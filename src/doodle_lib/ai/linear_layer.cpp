@@ -16,6 +16,9 @@ void linear_layer::load(const FSys::path& weight_path, const FSys::path& bias_pa
   std::int64_t rows = l_data.shape[0];
   std::int64_t cols = l_data.shape[1];
 
+  DOODLE_CHICK(l_data.word_size == sizeof(float), "linear_layer 权重数据类型不是 float32: {}", weight_path.string());
+  DOODLE_CHICK(l_data.fortran_order == false, "linear_layer 权重不是 C order (row-major): {}", weight_path.string());
+
   // npy 以行主序存储（C order），Eigen 默认为列主序
   // 直接使用 RowMajor 映射避免转置
   Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> w_map(

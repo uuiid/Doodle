@@ -56,7 +56,6 @@ Eigen::MatrixXf load_npy_matrix(const FSys::path& file_path, std::int64_t expect
   // 计算总元素数
   std::size_t total = 1;
   for (auto& s : data.shape) total *= s;
-
   std::int64_t rows = 1;
   std::int64_t cols = 1;
 
@@ -76,6 +75,9 @@ Eigen::MatrixXf load_npy_matrix(const FSys::path& file_path, std::int64_t expect
   if (expected_cols > 0) {
     DOODLE_CHICK(cols == expected_cols, "npy 文件 {} 列数 {} 不匹配预期 {}", file_path.string(), cols, expected_cols);
   }
+
+  DOODLE_CHICK(data.word_size == sizeof(float), "npy 文件 {} 数据类型不是 float32", file_path.string());
+  DOODLE_CHICK(data.fortran_order == false, "npy 文件 {} 不是 C order (row-major)", file_path.string());
 
   Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> map(
       data.data<float>(), rows, cols
@@ -132,7 +134,7 @@ std::vector<std::vector<std::int64_t>> compute_joint_levels(const std::vector<st
       if (already_placed) continue;
 
       // 检查父关节是否已在上一层级
-      auto pi = static_cast<std::size_t>(parents[i]);
+      auto pi             = static_cast<std::size_t>(parents[i]);
       bool parent_in_prev = false;
       if (!levels.empty()) {
         for (auto j : levels.back()) {
@@ -160,9 +162,7 @@ std::vector<std::vector<std::int64_t>> compute_joint_levels(const std::vector<st
 // 初始化
 // ======================================================================
 
-void skeleton_base::init_from_bone_hierarchy(
-    const std::vector<std::pair<std::string, std::string>>& bone_hierarchy
-) {
+void skeleton_base::init_from_bone_hierarchy(const std::vector<std::pair<std::string, std::string>>& bone_hierarchy) {
   bone_order_names_.clear();
   bone_index_.clear();
   joint_parents_.clear();
@@ -173,9 +173,7 @@ void skeleton_base::init_from_bone_hierarchy(
     bone_order_names_.push_back(name);
     parent_names.push_back(parent);
     // 插入索引映射（检查重复）
-    DOODLE_CHICK(
-        !bone_index_.contains(name), "重复的关节名称: {}", name
-    );
+    DOODLE_CHICK(!bone_index_.contains(name), "重复的关节名称: {}", name);
     bone_index_[name] = static_cast<std::int64_t>(bone_order_names_.size() - 1);
   }
 
@@ -189,7 +187,9 @@ void skeleton_base::init_from_bone_hierarchy(
       joint_parents_[static_cast<std::size_t>(i)] = -1;
     } else {
       auto it = bone_index_.find(pname);
-      DOODLE_CHICK(it != bone_index_.end(), "关节 {} 的父关节 {} 不存在", bone_order_names_[static_cast<std::size_t>(i)], pname);
+      DOODLE_CHICK(
+          it != bone_index_.end(), "关节 {} 的父关节 {} 不存在", bone_order_names_[static_cast<std::size_t>(i)], pname
+      );
       joint_parents_[static_cast<std::size_t>(i)] = it->second;
     }
   }
@@ -208,8 +208,7 @@ void skeleton_base::init_from_bone_hierarchy(
   joint_levels_ = compute_joint_levels(joint_parents_);
 
   SPDLOG_INFO(
-      "skeleton_base '{}' 初始化完成: {} 关节, 根索引={}, {} 层级",
-      name_, nbjoints_, root_idx_, joint_levels_.size()
+      "skeleton_base '{}' 初始化完成: {} 关节, 根索引={}, {} 层级", name_, nbjoints_, root_idx_, joint_levels_.size()
   );
 }
 
@@ -220,8 +219,7 @@ void skeleton_base::init_from_bone_hierarchy(
 void skeleton_base::load_neutral_joints(const FSys::path& folder) {
   neutral_joints_ = load_npy_matrix(folder / "joints.npy", 3);
   DOODLE_CHICK(
-      neutral_joints_.rows() == nbjoints_,
-      "joints.npy 行数 {} 不匹配关节数 {}", neutral_joints_.rows(), nbjoints_
+      neutral_joints_.rows() == nbjoints_, "joints.npy 行数 {} 不匹配关节数 {}", neutral_joints_.rows(), nbjoints_
   );
   SPDLOG_INFO("  加载 neutral_joints: [{}x{}]", neutral_joints_.rows(), neutral_joints_.cols());
 }
@@ -237,7 +235,9 @@ void skeleton_base::load_global_rot_offsets(const FSys::path& folder) {
         global_rot_offsets_.rows() == nbjoints_, "global_rot_offsets 行数 {} 不匹配关节数 {}",
         global_rot_offsets_.rows(), nbjoints_
     );
-    DOODLE_CHICK(global_rot_offsets_.cols() == 9, "global_rot_offsets 列数应为 9，实际为 {}", global_rot_offsets_.cols());
+    DOODLE_CHICK(
+        global_rot_offsets_.cols() == 9, "global_rot_offsets 列数应为 9，实际为 {}", global_rot_offsets_.cols()
+    );
   }
 }
 
@@ -249,8 +249,7 @@ void skeleton_base::load_rest_pose_local_rot(const FSys::path& folder) {
         rest_pose_local_rot_.rows(), nbjoints_
     );
     DOODLE_CHICK(
-        rest_pose_local_rot_.cols() == 9, "rest_pose_local_rot 列数应为 9，实际为 {}",
-        rest_pose_local_rot_.cols()
+        rest_pose_local_rot_.cols() == 9, "rest_pose_local_rot 列数应为 9，实际为 {}", rest_pose_local_rot_.cols()
     );
   }
 }
@@ -284,12 +283,9 @@ struct semantic_groups {
 };
 
 semantic_groups resolve_semantic_groups(
-    const skeleton_base& skel,
-    const std::vector<std::string>& left_foot_names,
-    const std::vector<std::string>& right_foot_names,
-    const std::vector<std::string>& left_hand_names,
-    const std::vector<std::string>& right_hand_names,
-    const std::vector<std::string>& hip_names
+    const skeleton_base& skel, const std::vector<std::string>& left_foot_names,
+    const std::vector<std::string>& right_foot_names, const std::vector<std::string>& left_hand_names,
+    const std::vector<std::string>& right_hand_names, const std::vector<std::string>& hip_names
 ) {
   semantic_groups g;
   auto resolve = [&](const std::vector<std::string>& names) {
@@ -302,11 +298,11 @@ semantic_groups resolve_semantic_groups(
     }
     return indices;
   };
-  g.left_foot   = resolve(left_foot_names);
-  g.right_foot  = resolve(right_foot_names);
-  g.left_hand   = resolve(left_hand_names);
-  g.right_hand  = resolve(right_hand_names);
-  g.hip         = resolve(hip_names);
+  g.left_foot  = resolve(left_foot_names);
+  g.right_foot = resolve(right_foot_names);
+  g.left_hand  = resolve(left_hand_names);
+  g.right_hand = resolve(right_hand_names);
+  g.hip        = resolve(hip_names);
   return g;
 }
 
@@ -319,12 +315,8 @@ void apply_semantic_groups(skeleton_base& skel, const semantic_groups& g) {
 
   // foot_joint_idx = left + right
   skel.foot_joint_idx_.clear();
-  skel.foot_joint_idx_.insert(
-      skel.foot_joint_idx_.end(), g.left_foot.begin(), g.left_foot.end()
-  );
-  skel.foot_joint_idx_.insert(
-      skel.foot_joint_idx_.end(), g.right_foot.begin(), g.right_foot.end()
-  );
+  skel.foot_joint_idx_.insert(skel.foot_joint_idx_.end(), g.left_foot.begin(), g.left_foot.end());
+  skel.foot_joint_idx_.insert(skel.foot_joint_idx_.end(), g.right_foot.begin(), g.right_foot.end());
 }
 
 }  // namespace
@@ -334,7 +326,7 @@ void apply_semantic_groups(skeleton_base& skel, const semantic_groups& g) {
 // ======================================================================
 
 std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_30(const FSys::path& folder) {
-  auto skel = std::make_shared<skeleton_base>();
+  auto skel   = std::make_shared<skeleton_base>();
   skel->name_ = "somaskel30";
 
   skel->init_from_bone_hierarchy({
@@ -371,12 +363,11 @@ std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_30(const FSys
   });
 
   auto g = resolve_semantic_groups(
-      *skel,
-      {"LeftFoot", "LeftToeBase"},               // left foot
-      {"RightFoot", "RightToeBase"},              // right foot
-      {"LeftHand", "LeftHandMiddleEnd"},          // left hand
-      {"RightHand", "RightHandMiddleEnd"},        // right hand
-      {"RightLeg", "LeftLeg"}                     // hip [right, left]
+      *skel, {"LeftFoot", "LeftToeBase"},   // left foot
+      {"RightFoot", "RightToeBase"},        // right foot
+      {"LeftHand", "LeftHandMiddleEnd"},    // left hand
+      {"RightHand", "RightHandMiddleEnd"},  // right hand
+      {"RightLeg", "LeftLeg"}               // hip [right, left]
   );
   apply_semantic_groups(*skel, g);
 
@@ -392,7 +383,7 @@ std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_30(const FSys
 // ======================================================================
 
 std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_77(const FSys::path& folder) {
-  auto skel = std::make_shared<skeleton_base>();
+  auto skel   = std::make_shared<skeleton_base>();
   skel->name_ = "somaskel77";
 
   skel->init_from_bone_hierarchy({
@@ -476,19 +467,17 @@ std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_77(const FSys
   });
 
   auto g = resolve_semantic_groups(
-      *skel,
-      {"LeftFoot", "LeftToeBase", "LeftToeEnd"},
-      {"RightFoot", "RightToeBase", "RightToeEnd"},
-      {"LeftHand", "LeftHandThumb1", "LeftHandThumb2", "LeftHandThumb3", "LeftHandThumbEnd",
-       "LeftHandIndex1", "LeftHandIndex2", "LeftHandIndex3", "LeftHandIndex4", "LeftHandIndexEnd",
+      *skel, {"LeftFoot", "LeftToeBase", "LeftToeEnd"}, {"RightFoot", "RightToeBase", "RightToeEnd"},
+      {"LeftHand",        "LeftHandThumb1",  "LeftHandThumb2",  "LeftHandThumb3",  "LeftHandThumbEnd",
+       "LeftHandIndex1",  "LeftHandIndex2",  "LeftHandIndex3",  "LeftHandIndex4",  "LeftHandIndexEnd",
        "LeftHandMiddle1", "LeftHandMiddle2", "LeftHandMiddle3", "LeftHandMiddle4", "LeftHandMiddleEnd",
-       "LeftHandRing1", "LeftHandRing2", "LeftHandRing3", "LeftHandRing4", "LeftHandRingEnd",
-       "LeftHandPinky1", "LeftHandPinky2", "LeftHandPinky3", "LeftHandPinky4", "LeftHandPinkyEnd"},
-      {"RightHand", "RightHandThumb1", "RightHandThumb2", "RightHandThumb3", "RightHandThumbEnd",
-       "RightHandIndex1", "RightHandIndex2", "RightHandIndex3", "RightHandIndex4", "RightHandIndexEnd",
+       "LeftHandRing1",   "LeftHandRing2",   "LeftHandRing3",   "LeftHandRing4",   "LeftHandRingEnd",
+       "LeftHandPinky1",  "LeftHandPinky2",  "LeftHandPinky3",  "LeftHandPinky4",  "LeftHandPinkyEnd"},
+      {"RightHand",        "RightHandThumb1",  "RightHandThumb2",  "RightHandThumb3",  "RightHandThumbEnd",
+       "RightHandIndex1",  "RightHandIndex2",  "RightHandIndex3",  "RightHandIndex4",  "RightHandIndexEnd",
        "RightHandMiddle1", "RightHandMiddle2", "RightHandMiddle3", "RightHandMiddle4", "RightHandMiddleEnd",
-       "RightHandRing1", "RightHandRing2", "RightHandRing3", "RightHandRing4", "RightHandRingEnd",
-       "RightHandPinky1", "RightHandPinky2", "RightHandPinky3", "RightHandPinky4", "RightHandPinkyEnd"},
+       "RightHandRing1",   "RightHandRing2",   "RightHandRing3",   "RightHandRing4",   "RightHandRingEnd",
+       "RightHandPinky1",  "RightHandPinky2",  "RightHandPinky3",  "RightHandPinky4",  "RightHandPinkyEnd"},
       {"RightLeg", "LeftLeg"}
   );
   apply_semantic_groups(*skel, g);
@@ -505,13 +494,11 @@ std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_77(const FSys
 // ======================================================================
 
 skeleton_base::fk_result skeleton_base::fk(
-    const Eigen::MatrixXf& local_rot_mats,
-    const Eigen::MatrixXf& root_positions
+    const Eigen::MatrixXf& local_rot_mats, const Eigen::MatrixXf& root_positions
 ) const {
   const Eigen::Index total_frames = local_rot_mats.rows();
   const Eigen::Index J            = nbjoints_;
-  DOODLE_CHICK(local_rot_mats.cols() == J * 9,
-               "local_rot_mats 列数 {} 不匹配 J*9 = {}", local_rot_mats.cols(), J * 9);
+  DOODLE_CHICK(local_rot_mats.cols() == J * 9, "local_rot_mats 列数 {} 不匹配 J*9 = {}", local_rot_mats.cols(), J * 9);
   DOODLE_CHICK(root_positions.rows() == total_frames, "root_positions 行数不匹配");
   DOODLE_CHICK(root_positions.cols() == 3, "root_positions 列数 != 3");
 
@@ -520,8 +507,7 @@ skeleton_base::fk_result skeleton_base::fk(
   result.posed_joints.resize(total_frames, J * 3);
   result.posed_joints_norootpos.resize(total_frames, J * 3);
 
-  DOODLE_CHICK(!joint_levels_.empty(),
-               "skeleton_base.joint_levels_ 为空，请先调用 init_from_bone_hierarchy");
+  DOODLE_CHICK(!joint_levels_.empty(), "skeleton_base.joint_levels_ 为空，请先调用 init_from_bone_hierarchy");
 
   for (Eigen::Index f = 0; f < total_frames; ++f) {
     const float* rot_row = local_rot_mats.row(f).data();
@@ -549,18 +535,15 @@ skeleton_base::fk_result skeleton_base::fk(
 
         // 相对位置 = neutral_joints[j] - neutral_joints[parent(j)]
         Eigen::Vector3f rel_joint;
-        rel_joint(0) = neutral_joints_(j_idx, 0) -
-                       neutral_joints_(static_cast<Eigen::Index>(pi), 0);
-        rel_joint(1) = neutral_joints_(j_idx, 1) -
-                       neutral_joints_(static_cast<Eigen::Index>(pi), 1);
-        rel_joint(2) = neutral_joints_(j_idx, 2) -
-                       neutral_joints_(static_cast<Eigen::Index>(pi), 2);
+        rel_joint(0)            = neutral_joints_(j_idx, 0) - neutral_joints_(static_cast<Eigen::Index>(pi), 0);
+        rel_joint(1)            = neutral_joints_(j_idx, 1) - neutral_joints_(static_cast<Eigen::Index>(pi), 1);
+        rel_joint(2)            = neutral_joints_(j_idx, 2) - neutral_joints_(static_cast<Eigen::Index>(pi), 2);
 
         Eigen::Matrix4f local_T = Eigen::Matrix4f::Identity();
         matrix_9_to_4x4(rot_row + j_idx * 9, local_T);
-        local_T(0, 3) = rel_joint(0);
-        local_T(1, 3) = rel_joint(1);
-        local_T(2, 3) = rel_joint(2);
+        local_T(0, 3)  = rel_joint(0);
+        local_T(1, 3)  = rel_joint(1);
+        local_T(2, 3)  = rel_joint(2);
 
         transforms[ji] = transforms[pi] * local_T;
       }
@@ -575,9 +558,9 @@ skeleton_base::fk_result skeleton_base::fk(
       const auto ji = static_cast<std::size_t>(j);
       matrix_4x4_to_9(transforms[ji], global_rot_out + j * 9);
 
-      posed_out[j * 3 + 0] = transforms[ji](0, 3);
-      posed_out[j * 3 + 1] = transforms[ji](1, 3);
-      posed_out[j * 3 + 2] = transforms[ji](2, 3);
+      posed_out[j * 3 + 0]     = transforms[ji](0, 3);
+      posed_out[j * 3 + 1]     = transforms[ji](1, 3);
+      posed_out[j * 3 + 2]     = transforms[ji](2, 3);
 
       posed_no_root[j * 3 + 0] = transforms[ji](0, 3) - pos_row[0];
       posed_no_root[j * 3 + 1] = transforms[ji](1, 3) - pos_row[1];
@@ -592,9 +575,7 @@ skeleton_base::fk_result skeleton_base::fk(
 // 全局旋转 → 局部旋转 成员方法
 // ======================================================================
 
-Eigen::MatrixXf skeleton_base::global_rots_to_local_rots(
-    const Eigen::MatrixXf& global_rot_mats
-) const {
+Eigen::MatrixXf skeleton_base::global_rots_to_local_rots(const Eigen::MatrixXf& global_rot_mats) const {
   const Eigen::Index total = global_rot_mats.rows();
   const Eigen::Index J     = nbjoints_;
   DOODLE_CHICK(global_rot_mats.cols() == J * 9, "global_rot_mats 列数不匹配");
@@ -637,7 +618,7 @@ Eigen::MatrixXf skeleton_base::global_rots_to_local_rots(
         R_parent(2, 1) = global_row[pi * 9 + 7];
         R_parent(2, 2) = global_row[pi * 9 + 8];
 
-        R_local = R_parent.transpose() * R_global;
+        R_local        = R_parent.transpose() * R_global;
       }
 
       local_row[j * 9 + 0] = R_local(0, 0);
