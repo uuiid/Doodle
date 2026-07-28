@@ -16,6 +16,8 @@
 
 namespace doodle::ai {
 
+struct kimodo_model_config;
+
 /// @brief 两阶段去噪器：先预测全局根节点运动，再基于局部根节点预测身体运动（对应 Python TwostageDenoiser）
 ///
 /// 架构:
@@ -46,18 +48,10 @@ class twostage_denoiser {
   twostage_denoiser() = default;
 
   /// @brief 加载所有权重并初始化两个 transformer_encoder_block
-  /// @param root_model_dir 根节点模型目录
-  /// @param body_model_dir 身体模型目录
-  /// @param latent_dim Transformer 潜在空间维度
-  /// @param num_text_tokens 最大文本 token 数
-  /// @param use_text_mask 是否使用文本 mask
+  /// @param config 模型配置（共享指针），提供路径、维度、标志等参数
   /// @param motion_rep 运动表示（从中推导 input_dim / global_root_dim / local_root_dim）
-  /// @param motion_mask_mode 运动 mask 模式 ("none" 或 "concat")
-  /// @param input_first_heading_angle 是否输入初始朝向角
   void load(
-      const FSys::path& root_model_dir, const FSys::path& body_model_dir, std::int64_t latent_dim,
-      std::int64_t num_text_tokens, bool use_text_mask, const std::shared_ptr<motion_rep_base>& motion_rep,
-      const std::string& motion_mask_mode = "none", bool input_first_heading_angle = false
+      std::shared_ptr<kimodo_model_config> config, const std::shared_ptr<motion_rep_base>& motion_rep
   );
 
   /// @brief 正向传播（对应 Python forward）

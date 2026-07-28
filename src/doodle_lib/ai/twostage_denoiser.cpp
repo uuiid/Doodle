@@ -2,6 +2,7 @@
 // Created by TD on 25-7-17.
 //
 #include "twostage_denoiser.h"
+#include "kimodo.h"
 
 #include <doodle_core/exception/exception.h>
 
@@ -11,10 +12,9 @@
 namespace doodle::ai {
 
 void twostage_denoiser::load(
-    const FSys::path& root_model_dir, const FSys::path& body_model_dir, std::int64_t latent_dim,
-    std::int64_t num_text_tokens, bool use_text_mask, const std::shared_ptr<motion_rep_base>& motion_rep,
-    const std::string& motion_mask_mode, bool input_first_heading_angle
+    std::shared_ptr<kimodo_model_config> config, const std::shared_ptr<motion_rep_base>& motion_rep
 ) {
+  DOODLE_CHICK(config != nullptr, "kimodo_model_config 为空");
   DOODLE_CHICK(motion_rep != nullptr, "motion_rep 不能为空");
   DOODLE_CHICK(
       motion_rep->motion_rep_dim() > 0 && motion_rep->global_root_dim() > 0,
@@ -26,7 +26,7 @@ void twostage_denoiser::load(
   input_dim_                         = motion_rep->motion_rep_dim();
   global_root_dim_                   = motion_rep->global_root_dim();
   local_root_dim_                    = motion_rep->local_root_dim();
-  motion_mask_mode_                  = motion_mask_mode;
+  motion_mask_mode_                  = config->motion_mask_mode_;
 
   const bool will_concatenate        = (motion_mask_mode_ == "concat");
 
@@ -36,11 +36,12 @@ void twostage_denoiser::load(
 
   SPDLOG_INFO(
       "twostage_denoiser 加载 root_model: input_dim={}, output_dim={}, latent_dim={}", root_input_dim, root_output_dim,
-      latent_dim
+      config->latent_dim_
   );
 
   // ---- 加载根节点模型 ----
-  root_model_.load(root_model_dir, latent_dim, num_text_tokens, use_text_mask, input_first_heading_angle);
+  root_model_.load(config->denoiser_root_path_, config->latent_dim_, config->num_text_tokens_, config->use_text_mask_,
+                   config->input_first_heading_angle_);
 
   // ---- 计算 local_motion_rep_dim: 用局部根节点替换全局根节点后的维度 ----
   // local_motion_rep_dim = input_dim - global_root_dim + local_root_dim
@@ -54,11 +55,12 @@ void twostage_denoiser::load(
   SPDLOG_INFO(
       "twostage_denoiser 加载 body_model: input_dim={}, output_dim={}, latent_dim={}, "
       "local_motion_rep_dim={}",
-      body_input_dim, body_output_dim, latent_dim, local_motion_rep_dim
+      body_input_dim, body_output_dim, config->latent_dim_, local_motion_rep_dim
   );
 
   // ---- 加载身体模型 ----
-  body_model_.load(body_model_dir, latent_dim, num_text_tokens, use_text_mask, input_first_heading_angle);
+  body_model_.load(config->denoiser_body_path_, config->latent_dim_, config->num_text_tokens_, config->use_text_mask_,
+                   config->input_first_heading_angle_);
 
   SPDLOG_INFO(
       "twostage_denoiser 加载完成: input_dim={}, global_root_dim={}, local_root_dim={}, "

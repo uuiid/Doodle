@@ -52,15 +52,12 @@ void kimodo::load(std::shared_ptr<kimodo_model_config> config) {
   );
 
   // ---- Step 3: 初始化扩散过程 ----
-  diffusion_.init(config->num_base_steps_);
+  diffusion_.init(config);
   sampler_.set_diffusion(diffusion_);
   SPDLOG_INFO("kimodo: diffusion 初始化完成: num_base_steps={}", config->num_base_steps_);
 
   // ---- Step 4: 初始化去噪器（含 CFG 包装） ----
-  denoiser_.load(
-      config->denoiser_root_path_, config->denoiser_body_path_, config->latent_dim_, config->num_text_tokens_,
-      config->use_text_mask_, motion_rep_, config->motion_mask_mode_, config->input_first_heading_angle_
-  );
+  denoiser_.load(config, motion_rep_);
   denoiser_.set_cfg_type_default(config->cfg_type_);
   SPDLOG_INFO("kimodo: denoiser (CFG) 加载完成");
 

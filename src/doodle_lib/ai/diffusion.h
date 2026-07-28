@@ -12,6 +12,8 @@
 
 namespace doodle::ai {
 
+struct kimodo_model_config;
+
 /// @brief Cosine-schedule 扩散过程：betas、alphas 和 DDIM 步映射（对应 Python Diffusion）
 ///
 /// 管理完整的 cosine beta schedule 以及针对子采样去噪步数的所有预计算 diffusion 变量。
@@ -40,12 +42,12 @@ class diffusion {
   diffusion() = default;
 
   /// @brief 构造并初始化 cosine beta schedule
-  /// @param num_base_steps 训练的完整扩散步数（如 1000）
-  explicit diffusion(std::int64_t num_base_steps) { init(num_base_steps); }
+  /// @param config 模型配置（共享指针），提供 num_base_steps 等参数
+  explicit diffusion(std::shared_ptr<kimodo_model_config> config) { init(std::move(config)); }
 
   /// @brief (重新)初始化扩散调度
-  /// @param num_base_steps 训练的完整扩散步数
-  void init(std::int64_t num_base_steps);
+  /// @param config 模型配置（共享指针），提供 num_base_steps 等参数
+  void init(std::shared_ptr<kimodo_model_config> config);
 
   // ======================================================================
   // 核心函数

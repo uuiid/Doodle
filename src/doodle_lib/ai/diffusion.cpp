@@ -2,6 +2,7 @@
 // Created by TD on 25-7-23.
 //
 #include "diffusion.h"
+#include "kimodo.h"
 
 #include <doodle_core/exception/exception.h>
 
@@ -66,7 +67,9 @@ namespace {
 // diffusion 实现
 // ======================================================================
 
-void diffusion::init(std::int64_t num_base_steps) {
+void diffusion::init(std::shared_ptr<kimodo_model_config> config) {
+  DOODLE_CHICK(config != nullptr, "kimodo_model_config 为空");
+  const auto num_base_steps = config->num_base_steps_;
   DOODLE_CHICK(num_base_steps > 0, "num_base_steps 必须大于 0，实际为 {}", num_base_steps);
   num_base_steps_ = num_base_steps;
 

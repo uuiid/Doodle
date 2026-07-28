@@ -15,6 +15,8 @@
 
 namespace doodle::ai {
 
+struct kimodo_model_config;
+
 /// @brief 无分类器引导包装器（对应 Python ClassifierFreeGuidedModel）
 ///
 /// 在采样时包装去噪器，实现无分类器引导（Classifier-Free Guidance, CFG）。
@@ -36,11 +38,9 @@ class classifier_free_guided_model {
   classifier_free_guided_model() = default;
 
   /// @brief 加载去噪器模型
-  void load(
-      const FSys::path& root_model_dir, const FSys::path& body_model_dir, std::int64_t latent_dim,
-      std::int64_t num_text_tokens, bool use_text_mask, const std::shared_ptr<motion_rep_base>& motion_rep,
-      const std::string& motion_mask_mode = "none", bool input_first_heading_angle = false
-  );
+  /// @param config 模型配置（共享指针），提供路径、维度、标志等参数
+  /// @param motion_rep 运动表示
+  void load(std::shared_ptr<kimodo_model_config> config, const std::shared_ptr<motion_rep_base>& motion_rep);
 
   /// @brief 设置默认 cfg_type
   void set_cfg_type_default(const std::string& cfg_type) { cfg_type_default_ = cfg_type; }

@@ -2,6 +2,7 @@
 // Created by TD on 25-7-20.
 //
 #include "classifier_free_guided_model.h"
+#include "kimodo.h"
 
 #include <doodle_core/exception/exception.h>
 
@@ -10,14 +11,10 @@
 namespace doodle::ai {
 
 void classifier_free_guided_model::load(
-    const FSys::path& root_model_dir, const FSys::path& body_model_dir, std::int64_t latent_dim,
-    std::int64_t num_text_tokens, bool use_text_mask, const std::shared_ptr<motion_rep_base>& motion_rep,
-    const std::string& motion_mask_mode, bool input_first_heading_angle
+    std::shared_ptr<kimodo_model_config> config, const std::shared_ptr<motion_rep_base>& motion_rep
 ) {
-  model_.load(
-      root_model_dir, body_model_dir, latent_dim, num_text_tokens, use_text_mask, motion_rep, motion_mask_mode,
-      input_first_heading_angle
-  );
+  DOODLE_CHICK(config != nullptr, "kimodo_model_config 为空");
+  model_.load(std::move(config), motion_rep);
 }
 
 namespace {
