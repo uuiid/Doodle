@@ -3,13 +3,13 @@
 //
 #pragma once
 
+#include <doodle_lib/ai/classifier_free_guided_model.h>
+#include <doodle_lib/ai/diffusion.h>
+#include <doodle_lib/ai/llm2vec.h>
+#include <doodle_lib/ai/motion_rep/kimodo_motion_rep.h>
+#include <doodle_lib/ai/skeleton/skeleton_base.h>
 #include <doodle_lib/core/global_function.h>
 
-#include "classifier_free_guided_model.h"
-#include "diffusion.h"
-#include "llm2vec.h"
-#include "motion_rep/kimodo_motion_rep.h"
-#include "skeleton/skeleton_base.h"
 #include <Eigen/Dense>
 #include <cstdint>
 #include <memory>
@@ -136,8 +136,10 @@ struct kimodo_model_config {
 ///
 /// 用法:
 /// @code
+///   auto cfg = std::make_shared<kimodo_model_config>();
+///   cfg->load_from_json("path/to/model_config.json");
 ///   auto kmd = std::make_shared<kimodo>();
-///   kmd->load(...);
+///   kmd->load(cfg);
 ///   auto output = kmd->generate({"a person walks"}, {120}, 50);
 /// @endcode
 ///
@@ -192,28 +194,10 @@ class kimodo {
   kimodo(const kimodo&)            = delete;
   kimodo& operator=(const kimodo&) = delete;
 
-  /// @brief 从 npy 权重目录加载模型
+  /// @brief 从模型配置加载模型
   ///
-  /// @param denoiser_root_dir 根节点去噪器目录（含 root_model 和 body_model 子目录）
-  /// @param denoiser_body_dir 身体模型目录
-  /// @param text_encoder_model_path LLM2Vec ONNX 模型路径
-  /// @param tokenizer_json_path tokenizer.json 路径
-  /// @param skeleton_dir 骨骼数据目录（可选，供 SOMASkeleton30 加载 npy）
-  /// @param stats_path 标准化统计目录（含 global_root/ local_root/ body/ 子目录）
-  /// @param num_base_steps 扩散基础步数（默认 1000）
-  /// @param latent_dim Transformer 潜在维度（默认 1024）
-  /// @param num_text_tokens 文本 token 数（默认 50）
-  /// @param use_text_mask 是否使用文本 mask
-  /// @param cfg_type 默认 CFG 类型
-  /// @param llm_dim 文本嵌入维度（默认 4096）
-  /// @param fps 帧率（默认 30）
-  void load(
-      const FSys::path& denoiser_root_dir, const FSys::path& denoiser_body_dir,
-      const FSys::path& text_encoder_model_path, const FSys::path& tokenizer_json_path, const FSys::path& skeleton_dir,
-      const FSys::path& stats_path, std::int64_t num_base_steps = 1000, std::int64_t latent_dim = 1024,
-      std::int64_t num_text_tokens = 50, bool use_text_mask = false, const std::string& cfg_type = "separated",
-      std::int64_t llm_dim = 4096, float fps = 30.0f
-  );
+  /// @param config 模型配置（共享指针），包含所有路径、维度、标志等设置
+  void load(std::shared_ptr<kimodo_model_config> config);
 
   /// @brief 从文本生成运动（对应 Python __call__，不含 multi_prompt）
   ///

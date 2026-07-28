@@ -2,17 +2,18 @@
 // Created by TD on 25-7-21.
 //
 #pragma once
+#include <doodle_lib/ai/motion_rep/motion_rep_base.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
-#include "motion_rep_base.h"
 #include <Eigen/Dense>
 #include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-
 namespace doodle::ai {
+
+struct kimodo_model_config;
 
 // ======================================================================
 // 运动解码输出（对应 Python KimodoMotionRep.inverse 的返回字典）
@@ -52,9 +53,8 @@ class kimodo_motion_rep : public motion_rep_base {
  public:
   /// @brief 构造函数
   /// @param skel 骨骼定义（共享指针）
-  /// @param in_fps 帧率
-  /// @param stats_path 统计文件路径（可选，包含 global_root/ local_root/ body/ 子目录）
-  kimodo_motion_rep(std::shared_ptr<skeleton_base> skel, float in_fps = 30.0f, const FSys::path& stats_path = {});
+  /// @param cfg 模型配置（共享指针），提供 fps、stats_path 等参数
+  kimodo_motion_rep(std::shared_ptr<skeleton_base> skel, std::shared_ptr<kimodo_model_config> cfg);
 
   // ======================================================================
   // 编码：局部旋转 + 根位置 → 平滑根特征（对应 Python __call__）

@@ -30,25 +30,20 @@ void kimodo_model_config::load_from_json(const FSys::path& json_path) {
 // ======================================================================
 // load
 // ======================================================================
-void kimodo::load(
-    const FSys::path& denoiser_root_dir, const FSys::path& denoiser_body_dir, const FSys::path& text_encoder_model_path,
-    const FSys::path& tokenizer_json_path, const FSys::path& skeleton_dir, const FSys::path& stats_path,
-    std::int64_t num_base_steps, std::int64_t latent_dim, std::int64_t num_text_tokens, bool use_text_mask,
-    const std::string& cfg_type, std::int64_t llm_dim, float fps
-) {
+void kimodo::load(std::shared_ptr<kimodo_model_config> config) {
+  DOODLE_CHICK(config != nullptr, "kimodo_model_config 为空");
   SPDLOG_INFO("kimodo::load 开始...");
 
-  cfg_type_default_ = cfg_type;
-  llm_dim_          = llm_dim;
-  fps_              = fps;
+  cfg_type_default_ = config->cfg_type_;
+  llm_dim_          = config->llm_dim_;
+  fps_              = static_cast<float>(config->fps_);
 
   // ---- Step 1: 初始化骨骼 ----
-  // config.yaml 使用 SOMASkeleton30
-  skeleton_         = skeleton_base::create_soma_skeleton_30(skeleton_dir);
+  skeleton_         = skeleton_base::create_soma_skeleton_30(config->skeleton_dir_);
   DOODLE_CHICK(skeleton_ != nullptr && skeleton_->is_valid(), "SOMASkeleton30 加载失败");
 
   // ---- Step 2: 初始化运动表示 ----
-  motion_rep_ = std::make_shared<kimodo_motion_rep>(skeleton_, fps, stats_path);
+  motion_rep_ = std::make_shared<kimodo_motion_rep>(skeleton_, config);
   DOODLE_CHICK(motion_rep_ != nullptr && motion_rep_->motion_rep_dim() > 0, "kimodo_motion_rep 初始化失败");
 
   SPDLOG_INFO(
@@ -57,25 +52,20 @@ void kimodo::load(
   );
 
   // ---- Step 3: 初始化扩散过程 ----
-  diffusion_.init(num_base_steps);
+  diffusion_.init(config->num_base_steps_);
   sampler_.set_diffusion(diffusion_);
-  SPDLOG_INFO("kimodo: diffusion 初始化完成: num_base_steps={}", num_base_steps);
+  SPDLOG_INFO("kimodo: diffusion 初始化完成: num_base_steps={}", config->num_base_steps_);
 
   // ---- Step 4: 初始化去噪器（含 CFG 包装） ----
-  // motion_mask_mode 根据 config.yaml 为 "concat"
-  const std::string motion_mask_mode       = "concat";
-  // input_first_heading_angle 根据 config.yaml 为 true
-  constexpr bool input_first_heading_angle = true;
-
   denoiser_.load(
-      denoiser_root_dir, denoiser_body_dir, latent_dim, num_text_tokens, use_text_mask, motion_rep_, motion_mask_mode,
-      input_first_heading_angle
+      config->denoiser_root_path_, config->denoiser_body_path_, config->latent_dim_, config->num_text_tokens_,
+      config->use_text_mask_, motion_rep_, config->motion_mask_mode_, config->input_first_heading_angle_
   );
-  denoiser_.set_cfg_type_default(cfg_type);
+  denoiser_.set_cfg_type_default(config->cfg_type_);
   SPDLOG_INFO("kimodo: denoiser (CFG) 加载完成");
 
   // ---- Step 5: 初始化文本编码器 ----
-  text_encoder_ = std::make_shared<LLM2Vec>(text_encoder_model_path, tokenizer_json_path);
+  text_encoder_ = std::make_shared<LLM2Vec>(config->text_encoder_model_path_, config->tokenizer_json_path_);
   DOODLE_CHICK(text_encoder_ != nullptr, "LLM2Vec 初始化失败");
   SPDLOG_INFO("kimodo: text_encoder 初始化完成");
 
