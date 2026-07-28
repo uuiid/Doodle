@@ -84,7 +84,6 @@ std::string get_ue_plug_version() {
 boost::asio::awaitable<bool> installUePath(
     std::shared_ptr<kitsu::kitsu_client> in_kitsu_client, const FSys::path& path, logger_ptr in_logger
 ) {
-  boost::scope::scope_exit l_scope{[] {}};
   auto l_version_data              = co_await in_kitsu_client->get_ue_plugins_version();
   auto l_ue_version                = core_set::get_set().ue4_version;
 
@@ -104,13 +103,12 @@ boost::asio::awaitable<bool> installUePath(
   SPDLOG_LOGGER_WARN(in_logger, "UE 版本 {} 插件版本 {}", l_ue_version, l_version);
   if (auto l_ver = get_ue_plug_version(); l_version.ends_with(l_ver) && !l_ver.empty()) co_return false;
 
-  auto l_path     = co_await in_kitsu_client->get_ue_plugin(l_version);
+  auto l_path = co_await in_kitsu_client->get_ue_plugin(l_version);
+  DOODLE_CHICK(!l_path.empty(), "获取 UE 插件下载路径失败");
   auto l_out_path = l_path.parent_path() / l_path.stem();
   if (!FSys::exists(l_out_path)) FSys::create_directories(l_out_path);
-  if (l_path.empty()) throw_exception(doodle_error{"获取 UE 插件路径失败"});
   bit7z::Bit7zLibrary l_lib{"7zip.dll"};
   bit7z::BitFileExtractor l_extractor{l_lib};
-  l_extractor.test(l_path.generic_string());
   l_extractor.extract(l_path.generic_string(), l_out_path.generic_string());
   l_out_path /= "Doodle";
   if (!FSys::exists(l_out_path)) throw_exception(doodle_error{"UE 插件解压失败"});
