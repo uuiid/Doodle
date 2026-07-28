@@ -10,11 +10,21 @@
 #include <random>
 #include <spdlog/spdlog.h>
 
-
 namespace doodle::ai {
 
 void kimodo_model_config::load_from_json(const FSys::path& json_path) {
   DOODLE_CHICK(FSys::exists(json_path), "kimodo_model_config json 文件不存在: {}", json_path.string());
+  auto l_json_path = json_path;
+  if (FSys::is_directory(json_path)) l_json_path /= "model_config.json";
+  DOODLE_CHICK(FSys::exists(l_json_path), "kimodo_model_config json 文件不存在: {}", l_json_path.string());
+  denoiser_root_path_      = l_json_path.parent_path() / "root";
+  denoiser_body_path_      = l_json_path.parent_path() / "body";
+  text_encoder_model_path_ = l_json_path.parent_path() / "text_encoder" / "model.onnx";
+  tokenizer_json_path_     = l_json_path.parent_path() / "text_encoder" / "tokenizer.json";
+  skeleton_dir_            = l_json_path.parent_path() / "skeleton";
+  stats_path_              = l_json_path.parent_path() / "stats";
+
+  *this                    = nlohmann::json::parse(FSys::ifstream{l_json_path}).get<kimodo_model_config>();
 }
 
 // ======================================================================

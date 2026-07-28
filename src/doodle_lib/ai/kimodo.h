@@ -64,6 +64,13 @@ struct kimodo_model_config {
 
   void load_from_json(const FSys::path& json_path);
 
+  FSys::path denoiser_root_path_;
+  FSys::path denoiser_body_path_;
+  FSys::path text_encoder_model_path_;
+  FSys::path tokenizer_json_path_;
+  FSys::path skeleton_dir_;
+  FSys::path stats_path_;
+
   friend void from_json(const nlohmann::json& j, kimodo_model_config& p) {
     j.at("model_name").get_to(p.model_name_);
     j.at("skeleton_type").get_to(p.skeleton_type_);
