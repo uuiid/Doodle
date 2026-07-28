@@ -102,7 +102,7 @@ boost::asio::awaitable<bool> installUePath(
     l_version.starts_with(l_ue_version), "未能找到 UE 插件版本 {} 对应的 UE 版本 {}", l_version, l_ue_version
   );
   SPDLOG_LOGGER_WARN(in_logger, "UE 版本 {} 插件版本 {}", l_ue_version, l_version);
-  if (l_version == get_ue_plug_version()) co_return false;
+  if (l_version.ends_with(get_ue_plug_version())) co_return false;
 
   auto l_path     = co_await in_kitsu_client->get_ue_plugin(l_version);
   auto l_out_path = l_path.parent_path() / l_path.stem();
