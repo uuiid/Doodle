@@ -3,14 +3,13 @@
 //
 #pragma once
 
+#include <doodle_lib/core/global_function.h>
+
 #include "classifier_free_guided_model.h"
 #include "diffusion.h"
 #include "llm2vec.h"
 #include "motion_rep/kimodo_motion_rep.h"
 #include "skeleton/skeleton_base.h"
-
-#include <doodle_lib/core/global_function.h>
-
 #include <Eigen/Dense>
 #include <cstdint>
 #include <memory>
@@ -63,6 +62,8 @@ struct kimodo_model_config {
   sub_module_config root_;
   sub_module_config body_;
 
+  void load_from_json(const FSys::path& json_path);
+
   friend void from_json(const nlohmann::json& j, kimodo_model_config& p) {
     j.at("model_name").get_to(p.model_name_);
     j.at("skeleton_type").get_to(p.skeleton_type_);
@@ -92,32 +93,32 @@ struct kimodo_model_config {
     j.at("body").get_to(p.body_);
   }
   friend void to_json(nlohmann::json& j, const kimodo_model_config& p) {
-    j["model_name"]               = p.model_name_;
-    j["skeleton_type"]            = p.skeleton_type_;
-    j["nb_joints"]                = p.nb_joints_;
-    j["num_base_steps"]           = p.num_base_steps_;
-    j["cfg_type"]                 = p.cfg_type_;
-    j["fps"]                      = p.fps_;
-    j["motion_rep_dim"]           = p.motion_rep_dim_;
-    j["global_root_dim"]          = p.global_root_dim_;
-    j["local_root_dim"]           = p.local_root_dim_;
-    j["motion_mask_mode"]         = p.motion_mask_mode_;
-    j["latent_dim"]               = p.latent_dim_;
-    j["ff_size"]                  = p.ff_size_;
-    j["num_layers"]               = p.num_layers_;
-    j["num_heads"]                = p.num_heads_;
-    j["activation"]               = p.activation_;
-    j["dropout"]                  = p.dropout_;
-    j["pe_dropout"]               = p.pe_dropout_;
-    j["norm_first"]               = p.norm_first_;
-    j["use_text_mask"]            = p.use_text_mask_;
-    j["num_text_tokens"]          = p.num_text_tokens_;
-    j["num_text_tokens_override"] = p.num_text_tokens_override_;
+    j["model_name"]                = p.model_name_;
+    j["skeleton_type"]             = p.skeleton_type_;
+    j["nb_joints"]                 = p.nb_joints_;
+    j["num_base_steps"]            = p.num_base_steps_;
+    j["cfg_type"]                  = p.cfg_type_;
+    j["fps"]                       = p.fps_;
+    j["motion_rep_dim"]            = p.motion_rep_dim_;
+    j["global_root_dim"]           = p.global_root_dim_;
+    j["local_root_dim"]            = p.local_root_dim_;
+    j["motion_mask_mode"]          = p.motion_mask_mode_;
+    j["latent_dim"]                = p.latent_dim_;
+    j["ff_size"]                   = p.ff_size_;
+    j["num_layers"]                = p.num_layers_;
+    j["num_heads"]                 = p.num_heads_;
+    j["activation"]                = p.activation_;
+    j["dropout"]                   = p.dropout_;
+    j["pe_dropout"]                = p.pe_dropout_;
+    j["norm_first"]                = p.norm_first_;
+    j["use_text_mask"]             = p.use_text_mask_;
+    j["num_text_tokens"]           = p.num_text_tokens_;
+    j["num_text_tokens_override"]  = p.num_text_tokens_override_;
     j["input_first_heading_angle"] = p.input_first_heading_angle_;
-    j["llm_shape"]                = p.llm_shape_;
-    j["llm_dim"]                  = p.llm_dim_;
-    j["root"]                     = p.root_;
-    j["body"]                     = p.body_;
+    j["llm_shape"]                 = p.llm_shape_;
+    j["llm_dim"]                   = p.llm_dim_;
+    j["root"]                      = p.root_;
+    j["body"]                      = p.body_;
   }
 };
 
@@ -136,9 +137,9 @@ struct kimodo_model_config {
 /// @note _multiprompt（多段拼接）暂不实现。
 class kimodo {
   // ---- 核心组件 ----
-  classifier_free_guided_model denoiser_;  ///< CFG 包装的去噪器
-  diffusion diffusion_;                     ///< 扩散过程
-  ddim_sampler sampler_;                    ///< DDIM 采样器
+  classifier_free_guided_model denoiser_;          ///< CFG 包装的去噪器
+  diffusion diffusion_;                            ///< 扩散过程
+  ddim_sampler sampler_;                           ///< DDIM 采样器
   std::shared_ptr<kimodo_motion_rep> motion_rep_;  ///< 运动表示
   std::shared_ptr<skeleton_base> skeleton_;        ///< 骨骼 (用于输出转换)
 
@@ -152,8 +153,8 @@ class kimodo {
 
   // ---- 内部辅助 ----
   struct text_encoding_result {
-    Eigen::MatrixXf text_feat;    ///< [B, D] 文本嵌入（已平坦化，实际形状 [B*1, D]）
-    MatrixXb text_pad_mask;       ///< [B, 1] 文本 mask
+    Eigen::MatrixXf text_feat;  ///< [B, D] 文本嵌入（已平坦化，实际形状 [B*1, D]）
+    MatrixXb text_pad_mask;     ///< [B, 1] 文本 mask
   };
 
   /// @brief 编码文本（对应 Python _generate 中的 self.text_encoder(texts)）
@@ -162,39 +163,26 @@ class kimodo {
   /// @brief 单步去噪（对应 Python denoising_step）
   /// @return [B*T, D] t-1 步的噪声运动（平坦化）
   Eigen::MatrixXf denoising_step(
-      const Eigen::MatrixXf& motion,
-      const MatrixXb& pad_mask,
-      const Eigen::MatrixXf& text_feat,
-      const MatrixXb& text_pad_mask,
-      std::int64_t t,
-      const std::vector<float>& first_heading_angle,
-      const Eigen::MatrixXf& motion_mask,
-      const Eigen::MatrixXf& observed_motion,
-      std::int64_t num_denoising_steps,
-      const std::vector<float>& cfg_weight,
-      const std::string& cfg_type
+      const Eigen::MatrixXf& motion, const MatrixXb& pad_mask, const Eigen::MatrixXf& text_feat,
+      const MatrixXb& text_pad_mask, std::int64_t t, const std::vector<float>& first_heading_angle,
+      const Eigen::MatrixXf& motion_mask, const Eigen::MatrixXf& observed_motion, std::int64_t num_denoising_steps,
+      const std::vector<float>& cfg_weight, const std::string& cfg_type
   );
 
   /// @brief 完整去噪循环（对应 Python _generate）
   /// @return [B*T, D] 去噪后的运动（平坦化，已标准化）
   Eigen::MatrixXf generate_internal(
-      const std::vector<std::string>& texts,
-      std::int64_t max_frames,
-      std::int64_t num_denoising_steps,
-      const MatrixXb& pad_mask,
-      const std::vector<float>& first_heading_angle,
-      const Eigen::MatrixXf& motion_mask,
-      const Eigen::MatrixXf& observed_motion,
-      const std::vector<float>& cfg_weight,
-      const std::string& cfg_type
+      const std::vector<std::string>& texts, std::int64_t max_frames, std::int64_t num_denoising_steps,
+      const MatrixXb& pad_mask, const std::vector<float>& first_heading_angle, const Eigen::MatrixXf& motion_mask,
+      const Eigen::MatrixXf& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
   );
 
  public:
-  kimodo() = default;
-  ~kimodo() = default;
+  kimodo()                         = default;
+  ~kimodo()                        = default;
 
   // 禁止拷贝
-  kimodo(const kimodo&) = delete;
+  kimodo(const kimodo&)            = delete;
   kimodo& operator=(const kimodo&) = delete;
 
   /// @brief 从 npy 权重目录加载模型
@@ -213,19 +201,11 @@ class kimodo {
   /// @param llm_dim 文本嵌入维度（默认 4096）
   /// @param fps 帧率（默认 30）
   void load(
-      const FSys::path& denoiser_root_dir,
-      const FSys::path& denoiser_body_dir,
-      const FSys::path& text_encoder_model_path,
-      const FSys::path& tokenizer_json_path,
-      const FSys::path& skeleton_dir,
-      const FSys::path& stats_path,
-      std::int64_t num_base_steps             = 1000,
-      std::int64_t latent_dim                 = 1024,
-      std::int64_t num_text_tokens            = 50,
-      bool use_text_mask                      = false,
-      const std::string& cfg_type             = "separated",
-      std::int64_t llm_dim                    = 4096,
-      float fps                               = 30.0f
+      const FSys::path& denoiser_root_dir, const FSys::path& denoiser_body_dir,
+      const FSys::path& text_encoder_model_path, const FSys::path& tokenizer_json_path, const FSys::path& skeleton_dir,
+      const FSys::path& stats_path, std::int64_t num_base_steps = 1000, std::int64_t latent_dim = 1024,
+      std::int64_t num_text_tokens = 50, bool use_text_mask = false, const std::string& cfg_type = "separated",
+      std::int64_t llm_dim = 4096, float fps = 30.0f
   );
 
   /// @brief 从文本生成运动（对应 Python __call__，不含 multi_prompt）
@@ -240,23 +220,16 @@ class kimodo {
   /// @param cfg_type CFG 类型；空则使用默认
   /// @return 运动输出结构体（平坦化，[B*T, ...]）
   motion_output generate(
-      const std::vector<std::string>& prompts,
-      const std::vector<std::int64_t>& num_frames,
-      std::int64_t num_denoising_steps,
-      const std::vector<float>& cfg_weight         = {2.0f, 2.0f},
-      const std::vector<float>& first_heading_angle = {},
-      const Eigen::MatrixXf& motion_mask            = {},
-      const Eigen::MatrixXf& observed_motion        = {},
-      const std::string& cfg_type                   = ""
+      const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
+      std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight = {2.0f, 2.0f},
+      const std::vector<float>& first_heading_angle = {}, const Eigen::MatrixXf& motion_mask = {},
+      const Eigen::MatrixXf& observed_motion = {}, const std::string& cfg_type = ""
   );
 
   /// @brief 简单版本：单个提示、单样本
   motion_output generate(
-      const std::string& prompt,
-      std::int64_t num_frames,
-      std::int64_t num_denoising_steps,
-      const std::vector<float>& cfg_weight         = {2.0f, 2.0f},
-      float first_heading_angle                     = 0.0f
+      const std::string& prompt, std::int64_t num_frames, std::int64_t num_denoising_steps,
+      const std::vector<float>& cfg_weight = {2.0f, 2.0f}, float first_heading_angle = 0.0f
   );
 
   [[nodiscard]] bool is_valid() const {
