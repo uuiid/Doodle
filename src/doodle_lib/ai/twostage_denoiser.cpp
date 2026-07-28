@@ -40,8 +40,7 @@ void twostage_denoiser::load(
   );
 
   // ---- 加载根节点模型 ----
-  root_model_.load(config->denoiser_root_path_, config->latent_dim_, config->num_text_tokens_, config->use_text_mask_,
-                   config->input_first_heading_angle_);
+  root_model_.load(config->denoiser_root_path_, config);
 
   // ---- 计算 local_motion_rep_dim: 用局部根节点替换全局根节点后的维度 ----
   // local_motion_rep_dim = input_dim - global_root_dim + local_root_dim
@@ -59,9 +58,7 @@ void twostage_denoiser::load(
   );
 
   // ---- 加载身体模型 ----
-  body_model_.load(config->denoiser_body_path_, config->latent_dim_, config->num_text_tokens_, config->use_text_mask_,
-                   config->input_first_heading_angle_);
-
+  body_model_.load(config->denoiser_body_path_, config);
   SPDLOG_INFO(
       "twostage_denoiser 加载完成: input_dim={}, global_root_dim={}, local_root_dim={}, "
       "motion_mask_mode={}",

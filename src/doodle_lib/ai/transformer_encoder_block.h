@@ -19,6 +19,8 @@
 
 namespace doodle::ai {
 
+struct kimodo_model_config;
+
 // Eigen 没有 MatrixX<bool> 的预定义 typedef
 using MatrixXb = Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic>;
 
@@ -66,22 +68,9 @@ class transformer_encoder_block {
   transformer_encoder_block() = default;
 
   /// @brief 加载所有权重并初始化 ONNX session
-  /// @param model_dir 模型目录，包含以下文件:
-  ///   - seq_trans_encoder.onnx  (ONNX 编码器)
-  ///   - embed_text_weight.npy, embed_text_bias.npy
-  ///   - input_linear_weight.npy, input_linear_bias.npy
-  ///   - output_linear_weight.npy, output_linear_bias.npy
-  ///   - linear_first_heading_angle_weight.npy, linear_first_heading_angle_bias.npy (可选)
-  ///   - timestep_linear1_weight.npy, timestep_linear1_bias.npy
-  ///   - timestep_linear2_weight.npy, timestep_linear2_bias.npy
-  /// @param latent_dim 潜在空间维度
-  /// @param num_text_tokens 最大文本 token 数
-  /// @param use_text_mask 是否使用文本 mask
-  /// @param input_first_heading_angle 是否输入初始朝向角
-  void load(
-      const FSys::path& model_dir, std::int64_t latent_dim, std::int64_t num_text_tokens, bool use_text_mask,
-      bool input_first_heading_angle = false
-  );
+  /// @param model_dir 模型目录
+  /// @param config 模型配置（共享指针），提供 latent_dim、num_text_tokens 等参数
+  void load(const FSys::path& model_dir, std::shared_ptr<kimodo_model_config> config);
 
   /// @brief 正向传播（对应 Python forward）
   /// @param x [B, T, input_dim] 当前噪声运动（平坦化为 [B*T, input_dim]）

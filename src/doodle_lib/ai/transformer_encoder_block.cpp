@@ -2,6 +2,7 @@
 // Created by TD on 25-6-29.
 //
 #include "transformer_encoder_block.h"
+#include "kimodo.h"
 
 #include <doodle_core/exception/exception.h>
 
@@ -14,9 +15,14 @@
 namespace doodle::ai {
 
 void transformer_encoder_block::load(
-    const FSys::path& model_dir, std::int64_t latent_dim, std::int64_t num_text_tokens, bool use_text_mask,
-    bool input_first_heading_angle
+    const FSys::path& model_dir, std::shared_ptr<kimodo_model_config> config
 ) {
+  DOODLE_CHICK(config != nullptr, "kimodo_model_config 为空");
+  const auto latent_dim                = config->latent_dim_;
+  const auto num_text_tokens           = config->num_text_tokens_;
+  const auto use_text_mask             = config->use_text_mask_;
+  const auto input_first_heading_angle = config->input_first_heading_angle_;
+
   model_dir_                 = model_dir;
   latent_dim_                = latent_dim;
   num_text_tokens_           = num_text_tokens;
