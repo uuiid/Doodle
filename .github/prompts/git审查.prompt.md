@@ -1,12 +1,23 @@
 ---
-description: "审查Git提交/差异中的C++代码，检查逻辑错误、协程、空指针、线程安全等问题，输出结构化检查清单"
+description: "审查指定的C++代码（函数、类方法、文件等），检查逻辑错误、协程、空指针、线程安全等问题，输出结构化检查清单"
 agent: C++ Expert
 tools: [vscode, execute, read, agent, ms-azuretools.vscode-containers, ms-vscode.cpp-devtools, ms-vscode.cpptools, edit, search, web, browser, todo]
+argument-hint: "<要审查的函数/类/文件>"
 ---
 
-# git审查
+# 代码审查
 
-审查提供的 Git diff / 代码变更，按以下结构化清单逐项检查。**忽略接口版本兼容性问题。**
+审查指定的 C++ 代码，按以下结构化清单逐项检查。**忽略接口版本兼容性问题。**
+
+## 审查范围
+
+请在提示中指定要审查的代码范围，例如：
+- 函数名：`ProcessFrame()`
+- 类/类方法：`class Renderer::Draw()`
+- 文件范围：`src/core/processor.cpp` 中 50-120 行
+- 完整文件：`src/lib/scheduler.cpp`
+
+> **提示**：可以在 VS Code 中选中代码后，用 `/代码审查` 命令直接审查选中的代码。
 
 ## 检查清单
 
