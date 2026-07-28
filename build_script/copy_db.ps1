@@ -32,7 +32,7 @@ $prjs = Invoke-SqliteQuery -DataSource $DataDestination -Query "select *from pro
 foreach ($p in $prjs) { 
   # //192.168.10.250/dd to D:/
   if ($p.path -eq '') { continue }  
-  $path = 'D:/test_db' + $p.path.Substring(16)
+  $path = 'D:/test_db'
   $q = "update project set path = '$path' where id=$($p.id);";
   Invoke-SqliteQuery -DataSource $DataDestination -Query $q;
 }
