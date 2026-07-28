@@ -8,6 +8,7 @@ target_sources(
         llm2vec_tokenizer.h
         llm2vec.h
         linear_layer.h
+        motion_rep/constraint_set.h
         motion_rep/feature_utils.h
         motion_rep/geometry.h
         motion_rep/kimodo_motion_rep.h
@@ -27,6 +28,7 @@ target_sources(
         llm2vec_tokenizer.cpp
         llm2vec.cpp
         linear_layer.cpp
+        motion_rep/constraint_set.cpp
         motion_rep/feature_utils.cpp
         motion_rep/geometry.cpp
         motion_rep/kimodo_motion_rep.cpp
