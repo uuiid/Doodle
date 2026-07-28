@@ -108,6 +108,16 @@ struct DOODLE_CORE_API entity_asset_extend {
   std::optional<std::int32_t> ji_du_;
   uuid kai_shi_ji_shu_;  // 开始集数 对应集数
   std::optional<std::int32_t> chang_ci_{};
+  // 检查 所有的 字段是否包含 '\', 如果包含之间返回 false, 否则返回 true
+  bool check_all_fields_no_backslash() const {
+    if (deng_ji_.find('\\') != std::string::npos) return false;
+    if (bian_hao_.find('\\') != std::string::npos) return false;
+    if (pin_yin_ming_cheng_.find('\\') != std::string::npos) return false;
+    if (ban_ben_.find('\\') != std::string::npos) return false;
+    return true;
+  }
+  
+
 
   bool is_empty() const {
     return ji_shu_lie_.is_nil() && deng_ji_.empty() && !gui_dang_ && bian_hao_.empty() && pin_yin_ming_cheng_.empty() &&

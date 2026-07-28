@@ -29,7 +29,6 @@
 #include <sys/stat.h>
 #include <vector>
 
-
 namespace doodle::http {
 namespace {
 
@@ -123,6 +122,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
         .entity_id_ = l_entity->uuid_id_,
     });
     l_json.get_to(*l_entity_extend);
+
+    DOODLE_CHICK(
+        l_entity_extend->check_all_fields_no_backslash(), "entity_asset_extend 字段不能包含反斜杠 '\\'，请检查输入数据"
+    )
+
     co_await l_sql.install(l_entity_extend);
     // l_json_ret = *l_entity_extend;
     l_json_ret.update(*l_entity_extend);
