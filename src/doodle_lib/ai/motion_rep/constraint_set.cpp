@@ -323,14 +323,6 @@ fullbody_constraint_set fullbody_constraint_set::from_dict(
     }
   }
 
-  // TODO: 30↔77 关节转换 — 当 skeleton 为 SOMASkeleton30 且 local_rot 为 77 关节时需要转换
-  // 当前 C++ 版本暂未实现 SOMA 30↔77 转换，需在 skeleton 中增加对应方法后启用
-  // if (local_rot_mats.rows() / 3 == 77 && skeleton->nbjoints_ == 30) {
-  //   local_rot_mats = skeleton->from_SOMASkeleton77(local_rot_mats);
-  // } else if (local_rot_mats.rows() / 3 == 30 && skeleton->nbjoints_ == 77) {
-  //   local_rot_mats = skeleton->to_SOMASkeleton77(local_rot_mats);
-  // }
-
   Eigen::MatrixXf root_positions = json_to_eigen_matrix<float>(dico.at("root_positions"));
   DOODLE_CHICK(
       root_positions.rows() == K, "fullbody: root_positions 行数 {} 与帧数 K={} 不匹配", root_positions.rows(), K
@@ -508,8 +500,6 @@ end_effector_constraint_set end_effector_constraint_set::from_dict(
       local_rot_mats.block(i, j * 9, 1, 9) = local_rot_flat.row(i * J + j);
     }
   }
-
-  // TODO: 30↔77 关节转换（同 fullbody）
 
   Eigen::MatrixXf root_positions = json_to_eigen_matrix<float>(dico.at("root_positions"));
   DOODLE_CHICK(
