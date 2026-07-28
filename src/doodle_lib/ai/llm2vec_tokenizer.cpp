@@ -14,22 +14,18 @@ llm2vec_tokenizer::llm2vec_tokenizer(const FSys::path& in_tokenizer_json_path) {
   tokenizer_      = std::make_unique<doodle::hf_tokenizer>(l_json_str);
 }
 
-std::string llm2vec_tokenizer::prepare_for_tokenization(
-    const std::string& instruction, const std::string& text
-) {
+std::string llm2vec_tokenizer::prepare_for_tokenization(const std::string& instruction, const std::string& text) {
   if (instruction.empty()) {
     return fmt::format("<|start_header_id|>user<|end_header_id|>\n\n{}{}<|eot_id|>", separator_, text);
   }
-  return fmt::format(
-      "<|start_header_id|>user<|end_header_id|>\n\n{} {}{}<|eot_id|>", instruction, separator_, text
-  );
+  return fmt::format("<|start_header_id|>user<|end_header_id|>\n\n{} {}{}<|eot_id|>", instruction, separator_, text);
 }
 
 llm2vec_tokenizer::tokenize_result llm2vec_tokenizer::tokenize(
     const std::string& instruction, const std::string& text
 ) {
   // 构建完整文本：<|start_header_id|>user<|end_header_id|>\n\n{instruction} !@#$%^&*(){text}<|eot_id|>
-  auto l_text = prepare_for_tokenization(instruction, text);
+  auto l_text        = prepare_for_tokenization(instruction, text);
 
   // Python 用 str.split("!@#$%^&*()") 以完整字符串为分隔符拆分
   // 不能用 boost::is_any_of（那是按单个字符拆分）
@@ -37,9 +33,8 @@ llm2vec_tokenizer::tokenize_result llm2vec_tokenizer::tokenize(
   std::string l_text2{};
   std::string l_original_texts{};
   if (sep_pos != std::string::npos) {
-    l_text2 = l_text.substr(sep_pos + separator_.size());  // 分隔符之后 → 文本部分
-    l_original_texts =
-        l_text.substr(0, sep_pos) + l_text.substr(sep_pos + separator_.size());  // 去掉分隔符的完整文本
+    l_text2          = l_text.substr(sep_pos + separator_.size());                              // 分隔符之后 → 文本部分
+    l_original_texts = l_text.substr(0, sep_pos) + l_text.substr(sep_pos + separator_.size());  // 去掉分隔符的完整文本
   } else {
     l_original_texts = l_text;
   }

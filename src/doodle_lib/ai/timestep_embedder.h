@@ -5,10 +5,10 @@
 
 #include "linear_layer.h"
 #include "positional_encoding.h"
-
 #include <Eigen/Dense>
 #include <cstdint>
 #include <vector>
+
 
 namespace doodle::ai {
 
@@ -32,12 +32,8 @@ class timestep_embedder {
   /// @param linear2_weight linear2 权重路径
   /// @param linear2_bias linear2 偏置路径
   void init(
-      std::int64_t latent_dim,
-      const positional_encoding* pos_encoder,
-      const FSys::path& linear1_weight,
-      const FSys::path& linear1_bias,
-      const FSys::path& linear2_weight,
-      const FSys::path& linear2_bias
+      std::int64_t latent_dim, const positional_encoding* pos_encoder, const FSys::path& linear1_weight,
+      const FSys::path& linear1_bias, const FSys::path& linear2_weight, const FSys::path& linear2_bias
   );
 
   /// @brief 正向传播

@@ -11,37 +11,32 @@
 namespace doodle::ai {
 
 void twostage_denoiser::load(
-    const FSys::path& root_model_dir,
-    const FSys::path& body_model_dir,
-    std::int64_t latent_dim,
-    std::int64_t num_text_tokens,
-    bool use_text_mask,
-    const std::shared_ptr<motion_rep_base>& motion_rep,
-    const std::string& motion_mask_mode,
-    bool input_first_heading_angle
+    const FSys::path& root_model_dir, const FSys::path& body_model_dir, std::int64_t latent_dim,
+    std::int64_t num_text_tokens, bool use_text_mask, const std::shared_ptr<motion_rep_base>& motion_rep,
+    const std::string& motion_mask_mode, bool input_first_heading_angle
 ) {
   DOODLE_CHICK(motion_rep != nullptr, "motion_rep 不能为空");
   DOODLE_CHICK(
       motion_rep->motion_rep_dim() > 0 && motion_rep->global_root_dim() > 0,
-      "motion_rep 维度无效: motion_rep_dim={}, global_root_dim={}",
-      motion_rep->motion_rep_dim(), motion_rep->global_root_dim()
+      "motion_rep 维度无效: motion_rep_dim={}, global_root_dim={}", motion_rep->motion_rep_dim(),
+      motion_rep->global_root_dim()
   );
 
-  motion_rep_        = motion_rep;
-  input_dim_         = motion_rep->motion_rep_dim();
-  global_root_dim_   = motion_rep->global_root_dim();
-  local_root_dim_    = motion_rep->local_root_dim();
-  motion_mask_mode_  = motion_mask_mode;
+  motion_rep_                        = motion_rep;
+  input_dim_                         = motion_rep->motion_rep_dim();
+  global_root_dim_                   = motion_rep->global_root_dim();
+  local_root_dim_                    = motion_rep->local_root_dim();
+  motion_mask_mode_                  = motion_mask_mode;
 
-  const bool will_concatenate = (motion_mask_mode_ == "concat");
+  const bool will_concatenate        = (motion_mask_mode_ == "concat");
 
   // ---- 计算 root 模型维度 ----
   const std::int64_t root_input_dim  = will_concatenate ? input_dim_ * 2 : input_dim_;
   const std::int64_t root_output_dim = global_root_dim_;
 
   SPDLOG_INFO(
-      "twostage_denoiser 加载 root_model: input_dim={}, output_dim={}, latent_dim={}",
-      root_input_dim, root_output_dim, latent_dim
+      "twostage_denoiser 加载 root_model: input_dim={}, output_dim={}, latent_dim={}", root_input_dim, root_output_dim,
+      latent_dim
   );
 
   // ---- 加载根节点模型 ----
@@ -49,14 +44,12 @@ void twostage_denoiser::load(
 
   // ---- 计算 local_motion_rep_dim: 用局部根节点替换全局根节点后的维度 ----
   // local_motion_rep_dim = input_dim - global_root_dim + local_root_dim
-  const std::int64_t local_motion_rep_dim =
-      input_dim_ - global_root_dim_ + local_root_dim_;
+  const std::int64_t local_motion_rep_dim = input_dim_ - global_root_dim_ + local_root_dim_;
 
   // ---- 计算 body 模型维度 ----
   // body stage 总是使用局部根节点 + 身体（concat 模式时额外拼接 motion_mask/observed_motion）
-  const std::int64_t body_input_dim =
-      local_motion_rep_dim + (will_concatenate ? input_dim_ : 0);
-  const std::int64_t body_output_dim = input_dim_ - global_root_dim_;
+  const std::int64_t body_input_dim       = local_motion_rep_dim + (will_concatenate ? input_dim_ : 0);
+  const std::int64_t body_output_dim      = input_dim_ - global_root_dim_;
 
   SPDLOG_INFO(
       "twostage_denoiser 加载 body_model: input_dim={}, output_dim={}, latent_dim={}, "
@@ -75,13 +68,9 @@ void twostage_denoiser::load(
 }
 
 Eigen::MatrixXf twostage_denoiser::forward(
-    const Eigen::MatrixXf& x,
-    const MatrixXb& x_pad_mask,
-    const Eigen::MatrixXf& text_feat,
-    const MatrixXb& text_feat_pad_mask,
-    const std::vector<std::int64_t>& timesteps,
-    const std::vector<float>& first_heading_angle,
-    const Eigen::MatrixXf& motion_mask,
+    const Eigen::MatrixXf& x, const MatrixXb& x_pad_mask, const Eigen::MatrixXf& text_feat,
+    const MatrixXb& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
+    const std::vector<float>& first_heading_angle, const Eigen::MatrixXf& motion_mask,
     const Eigen::MatrixXf& observed_motion
 ) {
   DOODLE_CHICK(is_valid(), "twostage_denoiser 未初始化");
@@ -91,9 +80,8 @@ Eigen::MatrixXf twostage_denoiser::forward(
   const auto total_frames = batch_size * time_steps;
 
   DOODLE_CHICK(
-      x.rows() == total_frames && x.cols() == input_dim_,
-      "x shape [{}x{}] 不匹配期望 [{}x{}]",
-      x.rows(), x.cols(), total_frames, input_dim_
+      x.rows() == total_frames && x.cols() == input_dim_, "x shape [{}x{}] 不匹配期望 [{}x{}]", x.rows(), x.cols(),
+      total_frames, input_dim_
   );
 
   // ---- 处理 motion_mask (concat 模式) ----
@@ -113,9 +101,9 @@ Eigen::MatrixXf twostage_denoiser::forward(
   if (motion_mask_mode_ == "concat") {
     // 确定 motion_mask 和 observed_motion
     if (motion_mask.size() == 0 || observed_motion.size() == 0) {
-      motion_mask_used     = Eigen::MatrixXf::Zero(total_frames, input_dim_);
-      const auto obs       = Eigen::MatrixXf::Zero(total_frames, input_dim_);
-      x_used               = x;  // x = x * 1 + 0 = x
+      motion_mask_used = Eigen::MatrixXf::Zero(total_frames, input_dim_);
+      const auto obs   = Eigen::MatrixXf::Zero(total_frames, input_dim_);
+      x_used           = x;  // x = x * 1 + 0 = x
       // x_extended = cat([x, zero_mask], axis=-1)
       x_extended.resize(total_frames, input_dim_ * 2);
       x_extended.leftCols(input_dim_)  = x;
@@ -123,13 +111,13 @@ Eigen::MatrixXf twostage_denoiser::forward(
     } else {
       DOODLE_CHICK(
           motion_mask.rows() == total_frames && motion_mask.cols() == input_dim_,
-          "motion_mask shape [{}x{}] 不匹配期望 [{}x{}]",
-          motion_mask.rows(), motion_mask.cols(), total_frames, input_dim_
+          "motion_mask shape [{}x{}] 不匹配期望 [{}x{}]", motion_mask.rows(), motion_mask.cols(), total_frames,
+          input_dim_
       );
       DOODLE_CHICK(
           observed_motion.rows() == total_frames && observed_motion.cols() == input_dim_,
-          "observed_motion shape [{}x{}] 不匹配期望 [{}x{}]",
-          observed_motion.rows(), observed_motion.cols(), total_frames, input_dim_
+          "observed_motion shape [{}x{}] 不匹配期望 [{}x{}]", observed_motion.rows(), observed_motion.cols(),
+          total_frames, input_dim_
       );
       motion_mask_used = motion_mask;
       // x = x * (1 - mask) + observed_motion * mask
@@ -146,19 +134,13 @@ Eigen::MatrixXf twostage_denoiser::forward(
 
   // ---- Stage 1: 预测全局根节点运动 ----
   // root_motion_pred [B*T, global_root_dim]
-  const Eigen::MatrixXf root_motion_pred = root_model_.forward(
-      x_extended,
-      x_pad_mask,
-      text_feat,
-      text_feat_pad_mask,
-      timesteps,
-      first_heading_angle
-  );
+  const Eigen::MatrixXf root_motion_pred =
+      root_model_.forward(x_extended, x_pad_mask, text_feat, text_feat_pad_mask, timesteps, first_heading_angle);
 
   DOODLE_CHICK(
       root_motion_pred.rows() == total_frames && root_motion_pred.cols() == global_root_dim_,
-      "root_motion_pred shape [{}x{}] 不匹配期望 [{}x{}]",
-      root_motion_pred.rows(), root_motion_pred.cols(), total_frames, global_root_dim_
+      "root_motion_pred shape [{}x{}] 不匹配期望 [{}x{}]", root_motion_pred.rows(), root_motion_pred.cols(),
+      total_frames, global_root_dim_
   );
 
   // ---- 计算 lengths (每个序列的有效帧数) ----
@@ -177,20 +159,20 @@ Eigen::MatrixXf twostage_denoiser::forward(
 
   DOODLE_CHICK(
       root_motion_local.rows() == total_frames && root_motion_local.cols() == local_root_dim_,
-      "root_motion_local shape [{}x{}] 不匹配期望 [{}x{}]",
-      root_motion_local.rows(), root_motion_local.cols(), total_frames, local_root_dim_
+      "root_motion_local shape [{}x{}] 不匹配期望 [{}x{}]", root_motion_local.rows(), root_motion_local.cols(),
+      total_frames, local_root_dim_
   );
 
   // ---- 提取身体运动: body_x = x[..., body_slice] ----
   // body_slice = [global_root_dim : input_dim]
-  const auto body_dim = input_dim_ - global_root_dim_;
+  const auto body_dim          = input_dim_ - global_root_dim_;
   const Eigen::MatrixXf body_x = x_used.rightCols(body_dim);  // [B*T, body_dim]
 
   // ---- 拼接局部根节点 + 身体: x_new = cat([root_motion_local, body_x], axis=-1) ----
   // x_new: [B*T, local_root_dim + body_dim] = [B*T, local_motion_rep_dim]
   Eigen::MatrixXf x_new(total_frames, local_root_dim_ + body_dim);
-  x_new.leftCols(local_root_dim_)  = root_motion_local;
-  x_new.rightCols(body_dim)        = body_x;
+  x_new.leftCols(local_root_dim_) = root_motion_local;
+  x_new.rightCols(body_dim)       = body_x;
 
   // ---- 处理 body stage 的 mask (concat 模式) ----
   Eigen::MatrixXf x_new_extended;
@@ -204,19 +186,13 @@ Eigen::MatrixXf twostage_denoiser::forward(
 
   // ---- Stage 2: 预测身体运动 ----
   // predicted_body [B*T, body_output_dim] = [B*T, input_dim - global_root_dim]
-  const Eigen::MatrixXf predicted_body = body_model_.forward(
-      x_new_extended,
-      x_pad_mask,
-      text_feat,
-      text_feat_pad_mask,
-      timesteps,
-      first_heading_angle
-  );
+  const Eigen::MatrixXf predicted_body =
+      body_model_.forward(x_new_extended, x_pad_mask, text_feat, text_feat_pad_mask, timesteps, first_heading_angle);
 
   DOODLE_CHICK(
       predicted_body.rows() == total_frames && predicted_body.cols() == body_dim,
-      "predicted_body shape [{}x{}] 不匹配期望 [{}x{}]",
-      predicted_body.rows(), predicted_body.cols(), total_frames, body_dim
+      "predicted_body shape [{}x{}] 不匹配期望 [{}x{}]", predicted_body.rows(), predicted_body.cols(), total_frames,
+      body_dim
   );
 
   // ---- 拼接输出: cat([root_motion_pred, predicted_body], axis=-1) ----

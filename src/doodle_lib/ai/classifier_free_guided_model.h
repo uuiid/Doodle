@@ -3,9 +3,8 @@
 //
 #pragma once
 
-#include "motion_rep/motion_rep_base.h"
-#include "twostage_denoiser.h"
-
+#include <doodle_lib/ai/motion_rep/motion_rep_base.h>
+#include <doodle_lib/ai/twostage_denoiser.h>
 #include <doodle_lib/core/global_function.h>
 
 #include <Eigen/Dense>
@@ -38,14 +37,9 @@ class classifier_free_guided_model {
 
   /// @brief 加载去噪器模型
   void load(
-      const FSys::path& root_model_dir,
-      const FSys::path& body_model_dir,
-      std::int64_t latent_dim,
-      std::int64_t num_text_tokens,
-      bool use_text_mask,
-      const std::shared_ptr<motion_rep_base>& motion_rep,
-      const std::string& motion_mask_mode   = "none",
-      bool input_first_heading_angle         = false
+      const FSys::path& root_model_dir, const FSys::path& body_model_dir, std::int64_t latent_dim,
+      std::int64_t num_text_tokens, bool use_text_mask, const std::shared_ptr<motion_rep_base>& motion_rep,
+      const std::string& motion_mask_mode = "none", bool input_first_heading_angle = false
   );
 
   /// @brief 设置默认 cfg_type
@@ -70,16 +64,10 @@ class classifier_free_guided_model {
   /// @param cfg_type CFG 类型；为空时使用 cfg_type_default_
   /// @return [B*T, input_dim] 去噪后的运动（平坦化）
   Eigen::MatrixXf forward(
-      const std::vector<float>& cfg_weight,
-      const Eigen::MatrixXf& x,
-      const MatrixXb& x_pad_mask,
-      const Eigen::MatrixXf& text_feat,
-      const MatrixXb& text_feat_pad_mask,
-      const std::vector<std::int64_t>& timesteps,
-      const std::vector<float>& first_heading_angle  = {},
-      const Eigen::MatrixXf& motion_mask              = {},
-      const Eigen::MatrixXf& observed_motion          = {},
-      const std::string& cfg_type                     = ""
+      const std::vector<float>& cfg_weight, const Eigen::MatrixXf& x, const MatrixXb& x_pad_mask,
+      const Eigen::MatrixXf& text_feat, const MatrixXb& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
+      const std::vector<float>& first_heading_angle = {}, const Eigen::MatrixXf& motion_mask = {},
+      const Eigen::MatrixXf& observed_motion = {}, const std::string& cfg_type = ""
   );
 
   [[nodiscard]] bool is_valid() const { return model_.is_valid(); }

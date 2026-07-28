@@ -11,7 +11,6 @@
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
-
 namespace doodle::ai {
 
 kimodo_motion_rep::kimodo_motion_rep(std::shared_ptr<skeleton_base> skel, std::shared_ptr<kimodo_model_config> cfg) {

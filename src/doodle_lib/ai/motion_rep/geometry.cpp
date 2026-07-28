@@ -50,9 +50,15 @@ Eigen::MatrixXf cont6d_to_matrix(const Eigen::MatrixXf& cont6d) {
     // Build rotation matrix (column-major storage but we store row-major)
     // Matrix R = [x | y | z]  (columns are x, y, z)
     // Row-major storage: row0 = [x0, y0, z0], row1 = [x1, y1, z1], row2 = [x2, y2, z2]
-    matrix(i, 0) = x(0);  matrix(i, 1) = y(0);  matrix(i, 2) = z(0);
-    matrix(i, 3) = x(1);  matrix(i, 4) = y(1);  matrix(i, 5) = z(1);
-    matrix(i, 6) = x(2);  matrix(i, 7) = y(2);  matrix(i, 8) = z(2);
+    matrix(i, 0)      = x(0);
+    matrix(i, 1)      = y(0);
+    matrix(i, 2)      = z(0);
+    matrix(i, 3)      = x(1);
+    matrix(i, 4)      = y(1);
+    matrix(i, 5)      = z(1);
+    matrix(i, 6)      = x(2);
+    matrix(i, 7)      = y(2);
+    matrix(i, 8)      = z(2);
   }
 
   return matrix;
@@ -63,9 +69,15 @@ Eigen::Matrix3f angle_to_Y_rotation_matrix(float angle) {
   const float sin_a = std::sin(angle);
 
   Eigen::Matrix3f mat;
-  mat(0, 0) = cos_a;  mat(0, 1) = 0.0f; mat(0, 2) = sin_a;
-  mat(1, 0) = 0.0f;   mat(1, 1) = 1.0f; mat(1, 2) = 0.0f;
-  mat(2, 0) = -sin_a; mat(2, 1) = 0.0f; mat(2, 2) = cos_a;
+  mat(0, 0) = cos_a;
+  mat(0, 1) = 0.0f;
+  mat(0, 2) = sin_a;
+  mat(1, 0) = 0.0f;
+  mat(1, 1) = 1.0f;
+  mat(1, 2) = 0.0f;
+  mat(2, 0) = -sin_a;
+  mat(2, 1) = 0.0f;
+  mat(2, 2) = cos_a;
 
   return mat;
 }
@@ -76,9 +88,15 @@ Eigen::MatrixXf angle_to_Y_rotation_matrix_batch(const Eigen::VectorXf& angles) 
 
   for (Eigen::Index i = 0; i < N; ++i) {
     Eigen::Matrix3f R = angle_to_Y_rotation_matrix(angles(i));
-    result(i, 0) = R(0, 0); result(i, 1) = R(0, 1); result(i, 2) = R(0, 2);
-    result(i, 3) = R(1, 0); result(i, 4) = R(1, 1); result(i, 5) = R(1, 2);
-    result(i, 6) = R(2, 0); result(i, 7) = R(2, 1); result(i, 8) = R(2, 2);
+    result(i, 0)      = R(0, 0);
+    result(i, 1)      = R(0, 1);
+    result(i, 2)      = R(0, 2);
+    result(i, 3)      = R(1, 0);
+    result(i, 4)      = R(1, 1);
+    result(i, 5)      = R(1, 2);
+    result(i, 6)      = R(2, 0);
+    result(i, 7)      = R(2, 1);
+    result(i, 8)      = R(2, 2);
   }
 
   return result;

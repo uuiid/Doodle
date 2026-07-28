@@ -3,8 +3,7 @@
 //
 #pragma once
 
-#include "llm2vec_tokenizer.h"
-
+#include <doodle_lib/ai/llm2vec_tokenizer.h>
 #include <doodle_lib/core/global_function.h>
 
 #include <array>
@@ -13,6 +12,7 @@
 #include <onnxruntime_cxx_api.h>
 #include <string>
 #include <vector>
+
 
 namespace doodle::ai {
 

@@ -3,13 +3,14 @@
 //
 #include "llm2vec.h"
 
+#include <doodle_core/exception/exception.h>
+
 #include <algorithm>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <numeric>
 #include <spdlog/spdlog.h>
 
-#include "doodle_core/exception/exception.h"
 
 namespace doodle::ai {
 
@@ -109,7 +110,7 @@ std::vector<float_t> LLM2Vec::operator()(const std::string& instruction, const s
   // Step 3: 创建 ONNX Runtime 输入 tensor
   const std::int64_t seq_len = static_cast<std::int64_t>(tokenized.input_ids.size());
   const std::array<std::int64_t, 2> input_shape{1, seq_len};
-  auto memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+  auto memory_info      = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
 
   auto input_ids_tensor = Ort::Value::CreateTensor<std::int64_t>(
       memory_info, tokenized.input_ids.data(), tokenized.input_ids.size(), input_shape.data(), input_shape.size()
@@ -147,9 +148,7 @@ std::vector<float_t> LLM2Vec::operator()(const std::string& instruction, const s
   // Step 5: 获取输出（ORT 自动分配内存）
   auto ort_outputs = io_binding_->GetOutputValues();
   if (ort_outputs.empty()) return SPDLOG_ERROR("ONNX Runtime returned no outputs"), std::vector<float_t>{};
-  DOODLE_CHICK(
-      ort_outputs.size() == 1, "Expected exactly one output from ONNX Runtime, got {}", ort_outputs.size()
-  );
+  DOODLE_CHICK(ort_outputs.size() == 1, "Expected exactly one output from ONNX Runtime, got {}", ort_outputs.size());
 
   // Step 6: 解析输出 shape
   auto type_info    = ort_outputs.front().GetTensorTypeAndShapeInfo();
@@ -161,7 +160,7 @@ std::vector<float_t> LLM2Vec::operator()(const std::string& instruction, const s
   const std::int64_t hidden_size = output_shape.back();
 
   // Step 7: 获取 last_hidden_state 数据并执行 pooling
-  float* output_data = ort_outputs.front().GetTensorMutableData<std::float_t>();
+  float* output_data             = ort_outputs.front().GetTensorMutableData<std::float_t>();
 
   return apply_pooling(tokenized, output_data, seq_len, hidden_size);
 }

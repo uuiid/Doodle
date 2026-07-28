@@ -4,12 +4,14 @@
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
+
 #include <doodle_lib/ai/hf_tokenizer.h>
 
 #include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
+
 
 namespace doodle::ai {
 

@@ -73,11 +73,7 @@ class diffusion {
   /// @param t 时间步索引
   /// @param noise [N, D] 噪声（可选，为空时自动生成标准正态噪声）
   /// @return [N, D] 加噪后的运动
-  Eigen::MatrixXf q_sample(
-      const Eigen::MatrixXf& x_start,
-      std::int64_t t,
-      const Eigen::MatrixXf& noise = {}
-  ) const;
+  Eigen::MatrixXf q_sample(const Eigen::MatrixXf& x_start, std::int64_t t, const Eigen::MatrixXf& noise = {}) const;
 
   // ======================================================================
   // 访问器（供 ddim_sampler 使用）
@@ -97,7 +93,6 @@ class diffusion {
   [[nodiscard]] std::int64_t current_num_steps() const { return current_num_steps_; }
   [[nodiscard]] bool is_valid() const { return num_base_steps_ > 0; }
 };
-
 
 /// @brief 确定性 DDIM 采样器（eta = 0）（对应 Python DDIMSampler）
 ///
@@ -128,11 +123,7 @@ class ddim_sampler {
   /// @param pred_xstart [B*T, D] 模型预测的干净运动
   /// @param t 当前步索引（所有 batch 元素相同）
   /// @return [B*T, D] t-1 步的运动
-  Eigen::MatrixXf step(
-      const Eigen::MatrixXf& x_t,
-      const Eigen::MatrixXf& pred_xstart,
-      std::int64_t t
-  ) const;
+  Eigen::MatrixXf step(const Eigen::MatrixXf& x_t, const Eigen::MatrixXf& pred_xstart, std::int64_t t) const;
 
   [[nodiscard]] bool is_valid() const { return diffusion_ != nullptr && diffusion_->is_valid(); }
 };

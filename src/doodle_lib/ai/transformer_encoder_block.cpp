@@ -5,22 +5,19 @@
 
 #include <doodle_core/exception/exception.h>
 
+#include <array>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 
-#include <array>
 
 namespace doodle::ai {
 
 void transformer_encoder_block::load(
-    const FSys::path& model_dir,
-    std::int64_t latent_dim,
-    std::int64_t num_text_tokens,
-    bool use_text_mask,
+    const FSys::path& model_dir, std::int64_t latent_dim, std::int64_t num_text_tokens, bool use_text_mask,
     bool input_first_heading_angle
 ) {
-  model_dir_                = model_dir;
+  model_dir_                 = model_dir;
   latent_dim_                = latent_dim;
   num_text_tokens_           = num_text_tokens;
   use_text_mask_             = use_text_mask;
@@ -32,28 +29,27 @@ void transformer_encoder_block::load(
   output_linear_.load(model_dir / "output_linear_weight.npy", model_dir / "output_linear_bias.npy");
 
   DOODLE_CHICK(
-      embed_text_.out_features() == latent_dim_,
-      "embed_text out_features {} 不匹配 latent_dim {}", embed_text_.out_features(), latent_dim_
+      embed_text_.out_features() == latent_dim_, "embed_text out_features {} 不匹配 latent_dim {}",
+      embed_text_.out_features(), latent_dim_
   );
   DOODLE_CHICK(
-      input_linear_.out_features() == latent_dim_,
-      "input_linear out_features {} 不匹配 latent_dim {}", input_linear_.out_features(), latent_dim_
+      input_linear_.out_features() == latent_dim_, "input_linear out_features {} 不匹配 latent_dim {}",
+      input_linear_.out_features(), latent_dim_
   );
   DOODLE_CHICK(
-      output_linear_.in_features() == latent_dim_,
-      "output_linear in_features {} 不匹配 latent_dim {}", output_linear_.in_features(), latent_dim_
+      output_linear_.in_features() == latent_dim_, "output_linear in_features {} 不匹配 latent_dim {}",
+      output_linear_.in_features(), latent_dim_
   );
 
   // 可选：初始朝向角线性层
   if (input_first_heading_angle_) {
     linear_first_heading_angle_.load(
-        model_dir / "linear_first_heading_angle_weight.npy",
-        model_dir / "linear_first_heading_angle_bias.npy"
+        model_dir / "linear_first_heading_angle_weight.npy", model_dir / "linear_first_heading_angle_bias.npy"
     );
     DOODLE_CHICK(
         linear_first_heading_angle_.out_features() == latent_dim_,
-        "linear_first_heading_angle out_features {} 不匹配 latent_dim {}",
-        linear_first_heading_angle_.out_features(), latent_dim_
+        "linear_first_heading_angle out_features {} 不匹配 latent_dim {}", linear_first_heading_angle_.out_features(),
+        latent_dim_
     );
   }
 
@@ -62,11 +58,8 @@ void transformer_encoder_block::load(
 
   // 初始化时间步编码器
   embed_timestep_.init(
-      latent_dim_,
-      &sequence_pos_encoder_,
-      model_dir / "timestep_linear1_weight.npy",
-      model_dir / "timestep_linear1_bias.npy",
-      model_dir / "timestep_linear2_weight.npy",
+      latent_dim_, &sequence_pos_encoder_, model_dir / "timestep_linear1_weight.npy",
+      model_dir / "timestep_linear1_bias.npy", model_dir / "timestep_linear2_weight.npy",
       model_dir / "timestep_linear2_bias.npy"
   );
 
@@ -84,7 +77,7 @@ void transformer_encoder_block::init_session() {
   auto onnx_path = model_dir_ / "seq_trans_encoder.onnx";
   DOODLE_CHICK(FSys::exists(onnx_path), "ONNX 模型文件不存在: {}", onnx_path.string());
 
-  session_ = std::make_unique<Ort::Session>(get_ort_env(), onnx_path.wstring().c_str(), session_options);
+  session_      = std::make_unique<Ort::Session>(get_ort_env(), onnx_path.wstring().c_str(), session_options);
   input_names_  = session_->GetInputNames();
   output_names_ = session_->GetOutputNames();
   io_binding_   = std::make_unique<Ort::IoBinding>(*session_);
@@ -96,10 +89,7 @@ void transformer_encoder_block::init_session() {
     for (const auto& name : input_names_) {
       // 检查是否是预期的输入名称
       if (!expected_names.contains(name)) {
-        SPDLOG_WARN(
-            "seqTransEncoder ONNX 含未预期的输入 '{}', 期望: [{}]",
-            name, fmt::join(expected_names, ", ")
-        );
+        SPDLOG_WARN("seqTransEncoder ONNX 含未预期的输入 '{}', 期望: [{}]", name, fmt::join(expected_names, ", "));
       }
     }
   }
@@ -109,17 +99,14 @@ void transformer_encoder_block::init_session() {
   }
 
   SPDLOG_INFO(
-      "seqTransEncoder ONNX session 初始化成功，输入: [{}], 输出: [{}]",
-      fmt::join(input_names_, ","), fmt::join(output_names_, ",")
+      "seqTransEncoder ONNX session 初始化成功，输入: [{}], 输出: [{}]", fmt::join(input_names_, ","),
+      fmt::join(output_names_, ",")
   );
 }
 
 Eigen::MatrixXf transformer_encoder_block::forward(
-    const Eigen::MatrixXf& x,
-    const MatrixXb& x_pad_mask,
-    const Eigen::MatrixXf& text_feat,
-    const MatrixXb& text_feat_pad_mask,
-    const std::vector<std::int64_t>& timesteps,
+    const Eigen::MatrixXf& x, const MatrixXb& x_pad_mask, const Eigen::MatrixXf& text_feat,
+    const MatrixXb& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
     const std::vector<float>& first_heading_angle
 ) {
   // ---- 提取形状信息 ----
@@ -129,18 +116,18 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   // text_feat_pad_mask: [B, max_text_len]  (在 collate 中可能已 pad 到 num_text_tokens)
   // timesteps: [B]
   // first_heading_angle: [B] (可选)
-  
-  const auto batch_size      = static_cast<Eigen::Index>(x_pad_mask.rows());
-  const auto time_steps      = static_cast<Eigen::Index>(x_pad_mask.cols());
-  const auto max_text_len    = static_cast<Eigen::Index>(text_feat_pad_mask.cols());
+
+  const auto batch_size   = static_cast<Eigen::Index>(x_pad_mask.rows());
+  const auto time_steps   = static_cast<Eigen::Index>(x_pad_mask.cols());
+  const auto max_text_len = static_cast<Eigen::Index>(text_feat_pad_mask.cols());
 
   DOODLE_CHICK(
-      x.rows() == batch_size * time_steps,
-      "x rows {} 不匹配 batch_size*time_steps {}*{}", x.rows(), batch_size, time_steps
+      x.rows() == batch_size * time_steps, "x rows {} 不匹配 batch_size*time_steps {}*{}", x.rows(), batch_size,
+      time_steps
   );
   DOODLE_CHICK(
-      static_cast<Eigen::Index>(timesteps.size()) == batch_size,
-      "timesteps size {} 不匹配 batch_size {}", timesteps.size(), batch_size
+      static_cast<Eigen::Index>(timesteps.size()) == batch_size, "timesteps size {} 不匹配 batch_size {}",
+      timesteps.size(), batch_size
   );
 
   // ---- Step 1: x = input_linear(x)  [B*T, input_dim] -> [B*T, latent_dim] ----
@@ -151,14 +138,14 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   // 需要 reshape 为 [B, max_text_len, llm_dim] 然后 pad
   // 我们用平坦化方式处理
   Eigen::MatrixXf text_padded;  // [B*num_text_tokens, llm_dim]
-  MatrixXb text_mask_padded;  // [B, num_text_tokens]
+  MatrixXb text_mask_padded;    // [B, num_text_tokens]
 
   {
     const auto llm_dim = text_feat.cols();
     if (max_text_len == num_text_tokens_) {
       // 已经 pad 好了
-      text_padded       = text_feat;
-      text_mask_padded  = text_feat_pad_mask;
+      text_padded      = text_feat;
+      text_mask_padded = text_feat_pad_mask;
     } else {
       // 需要 pad
       text_padded.resize(batch_size * num_text_tokens_, llm_dim);
@@ -172,8 +159,7 @@ Eigen::MatrixXf transformer_encoder_block::forward(
         text_padded.block(b * num_text_tokens_, 0, copy_len, llm_dim) =
             text_feat.block(b * max_text_len, 0, copy_len, llm_dim);
         // 复制 mask
-        text_mask_padded.block(b, 0, 1, copy_len) =
-            text_feat_pad_mask.block(b, 0, 1, copy_len);
+        text_mask_padded.block(b, 0, 1, copy_len) = text_feat_pad_mask.block(b, 0, 1, copy_len);
       }
 
       if (max_text_len > num_text_tokens_) {
@@ -192,10 +178,10 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   // prefix_feats = [emb_text | emb_time]  -> [B, num_text_tokens + 1, latent_dim]
   // 平坦化: [B*(num_text_tokens+1), latent_dim]
 
-  Eigen::Index prefix_len = num_text_tokens_ + 1;
+  Eigen::Index prefix_len  = num_text_tokens_ + 1;
 
   // 处理 text_feat_pad_mask: 如果 use_text_mask = false, 则全 true
-  MatrixXb text_mask_used = text_mask_padded;
+  MatrixXb text_mask_used  = text_mask_padded;
   if (!use_text_mask_) {
     text_mask_used.resize(batch_size, num_text_tokens_);
     text_mask_used.setConstant(true);
@@ -254,7 +240,7 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   // prefix_mask: [B, prefix_len]
   MatrixXb prefix_mask(batch_size, prefix_len);
   prefix_mask.block(0, 0, batch_size, num_text_tokens_) = text_mask_used;
-  prefix_mask.col(num_text_tokens_)                      = time_mask.col(0);
+  prefix_mask.col(num_text_tokens_)                     = time_mask.col(0);
   if (input_first_heading_angle_ && !first_heading_angle.empty()) {
     prefix_mask.col(num_text_tokens_ + 1) = first_heading_angle_mask.col(0);
   }
@@ -263,7 +249,7 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   const auto pose_start_ind = prefix_len;
 
   // ---- 拼接 prefix 和 x: xseq [B, prefix_len+T, latent_dim] ----
-  const auto total_len = prefix_len + time_steps;
+  const auto total_len      = prefix_len + time_steps;
   Eigen::MatrixXf xseq(batch_size * total_len, latent_dim_);
 
   // 填充 prefix
@@ -282,17 +268,17 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   // prefix_mask: True=有效, x_pad_mask: True=有效
   // ~ 取反后: True=pad（需要被 mask 的填充位置）
   MatrixXb src_key_padding_mask(batch_size, total_len);
-  src_key_padding_mask.block(0, 0, batch_size, prefix_len)              = prefix_mask;
-  src_key_padding_mask.block(0, prefix_len, batch_size, time_steps)     = x_pad_mask;
-  src_key_padding_mask = !src_key_padding_mask.array();
+  src_key_padding_mask.block(0, 0, batch_size, prefix_len)          = prefix_mask;
+  src_key_padding_mask.block(0, prefix_len, batch_size, time_steps) = x_pad_mask;
+  src_key_padding_mask                                              = !src_key_padding_mask.array();
 
   // ---- 添加位置编码 ----
   // xseq: [B*total_len, latent_dim] 需要 reshape 为 [total_len, latent_dim] 逐条加 PE
   // PositionalEncoding::forward 接受 [seq_len, d_model]
   // 我们对每个 batch 分别处理
   for (Eigen::Index b = 0; b < batch_size; ++b) {
-    Eigen::MatrixXf seq_slice = xseq.block(b * total_len, 0, total_len, latent_dim_);
-    seq_slice = sequence_pos_encoder_.forward(seq_slice);
+    Eigen::MatrixXf seq_slice                            = xseq.block(b * total_len, 0, total_len, latent_dim_);
+    seq_slice                                            = sequence_pos_encoder_.forward(seq_slice);
     xseq.block(b * total_len, 0, total_len, latent_dim_) = seq_slice;
   }
 
@@ -332,14 +318,12 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   // 验证 ONNX 模型确实包含预期的输入名
   for (const auto& name : input_names_) {
     if (name == input_data_name || name == input_mask_name) continue;
-    SPDLOG_WARN(
-        "seqTransEncoder ONNX 含未预期的输入 '{}', 期望: [src, src_key_padding_mask]", name
-    );
+    SPDLOG_WARN("seqTransEncoder ONNX 含未预期的输入 '{}', 期望: [src, src_key_padding_mask]", name);
   }
 
   SPDLOG_DEBUG(
-      "ONNX 名称绑定: data='{}', mask='{}', 全部输入: [{}]",
-      input_data_name, input_mask_name, fmt::join(input_names_, ",")
+      "ONNX 名称绑定: data='{}', mask='{}', 全部输入: [{}]", input_data_name, input_mask_name,
+      fmt::join(input_names_, ",")
   );
 
   // 序列输入 shape: [B, total_len, latent_dim]
@@ -380,13 +364,13 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   auto output_shape = type_info.GetShape();
   DOODLE_CHICK(output_shape.size() == 3, "ONNX 输出 shape rank 应为 3, 实际 {}", output_shape.size());
 
-  const std::int64_t out_batch    = output_shape[0];
-  const std::int64_t out_seq_len  = output_shape[1];
-  const std::int64_t out_dim      = output_shape[2];
+  const std::int64_t out_batch   = output_shape[0];
+  const std::int64_t out_seq_len = output_shape[1];
+  const std::int64_t out_dim     = output_shape[2];
   DOODLE_CHICK(
       out_batch == batch_size && out_seq_len == total_len && out_dim == latent_dim_,
-      "ONNX 输出 shape [{},{},{}] 不匹配期望 [{},{},{}]",
-      out_batch, out_seq_len, out_dim, batch_size, total_len, latent_dim_
+      "ONNX 输出 shape [{},{},{}] 不匹配期望 [{},{},{}]", out_batch, out_seq_len, out_dim, batch_size, total_len,
+      latent_dim_
   );
 
   float* onnx_output_data = ort_outputs.front().GetTensorMutableData<float>();

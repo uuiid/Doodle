@@ -3,16 +3,16 @@
 //
 #pragma once
 
-#include "motion_rep/motion_rep_base.h"
-#include "transformer_encoder_block.h"
-
 #include <doodle_lib/core/global_function.h>
 
+#include "motion_rep/motion_rep_base.h"
+#include "transformer_encoder_block.h"
 #include <Eigen/Dense>
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
+
 
 namespace doodle::ai {
 
@@ -20,8 +20,8 @@ namespace doodle::ai {
 ///
 /// 架构:
 ///   Stage 1 (root_model_) : 从含噪运动预测全局根节点轨迹 [B, T, global_root_dim]
-///   Stage 2 (body_model_) : 将全局根节点转为局部根节点，与原始身体拼接后预测身体运动 [B, T, input_dim - global_root_dim]
-///   输出: [B, T, input_dim] = 全局根节点预测 + 身体预测 拼接
+///   Stage 2 (body_model_) : 将全局根节点转为局部根节点，与原始身体拼接后预测身体运动 [B, T, input_dim -
+///   global_root_dim] 输出: [B, T, input_dim] = 全局根节点预测 + 身体预测 拼接
 ///
 /// motion_mask_mode 支持:
 ///   - "none" : 无运动 mask
@@ -55,14 +55,9 @@ class twostage_denoiser {
   /// @param motion_mask_mode 运动 mask 模式 ("none" 或 "concat")
   /// @param input_first_heading_angle 是否输入初始朝向角
   void load(
-      const FSys::path& root_model_dir,
-      const FSys::path& body_model_dir,
-      std::int64_t latent_dim,
-      std::int64_t num_text_tokens,
-      bool use_text_mask,
-      const std::shared_ptr<motion_rep_base>& motion_rep,
-      const std::string& motion_mask_mode    = "none",
-      bool input_first_heading_angle         = false
+      const FSys::path& root_model_dir, const FSys::path& body_model_dir, std::int64_t latent_dim,
+      std::int64_t num_text_tokens, bool use_text_mask, const std::shared_ptr<motion_rep_base>& motion_rep,
+      const std::string& motion_mask_mode = "none", bool input_first_heading_angle = false
   );
 
   /// @brief 正向传播（对应 Python forward）
@@ -76,14 +71,10 @@ class twostage_denoiser {
   /// @param observed_motion [B*T, input_dim] 观测运动（可选，concat 模式使用）
   /// @return [B*T, input_dim] 去噪后的运动（平坦化）
   Eigen::MatrixXf forward(
-      const Eigen::MatrixXf& x,
-      const MatrixXb& x_pad_mask,
-      const Eigen::MatrixXf& text_feat,
-      const MatrixXb& text_feat_pad_mask,
-      const std::vector<std::int64_t>& timesteps,
-      const std::vector<float>& first_heading_angle  = {},
-      const Eigen::MatrixXf& motion_mask              = {},
-      const Eigen::MatrixXf& observed_motion          = {}
+      const Eigen::MatrixXf& x, const MatrixXb& x_pad_mask, const Eigen::MatrixXf& text_feat,
+      const MatrixXb& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
+      const std::vector<float>& first_heading_angle = {}, const Eigen::MatrixXf& motion_mask = {},
+      const Eigen::MatrixXf& observed_motion = {}
   );
 
   [[nodiscard]] bool is_valid() const { return input_dim_ > 0 && global_root_dim_ > 0; }

@@ -3,10 +3,9 @@
 //
 #pragma once
 
-#include "linear_layer.h"
-#include "positional_encoding.h"
-#include "timestep_embedder.h"
-
+#include <doodle_lib/ai/linear_layer.h>
+#include <doodle_lib/ai/positional_encoding.h>
+#include <doodle_lib/ai/timestep_embedder.h>
 #include <doodle_lib/core/global_function.h>
 
 #include <Eigen/Dense>
@@ -16,6 +15,7 @@
 #include <onnxruntime_cxx_api.h>
 #include <string>
 #include <vector>
+
 
 namespace doodle::ai {
 
@@ -79,10 +79,7 @@ class transformer_encoder_block {
   /// @param use_text_mask 是否使用文本 mask
   /// @param input_first_heading_angle 是否输入初始朝向角
   void load(
-      const FSys::path& model_dir,
-      std::int64_t latent_dim,
-      std::int64_t num_text_tokens,
-      bool use_text_mask,
+      const FSys::path& model_dir, std::int64_t latent_dim, std::int64_t num_text_tokens, bool use_text_mask,
       bool input_first_heading_angle = false
   );
 
@@ -95,11 +92,8 @@ class transformer_encoder_block {
   /// @param first_heading_angle [B] 初始朝向角（可选，弧度）
   /// @return [B, T, output_dim] 去噪后的运动（平坦化为 [B*T, output_dim]）
   Eigen::MatrixXf forward(
-      const Eigen::MatrixXf& x,
-      const MatrixXb& x_pad_mask,
-      const Eigen::MatrixXf& text_feat,
-      const MatrixXb& text_feat_pad_mask,
-      const std::vector<std::int64_t>& timesteps,
+      const Eigen::MatrixXf& x, const MatrixXb& x_pad_mask, const Eigen::MatrixXf& text_feat,
+      const MatrixXb& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
       const std::vector<float>& first_heading_angle = {}
   );
 };

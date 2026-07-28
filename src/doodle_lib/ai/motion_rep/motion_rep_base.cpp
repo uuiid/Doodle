@@ -5,10 +5,10 @@
 
 #include <doodle_core/exception/exception.h>
 
-#include "geometry.h"
+#include <doodle_lib/ai/motion_rep/geometry.h>
+
 #include <cnpy.h>
 #include <fmt/format.h>
-#include <numeric>
 
 namespace doodle::ai {
 

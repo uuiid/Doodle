@@ -6,9 +6,9 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <tokenizers_c.h>
 #include <vector>
 
-#include <tokenizers_c.h>
 
 namespace doodle {
 
@@ -25,9 +25,7 @@ struct hf_tokenizer {
 
   std::vector<int32_t> encode(const std::string& text, bool add_special_tokens = true);
 
-  std::vector<std::vector<int32_t>> EncodeBatch(
-      const std::vector<std::string>& texts, bool add_special_tokens = true
-  );
+  std::vector<std::vector<int32_t>> EncodeBatch(const std::vector<std::string>& texts, bool add_special_tokens = true);
 
   // use i32 to be consistent with sentencepiece
   std::string Decode(const std::vector<int32_t>& ids, bool skip_special_tokens);
