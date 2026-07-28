@@ -8,7 +8,6 @@
 #include <doodle_lib/ai/motion_rep/feature_utils.h>
 #include <doodle_lib/ai/motion_rep/geometry.h>
 
-#include <fstream>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
@@ -21,9 +20,8 @@ namespace detail {
 Eigen::MatrixXf compute_global_heading_from_positions(
     const Eigen::MatrixXf& global_joints_positions, const skeleton_base& skeleton
 ) {
-  const Eigen::Index K = global_joints_positions.rows();
-  const Eigen::MatrixXf heading_angle =
-      compute_heading_angle(global_joints_positions, skeleton, 1, K);
+  const Eigen::Index K                = global_joints_positions.rows();
+  const Eigen::MatrixXf heading_angle = compute_heading_angle(global_joints_positions, skeleton, 1, K);
   // heading_angle: [1, K]
   Eigen::MatrixXf heading(K, 2);
   for (Eigen::Index i = 0; i < K; ++i) {
@@ -87,12 +85,10 @@ root2d_constraint_set::root2d_constraint_set(
       smooth_root_2d_(std::move(smooth_root_2d)),
       global_root_heading_(std::move(global_root_heading)) {
   // smooth_root_2d 应为 [K, 2]
+  DOODLE_CHICK(smooth_root_2d_.cols() == 2, "root2d: smooth_root_2d 列数应为 2，实际为 {}", smooth_root_2d_.cols());
   DOODLE_CHICK(
-      smooth_root_2d_.cols() == 2, "root2d: smooth_root_2d 列数应为 2，实际为 {}", smooth_root_2d_.cols()
-  );
-  DOODLE_CHICK(
-      frame_indices_.size() == smooth_root_2d_.rows(),
-      "root2d: frame_indices 大小 {} 与 smooth_root_2d 行数 {} 不匹配", frame_indices_.size(), smooth_root_2d_.rows()
+      frame_indices_.size() == smooth_root_2d_.rows(), "root2d: frame_indices 大小 {} 与 smooth_root_2d 行数 {} 不匹配",
+      frame_indices_.size(), smooth_root_2d_.rows()
   );
   if (global_root_heading_.size() > 0) {
     DOODLE_CHICK(
@@ -138,8 +134,8 @@ root2d_constraint_set root2d_constraint_set::crop_move(std::int64_t start, std::
   Eigen::MatrixXf new_global_root_heading;
 
   for (Eigen::Index i = 0; i < new_K; ++i) {
-    const Eigen::Index src = mask_indices[static_cast<std::size_t>(i)];
-    new_frame_indices(i)   = frame_indices_(src) - static_cast<std::int64_t>(start);
+    const Eigen::Index src    = mask_indices[static_cast<std::size_t>(i)];
+    new_frame_indices(i)      = frame_indices_(src) - static_cast<std::int64_t>(start);
     new_smooth_root_2d.row(i) = smooth_root_2d_.row(src);
   }
 
@@ -153,17 +149,6 @@ root2d_constraint_set root2d_constraint_set::crop_move(std::int64_t start, std::
   return root2d_constraint_set(skeleton_, new_frame_indices, new_smooth_root_2d, new_global_root_heading);
 }
 
-nlohmann::json root2d_constraint_set::get_save_info() const {
-  nlohmann::json out;
-  out["type"]             = name;
-  out["frame_indices"]    = eigen_matrix_to_json(frame_indices_);
-  out["smooth_root_2d"]   = eigen_matrix_to_json(smooth_root_2d_);
-  if (global_root_heading_.size() > 0) {
-    out["global_root_heading"] = eigen_matrix_to_json(global_root_heading_);
-  }
-  return out;
-}
-
 void root2d_constraint_set::to(const std::shared_ptr<skeleton_base>& skel) {
   if (skel) skeleton_ = skel;
 }
@@ -171,11 +156,10 @@ void root2d_constraint_set::to(const std::shared_ptr<skeleton_base>& skel) {
 root2d_constraint_set root2d_constraint_set::from_dict(
     std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
 ) {
-  Eigen::VectorXi frame_indices =
-      json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
+  Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
 
   // smooth_root_2d: 可能为 [K, 2] 或 [K, 3]（3D 时取前两列）
-  Eigen::MatrixXf raw_smooth = json_to_eigen_matrix<float>(dico.at("smooth_root_2d"));
+  Eigen::MatrixXf raw_smooth    = json_to_eigen_matrix<float>(dico.at("smooth_root_2d"));
   Eigen::MatrixXf smooth_root_2d;
   if (raw_smooth.cols() == 3) {
     smooth_root_2d.resize(raw_smooth.rows(), 2);
@@ -200,8 +184,8 @@ root2d_constraint_set root2d_constraint_set::from_dict(
 // ======================================================================
 
 fullbody_constraint_set::fullbody_constraint_set(
-    std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices,
-    Eigen::MatrixXf global_joints_positions, Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d
+    std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
+    Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d
 )
     : skeleton_(std::move(skeleton)),
       frame_indices_(std::move(frame_indices)),
@@ -214,7 +198,7 @@ fullbody_constraint_set::fullbody_constraint_set(
 
   const std::int64_t J = skeleton_->nbjoints_;
   DOODLE_CHICK(
-      global_joints_positions_.rows() == K, "fullbody: global_joints_positions 行数 {} != K {}", 
+      global_joints_positions_.rows() == K, "fullbody: global_joints_positions 行数 {} != K {}",
       global_joints_positions_.rows(), K
   );
   DOODLE_CHICK(
@@ -222,12 +206,11 @@ fullbody_constraint_set::fullbody_constraint_set(
       global_joints_positions_.cols(), J * 3
   );
   DOODLE_CHICK(
-      global_joints_rots_.rows() == K, "fullbody: global_joints_rots 行数 {} != K {}",
-      global_joints_rots_.rows(), K
+      global_joints_rots_.rows() == K, "fullbody: global_joints_rots 行数 {} != K {}", global_joints_rots_.rows(), K
   );
   DOODLE_CHICK(
-      global_joints_rots_.cols() == J * 9, "fullbody: global_joints_rots 列数 {} != J*9 {}",
-      global_joints_rots_.cols(), J * 9
+      global_joints_rots_.cols() == J * 9, "fullbody: global_joints_rots 列数 {} != J*9 {}", global_joints_rots_.cols(),
+      J * 9
   );
 
   // 如果没有提供 smooth_root_2d，从根关节位置提取
@@ -239,12 +222,8 @@ fullbody_constraint_set::fullbody_constraint_set(
       smooth_root_2d_(i, 1) = global_joints_positions_(i, root_idx * 3 + 2);
     }
   } else {
-    DOODLE_CHICK(
-        smooth_root_2d_.cols() == 2, "fullbody: smooth_root_2d 列数应为 2，实际为 {}", smooth_root_2d_.cols()
-    );
-    DOODLE_CHICK(
-        smooth_root_2d_.rows() == K, "fullbody: smooth_root_2d 行数 {} != K {}", smooth_root_2d_.rows(), K
-    );
+    DOODLE_CHICK(smooth_root_2d_.cols() == 2, "fullbody: smooth_root_2d 列数应为 2，实际为 {}", smooth_root_2d_.cols());
+    DOODLE_CHICK(smooth_root_2d_.rows() == K, "fullbody: smooth_root_2d 行数 {} != K {}", smooth_root_2d_.rows(), K);
   }
 
   // 计算根 Y 位置
@@ -314,37 +293,6 @@ fullbody_constraint_set fullbody_constraint_set::crop_move(std::int64_t start, s
   return fullbody_constraint_set(skeleton_, new_frame_indices, new_positions, new_rots, new_smooth);
 }
 
-nlohmann::json fullbody_constraint_set::get_save_info() const {
-  // 将全局旋转转换为局部旋转: [K, J*9] → [K, J*9]
-  Eigen::MatrixXf local_joints_rot = skeleton_->global_rots_to_local_rots(global_joints_rots_);
-
-  // 转换为轴角格式: 先将 [K, J*9] reshape 为 [K*J, 9]
-  const Eigen::Index K        = frame_indices_.size();
-  const std::int64_t J        = skeleton_->nbjoints_;
-  Eigen::MatrixXf local_rot_flat(K * J, 9);
-  for (Eigen::Index i = 0; i < K; ++i) {
-    for (std::int64_t j = 0; j < J; ++j) {
-      local_rot_flat.row(i * J + j) = local_joints_rot.row(i).segment(j * 9, 9);
-    }
-  }
-  // [K*J, 9] → axis_angle → [K*J, 3]
-  Eigen::MatrixXf local_aa_flat = matrix_to_axis_angle(local_rot_flat);
-
-  const Eigen::Index root_idx = skeleton_->root_idx_;
-  Eigen::MatrixXf root_positions(K, 3);
-  for (Eigen::Index i = 0; i < K; ++i) {
-    root_positions.row(i) = global_joints_positions_.row(i).segment(root_idx * 3, 3);
-  }
-
-  nlohmann::json out;
-  out["type"]             = name;
-  out["frame_indices"]    = eigen_matrix_to_json(frame_indices_);
-  out["local_joints_rot"] = eigen_matrix_to_json(local_aa_flat);
-  out["root_positions"]   = eigen_matrix_to_json(root_positions);
-  out["smooth_root_2d"]   = eigen_matrix_to_json(smooth_root_2d_);
-  return out;
-}
-
 void fullbody_constraint_set::to(const std::shared_ptr<skeleton_base>& skel) {
   if (skel) skeleton_ = skel;
 }
@@ -354,19 +302,18 @@ fullbody_constraint_set fullbody_constraint_set::from_dict(
 ) {
   DOODLE_CHICK(skeleton, "fullbody::from_dict: skeleton 为空");
 
-  Eigen::VectorXi frame_indices =
-      json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
+  Eigen::VectorXi frame_indices  = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
 
   // 加载局部旋转（轴角）: JSON 可能是 [K, J, 3] 3D 或 [K*J, 3] 2D 格式
   // json_to_eigen_matrix 统一 flatten 为 [K*J, 3]
-  Eigen::MatrixXf local_rot_aa = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
+  Eigen::MatrixXf local_rot_aa   = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
   // [K*J, 3] → axis_angle → [K*J, 9]
   Eigen::MatrixXf local_rot_flat = axis_angle_to_matrix(local_rot_aa);
 
   // reshape [K*J, 9] → [K, J*9] 用于 FK
-  const std::int64_t J = skeleton->nbjoints_;
-  const Eigen::Index total_rows = local_rot_flat.rows();
-  const Eigen::Index K = total_rows / J;
+  const std::int64_t J           = skeleton->nbjoints_;
+  const Eigen::Index total_rows  = local_rot_flat.rows();
+  const Eigen::Index K           = total_rows / J;
   DOODLE_CHICK(total_rows == K * J, "fullbody: local_joints_rot 行数 {} 不是 J={} 的整数倍", total_rows, J);
 
   Eigen::MatrixXf local_rot_mats(K, J * 9);
@@ -385,7 +332,9 @@ fullbody_constraint_set fullbody_constraint_set::from_dict(
   // }
 
   Eigen::MatrixXf root_positions = json_to_eigen_matrix<float>(dico.at("root_positions"));
-  DOODLE_CHICK(root_positions.rows() == K, "fullbody: root_positions 行数 {} 与帧数 K={} 不匹配", root_positions.rows(), K);
+  DOODLE_CHICK(
+      root_positions.rows() == K, "fullbody: root_positions 行数 {} 与帧数 K={} 不匹配", root_positions.rows(), K
+  );
 
   // FK: 得到全局旋转和关节位置
   auto fk_result = skeleton->fk(local_rot_mats, root_positions);
@@ -406,9 +355,8 @@ fullbody_constraint_set fullbody_constraint_set::from_dict(
 // ======================================================================
 
 end_effector_constraint_set::end_effector_constraint_set(
-    std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices,
-    Eigen::MatrixXf global_joints_positions, Eigen::MatrixXf global_joints_rots,
-    Eigen::MatrixXf smooth_root_2d, std::vector<std::string> joint_names
+    std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
+    Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d, std::vector<std::string> joint_names
 )
     : skeleton_(std::move(skeleton)),
       frame_indices_(std::move(frame_indices)),
@@ -429,10 +377,7 @@ end_effector_constraint_set::end_effector_constraint_set(
   rot_indices_.resize(static_cast<Eigen::Index>(joint_names_.size()));
   for (std::size_t i = 0; i < joint_names_.size(); ++i) {
     const auto it = skeleton_->bone_index_.find(joint_names_[i]);
-    DOODLE_CHICK(
-        it != skeleton_->bone_index_.end(), "end_effector: 关节名 '{}' 未在 skeleton 中找到",
-        joint_names_[i]
-    );
+    DOODLE_CHICK(it != skeleton_->bone_index_.end(), "end_effector: 关节名 '{}' 未在 skeleton 中找到", joint_names_[i]);
     pos_indices_(static_cast<Eigen::Index>(i)) = it->second;
     rot_indices_(static_cast<Eigen::Index>(i)) = it->second;
   }
@@ -441,12 +386,12 @@ end_effector_constraint_set::end_effector_constraint_set(
   const std::int64_t n_pos = pos_indices_.size();
   const std::int64_t n_rot = rot_indices_.size();
   DOODLE_CHICK(
-      global_joints_positions_.cols() == n_pos * 3,
-      "end_effector: positions 列数 {} != n_pos*3 {}", global_joints_positions_.cols(), n_pos * 3
+      global_joints_positions_.cols() == n_pos * 3, "end_effector: positions 列数 {} != n_pos*3 {}",
+      global_joints_positions_.cols(), n_pos * 3
   );
   DOODLE_CHICK(
-      global_joints_rots_.cols() == n_rot * 9,
-      "end_effector: rotations 列数 {} != n_rot*9 {}", global_joints_rots_.cols(), n_rot * 9
+      global_joints_rots_.cols() == n_rot * 9, "end_effector: rotations 列数 {} != n_rot*9 {}",
+      global_joints_rots_.cols(), n_rot * 9
   );
 
   // 如果没有提供 smooth_root_2d，从根位置提取
@@ -473,7 +418,7 @@ void end_effector_constraint_set::update_constraints(
     std::unordered_map<std::string, std::vector<Eigen::MatrixXf>>& data_dict,
     std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict
 ) const {
-  const Eigen::Index K = frame_indices_.size();
+  const Eigen::Index K     = frame_indices_.size();
   const std::int64_t n_pos = pos_indices_.size();
   const std::int64_t n_rot = rot_indices_.size();
 
@@ -532,44 +477,7 @@ end_effector_constraint_set end_effector_constraint_set::crop_move(std::int64_t 
     new_smooth.row(i)      = smooth_root_2d_.row(src);
   }
 
-  return end_effector_constraint_set(
-      skeleton_, new_frame_indices, new_positions, new_rots, new_smooth, joint_names_
-  );
-}
-
-nlohmann::json end_effector_constraint_set::get_save_info() const {
-  // 将全局旋转转换为局部旋转: [K, J*9] → [K, J*9] (所有关节)
-  Eigen::MatrixXf local_joints_rot = skeleton_->global_rots_to_local_rots(global_joints_rots_);
-
-  // 转换为轴角格式: reshape [K, J*9] → [K*J, 9]
-  const Eigen::Index K        = frame_indices_.size();
-  const std::int64_t J        = skeleton_->nbjoints_;
-  Eigen::MatrixXf local_rot_flat(K * J, 9);
-  for (Eigen::Index i = 0; i < K; ++i) {
-    for (std::int64_t j = 0; j < J; ++j) {
-      local_rot_flat.row(i * J + j) = local_joints_rot.row(i).segment(j * 9, 9);
-    }
-  }
-  // [K*J, 9] → axis_angle → [K*J, 3]
-  Eigen::MatrixXf local_aa_flat = matrix_to_axis_angle(local_rot_flat);
-
-  // 仅保存根位置 — 但 end-effector 中不一定有根关节的全量位置
-  // 使用零填充
-  Eigen::MatrixXf root_positions(K, 3);
-  root_positions.setZero();
-
-  nlohmann::json out;
-  out["type"]             = name;
-  out["frame_indices"]    = eigen_matrix_to_json(frame_indices_);
-  out["local_joints_rot"] = eigen_matrix_to_json(local_aa_flat);
-  out["root_positions"]   = eigen_matrix_to_json(root_positions);
-  out["smooth_root_2d"]   = eigen_matrix_to_json(smooth_root_2d_);
-
-  // 如果是基础 end_effector 类（不是左/右手/脚子类），保存 joint_names
-  // 注意：在 C++ 中无法像 Python 那样用 hasattr 区分，所以统一保存
-  out["joint_names"] = joint_names_;
-
-  return out;
+  return end_effector_constraint_set(skeleton_, new_frame_indices, new_positions, new_rots, new_smooth, joint_names_);
 }
 
 void end_effector_constraint_set::to(const std::shared_ptr<skeleton_base>& skel) {
@@ -581,18 +489,17 @@ end_effector_constraint_set end_effector_constraint_set::from_dict(
 ) {
   DOODLE_CHICK(skeleton, "end_effector::from_dict: skeleton 为空");
 
-  Eigen::VectorXi frame_indices =
-      json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
+  Eigen::VectorXi frame_indices  = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
 
   // 加载局部旋转（轴角）: JSON 可能是 [K, J, 3] 3D 或 [K*J, 3] 2D 格式
-  Eigen::MatrixXf local_rot_aa    = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
+  Eigen::MatrixXf local_rot_aa   = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
   // [K*J, 3] → axis_angle → [K*J, 9]
-  Eigen::MatrixXf local_rot_flat  = axis_angle_to_matrix(local_rot_aa);
+  Eigen::MatrixXf local_rot_flat = axis_angle_to_matrix(local_rot_aa);
 
   // reshape [K*J, 9] → [K, J*9] 用于 FK
-  const std::int64_t J = skeleton->nbjoints_;
-  const Eigen::Index total_rows = local_rot_flat.rows();
-  const Eigen::Index K = total_rows / J;
+  const std::int64_t J           = skeleton->nbjoints_;
+  const Eigen::Index total_rows  = local_rot_flat.rows();
+  const Eigen::Index K           = total_rows / J;
   DOODLE_CHICK(total_rows == K * J, "end_effector: local_joints_rot 行数 {} 不是 J={} 的整数倍", total_rows, J);
 
   Eigen::MatrixXf local_rot_mats(K, J * 9);
@@ -605,7 +512,9 @@ end_effector_constraint_set end_effector_constraint_set::from_dict(
   // TODO: 30↔77 关节转换（同 fullbody）
 
   Eigen::MatrixXf root_positions = json_to_eigen_matrix<float>(dico.at("root_positions"));
-  DOODLE_CHICK(root_positions.rows() == K, "end_effector: root_positions 行数 {} 与帧数 K={} 不匹配", root_positions.rows(), K);
+  DOODLE_CHICK(
+      root_positions.rows() == K, "end_effector: root_positions 行数 {} 与帧数 K={} 不匹配", root_positions.rows(), K
+  );
 
   // FK
   auto fk_result = skeleton->fk(local_rot_mats, root_positions);
@@ -631,18 +540,14 @@ end_effector_constraint_set end_effector_constraint_set::from_dict(
 // ======================================================================
 
 std::string get_constraint_type_name(const constraint_set_var& constraint) {
-  return std::visit(
-      [](const auto& c) -> std::string { return c.name; }, constraint
-  );
+  return std::visit([](const auto& c) -> std::string { return c.name; }, constraint);
 }
 
 // ======================================================================
 // 加载约束列表
 // ======================================================================
 
-std::vector<constraint_set_var> load_constraints_lst(
-    const FSys::path& path, std::shared_ptr<skeleton_base> skeleton
-) {
+std::vector<constraint_set_var> load_constraints_lst(const FSys::path& path, std::shared_ptr<skeleton_base> skeleton) {
   DOODLE_CHICK(FSys::exists(path), "约束 JSON 文件不存在: {}", path.string());
 
   SPDLOG_INFO("Loading constraints from {}", path.string());
@@ -660,46 +565,12 @@ std::vector<constraint_set_var> load_constraints_lst_from_json(
 
   for (const auto& el : json_data) {
     const std::string type = el.at("type").get<std::string>();
-    auto c = detail::make_constraint_from_type(type, skeleton, el);
+    auto c                 = detail::make_constraint_from_type(type, skeleton, el);
     constraints.push_back(std::move(c));
   }
 
   SPDLOG_INFO("Loaded {} constraints from JSON", constraints.size());
   return constraints;
-}
-
-// ======================================================================
-// 保存约束列表
-// ======================================================================
-
-nlohmann::json save_constraints_lst_to_json(const std::vector<constraint_set_var>& constraints_lst) {
-  if (constraints_lst.empty()) {
-    SPDLOG_INFO("The constraints list is empty. Skip saving");
-    return nullptr;
-  }
-
-  nlohmann::json to_save = nlohmann::json::array();
-
-  for (const auto& constraint : constraints_lst) {
-    nlohmann::json info = std::visit(
-        [](const auto& c) -> nlohmann::json { return c.get_save_info(); }, constraint
-    );
-    to_save.push_back(std::move(info));
-  }
-
-  return to_save;
-}
-
-void save_constraints_lst(const FSys::path& path, const std::vector<constraint_set_var>& constraints_lst) {
-  auto json_data = save_constraints_lst_to_json(constraints_lst);
-  if (json_data.is_null()) {
-    return;
-  }
-
-  std::ofstream ofs{path};
-  DOODLE_CHICK(ofs.is_open(), "无法写入约束 JSON 文件: {}", path.string());
-  ofs << json_data.dump(2);
-  SPDLOG_INFO("Saved {} constraints to {}", constraints_lst.size(), path.string());
 }
 
 }  // namespace doodle::ai

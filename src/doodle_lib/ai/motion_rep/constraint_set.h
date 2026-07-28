@@ -86,7 +86,7 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> json_to_eigen_matrix(const nloh
 /// @brief 将 Eigen 矩阵转换为 JSON 数组（二维数组格式）
 template <typename Derived>
 nlohmann::json eigen_matrix_to_json(const Eigen::DenseBase<Derived>& mat) {
-  nlohmann::json j = nlohmann::json::array();
+  nlohmann::json j        = nlohmann::json::array();
   const Eigen::Index rows = mat.rows();
   const Eigen::Index cols = mat.cols();
   for (Eigen::Index r = 0; r < rows; ++r) {
@@ -110,9 +110,9 @@ class root2d_constraint_set {
   static constexpr const char* name = "root2d";
 
   std::shared_ptr<skeleton_base> skeleton_;
-  Eigen::VectorXi frame_indices_;                  ///< [K] 约束帧索引
-  Eigen::MatrixXf smooth_root_2d_;                 ///< [K, 2] 平滑根位置 (x, z)
-  Eigen::MatrixXf global_root_heading_;            ///< [K, 2] 可选全局朝向 (cos, sin)，为空表示不约束
+  Eigen::VectorXi frame_indices_;        ///< [K] 约束帧索引
+  Eigen::MatrixXf smooth_root_2d_;       ///< [K, 2] 平滑根位置 (x, z)
+  Eigen::MatrixXf global_root_heading_;  ///< [K, 2] 可选全局朝向 (cos, sin)，为空表示不约束
 
   root2d_constraint_set() = default;
 
@@ -139,16 +139,11 @@ class root2d_constraint_set {
   /// @brief 裁剪到 [start, end) 帧范围，返回新对象
   root2d_constraint_set crop_move(std::int64_t start, std::int64_t end) const;
 
-  /// @brief 序列化为 JSON 字典
-  nlohmann::json get_save_info() const;
-
   /// @brief 移动数据
   void to(const std::shared_ptr<skeleton_base>& skel = {});
 
   /// @brief 从 JSON 字典反序列化
-  static root2d_constraint_set from_dict(
-      std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
-  );
+  static root2d_constraint_set from_dict(std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico);
 };
 
 // ======================================================================
@@ -162,19 +157,18 @@ class fullbody_constraint_set {
   static constexpr const char* name = "fullbody";
 
   std::shared_ptr<skeleton_base> skeleton_;
-  Eigen::VectorXi frame_indices_;                  ///< [K] 约束帧索引
-  Eigen::MatrixXf global_joints_positions_;        ///< [K, J*3] 全局关节位置
-  Eigen::MatrixXf global_joints_rots_;             ///< [K, J*9] 全局旋转矩阵
-  Eigen::VectorXf root_y_pos_;                     ///< [K] 根关节 Y 位置
-  Eigen::MatrixXf global_root_heading_;             ///< [K, 2] 全局朝向 (cos, sin)
-  Eigen::MatrixXf smooth_root_2d_;                 ///< [K, 2] 平滑根位置 (x, z)
+  Eigen::VectorXi frame_indices_;            ///< [K] 约束帧索引
+  Eigen::MatrixXf global_joints_positions_;  ///< [K, J*3] 全局关节位置
+  Eigen::MatrixXf global_joints_rots_;       ///< [K, J*9] 全局旋转矩阵
+  Eigen::VectorXf root_y_pos_;               ///< [K] 根关节 Y 位置
+  Eigen::MatrixXf global_root_heading_;      ///< [K, 2] 全局朝向 (cos, sin)
+  Eigen::MatrixXf smooth_root_2d_;           ///< [K, 2] 平滑根位置 (x, z)
 
   fullbody_constraint_set() = default;
 
   fullbody_constraint_set(
-      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices,
-      Eigen::MatrixXf global_joints_positions, Eigen::MatrixXf global_joints_rots,
-      Eigen::MatrixXf smooth_root_2d = {}
+      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
+      Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d = {}
   );
 
   void update_constraints(
@@ -184,13 +178,9 @@ class fullbody_constraint_set {
 
   fullbody_constraint_set crop_move(std::int64_t start, std::int64_t end) const;
 
-  nlohmann::json get_save_info() const;
-
   void to(const std::shared_ptr<skeleton_base>& skel = {});
 
-  static fullbody_constraint_set from_dict(
-      std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
-  );
+  static fullbody_constraint_set from_dict(std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico);
 };
 
 // ======================================================================
@@ -204,22 +194,21 @@ class end_effector_constraint_set {
   static constexpr const char* name = "end-effector";
 
   std::shared_ptr<skeleton_base> skeleton_;
-  Eigen::VectorXi frame_indices_;                  ///< [K] 约束帧索引
-  std::vector<std::string> joint_names_;            ///< 关节名称列表
-  Eigen::VectorXi pos_indices_;                     ///< 位置索引（对应 skeleton 关节索引）
-  Eigen::VectorXi rot_indices_;                     ///< 旋转索引（对应 skeleton 关节索引）
-  Eigen::MatrixXf global_joints_positions_;         ///< [K, selected_pos*3] 选中关节位置
-  Eigen::MatrixXf global_joints_rots_;              ///< [K, selected_rot*9] 选中关节旋转
-  Eigen::VectorXf root_y_pos_;                      ///< [K] 根关节 Y 位置
-  Eigen::MatrixXf global_root_heading_;             ///< [K, 2] 全局朝向
-  Eigen::MatrixXf smooth_root_2d_;                  ///< [K, 2] 平滑根位置
+  Eigen::VectorXi frame_indices_;            ///< [K] 约束帧索引
+  std::vector<std::string> joint_names_;     ///< 关节名称列表
+  Eigen::VectorXi pos_indices_;              ///< 位置索引（对应 skeleton 关节索引）
+  Eigen::VectorXi rot_indices_;              ///< 旋转索引（对应 skeleton 关节索引）
+  Eigen::MatrixXf global_joints_positions_;  ///< [K, selected_pos*3] 选中关节位置
+  Eigen::MatrixXf global_joints_rots_;       ///< [K, selected_rot*9] 选中关节旋转
+  Eigen::VectorXf root_y_pos_;               ///< [K] 根关节 Y 位置
+  Eigen::MatrixXf global_root_heading_;      ///< [K, 2] 全局朝向
+  Eigen::MatrixXf smooth_root_2d_;           ///< [K, 2] 平滑根位置
 
   end_effector_constraint_set() = default;
 
   end_effector_constraint_set(
-      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices,
-      Eigen::MatrixXf global_joints_positions, Eigen::MatrixXf global_joints_rots,
-      Eigen::MatrixXf smooth_root_2d, std::vector<std::string> joint_names
+      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
+      Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d, std::vector<std::string> joint_names
   );
 
   void update_constraints(
@@ -229,13 +218,9 @@ class end_effector_constraint_set {
 
   end_effector_constraint_set crop_move(std::int64_t start, std::int64_t end) const;
 
-  nlohmann::json get_save_info() const;
-
   void to(const std::shared_ptr<skeleton_base>& skel = {});
 
-  static end_effector_constraint_set from_dict(
-      std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
-  );
+  static end_effector_constraint_set from_dict(std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico);
 };
 
 // ======================================================================
@@ -248,20 +233,13 @@ class left_hand_constraint_set : public end_effector_constraint_set {
   static constexpr const char* name = "left-hand";
   left_hand_constraint_set() { joint_names_ = {"LeftHand"}; }
   left_hand_constraint_set(
-      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices,
-      Eigen::MatrixXf global_joints_positions, Eigen::MatrixXf global_joints_rots,
-      Eigen::MatrixXf smooth_root_2d
-  ) : end_effector_constraint_set(
-          std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
-          std::move(global_joints_rots), std::move(smooth_root_2d), {"LeftHand"}
-      ) {}
-
-  /// @brief 获取序列化信息（使用子类的 name）
-  nlohmann::json get_save_info() const {
-    auto out = end_effector_constraint_set::get_save_info();
-    out["type"] = name;
-    return out;
-  }
+      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
+      Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d
+  )
+      : end_effector_constraint_set(
+            std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
+            std::move(global_joints_rots), std::move(smooth_root_2d), {"LeftHand"}
+        ) {}
 };
 
 /// @brief 右手约束
@@ -270,19 +248,13 @@ class right_hand_constraint_set : public end_effector_constraint_set {
   static constexpr const char* name = "right-hand";
   right_hand_constraint_set() { joint_names_ = {"RightHand"}; }
   right_hand_constraint_set(
-      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices,
-      Eigen::MatrixXf global_joints_positions, Eigen::MatrixXf global_joints_rots,
-      Eigen::MatrixXf smooth_root_2d
-  ) : end_effector_constraint_set(
-          std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
-          std::move(global_joints_rots), std::move(smooth_root_2d), {"RightHand"}
-      ) {}
-
-  nlohmann::json get_save_info() const {
-    auto out = end_effector_constraint_set::get_save_info();
-    out["type"] = name;
-    return out;
-  }
+      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
+      Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d
+  )
+      : end_effector_constraint_set(
+            std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
+            std::move(global_joints_rots), std::move(smooth_root_2d), {"RightHand"}
+        ) {}
 };
 
 /// @brief 左脚约束
@@ -291,19 +263,13 @@ class left_foot_constraint_set : public end_effector_constraint_set {
   static constexpr const char* name = "left-foot";
   left_foot_constraint_set() { joint_names_ = {"LeftFoot"}; }
   left_foot_constraint_set(
-      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices,
-      Eigen::MatrixXf global_joints_positions, Eigen::MatrixXf global_joints_rots,
-      Eigen::MatrixXf smooth_root_2d
-  ) : end_effector_constraint_set(
-          std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
-          std::move(global_joints_rots), std::move(smooth_root_2d), {"LeftFoot"}
-      ) {}
-
-  nlohmann::json get_save_info() const {
-    auto out = end_effector_constraint_set::get_save_info();
-    out["type"] = name;
-    return out;
-  }
+      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
+      Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d
+  )
+      : end_effector_constraint_set(
+            std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
+            std::move(global_joints_rots), std::move(smooth_root_2d), {"LeftFoot"}
+        ) {}
 };
 
 /// @brief 右脚约束
@@ -312,19 +278,13 @@ class right_foot_constraint_set : public end_effector_constraint_set {
   static constexpr const char* name = "right-foot";
   right_foot_constraint_set() { joint_names_ = {"RightFoot"}; }
   right_foot_constraint_set(
-      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices,
-      Eigen::MatrixXf global_joints_positions, Eigen::MatrixXf global_joints_rots,
-      Eigen::MatrixXf smooth_root_2d
-  ) : end_effector_constraint_set(
-          std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
-          std::move(global_joints_rots), std::move(smooth_root_2d), {"RightFoot"}
-      ) {}
-
-  nlohmann::json get_save_info() const {
-    auto out = end_effector_constraint_set::get_save_info();
-    out["type"] = name;
-    return out;
-  }
+      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
+      Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d
+  )
+      : end_effector_constraint_set(
+            std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
+            std::move(global_joints_rots), std::move(smooth_root_2d), {"RightFoot"}
+        ) {}
 };
 
 // ======================================================================
@@ -344,9 +304,7 @@ using constraint_set_var = std::variant<
 /// @param path_or_data JSON 文件路径
 /// @param skeleton 骨骼定义
 /// @return 约束列表
-std::vector<constraint_set_var> load_constraints_lst(
-    const FSys::path& path, std::shared_ptr<skeleton_base> skeleton
-);
+std::vector<constraint_set_var> load_constraints_lst(const FSys::path& path, std::shared_ptr<skeleton_base> skeleton);
 
 /// @brief 从 JSON 数据加载约束列表（对应 Python load_constraints_lst）
 /// @param json_data nlohmann::json 数组
@@ -355,16 +313,6 @@ std::vector<constraint_set_var> load_constraints_lst(
 std::vector<constraint_set_var> load_constraints_lst_from_json(
     const nlohmann::json& json_data, std::shared_ptr<skeleton_base> skeleton
 );
-
-/// @brief 保存约束列表到 JSON 文件（对应 Python save_constraints_lst）
-/// @param path 输出 JSON 路径
-/// @param constraints_lst 约束列表
-void save_constraints_lst(const FSys::path& path, const std::vector<constraint_set_var>& constraints_lst);
-
-/// @brief 将约束列表序列化为 JSON 数组
-/// @param constraints_lst 约束列表
-/// @return JSON 数组，若列表为空返回 nullptr
-nlohmann::json save_constraints_lst_to_json(const std::vector<constraint_set_var>& constraints_lst);
 
 // ======================================================================
 // 辅助：约束类型名称获取

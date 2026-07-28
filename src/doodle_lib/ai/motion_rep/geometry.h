@@ -4,7 +4,6 @@
 #pragma once
 
 #include <Eigen/Dense>
-#include <cstdint>
 
 namespace doodle::ai {
 
