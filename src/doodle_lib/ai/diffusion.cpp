@@ -210,8 +210,8 @@ void diffusion::calc_diffusion_vars(const std::vector<std::int64_t>& use_timeste
   }
 }
 
-Eigen::MatrixXf diffusion::q_sample(
-    const Eigen::MatrixXf& x_start, std::int64_t t, const Eigen::MatrixXf& noise
+MatrixXfRow diffusion::q_sample(
+    const MatrixXfRow& x_start, std::int64_t t, const MatrixXfRow& noise
 ) const {
   DOODLE_CHICK(is_valid(), "Diffusion 未初始化");
   DOODLE_CHICK(static_cast<std::size_t>(t) < sqrt_alphas_cumprod_.size(), "t={} 超出范围", t);
@@ -220,11 +220,11 @@ Eigen::MatrixXf diffusion::q_sample(
   const auto cols = x_start.cols();
 
   // 如果没有提供噪声，生成标准正态噪声
-  Eigen::MatrixXf noise_used;
+  MatrixXfRow noise_used;
   if (noise.size() == 0) {
     static std::mt19937 gen{std::random_device{}()};
     static std::normal_distribution<float> dist{0.0f, 1.0f};
-    noise_used = Eigen::MatrixXf::NullaryExpr(rows, cols, [&]() { return dist(gen); });
+    noise_used = MatrixXfRow::NullaryExpr(rows, cols, [&]() { return dist(gen); });
   } else {
     DOODLE_CHICK(noise.rows() == rows && noise.cols() == cols, "noise shape 不匹配");
     noise_used = noise;
@@ -241,8 +241,8 @@ Eigen::MatrixXf diffusion::q_sample(
 // ddim_sampler 实现
 // ======================================================================
 
-Eigen::MatrixXf ddim_sampler::step(
-    const Eigen::MatrixXf& x_t, const Eigen::MatrixXf& pred_xstart, std::int64_t t
+MatrixXfRow ddim_sampler::step(
+    const MatrixXfRow& x_t, const MatrixXfRow& pred_xstart, std::int64_t t
 ) const {
   DOODLE_CHICK(diffusion_ != nullptr, "ddim_sampler 未关联 diffusion");
   DOODLE_CHICK(diffusion_->is_valid(), "关联的 diffusion 未初始化");
@@ -263,7 +263,7 @@ Eigen::MatrixXf ddim_sampler::step(
 
   // eps = (recip_ac * x_t - pred_xstart) / recipm1_ac
   // 注意: 当 recipm1_ac == 0 时（t=0），eps 无定义，此时 x_{t-1} = pred_xstart
-  Eigen::MatrixXf eps;
+  MatrixXfRow eps;
   if (std::abs(recipm1_ac) > 1e-9f) {
     eps = (recip_ac * x_t - pred_xstart) / recipm1_ac;
   } else {

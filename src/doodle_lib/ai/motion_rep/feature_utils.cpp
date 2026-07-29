@@ -15,17 +15,17 @@ namespace doodle::ai {
 // ======================================================================
 // diff_angles: 帧间角度差
 // ======================================================================
-Eigen::MatrixXf diff_angles(const Eigen::MatrixXf& angles, float fps) {
+MatrixXfRow diff_angles(const MatrixXfRow& angles, float fps) {
   const Eigen::Index B = angles.rows();
   const Eigen::Index T = angles.cols();
 
   if (T <= 1) {
     // 不足两帧，返回全零
-    return Eigen::MatrixXf::Zero(B, T);
+    return MatrixXfRow::Zero(B, T);
   }
 
   // diff = fps * atan2(sin_diff, cos_diff)
-  Eigen::MatrixXf result(B, T);
+  MatrixXfRow result(B, T);
   result.setZero();
 
   for (Eigen::Index b = 0; b < B; ++b) {
@@ -52,8 +52,8 @@ Eigen::MatrixXf diff_angles(const Eigen::MatrixXf& angles, float fps) {
 // ======================================================================
 // compute_heading_angle: 从关节位置计算朝向角
 // ======================================================================
-Eigen::MatrixXf compute_heading_angle(
-    const Eigen::MatrixXf& posed_joints, const skeleton_base& skel, std::int64_t batch_size, std::int64_t time_steps
+MatrixXfRow compute_heading_angle(
+    const MatrixXfRow& posed_joints, const skeleton_base& skel, std::int64_t batch_size, std::int64_t time_steps
 ) {
   const Eigen::Index total = posed_joints.rows();
   const Eigen::Index J     = skel.nbjoints_;
@@ -64,7 +64,7 @@ Eigen::MatrixXf compute_heading_angle(
   const std::int64_t r_hip = skel.hip_joint_idx_[0];  // right hip
   const std::int64_t l_hip = skel.hip_joint_idx_[1];  // left hip
 
-  Eigen::MatrixXf heading(batch_size, time_steps);
+  MatrixXfRow heading(batch_size, time_steps);
 
   for (Eigen::Index b = 0; b < batch_size; ++b) {
     for (Eigen::Index t = 0; t < time_steps; ++t) {
@@ -88,8 +88,8 @@ Eigen::MatrixXf compute_heading_angle(
 // ======================================================================
 // compute_vel_xyz: 关节速度
 // ======================================================================
-Eigen::MatrixXf compute_vel_xyz(
-    const Eigen::MatrixXf& positions, float fps, std::int64_t batch_size, std::int64_t time_steps,
+MatrixXfRow compute_vel_xyz(
+    const MatrixXfRow& positions, float fps, std::int64_t batch_size, std::int64_t time_steps,
     std::int64_t nbjoints, const Eigen::VectorXi& lengths
 ) {
   const Eigen::Index total = positions.rows();
@@ -98,7 +98,7 @@ Eigen::MatrixXf compute_vel_xyz(
 
   // velocity = fps * (positions[t+1] - positions[t])
   // 最后一帧复制前一帧的值
-  Eigen::MatrixXf velocity(total, nbjoints * 3);
+  MatrixXfRow velocity(total, nbjoints * 3);
   velocity.setZero();
 
   for (Eigen::Index b = 0; b < batch_size; ++b) {
@@ -129,7 +129,7 @@ Eigen::MatrixXf compute_vel_xyz(
 // ======================================================================
 // compute_vel_angle: 局部根节点旋转速度
 // ======================================================================
-Eigen::MatrixXf compute_vel_angle(const Eigen::MatrixXf& root_rot_angles, float fps, const Eigen::VectorXi& lengths) {
+MatrixXfRow compute_vel_angle(const MatrixXfRow& root_rot_angles, float fps, const Eigen::VectorXi& lengths) {
   // root_rot_angles: [B, T], 输出: [B, T]
   return diff_angles(root_rot_angles, fps);
 }
@@ -138,7 +138,7 @@ Eigen::MatrixXf compute_vel_angle(const Eigen::MatrixXf& root_rot_angles, float 
 // foot_detect_from_pos_and_vel: 脚接触检测
 // ======================================================================
 Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> foot_detect_from_pos_and_vel(
-    const Eigen::MatrixXf& positions, const Eigen::MatrixXf& velocity, const skeleton_base& skel,
+    const MatrixXfRow& positions, const MatrixXfRow& velocity, const skeleton_base& skel,
     std::int64_t batch_size, std::int64_t time_steps, float vel_thres, float height_thresh
 ) {
   const Eigen::Index total    = positions.rows();
@@ -209,14 +209,14 @@ Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> length_to_mask(
 // ======================================================================
 // get_smooth_root_pos: 平滑根位置（移动平均）
 // ======================================================================
-Eigen::MatrixXf get_smooth_root_pos(
-    const Eigen::MatrixXf& root_positions, std::int64_t batch_size, std::int64_t time_steps, std::int64_t window_size
+MatrixXfRow get_smooth_root_pos(
+    const MatrixXfRow& root_positions, std::int64_t batch_size, std::int64_t time_steps, std::int64_t window_size
 ) {
   const Eigen::Index total = root_positions.rows();
   DOODLE_CHICK(total == batch_size * time_steps, "总帧数不匹配");
   DOODLE_CHICK(root_positions.cols() == 3, "列数 != 3");
 
-  Eigen::MatrixXf smooth(total, 3);
+  MatrixXfRow smooth(total, 3);
 
   for (Eigen::Index b = 0; b < batch_size; ++b) {
     for (Eigen::Index t = 0; t < time_steps; ++t) {
@@ -277,8 +277,8 @@ rotate_features::rotate_features(const Eigen::VectorXf& angle) {
   }
 }
 
-Eigen::MatrixXf rotate_features::rotate_positions(
-    const Eigen::MatrixXf& positions, std::int64_t batch_size, std::int64_t time_steps
+MatrixXfRow rotate_features::rotate_positions(
+    const MatrixXfRow& positions, std::int64_t batch_size, std::int64_t time_steps
 ) const {
   // positions: [B*T, 3]
   const Eigen::Index total = positions.rows();
@@ -286,7 +286,7 @@ Eigen::MatrixXf rotate_features::rotate_positions(
   DOODLE_CHICK(positions.cols() == 3, "列数 != 3");
   DOODLE_CHICK(corrective_mat_Y_T_.rows() == batch_size, "角度数不匹配 batch_size");
 
-  Eigen::MatrixXf result(total, 3);
+  MatrixXfRow result(total, 3);
 
   for (Eigen::Index b = 0; b < batch_size; ++b) {
     for (Eigen::Index t = 0; t < time_steps; ++t) {
@@ -307,15 +307,15 @@ Eigen::MatrixXf rotate_features::rotate_positions(
   return result;
 }
 
-Eigen::MatrixXf rotate_features::rotate_2d_positions(
-    const Eigen::MatrixXf& positions_2d, std::int64_t batch_size, std::int64_t time_steps
+MatrixXfRow rotate_features::rotate_2d_positions(
+    const MatrixXfRow& positions_2d, std::int64_t batch_size, std::int64_t time_steps
 ) const {
   // positions_2d: [B*T, 2]
   const Eigen::Index total = positions_2d.rows();
   DOODLE_CHICK(total == batch_size * time_steps, "总帧数不匹配");
   DOODLE_CHICK(positions_2d.cols() == 2, "列数 != 2");
 
-  Eigen::MatrixXf result(total, 2);
+  MatrixXfRow result(total, 2);
 
   for (Eigen::Index b = 0; b < batch_size; ++b) {
     for (Eigen::Index t = 0; t < time_steps; ++t) {
@@ -334,8 +334,8 @@ Eigen::MatrixXf rotate_features::rotate_2d_positions(
   return result;
 }
 
-Eigen::MatrixXf rotate_features::rotate_6d_rotations(
-    const Eigen::MatrixXf& rotations_6d, std::int64_t batch_size, std::int64_t time_steps, std::int64_t nbjoints
+MatrixXfRow rotate_features::rotate_6d_rotations(
+    const MatrixXfRow& rotations_6d, std::int64_t batch_size, std::int64_t time_steps, std::int64_t nbjoints
 ) const {
   // rotations_6d: [B*T, J*6]
   const Eigen::Index total = rotations_6d.rows();
@@ -344,7 +344,7 @@ Eigen::MatrixXf rotate_features::rotate_6d_rotations(
 
   // 先转成旋转矩阵 [B*T*J, 9], 旋转后再转回 6D
   const Eigen::Index total_joints = total * nbjoints;
-  Eigen::MatrixXf rot_mats(total_joints, 9);
+  MatrixXfRow rot_mats(total_joints, 9);
   for (Eigen::Index i = 0; i < total_joints; ++i) {
     const Eigen::Index frame_idx = i / nbjoints;
     const Eigen::Index b         = frame_idx / time_steps;
@@ -383,7 +383,7 @@ Eigen::MatrixXf rotate_features::rotate_6d_rotations(
   }
 
   // 转回 6D
-  Eigen::MatrixXf result(total, nbjoints * 6);
+  MatrixXfRow result(total, nbjoints * 6);
   for (Eigen::Index i = 0; i < total_joints; ++i) {
     const Eigen::Index frame_idx     = i / nbjoints;
     const Eigen::Index j_idx         = i % nbjoints;

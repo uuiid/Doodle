@@ -109,7 +109,7 @@ void transformer_encoder_block::init_session() {
 }
 
 MatrixXfRow transformer_encoder_block::forward(
-    const MatrixXfRow& x, const MatrixXb& x_pad_mask, const MatrixXfRow& text_feat, const MatrixXb& text_feat_pad_mask,
+    const MatrixXfRow& x, const MatrixXbRow& x_pad_mask, const MatrixXfRow& text_feat, const MatrixXbRow& text_feat_pad_mask,
     const std::vector<std::int64_t>& timesteps, const std::vector<float>& first_heading_angle
 ) {
   // ---- 提取形状信息 ----
@@ -292,7 +292,7 @@ MatrixXfRow transformer_encoder_block::forward(
   DOODLE_CHICK(!input_names_.empty(), "ONNX session 未正确初始化输入名称");
 
   // ONNX 期望 RowMajor 连续内存，将 Eigen 列主序数据拷贝到行主序 vector
-  // 将 Eigen 列主序数据拷贝到行主序的 Eigen::MatrixXf
+  // 将 Eigen 列主序数据拷贝到行主序的 MatrixXfRow
   // xseq: [B*total_len, latent_dim] -> ONNX: [B, total_len, latent_dim]
 
   // mask: [B, total_len], bool

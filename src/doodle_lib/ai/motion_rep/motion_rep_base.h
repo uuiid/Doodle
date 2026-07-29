@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include <doodle_lib/ai/fwd.h>
 #include <doodle_lib/ai/motion_rep/feature_utils.h>
 #include <doodle_lib/ai/skeleton/skeleton_base.h>
 #include <doodle_lib/core/global_function.h>
@@ -14,6 +15,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 
 namespace doodle::ai {
 
@@ -40,12 +42,12 @@ struct motion_stats {
   /// @brief 标准化: (data - mean) / sqrt(std^2 + eps)
   /// @param data [N, D]
   /// @return [N, D]
-  Eigen::MatrixXf normalize(const Eigen::MatrixXf& data) const;
+  MatrixXfRow normalize(const MatrixXfRow& data) const;
 
   /// @brief 反标准化: data * sqrt(std^2 + eps) + mean
   /// @param data [N, D]
   /// @return [N, D]
-  Eigen::MatrixXf unnormalize(const Eigen::MatrixXf& data) const;
+  MatrixXfRow unnormalize(const MatrixXfRow& data) const;
 
   [[nodiscard]] bool is_valid() const { return mean.size() > 0 && std.size() > 0; }
   [[nodiscard]] std::int64_t dim() const { return mean.size(); }
@@ -129,10 +131,10 @@ class motion_rep_base {
   // ======================================================================
 
   /// @brief 合并标准化（global_root + body，对应 self.stats.normalize）
-  Eigen::MatrixXf normalize(const Eigen::MatrixXf& features) const;
+  MatrixXfRow normalize(const MatrixXfRow& features) const;
 
   /// @brief 合并反标准化
-  Eigen::MatrixXf unnormalize(const Eigen::MatrixXf& features) const;
+  MatrixXfRow unnormalize(const MatrixXfRow& features) const;
 
   // ======================================================================
   // 根位置提取
@@ -143,7 +145,7 @@ class motion_rep_base {
   /// @param batch_size B
   /// @param time_steps T
   /// @return [B*T, 3] 根位置
-  Eigen::MatrixXf get_root_pos(const Eigen::MatrixXf& features, std::int64_t batch_size, std::int64_t time_steps) const;
+  MatrixXfRow get_root_pos(const MatrixXfRow& features, std::int64_t batch_size, std::int64_t time_steps) const;
 
   // ======================================================================
   // 全局根 → 局部根转换（对应 Python MotionRepBase.global_root_to_local_root）
@@ -156,8 +158,8 @@ class motion_rep_base {
   /// @param time_steps T
   /// @param lengths [B] 各样本有效帧数
   /// @return [B*T, local_root_dim] 局部根特征
-  Eigen::MatrixXf global_root_to_local_root(
-      const Eigen::MatrixXf& root_features, bool normalized, std::int64_t batch_size, std::int64_t time_steps,
+  MatrixXfRow global_root_to_local_root(
+      const MatrixXfRow& root_features, bool normalized, std::int64_t batch_size, std::int64_t time_steps,
       const Eigen::VectorXi& lengths
   ) const;
 
@@ -170,8 +172,8 @@ class motion_rep_base {
   /// @param batch_size B
   /// @param time_steps T
   /// @return [B, T] 朝向角（弧度）
-  Eigen::MatrixXf get_root_heading_angle(
-      const Eigen::MatrixXf& features, std::int64_t batch_size, std::int64_t time_steps
+  MatrixXfRow get_root_heading_angle(
+      const MatrixXfRow& features, std::int64_t batch_size, std::int64_t time_steps
   ) const;
 
   // ======================================================================
@@ -179,14 +181,13 @@ class motion_rep_base {
   // ======================================================================
 
   /// @brief 旋转特征（子类应实现具体旋转逻辑）
-  virtual Eigen::MatrixXf rotate(
-      const Eigen::MatrixXf& features, const Eigen::VectorXf& angle, std::int64_t batch_size, std::int64_t time_steps
+  virtual MatrixXfRow rotate(
+      const MatrixXfRow& features, const Eigen::VectorXf& angle, std::int64_t batch_size, std::int64_t time_steps
   ) const = 0;
 
   /// @brief 平移特征（子类应实现具体平移逻辑）
-  virtual Eigen::MatrixXf translate_2d(
-      const Eigen::MatrixXf& features, const Eigen::MatrixXf& translation_2d, std::int64_t batch_size,
-      std::int64_t time_steps
+  virtual MatrixXfRow translate_2d(
+      const MatrixXfRow& features, const MatrixXfRow& translation_2d, std::int64_t batch_size, std::int64_t time_steps
   ) const = 0;
 
   // ======================================================================
@@ -194,30 +195,24 @@ class motion_rep_base {
   // ======================================================================
 
   /// @brief 将序列旋转使第 0 帧朝向 target_angle
-  Eigen::MatrixXf rotate_to(
-      const Eigen::MatrixXf& features, const Eigen::VectorXf& target_angle, std::int64_t batch_size,
-      std::int64_t time_steps
+  MatrixXfRow rotate_to(
+      const MatrixXfRow& features, const Eigen::VectorXf& target_angle, std::int64_t batch_size, std::int64_t time_steps
   ) const;
 
   /// @brief 将序列旋转使第 0 帧朝向 0
-  Eigen::MatrixXf rotate_to_zero(
-      const Eigen::MatrixXf& features, std::int64_t batch_size, std::int64_t time_steps
-  ) const;
+  MatrixXfRow rotate_to_zero(const MatrixXfRow& features, std::int64_t batch_size, std::int64_t time_steps) const;
 
   /// @brief 平移使第 0 帧根位置到 target_2d_pos（xz 平面）
-  Eigen::MatrixXf translate_2d_to(
-      const Eigen::MatrixXf& features, const Eigen::MatrixXf& target_2d_pos, std::int64_t batch_size,
-      std::int64_t time_steps
+  MatrixXfRow translate_2d_to(
+      const MatrixXfRow& features, const MatrixXfRow& target_2d_pos, std::int64_t batch_size, std::int64_t time_steps
   ) const;
 
   /// @brief 平移使第 0 帧根位置到原点
-  Eigen::MatrixXf translate_2d_to_zero(
-      const Eigen::MatrixXf& features, std::int64_t batch_size, std::int64_t time_steps
-  ) const;
+  MatrixXfRow translate_2d_to_zero(const MatrixXfRow& features, std::int64_t batch_size, std::int64_t time_steps) const;
 
   /// @brief 归一化：旋转使第 0 帧朝向 0，平移使第 0 帧根位置到原点
-  Eigen::MatrixXf canonicalize(
-      const Eigen::MatrixXf& features, bool normalized, std::int64_t batch_size, std::int64_t time_steps
+  MatrixXfRow canonicalize(
+      const MatrixXfRow& features, bool normalized, std::int64_t batch_size, std::int64_t time_steps
   ) const;
 };
 

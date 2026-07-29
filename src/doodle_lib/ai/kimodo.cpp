@@ -80,7 +80,7 @@ kimodo::text_encoding_result kimodo::encode_texts(const std::vector<std::string>
   // ---- 对每个文本调用 LLM2Vec 获取 pooled embedding ----
   // Python LLM2VecEncoder 返回 [B, 1, D] 的单个 token 嵌入
   // C++ LLM2Vec 对每个文本返回 std::vector<float> [D]
-  Eigen::MatrixXf text_feat(B, llm_dim_);
+  MatrixXfRow text_feat(B, llm_dim_);
   text_feat.setZero();
 
   for (Eigen::Index b = 0; b < B; ++b) {
@@ -108,7 +108,7 @@ kimodo::text_encoding_result kimodo::encode_texts(const std::vector<std::string>
   }
 
   // ---- 创建 text_pad_mask: [B, 1] 全 true（Python: lengths = [1, 1, ...]） ----
-  MatrixXb text_pad_mask(B, 1);
+  MatrixXbRow text_pad_mask(B, 1);
   text_pad_mask.setConstant(true);
 
   SPDLOG_INFO("kimodo: 编码 {} 个文本, text_feat shape [{}x{}]", B, text_feat.rows(), text_feat.cols());
@@ -119,11 +119,11 @@ kimodo::text_encoding_result kimodo::encode_texts(const std::vector<std::string>
 // ======================================================================
 // denoising_step: 单步去噪（对应 Python denoising_step）
 // ======================================================================
-Eigen::MatrixXf kimodo::denoising_step(
-    const Eigen::MatrixXf& motion, const MatrixXb& pad_mask, const Eigen::MatrixXf& text_feat,
-    const MatrixXb& text_pad_mask, std::int64_t t, const std::vector<int64_t>& map_tensor,
-    const std::vector<float>& first_heading_angle, const Eigen::MatrixXf& motion_mask,
-    const Eigen::MatrixXf& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
+MatrixXfRow kimodo::denoising_step(
+    const MatrixXfRow& motion, const MatrixXbRow& pad_mask, const MatrixXfRow& text_feat,
+    const MatrixXbRow& text_pad_mask, std::int64_t t, const std::vector<int64_t>& map_tensor,
+    const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
+    const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
 ) {
   // ---- 获取映射后的时间步（space_timesteps + calc_diffusion_vars 已在 generate_internal 中预计算） ----
   const std::int64_t t_map = map_tensor[static_cast<std::size_t>(t)];
@@ -136,14 +136,14 @@ Eigen::MatrixXf kimodo::denoising_step(
   // Python: pred_clean = self.denoiser(cfg_weight, motion, pad_mask, text_feat,
   //                                      text_pad_mask, t_map, first_heading_angle,
   //                                      motion_mask, observed_motion, cfg_type=cfg_type)
-  Eigen::MatrixXf pred_clean = denoiser_.forward(
+  MatrixXfRow pred_clean = denoiser_.forward(
       cfg_weight, motion, pad_mask, text_feat, text_pad_mask, timesteps_vec, first_heading_angle, motion_mask,
       observed_motion, cfg_type
   );
 
   // ---- DDIM 采样 ----
   // Python: x_tm1 = self.sampler(use_timesteps, motion, pred_clean, t)
-  Eigen::MatrixXf x_tm1 = sampler_.step(motion, pred_clean, t);
+  MatrixXfRow x_tm1 = sampler_.step(motion, pred_clean, t);
 
   return x_tm1;
 }
@@ -151,10 +151,10 @@ Eigen::MatrixXf kimodo::denoising_step(
 // ======================================================================
 // generate_internal: 完整去噪循环（对应 Python _generate）
 // ======================================================================
-Eigen::MatrixXf kimodo::generate_internal(
+MatrixXfRow kimodo::generate_internal(
     const std::vector<std::string>& texts, std::int64_t max_frames, std::int64_t num_denoising_steps,
-    const MatrixXb& pad_mask, const std::vector<float>& first_heading_angle, const Eigen::MatrixXf& motion_mask,
-    const Eigen::MatrixXf& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
+    const MatrixXbRow& pad_mask, const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
+    const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
 ) {
   const Eigen::Index batch_size = pad_mask.rows();
   const std::int64_t D          = motion_rep_->motion_rep_dim();
@@ -172,7 +172,7 @@ Eigen::MatrixXf kimodo::generate_internal(
   // ---- Step 2: motion_mask 类型转换（bool → float） ----
   // Python: if motion_mask is not None:
   //            if motion_mask.dtype == torch.bool: motion_mask = 1 * motion_mask
-  Eigen::MatrixXf motion_mask_f;
+  MatrixXfRow motion_mask_f;
   if (motion_mask.size() > 0) {
     motion_mask_f = motion_mask;
   }
@@ -183,7 +183,7 @@ Eigen::MatrixXf kimodo::generate_internal(
   std::mt19937 gen(rd());
   std::normal_distribution<float> dist(0.0f, 1.0f);
 
-  Eigen::MatrixXf cur_mot(total, D);
+  MatrixXfRow cur_mot(total, D);
   for (Eigen::Index i = 0; i < cur_mot.size(); ++i) {
     cur_mot(i) = dist(gen);
   }
@@ -215,8 +215,8 @@ Eigen::MatrixXf kimodo::generate_internal(
 std::vector<motion_output> kimodo::generate(
     const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
     std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight,
-    const std::vector<float>& first_heading_angle, const Eigen::MatrixXf& motion_mask,
-    const Eigen::MatrixXf& observed_motion, const std::string& cfg_type
+    const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
+    const MatrixXfRow& observed_motion, const std::string& cfg_type
 ) {
   DOODLE_CHICK(is_valid(), "kimodo 未加载或加载失败");
   DOODLE_CHICK(!prompts.empty(), "prompts 不能为空");
@@ -236,7 +236,7 @@ std::vector<motion_output> kimodo::generate(
   for (Eigen::Index b = 0; b < B; ++b) {
     lengths_vec(b) = static_cast<int>(num_frames[static_cast<std::size_t>(b)]);
   }
-  MatrixXb pad_mask = length_to_mask(lengths_vec, max_frames);
+  MatrixXbRow pad_mask = length_to_mask(lengths_vec, max_frames);
 
   // ---- Step 2: 处理 first_heading_angle ----
   // Python:
@@ -264,7 +264,7 @@ std::vector<motion_output> kimodo::generate(
   // motion_mask 和 observed_motion 可能由调用方提供（外部约束）
   // 注意：外部传入的 motion_mask 应是 [B*T, D] 形状
   // 如果为空，由 generate_internal 内部处理（twostage_denoiser 会用全零）
-  Eigen::MatrixXf motion          = generate_internal(
+  MatrixXfRow motion          = generate_internal(
       prompts, max_frames, num_denoising_steps, pad_mask, heading, motion_mask, observed_motion, cfg_weight,
       actual_cfg_type
   );

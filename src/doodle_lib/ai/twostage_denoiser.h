@@ -3,11 +3,11 @@
 //
 #pragma once
 
+#include <doodle_lib/ai/fwd.h>
+#include <doodle_lib/ai/motion_rep/motion_rep_base.h>
+#include <doodle_lib/ai/transformer_encoder_block.h>
 #include <doodle_lib/core/global_function.h>
 
-#include "fwd.h"
-#include "motion_rep/motion_rep_base.h"
-#include "transformer_encoder_block.h"
 #include <Eigen/Dense>
 #include <cstdint>
 #include <memory>

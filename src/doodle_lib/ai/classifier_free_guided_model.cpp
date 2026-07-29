@@ -31,11 +31,11 @@ std::vector<T> repeat_vector(const std::vector<T>& vec, std::size_t n) {
 }
 }  // namespace
 
-Eigen::MatrixXf classifier_free_guided_model::forward(
-    const std::vector<float>& cfg_weight, const Eigen::MatrixXf& x, const MatrixXb& x_pad_mask,
-    const Eigen::MatrixXf& text_feat, const MatrixXb& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
-    const std::vector<float>& first_heading_angle, const Eigen::MatrixXf& motion_mask,
-    const Eigen::MatrixXf& observed_motion, const std::string& cfg_type
+MatrixXfRow classifier_free_guided_model::forward(
+    const std::vector<float>& cfg_weight, const MatrixXfRow& x, const MatrixXbRow& x_pad_mask,
+    const MatrixXfRow& text_feat, const MatrixXbRow& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
+    const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
+    const MatrixXfRow& observed_motion, const std::string& cfg_type
 ) {
   const auto& actual_cfg_type = cfg_type.empty() ? cfg_type_default_ : cfg_type;
   DOODLE_CHICK(is_valid(), "classifier_free_guided_model 未初始化，请先调用 load()");
@@ -63,23 +63,23 @@ Eigen::MatrixXf classifier_free_guided_model::forward(
     const float w = cfg_weight[0];
 
     // --- x: [2*B*T, input_dim] ---
-    Eigen::MatrixXf x_cat(total_frames * 2, x.cols());
+    MatrixXfRow x_cat(total_frames * 2, x.cols());
     x_cat.topRows(total_frames)    = x;
     x_cat.bottomRows(total_frames) = x;
 
     // --- x_pad_mask: [2*B, T] ---
-    MatrixXb x_pad_mask_cat(batch_size * 2, time_steps);
+    MatrixXbRow x_pad_mask_cat(batch_size * 2, time_steps);
     x_pad_mask_cat.topRows(batch_size)    = x_pad_mask;
     x_pad_mask_cat.bottomRows(batch_size) = x_pad_mask;
 
     // --- text_feat: 条件 = 原文，无条件 = 零 ---
     const Eigen::Index text_total         = text_feat.rows();
-    Eigen::MatrixXf text_feat_cat(text_total * 2, llm_dim);
+    MatrixXfRow text_feat_cat(text_total * 2, llm_dim);
     text_feat_cat.topRows(text_total) = text_feat;
     text_feat_cat.bottomRows(text_total).setZero();
 
     // --- text_feat_pad_mask: 条件 = 原文，无条件 = false ---
-    MatrixXb text_pad_cat(batch_size * 2, text_token_cnt);
+    MatrixXbRow text_pad_cat(batch_size * 2, text_token_cnt);
     text_pad_cat.topRows(batch_size) = text_feat_pad_mask;
     text_pad_cat.bottomRows(batch_size).setConstant(false);
 
@@ -91,8 +91,8 @@ Eigen::MatrixXf classifier_free_guided_model::forward(
 
     // --- motion_mask: 条件 = 原文，无条件 = 零 ---
     // --- observed_motion: 两份都是原文 ---
-    Eigen::MatrixXf motion_mask_cat;
-    Eigen::MatrixXf observed_motion_cat;
+    MatrixXfRow motion_mask_cat;
+    MatrixXfRow observed_motion_cat;
     const bool has_motion_mask = motion_mask.size() > 0;
     if (has_motion_mask) {
       motion_mask_cat.resize(total_frames * 2, motion_mask.cols());
@@ -107,7 +107,7 @@ Eigen::MatrixXf classifier_free_guided_model::forward(
     // --- 一次 batch forward ---
     const auto out_cond_uncond = model_.forward(
         x_cat, x_pad_mask_cat, text_feat_cat, text_pad_cat, timesteps_cat, heading_cat,
-        has_motion_mask ? motion_mask_cat : Eigen::MatrixXf{}, has_motion_mask ? observed_motion_cat : Eigen::MatrixXf{}
+        has_motion_mask ? motion_mask_cat : MatrixXfRow{}, has_motion_mask ? observed_motion_cat : MatrixXfRow{}
     );
 
     DOODLE_CHICK(
@@ -133,26 +133,26 @@ Eigen::MatrixXf classifier_free_guided_model::forward(
     const float w_constraint = cfg_weight[1];
 
     // --- x: [3*B*T, input_dim] ---
-    Eigen::MatrixXf x_cat(total_frames * 3, x.cols());
+    MatrixXfRow x_cat(total_frames * 3, x.cols());
     x_cat.topRows(total_frames)                  = x;
     x_cat.middleRows(total_frames, total_frames) = x;
     x_cat.bottomRows(total_frames)               = x;
 
     // --- x_pad_mask: [3*B, T] ---
-    MatrixXb x_pad_mask_cat(batch_size * 3, time_steps);
+    MatrixXbRow x_pad_mask_cat(batch_size * 3, time_steps);
     x_pad_mask_cat.topRows(batch_size)                = x_pad_mask;
     x_pad_mask_cat.middleRows(batch_size, batch_size) = x_pad_mask;
     x_pad_mask_cat.bottomRows(batch_size)             = x_pad_mask;
 
     // --- text_feat: copy0=原文(text), copy1=零(constraint), copy2=零(uncond) ---
     const Eigen::Index text_total                     = text_feat.rows();
-    Eigen::MatrixXf text_feat_cat(text_total * 3, llm_dim);
+    MatrixXfRow text_feat_cat(text_total * 3, llm_dim);
     text_feat_cat.topRows(text_total) = text_feat;
     text_feat_cat.middleRows(text_total, text_total).setZero();
     text_feat_cat.bottomRows(text_total).setZero();
 
     // --- text_feat_pad_mask: copy0=原文, copy1=false, copy2=false ---
-    MatrixXb text_pad_cat(batch_size * 3, text_token_cnt);
+    MatrixXbRow text_pad_cat(batch_size * 3, text_token_cnt);
     text_pad_cat.topRows(batch_size) = text_feat_pad_mask;
     text_pad_cat.middleRows(batch_size, batch_size).setConstant(false);
     text_pad_cat.bottomRows(batch_size).setConstant(false);
@@ -165,8 +165,8 @@ Eigen::MatrixXf classifier_free_guided_model::forward(
 
     // --- motion_mask: copy0=零, copy1=原文(constraint), copy2=零 ---
     // --- observed_motion: 三份都是原文 ---
-    Eigen::MatrixXf motion_mask_cat;
-    Eigen::MatrixXf observed_motion_cat;
+    MatrixXfRow motion_mask_cat;
+    MatrixXfRow observed_motion_cat;
     const bool has_motion_mask = motion_mask.size() > 0;
     if (has_motion_mask) {
       motion_mask_cat.resize(total_frames * 3, motion_mask.cols());
@@ -183,7 +183,7 @@ Eigen::MatrixXf classifier_free_guided_model::forward(
     // --- 一次 batch forward ---
     const auto out_cond_uncond = model_.forward(
         x_cat, x_pad_mask_cat, text_feat_cat, text_pad_cat, timesteps_cat, heading_cat,
-        has_motion_mask ? motion_mask_cat : Eigen::MatrixXf{}, has_motion_mask ? observed_motion_cat : Eigen::MatrixXf{}
+        has_motion_mask ? motion_mask_cat : MatrixXfRow{}, has_motion_mask ? observed_motion_cat : MatrixXfRow{}
     );
 
     DOODLE_CHICK(

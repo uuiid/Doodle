@@ -17,13 +17,13 @@ namespace doodle::ai {
 // 辅助函数：计算全局朝向 (cos, sin) 用于约束初始化
 // ======================================================================
 namespace detail {
-Eigen::MatrixXf compute_global_heading_from_positions(
-    const Eigen::MatrixXf& global_joints_positions, const skeleton_base& skeleton
+MatrixXfRow compute_global_heading_from_positions(
+    const MatrixXfRow& global_joints_positions, const skeleton_base& skeleton
 ) {
   const Eigen::Index K                = global_joints_positions.rows();
-  const Eigen::MatrixXf heading_angle = compute_heading_angle(global_joints_positions, skeleton, 1, K);
+  const MatrixXfRow heading_angle = compute_heading_angle(global_joints_positions, skeleton, 1, K);
   // heading_angle: [1, K]
-  Eigen::MatrixXf heading(K, 2);
+  MatrixXfRow heading(K, 2);
   for (Eigen::Index i = 0; i < K; ++i) {
     heading(i, 0) = std::cos(heading_angle(0, i));
     heading(i, 1) = std::sin(heading_angle(0, i));
@@ -77,8 +77,8 @@ constraint_set_var make_constraint_from_type(
 // ======================================================================
 
 root2d_constraint_set::root2d_constraint_set(
-    std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf smooth_root_2d,
-    Eigen::MatrixXf global_root_heading
+    std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixXfRow smooth_root_2d,
+    MatrixXfRow global_root_heading
 )
     : skeleton_(std::move(skeleton)),
       frame_indices_(std::move(frame_indices)),
@@ -104,7 +104,7 @@ root2d_constraint_set::root2d_constraint_set(
 }
 
 void root2d_constraint_set::update_constraints(
-    std::unordered_map<std::string, std::vector<Eigen::MatrixXf>>& data_dict,
+    std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict,
     std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict
 ) const {
   data_dict["smooth_root_2d"].push_back(smooth_root_2d_);
@@ -130,8 +130,8 @@ root2d_constraint_set root2d_constraint_set::crop_move(std::int64_t start, std::
 
   const Eigen::Index new_K = static_cast<Eigen::Index>(mask_indices.size());
   Eigen::VectorXi new_frame_indices(new_K);
-  Eigen::MatrixXf new_smooth_root_2d(new_K, 2);
-  Eigen::MatrixXf new_global_root_heading;
+  MatrixXfRow new_smooth_root_2d(new_K, 2);
+  MatrixXfRow new_global_root_heading;
 
   for (Eigen::Index i = 0; i < new_K; ++i) {
     const Eigen::Index src    = mask_indices[static_cast<std::size_t>(i)];
@@ -159,8 +159,8 @@ root2d_constraint_set root2d_constraint_set::from_dict(
   Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
 
   // smooth_root_2d: 可能为 [K, 2] 或 [K, 3]（3D 时取前两列）
-  Eigen::MatrixXf raw_smooth    = json_to_eigen_matrix<float>(dico.at("smooth_root_2d"));
-  Eigen::MatrixXf smooth_root_2d;
+  MatrixXfRow raw_smooth    = json_to_eigen_matrix<float>(dico.at("smooth_root_2d"));
+  MatrixXfRow smooth_root_2d;
   if (raw_smooth.cols() == 3) {
     smooth_root_2d.resize(raw_smooth.rows(), 2);
     smooth_root_2d.col(0) = raw_smooth.col(0);
@@ -169,7 +169,7 @@ root2d_constraint_set root2d_constraint_set::from_dict(
     smooth_root_2d = std::move(raw_smooth);
   }
 
-  Eigen::MatrixXf global_root_heading;
+  MatrixXfRow global_root_heading;
   if (dico.contains("global_root_heading")) {
     global_root_heading = json_to_eigen_matrix<float>(dico.at("global_root_heading"));
   }
@@ -184,8 +184,8 @@ root2d_constraint_set root2d_constraint_set::from_dict(
 // ======================================================================
 
 fullbody_constraint_set::fullbody_constraint_set(
-    std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
-    Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d
+    std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixXfRow global_joints_positions,
+    MatrixXfRow global_joints_rots, MatrixXfRow smooth_root_2d
 )
     : skeleton_(std::move(skeleton)),
       frame_indices_(std::move(frame_indices)),
@@ -238,7 +238,7 @@ fullbody_constraint_set::fullbody_constraint_set(
 }
 
 void fullbody_constraint_set::update_constraints(
-    std::unordered_map<std::string, std::vector<Eigen::MatrixXf>>& data_dict,
+    std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict,
     std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict
 ) const {
   const std::int64_t J = skeleton_->nbjoints_;
@@ -278,9 +278,9 @@ fullbody_constraint_set fullbody_constraint_set::crop_move(std::int64_t start, s
 
   const Eigen::Index new_K = static_cast<Eigen::Index>(mask_indices.size());
   Eigen::VectorXi new_frame_indices(new_K);
-  Eigen::MatrixXf new_positions(new_K, global_joints_positions_.cols());
-  Eigen::MatrixXf new_rots(new_K, global_joints_rots_.cols());
-  Eigen::MatrixXf new_smooth(new_K, 2);
+  MatrixXfRow new_positions(new_K, global_joints_positions_.cols());
+  MatrixXfRow new_rots(new_K, global_joints_rots_.cols());
+  MatrixXfRow new_smooth(new_K, 2);
 
   for (Eigen::Index i = 0; i < new_K; ++i) {
     const Eigen::Index src = mask_indices[static_cast<std::size_t>(i)];
@@ -306,9 +306,9 @@ fullbody_constraint_set fullbody_constraint_set::from_dict(
 
   // 加载局部旋转（轴角）: JSON 可能是 [K, J, 3] 3D 或 [K*J, 3] 2D 格式
   // json_to_eigen_matrix 统一 flatten 为 [K*J, 3]
-  Eigen::MatrixXf local_rot_aa   = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
+  MatrixXfRow local_rot_aa   = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
   // [K*J, 3] → axis_angle → [K*J, 9]
-  Eigen::MatrixXf local_rot_flat = axis_angle_to_matrix(local_rot_aa);
+  MatrixXfRow local_rot_flat = axis_angle_to_matrix(local_rot_aa);
 
   // reshape [K*J, 9] → [K, J*9] 用于 FK
   const std::int64_t J           = skeleton->nbjoints_;
@@ -316,14 +316,14 @@ fullbody_constraint_set fullbody_constraint_set::from_dict(
   const Eigen::Index K           = total_rows / J;
   DOODLE_CHICK(total_rows == K * J, "fullbody: local_joints_rot 行数 {} 不是 J={} 的整数倍", total_rows, J);
 
-  Eigen::MatrixXf local_rot_mats(K, J * 9);
+  MatrixXfRow local_rot_mats(K, J * 9);
   for (Eigen::Index i = 0; i < K; ++i) {
     for (std::int64_t j = 0; j < J; ++j) {
       local_rot_mats.block(i, j * 9, 1, 9) = local_rot_flat.row(i * J + j);
     }
   }
 
-  Eigen::MatrixXf root_positions = json_to_eigen_matrix<float>(dico.at("root_positions"));
+  MatrixXfRow root_positions = json_to_eigen_matrix<float>(dico.at("root_positions"));
   DOODLE_CHICK(
       root_positions.rows() == K, "fullbody: root_positions 行数 {} 与帧数 K={} 不匹配", root_positions.rows(), K
   );
@@ -331,7 +331,7 @@ fullbody_constraint_set fullbody_constraint_set::from_dict(
   // FK: 得到全局旋转和关节位置
   auto fk_result = skeleton->fk(local_rot_mats, root_positions);
 
-  Eigen::MatrixXf smooth_root_2d;
+  MatrixXfRow smooth_root_2d;
   if (dico.contains("smooth_root_2d")) {
     smooth_root_2d = json_to_eigen_matrix<float>(dico.at("smooth_root_2d"));
   }
@@ -347,8 +347,8 @@ fullbody_constraint_set fullbody_constraint_set::from_dict(
 // ======================================================================
 
 end_effector_constraint_set::end_effector_constraint_set(
-    std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
-    Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d, std::vector<std::string> joint_names
+    std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixXfRow global_joints_positions,
+    MatrixXfRow global_joints_rots, MatrixXfRow smooth_root_2d, std::vector<std::string> joint_names
 )
     : skeleton_(std::move(skeleton)),
       frame_indices_(std::move(frame_indices)),
@@ -407,7 +407,7 @@ end_effector_constraint_set::end_effector_constraint_set(
 }
 
 void end_effector_constraint_set::update_constraints(
-    std::unordered_map<std::string, std::vector<Eigen::MatrixXf>>& data_dict,
+    std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict,
     std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict
 ) const {
   const Eigen::Index K     = frame_indices_.size();
@@ -457,9 +457,9 @@ end_effector_constraint_set end_effector_constraint_set::crop_move(std::int64_t 
 
   const Eigen::Index new_K = static_cast<Eigen::Index>(mask_indices.size());
   Eigen::VectorXi new_frame_indices(new_K);
-  Eigen::MatrixXf new_positions(new_K, global_joints_positions_.cols());
-  Eigen::MatrixXf new_rots(new_K, global_joints_rots_.cols());
-  Eigen::MatrixXf new_smooth(new_K, 2);
+  MatrixXfRow new_positions(new_K, global_joints_positions_.cols());
+  MatrixXfRow new_rots(new_K, global_joints_rots_.cols());
+  MatrixXfRow new_smooth(new_K, 2);
 
   for (Eigen::Index i = 0; i < new_K; ++i) {
     const Eigen::Index src = mask_indices[static_cast<std::size_t>(i)];
@@ -484,9 +484,9 @@ end_effector_constraint_set end_effector_constraint_set::from_dict(
   Eigen::VectorXi frame_indices  = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
 
   // 加载局部旋转（轴角）: JSON 可能是 [K, J, 3] 3D 或 [K*J, 3] 2D 格式
-  Eigen::MatrixXf local_rot_aa   = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
+  MatrixXfRow local_rot_aa   = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
   // [K*J, 3] → axis_angle → [K*J, 9]
-  Eigen::MatrixXf local_rot_flat = axis_angle_to_matrix(local_rot_aa);
+  MatrixXfRow local_rot_flat = axis_angle_to_matrix(local_rot_aa);
 
   // reshape [K*J, 9] → [K, J*9] 用于 FK
   const std::int64_t J           = skeleton->nbjoints_;
@@ -494,14 +494,14 @@ end_effector_constraint_set end_effector_constraint_set::from_dict(
   const Eigen::Index K           = total_rows / J;
   DOODLE_CHICK(total_rows == K * J, "end_effector: local_joints_rot 行数 {} 不是 J={} 的整数倍", total_rows, J);
 
-  Eigen::MatrixXf local_rot_mats(K, J * 9);
+  MatrixXfRow local_rot_mats(K, J * 9);
   for (Eigen::Index i = 0; i < K; ++i) {
     for (std::int64_t j = 0; j < J; ++j) {
       local_rot_mats.block(i, j * 9, 1, 9) = local_rot_flat.row(i * J + j);
     }
   }
 
-  Eigen::MatrixXf root_positions = json_to_eigen_matrix<float>(dico.at("root_positions"));
+  MatrixXfRow root_positions = json_to_eigen_matrix<float>(dico.at("root_positions"));
   DOODLE_CHICK(
       root_positions.rows() == K, "end_effector: root_positions 行数 {} 与帧数 K={} 不匹配", root_positions.rows(), K
   );
@@ -509,7 +509,7 @@ end_effector_constraint_set end_effector_constraint_set::from_dict(
   // FK
   auto fk_result = skeleton->fk(local_rot_mats, root_positions);
 
-  Eigen::MatrixXf smooth_root_2d;
+  MatrixXfRow smooth_root_2d;
   if (dico.contains("smooth_root_2d")) {
     smooth_root_2d = json_to_eigen_matrix<float>(dico.at("smooth_root_2d"));
   }

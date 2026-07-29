@@ -2,6 +2,7 @@
 // Created by TD on 25-7-21.
 //
 #pragma once
+#include <doodle_lib/ai/fwd.h>
 #include <doodle_lib/ai/motion_rep/motion_rep_base.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
@@ -10,6 +11,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 
 namespace doodle::ai {
 
@@ -21,13 +23,13 @@ struct kimodo_model_config;
 
 /// @brief KimodoMotionRep 解码输出结构
 struct motion_output {
-  Eigen::MatrixXf local_rot_mats;                                     ///< [B*T, J*9] 局部旋转矩阵
-  Eigen::MatrixXf global_rot_mats;                                    ///< [B*T, J*9] 全局旋转矩阵
-  Eigen::MatrixXf posed_joints;                                       ///< [B*T, J*3] 全局关节位置
-  Eigen::MatrixXf root_positions;                                     ///< [B*T, 3] 根节点位置
-  Eigen::MatrixXf smooth_root_pos;                                    ///< [B*T, 3] 平滑根位置
+  MatrixXfRow local_rot_mats;                                         ///< [B*T, J*9] 局部旋转矩阵
+  MatrixXfRow global_rot_mats;                                        ///< [B*T, J*9] 全局旋转矩阵
+  MatrixXfRow posed_joints;                                           ///< [B*T, J*3] 全局关节位置
+  MatrixXfRow root_positions;                                         ///< [B*T, 3] 根节点位置
+  MatrixXfRow smooth_root_pos;                                        ///< [B*T, 3] 平滑根位置
   Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> foot_contacts;  ///< [B*T, 4] 脚接触标签
-  Eigen::MatrixXf global_root_heading;                                ///< [B*T, 2] 全局根朝向 (cos, sin)
+  MatrixXfRow global_root_heading;                                    ///< [B*T, 2] 全局根朝向 (cos, sin)
 
   [[nodiscard]] bool is_valid() const { return local_rot_mats.size() > 0; }
 };
@@ -68,8 +70,8 @@ class kimodo_motion_rep : public motion_rep_base {
   /// @param time_steps T
   /// @param lengths [B] 各样本有效帧数（可选）
   /// @return [B*T, motion_rep_dim] 运动特征
-  Eigen::MatrixXf encode(
-      const Eigen::MatrixXf& local_joint_rots, const Eigen::MatrixXf& root_positions, bool to_normalize,
+  MatrixXfRow encode(
+      const MatrixXfRow& local_joint_rots, const MatrixXfRow& root_positions, bool to_normalize,
       std::int64_t batch_size, std::int64_t time_steps, const Eigen::VectorXi& lengths = {}
   ) const;
 
@@ -84,7 +86,7 @@ class kimodo_motion_rep : public motion_rep_base {
   /// @param time_steps T
   /// @return motion_output 结构
   motion_output decode(
-      const Eigen::MatrixXf& features, bool is_normalized, std::int64_t batch_size, std::int64_t time_steps
+      const MatrixXfRow& features, bool is_normalized, std::int64_t batch_size, std::int64_t time_steps
   ) const;
 
   // ======================================================================
@@ -92,14 +94,13 @@ class kimodo_motion_rep : public motion_rep_base {
   // ======================================================================
 
   /// @brief 旋转特征（对应 Python rotate）
-  Eigen::MatrixXf rotate(
-      const Eigen::MatrixXf& features, const Eigen::VectorXf& angle, std::int64_t batch_size, std::int64_t time_steps
+  MatrixXfRow rotate(
+      const MatrixXfRow& features, const Eigen::VectorXf& angle, std::int64_t batch_size, std::int64_t time_steps
   ) const override;
 
   /// @brief 平移 2D（对应 Python translate_2d）
-  Eigen::MatrixXf translate_2d(
-      const Eigen::MatrixXf& features, const Eigen::MatrixXf& translation_2d, std::int64_t batch_size,
-      std::int64_t time_steps
+  MatrixXfRow translate_2d(
+      const MatrixXfRow& features, const MatrixXfRow& translation_2d, std::int64_t batch_size, std::int64_t time_steps
   ) const override;
 
   // ======================================================================
@@ -116,13 +117,12 @@ class kimodo_motion_rep : public motion_rep_base {
   /// @param to_normalize 是否标准化
   /// @return (observed_motion [T, D], motion_mask [T, D])
   struct condition_result {
-    Eigen::MatrixXf observed_motion;                                  ///< [T, D] 观测运动
+    MatrixXfRow observed_motion;                                      ///< [T, D] 观测运动
     Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> motion_mask;  ///< [T, D] 运动掩码
   };
   condition_result create_conditions(
-      const std::unordered_map<std::string, std::vector<Eigen::MatrixXf>>& index_dict,
-      const std::unordered_map<std::string, std::vector<Eigen::MatrixXf>>& data_dict, std::int64_t length,
-      bool to_normalize
+      const std::unordered_map<std::string, std::vector<MatrixXfRow>>& index_dict,
+      const std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict, std::int64_t length, bool to_normalize
   ) const;
 
   /// @brief 批量创建条件（对应 Python create_conditions_from_constraints_batched）
@@ -131,11 +131,11 @@ class kimodo_motion_rep : public motion_rep_base {
   /// @param to_normalize 是否标准化
   /// @return (observed_motion [B*T, D], motion_mask [B*T, D])
   struct batched_condition_result {
-    Eigen::MatrixXf observed_motion;                                  ///< [B*T, D]
+    MatrixXfRow observed_motion;                                      ///< [B*T, D]
     Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> motion_mask;  ///< [B*T, D]
   };
   batched_condition_result create_conditions_from_constraints_batched(
-      const std::vector<std::vector<std::pair<std::string, std::vector<Eigen::MatrixXf>>>>& constraints_lst,
+      const std::vector<std::vector<std::pair<std::string, std::vector<MatrixXfRow>>>>& constraints_lst,
       const Eigen::VectorXi& lengths, bool to_normalize
   ) const;
 };

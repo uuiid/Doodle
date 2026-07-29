@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include <doodle_lib/ai/fwd.h>
 #include <doodle_lib/ai/linear_layer.h>
 #include <doodle_lib/ai/positional_encoding.h>
 #include <doodle_lib/ai/timestep_embedder.h>
@@ -16,13 +17,9 @@
 #include <string>
 #include <vector>
 
-
 namespace doodle::ai {
 
 struct kimodo_model_config;
-
-// Eigen 没有 MatrixX<bool> 的预定义 typedef
-using MatrixXb = Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic>;
 
 /// @brief Transformer 编码器主干（对应 Python TransformerEncoderBlock）
 ///
@@ -83,8 +80,8 @@ class transformer_encoder_block {
   /// @param first_heading_angle [B] 初始朝向角（可选，弧度）
   /// @return [B, T, output_dim] 去噪后的运动（平坦化为 [B*T, output_dim]）
   MatrixXfRow forward(
-      const MatrixXfRow& x, const MatrixXb& x_pad_mask, const MatrixXfRow& text_feat,
-      const MatrixXb& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
+      const MatrixXfRow& x, const MatrixXbRow& x_pad_mask, const MatrixXfRow& text_feat,
+      const MatrixXbRow& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
       const std::vector<float>& first_heading_angle = {}
   );
 };

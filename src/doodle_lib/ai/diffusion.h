@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include <doodle_lib/ai/fwd.h>
 #include <doodle_lib/core/global_function.h>
 
 #include <Eigen/Dense>
@@ -75,7 +76,7 @@ class diffusion {
   /// @param t 时间步索引
   /// @param noise [N, D] 噪声（可选，为空时自动生成标准正态噪声）
   /// @return [N, D] 加噪后的运动
-  Eigen::MatrixXf q_sample(const Eigen::MatrixXf& x_start, std::int64_t t, const Eigen::MatrixXf& noise = {}) const;
+  MatrixXfRow q_sample(const MatrixXfRow& x_start, std::int64_t t, const MatrixXfRow& noise = {}) const;
 
   // ======================================================================
   // 访问器（供 ddim_sampler 使用）
@@ -125,7 +126,7 @@ class ddim_sampler {
   /// @param pred_xstart [B*T, D] 模型预测的干净运动
   /// @param t 当前步索引（所有 batch 元素相同）
   /// @return [B*T, D] t-1 步的运动
-  Eigen::MatrixXf step(const Eigen::MatrixXf& x_t, const Eigen::MatrixXf& pred_xstart, std::int64_t t) const;
+  MatrixXfRow step(const MatrixXfRow& x_t, const MatrixXfRow& pred_xstart, std::int64_t t) const;
 
   [[nodiscard]] bool is_valid() const { return diffusion_ != nullptr && diffusion_->is_valid(); }
 };

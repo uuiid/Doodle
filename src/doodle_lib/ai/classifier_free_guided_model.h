@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include <doodle_lib/ai/fwd.h>
 #include <doodle_lib/ai/motion_rep/motion_rep_base.h>
 #include <doodle_lib/ai/twostage_denoiser.h>
 #include <doodle_lib/core/global_function.h>
@@ -12,6 +13,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+
 
 namespace doodle::ai {
 
@@ -63,11 +65,11 @@ class classifier_free_guided_model {
   /// @param observed_motion [B*T, input_dim] 观测运动（可选）
   /// @param cfg_type CFG 类型；为空时使用 cfg_type_default_
   /// @return [B*T, input_dim] 去噪后的运动（平坦化）
-  Eigen::MatrixXf forward(
-      const std::vector<float>& cfg_weight, const Eigen::MatrixXf& x, const MatrixXb& x_pad_mask,
-      const Eigen::MatrixXf& text_feat, const MatrixXb& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
-      const std::vector<float>& first_heading_angle = {}, const Eigen::MatrixXf& motion_mask = {},
-      const Eigen::MatrixXf& observed_motion = {}, const std::string& cfg_type = ""
+  MatrixXfRow forward(
+      const std::vector<float>& cfg_weight, const MatrixXfRow& x, const MatrixXbRow& x_pad_mask,
+      const MatrixXfRow& text_feat, const MatrixXbRow& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
+      const std::vector<float>& first_heading_angle = {}, const MatrixXfRow& motion_mask = {},
+      const MatrixXfRow& observed_motion = {}, const std::string& cfg_type = ""
   );
 
   [[nodiscard]] bool is_valid() const { return model_.is_valid(); }

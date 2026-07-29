@@ -56,8 +56,8 @@ kimodo_motion_rep::kimodo_motion_rep(std::shared_ptr<skeleton_base> skel, std::s
 // ======================================================================
 // encode: 局部旋转 + 根位置 → 平滑根特征
 // ======================================================================
-Eigen::MatrixXf kimodo_motion_rep::encode(
-    const Eigen::MatrixXf& local_joint_rots, const Eigen::MatrixXf& root_positions, bool to_normalize,
+MatrixXfRow kimodo_motion_rep::encode(
+    const MatrixXfRow& local_joint_rots, const MatrixXfRow& root_positions, bool to_normalize,
     std::int64_t batch_size, std::int64_t time_steps, const Eigen::VectorXi& lengths
 ) const {
   const Eigen::Index total = local_joint_rots.rows();
@@ -78,10 +78,10 @@ Eigen::MatrixXf kimodo_motion_rep::encode(
   // fk_res.posed_joints_norootpos: [B*T, J*3]
 
   // ---- Step 2: 计算朝向角 ----
-  Eigen::MatrixXf heading_angle = compute_heading_angle(fk_res.posed_joints, *skeleton_, batch_size, time_steps);
+  MatrixXfRow heading_angle = compute_heading_angle(fk_res.posed_joints, *skeleton_, batch_size, time_steps);
 
   // global_root_heading = [cos(angle), sin(angle)]
-  Eigen::MatrixXf global_root_heading(total, 2);
+  MatrixXfRow global_root_heading(total, 2);
   for (Eigen::Index i = 0; i < total; ++i) {
     const Eigen::Index b      = i / time_steps;
     const Eigen::Index t      = i % time_steps;
@@ -90,7 +90,7 @@ Eigen::MatrixXf kimodo_motion_rep::encode(
   }
 
   // ---- Step 3: 平滑根位置 ----
-  Eigen::MatrixXf smooth_root_pos = get_smooth_root_pos(root_positions, batch_size, time_steps);
+  MatrixXfRow smooth_root_pos = get_smooth_root_pos(root_positions, batch_size, time_steps);
 
   // ---- Step 4: 局部关节位置（相对平滑根） ----
   // hips_offset = root_positions - smooth_root_pos
@@ -99,7 +99,7 @@ Eigen::MatrixXf kimodo_motion_rep::encode(
   //   = posed_joints - root_positions + root_positions - smooth_root_pos (但保留Y为root)
   // 简化: local_joints_positions = fk_res.posed_joints - smooth_root_pos (在xz平面)
   //       并保持Y为posed_joints的Y
-  Eigen::MatrixXf local_joints_positions(total, nbjoints_ * 3);
+  MatrixXfRow local_joints_positions(total, nbjoints_ * 3);
   for (Eigen::Index i = 0; i < total; ++i) {
     for (Eigen::Index j = 0; j < nbjoints_; ++j) {
       const float px                       = fk_res.posed_joints(i, j * 3 + 0);
@@ -114,13 +114,13 @@ Eigen::MatrixXf kimodo_motion_rep::encode(
   }
 
   // ---- Step 5: 速度 ----
-  Eigen::MatrixXf velocities =
+  MatrixXfRow velocities =
       compute_vel_xyz(fk_res.posed_joints, fps_, batch_size, time_steps, nbjoints_, actual_lengths);
 
   // ---- Step 6: 脚接触检测 ----
   auto foot_contacts_bool =
       foot_detect_from_pos_and_vel(fk_res.posed_joints, velocities, *skeleton_, batch_size, time_steps);
-  Eigen::MatrixXf foot_contacts(total, 4);
+  MatrixXfRow foot_contacts(total, 4);
   for (Eigen::Index i = 0; i < total; ++i) {
     for (int c = 0; c < 4; ++c) {
       foot_contacts(i, c) = foot_contacts_bool(i, c) ? 1.0f : 0.0f;
@@ -128,10 +128,10 @@ Eigen::MatrixXf kimodo_motion_rep::encode(
   }
 
   // ---- Step 7: 全局旋转转 6D ----
-  Eigen::MatrixXf global_rot_data = matrix_to_cont6d(fk_res.global_rot_mats);
+  MatrixXfRow global_rot_data = matrix_to_cont6d(fk_res.global_rot_mats);
 
   // ---- Step 8: 拼接所有特征 ----
-  Eigen::MatrixXf features(total, motion_rep_dim_);
+  MatrixXfRow features(total, motion_rep_dim_);
 
   // 按 label 顺序拼接
   // smooth_root_pos(3) + global_root_heading(2) + local_joints_positions(J*3)
@@ -176,13 +176,13 @@ Eigen::MatrixXf kimodo_motion_rep::encode(
 // decode: 平滑根特征 → 运动输出
 // ======================================================================
 motion_output kimodo_motion_rep::decode(
-    const Eigen::MatrixXf& features, bool is_normalized, std::int64_t batch_size, std::int64_t time_steps
+    const MatrixXfRow& features, bool is_normalized, std::int64_t batch_size, std::int64_t time_steps
 ) const {
   const Eigen::Index total = features.rows();
   DOODLE_CHICK(total == batch_size * time_steps, "总帧数不匹配");
   DOODLE_CHICK(features.cols() == motion_rep_dim_, "特征维度不匹配");
 
-  Eigen::MatrixXf feats = features;
+  MatrixXfRow feats = features;
   if (is_normalized) {
     feats = unnormalize(feats);
   }
@@ -190,38 +190,38 @@ motion_output kimodo_motion_rep::decode(
   // ---- 拆包 ----
   std::int64_t offset                   = 0;
 
-  const Eigen::MatrixXf smooth_root_pos = feats.middleCols(offset, 3);
+  const MatrixXfRow smooth_root_pos = feats.middleCols(offset, 3);
   offset += 3;
 
-  const Eigen::MatrixXf global_root_heading = feats.middleCols(offset, 2);
+  const MatrixXfRow global_root_heading = feats.middleCols(offset, 2);
   offset += 2;
 
-  const Eigen::MatrixXf local_joints_positions = feats.middleCols(offset, nbjoints_ * 3);
+  const MatrixXfRow local_joints_positions = feats.middleCols(offset, nbjoints_ * 3);
   offset += nbjoints_ * 3;
 
-  const Eigen::MatrixXf global_rot_data = feats.middleCols(offset, nbjoints_ * 6);
+  const MatrixXfRow global_rot_data = feats.middleCols(offset, nbjoints_ * 6);
   offset += nbjoints_ * 6;
 
   // velocities (跳过，解码不使用)
   offset += nbjoints_ * 3;
 
-  const Eigen::MatrixXf foot_contacts_float = feats.middleCols(offset, 4);
+  const MatrixXfRow foot_contacts_float = feats.middleCols(offset, 4);
   offset += 4;
 
   DOODLE_CHICK(offset == motion_rep_dim_, "拆包偏移 {} 不匹配 motion_rep_dim {}", offset, motion_rep_dim_);
 
   // ---- 6D → 3x3 矩阵 ----
-  Eigen::MatrixXf global_rot_mats       = cont6d_to_matrix(global_rot_data);  // [B*T, J*9]
+  MatrixXfRow global_rot_mats       = cont6d_to_matrix(global_rot_data);  // [B*T, J*9]
 
   // ---- 全局旋转 → 局部旋转 ----
-  Eigen::MatrixXf local_rot_mats        = skeleton_->global_rots_to_local_rots(global_rot_mats);
+  MatrixXfRow local_rot_mats        = skeleton_->global_rots_to_local_rots(global_rot_mats);
 
   // ---- 从局部关节位置计算根位置 ----
   // posed_joints_from_pos = local_joints_positions
   // posed_joints_from_pos.x += smooth_root_pos.x
   // posed_joints_from_pos.z += smooth_root_pos.z
   // root_positions = posed_joints_from_pos[..., root_idx, :]
-  Eigen::MatrixXf posed_joints_from_pos = local_joints_positions;
+  MatrixXfRow posed_joints_from_pos = local_joints_positions;
   for (Eigen::Index i = 0; i < total; ++i) {
     for (Eigen::Index j = 0; j < nbjoints_; ++j) {
       posed_joints_from_pos(i, j * 3 + 0) += smooth_root_pos(i, 0);
@@ -229,7 +229,7 @@ motion_output kimodo_motion_rep::decode(
     }
   }
 
-  Eigen::MatrixXf root_positions(total, 3);
+  MatrixXfRow root_positions(total, 3);
   for (Eigen::Index i = 0; i < total; ++i) {
     root_positions(i, 0) = posed_joints_from_pos(i, skeleton_->root_idx_ * 3 + 0);
     root_positions(i, 1) = posed_joints_from_pos(i, skeleton_->root_idx_ * 3 + 1);
@@ -263,8 +263,8 @@ motion_output kimodo_motion_rep::decode(
 // ======================================================================
 // rotate: 按朝向角旋转特征
 // ======================================================================
-Eigen::MatrixXf kimodo_motion_rep::rotate(
-    const Eigen::MatrixXf& features, const Eigen::VectorXf& angle, std::int64_t batch_size, std::int64_t time_steps
+MatrixXfRow kimodo_motion_rep::rotate(
+    const MatrixXfRow& features, const Eigen::VectorXf& angle, std::int64_t batch_size, std::int64_t time_steps
 ) const {
   const Eigen::Index total = features.rows();
   DOODLE_CHICK(total == batch_size * time_steps, "总帧数不匹配");
@@ -279,23 +279,23 @@ Eigen::MatrixXf kimodo_motion_rep::rotate(
   const std::int64_t s5            = nbjoints_ * 3;  // velocities
   const std::int64_t s6            = 4;              // foot_contacts
 
-  Eigen::MatrixXf smooth_root_pos  = features.middleCols(0, s1);
-  Eigen::MatrixXf heading_2d       = features.middleCols(s1, s2);
-  Eigen::MatrixXf local_joints_pos = features.middleCols(s1 + s2, s3);
-  Eigen::MatrixXf global_rot_6d    = features.middleCols(s1 + s2 + s3, s4);
-  Eigen::MatrixXf velocities       = features.middleCols(s1 + s2 + s3 + s4, s5);
+  MatrixXfRow smooth_root_pos  = features.middleCols(0, s1);
+  MatrixXfRow heading_2d       = features.middleCols(s1, s2);
+  MatrixXfRow local_joints_pos = features.middleCols(s1 + s2, s3);
+  MatrixXfRow global_rot_6d    = features.middleCols(s1 + s2 + s3, s4);
+  MatrixXfRow velocities       = features.middleCols(s1 + s2 + s3 + s4, s5);
   // foot_contacts 不旋转
 
   rotate_features rf(angle);
 
-  Eigen::MatrixXf new_smooth_root = rf.rotate_positions(smooth_root_pos, batch_size, time_steps);
-  Eigen::MatrixXf new_heading     = rf.rotate_2d_positions(heading_2d, batch_size, time_steps);
-  Eigen::MatrixXf new_joints      = rf.rotate_positions(local_joints_pos, batch_size, time_steps);
-  Eigen::MatrixXf new_rot_6d      = rf.rotate_6d_rotations(global_rot_6d, batch_size, time_steps, nbjoints_);
-  Eigen::MatrixXf new_vel         = rf.rotate_positions(velocities, batch_size, time_steps);
+  MatrixXfRow new_smooth_root = rf.rotate_positions(smooth_root_pos, batch_size, time_steps);
+  MatrixXfRow new_heading     = rf.rotate_2d_positions(heading_2d, batch_size, time_steps);
+  MatrixXfRow new_joints      = rf.rotate_positions(local_joints_pos, batch_size, time_steps);
+  MatrixXfRow new_rot_6d      = rf.rotate_6d_rotations(global_rot_6d, batch_size, time_steps, nbjoints_);
+  MatrixXfRow new_vel         = rf.rotate_positions(velocities, batch_size, time_steps);
 
   // 拼接
-  Eigen::MatrixXf result(total, motion_rep_dim_);
+  MatrixXfRow result(total, motion_rep_dim_);
   std::int64_t offset           = 0;
   result.middleCols(offset, s1) = new_smooth_root;
   offset += s1;
@@ -315,8 +315,8 @@ Eigen::MatrixXf kimodo_motion_rep::rotate(
 // ======================================================================
 // translate_2d: 平移 XZ 平面
 // ======================================================================
-Eigen::MatrixXf kimodo_motion_rep::translate_2d(
-    const Eigen::MatrixXf& features, const Eigen::MatrixXf& translation_2d, std::int64_t batch_size,
+MatrixXfRow kimodo_motion_rep::translate_2d(
+    const MatrixXfRow& features, const MatrixXfRow& translation_2d, std::int64_t batch_size,
     std::int64_t time_steps
 ) const {
   const Eigen::Index total = features.rows();
@@ -325,7 +325,7 @@ Eigen::MatrixXf kimodo_motion_rep::translate_2d(
   DOODLE_CHICK(translation_2d.rows() == batch_size, "平移行数不匹配");
   DOODLE_CHICK(translation_2d.cols() == 2, "平移列数 != 2");
 
-  Eigen::MatrixXf result = features;
+  MatrixXfRow result = features;
 
   // smooth_root_pos 在列 [0, 3)
   for (Eigen::Index b = 0; b < batch_size; ++b) {
@@ -346,14 +346,14 @@ Eigen::MatrixXf kimodo_motion_rep::translate_2d(
 // create_conditions: 从约束构建条件和掩码
 // ======================================================================
 kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
-    const std::unordered_map<std::string, std::vector<Eigen::MatrixXf>>& index_dict,
-    const std::unordered_map<std::string, std::vector<Eigen::MatrixXf>>& data_dict, std::int64_t length,
+    const std::unordered_map<std::string, std::vector<MatrixXfRow>>& index_dict,
+    const std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict, std::int64_t length,
     bool to_normalize
 ) const {
   const std::int64_t D = motion_rep_dim_;
 
   condition_result result;
-  result.observed_motion = Eigen::MatrixXf::Zero(length, D);
+  result.observed_motion = MatrixXfRow::Zero(length, D);
   result.motion_mask     = Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic>::Zero(length, D);
 
   // 处理 smooth_root_2d 约束
@@ -525,7 +525,7 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
 // create_conditions_from_constraints_batched: 批量创建条件
 // ======================================================================
 kimodo_motion_rep::batched_condition_result kimodo_motion_rep::create_conditions_from_constraints_batched(
-    const std::vector<std::vector<std::pair<std::string, std::vector<Eigen::MatrixXf>>>>& constraints_lst,
+    const std::vector<std::vector<std::pair<std::string, std::vector<MatrixXfRow>>>>& constraints_lst,
     const Eigen::VectorXi& lengths, bool to_normalize
 ) const {
   const Eigen::Index B       = lengths.size();
@@ -533,7 +533,7 @@ kimodo_motion_rep::batched_condition_result kimodo_motion_rep::create_conditions
   const std::int64_t D       = motion_rep_dim_;
 
   batched_condition_result result;
-  result.observed_motion = Eigen::MatrixXf::Zero(B * max_len, D);
+  result.observed_motion = MatrixXfRow::Zero(B * max_len, D);
   result.motion_mask     = Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic>::Zero(B * max_len, D);
 
   if (constraints_lst.empty()) {

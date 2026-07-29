@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include <doodle_lib/ai/fwd.h>
 #include <doodle_lib/ai/skeleton/skeleton_base.h>
 #include <doodle_lib/core/global_function.h>
 
@@ -14,6 +15,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+
 
 namespace doodle::ai {
 
@@ -110,9 +112,9 @@ class root2d_constraint_set {
   static constexpr const char* name = "root2d";
 
   std::shared_ptr<skeleton_base> skeleton_;
-  Eigen::VectorXi frame_indices_;        ///< [K] 约束帧索引
-  Eigen::MatrixXf smooth_root_2d_;       ///< [K, 2] 平滑根位置 (x, z)
-  Eigen::MatrixXf global_root_heading_;  ///< [K, 2] 可选全局朝向 (cos, sin)，为空表示不约束
+  Eigen::VectorXi frame_indices_;    ///< [K] 约束帧索引
+  MatrixXfRow smooth_root_2d_;       ///< [K, 2] 平滑根位置 (x, z)
+  MatrixXfRow global_root_heading_;  ///< [K, 2] 可选全局朝向 (cos, sin)，为空表示不约束
 
   root2d_constraint_set() = default;
 
@@ -122,8 +124,8 @@ class root2d_constraint_set {
   /// @param smooth_root_2d [K, 2] 平滑根 (x, z)
   /// @param global_root_heading [K, 2] 可选全局朝向
   root2d_constraint_set(
-      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf smooth_root_2d,
-      Eigen::MatrixXf global_root_heading = {}
+      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixXfRow smooth_root_2d,
+      MatrixXfRow global_root_heading = {}
   );
 
   // ======================================================================
@@ -132,7 +134,7 @@ class root2d_constraint_set {
 
   /// @brief 将约束数据追加到 data_dict / index_dict（供 create_conditions 使用）
   void update_constraints(
-      std::unordered_map<std::string, std::vector<Eigen::MatrixXf>>& data_dict,
+      std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict,
       std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict
   ) const;
 
@@ -157,22 +159,22 @@ class fullbody_constraint_set {
   static constexpr const char* name = "fullbody";
 
   std::shared_ptr<skeleton_base> skeleton_;
-  Eigen::VectorXi frame_indices_;            ///< [K] 约束帧索引
-  Eigen::MatrixXf global_joints_positions_;  ///< [K, J*3] 全局关节位置
-  Eigen::MatrixXf global_joints_rots_;       ///< [K, J*9] 全局旋转矩阵
-  Eigen::VectorXf root_y_pos_;               ///< [K] 根关节 Y 位置
-  Eigen::MatrixXf global_root_heading_;      ///< [K, 2] 全局朝向 (cos, sin)
-  Eigen::MatrixXf smooth_root_2d_;           ///< [K, 2] 平滑根位置 (x, z)
+  Eigen::VectorXi frame_indices_;        ///< [K] 约束帧索引
+  MatrixXfRow global_joints_positions_;  ///< [K, J*3] 全局关节位置
+  MatrixXfRow global_joints_rots_;       ///< [K, J*9] 全局旋转矩阵
+  Eigen::VectorXf root_y_pos_;           ///< [K] 根关节 Y 位置
+  MatrixXfRow global_root_heading_;      ///< [K, 2] 全局朝向 (cos, sin)
+  MatrixXfRow smooth_root_2d_;           ///< [K, 2] 平滑根位置 (x, z)
 
   fullbody_constraint_set() = default;
 
   fullbody_constraint_set(
-      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
-      Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d = {}
+      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixXfRow global_joints_positions,
+      MatrixXfRow global_joints_rots, MatrixXfRow smooth_root_2d = {}
   );
 
   void update_constraints(
-      std::unordered_map<std::string, std::vector<Eigen::MatrixXf>>& data_dict,
+      std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict,
       std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict
   ) const;
 
@@ -194,25 +196,25 @@ class end_effector_constraint_set {
   static constexpr const char* name = "end-effector";
 
   std::shared_ptr<skeleton_base> skeleton_;
-  Eigen::VectorXi frame_indices_;            ///< [K] 约束帧索引
-  std::vector<std::string> joint_names_;     ///< 关节名称列表
-  Eigen::VectorXi pos_indices_;              ///< 位置索引（对应 skeleton 关节索引）
-  Eigen::VectorXi rot_indices_;              ///< 旋转索引（对应 skeleton 关节索引）
-  Eigen::MatrixXf global_joints_positions_;  ///< [K, selected_pos*3] 选中关节位置
-  Eigen::MatrixXf global_joints_rots_;       ///< [K, selected_rot*9] 选中关节旋转
-  Eigen::VectorXf root_y_pos_;               ///< [K] 根关节 Y 位置
-  Eigen::MatrixXf global_root_heading_;      ///< [K, 2] 全局朝向
-  Eigen::MatrixXf smooth_root_2d_;           ///< [K, 2] 平滑根位置
+  Eigen::VectorXi frame_indices_;         ///< [K] 约束帧索引
+  std::vector<std::string> joint_names_;  ///< 关节名称列表
+  Eigen::VectorXi pos_indices_;           ///< 位置索引（对应 skeleton 关节索引）
+  Eigen::VectorXi rot_indices_;           ///< 旋转索引（对应 skeleton 关节索引）
+  MatrixXfRow global_joints_positions_;   ///< [K, selected_pos*3] 选中关节位置
+  MatrixXfRow global_joints_rots_;        ///< [K, selected_rot*9] 选中关节旋转
+  Eigen::VectorXf root_y_pos_;            ///< [K] 根关节 Y 位置
+  MatrixXfRow global_root_heading_;       ///< [K, 2] 全局朝向
+  MatrixXfRow smooth_root_2d_;            ///< [K, 2] 平滑根位置
 
   end_effector_constraint_set() = default;
 
   end_effector_constraint_set(
-      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
-      Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d, std::vector<std::string> joint_names
+      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixXfRow global_joints_positions,
+      MatrixXfRow global_joints_rots, MatrixXfRow smooth_root_2d, std::vector<std::string> joint_names
   );
 
   void update_constraints(
-      std::unordered_map<std::string, std::vector<Eigen::MatrixXf>>& data_dict,
+      std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict,
       std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict
   ) const;
 
@@ -233,8 +235,8 @@ class left_hand_constraint_set : public end_effector_constraint_set {
   static constexpr const char* name = "left-hand";
   left_hand_constraint_set() { joint_names_ = {"LeftHand"}; }
   left_hand_constraint_set(
-      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
-      Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d
+      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixXfRow global_joints_positions,
+      MatrixXfRow global_joints_rots, MatrixXfRow smooth_root_2d
   )
       : end_effector_constraint_set(
             std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
@@ -248,8 +250,8 @@ class right_hand_constraint_set : public end_effector_constraint_set {
   static constexpr const char* name = "right-hand";
   right_hand_constraint_set() { joint_names_ = {"RightHand"}; }
   right_hand_constraint_set(
-      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
-      Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d
+      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixXfRow global_joints_positions,
+      MatrixXfRow global_joints_rots, MatrixXfRow smooth_root_2d
   )
       : end_effector_constraint_set(
             std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
@@ -263,8 +265,8 @@ class left_foot_constraint_set : public end_effector_constraint_set {
   static constexpr const char* name = "left-foot";
   left_foot_constraint_set() { joint_names_ = {"LeftFoot"}; }
   left_foot_constraint_set(
-      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
-      Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d
+      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixXfRow global_joints_positions,
+      MatrixXfRow global_joints_rots, MatrixXfRow smooth_root_2d
   )
       : end_effector_constraint_set(
             std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
@@ -278,8 +280,8 @@ class right_foot_constraint_set : public end_effector_constraint_set {
   static constexpr const char* name = "right-foot";
   right_foot_constraint_set() { joint_names_ = {"RightFoot"}; }
   right_foot_constraint_set(
-      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, Eigen::MatrixXf global_joints_positions,
-      Eigen::MatrixXf global_joints_rots, Eigen::MatrixXf smooth_root_2d
+      std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixXfRow global_joints_positions,
+      MatrixXfRow global_joints_rots, MatrixXfRow smooth_root_2d
   )
       : end_effector_constraint_set(
             std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),

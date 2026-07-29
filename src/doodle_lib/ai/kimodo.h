@@ -5,6 +5,7 @@
 
 #include <doodle_lib/ai/classifier_free_guided_model.h>
 #include <doodle_lib/ai/diffusion.h>
+#include <doodle_lib/ai/fwd.h>
 #include <doodle_lib/ai/llm2vec.h>
 #include <doodle_lib/ai/motion_rep/kimodo_motion_rep.h>
 #include <doodle_lib/ai/skeleton/skeleton_base.h>
@@ -162,8 +163,8 @@ class kimodo {
 
   // ---- 内部辅助 ----
   struct text_encoding_result {
-    Eigen::MatrixXf text_feat;  ///< [B, D] 文本嵌入（已平坦化，实际形状 [B*1, D]）
-    MatrixXb text_pad_mask;     ///< [B, 1] 文本 mask
+    MatrixXfRow text_feat;  ///< [B, D] 文本嵌入（已平坦化，实际形状 [B*1, D]）
+    MatrixXbRow text_pad_mask;     ///< [B, 1] 文本 mask
   };
 
   /// @brief 编码文本（对应 Python _generate 中的 self.text_encoder(texts)）
@@ -172,19 +173,19 @@ class kimodo {
   /// @brief 单步去噪（对应 Python denoising_step）
   /// @param map_tensor 时间步映射表（由 generate_internal 预计算，避免每步重复 space_timesteps）
   /// @return [B*T, D] t-1 步的噪声运动（平坦化）
-  Eigen::MatrixXf denoising_step(
-      const Eigen::MatrixXf& motion, const MatrixXb& pad_mask, const Eigen::MatrixXf& text_feat,
-      const MatrixXb& text_pad_mask, std::int64_t t, const std::vector<int64_t>& map_tensor,
-      const std::vector<float>& first_heading_angle, const Eigen::MatrixXf& motion_mask,
-      const Eigen::MatrixXf& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
+  MatrixXfRow denoising_step(
+      const MatrixXfRow& motion, const MatrixXbRow& pad_mask, const MatrixXfRow& text_feat,
+      const MatrixXbRow& text_pad_mask, std::int64_t t, const std::vector<int64_t>& map_tensor,
+      const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
+      const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
   );
 
   /// @brief 完整去噪循环（对应 Python _generate）
   /// @return [B*T, D] 去噪后的运动（平坦化，已标准化）
-  Eigen::MatrixXf generate_internal(
+  MatrixXfRow generate_internal(
       const std::vector<std::string>& texts, std::int64_t max_frames, std::int64_t num_denoising_steps,
-      const MatrixXb& pad_mask, const std::vector<float>& first_heading_angle, const Eigen::MatrixXf& motion_mask,
-      const Eigen::MatrixXf& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
+      const MatrixXbRow& pad_mask, const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
+      const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
   );
 
  public:
@@ -214,8 +215,8 @@ class kimodo {
   std::vector<motion_output> generate(
       const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
       std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight = {2.0f, 2.0f},
-      const std::vector<float>& first_heading_angle = {}, const Eigen::MatrixXf& motion_mask = {},
-      const Eigen::MatrixXf& observed_motion = {}, const std::string& cfg_type = ""
+      const std::vector<float>& first_heading_angle = {}, const MatrixXfRow& motion_mask = {},
+      const MatrixXfRow& observed_motion = {}, const std::string& cfg_type = ""
   );
 
   /// @brief 简单版本：单个提示、单样本

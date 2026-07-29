@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include <doodle_lib/ai/fwd.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <Eigen/Dense>
@@ -12,6 +13,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 
 namespace doodle::ai {
 
@@ -47,10 +49,10 @@ class skeleton_base {
   // 关节数据（从 .npy 文件加载）
   // ======================================================================
 
-  Eigen::MatrixXf neutral_joints_;       ///< [J, 3] 中性姿态关节位置
-  Eigen::MatrixXf bvh_neutral_joints_;   ///< [J, 3] BVH 中性关节（可选）
-  Eigen::MatrixXf global_rot_offsets_;   ///< [J, 9] 标准 T-pose 全局旋转偏移（可选）
-  Eigen::MatrixXf rest_pose_local_rot_;  ///< [J, 9] 静止姿态局部旋转（可选，如 G1 骨骼 XML rest pose）
+  MatrixXfRow neutral_joints_;       ///< [J, 3] 中性姿态关节位置
+  MatrixXfRow bvh_neutral_joints_;   ///< [J, 3] BVH 中性关节（可选）
+  MatrixXfRow global_rot_offsets_;   ///< [J, 9] 标准 T-pose 全局旋转偏移（可选）
+  MatrixXfRow rest_pose_local_rot_;  ///< [J, 9] 静止姿态局部旋转（可选，如 G1 骨骼 XML rest pose）
 
   // ======================================================================
   // 语义标签
@@ -73,7 +75,7 @@ class skeleton_base {
   // 特殊数据（SOMASkeleton77 的放松手部姿态）
   // ======================================================================
 
-  Eigen::MatrixXf relaxed_hands_rest_pose_;  ///< [J77, 9] 放松手部姿态局部旋转（仅 SOMA77）
+  MatrixXfRow relaxed_hands_rest_pose_;  ///< [J77, 9] 放松手部姿态局部旋转（仅 SOMA77）
 
   // ======================================================================
   // 构造 / 初始化
@@ -131,21 +133,21 @@ class skeleton_base {
 
   /// @brief 前向运动学结果
   struct fk_result {
-    Eigen::MatrixXf global_rot_mats;         ///< [B*T, J*9] 全局旋转矩阵
-    Eigen::MatrixXf posed_joints;            ///< [B*T, J*3] 全局关节位置
-    Eigen::MatrixXf posed_joints_norootpos;  ///< [B*T, J*3] 无根偏移的关节位置
+    MatrixXfRow global_rot_mats;         ///< [B*T, J*9] 全局旋转矩阵
+    MatrixXfRow posed_joints;            ///< [B*T, J*3] 全局关节位置
+    MatrixXfRow posed_joints_norootpos;  ///< [B*T, J*3] 无根偏移的关节位置
   };
 
   /// @brief 由局部旋转和根位置计算全局旋转和关节位置
   /// @param local_rot_mats [B*T, J*9] 局部旋转矩阵
   /// @param root_positions [B*T, 3] 根关节世界坐标
   /// @return 全局旋转、全局关节位置、无根偏移关节位置
-  [[nodiscard]] fk_result fk(const Eigen::MatrixXf& local_rot_mats, const Eigen::MatrixXf& root_positions) const;
+  [[nodiscard]] fk_result fk(const MatrixXfRow& local_rot_mats, const MatrixXfRow& root_positions) const;
 
   /// @brief 由全局旋转矩阵计算局部旋转（逆父级变换）
   /// @param global_rot_mats [B*T, J*9] 全局旋转
   /// @return [B*T, J*9] 局部旋转
-  [[nodiscard]] Eigen::MatrixXf global_rots_to_local_rots(const Eigen::MatrixXf& global_rot_mats) const;
+  [[nodiscard]] MatrixXfRow global_rots_to_local_rots(const MatrixXfRow& global_rot_mats) const;
 
   // ======================================================================
   // 骨骼间转换（SOMA30 ↔ SOMA77）
@@ -159,17 +161,17 @@ class skeleton_base {
 
   /// @brief SOMA30 → SOMA77 转换结果
   struct output_77_result {
-    Eigen::MatrixXf local_rot_mats;                ///< [B*T, 77*9]
-    Eigen::MatrixXf global_rot_mats;               ///< [B*T, 77*9]
-    Eigen::MatrixXf posed_joints;                  ///< [B*T, 77*3]
-    std::optional<Eigen::MatrixXf> foot_contacts;  ///< [B*T, 6]（可选）
+    MatrixXfRow local_rot_mats;                ///< [B*T, 77*9]
+    MatrixXfRow global_rot_mats;               ///< [B*T, 77*9]
+    MatrixXfRow posed_joints;                  ///< [B*T, 77*3]
+    std::optional<MatrixXfRow> foot_contacts;  ///< [B*T, 6]（可选）
   };
 
   /// @brief 将 30 关节局部旋转扩展为 77 关节（含放松手部姿态）。
   ///        仅在骨骼为 somaskel30 时有效。
   /// @param local_joint_rots_subset [B*T, 30*9] 30 关节局部旋转矩阵
   /// @return [B*T, 77*9] 77 关节局部旋转矩阵
-  [[nodiscard]] Eigen::MatrixXf to_soma_skeleton_77(const Eigen::MatrixXf& local_joint_rots_subset) const;
+  [[nodiscard]] MatrixXfRow to_soma_skeleton_77(const MatrixXfRow& local_joint_rots_subset) const;
 
   /// @brief 将 SOMA30 模型输出转换为 SOMA77 格式。
   ///        扩展 local_rot_mats 至 77 关节，重新运行 FK 计算 global_rot_mats 和 posed_joints，
@@ -179,8 +181,8 @@ class skeleton_base {
   /// @param foot_contacts 可选 [B*T, 4]（L_heel, L_toe, R_heel, R_toe）
   /// @return SOMA77 格式的输出
   [[nodiscard]] output_77_result output_to_soma_skeleton_77(
-      const Eigen::MatrixXf& local_rot_mats, const Eigen::MatrixXf& root_positions,
-      const std::optional<Eigen::MatrixXf>& foot_contacts = std::nullopt
+      const MatrixXfRow& local_rot_mats, const MatrixXfRow& root_positions,
+      const std::optional<MatrixXfRow>& foot_contacts = std::nullopt
   ) const;
 
  private:

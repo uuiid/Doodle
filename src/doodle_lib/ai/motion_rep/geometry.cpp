@@ -7,14 +7,14 @@
 
 namespace doodle::ai {
 
-Eigen::MatrixXf matrix_to_cont6d(const Eigen::MatrixXf& matrix) {
+MatrixXfRow matrix_to_cont6d(const MatrixXfRow& matrix) {
   // matrix: [N, J*9], each group of 9 cols is a 3x3 matrix flattened row-major
   const Eigen::Index N = matrix.rows();
   const Eigen::Index C = matrix.cols();
   DOODLE_CHICK(C % 9 == 0, "matrix_to_cont6d: input cols must be multiple of 9, got {}", C);
   const Eigen::Index J = C / 9;  // number of joints
 
-  Eigen::MatrixXf cont6d(N, J * 6);
+  MatrixXfRow cont6d(N, J * 6);
   for (Eigen::Index j = 0; j < J; ++j) {
     const Eigen::Index col_offset = j * 9;
     const Eigen::Index out_offset = j * 6;
@@ -32,13 +32,13 @@ Eigen::MatrixXf matrix_to_cont6d(const Eigen::MatrixXf& matrix) {
   return cont6d;
 }
 
-Eigen::MatrixXf cont6d_to_matrix(const Eigen::MatrixXf& cont6d) {
+MatrixXfRow cont6d_to_matrix(const MatrixXfRow& cont6d) {
   const Eigen::Index N = cont6d.rows();
   const Eigen::Index C = cont6d.cols();
   DOODLE_CHICK(C % 6 == 0, "cont6d_to_matrix: input cols must be multiple of 6, got {}", C);
   const Eigen::Index J = C / 6;  // number of joints
 
-  Eigen::MatrixXf matrix(N, J * 9);
+  MatrixXfRow matrix(N, J * 9);
 
   for (Eigen::Index j = 0; j < J; ++j) {
     const Eigen::Index col_offset = j * 6;
@@ -94,9 +94,9 @@ Eigen::Matrix3f angle_to_Y_rotation_matrix(float angle) {
   return mat;
 }
 
-Eigen::MatrixXf angle_to_Y_rotation_matrix_batch(const Eigen::VectorXf& angles) {
+MatrixXfRow angle_to_Y_rotation_matrix_batch(const Eigen::VectorXf& angles) {
   const Eigen::Index N = angles.size();
-  Eigen::MatrixXf result(N, 9);
+  MatrixXfRow result(N, 9);
 
   for (Eigen::Index i = 0; i < N; ++i) {
     Eigen::Matrix3f R = angle_to_Y_rotation_matrix(angles(i));
@@ -117,12 +117,12 @@ Eigen::MatrixXf angle_to_Y_rotation_matrix_batch(const Eigen::VectorXf& angles) 
 // ======================================================================
 // axis_angle_to_matrix: Rodrigues 公式
 // ======================================================================
-Eigen::MatrixXf axis_angle_to_matrix(const Eigen::MatrixXf& axis_angle) {
+MatrixXfRow axis_angle_to_matrix(const MatrixXfRow& axis_angle) {
   const Eigen::Index N = axis_angle.rows();
   DOODLE_CHICK(axis_angle.cols() == 3, "axis_angle_to_matrix: input cols must be 3, got {}", axis_angle.cols());
 
   constexpr float eps = 1e-6f;
-  Eigen::MatrixXf result(N, 9);
+  MatrixXfRow result(N, 9);
 
   for (Eigen::Index i = 0; i < N; ++i) {
     const Eigen::Vector3f v = axis_angle.row(i);
@@ -176,11 +176,11 @@ Eigen::MatrixXf axis_angle_to_matrix(const Eigen::MatrixXf& axis_angle) {
 // ======================================================================
 // matrix_to_quaternion: 旋转矩阵 → 四元数
 // ======================================================================
-Eigen::MatrixXf matrix_to_quaternion(const Eigen::MatrixXf& matrix) {
+MatrixXfRow matrix_to_quaternion(const MatrixXfRow& matrix) {
   const Eigen::Index N = matrix.rows();
   DOODLE_CHICK(matrix.cols() == 9, "matrix_to_quaternion: input cols must be 9, got {}", matrix.cols());
 
-  Eigen::MatrixXf quat(N, 4);
+  MatrixXfRow quat(N, 4);
 
   for (Eigen::Index i = 0; i < N; ++i) {
     // Row-major storage: R = [r00,r01,r02; r10,r11,r12; r20,r21,r22]
@@ -225,12 +225,12 @@ Eigen::MatrixXf matrix_to_quaternion(const Eigen::MatrixXf& matrix) {
 // ======================================================================
 // quaternion_to_axis_angle: 四元数 → 轴角
 // ======================================================================
-Eigen::MatrixXf quaternion_to_axis_angle(const Eigen::MatrixXf& quat) {
+MatrixXfRow quaternion_to_axis_angle(const MatrixXfRow& quat) {
   const Eigen::Index N = quat.rows();
   DOODLE_CHICK(quat.cols() == 4, "quaternion_to_axis_angle: input cols must be 4, got {}", quat.cols());
 
   constexpr float eps = 1e-6f;
-  Eigen::MatrixXf result(N, 3);
+  MatrixXfRow result(N, 3);
 
   for (Eigen::Index i = 0; i < N; ++i) {
     float w  = quat(i, 0);
@@ -263,7 +263,7 @@ Eigen::MatrixXf quaternion_to_axis_angle(const Eigen::MatrixXf& quat) {
 // ======================================================================
 // matrix_to_axis_angle: 旋转矩阵 → 轴角（通过四元数）
 // ======================================================================
-Eigen::MatrixXf matrix_to_axis_angle(const Eigen::MatrixXf& matrix) {
+MatrixXfRow matrix_to_axis_angle(const MatrixXfRow& matrix) {
   const auto quat = matrix_to_quaternion(matrix);
   return quaternion_to_axis_angle(quat);
 }

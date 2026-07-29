@@ -47,7 +47,7 @@ void matrix_4x4_to_9(const Eigen::Matrix4f& src, float* dst_9) {
 // 辅助：从 npy 文件加载矩阵
 // ======================================================================
 namespace {
-Eigen::MatrixXf load_npy_matrix(const FSys::path& file_path, std::int64_t expected_cols = -1) {
+MatrixXfRow load_npy_matrix(const FSys::path& file_path, std::int64_t expected_cols = -1) {
   DOODLE_CHICK(FSys::exists(file_path), "npy 文件不存在: {}", file_path.string());
 
   auto data = cnpy::npy_load(file_path.string());
@@ -83,13 +83,13 @@ Eigen::MatrixXf load_npy_matrix(const FSys::path& file_path, std::int64_t expect
       data.data<float>(), rows, cols
   );
 
-  Eigen::MatrixXf result{rows, cols};
+  MatrixXfRow result{rows, cols};
   result = map;
   return result;
 }
 
 bool load_npy_if_exists(
-    Eigen::MatrixXf& dest, const FSys::path& folder, const std::string& filename, std::int64_t expected_cols = -1
+    MatrixXfRow& dest, const FSys::path& folder, const std::string& filename, std::int64_t expected_cols = -1
 ) {
   auto path = folder / filename;
   if (FSys::exists(path)) {
@@ -497,7 +497,7 @@ std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_77(const FSys
 // ======================================================================
 
 skeleton_base::fk_result skeleton_base::fk(
-    const Eigen::MatrixXf& local_rot_mats, const Eigen::MatrixXf& root_positions
+    const MatrixXfRow& local_rot_mats, const MatrixXfRow& root_positions
 ) const {
   const Eigen::Index total_frames = local_rot_mats.rows();
   const Eigen::Index J            = nbjoints_;
@@ -578,12 +578,12 @@ skeleton_base::fk_result skeleton_base::fk(
 // 全局旋转 → 局部旋转 成员方法
 // ======================================================================
 
-Eigen::MatrixXf skeleton_base::global_rots_to_local_rots(const Eigen::MatrixXf& global_rot_mats) const {
+MatrixXfRow skeleton_base::global_rots_to_local_rots(const MatrixXfRow& global_rot_mats) const {
   const Eigen::Index total = global_rot_mats.rows();
   const Eigen::Index J     = nbjoints_;
   DOODLE_CHICK(global_rot_mats.cols() == J * 9, "global_rot_mats 列数不匹配");
 
-  Eigen::MatrixXf local_rot_mats(total, J * 9);
+  MatrixXfRow local_rot_mats(total, J * 9);
 
   for (Eigen::Index f = 0; f < total; ++f) {
     const float* global_row = global_rot_mats.row(f).data();
@@ -658,7 +658,7 @@ std::vector<std::int64_t> skeleton_base::get_skel_slice(const skeleton_base& tar
 // to_soma_skeleton_77（SOMA30 → SOMA77 关节扩展）
 // ======================================================================
 
-Eigen::MatrixXf skeleton_base::to_soma_skeleton_77(const Eigen::MatrixXf& local_joint_rots_subset) const {
+MatrixXfRow skeleton_base::to_soma_skeleton_77(const MatrixXfRow& local_joint_rots_subset) const {
   // local_joint_rots_subset size = [B * T, 30*9]
 
   DOODLE_CHICK(name_ == "somaskel30", "to_soma_skeleton_77 仅用于 somaskel30，当前为 '{}'", name_);
@@ -687,7 +687,7 @@ Eigen::MatrixXf skeleton_base::to_soma_skeleton_77(const Eigen::MatrixXf& local_
   );
 
   // 将 relaxed_hands_rest_pose [77, 9] 重复 total_frames 次 → [BT, 77*9]
-  Eigen::MatrixXf result(total_frames, J77 * 9);
+  MatrixXfRow result(total_frames, J77 * 9);
   for (Eigen::Index f = 0; f < total_frames; ++f) {
     Eigen::Map<Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>> row(result.row(f).data(), J77 * 9);
     row = Eigen::Map<const Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>>(
@@ -715,8 +715,8 @@ Eigen::MatrixXf skeleton_base::to_soma_skeleton_77(const Eigen::MatrixXf& local_
 // ======================================================================
 
 skeleton_base::output_77_result skeleton_base::output_to_soma_skeleton_77(
-    const Eigen::MatrixXf& local_rot_mats, const Eigen::MatrixXf& root_positions,
-    const std::optional<Eigen::MatrixXf>& foot_contacts
+    const MatrixXfRow& local_rot_mats, const MatrixXfRow& root_positions,
+    const std::optional<MatrixXfRow>& foot_contacts
 ) const {
   // 1. 扩展局部旋转至 77 关节
   auto local_rot_mats_77 = to_soma_skeleton_77(local_rot_mats);
@@ -742,7 +742,7 @@ skeleton_base::output_77_result skeleton_base::output_to_soma_skeleton_77(
     const Eigen::Index nrows = fc.rows();
     DOODLE_CHICK(fc.cols() == 4, "foot_contacts 列数应为 4，实际为 {}", fc.cols());
 
-    Eigen::MatrixXf fc_77(nrows, 6);
+    MatrixXfRow fc_77(nrows, 6);
     for (Eigen::Index i = 0; i < nrows; ++i) {
       // L_heel = fc[0]
       fc_77(i, 0) = fc(i, 0);
