@@ -80,7 +80,7 @@ void transformer_encoder_block::init_session() {
   Ort::SessionOptions session_options;
   session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 
-  auto onnx_path = model_dir_ / "seq_trans_encoder.onnx";
+  auto onnx_path = model_dir_ / "transformer_core.onnx";
   DOODLE_CHICK(FSys::exists(onnx_path), "ONNX 模型文件不存在: {}", onnx_path.string());
 
   session_      = std::make_unique<Ort::Session>(get_ort_env(), onnx_path.wstring().c_str(), session_options);
