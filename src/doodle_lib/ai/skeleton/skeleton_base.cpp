@@ -88,14 +88,16 @@ Eigen::MatrixXf load_npy_matrix(const FSys::path& file_path, std::int64_t expect
   return result;
 }
 
-void load_npy_if_exists(
+bool load_npy_if_exists(
     Eigen::MatrixXf& dest, const FSys::path& folder, const std::string& filename, std::int64_t expected_cols = -1
 ) {
   auto path = folder / filename;
   if (FSys::exists(path)) {
     dest = load_npy_matrix(path, expected_cols);
     SPDLOG_INFO("  已加载: {} ({}x{})", path.string(), dest.rows(), dest.cols());
+    return true;
   }
+  return false;
 }
 
 // 构建骨骼的 关节层级深度分组（对应 Python compute_idx_levels）
@@ -217,20 +219,21 @@ void skeleton_base::init_from_bone_hierarchy(const std::vector<std::pair<std::st
 // ======================================================================
 
 void skeleton_base::load_neutral_joints(const FSys::path& folder) {
-  neutral_joints_ = load_npy_matrix(folder / "joints.npy", 3);
+  neutral_joints_ = load_npy_matrix(folder / "neutral_joints.npy", 3);
   DOODLE_CHICK(
-      neutral_joints_.rows() == nbjoints_, "joints.npy 行数 {} 不匹配关节数 {}", neutral_joints_.rows(), nbjoints_
+      neutral_joints_.rows() == nbjoints_, "neutral_joints.npy 行数 {} 不匹配关节数 {}", neutral_joints_.rows(),
+      nbjoints_
   );
   SPDLOG_INFO("  加载 neutral_joints: [{}x{}]", neutral_joints_.rows(), neutral_joints_.cols());
 }
 
 void skeleton_base::load_bvh_neutral_joints(const FSys::path& folder) {
-  load_npy_if_exists(bvh_neutral_joints_, folder, "bvh_joints.npy", 3);
+  if (load_npy_if_exists(bvh_neutral_joints_, folder, "bvh_neutral_joints.npy", 3))
+    SPDLOG_INFO("  加载 bvh_neutral_joints: [{}x{}]", bvh_neutral_joints_.rows(), bvh_neutral_joints_.cols());
 }
 
 void skeleton_base::load_global_rot_offsets(const FSys::path& folder) {
-  load_npy_if_exists(global_rot_offsets_, folder, "standard_t_pose_global_offsets_rots.npy");
-  if (global_rot_offsets_.size() > 0) {
+  if (load_npy_if_exists(global_rot_offsets_, folder, "global_rot_offsets.npy")) {
     DOODLE_CHICK(
         global_rot_offsets_.rows() == nbjoints_, "global_rot_offsets 行数 {} 不匹配关节数 {}",
         global_rot_offsets_.rows(), nbjoints_
@@ -242,8 +245,7 @@ void skeleton_base::load_global_rot_offsets(const FSys::path& folder) {
 }
 
 void skeleton_base::load_rest_pose_local_rot(const FSys::path& folder) {
-  load_npy_if_exists(rest_pose_local_rot_, folder, "rest_pose_local_rot.npy");
-  if (rest_pose_local_rot_.size() > 0) {
+  if (load_npy_if_exists(rest_pose_local_rot_, folder, "rest_pose_local_rot.npy")) {
     DOODLE_CHICK(
         rest_pose_local_rot_.rows() == nbjoints_, "rest_pose_local_rot 行数 {} 不匹配关节数 {}",
         rest_pose_local_rot_.rows(), nbjoints_
