@@ -376,13 +376,7 @@ std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_30(
       {"RightLeg", "LeftLeg"}               // hip [right, left]
   );
   apply_semantic_groups(*skel, g);
-
   skel->load_all_from_folder(folder);
-  if (!in_77_folder.empty()) {
-    skel->somaskel77_cache_ = skeleton_base::create_soma_skeleton_77(in_77_folder);
-  } else {
-    skel->somaskel77_cache_ = skeleton_base::create_soma_skeleton_77(folder / "somaskel77");
-  }
 
   return skel;
 }
