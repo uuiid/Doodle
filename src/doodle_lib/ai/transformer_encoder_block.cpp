@@ -326,7 +326,11 @@ Eigen::MatrixXf transformer_encoder_block::forward(
 
   // ---- 运行 ONNX 推理 ----
   try {
+    // 输出推理时间
+    auto start_time = std::chrono::high_resolution_clock::now();
     session_->Run(Ort::RunOptions{nullptr}, *io_binding_);
+    auto end_time = std::chrono::high_resolution_clock::now();
+    SPDLOG_INFO("seqTransEncoder ONNX 推理完成，耗时 {:%S}", end_time - start_time);
   } catch (const Ort::Exception& e) {
     DOODLE_CHICK(false, "seqTransEncoder ONNX 推理失败: {}", e.what());
   }
