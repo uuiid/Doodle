@@ -8,57 +8,69 @@
 namespace doodle::ai {
 
 Eigen::MatrixXf matrix_to_cont6d(const Eigen::MatrixXf& matrix) {
-  // matrix: [N, 9], each row is a 3x3 matrix flattened row-major
+  // matrix: [N, J*9], each group of 9 cols is a 3x3 matrix flattened row-major
   const Eigen::Index N = matrix.rows();
-  DOODLE_CHICK(matrix.cols() == 9, "matrix_to_cont6d: input cols must be 9, got {}", matrix.cols());
+  const Eigen::Index C = matrix.cols();
+  DOODLE_CHICK(C % 9 == 0, "matrix_to_cont6d: input cols must be multiple of 9, got {}", C);
+  const Eigen::Index J = C / 9;  // number of joints
 
-  Eigen::MatrixXf cont6d(N, 6);
-  for (Eigen::Index i = 0; i < N; ++i) {
-    // First two columns of the rotation matrix
-    // Row-major: indices 0,1,2 = col0, 3,4,5 = col1, 6,7,8 = col2
-    cont6d(i, 0) = matrix(i, 0);  // col0.x
-    cont6d(i, 1) = matrix(i, 3);  // col0.y
-    cont6d(i, 2) = matrix(i, 6);  // col0.z
-    cont6d(i, 3) = matrix(i, 1);  // col1.x
-    cont6d(i, 4) = matrix(i, 4);  // col1.y
-    cont6d(i, 5) = matrix(i, 7);  // col1.z
+  Eigen::MatrixXf cont6d(N, J * 6);
+  for (Eigen::Index j = 0; j < J; ++j) {
+    const Eigen::Index col_offset = j * 9;
+    const Eigen::Index out_offset = j * 6;
+    for (Eigen::Index i = 0; i < N; ++i) {
+      // First two columns of the rotation matrix
+      // Row-major: indices 0,1,2 = col0, 3,4,5 = col1, 6,7,8 = col2
+      cont6d(i, out_offset + 0) = matrix(i, col_offset + 0);  // col0.x
+      cont6d(i, out_offset + 1) = matrix(i, col_offset + 3);  // col0.y
+      cont6d(i, out_offset + 2) = matrix(i, col_offset + 6);  // col0.z
+      cont6d(i, out_offset + 3) = matrix(i, col_offset + 1);  // col1.x
+      cont6d(i, out_offset + 4) = matrix(i, col_offset + 4);  // col1.y
+      cont6d(i, out_offset + 5) = matrix(i, col_offset + 7);  // col1.z
+    }
   }
   return cont6d;
 }
 
 Eigen::MatrixXf cont6d_to_matrix(const Eigen::MatrixXf& cont6d) {
   const Eigen::Index N = cont6d.rows();
-  DOODLE_CHICK(cont6d.cols() == 6, "cont6d_to_matrix: input cols must be 6, got {}", cont6d.cols());
+  const Eigen::Index C = cont6d.cols();
+  DOODLE_CHICK(C % 6 == 0, "cont6d_to_matrix: input cols must be multiple of 6, got {}", C);
+  const Eigen::Index J = C / 6;  // number of joints
 
-  Eigen::MatrixXf matrix(N, 9);
+  Eigen::MatrixXf matrix(N, J * 9);
 
-  for (Eigen::Index i = 0; i < N; ++i) {
-    // Extract first two columns from 6D representation
-    Eigen::Vector3f x_raw(cont6d(i, 0), cont6d(i, 1), cont6d(i, 2));
-    Eigen::Vector3f y_raw(cont6d(i, 3), cont6d(i, 4), cont6d(i, 5));
+  for (Eigen::Index j = 0; j < J; ++j) {
+    const Eigen::Index col_offset = j * 6;
+    const Eigen::Index out_offset = j * 9;
+    for (Eigen::Index i = 0; i < N; ++i) {
+      // Extract first two columns from 6D representation
+      Eigen::Vector3f x_raw(cont6d(i, col_offset + 0), cont6d(i, col_offset + 1), cont6d(i, col_offset + 2));
+      Eigen::Vector3f y_raw(cont6d(i, col_offset + 3), cont6d(i, col_offset + 4), cont6d(i, col_offset + 5));
 
-    // Gram-Schmidt orthogonalization
-    // x = normalize(x_raw)
-    Eigen::Vector3f x = x_raw.normalized();
+      // Gram-Schmidt orthogonalization
+      // x = normalize(x_raw)
+      Eigen::Vector3f x = x_raw.normalized();
 
-    // z = normalize(cross(x, y_raw))
-    Eigen::Vector3f z = x.cross(y_raw).normalized();
+      // z = normalize(cross(x, y_raw))
+      Eigen::Vector3f z = x.cross(y_raw).normalized();
 
-    // y = cross(z, x)
-    Eigen::Vector3f y = z.cross(x);
+      // y = cross(z, x)
+      Eigen::Vector3f y = z.cross(x);
 
-    // Build rotation matrix (column-major storage but we store row-major)
-    // Matrix R = [x | y | z]  (columns are x, y, z)
-    // Row-major storage: row0 = [x0, y0, z0], row1 = [x1, y1, z1], row2 = [x2, y2, z2]
-    matrix(i, 0)      = x(0);
-    matrix(i, 1)      = y(0);
-    matrix(i, 2)      = z(0);
-    matrix(i, 3)      = x(1);
-    matrix(i, 4)      = y(1);
-    matrix(i, 5)      = z(1);
-    matrix(i, 6)      = x(2);
-    matrix(i, 7)      = y(2);
-    matrix(i, 8)      = z(2);
+      // Build rotation matrix (column-major storage but we store row-major)
+      // Matrix R = [x | y | z]  (columns are x, y, z)
+      // Row-major storage: row0 = [x0, y0, z0], row1 = [x1, y1, z1], row2 = [x2, y2, z2]
+      matrix(i, out_offset + 0) = x(0);
+      matrix(i, out_offset + 1) = y(0);
+      matrix(i, out_offset + 2) = z(0);
+      matrix(i, out_offset + 3) = x(1);
+      matrix(i, out_offset + 4) = y(1);
+      matrix(i, out_offset + 5) = z(1);
+      matrix(i, out_offset + 6) = x(2);
+      matrix(i, out_offset + 7) = y(2);
+      matrix(i, out_offset + 8) = z(2);
+    }
   }
 
   return matrix;
