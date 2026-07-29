@@ -121,18 +121,12 @@ kimodo::text_encoding_result kimodo::encode_texts(const std::vector<std::string>
 // ======================================================================
 Eigen::MatrixXf kimodo::denoising_step(
     const Eigen::MatrixXf& motion, const MatrixXb& pad_mask, const Eigen::MatrixXf& text_feat,
-    const MatrixXb& text_pad_mask, std::int64_t t, const std::vector<float>& first_heading_angle,
-    const Eigen::MatrixXf& motion_mask, const Eigen::MatrixXf& observed_motion, std::int64_t num_denoising_steps,
-    const std::vector<float>& cfg_weight, const std::string& cfg_type
+    const MatrixXb& text_pad_mask, std::int64_t t, const std::vector<int64_t>& map_tensor,
+    const std::vector<float>& first_heading_angle, const Eigen::MatrixXf& motion_mask,
+    const Eigen::MatrixXf& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
 ) {
-  // ---- 子采样时间步 ----
-  // Python: use_timesteps, map_tensor = self.diffusion.space_timesteps(num_denoising_steps)
-  //         self.diffusion.calc_diffusion_vars(use_timesteps)
-  //         t_map = map_tensor[t]
-  auto [use_timesteps, map_tensor] = diffusion_.space_timesteps(num_denoising_steps);
-  diffusion_.calc_diffusion_vars(use_timesteps);
-
-  const std::int64_t t_map      = map_tensor[static_cast<std::size_t>(t)];
+  // ---- 获取映射后的时间步（space_timesteps + calc_diffusion_vars 已在 generate_internal 中预计算） ----
+  const std::int64_t t_map = map_tensor[static_cast<std::size_t>(t)];
 
   // ---- 创建 timesteps 向量（所有 batch 元素使用相同的 t_map） ----
   const Eigen::Index batch_size = pad_mask.rows();
@@ -149,8 +143,6 @@ Eigen::MatrixXf kimodo::denoising_step(
 
   // ---- DDIM 采样 ----
   // Python: x_tm1 = self.sampler(use_timesteps, motion, pred_clean, t)
-  // 注意: Python DDIMSampler 内部会调用 calc_diffusion_vars，但 C++ 的 ddim_sampler::step 不调用
-  // 我们已在上面调用过了
   Eigen::MatrixXf x_tm1 = sampler_.step(motion, pred_clean, t);
 
   return x_tm1;
@@ -196,8 +188,8 @@ Eigen::MatrixXf kimodo::generate_internal(
     cur_mot(i) = dist(gen);
   }
 
-  // ---- Step 4: 预计算扩散时间步 ----
-  auto [use_timesteps, _ /*map_tensor unused*/] = diffusion_.space_timesteps(num_denoising_steps);
+  // ---- Step 4: 预计算扩散时间步（仅一次，避免每步重复 space_timesteps + calc_diffusion_vars） ----
+  auto [use_timesteps, map_tensor] = diffusion_.space_timesteps(num_denoising_steps);
   diffusion_.calc_diffusion_vars(use_timesteps);
 
   // ---- Step 5: 去噪循环 ----
@@ -207,8 +199,8 @@ Eigen::MatrixXf kimodo::generate_internal(
   for (std::int64_t i = num_denoising_steps - 1; i >= 0; --i) {
     auto start_time = std::chrono::high_resolution_clock::now();
     cur_mot         = denoising_step(
-        cur_mot, pad_mask, text_feat, text_pad_mask, i, first_heading_angle, motion_mask_f, observed_motion,
-        num_denoising_steps, cfg_weight, cfg_type
+        cur_mot, pad_mask, text_feat, text_pad_mask, i, map_tensor, first_heading_angle, motion_mask_f,
+        observed_motion, cfg_weight, cfg_type
     );
     SPDLOG_INFO("kimodo: 去噪步 {} 完成 time {:%S}", i, std::chrono::high_resolution_clock::now() - start_time);
   }

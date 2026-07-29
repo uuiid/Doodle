@@ -170,12 +170,13 @@ class kimodo {
   text_encoding_result encode_texts(const std::vector<std::string>& texts);
 
   /// @brief 单步去噪（对应 Python denoising_step）
+  /// @param map_tensor 时间步映射表（由 generate_internal 预计算，避免每步重复 space_timesteps）
   /// @return [B*T, D] t-1 步的噪声运动（平坦化）
   Eigen::MatrixXf denoising_step(
       const Eigen::MatrixXf& motion, const MatrixXb& pad_mask, const Eigen::MatrixXf& text_feat,
-      const MatrixXb& text_pad_mask, std::int64_t t, const std::vector<float>& first_heading_angle,
-      const Eigen::MatrixXf& motion_mask, const Eigen::MatrixXf& observed_motion, std::int64_t num_denoising_steps,
-      const std::vector<float>& cfg_weight, const std::string& cfg_type
+      const MatrixXb& text_pad_mask, std::int64_t t, const std::vector<int64_t>& map_tensor,
+      const std::vector<float>& first_heading_angle, const Eigen::MatrixXf& motion_mask,
+      const Eigen::MatrixXf& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
   );
 
   /// @brief 完整去噪循环（对应 Python _generate）
