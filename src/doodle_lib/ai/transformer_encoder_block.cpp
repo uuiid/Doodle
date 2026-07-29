@@ -292,24 +292,13 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   DOODLE_CHICK(!input_names_.empty(), "ONNX session 未正确初始化输入名称");
 
   // ONNX 期望 RowMajor 连续内存，将 Eigen 列主序数据拷贝到行主序 vector
+  // 将 Eigen 列主序数据拷贝到行主序的 Eigen::MatrixXf
   // xseq: [B*total_len, latent_dim] -> ONNX: [B, total_len, latent_dim]
-  std::vector<float> xseq_onnx(static_cast<std::size_t>(batch_size * total_len * latent_dim_));
-  for (Eigen::Index b = 0; b < batch_size; ++b) {
-    for (Eigen::Index t = 0; t < total_len; ++t) {
-      for (Eigen::Index d = 0; d < latent_dim_; ++d) {
-        xseq_onnx[static_cast<std::size_t>(b * total_len * latent_dim_ + t * latent_dim_ + d)] =
-            xseq(b * total_len + t, d);
-      }
-    }
-  }
+  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> xseq_rowmajor = xseq;
 
   // mask: [B, total_len], bool
-  std::vector<bool> mask_onnx(static_cast<std::size_t>(batch_size * total_len));
-  for (Eigen::Index b = 0; b < batch_size; ++b) {
-    for (Eigen::Index t = 0; t < total_len; ++t) {
-      mask_onnx[static_cast<std::size_t>(b * total_len + t)] = src_key_padding_mask(b, t);
-    }
-  }
+  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> src_key_padding_mask_rowmajor =
+      src_key_padding_mask.cast<float>();
 
   // ---- 名称匹配：按 to_onnx.py 导出的输入名绑定 ----
   // TransformerEncoderWrapper 导出时输入名为:
@@ -323,23 +312,17 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   std::array<std::int64_t, 2> mask_shape{batch_size, total_len};
 
   auto data_tensor = Ort::Value::CreateTensor<float>(
-      memory_info_, xseq_onnx.data(), xseq_onnx.size(), data_shape.data(), data_shape.size()
+      memory_info_, xseq_rowmajor.data(), xseq_rowmajor.size(), data_shape.data(), data_shape.size()
   );
 
   io_binding_->BindInput(input_data_name.c_str(), data_tensor);
 
-  if (!input_mask_name.empty()) {
-    // ONNX 导出使用 float mask (1.0=padding, 0.0=attend), 见 TransformerEncoderWrapper
-    std::vector<float> mask_float(static_cast<std::size_t>(batch_size * total_len));
-    for (std::size_t i = 0; i < mask_onnx.size(); ++i) {
-      mask_float[i] = mask_onnx[i] ? 1.0f : 0.0f;
-    }
-
-    auto mask_tensor = Ort::Value::CreateTensor<float>(
-        memory_info_, mask_float.data(), mask_float.size(), mask_shape.data(), mask_shape.size()
-    );
-    io_binding_->BindInput(input_mask_name.c_str(), mask_tensor);
-  }
+  // ONNX 导出使用 float mask (1.0=padding, 0.0=attend), 见 TransformerEncoderWrapper
+  auto mask_tensor = Ort::Value::CreateTensor<float>(
+      memory_info_, src_key_padding_mask_rowmajor.data(), src_key_padding_mask_rowmajor.size(), mask_shape.data(),
+      mask_shape.size()
+  );
+  io_binding_->BindInput(input_mask_name.c_str(), mask_tensor);
 
   // ---- 运行 ONNX 推理 ----
   try {
