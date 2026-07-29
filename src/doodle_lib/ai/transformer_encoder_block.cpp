@@ -30,9 +30,9 @@ void transformer_encoder_block::load(
   input_first_heading_angle_ = input_first_heading_angle;
 
   // 加载 Linear 层
-  embed_text_.load(model_dir / "embed_text_weight.npy", model_dir / "embed_text_bias.npy");
-  input_linear_.load(model_dir / "input_linear_weight.npy", model_dir / "input_linear_bias.npy");
-  output_linear_.load(model_dir / "output_linear_weight.npy", model_dir / "output_linear_bias.npy");
+  embed_text_.load(model_dir / "embed_text.weight.npy", model_dir / "embed_text.bias.npy");
+  input_linear_.load(model_dir / "input_linear.weight.npy", model_dir / "input_linear.bias.npy");
+  output_linear_.load(model_dir / "output_linear.weight.npy", model_dir / "output_linear.bias.npy");
 
   DOODLE_CHICK(
       embed_text_.out_features() == latent_dim_, "embed_text out_features {} 不匹配 latent_dim {}",
@@ -50,7 +50,7 @@ void transformer_encoder_block::load(
   // 可选：初始朝向角线性层
   if (input_first_heading_angle_) {
     linear_first_heading_angle_.load(
-        model_dir / "linear_first_heading_angle_weight.npy", model_dir / "linear_first_heading_angle_bias.npy"
+        model_dir / "linear_first_heading_angle.weight.npy", model_dir / "linear_first_heading_angle.bias.npy"
     );
     DOODLE_CHICK(
         linear_first_heading_angle_.out_features() == latent_dim_,

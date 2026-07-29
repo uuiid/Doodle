@@ -10,6 +10,8 @@
 namespace doodle::ai {
 
 void linear_layer::load(const FSys::path& weight_path, const FSys::path& bias_path) {
+  DOODLE_CHICK(FSys::exists(weight_path), "linear_layer 权重文件不存在: {}", weight_path.string());
+
   // 加载权重
   auto l_data = cnpy::npy_load(weight_path.string());
   DOODLE_CHICK(l_data.shape.size() >= 2, "linear_layer 权重 shape 维度不足: {}", weight_path.string());
