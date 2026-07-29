@@ -64,9 +64,9 @@ void transformer_encoder_block::load(
 
   // 初始化时间步编码器
   embed_timestep_.init(
-      latent_dim_, &sequence_pos_encoder_, model_dir / "timestep_linear1_weight.npy",
-      model_dir / "timestep_linear1_bias.npy", model_dir / "timestep_linear2_weight.npy",
-      model_dir / "timestep_linear2_bias.npy"
+      latent_dim_, &sequence_pos_encoder_, model_dir / "embed_timestep_0.weight.npy",
+      model_dir / "embed_timestep_0.bias.npy", model_dir / "embed_timestep_2.weight.npy",
+      model_dir / "embed_timestep_2.bias.npy"
   );
 
   SPDLOG_INFO(
