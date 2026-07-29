@@ -18,7 +18,7 @@ target_sources(
         timestep_embedder.h
         transformer_encoder_block.h
         twostage_denoiser.h
-
+        fwd.h
         
         PRIVATE
         classifier_free_guided_model.cpp
