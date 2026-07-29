@@ -72,6 +72,8 @@ class transformer_encoder_block {
   /// @param config 模型配置（共享指针），提供 latent_dim、num_text_tokens 等参数
   void load(const FSys::path& model_dir, std::shared_ptr<kimodo_model_config> config);
 
+  void load_onnx() { std::call_once(session_init_flag_, &transformer_encoder_block::init_session, this); }
+
   /// @brief 正向传播（对应 Python forward）
   /// @param x [B, T, input_dim] 当前噪声运动（平坦化为 [B*T, input_dim]）
   /// @param x_pad_mask [B, T] 运动序列 mask（true=有效，false=填充）

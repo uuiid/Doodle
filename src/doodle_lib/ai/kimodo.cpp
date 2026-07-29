@@ -65,6 +65,9 @@ void kimodo::load(std::shared_ptr<kimodo_model_config> config) {
   DOODLE_CHICK(text_encoder_ != nullptr, "LLM2Vec 初始化失败");
   SPDLOG_INFO("kimodo: text_encoder 初始化完成");
 
+  text_encoder_->load_onnx();
+  denoiser_.load_onnx();
+
   SPDLOG_INFO("kimodo::load 完成");
 }
 

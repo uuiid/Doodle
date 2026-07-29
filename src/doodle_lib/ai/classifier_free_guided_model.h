@@ -44,7 +44,7 @@ class classifier_free_guided_model {
 
   /// @brief 设置默认 cfg_type
   void set_cfg_type_default(const std::string& cfg_type) { cfg_type_default_ = cfg_type; }
-
+  void load_onnx() { model_.load_onnx(); }
   /// @brief 带 CFG 的正向传播（对应 Python ClassifierFreeGuidedModel.forward）
   ///
   /// 根据 cfg_type 对输入沿 batch 维度拼接，一次 forward 同时计算条件和无条件输出，

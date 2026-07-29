@@ -13,7 +13,6 @@
 #include <string>
 #include <vector>
 
-
 namespace doodle::ai {
 
 struct kimodo_model_config;
@@ -50,9 +49,9 @@ class twostage_denoiser {
   /// @brief 加载所有权重并初始化两个 transformer_encoder_block
   /// @param config 模型配置（共享指针），提供路径、维度、标志等参数
   /// @param motion_rep 运动表示（从中推导 input_dim / global_root_dim / local_root_dim）
-  void load(
-      std::shared_ptr<kimodo_model_config> config, const std::shared_ptr<motion_rep_base>& motion_rep
-  );
+  void load(std::shared_ptr<kimodo_model_config> config, const std::shared_ptr<motion_rep_base>& motion_rep);
+
+  void load_onnx();
 
   /// @brief 正向传播（对应 Python forward）
   /// @param x [B*T, input_dim] 当前噪声运动（平坦化）

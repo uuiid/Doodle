@@ -13,7 +13,6 @@
 #include <string>
 #include <vector>
 
-
 namespace doodle::ai {
 
 /// @brief LLM2Vec 模型推理封装
@@ -39,6 +38,8 @@ struct LLM2Vec {
 
   LLM2Vec() = default;
   explicit LLM2Vec(const FSys::path& in_model_path, const FSys::path& in_tokenizer_json_path);
+
+  void load_onnx() { std::call_once(session_init_flag_, &LLM2Vec::init_session, this); }
 
   /// @brief 执行完整推理管线：tokenize → ONNX Run → pooling
   /// @return embedding 向量（维度 = hidden_size）

@@ -2,14 +2,27 @@
 // Created by TD on 25-7-17.
 //
 #include "twostage_denoiser.h"
-#include "kimodo.h"
 
 #include <doodle_core/exception/exception.h>
 
+#include "kimodo.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
+
 namespace doodle::ai {
+
+void twostage_denoiser::load_onnx() {
+  DOODLE_CHICK(motion_rep_.lock() != nullptr, "twostage_denoiser motion_rep_ 为空");
+  DOODLE_CHICK(
+      global_root_dim_ > 0 && local_root_dim_ > 0 && input_dim_ > 0,
+      "twostage_denoiser motion_rep 维度无效: input_dim={}, global_root_dim={}, local_root_dim={}", input_dim_,
+      global_root_dim_, local_root_dim_
+  );
+
+  root_model_.load_onnx();
+  body_model_.load_onnx();
+}
 
 void twostage_denoiser::load(
     std::shared_ptr<kimodo_model_config> config, const std::shared_ptr<motion_rep_base>& motion_rep
