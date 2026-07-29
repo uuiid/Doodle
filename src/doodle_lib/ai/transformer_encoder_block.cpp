@@ -78,6 +78,7 @@ void transformer_encoder_block::load(const FSys::path& model_dir, std::shared_pt
 void transformer_encoder_block::init_session() {
   Ort::SessionOptions session_options;
   session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+  session_options.SetLogSeverityLevel(OrtLoggingLevel::ORT_LOGGING_LEVEL_ERROR);
 
   auto onnx_path = model_dir_ / "transformer_core.onnx";
   DOODLE_CHICK(FSys::exists(onnx_path), "ONNX 模型文件不存在: {}", onnx_path.string());
@@ -316,17 +317,6 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   //   "src_key_padding_mask" — [B, T] float mask (1.0=padding)
   const std::string input_data_name = "src";
   const std::string input_mask_name = "src_key_padding_mask";
-
-  // 验证 ONNX 模型确实包含预期的输入名
-  for (const auto& name : input_names_) {
-    if (name == input_data_name || name == input_mask_name) continue;
-    SPDLOG_WARN("seqTransEncoder ONNX 含未预期的输入 '{}', 期望: [src, src_key_padding_mask]", name);
-  }
-
-  SPDLOG_DEBUG(
-      "ONNX 名称绑定: data='{}', mask='{}', 全部输入: [{}]", input_data_name, input_mask_name,
-      fmt::join(input_names_, ",")
-  );
 
   // 序列输入 shape: [B, total_len, latent_dim]
   std::array<std::int64_t, 3> data_shape{batch_size, total_len, latent_dim_};
