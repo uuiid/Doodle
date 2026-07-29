@@ -351,15 +351,15 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   float* onnx_output_data = ort_outputs.front().GetTensorMutableData<float>();
 
   // ---- 提取 pose_start_ind 之后的运动部分: [B*T, latent_dim] ----
-  Eigen::MatrixXf transformer_out(batch_size * time_steps, latent_dim_);
-  for (Eigen::Index b = 0; b < batch_size; ++b) {
-    for (Eigen::Index t = 0; t < time_steps; ++t) {
-      for (Eigen::Index d = 0; d < latent_dim_; ++d) {
-        const auto onnx_idx =
-            static_cast<std::size_t>(b * total_len * latent_dim_ + (pose_start_ind + t) * latent_dim_ + d);
-        transformer_out(b * time_steps + t, d) = onnx_output_data[onnx_idx];
-      }
-    }
+  // onnx_output_data: [B, total_len, latent_dim] 需要 reshape 为 [B*total_len, latent_dim] 然后提取 pose_start_ind
+  // 之后的部分 我们直接在循环中提取
+  Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> onnx_mat(
+      onnx_output_data, out_batch * out_seq_len, out_dim
+  );
+  Eigen::MatrixXf transformer_out(out_batch * time_steps, out_dim);
+  for (Eigen::Index b = 0; b < out_batch; ++b) {
+    transformer_out.block(b * time_steps, 0, time_steps, out_dim) =
+        onnx_mat.block(b * out_seq_len + pose_start_ind, 0, time_steps, out_dim);
   }
 
   // ---- output_linear: [B*T, latent_dim] -> [B*T, output_dim] ----
