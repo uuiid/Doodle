@@ -220,7 +220,7 @@ Eigen::MatrixXf kimodo::generate_internal(
 // ======================================================================
 // generate: 主入口（对应 Python __call__，不含 multi_prompt）
 // ======================================================================
-motion_output kimodo::generate(
+std::vector<motion_output> kimodo::generate(
     const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
     std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight,
     const std::vector<float>& first_heading_angle, const Eigen::MatrixXf& motion_mask,
@@ -291,9 +291,26 @@ motion_output kimodo::generate(
   // 注意：motion 已反标准化，所以 is_normalized=False
   motion_output output = motion_rep_->decode(motion, false /*is_normalized*/, B, max_frames);
 
-  // ---- Step 7: 检查并使用填充区域（仅保留有效帧） ----
-  // Python 中会自动裁剪到实际长度，但 decode 返回的是 [B*T, ...]
-  // 此处保持原样，由调用方根据 lengths 截取
+  // ---- Step 7: 按 num_frames 裁剪有效帧（仅保留各 batch 实际长度） ----
+  // decode 返回 [B*T, ...] 平坦化结果，T=max_frames
+  // 对每个 batch 元素 b，仅保留前 num_frames[b] 帧，丢弃 padding 噪声
+  std::vector<motion_output> trimmed_outputs;
+  trimmed_outputs.reserve(static_cast<std::size_t>(B));
+
+  for (Eigen::Index b = 0; b < B; ++b) {
+    const Eigen::Index start_row = b * max_frames;
+    const Eigen::Index count     = static_cast<Eigen::Index>(num_frames[static_cast<std::size_t>(b)]);
+
+    motion_output out;
+    out.local_rot_mats      = output.local_rot_mats.middleRows(start_row, count).eval();
+    out.global_rot_mats     = output.global_rot_mats.middleRows(start_row, count).eval();
+    out.posed_joints        = output.posed_joints.middleRows(start_row, count).eval();
+    out.root_positions      = output.root_positions.middleRows(start_row, count).eval();
+    out.smooth_root_pos     = output.smooth_root_pos.middleRows(start_row, count).eval();
+    out.foot_contacts       = output.foot_contacts.middleRows(start_row, count).eval();
+    out.global_root_heading = output.global_root_heading.middleRows(start_row, count).eval();
+    trimmed_outputs.push_back(std::move(out));
+  }
 
   // ---- Step 8: SOMA 骨骼输出转换 ----
   // Python: if isinstance(self.skeleton, SOMASkeleton30):
@@ -304,7 +321,7 @@ motion_output kimodo::generate(
 
   SPDLOG_INFO("kimodo::generate 完成: batch_size={}, max_frames={}, motion_rep_dim={}", B, max_frames, D);
 
-  return output;
+  return trimmed_outputs;
 }
 
 // ======================================================================
@@ -314,10 +331,12 @@ motion_output kimodo::generate(
     const std::string& prompt, std::int64_t num_frames, std::int64_t num_denoising_steps,
     const std::vector<float>& cfg_weight, float first_heading_angle
 ) {
-  return generate(
+  auto results = generate(
       std::vector<std::string>{prompt}, std::vector<std::int64_t>{num_frames}, num_denoising_steps, cfg_weight,
       {first_heading_angle}
   );
+  DOODLE_CHICK(results.size() == 1, "单样本 generate 应返回恰好 1 个结果，实际: {}", results.size());
+  return std::move(results[0]);
 }
 
 }  // namespace doodle::ai

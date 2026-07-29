@@ -209,8 +209,8 @@ class kimodo {
   /// @param motion_mask 运动 mask [B*T, D]（可选）
   /// @param observed_motion 观测运动 [B*T, D]（可选）
   /// @param cfg_type CFG 类型；空则使用默认
-  /// @return 运动输出结构体（平坦化，[B*T, ...]）
-  motion_output generate(
+  /// @return 已裁剪的运动输出列表（每个 batch 元素一个，仅保留有效帧）
+  std::vector<motion_output> generate(
       const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
       std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight = {2.0f, 2.0f},
       const std::vector<float>& first_heading_angle = {}, const Eigen::MatrixXf& motion_mask = {},
