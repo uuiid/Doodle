@@ -39,7 +39,7 @@ class timestep_embedder {
   /// @brief 正向传播
   /// @param timesteps [B] 时间步索引（int64 值）
   /// @return [B, 1, latent_dim]
-  Eigen::MatrixXf forward(const std::vector<std::int64_t>& timesteps) const;
+  MatrixXfRow forward(const std::vector<std::int64_t>& timesteps) const;
 
   [[nodiscard]] bool is_valid() const { return latent_dim_ > 0 && sequence_pos_encoder_ != nullptr; }
 };

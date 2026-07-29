@@ -5,6 +5,7 @@
 
 #include <doodle_lib/core/global_function.h>
 
+#include "fwd.h"
 #include "motion_rep/motion_rep_base.h"
 #include "transformer_encoder_block.h"
 #include <Eigen/Dense>
@@ -63,11 +64,11 @@ class twostage_denoiser {
   /// @param motion_mask [B*T, input_dim] 运动 mask（可选，concat 模式使用）
   /// @param observed_motion [B*T, input_dim] 观测运动（可选，concat 模式使用）
   /// @return [B*T, input_dim] 去噪后的运动（平坦化）
-  Eigen::MatrixXf forward(
-      const Eigen::MatrixXf& x, const MatrixXb& x_pad_mask, const Eigen::MatrixXf& text_feat,
-      const MatrixXb& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
-      const std::vector<float>& first_heading_angle = {}, const Eigen::MatrixXf& motion_mask = {},
-      const Eigen::MatrixXf& observed_motion = {}
+  MatrixXfRow forward(
+      const MatrixXfRow& x, const MatrixXbRow& x_pad_mask, const MatrixXfRow& text_feat,
+      const MatrixXbRow& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
+      const std::vector<float>& first_heading_angle = {}, const MatrixXfRow& motion_mask = {},
+      const MatrixXfRow& observed_motion = {}
   );
 
   [[nodiscard]] bool is_valid() const { return input_dim_ > 0 && global_root_dim_ > 0; }

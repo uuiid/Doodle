@@ -82,8 +82,8 @@ class transformer_encoder_block {
   /// @param timesteps [B] 当前扩散步
   /// @param first_heading_angle [B] 初始朝向角（可选，弧度）
   /// @return [B, T, output_dim] 去噪后的运动（平坦化为 [B*T, output_dim]）
-  Eigen::MatrixXf forward(
-      const Eigen::MatrixXf& x, const MatrixXb& x_pad_mask, const Eigen::MatrixXf& text_feat,
+  MatrixXfRow forward(
+      const MatrixXfRow& x, const MatrixXb& x_pad_mask, const MatrixXfRow& text_feat,
       const MatrixXb& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
       const std::vector<float>& first_heading_angle = {}
   );

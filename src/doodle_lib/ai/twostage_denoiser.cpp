@@ -79,11 +79,11 @@ void twostage_denoiser::load(
   );
 }
 
-Eigen::MatrixXf twostage_denoiser::forward(
-    const Eigen::MatrixXf& x, const MatrixXb& x_pad_mask, const Eigen::MatrixXf& text_feat,
-    const MatrixXb& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
-    const std::vector<float>& first_heading_angle, const Eigen::MatrixXf& motion_mask,
-    const Eigen::MatrixXf& observed_motion
+MatrixXfRow twostage_denoiser::forward(
+    const MatrixXfRow& x, const MatrixXbRow& x_pad_mask, const MatrixXfRow& text_feat,
+    const MatrixXbRow& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
+    const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
+    const MatrixXfRow& observed_motion
 ) {
   DOODLE_CHICK(is_valid(), "twostage_denoiser 未初始化");
 
@@ -106,15 +106,15 @@ Eigen::MatrixXf twostage_denoiser::forward(
   //     x_extended = cat([x, mask], axis=-1)
   //   else:
   //     x_extended = x
-  Eigen::MatrixXf x_used;
-  Eigen::MatrixXf x_extended;
-  Eigen::MatrixXf motion_mask_used;
+  MatrixXfRow x_used;
+  MatrixXfRow x_extended;
+  MatrixXfRow motion_mask_used;
 
   if (motion_mask_mode_ == "concat") {
     // 确定 motion_mask 和 observed_motion
     if (motion_mask.size() == 0 || observed_motion.size() == 0) {
-      motion_mask_used = Eigen::MatrixXf::Zero(total_frames, input_dim_);
-      const auto obs   = Eigen::MatrixXf::Zero(total_frames, input_dim_);
+      motion_mask_used = MatrixXfRow::Zero(total_frames, input_dim_);
+      const auto obs   = MatrixXfRow::Zero(total_frames, input_dim_);
       x_used           = x;  // x = x * 1 + 0 = x
       // x_extended = cat([x, zero_mask], axis=-1)
       x_extended.resize(total_frames, input_dim_ * 2);
@@ -146,7 +146,7 @@ Eigen::MatrixXf twostage_denoiser::forward(
 
   // ---- Stage 1: 预测全局根节点运动 ----
   // root_motion_pred [B*T, global_root_dim]
-  const Eigen::MatrixXf root_motion_pred =
+  const MatrixXfRow root_motion_pred =
       root_model_.forward(x_extended, x_pad_mask, text_feat, text_feat_pad_mask, timesteps, first_heading_angle);
 
   DOODLE_CHICK(
@@ -165,7 +165,7 @@ Eigen::MatrixXf twostage_denoiser::forward(
   auto motion_rep = motion_rep_.lock();
   DOODLE_CHICK(motion_rep != nullptr, "motion_rep 已失效（原始 shared_ptr 已释放）");
 
-  Eigen::MatrixXf root_motion_local = motion_rep->global_root_to_local_root(
+  MatrixXfRow root_motion_local = motion_rep->global_root_to_local_root(
       root_motion_pred, true, batch_size, time_steps, lengths
   );  // [B*T, local_root_dim]
 
@@ -178,16 +178,16 @@ Eigen::MatrixXf twostage_denoiser::forward(
   // ---- 提取身体运动: body_x = x[..., body_slice] ----
   // body_slice = [global_root_dim : input_dim]
   const auto body_dim          = input_dim_ - global_root_dim_;
-  const Eigen::MatrixXf body_x = x_used.rightCols(body_dim);  // [B*T, body_dim]
+  const MatrixXfRow body_x = x_used.rightCols(body_dim);  // [B*T, body_dim]
 
   // ---- 拼接局部根节点 + 身体: x_new = cat([root_motion_local, body_x], axis=-1) ----
   // x_new: [B*T, local_root_dim + body_dim] = [B*T, local_motion_rep_dim]
-  Eigen::MatrixXf x_new(total_frames, local_root_dim_ + body_dim);
+  MatrixXfRow x_new(total_frames, local_root_dim_ + body_dim);
   x_new.leftCols(local_root_dim_) = root_motion_local;
   x_new.rightCols(body_dim)       = body_x;
 
   // ---- 处理 body stage 的 mask (concat 模式) ----
-  Eigen::MatrixXf x_new_extended;
+  MatrixXfRow x_new_extended;
   if (motion_mask_mode_ == "concat") {
     x_new_extended.resize(total_frames, x_new.cols() + input_dim_);
     x_new_extended.leftCols(x_new.cols()) = x_new;
@@ -198,7 +198,7 @@ Eigen::MatrixXf twostage_denoiser::forward(
 
   // ---- Stage 2: 预测身体运动 ----
   // predicted_body [B*T, body_output_dim] = [B*T, input_dim - global_root_dim]
-  const Eigen::MatrixXf predicted_body =
+  const MatrixXfRow predicted_body =
       body_model_.forward(x_new_extended, x_pad_mask, text_feat, text_feat_pad_mask, timesteps, first_heading_angle);
 
   DOODLE_CHICK(
@@ -209,7 +209,7 @@ Eigen::MatrixXf twostage_denoiser::forward(
 
   // ---- 拼接输出: cat([root_motion_pred, predicted_body], axis=-1) ----
   // output: [B*T, input_dim]
-  Eigen::MatrixXf output(total_frames, input_dim_);
+  MatrixXfRow output(total_frames, input_dim_);
   output.leftCols(global_root_dim_) = root_motion_pred;
   output.rightCols(body_dim)        = predicted_body;
 

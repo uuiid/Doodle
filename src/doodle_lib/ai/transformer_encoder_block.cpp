@@ -5,6 +5,7 @@
 
 #include <doodle_core/exception/exception.h>
 
+#include "fwd.h"
 #include "kimodo.h"
 #include <array>
 #include <fmt/format.h>
@@ -107,10 +108,9 @@ void transformer_encoder_block::init_session() {
   );
 }
 
-Eigen::MatrixXf transformer_encoder_block::forward(
-    const Eigen::MatrixXf& x, const MatrixXb& x_pad_mask, const Eigen::MatrixXf& text_feat,
-    const MatrixXb& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
-    const std::vector<float>& first_heading_angle
+MatrixXfRow transformer_encoder_block::forward(
+    const MatrixXfRow& x, const MatrixXb& x_pad_mask, const MatrixXfRow& text_feat, const MatrixXb& text_feat_pad_mask,
+    const std::vector<std::int64_t>& timesteps, const std::vector<float>& first_heading_angle
 ) {
   // ---- 提取形状信息 ----
   // x: [B*T, input_dim]
@@ -134,14 +134,14 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   );
 
   // ---- Step 1: x = input_linear(x)  [B*T, input_dim] -> [B*T, latent_dim] ----
-  Eigen::MatrixXf x_emb = input_linear_.forward(x);  // [B*T, latent_dim]
+  MatrixXfRow x_emb = input_linear_.forward(x);  // [B*T, latent_dim]
 
   // ---- Step 2: Pad text tokens 到固定大小 num_text_tokens ----
   // text_feat: [B*max_text_len, llm_dim]
   // 需要 reshape 为 [B, max_text_len, llm_dim] 然后 pad
   // 我们用平坦化方式处理
-  Eigen::MatrixXf text_padded;  // [B*num_text_tokens, llm_dim]
-  MatrixXb text_mask_padded;    // [B, num_text_tokens]
+  MatrixXfRow text_padded;       // [B*num_text_tokens, llm_dim]
+  MatrixXbRow text_mask_padded;  // [B, num_text_tokens]
 
   {
     const auto llm_dim = text_feat.cols();
@@ -172,31 +172,31 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   }
 
   // ---- Step 3: emb_text = embed_text(text_padded)  [B*num_text_tokens, latent_dim] ----
-  Eigen::MatrixXf emb_text = embed_text_.forward(text_padded);  // [B*num_text_tokens, latent_dim]
+  MatrixXfRow emb_text       = embed_text_.forward(text_padded);  // [B*num_text_tokens, latent_dim]
 
   // ---- Step 4: emb_time = embed_timestep(timesteps)  [B, latent_dim] (含 [B,1,D] 语义) ----
-  Eigen::MatrixXf emb_time = embed_timestep_.forward(timesteps);  // [B, latent_dim]
+  MatrixXfRow emb_time       = embed_timestep_.forward(timesteps);  // [B, latent_dim]
 
   // ---- Step 5: 构建 prefix 特征和 mask ----
   // prefix_feats = [emb_text | emb_time]  -> [B, num_text_tokens + 1, latent_dim]
   // 平坦化: [B*(num_text_tokens+1), latent_dim]
 
-  Eigen::Index prefix_len  = num_text_tokens_ + 1;
+  Eigen::Index prefix_len    = num_text_tokens_ + 1;
 
   // 处理 text_feat_pad_mask: 如果 use_text_mask = false, 则全 true
-  MatrixXb text_mask_used  = text_mask_padded;
+  MatrixXbRow text_mask_used = text_mask_padded;
   if (!use_text_mask_) {
     text_mask_used.resize(batch_size, num_text_tokens_);
     text_mask_used.setConstant(true);
   }
 
   // time_mask: [B, 1], 全 true
-  MatrixXb time_mask(batch_size, 1);
+  MatrixXbRow time_mask(batch_size, 1);
   time_mask.setConstant(true);
 
   // ---- 可选: first_heading_angle ----
-  Eigen::MatrixXf first_heading_angle_feats;
-  MatrixXb first_heading_angle_mask;
+  MatrixXfRow first_heading_angle_feats;
+  MatrixXbRow first_heading_angle_mask;
   if (input_first_heading_angle_ && !first_heading_angle.empty()) {
     DOODLE_CHICK(
         static_cast<Eigen::Index>(first_heading_angle.size()) == batch_size,
@@ -221,7 +221,7 @@ Eigen::MatrixXf transformer_encoder_block::forward(
 
   // ---- 拼接 prefix：text + time + (可选) angle  ----
   // prefix_feats: [B, prefix_len, latent_dim] 平坦化为 [B*prefix_len, latent_dim]
-  Eigen::MatrixXf prefix_feats(batch_size * prefix_len, latent_dim_);
+  MatrixXfRow prefix_feats(batch_size * prefix_len, latent_dim_);
 
   // 填充 text 部分
   for (Eigen::Index b = 0; b < batch_size; ++b) {
@@ -241,7 +241,7 @@ Eigen::MatrixXf transformer_encoder_block::forward(
 
   // ---- 拼接 mask：text_mask + time_mask + (可选) angle_mask ----
   // prefix_mask: [B, prefix_len]
-  MatrixXb prefix_mask(batch_size, prefix_len);
+  MatrixXbRow prefix_mask(batch_size, prefix_len);
   prefix_mask.block(0, 0, batch_size, num_text_tokens_) = text_mask_used;
   prefix_mask.col(num_text_tokens_)                     = time_mask.col(0);
   if (input_first_heading_angle_ && !first_heading_angle.empty()) {
@@ -253,7 +253,7 @@ Eigen::MatrixXf transformer_encoder_block::forward(
 
   // ---- 拼接 prefix 和 x: xseq [B, prefix_len+T, latent_dim] ----
   const auto total_len      = prefix_len + time_steps;
-  Eigen::MatrixXf xseq(batch_size * total_len, latent_dim_);
+  MatrixXfRow xseq(batch_size * total_len, latent_dim_);
 
   // 填充 prefix
   for (Eigen::Index b = 0; b < batch_size; ++b) {
@@ -270,7 +270,7 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   // Python: src_key_padding_mask = ~torch.cat((prefix_mask, x_pad_mask), axis=1)
   // prefix_mask: True=有效, x_pad_mask: True=有效
   // ~ 取反后: True=pad（需要被 mask 的填充位置）
-  MatrixXb src_key_padding_mask(batch_size, total_len);
+  MatrixXbRow src_key_padding_mask(batch_size, total_len);
   src_key_padding_mask.block(0, 0, batch_size, prefix_len)          = prefix_mask;
   src_key_padding_mask.block(0, prefix_len, batch_size, time_steps) = x_pad_mask;
   src_key_padding_mask                                              = !src_key_padding_mask.array();
@@ -280,7 +280,7 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   // PositionalEncoding::forward 接受 [seq_len, d_model]
   // 我们对每个 batch 分别处理
   for (Eigen::Index b = 0; b < batch_size; ++b) {
-    Eigen::MatrixXf seq_slice                            = xseq.block(b * total_len, 0, total_len, latent_dim_);
+    MatrixXfRow seq_slice                                = xseq.block(b * total_len, 0, total_len, latent_dim_);
     seq_slice                                            = sequence_pos_encoder_.forward(seq_slice);
     xseq.block(b * total_len, 0, total_len, latent_dim_) = seq_slice;
   }
@@ -294,26 +294,23 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   // ONNX 期望 RowMajor 连续内存，将 Eigen 列主序数据拷贝到行主序 vector
   // 将 Eigen 列主序数据拷贝到行主序的 Eigen::MatrixXf
   // xseq: [B*total_len, latent_dim] -> ONNX: [B, total_len, latent_dim]
-  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> xseq_rowmajor = xseq;
 
   // mask: [B, total_len], bool
-  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> src_key_padding_mask_rowmajor =
-      src_key_padding_mask.cast<float>();
+  MatrixXfRow src_key_padding_mask_rowmajor = src_key_padding_mask.cast<float>();
 
   // ---- 名称匹配：按 to_onnx.py 导出的输入名绑定 ----
   // TransformerEncoderWrapper 导出时输入名为:
   //   "src"  — [B, T, D] 序列数据
   //   "src_key_padding_mask" — [B, T] float mask (1.0=padding)
-  const std::string input_data_name = "src";
-  const std::string input_mask_name = "src_key_padding_mask";
+  const std::string input_data_name         = "src";
+  const std::string input_mask_name         = "src_key_padding_mask";
 
   // 序列输入 shape: [B, total_len, latent_dim]
   std::array<std::int64_t, 3> data_shape{batch_size, total_len, latent_dim_};
   std::array<std::int64_t, 2> mask_shape{batch_size, total_len};
 
-  auto data_tensor = Ort::Value::CreateTensor<float>(
-      memory_info_, xseq_rowmajor.data(), xseq_rowmajor.size(), data_shape.data(), data_shape.size()
-  );
+  auto data_tensor =
+      Ort::Value::CreateTensor<float>(memory_info_, xseq.data(), xseq.size(), data_shape.data(), data_shape.size());
 
   io_binding_->BindInput(input_data_name.c_str(), data_tensor);
 
@@ -360,14 +357,14 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> onnx_mat(
       onnx_output_data, out_batch * out_seq_len, out_dim
   );
-  Eigen::MatrixXf transformer_out(out_batch * time_steps, out_dim);
+  MatrixXfRow transformer_out(out_batch * time_steps, out_dim);
   for (Eigen::Index b = 0; b < out_batch; ++b) {
     transformer_out.block(b * time_steps, 0, time_steps, out_dim) =
         onnx_mat.block(b * out_seq_len + pose_start_ind, 0, time_steps, out_dim);
   }
 
   // ---- output_linear: [B*T, latent_dim] -> [B*T, output_dim] ----
-  Eigen::MatrixXf result = output_linear_.forward(transformer_out);
+  MatrixXfRow result = output_linear_.forward(transformer_out);
 
   return result;
 }

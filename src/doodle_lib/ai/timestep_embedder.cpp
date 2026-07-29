@@ -34,7 +34,7 @@ void timestep_embedder::init(
   );
 }
 
-Eigen::MatrixXf timestep_embedder::forward(const std::vector<std::int64_t>& timesteps) const {
+MatrixXfRow timestep_embedder::forward(const std::vector<std::int64_t>& timesteps) const {
   DOODLE_CHICK(is_valid(), "timestep_embedder 未初始化");
 
   //   auto batch_size = static_cast<Eigen::Index>(timesteps.size());
@@ -43,10 +43,10 @@ Eigen::MatrixXf timestep_embedder::forward(const std::vector<std::int64_t>& time
   // 对应 Python: sequence_pos_encoder.pe.transpose(0, 1)[timesteps]
   // Python 中 pe shape: [1, max_len, D], transpose(0,1) -> [max_len, 1, D], [timesteps] -> [B, 1, D]
   // 我们在 C++ 中用 lookup 得到 [B, D]，然后 unsqueeze 为 [B, 1, D]
-  Eigen::MatrixXf pe_out = sequence_pos_encoder_->lookup(timesteps);  // [B, latent_dim]
+  MatrixXfRow pe_out = sequence_pos_encoder_->lookup(timesteps);  // [B, latent_dim]
 
   // 通过 MLP: Linear -> SiLU -> Linear
-  Eigen::MatrixXf h      = linear1_.forward(pe_out);  // [B, latent_dim]
+  MatrixXfRow h      = linear1_.forward(pe_out);  // [B, latent_dim]
   // SiLU 激活: x * sigmoid(x)
   h                      = h.array() * (1.0f / (1.0f + (-h.array()).exp()));
   h                      = linear2_.forward(h);  // [B, latent_dim]
