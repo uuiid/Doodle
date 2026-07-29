@@ -2,32 +2,31 @@
 // Created by TD on 25-6-29.
 //
 #include "transformer_encoder_block.h"
-#include "kimodo.h"
 
 #include <doodle_core/exception/exception.h>
 
+#include "kimodo.h"
 #include <array>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
-
+#include <string>
+#include <vector>
 
 namespace doodle::ai {
 
-void transformer_encoder_block::load(
-    const FSys::path& model_dir, std::shared_ptr<kimodo_model_config> config
-) {
+void transformer_encoder_block::load(const FSys::path& model_dir, std::shared_ptr<kimodo_model_config> config) {
   DOODLE_CHICK(config != nullptr, "kimodo_model_config 为空");
   const auto latent_dim                = config->latent_dim_;
   const auto num_text_tokens           = config->num_text_tokens_;
   const auto use_text_mask             = config->use_text_mask_;
   const auto input_first_heading_angle = config->input_first_heading_angle_;
 
-  model_dir_                 = model_dir;
-  latent_dim_                = latent_dim;
-  num_text_tokens_           = num_text_tokens;
-  use_text_mask_             = use_text_mask;
-  input_first_heading_angle_ = input_first_heading_angle;
+  model_dir_                           = model_dir;
+  latent_dim_                          = latent_dim;
+  num_text_tokens_                     = num_text_tokens;
+  use_text_mask_                       = use_text_mask;
+  input_first_heading_angle_           = input_first_heading_angle;
 
   // 加载 Linear 层
   embed_text_.load(model_dir / "embed_text.weight.npy", model_dir / "embed_text.bias.npy");
@@ -90,15 +89,12 @@ void transformer_encoder_block::init_session() {
 
   // ---- 名称匹配检查：验证输入名称符合预期（对应 to_onnx.py 的导出） ----
   // TransformerEncoderWrapper 导出时输入名为 ["src", "src_key_padding_mask"]
-  {
-    const std::set<std::string> expected_names = {"src", "src_key_padding_mask"};
-    for (const auto& name : input_names_) {
-      // 检查是否是预期的输入名称
-      if (!expected_names.contains(name)) {
-        SPDLOG_WARN("seqTransEncoder ONNX 含未预期的输入 '{}', 期望: [{}]", name, fmt::join(expected_names, ", "));
-      }
-    }
-  }
+  DOODLE_CHICK(input_names_.size() == 2, "seqTransEncoder ONNX 输入数量 {} 不匹配预期 2", input_names_.size());
+  static const std::vector<std::string> expected_input_names = {"src", "src_key_padding_mask"};
+  DOODLE_CHICK(
+      input_names_ == expected_input_names, "seqTransEncoder ONNX 输入名称不匹配预期: [{}]",
+      fmt::join(input_names_, ",")
+  );
 
   for (const auto& name : output_names_) {
     io_binding_->BindOutput(name.c_str(), memory_info_);
