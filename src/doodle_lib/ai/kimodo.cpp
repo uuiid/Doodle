@@ -205,10 +205,12 @@ Eigen::MatrixXf kimodo::generate_internal(
   SPDLOG_INFO("kimodo: 开始去噪循环, num_denoising_steps={}", num_denoising_steps);
 
   for (std::int64_t i = num_denoising_steps - 1; i >= 0; --i) {
-    cur_mot = denoising_step(
+    auto start_time = std::chrono::high_resolution_clock::now();
+    cur_mot         = denoising_step(
         cur_mot, pad_mask, text_feat, text_pad_mask, i, first_heading_angle, motion_mask_f, observed_motion,
         num_denoising_steps, cfg_weight, cfg_type
     );
+    SPDLOG_INFO("kimodo: 去噪步 {} 完成 time {:%S}", i, std::chrono::high_resolution_clock::now() - start_time);
   }
 
   SPDLOG_INFO("kimodo: 去噪循环完成");
