@@ -41,7 +41,7 @@ void linear_layer::load(const FSys::path& weight_path, const FSys::path& bias_pa
   }
 }
 
-Eigen::MatrixXf linear_layer::forward(const Eigen::MatrixXf& input) const {
+MatrixXfRow linear_layer::forward(const MatrixXfRow& input) const {
   DOODLE_CHICK(is_valid(), "linear_layer 未初始化");
   DOODLE_CHICK(
       input.cols() == in_features(), "linear_layer 输入特征维度不匹配: 期望 {}, 实际 {}", in_features(), input.cols()
@@ -50,15 +50,15 @@ Eigen::MatrixXf linear_layer::forward(const Eigen::MatrixXf& input) const {
   // y = x * W^T + b
   // input: [N, in_features], weight_: [out_features, in_features]
   // result: [N, out_features]
-  Eigen::MatrixXf result = input * weight_.transpose();
+  MatrixXfRow result = input * weight_.transpose();
   if (has_bias()) {
     result.rowwise() += bias_.transpose();
   }
   return result;
 }
 
-Eigen::MatrixXf linear_layer::forward_batched(
-    const Eigen::MatrixXf& input, std::int64_t batch_size, std::int64_t time_steps
+MatrixXfRow linear_layer::forward_batched(
+    const MatrixXfRow& input, std::int64_t batch_size, std::int64_t time_steps
 ) const {
   // input: [B*T, in_features]
   DOODLE_CHICK(is_valid(), "linear_layer 未初始化");
