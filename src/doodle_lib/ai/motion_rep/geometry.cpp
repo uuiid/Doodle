@@ -50,13 +50,13 @@ MatrixXfRow cont6d_to_matrix(const MatrixXfRow& cont6d) {
 
       // Gram-Schmidt orthogonalization
       // x = normalize(x_raw)
-      Eigen::Vector3f x = x_raw.normalized();
+      Eigen::Vector3f x         = x_raw.normalized();
 
       // z = normalize(cross(x, y_raw))
-      Eigen::Vector3f z = x.cross(y_raw).normalized();
+      Eigen::Vector3f z         = x.cross(y_raw).normalized();
 
       // y = cross(z, x)
-      Eigen::Vector3f y = z.cross(x);
+      Eigen::Vector3f y         = z.cross(x);
 
       // Build rotation matrix (column-major storage but we store row-major)
       // Matrix R = [x | y | z]  (columns are x, y, z)
@@ -92,85 +92,6 @@ Eigen::Matrix3f angle_to_Y_rotation_matrix(float angle) {
   mat(2, 2) = cos_a;
 
   return mat;
-}
-
-MatrixXfRow angle_to_Y_rotation_matrix_batch(const Eigen::VectorXf& angles) {
-  const Eigen::Index N = angles.size();
-  MatrixXfRow result(N, 9);
-
-  for (Eigen::Index i = 0; i < N; ++i) {
-    Eigen::Matrix3f R = angle_to_Y_rotation_matrix(angles(i));
-    result(i, 0)      = R(0, 0);
-    result(i, 1)      = R(0, 1);
-    result(i, 2)      = R(0, 2);
-    result(i, 3)      = R(1, 0);
-    result(i, 4)      = R(1, 1);
-    result(i, 5)      = R(1, 2);
-    result(i, 6)      = R(2, 0);
-    result(i, 7)      = R(2, 1);
-    result(i, 8)      = R(2, 2);
-  }
-
-  return result;
-}
-
-// ======================================================================
-// axis_angle_to_matrix: Rodrigues 公式
-// ======================================================================
-MatrixXfRow axis_angle_to_matrix(const MatrixXfRow& axis_angle) {
-  const Eigen::Index N = axis_angle.rows();
-  DOODLE_CHICK(axis_angle.cols() == 3, "axis_angle_to_matrix: input cols must be 3, got {}", axis_angle.cols());
-
-  constexpr float eps = 1e-6f;
-  MatrixXfRow result(N, 9);
-
-  for (Eigen::Index i = 0; i < N; ++i) {
-    const Eigen::Vector3f v = axis_angle.row(i);
-    const float angle       = v.norm();
-    Eigen::Vector3f axis;
-    if (angle < eps) {
-      // 接近零角度：近似 R ≈ I + [v]×
-      axis = Eigen::Vector3f::Zero();
-      // 直接用小角度近似：R ≈ I + skew(v)
-      const float vx = v(0), vy = v(1), vz = v(2);
-      // clang-format off
-      result.row(i) <<
-          1.0f, -vz,  vy,
-          vz,  1.0f, -vx,
-         -vy,  vx,  1.0f;
-      // clang-format on
-      continue;
-    }
-    axis        = v / angle;
-
-    const float c = std::cos(angle);
-    const float s = std::sin(angle);
-
-    // 斜对称矩阵 K = [0, -z, y; z, 0, -x; -y, x, 0]
-    const float x = axis(0), y = axis(1), z = axis(2);
-
-    // Rodrigues: R = I + sin(θ) * K + (1 - cos(θ)) * K²
-    // K² 的解析形式
-    const float Ksq_00 = -y * y - z * z;
-    const float Ksq_01 = x * y;
-    const float Ksq_02 = x * z;
-    const float Ksq_10 = x * y;
-    const float Ksq_11 = -x * x - z * z;
-    const float Ksq_12 = y * z;
-    const float Ksq_20 = x * z;
-    const float Ksq_21 = y * z;
-    const float Ksq_22 = -x * x - y * y;
-
-    const float omc = 1.0f - c;
-
-    // clang-format off
-    result.row(i) <<
-        c + omc * Ksq_00,  -z * s + omc * Ksq_01,   y * s + omc * Ksq_02,
-        z * s + omc * Ksq_10,  c + omc * Ksq_11,  -x * s + omc * Ksq_12,
-       -y * s + omc * Ksq_20,   x * s + omc * Ksq_21,  c + omc * Ksq_22;
-    // clang-format on
-  }
-  return result;
 }
 
 // ======================================================================
@@ -233,10 +154,10 @@ MatrixXfRow quaternion_to_axis_angle(const MatrixXfRow& quat) {
   MatrixXfRow result(N, 3);
 
   for (Eigen::Index i = 0; i < N; ++i) {
-    float w  = quat(i, 0);
-    float x  = quat(i, 1);
-    float y  = quat(i, 2);
-    float z  = quat(i, 3);
+    float w = quat(i, 0);
+    float x = quat(i, 1);
+    float y = quat(i, 2);
+    float z = quat(i, 3);
 
     // 标准化到规范形式：优先 w > 0；当 w ≈ 0 时优先第一个非零分量 > 0
     if (w < -eps || (std::abs(w) <= eps && x < 0.0f)) {

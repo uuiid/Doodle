@@ -7,7 +7,6 @@
 
 #include <Eigen/Dense>
 
-
 namespace doodle::ai {
 
 /// @brief 将旋转矩阵转换为 6D 连续表示（前两列），支持多关节拼接
@@ -19,16 +18,6 @@ MatrixXfRow matrix_to_cont6d(const MatrixXfRow& matrix);
 /// @param cont6d [N, J*6] 6D 连续表示
 /// @return [N, J*9] 旋转矩阵行展开
 MatrixXfRow cont6d_to_matrix(const MatrixXfRow& cont6d);
-
-/// @brief 构建绕 Y 轴的旋转矩阵
-/// @param angle 旋转角（弧度）
-/// @return [3, 3] 绕 Y 轴旋转矩阵
-Eigen::Matrix3f angle_to_Y_rotation_matrix(float angle);
-
-/// @brief 批量构建绕 Y 轴的旋转矩阵
-/// @param angles [N] 旋转角数组（弧度）
-/// @return [N, 9] 每行为 3x3 矩阵的行展开
-MatrixXfRow angle_to_Y_rotation_matrix_batch(const Eigen::VectorXf& angles);
 
 // ======================================================================
 // Axis-Angle ↔ Rotation Matrix (for constraint save/load)
