@@ -26,7 +26,8 @@ void linear_layer::load(const FSys::path& weight_path, const FSys::path& bias_pa
   Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> w_map(
       l_data.data<float>(), rows, cols
   );
-  weight_ = w_map;
+  weight_  = w_map;
+  weight_T_ = weight_.transpose();  // 预转置，forward 时直接用 input * weight_T_
 
   // 加载偏置（可选）
   if (!bias_path.empty()) {
@@ -48,9 +49,11 @@ MatrixXfRow linear_layer::forward(const MatrixXfRow& input) const {
   );
 
   // y = x * W^T + b
-  // input: [N, in_features], weight_: [out_features, in_features]
+  // input: [N, in_features], weight_T_: [in_features, out_features]
   // result: [N, out_features]
-  MatrixXfRow result = input * weight_.transpose();
+  // noalias 告知 Eigen 输出不别名输入，可走优化 GEMM 内核
+  MatrixXfRow result(input.rows(), weight_T_.cols());
+  result.noalias() = input * weight_T_;
   if (has_bias()) {
     result.rowwise() += bias_.transpose();
   }

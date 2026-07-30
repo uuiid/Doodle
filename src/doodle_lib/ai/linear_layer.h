@@ -17,6 +17,7 @@ namespace doodle::ai {
 /// 权重从 .npy 文件加载（对应 PyTorch nn.Linear）
 class linear_layer {
   MatrixXfRow weight_;    // [out_features, in_features]
+  MatrixXfRow weight_T_;  // [in_features, out_features] 预转置，forward 时避免 transpose 表达式
   Eigen::VectorXf bias_;  // [out_features] 或空
 
  public:
@@ -28,7 +29,10 @@ class linear_layer {
   void load(const FSys::path& weight_path, const FSys::path& bias_path = {});
 
   /// @brief 设置权重矩阵（直接赋值）
-  void set_weight(MatrixXfRow weight) { weight_ = std::move(weight); }
+  void set_weight(MatrixXfRow weight) {
+    weight_  = std::move(weight);
+    weight_T_ = weight_.transpose();
+  }
 
   /// @brief 设置偏置向量
   void set_bias(Eigen::VectorXf bias) { bias_ = std::move(bias); }

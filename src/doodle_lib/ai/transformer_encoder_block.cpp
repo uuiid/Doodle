@@ -133,8 +133,12 @@ MatrixXfRow transformer_encoder_block::forward(
       timesteps.size(), batch_size
   );
 
+  auto t0 = std::chrono::high_resolution_clock::now();
+
   // ---- Step 1: x = input_linear(x)  [B*T, input_dim] -> [B*T, latent_dim] ----
   MatrixXfRow x_emb = input_linear_.forward(x);  // [B*T, latent_dim]
+
+  auto t1 = std::chrono::high_resolution_clock::now();
 
   // ---- Step 2: Pad text tokens 到固定大小 num_text_tokens ----
   // text_feat: [B*max_text_len, llm_dim]
@@ -176,6 +180,8 @@ MatrixXfRow transformer_encoder_block::forward(
 
   // ---- Step 4: emb_time = embed_timestep(timesteps)  [B, latent_dim] (含 [B,1,D] 语义) ----
   MatrixXfRow emb_time       = embed_timestep_.forward(timesteps);  // [B, latent_dim]
+
+  auto t2 = std::chrono::high_resolution_clock::now();
 
   // ---- Step 5: 构建 prefix 特征和 mask ----
   // prefix_feats = [emb_text | emb_time]  -> [B, num_text_tokens + 1, latent_dim]
@@ -285,6 +291,8 @@ MatrixXfRow transformer_encoder_block::forward(
     xseq.block(b * total_len, 0, total_len, latent_dim_) = seq_slice;
   }
 
+  auto t3 = std::chrono::high_resolution_clock::now();
+
   // ---- 延迟初始化 ONNX session ----
   std::call_once(session_init_flag_, &transformer_encoder_block::init_session, this);
 
@@ -321,6 +329,8 @@ MatrixXfRow transformer_encoder_block::forward(
   );
   io_binding_->BindInput(input_mask_name.c_str(), mask_tensor);
 
+  auto t4 = std::chrono::high_resolution_clock::now();
+
   // ---- 运行 ONNX 推理 ----
   try {
     // 输出推理时间
@@ -331,6 +341,8 @@ MatrixXfRow transformer_encoder_block::forward(
   } catch (const Ort::Exception& e) {
     DOODLE_CHICK(false, "seqTransEncoder ONNX 推理失败: {}", e.what());
   }
+
+  auto t5 = std::chrono::high_resolution_clock::now();
 
   // ---- 获取 ONNX 输出 ----
   auto ort_outputs = io_binding_->GetOutputValues();
@@ -365,6 +377,13 @@ MatrixXfRow transformer_encoder_block::forward(
 
   // ---- output_linear: [B*T, latent_dim] -> [B*T, output_dim] ----
   MatrixXfRow result = output_linear_.forward(transformer_out);
+
+  auto t6 = std::chrono::high_resolution_clock::now();
+  SPDLOG_INFO(
+      "transformer block 分段计时(秒): input_linear={:%S} text+time_emb={:%S} prefix+xseq+poseenc={:%S} "
+      "onnx_io={:%S} onnx_run={:%S} out_extract+linear={:%S} total={:%S} (B={}, total_len={})",
+      t1 - t0, t2 - t1, t3 - t2, t4 - t3, t5 - t4, t6 - t5, t6 - t0, batch_size, total_len
+  );
 
   return result;
 }
