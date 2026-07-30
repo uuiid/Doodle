@@ -62,11 +62,9 @@ struct ai_train_animation::impl {
 };
 ai_train_animation::ai_train_animation() : impl_ptr_(std::make_shared<impl>()) {}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
-#ifndef NDEBUG
   init_ort_env();
   auto l_args = in_handle->get_json().get<ai_train_binding_weights_post_args>();
   boost::asio::post(g_io_context(), [this, l_args]() { impl_ptr_->run(l_args); });
-#endif
   co_return in_handle->make_msg(nlohmann::json{});
 }
 
