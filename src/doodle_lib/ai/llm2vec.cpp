@@ -10,7 +10,8 @@
 #include <fmt/ranges.h>
 #include <numeric>
 #include <spdlog/spdlog.h>
-
+#include <string>
+#include <vector>
 
 namespace doodle::ai {
 
@@ -29,7 +30,11 @@ void LLM2Vec::init_session() {
   io_binding_   = std::make_unique<Ort::IoBinding>(*session_);
   // 绑定输出到 CPU memory，让 ONNX Runtime 自动分配输出 tensor，避免传空 OrtValue* 导致空指针崩溃
   for (const auto& name : output_names_) io_binding_->BindOutput(name.c_str(), memory_info_);
-
+  static const std::vector<std::string> g_input_names{"input_ids", "attention_mask", "position_ids"};
+  DOODLE_CHICK(
+      input_names_ == g_input_names, "检查到模型输入错误 {} != {}", fmt::join(input_names_, ","),
+      fmt::join(g_input_names, ",")
+  );
   SPDLOG_INFO(
       "ONNX Runtime session 初始化成功，输入: [{}], 输出: [{}]", fmt::join(input_names_, ","),
       fmt::join(output_names_, ",")
@@ -126,18 +131,15 @@ std::vector<float_t> LLM2Vec::operator()(const std::string& instruction, const s
   // 部分 ONNX 导出包含 position_ids 输入（Llama 等模型的 rotary embedding 需要）
   // 生成 position_ids: [0, 1, 2, ..., seq_len-1] shape {1, seq_len}
   // 注意：position_ids 必须在此作用域保持存活直至 Run 完成
-  std::vector<std::int64_t> position_ids;
-  if (std::find_if(input_names_.begin(), input_names_.end(), [](const std::string& name) {
-        return name == "position_ids" || name == "position_ids_1";
-      }) != input_names_.end()) {
-    position_ids.assign(static_cast<std::size_t>(seq_len), 0);
-    io_binding_->BindInput(
-        "position_ids",
-        Ort::Value::CreateTensor<std::int64_t>(
-            memory_info, position_ids.data(), position_ids.size(), input_shape.data(), input_shape.size()
-        )
-    );
-  }
+  std::vector<std::int64_t> position_ids{};
+  position_ids.assign(static_cast<std::size_t>(seq_len), 0);
+  std::iota(position_ids.begin(), position_ids.end(), 0);
+  io_binding_->BindInput(
+      "position_ids", Ort::Value::CreateTensor<std::int64_t>(
+                          memory_info, position_ids.data(), position_ids.size(), input_shape.data(), input_shape.size()
+                      )
+  );
+
   // Step 4: 运行模型推理
   try {
     session_->Run(Ort::RunOptions{nullptr}, *io_binding_);
