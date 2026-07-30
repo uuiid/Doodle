@@ -57,8 +57,8 @@ kimodo_motion_rep::kimodo_motion_rep(std::shared_ptr<skeleton_base> skel, std::s
 // encode: 局部旋转 + 根位置 → 平滑根特征
 // ======================================================================
 MatrixXfRow kimodo_motion_rep::encode(
-    const MatrixXfRow& local_joint_rots, const MatrixXfRow& root_positions, bool to_normalize,
-    std::int64_t batch_size, std::int64_t time_steps, const Eigen::VectorXi& lengths
+    const MatrixXfRow& local_joint_rots, const MatrixXfRow& root_positions, bool to_normalize, std::int64_t batch_size,
+    std::int64_t time_steps, const Eigen::VectorXi& lengths
 ) const {
   const Eigen::Index total = local_joint_rots.rows();
   DOODLE_CHICK(total == batch_size * time_steps, "总帧数不匹配");
@@ -72,7 +72,7 @@ MatrixXfRow kimodo_motion_rep::encode(
   }
 
   // ---- Step 1: FK ----
-  auto fk_res                   = skeleton_->fk(local_joint_rots, root_positions);
+  auto fk_res               = skeleton_->fk(local_joint_rots, root_positions);
   // fk_res.global_rot_mats: [B*T, J*9]
   // fk_res.posed_joints: [B*T, J*3]
   // fk_res.posed_joints_norootpos: [B*T, J*3]
@@ -188,12 +188,12 @@ motion_output kimodo_motion_rep::decode(
   }
 
   // ---- 拆包 ----
-  std::int64_t offset                   = 0;
+  std::int64_t offset               = 0;
 
-  const MatrixXfRow smooth_root_pos = feats.middleCols(offset, 3);
+  const MatrixXfRow smooth_root_pos = feats.middleCols<3>(offset);
   offset += 3;
 
-  const MatrixXfRow global_root_heading = feats.middleCols(offset, 2);
+  const MatrixXfRow global_root_heading = feats.middleCols<2>(offset);
   offset += 2;
 
   const MatrixXfRow local_joints_positions = feats.middleCols(offset, nbjoints_ * 3);
@@ -205,7 +205,7 @@ motion_output kimodo_motion_rep::decode(
   // velocities (跳过，解码不使用)
   offset += nbjoints_ * 3;
 
-  const MatrixXfRow foot_contacts_float = feats.middleCols(offset, 4);
+  const MatrixXfRow foot_contacts_float = feats.middleCols<4>(offset);
   offset += 4;
 
   DOODLE_CHICK(offset == motion_rep_dim_, "拆包偏移 {} 不匹配 motion_rep_dim {}", offset, motion_rep_dim_);
@@ -272,12 +272,12 @@ MatrixXfRow kimodo_motion_rep::rotate(
   DOODLE_CHICK(angle.size() == batch_size, "角度数不匹配 batch_size");
 
   // 拆包特征块
-  const std::int64_t s1            = 3;              // smooth_root_pos
-  const std::int64_t s2            = 2;              // global_root_heading
-  const std::int64_t s3            = nbjoints_ * 3;  // local_joints_positions
-  const std::int64_t s4            = nbjoints_ * 6;  // global_rot_data
-  const std::int64_t s5            = nbjoints_ * 3;  // velocities
-  const std::int64_t s6            = 4;              // foot_contacts
+  const std::int64_t s1        = 3;              // smooth_root_pos
+  const std::int64_t s2        = 2;              // global_root_heading
+  const std::int64_t s3        = nbjoints_ * 3;  // local_joints_positions
+  const std::int64_t s4        = nbjoints_ * 6;  // global_rot_data
+  const std::int64_t s5        = nbjoints_ * 3;  // velocities
+  const std::int64_t s6        = 4;              // foot_contacts
 
   MatrixXfRow smooth_root_pos  = features.middleCols(0, s1);
   MatrixXfRow heading_2d       = features.middleCols(s1, s2);
@@ -316,8 +316,7 @@ MatrixXfRow kimodo_motion_rep::rotate(
 // translate_2d: 平移 XZ 平面
 // ======================================================================
 MatrixXfRow kimodo_motion_rep::translate_2d(
-    const MatrixXfRow& features, const MatrixXfRow& translation_2d, std::int64_t batch_size,
-    std::int64_t time_steps
+    const MatrixXfRow& features, const MatrixXfRow& translation_2d, std::int64_t batch_size, std::int64_t time_steps
 ) const {
   const Eigen::Index total = features.rows();
   DOODLE_CHICK(total == batch_size * time_steps, "总帧数不匹配");
@@ -347,8 +346,7 @@ MatrixXfRow kimodo_motion_rep::translate_2d(
 // ======================================================================
 kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
     const std::unordered_map<std::string, std::vector<MatrixXfRow>>& index_dict,
-    const std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict, std::int64_t length,
-    bool to_normalize
+    const std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict, std::int64_t length, bool to_normalize
 ) const {
   const std::int64_t D = motion_rep_dim_;
 
