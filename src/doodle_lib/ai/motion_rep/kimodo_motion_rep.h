@@ -7,11 +7,11 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <Eigen/Dense>
+#include <array>
 #include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
 
 namespace doodle::ai {
 
@@ -23,15 +23,80 @@ struct kimodo_model_config;
 
 /// @brief KimodoMotionRep 解码输出结构
 struct motion_output {
-  MatrixXfRow local_rot_mats;                                         ///< [B*T, J*9] 局部旋转矩阵
-  MatrixXfRow global_rot_mats;                                        ///< [B*T, J*9] 全局旋转矩阵
-  MatrixXfRow posed_joints;                                           ///< [B*T, J*3] 全局关节位置
-  MatrixXfRow root_positions;                                         ///< [B*T, 3] 根节点位置
-  MatrixXfRow smooth_root_pos;                                        ///< [B*T, 3] 平滑根位置
-  Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> foot_contacts;  ///< [B*T, 4] 脚接触标签
-  MatrixXfRow global_root_heading;                                    ///< [B*T, 2] 全局根朝向 (cos, sin)
+  MatrixXfRow local_rot_mats;       ///< [B*T, J*9] 局部旋转矩阵
+  MatrixXfRow global_rot_mats;      ///< [B*T, J*9] 全局旋转矩阵
+  MatrixXfRow posed_joints;         ///< [B*T, J*3] 全局关节位置
+  MatrixXfRow root_positions;       ///< [B*T, 3] 根节点位置
+  MatrixXfRow smooth_root_pos;      ///< [B*T, 3] 平滑根位置
+  MatrixXbRow foot_contacts;        ///< [B*T, 4] 脚接触标签(不序列化)
+  MatrixXfRow global_root_heading;  ///< [B*T, 2] 全局根朝向 (cos, sin)
 
   [[nodiscard]] bool is_valid() const { return local_rot_mats.size() > 0; }
+  // to json
+  // @note 输出时, 所有的 Row 为 T, B已经被拆分为多个 motion_output, 也就是每个 motion_output 对应一个 batch 元素
+  // 同时, J*9 要转换为 J*3*3, 也就是每个关节的旋转矩阵
+  friend void to_json(nlohmann::json& j, const motion_output& p) {
+    p.save_matrix_to_json_3_3(j["local_rot_mats"], p.local_rot_mats);
+    p.save_matrix_to_json_3_3(j["global_rot_mats"], p.global_rot_mats);
+    p.save_matrix_to_json_3(j["posed_joints"], p.posed_joints);
+    p.save_matrix_to_json(j["root_positions"], p.root_positions);
+    p.save_matrix_to_json(j["smooth_root_pos"], p.smooth_root_pos);
+    // p.save_matrix_to_json(j, p.foot_contacts);
+    p.save_matrix_to_json(j["global_root_heading"], p.global_root_heading);
+  }
+
+ private:
+  void save_matrix_to_json_3_3(nlohmann::json& j, const MatrixXfRow& mat) const {
+    // mat size: [N, J * 9], need to convert to [N, J, 3, 3]
+    using mat_33 = std::array<std::array<float, 3>, 3>;
+    DOODLE_CHICK(mat.cols() % 9 == 0, "mat 列数不是 9 的倍数: {}", mat.cols());
+    const Eigen::Index rows = mat.rows();
+    for (auto i = 0; i < rows; ++i) {
+      const auto row       = mat.row(i);
+      const Eigen::Index J = row.size() / 9;
+      std::vector<mat_33> joints(J);
+      for (auto j = 0; j < J; ++j) {
+        const auto joint_row = row.segment(j * 9, 9);
+        mat_33 joint_mat{};
+        for (auto r = 0; r < 3; ++r) {
+          for (auto c = 0; c < 3; ++c) {
+            joint_mat[r][c] = joint_row(r * 3 + c);
+          }
+        }
+        joints[j] = joint_mat;
+      }
+      j.push_back(joints);
+    }
+  }
+  void save_matrix_to_json_3(nlohmann::json& j, const MatrixXfRow& mat) const {
+    // mat size: [N, J * 3], need to convert to [N, J, 3]
+    using mat_3 = std::array<float, 3>;
+    DOODLE_CHICK(mat.cols() % 3 == 0, "mat 列数不是 3 的倍数: {}", mat.cols());
+    const Eigen::Index rows = mat.rows();
+    for (auto i = 0; i < rows; ++i) {
+      const auto row       = mat.row(i);
+      const Eigen::Index J = row.size() / 3;
+      std::vector<mat_3> joints(J);
+      for (auto j = 0; j < J; ++j) {
+        const auto joint_row = row.segment(j * 3, 3);
+        mat_3 joint_vec{};
+        for (auto c = 0; c < 3; ++c) {
+          joint_vec[c] = joint_row(c);
+        }
+        joints[j] = joint_vec;
+      }
+      j.push_back(joints);
+    }
+  }
+  void save_matrix_to_json(nlohmann::json& j, const MatrixXfRow& mat) const {
+    // mat size: [N, D], need to convert to [N, D]
+    const Eigen::Index rows = mat.rows();
+    for (auto i = 0; i < rows; ++i) {
+      const auto row = mat.row(i);
+      std::vector<float> row_vec(row.data(), row.data() + row.size());
+      j.push_back(row_vec);
+    }
+  }
 };
 
 // ======================================================================
