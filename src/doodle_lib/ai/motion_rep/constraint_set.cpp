@@ -14,13 +14,73 @@
 namespace doodle::ai {
 
 // ======================================================================
+// 工具函数：将 JSON 数组转换为 Eigen 矩阵
+// ======================================================================
+
+/// @brief 将嵌套 JSON 数组（1D/2D/3D）转换为 Eigen 矩阵
+/// @tparam T 标量类型（float / std::int64_t）
+/// @param j JSON 数据
+/// @return 行优先的 Eigen 矩阵
+/// @note
+///   - 一维数组 → [N, 1] 列向量
+///   - 二维数组 → [M, N] 矩阵
+///   - 三维数组 [M, N, K] → flatten 为 [M*N, K] 矩阵
+template <typename T = float>
+Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> json_to_eigen_matrix(const nlohmann::json& j) {
+  if (!j.is_array() || j.empty()) return {};
+
+  // 检查嵌套深度: j[0][0] 是否为数组 → 3D
+  const bool is_3d = j[0].is_array() && !j[0].empty() && j[0][0].is_array();
+
+  if (is_3d) {
+    // 三维数组: [[[...], ...], ...] — 形状 [M, N, K]
+    const Eigen::Index M = static_cast<Eigen::Index>(j.size());
+    const Eigen::Index N = static_cast<Eigen::Index>(j[0].size());
+    const Eigen::Index K = static_cast<Eigen::Index>(j[0][0].size());
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat(M * N, K);
+    for (Eigen::Index m = 0; m < M; ++m) {
+      const auto& jm = j[static_cast<std::size_t>(m)];
+      for (Eigen::Index n = 0; n < N; ++n) {
+        const auto& jmn = jm[static_cast<std::size_t>(n)];
+        for (Eigen::Index k = 0; k < K; ++k) {
+          mat(m * N + n, k) = static_cast<T>(jmn[static_cast<std::size_t>(k)]);
+        }
+      }
+    }
+    return mat;
+  }
+
+  if (j[0].is_array()) {
+    // 二维数组: [[...], [...], ...]
+    const Eigen::Index rows = static_cast<Eigen::Index>(j.size());
+    const Eigen::Index cols = static_cast<Eigen::Index>(j[0].size());
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat(rows, cols);
+    for (Eigen::Index r = 0; r < rows; ++r) {
+      const auto& row = j[static_cast<std::size_t>(r)];
+      for (Eigen::Index c = 0; c < cols; ++c) {
+        mat(r, c) = static_cast<T>(row[static_cast<std::size_t>(c)]);
+      }
+    }
+    return mat;
+  }
+
+  // 一维数组: [v0, v1, ...]
+  const Eigen::Index n = static_cast<Eigen::Index>(j.size());
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat(n, 1);
+  for (Eigen::Index i = 0; i < n; ++i) {
+    mat(i, 0) = static_cast<T>(j[static_cast<std::size_t>(i)]);
+  }
+  return mat;
+}
+
+// ======================================================================
 // 辅助函数：计算全局朝向 (cos, sin) 用于约束初始化
 // ======================================================================
 namespace detail {
 MatrixXfRow compute_global_heading_from_positions(
     const MatrixXfRow& global_joints_positions, const skeleton_base& skeleton
 ) {
-  const Eigen::Index K                = global_joints_positions.rows();
+  const Eigen::Index K            = global_joints_positions.rows();
   const MatrixXfRow heading_angle = compute_heading_angle(global_joints_positions, skeleton, 1, K);
   // heading_angle: [1, K]
   MatrixXfRow heading(K, 2);
@@ -159,7 +219,7 @@ root2d_constraint_set root2d_constraint_set::from_dict(
   Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
 
   // smooth_root_2d: 可能为 [K, 2] 或 [K, 3]（3D 时取前两列）
-  MatrixXfRow raw_smooth    = json_to_eigen_matrix<float>(dico.at("smooth_root_2d"));
+  MatrixXfRow raw_smooth        = json_to_eigen_matrix<float>(dico.at("smooth_root_2d"));
   MatrixXfRow smooth_root_2d;
   if (raw_smooth.cols() == 3) {
     smooth_root_2d.resize(raw_smooth.rows(), 2);
@@ -302,18 +362,18 @@ fullbody_constraint_set fullbody_constraint_set::from_dict(
 ) {
   DOODLE_CHICK(skeleton, "fullbody::from_dict: skeleton 为空");
 
-  Eigen::VectorXi frame_indices  = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
+  Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
 
   // 加载局部旋转（轴角）: JSON 可能是 [K, J, 3] 3D 或 [K*J, 3] 2D 格式
   // json_to_eigen_matrix 统一 flatten 为 [K*J, 3]
-  MatrixXfRow local_rot_aa   = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
+  MatrixXfRow local_rot_aa      = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
   // [K*J, 3] → axis_angle → [K*J, 9]
-  MatrixXfRow local_rot_flat = axis_angle_to_matrix(local_rot_aa);
+  MatrixXfRow local_rot_flat    = axis_angle_to_matrix(local_rot_aa);
 
   // reshape [K*J, 9] → [K, J*9] 用于 FK
-  const std::int64_t J           = skeleton->nbjoints_;
-  const Eigen::Index total_rows  = local_rot_flat.rows();
-  const Eigen::Index K           = total_rows / J;
+  const std::int64_t J          = skeleton->nbjoints_;
+  const Eigen::Index total_rows = local_rot_flat.rows();
+  const Eigen::Index K          = total_rows / J;
   DOODLE_CHICK(total_rows == K * J, "fullbody: local_joints_rot 行数 {} 不是 J={} 的整数倍", total_rows, J);
 
   MatrixXfRow local_rot_mats(K, J * 9);
@@ -481,17 +541,17 @@ end_effector_constraint_set end_effector_constraint_set::from_dict(
 ) {
   DOODLE_CHICK(skeleton, "end_effector::from_dict: skeleton 为空");
 
-  Eigen::VectorXi frame_indices  = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
+  Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
 
   // 加载局部旋转（轴角）: JSON 可能是 [K, J, 3] 3D 或 [K*J, 3] 2D 格式
-  MatrixXfRow local_rot_aa   = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
+  MatrixXfRow local_rot_aa      = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
   // [K*J, 3] → axis_angle → [K*J, 9]
-  MatrixXfRow local_rot_flat = axis_angle_to_matrix(local_rot_aa);
+  MatrixXfRow local_rot_flat    = axis_angle_to_matrix(local_rot_aa);
 
   // reshape [K*J, 9] → [K, J*9] 用于 FK
-  const std::int64_t J           = skeleton->nbjoints_;
-  const Eigen::Index total_rows  = local_rot_flat.rows();
-  const Eigen::Index K           = total_rows / J;
+  const std::int64_t J          = skeleton->nbjoints_;
+  const Eigen::Index total_rows = local_rot_flat.rows();
+  const Eigen::Index K          = total_rows / J;
   DOODLE_CHICK(total_rows == K * J, "end_effector: local_joints_rot 行数 {} 不是 J={} 的整数倍", total_rows, J);
 
   MatrixXfRow local_rot_mats(K, J * 9);
