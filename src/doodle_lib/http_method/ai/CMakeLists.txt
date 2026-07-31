@@ -3,6 +3,6 @@ target_sources(doodle_lib
         ai_main.h
         
         PRIVATE
-        train_binding_weights.cpp
+        kimodo_train.cpp
 
 )
