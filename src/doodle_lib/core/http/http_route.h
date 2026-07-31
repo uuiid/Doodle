@@ -36,6 +36,9 @@ class http_route {
   http_route();
 
   // 注册路由
+  // @brief 注册路由时, 重复的类只有第一次注册的会生效, 后续的注册会被忽略, 并打印警告
+  // 使用时, 可以通过 get_function<T>() 获取注册的函数对象, 如果没有注册则返回 nullptr
+  // @tparam T http_function 派生类类型
   template <typename T, typename... Args>
   http_route& reg_t(url_route_component_ptr&& in_component, Args&&... args) {
     auto l_type_index = std::type_index(typeid(T));
