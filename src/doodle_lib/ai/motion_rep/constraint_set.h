@@ -25,12 +25,40 @@ namespace doodle::ai {
 class skeleton_base;
 
 // ======================================================================
+// ConstraintSetBase — 约束集纯虚基类
+// ======================================================================
+
+/// @brief 所有约束集类型的纯虚基类
+class constraint_set_base {
+ public:
+  virtual ~constraint_set_base() = default;
+
+  /// @brief 返回约束类型名称
+  virtual std::string type_name() const = 0;
+
+  /// @brief 将约束数据追加到 data_dict / index_dict（供 create_conditions 使用）
+  virtual void update_constraints(
+      std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict,
+      std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict
+  ) const = 0;
+
+  /// @brief 裁剪到 [start, end) 帧范围，返回新对象
+  virtual std::shared_ptr<constraint_set_base> crop_move(std::int64_t start, std::int64_t end) const = 0;
+
+  /// @brief 设置骨骼
+  virtual void to(const std::shared_ptr<skeleton_base>& skel) = 0;
+
+  /// @brief 获取骨骼
+  virtual std::shared_ptr<skeleton_base> get_skeleton() const = 0;
+};
+
+// ======================================================================
 // Root2DConstraintSet — 根轨迹约束
 // ======================================================================
 
 /// @brief 根轨迹约束（对应 Python Root2DConstraintSet）
 /// 固定根节点 (x, z) 轨迹和可选全局朝向。
-class root2d_constraint_set {
+class root2d_constraint_set : public constraint_set_base {
  public:
   static constexpr const char* name = "root2d";
 
@@ -55,20 +83,23 @@ class root2d_constraint_set {
   // 接口
   // ======================================================================
 
-  /// @brief 将约束数据追加到 data_dict / index_dict（供 create_conditions 使用）
+  std::string type_name() const override { return name; }
+
   void update_constraints(
       std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict,
       std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict
-  ) const;
+  ) const override;
 
-  /// @brief 裁剪到 [start, end) 帧范围，返回新对象
-  root2d_constraint_set crop_move(std::int64_t start, std::int64_t end) const;
+  std::shared_ptr<constraint_set_base> crop_move(std::int64_t start, std::int64_t end) const override;
 
-  /// @brief 移动数据
-  void to(const std::shared_ptr<skeleton_base>& skel = {});
+  void to(const std::shared_ptr<skeleton_base>& skel) override;
+
+  std::shared_ptr<skeleton_base> get_skeleton() const override { return skeleton_; }
 
   /// @brief 从 JSON 字典反序列化
-  static root2d_constraint_set from_dict(std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico);
+  static std::shared_ptr<root2d_constraint_set> from_dict(
+      std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
+  );
 };
 
 // ======================================================================
@@ -77,7 +108,7 @@ class root2d_constraint_set {
 
 /// @brief 全身约束（对应 Python FullBodyConstraintSet）
 /// 固定所有关节的全局位置和旋转。
-class fullbody_constraint_set {
+class fullbody_constraint_set : public constraint_set_base {
  public:
   static constexpr const char* name = "fullbody";
 
@@ -96,16 +127,22 @@ class fullbody_constraint_set {
       MatrixXfRow global_joints_rots, MatrixXfRow smooth_root_2d = {}
   );
 
+  std::string type_name() const override { return name; }
+
   void update_constraints(
       std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict,
       std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict
-  ) const;
+  ) const override;
 
-  fullbody_constraint_set crop_move(std::int64_t start, std::int64_t end) const;
+  std::shared_ptr<constraint_set_base> crop_move(std::int64_t start, std::int64_t end) const override;
 
-  void to(const std::shared_ptr<skeleton_base>& skel = {});
+  void to(const std::shared_ptr<skeleton_base>& skel) override;
 
-  static fullbody_constraint_set from_dict(std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico);
+  std::shared_ptr<skeleton_base> get_skeleton() const override { return skeleton_; }
+
+  static std::shared_ptr<fullbody_constraint_set> from_dict(
+      std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
+  );
 };
 
 // ======================================================================
@@ -114,7 +151,7 @@ class fullbody_constraint_set {
 
 /// @brief 末端执行器约束（对应 Python EndEffectorConstraintSet）
 /// 固定指定关节（如手/脚）的全局位置和旋转。
-class end_effector_constraint_set {
+class end_effector_constraint_set : public constraint_set_base {
  public:
   static constexpr const char* name = "end-effector";
 
@@ -136,16 +173,22 @@ class end_effector_constraint_set {
       MatrixXfRow global_joints_rots, MatrixXfRow smooth_root_2d, std::vector<std::string> joint_names
   );
 
+  std::string type_name() const override { return name; }
+
   void update_constraints(
       std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict,
       std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict
-  ) const;
+  ) const override;
 
-  end_effector_constraint_set crop_move(std::int64_t start, std::int64_t end) const;
+  std::shared_ptr<constraint_set_base> crop_move(std::int64_t start, std::int64_t end) const override;
 
-  void to(const std::shared_ptr<skeleton_base>& skel = {});
+  void to(const std::shared_ptr<skeleton_base>& skel) override;
 
-  static end_effector_constraint_set from_dict(std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico);
+  std::shared_ptr<skeleton_base> get_skeleton() const override { return skeleton_; }
+
+  static std::shared_ptr<end_effector_constraint_set> from_dict(
+      std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
+  );
 };
 
 // ======================================================================
@@ -165,6 +208,7 @@ class left_hand_constraint_set : public end_effector_constraint_set {
             std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
             std::move(global_joints_rots), std::move(smooth_root_2d), {"LeftHand"}
         ) {}
+  std::string type_name() const override { return name; }
 };
 
 /// @brief 右手约束
@@ -180,6 +224,7 @@ class right_hand_constraint_set : public end_effector_constraint_set {
             std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
             std::move(global_joints_rots), std::move(smooth_root_2d), {"RightHand"}
         ) {}
+  std::string type_name() const override { return name; }
 };
 
 /// @brief 左脚约束
@@ -195,6 +240,7 @@ class left_foot_constraint_set : public end_effector_constraint_set {
             std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
             std::move(global_joints_rots), std::move(smooth_root_2d), {"LeftFoot"}
         ) {}
+  std::string type_name() const override { return name; }
 };
 
 /// @brief 右脚约束
@@ -210,32 +256,38 @@ class right_foot_constraint_set : public end_effector_constraint_set {
             std::move(skeleton), std::move(frame_indices), std::move(global_joints_positions),
             std::move(global_joints_rots), std::move(smooth_root_2d), {"RightFoot"}
         ) {}
+  std::string type_name() const override { return name; }
 };
 
 // ======================================================================
 // 约束集合类型擦除包装
 // ======================================================================
 
-/// @brief 所有约束集合类型的变体
+/// @brief 所有约束集合类型的变体（保留兼容）
 using constraint_set_var = std::variant<
     root2d_constraint_set, fullbody_constraint_set, end_effector_constraint_set, left_hand_constraint_set,
     right_hand_constraint_set, left_foot_constraint_set, right_foot_constraint_set>;
+
+/// @brief 约束集基类共享指针
+using constraint_set_ptr = std::shared_ptr<constraint_set_base>;
 
 // ======================================================================
 // 加载 / 保存约束列表
 // ======================================================================
 
-/// @brief 从 JSON 路径或数据加载约束列表（对应 Python load_constraints_lst）
-/// @param path_or_data JSON 文件路径
+/// @brief 从 JSON 路径加载约束列表
+/// @param path JSON 文件路径
 /// @param skeleton 骨骼定义
-/// @return 约束列表
-std::vector<constraint_set_var> load_constraints_lst(const FSys::path& path, std::shared_ptr<skeleton_base> skeleton);
+/// @return 约束列表（基类共享指针）
+std::vector<constraint_set_ptr> load_constraints_lst(
+    const FSys::path& path, std::shared_ptr<skeleton_base> skeleton
+);
 
-/// @brief 从 JSON 数据加载约束列表（对应 Python load_constraints_lst）
+/// @brief 从 JSON 数据加载约束列表
 /// @param json_data nlohmann::json 数组
 /// @param skeleton 骨骼定义
-/// @return 约束列表
-std::vector<constraint_set_var> load_constraints_lst_from_json(
+/// @return 约束列表（基类共享指针）
+std::vector<constraint_set_ptr> load_constraints_lst_from_json(
     const nlohmann::json& json_data, std::shared_ptr<skeleton_base> skeleton
 );
 

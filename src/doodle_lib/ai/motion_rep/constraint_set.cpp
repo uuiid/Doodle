@@ -92,7 +92,7 @@ MatrixXfRow compute_global_heading_from_positions(
 }
 
 // 根据 JSON 中 type 字段构造正确的约束变体
-constraint_set_var make_constraint_from_type(
+std::shared_ptr<constraint_set_base> make_constraint_from_type(
     const std::string& type, std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
 ) {
   if (type == root2d_constraint_set::name) {
@@ -102,28 +102,28 @@ constraint_set_var make_constraint_from_type(
   } else if (type == left_hand_constraint_set::name) {
     // 用 end_effector 的 from_dict 读取数据，但构造 left_hand 类型
     auto ee = end_effector_constraint_set::from_dict(skeleton, dico);
-    return left_hand_constraint_set{
-        skeleton, std::move(ee.frame_indices_), std::move(ee.global_joints_positions_),
-        std::move(ee.global_joints_rots_), std::move(ee.smooth_root_2d_)
-    };
+    return std::make_shared<left_hand_constraint_set>(
+        skeleton, std::move(ee->frame_indices_), std::move(ee->global_joints_positions_),
+        std::move(ee->global_joints_rots_), std::move(ee->smooth_root_2d_)
+    );
   } else if (type == right_hand_constraint_set::name) {
     auto ee = end_effector_constraint_set::from_dict(skeleton, dico);
-    return right_hand_constraint_set{
-        skeleton, std::move(ee.frame_indices_), std::move(ee.global_joints_positions_),
-        std::move(ee.global_joints_rots_), std::move(ee.smooth_root_2d_)
-    };
+    return std::make_shared<right_hand_constraint_set>(
+        skeleton, std::move(ee->frame_indices_), std::move(ee->global_joints_positions_),
+        std::move(ee->global_joints_rots_), std::move(ee->smooth_root_2d_)
+    );
   } else if (type == left_foot_constraint_set::name) {
     auto ee = end_effector_constraint_set::from_dict(skeleton, dico);
-    return left_foot_constraint_set{
-        skeleton, std::move(ee.frame_indices_), std::move(ee.global_joints_positions_),
-        std::move(ee.global_joints_rots_), std::move(ee.smooth_root_2d_)
-    };
+    return std::make_shared<left_foot_constraint_set>(
+        skeleton, std::move(ee->frame_indices_), std::move(ee->global_joints_positions_),
+        std::move(ee->global_joints_rots_), std::move(ee->smooth_root_2d_)
+    );
   } else if (type == right_foot_constraint_set::name) {
     auto ee = end_effector_constraint_set::from_dict(skeleton, dico);
-    return right_foot_constraint_set{
-        skeleton, std::move(ee.frame_indices_), std::move(ee.global_joints_positions_),
-        std::move(ee.global_joints_rots_), std::move(ee.smooth_root_2d_)
-    };
+    return std::make_shared<right_foot_constraint_set>(
+        skeleton, std::move(ee->frame_indices_), std::move(ee->global_joints_positions_),
+        std::move(ee->global_joints_rots_), std::move(ee->smooth_root_2d_)
+    );
   } else if (type == end_effector_constraint_set::name) {
     return end_effector_constraint_set::from_dict(std::move(skeleton), dico);
   }
@@ -176,7 +176,7 @@ void root2d_constraint_set::update_constraints(
   }
 }
 
-root2d_constraint_set root2d_constraint_set::crop_move(std::int64_t start, std::int64_t end) const {
+std::shared_ptr<constraint_set_base> root2d_constraint_set::crop_move(std::int64_t start, std::int64_t end) const {
   // 创建掩码：frame_indices 中在 [start, end) 范围内的帧
   const Eigen::Index K = frame_indices_.size();
   std::vector<Eigen::Index> mask_indices;
@@ -206,14 +206,16 @@ root2d_constraint_set root2d_constraint_set::crop_move(std::int64_t start, std::
     }
   }
 
-  return root2d_constraint_set(skeleton_, new_frame_indices, new_smooth_root_2d, new_global_root_heading);
+  return std::make_shared<root2d_constraint_set>(
+      skeleton_, new_frame_indices, new_smooth_root_2d, new_global_root_heading
+  );
 }
 
 void root2d_constraint_set::to(const std::shared_ptr<skeleton_base>& skel) {
   if (skel) skeleton_ = skel;
 }
 
-root2d_constraint_set root2d_constraint_set::from_dict(
+std::shared_ptr<root2d_constraint_set> root2d_constraint_set::from_dict(
     std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
 ) {
   Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
@@ -234,7 +236,7 @@ root2d_constraint_set root2d_constraint_set::from_dict(
     global_root_heading = json_to_eigen_matrix<float>(dico.at("global_root_heading"));
   }
 
-  return root2d_constraint_set(
+  return std::make_shared<root2d_constraint_set>(
       std::move(skeleton), std::move(frame_indices), std::move(smooth_root_2d), std::move(global_root_heading)
   );
 }
@@ -325,7 +327,7 @@ void fullbody_constraint_set::update_constraints(
   index_dict["global_root_heading"].push_back(frame_indices_);
 }
 
-fullbody_constraint_set fullbody_constraint_set::crop_move(std::int64_t start, std::int64_t end) const {
+std::shared_ptr<constraint_set_base> fullbody_constraint_set::crop_move(std::int64_t start, std::int64_t end) const {
   const Eigen::Index K = frame_indices_.size();
   std::vector<Eigen::Index> mask_indices;
   mask_indices.reserve(static_cast<std::size_t>(K));
@@ -350,14 +352,16 @@ fullbody_constraint_set fullbody_constraint_set::crop_move(std::int64_t start, s
     new_smooth.row(i)      = smooth_root_2d_.row(src);
   }
 
-  return fullbody_constraint_set(skeleton_, new_frame_indices, new_positions, new_rots, new_smooth);
+  return std::make_shared<fullbody_constraint_set>(
+      skeleton_, new_frame_indices, new_positions, new_rots, new_smooth
+  );
 }
 
 void fullbody_constraint_set::to(const std::shared_ptr<skeleton_base>& skel) {
   if (skel) skeleton_ = skel;
 }
 
-fullbody_constraint_set fullbody_constraint_set::from_dict(
+std::shared_ptr<fullbody_constraint_set> fullbody_constraint_set::from_dict(
     std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
 ) {
   DOODLE_CHICK(skeleton, "fullbody::from_dict: skeleton 为空");
@@ -396,7 +400,7 @@ fullbody_constraint_set fullbody_constraint_set::from_dict(
     smooth_root_2d = json_to_eigen_matrix<float>(dico.at("smooth_root_2d"));
   }
 
-  return fullbody_constraint_set(
+  return std::make_shared<fullbody_constraint_set>(
       std::move(skeleton), std::move(frame_indices), std::move(fk_result.posed_joints),
       std::move(fk_result.global_rot_mats), std::move(smooth_root_2d)
   );
@@ -504,7 +508,7 @@ void end_effector_constraint_set::update_constraints(
   index_dict["global_root_heading"].push_back(frame_indices_);
 }
 
-end_effector_constraint_set end_effector_constraint_set::crop_move(std::int64_t start, std::int64_t end) const {
+std::shared_ptr<constraint_set_base> end_effector_constraint_set::crop_move(std::int64_t start, std::int64_t end) const {
   const Eigen::Index K = frame_indices_.size();
   std::vector<Eigen::Index> mask_indices;
   mask_indices.reserve(static_cast<std::size_t>(K));
@@ -529,14 +533,16 @@ end_effector_constraint_set end_effector_constraint_set::crop_move(std::int64_t 
     new_smooth.row(i)      = smooth_root_2d_.row(src);
   }
 
-  return end_effector_constraint_set(skeleton_, new_frame_indices, new_positions, new_rots, new_smooth, joint_names_);
+  return std::make_shared<end_effector_constraint_set>(
+      skeleton_, new_frame_indices, new_positions, new_rots, new_smooth, joint_names_
+  );
 }
 
 void end_effector_constraint_set::to(const std::shared_ptr<skeleton_base>& skel) {
   if (skel) skeleton_ = skel;
 }
 
-end_effector_constraint_set end_effector_constraint_set::from_dict(
+std::shared_ptr<end_effector_constraint_set> end_effector_constraint_set::from_dict(
     std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
 ) {
   DOODLE_CHICK(skeleton, "end_effector::from_dict: skeleton 为空");
@@ -579,7 +585,7 @@ end_effector_constraint_set end_effector_constraint_set::from_dict(
     joint_names = dico.at("joint_names").get<std::vector<std::string>>();
   }
 
-  return end_effector_constraint_set(
+  return std::make_shared<end_effector_constraint_set>(
       std::move(skeleton), std::move(frame_indices), std::move(fk_result.posed_joints),
       std::move(fk_result.global_rot_mats), std::move(smooth_root_2d), std::move(joint_names)
   );
@@ -597,7 +603,9 @@ std::string get_constraint_type_name(const constraint_set_var& constraint) {
 // 加载约束列表
 // ======================================================================
 
-std::vector<constraint_set_var> load_constraints_lst(const FSys::path& path, std::shared_ptr<skeleton_base> skeleton) {
+std::vector<constraint_set_ptr> load_constraints_lst(
+    const FSys::path& path, std::shared_ptr<skeleton_base> skeleton
+) {
   DOODLE_CHICK(FSys::exists(path), "约束 JSON 文件不存在: {}", path.string());
 
   SPDLOG_INFO("Loading constraints from {}", path.string());
@@ -605,12 +613,12 @@ std::vector<constraint_set_var> load_constraints_lst(const FSys::path& path, std
   return load_constraints_lst_from_json(json_data, std::move(skeleton));
 }
 
-std::vector<constraint_set_var> load_constraints_lst_from_json(
+std::vector<constraint_set_ptr> load_constraints_lst_from_json(
     const nlohmann::json& json_data, std::shared_ptr<skeleton_base> skeleton
 ) {
   DOODLE_CHICK(json_data.is_array(), "约束 JSON 数据应为数组");
 
-  std::vector<constraint_set_var> constraints;
+  std::vector<constraint_set_ptr> constraints;
   constraints.reserve(json_data.size());
 
   for (const auto& el : json_data) {

@@ -104,7 +104,7 @@ struct ai_train_animation::impl {
 
     auto l_constraint_list = doodle::ai::load_constraints_lst_from_json(in_args.constraint_lst_, model_->skeleton());
     for (const auto& c : l_constraint_list) {
-      std::visit([](const auto& constraint) { SPDLOG_INFO("Loaded constraint: {}", constraint.name); }, c);
+      SPDLOG_INFO("Loaded constraint: {}", c->type_name());
     }
     auto output = model_->generate(in_args.text_, in_args.num_frames_[0], in_args.num_denoising_steps_);
   }
