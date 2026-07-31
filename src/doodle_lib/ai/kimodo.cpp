@@ -33,11 +33,11 @@ void kimodo::load(std::shared_ptr<kimodo_model_config> config) {
   DOODLE_CHICK(config != nullptr, "kimodo_model_config 为空");
   SPDLOG_INFO("kimodo::load 开始...");
 
-  llm_dim_          = config->llm_dim_;
-  fps_              = static_cast<float>(config->fps_);
+  llm_dim_  = config->llm_dim_;
+  fps_      = static_cast<float>(config->fps_);
 
   // ---- Step 1: 初始化骨骼 ----
-  skeleton_         = skeleton_base::create_soma_skeleton_30(config->skeleton_dir_);
+  skeleton_ = skeleton_base::create_soma_skeleton_30(config->skeleton_dir_);
   DOODLE_CHICK(skeleton_ != nullptr && skeleton_->is_valid(), "SOMASkeleton30 加载失败");
 
   // ---- Step 2: 初始化运动表示 ----
@@ -120,11 +120,11 @@ kimodo::text_encoding_result kimodo::encode_texts(const std::vector<std::string>
 MatrixXfRow kimodo::denoising_step(
     const MatrixXfRow& motion, const MatrixXbRow& pad_mask, const MatrixXfRow& text_feat,
     const MatrixXbRow& text_pad_mask, std::int64_t t, const std::vector<int64_t>& map_tensor,
-    const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
-    const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, cfg_type cfg_type_val
+    const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask, const MatrixXfRow& observed_motion,
+    const std::vector<float>& cfg_weight, cfg_type cfg_type_val
 ) {
   // ---- 获取映射后的时间步（space_timesteps + calc_diffusion_vars 已在 generate_internal 中预计算） ----
-  const std::int64_t t_map = map_tensor[static_cast<std::size_t>(t)];
+  const std::int64_t t_map      = map_tensor[static_cast<std::size_t>(t)];
 
   // ---- 创建 timesteps 向量（所有 batch 元素使用相同的 t_map） ----
   const Eigen::Index batch_size = pad_mask.rows();
@@ -197,8 +197,8 @@ MatrixXfRow kimodo::generate_internal(
   for (std::int64_t i = num_denoising_steps - 1; i >= 0; --i) {
     auto start_time = std::chrono::high_resolution_clock::now();
     cur_mot         = denoising_step(
-        cur_mot, pad_mask, text_feat, text_pad_mask, i, map_tensor, first_heading_angle, motion_mask_f,
-        observed_motion, cfg_weight, cfg_type_val
+        cur_mot, pad_mask, text_feat, text_pad_mask, i, map_tensor, first_heading_angle, motion_mask_f, observed_motion,
+        cfg_weight, cfg_type_val
     );
     SPDLOG_INFO("kimodo: 去噪步 {} 完成 time {:%S}", i, std::chrono::high_resolution_clock::now() - start_time);
   }
@@ -213,8 +213,8 @@ MatrixXfRow kimodo::generate_internal(
 std::vector<motion_output> kimodo::generate(
     const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
     std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight,
-    const std::vector<float>& first_heading_angle,
-    const std::vector<constraint_set_ptr>& constraints, cfg_type cfg_type_val
+    const std::vector<float>& first_heading_angle, const std::vector<constraint_set_ptr>& constraints,
+    cfg_type cfg_type_val
 ) {
   DOODLE_CHICK(is_valid(), "kimodo 未加载或加载失败");
   DOODLE_CHICK(!prompts.empty(), "prompts 不能为空");
@@ -252,22 +252,9 @@ std::vector<motion_output> kimodo::generate(
   // ---- Step 3: 处理约束条件（constraint_set_ptr → motion_mask + observed_motion） ----
   MatrixXfRow motion_mask_f, observed_motion_f;
   if (!constraints.empty()) {
-    // update_constraints 写入 Eigen::VectorXi，但 constraint_dicts 存储 MatrixXfRow
-    // 先用临时 map 收集 VectorXi，再转换为 MatrixXfRow
-    std::unordered_map<std::string, std::vector<Eigen::VectorXi>> tmp_index_dict;
     kimodo_motion_rep::constraint_dicts dicts;
     for (const auto& c : constraints) {
-      c->update_constraints(dicts.data_dict, tmp_index_dict);
-    }
-    // 转换 VectorXi → MatrixXfRow（N×1 列向量）
-    for (auto& [key, vecs] : tmp_index_dict) {
-      auto& dest = dicts.index_dict[key];
-      dest.reserve(vecs.size());
-      for (const auto& v : vecs) {
-        MatrixXfRow mat(v.size(), 1);
-        for (Eigen::Index i = 0; i < v.size(); ++i) mat(i, 0) = static_cast<float>(v(i));
-        dest.push_back(std::move(mat));
-      }
+      c->update_constraints(dicts.data_dict, dicts.index_dict);
     }
     std::vector<kimodo_motion_rep::constraint_dicts> constraint_dicts_per_sample = {std::move(dicts)};
 
@@ -281,7 +268,7 @@ std::vector<motion_output> kimodo::generate(
   // ---- Step 4: 去噪循环 ----
   const std::int64_t total_frames = B * max_frames;
 
-  MatrixXfRow motion          = generate_internal(
+  MatrixXfRow motion              = generate_internal(
       prompts, max_frames, num_denoising_steps, pad_mask, heading, motion_mask_f, observed_motion_f, cfg_weight,
       cfg_type_val
   );

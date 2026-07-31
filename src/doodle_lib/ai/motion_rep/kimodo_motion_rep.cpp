@@ -345,7 +345,7 @@ MatrixXfRow kimodo_motion_rep::translate_2d(
 // create_conditions: 从约束构建条件和掩码
 // ======================================================================
 kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
-    const std::unordered_map<std::string, std::vector<MatrixXfRow>>& index_dict,
+    const std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict,
     const std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict, std::int64_t length, bool to_normalize
 ) const {
   const std::int64_t D = motion_rep_dim_;
@@ -359,9 +359,9 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
   if (idx_it != index_dict.end() && !idx_it->second.empty()) {
     // 合并所有索引
     std::vector<Eigen::Index> all_indices;
-    for (const auto& mat : idx_it->second) {
-      for (Eigen::Index r = 0; r < mat.rows(); ++r) {
-        all_indices.push_back(static_cast<Eigen::Index>(mat(r, 0)));
+    for (const auto& vec : idx_it->second) {
+      for (Eigen::Index r = 0; r < vec.size(); ++r) {
+        all_indices.push_back(static_cast<Eigen::Index>(vec(r)));
       }
     }
     // 去重
@@ -396,9 +396,9 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
   idx_it = index_dict.find("root_y_pos");
   if (idx_it != index_dict.end() && !idx_it->second.empty()) {
     std::vector<Eigen::Index> all_indices;
-    for (const auto& mat : idx_it->second) {
-      for (Eigen::Index r = 0; r < mat.rows(); ++r) {
-        all_indices.push_back(static_cast<Eigen::Index>(mat(r, 0)));
+    for (const auto& vec : idx_it->second) {
+      for (Eigen::Index r = 0; r < vec.size(); ++r) {
+        all_indices.push_back(static_cast<Eigen::Index>(vec(r)));
       }
     }
     std::sort(all_indices.begin(), all_indices.end());
@@ -428,9 +428,9 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
   idx_it = index_dict.find("global_root_heading");
   if (idx_it != index_dict.end() && !idx_it->second.empty()) {
     std::vector<Eigen::Index> all_indices;
-    for (const auto& mat : idx_it->second) {
-      for (Eigen::Index r = 0; r < mat.rows(); ++r) {
-        all_indices.push_back(static_cast<Eigen::Index>(mat(r, 0)));
+    for (const auto& vec : idx_it->second) {
+      for (Eigen::Index r = 0; r < vec.size(); ++r) {
+        all_indices.push_back(static_cast<Eigen::Index>(vec(r)));
       }
     }
     std::sort(all_indices.begin(), all_indices.end());
@@ -464,11 +464,23 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
   if (idx_it != index_dict.end() && !idx_it->second.empty()) {
     const std::int64_t rot_start = feature_start_.at("global_rot_data");
 
-    // 简化的处理：假设 index_dict 每个元素是 [frame_idx, joint_idx]
-    for (const auto& mat : idx_it->second) {
-      for (Eigen::Index r = 0; r < mat.rows(); ++r) {
-        const Eigen::Index t_idx = static_cast<Eigen::Index>(mat(r, 0));
-        const Eigen::Index j_idx = static_cast<Eigen::Index>(mat(r, 1));
+    // 从 data_dict 推导每个约束的关节数（data 列数 / 9）
+    auto data_it = data_dict.find("global_joints_rots");
+    std::vector<std::int64_t> n_rot_per_constraint;
+    if (data_it != data_dict.end()) {
+      for (const auto& mat : data_it->second) {
+        n_rot_per_constraint.push_back(mat.cols() / 9);
+      }
+    }
+
+    // 设置 mask：flat VectorXi 中位置 r 的帧索引 = vec(r)，关节索引 = r % n_rot
+    std::size_t constraint_idx = 0;
+    for (const auto& vec : idx_it->second) {
+      const std::int64_t n_rot = constraint_idx < n_rot_per_constraint.size()
+                                     ? n_rot_per_constraint[constraint_idx] : 0;
+      for (Eigen::Index r = 0; r < vec.size(); ++r) {
+        const Eigen::Index t_idx = static_cast<Eigen::Index>(vec(r));
+        const Eigen::Index j_idx = n_rot > 0 ? static_cast<Eigen::Index>(r % n_rot) : 0;
         if (t_idx < length && j_idx < nbjoints_) {
           result.motion_mask(t_idx, rot_start + j_idx * 6 + 0) = true;
           result.motion_mask(t_idx, rot_start + j_idx * 6 + 1) = true;
@@ -478,15 +490,18 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
           result.motion_mask(t_idx, rot_start + j_idx * 6 + 5) = true;
         }
       }
+      ++constraint_idx;
     }
 
     // 填充数据
-    auto data_it = data_dict.find("global_joints_rots");
     if (data_it != data_dict.end()) {
+      constraint_idx = 0;
       std::size_t data_idx = 0;
       for (const auto& mat : data_it->second) {
+        const std::int64_t n_rot = constraint_idx < n_rot_per_constraint.size()
+                                       ? n_rot_per_constraint[constraint_idx] : 0;
         for (Eigen::Index r = 0; r < mat.rows(); ++r) {
-          if (data_idx < idx_it->second.size()) {
+          if (constraint_idx < idx_it->second.size()) {
             // 将旋转矩阵转 6D
             Eigen::Vector3f x_raw(mat(r, 0), mat(r, 1), mat(r, 2));
             Eigen::Vector3f y_raw(mat(r, 3), mat(r, 4), mat(r, 5));
@@ -494,8 +509,8 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
             Eigen::Vector3f z        = x.cross(y_raw).normalized();
             Eigen::Vector3f y        = z.cross(x);
 
-            const Eigen::Index t_idx = static_cast<Eigen::Index>(idx_it->second[data_idx](r, 0));
-            const Eigen::Index j_idx = static_cast<Eigen::Index>(idx_it->second[data_idx](r, 1));
+            const Eigen::Index t_idx = static_cast<Eigen::Index>(idx_it->second[constraint_idx](r));
+            const Eigen::Index j_idx = n_rot > 0 ? static_cast<Eigen::Index>(r % n_rot) : 0;
             if (t_idx < length && j_idx < nbjoints_) {
               result.observed_motion(t_idx, rot_start + j_idx * 6 + 0) = x(0);
               result.observed_motion(t_idx, rot_start + j_idx * 6 + 1) = x(1);
@@ -507,6 +522,7 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
           }
           ++data_idx;
         }
+        ++constraint_idx;
       }
     }
   }
@@ -517,19 +533,33 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
     const std::int64_t pos_start    = feature_start_.at("local_joints_positions");
     const std::int64_t smooth_start = feature_start_.at("smooth_root_pos");
 
+    // 从 data_dict 推导每个约束的关节数（data 列数 / 3）
+    auto data_it = data_dict.find("global_joints_positions");
+    std::vector<std::int64_t> n_pos_per_constraint;
+    if (data_it != data_dict.end()) {
+      for (const auto& mat : data_it->second) {
+        n_pos_per_constraint.push_back(mat.cols() / 3);
+      }
+    }
+
     // 合并所有 (t, j) 索引对并去重
     std::vector<std::pair<Eigen::Index, Eigen::Index>> all_pairs;
-    for (const auto& mat : idx_it->second) {
-      for (Eigen::Index r = 0; r < mat.rows(); ++r) {
-        all_pairs.emplace_back(static_cast<Eigen::Index>(mat(r, 0)), static_cast<Eigen::Index>(mat(r, 1)));
+    std::size_t constraint_idx = 0;
+    for (const auto& vec : idx_it->second) {
+      const std::int64_t n_pos = constraint_idx < n_pos_per_constraint.size()
+                                     ? n_pos_per_constraint[constraint_idx] : 0;
+      for (Eigen::Index r = 0; r < vec.size(); ++r) {
+        const Eigen::Index t_idx = static_cast<Eigen::Index>(vec(r));
+        const Eigen::Index j_idx = n_pos > 0 ? static_cast<Eigen::Index>(r % n_pos) : 0;
+        all_pairs.emplace_back(t_idx, j_idx);
       }
+      ++constraint_idx;
     }
     std::sort(all_pairs.begin(), all_pairs.end());
     all_pairs.erase(std::unique(all_pairs.begin(), all_pairs.end()), all_pairs.end());
 
     // 合并所有全局位置数据
     std::vector<Eigen::Vector3f> all_positions;
-    auto data_it = data_dict.find("global_joints_positions");
     if (data_it != data_dict.end()) {
       for (const auto& mat : data_it->second) {
         for (Eigen::Index r = 0; r < mat.rows(); ++r) {

@@ -186,13 +186,13 @@ class kimodo_motion_rep : public motion_rep_base {
     MatrixXbRow motion_mask;      ///< [T, D] 运动掩码
   };
   condition_result create_conditions(
-      const std::unordered_map<std::string, std::vector<MatrixXfRow>>& index_dict,
+      const std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict,
       const std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict, std::int64_t length, bool to_normalize
   ) const;
 
   /// @brief 预构建的约束字典（对应 Python build_condition_dicts 的输出）
   struct constraint_dicts {
-    std::unordered_map<std::string, std::vector<MatrixXfRow>> index_dict;
+    std::unordered_map<std::string, std::vector<Eigen::VectorXi>> index_dict;
     std::unordered_map<std::string, std::vector<MatrixXfRow>> data_dict;
   };
 
