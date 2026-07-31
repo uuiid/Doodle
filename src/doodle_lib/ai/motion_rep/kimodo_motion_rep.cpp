@@ -465,7 +465,7 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
     const std::int64_t rot_start = feature_start_.at("global_rot_data");
 
     // 从 data_dict 推导每个约束的关节数（data 列数 / 9）
-    auto data_it = data_dict.find("global_joints_rots");
+    auto data_it                 = data_dict.find("global_joints_rots");
     std::vector<std::int64_t> n_rot_per_constraint;
     if (data_it != data_dict.end()) {
       for (const auto& mat : data_it->second) {
@@ -476,8 +476,8 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
     // 设置 mask：flat VectorXi 中位置 r 的帧索引 = vec(r)，关节索引 = r % n_rot
     std::size_t constraint_idx = 0;
     for (const auto& vec : idx_it->second) {
-      const std::int64_t n_rot = constraint_idx < n_rot_per_constraint.size()
-                                     ? n_rot_per_constraint[constraint_idx] : 0;
+      const std::int64_t n_rot =
+          constraint_idx < n_rot_per_constraint.size() ? n_rot_per_constraint[constraint_idx] : 0;
       for (Eigen::Index r = 0; r < vec.size(); ++r) {
         const Eigen::Index t_idx = static_cast<Eigen::Index>(vec(r));
         const Eigen::Index j_idx = n_rot > 0 ? static_cast<Eigen::Index>(r % n_rot) : 0;
@@ -495,11 +495,11 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
 
     // 填充数据
     if (data_it != data_dict.end()) {
-      constraint_idx = 0;
+      constraint_idx       = 0;
       std::size_t data_idx = 0;
       for (const auto& mat : data_it->second) {
-        const std::int64_t n_rot = constraint_idx < n_rot_per_constraint.size()
-                                       ? n_rot_per_constraint[constraint_idx] : 0;
+        const std::int64_t n_rot =
+            constraint_idx < n_rot_per_constraint.size() ? n_rot_per_constraint[constraint_idx] : 0;
         for (Eigen::Index r = 0; r < mat.rows(); ++r) {
           if (constraint_idx < idx_it->second.size()) {
             // 将旋转矩阵转 6D
@@ -534,7 +534,7 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
     const std::int64_t smooth_start = feature_start_.at("smooth_root_pos");
 
     // 从 data_dict 推导每个约束的关节数（data 列数 / 3）
-    auto data_it = data_dict.find("global_joints_positions");
+    auto data_it                    = data_dict.find("global_joints_positions");
     std::vector<std::int64_t> n_pos_per_constraint;
     if (data_it != data_dict.end()) {
       for (const auto& mat : data_it->second) {
@@ -546,8 +546,8 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
     std::vector<std::pair<Eigen::Index, Eigen::Index>> all_pairs;
     std::size_t constraint_idx = 0;
     for (const auto& vec : idx_it->second) {
-      const std::int64_t n_pos = constraint_idx < n_pos_per_constraint.size()
-                                     ? n_pos_per_constraint[constraint_idx] : 0;
+      const std::int64_t n_pos =
+          constraint_idx < n_pos_per_constraint.size() ? n_pos_per_constraint[constraint_idx] : 0;
       for (Eigen::Index r = 0; r < vec.size(); ++r) {
         const Eigen::Index t_idx = static_cast<Eigen::Index>(vec(r));
         const Eigen::Index j_idx = n_pos > 0 ? static_cast<Eigen::Index>(r % n_pos) : 0;
@@ -587,11 +587,11 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
       const auto [t, j] = all_pairs[i];
       if (t >= length || j >= static_cast<Eigen::Index>(nbjoints_)) continue;
 
-      const float ref_x = result.observed_motion(t, smooth_start + 0);
-      const float ref_z = result.observed_motion(t, smooth_start + 2);
-      const float lx    = all_positions[i](0) - ref_x;
-      const float ly    = all_positions[i](1);
-      const float lz    = all_positions[i](2) - ref_z;
+      const float ref_x                                = result.observed_motion(t, smooth_start + 0);
+      const float ref_z                                = result.observed_motion(t, smooth_start + 2);
+      const float lx                                   = all_positions[i](0) - ref_x;
+      const float ly                                   = all_positions[i](1);
+      const float lz                                   = all_positions[i](2) - ref_z;
 
       result.observed_motion(t, pos_start + j * 3 + 0) = lx;
       result.observed_motion(t, pos_start + j * 3 + 1) = ly;
@@ -614,8 +614,7 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
 // create_conditions_from_constraints_batched: 批量创建条件
 // ======================================================================
 kimodo_motion_rep::batched_condition_result kimodo_motion_rep::create_conditions_from_constraints_batched(
-    const std::vector<constraint_dicts>& constraints_per_sample,
-    const Eigen::VectorXi& lengths, bool to_normalize
+    const std::vector<constraint_dicts>& constraints_per_sample, const Eigen::VectorXi& lengths, bool to_normalize
 ) const {
   const Eigen::Index B       = lengths.size();
   const std::int64_t max_len = lengths.maxCoeff();
@@ -628,35 +627,17 @@ kimodo_motion_rep::batched_condition_result kimodo_motion_rep::create_conditions
   if (constraints_per_sample.empty()) {
     return result;
   }
-
-  // 共享约束检测：只有一条时广播到所有样本（对应 Python `not isinstance(constraints_lst[0], list)`）
-  bool is_shared = (constraints_per_sample.size() == 1);
-
-  if (is_shared) {
+  // 约束不可共享, 必须与 batch_size 一致
+  DOODLE_CHICK(
+      static_cast<Eigen::Index>(constraints_per_sample.size()) == B,
+      "constraints_per_sample 数量 ({}) 与 batch_size ({}) 不匹配", constraints_per_sample.size(), B
+  );
+  for (Eigen::Index b = 0; b < B; ++b) {
     auto cond = create_conditions(
-        constraints_per_sample[0].index_dict,
-        constraints_per_sample[0].data_dict,
-        max_len, to_normalize
+        constraints_per_sample[b].index_dict, constraints_per_sample[b].data_dict, max_len, to_normalize
     );
-    for (Eigen::Index b = 0; b < B; ++b) {
-      result.observed_motion.middleRows(b * max_len, max_len) = cond.observed_motion;
-      result.motion_mask.middleRows(b * max_len, max_len)     = cond.motion_mask;
-    }
-  } else {
-    DOODLE_CHICK(
-        static_cast<Eigen::Index>(constraints_per_sample.size()) == B,
-        "constraints_per_sample 数量 ({}) 与 batch_size ({}) 不匹配",
-        constraints_per_sample.size(), B
-    );
-    for (Eigen::Index b = 0; b < B; ++b) {
-      auto cond = create_conditions(
-          constraints_per_sample[b].index_dict,
-          constraints_per_sample[b].data_dict,
-          max_len, to_normalize
-      );
-      result.observed_motion.middleRows(b * max_len, max_len) = cond.observed_motion;
-      result.motion_mask.middleRows(b * max_len, max_len)     = cond.motion_mask;
-    }
+    result.observed_motion.middleRows(b * max_len, max_len) = cond.observed_motion;
+    result.motion_mask.middleRows(b * max_len, max_len)     = cond.motion_mask;
   }
 
   return result;
