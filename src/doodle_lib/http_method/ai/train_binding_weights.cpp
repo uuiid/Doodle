@@ -1,5 +1,6 @@
 #include "doodle_core/exception/exception.h"
 
+#include <doodle_lib/ai/cfg_type.h>
 #include <doodle_lib/ai/kimodo.h>
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/http_method/ai/ai_main.h>

@@ -123,7 +123,7 @@ MatrixXfRow kimodo::denoising_step(
     const MatrixXfRow& motion, const MatrixXbRow& pad_mask, const MatrixXfRow& text_feat,
     const MatrixXbRow& text_pad_mask, std::int64_t t, const std::vector<int64_t>& map_tensor,
     const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
-    const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
+    const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, cfg_type cfg_type_val
 ) {
   // ---- 获取映射后的时间步（space_timesteps + calc_diffusion_vars 已在 generate_internal 中预计算） ----
   const std::int64_t t_map = map_tensor[static_cast<std::size_t>(t)];
@@ -138,7 +138,7 @@ MatrixXfRow kimodo::denoising_step(
   //                                      motion_mask, observed_motion, cfg_type=cfg_type)
   MatrixXfRow pred_clean = denoiser_.forward(
       cfg_weight, motion, pad_mask, text_feat, text_pad_mask, timesteps_vec, first_heading_angle, motion_mask,
-      observed_motion, cfg_type
+      observed_motion, cfg_type_val
   );
 
   // ---- DDIM 采样 ----
@@ -154,7 +154,7 @@ MatrixXfRow kimodo::denoising_step(
 MatrixXfRow kimodo::generate_internal(
     const std::vector<std::string>& texts, std::int64_t max_frames, std::int64_t num_denoising_steps,
     const MatrixXbRow& pad_mask, const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
-    const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
+    const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, cfg_type cfg_type_val
 ) {
   const Eigen::Index batch_size = pad_mask.rows();
   const std::int64_t D          = motion_rep_->motion_rep_dim();
@@ -200,7 +200,7 @@ MatrixXfRow kimodo::generate_internal(
     auto start_time = std::chrono::high_resolution_clock::now();
     cur_mot         = denoising_step(
         cur_mot, pad_mask, text_feat, text_pad_mask, i, map_tensor, first_heading_angle, motion_mask_f,
-        observed_motion, cfg_weight, cfg_type
+        observed_motion, cfg_weight, cfg_type_val
     );
     SPDLOG_INFO("kimodo: 去噪步 {} 完成 time {:%S}", i, std::chrono::high_resolution_clock::now() - start_time);
   }
@@ -216,7 +216,7 @@ std::vector<motion_output> kimodo::generate(
     const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
     std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight,
     const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
-    const MatrixXfRow& observed_motion, const std::string& cfg_type
+    const MatrixXfRow& observed_motion, cfg_type cfg_type_val
 ) {
   DOODLE_CHICK(is_valid(), "kimodo 未加载或加载失败");
   DOODLE_CHICK(!prompts.empty(), "prompts 不能为空");
@@ -229,7 +229,7 @@ std::vector<motion_output> kimodo::generate(
   const std::int64_t max_frames = *std::max_element(num_frames.begin(), num_frames.end());
   const std::int64_t D          = motion_rep_->motion_rep_dim();
 
-  const auto actual_cfg_type    = cfg_type.empty() ? cfg_type_default_ : cfg_type;
+  const auto actual_cfg_type    = cfg_type_val == cfg_type::default_ ? cfg_type_default_ : cfg_type_val;
 
   // ---- Step 1: 创建 motion_pad_mask（无约束时为全有效，Python length_to_mask） ----
   Eigen::VectorXi lengths_vec(B);

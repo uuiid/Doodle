@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include <doodle_lib/ai/cfg_type.h>
 #include <doodle_lib/ai/classifier_free_guided_model.h>
 #include <doodle_lib/ai/diffusion.h>
 #include <doodle_lib/ai/fwd.h>
@@ -25,7 +26,7 @@ struct kimodo_model_config {
   std::string skeleton_type_;
   std::int32_t nb_joints_;
   std::int32_t num_base_steps_;
-  std::string cfg_type_;
+  cfg_type cfg_type_{cfg_type::separated};
   std::int32_t fps_;
   std::int32_t motion_rep_dim_;
   std::int32_t global_root_dim_;
@@ -157,7 +158,7 @@ class kimodo {
   std::shared_ptr<LLM2Vec> text_encoder_;
 
   // ---- 配置 ----
-  std::string cfg_type_default_{"separated"};
+  cfg_type cfg_type_default_{cfg_type::separated};
   float fps_{30.0f};
   std::int64_t llm_dim_{4096};  ///< 文本嵌入维度
 
@@ -177,7 +178,7 @@ class kimodo {
       const MatrixXfRow& motion, const MatrixXbRow& pad_mask, const MatrixXfRow& text_feat,
       const MatrixXbRow& text_pad_mask, std::int64_t t, const std::vector<int64_t>& map_tensor,
       const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
-      const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
+      const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, cfg_type cfg_type_val
   );
 
   /// @brief 完整去噪循环（对应 Python _generate）
@@ -185,7 +186,7 @@ class kimodo {
   MatrixXfRow generate_internal(
       const std::vector<std::string>& texts, std::int64_t max_frames, std::int64_t num_denoising_steps,
       const MatrixXbRow& pad_mask, const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
-      const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, const std::string& cfg_type
+      const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, cfg_type cfg_type_val
   );
 
  public:
@@ -210,13 +211,13 @@ class kimodo {
   /// @param first_heading_angle 初始朝向角（弧度，[B] 或空）
   /// @param motion_mask 运动 mask [B*T, D]（可选）
   /// @param observed_motion 观测运动 [B*T, D]（可选）
-  /// @param cfg_type CFG 类型；空则使用默认
+  /// @param cfg_type_val CFG 类型；default_ 则使用默认
   /// @return 已裁剪的运动输出列表（每个 batch 元素一个，仅保留有效帧）
   std::vector<motion_output> generate(
       const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
       std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight = {2.0f, 2.0f},
       const std::vector<float>& first_heading_angle = {}, const MatrixXfRow& motion_mask = {},
-      const MatrixXfRow& observed_motion = {}, const std::string& cfg_type = ""
+      const MatrixXfRow& observed_motion = {}, cfg_type cfg_type_val = cfg_type::default_
   );
 
   /// @brief 简单版本：单个提示、单样本

@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include <doodle_lib/ai/cfg_type.h>
 #include <doodle_lib/ai/fwd.h>
 #include <doodle_lib/ai/motion_rep/motion_rep_base.h>
 #include <doodle_lib/ai/twostage_denoiser.h>
@@ -34,7 +35,7 @@ class classifier_free_guided_model {
   /// 被包装的去噪器模型
   twostage_denoiser model_;
   /// 默认 CFG 类型
-  std::string cfg_type_default_{"separated"};
+  cfg_type cfg_type_default_{cfg_type::separated};
 
  public:
   classifier_free_guided_model() = default;
@@ -45,7 +46,7 @@ class classifier_free_guided_model {
   void load(std::shared_ptr<kimodo_model_config> config, const std::shared_ptr<motion_rep_base>& motion_rep);
 
   /// @brief 设置默认 cfg_type
-  void set_cfg_type_default(const std::string& cfg_type) { cfg_type_default_ = cfg_type; }
+  void set_cfg_type_default(cfg_type type) { cfg_type_default_ = type; }
   void load_onnx() { model_.load_onnx(); }
   /// @brief 带 CFG 的正向传播（对应 Python ClassifierFreeGuidedModel.forward）
   ///
@@ -63,19 +64,19 @@ class classifier_free_guided_model {
   /// @param first_heading_angle [B] 初始朝向角（可选，弧度）
   /// @param motion_mask [B*T, input_dim] 运动 mask（可选）
   /// @param observed_motion [B*T, input_dim] 观测运动（可选）
-  /// @param cfg_type CFG 类型；为空时使用 cfg_type_default_
+  /// @param cfg_type_val CFG 类型；default_ 时使用 cfg_type_default_
   /// @return [B*T, input_dim] 去噪后的运动（平坦化）
   MatrixXfRow forward(
       const std::vector<float>& cfg_weight, const MatrixXfRow& x, const MatrixXbRow& x_pad_mask,
       const MatrixXfRow& text_feat, const MatrixXbRow& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
       const std::vector<float>& first_heading_angle = {}, const MatrixXfRow& motion_mask = {},
-      const MatrixXfRow& observed_motion = {}, const std::string& cfg_type = ""
+      const MatrixXfRow& observed_motion = {}, cfg_type cfg_type_val = cfg_type::default_
   );
 
   [[nodiscard]] bool is_valid() const { return model_.is_valid(); }
   [[nodiscard]] const twostage_denoiser& model() const { return model_; }
   [[nodiscard]] twostage_denoiser& model() { return model_; }
-  [[nodiscard]] const std::string& cfg_type_default() const { return cfg_type_default_; }
+  [[nodiscard]] cfg_type cfg_type_default() const { return cfg_type_default_; }
 };
 
 }  // namespace doodle::ai
