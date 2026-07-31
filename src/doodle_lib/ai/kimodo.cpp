@@ -4,6 +4,7 @@
 #include "kimodo.h"
 
 #include <doodle_core/exception/exception.h>
+
 #include <doodle_lib/ai/motion_rep/feature_utils.h>
 
 #include <fmt/format.h>
@@ -223,15 +224,11 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
   MatrixXfRow prev_latest_frames;
   std::int64_t prev_nb_transition = 0;
 
-  for (std::size_t idx = 0; idx < segments.size(); ++idx) {
-    const auto& seg          = segments[idx];
-    const bool is_first      = (idx == 0);
-    std::int64_t num_frame   = seg.num_frames_;
+  for (auto is_first = true; const auto& seg : segments) {
+    std::int64_t num_frame           = seg.num_frames_;
     const std::int64_t nb_transition = is_first ? 0 : seg.num_transition_frames_;
 
-    if (!is_first && nb_transition < 1) {
-      DOODLE_CHICK(false, "num_transition_frames 必须 >= 1, 实际: {}", nb_transition);
-    }
+    DOODLE_CHICK(!(!is_first && nb_transition < 1), "num_transition_frames 必须 >= 1, 实际: {}", nb_transition);
 
     // ====================================================================
     // 构建段约束 → observed_motion / motion_mask
@@ -266,13 +263,13 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
 
     if (!is_first) {
       // 取出上一段末尾过渡帧
-      MatrixXfRow& last_motion = generated_motions.back();
-      const std::int64_t last_T = last_motion.rows();
+      MatrixXfRow& last_motion      = generated_motions.back();
+      const std::int64_t last_T     = last_motion.rows();
       const std::int64_t new_last_T = last_T - prev_nb_transition;
       DOODLE_CHICK(new_last_T >= 0, "上一段帧数 {} 不足过渡帧 {}", last_T, prev_nb_transition);
 
-      prev_latest_frames = last_motion.bottomRows(prev_nb_transition).eval();
-      last_motion        = last_motion.topRows(new_last_T).eval();
+      prev_latest_frames        = last_motion.bottomRows(prev_nb_transition).eval();
+      last_motion               = last_motion.topRows(new_last_T).eval();
 
       // 解码过渡帧，获取关节数据用于构建约束
       motion_output last_output = motion_rep_->decode(prev_latest_frames, false, 1, prev_nb_transition);
@@ -311,9 +308,8 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
       Eigen::VectorXi trans_lengths(1);
       trans_lengths(0) = static_cast<int>(nb_transition);
 
-      auto [obs_trans, mask_trans] = motion_rep_->create_conditions_from_constraints_batched(
-          trans_dicts, trans_lengths, false
-      );
+      auto [obs_trans, mask_trans] =
+          motion_rep_->create_conditions_from_constraints_batched(trans_dicts, trans_lengths, false);
 
       // 拼接: [transition_obs, segment_obs]
       const std::int64_t total_T = nb_transition + num_frame;
@@ -322,8 +318,8 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
       combined_obs.setZero();
       combined_mask.setZero();
 
-      combined_obs.topRows(nb_transition)   = obs_trans;
-      combined_mask.topRows(nb_transition)  = mask_trans.cast<float>();
+      combined_obs.topRows(nb_transition)  = obs_trans;
+      combined_mask.topRows(nb_transition) = mask_trans.cast<float>();
 
       if (observed_motion.size() > 0) {
         combined_obs.bottomRows(num_frame)  = observed_motion;
@@ -332,14 +328,14 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
 
       // 平移到新段起点（原点）
       MatrixXfRow neg_trans(1, 2);
-      neg_trans(0, 0) = -prev_smooth_root_2d(0, 0);
-      neg_trans(0, 1) = -prev_smooth_root_2d(0, 1);
-      combined_obs = motion_rep_->translate_2d(combined_obs, neg_trans, 1, total_T);
-      combined_obs = combined_obs.cwiseProduct(combined_mask);
+      neg_trans(0, 0)         = -prev_smooth_root_2d(0, 0);
+      neg_trans(0, 1)         = -prev_smooth_root_2d(0, 1);
+      combined_obs            = motion_rep_->translate_2d(combined_obs, neg_trans, 1, total_T);
+      combined_obs            = combined_obs.cwiseProduct(combined_mask);
 
-      observed_motion = std::move(combined_obs);
-      motion_mask_f   = std::move(combined_mask);
-      num_frame       = total_T;
+      observed_motion         = std::move(combined_obs);
+      motion_mask_f           = std::move(combined_mask);
+      num_frame               = total_T;
 
       // 从上段末尾计算朝向角
       MatrixXfRow heading_mat = compute_heading_angle(last_output.posed_joints, *skeleton_, 1, prev_nb_transition);
@@ -354,15 +350,15 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
     }
 
     Eigen::VectorXi lengths_vec(1);
-    lengths_vec(0)        = static_cast<int>(num_frame);
-    MatrixXbRow pad_mask  = length_to_mask(lengths_vec, num_frame);
+    lengths_vec(0)                 = static_cast<int>(num_frame);
+    MatrixXbRow pad_mask           = length_to_mask(lengths_vec, num_frame);
 
-    std::vector<float> heading        = {heading_val};
-    std::vector<std::string> texts    = {seg.text_};
+    std::vector<float> heading     = {heading_val};
+    std::vector<std::string> texts = {seg.text_};
 
-    MatrixXfRow motion = generate_internal(
-        texts, num_frame, seg.num_denoising_steps_, pad_mask, heading, motion_mask_f, observed_motion,
-        seg.cfg_weight_, seg.cfg_type_
+    MatrixXfRow motion             = generate_internal(
+        texts, num_frame, seg.num_denoising_steps_, pad_mask, heading, motion_mask_f, observed_motion, seg.cfg_weight_,
+        seg.cfg_type_
     );
 
     motion = motion_rep_->unnormalize(motion);
@@ -388,13 +384,12 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
         alpha(0) = 1.0f;
       } else {
         for (std::int64_t i = 0; i < nb_transition; ++i)
-          alpha(static_cast<Eigen::Index>(i)) =
-              1.0f - static_cast<float>(i) / static_cast<float>(nb_transition - 1);
+          alpha(static_cast<Eigen::Index>(i)) = 1.0f - static_cast<float>(i) / static_cast<float>(nb_transition - 1);
       }
 
       MatrixXfRow blended(nb_transition, D);
       for (std::int64_t i = 0; i < nb_transition; ++i) {
-        const float a = alpha(static_cast<Eigen::Index>(i));
+        const float a  = alpha(static_cast<Eigen::Index>(i));
         blended.row(i) = a * prev_latest_frames.row(i) + (1.0f - a) * new_transition.row(i);
       }
 
@@ -405,6 +400,7 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
 
     generated_motions.push_back(std::move(motion));
     prev_nb_transition = seg.num_transition_frames_;
+    is_first           = false;
   }
 
   // ======================================================================
