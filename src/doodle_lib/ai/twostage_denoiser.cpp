@@ -41,7 +41,7 @@ void twostage_denoiser::load(
   local_root_dim_                    = motion_rep->local_root_dim();
   motion_mask_mode_                  = config->motion_mask_mode_;
 
-  const bool will_concatenate        = (motion_mask_mode_ == "concat");
+  const bool will_concatenate        = (motion_mask_mode_ == motion_mask_mode::concat);
 
   // ---- 计算 root 模型维度 ----
   const std::int64_t root_input_dim  = will_concatenate ? input_dim_ * 2 : input_dim_;
@@ -110,7 +110,7 @@ MatrixXfRow twostage_denoiser::forward(
   MatrixXfRow x_extended;
   MatrixXfRow motion_mask_used;
 
-  if (motion_mask_mode_ == "concat") {
+  if (motion_mask_mode_ == motion_mask_mode::concat) {
     // 确定 motion_mask 和 observed_motion
     if (motion_mask.size() == 0 || observed_motion.size() == 0) {
       motion_mask_used = MatrixXfRow::Zero(total_frames, input_dim_);
@@ -188,7 +188,7 @@ MatrixXfRow twostage_denoiser::forward(
 
   // ---- 处理 body stage 的 mask (concat 模式) ----
   MatrixXfRow x_new_extended;
-  if (motion_mask_mode_ == "concat") {
+  if (motion_mask_mode_ == motion_mask_mode::concat) {
     x_new_extended.resize(total_frames, x_new.cols() + input_dim_);
     x_new_extended.leftCols(x_new.cols()) = x_new;
     x_new_extended.rightCols(input_dim_)  = motion_mask_used;

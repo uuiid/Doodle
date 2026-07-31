@@ -4,6 +4,7 @@
 #pragma once
 
 #include <doodle_lib/ai/fwd.h>
+#include <doodle_lib/ai/motion_mask_mode.h>
 #include <doodle_lib/ai/motion_rep/motion_rep_base.h>
 #include <doodle_lib/ai/transformer_encoder_block.h>
 #include <doodle_lib/core/global_function.h>
@@ -35,7 +36,7 @@ class twostage_denoiser {
   std::int64_t input_dim_{};
 
   // ---- 配置 ----
-  std::string motion_mask_mode_{"none"};
+  motion_mask_mode motion_mask_mode_{motion_mask_mode::none};
 
   // ---- 运动表示（弱指针，防止循环引用） ----
   std::weak_ptr<motion_rep_base> motion_rep_;

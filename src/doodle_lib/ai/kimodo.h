@@ -8,6 +8,7 @@
 #include <doodle_lib/ai/diffusion.h>
 #include <doodle_lib/ai/fwd.h>
 #include <doodle_lib/ai/llm2vec.h>
+#include <doodle_lib/ai/motion_mask_mode.h>
 #include <doodle_lib/ai/motion_rep/kimodo_motion_rep.h>
 #include <doodle_lib/ai/skeleton/skeleton_base.h>
 #include <doodle_lib/core/global_function.h>
@@ -31,7 +32,7 @@ struct kimodo_model_config {
   std::int32_t motion_rep_dim_;
   std::int32_t global_root_dim_;
   std::int32_t local_root_dim_;
-  std::string motion_mask_mode_;
+  motion_mask_mode motion_mask_mode_{motion_mask_mode::none};
   std::int32_t latent_dim_;
   std::int32_t ff_size_;
   std::int32_t num_layers_;
