@@ -34,71 +34,29 @@ void init_ort_env() {
   std::call_once(l_flag, &_init_ort_env);
 }
 
-struct ai_train_binding_weights_post_args {
-  std::vector<std::string> text_{};
-  std::vector<std::int64_t> num_frames_{120};
-  std::int32_t num_denoising_steps_{50};
-  std::vector<std::float_t> cfg_weight_{80, 80};
-  std::int32_t num_samples_{100};
-  doodle::ai::cfg_type cfg_type_{doodle::ai::cfg_type::separated};
-  std::vector<std::float_t> first_heading_angle_{0.0f};
-  std::int32_t num_transition_frames_{10};
-  bool post_processing_{true};
-  std::float_t root_margin_{0.0f};
-  nlohmann::json constraint_lst_{}; // 原始约束列表（JSON 数组，每个元素对应一个样本的约束列表）
-  // 解析后的约束列表，每个元素对应一个样本的约束集指针列表
-  std::vector<std::vector<doodle::ai::constraint_set_ptr>> constraints_per_sample_{}; 
-  // from json
-  friend void from_json(const nlohmann::json& in_json, ai_train_binding_weights_post_args& out) {
-    if (in_json.contains("text") && in_json.at("text").is_string()) {
-      out.text_.resize(1);
-      in_json.at("text").get_to(out.text_.front());
-    } else if (in_json.contains("text") && in_json.at("text").is_array() && in_json.at("text").size() > 0 &&
-               in_json.at("text").at(0).is_string()) {
-      in_json.at("text").get_to(out.text_);
+/// @brief 从 JSON 解析段列表，并填充约束
+std::vector<doodle::ai::generate_segment_args> parse_segments(
+    const nlohmann::json& in_json, const std::shared_ptr<doodle::ai::skeleton_base>& skeleton
+) {
+  std::vector<doodle::ai::generate_segment_args> segments;
+
+  auto parse_one = [&](const nlohmann::json& j) {
+    auto seg = j.get<doodle::ai::generate_segment_args>();
+    if (seg.constraint_lst_.is_array() && !seg.constraint_lst_.empty()) {
+      seg.constraints_ = doodle::ai::load_constraints_lst_from_json(seg.constraint_lst_, skeleton);
     }
-    if (in_json.contains("num_frames") && in_json.at("num_frames").is_number_integer()) {
-      out.num_frames_.resize(1);
-      in_json.at("num_frames").get_to(out.num_frames_.front());
-    } else if (in_json.contains("num_frames") && in_json.at("num_frames").is_array() &&
-               in_json.at("num_frames").size() > 0 && in_json.at("num_frames").at(0).is_number_integer()) {
-      in_json.at("num_frames").get_to(out.num_frames_);
-    }
-    if (in_json.contains("num_denoising_steps") && in_json.at("num_denoising_steps").is_number_integer()) {
-      in_json.at("num_denoising_steps").get_to(out.num_denoising_steps_);
-    }
-    if (in_json.contains("cfg_weight") && in_json.at("cfg_weight").is_array() && in_json.at("cfg_weight").size() > 0 &&
-        in_json.at("cfg_weight").at(0).is_number_integer()) {
-      in_json.at("cfg_weight").get_to(out.cfg_weight_);
-    }
-    if (in_json.contains("num_samples") && in_json.at("num_samples").is_number_integer()) {
-      in_json.at("num_samples").get_to(out.num_samples_);
-    }
-    if (in_json.contains("cfg_type") && in_json.at("cfg_type").is_string()) {
-      in_json.at("cfg_type").get_to(out.cfg_type_);
-    }
-    if (in_json.contains("first_heading_angle") && in_json.at("first_heading_angle").is_number_float()) {
-      out.first_heading_angle_.resize(1);
-      in_json.at("first_heading_angle").get_to(out.first_heading_angle_.front());
-    } else if (in_json.contains("first_heading_angle") && in_json.at("first_heading_angle").is_array() &&
-               in_json.at("first_heading_angle").size() > 0 &&
-               in_json.at("first_heading_angle").at(0).is_number_float()) {
-      in_json.at("first_heading_angle").get_to(out.first_heading_angle_);
-    }
-    if (in_json.contains("num_transition_frames") && in_json.at("num_transition_frames").is_number_integer()) {
-      in_json.at("num_transition_frames").get_to(out.num_transition_frames_);
-    }
-    if (in_json.contains("post_processing") && in_json.at("post_processing").is_boolean()) {
-      in_json.at("post_processing").get_to(out.post_processing_);
-    }
-    if (in_json.contains("root_margin") && in_json.at("root_margin").is_number_float()) {
-      in_json.at("root_margin").get_to(out.root_margin_);
-    }
-    if (in_json.contains("constraint_lst") && in_json.at("constraint_lst").is_array()) {
-      in_json.at("constraint_lst").get_to(out.constraint_lst_);
-    }
+    return seg;
+  };
+
+  if (in_json.is_array()) {
+    for (const auto& elem : in_json) segments.push_back(parse_one(elem));
+  } else {
+    segments.push_back(parse_one(in_json));
   }
-};
+
+  DOODLE_CHICK(!segments.empty(), "segments 不能为空");
+  return segments;
+}
 
 }  // namespace
 
@@ -111,36 +69,15 @@ struct ai_train_animation::impl {
     l_config->load_from_json(model_path);
     model_->load(l_config);
   }
-  auto run(const ai_train_binding_weights_post_args& in_args) {
+  auto run(const std::vector<doodle::ai::generate_segment_args>& segments) {
     DOODLE_CHICK(model_ != nullptr, "模型未加载，请先调用 load_model");
-    auto l_args = in_args;
-    if (l_args.constraint_lst_.is_array() && l_args.constraint_lst_.size() > 0 &&
-        l_args.constraint_lst_.at(0).is_array()) {
-      l_args.constraints_per_sample_.resize(l_args.constraint_lst_.size());
-      for (std::size_t i = 0; i < l_args.constraint_lst_.size(); ++i) {
-        l_args.constraints_per_sample_[i] =
-            doodle::ai::load_constraints_lst_from_json(l_args.constraint_lst_.at(i), model_->skeleton());
-      }
-    }
-    DOODLE_CHICK(
-        l_args.constraints_per_sample_.empty() || l_args.constraints_per_sample_.size() == l_args.text_.size(),
-        "约束列表数量 ({}) 与文本提示数量 ({}) 不匹配", l_args.constraints_per_sample_.size(), l_args.text_.size()
-    );
-
-    auto output = model_->generate(
-        l_args.text_, l_args.num_frames_, l_args.num_denoising_steps_, l_args.cfg_weight_, l_args.first_heading_angle_,
-        l_args.constraints_per_sample_, l_args.cfg_type_
-    );
-    return output;
+    return model_->generate(segments);
   }
 };
 ai_train_animation::ai_train_animation() : impl_ptr_(std::make_shared<impl>()) {}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
-  // 这里推理是在本地进行, 只需要阻塞当前协程,
-  // todo: 未来需要使 ::doodle ::http ::http_function 继承的类可以指定协程调度器, 以便在协程中使用 co_await
-  // 来等待阻塞操作完成
-  auto l_args = in_handle->get_json().get<ai_train_binding_weights_post_args>();
-  co_return in_handle->make_msg(nlohmann::json{} = impl_ptr_->run(l_args));
+  auto l_segments = parse_segments(in_handle->get_json(), impl_ptr_->model_->skeleton());
+  co_return in_handle->make_msg(nlohmann::json{} = impl_ptr_->run(l_segments));
 }
 
 void ai_train_animation::load_model(const std::string& model_path) {

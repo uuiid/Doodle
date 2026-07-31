@@ -133,6 +133,44 @@ struct kimodo_model_config {
   }
 };
 
+/// @brief 单段生成参数（对应 _multiprompt 中每个 segment）
+struct generate_segment_args {
+  std::string text_{};
+  std::int64_t num_frames_{120};
+  std::int32_t num_denoising_steps_{50};
+  std::vector<float> cfg_weight_{2.0f, 2.0f};
+  cfg_type cfg_type_{cfg_type::separated};
+  float first_heading_angle_{0.0f};
+  std::int32_t num_transition_frames_{10};
+  bool post_processing_{false};
+  float root_margin_{0.0f};
+  nlohmann::json constraint_lst_{};
+  std::vector<constraint_set_ptr> constraints_{};
+
+  friend void from_json(const nlohmann::json& j, generate_segment_args& p) {
+    if (j.contains("text") && j.at("text").is_string())
+      j.at("text").get_to(p.text_);
+    if (j.contains("num_frames") && j.at("num_frames").is_number_integer())
+      j.at("num_frames").get_to(p.num_frames_);
+    if (j.contains("num_denoising_steps") && j.at("num_denoising_steps").is_number_integer())
+      j.at("num_denoising_steps").get_to(p.num_denoising_steps_);
+    if (j.contains("cfg_weight") && j.at("cfg_weight").is_array() && j.at("cfg_weight").size() > 0)
+      j.at("cfg_weight").get_to(p.cfg_weight_);
+    if (j.contains("cfg_type") && j.at("cfg_type").is_string())
+      j.at("cfg_type").get_to(p.cfg_type_);
+    if (j.contains("first_heading_angle") && j.at("first_heading_angle").is_number())
+      j.at("first_heading_angle").get_to(p.first_heading_angle_);
+    if (j.contains("num_transition_frames") && j.at("num_transition_frames").is_number_integer())
+      j.at("num_transition_frames").get_to(p.num_transition_frames_);
+    if (j.contains("post_processing") && j.at("post_processing").is_boolean())
+      j.at("post_processing").get_to(p.post_processing_);
+    if (j.contains("root_margin") && j.at("root_margin").is_number())
+      j.at("root_margin").get_to(p.root_margin_);
+    if (j.contains("constraint_lst") && j.at("constraint_lst").is_array())
+      j.at("constraint_lst").get_to(p.constraint_lst_);
+  }
+};
+
 /// @brief Kimodo 主编排类（对应 Python Kimodo）
 ///
 /// 编排完整推理管线: 文本编码 → 去噪循环 → 运动解码。
@@ -144,10 +182,8 @@ struct kimodo_model_config {
 ///   cfg->load_from_json("path/to/model_config.json");
 ///   auto kmd = std::make_shared<kimodo>();
 ///   kmd->load(cfg);
-///   auto output = kmd->generate({"a person walks"}, {120}, 50);
+///   auto output = kmd->generate({{"a person walks", 120, 50}});
 /// @endcode
-///
-/// @note _multiprompt（多段拼接）暂不实现。
 class kimodo {
   // ---- 核心组件 ----
   classifier_free_guided_model denoiser_;          ///< CFG 包装的去噪器
@@ -203,28 +239,13 @@ class kimodo {
   /// @param config 模型配置（共享指针），包含所有路径、维度、标志等设置
   void load(std::shared_ptr<kimodo_model_config> config);
 
-  /// @brief 从文本生成运动（对应 Python __call__，不含 multi_prompt）
+  /// @brief 多段顺序生成运动（对应 Python _multiprompt）
   ///
-  /// @param prompts 文本提示（每个元素对应一个样本）
-  /// @param num_frames 各样本帧数（长度需与 prompts 相同）
-  /// @param num_denoising_steps 去噪步数
-  /// @param cfg_weight CFG 权重: {w_text, w_constraint}
-  /// @param first_heading_angle 初始朝向角（弧度，[B] 或空）
-  /// @param constraints 约束列表（由 load_constraints_lst_from_json 解析），为空表示无约束
-  /// @param cfg_type_val CFG 类型
-  /// @return 已裁剪的运动输出列表（每个 batch 元素一个，仅保留有效帧）
-  std::vector<motion_output> generate(
-      const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
-      std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight = {2.0f, 2.0f},
-      const std::vector<float>& first_heading_angle                   = {},
-      const std::vector<std::vector<constraint_set_ptr>>& constraints = {}, cfg_type cfg_type_val = cfg_type::separated
-  );
-
-  /// @brief 简单版本：单个提示、单样本
-  motion_output generate(
-      const std::string& prompt, std::int64_t num_frames, std::int64_t num_denoising_steps,
-      const std::vector<float>& cfg_weight = {2.0f, 2.0f}, float first_heading_angle = 0.0f
-  );
+  /// 按顺序生成多个运动段，段间自动创建平滑过渡。
+  ///
+  /// @param segments 段参数列表（至少 1 个元素）
+  /// @return 拼接后的完整运动输出
+  motion_output generate(const std::vector<generate_segment_args>& segments);
 
   [[nodiscard]] bool is_valid() const {
     return denoiser_.is_valid() && diffusion_.is_valid() && motion_rep_ != nullptr;

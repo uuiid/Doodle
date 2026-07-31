@@ -4,6 +4,7 @@
 #include "kimodo.h"
 
 #include <doodle_core/exception/exception.h>
+#include <doodle_lib/ai/motion_rep/feature_utils.h>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -208,138 +209,223 @@ MatrixXfRow kimodo::generate_internal(
 }
 
 // ======================================================================
-// generate: 主入口（对应 Python __call__，不含 multi_prompt）
+// generate: 多段顺序生成（对应 Python _multiprompt）
 // ======================================================================
-std::vector<motion_output> kimodo::generate(
-    const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
-    std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight,
-    const std::vector<float>& first_heading_angle, const std::vector<std::vector<constraint_set_ptr>>& constraints,
-    cfg_type cfg_type_val
-) {
+motion_output kimodo::generate(const std::vector<generate_segment_args>& segments) {
   DOODLE_CHICK(is_valid(), "kimodo 未加载或加载失败");
-  DOODLE_CHICK(!prompts.empty(), "prompts 不能为空");
-  DOODLE_CHICK(
-      prompts.size() == num_frames.size(), "prompts 数量 {} 与 num_frames 数量 {} 不匹配", prompts.size(),
-      num_frames.size()
-  );
+  DOODLE_CHICK(!segments.empty(), "segments 不能为空");
 
-  const Eigen::Index B          = static_cast<Eigen::Index>(prompts.size());
-  const std::int64_t max_frames = *std::max_element(num_frames.begin(), num_frames.end());
-  const std::int64_t D          = motion_rep_->motion_rep_dim();
+  const std::int64_t D = motion_rep_->motion_rep_dim();
 
-  // ---- Step 1: 创建 motion_pad_mask（无约束时为全有效，Python length_to_mask） ----
-  Eigen::VectorXi lengths_vec(B);
-  for (Eigen::Index b = 0; b < B; ++b) {
-    lengths_vec(b) = static_cast<int>(num_frames[static_cast<std::size_t>(b)]);
-  }
-  MatrixXbRow pad_mask = length_to_mask(lengths_vec, max_frames);
+  /// 已生成的各段运动（motion_rep 特征，未标准化），每个 [1*T_i, D]
+  std::vector<MatrixXfRow> generated_motions;
+  /// 上一段末尾过渡帧（用于混合），[1*nb_transition, D]
+  MatrixXfRow prev_latest_frames;
+  std::int64_t prev_nb_transition = 0;
 
-  // ---- Step 2: 处理 first_heading_angle ----
-  // Python:
-  //   if first_heading_angle is None:  start at 0 angle
-  //   else:  repeat if scalar -> [B]
-  std::vector<float> heading(B, 0.0f);
-  if (first_heading_angle.size() == 1) {
-    // 标量 → 广播到所有 batch
-    std::fill(heading.begin(), heading.end(), first_heading_angle[0]);
-  } else if (static_cast<Eigen::Index>(first_heading_angle.size()) == B) {
-    heading = first_heading_angle;
-  } else if (!first_heading_angle.empty()) {
-    DOODLE_CHICK(false, "first_heading_angle 大小 {} 不匹配 batch_size {}", first_heading_angle.size(), B);
-  }
-  // else: 全零（已初始化）
+  for (std::size_t idx = 0; idx < segments.size(); ++idx) {
+    const auto& seg          = segments[idx];
+    const bool is_first      = (idx == 0);
+    std::int64_t num_frame   = seg.num_frames_;
+    const std::int64_t nb_transition = is_first ? 0 : seg.num_transition_frames_;
 
-  // ---- Step 3: 处理约束条件（constraint_set_ptr → motion_mask + observed_motion） ----
-  MatrixXfRow motion_mask_f, observed_motion_f;
-  if (!constraints.empty()) {
-    DOODLE_CHICK(
-        static_cast<Eigen::Index>(constraints.size()) == B, "constraints 数量 {} 与 batch_size {} 不匹配",
-        constraints.size(), B
-    );
-    std::vector<kimodo_motion_rep::constraint_dicts> constraint_dicts_per_sample;
-    for (const auto& c_per_sample : constraints) {
-      kimodo_motion_rep::constraint_dicts dicts;
-      for (const auto& c : c_per_sample) {
-        c->update_constraints(dicts.data_dict, dicts.index_dict);
-      }
-      constraint_dicts_per_sample.push_back(std::move(dicts));
+    if (!is_first && nb_transition < 1) {
+      DOODLE_CHICK(false, "num_transition_frames 必须 >= 1, 实际: {}", nb_transition);
     }
 
-    auto [obs, mask] = motion_rep_->create_conditions_from_constraints_batched(
-        constraint_dicts_per_sample, lengths_vec, true /*to_normalize*/
+    // ====================================================================
+    // 构建段约束 → observed_motion / motion_mask
+    // ====================================================================
+    MatrixXfRow observed_motion, motion_mask_f;
+
+    std::vector<kimodo_motion_rep::constraint_dicts> seg_dicts(1);
+    bool has_seg_constraints = false;
+    if (!seg.constraints_.empty()) {
+      for (const auto& c : seg.constraints_) {
+        c->update_constraints(seg_dicts[0].data_dict, seg_dicts[0].index_dict);
+      }
+      has_seg_constraints = true;
+    }
+
+    Eigen::VectorXi seg_lengths(1);
+    seg_lengths(0) = static_cast<int>(num_frame);
+
+    if (has_seg_constraints) {
+      auto [obs, mask] = motion_rep_->create_conditions_from_constraints_batched(
+          seg_dicts, seg_lengths, false /*to_normalize*/
+      );
+      observed_motion = std::move(obs);
+      motion_mask_f   = mask.cast<float>();
+    }
+
+    // ====================================================================
+    // 过渡逻辑（非首段）
+    // ====================================================================
+    MatrixXfRow prev_smooth_root_2d;  // [1, 2]
+    float heading_val = seg.first_heading_angle_;
+
+    if (!is_first) {
+      // 取出上一段末尾过渡帧
+      MatrixXfRow& last_motion = generated_motions.back();
+      const std::int64_t last_T = last_motion.rows();
+      const std::int64_t new_last_T = last_T - prev_nb_transition;
+      DOODLE_CHICK(new_last_T >= 0, "上一段帧数 {} 不足过渡帧 {}", last_T, prev_nb_transition);
+
+      prev_latest_frames = last_motion.bottomRows(prev_nb_transition).eval();
+      last_motion        = last_motion.topRows(new_last_T).eval();
+
+      // 解码过渡帧，获取关节数据用于构建约束
+      motion_output last_output = motion_rep_->decode(prev_latest_frames, false, 1, prev_nb_transition);
+
+      // 提取 smooth_root_2d 首帧（新段起点）
+      prev_smooth_root_2d.resize(1, 2);
+      prev_smooth_root_2d(0, 0) = last_output.smooth_root_pos(0, 0);  // x
+      prev_smooth_root_2d(0, 1) = last_output.smooth_root_pos(0, 2);  // z
+
+      // 构建过渡 frame_indices [0, 1, ..., nb_transition-1]
+      Eigen::VectorXi trans_indices(nb_transition);
+      for (std::int64_t i = 0; i < nb_transition; ++i)
+        trans_indices(static_cast<Eigen::Index>(i)) = static_cast<int>(i);
+
+      // smooth_root_2d [nb_transition, 2]
+      MatrixXfRow trans_smooth_root_2d(nb_transition, 2);
+      for (std::int64_t i = 0; i < nb_transition; ++i) {
+        trans_smooth_root_2d(i, 0) = last_output.smooth_root_pos(i, 0);
+        trans_smooth_root_2d(i, 1) = last_output.smooth_root_pos(i, 2);
+      }
+
+      // 过渡约束：全身 + 末端执行器
+      std::vector<kimodo_motion_rep::constraint_dicts> trans_dicts(1);
+
+      auto fb = std::make_shared<fullbody_constraint_set>(
+          skeleton_, trans_indices, last_output.posed_joints, last_output.global_rot_mats, trans_smooth_root_2d
+      );
+      fb->update_constraints(trans_dicts[0].data_dict, trans_dicts[0].index_dict);
+
+      auto ee = std::make_shared<end_effector_constraint_set>(
+          skeleton_, trans_indices, last_output.posed_joints, last_output.global_rot_mats, trans_smooth_root_2d,
+          std::vector<std::string>{"LeftHand", "RightHand", "LeftFoot", "RightFoot"}
+      );
+      ee->update_constraints(trans_dicts[0].data_dict, trans_dicts[0].index_dict);
+
+      Eigen::VectorXi trans_lengths(1);
+      trans_lengths(0) = static_cast<int>(nb_transition);
+
+      auto [obs_trans, mask_trans] = motion_rep_->create_conditions_from_constraints_batched(
+          trans_dicts, trans_lengths, false
+      );
+
+      // 拼接: [transition_obs, segment_obs]
+      const std::int64_t total_T = nb_transition + num_frame;
+      MatrixXfRow combined_obs(total_T, D);
+      MatrixXfRow combined_mask(total_T, D);
+      combined_obs.setZero();
+      combined_mask.setZero();
+
+      combined_obs.topRows(nb_transition)   = obs_trans;
+      combined_mask.topRows(nb_transition)  = mask_trans.cast<float>();
+
+      if (observed_motion.size() > 0) {
+        combined_obs.bottomRows(num_frame)  = observed_motion;
+        combined_mask.bottomRows(num_frame) = motion_mask_f;
+      }
+
+      // 平移到新段起点（原点）
+      MatrixXfRow neg_trans(1, 2);
+      neg_trans(0, 0) = -prev_smooth_root_2d(0, 0);
+      neg_trans(0, 1) = -prev_smooth_root_2d(0, 1);
+      combined_obs = motion_rep_->translate_2d(combined_obs, neg_trans, 1, total_T);
+      combined_obs = combined_obs.cwiseProduct(combined_mask);
+
+      observed_motion = std::move(combined_obs);
+      motion_mask_f   = std::move(combined_mask);
+      num_frame       = total_T;
+
+      // 从上段末尾计算朝向角
+      MatrixXfRow heading_mat = compute_heading_angle(last_output.posed_joints, *skeleton_, 1, prev_nb_transition);
+      heading_val             = heading_mat(0, 0);
+    }
+
+    // ====================================================================
+    // 标准化 → 生成 → 反标准化
+    // ====================================================================
+    if (observed_motion.size() > 0) {
+      observed_motion = motion_rep_->normalize(observed_motion);
+    }
+
+    Eigen::VectorXi lengths_vec(1);
+    lengths_vec(0)        = static_cast<int>(num_frame);
+    MatrixXbRow pad_mask  = length_to_mask(lengths_vec, num_frame);
+
+    std::vector<float> heading        = {heading_val};
+    std::vector<std::string> texts    = {seg.text_};
+
+    MatrixXfRow motion = generate_internal(
+        texts, num_frame, seg.num_denoising_steps_, pad_mask, heading, motion_mask_f, observed_motion,
+        seg.cfg_weight_, seg.cfg_type_
     );
-    observed_motion_f = std::move(obs);
-    motion_mask_f     = mask.cast<float>();
+
+    motion = motion_rep_->unnormalize(motion);
+
+    // ====================================================================
+    // 后处理：过渡混合 / post_processing
+    // ====================================================================
+    if (!is_first) {
+      // 平移回原始位置
+      motion = motion_rep_->translate_2d(motion, prev_smooth_root_2d, 1, num_frame);
+
+      if (seg.post_processing_) {
+        SPDLOG_WARN("post_processing=true but post_process_motion not implemented in C++, skipping");
+      }
+
+      // 拆分: [transition_frames, segment_frames]
+      MatrixXfRow new_transition = motion.topRows(nb_transition);
+      motion                     = motion.bottomRows(num_frame - nb_transition).eval();
+
+      // Alpha 混合: old * alpha + new * (1-alpha), alpha = linspace(1, 0, nb_transition)
+      Eigen::VectorXf alpha(nb_transition);
+      if (nb_transition == 1) {
+        alpha(0) = 1.0f;
+      } else {
+        for (std::int64_t i = 0; i < nb_transition; ++i)
+          alpha(static_cast<Eigen::Index>(i)) =
+              1.0f - static_cast<float>(i) / static_cast<float>(nb_transition - 1);
+      }
+
+      MatrixXfRow blended(nb_transition, D);
+      for (std::int64_t i = 0; i < nb_transition; ++i) {
+        const float a = alpha(static_cast<Eigen::Index>(i));
+        blended.row(i) = a * prev_latest_frames.row(i) + (1.0f - a) * new_transition.row(i);
+      }
+
+      generated_motions.push_back(std::move(blended));
+    } else if (seg.post_processing_) {
+      SPDLOG_WARN("post_processing=true but post_process_motion not implemented in C++, skipping");
+    }
+
+    generated_motions.push_back(std::move(motion));
+    prev_nb_transition = seg.num_transition_frames_;
   }
 
-  // ---- Step 4: 去噪循环 ----
-  const std::int64_t total_frames = B * max_frames;
+  // ======================================================================
+  // 拼接所有段 → 解码
+  // ======================================================================
+  std::int64_t total_frames = 0;
+  for (const auto& m : generated_motions) total_frames += m.rows();
 
-  MatrixXfRow motion              = generate_internal(
-      prompts, max_frames, num_denoising_steps, pad_mask, heading, motion_mask_f, observed_motion_f, cfg_weight,
-      cfg_type_val
-  );
-
-  // ---- Step 5: 反标准化 ----
-  // Python: motion = self.motion_rep.unnormalize(motion)
-  DOODLE_CHICK(
-      motion.rows() == total_frames && motion.cols() == D, "生成的运动 shape [{}x{}] 不匹配预期 [{}x{}]", motion.rows(),
-      motion.cols(), total_frames, D
-  );
-
-  motion               = motion_rep_->unnormalize(motion);
-
-  // ---- Step 6: 解码为运动输出 ----
-  // Python: output = self.motion_rep.inverse(motion, is_normalized=True, return_numpy=False)
-  // 注意：motion 已反标准化，所以 is_normalized=False
-  motion_output output = motion_rep_->decode(motion, false /*is_normalized*/, B, max_frames);
-
-  // ---- Step 7: 按 num_frames 裁剪有效帧（仅保留各 batch 实际长度） ----
-  // decode 返回 [B*T, ...] 平坦化结果，T=max_frames
-  // 对每个 batch 元素 b，仅保留前 num_frames[b] 帧，丢弃 padding 噪声
-  std::vector<motion_output> trimmed_outputs;
-  trimmed_outputs.reserve(static_cast<std::size_t>(B));
-
-  for (Eigen::Index b = 0; b < B; ++b) {
-    const Eigen::Index start_row = b * max_frames;
-    const Eigen::Index count     = static_cast<Eigen::Index>(num_frames[static_cast<std::size_t>(b)]);
-
-    motion_output out;
-    out.local_rot_mats      = output.local_rot_mats.middleRows(start_row, count).eval();
-    out.global_rot_mats     = output.global_rot_mats.middleRows(start_row, count).eval();
-    out.posed_joints        = output.posed_joints.middleRows(start_row, count).eval();
-    out.root_positions      = output.root_positions.middleRows(start_row, count).eval();
-    out.smooth_root_pos     = output.smooth_root_pos.middleRows(start_row, count).eval();
-    out.foot_contacts       = output.foot_contacts.middleRows(start_row, count).eval();
-    out.global_root_heading = output.global_root_heading.middleRows(start_row, count).eval();
-    trimmed_outputs.push_back(std::move(out));
+  MatrixXfRow all_motion(total_frames, D);
+  std::int64_t offset = 0;
+  for (const auto& m : generated_motions) {
+    all_motion.middleRows(offset, m.rows()) = m;
+    offset += m.rows();
   }
 
-  // ---- Step 8: SOMA 骨骼输出转换 ----
-  // Python: if isinstance(self.skeleton, SOMASkeleton30):
-  //             output = self.skeleton.output_to_SOMASkeleton77(output)
-  // TODO: output_to_SOMASkeleton77 转换暂未实现
-  // 对应的 Python 方法将 SOMA30 关节重新映射到 SOMA77 关节
-  // 若需要此转换，需在 skeleton_base 中添加对应方法
+  motion_output output = motion_rep_->decode(all_motion, false, 1, total_frames);
 
-  SPDLOG_INFO("kimodo::generate 完成: batch_size={}, max_frames={}, motion_rep_dim={}", B, max_frames, D);
+  // TODO: SOMASkeleton30 → SOMASkeleton77 转换
 
-  return trimmed_outputs;
-}
-
-// ======================================================================
-// generate: 简单单样本版本
-// ======================================================================
-motion_output kimodo::generate(
-    const std::string& prompt, std::int64_t num_frames, std::int64_t num_denoising_steps,
-    const std::vector<float>& cfg_weight, float first_heading_angle
-) {
-  auto results = generate(
-      std::vector<std::string>{prompt}, std::vector<std::int64_t>{num_frames}, num_denoising_steps, cfg_weight,
-      {first_heading_angle}
-  );
-  DOODLE_CHICK(results.size() == 1, "单样本 generate 应返回恰好 1 个结果，实际: {}", results.size());
-  return std::move(results[0]);
+  SPDLOG_INFO("kimodo::generate (multiprompt) 完成: {} 段, 总帧数 {}", segments.size(), total_frames);
+  return output;
 }
 
 }  // namespace doodle::ai
