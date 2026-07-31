@@ -40,11 +40,10 @@ class http_route {
   http_route& reg_t(url_route_component_ptr&& in_component, Args&&... args) {
     auto l_type_index = std::type_index(typeid(T));
     auto l_function   = std::make_shared<T>(std::forward<Args>(args)...);
-    DOODLE_CHICK(
-        !url_route_map_type_.contains(l_type_index), "http_route::reg_t: 重复注册路由类型 {}，请检查代码",
-        l_type_index.name()
-    );
-    url_route_map_type_[l_type_index] = l_function;
+    if (url_route_map_type_.contains(l_type_index)) {
+      SPDLOG_WARN("http_route::reg_t: 重复注册路由类型 {}，请检查代码", l_type_index.name());
+    } else
+      url_route_map_type_[l_type_index] = l_function;
     return reg(std::forward<url_route_component_ptr>(in_component), l_function);
   }
   // 路由分发
