@@ -240,7 +240,7 @@ motion_output kimodo_motion_rep::decode(
   auto fk_res = skeleton_->fk(local_rot_mats, root_positions);
 
   // ---- 脚接触二值化 ----
-  Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> foot_contacts_bool(total, 4);
+  MatrixXbRow foot_contacts_bool(total, 4);
   for (Eigen::Index i = 0; i < total; ++i) {
     for (int c = 0; c < 4; ++c) {
       foot_contacts_bool(i, c) = foot_contacts_float(i, c) > 0.5f;
@@ -352,7 +352,7 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
 
   condition_result result;
   result.observed_motion = MatrixXfRow::Zero(length, D);
-  result.motion_mask     = Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic>::Zero(length, D);
+  result.motion_mask     = MatrixXbRow::Zero(length, D);
 
   // 处理 smooth_root_2d 约束
   auto idx_it            = index_dict.find("smooth_root_2d");
@@ -532,7 +532,7 @@ kimodo_motion_rep::batched_condition_result kimodo_motion_rep::create_conditions
 
   batched_condition_result result;
   result.observed_motion = MatrixXfRow::Zero(B * max_len, D);
-  result.motion_mask     = Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic>::Zero(B * max_len, D);
+  result.motion_mask     = MatrixXbRow::Zero(B * max_len, D);
 
   if (constraints_lst.empty()) {
     return result;

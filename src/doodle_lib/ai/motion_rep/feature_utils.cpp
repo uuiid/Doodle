@@ -89,8 +89,8 @@ MatrixXfRow compute_heading_angle(
 // compute_vel_xyz: 关节速度
 // ======================================================================
 MatrixXfRow compute_vel_xyz(
-    const MatrixXfRow& positions, float fps, std::int64_t batch_size, std::int64_t time_steps,
-    std::int64_t nbjoints, const Eigen::VectorXi& lengths
+    const MatrixXfRow& positions, float fps, std::int64_t batch_size, std::int64_t time_steps, std::int64_t nbjoints,
+    const Eigen::VectorXi& lengths
 ) {
   const Eigen::Index total = positions.rows();
   DOODLE_CHICK(total == batch_size * time_steps, "总帧数不匹配");
@@ -137,9 +137,9 @@ MatrixXfRow compute_vel_angle(const MatrixXfRow& root_rot_angles, float fps, con
 // ======================================================================
 // foot_detect_from_pos_and_vel: 脚接触检测
 // ======================================================================
-Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> foot_detect_from_pos_and_vel(
-    const MatrixXfRow& positions, const MatrixXfRow& velocity, const skeleton_base& skel,
-    std::int64_t batch_size, std::int64_t time_steps, float vel_thres, float height_thresh
+MatrixXbRow foot_detect_from_pos_and_vel(
+    const MatrixXfRow& positions, const MatrixXfRow& velocity, const skeleton_base& skel, std::int64_t batch_size,
+    std::int64_t time_steps, float vel_thres, float height_thresh
 ) {
   const Eigen::Index total    = positions.rows();
   const Eigen::Index J        = skel.nbjoints_;
@@ -150,7 +150,7 @@ Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> foot_detect_from_pos_and_vel
   const std::int64_t n_foot_l = (std::min)(static_cast<std::int64_t>(fid_l.size()), std::int64_t{2});
   const std::int64_t n_foot_r = (std::min)(static_cast<std::int64_t>(fid_r.size()), std::int64_t{2});
 
-  Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> contacts(total, 4);
+  MatrixXbRow contacts(total, 4);
   contacts.setConstant(false);
 
   for (Eigen::Index b = 0; b < batch_size; ++b) {
@@ -189,15 +189,13 @@ Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> foot_detect_from_pos_and_vel
 // ======================================================================
 // length_to_mask: 长度 → 布尔掩码
 // ======================================================================
-Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> length_to_mask(
-    const Eigen::VectorXi& lengths, std::int64_t max_len
-) {
+MatrixXbRow length_to_mask(const Eigen::VectorXi& lengths, std::int64_t max_len) {
   const Eigen::Index B = lengths.size();
   if (max_len <= 0) {
     max_len = lengths.maxCoeff();
   }
 
-  Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> mask(B, max_len);
+  MatrixXbRow mask(B, max_len);
   for (Eigen::Index b = 0; b < B; ++b) {
     for (Eigen::Index t = 0; t < max_len; ++t) {
       mask(b, t) = (t < lengths(b));

@@ -9,7 +9,6 @@
 #include <cstdint>
 #include <vector>
 
-
 namespace doodle::ai {
 
 // ======================================================================
@@ -69,7 +68,7 @@ MatrixXfRow compute_vel_angle(const MatrixXfRow& root_rot_angles, float fps, con
 /// @param vel_thres 速度阈值
 /// @param height_thresh 高度阈值
 /// @return [B*T, 4] 脚接触标签 [左跟, 左趾, 右跟, 右趾]
-Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> foot_detect_from_pos_and_vel(
+MatrixXbRow foot_detect_from_pos_and_vel(
     const MatrixXfRow& positions, const MatrixXfRow& velocity, const skeleton_base& skel, std::int64_t batch_size,
     std::int64_t time_steps, float vel_thres = 0.15f, float height_thresh = 0.10f
 );
@@ -82,9 +81,7 @@ Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> foot_detect_from_pos_and_vel
 /// @param lengths [B] 各序列长度
 /// @param max_len 最大长度（若 <=0 则使用 lengths 最大值）
 /// @return [B, max_len] 布尔掩码，true=有效
-Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> length_to_mask(
-    const Eigen::VectorXi& lengths, std::int64_t max_len = -1
-);
+MatrixXbRow length_to_mask(const Eigen::VectorXi& lengths, std::int64_t max_len = -1);
 
 // ======================================================================
 // 平滑根位置（简化版）

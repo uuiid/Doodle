@@ -182,8 +182,8 @@ class kimodo_motion_rep : public motion_rep_base {
   /// @param to_normalize 是否标准化
   /// @return (observed_motion [T, D], motion_mask [T, D])
   struct condition_result {
-    MatrixXfRow observed_motion;                                      ///< [T, D] 观测运动
-    Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> motion_mask;  ///< [T, D] 运动掩码
+    MatrixXfRow observed_motion;  ///< [T, D] 观测运动
+    MatrixXbRow motion_mask;      ///< [T, D] 运动掩码
   };
   condition_result create_conditions(
       const std::unordered_map<std::string, std::vector<MatrixXfRow>>& index_dict,
@@ -196,8 +196,8 @@ class kimodo_motion_rep : public motion_rep_base {
   /// @param to_normalize 是否标准化
   /// @return (observed_motion [B*T, D], motion_mask [B*T, D])
   struct batched_condition_result {
-    MatrixXfRow observed_motion;                                      ///< [B*T, D]
-    Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> motion_mask;  ///< [B*T, D]
+    MatrixXfRow observed_motion;  ///< [B*T, D]
+    MatrixXbRow motion_mask;      ///< [B*T, D]
   };
   batched_condition_result create_conditions_from_constraints_batched(
       const std::vector<std::vector<std::pair<std::string, std::vector<MatrixXfRow>>>>& constraints_lst,
