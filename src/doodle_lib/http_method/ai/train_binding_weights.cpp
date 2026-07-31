@@ -46,6 +46,7 @@ struct ai_train_binding_weights_post_args {
   bool post_processing_{true};
   std::float_t root_margin_{0.0f};
   nlohmann::json constraint_lst_{};
+  std::vector<std::vector<doodle::ai::constraint_set_ptr>> constraints_per_sample_{};
   // from json
   friend void from_json(const nlohmann::json& in_json, ai_train_binding_weights_post_args& out) {
     if (in_json.contains("text") && in_json.at("text").is_string()) {
@@ -112,15 +113,23 @@ struct ai_train_animation::impl {
   }
   void run(const ai_train_binding_weights_post_args& in_args) {
     std::call_once(init_flag_, &impl::init, this);
-
-    auto l_constraint_list = doodle::ai::load_constraints_lst_from_json(in_args.constraint_lst_, model_->skeleton());
-    for (const auto& c : l_constraint_list) {
-      SPDLOG_INFO("Loaded constraint: {}", c->type_name());
+    auto l_args = in_args;
+    if (l_args.constraint_lst_.is_array() && l_args.constraint_lst_.size() > 0 &&
+        l_args.constraint_lst_.at(0).is_array()) {
+      l_args.constraints_per_sample_.resize(l_args.constraint_lst_.size());
+      for (std::size_t i = 0; i < l_args.constraint_lst_.size(); ++i) {
+        l_args.constraints_per_sample_[i] =
+            doodle::ai::load_constraints_lst_from_json(l_args.constraint_lst_.at(i), model_->skeleton());
+      }
     }
+    DOODLE_CHICK(
+        l_args.constraints_per_sample_.empty() || l_args.constraints_per_sample_.size() == l_args.text_.size(),
+        "约束列表数量 ({}) 与文本提示数量 ({}) 不匹配", l_args.constraints_per_sample_.size(), l_args.text_.size()
+    );
 
     auto output = model_->generate(
-        in_args.text_, in_args.num_frames_, in_args.num_denoising_steps_, in_args.cfg_weight_,
-        {in_args.first_heading_angle_}, l_constraint_list, in_args.cfg_type_
+        l_args.text_, l_args.num_frames_, l_args.num_denoising_steps_, l_args.cfg_weight_,
+        {l_args.first_heading_angle_}, l_args.constraints_per_sample_, l_args.cfg_type_
     );
   }
 };

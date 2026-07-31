@@ -213,7 +213,7 @@ MatrixXfRow kimodo::generate_internal(
 std::vector<motion_output> kimodo::generate(
     const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
     std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight,
-    const std::vector<float>& first_heading_angle, const std::vector<constraint_set_ptr>& constraints,
+    const std::vector<float>& first_heading_angle, const std::vector<std::vector<constraint_set_ptr>>& constraints,
     cfg_type cfg_type_val
 ) {
   DOODLE_CHICK(is_valid(), "kimodo 未加载或加载失败");
@@ -252,11 +252,18 @@ std::vector<motion_output> kimodo::generate(
   // ---- Step 3: 处理约束条件（constraint_set_ptr → motion_mask + observed_motion） ----
   MatrixXfRow motion_mask_f, observed_motion_f;
   if (!constraints.empty()) {
-    kimodo_motion_rep::constraint_dicts dicts;
-    for (const auto& c : constraints) {
-      c->update_constraints(dicts.data_dict, dicts.index_dict);
+    DOODLE_CHICK(
+        static_cast<Eigen::Index>(constraints.size()) == B, "constraints 数量 {} 与 batch_size {} 不匹配",
+        constraints.size(), B
+    );
+    std::vector<kimodo_motion_rep::constraint_dicts> constraint_dicts_per_sample;
+    for (const auto& c_per_sample : constraints) {
+      kimodo_motion_rep::constraint_dicts dicts;
+      for (const auto& c : c_per_sample) {
+        c->update_constraints(dicts.data_dict, dicts.index_dict);
+      }
+      constraint_dicts_per_sample.push_back(std::move(dicts));
     }
-    std::vector<kimodo_motion_rep::constraint_dicts> constraint_dicts_per_sample = {std::move(dicts)};
 
     auto [obs, mask] = motion_rep_->create_conditions_from_constraints_batched(
         constraint_dicts_per_sample, lengths_vec, true /*to_normalize*/

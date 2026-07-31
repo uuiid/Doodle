@@ -165,8 +165,8 @@ class kimodo {
 
   // ---- 内部辅助 ----
   struct text_encoding_result {
-    MatrixXfRow text_feat;  ///< [B, D] 文本嵌入（已平坦化，实际形状 [B*1, D]）
-    MatrixXbRow text_pad_mask;     ///< [B, 1] 文本 mask
+    MatrixXfRow text_feat;      ///< [B, D] 文本嵌入（已平坦化，实际形状 [B*1, D]）
+    MatrixXbRow text_pad_mask;  ///< [B, 1] 文本 mask
   };
 
   /// @brief 编码文本（对应 Python _generate 中的 self.text_encoder(texts)）
@@ -178,8 +178,8 @@ class kimodo {
   MatrixXfRow denoising_step(
       const MatrixXfRow& motion, const MatrixXbRow& pad_mask, const MatrixXfRow& text_feat,
       const MatrixXbRow& text_pad_mask, std::int64_t t, const std::vector<int64_t>& map_tensor,
-      const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
-      const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, cfg_type cfg_type_val
+      const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask, const MatrixXfRow& observed_motion,
+      const std::vector<float>& cfg_weight, cfg_type cfg_type_val
   );
 
   /// @brief 完整去噪循环（对应 Python _generate）
@@ -216,8 +216,8 @@ class kimodo {
   std::vector<motion_output> generate(
       const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
       std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight = {2.0f, 2.0f},
-      const std::vector<float>& first_heading_angle = {},
-      const std::vector<constraint_set_ptr>& constraints = {}, cfg_type cfg_type_val = cfg_type::separated
+      const std::vector<float>& first_heading_angle                   = {},
+      const std::vector<std::vector<constraint_set_ptr>>& constraints = {}, cfg_type cfg_type_val = cfg_type::separated
   );
 
   /// @brief 简单版本：单个提示、单样本
