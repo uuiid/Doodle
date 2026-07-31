@@ -35,20 +35,26 @@ void init_ort_env() {
 }
 
 struct ai_train_binding_weights_post_args {
-  std::string text_{};
-  std::vector<std::int32_t> num_frames_{120};
+  std::vector<std::string> text_{};
+  std::vector<std::int64_t> num_frames_{120};
   std::int32_t num_denoising_steps_{50};
-  std::vector<std::int32_t> cfg_weight_{80, 80};
+  std::vector<std::float_t> cfg_weight_{80, 80};
   std::int32_t num_samples_{100};
   doodle::ai::cfg_type cfg_type_{doodle::ai::cfg_type::separated};
-  std::float_t first_heading_angle_{0.0f};
+  std::vector<std::float_t> first_heading_angle_{0.0f};
   std::int32_t num_transition_frames_{10};
   bool post_processing_{true};
   std::float_t root_margin_{0.0f};
   nlohmann::json constraint_lst_{};
   // from json
   friend void from_json(const nlohmann::json& in_json, ai_train_binding_weights_post_args& out) {
-    if (in_json.contains("text") && in_json.at("text").is_string()) in_json.at("text").get_to(out.text_);
+    if (in_json.contains("text") && in_json.at("text").is_string()) {
+      out.text_.resize(1);
+      in_json.at("text").get_to(out.text_.front());
+    } else if (in_json.contains("text") && in_json.at("text").is_array() && in_json.at("text").size() > 0 &&
+               in_json.at("text").at(0).is_string()) {
+      in_json.at("text").get_to(out.text_);
+    }
     if (in_json.contains("num_frames") && in_json.at("num_frames").is_number_integer()) {
       out.num_frames_.resize(1);
       in_json.at("num_frames").get_to(out.num_frames_.front());
@@ -70,6 +76,11 @@ struct ai_train_binding_weights_post_args {
       in_json.at("cfg_type").get_to(out.cfg_type_);
     }
     if (in_json.contains("first_heading_angle") && in_json.at("first_heading_angle").is_number_float()) {
+      out.first_heading_angle_.resize(1);
+      in_json.at("first_heading_angle").get_to(out.first_heading_angle_.front());
+    } else if (in_json.contains("first_heading_angle") && in_json.at("first_heading_angle").is_array() &&
+               in_json.at("first_heading_angle").size() > 0 &&
+               in_json.at("first_heading_angle").at(0).is_number_float()) {
       in_json.at("first_heading_angle").get_to(out.first_heading_angle_);
     }
     if (in_json.contains("num_transition_frames") && in_json.at("num_transition_frames").is_number_integer()) {
@@ -106,7 +117,11 @@ struct ai_train_animation::impl {
     for (const auto& c : l_constraint_list) {
       SPDLOG_INFO("Loaded constraint: {}", c->type_name());
     }
-    auto output = model_->generate(in_args.text_, in_args.num_frames_[0], in_args.num_denoising_steps_);
+    
+    auto output = model_->generate(
+        in_args.text_, in_args.num_frames_, in_args.num_denoising_steps_, in_args.cfg_weight_,
+        {in_args.first_heading_angle_}, {}, {}, in_args.cfg_type_
+    );
   }
 };
 ai_train_animation::ai_train_animation() : impl_ptr_(std::make_shared<impl>()) {}

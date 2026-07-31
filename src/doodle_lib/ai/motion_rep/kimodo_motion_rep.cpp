@@ -511,6 +511,67 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
     }
   }
 
+  // 处理 global_joints_positions 约束
+  idx_it = index_dict.find("global_joints_positions");
+  if (idx_it != index_dict.end() && !idx_it->second.empty()) {
+    const std::int64_t pos_start    = feature_start_.at("local_joints_positions");
+    const std::int64_t smooth_start = feature_start_.at("smooth_root_pos");
+
+    // 合并所有 (t, j) 索引对并去重
+    std::vector<std::pair<Eigen::Index, Eigen::Index>> all_pairs;
+    for (const auto& mat : idx_it->second) {
+      for (Eigen::Index r = 0; r < mat.rows(); ++r) {
+        all_pairs.emplace_back(static_cast<Eigen::Index>(mat(r, 0)), static_cast<Eigen::Index>(mat(r, 1)));
+      }
+    }
+    std::sort(all_pairs.begin(), all_pairs.end());
+    all_pairs.erase(std::unique(all_pairs.begin(), all_pairs.end()), all_pairs.end());
+
+    // 合并所有全局位置数据
+    std::vector<Eigen::Vector3f> all_positions;
+    auto data_it = data_dict.find("global_joints_positions");
+    if (data_it != data_dict.end()) {
+      for (const auto& mat : data_it->second) {
+        for (Eigen::Index r = 0; r < mat.rows(); ++r) {
+          all_positions.emplace_back(mat(r, 0), mat(r, 1), mat(r, 2));
+        }
+      }
+    }
+
+    // 提取唯一帧索引
+    std::vector<Eigen::Index> unique_frames;
+    for (const auto& [t, j] : all_pairs) unique_frames.push_back(t);
+    std::sort(unique_frames.begin(), unique_frames.end());
+    unique_frames.erase(std::unique(unique_frames.begin(), unique_frames.end()), unique_frames.end());
+
+    // 验证 smooth_root_2d 在对应帧上已约束（Python 的断言等价）
+    for (Eigen::Index t : unique_frames) {
+      DOODLE_CHICK(
+          t < length && result.motion_mask(t, smooth_start + 0) && result.motion_mask(t, smooth_start + 2),
+          "global_joints_positions 约束要求 smooth_root_2d 在帧 {} 上已约束", t
+      );
+    }
+
+    // 填充 local_joints_positions = global_pos - smooth_root_pos (y=0 作为参考)
+    for (std::size_t i = 0; i < all_pairs.size() && i < all_positions.size(); ++i) {
+      const auto [t, j] = all_pairs[i];
+      if (t >= length || j >= static_cast<Eigen::Index>(nbjoints_)) continue;
+
+      const float ref_x = result.observed_motion(t, smooth_start + 0);
+      const float ref_z = result.observed_motion(t, smooth_start + 2);
+      const float lx    = all_positions[i](0) - ref_x;
+      const float ly    = all_positions[i](1);
+      const float lz    = all_positions[i](2) - ref_z;
+
+      result.observed_motion(t, pos_start + j * 3 + 0) = lx;
+      result.observed_motion(t, pos_start + j * 3 + 1) = ly;
+      result.observed_motion(t, pos_start + j * 3 + 2) = lz;
+      result.motion_mask(t, pos_start + j * 3 + 0)     = true;
+      result.motion_mask(t, pos_start + j * 3 + 1)     = true;
+      result.motion_mask(t, pos_start + j * 3 + 2)     = true;
+    }
+  }
+
   // 标准化
   if (to_normalize) {
     result.observed_motion = normalize(result.observed_motion);
@@ -523,7 +584,7 @@ kimodo_motion_rep::condition_result kimodo_motion_rep::create_conditions(
 // create_conditions_from_constraints_batched: 批量创建条件
 // ======================================================================
 kimodo_motion_rep::batched_condition_result kimodo_motion_rep::create_conditions_from_constraints_batched(
-    const std::vector<std::vector<std::pair<std::string, std::vector<MatrixXfRow>>>>& constraints_lst,
+    const std::vector<constraint_dicts>& constraints_per_sample,
     const Eigen::VectorXi& lengths, bool to_normalize
 ) const {
   const Eigen::Index B       = lengths.size();
@@ -534,57 +595,38 @@ kimodo_motion_rep::batched_condition_result kimodo_motion_rep::create_conditions
   result.observed_motion = MatrixXfRow::Zero(B * max_len, D);
   result.motion_mask     = MatrixXbRow::Zero(B * max_len, D);
 
-  if (constraints_lst.empty()) {
+  if (constraints_per_sample.empty()) {
     return result;
   }
 
-  // 对每个样本分别处理
-  for (Eigen::Index b = 0; b < B; ++b) {
-    // 当前样本的约束
-    for (const auto& constraint_pair : constraints_lst[static_cast<std::size_t>(b)]) {
-      const auto& type     = constraint_pair.first;
-      const auto& data_vec = constraint_pair.second;
+  // 共享约束检测：只有一条时广播到所有样本（对应 Python `not isinstance(constraints_lst[0], list)`）
+  bool is_shared = (constraints_per_sample.size() == 1);
 
-      if (type == "FullBodyConstraintSet" || type == "EndEffectorConstraintSet") {
-        // 简化的约束处理：提取 smooth_root_2d、global_root_heading、global_joints_rots
-        // 实际完整实现需要解析约束对象的内部结构
-        if (data_vec.size() >= 3) {
-          // data_vec[0]: frame_indices [K, 1]
-          // data_vec[1]: smooth_root_2d [K, 2]
-          // data_vec[2]: root_heading [K, 2]
-          const auto& frame_idx            = data_vec[0];
-          const auto& root_2d              = data_vec[1];
-          const auto& heading              = data_vec[2];
-
-          const std::int64_t smooth_start  = feature_start_.at("smooth_root_pos");
-          const std::int64_t heading_start = feature_start_.at("global_root_heading");
-
-          for (Eigen::Index r = 0; r < frame_idx.rows() && r < root_2d.rows(); ++r) {
-            const Eigen::Index t = b * max_len + static_cast<Eigen::Index>(frame_idx(r, 0));
-            if (t < b * max_len + lengths(b)) {
-              result.observed_motion(t, smooth_start + 0) = root_2d(r, 0);
-              result.observed_motion(t, smooth_start + 2) = root_2d(r, 1);
-              result.motion_mask(t, smooth_start + 0)     = true;
-              result.motion_mask(t, smooth_start + 2)     = true;
-            }
-          }
-
-          for (Eigen::Index r = 0; r < frame_idx.rows() && r < heading.rows(); ++r) {
-            const Eigen::Index t = b * max_len + static_cast<Eigen::Index>(frame_idx(r, 0));
-            if (t < b * max_len + lengths(b)) {
-              result.observed_motion(t, heading_start + 0) = heading(r, 0);
-              result.observed_motion(t, heading_start + 1) = heading(r, 1);
-              result.motion_mask(t, heading_start + 0)     = true;
-              result.motion_mask(t, heading_start + 1)     = true;
-            }
-          }
-        }
-      }
+  if (is_shared) {
+    auto cond = create_conditions(
+        constraints_per_sample[0].index_dict,
+        constraints_per_sample[0].data_dict,
+        max_len, to_normalize
+    );
+    for (Eigen::Index b = 0; b < B; ++b) {
+      result.observed_motion.middleRows(b * max_len, max_len) = cond.observed_motion;
+      result.motion_mask.middleRows(b * max_len, max_len)     = cond.motion_mask;
     }
-  }
-
-  if (to_normalize) {
-    result.observed_motion = normalize(result.observed_motion);
+  } else {
+    DOODLE_CHICK(
+        static_cast<Eigen::Index>(constraints_per_sample.size()) == B,
+        "constraints_per_sample 数量 ({}) 与 batch_size ({}) 不匹配",
+        constraints_per_sample.size(), B
+    );
+    for (Eigen::Index b = 0; b < B; ++b) {
+      auto cond = create_conditions(
+          constraints_per_sample[b].index_dict,
+          constraints_per_sample[b].data_dict,
+          max_len, to_normalize
+      );
+      result.observed_motion.middleRows(b * max_len, max_len) = cond.observed_motion;
+      result.motion_mask.middleRows(b * max_len, max_len)     = cond.motion_mask;
+    }
   }
 
   return result;

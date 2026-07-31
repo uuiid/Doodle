@@ -190,8 +190,14 @@ class kimodo_motion_rep : public motion_rep_base {
       const std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict, std::int64_t length, bool to_normalize
   ) const;
 
+  /// @brief 预构建的约束字典（对应 Python build_condition_dicts 的输出）
+  struct constraint_dicts {
+    std::unordered_map<std::string, std::vector<MatrixXfRow>> index_dict;
+    std::unordered_map<std::string, std::vector<MatrixXfRow>> data_dict;
+  };
+
   /// @brief 批量创建条件（对应 Python create_conditions_from_constraints_batched）
-  /// @param constraints_lst 每个样本的约束列表
+  /// @param constraints_per_sample 每个样本的约束字典；若 size==1 则视为共享约束广播到所有样本
   /// @param lengths [B] 各样本长度
   /// @param to_normalize 是否标准化
   /// @return (observed_motion [B*T, D], motion_mask [B*T, D])
@@ -200,7 +206,7 @@ class kimodo_motion_rep : public motion_rep_base {
     MatrixXbRow motion_mask;      ///< [B*T, D]
   };
   batched_condition_result create_conditions_from_constraints_batched(
-      const std::vector<std::vector<std::pair<std::string, std::vector<MatrixXfRow>>>>& constraints_lst,
+      const std::vector<constraint_dicts>& constraints_per_sample,
       const Eigen::VectorXi& lengths, bool to_normalize
   ) const;
 };
