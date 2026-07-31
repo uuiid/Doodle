@@ -104,15 +104,14 @@ struct ai_train_binding_weights_post_args {
 struct ai_train_animation::impl {
   std::shared_ptr<doodle::ai::kimodo> model_{};
   impl() = default;
-  std::once_flag init_flag_;
-  void init() {
+  void init(const std::string& model_path) {
     model_        = std::make_shared<doodle::ai::kimodo>();
     auto l_config = std::make_shared<doodle::ai::kimodo_model_config>();
-    l_config->load_from_json(R"(D:\ai_mod\onnx-models--nvidia--Kimodo-SOMA-RP-v1.1)");
+    l_config->load_from_json(model_path);
     model_->load(l_config);
   }
-  void run(const ai_train_binding_weights_post_args& in_args) {
-    std::call_once(init_flag_, &impl::init, this);
+  auto run(const ai_train_binding_weights_post_args& in_args) {
+    DOODLE_CHICK(model_ != nullptr, "模型未加载，请先调用 load_model");
     auto l_args = in_args;
     if (l_args.constraint_lst_.is_array() && l_args.constraint_lst_.size() > 0 &&
         l_args.constraint_lst_.at(0).is_array()) {
@@ -131,14 +130,28 @@ struct ai_train_animation::impl {
         l_args.text_, l_args.num_frames_, l_args.num_denoising_steps_, l_args.cfg_weight_,
         {l_args.first_heading_angle_}, l_args.constraints_per_sample_, l_args.cfg_type_
     );
+    return output;
   }
 };
 ai_train_animation::ai_train_animation() : impl_ptr_(std::make_shared<impl>()) {}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
-  init_ort_env();
+  // 这里推理是在本地进行, 只需要阻塞当前协程,
+  // todo: 未来需要使 ::doodle ::http ::http_function 继承的类可以指定协程调度器, 以便在协程中使用 co_await
+  // 来等待阻塞操作完成
   auto l_args = in_handle->get_json().get<ai_train_binding_weights_post_args>();
-  boost::asio::post(g_io_context(), [this, l_args]() { impl_ptr_->run(l_args); });
-  co_return in_handle->make_msg(nlohmann::json{});
+  co_return in_handle->make_msg(nlohmann::json{} = impl_ptr_->run(l_args));
 }
 
+void ai_train_animation::load_model(const std::string& model_path) {
+  init_ort_env();
+  impl_ptr_->init(model_path);
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation_settings, post) {
+  auto l_path     = in_handle->get_json().at("model_path").get<std::string>();
+  auto l_main_fun = in_handle->route_ptr_->get_function<ai_train_animation>();
+  DOODLE_CHICK(l_main_fun != nullptr, "ai_train_animation 路由未注册，请检查代码");
+  l_main_fun->load_model(l_path);
+  co_return in_handle->make_msg(nlohmann::json{{"model_path", l_path}});
+}
 }  // namespace doodle::http

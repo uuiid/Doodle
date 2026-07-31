@@ -12,5 +12,11 @@ struct impl;
 std::shared_ptr<impl> impl_ptr_;
 ai_train_animation();
 DOODLE_HTTP_FUN_OVERRIDE(post)
+public:
+void load_model(const std::string& model_path);
+DOODLE_HTTP_FUN_END()
+// /api/doodle/ai/animation/train/settings
+DOODLE_HTTP_FUN(ai_train_animation_settings)
+DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http
