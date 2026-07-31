@@ -13,6 +13,7 @@
 #include <onnxruntime_cxx_api.h>
 #include <spdlog/spdlog.h>
 #include <string>
+#include <vector>
 
 namespace doodle::http {
 namespace {
@@ -33,8 +34,15 @@ void init_ort_env() {
 
 struct ai_train_binding_weights_post_args {
   std::string text_{};
-  std::int32_t num_frames_{120};
-
+  std::vector<std::int32_t> num_frames_{120};
+  std::int32_t num_denoising_steps_{50};
+  std::vector<std::int32_t> cfg_weight_{80, 80};
+  std::int32_t num_samples_{100};
+  std::string cfg_type_{"default"};
+  std::float_t first_heading_angle_{0.0f};
+  std::int32_t num_transition_frames_{10};
+  bool post_processing_{true};
+  std::float_t root_margin_{0.0f};
   // from json
   friend void from_json(const nlohmann::json& in_json, ai_train_binding_weights_post_args& out) {
     if (in_json.contains("text") && in_json.at("text").is_string()) in_json.at("text").get_to(out.text_);
@@ -57,7 +65,7 @@ struct ai_train_animation::impl {
   }
   void run(const ai_train_binding_weights_post_args& in_args) {
     std::call_once(init_flag_, &impl::init, this);
-    auto output = model_->generate(in_args.text_, in_args.num_frames_, 50);
+    auto output = model_->generate(in_args.text_, in_args.num_frames_[0], in_args.num_denoising_steps_);
   }
 };
 ai_train_animation::ai_train_animation() : impl_ptr_(std::make_shared<impl>()) {}
