@@ -45,8 +45,9 @@ struct ai_train_binding_weights_post_args {
   std::int32_t num_transition_frames_{10};
   bool post_processing_{true};
   std::float_t root_margin_{0.0f};
-  nlohmann::json constraint_lst_{};
-  std::vector<std::vector<doodle::ai::constraint_set_ptr>> constraints_per_sample_{};
+  nlohmann::json constraint_lst_{}; // 原始约束列表（JSON 数组，每个元素对应一个样本的约束列表）
+  // 解析后的约束列表，每个元素对应一个样本的约束集指针列表
+  std::vector<std::vector<doodle::ai::constraint_set_ptr>> constraints_per_sample_{}; 
   // from json
   friend void from_json(const nlohmann::json& in_json, ai_train_binding_weights_post_args& out) {
     if (in_json.contains("text") && in_json.at("text").is_string()) {
@@ -127,8 +128,8 @@ struct ai_train_animation::impl {
     );
 
     auto output = model_->generate(
-        l_args.text_, l_args.num_frames_, l_args.num_denoising_steps_, l_args.cfg_weight_,
-        {l_args.first_heading_angle_}, l_args.constraints_per_sample_, l_args.cfg_type_
+        l_args.text_, l_args.num_frames_, l_args.num_denoising_steps_, l_args.cfg_weight_, l_args.first_heading_angle_,
+        l_args.constraints_per_sample_, l_args.cfg_type_
     );
     return output;
   }
