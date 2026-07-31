@@ -9,6 +9,7 @@
 #include <doodle_lib/ai/fwd.h>
 #include <doodle_lib/ai/llm2vec.h>
 #include <doodle_lib/ai/motion_mask_mode.h>
+#include <doodle_lib/ai/motion_rep/constraint_set.h>
 #include <doodle_lib/ai/motion_rep/kimodo_motion_rep.h>
 #include <doodle_lib/ai/skeleton/skeleton_base.h>
 #include <doodle_lib/core/global_function.h>
@@ -209,15 +210,14 @@ class kimodo {
   /// @param num_denoising_steps 去噪步数
   /// @param cfg_weight CFG 权重: {w_text, w_constraint}
   /// @param first_heading_angle 初始朝向角（弧度，[B] 或空）
-  /// @param motion_mask 运动 mask [B*T, D]（可选）
-  /// @param observed_motion 观测运动 [B*T, D]（可选）
+  /// @param constraints 约束列表（由 load_constraints_lst_from_json 解析），为空表示无约束
   /// @param cfg_type_val CFG 类型
   /// @return 已裁剪的运动输出列表（每个 batch 元素一个，仅保留有效帧）
   std::vector<motion_output> generate(
       const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
       std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight = {2.0f, 2.0f},
-      const std::vector<float>& first_heading_angle = {}, const MatrixXfRow& motion_mask = {},
-      const MatrixXfRow& observed_motion = {}, cfg_type cfg_type_val = cfg_type::separated
+      const std::vector<float>& first_heading_angle = {},
+      const std::vector<constraint_set_ptr>& constraints = {}, cfg_type cfg_type_val = cfg_type::separated
   );
 
   /// @brief 简单版本：单个提示、单样本

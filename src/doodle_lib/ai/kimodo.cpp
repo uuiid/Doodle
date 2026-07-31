@@ -213,8 +213,8 @@ MatrixXfRow kimodo::generate_internal(
 std::vector<motion_output> kimodo::generate(
     const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
     std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight,
-    const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
-    const MatrixXfRow& observed_motion, cfg_type cfg_type_val
+    const std::vector<float>& first_heading_angle,
+    const std::vector<constraint_set_ptr>& constraints, cfg_type cfg_type_val
 ) {
   DOODLE_CHICK(is_valid(), "kimodo 未加载或加载失败");
   DOODLE_CHICK(!prompts.empty(), "prompts 不能为空");
@@ -249,19 +249,40 @@ std::vector<motion_output> kimodo::generate(
   }
   // else: 全零（已初始化）
 
-  // ---- Step 3: 处理约束条件（motion_mask + observed_motion） ----
-  // 如果调用方未提供约束，则传入空矩阵（twostage_denoiser 内部会用全零）
-  // Python 中如果没有 constraint_lst，则 motion_mask/observed_motion 保持 None
-  // 我们直接传空矩阵，由 twostage_denoiser 内部处理
+  // ---- Step 3: 处理约束条件（constraint_set_ptr → motion_mask + observed_motion） ----
+  MatrixXfRow motion_mask_f, observed_motion_f;
+  if (!constraints.empty()) {
+    // update_constraints 写入 Eigen::VectorXi，但 constraint_dicts 存储 MatrixXfRow
+    // 先用临时 map 收集 VectorXi，再转换为 MatrixXfRow
+    std::unordered_map<std::string, std::vector<Eigen::VectorXi>> tmp_index_dict;
+    kimodo_motion_rep::constraint_dicts dicts;
+    for (const auto& c : constraints) {
+      c->update_constraints(dicts.data_dict, tmp_index_dict);
+    }
+    // 转换 VectorXi → MatrixXfRow（N×1 列向量）
+    for (auto& [key, vecs] : tmp_index_dict) {
+      auto& dest = dicts.index_dict[key];
+      dest.reserve(vecs.size());
+      for (const auto& v : vecs) {
+        MatrixXfRow mat(v.size(), 1);
+        for (Eigen::Index i = 0; i < v.size(); ++i) mat(i, 0) = static_cast<float>(v(i));
+        dest.push_back(std::move(mat));
+      }
+    }
+    std::vector<kimodo_motion_rep::constraint_dicts> constraint_dicts_per_sample = {std::move(dicts)};
+
+    auto [obs, mask] = motion_rep_->create_conditions_from_constraints_batched(
+        constraint_dicts_per_sample, lengths_vec, true /*to_normalize*/
+    );
+    observed_motion_f = std::move(obs);
+    motion_mask_f     = mask.cast<float>();
+  }
 
   // ---- Step 4: 去噪循环 ----
   const std::int64_t total_frames = B * max_frames;
 
-  // motion_mask 和 observed_motion 可能由调用方提供（外部约束）
-  // 注意：外部传入的 motion_mask 应是 [B*T, D] 形状
-  // 如果为空，由 generate_internal 内部处理（twostage_denoiser 会用全零）
   MatrixXfRow motion          = generate_internal(
-      prompts, max_frames, num_denoising_steps, pad_mask, heading, motion_mask, observed_motion, cfg_weight,
+      prompts, max_frames, num_denoising_steps, pad_mask, heading, motion_mask_f, observed_motion_f, cfg_weight,
       cfg_type_val
   );
 

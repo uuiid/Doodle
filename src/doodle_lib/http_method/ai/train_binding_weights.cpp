@@ -117,10 +117,10 @@ struct ai_train_animation::impl {
     for (const auto& c : l_constraint_list) {
       SPDLOG_INFO("Loaded constraint: {}", c->type_name());
     }
-    
+
     auto output = model_->generate(
         in_args.text_, in_args.num_frames_, in_args.num_denoising_steps_, in_args.cfg_weight_,
-        {in_args.first_heading_angle_}, {}, {}, in_args.cfg_type_
+        {in_args.first_heading_angle_}, l_constraint_list, in_args.cfg_type_
     );
   }
 };
