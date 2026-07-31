@@ -33,7 +33,6 @@ void kimodo::load(std::shared_ptr<kimodo_model_config> config) {
   DOODLE_CHICK(config != nullptr, "kimodo_model_config 为空");
   SPDLOG_INFO("kimodo::load 开始...");
 
-  cfg_type_default_ = config->cfg_type_;
   llm_dim_          = config->llm_dim_;
   fps_              = static_cast<float>(config->fps_);
 
@@ -57,7 +56,6 @@ void kimodo::load(std::shared_ptr<kimodo_model_config> config) {
 
   // ---- Step 4: 初始化去噪器（含 CFG 包装） ----
   denoiser_.load(config, motion_rep_);
-  denoiser_.set_cfg_type_default(config->cfg_type_);
   SPDLOG_INFO("kimodo: denoiser (CFG) 加载完成");
 
   // ---- Step 5: 初始化文本编码器 ----
@@ -229,8 +227,6 @@ std::vector<motion_output> kimodo::generate(
   const std::int64_t max_frames = *std::max_element(num_frames.begin(), num_frames.end());
   const std::int64_t D          = motion_rep_->motion_rep_dim();
 
-  const auto actual_cfg_type    = cfg_type_val == cfg_type::default_ ? cfg_type_default_ : cfg_type_val;
-
   // ---- Step 1: 创建 motion_pad_mask（无约束时为全有效，Python length_to_mask） ----
   Eigen::VectorXi lengths_vec(B);
   for (Eigen::Index b = 0; b < B; ++b) {
@@ -266,7 +262,7 @@ std::vector<motion_output> kimodo::generate(
   // 如果为空，由 generate_internal 内部处理（twostage_denoiser 会用全零）
   MatrixXfRow motion          = generate_internal(
       prompts, max_frames, num_denoising_steps, pad_mask, heading, motion_mask, observed_motion, cfg_weight,
-      actual_cfg_type
+      cfg_type_val
   );
 
   // ---- Step 5: 反标准化 ----

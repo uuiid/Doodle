@@ -158,7 +158,6 @@ class kimodo {
   std::shared_ptr<LLM2Vec> text_encoder_;
 
   // ---- 配置 ----
-  cfg_type cfg_type_default_{cfg_type::separated};
   float fps_{30.0f};
   std::int64_t llm_dim_{4096};  ///< 文本嵌入维度
 
@@ -211,13 +210,13 @@ class kimodo {
   /// @param first_heading_angle 初始朝向角（弧度，[B] 或空）
   /// @param motion_mask 运动 mask [B*T, D]（可选）
   /// @param observed_motion 观测运动 [B*T, D]（可选）
-  /// @param cfg_type_val CFG 类型；default_ 则使用默认
+  /// @param cfg_type_val CFG 类型
   /// @return 已裁剪的运动输出列表（每个 batch 元素一个，仅保留有效帧）
   std::vector<motion_output> generate(
       const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
       std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight = {2.0f, 2.0f},
       const std::vector<float>& first_heading_angle = {}, const MatrixXfRow& motion_mask = {},
-      const MatrixXfRow& observed_motion = {}, cfg_type cfg_type_val = cfg_type::default_
+      const MatrixXfRow& observed_motion = {}, cfg_type cfg_type_val = cfg_type::nocfg
   );
 
   /// @brief 简单版本：单个提示、单样本

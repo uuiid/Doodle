@@ -37,7 +37,6 @@ MatrixXfRow classifier_free_guided_model::forward(
     const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
     const MatrixXfRow& observed_motion, cfg_type cfg_type_val
 ) {
-  const auto actual_cfg_type = cfg_type_val == cfg_type::default_ ? cfg_type_default_ : cfg_type_val;
   DOODLE_CHICK(is_valid(), "classifier_free_guided_model 未初始化，请先调用 load()");
 
   const Eigen::Index batch_size     = x_pad_mask.rows();
@@ -49,7 +48,7 @@ MatrixXfRow classifier_free_guided_model::forward(
   // ======================================================================
   // nocfg: 无引导，直接转发
   // ======================================================================
-  if (actual_cfg_type == cfg_type::nocfg) {
+  if (cfg_type_val == cfg_type::nocfg) {
     return model_.forward(
         x, x_pad_mask, text_feat, text_feat_pad_mask, timesteps, first_heading_angle, motion_mask, observed_motion
     );
@@ -58,7 +57,7 @@ MatrixXfRow classifier_free_guided_model::forward(
   // ======================================================================
   // regular: out_uncond + w * (out_cond - out_uncond)
   // ======================================================================
-  if (actual_cfg_type == cfg_type::regular) {
+  if (cfg_type_val == cfg_type::regular) {
     DOODLE_CHICK(cfg_weight.size() == 1, "regular CFG 需要单个 cfg_weight，当前有 {} 个", cfg_weight.size());
     const float w = cfg_weight[0];
 
@@ -125,7 +124,7 @@ MatrixXfRow classifier_free_guided_model::forward(
   // ======================================================================
   // separated: out_uncond + w_text*(out_text - out_uncond) + w_constraint*(out_constraint - out_uncond)
   // ======================================================================
-  if (actual_cfg_type == cfg_type::separated) {
+  if (cfg_type_val == cfg_type::separated) {
     DOODLE_CHICK(
         cfg_weight.size() == 2, "separated CFG 需要两个 cfg_weight (text, constraint)，当前有 {} 个", cfg_weight.size()
     );
@@ -203,7 +202,7 @@ MatrixXfRow classifier_free_guided_model::forward(
   // ======================================================================
   // 未知 cfg_type
   // ======================================================================
-  DOODLE_CHICK(false, "未知的 cfg_type: {}", static_cast<int>(actual_cfg_type));
+  DOODLE_CHICK(false, "未知的 cfg_type: {}", static_cast<int>(cfg_type_val));
 }
 
 }  // namespace doodle::ai
