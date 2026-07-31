@@ -76,24 +76,64 @@ MatrixXfRow cont6d_to_matrix(const MatrixXfRow& cont6d) {
   return matrix;
 }
 
-Eigen::Matrix3f angle_to_Y_rotation_matrix(float angle) {
-  const float cos_a = std::cos(angle);
-  const float sin_a = std::sin(angle);
+// ======================================================================
+// axis_angle_to_matrix: Rodrigues 公式
+// ======================================================================
+MatrixXfRow axis_angle_to_matrix(const MatrixXfRow& axis_angle) {
+  const Eigen::Index N = axis_angle.rows();
+  DOODLE_CHICK(axis_angle.cols() == 3, "axis_angle_to_matrix: input cols must be 3, got {}", axis_angle.cols());
 
-  Eigen::Matrix3f mat;
-  mat(0, 0) = cos_a;
-  mat(0, 1) = 0.0f;
-  mat(0, 2) = sin_a;
-  mat(1, 0) = 0.0f;
-  mat(1, 1) = 1.0f;
-  mat(1, 2) = 0.0f;
-  mat(2, 0) = -sin_a;
-  mat(2, 1) = 0.0f;
-  mat(2, 2) = cos_a;
+  constexpr float eps = 1e-6f;
+  MatrixXfRow result(N, 9);
 
-  return mat;
+  for (Eigen::Index i = 0; i < N; ++i) {
+    const Eigen::Vector3f v = axis_angle.row(i);
+    const float angle       = v.norm();
+    Eigen::Vector3f axis;
+    if (angle < eps) {
+      // 接近零角度：近似 R ≈ I + [v]×
+      axis           = Eigen::Vector3f::Zero();
+      // 直接用小角度近似：R ≈ I + skew(v)
+      const float vx = v(0), vy = v(1), vz = v(2);
+      // clang-format off
+      result.row(i) <<
+          1.0f, -vz,  vy,
+          vz,  1.0f, -vx,
+         -vy,  vx,  1.0f;
+      // clang-format on
+      continue;
+    }
+    axis          = v / angle;
+
+    const float c = std::cos(angle);
+    const float s = std::sin(angle);
+
+    // 斜对称矩阵 K = [0, -z, y; z, 0, -x; -y, x, 0]
+    const float x = axis(0), y = axis(1), z = axis(2);
+
+    // Rodrigues: R = I + sin(θ) * K + (1 - cos(θ)) * K²
+    // K² 的解析形式
+    const float Ksq_00 = -y * y - z * z;
+    const float Ksq_01 = x * y;
+    const float Ksq_02 = x * z;
+    const float Ksq_10 = x * y;
+    const float Ksq_11 = -x * x - z * z;
+    const float Ksq_12 = y * z;
+    const float Ksq_20 = x * z;
+    const float Ksq_21 = y * z;
+    const float Ksq_22 = -x * x - y * y;
+
+    const float omc    = 1.0f - c;
+
+    // clang-format off
+    result.row(i) <<
+        c + omc * Ksq_00,  -z * s + omc * Ksq_01,   y * s + omc * Ksq_02,
+        z * s + omc * Ksq_10,  c + omc * Ksq_11,  -x * s + omc * Ksq_12,
+       -y * s + omc * Ksq_20,   x * s + omc * Ksq_21,  c + omc * Ksq_22;
+    // clang-format on
+  }
+  return result;
 }
-
 // ======================================================================
 // matrix_to_quaternion: 旋转矩阵 → 四元数
 // ======================================================================
