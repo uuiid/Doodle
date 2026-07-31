@@ -2,6 +2,7 @@
 
 #include <doodle_lib/ai/cfg_type.h>
 #include <doodle_lib/ai/kimodo.h>
+#include <doodle_lib/ai/motion_rep/constraint_set.h>
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/http_method/ai/ai_main.h>
 
@@ -44,11 +45,45 @@ struct ai_train_binding_weights_post_args {
   std::int32_t num_transition_frames_{10};
   bool post_processing_{true};
   std::float_t root_margin_{0.0f};
+  nlohmann::json constraint_lst_{};
   // from json
   friend void from_json(const nlohmann::json& in_json, ai_train_binding_weights_post_args& out) {
     if (in_json.contains("text") && in_json.at("text").is_string()) in_json.at("text").get_to(out.text_);
-    if (in_json.contains("num_frames") && in_json.at("num_frames").is_number_integer())
+    if (in_json.contains("num_frames") && in_json.at("num_frames").is_number_integer()) {
+      out.num_frames_.resize(1);
+      in_json.at("num_frames").get_to(out.num_frames_.front());
+    } else if (in_json.contains("num_frames") && in_json.at("num_frames").is_array() &&
+               in_json.at("num_frames").size() > 0 && in_json.at("num_frames").at(0).is_number_integer()) {
       in_json.at("num_frames").get_to(out.num_frames_);
+    }
+    if (in_json.contains("num_denoising_steps") && in_json.at("num_denoising_steps").is_number_integer()) {
+      in_json.at("num_denoising_steps").get_to(out.num_denoising_steps_);
+    }
+    if (in_json.contains("cfg_weight") && in_json.at("cfg_weight").is_array() && in_json.at("cfg_weight").size() > 0 &&
+        in_json.at("cfg_weight").at(0).is_number_integer()) {
+      in_json.at("cfg_weight").get_to(out.cfg_weight_);
+    }
+    if (in_json.contains("num_samples") && in_json.at("num_samples").is_number_integer()) {
+      in_json.at("num_samples").get_to(out.num_samples_);
+    }
+    if (in_json.contains("cfg_type") && in_json.at("cfg_type").is_string()) {
+      in_json.at("cfg_type").get_to(out.cfg_type_);
+    }
+    if (in_json.contains("first_heading_angle") && in_json.at("first_heading_angle").is_number_float()) {
+      in_json.at("first_heading_angle").get_to(out.first_heading_angle_);
+    }
+    if (in_json.contains("num_transition_frames") && in_json.at("num_transition_frames").is_number_integer()) {
+      in_json.at("num_transition_frames").get_to(out.num_transition_frames_);
+    }
+    if (in_json.contains("post_processing") && in_json.at("post_processing").is_boolean()) {
+      in_json.at("post_processing").get_to(out.post_processing_);
+    }
+    if (in_json.contains("root_margin") && in_json.at("root_margin").is_number_float()) {
+      in_json.at("root_margin").get_to(out.root_margin_);
+    }
+    if (in_json.contains("constraint_lst") && in_json.at("constraint_lst").is_array()) {
+      in_json.at("constraint_lst").get_to(out.constraint_lst_);
+    }
   }
 };
 
@@ -66,6 +101,11 @@ struct ai_train_animation::impl {
   }
   void run(const ai_train_binding_weights_post_args& in_args) {
     std::call_once(init_flag_, &impl::init, this);
+
+    auto l_constraint_list = doodle::ai::load_constraints_lst_from_json(in_args.constraint_lst_, model_->skeleton());
+    for (const auto& c : l_constraint_list) {
+      std::visit([](const auto& constraint) { SPDLOG_INFO("Loaded constraint: {}", constraint.name); }, c);
+    }
     auto output = model_->generate(in_args.text_, in_args.num_frames_[0], in_args.num_denoising_steps_);
   }
 };
