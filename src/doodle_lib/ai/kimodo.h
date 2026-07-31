@@ -205,6 +205,12 @@ class kimodo {
     MatrixXbRow text_pad_mask;  ///< [B, 1] 文本 mask
   };
 
+  /// @brief 过渡准备结果
+  struct transition_prep_result {
+    MatrixXfRow prev_smooth_root_2d;  ///< [1, 2] 新段起点的平滑根位置 (x, z)
+    float heading_val;                ///< 新段朝向角（弧度）
+  };
+
   /// @brief 编码文本（对应 Python _generate 中的 self.text_encoder(texts)）
   text_encoding_result encode_texts(const std::vector<std::string>& texts);
 
@@ -224,6 +230,32 @@ class kimodo {
       const std::vector<std::string>& texts, std::int64_t max_frames, std::int64_t num_denoising_steps,
       const MatrixXbRow& pad_mask, const std::vector<float>& first_heading_angle, const MatrixXfRow& motion_mask,
       const MatrixXfRow& observed_motion, const std::vector<float>& cfg_weight, cfg_type cfg_type_val
+  );
+
+  /// @brief 准备段间过渡：截断上一段、构建过渡约束、拼接观测运动
+  /// @param[in,out] generated_motions 已生成段列表（最后一段被截断）
+  /// @param[out] prev_latest_frames 上一段末尾过渡帧 [1*nb_transition, D]
+  /// @param[in] prev_nb_transition 上一段过渡帧数
+  /// @param[in,out] observed_motion 段观测运动（被拼接过渡部分）
+  /// @param[in,out] motion_mask_f 运动掩码（被拼接过渡部分）
+  /// @param[in,out] num_frame 帧数（增加过渡帧）
+  /// @param[in] nb_transition 当前段过渡帧数
+  transition_prep_result prepare_transition(
+      std::vector<MatrixXfRow>& generated_motions, MatrixXfRow& prev_latest_frames,
+      std::int64_t prev_nb_transition, MatrixXfRow& observed_motion, MatrixXfRow& motion_mask_f,
+      std::int64_t& num_frame, std::int64_t nb_transition
+  );
+
+  /// @brief 混合过渡帧：平移回原位、拆分、Alpha 混合
+  /// @param[in,out] motion 生成的运动 [1*(nb_transition+num_frame), D] → 截断为 [1*num_frame, D]
+  /// @param[in] prev_latest_frames 上一段末尾过渡帧 [1*nb_transition, D]
+  /// @param[in] prev_smooth_root_2d 平移量 [1, 2]
+  /// @param[in] nb_transition 过渡帧数
+  /// @param[in] num_frame 段帧数（含过渡帧）
+  /// @return 混合后的过渡帧 [1*nb_transition, D]
+  MatrixXfRow blend_transition(
+      MatrixXfRow& motion, const MatrixXfRow& prev_latest_frames, const MatrixXfRow& prev_smooth_root_2d,
+      std::int64_t nb_transition, std::int64_t num_frame
   );
 
  public:

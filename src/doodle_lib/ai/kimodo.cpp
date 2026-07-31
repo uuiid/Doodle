@@ -210,6 +210,132 @@ MatrixXfRow kimodo::generate_internal(
 }
 
 // ======================================================================
+// prepare_transition: 准备段间过渡
+// ======================================================================
+kimodo::transition_prep_result kimodo::prepare_transition(
+    std::vector<MatrixXfRow>& generated_motions, MatrixXfRow& prev_latest_frames, std::int64_t prev_nb_transition,
+    MatrixXfRow& observed_motion, MatrixXfRow& motion_mask_f, std::int64_t& num_frame, std::int64_t nb_transition
+) {
+  const std::int64_t D = motion_rep_->motion_rep_dim();
+
+  // 取出上一段末尾过渡帧
+  MatrixXfRow& last_motion      = generated_motions.back();
+  const std::int64_t last_T     = last_motion.rows();
+  const std::int64_t new_last_T = last_T - prev_nb_transition;
+  DOODLE_CHICK(new_last_T >= 0, "上一段帧数 {} 不足过渡帧 {}", last_T, prev_nb_transition);
+
+  prev_latest_frames = last_motion.bottomRows(prev_nb_transition).eval();
+  last_motion        = last_motion.topRows(new_last_T).eval();
+
+  // 解码过渡帧，获取关节数据用于构建约束
+  motion_output last_output = motion_rep_->decode(prev_latest_frames, false, 1, prev_nb_transition);
+
+  // 提取 smooth_root_2d 首帧（新段起点）
+  transition_prep_result result;
+  result.prev_smooth_root_2d.resize(1, 2);
+  result.prev_smooth_root_2d(0, 0) = last_output.smooth_root_pos(0, 0);  // x
+  result.prev_smooth_root_2d(0, 1) = last_output.smooth_root_pos(0, 2);  // z
+
+  // 构建过渡 frame_indices [0, 1, ..., nb_transition-1]
+  Eigen::VectorXi trans_indices(nb_transition);
+  for (std::int64_t i = 0; i < nb_transition; ++i)
+    trans_indices(static_cast<Eigen::Index>(i)) = static_cast<int>(i);
+
+  // smooth_root_2d [nb_transition, 2]
+  MatrixXfRow trans_smooth_root_2d(nb_transition, 2);
+  for (std::int64_t i = 0; i < nb_transition; ++i) {
+    trans_smooth_root_2d(i, 0) = last_output.smooth_root_pos(i, 0);
+    trans_smooth_root_2d(i, 1) = last_output.smooth_root_pos(i, 2);
+  }
+
+  // 过渡约束：全身 + 末端执行器
+  std::vector<kimodo_motion_rep::constraint_dicts> trans_dicts(1);
+
+  auto fb = std::make_shared<fullbody_constraint_set>(
+      skeleton_, trans_indices, last_output.posed_joints, last_output.global_rot_mats, trans_smooth_root_2d
+  );
+  fb->update_constraints(trans_dicts[0].data_dict, trans_dicts[0].index_dict);
+
+  auto ee = std::make_shared<end_effector_constraint_set>(
+      skeleton_, trans_indices, last_output.posed_joints, last_output.global_rot_mats, trans_smooth_root_2d,
+      std::vector<std::string>{"LeftHand", "RightHand", "LeftFoot", "RightFoot"}
+  );
+  ee->update_constraints(trans_dicts[0].data_dict, trans_dicts[0].index_dict);
+
+  Eigen::VectorXi trans_lengths(1);
+  trans_lengths(0) = static_cast<int>(nb_transition);
+
+  auto [obs_trans, mask_trans] =
+      motion_rep_->create_conditions_from_constraints_batched(trans_dicts, trans_lengths, false);
+
+  // 拼接: [transition_obs, segment_obs]
+  const std::int64_t total_T = nb_transition + num_frame;
+  MatrixXfRow combined_obs(total_T, D);
+  MatrixXfRow combined_mask(total_T, D);
+  combined_obs.setZero();
+  combined_mask.setZero();
+
+  combined_obs.topRows(nb_transition)  = obs_trans;
+  combined_mask.topRows(nb_transition) = mask_trans.cast<float>();
+
+  if (observed_motion.size() > 0) {
+    combined_obs.bottomRows(num_frame)  = observed_motion;
+    combined_mask.bottomRows(num_frame) = motion_mask_f;
+  }
+
+  // 平移到新段起点（原点）
+  MatrixXfRow neg_trans(1, 2);
+  neg_trans(0, 0)  = -result.prev_smooth_root_2d(0, 0);
+  neg_trans(0, 1)  = -result.prev_smooth_root_2d(0, 1);
+  combined_obs      = motion_rep_->translate_2d(combined_obs, neg_trans, 1, total_T);
+  combined_obs      = combined_obs.cwiseProduct(combined_mask);
+
+  observed_motion   = std::move(combined_obs);
+  motion_mask_f     = std::move(combined_mask);
+  num_frame         = total_T;
+
+  // 从上段末尾计算朝向角
+  MatrixXfRow heading_mat = compute_heading_angle(last_output.posed_joints, *skeleton_, 1, prev_nb_transition);
+  result.heading_val      = heading_mat(0, 0);
+
+  return result;
+}
+
+// ======================================================================
+// blend_transition: 混合过渡帧
+// ======================================================================
+MatrixXfRow kimodo::blend_transition(
+    MatrixXfRow& motion, const MatrixXfRow& prev_latest_frames, const MatrixXfRow& prev_smooth_root_2d,
+    std::int64_t nb_transition, std::int64_t num_frame
+) {
+  const std::int64_t D = motion_rep_->motion_rep_dim();
+
+  // 平移回原始位置
+  motion = motion_rep_->translate_2d(motion, prev_smooth_root_2d, 1, num_frame);
+
+  // 拆分: [transition_frames, segment_frames]
+  MatrixXfRow new_transition = motion.topRows(nb_transition);
+  motion                     = motion.bottomRows(num_frame - nb_transition).eval();
+
+  // Alpha 混合: old * alpha + new * (1-alpha), alpha = linspace(1, 0, nb_transition)
+  Eigen::VectorXf alpha(nb_transition);
+  if (nb_transition == 1) {
+    alpha(0) = 1.0f;
+  } else {
+    for (std::int64_t i = 0; i < nb_transition; ++i)
+      alpha(static_cast<Eigen::Index>(i)) = 1.0f - static_cast<float>(i) / static_cast<float>(nb_transition - 1);
+  }
+
+  MatrixXfRow blended(nb_transition, D);
+  for (std::int64_t i = 0; i < nb_transition; ++i) {
+    const float a  = alpha(static_cast<Eigen::Index>(i));
+    blended.row(i) = a * prev_latest_frames.row(i) + (1.0f - a) * new_transition.row(i);
+  }
+
+  return blended;
+}
+
+// ======================================================================
 // generate: 多段顺序生成（对应 Python _multiprompt）
 // ======================================================================
 motion_output kimodo::generate(const std::vector<generate_segment_args>& segments) {
@@ -262,84 +388,12 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
     float heading_val = seg.first_heading_angle_;
 
     if (!is_first) {
-      // 取出上一段末尾过渡帧
-      MatrixXfRow& last_motion      = generated_motions.back();
-      const std::int64_t last_T     = last_motion.rows();
-      const std::int64_t new_last_T = last_T - prev_nb_transition;
-      DOODLE_CHICK(new_last_T >= 0, "上一段帧数 {} 不足过渡帧 {}", last_T, prev_nb_transition);
-
-      prev_latest_frames        = last_motion.bottomRows(prev_nb_transition).eval();
-      last_motion               = last_motion.topRows(new_last_T).eval();
-
-      // 解码过渡帧，获取关节数据用于构建约束
-      motion_output last_output = motion_rep_->decode(prev_latest_frames, false, 1, prev_nb_transition);
-
-      // 提取 smooth_root_2d 首帧（新段起点）
-      prev_smooth_root_2d.resize(1, 2);
-      prev_smooth_root_2d(0, 0) = last_output.smooth_root_pos(0, 0);  // x
-      prev_smooth_root_2d(0, 1) = last_output.smooth_root_pos(0, 2);  // z
-
-      // 构建过渡 frame_indices [0, 1, ..., nb_transition-1]
-      Eigen::VectorXi trans_indices(nb_transition);
-      for (std::int64_t i = 0; i < nb_transition; ++i)
-        trans_indices(static_cast<Eigen::Index>(i)) = static_cast<int>(i);
-
-      // smooth_root_2d [nb_transition, 2]
-      MatrixXfRow trans_smooth_root_2d(nb_transition, 2);
-      for (std::int64_t i = 0; i < nb_transition; ++i) {
-        trans_smooth_root_2d(i, 0) = last_output.smooth_root_pos(i, 0);
-        trans_smooth_root_2d(i, 1) = last_output.smooth_root_pos(i, 2);
-      }
-
-      // 过渡约束：全身 + 末端执行器
-      std::vector<kimodo_motion_rep::constraint_dicts> trans_dicts(1);
-
-      auto fb = std::make_shared<fullbody_constraint_set>(
-          skeleton_, trans_indices, last_output.posed_joints, last_output.global_rot_mats, trans_smooth_root_2d
+      auto trans_prep = prepare_transition(
+          generated_motions, prev_latest_frames, prev_nb_transition, observed_motion, motion_mask_f, num_frame,
+          nb_transition
       );
-      fb->update_constraints(trans_dicts[0].data_dict, trans_dicts[0].index_dict);
-
-      auto ee = std::make_shared<end_effector_constraint_set>(
-          skeleton_, trans_indices, last_output.posed_joints, last_output.global_rot_mats, trans_smooth_root_2d,
-          std::vector<std::string>{"LeftHand", "RightHand", "LeftFoot", "RightFoot"}
-      );
-      ee->update_constraints(trans_dicts[0].data_dict, trans_dicts[0].index_dict);
-
-      Eigen::VectorXi trans_lengths(1);
-      trans_lengths(0) = static_cast<int>(nb_transition);
-
-      auto [obs_trans, mask_trans] =
-          motion_rep_->create_conditions_from_constraints_batched(trans_dicts, trans_lengths, false);
-
-      // 拼接: [transition_obs, segment_obs]
-      const std::int64_t total_T = nb_transition + num_frame;
-      MatrixXfRow combined_obs(total_T, D);
-      MatrixXfRow combined_mask(total_T, D);
-      combined_obs.setZero();
-      combined_mask.setZero();
-
-      combined_obs.topRows(nb_transition)  = obs_trans;
-      combined_mask.topRows(nb_transition) = mask_trans.cast<float>();
-
-      if (observed_motion.size() > 0) {
-        combined_obs.bottomRows(num_frame)  = observed_motion;
-        combined_mask.bottomRows(num_frame) = motion_mask_f;
-      }
-
-      // 平移到新段起点（原点）
-      MatrixXfRow neg_trans(1, 2);
-      neg_trans(0, 0)         = -prev_smooth_root_2d(0, 0);
-      neg_trans(0, 1)         = -prev_smooth_root_2d(0, 1);
-      combined_obs            = motion_rep_->translate_2d(combined_obs, neg_trans, 1, total_T);
-      combined_obs            = combined_obs.cwiseProduct(combined_mask);
-
-      observed_motion         = std::move(combined_obs);
-      motion_mask_f           = std::move(combined_mask);
-      num_frame               = total_T;
-
-      // 从上段末尾计算朝向角
-      MatrixXfRow heading_mat = compute_heading_angle(last_output.posed_joints, *skeleton_, 1, prev_nb_transition);
-      heading_val             = heading_mat(0, 0);
+      prev_smooth_root_2d = std::move(trans_prep.prev_smooth_root_2d);
+      heading_val          = trans_prep.heading_val;
     }
 
     // ====================================================================
@@ -367,33 +421,13 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
     // 后处理：过渡混合 / post_processing
     // ====================================================================
     if (!is_first) {
-      // 平移回原始位置
-      motion = motion_rep_->translate_2d(motion, prev_smooth_root_2d, 1, num_frame);
-
       if (seg.post_processing_) {
         SPDLOG_WARN("post_processing=true but post_process_motion not implemented in C++, skipping");
       }
 
-      // 拆分: [transition_frames, segment_frames]
-      MatrixXfRow new_transition = motion.topRows(nb_transition);
-      motion                     = motion.bottomRows(num_frame - nb_transition).eval();
-
-      // Alpha 混合: old * alpha + new * (1-alpha), alpha = linspace(1, 0, nb_transition)
-      Eigen::VectorXf alpha(nb_transition);
-      if (nb_transition == 1) {
-        alpha(0) = 1.0f;
-      } else {
-        for (std::int64_t i = 0; i < nb_transition; ++i)
-          alpha(static_cast<Eigen::Index>(i)) = 1.0f - static_cast<float>(i) / static_cast<float>(nb_transition - 1);
-      }
-
-      MatrixXfRow blended(nb_transition, D);
-      for (std::int64_t i = 0; i < nb_transition; ++i) {
-        const float a  = alpha(static_cast<Eigen::Index>(i));
-        blended.row(i) = a * prev_latest_frames.row(i) + (1.0f - a) * new_transition.row(i);
-      }
-
-      generated_motions.push_back(std::move(blended));
+      generated_motions.push_back(
+          blend_transition(motion, prev_latest_frames, prev_smooth_root_2d, nb_transition, num_frame)
+      );
     } else if (seg.post_processing_) {
       SPDLOG_WARN("post_processing=true but post_process_motion not implemented in C++, skipping");
     }
