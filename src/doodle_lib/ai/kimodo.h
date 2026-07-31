@@ -216,7 +216,7 @@ class kimodo {
       const std::vector<std::string>& prompts, const std::vector<std::int64_t>& num_frames,
       std::int64_t num_denoising_steps, const std::vector<float>& cfg_weight = {2.0f, 2.0f},
       const std::vector<float>& first_heading_angle = {}, const MatrixXfRow& motion_mask = {},
-      const MatrixXfRow& observed_motion = {}, cfg_type cfg_type_val = cfg_type::nocfg
+      const MatrixXfRow& observed_motion = {}, cfg_type cfg_type_val = cfg_type::separated
   );
 
   /// @brief 简单版本：单个提示、单样本

@@ -39,7 +39,7 @@ struct ai_train_binding_weights_post_args {
   std::int32_t num_denoising_steps_{50};
   std::vector<std::int32_t> cfg_weight_{80, 80};
   std::int32_t num_samples_{100};
-  doodle::ai::cfg_type cfg_type_{doodle::ai::cfg_type::nocfg};
+  doodle::ai::cfg_type cfg_type_{doodle::ai::cfg_type::separated};
   std::float_t first_heading_angle_{0.0f};
   std::int32_t num_transition_frames_{10};
   bool post_processing_{true};

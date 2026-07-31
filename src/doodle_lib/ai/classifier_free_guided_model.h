@@ -66,7 +66,7 @@ class classifier_free_guided_model {
       const std::vector<float>& cfg_weight, const MatrixXfRow& x, const MatrixXbRow& x_pad_mask,
       const MatrixXfRow& text_feat, const MatrixXbRow& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
       const std::vector<float>& first_heading_angle = {}, const MatrixXfRow& motion_mask = {},
-      const MatrixXfRow& observed_motion = {}, cfg_type cfg_type_val = cfg_type::nocfg
+      const MatrixXfRow& observed_motion = {}, cfg_type cfg_type_val = cfg_type::separated
   );
 
   [[nodiscard]] bool is_valid() const { return model_.is_valid(); }
