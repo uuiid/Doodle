@@ -216,7 +216,7 @@ kimodo::transition_prep_result kimodo::prepare_transition(
     std::vector<MatrixXfRow>& generated_motions, MatrixXfRow& prev_latest_frames, std::int64_t prev_nb_transition,
     MatrixXfRow& observed_motion, MatrixXfRow& motion_mask_f, std::int64_t& num_frame, std::int64_t nb_transition
 ) {
-  const std::int64_t D = motion_rep_->motion_rep_dim();
+  const std::int64_t D          = motion_rep_->motion_rep_dim();
 
   // 取出上一段末尾过渡帧
   MatrixXfRow& last_motion      = generated_motions.back();
@@ -224,8 +224,8 @@ kimodo::transition_prep_result kimodo::prepare_transition(
   const std::int64_t new_last_T = last_T - prev_nb_transition;
   DOODLE_CHICK(new_last_T >= 0, "上一段帧数 {} 不足过渡帧 {}", last_T, prev_nb_transition);
 
-  prev_latest_frames = last_motion.bottomRows(prev_nb_transition).eval();
-  last_motion        = last_motion.topRows(new_last_T).eval();
+  prev_latest_frames        = last_motion.bottomRows(prev_nb_transition).eval();
+  last_motion               = last_motion.topRows(new_last_T).eval();
 
   // 解码过渡帧，获取关节数据用于构建约束
   motion_output last_output = motion_rep_->decode(prev_latest_frames, false, 1, prev_nb_transition);
@@ -238,8 +238,7 @@ kimodo::transition_prep_result kimodo::prepare_transition(
 
   // 构建过渡 frame_indices [0, 1, ..., nb_transition-1]
   Eigen::VectorXi trans_indices(nb_transition);
-  for (std::int64_t i = 0; i < nb_transition; ++i)
-    trans_indices(static_cast<Eigen::Index>(i)) = static_cast<int>(i);
+  for (std::int64_t i = 0; i < nb_transition; ++i) trans_indices(static_cast<Eigen::Index>(i)) = static_cast<int>(i);
 
   // smooth_root_2d [nb_transition, 2]
   MatrixXfRow trans_smooth_root_2d(nb_transition, 2);
@@ -285,14 +284,14 @@ kimodo::transition_prep_result kimodo::prepare_transition(
 
   // 平移到新段起点（原点）
   MatrixXfRow neg_trans(1, 2);
-  neg_trans(0, 0)  = -result.prev_smooth_root_2d(0, 0);
-  neg_trans(0, 1)  = -result.prev_smooth_root_2d(0, 1);
-  combined_obs      = motion_rep_->translate_2d(combined_obs, neg_trans, 1, total_T);
-  combined_obs      = combined_obs.cwiseProduct(combined_mask);
+  neg_trans(0, 0)         = -result.prev_smooth_root_2d(0, 0);
+  neg_trans(0, 1)         = -result.prev_smooth_root_2d(0, 1);
+  combined_obs            = motion_rep_->translate_2d(combined_obs, neg_trans, 1, total_T);
+  combined_obs            = combined_obs.cwiseProduct(combined_mask);
 
-  observed_motion   = std::move(combined_obs);
-  motion_mask_f     = std::move(combined_mask);
-  num_frame         = total_T;
+  observed_motion         = std::move(combined_obs);
+  motion_mask_f           = std::move(combined_mask);
+  num_frame               = total_T;
 
   // 从上段末尾计算朝向角
   MatrixXfRow heading_mat = compute_heading_angle(last_output.posed_joints, *skeleton_, 1, prev_nb_transition);
@@ -308,10 +307,10 @@ MatrixXfRow kimodo::blend_transition(
     MatrixXfRow& motion, const MatrixXfRow& prev_latest_frames, const MatrixXfRow& prev_smooth_root_2d,
     std::int64_t nb_transition, std::int64_t num_frame
 ) {
-  const std::int64_t D = motion_rep_->motion_rep_dim();
+  const std::int64_t D       = motion_rep_->motion_rep_dim();
 
   // 平移回原始位置
-  motion = motion_rep_->translate_2d(motion, prev_smooth_root_2d, 1, num_frame);
+  motion                     = motion_rep_->translate_2d(motion, prev_smooth_root_2d, 1, num_frame);
 
   // 拆分: [transition_frames, segment_frames]
   MatrixXfRow new_transition = motion.topRows(nb_transition);
@@ -362,18 +361,12 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
     MatrixXfRow observed_motion, motion_mask_f;
 
     std::vector<kimodo_motion_rep::constraint_dicts> seg_dicts(1);
-    bool has_seg_constraints = false;
+    Eigen::VectorXi seg_lengths(1);
+    seg_lengths(0) = static_cast<int>(num_frame);
     if (!seg.constraints_.empty()) {
       for (const auto& c : seg.constraints_) {
         c->update_constraints(seg_dicts[0].data_dict, seg_dicts[0].index_dict);
       }
-      has_seg_constraints = true;
-    }
-
-    Eigen::VectorXi seg_lengths(1);
-    seg_lengths(0) = static_cast<int>(num_frame);
-
-    if (has_seg_constraints) {
       auto [obs, mask] = motion_rep_->create_conditions_from_constraints_batched(
           seg_dicts, seg_lengths, false /*to_normalize*/
       );
@@ -393,7 +386,7 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
           nb_transition
       );
       prev_smooth_root_2d = std::move(trans_prep.prev_smooth_root_2d);
-      heading_val          = trans_prep.heading_val;
+      heading_val         = trans_prep.heading_val;
     }
 
     // ====================================================================
