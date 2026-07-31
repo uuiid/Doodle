@@ -392,9 +392,7 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
     // ====================================================================
     // 标准化 → 生成 → 反标准化
     // ====================================================================
-    if (observed_motion.size() > 0) {
-      observed_motion = motion_rep_->normalize(observed_motion);
-    }
+    if (observed_motion.size() > 0) observed_motion = motion_rep_->normalize(observed_motion);
 
     Eigen::VectorXi lengths_vec(1);
     lengths_vec(0)                 = static_cast<int>(num_frame);
@@ -441,8 +439,6 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
   }
 
   motion_output output = motion_rep_->decode(all_motion, false, 1, total_frames);
-
-  // TODO: SOMASkeleton30 → SOMASkeleton77 转换
 
   SPDLOG_INFO("kimodo::generate (multiprompt) 完成: {} 段, 总帧数 {}", segments.size(), total_frames);
   return output;
