@@ -360,10 +360,10 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
     // ====================================================================
     MatrixXfRow observed_motion, motion_mask_f;
 
-    std::vector<kimodo_motion_rep::constraint_dicts> seg_dicts(1);
     Eigen::VectorXi seg_lengths(1);
     seg_lengths(0) = static_cast<int>(num_frame);
     if (!seg.constraints_.empty()) {
+      std::vector<kimodo_motion_rep::constraint_dicts> seg_dicts(1);
       for (const auto& c : seg.constraints_) {
         c->update_constraints(seg_dicts[0].data_dict, seg_dicts[0].index_dict);
       }
@@ -413,16 +413,13 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
     // ====================================================================
     // 后处理：过渡混合 / post_processing
     // ====================================================================
+    if (seg.post_processing_) {
+      SPDLOG_WARN("post_processing=true but post_process_motion not implemented in C++, skipping");
+    }
     if (!is_first) {
-      if (seg.post_processing_) {
-        SPDLOG_WARN("post_processing=true but post_process_motion not implemented in C++, skipping");
-      }
-
       generated_motions.push_back(
           blend_transition(motion, prev_latest_frames, prev_smooth_root_2d, nb_transition, num_frame)
       );
-    } else if (seg.post_processing_) {
-      SPDLOG_WARN("post_processing=true but post_process_motion not implemented in C++, skipping");
     }
 
     generated_motions.push_back(std::move(motion));
