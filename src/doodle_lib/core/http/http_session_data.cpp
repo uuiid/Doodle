@@ -42,7 +42,6 @@
 #include <cryptopp/hex.h>
 #include <magic_enum/magic_enum.hpp>
 #include <spdlog/spdlog.h>
-
 #include <variant>
 
 namespace doodle::http::detail {
@@ -136,17 +135,15 @@ boost::asio::awaitable<void> session_data::run() {
         [this](auto&& in_ptr) { return boost::beast::http::async_read_header(*stream_, buffer_, *in_ptr); },
         request_parser_
     );
-    stream_->expires_after(timeout_);
+    stream_->expires_never();
     set_session();
     callback_ = (*route_ptr_)(method_verb_, url_.segments(), shared_from_this());
-    logger_->info("请求 url {} {} t:{}", method_verb_, url_, timeout_);
-    // 解析发现是 websocket 后,会直接启动新的携程, 本次携程直接返回
-    stream_->expires_after(timeout_);
+    logger_->info("请求 url {} {}", method_verb_, url_);
 
     std::unique_ptr<boost::beast::http::message_generator> l_gen{};
     try {
+      // 解析发现是 websocket 后,会直接启动新的携程, 本次携程直接返回
       if (co_await parse_body()) co_return;
-      stream_->expires_after(timeout_);
       l_gen = std::make_unique<boost::beast::http::message_generator>(co_await callback_->callback(shared_from_this()));
     } catch (const http_request_error& e) {
       logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
@@ -162,7 +159,6 @@ boost::asio::awaitable<void> session_data::run() {
     if (!l_gen) co_return logger_->error("回复生成器为空 {}", url_);
 
     logger_->info("回复 url {} {}", method_verb_, url_);
-    stream_->expires_after(timeout_);
     co_await boost::beast::async_write(*stream_, std::move(*l_gen));
     if (!keep_alive_) co_return;
     stream_->expires_after(timeout_);
@@ -192,13 +188,6 @@ void session_data::set_session() {
           boost::lexical_cast<std::int64_t>(l_value.substr(l_it + 8, l_value.find(',', l_it) - l_it - 8))
       };
     }
-    // SPDLOG_LOGGER_WARN(logger_, "超时设置 {}", timeout_);
-  } else if ((method_verb_ == boost::beast::http::verb::post || method_verb_ == boost::beast::http::verb::put ||
-              method_verb_ == boost::beast::http::verb::patch) &&
-             req_header_.find(boost::beast::http::field::content_length) != req_header_.end()) {
-    auto l_size = std::stoull(req_header_.at(boost::beast::http::field::content_length));
-    timeout_    = l_size > 10 * 1024 * 1024 ? std::chrono::seconds{l_size / (10 * 1024)} + doodle_config::g_timeout
-                                            : doodle_config::g_timeout;
   } else {
     timeout_ = doodle_config::g_timeout;
   }
@@ -370,9 +359,6 @@ boost::beast::http::message_generator session_data::make_msg(
           fmt::format("bytes {}-{}/{}", l_begin, FSys::file_size(in_path) - 1, FSys::file_size(in_path))
       );
     }
-
-  if (auto l_size = FSys::file_size(in_path); l_size > 10 * 1024 * 1024)  // 10MB
-    timeout_ += chrono::seconds(l_size / (10 * 1024));
 
   set_response_file_header(l_res, in_path, in_http_header_ctrl);
   l_res.keep_alive(keep_alive_);
