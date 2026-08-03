@@ -109,8 +109,9 @@ void transformer_encoder_block::init_session() {
 }
 
 MatrixXfRow transformer_encoder_block::forward(
-    const MatrixXfRow& x, const MatrixXbRow& x_pad_mask, const MatrixXfRow& text_feat, const MatrixXbRow& text_feat_pad_mask,
-    const std::vector<std::int64_t>& timesteps, const std::vector<float>& first_heading_angle
+    const MatrixXfRow& x, const MatrixXbRow& x_pad_mask, const MatrixXfRow& text_feat,
+    const MatrixXbRow& text_feat_pad_mask, const std::vector<std::int64_t>& timesteps,
+    const std::vector<float>& first_heading_angle
 ) {
   // ---- 提取形状信息 ----
   // x: [B*T, input_dim]
@@ -133,12 +134,12 @@ MatrixXfRow transformer_encoder_block::forward(
       timesteps.size(), batch_size
   );
 
-  auto t0 = std::chrono::high_resolution_clock::now();
+  auto t0           = std::chrono::high_resolution_clock::now();
 
   // ---- Step 1: x = input_linear(x)  [B*T, input_dim] -> [B*T, latent_dim] ----
   MatrixXfRow x_emb = input_linear_.forward(x);  // [B*T, latent_dim]
 
-  auto t1 = std::chrono::high_resolution_clock::now();
+  auto t1           = std::chrono::high_resolution_clock::now();
 
   // ---- Step 2: Pad text tokens 到固定大小 num_text_tokens ----
   // text_feat: [B*max_text_len, llm_dim]
@@ -181,7 +182,7 @@ MatrixXfRow transformer_encoder_block::forward(
   // ---- Step 4: emb_time = embed_timestep(timesteps)  [B, latent_dim] (含 [B,1,D] 语义) ----
   MatrixXfRow emb_time       = embed_timestep_.forward(timesteps);  // [B, latent_dim]
 
-  auto t2 = std::chrono::high_resolution_clock::now();
+  auto t2                    = std::chrono::high_resolution_clock::now();
 
   // ---- Step 5: 构建 prefix 特征和 mask ----
   // prefix_feats = [emb_text | emb_time]  -> [B, num_text_tokens + 1, latent_dim]
@@ -342,7 +343,7 @@ MatrixXfRow transformer_encoder_block::forward(
     DOODLE_CHICK(false, "seqTransEncoder ONNX 推理失败: {}", e.what());
   }
 
-  auto t5 = std::chrono::high_resolution_clock::now();
+  auto t5          = std::chrono::high_resolution_clock::now();
 
   // ---- 获取 ONNX 输出 ----
   auto ort_outputs = io_binding_->GetOutputValues();
@@ -362,6 +363,18 @@ MatrixXfRow transformer_encoder_block::forward(
   );
 
   float* onnx_output_data = ort_outputs.front().GetTensorMutableData<float>();
+  {  // 检查输出是否有 nan
+    std::vector<std::int64_t> l_nan_indices{};
+    for (std::int64_t i = 0; i < out_batch * out_seq_len * out_dim; ++i) {
+      if (std::isnan(onnx_output_data[i])) l_nan_indices.push_back(i);
+    }
+    if (!l_nan_indices.empty()) {
+      SPDLOG_WARN(
+          "seqTransEncoder ONNX 输出包含 {} 个 NaN, 索引: [{}]", l_nan_indices.size(),
+          fmt::join(l_nan_indices.begin(), l_nan_indices.end(), ",")
+      );
+    }
+  }
 
   // ---- 提取 pose_start_ind 之后的运动部分: [B*T, latent_dim] ----
   // onnx_output_data: [B, total_len, latent_dim] 需要 reshape 为 [B*total_len, latent_dim] 然后提取 pose_start_ind
@@ -378,7 +391,7 @@ MatrixXfRow transformer_encoder_block::forward(
   // ---- output_linear: [B*T, latent_dim] -> [B*T, output_dim] ----
   MatrixXfRow result = output_linear_.forward(transformer_out);
 
-  auto t6 = std::chrono::high_resolution_clock::now();
+  auto t6            = std::chrono::high_resolution_clock::now();
   SPDLOG_INFO(
       "transformer block 分段计时(秒): input_linear={:%S} text+time_emb={:%S} prefix+xseq+poseenc={:%S} "
       "onnx_io={:%S} onnx_run={:%S} out_extract+linear={:%S} total={:%S} (B={}, total_len={})",

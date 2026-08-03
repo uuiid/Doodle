@@ -164,6 +164,19 @@ std::vector<float_t> LLM2Vec::operator()(const std::string& instruction, const s
   // Step 7: 获取 last_hidden_state 数据并执行 pooling
   float* output_data             = ort_outputs.front().GetTensorMutableData<std::float_t>();
 
+  {  // 检查输出是否有 nan
+    std::vector<std::int64_t> l_nan_indices{};
+    for (std::int64_t i = 0; i < seq_len * hidden_size; ++i) {
+      if (std::isnan(output_data[i])) l_nan_indices.push_back(i);
+    }
+    if (!l_nan_indices.empty()) {
+      SPDLOG_WARN(
+          "ONNX 输出包含 {} 个 NaN, 索引: [{}]", l_nan_indices.size(),
+          fmt::join(l_nan_indices.begin(), l_nan_indices.end(), ",")
+      );
+    }
+  }
+
   return apply_pooling(tokenized, output_data, seq_len, hidden_size);
 }
 
