@@ -14,7 +14,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 namespace doodle::ai {
 
 // ======================================================================
@@ -49,10 +48,7 @@ class skeleton_base {
   // 关节数据（从 .npy 文件加载）
   // ======================================================================
 
-  MatrixXfRow neutral_joints_;       ///< [J, 3] 中性姿态关节位置
-  MatrixXfRow bvh_neutral_joints_;   ///< [J, 3] BVH 中性关节（可选）
-  MatrixXfRow global_rot_offsets_;   ///< [J, 9] 标准 T-pose 全局旋转偏移（可选）
-  MatrixXfRow rest_pose_local_rot_;  ///< [J, 9] 静止姿态局部旋转（可选，如 G1 骨骼 XML rest pose）
+  MatrixXfRow neutral_joints_;  ///< [J, 3] 中性姿态关节位置
 
   // ======================================================================
   // 语义标签
@@ -72,12 +68,6 @@ class skeleton_base {
   std::vector<std::vector<std::int64_t>> joint_levels_;
 
   // ======================================================================
-  // 特殊数据（SOMASkeleton77 的放松手部姿态）
-  // ======================================================================
-
-  MatrixXfRow relaxed_hands_rest_pose_;  ///< [J77, 9] 放松手部姿态局部旋转（仅 SOMA77）
-
-  // ======================================================================
   // 构造 / 初始化
   // ======================================================================
 
@@ -93,18 +83,6 @@ class skeleton_base {
 
   /// @brief 从文件夹加载 neutral_joints (joints.npy)
   void load_neutral_joints(const FSys::path& folder);
-
-  /// @brief 从文件夹加载 bvh_neutral_joints (bvh_joints.npy，可选)
-  void load_bvh_neutral_joints(const FSys::path& folder);
-
-  /// @brief 从文件夹加载 global_rot_offsets (standard_t_pose_global_offsets_rots.npy，可选)
-  void load_global_rot_offsets(const FSys::path& folder);
-
-  /// @brief 从文件夹加载 rest_pose_local_rot (rest_pose_local_rot.npy，可选)
-  void load_rest_pose_local_rot(const FSys::path& folder);
-
-  /// @brief 从文件夹加载 relaxed_hands_rest_pose (relaxed_hands_rest_pose.npy，可选)
-  void load_relaxed_hands_rest_pose(const FSys::path& folder);
 
   /// @brief 从文件夹加载所有可用数据文件（不报错若文件不存在）
   void load_all_from_folder(const FSys::path& folder);
@@ -123,9 +101,6 @@ class skeleton_base {
   static std::shared_ptr<skeleton_base> create_soma_skeleton_30(
       const FSys::path& folder, const FSys::path& in_77_folder = {}
   );
-
-  /// @brief 创建 SOMA 77 关节骨骼
-  static std::shared_ptr<skeleton_base> create_soma_skeleton_77(const FSys::path& folder = {});
 
   // ======================================================================
   // 前向运动学 (FK)
@@ -158,32 +133,6 @@ class skeleton_base {
   /// @param target 目标骨骼
   /// @return 索引列表，顺序对应当前骨骼的 bone_order_names_
   [[nodiscard]] std::vector<std::int64_t> get_skel_slice(const skeleton_base& target) const;
-
-  /// @brief SOMA30 → SOMA77 转换结果
-  struct output_77_result {
-    MatrixXfRow local_rot_mats;                ///< [B*T, 77*9]
-    MatrixXfRow global_rot_mats;               ///< [B*T, 77*9]
-    MatrixXfRow posed_joints;                  ///< [B*T, 77*3]
-    std::optional<MatrixXfRow> foot_contacts;  ///< [B*T, 6]（可选）
-  };
-
-  /// @brief 将 30 关节局部旋转扩展为 77 关节（含放松手部姿态）。
-  ///        仅在骨骼为 somaskel30 时有效。
-  /// @param local_joint_rots_subset [B*T, 30*9] 30 关节局部旋转矩阵
-  /// @return [B*T, 77*9] 77 关节局部旋转矩阵
-  [[nodiscard]] MatrixXfRow to_soma_skeleton_77(const MatrixXfRow& local_joint_rots_subset) const;
-
-  /// @brief 将 SOMA30 模型输出转换为 SOMA77 格式。
-  ///        扩展 local_rot_mats 至 77 关节，重新运行 FK 计算 global_rot_mats 和 posed_joints，
-  ///        如有 foot_contacts 则从 4 通道扩展为 6 通道（toe-end 复制 toe-base）。
-  /// @param local_rot_mats [B*T, 30*9] 30 关节局部旋转
-  /// @param root_positions [B*T, 3] 根关节位置
-  /// @param foot_contacts 可选 [B*T, 4]（L_heel, L_toe, R_heel, R_toe）
-  /// @return SOMA77 格式的输出
-  [[nodiscard]] output_77_result output_to_soma_skeleton_77(
-      const MatrixXfRow& local_rot_mats, const MatrixXfRow& root_positions,
-      const std::optional<MatrixXfRow>& foot_contacts = std::nullopt
-  ) const;
 
  private:
   /// @brief SOMA77 骨骼缓存（用于 SOMA30 → SOMA77 转换时懒加载）
