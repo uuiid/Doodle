@@ -15,7 +15,7 @@ function Get-GitMsg {
   Set-Location $GitRoot
  
   # 获取当天git提交消息, utf-8编码
-  $gitLog = git log --since="$Date 00:00:00" --until="$Date 23:59:59"  --pretty=format:"%s" --date=short --encoding=UTF-8 | Out-String
+  $gitLog = git log --all --since="$Date 00:00:00" --until="$Date 23:59:59"  --pretty=format:"%s" --date=short --encoding=UTF-8 | Out-String
   # 循环排除 ... 提交
   # 循环去除 git 中的消息id (b4c5b71b0 - )
   # 循环 将行尾括号内的日期以外的内容去除 (uuiid, 2026-01-19) -> 2026-01-19
