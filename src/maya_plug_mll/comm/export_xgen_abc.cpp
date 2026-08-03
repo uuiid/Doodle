@@ -328,13 +328,16 @@ class xgen_alembic_out {
     // 写入动画
     using namespace XGenRenderAPI;
     if (!in_cache->get(PrimitiveCache::PrimIsSpline)) return;
-    auto& l_curve_data = render_curve_data_;
-    auto l_inited      = render_init_;
+    auto& l_curve_data         = render_curve_data_;
+    auto l_inited              = render_init_;
 
-    // 获取 taper 参数：从 XgSplinePrimitive 读取缓存的 taper/taperStart
-    const auto* l_spline_prim = dynamic_cast<const XgSplinePrimitive*>(in_patch->description()->activePrimitive());
-    const float l_taper       = l_spline_prim ? l_spline_prim->cTaper() : 0.0f;
-    const float l_taper_start = l_spline_prim ? l_spline_prim->cTaperStart() : 0.0f;
+    // 获取 taper 和 ramp 参数：从 XgSplinePrimitive 读取缓存的 taper/taperStart 与宽度渐变曲线
+    const auto* l_spline_prim  = dynamic_cast<const XgSplinePrimitive*>(in_patch->description()->activePrimitive());
+    const float l_taper        = l_spline_prim ? l_spline_prim->cTaper() : 0.0f;
+    const float l_taper_start  = l_spline_prim ? l_spline_prim->cTaperStart() : 0.0f;
+    const auto& l_ramp         = l_spline_prim ? l_spline_prim->getRampUI() : SgRampUIComp{};
+    const bool l_has_ramp      = l_spline_prim && !l_ramp.isConstant();
+    const bool l_has_width_mod = l_taper > 0.0f || l_has_ramp;
 
     if (!l_inited) {
       auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
@@ -378,17 +381,21 @@ class xgen_alembic_out {
           l_index_off += l_curve_verts;
           l_curve_data.vertices_.emplace_back(l_store_verts);
 
-          // 宽度展开到每个顶点（kVertexScope），应用 taper 衰减
+          // 宽度展开到每个顶点（kVertexScope），应用 ramp 渐变 + taper 衰减
           {
             const auto l_root_w = l_has_per_curve_width ? l_per_curve_width[z] : l_const_width;
-            if (l_taper > 0.0f && l_store_verts > 1) {
+            if (l_has_width_mod && l_store_verts > 1) {
               l_curve_data.widths_.reserve(l_curve_data.widths_.size() + l_store_verts);
-              const float l_inv_range = 1.0f / (1.0f - l_taper_start);
+              const float l_inv_taper_range = 1.0f / std::max(0.001f, 1.0f - l_taper_start);
               for (auto v = 0; v < l_store_verts; ++v) {
-                const float t = static_cast<float>(v) / static_cast<float>(l_store_verts - 1);
-                const float l_scale =
-                    (t <= l_taper_start) ? 1.0f : (1.0f - l_taper * (t - l_taper_start) * l_inv_range);
-                l_curve_data.widths_.emplace_back(l_root_w * l_scale);
+                const float t             = static_cast<float>(v) / static_cast<float>(l_store_verts - 1);
+                // ramp 倍率：沿曲线长度的宽度渐变曲线
+                const float l_ramp_scale  = l_has_ramp ? l_ramp.getValue(t) : 1.0f;
+                // taper 倍率：从 taperStart 开始线性缩减到末端
+                const float l_taper_scale = (l_taper <= 0.0f || t <= l_taper_start)
+                                                ? 1.0f
+                                                : (1.0f - l_taper * (t - l_taper_start) * l_inv_taper_range);
+                l_curve_data.widths_.emplace_back(l_root_w * l_ramp_scale * l_taper_scale);
               }
             } else {
               l_curve_data.widths_.insert(l_curve_data.widths_.end(), l_store_verts, l_root_w);
