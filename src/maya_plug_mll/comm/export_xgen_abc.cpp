@@ -330,6 +330,12 @@ class xgen_alembic_out {
     if (!in_cache->get(PrimitiveCache::PrimIsSpline)) return;
     auto& l_curve_data = render_curve_data_;
     auto l_inited      = render_init_;
+
+    // 获取 taper 参数：从 XgSplinePrimitive 读取缓存的 taper/taperStart
+    const auto* l_spline_prim = dynamic_cast<const XgSplinePrimitive*>(in_patch->description()->activePrimitive());
+    const float l_taper       = l_spline_prim ? l_spline_prim->cTaper() : 0.0f;
+    const float l_taper_start = l_spline_prim ? l_spline_prim->cTaperStart() : 0.0f;
+
     if (!l_inited) {
       auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
       // 只采样一次, 不使用运动模糊, 保留迭代, 后期可加入运动模糊
@@ -372,10 +378,21 @@ class xgen_alembic_out {
           l_index_off += l_curve_verts;
           l_curve_data.vertices_.emplace_back(l_store_verts);
 
-          // 宽度展开到每个顶点（kVertexScope）
+          // 宽度展开到每个顶点（kVertexScope），应用 taper 衰减
           {
-            const auto l_w = l_has_per_curve_width ? l_per_curve_width[z] : l_const_width;
-            l_curve_data.widths_.insert(l_curve_data.widths_.end(), l_store_verts, l_w);
+            const auto l_root_w = l_has_per_curve_width ? l_per_curve_width[z] : l_const_width;
+            if (l_taper > 0.0f && l_store_verts > 1) {
+              l_curve_data.widths_.reserve(l_curve_data.widths_.size() + l_store_verts);
+              const float l_inv_range = 1.0f / (1.0f - l_taper_start);
+              for (auto v = 0; v < l_store_verts; ++v) {
+                const float t = static_cast<float>(v) / static_cast<float>(l_store_verts - 1);
+                const float l_scale =
+                    (t <= l_taper_start) ? 1.0f : (1.0f - l_taper * (t - l_taper_start) * l_inv_range);
+                l_curve_data.widths_.emplace_back(l_root_w * l_scale);
+              }
+            } else {
+              l_curve_data.widths_.insert(l_curve_data.widths_.end(), l_store_verts, l_root_w);
+            }
           }
 
           // 将根 UV 展开到每个顶点（kVertexScope）
