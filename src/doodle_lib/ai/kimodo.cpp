@@ -347,7 +347,6 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
   std::vector<MatrixXfRow> generated_motions;
   /// 上一段末尾过渡帧（用于混合），[1*nb_transition, D]
   MatrixXfRow prev_latest_frames;
-  std::int64_t prev_nb_transition = 0;
 
   for (auto is_first = true; const auto& seg : segments) {
     std::int64_t num_frame           = seg.num_frames_;
@@ -382,7 +381,7 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
 
     if (!is_first) {
       auto trans_prep = prepare_transition(
-          generated_motions, prev_latest_frames, prev_nb_transition, observed_motion, motion_mask_f, num_frame,
+          generated_motions, prev_latest_frames, seg.num_transition_frames_, observed_motion, motion_mask_f, num_frame,
           nb_transition
       );
       prev_smooth_root_2d = std::move(trans_prep.prev_smooth_root_2d);
@@ -421,7 +420,6 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
     }
 
     generated_motions.push_back(std::move(motion));
-    prev_nb_transition = seg.num_transition_frames_;
     is_first           = false;
   }
 
