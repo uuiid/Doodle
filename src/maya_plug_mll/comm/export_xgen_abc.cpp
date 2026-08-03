@@ -153,10 +153,7 @@ class xgen_alembic_out {
     }
   }
 
-  void write_curve_sample(
-      curve_data& in_data, const o_curve_ptr& in_curve_ptr, bool& in_init,
-      Alembic::AbcGeom::GeometryScope in_width_scope = Alembic::AbcGeom::kVertexScope
-  ) {
+  void write_curve_sample(curve_data& in_data, const o_curve_ptr& in_curve_ptr, bool& in_init) {
     Alembic::AbcGeom::OCurvesSchema::Sample l_curve_sample{};
     if (!in_init) {
       l_curve_sample.setBasis(Alembic::AbcGeom::kBsplineBasis);
@@ -164,7 +161,9 @@ class xgen_alembic_out {
       l_curve_sample.setType(Alembic::AbcGeom::kCubic);
       l_curve_sample.setCurvesNumVertices(in_data.vertices_);
       l_curve_sample.setPositions(in_data.points_);
-      l_curve_sample.setWidths(Alembic::AbcGeom::OFloatGeomParam::Sample{in_data.widths_, in_width_scope});
+      l_curve_sample.setWidths(
+          Alembic::AbcGeom::OFloatGeomParam::Sample{in_data.widths_, Alembic::AbcGeom::kVertexScope}
+      );
       if (!in_data.uvs_.empty()) {
         l_curve_sample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample{in_data.uvs_, Alembic::AbcGeom::kVertexScope});
       }
