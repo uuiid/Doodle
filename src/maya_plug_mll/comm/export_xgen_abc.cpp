@@ -4,6 +4,8 @@
 
 #include "export_xgen_abc.h"
 
+#include <boost/scope/scope_exit.hpp>
+
 #include <maya_plug/data/maya_display.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
@@ -58,6 +60,7 @@
 #include <xgen/src/xgprimitive/XgSplinePrimitive.h>
 #include <xgen/src/xgrenderer/XgRenderAPI.h>
 #include <xgen/src/xgrenderer/XgRenderAPIUtils.h>
+
 namespace doodle::maya_plug {
 
 class xgen_alembic_out {
@@ -370,15 +373,14 @@ class xgen_alembic_out {
         std::size_t l_index_off{};
         for (auto z = 0; z < l_num_size; ++z) {
           const auto l_curve_verts = l_num[z];
+          boost::scope::scope_exit l_exit{[&]() { l_index_off += l_curve_verts; }};
           // 顶点数 <= 2 的曲线无法构成有意义的 cubic 曲线（去掉首尾后 <= 0），
           // 且负值传入 Alembic 内部会触发 boost::numeric_cast::negative_overflow
-          if (l_curve_verts <= 2) {
-            l_index_off += l_curve_verts;
-            continue;
-          }
+          if (l_curve_verts <= 2) continue;
+
           const auto l_store_verts = l_curve_verts - 2;
           creare_curve(l_pos + l_index_off + 1, l_store_verts, l_curve_data.points_, l_curve_data.knots_);
-          l_index_off += l_curve_verts;
+          
           l_curve_data.vertices_.emplace_back(l_store_verts);
 
           // 宽度展开到每个顶点（kVertexScope），应用 ramp 渐变 + taper 衰减
