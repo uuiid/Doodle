@@ -504,4 +504,16 @@ std::vector<std::int64_t> skeleton_base::get_skel_slice(const skeleton_base& tar
   return slice;
 }
 
+void to_json(nlohmann::json& j, const skeleton_base& skel) {
+  j["name"]             = skel.name_;
+  j["nbjoints"]         = skel.nbjoints_;
+  j["bone_order_names"] = skel.bone_order_names_;
+  j["joint_parents"]    = skel.joint_parents_;
+  j["bone_index"]       = skel.bone_index_;
+  // neutral_joints_ -> [[x, y, z], ...]
+  for (Eigen::Index i = 0; i < skel.neutral_joints_.rows(); ++i) {
+    j["neutral_joints"].push_back({skel.neutral_joints_(i, 0), skel.neutral_joints_(i, 1), skel.neutral_joints_(i, 2)});
+  }
+}
+
 }  // namespace doodle::ai

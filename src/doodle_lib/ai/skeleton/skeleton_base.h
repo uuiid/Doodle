@@ -134,9 +134,9 @@ class skeleton_base {
   /// @return 索引列表，顺序对应当前骨骼的 bone_order_names_
   [[nodiscard]] std::vector<std::int64_t> get_skel_slice(const skeleton_base& target) const;
 
- private:
-  /// @brief SOMA77 骨骼缓存（用于 SOMA30 → SOMA77 转换时懒加载）
-  mutable std::shared_ptr<skeleton_base> somaskel77_cache_;
+  // to json
+  // 转换为 JSON（用于调试或保存骨骼信息）
+  friend void to_json(nlohmann::json& j, const skeleton_base& skel);
 };
 
 }  // namespace doodle::ai
