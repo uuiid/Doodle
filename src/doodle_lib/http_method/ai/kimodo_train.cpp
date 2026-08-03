@@ -90,6 +90,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation_settings, post) {
   auto l_main_fun = in_handle->route_ptr_->get_function<ai_train_animation>();
   DOODLE_CHICK(l_main_fun != nullptr, "ai_train_animation 路由未注册，请检查代码");
   l_main_fun->load_model(l_path);
-  co_return in_handle->make_msg(nlohmann::json{{"model_path", l_path}});
+  co_return in_handle->make_msg(
+      nlohmann::json{{"model_path", l_path}, {"skeleton", *l_main_fun->impl_ptr_->model_->skeleton()}}
+  );
 }
 }  // namespace doodle::http
