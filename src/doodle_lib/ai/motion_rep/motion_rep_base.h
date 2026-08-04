@@ -26,8 +26,8 @@ namespace doodle::ai {
 /// @brief 特征标准化统计工具
 /// 加载 mean.npy / std.npy，提供 normalize / unnormalize。
 struct motion_stats {
-  Eigen::VectorXf mean;  ///< [D] 均值
-  Eigen::VectorXf std;   ///< [D] 标准差
+  Eigen::VectorXd mean;  ///< [D] 均值
+  Eigen::VectorXd std;   ///< [D] 标准差
   static constexpr float eps = 1e-5f;
 
   /// @brief 从文件夹加载 mean.npy 和 std.npy
