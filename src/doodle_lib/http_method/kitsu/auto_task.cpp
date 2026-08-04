@@ -420,8 +420,10 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
                 l_scene_ue_path / doodle_config::ue4_content
             );
             if (!l_ret.asset_infos_[l_idx].groom_name_.empty())
-              l_ret.asset_infos_[l_idx].groom_bind_path_ =
-                  get_entity_character_ue_groom_name(l_asset_extend_value, l_ret.asset_infos_[l_idx].groom_name_);
+              l_ret.asset_infos_[l_idx].groom_bind_path_ = get_entity_character_ue_groom_name(
+                  l_asset_extend_value, l_ret.asset_infos_[l_idx].groom_name_,
+                  l_ret.asset_infos_[l_idx].simulation_type_
+              );
           }
         } else
           throw_exception(

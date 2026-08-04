@@ -37,7 +37,8 @@ FSys::path get_entity_sim_character_ue_name(
 );
 /// 角色模型 ue groom 名称
 FSys::path get_entity_character_ue_groom_name(
-    const entity_asset_extend_value& in_extend_, std::string_view in_groom_name_
+    const entity_asset_extend_value& in_extend_, std::string_view in_groom_name_,
+    const std::bitset<2>& sim_type_ = simulation_status_none
 );
 
 /// 道具模型ue 路径

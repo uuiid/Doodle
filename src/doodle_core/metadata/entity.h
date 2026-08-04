@@ -25,6 +25,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                     {entity_status::canceled, "canceled"}}
 )
 /// 解算状态
+const constexpr std::bitset<2> simulation_status_none       = 0b00;
 const constexpr std::bitset<2> simulation_status_cloth      = 0b01;
 const constexpr std::bitset<2> simulation_status_hair       = 0b10;
 const constexpr std::bitset<2> simulation_status_cloth_hair = 0b11;
@@ -116,8 +117,6 @@ struct DOODLE_CORE_API entity_asset_extend {
     if (ban_ben_.find('\\') != std::string::npos) return false;
     return true;
   }
-  
-
 
   bool is_empty() const {
     return ji_shu_lie_.is_nil() && deng_ji_.empty() && !gui_dang_ && bian_hao_.empty() && pin_yin_ming_cheng_.empty() &&

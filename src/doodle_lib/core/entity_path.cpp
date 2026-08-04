@@ -209,12 +209,13 @@ FSys::path get_entity_sim_character_ue_name(
 
 /// 角色模型 ue groom 名称
 FSys::path get_entity_character_ue_groom_name(
-    const entity_asset_extend_value& in_extend_, std::string_view in_groom_name_
+    const entity_asset_extend_value& in_extend_, std::string_view in_groom_name_, const std::bitset<2>& sim_type_
 ) {
+  std::string l_sim_type_suffix = entity_sim_type_to_string(sim_type_);
   return fmt::format(
-      "{}/Character/{}/Meshs/Groom/{}_SK_Ch{}_Binding.uasset", doodle_config::ue4_content,
+      "{}/Character/{}/Meshs/Groom/{}_SK_Ch{}{}{}_Binding.uasset", doodle_config::ue4_content,
       in_extend_.pin_yin_ming_cheng_, in_groom_name_, in_extend_.bian_hao_,
-      in_extend_.ban_ben_.empty() ? "" : "_" + in_extend_.ban_ben_
+      in_extend_.ban_ben_.empty() ? "" : "_" + in_extend_.ban_ben_, l_sim_type_suffix
   );
 }
 
