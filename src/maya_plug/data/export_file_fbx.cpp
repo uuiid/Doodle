@@ -159,20 +159,16 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
     l_export_list.push_back(l_path);
   }
 
-  // 寻找 xgen xgmPalette 节点
+  // 检查 l_main_path 是否有 xgen 属性, 并且为 true, 如果有, 则导出对应的 xgen 文件
   bool l_has_xgen{false};
-  std::string l_xgen_name{};
-  maya_chick(l_it.reset(l_main_path, MItDag::kDepthFirst, MFn::kPluginTransformNode));
-  for (; !l_it.isDone(); l_it.next()) {
-    MFnDependencyNode l_dep{};
-    maya_chick(l_dep.setObject(l_it.currentItem()));
-    if (l_dep.typeName() == "xgmPalette") {
-      l_has_xgen = true;
-      l_xgen_name = conv::to_s(l_dep.name());
-      break;
-    }
+  {
+    MFnDagNode l_dag{};
+    l_dag.setObject(l_main_path);
+    MStatus l_status{};
+    l_has_xgen = l_dag.hasAttribute("xgen") && l_dag.findPlug("xgen", false, &l_status).asBool();
+    maya_chick(l_status);
   }
-  display_info("检查到 xgen 节点 {} {}", l_has_xgen, l_xgen_name);
+  display_info("检查到 UE 组 xgen 属性 {}", l_has_xgen);
   auto l_export_list_old = l_export_list;
   std::vector<FSys::path> l_ret{};
   auto l_stem             = maya_file_io::get_current_path().stem().generic_string();
