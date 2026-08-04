@@ -18,7 +18,7 @@ namespace doodle::ai {
 // WorkingRigJoint — 工作骨骼关节描述符
 // ======================================================================
 
-/// @brief 工作骨骼关节（对应 Python SimpleNamespace 工作骨骼）
+/// @brief 工作骨骼关节（对应 Python SimpleNamespace 工作骨骼, 无重定向, 只有一种骨骼 soma30）
 struct working_rig_joint {
   std::string name;
   std::string parent;                        ///< 父关节名，根关节为空

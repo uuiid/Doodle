@@ -3,6 +3,9 @@
 //
 #include "motion_postprocess.h"
 
+#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/exception/exception.h>
+
 #include <doodle_lib/ai/AnimProcessing/Utility.h>
 #include <doodle_lib/ai/Math/Transform.h>
 #include <doodle_lib/ai/motion_rep/geometry.h>
@@ -26,34 +29,8 @@ std::vector<working_rig_joint> create_working_rig_from_skeleton(
   const auto& parent_indices    = skeleton.joint_parents_;
   const auto J                  = skeleton.nbjoints_;
 
-  // 构建重定向映射
-  std::unordered_map<std::string, std::string> retarget_map;
-  {
-    // 判断骨骼类型：SOMA 使用名称映射，G1/SMPLX 使用索引映射
-    const bool is_soma =
-        skeleton.name_.find("soma") != std::string::npos || skeleton.name_.find("SOMA") != std::string::npos;
-
-    if (is_soma) {
-      // SOMA: 名称到自身的映射
-      for (const auto& tag : {"Hips", "Head", "LeftHand", "RightHand", "LeftFoot", "RightFoot"}) {
-        retarget_map[tag] = tag;
-      }
-    } else {
-      // G1/SMPLX: 使用语义索引
-      if (!skeleton.left_hand_joint_idx_.empty())
-        retarget_map[joint_names[skeleton.left_hand_joint_idx_[0]]] = "LeftHand";
-      if (!skeleton.right_hand_joint_idx_.empty())
-        retarget_map[joint_names[skeleton.right_hand_joint_idx_[0]]] = "RightHand";
-      if (!skeleton.left_foot_joint_idx_.empty())
-        retarget_map[joint_names[skeleton.left_foot_joint_idx_[0]]] = "LeftFoot";
-      if (!skeleton.right_foot_joint_idx_.empty())
-        retarget_map[joint_names[skeleton.right_foot_joint_idx_[0]]] = "RightFoot";
-      retarget_map[joint_names[skeleton.root_idx_]] = "Hips";
-    }
-  }
-
   // 计算最低点（脚趾）高度，用于离地偏移
-  float toe_height = neutral_positions.col(1).minCoeff();
+  float toe_height              = neutral_positions.col(1).minCoeff();
 
   std::vector<working_rig_joint> rig;
   rig.reserve(J);
@@ -76,12 +53,6 @@ std::vector<working_rig_joint> create_working_rig_from_skeleton(
           neutral_positions(i, 1) - neutral_positions(parent_idx, 1),
           neutral_positions(i, 2) - neutral_positions(parent_idx, 2)
       };
-    }
-
-    // 设置重定向标签
-    auto it = retarget_map.find(joint.name);
-    if (it != retarget_map.end()) {
-      joint.retarget_tag = it->second;
     }
 
     rig.push_back(std::move(joint));
@@ -253,7 +224,7 @@ static constraint_masks build_constraint_masks(
 
   for (const auto& c : constraints) {
     // 获取帧索引
-    const auto& frame_indices = c->get_frame_indices();
+    const auto& frame_indices  = c->get_frame_indices();
 
     // 选择目标掩码
     std::vector<float>* target = nullptr;
@@ -395,14 +366,16 @@ post_process_result post_process_motion(
     joint_parents_vec[j] = working_rig[j].parent.empty() ? -1 : name_to_idx.at(working_rig[j].parent);
   }
 
-  // 从 retarget_tag 查找手/脚索引
-  int left_hand_idx = -1, right_hand_idx = -1, left_foot_idx = -1, right_foot_idx = -1;
-  for (int j = 0; j < static_cast<int>(num_joints); ++j) {
-    if (working_rig[j].retarget_tag == "LeftHand") left_hand_idx = j;
-    if (working_rig[j].retarget_tag == "RightHand") right_hand_idx = j;
-    if (working_rig[j].retarget_tag == "LeftFoot") left_foot_idx = j;
-    if (working_rig[j].retarget_tag == "RightFoot") right_foot_idx = j;
-  }
+  // 从 skeleton 语义索引获取手/脚关节
+  DOODLE_CHICK(
+      !skeleton.left_hand_joint_idx_.empty() && !skeleton.right_hand_joint_idx_.empty() &&
+          !skeleton.left_foot_joint_idx_.empty() && !skeleton.right_foot_joint_idx_.empty(),
+      "Skeleton must have hand and foot joints defined"
+  );
+  int left_hand_idx  = static_cast<int>(skeleton.left_hand_joint_idx_[0]);
+  int right_hand_idx = static_cast<int>(skeleton.right_hand_joint_idx_[0]);
+  int left_foot_idx  = static_cast<int>(skeleton.left_foot_joint_idx_[0]);
+  int right_foot_idx = static_cast<int>(skeleton.right_foot_joint_idx_[0]);
 
   // 查找脚趾关节（父关节为脚）
   int left_toe_idx = -1, right_toe_idx = -1;
