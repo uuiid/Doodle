@@ -122,12 +122,7 @@ std::pair<MatrixXfRow, MatrixXfRow> extract_input_motion_from_constraints(
 
   for (const auto& constraint : sorted) {
     // 获取有效帧索引（过滤超出范围的索引）
-    const auto& raw_indices = [&]() -> const Eigen::VectorXi& {
-      if (auto* r = dynamic_cast<const root2d_constraint_set*>(constraint.get())) return r->frame_indices_;
-      if (auto* f = dynamic_cast<const fullbody_constraint_set*>(constraint.get())) return f->frame_indices_;
-      if (auto* e = dynamic_cast<const end_effector_constraint_set*>(constraint.get())) return e->frame_indices_;
-      throw std::runtime_error("Unknown constraint type");
-    }();
+    const auto& raw_indices = constraint->get_frame_indices();
 
     std::vector<std::int64_t> valid_indices;
     std::vector<std::int64_t> valid_positions;  // 在原始数组中的位置
@@ -258,14 +253,7 @@ static constraint_masks build_constraint_masks(
 
   for (const auto& c : constraints) {
     // 获取帧索引
-    const Eigen::VectorXi* frame_indices = nullptr;
-    if (auto* r = dynamic_cast<const root2d_constraint_set*>(c.get()))
-      frame_indices = &r->frame_indices_;
-    else if (auto* f = dynamic_cast<const fullbody_constraint_set*>(c.get()))
-      frame_indices = &f->frame_indices_;
-    else if (auto* e = dynamic_cast<const end_effector_constraint_set*>(c.get()))
-      frame_indices = &e->frame_indices_;
-    if (!frame_indices) continue;
+    const auto& frame_indices = c->get_frame_indices();
 
     // 选择目标掩码
     std::vector<float>* target = nullptr;
@@ -284,8 +272,8 @@ static constraint_masks build_constraint_masks(
       target = &masks.root;
     if (!target) continue;
 
-    for (Eigen::Index k = 0; k < frame_indices->size(); ++k) {
-      auto idx = (*frame_indices)(k);
+    for (Eigen::Index k = 0; k < frame_indices.size(); ++k) {
+      auto idx = frame_indices(k);
       if (idx < num_frames) (*target)[idx] = 1.0f;
     }
   }

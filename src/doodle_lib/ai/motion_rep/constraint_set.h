@@ -50,6 +50,9 @@ class constraint_set_base {
 
   /// @brief 获取骨骼
   virtual std::shared_ptr<skeleton_base> get_skeleton() const = 0;
+
+  /// @brief 获取约束帧索引 [K]
+  virtual const Eigen::VectorXi& get_frame_indices() const = 0;
 };
 
 // ======================================================================
@@ -96,6 +99,8 @@ class root2d_constraint_set : public constraint_set_base {
 
   std::shared_ptr<skeleton_base> get_skeleton() const override { return skeleton_; }
 
+  const Eigen::VectorXi& get_frame_indices() const override { return frame_indices_; }
+
   /// @brief 从 JSON 字典反序列化
   static std::shared_ptr<root2d_constraint_set> from_dict(
       std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
@@ -139,6 +144,8 @@ class fullbody_constraint_set : public constraint_set_base {
   void to(const std::shared_ptr<skeleton_base>& skel) override;
 
   std::shared_ptr<skeleton_base> get_skeleton() const override { return skeleton_; }
+
+  const Eigen::VectorXi& get_frame_indices() const override { return frame_indices_; }
 
   static std::shared_ptr<fullbody_constraint_set> from_dict(
       std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
@@ -185,6 +192,8 @@ class end_effector_constraint_set : public constraint_set_base {
   void to(const std::shared_ptr<skeleton_base>& skel) override;
 
   std::shared_ptr<skeleton_base> get_skeleton() const override { return skeleton_; }
+
+  const Eigen::VectorXi& get_frame_indices() const override { return frame_indices_; }
 
   static std::shared_ptr<end_effector_constraint_set> from_dict(
       std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
