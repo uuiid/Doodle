@@ -260,28 +260,17 @@ static constraint_masks build_constraint_masks(
 post_process_result post_process_motion(
     const MatrixXfRow& local_rot_mats, const MatrixXfRow& root_positions, const MatrixXfRow& contacts,
     const skeleton_base& skeleton, std::int64_t batch_size, std::int64_t num_frames,
-    const std::vector<constraint_set_ptr>& constraint_lst,
-    const std::vector<std::vector<constraint_set_ptr>>& batched_constraints, float contact_threshold, float root_margin
+    const std::vector<constraint_set_ptr>& constraint_lst, float contact_threshold, float root_margin
 ) {
   const auto num_joints  = skeleton.nbjoints_;
   const auto T           = num_frames;
   const auto B           = batch_size;
 
-  // 确定是否使用批次约束
-  const bool use_batched = !batched_constraints.empty();
-
-  // 构建约束掩码
+  // 构建约束掩码（所有批次共享）
+  auto shared_masks    = build_constraint_masks(constraint_lst, T);
   std::vector<constraint_masks> masks_per_batch;
-  if (use_batched) {
-    masks_per_batch.reserve(B);
-    for (std::int64_t b = 0; b < B; ++b) {
-      masks_per_batch.emplace_back(build_constraint_masks(batched_constraints[b], T));
-    }
-  } else {
-    auto shared_masks = build_constraint_masks(constraint_lst, T);
-    for (std::int64_t b = 0; b < B; ++b) {
-      masks_per_batch.push_back(shared_masks);
-    }
+  for (std::int64_t b = 0; b < B; ++b) {
+    masks_per_batch.push_back(shared_masks);
   }
 
   // 创建工作骨骼
@@ -322,11 +311,9 @@ post_process_result post_process_motion(
     }
   }
 
-  if (!constraint_lst.empty() || use_batched) {
+  if (!constraint_lst.empty()) {
     for (std::int64_t b = 0; b < B; ++b) {
-      const auto& constraints_for_batch = use_batched ? batched_constraints[b] : constraint_lst;
-
-      auto [hip_t, rots_t] = extract_input_motion_from_constraints(constraints_for_batch, skeleton, T, num_joints);
+      auto [hip_t, rots_t] = extract_input_motion_from_constraints(constraint_lst, skeleton, T, num_joints);
       // hip_t: [T, 3], rots_t: [T, J*4]
       hip_input.block(b * T, 0, T, 3)               = hip_t;
       rots_input.block(b * T, 0, T, num_joints * 4) = rots_t;

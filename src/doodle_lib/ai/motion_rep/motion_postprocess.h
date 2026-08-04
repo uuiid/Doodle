@@ -81,15 +81,13 @@ std::pair<MatrixXfRow, MatrixXfRow> extract_input_motion_from_constraints(
 /// @param batch_size      批次大小 B
 /// @param num_frames      帧数 T
 /// @param constraint_lst  约束列表（所有批次共享，或为空）
-/// @param batched_constraints 每个批次独立的约束列表（与 constraint_lst 二选一）
 /// @param contact_threshold 脚接触检测阈值
 /// @param root_margin     根位置校正边距
 /// @return 校正后的运动数据
 post_process_result post_process_motion(
     const MatrixXfRow& local_rot_mats, const MatrixXfRow& root_positions, const MatrixXfRow& contacts,
     const skeleton_base& skeleton, std::int64_t batch_size, std::int64_t num_frames,
-    const std::vector<constraint_set_ptr>& constraint_lst = {},
-    const std::vector<std::vector<constraint_set_ptr>>& batched_constraints = {}, float contact_threshold = 0.5f,
+    const std::vector<constraint_set_ptr>& constraint_lst = {}, float contact_threshold = 0.5f,
     float root_margin = 0.04f
 );
 
