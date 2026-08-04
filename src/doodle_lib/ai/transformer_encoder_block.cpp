@@ -369,10 +369,7 @@ MatrixXfRow transformer_encoder_block::forward(
       if (std::isnan(onnx_output_data[i])) l_nan_indices.push_back(i);
     }
     if (!l_nan_indices.empty()) {
-      SPDLOG_WARN(
-          "seqTransEncoder ONNX 输出包含 {} 个 NaN, 索引: [{}]", l_nan_indices.size(),
-          fmt::join(l_nan_indices.begin(), l_nan_indices.end(), ",")
-      );
+      SPDLOG_WARN("seqTransEncoder ONNX {} 输出包含 {} 个 NaN", model_dir_, l_nan_indices.size());
     }
   }
 
