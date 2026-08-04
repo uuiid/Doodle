@@ -22,6 +22,8 @@
 namespace doodle {
 
 boost::asio::awaitable<void> export_rig_sk_arg::run() {
+  DOODLE_CHICK(kitsu_client_, "kitsu_client_ is null");
+  DOODLE_CHICK(logger_ptr_, "logger_ptr_ is null")
   kitsu_client_->set_logger(logger_ptr_);
 
   {
@@ -33,16 +35,22 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   l_arg->set_logger(logger_ptr_);
   co_await l_arg->async_run_maya();
   auto l_maya_file = l_arg->get_out_arg();
+  DOODLE_CHICK(!l_maya_file.out_file_list.empty(), "导出骨架文件失败 {} {}", maya_file_, l_maya_file.out_file_list);
+
+  auto l_ue_project  = impl_.ue_project_path_;
+  auto l_import_root = l_ue_project.parent_path() / conv_normal_path(impl_.import_game_path_.parent_path());
+  if (auto l_gromm_dir = l_ue_project.parent_path() / conv_normal_path(impl_.groom_path_); FSys::exists(l_gromm_dir)) {
+    // 先检查缓存的groom文件是否存在, 如果存在则删除
+    FSys::remove_all(l_gromm_dir);
+    logger_ptr_->warn("删除旧的groom资产 {}", l_gromm_dir);
+  }
 
   for (auto&& p : impl_.ue_asset_copy_path_) {
     logger_ptr_->info("复制UE资源文件 from {} to {}", p.from_, p.to_);
     FSys::copy_diff(p.from_, p.to_, logger_ptr_);
   }
 
-  if (l_maya_file.out_file_list.empty()) throw_exception(doodle_error{"文件 {}, 未能输出骨架fbx", maya_file_});
-
-  auto l_ue_project  = ue_exe_ns::find_ue_project_file(impl_.ue_project_path_);
-  auto l_import_root = l_ue_project.parent_path() / conv_normal_path(impl_.import_game_path_.parent_path());
+  DOODLE_CHICK(FSys::exists(l_ue_project), "UE工程文件 {} 不存在", l_ue_project);
 
   for (auto&& p : l_maya_file.out_file_list) {
     if (impl_.rename_map_.contains(p.stem().generic_string())) {
@@ -89,6 +97,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
         .skin_path_      = impl_.skin_path_,
         .groom_path_     = impl_.groom_path_.generic_string()
     };
+    // 文件暂时不删除, 用来调试 
     auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
 
     if (l_ue_project.empty()) throw doodle_error{"无法找到UE项目文件 {}", impl_.ue_project_path_};
