@@ -43,4 +43,9 @@ MatrixXfRow matrix_to_quaternion(const MatrixXfRow& matrix);
 /// @return [N, 3] 轴角向量
 MatrixXfRow quaternion_to_axis_angle(const MatrixXfRow& quat);
 
+/// @brief 将四元数 (w, x, y, z) 转换为旋转矩阵
+/// @param quat [N, 4] 四元数
+/// @return [N, 9] 旋转矩阵行展开
+MatrixXfRow quaternion_to_matrix(const MatrixXfRow& quat);
+
 }  // namespace doodle::ai

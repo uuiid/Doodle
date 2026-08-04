@@ -229,4 +229,29 @@ MatrixXfRow matrix_to_axis_angle(const MatrixXfRow& matrix) {
   return quaternion_to_axis_angle(quat);
 }
 
+// ======================================================================
+// quaternion_to_matrix: 四元数 → 旋转矩阵
+// ======================================================================
+MatrixXfRow quaternion_to_matrix(const MatrixXfRow& quat) {
+  const Eigen::Index N = quat.rows();
+  DOODLE_CHICK(quat.cols() == 4, "quaternion_to_matrix: input cols must be 4, got {}", quat.cols());
+
+  MatrixXfRow result(N, 9);
+
+  for (Eigen::Index i = 0; i < N; ++i) {
+    const float w = quat(i, 0), x = quat(i, 1), y = quat(i, 2), z = quat(i, 3);
+    const float xx = x * x, yy = y * y, zz = z * z;
+    const float xy = x * y, xz = x * z, yz = y * z;
+    const float wx = w * x, wy = w * y, wz = w * z;
+
+    // clang-format off
+    result.row(i) <<
+        1.0f - 2.0f * yy - 2.0f * zz,  2.0f * xy - 2.0f * wz,        2.0f * xz + 2.0f * wy,
+        2.0f * xy + 2.0f * wz,          1.0f - 2.0f * xx - 2.0f * zz,  2.0f * yz - 2.0f * wx,
+        2.0f * xz - 2.0f * wy,          2.0f * yz + 2.0f * wx,          1.0f - 2.0f * xx - 2.0f * yy;
+    // clang-format on
+  }
+  return result;
+}
+
 }  // namespace doodle::ai
