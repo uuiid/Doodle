@@ -11,6 +11,7 @@
 #include <doodle_lib/ai/motion_rep/geometry.h>
 
 #include <algorithm>
+#include <boost/numeric/conversion/cast.hpp>
 #include <cmath>
 #include <spdlog/spdlog.h>
 #include <unordered_map>
@@ -105,7 +106,7 @@ std::pair<MatrixXfRow, MatrixXfRow> extract_input_motion_from_constraints(
     }
     if (valid_indices.empty()) continue;
 
-    const auto K = static_cast<Eigen::Index>(valid_indices.size());
+    const auto K = boost::numeric_cast<Eigen::Index>(valid_indices.size());
 
     // Root2DConstraintSet: 仅设置 xz
     if (auto* r = dynamic_cast<const root2d_constraint_set*>(constraint.get())) {
@@ -359,10 +360,10 @@ post_process_result post_process_motion(
 
   // joint_parents_vec: 名称→索引 映射
   std::unordered_map<std::string, int> name_to_idx;
-  for (int j = 0; j < static_cast<int>(num_joints); ++j) name_to_idx[working_rig[j].name] = j;
+  for (int j = 0; j < boost::numeric_cast<int>(num_joints); ++j) name_to_idx[working_rig[j].name] = j;
 
   std::vector<int> joint_parents_vec(num_joints);
-  for (int j = 0; j < static_cast<int>(num_joints); ++j) {
+  for (int j = 0; j < boost::numeric_cast<int>(num_joints); ++j) {
     joint_parents_vec[j] = working_rig[j].parent.empty() ? -1 : name_to_idx.at(working_rig[j].parent);
   }
 
@@ -372,14 +373,14 @@ post_process_result post_process_motion(
           !skeleton.left_foot_joint_idx_.empty() && !skeleton.right_foot_joint_idx_.empty(),
       "Skeleton must have hand and foot joints defined"
   );
-  int left_hand_idx  = static_cast<int>(skeleton.left_hand_joint_idx_[0]);
-  int right_hand_idx = static_cast<int>(skeleton.right_hand_joint_idx_[0]);
-  int left_foot_idx  = static_cast<int>(skeleton.left_foot_joint_idx_[0]);
-  int right_foot_idx = static_cast<int>(skeleton.right_foot_joint_idx_[0]);
+  int left_hand_idx  = boost::numeric_cast<int>(skeleton.left_hand_joint_idx_[0]);
+  int right_hand_idx = boost::numeric_cast<int>(skeleton.right_hand_joint_idx_[0]);
+  int left_foot_idx  = boost::numeric_cast<int>(skeleton.left_foot_joint_idx_[0]);
+  int right_foot_idx = boost::numeric_cast<int>(skeleton.right_foot_joint_idx_[0]);
 
   // 查找脚趾关节（父关节为脚）
   int left_toe_idx = -1, right_toe_idx = -1;
-  for (int j = 0; j < static_cast<int>(num_joints); ++j) {
+  for (int j = 0; j < boost::numeric_cast<int>(num_joints); ++j) {
     if (joint_parents_vec[j] == left_foot_idx) left_toe_idx = j;
     if (joint_parents_vec[j] == right_foot_idx) right_toe_idx = j;
   }
@@ -393,10 +394,10 @@ post_process_result post_process_motion(
 
     // --- posesFixed: 待校正的当前运动 [T][J] ---
     std::vector<std::vector<Math::Transform>> posesFixed(T, defaultPose);
-    for (int f = 0; f < static_cast<int>(T); ++f) {
-      auto bt = static_cast<Eigen::Index>(b * T + f);
+    for (int f = 0; f < boost::numeric_cast<int>(T); ++f) {
+      auto bt = boost::numeric_cast<Eigen::Index>(b * T + f);
       posesFixed[f][0].SetTranslation(Math::Vector(hip_corrected(bt, 0), hip_corrected(bt, 1), hip_corrected(bt, 2)));
-      for (int j = 0; j < static_cast<int>(num_joints); ++j) {
+      for (int j = 0; j < boost::numeric_cast<int>(num_joints); ++j) {
         // rots_corrected: (w, x, y, z) → Math::Quaternion(x, y, z, w)
         Math::Quaternion q(
             rots_corrected(bt, j * 4 + 1), rots_corrected(bt, j * 4 + 2), rots_corrected(bt, j * 4 + 3),
@@ -409,10 +410,10 @@ post_process_result post_process_motion(
 
     // --- posesTarget: 目标运动（来自约束）[T][J] ---
     std::vector<std::vector<Math::Transform>> posesTarget(T, defaultPose);
-    for (int f = 0; f < static_cast<int>(T); ++f) {
-      auto bt = static_cast<Eigen::Index>(b * T + f);
+    for (int f = 0; f < boost::numeric_cast<int>(T); ++f) {
+      auto bt = boost::numeric_cast<Eigen::Index>(b * T + f);
       posesTarget[f][0].SetTranslation(Math::Vector(hip_input(bt, 0), hip_input(bt, 1), hip_input(bt, 2)));
-      for (int j = 0; j < static_cast<int>(num_joints); ++j) {
+      for (int j = 0; j < boost::numeric_cast<int>(num_joints); ++j) {
         // rots_input: (w, x, y, z) → Math::Quaternion(x, y, z, w)
         Math::Quaternion q(
             rots_input(bt, j * 4 + 1), rots_input(bt, j * 4 + 2), rots_input(bt, j * 4 + 3), rots_input(bt, j * 4 + 0)
@@ -433,7 +434,7 @@ post_process_result post_process_motion(
     endEffectorPins[3].jointIndex = right_foot_idx;
     endEffectorPins[3].hintOffset = Math::Vector(0.0f, 0.0f, 0.1f);
 
-    for (int f = 0; f < static_cast<int>(T); ++f) {
+    for (int f = 0; f < boost::numeric_cast<int>(T); ++f) {
       endEffectorPins[0].contactMask.push_back((1.0f - masks.full_body[f]) * masks.left_hand[f]);
       endEffectorPins[1].contactMask.push_back((1.0f - masks.full_body[f]) * masks.right_hand[f]);
       endEffectorPins[2].contactMask.push_back((1.0f - masks.full_body[f]) * masks.left_foot[f]);
@@ -457,8 +458,8 @@ post_process_result post_process_motion(
     auto& lContacts           = contactInfo[1].contactMask;
     rContacts.resize(T);
     lContacts.resize(T);
-    for (int f = 0; f < static_cast<int>(T); ++f) {
-      auto bt      = static_cast<Eigen::Index>(b * T + f);
+    for (int f = 0; f < boost::numeric_cast<int>(T); ++f) {
+      auto bt      = boost::numeric_cast<Eigen::Index>(b * T + f);
       // contacts 布局: [left_heel, left_toe, right_heel, right_toe]
       rContacts[f] = masks.right_foot[f] ? 0.0f : contacts(bt, 2);
       lContacts[f] = masks.left_foot[f] ? 0.0f : contacts(bt, 0);
@@ -482,8 +483,8 @@ post_process_result post_process_motion(
       auto& lToeContacts         = contactInfo[3].contactMask;
       rToeContacts.resize(T);
       lToeContacts.resize(T);
-      for (int f = 0; f < static_cast<int>(T); ++f) {
-        auto bt         = static_cast<Eigen::Index>(b * T + f);
+      for (int f = 0; f < boost::numeric_cast<int>(T); ++f) {
+        auto bt         = boost::numeric_cast<Eigen::Index>(b * T + f);
         rToeContacts[f] = masks.right_foot[f] ? 0.0f : contacts(bt, 3);
         lToeContacts[f] = masks.left_foot[f] ? 0.0f : contacts(bt, 1);
       }
@@ -496,14 +497,14 @@ post_process_result post_process_motion(
     );
 
     // --- 写回结果 ---
-    for (int f = 0; f < static_cast<int>(T); ++f) {
-      auto bt              = static_cast<Eigen::Index>(b * T + f);
+    for (int f = 0; f < boost::numeric_cast<int>(T); ++f) {
+      auto bt              = boost::numeric_cast<Eigen::Index>(b * T + f);
       auto t               = posesFixed[f][0].GetTranslation();
       hip_corrected(bt, 0) = t.GetX();
       hip_corrected(bt, 1) = t.GetY();
       hip_corrected(bt, 2) = t.GetZ();
 
-      for (int j = 0; j < static_cast<int>(num_joints); ++j) {
+      for (int j = 0; j < boost::numeric_cast<int>(num_joints); ++j) {
         auto q                        = posesFixed[f][j].GetRotation();
         // Math::Quaternion 内部: ((float*)&q)[0]=x, [1]=y, [2]=z, [3]=w
         // rots_corrected 存储: (w, x, y, z)
