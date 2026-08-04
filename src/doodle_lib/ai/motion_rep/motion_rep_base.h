@@ -34,7 +34,7 @@ struct motion_stats {
   void load(const FSys::path& folder);
 
   /// @brief 从内存注册统计值
-  void set_from_vectors(const Eigen::VectorXf& in_mean, const Eigen::VectorXf& in_std) {
+  void set_from_vectors(const Eigen::VectorXd& in_mean, const Eigen::VectorXd& in_std) {
     mean = in_mean;
     std  = in_std;
   }

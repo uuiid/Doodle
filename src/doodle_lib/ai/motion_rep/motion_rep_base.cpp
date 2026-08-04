@@ -59,7 +59,8 @@ MatrixXfRow motion_stats::normalize(const MatrixXfRow& data) const {
   const auto mean_arr = mean.transpose().replicate(data.rows(), 1);
   const auto std_arr  = std.transpose().replicate(data.rows(), 1);
 
-  return (data.array() - mean_arr.array()) / (std_arr.array().square() + eps).sqrt();
+  return ((data.cast<std::double_t>().array() - mean_arr.array()) / (std_arr.array().square() + eps).sqrt())
+      .cast<std::float_t>();
 }
 
 MatrixXfRow motion_stats::unnormalize(const MatrixXfRow& data) const {
@@ -69,7 +70,8 @@ MatrixXfRow motion_stats::unnormalize(const MatrixXfRow& data) const {
   const auto mean_arr = mean.transpose().replicate(data.rows(), 1);
   const auto std_arr  = std.transpose().replicate(data.rows(), 1);
 
-  return data.array() * (std_arr.array().square() + eps).sqrt() + mean_arr.array();
+  return (data.cast<std::double_t>().array() * (std_arr.array().square() + eps).sqrt() + mean_arr.array())
+      .cast<std::float_t>();
 }
 
 // ======================================================================
@@ -116,8 +118,8 @@ void motion_rep_base::load_stats(const FSys::path& stats_path) {
   // 合并统计（global_root + body）
   DOODLE_CHICK(global_root_stats_.is_valid(), "global_root_stats_ 未初始化");
   DOODLE_CHICK(body_stats_.is_valid(), "body_stats_ 未初始化");
-  Eigen::VectorXf combined_mean(global_root_stats_.dim() + body_stats_.dim());
-  Eigen::VectorXf combined_std(global_root_stats_.dim() + body_stats_.dim());
+  Eigen::VectorXd combined_mean(global_root_stats_.dim() + body_stats_.dim());
+  Eigen::VectorXd combined_std(global_root_stats_.dim() + body_stats_.dim());
 
   combined_mean.head(global_root_stats_.dim()) = global_root_stats_.mean;
   combined_mean.tail(body_stats_.dim())        = body_stats_.mean;
