@@ -22,7 +22,7 @@ namespace doodle::ai {
 struct working_rig_joint {
   std::string name;
   std::string parent;                        ///< 父关节名，根关节为空
-  std::array<float, 4> t_pose_rotation{};    ///< T-pose 局部旋转四元数 (w, x, y, z)
+  std::array<float, 4> t_pose_rotation{};    ///< T-pose 局部旋转四元数 (x, y, z, w)
   std::array<float, 3> t_pose_translation{}; ///< T-pose 局部平移
   std::string retarget_tag;                  ///< 重定向标签 ("Hips", "LeftHand", ...)
 };

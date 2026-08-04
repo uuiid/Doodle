@@ -3,12 +3,13 @@
 //
 #include "motion_postprocess.h"
 
+#include <doodle_lib/ai/AnimProcessing/Utility.h>
+#include <doodle_lib/ai/Math/Transform.h>
 #include <doodle_lib/ai/motion_rep/geometry.h>
-
-#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cmath>
+#include <spdlog/spdlog.h>
 #include <unordered_map>
 
 namespace doodle::ai {
@@ -20,17 +21,17 @@ namespace doodle::ai {
 std::vector<working_rig_joint> create_working_rig_from_skeleton(
     const skeleton_base& skeleton, float above_ground_offset
 ) {
-  const auto& joint_names      = skeleton.bone_order_names_;
+  const auto& joint_names       = skeleton.bone_order_names_;
   const auto& neutral_positions = skeleton.neutral_joints_;  // [J, 3]
-  const auto& parent_indices   = skeleton.joint_parents_;
-  const auto J                 = skeleton.nbjoints_;
+  const auto& parent_indices    = skeleton.joint_parents_;
+  const auto J                  = skeleton.nbjoints_;
 
   // 构建重定向映射
   std::unordered_map<std::string, std::string> retarget_map;
   {
     // 判断骨骼类型：SOMA 使用名称映射，G1/SMPLX 使用索引映射
-    const bool is_soma = skeleton.name_.find("soma") != std::string::npos ||
-                         skeleton.name_.find("SOMA") != std::string::npos;
+    const bool is_soma =
+        skeleton.name_.find("soma") != std::string::npos || skeleton.name_.find("SOMA") != std::string::npos;
 
     if (is_soma) {
       // SOMA: 名称到自身的映射
@@ -59,22 +60,22 @@ std::vector<working_rig_joint> create_working_rig_from_skeleton(
 
   for (std::int64_t i = 0; i < J; ++i) {
     working_rig_joint joint;
-    joint.name              = joint_names[i];
-    joint.parent            = (parent_indices[i] == -1) ? "" : joint_names[parent_indices[i]];
-    joint.t_pose_rotation   = {1.0f, 0.0f, 0.0f, 0.0f};  // 单位四元数 (w, x, y, z)
+    joint.name            = joint_names[i];
+    joint.parent          = (parent_indices[i] == -1) ? "" : joint_names[parent_indices[i]];
+    joint.t_pose_rotation = {0.0f, 0.0f, 0.0f, 1.0f};  // 单位四元数 (x, y, z, w)，匹配 Math::Quaternion 构造
 
     if (parent_indices[i] == -1) {
       // 根关节：移动使最低点位于地面以上
       joint.t_pose_translation = {
-          neutral_positions(i, 0),
-          neutral_positions(i, 1) - toe_height + above_ground_offset,
-          neutral_positions(i, 2)};
+          neutral_positions(i, 0), neutral_positions(i, 1) - toe_height + above_ground_offset, neutral_positions(i, 2)
+      };
     } else {
-      const auto parent_idx = parent_indices[i];
+      const auto parent_idx    = parent_indices[i];
       joint.t_pose_translation = {
           neutral_positions(i, 0) - neutral_positions(parent_idx, 0),
           neutral_positions(i, 1) - neutral_positions(parent_idx, 1),
-          neutral_positions(i, 2) - neutral_positions(parent_idx, 2)};
+          neutral_positions(i, 2) - neutral_positions(parent_idx, 2)
+      };
     }
 
     // 设置重定向标签
@@ -114,20 +115,17 @@ std::pair<MatrixXfRow, MatrixXfRow> extract_input_motion_from_constraints(
   // 排序：FullBody 放最后处理，确保它覆盖其他约束
   auto sorted = constraint_lst;
   std::stable_sort(sorted.begin(), sorted.end(), [](const constraint_set_ptr& a, const constraint_set_ptr& b) {
-    return a->type_name() == fullbody_constraint_set::name ? false
-         : b->type_name() == fullbody_constraint_set::name ? true
-                                                           : false;
+    return a->type_name() == fullbody_constraint_set::name   ? false
+           : b->type_name() == fullbody_constraint_set::name ? true
+                                                             : false;
   });
 
   for (const auto& constraint : sorted) {
     // 获取有效帧索引（过滤超出范围的索引）
     const auto& raw_indices = [&]() -> const Eigen::VectorXi& {
-      if (auto* r = dynamic_cast<const root2d_constraint_set*>(constraint.get()))
-        return r->frame_indices_;
-      if (auto* f = dynamic_cast<const fullbody_constraint_set*>(constraint.get()))
-        return f->frame_indices_;
-      if (auto* e = dynamic_cast<const end_effector_constraint_set*>(constraint.get()))
-        return e->frame_indices_;
+      if (auto* r = dynamic_cast<const root2d_constraint_set*>(constraint.get())) return r->frame_indices_;
+      if (auto* f = dynamic_cast<const fullbody_constraint_set*>(constraint.get())) return f->frame_indices_;
+      if (auto* e = dynamic_cast<const end_effector_constraint_set*>(constraint.get())) return e->frame_indices_;
       throw std::runtime_error("Unknown constraint type");
     }();
 
@@ -146,34 +144,29 @@ std::pair<MatrixXfRow, MatrixXfRow> extract_input_motion_from_constraints(
     // Root2DConstraintSet: 仅设置 xz
     if (auto* r = dynamic_cast<const root2d_constraint_set*>(constraint.get())) {
       for (Eigen::Index k = 0; k < K; ++k) {
-        auto f                        = valid_indices[k];
-        auto p                        = valid_positions[k];
-        hip_translations(f, 0)        = r->smooth_root_2d_(p, 0);  // x
-        hip_translations(f, 2)        = r->smooth_root_2d_(p, 1);  // z
+        auto f                 = valid_indices[k];
+        auto p                 = valid_positions[k];
+        hip_translations(f, 0) = r->smooth_root_2d_(p, 0);  // x
+        hip_translations(f, 2) = r->smooth_root_2d_(p, 1);  // z
       }
       continue;
     }
 
     // FullBody / EndEffector
-    const auto* global_rots      = [&]() -> const MatrixXfRow* {
-      if (auto* f = dynamic_cast<const fullbody_constraint_set*>(constraint.get()))
-        return &f->global_joints_rots_;
-      if (auto* e = dynamic_cast<const end_effector_constraint_set*>(constraint.get()))
-        return &e->global_joints_rots_;
+    const auto* global_rots = [&]() -> const MatrixXfRow* {
+      if (auto* f = dynamic_cast<const fullbody_constraint_set*>(constraint.get())) return &f->global_joints_rots_;
+      if (auto* e = dynamic_cast<const end_effector_constraint_set*>(constraint.get())) return &e->global_joints_rots_;
       return nullptr;
     }();
     const auto* global_positions = [&]() -> const MatrixXfRow* {
-      if (auto* f = dynamic_cast<const fullbody_constraint_set*>(constraint.get()))
-        return &f->global_joints_positions_;
+      if (auto* f = dynamic_cast<const fullbody_constraint_set*>(constraint.get())) return &f->global_joints_positions_;
       if (auto* e = dynamic_cast<const end_effector_constraint_set*>(constraint.get()))
         return &e->global_joints_positions_;
       return nullptr;
     }();
-    const auto* smooth_root_2d   = [&]() -> const MatrixXfRow* {
-      if (auto* f = dynamic_cast<const fullbody_constraint_set*>(constraint.get()))
-        return &f->smooth_root_2d_;
-      if (auto* e = dynamic_cast<const end_effector_constraint_set*>(constraint.get()))
-        return &e->smooth_root_2d_;
+    const auto* smooth_root_2d = [&]() -> const MatrixXfRow* {
+      if (auto* f = dynamic_cast<const fullbody_constraint_set*>(constraint.get())) return &f->smooth_root_2d_;
+      if (auto* e = dynamic_cast<const end_effector_constraint_set*>(constraint.get())) return &e->smooth_root_2d_;
       return nullptr;
     }();
 
@@ -184,7 +177,7 @@ std::pair<MatrixXfRow, MatrixXfRow> extract_input_motion_from_constraints(
     MatrixXfRow valid_global_positions(K, num_joints * 3);
     MatrixXfRow valid_smooth_root_2d(K, 2);
     for (Eigen::Index k = 0; k < K; ++k) {
-      auto p = valid_positions[k];
+      auto p                        = valid_positions[k];
       valid_global_rots.row(k)      = global_rots->row(p);
       valid_global_positions.row(k) = global_positions->row(p);
       valid_smooth_root_2d.row(k)   = smooth_root_2d->row(p);
@@ -226,7 +219,7 @@ std::pair<MatrixXfRow, MatrixXfRow> extract_input_motion_from_constraints(
 
     // 写回结果
     for (Eigen::Index k = 0; k < K; ++k) {
-      auto f = valid_indices[k];
+      auto f                  = valid_indices[k];
       hip_translations.row(f) = root_positions.row(k);
       for (Eigen::Index j = 0; j < num_joints; ++j) {
         rotations.block(f, j * 4, 1, 4) = local_rot_quats_flat.block(k * num_joints + j, 0, 1, 4);
@@ -250,8 +243,12 @@ struct constraint_masks {
   std::vector<float> root;        // [T]
 
   explicit constraint_masks(std::int64_t num_frames)
-      : full_body(num_frames, 0.0f), left_foot(num_frames, 0.0f), right_foot(num_frames, 0.0f),
-        left_hand(num_frames, 0.0f), right_hand(num_frames, 0.0f), root(num_frames, 0.0f) {}
+      : full_body(num_frames, 0.0f),
+        left_foot(num_frames, 0.0f),
+        right_foot(num_frames, 0.0f),
+        left_hand(num_frames, 0.0f),
+        right_hand(num_frames, 0.0f),
+        root(num_frames, 0.0f) {}
 };
 
 static constraint_masks build_constraint_masks(
@@ -306,9 +303,9 @@ post_process_result post_process_motion(
     const std::vector<constraint_set_ptr>& constraint_lst,
     const std::vector<std::vector<constraint_set_ptr>>& batched_constraints, float contact_threshold, float root_margin
 ) {
-  const auto num_joints = skeleton.nbjoints_;
-  const auto T          = num_frames;
-  const auto B          = batch_size;
+  const auto num_joints  = skeleton.nbjoints_;
+  const auto T           = num_frames;
+  const auto B           = batch_size;
 
   // 确定是否使用批次约束
   const bool use_batched = !batched_constraints.empty();
@@ -328,8 +325,8 @@ post_process_result post_process_motion(
   }
 
   // 创建工作骨骼
-  const bool is_soma = skeleton.name_.find("soma") != std::string::npos ||
-                       skeleton.name_.find("SOMA") != std::string::npos;
+  const bool is_soma =
+      skeleton.name_.find("soma") != std::string::npos || skeleton.name_.find("SOMA") != std::string::npos;
   float above_ground_offset = is_soma ? 0.02f : 0.007f;
   auto working_rig          = create_working_rig_from_skeleton(skeleton, above_ground_offset);
 
@@ -367,15 +364,12 @@ post_process_result post_process_motion(
 
   if (!constraint_lst.empty() || use_batched) {
     for (std::int64_t b = 0; b < B; ++b) {
-      const auto& constraints_for_batch =
-          use_batched ? batched_constraints[b] : constraint_lst;
+      const auto& constraints_for_batch = use_batched ? batched_constraints[b] : constraint_lst;
 
-      auto [hip_t, rots_t] = extract_input_motion_from_constraints(
-          constraints_for_batch, skeleton, T, num_joints
-      );
+      auto [hip_t, rots_t] = extract_input_motion_from_constraints(constraints_for_batch, skeleton, T, num_joints);
       // hip_t: [T, 3], rots_t: [T, J*4]
-      hip_input.block(b * T, 0, T, 3)                 = hip_t;
-      rots_input.block(b * T, 0, T, num_joints * 4)   = rots_t;
+      hip_input.block(b * T, 0, T, 3)               = hip_t;
+      rots_input.block(b * T, 0, T, num_joints * 4) = rots_t;
     }
   }
 
@@ -383,21 +377,182 @@ post_process_result post_process_motion(
   bool has_double_ankle_joints = false;
   {
     // G1Skeleton34 有双踝关节；通过骨骼名称判断
-    const auto& name = skeleton.name_;
-    has_double_ankle_joints =
-        name.find("G1") != std::string::npos || name.find("g1") != std::string::npos;
+    const auto& name        = skeleton.name_;
+    has_double_ankle_joints = name.find("G1") != std::string::npos || name.find("g1") != std::string::npos;
   }
 
   // ======================================================================
-  // correct_motion 占位
-  // 对应 Python 中的 motion_correction.correct_motion() 调用
-  // 在 C++ 中暂不实现，仅记录日志
+  // 构建 Math 骨骼数据（与 Python BindingsPython.cpp 一致）
   // ======================================================================
-  spdlog::warn(
-      "post_process_motion: correct_motion is not implemented in C++. "
-      "Batch={}, Frames={}, Joints={}, contact_threshold={}, root_margin={}",
-      B, T, num_joints, contact_threshold, root_margin
-  );
+
+  // defaultPose: 从 working_rig 构建
+  std::vector<Math::Transform> defaultPose(num_joints);
+  for (std::int64_t j = 0; j < num_joints; ++j) {
+    const auto& rj = working_rig[j];
+    defaultPose[j].SetTranslation(
+        Math::Vector(rj.t_pose_translation[0], rj.t_pose_translation[1], rj.t_pose_translation[2])
+    );
+    // t_pose_rotation: (x, y, z, w) → Math::Quaternion(x, y, z, w)
+    defaultPose[j].SetRotation(
+        Math::Quaternion(rj.t_pose_rotation[0], rj.t_pose_rotation[1], rj.t_pose_rotation[2], rj.t_pose_rotation[3])
+    );
+  }
+
+  // joint_parents_vec: 名称→索引 映射
+  std::unordered_map<std::string, int> name_to_idx;
+  for (int j = 0; j < static_cast<int>(num_joints); ++j) name_to_idx[working_rig[j].name] = j;
+
+  std::vector<int> joint_parents_vec(num_joints);
+  for (int j = 0; j < static_cast<int>(num_joints); ++j) {
+    joint_parents_vec[j] = working_rig[j].parent.empty() ? -1 : name_to_idx.at(working_rig[j].parent);
+  }
+
+  // 从 retarget_tag 查找手/脚索引
+  int left_hand_idx = -1, right_hand_idx = -1, left_foot_idx = -1, right_foot_idx = -1;
+  for (int j = 0; j < static_cast<int>(num_joints); ++j) {
+    if (working_rig[j].retarget_tag == "LeftHand") left_hand_idx = j;
+    if (working_rig[j].retarget_tag == "RightHand") right_hand_idx = j;
+    if (working_rig[j].retarget_tag == "LeftFoot") left_foot_idx = j;
+    if (working_rig[j].retarget_tag == "RightFoot") right_foot_idx = j;
+  }
+
+  // 查找脚趾关节（父关节为脚）
+  int left_toe_idx = -1, right_toe_idx = -1;
+  for (int j = 0; j < static_cast<int>(num_joints); ++j) {
+    if (joint_parents_vec[j] == left_foot_idx) left_toe_idx = j;
+    if (joint_parents_vec[j] == right_foot_idx) right_toe_idx = j;
+  }
+
+  // ======================================================================
+  // 逐批次调用 Animation::CorrectMotion
+  // ======================================================================
+
+  for (std::int64_t b = 0; b < B; ++b) {
+    const auto& masks = masks_per_batch[b];
+
+    // --- posesFixed: 待校正的当前运动 [T][J] ---
+    std::vector<std::vector<Math::Transform>> posesFixed(T, defaultPose);
+    for (int f = 0; f < static_cast<int>(T); ++f) {
+      auto bt = static_cast<Eigen::Index>(b * T + f);
+      posesFixed[f][0].SetTranslation(Math::Vector(hip_corrected(bt, 0), hip_corrected(bt, 1), hip_corrected(bt, 2)));
+      for (int j = 0; j < static_cast<int>(num_joints); ++j) {
+        // rots_corrected: (w, x, y, z) → Math::Quaternion(x, y, z, w)
+        Math::Quaternion q(
+            rots_corrected(bt, j * 4 + 1), rots_corrected(bt, j * 4 + 2), rots_corrected(bt, j * 4 + 3),
+            rots_corrected(bt, j * 4 + 0)
+        );
+        q.Normalize();
+        posesFixed[f][j].SetRotation(q);
+      }
+    }
+
+    // --- posesTarget: 目标运动（来自约束）[T][J] ---
+    std::vector<std::vector<Math::Transform>> posesTarget(T, defaultPose);
+    for (int f = 0; f < static_cast<int>(T); ++f) {
+      auto bt = static_cast<Eigen::Index>(b * T + f);
+      posesTarget[f][0].SetTranslation(Math::Vector(hip_input(bt, 0), hip_input(bt, 1), hip_input(bt, 2)));
+      for (int j = 0; j < static_cast<int>(num_joints); ++j) {
+        // rots_input: (w, x, y, z) → Math::Quaternion(x, y, z, w)
+        Math::Quaternion q(
+            rots_input(bt, j * 4 + 1), rots_input(bt, j * 4 + 2), rots_input(bt, j * 4 + 3), rots_input(bt, j * 4 + 0)
+        );
+        q.Normalize();
+        posesTarget[f][j].SetRotation(q);
+      }
+    }
+
+    // --- endEffectorPins: 左右手 + 左右脚 ---
+    std::vector<Animation::ContactInfo> endEffectorPins(4);
+    endEffectorPins[0].jointIndex = left_hand_idx;
+    endEffectorPins[0].hintOffset = Math::Vector(0.0f, 0.0f, -0.1f);
+    endEffectorPins[1].jointIndex = right_hand_idx;
+    endEffectorPins[1].hintOffset = Math::Vector(0.0f, 0.0f, -0.1f);
+    endEffectorPins[2].jointIndex = left_foot_idx;
+    endEffectorPins[2].hintOffset = Math::Vector(0.0f, 0.0f, 0.1f);
+    endEffectorPins[3].jointIndex = right_foot_idx;
+    endEffectorPins[3].hintOffset = Math::Vector(0.0f, 0.0f, 0.1f);
+
+    for (int f = 0; f < static_cast<int>(T); ++f) {
+      endEffectorPins[0].contactMask.push_back((1.0f - masks.full_body[f]) * masks.left_hand[f]);
+      endEffectorPins[1].contactMask.push_back((1.0f - masks.full_body[f]) * masks.right_hand[f]);
+      endEffectorPins[2].contactMask.push_back((1.0f - masks.full_body[f]) * masks.left_foot[f]);
+      endEffectorPins[3].contactMask.push_back((1.0f - masks.full_body[f]) * masks.right_foot[f]);
+    }
+
+    // --- contactInfo: 脚接触（2-bone IK）+ 可选脚趾（1-bone IK）---
+    std::vector<Animation::ContactInfo> contactInfo(2);
+
+    auto footTrans = Animation::JointLocalToGlobal(joint_parents_vec, right_foot_idx, defaultPose).GetTranslation();
+    contactInfo[0].jointIndex = right_foot_idx;
+    contactInfo[0].hintOffset = Math::Vector(0.0f, 0.0f, 0.1f);
+    contactInfo[0].minHeight  = footTrans.GetY();
+
+    footTrans = Animation::JointLocalToGlobal(joint_parents_vec, left_foot_idx, defaultPose).GetTranslation();
+    contactInfo[1].jointIndex = left_foot_idx;
+    contactInfo[1].hintOffset = Math::Vector(0.0f, 0.0f, 0.1f);
+    contactInfo[1].minHeight  = footTrans.GetY();
+
+    auto& rContacts           = contactInfo[0].contactMask;
+    auto& lContacts           = contactInfo[1].contactMask;
+    rContacts.resize(T);
+    lContacts.resize(T);
+    for (int f = 0; f < static_cast<int>(T); ++f) {
+      auto bt      = static_cast<Eigen::Index>(b * T + f);
+      // contacts 布局: [left_heel, left_toe, right_heel, right_toe]
+      rContacts[f] = masks.right_foot[f] ? 0.0f : contacts(bt, 2);
+      lContacts[f] = masks.left_foot[f] ? 0.0f : contacts(bt, 0);
+      // 合并脚趾接触
+      rContacts[f] = std::min((masks.right_foot[f] ? 0.0f : contacts(bt, 3)) + rContacts[f], 1.0f);
+      lContacts[f] = std::min((masks.left_foot[f] ? 0.0f : contacts(bt, 1)) + lContacts[f], 1.0f);
+    }
+
+    if (left_toe_idx != -1 && right_toe_idx != -1) {
+      auto toeTrans = Animation::JointLocalToGlobal(joint_parents_vec, right_toe_idx, defaultPose).GetTranslation();
+
+      contactInfo.resize(4);
+      contactInfo[2].jointIndex  = right_toe_idx;
+      contactInfo[2].contactType = Animation::kOneBone;
+      contactInfo[2].minHeight   = toeTrans.GetY();
+      contactInfo[3].jointIndex  = left_toe_idx;
+      contactInfo[3].contactType = Animation::kOneBone;
+      contactInfo[3].minHeight   = toeTrans.GetY();
+
+      auto& rToeContacts         = contactInfo[2].contactMask;
+      auto& lToeContacts         = contactInfo[3].contactMask;
+      rToeContacts.resize(T);
+      lToeContacts.resize(T);
+      for (int f = 0; f < static_cast<int>(T); ++f) {
+        auto bt         = static_cast<Eigen::Index>(b * T + f);
+        rToeContacts[f] = masks.right_foot[f] ? 0.0f : contacts(bt, 3);
+        lToeContacts[f] = masks.left_foot[f] ? 0.0f : contacts(bt, 1);
+      }
+    }
+
+    // --- 调用核心校正 ---
+    Animation::CorrectMotion(
+        posesFixed, posesTarget, masks.full_body, masks.root, contactInfo, endEffectorPins, joint_parents_vec,
+        defaultPose, contact_threshold, root_margin, has_double_ankle_joints
+    );
+
+    // --- 写回结果 ---
+    for (int f = 0; f < static_cast<int>(T); ++f) {
+      auto bt              = static_cast<Eigen::Index>(b * T + f);
+      auto t               = posesFixed[f][0].GetTranslation();
+      hip_corrected(bt, 0) = t.GetX();
+      hip_corrected(bt, 1) = t.GetY();
+      hip_corrected(bt, 2) = t.GetZ();
+
+      for (int j = 0; j < static_cast<int>(num_joints); ++j) {
+        auto q                        = posesFixed[f][j].GetRotation();
+        // Math::Quaternion 内部: ((float*)&q)[0]=x, [1]=y, [2]=z, [3]=w
+        // rots_corrected 存储: (w, x, y, z)
+        rots_corrected(bt, j * 4 + 0) = reinterpret_cast<const float*>(&q)[3];  // w
+        rots_corrected(bt, j * 4 + 1) = reinterpret_cast<const float*>(&q)[0];  // x
+        rots_corrected(bt, j * 4 + 2) = reinterpret_cast<const float*>(&q)[1];  // y
+        rots_corrected(bt, j * 4 + 3) = reinterpret_cast<const float*>(&q)[2];  // z
+      }
+    }
+  }
 
   // 将四元数转换回旋转矩阵 [B*T, J*9]
   MatrixXfRow local_rot_mats_corrected(B * T, num_joints * 9);
