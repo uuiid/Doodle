@@ -51,6 +51,7 @@ MatrixXfRow load_npy_matrix(const FSys::path& file_path, std::int64_t expected_c
   DOODLE_CHICK(FSys::exists(file_path), "npy 文件不存在: {}", file_path.string());
 
   auto data = cnpy::npy_load(file_path.string());
+  DOODLE_CHICK(data.word_size == sizeof(float), "npy 文件 {} 数据类型不是 float32", file_path.string());
   DOODLE_CHICK(data.shape.size() >= 1, "npy 文件 {} shape 无效", file_path.string());
 
   // 计算总元素数

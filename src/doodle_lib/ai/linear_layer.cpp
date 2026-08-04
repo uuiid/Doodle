@@ -14,6 +14,7 @@ void linear_layer::load(const FSys::path& weight_path, const FSys::path& bias_pa
 
   // 加载权重
   auto l_data = cnpy::npy_load(weight_path.string());
+  DOODLE_CHICK(l_data.word_size == sizeof(float), "linear_layer 权重数据类型不是 float32: {}", weight_path.string());
   DOODLE_CHICK(l_data.shape.size() >= 2, "linear_layer 权重 shape 维度不足: {}", weight_path.string());
   std::int64_t rows = l_data.shape[0];
   std::int64_t cols = l_data.shape[1];
@@ -26,12 +27,13 @@ void linear_layer::load(const FSys::path& weight_path, const FSys::path& bias_pa
   Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> w_map(
       l_data.data<float>(), rows, cols
   );
-  weight_  = w_map;
+  weight_   = w_map;
   weight_T_ = weight_.transpose();  // 预转置，forward 时直接用 input * weight_T_
 
   // 加载偏置（可选）
   if (!bias_path.empty()) {
     auto b_data = cnpy::npy_load(bias_path.string());
+    DOODLE_CHICK(b_data.word_size == sizeof(float), "linear_layer 偏置数据类型不是 float32: {}", bias_path.string());
     DOODLE_CHICK(b_data.shape.size() == 1, "linear_layer 偏置 shape 应为 1D: {}", bias_path.string());
     DOODLE_CHICK(
         static_cast<std::int64_t>(b_data.shape[0]) == rows, "linear_layer 偏置大小 {} 不匹配权重行数 {}: {}",

@@ -24,11 +24,19 @@ void motion_stats::load(const FSys::path& folder) {
 
   // 加载 mean.npy（应为 1D 向量）
   auto mean_data = cnpy::npy_load(mean_path.string());
+  // 检查加载的数据类型是否是 float32
+  DOODLE_CHICK(
+      mean_data.word_size == sizeof(float), "mean.npy 数据类型应为 float32，当前字节大小: {}", mean_data.word_size
+  );
+
   DOODLE_CHICK(mean_data.shape.size() == 1, "mean.npy shape 应为 1D，当前维度数: {}", mean_data.shape.size());
   Eigen::Map<Eigen::VectorXf> mean_map(mean_data.data<float>(), static_cast<Eigen::Index>(mean_data.shape[0]));
 
   // 加载 std.npy（应为 1D 向量）
   auto std_data = cnpy::npy_load(std_path.string());
+  DOODLE_CHICK(
+      std_data.word_size == sizeof(float), "std.npy 数据类型应为 float32，当前字节大小: {}", std_data.word_size
+  );
   DOODLE_CHICK(std_data.shape.size() == 1, "std.npy shape 应为 1D，当前维度数: {}", std_data.shape.size());
   DOODLE_CHICK(
       std_data.shape[0] == mean_data.shape[0], "mean.npy 长度 {} 与 std.npy 长度 {} 不匹配", mean_data.shape[0],
