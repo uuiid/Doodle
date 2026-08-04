@@ -12,6 +12,7 @@ target_sources(
         motion_rep/feature_utils.h
         motion_rep/geometry.h
         motion_rep/kimodo_motion_rep.h
+        motion_rep/motion_postprocess.h
         motion_rep/motion_rep_base.h
         skeleton/skeleton_base.h
         positional_encoding.h
@@ -32,9 +33,13 @@ target_sources(
         motion_rep/feature_utils.cpp
         motion_rep/geometry.cpp
         motion_rep/kimodo_motion_rep.cpp
+        motion_rep/motion_postprocess.cpp
         motion_rep/motion_rep_base.cpp
         skeleton/skeleton_base.cpp
         timestep_embedder.cpp
         transformer_encoder_block.cpp
         twostage_denoiser.cpp
 )
+
+add_subdirectory(AnimProcessing)
+add_subdirectory(Math)
