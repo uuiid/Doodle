@@ -38,7 +38,7 @@ struct motion_output {
   friend void to_json(nlohmann::json& j, const motion_output& p) {
     p.save_matrix_to_json_3_3(j["local_rot_mats"], p.local_rot_mats);
     p.save_matrix_to_json_3_3(j["global_rot_mats"], p.global_rot_mats);
-    p.save_matrix_to_json_3(j["posed_joints"], p.posed_joints);
+    // p.save_matrix_to_json_3(j["posed_joints"], p.posed_joints);
     p.save_matrix_to_json(j["root_positions"], p.root_positions);
     p.save_matrix_to_json(j["smooth_root_pos"], p.smooth_root_pos);
     // p.save_matrix_to_json(j, p.foot_contacts);

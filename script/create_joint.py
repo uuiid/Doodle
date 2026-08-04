@@ -73,15 +73,15 @@ def create_joints_from_skeleton(skeleton_data):
 
 def apply_animation_from_response(created_joints, response_data):
     """将 motion_output 数据作为关键帧动画应用到已创建的关节上。"""
-    posed_joints = response_data["posed_joints"]            # [T, J, 3]
+    # posed_joints = response_data["posed_joints"]            # [T, J, 3]
     local_rot_mats = response_data["local_rot_mats"]        # [T, J, 3, 3]
     smooth_root_pos = response_data["smooth_root_pos"]      # [T, 3]
     global_root_heading = response_data["global_root_heading"]  # [T, 2]
     fps = response_data.get("fps", 30.0)
     fps = int(fps)
 
-    num_frames = len(posed_joints)
-    num_joints = len(posed_joints[0])
+    num_frames = len(local_rot_mats)
+    num_joints = len(local_rot_mats[0])
 
     cmds.currentUnit(time=f"{fps}fps")
     start_frame = 1
