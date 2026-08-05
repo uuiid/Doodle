@@ -67,6 +67,8 @@ def create_joints_from_skeleton(skeleton_data):
         cmds.setAttr(f"{jnt}.jointOrientX", 0)
         cmds.setAttr(f"{jnt}.jointOrientY", 0)
         cmds.setAttr(f"{jnt}.jointOrientZ", 0)
+        # 设置 radius 为 0.02，便于在 Maya 中查看
+        cmds.setAttr(f"{jnt}.radius", 0.02)
 
     return created
 
