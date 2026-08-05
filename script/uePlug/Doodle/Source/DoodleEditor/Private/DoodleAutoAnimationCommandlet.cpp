@@ -1169,6 +1169,8 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			L_Actor->AddInstanceComponent(L_Com);
 			L_Com->AttachToComponent(L_Actor->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 			L_Com->GroomAsset = L_GroomAsset;
+			// 设置灯光通道为1通道
+			L_Com->SetLightingChannels(false, true, false);
 			if (L_GroomCacheOrBind.GroomCache)
 				L_Com->GroomCache = L_GroomCacheOrBind.GroomCache;
 			else if (L_GroomCacheOrBind.GroomBindingAsset)
