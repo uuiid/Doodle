@@ -247,19 +247,7 @@ class kimodo {
       std::int64_t& num_frame, std::int64_t nb_transition
   );
 
-  /// @brief 混合过渡帧：平移回原位、拆分、Alpha 混合
-  /// @param[in,out] motion 生成的运动 [1*(nb_transition+num_frame), D] → 截断为 [1*num_frame, D]
-  /// @param[in] prev_latest_frames 上一段末尾过渡帧 [1*nb_transition, D]
-  /// @param[in] prev_smooth_root_2d 平移量 [1, 2]
-  /// @param[in] nb_transition 过渡帧数
-  /// @param[in] num_frame 段帧数（含过渡帧）
-  /// @return 混合后的过渡帧 [1*nb_transition, D]
-  MatrixXfRow blend_transition(
-      MatrixXfRow& motion, const MatrixXfRow& prev_latest_frames, const MatrixXfRow& prev_smooth_root_2d,
-      std::int64_t nb_transition, std::int64_t num_frame
-  );
-
- public:
+  public:
   kimodo()                         = default;
   ~kimodo()                        = default;
 

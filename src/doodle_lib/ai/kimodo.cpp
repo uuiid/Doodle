@@ -306,40 +306,6 @@ kimodo::transition_prep_result kimodo::prepare_transition(
 }
 
 // ======================================================================
-// blend_transition: 混合过渡帧
-// ======================================================================
-MatrixXfRow kimodo::blend_transition(
-    MatrixXfRow& motion, const MatrixXfRow& prev_latest_frames, const MatrixXfRow& prev_smooth_root_2d,
-    std::int64_t nb_transition, std::int64_t num_frame
-) {
-  const std::int64_t D       = motion_rep_->motion_rep_dim();
-
-  // 平移回原始位置
-  motion                     = motion_rep_->translate_2d(motion, prev_smooth_root_2d, 1, num_frame);
-
-  // 拆分: [transition_frames, segment_frames]
-  MatrixXfRow new_transition = motion.topRows(nb_transition);
-  motion                     = motion.bottomRows(num_frame - nb_transition).eval();
-
-  // Alpha 混合: old * alpha + new * (1-alpha), alpha = linspace(1, 0, nb_transition)
-  Eigen::VectorXf alpha(nb_transition);
-  if (nb_transition == 1) {
-    alpha(0) = 1.0f;
-  } else {
-    for (std::int64_t i = 0; i < nb_transition; ++i)
-      alpha(static_cast<Eigen::Index>(i)) = 1.0f - static_cast<float>(i) / static_cast<float>(nb_transition - 1);
-  }
-
-  MatrixXfRow blended(nb_transition, D);
-  for (std::int64_t i = 0; i < nb_transition; ++i) {
-    const float a  = alpha(static_cast<Eigen::Index>(i));
-    blended.row(i) = a * prev_latest_frames.row(i) + (1.0f - a) * new_transition.row(i);
-  }
-
-  return blended;
-}
-
-// ======================================================================
 // generate: 多段顺序生成（对应 Python _multiprompt）
 // ======================================================================
 motion_output kimodo::generate(const std::vector<generate_segment_args>& segments) {
