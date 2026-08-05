@@ -1163,8 +1163,11 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 		AActor* L_Actor = L_Value.Actor;
 		for (auto&& [L_GroomAsset, L_GroomCacheOrBind] : L_Value.GroomMap)
 		{
-			UGroomComponent* L_Com = CastChecked<UGroomComponent>(L_Actor->AddComponentByClass(UGroomComponent::StaticClass(), false,
-				FTransform::Identity, false));
+			UGroomComponent* L_Com = NewObject<UGroomComponent>(L_Actor, NAME_None, RF_Transactional);
+			L_Com->OnComponentCreated();
+			L_Com->RegisterComponent();
+			L_Actor->AddInstanceComponent(L_Com);
+			L_Com->AttachToComponent(L_Actor->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 			L_Com->GroomAsset = L_GroomAsset;
 			if (L_GroomCacheOrBind.GroomCache)
 				L_Com->GroomCache = L_GroomCacheOrBind.GroomCache;
@@ -1174,6 +1177,8 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 				UE_LOG(LogTemp, Error, TEXT("GroomMap not contains GroomCache or GroomBindingAsset for %s"),
 				*L_GroomAsset->GetName()
 			);
+			L_Com->Modify();
+			L_Actor->Modify();
 			const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Com->GetName(), L_Com->GetClass());
 			if (FMovieScenePossessable* L_Poss = TheLevelSequence->GetMovieScene()->FindPossessable(L_GUID))
 			{
