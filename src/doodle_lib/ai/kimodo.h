@@ -142,30 +142,26 @@ struct generate_segment_args {
   cfg_type cfg_type_{cfg_type::separated};
   float first_heading_angle_{0.0f};
   std::int32_t num_transition_frames_{10};
-  bool post_processing_{false};
+  bool post_processing_{true};
   float root_margin_{0.0f};
   nlohmann::json constraint_lst_{};
   std::vector<constraint_set_ptr> constraints_{};
 
   friend void from_json(const nlohmann::json& j, generate_segment_args& p) {
-    if (j.contains("text") && j.at("text").is_string())
-      j.at("text").get_to(p.text_);
-    if (j.contains("num_frames") && j.at("num_frames").is_number_integer())
-      j.at("num_frames").get_to(p.num_frames_);
+    if (j.contains("text") && j.at("text").is_string()) j.at("text").get_to(p.text_);
+    if (j.contains("num_frames") && j.at("num_frames").is_number_integer()) j.at("num_frames").get_to(p.num_frames_);
     if (j.contains("num_denoising_steps") && j.at("num_denoising_steps").is_number_integer())
       j.at("num_denoising_steps").get_to(p.num_denoising_steps_);
     if (j.contains("cfg_weight") && j.at("cfg_weight").is_array() && j.at("cfg_weight").size() > 0)
       j.at("cfg_weight").get_to(p.cfg_weight_);
-    if (j.contains("cfg_type") && j.at("cfg_type").is_string())
-      j.at("cfg_type").get_to(p.cfg_type_);
+    if (j.contains("cfg_type") && j.at("cfg_type").is_string()) j.at("cfg_type").get_to(p.cfg_type_);
     if (j.contains("first_heading_angle") && j.at("first_heading_angle").is_number())
       j.at("first_heading_angle").get_to(p.first_heading_angle_);
     if (j.contains("num_transition_frames") && j.at("num_transition_frames").is_number_integer())
       j.at("num_transition_frames").get_to(p.num_transition_frames_);
     if (j.contains("post_processing") && j.at("post_processing").is_boolean())
       j.at("post_processing").get_to(p.post_processing_);
-    if (j.contains("root_margin") && j.at("root_margin").is_number())
-      j.at("root_margin").get_to(p.root_margin_);
+    if (j.contains("root_margin") && j.at("root_margin").is_number()) j.at("root_margin").get_to(p.root_margin_);
     if (j.contains("constraint_lst") && j.at("constraint_lst").is_array())
       j.at("constraint_lst").get_to(p.constraint_lst_);
   }
@@ -207,8 +203,8 @@ class kimodo {
 
   /// @brief 过渡准备结果
   struct transition_prep_result {
-    MatrixXfRow prev_smooth_root_2d;           ///< [1, 2] 新段起点的平滑根位置 (x, z)
-    float heading_val;                         ///< 新段朝向角（弧度）
+    MatrixXfRow prev_smooth_root_2d;                    ///< [1, 2] 新段起点的平滑根位置 (x, z)
+    float heading_val;                                  ///< 新段朝向角（弧度）
     std::vector<constraint_set_ptr> trans_constraints;  ///< 过渡约束（FullBody + EndEffector），供后处理使用
   };
 
@@ -242,12 +238,11 @@ class kimodo {
   /// @param[in,out] num_frame 帧数（增加过渡帧）
   /// @param[in] nb_transition 当前段过渡帧数
   transition_prep_result prepare_transition(
-      std::vector<MatrixXfRow>& generated_motions, MatrixXfRow& prev_latest_frames,
-      std::int64_t prev_nb_transition, MatrixXfRow& observed_motion, MatrixXfRow& motion_mask_f,
-      std::int64_t& num_frame, std::int64_t nb_transition
+      std::vector<MatrixXfRow>& generated_motions, MatrixXfRow& prev_latest_frames, std::int64_t prev_nb_transition,
+      MatrixXfRow& observed_motion, MatrixXfRow& motion_mask_f, std::int64_t& num_frame, std::int64_t nb_transition
   );
 
-  public:
+ public:
   kimodo()                         = default;
   ~kimodo()                        = default;
 
