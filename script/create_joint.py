@@ -149,7 +149,7 @@ def create_animation_from_response(response_json_path, skeleton_json_path):
     print(f"Creating {len(skeleton_data['bone_order_names'])} joints...")
     created_joints = create_joints_from_skeleton(skeleton_data)
 
-    print(f"Applying animation ({len(response_data['posed_joints'])} frames)...")
+    print(f"Applying animation ({len(response_data['local_rot_mats'])} frames)...")
     apply_animation_from_response(created_joints, response_data)
 
     print("Done.")
