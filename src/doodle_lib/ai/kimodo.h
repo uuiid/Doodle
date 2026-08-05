@@ -142,7 +142,6 @@ struct generate_segment_args {
   cfg_type cfg_type_{cfg_type::separated};
   float first_heading_angle_{0.0f};
   std::int32_t num_transition_frames_{10};
-  bool post_processing_{true};
   float root_margin_{0.0f};
   nlohmann::json constraint_lst_{};
   std::vector<constraint_set_ptr> constraints_{};
@@ -159,8 +158,6 @@ struct generate_segment_args {
       j.at("first_heading_angle").get_to(p.first_heading_angle_);
     if (j.contains("num_transition_frames") && j.at("num_transition_frames").is_number_integer())
       j.at("num_transition_frames").get_to(p.num_transition_frames_);
-    if (j.contains("post_processing") && j.at("post_processing").is_boolean())
-      j.at("post_processing").get_to(p.post_processing_);
     if (j.contains("root_margin") && j.at("root_margin").is_number()) j.at("root_margin").get_to(p.root_margin_);
     if (j.contains("constraint_lst") && j.at("constraint_lst").is_array())
       j.at("constraint_lst").get_to(p.constraint_lst_);
