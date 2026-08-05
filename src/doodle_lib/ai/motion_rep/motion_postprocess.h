@@ -45,11 +45,8 @@ struct post_process_result {
 
 /// @brief 从骨骼创建工作骨骼（对应 Python create_working_rig_from_skeleton）
 /// @param skeleton 骨骼定义
-/// @param above_ground_offset 离地偏移量（SOMA 默认 0.02，其他默认 0.007）
 /// @return 工作骨骼关节列表
-std::vector<working_rig_joint> create_working_rig_from_skeleton(
-    const skeleton_base& skeleton, float above_ground_offset = 0.007f
-);
+std::vector<working_rig_joint> create_working_rig_from_skeleton(const skeleton_base& skeleton);
 
 // ======================================================================
 // extract_input_motion_from_constraints

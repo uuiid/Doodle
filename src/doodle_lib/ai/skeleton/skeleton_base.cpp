@@ -298,6 +298,7 @@ std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_30(
 
   auto skel   = std::make_shared<skeleton_base>();
   skel->name_ = "somaskel30";
+  skel->above_ground_offset_ = 0.02f;
 
   skel->init_from_bone_hierarchy({
       {"Hips", ""},

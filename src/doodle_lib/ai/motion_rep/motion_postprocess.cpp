@@ -22,9 +22,7 @@ namespace doodle::ai {
 // create_working_rig_from_skeleton
 // ======================================================================
 
-std::vector<working_rig_joint> create_working_rig_from_skeleton(
-    const skeleton_base& skeleton, float above_ground_offset
-) {
+std::vector<working_rig_joint> create_working_rig_from_skeleton(const skeleton_base& skeleton) {
   const auto& joint_names       = skeleton.bone_order_names_;
   const auto& neutral_positions = skeleton.neutral_joints_;  // [J, 3]
   const auto& parent_indices    = skeleton.joint_parents_;
@@ -45,7 +43,8 @@ std::vector<working_rig_joint> create_working_rig_from_skeleton(
     if (parent_indices[i] == -1) {
       // 根关节：移动使最低点位于地面以上
       joint.t_pose_translation = {
-          neutral_positions(i, 0), neutral_positions(i, 1) - toe_height + above_ground_offset, neutral_positions(i, 2)
+          neutral_positions(i, 0), neutral_positions(i, 1) - toe_height + skeleton.above_ground_offset_,
+          neutral_positions(i, 2)
       };
     } else {
       const auto parent_idx    = parent_indices[i];
@@ -274,10 +273,7 @@ post_process_result post_process_motion(
   }
 
   // 创建工作骨骼
-  const bool is_soma =
-      skeleton.name_.find("soma") != std::string::npos || skeleton.name_.find("SOMA") != std::string::npos;
-  float above_ground_offset = is_soma ? 0.02f : 0.007f;
-  auto working_rig          = create_working_rig_from_skeleton(skeleton, above_ground_offset);
+  auto working_rig = create_working_rig_from_skeleton(skeleton);
 
   // 克隆并准备数据
   MatrixXfRow hip_corrected = root_positions;  // [B*T, 3]
