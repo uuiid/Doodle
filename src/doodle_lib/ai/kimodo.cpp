@@ -6,6 +6,7 @@
 #include <doodle_core/exception/exception.h>
 
 #include <doodle_lib/ai/motion_rep/feature_utils.h>
+#include <doodle_lib/ai/motion_rep/motion_postprocess.h>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -261,6 +262,10 @@ kimodo::transition_prep_result kimodo::prepare_transition(
   );
   ee->update_constraints(trans_dicts[0].data_dict, trans_dicts[0].index_dict);
 
+  // 保存过渡约束，供后处理使用
+  result.trans_constraints.push_back(fb);
+  result.trans_constraints.push_back(ee);
+
   Eigen::VectorXi trans_lengths(1);
   trans_lengths(0) = static_cast<int>(nb_transition);
 
@@ -341,9 +346,7 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
   DOODLE_CHICK(is_valid(), "kimodo 未加载或加载失败");
   DOODLE_CHICK(!segments.empty(), "segments 不能为空");
 
-  const std::int64_t D = motion_rep_->motion_rep_dim();
-
-  /// 已生成的各段运动（motion_rep 特征，未标准化），每个 [1*T_i, D]
+  /// 已生成的各段运动（motion_rep 特征，未标准化），每个 [1*T_i, D]，用于过渡混合
   std::vector<MatrixXfRow> generated_motions;
   /// 上一段末尾过渡帧（用于混合），[1*nb_transition, D]
   MatrixXfRow prev_latest_frames;
@@ -378,6 +381,7 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
     // ====================================================================
     MatrixXfRow prev_smooth_root_2d;  // [1, 2]
     float heading_val = seg.first_heading_angle_;
+    std::vector<constraint_set_ptr> trans_constraints;  // 过渡约束，供后处理使用
 
     if (!is_first) {
       auto trans_prep = prepare_transition(
@@ -386,6 +390,7 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
       );
       prev_smooth_root_2d = std::move(trans_prep.prev_smooth_root_2d);
       heading_val         = trans_prep.heading_val;
+      trans_constraints   = std::move(trans_prep.trans_constraints);
     }
 
     // ====================================================================
@@ -408,24 +413,103 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
     motion = motion_rep_->unnormalize(motion);
 
     // ====================================================================
-    // 后处理：过渡混合 / post_processing
+    // 逐段后处理 / 过渡混合（对应 Python _multiprompt）
     // ====================================================================
-    if (seg.post_processing_) {
-      SPDLOG_WARN("post_processing=true but post_process_motion not implemented in C++, skipping");
-    }
     if (!is_first) {
-      generated_motions.push_back(
-          blend_transition(motion, prev_latest_frames, prev_smooth_root_2d, nb_transition, num_frame)
+      // 平移到原始位置
+      motion                     = motion_rep_->translate_2d(motion, prev_smooth_root_2d, 1, num_frame);
+      const std::int64_t total_T = num_frame;  // nb_transition + original_num_frame
+
+      if (seg.post_processing_) {
+        // 后处理：解码完整 transition+segment → 合并约束 → 后处理 → re-encode
+        motion_output seg_output               = motion_rep_->decode(motion, false, 1, total_T);
+
+        std::vector<constraint_set_ptr> merged = trans_constraints;
+        for (const auto& c : seg.constraints_) {
+          // 将段约束帧索引偏移 nb_transition（过渡帧在前）
+          merged.push_back(
+              std::static_pointer_cast<constraint_set_base>(c->crop_move(-nb_transition, seg.num_frames_))
+          );
+        }
+
+        SPDLOG_INFO(
+            "kimodo: 段 {} 后处理 (含过渡), total_T={}, nb_transition={}, root_margin={}", generated_motions.size(),
+            total_T, nb_transition, seg.root_margin_
+        );
+        MatrixXfRow contacts_float = seg_output.foot_contacts.cast<float>();
+        auto pp_result             = post_process_motion(
+            seg_output.local_rot_mats, seg_output.root_positions, contacts_float, *skeleton_, 1, total_T, merged, 0.5f,
+            seg.root_margin_
+        );
+        seg_output.local_rot_mats  = std::move(pp_result.local_rot_mats);
+        seg_output.root_positions  = std::move(pp_result.root_positions);
+        seg_output.posed_joints    = std::move(pp_result.posed_joints);
+        seg_output.global_rot_mats = std::move(pp_result.global_rot_mats);
+
+        // Re-encode 回 motion_rep 特征
+        Eigen::VectorXi encode_lengths(1);
+        encode_lengths(0) = static_cast<int>(total_T);
+        motion            = motion_rep_->encode(
+            seg_output.local_rot_mats, seg_output.root_positions, false, 1, total_T, encode_lengths
+        );
+
+        generated_motions.push_back(std::move(motion));
+      } else {
+        // 非后处理：拆分 + alpha 混合过渡帧
+        MatrixXfRow new_transition = motion.topRows(nb_transition);
+        motion                     = motion.bottomRows(total_T - nb_transition).eval();
+
+        Eigen::VectorXf alpha(nb_transition);
+        if (nb_transition == 1) {
+          alpha(0) = 1.0f;
+        } else {
+          for (std::int64_t i = 0; i < nb_transition; ++i)
+            alpha(static_cast<Eigen::Index>(i)) = 1.0f - static_cast<float>(i) / static_cast<float>(nb_transition - 1);
+        }
+
+        const std::int64_t D = motion_rep_->motion_rep_dim();
+        MatrixXfRow blended(nb_transition, D);
+        for (std::int64_t i = 0; i < nb_transition; ++i) {
+          const float a  = alpha(static_cast<Eigen::Index>(i));
+          blended.row(i) = a * prev_latest_frames.row(i) + (1.0f - a) * new_transition.row(i);
+        }
+
+        generated_motions.push_back(std::move(blended));
+        generated_motions.push_back(std::move(motion));
+      }
+    } else if (seg.post_processing_) {
+      // 首段后处理：解码 → 后处理 → re-encode
+      motion_output seg_output = motion_rep_->decode(motion, false, 1, num_frame);
+
+      SPDLOG_INFO("kimodo: 首段后处理, num_frame={}, root_margin={}", num_frame, seg.root_margin_);
+      MatrixXfRow contacts_float = seg_output.foot_contacts.cast<float>();
+      auto pp_result             = post_process_motion(
+          seg_output.local_rot_mats, seg_output.root_positions, contacts_float, *skeleton_, 1, num_frame,
+          seg.constraints_, 0.5f, seg.root_margin_
       );
+      seg_output.local_rot_mats  = std::move(pp_result.local_rot_mats);
+      seg_output.root_positions  = std::move(pp_result.root_positions);
+      seg_output.posed_joints    = std::move(pp_result.posed_joints);
+      seg_output.global_rot_mats = std::move(pp_result.global_rot_mats);
+
+      Eigen::VectorXi encode_lengths(1);
+      encode_lengths(0) = static_cast<int>(num_frame);
+      motion            = motion_rep_->encode(
+          seg_output.local_rot_mats, seg_output.root_positions, false, 1, num_frame, encode_lengths
+      );
+
+      generated_motions.push_back(std::move(motion));
+    } else {
+      generated_motions.push_back(std::move(motion));
     }
 
-    generated_motions.push_back(std::move(motion));
-    is_first           = false;
+    is_first = false;
   }
 
   // ======================================================================
-  // 拼接所有段 → 解码
+  // 拼接所有段 → 最终解码（对应 Python torch.cat + inverse）
   // ======================================================================
+  const std::int64_t D      = motion_rep_->motion_rep_dim();
   std::int64_t total_frames = 0;
   for (const auto& m : generated_motions) total_frames += m.rows();
 

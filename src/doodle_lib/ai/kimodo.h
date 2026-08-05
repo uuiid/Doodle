@@ -207,8 +207,9 @@ class kimodo {
 
   /// @brief 过渡准备结果
   struct transition_prep_result {
-    MatrixXfRow prev_smooth_root_2d;  ///< [1, 2] 新段起点的平滑根位置 (x, z)
-    float heading_val;                ///< 新段朝向角（弧度）
+    MatrixXfRow prev_smooth_root_2d;           ///< [1, 2] 新段起点的平滑根位置 (x, z)
+    float heading_val;                         ///< 新段朝向角（弧度）
+    std::vector<constraint_set_ptr> trans_constraints;  ///< 过渡约束（FullBody + EndEffector），供后处理使用
   };
 
   /// @brief 编码文本（对应 Python _generate 中的 self.text_encoder(texts)）
