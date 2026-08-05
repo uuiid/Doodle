@@ -1180,6 +1180,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			L_Com->Modify();
 			L_Actor->Modify();
 			const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Com->GetName(), L_Com->GetClass());
+			TheLevelSequence->BindPossessableObject(L_GUID, *L_Com, TheSequenceWorld);
 			if (FMovieScenePossessable* L_Poss = TheLevelSequence->GetMovieScene()->FindPossessable(L_GUID))
 			{
 				L_Poss->SetParent(L_Value.ActorGuid);
