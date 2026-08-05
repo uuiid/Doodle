@@ -992,6 +992,11 @@ UGroomCache* UDoodleAutoAnimationCommandlet::CreateGroomImportTask(const FString
 	auto L_Obj = L_Data->Factory->ImportObject(L_Data->Factory->ResolveSupportedClass(), Pkg, FName{*L_Name},
 		RF_Public | RF_Standalone | RF_Transactional,
 		InAbcPath, nullptr, bImportWasCancelled);
+	if (!L_Obj)
+	{
+		UE_LOG(LogTemp, Error, TEXT("导入文件失败, 请检查文件 %s"), *InAbcPath);
+		return nullptr;
+	}
 	// const FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
 	// TArray<UObject*> L_Obj = AssetToolsModule.Get().ImportAssetTasks(L_Data);
 	UGroomCache* L_GroomCache = CastChecked<UGroomCache>(L_Obj);
@@ -1138,6 +1143,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 				if (!L_SK_Map.Contains(Mesh))
 					break;
 				UGroomCache* L_GroomCache = CreateGroomImportTask(Path, GroomBind->GetGroom());
+				if (!L_GroomCache) return;
 
 				FImportFiles2GroomMapValue3& L_Value = L_SK_Map[Mesh];
 				if (!L_Value.GroomMap.Contains(GroomBind->GetGroom()))
