@@ -317,12 +317,7 @@ post_process_result post_process_motion(
   }
 
   // 确定是否有双踝关节
-  bool has_double_ankle_joints = false;
-  {
-    // G1Skeleton34 有双踝关节；通过骨骼名称判断
-    const auto& name        = skeleton.name_;
-    has_double_ankle_joints = name.find("G1") != std::string::npos || name.find("g1") != std::string::npos;
-  }
+  bool has_double_ankle_joints = skeleton.has_double_ankle_joints_;
 
   // ======================================================================
   // 构建 Math 骨骼数据（与 Python BindingsPython.cpp 一致）
