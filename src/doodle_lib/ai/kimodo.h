@@ -167,9 +167,9 @@ struct generate_segment_args {
 
 struct generate_arg {
   std::vector<generate_segment_args> segments_;
-  std::shared_ptr<skeleton_base> skeleton_;       ///< 骨骼, 用于最终重定向, 必须和 kimodo::skeleton_ 层级相同
-  std::array<std::double_t, 3> root_trajectory_;  ///< [x, y, z] 根轨迹
-  std::array<std::double_t, 2> root_heading_;     ///< [cos, sin] 根朝向
+  /// 骨骼, 用于最终重定向, 必须和 kimodo::skeleton_ 层级相同, 用于定义Tpost, 必须在原点
+  std::shared_ptr<skeleton_base> skeleton_;
+  MatrixXfRow root_trajectory_;  ///< [x, y, z] 根位置
   friend void from_json(const nlohmann::json& j, generate_arg& p);
 };
 
@@ -268,7 +268,7 @@ class kimodo {
   /// @param segments 段参数列表（至少 1 个元素）
   /// @return 拼接后的完整运动输出
 
-  motion_output generate(const std::vector<generate_segment_args>& segments);
+  motion_output generate(const generate_arg& segments);
 
   [[nodiscard]] bool is_valid() const {
     return denoiser_.is_valid() && diffusion_.is_valid() && motion_rep_ != nullptr;

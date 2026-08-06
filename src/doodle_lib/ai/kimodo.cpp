@@ -21,10 +21,14 @@ void from_json(const nlohmann::json& j, generate_arg& p) {
     p.skeleton_ = std::make_shared<skeleton_base>();
     j.at("skeleton").get_to(*p.skeleton_);
   }
-  if (j.contains("root_trajectory") && j.at("root_trajectory").is_array() && j.at("root_trajectory").size() == 3)
-    j.at("root_trajectory").get_to(p.root_trajectory_);
-  if (j.contains("root_heading") && j.at("root_heading").is_array() && j.at("root_heading").size() == 2)
-    j.at("root_heading").get_to(p.root_heading_);
+  if (j.contains("root_trajectory") && j.at("root_trajectory").is_array() && j.at("root_trajectory").size() == 3) {
+    std::array<std::float_t, 3> root_traj{};
+    j.at("root_trajectory").get_to(root_traj);
+    p.root_trajectory_       = MatrixXfRow(1, 3);
+    p.root_trajectory_(0, 0) = root_traj[0];
+    p.root_trajectory_(0, 1) = root_traj[1];
+    p.root_trajectory_(0, 2) = root_traj[2];
+  }
 }
 
 void kimodo_model_config::load_from_json(const FSys::path& json_path) {
@@ -320,16 +324,16 @@ kimodo::transition_prep_result kimodo::prepare_transition(
 // ======================================================================
 // generate: 多段顺序生成（对应 Python _multiprompt）
 // ======================================================================
-motion_output kimodo::generate(const std::vector<generate_segment_args>& segments) {
+motion_output kimodo::generate(const generate_arg& segments) {
   DOODLE_CHICK(is_valid(), "kimodo 未加载或加载失败");
-  DOODLE_CHICK(!segments.empty(), "segments 不能为空");
+  DOODLE_CHICK(!segments.segments_.empty(), "segments 不能为空");
 
   /// 已生成的各段运动（motion_rep 特征，未标准化），每个 [1*T_i, D]，用于过渡混合
   std::vector<MatrixXfRow> generated_motions;
   /// 上一段末尾过渡帧（用于混合），[1*nb_transition, D]
   MatrixXfRow prev_latest_frames;
 
-  for (auto is_first = true; const auto& seg : segments) {
+  for (auto is_first = true; const auto& seg : segments.segments_) {
     std::int64_t num_frame           = seg.num_frames_;
     const std::int64_t nb_transition = is_first ? 0 : seg.num_transition_frames_;
 
@@ -470,8 +474,24 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
   }
 
   motion_output output = motion_rep_->decode(all_motion, false, 1, total_frames);
-
-  SPDLOG_INFO("kimodo::generate (multiprompt) 完成: {} 段, 总帧数 {}", segments.size(), total_frames);
+  SPDLOG_INFO("kimodo::generate (multiprompt) 完成: {} 段, 总帧数 {}", segments.segments_.size(), total_frames);
+  // 最终重定向 为 arg.skeleton_ 层级
+  if (segments.skeleton_ == nullptr) return output;
+  DOODLE_CHICK(segments.skeleton_->is_valid(), "generate_arg.skeleton_ 无效，无法进行最终重定向");
+  DOODLE_CHICK(
+      segments.skeleton_->nbjoints_ == skeleton_->nbjoints_, "重定向骨骼关节数 {} 与模型骨骼 {} 不匹配",
+      segments.skeleton_->nbjoints_, skeleton_->nbjoints_
+  );
+  MatrixXfRow contacts_float = output.foot_contacts.cast<float>();
+  auto pp_result             = post_process_motion(
+      output.local_rot_mats, output.root_positions, contacts_float, *segments.skeleton_, 1, total_frames, {}, 0.5f, 0.0f
+  );
+  output.local_rot_mats  = std::move(pp_result.local_rot_mats);
+  output.root_positions  = std::move(pp_result.root_positions);
+  output.posed_joints    = std::move(pp_result.posed_joints);
+  output.global_rot_mats = std::move(pp_result.global_rot_mats);
+  // 最后将骨骼位置添加到 root_positions 中
+  output.root_positions.rowwise() += segments.root_trajectory_;
   return output;
 }
 
