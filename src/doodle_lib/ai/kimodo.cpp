@@ -383,17 +383,16 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
     // ====================================================================
     if (!is_first) {
       // 平移到原始位置
-      motion                     = motion_rep_->translate_2d(motion, prev_smooth_root_2d, 1, num_frame);
-      const std::int64_t total_T = num_frame;  // nb_transition + original_num_frame
+      motion                                 = motion_rep_->translate_2d(motion, prev_smooth_root_2d, 1, num_frame);
+      const std::int64_t total_T             = num_frame;  // nb_transition + original_num_frame
 
       // 后处理：解码完整 transition+segment → 合并约束 → 后处理 → re-encode
       motion_output seg_output               = motion_rep_->decode(motion, false, 1, total_T);
 
       std::vector<constraint_set_ptr> merged = trans_constraints;
       for (const auto& c : seg.constraints_) {
-        merged.push_back(
-            std::static_pointer_cast<constraint_set_base>(c->crop_move(-nb_transition, seg.num_frames_))
-        );
+        // crop_move: 将约束裁剪到 [0, num_frames) 范围
+        merged.push_back(c->crop_move(-nb_transition, seg.num_frames_));
       }
 
       SPDLOG_INFO(
@@ -413,9 +412,8 @@ motion_output kimodo::generate(const std::vector<generate_segment_args>& segment
       // Re-encode 回 motion_rep 特征
       Eigen::VectorXi encode_lengths(1);
       encode_lengths(0) = static_cast<int>(total_T);
-      motion            = motion_rep_->encode(
-          seg_output.local_rot_mats, seg_output.root_positions, false, 1, total_T, encode_lengths
-      );
+      motion =
+          motion_rep_->encode(seg_output.local_rot_mats, seg_output.root_positions, false, 1, total_T, encode_lengths);
 
       generated_motions.push_back(std::move(motion));
     } else {
