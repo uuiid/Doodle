@@ -5,9 +5,14 @@
 
 #include <doodle_core/exception/exception.h>
 
+#include <array>
 #include <cnpy.h>
 #include <fmt/format.h>
+#include <map>
 #include <spdlog/spdlog.h>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace doodle::ai {
 
@@ -290,17 +295,9 @@ void apply_semantic_groups(skeleton_base& skel, const semantic_groups& g) {
 // ======================================================================
 // SOMASkeleton30
 // ======================================================================
-
-std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_30(
-    const FSys::path& folder, const FSys::path& in_77_folder
-) {
-  DOODLE_CHICK(!folder.empty(), "创建 SOMASkeleton30 时必须提供 folder 路径");
-
-  auto skel   = std::make_shared<skeleton_base>();
-  skel->name_ = "somaskel30";
-  skel->above_ground_offset_ = 0.02f;
-
-  skel->init_from_bone_hierarchy({
+constexpr auto get_soma_skeleton_30_name() { return "somaskel30"; }
+constexpr auto get_soma_skeleton_30_bone_hierarchy() {
+  return std::vector<std::pair<std::string, std::string>>{
       {"Hips", ""},
       {"Spine1", "Hips"},
       {"Spine2", "Spine1"},
@@ -331,14 +328,34 @@ std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_30(
       {"RightShin", "RightLeg"},
       {"RightFoot", "RightShin"},
       {"RightToeBase", "RightFoot"},
-  });
-
-  auto g = resolve_semantic_groups(
-      *skel, {"LeftFoot", "LeftToeBase"},   // left foot
+  };
+}
+constexpr auto get_soma_skeleton_30_semantic_groups() {
+  return std::vector<std::vector<std::string>>{
+      {"LeftFoot", "LeftToeBase"},          // left foot
       {"RightFoot", "RightToeBase"},        // right foot
       {"LeftHand", "LeftHandMiddleEnd"},    // left hand
       {"RightHand", "RightHandMiddleEnd"},  // right hand
       {"RightLeg", "LeftLeg"}               // hip [right, left]
+  };
+}
+std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_30(
+    const FSys::path& folder, const FSys::path& in_77_folder
+) {
+  DOODLE_CHICK(!folder.empty(), "创建 SOMASkeleton30 时必须提供 folder 路径");
+
+  auto skel                  = std::make_shared<skeleton_base>();
+  skel->name_                = get_soma_skeleton_30_name();
+  skel->above_ground_offset_ = 0.02f;
+
+  skel->init_from_bone_hierarchy(get_soma_skeleton_30_bone_hierarchy());
+
+  auto g = resolve_semantic_groups(
+      *skel, get_soma_skeleton_30_semantic_groups()[0],  // left foot
+      get_soma_skeleton_30_semantic_groups()[1],         // right foot
+      get_soma_skeleton_30_semantic_groups()[2],         // left hand
+      get_soma_skeleton_30_semantic_groups()[3],         // right hand
+      get_soma_skeleton_30_semantic_groups()[4]          // hip [right, left]
   );
   apply_semantic_groups(*skel, g);
   skel->load_all_from_folder(folder);
@@ -505,17 +522,87 @@ std::vector<std::int64_t> skeleton_base::get_skel_slice(const skeleton_base& tar
   }
   return slice;
 }
+namespace {
 
-void to_json(nlohmann::json& j, const skeleton_base& skel) {
-  j["name"]             = skel.name_;
-  j["nbjoints"]         = skel.nbjoints_;
-  j["bone_order_names"] = skel.bone_order_names_;
-  j["joint_parents"]    = skel.joint_parents_;
-  j["bone_index"]       = skel.bone_index_;
-  // neutral_joints_ -> [[x, y, z], ...]
-  for (Eigen::Index i = 0; i < skel.neutral_joints_.rows(); ++i) {
-    j["neutral_joints"].push_back({skel.neutral_joints_(i, 0), skel.neutral_joints_(i, 1), skel.neutral_joints_(i, 2)});
+struct skeleton_base_json_helper {
+  std::string name;
+  std::int64_t parent_idx;                    // 父关节索引，根关节为 -1
+  std::array<std::float_t, 3> neutral_joint;  // 中性关节位置 [x, y, z]
+  //  to_json
+  friend void to_json(nlohmann::json& j, const skeleton_base_json_helper& h) {
+    j["name"]          = h.name;
+    j["parent_idx"]    = h.parent_idx;
+    j["neutral_joint"] = h.neutral_joint;
   }
+  //  from_json
+  friend void from_json(const nlohmann::json& j, skeleton_base_json_helper& h) {
+    j.at("name").get_to(h.name);
+    j.at("parent_idx").get_to(h.parent_idx);
+    j.at("neutral_joint").get_to(h.neutral_joint);
+  }
+};
+static std::vector<skeleton_base_json_helper> form_skeleton(const skeleton_base& skel) {
+  std::vector<skeleton_base_json_helper> result;
+  result.reserve(skel.bone_order_names_.size());
+
+  DOODLE_CHICK(
+      skel.neutral_joints_.rows() == skel.bone_order_names_.size(), "关节数量 {} 与中性关节数量 {} 不匹配",
+      skel.bone_order_names_.size(), skel.neutral_joints_.rows()
+  );
+  DOODLE_CHICK(skel.neutral_joints_.rows() > 0 && skel.neutral_joints_.cols() == 3, "中性关节矩阵必须为 Jx3");
+  for (std::size_t i = 0; i < skel.bone_order_names_.size(); ++i) {
+    skeleton_base_json_helper h;
+    h.name       = skel.bone_order_names_[i];
+    h.parent_idx = skel.joint_parents_[i];
+    DOODLE_CHICK(h.parent_idx >= -1 && h.parent_idx < skel.nbjoints_, "关节 {} 的父索引 {} 无效", h.name, h.parent_idx);
+    h.neutral_joint = {
+        skel.neutral_joints_(static_cast<Eigen::Index>(i), 0), skel.neutral_joints_(static_cast<Eigen::Index>(i), 1),
+        skel.neutral_joints_(static_cast<Eigen::Index>(i), 2)
+    };
+    result.push_back(std::move(h));
+  }
+  return result;
 }
 
+static skeleton_base form_skeleton_from_json(const std::vector<skeleton_base_json_helper>& json_data) {
+  skeleton_base skel;
+  skel.name_                = "from_json";
+  skel.above_ground_offset_ = 0.02f;
+
+  skel.init_from_bone_hierarchy(get_soma_skeleton_30_bone_hierarchy());
+  auto g = resolve_semantic_groups(
+      skel, get_soma_skeleton_30_semantic_groups()[0],  // left foot
+      get_soma_skeleton_30_semantic_groups()[1],        // right foot
+      get_soma_skeleton_30_semantic_groups()[2],        // left hand
+      get_soma_skeleton_30_semantic_groups()[3],        // right hand
+      get_soma_skeleton_30_semantic_groups()[4]         // hip [right, left]
+  );
+  apply_semantic_groups(skel, g);
+  std::map<std::string, std::size_t> name_to_index;
+  for (std::size_t i = 0; i < json_data.size(); ++i) name_to_index[json_data[i].name] = i;
+  for (std::size_t i = 0; i < skel.bone_order_names_.size(); ++i) {
+    const auto& name = skel.bone_order_names_[i];
+    DOODLE_CHICK(!name.empty(), "关节名称不能为空");
+    DOODLE_CHICK(name_to_index.contains(name), "关节名称 '{}' 在 JSON 数据中未找到", name);
+
+    const auto& h = json_data[name_to_index[name]];
+    DOODLE_CHICK(
+        h.parent_idx == skel.joint_parents_[i], "关节 '{}' 的父索引不匹配: JSON {}, 骨骼 {}", name, h.parent_idx,
+        skel.joint_parents_[i]
+    );
+    skel.neutral_joints_(static_cast<Eigen::Index>(i), 0) = h.neutral_joint[0];
+    skel.neutral_joints_(static_cast<Eigen::Index>(i), 1) = h.neutral_joint[1];
+    skel.neutral_joints_(static_cast<Eigen::Index>(i), 2) = h.neutral_joint[2];
+  }
+  return skel;
+}
+
+}  // namespace
+
+void to_json(nlohmann::json& j, const skeleton_base& skel) { j = form_skeleton(skel); }
+void from_json(const nlohmann::json& j, skeleton_base& skel) {
+  DOODLE_CHICK(j.is_array(), "skeleton_base JSON 必须是数组");
+  std::vector<skeleton_base_json_helper> json_data = j.get<std::vector<skeleton_base_json_helper>>();
+  skel                                             = form_skeleton_from_json(json_data);
+}
 }  // namespace doodle::ai

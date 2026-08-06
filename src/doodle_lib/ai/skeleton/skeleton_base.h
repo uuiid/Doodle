@@ -11,6 +11,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -71,14 +72,14 @@ class skeleton_base {
   // 骨骼参数
   // ======================================================================
 
-  float above_ground_offset_ = 0.007f;  ///< 离地偏移量，SOMA 骨骼为 0.02，其他默认 0.007
-  bool has_double_ankle_joints_ = false;  ///< 双踝关节（如 G1Skeleton34），需要额外的 1-bone IK 脚趾接触
+  float above_ground_offset_    = 0.007f;  ///< 离地偏移量，SOMA 骨骼为 0.02，其他默认 0.007
+  bool has_double_ankle_joints_ = false;   ///< 双踝关节（如 G1Skeleton34），需要额外的 1-bone IK 脚趾接触
 
   // ======================================================================
   // 构造 / 初始化
   // ======================================================================
 
-  skeleton_base() = default;
+  skeleton_base()               = default;
 
   /// @brief 从关节层级列表初始化（由具体骨骼工厂调用）
   /// @param bone_hierarchy { (关节名, 父关节名), ... }，父关节为 nullptr/空 表示根关节
@@ -144,6 +145,7 @@ class skeleton_base {
   // to json
   // 转换为 JSON（用于调试或保存骨骼信息）
   friend void to_json(nlohmann::json& j, const skeleton_base& skel);
+  // form josn
+  friend void from_json(const nlohmann::json& j, skeleton_base& skel);
 };
-
 }  // namespace doodle::ai
