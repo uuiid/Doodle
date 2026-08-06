@@ -23,13 +23,13 @@ struct kimodo_model_config;
 
 /// @brief KimodoMotionRep 解码输出结构
 struct motion_output {
-  MatrixXfRow local_rot_mats;       ///< [B*T, J*9] 局部旋转矩阵
-  MatrixXfRow global_rot_mats;      ///< [B*T, J*9] 全局旋转矩阵
-  MatrixXfRow posed_joints;         ///< [B*T, J*3] 全局关节位置
-  MatrixXfRow root_positions;       ///< [B*T, 3] 根节点位置
-  MatrixXfRow smooth_root_pos;      ///< [B*T, 3] 平滑根位置
-  MatrixXbRow foot_contacts;        ///< [B*T, 4] 脚接触标签(不序列化)
-  MatrixXfRow global_root_heading;  ///< [B*T, 2] 全局根朝向 (cos, sin)
+  MatrixXfRow local_rot_mats;        ///< [B*T, J*9] 局部旋转矩阵
+  MatrixXfRow global_rot_mats;       ///< [B*T, J*9] 全局旋转矩阵
+  MatrixXfRow posed_joints;          ///< [B*T, J*3] 全局关节位置
+  MatrixXfRow root_positions;        ///< [B*T, 3] 根节点位置
+  MatrixX3fRow smooth_root_pos;      ///< [B*T, 3] 平滑根位置
+  MatrixXbRow foot_contacts;         ///< [B*T, 4] 脚接触标签(不序列化)
+  MatrixX2fRow global_root_heading;  ///< [B*T, 2] 全局根朝向 (cos, sin)
 
   [[nodiscard]] bool is_valid() const { return local_rot_mats.size() > 0; }
   // to json
@@ -206,8 +206,7 @@ class kimodo_motion_rep : public motion_rep_base {
     MatrixXbRow motion_mask;      ///< [B*T, D]
   };
   batched_condition_result create_conditions_from_constraints_batched(
-      const std::vector<constraint_dicts>& constraints_per_sample,
-      const Eigen::VectorXi& lengths, bool to_normalize
+      const std::vector<constraint_dicts>& constraints_per_sample, const Eigen::VectorXi& lengths, bool to_normalize
   ) const;
 };
 

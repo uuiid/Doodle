@@ -8,6 +8,7 @@
 #include <doodle_lib/ai/motion_rep/feature_utils.h>
 #include <doodle_lib/ai/motion_rep/motion_postprocess.h>
 
+#include <Eigen/Core>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <random>
@@ -24,10 +25,7 @@ void from_json(const nlohmann::json& j, generate_arg& p) {
   if (j.contains("root_trajectory") && j.at("root_trajectory").is_array() && j.at("root_trajectory").size() == 3) {
     std::array<std::float_t, 3> root_traj{};
     j.at("root_trajectory").get_to(root_traj);
-    p.root_trajectory_       = MatrixXfRow(1, 3);
-    p.root_trajectory_(0, 0) = root_traj[0];
-    p.root_trajectory_(0, 1) = root_traj[1];
-    p.root_trajectory_(0, 2) = root_traj[2];
+    p.root_trajectory_ = Eigen::RowVector3f(root_traj[0], root_traj[1], root_traj[2]);
   }
 }
 

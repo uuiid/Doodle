@@ -21,10 +21,10 @@ namespace doodle::ai {
 /// @brief 工作骨骼关节（对应 Python SimpleNamespace 工作骨骼, 无重定向, 只有一种骨骼 soma30）
 struct working_rig_joint {
   std::string name;
-  std::string parent;                        ///< 父关节名，根关节为空
-  std::array<float, 4> t_pose_rotation{};    ///< T-pose 局部旋转四元数 (x, y, z, w)
-  std::array<float, 3> t_pose_translation{}; ///< T-pose 局部平移
-  std::string retarget_tag;                  ///< 重定向标签 ("Hips", "LeftHand", ...)
+  std::string parent;                         ///< 父关节名，根关节为空
+  std::array<float, 4> t_pose_rotation{};     ///< T-pose 局部旋转四元数 (x, y, z, w)
+  std::array<float, 3> t_pose_translation{};  ///< T-pose 局部平移
+  std::string retarget_tag;                   ///< 重定向标签 ("Hips", "LeftHand", ...)
 };
 
 // ======================================================================
@@ -34,7 +34,7 @@ struct working_rig_joint {
 /// @brief post_process_motion 返回值
 struct post_process_result {
   MatrixXfRow local_rot_mats;   ///< [B*T, J*9] 校正后的局部旋转矩阵
-  MatrixXfRow root_positions;   ///< [B*T, 3] 校正后的根位置
+  MatrixX3fRow root_positions;  ///< [B*T, 3] 校正后的根位置
   MatrixXfRow posed_joints;     ///< [B*T, J*3] 全局关节位置
   MatrixXfRow global_rot_mats;  ///< [B*T, J*9] 全局旋转矩阵
 };

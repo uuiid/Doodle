@@ -14,6 +14,7 @@
 #include <doodle_lib/ai/skeleton/skeleton_base.h>
 #include <doodle_lib/core/global_function.h>
 
+#include <Eigen/Core>
 #include <Eigen/Dense>
 #include <array>
 #include <cstdint>
@@ -169,7 +170,7 @@ struct generate_arg {
   std::vector<generate_segment_args> segments_;
   /// 骨骼, 用于最终重定向, 必须和 kimodo::skeleton_ 层级相同, 用于定义Tpost, 必须在原点
   std::shared_ptr<skeleton_base> skeleton_;
-  MatrixXfRow root_trajectory_;  ///< [x, y, z] 根位置
+  Eigen::RowVector3f root_trajectory_;  ///< [x, y, z] 根位置
   friend void from_json(const nlohmann::json& j, generate_arg& p);
 };
 
