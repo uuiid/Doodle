@@ -15,6 +15,18 @@
 
 namespace doodle::ai {
 
+void from_json(const nlohmann::json& j, generate_arg& p) {
+  if (j.contains("segments") && j.at("segments").is_array()) j.at("segments").get_to(p.segments_);
+  if (j.contains("skeleton") && j.at("skeleton").is_object()) {
+    p.skeleton_ = std::make_shared<skeleton_base>();
+    j.at("skeleton").get_to(*p.skeleton_);
+  }
+  if (j.contains("root_trajectory") && j.at("root_trajectory").is_array() && j.at("root_trajectory").size() == 3)
+    j.at("root_trajectory").get_to(p.root_trajectory_);
+  if (j.contains("root_heading") && j.at("root_heading").is_array() && j.at("root_heading").size() == 2)
+    j.at("root_heading").get_to(p.root_heading_);
+}
+
 void kimodo_model_config::load_from_json(const FSys::path& json_path) {
   DOODLE_CHICK(FSys::exists(json_path), "kimodo_model_config json 文件不存在: {}", json_path.string());
   auto l_json_path = json_path;

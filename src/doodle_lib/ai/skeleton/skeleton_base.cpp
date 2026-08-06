@@ -602,7 +602,6 @@ static skeleton_base form_skeleton_from_json(const std::vector<skeleton_base_jso
 void to_json(nlohmann::json& j, const skeleton_base& skel) { j = form_skeleton(skel); }
 void from_json(const nlohmann::json& j, skeleton_base& skel) {
   DOODLE_CHICK(j.is_array(), "skeleton_base JSON 必须是数组");
-  std::vector<skeleton_base_json_helper> json_data = j.get<std::vector<skeleton_base_json_helper>>();
-  skel                                             = form_skeleton_from_json(json_data);
+  skel = form_skeleton_from_json(j.get<std::vector<skeleton_base_json_helper>>());
 }
 }  // namespace doodle::ai
