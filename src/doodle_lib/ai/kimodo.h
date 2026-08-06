@@ -15,6 +15,7 @@
 #include <doodle_lib/core/global_function.h>
 
 #include <Eigen/Dense>
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -164,6 +165,14 @@ struct generate_segment_args {
   }
 };
 
+struct generate_arg {
+  std::vector<generate_segment_args> segments_;
+  std::shared_ptr<skeleton_base> skeleton_;       ///< 骨骼, 用于最终重定向, 必须和 kimodo::skeleton_ 层级相同
+  std::array<std::double_t, 3> root_trajectory_;  ///< [x, y, z] 根轨迹
+  std::array<std::double_t, 2> root_heading_;     ///< [cos, sin] 根朝向
+  friend void from_json(const nlohmann::json& j, generate_arg& p);
+};
+
 /// @brief Kimodo 主编排类（对应 Python Kimodo）
 ///
 /// 编排完整推理管线: 文本编码 → 去噪循环 → 运动解码。
@@ -258,6 +267,7 @@ class kimodo {
   ///
   /// @param segments 段参数列表（至少 1 个元素）
   /// @return 拼接后的完整运动输出
+
   motion_output generate(const std::vector<generate_segment_args>& segments);
 
   [[nodiscard]] bool is_valid() const {
