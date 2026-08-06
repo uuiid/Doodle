@@ -18,7 +18,7 @@ namespace doodle::ai {
 /// @brief 计算帧间角度差（对应 Python diff_angles）
 /// @param angles [B, T] 角度序列（弧度）
 /// @param fps 帧率
-/// @return [B, T] 角度差（补零至原始长度）
+/// @return [B, T-1] 角度差（不含 padding，由调用方补零）
 MatrixXfRow diff_angles(const MatrixXfRow& angles, float fps);
 
 /// @brief 计算头部朝向角（对应 Python compute_heading_angle）

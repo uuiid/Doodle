@@ -13,20 +13,18 @@
 namespace doodle::ai {
 
 // ======================================================================
-// diff_angles: 帧间角度差
+// diff_angles: 帧间角度差（对应 Python diff_angles，返回 [B, T-1]）
 // ======================================================================
 MatrixXfRow diff_angles(const MatrixXfRow& angles, float fps) {
   const Eigen::Index B = angles.rows();
   const Eigen::Index T = angles.cols();
 
   if (T <= 1) {
-    // 不足两帧，返回全零
-    return MatrixXfRow::Zero(B, T);
+    return MatrixXfRow::Zero(B, 0);
   }
 
   // diff = fps * atan2(sin_diff, cos_diff)
-  MatrixXfRow result(B, T);
-  result.setZero();
+  MatrixXfRow result(B, T - 1);
 
   for (Eigen::Index b = 0; b < B; ++b) {
     for (Eigen::Index t = 0; t < T - 1; ++t) {
@@ -39,10 +37,6 @@ MatrixXfRow diff_angles(const MatrixXfRow& angles, float fps) {
       const float sin_diff = sin_t1 * cos_t - cos_t1 * sin_t;
 
       result(b, t)         = fps * std::atan2(sin_diff, cos_diff);
-    }
-    // 最后一帧使用前一帧的值（重复 padding）
-    if (T >= 2) {
-      result(b, T - 1) = result(b, T - 2);
     }
   }
 
@@ -127,11 +121,29 @@ MatrixXfRow compute_vel_xyz(
 }
 
 // ======================================================================
-// compute_vel_angle: 局部根节点旋转速度
+// compute_vel_angle: 局部根节点旋转速度（对应 Python compute_vel_angle）
 // ======================================================================
 MatrixXfRow compute_vel_angle(const MatrixXfRow& root_rot_angles, float fps, const Eigen::VectorXi& lengths) {
-  // root_rot_angles: [B, T], 输出: [B, T]
-  return diff_angles(root_rot_angles, fps);
+  // root_rot_angles: [B, T], diff_angles 返回 [B, T-1]
+  const Eigen::Index B = root_rot_angles.rows();
+  const Eigen::Index T = root_rot_angles.cols();
+
+  MatrixXfRow diff = diff_angles(root_rot_angles, fps);  // [B, T-1]
+
+  // 末尾补零 → [B, T]
+  MatrixXfRow result(B, T);
+  result.setZero();
+  result.leftCols(T - 1) = diff;
+
+  // 复制最后一帧有效速度: result[b, lengths[b]-1] = result[b, lengths[b]-2]
+  for (Eigen::Index b = 0; b < B; ++b) {
+    const std::int64_t len = (lengths.size() > 0) ? lengths(b) : T;
+    if (len >= 2) {
+      result(b, len - 1) = result(b, len - 2);
+    }
+  }
+
+  return result;
 }
 
 // ======================================================================
