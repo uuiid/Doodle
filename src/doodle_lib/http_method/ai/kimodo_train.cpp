@@ -34,30 +34,6 @@ void init_ort_env() {
   std::call_once(l_flag, &_init_ort_env);
 }
 
-/// @brief 从 JSON 解析段列表，并填充约束
-std::vector<doodle::ai::generate_segment_args> parse_segments(
-    const nlohmann::json& in_json, const std::shared_ptr<doodle::ai::skeleton_base>& skeleton
-) {
-  std::vector<doodle::ai::generate_segment_args> segments;
-
-  auto parse_one = [&](const nlohmann::json& j) {
-    auto seg = j.get<doodle::ai::generate_segment_args>();
-    if (seg.constraint_lst_.is_array() && !seg.constraint_lst_.empty()) {
-      seg.constraints_ = doodle::ai::load_constraints_lst_from_json(seg.constraint_lst_, skeleton);
-    }
-    return seg;
-  };
-
-  if (in_json.is_array()) {
-    for (const auto& elem : in_json) segments.push_back(parse_one(elem));
-  } else {
-    segments.push_back(parse_one(in_json));
-  }
-
-  DOODLE_CHICK(!segments.empty(), "segments 不能为空");
-  return segments;
-}
-
 }  // namespace
 
 struct ai_train_animation::impl {
@@ -69,15 +45,35 @@ struct ai_train_animation::impl {
     l_config->load_from_json(model_path);
     model_->load(l_config);
   }
-  auto run(const std::vector<doodle::ai::generate_segment_args>& segments) {
+  auto run(const doodle::ai::generate_arg& segments) {
     DOODLE_CHICK(model_ != nullptr, "模型未加载，请先调用 load_model");
     return model_->generate(segments);
   }
 };
 ai_train_animation::ai_train_animation() : impl_ptr_(std::make_shared<impl>()) {}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
-  auto l_segments = parse_segments(in_handle->get_json(), impl_ptr_->model_->skeleton());
-  co_return in_handle->make_msg(nlohmann::json{} = impl_ptr_->run(l_segments));
+  DOODLE_CHICK(impl_ptr_->model_, "模型为空，请先调用 load_model");
+  DOODLE_CHICK(impl_ptr_->model_->is_valid(), "模型加载错误，请先调用 load_model");
+
+  doodle::ai::generate_arg l_segment = in_handle->get_json().get<doodle::ai::generate_arg>();
+  DOODLE_CHICK(!l_segment.segments_.empty(), "segment 不能为空");
+
+  for (auto& seg : l_segment.segments_) {
+    if (seg.constraint_lst_.is_array() && !seg.constraint_lst_.empty()) {
+      seg.constraints_ = doodle::ai::load_constraints_lst_from_json(seg.constraint_lst_, impl_ptr_->model_->skeleton());
+    }
+  }
+  // 获取根节点的位置
+  if (l_segment.skeleton_) {
+    auto l_root_index = impl_ptr_->model_->skeleton()->root_idx_;
+    auto l_neutral_joints =
+        impl_ptr_->model_->motion_rep()->translate_2d_to_zero(l_segment.skeleton_->neutral_joints_, 1, 1);
+    auto l_root_pos =
+        l_segment.skeleton_->neutral_joints_.row(l_root_index).head<3>() - l_neutral_joints.row(l_root_index).head<3>();
+    l_segment.skeleton_->neutral_joints_ = l_neutral_joints;
+    l_segment.root_trajectory_ += l_root_pos;
+  }
+  co_return in_handle->make_msg(nlohmann::json{} = impl_ptr_->run(l_segment));
 }
 
 void ai_train_animation::load_model(const std::string& model_path) {

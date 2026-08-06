@@ -271,7 +271,7 @@ class kimodo {
   motion_output generate(const generate_arg& segments);
 
   [[nodiscard]] bool is_valid() const {
-    return denoiser_.is_valid() && diffusion_.is_valid() && motion_rep_ != nullptr;
+    return denoiser_.is_valid() && diffusion_.is_valid() && motion_rep_ != nullptr && skeleton_ != nullptr;
   }
 
   [[nodiscard]] const std::shared_ptr<kimodo_motion_rep>& motion_rep() const { return motion_rep_; }
