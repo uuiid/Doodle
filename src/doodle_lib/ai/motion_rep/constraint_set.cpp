@@ -9,6 +9,7 @@
 #include <doodle_lib/ai/motion_rep/geometry.h>
 
 #include <Eigen/Core>
+#include <boost/numeric/conversion/cast.hpp>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
@@ -53,7 +54,7 @@ Eigen::Matrix<T, Rows, Cols> json_to_eigen_matrix(const nlohmann::json& j) {
       for (Eigen::Index n = 0; n < N; ++n) {
         const auto& jmn = jm[static_cast<std::size_t>(n)];
         for (Eigen::Index k = 0; k < K; ++k) {
-          mat(m * N + n, k) = static_cast<T>(jmn[static_cast<std::size_t>(k)]);
+          mat(m * N + n, k) = boost::numeric_cast<T>(jmn[static_cast<std::size_t>(k)]);
         }
       }
     }
@@ -76,7 +77,7 @@ Eigen::Matrix<T, Rows, Cols> json_to_eigen_matrix(const nlohmann::json& j) {
   for (Eigen::Index r = 0; r < rows; ++r) {
     const auto& row = j[static_cast<std::size_t>(r)];
     for (Eigen::Index c = 0; c < cols; ++c) {
-      mat(r, c) = static_cast<T>(row[static_cast<std::size_t>(c)]);
+      mat(r, c) = boost::numeric_cast<T>(row[static_cast<std::size_t>(c)]);
     }
   }
   return mat;
@@ -98,7 +99,7 @@ Eigen::Matrix<T, Rows, 1> json_to_eigen_matrix(const nlohmann::json& j) {
 
   Eigen::Matrix<T, Rows, 1> mat(n);
   for (Eigen::Index i = 0; i < n; ++i) {
-    mat(i, 0) = static_cast<T>(j[static_cast<std::size_t>(i)]);
+    mat(i, 0) = boost::numeric_cast<T>(j[static_cast<std::size_t>(i)]);
   }
   return mat;
 }
