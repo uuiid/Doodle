@@ -253,8 +253,13 @@ std::shared_ptr<root2d_constraint_set> root2d_constraint_set::from_dict(
   Eigen::VectorXi frame_indices =
       json_to_eigen_matrix<std::int64_t, Eigen::Dynamic>(dico.at("frame_indices")).cast<int>();
 
-  // smooth_root_2d:  为 [K, 2]
-  MatrixX2fRow raw_smooth = json_to_eigen_matrix<float, Eigen::Dynamic, 2>(dico.at("smooth_root_2d"));
+  // smooth_root_2d:  为 [K, 3] (x, y, z)，但我们只取 (x, z) 作为约束, y 给 root_y_pos_ 使用
+  MatrixX3fRow raw_smooth = json_to_eigen_matrix<float, Eigen::Dynamic, 3>(dico.at("smooth_root"));
+
+  for (Eigen::Index i = 0; i < raw_smooth.rows(); ++i) {
+    raw_smooth(i, 1) = raw_smooth(i, 2);  // 将 z 复制到第二列
+  }
+  raw_smooth.conservativeResize(raw_smooth.rows(), 2);  // 只保留前两列 (x, z)
 
   MatrixX2fRow global_root_heading;
   if (dico.contains("global_root_heading")) {
@@ -419,9 +424,13 @@ std::shared_ptr<fullbody_constraint_set> fullbody_constraint_set::from_dict(
   // FK: 得到全局旋转和关节位置
   auto fk_result = skeleton->fk(local_rot_mats, root_positions);
 
-  MatrixXfRow smooth_root_2d;
-  if (dico.contains("smooth_root_2d")) {
-    smooth_root_2d = json_to_eigen_matrix<float, Eigen::Dynamic, Eigen::Dynamic>(dico.at("smooth_root_2d"));
+  MatrixX2fRow smooth_root_2d;
+  if (dico.contains("smooth_root")) {
+    smooth_root_2d = json_to_eigen_matrix<float, Eigen::Dynamic, 3>(dico.at("smooth_root"));
+    for (Eigen::Index i = 0; i < smooth_root_2d.rows(); ++i)
+      smooth_root_2d(i, 1) = smooth_root_2d(i, 2);  // 将 z 复制到第二列
+
+    smooth_root_2d.conservativeResize(smooth_root_2d.rows(), 2);  // 只保留前两列 (x, z)
   }
 
   return std::make_shared<fullbody_constraint_set>(
@@ -603,8 +612,11 @@ std::shared_ptr<end_effector_constraint_set> end_effector_constraint_set::from_d
   auto fk_result = skeleton->fk(local_rot_mats, root_positions);
 
   MatrixXfRow smooth_root_2d;
-  if (dico.contains("smooth_root_2d")) {
-    smooth_root_2d = json_to_eigen_matrix<float, Eigen::Dynamic, Eigen::Dynamic>(dico.at("smooth_root_2d"));
+  if (dico.contains("smooth_root")) {
+    smooth_root_2d = json_to_eigen_matrix<float, Eigen::Dynamic, 3>(dico.at("smooth_root"));
+    for (Eigen::Index i = 0; i < smooth_root_2d.rows(); ++i)
+      smooth_root_2d(i, 1) = smooth_root_2d(i, 2);                // 将 z 复制到第二列
+    smooth_root_2d.conservativeResize(smooth_root_2d.rows(), 2);  // 只保留前两列 (x, z)
   }
 
   std::vector<std::string> joint_names;
