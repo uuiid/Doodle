@@ -253,24 +253,16 @@ std::shared_ptr<root2d_constraint_set> root2d_constraint_set::from_dict(
   Eigen::VectorXi frame_indices =
       json_to_eigen_matrix<std::int64_t, Eigen::Dynamic>(dico.at("frame_indices")).cast<int>();
 
-  // smooth_root_2d: 可能为 [K, 2] 或 [K, 3]（3D 时取前两列）
-  MatrixXfRow raw_smooth = json_to_eigen_matrix<float, Eigen::Dynamic, Eigen::Dynamic>(dico.at("smooth_root_2d"));
-  MatrixXfRow smooth_root_2d;
-  if (raw_smooth.cols() == 3) {
-    smooth_root_2d.resize(raw_smooth.rows(), 2);
-    smooth_root_2d.col(0) = raw_smooth.col(0);
-    smooth_root_2d.col(1) = raw_smooth.col(1);
-  } else {
-    smooth_root_2d = std::move(raw_smooth);
-  }
+  // smooth_root_2d:  为 [K, 2]
+  MatrixX2fRow raw_smooth = json_to_eigen_matrix<float, Eigen::Dynamic, 2>(dico.at("smooth_root_2d"));
 
-  MatrixXfRow global_root_heading;
+  MatrixX2fRow global_root_heading;
   if (dico.contains("global_root_heading")) {
     global_root_heading = json_to_eigen_matrix<float, Eigen::Dynamic, 2>(dico.at("global_root_heading"));
   }
 
   return std::make_shared<root2d_constraint_set>(
-      std::move(skeleton), std::move(frame_indices), std::move(smooth_root_2d), std::move(global_root_heading)
+      std::move(skeleton), std::move(frame_indices), std::move(raw_smooth), std::move(global_root_heading)
   );
 }
 
