@@ -66,8 +66,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
   // 获取根节点的位置
   if (l_segment.skeleton_) {
     auto l_root_index = impl_ptr_->model_->skeleton()->root_idx_;
+
+    auto l_root_pos   = l_segment.skeleton_->neutral_joints_.row(l_root_index).head<3>();
+    l_segment.skeleton_->neutral_joints_.rowwise() -= l_root_pos;
+    l_segment.root_trajectory_ += l_root_pos;
     DOODLE_CHICK(
-        (l_segment.skeleton_->neutral_joints_.row(l_root_index).head<3>() == Eigen::RowVector3f{0, 0, 0}), "根节点位置不为零"
+        (l_segment.skeleton_->neutral_joints_.row(l_root_index).head<3>() == Eigen::RowVector3f{0, 0, 0}),
+        "根节点位置不为零"
     );
     // auto l_neutral_joints =
     //     impl_ptr_->model_->motion_rep()->translate_2d_to_zero(l_segment.skeleton_->neutral_joints_, 1, 1);
