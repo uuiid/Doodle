@@ -236,10 +236,7 @@ boost::asio::awaitable<bool> session_data::parse_body() {
     case boost::beast::http::verb::get:
       if (boost::beast::websocket::is_upgrade(std::get<empty_request_parser_ptr>(request_parser_)->get()) &&
           callback_->has_websocket()) {
-        boost::asio::co_spawn(
-            stream_->get_executor(), async_websocket_session(),
-            boost::asio::consign(boost::asio::detached, shared_from_this())
-        );
+        co_await async_websocket_session();
         l_result = true;
       }
       break;
