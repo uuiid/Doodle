@@ -8,8 +8,9 @@
 #include <doodle_lib/ai/motion_rep/feature_utils.h>
 #include <doodle_lib/ai/motion_rep/geometry.h>
 
-#include <Eigen/Core>
 #include <boost/numeric/conversion/cast.hpp>
+
+#include <Eigen/Core>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
@@ -108,13 +109,13 @@ Eigen::Matrix<T, Rows, 1> json_to_eigen_matrix(const nlohmann::json& j) {
 // 辅助函数：计算全局朝向 (cos, sin) 用于约束初始化
 // ======================================================================
 namespace detail {
-MatrixXfRow compute_global_heading_from_positions(
+MatrixX2fRow compute_global_heading_from_positions(
     const MatrixXfRow& global_joints_positions, const skeleton_base& skeleton
 ) {
   const Eigen::Index K            = global_joints_positions.rows();
   const MatrixXfRow heading_angle = compute_heading_angle(global_joints_positions, skeleton, 1, K);
   // heading_angle: [1, K]
-  MatrixXfRow heading(K, 2);
+  MatrixX2fRow heading(K, 2);
   for (Eigen::Index i = 0; i < K; ++i) {
     heading(i, 0) = std::cos(heading_angle(0, i));
     heading(i, 1) = std::sin(heading_angle(0, i));
@@ -168,8 +169,8 @@ std::shared_ptr<constraint_set_base> make_constraint_from_type(
 // ======================================================================
 
 root2d_constraint_set::root2d_constraint_set(
-    std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixXfRow smooth_root_2d,
-    MatrixXfRow global_root_heading
+    std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixX2fRow smooth_root_2d,
+    MatrixX2fRow global_root_heading
 )
     : skeleton_(std::move(skeleton)),
       frame_indices_(std::move(frame_indices)),
@@ -249,10 +250,11 @@ void root2d_constraint_set::to(const std::shared_ptr<skeleton_base>& skel) {
 std::shared_ptr<root2d_constraint_set> root2d_constraint_set::from_dict(
     std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
 ) {
-  Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t, Eigen::Dynamic>(dico.at("frame_indices")).cast<int>();
+  Eigen::VectorXi frame_indices =
+      json_to_eigen_matrix<std::int64_t, Eigen::Dynamic>(dico.at("frame_indices")).cast<int>();
 
   // smooth_root_2d: 可能为 [K, 2] 或 [K, 3]（3D 时取前两列）
-  MatrixXfRow raw_smooth        = json_to_eigen_matrix<float, Eigen::Dynamic, Eigen::Dynamic>(dico.at("smooth_root_2d"));
+  MatrixXfRow raw_smooth = json_to_eigen_matrix<float, Eigen::Dynamic, Eigen::Dynamic>(dico.at("smooth_root_2d"));
   MatrixXfRow smooth_root_2d;
   if (raw_smooth.cols() == 3) {
     smooth_root_2d.resize(raw_smooth.rows(), 2);
@@ -278,7 +280,7 @@ std::shared_ptr<root2d_constraint_set> root2d_constraint_set::from_dict(
 
 fullbody_constraint_set::fullbody_constraint_set(
     std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixXfRow global_joints_positions,
-    MatrixXfRow global_joints_rots, MatrixXfRow smooth_root_2d
+    MatrixXfRow global_joints_rots, MatrixX2fRow smooth_root_2d
 )
     : skeleton_(std::move(skeleton)),
       frame_indices_(std::move(frame_indices)),
@@ -395,7 +397,8 @@ std::shared_ptr<fullbody_constraint_set> fullbody_constraint_set::from_dict(
 ) {
   DOODLE_CHICK(skeleton, "fullbody::from_dict: skeleton 为空");
 
-  Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t, Eigen::Dynamic>(dico.at("frame_indices")).cast<int>();
+  Eigen::VectorXi frame_indices =
+      json_to_eigen_matrix<std::int64_t, Eigen::Dynamic>(dico.at("frame_indices")).cast<int>();
 
   // 加载局部旋转（轴角）: JSON 可能是 [K, J, 3] 3D 或 [K*J, 3] 2D 格式
   // json_to_eigen_matrix 统一 flatten 为 [K*J, 3]
@@ -441,7 +444,7 @@ std::shared_ptr<fullbody_constraint_set> fullbody_constraint_set::from_dict(
 
 end_effector_constraint_set::end_effector_constraint_set(
     std::shared_ptr<skeleton_base> skeleton, Eigen::VectorXi frame_indices, MatrixXfRow global_joints_positions,
-    MatrixXfRow global_joints_rots, MatrixXfRow smooth_root_2d, std::vector<std::string> joint_names
+    MatrixXfRow global_joints_rots, MatrixX2fRow smooth_root_2d, std::vector<std::string> joint_names
 )
     : skeleton_(std::move(skeleton)),
       frame_indices_(std::move(frame_indices)),
@@ -578,7 +581,8 @@ std::shared_ptr<end_effector_constraint_set> end_effector_constraint_set::from_d
 ) {
   DOODLE_CHICK(skeleton, "end_effector::from_dict: skeleton 为空");
 
-  Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t, Eigen::Dynamic>(dico.at("frame_indices")).cast<int>();
+  Eigen::VectorXi frame_indices =
+      json_to_eigen_matrix<std::int64_t, Eigen::Dynamic>(dico.at("frame_indices")).cast<int>();
 
   // 加载局部旋转（轴角）: JSON 可能是 [K, J, 3] 3D 或 [K*J, 3] 2D 格式
   MatrixXfRow local_rot_aa      = json_to_eigen_matrix<float, Eigen::Dynamic, 3>(dico.at("local_joints_rot"));
