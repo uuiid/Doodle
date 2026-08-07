@@ -149,7 +149,7 @@ struct generate_segment_args {
   std::vector<constraint_set_ptr> constraints_{};
 
   friend void from_json(const nlohmann::json& j, generate_segment_args& p) {
-    if (j.contains("text") && j.at("text").is_string()) j.at("text").get_to(p.text_);
+    j.at("text").get_to(p.text_);
     if (j.contains("num_frames") && j.at("num_frames").is_number_integer()) j.at("num_frames").get_to(p.num_frames_);
     if (j.contains("num_denoising_steps") && j.at("num_denoising_steps").is_number_integer())
       j.at("num_denoising_steps").get_to(p.num_denoising_steps_);
