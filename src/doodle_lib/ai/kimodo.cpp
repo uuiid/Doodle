@@ -17,12 +17,15 @@
 namespace doodle::ai {
 
 void from_json(const nlohmann::json& j, generate_arg& p) {
-  if (j.contains("segments") && j.at("segments").is_array()) j.at("segments").get_to(p.segments_);
+  if (j.contains("segments") && j.at("segments").is_array())
+    j.at("segments").get_to(p.segments_);
   else if (j.contains("segment") && j.at("segment").is_object()) {
     generate_segment_args single_segment;
     j.at("segment").get_to(single_segment);
     p.segments_.push_back(single_segment);
   }
+  if (j.contains("first_heading_angle") && j.at("first_heading_angle").is_number())
+    j.at("first_heading_angle").get_to(p.first_heading_angle_);
   if (j.contains("skeleton") && j.at("skeleton").is_object()) {
     p.skeleton_ = std::make_shared<skeleton_base>();
     j.at("skeleton").get_to(*p.skeleton_);
@@ -365,7 +368,7 @@ motion_output kimodo::generate(const generate_arg& segments) {
     // 过渡逻辑（非首段）
     // ====================================================================
     MatrixXfRow prev_smooth_root_2d;  // [1, 2]
-    float heading_val = seg.first_heading_angle_;
+    float heading_val = segments.first_heading_angle_;
     std::vector<constraint_set_ptr> trans_constraints;  // 过渡约束，供后处理使用
 
     if (!is_first) {

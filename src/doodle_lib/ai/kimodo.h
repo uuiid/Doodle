@@ -142,7 +142,6 @@ struct generate_segment_args {
   std::int32_t num_denoising_steps_{50};
   std::vector<float> cfg_weight_{2.0f, 2.0f};
   cfg_type cfg_type_{cfg_type::separated};
-  float first_heading_angle_{0.0f};
   std::int32_t num_transition_frames_{10};
   float root_margin_{0.0f};
   nlohmann::json constraint_lst_{};
@@ -156,8 +155,6 @@ struct generate_segment_args {
     if (j.contains("cfg_weight") && j.at("cfg_weight").is_array() && j.at("cfg_weight").size() > 0)
       j.at("cfg_weight").get_to(p.cfg_weight_);
     if (j.contains("cfg_type") && j.at("cfg_type").is_string()) j.at("cfg_type").get_to(p.cfg_type_);
-    if (j.contains("first_heading_angle") && j.at("first_heading_angle").is_number())
-      j.at("first_heading_angle").get_to(p.first_heading_angle_);
     if (j.contains("num_transition_frames") && j.at("num_transition_frames").is_number_integer())
       j.at("num_transition_frames").get_to(p.num_transition_frames_);
     if (j.contains("root_margin") && j.at("root_margin").is_number()) j.at("root_margin").get_to(p.root_margin_);
@@ -171,6 +168,8 @@ struct generate_arg {
   /// 骨骼, 用于最终重定向, 必须和 kimodo::skeleton_ 层级相同, 用于定义Tpost, 必须在原点
   std::shared_ptr<skeleton_base> skeleton_;
   Eigen::RowVector3f root_trajectory_;  ///< [x, y, z] 根位置
+  float first_heading_angle_{0.0f};
+
   friend void from_json(const nlohmann::json& j, generate_arg& p);
 };
 
