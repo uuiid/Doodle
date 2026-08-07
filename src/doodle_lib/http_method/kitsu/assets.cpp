@@ -418,16 +418,16 @@ auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_ur
   for (auto&& l_i : in_url.params()) {
     if (l_i.has_value && l_i.key == "entity_type_id") l_data.entity_type_id_.emplace_back(from_uuid_str(l_i.value));
     if (l_i.has_value && l_i.key == "ji_du") {
-      if (std::isdigit(l_i.value.front()))
-        l_data.ji_du_filter_.emplace_back(std::stoi(l_i.value));
-      else if (l_i.value == "null")
+      if (l_i.value == "null")
         l_data.ji_du_filter_is_null = true;
+      else
+        l_data.ji_du_filter_.emplace_back(std::stoi(l_i.value));
     }
     if (l_i.has_value && l_i.key == "ji_shu_lie") {
-      if (std::isdigit(l_i.value.front()))
-        l_data.ji_shu_lie_filter_.emplace_back(from_uuid_str(l_i.value));
-      else if (l_i.value == "null")
+      if (l_i.value == "null")
         l_data.ji_shu_lie_filter_is_null = true;
+      else
+        l_data.ji_shu_lie_filter_.emplace_back(from_uuid_str(l_i.value));
     }
     if (l_i.has_value && l_i.key == "task_status_id")
       l_data.task_status_id_filter_.emplace_back(from_uuid_str(l_i.value));
@@ -437,10 +437,10 @@ auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_ur
     if (l_i.has_value && l_i.key == "project_id") l_data.project_id_ = from_uuid_str(l_i.value);
     if (l_i.has_value && l_i.key == "search_key") l_data.search_key_ = l_i.value;
     if (l_i.has_value && l_i.key == "scenes") {
-      if (std::isdigit(l_i.value.front()))
-        l_data.scenes_.emplace_back(std::stoi(l_i.value));
-      else if (l_i.value == "null")
+      if (l_i.value == "null")
         l_data.scenes_is_null = true;
+      else
+        l_data.scenes_.emplace_back(std::stoi(l_i.value));
     }
   }
   std::vector<with_tasks_get_result_t> l_ret{};
