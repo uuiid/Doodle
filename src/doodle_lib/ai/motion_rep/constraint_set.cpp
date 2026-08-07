@@ -8,6 +8,7 @@
 #include <doodle_lib/ai/motion_rep/feature_utils.h>
 #include <doodle_lib/ai/motion_rep/geometry.h>
 
+#include <Eigen/Core>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
@@ -25,19 +26,28 @@ namespace doodle::ai {
 ///   - 一维数组 → [N, 1] 列向量
 ///   - 二维数组 → [M, N] 矩阵
 ///   - 三维数组 [M, N, K] → flatten 为 [M*N, K] 矩阵
-template <typename T = float>
-Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> json_to_eigen_matrix(const nlohmann::json& j) {
-  if (!j.is_array() || j.empty()) return {};
 
-  // 检查嵌套深度: j[0][0] 是否为数组 → 3D
+// 固定尺寸矩阵特化: 支持 2D 和 3D JSON 数组
+// 3D 数组 [M, N, K] → flatten 为 [M*N, K] 矩阵
+template <typename T, std::int32_t Rows, std::int32_t Cols>
+Eigen::Matrix<T, Rows, Cols> json_to_eigen_matrix(const nlohmann::json& j) {
+  DOODLE_CHICK(j.is_array(), "json_to_eigen_matrix<{}, {}>: 期望 JSON 数组", Rows, Cols);
+  DOODLE_CHICK(!j.empty(), "json_to_eigen_matrix<{}, {}>: 数组为空", Rows, Cols);
+
   const bool is_3d = j[0].is_array() && !j[0].empty() && j[0][0].is_array();
 
   if (is_3d) {
-    // 三维数组: [[[...], ...], ...] — 形状 [M, N, K]
+    // 三维数组: [[[...], ...], ...] — 形状 [M, N, K] → flatten [M*N, K]
     const Eigen::Index M = static_cast<Eigen::Index>(j.size());
     const Eigen::Index N = static_cast<Eigen::Index>(j[0].size());
     const Eigen::Index K = static_cast<Eigen::Index>(j[0][0].size());
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat(M * N, K);
+    if constexpr (Rows != Eigen::Dynamic) {
+      DOODLE_CHICK(M * N == Rows, "json_to_eigen_matrix<{}, {}>: flatten 行数 {} != 期望 {}", Rows, Cols, M * N, Rows);
+    }
+    if constexpr (Cols != Eigen::Dynamic) {
+      DOODLE_CHICK(K == Cols, "json_to_eigen_matrix<{}, {}>: 最后一维 {} != 期望 {}", Rows, Cols, K, Cols);
+    }
+    Eigen::Matrix<T, Rows, Cols> mat(M * N, K);
     for (Eigen::Index m = 0; m < M; ++m) {
       const auto& jm = j[static_cast<std::size_t>(m)];
       for (Eigen::Index n = 0; n < N; ++n) {
@@ -50,23 +60,43 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> json_to_eigen_matrix(const nloh
     return mat;
   }
 
-  if (j[0].is_array()) {
-    // 二维数组: [[...], [...], ...]
-    const Eigen::Index rows = static_cast<Eigen::Index>(j.size());
-    const Eigen::Index cols = static_cast<Eigen::Index>(j[0].size());
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat(rows, cols);
-    for (Eigen::Index r = 0; r < rows; ++r) {
-      const auto& row = j[static_cast<std::size_t>(r)];
-      for (Eigen::Index c = 0; c < cols; ++c) {
-        mat(r, c) = static_cast<T>(row[static_cast<std::size_t>(c)]);
-      }
-    }
-    return mat;
+  // 二维数组: [[...], [...], ...]
+  DOODLE_CHICK(j[0].is_array(), "json_to_eigen_matrix<{}, {}>: 期望二维数组，实际为一维", Rows, Cols);
+
+  const Eigen::Index rows = static_cast<Eigen::Index>(j.size());
+  const Eigen::Index cols = static_cast<Eigen::Index>(j[0].size());
+  if constexpr (Rows != Eigen::Dynamic) {
+    DOODLE_CHICK(rows == Rows, "json_to_eigen_matrix<{}, {}>: 行数 {} != 期望 {}", Rows, Cols, rows, Rows);
+  }
+  if constexpr (Cols != Eigen::Dynamic) {
+    DOODLE_CHICK(cols == Cols, "json_to_eigen_matrix<{}, {}>: 列数 {} != 期望 {}", Rows, Cols, cols, Cols);
   }
 
-  // 一维数组: [v0, v1, ...]
+  Eigen::Matrix<T, Rows, Cols> mat(rows, cols);
+  for (Eigen::Index r = 0; r < rows; ++r) {
+    const auto& row = j[static_cast<std::size_t>(r)];
+    for (Eigen::Index c = 0; c < cols; ++c) {
+      mat(r, c) = static_cast<T>(row[static_cast<std::size_t>(c)]);
+    }
+  }
+  return mat;
+}
+
+// 固定尺寸列向量特化: Eigen::Matrix<T, Rows, 1>
+template <typename T, std::int32_t Rows>
+Eigen::Matrix<T, Rows, 1> json_to_eigen_matrix(const nlohmann::json& j) {
+  DOODLE_CHICK(j.is_array(), "json_to_eigen_matrix<{}, 1>: 期望 JSON 数组", Rows);
+
   const Eigen::Index n = static_cast<Eigen::Index>(j.size());
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat(n, 1);
+  if constexpr (Rows != Eigen::Dynamic) {
+    DOODLE_CHICK(n == Rows, "json_to_eigen_matrix<{}, 1>: 元素个数 {} != 期望 {}", Rows, n, Rows);
+  }
+
+  if (n == 0) return Eigen::Matrix<T, Rows, 1>{};
+
+  DOODLE_CHICK(!j[0].is_array(), "json_to_eigen_matrix<{}, 1>: 期望一维数组，实际为多维", Rows);
+
+  Eigen::Matrix<T, Rows, 1> mat(n);
   for (Eigen::Index i = 0; i < n; ++i) {
     mat(i, 0) = static_cast<T>(j[static_cast<std::size_t>(i)]);
   }
@@ -218,10 +248,10 @@ void root2d_constraint_set::to(const std::shared_ptr<skeleton_base>& skel) {
 std::shared_ptr<root2d_constraint_set> root2d_constraint_set::from_dict(
     std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
 ) {
-  Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
+  Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t, Eigen::Dynamic>(dico.at("frame_indices")).cast<int>();
 
   // smooth_root_2d: 可能为 [K, 2] 或 [K, 3]（3D 时取前两列）
-  MatrixXfRow raw_smooth        = json_to_eigen_matrix<float>(dico.at("smooth_root_2d"));
+  MatrixXfRow raw_smooth        = json_to_eigen_matrix<float, Eigen::Dynamic, Eigen::Dynamic>(dico.at("smooth_root_2d"));
   MatrixXfRow smooth_root_2d;
   if (raw_smooth.cols() == 3) {
     smooth_root_2d.resize(raw_smooth.rows(), 2);
@@ -233,7 +263,7 @@ std::shared_ptr<root2d_constraint_set> root2d_constraint_set::from_dict(
 
   MatrixXfRow global_root_heading;
   if (dico.contains("global_root_heading")) {
-    global_root_heading = json_to_eigen_matrix<float>(dico.at("global_root_heading"));
+    global_root_heading = json_to_eigen_matrix<float, Eigen::Dynamic, 2>(dico.at("global_root_heading"));
   }
 
   return std::make_shared<root2d_constraint_set>(
@@ -352,9 +382,7 @@ std::shared_ptr<constraint_set_base> fullbody_constraint_set::crop_move(std::int
     new_smooth.row(i)      = smooth_root_2d_.row(src);
   }
 
-  return std::make_shared<fullbody_constraint_set>(
-      skeleton_, new_frame_indices, new_positions, new_rots, new_smooth
-  );
+  return std::make_shared<fullbody_constraint_set>(skeleton_, new_frame_indices, new_positions, new_rots, new_smooth);
 }
 
 void fullbody_constraint_set::to(const std::shared_ptr<skeleton_base>& skel) {
@@ -366,11 +394,11 @@ std::shared_ptr<fullbody_constraint_set> fullbody_constraint_set::from_dict(
 ) {
   DOODLE_CHICK(skeleton, "fullbody::from_dict: skeleton 为空");
 
-  Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
+  Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t, Eigen::Dynamic>(dico.at("frame_indices")).cast<int>();
 
   // 加载局部旋转（轴角）: JSON 可能是 [K, J, 3] 3D 或 [K*J, 3] 2D 格式
   // json_to_eigen_matrix 统一 flatten 为 [K*J, 3]
-  MatrixXfRow local_rot_aa      = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
+  MatrixXfRow local_rot_aa      = json_to_eigen_matrix<float, Eigen::Dynamic, 3>(dico.at("local_joints_rot"));
   // [K*J, 3] → axis_angle → [K*J, 9]
   MatrixXfRow local_rot_flat    = axis_angle_to_matrix(local_rot_aa);
 
@@ -387,7 +415,7 @@ std::shared_ptr<fullbody_constraint_set> fullbody_constraint_set::from_dict(
     }
   }
 
-  MatrixXfRow root_positions = json_to_eigen_matrix<float>(dico.at("root_positions"));
+  MatrixXfRow root_positions = json_to_eigen_matrix<float, Eigen::Dynamic, 3>(dico.at("root_positions"));
   DOODLE_CHICK(
       root_positions.rows() == K, "fullbody: root_positions 行数 {} 与帧数 K={} 不匹配", root_positions.rows(), K
   );
@@ -397,7 +425,7 @@ std::shared_ptr<fullbody_constraint_set> fullbody_constraint_set::from_dict(
 
   MatrixXfRow smooth_root_2d;
   if (dico.contains("smooth_root_2d")) {
-    smooth_root_2d = json_to_eigen_matrix<float>(dico.at("smooth_root_2d"));
+    smooth_root_2d = json_to_eigen_matrix<float, Eigen::Dynamic, Eigen::Dynamic>(dico.at("smooth_root_2d"));
   }
 
   return std::make_shared<fullbody_constraint_set>(
@@ -508,7 +536,9 @@ void end_effector_constraint_set::update_constraints(
   index_dict["global_root_heading"].push_back(frame_indices_);
 }
 
-std::shared_ptr<constraint_set_base> end_effector_constraint_set::crop_move(std::int64_t start, std::int64_t end) const {
+std::shared_ptr<constraint_set_base> end_effector_constraint_set::crop_move(
+    std::int64_t start, std::int64_t end
+) const {
   const Eigen::Index K = frame_indices_.size();
   std::vector<Eigen::Index> mask_indices;
   mask_indices.reserve(static_cast<std::size_t>(K));
@@ -547,10 +577,10 @@ std::shared_ptr<end_effector_constraint_set> end_effector_constraint_set::from_d
 ) {
   DOODLE_CHICK(skeleton, "end_effector::from_dict: skeleton 为空");
 
-  Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t>(dico.at("frame_indices")).cast<int>();
+  Eigen::VectorXi frame_indices = json_to_eigen_matrix<std::int64_t, Eigen::Dynamic>(dico.at("frame_indices")).cast<int>();
 
   // 加载局部旋转（轴角）: JSON 可能是 [K, J, 3] 3D 或 [K*J, 3] 2D 格式
-  MatrixXfRow local_rot_aa      = json_to_eigen_matrix<float>(dico.at("local_joints_rot"));
+  MatrixXfRow local_rot_aa      = json_to_eigen_matrix<float, Eigen::Dynamic, 3>(dico.at("local_joints_rot"));
   // [K*J, 3] → axis_angle → [K*J, 9]
   MatrixXfRow local_rot_flat    = axis_angle_to_matrix(local_rot_aa);
 
@@ -567,7 +597,7 @@ std::shared_ptr<end_effector_constraint_set> end_effector_constraint_set::from_d
     }
   }
 
-  MatrixXfRow root_positions = json_to_eigen_matrix<float>(dico.at("root_positions"));
+  MatrixXfRow root_positions = json_to_eigen_matrix<float, Eigen::Dynamic, 3>(dico.at("root_positions"));
   DOODLE_CHICK(
       root_positions.rows() == K, "end_effector: root_positions 行数 {} 与帧数 K={} 不匹配", root_positions.rows(), K
   );
@@ -577,7 +607,7 @@ std::shared_ptr<end_effector_constraint_set> end_effector_constraint_set::from_d
 
   MatrixXfRow smooth_root_2d;
   if (dico.contains("smooth_root_2d")) {
-    smooth_root_2d = json_to_eigen_matrix<float>(dico.at("smooth_root_2d"));
+    smooth_root_2d = json_to_eigen_matrix<float, Eigen::Dynamic, Eigen::Dynamic>(dico.at("smooth_root_2d"));
   }
 
   std::vector<std::string> joint_names;
@@ -603,9 +633,7 @@ std::string get_constraint_type_name(const constraint_set_var& constraint) {
 // 加载约束列表
 // ======================================================================
 
-std::vector<constraint_set_ptr> load_constraints_lst(
-    const FSys::path& path, std::shared_ptr<skeleton_base> skeleton
-) {
+std::vector<constraint_set_ptr> load_constraints_lst(const FSys::path& path, std::shared_ptr<skeleton_base> skeleton) {
   DOODLE_CHICK(FSys::exists(path), "约束 JSON 文件不存在: {}", path.string());
 
   SPDLOG_INFO("Loading constraints from {}", path.string());
