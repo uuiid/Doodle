@@ -116,6 +116,8 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
     sid_data_->handle_socket_io(l_socket_io);
   }
   socket_io_contexts_.clear();
+  SPDLOG_LOGGER_WARN(g_logger_ctrl().get_socket_io(), "socket_io_websocket_core 超时或取消, 关闭连接");
+  SPDLOG_LOGGER_WARN(logger_, "socket_io_websocket_core 超时或取消, 关闭连接");
 }
 
 boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket() {

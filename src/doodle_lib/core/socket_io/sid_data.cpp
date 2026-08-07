@@ -64,6 +64,7 @@ boost::asio::awaitable<void> sid_data::impl_run() {
     if (auto l_websocket = socket_io_websocket_core_.lock(); !l_websocket) co_return;
     seed_message_ping();
   }
+  SPDLOG_LOGGER_WARN(g_logger_ctrl().get_socket_io(), "sid {} 超时或取消, 关闭连接", sid_);
   co_return;
 }
 
