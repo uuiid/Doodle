@@ -88,9 +88,7 @@ std::pair<MatrixXfRow, MatrixXfRow> extract_input_motion_from_constraints(
   // 排序：FullBody 放最后处理，确保它覆盖其他约束
   auto sorted = constraint_lst;
   std::stable_sort(sorted.begin(), sorted.end(), [](const constraint_set_ptr& a, const constraint_set_ptr& b) {
-    return a->type_name() == fullbody_constraint_set::name   ? false
-           : b->type_name() == fullbody_constraint_set::name ? true
-                                                             : false;
+    return a->sort_priority() < b->sort_priority();
   });
 
   for (const auto& constraint : sorted) {
@@ -121,22 +119,9 @@ std::pair<MatrixXfRow, MatrixXfRow> extract_input_motion_from_constraints(
     }
 
     // FullBody / EndEffector
-    const auto* global_rots = [&]() -> const MatrixXfRow* {
-      if (auto* f = dynamic_cast<const fullbody_constraint_set*>(constraint.get())) return &f->global_joints_rots_;
-      if (auto* e = dynamic_cast<const end_effector_constraint_set*>(constraint.get())) return &e->global_joints_rots_;
-      return nullptr;
-    }();
-    const auto* global_positions = [&]() -> const MatrixXfRow* {
-      if (auto* f = dynamic_cast<const fullbody_constraint_set*>(constraint.get())) return &f->global_joints_positions_;
-      if (auto* e = dynamic_cast<const end_effector_constraint_set*>(constraint.get()))
-        return &e->global_joints_positions_;
-      return nullptr;
-    }();
-    const auto* smooth_root_2d = [&]() -> const MatrixX2fRow* {
-      if (auto* f = dynamic_cast<const fullbody_constraint_set*>(constraint.get())) return &f->smooth_root_2d_;
-      if (auto* e = dynamic_cast<const end_effector_constraint_set*>(constraint.get())) return &e->smooth_root_2d_;
-      return nullptr;
-    }();
+    const auto* global_rots      = constraint->get_global_joints_rots();
+    const auto* global_positions = constraint->get_global_joints_positions();
+    const auto* smooth_root_2d   = constraint->get_smooth_root_2d();
 
     if (!global_rots || !global_positions || !smooth_root_2d) continue;
 

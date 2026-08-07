@@ -53,6 +53,18 @@ class constraint_set_base {
 
   /// @brief 获取约束帧索引 [K]
   virtual const Eigen::VectorXi& get_frame_indices() const                                           = 0;
+
+  /// @brief 排序优先级，值越小越靠前（默认 0）
+  virtual int sort_priority() const { return 0; }
+
+  /// @brief 全局关节旋转 [K, J*9]（FullBody/EndEffector），其他返回 nullptr
+  virtual const MatrixXfRow* get_global_joints_rots() const { return nullptr; }
+
+  /// @brief 全局关节位置 [K, J*3]（FullBody/EndEffector），其他返回 nullptr
+  virtual const MatrixXfRow* get_global_joints_positions() const { return nullptr; }
+
+  /// @brief 平滑根轨迹 [K, 2]（Root2D/FullBody/EndEffector），其他返回 nullptr
+  virtual const MatrixX2fRow* get_smooth_root_2d() const { return nullptr; }
 };
 
 // ======================================================================
@@ -101,6 +113,8 @@ class root2d_constraint_set : public constraint_set_base {
 
   const Eigen::VectorXi& get_frame_indices() const override { return frame_indices_; }
 
+  const MatrixX2fRow* get_smooth_root_2d() const override { return &smooth_root_2d_; }
+
   /// @brief 从 JSON 字典反序列化
   static std::shared_ptr<root2d_constraint_set> from_dict(
       std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
@@ -146,6 +160,12 @@ class fullbody_constraint_set : public constraint_set_base {
   std::shared_ptr<skeleton_base> get_skeleton() const override { return skeleton_; }
 
   const Eigen::VectorXi& get_frame_indices() const override { return frame_indices_; }
+
+  int sort_priority() const override { return 1; }
+
+  const MatrixXfRow* get_global_joints_rots() const override { return &global_joints_rots_; }
+  const MatrixXfRow* get_global_joints_positions() const override { return &global_joints_positions_; }
+  const MatrixX2fRow* get_smooth_root_2d() const override { return &smooth_root_2d_; }
 
   static std::shared_ptr<fullbody_constraint_set> from_dict(
       std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
@@ -194,6 +214,10 @@ class end_effector_constraint_set : public constraint_set_base {
   std::shared_ptr<skeleton_base> get_skeleton() const override { return skeleton_; }
 
   const Eigen::VectorXi& get_frame_indices() const override { return frame_indices_; }
+
+  const MatrixXfRow* get_global_joints_rots() const override { return &global_joints_rots_; }
+  const MatrixXfRow* get_global_joints_positions() const override { return &global_joints_positions_; }
+  const MatrixX2fRow* get_smooth_root_2d() const override { return &smooth_root_2d_; }
 
   static std::shared_ptr<end_effector_constraint_set> from_dict(
       std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
