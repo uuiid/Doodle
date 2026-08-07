@@ -10,11 +10,13 @@
 #include <doodle_lib/ai/Math/Transform.h>
 #include <doodle_lib/ai/motion_rep/geometry.h>
 
-#include <algorithm>
 #include <boost/numeric/conversion/cast.hpp>
+
+#include <algorithm>
 #include <cmath>
 #include <spdlog/spdlog.h>
 #include <unordered_map>
+
 
 namespace doodle::ai {
 
@@ -130,7 +132,7 @@ std::pair<MatrixXfRow, MatrixXfRow> extract_input_motion_from_constraints(
         return &e->global_joints_positions_;
       return nullptr;
     }();
-    const auto* smooth_root_2d = [&]() -> const MatrixXfRow* {
+    const auto* smooth_root_2d = [&]() -> const MatrixX2fRow* {
       if (auto* f = dynamic_cast<const fullbody_constraint_set*>(constraint.get())) return &f->smooth_root_2d_;
       if (auto* e = dynamic_cast<const end_effector_constraint_set*>(constraint.get())) return &e->smooth_root_2d_;
       return nullptr;
@@ -261,19 +263,19 @@ post_process_result post_process_motion(
     const skeleton_base& skeleton, std::int64_t batch_size, std::int64_t num_frames,
     const std::vector<constraint_set_ptr>& constraint_lst, float contact_threshold, float root_margin
 ) {
-  const auto num_joints  = skeleton.nbjoints_;
-  const auto T           = num_frames;
-  const auto B           = batch_size;
+  const auto num_joints = skeleton.nbjoints_;
+  const auto T          = num_frames;
+  const auto B          = batch_size;
 
   // 构建约束掩码（所有批次共享）
-  auto shared_masks    = build_constraint_masks(constraint_lst, T);
+  auto shared_masks     = build_constraint_masks(constraint_lst, T);
   std::vector<constraint_masks> masks_per_batch;
   for (std::int64_t b = 0; b < B; ++b) {
     masks_per_batch.push_back(shared_masks);
   }
 
   // 创建工作骨骼
-  auto working_rig = create_working_rig_from_skeleton(skeleton);
+  auto working_rig          = create_working_rig_from_skeleton(skeleton);
 
   // 克隆并准备数据
   MatrixXfRow hip_corrected = root_positions;  // [B*T, 3]
@@ -309,9 +311,9 @@ post_process_result post_process_motion(
 
   if (!constraint_lst.empty()) {
     for (std::int64_t b = 0; b < B; ++b) {
-      auto [hip_t, rots_t] = extract_input_motion_from_constraints(constraint_lst, skeleton, T, num_joints);
+      auto [hip_t, rots_t]            = extract_input_motion_from_constraints(constraint_lst, skeleton, T, num_joints);
       // hip_t: [T, 3], rots_t: [T, J*4]
-      hip_input.block(b * T, 0, T, 3)               = hip_t;
+      hip_input.block(b * T, 0, T, 3) = hip_t;
       rots_input.block(b * T, 0, T, num_joints * 4) = rots_t;
     }
   }
