@@ -96,7 +96,8 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
 boost::asio::awaitable<void> socket_io_websocket_core::run() {
   co_await init();
   if (!sid_data_) co_return;
-  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none &&
+         sid_data_ && !sid_data_->is_timeout()) {
     // boost::beast::flat_buffer l_buffer{};
     std::string l_body{};
     auto l_buffer = boost::asio::dynamic_buffer(l_body);
