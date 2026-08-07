@@ -31,7 +31,7 @@ class skeleton_base;
 /// @brief 所有约束集类型的纯虚基类
 class constraint_set_base {
  public:
-  virtual ~constraint_set_base() = default;
+  virtual ~constraint_set_base()        = default;
 
   /// @brief 返回约束类型名称
   virtual std::string type_name() const = 0;
@@ -40,19 +40,19 @@ class constraint_set_base {
   virtual void update_constraints(
       std::unordered_map<std::string, std::vector<MatrixXfRow>>& data_dict,
       std::unordered_map<std::string, std::vector<Eigen::VectorXi>>& index_dict
-  ) const = 0;
+  ) const                                                                                            = 0;
 
   /// @brief 裁剪到 [start, end) 帧范围，返回新对象
   virtual std::shared_ptr<constraint_set_base> crop_move(std::int64_t start, std::int64_t end) const = 0;
 
   /// @brief 设置骨骼
-  virtual void to(const std::shared_ptr<skeleton_base>& skel) = 0;
+  virtual void to(const std::shared_ptr<skeleton_base>& skel)                                        = 0;
 
   /// @brief 获取骨骼
-  virtual std::shared_ptr<skeleton_base> get_skeleton() const = 0;
+  virtual std::shared_ptr<skeleton_base> get_skeleton() const                                        = 0;
 
   /// @brief 获取约束帧索引 [K]
-  virtual const Eigen::VectorXi& get_frame_indices() const = 0;
+  virtual const Eigen::VectorXi& get_frame_indices() const                                           = 0;
 };
 
 // ======================================================================
@@ -288,9 +288,7 @@ using constraint_set_ptr = std::shared_ptr<constraint_set_base>;
 /// @param path JSON 文件路径
 /// @param skeleton 骨骼定义
 /// @return 约束列表（基类共享指针）
-std::vector<constraint_set_ptr> load_constraints_lst(
-    const FSys::path& path, std::shared_ptr<skeleton_base> skeleton
-);
+std::vector<constraint_set_ptr> load_constraints_lst(const FSys::path& path, std::shared_ptr<skeleton_base> skeleton);
 
 /// @brief 从 JSON 数据加载约束列表
 /// @param json_data nlohmann::json 数组
