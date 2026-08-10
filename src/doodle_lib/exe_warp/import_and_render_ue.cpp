@@ -67,7 +67,7 @@ void fix_project(const FSys::path& in_project_path) {
   l_enabled_plug(l_plugin, "MoviePipelineMaskRenderPass");
   l_enabled_plug(l_plugin, "MovieRenderPipeline");
   l_enabled_plug(l_plugin, "AlembicHairImporter");
-  l_enabled_plug(l_plugin, "Groom");
+  // l_enabled_plug(l_plugin, "Groom");
   l_enabled_plug(l_plugin, "UAssetBrowser", false);
   FSys::ofstream{in_project_path} << l_json.dump();
 }
