@@ -76,7 +76,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
     );
     for (auto& seg : l_segment.segments_)
       for (auto& c : seg.constraints_) c->move(-l_root_pos);
-
+    for (auto& seg : l_segment.segments_)  // 约束少于20 个
+      DOODLE_CHICK(seg.constraints_.size() <= 20, "约束数量不能超过 20");
     // auto l_neutral_joints =
     //     impl_ptr_->model_->motion_rep()->translate_2d_to_zero(l_segment.skeleton_->neutral_joints_, 1, 1);
     // auto l_root_pos =
