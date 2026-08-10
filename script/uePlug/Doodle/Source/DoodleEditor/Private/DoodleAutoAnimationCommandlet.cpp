@@ -1163,7 +1163,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 		AActor* L_Actor = L_Value.Actor;
 		for (auto&& [L_GroomAsset, L_GroomCacheOrBind] : L_Value.GroomMap)
 		{
-			UGroomComponent* L_Com = NewObject<UGroomComponent>(L_Actor, NAME_None, RF_Transactional);
+			UGroomComponent* L_Com = NewObject<UGroomComponent>(L_Actor, FName(*L_GroomAsset->GetName()), RF_Transactional);
 			L_Com->OnComponentCreated();
 			L_Com->RegisterComponent();
 			L_Actor->AddInstanceComponent(L_Com);
