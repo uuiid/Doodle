@@ -1182,15 +1182,10 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			);
 			L_Com->Modify();
 			L_Actor->Modify();
-			const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Com->GetName(), L_Com->GetClass());
-			if (FMovieScenePossessable* L_Poss = TheLevelSequence->GetMovieScene()->FindPossessable(L_GUID))
-			{
-				L_Poss->SetParent(L_Value.ActorGuid);
-			}
-			TheLevelSequence->BindPossessableObject(L_GUID, *L_Com, TheSequenceWorld);
-			UE_LOG(LogTemp, Log, TEXT("GroomMap Created %s %s"), *L_GroomAsset->GetName(), *L_GUID.ToString());
 			if (!L_GroomCacheOrBind.GroomCache) continue;
-			UMovieSceneGroomCacheTrack* L_Track = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneGroomCacheTrack>(L_GUID);
+			// 将 GroomCacheTrack 直接添加到 Actor 的绑定上，而非创建独立的 Component Possessable
+			// GroomComponentFromObject() 会从 Actor 上自动查找 UGroomComponent
+			UMovieSceneGroomCacheTrack* L_Track = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneGroomCacheTrack>(L_Value.ActorGuid);
 			UMovieSceneGroomCacheSection* L_GroomCacheSection = CastChecked<UMovieSceneGroomCacheSection>(
 				L_Track->AddNewAnimation(L_Start * FrameTick, L_Com));
 			L_GroomCacheSection->SetPreRollFrames(50 * FrameTick);
