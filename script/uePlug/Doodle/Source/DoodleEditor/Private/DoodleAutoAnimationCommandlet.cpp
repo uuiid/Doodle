@@ -1173,7 +1173,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			L_Com->SetLightingChannels(false, true, false);
 			if (L_GroomCacheOrBind.GroomCache)
 				L_Com->GroomCache = L_GroomCacheOrBind.GroomCache;
-			else if (L_GroomCacheOrBind.GroomBindingAsset)
+		  if (L_GroomCacheOrBind.GroomBindingAsset)
 				L_Com->BindingAsset = L_GroomCacheOrBind.GroomBindingAsset;
 			else
 				UE_LOG(LogTemp, Error, TEXT("GroomMap not contains GroomCache or GroomBindingAsset for %s"),
