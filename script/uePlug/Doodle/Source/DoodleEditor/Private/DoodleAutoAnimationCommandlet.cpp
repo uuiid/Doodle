@@ -1189,7 +1189,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			}
 
 			if (!L_GroomCacheOrBind.GroomCache) continue;
-			UMovieSceneGroomCacheTrack* L_Track = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneGroomCacheTrack>();
+			UMovieSceneGroomCacheTrack* L_Track = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneGroomCacheTrack>(L_GUID);
 			UMovieSceneGroomCacheSection* L_GroomCacheSection = CastChecked<UMovieSceneGroomCacheSection>(
 				L_Track->AddNewAnimation(L_Start * FrameTick, L_Com));
 			L_GroomCacheSection->SetPreRollFrames(50 * FrameTick);
