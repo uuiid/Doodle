@@ -57,6 +57,9 @@ class constraint_set_base {
   /// @brief 排序优先级，值越小越靠前（默认 0）
   virtual int sort_priority() const { return 0; }
 
+  /// @brief 移动约束位置（偏移量）
+  virtual void move(const Eigen::RowVector3f& offset) = 0;
+
   /// @brief 全局关节旋转 [K, J*9]（FullBody/EndEffector），其他返回 nullptr
   virtual const MatrixXfRow* get_global_joints_rots() const { return nullptr; }
 
@@ -109,6 +112,8 @@ class root2d_constraint_set : public constraint_set_base {
 
   void to(const std::shared_ptr<skeleton_base>& skel) override;
 
+  void move(const Eigen::RowVector3f& offset) override;
+
   std::shared_ptr<skeleton_base> get_skeleton() const override { return skeleton_; }
 
   const Eigen::VectorXi& get_frame_indices() const override { return frame_indices_; }
@@ -156,6 +161,8 @@ class fullbody_constraint_set : public constraint_set_base {
   std::shared_ptr<constraint_set_base> crop_move(std::int64_t start, std::int64_t end) const override;
 
   void to(const std::shared_ptr<skeleton_base>& skel) override;
+
+  void move(const Eigen::RowVector3f& offset) override;
 
   std::shared_ptr<skeleton_base> get_skeleton() const override { return skeleton_; }
 
@@ -210,6 +217,8 @@ class end_effector_constraint_set : public constraint_set_base {
   std::shared_ptr<constraint_set_base> crop_move(std::int64_t start, std::int64_t end) const override;
 
   void to(const std::shared_ptr<skeleton_base>& skel) override;
+
+  void move(const Eigen::RowVector3f& offset) override;
 
   std::shared_ptr<skeleton_base> get_skeleton() const override { return skeleton_; }
 

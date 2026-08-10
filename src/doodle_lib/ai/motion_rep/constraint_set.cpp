@@ -247,6 +247,11 @@ void root2d_constraint_set::to(const std::shared_ptr<skeleton_base>& skel) {
   if (skel) skeleton_ = skel;
 }
 
+void root2d_constraint_set::move(const Eigen::RowVector3f& offset) {
+  smooth_root_2d_.col(0).array() += offset.x();
+  smooth_root_2d_.col(1).array() += offset.z();
+}
+
 std::shared_ptr<root2d_constraint_set> root2d_constraint_set::from_dict(
     std::shared_ptr<skeleton_base> skeleton, const nlohmann::json& dico
 ) {
@@ -387,6 +392,17 @@ std::shared_ptr<constraint_set_base> fullbody_constraint_set::crop_move(std::int
 
 void fullbody_constraint_set::to(const std::shared_ptr<skeleton_base>& skel) {
   if (skel) skeleton_ = skel;
+}
+
+void fullbody_constraint_set::move(const Eigen::RowVector3f& offset) {
+  const Eigen::Index J = skeleton_->nbjoints_;
+  for (Eigen::Index j = 0; j < J; ++j) {
+    global_joints_positions_.col(j * 3 + 0).array() += offset.x();
+    global_joints_positions_.col(j * 3 + 1).array() += offset.y();
+    global_joints_positions_.col(j * 3 + 2).array() += offset.z();
+  }
+  smooth_root_2d_.col(0).array() += offset.x();
+  smooth_root_2d_.col(1).array() += offset.z();
 }
 
 std::shared_ptr<fullbody_constraint_set> fullbody_constraint_set::from_dict(
@@ -575,6 +591,17 @@ std::shared_ptr<constraint_set_base> end_effector_constraint_set::crop_move(
 
 void end_effector_constraint_set::to(const std::shared_ptr<skeleton_base>& skel) {
   if (skel) skeleton_ = skel;
+}
+
+void end_effector_constraint_set::move(const Eigen::RowVector3f& offset) {
+  const Eigen::Index n_pos = pos_indices_.size();
+  for (Eigen::Index j = 0; j < n_pos; ++j) {
+    global_joints_positions_.col(j * 3 + 0).array() += offset.x();
+    global_joints_positions_.col(j * 3 + 1).array() += offset.y();
+    global_joints_positions_.col(j * 3 + 2).array() += offset.z();
+  }
+  smooth_root_2d_.col(0).array() += offset.x();
+  smooth_root_2d_.col(1).array() += offset.z();
 }
 
 std::shared_ptr<end_effector_constraint_set> end_effector_constraint_set::from_dict(
