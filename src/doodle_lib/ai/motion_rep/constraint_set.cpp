@@ -264,15 +264,14 @@ std::shared_ptr<root2d_constraint_set> root2d_constraint_set::from_dict(
   for (Eigen::Index i = 0; i < raw_smooth.rows(); ++i) {
     raw_smooth(i, 1) = raw_smooth(i, 2);  // 将 z 复制到第二列
   }
-  raw_smooth.conservativeResize(raw_smooth.rows(), 2);  // 只保留前两列 (x, z)
-
+  MatrixX2fRow smooth_root_2d = raw_smooth.leftCols<2>();  // 只保留前两列 (x, z)
   MatrixX2fRow global_root_heading;
   if (dico.contains("global_root_heading")) {
     global_root_heading = json_to_eigen_matrix<float, Eigen::Dynamic, 2>(dico.at("global_root_heading"));
   }
 
   return std::make_shared<root2d_constraint_set>(
-      std::move(skeleton), std::move(frame_indices), std::move(raw_smooth), std::move(global_root_heading)
+      std::move(skeleton), std::move(frame_indices), std::move(smooth_root_2d), std::move(global_root_heading)
   );
 }
 
@@ -442,11 +441,11 @@ std::shared_ptr<fullbody_constraint_set> fullbody_constraint_set::from_dict(
 
   MatrixX2fRow smooth_root_2d;
   if (dico.contains("smooth_root")) {
-    smooth_root_2d = json_to_eigen_matrix<float, Eigen::Dynamic, 3>(dico.at("smooth_root"));
-    for (Eigen::Index i = 0; i < smooth_root_2d.rows(); ++i)
-      smooth_root_2d(i, 1) = smooth_root_2d(i, 2);  // 将 z 复制到第二列
+    MatrixX3fRow smooth_root_3d = json_to_eigen_matrix<float, Eigen::Dynamic, 3>(dico.at("smooth_root"));
+    for (Eigen::Index i = 0; i < smooth_root_3d.rows(); ++i)
+      smooth_root_3d(i, 1) = smooth_root_3d(i, 2);  // 将 z 复制到第二列
 
-    smooth_root_2d.conservativeResize(smooth_root_2d.rows(), 2);  // 只保留前两列 (x, z)
+    smooth_root_2d = smooth_root_3d.leftCols<2>();  // 只保留前两列 (x, z)
   }
 
   return std::make_shared<fullbody_constraint_set>(
