@@ -74,6 +74,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
         (l_segment.skeleton_->neutral_joints_.row(l_root_index).head<3>() == Eigen::RowVector3f{0, 0, 0}),
         "根节点位置不为零"
     );
+    for (auto& seg : l_segment.segments_)
+      for (auto& c : seg.constraints_) c->move(-l_root_pos);
+
     // auto l_neutral_joints =
     //     impl_ptr_->model_->motion_rep()->translate_2d_to_zero(l_segment.skeleton_->neutral_joints_, 1, 1);
     // auto l_root_pos =
