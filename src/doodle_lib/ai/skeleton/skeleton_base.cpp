@@ -21,29 +21,17 @@ namespace doodle::ai {
 // ======================================================================
 namespace {
 
-void matrix_9_to_4x4(const float* src_9, Eigen::Matrix4f& dst) {
-  dst.setIdentity();
-  dst(0, 0) = src_9[0];
-  dst(0, 1) = src_9[1];
-  dst(0, 2) = src_9[2];
-  dst(1, 0) = src_9[3];
-  dst(1, 1) = src_9[4];
-  dst(1, 2) = src_9[5];
-  dst(2, 0) = src_9[6];
-  dst(2, 1) = src_9[7];
-  dst(2, 2) = src_9[8];
+Eigen::Matrix4f matrix_9_to_4x4(Eigen::Ref<const Eigen::RowVectorXf> src_9) {
+  auto& l_der         = src_9.derived();
+  Eigen::Matrix4f dst = Eigen::Matrix4f::Identity();
+  Eigen::Map<const Eigen::Matrix<float, 3, 3, Eigen::RowMajor>> rot(l_der.data());
+  dst.block<3, 3>(0, 0) = rot;
+  return dst;
 }
 
-void matrix_4x4_to_9(const Eigen::Matrix4f& src, float* dst_9) {
-  dst_9[0] = src(0, 0);
-  dst_9[1] = src(0, 1);
-  dst_9[2] = src(0, 2);
-  dst_9[3] = src(1, 0);
-  dst_9[4] = src(1, 1);
-  dst_9[5] = src(1, 2);
-  dst_9[6] = src(2, 0);
-  dst_9[7] = src(2, 1);
-  dst_9[8] = src(2, 2);
+void matrix_4x4_to_9(const Eigen::Matrix4f& src, Eigen::Ref<Eigen::RowVectorXf> dst_9) {
+  Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>> rot(dst_9.derived().data());
+  rot = src.block<3, 3>(0, 0);
 }
 
 }  // namespace
@@ -382,17 +370,16 @@ skeleton_base::fk_result skeleton_base::fk(const MatrixXfRow& local_rot_mats, co
   DOODLE_CHICK(!joint_levels_.empty(), "skeleton_base.joint_levels_ 为空，请先调用 init_from_bone_hierarchy");
 
   for (Eigen::Index f = 0; f < total_frames; ++f) {
-    const float* rot_row = local_rot_mats.row(f).data();
-    const float* pos_row = root_positions.row(f).data();
+    const auto rot_row = local_rot_mats.row(f);
+    const auto pos_row = root_positions.row(f);
 
     std::vector<Eigen::Matrix4f> transforms(static_cast<std::size_t>(J));
 
     // 根关节
     const auto root_i = static_cast<std::size_t>(root_idx_);
     {
-      Eigen::Matrix4f local_T = Eigen::Matrix4f::Identity();
-      matrix_9_to_4x4(rot_row + root_i * 9, local_T);
-      transforms[root_i] = local_T;
+      Eigen::Matrix4f local_T = matrix_9_to_4x4(rot_row.segment(root_i * 9, 9));
+      transforms[root_i]      = local_T;
       transforms[root_i](0, 3) += pos_row[0];
       transforms[root_i](1, 3) += pos_row[1];
       transforms[root_i](2, 3) += pos_row[2];
@@ -411,24 +398,23 @@ skeleton_base::fk_result skeleton_base::fk(const MatrixXfRow& local_rot_mats, co
         rel_joint(1)            = neutral_joints_(j_idx, 1) - neutral_joints_(static_cast<Eigen::Index>(pi), 1);
         rel_joint(2)            = neutral_joints_(j_idx, 2) - neutral_joints_(static_cast<Eigen::Index>(pi), 2);
 
-        Eigen::Matrix4f local_T = Eigen::Matrix4f::Identity();
-        matrix_9_to_4x4(rot_row + j_idx * 9, local_T);
-        local_T(0, 3)  = rel_joint(0);
-        local_T(1, 3)  = rel_joint(1);
-        local_T(2, 3)  = rel_joint(2);
+        Eigen::Matrix4f local_T = matrix_9_to_4x4(rot_row.segment(j_idx * 9, 9));
+        local_T(0, 3)           = rel_joint(0);
+        local_T(1, 3)           = rel_joint(1);
+        local_T(2, 3)           = rel_joint(2);
 
-        transforms[ji] = transforms[pi] * local_T;
+        transforms[ji]          = transforms[pi] * local_T;
       }
     }
 
     // 提取结果
-    float* global_rot_out = result.global_rot_mats.row(f).data();
-    float* posed_out      = result.posed_joints.row(f).data();
-    float* posed_no_root  = result.posed_joints_norootpos.row(f).data();
+    auto global_rot_row = result.global_rot_mats.row(f);
+    auto posed_out      = result.posed_joints.row(f);
+    auto posed_no_root  = result.posed_joints_norootpos.row(f);
 
     for (Eigen::Index j = 0; j < J; ++j) {
       const auto ji = static_cast<std::size_t>(j);
-      matrix_4x4_to_9(transforms[ji], global_rot_out + j * 9);
+      matrix_4x4_to_9(transforms[ji], global_rot_row.segment(j * 9, 9));
 
       posed_out[j * 3 + 0]     = transforms[ji](0, 3);
       posed_out[j * 3 + 1]     = transforms[ji](1, 3);
@@ -455,8 +441,8 @@ MatrixXfRow skeleton_base::global_rots_to_local_rots(const MatrixXfRow& global_r
   MatrixXfRow local_rot_mats(total, J * 9);
 
   for (Eigen::Index f = 0; f < total; ++f) {
-    const float* global_row = global_rot_mats.row(f).data();
-    float* local_row        = local_rot_mats.row(f).data();
+    const auto global_row = global_rot_mats.row(f);
+    auto local_row        = local_rot_mats.row(f);
 
     for (Eigen::Index j = 0; j < J; ++j) {
       const auto ji = static_cast<std::size_t>(j);
