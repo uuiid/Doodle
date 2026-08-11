@@ -75,7 +75,6 @@ MatrixXfRow kimodo_motion_rep::encode(
   auto fk_res               = skeleton_->fk(local_joint_rots, root_positions);
   // fk_res.global_rot_mats: [B*T, J*9]
   // fk_res.posed_joints: [B*T, J*3]
-  // fk_res.posed_joints_norootpos: [B*T, J*3]
 
   // ---- Step 2: 计算朝向角 ----
   MatrixXfRow heading_angle = compute_heading_angle(fk_res.posed_joints, *skeleton_, batch_size, time_steps);
@@ -95,8 +94,6 @@ MatrixXfRow kimodo_motion_rep::encode(
   // ---- Step 4: 局部关节位置（相对平滑根） ----
   // hips_offset = root_positions - smooth_root_pos
   // hips_offset.y = root_positions.y
-  // local_joints_positions = posed_joints_norootpos + hips_offset[:, None]
-  //   = posed_joints - root_positions + root_positions - smooth_root_pos (但保留Y为root)
   // 简化: local_joints_positions = fk_res.posed_joints - smooth_root_pos (在xz平面)
   //       并保持Y为posed_joints的Y
   MatrixXfRow local_joints_positions(total, nbjoints_ * 3);

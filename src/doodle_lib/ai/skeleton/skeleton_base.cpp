@@ -365,7 +365,6 @@ skeleton_base::fk_result skeleton_base::fk(const MatrixXfRow& local_rot_mats, co
   fk_result result;
   result.global_rot_mats.resize(total_frames, J * 9);
   result.posed_joints.resize(total_frames, J * 3);
-  result.posed_joints_norootpos.resize(total_frames, J * 3);
 
   DOODLE_CHICK(!joint_levels_.empty(), "skeleton_base.joint_levels_ 为空，请先调用 init_from_bone_hierarchy");
 
@@ -410,19 +409,14 @@ skeleton_base::fk_result skeleton_base::fk(const MatrixXfRow& local_rot_mats, co
     // 提取结果
     auto global_rot_row = result.global_rot_mats.row(f);
     auto posed_out      = result.posed_joints.row(f);
-    auto posed_no_root  = result.posed_joints_norootpos.row(f);
 
     for (Eigen::Index j = 0; j < J; ++j) {
       const auto ji = static_cast<std::size_t>(j);
       matrix_4x4_to_9(transforms[ji], global_rot_row.segment(j * 9, 9));
 
-      posed_out[j * 3 + 0]     = transforms[ji](0, 3);
-      posed_out[j * 3 + 1]     = transforms[ji](1, 3);
-      posed_out[j * 3 + 2]     = transforms[ji](2, 3);
-
-      posed_no_root[j * 3 + 0] = transforms[ji](0, 3) - pos_row[0];
-      posed_no_root[j * 3 + 1] = transforms[ji](1, 3) - pos_row[1];
-      posed_no_root[j * 3 + 2] = transforms[ji](2, 3) - pos_row[2];
+      posed_out[j * 3 + 0] = transforms[ji](0, 3);
+      posed_out[j * 3 + 1] = transforms[ji](1, 3);
+      posed_out[j * 3 + 2] = transforms[ji](2, 3);
     }
   }
 

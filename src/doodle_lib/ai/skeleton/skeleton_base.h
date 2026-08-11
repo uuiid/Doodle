@@ -116,15 +116,14 @@ class skeleton_base {
 
   /// @brief 前向运动学结果
   struct fk_result {
-    MatrixXfRow global_rot_mats;         ///< [B*T, J*9] 全局旋转矩阵
-    MatrixXfRow posed_joints;            ///< [B*T, J*3] 全局关节位置
-    MatrixXfRow posed_joints_norootpos;  ///< [B*T, J*3] 无根偏移的关节位置
+    MatrixXfRow global_rot_mats;  ///< [B*T, J*9] 全局旋转矩阵
+    MatrixXfRow posed_joints;     ///< [B*T, J*3] 全局关节位置
   };
 
   /// @brief 由局部旋转和根位置计算全局旋转和关节位置
   /// @param local_rot_mats [B*T, J*9] 局部旋转矩阵
   /// @param root_positions [B*T, 3] 根关节世界坐标
-  /// @return 全局旋转、全局关节位置、无根偏移关节位置
+  /// @return 全局旋转、全局关节位置
   [[nodiscard]] fk_result fk(const MatrixXfRow& local_rot_mats, const MatrixXfRow& root_positions) const;
 
   /// @brief 由全局旋转矩阵计算局部旋转（逆父级变换）
