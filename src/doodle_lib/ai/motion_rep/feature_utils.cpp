@@ -128,7 +128,7 @@ MatrixXfRow compute_vel_angle(const MatrixXfRow& root_rot_angles, float fps, con
   const Eigen::Index B = root_rot_angles.rows();
   const Eigen::Index T = root_rot_angles.cols();
 
-  MatrixXfRow diff = diff_angles(root_rot_angles, fps);  // [B, T-1]
+  MatrixXfRow diff     = diff_angles(root_rot_angles, fps);  // [B, T-1]
 
   // 末尾补零 → [B, T]
   MatrixXfRow result(B, T);
@@ -307,7 +307,7 @@ MatrixXfRow rotate_features::rotate_positions(
       const float y          = positions(idx, 1);
       const float z          = positions(idx, 2);
 
-      const float* R         = corrective_mat_Y_T_.row(b).data();
+      const auto R           = corrective_mat_Y_T_.row(b);
       result(idx, 0)         = x * R[0] + y * R[1] + z * R[2];
       result(idx, 1)         = x * R[3] + y * R[4] + z * R[5];
       result(idx, 2)         = x * R[6] + y * R[7] + z * R[8];
@@ -335,7 +335,7 @@ MatrixXfRow rotate_features::rotate_2d_positions(
       const float x          = positions_2d(idx, 0);
       const float y          = positions_2d(idx, 1);
 
-      const float* R         = corrective_mat_2d_T_.row(b).data();
+      const auto R           = corrective_mat_2d_T_.row(b);
       result(idx, 0)         = x * R[0] + y * R[1];
       result(idx, 1)         = x * R[2] + y * R[3];
     }
@@ -360,7 +360,8 @@ MatrixXfRow rotate_features::rotate_6d_rotations(
     const Eigen::Index b         = frame_idx / time_steps;
 
     // 从 6D 恢复为矩阵
-    const float* src_6d          = rotations_6d.row(i / nbjoints).data() + (i % nbjoints) * 6;
+    auto l_begin_index           = (i % nbjoints) * 6;
+    const auto src_6d            = rotations_6d.row(i / nbjoints).segment<6>(l_begin_index);
     Eigen::Vector3f x_raw(src_6d[0], src_6d[1], src_6d[2]);
     Eigen::Vector3f y_raw(src_6d[3], src_6d[4], src_6d[5]);
 
@@ -369,7 +370,7 @@ MatrixXfRow rotate_features::rotate_6d_rotations(
     Eigen::Vector3f y = z.cross(x);
 
     // 应用旋转 Ry^T @ R
-    const float* R    = corrective_mat_Y_T_.row(b).data();
+    const auto R      = corrective_mat_Y_T_.row(b);
     // R_rotated = Ry^T * R
     const float r00   = R[0] * x(0) + R[1] * x(1) + R[2] * x(2);
     const float r10   = R[3] * x(0) + R[4] * x(1) + R[5] * x(2);
