@@ -244,14 +244,13 @@ struct computing_time_post_req_custom_data {
       j.at("project_uuid").get_to(p.project_id);
     else
       j.at("project_name").get_to(p.project_name_);
-
-    j.at("entity_ji_du").get_to(p.season);
-    j.at("entity_ji_shu_lie").get_to(p.episode);
+    if (j.contains("entity_ji_du")) j.at("entity_ji_du").get_to(p.season);
+    if (j.contains("entity_ji_shu_lie")) j.at("entity_ji_shu_lie").get_to(p.episode);
     j.at("task_name").get_to(p.name);
     if (j.contains("entity_deng_ji")) j.at("entity_deng_ji").get_to(p.grade);
     j.at("work_user_remark").get_to(p.remark);
-    j.at("work_start_time").get_to(p.start_time);
-    j.at("work_end_time").get_to(p.end_time);
+    if (j.contains("work_start_time")) j.at("work_start_time").get_to(p.start_time);
+    if (j.contains("work_end_time")) j.at("work_end_time").get_to(p.end_time);
 
     // 检查数据
     if (p.start_time > p.end_time)
@@ -633,6 +632,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_cus
 
   l_data.user_id_                            = user_id_;
   l_data.year_month_                         = year_month_;
+  if (l_data.start_time == chrono::local_time_pos{}) l_data.start_time = chrono::local_days{l_data.year_month_ / 1};
+  if (l_data.end_time == chrono::local_time_pos{}) l_data.end_time = chrono::local_days{l_data.year_month_ / 2};
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始自定义工时 user_id {} year_month {} name {}", person_.person_.email_,
