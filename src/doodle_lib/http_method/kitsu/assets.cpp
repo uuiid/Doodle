@@ -157,7 +157,7 @@ struct with_tasks_get_result_t {
       const std::string& in_sequence_name
   )
       : uuid_id_(in_entity.uuid_id_),
-        name_(create_name(in_entity.name_, in_sequence_name)),
+        name_(in_entity.name_),
         preview_file_id_(in_entity.preview_file_id_),
         description_(in_entity.description_),
         asset_type_name_(in_asset_type.name_),
@@ -201,12 +201,6 @@ struct with_tasks_get_result_t {
   decltype(entity_asset_extend::ji_du_) ji_du_;
   decltype(entity_asset_extend::kai_shi_ji_shu_) kai_shi_ji_shu_;
   decltype(entity_asset_extend::chang_ci_) chang_ci_;
-
-  static std::string create_name(const std::string& in_entity_name, const std::string& in_sequence_name) {
-    if (!in_sequence_name.empty()) return fmt::format("{}_{}", in_sequence_name, in_entity_name);
-
-    return in_entity_name;
-  }
 
   struct task_t {
     task_t() = default;
