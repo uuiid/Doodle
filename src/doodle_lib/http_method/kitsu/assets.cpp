@@ -153,8 +153,7 @@ namespace {
 struct with_tasks_get_result_t {
   with_tasks_get_result_t() = default;
   explicit with_tasks_get_result_t(
-      const entity& in_entity, const entity_asset_extend& in_asset_extend, const asset_type& in_asset_type,
-      const std::string& in_sequence_name
+      const entity& in_entity, const entity_asset_extend& in_asset_extend, const asset_type& in_asset_type
   )
       : uuid_id_(in_entity.uuid_id_),
         name_(in_entity.name_),
@@ -317,8 +316,6 @@ struct make_with_tasks_sql_result_t {
 
     auto l_sql               = get_sqlite_database();
     auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
-    auto l_sequence          = alias<entity>("sequence");
-    auto l_episode           = alias<entity>("episode");
     auto l_dynamic_where     = dynamic_column_operations{};
     l_dynamic_where.add_condition(c(&entity::entity_type_id_).not_in(l_temporal_type_ids));
     if (person_.role_ == person_role_type::outsource)
@@ -391,14 +388,13 @@ struct make_with_tasks_sql_result_t {
     return select(l_sql)
         .columns(
             object<entity>(), object<task>(), object<entity_asset_extend>(), object<asset_type>(),
-            &assignees_table::person_id_, l_sequence->*&entity::name_
+            &assignees_table::person_id_
         )
         .from<entity>()
         .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
         .left_outer_join<task>(&entity::uuid_id_, &task::entity_id_)
         .left_outer_join<assignees_table>(&assignees_table::task_id_, &task::uuid_id_)
         .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
-        .left_outer_join(l_sequence, &entity::parent_id_, l_sequence->*&entity::uuid_id_)
         .where(l_dynamic_where)
         .order_by(&asset_type::name_)
         .order_by(&entity::name_)
@@ -445,9 +441,9 @@ auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_ur
   l_ret.reserve(l_sql.get_project_entity_count(l_data.project_id_));
   std::map<uuid, std::size_t> l_entities_and_tasks_map{};
   std::map<uuid, std::size_t> l_task_id_set{};
-  for (auto&& [l_entity, l_task, l_entity_asset_extend, l_asset_type, l_person_id, l_sequence_name] : l_data()) {
+  for (auto&& [l_entity, l_task, l_entity_asset_extend, l_asset_type, l_person_id] : l_data()) {
     if (!l_entities_and_tasks_map.contains(l_entity.uuid_id_)) {
-      l_ret.emplace_back(with_tasks_get_result_t{l_entity, l_entity_asset_extend, l_asset_type, l_sequence_name});
+      l_ret.emplace_back(with_tasks_get_result_t{l_entity, l_entity_asset_extend, l_asset_type});
       l_entities_and_tasks_map.emplace(l_entity.uuid_id_, l_ret.size() - 1);
     }
     if (!l_task.uuid_id_.is_nil()) {
