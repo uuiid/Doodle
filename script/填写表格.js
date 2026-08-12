@@ -62,7 +62,7 @@ function fillWorkRow(row, role, numWorkCols) {
  * @param {string} endCell - 结束单元格（如 "AU20"），起始格固定为 C4
  */
 function fillSheet(sheet, endCell) {
-  const targetRange = sheet.Range("C4", sheet.Range(endCell));
+  const targetRange = sheet.Range("E4", sheet.Range(endCell));
   const targetRows = targetRange.Rows.Count;
   const targetCols = targetRange.Columns.Count;
   const numWorkCols = targetCols - 1;
@@ -122,14 +122,14 @@ function fillSheet(sheet, endCell) {
 
 function Macro() {
   const sheet_end_map = {
-    rd15: "BZ20",
+    // rd15: "BZ20",
     // rd16: "AU18",
     // rd17: "BM20",
     // rd18: "AZ15",
     // rd19: "BD21",
     // rd20: "AV17",
     // rd21: "AV21",
-    rd22: "BI18",
+    // rd22: "BI18",
     // rd23: "BA22",
     // rd24: "BD34",
     // rd25: "AQ25",
@@ -146,9 +146,10 @@ function Macro() {
     // "rd34-03": "AQ25",
     // "rd34-04": "AQ26",
     // "rd34-05": "AQ29",
-    // rd35: "AN21",
-    // rd36: "AR34",
-    // rd37: "AR26",
+    RD35: "AS21",
+    RD36: "AX37",
+    RD37: "AX26",
+    RD39: "AW11",
   };
   for (const [sheetName, endCell] of Object.entries(sheet_end_map)) {
     let sheet;
