@@ -17,7 +17,6 @@
 #include <spdlog/spdlog.h>
 #include <unordered_map>
 
-
 namespace doodle::ai {
 
 // ======================================================================
@@ -470,13 +469,13 @@ post_process_result post_process_motion(
       hip_corrected(bt, 2) = t.GetZ();
 
       for (int j = 0; j < boost::numeric_cast<int>(num_joints); ++j) {
-        auto q                        = posesFixed[f][j].GetRotation();
+        auto q                        = posesFixed[f][j].GetRotation().ToFloat4();
         // Math::Quaternion 内部: ((float*)&q)[0]=x, [1]=y, [2]=z, [3]=w
         // rots_corrected 存储: (w, x, y, z)
-        rots_corrected(bt, j * 4 + 0) = reinterpret_cast<const float*>(&q)[3];  // w
-        rots_corrected(bt, j * 4 + 1) = reinterpret_cast<const float*>(&q)[0];  // x
-        rots_corrected(bt, j * 4 + 2) = reinterpret_cast<const float*>(&q)[1];  // y
-        rots_corrected(bt, j * 4 + 3) = reinterpret_cast<const float*>(&q)[2];  // z
+        rots_corrected(bt, j * 4 + 0) = q.m_w;  // w
+        rots_corrected(bt, j * 4 + 1) = q.m_x;  // x
+        rots_corrected(bt, j * 4 + 2) = q.m_y;  // y
+        rots_corrected(bt, j * 4 + 3) = q.m_z;  // z
       }
     }
   }
