@@ -43,6 +43,7 @@ struct DOODLE_CORE_API task {
   chrono::system_zoned_time ended_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   uuid shot_uuid_id_;                        // 内部使用的UUID，对应镜头中的uuid_id_
+  uuid project_uuid_id_;                     // 内部使用的UUID，对应项目中的uuid_id_
   std::int64_t completion_tokens_{20'0000};  // 任务完成所需的token数量，默认为20万，具体数值可根据实际情况调整
 
   // 归档
@@ -61,6 +62,7 @@ struct DOODLE_CORE_API task {
     j["ended_at"]          = p.ended_at_;
     j["archived"]          = p.archived_;
     j["shot_uuid_id"]      = p.shot_uuid_id_;
+    j["project_uuid_id"]   = p.project_uuid_id_;
     j["completion_tokens"] = p.completion_tokens_;
   }
   friend void from_json(const nlohmann::json& j, task& p) {
@@ -68,6 +70,7 @@ struct DOODLE_CORE_API task {
     if (j.contains("ai_studio_id")) j.at("ai_studio_id").get_to(p.ai_studio_id_);
     if (j.contains("archived")) j.at("archived").get_to(p.archived_);
     if (j.contains("shot_uuid_id")) j.at("shot_uuid_id").get_to(p.shot_uuid_id_);
+    if (j.contains("project_uuid_id")) j.at("project_uuid_id").get_to(p.project_uuid_id_);
   }
 };
 
