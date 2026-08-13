@@ -7,6 +7,10 @@
 		{
 			"path": "external/kimodo",
 			"name": "kimodo"
+		},
+		{
+			"path": "D:/dev/dev",
+			"name": "开发日志"
 		}
 	],
 	"settings": {
