@@ -112,7 +112,7 @@ struct DOODLE_CORE_API person {
   // 自定义属性
   // 钉钉id
   std::string dingding_id_;
-  std::int64_t max_completion_tokens_{doodle_config::g_max_completion_tokens};  // 当周任务消耗的最大token数量
+  std::int64_t remaining_completion_tokens_{doodle_config::g_max_completion_tokens};  // 当周任务消耗的最大token数量
 
   std::string get_full_name() const {
     return !first_name_.empty() && !last_name_.empty() ? first_name_ + ' ' + last_name_ : first_name_ + last_name_;
@@ -168,7 +168,7 @@ struct DOODLE_CORE_API person {
     if (j.contains("ldap_uid")) j.at("ldap_uid").get_to(p.ldap_uid_);
     if (j.contains("departments")) j.at("departments").get_to(p.departments_);
     if (j.contains("studio_id")) j.at("studio_id").get_to(p.studio_id_);
-    if (j.contains("max_completion_tokens")) j.at("max_completion_tokens").get_to(p.max_completion_tokens_);
+    if (j.contains("max_completion_tokens")) j.at("max_completion_tokens").get_to(p.remaining_completion_tokens_);
   }
   // from json
   friend void to_json(nlohmann::json& j, const person& p) {
@@ -209,7 +209,7 @@ struct DOODLE_CORE_API person {
     j["fido_devices"]                        = nlohmann::json::array();
     j["full_name"]                           = p.first_name_ + " " + p.last_name_;
     j["id"]                                  = p.uuid_id_;
-    j["max_completion_tokens"]               = p.max_completion_tokens_;
+    j["max_completion_tokens"]               = p.remaining_completion_tokens_;
   }
 };
 }  // namespace doodle

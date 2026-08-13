@@ -16,7 +16,7 @@ boost::asio::awaitable<void> set_remaining_tokens_all_persons(std::int64_t in_to
   co_await l_sql.update(
       orm::update(l_sql)
           .from<person>()
-          .set(c(&person::max_completion_tokens_) = in_tokens)
+          .set(c(&person::remaining_completion_tokens_) = in_tokens)
           .where(c(&person::archived_) == false)
   );
   co_return;
@@ -30,7 +30,7 @@ boost::asio::awaitable<void> set_remaining_tokens_for_person(const uuid& in_pers
   co_await l_sql.update(
       orm::update(l_sql)
           .from<person>()
-          .set(c(&person::max_completion_tokens_) = in_tokens)
+          .set(c(&person::remaining_completion_tokens_) = in_tokens)
           .where(c(&person::uuid_id_) == in_person)
   );
 
@@ -47,7 +47,7 @@ boost::asio::awaitable<void> add_remaining_tokens_for_person(const uuid& in_pers
   co_await l_sql.update(
       orm::update(l_sql)
           .from<person>()
-          .set(c(&person::max_completion_tokens_) = c(&person::max_completion_tokens_) + in_tokens)
+          .set(c(&person::remaining_completion_tokens_) = c(&person::remaining_completion_tokens_) + in_tokens)
           .where(c(&person::uuid_id_) == in_person)
   );
 
@@ -57,7 +57,7 @@ std::int64_t get_remaining_tokens_for_person(const uuid& in_person) {
   auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
-      .columns(&person::max_completion_tokens_)
+      .columns(&person::remaining_completion_tokens_)
       .from<person>()
       .where(c(&person::uuid_id_) == in_person)()
       .to_optional()
@@ -65,7 +65,7 @@ std::int64_t get_remaining_tokens_for_person(const uuid& in_person) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens, get) {
-  co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", person_.person_.max_completion_tokens_}});
+  co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", person_.person_.remaining_completion_tokens_}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens, post) {
   // 设置当周人员剩余可使用的 token 数量
@@ -80,7 +80,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens, post) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, get) {
   person_.check_producer();
   auto l_others_person = get_sqlite_database().get_by_uuid<person>(person_id_);
-  co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", l_others_person.max_completion_tokens_}});
+  co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", l_others_person.remaining_completion_tokens_}});
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
@@ -90,9 +90,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
   std::int64_t l_remaining_tokens = l_json.at("remaining_tokens").get<std::int64_t>();
   auto l_others_person            = get_sqlite_database().get_by_uuid<person>(person_id_);
   co_await set_remaining_tokens_for_person(l_others_person.uuid_id_, l_remaining_tokens);  // 计算差值进行更新
-  co_return in_handle->make_msg(
-      nlohmann::json{{"remaining_tokens", l_others_person.max_completion_tokens_ + l_remaining_tokens}}
-  );
+  co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", l_remaining_tokens}});
 }
 namespace {
 
@@ -113,7 +111,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_all, get) {
 
   std::vector<person_token_t> l_result_map;
   for (const auto& [person_id, max_tokens] : select(l_sql)
-                                                 .columns(&person::uuid_id_, &person::max_completion_tokens_)
+                                                 .columns(&person::uuid_id_, &person::remaining_completion_tokens_)
                                                  .from<person>()
                                                  .where(c(&person::archived_) == false)()) {
     l_result_map.push_back(person_token_t{person_id, max_tokens});
