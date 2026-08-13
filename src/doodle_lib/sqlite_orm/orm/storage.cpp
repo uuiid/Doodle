@@ -242,6 +242,10 @@ sqlite_connection_ptr storage::get_thread_db() {
 }
 
 void storage::add_thread_db(const sqlite_connection_ptr& in_ptr) {
+  if (auto l_last_err = sqlite3_extended_errcode(*in_ptr); l_last_err != 0) {
+    SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "数据库连接健康检查失败, 销毁连接而非回池");
+    return;  // shared_ptr 析构 → sqlite3_close
+  }
   timed_connection l_entry{in_ptr, std::chrono::steady_clock::now()};
   if (connection_queue_.push(std::move(l_entry)))
     ++thread_db_count_;
