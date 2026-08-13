@@ -68,7 +68,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens, get) {
   co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", person_.person_.remaining_completion_tokens_}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens, post) {
-  // 设置当周人员剩余可使用的 token 数量
   person_.check_admin();
   auto l_json = in_handle->get_json();
   std::int64_t l_remaining_tokens{doodle_config::g_max_completion_tokens};
