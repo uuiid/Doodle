@@ -191,6 +191,8 @@ void session_data::set_session() {
           boost::lexical_cast<std::int32_t>(l_value.substr(l_it + 8, l_value.find(',', l_it) - l_it - 8)),
           doodle_config::g_max_keep_alive
       )};
+    } else {
+      timeout_ = doodle_config::g_timeout;  // 有 keep-alive 但无 timeout=，重置为默认值
     }
   } else {
     timeout_ = doodle_config::g_timeout;
