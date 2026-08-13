@@ -59,5 +59,8 @@ constexpr std::string_view set_state{R"(set_state)"};
 constexpr std::string_view logger{R"(logger)"};
 constexpr std::string_view set_task_state{R"(set_task_state)"};
 }  // namespace server_websocket_event
+
+constexpr std::int64_t g_max_task_completion_tokens{50'0000};                        // 一个任务预先消耗的最大token数量
+constexpr std::int64_t g_max_completion_tokens{g_max_task_completion_tokens * 100};  // 当周任务消耗的最大token数量
 }  // namespace doodle_config
 }  // namespace doodle

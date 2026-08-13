@@ -1,5 +1,6 @@
 #include "doodle_core/metadata/task.h"
 
+#include "doodle_core/configure/static_value.h"
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/person.h"
@@ -11,9 +12,9 @@
 #include <doodle_core/metadata/seedance2/group.h>
 #include <doodle_core/metadata/seedance2/task.h>
 
-#include "doodle_lib/core/app_base.h"
-#include "doodle_lib/core/global_function.h"
-#include "doodle_lib/core/socket_io/broadcast.h"
+#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/global_function.h>
+#include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_client/seedance2_client.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
@@ -188,13 +189,14 @@ class seedance2_task_run_manager {
     l_task_ptr->status_        = l_info.status_;
     l_task_ptr->data_response_ = l_info.data_response_;
     co_await l_sql.update(l_task_ptr);
-    auto l_person = l_sql.get_by_uuid<person>(in_task.user_id_);
     if (l_info.status_ == sd2::task_status::succeeded || l_info.completion_tokens_ > 0) {
       // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
-      co_await add_remaining_tokens_for_person(l_person, in_task.completion_tokens_ - l_info.completion_tokens_);
+      co_await add_remaining_tokens_for_person(
+          in_task.user_id_, in_task.completion_tokens_ - l_info.completion_tokens_
+      );
     } else {
       // 任务失败或者其他状态，返还 tokenf
-      co_await add_remaining_tokens_for_person(l_person, in_task.completion_tokens_);
+      co_await add_remaining_tokens_for_person(in_task.user_id_, in_task.completion_tokens_);
     }
     if (l_info.status_ != sd2::task_status::queued && l_info.status_ != sd2::task_status::running) {
       socket_io::broadcast(
@@ -224,13 +226,13 @@ class seedance2_task_run_manager {
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
-  if (get_remaining_tokens_for_person(person_.person_) <= 0)
-    throw_exception(doodle_error{"当日可用token数量不足，请联系管理员"});
+  if (get_remaining_tokens_for_person(person_.person_.uuid_id_) - doodle_config::g_max_task_completion_tokens <= 0)
+    throw_exception(doodle_error{"当周可用token数量不足，请联系管理员"});
 
+  auto l_task = std::make_shared<sd2::task>();
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
-  auto l_task = std::make_shared<sd2::task>();
   l_json.get_to(*l_task);
   l_task->user_id_        = person_.person_.uuid_id_;
   l_task->ai_studio_id_   = person_.get_ai_studio_id();
@@ -242,7 +244,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
 #ifdef DOODLE_SEED2
   l_task->task_id_ = co_await l_client->run_task(l_task->data_request_);  // 异步运行任务，不等待结果
 #endif
-  co_await add_remaining_tokens_for_person(person_.person_, -l_task->completion_tokens_);
+  co_await add_remaining_tokens_for_person(person_.person_.uuid_id_, -l_task->completion_tokens_);
   // 查找 以https://或者http://开头的url，并替换host部分为空
   static std::regex l_url_regex(R"(https?:\/\/[^\/\s]+)");
   for (auto&& l_value : l_task->data_request_.at("content")) {
