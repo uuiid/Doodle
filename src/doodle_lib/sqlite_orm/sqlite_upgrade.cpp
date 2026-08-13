@@ -103,12 +103,13 @@ struct upgrade_2_t : sqlite_upgrade {
     }
     if (in_data.pragma().user_version() == 14) {
       auto l_s = in_data.create_session();
+      // in_data.pragma().foreign_keys(false);
       l_s.drop_table("seedance2_task_person_token");
       // 重命名表 person.max_completion_tokens -> person.remaining_completion_tokens
       l_s.exec(R"(ALTER TABLE person RENAME COLUMN max_completion_tokens TO remaining_completion_tokens;)");
       in_data.sync_schema();
       // 将表 seedance2_task 的数据转移到 seedance2_task_2 中
-      l_s.exec(
+      in_data.create_session().exec(
           R"(INSERT INTO seedance2_task_2 (
 uuid_id, user_id, task_id, status, data_response, created_at, ended_at, shot_uuid_id, project_uuid_id, archived, completion_tokens) 
 SELECT uuid_id, user_id, task_id, status, data_response, created_at, ended_at, shot_uuid_id, NULL AS project_uuid_id, archived, completion_tokens FROM seedance2_task;)"
