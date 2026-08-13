@@ -50,6 +50,34 @@ bool session::table_exists(const std::string& table_name) {
       .to_optional()
       .has_value();
 }
+std::set<std::string> session::get_all_table_names() {
+  using namespace detail;
+  auto l_tables = select(*this)
+                      .columns(&sqlite_master_entry::name)
+                      .from<sqlite_master_entry>()
+                      .where(c(&sqlite_master_entry::type) == "table")()
+                      .to_set();
+  return l_tables;
+}
+std::set<std::string> session::get_all_index_names() {
+  using namespace detail;
+  auto l_indexes = select(*this)
+                       .columns(&sqlite_master_entry::name)
+                       .from<sqlite_master_entry>()
+                       .where(c(&sqlite_master_entry::type) == "index")()
+                       .to_set();
+  return l_indexes;
+}
+
+std::set<std::string> session::get_all_trigger_names() {
+  using namespace detail;
+  auto l_triggers = select(*this)
+                        .columns(&sqlite_master_entry::name)
+                        .from<sqlite_master_entry>()
+                        .where(c(&sqlite_master_entry::type) == "trigger")()
+                        .to_set();
+  return l_triggers;
+}
 
 bool session::index_exists(const std::string& index_name) {
   if (index_name.empty()) throw std::invalid_argument("Index name cannot be empty");

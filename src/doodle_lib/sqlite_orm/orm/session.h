@@ -3,6 +3,10 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+#include <set>
+#include <string>
+
+
 namespace doodle::orm {
 class session {
   struct session_data {
@@ -61,6 +65,12 @@ class session {
   void vacuum();
   // 运行任意SQL
   void exec(std::string_view sql);
+  // 获取所有的表名
+  std::set<std::string> get_all_table_names();
+  // 获取所有的索引名
+  std::set<std::string> get_all_index_names();
+  // 获取所有的触发器名
+  std::set<std::string> get_all_trigger_names();
 
   // 储存接口
   template <typename T>

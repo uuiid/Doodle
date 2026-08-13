@@ -314,10 +314,13 @@ fts5_api* storage::get_fts5_api(sqlite3* in_sqlite) {
 session storage::create_session() { return session{*this}; }
 
 void storage::sync_schema() {
-  auto l_session     = create_session();
-  auto l_transaction = l_session.transaction();
+  auto l_session      = create_session();
+  auto l_all_tables   = l_session.get_all_table_names();
+  auto l_all_indexes  = l_session.get_all_index_names();
+  auto l_all_triggers = l_session.get_all_trigger_names();
+  auto l_transaction  = l_session.transaction();
   for (const auto& table : tables_) {
-    if (l_session.table_exists(table->name_)) {
+    if (l_all_tables.contains(table->name_)) {
       SPDLOG_DEBUG("Table already exists, skipping creation: {}", table->name_);
       continue;
     }
@@ -338,7 +341,7 @@ void storage::sync_schema() {
         // 已经存在相同的索引，无需创建
         continue;
       }
-      if (l_session.index_exists(l_index_info.name_)) {
+      if (l_all_indexes.contains(l_index_info.name_)) {
         SPDLOG_DEBUG("Index already exists in database, skipping creation: {}", l_index_info.name_);
         l_existing_indexes.insert(l_index_info);
         continue;
@@ -350,7 +353,7 @@ void storage::sync_schema() {
     }
   }
   for (const auto& l_trigger : triggers_) {
-    if (l_session.trigger_exists(l_trigger->info_->name_)) {
+    if (l_all_triggers.contains(l_trigger->info_->name_)) {
       SPDLOG_DEBUG("Trigger already exists, skipping creation: {}", l_trigger->info_->name_);
       continue;
     }
