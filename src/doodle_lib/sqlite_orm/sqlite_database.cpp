@@ -100,7 +100,7 @@ void sqlite_storage::regs_all() {
       .add_column("ai_studio_id", &seedance2::assets_group::ai_studio_id_)
       .add_column("created_at", &seedance2::assets_group::created_at_);
 
-  reg_table<seedance2::task>("seedance2_task")
+  reg_table<seedance2::task>("seedance2_task_2")
       .add_column("id", &seedance2::task::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::task::uuid_id_, unique(), not_null())
       .add_column("user_id", &seedance2::task::user_id_)
@@ -113,9 +113,11 @@ void sqlite_storage::regs_all() {
       .add_column("created_at", &seedance2::task::created_at_)
       .add_column("ended_at", &seedance2::task::ended_at_)
       .add_column("shot_uuid_id", &seedance2::task::shot_uuid_id_)
+      .add_column("project_uuid_id", &seedance2::task::project_uuid_id_)
       .add_column("archived", &seedance2::task::archived_)
       .add_column("completion_tokens", &seedance2::task::completion_tokens_)
       .add_foreign_key(&seedance2::task::shot_uuid_id_, &task::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&seedance2::task::project_uuid_id_, &project::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&seedance2::task::user_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_index(&seedance2::task::uuid_id_);
 
@@ -729,7 +731,7 @@ void sqlite_storage::regs_all() {
       .add_column("is_generated_from_ldap", &person::is_generated_from_ldap_)
       .add_column("ldap_uid", &person::ldap_uid_, unique())
       .add_column("dingding_id", &person::dingding_id_)
-      .add_column("max_completion_tokens", &person::remaining_completion_tokens_)
+      .add_column("remaining_completion_tokens", &person::remaining_completion_tokens_)
       .add_foreign_key(&person::studio_id_, &studio::uuid_id_, foreign_key_action::set_null);
 
   reg_table<preview_background_file>("preview_background_file")
