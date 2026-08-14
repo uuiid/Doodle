@@ -11,6 +11,7 @@
 #include <chrono>
 #include <map>
 #include <memory>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -130,24 +131,41 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_all, get) {
 namespace {
 auto get_date_person_tokens(const decltype(get_sqlite_database())& in_sql, const chrono::sys_days& in_date) {
   std::map<uuid, sd2::person_token> l_token_map;
+  std::map<uuid, std::set<uuid>> l_project_map;
   using namespace orm;
   namespace sd2 = doodle::seedance2;
 
   chrono::system_zoned_time l_begin{chrono::current_zone(), chrono::sys_days{in_date}};
   chrono::system_zoned_time l_end{chrono::current_zone(), chrono::sys_days{in_date} + chrono::days{1}};
-  for (auto&& [l_user_id, l_tokens] :
+  for (auto&& [l_user_id, l_tokens, l_type, l_project_id] :
        select(in_sql)
-           .columns(&sd2::task::user_id_, &sd2::task::completion_tokens_)
+           .columns(
+               &sd2::task::user_id_, &sd2::task::completion_tokens_, &sd2::task::type_, &sd2::task::project_uuid_id_
+           )
            .from<sd2::task>()
            .where(c(&sd2::task::created_at_) >= l_begin && c(&sd2::task::created_at_) < l_end)()) {
-    if (l_token_map.contains(l_user_id))
+    if (l_token_map.contains(l_user_id)) {
       l_token_map.at(l_user_id).token_consumed_ += l_tokens;
-    else {
+      ++l_token_map.at(l_user_id).task_count_;
+      if (!l_project_map[l_user_id].contains(l_project_id)) {
+        ++l_token_map.at(l_user_id).project_count_;
+        l_project_map.at(l_user_id).insert(l_project_id);
+      }
+      if (l_type == sd2::task_type::video) ++l_token_map.at(l_user_id).video_count_;
+      if (l_type == sd2::task_type::picture) ++l_token_map.at(l_user_id).picture_count_;
+    } else {
       l_token_map.emplace(
           l_user_id, sd2::person_token{
-                         .date_ = chrono::year_month_day{in_date}, .person_id_ = l_user_id, .token_consumed_ = l_tokens
+                         .date_           = chrono::year_month_day{in_date},
+                         .person_id_      = l_user_id,
+                         .token_consumed_ = l_tokens,
+                         .task_count_     = 1,
+                         .project_count_  = 1,
+                         .video_count_    = (l_type == sd2::task_type::video ? 1 : 0),
+                         .picture_count_  = (l_type == sd2::task_type::picture ? 1 : 0),
                      }
       );
+      l_project_map[l_user_id].insert(l_project_id);
     }
   }
   return l_token_map;

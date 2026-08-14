@@ -105,6 +105,7 @@ void sqlite_storage::regs_all() {
       .add_column("uuid_id", &seedance2::task::uuid_id_, unique(), not_null())
       .add_column("user_id", &seedance2::task::user_id_)
       .add_column("status", &seedance2::task::status_)
+      .add_column("type", &seedance2::task::type_, not_null())
       .add_column("data_request", &seedance2::task::data_request_)
       .add_column("file_extension", &seedance2::task::file_extension_)
       .add_column("data_response", &seedance2::task::data_response_)
@@ -127,6 +128,10 @@ void sqlite_storage::regs_all() {
       .add_column("date", &seedance2::person_token::date_)
       .add_column("person_id", &seedance2::person_token::person_id_)
       .add_column("token_amount", &seedance2::person_token::token_consumed_)
+      .add_column("task_count", &seedance2::person_token::task_count_)
+      .add_column("project_count", &seedance2::person_token::project_count_)
+      .add_column("video_count", &seedance2::person_token::video_count_)
+      .add_column("picture_count", &seedance2::person_token::picture_count_)
       .add_foreign_key(&seedance2::person_token::person_id_, &person::uuid_id_, foreign_key_action::cascade)
       .add_index(&seedance2::person_token::date_)
       .add_unique_index(&seedance2::person_token::date_, &seedance2::person_token::person_id_);

@@ -22,6 +22,16 @@ enum class DOODLE_CORE_API task_status {
   failed,
   expired,
 };
+
+// 任务类别 图片,视频等
+enum class DOODLE_CORE_API task_type {
+  picture,
+  video,
+};
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    task_type, {{task_type::picture, "picture"},
+                {task_type::video, "video"}}
+);
 NLOHMANN_JSON_SERIALIZE_ENUM(
     task_status, {{task_status::queued, "queued"},
                   {task_status::running, "running"},
@@ -34,6 +44,7 @@ struct DOODLE_CORE_API task {
   DOODLE_BASE_FIELDS();
   uuid user_id_;
   task_status status_;
+  task_type type_;
   nlohmann::json data_request_;
   std::string file_extension_;
   nlohmann::json data_response_;
@@ -54,6 +65,7 @@ struct DOODLE_CORE_API task {
     j["id"]                = p.uuid_id_;
     j["user_id"]           = p.user_id_;
     j["status"]            = p.status_;
+    j["type"]              = p.type_;
     j["data_request"]      = p.data_request_;
     j["file_extension"]    = p.file_extension_;
     j["data_response"]     = p.data_response_;
@@ -67,11 +79,15 @@ struct DOODLE_CORE_API task {
     j["completion_tokens"] = p.completion_tokens_;
   }
   friend void from_json(const nlohmann::json& j, task& p) {
-    if (j.contains("data_request")) j.at("data_request").get_to(p.data_request_);
-    if (j.contains("ai_studio_id")) j.at("ai_studio_id").get_to(p.ai_studio_id_);
+    j.at("data_request").get_to(p.data_request_);
+    j.at("ai_studio_id").get_to(p.ai_studio_id_);
+    j.at("project_uuid_id").get_to(p.project_uuid_id_);
+    j.at("type").get_to(p.type_);
+
+
     if (j.contains("archived")) j.at("archived").get_to(p.archived_);
     if (j.contains("shot_uuid_id")) j.at("shot_uuid_id").get_to(p.shot_uuid_id_);
-    if (j.contains("project_uuid_id")) j.at("project_uuid_id").get_to(p.project_uuid_id_);
+    
   }
 };
 // 统计每人, 每天的 token 消耗量
@@ -79,13 +95,27 @@ struct DOODLE_CORE_API person_token {
   DOODLE_BASE_FIELDS();
   chrono::year_month_day date_;
   uuid person_id_;
+  // 消耗的 token 数量
   std::int64_t token_consumed_{0};
+  // 任务数量
+  std::int64_t task_count_{0};
+  // 任务参与项目数量
+  std::int64_t project_count_{0};
+  // 视频类的数量
+  std::int64_t video_count_{0};
+  // 图片类的数量
+  std::int64_t picture_count_{0};
+
   // to json
   friend void to_json(nlohmann::json& j, const person_token& p) {
-    j["id"]           = p.uuid_id_;
-    j["date"]         = p.date_;
-    j["person_id"]    = p.person_id_;
-    j["token_amount"] = p.token_consumed_;
+    j["id"]            = p.uuid_id_;
+    j["date"]          = p.date_;
+    j["person_id"]     = p.person_id_;
+    j["token_amount"]  = p.token_consumed_;
+    j["task_count"]    = p.task_count_;
+    j["project_count"] = p.project_count_;
+    j["video_count"]   = p.video_count_;
+    j["picture_count"] = p.picture_count_;
   }
 };
 }  // namespace doodle::seedance2
