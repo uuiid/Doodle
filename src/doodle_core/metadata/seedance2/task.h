@@ -2,6 +2,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
 
+#include <chrono>
 #include <string>
 
 namespace doodle::seedance2 {
@@ -73,5 +74,18 @@ struct DOODLE_CORE_API task {
     if (j.contains("project_uuid_id")) j.at("project_uuid_id").get_to(p.project_uuid_id_);
   }
 };
-
+// 统计每人, 每天的 token 消耗量
+struct DOODLE_CORE_API person_token {
+  DOODLE_BASE_FIELDS();
+  chrono::year_month_day date_;
+  uuid person_id_;
+  std::int64_t token_consumed_{0};
+  // to json
+  friend void to_json(nlohmann::json& j, const person_token& p) {
+    j["id"]           = p.uuid_id_;
+    j["date"]         = p.date_;
+    j["person_id"]    = p.person_id_;
+    j["token_amount"] = p.token_consumed_;
+  }
+};
 }  // namespace doodle::seedance2

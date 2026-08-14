@@ -121,6 +121,16 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(&seedance2::task::user_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_index(&seedance2::task::uuid_id_);
 
+  reg_table<seedance2::person_token>("seedance2_person_token")
+      .add_column("id", &seedance2::person_token::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::person_token::uuid_id_, unique(), not_null())
+      .add_column("date", &seedance2::person_token::date_)
+      .add_column("person_id", &seedance2::person_token::person_id_)
+      .add_column("token_amount", &seedance2::person_token::token_consumed_)
+      .add_foreign_key(&seedance2::person_token::person_id_, &person::uuid_id_, foreign_key_action::cascade)
+      .add_index(&seedance2::person_token::date_)
+      .add_unique_index(&seedance2::person_token::date_, &seedance2::person_token::person_id_);
+
   reg_table<ai_studio_person_role_link>("ai_studio_person_role_link")
       .add_column("id", &ai_studio_person_role_link::id_, primary_key(), autoincrement())
       .add_column("ai_studio_id", &ai_studio_person_role_link::ai_studio_id_, not_null())

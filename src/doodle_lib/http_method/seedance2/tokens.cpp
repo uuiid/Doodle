@@ -1,10 +1,17 @@
+#include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/person.h"
 #include <doodle_core/metadata/seedance2/task.h>
 
 #include <doodle_lib/http_method/seedance2/reg.h>
+#include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include "reg.h"
+#include <chrono>
+#include <map>
+#include <memory>
+#include <utility>
+#include <vector>
 
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
@@ -117,5 +124,72 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_all, get) {
   }
 
   co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_instance, get) {
+  person_.check_producer();
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  namespace sd2 = doodle::seedance2;
+  std::vector<sd2::person_token> l_result_map =
+      select(l_sql)
+          .columns(object<sd2::person_token>())
+          .from<sd2::person_token>()
+          .where(c(&sd2::person_token::date_) >= date_start_ && c(&sd2::person_token::date_) <= date_end_ && c(&sd2::person_token::person_id_) == person_id_)()
+          .to_vector();
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_all, get) {
+  person_.check_producer();
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  namespace sd2 = doodle::seedance2;
+  std::vector<sd2::person_token> l_result_map =
+      select(l_sql)
+          .columns(object<sd2::person_token>())
+          .from<sd2::person_token>()
+          .where(c(&sd2::person_token::date_) >= date_start_ && c(&sd2::person_token::date_) <= date_end_)()
+          .to_vector();
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date, post) {
+  person_.check_admin();
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  namespace sd2 = doodle::seedance2;
+
+  if (std::vector<sd2::person_token> l_result_map = select(l_sql)
+                                                        .columns(object<sd2::person_token>())
+                                                        .from<sd2::person_token>()
+                                                        .where(c(&sd2::person_token::date_) == date_)()
+                                                        .to_vector();
+      !l_result_map.empty())
+    co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
+
+  std::map<uuid, sd2::person_token> l_token_map;
+
+  chrono::system_zoned_time l_begin{chrono::current_zone(), chrono::sys_days{date_}};
+  chrono::system_zoned_time l_end{chrono::current_zone(), chrono::sys_days{date_} + chrono::days{1}};
+  for (auto&& [l_user_id, l_tokens] :
+       select(l_sql)
+           .columns(&sd2::task::user_id_, &sd2::task::completion_tokens_)
+           .from<sd2::task>()
+           .where(c(&sd2::task::created_at_) >= l_begin && c(&sd2::task::created_at_) < l_end)()) {
+    if (l_token_map.contains(l_user_id))
+      l_token_map.at(l_user_id).token_consumed_ += l_tokens;
+    else {
+      l_token_map.emplace(
+          l_user_id, sd2::person_token{.date_ = this->date_, .person_id_ = l_user_id, .token_consumed_ = l_tokens}
+      );
+    }
+  }
+
+  auto l_list_vector = std::make_shared<std::vector<sd2::person_token>>();
+  for (auto&& [l_person_id, l_tokens] : l_token_map) l_list_vector->emplace_back(l_tokens);
+  co_await l_sql.install_range(l_list_vector);
+
+  co_return in_handle->make_msg(nlohmann::json{} = *l_list_vector);
 }
 }  // namespace doodle::http::seedance2

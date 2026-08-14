@@ -132,4 +132,25 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(seedance2_tokens_person_all)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
+// 获取某人某段时间 token 消耗统计
+// /api/seedance2/tokens/person/{person_id}/date/{date}-{date}
+DOODLE_HTTP_JWT_FUN(seedance2_tokens_person_date_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid person_id_{};
+chrono::year_month_day date_start_{};
+chrono::year_month_day date_end_{};
+DOODLE_HTTP_FUN_END()
+// 获取某段时间所有人 token 消耗统计
+// /api/seedance2/tokens/person/date/{date}-{date}
+DOODLE_HTTP_JWT_FUN(seedance2_tokens_person_date_all)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+chrono::year_month_day date_start_{};
+chrono::year_month_day date_end_{};
+DOODLE_HTTP_FUN_END()
+// 统计所有人, 某天的 token 消耗量
+// /api/seedance2/tokens/person/date/{date}
+DOODLE_HTTP_JWT_FUN(seedance2_tokens_person_date)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+chrono::year_month_day date_{};
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http::seedance2
