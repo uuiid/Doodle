@@ -6,6 +6,7 @@
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
+#include "core/global_function.h"
 #include "reg.h"
 #include <chrono>
 #include <map>
@@ -125,6 +126,34 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_all, get) {
 
   co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
 }
+
+namespace {
+auto get_date_person_tokens(const decltype(get_sqlite_database())& in_sql, const chrono::sys_days& in_date) {
+  std::map<uuid, sd2::person_token> l_token_map;
+  using namespace orm;
+  namespace sd2 = doodle::seedance2;
+
+  chrono::system_zoned_time l_begin{chrono::current_zone(), chrono::sys_days{in_date}};
+  chrono::system_zoned_time l_end{chrono::current_zone(), chrono::sys_days{in_date} + chrono::days{1}};
+  for (auto&& [l_user_id, l_tokens] :
+       select(in_sql)
+           .columns(&sd2::task::user_id_, &sd2::task::completion_tokens_)
+           .from<sd2::task>()
+           .where(c(&sd2::task::created_at_) >= l_begin && c(&sd2::task::created_at_) < l_end)()) {
+    if (l_token_map.contains(l_user_id))
+      l_token_map.at(l_user_id).token_consumed_ += l_tokens;
+    else {
+      l_token_map.emplace(
+          l_user_id, sd2::person_token{
+                         .date_ = chrono::year_month_day{in_date}, .person_id_ = l_user_id, .token_consumed_ = l_tokens
+                     }
+      );
+    }
+  }
+  return l_token_map;
+}
+}  // namespace
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_instance, get) {
   person_.check_producer();
   auto l_sql = get_sqlite_database();
@@ -136,6 +165,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_instance, get) {
           .from<sd2::person_token>()
           .where(c(&sd2::person_token::date_) >= date_start_ && c(&sd2::person_token::date_) <= date_end_ && c(&sd2::person_token::person_id_) == person_id_)()
           .to_vector();
+
+  // 检查是否包含当天
+  if (chrono::sys_days l_now{chrono::floor<chrono::days>(chrono::system_clock::now())};
+      l_now >= date_start_ && l_now <= date_end_) {
+    auto l_today_tokens = get_date_person_tokens(l_sql, l_now);
+    if (l_today_tokens.contains(person_id_))
+      l_result_map.push_back(l_today_tokens.at(person_id_));  // 添加当天的token消耗量
+  }
 
   co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
 }
@@ -151,7 +188,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_all, get) {
           .from<sd2::person_token>()
           .where(c(&sd2::person_token::date_) >= date_start_ && c(&sd2::person_token::date_) <= date_end_)()
           .to_vector();
-
+  // 检查是否包含当天
+  if (chrono::sys_days l_now{chrono::floor<chrono::days>(chrono::system_clock::now())};
+      l_now >= date_start_ && l_now <= date_end_) {
+    auto l_today_tokens = get_date_person_tokens(l_sql, l_now);
+    l_result_map |= ranges::actions::push_back(l_today_tokens | std::views::values);
+  }
   co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date, post) {
@@ -168,23 +210,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date, post) {
       !l_result_map.empty())
     co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
 
-  std::map<uuid, sd2::person_token> l_token_map;
-
-  chrono::system_zoned_time l_begin{chrono::current_zone(), chrono::sys_days{date_}};
-  chrono::system_zoned_time l_end{chrono::current_zone(), chrono::sys_days{date_} + chrono::days{1}};
-  for (auto&& [l_user_id, l_tokens] :
-       select(l_sql)
-           .columns(&sd2::task::user_id_, &sd2::task::completion_tokens_)
-           .from<sd2::task>()
-           .where(c(&sd2::task::created_at_) >= l_begin && c(&sd2::task::created_at_) < l_end)()) {
-    if (l_token_map.contains(l_user_id))
-      l_token_map.at(l_user_id).token_consumed_ += l_tokens;
-    else {
-      l_token_map.emplace(
-          l_user_id, sd2::person_token{.date_ = this->date_, .person_id_ = l_user_id, .token_consumed_ = l_tokens}
-      );
-    }
-  }
+  std::map<uuid, sd2::person_token> l_token_map = get_date_person_tokens(l_sql, date_);
+  // 是当天的, 不进行插入, 直接返计算结果
+  if (chrono::sys_days l_now{chrono::floor<chrono::days>(chrono::system_clock::now())}; l_now == date_)
+    co_return in_handle->make_msg(
+        nlohmann::json{} = l_token_map | std::views::values | ranges::to<std::vector<sd2::person_token>>()
+    );
 
   auto l_list_vector = std::make_shared<std::vector<sd2::person_token>>();
   for (auto&& [l_person_id, l_tokens] : l_token_map) l_list_vector->emplace_back(l_tokens);
