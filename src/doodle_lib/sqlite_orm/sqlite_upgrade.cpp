@@ -111,7 +111,7 @@ struct upgrade_2_t : sqlite_upgrade {
       // 将表 seedance2_task 的数据转移到 seedance2_task_2 中
       in_data.create_session().exec(
           R"(INSERT INTO seedance2_task_2 (uuid_id, user_id, task_id, status, data_response, created_at, ended_at, shot_uuid_id,
-                              project_uuid_id, archived, completion_tokens, ai_studio_id)
+                              project_uuid_id, type, archived, completion_tokens, ai_studio_id)
 SELECT uuid_id,
        user_id,
        task_id,
@@ -121,6 +121,7 @@ SELECT uuid_id,
        ended_at,
        shot_uuid_id,
        NULL AS project_uuid_id,
+       'video' AS type,
        archived,
        completion_tokens,
        ai_studio_id

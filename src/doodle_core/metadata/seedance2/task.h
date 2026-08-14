@@ -28,10 +28,7 @@ enum class DOODLE_CORE_API task_type {
   picture,
   video,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
-    task_type, {{task_type::picture, "picture"},
-                {task_type::video, "video"}}
-);
+NLOHMANN_JSON_SERIALIZE_ENUM(task_type, {{task_type::picture, "picture"}, {task_type::video, "video"}});
 NLOHMANN_JSON_SERIALIZE_ENUM(
     task_status, {{task_status::queued, "queued"},
                   {task_status::running, "running"},
@@ -44,7 +41,7 @@ struct DOODLE_CORE_API task {
   DOODLE_BASE_FIELDS();
   uuid user_id_;
   task_status status_;
-  task_type type_;
+  task_type type_{task_type::video};
   nlohmann::json data_request_;
   std::string file_extension_;
   nlohmann::json data_response_;
@@ -84,10 +81,8 @@ struct DOODLE_CORE_API task {
     j.at("project_uuid_id").get_to(p.project_uuid_id_);
     j.at("type").get_to(p.type_);
 
-
     if (j.contains("archived")) j.at("archived").get_to(p.archived_);
     if (j.contains("shot_uuid_id")) j.at("shot_uuid_id").get_to(p.shot_uuid_id_);
-    
   }
 };
 // 统计每人, 每天的 token 消耗量
