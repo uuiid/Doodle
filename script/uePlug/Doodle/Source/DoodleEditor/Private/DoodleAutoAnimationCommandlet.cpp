@@ -1169,17 +1169,15 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			L_Actor->AddInstanceComponent(L_Com);
 			L_Com->AttachToComponent(L_Actor->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 			L_Com->RegisterComponent();
-			L_Com->GroomAsset = L_GroomAsset;
 			// 设置灯光通道为1通道
 			L_Com->SetLightingChannels(false, true, false);
-			if (L_GroomCacheOrBind.GroomCache)
-				L_Com->GroomCache = L_GroomCacheOrBind.GroomCache;
 			if (L_GroomCacheOrBind.GroomBindingAsset)
-				L_Com->BindingAsset = L_GroomCacheOrBind.GroomBindingAsset;
+				L_Com->SetGroomAsset(L_GroomAsset, L_GroomCacheOrBind.GroomBindingAsset);
 			else
 				UE_LOG(LogTemp, Error, TEXT("GroomMap not contains GroomCache or GroomBindingAsset for %s"),
-				*L_GroomAsset->GetName()
-			);
+				*L_GroomAsset->GetName());
+			if (L_GroomCacheOrBind.GroomCache)
+				L_Com->SetGroomCache(L_GroomCacheOrBind.GroomCache);
 			L_Com->Modify();
 			L_Actor->Modify();
 			if (!L_GroomCacheOrBind.GroomCache) continue;
