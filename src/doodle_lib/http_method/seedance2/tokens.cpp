@@ -176,6 +176,29 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_instance, get) {
 
   co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
 }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_instance_day, get) {
+  person_.check_producer();
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  namespace sd2 = doodle::seedance2;
+  std::vector<sd2::person_token> l_result_map;
+
+  // 检查是否包含当天
+  if (chrono::sys_days l_now{chrono::floor<chrono::days>(chrono::system_clock::now())}; l_now == date_) {
+    auto l_today_tokens = get_date_person_tokens(l_sql, l_now);
+    if (l_today_tokens.contains(person_id_))
+      l_result_map.push_back(l_today_tokens.at(person_id_));  // 添加当天的token消耗量
+  } else {
+    l_result_map =
+        select(l_sql)
+            .columns(object<sd2::person_token>())
+            .from<sd2::person_token>()
+            .where(c(&sd2::person_token::date_) == date_ && c(&sd2::person_token::person_id_) == person_id_)()
+            .to_vector();
+  }
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
+}
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_all, get) {
   person_.check_producer();
@@ -193,6 +216,26 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_all, get) {
       l_now >= date_start_ && l_now <= date_end_) {
     auto l_today_tokens = get_date_person_tokens(l_sql, l_now);
     l_result_map |= ranges::actions::push_back(l_today_tokens | std::views::values);
+  }
+  co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date, get) {
+  person_.check_producer();
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  namespace sd2 = doodle::seedance2;
+  std::vector<sd2::person_token> l_result_map;
+
+  // 检查是否包含当天
+  if (chrono::sys_days l_now{chrono::floor<chrono::days>(chrono::system_clock::now())}; l_now == date_) {
+    auto l_today_tokens = get_date_person_tokens(l_sql, l_now);
+    l_result_map        = l_today_tokens | std::views::values | ranges::to<std::vector<sd2::person_token>>();
+  } else {
+    l_result_map = select(l_sql)
+                       .columns(object<sd2::person_token>())
+                       .from<sd2::person_token>()
+                       .where(c(&sd2::person_token::date_) == date_)()
+                       .to_vector();
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
 }

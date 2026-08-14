@@ -344,6 +344,24 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &seedance2::seedance2_tokens_person_instance::person_id_
       ))
       .reg_t<seedance2::seedance2_tokens_person_all>("/api/seedance2/tokens/person/all"_url)
+      .reg_t<seedance2::seedance2_tokens_person_date_instance>("/api/seedance2/tokens/person/{}/date/{}-{}"_url(
+        &seedance2::seedance2_tokens_person_date_instance::person_id_,
+        &seedance2::seedance2_tokens_person_date_instance::date_start_,
+        &seedance2::seedance2_tokens_person_date_instance::date_end_
+      ))
+      .reg_t<seedance2::seedance2_tokens_person_date_instance_day>("/api/seedance2/tokens/person/{}/date/{}"_url(
+        &seedance2::seedance2_tokens_person_date_instance_day::person_id_,
+        &seedance2::seedance2_tokens_person_date_instance_day::date_
+      ))
+      .reg_t<seedance2::seedance2_tokens_person_date_all>("/api/seedance2/tokens/person/date/{}-{}"_url(
+        &seedance2::seedance2_tokens_person_date_all::date_start_,
+        &seedance2::seedance2_tokens_person_date_all::date_end_
+      ))
+      .reg_t<seedance2::seedance2_tokens_person_date>(
+        "/api/seedance2/tokens/person/date/{}"_url(
+          &seedance2::seedance2_tokens_person_date::date_
+        )
+      )
       .reg_t<data_preview_files>("/api/data/preview-files/{}"_url(&data_preview_files::preview_file_id_))
       .reg_t<seedance2::seedance2_task_fix>("/api/seedance2/task/fix"_url)
       .reg_t<data_updata_logs>("/api/data/updata-logs"_url)
@@ -354,7 +372,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &ue_plugins_version_instance::version_minor_,
         &ue_plugins_version_instance::version_patch_
       ))
-
+      
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on
