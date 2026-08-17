@@ -11,8 +11,10 @@ struct DOODLE_CORE_API subproject {
   std::string name_;
   uuid project_id_;
   uuid created_user_id_;
+  uuid preview_file_;
 
   bool archived_{false};
+
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   // to json
@@ -23,6 +25,7 @@ struct DOODLE_CORE_API subproject {
     j["created_user_id"] = p.created_user_id_;
     j["created_at"]      = p.created_at_;
     j["archived"]        = p.archived_;
+    j["preview_file"]    = p.preview_file_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, subproject& p) {

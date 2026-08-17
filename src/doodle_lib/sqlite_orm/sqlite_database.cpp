@@ -130,7 +130,9 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(&seedance2::task::project_uuid_id_, &project::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&seedance2::task::user_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&seedance2::task::ai_studio_id_, &ai_studio::uuid_id_, foreign_key_action::set_null)
-      .add_foreign_key(&seedance2::task::preview_file_, &seedance2::ai_preview_file::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(
+          &seedance2::task::preview_file_, &seedance2::ai_preview_file::uuid_id_, foreign_key_action::set_null
+      )
       .add_index(&seedance2::task::uuid_id_);
 
   reg_table<seedance2::subproject>("seedance2_subproject")
@@ -139,10 +141,14 @@ void sqlite_storage::regs_all() {
       .add_column("name", &seedance2::subproject::name_, not_null())
       .add_column("project_id", &seedance2::subproject::project_id_, not_null())
       .add_column("created_user_id", &seedance2::subproject::created_user_id_, not_null())
+      .add_column("preview_file", &seedance2::subproject::preview_file_)
       .add_column("archived", &seedance2::subproject::archived_)
       .add_column("created_at", &seedance2::subproject::created_at_)
       .add_foreign_key(&seedance2::subproject::project_id_, &project::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&seedance2::subproject::created_user_id_, &person::uuid_id_, foreign_key_action::set_null);
+      .add_foreign_key(&seedance2::subproject::created_user_id_, &person::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(
+          &seedance2::subproject::preview_file_, &seedance2::ai_preview_file::uuid_id_, foreign_key_action::set_null
+      );
 
   reg_table<seedance2::subproject_person_link>("seedance2_subproject_person_link")
       .add_column("id", &seedance2::subproject_person_link::id_, primary_key(), autoincrement())
@@ -189,7 +195,8 @@ void sqlite_storage::regs_all() {
           &seedance2::ai_generate_entity::project_uuid_id_, &project::uuid_id_, foreign_key_action::cascade
       )
       .add_foreign_key(
-          &seedance2::ai_generate_entity::preview_file_, &preview_file::uuid_id_, foreign_key_action::set_null
+          &seedance2::ai_generate_entity::preview_file_, &seedance2::ai_preview_file::uuid_id_,
+          foreign_key_action::set_null
       );
 
   reg_table<seedance2::person_token>("seedance2_person_token")

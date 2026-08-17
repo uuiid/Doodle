@@ -1,5 +1,6 @@
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/person.h"
+#include "doodle_core/metadata/seedance2/ai_preview_file.h"
 #include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/seedance2/subproject.h>
 
@@ -9,7 +10,7 @@
 
 #include "core/global_function.h"
 #include "reg.h"
-
+#include <memory>
 #include <opencv2/opencv.hpp>
 
 namespace doodle::http::seedance2 {
@@ -95,13 +96,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, delete_) {
 
 // /api/seedance2/subproject/{id}/preview
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_preview, post) {
-  auto l_sql        = get_sqlite_database();
-  auto l_subproject = l_sql.get_by_uuid<sd2::subproject>(id_);
-  auto l_file       = in_handle->get_file();
+  auto l_sql            = get_sqlite_database();
+  auto l_subproject     = std::make_shared<sd2::subproject>(l_sql.get_by_uuid<sd2::subproject>(id_));
+  auto l_file           = in_handle->get_file();
+  auto l_preview        = std::make_shared<sd2::ai_preview_file>();
+  l_preview->extension_ = ".png";
+  co_await l_sql.install(l_preview);
+  l_subproject->preview_file_ = l_preview->uuid_id_;
+  co_await l_sql.update(l_subproject);
 
-  auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
-  auto l_file_picture    = l_ctx.get_sd2_pictures_file(id_, l_file.extension().string());
-  auto l_file_thumbnail  = l_ctx.get_sd2_thumbnail_file(id_);
+  auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
+  auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview->uuid_id_, l_file.extension().string());
+  auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(l_preview->uuid_id_);
 
   if (auto l_p = l_file_picture.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
@@ -115,7 +121,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_preview, post) {
   }
   FSys::rename(l_file, l_file_picture);
 
-  co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
+  co_return in_handle->make_msg(nlohmann::json{{"id", l_preview->uuid_id_}});
 }
 
 namespace {
