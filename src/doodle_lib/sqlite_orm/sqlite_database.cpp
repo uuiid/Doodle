@@ -7,6 +7,7 @@
 #include "doodle_core/metadata/ai_studio.h"
 #include "doodle_core/metadata/seedance2/ai_generate_classification.h"
 #include "doodle_core/metadata/seedance2/ai_generate_entity.h"
+#include "doodle_core/metadata/seedance2/ai_preview_file.h"
 #include "doodle_core/metadata/seedance2/assets_entity.h"
 #include "doodle_core/metadata/seedance2/assets_entity_item.h"
 #include "doodle_core/metadata/seedance2/group.h"
@@ -103,6 +104,11 @@ void sqlite_storage::regs_all() {
       .add_column("ai_studio_id", &seedance2::assets_group::ai_studio_id_)
       .add_column("created_at", &seedance2::assets_group::created_at_);
 
+  reg_table<seedance2::ai_preview_file>("seedance2_ai_preview_file")
+      .add_column("id", &seedance2::ai_preview_file::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::ai_preview_file::uuid_id_, unique(), not_null())
+      .add_column("extension", &seedance2::ai_preview_file::extension_);
+
   reg_table<seedance2::task>("seedance2_task_2")
       .add_column("id", &seedance2::task::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::task::uuid_id_, unique(), not_null())
@@ -110,6 +116,8 @@ void sqlite_storage::regs_all() {
       .add_column("status", &seedance2::task::status_)
       .add_column("type", &seedance2::task::type_, not_null())
       .add_column("data_request", &seedance2::task::data_request_)
+      .add_column("text_prompt", &seedance2::task::text_prompt_)
+      .add_column("preview_file", &seedance2::task::preview_file_)
       .add_column("file_extension", &seedance2::task::file_extension_)
       .add_column("data_response", &seedance2::task::data_response_)
       .add_column("ai_studio_id", &seedance2::task::ai_studio_id_)
@@ -121,6 +129,8 @@ void sqlite_storage::regs_all() {
       .add_column("completion_tokens", &seedance2::task::completion_tokens_)
       .add_foreign_key(&seedance2::task::project_uuid_id_, &project::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&seedance2::task::user_id_, &person::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&seedance2::task::ai_studio_id_, &ai_studio::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&seedance2::task::preview_file_, &seedance2::ai_preview_file::uuid_id_, foreign_key_action::set_null)
       .add_index(&seedance2::task::uuid_id_);
 
   reg_table<seedance2::subproject>("seedance2_subproject")

@@ -7,6 +7,7 @@
 #include "doodle_core/metadata/project.h"
 #include <doodle_core/metadata/ai_studio.h>
 #include <doodle_core/metadata/kitsu_ctx_t.h>
+#include <doodle_core/metadata/seedance2/ai_preview_file.h>
 #include <doodle_core/metadata/seedance2/assets_entity.h>
 #include <doodle_core/metadata/seedance2/assets_entity_item.h>
 #include <doodle_core/metadata/seedance2/group.h>
@@ -53,9 +54,9 @@ auto get_sd2_tasks_for_person(const uuid& in_person_id) {
       .to_vector();
 }
 
-void video_create_picture(const FSys::path& in_video_path, const uuid& in_task_id) {
-  auto l_file_picture   = g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_file(in_task_id, ".mp4");
-  auto l_file_thumbnail = g_ctx().get<kitsu_ctx_t>().get_sd2_thumbnail_file(in_task_id);
+void video_create_picture(const FSys::path& in_video_path, const uuid& in_id) {
+  auto l_file_picture   = g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_file(in_id, ".mp4");
+  auto l_file_thumbnail = g_ctx().get<kitsu_ctx_t>().get_sd2_thumbnail_file(in_id);
   if (auto l_p = l_file_picture.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   {
@@ -144,9 +145,13 @@ class seedance2_task_run_manager {
     }
     if (l_info.status_ == sd2::task_status::succeeded && l_task_info.contains("content") &&
         l_task_info.at("content").contains("video_url")) {
-      auto l_video_url = l_task_info.at("content").at("video_url").get<std::string>();
-      auto l_file      = co_await in_client->download_result(l_video_url);
-      video_create_picture(l_file, in_task.uuid_id_);
+      auto l_video_url           = l_task_info.at("content").at("video_url").get<std::string>();
+      auto l_file                = co_await in_client->download_result(l_video_url);
+      auto l_preview_file        = std::make_shared<sd2::ai_preview_file>();
+      l_preview_file->extension_ = ".mp4";
+      auto l_sql                 = get_sqlite_database();
+      co_await l_sql.install(l_preview_file);
+      video_create_picture(l_file, l_preview_file->uuid_id_);
     }
     if (l_info.status_ != sd2::task_status::queued && l_info.status_ != sd2::task_status::running) co_return;
 

@@ -43,6 +43,8 @@ struct DOODLE_CORE_API task {
   task_status status_;
   task_type type_{task_type::video};
   nlohmann::json data_request_;
+  std::string text_prompt_;
+  uuid preview_file_;  // 对应 ai_preview_file
   std::string file_extension_;
   nlohmann::json data_response_;
   uuid ai_studio_id_;
@@ -62,6 +64,8 @@ struct DOODLE_CORE_API task {
     j["user_id"]               = p.user_id_;
     j["status"]                = p.status_;
     j["type"]                  = p.type_;
+    j["text_prompt"]           = p.text_prompt_;
+    j["preview_file"]          = p.preview_file_;
     j["data_request"]          = p.data_request_;
     j["file_extension"]        = p.file_extension_;
     j["data_response"]         = p.data_response_;
