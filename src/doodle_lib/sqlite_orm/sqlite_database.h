@@ -34,7 +34,6 @@ struct get_comments_t;
 struct task_status;
 struct assets_and_tasks_t;
 struct entities_and_tasks_t;
-struct ai_studio_person_role_link;
 struct department;
 struct comment;
 struct task;
@@ -461,10 +460,5 @@ class sqlite_database {
   entity_asset_extend_value get_entity_shot_extend_by_task(const uuid& in_shot_id);
   // 更新计算机状态
   boost::asio::awaitable<void> update_computer_status(const uuid& in_computer_id, computer_status in_status);
-  // 检查人员和ai工作室是否有连接
-  bool is_person_ai_studio_connected(const uuid& in_person_id, const uuid& in_ai_studio_id);
-  std::optional<ai_studio_person_role_link> get_ai_studio_person_role_link(
-      const uuid& in_person_id, const uuid& in_ai_studio_id
-  );
 };
 }  // namespace doodle

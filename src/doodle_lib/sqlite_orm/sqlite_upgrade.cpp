@@ -105,29 +105,16 @@ struct upgrade_2_t : sqlite_upgrade {
       auto l_s = in_data.create_session();
       // in_data.pragma().foreign_keys(false);
       l_s.drop_table("seedance2_task_person_token");
+      l_s.drop_table("ai_studio_person_role_link");
+      l_s.drop_table("seedance2_task");
       // 重命名表 person.max_completion_tokens -> person.remaining_completion_tokens
       l_s.exec(R"(ALTER TABLE person RENAME COLUMN max_completion_tokens TO remaining_completion_tokens;)");
-      in_data.sync_schema();
-      // 将表 seedance2_task 的数据转移到 seedance2_task_2 中
-      in_data.create_session().exec(
-          R"(INSERT INTO seedance2_task_2 (uuid_id, user_id, task_id, status, data_response, created_at, ended_at, shot_uuid_id,
-                              project_uuid_id, type, archived, completion_tokens, ai_studio_id)
-SELECT uuid_id,
-       user_id,
-       task_id,
-       status,
-       data_response,
-       created_at,
-       ended_at,
-       shot_uuid_id,
-       NULL AS project_uuid_id,
-       'video' AS type,
-       archived,
-       completion_tokens,
-       ai_studio_id
-FROM seedance2_task;
-)"
+      // 添加列 &person::ai_studio_id_ 并添加外键约束
+      l_s.exec(R"(ALTER TABLE person ADD COLUMN ai_studio_id INTEGER;)");
+      l_s.exec(
+          R"(ALTER TABLE person ADD FOREIGN KEY (ai_studio_id) REFERENCES ai_studio(uuid_id) ON DELETE SET NULL;)"
       );
+      in_data.sync_schema();
     }
 
     in_data.pragma().user_version(g_current_version);

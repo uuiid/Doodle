@@ -30,31 +30,4 @@ struct DOODLE_CORE_API ai_studio {
     if (j.contains("app_secret")) j.at("app_secret").get_to(p.app_secret_);
   }
 };
-
-struct ai_studio_person_role_link {
-  std::int64_t id_;
-  uuid ai_studio_id_;
-  uuid person_id_;
-
-  // to json
-  friend void to_json(nlohmann::json& j, const ai_studio_person_role_link& p) {
-    j["ai_studio_id"] = p.ai_studio_id_;
-    j["person_id"]    = p.person_id_;
-  }
-  // from json
-  friend void from_json(const nlohmann::json& j, ai_studio_person_role_link& p) {
-    if (j.contains("ai_studio_id")) j.at("ai_studio_id").get_to(p.ai_studio_id_);
-    if (j.contains("person_id")) j.at("person_id").get_to(p.person_id_);
-  }
-};
-struct ai_studio_and_link_t : ai_studio {
-  std::vector<ai_studio_person_role_link> link_;
-  explicit ai_studio_and_link_t(const ai_studio& in_ai_studio) : ai_studio(in_ai_studio) {}
-
-  // to json
-  friend void to_json(nlohmann::json& j, const ai_studio_and_link_t& p) {
-    to_json(j, static_cast<const ai_studio&>(p));
-    j["link"] = p.link_;
-  }
-};
 }  // namespace doodle

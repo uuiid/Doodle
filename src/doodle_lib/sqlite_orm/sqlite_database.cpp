@@ -113,11 +113,9 @@ void sqlite_storage::regs_all() {
       .add_column("task_id", &seedance2::task::task_id_)
       .add_column("created_at", &seedance2::task::created_at_)
       .add_column("ended_at", &seedance2::task::ended_at_)
-      .add_column("shot_uuid_id", &seedance2::task::shot_uuid_id_)
       .add_column("project_uuid_id", &seedance2::task::project_uuid_id_)
       .add_column("archived", &seedance2::task::archived_)
       .add_column("completion_tokens", &seedance2::task::completion_tokens_)
-      .add_foreign_key(&seedance2::task::shot_uuid_id_, &task::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&seedance2::task::project_uuid_id_, &project::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&seedance2::task::user_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_index(&seedance2::task::uuid_id_);
@@ -135,13 +133,6 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(&seedance2::person_token::person_id_, &person::uuid_id_, foreign_key_action::cascade)
       .add_index(&seedance2::person_token::date_)
       .add_unique_index(&seedance2::person_token::date_, &seedance2::person_token::person_id_);
-
-  reg_table<ai_studio_person_role_link>("ai_studio_person_role_link")
-      .add_column("id", &ai_studio_person_role_link::id_, primary_key(), autoincrement())
-      .add_column("ai_studio_id", &ai_studio_person_role_link::ai_studio_id_, not_null())
-      .add_column("person_id", &ai_studio_person_role_link::person_id_, not_null())
-      .add_foreign_key(&ai_studio_person_role_link::ai_studio_id_, &ai_studio::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&ai_studio_person_role_link::person_id_, &person::uuid_id_, foreign_key_action::cascade);
 
   reg_table<ai_studio>("ai_studio")
       .add_column("id", &ai_studio::id_, primary_key(), autoincrement())
@@ -747,7 +738,9 @@ void sqlite_storage::regs_all() {
       .add_column("ldap_uid", &person::ldap_uid_, unique())
       .add_column("dingding_id", &person::dingding_id_)
       .add_column("remaining_completion_tokens", &person::remaining_completion_tokens_)
-      .add_foreign_key(&person::studio_id_, &studio::uuid_id_, foreign_key_action::set_null);
+      .add_column("ai_studio_id", &person::ai_studio_id_)
+      .add_foreign_key(&person::studio_id_, &studio::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&person::ai_studio_id_, &ai_studio::uuid_id_, foreign_key_action::set_null);
 
   reg_table<preview_background_file>("preview_background_file")
       .add_column("id", &preview_background_file::id_, primary_key(), autoincrement())
@@ -1590,26 +1583,6 @@ boost::asio::awaitable<void> sqlite_database::update_computer_status(
       .set(c(&computer::status_) = in_status)
       .where(c(&computer::uuid_id_) == in_computer_id)();
   DOODLE_TO_SELF();
-}
-
-bool sqlite_database::is_person_ai_studio_connected(const uuid& in_person_id, const uuid& in_ai_studio_id) {
-  using namespace orm;
-
-  return select(*this)
-             .columns(count(&ai_studio_person_role_link::id_))
-             .from<ai_studio_person_role_link>()
-             .where(c(&ai_studio_person_role_link::person_id_) == in_person_id && c(&ai_studio_person_role_link::ai_studio_id_) == in_ai_studio_id)()
-             .to_single() > 0;
-}
-std::optional<ai_studio_person_role_link> sqlite_database::get_ai_studio_person_role_link(
-    const uuid& in_person_id, const uuid& in_ai_studio_id
-) {
-  using namespace orm;
-  return select(*this)
-      .columns(object<ai_studio_person_role_link>())
-      .from<ai_studio_person_role_link>()
-      .where(c(&ai_studio_person_role_link::person_id_) == in_person_id && c(&ai_studio_person_role_link::ai_studio_id_) == in_ai_studio_id)()
-      .to_optional();
 }
 
 }  // namespace doodle

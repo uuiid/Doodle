@@ -43,16 +43,6 @@ namespace sd2 = doodle::seedance2;
 
 namespace {
 
-auto get_sd2_tasks_for_ai_studio(const uuid& in_ai_studio_id) {
-  auto l_sql = get_sqlite_database();
-  using namespace orm;
-  return select(l_sql)
-      .columns(object<sd2::task>())
-      .from<sd2::task>()
-      .where(c(&sd2::task::ai_studio_id_) == in_ai_studio_id && !c(&sd2::task::archived_))()
-      .to_vector();
-}
-
 auto get_sd2_tasks_for_person(const uuid& in_person_id) {
   auto l_sql = get_sqlite_database();
   using namespace orm;
@@ -246,23 +236,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, get) {
   co_return in_handle->make_msg(nlohmann::json{} = get_sd2_tasks_for_person(person_.person_.uuid_id_));
 }
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
-  co_return in_handle->make_msg(nlohmann::json{} = get_sd2_tasks_for_ai_studio(person_.get_ai_studio_id()));
-}
-
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, get) {
   auto l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
-  DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
 
   co_return in_handle->make_msg(l_task);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, put) {
-  auto l_sql  = get_sqlite_database();
-  auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
-  DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
-  auto l_studio = l_sql.get_by_uuid<ai_studio>(l_task.ai_studio_id_);
+  auto l_sql    = get_sqlite_database();
+  auto l_task   = l_sql.get_by_uuid<sd2::task>(id_);
+  auto l_studio = l_sql.get_by_uuid<ai_studio>(person_.get_ai_studio_id());
   auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
 
   l_client->set_token(l_studio.app_secret_);
@@ -274,9 +258,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, put) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, delete_) {
-  auto l_sql  = get_sqlite_database();
-  auto l_task = std::make_shared<sd2::task>(l_sql.get_by_uuid<sd2::task>(id_));
-  DOODLE_CHICK_HTTP(l_task->ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
+  auto l_sql        = get_sqlite_database();
+  auto l_task       = std::make_shared<sd2::task>(l_sql.get_by_uuid<sd2::task>(id_));
   l_task->archived_ = true;
   co_await l_sql.update(l_task);
   co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
@@ -285,7 +268,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, delete_) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail_task, get) {
   auto l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
-  DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
 
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
   auto l_file = l_ctx.get_sd2_thumbnail_task_file(id_);
@@ -295,7 +277,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail_task, get) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures_task, get) {
   auto l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
-  DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
 
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
   auto l_file = l_ctx.get_sd2_pictures_task_file(id_, l_task.file_extension_);
@@ -303,25 +284,4 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures_task, get) {
   co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
 }
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_fix, post) {
-  person_.check_admin();
-  auto l_sql    = get_sqlite_database();
-  auto l_tasks  = l_sql.get_all<sd2::task>();
-  auto& l_ctx   = g_ctx().get<kitsu_ctx_t>();
-  auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
-  for (auto&& l_task : l_tasks) {
-    if (chrono::system_clock::now() - l_task.created_at_.get_sys_time() > chrono::days{1})
-      continue;  // 只修复一天内的任务
-    if (l_task.status_ != sd2::task_status::succeeded) continue;
-    auto l_file = l_ctx.get_sd2_pictures_task_file(l_task.uuid_id_, l_task.file_extension_);
-    if (FSys::exists(l_file)) continue;
-    auto& l_res = l_task.data_response_;
-    if (!l_res.contains("content")) continue;
-    if (!l_res.at("content").contains("video_url")) continue;
-    auto l_video_url       = l_res.at("content").at("video_url").get<std::string>();
-    auto l_file_downloaded = co_await l_client->download_result(l_video_url);
-    video_create_picture(l_file_downloaded, l_task.uuid_id_);
-  }
-  co_return in_handle->make_msg_204();
-}
 }  // namespace doodle::http::seedance2
