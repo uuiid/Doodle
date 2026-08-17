@@ -358,6 +358,13 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
           &seedance2::seedance2_tokens_person_date::date_
         )
       )
+      .reg_t<seedance2::seedance2_subproject_ai_generate_classification>("/api/seedance2/subproject/{}/classification"_url(
+        &seedance2::seedance2_subproject_ai_generate_classification::subproject_id_
+      ))
+      .reg_t<seedance2::seedance2_subproject_ai_generate_classification_instance>("/api/seedance2/subproject/{}/classification/{}"_url(
+        &seedance2::seedance2_subproject_ai_generate_classification_instance::subproject_id_,
+        &seedance2::seedance2_subproject_ai_generate_classification_instance::classification_id_
+      ))
       .reg_t<data_preview_files>("/api/data/preview-files/{}"_url(&data_preview_files::preview_file_id_))
       .reg_t<data_updata_logs>("/api/data/updata-logs"_url)
       .reg_t<data_production_specifications>("/api/data/production-specifications"_url)
