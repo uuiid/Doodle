@@ -5,9 +5,12 @@
 #include "sqlite_database.h"
 
 #include "doodle_core/metadata/ai_studio.h"
+#include "doodle_core/metadata/seedance2/ai_generate_classification.h"
+#include "doodle_core/metadata/seedance2/ai_generate_entity.h"
 #include "doodle_core/metadata/seedance2/assets_entity.h"
 #include "doodle_core/metadata/seedance2/assets_entity_item.h"
 #include "doodle_core/metadata/seedance2/group.h"
+#include "doodle_core/metadata/seedance2/subproject.h"
 #include "doodle_core/metadata/seedance2/task.h"
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/ai_image_metadata.h>
@@ -119,6 +122,65 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(&seedance2::task::project_uuid_id_, &project::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&seedance2::task::user_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_index(&seedance2::task::uuid_id_);
+
+  reg_table<seedance2::subproject>("seedance2_subproject")
+      .add_column("id", &seedance2::subproject::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::subproject::uuid_id_, unique(), not_null())
+      .add_column("name", &seedance2::subproject::name_, not_null())
+      .add_column("project_id", &seedance2::subproject::project_id_, not_null())
+      .add_column("created_user_id", &seedance2::subproject::created_user_id_, not_null())
+      .add_column("archived", &seedance2::subproject::archived_)
+      .add_column("created_at", &seedance2::subproject::created_at_)
+      .add_foreign_key(&seedance2::subproject::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&seedance2::subproject::created_user_id_, &person::uuid_id_, foreign_key_action::set_null);
+
+  reg_table<seedance2::subproject_person_link>("seedance2_subproject_person_link")
+      .add_column("id", &seedance2::subproject_person_link::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::subproject_person_link::uuid_id_, unique(), not_null())
+      .add_column("subproject_id", &seedance2::subproject_person_link::subproject_id_, not_null())
+      .add_column("person_id", &seedance2::subproject_person_link::person_id_, not_null())
+      .add_foreign_key(
+          &seedance2::subproject_person_link::subproject_id_, &seedance2::subproject::uuid_id_,
+          foreign_key_action::cascade
+      )
+      .add_foreign_key(&seedance2::subproject_person_link::person_id_, &person::uuid_id_, foreign_key_action::cascade)
+      .add_unique_index(
+          &seedance2::subproject_person_link::subproject_id_, &seedance2::subproject_person_link::person_id_
+      );
+
+  reg_table<seedance2::ai_generate_classification>("seedance2_ai_generate_classification")
+      .add_column("id", &seedance2::ai_generate_classification::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::ai_generate_classification::uuid_id_, unique(), not_null())
+      .add_column("name", &seedance2::ai_generate_classification::name_, not_null())
+      .add_column("description", &seedance2::ai_generate_classification::description_)
+      .add_column("subproject_id", &seedance2::ai_generate_classification::subproject_id_, not_null())
+      .add_column("created_at", &seedance2::ai_generate_classification::created_at_)
+      .add_foreign_key(
+          &seedance2::ai_generate_classification::subproject_id_, &seedance2::subproject::uuid_id_,
+          foreign_key_action::cascade
+      );
+
+  reg_table<seedance2::ai_generate_entity>("seedance2_ai_generate_entity")
+      .add_column("id", &seedance2::ai_generate_entity::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::ai_generate_entity::uuid_id_, unique(), not_null())
+      .add_column("name", &seedance2::ai_generate_entity::name_, not_null())
+      .add_column(
+          "ai_generate_classification_id", &seedance2::ai_generate_entity::ai_generate_classification_id_, not_null()
+      )
+      .add_column("shot_uuid_id", &seedance2::ai_generate_entity::shot_uuid_id_)
+      .add_column("project_uuid_id", &seedance2::ai_generate_entity::project_uuid_id_, not_null())
+      .add_column("preview_file", &seedance2::ai_generate_entity::preview_file_)
+      .add_foreign_key(
+          &seedance2::ai_generate_entity::ai_generate_classification_id_,
+          &seedance2::ai_generate_classification::uuid_id_, foreign_key_action::cascade
+      )
+      .add_foreign_key(&seedance2::ai_generate_entity::shot_uuid_id_, &task::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(
+          &seedance2::ai_generate_entity::project_uuid_id_, &project::uuid_id_, foreign_key_action::cascade
+      )
+      .add_foreign_key(
+          &seedance2::ai_generate_entity::preview_file_, &preview_file::uuid_id_, foreign_key_action::set_null
+      );
 
   reg_table<seedance2::person_token>("seedance2_person_token")
       .add_column("id", &seedance2::person_token::id_, primary_key(), autoincrement())

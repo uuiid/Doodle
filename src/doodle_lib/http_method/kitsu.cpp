@@ -296,7 +296,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       ))
 
       .reg_t<seedance2::user_seedance2_task>("/api/user/seedance2/task"_url)
-      .reg_t<seedance2::seedance2_task>("/api/seedance2/task"_url)
       .reg_t<seedance2::seedance2_task_instance>("/api/seedance2/task/{}"_url(&seedance2::seedance2_task_instance::id_))
       .reg_t<seedance2::seedance2_thumbnail_task>("/api/seedance2/thumbnail/task/{}.png"_url(&seedance2::seedance2_thumbnail_task::id_))
       .reg_t<seedance2::seedance2_pictures_task>("/api/seedance2/pictures/task/{}.png"_url(&seedance2::seedance2_pictures_task::id_))
@@ -336,9 +335,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &data_ai_studio_instance_person_instance::ai_studio_id_,
         &data_ai_studio_instance_person_instance::person_id_
       ))
-      .reg_t<seedance2::seedance2_shot_task_instance>("/api/seedance2/shot/task/{}"_url(
-        &seedance2::seedance2_shot_task_instance::id_
-      ))
       .reg_t<seedance2::seedance2_tokens>("/api/seedance2/tokens"_url)
       .reg_t<seedance2::seedance2_tokens_person_instance>("/api/seedance2/tokens/person/{}"_url(
         &seedance2::seedance2_tokens_person_instance::person_id_
@@ -363,7 +359,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         )
       )
       .reg_t<data_preview_files>("/api/data/preview-files/{}"_url(&data_preview_files::preview_file_id_))
-      .reg_t<seedance2::seedance2_task_fix>("/api/seedance2/task/fix"_url)
       .reg_t<data_updata_logs>("/api/data/updata-logs"_url)
       .reg_t<data_production_specifications>("/api/data/production-specifications"_url)
       .reg_t<ue_plugins_version>("/api/ue-plugins/version"_url)

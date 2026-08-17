@@ -11,7 +11,6 @@ struct DOODLE_CORE_API subproject {
   std::string name_;
   uuid project_id_;
   uuid created_user_id_;
-  uuid ai_studio_id_;
 
   bool archived_{false};
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
