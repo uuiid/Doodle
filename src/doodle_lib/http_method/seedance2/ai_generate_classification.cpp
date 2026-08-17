@@ -13,7 +13,7 @@ namespace sd2 = doodle::seedance2;
 
 // /api/seedance2/subproject/{subproject_id}/classification
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_classification, post) {
-  person_.check_producer();
+  person_.check_not_outsourcer();
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
@@ -35,7 +35,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_classificati
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_classification_instance, put) {
-  person_.check_producer();
+  person_.check_not_outsourcer();
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
@@ -51,7 +51,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_classificati
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_classification_instance, delete_) {
-  person_.check_producer();
+  person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   co_await l_sql.remove<sd2::ai_generate_classification>(classification_id_);
 
