@@ -63,6 +63,7 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/person
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_person_link)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid subproject_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/classification
