@@ -9,6 +9,6 @@ namespace doodle::seedance2 {
 ///
 struct DOODLE_CORE_API ai_preview_file {
   DOODLE_BASE_FIELDS();
-  std::string extension_;
+  std::string extension_;  // 必填
 };
 }  // namespace doodle::seedance2

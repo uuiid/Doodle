@@ -42,49 +42,25 @@ namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 
 namespace {
-// task 扩展数据
-struct task_extend : sd2::task {
-  uuid project_id_;
-  explicit task_extend(const sd2::task& in_task, const uuid& in_project_id)
-      : sd2::task(in_task), project_id_(in_project_id) {}
-  // to json
-  friend void to_json(nlohmann::json& j, const task_extend& p) {
-    to_json(j, static_cast<const sd2::task&>(p));
-    j["project_id"] = p.project_id_;
-  }
-};
 
 auto get_sd2_tasks_for_ai_studio(const uuid& in_ai_studio_id) {
   auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
-      .columns(object<sd2::task>(), &entity::project_id_)
+      .columns(object<sd2::task>())
       .from<sd2::task>()
-      .left_outer_join<entity>(&entity::uuid_id_, &sd2::task::shot_uuid_id_)
       .where(c(&sd2::task::ai_studio_id_) == in_ai_studio_id && !c(&sd2::task::archived_))()
-      .to_vector<task_extend>();
+      .to_vector();
 }
 
 auto get_sd2_tasks_for_person(const uuid& in_person_id) {
   auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
-      .columns(object<sd2::task>(), &entity::project_id_)
+      .columns(object<sd2::task>())
       .from<sd2::task>()
-      .left_outer_join<entity>(&entity::uuid_id_, &sd2::task::shot_uuid_id_)
       .where(c(&sd2::task::user_id_) == in_person_id && !c(&sd2::task::archived_))()
-      .to_vector<task_extend>();
-}
-
-auto get_task_for_shot_task_id(const uuid& in_task_id, const uuid& in_ai_studio_id) {
-  auto l_sql = get_sqlite_database();
-  using namespace orm;
-  return select(l_sql)
-      .columns(object<sd2::task>(), &entity::project_id_)
-      .from<sd2::task>()
-      .left_outer_join<entity>(&entity::uuid_id_, &sd2::task::shot_uuid_id_)
-      .where(c(&sd2::task::shot_uuid_id_) == in_task_id && c(&sd2::task::ai_studio_id_) == in_ai_studio_id && !c(&sd2::task::archived_))()
-      .to_vector<task_extend>();
+      .to_vector();
 }
 
 void video_create_picture(const FSys::path& in_video_path, const uuid& in_task_id) {
@@ -280,10 +256,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, get) {
   DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
 
   co_return in_handle->make_msg(l_task);
-}
-
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_shot_task_instance, get) {
-  co_return in_handle->make_msg(nlohmann::json{} = get_task_for_shot_task_id(id_, person_.get_ai_studio_id()));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, put) {
