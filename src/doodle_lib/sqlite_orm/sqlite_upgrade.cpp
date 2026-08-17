@@ -46,7 +46,7 @@ struct upgrade_init_t : sqlite_upgrade {
 
   void upgrade(sqlite_storage& in_data) override {
     if (in_data.pragma().user_version() != 0) return;
-    in_data.sync_schema();
+    in_data.sync_schema(in_data.create_session());
     in_data.pragma().user_version(g_current_version);
     auto l_session = sqlite_database{in_data.get_strand(), in_data.create_session()};
 
@@ -99,10 +99,11 @@ struct upgrade_2_t : sqlite_upgrade {
       l_s.drop_trigger("entity_fts_delete_trigger");
       l_s.drop_trigger("entity_fts_insert_trigger");
       l_s.drop_trigger("entity_fts_update_trigger");
-      in_data.sync_schema();
+      in_data.sync_schema(l_s);
     }
     if (in_data.pragma().user_version() == 14) {
       auto l_s = in_data.create_session();
+      in_data.sync_schema(l_s);
       // in_data.pragma().foreign_keys(false);
       l_s.drop_table("seedance2_task_person_token");
       l_s.drop_table("ai_studio_person_role_link");
@@ -114,7 +115,6 @@ struct upgrade_2_t : sqlite_upgrade {
       l_s.exec(
           R"(ALTER TABLE person ADD FOREIGN KEY (ai_studio_id) REFERENCES ai_studio(uuid_id) ON DELETE SET NULL;)"
       );
-      in_data.sync_schema();
     }
 
     in_data.pragma().user_version(g_current_version);

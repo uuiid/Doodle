@@ -313,8 +313,8 @@ fts5_api* storage::get_fts5_api(sqlite3* in_sqlite) {
 
 session storage::create_session() { return session{*this}; }
 
-void storage::sync_schema() {
-  auto l_session      = create_session();
+void storage::sync_schema(const session& in_session) {
+  auto l_session      = in_session ? in_session : create_session();
   auto l_all_tables   = l_session.get_all_table_names();
   auto l_all_indexes  = l_session.get_all_index_names();
   auto l_all_triggers = l_session.get_all_trigger_names();
