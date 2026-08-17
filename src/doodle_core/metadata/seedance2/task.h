@@ -51,10 +51,9 @@ struct DOODLE_CORE_API task {
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time ended_at_{chrono::current_zone(), chrono::system_clock::now()};
 
-  uuid shot_uuid_id_;                        // 内部使用的UUID，对应镜头中的uuid_id_
   uuid project_uuid_id_;                     // 内部使用的UUID，对应项目中的uuid_id_
   std::int64_t completion_tokens_{20'0000};  // 任务完成所需的token数量，默认为20万，具体数值可根据实际情况调整
-
+  uuid ai_generate_entity_id_;               // 内部使用的UUID，对应ai_generate_entity中的uuid_id_
   // 归档
   bool archived_;
   // to json
@@ -71,7 +70,6 @@ struct DOODLE_CORE_API task {
     j["created_at"]        = p.created_at_;
     j["ended_at"]          = p.ended_at_;
     j["archived"]          = p.archived_;
-    j["shot_uuid_id"]      = p.shot_uuid_id_;
     j["project_uuid_id"]   = p.project_uuid_id_;
     j["completion_tokens"] = p.completion_tokens_;
   }
@@ -82,7 +80,6 @@ struct DOODLE_CORE_API task {
     j.at("type").get_to(p.type_);
 
     if (j.contains("archived")) j.at("archived").get_to(p.archived_);
-    if (j.contains("shot_uuid_id")) j.at("shot_uuid_id").get_to(p.shot_uuid_id_);
   }
 };
 // 统计每人, 每天的 token 消耗量
