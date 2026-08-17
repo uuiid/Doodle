@@ -54,8 +54,8 @@ auto get_sd2_tasks_for_person(const uuid& in_person_id) {
 }
 
 void video_create_picture(const FSys::path& in_video_path, const uuid& in_task_id) {
-  auto l_file_picture   = g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_task_file(in_task_id, ".mp4");
-  auto l_file_thumbnail = g_ctx().get<kitsu_ctx_t>().get_sd2_thumbnail_task_file(in_task_id);
+  auto l_file_picture   = g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_file(in_task_id, ".mp4");
+  auto l_file_thumbnail = g_ctx().get<kitsu_ctx_t>().get_sd2_thumbnail_file(in_task_id);
   if (auto l_p = l_file_picture.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   {
@@ -266,22 +266,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, delete_) 
   co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
 }
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail_task, get) {
-  auto l_sql  = get_sqlite_database();
-  auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
-
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail, get) {
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
-  auto l_file = l_ctx.get_sd2_thumbnail_task_file(id_);
+  auto l_file = l_ctx.get_sd2_thumbnail_file(id_);
   DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "缩略图不存在");
   co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
 }
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures_task, get) {
-  auto l_sql  = get_sqlite_database();
-  auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
-
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures, get) {
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
-  auto l_file = l_ctx.get_sd2_pictures_task_file(id_, l_task.file_extension_);
-  DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "图片或者视频不存在");
+  auto l_file = l_ctx.get_sd2_pictures_file(id_);
+  DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "图片不存在");
   co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
 }
 

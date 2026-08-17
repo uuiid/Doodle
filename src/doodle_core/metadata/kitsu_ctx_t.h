@@ -48,23 +48,13 @@ struct kitsu_ctx_t {
            FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
   }
 
-  // seedance2_thumbnail_task
-  FSys::path get_sd2_thumbnail_task_file(const uuid& in_uuid) {
-    return root_ / "sd2" / "thumbnails" / "tasks" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ".png"));
+  // seedance2_thumbnail
+  FSys::path get_sd2_thumbnail_file(const uuid& in_uuid) {
+    return root_ / "sd2" / "thumbnails" / FSys::split_uuid_path(fmt::format("{}.png", in_uuid));
   }
-  // seedance2_pictures_task
-  FSys::path get_sd2_pictures_task_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return root_ / "sd2" / "pictures" / "tasks" /
-           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
-  }
-
-  // seedance2_thumbnail_subproject
-  FSys::path get_sd2_thumbnail_subproject_file(const uuid& in_uuid) {
-    return root_ / "sd2" / "thumbnails" / "subprojects" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ".png"));
-  }
-  // seedance2_pictures_subproject
-  FSys::path get_sd2_pictures_subproject_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return root_ / "sd2" / "pictures" / "subprojects" /
+  // seedance2_pictures
+  FSys::path get_sd2_pictures_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "sd2" / "pictures" /
            FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
   }
 

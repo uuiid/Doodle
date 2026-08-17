@@ -18,13 +18,13 @@ boost::asio::awaitable<void> add_remaining_tokens_for_person(const uuid& in_pers
 std::int64_t get_remaining_tokens_for_person(const uuid& in_person_id);
 
 // 任务相关 ------------------
-// /api/seedance2/thumbnail/task/{id}.png
-DOODLE_HTTP_JWT_FUN(seedance2_thumbnail_task)
+// /api/seedance2/thumbnail/{id}.png
+DOODLE_HTTP_JWT_FUN(seedance2_thumbnail)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// /api/seedance2/pictures/task/{id}.png
-DOODLE_HTTP_JWT_FUN(seedance2_pictures_task)
+// /api/seedance2/pictures/{id}.png
+DOODLE_HTTP_JWT_FUN(seedance2_pictures)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
@@ -51,16 +51,6 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{id}/preview
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_preview)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
-// /api/seedance2/thumbnail/subproject/{id}.png
-DOODLE_HTTP_JWT_FUN(seedance2_thumbnail_subproject)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
-// /api/seedance2/pictures/subproject/{id}.png
-DOODLE_HTTP_JWT_FUN(seedance2_pictures_subproject)
-DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
