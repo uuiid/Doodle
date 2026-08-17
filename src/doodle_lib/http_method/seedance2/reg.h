@@ -16,12 +16,13 @@ namespace doodle::http::seedance2 {
 boost::asio::awaitable<void> add_remaining_tokens_for_person(const uuid& in_person_id, std::int64_t in_tokens);
 // 获取当周人员可以使用的 token 数量
 std::int64_t get_remaining_tokens_for_person(const uuid& in_person_id);
+
+// 任务相关 ------------------
 // /api/user/seedance2/task
 DOODLE_HTTP_JWT_FUN(user_seedance2_task)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-
 // /api/seedance2/task/{id}
 DOODLE_HTTP_JWT_FUN(seedance2_task_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
@@ -40,7 +41,59 @@ DOODLE_HTTP_JWT_FUN(seedance2_pictures_task)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// 等待动画
+// /api/seedance2/animation/waiting.mp4
+DOODLE_HTTP_JWT_FUN(seedance2_animation_waiting)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+/// 子项目, 参与人员相关 ---------------------
+// /api/seedance2/subproject
+DOODLE_HTTP_JWT_FUN(seedance2_subproject)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/subproject/{id}
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/subproject/{subproject_id}/person
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_person_link)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid subproject_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/subproject/{subproject_id}/classification
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_generate_classification)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid subproject_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/subproject/{subproject_id}/classification/{classification_id}
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_generate_classification_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid subproject_id_{};
+uuid classification_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/subproject/{subproject_id}/entity
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_generate_entity)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid subproject_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/subproject/{subproject_id}/entity/{entity_id}
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_generate_entity_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid subproject_id_{};
+uuid entity_id_{};
+DOODLE_HTTP_FUN_END()
 
+
+
+/// 资产库相关 ---------------------
 // /api/seedance2/asset-library/entity/{parent_id}/item
 DOODLE_HTTP_JWT_FUN(seedance2_asset_library_entity_item)
 DOODLE_HTTP_FUN_OVERRIDE(post)
@@ -99,10 +152,8 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid parent_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// /api/seedance2/animation/waiting.mp4
-DOODLE_HTTP_JWT_FUN(seedance2_animation_waiting)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_END()
+
+/// 限额相关 -----------------------------------
 // /api/seedance2/tokens
 DOODLE_HTTP_JWT_FUN(seedance2_tokens)
 DOODLE_HTTP_FUN_OVERRIDE(get)

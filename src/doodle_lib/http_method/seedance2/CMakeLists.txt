@@ -10,5 +10,8 @@ target_sources(
         group.cpp
         task.cpp
         tokens.cpp
+        ai_entity.cpp
+        ai_generate_classification.cpp
+        subproject.cpp
 )
 
