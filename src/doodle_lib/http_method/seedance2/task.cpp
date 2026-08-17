@@ -273,6 +273,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, delete_) 
   co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
 }
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, get) {
+  auto l_sql  = get_sqlite_database();
+  auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
+  co_return in_handle->make_msg(nlohmann::json{} = l_task);
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail, get) {
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
   auto l_file = l_ctx.get_sd2_thumbnail_file(id_);
