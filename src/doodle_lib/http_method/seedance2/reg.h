@@ -18,19 +18,6 @@ boost::asio::awaitable<void> add_remaining_tokens_for_person(const uuid& in_pers
 std::int64_t get_remaining_tokens_for_person(const uuid& in_person_id);
 
 // 任务相关 ------------------
-// /api/user/seedance2/task
-DOODLE_HTTP_JWT_FUN(user_seedance2_task)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_END()
-// /api/seedance2/task/{id}
-DOODLE_HTTP_JWT_FUN(seedance2_task_instance)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_OVERRIDE(put)
-DOODLE_HTTP_FUN_OVERRIDE(delete_)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
-
 // /api/seedance2/thumbnail/task/{id}.png
 DOODLE_HTTP_JWT_FUN(seedance2_thumbnail_task)
 DOODLE_HTTP_FUN_OVERRIDE(get)
@@ -91,6 +78,19 @@ DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid subproject_id_{};
 uuid entity_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/subproject/{subproject_id}/task
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_task)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid subproject_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/subproject/{subproject_id}/task/{id}
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_task_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid subproject_id_{};
+uuid id_{};
 DOODLE_HTTP_FUN_END()
 
 

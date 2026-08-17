@@ -191,7 +191,7 @@ class seedance2_task_run_manager {
 
 }  // namespace
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   if (get_remaining_tokens_for_person(person_.person_.uuid_id_) - doodle_config::g_max_task_completion_tokens <= 0)
     throw_exception(doodle_error{"当周可用token数量不足，请联系管理员"});
 
@@ -232,18 +232,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
 
   co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});
 }
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, get) {
-  co_return in_handle->make_msg(nlohmann::json{} = get_sd2_tasks_for_person(person_.person_.uuid_id_));
-}
+ 
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, get) {
-  auto l_sql  = get_sqlite_database();
-  auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
-
-  co_return in_handle->make_msg(l_task);
-}
-
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, put) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
   auto l_sql    = get_sqlite_database();
   auto l_task   = l_sql.get_by_uuid<sd2::task>(id_);
   auto l_studio = l_sql.get_by_uuid<ai_studio>(person_.get_ai_studio_id());
@@ -257,7 +248,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, put) {
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
 }
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, delete_) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, delete_) {
   auto l_sql        = get_sqlite_database();
   auto l_task       = std::make_shared<sd2::task>(l_sql.get_by_uuid<sd2::task>(id_));
   l_task->archived_ = true;

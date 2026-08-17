@@ -295,8 +295,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &actions_projects_sequences_casting_ue_assembly_harvest::id_
       ))
 
-      .reg_t<seedance2::user_seedance2_task>("/api/user/seedance2/task"_url)
-      .reg_t<seedance2::seedance2_task_instance>("/api/seedance2/task/{}"_url(&seedance2::seedance2_task_instance::id_))
       .reg_t<seedance2::seedance2_thumbnail_task>("/api/seedance2/thumbnail/task/{}.png"_url(&seedance2::seedance2_thumbnail_task::id_))
       .reg_t<seedance2::seedance2_pictures_task>("/api/seedance2/pictures/task/{}.png"_url(&seedance2::seedance2_pictures_task::id_))
       .reg_t<seedance2::seedance2_pictures_task>("/api/seedance2/pictures/task/{}.mp4"_url(&seedance2::seedance2_pictures_task::id_))
@@ -378,6 +376,10 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<seedance2::seedance2_subproject_ai_generate_entity_instance>("/api/seedance2/subproject/{}/entity/{}"_url(
         &seedance2::seedance2_subproject_ai_generate_entity_instance::subproject_id_,
         &seedance2::seedance2_subproject_ai_generate_entity_instance::entity_id_
+      ))
+      .reg_t<seedance2::seedance2_subproject_task>("/api/seedance2/subproject/{}/task"_url(&seedance2::seedance2_subproject_task::subproject_id_))
+      .reg_t<seedance2::seedance2_subproject_task_instance>("/api/seedance2/subproject/{}/task/{}"_url(
+        &seedance2::seedance2_subproject_task_instance::subproject_id_,&seedance2::seedance2_subproject_task_instance::id_
       ))
       .reg_t<data_preview_files>("/api/data/preview-files/{}"_url(&data_preview_files::preview_file_id_))
       .reg_t<data_updata_logs>("/api/data/updata-logs"_url)
