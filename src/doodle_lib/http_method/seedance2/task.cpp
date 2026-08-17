@@ -191,6 +191,17 @@ class seedance2_task_run_manager {
 
 }  // namespace
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, get) {
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_result = select(l_sql)
+                      .columns(object<sd2::task>())
+                      .from<sd2::task>()
+                      .where(c(&sd2::task::ai_generate_entity_id_) == entity_id_)()
+                      .to_vector();
+  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   if (get_remaining_tokens_for_person(person_.person_.uuid_id_) - doodle_config::g_max_task_completion_tokens <= 0)
     throw_exception(doodle_error{"当周可用token数量不足，请联系管理员"});
@@ -232,7 +243,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
 
   co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});
 }
- 
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
   auto l_sql    = get_sqlite_database();
