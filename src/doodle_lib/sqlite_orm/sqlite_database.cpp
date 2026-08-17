@@ -199,6 +199,20 @@ void sqlite_storage::regs_all() {
           foreign_key_action::set_null
       );
 
+  reg_table<seedance2::ai_entity_reference_preview>("seedance2_ai_entity_reference_preview")
+      .add_column("id", &seedance2::ai_entity_reference_preview::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::ai_entity_reference_preview::uuid_id_, unique(), not_null())
+      .add_column("ai_generate_entity_id", &seedance2::ai_entity_reference_preview::ai_generate_entity_id_, not_null())
+      .add_column("preview_file", &seedance2::ai_entity_reference_preview::preview_file_, not_null())
+      .add_foreign_key(
+          &seedance2::ai_entity_reference_preview::ai_generate_entity_id_, &seedance2::ai_generate_entity::uuid_id_,
+          foreign_key_action::cascade
+      )
+      .add_foreign_key(
+          &seedance2::ai_entity_reference_preview::preview_file_, &seedance2::ai_preview_file::uuid_id_,
+          foreign_key_action::cascade
+      );
+
   reg_table<seedance2::person_token>("seedance2_person_token")
       .add_column("id", &seedance2::person_token::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::person_token::uuid_id_, unique(), not_null())
