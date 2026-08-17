@@ -86,6 +86,7 @@ class seedance2_task_run_manager {
     std::int64_t completion_tokens_{0};
     sd2::task_status status_{sd2::task_status::queued};
     nlohmann::json data_response_{};
+    uuid preview_file_{};
   };
 
   std::atomic_bool is_running_{false};
@@ -137,6 +138,7 @@ class seedance2_task_run_manager {
     } else {
       l_info.status_ = l_task_info.at("status").get<sd2::task_status>();
     }
+    if (l_info.status_ == sd2::task_status::queued || l_info.status_ == sd2::task_status::running) co_return;
 
     if (l_info.status_ == sd2::task_status::succeeded && l_task_info.contains("usage") &&
         l_task_info.at("usage").contains("completion_tokens")) {
@@ -151,14 +153,14 @@ class seedance2_task_run_manager {
       l_preview_file->extension_ = ".mp4";
       auto l_sql                 = get_sqlite_database();
       co_await l_sql.install(l_preview_file);
+      l_info.preview_file_ = l_preview_file->uuid_id_;
       video_create_picture(l_file, l_preview_file->uuid_id_);
     }
-    if (l_info.status_ != sd2::task_status::queued && l_info.status_ != sd2::task_status::running) co_return;
-
     auto l_sql                 = get_sqlite_database();
     auto l_task_ptr            = std::make_shared<sd2::task>(in_task);
     l_task_ptr->status_        = l_info.status_;
     l_task_ptr->data_response_ = l_info.data_response_;
+    l_task_ptr->preview_file_  = l_info.preview_file_;
     co_await l_sql.update(l_task_ptr);
     if (l_info.status_ == sd2::task_status::succeeded || l_info.completion_tokens_ > 0) {
       // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
