@@ -47,6 +47,22 @@ DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// 添加缩略图
+// /api/seedance2/subproject/{id}/preview
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_preview)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/thumbnail/subproject/{id}.png
+DOODLE_HTTP_JWT_FUN(seedance2_thumbnail_subproject)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/pictures/subproject/{id}.png
+DOODLE_HTTP_JWT_FUN(seedance2_pictures_subproject)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
 // /api/seedance2/subproject/{subproject_id}/person
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_person_link)
 DOODLE_HTTP_FUN_OVERRIDE(post)
@@ -94,8 +110,6 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid subproject_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-
-
 
 /// 资产库相关 ---------------------
 // /api/seedance2/asset-library/entity/{parent_id}/item
