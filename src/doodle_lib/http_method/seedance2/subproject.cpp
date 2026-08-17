@@ -1,5 +1,6 @@
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/person.h"
+#include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/seedance2/subproject.h>
 
 #include <doodle_lib/http_method/seedance2/reg.h>
@@ -7,7 +8,10 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include "core/global_function.h"
+#include "http_method/kitsu.h"
 #include "reg.h"
+
+#include <opencv2/opencv.hpp>
 
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
@@ -90,6 +94,31 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, delete_) {
   co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
 }
 
+// /api/seedance2/subproject/{id}/preview
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_preview, post) {
+  auto l_sql        = get_sqlite_database();
+  auto l_subproject = l_sql.get_by_uuid<sd2::subproject>(id_);
+  auto l_file       = in_handle->get_file();
+
+  auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
+  auto l_file_picture    = l_ctx.get_sd2_pictures_subproject_file(id_, l_file.extension().string());
+  auto l_file_thumbnail  = l_ctx.get_sd2_thumbnail_subproject_file(id_);
+
+  if (auto l_p = l_file_picture.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+
+  {
+    auto l_image = cv::imread(l_file.generic_string());
+    if (l_image.empty()) throw_exception(doodle_error{"图片解码失败"});
+    auto l_resize = std::min(500.0 / l_image.cols, 500.0 / l_image.rows);
+    cv::resize(l_image, l_image, cv::Size(l_image.cols * l_resize, l_image.rows * l_resize));
+    cv::imwrite(l_file_thumbnail.generic_string(), l_image);
+  }
+  FSys::rename(l_file, l_file_picture);
+
+  co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
+}
+
 namespace {
 
 std::optional<sd2::subproject_person_link> get_subproject_person_link(
@@ -134,6 +163,26 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_person_link, delete_) {
   co_await l_sql.remove<sd2::subproject_person_link>(l_link->uuid_id_);
 
   co_return in_handle->make_msg(nlohmann::json{{"subproject_id", subproject_id_}, {"person_id", l_person_id}});
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail_subproject, get) {
+  auto l_sql        = get_sqlite_database();
+  auto l_subproject = l_sql.get_by_uuid<sd2::subproject>(id_);
+
+  auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
+  auto l_file = l_ctx.get_sd2_thumbnail_subproject_file(id_);
+  DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "缩略图不存在");
+  co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures_subproject, get) {
+  auto l_sql        = get_sqlite_database();
+  auto l_subproject = l_sql.get_by_uuid<sd2::subproject>(id_);
+
+  auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
+  auto l_file = l_ctx.get_sd2_pictures_subproject_file(id_);
+  DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "图片不存在");
+  co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
 }
 
 }  // namespace doodle::http::seedance2

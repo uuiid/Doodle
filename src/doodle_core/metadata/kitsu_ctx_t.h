@@ -58,6 +58,16 @@ struct kitsu_ctx_t {
            FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
   }
 
+  // seedance2_thumbnail_subproject
+  FSys::path get_sd2_thumbnail_subproject_file(const uuid& in_uuid) {
+    return root_ / "sd2" / "thumbnails" / "subprojects" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ".png"));
+  }
+  // seedance2_pictures_subproject
+  FSys::path get_sd2_pictures_subproject_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "sd2" / "pictures" / "subprojects" /
+           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
+  }
+
   FSys::path get_jobs_logs_file(const uuid& in_uuid) {
     return root_ / "jobs" / FSys::split_uuid_path(fmt::format("{}.log", in_uuid));
   }

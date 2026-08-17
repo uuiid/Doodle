@@ -51,6 +51,7 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{id}/preview
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_preview)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/thumbnail/subproject/{id}.png
 DOODLE_HTTP_JWT_FUN(seedance2_thumbnail_subproject)

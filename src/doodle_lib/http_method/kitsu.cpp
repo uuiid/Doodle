@@ -298,6 +298,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<seedance2::seedance2_thumbnail_task>("/api/seedance2/thumbnail/task/{}.png"_url(&seedance2::seedance2_thumbnail_task::id_))
       .reg_t<seedance2::seedance2_pictures_task>("/api/seedance2/pictures/task/{}.png"_url(&seedance2::seedance2_pictures_task::id_))
       .reg_t<seedance2::seedance2_pictures_task>("/api/seedance2/pictures/task/{}.mp4"_url(&seedance2::seedance2_pictures_task::id_))
+      .reg_t<seedance2::seedance2_thumbnail_subproject>("/api/seedance2/thumbnail/subproject/{}.png"_url(&seedance2::seedance2_thumbnail_subproject::id_))
+      .reg_t<seedance2::seedance2_pictures_subproject>("/api/seedance2/pictures/subproject/{}.png"_url(&seedance2::seedance2_pictures_subproject::id_))
       .reg_t<seedance2::seedance2_asset_library_entity_item>("/api/seedance2/asset-library/entity/{}/item"_url(&seedance2::seedance2_asset_library_entity_item::parent_id_))
       .reg_t<seedance2::seedance2_asset_library_entity_item_instance>("/api/seedance2/asset-library/entity/{}/item/{}"_url(
         &seedance2::seedance2_asset_library_entity_item_instance::parent_id_,
@@ -359,6 +361,9 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<seedance2::seedance2_subproject>("/api/seedance2/subproject"_url)
       .reg_t<seedance2::seedance2_subproject_instance>("/api/seedance2/subproject/{}"_url(
         &seedance2::seedance2_subproject_instance::id_
+      ))
+      .reg_t<seedance2::seedance2_subproject_preview>("/api/seedance2/subproject/{}/preview"_url(
+        &seedance2::seedance2_subproject_preview::id_
       ))
       .reg_t<seedance2::seedance2_subproject_person_link>("/api/seedance2/subproject/{}/person"_url(
         &seedance2::seedance2_subproject_person_link::subproject_id_
