@@ -42,6 +42,7 @@ class http_jwt_fun : public http_function {
     void check_admin() const;
     // 检查是否是制片
     void check_producer() const;
+    bool is_producer() const;
     // 检查是否是项目经理
     void check_manager() const;
     // is_supervisor
