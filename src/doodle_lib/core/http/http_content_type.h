@@ -20,6 +20,13 @@ enum class content_type {
   image_gif,
   video_mp4,
   video_mov,
+  video_avi,
+  audio_mp3,
+  audio_wav,
+  audio_ogg,
+  audio_aac,
+  audio_wma,
+  audio_m4a,
   form_data,
   multipart_form_data,
   unknown

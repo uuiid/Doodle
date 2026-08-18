@@ -17,6 +17,15 @@ content_type get_content_type(const std::string_view& in_content_type) {
   if (in_content_type.starts_with("application/")) return content_type::application_nuknown;
   if (in_content_type.starts_with("text/plain")) return content_type::text_plain;
   if (in_content_type.starts_with("video/quicktime")) return content_type::video_mov;
+  if (in_content_type.starts_with("video/x-msvideo")) return content_type::video_avi;
+  if (in_content_type.starts_with("audio/mpeg")) return content_type::audio_mp3;
+  if (in_content_type.starts_with("audio/wav") || in_content_type.starts_with("audio/x-wav"))
+    return content_type::audio_wav;
+  if (in_content_type.starts_with("audio/ogg")) return content_type::audio_ogg;
+  if (in_content_type.starts_with("audio/aac")) return content_type::audio_aac;
+  if (in_content_type.starts_with("audio/x-ms-wma")) return content_type::audio_wma;
+  if (in_content_type.starts_with("audio/mp4") || in_content_type.starts_with("audio/x-m4a"))
+    return content_type::audio_m4a;
   return content_type::unknown;
 }
 
@@ -33,6 +42,20 @@ std::string extension_from_mime_type(detail::content_type in_mime_type) {
       return ".mp4";
     case content_type::video_mov:
       return ".mov";
+    case content_type::video_avi:
+      return ".avi";
+    case content_type::audio_mp3:
+      return ".mp3";
+    case content_type::audio_wav:
+      return ".wav";
+    case content_type::audio_ogg:
+      return ".ogg";
+    case content_type::audio_aac:
+      return ".aac";
+    case content_type::audio_wma:
+      return ".wma";
+    case content_type::audio_m4a:
+      return ".m4a";
     case content_type::text_plain:
       return ".txt";
     case content_type::application_nuknown:
