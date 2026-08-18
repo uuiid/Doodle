@@ -123,10 +123,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, post) 
   auto l_file     = in_handle->get_file();
   auto l_ext      = l_file.extension().string();
   auto l_is_video = l_ext == ".mp4" || l_ext == ".mov" || l_ext == ".avi";
-  auto l_is_audio = l_ext == ".mp3" || l_ext == ".wav" || l_ext == ".ogg" || l_ext == ".flac"
-                 || l_ext == ".aac" || l_ext == ".wma" || l_ext == ".m4a";
+  auto l_is_audio =
+      l_ext == ".mp3" || l_ext == ".wav" || l_ext == ".ogg" || l_ext == ".aac" || l_ext == ".wma" || l_ext == ".m4a";
 
-  auto l_preview  = std::make_shared<sd2::ai_preview_file>();
+  auto l_preview        = std::make_shared<sd2::ai_preview_file>();
   l_preview->extension_ = l_is_audio ? l_ext : (l_is_video ? ".mp4" : ".png");
   co_await l_sql.install(l_preview);
 
@@ -167,7 +167,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, post) 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_reference_instance, delete_) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
-  auto l_ref = std::make_shared<sd2::ai_entity_reference_preview>(l_sql.get_by_uuid<sd2::ai_entity_reference_preview>(id_));
+  auto l_ref =
+      std::make_shared<sd2::ai_entity_reference_preview>(l_sql.get_by_uuid<sd2::ai_entity_reference_preview>(id_));
 
   auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
   auto l_preview        = l_sql.get_by_uuid<sd2::ai_preview_file>(l_ref->preview_file_);
