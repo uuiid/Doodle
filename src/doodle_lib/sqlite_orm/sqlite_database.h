@@ -84,6 +84,7 @@ class sqlite_database {
   ~sqlite_database() = default;
   // operator orm::session() { return session_; }
   operator orm::session() const { return session_; }
+  orm::session get_session() const { return session_; }
   /// 备份数据库
   boost::asio::awaitable<void> backup(FSys::path in_path);
 

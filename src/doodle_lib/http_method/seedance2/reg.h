@@ -13,7 +13,9 @@
 
 namespace doodle::http::seedance2 {
 // 设置当周人员剩余可使用的 token 数量
-boost::asio::awaitable<void> add_remaining_tokens_for_person(const uuid& in_person_id, std::int64_t in_tokens);
+boost::asio::awaitable<void> add_remaining_tokens_for_person(
+    sqlite_database& in_sql, const uuid& in_person_id, std::int64_t in_tokens
+);
 // 获取当周人员可以使用的 token 数量
 std::int64_t get_remaining_tokens_for_person(const uuid& in_person_id);
 
@@ -119,7 +121,6 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid subproject_id_{};
 uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
-
 
 /// 资产库相关 ---------------------
 // /api/seedance2/asset-library/entity/{parent_id}/item

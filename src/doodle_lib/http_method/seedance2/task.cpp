@@ -178,11 +178,11 @@ class seedance2_task_run_manager {
     if (l_status == sd2::task_status::succeeded && l_task_ptr->completion_tokens_ > 0) {
       // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
       co_await add_remaining_tokens_for_person(
-          in_task.user_id_, in_task.completion_tokens_ - l_task_ptr->completion_tokens_
+          l_sql, in_task.user_id_, in_task.completion_tokens_ - l_task_ptr->completion_tokens_
       );
     } else {
       // 任务失败或者其他状态，返还 token
-      co_await add_remaining_tokens_for_person(in_task.user_id_, in_task.completion_tokens_);
+      co_await add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_);
     }
     socket_io::broadcast(
         socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_task_ptr->status_}
@@ -246,7 +246,7 @@ boost::asio::awaitable<std::string> get_self_ip() {
       if (i == 2) throw;
     }
   }
-  co_return std::string{}; // unreachable
+  co_return std::string{};  // unreachable
 }
 // 将传入的 req 中的资源路径附加上服务器的 ip 地址，返回新的 req
 nlohmann::json add_ip_to_req(const nlohmann::json& in_req, const std::string& in_ip) {
@@ -289,9 +289,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   auto l_ip        = co_await get_self_ip();
   auto l_req       = add_ip_to_req(l_task->data_request_, l_ip);
   l_task->task_id_ = co_await l_client->run_task(l_req);  // 异步运行任务，不等待结果
+  {
+    auto l_g = l_sql.get_session().transaction();
+    co_await add_remaining_tokens_for_person(l_sql, person_.person_.uuid_id_, -l_task->completion_tokens_);
+    co_await l_sql.install(l_task);
+    l_g.commit();
+  }
 #endif
-  co_await add_remaining_tokens_for_person(person_.person_.uuid_id_, -l_task->completion_tokens_);
-  co_await l_sql.install(l_task);
   seedance2_task_run_manager::Get().run();
   co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});
 }

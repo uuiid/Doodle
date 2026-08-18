@@ -48,13 +48,14 @@ boost::asio::awaitable<void> set_remaining_tokens_for_person(const uuid& in_pers
 }  // namespace
 
 // 设置当周人员剩余可使用的 token 数量
-boost::asio::awaitable<void> add_remaining_tokens_for_person(const uuid& in_person, std::int64_t in_tokens) {
+boost::asio::awaitable<void> add_remaining_tokens_for_person(
+    sqlite_database& in_sql, const uuid& in_person, std::int64_t in_tokens
+) {
   if (in_tokens == 0) co_return;
-  auto l_sql = get_sqlite_database();
   using namespace orm;
 
-  co_await l_sql.update(
-      orm::update(l_sql)
+  co_await in_sql.update(
+      orm::update(in_sql)
           .from<person>()
           .set(c(&person::remaining_completion_tokens_) = c(&person::remaining_completion_tokens_) + in_tokens)
           .where(c(&person::uuid_id_) == in_person)
