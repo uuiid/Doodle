@@ -147,7 +147,8 @@ class seedance2_task_run_manager {
     }
     if (l_info.status_ == sd2::task_status::succeeded && l_task_info.contains("content") &&
         l_task_info.at("content").contains("video_url")) {
-      auto l_video_url           = l_task_info.at("content").at("video_url").get<std::string>();
+      auto l_video_url = l_task_info.at("content").at("video_url").get<std::string>();
+      SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "任务 {} 完成，下载视频 {}", in_task.uuid_id_, l_video_url);
       auto l_file                = co_await in_client->download_result(l_video_url);
       auto l_preview_file        = std::make_shared<sd2::ai_preview_file>();
       l_preview_file->extension_ = ".mp4";
@@ -161,6 +162,7 @@ class seedance2_task_run_manager {
     l_task_ptr->status_        = l_info.status_;
     l_task_ptr->data_response_ = l_info.data_response_;
     l_task_ptr->preview_file_  = l_info.preview_file_;
+    l_task_ptr->ended_at_      = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
     co_await l_sql.update(l_task_ptr);
     if (l_info.status_ == sd2::task_status::succeeded || l_info.completion_tokens_ > 0) {
       // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
