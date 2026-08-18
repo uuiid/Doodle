@@ -192,24 +192,6 @@ struct sqlite_stmt {
 };
 
 class storage : public boost::noncopyable {
-  struct pragma_t {
-    void synchronous(std::int32_t in_sync);
-    void journal_mode(journal_mode_t in_mode);
-    void recursive_triggers(bool in_recursive);
-    void foreign_keys(bool in_foreign_keys);
-    void locking_mode(bool in_exclusive);
-    std::int32_t user_version();
-    void user_version(std::int32_t version);
-
-    void run(std::string_view in_pragma_sql, bool in_value);
-    void run(std::string_view in_pragma_sql, std::string_view in_value);
-    void run(std::string_view in_pragma_sql, std::int32_t in_value);
-
-   private:
-    storage& s_;
-    explicit pragma_t(storage& s) : s_(s) {};
-    friend struct storage;
-  };
   friend struct table_info;
   friend struct sqlite_stmt;
   friend struct select_t;
@@ -248,7 +230,6 @@ class storage : public boost::noncopyable {
   std::atomic_bool finalized_{false};
   FSys::path db_path_;
 
-  pragma_t pragma_{*this};
   boost::lockfree::stack<timed_connection, boost::lockfree::capacity<512>> connection_queue_{};
   std::atomic_char16_t thread_db_count_{0};
   bool is_opened_{false};
@@ -272,7 +253,6 @@ class storage : public boost::noncopyable {
   virtual void open(const FSys::path& in_path) final;
 
   void sync_schema(const session& in_session);
-  pragma_t& pragma();
 
   static fts5_api* get_fts5_api(sqlite3* in_sqlite);
 

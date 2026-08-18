@@ -379,52 +379,6 @@ storage::backup_t storage::backup(const FSys::path& dest_path) {
   );
 }
 
-void storage::pragma_t::synchronous(std::int32_t in_sync) {
-  if (in_sync < 0 || in_sync > 2) throw std::invalid_argument("Invalid synchronous value, must be 0, 1, or 2");
-  run("synchronous", in_sync);
-}
-void storage::pragma_t::journal_mode(journal_mode_t in_mode) {
-  static const std::map<journal_mode_t, std::string_view> mode_to_str{
-      {journal_mode_t::delete_, "DELETE"}, {journal_mode_t::truncate, "TRUNCATE"}, {journal_mode_t::persist, "PERSIST"},
-      {journal_mode_t::memory, "MEMORY"},  {journal_mode_t::wal, "WAL"},           {journal_mode_t::off, "OFF"},
-  };
-  if (!mode_to_str.contains(in_mode)) throw std::invalid_argument("Invalid journal mode");
-  run("journal_mode", mode_to_str.at(in_mode));
-}
-void storage::pragma_t::recursive_triggers(bool in_recursive) { run("recursive_triggers", in_recursive); }
-void storage::pragma_t::foreign_keys(bool in_foreign_keys) { run("foreign_keys", in_foreign_keys); }
-void storage::pragma_t::locking_mode(bool in_exclusive) { run("locking_mode", in_exclusive ? "EXCLUSIVE" : "NORMAL"); }
-void storage::pragma_t::user_version(std::int32_t version) { run("user_version", version); }
-std::int32_t storage::pragma_t::user_version() {
-  auto l_session = s_.create_session();
-  sqlite_stmt l_stmt{};
-  l_stmt.prepare(l_session, "PRAGMA user_version;");
-  l_stmt.step();
-  return l_stmt.get_column_value<std::int32_t>(0);
-}
-
-void storage::pragma_t::run(std::string_view in_pragma_sql, bool in_value) {
-  auto l_session = s_.create_session();
-
-  auto l_sql     = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value ? "ON" : "OFF");
-  auto l_stmt    = sqlite_stmt(l_session, l_sql);
-  l_stmt.step();
-}
-
-void storage::pragma_t::run(std::string_view in_pragma_sql, std::string_view in_value) {
-  auto l_session = s_.create_session();
-
-  auto l_sql     = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value);
-  auto l_stmt    = sqlite_stmt(l_session, l_sql);
-  l_stmt.step();
-}
-void storage::pragma_t::run(std::string_view in_pragma_sql, std::int32_t in_value) {
-  auto l_sql     = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value);
-  auto l_session = s_.create_session();
-  auto l_stmt    = sqlite_stmt(l_session, l_sql);
-  l_stmt.step();
-}
-
 storage::~storage() = default;
 void storage::register_custom_extension(sqlite3* in_sqlite) {}
 
@@ -435,8 +389,6 @@ std::string storage::get_table_name(std::type_index in_type_index) const {
   auto l_table_index = type_to_table_index_.at(in_type_index);
   return tables_[l_table_index]->name_;
 }
-
-storage::pragma_t& storage::pragma() { return pragma_; }
 
 std::string storage::get_column_name(const table_columns_t& in_column, const to_sql_ctx& ctx) const {
   auto l_type_index = in_column.table_type_index_;

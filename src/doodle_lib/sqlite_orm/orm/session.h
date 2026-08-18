@@ -17,6 +17,25 @@ class session {
   };
   std::shared_ptr<session_data> data_;
 
+  struct pragma_t {
+    void synchronous(std::int32_t in_sync);
+    void journal_mode(journal_mode_t in_mode);
+    void recursive_triggers(bool in_recursive);
+    void foreign_keys(bool in_foreign_keys);
+    void locking_mode(bool in_exclusive);
+    std::int32_t user_version();
+    void user_version(std::int32_t version);
+
+   private:
+    session& s_;
+    explicit pragma_t(session& s) : s_(s) {};
+    friend class session;
+
+    void run(std::string_view in_pragma_sql, bool in_value);
+    void run(std::string_view in_pragma_sql, std::string_view in_value);
+    void run(std::string_view in_pragma_sql, std::int32_t in_value);
+  };
+
  public:
   explicit session(storage& s);
   session() : data_(std::make_shared<session_data>()) {}
@@ -95,5 +114,7 @@ class session {
     return data_->s_->get_table_name<T>();
   }
   std::string get_table_name(std::type_index in_type_index) const { return data_->s_->get_table_name(in_type_index); }
+
+  pragma_t pragma() { return pragma_t{*this}; }
 };
 }  // namespace doodle::orm

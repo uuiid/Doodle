@@ -146,4 +146,44 @@ session::transaction_guard::~transaction_guard() {
   }
 }
 
+void session::pragma_t::synchronous(std::int32_t in_sync) {
+  if (in_sync < 0 || in_sync > 2) throw std::invalid_argument("Invalid synchronous value, must be 0, 1, or 2");
+  run("synchronous", in_sync);
+}
+void session::pragma_t::journal_mode(journal_mode_t in_mode) {
+  static const std::map<journal_mode_t, std::string_view> mode_to_str{
+      {journal_mode_t::delete_, "DELETE"}, {journal_mode_t::truncate, "TRUNCATE"}, {journal_mode_t::persist, "PERSIST"},
+      {journal_mode_t::memory, "MEMORY"},  {journal_mode_t::wal, "WAL"},           {journal_mode_t::off, "OFF"},
+  };
+  if (!mode_to_str.contains(in_mode)) throw std::invalid_argument("Invalid journal mode");
+  run("journal_mode", mode_to_str.at(in_mode));
+}
+void session::pragma_t::recursive_triggers(bool in_recursive) { run("recursive_triggers", in_recursive); }
+void session::pragma_t::foreign_keys(bool in_foreign_keys) { run("foreign_keys", in_foreign_keys); }
+void session::pragma_t::locking_mode(bool in_exclusive) { run("locking_mode", in_exclusive ? "EXCLUSIVE" : "NORMAL"); }
+void session::pragma_t::user_version(std::int32_t version) { run("user_version", version); }
+std::int32_t session::pragma_t::user_version() {
+  sqlite_stmt l_stmt{};
+  l_stmt.prepare(s_, "PRAGMA user_version;");
+  l_stmt.step();
+  return l_stmt.get_column_value<std::int32_t>(0);
+}
+
+void session::pragma_t::run(std::string_view in_pragma_sql, bool in_value) {
+  auto l_sql  = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value ? "ON" : "OFF");
+  auto l_stmt = sqlite_stmt(s_, l_sql);
+  l_stmt.step();
+}
+
+void session::pragma_t::run(std::string_view in_pragma_sql, std::string_view in_value) {
+  auto l_sql  = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value);
+  auto l_stmt = sqlite_stmt(s_, l_sql);
+  l_stmt.step();
+}
+void session::pragma_t::run(std::string_view in_pragma_sql, std::int32_t in_value) {
+  auto l_sql  = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value);
+  auto l_stmt = sqlite_stmt(s_, l_sql);
+  l_stmt.step();
+}
+
 }  // namespace doodle::orm

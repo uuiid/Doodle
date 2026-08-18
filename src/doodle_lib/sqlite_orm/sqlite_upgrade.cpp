@@ -45,9 +45,10 @@ struct upgrade_init_t : sqlite_upgrade {
   }
 
   void upgrade(sqlite_storage& in_data) override {
-    if (in_data.pragma().user_version() != 0) return;
-    in_data.sync_schema(in_data.create_session());
-    in_data.pragma().user_version(g_current_version);
+    auto l_s = in_data.create_session();
+    if (l_s.pragma().user_version() != 0) return;
+    in_data.sync_schema(l_s);
+    l_s.pragma().user_version(g_current_version);
     auto l_session = sqlite_database{in_data.get_strand(), in_data.create_session()};
 
 #define DOODLE_ASSET_TYPE(class_name)                        \
@@ -94,16 +95,15 @@ struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t() {}
   void upgrade(sqlite_storage& in_data) override {
     // upgrade_init_t::full_fts_sync(in_data);
-    if (in_data.pragma().user_version() == 11) {
+    if (in_data.create_session().pragma().user_version() == 11) {
       auto l_s = in_data.create_session();
       l_s.drop_trigger("entity_fts_delete_trigger");
       l_s.drop_trigger("entity_fts_insert_trigger");
       l_s.drop_trigger("entity_fts_update_trigger");
       in_data.sync_schema(l_s);
     }
-    if (in_data.pragma().user_version() == 14) {
+    if (in_data.create_session().pragma().user_version() == 14) {
       auto l_s = in_data.create_session();
-      in_data.sync_schema(l_s);
       // in_data.pragma().foreign_keys(false);
       l_s.drop_table("seedance2_task_person_token");
       l_s.drop_table("ai_studio_person_role_link");
@@ -111,13 +111,14 @@ struct upgrade_2_t : sqlite_upgrade {
       // 重命名表 person.max_completion_tokens -> person.remaining_completion_tokens
       l_s.exec(R"(ALTER TABLE person RENAME COLUMN max_completion_tokens TO remaining_completion_tokens;)");
       // 添加列 &person::ai_studio_id_ 并添加外键约束
-      l_s.exec(R"(ALTER TABLE person ADD COLUMN ai_studio_id INTEGER;)");
+      l_s.exec(R"(ALTER TABLE person ADD COLUMN ai_studio_id BLOB;)");
+      in_data.sync_schema(l_s);
       l_s.exec(
           R"(ALTER TABLE person ADD FOREIGN KEY (ai_studio_id) REFERENCES ai_studio(uuid_id) ON DELETE SET NULL;)"
       );
     }
 
-    in_data.pragma().user_version(g_current_version);
+    in_data.create_session().pragma().user_version(g_current_version);
   }
   ~upgrade_2_t() override = default;
 };
