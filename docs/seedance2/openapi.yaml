@@ -1,0 +1,1731 @@
+openapi: "3.0.3"
+info:
+  title: Seedance2 API
+  description: |
+    Seedance2 模块 HTTP API，提供子项目管理、AI 生成分类/实体/任务、资产库及 Token 限额管理功能。
+
+    所有接口均需 JWT Bearer Token 认证（Header: `Authorization: Bearer <token>`）。
+  version: "1.0.0"
+  contact:
+    name: 索以动画研发中心
+
+servers:
+  - url: http://localhost:8080
+    description: 本地开发服务器
+
+tags:
+  - name: 静态文件
+    description: 缩略图、图片、动画等静态资源
+  - name: 子项目
+    description: 子项目 CRUD、参与人员关联
+  - name: AI生成分类
+    description: AI 生成内容分类管理
+  - name: AI生成实体
+    description: AI 生成实体及预览、参考文件管理
+  - name: 任务
+    description: AI 生成任务提交、查询、取消、归档
+  - name: 资产库
+    description: 资产分组、资产实体、资产项管理
+  - name: 限额管理
+    description: Token 配额查询与设置
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ═══════════════ 静态文件 ═══════════════
+  /api/seedance2/thumbnail/{id}.png:
+    get:
+      tags: [静态文件]
+      summary: 获取缩略图
+      description: 根据预览文件 ID 获取缩略图（PNG 格式）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 缩略图二进制数据
+          content:
+            image/png: {}
+        "404":
+          description: 缩略图不存在
+
+  /api/seedance2/pictures/{id}.png:
+    get:
+      tags: [静态文件]
+      summary: 获取图片
+      description: 根据预览文件 ID 获取原始图片/视频文件
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 图片/视频二进制数据
+          content:
+            image/png: {}
+            video/mp4: {}
+        "404":
+          description: 文件不存在
+
+  /api/seedance2/animation/waiting.mp4:
+    get:
+      tags: [静态文件]
+      summary: 获取等待动画
+      description: 返回前端展示用的等待动画视频
+      responses:
+        "200":
+          description: 等待动画视频
+          content:
+            video/mp4: {}
+        "404":
+          description: 文件不存在
+
+  # ═══════════════ 子项目 ═══════════════
+  /api/seedance2/subproject:
+    get:
+      tags: [子项目]
+      summary: 获取子项目列表
+      description: |
+        获取当前用户可见的子项目列表。
+        - 制片/管理员：查看所有子项目
+        - 普通用户：仅查看自己参与的子项目
+      responses:
+        "200":
+          description: 子项目列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subproject"
+    post:
+      tags: [子项目]
+      summary: 创建子项目
+      description: 制片及以上权限可创建子项目
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, project_id]
+              properties:
+                name:
+                  type: string
+                  description: 子项目名称
+                project_id:
+                  type: string
+                  format: uuid
+                  description: 关联项目ID
+      responses:
+        "200":
+          description: 创建成功，返回完整子项目信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subproject"
+
+  /api/seedance2/subproject/{id}:
+    get:
+      tags: [子项目]
+      summary: 获取子项目详情
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 子项目详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subproject"
+    put:
+      tags: [子项目]
+      summary: 更新子项目
+      description: 制片及以上权限可更新子项目。可更新字段：name, project_id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                project_id:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: 更新后的子项目信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subproject"
+    delete:
+      tags: [子项目]
+      summary: 删除/归档子项目
+      description: |
+        制片及以上权限可操作。
+        - 默认软删除（归档），设置 archived=true
+        - 传 `?force=true` 则硬删除
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: force
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "204":
+          description: 删除成功
+
+  /api/seedance2/subproject/{id}/preview:
+    post:
+      tags: [子项目]
+      summary: 上传子项目预览图
+      description: 上传图片作为子项目缩略图，自动生成缩略图和预览文件
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 图片文件
+      responses:
+        "200":
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: 预览文件ID
+
+  /api/seedance2/subproject/{subproject_id}/person:
+    post:
+      tags: [子项目]
+      summary: 添加子项目参与人员
+      description: 制片及以上权限，关联人员到子项目
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubprojectPersonLink"
+      responses:
+        "200":
+          description: 关联成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubprojectPersonLink"
+    delete:
+      tags: [子项目]
+      summary: 移除子项目参与人员
+      description: 制片及以上权限，移除子项目中的参与人员
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [person_id]
+              properties:
+                person_id:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: 移除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subproject_id:
+                    type: string
+                    format: uuid
+                  person_id:
+                    type: string
+                    format: uuid
+
+  # ═══════════════ AI生成分类 ═══════════════
+  /api/seedance2/subproject/{subproject_id}/classification:
+    post:
+      tags: [AI生成分类]
+      summary: 创建 AI 生成分类
+      description: 非外包人员可创建。分类如 "sc002"、"sc003" 等
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  description: 分类名称
+                description:
+                  type: string
+                  description: 分类描述
+      responses:
+        "200":
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiGenerateClassification"
+
+  /api/seedance2/subproject/{subproject_id}/classification/{classification_id}:
+    get:
+      tags: [AI生成分类]
+      summary: 获取分类详情
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: classification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 分类详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiGenerateClassification"
+    put:
+      tags: [AI生成分类]
+      summary: 更新分类
+      description: 非外包人员可更新。可更新字段：name, description
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: classification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        "200":
+          description: 更新后的分类信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiGenerateClassification"
+    delete:
+      tags: [AI生成分类]
+      summary: 删除分类
+      description: 非外包人员可删除
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: classification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  classification_id:
+                    type: string
+                    format: uuid
+
+  # ═══════════════ AI生成实体 ═══════════════
+  /api/seedance2/subproject/{subproject_id}/entity:
+    post:
+      tags: [AI生成实体]
+      summary: 创建 AI 生成实体
+      description: 非外包人员可创建。实体用于组织一批 AI 生成任务
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, ai_generate_classification_id, project_uuid_id]
+              properties:
+                name:
+                  type: string
+                ai_generate_classification_id:
+                  type: string
+                  format: uuid
+                project_uuid_id:
+                  type: string
+                  format: uuid
+                shot_uuid_id:
+                  type: string
+                  format: uuid
+                preview_file:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiGenerateEntity"
+
+  /api/seedance2/subproject/{subproject_id}/entity/{entity_id}:
+    get:
+      tags: [AI生成实体]
+      summary: 获取实体详情
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 实体详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiGenerateEntity"
+    put:
+      tags: [AI生成实体]
+      summary: 更新实体
+      description: 非外包人员可更新。可更新字段：name, ai_generate_classification_id, shot_uuid_id, preview_file
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                ai_generate_classification_id:
+                  type: string
+                  format: uuid
+                shot_uuid_id:
+                  type: string
+                  format: uuid
+                preview_file:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: 更新后的实体信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiGenerateEntity"
+    delete:
+      tags: [AI生成实体]
+      summary: 删除实体
+      description: 非外包人员可删除
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entity_id:
+                    type: string
+                    format: uuid
+
+  /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/preview:
+    post:
+      tags: [AI生成实体]
+      summary: 上传实体预览图
+      description: 上传图片作为实体预览，自动生成缩略图
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 图片文件
+      responses:
+        "200":
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: 预览文件ID
+
+  /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/reference:
+    get:
+      tags: [AI生成实体]
+      summary: 获取实体参考列表
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 参考列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiEntityReferencePreview"
+    post:
+      tags: [AI生成实体]
+      summary: 上传实体参考文件
+      description: 非外包人员可上传。支持图片和视频（mp4/mov/avi），自动生成缩略图
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 图片或视频文件
+      responses:
+        "200":
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiEntityReferencePreview"
+
+  # ═══════════════ 任务 ═══════════════
+  /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/task:
+    get:
+      tags: [任务]
+      summary: 获取实体下的任务列表
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 任务列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      tags: [任务]
+      summary: 创建 AI 生成任务
+      description: |
+        提交一个新的 AI 生成任务。会检查当前用户剩余 Token 是否充足，不足则拒绝。
+        任务创建后异步运行，扣除对应 Token。
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [data_request, ai_studio_id, project_uuid_id, type, ai_generate_entity_id]
+              properties:
+                data_request:
+                  type: object
+                  description: AI 请求数据（content 等）
+                ai_studio_id:
+                  type: string
+                  format: uuid
+                project_uuid_id:
+                  type: string
+                  format: uuid
+                type:
+                  $ref: "#/components/schemas/TaskType"
+                ai_generate_entity_id:
+                  type: string
+                  format: uuid
+                archived:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: 创建成功，返回任务ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+
+  /api/seedance2/subproject/{subproject_id}/task/{id}:
+    get:
+      tags: [任务]
+      summary: 获取任务详情
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 任务详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    put:
+      tags: [任务]
+      summary: 取消任务
+      description: 向外部服务发送取消请求，并将状态设为 cancelled
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 取消后的任务信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    delete:
+      tags: [任务]
+      summary: 归档任务
+      description: 软删除，设置 archived=true
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 归档成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+
+  # ═══════════════ 资产库 - 分组 ═══════════════
+  /api/seedance2/asset-library/group:
+    get:
+      tags: [资产库]
+      summary: 获取资产分组列表
+      description: 获取当前用户所属 AI Studio 的所有资产分组
+      responses:
+        "200":
+          description: 资产分组列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AssetsGroup"
+    post:
+      tags: [资产库]
+      summary: 创建资产分组
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+                  description: 分组标签，为空时默认 "group_"
+      responses:
+        "200":
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetsGroup"
+
+  /api/seedance2/asset-library/group/{group_id}:
+    get:
+      tags: [资产库]
+      summary: 获取资产分组详情
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 分组详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetsGroup"
+    put:
+      tags: [资产库]
+      summary: 更新资产分组
+      description: 仅创建者或管理员可修改
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+      responses:
+        "200":
+          description: 更新后的分组信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetsGroup"
+    delete:
+      tags: [资产库]
+      summary: 删除资产分组
+      description: 仅创建者或管理员可删除，且分组下不能有资产实体
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+        "400":
+          description: 分组下存在资产，无法删除
+
+  /api/seedance2/asset-library/group/{group_id}/entity:
+    get:
+      tags: [资产库]
+      summary: 获取分组下的资产实体列表
+      description: 返回资产实体及其子项列表
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 资产实体列表（含子项）
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AssetsEntityWithItems"
+    post:
+      tags: [资产库]
+      summary: 在分组下创建资产实体
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        "200":
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetsEntity"
+
+  # ═══════════════ 资产库 - 实体 ═══════════════
+  /api/seedance2/asset-library/entity/{entity_id}:
+    get:
+      tags: [资产库]
+      summary: 获取资产实体详情
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 资产实体详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetsEntity"
+    put:
+      tags: [资产库]
+      summary: 更新资产实体
+      description: 仅创建者或管理员可修改
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssetsEntity"
+      responses:
+        "200":
+          description: 更新后的资产实体
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetsEntity"
+    delete:
+      tags: [资产库]
+      summary: 删除资产实体
+      description: 仅创建者或管理员可删除
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: 删除成功
+
+  /api/seedance2/asset-library/entity/search:
+    get:
+      tags: [资产库]
+      summary: 搜索资产实体
+      description: 按名称模糊搜索当前 AI Studio 下的资产实体
+      parameters:
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 搜索关键词
+      responses:
+        "200":
+          description: 匹配的资产实体列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AssetsEntity"
+
+  /api/seedance2/asset-library/entity/{parent_id}/item:
+    post:
+      tags: [资产库]
+      summary: 上传资产实体项
+      description: 上传图片（png/jpg/jpeg）或视频（mp4/avi/m4v/mov/webm）文件，视频限制 100MB。自动生成缩略图
+      parameters:
+        - name: parent_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 图片或视频文件
+      responses:
+        "200":
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetsEntityItem"
+        "400":
+          description: 文件类型不支持或视频超过 100MB
+
+  /api/seedance2/asset-library/entity/{parent_id}/item/{id}:
+    delete:
+      tags: [资产库]
+      summary: 删除资产实体项
+      description: 管理员可删除
+      parameters:
+        - name: parent_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: 删除成功
+
+  /api/seedance2/asset-library/entity/{parent_id}/pictures/item/{id}.png:
+    get:
+      tags: [资产库]
+      summary: 获取资产实体项图片/视频文件
+      parameters:
+        - name: parent_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 图片或视频二进制数据
+          content:
+            image/png: {}
+            video/mp4: {}
+        "404":
+          description: 文件不存在
+
+  /api/seedance2/asset-library/entity/{parent_id}/thumbnail/item/{id}.png:
+    get:
+      tags: [资产库]
+      summary: 获取资产实体项缩略图
+      parameters:
+        - name: parent_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 缩略图
+          content:
+            image/png: {}
+        "404":
+          description: 文件不存在
+
+  # ═══════════════ 限额管理 ═══════════════
+  /api/seedance2/tokens:
+    get:
+      tags: [限额管理]
+      summary: 获取当前用户剩余 Token
+      responses:
+        "200":
+          description: 当前用户剩余 Token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  remaining_tokens:
+                    type: integer
+                    format: int64
+                    description: 剩余可用 Token 数量
+    post:
+      tags: [限额管理]
+      summary: 设置所有人员当周剩余 Token
+      description: 仅管理员可操作。将所有人的剩余 Token 重置为指定值
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                remaining_tokens:
+                  type: integer
+                  format: int64
+                  description: Token 数量，默认使用全局配置的最大值
+      responses:
+        "200":
+          description: 设置成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  remaining_tokens:
+                    type: integer
+                    format: int64
+
+  /api/seedance2/tokens/person/{person_id}:
+    get:
+      tags: [限额管理]
+      summary: 获取指定人员剩余 Token
+      description: 制片及以上可查看
+      parameters:
+        - name: person_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 人员剩余 Token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  remaining_tokens:
+                    type: integer
+                    format: int64
+    put:
+      tags: [限额管理]
+      summary: 设置指定人员剩余 Token
+      description: 仅管理员可操作
+      parameters:
+        - name: person_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [remaining_tokens]
+              properties:
+                remaining_tokens:
+                  type: integer
+                  format: int64
+      responses:
+        "200":
+          description: 设置成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  remaining_tokens:
+                    type: integer
+                    format: int64
+
+  /api/seedance2/tokens/person/all:
+    get:
+      tags: [限额管理]
+      summary: 获取所有人员剩余 Token
+      description: 制片及以上可查看。返回所有未归档人员的 Token 信息
+      responses:
+        "200":
+          description: 所有人员 Token 列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PersonTokenBrief"
+
+  /api/seedance2/tokens/person/{person_id}/date/{date_start}-{date_end}:
+    get:
+      tags: [限额管理]
+      summary: 获取某人某段时间 Token 消耗统计
+      description: 制片及以上可查看。若时间范围包含当天，会实时统计当天数据
+      parameters:
+        - name: person_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: date_start
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: date_end
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Token 消耗统计列表（按天）
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PersonToken"
+
+  /api/seedance2/tokens/person/{person_id}/date/{date}:
+    get:
+      tags: [限额管理]
+      summary: 获取某人某天 Token 消耗统计
+      description: 制片及以上可查看。当天数据实时统计
+      parameters:
+        - name: person_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Token 消耗统计
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PersonToken"
+
+  /api/seedance2/tokens/person/date/{date_start}-{date_end}:
+    get:
+      tags: [限额管理]
+      summary: 获取某段时间所有人员 Token 消耗统计
+      description: 制片及以上可查看。若时间范围包含当天，会实时统计当天数据
+      parameters:
+        - name: date_start
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: date_end
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: 所有人员 Token 消耗统计列表（按天）
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PersonToken"
+
+  /api/seedance2/tokens/person/date/{date}:
+    get:
+      tags: [限额管理]
+      summary: 获取某天所有人员 Token 消耗统计
+      description: 制片及以上可查看。当天数据实时统计
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: 所有人员当天 Token 消耗统计列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PersonToken"
+    post:
+      tags: [限额管理]
+      summary: 归档某天 Token 消耗统计
+      description: |
+        仅管理员可操作。将指定日期的 Token 消耗数据归档到 person_token 表。
+        若已归档则直接返回已有数据；当天数据不进行归档，直接返回实时计算结果。
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: 归档后的统计列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PersonToken"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer Token 认证
+
+  schemas:
+    Subproject:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 子项目ID
+        name:
+          type: string
+          description: 子项目名称
+        project_id:
+          type: string
+          format: uuid
+          description: 关联项目ID
+        created_user_id:
+          type: string
+          format: uuid
+          description: 创建者ID
+        created_at:
+          type: string
+          format: date-time
+          description: 创建时间
+        archived:
+          type: boolean
+          description: 是否归档
+        preview_file:
+          type: string
+          format: uuid
+          description: 预览文件ID
+
+    SubprojectPersonLink:
+      type: object
+      required: [subproject_id, person_id]
+      properties:
+        id:
+          type: string
+          format: uuid
+        subproject_id:
+          type: string
+          format: uuid
+          description: 子项目ID
+        person_id:
+          type: string
+          format: uuid
+          description: 人员ID
+
+    AiGenerateClassification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: 分类名称
+        description:
+          type: string
+          description: 分类描述
+        created_at:
+          type: string
+          format: date-time
+
+    AiGenerateEntity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: 实体名称
+        ai_generate_classification_id:
+          type: string
+          format: uuid
+          description: 所属分类ID
+        shot_uuid_id:
+          type: string
+          format: uuid
+          description: 关联镜头ID
+        project_uuid_id:
+          type: string
+          format: uuid
+          description: 关联项目ID
+        preview_file:
+          type: string
+          format: uuid
+          description: 预览文件ID
+
+    AiEntityReferencePreview:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ai_generate_entity_id:
+          type: string
+          format: uuid
+          description: 所属实体ID
+        preview_file:
+          type: string
+          format: uuid
+          description: 预览文件ID
+
+    TaskType:
+      type: string
+      enum: [picture, video]
+      description: picture - 图片生成, video - 视频生成
+
+    TaskStatus:
+      type: string
+      enum: [queued, running, cancelled, succeeded, failed, expired]
+      description: |
+        queued - 排队中,
+        running - 运行中,
+        cancelled - 已取消（24h后自动删除）,
+        succeeded - 成功,
+        failed - 失败,
+        expired - 超时
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+          description: 提交用户ID
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        type:
+          $ref: "#/components/schemas/TaskType"
+        text_prompt:
+          type: string
+          description: 文本提示词
+        preview_file:
+          type: string
+          format: uuid
+          description: 预览文件ID
+        data_request:
+          type: object
+          description: AI 请求数据
+        file_extension:
+          type: string
+          description: 文件扩展名
+        data_response:
+          type: object
+          description: AI 响应数据
+        ai_studio_id:
+          type: string
+          format: uuid
+          description: AI Studio ID
+        created_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        archived:
+          type: boolean
+        project_uuid_id:
+          type: string
+          format: uuid
+          description: 关联项目ID
+        completion_tokens:
+          type: integer
+          format: int64
+          description: 任务消耗 Token（默认 200000）
+        ai_generate_entity_id:
+          type: string
+          format: uuid
+          description: 所属AI生成实体ID
+
+    AssetsGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+          description: 分组标签
+        user_id:
+          type: string
+          format: uuid
+          description: 创建者ID
+        ai_studio_id:
+          type: string
+          format: uuid
+          description: 所属AI Studio ID
+        created_at:
+          type: string
+          format: date-time
+
+    AssetsEntity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: 资产名称
+        description:
+          type: string
+          description: 资产描述
+        group_id:
+          type: string
+          format: uuid
+          description: 所属分组ID
+        user_id:
+          type: string
+          format: uuid
+          description: 创建者ID
+        preview_id:
+          type: string
+          format: uuid
+          description: 预览文件ID
+        ai_studio_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AssetsEntityItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        entity_id:
+          type: string
+          format: uuid
+          description: 所属资产实体ID
+        asset_id:
+          type: string
+          format: uuid
+          description: 资产项ID（同 uuid_id_）
+        file_extension:
+          type: string
+          description: 文件扩展名
+
+    AssetsEntityWithItems:
+      type: object
+      description: 资产实体及其子项
+      allOf:
+        - $ref: "#/components/schemas/AssetsEntity"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/AssetsEntityItem"
+
+    PersonTokenBrief:
+      type: object
+      properties:
+        person_id:
+          type: string
+          format: uuid
+        remaining_tokens:
+          type: integer
+          format: int64
+          description: 剩余可用 Token
+
+    PersonToken:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        person_id:
+          type: string
+          format: uuid
+        token_amount:
+          type: integer
+          format: int64
+          description: 消耗 Token 总量
+        task_count:
+          type: integer
+          format: int64
+          description: 任务数量
+        project_count:
+          type: integer
+          format: int64
+          description: 涉及项目数量
+        video_count:
+          type: integer
+          format: int64
+          description: 视频类任务数量
+        picture_count:
+          type: integer
+          format: int64
+          description: 图片类任务数量
