@@ -10,7 +10,7 @@ info:
     name: 索以动画研发中心
 
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:50025
     description: 本地开发服务器
 
 tags:
