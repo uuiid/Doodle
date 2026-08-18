@@ -290,10 +290,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   auto l_req       = add_ip_to_req(l_task->data_request_, l_ip);
   l_task->task_id_ = co_await l_client->run_task(l_req);  // 异步运行任务，不等待结果
   {
-    auto l_g = l_sql.get_session().transaction();
     co_await add_remaining_tokens_for_person(l_sql, person_.person_.uuid_id_, -l_task->completion_tokens_);
     co_await l_sql.install(l_task);
-    l_g.commit();
   }
 #endif
   seedance2_task_run_manager::Get().run();
