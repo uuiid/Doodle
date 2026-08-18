@@ -252,8 +252,6 @@ class storage : public boost::noncopyable {
   virtual void open() final;
   virtual void open(const FSys::path& in_path) final;
 
-  void sync_schema(const session& in_session);
-
   static fts5_api* get_fts5_api(sqlite3* in_sqlite);
 
   template <typename T>

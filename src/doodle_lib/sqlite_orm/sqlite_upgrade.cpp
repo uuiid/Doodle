@@ -47,7 +47,7 @@ struct upgrade_init_t : sqlite_upgrade {
   void upgrade(sqlite_storage& in_data) override {
     auto l_s = in_data.create_session();
     if (l_s.pragma().user_version() != 0) return;
-    in_data.sync_schema(l_s);
+    l_s.sync_schema();
     l_s.pragma().user_version(g_current_version);
     auto l_session = sqlite_database{in_data.get_strand(), in_data.create_session()};
 
@@ -100,7 +100,7 @@ struct upgrade_2_t : sqlite_upgrade {
       l_s.drop_trigger("entity_fts_delete_trigger");
       l_s.drop_trigger("entity_fts_insert_trigger");
       l_s.drop_trigger("entity_fts_update_trigger");
-      in_data.sync_schema(l_s);
+      l_s.sync_schema();
     }
     if (in_data.create_session().pragma().user_version() == 14) {
       auto l_s = in_data.create_session();
@@ -112,7 +112,7 @@ struct upgrade_2_t : sqlite_upgrade {
       l_s.exec(R"(ALTER TABLE person RENAME COLUMN max_completion_tokens TO remaining_completion_tokens;)");
       // 添加列 &person::ai_studio_id_ 并添加外键约束
       l_s.exec(R"(ALTER TABLE person ADD COLUMN ai_studio_id BLOB;)");
-      in_data.sync_schema(l_s);
+      l_s.sync_schema();
       l_s.exec(
           R"(ALTER TABLE person ADD FOREIGN KEY (ai_studio_id) REFERENCES ai_studio(uuid_id) ON DELETE SET NULL;)"
       );

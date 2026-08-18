@@ -319,58 +319,6 @@ fts5_api* storage::get_fts5_api(sqlite3* in_sqlite) {
 
 session storage::create_session() { return session{*this}; }
 
-void storage::sync_schema(const session& in_session) {
-  auto l_session      = in_session ? in_session : create_session();
-  auto l_all_tables   = l_session.get_all_table_names();
-  auto l_all_indexes  = l_session.get_all_index_names();
-  auto l_all_triggers = l_session.get_all_trigger_names();
-  auto l_transaction  = l_session.transaction();
-  for (const auto& table : tables_) {
-    if (l_all_tables.contains(table->name_)) {
-      SPDLOG_DEBUG("Table already exists, skipping creation: {}", table->name_);
-      continue;
-    }
-    if (table->name_ == "sqlite_master")
-      // sqlite_master 是 SQLite 内部表，不能创建
-      continue;
-
-    auto l_create_table_sql = table->to_sql(l_session, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
-    auto l_stmt             = sqlite_stmt{l_session, l_create_table_sql};
-    l_stmt.step();
-  }
-  std::set<create_index_base_t::index_info> l_existing_indexes;
-  for (const auto& table : tables_) {
-    for (const auto& index : table->indexes_) {
-      auto l_index_info = index->get_index_info(l_session, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
-      if (l_existing_indexes.contains(l_index_info)) {
-        SPDLOG_DEBUG("Index already exists, skipping creation: {}", l_index_info.name_);
-        // 已经存在相同的索引，无需创建
-        continue;
-      }
-      if (l_all_indexes.contains(l_index_info.name_)) {
-        SPDLOG_DEBUG("Index already exists in database, skipping creation: {}", l_index_info.name_);
-        l_existing_indexes.insert(l_index_info);
-        continue;
-      }
-
-      auto l_create_index_sql = index->to_sql(l_session, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
-      auto l_stmt             = sqlite_stmt{l_session, l_create_index_sql};
-      l_stmt.step();
-    }
-  }
-  for (const auto& l_trigger : triggers_) {
-    if (l_all_triggers.contains(l_trigger->info_->name_)) {
-      SPDLOG_DEBUG("Trigger already exists, skipping creation: {}", l_trigger->info_->name_);
-      continue;
-    }
-
-    auto l_create_trigger_sql = l_trigger->to_sql(l_session, to_sql_ctx{.ctx_ = to_sql_ctx::create_trigger_sql});
-    auto l_stmt               = sqlite_stmt{l_session, l_create_trigger_sql};
-    l_stmt.step();
-  }
-  l_transaction.commit();
-}
-
 storage::backup_t storage::backup(const FSys::path& dest_path) {
   sqlite3* dest_db = nullptr;
   auto l_str       = dest_path.generic_string();

@@ -84,6 +84,8 @@ class session {
   void vacuum();
   // 运行任意SQL
   void exec(std::string_view sql);
+  // 同步schema
+  void sync_schema();
   // 获取所有的表名
   std::set<std::string> get_all_table_names();
   // 获取所有的索引名

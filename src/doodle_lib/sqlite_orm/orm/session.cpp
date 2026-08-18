@@ -112,6 +112,56 @@ void session::exec(std::string_view sql) {
   l_stmt.step();
 }
 
+void session::sync_schema() {
+  auto& l_s              = *data_->s_;
+  auto l_all_tables   = get_all_table_names();
+  auto l_all_indexes  = get_all_index_names();
+  auto l_all_triggers = get_all_trigger_names();
+  auto l_transaction  = transaction();
+  for (const auto& table : l_s.tables_) {
+    if (l_all_tables.contains(table->name_)) {
+      SPDLOG_DEBUG("Table already exists, skipping creation: {}", table->name_);
+      continue;
+    }
+    if (table->name_ == "sqlite_master")
+      continue;
+
+    auto l_create_table_sql = table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
+    auto l_stmt             = sqlite_stmt{*this, l_create_table_sql};
+    l_stmt.step();
+  }
+  std::set<create_index_base_t::index_info> l_existing_indexes;
+  for (const auto& table : l_s.tables_) {
+    for (const auto& index : table->indexes_) {
+      auto l_index_info = index->get_index_info(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
+      if (l_existing_indexes.contains(l_index_info)) {
+        SPDLOG_DEBUG("Index already exists, skipping creation: {}", l_index_info.name_);
+        continue;
+      }
+      if (l_all_indexes.contains(l_index_info.name_)) {
+        SPDLOG_DEBUG("Index already exists in database, skipping creation: {}", l_index_info.name_);
+        l_existing_indexes.insert(l_index_info);
+        continue;
+      }
+
+      auto l_create_index_sql = index->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
+      auto l_stmt             = sqlite_stmt{*this, l_create_index_sql};
+      l_stmt.step();
+    }
+  }
+  for (const auto& l_trigger : l_s.triggers_) {
+    if (l_all_triggers.contains(l_trigger->info_->name_)) {
+      SPDLOG_DEBUG("Trigger already exists, skipping creation: {}", l_trigger->info_->name_);
+      continue;
+    }
+
+    auto l_create_trigger_sql = l_trigger->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_trigger_sql});
+    auto l_stmt               = sqlite_stmt{*this, l_create_trigger_sql};
+    l_stmt.step();
+  }
+  l_transaction.commit();
+}
+
 session::transaction_guard::transaction_guard(session& s) : connection_(s.data_->connection_) { begin(); }
 
 void session::transaction_guard::begin() {
