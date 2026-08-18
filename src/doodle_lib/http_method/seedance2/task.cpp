@@ -138,7 +138,6 @@ class seedance2_task_run_manager {
     } else {
       l_status = l_task_info.at("status").get<sd2::task_status>();
     }
-    if (l_status == sd2::task_status::queued || l_status == sd2::task_status::running) co_return;
     auto l_sql = get_sqlite_database();
 
     switch (l_status) {
