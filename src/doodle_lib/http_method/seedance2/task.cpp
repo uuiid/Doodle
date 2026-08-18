@@ -131,13 +131,9 @@ class seedance2_task_run_manager {
     const auto l_task_info     = co_await in_client->query_task(in_task.task_id_);
     auto l_task_ptr            = std::make_shared<sd2::task>(in_task);
     l_task_ptr->data_response_ = l_task_info;
-    sd2::task_status l_status{};
-    if (!l_task_info.contains("status")) {
-      default_logger_raw()->error("查询任务状态失败，响应内容: {}", l_task_info.dump());
-      l_status = sd2::task_status::failed;
-    } else {
-      l_status = l_task_info.at("status").get<sd2::task_status>();
-    }
+    const sd2::task_status l_status{
+        l_task_info.contains("status") ? l_task_info.at("status").get<sd2::task_status>() : sd2::task_status::failed
+    };
     auto l_sql = get_sqlite_database();
 
     switch (l_status) {
