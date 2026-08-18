@@ -43,11 +43,11 @@ class http_jwt_fun : public http_function {
     // 检查是否是制片
     void check_producer() const;
     bool is_producer() const;
-    // 检查是否是项目经理
+    // 检查是否是组长
     void check_manager() const;
+    bool is_manager() const;
     // is_supervisor
     bool is_supervisor() const;
-    bool is_manager() const;
     // 检查是否是项目人
     void check_supervisor() const;
     // 是否是组员
