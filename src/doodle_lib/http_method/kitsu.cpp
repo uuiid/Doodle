@@ -296,8 +296,9 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       ))
 
       .reg_t<seedance2::seedance2_thumbnail>("/api/seedance2/thumbnail/{}.png"_url(&seedance2::seedance2_thumbnail::id_))
-      .reg_t<seedance2::seedance2_pictures>("/api/seedance2/pictures/{}.png"_url(&seedance2::seedance2_pictures::id_))
-      .reg_t<seedance2::seedance2_pictures>("/api/seedance2/pictures/{}.mp4"_url(&seedance2::seedance2_pictures::id_))
+      .reg_t<seedance2::seedance2_pictures>("/api/seedance2/pictures/{}{}"_url(
+        &seedance2::seedance2_pictures::id_, &seedance2::seedance2_pictures::file_extension_
+      ))
       .reg_t<seedance2::seedance2_asset_library_entity_item>("/api/seedance2/asset-library/entity/{}/item"_url(&seedance2::seedance2_asset_library_entity_item::parent_id_))
       .reg_t<seedance2::seedance2_asset_library_entity_item_instance>("/api/seedance2/asset-library/entity/{}/item/{}"_url(
         &seedance2::seedance2_asset_library_entity_item_instance::parent_id_,

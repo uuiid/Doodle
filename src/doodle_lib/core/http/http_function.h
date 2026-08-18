@@ -2,16 +2,14 @@
 // Created by TD on 2024/2/21.
 //
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
-
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/logger/logger.h>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/dynamic_bitset.hpp>
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
 #include <boost/url.hpp>
 
@@ -19,11 +17,14 @@
 #include <magic_enum/magic_enum_all.hpp>
 #include <string>
 
-
 namespace doodle::http {
 
 struct capture_id_t {
   uuid id_;
+};
+
+struct file_extension_t {
+  FSys::path file_extension_;
 };
 
 // 初始化
@@ -64,6 +65,7 @@ class url_route_component_t : public url_route_component_base_t {
   constexpr static auto g_year_month_day_regex = std::string_view{"([0-9]{4}-[0-9]{2}-[0-9]{2})"};
   constexpr static auto g_number               = std::string_view{"([0-9]+)"};
   constexpr static auto g_file_name            = std::string_view{R"((.+\.[A-Za-z0-9]{3}$))"};
+  constexpr static auto g_file_extension       = std::string_view{R"((\.[A-Za-z0-9]{3}$))"};
   constexpr static auto g_enum                 = std::string_view{"([A-Za-z0-9_]+)"};
 
   struct component_base_t {
@@ -130,6 +132,11 @@ class url_route_component_t : public url_route_component_base_t {
     Path_T convert(const std::string& in_str) const {
       return this->convert_file_name(in_str);
     }
+    template <typename File_Extension_T>
+      requires std::is_same_v<File_Extension_T, file_extension_t>
+    File_Extension_T convert(const std::string& in_str) const {
+      return file_extension_t{FSys::path{in_str}};
+    }
   };
 
  private:
@@ -156,7 +163,8 @@ class url_route_component_t : public url_route_component_base_t {
       static_assert(
           std::is_same_v<field_type, uuid> || std::is_same_v<field_type, chrono::year_month> ||
               std::is_same_v<field_type, chrono::year_month_day> || std::is_same_v<field_type, std::int32_t> ||
-              std::is_same_v<field_type, FSys::path> || magic_enum::is_scoped_enum_v<field_type>,
+              std::is_same_v<field_type, FSys::path> || magic_enum::is_scoped_enum_v<field_type> ||
+              std::is_same_v<field_type, file_extension_t>,
           "not support type"
       );
 
@@ -173,6 +181,8 @@ class url_route_component_t : public url_route_component_base_t {
       else if constexpr (magic_enum::is_scoped_enum_v<field_type>) {
         constexpr auto color_names = magic_enum::enum_names<field_type>();
         return fmt::format("({})", fmt::join(color_names, "|"));
+      } else if constexpr (std::is_same_v<field_type, file_extension_t>) {
+        return g_file_extension;
       }
     }
     template <typename Member_Pointer>
@@ -182,7 +192,8 @@ class url_route_component_t : public url_route_component_base_t {
       static_assert(
           std::is_same_v<field_type, uuid> || std::is_same_v<field_type, chrono::year_month> ||
               std::is_same_v<field_type, chrono::year_month_day> || std::is_same_v<field_type, std::int32_t> ||
-              std::is_same_v<field_type, FSys::path> || magic_enum::is_scoped_enum_v<field_type>,
+              std::is_same_v<field_type, FSys::path> || magic_enum::is_scoped_enum_v<field_type> ||
+              std::is_same_v<field_type, file_extension_t>,
           "not support type"
       );
       return std::make_shared<component_t<Member_Pointer>>(in_target);

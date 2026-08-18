@@ -29,7 +29,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(seedance2_pictures)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
-FSys::path file_extension_{};
+file_extension_t file_extension_{};
 DOODLE_HTTP_FUN_END()
 // 等待动画
 // /api/seedance2/animation/waiting.mp4
