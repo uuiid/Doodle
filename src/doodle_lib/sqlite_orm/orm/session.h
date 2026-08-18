@@ -6,7 +6,6 @@
 #include <set>
 #include <string>
 
-
 namespace doodle::orm {
 class session {
   struct session_data {
@@ -86,6 +85,13 @@ class session {
   void exec(std::string_view sql);
   // 同步schema
   void sync_schema();
+  // 重建表
+  void rebuild_table(const std::type_index& table_name);
+  template <typename T>
+  void rebuild_table() {
+    rebuild_table(std::type_index(typeid(T)));
+  }
+
   // 获取所有的表名
   std::set<std::string> get_all_table_names();
   // 获取所有的索引名

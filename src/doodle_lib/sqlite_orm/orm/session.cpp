@@ -113,7 +113,7 @@ void session::exec(std::string_view sql) {
 }
 
 void session::sync_schema() {
-  auto& l_s              = *data_->s_;
+  auto& l_s           = *data_->s_;
   auto l_all_tables   = get_all_table_names();
   auto l_all_indexes  = get_all_index_names();
   auto l_all_triggers = get_all_trigger_names();
@@ -123,8 +123,7 @@ void session::sync_schema() {
       SPDLOG_DEBUG("Table already exists, skipping creation: {}", table->name_);
       continue;
     }
-    if (table->name_ == "sqlite_master")
-      continue;
+    if (table->name_ == "sqlite_master") continue;
 
     auto l_create_table_sql = table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
     auto l_stmt             = sqlite_stmt{*this, l_create_table_sql};
@@ -160,6 +159,60 @@ void session::sync_schema() {
     l_stmt.step();
   }
   l_transaction.commit();
+}
+
+void session::rebuild_table(const std::type_index& table_name) {
+  auto& l_s = *data_->s_;
+  if (!l_s.type_to_table_index_.contains(table_name)) throw std::runtime_error("Table not found for the given type");
+  auto l_table_index = l_s.type_to_table_index_.at(table_name);
+  auto& l_table      = l_s.tables_[l_table_index];
+  auto l_transaction = transaction();
+  // 预先关闭外键约束检查，以避免在重建表时出现外键约束错误
+  this->pragma().foreign_keys(false);
+
+  {  // 1. 重命名原表
+    auto l_rename_sql = fmt::format(R"(ALTER TABLE "{}" RENAME TO {}_backup;)", l_table->name_, l_table->name_);
+    // 2. 创建新表, 需要包含索引
+    auto l_create_sql = l_table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
+    // 3. 将数据从旧表复制到新表
+    std::vector<std::string> l_column_names;
+    for (const auto& column : l_table->columns_) {
+      l_column_names.push_back(column.name_);
+    }
+    auto l_copy_sql = fmt::format(
+        R"(INSERT INTO "{}" ("{}") SELECT "{}" FROM {}_backup;)", l_table->name_, fmt::join(l_column_names, R"(", ")"),
+        fmt::join(l_column_names, R"(", ")"), l_table->name_
+    );
+    // 4. 删除旧表
+    auto l_drop_sql    = fmt::format(R"(DROP TABLE {}_backup;)", l_table->name_);
+    // 执行 SQL 语句
+    auto l_rename_stmt = sqlite_stmt{*this, l_rename_sql};
+    l_rename_stmt.step();
+    auto l_create_stmt = sqlite_stmt{*this, l_create_sql};
+    l_create_stmt.step();
+    auto l_copy_stmt = sqlite_stmt{*this, l_copy_sql};
+    l_copy_stmt.step();
+    auto l_drop_stmt = sqlite_stmt{*this, l_drop_sql};
+    l_drop_stmt.step();
+    auto l_all_triggers = get_all_trigger_names();
+    // 5. 创建索引和触发器
+    for (const auto& index : l_table->indexes_) {
+      auto l_create_index_sql = index->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
+      auto l_stmt             = sqlite_stmt{*this, l_create_index_sql};
+      l_stmt.step();
+    }
+    for (const auto& trigger : l_s.triggers_) {
+      if (l_all_triggers.contains(trigger->info_->name_)) {
+        SPDLOG_DEBUG("Trigger already exists, skipping creation: {}", trigger->info_->name_);
+        continue;
+      }
+      auto l_create_trigger_sql = trigger->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_trigger_sql});
+      auto l_stmt               = sqlite_stmt{*this, l_create_trigger_sql};
+      l_stmt.step();
+    }
+  }
+  // 重新启用外键约束检查(如何失败, 链接将被抛弃, 无需进行回滚)
+  this->pragma().foreign_keys(true);
 }
 
 session::transaction_guard::transaction_guard(session& s) : connection_(s.data_->connection_) { begin(); }
