@@ -106,9 +106,15 @@ on_update::on_update(foreign_key_action action) : action_(action) {}
 std::vector<std::string> table_info_base::get_foreign_key_create_sql(session& s, const to_sql_ctx& ctx) const {
   std::vector<std::string> l_sqls;
   for (const auto& fk : foreign_keys_) {
+    // 生成约束名称
+    auto l_constraint_name = fmt::format(
+        "fk_{}_{}_to_{}_{}", name_, fk.ptr_->get_column_name(s, ctx), fk.ref_table_->to_sql(s, ctx),
+        fk.ref_ptr_->get_column_name(s, ctx)
+    );
     std::string l_sql = fmt::format(
-        "FOREIGN KEY({}) REFERENCES {}({}) ON DELETE {} ON UPDATE {}", fk.ptr_->get_column_name(s, ctx),
-        fk.ref_table_->to_sql(s, ctx), fk.ref_ptr_->get_column_name(s, ctx), fk.on_delete_, fk.on_update_
+        "CONSTRAINT {} FOREIGN KEY({}) REFERENCES {}({}) ON DELETE {} ON UPDATE {}", l_constraint_name,
+        fk.ptr_->get_column_name(s, ctx), fk.ref_table_->to_sql(s, ctx), fk.ref_ptr_->get_column_name(s, ctx),
+        fk.on_delete_, fk.on_update_
     );
     l_sqls.push_back(std::move(l_sql));
   }
