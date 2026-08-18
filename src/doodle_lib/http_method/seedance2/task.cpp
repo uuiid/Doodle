@@ -161,6 +161,10 @@ class seedance2_task_run_manager {
         }
         break;
       }
+      case sd2::task_status::cancelled:
+      case sd2::task_status::failed:
+      case sd2::task_status::expired:
+        break;
     }
 
     l_task_ptr->status_   = l_status;
