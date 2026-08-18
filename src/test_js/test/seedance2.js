@@ -5,7 +5,7 @@ import { expect } from 'chai';
 // const fs = require('node:fs');
 import { URL, JWT } from './config.js';
 
-describe('seedance2 subproject 测试', function () {
+describe('seedance2 测试', function () {
 
   const authHeader = { 'Cookie': `access_token_cookie=${JWT}` };
   let subprojectId = null;
@@ -49,6 +49,53 @@ describe('seedance2 subproject 测试', function () {
     const req = await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}`).set(authHeader);
     expect(req.status).to.equal(204);
     console.log('DELETE 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+});
+
+describe('seedance2 person link 测试', function () {
+
+  const authHeader = { 'Cookie': `access_token_cookie=${JWT}` };
+  const personId = '69a8d093-dcab-4890-8f9d-c51ef065d03b';
+  let subprojectId = null;
+  let linkId = null;
+
+  before(async function () {
+    const req = await request.post(`${URL}/api/seedance2/subproject`)
+      .set(authHeader)
+      .send({
+        name: 'test_subproject_person_link',
+        project_id: 'c340051a-45a6-4af1-a750-efefe639c75b',
+      });
+    subprojectId = req.body.id;
+  });
+
+  after(async function () {
+    if (subprojectId) {
+      await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}`).set(authHeader);
+    }
+  });
+
+  it('POST /api/seedance2/subproject/{subproject_id}/person — 添加参与人员', async function () {
+    expect(subprojectId).to.not.be.null;
+    const req = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/person`)
+      .set(authHeader)
+      .send({
+        subproject_id: subprojectId,
+        person_id: personId,
+      });
+    expect(req.status).to.equal(201);
+    linkId = req.body.id;
+    console.log('POST person link 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('DELETE /api/seedance2/subproject/{subproject_id}/person — 移除参与人员', async function () {
+    expect(subprojectId).to.not.be.null;
+    const req = await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}/person`)
+      .set(authHeader)
+      .send({ person_id: personId });
+    expect(req.status).to.equal(200);
+    console.log('DELETE person link 返回值:', JSON.stringify(req.body, null, 2));
   });
 
 });
