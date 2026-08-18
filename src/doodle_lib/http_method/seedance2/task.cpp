@@ -334,8 +334,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail, get) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures, get) {
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
-  auto l_file = l_ctx.get_sd2_pictures_file(id_);
-  DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "图片不存在");
+  auto l_file = l_ctx.get_sd2_pictures_file(id_, ".png");
+  if (!FSys::exists(l_file)) l_file = l_ctx.get_sd2_pictures_file(id_, ".mp4");
+  DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "图片/视频不存在");
   co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
 }
 
