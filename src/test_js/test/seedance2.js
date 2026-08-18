@@ -100,4 +100,75 @@ describe('seedance2 person link 测试', function () {
 
 });
 
+describe('seedance2 classification 测试', function () {
+
+  const authHeader = { 'Cookie': `access_token_cookie=${JWT}` };
+  let subprojectId = null;
+  let classificationId = null;
+
+  before(async function () {
+    const req = await request.post(`${URL}/api/seedance2/subproject`)
+      .set(authHeader)
+      .send({
+        name: 'test_subproject_classification',
+        project_id: 'c340051a-45a6-4af1-a750-efefe639c75b',
+      });
+    subprojectId = req.body.id;
+  });
+
+  after(async function () {
+    if (subprojectId) {
+      await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}`).set(authHeader);
+    }
+  });
+
+  it('POST /api/seedance2/subproject/{subproject_id}/classification — 创建分类', async function () {
+    expect(subprojectId).to.not.be.null;
+    const req = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/classification`)
+      .set(authHeader)
+      .send({
+        name: 'sc001',
+        subproject_id: subprojectId,
+        description: '测试分类',
+      });
+    expect(req.status).to.equal(201);
+    classificationId = req.body.id;
+    console.log('POST classification 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('GET /api/seedance2/subproject/{subproject_id}/classification — 获取分类列表', async function () {
+    expect(subprojectId).to.not.be.null;
+    const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/classification`)
+      .set(authHeader);
+    expect(req.status).to.equal(200);
+    console.log('GET classification list 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('GET /api/seedance2/subproject/{subproject_id}/classification/{classification_id} — 获取分类详情', async function () {
+    expect(classificationId).to.not.be.null;
+    const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/classification/${classificationId}`)
+      .set(authHeader);
+    expect(req.status).to.equal(200);
+    console.log('GET classification instance 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('PUT /api/seedance2/subproject/{subproject_id}/classification/{classification_id} — 更新分类', async function () {
+    expect(classificationId).to.not.be.null;
+    const req = await request.put(`${URL}/api/seedance2/subproject/${subprojectId}/classification/${classificationId}`)
+      .set(authHeader)
+      .send({ name: 'sc001_updated', description: '更新后的分类' });
+    expect(req.status).to.equal(200);
+    console.log('PUT classification 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('DELETE /api/seedance2/subproject/{subproject_id}/classification/{classification_id} — 删除分类', async function () {
+    expect(classificationId).to.not.be.null;
+    const req = await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}/classification/${classificationId}`)
+      .set(authHeader);
+    expect(req.status).to.equal(200);
+    console.log('DELETE classification 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+});
+
 
