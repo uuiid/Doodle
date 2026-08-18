@@ -15,7 +15,7 @@
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 
-// /api/seedance2/subproject/{subproject_id}/entity
+// /api/seedance2/subproject/{subproject_id}/classification/{classification_id}/entity
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, post) {
   person_.check_not_outsourcer();
   auto l_sql    = get_sqlite_database();
@@ -23,10 +23,22 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, post
 
   auto l_entity = std::make_shared<sd2::ai_generate_entity>();
   l_json.get_to(*l_entity);
+  l_entity->ai_generate_classification_id_ = classification_id_;
 
   co_await l_sql.install(l_entity);
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_entity);
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, get) {
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_result = select(l_sql)
+                      .columns(object<sd2::ai_generate_entity>())
+                      .from<sd2::ai_generate_entity>()
+                      .where(c(&sd2::ai_generate_entity::ai_generate_classification_id_) == classification_id_)()
+                      .to_vector();
+  co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}

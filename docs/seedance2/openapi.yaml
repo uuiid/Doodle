@@ -425,13 +425,45 @@ paths:
                     format: uuid
 
   # ═══════════════ AI生成实体 ═══════════════
-  /api/seedance2/subproject/{subproject_id}/entity:
+  /api/seedance2/subproject/{subproject_id}/classification/{classification_id}/entity:
+    get:
+      tags: [AI生成实体]
+      summary: 获取分类下的实体列表
+      description: 返回指定分类下的所有 AI 生成实体
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: classification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 实体列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiGenerateEntity"
     post:
       tags: [AI生成实体]
       summary: 创建 AI 生成实体
-      description: 非外包人员可创建。实体用于组织一批 AI 生成任务
+      description: 非外包人员可创建。实体用于组织一批 AI 生成任务。classification_id 从路径获取
       parameters:
         - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: classification_id
           in: path
           required: true
           schema:
@@ -443,13 +475,10 @@ paths:
           application/json:
             schema:
               type: object
-              required: [name, ai_generate_classification_id, project_uuid_id]
+              required: [name, project_uuid_id]
               properties:
                 name:
                   type: string
-                ai_generate_classification_id:
-                  type: string
-                  format: uuid
                 project_uuid_id:
                   type: string
                   format: uuid
