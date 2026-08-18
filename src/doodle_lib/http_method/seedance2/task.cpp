@@ -139,11 +139,19 @@ class seedance2_task_run_manager {
       l_status = l_task_info.at("status").get<sd2::task_status>();
     }
     if (l_status == sd2::task_status::queued || l_status == sd2::task_status::running) co_return;
+    auto l_sql = get_sqlite_database();
 
     switch (l_status) {
       case sd2::task_status::queued:
-      case sd2::task_status::running:
         co_return;
+      case sd2::task_status::running: {
+        l_task_ptr->status_ = l_status;
+        co_await l_sql.update(l_task_ptr);
+        socket_io::broadcast(
+            socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_task_ptr->status_}
+        );
+        co_return;
+      }
       case sd2::task_status::succeeded: {
         if (l_task_info.contains("usage") && l_task_info.at("usage").contains("completion_tokens")) {
           l_task_ptr->completion_tokens_ = l_task_info.at("usage").at("completion_tokens").get<std::int64_t>();
@@ -154,7 +162,6 @@ class seedance2_task_run_manager {
           auto l_file                = co_await in_client->download_result(l_video_url);
           auto l_preview_file        = std::make_shared<sd2::ai_preview_file>();
           l_preview_file->extension_ = ".mp4";
-          auto l_sql                 = get_sqlite_database();
           co_await l_sql.install(l_preview_file);
           l_task_ptr->preview_file_ = l_preview_file->uuid_id_;
           video_create_picture(l_file, l_preview_file->uuid_id_);
@@ -169,10 +176,9 @@ class seedance2_task_run_manager {
 
     l_task_ptr->status_   = l_status;
     l_task_ptr->ended_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-    {
-      auto l_sql = get_sqlite_database();
-      co_await l_sql.update(l_task_ptr);
-    }
+
+    co_await l_sql.update(l_task_ptr);
+
     if (l_status == sd2::task_status::succeeded && l_task_ptr->completion_tokens_ > 0) {
       // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
       co_await add_remaining_tokens_for_person(
