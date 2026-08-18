@@ -104,6 +104,7 @@ struct upgrade_2_t : sqlite_upgrade {
     }
     if (in_data.create_session().pragma().user_version() == 14) {
       auto l_s = in_data.create_session();
+      
       // in_data.pragma().foreign_keys(false);
       l_s.drop_table("seedance2_task_person_token");
       l_s.drop_table("ai_studio_person_role_link");

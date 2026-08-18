@@ -111,6 +111,8 @@ std::vector<std::string> table_info_base::get_foreign_key_create_sql(session& s,
         "fk_{}_{}_to_{}_{}", name_, fk.ptr_->get_column_name(s, ctx), fk.ref_table_->to_sql(s, ctx),
         fk.ref_ptr_->get_column_name(s, ctx)
     );
+    // 清除名称中的 " 字符
+    l_constraint_name.erase(std::remove(l_constraint_name.begin(), l_constraint_name.end(), '"'), l_constraint_name.end());
     std::string l_sql = fmt::format(
         "CONSTRAINT {} FOREIGN KEY({}) REFERENCES {}({}) ON DELETE {} ON UPDATE {}", l_constraint_name,
         fk.ptr_->get_column_name(s, ctx), fk.ref_table_->to_sql(s, ctx), fk.ref_ptr_->get_column_name(s, ctx),
