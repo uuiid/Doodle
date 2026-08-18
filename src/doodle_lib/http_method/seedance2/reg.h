@@ -26,7 +26,7 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/pictures/{id}.png
-DOODLE_HTTP_JWT_FUN(seedance2_pictures)
+DOODLE_HTTP_FUN(seedance2_pictures)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
