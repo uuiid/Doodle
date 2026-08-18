@@ -123,9 +123,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, post) 
   auto l_file     = in_handle->get_file();
   auto l_ext      = l_file.extension().string();
   auto l_is_video = l_ext == ".mp4" || l_ext == ".mov" || l_ext == ".avi";
+  auto l_is_audio = l_ext == ".mp3" || l_ext == ".wav" || l_ext == ".ogg" || l_ext == ".flac"
+                 || l_ext == ".aac" || l_ext == ".wma" || l_ext == ".m4a";
 
   auto l_preview  = std::make_shared<sd2::ai_preview_file>();
-  l_preview->extension_ = l_is_video ? ".mp4" : ".png";
+  l_preview->extension_ = l_is_audio ? l_ext : (l_is_video ? ".mp4" : ".png");
   co_await l_sql.install(l_preview);
 
   auto l_ref                    = std::make_shared<sd2::ai_entity_reference_preview>();
@@ -138,20 +140,23 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, post) 
   auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(l_preview->uuid_id_);
 
   if (auto l_p = l_file_picture.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-  if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
 
-  cv::Mat l_image{};
-  if (l_is_video) {
-    auto l_video = cv::VideoCapture{l_file.generic_string()};
-    l_video >> l_image;
-    if (l_image.empty()) throw_exception(doodle_error{"视频解码失败"});
-  } else {
-    l_image = cv::imread(l_file.generic_string());
-    if (l_image.empty()) throw_exception(doodle_error{"图片解码失败"});
+  if (!l_is_audio) {
+    if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+
+    cv::Mat l_image{};
+    if (l_is_video) {
+      auto l_video = cv::VideoCapture{l_file.generic_string()};
+      l_video >> l_image;
+      if (l_image.empty()) throw_exception(doodle_error{"视频解码失败"});
+    } else {
+      l_image = cv::imread(l_file.generic_string());
+      if (l_image.empty()) throw_exception(doodle_error{"图片解码失败"});
+    }
+    auto l_resize = std::min(500.0 / l_image.cols, 500.0 / l_image.rows);
+    cv::resize(l_image, l_image, cv::Size(l_image.cols * l_resize, l_image.rows * l_resize));
+    cv::imwrite(l_file_thumbnail.generic_string(), l_image);
   }
-  auto l_resize = std::min(500.0 / l_image.cols, 500.0 / l_image.rows);
-  cv::resize(l_image, l_image, cv::Size(l_image.cols * l_resize, l_image.rows * l_resize));
-  cv::imwrite(l_file_thumbnail.generic_string(), l_image);
 
   FSys::rename(l_file, l_file_picture);
 

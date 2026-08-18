@@ -25,10 +25,11 @@ DOODLE_HTTP_JWT_FUN(seedance2_thumbnail)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// /api/seedance2/pictures/{id}.png
+// /api/seedance2/pictures/{id}{file_extension}
 DOODLE_HTTP_FUN(seedance2_pictures)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
+FSys::path file_extension_{};
 DOODLE_HTTP_FUN_END()
 // 等待动画
 // /api/seedance2/animation/waiting.mp4
