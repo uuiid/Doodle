@@ -158,4 +158,24 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, post) 
   co_return in_handle->make_msg(nlohmann::json{} = *l_ref);
 }
 
+// /api/seedance2/subproject/{subproject_id}/reference/{id}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_reference_instance, delete_) {
+  person_.check_not_outsourcer();
+  auto l_sql = get_sqlite_database();
+  auto l_ref = std::make_shared<sd2::ai_entity_reference_preview>(l_sql.get_by_uuid<sd2::ai_entity_reference_preview>(id_));
+
+  auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
+  auto l_preview        = l_sql.get_by_uuid<sd2::ai_preview_file>(l_ref->preview_file_);
+  auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview.uuid_id_, l_preview.extension_);
+  auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(l_preview.uuid_id_);
+
+  if (FSys::exists(l_file_picture)) FSys::remove(l_file_picture);
+  if (FSys::exists(l_file_thumbnail)) FSys::remove(l_file_thumbnail);
+
+  co_await l_sql.remove<sd2::ai_entity_reference_preview>(id_);
+  co_await l_sql.remove<sd2::ai_preview_file>(l_ref->preview_file_);
+
+  co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
+}
+
 }  // namespace doodle::http::seedance2
