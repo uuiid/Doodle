@@ -211,6 +211,7 @@ void session::rebuild_table(const std::type_index& table_name) {
       l_stmt.step();
     }
   }
+  l_transaction.commit();
   // 重新启用外键约束检查(如何失败, 链接将被抛弃, 无需进行回滚)
   this->pragma().foreign_keys(true);
 }
