@@ -98,7 +98,7 @@ class seedance2_task_run_manager {
     return select(l_sql)
         .columns(object<sd2::task>(), &ai_studio::app_secret_)
         .from<sd2::task>()
-        .where(c(&sd2::task::status_) == sd2::task_status::queued)
+        .where(c(&sd2::task::status_) == sd2::task_status::queued || c(&sd2::task::status_) == sd2::task_status::running)
         .left_outer_join<ai_studio>(&ai_studio::uuid_id_, &sd2::task::ai_studio_id_)()
         .to_vector<task_info>();
   }
