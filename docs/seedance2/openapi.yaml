@@ -695,6 +695,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiEntityReferencePreview"
 
+  /api/seedance2/subproject/{subproject_id}/reference/{id}:
+    delete:
+      tags: [AI生成实体]
+      summary: 删除实体参考文件
+      description: 删除指定的 ai_entity_reference_preview 记录
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: 删除成功
+        "404":
+          description: 参考文件不存在
+
   # ═══════════════ 任务 ═══════════════
   /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/task:
     get:
