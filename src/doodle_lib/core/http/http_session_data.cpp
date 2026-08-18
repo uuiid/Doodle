@@ -157,6 +157,7 @@ boost::asio::awaitable<void> session_data::run() try {
       );
     }
     if (!l_gen) co_return logger_->error("回复生成器为空 {}", url_);
+    if (!stream_) co_return logger_->error("stream_ 已失效, 无法回复 {}", url_);
 
     logger_->info("回复 url {} {}", method_verb_, url_);
     co_await boost::beast::async_write(*stream_, std::move(*l_gen));
