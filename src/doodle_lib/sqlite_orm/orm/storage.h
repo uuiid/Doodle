@@ -91,6 +91,8 @@ struct table_info_base {
   template <typename T>
   column_info& find_column_info(auto T::* in_ptr);
   column_info& find_column_info(const table_columns_t& in_column);
+  // 深度拷贝
+  virtual std::shared_ptr<table_info_base> clone() const = 0;
 };
 
 struct table_fts_info : table_info_base {
@@ -111,6 +113,10 @@ struct table_fts_info : table_info_base {
   table_fts_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options);
 
   std::string to_sql(session& s, const to_sql_ctx& ctx) const override;
+  std::shared_ptr<table_info_base> clone() const override {
+    auto l_clone = std::make_shared<table_fts_info>(*this);
+    return l_clone;
+  }
 };
 
 struct table_info : table_info_base {
@@ -131,6 +137,10 @@ struct table_info : table_info_base {
   table_info& add_index(const create_index_base_t& index);
 
   std::string to_sql(session& s, const to_sql_ctx& ctx) const override;
+  std::shared_ptr<table_info_base> clone() const override {
+    auto l_clone = std::make_shared<table_info>(*this);
+    return l_clone;
+  }
 };
 
 enum class trigger_timing { before, after, instead_of };

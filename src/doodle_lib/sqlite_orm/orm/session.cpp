@@ -165,38 +165,41 @@ void session::rebuild_table(const std::type_index& table_name) {
   auto& l_s = *data_->s_;
   if (!l_s.type_to_table_index_.contains(table_name)) throw std::runtime_error("Table not found for the given type");
   auto l_table_index = l_s.type_to_table_index_.at(table_name);
-  auto& l_table      = l_s.tables_[l_table_index];
+  auto& l_old_table  = l_s.tables_[l_table_index];
   auto l_transaction = transaction();
   // 预先关闭外键约束检查，以避免在重建表时出现外键约束错误
   this->pragma().foreign_keys(false);
 
-  {  // 1. 重命名原表
-    auto l_rename_sql = fmt::format(R"(ALTER TABLE "{}" RENAME TO {}_backup;)", l_table->name_, l_table->name_);
-    // 2. 创建新表, 需要包含索引
-    auto l_create_sql = l_table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
-    // 3. 将数据从旧表复制到新表
+  {
+    auto l_new_table   = l_old_table->clone();
+    l_new_table->name_ = l_old_table->name_ + "_backup";
+    //   创建新表, 需要包含索引
+    auto l_create_sql  = l_new_table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
+    //   重命名
+    auto l_rename_sql  = fmt::format(R"(ALTER TABLE "{}" RENAME TO "{}";)", l_new_table->name_, l_old_table->name_);
+    //   将数据从旧表复制到新表
     std::vector<std::string> l_column_names;
-    for (const auto& column : l_table->columns_) {
+    for (const auto& column : l_old_table->columns_) {
       l_column_names.push_back(column.name_);
     }
     auto l_copy_sql = fmt::format(
-        R"(INSERT INTO "{}" ("{}") SELECT "{}" FROM {}_backup;)", l_table->name_, fmt::join(l_column_names, R"(", ")"),
-        fmt::join(l_column_names, R"(", ")"), l_table->name_
+        R"(INSERT INTO "{}" ("{}") SELECT "{}" FROM "{}";)", l_new_table->name_, fmt::join(l_column_names, R"(", ")"),
+        fmt::join(l_column_names, R"(", ")"), l_old_table->name_
     );
-    // 4. 删除旧表
-    auto l_drop_sql    = fmt::format(R"(DROP TABLE {}_backup;)", l_table->name_);
+    //   删除旧表
+    auto l_drop_sql    = fmt::format(R"(DROP TABLE "{}";)", l_old_table->name_);
     // 执行 SQL 语句
-    auto l_rename_stmt = sqlite_stmt{*this, l_rename_sql};
-    l_rename_stmt.step();
     auto l_create_stmt = sqlite_stmt{*this, l_create_sql};
     l_create_stmt.step();
     auto l_copy_stmt = sqlite_stmt{*this, l_copy_sql};
     l_copy_stmt.step();
     auto l_drop_stmt = sqlite_stmt{*this, l_drop_sql};
     l_drop_stmt.step();
+    auto l_rename_stmt = sqlite_stmt{*this, l_rename_sql};
+    l_rename_stmt.step();
     auto l_all_triggers = get_all_trigger_names();
     // 5. 创建索引和触发器
-    for (const auto& index : l_table->indexes_) {
+    for (const auto& index : l_old_table->indexes_) {
       auto l_create_index_sql = index->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
       auto l_stmt             = sqlite_stmt{*this, l_create_index_sql};
       l_stmt.step();
