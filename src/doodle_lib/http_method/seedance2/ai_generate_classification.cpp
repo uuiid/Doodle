@@ -12,6 +12,17 @@ namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 
 // /api/seedance2/subproject/{subproject_id}/classification
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_classification, get) {
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_result = select(l_sql)
+                      .columns(object<sd2::ai_generate_classification>())
+                      .from<sd2::ai_generate_classification>()
+                      .where(c(&sd2::ai_generate_classification::subproject_id_) == subproject_id_)()
+                      .to_vector();
+  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_classification, post) {
   person_.check_not_outsourcer();
   auto l_sql  = get_sqlite_database();

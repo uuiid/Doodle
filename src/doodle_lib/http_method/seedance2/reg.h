@@ -63,6 +63,7 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/classification
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_generate_classification)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid subproject_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/classification/{classification_id}
