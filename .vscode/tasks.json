@@ -64,7 +64,12 @@
       "problemMatcher": [
         "$msCompile"
       ],
-      "group": "build"
+      "group": "build",
+      "presentation": {
+        "focus": false,
+        "reveal": "never"
+      },
+      
     },
     {
       "label": "cmake build test",
