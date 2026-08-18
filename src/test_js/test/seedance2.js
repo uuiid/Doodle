@@ -2,7 +2,7 @@
 import request from 'superagent';
 import { expect } from 'chai';
 
-// const fs = require('node:fs');
+import fs from 'node:fs';
 import { URL, JWT } from './config.js';
 
 describe('seedance2 测试', function () {
@@ -217,15 +217,16 @@ describe('seedance2 entity 测试', function () {
     console.log('POST entity 返回值:', JSON.stringify(req.body, null, 2));
   });
 
-  it('POST /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/preview — 上传实体预览图', async function () {
+  it('POST /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/reference — 上传实体参考文件', async function () {
+    this.timeout(330000);
     expect(entityId).to.not.be.null;
-    // 最小 1x1 红色 PNG
-    const pngBuffer = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
-    const req = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity/${entityId}/preview`)
+    const mp4Path = 'D:\\ZM_EP124_SC097_[1001-1202].mp4';
+    const req = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity/${entityId}/reference`)
       .set(authHeader)
-      .attach('file', pngBuffer, 'test_preview.png');
+      .attach('file', fs.createReadStream(mp4Path), 'ZM_EP124_SC097_[1001-1202].mp4')
+      .timeout(300000);
     expect(req.status).to.equal(200);
-    console.log('POST entity preview 返回值:', JSON.stringify(req.body, null, 2));
+    console.log('POST entity reference 返回值:', JSON.stringify(req.body, null, 2));
   });
 
   it('GET /api/seedance2/subproject/{subproject_id}/classification/{classification_id}/entity — 获取实体列表', async function () {
