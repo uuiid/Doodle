@@ -121,6 +121,14 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid subproject_id_{};
 uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
+// 删除 ai_entity_reference_preview
+// /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/reference/{id}
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_entity_reference_instance)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid subproject_id_{};
+uuid entity_id_{};
+uuid id_{};
+DOODLE_HTTP_FUN_END()
 
 /// 资产库相关 ---------------------
 // /api/seedance2/asset-library/entity/{parent_id}/item
