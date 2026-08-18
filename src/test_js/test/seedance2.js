@@ -217,6 +217,17 @@ describe('seedance2 entity 测试', function () {
     console.log('POST entity 返回值:', JSON.stringify(req.body, null, 2));
   });
 
+  it('POST /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/preview — 上传实体预览图', async function () {
+    expect(entityId).to.not.be.null;
+    // 最小 1x1 红色 PNG
+    const pngBuffer = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
+    const req = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity/${entityId}/preview`)
+      .set(authHeader)
+      .attach('file', pngBuffer, 'test_preview.png');
+    expect(req.status).to.equal(200);
+    console.log('POST entity preview 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
   it('GET /api/seedance2/subproject/{subproject_id}/classification/{classification_id}/entity — 获取实体列表', async function () {
     expect(classificationId).to.not.be.null;
     const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/classification/${classificationId}/entity`)
