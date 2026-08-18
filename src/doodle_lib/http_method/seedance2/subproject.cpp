@@ -91,7 +91,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, delete_) {
     co_await l_sql.update(l_subproject);
   }
 
-  co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
+  co_return in_handle->make_msg_204();
 }
 
 // /api/seedance2/subproject/{id}/preview
