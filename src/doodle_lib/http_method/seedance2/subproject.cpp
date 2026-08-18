@@ -24,7 +24,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, get) {
   auto l_query = select(l_sql).columns(object<sd2::subproject>()).from<sd2::subproject>();
 
   // 非制片/管理员只能看到自己参与的子项目
-  if (!person_.is_producer()) {
+  if (!person_.is_manager()) {
     l_query.join<sd2::subproject_person_link>(&sd2::subproject_person_link::subproject_id_, &sd2::subproject::uuid_id_);
     l_query.where(c(&sd2::subproject_person_link::person_id_) == person_.person_.uuid_id_);
   }
@@ -35,7 +35,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, post) {
-  person_.check_producer();
+  person_.check_manager();
   auto l_sql        = get_sqlite_database();
   auto l_json       = in_handle->get_json();
 
@@ -50,7 +50,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, post) {
 
 // /api/seedance2/subproject/{id}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, get) {
-  person_.check_producer();
+  person_.check_manager();
   auto l_sql        = get_sqlite_database();
   auto l_subproject = l_sql.get_by_uuid<sd2::subproject>(id_);
 
@@ -58,7 +58,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, put) {
-  person_.check_producer();
+  person_.check_manager();
   auto l_sql        = get_sqlite_database();
   auto l_json       = in_handle->get_json();
 
@@ -72,7 +72,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, put) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, delete_) {
-  person_.check_producer();
+  person_.check_manager();
   auto l_sql   = get_sqlite_database();
 
   bool l_force = false;
@@ -142,7 +142,7 @@ std::optional<sd2::subproject_person_link> get_subproject_person_link(
 
 // /api/seedance2/subproject/{subproject_id}/person
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_person_link, post) {
-  person_.check_producer();
+  person_.check_manager();
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
@@ -156,7 +156,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_person_link, post) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_person_link, delete_) {
-  person_.check_producer();
+  person_.check_manager();
   auto l_json      = in_handle->get_json();
   auto l_person_id = l_json.at("person_id").get<uuid>();
 
