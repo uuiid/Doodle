@@ -4,7 +4,8 @@
   "type": "module",
   "description": "doodle 测试",
   "scripts": {
-    "test": "mocha config.js"
+    "test": "mocha config.js",
+    "test:grep": "mocha --grep"
   },
   "author": "",
   "license": "ISC",
