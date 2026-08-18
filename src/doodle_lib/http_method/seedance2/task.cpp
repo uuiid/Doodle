@@ -128,56 +128,59 @@ class seedance2_task_run_manager {
   boost::asio::awaitable<void> query_task_and_down(
       const sd2::task& in_task, const std::shared_ptr<seedance2_client>& in_client
   ) try {
-    const auto l_task_info = co_await in_client->query_task(in_task.task_id_);
-    seedance2_info l_info{};
-    l_info.data_response_ = l_task_info;
-
+    const auto l_task_info     = co_await in_client->query_task(in_task.task_id_);
+    auto l_task_ptr            = std::make_shared<sd2::task>(in_task);
+    l_task_ptr->data_response_ = l_task_info;
+    sd2::task_status l_status{};
     if (!l_task_info.contains("status")) {
       default_logger_raw()->error("查询任务状态失败，响应内容: {}", l_task_info.dump());
-      l_info.status_ = sd2::task_status::failed;
+      l_status = sd2::task_status::failed;
     } else {
-      l_info.status_ = l_task_info.at("status").get<sd2::task_status>();
+      l_status = l_task_info.at("status").get<sd2::task_status>();
     }
-    if (l_info.status_ == sd2::task_status::queued || l_info.status_ == sd2::task_status::running) co_return;
+    if (l_status == sd2::task_status::queued || l_status == sd2::task_status::running) co_return;
 
-    if (l_info.status_ == sd2::task_status::succeeded && l_task_info.contains("usage") &&
-        l_task_info.at("usage").contains("completion_tokens")) {
-      auto l_completion_tokens  = l_task_info.at("usage").at("completion_tokens").get<std::int64_t>();
-      l_info.completion_tokens_ = l_completion_tokens;
+    switch (l_status) {
+      case sd2::task_status::queued:
+      case sd2::task_status::running:
+        co_return;
+      case sd2::task_status::succeeded: {
+        if (l_task_info.contains("usage") && l_task_info.at("usage").contains("completion_tokens")) {
+          l_task_ptr->completion_tokens_ = l_task_info.at("usage").at("completion_tokens").get<std::int64_t>();
+        }
+        if (l_task_info.contains("content") && l_task_info.at("content").contains("video_url")) {
+          auto l_video_url = l_task_info.at("content").at("video_url").get<std::string>();
+          SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "任务 {} 完成，下载视频 {}", in_task.uuid_id_, l_video_url);
+          auto l_file                = co_await in_client->download_result(l_video_url);
+          auto l_preview_file        = std::make_shared<sd2::ai_preview_file>();
+          l_preview_file->extension_ = ".mp4";
+          auto l_sql                 = get_sqlite_database();
+          co_await l_sql.install(l_preview_file);
+          l_task_ptr->preview_file_ = l_preview_file->uuid_id_;
+          video_create_picture(l_file, l_preview_file->uuid_id_);
+        }
+        break;
+      }
     }
-    if (l_info.status_ == sd2::task_status::succeeded && l_task_info.contains("content") &&
-        l_task_info.at("content").contains("video_url")) {
-      auto l_video_url = l_task_info.at("content").at("video_url").get<std::string>();
-      SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "任务 {} 完成，下载视频 {}", in_task.uuid_id_, l_video_url);
-      auto l_file                = co_await in_client->download_result(l_video_url);
-      auto l_preview_file        = std::make_shared<sd2::ai_preview_file>();
-      l_preview_file->extension_ = ".mp4";
-      auto l_sql                 = get_sqlite_database();
-      co_await l_sql.install(l_preview_file);
-      l_info.preview_file_ = l_preview_file->uuid_id_;
-      video_create_picture(l_file, l_preview_file->uuid_id_);
+
+    l_task_ptr->status_   = l_status;
+    l_task_ptr->ended_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+    {
+      auto l_sql = get_sqlite_database();
+      co_await l_sql.update(l_task_ptr);
     }
-    auto l_sql                 = get_sqlite_database();
-    auto l_task_ptr            = std::make_shared<sd2::task>(in_task);
-    l_task_ptr->status_        = l_info.status_;
-    l_task_ptr->data_response_ = l_info.data_response_;
-    l_task_ptr->preview_file_  = l_info.preview_file_;
-    l_task_ptr->ended_at_      = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-    co_await l_sql.update(l_task_ptr);
-    if (l_info.status_ == sd2::task_status::succeeded || l_info.completion_tokens_ > 0) {
+    if (l_status == sd2::task_status::succeeded && l_task_ptr->completion_tokens_ > 0) {
       // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
       co_await add_remaining_tokens_for_person(
-          in_task.user_id_, in_task.completion_tokens_ - l_info.completion_tokens_
+          in_task.user_id_, in_task.completion_tokens_ - l_task_ptr->completion_tokens_
       );
     } else {
-      // 任务失败或者其他状态，返还 tokenf
+      // 任务失败或者其他状态，返还 token
       co_await add_remaining_tokens_for_person(in_task.user_id_, in_task.completion_tokens_);
     }
-    if (l_info.status_ != sd2::task_status::queued && l_info.status_ != sd2::task_status::running) {
-      socket_io::broadcast(
-          socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_info.status_}
-      );
-    }
+    socket_io::broadcast(
+        socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_task_ptr->status_}
+    );
   } catch (...) {
     auto l_err_str = boost::current_exception_diagnostic_information();
     SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), l_err_str);
