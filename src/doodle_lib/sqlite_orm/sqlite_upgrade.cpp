@@ -113,9 +113,7 @@ struct upgrade_2_t : sqlite_upgrade {
       // 添加列 &person::ai_studio_id_ 并添加外键约束
       l_s.exec(R"(ALTER TABLE person ADD COLUMN ai_studio_id BLOB;)");
       l_s.sync_schema();
-      l_s.exec(
-          R"(ALTER TABLE person ADD FOREIGN KEY (ai_studio_id) REFERENCES ai_studio(uuid_id) ON DELETE SET NULL;)"
-      );
+      l_s.rebuild_table<person>();
     }
 
     in_data.create_session().pragma().user_version(g_current_version);
