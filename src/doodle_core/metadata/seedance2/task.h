@@ -53,9 +53,11 @@ struct DOODLE_CORE_API task {
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time ended_at_{chrono::current_zone(), chrono::system_clock::now()};
 
-  uuid project_uuid_id_;                     // 内部使用的UUID，对应项目中的uuid_id_
-  std::int64_t completion_tokens_{20'0000};  // 任务完成所需的token数量，默认为20万，具体数值可根据实际情况调整
-  uuid ai_generate_entity_id_;               // 内部使用的UUID，对应ai_generate_entity中的uuid_id_
+  uuid project_uuid_id_;  // 内部使用的UUID，对应项目中的uuid_id_
+  std::int64_t completion_tokens_{
+      doodle_config::g_max_task_completion_tokens
+  };                            // 任务完成所需的token数量，默认为20万，具体数值可根据实际情况调整
+  uuid ai_generate_entity_id_;  // 内部使用的UUID，对应ai_generate_entity中的uuid_id_
   // 归档
   bool archived_;
   // to json
