@@ -20,6 +20,7 @@
 #include <doodle_lib/http_client/seedance2_client.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
+#include <boost/asio/awaitable.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/consign.hpp>
 #include <boost/asio/this_coro.hpp>
@@ -218,6 +219,55 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, get) {
                       .to_vector();
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
+// 获取 ip , 访问 http://ip.sb, 返回值就是 ip, 不是json字段
+boost::asio::awaitable<std::string> get_self_ip() {
+  using http_client_t     = doodle::http::http_client;
+  using http_client_ptr_t = std::shared_ptr<http_client_t>;
+  auto l_client           = std::make_shared<http_client_t>("http://ip.sb");
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{boost::beast::http::verb::get, "/", 11};
+  l_req.set(boost::beast::http::field::host, l_client->server_ip_and_port_);
+  l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  // 3 次重试
+  for (int i = 0; i < 3; ++i) {
+    boost::beast::http::response<boost::beast::http::string_body> l_res{};
+    try {
+      co_await l_client->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+      if (l_res.result() != boost::beast::http::status::ok)
+        throw_exception(doodle_error{"get_self_ip error {} {}", l_res.result(), l_res.body()});
+      co_return l_res.body();
+    } catch (const boost::system::system_error& e) {
+      if (e.code() == boost::asio::error::operation_aborted) throw;
+      SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "get_self_ip error: {}", e.what());
+      if (i == 2) throw;
+    } catch (...) {
+      auto l_err_str = boost::current_exception_diagnostic_information();
+      SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "get_self_ip error: {}", l_err_str);
+      if (i == 2) throw;
+    }
+  }
+  co_return std::string{}; // unreachable
+}
+// 将传入的 req 中的资源路径附加上服务器的 ip 地址，返回新的 req
+nlohmann::json add_ip_to_req(const nlohmann::json& in_req, const std::string& in_ip) {
+  nlohmann::json l_req = in_req;
+  for (auto&& l_value : l_req.at("content")) {
+    if (l_value.contains("image_url")) {
+      auto& l_url = l_value.at("image_url").at("url");
+      if (!l_url.get<std::string>().starts_with("http"))
+        l_url = fmt::format("http://{}:38192{}", in_ip, l_url.get<std::string>());
+    } else if (l_value.contains("video_url")) {
+      auto& l_url = l_value.at("video_url").at("url");
+      if (!l_url.get<std::string>().starts_with("http"))
+        l_url = fmt::format("http://{}:38192{}", in_ip, l_url.get<std::string>());
+    } else if (l_value.contains("audio_url")) {
+      auto& l_url = l_value.at("audio_url").at("url");
+      if (!l_url.get<std::string>().starts_with("http"))
+        l_url = fmt::format("http://{}:38192{}", in_ip, l_url.get<std::string>());
+    }
+  }
+  return l_req;
+}
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   if (get_remaining_tokens_for_person(person_.person_.uuid_id_) - doodle_config::g_max_task_completion_tokens <= 0)
@@ -236,28 +286,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   l_client->set_token(l_studio.app_secret_);
   l_client->set_logger(g_logger_ctrl().get_http());
 #ifdef DOODLE_SEED2
-  l_task->task_id_ = co_await l_client->run_task(l_task->data_request_);  // 异步运行任务，不等待结果
+  auto l_ip        = co_await get_self_ip();
+  auto l_req       = add_ip_to_req(l_task->data_request_, l_ip);
+  l_task->task_id_ = co_await l_client->run_task(l_req);  // 异步运行任务，不等待结果
 #endif
   co_await add_remaining_tokens_for_person(person_.person_.uuid_id_, -l_task->completion_tokens_);
-  // 查找 以https://或者http://开头的url，并替换host部分为空
-  static std::regex l_url_regex(R"(https?:\/\/[^\/\s]+)");
-  for (auto&& l_value : l_task->data_request_.at("content")) {
-    nlohmann::json* l_url{};
-    if (l_value.contains("image_url"))
-      l_url = &l_value.at("image_url").at("url");
-    else if (l_value.contains("video_url"))
-      l_url = &l_value.at("video_url").at("url");
-    else if (l_value.contains("audio_url "))
-      l_url = &l_value.at("audio_url ").at("url");
-    else
-      continue;
-
-    *l_url = std::regex_replace(l_url->get<std::string>(), l_url_regex, "");
-  }
-
   co_await l_sql.install(l_task);
   seedance2_task_run_manager::Get().run();
-
   co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});
 }
 
