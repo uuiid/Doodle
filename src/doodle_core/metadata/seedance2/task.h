@@ -118,4 +118,21 @@ struct DOODLE_CORE_API person_token {
     j["picture_count"] = p.picture_count_;
   }
 };
+// task 任务和之前任务的相似度, 用于判断是否重复提交任务
+struct DOODLE_CORE_API task_similarity {
+  DOODLE_BASE_FIELDS();
+  uuid task_id_;
+  uuid similar_task_id_;
+  double similarity_{0.0};
+
+  // to json
+  friend void to_json(nlohmann::json& j, const task_similarity& p) {
+    j["id"]              = p.uuid_id_;
+    j["task_id"]         = p.task_id_;
+    j["similar_task_id"] = p.similar_task_id_;
+    j["similarity"]      = p.similarity_;
+  }
+};
+
+
 }  // namespace doodle::seedance2
