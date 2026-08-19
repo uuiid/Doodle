@@ -98,7 +98,9 @@ class seedance2_task_run_manager {
     return select(l_sql)
         .columns(object<sd2::task>(), &ai_studio::app_secret_)
         .from<sd2::task>()
-        .where(c(&sd2::task::status_) == sd2::task_status::queued || c(&sd2::task::status_) == sd2::task_status::running)
+        .where(
+            c(&sd2::task::status_) == sd2::task_status::queued || c(&sd2::task::status_) == sd2::task_status::running
+        )
         .left_outer_join<ai_studio>(&ai_studio::uuid_id_, &sd2::task::ai_studio_id_)()
         .to_vector<task_info>();
   }
@@ -281,8 +283,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   l_task->user_id_        = person_.person_.uuid_id_;
   l_task->ai_studio_id_   = person_.get_ai_studio_id();
   l_task->file_extension_ = ".mp4";
-  auto l_client           = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
-  auto l_studio           = l_sql.get_by_uuid<ai_studio>(l_task->ai_studio_id_);
+  // data_request 必须有 content 字段，且 content 中可能 type 为 text 的字段
+  auto& l_content         = l_task->data_request_.at("content");
+  for (auto&& l_value : l_content.at("content"))
+    if (l_value.contains("type") && l_value.at("type").get<std::string>() == "text")
+      l_task->text_prompt_ += l_value.at("text").get<std::string>() + "\n";
+
+  auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
+  auto l_studio = l_sql.get_by_uuid<ai_studio>(l_task->ai_studio_id_);
   l_client->set_token(l_studio.app_secret_);
   l_client->set_logger(g_logger_ctrl().get_http());
 #ifdef DOODLE_SEED2
