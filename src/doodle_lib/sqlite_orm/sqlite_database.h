@@ -18,6 +18,7 @@
 #include "sqlite_orm/orm/delete.h"
 #include "sqlite_orm/orm/session.h"
 #include <optional>
+#include <range/v3/view/unique.hpp>
 #include <stdexcept>
 #include <vector>
 
@@ -291,6 +292,15 @@ class sqlite_database {
   boost::asio::awaitable<void> update(orm::update_t in_update);
 
   boost::asio::awaitable<void> mark_all_notifications_as_read(uuid in_user_id);
+
+  template <typename... Args>
+  boost::asio::awaitable<void> run_sql(Args&&... args) {
+    DOODLE_TO_SQLITE_THREAD();
+    auto l_g = session_.transaction();
+    std::invoke(std::forward<Args>(args)...);
+    l_g.commit();
+    DOODLE_TO_SELF();
+  }
 
   std::vector<attendance_helper::database_t> get_attendance(
       const uuid& in_person_id, const chrono::local_days& in_data
