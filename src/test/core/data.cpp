@@ -64,6 +64,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
       .add_column("uuid", &entity::uuid_id_)
       .add_column("name", &entity::name_)
+      .add_column("description", &entity::description_)
       .add_column("code", &entity::code_)
       .add_column("parent_id", &entity::parent_id_)
       .add_column("entity_type_id", &entity::entity_type_id_)
