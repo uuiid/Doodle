@@ -1,6 +1,9 @@
 {
 	"folders": [
 		{
+			"path": "src/test_js"
+		},
+		{
 			"path": ".",
 			"name": "doodleMain"
 		},
