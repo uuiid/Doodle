@@ -264,7 +264,7 @@ describe('seedance2 entity 测试', function () {
 
 });
 
-describe('seedance2 task 测试', function () {
+describe('seedance2 task', function () {
 
   const authHeader = { 'Cookie': `access_token_cookie=${JWT}` };
   const projectId = 'c340051a-45a6-4af1-a750-efefe639c75b';

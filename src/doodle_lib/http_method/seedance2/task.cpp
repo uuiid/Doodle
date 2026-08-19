@@ -223,7 +223,7 @@ namespace {
 boost::asio::awaitable<std::string> get_self_ip() {
   using http_client_t     = doodle::http::http_client;
   using http_client_ptr_t = std::shared_ptr<http_client_t>;
-  auto l_client           = std::make_shared<http_client_t>("http://ip.sb");
+  auto l_client           = std::make_shared<http_client_t>("http://api.ip.sb/ip");
   boost::beast::http::request<boost::beast::http::empty_body> l_req{boost::beast::http::verb::get, "/", 11};
   l_req.set(boost::beast::http::field::host, l_client->server_ip_and_port_);
   l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
@@ -352,7 +352,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
 
   l_client->set_token(l_studio.app_secret_);
   l_client->set_logger(g_logger_ctrl().get_http());
+#ifdef DOODLE_SEED2
   if (!l_task.task_id_.empty()) co_await l_client->cancel_task(l_task.task_id_);
+#endif
+
   l_task.status_ = sd2::task_status::cancelled;
 
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
