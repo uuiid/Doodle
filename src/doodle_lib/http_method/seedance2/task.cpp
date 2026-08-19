@@ -345,8 +345,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
       auto l_install_similarities = orm::insert(l_sql).into<sd2::task_similarity>().set_range(l_result_map);
       co_await l_sql.run_sql(l_add_tokens, l_install, l_install_similarities);
     }
-    auto l_install_similarities = orm::insert(l_sql).into<sd2::task_similarity>().set_range(l_result_map);
-    co_await l_sql.run_sql(l_add_tokens, l_install, l_install_similarities);
   }
   seedance2_task_run_manager::Get().run();
   co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});
