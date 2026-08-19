@@ -33,9 +33,11 @@
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <opencv2/opencv.hpp>
+#include <rapidfuzz/rapidfuzz_all.hpp>
 #include <regex>
 #include <spdlog/spdlog.h>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #define DOODLE_SEED2
@@ -215,6 +217,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, get) {
                       .to_vector();
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
+namespace {
 // 获取 ip , 访问 http://ip.sb, 返回值就是 ip, 不是json字段
 boost::asio::awaitable<std::string> get_self_ip() {
   using http_client_t     = doodle::http::http_client;
@@ -264,6 +267,43 @@ nlohmann::json add_ip_to_req(const nlohmann::json& in_req, const std::string& in
   }
   return l_req;
 }
+
+// 对比传入的任务和一批任务的相似度
+std::vector<sd2::task_similarity> compare_task_similarity(
+    const sd2::task& in_task, const std::vector<std::tuple<uuid, std::string>>& in_tasks
+) {
+  std::vector<sd2::task_similarity> l_result;
+  l_result.reserve(in_tasks.size());
+  auto l_cache = rapidfuzz::fuzz::CachedWRatio(in_task.text_prompt_);  // 缓存 in_task 的文本，提升性能
+  for (const auto& [l_uuid, l_text_prompt] : in_tasks) {
+    auto l_similarity = l_cache.similarity(l_text_prompt);
+    if (l_similarity < 50) continue;  // 相似度小于 50 的任务不考虑
+    l_result.emplace_back(
+        sd2::task_similarity{
+            .task_id_         = in_task.uuid_id_,
+            .similar_task_id_ = l_uuid,
+            .similarity_      = l_similarity,
+        }
+    );
+  }
+  return l_result;
+}
+std::vector<sd2::task_similarity> get_task_similarity_for_person(
+    const decltype(get_sqlite_database())& l_sql, const sd2::task& in_task
+) {
+  using namespace orm;
+  // 只检查最近 50 条任务
+  auto l_tasks = select(l_sql)
+                     .columns(&sd2::task::uuid_id_, &sd2::task::text_prompt_)
+                     .from<sd2::task>()
+                     .where(c(&sd2::task::user_id_) == in_task.user_id_ && !c(&sd2::task::archived_))
+                     .order_by(&sd2::task::created_at_, false)
+                     .limit(50)()
+                     .to_vector();
+  return compare_task_similarity(in_task, l_tasks);
+}
+
+}  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   if (get_remaining_tokens_for_person(person_.person_.uuid_id_) - doodle_config::g_max_task_completion_tokens <= 0)
