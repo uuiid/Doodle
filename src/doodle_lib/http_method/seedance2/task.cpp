@@ -83,12 +83,6 @@ class seedance2_task_run_manager {
     sd2::task task_;
     std::string app_secret_;
   };
-  struct seedance2_info {
-    std::int64_t completion_tokens_{0};
-    sd2::task_status status_{sd2::task_status::queued};
-    nlohmann::json data_response_{};
-    uuid preview_file_{};
-  };
 
   std::atomic_bool is_running_{false};
 
