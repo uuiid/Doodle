@@ -136,6 +136,17 @@ void sqlite_storage::regs_all() {
       )
       .add_index(&seedance2::task::uuid_id_);
 
+  reg_table<seedance2::task_similarity>("seedance2_task_similarity")
+      .add_column("id", &seedance2::task_similarity::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::task_similarity::uuid_id_, unique(), not_null())
+      .add_column("task_id", &seedance2::task_similarity::task_id_, not_null())
+      .add_column("similar_task_id", &seedance2::task_similarity::similar_task_id_, not_null())
+      .add_column("similarity", &seedance2::task_similarity::similarity_)
+      .add_foreign_key(&seedance2::task_similarity::task_id_, &seedance2::task::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(
+          &seedance2::task_similarity::similar_task_id_, &seedance2::task::uuid_id_, foreign_key_action::cascade
+      );
+
   reg_table<seedance2::subproject>("seedance2_subproject")
       .add_column("id", &seedance2::subproject::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::subproject::uuid_id_, unique(), not_null())

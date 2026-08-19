@@ -26,6 +26,8 @@
 #include <boost/asio/this_coro.hpp>
 #include <boost/scope/scope_exit.hpp>
 
+#include "core/core_set.h"
+#include "core/http_client_core.h"
 #include "http_method/kitsu.h"
 #include "reg.h"
 #include "sqlite_orm/orm/insert.h"
@@ -41,7 +43,7 @@
 #include <tuple>
 #include <vector>
 
-#define DOODLE_SEED2
+// #define DOODLE_SEED2
 
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
@@ -221,10 +223,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, get) {
 namespace {
 // 获取 ip , 访问 http://ip.sb, 返回值就是 ip, 不是json字段
 boost::asio::awaitable<std::string> get_self_ip() {
-  using http_client_t     = doodle::http::http_client;
-  using http_client_ptr_t = std::shared_ptr<http_client_t>;
-  auto l_client           = std::make_shared<http_client_t>("http://api.ip.sb/ip");
-  boost::beast::http::request<boost::beast::http::empty_body> l_req{boost::beast::http::verb::get, "/", 11};
+  using http_client_t     = doodle::http::http_client_ssl;
+  using http_client_ptr_t = std::shared_ptr<http_client_ssl>;
+  auto l_client           = std::make_shared<http_client_t>("https://api.ip.sb", *core_set::get_set().ctx_ptr);
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{boost::beast::http::verb::get, "/ip", 11};
   l_req.set(boost::beast::http::field::host, l_client->server_ip_and_port_);
   l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
   boost::beast::http::response<boost::beast::http::string_body> l_res{};
@@ -337,6 +339,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
     auto l_add_tokens = add_remaining_tokens_for_person(l_sql, person_.person_.uuid_id_, -l_task->completion_tokens_);
     auto l_install    = orm::insert(l_sql).into<sd2::task>().values(*l_task);
     auto l_result_map = get_task_similarity_for_person(l_sql, *l_task);
+    if (l_result_map.empty()) {
+      co_await l_sql.run_sql(l_add_tokens, l_install);
+    } else {
+      auto l_install_similarities = orm::insert(l_sql).into<sd2::task_similarity>().set_range(l_result_map);
+      co_await l_sql.run_sql(l_add_tokens, l_install, l_install_similarities);
+    }
     auto l_install_similarities = orm::insert(l_sql).into<sd2::task_similarity>().set_range(l_result_map);
     co_await l_sql.run_sql(l_add_tokens, l_install, l_install_similarities);
   }
