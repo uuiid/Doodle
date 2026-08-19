@@ -45,6 +45,17 @@ struct update_t : public statement_info_base_t {
   friend update_t update(const session& s);
 
   std::shared_ptr<update_state_t> state_;
+  /// 测试成员字段 updated_at_ 是否存在，以及是否是 chrono::system_zoned_time 类型
+  template <typename T, typename = void>
+  struct has_updated_at_impl : std::false_type {};
+
+  template <typename T>
+  struct has_updated_at_impl<
+      T, std::enable_if_t<std::is_same_v<chrono::system_zoned_time, decltype(std::declval<T>().updated_at_)>>>
+      : std::true_type {};
+
+  template <typename T>
+  static constexpr bool has_updated_at = has_updated_at_impl<T>::value;
 
  public:
   update_t() : state_(std::make_shared<update_state_t>()) {}
@@ -73,9 +84,11 @@ struct update_t : public statement_info_base_t {
     return *this;
   }
   template <typename T>
-    requires is_object_specialization_v<std::decay_t<T>>
-  update_t set(T&& in_object) {
-    using Table         = class_type_t<std::decay_t<T>>;
+  update_t set_value(T&& in_object) {
+    using Table = std::decay_t<T>;
+    if constexpr (has_updated_at<T>)
+      in_object.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+
     auto l_table_cloums = state_->s_.template get_table_columns<Table>();
     column_info l_primary_key_{};
     for (const auto& l_column : l_table_cloums) {
@@ -84,19 +97,21 @@ struct update_t : public statement_info_base_t {
         continue;
       }
       auto col_ptr = std::make_shared<column_operations>(l_column.ptr_);
-      *col_ptr     = l_column.ptr_.get_value(in_object.obj_);
+      *col_ptr     = l_column.ptr_.get_value(in_object);
 
       state_->column_operations_.push_back(col_ptr);
     }
     from<Table>();
-    where(column_operations{l_primary_key_.ptr_} == l_primary_key_.ptr_.get_value(in_object.obj_));
+    where(column_operations{l_primary_key_.ptr_} == l_primary_key_.ptr_.get_value(in_object));
     return *this;
   }
 
   template <typename T>
-    requires is_object_specialization_v<std::decay_t<T>>
   update_t rebind(T&& in_object) {
-    using Table         = class_type_t<std::decay_t<T>>;
+    using Table = std::decay_t<T>;
+    if constexpr (has_updated_at<T>)
+      in_object.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+
     auto l_table_cloums = state_->s_.template get_table_columns<Table>();
     if (l_table_cloums.size() != state_->bind_variants_.bind_values_.size())
       throw std::runtime_error("列数量与绑定变量数量不匹配，无法使用 re_set 更新");
@@ -108,9 +123,9 @@ struct update_t : public statement_info_base_t {
         continue;
       }
       auto col_ptr                               = std::make_shared<column_operations>(l_column.ptr_);
-      state_->bind_variants_.bind_values_[l_i++] = l_column.ptr_.get_value(in_object.obj_);
+      state_->bind_variants_.bind_values_[l_i++] = l_column.ptr_.get_value(in_object);
     }
-    state_->bind_variants_.bind_values_.back() = l_primary_key_.ptr_.get_value(in_object.obj_);
+    state_->bind_variants_.bind_values_.back() = l_primary_key_.ptr_.get_value(in_object);
     return *this;
   }
 

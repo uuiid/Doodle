@@ -2,6 +2,7 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
@@ -33,6 +34,38 @@ struct insert_t : public statement_info_base_t {
   friend auto insert(const session& s) -> insert_t;
 
   std::shared_ptr<insert_state_t> state_;
+  /// 测试成员字段 uuid_id_ 是否存在，以及是否是 uuid 类型
+  template <typename T, typename = void>
+  struct has_uuid_id_impl : std::false_type {};
+
+  template <typename T>
+  struct has_uuid_id_impl<T, std::enable_if_t<std::is_same_v<uuid, decltype(std::declval<T>().uuid_id_)>>>
+      : std::true_type {};
+
+  template <typename T>
+  static constexpr bool has_uuid_id = has_uuid_id_impl<T>::value;
+  /// 测试成员字段 created_at_ 是否存在，以及是否是 chrono::system_zoned_time 类型
+  template <typename T, typename = void>
+  struct has_created_at_impl : std::false_type {};
+
+  template <typename T>
+  struct has_created_at_impl<
+      T, std::enable_if_t<std::is_same_v<chrono::system_zoned_time, decltype(std::declval<T>().created_at_)>>>
+      : std::true_type {};
+
+  template <typename T>
+  static constexpr bool has_created_at = has_created_at_impl<T>::value;
+  /// 测试成员字段 updated_at_ 是否存在，以及是否是 chrono::system_zoned_time 类型
+  template <typename T, typename = void>
+  struct has_updated_at_impl : std::false_type {};
+
+  template <typename T>
+  struct has_updated_at_impl<
+      T, std::enable_if_t<std::is_same_v<chrono::system_zoned_time, decltype(std::declval<T>().updated_at_)>>>
+      : std::true_type {};
+
+  template <typename T>
+  static constexpr bool has_updated_at = has_updated_at_impl<T>::value;
 
  public:
   insert_t() : state_(std::make_shared<insert_state_t>()) {}
@@ -53,6 +86,14 @@ struct insert_t : public statement_info_base_t {
   insert_t values(T&& in_object) {
     using Table         = class_type_t<std::decay_t<T>>;
     auto l_table_cloums = state_->s_.template get_table_columns<Table>();
+    if constexpr (has_uuid_id<Table>) {
+      DOODLE_CHICK(in_object.obj_.uuid_id_.is_nil(), "传入的数据实体 uuid_id_ 不为空");
+      in_object.obj_.uuid_id_ = core_set::get_set().get_uuid();
+    }
+    if constexpr (has_created_at<Table>)
+      in_object.obj_.created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+    if constexpr (has_updated_at<Table>)
+      in_object.obj_.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
     for (const auto& l_column : l_table_cloums) {
       if (l_column.primary_key_) continue;  // 跳过主键列
@@ -72,6 +113,19 @@ struct insert_t : public statement_info_base_t {
     state_->values_.bind_values_.clear();
     state_->columns_.clear();
     auto l_table_cloums = state_->s_.template get_table_columns<Table>();
+    // 循环设置
+    if constexpr (has_uuid_id<Table> || has_created_at<Table> || has_updated_at<Table>)
+      for (auto&& value : values) {
+        if constexpr (has_uuid_id<Table>) {
+          DOODLE_CHICK(value.uuid_id_.is_nil(), "传入的数据实体 uuid_id_ 不为空");
+          value.uuid_id_ = core_set::get_set().get_uuid();
+        }
+        if constexpr (has_created_at<Table>)
+          value.created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+        if constexpr (has_updated_at<Table>)
+          value.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+      }
+
     for (const auto& l_column : l_table_cloums) {
       if (l_column.primary_key_) continue;
       state_->columns_.push_back(std::make_shared<column_info_t>(l_column.ptr_));

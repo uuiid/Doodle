@@ -277,7 +277,7 @@ std::vector<sd2::task_similarity> compare_task_similarity(
   auto l_cache = rapidfuzz::fuzz::CachedWRatio(in_task.text_prompt_);  // 缓存 in_task 的文本，提升性能
   for (const auto& [l_uuid, l_text_prompt] : in_tasks) {
     auto l_similarity = l_cache.similarity(l_text_prompt);
-    if (l_similarity < 50) continue;  // 相似度小于 50 的任务不考虑
+    if (l_similarity < 75) continue;  // 相似度小于 75 的任务不考虑
     l_result.emplace_back(
         sd2::task_similarity{
             .task_id_         = in_task.uuid_id_,

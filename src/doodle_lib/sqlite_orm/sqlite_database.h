@@ -133,44 +133,12 @@ class sqlite_database {
 
   template <typename T>
   static constexpr bool has_uuid_id = has_uuid_id_impl<T>::value;
-  /// 测试成员字段 created_at_ 是否存在，以及是否是 chrono::system_zoned_time 类型
-  template <typename T, typename = void>
-  struct has_created_at_impl : std::false_type {};
-
-  template <typename T>
-  struct has_created_at_impl<
-      T, std::enable_if_t<std::is_same_v<chrono::system_zoned_time, decltype(std::declval<T>().created_at_)>>>
-      : std::true_type {};
-
-  template <typename T>
-  static constexpr bool has_created_at = has_created_at_impl<T>::value;
-  /// 测试成员字段 updated_at_ 是否存在，以及是否是 chrono::system_zoned_time 类型
-  template <typename T, typename = void>
-  struct has_updated_at_impl : std::false_type {};
-
-  template <typename T>
-  struct has_updated_at_impl<
-      T, std::enable_if_t<std::is_same_v<chrono::system_zoned_time, decltype(std::declval<T>().updated_at_)>>>
-      : std::true_type {};
-
-  template <typename T>
-  static constexpr bool has_updated_at = has_updated_at_impl<T>::value;
 
   template <typename T>
   boost::asio::awaitable<void> install(std::shared_ptr<T> in_data) {
     using namespace orm;
     DOODLE_CHICK(in_data, "不可传入空指针");
-    if constexpr (has_uuid_id<T>) {
-      DOODLE_CHICK(in_data->uuid_id_.is_nil(), "传入的数据实体 uuid_id_ 不为空");
-      in_data->uuid_id_ = core_set::get_set().get_uuid();
-    }
     DOODLE_CHICK(in_data->id_ == 0, "必须传入id为0的新实体");
-
-    if constexpr (has_created_at<T>)
-      in_data->created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-
-    if constexpr (has_updated_at<T>)
-      in_data->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
     DOODLE_TO_SQLITE_THREAD();
     install_unsafe<T>(in_data);
@@ -185,9 +153,6 @@ class sqlite_database {
     }
     DOODLE_CHICK(in_data->id_ != 0, "不可传入空指针");
 
-    if constexpr (has_updated_at<T>)
-      in_data->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-
     DOODLE_TO_SQLITE_THREAD();
     update_unsafe<T>(in_data);
     DOODLE_TO_SELF();
@@ -201,7 +166,7 @@ class sqlite_database {
   template <typename T>
   void update_unsafe(std::shared_ptr<T> in_data) {
     using namespace orm;
-    orm::update(*this).from<T>().set(object<T>(*in_data)).where(c(&T::id_) == in_data->id_)();
+    orm::update(*this).from<T>().set_value(*in_data).where(c(&T::id_) == in_data->id_)();
   }
 
   /**
@@ -216,18 +181,8 @@ class sqlite_database {
     if (in_data->empty()) co_return;
     auto l_id_is_zero = std::ranges::all_of(*in_data, [](const auto& in_) { return in_.id_ == 0; });
     DOODLE_CHICK(l_id_is_zero, "传入的数据实体 id_ 必须全部为0");
-    if constexpr (has_uuid_id<T>)
-      for (auto& in_ : *in_data) in_.uuid_id_ = core_set::get_set().get_uuid();
-
-    if constexpr (has_created_at<T>)
-      for (auto& in_ : *in_data)
-        in_.created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-    if constexpr (has_updated_at<T>)
-      for (auto& in_ : *in_data)
-        in_.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
     DOODLE_TO_SQLITE_THREAD();
-
     auto l_g    = session_.transaction();
     auto l_size = in_data->size();
     using namespace orm;
@@ -257,10 +212,6 @@ class sqlite_database {
     auto l_id_not_zero = std::ranges::all_of(*in_data, [](const auto& in_) { return in_.id_ != 0; });
     DOODLE_CHICK(l_id_not_zero, "传入的数据实体 id_ 不可为0");
 
-    if constexpr (has_updated_at<T>)
-      for (auto& in_ : *in_data)
-        in_.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-
     DOODLE_TO_SQLITE_THREAD();
     auto l_g = session_.transaction();
     using namespace orm;
@@ -268,9 +219,9 @@ class sqlite_database {
     for (auto l_is_begin = true; auto&& i : *in_data) {
       if (l_is_begin) {
         l_is_begin = false;
-        l_update.set(object<T>(i))();
+        l_update.set_value(i)();
       } else
-        l_update.rebind(object<T>(i))();
+        l_update.rebind(i)();
     }
     l_g.commit();
     DOODLE_TO_SELF();
