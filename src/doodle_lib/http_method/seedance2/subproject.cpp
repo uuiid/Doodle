@@ -10,11 +10,23 @@
 
 #include "core/global_function.h"
 #include "reg.h"
+#include <map>
 #include <memory>
 #include <opencv2/opencv.hpp>
 
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
+
+namespace {
+struct seedance2_subproject_and_person : public sd2::subproject {
+  std::vector<uuid> persons_;
+  // to json
+  friend void to_json(nlohmann::json& j, const seedance2_subproject_and_person& p) {
+    to_json(j, static_cast<const sd2::subproject&>(p));
+    j["persons"] = p.persons_;
+  }
+};
+}  // namespace
 
 // /api/seedance2/subproject
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, get) {
@@ -29,7 +41,29 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, get) {
     l_query.where(c(&sd2::subproject_person_link::person_id_) == person_.person_.uuid_id_);
   }
 
-  auto l_result = l_query().to_vector();
+  auto l_subprojects = l_query().to_vector();
+
+  std::vector<uuid> l_subproject_ids;
+  l_subproject_ids.reserve(l_subprojects.size());
+  for (auto&& l_sp : l_subprojects) l_subproject_ids.push_back(l_sp.uuid_id_);
+
+  auto l_all_links = select(l_sql)
+                         .columns(object<sd2::subproject_person_link>())
+                         .from<sd2::subproject_person_link>()
+                         .where(c(&sd2::subproject_person_link::subproject_id_).in(l_subproject_ids))()
+                         .to_vector();
+  std::map<uuid, std::vector<uuid>> l_person_map;
+  for (auto&& l_link : l_all_links) {
+    l_person_map[l_link.subproject_id_].push_back(l_link.person_id_);
+  }
+
+  std::vector<seedance2_subproject_and_person> l_result;
+  l_result.reserve(l_subprojects.size());
+  for (auto&& l_sp : l_subprojects) {
+    auto& l_item                          = l_result.emplace_back();
+    static_cast<sd2::subproject&>(l_item) = std::move(l_sp);
+    if (l_person_map.contains(l_item.uuid_id_)) l_item.persons_ = std::move(l_person_map[l_item.uuid_id_]);
+  }
 
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
