@@ -47,6 +47,8 @@ BOOST_AUTO_TEST_CASE(http_client) {
 BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   using namespace doodle;
   using namespace doodle::orm;
+  app_base l_app{};
+
   auto l_storage = orm::storage{};
   auto l_reg     = l_storage.create_session();
   //   auto l_enit_tab = orm::make_table_info<entity>("entity");

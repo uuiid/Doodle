@@ -1509,6 +1509,12 @@ components:
           type: string
           format: uuid
           description: 预览文件ID
+        persons:
+          type: array
+          description: 参与人员ID列表（仅列表接口返回）
+          items:
+            type: string
+            format: uuid
 
     SubprojectPersonLink:
       type: object
