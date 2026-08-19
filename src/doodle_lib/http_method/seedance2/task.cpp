@@ -28,6 +28,7 @@
 
 #include "http_method/kitsu.h"
 #include "reg.h"
+#include "sqlite_orm/orm/insert.h"
 #include <chrono>
 #include <map>
 #include <memory>
@@ -175,12 +176,12 @@ class seedance2_task_run_manager {
 
     if (l_status == sd2::task_status::succeeded && l_task_ptr->completion_tokens_ > 0) {
       // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
-      co_await add_remaining_tokens_for_person(
+      co_await l_sql.run_sql(add_remaining_tokens_for_person(
           l_sql, in_task.user_id_, in_task.completion_tokens_ - l_task_ptr->completion_tokens_
-      );
+      ));
     } else {
       // 任务失败或者其他状态，返还 token
-      co_await add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_);
+      co_await l_sql.run_sql(add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_));
     }
     socket_io::broadcast(
         socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_task_ptr->status_}
@@ -327,15 +328,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   auto l_studio = l_sql.get_by_uuid<ai_studio>(l_task->ai_studio_id_);
   l_client->set_token(l_studio.app_secret_);
   l_client->set_logger(g_logger_ctrl().get_http());
+  auto l_ip  = co_await get_self_ip();
+  auto l_req = add_ip_to_req(l_task->data_request_, l_ip);
 #ifdef DOODLE_SEED2
-  auto l_ip        = co_await get_self_ip();
-  auto l_req       = add_ip_to_req(l_task->data_request_, l_ip);
   l_task->task_id_ = co_await l_client->run_task(l_req);  // 异步运行任务，不等待结果
-  {
-    co_await add_remaining_tokens_for_person(l_sql, person_.person_.uuid_id_, -l_task->completion_tokens_);
-    co_await l_sql.install(l_task);
-  }
 #endif
+  {
+    auto l_add_tokens = add_remaining_tokens_for_person(l_sql, person_.person_.uuid_id_, -l_task->completion_tokens_);
+    auto l_install    = orm::insert(l_sql).into<sd2::task>().values(*l_task);
+    auto l_result_map = get_task_similarity_for_person(l_sql, *l_task);
+    auto l_install_similarities = orm::insert(l_sql).into<sd2::task_similarity>().set_range(l_result_map);
+    co_await l_sql.run_sql(l_add_tokens, l_install, l_install_similarities);
+  }
   seedance2_task_run_manager::Get().run();
   co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});
 }

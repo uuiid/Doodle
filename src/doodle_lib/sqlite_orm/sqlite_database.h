@@ -161,7 +161,7 @@ class sqlite_database {
   template <typename T>
   void install_unsafe(std::shared_ptr<T> in_data) {
     using namespace orm;
-    in_data->id_ = orm::insert(*this).into<T>().values(object<T>(*in_data))();
+    in_data->id_ = orm::insert(*this).into<T>().values(*in_data)();
   }
 
   template <typename T>
@@ -297,7 +297,7 @@ class sqlite_database {
   boost::asio::awaitable<void> run_sql(Args&&... args) {
     DOODLE_TO_SQLITE_THREAD();
     auto l_g = session_.transaction();
-    std::invoke(std::forward<Args>(args)...);
+    (std::invoke(std::forward<Args>(args)), ...);
     l_g.commit();
     DOODLE_TO_SELF();
   }

@@ -82,23 +82,22 @@ struct insert_t : public statement_info_base_t {
     return *this;
   }
   template <typename T>
-    requires is_object_specialization_v<std::decay_t<T>>
   insert_t values(T&& in_object) {
-    using Table         = class_type_t<std::decay_t<T>>;
+    using Table         = std::decay_t<T>;
     auto l_table_cloums = state_->s_.template get_table_columns<Table>();
     if constexpr (has_uuid_id<Table>) {
-      DOODLE_CHICK(in_object.obj_.uuid_id_.is_nil(), "传入的数据实体 uuid_id_ 不为空");
-      in_object.obj_.uuid_id_ = core_set::get_set().get_uuid();
+      DOODLE_CHICK(in_object.uuid_id_.is_nil(), "传入的数据实体 uuid_id_ 不为空");
+      in_object.uuid_id_ = core_set::get_set().get_uuid();
     }
     if constexpr (has_created_at<Table>)
-      in_object.obj_.created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+      in_object.created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
     if constexpr (has_updated_at<Table>)
-      in_object.obj_.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+      in_object.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
     for (const auto& l_column : l_table_cloums) {
       if (l_column.primary_key_) continue;  // 跳过主键列
       state_->columns_.push_back(std::make_shared<column_info_t>(l_column.ptr_));
-      state_->values_.bind_values_.push_back(l_column.ptr_.get_value(in_object.obj_));
+      state_->values_.bind_values_.push_back(l_column.ptr_.get_value(in_object));
     }
     return *this;
   }

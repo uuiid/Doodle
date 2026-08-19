@@ -1,4 +1,5 @@
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/person.h"
 #include <doodle_core/metadata/seedance2/task.h>
 
@@ -48,20 +49,14 @@ boost::asio::awaitable<void> set_remaining_tokens_for_person(const uuid& in_pers
 }  // namespace
 
 // 设置当周人员剩余可使用的 token 数量
-boost::asio::awaitable<void> add_remaining_tokens_for_person(
-    sqlite_database& in_sql, const uuid& in_person, std::int64_t in_tokens
-) {
-  if (in_tokens == 0) co_return;
+orm::update_t add_remaining_tokens_for_person(sqlite_database& in_sql, const uuid& in_person, std::int64_t in_tokens) {
+  DOODLE_CHICK(in_tokens != 0, "in_tokens must not be 0");
   using namespace orm;
 
-  co_await in_sql.update(
-      orm::update(in_sql)
-          .from<person>()
-          .set(c(&person::remaining_completion_tokens_) = c(&person::remaining_completion_tokens_) + in_tokens)
-          .where(c(&person::uuid_id_) == in_person)
-  );
-
-  co_return;
+  return orm::update(in_sql)
+      .from<person>()
+      .set(c(&person::remaining_completion_tokens_) = c(&person::remaining_completion_tokens_) + in_tokens)
+      .where(c(&person::uuid_id_) == in_person);
 }
 std::int64_t get_remaining_tokens_for_person(const uuid& in_person) {
   auto l_sql = get_sqlite_database();

@@ -10,10 +10,12 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
 #include <core/http/http_function.h>
+#include <sqlite_orm/orm/update.h>
+
 
 namespace doodle::http::seedance2 {
 // 设置当周人员剩余可使用的 token 数量
-boost::asio::awaitable<void> add_remaining_tokens_for_person(
+orm::update_t add_remaining_tokens_for_person(
     sqlite_database& in_sql, const uuid& in_person_id, std::int64_t in_tokens
 );
 // 获取当周人员可以使用的 token 数量
