@@ -97,6 +97,7 @@ target_link_libraries(doodle_lib
         tokenizers_cpp::tokenizers_c
         onnxruntime::onnxruntime
         cnpy::cnpy_static
+        rapidfuzz::rapidfuzz
 )
 
 

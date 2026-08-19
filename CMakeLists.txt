@@ -128,7 +128,8 @@ find_package(onnxruntime CONFIG REQUIRED)
 find_package(cnpy CONFIG REQUIRED)
 # 数据库
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
-
+# 字符串对比库
+find_package(rapidfuzz CONFIG REQUIRED)
 # Debug 模式下启用测试
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     enable_testing()

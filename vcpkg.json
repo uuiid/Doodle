@@ -41,6 +41,7 @@
     "tl-expected",
     "bit7z",
     "cppjieba",
+    "rapidfuzz-cpp",
     {
       "name": "mimalloc",
       "default-features": false,
