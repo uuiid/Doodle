@@ -24,7 +24,6 @@
 #include <utility>
 #include <vector>
 
-
 BOOST_AUTO_TEST_SUITE(data)
 BOOST_AUTO_TEST_CASE(http_client) {
   using namespace doodle;
@@ -94,16 +93,17 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .end();
 
   l_storage.open();
-  l_storage.create_session().sync_schema();
+  auto l_session = l_storage.create_session();
+  l_session.sync_schema();
   auto l_uuid           = from_uuid_str("96a1f1d5-e37d-4f22-90e0-1817468c9c3e");
   auto l_entity_uuid_id = core_set::get_set().get_uuid();
-  insert(l_reg).into<asset_type>().set(c(&asset_type::uuid_id_) = l_uuid, c(&asset_type::name_) = "test")();
-  insert(l_reg)
+  insert(l_session).into<asset_type>().set(c(&asset_type::uuid_id_) = l_uuid, c(&asset_type::name_) = "test")();
+  insert(l_session)
       .into<entity>()
       .set(c(&entity::uuid_id_) = l_entity_uuid_id, c(&entity::name_) = "test", c(&entity::entity_type_id_) = l_uuid)();
 
   auto l_shot = alias<entity>("shot");
-  for (auto l_s = select(l_reg).columns(&entity::uuid_id_, object_t<asset_type>(), l_shot->*&entity::name_);
+  for (auto l_s = select(l_session).columns(&entity::uuid_id_, object_t<asset_type>(), l_shot->*&entity::name_);
        auto&& [uuid_id, asset_type, shot_name] :
        l_s.from<entity>()
 
@@ -116,11 +116,11 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
     BOOST_TEST_CHECK(uuid_id == l_entity_uuid_id);
     BOOST_TEST_CHECK(asset_type.name_ == "test");
   }
-  update(l_reg)
+  update(l_session)
       .from<asset_type>()
       .set(c(&asset_type::name_) = "updated_name")
       .where(c(&asset_type::uuid_id_) == l_uuid)();
-  for (auto l_s = select(l_reg).columns(&entity::uuid_id_, object_t<asset_type>());
+  for (auto l_s = select(l_session).columns(&entity::uuid_id_, object_t<asset_type>());
        auto&& [uuid_id, asset_type] : l_s.from<entity>()
 
                                           .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
     BOOST_TEST_CHECK(uuid_id == l_entity_uuid_id);
     BOOST_TEST_CHECK(asset_type.name_ == "updated_name");
   }
-  for (auto l_s = select(l_reg).columns(&entity::uuid_id_, object_t<asset_type>());
+  for (auto l_s = select(l_session).columns(&entity::uuid_id_, object_t<asset_type>());
        auto&& [uuid_id, asset_type] : l_s.from<entity>()
                                           .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
 
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
     l_install_entities[i].name_           = fmt::format("install_entity_{}", i + 1);
     l_install_entities[i].entity_type_id_ = l_uuid;
   }
-  auto l_install_1 = insert(l_reg).into<entity>().set_range(l_install_entities);
+  auto l_install_1 = insert(l_session).into<entity>().set_range(l_install_entities);
   l_install_1();
   for (auto& entity : l_install_entities) {
     entity.uuid_id_        = core_set::get_set().get_uuid();
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
     entity.entity_type_id_ = l_uuid;
   }
 
-  for (auto l_s = select(l_reg).columns(&entity::name_, &entity::uuid_id_, object_t<asset_type>());
+  for (auto l_s = select(l_session).columns(&entity::name_, &entity::uuid_id_, object_t<asset_type>());
        auto&& [name, uuid_id, asset_type] : l_s.from<entity>()
                                                 .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
                                                 .where(c(&entity::name_).like("updated_%"))
