@@ -232,20 +232,7 @@ class sqlite_database {
     auto l_size = in_data->size();
     using namespace orm;
     auto l_insert = orm::insert(*this).into<T>();
-    bool first    = true;
-    for (auto&& view : *in_data | ranges::views::chunk(g_step_size)) {
-      if (first) {
-        l_insert.set_range(view)();
-        first = false;
-      } else {
-        try {
-          l_insert.rebind_range(view)();
-        } catch (const rebind_range_size_mismatch_exception& e) {
-          SPDLOG_ERROR("安装范围失败: {}", e.what());
-          orm::insert(*this).into<T>().set_range(view)();
-        }
-      }
-    }
+    l_insert.set_range (*in_data)();
     l_g.commit();
     DOODLE_TO_SELF();
 

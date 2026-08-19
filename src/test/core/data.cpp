@@ -153,7 +153,6 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
     entity.name_           = fmt::format("updated_{}", entity.uuid_id_);
     entity.entity_type_id_ = l_uuid;
   }
-  l_install_1.rebind_range(l_install_entities)();
 
   for (auto l_s = select(l_reg).columns(&entity::name_, &entity::uuid_id_, object_t<asset_type>());
        auto&& [name, uuid_id, asset_type] : l_s.from<entity>()

@@ -32,7 +32,7 @@ boost::asio::awaitable<std::string> seedance2_client::run_task(const nlohmann::j
     );
   }
 
-  DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "run_task error: {}", l_res.result());
+  DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "run_task error: {} {}", l_res.result(), l_res.body().dump());
 
   auto& l_json = l_res.body();
   DOODLE_CHICK(l_json.contains("id"), "run_task response error: {}", l_json.dump());

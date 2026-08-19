@@ -5,8 +5,8 @@
 #include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
-#include <doodle_lib/sqlite_orm/orm/storage.h>
 #include <doodle_lib/sqlite_orm/orm/session.h>
+#include <doodle_lib/sqlite_orm/orm/storage.h>
 
 #include <algorithm>
 #include <memory>
@@ -19,15 +19,18 @@ struct insert_t : public statement_info_base_t {
   struct insert_state_t {
     std::vector<column_info_ptr> columns_;
     bind_value_collector_t values_;
-    std::int32_t batch_size_{1};
     std::shared_ptr<column_operations_base_t> wheres_;
     std::string into_table_name_;
     session s_{};
     std::shared_ptr<sqlite_stmt> stmt_;
+    // 是一次插入多条数据吗, 如果是, 那么 values_ 中的值是多条数据的值, 需要在 to_sql 中生成 (?, ?, ?), (?, ?, ?), (?,
+    // ?, ?) 这样的语句
+    bool is_batch_insert_{false};
+    std::int32_t batch_insert_row_count_{0};
+    bool executed_{false};
   };
- 
+
   friend auto insert(const session& s) -> insert_t;
-  constexpr static std::int32_t g_max_batch_size_ = 100;  // SQLite的参数限制通常是999，预留一些空间给其他参数
 
   std::shared_ptr<insert_state_t> state_;
 
@@ -63,11 +66,9 @@ struct insert_t : public statement_info_base_t {
     requires(std::ranges::range<T>)
   insert_t set_range(T&& values) {
     if (values.empty()) return *this;  // 如果没有值，直接返回
-    if (values.size() > 100)
-      throw std::runtime_error("set_range中的值太多, 目前最多只支持100个值, 以避免超出SQLite的参数限制");
-
-    using value_type = std::ranges::range_value_t<std::decay_t<T>>;
-    using Table      = value_type;
+    state_->is_batch_insert_ = true;
+    using value_type         = std::ranges::range_value_t<std::decay_t<T>>;
+    using Table              = value_type;
     state_->values_.bind_values_.clear();
     state_->columns_.clear();
     auto l_table_cloums = state_->s_.template get_table_columns<Table>();
@@ -75,28 +76,6 @@ struct insert_t : public statement_info_base_t {
       if (l_column.primary_key_) continue;
       state_->columns_.push_back(std::make_shared<column_info_t>(l_column.ptr_));
     }
-    for (const auto& value : values) {
-      for (const auto& l_column : l_table_cloums) {
-        if (l_column.primary_key_) continue;  // 跳过主键列
-        state_->values_.bind_values_.push_back(l_column.ptr_.get_value(value));
-      }
-    }
-    state_->batch_size_ = std::clamp(static_cast<std::int32_t>(values.size()), 1, g_max_batch_size_);
-    return *this;
-  }
-  // 重新bing range参数
-  template <typename T>
-    requires(std::ranges::range<T>)
-  insert_t rebind_range(T&& values) {
-    if (values.empty()) return *this;  // 如果没有值，直接返回
-    if (values.size() > 100)
-      throw std::runtime_error("rebind_range中的值太多, 目前最多只支持100个值, 以避免超出SQLite的参数限制");
-    if (values.size() != state_->batch_size_) throw rebind_range_size_mismatch_exception();
-
-    using value_type    = std::ranges::range_value_t<std::decay_t<T>>;
-    using Table         = value_type;
-    auto l_table_cloums = state_->s_.template get_table_columns<Table>();
-    state_->values_.bind_values_.clear();
     for (const auto& value : values) {
       for (const auto& l_column : l_table_cloums) {
         if (l_column.primary_key_) continue;  // 跳过主键列
