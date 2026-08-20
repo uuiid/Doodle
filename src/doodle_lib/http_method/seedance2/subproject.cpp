@@ -40,7 +40,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, get) {
   auto l_query = select(l_sql)
                      .columns(object<sd2::subproject>(), object<sd2::ai_preview_file>())
                      .from<sd2::subproject>()
-                     .join<sd2::ai_preview_file>(&sd2::subproject::preview_file_, &sd2::ai_preview_file::uuid_id_);
+                     .left_outer_join<sd2::ai_preview_file>(&sd2::subproject::preview_file_, &sd2::ai_preview_file::uuid_id_);
 
   // 非制片/管理员只能看到自己参与的子项目
   if (!person_.is_manager()) {

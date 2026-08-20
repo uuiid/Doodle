@@ -54,7 +54,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, get)
       select(l_sql)
           .columns(object<sd2::ai_generate_entity>(), object<sd2::ai_preview_file>())
           .from<sd2::ai_generate_entity>()
-          .join<sd2::ai_preview_file>(&sd2::ai_generate_entity::preview_file_, &sd2::ai_preview_file::uuid_id_)
+          .left_outer_join<sd2::ai_preview_file>(&sd2::ai_generate_entity::preview_file_, &sd2::ai_preview_file::uuid_id_)
           .where(c(&sd2::ai_generate_entity::ai_generate_classification_id_) == classification_id_)()
           .to_vector<ai_generate_entity_with_preview_file>();
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
