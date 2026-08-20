@@ -86,7 +86,7 @@ struct insert_t : public statement_info_base_t {
     using Table         = std::decay_t<T>;
     auto l_table_cloums = state_->s_.template get_table_columns<Table>();
     if constexpr (has_uuid_id<Table>) {
-      in_object.uuid_id_ = core_set::get_set().get_uuid();
+      if (in_object.uuid_id_.is_nil()) in_object.uuid_id_ = core_set::get_set().get_uuid();
     }
     if constexpr (has_created_at<Table>)
       in_object.created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
@@ -115,7 +115,7 @@ struct insert_t : public statement_info_base_t {
     if constexpr (has_uuid_id<Table> || has_created_at<Table> || has_updated_at<Table>)
       for (auto&& value : values) {
         if constexpr (has_uuid_id<Table>) {
-          value.uuid_id_ = core_set::get_set().get_uuid();
+          if (value.uuid_id_.is_nil()) value.uuid_id_ = core_set::get_set().get_uuid();
         }
         if constexpr (has_created_at<Table>)
           value.created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
