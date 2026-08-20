@@ -451,14 +451,13 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  required: [reference]
-                  properties:
-                    reference:
-                      $ref: "#/components/schemas/AiGenerateEntity"
-                    preview:
-                      $ref: "#/components/schemas/AiPreviewFile"
-                      description: 预览文件，仅存在预览时返回
+                  allOf:
+                    - $ref: "#/components/schemas/AiGenerateEntity"
+                    - type: object
+                      properties:
+                        preview:
+                          $ref: "#/components/schemas/AiPreviewFile"
+                          description: 预览文件，仅存在预览时返回
     post:
       tags: [AI生成实体]
       summary: 创建 AI 生成实体
