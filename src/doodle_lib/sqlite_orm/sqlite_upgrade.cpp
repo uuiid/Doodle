@@ -49,7 +49,7 @@ struct upgrade_init_t : sqlite_upgrade {
     if (l_s.pragma().user_version() != 0) return;
     l_s.sync_schema();
     l_s.pragma().user_version(g_current_version);
-    auto l_session = sqlite_database{in_data.get_strand(), in_data.create_session()};
+    auto l_session = sqlite_database{in_data.get_strand(), l_s};
 
 #define DOODLE_ASSET_TYPE(class_name)                        \
   for (const auto& v : class_name::get_all_constant()) {     \
