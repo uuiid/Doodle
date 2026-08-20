@@ -127,5 +127,10 @@ target_include_directories(doodle_lib
         PUBLIC
         ${PROJECT_SOURCE_DIR}/src
 )
-#add_custom_target(genexdebug
+
+install(TARGETS doodle_lib
+        RUNTIME DESTINATION bin
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+)
 #        COMMAND ${CMAKE_COMMAND} -E echo "$<TARGET_FILE:Fbx::Fbx> $<TARGET_RUNTIME_DLLS:doodle_lib>")
