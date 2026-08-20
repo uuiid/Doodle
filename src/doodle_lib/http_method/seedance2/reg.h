@@ -102,6 +102,7 @@ DOODLE_HTTP_FUN_END()
 
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/task
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_task)
+seedance2_subproject_task();
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid subproject_id_{};

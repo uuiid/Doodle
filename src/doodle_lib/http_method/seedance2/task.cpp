@@ -109,7 +109,9 @@ class seedance2_task_run_manager {
     boost::asio::steady_timer l_timer{g_io_context()};
     std::map<std::string, std::shared_ptr<seedance2_client>> l_client_map;
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-      for (auto&& l_task_info : get_task()) {
+      auto l_tasks = get_task();
+      if (l_tasks.empty()) co_return;
+      for (auto&& l_task_info : l_tasks) {
         std::shared_ptr<seedance2_client> l_client;
         if (l_client_map.contains(l_task_info.app_secret_)) {
           l_client = l_client_map[l_task_info.app_secret_];
@@ -130,11 +132,20 @@ class seedance2_task_run_manager {
   boost::asio::awaitable<void> query_task_and_down(
       const sd2::task& in_task, const std::shared_ptr<seedance2_client>& in_client
   ) try {
-    const auto l_task_info     = co_await in_client->query_task(in_task.task_id_);
-    auto l_task_ptr            = std::make_shared<sd2::task>(in_task);
-    l_task_ptr->data_response_ = l_task_info;
+    auto l_task_ptr = std::make_shared<sd2::task>(in_task);
+    try {
+      const auto l_task_info     = co_await in_client->query_task(in_task.task_id_);
+      l_task_ptr->data_response_ = l_task_info;
+    } catch (const doodle_error& in_err) {
+      SPDLOG_LOGGER_ERROR(
+          g_logger_ctrl().get_main_error(), "查询任务 {} 失败, 错误: {}", in_task.uuid_id_, in_err.what()
+      );
+      l_task_ptr->status_ = sd2::task_status::failed;
+      l_task_ptr->data_response_ = in_err.what();
+    }
     const sd2::task_status l_status{
-        l_task_info.contains("status") ? l_task_info.at("status").get<sd2::task_status>() : sd2::task_status::failed
+        l_task_ptr->data_response_.contains("status") ? l_task_ptr->data_response_.at("status").get<sd2::task_status>()
+                                                      : sd2::task_status::failed
     };
     auto l_sql = get_sqlite_database();
 
@@ -152,11 +163,14 @@ class seedance2_task_run_manager {
         co_return;
       }
       case sd2::task_status::succeeded: {
-        if (l_task_info.contains("usage") && l_task_info.at("usage").contains("completion_tokens")) {
-          l_task_ptr->completion_tokens_ = l_task_info.at("usage").at("completion_tokens").get<std::int64_t>();
+        if (l_task_ptr->data_response_.contains("usage") &&
+            l_task_ptr->data_response_.at("usage").contains("completion_tokens")) {
+          l_task_ptr->completion_tokens_ =
+              l_task_ptr->data_response_.at("usage").at("completion_tokens").get<std::int64_t>();
         }
-        if (l_task_info.contains("content") && l_task_info.at("content").contains("video_url")) {
-          auto l_video_url = l_task_info.at("content").at("video_url").get<std::string>();
+        if (l_task_ptr->data_response_.contains("content") &&
+            l_task_ptr->data_response_.at("content").contains("video_url")) {
+          auto l_video_url = l_task_ptr->data_response_.at("content").at("video_url").get<std::string>();
           SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "任务 {} 完成，下载视频 {}", in_task.uuid_id_, l_video_url);
           auto l_file                = co_await in_client->download_result(l_video_url);
           auto l_preview_file        = std::make_shared<sd2::ai_preview_file>();
@@ -312,7 +326,7 @@ std::vector<sd2::task_similarity> get_task_similarity_for_person(
 }
 
 }  // namespace
-
+seedance2_subproject_task::seedance2_subproject_task() { seedance2_task_run_manager::Get().run(); }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   person_.check_subproject_access(subproject_id_);
 

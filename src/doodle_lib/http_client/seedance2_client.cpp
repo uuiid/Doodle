@@ -32,7 +32,9 @@ boost::asio::awaitable<std::string> seedance2_client::run_task(const nlohmann::j
     );
   }
 
-  DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "run_task error: {} {}", l_res.result(), l_res.body().dump());
+  DOODLE_CHICK(
+      l_res.result() == boost::beast::http::status::ok, "run_task error: {} {}", l_res.result(), l_res.body().dump()
+  );
 
   auto& l_json = l_res.body();
   DOODLE_CHICK(l_json.contains("id"), "run_task response error: {}", l_json.dump());
@@ -63,7 +65,9 @@ boost::asio::awaitable<nlohmann::json> seedance2_client::query_task(const std::s
   boost::beast::http::response<http::basic_json_body> l_res{};
   co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
 
-  DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "query_task error: {}", l_res.result());
+  DOODLE_CHICK(
+      l_res.result() == boost::beast::http::status::ok, "query_task error: {} {}", l_res.result(), l_res.body().dump()
+  );
 
   co_return l_res.body();
 }
