@@ -312,11 +312,9 @@ describe('seedance2 task', function () {
       .set(authHeader)
       .send({
         data_request: {
-          content: {
-            content: [
-              { type: 'text', text: 'A test prompt for seedance2 task' },
-            ],
-          },
+          content: [
+            { type: 'text', text: 'A test prompt for seedance2 task' },
+          ],
         },
         ai_studio_id: '00000000-0000-0000-0000-000000000000',
         project_uuid_id: projectId,
