@@ -1335,6 +1335,7 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 		ConsoleVar->AddOrUpdateConsoleVariable("r.DepthOfFieldQuality", 4.000000);
 		ConsoleVar->AddOrUpdateConsoleVariable("r.MotionBlurQuality", 4.000000);
 		ConsoleVar->AddOrUpdateConsoleVariable("r.VT.TileSize", 128.000000);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.VT.PoolSizeScale", 6);
 	}
 
 	// 设置抗拒齿方法
