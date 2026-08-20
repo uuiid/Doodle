@@ -140,7 +140,7 @@ class seedance2_task_run_manager {
       SPDLOG_LOGGER_ERROR(
           g_logger_ctrl().get_main_error(), "查询任务 {} 失败, 错误: {}", in_task.uuid_id_, in_err.what()
       );
-      l_task_ptr->status_ = sd2::task_status::failed;
+      l_task_ptr->status_        = sd2::task_status::failed;
       l_task_ptr->data_response_ = in_err.what();
     }
     const sd2::task_status l_status{
@@ -381,12 +381,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
 
   l_client->set_token(l_studio.app_secret_);
   l_client->set_logger(g_logger_ctrl().get_http());
+  DOODLE_CHICK_HTTP(!l_task.task_id_.empty(), internal_server_error, "task id 为空, 无法查询");
+  auto l_res = co_await l_client->query_task(l_task.task_id_);
+  const sd2::task_status l_status{
+      l_res.contains("status") ? l_res.at("status").get<sd2::task_status>() : sd2::task_status::failed
+  };
+  DOODLE_CHICK_HTTP(l_status == sd2::task_status::queued, bad_request, "只有排队中的任务可以删除");
 #ifdef DOODLE_SEED2
-  if (!l_task.task_id_.empty()) co_await l_client->cancel_task(l_task.task_id_);
+  co_await l_client->cancel_task(l_task.task_id_);
 #endif
-
-  l_task.status_ = sd2::task_status::cancelled;
-
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
 }
 
