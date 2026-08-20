@@ -219,12 +219,15 @@ auto create_video_tile_image(cv::VideoCapture& in_capture, const handle_video_fi
 namespace preview {
 video_info_t get_video_duration(const FSys::path& in_path) {
   auto l_video    = cv::VideoCapture{in_path.generic_string()};
+  auto l_fps      = static_cast<std::int32_t>(l_video.get(cv::CAP_PROP_FPS));
   auto l_duration = l_video.get(cv::CAP_PROP_FRAME_COUNT) / l_video.get(cv::CAP_PROP_FPS);
   return video_info_t{
-      l_duration, cv::Size{
-                      static_cast<int>(l_video.get(cv::CAP_PROP_FRAME_WIDTH)),
-                      static_cast<int>(l_video.get(cv::CAP_PROP_FRAME_HEIGHT))
-                  }
+      l_duration,
+      cv::Size{
+          static_cast<int>(l_video.get(cv::CAP_PROP_FRAME_WIDTH)),
+          static_cast<int>(l_video.get(cv::CAP_PROP_FRAME_HEIGHT))
+      },
+      l_fps
   };
 }
 
@@ -360,6 +363,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     auto l_prj_size = l_prj.get_resolution();
 
     auto l_duration = preview::get_video_duration(l_new_path);
+    DOODLE_CHICK(l_duration.size_.width > 0 && l_duration.size_.height > 0, "无法获取视频尺寸");
+    DOODLE_CHICK(l_duration.fps_ > 0, "无法获取视频帧率");
+    DOODLE_CHICK(l_duration.fps_ == l_prj.fps_, "无法获取视频帧率");
+
     boost::asio::post(
         g_pool_strand(),
         [l_new_path, fps = l_prj.fps_, l_preview_file, size = cv::Size{l_prj_size.first, l_prj_size.second}]() {

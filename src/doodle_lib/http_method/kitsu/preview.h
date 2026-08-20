@@ -10,6 +10,8 @@ namespace doodle::http::preview {
 struct video_info_t {
   std::double_t duration_{0.0};
   cv::Size size_{0, 0};
+  // 帧率
+  std::int32_t fps_{0};
 };
 
 video_info_t get_video_duration(const FSys::path& in_path);
