@@ -139,7 +139,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, post) 
       l_ext == ".mp3" || l_ext == ".wav" || l_ext == ".ogg" || l_ext == ".aac" || l_ext == ".wma" || l_ext == ".m4a";
 
   auto l_preview        = std::make_shared<sd2::ai_preview_file>();
-  l_preview->extension_ = l_is_audio ? l_ext : (l_is_video ? ".mp4" : ".png");
+  l_preview->extension_ = l_ext;
   co_await l_sql.install(l_preview);
 
   auto l_ref                    = std::make_shared<sd2::ai_entity_reference_preview>();
