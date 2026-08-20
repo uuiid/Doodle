@@ -165,8 +165,8 @@ boost::asio::awaitable<void> session_data::run() try {
     stream_->expires_after(timeout_);
   }
 } catch (...) {
-  auto l_err_str = boost::current_exception_diagnostic_information();
-  SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), l_err_str);
+  // auto l_err_str = boost::current_exception_diagnostic_information();
+  // SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), l_err_str);
 }
 
 void session_data::set_session() {
