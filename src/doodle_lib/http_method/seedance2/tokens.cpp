@@ -10,6 +10,7 @@
 #include "core/global_function.h"
 #include "reg.h"
 #include <chrono>
+#include <fmt/format.h>
 #include <map>
 #include <memory>
 #include <set>
@@ -279,5 +280,43 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date, post) {
   co_await l_sql.install_range(l_list_vector);
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_list_vector);
+}
+
+namespace {
+struct task_similarity_person_t {
+  std::map<uuid, std::vector<sd2::task_similarity>> person_task_maps_;
+  // to json
+  friend void to_json(nlohmann::json& j, const task_similarity_person_t& p) {
+    for (auto&& [person_id, task_similarities] : p.person_task_maps_) {
+      j[fmt::to_string(person_id)] = task_similarities;
+    }
+  }
+};
+}  // namespace
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_similarity, get) {
+  person_.check_producer();
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  namespace sd2 = doodle::seedance2;
+
+  std::int32_t l_offset{0};
+  std::int32_t l_limit{5000};
+  for (auto&& l_i : in_handle->url_.params()) {
+    if (l_i.has_value && l_i.key == "offset") l_offset = std::stoi(l_i.value);
+    if (l_i.has_value && l_i.key == "limit") l_limit = std::stoi(l_i.value);
+  }
+
+  task_similarity_person_t l_result;
+  for (auto&& [l_similarity, l_user_id] :
+       select(l_sql)
+           .columns(object<sd2::task_similarity>(), &sd2::task::user_id_)
+           .from<sd2::task_similarity>()
+           .join<sd2::task>(&sd2::task_similarity::task_id_, &sd2::task::uuid_id_)
+           .offset(l_offset)
+           .limit(l_limit)()) {
+    l_result.person_task_maps_[l_user_id].push_back(std::move(l_similarity));
+  }
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 }  // namespace doodle::http::seedance2

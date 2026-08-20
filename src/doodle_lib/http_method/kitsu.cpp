@@ -357,6 +357,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
           &seedance2::seedance2_tokens_person_date::date_
         )
       )
+      .reg_t<seedance2::seedance2_task_similarity>("/api/seedance2/task-similarity"_url)
       .reg_t<seedance2::seedance2_subproject>("/api/seedance2/subproject"_url)
       .reg_t<seedance2::seedance2_subproject_instance>("/api/seedance2/subproject/{}"_url(
         &seedance2::seedance2_subproject_instance::id_

@@ -12,7 +12,6 @@
 #include <core/http/http_function.h>
 #include <sqlite_orm/orm/update.h>
 
-
 namespace doodle::http::seedance2 {
 // 设置当周人员剩余可使用的 token 数量
 orm::update_t add_remaining_tokens_for_person(
@@ -237,4 +236,10 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 chrono::year_month_day date_{};
 DOODLE_HTTP_FUN_END()
+// 获取预警信息(task重复度)
+// /api/seedance2/task-similarity
+DOODLE_HTTP_JWT_FUN(seedance2_task_similarity)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+
 }  // namespace doodle::http::seedance2
