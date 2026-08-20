@@ -241,6 +241,7 @@ void http_jwt_fun::http_jwt_t::check_subproject_access(const uuid& in_subproject
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
 bool http_jwt_fun::http_jwt_t::is_subproject_access(const uuid& in_subproject_id) const {
+  if (person_.ai_studio_id_.is_nil()) return false;
   if (person_.role_ == person_role_type::admin || person_.role_ == person_role_type::producer ||
       person_.role_ == person_role_type::manager)
     return true;
