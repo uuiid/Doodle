@@ -43,7 +43,7 @@
 #include <tuple>
 #include <vector>
 
-// #define DOODLE_SEED2
+#define DOODLE_SEED2
 
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
