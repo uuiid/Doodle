@@ -31,17 +31,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, post
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_entity);
 }
-struct ai_generate_entity_with_preview_file {
-  sd2::ai_generate_entity reference_;
+struct ai_generate_entity_with_preview_file : public sd2::ai_generate_entity {
   sd2::ai_preview_file preview_;
   explicit ai_generate_entity_with_preview_file(
       const sd2::ai_generate_entity& in_reference, const sd2::ai_preview_file& in_preview
   )
-      : reference_(in_reference), preview_(in_preview) {}
+      : sd2::ai_generate_entity(in_reference), preview_(in_preview) {}
   // to  json
   friend void to_json(nlohmann::json& j, const ai_generate_entity_with_preview_file& p) {
-    j["reference"] = p.reference_;
-    j["preview"]   = p.preview_;
+    j["reference"] = static_cast<sd2::ai_generate_entity>(p);
+    if (!p.preview_.uuid_id_.is_nil()) j["preview"] = p.preview_;
   }
 };
 namespace {}
@@ -50,13 +49,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, get)
 
   auto l_sql = get_sqlite_database();
   using namespace orm;
-  auto l_result =
-      select(l_sql)
-          .columns(object<sd2::ai_generate_entity>(), object<sd2::ai_preview_file>())
-          .from<sd2::ai_generate_entity>()
-          .left_outer_join<sd2::ai_preview_file>(&sd2::ai_generate_entity::preview_file_, &sd2::ai_preview_file::uuid_id_)
-          .where(c(&sd2::ai_generate_entity::ai_generate_classification_id_) == classification_id_)()
-          .to_vector<ai_generate_entity_with_preview_file>();
+  auto l_result = select(l_sql)
+                      .columns(object<sd2::ai_generate_entity>(), object<sd2::ai_preview_file>())
+                      .from<sd2::ai_generate_entity>()
+                      .left_outer_join<sd2::ai_preview_file>(
+                          &sd2::ai_generate_entity::preview_file_, &sd2::ai_preview_file::uuid_id_
+                      )
+                      .where(c(&sd2::ai_generate_entity::ai_generate_classification_id_) == classification_id_)()
+                      .to_vector<ai_generate_entity_with_preview_file>();
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
@@ -129,17 +129,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_preview, post) {
   co_return in_handle->make_msg(nlohmann::json{{"id", l_preview->uuid_id_}});
 }
 namespace {
-struct ai_entity_reference_preview_with_preview_file {
-  sd2::ai_entity_reference_preview reference_;
+struct ai_entity_reference_preview_with_preview_file : public sd2::ai_entity_reference_preview {
   sd2::ai_preview_file preview_;
   explicit ai_entity_reference_preview_with_preview_file(
       const sd2::ai_entity_reference_preview& in_reference, const sd2::ai_preview_file& in_preview
   )
-      : reference_(in_reference), preview_(in_preview) {}
+      : sd2::ai_entity_reference_preview(in_reference), preview_(in_preview) {}
   // to  json
   friend void to_json(nlohmann::json& j, const ai_entity_reference_preview_with_preview_file& p) {
-    j["reference"] = p.reference_;
-    j["preview"]   = p.preview_;
+    to_json(j, static_cast<const sd2::ai_entity_reference_preview>(p));
+    j["preview"] = p.preview_;
   }
 };
 
