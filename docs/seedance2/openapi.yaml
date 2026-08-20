@@ -695,11 +695,16 @@ paths:
                   description: 图片或视频文件
       responses:
         "200":
-          description: 上传成功
+          description: 上传成功，返回参考记录和预览文件信息
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AiEntityReferencePreview"
+                type: object
+                properties:
+                  reference:
+                    $ref: "#/components/schemas/AiEntityReferencePreview"
+                  preview:
+                    $ref: "#/components/schemas/AiPreviewFile"
 
   /api/seedance2/subproject/{subproject_id}/reference/{id}:
     delete:
@@ -1611,6 +1616,16 @@ components:
           type: string
           format: uuid
           description: 预览文件ID
+
+    AiPreviewFile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        extension:
+          type: string
+          description: 文件扩展名
 
     AiEntityReferencePreview:
       type: object
