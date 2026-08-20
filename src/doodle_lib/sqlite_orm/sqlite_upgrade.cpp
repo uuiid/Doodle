@@ -27,7 +27,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 15;
+constexpr std::size_t g_current_version = 16;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -102,19 +102,10 @@ struct upgrade_2_t : sqlite_upgrade {
       l_s.drop_trigger("entity_fts_update_trigger");
       l_s.sync_schema();
     }
-    if (in_data.create_session().pragma().user_version() == 14) {
+    if (in_data.create_session().pragma().user_version() == 15) {
       auto l_s = in_data.create_session();
-      
-      // in_data.pragma().foreign_keys(false);
-      l_s.drop_table("seedance2_task_person_token");
-      l_s.drop_table("ai_studio_person_role_link");
-      l_s.drop_table("seedance2_task");
-      // 重命名表 person.max_completion_tokens -> person.remaining_completion_tokens
-      l_s.exec(R"(ALTER TABLE person RENAME COLUMN max_completion_tokens TO remaining_completion_tokens;)");
-      // 添加列 &person::ai_studio_id_ 并添加外键约束
-      l_s.exec(R"(ALTER TABLE person ADD COLUMN ai_studio_id BLOB;)");
-      l_s.sync_schema();
-      l_s.rebuild_table<person>();
+      // 添加 description 字段到 seedance2::ai_generate_entity 表
+      l_s.exec(R"(ALTER TABLE seedance2_ai_generate_entity ADD COLUMN description TEXT;)");
     }
 
     in_data.create_session().pragma().user_version(g_current_version);
