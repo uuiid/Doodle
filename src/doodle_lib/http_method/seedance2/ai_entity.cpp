@@ -63,6 +63,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_insta
 
   auto l_entity = std::make_shared<sd2::ai_generate_entity>(l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_));
   if (l_json.contains("name")) l_json.at("name").get_to(l_entity->name_);
+  if (l_json.contains("description")) l_json.at("description").get_to(l_entity->description_);
   if (l_json.contains("ai_generate_classification_id"))
     l_json.at("ai_generate_classification_id").get_to(l_entity->ai_generate_classification_id_);
   if (l_json.contains("shot_uuid_id")) l_json.at("shot_uuid_id").get_to(l_entity->shot_uuid_id_);

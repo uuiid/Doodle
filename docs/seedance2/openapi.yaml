@@ -479,6 +479,9 @@ paths:
               properties:
                 name:
                   type: string
+                description:
+                  type: string
+                  description: 实体描述（选填）
                 project_uuid_id:
                   type: string
                   format: uuid
@@ -523,7 +526,7 @@ paths:
     put:
       tags: [AI生成实体]
       summary: 更新实体
-      description: 非外包人员可更新。可更新字段：name, ai_generate_classification_id, shot_uuid_id, preview_file
+      description: 非外包人员可更新。可更新字段：name, description, ai_generate_classification_id, shot_uuid_id, preview_file
       parameters:
         - name: subproject_id
           in: path
@@ -546,6 +549,9 @@ paths:
               properties:
                 name:
                   type: string
+                description:
+                  type: string
+                  description: 实体描述（选填）
                 ai_generate_classification_id:
                   type: string
                   format: uuid
@@ -1586,6 +1592,9 @@ components:
         name:
           type: string
           description: 实体名称
+        description:
+          type: string
+          description: 实体描述（选填）
         ai_generate_classification_id:
           type: string
           format: uuid
