@@ -188,10 +188,12 @@ void session_data::set_session() {
   if (auto l_keep_alive = req_header_.find(boost::beast::http::field::keep_alive); l_keep_alive != req_header_.end()) {
     auto l_value = l_keep_alive->value();
     if (auto l_it = l_value.find("timeout="); l_it != std::string_view::npos) {
-      timeout_ = std::chrono::seconds{std::min(
-          boost::lexical_cast<std::int32_t>(l_value.substr(l_it + 8, l_value.find(',', l_it) - l_it - 8)),
+      timeout_ = std::min(
+          std::chrono::seconds{
+              boost::lexical_cast<std::int32_t>(l_value.substr(l_it + 8, l_value.find(',', l_it) - l_it - 8))
+          },
           doodle_config::g_max_keep_alive
-      )};
+      );
     } else {
       timeout_ = doodle_config::g_timeout;  // 有 keep-alive 但无 timeout=，重置为默认值
     }
