@@ -23,11 +23,11 @@ namespace doodle {
 class DOODLELIB_API doodle_lib : public boost::noncopyable, boost::equality_comparable<doodle_lib> {
  public:
   using logger_ctr_ptr = std::shared_ptr<details::logger_ctrl>;
-  friend boost::asio::io_context& g_io_context();
-  friend entt::registry::context& g_ctx();
-  friend details::logger_ctrl& g_logger_ctrl();
-  friend boost::asio::strand<boost::asio::io_context::executor_type>& g_strand();
-  friend boost::asio::strand<boost::asio::io_context::executor_type>& g_pool_strand();
+  friend DOODLELIB_API boost::asio::io_context& g_io_context();
+  friend DOODLELIB_API entt::registry::context& g_ctx();
+  friend DOODLELIB_API details::logger_ctrl& g_logger_ctrl();
+  friend DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_strand();
+  friend DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_pool_strand();
 
  private:
   class impl;

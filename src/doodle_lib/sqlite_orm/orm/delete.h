@@ -9,7 +9,7 @@
 
 namespace doodle::orm {
 
-struct delete_t : public statement_info_base_t {
+struct DOODLELIB_API delete_t : public statement_info_base_t {
  private:
   struct delete_state_t {
     std::string from_table_name_;

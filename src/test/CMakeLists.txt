@@ -30,6 +30,9 @@ target_link_libraries(test_main
         Alembic::Alembic
         Fbx::Fbx-static
         TBB::tbb
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        unofficial::sqlite3::sqlite3
 )
 target_compile_definitions(test_main
         PUBLIC

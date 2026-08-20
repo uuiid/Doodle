@@ -9,7 +9,7 @@
 
 namespace doodle {
 
-class generate_text_video {
+class DOODLELIB_API generate_text_video {
  public:
   struct font_attr_t {
     FSys::path font_path_{doodle_config::font_default};

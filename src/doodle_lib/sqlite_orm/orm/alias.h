@@ -10,7 +10,7 @@
 namespace doodle::orm {
 struct column_operations;
 
-struct alias_column_info_t : public base_column_info_t {
+struct DOODLELIB_API alias_column_info_t : public base_column_info_t {
   table_columns_t ptr_;
   std::string table_alias_name_;
 
@@ -26,7 +26,7 @@ struct alias_column_info_t : public base_column_info_t {
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
 };
 
-struct alias_info_t : public table_info_base_t {
+struct DOODLELIB_API alias_info_t : public table_info_base_t {
   std::string table_name_;
   std::type_index table_type_index_{typeid(void)};
 

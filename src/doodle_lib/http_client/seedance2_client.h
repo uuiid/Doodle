@@ -14,7 +14,7 @@
 
 namespace doodle::http::seedance2 {
 
-class seedance2_client : public std::enable_shared_from_this<seedance2_client> {
+class DOODLELIB_API seedance2_client : public std::enable_shared_from_this<seedance2_client> {
   using http_client_t     = doodle::http::http_client_ssl;
   using http_client_ptr_t = std::shared_ptr<http_client_t>;
 

@@ -13,7 +13,7 @@ class http_websocket_data;
 
 using http_websocket_data_ptr = std::shared_ptr<detail::http_websocket_data>;
 
-class websocket_route {
+class DOODLELIB_API websocket_route {
  public:
   // using call_fun_type = std::function<boost::asio::awaitable<std::string>(http_websocket_data_ptr)>;
 

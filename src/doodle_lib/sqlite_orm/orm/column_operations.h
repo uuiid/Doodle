@@ -27,7 +27,7 @@ enum class compare_operator {
 };
 
 // and 运算符
-struct operator_compare_t : public column_operations_base_t {
+struct DOODLELIB_API operator_compare_t : public column_operations_base_t {
   struct data_impl {
     compare_operator op_;
     std::shared_ptr<column_operations_base_t> left_;
@@ -79,14 +79,14 @@ concept is_bindable_value =
     !std::is_base_of_v<column_operations, std::decay_t<T>> && !is_alias_column_t_v<std::decay_t<T>> &&
     !std::is_same_v<std::decay_t<T>, expression_t> && !std::is_same_v<std::decay_t<T>, bind_value_t>;
 
-struct column_operations : column_operations_base_t {
+struct DOODLELIB_API column_operations : column_operations_base_t {
  private:
   struct to_str_base_t {
     ~to_str_base_t()                                                                                   = default;
     virtual std::string to_str(column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx) const = 0;
     virtual void collect_bind_variants(bind_value_collector_t& bind_variants) const                    = 0;
   };
-  struct to_str_value_t : to_str_base_t {
+  struct DOODLELIB_API to_str_value_t : to_str_base_t {
     std::string fmt_str_;
     bind_value_t value_variant_;
     explicit to_str_value_t(std::string fmt_str);
@@ -109,7 +109,7 @@ struct column_operations : column_operations_base_t {
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
   // NEW.uuid = OLD.uuid   NEW.name != OLD.name 别名比较, 必须包含表名以避免歧义
-  struct to_str_compare_t : to_str_base_t {
+  struct DOODLELIB_API to_str_compare_t : to_str_base_t {
     std::string fmt_str_;
     column_info_ptr other_column_ptr_;
     explicit to_str_compare_t(std::string fmt_str, column_info_ptr other_column_ptr);
@@ -117,7 +117,7 @@ struct column_operations : column_operations_base_t {
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
   // 这里的 column_to_str 主要是将 column_operations 转换为对应的列名称，用于生成 SQL 片段
-  struct column_to_str : to_str_base_t {
+  struct DOODLELIB_API column_to_str : to_str_base_t {
     explicit column_to_str() = default;
     std::string to_str(column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& /*bind_variants*/) const override {
@@ -382,7 +382,7 @@ struct column_operations : column_operations_base_t {
 };
 
 // 动态查询
-struct dynamic_column_operations : column_operations_base_t {
+struct DOODLELIB_API dynamic_column_operations : column_operations_base_t {
   std::vector<std::shared_ptr<column_operations_base_t>> operations_;
   dynamic_column_operations();
   std::string to_sql(const session& s, const to_sql_ctx& ctx) const override;
@@ -395,7 +395,7 @@ struct dynamic_column_operations : column_operations_base_t {
   }
 };
 
-struct on_operations : column_operations_base_t {
+struct DOODLELIB_API on_operations : column_operations_base_t {
   std::shared_ptr<column_operations_base_t> expr_;
   on_operations();
   template <typename T>

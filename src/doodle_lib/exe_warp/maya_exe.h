@@ -27,7 +27,7 @@ class maya_exe;
 
 namespace maya_exe_ns {
 
-class arg : public async_task {
+class DOODLELIB_API arg : public async_task {
   FSys::path out_path_file_{};
   std::shared_ptr<server_task_info::run_time_info_t> time_info_;
 

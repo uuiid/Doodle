@@ -15,7 +15,7 @@
 #include <vector>
 
 namespace doodle::orm {
-struct insert_t : public statement_info_base_t {
+struct DOODLELIB_API insert_t : public statement_info_base_t {
  private:
   struct insert_state_t {
     std::vector<column_info_ptr> columns_;

@@ -59,7 +59,7 @@ overloaded(Ts...) -> overloaded<Ts...>;
 DOODLELIB_API boost::uuids::uuid from_uuid_str(const std::string& uuid_str);
 
 template <typename Duration = std::chrono::system_clock::duration>
-DOODLELIB_API std::chrono::zoned_time<std::chrono::system_clock::duration> from_chrono_time_zone_str(
+std::chrono::zoned_time<std::chrono::system_clock::duration> from_chrono_time_zone_str(
     const std::string& in_time_zone_str
 ) {
   using time_point     = std::chrono::zoned_time<Duration>;

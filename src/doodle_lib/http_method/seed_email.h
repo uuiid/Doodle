@@ -8,7 +8,7 @@ namespace mailio {
 class smtp;
 }
 namespace doodle::email {
-class seed_email {
+class DOODLELIB_API seed_email {
  private:
   std::string address_;
   std::uint32_t port_;

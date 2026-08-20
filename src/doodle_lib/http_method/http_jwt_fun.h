@@ -13,7 +13,7 @@ struct task;
 }  // namespace doodle
 
 namespace doodle::http {
-class http_jwt_fun : public http_function {
+class DOODLELIB_API http_jwt_fun : public http_function {
  public:
   struct http_jwt_t;
 

@@ -16,7 +16,7 @@ void connect_video(
     const image_size &in_size, const uuid &in_task_info_id = uuid{}, const progress_data_ptr &in_progress_data = nullptr
 );
 
-class connect_video_t : public async_task {
+class DOODLELIB_API connect_video_t : public async_task {
  public:
   FSys::path out_path_;
   std::vector<FSys::path> file_list_{};

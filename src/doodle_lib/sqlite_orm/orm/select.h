@@ -29,7 +29,7 @@ concept result_vector_value_constructible =
     (IsSingleColumn && std::constructible_from<T, Source>) ||
     (!IsSingleColumn && requires(Source&& source) { std::make_from_tuple<T>(std::forward<Source>(source)); });
 
-struct select_t : public statement_info_base_t {
+struct DOODLELIB_API select_t : public statement_info_base_t {
  protected:
   friend class session;
   friend select_t select(const session& s);

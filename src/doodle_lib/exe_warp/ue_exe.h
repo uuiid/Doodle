@@ -23,7 +23,7 @@ FSys::path find_ue_project_file(const FSys::path& in_path);
 
 }  // namespace ue_exe_ns
 
-class ue_ctx {
+class DOODLELIB_API ue_ctx {
  public:
   ue_ctx()                                           = default;
   ~ue_ctx()                                          = default;

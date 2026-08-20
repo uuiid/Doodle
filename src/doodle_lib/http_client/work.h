@@ -36,7 +36,7 @@ using http_websocket_data_ptr = std::shared_ptr<detail::http_websocket_data>;
  *
  */
 
-class http_work : public std::enable_shared_from_this<http_work> {
+class DOODLELIB_API http_work : public std::enable_shared_from_this<http_work> {
   using timer     = boost::asio::high_resolution_timer;
   using timer_ptr = std::shared_ptr<timer>;
 

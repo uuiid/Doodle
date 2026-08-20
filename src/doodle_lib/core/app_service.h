@@ -5,7 +5,7 @@
 #pragma once
 #include <doodle_lib/core/app_base.h>
 namespace doodle {
-class app_service : public app_base {
+class DOODLELIB_API app_service : public app_base {
  public:
   static constexpr auto g_run{"run"};
 
@@ -64,7 +64,7 @@ class app_service : public app_base {
  * @brief 服务器基本的命令行类
  */
 template <typename... Facet_>
-class app_service_t : public app_service {
+class DOODLELIB_API app_service_t : public app_service {
  public:
   app_service_t() : app_service() { run_facet(); };
 

@@ -12,7 +12,7 @@
 
 namespace doodle::orm {
 
-struct create_trigger_t {
+struct DOODLELIB_API create_trigger_t {
   struct trigger_info {
     std::string name_;
     trigger_timing timing_;                 // BEFORE, AFTER, INSTEAD OF

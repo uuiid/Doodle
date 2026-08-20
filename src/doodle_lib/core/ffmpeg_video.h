@@ -16,7 +16,7 @@
 #include <utility>
 
 namespace doodle {
-class ffmpeg_video {
+class DOODLELIB_API ffmpeg_video {
   class impl;
 
   // 主要处理的视频
@@ -68,7 +68,7 @@ class ffmpeg_video {
 };
 
 // 重新调整大小
-class ffmpeg_video_resize {
+class DOODLELIB_API ffmpeg_video_resize {
   cv::Size high_size_;
   // 低分辨率
   cv::Size low_size_;

@@ -36,7 +36,7 @@ struct bind_value_t {
   void bind(sqlite_stmt& stmt) const;
   std::string to_string(const session& in_session, const to_sql_ctx& ctx) const;
 };
-struct bind_value_collector_t {
+struct DOODLELIB_API bind_value_collector_t {
   std::vector<bind_value_t> bind_values_;
 };
 

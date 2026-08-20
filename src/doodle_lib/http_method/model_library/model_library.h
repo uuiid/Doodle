@@ -50,7 +50,7 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_);
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-class pictures_base : public http_jwt_fun {
+class DOODLELIB_API pictures_base : public http_jwt_fun {
  protected:
   std::pair<std::size_t, std::size_t> create_thumbnail_mp4(
       const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name

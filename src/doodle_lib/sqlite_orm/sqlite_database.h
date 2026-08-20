@@ -58,7 +58,7 @@ struct database_t;
 }  // namespace doodle
 namespace doodle {
 
-class sqlite_storage : public orm::storage {
+class DOODLELIB_API sqlite_storage : public orm::storage {
   void open_(FSys::path in_path, std::int32_t in_flags) override;
   void register_custom_extension(sqlite3* in_sqlite) override;
   using strand_type = boost::asio::strand<boost::asio::io_context::executor_type>;
@@ -71,7 +71,7 @@ class sqlite_storage : public orm::storage {
   strand_type get_strand() { return strand_; }
 };
 
-class sqlite_database {
+class DOODLELIB_API sqlite_database {
   using strand_type = boost::asio::strand<boost::asio::io_context::executor_type>;
   strand_type strand_;
   static constexpr std::size_t g_step_size{100};

@@ -18,7 +18,7 @@ using socket_io_websocket_core_wptr = std::weak_ptr<socket_io_websocket_core>;
 using socket_io_sid_data_ptr        = std::shared_ptr<sid_data>;
 using socket_io_sid_data_wptr       = std::weak_ptr<sid_data>;
 /// socket 连接
-class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
+class DOODLELIB_API socket_io_core : public std::enable_shared_from_this<socket_io_core> {
  public:
   using signal_type = boost::signals2::signal<void(const std::variant<nlohmann::json, std::vector<std::string>>&)>;
   using signal_ptr  = std::shared_ptr<signal_type>;

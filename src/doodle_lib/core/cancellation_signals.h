@@ -2,7 +2,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle {
-class cancellation_signals {
+class DOODLELIB_API cancellation_signals {
   struct signal_entry {
     boost::asio::cancellation_signal signal;
     bool observed_handler{false};

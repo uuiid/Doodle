@@ -15,7 +15,7 @@
 // #include <asio/experimental/as_single.hpp>
 
 namespace doodle::dingding {
-class client : public std::enable_shared_from_this<client> {
+class DOODLELIB_API client : public std::enable_shared_from_this<client> {
   using https_client_core     = doodle::http::http_client_ssl;
   using https_client_core_ptr = std::shared_ptr<https_client_core>;
 

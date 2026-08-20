@@ -58,7 +58,7 @@ struct class_attr_type<result_column_info_t<Table, void, BaseClass>> {
 };
 
 // 运行时列信息
-struct base_column_info_t {
+struct DOODLELIB_API base_column_info_t {
   virtual ~base_column_info_t()                                                                            = default;
   virtual std::string get_column_name(const session& s, const to_sql_ctx& ctx) const                       = 0;
   // virtual void set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const        = 0;
@@ -105,7 +105,7 @@ struct table_columns_t {
 
 // 基本的列信息，包含列名和成员指针
 
-struct column_info_t : public base_column_info_t {
+struct DOODLELIB_API column_info_t : public base_column_info_t {
   table_columns_t ptr_;
   template <typename ValueType, typename Table>
   explicit column_info_t(ValueType Table::* in_ptr) : ptr_(in_ptr) {}

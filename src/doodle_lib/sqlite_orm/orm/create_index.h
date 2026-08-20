@@ -7,7 +7,7 @@
 #include <string>
 
 namespace doodle::orm {
-struct create_index_base_t {
+struct DOODLELIB_API create_index_base_t {
   struct impl {
     std::string name_;
     table_info_base_ptr table_name_;

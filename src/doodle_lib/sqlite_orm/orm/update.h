@@ -31,7 +31,7 @@ using update_arg_type_t = typename update_arg_type<std::decay_t<T>>::type;
 
 }  // namespace detail
 
-struct update_t : public statement_info_base_t {
+struct DOODLELIB_API update_t : public statement_info_base_t {
  private:
   struct update_state_t {
     std::vector<std::shared_ptr<column_operations_base_t>> column_operations_;

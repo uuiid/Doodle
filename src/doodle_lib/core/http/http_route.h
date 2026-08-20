@@ -19,7 +19,7 @@ class websocket_route;
 using websocket_route_ptr = std::shared_ptr<websocket_route>;
 class url_route_component_t;
 class url_route_component_base_t;
-class http_route {
+class DOODLELIB_API http_route {
  protected:
   using url_route_component_ptr = std::shared_ptr<url_route_component_base_t>;
   std::vector<std::pair<url_route_component_ptr, http_function_ptr>> url_route_map_;

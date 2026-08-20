@@ -5,22 +5,22 @@
 #pragma once
 
 #ifdef DOODLE_LIB_STATIC_DEFINE
-#define DOODLELIB_API
-#define DOODLE_LIB_NO_EXPORT
+#  define DOODLELIB_API
+#  define DOODLE_LIB_NO_EXPORT
 #else
-#ifndef DOODLELIB_API
-#ifdef doodle_lib_EXPORTS
+#  ifndef DOODLELIB_API
+#    ifdef doodle_lib_EXPORTS
 /* We are building this library */
-#define DOODLELIB_API
-#else
+#      define DOODLELIB_API __declspec(dllexport)
+#    else
 /* We are using this library */
-#define DOODLELIB_API
-#endif
-#endif
+#      define DOODLELIB_API __declspec(dllimport)
+#    endif
+#  endif
 
-#ifndef DOODLE_LIB_NO_EXPORT
-#define DOODLE_LIB_NO_EXPORT
-#endif
+#  ifndef DOODLE_LIB_NO_EXPORT
+#    define DOODLE_LIB_NO_EXPORT
+#  endif
 #endif
 
 #ifndef DOODLE_LIB_DEPRECATED

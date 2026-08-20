@@ -20,13 +20,13 @@ FSys::path create_out_path(
     const FSys::path& in_dir, const episodes& in_eps, const shot& in_shot,
     const std::string& in_project_short_string = {}
 );
-void create_move(
+DOODLELIB_API void create_move(
     const FSys::path& in_out_path, logger_ptr in_msg, const std::vector<movie::image_attr>& in_vector,
     const image_size& in_image_size = image_size{}
 );
 image_size get_image_size(const FSys::path& in_path);
 
-class add_watermark_t {
+class DOODLELIB_API add_watermark_t {
   cv::Ptr<cv::freetype::FreeType2> ft2_;
   static constexpr std::int32_t g_thickness = -1;
   std::int32_t baseline_                    = 0;

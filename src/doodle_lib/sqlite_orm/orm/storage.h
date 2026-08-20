@@ -119,7 +119,7 @@ struct table_fts_info : table_info_base {
   }
 };
 
-struct table_info : table_info_base {
+struct DOODLELIB_API table_info : table_info_base {
   using column_ptr_type = table_columns_t;
 
   template <typename T>
@@ -167,7 +167,7 @@ struct sqlite_connection_t {
 };
 using sqlite_connection_ptr = std::shared_ptr<sqlite_connection_t>;
 
-struct sqlite_stmt {
+struct DOODLELIB_API sqlite_stmt {
   sqlite3_stmt* stmt_{nullptr};
   std::int32_t bind_index_{0};  // sqlite bind index starts from 1, but we use 0-based index internally
  public:
@@ -201,7 +201,7 @@ struct sqlite_stmt {
   void bind(const T& in_value);
 };
 
-class storage : public boost::noncopyable {
+class DOODLELIB_API storage : public boost::noncopyable {
   friend struct table_info;
   friend struct sqlite_stmt;
   friend struct select_t;

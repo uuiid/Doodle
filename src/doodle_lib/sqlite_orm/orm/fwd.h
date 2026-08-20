@@ -148,7 +148,7 @@ struct is_object_specialization<object_t<T>> : std::true_type {};
 template <typename T>
 inline constexpr bool is_object_specialization_v = is_object_specialization<std::remove_cvref_t<T>>::value;
 
-struct orm_base {
+struct DOODLELIB_API orm_base {
  protected:
   orm_base() = default;
 
@@ -158,18 +158,18 @@ struct orm_base {
   virtual void collect_bind_variants(bind_value_collector_t& bind_variants) const = 0;
 };
 
-struct column_operations_base_t : public orm_base {};
+struct DOODLELIB_API column_operations_base_t : public orm_base {};
 
 using column_operations_ptr = std::shared_ptr<column_operations_base_t>;
 
 // 运行是表基类, 可以获取表名称
-struct table_info_base_t : public orm_base {
+struct DOODLELIB_API table_info_base_t : public orm_base {
   virtual ~table_info_base_t() = default;
 };
 using table_info_base_ptr = std::shared_ptr<table_info_base_t>;
 
 // 数据库 select update delete insert 语句 基类
-struct statement_info_base_t : public orm_base {
+struct DOODLELIB_API statement_info_base_t : public orm_base {
   virtual ~statement_info_base_t() = default;
   virtual void prepare(session& s, const to_sql_ctx& ctx) = 0;
 };

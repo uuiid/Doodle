@@ -27,7 +27,7 @@ class async_task;
 
 namespace doodle::kitsu {
 
-class kitsu_client {
+class DOODLELIB_API kitsu_client {
   using http_client_t     = doodle::http::http_client;
   using http_client_ptr_t = std::shared_ptr<http_client_t>;
   http_client_ptr_t http_client_ptr_{};

@@ -7,7 +7,7 @@
 #include <string>
 
 namespace doodle::orm {
-class session {
+class DOODLELIB_API session {
   struct session_data {
     sqlite_connection_ptr connection_;
     storage* s_{nullptr};

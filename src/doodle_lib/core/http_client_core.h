@@ -133,7 +133,7 @@ class http_stream_base {
   http_stream_base& operator=(http_stream_base&&)      = delete;
 };
 
-class http_client : public http_stream_base<boost::beast::tcp_stream> {
+class DOODLELIB_API http_client : public http_stream_base<boost::beast::tcp_stream> {
   class resolve_and_connect_compose {
    public:
     http_client* self_;
@@ -241,7 +241,7 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
   }
 };
 
-class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::beast::tcp_stream>> {
+class DOODLELIB_API http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::beast::tcp_stream>> {
   boost::asio::ssl::context& ctx_;
   void set_ssl();
 

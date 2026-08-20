@@ -1,9 +1,4 @@
-add_library(doodle_lib
-        #        SHARED
-        #        $<$<CXX_COMPILER_ID:MSVC>:SHARED>
-
-
-)
+add_library(doodle_lib SHARED)
 
 target_sources(doodle_lib
         PUBLIC

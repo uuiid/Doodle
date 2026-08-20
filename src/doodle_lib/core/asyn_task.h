@@ -6,7 +6,7 @@
 
 
 namespace doodle {
-class async_task {
+class DOODLELIB_API async_task {
  protected:
   logger_ptr logger_ptr_;
 

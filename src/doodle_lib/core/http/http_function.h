@@ -28,7 +28,7 @@ struct file_extension_t {
 };
 
 // 初始化
-class url_route_component_base_t {
+class DOODLELIB_API url_route_component_base_t {
  public:
   virtual ~url_route_component_base_t() = default;
   virtual std::tuple<bool, std::shared_ptr<http_function>> set_match_url(
@@ -36,7 +36,7 @@ class url_route_component_base_t {
   ) const = 0;
 };
 using url_route_component_ptr = std::shared_ptr<url_route_component_base_t>;
-class url_route_component_t : public url_route_component_base_t {
+class DOODLELIB_API url_route_component_t : public url_route_component_base_t {
   // SFINAE friendly trait to get a member object pointer's field type
   template <typename T>
   struct object_field_type {};
@@ -231,7 +231,7 @@ class url_route_component_t : public url_route_component_base_t {
 };
 url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t);
 
-class http_function {
+class DOODLELIB_API http_function {
  protected:
   virtual void parse_header(const session_data_ptr& in_handle);
 
