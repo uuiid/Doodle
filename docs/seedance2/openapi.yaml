@@ -1471,6 +1471,35 @@ paths:
                 items:
                   $ref: "#/components/schemas/PersonToken"
 
+  /api/seedance2/task-similarity:
+    get:
+      tags: [限额管理]
+      summary: 获取任务相似度预警信息
+      description: |
+        制片及以上可查看。返回所有人员提交任务的相似度预警信息，按人员分组。
+        用于发现重复或高度相似的任务提交，相似度 >= 75 的记录才会被收录。
+        支持分页查询。
+      parameters:
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: 分页偏移量
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 300
+          description: 每页返回条数上限
+      responses:
+        "200":
+          description: 按人员分组的任务相似度信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskSimilarityPerson"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1788,3 +1817,37 @@ components:
           type: integer
           format: int64
           description: 图片类任务数量
+
+    TaskSimilarity:
+      type: object
+      description: 任务相似度记录，用于预警重复提交
+      properties:
+        id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+          description: 当前任务ID
+        similar_task_id:
+          type: string
+          format: uuid
+          description: 相似的历史任务ID
+        similarity:
+          type: number
+          format: double
+          description: 相似度分数（0-100），仅 >= 75 的记录被收录
+
+    TaskSimilarityPerson:
+      type: object
+      description: 按人员分组的任务相似度预警信息
+      additionalProperties:
+        type: array
+        items:
+          $ref: "#/components/schemas/TaskSimilarity"
+      example:
+        "550e8400-e29b-41d4-a716-446655440000":
+          - id: "660e8400-e29b-41d4-a716-446655440001"
+            task_id: "770e8400-e29b-41d4-a716-446655440002"
+            similar_task_id: "880e8400-e29b-41d4-a716-446655440003"
+            similarity: 85.5
