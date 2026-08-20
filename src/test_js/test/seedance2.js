@@ -314,6 +314,7 @@ describe('seedance2 task', function () {
         data_request: {
           content: [
             { type: 'text', text: 'A test prompt for seedance2 task' },
+            { type: 'image', image_url: { url: "/api/seedance2/pictures/01a01da2-876d-7208-803f-e1b7938d15d9.png" } }
           ],
         },
         ai_studio_id: '00000000-0000-0000-0000-000000000000',
