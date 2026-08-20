@@ -322,7 +322,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   l_task->file_extension_ = ".mp4";
   // data_request 必须有 content 字段，且 content 中可能 type 为 text 的字段
   auto& l_content         = l_task->data_request_.at("content");
-  for (auto&& l_value : l_content.at("content"))
+  for (auto&& l_value : l_content)
     if (l_value.contains("type") && l_value.at("type").get<std::string>() == "text")
       l_task->text_prompt_ += l_value.at("text").get<std::string>() + "\n";
 
