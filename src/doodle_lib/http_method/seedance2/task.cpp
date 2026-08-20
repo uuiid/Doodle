@@ -240,7 +240,9 @@ boost::asio::awaitable<std::string> get_self_ip() {
       co_await l_client->read_and_write(l_req, l_res, boost::asio::use_awaitable);
       if (l_res.result() != boost::beast::http::status::ok)
         throw_exception(doodle_error{"get_self_ip error {} {}", l_res.result(), l_res.body()});
-      co_return l_res.body();
+      auto l_ip = l_res.body();
+      if (l_ip.ends_with('\n')) l_ip.pop_back();
+      co_return l_ip;
     } catch (const boost::system::system_error& e) {
       if (e.code() == boost::asio::error::operation_aborted) throw;
       SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "get_self_ip error: {}", e.what());
