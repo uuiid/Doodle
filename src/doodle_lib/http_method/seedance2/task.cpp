@@ -415,6 +415,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
+  // todo: 在 task 中, 添加 subproject 外键, 以方便查询
   auto l_sql = get_sqlite_database();
   using namespace orm;
   auto l_query =
