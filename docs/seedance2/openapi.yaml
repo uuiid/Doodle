@@ -664,7 +664,12 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/AiEntityReferencePreview"
+                  type: object
+                  properties:
+                    reference:
+                      $ref: "#/components/schemas/AiEntityReferencePreview"
+                    preview:
+                      $ref: "#/components/schemas/AiPreviewFile"
     post:
       tags: [AI生成实体]
       summary: 上传实体参考文件
