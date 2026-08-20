@@ -374,8 +374,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
   person_.check_subproject_access(subproject_id_);
 
-  auto l_sql    = get_sqlite_database();
-  auto l_task   = l_sql.get_by_uuid<sd2::task>(id_);
+  auto l_sql  = get_sqlite_database();
+  auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
+  DOODLE_CHICK_HTTP(l_task.status_ == sd2::task_status::queued, bad_request, "只有排队中的任务可以删除");
   auto l_studio = l_sql.get_by_uuid<ai_studio>(person_.get_ai_studio_id());
   auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
 
