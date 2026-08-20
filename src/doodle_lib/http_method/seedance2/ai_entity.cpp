@@ -17,6 +17,8 @@ namespace sd2 = doodle::seedance2;
 
 // /api/seedance2/subproject/{subproject_id}/classification/{classification_id}/entity
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, post) {
+  person_.check_subproject_access(subproject_id_);
+
   person_.check_not_outsourcer();
   auto l_sql    = get_sqlite_database();
   auto l_json   = in_handle->get_json();
@@ -31,6 +33,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, post
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, get) {
+  person_.check_subproject_access(subproject_id_);
+
   auto l_sql = get_sqlite_database();
   using namespace orm;
   auto l_result = select(l_sql)
@@ -43,6 +47,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, get)
 
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_instance, get) {
+  person_.check_subproject_access(subproject_id_);
+
   auto l_sql    = get_sqlite_database();
   auto l_entity = l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_);
 
@@ -50,6 +56,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_insta
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_instance, put) {
+  person_.check_manager();
   person_.check_not_outsourcer();
   auto l_sql    = get_sqlite_database();
   auto l_json   = in_handle->get_json();
@@ -67,6 +74,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_insta
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_instance, delete_) {
+  person_.check_manager();
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   co_await l_sql.remove<sd2::ai_generate_entity>(entity_id_);
@@ -76,6 +84,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_insta
 
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/preview
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_preview, post) {
+  person_.check_subproject_access(subproject_id_);
   auto l_sql     = get_sqlite_database();
   auto l_entity  = std::make_shared<sd2::ai_generate_entity>(l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_));
   auto l_file    = in_handle->get_file();
@@ -106,6 +115,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_preview, post) {
 
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/reference
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, get) {
+  person_.check_subproject_access(subproject_id_);
   auto l_sql = get_sqlite_database();
   using namespace orm;
   auto l_result = select(l_sql)
@@ -117,6 +127,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, post) {
+  person_.check_subproject_access(subproject_id_);
   person_.check_not_outsourcer();
   auto l_sql      = get_sqlite_database();
   auto l_entity   = std::make_shared<sd2::ai_generate_entity>(l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_));
@@ -165,6 +176,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, post) 
 
 // /api/seedance2/subproject/{subproject_id}/reference/{id}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_reference_instance, delete_) {
+  person_.check_subproject_access(subproject_id_);
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   auto l_ref =
