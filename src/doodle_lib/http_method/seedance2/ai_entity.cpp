@@ -172,7 +172,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, post) 
 
   FSys::rename(l_file, l_file_picture);
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ref);
+  co_return in_handle->make_msg(nlohmann::json{{"reference", *l_ref}, {"preview", *l_preview}});
 }
 
 // /api/seedance2/subproject/{subproject_id}/reference/{id}
