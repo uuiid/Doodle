@@ -91,6 +91,8 @@ install(TARGETS doodle_kitsu_supplement
         DIRECTORIES
         $<TARGET_FILE_DIR:Fbx::Fbx>
         $ENV{CUDA_PATH}/bin
+        $<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/debug/bin>
+        $<$<NOT:$<CONFIG:Debug>>:${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin>
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "api-ms-"
 )

@@ -129,6 +129,13 @@ target_include_directories(doodle_lib
 )
 
 install(TARGETS doodle_lib
+        RUNTIME_DEPENDENCIES
+        DIRECTORIES
+        $<TARGET_FILE_DIR:Fbx::Fbx>
+        $<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/debug/bin>
+        $<$<NOT:$<CONFIG:Debug>>:${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin>
+        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
+        POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "api-ms-"
         RUNTIME DESTINATION bin
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
