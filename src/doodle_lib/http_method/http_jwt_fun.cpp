@@ -248,10 +248,14 @@ bool http_jwt_fun::http_jwt_t::is_subproject_access(const uuid& in_subproject_id
   using namespace orm;
   using namespace doodle::seedance2;
   return select(l_sql)
-             .columns(count(&subproject_person_link::id_))
-             .from<subproject_person_link>()
-             .where(c(&subproject_person_link::subproject_id_) == in_subproject_id)()
-             .to_single() > 0;
+      .columns(count(&subproject_person_link::id_))
+      .from<subproject_person_link>()
+      .where(
+          c(&subproject_person_link::subproject_id_) == in_subproject_id &&
+          c(&subproject_person_link::person_id_) == person_.uuid_id_
+      )
+      ()
+      .to_single() > 0;
 }
 
 }  // namespace doodle::http
