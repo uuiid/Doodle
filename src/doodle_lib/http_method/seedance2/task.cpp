@@ -142,8 +142,10 @@ class seedance2_task_run_manager {
       case sd2::task_status::queued:
         co_return;
       case sd2::task_status::running: {
-        l_task_ptr->status_ = l_status;
-        co_await l_sql.update(l_task_ptr);
+        if (l_task_ptr->status_ != l_status) {
+          l_task_ptr->status_ = l_status;
+          co_await l_sql.update(l_task_ptr);
+        }
         socket_io::broadcast(
             socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_task_ptr->status_}
         );
