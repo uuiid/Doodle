@@ -113,17 +113,35 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_preview, post) {
 
   co_return in_handle->make_msg(nlohmann::json{{"id", l_preview->uuid_id_}});
 }
+namespace {
+struct ai_entity_reference_preview_with_preview_file {
+  sd2::ai_entity_reference_preview reference_;
+  sd2::ai_preview_file preview_;
+  explicit ai_entity_reference_preview_with_preview_file(
+      const sd2::ai_entity_reference_preview& in_reference, const sd2::ai_preview_file& in_preview
+  )
+      : reference_(in_reference), preview_(in_preview) {}
+  // to  json
+  friend void to_json(nlohmann::json& j, const ai_entity_reference_preview_with_preview_file& p) {
+    j["reference"] = p.reference_;
+    j["preview"]   = p.preview_;
+  }
+};
 
+}  // namespace
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/reference
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, get) {
   person_.check_subproject_access(subproject_id_);
   auto l_sql = get_sqlite_database();
   using namespace orm;
   auto l_result = select(l_sql)
-                      .columns(object<sd2::ai_entity_reference_preview>())
+                      .columns(object<sd2::ai_entity_reference_preview>(), object<sd2::ai_preview_file>())
                       .from<sd2::ai_entity_reference_preview>()
+                      .join<sd2::ai_preview_file>(
+                          c(&sd2::ai_entity_reference_preview::preview_file_) == c(&sd2::ai_preview_file::uuid_id_)
+                      )
                       .where(c(&sd2::ai_entity_reference_preview::ai_generate_entity_id_) == entity_id_)()
-                      .to_vector();
+                      .to_vector<ai_entity_reference_preview_with_preview_file>();
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
