@@ -220,12 +220,12 @@ describe('seedance2 entity 测试', function () {
   it('POST /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/reference — 上传实体参考文件', async function () {
     this.timeout(330000);
     expect(entityId).to.not.be.null;
-    const mp4Path = 'D:\\ZM_EP124_SC097_[1001-1202].mp4';
+    const mp4Path = 'D:\\无标题(1).jpg';
     const req = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity/${entityId}/reference`)
       .set(authHeader)
-      .attach('file', fs.createReadStream(mp4Path), 'ZM_EP124_SC097_[1001-1202].mp4')
+      .attach('file', fs.createReadStream(mp4Path), '无标题(1).jpg')
       .timeout(300000);
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     console.log('POST entity reference 返回值:', JSON.stringify(req.body, null, 2));
   });
 
