@@ -25,7 +25,7 @@ struct DOODLE_CORE_API subproject {
     j["created_user_id"] = p.created_user_id_;
     j["created_at"]      = p.created_at_;
     j["archived"]        = p.archived_;
-    j["preview_file"]    = p.preview_file_;
+    j["preview_file_id"] = p.preview_file_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, subproject& p) {

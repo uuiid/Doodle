@@ -451,7 +451,12 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/AiGenerateEntity"
+                  type: object
+                  properties:
+                    reference:
+                      $ref: "#/components/schemas/AiGenerateEntity"
+                    preview:
+                      $ref: "#/components/schemas/AiPreviewFile"
     post:
       tags: [AI生成实体]
       summary: 创建 AI 生成实体
@@ -1550,10 +1555,13 @@ components:
         archived:
           type: boolean
           description: 是否归档
-        preview_file:
+        preview_file_id:
           type: string
           format: uuid
           description: 预览文件ID
+        preview_file:
+          $ref: "#/components/schemas/AiPreviewFile"
+          description: 预览文件信息（列表接口返回）
         persons:
           type: array
           description: 参与人员ID列表（仅列表接口返回）

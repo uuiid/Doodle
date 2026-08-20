@@ -20,10 +20,14 @@ namespace sd2 = doodle::seedance2;
 namespace {
 struct seedance2_subproject_and_person : public sd2::subproject {
   std::vector<uuid> persons_;
+  sd2::ai_preview_file preview_file_;
+  explicit seedance2_subproject_and_person(const sd2::subproject& in_subproject, const sd2::ai_preview_file& in_preview)
+      : sd2::subproject(in_subproject), preview_file_(in_preview) {}
   // to json
   friend void to_json(nlohmann::json& j, const seedance2_subproject_and_person& p) {
     to_json(j, static_cast<const sd2::subproject&>(p));
-    j["persons"] = p.persons_;
+    j["persons"]      = p.persons_;
+    j["preview_file"] = p.preview_file_;
   }
 };
 }  // namespace
@@ -33,7 +37,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, get) {
   auto l_sql = get_sqlite_database();
   using namespace orm;
 
-  auto l_query = select(l_sql).columns(object<sd2::subproject>()).from<sd2::subproject>();
+  auto l_query = select(l_sql)
+                     .columns(object<sd2::subproject>(), object<sd2::ai_preview_file>())
+                     .from<sd2::subproject>()
+                     .join<sd2::ai_preview_file>(&sd2::subproject::preview_file_, &sd2::ai_preview_file::uuid_id_);
 
   // 非制片/管理员只能看到自己参与的子项目
   if (!person_.is_manager()) {
@@ -45,7 +52,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, get) {
 
   std::vector<uuid> l_subproject_ids;
   l_subproject_ids.reserve(l_subprojects.size());
-  for (auto&& l_sp : l_subprojects) l_subproject_ids.push_back(l_sp.uuid_id_);
+  for (auto&& [l_sp, l_] : l_subprojects) l_subproject_ids.push_back(l_sp.uuid_id_);
 
   auto l_all_links = select(l_sql)
                          .columns(object<sd2::subproject_person_link>())
@@ -59,9 +66,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, get) {
 
   std::vector<seedance2_subproject_and_person> l_result;
   l_result.reserve(l_subprojects.size());
-  for (auto&& l_sp : l_subprojects) {
-    auto& l_item                          = l_result.emplace_back();
-    static_cast<sd2::subproject&>(l_item) = std::move(l_sp);
+  for (auto&& [l_sp, l_preview] : l_subprojects) {
+    auto& l_item                          = l_result.emplace_back(std::move(l_sp), std::move(l_preview));
     if (l_person_map.contains(l_item.uuid_id_)) l_item.persons_ = std::move(l_person_map[l_item.uuid_id_]);
   }
 
