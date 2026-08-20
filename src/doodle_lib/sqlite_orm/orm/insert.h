@@ -86,7 +86,6 @@ struct insert_t : public statement_info_base_t {
     using Table         = std::decay_t<T>;
     auto l_table_cloums = state_->s_.template get_table_columns<Table>();
     if constexpr (has_uuid_id<Table>) {
-      DOODLE_CHICK(in_object.uuid_id_.is_nil(), "传入的数据实体 uuid_id_ 不为空");
       in_object.uuid_id_ = core_set::get_set().get_uuid();
     }
     if constexpr (has_created_at<Table>)
