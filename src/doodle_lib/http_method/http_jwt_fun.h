@@ -68,6 +68,10 @@ class DOODLELIB_API http_jwt_fun : public http_function {
     void check_delete_access(const uuid& in_project_id) const;
     // 从人员获取 ai工作室的id
     uuid get_ai_studio_id() const;
+
+    // 检查人员是否在子项目中
+    void check_subproject_access(const uuid& in_subproject_id) const;
+    bool is_subproject_access(const uuid& in_subproject_id) const;
   };
   using http_function::http_function;
 

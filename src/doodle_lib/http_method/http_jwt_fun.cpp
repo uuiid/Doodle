@@ -5,6 +5,7 @@
 #include "http_jwt_fun.h"
 
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/seedance2/subproject.h"
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_status.h>
@@ -131,8 +132,7 @@ bool http_jwt_fun::http_jwt_t::is_producer() const {
 }
 
 void http_jwt_fun::http_jwt_t::check_producer() const {
-  if (is_producer())
-    return;
+  if (is_producer()) return;
 
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
@@ -235,5 +235,23 @@ void http_jwt_fun::http_jwt_t::check_delete_access(const uuid& in_project_id) co
 }
 
 uuid http_jwt_fun::http_jwt_t::get_ai_studio_id() const { return person_.ai_studio_id_; }
+
+void http_jwt_fun::http_jwt_t::check_subproject_access(const uuid& in_subproject_id) const {
+  if (!is_subproject_access(in_subproject_id))
+    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+}
+bool http_jwt_fun::http_jwt_t::is_subproject_access(const uuid& in_subproject_id) const {
+  if (person_.role_ == person_role_type::admin || person_.role_ == person_role_type::producer ||
+      person_.role_ == person_role_type::manager)
+    return true;
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  using namespace doodle::seedance2;
+  return select(l_sql)
+             .columns(count(&subproject_person_link::id_))
+             .from<subproject_person_link>()
+             .where(c(&subproject_person_link::subproject_id_) == in_subproject_id)()
+             .to_single() > 0;
+}
 
 }  // namespace doodle::http
