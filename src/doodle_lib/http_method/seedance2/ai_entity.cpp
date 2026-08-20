@@ -39,7 +39,7 @@ struct ai_generate_entity_with_preview_file : public sd2::ai_generate_entity {
       : sd2::ai_generate_entity(in_reference), preview_(in_preview) {}
   // to  json
   friend void to_json(nlohmann::json& j, const ai_generate_entity_with_preview_file& p) {
-    j["reference"] = static_cast<sd2::ai_generate_entity>(p);
+    to_json(j, static_cast<const sd2::ai_generate_entity&>(p));
     if (!p.preview_.uuid_id_.is_nil()) j["preview"] = p.preview_;
   }
 };
