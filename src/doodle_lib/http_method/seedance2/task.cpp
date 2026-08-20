@@ -5,6 +5,9 @@
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/person.h"
 #include "doodle_core/metadata/project.h"
+#include "doodle_core/metadata/seedance2/ai_generate_classification.h"
+#include "doodle_core/metadata/seedance2/ai_generate_entity.h"
+#include "doodle_core/metadata/seedance2/subproject.h"
 #include <doodle_core/metadata/ai_studio.h>
 #include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/seedance2/ai_preview_file.h>
@@ -30,6 +33,7 @@
 #include "core/http_client_core.h"
 #include "http_method/kitsu.h"
 #include "reg.h"
+#include "sqlite_orm/orm/column_operations.h"
 #include "sqlite_orm/orm/insert.h"
 #include <chrono>
 #include <map>
@@ -408,6 +412,28 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, get) {
   auto l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_query =
+      select(l_sql)
+          .columns(object<sd2::task>())
+          .from<sd2::task>()
+          .join<sd2::ai_generate_entity>(c(&sd2::task::ai_generate_entity_id_) == c(&sd2::task::ai_generate_entity_id_))
+          .join<sd2::ai_generate_classification>(
+              c(&sd2::ai_generate_entity::ai_generate_classification_id_) ==
+              c(&sd2::ai_generate_classification::uuid_id_)
+          )
+          .join<sd2::subproject>(c(&sd2::ai_generate_classification::subproject_id_) == c(&sd2::subproject::uuid_id_))
+          .join<sd2::subproject_person_link>(
+              c(&sd2::subproject::uuid_id_) == c(&sd2::subproject_person_link::subproject_id_)
+          )
+          .order_by(&sd2::task::created_at_, false);
+  if (!person_.is_manager())
+    l_query.where(c(&sd2::subproject_person_link::person_id_) == person_.person_.uuid_id_ && !c(&sd2::task::archived_));
+  co_return in_handle->make_msg(nlohmann::json{} = l_query().to_vector());
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail, get) {

@@ -108,6 +108,11 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid subproject_id_{};
 uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
+// 获取所有可以访问的任务
+// /api/seedance2/task
+DOODLE_HTTP_JWT_FUN(seedance2_task)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/task/{id}
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_task_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
