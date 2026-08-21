@@ -4,6 +4,7 @@
 
 #pragma once
 #include "doodle_core/doodle_core_fwd.h"
+#include <doodle_core/metadata/seedance2/canvas_media.h>
 
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/doodle_lib_fwd.h>
@@ -246,6 +247,77 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/task-similarity
 DOODLE_HTTP_JWT_FUN(seedance2_task_similarity)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+
+/// 画布相关 ---------------------
+// /api/canvas
+DOODLE_HTTP_JWT_FUN(canvas_)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+// /api/canvas/{canvas_id}
+DOODLE_HTTP_JWT_FUN(canvas_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid canvas_id_{};
+DOODLE_HTTP_FUN_END()
+
+/// 画布节点 ---------------------
+// /api/canvas/{canvas_id}/node
+DOODLE_HTTP_JWT_FUN(canvas_node)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid canvas_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/canvas/{canvas_id}/node/{node_id}
+DOODLE_HTTP_JWT_FUN(canvas_node_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid canvas_id_{};
+uuid node_id_{};
+DOODLE_HTTP_FUN_END()
+
+/// 画布连线 ---------------------
+// /api/canvas/{canvas_id}/connection
+DOODLE_HTTP_JWT_FUN(canvas_connection)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid canvas_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/canvas/{canvas_id}/connection/{connection_id}
+DOODLE_HTTP_JWT_FUN(canvas_connection_instance)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid canvas_id_{};
+uuid connection_id_{};
+DOODLE_HTTP_FUN_END()
+
+/// 画布媒体 ---------------------
+// /api/canvas/{canvas_id}/node/{node_id}/media
+DOODLE_HTTP_JWT_FUN(canvas_media)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid canvas_id_{};
+uuid node_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/canvas/{canvas_id}/node/{node_id}/media/{media_id}
+DOODLE_HTTP_JWT_FUN(canvas_media_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid canvas_id_{};
+uuid node_id_{};
+uuid media_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/canvas/{canvas_id}/node/{node_id}/media/{media_id}/file/{role}
+DOODLE_HTTP_JWT_FUN(canvas_media_file)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+uuid canvas_id_{};
+uuid node_id_{};
+uuid media_id_{};
+doodle::seedance2::media_role role_{};
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http::seedance2
