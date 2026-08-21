@@ -22,6 +22,8 @@ tags:
     description: 画布上的 text/image/video/audio/config/group 节点管理
   - name: 画布连线
     description: 节点之间的连线管理
+  - name: 画布媒体
+    description: 画布节点的媒体文件（图片/视频/音频）上传、下载与元数据管理
 
 security:
   - bearerAuth: []
@@ -384,6 +386,275 @@ paths:
         "204":
           description: 删除成功
 
+  # ═══════════════ 画布媒体 ═══════════════
+  /api/canvas/{canvas_id}/node/{node_id}/media:
+    get:
+      tags: [画布媒体]
+      summary: 获取节点媒体列表
+      description: 返回指定节点的所有媒体文件元数据
+      parameters:
+        - name: canvas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: node_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 媒体列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CanvasMedia"
+    post:
+      tags: [画布媒体]
+      summary: 上传媒体文件并创建媒体记录
+      description: |
+        上传媒体文件到节点。请求体使用 multipart/form-data。
+        上传成功后自动创建 canvas_media 记录，并生成缩略图。
+      parameters:
+        - name: canvas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: node_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 媒体文件
+      responses:
+        "200":
+          description: 上传成功，返回媒体元数据
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CanvasMedia"
+
+  /api/canvas/{canvas_id}/node/{node_id}/media/{media_id}:
+    get:
+      tags: [画布媒体]
+      summary: 获取媒体详情
+      parameters:
+        - name: canvas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: node_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: media_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 媒体详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CanvasMedia"
+    put:
+      tags: [画布媒体]
+      summary: 更新媒体元数据
+      description: 更新媒体属性（width, height, duration, original_name, metadata 等）
+      parameters:
+        - name: canvas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: node_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: media_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                width:
+                  type: integer
+                  description: 宽度 px
+                height:
+                  type: integer
+                  description: 高度 px
+                duration:
+                  type: number
+                  format: double
+                  description: 时长 秒
+                original_name:
+                  type: string
+                  description: 原始文件名
+                metadata:
+                  type: object
+                  description: 扩展元数据（codec, bitrate, framerate, mime_type 等）
+      responses:
+        "200":
+          description: 更新后的媒体信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CanvasMedia"
+    delete:
+      tags: [画布媒体]
+      summary: 删除媒体记录及文件
+      description: 删除 canvas_media 记录及其所有版本的磁盘文件（原始 + 缩略图 + 预览）
+      parameters:
+        - name: canvas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: node_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: media_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: 删除成功
+
+  /api/canvas/{canvas_id}/node/{node_id}/media/{media_id}/file/{role}:
+    get:
+      tags: [画布媒体]
+      summary: 下载媒体文件
+      description: |
+        按 media_role 下载对应版本的文件。
+        
+        缩略图固定为 PNG 格式；原始文件按 file_extension 返回；预览按 preview_extension 返回。
+      parameters:
+        - name: canvas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: node_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: media_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: role
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/MediaRole"
+      responses:
+        "200":
+          description: 媒体文件二进制流
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: 文件不存在
+    put:
+      tags: [画布媒体]
+      summary: 替换媒体文件
+      description: |
+        按 media_role 替换对应版本的文件（如单独上传缩略图或预览版本）。
+        请求体使用 multipart/form-data。
+      parameters:
+        - name: canvas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: node_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: media_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: role
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/MediaRole"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 媒体文件
+      responses:
+        "200":
+          description: 替换成功，返回更新后的媒体元数据
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CanvasMedia"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -555,6 +826,69 @@ components:
         directed:
           type: boolean
           description: 是否有箭头（后端扩展）
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ═══════════════ 画布媒体 ═══════════════
+    MediaRole:
+      type: string
+      enum: [original, thumbnail, preview, variant]
+      description: |
+        媒体版本角色，用于区分同一媒体的不同文件版本：
+        - original  — 原始上传文件
+        - thumbnail — 缩略图（固定 PNG 格式）
+        - preview   — 预览/压缩版本
+        - variant   — 其他变体
+
+    CanvasMedia:
+      type: object
+      description: |
+        画布节点媒体文件元数据，与 canvas_element 分离存储。
+        单条记录包含多个版本文件（原始/缩略图/预览），各版本通过 MediaRole 区分 URL 请求。
+        文件路径由后端 kitsu_ctx_t 根据 uuid + role 派生，不暴露磁盘路径。
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 媒体记录ID
+        canvas_element_id:
+          type: string
+          format: uuid
+          description: 所属画布节点ID (canvas_element.uuid_id_)
+        file_extension:
+          type: string
+          description: 原始文件扩展名（含点，如 ".png", ".mp4"）
+          example: ".png"
+        preview_extension:
+          type: string
+          description: 预览文件扩展名（含点，不存在则为空）
+          example: ".mp4"
+        width:
+          type: integer
+          description: 媒体宽度 px（以原始文件为准）
+        height:
+          type: integer
+          description: 媒体高度 px（以原始文件为准）
+        duration:
+          type: number
+          format: double
+          description: 时长 秒（视频/音频，图片为 0）
+        original_name:
+          type: string
+          description: 上传时的原始文件名
+        metadata:
+          type: object
+          description: |
+            扩展元数据，常用字段：
+            - codec: 编码格式
+            - bitrate: 比特率
+            - framerate: 帧率
+            - mime_type: MIME 类型
+            - 插件可写入任意自定义字段
         created_at:
           type: string
           format: date-time
