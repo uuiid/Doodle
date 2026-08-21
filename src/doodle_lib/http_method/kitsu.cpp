@@ -402,6 +402,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &seedance2::seedance2_subproject_reference_instance::subproject_id_,
         &seedance2::seedance2_subproject_reference_instance::id_
       ))
+      .reg_t<seedance2::seedance2_task>("/api/seedance2/task"_url)
       .reg_t<data_preview_files>("/api/data/preview-files/{}"_url(&data_preview_files::preview_file_id_))
       .reg_t<data_updata_logs>("/api/data/updata-logs"_url)
       .reg_t<data_production_specifications>("/api/data/production-specifications"_url)
