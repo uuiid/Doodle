@@ -35,6 +35,7 @@
 #include "reg.h"
 #include "sqlite_orm/orm/column_operations.h"
 #include "sqlite_orm/orm/insert.h"
+#include "sqlite_orm/orm/select.h"
 #include <chrono>
 #include <map>
 #include <memory>
@@ -419,22 +420,20 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
   // todo: 在 task 中, 添加 subproject 外键, 以方便查询
   auto l_sql = get_sqlite_database();
   using namespace orm;
-  auto l_query =
-      select(l_sql)
-          .columns(object<sd2::task>())
-          .from<sd2::task>()
-          .join<sd2::ai_generate_entity>(c(&sd2::task::ai_generate_entity_id_) == c(&sd2::task::ai_generate_entity_id_))
-          .join<sd2::ai_generate_classification>(
-              c(&sd2::ai_generate_entity::ai_generate_classification_id_) ==
-              c(&sd2::ai_generate_classification::uuid_id_)
-          )
-          .join<sd2::subproject>(c(&sd2::ai_generate_classification::subproject_id_) == c(&sd2::subproject::uuid_id_))
-          .join<sd2::subproject_person_link>(
-              c(&sd2::subproject::uuid_id_) == c(&sd2::subproject_person_link::subproject_id_)
-          )
-          .order_by(&sd2::task::created_at_, false);
+  auto l_query = select(l_sql)
+                     .columns(object<sd2::task>())
+                     .from<sd2::task>()
+                     .join<sd2::subproject>(c(&sd2::task::subproject_id_) == c(&sd2::subproject::uuid_id_))
+                     .order_by(&sd2::task::created_at_, false);
   if (!person_.is_manager())
-    l_query.where(c(&sd2::subproject_person_link::person_id_) == person_.person_.uuid_id_ && !c(&sd2::task::archived_));
+    l_query.where(
+        c(&sd2::subproject::uuid_id_)
+            .in(select(l_sql)
+                    .columns(&sd2::subproject_person_link::subproject_id_)
+                    .from<sd2::subproject_person_link>()
+                    .where(c(&sd2::subproject_person_link::person_id_) == person_.person_.uuid_id_)) &&
+        !c(&sd2::task::archived_)
+    );
   co_return in_handle->make_msg(nlohmann::json{} = l_query().to_vector());
 }
 
