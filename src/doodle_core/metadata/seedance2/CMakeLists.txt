@@ -10,4 +10,7 @@ target_sources(
         ai_generate_classification.h
         subproject.h
         ai_preview_file.h
+        infinite_canvas.h
+        canvas_element.h
+        canvas_link.h
 )
