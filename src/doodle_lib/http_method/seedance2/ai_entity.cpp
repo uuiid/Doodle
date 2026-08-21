@@ -71,7 +71,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_insta
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_instance, put) {
-  person_.check_manager();
+  person_.check_subproject_access(subproject_id_);
   person_.check_not_outsourcer();
   auto l_sql    = get_sqlite_database();
   auto l_json   = in_handle->get_json();
