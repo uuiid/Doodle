@@ -187,7 +187,8 @@
       "problemMatcher": []
     },
     {
-      "label": "复制数据库",
+      "label": "copy db",
+      "detail": "复制数据库文件",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/copy_db.ps1",
       "args": [
