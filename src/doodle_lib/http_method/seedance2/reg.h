@@ -114,6 +114,12 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(seedance2_task)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
+// /api/seedance2/task/{date}-{date}
+DOODLE_HTTP_JWT_FUN(seedance2_task_date)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+chrono::year_month_day date_start_{};
+chrono::year_month_day date_end_{};
+DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/task/{id}
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_task_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)

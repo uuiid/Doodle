@@ -932,6 +932,38 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
+  /api/seedance2/task/{date_start}-{date_end}:
+    get:
+      tags: [任务]
+      summary: 按时间范围查询任务
+      description: |
+        仅制片/管理员可访问。按创建时间范围查询所有任务。
+        date_end 包含当天，查询范围为 [date_start, date_end 23:59:59]。
+      parameters:
+        - name: date_start
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+          description: 起始日期
+        - name: date_end
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+          description: 结束日期（含当天）
+      responses:
+        "200":
+          description: 任务列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
   # ═══════════════ 资产库 - 分组 ═══════════════
   /api/seedance2/asset-library/group:
     get:

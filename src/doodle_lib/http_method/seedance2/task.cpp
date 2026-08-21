@@ -1,6 +1,7 @@
 #include "doodle_core/metadata/task.h"
 
 #include "doodle_core/configure/static_value.h"
+#include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/person.h"
@@ -443,6 +444,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
         !c(&sd2::task::archived_)
     );
   co_return in_handle->make_msg(nlohmann::json{} = l_query.limit(l_size).offset(l_offset)().to_vector());
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_date, get) {
+  auto l_sql = get_sqlite_database();
+  person_.check_manager();
+  using namespace orm;
+  chrono::system_zoned_time l_date_start{chrono::current_zone(), chrono::sys_days{date_start_}};
+  chrono::system_zoned_time l_date_end{
+      chrono::current_zone(), chrono::sys_days{date_end_} + chrono::days{1} - chrono::seconds{1}
+  };
+  auto l_query = select(l_sql)
+                     .columns(object<sd2::task>())
+                     .from<sd2::task>()
+                     .where(c(&sd2::task::created_at_) >= l_date_start && c(&sd2::task::created_at_) <= l_date_end)
+                     .order_by(&sd2::task::created_at_, false);
+  co_return in_handle->make_msg(nlohmann::json{} = l_query().to_vector());
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail, get) {
