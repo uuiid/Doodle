@@ -565,7 +565,7 @@ DOODLE_HTTP_FUN_END()
 // /api/actions/projects/<project_id>/task-types/<task_type_id>/create-tasks/<entity_type>
 DOODLE_HTTP_JWT_FUN(actions_projects_task_types_create_tasks)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-enum class url_entity_type_enum { episodes, sequence };
+enum class url_entity_type_enum { episode, sequence };
 uuid project_id_{};
 uuid task_type_id_{};
 url_entity_type_enum entity_type_{};
