@@ -2,9 +2,9 @@ openapi: "3.0.3"
 info:
   title: Canvas API
   description: |
-    无限画布模块 HTTP API，提供画布元数据、画布元素（文本/图片/视频/音频）及元素间链接的管理功能。
+    无限画布模块 HTTP API，对齐 [infinite-canvas](https://github.com/basketikun/infinite-canvas) 前端库的数据模型。
 
-    核心设计：画布"内容"（元素/链接）与"元数据"（画布信息/视口）分离存储，元素与链接均为独立记录。
+    核心设计：画布"内容"（节点/连线）与"元数据"（画布信息/视口）分离存储，节点与连线均为独立记录。
 
     所有接口均需 JWT Bearer Token 认证（Header: `Authorization: Bearer <token>`）。
   version: "1.0.0"
@@ -17,11 +17,11 @@ servers:
 
 tags:
   - name: 画布
-    description: 画布元数据 CRUD，视口状态管理
-  - name: 画布元素
-    description: 画布上的文本、图片、视频、音频元素管理
-  - name: 画布链接
-    description: 元素之间的连线/边管理
+    description: 画布元数据 CRUD，视口与背景管理
+  - name: 画布节点
+    description: 画布上的 text/image/video/audio/config/group 节点管理
+  - name: 画布连线
+    description: 节点之间的连线管理
 
 security:
   - bearerAuth: []
@@ -59,9 +59,9 @@ paths:
           application/json:
             schema:
               type: object
-              required: [name, project_uuid_id]
+              required: [title, project_uuid_id]
               properties:
-                name:
+                title:
                   type: string
                   description: 画布名称
                 description:
@@ -71,10 +71,8 @@ paths:
                   type: string
                   format: uuid
                   description: 所属项目ID
-                background_color:
-                  type: string
-                  default: "#ffffff"
-                  description: 背景色
+                backgroundMode:
+                  $ref: "#/components/schemas/CanvasBackgroundMode"
       responses:
         "200":
           description: 创建成功
@@ -104,7 +102,7 @@ paths:
     put:
       tags: [画布]
       summary: 更新画布
-      description: 可更新字段：name, description, viewport_x, viewport_y, viewport_zoom, background_color
+      description: 可更新字段：title, description, viewport, backgroundMode
       parameters:
         - name: canvas_id
           in: path
@@ -119,21 +117,14 @@ paths:
             schema:
               type: object
               properties:
-                name:
+                title:
                   type: string
                 description:
                   type: string
-                viewport_x:
-                  type: number
-                  format: double
-                viewport_y:
-                  type: number
-                  format: double
-                viewport_zoom:
-                  type: number
-                  format: double
-                background_color:
-                  type: string
+                viewport:
+                  $ref: "#/components/schemas/Viewport"
+                backgroundMode:
+                  $ref: "#/components/schemas/CanvasBackgroundMode"
       responses:
         "200":
           description: 更新后的画布信息
@@ -144,7 +135,7 @@ paths:
     delete:
       tags: [画布]
       summary: 删除画布
-      description: 删除画布及其下所有元素和链接
+      description: 删除画布及其下所有节点和连线
       parameters:
         - name: canvas_id
           in: path
@@ -156,12 +147,12 @@ paths:
         "204":
           description: 删除成功
 
-  # ═══════════════ 画布元素 ═══════════════
-  /api/canvas/{canvas_id}/element:
+  # ═══════════════ 画布节点 ═══════════════
+  /api/canvas/{canvas_id}/node:
     get:
-      tags: [画布元素]
-      summary: 获取画布元素列表
-      description: 返回指定画布下的所有元素，按 z_index 排序
+      tags: [画布节点]
+      summary: 获取画布节点列表
+      description: 返回指定画布下的所有节点
       parameters:
         - name: canvas_id
           in: path
@@ -171,16 +162,16 @@ paths:
             format: uuid
       responses:
         "200":
-          description: 元素列表
+          description: 节点列表
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/CanvasElement"
+                  $ref: "#/components/schemas/CanvasNode"
     post:
-      tags: [画布元素]
-      summary: 创建画布元素
+      tags: [画布节点]
+      summary: 创建画布节点
       parameters:
         - name: canvas_id
           in: path
@@ -194,88 +185,41 @@ paths:
           application/json:
             schema:
               type: object
-              required: [element_type]
+              required: [type]
               properties:
-                element_type:
-                  $ref: "#/components/schemas/CanvasElementType"
-                name:
+                type:
+                  $ref: "#/components/schemas/CanvasNodeType"
+                title:
                   type: string
-                  description: 元素名称
-                position_x:
-                  type: number
-                  format: double
-                  default: 0
-                position_y:
-                  type: number
-                  format: double
-                  default: 0
+                  description: 节点标题
+                position:
+                  $ref: "#/components/schemas/Position"
                 width:
                   type: number
                   format: double
-                  default: 100
+                  default: 340
                 height:
                   type: number
                   format: double
-                  default: 100
-                rotation:
-                  type: number
-                  format: double
-                  default: 0
-                z_index:
-                  type: integer
-                  format: int32
-                  default: 0
-                fill_color:
+                  default: 240
+                content:
                   type: string
-                  default: "#ffffff"
-                stroke_color:
-                  type: string
-                  default: "#000000"
-                stroke_width:
-                  type: number
-                  format: double
-                  default: 1
-                opacity:
-                  type: number
-                  format: double
-                  default: 1
-                text_content:
-                  type: string
-                  description: 文本内容（text 类型）
-                image_url:
-                  type: string
-                  description: 图片URL（image 类型）
-                video_url:
-                  type: string
-                  description: 视频URL（video 类型）
-                audio_url:
-                  type: string
-                  description: 音频URL（audio 类型）
-                parent_id:
-                  type: string
-                  format: uuid
-                  description: 父元素ID（用于嵌套）
-                locked:
-                  type: boolean
-                  default: false
-                visible:
-                  type: boolean
-                  default: true
-                custom_data:
+                  description: 节点内容（文本 或 媒体URL）
+                metadata:
                   type: object
-                  description: 自定义扩展数据
+                  description: 扩展元数据（prompt, status, model, size, generationMode 等）
       responses:
         "200":
           description: 创建成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CanvasElement"
+                $ref: "#/components/schemas/CanvasNode"
 
-  /api/canvas/{canvas_id}/element/{element_id}:
+  /api/canvas/{canvas_id}/node/{node_id}:
     get:
-      tags: [画布元素]
-      summary: 获取画布元素详情
+      tags: [画布节点]
+      summary: 获取画布节点详情
       parameters:
         - name: canvas_id
           in: path
@@ -283,7 +227,7 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: element_id
+        - name: node_id
           in: path
           required: true
           schema:
@@ -291,15 +235,14 @@ paths:
             format: uuid
       responses:
         "200":
-          description: 元素详情
+          description: 节点详情
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CanvasElement"
+                $ref: "#/components/schemas/CanvasNode"
     put:
-      tags: [画布元素]
-      summary: 更新画布元素
-      description: 更新元素的位置、大小、样式、内容等属性
+      tags: [画布节点]
+      summary: 更新画布节点
       parameters:
         - name: canvas_id
           in: path
@@ -307,7 +250,7 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: element_id
+        - name: node_id
           in: path
           required: true
           schema:
@@ -320,66 +263,33 @@ paths:
             schema:
               type: object
               properties:
-                element_type:
-                  $ref: "#/components/schemas/CanvasElementType"
-                name:
+                type:
+                  $ref: "#/components/schemas/CanvasNodeType"
+                title:
                   type: string
-                position_x:
-                  type: number
-                  format: double
-                position_y:
-                  type: number
-                  format: double
+                position:
+                  $ref: "#/components/schemas/Position"
                 width:
                   type: number
                   format: double
                 height:
                   type: number
                   format: double
-                rotation:
-                  type: number
-                  format: double
-                z_index:
-                  type: integer
-                  format: int32
-                fill_color:
+                content:
                   type: string
-                stroke_color:
-                  type: string
-                stroke_width:
-                  type: number
-                  format: double
-                opacity:
-                  type: number
-                  format: double
-                text_content:
-                  type: string
-                image_url:
-                  type: string
-                video_url:
-                  type: string
-                audio_url:
-                  type: string
-                parent_id:
-                  type: string
-                  format: uuid
-                locked:
-                  type: boolean
-                visible:
-                  type: boolean
-                custom_data:
+                metadata:
                   type: object
       responses:
         "200":
-          description: 更新后的元素信息
+          description: 更新后的节点信息
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CanvasElement"
+                $ref: "#/components/schemas/CanvasNode"
     delete:
-      tags: [画布元素]
-      summary: 删除画布元素
-      description: 删除元素及其关联的所有链接
+      tags: [画布节点]
+      summary: 删除画布节点
+      description: 删除节点及其关联的所有连线
       parameters:
         - name: canvas_id
           in: path
@@ -387,7 +297,7 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: element_id
+        - name: node_id
           in: path
           required: true
           schema:
@@ -397,12 +307,12 @@ paths:
         "204":
           description: 删除成功
 
-  # ═══════════════ 画布链接 ═══════════════
-  /api/canvas/{canvas_id}/link:
+  # ═══════════════ 画布连线 ═══════════════
+  /api/canvas/{canvas_id}/connection:
     get:
-      tags: [画布链接]
-      summary: 获取画布链接列表
-      description: 返回指定画布下的所有元素间链接
+      tags: [画布连线]
+      summary: 获取画布连线列表
+      description: 返回指定画布下的所有节点间连线
       parameters:
         - name: canvas_id
           in: path
@@ -412,16 +322,16 @@ paths:
             format: uuid
       responses:
         "200":
-          description: 链接列表
+          description: 连线列表
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/CanvasLink"
+                  $ref: "#/components/schemas/CanvasConnection"
     post:
-      tags: [画布链接]
-      summary: 创建画布链接
+      tags: [画布连线]
+      summary: 创建画布连线
       parameters:
         - name: canvas_id
           in: path
@@ -435,90 +345,28 @@ paths:
           application/json:
             schema:
               type: object
-              required: [source_id, target_id]
+              required: [fromNodeId, toNodeId]
               properties:
-                source_id:
+                fromNodeId:
                   type: string
                   format: uuid
-                  description: 起始元素ID
-                target_id:
+                  description: 起始节点ID
+                toNodeId:
                   type: string
                   format: uuid
-                  description: 目标元素ID
-                link_type:
-                  $ref: "#/components/schemas/CanvasLinkType"
-                label:
-                  type: string
-                  description: 链接标签
-                color:
-                  type: string
-                  default: "#000000"
-                width:
-                  type: number
-                  format: double
-                  default: 2
-                dash_pattern:
-                  type: string
-                  description: 虚线样式，如 "5,5"
-                directed:
-                  type: boolean
-                  default: false
+                  description: 目标节点ID
       responses:
         "200":
           description: 创建成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CanvasLink"
+                $ref: "#/components/schemas/CanvasConnection"
 
-  /api/canvas/{canvas_id}/link/{link_id}:
-    put:
-      tags: [画布链接]
-      summary: 更新画布链接
-      description: 更新链接的样式、标签、方向等属性
-      parameters:
-        - name: canvas_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: link_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                link_type:
-                  $ref: "#/components/schemas/CanvasLinkType"
-                label:
-                  type: string
-                color:
-                  type: string
-                width:
-                  type: number
-                  format: double
-                dash_pattern:
-                  type: string
-                directed:
-                  type: boolean
-      responses:
-        "200":
-          description: 更新后的链接信息
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CanvasLink"
+  /api/canvas/{canvas_id}/connection/{connection_id}:
     delete:
-      tags: [画布链接]
-      summary: 删除画布链接
+      tags: [画布连线]
+      summary: 删除画布连线
       parameters:
         - name: canvas_id
           in: path
@@ -526,7 +374,7 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: link_id
+        - name: connection_id
           in: path
           required: true
           schema:
@@ -545,16 +393,51 @@ components:
       description: JWT Bearer Token 认证
 
   schemas:
+    # ═══════════════ 通用 ═══════════════
+    Position:
+      type: object
+      properties:
+        x:
+          type: number
+          format: double
+        y:
+          type: number
+          format: double
+
+    Viewport:
+      type: object
+      description: 视口状态，对齐前端 viewport: {x, y, k}
+      properties:
+        x:
+          type: number
+          format: double
+          description: 水平偏移
+        y:
+          type: number
+          format: double
+          description: 垂直偏移
+        k:
+          type: number
+          format: double
+          description: 缩放比例（1.0 = 100%）
+
     # ═══════════════ 画布 ═══════════════
+    CanvasBackgroundMode:
+      type: string
+      enum: [blank, lines, dots]
+      description: |
+        blank - 空白背景
+        lines - 网格线
+        dots  - 网点
+
     InfiniteCanvas:
       type: object
-      description: 无限画布元数据，与画布内容（元素/链接）分离存储
+      description: 画布元数据，对齐前端 CanvasProject
       properties:
         id:
           type: string
           format: uuid
-          description: 画布ID
-        name:
+        title:
           type: string
           description: 画布名称
         description:
@@ -568,21 +451,10 @@ components:
           type: string
           format: uuid
           description: 创建者ID
-        viewport_x:
-          type: number
-          format: double
-          description: 视口水平偏移
-        viewport_y:
-          type: number
-          format: double
-          description: 视口垂直偏移
-        viewport_zoom:
-          type: number
-          format: double
-          description: 视口缩放
-        background_color:
-          type: string
-          description: 背景色
+        viewport:
+          $ref: "#/components/schemas/Viewport"
+        backgroundMode:
+          $ref: "#/components/schemas/CanvasBackgroundMode"
         created_at:
           type: string
           format: date-time
@@ -590,19 +462,21 @@ components:
           type: string
           format: date-time
 
-    # ═══════════════ 画布元素 ═══════════════
-    CanvasElementType:
+    # ═══════════════ 画布节点 ═══════════════
+    CanvasNodeType:
       type: string
-      enum: [text, image, video, audio]
+      enum: [text, image, video, audio, config, group]
       description: |
-        text  - 文本元素
-        image - 图片元素
-        video - 视频元素
-        audio - 音频元素
+        text   - 文本节点
+        image  - 图片节点
+        video  - 视频节点
+        audio  - 音频节点
+        config - 生成配置节点（模型/参数/提示词）
+        group  - 分组节点
 
-    CanvasElement:
+    CanvasNode:
       type: object
-      description: 画布上的单个元素，独立记录存储
+      description: 画布节点，对齐前端 CanvasNodeData
       properties:
         id:
           type: string
@@ -611,74 +485,33 @@ components:
           type: string
           format: uuid
           description: 所属画布ID
-        element_type:
-          $ref: "#/components/schemas/CanvasElementType"
-        name:
+        type:
+          $ref: "#/components/schemas/CanvasNodeType"
+        title:
           type: string
-          description: 元素名称
-        position_x:
-          type: number
-          format: double
-          description: 水平位置
-        position_y:
-          type: number
-          format: double
-          description: 垂直位置
+          description: 节点标题
+        position:
+          $ref: "#/components/schemas/Position"
         width:
           type: number
           format: double
-          description: 宽度
+          description: 节点宽度
         height:
           type: number
           format: double
-          description: 高度
-        rotation:
-          type: number
-          format: double
-          description: 旋转角度（度）
-        z_index:
-          type: integer
-          format: int32
-          description: 层级
-        fill_color:
-          type: string
-          description: 填充色
-        stroke_color:
-          type: string
-          description: 描边色
-        stroke_width:
-          type: number
-          format: double
-          description: 描边宽度
-        opacity:
-          type: number
-          format: double
-          description: 不透明度 [0, 1]
-        text_content:
-          type: string
-          description: 文本内容（text 类型）
-        image_url:
-          type: string
-          description: 图片URL（image 类型）
-        video_url:
-          type: string
-          description: 视频URL（video 类型）
-        audio_url:
-          type: string
-          description: 音频URL（audio 类型）
-        parent_id:
-          type: string
-          format: uuid
-          description: 父元素ID（用于嵌套）
-        locked:
-          type: boolean
-          description: 是否锁定
-        visible:
-          type: boolean
-          description: 是否可见
-        custom_data:
+          description: 节点高度
+        metadata:
           type: object
-          description: 任意自定义属性
+          description: |
+            扩展元数据扁平可选字段袋。常用字段：
+            - content: 文本内容 或 媒体URL
+            - prompt: 提示词
+            - status: idle | success | loading | error
+            - generationMode: text | image | video | audio
+            - model, size, count, quality 等生成参数
+            - groupId: 所属分组节点ID
+            - storageKey, mimeType, bytes, naturalWidth, naturalHeight
+            - 插件可写入任意自定义字段
         created_at:
           type: string
           format: date-time
@@ -686,18 +519,10 @@ components:
           type: string
           format: date-time
 
-    # ═══════════════ 画布链接 ═══════════════
-    CanvasLinkType:
-      type: string
-      enum: [straight, curved, orthogonal]
-      description: |
-        straight   - 直线
-        curved     - 曲线
-        orthogonal - 正交折线
-
-    CanvasLink:
+    # ═══════════════ 画布连线 ═══════════════
+    CanvasConnection:
       type: object
-      description: 画布节点之间的链接，独立记录存储
+      description: 节点连线，对齐前端 CanvasConnection。样式字段为后端扩展。
       properties:
         id:
           type: string
@@ -706,32 +531,30 @@ components:
           type: string
           format: uuid
           description: 所属画布ID
-        source_id:
+        fromNodeId:
           type: string
           format: uuid
-          description: 起始元素ID
-        target_id:
+          description: 起始节点ID
+        toNodeId:
           type: string
           format: uuid
-          description: 目标元素ID
-        link_type:
-          $ref: "#/components/schemas/CanvasLinkType"
+          description: 目标节点ID
         label:
           type: string
-          description: 链接上的标签文字
+          description: 连线标签（后端扩展）
         color:
           type: string
-          description: 连线颜色
+          description: 连线颜色（后端扩展）
         width:
           type: number
           format: double
-          description: 连线宽度
-        dash_pattern:
+          description: 连线宽度（后端扩展）
+        dashPattern:
           type: string
-          description: 虚线样式，如 "5,5"；空串为实线
+          description: 虚线样式（后端扩展）
         directed:
           type: boolean
-          description: 是否有箭头
+          description: 是否有箭头（后端扩展）
         created_at:
           type: string
           format: date-time
