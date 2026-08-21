@@ -901,6 +901,37 @@ paths:
                     type: string
                     format: uuid
 
+  /api/seedance2/task:
+    get:
+      tags: [任务]
+      summary: 获取所有可访问的任务
+      description: |
+        获取当前用户可访问的所有任务列表，支持分页。
+        - 制片/管理员：查看所有任务
+        - 普通用户：仅查看自己参与的子项目下的任务
+      parameters:
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 100
+          description: 每页返回条数
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: 分页偏移量
+      responses:
+        "200":
+          description: 任务列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
   # ═══════════════ 资产库 - 分组 ═══════════════
   /api/seedance2/asset-library/group:
     get:
