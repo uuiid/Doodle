@@ -6,6 +6,8 @@
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/global_function.h>
 
+#include <doodle_core/metadata/seedance2/canvas_media.h>
+
 #include <filesystem>
 #include <fmt/format.h>
 #include <string>
@@ -56,6 +58,20 @@ struct kitsu_ctx_t {
   FSys::path get_sd2_pictures_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / "sd2" / "pictures" /
            FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
+  }
+  // seedance2_canvas_media — 按 media_role 路由到不同子目录，缩略图固定 .png
+  FSys::path get_sd2_canvas_media_file(const uuid& in_uuid, seedance2::media_role in_role, const std::string& in_ext = {}) {
+    auto subdir = [&]() -> FSys::path {
+      switch (in_role) {
+        case seedance2::media_role::thumbnail: return "thumbnails";
+        case seedance2::media_role::preview:   return "previews";
+        default:                               return {};
+      }
+    }();
+    auto path = FSys::path{"sd2"} / "canvas_media";
+    if (!subdir.empty()) path /= subdir;
+    auto ext = in_role == seedance2::media_role::thumbnail ? ".png" : fix_ext(true, in_ext);
+    return root_ / path / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ext));
   }
 
   FSys::path get_jobs_logs_file(const uuid& in_uuid) {
