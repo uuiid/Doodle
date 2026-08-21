@@ -109,7 +109,7 @@ function Initialize-Sd2 {
     $is_run = Start-GitPull -Remote "origin" -Branch "master" -WorkingDirectory $DoodleSdRoot -LogPath $DoodleLogPath
     if ($is_run) {
         Write-Host "开始构建SD.exe"
-        $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "pack:win" -WorkingDirectory $DoodleSdRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
+        $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "build" -WorkingDirectory $DoodleSdRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
         if ($NpmResult.ExitCode -ne 0) {
             throw "Build failed with exit code $($NpmResult.ExitCode)"
         }
