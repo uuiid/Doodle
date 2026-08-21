@@ -113,7 +113,7 @@ struct upgrade_2_t : sqlite_upgrade {
                          .columns(&sd2::task::uuid_id_, &sd2::subproject::uuid_id_)
                          .from<sd2::task>()
                          .join<sd2::ai_generate_entity>(
-                             c(&sd2::task::ai_generate_entity_id_) == c(&sd2::task::ai_generate_entity_id_)
+                             c(&sd2::ai_generate_entity::uuid_id_) == c(&sd2::task::ai_generate_entity_id_)
                          )
                          .join<sd2::ai_generate_classification>(
                              c(&sd2::ai_generate_entity::ai_generate_classification_id_) ==
@@ -121,9 +121,6 @@ struct upgrade_2_t : sqlite_upgrade {
                          )
                          .join<sd2::subproject>(
                              c(&sd2::ai_generate_classification::subproject_id_) == c(&sd2::subproject::uuid_id_)
-                         )
-                         .join<sd2::subproject_person_link>(
-                             c(&sd2::subproject::uuid_id_) == c(&sd2::subproject_person_link::subproject_id_)
                          )  //
                      ();
 
