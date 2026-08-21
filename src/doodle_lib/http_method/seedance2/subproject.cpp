@@ -124,6 +124,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, delete_) {
   }
 
   if (l_force) {
+    person_.check_admin();
     co_await l_sql.remove<sd2::subproject>(id_);
   } else {
     auto l_subproject       = std::make_shared<sd2::subproject>(l_sql.get_by_uuid<sd2::subproject>(id_));

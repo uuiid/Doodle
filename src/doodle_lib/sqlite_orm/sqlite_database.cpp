@@ -126,7 +126,7 @@ void sqlite_storage::regs_all() {
       .add_column("ended_at", &seedance2::task::ended_at_)
       .add_column("project_uuid_id", &seedance2::task::project_uuid_id_)
       .add_column("completion_tokens", &seedance2::task::completion_tokens_)
-      .add_column("ai_generate_entity_id", &seedance2::task::ai_generate_entity_id_, not_null())
+      .add_column("ai_generate_entity_id", &seedance2::task::ai_generate_entity_id_)
       .add_column("subproject_id", &seedance2::task::subproject_id_)
       .add_column("archived", &seedance2::task::archived_)
       .add_foreign_key(&seedance2::task::project_uuid_id_, &project::uuid_id_, foreign_key_action::set_null)
@@ -135,8 +135,10 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(
           &seedance2::task::preview_file_, &seedance2::ai_preview_file::uuid_id_, foreign_key_action::set_null
       )
+      .add_foreign_key(&seedance2::task::subproject_id_, &seedance2::subproject::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(
-          &seedance2::task::subproject_id_, &seedance2::subproject::uuid_id_, foreign_key_action::set_null
+          &seedance2::task::ai_generate_entity_id_, &seedance2::ai_generate_entity::uuid_id_,
+          foreign_key_action::set_null
       )
       .add_index(&seedance2::task::uuid_id_);
 
