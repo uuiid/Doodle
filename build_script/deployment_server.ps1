@@ -9,7 +9,8 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
 if ($BuildSd2) {
     $Sd_path = Initialize-Sd2
-    &scp -i ~/.ssh/id_ed25519_deploy -r "$Sd_path\*" zyb@192.168.20.188:/home/zyb/nginx/html/sd2
+    $Sd_wsl_path = ($Sd_path -replace '\\', '/') -replace '^([A-Z]):', '/mnt/$1' -replace '^/mnt/([A-Z])', { "/mnt/" + $_.Groups[1].Value.ToLower() }
+    wsl rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519_deploy" "$Sd_wsl_path/" zyb@192.168.20.188:/home/zyb/nginx/html/sd2
     return;
 }
 
