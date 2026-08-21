@@ -10,7 +10,11 @@
 #include "doodle_core/metadata/seedance2/ai_preview_file.h"
 #include "doodle_core/metadata/seedance2/assets_entity.h"
 #include "doodle_core/metadata/seedance2/assets_entity_item.h"
+#include "doodle_core/metadata/seedance2/canvas_element.h"
+#include "doodle_core/metadata/seedance2/canvas_link.h"
+#include "doodle_core/metadata/seedance2/canvas_media.h"
 #include "doodle_core/metadata/seedance2/group.h"
+#include "doodle_core/metadata/seedance2/infinite_canvas.h"
 #include "doodle_core/metadata/seedance2/subproject.h"
 #include "doodle_core/metadata/seedance2/task.h"
 #include <doodle_core/exception/exception.h>
@@ -1023,6 +1027,84 @@ void sqlite_storage::regs_all() {
               .where(c(&entity_fts::entity_id_) == old_(&entity::uuid_id_))
       )
       .end();
+
+  reg_table<seedance2::infinite_canvas>("seedance2_infinite_canvas")
+      .add_column("id", &seedance2::infinite_canvas::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::infinite_canvas::uuid_id_, unique(), not_null())
+      .add_column("title", &seedance2::infinite_canvas::title_, not_null())
+      .add_column("description", &seedance2::infinite_canvas::description_)
+      .add_column("project_uuid_id", &seedance2::infinite_canvas::project_uuid_id_)
+      .add_column("subproject_id", &seedance2::infinite_canvas::subproject_id_)
+      .add_column("user_id", &seedance2::infinite_canvas::user_id_)
+      .add_column("viewport_x", &seedance2::infinite_canvas::viewport_x_)
+      .add_column("viewport_y", &seedance2::infinite_canvas::viewport_y_)
+      .add_column("viewport_k", &seedance2::infinite_canvas::viewport_k_)
+      .add_column("background_mode", &seedance2::infinite_canvas::background_mode_)
+      .add_column("created_at", &seedance2::infinite_canvas::created_at_)
+      .add_column("updated_at", &seedance2::infinite_canvas::updated_at_)
+      .add_foreign_key(&seedance2::infinite_canvas::project_uuid_id_, &project::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&seedance2::infinite_canvas::subproject_id_, &seedance2::subproject::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&seedance2::infinite_canvas::user_id_, &person::uuid_id_, foreign_key_action::set_null);
+
+  reg_table<seedance2::canvas_element>("seedance2_canvas_element")
+      .add_column("id", &seedance2::canvas_element::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::canvas_element::uuid_id_, unique(), not_null())
+      .add_column("canvas_id", &seedance2::canvas_element::canvas_id_, not_null())
+      .add_column("element_type", &seedance2::canvas_element::element_type_)
+      .add_column("title", &seedance2::canvas_element::title_)
+      .add_column("position_x", &seedance2::canvas_element::position_x_)
+      .add_column("position_y", &seedance2::canvas_element::position_y_)
+      .add_column("width", &seedance2::canvas_element::width_)
+      .add_column("height", &seedance2::canvas_element::height_)
+      .add_column("content", &seedance2::canvas_element::content_)
+      .add_column("metadata", &seedance2::canvas_element::metadata_)
+      .add_column("parent_id", &seedance2::canvas_element::parent_id_)
+      .add_column("created_at", &seedance2::canvas_element::created_at_)
+      .add_column("updated_at", &seedance2::canvas_element::updated_at_)
+      .add_foreign_key(
+          &seedance2::canvas_element::canvas_id_, &seedance2::infinite_canvas::uuid_id_, foreign_key_action::cascade
+      );
+
+  reg_table<seedance2::canvas_link>("seedance2_canvas_link")
+      .add_column("id", &seedance2::canvas_link::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::canvas_link::uuid_id_, unique(), not_null())
+      .add_column("canvas_id", &seedance2::canvas_link::canvas_id_, not_null())
+      .add_column("source_id", &seedance2::canvas_link::source_id_, not_null())
+      .add_column("target_id", &seedance2::canvas_link::target_id_, not_null())
+      .add_column("label", &seedance2::canvas_link::label_)
+      .add_column("color", &seedance2::canvas_link::color_)
+      .add_column("width", &seedance2::canvas_link::width_)
+      .add_column("dash_pattern", &seedance2::canvas_link::dash_pattern_)
+      .add_column("directed", &seedance2::canvas_link::directed_)
+      .add_column("created_at", &seedance2::canvas_link::created_at_)
+      .add_column("updated_at", &seedance2::canvas_link::updated_at_)
+      .add_foreign_key(
+          &seedance2::canvas_link::canvas_id_, &seedance2::infinite_canvas::uuid_id_, foreign_key_action::cascade
+      )
+      .add_foreign_key(
+          &seedance2::canvas_link::source_id_, &seedance2::canvas_element::uuid_id_, foreign_key_action::cascade
+      )
+      .add_foreign_key(
+          &seedance2::canvas_link::target_id_, &seedance2::canvas_element::uuid_id_, foreign_key_action::cascade
+      );
+
+  reg_table<seedance2::canvas_media>("seedance2_canvas_media")
+      .add_column("id", &seedance2::canvas_media::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::canvas_media::uuid_id_, unique(), not_null())
+      .add_column("canvas_element_id", &seedance2::canvas_media::canvas_element_id_, not_null())
+      .add_column("file_extension", &seedance2::canvas_media::file_extension_)
+      .add_column("preview_extension", &seedance2::canvas_media::preview_extension_)
+      .add_column("width", &seedance2::canvas_media::width_)
+      .add_column("height", &seedance2::canvas_media::height_)
+      .add_column("duration", &seedance2::canvas_media::duration_)
+      .add_column("original_name", &seedance2::canvas_media::original_name_)
+      .add_column("metadata", &seedance2::canvas_media::metadata_)
+      .add_column("created_at", &seedance2::canvas_media::created_at_)
+      .add_column("updated_at", &seedance2::canvas_media::updated_at_)
+      .add_foreign_key(
+          &seedance2::canvas_media::canvas_element_id_, &seedance2::canvas_element::uuid_id_,
+          foreign_key_action::cascade
+      );
 }
 void sqlite_storage::register_custom_extension(sqlite3* in_sqlite) {
   tokenizer::register_jieba_tokenizer(get_fts5_api(in_sqlite));
