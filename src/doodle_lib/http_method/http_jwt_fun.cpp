@@ -29,6 +29,12 @@ void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
     l_jwt = l_jwt.substr(l_it + 20, l_jwt.find(';', l_it) - l_it - 20);
   else if (auto l_it_b = l_jwt.find("Bearer "); l_it_b != std::string::npos)
     l_jwt = l_jwt.substr(l_it_b + 7, l_jwt.find(' ', l_it_b) - l_it_b - 7);
+  else if (auto l_it1 = in_handle->url_.params().find("access_token_cookie");
+           l_it1 != in_handle->url_.params().end() && (*l_it1)->has_value)
+    l_jwt = (*l_it1)->value;
+  else if (auto l_it2 = in_handle->url_.params().find("access_token");
+           l_it2 != in_handle->url_.params().end() && (*l_it2)->has_value)
+    l_jwt = (*l_it2)->value;
   if (l_jwt.empty()) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
   // std::string l_l_jwt_str{l_jwt};
 
