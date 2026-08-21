@@ -5,6 +5,7 @@
 
 #include <set>
 #include <string>
+#include <vector>
 
 namespace doodle::orm {
 class DOODLELIB_API session {
@@ -86,10 +87,13 @@ class DOODLELIB_API session {
   // 同步schema
   void sync_schema();
   // 重建表
-  void rebuild_table(const std::type_index& table_name);
+  // @param table_name 表名
+  // @param in_columns 由于有时有新增的列, 所以需要传入新增的列名, 以便同步数据
+  //
+  void rebuild_table(const std::type_index& table_name, const std::vector<std::string>& in_new_columns = {});
   template <typename T>
-  void rebuild_table() {
-    rebuild_table(std::type_index(typeid(T)));
+  void rebuild_table(const std::vector<std::string>& in_new_columns = {}) {
+    rebuild_table(std::type_index(typeid(T)), in_new_columns);
   }
 
   // 获取所有的表名

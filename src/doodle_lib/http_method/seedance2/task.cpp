@@ -344,6 +344,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   l_json.get_to(*l_task);
   l_task->user_id_        = person_.person_.uuid_id_;
   l_task->ai_studio_id_   = person_.get_ai_studio_id();
+  l_task->subproject_id_  = subproject_id_;
   l_task->file_extension_ = ".mp4";
   // data_request 必须有 content 字段，且 content 中可能 type 为 text 的字段
   auto& l_content         = l_task->data_request_.at("content");

@@ -161,7 +161,7 @@ void session::sync_schema() {
   l_transaction.commit();
 }
 
-void session::rebuild_table(const std::type_index& table_name) {
+void session::rebuild_table(const std::type_index& table_name, const std::vector<std::string>& in_new_columns) {
   auto& l_s = *data_->s_;
   if (!l_s.type_to_table_index_.contains(table_name)) throw std::runtime_error("Table not found for the given type");
   auto l_table_index = l_s.type_to_table_index_.at(table_name);
@@ -181,6 +181,11 @@ void session::rebuild_table(const std::type_index& table_name) {
     std::vector<std::string> l_column_names;
     for (const auto& column : l_old_table->columns_) {
       l_column_names.push_back(column.name_);
+    }
+    // 如何有新增的列, 则需要将 l_column_names 中去除新增的列, 只保留旧表中存在的列,
+    // 这个是为了避免在复制数据时出现列不匹配的错误
+    for (const auto& new_column : in_new_columns) {
+      l_column_names.erase(std::remove(l_column_names.begin(), l_column_names.end(), new_column), l_column_names.end());
     }
     auto l_copy_sql = fmt::format(
         R"(INSERT INTO "{}" ("{}") SELECT "{}" FROM "{}";)", l_new_table->name_, fmt::join(l_column_names, R"(", ")"),
