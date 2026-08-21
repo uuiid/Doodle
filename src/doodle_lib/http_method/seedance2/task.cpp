@@ -420,6 +420,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
   // todo: 在 task 中, 添加 subproject 外键, 以方便查询
   auto l_sql = get_sqlite_database();
   using namespace orm;
+
+  std::int32_t l_size   = 100;
+  std::int32_t l_offset = 0;
+  for (auto&& [key, value, has_value] : in_handle->url_.params()) {
+    if (key == "size") l_size = std::stoi(value);
+    if (key == "offset") l_offset = std::stoi(value);
+  }
+
   auto l_query = select(l_sql)
                      .columns(object<sd2::task>())
                      .from<sd2::task>()
@@ -434,7 +442,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
                     .where(c(&sd2::subproject_person_link::person_id_) == person_.person_.uuid_id_)) &&
         !c(&sd2::task::archived_)
     );
-  co_return in_handle->make_msg(nlohmann::json{} = l_query().to_vector());
+  co_return in_handle->make_msg(nlohmann::json{} = l_query.limit(l_size).offset(l_offset)().to_vector());
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail, get) {
