@@ -30,7 +30,9 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/Ninja_release/bin/doodle_kitsu_supplement.exe",
             "args": [
-                "--config=${workspaceFolder}/build/my_debug_server.json"
+                "--config=${workspaceFolder}/build/my_debug_server.json",
+                "--local",
+                "--port=50024"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_release/bin",
