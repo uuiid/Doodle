@@ -1,11 +1,11 @@
 {
 	"folders": [
 		{
-			"path": "src/test_js"
-		},
-		{
 			"path": ".",
 			"name": "doodleMain"
+		},
+		{
+			"path": "src/test_js"
 		},
 		{
 			"path": "external/kimodo",
@@ -14,6 +14,10 @@
 		{
 			"path": "D:/dev/dev",
 			"name": "开发日志"
+		},
+		{
+			"path": "E:/UnrealEngine",
+			"name": "uePlug"
 		}
 	],
 	"settings": {
