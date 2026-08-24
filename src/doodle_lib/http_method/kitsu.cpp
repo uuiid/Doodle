@@ -347,6 +347,9 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &seedance2::seedance2_subproject_ai_episode_instance::subproject_id_,
         &seedance2::seedance2_subproject_ai_episode_instance::episode_id_
       ))
+      .reg_t<seedance2::seedance2_subproject_entity>("/api/seedance2/subproject/{}/entity"_url(
+        &seedance2::seedance2_subproject_entity::subproject_id_
+      ))
       .reg_t<seedance2::seedance2_subproject_ai_generate_entity>("/api/seedance2/subproject/{}/episodes/{}/entity"_url(
         &seedance2::seedance2_subproject_ai_generate_entity::subproject_id_,
         &seedance2::seedance2_subproject_ai_generate_entity::episode_id_

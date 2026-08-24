@@ -79,10 +79,14 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid subproject_id_{};
 uuid episode_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/seedance2/subproject/{subproject_id}/entity
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_entity)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid subproject_id_{};
+DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}/entity
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_generate_entity)
 DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid subproject_id_{};
 uuid episode_id_{};
 DOODLE_HTTP_FUN_END()

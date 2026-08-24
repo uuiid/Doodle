@@ -31,9 +31,9 @@ struct DOODLE_CORE_API ai_generate_entity {
   // from json
   friend void from_json(const nlohmann::json& j, ai_generate_entity& p) {
     j.at("name").get_to(p.name_);
-    j.at("ai_episode_id").get_to(p.ai_episode_id_);
     j.at("project_uuid_id").get_to(p.project_uuid_id_);
     j.at("ai_category_id").get_to(p.ai_category_id_);
+    if (j.contains("ai_episode_id")) j.at("ai_episode_id").get_to(p.ai_episode_id_);
     if (j.contains("description")) j.at("description").get_to(p.description_);
     if (j.contains("shot_uuid_id")) j.at("shot_uuid_id").get_to(p.shot_uuid_id_);
     if (j.contains("preview_file")) j.at("preview_file").get_to(p.preview_file_);
