@@ -22,14 +22,14 @@ LLM2Vec::LLM2Vec(const FSys::path& in_model_path, const FSys::path& in_tokenizer
 
 void LLM2Vec::init_session() {
   Ort::SessionOptions session_options;
-  // session_options.SetIntraOpNumThreads(1);
-  session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+  // 使用 ORT_ENABLE_BASIC 避免动态 seq_len 下融合器烘焙静态 shape
+  session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_BASIC);
+  session_options.DisableMemPattern();
+  session_options.DisableCpuMemArena();
   session_      = std::make_unique<Ort::Session>(get_ort_env(), model_path_.wstring().c_str(), session_options);
   input_names_  = session_->GetInputNames();
   output_names_ = session_->GetOutputNames();
   io_binding_   = std::make_unique<Ort::IoBinding>(*session_);
-  // 绑定输出到 CPU memory，让 ONNX Runtime 自动分配输出 tensor，避免传空 OrtValue* 导致空指针崩溃
-  for (const auto& name : output_names_) io_binding_->BindOutput(name.c_str(), memory_info_);
   static const std::vector<std::string> g_input_names{"input_ids", "attention_mask", "position_ids"};
   DOODLE_CHICK(
       input_names_ == g_input_names, "检查到模型输入错误 {} != {}", fmt::join(input_names_, ","),
@@ -116,6 +116,11 @@ std::vector<float_t> LLM2Vec::operator()(const std::string& instruction, const s
   const std::int64_t seq_len = static_cast<std::int64_t>(tokenized.input_ids.size());
   const std::array<std::int64_t, 2> input_shape{1, seq_len};
   auto memory_info      = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+
+  // 清除上一次推理的绑定，避免复用旧 shape 的缓冲区
+  io_binding_->ClearBoundInputs();
+  io_binding_->ClearBoundOutputs();
+  for (const auto& name : output_names_) io_binding_->BindOutput(name.c_str(), memory_info_);
 
   auto input_ids_tensor = Ort::Value::CreateTensor<std::int64_t>(
       memory_info, tokenized.input_ids.data(), tokenized.input_ids.size(), input_shape.data(), input_shape.size()

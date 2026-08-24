@@ -78,11 +78,13 @@ void transformer_encoder_block::load(const FSys::path& model_dir, std::shared_pt
 
 void transformer_encoder_block::init_session() {
   Ort::SessionOptions session_options;
-  session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+  // 使用 ORT_ENABLE_BASIC 而非 EXTENDED/ALL：Level2 的 SimplifiedLayerNormFusion 等融合
+  // 会在动态 seq_len 场景下烘焙静态 shape，导致不同帧数推理时报 "OrtValue shape verification failed"。
+  session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_BASIC);
   session_options.SetLogSeverityLevel(OrtLoggingLevel::ORT_LOGGING_LEVEL_ERROR);
-  // SimplifiedLayerNormFusion 会把动态 seq_len 烘焙成静态 shape，不同帧数推理时触发
-  // "OrtValue shape verification failed"，这里禁用该融合。
-  session_options.AddConfigEntry("optimization.disable_specified_optimizers", "SimplifiedLayerNormFusion");
+  // 禁用内存模式，防止基于首次运行 shape 预分配固定大小缓冲区
+  session_options.DisableMemPattern();
+  session_options.DisableCpuMemArena();
 
   auto onnx_path = model_dir_ / "transformer_core.onnx";
   DOODLE_CHICK(FSys::exists(onnx_path), "ONNX 模型文件不存在: {}", onnx_path.string());
@@ -302,6 +304,13 @@ MatrixXfRow transformer_encoder_block::forward(
 
   // ---- 准备 ONNX 输入 ----
   DOODLE_CHICK(!input_names_.empty(), "ONNX session 未正确初始化输入名称");
+
+  // 清除上一次推理的绑定，避免引用已销毁的栈上 tensor 或复用旧 shape 的输出缓冲区
+  io_binding_->ClearBoundInputs();
+  io_binding_->ClearBoundOutputs();
+  for (const auto& name : output_names_) {
+    io_binding_->BindOutput(name.c_str(), memory_info_);
+  }
 
   // ONNX 期望 RowMajor 连续内存，将 Eigen 列主序数据拷贝到行主序 vector
   // 将 Eigen 列主序数据拷贝到行主序的 MatrixXfRow
