@@ -3,6 +3,8 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+#include <boost/core/noncopyable.hpp>
+
 #include <set>
 #include <string>
 #include <vector>
@@ -12,6 +14,8 @@ class DOODLELIB_API session {
   struct session_data {
     sqlite_connection_ptr connection_;
     storage* s_{nullptr};
+    // 嵌套事务的层数
+    std::uint32_t is_transaction_{0};
     session_data() = default;
     ~session_data();
   };
@@ -51,13 +55,17 @@ class DOODLELIB_API session {
 
   operator bool() const { return data_ && data_->connection_ && data_->s_; }
 
-  struct transaction_guard {
+  struct transaction_guard : public boost::noncopyable {
+   private:
     void begin();
     sqlite_connection_ptr connection_;
+    session* s_{nullptr};
+    std::int32_t transaction_size_{};
 
    public:
     bool committed_{false};
     explicit transaction_guard(session& s);
+
     void commit();
     void rollback();
     ~transaction_guard();

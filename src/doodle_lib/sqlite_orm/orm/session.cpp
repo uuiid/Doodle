@@ -231,26 +231,57 @@ void session::rename_table(const std::string& old_name, const std::string& new_n
   l_stmt.step();
 }
 
-session::transaction_guard::transaction_guard(session& s) : connection_(s.data_->connection_) { begin(); }
+session::transaction_guard::transaction_guard(session& s) : connection_(s.data_->connection_), s_(&s) { begin(); }
 
 void session::transaction_guard::begin() {
   sqlite_stmt l_stmt{};
-  l_stmt.prepare(connection_, "BEGIN TRANSACTION;");
+  transaction_size_ = s_->data_->is_transaction_;
+  if (transaction_size_)
+    l_stmt.prepare(connection_, fmt::format("SAVEPOINT sp_{};", transaction_size_));
+  else
+    l_stmt.prepare(connection_, "BEGIN TRANSACTION;");
   l_stmt.step();
+  s_->data_->is_transaction_++;
 }
 
 void session::transaction_guard::commit() {
   if (committed_) throw std::runtime_error("Transaction already committed");
+  // 校验 LIFO：只有当前最内层的 guard 才能被提交，避免乱序提交破坏嵌套事务
+  if (static_cast<std::uint32_t>(transaction_size_) + 1 != s_->data_->is_transaction_)
+    throw std::runtime_error("Transaction committed out of order");
   sqlite_stmt l_stmt{};
-  l_stmt.prepare(connection_, "COMMIT;");
+  if (transaction_size_ > 0) {
+    l_stmt.prepare(connection_, fmt::format("RELEASE SAVEPOINT sp_{};", transaction_size_));
+  } else {
+    l_stmt.prepare(connection_, "COMMIT;");
+  }
   l_stmt.step();
+  s_->data_->is_transaction_--;
   committed_ = true;
 }
 void session::transaction_guard::rollback() {
   if (committed_) throw std::runtime_error("Transaction already committed");
-  sqlite_stmt l_stmt{};
-  l_stmt.prepare(connection_, "ROLLBACK;");
-  l_stmt.step();
+  // 校验 LIFO：只有当前最内层的 guard 才能被回滚
+  if (static_cast<std::uint32_t>(transaction_size_) + 1 != s_->data_->is_transaction_)
+    throw std::runtime_error("Transaction rolled back out of order");
+  if (transaction_size_ > 0) {
+    // ROLLBACK TO 并不会移除 savepoint, 需再执行 RELEASE 以彻底清理栈上残留的同名 savepoint
+    {
+      sqlite_stmt l_rollback_stmt{};
+      l_rollback_stmt.prepare(connection_, fmt::format("ROLLBACK TO SAVEPOINT sp_{};", transaction_size_));
+      l_rollback_stmt.step();
+    }
+    {
+      sqlite_stmt l_release_stmt{};
+      l_release_stmt.prepare(connection_, fmt::format("RELEASE SAVEPOINT sp_{};", transaction_size_));
+      l_release_stmt.step();
+    }
+  } else {
+    sqlite_stmt l_stmt{};
+    l_stmt.prepare(connection_, "ROLLBACK;");
+    l_stmt.step();
+  }
+  s_->data_->is_transaction_--;
   committed_ = true;
 }
 session::transaction_guard::~transaction_guard() {
