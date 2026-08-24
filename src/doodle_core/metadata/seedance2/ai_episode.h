@@ -32,15 +32,15 @@ struct DOODLE_CORE_API ai_episode {
 // 限制 ai_episode 中, 可以使用的模型和分辨率
 struct DOODLE_CORE_API ai_episode_model_resolution_limit {
   DOODLE_BASE_FIELDS();
-  uuid ai_episode_id_;
-  std::string model_name_;
-  std::string resolution_;
+  uuid ai_episode_id_;      // < 以下三项有唯一约束
+  std::string model_name_;  //
+  std::string resolution_;  //
   // to json
   friend void to_json(nlohmann::json& j, const ai_episode_model_resolution_limit& p) {
-    j["id"]              = p.uuid_id_;
-    j["ai_episode_id"]   = p.ai_episode_id_;
-    j["model_name"]      = p.model_name_;
-    j["resolution"]      = p.resolution_;
+    j["id"]            = p.uuid_id_;
+    j["ai_episode_id"] = p.ai_episode_id_;
+    j["model_name"]    = p.model_name_;
+    j["resolution"]    = p.resolution_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, ai_episode_model_resolution_limit& p) {

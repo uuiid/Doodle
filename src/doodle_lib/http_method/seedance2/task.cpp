@@ -32,6 +32,7 @@
 #include "http_method/kitsu.h"
 #include "reg.h"
 #include "sqlite_orm/orm/column_operations.h"
+#include "sqlite_orm/orm/count.h"
 #include "sqlite_orm/orm/insert.h"
 #include "sqlite_orm/orm/select.h"
 #include <chrono>
@@ -350,6 +351,25 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   for (auto&& l_value : l_content)
     if (l_value.contains("type") && l_value.at("type").get<std::string>() == "text")
       l_task->text_prompt_ += l_value.at("text").get<std::string>() + "\n";
+  // 获取模型和分辨率字段(为必填项, 不检测存在)
+  std::string l_model      = l_task->data_request_.at("model").get<std::string>();
+  std::string l_resolution = l_task->data_request_.at("resolution").get<std::string>();
+
+  {
+    using namespace orm;
+    auto l_entity = l_sql.get_by_uuid<sd2::ai_generate_entity>(l_task->ai_generate_entity_id_);
+    auto l_result = select(l_sql)
+                        .columns(count(&sd2::ai_episode_model_resolution_limit::id_))
+                        .from<sd2::ai_episode_model_resolution_limit>()
+                        .where(
+                            c(&sd2::ai_episode_model_resolution_limit::ai_episode_id_) == l_entity.ai_episode_id_ &&
+                            c(&sd2::ai_episode_model_resolution_limit::model_name_) == l_model &&
+                            c(&sd2::ai_episode_model_resolution_limit::resolution_) == l_resolution
+                        )  //
+                    ()
+                        .to_single();
+    DOODLE_CHICK_HTTP(l_result == 1, unauthorized, "模型 {} 或者分辨率 {} 未被授权", l_model, l_resolution);
+  }
 
   auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
   auto l_studio = l_sql.get_by_uuid<ai_studio>(l_task->ai_studio_id_);
