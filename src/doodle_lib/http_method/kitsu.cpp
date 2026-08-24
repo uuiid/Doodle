@@ -299,34 +299,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<seedance2::seedance2_pictures>("/api/seedance2/pictures/{}{}"_url(
         &seedance2::seedance2_pictures::id_, &seedance2::seedance2_pictures::file_extension_
       ))
-      .reg_t<seedance2::seedance2_asset_library_entity_item>("/api/seedance2/asset-library/entity/{}/item"_url(&seedance2::seedance2_asset_library_entity_item::parent_id_))
-      .reg_t<seedance2::seedance2_asset_library_entity_item_instance>("/api/seedance2/asset-library/entity/{}/item/{}"_url(
-        &seedance2::seedance2_asset_library_entity_item_instance::parent_id_,
-        &seedance2::seedance2_asset_library_entity_item_instance::id_
-      ))
-      .reg_t<seedance2::seedance2_asset_library_group_entity>("/api/seedance2/asset-library/group/{}/entity"_url(
-        &seedance2::seedance2_asset_library_group_entity::group_id_
-      ))
-      .reg_t<seedance2::seedance2_asset_library_entity_instance>("/api/seedance2/asset-library/entity/{}"_url(
-        &seedance2::seedance2_asset_library_entity_instance::entity_id_
-      ))
-      .reg_t<seedance2::seedance2_asset_library_entity_search>("/api/seedance2/asset-library/entity/search"_url)
-      .reg_t<seedance2::seedance2_asset_library_group>("/api/seedance2/asset-library/group"_url)
-      .reg_t<seedance2::seedance2_asset_library_group_instance>("/api/seedance2/asset-library/group/{}"_url(
-        &seedance2::seedance2_asset_library_group_instance::group_id_
-      ))
-      .reg_t<seedance2::seedance2_asset_library_entity_pictures_item>("/api/seedance2/asset-library/entity/{}/pictures/item/{}.png"_url(
-        &seedance2::seedance2_asset_library_entity_pictures_item::parent_id_,
-        &seedance2::seedance2_asset_library_entity_pictures_item::id_
-      ))
-      .reg_t<seedance2::seedance2_asset_library_entity_pictures_item>("/api/seedance2/asset-library/entity/{}/pictures/item/{}.mp4"_url(
-        &seedance2::seedance2_asset_library_entity_pictures_item::parent_id_,
-        &seedance2::seedance2_asset_library_entity_pictures_item::id_
-      ))
-      .reg_t<seedance2::seedance2_asset_library_entity_thumbnail_item>("/api/seedance2/asset-library/entity/{}/thumbnail/item/{}.png"_url(
-        &seedance2::seedance2_asset_library_entity_thumbnail_item::parent_id_,
-        &seedance2::seedance2_asset_library_entity_thumbnail_item::id_
-      ))
       .reg_t<seedance2::seedance2_animation_waiting>("/api/seedance2/animation/waiting.mp4"_url)
       .reg_t<data_ai_studio>("/api/data/ai_studio"_url)
       .reg_t<data_ai_studio_instance>("/api/data/ai_studio/{}"_url(&data_ai_studio_instance::id_))

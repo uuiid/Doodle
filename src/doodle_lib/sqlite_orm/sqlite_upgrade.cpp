@@ -12,8 +12,6 @@
 #include <doodle_core/metadata/seedance2/ai_episode.h>
 #include <doodle_core/metadata/seedance2/ai_generate_entity.h>
 #include <doodle_core/metadata/seedance2/ai_preview_file.h>
-#include <doodle_core/metadata/seedance2/assets_entity.h>
-#include <doodle_core/metadata/seedance2/assets_entity_item.h>
 #include <doodle_core/metadata/seedance2/task.h>
 #include <doodle_core/metadata/task_type.h>
 

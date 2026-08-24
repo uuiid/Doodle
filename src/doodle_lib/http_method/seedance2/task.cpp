@@ -12,9 +12,6 @@
 #include <doodle_core/metadata/ai_studio.h>
 #include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/seedance2/ai_preview_file.h>
-#include <doodle_core/metadata/seedance2/assets_entity.h>
-#include <doodle_core/metadata/seedance2/assets_entity_item.h>
-#include <doodle_core/metadata/seedance2/group.h>
 #include <doodle_core/metadata/seedance2/task.h>
 
 #include <doodle_lib/core/app_base.h>
@@ -470,6 +467,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail, get) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures, get) {
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
   auto l_file = l_ctx.get_sd2_pictures_file(id_, file_extension_.file_extension_.generic_string());
+  co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_animation_waiting, get) {
+  auto l_file = g_ctx().get<kitsu_ctx_t>().front_end_root_ / "seedance2" / "animation" / "waiting.mp4";
+  DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "文件不存在");
   co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
 }
 

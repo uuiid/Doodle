@@ -39,17 +39,6 @@ struct kitsu_ctx_t {
     return root_ / "ue_plugins" / fmt::format("UE_{}.{}.{}.zip", in_major, in_minor, in_patch);
   }
 
-  // seedance2_asset_library_entity_pictures_item
-  FSys::path get_sd2_asset_library_entity_pictures_item_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return root_ / "sd2" / "pictures" / "asset_library" /
-           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
-  }
-  // seedance2_asset_library_entity_thumbnail_item
-  FSys::path get_sd2_asset_library_entity_thumbnail_item_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return root_ / "sd2" / "thumbnails" / "asset_library" /
-           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
-  }
-
   // seedance2_thumbnail
   FSys::path get_sd2_thumbnail_file(const uuid& in_uuid) {
     return root_ / "sd2" / "thumbnails" / FSys::split_uuid_path(fmt::format("{}.png", in_uuid));

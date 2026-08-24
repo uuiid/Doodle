@@ -13,9 +13,6 @@
 #include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/project_status.h>
-#include <doodle_core/metadata/seedance2/assets_entity.h>
-#include <doodle_core/metadata/seedance2/assets_entity_item.h>
-#include <doodle_core/metadata/seedance2/group.h>
 #include <doodle_core/metadata/seedance2/task.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_status.h>
@@ -360,16 +357,6 @@ struct preview_files_for_entity_t {
 
   // to json
   friend void to_json(nlohmann::json& j, const preview_files_for_entity_t& p);
-};
-struct assets_entity_and_item : public seedance2::assets_entity {
-  explicit assets_entity_and_item(const seedance2::assets_entity& in_entity) : seedance2::assets_entity(in_entity) {}
-
-  std::vector<seedance2::assets_entity_item> items_;
-  // to json
-  friend void to_json(nlohmann::json& j, const assets_entity_and_item& p) {
-    to_json(j, static_cast<const seedance2::assets_entity>(p));
-    j["items"] = p.items_;
-  }
 };
 
 }  // namespace doodle

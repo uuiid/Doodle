@@ -8,12 +8,9 @@
 #include "doodle_core/metadata/seedance2/ai_episode.h"
 #include "doodle_core/metadata/seedance2/ai_generate_entity.h"
 #include "doodle_core/metadata/seedance2/ai_preview_file.h"
-#include "doodle_core/metadata/seedance2/assets_entity.h"
-#include "doodle_core/metadata/seedance2/assets_entity_item.h"
 #include "doodle_core/metadata/seedance2/canvas_element.h"
 #include "doodle_core/metadata/seedance2/canvas_link.h"
 #include "doodle_core/metadata/seedance2/canvas_media.h"
-#include "doodle_core/metadata/seedance2/group.h"
 #include "doodle_core/metadata/seedance2/infinite_canvas.h"
 #include "doodle_core/metadata/seedance2/subproject.h"
 #include "doodle_core/metadata/seedance2/task.h"
@@ -71,43 +68,6 @@ namespace doodle {
 
 void sqlite_storage::regs_all() {
   using namespace orm;
-  reg_table<seedance2::assets_entity_item>("seedance2_assets_entity_item")
-      .add_column("id", &seedance2::assets_entity_item::id_, primary_key(), autoincrement())
-      .add_column("uuid_id", &seedance2::assets_entity_item::uuid_id_, unique(), not_null())
-      .add_column("parent_id", &seedance2::assets_entity_item::parent_id_, not_null())
-      .add_column("file_extension", &seedance2::assets_entity_item::file_extension_)
-      .add_foreign_key(
-          &seedance2::assets_entity_item::parent_id_, &seedance2::assets_entity::uuid_id_, foreign_key_action::cascade
-      );
-
-  reg_table<seedance2::assets_entity>("seedance2_assets_entity")
-      .add_column("id", &seedance2::assets_entity::id_, primary_key(), autoincrement())
-      .add_column("uuid_id", &seedance2::assets_entity::uuid_id_, unique(), not_null())
-      .add_column("name", &seedance2::assets_entity::name_, not_null())
-      .add_column("description", &seedance2::assets_entity::description_)
-      .add_column("group_id", &seedance2::assets_entity::group_id_, not_null())
-      .add_column("user_id", &seedance2::assets_entity::user_id_)
-      .add_column("preview_id", &seedance2::assets_entity::preview_id_)
-      .add_column("ai_studio_id", &seedance2::assets_entity::ai_studio_id_, not_null())
-      .add_column("created_at", &seedance2::assets_entity::created_at_)
-      .add_column("updated_at", &seedance2::assets_entity::updated_at_)
-      .add_foreign_key(
-          &seedance2::assets_entity::group_id_, &seedance2::assets_group::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(&seedance2::assets_entity::user_id_, &person::uuid_id_, foreign_key_action::set_null)
-      .add_foreign_key(&seedance2::assets_entity::ai_studio_id_, &ai_studio::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(
-          &seedance2::assets_entity::preview_id_, &seedance2::assets_entity_item::uuid_id_, foreign_key_action::set_null
-      );
-
-  reg_table<seedance2::assets_group>("seedance2_assets_group")
-      .add_column("id", &seedance2::assets_group::id_, primary_key(), autoincrement())
-      .add_column("uuid_id", &seedance2::assets_group::uuid_id_, unique(), not_null())
-      .add_column("label", &seedance2::assets_group::label_)
-      .add_column("user_id", &seedance2::assets_group::user_id_)
-      .add_column("ai_studio_id", &seedance2::assets_group::ai_studio_id_)
-      .add_column("created_at", &seedance2::assets_group::created_at_);
-
   reg_table<seedance2::ai_preview_file>("seedance2_ai_preview_file")
       .add_column("id", &seedance2::ai_preview_file::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::ai_preview_file::uuid_id_, unique(), not_null())
