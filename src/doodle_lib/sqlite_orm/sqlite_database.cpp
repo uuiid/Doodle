@@ -155,8 +155,7 @@ void sqlite_storage::regs_all() {
       .add_column("subproject_id", &seedance2::ai_episode::subproject_id_, not_null())
       .add_column("created_at", &seedance2::ai_episode::created_at_)
       .add_foreign_key(
-          &seedance2::ai_episode::subproject_id_, &seedance2::subproject::uuid_id_,
-          foreign_key_action::cascade
+          &seedance2::ai_episode::subproject_id_, &seedance2::subproject::uuid_id_, foreign_key_action::cascade
       );
 
   reg_table<seedance2::ai_category>("seedance2_ai_category")
@@ -169,17 +168,14 @@ void sqlite_storage::regs_all() {
       .add_column("id", &seedance2::ai_generate_entity::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::ai_generate_entity::uuid_id_, unique(), not_null())
       .add_column("name", &seedance2::ai_generate_entity::name_, not_null())
-      .add_column(
-          "ai_episode_id", &seedance2::ai_generate_entity::ai_episode_id_, not_null()
-      )
+      .add_column("ai_episode_id", &seedance2::ai_generate_entity::ai_episode_id_, not_null())
       .add_column("description", &seedance2::ai_generate_entity::description_)
       .add_column("ai_category_id", &seedance2::ai_generate_entity::ai_category_id_)
       .add_column("shot_uuid_id", &seedance2::ai_generate_entity::shot_uuid_id_)
       .add_column("project_uuid_id", &seedance2::ai_generate_entity::project_uuid_id_, not_null())
       .add_column("preview_file", &seedance2::ai_generate_entity::preview_file_)
       .add_foreign_key(
-          &seedance2::ai_generate_entity::ai_episode_id_,
-          &seedance2::ai_episode::uuid_id_, foreign_key_action::cascade
+          &seedance2::ai_generate_entity::ai_episode_id_, &seedance2::ai_episode::uuid_id_, foreign_key_action::cascade
       )
       .add_foreign_key(
           &seedance2::ai_generate_entity::ai_category_id_, &seedance2::ai_category::uuid_id_,
@@ -1015,7 +1011,9 @@ void sqlite_storage::regs_all() {
       .add_column("created_at", &seedance2::infinite_canvas::created_at_)
       .add_column("updated_at", &seedance2::infinite_canvas::updated_at_)
       .add_foreign_key(&seedance2::infinite_canvas::project_uuid_id_, &project::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&seedance2::infinite_canvas::subproject_id_, &seedance2::subproject::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(
+          &seedance2::infinite_canvas::subproject_id_, &seedance2::subproject::uuid_id_, foreign_key_action::set_null
+      )
       .add_foreign_key(&seedance2::infinite_canvas::user_id_, &person::uuid_id_, foreign_key_action::set_null);
 
   reg_table<seedance2::canvas_element>("seedance2_canvas_element")
@@ -1090,11 +1088,13 @@ void sqlite_storage::open_(FSys::path in_path, std::int32_t in_flags) {
 }
 
 void sqlite_storage::upgrade() {
-  auto l_s = create_session();
-  l_s.pragma().foreign_keys(true);
-  l_s.pragma().synchronous(1);
-  l_s.pragma().recursive_triggers(true);
-  l_s.pragma().journal_mode(orm::journal_mode_t::wal);
+  {
+    auto l_s = create_session();
+    l_s.pragma().foreign_keys(true);
+    l_s.pragma().synchronous(1);
+    l_s.pragma().recursive_triggers(true);
+    l_s.pragma().journal_mode(orm::journal_mode_t::wal);
+  }
 
   auto l_list = {details::upgrade_init(), details::upgrade_1()};
   for (auto&& i : l_list) {
