@@ -347,6 +347,18 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &seedance2::seedance2_subproject_ai_episode_instance::subproject_id_,
         &seedance2::seedance2_subproject_ai_episode_instance::episode_id_
       ))
+      .reg_t<seedance2::seedance2_subproject_ai_episode_model_resolution_limit>(
+        "/api/seedance2/subproject/{}/episodes/{}/model-resolution-limit"_url(
+          &seedance2::seedance2_subproject_ai_episode_model_resolution_limit::subproject_id_,
+          &seedance2::seedance2_subproject_ai_episode_model_resolution_limit::episode_id_
+        )
+      )
+      .reg_t<seedance2::seedance2_subproject_model_resolution_limit_instance>(
+        "/api/seedance2/subproject/{}/model-resolution-limit/{}"_url(
+          &seedance2::seedance2_subproject_model_resolution_limit_instance::subproject_id_,
+          &seedance2::seedance2_subproject_model_resolution_limit_instance::limit_id_
+        )
+      )
       .reg_t<seedance2::seedance2_subproject_entity>("/api/seedance2/subproject/{}/entity"_url(
         &seedance2::seedance2_subproject_entity::subproject_id_
       ))
