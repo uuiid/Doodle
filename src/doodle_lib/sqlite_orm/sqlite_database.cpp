@@ -5,6 +5,7 @@
 #include "sqlite_database.h"
 
 #include "doodle_core/metadata/ai_studio.h"
+#include "doodle_core/metadata/seedance2/ai_category.h"
 #include "doodle_core/metadata/seedance2/ai_episode.h"
 #include "doodle_core/metadata/seedance2/ai_generate_entity.h"
 #include "doodle_core/metadata/seedance2/ai_preview_file.h"
@@ -158,6 +159,12 @@ void sqlite_storage::regs_all() {
           foreign_key_action::cascade
       );
 
+  reg_table<seedance2::ai_category>("seedance2_ai_category")
+      .add_column("id", &seedance2::ai_category::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::ai_category::uuid_id_, unique(), not_null())
+      .add_column("name", &seedance2::ai_category::name_, not_null())
+      .add_column("description", &seedance2::ai_category::description_);
+
   reg_table<seedance2::ai_generate_entity>("seedance2_ai_generate_entity")
       .add_column("id", &seedance2::ai_generate_entity::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::ai_generate_entity::uuid_id_, unique(), not_null())
@@ -166,12 +173,17 @@ void sqlite_storage::regs_all() {
           "ai_episode_id", &seedance2::ai_generate_entity::ai_episode_id_, not_null()
       )
       .add_column("description", &seedance2::ai_generate_entity::description_)
+      .add_column("ai_category_id", &seedance2::ai_generate_entity::ai_category_id_)
       .add_column("shot_uuid_id", &seedance2::ai_generate_entity::shot_uuid_id_)
       .add_column("project_uuid_id", &seedance2::ai_generate_entity::project_uuid_id_, not_null())
       .add_column("preview_file", &seedance2::ai_generate_entity::preview_file_)
       .add_foreign_key(
           &seedance2::ai_generate_entity::ai_episode_id_,
           &seedance2::ai_episode::uuid_id_, foreign_key_action::cascade
+      )
+      .add_foreign_key(
+          &seedance2::ai_generate_entity::ai_category_id_, &seedance2::ai_category::uuid_id_,
+          foreign_key_action::set_null
       )
       .add_foreign_key(&seedance2::ai_generate_entity::shot_uuid_id_, &task::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(

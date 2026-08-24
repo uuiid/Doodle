@@ -100,13 +100,15 @@ struct project_data {
 struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t() {}
   void upgrade(sqlite_storage& in_data) override {
-    // upgrade_init_t::full_fts_sync(in_data);
-    if (in_data.create_session().pragma().user_version() == 17) {
-      auto l_s = in_data.create_session();
-        l_s.rename_table("seedance2_ai_generate_classification", "seedance2_ai_episode");
-      }
+    auto l_s = in_data.create_session();
+    if (l_s.pragma().user_version() == 17) {
+      l_s.rename_table("seedance2_ai_generate_classification", "seedance2_ai_episode");
+      // 新增 seedance2_ai_category 表, 并为 seedance2_ai_generate_entity 添加 ai_category_id 列
+      l_s.sync_schema();
+      l_s.rebuild_table<seedance2::ai_generate_entity>(std::vector<std::string>{"ai_category_id"});
+    }
 
-    in_data.create_session().pragma().user_version(g_current_version);
+    l_s.pragma().user_version(g_current_version);
   }
   ~upgrade_2_t() override = default;
 };
