@@ -1,0 +1,16 @@
+type: object
+required:
+  - subproject_id
+  - person_id
+properties:
+  id:
+    type: string
+    format: uuid
+  subproject_id:
+    type: string
+    format: uuid
+    description: 子项目ID
+  person_id:
+    type: string
+    format: uuid
+    description: 人员ID

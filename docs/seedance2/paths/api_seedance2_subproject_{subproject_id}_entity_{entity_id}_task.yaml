@@ -1,0 +1,87 @@
+get:
+  tags:
+    - 任务
+  summary: 获取实体下的任务列表
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: entity_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 任务列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/Task.yaml
+post:
+  tags:
+    - 任务
+  summary: 创建 AI 生成任务
+  description: |
+    提交一个新的 AI 生成任务。会检查当前用户剩余 Token 是否充足，不足则拒绝。
+    任务创建后异步运行，扣除对应 Token。
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: entity_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - data_request
+            - ai_studio_id
+            - project_uuid_id
+            - type
+            - ai_generate_entity_id
+          properties:
+            data_request:
+              type: object
+              description: AI 请求数据（content 等）
+            ai_studio_id:
+              type: string
+              format: uuid
+            project_uuid_id:
+              type: string
+              format: uuid
+            type:
+              $ref: ../components/schemas/TaskType.yaml
+            ai_generate_entity_id:
+              type: string
+              format: uuid
+            archived:
+              type: boolean
+              default: false
+  responses:
+    '200':
+      description: 创建成功，返回任务ID
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid

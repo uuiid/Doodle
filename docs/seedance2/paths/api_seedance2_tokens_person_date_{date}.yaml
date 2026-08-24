@@ -1,0 +1,44 @@
+get:
+  tags:
+    - 限额管理
+  summary: 获取某天所有人员 Token 消耗统计
+  description: 制片及以上可查看。当天数据实时统计
+  parameters:
+    - name: date
+      in: path
+      required: true
+      schema:
+        type: string
+        format: date
+  responses:
+    '200':
+      description: 所有人员当天 Token 消耗统计列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/PersonToken.yaml
+post:
+  tags:
+    - 限额管理
+  summary: 归档某天 Token 消耗统计
+  description: |
+    仅管理员可操作。将指定日期的 Token 消耗数据归档到 person_token 表。
+    若已归档则直接返回已有数据；当天数据不进行归档，直接返回实时计算结果。
+  parameters:
+    - name: date
+      in: path
+      required: true
+      schema:
+        type: string
+        format: date
+  responses:
+    '200':
+      description: 归档后的统计列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/PersonToken.yaml

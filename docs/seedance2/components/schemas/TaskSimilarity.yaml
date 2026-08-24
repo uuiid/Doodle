@@ -1,0 +1,18 @@
+type: object
+description: 任务相似度记录，用于预警重复提交
+properties:
+  id:
+    type: string
+    format: uuid
+  task_id:
+    type: string
+    format: uuid
+    description: 当前任务ID
+  similar_task_id:
+    type: string
+    format: uuid
+    description: 相似的历史任务ID
+  similarity:
+    type: number
+    format: double
+    description: 相似度分数（0-100），仅 >= 75 的记录被收录

@@ -1,0 +1,14 @@
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  name:
+    type: string
+    description: 剧集名称
+  description:
+    type: string
+    description: 剧集描述
+  created_at:
+    type: string
+    format: date-time

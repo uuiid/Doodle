@@ -1,0 +1,105 @@
+get:
+  tags:
+    - AI生成实体
+  summary: 获取实体详情
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: entity_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 实体详情
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiGenerateEntity.yaml
+put:
+  tags:
+    - AI生成实体
+  summary: 更新实体
+  description: >-
+    非外包人员可更新。可更新字段：name, description, ai_episode_id, ai_category_id,
+    shot_uuid_id, preview_file
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: entity_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+              description: 实体描述（选填）
+            ai_episode_id:
+              type: string
+              format: uuid
+            ai_category_id:
+              type: string
+              format: uuid
+              description: 所属实体类别ID（选填，传null则移除分类）
+            shot_uuid_id:
+              type: string
+              format: uuid
+            preview_file:
+              type: string
+              format: uuid
+  responses:
+    '200':
+      description: 更新后的实体信息
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiGenerateEntity.yaml
+delete:
+  tags:
+    - AI生成实体
+  summary: 删除实体
+  description: 非外包人员可删除
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: entity_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 删除成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              entity_id:
+                type: string
+                format: uuid

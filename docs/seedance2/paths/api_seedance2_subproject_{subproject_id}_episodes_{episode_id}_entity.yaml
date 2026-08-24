@@ -1,0 +1,86 @@
+get:
+  tags:
+    - AI生成实体
+  summary: 获取剧集下的实体列表
+  description: 返回指定剧集下的所有 AI 生成实体
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: episode_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 实体列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              allOf:
+                - $ref: ../components/schemas/AiGenerateEntity.yaml
+                - type: object
+                  properties:
+                    preview:
+                      $ref: ../components/schemas/AiPreviewFile.yaml
+                      description: 预览文件，仅存在预览时返回
+post:
+  tags:
+    - AI生成实体
+  summary: 创建 AI 生成实体
+  description: 非外包人员可创建。实体用于组织一批 AI 生成任务。episode_id 从路径获取
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: episode_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - name
+            - project_uuid_id
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+              description: 实体描述（选填）
+            project_uuid_id:
+              type: string
+              format: uuid
+            shot_uuid_id:
+              type: string
+              format: uuid
+            ai_category_id:
+              type: string
+              format: uuid
+              description: 所属实体类别ID（选填）
+            preview_file:
+              type: string
+              format: uuid
+  responses:
+    '200':
+      description: 创建成功
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiGenerateEntity.yaml

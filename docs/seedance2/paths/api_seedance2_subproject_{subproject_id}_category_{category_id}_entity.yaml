@@ -1,0 +1,33 @@
+get:
+  tags:
+    - AI实体类别
+  summary: 获取类别下的实体列表
+  description: 子项目成员可查看。返回指定类别下的所有 AI 生成实体
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: category_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 实体列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              allOf:
+                - $ref: ../components/schemas/AiGenerateEntity.yaml
+                - type: object
+                  properties:
+                    preview:
+                      $ref: ../components/schemas/AiPreviewFile.yaml
+                      description: 预览文件，仅存在预览时返回

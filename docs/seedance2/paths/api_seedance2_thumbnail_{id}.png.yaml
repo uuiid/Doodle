@@ -1,0 +1,19 @@
+get:
+  tags:
+    - 静态文件
+  summary: 获取缩略图
+  description: 根据预览文件 ID 获取缩略图（PNG 格式）
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 缩略图二进制数据
+      content:
+        image/png: {}
+    '404':
+      description: 缩略图不存在

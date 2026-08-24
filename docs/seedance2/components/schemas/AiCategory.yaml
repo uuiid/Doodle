@@ -1,0 +1,20 @@
+type: object
+required:
+  - name
+  - type
+properties:
+  id:
+    type: string
+    format: uuid
+  name:
+    type: string
+    description: 类别名称（必填）
+  description:
+    type: string
+    description: 类别描述（选填）
+  type:
+    type: string
+    enum:
+      - shot
+      - assets
+    description: 类别类型（必填）。shot - 镜头类别, assets - 素材类别

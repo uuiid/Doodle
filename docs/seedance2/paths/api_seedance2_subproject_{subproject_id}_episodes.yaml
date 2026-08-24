@@ -1,0 +1,34 @@
+post:
+  tags:
+    - AI生成剧集
+  summary: 创建 AI 生成剧集
+  description: 非外包人员可创建。剧集如 "sc002"、"sc003" 等
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              description: 剧集名称
+            description:
+              type: string
+              description: 剧集描述
+  responses:
+    '200':
+      description: 创建成功
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiEpisode.yaml

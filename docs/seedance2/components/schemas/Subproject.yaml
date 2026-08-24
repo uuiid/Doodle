@@ -1,0 +1,37 @@
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+    description: 子项目ID
+  name:
+    type: string
+    description: 子项目名称
+  project_id:
+    type: string
+    format: uuid
+    description: 关联项目ID
+  created_user_id:
+    type: string
+    format: uuid
+    description: 创建者ID
+  created_at:
+    type: string
+    format: date-time
+    description: 创建时间
+  archived:
+    type: boolean
+    description: 是否归档
+  preview_file_id:
+    type: string
+    format: uuid
+    description: 预览文件ID
+  preview_file:
+    $ref: ./AiPreviewFile.yaml
+    description: 预览文件信息（列表接口返回）
+  persons:
+    type: array
+    description: 参与人员ID列表（仅列表接口返回）
+    items:
+      type: string
+      format: uuid

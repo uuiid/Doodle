@@ -1,0 +1,5 @@
+type: string
+enum:
+  - picture
+  - video
+description: picture - 图片生成, video - 视频生成

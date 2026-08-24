@@ -1,0 +1,12 @@
+type: object
+description: 按人员分组的任务相似度预警信息
+additionalProperties:
+  type: array
+  items:
+    $ref: ./TaskSimilarity.yaml
+example:
+  550e8400-e29b-41d4-a716-446655440000:
+    - id: 660e8400-e29b-41d4-a716-446655440001
+      task_id: 770e8400-e29b-41d4-a716-446655440002
+      similar_task_id: 880e8400-e29b-41d4-a716-446655440003
+      similarity: 85.5

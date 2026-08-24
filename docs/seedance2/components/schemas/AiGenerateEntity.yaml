@@ -1,0 +1,31 @@
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  name:
+    type: string
+    description: 实体名称
+  description:
+    type: string
+    description: 实体描述（选填）
+  ai_episode_id:
+    type: string
+    format: uuid
+    description: 所属剧集ID
+  ai_category_id:
+    type: string
+    format: uuid
+    description: 所属实体类别ID（选填）
+  shot_uuid_id:
+    type: string
+    format: uuid
+    description: 关联镜头ID
+  project_uuid_id:
+    type: string
+    format: uuid
+    description: 关联项目ID
+  preview_file:
+    type: string
+    format: uuid
+    description: 预览文件ID

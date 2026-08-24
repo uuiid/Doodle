@@ -1,0 +1,33 @@
+get:
+  tags:
+    - 限额管理
+  summary: 获取某人某段时间 Token 消耗统计
+  description: 制片及以上可查看。若时间范围包含当天，会实时统计当天数据
+  parameters:
+    - name: person_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: date_start
+      in: path
+      required: true
+      schema:
+        type: string
+        format: date
+    - name: date_end
+      in: path
+      required: true
+      schema:
+        type: string
+        format: date
+  responses:
+    '200':
+      description: Token 消耗统计列表（按天）
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/PersonToken.yaml

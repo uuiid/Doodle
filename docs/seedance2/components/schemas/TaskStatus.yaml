@@ -1,0 +1,15 @@
+type: string
+enum:
+  - queued
+  - running
+  - cancelled
+  - succeeded
+  - failed
+  - expired
+description: |
+  queued - 排队中,
+  running - 运行中,
+  cancelled - 已取消（24h后自动删除）,
+  succeeded - 成功,
+  failed - 失败,
+  expired - 超时

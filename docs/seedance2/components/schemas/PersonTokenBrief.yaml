@@ -1,0 +1,9 @@
+type: object
+properties:
+  person_id:
+    type: string
+    format: uuid
+  remaining_tokens:
+    type: integer
+    format: int64
+    description: 剩余可用 Token

@@ -1,0 +1,53 @@
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  user_id:
+    type: string
+    format: uuid
+    description: 提交用户ID
+  status:
+    $ref: ./TaskStatus.yaml
+  type:
+    $ref: ./TaskType.yaml
+  text_prompt:
+    type: string
+    description: 文本提示词
+  preview_file:
+    type: string
+    format: uuid
+    description: 预览文件ID
+  data_request:
+    type: object
+    description: AI 请求数据
+  file_extension:
+    type: string
+    description: 文件扩展名
+  data_response:
+    type: object
+    description: AI 响应数据
+  ai_studio_id:
+    type: string
+    format: uuid
+    description: AI Studio ID
+  created_at:
+    type: string
+    format: date-time
+  ended_at:
+    type: string
+    format: date-time
+  archived:
+    type: boolean
+  project_uuid_id:
+    type: string
+    format: uuid
+    description: 关联项目ID
+  completion_tokens:
+    type: integer
+    format: int64
+    description: 任务消耗 Token（默认 200000）
+  ai_generate_entity_id:
+    type: string
+    format: uuid
+    description: 所属AI生成实体ID

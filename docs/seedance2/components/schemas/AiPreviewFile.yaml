@@ -1,0 +1,8 @@
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  extension:
+    type: string
+    description: 文件扩展名

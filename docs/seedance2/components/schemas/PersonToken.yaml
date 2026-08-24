@@ -1,0 +1,31 @@
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  date:
+    type: string
+    format: date
+  person_id:
+    type: string
+    format: uuid
+  token_amount:
+    type: integer
+    format: int64
+    description: 消耗 Token 总量
+  task_count:
+    type: integer
+    format: int64
+    description: 任务数量
+  project_count:
+    type: integer
+    format: int64
+    description: 涉及项目数量
+  video_count:
+    type: integer
+    format: int64
+    description: 视频类任务数量
+  picture_count:
+    type: integer
+    format: int64
+    description: 图片类任务数量

@@ -1,0 +1,13 @@
+type: object
+properties:
+  id:
+    type: string
+    format: uuid
+  ai_generate_entity_id:
+    type: string
+    format: uuid
+    description: 所属实体ID
+  preview_file:
+    type: string
+    format: uuid
+    description: 预览文件ID

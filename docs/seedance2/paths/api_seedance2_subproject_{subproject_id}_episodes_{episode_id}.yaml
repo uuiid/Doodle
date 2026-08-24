@@ -1,0 +1,89 @@
+get:
+  tags:
+    - AI生成剧集
+  summary: 获取剧集详情
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: episode_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 剧集详情
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiEpisode.yaml
+put:
+  tags:
+    - AI生成剧集
+  summary: 更新剧集
+  description: 非外包人员可更新。可更新字段：name, description
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: episode_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+  responses:
+    '200':
+      description: 更新后的剧集信息
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiEpisode.yaml
+delete:
+  tags:
+    - AI生成剧集
+  summary: 删除剧集
+  description: 非外包人员可删除
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: episode_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 删除成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              episode_id:
+                type: string
+                format: uuid
