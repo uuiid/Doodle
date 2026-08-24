@@ -768,13 +768,7 @@ paths:
               schema:
                 type: array
                 items:
-                  allOf:
-                    - $ref: "#/components/schemas/AiCategory"
-                    - type: object
-                      properties:
-                        preview:
-                          $ref: "#/components/schemas/AiPreviewFile"
-                          description: 预览文件，仅存在预览时返回
+                  $ref: "#/components/schemas/AiCategory"
     post:
       tags: [AI实体类别]
       summary: 创建 AI 实体类别
@@ -800,10 +794,6 @@ paths:
                 description:
                   type: string
                   description: 类别描述（选填）
-                preview_file:
-                  type: string
-                  format: uuid
-                  description: 预览文件ID（选填）
       responses:
         "200":
           description: 创建成功
@@ -839,7 +829,7 @@ paths:
     put:
       tags: [AI实体类别]
       summary: 更新类别
-      description: 非外包人员可更新。可更新字段：name, description, preview_file
+      description: 非外包人员可更新。可更新字段：name, description
       parameters:
         - name: subproject_id
           in: path
@@ -866,10 +856,6 @@ paths:
                 description:
                   type: string
                   description: 类别描述
-                preview_file:
-                  type: string
-                  format: uuid
-                  description: 预览文件ID
       responses:
         "200":
           description: 更新后的类别信息
@@ -899,48 +885,6 @@ paths:
           description: 删除成功
         "400":
           description: 类别不存在
-
-  /api/seedance2/subproject/{subproject_id}/category/{category_id}/preview:
-    post:
-      tags: [AI实体类别]
-      summary: 上传类别预览图
-      description: 上传图片作为类别预览，自动生成缩略图
-      parameters:
-        - name: subproject_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: category_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: 图片文件
-      responses:
-        "200":
-          description: 上传成功
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                    description: 预览文件ID
 
   /api/seedance2/subproject/{subproject_id}/category/{category_id}/entity:
     get:
@@ -1607,10 +1551,6 @@ components:
           type: string
           format: uuid
           description: 所属子项目ID
-        preview_file:
-          type: string
-          format: uuid
-          description: 预览文件ID（选填）
         created_at:
           type: string
           format: date-time
