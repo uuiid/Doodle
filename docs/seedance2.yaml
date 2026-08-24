@@ -494,6 +494,10 @@ paths:
                 shot_uuid_id:
                   type: string
                   format: uuid
+                ai_category_id:
+                  type: string
+                  format: uuid
+                  description: 所属实体类别ID（选填）
                 preview_file:
                   type: string
                   format: uuid
@@ -532,7 +536,7 @@ paths:
     put:
       tags: [AI生成实体]
       summary: 更新实体
-      description: 非外包人员可更新。可更新字段：name, description, ai_episode_id, shot_uuid_id, preview_file
+      description: 非外包人员可更新。可更新字段：name, description, ai_episode_id, ai_category_id, shot_uuid_id, preview_file
       parameters:
         - name: subproject_id
           in: path
@@ -561,6 +565,10 @@ paths:
                 ai_episode_id:
                   type: string
                   format: uuid
+                ai_category_id:
+                  type: string
+                  format: uuid
+                  description: 所属实体类别ID（选填，传null则移除分类）
                 shot_uuid_id:
                   type: string
                   format: uuid
@@ -740,6 +748,235 @@ paths:
           description: 删除成功
         "404":
           description: 参考文件不存在
+
+  # ═══════════════ AI实体类别 ═══════════════
+  /api/seedance2/subproject/{subproject_id}/category:
+    get:
+      tags: [AI实体类别]
+      summary: 获取子项目下的实体类别列表
+      description: 返回指定子项目下的所有 AI 实体类别，非外包人员可查看
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 类别列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/AiCategory"
+                    - type: object
+                      properties:
+                        preview:
+                          $ref: "#/components/schemas/AiPreviewFile"
+                          description: 预览文件，仅存在预览时返回
+    post:
+      tags: [AI实体类别]
+      summary: 创建 AI 实体类别
+      description: 非外包人员可创建。类别用于对 AI 生成实体进行分组管理
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  description: 类别名称
+                description:
+                  type: string
+                  description: 类别描述（选填）
+                preview_file:
+                  type: string
+                  format: uuid
+                  description: 预览文件ID（选填）
+      responses:
+        "200":
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiCategory"
+
+  /api/seedance2/subproject/{subproject_id}/category/{category_id}:
+    get:
+      tags: [AI实体类别]
+      summary: 获取类别详情
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 类别详情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiCategory"
+    put:
+      tags: [AI实体类别]
+      summary: 更新类别
+      description: 非外包人员可更新。可更新字段：name, description, preview_file
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 类别名称
+                description:
+                  type: string
+                  description: 类别描述
+                preview_file:
+                  type: string
+                  format: uuid
+                  description: 预览文件ID
+      responses:
+        "200":
+          description: 更新后的类别信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiCategory"
+    delete:
+      tags: [AI实体类别]
+      summary: 删除类别
+      description: 非外包人员可删除。删除时会将该类别下所有实体的 ai_category_id 置空
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: 删除成功
+        "400":
+          description: 类别不存在
+
+  /api/seedance2/subproject/{subproject_id}/category/{category_id}/preview:
+    post:
+      tags: [AI实体类别]
+      summary: 上传类别预览图
+      description: 上传图片作为类别预览，自动生成缩略图
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 图片文件
+      responses:
+        "200":
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: 预览文件ID
+
+  /api/seedance2/subproject/{subproject_id}/category/{category_id}/entity:
+    get:
+      tags: [AI实体类别]
+      summary: 获取类别下的实体列表
+      description: 返回指定类别下的所有 AI 生成实体
+      parameters:
+        - name: subproject_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 实体列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/AiGenerateEntity"
+                    - type: object
+                      properties:
+                        preview:
+                          $ref: "#/components/schemas/AiPreviewFile"
+                          description: 预览文件，仅存在预览时返回
 
   # ═══════════════ 任务 ═══════════════
   /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/task:
@@ -1681,6 +1918,10 @@ components:
           type: string
           format: uuid
           description: 所属剧集ID
+        ai_category_id:
+          type: string
+          format: uuid
+          description: 所属实体类别ID（选填）
         shot_uuid_id:
           type: string
           format: uuid
@@ -1693,6 +1934,31 @@ components:
           type: string
           format: uuid
           description: 预览文件ID
+
+    AiCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: 类别名称
+        description:
+          type: string
+          description: 类别描述（选填）
+        subproject_id:
+          type: string
+          format: uuid
+          description: 所属子项目ID
+        preview_file:
+          type: string
+          format: uuid
+          description: 预览文件ID（选填）
+        created_at:
+          type: string
+          format: date-time
+          description: 创建时间
 
     AiPreviewFile:
       type: object

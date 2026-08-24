@@ -7,6 +7,7 @@ target_sources(
         group.h
         task.h
         ai_generate_entity.h
+        ai_category.h
         ai_episode.h
         subproject.h
         ai_preview_file.h
