@@ -34,9 +34,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode, post) {
   auto l_episode = std::make_shared<sd2::ai_episode>();
   l_json.get_to(*l_episode);
   l_episode->subproject_id_ = subproject_id_;
-
-  co_await l_sql.install(l_episode);
-
+  using namespace orm;
+  auto l_limit            = std::make_shared<sd2::ai_episode_model_resolution_limit>();
+  l_limit->ai_episode_id_ = l_episode->uuid_id_;
+  l_limit->model_name_    = "doubao-seedance-2-0-mini-260615";
+  l_limit->resolution_    = "480p";
+  auto l_install_1 = insert(l_sql).into<sd2::ai_episode>().values(*l_episode);
+  auto l_install_2 = insert(l_sql).into<sd2::ai_episode_model_resolution_limit>().values(*l_limit);
+  co_await l_sql.run_sql(l_install_1, l_install_2);
+  
   co_return in_handle->make_msg(nlohmann::json{} = *l_episode);
 }
 
