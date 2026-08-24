@@ -14,6 +14,8 @@ $Yesterday = (Get-Date).AddDays(-1).ToString("yyyy-MM-dd")
 Write-Host "归档 $Yesterday 的 Token 消耗统计 http://$Kitsu_Ip/api/seedance2/tokens/person/date/$Yesterday"
 Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/seedance2/tokens/person/date/$Yesterday" -Method Post -Headers $headers -ContentType "application/json" -Body "{}" | Out-Null
 
-# 重置所有人员当周剩余 token 额度 (seedance2_tokens POST, 不传 remaining_tokens 时重置为最大值)
-Write-Host "重置当周 Token 额度 http://$Kitsu_Ip/api/seedance2/tokens"
-Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/seedance2/tokens" -Method Post -Headers $headers -ContentType "application/json" -Body "{}" | Out-Null
+# 重置所有人员当周剩余 token 额度 (seedance2_tokens POST, 不传 remaining_tokens 时重置为最大值), 仅在周日执行
+if ((Get-Date).DayOfWeek -eq 'Sunday') {
+  Write-Host "重置当周 Token 额度 http://$Kitsu_Ip/api/seedance2/tokens"
+  Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/seedance2/tokens" -Method Post -Headers $headers -ContentType "application/json" -Body "{}" | Out-Null
+}
