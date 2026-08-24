@@ -13,6 +13,6 @@ Copy-Item -Path $res.Content -Destination "\\192.168.0.67\bakk3\doodlebak\kitsu_
 $Yesterday = (Get-Date).AddDays(-1).ToString("yyyy-MM-dd")
 Write-Host "归档 $Yesterday 的 Token 消耗统计 http://$Kitsu_Ip/api/seedance2/tokens/person/date/$Yesterday"
 Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/seedance2/tokens/person/date/$Yesterday" -Method Post -Headers @{
-  "Authorization" = "Bearer $KitsuCookies",
+  "Authorization" = "Bearer $KitsuCookies"
   "Content-Type" = "application/json"
 } -Body "{}" | Out-Null
