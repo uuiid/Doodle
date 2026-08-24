@@ -9,6 +9,7 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/project_status.h>
+#include <doodle_core/metadata/seedance2/ai_category.h>
 #include <doodle_core/metadata/seedance2/ai_episode.h>
 #include <doodle_core/metadata/seedance2/ai_generate_entity.h>
 #include <doodle_core/metadata/seedance2/ai_preview_file.h>
@@ -106,6 +107,16 @@ struct upgrade_2_t : sqlite_upgrade {
       // 新增 seedance2_ai_category 表, 并为 seedance2_ai_generate_entity 添加 ai_category_id 列
       l_s.sync_schema();
       l_s.rebuild_table<seedance2::ai_generate_entity>(std::vector<std::string>{"ai_category_id"});
+
+      // 创建一个默认的镜头类别, 并将所有 ai_generate_entity 关联到该类别
+      auto l_category  = seedance2::ai_category{};
+      l_category.name_ = "镜头类别";
+      l_category.type_ = seedance2::ai_category_type::shot;
+      l_category.id_   = orm::insert(l_s).into<seedance2::ai_category>().values(l_category)();
+      orm::update(l_s)
+          .from<seedance2::ai_generate_entity>()
+          .set(orm::c(&seedance2::ai_generate_entity::ai_category_id_) = l_category.uuid_id_)
+          .where(orm::c(&seedance2::ai_generate_entity::id_) > std::int64_t{0})();
     }
 
     l_s.pragma().user_version(g_current_version);
