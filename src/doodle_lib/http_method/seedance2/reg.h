@@ -79,6 +79,20 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid subproject_id_{};
 uuid episode_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}/model-resolution-limit
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_episode_model_resolution_limit)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid subproject_id_{};
+uuid episode_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/subproject/{subproject_id}/model-resolution-limit/{limit_id}
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_model_resolution_limit_instance)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid subproject_id_{};
+uuid episode_id_{};
+uuid limit_id_{};
+DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/entity
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_entity)
 DOODLE_HTTP_FUN_OVERRIDE(post)

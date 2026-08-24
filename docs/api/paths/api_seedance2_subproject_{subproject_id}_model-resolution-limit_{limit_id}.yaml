@@ -1,0 +1,31 @@
+delete:
+  tags:
+    - AI生成剧集
+  summary: 删除剧集的模型和分辨率限制
+  description: 非外包人员可删除
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: limit_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 删除成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              limit_id:
+                type: string
+                format: uuid
+  security:
+    - bearerAuth: []

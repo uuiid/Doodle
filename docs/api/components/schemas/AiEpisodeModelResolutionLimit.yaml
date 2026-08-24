@@ -1,0 +1,19 @@
+type: object
+required:
+  - model_name
+  - resolution
+properties:
+  id:
+    type: string
+    format: uuid
+    description: 限制记录 ID
+  ai_episode_id:
+    type: string
+    format: uuid
+    description: 所属剧集 ID
+  model_name:
+    type: string
+    description: 可使用的模型名称
+  resolution:
+    type: string
+    description: 可使用的分辨率

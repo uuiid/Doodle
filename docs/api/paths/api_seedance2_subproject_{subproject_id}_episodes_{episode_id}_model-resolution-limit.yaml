@@ -1,0 +1,72 @@
+get:
+  tags:
+    - AI生成剧集
+  summary: 获取剧集可用的模型和分辨率限制列表
+  description: 返回指定剧集下配置的可使用模型与分辨率限制
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: episode_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 模型和分辨率限制列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/AiEpisodeModelResolutionLimit.yaml
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - AI生成剧集
+  summary: 为剧集添加模型和分辨率限制
+  description: 非外包人员可添加。限制指定剧集可使用的模型与分辨率组合
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: episode_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - model_name
+            - resolution
+          properties:
+            model_name:
+              type: string
+              description: 可使用的模型名称
+            resolution:
+              type: string
+              description: 可使用的分辨率
+  responses:
+    '200':
+      description: 创建成功
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiEpisodeModelResolutionLimit.yaml
+  security:
+    - bearerAuth: []

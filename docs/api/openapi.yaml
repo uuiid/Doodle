@@ -94,6 +94,12 @@ paths:
     $ref: paths/api_seedance2_subproject_{subproject_id}_episodes.yaml
   /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}:
     $ref: paths/api_seedance2_subproject_{subproject_id}_episodes_{episode_id}.yaml
+  /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}/model-resolution-limit:
+    $ref: >-
+      paths/api_seedance2_subproject_{subproject_id}_episodes_{episode_id}_model-resolution-limit.yaml
+  /api/seedance2/subproject/{subproject_id}/model-resolution-limit/{limit_id}:
+    $ref: >-
+      paths/api_seedance2_subproject_{subproject_id}_model-resolution-limit_{limit_id}.yaml
   /api/seedance2/subproject/{subproject_id}/entity:
     $ref: paths/api_seedance2_subproject_{subproject_id}_entity.yaml
   /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}/entity:
