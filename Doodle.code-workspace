@@ -15,10 +15,10 @@
 			"path": "D:/dev/dev",
 			"name": "开发日志"
 		},
-		{
-			"path": "E:/UnrealEngine",
-			"name": "uePlug"
-		}
+		// {
+		// 	"path": "E:/UnrealEngine",
+		// 	"name": "uePlug"
+		// }
 	],
 	"settings": {
 		"git.autoRepositoryDetection": "subFolders",
