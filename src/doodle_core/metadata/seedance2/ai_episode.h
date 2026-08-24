@@ -44,7 +44,6 @@ struct DOODLE_CORE_API ai_episode_model_resolution_limit {
   }
   // from json
   friend void from_json(const nlohmann::json& j, ai_episode_model_resolution_limit& p) {
-    j.at("ai_episode_id").get_to(p.ai_episode_id_);
     j.at("model_name").get_to(p.model_name_);
     j.at("resolution").get_to(p.resolution_);
   }
