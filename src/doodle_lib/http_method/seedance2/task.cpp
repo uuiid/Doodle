@@ -6,7 +6,7 @@
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/person.h"
 #include "doodle_core/metadata/project.h"
-#include "doodle_core/metadata/seedance2/ai_generate_classification.h"
+#include "doodle_core/metadata/seedance2/ai_episode.h"
 #include "doodle_core/metadata/seedance2/ai_generate_entity.h"
 #include "doodle_core/metadata/seedance2/subproject.h"
 #include <doodle_core/metadata/ai_studio.h>

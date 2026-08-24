@@ -368,16 +368,16 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<seedance2::seedance2_subproject_person_link>("/api/seedance2/subproject/{}/person"_url(
         &seedance2::seedance2_subproject_person_link::subproject_id_
       ))
-      .reg_t<seedance2::seedance2_subproject_ai_generate_classification>("/api/seedance2/subproject/{}/classification"_url(
-        &seedance2::seedance2_subproject_ai_generate_classification::subproject_id_
+      .reg_t<seedance2::seedance2_subproject_ai_episode>("/api/seedance2/subproject/{}/episodes"_url(
+        &seedance2::seedance2_subproject_ai_episode::subproject_id_
       ))
-      .reg_t<seedance2::seedance2_subproject_ai_generate_classification_instance>("/api/seedance2/subproject/{}/classification/{}"_url(
-        &seedance2::seedance2_subproject_ai_generate_classification_instance::subproject_id_,
-        &seedance2::seedance2_subproject_ai_generate_classification_instance::classification_id_
+      .reg_t<seedance2::seedance2_subproject_ai_episode_instance>("/api/seedance2/subproject/{}/episodes/{}"_url(
+        &seedance2::seedance2_subproject_ai_episode_instance::subproject_id_,
+        &seedance2::seedance2_subproject_ai_episode_instance::episode_id_
       ))
-      .reg_t<seedance2::seedance2_subproject_ai_generate_entity>("/api/seedance2/subproject/{}/classification/{}/entity"_url(
+      .reg_t<seedance2::seedance2_subproject_ai_generate_entity>("/api/seedance2/subproject/{}/episodes/{}/entity"_url(
         &seedance2::seedance2_subproject_ai_generate_entity::subproject_id_,
-        &seedance2::seedance2_subproject_ai_generate_entity::classification_id_
+        &seedance2::seedance2_subproject_ai_generate_entity::episode_id_
       ))
       .reg_t<seedance2::seedance2_subproject_ai_generate_entity_instance>("/api/seedance2/subproject/{}/entity/{}"_url(
         &seedance2::seedance2_subproject_ai_generate_entity_instance::subproject_id_,

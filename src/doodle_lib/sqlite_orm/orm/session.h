@@ -95,6 +95,8 @@ class DOODLELIB_API session {
   void rebuild_table(const std::vector<std::string>& in_new_columns = {}) {
     rebuild_table(std::type_index(typeid(T)), in_new_columns);
   }
+  // 重命名表
+  void rename_table(const std::string& old_name, const std::string& new_name);
 
   // 获取所有的表名
   std::set<std::string> get_all_table_names();

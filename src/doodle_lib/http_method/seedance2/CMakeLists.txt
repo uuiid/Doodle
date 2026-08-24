@@ -14,7 +14,7 @@ target_sources(
         task.cpp
         tokens.cpp
         ai_entity.cpp
-        ai_generate_classification.cpp
+        ai_episode.cpp
         subproject.cpp
 )
 

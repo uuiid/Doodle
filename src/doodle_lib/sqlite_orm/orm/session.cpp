@@ -224,6 +224,13 @@ void session::rebuild_table(const std::type_index& table_name, const std::vector
   this->pragma().foreign_keys(true);
 }
 
+void session::rename_table(const std::string& old_name, const std::string& new_name) {
+  if (old_name.empty() || new_name.empty()) throw std::invalid_argument("Table names cannot be empty");
+  auto l_sql  = fmt::format(R"(ALTER TABLE "{}" RENAME TO "{}";)", old_name, new_name);
+  auto l_stmt = sqlite_stmt(*this, l_sql);
+  l_stmt.step();
+}
+
 session::transaction_guard::transaction_guard(session& s) : connection_(s.data_->connection_) { begin(); }
 
 void session::transaction_guard::begin() {

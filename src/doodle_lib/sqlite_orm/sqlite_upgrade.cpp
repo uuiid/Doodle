@@ -9,7 +9,7 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/project_status.h>
-#include <doodle_core/metadata/seedance2/ai_generate_classification.h>
+#include <doodle_core/metadata/seedance2/ai_episode.h>
 #include <doodle_core/metadata/seedance2/ai_generate_entity.h>
 #include <doodle_core/metadata/seedance2/ai_preview_file.h>
 #include <doodle_core/metadata/seedance2/assets_entity.h>
@@ -35,7 +35,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 17;
+constexpr std::size_t g_current_version = 18;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -103,34 +103,10 @@ struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t() {}
   void upgrade(sqlite_storage& in_data) override {
     // upgrade_init_t::full_fts_sync(in_data);
-    if (in_data.create_session().pragma().user_version() == 16) {
+    if (in_data.create_session().pragma().user_version() == 17) {
       auto l_s = in_data.create_session();
-      l_s.rebuild_table<seedance2::task>({"subproject_id"});
-      // 将外键约束建立
-      using namespace orm;
-      namespace sd2 = doodle::seedance2;
-      auto l_query  = select(l_s)
-                         .columns(&sd2::task::uuid_id_, &sd2::subproject::uuid_id_)
-                         .from<sd2::task>()
-                         .join<sd2::ai_generate_entity>(
-                             c(&sd2::ai_generate_entity::uuid_id_) == c(&sd2::task::ai_generate_entity_id_)
-                         )
-                         .join<sd2::ai_generate_classification>(
-                             c(&sd2::ai_generate_entity::ai_generate_classification_id_) ==
-                             c(&sd2::ai_generate_classification::uuid_id_)
-                         )
-                         .join<sd2::subproject>(
-                             c(&sd2::ai_generate_classification::subproject_id_) == c(&sd2::subproject::uuid_id_)
-                         )  //
-                     ();
-
-      for (const auto& [task_uuid, subproject_uuid] : l_query) {
-        update(l_s)
-            .from<sd2::task>()
-            .set(c(&sd2::task::subproject_id_) = subproject_uuid)
-            .where(c(&sd2::task::uuid_id_) == task_uuid)();
+        l_s.rename_table("seedance2_ai_generate_classification", "seedance2_ai_episode");
       }
-    }
 
     in_data.create_session().pragma().user_version(g_current_version);
   }

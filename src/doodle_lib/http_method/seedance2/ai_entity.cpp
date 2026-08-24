@@ -15,7 +15,7 @@
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 
-// /api/seedance2/subproject/{subproject_id}/classification/{classification_id}/entity
+// /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}/entity
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, post) {
   person_.check_subproject_access(subproject_id_);
 
@@ -25,7 +25,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, post
 
   auto l_entity = std::make_shared<sd2::ai_generate_entity>();
   l_json.get_to(*l_entity);
-  l_entity->ai_generate_classification_id_ = classification_id_;
+  l_entity->ai_episode_id_ = episode_id_;
 
   co_await l_sql.install(l_entity);
 
@@ -55,7 +55,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, get)
                       .left_outer_join<sd2::ai_preview_file>(
                           &sd2::ai_generate_entity::preview_file_, &sd2::ai_preview_file::uuid_id_
                       )
-                      .where(c(&sd2::ai_generate_entity::ai_generate_classification_id_) == classification_id_)()
+                      .where(c(&sd2::ai_generate_entity::ai_episode_id_) == episode_id_)()
                       .to_vector<ai_generate_entity_with_preview_file>();
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
@@ -79,8 +79,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_insta
   auto l_entity = std::make_shared<sd2::ai_generate_entity>(l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_));
   if (l_json.contains("name")) l_json.at("name").get_to(l_entity->name_);
   if (l_json.contains("description")) l_json.at("description").get_to(l_entity->description_);
-  if (l_json.contains("ai_generate_classification_id"))
-    l_json.at("ai_generate_classification_id").get_to(l_entity->ai_generate_classification_id_);
+  if (l_json.contains("ai_episode_id"))
+    l_json.at("ai_episode_id").get_to(l_entity->ai_episode_id_);
   if (l_json.contains("shot_uuid_id")) l_json.at("shot_uuid_id").get_to(l_entity->shot_uuid_id_);
   if (l_json.contains("preview_file")) l_json.at("preview_file").get_to(l_entity->preview_file_);
 
