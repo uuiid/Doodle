@@ -1,0 +1,50 @@
+type: object
+description: |
+  画布节点媒体文件元数据，与 canvas_element 分离存储。
+  单条记录包含多个版本文件（原始/缩略图/预览），各版本通过 MediaRole 区分 URL 请求。
+  文件路径由后端 kitsu_ctx_t 根据 uuid + role 派生，不暴露磁盘路径。
+properties:
+  id:
+    type: string
+    format: uuid
+    description: 媒体记录ID
+  canvas_element_id:
+    type: string
+    format: uuid
+    description: 所属画布节点ID (canvas_element.uuid_id_)
+  file_extension:
+    type: string
+    description: 原始文件扩展名（含点，如 ".png", ".mp4"）
+    example: .png
+  preview_extension:
+    type: string
+    description: 预览文件扩展名（含点，不存在则为空）
+    example: .mp4
+  width:
+    type: integer
+    description: 媒体宽度 px（以原始文件为准）
+  height:
+    type: integer
+    description: 媒体高度 px（以原始文件为准）
+  duration:
+    type: number
+    format: double
+    description: 时长 秒（视频/音频，图片为 0）
+  original_name:
+    type: string
+    description: 上传时的原始文件名
+  metadata:
+    type: object
+    description: |
+      扩展元数据，常用字段：
+      - codec: 编码格式
+      - bitrate: 比特率
+      - framerate: 帧率
+      - mime_type: MIME 类型
+      - 插件可写入任意自定义字段
+  created_at:
+    type: string
+    format: date-time
+  updated_at:
+    type: string
+    format: date-time

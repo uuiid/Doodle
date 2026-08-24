@@ -1,0 +1,40 @@
+type: object
+description: 节点连线，对齐前端 CanvasConnection。样式字段为后端扩展。
+properties:
+  id:
+    type: string
+    format: uuid
+  canvas_id:
+    type: string
+    format: uuid
+    description: 所属画布ID
+  fromNodeId:
+    type: string
+    format: uuid
+    description: 起始节点ID
+  toNodeId:
+    type: string
+    format: uuid
+    description: 目标节点ID
+  label:
+    type: string
+    description: 连线标签（后端扩展）
+  color:
+    type: string
+    description: 连线颜色（后端扩展）
+  width:
+    type: number
+    format: double
+    description: 连线宽度（后端扩展）
+  dashPattern:
+    type: string
+    description: 虚线样式（后端扩展）
+  directed:
+    type: boolean
+    description: 是否有箭头（后端扩展）
+  created_at:
+    type: string
+    format: date-time
+  updated_at:
+    type: string
+    format: date-time

@@ -1,0 +1,59 @@
+post:
+  tags:
+    - 动画生成
+  summary: 生成动画
+  description: |
+    按顺序生成一个或多个运动段，段间自动创建平滑过渡。须先通过 `settings` 接口加载模型。
+
+    请求体支持两种形式：
+    - `segments`：运动段数组（多段生成）
+    - `segment`：单个运动段对象（单段生成，内部转为单元素数组）
+
+    可选传 `skeleton`（用于最终重定向，层级须与模型骨骼相同且处于原点）与 `root_trajectory`（根位置偏移）。
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - type: object
+              properties:
+                segments:
+                  type: array
+                  description: 运动段参数列表（与 segment 二选一）
+                  items:
+                    $ref: ../components/schemas/GenerateSegmentArgs.yaml
+                segment:
+                  $ref: ../components/schemas/GenerateSegmentArgs.yaml
+                  description: 单个运动段参数（与 segments 二选一）
+                skeleton:
+                  type: array
+                  description: 重定向用骨骼（选填）
+                  items:
+                    $ref: ../components/schemas/SkeletonJoint.yaml
+                root_trajectory:
+                  type: array
+                  minItems: 3
+                  maxItems: 3
+                  items:
+                    type: number
+                  description: 根位置偏移 [x, y, z]（选填）
+                first_heading_angle:
+                  type: number
+                  description: 首段朝向角（弧度，选填，默认 0）
+            - anyOf:
+                - required:
+                    - segments
+                - required:
+                    - segment
+  responses:
+    '200':
+      description: 生成成功，返回拼接后的完整运动输出
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/MotionOutput.yaml
+    '500':
+      description: 模型未加载、约束无效或生成失败
+  security:
+    - bearerAuth: []

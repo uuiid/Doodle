@@ -1,0 +1,61 @@
+get:
+  tags:
+    - 画布连线
+  summary: 获取画布连线列表
+  description: 返回指定画布下的所有节点间连线
+  parameters:
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 连线列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/CanvasConnection.yaml
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - 画布连线
+  summary: 创建画布连线
+  parameters:
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - fromNodeId
+            - toNodeId
+          properties:
+            fromNodeId:
+              type: string
+              format: uuid
+              description: 起始节点ID
+            toNodeId:
+              type: string
+              format: uuid
+              description: 目标节点ID
+  responses:
+    '200':
+      description: 创建成功
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/CanvasConnection.yaml
+  security:
+    - bearerAuth: []

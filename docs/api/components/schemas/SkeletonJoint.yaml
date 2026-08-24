@@ -1,0 +1,19 @@
+type: object
+required:
+  - name
+  - parent_idx
+  - neutral_joint
+properties:
+  name:
+    type: string
+    description: 关节名称
+  parent_idx:
+    type: integer
+    description: 父关节索引，根关节为 -1
+  neutral_joint:
+    type: array
+    minItems: 3
+    maxItems: 3
+    items:
+      type: number
+    description: 中性姿态关节位置 [x, y, z]

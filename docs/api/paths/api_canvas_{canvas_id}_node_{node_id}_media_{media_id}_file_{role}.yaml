@@ -1,0 +1,97 @@
+get:
+  tags:
+    - 画布媒体
+  summary: 下载媒体文件
+  description: |
+    按 media_role 下载对应版本的文件。
+
+    缩略图固定为 PNG 格式；原始文件按 file_extension 返回；预览按 preview_extension 返回。
+  parameters:
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: node_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: media_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: role
+      in: path
+      required: true
+      schema:
+        $ref: ../components/schemas/MediaRole.yaml
+  responses:
+    '200':
+      description: 媒体文件二进制流
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    '404':
+      description: 文件不存在
+  security:
+    - bearerAuth: []
+put:
+  tags:
+    - 画布媒体
+  summary: 替换媒体文件
+  description: |
+    按 media_role 替换对应版本的文件（如单独上传缩略图或预览版本）。
+    请求体使用 multipart/form-data。
+  parameters:
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: node_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: media_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: role
+      in: path
+      required: true
+      schema:
+        $ref: ../components/schemas/MediaRole.yaml
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          required:
+            - file
+          properties:
+            file:
+              type: string
+              format: binary
+              description: 媒体文件
+  responses:
+    '200':
+      description: 替换成功，返回更新后的媒体元数据
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/CanvasMedia.yaml
+  security:
+    - bearerAuth: []

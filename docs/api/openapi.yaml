@@ -1,0 +1,171 @@
+openapi: 3.0.3
+info:
+  title: AI 动画生成 API
+  description: |
+    AI 动画训练/生成模块 HTTP API，基于 Kimodo 运动生成模型，提供模型加载与多段运动生成能力。
+
+    使用前须先调用 `settings` 接口加载模型，再调用 `train` 接口生成动画。
+
+    所有接口均需 JWT Bearer Token 认证（Header: `Authorization: Bearer <token>`）。
+  version: 1.0.0
+  contact:
+    name: 索以动画研发中心
+servers:
+  - url: http://localhost:50025
+    description: 本地开发服务器
+tags:
+  - name: 模型管理
+    description: 模型加载与配置
+    x-displayName: 模型管理
+  - name: 动画生成
+    description: 多段运动生成
+    x-displayName: 动画生成
+  - name: 画布
+    description: 画布元数据 CRUD，视口与背景管理
+    x-displayName: 画布
+  - name: 画布节点
+    description: 画布上的 text/image/video/audio/config/group 节点管理
+    x-displayName: 画布节点
+  - name: 画布连线
+    description: 节点之间的连线管理
+    x-displayName: 画布连线
+  - name: 画布媒体
+    description: 画布节点的媒体文件（图片/视频/音频）上传、下载与元数据管理
+    x-displayName: 画布媒体
+  - name: 静态文件
+    description: 缩略图、图片、动画等静态资源
+    x-displayName: 静态文件
+  - name: 子项目
+    description: 子项目 CRUD、参与人员关联
+    x-displayName: 子项目
+  - name: AI实体类别
+    description: AI 生成实体类别管理
+    x-displayName: AI实体类别
+  - name: AI生成实体
+    description: AI 生成实体及预览、参考文件管理
+    x-displayName: AI生成实体
+  - name: 任务
+    description: AI 生成任务提交、查询、取消、归档
+    x-displayName: 任务
+  - name: 限额管理
+    description: Token 配额查询与设置
+    x-displayName: 限额管理
+  - name: AI生成剧集
+    x-displayName: AI生成剧集
+paths:
+  /api/doodle/ai/animation/train/settings:
+    $ref: paths/api_doodle_ai_animation_train_settings.yaml
+  /api/doodle/ai/animation/train:
+    $ref: paths/api_doodle_ai_animation_train.yaml
+  /api/canvas:
+    $ref: paths/api_canvas.yaml
+  /api/canvas/{canvas_id}:
+    $ref: paths/api_canvas_{canvas_id}.yaml
+  /api/canvas/{canvas_id}/node:
+    $ref: paths/api_canvas_{canvas_id}_node.yaml
+  /api/canvas/{canvas_id}/node/{node_id}:
+    $ref: paths/api_canvas_{canvas_id}_node_{node_id}.yaml
+  /api/canvas/{canvas_id}/connection:
+    $ref: paths/api_canvas_{canvas_id}_connection.yaml
+  /api/canvas/{canvas_id}/connection/{connection_id}:
+    $ref: paths/api_canvas_{canvas_id}_connection_{connection_id}.yaml
+  /api/canvas/{canvas_id}/node/{node_id}/media:
+    $ref: paths/api_canvas_{canvas_id}_node_{node_id}_media.yaml
+  /api/canvas/{canvas_id}/node/{node_id}/media/{media_id}:
+    $ref: paths/api_canvas_{canvas_id}_node_{node_id}_media_{media_id}.yaml
+  /api/canvas/{canvas_id}/node/{node_id}/media/{media_id}/file/{role}:
+    $ref: >-
+      paths/api_canvas_{canvas_id}_node_{node_id}_media_{media_id}_file_{role}.yaml
+  /api/seedance2/thumbnail/{id}.png:
+    $ref: paths/api_seedance2_thumbnail_{id}.png.yaml
+  /api/seedance2/pictures/{id}.png:
+    $ref: paths/api_seedance2_pictures_{id}.png.yaml
+  /api/seedance2/animation/waiting.mp4:
+    $ref: paths/api_seedance2_animation_waiting.mp4.yaml
+  /api/seedance2/subproject:
+    $ref: paths/api_seedance2_subproject.yaml
+  /api/seedance2/subproject/{id}:
+    $ref: paths/api_seedance2_subproject_{id}.yaml
+  /api/seedance2/subproject/{id}/preview:
+    $ref: paths/api_seedance2_subproject_{id}_preview.yaml
+  /api/seedance2/subproject/{subproject_id}/person:
+    $ref: paths/api_seedance2_subproject_{subproject_id}_person.yaml
+  /api/seedance2/subproject/{subproject_id}/episodes:
+    $ref: paths/api_seedance2_subproject_{subproject_id}_episodes.yaml
+  /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}:
+    $ref: paths/api_seedance2_subproject_{subproject_id}_episodes_{episode_id}.yaml
+  /api/seedance2/subproject/{subproject_id}/entity:
+    $ref: paths/api_seedance2_subproject_{subproject_id}_entity.yaml
+  /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}/entity:
+    $ref: >-
+      paths/api_seedance2_subproject_{subproject_id}_episodes_{episode_id}_entity.yaml
+  /api/seedance2/subproject/{subproject_id}/entity/{entity_id}:
+    $ref: paths/api_seedance2_subproject_{subproject_id}_entity_{entity_id}.yaml
+  /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/preview:
+    $ref: >-
+      paths/api_seedance2_subproject_{subproject_id}_entity_{entity_id}_preview.yaml
+  /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/reference:
+    $ref: >-
+      paths/api_seedance2_subproject_{subproject_id}_entity_{entity_id}_reference.yaml
+  /api/seedance2/subproject/{subproject_id}/reference/{id}:
+    $ref: paths/api_seedance2_subproject_{subproject_id}_reference_{id}.yaml
+  /api/seedance2/subproject/{subproject_id}/category:
+    $ref: paths/api_seedance2_subproject_{subproject_id}_category.yaml
+  /api/seedance2/subproject/{subproject_id}/category/{category_id}:
+    $ref: paths/api_seedance2_subproject_{subproject_id}_category_{category_id}.yaml
+  /api/seedance2/subproject/{subproject_id}/category/{category_id}/entity:
+    $ref: >-
+      paths/api_seedance2_subproject_{subproject_id}_category_{category_id}_entity.yaml
+  /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/task:
+    $ref: >-
+      paths/api_seedance2_subproject_{subproject_id}_entity_{entity_id}_task.yaml
+  /api/seedance2/subproject/{subproject_id}/task/{id}:
+    $ref: paths/api_seedance2_subproject_{subproject_id}_task_{id}.yaml
+  /api/seedance2/task:
+    $ref: paths/api_seedance2_task.yaml
+  /api/seedance2/task/{date_start}-{date_end}:
+    $ref: paths/api_seedance2_task_{date_start}-{date_end}.yaml
+  /api/seedance2/tokens:
+    $ref: paths/api_seedance2_tokens.yaml
+  /api/seedance2/tokens/person/{person_id}:
+    $ref: paths/api_seedance2_tokens_person_{person_id}.yaml
+  /api/seedance2/tokens/person/all:
+    $ref: paths/api_seedance2_tokens_person_all.yaml
+  /api/seedance2/tokens/person/{person_id}/date/{date_start}-{date_end}:
+    $ref: >-
+      paths/api_seedance2_tokens_person_{person_id}_date_{date_start}-{date_end}.yaml
+  /api/seedance2/tokens/person/{person_id}/date/{date}:
+    $ref: paths/api_seedance2_tokens_person_{person_id}_date_{date}.yaml
+  /api/seedance2/tokens/person/date/{date_start}-{date_end}:
+    $ref: paths/api_seedance2_tokens_person_date_{date_start}-{date_end}.yaml
+  /api/seedance2/tokens/person/date/{date}:
+    $ref: paths/api_seedance2_tokens_person_date_{date}.yaml
+  /api/seedance2/task-similarity:
+    $ref: paths/api_seedance2_task-similarity.yaml
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer Token 认证
+x-tagGroups:
+  - name: AI 动画生成 API
+    tags:
+      - 模型管理
+      - 动画生成
+  - name: Canvas API
+    tags:
+      - 画布
+      - 画布节点
+      - 画布连线
+      - 画布媒体
+  - name: Seedance2 API
+    tags:
+      - 静态文件
+      - 子项目
+      - AI实体类别
+      - AI生成实体
+      - 任务
+      - 限额管理
+      - AI生成剧集

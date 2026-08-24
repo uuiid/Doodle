@@ -1,0 +1,73 @@
+get:
+  tags:
+    - 画布节点
+  summary: 获取画布节点列表
+  description: 返回指定画布下的所有节点
+  parameters:
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 节点列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/CanvasNode.yaml
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - 画布节点
+  summary: 创建画布节点
+  parameters:
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - type
+          properties:
+            type:
+              $ref: ../components/schemas/CanvasNodeType.yaml
+            title:
+              type: string
+              description: 节点标题
+            position:
+              $ref: ../components/schemas/Position.yaml
+            width:
+              type: number
+              format: double
+              default: 340
+            height:
+              type: number
+              format: double
+              default: 240
+            content:
+              type: string
+              description: 节点内容（文本 或 媒体URL）
+            metadata:
+              type: object
+              description: 扩展元数据（prompt, status, model, size, generationMode 等）
+  responses:
+    '200':
+      description: 创建成功
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/CanvasNode.yaml
+  security:
+    - bearerAuth: []

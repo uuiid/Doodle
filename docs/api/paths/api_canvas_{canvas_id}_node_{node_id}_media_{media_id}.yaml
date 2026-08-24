@@ -1,0 +1,117 @@
+get:
+  tags:
+    - 画布媒体
+  summary: 获取媒体详情
+  parameters:
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: node_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: media_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 媒体详情
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/CanvasMedia.yaml
+  security:
+    - bearerAuth: []
+put:
+  tags:
+    - 画布媒体
+  summary: 更新媒体元数据
+  description: 更新媒体属性（width, height, duration, original_name, metadata 等）
+  parameters:
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: node_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: media_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            width:
+              type: integer
+              description: 宽度 px
+            height:
+              type: integer
+              description: 高度 px
+            duration:
+              type: number
+              format: double
+              description: 时长 秒
+            original_name:
+              type: string
+              description: 原始文件名
+            metadata:
+              type: object
+              description: 扩展元数据（codec, bitrate, framerate, mime_type 等）
+  responses:
+    '200':
+      description: 更新后的媒体信息
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/CanvasMedia.yaml
+  security:
+    - bearerAuth: []
+delete:
+  tags:
+    - 画布媒体
+  summary: 删除媒体记录及文件
+  description: 删除 canvas_media 记录及其所有版本的磁盘文件（原始 + 缩略图 + 预览）
+  parameters:
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: node_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: media_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: 删除成功
+  security:
+    - bearerAuth: []

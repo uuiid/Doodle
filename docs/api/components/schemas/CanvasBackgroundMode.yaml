@@ -1,0 +1,9 @@
+type: string
+enum:
+  - blank
+  - lines
+  - dots
+description: |
+  blank - 空白背景
+  lines - 网格线
+  dots  - 网点

@@ -1,0 +1,66 @@
+get:
+  tags:
+    - AI实体类别
+  summary: 获取子项目下的实体类别列表
+  description: 返回指定子项目下的所有 AI 实体类别，子项目成员可查看
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 类别列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/AiCategory.yaml
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - AI实体类别
+  summary: 创建 AI 实体类别
+  description: 制片及以上权限（非外包）可创建。类别用于对 AI 生成实体进行分组管理
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - name
+            - type
+          properties:
+            name:
+              type: string
+              description: 类别名称
+            description:
+              type: string
+              description: 类别描述（选填）
+            type:
+              type: string
+              enum:
+                - shot
+                - assets
+              description: 类别类型（必填）。shot - 镜头类别, assets - 素材类别
+  responses:
+    '200':
+      description: 创建成功
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiCategory.yaml
+  security:
+    - bearerAuth: []

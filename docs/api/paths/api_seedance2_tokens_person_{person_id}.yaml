@@ -1,0 +1,62 @@
+get:
+  tags:
+    - 限额管理
+  summary: 获取指定人员剩余 Token
+  description: 制片及以上可查看
+  parameters:
+    - name: person_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 人员剩余 Token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              remaining_tokens:
+                type: integer
+                format: int64
+  security:
+    - bearerAuth: []
+put:
+  tags:
+    - 限额管理
+  summary: 设置指定人员剩余 Token
+  description: 仅管理员可操作
+  parameters:
+    - name: person_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - remaining_tokens
+          properties:
+            remaining_tokens:
+              type: integer
+              format: int64
+  responses:
+    '200':
+      description: 设置成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              remaining_tokens:
+                type: integer
+                format: int64
+  security:
+    - bearerAuth: []

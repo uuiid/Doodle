@@ -1,0 +1,47 @@
+get:
+  tags:
+    - 限额管理
+  summary: 获取当前用户剩余 Token
+  responses:
+    '200':
+      description: 当前用户剩余 Token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              remaining_tokens:
+                type: integer
+                format: int64
+                description: 剩余可用 Token 数量
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - 限额管理
+  summary: 设置所有人员当周剩余 Token
+  description: 仅管理员可操作。将所有人的剩余 Token 重置为指定值
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            remaining_tokens:
+              type: integer
+              format: int64
+              description: Token 数量，默认使用全局配置的最大值
+  responses:
+    '200':
+      description: 设置成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              remaining_tokens:
+                type: integer
+                format: int64
+  security:
+    - bearerAuth: []

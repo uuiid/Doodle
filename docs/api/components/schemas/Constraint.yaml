@@ -1,0 +1,70 @@
+type: object
+required:
+  - type
+  - frame_indices
+description: >
+  运动约束。type 决定其余字段含义：
+
+  - `root2d`：根轨迹约束，需 `smooth_root`，可选 `global_root_heading`
+
+  - `fullbody`：全身约束，需 `local_joints_rot`、`root_positions`，可选 `smooth_root`
+
+  - `end-effector` / `left-hand` / `right-hand` / `left-foot` /
+  `right-foot`：末端执行器约束，需 `local_joints_rot`、`root_positions`，可选
+  `smooth_root`、`joint_names`
+properties:
+  type:
+    type: string
+    enum:
+      - root2d
+      - fullbody
+      - end-effector
+      - left-hand
+      - right-hand
+      - left-foot
+      - right-foot
+    description: 约束类型
+  frame_indices:
+    type: array
+    items:
+      type: integer
+    description: 约束帧索引
+  smooth_root:
+    type: array
+    items:
+      type: array
+      minItems: 3
+      maxItems: 3
+      items:
+        type: number
+    description: 平滑根位置序列（每帧 [x, y, z]）
+  global_root_heading:
+    type: array
+    items:
+      type: array
+      minItems: 2
+      maxItems: 2
+      items:
+        type: number
+    description: 全局根朝向序列（每帧 [cos, sin]，选填）
+  local_joints_rot:
+    type: array
+    description: 局部关节旋转（轴角，可 [K, J, 3] 或 [K*J, 3] 扁平格式）
+    items:
+      type: array
+      items:
+        type: number
+  root_positions:
+    type: array
+    items:
+      type: array
+      minItems: 3
+      maxItems: 3
+      items:
+        type: number
+    description: 根关节世界坐标序列（每帧 [x, y, z]）
+  joint_names:
+    type: array
+    items:
+      type: string
+    description: 约束关节名称列表（end-effector 系列选填）

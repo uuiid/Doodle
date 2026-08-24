@@ -1,0 +1,16 @@
+get:
+  tags:
+    - 限额管理
+  summary: 获取所有人员剩余 Token
+  description: 制片及以上可查看。返回所有未归档人员的 Token 信息
+  responses:
+    '200':
+      description: 所有人员 Token 列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/PersonTokenBrief.yaml
+  security:
+    - bearerAuth: []

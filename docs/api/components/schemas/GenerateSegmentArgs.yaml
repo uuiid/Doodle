@@ -1,0 +1,38 @@
+type: object
+required:
+  - text
+properties:
+  text:
+    type: string
+    description: 该段的动作文本描述（必填）
+  num_frames:
+    type: integer
+    default: 120
+    description: 生成帧数
+  num_denoising_steps:
+    type: integer
+    default: 50
+    description: 去噪步数
+  cfg_weight:
+    type: array
+    items:
+      type: number
+    default:
+      - 2
+      - 2
+    description: 无分类器引导权重
+  cfg_type:
+    $ref: ./CfgType.yaml
+  num_transition_frames:
+    type: integer
+    default: 10
+    description: 与上一段之间的过渡帧数
+  root_margin:
+    type: number
+    default: 0
+    description: 根位置边距
+  constraint_lst:
+    type: array
+    description: 约束列表（选填，每段不超过 20 个）
+    items:
+      $ref: ./Constraint.yaml

@@ -1,0 +1,10 @@
+type: string
+enum:
+  - nocfg
+  - regular
+  - separated
+default: separated
+description: |
+  nocfg - 无引导,
+  regular - out_uncond + w*(out_cond - out_uncond),
+  separated - 文本/约束分离引导

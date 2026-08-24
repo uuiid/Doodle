@@ -1,0 +1,22 @@
+delete:
+  tags:
+    - 画布连线
+  summary: 删除画布连线
+  parameters:
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: connection_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: 删除成功
+  security:
+    - bearerAuth: []

@@ -1,0 +1,12 @@
+type: string
+enum:
+  - original
+  - thumbnail
+  - preview
+  - variant
+description: |
+  媒体版本角色，用于区分同一媒体的不同文件版本：
+  - original  — 原始上传文件
+  - thumbnail — 缩略图（固定 PNG 格式）
+  - preview   — 预览/压缩版本
+  - variant   — 其他变体

@@ -1,0 +1,59 @@
+get:
+  tags:
+    - 画布
+  summary: 获取画布列表
+  description: 获取指定项目下的所有画布
+  parameters:
+    - name: project_id
+      in: query
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 项目ID
+  responses:
+    '200':
+      description: 画布列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/InfiniteCanvas.yaml
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - 画布
+  summary: 创建画布
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - title
+            - project_uuid_id
+          properties:
+            title:
+              type: string
+              description: 画布名称
+            description:
+              type: string
+              description: 画布描述
+            project_uuid_id:
+              type: string
+              format: uuid
+              description: 所属项目ID
+            backgroundMode:
+              $ref: ../components/schemas/CanvasBackgroundMode.yaml
+  responses:
+    '200':
+      description: 创建成功
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/InfiniteCanvas.yaml
+  security:
+    - bearerAuth: []

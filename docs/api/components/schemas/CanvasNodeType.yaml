@@ -1,0 +1,15 @@
+type: string
+enum:
+  - text
+  - image
+  - video
+  - audio
+  - config
+  - group
+description: |
+  text   - 文本节点
+  image  - 图片节点
+  video  - 视频节点
+  audio  - 音频节点
+  config - 生成配置节点（模型/参数/提示词）
+  group  - 分组节点

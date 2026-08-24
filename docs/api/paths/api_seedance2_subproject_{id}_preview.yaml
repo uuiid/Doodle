@@ -1,0 +1,37 @@
+post:
+  tags:
+    - 子项目
+  summary: 上传子项目预览图
+  description: 上传图片作为子项目缩略图，自动生成缩略图和预览文件
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            file:
+              type: string
+              format: binary
+              description: 图片文件
+  responses:
+    '200':
+      description: 上传成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: 预览文件ID
+  security:
+    - bearerAuth: []

@@ -1,0 +1,29 @@
+get:
+  tags:
+    - 限额管理
+  summary: 获取某人某天 Token 消耗统计
+  description: 制片及以上可查看。当天数据实时统计
+  parameters:
+    - name: person_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: date
+      in: path
+      required: true
+      schema:
+        type: string
+        format: date
+  responses:
+    '200':
+      description: Token 消耗统计
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/PersonToken.yaml
+  security:
+    - bearerAuth: []

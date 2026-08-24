@@ -1,0 +1,41 @@
+post:
+  tags:
+    - 模型管理
+  summary: 加载 Kimodo 模型
+  description: >
+    根据 model_path 加载 Kimodo 模型。`model_path` 可为目录（自动定位其中的
+    `model_config.json`）或直接指向模型配置文件。
+
+    加载成功后返回模型路径及骨骼信息，供生成接口使用。
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - model_path
+          properties:
+            model_path:
+              type: string
+              description: 模型目录或 model_config.json 文件路径
+  responses:
+    '200':
+      description: 加载成功，返回模型路径与骨骼信息
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              model_path:
+                type: string
+                description: 模型路径
+              skeleton:
+                type: array
+                description: 骨骼关节列表
+                items:
+                  $ref: ../components/schemas/SkeletonJoint.yaml
+    '500':
+      description: 模型加载失败（文件不存在、ONNX 初始化失败等）
+  security:
+    - bearerAuth: []

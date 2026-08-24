@@ -1,0 +1,30 @@
+type: object
+description: 画布元数据，对齐前端 CanvasProject
+properties:
+  id:
+    type: string
+    format: uuid
+  title:
+    type: string
+    description: 画布名称
+  description:
+    type: string
+    description: 画布描述
+  project_uuid_id:
+    type: string
+    format: uuid
+    description: 所属项目ID
+  user_id:
+    type: string
+    format: uuid
+    description: 创建者ID
+  viewport:
+    $ref: ./Viewport.yaml
+  backgroundMode:
+    $ref: ./CanvasBackgroundMode.yaml
+  created_at:
+    type: string
+    format: date-time
+  updated_at:
+    type: string
+    format: date-time

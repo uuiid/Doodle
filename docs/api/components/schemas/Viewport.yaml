@@ -1,0 +1,15 @@
+type: object
+description: '视口状态，对齐前端 viewport: {x, y, k}'
+properties:
+  x:
+    type: number
+    format: double
+    description: 水平偏移
+  'y':
+    type: number
+    format: double
+    description: 垂直偏移
+  k:
+    type: number
+    format: double
+    description: 缩放比例（1.0 = 100%）

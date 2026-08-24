@@ -1,0 +1,43 @@
+type: object
+description: 画布节点，对齐前端 CanvasNodeData
+properties:
+  id:
+    type: string
+    format: uuid
+  canvas_id:
+    type: string
+    format: uuid
+    description: 所属画布ID
+  type:
+    $ref: ./CanvasNodeType.yaml
+  title:
+    type: string
+    description: 节点标题
+  position:
+    $ref: ./Position.yaml
+  width:
+    type: number
+    format: double
+    description: 节点宽度
+  height:
+    type: number
+    format: double
+    description: 节点高度
+  metadata:
+    type: object
+    description: |
+      扩展元数据扁平可选字段袋。常用字段：
+      - content: 文本内容 或 媒体URL
+      - prompt: 提示词
+      - status: idle | success | loading | error
+      - generationMode: text | image | video | audio
+      - model, size, count, quality 等生成参数
+      - groupId: 所属分组节点ID
+      - storageKey, mimeType, bytes, naturalWidth, naturalHeight
+      - 插件可写入任意自定义字段
+  created_at:
+    type: string
+    format: date-time
+  updated_at:
+    type: string
+    format: date-time

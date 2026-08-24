@@ -1,0 +1,71 @@
+get:
+  tags:
+    - 画布媒体
+  summary: 获取节点媒体列表
+  description: 返回指定节点的所有媒体文件元数据
+  parameters:
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: node_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 媒体列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/CanvasMedia.yaml
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - 画布媒体
+  summary: 上传媒体文件并创建媒体记录
+  description: |
+    上传媒体文件到节点。请求体使用 multipart/form-data。
+    上传成功后自动创建 canvas_media 记录，并生成缩略图。
+  parameters:
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: node_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          required:
+            - file
+          properties:
+            file:
+              type: string
+              format: binary
+              description: 媒体文件
+  responses:
+    '200':
+      description: 上传成功，返回媒体元数据
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/CanvasMedia.yaml
+  security:
+    - bearerAuth: []
