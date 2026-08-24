@@ -18,8 +18,8 @@ tags:
     description: 缩略图、图片、动画等静态资源
   - name: 子项目
     description: 子项目 CRUD、参与人员关联
-  - name: AI生成分类
-    description: AI 生成内容分类管理
+  - name: AI实体类别
+    description: AI 生成实体类别管理
   - name: AI生成实体
     description: AI 生成实体及预览、参考文件管理
   - name: 任务
@@ -786,7 +786,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [name]
+              required: [name, type]
               properties:
                 name:
                   type: string
@@ -794,6 +794,10 @@ paths:
                 description:
                   type: string
                   description: 类别描述（选填）
+                type:
+                  type: string
+                  enum: [shot, assets]
+                  description: 类别类型（必填）。shot - 镜头类别, assets - 素材类别
       responses:
         "200":
           description: 创建成功
@@ -829,7 +833,7 @@ paths:
     put:
       tags: [AI实体类别]
       summary: 更新类别
-      description: 非外包人员可更新。可更新字段：name, description
+      description: 非外包人员可更新。可更新字段：name, description, type
       parameters:
         - name: subproject_id
           in: path
@@ -856,6 +860,10 @@ paths:
                 description:
                   type: string
                   description: 类别描述
+                type:
+                  type: string
+                  enum: [shot, assets]
+                  description: 类别类型。shot - 镜头类别, assets - 素材类别
       responses:
         "200":
           description: 更新后的类别信息
@@ -1537,24 +1545,21 @@ components:
 
     AiCategory:
       type: object
+      required: [name, type]
       properties:
         id:
           type: string
           format: uuid
         name:
           type: string
-          description: 类别名称
+          description: 类别名称（必填）
         description:
           type: string
           description: 类别描述（选填）
-        subproject_id:
+        type:
           type: string
-          format: uuid
-          description: 所属子项目ID
-        created_at:
-          type: string
-          format: date-time
-          description: 创建时间
+          enum: [shot, assets]
+          description: 类别类型（必填）。shot - 镜头类别, assets - 素材类别
 
     AiPreviewFile:
       type: object
