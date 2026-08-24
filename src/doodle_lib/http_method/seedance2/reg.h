@@ -144,6 +144,28 @@ uuid subproject_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
+/// AI 实体类别相关 ------------------------------
+// /api/seedance2/subproject/{subproject_id}/category
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_category)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid subproject_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/subproject/{subproject_id}/category/{category_id}
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_category_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid subproject_id_{};
+uuid category_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/subproject/{subproject_id}/category/{category_id}/entity
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_category_entity)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid subproject_id_{};
+uuid category_id_{};
+DOODLE_HTTP_FUN_END()
+
 /// 限额相关 -----------------------------------
 // /api/seedance2/tokens
 DOODLE_HTTP_JWT_FUN(seedance2_tokens)

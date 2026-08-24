@@ -12,6 +12,7 @@ target_sources(
         tokens.cpp
         ai_entity.cpp
         ai_episode.cpp
+        category.cpp
         subproject.cpp
 )
 
