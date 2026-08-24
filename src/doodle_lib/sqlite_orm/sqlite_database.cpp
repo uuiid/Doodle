@@ -158,6 +158,22 @@ void sqlite_storage::regs_all() {
           &seedance2::ai_episode::subproject_id_, &seedance2::subproject::uuid_id_, foreign_key_action::cascade
       );
 
+  reg_table<seedance2::ai_episode_model_resolution_limit>("seedance2_ai_episode_model_resolution_limit")
+      .add_column("id", &seedance2::ai_episode_model_resolution_limit::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::ai_episode_model_resolution_limit::uuid_id_, unique(), not_null())
+      .add_column("ai_episode_id", &seedance2::ai_episode_model_resolution_limit::ai_episode_id_, not_null())
+      .add_column("model_name", &seedance2::ai_episode_model_resolution_limit::model_name_, not_null())
+      .add_column("resolution", &seedance2::ai_episode_model_resolution_limit::resolution_, not_null())
+      .add_foreign_key(
+          &seedance2::ai_episode_model_resolution_limit::ai_episode_id_, &seedance2::ai_episode::uuid_id_,
+          foreign_key_action::cascade
+      )
+      .add_unique_index(
+          &seedance2::ai_episode_model_resolution_limit::ai_episode_id_,
+          &seedance2::ai_episode_model_resolution_limit::model_name_,
+          &seedance2::ai_episode_model_resolution_limit::resolution_
+      );
+
   reg_table<seedance2::ai_category>("seedance2_ai_category")
       .add_column("id", &seedance2::ai_category::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::ai_category::uuid_id_, unique(), not_null())
