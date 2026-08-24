@@ -80,6 +80,9 @@ void transformer_encoder_block::init_session() {
   Ort::SessionOptions session_options;
   session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
   session_options.SetLogSeverityLevel(OrtLoggingLevel::ORT_LOGGING_LEVEL_ERROR);
+  // SimplifiedLayerNormFusion 会把动态 seq_len 烘焙成静态 shape，不同帧数推理时触发
+  // "OrtValue shape verification failed"，这里禁用该融合。
+  session_options.AddConfigEntry("optimization.disable_specified_optimizers", "SimplifiedLayerNormFusion");
 
   auto onnx_path = model_dir_ / "transformer_core.onnx";
   DOODLE_CHICK(FSys::exists(onnx_path), "ONNX 模型文件不存在: {}", onnx_path.string());

@@ -13,7 +13,7 @@ namespace sd2 = doodle::seedance2;
 
 // /api/seedance2/subproject/{subproject_id}/classification
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_classification, get) {
-  person_.check_manager();
+  person_.check_subproject_access(subproject_id_);
 
   auto l_sql = get_sqlite_database();
   using namespace orm;
@@ -42,7 +42,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_classificati
 
 // /api/seedance2/subproject/{subproject_id}/classification/{classification_id}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_classification_instance, get) {
-  person_.check_manager();
+  person_.check_subproject_access(subproject_id_);
 
   auto l_sql            = get_sqlite_database();
   auto l_classification = l_sql.get_by_uuid<sd2::ai_generate_classification>(classification_id_);
