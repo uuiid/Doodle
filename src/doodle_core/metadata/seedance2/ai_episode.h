@@ -28,4 +28,26 @@ struct DOODLE_CORE_API ai_episode {
     if (j.contains("description")) j.at("description").get_to(p.description_);
   }
 };
+
+// 限制 ai_episode 中, 可以使用的模型和分辨率
+struct DOODLE_CORE_API ai_episode_model_resolution_limit {
+  DOODLE_BASE_FIELDS();
+  uuid ai_episode_id_;
+  std::string model_name_;
+  std::string resolution_;
+  // to json
+  friend void to_json(nlohmann::json& j, const ai_episode_model_resolution_limit& p) {
+    j["id"]              = p.uuid_id_;
+    j["ai_episode_id"]   = p.ai_episode_id_;
+    j["model_name"]      = p.model_name_;
+    j["resolution"]      = p.resolution_;
+  }
+  // from json
+  friend void from_json(const nlohmann::json& j, ai_episode_model_resolution_limit& p) {
+    j.at("ai_episode_id").get_to(p.ai_episode_id_);
+    j.at("model_name").get_to(p.model_name_);
+    j.at("resolution").get_to(p.resolution_);
+  }
+};
+
 }  // namespace doodle::seedance2
