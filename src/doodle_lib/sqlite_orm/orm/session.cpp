@@ -240,6 +240,20 @@ void session::rename_column(
   auto l_stmt = sqlite_stmt(*this, l_sql);
   l_stmt.step();
 }
+
+void session::create_table(const std::type_index& table_name) {
+  auto& l_s = *data_->s_;
+  if (!l_s.type_to_table_index_.contains(table_name)) throw std::runtime_error("Table not found for the given type");
+  auto l_all_tables = get_all_table_names();
+  if (l_all_tables.contains(l_s.tables_[l_s.type_to_table_index_.at(table_name)]->name_)) return;
+
+  auto l_table_index = l_s.type_to_table_index_.at(table_name);
+  auto& l_table      = l_s.tables_[l_table_index];
+  auto l_create_sql  = l_table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
+  auto l_stmt        = sqlite_stmt{*this, l_create_sql};
+  l_stmt.step();
+}
+
 session::transaction_guard::transaction_guard(session& s) : connection_(s.data_->connection_), s_(&s) { begin(); }
 
 void session::transaction_guard::begin() {

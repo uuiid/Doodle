@@ -109,6 +109,12 @@ class DOODLELIB_API session {
   void rename_column(
       const std::string& table_name, const std::string& old_column_name, const std::string& new_column_name
   );
+  // 单独创建某张表
+  void create_table(const std::type_index& table_name);
+  template <typename T>
+  void create_table() {
+    create_table(std::type_index(typeid(T)));
+  }
 
   // 获取所有的表名
   std::set<std::string> get_all_table_names();
