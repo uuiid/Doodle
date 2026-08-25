@@ -120,7 +120,7 @@ void session::sync_schema() {
   auto l_transaction  = transaction();
   for (const auto& table : l_s.tables_) {
     if (l_all_tables.contains(table->name_)) {
-      SPDLOG_DEBUG("Table already exists, skipping creation: {}", table->name_);
+      // SPDLOG_DEBUG("Table already exists, skipping creation: {}", table->name_);
       continue;
     }
     if (table->name_ == "sqlite_master") continue;
@@ -134,11 +134,11 @@ void session::sync_schema() {
     for (const auto& index : table->indexes_) {
       auto l_index_info = index->get_index_info(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
       if (l_existing_indexes.contains(l_index_info)) {
-        SPDLOG_DEBUG("Index already exists, skipping creation: {}", l_index_info.name_);
+        // SPDLOG_DEBUG("Index already exists, skipping creation: {}", l_index_info.name_);
         continue;
       }
       if (l_all_indexes.contains(l_index_info.name_)) {
-        SPDLOG_DEBUG("Index already exists in database, skipping creation: {}", l_index_info.name_);
+        // SPDLOG_DEBUG("Index already exists in database, skipping creation: {}", l_index_info.name_);
         l_existing_indexes.insert(l_index_info);
         continue;
       }
@@ -150,7 +150,7 @@ void session::sync_schema() {
   }
   for (const auto& l_trigger : l_s.triggers_) {
     if (l_all_triggers.contains(l_trigger->info_->name_)) {
-      SPDLOG_DEBUG("Trigger already exists, skipping creation: {}", l_trigger->info_->name_);
+      // SPDLOG_DEBUG("Trigger already exists, skipping creation: {}", l_trigger->info_->name_);
       continue;
     }
 
