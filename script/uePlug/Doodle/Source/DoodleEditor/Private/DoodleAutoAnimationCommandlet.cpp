@@ -1187,8 +1187,10 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			if (FMovieScenePossessable* L_ComPossessable = L_MovieScene->FindPossessable(L_ComGuid))
 			{
 				L_ComPossessable->SetParent(L_Value.ActorGuid, L_MovieScene);
+				// 子绑定需以父 Actor 为上下文解析, 否则重开文件后组件定位丢失
+				TheLevelSequence->BindPossessableObject(L_ComGuid, *L_Com, L_Actor);
+				L_ComPossessable->FixupPossessedObjectClass(TheLevelSequence, L_Actor);
 			}
-			TheLevelSequence->BindPossessableObject(L_ComGuid, *L_Com, TheSequenceWorld);
 			UMovieSceneGroomCacheTrack* L_Track = L_MovieScene->AddTrack<UMovieSceneGroomCacheTrack>(L_ComGuid);
 			UMovieSceneGroomCacheSection* L_GroomCacheSection = CastChecked<UMovieSceneGroomCacheSection>(
 				L_Track->AddNewAnimation(L_Start * FrameTick, L_Com));
