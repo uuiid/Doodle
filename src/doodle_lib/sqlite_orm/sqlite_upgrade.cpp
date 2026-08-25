@@ -105,9 +105,10 @@ struct upgrade_2_t : sqlite_upgrade {
     if (l_s.pragma().user_version() == 17) {
       auto l_transaction = l_s.transaction();
       l_s.rename_table("seedance2_ai_generate_classification", "seedance2_ai_episode");
+      l_s.rename_column("seedance2_ai_generate_entity", "ai_generate_classification_id", "ai_episode_id");
       // 新增 seedance2_ai_category 表, 并为 seedance2_ai_generate_entity 添加 ai_category_id 列
       l_s.sync_schema();
-      l_s.rebuild_table<seedance2::ai_generate_entity>(std::vector<std::string>{"ai_category_id"});
+      l_s.rebuild_table<seedance2::ai_generate_entity>(std::vector<std::string>{"ai_category_id", "ai_episode_id"});
 
       // 创建一个默认的镜头类别, 并将所有 ai_generate_entity 关联到该类别
       auto l_category  = seedance2::ai_category{};
