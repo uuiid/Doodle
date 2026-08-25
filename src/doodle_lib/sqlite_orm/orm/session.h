@@ -105,6 +105,10 @@ class DOODLELIB_API session {
   }
   // 重命名表
   void rename_table(const std::string& old_name, const std::string& new_name);
+  // 重命名列
+  void rename_column(
+      const std::string& table_name, const std::string& old_column_name, const std::string& new_column_name
+  );
 
   // 获取所有的表名
   std::set<std::string> get_all_table_names();

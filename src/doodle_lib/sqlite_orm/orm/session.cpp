@@ -230,7 +230,16 @@ void session::rename_table(const std::string& old_name, const std::string& new_n
   auto l_stmt = sqlite_stmt(*this, l_sql);
   l_stmt.step();
 }
-
+void session::rename_column(
+    const std::string& table_name, const std::string& old_column_name, const std::string& new_column_name
+) {
+  if (table_name.empty() || old_column_name.empty() || new_column_name.empty())
+    throw std::invalid_argument("Table and column names cannot be empty");
+  auto l_sql =
+      fmt::format(R"(ALTER TABLE "{}" RENAME COLUMN "{}" TO "{}";)", table_name, old_column_name, new_column_name);
+  auto l_stmt = sqlite_stmt(*this, l_sql);
+  l_stmt.step();
+}
 session::transaction_guard::transaction_guard(session& s) : connection_(s.data_->connection_), s_(&s) { begin(); }
 
 void session::transaction_guard::begin() {
