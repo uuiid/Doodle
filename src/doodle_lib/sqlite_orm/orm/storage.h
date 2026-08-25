@@ -156,6 +156,13 @@ struct sqlite_master_entry {
   std::int32_t rootpage;
   std::string sql;
 };
+// 表 pragma_foreign_key_check 对应的结构体，用于查询外键约束是否存在问题
+struct pragma_foreign_key_check_entry {
+  std::string table;
+  std::int32_t rowid;
+  std::string parent;
+  std::int32_t fkid;
+};
 }  // namespace detail
 
 struct sqlite_connection_t {

@@ -112,7 +112,9 @@ std::vector<std::string> table_info_base::get_foreign_key_create_sql(session& s,
         fk.ref_ptr_->get_column_name(s, ctx)
     );
     // 清除名称中的 " 字符
-    l_constraint_name.erase(std::remove(l_constraint_name.begin(), l_constraint_name.end(), '"'), l_constraint_name.end());
+    l_constraint_name.erase(
+        std::remove(l_constraint_name.begin(), l_constraint_name.end(), '"'), l_constraint_name.end()
+    );
     std::string l_sql = fmt::format(
         "CONSTRAINT {} FOREIGN KEY({}) REFERENCES {}({}) ON DELETE {} ON UPDATE {}", l_constraint_name,
         fk.ptr_->get_column_name(s, ctx), fk.ref_table_->to_sql(s, ctx), fk.ref_ptr_->get_column_name(s, ctx),
@@ -184,6 +186,11 @@ void reg_sqlite_master_entry(storage& s) {
       .add_column("tbl_name", &sqlite_master_entry::tbl_name)
       .add_column("rootpage", &sqlite_master_entry::rootpage)
       .add_column("sql", &sqlite_master_entry::sql);
+  s.reg_table<pragma_foreign_key_check_entry>("pragma_foreign_key_check")
+      .add_column("table", &pragma_foreign_key_check_entry::table)
+      .add_column("rowid", &pragma_foreign_key_check_entry::rowid)
+      .add_column("parent", &pragma_foreign_key_check_entry::parent)
+      .add_column("fkid", &pragma_foreign_key_check_entry::fkid);
 }
 }  // namespace
 storage::backup_t::backup_t(sqlite_connection_ptr dest_db, sqlite_connection_ptr src_db)
