@@ -190,10 +190,7 @@
       "detail": "复制数据库文件",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/copy_db.ps1",
-      "args": [
-        "-DBVersion",
-        "${input:DB_Version}"
-      ],
+      "args": [],
       "problemMatcher": [
         {
           "owner": "powershell",

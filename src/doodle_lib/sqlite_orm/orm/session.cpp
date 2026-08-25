@@ -329,18 +329,18 @@ std::int32_t session::pragma_t::user_version() {
 }
 
 void session::pragma_t::run(std::string_view in_pragma_sql, bool in_value) {
-  auto l_sql  = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value ? "ON" : "OFF");
+  auto l_sql  = fmt::format("PRAGMA {} = {};", in_pragma_sql, in_value ? "ON" : "OFF");
   auto l_stmt = sqlite_stmt(s_, l_sql);
   l_stmt.step();
 }
 
 void session::pragma_t::run(std::string_view in_pragma_sql, std::string_view in_value) {
-  auto l_sql  = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value);
+  auto l_sql  = fmt::format("PRAGMA {} = {};", in_pragma_sql, in_value);
   auto l_stmt = sqlite_stmt(s_, l_sql);
   l_stmt.step();
 }
 void session::pragma_t::run(std::string_view in_pragma_sql, std::int32_t in_value) {
-  auto l_sql  = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value);
+  auto l_sql  = fmt::format("PRAGMA {} = {};", in_pragma_sql, in_value);
   auto l_stmt = sqlite_stmt(s_, l_sql);
   l_stmt.step();
 }
