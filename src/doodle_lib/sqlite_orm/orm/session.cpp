@@ -166,10 +166,9 @@ void session::rebuild_table(const std::type_index& table_name, const std::vector
   if (!l_s.type_to_table_index_.contains(table_name)) throw std::runtime_error("Table not found for the given type");
   auto l_table_index = l_s.type_to_table_index_.at(table_name);
   auto& l_old_table  = l_s.tables_[l_table_index];
-  auto l_transaction = transaction();
   // 预先关闭外键约束检查，以避免在重建表时出现外键约束错误
-  this->pragma().foreign_keys(false);
-
+  
+  auto l_transaction = transaction();
   {
     auto l_new_table   = l_old_table->clone();
     l_new_table->name_ = l_old_table->name_ + "_backup";
@@ -221,7 +220,6 @@ void session::rebuild_table(const std::type_index& table_name, const std::vector
   }
   l_transaction.commit();
   // 重新启用外键约束检查(如何失败, 链接将被抛弃, 无需进行回滚)
-  this->pragma().foreign_keys(true);
 }
 
 void session::rename_table(const std::string& old_name, const std::string& new_name) {

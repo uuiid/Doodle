@@ -107,7 +107,8 @@ struct upgrade_2_t : sqlite_upgrade {
       l_s.rename_table("seedance2_ai_generate_classification", "seedance2_ai_episode");
       l_s.rename_column("seedance2_ai_generate_entity", "ai_generate_classification_id", "ai_episode_id");
       // 新增 seedance2_ai_category 表, 并为 seedance2_ai_generate_entity 添加 ai_category_id 列
-      l_s.sync_schema();
+      l_s.create_table<seedance2::ai_category>();
+      l_s.create_table<seedance2::ai_episode_model_resolution_limit>();
       l_s.rebuild_table<seedance2::ai_generate_entity>(std::vector<std::string>{"ai_category_id"});
 
       // 创建一个默认的镜头类别, 并将所有 ai_generate_entity 关联到该类别
@@ -119,6 +120,7 @@ struct upgrade_2_t : sqlite_upgrade {
           .from<seedance2::ai_generate_entity>()
           .set(orm::c(&seedance2::ai_generate_entity::ai_category_id_) = l_category.uuid_id_)
           .where(orm::c(&seedance2::ai_generate_entity::id_) > std::int64_t{0})();
+      l_s.sync_schema();
       l_transaction.commit();
     }
 

@@ -1105,17 +1105,16 @@ void sqlite_storage::open_(FSys::path in_path, std::int32_t in_flags) {
 }
 
 void sqlite_storage::upgrade() {
+  auto l_list = {details::upgrade_init(), details::upgrade_1()};
+  for (auto&& i : l_list) {
+    i->upgrade(*this);
+  }
   {
     auto l_s = create_session();
     l_s.pragma().foreign_keys(true);
     l_s.pragma().synchronous(1);
     l_s.pragma().recursive_triggers(true);
     l_s.pragma().journal_mode(orm::journal_mode_t::wal);
-  }
-
-  auto l_list = {details::upgrade_init(), details::upgrade_1()};
-  for (auto&& i : l_list) {
-    i->upgrade(*this);
   }
 }
 
