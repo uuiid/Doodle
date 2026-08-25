@@ -76,7 +76,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens, get) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens, post) {
   person_.check_admin();
   auto l_json = in_handle->get_json();
-  std::int64_t l_remaining_tokens{doodle_config::g_max_completion_tokens};
+  std::int64_t l_remaining_tokens{200'0000};  // 默认值, 如果没有传入 remaining_tokens 字段, 则设置为 2000000
   if (l_json.contains("remaining_tokens")) l_remaining_tokens = l_json.at("remaining_tokens").get<std::int64_t>();
   co_await set_remaining_tokens_all_persons(l_remaining_tokens);
   co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", l_remaining_tokens}});
@@ -94,7 +94,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
   if (person_.person_.role_ != person_role_type::admin && person_.person_.role_ != person_role_type::manager)
     throw_exception(doodle_error{"权限不足"});
   auto l_others_person = get_sqlite_database().get_by_uuid<person>(person_id_);
-  
+
   if (l_others_person.studio_id_ != person_.person_.studio_id_)
     throw_exception(doodle_error{"只能修改同一工作室的人员token数量"});
   // 比较两个人的部门是否有重叠
