@@ -211,7 +211,7 @@ void session::rebuild_table(const std::type_index& table_name, const std::vector
     }
     for (const auto& trigger : l_s.triggers_) {
       if (l_all_triggers.contains(trigger->info_->name_)) {
-        SPDLOG_DEBUG("Trigger already exists, skipping creation: {}", trigger->info_->name_);
+        // SPDLOG_DEBUG("Trigger already exists, skipping creation: {}", trigger->info_->name_);
         continue;
       }
       auto l_create_trigger_sql = trigger->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_trigger_sql});
