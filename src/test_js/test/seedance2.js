@@ -361,4 +361,108 @@ describe('seedance2 task', function () {
 
 });
 
+describe('seedance2 ai category 测试', function () {
+
+  const authHeader = { 'Cookie': `access_token_cookie=${JWT}` };
+  const projectId = 'c340051a-45a6-4af1-a750-efefe639c75b';
+  let subprojectId = null;
+  let categoryId = null;
+  let entityId = null;
+
+  before(async function () {
+    const subReq = await request.post(`${URL}/api/seedance2/subproject`)
+      .set(authHeader)
+      .send({
+        name: 'test_subproject_ai_category',
+        project_id: projectId,
+      });
+    subprojectId = subReq.body.id;
+  });
+
+  after(async function () {
+    if (subprojectId) {
+      await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}`).set(authHeader);
+    }
+  });
+
+  it('POST /api/seedance2/subproject/{subproject_id}/category — 创建类别', async function () {
+    expect(subprojectId).to.not.be.null;
+    const req = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/category`)
+      .set(authHeader)
+      .send({
+        name: 'cat001',
+        type: 'assets',
+        description: '测试类别',
+      });
+    expect(req.status).to.equal(201);
+    categoryId = req.body.id;
+    console.log('POST category 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('GET /api/seedance2/subproject/{subproject_id}/category — 获取类别列表', async function () {
+    expect(subprojectId).to.not.be.null;
+    const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/category`)
+      .set(authHeader);
+    expect(req.status).to.equal(200);
+    console.log('GET category list 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('GET /api/seedance2/subproject/{subproject_id}/category/{category_id} — 获取类别详情', async function () {
+    expect(categoryId).to.not.be.null;
+    const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/category/${categoryId}`)
+      .set(authHeader);
+    expect(req.status).to.equal(200);
+    expect(req.body.type).to.equal('assets');
+    console.log('GET category instance 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('PUT /api/seedance2/subproject/{subproject_id}/category/{category_id} — 更新类别', async function () {
+    expect(categoryId).to.not.be.null;
+    const req = await request.put(`${URL}/api/seedance2/subproject/${subprojectId}/category/${categoryId}`)
+      .set(authHeader)
+      .send({ name: 'cat001_updated', type: 'assets', description: '更新后的类别' });
+    expect(req.status).to.equal(200);
+    console.log('PUT category 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('POST /api/seedance2/subproject/{subproject_id}/entity — 创建关联类别的实体', async function () {
+    expect(categoryId).to.not.be.null;
+    const req = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity`)
+      .set(authHeader)
+      .send({
+        name: 'test_entity_ai_category',
+        project_uuid_id: projectId,
+        ai_category_id: categoryId,
+      });
+    expect(req.status).to.equal(201);
+    entityId = req.body.id;
+    console.log('POST entity 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('GET /api/seedance2/subproject/{subproject_id}/category/{category_id}/entity — 获取类别下实体列表', async function () {
+    expect(categoryId).to.not.be.null;
+    const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/category/${categoryId}/entity`)
+      .set(authHeader);
+    expect(req.status).to.equal(200);
+    console.log('GET category entity 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('DELETE /api/seedance2/subproject/{subproject_id}/category/{category_id} — 删除类别', async function () {
+    expect(categoryId).to.not.be.null;
+    const req = await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}/category/${categoryId}`)
+      .set(authHeader);
+    expect(req.status).to.equal(200);
+    console.log('DELETE category 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('DELETE /api/seedance2/subproject/{subproject_id}/entity/{entity_id} — 清理关联实体', async function () {
+    expect(entityId).to.not.be.null;
+    const req = await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}/entity/${entityId}`)
+      .set(authHeader);
+    expect(req.status).to.equal(200);
+    console.log('DELETE entity 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+});
+
 

@@ -185,7 +185,7 @@ void sqlite_storage::regs_all() {
       .add_column("id", &seedance2::ai_generate_entity::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::ai_generate_entity::uuid_id_, unique(), not_null())
       .add_column("name", &seedance2::ai_generate_entity::name_, not_null())
-      .add_column("ai_episode_id", &seedance2::ai_generate_entity::ai_episode_id_, not_null())
+      .add_column("ai_episode_id", &seedance2::ai_generate_entity::ai_episode_id_)
       .add_column("description", &seedance2::ai_generate_entity::description_)
       .add_column("ai_category_id", &seedance2::ai_generate_entity::ai_category_id_)
       .add_column("shot_uuid_id", &seedance2::ai_generate_entity::shot_uuid_id_)
