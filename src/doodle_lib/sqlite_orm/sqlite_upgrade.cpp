@@ -103,6 +103,7 @@ struct upgrade_2_t : sqlite_upgrade {
   void upgrade(sqlite_storage& in_data) override {
     auto l_s = in_data.create_session();
     if (l_s.pragma().user_version() == 17) {
+      auto l_transaction = l_s.transaction();
       l_s.rename_table("seedance2_ai_generate_classification", "seedance2_ai_episode");
       // 新增 seedance2_ai_category 表, 并为 seedance2_ai_generate_entity 添加 ai_category_id 列
       l_s.sync_schema();
@@ -117,6 +118,7 @@ struct upgrade_2_t : sqlite_upgrade {
           .from<seedance2::ai_generate_entity>()
           .set(orm::c(&seedance2::ai_generate_entity::ai_category_id_) = l_category.uuid_id_)
           .where(orm::c(&seedance2::ai_generate_entity::id_) > std::int64_t{0})();
+      l_transaction.commit();
     }
 
     l_s.pragma().user_version(g_current_version);
