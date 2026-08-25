@@ -178,7 +178,8 @@ void sqlite_storage::regs_all() {
       .add_column("id", &seedance2::ai_category::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::ai_category::uuid_id_, unique(), not_null())
       .add_column("name", &seedance2::ai_category::name_, not_null())
-      .add_column("description", &seedance2::ai_category::description_);
+      .add_column("description", &seedance2::ai_category::description_)
+      .add_column("type", &seedance2::ai_category::type_, not_null());
 
   reg_table<seedance2::ai_generate_entity>("seedance2_ai_generate_entity")
       .add_column("id", &seedance2::ai_generate_entity::id_, primary_key(), autoincrement())
@@ -1443,8 +1444,9 @@ std::map<uuid, std::vector<preview_files_for_entity_t>> sqlite_database::get_pre
           .order_by(&preview_file::created_at_);
 
   std::map<uuid, std::vector<preview_files_for_entity_t>> l_select_t{};
-  for (auto&& [task_id, task_type_id, preview_id, revision, position, original_name, extension, width, height, duration, status, source_, annotations, created_at] :
-       l_select()) {
+  for (
+      auto&& [task_id, task_type_id, preview_id, revision, position, original_name, extension, width, height, duration, status, source_, annotations, created_at] :
+      l_select()) {
     l_select_t[task_id].emplace_back(
         preview_files_for_entity_t{
             .uuid_id_       = preview_id,
