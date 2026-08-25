@@ -89,11 +89,29 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
-  person_.check_admin();
+  if (person_.person_.studio_id_.is_nil())
+    throw_exception(doodle_error{"只有绑定工作室的人员才能修改其他人员的token数量"});
+  if (person_.person_.role_ != person_role_type::admin && person_.person_.role_ != person_role_type::manager)
+    throw_exception(doodle_error{"权限不足"});
+  auto l_others_person = get_sqlite_database().get_by_uuid<person>(person_id_);
+  
+  if (l_others_person.studio_id_ != person_.person_.studio_id_)
+    throw_exception(doodle_error{"只能修改同一工作室的人员token数量"});
+  // 比较两个人的部门是否有重叠
+  auto l_common_departments_fun = [](const std::vector<uuid>& a, const std::vector<uuid>& b) {
+    for (const auto& dep_a : a)
+      for (const auto& dep_b : b)
+        if (dep_a == dep_b) return true;
+    return false;
+  };
+  if (!(person_.person_.role_ == person_role_type::manager &&
+        l_common_departments_fun(person_.person_.departments_, l_others_person.departments_)))
+    throw_exception(doodle_error{"权限不足"});
+
   auto l_json = in_handle->get_json();
   if (!l_json.contains("remaining_tokens")) throw_exception(doodle_error{"缺少remaining_tokens字段"});
+
   std::int64_t l_remaining_tokens = l_json.at("remaining_tokens").get<std::int64_t>();
-  auto l_others_person            = get_sqlite_database().get_by_uuid<person>(person_id_);
   co_await set_remaining_tokens_for_person(l_others_person.uuid_id_, l_remaining_tokens);  // 计算差值进行更新
   co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", l_remaining_tokens}});
 }
@@ -307,13 +325,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_similarity, get) {
   }
 
   task_similarity_person_t l_result;
-  for (auto&& [l_similarity, l_user_id] :
-       select(l_sql)
-           .columns(object<sd2::task_similarity>(), &sd2::task::user_id_)
-           .from<sd2::task_similarity>()
-           .join<sd2::task>(&sd2::task_similarity::task_id_, &sd2::task::uuid_id_)
-           .offset(l_offset)
-           .limit(l_limit)()) {
+  for (auto&& [l_similarity, l_user_id] : select(l_sql)
+                                              .columns(object<sd2::task_similarity>(), &sd2::task::user_id_)
+                                              .from<sd2::task_similarity>()
+                                              .join<sd2::task>(&sd2::task_similarity::task_id_, &sd2::task::uuid_id_)
+                                              .offset(l_offset)
+                                              .limit(l_limit)()) {
     l_result.person_task_maps_[l_user_id].push_back(std::move(l_similarity));
   }
 

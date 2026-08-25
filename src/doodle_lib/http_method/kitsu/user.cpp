@@ -48,26 +48,26 @@ std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::ht
   }
   for (auto&& l_project : l_select()) l_projects.push_back(project_with_extra_data{l_project});
   for (auto& l_project : l_projects) {
-    l_project.team_ = select(l_sql)
-                          .columns(&project_person_link::person_id_)
-                          .from<project_person_link>()
-                          .where(c(&project_person_link::project_id_) == l_project.uuid_id_)()
-                          .to_vector();
-    l_project.asset_types_ = select(l_sql)
-                                 .columns(&project_asset_type_link::asset_type_id_)
-                                 .from<project_asset_type_link>()
-                                 .where(c(&project_asset_type_link::project_id_) == l_project.uuid_id_)()
-                                 .to_vector();
-    l_project.task_statuses_ = select(l_sql)
-                                   .columns(&project_task_status_link::task_status_id_)
-                                   .from<project_task_status_link>()
-                                   .where(c(&project_task_status_link::project_id_) == l_project.uuid_id_)()
-                                   .to_vector();
-    l_project.task_types_ = select(l_sql)
-                                .columns(&project_task_type_link::task_type_id_)
-                                .from<project_task_type_link>()
-                                .where(c(&project_task_type_link::project_id_) == l_project.uuid_id_)()
-                                .to_vector();
+    l_project.team_               = select(l_sql)
+                                        .columns(&project_person_link::person_id_)
+                                        .from<project_person_link>()
+                                        .where(c(&project_person_link::project_id_) == l_project.uuid_id_)()
+                                        .to_vector();
+    l_project.asset_types_        = select(l_sql)
+                                        .columns(&project_asset_type_link::asset_type_id_)
+                                        .from<project_asset_type_link>()
+                                        .where(c(&project_asset_type_link::project_id_) == l_project.uuid_id_)()
+                                        .to_vector();
+    l_project.task_statuses_      = select(l_sql)
+                                        .columns(&project_task_status_link::task_status_id_)
+                                        .from<project_task_status_link>()
+                                        .where(c(&project_task_status_link::project_id_) == l_project.uuid_id_)()
+                                        .to_vector();
+    l_project.task_types_         = select(l_sql)
+                                        .columns(&project_task_type_link::task_type_id_)
+                                        .from<project_task_type_link>()
+                                        .where(c(&project_task_type_link::project_id_) == l_project.uuid_id_)()
+                                        .to_vector();
     l_project.status_automations_ = select(l_sql)
                                         .columns(&project_status_automation_link::status_automation_id_)
                                         .from<project_status_automation_link>()
@@ -84,11 +84,11 @@ std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::ht
                                          .from<project_task_type_link>()
                                          .where(c(&project_task_type_link::project_id_) == l_project.uuid_id_)()
                                          .to_vector();
-    l_project.task_statuses_link_ = select(l_sql)
-                                        .columns(object<project_task_status_link>())
-                                        .from<project_task_status_link>()
-                                        .where(c(&project_task_status_link::project_id_) == l_project.uuid_id_)()
-                                        .to_vector();
+    l_project.task_statuses_link_  = select(l_sql)
+                                         .columns(object<project_task_status_link>())
+                                         .from<project_task_status_link>()
+                                         .where(c(&project_task_status_link::project_id_) == l_project.uuid_id_)()
+                                         .to_vector();
 
     {
       std::map<uuid, std::size_t> l_entity_map{};
@@ -123,20 +123,20 @@ std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::ht
                              .where(c(&entity::project_id_) == l_project.uuid_id_)
                              .group_by(&entity_asset_extend::ji_du_)()
                              .to_vector<project_with_extra_data::project_int>();
-    l_project.levels_ = select(l_sql)
-                            .columns(&entity_asset_extend::deng_ji_, count())
-                            .from<entity_asset_extend>()
-                            .join<entity>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
-                            .where(c(&entity::project_id_) == l_project.uuid_id_)
-                            .group_by(&entity_asset_extend::deng_ji_)()
-                            .to_vector<project_with_extra_data::project_str>();
-    l_project.scenes_ = select(l_sql)
-                            .columns(&entity_asset_extend::chang_ci_, count())
-                            .from<entity_asset_extend>()
-                            .join<entity>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
-                            .where(c(&entity::project_id_) == l_project.uuid_id_)
-                            .group_by(&entity_asset_extend::chang_ci_)()
-                            .to_vector<project_with_extra_data::project_int>();
+    l_project.levels_  = select(l_sql)
+                             .columns(&entity_asset_extend::deng_ji_, count())
+                             .from<entity_asset_extend>()
+                             .join<entity>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+                             .where(c(&entity::project_id_) == l_project.uuid_id_)
+                             .group_by(&entity_asset_extend::deng_ji_)()
+                             .to_vector<project_with_extra_data::project_str>();
+    l_project.scenes_  = select(l_sql)
+                             .columns(&entity_asset_extend::chang_ci_, count())
+                             .from<entity_asset_extend>()
+                             .join<entity>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+                             .where(c(&entity::project_id_) == l_project.uuid_id_)
+                             .group_by(&entity_asset_extend::chang_ci_)()
+                             .to_vector<project_with_extra_data::project_int>();
   }
 
   return l_projects;
@@ -197,12 +197,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(
   l_ret["search_filter_groups"]     = nlohmann::json::value_t::object;
   l_ret["search_filters"]           = nlohmann::json::value_t::object;
   l_ret["log"]                      = select(l_sql)
-                     .columns(&updata_logs::log_)
-                     .from<updata_logs>()
-                     .order_by(&updata_logs::created_at_, false)
-                     .limit(1)()
-                     .to_optional()
-                     .value_or(std::string{});
+                                          .columns(&updata_logs::log_)
+                                          .from<updata_logs>()
+                                          .order_by(&updata_logs::created_at_, false)
+                                          .limit(1)()
+                                          .to_optional()
+                                          .value_or(std::string{});
 
   co_return in_handle->make_msg(l_ret);
 }
@@ -251,6 +251,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_instan
   auto l_person     = std::make_shared<person>(l_old_person);
   auto l_json       = in_handle->get_json();
   l_json.get_to(*l_person);
+  l_person->remaining_completion_tokens_ = l_old_person.remaining_completion_tokens_;  // 不允许修改剩余token数量
+  l_person->password_                    = l_old_person.password_;                     // 不允许修改密码
   if (l_old_person.studio_id_ != l_person->studio_id_ && !l_person->phone_.empty()) {
     auto l_studio          = l_sql.get_by_uuid<studio>(l_person->studio_id_);
     auto l_dingding_client = g_ctx().get<dingding::dingding_company>().make_client(l_studio);
