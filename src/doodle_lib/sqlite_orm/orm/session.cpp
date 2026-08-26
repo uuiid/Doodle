@@ -1,3 +1,4 @@
+#include <doodle_core/exception/exception.h>
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/orm/session.h>
 
@@ -15,6 +16,39 @@ session::session(storage& s) : data_(std::make_shared<session_data>()) {
 sqlite_connection_ptr session::get_connection() const {
   if (!data_ || !data_->connection_) throw std::runtime_error("Session is not connected to a database");
   return data_->connection_;
+}
+
+session::backup_t::backup_t(sqlite_connection_ptr dest_db, sqlite_connection_ptr src_db)
+    : dest_db_(std::move(dest_db)), src_db_(std::move(src_db)) {}
+std::int32_t session::backup_t::step(int pages) {
+  if (!backup_) {
+    backup_ = sqlite3_backup_init(*dest_db_, "main", *src_db_, "main");
+    if (!backup_) {
+      auto l_msg = sqlite3_errmsg(*dest_db_);
+      throw_exception(doodle_error{fmt::format("Failed to initialize backup: {}", l_msg)});
+    }
+  }
+  auto l_r = sqlite3_backup_step(backup_, pages);
+  if (l_r != SQLITE_OK && l_r != SQLITE_DONE && l_r != SQLITE_BUSY && l_r != SQLITE_LOCKED) {
+    auto l_msg = sqlite3_errmsg(*dest_db_);
+    throw_exception(doodle_error{fmt::format("Failed to perform backup step: {}", l_msg)});
+  }
+  return l_r;
+}
+session::backup_t::~backup_t() {
+  if (backup_) sqlite3_backup_finish(backup_);
+}
+
+session::backup_t session::backup(const FSys::path& dest_path) {
+  sqlite3* dest_db = nullptr;
+  auto l_str       = dest_path.generic_string();
+  auto l_r         = ::sqlite3_open_v2(l_str.c_str(), &dest_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr);
+  if (l_r != SQLITE_OK) {
+    auto l_msg = sqlite3_errmsg(dest_db);
+    if (dest_db) sqlite3_close_v2(dest_db);
+    throw_exception(doodle_error{fmt::format("Failed to open destination database: {}", l_msg)});
+  }
+  return backup_t(std::make_shared<sqlite_connection_t>(dest_db), get_connection());
 }
 
 session::transaction_guard session::transaction() { return transaction_guard{*this}; }

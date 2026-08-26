@@ -216,25 +216,6 @@ class DOODLELIB_API storage : public boost::noncopyable {
   friend struct update_t;
   friend struct session;
 
-  struct backup_t {
-   private:
-    sqlite3_backup* backup_{nullptr};
-    sqlite_connection_ptr dest_db_{nullptr};
-    sqlite_connection_ptr src_db_{};
-
-   public:
-    explicit backup_t(sqlite_connection_ptr dest_db, sqlite_connection_ptr src_db);
-    std::int32_t step(int pages = -1);
-    ~backup_t();
-
-    // dis copy
-    backup_t(const backup_t&)            = delete;
-    backup_t& operator=(const backup_t&) = delete;
-
-    backup_t(backup_t&&)                 = default;
-    backup_t& operator=(backup_t&&)      = default;
-  };
-
   std::vector<std::shared_ptr<table_info_base>> tables_;
   std::map<std::type_index, std::size_t> type_to_table_index_;
   std::vector<std::shared_ptr<create_trigger_t>> triggers_;
@@ -277,11 +258,6 @@ class DOODLELIB_API storage : public boost::noncopyable {
   table_fts_info& reg_virtual_table(std::string&& in_name);
   create_trigger_t create_trigger(std::string in_name);
 
-  backup_t backup(const FSys::path& dest_path);
-  void backup_to(const FSys::path& dest_path) {
-    auto backup = this->backup(dest_path);
-    backup.step(-1);
-  }
   session create_session();
 
   template <typename T>

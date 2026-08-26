@@ -40,6 +40,25 @@ class DOODLELIB_API session {
     void run(std::string_view in_pragma_sql, std::int32_t in_value);
   };
 
+  struct backup_t {
+   private:
+    sqlite3_backup* backup_{nullptr};
+    sqlite_connection_ptr dest_db_{nullptr};
+    sqlite_connection_ptr src_db_{};
+
+   public:
+    explicit backup_t(sqlite_connection_ptr dest_db, sqlite_connection_ptr src_db);
+    std::int32_t step(int pages = -1);
+    ~backup_t();
+
+    // dis copy
+    backup_t(const backup_t&)            = delete;
+    backup_t& operator=(const backup_t&) = delete;
+
+    backup_t(backup_t&&)                 = default;
+    backup_t& operator=(backup_t&&)      = default;
+  };
+
  public:
   explicit session(storage& s);
   session() : data_(std::make_shared<session_data>()) {}
@@ -73,6 +92,12 @@ class DOODLELIB_API session {
 
   transaction_guard transaction();
   sqlite_connection_ptr get_connection() const;
+
+  backup_t backup(const FSys::path& dest_path);
+  void backup_to(const FSys::path& dest_path) {
+    auto l_backup = this->backup(dest_path);
+    l_backup.step(-1);
+  }
 
   // 删除表
   void drop_table(const std::string& table_name);
