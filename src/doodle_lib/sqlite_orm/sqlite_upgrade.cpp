@@ -34,7 +34,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 18;
+constexpr std::size_t g_current_version = 19;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -102,25 +102,10 @@ struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t() {}
   void upgrade(sqlite_storage& in_data) override {
     auto l_s = in_data.create_session();
-    if (l_s.pragma().user_version() == 17) {
+    if (l_s.pragma().user_version() == 18) {
       auto l_transaction = l_s.transaction();
-      l_s.rename_table("seedance2_ai_generate_classification", "seedance2_ai_episode");
-      l_s.rename_column("seedance2_ai_generate_entity", "ai_generate_classification_id", "ai_episode_id");
-      // 新增 seedance2_ai_category 表, 并为 seedance2_ai_generate_entity 添加 ai_category_id 列
-      l_s.create_table<seedance2::ai_category>();
-      l_s.create_table<seedance2::ai_episode_model_resolution_limit>();
-      l_s.rebuild_table<seedance2::ai_generate_entity>(std::vector<std::string>{"ai_category_id"});
-
-      // 创建一个默认的镜头类别, 并将所有 ai_generate_entity 关联到该类别
-      auto l_category  = seedance2::ai_category{};
-      l_category.name_ = "镜头类别";
-      l_category.type_ = seedance2::ai_category_type::shot;
-      l_category.id_   = orm::insert(l_s).into<seedance2::ai_category>().values(l_category)();
-      orm::update(l_s)
-          .from<seedance2::ai_generate_entity>()
-          .set(orm::c(&seedance2::ai_generate_entity::ai_category_id_) = l_category.uuid_id_)
-          .where(orm::c(&seedance2::ai_generate_entity::id_) > std::int64_t{0})();
-      l_s.sync_schema();
+      l_s.rebuild_table<seedance2::ai_generate_entity>();
+      l_s.rebuild_table<seedance2::ai_episode>({"entity_id"});
       l_transaction.commit();
     }
 

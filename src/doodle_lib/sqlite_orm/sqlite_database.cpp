@@ -153,7 +153,9 @@ void sqlite_storage::regs_all() {
       .add_column("name", &seedance2::ai_episode::name_, not_null())
       .add_column("description", &seedance2::ai_episode::description_)
       .add_column("subproject_id", &seedance2::ai_episode::subproject_id_, not_null())
+      .add_column("entity_id", &seedance2::ai_episode::entity_id_)
       .add_column("created_at", &seedance2::ai_episode::created_at_)
+      .add_foreign_key(&seedance2::ai_episode::entity_id_, &entity::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(
           &seedance2::ai_episode::subproject_id_, &seedance2::subproject::uuid_id_, foreign_key_action::cascade
       );
@@ -198,7 +200,7 @@ void sqlite_storage::regs_all() {
           &seedance2::ai_generate_entity::ai_category_id_, &seedance2::ai_category::uuid_id_,
           foreign_key_action::set_null
       )
-      .add_foreign_key(&seedance2::ai_generate_entity::shot_uuid_id_, &task::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&seedance2::ai_generate_entity::shot_uuid_id_, &entity::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(
           &seedance2::ai_generate_entity::project_uuid_id_, &project::uuid_id_, foreign_key_action::cascade
       )

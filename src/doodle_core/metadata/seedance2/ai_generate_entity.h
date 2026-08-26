@@ -14,7 +14,7 @@ struct DOODLE_CORE_API ai_generate_entity {
   std::string description_;  // 选填
 
   uuid ai_category_id_;   // 选填 对应 ai_category
-  uuid shot_uuid_id_;     // 选填 内部使用的UUID，对应镜头中的uuid_id_
+  uuid shot_uuid_id_;     // 选填 对应的 entity.h 
   uuid project_uuid_id_;  // 必填 内部使用的UUID，对应项目中的uuid_id_
   uuid preview_file_;     // 选填 对应 ai_preview_file
   // to json
