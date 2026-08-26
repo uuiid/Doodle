@@ -1,0 +1,16 @@
+diff --git a/include/cutlass/subbyte_reference.h b/include/cutlass/subbyte_reference.h
+index 83bcbd7..b6662b5 100644
+--- a/include/cutlass/subbyte_reference.h
++++ b/include/cutlass/subbyte_reference.h
+@@ -455,11 +455,7 @@ public:
+     // Homebrew read-modify-write
+     //
+     Storage assumed;
+-#if (__CUDACC_VER_MAJOR__ > 12) || (__CUDACC_VER_MAJOR__ == 12 && __CUDACC_VER_MINOR__ >= 8)
+-    Storage original = __nv_atomic_load_n(ptr_, __NV_ATOMIC_RELAXED);
+-#else
+     Storage original = *const_cast<Storage const volatile *>(ptr_);
+-#endif
+ 
+     do {
+ 
