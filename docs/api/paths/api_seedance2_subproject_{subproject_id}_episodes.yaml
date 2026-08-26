@@ -25,6 +25,10 @@ post:
             description:
               type: string
               description: 剧集描述
+            entity_id:
+              type: string
+              format: uuid
+              description: 对应的 AI 生成实体
   responses:
     '200':
       description: 创建成功

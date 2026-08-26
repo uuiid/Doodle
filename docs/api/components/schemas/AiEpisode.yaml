@@ -12,3 +12,7 @@ properties:
   created_at:
     type: string
     format: date-time
+  entity_id:
+    type: string
+    format: uuid
+    description: 对应的 AI 生成实体
