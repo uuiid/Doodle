@@ -88,16 +88,8 @@ void backup(orm::session& in_data) {
 struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t() {}
   void upgrade(sqlite_storage& in_data) override {
-    auto l_s = in_data.create_session();
-    if (l_s.pragma().user_version() == 18) {
-      backup(l_s);
-      auto l_transaction = l_s.transaction();
-      l_s.rebuild_table<seedance2::ai_generate_entity>();
-      l_s.rebuild_table<seedance2::ai_episode>({"entity_id"});
-      l_transaction.commit();
-    }
-
-    l_s.pragma().user_version(g_current_version);
+    // auto l_s = in_data.create_session();
+    // l_s.pragma().user_version(g_current_version);
   }
   ~upgrade_2_t() override = default;
 };
