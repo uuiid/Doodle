@@ -76,26 +76,13 @@ struct upgrade_init_t : sqlite_upgrade {
 };  // namespace doodle::details
 
 namespace {
-struct entity_asset_extend_old {
-  DOODLE_BASE_FIELDS();
-  uuid entity_id_;
-
-  std::optional<std::int32_t> ji_shu_lie_;
-  std::string deng_ji_;
-  std::optional<std::int32_t> gui_dang_;
-  std::string bian_hao_;
-  std::string pin_yin_ming_cheng_;
-  std::string ban_ben_;
-  std::optional<std::int32_t> ji_du_;
-  std::optional<std::int32_t> kai_shi_ji_shu_;
-  std::optional<std::int32_t> chang_ci_{};
-};
-struct project_data {
-  std::vector<std::pair<entity, entity_asset_extend_old>> entity_asset_extends_;
-  std::map<std::string, entity> eps_entities_;
-  std::vector<entity> assets_entities_;
-};
-
+void backup(orm::session& in_data) {
+  FSys::path l_file{
+      core_set::get_set().get_cache_root("backup") /
+      fmt::format("kitsu_{:%Y_%m_%d_%H_%M_%S}.db", chrono::system_clock::now())
+  };
+  in_data.backup_to(l_file);
+}
 }  // namespace
 
 struct upgrade_2_t : sqlite_upgrade {
@@ -103,6 +90,7 @@ struct upgrade_2_t : sqlite_upgrade {
   void upgrade(sqlite_storage& in_data) override {
     auto l_s = in_data.create_session();
     if (l_s.pragma().user_version() == 18) {
+      backup(l_s);
       auto l_transaction = l_s.transaction();
       l_s.rebuild_table<seedance2::ai_generate_entity>();
       l_s.rebuild_table<seedance2::ai_episode>({"entity_id"});
