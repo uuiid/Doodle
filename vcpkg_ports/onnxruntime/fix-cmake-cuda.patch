@@ -1,0 +1,45 @@
+diff --git a/cmake/external/cuDNN.cmake b/cmake/external/cuDNN.cmake
+index b428ccb..9b73acb 100644
+--- a/cmake/external/cuDNN.cmake
++++ b/cmake/external/cuDNN.cmake
+@@ -1,3 +1,5 @@
++find_package(CUDNN REQUIRED) # vcpkg port 'cudnn'
++get_filename_component(cudnn_LIBRARY "${CUDNN_LIBRARY}" ABSOLUTE)
+ add_library(CUDNN::cudnn_all INTERFACE IMPORTED)
+ 
+ find_path(
+diff --git a/cmake/external/cudnn_frontend.cmake b/cmake/external/cudnn_frontend.cmake
+index d89ab0f..c28568f 100644
+--- a/cmake/external/cudnn_frontend.cmake
++++ b/cmake/external/cudnn_frontend.cmake
+@@ -1,5 +1,7 @@
++find_package(cudnn_frontend CONFIG REQUIRED) # cudnn-frontend 1.13.0+
++return()
+ 
+ # The cudnn_frontend shim only loads the CUDA runtime / driver libraries with
+ # their Linux names (libcudart.so.*, libcuda.so.1) when NV_CUDNN_FRONTEND_USE_DYNAMIC_LOADING
+ # is enabled. On Windows this always fails (dlopen is mapped to LoadLibrary), so patch the
+ # shim to use the Windows DLL names (cudart64_*.dll, nvcuda.dll).
+diff --git a/cmake/onnxruntime_providers_cuda.cmake b/cmake/onnxruntime_providers_cuda.cmake
+index 91707c4..243783b 100644
+--- a/cmake/onnxruntime_providers_cuda.cmake
++++ b/cmake/onnxruntime_providers_cuda.cmake
+@@ -208,4 +208,5 @@
+     target_compile_options(onnxruntime_providers_cuda PRIVATE
+       "$<$<COMPILE_LANGUAGE:CXX>:/permissive>"
++      "$<$<COMPILE_LANGUAGE:CXX>:/bigobj>"
+       "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler /permissive>"
+     )
+@@ -415,3 +416,3 @@
+-      target_link_libraries(${target} PRIVATE CUDA::cublasLt CUDA::cublas cudnn_frontend CUDA::curand CUDA::cudart CUDA::cuda_driver
++      target_link_libraries(${target} PRIVATE CUDA::cublasLt CUDA::cublas cudnn_frontend CUDA::curand CUDA::cudart CUDA::cuda_driver CUDA::nvrtc
+               ${ABSEIL_LIBS} ${ONNXRUNTIME_PROVIDERS_SHARED} Boost::mp11 safeint_interface)
+     endif()
+@@ -419,3 +420,3 @@
+-    include(cutlass)
+-    target_include_directories(${target} PRIVATE ${cutlass_SOURCE_DIR}/include ${cutlass_SOURCE_DIR}/examples ${cutlass_SOURCE_DIR}/tools/util/include)
++    find_package(NvidiaCutlass REQUIRED)
++    target_link_libraries(${target} PRIVATE nvidia::cutlass::cutlass nvidia::cutlass::tools::util)
+     target_link_libraries(${target} PRIVATE Eigen3::Eigen)
+     target_include_directories(${target} PRIVATE ${ONNXRUNTIME_ROOT} ${CMAKE_CURRENT_BINARY_DIR} PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
+     # ${CMAKE_CURRENT_BINARY_DIR} is so that #include "onnxruntime_config.h" inside tensor_shape.h is found

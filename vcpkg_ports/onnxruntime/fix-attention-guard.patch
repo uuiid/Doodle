@@ -1,0 +1,47 @@
+diff --git a/onnxruntime/contrib_ops/cuda/bert/cutlass_fmha/memory_efficient_attention.h b/onnxruntime/contrib_ops/cuda/bert/cutlass_fmha/memory_efficient_attention.h
+index a961be0..664c199 100644
+--- a/onnxruntime/contrib_ops/cuda/bert/cutlass_fmha/memory_efficient_attention.h
++++ b/onnxruntime/contrib_ops/cuda/bert/cutlass_fmha/memory_efficient_attention.h
+@@ -2,17 +2,13 @@
+ // Licensed under the MIT License.
+ #pragma once
+ 
+-#if USE_MEMORY_EFFICIENT_ATTENTION
+-
+-#include "core/providers/cuda/cuda_common.h"
+-#include "contrib_ops/cpu/bert/attention_common.h"
+-
++// kCutlassSafeMaskFilterValue is referenced unconditionally from
++// onnxruntime/core/providers/cuda/llm/attention.cc, so it must be defined
++// even when USE_MEMORY_EFFICIENT_ATTENTION is disabled (vcpkg disables it).
+ namespace onnxruntime {
+ namespace contrib {
+ namespace cuda {
+ 
+-constexpr int kEfficientAttentionMaxHeadSize = 1024;
+-
+ // CUTLASS online softmax multiplies attention scores by kLog2e (≈1.4427).
+ // For float/bf16, |lowest() × kLog2e| > FLT_MAX, overflowing to -inf and
+ // causing s_prime=0 → NaN for fully-masked batches. Cap to prevent this.
+@@ -20,6 +16,21 @@ constexpr int kEfficientAttentionMaxHeadSize = 1024;
+ // exp(-1e30) ≈ 0 (effectively masked). For fp16 lowest()=-65504 > -1e30, no-op.
+ constexpr float kCutlassSafeMaskFilterValue = -1.0e+30f;
+ 
++}  // namespace cuda
++}  // namespace contrib
++}  // namespace onnxruntime
++
++#if USE_MEMORY_EFFICIENT_ATTENTION
++
++#include "core/providers/cuda/cuda_common.h"
++#include "contrib_ops/cpu/bert/attention_common.h"
++
++namespace onnxruntime {
++namespace contrib {
++namespace cuda {
++
++constexpr int kEfficientAttentionMaxHeadSize = 1024;
++
+ struct MemoryEfficientAttentionParams {
+   int32_t sm = 50;
+   bool is_half = false;
