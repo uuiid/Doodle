@@ -91,7 +91,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, get) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
   auto l_others_person = get_sqlite_database().get_by_uuid<person>(person_id_);
   if (person_.person_.role_ == person_role_type::manager) {
-    if (l_others_person.studio_id_ != person_.person_.studio_id_ && !person_.person_.studio_id_.is_nil())
+    if (!(l_others_person.studio_id_ == person_.person_.studio_id_ && !person_.person_.studio_id_.is_nil()))
       throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
     // 比较两个人的部门是否有重叠
     auto l_common_departments_fun = [](const std::vector<uuid>& a, const std::vector<uuid>& b) {
