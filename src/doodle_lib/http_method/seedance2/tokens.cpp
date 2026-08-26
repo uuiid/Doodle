@@ -89,27 +89,27 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
-  if (person_.person_.studio_id_.is_nil())
-    throw_exception(doodle_error{"只有绑定工作室的人员才能修改其他人员的token数量"});
-  if (person_.person_.role_ != person_role_type::admin && person_.person_.role_ != person_role_type::manager)
-    throw_exception(doodle_error{"权限不足"});
   auto l_others_person = get_sqlite_database().get_by_uuid<person>(person_id_);
-
-  if (l_others_person.studio_id_ != person_.person_.studio_id_)
-    throw_exception(doodle_error{"只能修改同一工作室的人员token数量"});
-  // 比较两个人的部门是否有重叠
-  auto l_common_departments_fun = [](const std::vector<uuid>& a, const std::vector<uuid>& b) {
-    for (const auto& dep_a : a)
-      for (const auto& dep_b : b)
-        if (dep_a == dep_b) return true;
-    return false;
-  };
-  if (!(person_.person_.role_ == person_role_type::manager &&
-        l_common_departments_fun(person_.person_.departments_, l_others_person.departments_)))
-    throw_exception(doodle_error{"权限不足"});
+  if (person_.person_.role_ == person_role_type::manager) {
+    if (l_others_person.studio_id_ != person_.person_.studio_id_ && !person_.person_.studio_id_.is_nil())
+      throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+    // 比较两个人的部门是否有重叠
+    auto l_common_departments_fun = [](const std::vector<uuid>& a, const std::vector<uuid>& b) {
+      for (const auto& dep_a : a)
+        for (const auto& dep_b : b)
+          if (dep_a == dep_b) return true;
+      return false;
+    };
+    if (!(person_.person_.role_ == person_role_type::manager &&
+          l_common_departments_fun(person_.person_.departments_, l_others_person.departments_)))
+      throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+  } else if (person_.person_.role_ == person_role_type::admin) {
+  } else
+    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 
   auto l_json = in_handle->get_json();
-  if (!l_json.contains("remaining_tokens")) throw_exception(doodle_error{"缺少remaining_tokens字段"});
+  if (!l_json.contains("remaining_tokens"))
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺少remaining_tokens字段"});
 
   std::int64_t l_remaining_tokens = l_json.at("remaining_tokens").get<std::int64_t>();
   co_await set_remaining_tokens_for_person(l_others_person.uuid_id_, l_remaining_tokens);  // 计算差值进行更新
