@@ -125,7 +125,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_originals_preview_files_download, get) {
   DOODLE_CHICK_HTTP(!person_.is_outsourcer(), unauthorized, "无权限下载");
 
-  auto l_path     = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(preview_file_id_);
+  auto l_path     = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(preview_file_id_);
   auto l_pre_file = get_sqlite_database().get_by_uuid<preview_file>(preview_file_id_);
   auto l_ext      = l_path.extension();
   co_return in_handle->make_msg(
