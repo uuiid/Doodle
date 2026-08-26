@@ -89,9 +89,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
-  auto l_others_person = get_sqlite_database().get_by_uuid<person>(person_id_);
+  auto l_sql           = get_sqlite_database();
+  auto l_others_person = l_sql.get_by_uuid<person>(person_id_);
+
   if (person_.person_.role_ == person_role_type::manager) {
-    if (!(l_others_person.studio_id_ == person_.person_.studio_id_ && !person_.person_.studio_id_.is_nil()))
+    if (!(l_others_person.ai_studio_id_ == person_.person_.ai_studio_id_ && !person_.person_.ai_studio_id_.is_nil()))
       throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
     // 比较两个人的部门是否有重叠
     auto l_common_departments_fun = [](const std::vector<uuid>& a, const std::vector<uuid>& b) {
@@ -100,6 +102,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
           if (dep_a == dep_b) return true;
       return false;
     };
+
+    {
+      using namespace orm;
+      l_others_person.departments_ = select(l_sql)
+                                         .columns(&person_department_link::department_id_)
+                                         .from<person_department_link>()
+                                         .where(c(&person_department_link::person_id_) == l_others_person.uuid_id_)()
+                                         .to_vector();
+    }
+
     if (!l_common_departments_fun(person_.person_.departments_, l_others_person.departments_))
       throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
   } else if (person_.person_.role_ == person_role_type::admin) {
