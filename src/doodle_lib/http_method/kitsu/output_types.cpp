@@ -12,7 +12,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> data_output_types::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_output_types, get) {
   co_return in_handle->make_msg(nlohmann::json::array());
 }
 

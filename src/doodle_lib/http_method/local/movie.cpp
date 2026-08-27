@@ -40,7 +40,7 @@ struct video_thumbnail_arg_t {
     j["time"].get_to(p.time_);
   }
 };
-boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(video_thumbnail, post) {
   auto l_arg = in_handle->get_json().get<video_thumbnail_arg_t>();
   if (!exists(l_arg.video_path_))
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "视频文件不存在"});
@@ -70,7 +70,7 @@ void video_thumbnail::init_ctx() {
   std::call_once(l_flag, []() { g_ctx().emplace<video_thumbnail_cache>(); });
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(video_thumbnail, get) {
   auto& l_cache = g_ctx().get<video_thumbnail_cache>();
   if (l_cache.Cached(video_thumbnail_cache_id)) {
     auto l_buffer = *l_cache.Get(video_thumbnail_cache_id);
@@ -123,7 +123,7 @@ struct tools_add_watermark_arg_t {
   }
 };
 
-boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermark::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(tools_add_watermark, get) {
   bool l_preview{};
   for (auto&& [l_key, l_value, l_has_value] : in_handle->url_.params()) {
     if (l_key == "preview") {
@@ -167,7 +167,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermar
   co_return in_handle->make_msg(l_json);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermark::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(tools_add_watermark, post) {
   auto l_args = in_handle->get_json().get<tools_add_watermark_arg_t>();
   FSys::ofstream{core_set::get_set().get_cache_root() / tools_add_watermark_arg_t::g_config_name}
       << in_handle->get_json().dump(2);
@@ -201,7 +201,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermar
   co_return in_handle->make_msg(nlohmann::json{{"id", l_uuid}});
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermark::put(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(tools_add_watermark, put) {
   auto l_args = in_handle->get_json().get<tools_add_watermark_arg_t>();
   FSys::ofstream{core_set::get_set().get_cache_root() / tools_add_watermark_arg_t::g_config_name}
       << in_handle->get_json().dump(2);

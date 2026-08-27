@@ -32,7 +32,7 @@ void local_http_fun::parse_header(const session_data_ptr& in_handle) {
   token_ = l_jwt;
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> local_setting::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(local_setting, get) {
   FSys::path l_maya_path{};
   try {
     l_maya_path = maya_exe_ns::find_maya_path();
@@ -53,7 +53,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::get
   );
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> local_setting::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(local_setting, post) {
   auto& l_set = core_set::get_set();
   auto l_json = in_handle->get_json();
   if (l_json.contains("maya_parallel_quantity")) {
@@ -99,9 +99,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::pos
   );
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> local_setting_tmp_dir_server_task::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(local_setting_tmp_dir_server_task, get) {
   co_return in_handle->make_msg(nlohmann::json{{"tmp_dir", core_set::get_set().get_cache_root("server_task")}});
 }
 

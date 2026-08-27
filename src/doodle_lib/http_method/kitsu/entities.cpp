@@ -36,7 +36,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, get) {
   auto l_entt = l_sql.get_by_uuid<entity>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_entt);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
   auto l_sql = get_sqlite_database();
   auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   auto l_json = in_handle->get_json();
@@ -86,7 +86,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put
 
   co_return in_handle->make_msg(l_res);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_entities_news::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_news, get) {
   co_return in_handle->make_msg(
       nlohmann::json{
           {"data", nlohmann::json::array()}, {"limit", 2000}, {"nb_pages", 0}, {"offset", 0}, {"page", 1}, {"total", 0}

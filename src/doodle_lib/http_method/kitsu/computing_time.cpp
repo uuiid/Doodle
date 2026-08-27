@@ -500,7 +500,7 @@ std::string patch_time(
   return {};
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time, post) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
   auto l_json = in_handle->get_json();
@@ -553,7 +553,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::po
 
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time, get) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_logger    = in_handle->logger_;
   auto l_sql       = get_sqlite_database();
@@ -565,7 +565,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::ge
   *l_block_ptr |= ranges::actions::sort;
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_add, post) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
   auto l_json                         = in_handle->get_json();
@@ -625,7 +625,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_custom::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_custom, post) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_json                                = in_handle->get_json();
   computing_time_post_req_custom_data l_data = l_json.get<computing_time_post_req_custom_data>();
@@ -692,7 +692,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_cus
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sort::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_sort, post) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_json = in_handle->get_json();
   auto l_data = l_json.get<std::vector<uuid>>();
@@ -747,7 +747,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sor
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_sort));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_average::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_average, post) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
   SPDLOG_LOGGER_WARN(
@@ -774,7 +774,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_ave
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_patch::patch(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_patch, patch) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_json = in_handle->get_json();
 
@@ -842,9 +842,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_delete::delete_(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_delete, delete_) {
   auto l_sql                                    = get_sqlite_database();
 
   work_xlsx_task_info_helper::database_t l_task = l_sql.get_by_uuid<work_xlsx_task_info_helper::database_t>(id_);

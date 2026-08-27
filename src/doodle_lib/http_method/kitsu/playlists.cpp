@@ -100,9 +100,7 @@ auto get_preview_files_and_entity_id_and_entity_name_by_sequence_id(const uuid& 
 
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> playlists_entities_preview_files::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(playlists_entities_preview_files, get) {
   auto l_sql = get_sqlite_database();
   auto l_entt_id = l_sql.get_by_uuid<entity>(id_);
   person_.check_not_outsourcer();
@@ -126,9 +124,7 @@ struct actions_preview_files_update_annotations_args {
   }
 };
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_files_update_annotations::put(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_update_annotations, put) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   auto l_prev = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(preview_file_id_));
@@ -421,9 +417,7 @@ struct temp_playlist_t {
 };
 
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists_temp::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_playlists_temp, post) {
   person_.check_not_outsourcer();
   person_.check_in_project(project_id_);
   auto l_sql = get_sqlite_database();
@@ -505,7 +499,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
   );
   co_return in_handle->make_msg(nlohmann::json{} = l_playlist);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_playlists, get) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
   std::int32_t l_page{1};
@@ -529,7 +523,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
   );
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_playlists::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists, post) {
   auto l_sql = get_sqlite_database();
   auto l_playlist = std::make_shared<playlist>();
   in_handle->get_json().get_to(*l_playlist);
@@ -729,16 +723,14 @@ auto get_playlist_shot_entity(const playlist& in_playlist) {
   return l_ret;
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists_instance::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_playlists_instance, get) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   auto l_playlist = l_sql.get_by_uuid<playlist>(playlist_id_);
   co_return in_handle->make_msg(nlohmann::json{} = get_playlist_shot_entity(l_playlist));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_instance::put(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, put) {
   auto l_sql = get_sqlite_database();
   auto l_playlist = std::make_shared<playlist>(l_sql.get_by_uuid<playlist>(id_));
   person_.check_in_project(l_playlist->project_id_);

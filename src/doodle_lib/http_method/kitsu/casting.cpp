@@ -384,9 +384,7 @@ data_project_asset_types_casting_result_map get_asset_type_casting(
 }
 
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences_all_casting::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_sequences_all_casting, get) {
   person_.check_in_project(project_id_);
   co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_, person_.person_));
 }
@@ -466,9 +464,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, get) {
   co_return in_handle->make_msg(nlohmann::json{} = get_casting_t::get(entity_id_));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_entities_casting::put(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, put) {
   person_.check_in_project(project_id_);
   auto l_sql = get_sqlite_database();
   auto l_ent = std::make_shared<entity>(l_sql.get_by_uuid<entity>(entity_id_));
@@ -579,18 +575,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
   );
   co_return in_handle->make_msg(in_handle->get_json());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences_casting::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_sequences_casting, get) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
   if (get_sqlite_database().uuid_to_id<entity>(sequence_id_) == 0)
     throw_exception(doodle_error{"序列不存在或已被删除"});
   co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, sequence_id_));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_asset_types_casting::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_asset_types_casting, get) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
   if (get_sqlite_database().uuid_to_id<asset_type>(asset_type_id_) == 0)
@@ -598,9 +590,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_asset
   co_return in_handle->make_msg(nlohmann::json{} = get_asset_type_casting(project_id_, asset_type_id_));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_casting_replace::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_replace, post) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
   auto l_list = in_handle->get_json().get<std::vector<actions_projects_casting_replace_arg>>();

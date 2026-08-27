@@ -38,12 +38,12 @@
 #include <vector>
 
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> departments::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments, get) {
   person_.check_admin();
   auto l_list = get_sqlite_database().get_all<department>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> departments_instance::put(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments_instance, put) {
   person_.check_admin();
   auto l_sql            = get_sqlite_database();
   auto l_department_ptr = std::make_shared<department>(l_sql.get_by_uuid<department>(id_));
@@ -62,7 +62,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> departments_instan
   co_return in_handle->make_msg(nlohmann::json{} = *l_department_ptr);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> studios::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, get) {
   person_.check_admin();
   auto l_list = get_sqlite_database().get_all<studio>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
@@ -114,7 +114,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, put) {
   );
   co_return in_handle->make_msg(nlohmann::json{} = *l_studio_ptr);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> task_types::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_types, get) {
   person_.check_admin();
   auto l_list = get_sqlite_database().get_all<task_type>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
@@ -126,12 +126,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_types, post) {
   co_await l_sql.install(l_args);
   co_return in_handle->make_msg(nlohmann::json{} = *l_args);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> custom_actions::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(custom_actions, get) {
   person_.check_admin();
 
   co_return in_handle->make_msg(nlohmann::json::array());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> status_automations::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, get) {
   person_.check_admin();
   auto l_list = get_sqlite_database().get_all<status_automation>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
@@ -153,9 +153,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_status_automation);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_instance::put(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, put) {
   person_.check_admin();
   auto l_sql            = get_sqlite_database();
   auto l_asset_type_ptr = std::make_shared<asset_type>(l_sql.get_by_uuid<asset_type>(id_));
@@ -219,7 +217,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_args);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_task_status::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status, post) {
   person_.check_admin();
   auto l_sql    = get_sqlite_database();
   auto l_status = std::make_shared<task_status>();
@@ -235,9 +233,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status::
   );
   co_return in_handle->make_msg(nlohmann::json{} = *l_status);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_instance::put(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status_instance, put) {
   person_.check_admin();
   auto l_sql    = get_sqlite_database();
   auto l_status = std::make_shared<task_status>(l_sql.get_by_uuid<task_status>(id_));
@@ -255,7 +251,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_i
   );
   co_return in_handle->make_msg(nlohmann::json{} = *l_status);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> doodle_backup::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_backup, post) {
   person_.check_admin();
   FSys::path l_file{
       core_set::get_set().get_cache_root("backup") /
@@ -298,7 +294,7 @@ boost::asio::awaitable<void> check_http_connection_count_and_stop_server() {
 }
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> doodle_stop_server::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_stop_server, post) {
   person_.check_admin();
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始停止服务器", person_.person_.email_, person_.person_.get_full_name()

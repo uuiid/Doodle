@@ -161,7 +161,7 @@ auto get_asset_types() {
 
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_context, get) {
   nlohmann::json l_ret{};
   using namespace orm;
   auto l_sql              = get_sqlite_database();
@@ -207,7 +207,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(
   co_return in_handle->make_msg(l_ret);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_person::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person, get) {
   auto l_p           = get_sqlite_database().get_all<person>();
   auto l_person_deps = get_sqlite_database().get_all<person_department_link>();
   std::map<uuid, std::vector<uuid>> l_person_deps_map{};
@@ -219,7 +219,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::get(s
   co_return in_handle->make_msg(nlohmann::json{} = l_p);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person, post) {
   person_.check_admin();
   auto l_person       = std::make_shared<person>(in_handle->get_json().get<person>());
   l_person->timezone_ = chrono::current_zone()->name();
@@ -245,7 +245,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_person_instance::put(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person_instance, put) {
   auto l_sql        = get_sqlite_database();
   auto l_old_person = l_sql.get_by_uuid<person>(id_);
   auto l_person     = std::make_shared<person>(l_old_person);

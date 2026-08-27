@@ -214,13 +214,13 @@ auto get_last_notifications_query(const uuid& in_person_id, const data_user_noti
 }
 
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifications::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_user_notifications, get) {
   data_user_notifications_get_args l_args{};
   l_args.get_query_params(in_handle->url_.params());
   auto l_ret = get_last_notifications_query(person_.person_.uuid_id_, l_args);
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_user_notification::put(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_user_notification, put) {
   auto l_sql = get_sqlite_database();
   auto l_not        = std::make_shared<notification>(l_sql.get_by_uuid<notification>(id_));
   const bool l_read = in_handle->get_json().value<bool>("read", false);
@@ -238,9 +238,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifica
   );
   co_return in_handle->make_msg(nlohmann::json{} = *l_not);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> actions_user_notifications_mark_all_as_read::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_user_notifications_mark_all_as_read, post) {
   auto l_sql = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(

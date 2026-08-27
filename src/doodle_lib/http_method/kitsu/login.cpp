@@ -31,7 +31,7 @@ struct login_data {
 };
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> authenticated::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(authenticated, get) {
   nlohmann::json l_r{};
   l_r["authenticated"] = true;
   l_r["user"]          = person_.person_;
@@ -40,12 +40,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> authenticated::get
   co_return in_handle->make_msg(l_r.dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> organisations::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(organisations, get) {
   auto l_org = get_sqlite_database().get_all<organisation>();
   co_return in_handle->make_msg((nlohmann::json{l_org.empty() ? organisation::get_default() : l_org.front()}).dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_login, post) {
   auto l_data = in_handle->get_json().get<login_data>();
   auto l_sql  = get_sqlite_database();
 
@@ -124,7 +124,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(s
   co_return boost::beast::http::message_generator{std::move(l_res)};
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> auth_refresh_token::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_refresh_token, get) {
   default_logger_raw()->info("用户 {} 刷新 token", person_.person_.email_);
 
   nlohmann::json l_json{};

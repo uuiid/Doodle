@@ -105,7 +105,7 @@ void auth_reset_password::init() {
   if (!pimpl_) pimpl_ = std::make_shared<impl>();
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, post) {
   auto l_email = in_handle->get_json()["email"].get<std::string>();
   default_logger_raw()->info("重置密码 {}", l_email);
   auto l_sql = get_sqlite_database();
@@ -134,7 +134,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_passwor
 
   co_return in_handle->make_msg(nlohmann::json{{"success", "Reset token sent"}});
 }
-boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password::put(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, put) {
   auto l_arg   = in_handle->get_json().get<auth_reset_password_put_arg>();
   auto l_token = co_await pimpl_->get_reset_token(l_arg.email);
   if (l_token.empty()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "无效的重置令牌。"});
@@ -146,7 +146,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_passwor
   co_await l_sql.update(l_person);
   co_return in_handle->make_msg(nlohmann::json{{"success", "Password changed"}});
 }
-boost::asio::awaitable<boost::beast::http::message_generator> auth_logout::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_logout, get) {
   boost::beast::http::response<boost::beast::http::string_body> l_res{
       boost::beast::http::status::ok, in_handle->version_
   };

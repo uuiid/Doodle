@@ -184,7 +184,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_instance, post) {
   person_.check_user();
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 上传缩略图/预览文件 {} ", person_.person_.email_,
@@ -192,15 +192,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance:
   );
   return thumbnail_post(in_handle, *root_);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_instance, get) {
   person_.check_user();
   return thumbnail_get(in_handle, *root_ / "previews", ".png");
 }
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance_mp4::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_instance_mp4, get) {
   person_.check_user();
   return thumbnail_get(in_handle, *root_ / "previews", ".mp4");
 }
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails, get) {
   person_.check_user();
   return thumbnail_get(in_handle, *root_ / "thumbnails");
 }

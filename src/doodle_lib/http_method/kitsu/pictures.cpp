@@ -18,9 +18,7 @@
 #include <opencv2/opencv.hpp>
 
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails_organisations_png::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_organisations_png, get) {
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "组织缩略图不存在 组织 id {}", id_);
@@ -38,9 +36,7 @@ void handle_organisation_thumbnail(const FSys::path& in_file, const FSys::path& 
   cv::imwrite(in_save_path.string(), l_image);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails_organisations::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_organisations, post) {
   person_.check_admin();
   auto l_org = get_sqlite_database().get_by_uuid<organisation>(id_);
 
@@ -67,9 +63,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
       nlohmann::json{{"thumbnail_path", fmt::format("pictures/thumbnails/organisations/{}.png", id_)}}
   );
 }
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails_square_preview_files::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_square_preview_files, get) {
   FSys::path l_filename = fmt::format("{}.png", id_);
   auto l_path           = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_square_file(id_);
   auto l_ext            = l_filename.extension();
@@ -77,26 +71,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
   co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails_preview_files::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_preview_files, get) {
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
   co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails_persons::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_persons, get) {
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
   co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals_preview_files_download::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_originals_preview_files_download, get) {
   auto l_sql = get_sqlite_database();
   auto l_pre_file   = l_sql.get_by_uuid<preview_file>(id_);
   FSys::path l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_original_file(id_)
@@ -104,18 +92,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals
   DOODLE_CHICK(FSys::exists(l_path), "原始图片不存在 文件 {}", l_path.generic_string());
   co_return in_handle->make_msg(l_path, kitsu::mime_type(l_pre_file.extension_));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_previews_preview_files::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_previews_preview_files, get) {
   auto l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_preview_file(id_)
                                         : g_ctx().get<kitsu_ctx_t>().get_pictures_preview_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
   co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals_preview_files::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_originals_preview_files, get) {
   auto l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_original_file(id_)
                                         : g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(id_);
   auto l_ext  = l_path.extension();

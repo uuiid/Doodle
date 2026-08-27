@@ -243,7 +243,7 @@ auto get_get_entities_and_tasks(
 }
 
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> sequences_with_tasks::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(sequences_with_tasks, get) {
   auto l_sql     = get_sqlite_database();
   auto l_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence});
 
@@ -275,7 +275,7 @@ struct data_project_sequences_args {
   }
 };
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_sequences, post) {
   person_.check_in_project(id_);
   person_.check_not_outsourcer();
   auto l_sql  = get_sqlite_database();
@@ -312,7 +312,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_entity_ptr);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_sequences, get) {
   person_.check_in_project(id_);
   auto l_sql = get_sqlite_database();
 
@@ -322,14 +322,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
 
   co_return in_handle->make_msg(nlohmann::json{} = l_row);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_instance::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_sequence_instance, get) {
   auto l_sql  = get_sqlite_database();
   auto l_data = l_sql.get_by_uuid<entity>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_data);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_instance::delete_(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_sequence_instance, delete_) {
   auto l_sql      = get_sqlite_database();
   auto l_sequence = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   if (!(l_sequence->created_by_ == person_.person_.uuid_id_ &&
@@ -364,9 +362,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_inst
   co_return in_handle->make_msg_204();
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_task_types_create_tasks::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_task_types_create_tasks, post) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
   auto l_sql          = get_sqlite_database();

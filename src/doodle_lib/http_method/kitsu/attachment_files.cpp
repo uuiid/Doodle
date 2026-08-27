@@ -10,9 +10,7 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> data_attachment_files_file::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_attachment_files_file, get) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   auto l_attachment_file = l_sql.get_by_uuid<attachment_file>(id_);

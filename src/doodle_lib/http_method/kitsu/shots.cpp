@@ -279,12 +279,12 @@ auto make_shots_with_tasks_result(const person& in_person, const boost::urls::ur
 }
 
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_tasks::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_shots_with_tasks, get) {
   auto l_sql = get_sqlite_database();
 
   co_return in_handle->make_msg(nlohmann::json{} = make_shots_with_tasks_result(person_.person_, in_handle->url_, {}));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_shots, get) {
   co_return in_handle->make_msg_204();
 }
 namespace {
@@ -304,7 +304,7 @@ struct data_project_shots_args {
   }
 };
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_shots, post) {
   auto l_args = in_handle->get_json().get<data_project_shots_args>();
   auto l_sql  = get_sqlite_database();
 
@@ -366,15 +366,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
   co_return in_handle->make_msg(l_result);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_shot::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_shot, get) {
   auto l_sql = get_sqlite_database();
   //
   auto l_ret = make_shots_with_tasks_result(person_.person_, {}, id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_ret.empty() ? nlohmann::json{} : l_ret.front());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_task_types_shots_create_tasks::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_task_types_shots_create_tasks, post) {
   auto l_sql       = get_sqlite_database();
   auto l_task_type = l_sql.get_by_uuid<task_type>(task_type_id_);
   std::vector<entity> l_shots;
@@ -440,7 +438,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
 
   co_return in_handle->make_msg(nlohmann::json{} = l_results);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_shot, delete_) {
   auto l_sql  = get_sqlite_database();
   auto l_shot = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   if (!(

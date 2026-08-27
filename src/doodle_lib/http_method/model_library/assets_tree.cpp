@@ -37,9 +37,7 @@ void check_data(const assets_helper::database_t& in_data) {
   }
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree::get(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree, get) {
   person_.check_user();
   auto l_list = get_sqlite_database().get_all<assets_helper::database_t>();
 
@@ -48,9 +46,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   co_return in_handle->make_msg(l_json);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree::post(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree, post) {
   person_.check_supervisor();
   auto l_json = in_handle->get_json();
   std::shared_ptr<assets_helper::database_t> l_ptr =
@@ -68,9 +64,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   );
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree::patch(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree, patch) {
   person_.check_supervisor();
   auto l_values = std::make_shared<std::vector<assets_helper::database_t>>(
       in_handle->get_json().get<std::vector<assets_helper::database_t>>()
@@ -84,9 +78,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   co_return in_handle->make_msg(nlohmann::json{} = *l_values);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree_instance::put(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree_instance, put) {
   person_.check_supervisor();
   auto l_sql                        = get_sqlite_database();
 
@@ -98,9 +90,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   co_return in_handle->make_msg(nlohmann::json{} = *l_value);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree_instance::delete_(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree_instance, delete_) {
   person_.check_supervisor();
   auto l_uuid = boost::lexical_cast<uuid>(id_);
   auto l_sql = get_sqlite_database();

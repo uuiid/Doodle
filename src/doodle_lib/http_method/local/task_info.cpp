@@ -263,12 +263,12 @@ void emit_signal(const std::shared_ptr<server_task_info>& in_ptr) {
 
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> task_instance::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance, get) {
   auto l_list = task_info_manager().get_instance().get_all_task_info();
 
   co_return in_handle->make_msg(nlohmann::json{} = l_list);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> task::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task, get) {
   server_task_info_type l_type{server_task_info_type::unknown};
   for (auto&& i : in_handle->url_.params()) {
     if (i.has_value && i.key == "type") {
@@ -298,7 +298,7 @@ void task::init_ctx() {
     });
   });
 }
-boost::asio::awaitable<boost::beast::http::message_generator> task::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task, post) {
   auto l_ptr  = std::make_shared<server_task_info>();
   auto l_json = in_handle->get_json();
   l_json.get_to(*l_ptr);
@@ -317,7 +317,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task::post(session
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> task_instance_log::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance_log, get) {
   auto l_path = core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", id_);
   if (!FSys::exists(l_path))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "日志不存在");
@@ -325,7 +325,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_log:
   l_mime += "; charset=utf-8";
   co_return in_handle->make_msg(l_path, l_mime);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> task_instance::delete_(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance, delete_) {
   auto l_list = task_info_manager().get_instance().get_task_info(id_);
   if (l_list->status_ == server_task_info_status::running) {
     co_return in_handle->make_error_code_msg(
@@ -336,7 +336,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance::del
   co_return in_handle->make_msg(nlohmann::json{});
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> task_instance::patch(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance, patch) {
   auto l_server_task_info = task_info_manager().get_instance().get_task_info(id_);
 
   server_task_info l_server_task_info_org{*l_server_task_info};
@@ -349,7 +349,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance::pat
     g_ctx().get<run_post_task_local_cancel_manager>().cancel(l_server_task_info->uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = *l_server_task_info);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> task_inspect_instance::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_inspect_instance, post) {
   auto l_ptr   = std::make_shared<server_task_info>();
   l_ptr->type_ = server_task_info_type::check_maya;
   auto l_json  = in_handle->get_json();
@@ -371,9 +371,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_inspect_insta
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> task_instance_generate_uesk_file::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance_generate_uesk_file, post) {
   auto l_ptr          = std::make_shared<server_task_info>();
   l_ptr->type_        = server_task_info_type::create_rig_sk;
   l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
@@ -400,9 +398,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_gene
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_export_anim_fbx_local::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_export_anim_fbx_local, post) {
   auto l_ptr          = std::make_shared<server_task_info>();
   l_ptr->type_        = server_task_info_type::export_fbx;
   l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
@@ -430,9 +426,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_update_sim_abc_local::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_update_sim_abc_local, post) {
   auto l_ptr          = std::make_shared<server_task_info>();
   l_ptr->type_        = server_task_info_type::export_sim;
   l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
@@ -460,9 +454,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_project_sync_local::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_project_sync_local, post) {
   auto l_ptr          = std::make_shared<server_task_info>();
   l_ptr->type_        = server_task_info_type::project_sync;
   l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
@@ -629,9 +621,7 @@ void epiboly_actions_projects_export_anim_fbx::init_ctx() {
   });
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> epiboly_actions_projects_export_anim_fbx::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(epiboly_actions_projects_export_anim_fbx, post) {
   auto l_ptr          = std::make_shared<server_task_info>();
   l_ptr->type_        = server_task_info_type::export_fbx;
   l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};

@@ -56,9 +56,7 @@ std::vector<preview_file> get_preview_files_by_entity_id(const uuid& in_entity_i
 }
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comments_add_preview::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comments_add_preview, post) {
   person_.check_task_action_access(task_id_);
   auto l_sql      = get_sqlite_database();
 
@@ -319,7 +317,7 @@ image_info_t convert_to_png(const FSys::path& in_path) {
 }
 
 }  // namespace preview
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_files::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
   auto l_sql          = get_sqlite_database();
   auto l_preview_file = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(id_));
   if (!l_preview_file->original_name_.empty())
@@ -415,9 +413,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comments_preview_files::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comments_preview_files, post) {
   auto l_sql  = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(task_id_));
   person_.check_task_action_access(*l_task);
@@ -473,9 +469,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_files_set_main_preview::put(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_set_main_preview, put) {
   auto l_sql          = get_sqlite_database();
   auto l_preview_file = l_sql.get_by_uuid<preview_file>(id_);
 

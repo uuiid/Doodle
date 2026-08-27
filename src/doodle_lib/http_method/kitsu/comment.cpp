@@ -195,7 +195,7 @@ boost::asio::awaitable<create_comment_result> create_comment(
 
   co_return create_comment_result{*in_comment, l_task_status, in_person->person_, l_attachment_files};
 }
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comment::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comment, post) {
   person_.check_task_action_access(id_);
 
   SPDLOG_LOGGER_WARN(
@@ -218,9 +218,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_tasks_comment_many::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_tasks_comment_many, post) {
   auto l_sql = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
@@ -254,9 +252,7 @@ struct actions_tasks_modify_date_comment_time_arg {
   }
 };
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_modify_date_comment::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_modify_date_comment, post) {
   auto l_sql = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
 
@@ -292,9 +288,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_modi
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comments_ack::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks_comments_ack, post) {
   auto l_sql = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
@@ -348,7 +342,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comment
   co_return in_handle->make_msg(nlohmann::json{} = l_comment);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_comment::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_comment, get) {
   auto l_sql = get_sqlite_database();
   auto l_comment = l_sql.get_by_uuid<comment>(id_);
 
@@ -358,7 +352,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_comment::get(
   co_return in_handle->make_msg(l_json);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> task_comment::delete_(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_comment, delete_) {
   auto l_sql = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(task_id_));
   person_.check_delete_access(l_task->project_id_);
@@ -379,7 +373,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment::dele
   co_return in_handle->make_msg(nlohmann::json{});
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_comment::put(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_comment, put) {
   auto l_json    = in_handle->get_json();
   auto l_sql = get_sqlite_database();
   auto l_comment = std::make_shared<comment>(l_sql.get_by_uuid<comment>(id_));

@@ -11,9 +11,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> movies_low_preview_files::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_low_preview_files, get) {
   person_.check_not_outsourcer();
 
   auto l_sql = get_sqlite_database();
@@ -25,9 +23,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> movies_low_preview
       l_path, http_header_ctrl{.mine_type_ = kitsu::mime_type(l_path.extension()), .has_cache_control_ = true}
   );
 }
-boost::asio::awaitable<boost::beast::http::message_generator> movies_originals_preview_files::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_originals_preview_files, get) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   auto l_entt = l_sql.get_by_uuid<task>(l_sql.get_by_uuid<preview_file>(id_).task_id_);
@@ -37,9 +33,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> movies_originals_p
       l_path, http_header_ctrl{.mine_type_ = kitsu::mime_type(l_path.extension()), .has_cache_control_ = true}
   );
 }
-boost::asio::awaitable<boost::beast::http::message_generator> movies_tiles_preview_files::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_tiles_preview_files, get) {
   person_.check_not_outsourcer();
 
   auto l_sql = get_sqlite_database();

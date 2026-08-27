@@ -7,7 +7,7 @@
 
 #include "model_library.h"
 namespace doodle::http::model_library {
-boost::asio::awaitable<boost::beast::http::message_generator> context::get(http::session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(context, get) {
   person_.check_user();
   nlohmann::json l_json{};
   l_json["tree_nodes"] = get_sqlite_database().get_all<assets_helper::database_t>();
