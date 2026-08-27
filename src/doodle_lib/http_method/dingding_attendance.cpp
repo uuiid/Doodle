@@ -54,15 +54,13 @@ auto create_clock_leave(const chrono::year_month_day& in_date) {
 }
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_create_post::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
   auto l_logger                 = in_handle->logger_;
 
   auto l_json_1                 = in_handle->get_json();
   chrono::year_month_day l_date = l_json_1["work_date"].get<chrono::year_month_day>();
 
-  auto l_sql                 = get_sqlite_database();
+  auto l_sql                    = get_sqlite_database();
   auto l_user                   = l_sql.get_by_uuid<person>(id_);
   auto& l_d                     = g_ctx().get<dingding::dingding_company>();
   auto l_studio                 = l_sql.get_by_uuid<studio>(l_user.studio_id_);
