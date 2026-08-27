@@ -373,12 +373,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_comment, delete_) {
   co_await l_sql.remove<comment>(comment_id_);
   auto l_last_comment = l_sql.get_last_comment(l_task->uuid_id_);
   if (l_last_comment) {
-    auto l_task_status         = l_sql.get_by_uuid<task_status>(l_task->task_status_id_);
-    l_task->last_comment_date_ = l_last_comment->created_at_;
-    l_task->task_status_id_    = l_last_comment->task_status_id_;
-    if (l_task_status.is_feedback_request_) l_task->end_date_ = l_last_comment->created_at_;
-    if (l_task_status.is_done_) l_task->done_date_ = l_last_comment->created_at_;
-    co_await l_sql.update(l_task);
+    auto l_task_status = l_sql.get_by_uuid<task_status>(l_task->task_status_id_);
+    using namespace orm;
+    auto l_update = update(l_sql)
+                        .from<task>()
+                        .set(c(&task::last_comment_date_) = l_last_comment->created_at_)
+                        .set(c(&task::task_status_id_) = l_last_comment->task_status_id_)
+                        .where(c(&task::uuid_id_) == l_task->uuid_id_);
+    if (l_task_status.is_feedback_request_) l_update.set(c(&task::end_date_) = l_last_comment->created_at_);
+    if (l_task_status.is_done_) l_update.set(c(&task::done_date_) = l_last_comment->created_at_);
+    co_await l_sql.run_sql(l_update);
   }
   co_return in_handle->make_msg(nlohmann::json{});
 }
