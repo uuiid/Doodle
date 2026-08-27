@@ -164,6 +164,45 @@ struct project {
   // std::pair<width,height>
   std::pair<std::int32_t, std::int32_t> get_resolution() const;
   std::double_t get_film_aperture() const;
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"name", &project::name_},                                               //
+        std::pair{"code", &project::code_},                                               //
+        std::pair{"description", &project::description_},                                 //
+        std::pair{"shotgun_id", &project::shotgun_id_},                                   //
+        std::pair{"file_tree", &project::file_tree_},                                     //
+        std::pair{"data", &project::data_},                                               //
+        std::pair{"has_avatar", &project::has_avatar_},                                   //
+        std::pair{"fps", &project::fps_},                                                 //
+        std::pair{"ratio", &project::ratio_},                                             //
+        std::pair{"resolution", &project::resolution_},                                   //
+        std::pair{"production_type", &project::production_type_},                         //
+        std::pair{"production_style", &project::production_style_},                       //
+        std::pair{"start_date", &project::start_date_},                                   //
+        std::pair{"end_date", &project::end_date_},                                       //
+        std::pair{"man_days", &project::man_days_},                                       //
+        std::pair{"nb_episodes", &project::nb_episodes_},                                 //
+        std::pair{"episode_span", &project::episode_span_},                               //
+        std::pair{"max_retakes", &project::max_retakes_},                                 //
+        std::pair{"is_clients_isolated", &project::is_clients_isolated_},                 //
+        std::pair{"is_preview_download_allowed", &project::is_preview_download_allowed_}, //
+        std::pair{"is_set_preview_automated", &project::is_set_preview_automated_},       //
+        std::pair{"homepage", &project::homepage_},                                       //
+        std::pair{"is_publish_default_for_artists", &project::is_publish_default_for_artists_}, //
+        std::pair{"hd_bitrate_compression", &project::hd_bitrate_compression_},           //
+        std::pair{"ld_bitrate_compression", &project::ld_bitrate_compression_},           //
+        std::pair{"project_status_id", &project::project_status_id_},                     //
+        std::pair{"default_preview_background_file_id", &project::default_preview_background_file_id_}, //
+        std::pair{"path", &project::path_},                                               //
+        std::pair{"en_str", &project::en_str_},                                           //
+        std::pair{"auto_upload_path", &project::auto_upload_path_},                       //
+        std::pair{"production_category", &project::production_category_},                 //
+        std::pair{"short_name", &project::short_name_},                                   //
+        std::pair{"asset_root_path", &project::asset_root_path_},                         //
+    };
+  }
+
   friend void from_json(const nlohmann::json& j, project& p) {
     if (j.contains("name")) j.at("name").get_to(p.name_);
     if (j.contains("code")) j.at("code").get_to(p.code_);

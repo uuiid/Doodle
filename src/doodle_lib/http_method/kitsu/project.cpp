@@ -96,20 +96,24 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_instance, get) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_instance, put) {
   auto l_sql     = get_sqlite_database();
-  auto l_project = std::make_shared<project>(l_sql.get_by_uuid<project>(id_));
+  auto l_project = l_sql.get_by_uuid<project>(id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始更新项目 project_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_project->name_
+      person_.person_.get_full_name(), id_, l_project.name_
   );
-  in_handle->get_json().get_to(*l_project);
-  co_await l_sql.update(l_project);
+  auto l_json = in_handle->get_json();
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql).from<project>().set_from_ref<project>(l_json).where(c(&project::uuid_id_) == id_)
+  );
+  auto l_project_updated = l_sql.get_by_uuid<project>(id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新项目 project_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_project->name_
+      person_.person_.get_full_name(), id_, l_project_updated.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_project);
+  co_return in_handle->make_msg(nlohmann::json{} = l_project_updated);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_projects, post) {
@@ -365,8 +369,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_type_links, post) {
   l_ptr->priority_ = l_args.priority_.value_or(0);
   if (!l_ptr->id_)
     co_await l_sql.install(l_ptr);
-  else
-    co_await l_sql.update(l_ptr);
+  else {
+    using namespace orm;
+    co_await l_sql.run_sql(
+        update(l_sql)
+            .from<project_task_type_link>()
+            .set(c(&project_task_type_link::priority_) = l_ptr->priority_)
+            .where(c(&project_task_type_link::uuid_id_) == l_ptr->uuid_id_)
+    );
+  }
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成设置项目 {} 任务类型关联 id {} task_type_id {} priority {}",
