@@ -48,15 +48,25 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
   l_json.get_to(*l_entt);
   nlohmann::json l_res{};
   const bool l_can_update = person_.is_project_supervisor(l_entt->project_id_);
-  if (l_can_update) co_await l_sql.update(l_entt);
+  if (l_can_update) {
+    using namespace orm;
+    co_await l_sql.run_sql(
+        update(l_sql).from<entity>().set_from_ref<entity>(l_json).where(c(&entity::uuid_id_) == id_)
+    );
+  }
   l_res = *l_entt;
   if (entity_asset_extend::has_extend_data(l_json)) {
-    ;
     auto l_ext_ptr = std::make_shared<entity_asset_extend>();
     if (auto l_list_ext = get_entity_asset_extend_by_entity_id(l_entt->uuid_id_); l_list_ext.has_value()) {
       *l_ext_ptr = l_list_ext.value();
       l_json.get_to(*l_ext_ptr);
-      co_await l_sql.update(l_ext_ptr);
+      using namespace orm;
+      co_await l_sql.run_sql(
+          update(l_sql)
+              .from<entity_asset_extend>()
+              .set_from_ref<entity_asset_extend>(l_json)
+              .where(c(&entity_asset_extend::uuid_id_) == l_ext_ptr->uuid_id_)
+      );
     } else {
       l_json.get_to(*l_ext_ptr);
       l_ext_ptr->entity_id_ = l_entt->uuid_id_;
@@ -65,12 +75,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
     l_res.update(*l_ext_ptr);
   }
   if (entity_shot_extend::has_extend_data(l_json)) {
-    ;
     auto l_ext_ptr = std::make_shared<entity_shot_extend>();
     if (auto l_list_ext = get_entity_shot_extend_by_entity_id(l_entt->uuid_id_); l_list_ext.has_value()) {
       *l_ext_ptr = l_list_ext.value();
       l_json.get_to(*l_ext_ptr);
-      co_await l_sql.update(l_ext_ptr);
+      using namespace orm;
+      co_await l_sql.run_sql(
+          update(l_sql)
+              .from<entity_shot_extend>()
+              .set_from_ref<entity_shot_extend>(l_json)
+              .where(c(&entity_shot_extend::uuid_id_) == l_ext_ptr->uuid_id_)
+      );
     } else {
       l_json.get_to(*l_ext_ptr);
       l_ext_ptr->entity_id_ = l_entt->uuid_id_;
