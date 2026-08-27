@@ -96,13 +96,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_insta
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_preview, post) {
   person_.check_subproject_access(subproject_id_);
   auto l_sql     = get_sqlite_database();
-  auto l_entity  = std::make_shared<sd2::ai_generate_entity>(l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_));
+  auto l_entity  = l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_);
   auto l_file    = in_handle->get_file();
   auto l_preview = std::make_shared<sd2::ai_preview_file>();
   l_preview->extension_ = ".png";
   co_await l_sql.install(l_preview);
-  l_entity->preview_file_ = l_preview->uuid_id_;
-  co_await l_sql.update(l_entity);
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql)
+          .from<sd2::ai_generate_entity>()
+          .set(c(&sd2::ai_generate_entity::preview_file_) = l_preview->uuid_id_)
+          .where(c(&sd2::ai_generate_entity::uuid_id_) == l_entity.uuid_id_)
+  );
 
   auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview->uuid_id_, l_file.extension().string());

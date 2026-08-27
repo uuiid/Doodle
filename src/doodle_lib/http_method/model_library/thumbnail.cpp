@@ -129,10 +129,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
 
   auto l_sql = get_sqlite_database();
   if (auto l_id = l_sql.uuid_to_id<ai_image_metadata>(id_); l_id != 0) {
-    auto l_entt     = std::make_shared<ai_image_metadata>(l_sql.get_by_uuid<ai_image_metadata>(id_));
-    l_entt->width_  = l_size.first;
-    l_entt->height_ = l_size.second;
-    co_await l_sql.update(l_entt);
+    using namespace orm;
+    co_await l_sql.run_sql(
+        update(l_sql)
+            .from<ai_image_metadata>()
+            .set(c(&ai_image_metadata::width_) = static_cast<std::int32_t>(l_size.first))
+            .set(c(&ai_image_metadata::height_) = static_cast<std::int32_t>(l_size.second))
+            .where(c(&ai_image_metadata::uuid_id_) == id_)
+    );
   }
 
   co_return in_handle->make_msg(fmt::format(R"({{"id":"{}"}})", id_));

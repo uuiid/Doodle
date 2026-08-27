@@ -20,18 +20,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category, get) {
 
   auto l_sql = get_sqlite_database();
   using namespace orm;
-  auto l_result = select(l_sql)
-                      .columns(object<sd2::ai_category>())
-                      .from<sd2::ai_category>()()
-                      .to_vector();
+  auto l_result = select(l_sql).columns(object<sd2::ai_category>()).from<sd2::ai_category>()().to_vector();
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category, post) {
   person_.check_manager();
   person_.check_not_outsourcer();
-  auto l_sql  = get_sqlite_database();
-  auto l_json = in_handle->get_json();
+  auto l_sql      = get_sqlite_database();
+  auto l_json     = in_handle->get_json();
 
   auto l_category = std::make_shared<sd2::ai_category>();
   l_json.get_to(*l_category);
@@ -72,13 +69,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category_instance, de
   auto l_sql = get_sqlite_database();
   using namespace orm;
 
-  // 删除类别时, 将该类别下所有实体的 ai_category_id 置空
-  co_await l_sql.update(
-      orm::update(l_sql)
-          .from<sd2::ai_generate_entity>()
-          .set(c(&sd2::ai_generate_entity::ai_category_id_) = uuid{})
-          .where(c(&sd2::ai_generate_entity::ai_category_id_) == category_id_)
-  );
   co_await l_sql.remove<sd2::ai_category>(category_id_);
 
   co_return in_handle->make_msg(nlohmann::json{{"category_id", category_id_}});
