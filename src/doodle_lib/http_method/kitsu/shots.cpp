@@ -26,7 +26,6 @@
 #include <map>
 #include <range/v3/view/unique.hpp>
 #include <spdlog/spdlog.h>
-
 #include <vector>
 
 namespace doodle::http {
@@ -182,7 +181,7 @@ struct shots_with_tasks_result {
   }
 };
 
-auto make_shots_with_tasks_result(const person& in_person, const boost::urls::url& in_url) {
+auto make_shots_with_tasks_result(const person& in_person, const boost::urls::url& in_url, const uuid& in_shot_id_) {
   uuid l_project_id_;
   std::vector<uuid> l_episode_id_;
   std::vector<uuid> l_sequence_id_;
@@ -205,7 +204,7 @@ auto make_shots_with_tasks_result(const person& in_person, const boost::urls::ur
 
   // 构建动态查询条件
   using namespace doodle::orm;
-  auto l_sql = get_sqlite_database();
+  auto l_sql           = get_sqlite_database();
   auto sequence        = alias<entity>("sequence");
   auto episode         = alias<entity>("episode");
 
@@ -227,6 +226,7 @@ auto make_shots_with_tasks_result(const person& in_person, const boost::urls::ur
   if (!l_sequence_id_.empty()) l_dynamic_query.add_condition(c(sequence->*&entity::uuid_id_).in(l_sequence_id_));
   if (!l_person_id_.empty()) l_dynamic_query.add_condition(c(&assignees_table::person_id_).in(l_person_id_));
   if (!l_entity_type_id_.empty()) l_dynamic_query.add_condition(c(&entity::entity_type_id_).in(l_entity_type_id_));
+  if (!in_shot_id_.is_nil()) l_dynamic_query.add_condition(c(&entity::uuid_id_) == in_shot_id_);
 
   std::vector<shots_with_tasks_result> l_ret{};
   std::map<uuid, std::size_t> l_shots_ids{};
@@ -234,7 +234,7 @@ auto make_shots_with_tasks_result(const person& in_person, const boost::urls::ur
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person.uuid_id_, l_project_id_, l_entity_type_id_);
 
   // 迁移到 doodle::orm 的查询
-  auto l_result                 = doodle::orm::select(l_sql)
+  auto l_result = doodle::orm::select(l_sql)
                       .columns(
                           object<entity>(), object<task>(), episode->*&entity::uuid_id_, episode->*&entity::name_,
                           sequence->*&entity::uuid_id_, sequence->*&entity::name_, &assignees_table::person_id_,
@@ -255,8 +255,9 @@ auto make_shots_with_tasks_result(const person& in_person, const boost::urls::ur
                       .offset(l_offset_);
 
   // 处理结果：将扁平结构转换为分组的结果
-  for (auto&& [l_entity, l_task, l_episode_id, l_episode_name, l_sequence_id, l_sequence_name, l_assignee_id, l_project_id, l_project_name, l_shot_extend] :
-       l_result()) {
+  for (
+      auto&& [l_entity, l_task, l_episode_id, l_episode_name, l_sequence_id, l_sequence_name, l_assignee_id, l_project_id, l_project_name, l_shot_extend] :
+      l_result()) {
     if (!l_shots_ids.contains(l_entity.uuid_id_)) {
       l_ret.emplace_back(
           shots_with_tasks_result{
@@ -281,7 +282,7 @@ auto make_shots_with_tasks_result(const person& in_person, const boost::urls::ur
 boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_tasks::get(session_data_ptr in_handle) {
   auto l_sql = get_sqlite_database();
 
-  co_return in_handle->make_msg(nlohmann::json{} = make_shots_with_tasks_result(person_.person_, in_handle->url_));
+  co_return in_handle->make_msg(nlohmann::json{} = make_shots_with_tasks_result(person_.person_, in_handle->url_, {}));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots::get(session_data_ptr in_handle) {
   co_return in_handle->make_msg_204();
@@ -305,7 +306,7 @@ struct data_project_shots_args {
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots::post(session_data_ptr in_handle) {
   auto l_args = in_handle->get_json().get<data_project_shots_args>();
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 创建/获取镜头 name {} sequence_id {}",
@@ -367,18 +368,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_shot::get(session_data_ptr in_handle) {
   auto l_sql = get_sqlite_database();
-  auto l_ent  = l_sql.get_by_uuid<entity>(id_);
-  auto l_ext  = l_sql.get_entity_shot_extend(id_);
-  nlohmann::json l_result;
-  l_result = l_ent;
-  l_result.update(l_ext);
-
-  co_return in_handle->make_msg(l_result);
+  //
+  auto l_ret = make_shots_with_tasks_result(person_.person_, {}, id_);
+  co_return in_handle->make_msg(nlohmann::json{} = l_ret.empty() ? nlohmann::json{} : l_ret.front());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_task_types_shots_create_tasks::post(
     session_data_ptr in_handle
 ) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql       = get_sqlite_database();
   auto l_task_type = l_sql.get_by_uuid<task_type>(task_type_id_);
   std::vector<entity> l_shots;
   auto l_shot_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot}).uuid_id_;
@@ -444,7 +441,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   co_return in_handle->make_msg(nlohmann::json{} = l_results);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_(session_data_ptr in_handle) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_shot = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   if (!(
           (l_shot->created_by_ == person_.person_.uuid_id_ &&
@@ -501,7 +498,7 @@ struct actions_projects_shots_import_frame_range_args {
 };
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_import_frame_range, post) {
   auto l_args = in_handle->get_json().get<actions_projects_shots_import_frame_range_args>();
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 导入镜头帧范围", person_.person_.email_,
@@ -525,12 +522,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_import_frame_range, po
   for (auto&& l_shot : l_args.shots_)
     l_shot_name_to_frame_range.emplace(l_shot.name_.substr(l_project.code_.size() + 1), &l_shot);
 
-  auto sequence = alias<entity>("sequence");
-  auto l_list   = select(l_sql)
-                    .columns(sequence->*&entity::name_, &entity::name_, &entity::uuid_id_)
-                    .from<entity>()
-                    .join(sequence, &entity::parent_id_, sequence->*&entity::uuid_id_)
-                    .where(c(&entity::project_id_) == project_id_);
+  auto sequence            = alias<entity>("sequence");
+  auto l_list              = select(l_sql)
+                                 .columns(sequence->*&entity::name_, &entity::name_, &entity::uuid_id_)
+                                 .from<entity>()
+                                 .join(sequence, &entity::parent_id_, sequence->*&entity::uuid_id_)
+                                 .where(c(&entity::project_id_) == project_id_);
 
   auto l_shot_ext_instasll = std::make_shared<std::vector<entity_shot_extend>>();
   auto l_shot_ext_update   = std::make_shared<std::vector<entity_shot_extend>>();
