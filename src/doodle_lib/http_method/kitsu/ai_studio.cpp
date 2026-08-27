@@ -81,31 +81,37 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, delete_) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, post) {
   person_.check_producer();
-  auto l_sql              = get_sqlite_database();
-  auto l_person           = std::make_shared<person>(l_sql.get_by_uuid<person>(person_id_));
-
-  l_person->ai_studio_id_ = ai_studio_id_;
-  co_await l_sql.update(l_person);
+  auto l_sql = get_sqlite_database();
+  {
+    using namespace orm;
+    auto l_update = update(l_sql)
+                        .from<person>()
+                        .set(c(&person::ai_studio_id_) = ai_studio_id_)
+                        .where(c(&person::uuid_id_) == person_id_);
+    co_await l_sql.run_sql(l_update);
+  }
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成将人员 {} 加入 AI 工作室 {}", person_.person_.email_,
       person_.person_.get_full_name(), person_id_, ai_studio_id_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_person);
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<person>(person_id_));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, delete_) {
   person_.check_producer();
-  auto l_sql    = get_sqlite_database();
-  auto l_person = std::make_shared<person>(l_sql.get_by_uuid<person>(person_id_));
+  auto l_sql = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 将人员 {} 从 AI 工作室 {} 移除", person_.person_.email_,
       person_.person_.get_full_name(), person_id_, ai_studio_id_
   );
-
-  l_person->ai_studio_id_ = {};
-  co_await l_sql.update(l_person);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_person);
+  {
+    using namespace orm;
+    auto l_update =
+        update(l_sql).from<person>().set(c(&person::ai_studio_id_) = uuid{}).where(c(&person::uuid_id_) == person_id_);
+    co_await l_sql.run_sql(l_update);
+  }
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<person>(person_id_));
 }
 }  // namespace doodle::http

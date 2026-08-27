@@ -115,6 +115,51 @@ struct DOODLE_CORE_API person {
   std::int64_t remaining_completion_tokens_{doodle_config::g_max_completion_tokens};  // 当周任务消耗的最大token数量
   uuid ai_studio_id_;                                                                 // 关联的AI Studio ID
 
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"first_name", &person::first_name_},                //
+        std::pair{"last_name", &person::last_name_},                  //
+        std::pair{"email", &person::email_},                          //
+        std::pair{"phone", &person::phone_},                          //
+        std::pair{"contract_type", &person::contract_type_},          //
+        std::pair{"active", &person::active_},                        //
+        std::pair{"archived", &person::archived_},                    //
+        std::pair{"last_presence", &person::last_presence_},          //
+        std::pair{"desktop_login", &person::desktop_login_},          //
+        std::pair{"login_failed_attemps", &person::login_failed_attemps_},  //
+        std::pair{"last_login_failed", &person::last_login_failed_},  //
+        std::pair{"totp_enabled", &person::totp_enabled_},            //
+        std::pair{"totp_secret", &person::totp_secret_},              //
+        std::pair{"email_otp_enabled", &person::email_otp_enabled_},  //
+        std::pair{"email_otp_secret", &person::email_otp_secret_},    //
+        std::pair{"fido_enabled", &person::fido_enabled_},            //
+        std::pair{"fido_credentials", &person::fido_credentials_},    //
+        std::pair{"otp_recovery_codes", &person::otp_recovery_codes_},  //
+        std::pair{"preferred_two_factor_authentication", &person::preferred_two_factor_authentication_},  //
+        std::pair{"shotgun_id", &person::shotgun_id_},                //
+        std::pair{"timezone", &person::timezone_},                    //
+        std::pair{"locale", &person::locale_},                        //
+        std::pair{"data", &person::data_},                            //
+        std::pair{"role", &person::role_},                            //
+        std::pair{"has_avatar", &person::has_avatar_},                //
+        std::pair{"notifications_enabled", &person::notifications_enabled_},  //
+        std::pair{"notifications_slack_enabled", &person::notifications_slack_enabled_},  //
+        std::pair{"notifications_slack_userid", &person::notifications_slack_userid_},  //
+        std::pair{"notifications_mattermost_enabled", &person::notifications_mattermost_enabled_},  //
+        std::pair{"notifications_mattermost_userid", &person::notifications_mattermost_userid_},  //
+        std::pair{"notifications_discord_enabled", &person::notifications_discord_enabled_},  //
+        std::pair{"notifications_discord_userid", &person::notifications_discord_userid_},  //
+        std::pair{"is_bot", &person::is_bot_},                        //
+        std::pair{"expiration_date", &person::expiration_date_},      //
+        std::pair{"studio_id", &person::studio_id_},                  //
+        std::pair{"is_generated_from_ldap", &person::is_generated_from_ldap_},  //
+        std::pair{"ldap_uid", &person::ldap_uid_},                    //
+        std::pair{"ai_studio_id", &person::ai_studio_id_}             //
+        // departments_ 经由 person_department_link 表单独维护, 不在此列
+        // remaining_completion_tokens_ 不允许通过接口修改
+    };
+  }
+
   std::string get_full_name() const {
     return !first_name_.empty() && !last_name_.empty() ? first_name_ + ' ' + last_name_ : first_name_ + last_name_;
   };

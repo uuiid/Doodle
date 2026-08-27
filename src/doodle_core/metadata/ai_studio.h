@@ -22,7 +22,6 @@ struct DOODLE_CORE_API ai_studio {
         std::pair{"archived", &ai_studio::archived_},      //
         std::pair{"app_key", &ai_studio::app_key_},        //
         std::pair{"app_secret", &ai_studio::app_secret_},  //
-        std::pair{"archived", &ai_studio::archived_}       //
     };
   }
 

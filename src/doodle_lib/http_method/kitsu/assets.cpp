@@ -490,8 +490,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, get) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, delete_) {
   auto l_sql = get_sqlite_database();
-  auto l_ass = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
-  person_.check_delete_access(l_ass->project_id_);
+  auto l_ass = l_sql.get_by_uuid<entity>(id_);
+  person_.check_delete_access(l_ass.project_id_);
   bool l_force{};
   for (auto&& l_i : in_handle->url_.params()) {
     if (l_i.key == "force") l_force = true;
@@ -499,26 +499,23 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, delete_) {
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 删除实体 {}", person_.person_.email_, person_.person_.get_full_name(),
-      l_ass->uuid_id_
+      id_
   );
   if (!l_force) {
-    l_ass->canceled_ = true;
-    co_await l_sql.update(l_ass);
-    co_return in_handle->make_msg(nlohmann::json{} = *l_ass);
+    l_ass.canceled_ = true;
+    using namespace orm;
+    auto l_update = update(l_sql).from<entity>().set(c(&entity::canceled_) = true).where(c(&entity::uuid_id_) == id_);
+    co_await l_sql.run_sql(l_update);
+    co_return in_handle->make_msg(nlohmann::json{} = l_ass);
   }
-  auto l_task     = l_sql.get_tasks_for_entity(l_ass->uuid_id_);
+  auto l_task     = l_sql.get_tasks_for_entity(l_ass.uuid_id_);
   auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
-  co_await l_sql.remove<task>(l_task_ids);
-  co_await l_sql.remove<entity>(l_ass->uuid_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ass);
+  co_await l_sql.remove<entity>(l_ass.uuid_id_);
+  co_return in_handle->make_msg(nlohmann::json{} = l_ass);
 }
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shared_used, get) {
-  co_return in_handle->make_msg(nlohmann::json::array());
-}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shared_used, get) { co_return in_handle->make_msg(nlohmann::json::array()); }
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets_cast_in, get) {
-  co_return in_handle->make_msg(nlohmann::json::array());
-}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets_cast_in, get) { co_return in_handle->make_msg(nlohmann::json::array()); }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets, get) {
   auto l_sql = get_sqlite_database();
   bool l_is_shared{};
