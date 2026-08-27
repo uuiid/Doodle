@@ -165,7 +165,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
     };
     l_attendance_install_list->emplace_back(std::move(l_attendance));
   }
-  if (l_modify_user) co_await l_sql.update(std::make_shared<person>(l_user));
+  if (l_modify_user) {
+    using namespace doodle::orm;
+    auto l_update_user = update(l_sql)
+                             .from<person>()
+                             .set(c(&person::dingding_id_) = l_user.dingding_id_)
+                             .where(c(&person::uuid_id_) == l_user.uuid_id_);
+    co_await l_sql.run_sql(l_update_user);
+  }
 
   if (!l_attends.empty()) {
     std::vector<std::int64_t> l_rem{};
@@ -232,16 +239,20 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_id_custom, post) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, put) {
   if (id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
-  auto l_data = std::make_shared<attendance_helper::database_t>(
-      get_sqlite_database().get_by_uuid<attendance_helper::database_t>(id_)
-  );
-  in_handle->get_json().get_to(*l_data);
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
-  const chrono::year_month_day l_date{l_data->create_date_};
-  auto l_sql = get_sqlite_database();
-  co_await l_sql.update(l_data);
-  co_await recomputing_time(l_data->person_id_, chrono::year_month{l_date.year(), l_date.month()});
-  co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
+  using namespace orm;
+  auto l_update = update(l_sql)
+                      .from<attendance_helper::database_t>()
+                      .set_from_ref<attendance_helper::database_t>(l_json)
+                      .where(c(&attendance_helper::database_t::uuid_id_) == id_);
+  co_await l_sql.run_sql(l_update);
+
+  auto l_data = l_sql.get_by_uuid<attendance_helper::database_t>(id_);
+  const chrono::year_month_day l_date{l_data.create_date_};
+  co_await recomputing_time(l_data.person_id_, chrono::year_month{l_date.year(), l_date.month()});
+  co_return in_handle->make_msg((nlohmann::json{} = l_data).dump());
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, delete_) {
   auto l_sql  = get_sqlite_database();
