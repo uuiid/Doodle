@@ -2,19 +2,19 @@
 // Created by TD on 25-7-1.
 //
 
-#include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/core/bcrypt/bcrypt.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
-#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
+#include <doodle_lib/core/bcrypt/bcrypt.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/seed_email.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/io_context.hpp>
@@ -140,10 +140,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, put) {
   if (l_token.empty()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "无效的重置令牌。"});
   if (l_arg.password != l_arg.password2)
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "Passwords do not match."});
-  auto l_sql = get_sqlite_database();
-  auto l_person       = std::make_shared<person>(l_sql.get_person_for_email(l_arg.email));
-  l_person->password_ = bcrypt::generateHash(l_arg.password);
-  co_await l_sql.update(l_person);
+  auto l_sql    = get_sqlite_database();
+  auto l_person = l_sql.get_person_for_email(l_arg.email);
+  {
+    using namespace orm;
+    auto l_update = update(l_sql)
+                        .from<person>()
+                        .set(c(&person::password_) == bcrypt::generateHash(l_arg.password))
+                        .where(c(&person::uuid_id_) == l_person.uuid_id_);
+    co_await l_sql.run_sql(l_update);
+  }
   co_return in_handle->make_msg(nlohmann::json{{"success", "Password changed"}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_logout, get) {
