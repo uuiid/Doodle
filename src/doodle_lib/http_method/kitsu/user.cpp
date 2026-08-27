@@ -259,7 +259,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person_instance, put) {
     l_person->dingding_id_ = co_await l_dingding_client->get_user_by_mobile(l_person->phone_);
   }
 
-  co_await l_sql.update(l_person);
+  using namespace orm;
+  auto l_update = update(l_sql).from<person>().set_from_ref<person>(l_json).where(c(&person::uuid_id_) == id_);
+  if (l_person->dingding_id_ != l_old_person.dingding_id_)
+    l_update.set(c(&person::dingding_id_) = l_person->dingding_id_);
+  co_await l_sql.run_sql(l_update);
   if (l_old_person.departments_ != l_person->departments_) {
     using namespace orm;
     co_await l_sql.remove(
@@ -306,7 +310,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   const auto& l_password_2 = l_json.at("password_2").get_ref<const std::string&>();
   DOODLE_CHICK(l_password == l_password_2, "两次输入密码不一致");
   l_person->password_ = bcrypt::generateHash(l_password);
-  co_await l_sql.update(l_person);
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql)
+          .from<person>()
+          .set(c(&person::password_) = l_person->password_)
+          .where(c(&person::uuid_id_) == person_id_)
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_change_password, post) {
@@ -319,7 +329,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_change_password, post) {
   DOODLE_CHICK(bcrypt::validatePassword(l_old_password, l_person->password_), "旧密码错误");
   DOODLE_CHICK(l_password == l_password_2, "两次输入密码不一致");
   l_person->password_ = bcrypt::generateHash(l_password);
-  co_await l_sql.update(l_person);
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql)
+          .from<person>()
+          .set(c(&person::password_) = l_person->password_)
+          .where(c(&person::uuid_id_) == l_person->uuid_id_)
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 }  // namespace doodle::http
