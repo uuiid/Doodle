@@ -379,17 +379,22 @@ struct run_actions_playlists_preview_files_create_review {
   }
 
   boost::asio::awaitable<void> update_preview_file_and_create_comment(std::string in_error_msg) {
-    auto l_sql                               = get_sqlite_database();
-    data_ptr_->review_preview_file_->status_ = preview_file_statuses::broken;
-    co_await l_sql.update(data_ptr_->review_preview_file_);
+    auto l_sql = get_sqlite_database();
+    using namespace orm;
+    co_await l_sql.run_sql(update(l_sql)
+                               .from<preview_file>()
+                               .set(c(&preview_file::status_) = preview_file_statuses::broken)
+                               .where(c(&preview_file::uuid_id_) == data_ptr_->review_preview_file_->uuid_id_));
 
     if (auto l_comm = l_sql.get_last_comment(data_ptr_->review_preview_file_->task_id_); l_comm) {
-      auto l_comm_ptr      = std::make_shared<comment>(*l_comm);
-      l_comm_ptr->uuid_id_ = {};
-      l_comm_ptr->id_      = {};
-      l_comm_ptr->text_ += fmt::format("生成评审视频失败 {}", in_error_msg);
-      l_comm_ptr->person_id_ = data_ptr_->review_preview_file_->person_id_;
-      co_await l_sql.update(l_comm_ptr);
+      auto l_update = update(l_sql)
+                          .from<comment>()
+                          .set(
+                              c(&comment::text_)      = fmt::format("视频合成失败 {}", in_error_msg),
+                              c(&comment::person_id_) = l_comm->person_id_
+                          )
+                          .where(c(&comment::uuid_id_) == l_comm->uuid_id_);
+      co_await l_sql.run_sql(l_update);
     }
   }
 };
