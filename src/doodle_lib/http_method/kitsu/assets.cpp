@@ -89,7 +89,7 @@ struct projects_assets_new_post_data {
   }
 };
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_new::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(projects_assets_new, post) {
   projects_assets_new_post_data l_data{};
   l_data.project_id = project_id_;
   person_.check_project_manager(l_data.project_id);
@@ -468,10 +468,10 @@ auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_ur
 
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_assets_with_tasks::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets_with_tasks, get) {
   co_return in_handle->make_msg(nlohmann::json{} = make_with_tasks_sql_result(person_.person_, in_handle->url_, {}));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, get) {
   auto l_sql = get_sqlite_database();
   auto l_t   = make_with_tasks_sql_result(person_.person_, in_handle->url_, id_);
   if (l_t.empty())
@@ -488,7 +488,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get
   l_json.update(l_t[0]);
   co_return in_handle->make_msg(l_json);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> asset_details::delete_(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, delete_) {
   auto l_sql = get_sqlite_database();
   auto l_ass = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   person_.check_delete_access(l_ass->project_id_);
@@ -512,14 +512,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details::del
   co_await l_sql.remove<entity>(l_ass->uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = *l_ass);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> shared_used::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shared_used, get) {
   co_return in_handle->make_msg(nlohmann::json::array());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_assets_cast_in::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets_cast_in, get) {
   co_return in_handle->make_msg(nlohmann::json::array());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_assets::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets, get) {
   auto l_sql = get_sqlite_database();
   bool l_is_shared{};
   for (auto&& [key, value, has] : in_handle->url_.params())

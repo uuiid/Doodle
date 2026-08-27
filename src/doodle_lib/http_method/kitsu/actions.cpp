@@ -46,9 +46,7 @@ std::vector<std::int64_t> get_task_assignees_ids_for_task(uuid in_task_id) {
 }
 
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_clear_assignation::put(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_clear_assignation, put) {
   auto l_args = in_handle->get_json().get<actions_tasks_clear_assignation_put_args>();
   auto l_sql = get_sqlite_database();
   if (l_args.task_id_.empty()) co_return in_handle->make_msg(nlohmann::json::array());

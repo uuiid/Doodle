@@ -192,7 +192,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
   l_json = l_attendance_list;
   co_return in_handle->make_msg(l_json.dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_get, get) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   std::vector<chrono::local_days> l_date_list{};
   auto l_end = chrono::local_days{chrono::year_month_day{year_month_ / chrono::last}};
@@ -211,9 +211,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   l_json = l_list;
   co_return in_handle->make_msg(l_json.dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_id_custom::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_id_custom, post) {
   if (id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
   auto l_data = std::make_shared<attendance_helper::database_t>(
@@ -231,9 +229,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom::put(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, put) {
   if (id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
   auto l_data = std::make_shared<attendance_helper::database_t>(
@@ -247,9 +243,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   co_await recomputing_time(l_data->person_id_, chrono::year_month{l_date.year(), l_date.month()});
   co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom::delete_(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, delete_) {
   auto l_sql  = get_sqlite_database();
   auto l_data = l_sql.get_by_uuid<attendance_helper::database_t>(id_);
   if (l_data.person_id_ != person_.person_.uuid_id_) person_.check_supervisor();
