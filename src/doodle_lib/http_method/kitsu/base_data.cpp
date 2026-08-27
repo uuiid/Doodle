@@ -248,21 +248,22 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status, post) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status_instance, put) {
   person_.check_admin();
-  auto l_sql    = get_sqlite_database();
-  auto l_status = std::make_shared<task_status>(l_sql.get_by_uuid<task_status>(id_));
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新任务状态 task_status_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_status->name_
+  using namespace orm;
+  auto l_update = update(l_sql).from<task_status>().set_from_ref<task_status>(l_json).where(
+      c(&task_status::uuid_id_) == id_
   );
-  in_handle->get_json().get_to(*l_status);
-  co_await l_sql.update(l_status);
+  co_await l_sql.run_sql(l_update);
+
+  auto l_status = l_sql.get_by_uuid<task_status>(id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新任务状态 task_status_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_status->name_
+      person_.person_.get_full_name(), id_, l_status.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_status);
+  co_return in_handle->make_msg(nlohmann::json{} = l_status);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_backup, post) {
   person_.check_admin();

@@ -26,6 +26,25 @@ struct DOODLE_CORE_API task_status {
   std::optional<std::int32_t> shotgun_id_;
   bool for_concept_;
 
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"name", &task_status::name_},                             //
+        std::pair{"archived", &task_status::archived_},                     //
+        std::pair{"short_name", &task_status::short_name_},                 //
+        std::pair{"description", &task_status::description_},               //
+        std::pair{"color", &task_status::color_},                           //
+        std::pair{"priority", &task_status::priority_},                     //
+        std::pair{"is_done", &task_status::is_done_},                       //
+        std::pair{"is_artist_allowed", &task_status::is_artist_allowed_},   //
+        std::pair{"is_client_allowed", &task_status::is_client_allowed_},   //
+        std::pair{"is_retake", &task_status::is_retake_},                   //
+        std::pair{"is_feedback_request", &task_status::is_feedback_request_},  //
+        std::pair{"is_default", &task_status::is_default_},                 //
+        std::pair{"shotgun_id", &task_status::shotgun_id_},                 //
+        std::pair{"for_concept", &task_status::for_concept_},               //
+    };
+  }
+
   static const uuid& get_completed();
   // nearly completed
   static const uuid& get_nearly_completed();
