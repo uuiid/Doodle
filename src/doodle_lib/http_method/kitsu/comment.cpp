@@ -72,7 +72,7 @@ boost::asio::awaitable<create_comment_result> create_comment(
 
   if (!in_task_id.is_nil()) in_comment->object_id_ = in_task_id;
 
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_task = in_task ? in_task : std::make_shared<task>(l_sql.get_by_uuid<task>(in_comment->object_id_));
 
   if (in_comment->task_status_id_.is_nil()) in_comment->task_status_id_ = l_task->task_status_id_;
@@ -124,9 +124,16 @@ boost::asio::awaitable<create_comment_result> create_comment(
     l_status_changed           = l_task->task_status_id_ != in_comment->task_status_id_;
     l_task->last_comment_date_ = in_comment->created_at_;
     l_task->task_status_id_    = in_comment->task_status_id_;
-    if (l_task_status.is_retake_) ++l_task->retake_count_;
-    if (l_task_status.is_feedback_request_) l_task->end_date_ = chrono::system_clock::now();
-    co_await l_sql.update(l_task);
+
+    using namespace orm;
+    auto l_update = update(l_sql)
+                        .from<task>()
+                        .set(c(&task::last_comment_date_) = l_task->last_comment_date_)
+                        .set(c(&task::task_status_id_) = l_task->task_status_id_)
+                        .where(c(&task::uuid_id_) == l_task->uuid_id_);
+    if (l_task_status.is_retake_) l_update.set(c(&task::retake_count_) = c(&task::retake_count_) + 1);
+    if (l_task_status.is_feedback_request_) l_update.set(c(&task::end_date_) = chrono::system_clock::now());
+    co_await l_sql.run_sql(l_update);
 
     socket_io::broadcast(
         socket_io::task_update_broadcast_t{.task_id_ = in_comment->object_id_, .project_id_ = l_task->project_id_}
@@ -253,16 +260,13 @@ struct actions_tasks_modify_date_comment_time_arg {
 };
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_modify_date_comment, post) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始修改任务 {} 时间并创建评论", person_.person_.email_,
       person_.person_.get_full_name(), id_
   );
-
-  if (!(l_task->start_date_ && l_task->due_date_))
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "任务没有设置时间");
 
   auto l_comment = std::make_shared<comment>();
   auto l_json    = in_handle->get_json();
@@ -276,7 +280,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_modify_date_comment, post) {
 
   l_task->start_date_ = l_arg.start_date_;
   l_task->due_date_   = l_arg.due_date_;
-  co_await l_sql.update(l_task);
+  using namespace orm;
+  auto l_update = update(l_sql)
+                      .from<task>()
+                      .set(c(&task::start_date_) = l_task->start_date_)
+                      .set(c(&task::due_date_) = l_task->due_date_)
+                      .where(c(&task::uuid_id_) == l_task->uuid_id_);
+  co_await l_sql.run_sql(l_update);
   auto l_result = co_await create_comment(l_comment, &person_, id_, {}, l_task);
   default_logger_raw()->info("由 {} 创建评论 {}, 修改任务时间", person_.person_.email_, l_comment->uuid_id_);
 
@@ -343,7 +353,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks_comments_ack, post) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_comment, get) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql     = get_sqlite_database();
   auto l_comment = l_sql.get_by_uuid<comment>(id_);
 
   nlohmann::json l_json{};
@@ -353,7 +363,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_comment, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_comment, delete_) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(task_id_));
   person_.check_delete_access(l_task->project_id_);
   SPDLOG_LOGGER_WARN(
@@ -375,7 +385,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_comment, delete_) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_comment, put) {
   auto l_json    = in_handle->get_json();
-  auto l_sql = get_sqlite_database();
+  auto l_sql     = get_sqlite_database();
   auto l_comment = std::make_shared<comment>(l_sql.get_by_uuid<comment>(id_));
 
   SPDLOG_LOGGER_WARN(
