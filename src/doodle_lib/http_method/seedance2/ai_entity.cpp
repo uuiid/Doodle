@@ -72,15 +72,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_insta
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_instance, put) {
   person_.check_subproject_access(subproject_id_);
   person_.check_not_outsourcer();
-  auto l_sql    = get_sqlite_database();
-  auto l_json   = in_handle->get_json();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+  using namespace orm;
+  auto l_update = update(l_sql).from<sd2::ai_generate_entity>().set_from_ref<sd2::ai_generate_entity>(l_json).where(
+      c(&sd2::ai_generate_entity::uuid_id_) == entity_id_
+  );
+  co_await l_sql.run_sql(l_update);
 
-  auto l_entity = std::make_shared<sd2::ai_generate_entity>(l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_));
-  l_json.get_to(*l_entity);
-
-  co_await l_sql.update(l_entity);
-
-  co_return in_handle->make_msg(nlohmann::json{} = *l_entity);
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_instance, delete_) {
