@@ -95,6 +95,11 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
   template <typename T>
   update_t set_from_ref(const nlohmann::json& in_json) {
     from<T>();
+    if constexpr (has_updated_at<T>) {
+      column_operations l_col{&T::updated_at_};
+      l_col = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};;
+      this->set(std::move(l_col));
+    }
     return set_from_ref_impl(
         in_json, T::put_property_list(), std::make_index_sequence<std::tuple_size_v<decltype(T::put_property_list())>>{}
     );
