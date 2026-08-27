@@ -26,7 +26,6 @@
 #include <boost/exception/diagnostic_information.hpp>
 
 #include "kitsu_reg_url.h"
-#include "sqlite_orm/sqlite_select_data.h"
 #include <algorithm>
 #include <filesystem>
 #include <long_task/image_to_move.h>
@@ -289,7 +288,15 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
       g_io_context(),
       [in_preview_file]() -> boost::asio::awaitable<void> {
         auto l_sql = get_sqlite_database();
-        co_await l_sql.update(in_preview_file);
+        using namespace orm;
+        co_await l_sql.run_sql(
+            update(l_sql)
+                .from<preview_file>()
+                .set(c(&preview_file::file_size_) = in_preview_file->file_size_)
+                .set(c(&preview_file::status_) = in_preview_file->status_)
+                .set(c(&preview_file::updated_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()})
+                .where(c(&preview_file::uuid_id_) == in_preview_file->uuid_id_)
+        );
       },
       boost::asio::detached
   );
@@ -386,19 +393,42 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
   } else
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "不支持的预览文件格式"});
 
-  l_preview_file->file_size_ = FSys::exists(l_file) ? FSys::file_size(l_file) : 0;
-  co_await l_sql.update(l_preview_file);
+  l_preview_file->file_size_  = FSys::exists(l_file) ? FSys::file_size(l_file) : 0;
+  l_preview_file->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql)
+          .from<preview_file>()
+          .set(c(&preview_file::extension_) = l_preview_file->extension_)
+          .set(c(&preview_file::original_name_) = l_preview_file->original_name_)
+          .set(c(&preview_file::width_) = l_preview_file->width_)
+          .set(c(&preview_file::height_) = l_preview_file->height_)
+          .set(c(&preview_file::duration_) = l_preview_file->duration_)
+          .set(c(&preview_file::status_) = l_preview_file->status_)
+          .set(c(&preview_file::file_size_) = l_preview_file->file_size_)
+          .set(c(&preview_file::updated_at_) = l_preview_file->updated_at_)
+          .where(c(&preview_file::uuid_id_) == l_preview_file->uuid_id_)
+  );
 
   // 更新task
   if (l_preview_file->position_ == 1) {
-    auto l_task                   = std::make_shared<task>(l_sql.get_by_uuid<task>(l_preview_file->task_id_));
-    l_task->last_preview_file_id_ = l_preview_file->uuid_id_;
-    co_await l_sql.update(l_task);
-    if (auto l_prj = l_sql.get_by_uuid<project>(l_task->project_id_); l_prj.is_set_preview_automated_) {
-      auto l_entity              = std::make_shared<entity>(l_sql.get_by_uuid<entity>(l_task->entity_id_));
-      l_entity->preview_file_id_ = l_preview_file->uuid_id_;
+    auto l_task = l_sql.get_by_uuid<task>(l_preview_file->task_id_);
+    co_await l_sql.run_sql(
+        update(l_sql)
+            .from<task>()
+            .set(c(&task::last_preview_file_id_) = l_preview_file->uuid_id_)
+            .set(c(&task::updated_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()})
+            .where(c(&task::uuid_id_) == l_task.uuid_id_)
+    );
+    if (auto l_prj = l_sql.get_by_uuid<project>(l_task.project_id_); l_prj.is_set_preview_automated_) {
+      auto l_entity = l_sql.get_by_uuid<entity>(l_task.entity_id_);
+      co_await l_sql.run_sql(
+          update(l_sql)
+              .from<entity>()
+              .set(c(&entity::preview_file_id_) = l_preview_file->uuid_id_)
+              .where(c(&entity::uuid_id_) == l_entity.uuid_id_)
+      );
       // 发送事件 "preview-file:set-main"
-      co_await l_sql.update(l_entity);
     }
   }
 
@@ -489,7 +519,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_set_main_preview, put) 
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "mp4文件不支持设置为主预览文件"});
   } else {
     l_ent->preview_file_id_ = l_preview_file.uuid_id_;
-    co_await l_sql.update(l_ent);
+    using namespace orm;
+    co_await l_sql.run_sql(
+        update(l_sql)
+            .from<entity>()
+            .set(c(&entity::preview_file_id_) = l_preview_file.uuid_id_)
+            .where(c(&entity::uuid_id_) == l_ent->uuid_id_)
+    );
     // 发送事件 "preview-file:set-main"
   }
 
