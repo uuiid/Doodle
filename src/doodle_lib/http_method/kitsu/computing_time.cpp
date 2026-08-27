@@ -819,25 +819,33 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_patch, patch) {
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, l_err);
     }
   } else if (l_comment) {
-    auto l_block_ptr_value = std::make_shared<work_xlsx_task_info_helper::database_t>();
+    using namespace orm;
     for (auto&& l_b : *l_block_ptr) {
       if (l_b.uuid_id_ == task_id_) {
-        l_b.user_remark_   = *l_comment;
-        *l_block_ptr_value = l_b;
+        l_b.user_remark_ = *l_comment;
+        co_await l_sql.run_sql(
+            update(l_sql)
+                .from<work_xlsx_task_info_helper::database_t>()
+                .set(c(&work_xlsx_task_info_helper::database_t::user_remark_) = *l_comment)
+                .where(c(&work_xlsx_task_info_helper::database_t::uuid_id_) == task_id_)
+        );
         break;
       }
     }
-    co_await l_sql.update(l_block_ptr_value);
   } else if (l_eps) {
-    auto l_block_ptr_value = std::make_shared<work_xlsx_task_info_helper::database_t>();
+    using namespace orm;
     for (auto&& l_b : *l_block_ptr) {
       if (l_b.uuid_id_ == task_id_) {
-        l_b.episode_       = *l_eps;
-        *l_block_ptr_value = l_b;
+        l_b.episode_ = *l_eps;
+        co_await l_sql.run_sql(
+            update(l_sql)
+                .from<work_xlsx_task_info_helper::database_t>()
+                .set(c(&work_xlsx_task_info_helper::database_t::episode_) = *l_eps)
+                .where(c(&work_xlsx_task_info_helper::database_t::uuid_id_) == task_id_)
+        );
         break;
       }
     }
-    co_await l_sql.update(l_block_ptr_value);
   }
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
