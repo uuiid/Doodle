@@ -341,8 +341,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_sequence_instance, delete_) {
   for (auto&& [key, value, has] : in_handle->url_.params())
     if (key == "force" && has) l_force = true;
   if (!l_force) {
-    l_sequence->canceled_ = true;
-    co_await l_sql.update(l_sequence);
+    using namespace orm;
+    co_await l_sql.run_sql(
+        update(l_sql)
+            .from<entity>()
+            .set(c(&entity::canceled_) = true)
+            .where(c(&entity::uuid_id_) == l_sequence->uuid_id_)
+    );
     socket_io::broadcast(
         socket_io::sequence_update_broadcast_t{
             .sequence_id_ = l_sequence->uuid_id_, .project_id_ = l_sequence->project_id_
