@@ -52,6 +52,16 @@ struct DOODLE_CORE_API comment {
   std::vector<uuid> department_mentions_;  // 评论提到的部门
   std::vector<uuid> acknowledgements_;
   std::vector<uuid> attachment_files_;
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"text", &comment::text_},                       //
+        std::pair{"task_status_id", &comment::task_status_id_},   //
+        std::pair{"object_id", &comment::object_id_},             //
+        std::pair{"checklist", &comment::checklist_},             //
+    };
+  }
+
   // to json
   friend void to_json(nlohmann::json& j, const comment& p) {
     j["id"]                  = p.uuid_id_;

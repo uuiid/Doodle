@@ -384,22 +384,33 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_comment, delete_) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_comment, put) {
-  auto l_json    = in_handle->get_json();
-  auto l_sql     = get_sqlite_database();
-  auto l_comment = std::make_shared<comment>(l_sql.get_by_uuid<comment>(id_));
+  auto l_json = in_handle->get_json();
+  auto l_sql  = get_sqlite_database();
+  {
+    if (l_json.contains("comment")) {
+      if (auto&& l_c = l_json.at("comment"); l_c.is_boolean())
+        l_c = l_c.get<bool>() ? "true" : "false";
+      else if (l_c.is_number())
+        l_c = fmt::to_string(l_c.get<std::double_t>());
+    }
+  }
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始更新评论 comment_id {}", person_.person_.email_,
       person_.person_.get_full_name(), id_
   );
-  l_json.get_to(*l_comment);
-  co_await l_sql.update(l_comment);
+
+  using namespace orm;
+  auto l_update = update(l_sql).from<comment>().set_from_ref<comment>(l_json).where(c(&comment::uuid_id_) == id_);
+  co_await l_sql.run_sql(l_update);
+
+  auto l_comment = l_sql.get_by_uuid<comment>(id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新评论 comment_id {}", person_.person_.email_,
       person_.person_.get_full_name(), id_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_comment);
+  co_return in_handle->make_msg(nlohmann::json{} = l_comment);
 }
 
 }  // namespace doodle::http
