@@ -152,6 +152,7 @@ class seedance2_task_run_manager {
                                                       : sd2::task_status::failed
     };
     auto l_sql = get_sqlite_database();
+    using namespace orm;
 
     switch (l_status) {
       case sd2::task_status::queued:
@@ -159,7 +160,13 @@ class seedance2_task_run_manager {
       case sd2::task_status::running: {
         if (l_task_ptr->status_ != l_status) {
           l_task_ptr->status_ = l_status;
-          co_await l_sql.update(l_task_ptr);
+          co_await l_sql.run_sql(
+              update(l_sql)
+                  .from<sd2::task>()
+                  .set(c(&sd2::task::status_) = l_task_ptr->status_)
+                  .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
+                  .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_)
+          );
         }
         socket_io::broadcast(
             socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_task_ptr->status_}
@@ -194,7 +201,16 @@ class seedance2_task_run_manager {
     l_task_ptr->status_   = l_status;
     l_task_ptr->ended_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
-    co_await l_sql.update(l_task_ptr);
+    co_await l_sql.run_sql(
+        update(l_sql)
+            .from<sd2::task>()
+            .set(c(&sd2::task::status_) = l_task_ptr->status_)
+            .set(c(&sd2::task::ended_at_) = l_task_ptr->ended_at_)
+            .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
+            .set(c(&sd2::task::completion_tokens_) = l_task_ptr->completion_tokens_)
+            .set(c(&sd2::task::preview_file_) = l_task_ptr->preview_file_)
+            .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_)
+    );
 
     if (l_status == sd2::task_status::succeeded && l_task_ptr->completion_tokens_ > 0) {
       // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
@@ -420,10 +436,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, delete_) {
   person_.check_subproject_access(subproject_id_);
-  auto l_sql        = get_sqlite_database();
-  auto l_task       = std::make_shared<sd2::task>(l_sql.get_by_uuid<sd2::task>(id_));
-  l_task->archived_ = true;
-  co_await l_sql.update(l_task);
+  auto l_sql  = get_sqlite_database();
+  auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql)
+          .from<sd2::task>()
+          .set(c(&sd2::task::archived_) = true)
+          .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_)
+  );
   co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
 }
 

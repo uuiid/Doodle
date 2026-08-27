@@ -24,7 +24,7 @@ boost::asio::awaitable<void> set_remaining_tokens_all_persons(std::int64_t in_to
   auto l_sql = get_sqlite_database();
   using namespace orm;
 
-  co_await l_sql.update(
+  co_await l_sql.run_sql(
       orm::update(l_sql)
           .from<person>()
           .set(c(&person::remaining_completion_tokens_) = in_tokens)
@@ -38,7 +38,7 @@ boost::asio::awaitable<void> set_remaining_tokens_for_person(const uuid& in_pers
   auto l_sql = get_sqlite_database();
   using namespace orm;
 
-  co_await l_sql.update(
+  co_await l_sql.run_sql(
       orm::update(l_sql)
           .from<person>()
           .set(c(&person::remaining_completion_tokens_) = in_tokens)
