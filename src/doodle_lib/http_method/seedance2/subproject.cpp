@@ -99,16 +99,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, get) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, put) {
   person_.check_manager();
-  auto l_sql        = get_sqlite_database();
-  auto l_json       = in_handle->get_json();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
-  auto l_subproject = std::make_shared<sd2::subproject>(l_sql.get_by_uuid<sd2::subproject>(id_));
-  if (l_json.contains("name")) l_json.at("name").get_to(l_subproject->name_);
-  if (l_json.contains("project_id")) l_json.at("project_id").get_to(l_subproject->project_id_);
+  using namespace orm;
+  auto l_update = update(l_sql).from<sd2::subproject>().set_from_ref<sd2::subproject>(l_json).where(
+      c(&sd2::subproject::uuid_id_) == id_
+  );
+  co_await l_sql.run_sql(l_update);
 
-  co_await l_sql.update(l_subproject);
-
-  co_return in_handle->make_msg(nlohmann::json{} = *l_subproject);
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::subproject>(id_));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, delete_) {

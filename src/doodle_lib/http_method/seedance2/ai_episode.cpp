@@ -59,16 +59,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, get
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, put) {
   person_.check_manager();
   person_.check_not_outsourcer();
-  auto l_sql     = get_sqlite_database();
-  auto l_json    = in_handle->get_json();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
-  auto l_episode = std::make_shared<sd2::ai_episode>(l_sql.get_by_uuid<sd2::ai_episode>(episode_id_));
-  if (l_json.contains("name")) l_json.at("name").get_to(l_episode->name_);
-  if (l_json.contains("description")) l_json.at("description").get_to(l_episode->description_);
+  using namespace orm;
+  auto l_update = update(l_sql).from<sd2::ai_episode>().set_from_ref<sd2::ai_episode>(l_json).where(
+      c(&sd2::ai_episode::uuid_id_) == episode_id_
+  );
+  co_await l_sql.run_sql(l_update);
 
-  co_await l_sql.update(l_episode);
-
-  co_return in_handle->make_msg(nlohmann::json{} = *l_episode);
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::ai_episode>(episode_id_));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, delete_) {
