@@ -49,6 +49,27 @@ struct DOODLE_CORE_API task {
   // 一对多(任务分配的人员)
   std::vector<uuid> assignees_{};
 
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"name", &task::name_},                             //
+        std::pair{"description", &task::description_},               //
+        std::pair{"priority", &task::priority_},                     //
+        std::pair{"difficulty", &task::difficulty_},                 //
+        std::pair{"duration", &task::duration_},                     //
+        std::pair{"estimation", &task::estimation_},                 //
+        std::pair{"completion_rate", &task::completion_rate_},       //
+        std::pair{"sort_order", &task::sort_order_},                 //
+        std::pair{"start_date", &task::start_date_},                 //
+        std::pair{"due_date", &task::due_date_},                     //
+        std::pair{"real_start_date", &task::real_start_date_},       //
+        std::pair{"end_date", &task::end_date_},                     //
+        std::pair{"done_date", &task::done_date_},                   //
+        std::pair{"last_comment_date", &task::last_comment_date_},   //
+        std::pair{"nb_assets_ready", &task::nb_assets_ready_},       //
+        std::pair{"data", &task::data_},                             //
+    };
+  }
+
   // to json
   friend void to_json(nlohmann::json& j, const task& p) {
     j["id"]                   = p.uuid_id_;

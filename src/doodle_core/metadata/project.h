@@ -84,6 +84,15 @@ struct project_task_status_link {
       person_role_type::manager, person_role_type::client, person_role_type::vendor,
   };
 
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"project_id", &project_task_status_link::project_id_},          //
+        std::pair{"task_status_id", &project_task_status_link::task_status_id_},  //
+        std::pair{"priority", &project_task_status_link::priority_},              //
+        std::pair{"roles_for_board", &project_task_status_link::roles_for_board_},//
+    };
+  }
+
   // form json
   friend void from_json(const nlohmann::json& j, project_task_status_link& p) {
     j.at("project_id").get_to(p.project_id_);

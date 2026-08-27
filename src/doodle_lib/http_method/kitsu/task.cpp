@@ -98,7 +98,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status_links, post) {
           .value_or(project_task_status_link{})
   );
   l_json.get_to(*l_task_status_link);
-  l_task_status_link->id_ == 0 ? co_await l_sql.install(l_task_status_link) : co_await l_sql.update(l_task_status_link);
+  if (l_task_status_link->id_ == 0)
+    co_await l_sql.install(l_task_status_link);
+  else {
+    using namespace orm;
+    co_await l_sql.run_sql(
+        update(l_sql)
+            .from<project_task_status_link>()
+            .set_from_ref<project_task_status_link>(l_json)
+            .where(c(&project_task_status_link::uuid_id_) == l_task_status_link->uuid_id_)
+    );
+  }
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成设置任务状态关联 id {} project_id {} task_status_id {}",
@@ -111,22 +121,26 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status_links, post) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks, put) {
   auto l_sql  = get_sqlite_database();
-  auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
-  person_.check_task_action_access(*l_task);
+  auto l_task = l_sql.get_by_uuid<task>(id_);
+  person_.check_task_action_access(l_task);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始更新任务 task_id {} project_id {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_task->uuid_id_, l_task->project_id_
+      person_.person_.get_full_name(), l_task.uuid_id_, l_task.project_id_
   );
-  in_handle->get_json().get_to(*l_task);
-  co_await l_sql.update(l_task);
+  auto l_json = in_handle->get_json();
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql).from<task>().set_from_ref<task>(l_json).where(c(&task::uuid_id_) == id_)
+  );
+  auto l_task_updated = l_sql.get_by_uuid<task>(id_);
   // l_task->assigner_id_ = l_person->person_.uuid_id_;
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新任务 task_id {} project_id {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_task->uuid_id_, l_task->project_id_
+      person_.person_.get_full_name(), l_task_updated.uuid_id_, l_task_updated.project_id_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_task);
+  co_return in_handle->make_msg(nlohmann::json{} = l_task_updated);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_assign, put) {

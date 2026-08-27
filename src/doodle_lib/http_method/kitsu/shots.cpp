@@ -459,8 +459,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_shot, delete_) {
     if (key == "force" && has) l_force = true;
   l_force = l_force || person_.is_outsourcer();  // 这里比较特殊, 外包商可以直接删除, 不需要先标记为取消
   if (!l_force) {
-    l_shot->canceled_ = true;
-    co_await l_sql.update(l_shot);
+    using namespace orm;
+    co_await l_sql.run_sql(
+        update(l_sql)
+            .from<entity>()
+            .set(c(&entity::canceled_) = true)
+            .where(c(&entity::uuid_id_) == l_shot->uuid_id_)
+    );
     socket_io::broadcast(
         socket_io::shot_update_broadcast_t{.shot_id_ = l_shot->uuid_id_, .project_id_ = l_shot->project_id_}
     );
