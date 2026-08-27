@@ -127,8 +127,8 @@ struct actions_preview_files_update_annotations_args {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_update_annotations, put) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
-  auto l_prev = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(preview_file_id_));
-  auto l_task = l_sql.get_by_uuid<task>(l_prev->task_id_);
+  auto l_prev = l_sql.get_by_uuid<preview_file>(preview_file_id_);
+  auto l_task = l_sql.get_by_uuid<task>(l_prev.task_id_);
   person_.check_in_project(l_task.project_id_);
 
   auto l_args = in_handle->get_json().get<actions_preview_files_update_annotations_args>();
@@ -136,11 +136,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_update_annotations, put
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
       "用户 {}({}) 开始更新预览批注 preview_file_id {} task_id {} project_id {} add {} update {} delete {}",
-      person_.person_.email_, person_.person_.get_full_name(), l_prev->uuid_id_, l_prev->task_id_, l_task.project_id_,
+      person_.person_.email_, person_.person_.get_full_name(), l_prev.uuid_id_, l_prev.task_id_, l_task.project_id_,
       l_args.additions_.size(), l_args.updates_.size(), l_args.deletions_.size()
   );
   std::map<std::double_t, preview_file::annotations_t> l_time_map{};
-  for (auto&& i : l_prev->get_annotations()) l_time_map[i.time_] = std::move(i);
+  for (auto&& i : l_prev.get_annotations()) l_time_map[i.time_] = std::move(i);
 
   for (auto&& i : l_args.additions_) {
     for (auto&& j : i.objects_) j.id_ = core_set::get_set().get_uuid();
@@ -171,23 +171,31 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_update_annotations, put
   }
   auto l_ru = l_time_map | ranges::views::values | ranges::to_vector;
   l_ru |= ranges::actions::remove_if([](const auto& j) { return j.objects_.empty(); });
-  l_prev->set_annotations(std::move(l_ru));
+  l_prev.set_annotations(std::move(l_ru));
+  l_prev.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
-  co_await l_sql.update(l_prev);
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql)
+          .from<preview_file>()
+          .set(c(&preview_file::annotations_) = l_prev.annotations_)
+          .set(c(&preview_file::updated_at_) = l_prev.updated_at_)
+          .where(c(&preview_file::uuid_id_) == l_prev.uuid_id_)
+  );
   socket_io::broadcast(
       socket_io::preview_file_annotation_update_broadcast_t{
-          .preview_file_id_ = l_prev->uuid_id_,
+          .preview_file_id_ = l_prev.uuid_id_,
           .person_id_       = person_.person_.uuid_id_,
-          .updated_at_      = l_prev->updated_at_,
+          .updated_at_      = l_prev.updated_at_,
           .project_id_      = l_task.project_id_
       }
   );
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
       "用户 {}({}) 完成更新预览批注 preview_file_id {} task_id {} project_id {} updated_at {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_prev->uuid_id_, l_prev->task_id_, l_task.project_id_, l_prev->updated_at_
+      person_.person_.get_full_name(), l_prev.uuid_id_, l_prev.task_id_, l_task.project_id_, l_prev.updated_at_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_prev);
+  co_return in_handle->make_msg(nlohmann::json{} = l_prev);
 }
 namespace {
 struct base_playlist_t {
@@ -732,26 +740,25 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_playlists_instance, get) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, put) {
   auto l_sql = get_sqlite_database();
-  auto l_playlist = std::make_shared<playlist>(l_sql.get_by_uuid<playlist>(id_));
-  person_.check_in_project(l_playlist->project_id_);
+  person_.check_in_project(l_sql.get_by_uuid<playlist>(id_).project_id_);
   person_.check_not_outsourcer();
   auto l_json = in_handle->get_json();
-  l_json.get_to(*l_playlist);
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始修改播放列表 playlist_id {} project_id {} name {}",
-      person_.person_.email_, person_.person_.get_full_name(), l_playlist->uuid_id_, l_playlist->project_id_,
-      l_playlist->name_
+ 
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql).from<playlist>().set_from_ref<playlist>(l_json).where(c(&playlist::uuid_id_) == id_)
   );
-  co_await l_sql.update(l_playlist);
+
+  auto l_playlist_updated = l_sql.get_by_uuid<playlist>(id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成修改播放列表 playlist_id {} project_id {} name {}",
-      person_.person_.email_, person_.person_.get_full_name(), l_playlist->uuid_id_, l_playlist->project_id_,
-      l_playlist->name_
+      person_.person_.email_, person_.person_.get_full_name(), l_playlist_updated.uuid_id_,
+      l_playlist_updated.project_id_, l_playlist_updated.name_
   );
   nlohmann::json l_ret{};
-  l_ret         = *l_playlist;
-  l_ret["shot"] = l_sql.get_playlist_shot_entity(l_playlist->uuid_id_);
+  l_ret         = l_playlist_updated;
+  l_ret["shot"] = l_sql.get_playlist_shot_entity(l_playlist_updated.uuid_id_);
   co_return in_handle->make_msg(l_ret);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, delete_) {
@@ -805,19 +812,24 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, put) {
       person_.person_.email_, person_.person_.get_full_name(), playlist_id_, shot_id_, l_playlist.name_
   );
   auto l_json          = in_handle->get_json();
-  auto l_playlist_shot = std::make_shared<playlist_shot>(l_sql.get_by_uuid<playlist_shot>(shot_id_));
-  DOODLE_CHICK(*l_playlist_shot, "Preview file is not in playlist");
-  l_json.get_to(*l_playlist_shot);
-  l_playlist_shot->playlist_id_ = playlist_id_;
-  co_await l_sql.update(l_playlist_shot);
+
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql)
+          .from<playlist_shot>()
+          .set_from_ref<playlist_shot>(l_json)
+          .where(c(&playlist_shot::uuid_id_) == shot_id_)
+  );
+
+  auto l_playlist_shot = l_sql.get_by_uuid<playlist_shot>(shot_id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
       "用户 {}({}) 完成修改播放列表镜头 playlist_id {} shot_id {} preview_id {} order_index {}", person_.person_.email_,
-      person_.person_.get_full_name(), playlist_id_, shot_id_, l_playlist_shot->preview_id_,
-      l_playlist_shot->order_index_
+      person_.person_.get_full_name(), playlist_id_, shot_id_, l_playlist_shot.preview_id_,
+      l_playlist_shot.order_index_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_playlist_shot);
+  co_return in_handle->make_msg(nlohmann::json{} = l_playlist_shot);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, delete_) {
   auto l_sql = get_sqlite_database();

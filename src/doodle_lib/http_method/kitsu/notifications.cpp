@@ -221,22 +221,28 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_user_notifications, get) {
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_user_notification, put) {
-  auto l_sql = get_sqlite_database();
-  auto l_not        = std::make_shared<notification>(l_sql.get_by_uuid<notification>(id_));
-  const bool l_read = in_handle->get_json().value<bool>("read", false);
+  auto l_sql         = get_sqlite_database();
+  const bool l_read  = in_handle->get_json().value<bool>("read", false);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始更新通知 notification_id {} read {}", person_.person_.email_,
       person_.person_.get_full_name(), id_, l_read
   );
-  l_not->read_ = l_read;
-  co_await l_sql.update(l_not);
+
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql).from<notification>().set(c(&notification::read_) = l_read).where(
+          c(&notification::uuid_id_) == id_
+      )
+  );
+
+  auto l_not = l_sql.get_by_uuid<notification>(id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新通知 notification_id {} read {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_not->read_
+      person_.person_.get_full_name(), id_, l_not.read_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_not);
+  co_return in_handle->make_msg(nlohmann::json{} = l_not);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_user_notifications_mark_all_as_read, post) {
   auto l_sql = get_sqlite_database();
