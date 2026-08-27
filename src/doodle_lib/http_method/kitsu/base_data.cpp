@@ -157,35 +157,46 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, post) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, put) {
   person_.check_admin();
-  auto l_sql            = get_sqlite_database();
-  auto l_asset_type_ptr = std::make_shared<asset_type>(l_sql.get_by_uuid<asset_type>(id_));
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新资产类型 asset_type_id {} name {} task_type_count {}",
-      person_.person_.email_, person_.person_.get_full_name(), id_, l_asset_type_ptr->name_,
-      l_asset_type_ptr->task_types_.size()
+  using namespace orm;
+  auto l_update = update(l_sql).from<asset_type>().set_from_ref<asset_type>(l_json).where(
+      c(&asset_type::uuid_id_) == id_
   );
-  in_handle->get_json().get_to(*l_asset_type_ptr);
+  co_await l_sql.run_sql(l_update);
 
-  auto l_task_type_asset_type_link_list = std::make_shared<std::vector<task_type_asset_type_link>>();
-  for (auto&& l_task_type_id : l_asset_type_ptr->task_types_) {
-    l_task_type_asset_type_link_list->emplace_back(
-        task_type_asset_type_link{
-            .asset_type_id_ = l_asset_type_ptr->uuid_id_,
-            .task_type_id_  = l_task_type_id,
-        }
+  // 重建 task_type_asset_type_link 关联
+  if (l_json.contains("task_types")) {
+    auto l_deletes = orm::delete_from(l_sql).from<task_type_asset_type_link>().where(
+        c(&task_type_asset_type_link::asset_type_id_) == id_
     );
+    std::vector<task_type_asset_type_link> l_task_type_asset_type_link_list{};
+    for (auto&& l_task_type_id : l_json.at("task_types").get<std::vector<uuid>>()) {
+      l_task_type_asset_type_link_list.emplace_back(
+          task_type_asset_type_link{.asset_type_id_ = id_, .task_type_id_ = l_task_type_id}
+      );
+    }
+    if (l_task_type_asset_type_link_list.empty()) {
+      co_await l_sql.run_sql(l_deletes);
+    } else {
+      auto l_installs = orm::insert(l_sql).into<task_type_asset_type_link>().set_range(l_task_type_asset_type_link_list);
+      co_await l_sql.run_sql(l_deletes, l_installs);
+    }
   }
-  co_await l_sql.remove_task_type_asset_type_link_by_asset_type(l_asset_type_ptr->uuid_id_);
-  co_await l_sql.install_range(l_task_type_asset_type_link_list);
-  co_await l_sql.update(l_asset_type_ptr);
+
+  auto l_asset_type = l_sql.get_by_uuid<asset_type>(id_);
+  l_asset_type.task_types_ =
+      select(l_sql).columns(&task_type_asset_type_link::task_type_id_).from<task_type_asset_type_link>()
+          .where(c(&task_type_asset_type_link::asset_type_id_) == id_)()
+          .to_vector();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新资产类型 asset_type_id {} name {} task_type_count {}",
-      person_.person_.email_, person_.person_.get_full_name(), id_, l_asset_type_ptr->name_,
-      l_asset_type_ptr->task_types_.size()
+      person_.person_.email_, person_.person_.get_full_name(), id_, l_asset_type.name_,
+      l_asset_type.task_types_.size()
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_asset_type_ptr);
+  co_return in_handle->make_msg(nlohmann::json{} = l_asset_type);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, delete_) {
