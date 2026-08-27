@@ -125,7 +125,7 @@ auto get_sequence_casting_for_project_and_person_and_sequence(
                                 .from<outsource_studio_authorization>()
                                 .where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_);
 
-  auto l_where = dynamic_column_operations{};
+  auto l_where            = dynamic_column_operations{};
   l_where.add_condition(c(&entity::canceled_) != true);
   if (!in_project_id.is_nil()) l_where.add_condition(c(&entity::project_id_) == in_project_id);
   if (!in_sequence_id.is_nil()) l_where.add_condition(c(sequence->*&entity::uuid_id_) == in_sequence_id);
@@ -175,16 +175,16 @@ actions_projects_casting_copy_select get_actions_projects_casting_copy_select(
                               .where(c(sequence->*&entity::uuid_id_) == in_source_project_id)()
                               .to_vector();
   // 查找 shot
-  l_ret.source_shots_ = select(l_sql)
-                            .columns(object<entity>())
-                            .from<entity>()
-                            .where(c(&entity::parent_id_) == in_source_project_id && c(&entity::canceled_) != true)()
-                            .to_vector();
-  l_ret.target_shots_ = select(l_sql)
-                            .columns(object<entity>())
-                            .from<entity>()
-                            .where(c(&entity::parent_id_) == in_target_project_id && c(&entity::canceled_) != true)()
-                            .to_vector();
+  l_ret.source_shots_   = select(l_sql)
+                              .columns(object<entity>())
+                              .from<entity>()
+                              .where(c(&entity::parent_id_) == in_source_project_id && c(&entity::canceled_) != true)()
+                              .to_vector();
+  l_ret.target_shots_   = select(l_sql)
+                              .columns(object<entity>())
+                              .from<entity>()
+                              .where(c(&entity::parent_id_) == in_target_project_id && c(&entity::canceled_) != true)()
+                              .to_vector();
   return l_ret;
 }
 
@@ -544,7 +544,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, put) {
   }
 
   l_ent->nb_entities_out_ = l_list.size();
-  co_await l_sql.update(l_ent);
+  {
+    using namespace orm;
+    auto l_update = update(l_sql)
+                        .from<entity>()
+                        .set(c(&entity::nb_entities_out_) = l_ent->nb_entities_out_)
+                        .where(c(&entity::uuid_id_) == l_ent->uuid_id_);
+    co_await l_sql.run_sql(l_update);
+  }
   if (!l_entity_links_update->empty()) {
     co_await l_sql.update_range(l_entity_links_update);
     SPDLOG_LOGGER_WARN(
