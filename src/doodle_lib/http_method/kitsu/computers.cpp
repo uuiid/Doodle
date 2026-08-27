@@ -113,7 +113,13 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     if (auto l_db_computer = get_entity_computer_by_hardware_id(computer_->hardware_id_); l_db_computer.has_value()) {
       *computer_         = l_db_computer.value();
       computer_->status_ = l_computer_json.status_;
-      co_await l_sql.update(computer_);
+      using namespace orm;
+      co_await l_sql.run_sql(
+          update(l_sql)
+              .from<computer>()
+              .set(c(&computer::status_) = l_computer_json.status_)
+              .where(c(&computer::uuid_id_) == computer_->uuid_id_)
+      );
     } else {
       co_await l_sql.install(computer_);
     }
@@ -131,9 +137,16 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
         computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
         computer_->status_              = computer_status::offline;
         computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
-        boost::asio::co_spawn(g_io_context(), [computer = computer_]() -> boost::asio::awaitable<void> {
+        boost::asio::co_spawn(g_io_context(), [l_computer = computer_]() -> boost::asio::awaitable<void> {
           auto l_sql = get_sqlite_database();
-          co_await l_sql.update(computer);
+          using namespace orm;
+          co_await l_sql.run_sql(
+              update(l_sql)
+                  .from<computer>()
+                  .set(c(&computer::status_) = l_computer->status_)
+                  .set(c(&computer::last_heartbeat_time_) = l_computer->last_heartbeat_time_)
+                  .where(c(&computer::uuid_id_) == l_computer->uuid_id_)
+          );
         }, boost::asio::detached);
         socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
       } catch (...) {
@@ -188,7 +201,14 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     computer_->status_              = in_computer.get().status_;
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
     last_status_                    = computer_->status_;
-    co_await l_sql.update(computer_);
+    using namespace orm;
+    co_await l_sql.run_sql(
+        update(l_sql)
+            .from<computer>()
+            .set(c(&computer::status_) = computer_->status_)
+            .set(c(&computer::last_heartbeat_time_) = computer_->last_heartbeat_time_)
+            .where(c(&computer::uuid_id_) == computer_->uuid_id_)
+    );
     if (computer_->status_ == computer_status::online) co_await computers_assign_task::get_instance().run_next_task();
 
     socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
@@ -290,26 +310,35 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
   }
   in_computer->set_computer_status(computer_status::busy);
   co_await l_sql.update_computer_status(in_computer->get_computer_id(), computer_status::busy);
-  auto l_job_ptr              = std::make_shared<server_task_info>(l_jobs.front());
-  l_job_ptr->status_          = server_task_info_status::running;
-  l_job_ptr->run_time_        = {chrono::current_zone(), chrono::system_clock::now()};
-  l_job_ptr->run_computer_id_ = in_computer->get_computer_id();
-  auto& l_ctx                 = g_ctx().get<kitsu_ctx_t>();
-  auto l_access_token         = jwt::create()
+  auto l_job                 = l_jobs.front();
+  l_job.status_              = server_task_info_status::running;
+  l_job.run_time_            = {chrono::current_zone(), chrono::system_clock::now()};
+  l_job.run_computer_id_     = in_computer->get_computer_id();
+  auto& l_ctx                = g_ctx().get<kitsu_ctx_t>();
+  auto l_access_token        = jwt::create()
                             .set_payload_claim("identity_type", jwt::claim{"person"s})
                             .set_issued_at(chrono::system_clock::now())
-                            .set_id(fmt::to_string(l_job_ptr->submitter_))
-                            .set_subject(fmt::to_string(l_job_ptr->submitter_))
+                            .set_id(fmt::to_string(l_job.submitter_))
+                            .set_subject(fmt::to_string(l_job.submitter_))
                             .set_not_before(chrono::system_clock::now())
                             .set_expires_at(chrono::system_clock::now() + chrono::days{7})
                             .sign(jwt::algorithm::hs256{l_ctx.secret_});
-  l_job_ptr->submitter_cookies_ = l_access_token;
-  co_await l_sql.update(l_job_ptr);
-  auto l_json = (nlohmann::json{} = *l_job_ptr);
+  l_job.submitter_cookies_ = l_access_token;
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql)
+          .from<server_task_info>()
+          .set(c(&server_task_info::status_) = l_job.status_)
+          .set(c(&server_task_info::run_time_) = l_job.run_time_)
+          .set(c(&server_task_info::run_computer_id_) = l_job.run_computer_id_)
+          .set(c(&server_task_info::submitter_cookies_) = l_job.submitter_cookies_)
+          .where(c(&server_task_info::uuid_id_) == l_job.uuid_id_)
+  );
+  auto l_json = (nlohmann::json{} = l_job);
   in_computer->write_msg(l_json.dump());
   in_computer->begin_write_msg();
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "分发任务 {} 成功，在线计算机 {}", l_job_ptr->uuid_id_, in_computer->get_computer_id()
+      g_logger_ctrl().get_http(), "分发任务 {} 成功，在线计算机 {}", l_job.uuid_id_, in_computer->get_computer_id()
   );
   co_return;
 }
