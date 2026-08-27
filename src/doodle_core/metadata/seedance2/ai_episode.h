@@ -4,6 +4,8 @@
 #include <doodle_core/metadata/base.h>
 
 #include <string>
+#include <tuple>
+#include <utility>
 
 namespace doodle::seedance2 {
 /// 这个是 ai 生成中的剧集，比如 "sc002", "sc003" 等等
@@ -14,6 +16,14 @@ struct DOODLE_CORE_API ai_episode {
   uuid subproject_id_;
 
   uuid entity_id_;  // 对应的 entity.h
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"name", &ai_episode::name_},  //
+        std::pair{"description", &ai_episode::description_}
+    };
+  }
+
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   // to json
   friend void to_json(nlohmann::json& j, const ai_episode& p) {
