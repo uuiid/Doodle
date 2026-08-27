@@ -11,6 +11,15 @@ struct DOODLE_CORE_API department {
   std::string name_;
   std::string color_;
   bool archived_;
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"name", &department::name_},         //
+        std::pair{"color", &department::color_},       //
+        std::pair{"archived", &department::archived_},  //
+    };
+  }
+
   // from json
   template <typename BasicJsonType>
   friend void from_json(const BasicJsonType& j, department& p) {

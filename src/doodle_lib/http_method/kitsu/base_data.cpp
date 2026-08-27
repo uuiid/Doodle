@@ -45,21 +45,22 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments, get) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments_instance, put) {
   person_.check_admin();
-  auto l_sql            = get_sqlite_database();
-  auto l_department_ptr = std::make_shared<department>(l_sql.get_by_uuid<department>(id_));
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新部门 department_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_department_ptr->name_
+  using namespace orm;
+  auto l_update = update(l_sql).from<department>().set_from_ref<department>(l_json).where(
+      c(&department::uuid_id_) == id_
   );
-  in_handle->get_json().get_to(*l_department_ptr);
-  co_await l_sql.update(l_department_ptr);
+  co_await l_sql.run_sql(l_update);
+
+  auto l_department = l_sql.get_by_uuid<department>(id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新部门 department_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_department_ptr->name_
+      person_.person_.get_full_name(), id_, l_department.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_department_ptr);
+  co_return in_handle->make_msg(nlohmann::json{} = l_department);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, get) {
@@ -97,22 +98,23 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, put) {
   person_.check_admin();
-  auto l_sql        = get_sqlite_database();
-  auto l_studio_ptr = std::make_shared<studio>(l_sql.get_by_uuid<studio>(id_));
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+  if (l_json.contains("name")) DOODLE_CHICK(!l_json.at("name").get<std::string>().empty(), "工作室名称不可为空");
 
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新工作室 studio_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_studio_ptr->name_
+  using namespace orm;
+  auto l_update = update(l_sql).from<studio>().set_from_ref<studio>(l_json).where(
+      c(&studio::uuid_id_) == id_
   );
-  in_handle->get_json().get_to(*l_studio_ptr);
-  DOODLE_CHICK(!l_studio_ptr->name_.empty(), "工作室名称不可为空");
-  co_await l_sql.update(l_studio_ptr);
+  co_await l_sql.run_sql(l_update);
+
+  auto l_studio = l_sql.get_by_uuid<studio>(id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新工作室 studio_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_studio_ptr->name_
+      person_.person_.get_full_name(), id_, l_studio.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_studio_ptr);
+  co_return in_handle->make_msg(nlohmann::json{} = l_studio);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_types, get) {
   person_.check_admin();
