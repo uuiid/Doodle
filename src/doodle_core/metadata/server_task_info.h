@@ -142,6 +142,26 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   void set_run_time_info(const std::vector<run_time_info_t>& in_run_time_info) { run_time_info_ = in_run_time_info; }
   void add_run_time_info(const run_time_info_t& in_run_time_info) { run_time_info_.push_back(in_run_time_info); }
 
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"name", &server_task_info::name_},                            //
+        std::pair{"source_computer", &server_task_info::source_computer_},      //
+        std::pair{"submitter", &server_task_info::submitter_},                  //
+        std::pair{"run_computer_id", &server_task_info::run_computer_id_},      //
+        std::pair{"type", &server_task_info::type_},                            //
+        std::pair{"command", &server_task_info::command_},                      //
+        std::pair{"status", &server_task_info::status_},                        //
+        std::pair{"submit_time", &server_task_info::submit_time_},              //
+        std::pair{"run_time", &server_task_info::run_time_},                    //
+        std::pair{"end_time", &server_task_info::end_time_},                    //
+        std::pair{"last_line_log", &server_task_info::last_line_log_},          //
+        std::pair{"run_time_info", &server_task_info::run_time_info_},          //
+        std::pair{"priority", &server_task_info::priority_},                    //
+        std::pair{"task_id", &server_task_info::task_id_},                      //
+        std::pair{"submitter_cookies", &server_task_info::submitter_cookies_},  //
+    };
+  }
+
   static constexpr auto logger_category = "server_task";
 
   void get_last_line_log(const FSys::path& in_log_path);
