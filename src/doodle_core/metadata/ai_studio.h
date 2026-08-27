@@ -14,6 +14,18 @@ struct DOODLE_CORE_API ai_studio {
   std::string app_key_;
   std::string app_secret_;
   bool archived_;
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"name", &ai_studio::name_},              //
+        std::pair{"color", &ai_studio::color_},            //
+        std::pair{"archived", &ai_studio::archived_},      //
+        std::pair{"app_key", &ai_studio::app_key_},        //
+        std::pair{"app_secret", &ai_studio::app_secret_},  //
+        std::pair{"archived", &ai_studio::archived_}       //
+    };
+  }
+
   // to json
   friend void to_json(nlohmann::json& j, const ai_studio& p) {
     j["id"]       = p.uuid_id_;

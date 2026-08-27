@@ -48,7 +48,7 @@ std::vector<std::int64_t> get_task_assignees_ids_for_task(uuid in_task_id) {
 }  // namespace
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_clear_assignation, put) {
   auto l_args = in_handle->get_json().get<actions_tasks_clear_assignation_put_args>();
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   if (l_args.task_id_.empty()) co_return in_handle->make_msg(nlohmann::json::array());
 
   auto l_task = l_sql.get_by_uuid<task>(l_args.task_id_.front());
@@ -66,12 +66,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_clear_assignation, put) {
     } else {
       co_await l_sql.remove<assignees_table>(get_task_assignees_ids_for_task(l_i));
     }
-
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 完成清空/移除任务指派 project_id {} task_count {} person_id {}",
-      person_.person_.email_, person_.person_.get_full_name(), l_task.project_id_, l_args.task_id_.size(),
-      l_args.person_id_
-  );
 
   co_return in_handle->make_msg(nlohmann::json{} = l_args.task_id_);
 }

@@ -50,24 +50,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, get) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, put) {
   person_.check_producer();
-  auto l_sql       = get_sqlite_database();
-  auto l_ai_studio = std::make_shared<ai_studio>(l_sql.get_by_uuid<ai_studio>(id_));
-
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新 AI 工作室 id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_ai_studio->name_
-  );
-
+  auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
-  l_json.get_to(*l_ai_studio);
-  co_await l_sql.update(l_ai_studio);
+
+  using namespace orm;
+  auto l_update = update(l_sql).from<ai_studio>().set_from_ref<ai_studio>(l_json).where(c(&ai_studio::uuid_id_) == id_);
+  co_await l_sql.run_sql(l_update);
+
+  auto l_ai_studio = l_sql.get_by_uuid<ai_studio>(id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新 AI 工作室 id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_ai_studio->name_
+      person_.person_.get_full_name(), id_, l_ai_studio.name_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ai_studio);
+  co_return in_handle->make_msg(nlohmann::json{} = l_ai_studio);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, delete_) {
   person_.check_producer();
