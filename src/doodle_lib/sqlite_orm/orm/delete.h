@@ -26,6 +26,11 @@ struct DOODLELIB_API delete_t : public statement_info_base_t {
  public:
   delete_t() : state_(std::make_shared<delete_state_t>()) {}
 
+  inline delete_t set_session(const session& s) {
+    state_->s_ = s;
+    return *this;
+  }
+
   template <typename T>
   delete_t where(T&& condition_fun) {
     auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));

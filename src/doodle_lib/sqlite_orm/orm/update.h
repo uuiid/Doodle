@@ -66,6 +66,11 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
  public:
   update_t() : state_(std::make_shared<update_state_t>()) {}
 
+  inline update_t set_session(const session& s) {
+    state_->s_ = s;
+    return *this;
+  }
+
   template <typename T>
   update_t where(T&& condition_fun) {
     auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));

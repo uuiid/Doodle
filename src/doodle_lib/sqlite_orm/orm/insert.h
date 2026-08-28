@@ -70,6 +70,11 @@ struct DOODLELIB_API insert_t : public statement_info_base_t {
  public:
   insert_t() : state_(std::make_shared<insert_state_t>()) {}
 
+  inline insert_t set_session(const session& s) {
+    state_->s_ = s;
+    return *this;
+  }
+
   template <typename... TableColumns>
     requires((std::is_base_of_v<column_operations, std::decay_t<TableColumns>> && ...))
   insert_t set(TableColumns&&... in_columns) {

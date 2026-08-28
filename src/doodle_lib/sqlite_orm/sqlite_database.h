@@ -277,6 +277,7 @@ class DOODLELIB_API sqlite_database {
 
   template <typename... Args>
   boost::asio::awaitable<void> run_sql(Args&&... args) {
+    (args.set_session(session_), ...);
     DOODLE_TO_SQLITE_THREAD();
     auto l_g = session_.transaction();
     (std::invoke(std::forward<Args>(args)), ...);

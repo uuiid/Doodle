@@ -1122,11 +1122,14 @@ void sqlite_storage::upgrade() {
 }
 
 boost::asio::awaitable<void> sqlite_database::run_sql(orm::sql_modify_statement_vector_t in_sqls) {
+  for (auto&& i : in_sqls) 
+    std::visit([&](auto&& in_sql) { in_sql.set_session(session_); }, i);
+
   DOODLE_TO_SQLITE_THREAD()
   auto l_g = session_.transaction();
-  for (auto&& i : in_sqls) {
+  for (auto&& i : in_sqls) 
     std::visit([&](auto&& in_sql) { in_sql(); }, i);
-  }
+  
   l_g.commit();
   DOODLE_TO_SELF();
 }

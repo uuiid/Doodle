@@ -75,6 +75,12 @@ struct DOODLELIB_API select_t : public statement_info_base_t {
  public:
   explicit select_t(const session& s) : impl_(std::make_shared<impl_t>()) { impl_->s_ = s; }
   select_t() = default;
+
+  inline select_t set_session(const session& s) {
+    impl_->s_ = s;
+    return *this;
+  }
+
   template <typename FromTable>
   select_t from();
 
