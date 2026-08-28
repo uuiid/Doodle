@@ -44,6 +44,7 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
     session s_{};
     std::shared_ptr<sqlite_stmt> stmt_;
     bind_value_collector_t bind_variants_{};
+    bind_value_collector_t bind_variants_for_rebind_{};
   };
 
   friend update_t update(const session& s);
@@ -97,12 +98,23 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
     from<T>();
     if constexpr (has_updated_at<T>) {
       column_operations l_col{&T::updated_at_};
-      l_col = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};;
+      l_col = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+      ;
       this->set(std::move(l_col));
     }
     return set_from_ref_impl(
         in_json, T::put_property_list(), std::make_index_sequence<std::tuple_size_v<decltype(T::put_property_list())>>{}
     );
+  }
+
+  template <typename... RebindValue>
+  update_t rebind(RebindValue&&... in_arg) {
+    auto l_iter_fun = [this](auto&& in_value) {
+      using value_type = std::decay_t<decltype(in_value)>;
+      state_->bind_variants_for_rebind_.bind_values_.push_back(in_value);
+    };
+    (l_iter_fun(in_arg), ...);
+    return *this;
   }
 
   template <typename T>
@@ -129,7 +141,7 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
   }
 
   template <typename T>
-  update_t rebind(T&& in_object) {
+  update_t rebind_obj(T&& in_object) {
     using Table = std::decay_t<T>;
     if constexpr (has_updated_at<T>)
       in_object.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};

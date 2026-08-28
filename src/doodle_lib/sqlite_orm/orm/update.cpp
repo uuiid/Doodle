@@ -4,6 +4,7 @@
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 #include <doodle_lib/sqlite_orm/orm/update.h>
 
+#include <range/v3/view/chunk.hpp>
 #include <string>
 #include <vector>
 
@@ -47,8 +48,20 @@ update_t update_t::operator()() {
   }
   state_->stmt_->reset_bind();
   for (const auto& val : state_->bind_variants_.bind_values_) val.bind(*state_->stmt_);
-
   state_->stmt_->step();
+
+  if (!state_->bind_variants_for_rebind_.bind_values_.empty() && !state_->bind_variants_.bind_values_.empty()) {
+    // 必须是 state_->bind_variants_.bind_values_.size() 的倍数
+    if (state_->bind_variants_for_rebind_.bind_values_.size() % state_->bind_variants_.bind_values_.size() != 0)
+      throw std::runtime_error("绑定变量数量不匹配，无法使用 re_set 更新");
+    for (auto&& l_value_ranges : state_->bind_variants_for_rebind_.bind_values_ |
+                                     ranges::views::chunk(state_->bind_variants_.bind_values_.size())) {
+      state_->stmt_->reset_bind();
+      for (auto&& l_v : l_value_ranges) l_v.bind(*state_->stmt_);
+      state_->stmt_->step();
+    }
+  }
+
   return *this;
 }
 }  // namespace doodle::orm

@@ -206,7 +206,7 @@ class DOODLELIB_API sqlite_database {
         l_is_begin = false;
         l_update.set_value(i)();
       } else
-        l_update.rebind(i)();
+        l_update.rebind_obj(i)();
     }
     l_g.commit();
     DOODLE_TO_SELF();
