@@ -59,13 +59,24 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_clear_assignation, put) {
       person_.person_.email_, person_.person_.get_full_name(), l_task.project_id_, l_args.task_id_.size(),
       l_args.person_id_
   );
-  for (auto&& l_i : l_args.task_id_)
+
+  std::vector<std::int64_t> l_assignee_ids;
+  for (auto&& l_i : l_args.task_id_) {
     if (!l_args.person_id_.is_nil()) {
       if (auto l_assign = get_task_assignees_for_task_and_person(l_i, l_args.person_id_); l_assign)
-        co_await l_sql.remove<assignees_table>(l_assign.value().id_);
+        l_assignee_ids.push_back(l_assign.value().id_);
     } else {
-      co_await l_sql.remove<assignees_table>(get_task_assignees_ids_for_task(l_i));
+      auto l_ids = get_task_assignees_ids_for_task(l_i);
+      l_assignee_ids.insert(l_assignee_ids.end(), l_ids.begin(), l_ids.end());
     }
+  }
+
+  if (!l_assignee_ids.empty()) {
+    using namespace orm;
+    co_await l_sql.run_sql(
+        delete_from(l_sql).from<assignees_table>().where(c(&assignees_table::id_).in(l_assignee_ids))
+    );
+  }
 
   co_return in_handle->make_msg(nlohmann::json{} = l_args.task_id_);
 }

@@ -11,29 +11,25 @@
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include "kitsu_reg_url.h"
-#include <vector>
 
 namespace doodle::http {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, post) {
-  auto l_sql       = get_sqlite_database();
-  auto l_json      = in_handle->get_json();
-  auto l_ai_studio = std::make_shared<ai_studio>();
-  l_json.get_to(*l_ai_studio);
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+  ai_studio l_ai_studio{};
+  l_json.get_to(l_ai_studio);
 
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始创建 AI 工作室 name {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_ai_studio->name_
-  );
-
-  co_await l_sql.install(l_ai_studio);
+  using namespace orm;
+  auto l_install = insert(l_sql).into<ai_studio>().values(l_ai_studio);
+  co_await l_sql.run_sql(l_install);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建 AI 工作室 id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_ai_studio->uuid_id_, l_ai_studio->name_
+      person_.person_.get_full_name(), l_ai_studio.uuid_id_, l_ai_studio.name_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ai_studio);
+  co_return in_handle->make_msg(nlohmann::json{} = l_ai_studio);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, get) {
@@ -76,7 +72,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, delete_) {
   );
 
   l_sql.uuid_to_id<ai_studio>(id_);
-  co_await l_sql.remove<ai_studio>(id_);
+  using namespace orm;
+  auto l_delete = delete_from(l_sql).from<ai_studio>().where(c(&ai_studio::uuid_id_) == id_);
+  co_await l_sql.run_sql(l_delete);
   co_return in_handle->make_msg_204();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, post) {
