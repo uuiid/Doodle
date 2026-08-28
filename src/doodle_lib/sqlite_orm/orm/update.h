@@ -5,6 +5,7 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/session.h>
 
+#include "sqlite_orm/orm/bind_value.h"
 #include <cstdint>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -111,7 +112,7 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
   update_t rebind(RebindValue&&... in_arg) {
     auto l_iter_fun = [this](auto&& in_value) {
       using value_type = std::decay_t<decltype(in_value)>;
-      state_->bind_variants_for_rebind_.bind_values_.push_back(in_value);
+      state_->bind_variants_for_rebind_.bind_values_.push_back(bind_value_t{in_value});
     };
     (l_iter_fun(in_arg), ...);
     return *this;
