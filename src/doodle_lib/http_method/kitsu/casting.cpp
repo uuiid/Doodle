@@ -24,6 +24,7 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace doodle::http {
@@ -475,7 +476,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, put) {
       g_logger_ctrl().get_http(), "用户 {}({}) 开始更新 Casting 关联 project_id {} entity_id {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, l_ent->uuid_id_
   );
-  auto l_entity_links_update = std::make_shared<std::vector<entity_link>>();
+  std::vector<std::tuple<std::int32_t, std::string, std::int64_t>> l_entity_links_update{};
   auto l_entity_links_insert = std::make_shared<std::vector<entity_link>>();
   std::vector<std::function<void()>> l_delay_events{};
   auto l_seq        = l_sql.get_by_uuid<entity>(l_ent->parent_id_);
@@ -488,9 +489,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, put) {
     if (i.entity_out_id_.is_nil()) continue;
     auto l_link = find_entity_link(l_shot_links, i.entity_out_id_);
     if (l_link) {
-      l_link->nb_occurences_ = i.nb_occurences_;
-      l_link->label_         = i.label_;
-      l_entity_links_update->emplace_back(*l_link);
+      l_entity_links_update.emplace_back(i.nb_occurences_, i.label_, l_link->id_);
       l_delay_events.emplace_back([i, this]() {
         socket_io::broadcast(
             socket_io::entity_link_update_broadcast_t{
@@ -534,38 +533,49 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, put) {
       });
     }
   }
+  l_ent->nb_entities_out_ = l_list.size();
+
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls;
   if (auto l_id_list = l_shot_links | ranges::views::transform(&entity_link::id_) | ranges::to_vector;
       !l_id_list.empty()) {
-    co_await l_sql.remove<entity_link>(l_id_list);
+    l_sqls.emplace_back(delete_from(l_sql).from<entity_link>().where(c(&entity_link::id_).in(l_id_list)));
     SPDLOG_LOGGER_WARN(
         g_logger_ctrl().get_http(), "用户 {}({}) 移除实体链接 count {}", person_.person_.email_,
         person_.person_.get_full_name(), l_id_list.size()
     );
   }
 
-  l_ent->nb_entities_out_ = l_list.size();
-  {
-    using namespace orm;
-    auto l_update = update(l_sql)
-                        .from<entity>()
-                        .set(c(&entity::nb_entities_out_) = l_ent->nb_entities_out_)
-                        .where(c(&entity::uuid_id_) == l_ent->uuid_id_);
-    co_await l_sql.run_sql(l_update);
-  }
-  if (!l_entity_links_update->empty()) {
-    co_await l_sql.update_range(l_entity_links_update);
+  l_sqls.emplace_back(update(l_sql)
+                          .from<entity>()
+                          .set(c(&entity::nb_entities_out_) = l_ent->nb_entities_out_)
+                          .where(c(&entity::uuid_id_) == l_ent->uuid_id_));
+
+  if (!l_entity_links_update.empty()) {
+    auto l_update = update(l_sql).from<entity_link>();
+    for (auto l_is_begin = true; auto&& [l_nb_occurences, l_label, l_id] : l_entity_links_update) {
+      if (l_is_begin) {
+        l_update.set(c(&entity_link::nb_occurences_) = l_nb_occurences, c(&entity_link::label_) = l_label)
+            .where(c(&entity_link::id_) == l_id);
+        l_is_begin = false;
+      } else {
+        l_update.rebind(l_nb_occurences, l_label, l_id);
+      }
+    }
+    l_sqls.emplace_back(std::move(l_update));
     SPDLOG_LOGGER_WARN(
         g_logger_ctrl().get_http(), "用户 {}({}) 更新实体链接 count {}", person_.person_.email_,
-        person_.person_.get_full_name(), l_entity_links_update->size()
+        person_.person_.get_full_name(), l_entity_links_update.size()
     );
   }
   if (!l_entity_links_insert->empty()) {
-    co_await l_sql.install_range(l_entity_links_insert);
+    l_sqls.emplace_back(insert(l_sql).into<entity_link>().set_range(*l_entity_links_insert));
     SPDLOG_LOGGER_WARN(
         g_logger_ctrl().get_http(), "用户 {}({}) 新增实体链接 count {}", person_.person_.email_,
         person_.person_.get_full_name(), l_entity_links_insert->size()
     );
   }
+  co_await l_sql.run_sql(std::move(l_sqls));
   // for (auto&& i : l_delay_events) i();
   socket_io::broadcast(
       socket_io::shot_casting_update_broadcast_t{
@@ -578,7 +588,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, put) {
       "用户 {}({}) 完成更新 Casting 关联 project_id {} entity_id {} nb_entities_out {} updated_link_count {} "
       "inserted_link_count {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, l_ent->uuid_id_, l_ent->nb_entities_out_,
-      l_entity_links_update->size(), l_entity_links_insert->size()
+      l_entity_links_update.size(), l_entity_links_insert->size()
   );
   co_return in_handle->make_msg(in_handle->get_json());
 }
@@ -624,7 +634,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_replace, post) {
       );
     });
   }
-  co_await l_sql.update_range(l_entity_links);
+  if (!l_entity_links->empty()) {
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls;
+    auto l_update = update(l_sql).from<entity_link>();
+    for (auto l_is_begin = true; auto&& l_e : *l_entity_links) {
+      if (l_is_begin) {
+        l_update.set(c(&entity_link::entity_out_id_) = l_e.entity_out_id_).where(c(&entity_link::id_) == l_e.id_);
+        l_is_begin = false;
+      } else {
+        l_update.rebind(l_e.entity_out_id_, l_e.id_);
+      }
+    }
+    l_sqls.emplace_back(std::move(l_update));
+    co_await l_sql.run_sql(std::move(l_sqls));
+  }
   for (auto&& i : l_delay_events) i();
   data_project_sequences_casting_result_map l_result{};
   std::vector<uuid> l_shot_ids{};
@@ -688,7 +712,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_copy, post) {
         l_arg.target_sequence_id_, l_install_entity_links->size()
     );
     co_await l_sql.remove_sequence_casting(l_arg.target_sequence_id_);
-    co_await l_sql.install_range(l_install_entity_links);
+    using namespace orm;
+    auto l_install = insert(l_sql).into<entity_link>().set_range(*l_install_entity_links);
+    co_await l_sql.run_sql(l_install);
   }
   co_return in_handle->make_msg(
       nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, l_arg.target_sequence_id_)
@@ -862,8 +888,22 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
   for (auto&& [l_key, l_val] : l_shot_harvest_map) l_val(l_install_entity_links, l_install_entity);
 
   if (!l_install_entity_links->empty()) {
-    co_await l_sql.install_range(l_install_entity_links);
-    co_await l_sql.update_range(l_install_entity);
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls;
+    l_sqls.emplace_back(insert(l_sql).into<entity_link>().set_range(*l_install_entity_links));
+    if (!l_install_entity->empty()) {
+      auto l_update = update(l_sql).from<entity>();
+      for (auto l_is_begin = true; auto&& l_e : *l_install_entity) {
+        if (l_is_begin) {
+          l_update.set(c(&entity::nb_entities_out_) = l_e.nb_entities_out_).where(c(&entity::id_) == l_e.id_);
+          l_is_begin = false;
+        } else {
+          l_update.rebind(l_e.nb_entities_out_, l_e.id_);
+        }
+      }
+      l_sqls.emplace_back(std::move(l_update));
+    }
+    co_await l_sql.run_sql(std::move(l_sqls));
     // for (auto&& i : *l_install_entity_links)
     //   socket_io::broadcast(
     //       socket_io::entity_link_new_broadcast_t{
