@@ -62,7 +62,7 @@ std::vector<attachment_file> get_attachment_files_by_comment_id(const uuid& in_c
 }
 }  // namespace
 
-boost::asio::awaitable<create_comment_result> create_comment(
+create_comment_result create_comment(
     std::shared_ptr<comment> in_comment, const http_jwt_fun::http_jwt_t* in_person, uuid in_task_id,
     std::vector<FSys::path> in_files, std::shared_ptr<task> in_task
 ) {
@@ -82,24 +82,30 @@ boost::asio::awaitable<create_comment_result> create_comment(
   auto l_task_status = l_sql.get_by_uuid<task_status>(in_comment->task_status_id_);
   task_status_ns::check_retake_capping(l_task_status, *l_task);
   std::vector<attachment_file> l_attachment_files{};
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls;
   {  // 创建基本的评论(包括辅助结构)
     comment_ns::set_comment_department_mentions(*in_comment);
     comment_ns::set_comment_mentions(*in_comment, l_task->project_id_);
-    co_await l_sql.install(in_comment);
+    l_sqls.emplace_back(insert(l_sql).into<comment>().values(*in_comment));
+
     auto in_comment_mentions = std::make_shared<std::vector<comment_mentions>>(
         in_comment->mentions_ | ranges::views::transform([in_comment](const uuid& in) {
           return comment_mentions{.comment_id_ = in_comment->uuid_id_, .person_id_ = in};
         }) |
         ranges::to_vector
     );
-    co_await l_sql.install_range(in_comment_mentions);
+    if (!in_comment_mentions->empty())
+      l_sqls.emplace_back(insert(l_sql).into<comment_mentions>().set_range(*in_comment_mentions));
+
     auto in_comment_department_mentions = std::make_shared<std::vector<comment_department_mentions>>(
         in_comment->department_mentions_ | ranges::views::transform([in_comment](const uuid& in) {
           return comment_department_mentions{.comment_id_ = in_comment->uuid_id_, .department_id_ = in};
         }) |
         ranges::to_vector
     );
-    co_await l_sql.install_range(in_comment_department_mentions);
+    if (!in_comment_department_mentions->empty())
+      l_sqls.emplace_back(insert(l_sql).into<comment_department_mentions>().set_range(*in_comment_department_mentions));
 
     // 创建附属文件
     for (auto&& i : in_files) {
@@ -110,7 +116,8 @@ boost::asio::awaitable<create_comment_result> create_comment(
       l_attachment_file->name_       = i.filename().generic_string();
       l_attachment_file->mimetype_   = kitsu::mime_type(i.extension());
       l_attachment_file->size_       = FSys::file_size(i);
-      co_await l_sql.install(l_attachment_file);
+      l_sqls.emplace_back(insert(l_sql).into<attachment_file>().values(*l_attachment_file));
+
       auto l_attachment_file_path = g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_attachment_file->uuid_id_);
       if (auto l_p = l_attachment_file_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
       FSys::rename(i, l_attachment_file_path);
@@ -133,7 +140,7 @@ boost::asio::awaitable<create_comment_result> create_comment(
                         .where(c(&task::uuid_id_) == l_task->uuid_id_);
     if (l_task_status.is_retake_) l_update.set(c(&task::retake_count_) = c(&task::retake_count_) + 1);
     if (l_task_status.is_feedback_request_) l_update.set(c(&task::end_date_) = chrono::system_clock::now());
-    co_await l_sql.run_sql(l_update);
+    l_sqls.emplace_back(std::move(l_update));
 
     socket_io::broadcast(
         socket_io::task_update_broadcast_t{.task_id_ = in_comment->object_id_, .project_id_ = l_task->project_id_}
@@ -184,12 +191,13 @@ boost::asio::awaitable<create_comment_result> create_comment(
           }
       );
     }
-    co_await l_sql.install_range(l_notifications);
+    l_sqls.emplace_back(insert(l_sql).into<notification>().set_range(*l_notifications));
   }
 
   // 运行自动化任务
   for (auto&& i : l_sql.get_project_status_automations(l_task->project_id_))
-    co_await status_automation_ns::run(i, l_task, in_person->person_.uuid_id_);
+    l_sqls |= ranges::actions::push_back(status_automation_ns::run(i, l_task, in_person->person_.uuid_id_));
+  // co_await status_automation_ns::run(i, l_task, in_person->person_.uuid_id_);
 
   socket_io::broadcast(
       socket_io::comment_new_broadcast_t{
@@ -199,8 +207,9 @@ boost::asio::awaitable<create_comment_result> create_comment(
           .project_id_     = l_task->project_id_
       }
   );
-
-  co_return create_comment_result{*in_comment, l_task_status, in_person->person_, l_attachment_files};
+  create_comment_result l_result{*in_comment, l_task_status, in_person->person_, l_attachment_files};
+  l_result.sqls_ = std::move(l_sqls);
+  return l_result;
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comment, post) {
   person_.check_task_action_access(id_);
@@ -214,7 +223,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comment, post) {
   auto l_json                        = in_handle->get_json();
   auto l_files                       = in_handle->get_files();
   l_json.get_to(*l_comment);
-  auto l_result = co_await create_comment(l_comment, &person_, id_, l_files);
+  auto l_result = create_comment(l_comment, &person_, id_, l_files);
+  auto l_sql    = get_sqlite_database();
+  co_await l_sql.run_sql(l_result.sqls_);
   default_logger_raw()->info("由 {} 创建评论 {}", person_.person_.email_, l_comment->uuid_id_);
 
   SPDLOG_LOGGER_WARN(
@@ -237,9 +248,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_tasks_comment_many, post) {
   for (auto&& i : in_handle->get_json()) {
     auto l_comm = std::make_shared<comment>(i.get<comment>());
     default_logger_raw()->info("{} 创建评论", person_.person_.email_);
-    l_result.emplace_back(co_await create_comment(l_comm, &person_, {}, {}));
+    l_result.emplace_back(create_comment(l_comm, &person_, {}, {}));
   }
-
+  orm::sql_modify_statement_vector_t l_sqls{};
+  for (auto&& i : l_result) l_sqls |= ranges::actions::push_back(std::move(i.sqls_));
+  co_await l_sql.run_sql(l_sqls);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成批量创建评论 数量 {}", person_.person_.email_,
       person_.person_.get_full_name(), l_result.size()
@@ -286,8 +299,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_modify_date_comment, post) {
                       .set(c(&task::start_date_) = l_task->start_date_)
                       .set(c(&task::due_date_) = l_task->due_date_)
                       .where(c(&task::uuid_id_) == l_task->uuid_id_);
-  co_await l_sql.run_sql(l_update);
-  auto l_result = co_await create_comment(l_comment, &person_, id_, {}, l_task);
+  auto l_result = create_comment(l_comment, &person_, id_, {}, l_task);
+  l_result.sqls_.emplace_back(std::move(l_update));
+  co_await l_sql.run_sql(l_result.sqls_);
   default_logger_raw()->info("由 {} 创建评论 {}, 修改任务时间", person_.person_.email_, l_comment->uuid_id_);
 
   SPDLOG_LOGGER_WARN(
@@ -317,6 +331,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks_comments_ack, post) {
     throw_exception(
         http_request_error{boost::beast::http::status::bad_request, fmt::format("未知的task id: {}", l_task_id[0])}
     );
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls;
   if (auto l_id = get_comment_acknowledgement_ids_by_comment_id_and_person_id(
 
           comment_id_, person_.person_.uuid_id_
@@ -325,7 +341,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks_comments_ack, post) {
     auto l_ack         = std::make_shared<comment_acknoledgments>();
     l_ack->comment_id_ = comment_id_;
     l_ack->person_id_  = person_.person_.uuid_id_;
-    co_await l_sql.install(l_ack);
+    l_sqls.emplace_back(insert(l_sql).into<comment_acknoledgments>().values(*l_ack));
     socket_io::broadcast(
         socket_io::comment_acknowledge_broadcast_t{
             .comment_id_ = comment_id_, .person_id_ = person_.person_.uuid_id_, .project_id_ = l_prj_id.front()
@@ -339,8 +355,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks_comments_ack, post) {
         }
     );
     default_logger_raw()->info("{} 取消点赞 {}", person_.person_.email_, comment_id_);
-    co_await l_sql.remove<comment_acknoledgments>(l_id[0]);
+    l_sqls.emplace_back(
+        delete_from(l_sql).from<comment_acknoledgments>().where(c(&comment_acknoledgments::id_) == l_id[0])
+    );
   }
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_comment = l_sql.get_by_uuid<comment>(comment_id_);
 
@@ -370,11 +389,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_comment, delete_) {
       g_logger_ctrl().get_http(), "用户 {}({}) 删除 任务 {} 的评论 {}", person_.person_.email_,
       person_.person_.get_full_name(), l_task->uuid_id_, comment_id_
   );
-  co_await l_sql.remove<comment>(comment_id_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls;
+  l_sqls.emplace_back(delete_from(l_sql).from<comment>().where(c(&comment::uuid_id_) == comment_id_));
+
   auto l_last_comment = l_sql.get_last_comment(l_task->uuid_id_);
   if (l_last_comment) {
     auto l_task_status = l_sql.get_by_uuid<task_status>(l_task->task_status_id_);
-    using namespace orm;
     auto l_update = update(l_sql)
                         .from<task>()
                         .set(c(&task::last_comment_date_) = l_last_comment->created_at_)
@@ -382,8 +403,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_comment, delete_) {
                         .where(c(&task::uuid_id_) == l_task->uuid_id_);
     if (l_task_status.is_feedback_request_) l_update.set(c(&task::end_date_) = l_last_comment->created_at_);
     if (l_task_status.is_done_) l_update.set(c(&task::done_date_) = l_last_comment->created_at_);
-    co_await l_sql.run_sql(l_update);
+    l_sqls.emplace_back(std::move(l_update));
   }
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{});
 }
 
@@ -398,11 +420,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_comment, put) {
         l_c = fmt::to_string(l_c.get<std::double_t>());
     }
   }
-
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新评论 comment_id {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_
-  );
 
   using namespace orm;
   auto l_update = update(l_sql).from<comment>().set_from_ref<comment>(l_json).where(c(&comment::uuid_id_) == id_);

@@ -657,7 +657,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
   if (!l_run.data_ptr_->args_.outro_path_.empty() && FSys::exists(l_run.data_ptr_->args_.outro_path_))
     l_files.push_back(l_run.data_ptr_->args_.outro_path_);
 
-  auto l_result   = co_await create_comment(l_comment, &person_, task_id_, l_files);
+  auto l_result = create_comment(l_comment, &person_, task_id_, l_files);
+  auto l_sql   = get_sqlite_database();
+  co_await l_sql.run_sql(std::move(l_result.sqls_));
 
   // 重新定向文件
   auto l_fix_path = [&](const FSys::path& in_path) {
