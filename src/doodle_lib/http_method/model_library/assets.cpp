@@ -69,13 +69,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets, post) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_instance, put) {
   person_.check_supervisor();
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
-  std::shared_ptr<assets_file_helper::database_t> const l_ptr =
-      std::make_shared<assets_file_helper::database_t>(l_sql.get_by_uuid<assets_file_helper::database_t>(id_));
-  in_handle->get_json().get_to(*l_ptr);
-  co_await l_sql.update<assets_file_helper::database_t>(l_ptr);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql)
+          .from<assets_file_helper::database_t>()
+          .set_from_ref<assets_file_helper::database_t>(l_json)
+          .where(c(&assets_file_helper::database_t::uuid_id_) == id_)
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<assets_file_helper::database_t>(id_));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_instance, delete_) {

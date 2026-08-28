@@ -37,20 +37,39 @@ boost::asio::awaitable<void> run(
                     .person_id_      = in_person_id,
         });
         co_await l_sql.install(l_comment);
-        l_task->task_status_id_     = l_task_out_status.uuid_id_;
+        l_task->task_status_id_  = l_task_out_status.uuid_id_;
+        l_task->updated_at_      = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
         in_task->task_status_id_    = l_task_status.uuid_id_;
         in_task->last_comment_date_ = l_comment->created_at_;
-        auto l_tasl_tmp             = std::make_shared<task>(*l_task);
-        co_await l_sql.update(l_tasl_tmp);
-        co_await l_sql.update(in_task);
+        in_task->updated_at_        = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+
+        using namespace orm;
+        co_await l_sql.run_sql(
+            update(l_sql)
+                .from<task>()
+                .set(c(&task::task_status_id_) = l_task->task_status_id_)
+                .set(c(&task::updated_at_) = l_task->updated_at_)
+                .where(c(&task::uuid_id_) == l_task->uuid_id_),
+            update(l_sql)
+                .from<task>()
+                .set(c(&task::task_status_id_) = in_task->task_status_id_)
+                .set(c(&task::last_comment_date_) = in_task->last_comment_date_)
+                .set(c(&task::updated_at_) = in_task->updated_at_)
+                .where(c(&task::uuid_id_) == in_task->uuid_id_)
+        );
       }
 
       break;
     case status_automation_change_type::ready_for: {
-      auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(in_task->entity_id_));
-      if (l_entt->ready_for_ == in_status_automation.out_task_type_id_) co_return;
-      l_entt->ready_for_ = in_status_automation.out_task_type_id_;
-      co_await l_sql.update(l_entt);
+      auto l_entt = l_sql.get_by_uuid<entity>(in_task->entity_id_);
+      if (l_entt.ready_for_ == in_status_automation.out_task_type_id_) co_return;
+      using namespace orm;
+      co_await l_sql.run_sql(
+          update(l_sql)
+              .from<entity>()
+              .set(c(&entity::ready_for_) = in_status_automation.out_task_type_id_)
+              .where(c(&entity::uuid_id_) == l_entt.uuid_id_)
+      );
     } break;
   }
 }
