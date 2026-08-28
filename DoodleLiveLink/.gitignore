@@ -1,0 +1,72 @@
+# ================================
+# Unreal Engine 项目 .gitignore
+# ================================
+
+# 引擎生成的构建产物
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+Build/
+
+# Visual Studio 用户特定文件
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.VC.opendb
+*.VC.opendb
+
+# 可生成的项目文件（由引擎生成，无需入库）
+*.sln
+*.xcodeproj
+*.xcworkspace
+
+# 编译产物
+*.o
+*.obj
+*.pch
+*.pdb
+*.ilk
+*.iobj
+*.ipdb
+*.exp
+
+# 动态/静态链接库
+*.dll
+*.lib
+*.a
+*.so
+*.dylib
+
+# 可执行文件
+*.exe
+*.out
+*.app
+*.ipa
+
+# 预编译资产
+Source/Art/**/*.png
+Source/Art/**/*.tga
+
+# 编辑器生成的配置文件
+Config/*
+
+# 日志与临时文件
+*.log
+*.tmp
+*.temp
+*.swp
+*~
+
+# 平台特定
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.xcuserstate
+*.xcuserdata/
