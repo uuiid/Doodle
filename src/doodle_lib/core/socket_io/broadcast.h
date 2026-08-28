@@ -41,6 +41,11 @@ void broadcast(const Struct& in_struct, const std::shared_ptr<sid_ctx>& in_ctx =
       std::string{in_struct.event_name_}, nlohmann::json{} = in_struct, std::string{in_struct.namespace_}, in_ctx
   );
 }
+// 延迟广播, 直到调用
+template <BroadcastStruct Struct>
+auto broadcast_deferred(const Struct& in_struct, const std::shared_ptr<sid_ctx>& in_ctx = nullptr) {
+  return [in_struct, in_ctx]() { broadcast(in_struct, in_ctx); };
+}
 
 struct asset_new_broadcast_t {
   static constexpr std::string_view event_name_ = "asset:new";

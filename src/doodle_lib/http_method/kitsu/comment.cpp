@@ -3,6 +3,7 @@
 //
 #include "comment.h"
 
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/metadata/attachment_file.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/notification.h>
@@ -84,6 +85,7 @@ create_comment_result create_comment(
   std::vector<attachment_file> l_attachment_files{};
   using namespace orm;
   sql_modify_statement_vector_t l_sqls;
+  std::vector<std::function<void()>> l_deferred_broadcasts;
   {  // 创建基本的评论(包括辅助结构)
     comment_ns::set_comment_department_mentions(*in_comment);
     comment_ns::set_comment_mentions(*in_comment, l_task->project_id_);
@@ -139,23 +141,30 @@ create_comment_result create_comment(
                         .set(c(&task::task_status_id_) = l_task->task_status_id_)
                         .where(c(&task::uuid_id_) == l_task->uuid_id_);
     if (l_task_status.is_retake_) l_update.set(c(&task::retake_count_) = c(&task::retake_count_) + 1);
-    if (l_task_status.is_feedback_request_) l_update.set(c(&task::end_date_) = chrono::system_clock::now());
+    if (l_task_status.is_feedback_request_)
+      l_update.set(
+          c(&task::end_date_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}
+      );
     l_sqls.emplace_back(std::move(l_update));
 
-    socket_io::broadcast(
-        socket_io::task_update_broadcast_t{.task_id_ = in_comment->object_id_, .project_id_ = l_task->project_id_}
+    l_deferred_broadcasts.emplace_back(
+        socket_io::broadcast_deferred(
+            socket_io::task_update_broadcast_t{.task_id_ = in_comment->object_id_, .project_id_ = l_task->project_id_}
+        )
     );
 
     if (l_status_changed) {
       // 需要通知状态改变
-      socket_io::broadcast(
-          socket_io::task_status_change_broadcast_t{
-              .task_id_                 = in_comment->object_id_,
-              .new_task_status_id_      = l_task_status.uuid_id_,
-              .previous_task_status_id_ = l_task_status.uuid_id_,
-              .person_id_               = in_comment->person_id_,
-              .project_id_              = l_task->project_id_
-          }
+      l_deferred_broadcasts.emplace_back(
+          socket_io::broadcast_deferred(
+              socket_io::task_status_change_broadcast_t{
+                  .task_id_                 = in_comment->object_id_,
+                  .new_task_status_id_      = l_task_status.uuid_id_,
+                  .previous_task_status_id_ = l_task_status.uuid_id_,
+                  .person_id_               = in_comment->person_id_,
+                  .project_id_              = l_task->project_id_
+              }
+          )
       );
     };
   }
@@ -191,24 +200,26 @@ create_comment_result create_comment(
           }
       );
     }
-    l_sqls.emplace_back(insert(l_sql).into<notification>().set_range(*l_notifications));
+    if (!l_notifications->empty()) l_sqls.emplace_back(insert(l_sql).into<notification>().set_range(*l_notifications));
   }
 
   // 运行自动化任务
   for (auto&& i : l_sql.get_project_status_automations(l_task->project_id_))
     l_sqls |= ranges::actions::push_back(status_automation_ns::run(i, l_task, in_person->person_.uuid_id_));
   // co_await status_automation_ns::run(i, l_task, in_person->person_.uuid_id_);
-
-  socket_io::broadcast(
-      socket_io::comment_new_broadcast_t{
-          .comment_id_     = in_comment->uuid_id_,
-          .task_id_        = in_comment->object_id_,
-          .task_status_id_ = in_comment->task_status_id_,
-          .project_id_     = l_task->project_id_
-      }
+  l_deferred_broadcasts.emplace_back(
+      socket_io::broadcast_deferred(
+          socket_io::comment_new_broadcast_t{
+              .comment_id_     = in_comment->uuid_id_,
+              .task_id_        = in_comment->object_id_,
+              .task_status_id_ = in_comment->task_status_id_,
+              .project_id_     = l_task->project_id_
+          }
+      )
   );
   create_comment_result l_result{*in_comment, l_task_status, in_person->person_, l_attachment_files};
-  l_result.sqls_ = std::move(l_sqls);
+  l_result.sqls_                = std::move(l_sqls);
+  l_result.deferred_broadcasts_ = std::move(l_deferred_broadcasts);
   return l_result;
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comment, post) {
@@ -226,6 +237,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comment, post) {
   auto l_result = create_comment(l_comment, &person_, id_, l_files);
   auto l_sql    = get_sqlite_database();
   co_await l_sql.run_sql(l_result.sqls_);
+  for (auto&& i : l_result.deferred_broadcasts_) i();
   default_logger_raw()->info("由 {} 创建评论 {}", person_.person_.email_, l_comment->uuid_id_);
 
   SPDLOG_LOGGER_WARN(
@@ -253,6 +265,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_tasks_comment_many, post) {
   orm::sql_modify_statement_vector_t l_sqls{};
   for (auto&& i : l_result) l_sqls |= ranges::actions::push_back(std::move(i.sqls_));
   co_await l_sql.run_sql(l_sqls);
+  for (auto&& i : l_result)
+    for (auto&& j : i.deferred_broadcasts_) j();
+
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成批量创建评论 数量 {}", person_.person_.email_,
       person_.person_.get_full_name(), l_result.size()
@@ -396,11 +411,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_comment, delete_) {
   auto l_last_comment = l_sql.get_last_comment(l_task->uuid_id_);
   if (l_last_comment) {
     auto l_task_status = l_sql.get_by_uuid<task_status>(l_task->task_status_id_);
-    auto l_update = update(l_sql)
-                        .from<task>()
-                        .set(c(&task::last_comment_date_) = l_last_comment->created_at_)
-                        .set(c(&task::task_status_id_) = l_last_comment->task_status_id_)
-                        .where(c(&task::uuid_id_) == l_task->uuid_id_);
+    auto l_update      = update(l_sql)
+                             .from<task>()
+                             .set(c(&task::last_comment_date_) = l_last_comment->created_at_)
+                             .set(c(&task::task_status_id_) = l_last_comment->task_status_id_)
+                             .where(c(&task::uuid_id_) == l_task->uuid_id_);
     if (l_task_status.is_feedback_request_) l_update.set(c(&task::end_date_) = l_last_comment->created_at_);
     if (l_task_status.is_done_) l_update.set(c(&task::done_date_) = l_last_comment->created_at_);
     l_sqls.emplace_back(std::move(l_update));

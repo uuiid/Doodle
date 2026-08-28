@@ -23,6 +23,8 @@ struct create_comment_result : comment {
   person person_;
   std::vector<attachment_file> attachment_file_;
   orm::sql_modify_statement_vector_t sqls_;
+  std::vector<std::function<void()>> deferred_broadcasts_;
+  
   explicit create_comment_result(
       const comment& in_comment, const task_status& in_task_status, const person& in_person,
       const std::vector<attachment_file>& in_attachment_file
