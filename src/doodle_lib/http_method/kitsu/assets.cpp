@@ -103,7 +103,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(projects_assets_new, post) {
       person_.person_.get_full_name(), l_data.project_id, l_data.name, l_data.asset_type_id
   );
 
-  auto l_entity = std::make_shared<entity>(entity{
+  auto l_sql   = get_sqlite_database();
+  entity l_entity{
       .name_           = l_data.name,
       .description_    = l_data.description,
       .is_shared_      = l_data.is_shared,
@@ -112,37 +113,40 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(projects_assets_new, post) {
       .entity_type_id_ = l_data.asset_type_id,
       .source_id_      = l_data.source_id,
       .created_by_     = person_.person_.uuid_id_,
-  });
-  auto l_sql    = get_sqlite_database();
-  co_await l_sql.install(l_entity);
+  };
+  using namespace orm;
+  auto l_install = insert(l_sql).into<entity>().values(l_entity);
+
   nlohmann::json l_json_ret{};
-  l_json_ret = *l_entity;
+  l_json_ret = l_entity;
   if (entity_asset_extend::has_extend_data(l_json)) {
-    auto l_entity_extend = std::make_shared<entity_asset_extend>(entity_asset_extend{
-        .entity_id_ = l_entity->uuid_id_,
-    });
-    l_json.get_to(*l_entity_extend);
+    entity_asset_extend l_entity_extend{
+        .entity_id_ = l_entity.uuid_id_,
+    };
+    l_json.get_to(l_entity_extend);
 
     DOODLE_CHICK(
-        l_entity_extend->check_all_fields_no_backslash(), "entity_asset_extend 字段不能包含反斜杠 '\\'，请检查输入数据"
+        l_entity_extend.check_all_fields_no_backslash(), "entity_asset_extend 字段不能包含反斜杠 '\\'，请检查输入数据"
     )
 
-    co_await l_sql.install(l_entity_extend);
-    // l_json_ret = *l_entity_extend;
-    l_json_ret.update(*l_entity_extend);
+    auto l_install_extend = insert(l_sql).into<entity_asset_extend>().values(l_entity_extend);
+    co_await l_sql.run_sql(l_install, l_install_extend);
+    l_json_ret.update(l_entity_extend);
+  } else {
+    co_await l_sql.run_sql(l_install);
   }
   socket_io::broadcast(
       socket_io::asset_new_broadcast_t{
-          .asset_id_   = l_entity->uuid_id_,
-          .asset_type_ = l_entity->entity_type_id_,
-          .project_id_ = l_entity->project_id_
+          .asset_id_   = l_entity.uuid_id_,
+          .asset_type_ = l_entity.entity_type_id_,
+          .project_id_ = l_entity.project_id_
       }
   );
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 创建资产 asset_id {} asset_type_id {}",
-      person_.person_.email_, person_.person_.get_full_name(), l_entity->project_id_, l_entity->uuid_id_,
-      l_entity->entity_type_id_
+      person_.person_.email_, person_.person_.get_full_name(), l_entity.project_id_, l_entity.uuid_id_,
+      l_entity.entity_type_id_
   );
 
   co_return in_handle->make_msg(l_json_ret);
@@ -510,7 +514,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, delete_) {
   }
   auto l_task     = l_sql.get_tasks_for_entity(l_ass.uuid_id_);
   auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
-  co_await l_sql.remove<entity>(l_ass.uuid_id_);
+  using namespace orm;
+  auto l_delete = delete_from(l_sql).from<entity>().where(c(&entity::uuid_id_) == l_ass.uuid_id_);
+  co_await l_sql.run_sql(l_delete);
   co_return in_handle->make_msg(nlohmann::json{} = l_ass);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shared_used, get) { co_return in_handle->make_msg(nlohmann::json::array()); }
