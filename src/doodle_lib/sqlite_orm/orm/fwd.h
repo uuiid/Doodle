@@ -26,6 +26,9 @@ struct bind_value_collector_t;
 struct on_operations;
 struct create_index_base_t;
 
+using sql_modify_statement_t        = std::variant<delete_t, update_t, insert_t>;
+using sql_modify_statement_vector_t = std::vector<sql_modify_statement_t>;
+
 template <typename...>
 inline constexpr bool always_false = false;
 
@@ -170,7 +173,7 @@ using table_info_base_ptr = std::shared_ptr<table_info_base_t>;
 
 // 数据库 select update delete insert 语句 基类
 struct DOODLELIB_API statement_info_base_t : public orm_base {
-  virtual ~statement_info_base_t() = default;
+  virtual ~statement_info_base_t()                        = default;
   virtual void prepare(session& s, const to_sql_ctx& ctx) = 0;
 };
 }  // namespace doodle::orm

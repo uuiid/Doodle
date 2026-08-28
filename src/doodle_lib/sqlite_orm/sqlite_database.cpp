@@ -63,6 +63,7 @@
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 #include <tuple>
+#include <variant>
 #include <vector>
 
 namespace doodle {
@@ -1118,6 +1119,16 @@ void sqlite_storage::upgrade() {
     l_s.pragma().recursive_triggers(true);
     l_s.pragma().journal_mode(orm::journal_mode_t::wal);
   }
+}
+
+boost::asio::awaitable<void> sqlite_database::run_sql(orm::sql_modify_statement_vector_t in_sqls) {
+  DOODLE_TO_SQLITE_THREAD()
+  auto l_g = session_.transaction();
+  for (auto&& i : in_sqls) {
+    std::visit([&](auto&& in_sql) { in_sql(); }, i);
+  }
+  l_g.commit();
+  DOODLE_TO_SELF();
 }
 
 boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {

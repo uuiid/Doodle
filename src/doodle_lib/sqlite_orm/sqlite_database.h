@@ -145,14 +145,12 @@ class DOODLELIB_API sqlite_database {
     install_unsafe<T>(in_data);
     DOODLE_TO_SELF();
   }
- 
+
   template <typename T>
   void install_unsafe(std::shared_ptr<T> in_data) {
     using namespace orm;
     in_data->id_ = orm::insert(*this).into<T>().values(*in_data)();
   }
-
- 
 
   /**
    *
@@ -285,6 +283,7 @@ class DOODLELIB_API sqlite_database {
     l_g.commit();
     DOODLE_TO_SELF();
   }
+  boost::asio::awaitable<void> run_sql(orm::sql_modify_statement_vector_t in_sqls);
 
   std::vector<attendance_helper::database_t> get_attendance(
       const uuid& in_person_id, const chrono::local_days& in_data
