@@ -146,7 +146,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, put) {
     using namespace orm;
     auto l_update = update(l_sql)
                         .from<person>()
-                        .set(c(&person::password_) == bcrypt::generateHash(l_arg.password))
+                        .set(c(&person::password_) = bcrypt::generateHash(l_arg.password))
                         .where(c(&person::uuid_id_) == l_person.uuid_id_);
     co_await l_sql.run_sql(l_update);
   }
