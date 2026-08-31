@@ -17,13 +17,12 @@
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <boost/asio/awaitable.hpp>
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/strand.hpp>
 
 #include <cache.hpp>
 #include <cache_policy.hpp>
 #include <lru_cache_policy.hpp>
-#include <map>
+#include <tbb/concurrent_hash_map.h>
+
 #include <string>
 
 namespace doodle::http {
@@ -80,25 +79,22 @@ class auth_reset_password::impl {
 
  public:
   impl() = default;
-  boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
 
-  std::map<std::string, cache_value> reset_tokens_;
-  boost::asio::awaitable<std::string> get_reset_token(const std::string& in_email) {
-    DOODLE_TO_EXECUTOR(strand_);
+  tbb::concurrent_hash_map<std::string, cache_value> reset_tokens_;
+  std::string get_reset_token(const std::string& in_email) {
     std::string l_str{};
-    if (reset_tokens_.contains(in_email)) {
-      if (reset_tokens_.at(in_email).create_time_ + std::chrono::hours(2) > std::chrono::system_clock::now())
-        l_str = reset_tokens_.at(in_email).token_;
-      reset_tokens_.erase(in_email);
+    decltype(reset_tokens_)::accessor l_accessor;
+    if (reset_tokens_.find(l_accessor, in_email)) {
+      if (l_accessor->second.create_time_ + std::chrono::hours(2) > std::chrono::system_clock::now())
+        l_str = l_accessor->second.token_;
+      reset_tokens_.erase(l_accessor);
     }
-    DOODLE_TO_SELF()
-    co_return l_str;
+    return l_str;
   }
-  boost::asio::awaitable<void> set_reset_token(const std::string& in_email, const std::string& in_token) {
-    DOODLE_TO_EXECUTOR(strand_);
-    reset_tokens_[in_email] = cache_value{in_token, std::chrono::system_clock::now()};
-    DOODLE_TO_SELF()
-    co_return;
+  void set_reset_token(const std::string& in_email, const std::string& in_token) {
+    decltype(reset_tokens_)::accessor l_accessor;
+    reset_tokens_.insert(l_accessor, in_email);
+    l_accessor->second = cache_value{in_token, std::chrono::system_clock::now()};
   }
 };
 void auth_reset_password::init() {
@@ -121,7 +117,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, post) {
     );
   }
   auto l_token = generate_reset_token();
-  co_await pimpl_->set_reset_token(l_email, l_token);
+  pimpl_->set_reset_token(l_email, l_token);
   auto& l_kitsu_ctx = g_ctx().get<http::kitsu_ctx_t>();
   auto l_rest_url   = fmt::format(
       "{}://{}/reset-change-password?email={}&token={}", l_kitsu_ctx.domain_protocol_, l_kitsu_ctx.domain_name_,
@@ -136,7 +132,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, post) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, put) {
   auto l_arg   = in_handle->get_json().get<auth_reset_password_put_arg>();
-  auto l_token = co_await pimpl_->get_reset_token(l_arg.email);
+  auto l_token = pimpl_->get_reset_token(l_arg.email);
   if (l_token.empty()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "无效的重置令牌。"});
   if (l_arg.password != l_arg.password2)
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "Passwords do not match."});
