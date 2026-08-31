@@ -3,7 +3,9 @@
 #include "DoodleLiveLinkWindow.h"
 #include "DoodleLiveLink.h"
 
+#include "Features/IModularFeatures.h"
 #include "Framework/Application/SlateApplication.h"
+#include "ILiveLinkClient.h"
 #include "LiveLinkFaceSourceBlueprint.h"
 #include "Styling/CoreStyle.h"
 #include "Widgets/Input/SButton.h"
@@ -11,6 +13,7 @@
 #include "Widgets/Input/SNumericEntryBox.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
+#include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/SWindow.h"
 #include "Widgets/Text/STextBlock.h"
@@ -163,10 +166,48 @@ void FDoodleLiveLinkWindow::CreateWindow()
 					return FReply::Handled();
 				})
 			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 24.0f, 0.0f, 0.0f)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				[
+					SNew(STextBlock)
+					.Text(NSLOCTEXT("DoodleLiveLink", "SourceListHeader", "源列表"))
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 14))
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(12.0f, 0.0f, 0.0f, 0.0f)
+				[
+					SNew(SButton)
+					.Text(NSLOCTEXT("DoodleLiveLink", "RefreshSourceList", "刷新"))
+					.OnClicked_Lambda([this]() -> FReply
+					{
+						RefreshSourceList();
+						return FReply::Handled();
+					})
+				]
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 8.0f, 0.0f, 0.0f)
+			[
+				SNew(SScrollBox)
+				+ SScrollBox::Slot()
+				[
+					SAssignNew(SourceListBox, SVerticalBox)
+				]
+			]
 		]
 	);
 
 	FSlateApplication::Get().AddWindow(RootWindow.ToSharedRef());
+
+	RefreshSourceList();
 }
 
 void FDoodleLiveLinkWindow::CreateLiveLinkFaceSource()
@@ -186,6 +227,9 @@ void FDoodleLiveLinkWindow::CreateLiveLinkFaceSource()
 
 	bLiveLinkFaceSourceCreated = true;
 
+	// 源已加入客户端，先刷新列表再尝试连接。
+	RefreshSourceList();
+
 	// 使用界面配置连接（地址、端口、Subject 名称）。
 	bool bConnected = false;
 	ULiveLinkFaceSourceBlueprint::Connect(LiveLinkFaceSourceHandle, LiveLinkFaceSubjectName, LiveLinkFaceAddress, bConnected, LiveLinkFacePort);
@@ -196,6 +240,83 @@ void FDoodleLiveLinkWindow::CreateLiveLinkFaceSource()
 	}
 
 	UE_LOG(LogDoodleLiveLink, Log, TEXT("Live Link Face 源已创建并连接（%s:%d, Subject=%s）"), *LiveLinkFaceAddress, LiveLinkFacePort, *LiveLinkFaceSubjectName);
+}
+
+void FDoodleLiveLinkWindow::RefreshSourceList()
+{
+	if (!SourceListBox.IsValid())
+	{
+		return;
+	}
+
+	SourceListBox->ClearChildren();
+
+	ILiveLinkClient* LiveLinkClient = nullptr;
+	if (IModularFeatures::Get().IsModularFeatureAvailable(ILiveLinkClient::ModularFeatureName))
+	{
+		LiveLinkClient = &IModularFeatures::Get().GetModularFeature<ILiveLinkClient>(ILiveLinkClient::ModularFeatureName);
+	}
+
+	if (!LiveLinkClient)
+	{
+		SourceListBox->AddSlot()
+		.AutoHeight()
+		.Padding(0.0f, 2.0f, 0.0f, 2.0f)
+		[
+			SNew(STextBlock)
+			.Text(NSLOCTEXT("DoodleLiveLink", "NoLiveLinkClient", "Live Link 客户端不可用"))
+		];
+		return;
+	}
+
+	const TArray<FGuid> Sources = LiveLinkClient->GetSources();
+	if (Sources.Num() == 0)
+	{
+		SourceListBox->AddSlot()
+		.AutoHeight()
+		.Padding(0.0f, 2.0f, 0.0f, 2.0f)
+		[
+			SNew(STextBlock)
+			.Text(NSLOCTEXT("DoodleLiveLink", "NoSources", "（暂无源）"))
+		];
+		return;
+	}
+
+	for (const FGuid& SourceGuid : Sources)
+	{
+		const FText SourceType = LiveLinkClient->GetSourceType(SourceGuid);
+		const FText MachineName = LiveLinkClient->GetSourceMachineName(SourceGuid);
+		const FText Status = LiveLinkClient->GetSourceStatus(SourceGuid);
+
+		SourceListBox->AddSlot()
+		.AutoHeight()
+		.Padding(0.0f, 2.0f, 0.0f, 2.0f)
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(STextBlock)
+				.Text(SourceType)
+				.MinDesiredWidth(160.0f)
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(8.0f, 0.0f, 0.0f, 0.0f)
+			[
+				SNew(STextBlock)
+				.Text(MachineName)
+				.MinDesiredWidth(160.0f)
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(8.0f, 0.0f, 0.0f, 0.0f)
+			[
+				SNew(STextBlock)
+				.Text(Status)
+			]
+		];
+	}
 }
 
 void FDoodleLiveLinkWindow::OnWindowClosed(const TSharedRef<SWindow>& InWindow)

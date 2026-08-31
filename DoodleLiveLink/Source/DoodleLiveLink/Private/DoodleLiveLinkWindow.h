@@ -19,10 +19,16 @@ private:
 	/** 创建 Live Link Face 源。 */
 	void CreateLiveLinkFaceSource();
 
+	/** 刷新源列表显示。 */
+	void RefreshSourceList();
+
 	/** 主窗口关闭时触发，请求退出引擎。 */
 	void OnWindowClosed(const TSharedRef<SWindow>& InWindow);
 
 	TSharedPtr<class SWindow> RootWindow;
+
+	/** 源列表容器。 */
+	TSharedPtr<class SVerticalBox> SourceListBox;
 
 	/** 已创建的 Live Link Face 源句柄。 */
 	FLiveLinkSourceHandle LiveLinkFaceSourceHandle;
