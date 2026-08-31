@@ -55,9 +55,6 @@ Build/
 Source/Art/**/*.png
 Source/Art/**/*.tga
 
-# 编辑器生成的配置文件
-Config/*
-
 # 日志与临时文件
 *.log
 *.tmp

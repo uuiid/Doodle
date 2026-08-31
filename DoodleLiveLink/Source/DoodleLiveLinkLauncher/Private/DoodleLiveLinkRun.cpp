@@ -4,7 +4,9 @@
 
 #include "Editor.h"
 #include "Editor/EditorEngine.h"
+#include "Misc/App.h"
 #include "Misc/CommandLine.h"
+#include "Misc/PackageName.h"
 #include "Misc/Paths.h"
 #include "HAL/PlatformMisc.h"
 #include "HAL/PlatformProcess.h"
@@ -35,11 +37,22 @@ int32 RunDoodleLiveLink(const TCHAR* CommandLine)
 	}
 #endif
 
-	// in-tree program：uproject 位于 Engine/Source/Programs/DoodleLiveLink/ 下。
+	// in-tree 开发构建：uproject 位于 Engine/Source/Programs/DoodleLiveLink/ 下。
 	const TCHAR* const DevelopmentProjectPath = TEXT("../../Source/Programs/DoodleLiveLink/DoodleLiveLink.uproject");
+	// Cooked Editor 分发构建：uproject 位于 <发布目录>/DoodleLiveLink/ 下。
+	const TCHAR* const StagedProjectPath = TEXT("../../../DoodleLiveLink/DoodleLiveLink.uproject");
+
 	if (FPaths::FileExists(DevelopmentProjectPath))
 	{
 		FPaths::SetProjectFilePath(DevelopmentProjectPath);
+	}
+	else if (FPaths::FileExists(StagedProjectPath))
+	{
+		FPaths::SetProjectFilePath(StagedProjectPath);
+
+		// 确保分发版中由 hub 生成的内容（如 LiveLink 录制）可被找到。
+		const FString GameContentPath = FPaths::Combine(FPlatformProcess::UserSettingsDir(), *FApp::GetEpicProductIdentifier(), TEXT("DoodleLiveLink"), TEXT("Content"));
+		FPackageName::RegisterMountPoint(TEXT("/Game/"), GameContentPath);
 	}
 
 	FPlatformMisc::SetUBTTargetName(TEXT("DoodleLiveLink"));
