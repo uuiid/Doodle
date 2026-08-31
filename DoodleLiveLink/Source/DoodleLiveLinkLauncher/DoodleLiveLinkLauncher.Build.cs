@@ -10,18 +10,9 @@ public class DoodleLiveLinkLauncher : ModuleRules
 {
 	public DoodleLiveLinkLauncher(ReadOnlyTargetRules Target) : base(Target)
 	{
-		// 核心业务模块（LiveLink 接收 + WebSocket 转发）
-		PrivateDependencyModuleNames.AddRange(
-			new string[] {
-				"LiveLink",
-				"LiveLinkInterface",
-				"LiveLinkComponents",
-				"WebSockets",
-				"Sockets",
-				"Networking",
-			});
+		PrivateDependencyModuleNames.Add("DoodleLiveLink");
 
-		// LaunchEngineLoop 依赖
+		// LaunchEngineLoop dependencies
 		PrivateDependencyModuleNames.AddRange(
 			new string[] {
 				"ApplicationCore",
@@ -49,7 +40,7 @@ public class DoodleLiveLinkLauncher : ModuleRules
 			}
 		);
 
-		// LaunchEngineLoop IncludePath 依赖
+		// LaunchEngineLoop IncludePath dependencies
 		PrivateIncludePathModuleNames.AddRange(
 			new string[] {
 				"Launch",
@@ -64,7 +55,7 @@ public class DoodleLiveLinkLauncher : ModuleRules
 			}
 		);
 
-		// LaunchEngineLoop editor 依赖
+		// LaunchEngineLoop editor dependencies
 		PrivateDependencyModuleNames.AddRange(
 			new string[] {
 				"PropertyEditor",
@@ -81,11 +72,6 @@ public class DoodleLiveLinkLauncher : ModuleRules
 					"AutomationTest",
 					"AutomationWorker",
 				});
-		}
-
-		if (Target.Platform.IsInGroup(UnrealPlatformGroup.Windows))
-		{
-			PrivateDependencyModuleNames.Add("AgilitySDK");
 		}
 
 		ShortName = "DLHub";

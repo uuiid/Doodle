@@ -10,6 +10,7 @@
 #include "HAL/PlatformProcess.h"
 #include "HAL/PlatformSplash.h"
 #include "LaunchEngineLoop.h"
+#include "Modules/ModuleManager.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogDoodleLiveLink, Log, All);
 
@@ -34,20 +35,14 @@ int32 RunDoodleLiveLink(const TCHAR* CommandLine)
 	}
 #endif
 
-	FPlatformMisc::SetUBTTargetName(TEXT("DoodleLiveLink"));
-
-	// 独立项目：exe 位于 <Project>/Binaries/Win64/，向上三级即项目根目录。
-	// 未通过命令行传入 -project 时，自动定位 DoodleLiveLink.uproject。
-	if (FPaths::GetProjectFilePath().IsEmpty())
+	// in-tree program：uproject 位于 Engine/Source/Programs/DoodleLiveLink/ 下。
+	const TCHAR* const DevelopmentProjectPath = TEXT("../../Source/Programs/DoodleLiveLink/DoodleLiveLink.uproject");
+	if (FPaths::FileExists(DevelopmentProjectPath))
 	{
-		const FString ExePath(FPlatformProcess::ExecutablePath());
-		const FString ProjectDir = FPaths::GetPath(FPaths::GetPath(FPaths::GetPath(ExePath)));
-		const FString ProjectFile = FPaths::Combine(ProjectDir, TEXT("DoodleLiveLink.uproject"));
-		if (FPaths::FileExists(ProjectFile))
-		{
-			FPaths::SetProjectFilePath(ProjectFile);
-		}
+		FPaths::SetProjectFilePath(DevelopmentProjectPath);
 	}
+
+	FPlatformMisc::SetUBTTargetName(TEXT("DoodleLiveLink"));
 
 	const TCHAR* const ExtraArgs = TEXT("-xrtrackingonly");
 	int32 Result = GEngineLoop.PreInit(*FString::Printf(TEXT("%s %s %s"),
@@ -74,6 +69,9 @@ int32 RunDoodleLiveLink(const TCHAR* CommandLine)
 
 		// Hide the splash screen now that everything is ready to go
 		FPlatformSplash::Hide();
+
+		// 加载主模块，创建 DoodleLiveLink 中心窗口（此时 Slate 已就绪）
+		FModuleManager::Get().LoadModuleChecked("DoodleLiveLink");
 
 		while (!IsEngineExitRequested())
 		{

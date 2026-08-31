@@ -2,7 +2,6 @@
 
 using UnrealBuildTool;
 
-[SupportedPlatforms("Win64")]
 public class DoodleLiveLinkTarget : TargetRules
 {
 	public DoodleLiveLinkTarget(TargetInfo Target) : base(Target)
@@ -20,12 +19,9 @@ public class DoodleLiveLinkTarget : TargetRules
 		EnablePlugins.AddRange(new string[]
 		{
 			"LiveLink",
-			"LiveLinkComponents",
 			"UdpMessaging",
-			"Messaging",
 		});
 
-		bAllowEnginePluginsEnabledByDefault = false;
 		bBuildAdditionalConsoleApp = false;
 
 		OutputFile = "Binaries/" + Platform.ToString() + "/DoodleLiveLink";
