@@ -14,6 +14,7 @@ public class DoodleLiveLinkTarget : TargetRules
 
 		DefaultBuildSettings = BuildSettingsVersion.Latest;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+		GeneratedProjectName = "DoodleLiveLink";
 
 		// LiveLink 接收与 WebSocket 转发所需插件
 		EnablePlugins.AddRange(new string[]
@@ -23,6 +24,7 @@ public class DoodleLiveLinkTarget : TargetRules
 			"WebSocketNetworking",
 		});
 
+		bAllowEnginePluginsEnabledByDefault = false;
 		bBuildAdditionalConsoleApp = false;
 
 		OutputFile = "Binaries/" + Platform.ToString() + "/DoodleLiveLink";

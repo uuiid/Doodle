@@ -21,6 +21,7 @@ Build/
 *.VC.db
 *.VC.VC.opendb
 *.VC.opendb
+.vsconfig
 
 # 可生成的项目文件（由引擎生成，无需入库）
 *.sln
