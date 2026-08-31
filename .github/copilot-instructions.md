@@ -1,9 +1,10 @@
 ## 快速目标（对 AI 编码代理）
 
-这是一个以 CMake + vcpkg 为中心的 Windows 优先的 C++ 项目，包含可执行程序、Maya 插件、UE 插件与若干工具。主要路径和约定见下。请在进行改动前阅读并参考下面的文件/命令。只修改能通过本地构建与测试的最小改动。
+这是一个以 CMake + vcpkg 为中心的 Windows 优先的 C++ 项目，包含独立软件、Maya 插件、UE 独立程序与若干工具。主要路径和约定见下。请在进行改动前阅读并参考下面的文件/命令。只修改能通过本地构建与测试的最小改动。
 
 ### 一眼看懂仓库结构
-- `src/`：源代码入口。模块分层：`doodle_core`（底层核心）、`doodle_lib`（可复用库）、`exe_*`（各可执行入口）、`maya_plug*`（Maya 插件）、`exe_maya*`（Maya 相关 exe）。
+- `src/`：C++ 源代码入口，除 `maya_plug`、`maya_plug_mll` 两个目录（Maya 插件）外均为独立软件。模块分层：`doodle_core`（底层核心）、`doodle_lib`（可复用库）、`exe_*`（各可执行入口）、`maya_plug` / `maya_plug_mll`（Maya 插件）、`exe_maya*`（Maya 相关 exe）。
+- `DoodleLiveLink/`：UE 独立程序（非插件），需接入 UE 源码 `Engine\Source\Programs\` 目录中使用；UE 根目录暂定 `E:\UnrealEngine`。
 - `CMake/`：自定义的 Find 模块（例如 `FindMaya.cmake`, `FindAutodesk_FBX.cmake`），查看这里即可了解如何寻找并链接外部 SDK（Maya/FBX/Photoshop 等）。
 - `external/`、`vcpkg/`：第三方库和预编译内容（例如 USD、libtorch）。依赖由 `vcpkg.json` 管理；本仓库使用 overlay ports (`vcpkg_ports`) 和 overlay triplets (`vcpkg_triplets`).
 - `build_script/`：一组用于构建/部署的脚本（Windows .cmd/.ps1）。重要：`build_script/build/set_venv.cmd` 是调用 CMake 的 wrapper，会激活 `.venv` 并运行 vcvars，VS/Ninja 构建都通过它。 
@@ -15,7 +16,7 @@
   - `Ninja_RelWithDebInfo` / build preset `debug_maya`：用于构建 Maya 插件（仓库约定 Maya 插件使用 RelWithDebInfo）。
 - 在本仓库中，所有 CMake/Build 命令通过 `build_script/build/set_venv.cmd` 调用（该脚本会 set venv 并调用 vcvars）。示例：
   - CMake configure（示例）: 调用 wrapper 并传入 cmake 可执行路径与 `--preset`。VSCode tasks 已配置并使用该 wrapper（参见 workspace tasks）。
-- 单元/集成测试：编译后可在 `build/Ninja_debug/bin/test_main.exe` 运行（仓库提供了 VSCode task “运行boost测试”）。测试框架为 Boost.Test（见 vcpkg 依赖 `boost-test`）。
+
 
 ### 项目约定与常见变更点（具体、可操作）
 - 新增第三方库：修改 `vcpkg.json`（并把自定义 port 放在 `vcpkg_ports/`），然后使用 CMakePresets（或通过 wrapper）重新 configure。不要直接在 CMakeLists 中硬编码外部依赖路径。
