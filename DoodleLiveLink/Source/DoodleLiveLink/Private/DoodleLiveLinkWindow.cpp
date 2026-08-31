@@ -4,12 +4,22 @@
 #include "DoodleLiveLink.h"
 
 #include "Framework/Application/SlateApplication.h"
+#include "LiveLinkFaceSourceBlueprint.h"
 #include "Styling/CoreStyle.h"
+#include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SEditableTextBox.h"
+#include "Widgets/Input/SNumericEntryBox.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/SWindow.h"
 #include "Widgets/Text/STextBlock.h"
+
+namespace
+{
+	/** 配置输入行的标签样式。 */
+	const FMargin ConfigLabelPadding(0.0f, 4.0f, 0.0f, 4.0f);
+}
 
 FDoodleLiveLinkWindow::FDoodleLiveLinkWindow()
 {
@@ -58,10 +68,134 @@ void FDoodleLiveLinkWindow::CreateWindow()
 				SNew(STextBlock)
 				.Text(NSLOCTEXT("DoodleLiveLink", "Status", "WebSocket 服务端已启动，等待 Maya 客户端连接..."))
 			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 24.0f, 0.0f, 0.0f)
+			[
+				SNew(STextBlock)
+				.Text(NSLOCTEXT("DoodleLiveLink", "ConfigHeader", "Live Link Face 源配置"))
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 14))
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 8.0f, 0.0f, 0.0f)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(ConfigLabelPadding)
+				.VAlign(VAlign_Center)
+				[
+					SNew(STextBlock)
+					.Text(NSLOCTEXT("DoodleLiveLink", "AddressLabel", "地址"))
+					.MinDesiredWidth(80.0f)
+				]
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
+				[
+					SNew(SEditableTextBox)
+					.Text(FText::FromString(LiveLinkFaceAddress))
+					.OnTextChanged_Lambda([this](const FText& InText)
+					{
+						LiveLinkFaceAddress = InText.ToString();
+					})
+				]
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 4.0f, 0.0f, 0.0f)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(ConfigLabelPadding)
+				.VAlign(VAlign_Center)
+				[
+					SNew(STextBlock)
+					.Text(NSLOCTEXT("DoodleLiveLink", "PortLabel", "端口"))
+					.MinDesiredWidth(80.0f)
+				]
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
+				[
+					SNew(SNumericEntryBox<uint16>)
+					.Value(LiveLinkFacePort)
+					.OnValueChanged_Lambda([this](uint16 InValue)
+					{
+						LiveLinkFacePort = InValue;
+					})
+				]
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 4.0f, 0.0f, 0.0f)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(ConfigLabelPadding)
+				.VAlign(VAlign_Center)
+				[
+					SNew(STextBlock)
+					.Text(NSLOCTEXT("DoodleLiveLink", "SubjectNameLabel", "Subject 名"))
+					.MinDesiredWidth(80.0f)
+				]
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
+				[
+					SNew(SEditableTextBox)
+					.Text(FText::FromString(LiveLinkFaceSubjectName))
+					.OnTextChanged_Lambda([this](const FText& InText)
+					{
+						LiveLinkFaceSubjectName = InText.ToString();
+					})
+				]
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 24.0f, 0.0f, 0.0f)
+			[
+				SNew(SButton)
+				.Text(NSLOCTEXT("DoodleLiveLink", "CreateLiveLinkFaceSource", "创建 Live Link Face 源"))
+				.OnClicked_Lambda([this]() -> FReply
+				{
+					CreateLiveLinkFaceSource();
+					return FReply::Handled();
+				})
+			]
 		]
 	);
 
 	FSlateApplication::Get().AddWindow(RootWindow.ToSharedRef());
+}
+
+void FDoodleLiveLinkWindow::CreateLiveLinkFaceSource()
+{
+	if (bLiveLinkFaceSourceCreated)
+	{
+		return;
+	}
+
+	bool bSucceeded = false;
+	ULiveLinkFaceSourceBlueprint::CreateLiveLinkFaceSource(LiveLinkFaceSourceHandle, bSucceeded);
+	if (!bSucceeded)
+	{
+		UE_LOG(LogDoodleLiveLink, Error, TEXT("创建 Live Link Face 源失败"));
+		return;
+	}
+
+	bLiveLinkFaceSourceCreated = true;
+
+	// 使用界面配置连接（地址、端口、Subject 名称）。
+	bool bConnected = false;
+	ULiveLinkFaceSourceBlueprint::Connect(LiveLinkFaceSourceHandle, LiveLinkFaceSubjectName, LiveLinkFaceAddress, bConnected, LiveLinkFacePort);
+	if (!bConnected)
+	{
+		UE_LOG(LogDoodleLiveLink, Error, TEXT("Live Link Face 源连接失败（%s:%d）"), *LiveLinkFaceAddress, LiveLinkFacePort);
+		return;
+	}
+
+	UE_LOG(LogDoodleLiveLink, Log, TEXT("Live Link Face 源已创建并连接（%s:%d, Subject=%s）"), *LiveLinkFaceAddress, LiveLinkFacePort, *LiveLinkFaceSubjectName);
 }
 
 void FDoodleLiveLinkWindow::OnWindowClosed(const TSharedRef<SWindow>& InWindow)

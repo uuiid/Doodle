@@ -20,6 +20,7 @@ public class DoodleLiveLinkTarget : TargetRules
 		EnablePlugins.AddRange(new string[]
 		{
 			"LiveLink",
+			"MetaHumanLiveLink",
 			"UdpMessaging",
 			"WebSocketNetworking",
 		});

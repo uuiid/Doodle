@@ -22,6 +22,7 @@ public class DoodleLiveLink : ModuleRules
 			"ApplicationCore",
 			"LiveLink",
 			"LiveLinkInterface",
+			"LiveLinkFaceSource",
 			"Networking",
 			"Sockets",
 			"NetCore",
