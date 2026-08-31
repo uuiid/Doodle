@@ -15,5 +15,8 @@ public:
 	void CreateWindow();
 
 private:
+	/** 主窗口关闭时触发，请求退出引擎。 */
+	void OnWindowClosed(const TSharedRef<SWindow>& InWindow);
+
 	TSharedPtr<class SWindow> RootWindow;
 };

@@ -36,6 +36,9 @@ void FDoodleLiveLinkWindow::CreateWindow()
 		.SupportsMinimize(true)
 		.SizingRule(ESizingRule::UserSized);
 
+	// 关闭主窗口时退出程序。
+	RootWindow->SetOnWindowClosed(FOnWindowClosed::CreateRaw(this, &FDoodleLiveLinkWindow::OnWindowClosed));
+
 	RootWindow->SetContent(
 		SNew(SBorder)
 		.Padding(24.0f)
@@ -59,4 +62,9 @@ void FDoodleLiveLinkWindow::CreateWindow()
 	);
 
 	FSlateApplication::Get().AddWindow(RootWindow.ToSharedRef());
+}
+
+void FDoodleLiveLinkWindow::OnWindowClosed(const TSharedRef<SWindow>& InWindow)
+{
+	RequestEngineExit(TEXT("DoodleLiveLink 主窗口已关闭"));
 }
