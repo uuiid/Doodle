@@ -25,6 +25,7 @@ public class DoodleLiveLink : ModuleRules
 			"Networking",
 			"Sockets",
 			"NetCore",
+			"WebSocketNetworking",
 		});
 	}
 }

@@ -20,6 +20,7 @@ public class DoodleLiveLinkTarget : TargetRules
 		{
 			"LiveLink",
 			"UdpMessaging",
+			"WebSocketNetworking",
 		});
 
 		bBuildAdditionalConsoleApp = false;
