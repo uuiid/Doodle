@@ -635,10 +635,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_add, post) {
         l_end_time
     );
     using namespace orm;
-    l_modify_statements.emplace_back(
-        insert(l_sql).into<work_xlsx_task_info_helper::database_t>().values(l_data_work)
-    );
- 
+    l_modify_statements.emplace_back(insert(l_sql).into<work_xlsx_task_info_helper::database_t>().values(l_data_work));
   }
   auto l_block_ptr  = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block_ptr      = l_sql.get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
@@ -700,9 +697,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_custom, post) {
         .project_name_ = l_data.project_name_
     };
     using namespace orm;
-    l_modify_statements.emplace_back(
-        insert(l_sql).into<work_xlsx_task_info_helper::database_t>().values(l_data_work)
-    );
+    l_modify_statements.emplace_back(insert(l_sql).into<work_xlsx_task_info_helper::database_t>().values(l_data_work));
   }
 
   auto l_block_ptr  = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
@@ -896,11 +891,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_delete, delete_) {
 
   using namespace orm;
   sql_modify_statement_vector_t l_modify_statements{};
-  l_modify_statements.emplace_back(
-      delete_from(l_sql)
-          .from<work_xlsx_task_info_helper::database_t>()
-          .where(c(&work_xlsx_task_info_helper::database_t::id_) == l_task.id_)
-  );
+  l_modify_statements.emplace_back(delete_from(l_sql).from<work_xlsx_task_info_helper::database_t>().where(
+      c(&work_xlsx_task_info_helper::database_t::id_) == l_task.id_
+  ));
 
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block_ptr     = l_sql.get_work_xlsx_task_info(l_task.person_id_, l_task.year_month_);
