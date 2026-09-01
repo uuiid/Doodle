@@ -9,6 +9,7 @@
 
 #include <boost/rational.hpp>
 
+#include "sqlite_orm/orm/fwd.h"
 #include "sqlite_orm/orm/session.h"
 #include "sqlite_orm/orm/update.h"
 #include <memory>
@@ -603,7 +604,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_add, post) {
   );
   auto l_sql  = get_sqlite_database();
   auto l_user = l_sql.get_by_uuid<person>(user_id_);
-
+  orm::sql_modify_statement_vector_t l_modify_statements{};
   {
     work_xlsx_task_info_helper::database_t l_data_work{
         .start_time_ =
@@ -633,13 +634,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_add, post) {
         chrono::time_point_cast<chrono::local_time_pos::duration>(l_data_work.end_time_.get_local_time()), l_begin_time,
         l_end_time
     );
-    co_await l_sql.install(std::make_shared<work_xlsx_task_info_helper::database_t>(std::move(l_data_work)));
+    using namespace orm;
+    l_modify_statements.emplace_back(
+        insert(l_sql).into<work_xlsx_task_info_helper::database_t>().values(l_data_work)
+    );
+ 
   }
   auto l_block_ptr  = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block_ptr      = l_sql.get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
   auto l_time_clock = create_time_clock(year_month_, l_user.uuid_id_);
   recomputing_time_run(year_month_, l_time_clock, *l_block_ptr);
-  co_await l_sql.update_range(l_block_ptr);
+  auto l_session = l_sql.get_session();
+  l_modify_statements.emplace_back(set_work_xlsx_task_info(*l_block_ptr, l_session));
+  co_await l_sql.run_sql(std::move(l_modify_statements));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成追加工时 user_id {} year_month {} 总条目 {}", person_.person_.email_,
@@ -669,43 +676,42 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_custom, post) {
   auto l_sql  = get_sqlite_database();
 
   auto l_user = l_sql.get_by_uuid<person>(l_data.user_id_);
-  co_await l_sql.install(
-      std::make_shared<work_xlsx_task_info_helper::database_t>(
-          work_xlsx_task_info_helper::database_t{
-              .start_time_ =
-                  work_xlsx_task_info_helper::database_t::zoned_time{
-                      chrono::current_zone(),
-                      chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(
-                          l_data.start_time
-                      )
-                  },
-              .end_time_ =
-                  work_xlsx_task_info_helper::database_t::zoned_time{
-                      chrono::current_zone(),
-                      chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(
-                          l_data.end_time
-                      )
-                  },
-              .user_remark_  = l_data.remark,
-              .year_month_   = chrono::local_days{l_data.year_month_ / 1},
-              .person_id_    = l_user.uuid_id_,
-              .season_       = l_data.season,
-              .episode_      = l_data.episode,
-              .name_         = l_data.name,
-              .grade_        = l_data.grade,
-              .project_id_   = l_data.project_id,
-              .project_name_ = l_data.project_name_
-          }
-
-      )
-
-  );
+  orm::sql_modify_statement_vector_t l_modify_statements{};
+  {
+    work_xlsx_task_info_helper::database_t l_data_work{
+        .start_time_ =
+            work_xlsx_task_info_helper::database_t::zoned_time{
+                chrono::current_zone(),
+                chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(l_data.start_time)
+            },
+        .end_time_ =
+            work_xlsx_task_info_helper::database_t::zoned_time{
+                chrono::current_zone(),
+                chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(l_data.end_time)
+            },
+        .user_remark_  = l_data.remark,
+        .year_month_   = chrono::local_days{l_data.year_month_ / 1},
+        .person_id_    = l_user.uuid_id_,
+        .season_       = l_data.season,
+        .episode_      = l_data.episode,
+        .name_         = l_data.name,
+        .grade_        = l_data.grade,
+        .project_id_   = l_data.project_id,
+        .project_name_ = l_data.project_name_
+    };
+    using namespace orm;
+    l_modify_statements.emplace_back(
+        insert(l_sql).into<work_xlsx_task_info_helper::database_t>().values(l_data_work)
+    );
+  }
 
   auto l_block_ptr  = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block_ptr      = l_sql.get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{l_data.year_month_ / 1});
   auto l_time_clock = create_time_clock(l_data.year_month_, l_user.uuid_id_);
   recomputing_time_run(l_data.year_month_, l_time_clock, *l_block_ptr);
-  co_await l_sql.update_range(l_block_ptr);
+  auto l_session = l_sql.get_session();
+  l_modify_statements.emplace_back(set_work_xlsx_task_info(*l_block_ptr, l_session));
+  co_await l_sql.run_sql(std::move(l_modify_statements));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成自定义工时 user_id {} year_month {} 总条目 {}",
