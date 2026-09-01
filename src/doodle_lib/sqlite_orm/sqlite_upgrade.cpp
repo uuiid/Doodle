@@ -88,11 +88,26 @@ void backup(orm::session& in_data) {
 struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t() {}
   void upgrade(sqlite_storage& in_data) override {
-    // auto l_s = in_data.create_session();
-    // if (l_s.pragma().user_version() == 19) {
-    //   l_s.sync_schema();
-    // }
-    // l_s.pragma().user_version(g_current_version);
+    auto l_s = in_data.create_session();
+    if (l_s.pragma().user_version() == 19) {
+      backup(l_s);
+      l_s.exec(R"(
+        DELETE FROM work_xlsx_task_info_tab
+        WHERE id NOT IN (
+            SELECT MIN(id)
+            FROM work_xlsx_task_info_tab
+            WHERE kitsu_task_ref_id IS NOT NULL
+              AND year_month IS NOT NULL
+              AND person_id IS NOT NULL
+            GROUP BY kitsu_task_ref_id, year_month, person_id
+        )
+          AND kitsu_task_ref_id IS NOT NULL
+          AND year_month IS NOT NULL
+          AND person_id IS NOT NULL;
+      )");
+      l_s.sync_schema();
+    }
+    l_s.pragma().user_version(g_current_version);
   }
   ~upgrade_2_t() override = default;
 };
