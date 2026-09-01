@@ -487,9 +487,12 @@ std::string patch_time(
       auto l_end = in_time_clock.next_time(l_begin_time, in_block[i].duration_);
       if (l_end >= l_time_end) l_end = l_time_end;
       if (i + 1 == in_block.size()) l_end = l_time_end;
+      auto l_info          = in_time_clock.get_time_info(l_begin_time, l_end);
+      std::string l_remark = fmt::format("{}", fmt::join(l_info, ", "));
       in_block[i].start_time_ = l_begin_time;
       in_block[i].end_time_   = l_end;
       in_block[i].duration_   = in_time_clock(l_begin_time, l_end);
+      in_block[i].remark_     = l_remark;
       l_begin_time            = l_end;
     }
   }
