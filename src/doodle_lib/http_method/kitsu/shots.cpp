@@ -552,8 +552,28 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_import_frame_range, po
       }
     }
   }
-  if (!l_shot_ext_update->empty()) co_await l_sql.update_range(l_shot_ext_update);
-  if (!l_shot_ext_instasll->empty()) co_await l_sql.install_range(l_shot_ext_instasll);
+  sql_modify_statement_vector_t l_sqls;
+  if (!l_shot_ext_update->empty()) {
+    auto l_update = update(l_sql).from<entity_shot_extend>();
+    for (auto l_is_begin = true; auto&& l_e : *l_shot_ext_update) {
+      if (l_is_begin) {
+        l_update
+            .set(
+                c(&entity_shot_extend::frame_in_)  = l_e.frame_in_,
+                c(&entity_shot_extend::frame_out_) = l_e.frame_out_
+            )
+            .where(c(&entity_shot_extend::id_) == l_e.id_);
+        l_is_begin = false;
+      } else {
+        l_update.rebind(l_e.frame_in_, l_e.frame_out_, l_e.id_);
+      }
+    }
+    l_sqls.emplace_back(std::move(l_update));
+  }
+  if (!l_shot_ext_instasll->empty()) {
+    l_sqls.emplace_back(insert(l_sql).into<entity_shot_extend>().set_range(*l_shot_ext_instasll));
+  }
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 导入镜头帧范围", person_.person_.email_,
