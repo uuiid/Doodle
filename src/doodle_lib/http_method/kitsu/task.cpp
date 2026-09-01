@@ -180,9 +180,24 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_assign, put) {
       l_notifications->emplace_back(l_notification);
     }
   }
-  co_await l_sql.update_range(l_tasks);
-  co_await l_sql.install_range(l_assignees_table);
-  co_await l_sql.install_range(l_notifications);
+  sql_modify_statement_vector_t l_sqls;
+  if (!l_tasks->empty()) {
+    auto l_update = update(l_sql).from<task>();
+    for (auto l_is_begin = true; auto&& l_e : *l_tasks) {
+      if (l_is_begin) {
+        l_update.set(c(&task::assigner_id_) = l_e.assigner_id_).where(c(&task::id_) == l_e.id_);
+        l_is_begin = false;
+      } else {
+        l_update.rebind(l_e.assigner_id_, l_e.id_);
+      }
+    }
+    l_sqls.emplace_back(std::move(l_update));
+  }
+  if (!l_assignees_table->empty())
+    l_sqls.emplace_back(insert(l_sql).into<assignees_table>().set_range(*l_assignees_table));
+  if (!l_notifications->empty())
+    l_sqls.emplace_back(insert(l_sql).into<notification>().set_range(*l_notifications));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
