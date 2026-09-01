@@ -165,13 +165,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
     };
     l_attendance_install_list->emplace_back(std::move(l_attendance));
   }
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls;
+
   if (l_modify_user) {
-    using namespace doodle::orm;
-    auto l_update_user = update(l_sql)
-                             .from<person>()
-                             .set(c(&person::dingding_id_) = l_user.dingding_id_)
-                             .where(c(&person::uuid_id_) == l_user.uuid_id_);
-    co_await l_sql.run_sql(l_update_user);
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<person>()
+            .set(c(&person::dingding_id_) = l_user.dingding_id_)
+            .where(c(&person::uuid_id_) == l_user.uuid_id_)
+    );
   }
 
   if (!l_attends.empty()) {
@@ -179,14 +182,35 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
     for (auto&& id : l_attends) {
       l_rem.emplace_back(id.id_);
     }
-    co_await l_sql.remove<attendance_helper::database_t>(l_rem);
+    l_sqls.emplace_back(
+        delete_from(l_sql)
+            .from<attendance_helper::database_t>()
+            .where(c(&attendance_helper::database_t::id_).in(l_rem))
+    );
   }
   if (!l_attendance_update_list->empty()) {
-    co_await l_sql.update_range<attendance_helper::database_t>(l_attendance_update_list);
+    auto l_update = update(l_sql).from<attendance_helper::database_t>();
+    for (auto l_is_begin = true; auto&& l_e : *l_attendance_update_list) {
+      if (l_is_begin) {
+        l_update
+            .set(
+                c(&attendance_helper::database_t::remark_)      = l_e.remark_,
+                c(&attendance_helper::database_t::type_)        = l_e.type_,
+                c(&attendance_helper::database_t::create_date_) = l_e.create_date_,
+                c(&attendance_helper::database_t::update_time_) = l_e.update_time_
+            )
+            .where(c(&attendance_helper::database_t::id_) == l_e.id_);
+        l_is_begin = false;
+      } else {
+        l_update.rebind(l_e.remark_, l_e.type_, l_e.create_date_, l_e.update_time_, l_e.id_);
+      }
+    }
+    l_sqls.emplace_back(std::move(l_update));
   }
   if (!l_attendance_install_list->empty()) {
-    co_await l_sql.install_range<attendance_helper::database_t>(l_attendance_install_list);
+    l_sqls.emplace_back(insert(l_sql).into<attendance_helper::database_t>().set_range(*l_attendance_install_list));
   }
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_attendance_list = ranges::views::concat(*l_attendance_update_list, *l_attendance_install_list) |
                            ranges::to<std::vector<attendance_helper::database_t>>();
