@@ -395,7 +395,11 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(
           &work_xlsx_task_info_helper::database_t::person_id_, &person::uuid_id_, foreign_key_action::cascade
       )
-      .add_index(&work_xlsx_task_info_helper::database_t::year_month_);
+      .add_index(&work_xlsx_task_info_helper::database_t::year_month_)
+      .add_unique_index(
+          &work_xlsx_task_info_helper::database_t::kitsu_task_ref_id_,
+          &work_xlsx_task_info_helper::database_t::year_month_, &work_xlsx_task_info_helper::database_t::person_id_
+      );
 
   reg_table<attachment_file>("attachment_file")
       .add_column("id", &attachment_file::id_, primary_key(), autoincrement())
@@ -1122,14 +1126,12 @@ void sqlite_storage::upgrade() {
 }
 
 boost::asio::awaitable<void> sqlite_database::run_sql(orm::sql_modify_statement_vector_t in_sqls) {
-  for (auto&& i : in_sqls) 
-    std::visit([&](auto&& in_sql) { in_sql.set_session(session_); }, i);
+  for (auto&& i : in_sqls) std::visit([&](auto&& in_sql) { in_sql.set_session(session_); }, i);
 
   DOODLE_TO_SQLITE_THREAD()
   auto l_g = session_.transaction();
-  for (auto&& i : in_sqls) 
-    std::visit([&](auto&& in_sql) { in_sql(); }, i);
-  
+  for (auto&& i : in_sqls) std::visit([&](auto&& in_sql) { in_sql(); }, i);
+
   l_g.commit();
   DOODLE_TO_SELF();
 }
