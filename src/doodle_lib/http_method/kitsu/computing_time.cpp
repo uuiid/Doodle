@@ -9,6 +9,8 @@
 
 #include <boost/rational.hpp>
 
+#include "sqlite_orm/orm/session.h"
+#include "sqlite_orm/orm/update.h"
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <variant>
@@ -487,8 +489,8 @@ std::string patch_time(
       auto l_end = in_time_clock.next_time(l_begin_time, in_block[i].duration_);
       if (l_end >= l_time_end) l_end = l_time_end;
       if (i + 1 == in_block.size()) l_end = l_time_end;
-      auto l_info          = in_time_clock.get_time_info(l_begin_time, l_end);
-      std::string l_remark = fmt::format("{}", fmt::join(l_info, ", "));
+      auto l_info             = in_time_clock.get_time_info(l_begin_time, l_end);
+      std::string l_remark    = fmt::format("{}", fmt::join(l_info, ", "));
       in_block[i].start_time_ = l_begin_time;
       in_block[i].end_time_   = l_end;
       in_block[i].duration_   = in_time_clock(l_begin_time, l_end);
@@ -552,6 +554,30 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time, post) {
 
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
+
+orm::update_t set_work_xlsx_task_info(
+    const std::vector<work_xlsx_task_info_helper::database_t>& in_data, orm::session& in_sql
+) {
+  using namespace orm;
+  auto l_update = update(in_sql).from<work_xlsx_task_info_helper::database_t>();
+  for (auto l_begin = true; auto&& l_task : in_data) {
+    if (l_begin) {
+      l_update = l_update
+                     .set(
+                         c(&work_xlsx_task_info_helper::database_t::start_time_) = l_task.start_time_,
+                         c(&work_xlsx_task_info_helper::database_t::end_time_)   = l_task.end_time_,
+                         c(&work_xlsx_task_info_helper::database_t::duration_)   = l_task.duration_,
+                         c(&work_xlsx_task_info_helper::database_t::remark_)     = l_task.remark_
+                     )
+                     .where(c(&work_xlsx_task_info_helper::database_t::id_) = l_task.id_);
+      l_begin  = false;
+    } else {
+      l_update.rebind(l_task.start_time_, l_task.end_time_, l_task.duration_, l_task.remark_, l_task.id_);
+    }
+  }
+  return l_update;
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time, get) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_logger    = in_handle->logger_;
