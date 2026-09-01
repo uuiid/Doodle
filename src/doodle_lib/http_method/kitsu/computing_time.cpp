@@ -768,7 +768,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_sort, post) {
 
   auto l_time_clock = create_time_clock(year_month_, l_user.uuid_id_);
   recomputing_time_run(year_month_, l_time_clock, *l_block_sort);
-  co_await l_sql.update_range(l_block_sort);
+  auto l_session = l_sql.get_session();
+  auto l_update  = set_work_xlsx_task_info(*l_block_sort, l_session);
+  co_await l_sql.run_sql(std::move(l_update));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成排序工时 user_id {} year_month {}", person_.person_.email_,
