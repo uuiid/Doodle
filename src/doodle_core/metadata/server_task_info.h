@@ -144,21 +144,19 @@ class server_task_info : boost::equality_comparable<server_task_info> {
 
   constexpr static auto put_property_list() {
     return std::tuple{
-        std::pair{"name", &server_task_info::name_},                            //
-        std::pair{"source_computer", &server_task_info::source_computer_},      //
-        std::pair{"submitter", &server_task_info::submitter_},                  //
-        std::pair{"run_computer_id", &server_task_info::run_computer_id_},      //
-        std::pair{"type", &server_task_info::type_},                            //
-        std::pair{"command", &server_task_info::command_},                      //
-        std::pair{"status", &server_task_info::status_},                        //
-        std::pair{"submit_time", &server_task_info::submit_time_},              //
-        std::pair{"run_time", &server_task_info::run_time_},                    //
-        std::pair{"end_time", &server_task_info::end_time_},                    //
-        std::pair{"last_line_log", &server_task_info::last_line_log_},          //
-        std::pair{"run_time_info", &server_task_info::run_time_info_},          //
-        std::pair{"priority", &server_task_info::priority_},                    //
-        std::pair{"task_id", &server_task_info::task_id_},                      //
-        std::pair{"submitter_cookies", &server_task_info::submitter_cookies_},  //
+        std::pair{"name", &server_task_info::name_},                        //
+        std::pair{"source_computer", &server_task_info::source_computer_},  //
+        std::pair{"submitter", &server_task_info::submitter_},              //
+        std::pair{"run_computer_id", &server_task_info::run_computer_id_},  //
+        std::pair{"type", &server_task_info::type_},                        //
+        // std::pair{"command", &server_task_info::command_},                      //
+        std::pair{"status", &server_task_info::status_},  //
+        // std::pair{"submit_time", &server_task_info::submit_time_},              //
+        std::pair{"run_time", &server_task_info::run_time_},            //
+        std::pair{"end_time", &server_task_info::end_time_},            //
+        std::pair{"run_time_info", &server_task_info::run_time_info_},  //
+        std::pair{"priority", &server_task_info::priority_},            //
+        std::pair{"task_id", &server_task_info::task_id_},              //
     };
   }
 
