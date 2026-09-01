@@ -375,31 +375,29 @@ class http_stream_base<SocketType>::read_and_write_compose_parser {
     BOOST_ASIO_CORO_REENTER(coro_) {
       // BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(self_->socket_, std::as_const(req_), std::move(self));
       // if (in_ec) {
-      if (self_->is_timeout()) {
-        self_->reset_socket();
-      }
+      if (self_->is_timeout()) self_->reset_socket();
 
       self_->expires_after(self_->timeout_);
       if (!self_->is_open()) {
         BOOST_ASIO_CORO_YIELD self_->resolve_and_connect(std::move(self));
         if (in_ec) goto end_complete;
-        self_->expires_after(self_->timeout_);
       }
+      self_->expire_never();
 
       BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(*self_->socket_, req_, std::move(self));
       if (in_ec) goto end_complete;
-      self_->expires_after(self_->timeout_);
-      // }
+
       BOOST_ASIO_CORO_YIELD boost::beast::http::async_read_header(
           *self_->socket_, self_->buffer_, *parser_, std::move(self)
       );
       if (in_ec) goto end_complete;
       self_->parse_response_timeout(parser_->get());
-      self_->expires_after(self_->timeout_);
+
       BOOST_ASIO_CORO_YIELD boost::beast::http::async_read(*self_->socket_, self_->buffer_, *parser_, std::move(self));
       if (in_ec) goto end_complete;
-      self_->expires_after(self_->timeout_);
+      
     end_complete:
+      self_->expires_after(self_->timeout_);
       if (!in_ec) res_ = parser_->release();
       self.complete(in_ec);
     }
