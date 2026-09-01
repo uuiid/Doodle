@@ -10,6 +10,8 @@
 #include "IWebSocketNetworkingModule.h"
 #include "IWebSocketServer.h"
 #include "LiveLinkFaceSourceBlueprint.h"
+#include "LiveLinkRole.h"
+#include "LiveLinkTypes.h"
 #include "Modules/ModuleManager.h"
 #include "Styling/CoreStyle.h"
 #include "Widgets/Input/SButton.h"
@@ -40,6 +42,7 @@ FDoodleLiveLinkWindow::FDoodleLiveLinkWindow()
 FDoodleLiveLinkWindow::~FDoodleLiveLinkWindow()
 {
 	StopWebSocketServer();
+	UnregisterLiveLinkFaceFrameCallback();
 
 	// 关闭引擎阶段 Slate 可能已销毁，RequestDestroyWindow 会访问 FSlateApplication，需先判断是否仍可用。
 	if (RootWindow.IsValid() && FSlateApplication::IsInitialized())
@@ -271,7 +274,7 @@ void FDoodleLiveLinkWindow::CreateLiveLinkFaceSource()
 	bool bConnected = false;
 	ULiveLinkFaceSourceBlueprint::Connect(LiveLinkFaceSourceHandle, LiveLinkFaceSubjectName, LiveLinkFaceAddress, bConnected, LiveLinkFacePort);
 	RefreshSourceList();
-	
+
 	if (!bConnected)
 	{
 		UE_LOG(LogDoodleLiveLink, Error, TEXT("Live Link Face 源连接失败（%s:%d）"), *LiveLinkFaceAddress, LiveLinkFacePort);
@@ -279,6 +282,9 @@ void FDoodleLiveLinkWindow::CreateLiveLinkFaceSource()
 	}
 
 	UE_LOG(LogDoodleLiveLink, Log, TEXT("Live Link Face 源已连接（%s:%d, Subject=%s）"), *LiveLinkFaceAddress, LiveLinkFacePort, *LiveLinkFaceSubjectName);
+
+	// 连接成功后注册帧数据回调，把数据广播到 WebSocket 客户端。
+	RegisterLiveLinkFaceFrameCallback();
 }
 
 void FDoodleLiveLinkWindow::RefreshSourceList()
@@ -325,34 +331,35 @@ void FDoodleLiveLinkWindow::RefreshSourceList()
 	}
 }
 
-TSharedRef<ITableRow> FDoodleLiveLinkWindow::OnGenerateSourceRow(TSharedPtr<FSourceListItem> InItem, const TSharedRef<STableViewBase>& OwnerTable) const
+TSharedRef<ITableRow> FDoodleLiveLinkWindow::OnGenerateSourceRow(TSharedPtr<FSourceListItem> InItem,
+                                                                 const TSharedRef<STableViewBase>& OwnerTable) const
 {
 	return SNew(STableRow<TSharedPtr<FSourceListItem>>, OwnerTable)
-	[
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
 		[
-			SNew(STextBlock)
-			.Text(FText::FromString(InItem->Type))
-			.MinDesiredWidth(160.0f)
-		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.Padding(8.0f, 0.0f, 0.0f, 0.0f)
-		[
-			SNew(STextBlock)
-			.Text(FText::FromString(InItem->MachineName))
-			.MinDesiredWidth(160.0f)
-		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.Padding(8.0f, 0.0f, 0.0f, 0.0f)
-		[
-			SNew(STextBlock)
-			.Text(FText::FromString(InItem->Status))
-		]
-	];
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(InItem->Type))
+				.MinDesiredWidth(160.0f)
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(8.0f, 0.0f, 0.0f, 0.0f)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(InItem->MachineName))
+				.MinDesiredWidth(160.0f)
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(8.0f, 0.0f, 0.0f, 0.0f)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(InItem->Status))
+			]
+		];
 }
 
 void FDoodleLiveLinkWindow::StartWebSocketServer()
@@ -416,7 +423,157 @@ void FDoodleLiveLinkWindow::OnWebSocketClientConnected(INetworkingWebSocket* Soc
 	}
 
 	WebSocketClients.Add(Socket);
-	UE_LOG(LogDoodleLiveLink, Log, TEXT("WebSocket 客户端已连接：%s"), *Socket->RemoteEndPoint(true));
+
+	// 断开时从列表移除，避免向已关闭的连接发送数据。
+	const FString Endpoint = Socket->RemoteEndPoint(true);
+	Socket->SetSocketClosedCallBack(FWebSocketInfoCallBack::CreateLambda([this, Socket, Endpoint]()
+	{
+		const int32 RemovedCount = WebSocketClients.Remove(Socket);
+		if (RemovedCount > 0)
+		{
+			UE_LOG(LogDoodleLiveLink, Log, TEXT("WebSocket 客户端已断开：%s"), *Endpoint);
+		}
+	}));
+
+	UE_LOG(LogDoodleLiveLink, Log, TEXT("WebSocket 客户端已连接：%s"), *Endpoint);
+}
+
+void FDoodleLiveLinkWindow::RegisterLiveLinkFaceFrameCallback()
+{
+	UnregisterLiveLinkFaceFrameCallback();
+
+	ILiveLinkClient* LiveLinkClient = nullptr;
+	if (IModularFeatures::Get().IsModularFeatureAvailable(ILiveLinkClient::ModularFeatureName))
+	{
+		LiveLinkClient = &IModularFeatures::Get().GetModularFeature<ILiveLinkClient>(ILiveLinkClient::ModularFeatureName);
+	}
+
+	if (!LiveLinkClient)
+	{
+		return;
+	}
+
+	LiveLinkSubjectAddedHandle = LiveLinkClient->OnLiveLinkSubjectAdded().AddRaw(this, &FDoodleLiveLinkWindow::OnLiveLinkSubjectAdded);
+
+	// 重连时 Subject 可能已存在，立即尝试注册一次。
+	TryRegisterLiveLinkFaceFrames();
+}
+
+void FDoodleLiveLinkWindow::UnregisterLiveLinkFaceFrameCallback()
+{
+	ILiveLinkClient* LiveLinkClient = nullptr;
+	if (IModularFeatures::Get().IsModularFeatureAvailable(ILiveLinkClient::ModularFeatureName))
+	{
+		LiveLinkClient = &IModularFeatures::Get().GetModularFeature<ILiveLinkClient>(ILiveLinkClient::ModularFeatureName);
+	}
+
+	if (LiveLinkClient)
+	{
+		if (LiveLinkSubjectAddedHandle.IsValid())
+		{
+			LiveLinkClient->OnLiveLinkSubjectAdded().Remove(LiveLinkSubjectAddedHandle);
+			LiveLinkSubjectAddedHandle.Reset();
+		}
+
+		if (LiveLinkFaceStaticDataHandle.IsValid() || LiveLinkFaceFrameDataHandle.IsValid())
+		{
+			LiveLinkClient->UnregisterSubjectFramesHandle(
+				FLiveLinkSubjectName(FName(*LiveLinkFaceSubjectName)),
+				LiveLinkFaceStaticDataHandle,
+				LiveLinkFaceFrameDataHandle);
+		}
+	}
+
+	LiveLinkFaceStaticDataHandle.Reset();
+	LiveLinkFaceFrameDataHandle.Reset();
+	LiveLinkFacePropertyNames.Reset();
+}
+
+void FDoodleLiveLinkWindow::TryRegisterLiveLinkFaceFrames()
+{
+	if (LiveLinkFaceStaticDataHandle.IsValid() || LiveLinkFaceFrameDataHandle.IsValid())
+	{
+		return;
+	}
+
+	ILiveLinkClient* LiveLinkClient = nullptr;
+	if (IModularFeatures::Get().IsModularFeatureAvailable(ILiveLinkClient::ModularFeatureName))
+	{
+		LiveLinkClient = &IModularFeatures::Get().GetModularFeature<ILiveLinkClient>(ILiveLinkClient::ModularFeatureName);
+	}
+
+	if (!LiveLinkClient)
+	{
+		return;
+	}
+
+	TSubclassOf<ULiveLinkRole> SubjectRole;
+	LiveLinkClient->RegisterForSubjectFrames(
+		FLiveLinkSubjectName(FName(*LiveLinkFaceSubjectName)),
+		FOnLiveLinkSubjectStaticDataAdded::FDelegate::CreateRaw(this, &FDoodleLiveLinkWindow::OnLiveLinkFaceStaticData),
+		FOnLiveLinkSubjectFrameDataAdded::FDelegate::CreateRaw(this, &FDoodleLiveLinkWindow::OnLiveLinkFaceFrameData),
+		LiveLinkFaceStaticDataHandle,
+		LiveLinkFaceFrameDataHandle,
+		SubjectRole);
+}
+
+void FDoodleLiveLinkWindow::OnLiveLinkSubjectAdded(FLiveLinkSubjectKey InSubjectKey)
+{
+	// 仅处理与当前 Subject 名匹配的主题。
+	if (InSubjectKey.SubjectName.Name.ToString() != LiveLinkFaceSubjectName)
+	{
+		return;
+	}
+
+	TryRegisterLiveLinkFaceFrames();
+}
+
+void FDoodleLiveLinkWindow::OnLiveLinkFaceStaticData(FLiveLinkSubjectKey InSubjectKey, TSubclassOf<ULiveLinkRole> InSubjectRole,
+                                                     const FLiveLinkStaticDataStruct& InStaticData)
+{
+	const FLiveLinkBaseStaticData* BaseData = InStaticData.GetBaseData();
+	if (BaseData)
+	{
+		LiveLinkFacePropertyNames = BaseData->PropertyNames;
+	}
+}
+
+void FDoodleLiveLinkWindow::OnLiveLinkFaceFrameData(FLiveLinkSubjectKey InSubjectKey, TSubclassOf<ULiveLinkRole> InSubjectRole,
+                                                    const FLiveLinkFrameDataStruct& InFrameData)
+{
+	const FLiveLinkBaseFrameData* BaseData = InFrameData.GetBaseData();
+	if (!BaseData)
+	{
+		return;
+	}
+
+	// 将属性值序列化为 float 数组字节流后广播。
+	TArray<uint8> Payload;
+	const int32 ValueCount = BaseData->PropertyValues.Num();
+	const int32 ByteCount = ValueCount * sizeof(float);
+	if (ByteCount > 0)
+	{
+		Payload.SetNumUninitialized(ByteCount);
+		FMemory::Memcpy(Payload.GetData(), BaseData->PropertyValues.GetData(), ByteCount);
+	}
+
+	BroadcastToWebSocketClients(Payload);
+}
+
+void FDoodleLiveLinkWindow::BroadcastToWebSocketClients(const TArray<uint8>& InPayload)
+{
+	if (InPayload.Num() == 0)
+	{
+		return;
+	}
+
+	for (INetworkingWebSocket* Client : WebSocketClients)
+	{
+		if (Client)
+		{
+			Client->Send(InPayload.GetData(), InPayload.Num(), false);
+		}
+	}
 }
 
 void FDoodleLiveLinkWindow::OnWindowClosed(const TSharedRef<SWindow>& InWindow)

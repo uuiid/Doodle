@@ -11,6 +11,7 @@ class ITableRow;
 class STableViewBase;
 class IWebSocketServer;
 class INetworkingWebSocket;
+class ULiveLinkRole;
 
 /** DoodleLiveLink 中心主窗口。 */
 class FDoodleLiveLinkWindow : public TSharedFromThis<FDoodleLiveLinkWindow>
@@ -54,6 +55,25 @@ private:
 	/** WebSocket 客户端连接回调。 */
 	void OnWebSocketClientConnected(INetworkingWebSocket* Socket);
 
+	/** 注册 Live Link Face 帧数据回调。 */
+	void RegisterLiveLinkFaceFrameCallback();
+
+	/** 注销 Live Link Face 帧数据回调。 */
+	void UnregisterLiveLinkFaceFrameCallback();
+
+	/** 尝试为当前 Subject 注册帧数据委托。 */
+	void TryRegisterLiveLinkFaceFrames();
+
+	/** 主题添加时，若匹配当前 Subject 名则注册帧回调。 */
+	void OnLiveLinkSubjectAdded(FLiveLinkSubjectKey InSubjectKey);
+
+	/** Live Link Face 静态数据 / 帧数据回调。 */
+	void OnLiveLinkFaceStaticData(FLiveLinkSubjectKey InSubjectKey, TSubclassOf<ULiveLinkRole> InSubjectRole, const FLiveLinkStaticDataStruct& InStaticData);
+	void OnLiveLinkFaceFrameData(FLiveLinkSubjectKey InSubjectKey, TSubclassOf<ULiveLinkRole> InSubjectRole, const FLiveLinkFrameDataStruct& InFrameData);
+
+	/** 将数据广播到所有 WebSocket 客户端。 */
+	void BroadcastToWebSocketClients(const TArray<uint8>& InPayload);
+
 	TSharedPtr<class SWindow> RootWindow;
 
 	/** 源列表数据与控件。 */
@@ -68,9 +88,16 @@ private:
 	/** 已连接的 WebSocket 客户端。 */
 	TArray<INetworkingWebSocket*> WebSocketClients;
 
+	/** Live Link Face 帧数据回调句柄与属性名。 */
+	FDelegateHandle LiveLinkSubjectAddedHandle;
+	FDelegateHandle LiveLinkFaceStaticDataHandle;
+	FDelegateHandle LiveLinkFaceFrameDataHandle;
+	TArray<FName> LiveLinkFacePropertyNames;
+
 	/** 已创建的 Live Link Face 源句柄。 */
 	FLiveLinkSourceHandle LiveLinkFaceSourceHandle;
 	bool bLiveLinkFaceSourceCreated = false;
+	bool bLiveLinkFaceConnected = false;
 
 	/** Live Link Face 源连接配置。 */
 	FString LiveLinkFaceAddress = TEXT("127.0.0.1");
