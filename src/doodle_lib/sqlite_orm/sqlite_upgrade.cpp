@@ -34,7 +34,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 19;
+constexpr std::size_t g_current_version = 20;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -88,8 +88,11 @@ void backup(orm::session& in_data) {
 struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t() {}
   void upgrade(sqlite_storage& in_data) override {
-    // auto l_s = in_data.create_session();
-    // l_s.pragma().user_version(g_current_version);
+    auto l_s = in_data.create_session();
+    if (l_s.pragma().user_version() == 19) {
+      l_s.sync_schema();
+    }
+    l_s.pragma().user_version(g_current_version);
   }
   ~upgrade_2_t() override = default;
 };
