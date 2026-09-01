@@ -6,17 +6,22 @@
 #include "Features/IModularFeatures.h"
 #include "Framework/Application/SlateApplication.h"
 #include "ILiveLinkClient.h"
+#include "INetworkingWebSocket.h"
+#include "IWebSocketNetworkingModule.h"
+#include "IWebSocketServer.h"
 #include "LiveLinkFaceSourceBlueprint.h"
+#include "Modules/ModuleManager.h"
 #include "Styling/CoreStyle.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Input/SNumericEntryBox.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
-#include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/SWindow.h"
 #include "Widgets/Text/STextBlock.h"
+#include "Widgets/Views/SListView.h"
+#include "Widgets/Views/STableRow.h"
 
 namespace
 {
@@ -34,7 +39,10 @@ FDoodleLiveLinkWindow::FDoodleLiveLinkWindow()
 
 FDoodleLiveLinkWindow::~FDoodleLiveLinkWindow()
 {
-	if (RootWindow.IsValid())
+	StopWebSocketServer();
+
+	// 关闭引擎阶段 Slate 可能已销毁，RequestDestroyWindow 会访问 FSlateApplication，需先判断是否仍可用。
+	if (RootWindow.IsValid() && FSlateApplication::IsInitialized())
 	{
 		RootWindow->RequestDestroyWindow();
 	}
@@ -163,6 +171,43 @@ void FDoodleLiveLinkWindow::CreateWindow()
 			.AutoHeight()
 			.Padding(0.0f, 24.0f, 0.0f, 0.0f)
 			[
+				SNew(STextBlock)
+				.Text(NSLOCTEXT("DoodleLiveLink", "WebSocketHeader", "WebSocket 服务器"))
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 14))
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 8.0f, 0.0f, 0.0f)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(ConfigLabelPadding)
+				.VAlign(VAlign_Center)
+				[
+					SNew(STextBlock)
+					.Text(NSLOCTEXT("DoodleLiveLink", "WebSocketPortLabel", "监听端口"))
+					.MinDesiredWidth(80.0f)
+				]
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
+				[
+					SNew(SNumericEntryBox<uint16>)
+					.Value(WebSocketServerPort)
+					.OnValueChanged_Lambda([this](uint16 InValue)
+						{
+							if (InValue != WebSocketServerPort)
+							{
+								WebSocketServerPort = InValue;
+								RestartWebSocketServer();
+							}
+						})
+				]
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 24.0f, 0.0f, 0.0f)
+			[
 				SNew(SHorizontalBox)
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
@@ -186,14 +231,12 @@ void FDoodleLiveLinkWindow::CreateWindow()
 				]
 			]
 			+ SVerticalBox::Slot()
-			.AutoHeight()
+			.FillHeight(1.0f)
 			.Padding(0.0f, 8.0f, 0.0f, 0.0f)
 			[
-				SNew(SScrollBox)
-				+ SScrollBox::Slot()
-				[
-					SAssignNew(SourceListBox, SVerticalBox)
-				]
+				SAssignNew(SourceListView, SListView<TSharedPtr<FSourceListItem>>)
+				.ListItemsSource(&SourceListItems)
+				.OnGenerateRow(this, &FDoodleLiveLinkWindow::OnGenerateSourceRow)
 			]
 		]
 	);
@@ -201,6 +244,9 @@ void FDoodleLiveLinkWindow::CreateWindow()
 	FSlateApplication::Get().AddWindow(RootWindow.ToSharedRef());
 
 	RefreshSourceList();
+
+	// 窗口创建时启动 WebSocket 服务器。
+	StartWebSocketServer();
 }
 
 void FDoodleLiveLinkWindow::CreateLiveLinkFaceSource()
@@ -237,12 +283,7 @@ void FDoodleLiveLinkWindow::CreateLiveLinkFaceSource()
 
 void FDoodleLiveLinkWindow::RefreshSourceList()
 {
-	if (!SourceListBox.IsValid())
-	{
-		return;
-	}
-
-	SourceListBox->ClearChildren();
+	SourceListItems.Reset();
 
 	ILiveLinkClient* LiveLinkClient = nullptr;
 	if (IModularFeatures::Get().IsModularFeatureAvailable(ILiveLinkClient::ModularFeatureName))
@@ -252,64 +293,130 @@ void FDoodleLiveLinkWindow::RefreshSourceList()
 
 	if (!LiveLinkClient)
 	{
-		SourceListBox->AddSlot()
-		             .AutoHeight()
-		             .Padding(0.0f, 2.0f, 0.0f, 2.0f)
+		TSharedPtr<FSourceListItem> Item = MakeShared<FSourceListItem>();
+		Item->Type = TEXT("Live Link 客户端不可用");
+		SourceListItems.Add(MoveTemp(Item));
+	}
+	else
+	{
+		const TArray<FGuid> Sources = LiveLinkClient->GetSources();
+		if (Sources.Num() == 0)
+		{
+			TSharedPtr<FSourceListItem> Item = MakeShared<FSourceListItem>();
+			Item->Type = TEXT("（暂无源）");
+			SourceListItems.Add(MoveTemp(Item));
+		}
+		else
+		{
+			for (const FGuid& SourceGuid : Sources)
+			{
+				TSharedPtr<FSourceListItem> Item = MakeShared<FSourceListItem>();
+				Item->Type = LiveLinkClient->GetSourceType(SourceGuid).ToString();
+				Item->MachineName = LiveLinkClient->GetSourceMachineName(SourceGuid).ToString();
+				Item->Status = LiveLinkClient->GetSourceStatus(SourceGuid).ToString();
+				SourceListItems.Add(MoveTemp(Item));
+			}
+		}
+	}
+
+	if (SourceListView.IsValid())
+	{
+		SourceListView->RequestListRefresh();
+	}
+}
+
+TSharedRef<ITableRow> FDoodleLiveLinkWindow::OnGenerateSourceRow(TSharedPtr<FSourceListItem> InItem, const TSharedRef<STableViewBase>& OwnerTable) const
+{
+	return SNew(STableRow<TSharedPtr<FSourceListItem>>, OwnerTable)
+	[
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
 		[
 			SNew(STextBlock)
-			.Text(NSLOCTEXT("DoodleLiveLink", "NoLiveLinkClient", "Live Link 客户端不可用"))
-		];
+			.Text(FText::FromString(InItem->Type))
+			.MinDesiredWidth(160.0f)
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.Padding(8.0f, 0.0f, 0.0f, 0.0f)
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString(InItem->MachineName))
+			.MinDesiredWidth(160.0f)
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.Padding(8.0f, 0.0f, 0.0f, 0.0f)
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString(InItem->Status))
+		]
+	];
+}
+
+void FDoodleLiveLinkWindow::StartWebSocketServer()
+{
+	StopWebSocketServer();
+
+	IWebSocketNetworkingModule& WebSocketModule = FModuleManager::LoadModuleChecked<IWebSocketNetworkingModule>("WebSocketNetworking");
+	WebSocketServer = WebSocketModule.CreateServer();
+	if (!WebSocketServer)
+	{
+		UE_LOG(LogDoodleLiveLink, Error, TEXT("创建 WebSocket 服务器失败"));
 		return;
 	}
 
-	const TArray<FGuid> Sources = LiveLinkClient->GetSources();
-	if (Sources.Num() == 0)
+	FWebSocketClientConnectedCallBack ConnectedCallback;
+	ConnectedCallback.BindRaw(this, &FDoodleLiveLinkWindow::OnWebSocketClientConnected);
+
+	if (!WebSocketServer->Init(WebSocketServerPort, ConnectedCallback))
 	{
-		SourceListBox->AddSlot()
-		             .AutoHeight()
-		             .Padding(0.0f, 2.0f, 0.0f, 2.0f)
-		[
-			SNew(STextBlock)
-			.Text(NSLOCTEXT("DoodleLiveLink", "NoSources", "（暂无源）"))
-		];
+		UE_LOG(LogDoodleLiveLink, Error, TEXT("WebSocket 服务器启动失败（端口 %d）"), WebSocketServerPort);
+		WebSocketServer.Reset();
 		return;
 	}
 
-	for (const FGuid& SourceGuid : Sources)
-	{
-		const FText SourceType = LiveLinkClient->GetSourceType(SourceGuid);
-		const FText MachineName = LiveLinkClient->GetSourceMachineName(SourceGuid);
-		const FText Status = LiveLinkClient->GetSourceStatus(SourceGuid);
+	WebSocketTickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateRaw(this, &FDoodleLiveLinkWindow::TickWebSocketServer));
 
-		SourceListBox->AddSlot()
-		             .AutoHeight()
-		             .Padding(0.0f, 2.0f, 0.0f, 2.0f)
-		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				SNew(STextBlock)
-				.Text(SourceType)
-				.MinDesiredWidth(160.0f)
-			]
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.Padding(8.0f, 0.0f, 0.0f, 0.0f)
-			[
-				SNew(STextBlock)
-				.Text(MachineName)
-				.MinDesiredWidth(160.0f)
-			]
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.Padding(8.0f, 0.0f, 0.0f, 0.0f)
-			[
-				SNew(STextBlock)
-				.Text(Status)
-			]
-		];
+	UE_LOG(LogDoodleLiveLink, Log, TEXT("WebSocket 服务器已启动（端口 %d）"), WebSocketServerPort);
+}
+
+void FDoodleLiveLinkWindow::StopWebSocketServer()
+{
+	if (WebSocketTickerHandle.IsValid())
+	{
+		FTSTicker::GetCoreTicker().RemoveTicker(WebSocketTickerHandle);
+		WebSocketTickerHandle.Reset();
 	}
+
+	WebSocketClients.Reset();
+	WebSocketServer.Reset();
+}
+
+void FDoodleLiveLinkWindow::RestartWebSocketServer()
+{
+	StartWebSocketServer();
+}
+
+bool FDoodleLiveLinkWindow::TickWebSocketServer(float DeltaTime)
+{
+	if (WebSocketServer)
+	{
+		WebSocketServer->Tick();
+	}
+	return true;
+}
+
+void FDoodleLiveLinkWindow::OnWebSocketClientConnected(INetworkingWebSocket* Socket)
+{
+	if (!Socket)
+	{
+		return;
+	}
+
+	WebSocketClients.Add(Socket);
+	UE_LOG(LogDoodleLiveLink, Log, TEXT("WebSocket 客户端已连接：%s"), *Socket->RemoteEndPoint(true));
 }
 
 void FDoodleLiveLinkWindow::OnWindowClosed(const TSharedRef<SWindow>& InWindow)
