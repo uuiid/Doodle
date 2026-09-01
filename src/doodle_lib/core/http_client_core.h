@@ -74,6 +74,9 @@ class http_stream_base {
     }
   }
 
+  virtual void resolve_and_connect_sync() = 0;
+  virtual void reset_socket()             = 0;
+
  public:
   template <typename... Args>
   explicit http_stream_base(Args&&... args)
@@ -99,7 +102,7 @@ class http_stream_base {
     }
     expires_after_impl(in_seconds);
   }
-
+  virtual void expire_never() = 0;
   void set_timeout(std::chrono::seconds in_seconds) { next_timeout_ = in_seconds; }
   const std::chrono::seconds& get_timeout() const { return timeout_; }
 
@@ -121,6 +124,37 @@ class http_stream_base {
   bool is_timeout() {
     auto l_now = chrono::sys_time_pos::clock::now();
     return (l_now - last_use_time_) > (timeout_ - 3s);
+  }
+  virtual bool is_open() = 0;
+
+  template <typename ResponseBody, typename RequestType>
+  auto read_and_write_sync(
+      boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res
+  ) {
+    set_request_timeout(in_req);
+    in_req.prepare_payload();
+
+    if (is_timeout()) reset_socket();
+
+    expires_after(timeout_);
+    if (!is_open()) resolve_and_connect_sync();
+
+    expire_never();
+    boost::system::error_code l_ec{};
+    boost::beast::http::write(*socket_, in_req, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+
+    auto parser = boost::beast::http::response_parser<ResponseBody>{std::move(out_res)};
+    if (body_limit_) parser.body_limit(*body_limit_);
+    boost::beast::http::read_header(*socket_, buffer_, parser, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+
+    parse_response_timeout(parser.get());
+    boost::beast::http::read(*socket_, buffer_, parser, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+
+    expires_after(timeout_);
+    out_res = parser.release();
   }
 
   // copy constructor
@@ -177,7 +211,7 @@ class DOODLELIB_API http_client : public http_stream_base<boost::beast::tcp_stre
     );
   }
 
-  void resolve_and_connect_sync() {
+  void resolve_and_connect_sync() override {
     boost::system::error_code l_ec{};
     resolver_t resolver{socket_->get_executor()};
     auto l_results = resolver.resolve(server_ip_, server_port_, l_ec);
@@ -187,10 +221,11 @@ class DOODLELIB_API http_client : public http_stream_base<boost::beast::tcp_stre
     if (l_ec) throw boost::system::system_error(l_ec);
   }
 
-  bool is_open() { return socket_->socket().is_open(); }
+  bool is_open() override { return socket_->socket().is_open(); }
 
-  void reset_socket() { socket_ = std::make_unique<socket_type>(socket_->get_executor()); }
-  void expires_after_impl(std::chrono::seconds in_seconds) { socket_->expires_after(in_seconds); }
+  void reset_socket() override { socket_ = std::make_unique<socket_type>(socket_->get_executor()); }
+  void expires_after_impl(std::chrono::seconds in_seconds) override { socket_->expires_after(in_seconds); }
+  void expire_never() override { socket_->expires_never(); }
   // read and write
   template <typename ResponseBody, typename RequestType, typename Handle>
   auto read_and_write(
@@ -205,39 +240,6 @@ class DOODLELIB_API http_client : public http_stream_base<boost::beast::tcp_stre
         },
         in_handle
     );
-  }
-  template <typename ResponseBody, typename RequestType>
-  auto read_and_write_sync(
-      boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res
-  ) {
-    set_request_timeout(in_req);
-    in_req.prepare_payload();
-
-    if (is_timeout()) {
-      reset_socket();
-    }
-    expires_after(timeout_);
-    if (!is_open()) {
-      resolve_and_connect_sync();
-      expires_after(timeout_);
-    }
-    boost::system::error_code l_ec{};
-    boost::beast::http::write(*socket_, in_req, l_ec);
-    if (l_ec) throw boost::system::system_error(l_ec);
-
-    expires_after(timeout_);
-    auto parser = boost::beast::http::response_parser<ResponseBody>{std::move(out_res)};
-    if (body_limit_) parser.body_limit(*body_limit_);
-    boost::beast::http::read_header(*socket_, buffer_, parser, l_ec);
-    if (l_ec) throw boost::system::system_error(l_ec);
-
-    parse_response_timeout(parser.get());
-    expires_after(timeout_);
-    boost::beast::http::read(*socket_, buffer_, parser, l_ec);
-    if (l_ec) throw boost::system::system_error(l_ec);
-
-    expires_after(timeout_);
-    out_res = parser.release();
   }
 };
 
@@ -307,7 +309,7 @@ class DOODLELIB_API http_client_ssl : public http_stream_base<boost::beast::ssl_
     );
   }
 
-  void resolve_and_connect_sync() {
+  void resolve_and_connect_sync() override {
     boost::system::error_code l_ec{};
     resolver_t resolver{socket_->get_executor()};
     auto l_results = resolver.resolve(server_ip_, server_port_, l_ec);
@@ -319,14 +321,15 @@ class DOODLELIB_API http_client_ssl : public http_stream_base<boost::beast::ssl_
     if (l_ec) throw boost::system::system_error(l_ec);
   }
 
-  bool is_open() { return socket_->next_layer().socket().is_open(); }
-  void reset_socket() {
+  bool is_open() override { return socket_->next_layer().socket().is_open(); }
+  void reset_socket() override {
     socket_ = std::make_unique<boost::beast::ssl_stream<boost::beast::tcp_stream>>(socket_->get_executor(), ctx_);
     set_ssl();
   }
-  void expires_after_impl(std::chrono::seconds in_seconds) {
+  void expires_after_impl(std::chrono::seconds in_seconds) override {
     boost::beast::get_lowest_layer(*socket_).expires_after(in_seconds);
   }
+  void expire_never() override { boost::beast::get_lowest_layer(*socket_).expires_never(); }
 
   // read and write
   template <typename ResponseBody, typename RequestType, typename Handle = boost::asio::use_awaitable_t<>>
@@ -342,40 +345,6 @@ class DOODLELIB_API http_client_ssl : public http_stream_base<boost::beast::ssl_
         },
         in_handle
     );
-  }
-
-  template <typename ResponseBody, typename RequestType>
-  auto read_and_write_sync(
-      boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res
-  ) {
-    set_request_timeout(in_req);
-    in_req.prepare_payload();
-
-    if (is_timeout()) {
-      reset_socket();
-    }
-    expires_after(timeout_);
-    if (!is_open()) {
-      resolve_and_connect_sync();
-      expires_after(timeout_);
-    }
-    boost::system::error_code l_ec{};
-    boost::beast::http::write(*socket_, in_req, l_ec);
-    if (l_ec) throw boost::system::system_error(l_ec);
-
-    expires_after(timeout_);
-    auto parser = boost::beast::http::response_parser<ResponseBody>{std::move(out_res)};
-    if (body_limit_) parser.body_limit(*body_limit_);
-    boost::beast::http::read_header(*socket_, buffer_, parser, l_ec);
-    if (l_ec) throw boost::system::system_error(l_ec);
-
-    parse_response_timeout(parser.get());
-    expires_after(timeout_);
-    boost::beast::http::read(*socket_, buffer_, parser, l_ec);
-    if (l_ec) throw boost::system::system_error(l_ec);
-
-    expires_after(timeout_);
-    out_res = parser.release();
   }
 };
 
