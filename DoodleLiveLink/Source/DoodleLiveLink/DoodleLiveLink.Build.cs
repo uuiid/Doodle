@@ -20,6 +20,7 @@ public class DoodleLiveLink : ModuleRules
 			"Slate",
 			"SlateCore",
 			"ApplicationCore",
+			"InputCore",
 			"LiveLink",
 			"LiveLinkInterface",
 			"LiveLinkFaceSource",
