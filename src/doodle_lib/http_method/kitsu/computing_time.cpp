@@ -10,6 +10,7 @@
 #include <boost/rational.hpp>
 
 #include <memory>
+#include <spdlog/spdlog.h>
 #include <variant>
 
 //
@@ -293,13 +294,8 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
         break;
     }
   }
-
-  // #ifndef NDEBUG
-  //     auto l_logger = session_data_->logger_;
-  //     l_logger->log(log_loc(), level::info, "work_pair_p: {}", fmt::join(l_rules_.work_pair_p, ", "));
-  //     l_logger->log(log_loc(), level::info, "work: {}", l_time_clock_.debug_print());
-  // #endif
-
+  SPDLOG_DEBUG("work_pair_p: {}", fmt::join(l_rules_.work_pair_p, ", "));
+  SPDLOG_DEBUG("work: {}", l_time_clock_.debug_print());
   // 排除绝对时间
   for (auto l_begin = l_begin_time; l_begin <= l_end_time; l_begin += chrono::days{1}) {
     for (auto&& l_deduction :
@@ -823,12 +819,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_patch, patch) {
     for (auto&& l_b : *l_block_ptr) {
       if (l_b.uuid_id_ == task_id_) {
         l_b.user_remark_ = *l_comment;
-        co_await l_sql.run_sql(
-            update(l_sql)
-                .from<work_xlsx_task_info_helper::database_t>()
-                .set(c(&work_xlsx_task_info_helper::database_t::user_remark_) = *l_comment)
-                .where(c(&work_xlsx_task_info_helper::database_t::uuid_id_) == task_id_)
-        );
+        co_await l_sql.run_sql(update(l_sql)
+                                   .from<work_xlsx_task_info_helper::database_t>()
+                                   .set(c(&work_xlsx_task_info_helper::database_t::user_remark_) = *l_comment)
+                                   .where(c(&work_xlsx_task_info_helper::database_t::uuid_id_) == task_id_));
         break;
       }
     }
@@ -837,12 +831,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_patch, patch) {
     for (auto&& l_b : *l_block_ptr) {
       if (l_b.uuid_id_ == task_id_) {
         l_b.episode_ = *l_eps;
-        co_await l_sql.run_sql(
-            update(l_sql)
-                .from<work_xlsx_task_info_helper::database_t>()
-                .set(c(&work_xlsx_task_info_helper::database_t::episode_) = *l_eps)
-                .where(c(&work_xlsx_task_info_helper::database_t::uuid_id_) == task_id_)
-        );
+        co_await l_sql.run_sql(update(l_sql)
+                                   .from<work_xlsx_task_info_helper::database_t>()
+                                   .set(c(&work_xlsx_task_info_helper::database_t::episode_) = *l_eps)
+                                   .where(c(&work_xlsx_task_info_helper::database_t::uuid_id_) == task_id_));
         break;
       }
     }
