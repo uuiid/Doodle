@@ -602,8 +602,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_add, post) {
       person_.person_.email_, person_.person_.get_full_name(), user_id_,
       fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()}), l_data.task_id
   );
-  auto l_sql  = get_sqlite_database();
-  auto l_user = l_sql.get_by_uuid<person>(user_id_);
+  auto l_sql      = get_sqlite_database();
+  auto l_user     = l_sql.get_by_uuid<person>(user_id_);
+  auto l_existing = l_sql.get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
+  DOODLE_CHICK_HTTP(
+      std::ranges::all_of(
+          l_existing, [&](const auto& l_e) { return l_e.year_month_ == chrono::local_days{year_month_ / 1}; }
+      ),
+      bad_request, "year_month_ 不一致"
+  );
+  DOODLE_CHICK_HTTP(!l_data.task_id.is_nil(), bad_request, "task_id is nil");
+  DOODLE_CHICK_HTTP(
+      !std::ranges::any_of(l_existing, [&](const auto& l_e) { return l_e.kitsu_task_ref_id_ == l_data.task_id; }),
+      bad_request, "task {} 已存在", l_data.task_id
+  );
+
   orm::sql_modify_statement_vector_t l_modify_statements{};
   {
     work_xlsx_task_info_helper::database_t l_data_work{
