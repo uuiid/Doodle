@@ -557,7 +557,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time, post) {
 }
 
 orm::update_t set_work_xlsx_task_info(
-    const std::vector<work_xlsx_task_info_helper::database_t>& in_data, orm::session& in_sql
+    const std::vector<work_xlsx_task_info_helper::database_t>& in_data, decltype(get_sqlite_database())& in_sql
 ) {
   using namespace orm;
   auto l_update = update(in_sql).from<work_xlsx_task_info_helper::database_t>();
@@ -654,8 +654,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_add, post) {
   *l_block_ptr      = l_sql.get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
   auto l_time_clock = create_time_clock(year_month_, l_user.uuid_id_);
   recomputing_time_run(year_month_, l_time_clock, *l_block_ptr);
-  auto l_session = l_sql.get_session();
-  l_modify_statements.emplace_back(set_work_xlsx_task_info(*l_block_ptr, l_session));
+  if (!l_block_ptr->empty()) l_modify_statements.emplace_back(set_work_xlsx_task_info(*l_block_ptr, l_sql));
   co_await l_sql.run_sql(std::move(l_modify_statements));
 
   SPDLOG_LOGGER_WARN(
@@ -718,7 +717,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_custom, post) {
   auto l_time_clock = create_time_clock(l_data.year_month_, l_user.uuid_id_);
   recomputing_time_run(l_data.year_month_, l_time_clock, *l_block_ptr);
   auto l_session = l_sql.get_session();
-  l_modify_statements.emplace_back(set_work_xlsx_task_info(*l_block_ptr, l_session));
+  if (!l_block_ptr->empty()) l_modify_statements.emplace_back(set_work_xlsx_task_info(*l_block_ptr, l_sql));
   co_await l_sql.run_sql(std::move(l_modify_statements));
 
   SPDLOG_LOGGER_WARN(
@@ -776,9 +775,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_sort, post) {
 
   auto l_time_clock = create_time_clock(year_month_, l_user.uuid_id_);
   recomputing_time_run(year_month_, l_time_clock, *l_block_sort);
-  auto l_session = l_sql.get_session();
-  auto l_update  = set_work_xlsx_task_info(*l_block_sort, l_session);
-  co_await l_sql.run_sql(std::move(l_update));
+  if (!l_block_sort->empty()) {
+    auto l_update = set_work_xlsx_task_info(*l_block_sort, l_sql);
+    co_await l_sql.run_sql(std::move(l_update));
+  }
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成排序工时 user_id {} year_month {}", person_.person_.email_,
@@ -804,9 +804,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_average, post) {
 
   auto l_time_clock = create_time_clock(year_month_, user_id_);
   average_time_run(year_month_, l_time_clock, *l_block);
-  auto l_session = l_sql.get_session();
-  auto l_update  = set_work_xlsx_task_info(*l_block, l_session);
-  co_await l_sql.run_sql(std::move(l_update));
+
+  if (!l_block->empty()) {
+    auto l_update = set_work_xlsx_task_info(*l_block, l_sql);
+    co_await l_sql.run_sql(std::move(l_update));
+  }
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成平均工时 user_id {} year_month {} 条目 {}", person_.person_.email_,
@@ -857,9 +859,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_patch, patch) {
     auto l_timer_clock = create_time_clock(year_month_, l_user.uuid_id_);
     if (auto l_err = patch_time(l_timer_clock, *l_block_ptr, task_id_, *l_duration, in_handle->logger_);
         l_err.empty()) {
-      auto l_session = l_sql.get_session();
-      auto l_update  = set_work_xlsx_task_info(*l_block_ptr, l_session);
-      co_await l_sql.run_sql(std::move(l_update));
+      if (!l_block_ptr->empty()) {
+        auto l_update = set_work_xlsx_task_info(*l_block_ptr, l_sql);
+        co_await l_sql.run_sql(std::move(l_update));
+      }
     } else {
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, l_err);
     }
@@ -915,10 +918,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_delete, delete_) {
   auto l_time_clock = create_time_clock(l_year_month, l_task.person_id_);
   recomputing_time_run(l_year_month, l_time_clock, *l_block_ptr);
 
-  if (!l_block_ptr->empty()) {
-    auto l_session = l_sql.get_session();
-    l_modify_statements.emplace_back(set_work_xlsx_task_info(*l_block_ptr, l_session));
-  }
+  if (!l_block_ptr->empty()) l_modify_statements.emplace_back(set_work_xlsx_task_info(*l_block_ptr, l_sql));
+
   co_await l_sql.run_sql(std::move(l_modify_statements));
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
