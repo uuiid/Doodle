@@ -42,6 +42,7 @@
     "bit7z",
     "cppjieba",
     "rapidfuzz-cpp",
+    "msgpack",
     {
       "name": "mimalloc",
       "default-features": false,
