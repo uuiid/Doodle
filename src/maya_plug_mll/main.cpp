@@ -16,6 +16,7 @@
 #include <maya_plug/maya_comm/reference_comm.h>
 #include <maya_plug/node/dna_calib_node.h>
 #include <maya_plug/node/files_info.h>
+#include <maya_plug/node/websocket_client_node.h>
 #include <maya_plug_mll/comm/export_xgen_abc.h>
 
 #include <maya/MFnPlugin.h>
@@ -43,6 +44,8 @@ MStatus initializePlugin(MObject obj) {
   status   = maya_reg->register_node<doodle::maya_plug::doodle_file_info>(k_plugin);
   CHECK_MSTATUS(status);
   status = maya_reg->register_node<doodle::maya_plug::dna_calib_node>(k_plugin);
+  CHECK_MSTATUS(status);
+  status = maya_reg->register_node<doodle::maya_plug::websocket_client_node>(k_plugin);
   CHECK_MSTATUS(status);
   status = maya_reg->register_command<::doodle::maya_plug::dna_calib_import>(k_plugin);
   CHECK_MSTATUS(status);
