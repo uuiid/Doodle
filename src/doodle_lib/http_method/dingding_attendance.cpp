@@ -169,12 +169,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
   sql_modify_statement_vector_t l_sqls;
 
   if (l_modify_user) {
-    l_sqls.emplace_back(
-        update(l_sql)
-            .from<person>()
-            .set(c(&person::dingding_id_) = l_user.dingding_id_)
-            .where(c(&person::uuid_id_) == l_user.uuid_id_)
-    );
+    l_sqls.emplace_back(update(l_sql)
+                            .from<person>()
+                            .set(c(&person::dingding_id_) = l_user.dingding_id_)
+                            .where(c(&person::uuid_id_) == l_user.uuid_id_));
   }
 
   if (!l_attends.empty()) {
@@ -183,9 +181,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
       l_rem.emplace_back(id.id_);
     }
     l_sqls.emplace_back(
-        delete_from(l_sql)
-            .from<attendance_helper::database_t>()
-            .where(c(&attendance_helper::database_t::id_).in(l_rem))
+        delete_from(l_sql).from<attendance_helper::database_t>().where(c(&attendance_helper::database_t::id_).in(l_rem))
     );
   }
   if (!l_attendance_update_list->empty()) {
@@ -220,8 +216,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
     return l_attendance.type_ == attendance_helper::att_enum::max;
   });
   nlohmann::json l_json{};
-  l_json = l_attendance_list;
-  co_return in_handle->make_msg(l_json.dump());
+  if (!l_attendance_list.empty())
+    l_json = l_attendance_list;
+  else
+    l_json = nlohmann::json::array();
+  co_return in_handle->make_msg(l_json);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_get, get) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
@@ -240,7 +239,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_get, get) {
 
   nlohmann::json l_json{};
   l_json = l_list;
-  co_return in_handle->make_msg(l_json.dump());
+  co_return in_handle->make_msg(l_json);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_id_custom, post) {
   if (id_ != person_.person_.uuid_id_) person_.check_supervisor();
@@ -257,7 +256,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_id_custom, post) {
   const chrono::year_month_day l_date{l_data->create_date_};
   co_await l_sql.install(l_data);
   co_await recomputing_time(l_user.uuid_id_, chrono::year_month{l_date.year(), l_date.month()});
-  co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
+  co_return in_handle->make_msg((nlohmann::json{} = *l_data));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, put) {
@@ -267,16 +266,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, put) {
   auto l_json = in_handle->get_json();
 
   using namespace orm;
-  auto l_update = update(l_sql)
-                      .from<attendance_helper::database_t>()
-                      .set_from_ref<attendance_helper::database_t>(l_json)
-                      .where(c(&attendance_helper::database_t::uuid_id_) == id_);
+  auto l_update =
+      update(l_sql).from<attendance_helper::database_t>().set_from_ref<attendance_helper::database_t>(l_json).where(
+          c(&attendance_helper::database_t::uuid_id_) == id_
+      );
   co_await l_sql.run_sql(l_update);
 
   auto l_data = l_sql.get_by_uuid<attendance_helper::database_t>(id_);
   const chrono::year_month_day l_date{l_data.create_date_};
   co_await recomputing_time(l_data.person_id_, chrono::year_month{l_date.year(), l_date.month()});
-  co_return in_handle->make_msg((nlohmann::json{} = l_data).dump());
+  co_return in_handle->make_msg((nlohmann::json{} = l_data));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, delete_) {
   auto l_sql  = get_sqlite_database();
@@ -289,7 +288,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, delete_) {
   );
 
   co_await l_sql.remove<attendance_helper::database_t>(id_);
-  co_return in_handle->make_msg((nlohmann::json{} = id_).dump());
+  co_return in_handle->make_msg((nlohmann::json{} = id_));
 }
 
 }  // namespace doodle::http
