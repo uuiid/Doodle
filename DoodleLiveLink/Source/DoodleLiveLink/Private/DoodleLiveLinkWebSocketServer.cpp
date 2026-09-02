@@ -8,6 +8,25 @@
 #include "IWebSocketServer.h"
 #include "Modules/ModuleManager.h"
 
+namespace
+{
+	/** 将属性名列表序列化为字节流：int32 数量，随后每个名字 [int32 字节长度 + UTF-8 字节]。 */
+	TArray<uint8> SerializePropertyNames(const TArray<FName>& InNames)
+	{
+		TArray<uint8> Payload;
+		const int32 NameCount = InNames.Num();
+		Payload.Append(reinterpret_cast<const uint8*>(&NameCount), sizeof(NameCount));
+		for (const FName& Name : InNames)
+		{
+			FTCHARToUTF8 Utf8(*Name.ToString());
+			const int32 ByteCount = Utf8.Length();
+			Payload.Append(reinterpret_cast<const uint8*>(&ByteCount), sizeof(ByteCount));
+			Payload.Append(reinterpret_cast<const uint8*>(Utf8.Get()), ByteCount);
+		}
+		return Payload;
+	}
+}
+
 FDoodleLiveLinkWebSocketServer::FDoodleLiveLinkWebSocketServer() = default;
 
 FDoodleLiveLinkWebSocketServer::~FDoodleLiveLinkWebSocketServer()
@@ -61,6 +80,11 @@ void FDoodleLiveLinkWebSocketServer::Restart(uint16 InPort)
 	Start(InPort);
 }
 
+void FDoodleLiveLinkWebSocketServer::SetPropertyNamesProvider(TFunction<TArray<FName>()> InProvider)
+{
+	PropertyNamesProvider = MoveTemp(InProvider);
+}
+
 bool FDoodleLiveLinkWebSocketServer::Tick(float DeltaTime)
 {
 	if (Server)
@@ -90,21 +114,48 @@ void FDoodleLiveLinkWebSocketServer::OnClientConnected(INetworkingWebSocket* Soc
 		}
 	}));
 
+	// 收到客户端消息时回传属性名列表。
+	Socket->SetReceiveCallBack(FWebSocketPacketReceivedCallBack::CreateLambda([this, Socket](void* Data, int32 DataSize)
+	{
+		OnClientMessage(Socket, Data, DataSize);
+	}));
+
 	UE_LOG(LogDoodleLiveLink, Log, TEXT("WebSocket 客户端已连接：%s"), *Endpoint);
 }
 
-void FDoodleLiveLinkWebSocketServer::Broadcast(const TArray<uint8>& InPayload)
+void FDoodleLiveLinkWebSocketServer::OnClientMessage(INetworkingWebSocket* Socket, void* Data, int32 DataSize)
 {
-	if (InPayload.Num() == 0)
+	if (!Socket || !PropertyNamesProvider)
 	{
 		return;
 	}
+
+	const TArray<uint8> Payload = SerializePropertyNames(PropertyNamesProvider());
+	if (Payload.Num() > 0)
+	{
+		Socket->Send(Payload.GetData(), Payload.Num(), false);
+	}
+}
+
+void FDoodleLiveLinkWebSocketServer::Broadcast(const FLiveLinkBaseFrameData& InFrameData)
+{
+	// 将属性值序列化为 float 数组字节流。
+	TArray<uint8> Payload;
+	const int32 ValueCount = InFrameData.PropertyValues.Num();
+	const int32 ByteCount = ValueCount * sizeof(float);
+	if (ByteCount == 0)
+	{
+		return;
+	}
+
+	Payload.SetNumUninitialized(ByteCount);
+	FMemory::Memcpy(Payload.GetData(), InFrameData.PropertyValues.GetData(), ByteCount);
 
 	for (INetworkingWebSocket* Client : Clients)
 	{
 		if (Client)
 		{
-			Client->Send(InPayload.GetData(), InPayload.Num(), false);
+			Client->Send(Payload.GetData(), Payload.Num(), false);
 		}
 	}
 }

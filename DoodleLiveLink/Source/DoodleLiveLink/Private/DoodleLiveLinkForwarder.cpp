@@ -13,7 +13,7 @@ FDoodleLiveLinkForwarder::~FDoodleLiveLinkForwarder()
 	UnregisterFrameCallback();
 }
 
-void FDoodleLiveLinkForwarder::SetFrameSink(TFunction<void(const TArray<uint8>&)> InSink)
+void FDoodleLiveLinkForwarder::SetFrameSink(TFunction<void(const FLiveLinkBaseFrameData&)> InSink)
 {
 	FrameSink = MoveTemp(InSink);
 }
@@ -160,15 +160,5 @@ void FDoodleLiveLinkForwarder::OnLiveLinkFaceFrameData(FLiveLinkSubjectKey InSub
 		return;
 	}
 
-	// 将属性值序列化为 float 数组字节流后外送。
-	TArray<uint8> Payload;
-	const int32 ValueCount = BaseData->PropertyValues.Num();
-	const int32 ByteCount = ValueCount * sizeof(float);
-	if (ByteCount > 0)
-	{
-		Payload.SetNumUninitialized(ByteCount);
-		FMemory::Memcpy(Payload.GetData(), BaseData->PropertyValues.GetData(), ByteCount);
-	}
-
-	FrameSink(Payload);
+	FrameSink(*BaseData);
 }

@@ -35,12 +35,16 @@ FDoodleLiveLinkWindow::FDoodleLiveLinkWindow()
 
 	WebSocketServer = MakeUnique<FDoodleLiveLinkWebSocketServer>();
 	Forwarder = MakeUnique<FDoodleLiveLinkForwarder>();
-	Forwarder->SetFrameSink([this](const TArray<uint8>& InPayload)
+	Forwarder->SetFrameSink([this](const FLiveLinkBaseFrameData& InFrameData)
 	{
 		if (WebSocketServer)
 		{
-			WebSocketServer->Broadcast(InPayload);
+			WebSocketServer->Broadcast(InFrameData);
 		}
+	});
+	WebSocketServer->SetPropertyNamesProvider([this]()
+	{
+		return Forwarder ? Forwarder->GetPropertyNames() : TArray<FName>();
 	});
 }
 

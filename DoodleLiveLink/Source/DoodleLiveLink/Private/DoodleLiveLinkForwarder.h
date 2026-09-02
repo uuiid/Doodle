@@ -16,7 +16,10 @@ public:
 	~FDoodleLiveLinkForwarder();
 
 	/** 设置帧数据输出回调（例如广播到 WebSocket）。 */
-	void SetFrameSink(TFunction<void(const TArray<uint8>&)> InSink);
+	void SetFrameSink(TFunction<void(const FLiveLinkBaseFrameData&)> InSink);
+
+	/** 获取当前已知的属性名列表。 */
+	const TArray<FName>& GetPropertyNames() const { return LiveLinkFacePropertyNames; }
 
 	/** 创建（若未创建）并连接 Live Link Face 源，随后注册帧回调。 */
 	void ConnectSource(const FString& InAddress, uint16 InPort, const FString& InSubjectName);
@@ -36,7 +39,7 @@ private:
 	void OnLiveLinkFaceStaticData(FLiveLinkSubjectKey InSubjectKey, TSubclassOf<ULiveLinkRole> InSubjectRole, const FLiveLinkStaticDataStruct& InStaticData);
 	void OnLiveLinkFaceFrameData(FLiveLinkSubjectKey InSubjectKey, TSubclassOf<ULiveLinkRole> InSubjectRole, const FLiveLinkFrameDataStruct& InFrameData);
 
-	TFunction<void(const TArray<uint8>&)> FrameSink;
+	TFunction<void(const FLiveLinkBaseFrameData&)> FrameSink;
 
 	FDelegateHandle LiveLinkSubjectAddedHandle;
 	FDelegateHandle LiveLinkFaceStaticDataHandle;
