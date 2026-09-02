@@ -14,7 +14,6 @@
 #include <utility>
 #include <vector>
 
-
 namespace doodle::orm {
 namespace detail {
 template <typename T>
@@ -176,6 +175,7 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
   std::string to_sql(const session& s, const to_sql_ctx& ctx) const override;
 
   update_t operator()();
+  operator bool() const;
 
  private:
   /// 按成员指针类型检查 json 值, 通过后写入 SET 表达式

@@ -64,4 +64,7 @@ update_t update_t::operator()() {
 
   return *this;
 }
+// 检查是否有设置列和是否设置了where
+update_t::operator bool() const { return !state_->column_operations_.empty() && static_cast<bool>(state_->wheres_); }
+
 }  // namespace doodle::orm

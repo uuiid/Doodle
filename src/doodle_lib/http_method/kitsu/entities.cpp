@@ -32,12 +32,12 @@ std::optional<entity_shot_extend> get_entity_shot_extend_by_entity_id(const uuid
 }
 }  // namespace
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, get) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_entt = l_sql.get_by_uuid<entity>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_entt);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   auto l_json = in_handle->get_json();
 
@@ -50,9 +50,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
   const bool l_can_update = person_.is_project_supervisor(l_entt->project_id_);
   if (l_can_update) {
     using namespace orm;
-    co_await l_sql.run_sql(
-        update(l_sql).from<entity>().set_from_ref<entity>(l_json).where(c(&entity::uuid_id_) == id_)
-    );
+    auto l_update = update(l_sql).from<entity>().set_from_ref<entity>(l_json).where(c(&entity::uuid_id_) == id_);
+    if (l_update) co_await l_sql.run_sql(l_update);
   }
   l_res = *l_entt;
   if (entity_asset_extend::has_extend_data(l_json)) {
@@ -61,12 +60,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
       *l_ext_ptr = l_list_ext.value();
       l_json.get_to(*l_ext_ptr);
       using namespace orm;
-      co_await l_sql.run_sql(
-          update(l_sql)
-              .from<entity_asset_extend>()
-              .set_from_ref<entity_asset_extend>(l_json)
-              .where(c(&entity_asset_extend::uuid_id_) == l_ext_ptr->uuid_id_)
-      );
+      auto l_update = update(l_sql)
+                          .from<entity_asset_extend>()
+                          .set_from_ref<entity_asset_extend>(l_json)
+                          .where(c(&entity_asset_extend::entity_id_) == l_entt->uuid_id_);
+      if (l_update) co_await l_sql.run_sql(l_update);
     } else {
       l_json.get_to(*l_ext_ptr);
       l_ext_ptr->entity_id_ = l_entt->uuid_id_;
@@ -75,23 +73,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
     l_res.update(*l_ext_ptr);
   }
   if (entity_shot_extend::has_extend_data(l_json)) {
-    auto l_ext_ptr = std::make_shared<entity_shot_extend>();
+    entity_shot_extend l_new_ext{};
     if (auto l_list_ext = get_entity_shot_extend_by_entity_id(l_entt->uuid_id_); l_list_ext.has_value()) {
-      *l_ext_ptr = l_list_ext.value();
-      l_json.get_to(*l_ext_ptr);
+      l_json.get_to(l_new_ext);
       using namespace orm;
-      co_await l_sql.run_sql(
-          update(l_sql)
-              .from<entity_shot_extend>()
-              .set_from_ref<entity_shot_extend>(l_json)
-              .where(c(&entity_shot_extend::uuid_id_) == l_ext_ptr->uuid_id_)
-      );
+      auto l_update = update(l_sql)
+                          .from<entity_shot_extend>()
+                          .set_from_ref<entity_shot_extend>(l_json)
+                          .where(c(&entity_shot_extend::entity_id_) == l_entt->uuid_id_);
+      if (l_update) co_await l_sql.run_sql(l_update);
     } else {
-      l_json.get_to(*l_ext_ptr);
-      l_ext_ptr->entity_id_ = l_entt->uuid_id_;
-      co_await l_sql.install(l_ext_ptr);
+      l_json.get_to(l_new_ext);
+      l_new_ext.entity_id_ = l_entt->uuid_id_;
+      co_await l_sql.install(std::make_shared<entity_shot_extend>(l_new_ext));
     }
-    l_res.update(*l_ext_ptr);
+    l_res.update(l_new_ext);
   }
 
   SPDLOG_LOGGER_WARN(
