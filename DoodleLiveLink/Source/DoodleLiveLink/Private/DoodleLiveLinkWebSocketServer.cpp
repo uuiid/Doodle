@@ -10,18 +10,95 @@
 
 namespace
 {
-	/** 将属性名列表序列化为字节流：int32 数量，随后每个名字 [int32 字节长度 + UTF-8 字节]。 */
-	TArray<uint8> SerializePropertyNames(const TArray<FName>& InNames)
+	/** 按 MessagePack 规范写入 array 头（fixarray / array16 / array32）。 */
+	void AppendArrayHeader(TArray<uint8>& Out, int32 Count)
+	{
+		if (Count <= 0x0F)
+		{
+			Out.Add(static_cast<uint8>(0x90 | Count));
+		}
+		else if (Count <= 0xFFFF)
+		{
+			Out.Add(0xDC);
+			Out.Add(static_cast<uint8>(Count >> 8));
+			Out.Add(static_cast<uint8>(Count));
+		}
+		else
+		{
+			Out.Add(0xDD);
+			Out.Add(static_cast<uint8>(Count >> 24));
+			Out.Add(static_cast<uint8>(Count >> 16));
+			Out.Add(static_cast<uint8>(Count >> 8));
+			Out.Add(static_cast<uint8>(Count));
+		}
+	}
+
+	/** 按 MessagePack 规范写入 float32（0xCA + 大端序 IEEE754）。 */
+	void AppendFloat32(TArray<uint8>& Out, float Value)
+	{
+		Out.Add(0xCA);
+		uint32 Bits = 0;
+		FMemory::Memcpy(&Bits, &Value, sizeof(float));
+		Out.Add(static_cast<uint8>(Bits >> 24));
+		Out.Add(static_cast<uint8>(Bits >> 16));
+		Out.Add(static_cast<uint8>(Bits >> 8));
+		Out.Add(static_cast<uint8>(Bits));
+	}
+
+	/** 按 MessagePack 规范写入 str（fixstr / str8 / str16 / str32）。 */
+	void AppendString(TArray<uint8>& Out, const FString& String)
+	{
+		FTCHARToUTF8 Utf8(*String);
+		const int32 ByteCount = Utf8.Length();
+		const uint8* Bytes = reinterpret_cast<const uint8*>(Utf8.Get());
+
+		if (ByteCount <= 31)
+		{
+			Out.Add(static_cast<uint8>(0xA0 | ByteCount));
+		}
+		else if (ByteCount <= 0xFF)
+		{
+			Out.Add(0xD9);
+			Out.Add(static_cast<uint8>(ByteCount));
+		}
+		else if (ByteCount <= 0xFFFF)
+		{
+			Out.Add(0xDA);
+			Out.Add(static_cast<uint8>(ByteCount >> 8));
+			Out.Add(static_cast<uint8>(ByteCount));
+		}
+		else
+		{
+			Out.Add(0xDB);
+			Out.Add(static_cast<uint8>(ByteCount >> 24));
+			Out.Add(static_cast<uint8>(ByteCount >> 16));
+			Out.Add(static_cast<uint8>(ByteCount >> 8));
+			Out.Add(static_cast<uint8>(ByteCount));
+		}
+
+		Out.Append(Bytes, ByteCount);
+	}
+
+	/** 将属性值数组打包为 MessagePack array（元素为 float32）。 */
+	TArray<uint8> PackPropertyValues(const TArray<float>& InValues)
 	{
 		TArray<uint8> Payload;
-		const int32 NameCount = InNames.Num();
-		Payload.Append(reinterpret_cast<const uint8*>(&NameCount), sizeof(NameCount));
+		AppendArrayHeader(Payload, InValues.Num());
+		for (float Value : InValues)
+		{
+			AppendFloat32(Payload, Value);
+		}
+		return Payload;
+	}
+
+	/** 将属性名数组打包为 MessagePack array（元素为 str）。 */
+	TArray<uint8> PackPropertyNames(const TArray<FName>& InNames)
+	{
+		TArray<uint8> Payload;
+		AppendArrayHeader(Payload, InNames.Num());
 		for (const FName& Name : InNames)
 		{
-			FTCHARToUTF8 Utf8(*Name.ToString());
-			const int32 ByteCount = Utf8.Length();
-			Payload.Append(reinterpret_cast<const uint8*>(&ByteCount), sizeof(ByteCount));
-			Payload.Append(reinterpret_cast<const uint8*>(Utf8.Get()), ByteCount);
+			AppendString(Payload, Name.ToString());
 		}
 		return Payload;
 	}
@@ -130,7 +207,7 @@ void FDoodleLiveLinkWebSocketServer::OnClientMessage(INetworkingWebSocket* Socke
 		return;
 	}
 
-	const TArray<uint8> Payload = SerializePropertyNames(PropertyNamesProvider());
+	const TArray<uint8> Payload = PackPropertyNames(PropertyNamesProvider());
 	if (Payload.Num() > 0)
 	{
 		Socket->Send(Payload.GetData(), Payload.Num(), false);
@@ -139,17 +216,12 @@ void FDoodleLiveLinkWebSocketServer::OnClientMessage(INetworkingWebSocket* Socke
 
 void FDoodleLiveLinkWebSocketServer::Broadcast(const FLiveLinkBaseFrameData& InFrameData)
 {
-	// 将属性值序列化为 float 数组字节流。
-	TArray<uint8> Payload;
-	const int32 ValueCount = InFrameData.PropertyValues.Num();
-	const int32 ByteCount = ValueCount * sizeof(float);
-	if (ByteCount == 0)
+	// 将属性值打包为 MessagePack array 后广播。
+	const TArray<uint8> Payload = PackPropertyValues(InFrameData.PropertyValues);
+	if (Payload.Num() == 0)
 	{
 		return;
 	}
-
-	Payload.SetNumUninitialized(ByteCount);
-	FMemory::Memcpy(Payload.GetData(), InFrameData.PropertyValues.GetData(), ByteCount);
 
 	for (INetworkingWebSocket* Client : Clients)
 	{

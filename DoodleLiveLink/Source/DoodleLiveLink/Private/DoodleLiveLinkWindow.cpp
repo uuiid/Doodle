@@ -135,7 +135,7 @@ void FDoodleLiveLinkWindow::CreateWindow()
 				.FillWidth(1.0f)
 				[
 					SNew(SNumericEntryBox<uint16>)
-					.Value(LiveLinkFacePort)
+					.Value_Lambda([this]() { return LiveLinkFacePort; })
 					.OnValueChanged_Lambda([this](uint16 InValue)
 						{
 							LiveLinkFacePort = InValue;
@@ -205,7 +205,7 @@ void FDoodleLiveLinkWindow::CreateWindow()
 				.FillWidth(1.0f)
 				[
 					SNew(SNumericEntryBox<uint16>)
-					.Value(WebSocketServerPort)
+					.Value_Lambda([this]() { return WebSocketServerPort; })
 					.OnValueChanged_Lambda([this](uint16 InValue)
 						{
 							if (InValue != WebSocketServerPort)
