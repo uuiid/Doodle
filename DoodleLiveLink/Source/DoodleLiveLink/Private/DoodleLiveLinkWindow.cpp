@@ -308,6 +308,7 @@ void FDoodleLiveLinkWindow::RefreshSourceList()
 			for (const FGuid& SourceGuid : Sources)
 			{
 				TSharedPtr<FSourceListItem> Item = MakeShared<FSourceListItem>();
+				Item->SourceGuid = SourceGuid;
 				Item->Type = LiveLinkClient->GetSourceType(SourceGuid).ToString();
 				Item->MachineName = LiveLinkClient->GetSourceMachineName(SourceGuid).ToString();
 				Item->Status = LiveLinkClient->GetSourceStatus(SourceGuid).ToString();
@@ -322,8 +323,23 @@ void FDoodleLiveLinkWindow::RefreshSourceList()
 	}
 }
 
+void FDoodleLiveLinkWindow::RemoveSource(FGuid SourceGuid)
+{
+	ILiveLinkClient* LiveLinkClient = nullptr;
+	if (IModularFeatures::Get().IsModularFeatureAvailable(ILiveLinkClient::ModularFeatureName))
+	{
+		LiveLinkClient = &IModularFeatures::Get().GetModularFeature<ILiveLinkClient>(ILiveLinkClient::ModularFeatureName);
+	}
+
+	if (LiveLinkClient && SourceGuid.IsValid())
+	{
+		LiveLinkClient->RemoveSource(SourceGuid);
+		RefreshSourceList();
+	}
+}
+
 TSharedRef<ITableRow> FDoodleLiveLinkWindow::OnGenerateSourceRow(TSharedPtr<FSourceListItem> InItem,
-                                                                 const TSharedRef<STableViewBase>& OwnerTable) const
+                                                                 const TSharedRef<STableViewBase>& OwnerTable)
 {
 	return SNew(STableRow<TSharedPtr<FSourceListItem>>, OwnerTable)
 		[
@@ -349,6 +365,18 @@ TSharedRef<ITableRow> FDoodleLiveLinkWindow::OnGenerateSourceRow(TSharedPtr<FSou
 			[
 				SNew(STextBlock)
 				.Text(FText::FromString(InItem->Status))
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(8.0f, 0.0f, 0.0f, 0.0f)
+			[
+				SNew(SButton)
+				.Text(NSLOCTEXT("DoodleLiveLink", "RemoveSource", "删除连接"))
+				.OnClicked_Lambda([this, SourceGuid = InItem->SourceGuid]() -> FReply
+					{
+						RemoveSource(SourceGuid);
+						return FReply::Handled();
+					})
 			]
 		];
 }

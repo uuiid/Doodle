@@ -29,8 +29,9 @@ public:
 	void UnregisterFrameCallback();
 
 private:
-	/** 主题添加时，若匹配当前 Subject 名则注册帧回调。 */
+	/** 主题添加 / 启用时，若匹配当前 Subject 名则注册帧回调。 */
 	void OnLiveLinkSubjectAdded(FLiveLinkSubjectKey InSubjectKey);
+	void OnLiveLinkSubjectEnabledChanged(FLiveLinkSubjectKey InSubjectKey, bool bNewEnabled);
 
 	/** 尝试为当前 Subject 注册帧数据委托。 */
 	void TryRegisterLiveLinkFaceFrames();
@@ -42,6 +43,7 @@ private:
 	TFunction<void(const FLiveLinkBaseFrameData&)> FrameSink;
 
 	FDelegateHandle LiveLinkSubjectAddedHandle;
+	FDelegateHandle LiveLinkSubjectEnabledChangedHandle;
 	FDelegateHandle LiveLinkFaceStaticDataHandle;
 	FDelegateHandle LiveLinkFaceFrameDataHandle;
 	TArray<FName> LiveLinkFacePropertyNames;

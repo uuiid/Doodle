@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Misc/Guid.h"
 
 template <typename ItemType> class SListView;
 class ITableRow;
@@ -24,6 +25,7 @@ private:
 	/** 源列表条目。 */
 	struct FSourceListItem
 	{
+		FGuid SourceGuid;
 		FString Type;
 		FString MachineName;
 		FString Status;
@@ -32,11 +34,14 @@ private:
 	/** 创建 Live Link Face 源。 */
 	void CreateLiveLinkFaceSource();
 
+	/** 移除指定源。 */
+	void RemoveSource(FGuid SourceGuid);
+
 	/** 刷新源列表显示。 */
 	void RefreshSourceList();
 
 	/** 生成源列表的一行。 */
-	TSharedRef<ITableRow> OnGenerateSourceRow(TSharedPtr<FSourceListItem> InItem, const TSharedRef<STableViewBase>& OwnerTable) const;
+	TSharedRef<ITableRow> OnGenerateSourceRow(TSharedPtr<FSourceListItem> InItem, const TSharedRef<STableViewBase>& OwnerTable);
 
 	/** 主窗口关闭时触发，请求退出引擎。 */
 	void OnWindowClosed(const TSharedRef<SWindow>& InWindow);

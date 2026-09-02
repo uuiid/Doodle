@@ -66,7 +66,10 @@ void FDoodleLiveLinkForwarder::RegisterFrameCallback()
 		return;
 	}
 
+	// subject 由源异步创建，且 OnLiveLinkSubjectAdded 广播早于 SetSubjectEnabled，
+	// 因此同时监听「添加」与「启用」事件，确保 subject 启用后再注册帧回调。
 	LiveLinkSubjectAddedHandle = LiveLinkClient->OnLiveLinkSubjectAdded().AddRaw(this, &FDoodleLiveLinkForwarder::OnLiveLinkSubjectAdded);
+	LiveLinkSubjectEnabledChangedHandle = LiveLinkClient->OnLiveLinkSubjectEnabledChanged().AddRaw(this, &FDoodleLiveLinkForwarder::OnLiveLinkSubjectEnabledChanged);
 
 	// 重连时 Subject 可能已存在，立即尝试注册一次。
 	TryRegisterLiveLinkFaceFrames();
@@ -88,6 +91,12 @@ void FDoodleLiveLinkForwarder::UnregisterFrameCallback()
 			LiveLinkSubjectAddedHandle.Reset();
 		}
 
+		if (LiveLinkSubjectEnabledChangedHandle.IsValid())
+		{
+			LiveLinkClient->OnLiveLinkSubjectEnabledChanged().Remove(LiveLinkSubjectEnabledChangedHandle);
+			LiveLinkSubjectEnabledChangedHandle.Reset();
+		}
+
 		if (LiveLinkFaceStaticDataHandle.IsValid() || LiveLinkFaceFrameDataHandle.IsValid())
 		{
 			LiveLinkClient->UnregisterSubjectFramesHandle(
@@ -106,6 +115,17 @@ void FDoodleLiveLinkForwarder::OnLiveLinkSubjectAdded(FLiveLinkSubjectKey InSubj
 {
 	// 仅处理与当前 Subject 名匹配的主题。
 	if (InSubjectKey.SubjectName.Name.ToString() != LiveLinkFaceSubjectName)
+	{
+		return;
+	}
+
+	TryRegisterLiveLinkFaceFrames();
+}
+
+void FDoodleLiveLinkForwarder::OnLiveLinkSubjectEnabledChanged(FLiveLinkSubjectKey InSubjectKey, bool bNewEnabled)
+{
+	// 仅在匹配且启用时尝试注册，避开 OnLiveLinkSubjectAdded 早于 SetSubjectEnabled 的时序问题。
+	if (!bNewEnabled || InSubjectKey.SubjectName.Name.ToString() != LiveLinkFaceSubjectName)
 	{
 		return;
 	}
