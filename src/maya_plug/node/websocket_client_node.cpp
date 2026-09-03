@@ -58,6 +58,7 @@ enum class buffer_type : std::int32_t { k_names = 0, k_values = 1 };
 struct payload {
   buffer_type type{};
   std::vector<std::string> names{};
+  double time{};
   std::vector<double> values{};
 };
 
@@ -73,9 +74,13 @@ bool fill_payload(payload& in_payload, const std::string& in_msg) {
       l_obj.convert(in_payload.names);
     } else {
       in_payload.type = buffer_type::k_values;
-      std::vector<float> l_values{};
+      std::vector<double> l_values{};
       l_obj.convert(l_values);
-      in_payload.values.assign(l_values.begin(), l_values.end());
+      // 首项为时间, 其余为通道值
+      if (!l_values.empty()) {
+        in_payload.time = l_values.front();
+        in_payload.values.assign(l_values.begin() + 1, l_values.end());
+      }
     }
     return true;
   } catch (const std::exception& e) {
