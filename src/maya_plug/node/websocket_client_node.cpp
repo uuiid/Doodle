@@ -117,50 +117,12 @@ MStatus websocket_client_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_values));
   }
 
-  // 基类设备节点属性 (serverName, deviceName, output, live, frameRate)
-  {
-    MFnTypedAttribute l_typed_attr{};
-    serverName = l_typed_attr.create("serverName", "srv", MFnData::kString, MObject::kNullObj, &l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(false));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(serverName));
-  }
-  {
-    MFnTypedAttribute l_typed_attr{};
-    deviceName = l_typed_attr.create("deviceName", "dev", MFnData::kString, MObject::kNullObj, &l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(false));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(deviceName));
-  }
-  {
-    MFnTypedAttribute l_typed_attr{};
-    output = l_typed_attr.create("output", "out", MFnData::kString, MObject::kNullObj, &l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(false));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setWritable(false));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output));
-  }
-  {
-    MFnNumericAttribute l_numeric_attr{};
-    live = l_numeric_attr.create("live", "live", MFnNumericData::kBoolean, 1.0, &l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(live));
-  }
-  {
-    MFnNumericAttribute l_numeric_attr{};
-    frameRate = l_numeric_attr.create("frameRate", "fps", MFnNumericData::kDouble, 24.0, &l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(frameRate));
-  }
+  // serverName/deviceName/live/frameRate/output 为基类静态属性, 由 Maya 自动创建
+  // 变化会触发线程重启, 此处仅建立与输出属性的依赖关系
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(live, output_values));
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(frameRate, output_values));
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(serverName, output_values));
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(deviceName, output_values));
 
   return l_status;
 }
