@@ -7,6 +7,7 @@
 
 namespace doodle::seedance2 {
 /**
+preparing: 准备提交
 queued：排队中。
 running：任务运行中。
 cancelled：取消任务，取消状态24h自动删除（只支持排队中状态的任务被取消）。
@@ -15,6 +16,7 @@ failed：任务失败。（如发送失败，即5秒内没有接收到成功发�
 expired：任务超时，即任务处于运行中或排队中状态超过过期时间。可通过 execution_expires_after 字段设置过期时间。
 */
 enum class DOODLE_CORE_API task_status {
+  preparing,
   queued,
   running,
   cancelled,
@@ -30,17 +32,20 @@ enum class DOODLE_CORE_API task_type {
 };
 NLOHMANN_JSON_SERIALIZE_ENUM(task_type, {{task_type::picture, "picture"}, {task_type::video, "video"}});
 NLOHMANN_JSON_SERIALIZE_ENUM(
-    task_status, {{task_status::queued, "queued"},
-                  {task_status::running, "running"},
-                  {task_status::cancelled, "cancelled"},
-                  {task_status::succeeded, "succeeded"},
-                  {task_status::failed, "failed"},
-                  {task_status::expired, "expired"}}
+    task_status,
+
+    {{task_status::preparing, "preparing"},
+     {task_status::queued, "queued"},
+     {task_status::running, "running"},
+     {task_status::cancelled, "cancelled"},
+     {task_status::succeeded, "succeeded"},
+     {task_status::failed, "failed"},
+     {task_status::expired, "expired"}}
 );
 struct DOODLE_CORE_API task {
   DOODLE_BASE_FIELDS();
   uuid user_id_;
-  task_status status_;
+  task_status status_{task_status::preparing};
   task_type type_{task_type::video};
   nlohmann::json data_request_;
   std::string text_prompt_;
@@ -56,9 +61,9 @@ struct DOODLE_CORE_API task {
   uuid project_uuid_id_;  // 内部使用的UUID，对应项目中的uuid_id_
   std::int64_t completion_tokens_{
       doodle_config::g_max_task_completion_tokens
-  };                            // 任务完成所需的token数量，默认为20万，具体数值可根据实际情况调整
+  };  // 任务完成所需的token数量，默认为20万，具体数值可根据实际情况调整
   uuid ai_generate_entity_id_;  // 内部使用的UUID，对应ai_generate_entity中的uuid_id_
-  uuid subproject_id_;           // 对应 subproject 的 uuid_id_
+  uuid subproject_id_;          // 对应 subproject 的 uuid_id_
   // 归档
   bool archived_;
   // to json
@@ -135,6 +140,5 @@ struct DOODLE_CORE_API task_similarity {
     j["similarity"]      = p.similarity_;
   }
 };
-
 
 }  // namespace doodle::seedance2
