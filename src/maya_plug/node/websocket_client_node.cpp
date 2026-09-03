@@ -12,11 +12,11 @@
 #include "data/maya_display.h"
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <data/maya_conv_str.h>
 #include <maya/MArrayDataBuilder.h>
 #include <maya/MArrayDataHandle.h>
-#include <maya/MFnDependencyNode.h>
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MPlug.h>
@@ -34,8 +34,6 @@ namespace websocket = beast::websocket;
 namespace net       = boost::asio;
 using tcp           = net::ip::tcp;
 
-MObject websocket_client_node::ip_address{};
-MObject websocket_client_node::port{};
 MObject websocket_client_node::output_names{};
 MObject websocket_client_node::output_values{};
 
@@ -45,9 +43,6 @@ class websocket_client_node::impl_t {
  public:
   impl_t()  = default;
   ~impl_t() = default;
-
-  std::string ip_{"127.0.0.1"};
-  int port_{8890};
 };
 
 namespace {
@@ -99,24 +94,6 @@ websocket_client_node::impl_t* websocket_client_node::impl() { return p_i.get();
 MStatus websocket_client_node::initialize() {
   MStatus l_status{};
 
-  {  // WebSocket 服务器 ip 地址
-    MFnTypedAttribute l_typed_attr{};
-    ip_address = l_typed_attr.create("ip_address", "ip", MFnData::kString, MObject::kNullObj, &l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setWritable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(ip_address));
-  }
-  {  // WebSocket 服务器端口
-    MFnNumericAttribute l_numeric_attr{};
-    port = l_numeric_attr.create("port", "port", MFnNumericData::kInt, 8890, &l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(port));
-  }
   {  // 输出属性名列表
     MFnTypedAttribute l_typed_attr{};
     output_names = l_typed_attr.create("output_names", "out_n", MFnData::kString, MObject::kNullObj, &l_status);
@@ -140,65 +117,55 @@ MStatus websocket_client_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_values));
   }
 
-  // // 基类设备节点属性 (serverName, deviceName, output, live, frameRate)
-  // {
-  //   MFnTypedAttribute l_typed_attr{};
-  //   serverName = l_typed_attr.create("serverName", "srv", MFnData::kString, MObject::kNullObj, &l_status);
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(true));
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(false));
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(serverName));
-  // }
-  // {
-  //   MFnTypedAttribute l_typed_attr{};
-  //   deviceName = l_typed_attr.create("deviceName", "dev", MFnData::kString, MObject::kNullObj, &l_status);
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(true));
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(false));
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(deviceName));
-  // }
-  // {
-  //   MFnTypedAttribute l_typed_attr{};
-  //   output = l_typed_attr.create("output", "out", MFnData::kString, MObject::kNullObj, &l_status);
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(false));
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setWritable(false));
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(true));
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output));
-  // }
-  // {
-  //   MFnNumericAttribute l_numeric_attr{};
-  //   live = l_numeric_attr.create("live", "live", MFnNumericData::kBoolean, 1.0, &l_status);
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(live));
-  // }
-  // {
-  //   MFnNumericAttribute l_numeric_attr{};
-  //   frameRate = l_numeric_attr.create("frameRate", "fps", MFnNumericData::kDouble, 24.0, &l_status);
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
-  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(frameRate));
-  // }
+  // 基类设备节点属性 (serverName, deviceName, output, live, frameRate)
+  {
+    MFnTypedAttribute l_typed_attr{};
+    serverName = l_typed_attr.create("serverName", "srv", MFnData::kString, MObject::kNullObj, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(false));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(serverName));
+  }
+  {
+    MFnTypedAttribute l_typed_attr{};
+    deviceName = l_typed_attr.create("deviceName", "dev", MFnData::kString, MObject::kNullObj, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(false));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(deviceName));
+  }
+  {
+    MFnTypedAttribute l_typed_attr{};
+    output = l_typed_attr.create("output", "out", MFnData::kString, MObject::kNullObj, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(false));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setWritable(false));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output));
+  }
+  {
+    MFnNumericAttribute l_numeric_attr{};
+    live = l_numeric_attr.create("live", "live", MFnNumericData::kBoolean, 1.0, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(live));
+  }
+  {
+    MFnNumericAttribute l_numeric_attr{};
+    frameRate = l_numeric_attr.create("frameRate", "fps", MFnNumericData::kDouble, 24.0, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(frameRate));
+  }
 
-  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(ip_address, output_values));
-  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(port, output_values));
   return l_status;
 }
 
 void websocket_client_node::postConstructor() {
-  // 在主线程中读取 ip 与端口, 供工作线程使用
-  MFnDependencyNode l_fn_node{thisMObject()};
-  MStatus l_status{};
-  auto l_ip_plug = l_fn_node.findPlug(ip_address, false, &l_status);
-  if (l_status) impl()->ip_ = conv::to_s(l_ip_plug.asString());
-  auto l_port_plug = l_fn_node.findPlug(port, false, &l_status);
-  if (l_status) impl()->port_ = l_port_plug.asInt();
-
   // 刷新输出属性
   MObjectArray l_attribute_list{};
   l_attribute_list.append(output_values);
@@ -208,9 +175,9 @@ void websocket_client_node::postConstructor() {
   createMemoryPools(1024, 1, sizeof(void*));
 }
 
-void websocket_client_node::threadHandler() {
-  const auto l_ip   = impl()->ip_;
-  const auto l_port = impl()->port_;
+void websocket_client_node::threadHandler(const char* serverName, const char* deviceName) {
+  const std::string l_ip   = serverName ? serverName : "127.0.0.1";
+  const int l_port         = deviceName ? std::atoi(deviceName) : 8890;
 
   while (!isDone()) {
     try {
