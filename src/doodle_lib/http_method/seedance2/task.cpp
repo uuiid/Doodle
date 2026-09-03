@@ -107,8 +107,8 @@ class seedance2_task_run_manager {
         .columns(object<sd2::task>(), &ai_studio::app_secret_)
         .from<sd2::task>()
         .where(
-            c(&sd2::task::status_) == sd2::task_status::preparing || c(&sd2::task::status_) == sd2::task_status::queued ||
-            c(&sd2::task::status_) == sd2::task_status::running
+            c(&sd2::task::status_) == sd2::task_status::preparing ||
+            c(&sd2::task::status_) == sd2::task_status::queued || c(&sd2::task::status_) == sd2::task_status::running
         )
         .left_outer_join<ai_studio>(&ai_studio::uuid_id_, &sd2::task::ai_studio_id_)()
         .to_vector<task_info>();
@@ -121,7 +121,7 @@ class seedance2_task_run_manager {
     auto l_req     = add_ip_to_req(in_task.data_request_, l_ip);
     auto l_task_id = co_await in_client->run_task(l_req);
 
-    auto l_sql = get_sqlite_database();
+    auto l_sql     = get_sqlite_database();
     using namespace orm;
     co_await l_sql.run_sql(update(l_sql)
                                .from<sd2::task>()
@@ -373,9 +373,7 @@ std::vector<sd2::task_similarity> get_task_similarity_for_person(
 
 }  // namespace
 
-seedance2_subproject_task::seedance2_subproject_task() {
-  seedance2_task_run_manager::Get().run();
-}
+seedance2_subproject_task::seedance2_subproject_task() { seedance2_task_run_manager::Get().run(); }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   person_.check_subproject_access(subproject_id_);
 
@@ -436,7 +434,29 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
 
   auto l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
-  DOODLE_CHICK_HTTP(l_task.status_ == sd2::task_status::queued, bad_request, "只有排队中的任务可以删除");
+  DOODLE_CHICK_HTTP(
+      l_task.status_ == sd2::task_status::preparing || l_task.status_ == sd2::task_status::queued, bad_request,
+      "只有准备中或排队中的任务可以取消"
+  );
+
+  // preparing 状态尚未提交到外部, 直接置为 cancelled 并归还 token
+  if (l_task.status_ == sd2::task_status::preparing) {
+    using namespace orm;
+    co_await l_sql.run_sql(
+        update(l_sql)
+            .from<sd2::task>()
+            .set(c(&sd2::task::status_) = sd2::task_status::cancelled)
+            .set(
+                c(&sd2::task::ended_at_) =
+                    chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}
+            )
+            .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_),
+        add_remaining_tokens_for_person(l_sql, l_task.user_id_, l_task.completion_tokens_)
+    );
+    l_task.status_ = sd2::task_status::cancelled;
+    co_return in_handle->make_msg(nlohmann::json{} = l_task);
+  }
+
   auto l_studio = l_sql.get_by_uuid<ai_studio>(person_.get_ai_studio_id());
   auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
 
@@ -447,10 +467,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
   const sd2::task_status l_status{
       l_res.contains("status") ? l_res.at("status").get<sd2::task_status>() : sd2::task_status::failed
   };
-  DOODLE_CHICK_HTTP(l_status == sd2::task_status::queued, bad_request, "只有排队中的任务可以删除");
+  DOODLE_CHICK_HTTP(l_status == sd2::task_status::queued, bad_request, "只有排队中的任务可以取消");
 #ifdef DOODLE_SEED2
   co_await l_client->cancel_task(l_task.task_id_);
 #endif
+  co_await l_sql.run_sql(add_remaining_tokens_for_person(l_sql, l_task.user_id_, l_task.completion_tokens_));
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
 }
 
