@@ -13,12 +13,12 @@ namespace doodle::ai {
 /// @brief 将旋转矩阵转换为 6D 连续表示（前两列），支持多关节拼接
 /// @param matrix [N, J*9] 每行为 J 个关节的 3x3 矩阵行展开拼接
 /// @return [N, J*6] 6D 连续表示
-MatrixXfRow matrix_to_cont6d(const MatrixXfRow& matrix);
+DOODLELIB_API MatrixXfRow matrix_to_cont6d(const MatrixXfRow& matrix);
 
 /// @brief 将 6D 连续表示恢复为旋转矩阵（Gram–Schmidt 正交化），支持多关节拼接
 /// @param cont6d [N, J*6] 6D 连续表示
 /// @return [N, J*9] 旋转矩阵行展开
-MatrixXfRow cont6d_to_matrix(const MatrixXfRow& cont6d);
+DOODLELIB_API MatrixXfRow cont6d_to_matrix(const MatrixXfRow& cont6d);
 
 // ======================================================================
 // Axis-Angle ↔ Rotation Matrix (for constraint save/load)

@@ -107,4 +107,60 @@ BOOST_AUTO_TEST_CASE(matrix_round_trip) {
   check_matrix_close(back, m, 1e-3f);
 }
 
+// matrix_to_cont6d: 单位矩阵的前两列
+BOOST_AUTO_TEST_CASE(matrix_to_cont6d_identity) {
+  MatrixXfRow m(1, 9);
+  m << 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f;
+
+  MatrixXfRow expected(1, 6);
+  expected << 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f;
+
+  check_matrix_close(doodle::ai::matrix_to_cont6d(m), expected);
+}
+
+// matrix_to_cont6d: 绕 z 轴旋转 90° 的前两列
+BOOST_AUTO_TEST_CASE(matrix_to_cont6d_rot_z_90) {
+  MatrixXfRow m(1, 9);
+  m << 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f;
+
+  MatrixXfRow expected(1, 6);
+  expected << 0.0f, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f;
+
+  check_matrix_close(doodle::ai::matrix_to_cont6d(m), expected);
+}
+
+// cont6d_to_matrix: 单位前两列应恢复单位矩阵
+BOOST_AUTO_TEST_CASE(cont6d_to_matrix_identity) {
+  MatrixXfRow cont6d(1, 6);
+  cont6d << 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f;
+
+  MatrixXfRow expected(1, 9);
+  expected << 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f;
+
+  check_matrix_close(doodle::ai::cont6d_to_matrix(cont6d), expected);
+}
+
+// 往返测试: matrix -> cont6d -> matrix
+BOOST_AUTO_TEST_CASE(cont6d_round_trip) {
+  MatrixXfRow m(1, 9);
+  m << 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f;
+
+  MatrixXfRow back = doodle::ai::cont6d_to_matrix(doodle::ai::matrix_to_cont6d(m));
+
+  check_matrix_close(back, m, 1e-3f);
+}
+
+// 多关节拼接: 两个关节的往返
+BOOST_AUTO_TEST_CASE(cont6d_round_trip_multi_joint) {
+  MatrixXfRow m(1, 18);
+  m << 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,  // joint 0: identity
+      0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f;  // joint 1: rot z 90
+
+  MatrixXfRow cont6d = doodle::ai::matrix_to_cont6d(m);
+  BOOST_CHECK_EQUAL(cont6d.cols(), 12);
+  MatrixXfRow back = doodle::ai::cont6d_to_matrix(cont6d);
+
+  check_matrix_close(back, m, 1e-3f);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
