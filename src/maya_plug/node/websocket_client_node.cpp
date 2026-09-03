@@ -28,7 +28,6 @@
 #include <thread>
 #include <vector>
 
-
 namespace doodle::maya_plug {
 namespace beast     = boost::beast;
 namespace websocket = beast::websocket;
@@ -204,7 +203,7 @@ void websocket_client_node::postConstructor() {
   createMemoryPools(1024, 1, sizeof(void*));
 }
 
-void websocket_client_node::threadHandler(const char* serverName, const char* deviceName) {
+void websocket_client_node::threadHandler() {
   const auto l_ip   = impl()->ip_;
   const auto l_port = impl()->port_;
 

@@ -6,11 +6,11 @@
 
 #include <maya_plug/maya_plug_fwd.h>
 
-#include <maya/MPxClientDeviceNode.h>
+#include <maya/MPxThreadedDeviceNode.h>
 #include <maya/MStatus.h>
 namespace doodle::maya_plug {
 /// @brief 接收 WebSocket 数据并传递给 Maya 的客户端设备节点
-class websocket_client_node : public MPxClientDeviceNode {
+class websocket_client_node : public MPxThreadedDeviceNode {
  public:
   websocket_client_node();
   ~websocket_client_node() override;
@@ -33,7 +33,7 @@ class websocket_client_node : public MPxClientDeviceNode {
 
   void postConstructor() override;
   MStatus compute(const MPlug& in_plug, MDataBlock& in_data_block) override;
-  void threadHandler(const char* serverName, const char* deviceName) override;
+  void threadHandler() override;
   void threadShutdownHandler() override;
 
   class impl_t;
