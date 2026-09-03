@@ -156,7 +156,7 @@ void create_move(
     if (l_image.gamma_t) {
       cv::LUT(k_image, l_gamma, k_image);
     }
-    watermark_add_image(k_image, l_image.watermarks_attr);
+    // watermark_add_image(k_image, l_image.watermarks_attr);
     in_logger->info("开始写入图片 {}", l_image.path_attr);
     in_logger->info("progress 1/{}", k_size_len + k_size_len / 10);
     video << k_image;
