@@ -201,8 +201,8 @@ void websocket_client_node::postConstructor() {
   l_attribute_list.append(output_values);
   setRefreshOutputAttributes(l_attribute_list);
 
-  // 创建内存池: 32 个缓冲区, 每个 8192 字节
-  createMemoryPools(32, 1, 8192);
+  // 创建内存池: 1024 个缓冲区, 每个缓冲区仅存放一个指针
+  createMemoryPools(1024, 1, sizeof(void*));
 }
 
 void websocket_client_node::threadHandler(const char* serverName, const char* deviceName) {
