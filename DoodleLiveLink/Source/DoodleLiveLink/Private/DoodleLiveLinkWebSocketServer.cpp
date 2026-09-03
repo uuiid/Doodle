@@ -33,12 +33,16 @@ namespace
 		}
 	}
 
-	/** 按 MessagePack 规范写入 float32（0xCA + 大端序 IEEE754）。 */
-	void AppendFloat32(TArray<uint8>& Out, float Value)
+	/** 按 MessagePack 规范写入 float64（0xCB + 大端序 IEEE754）。 */
+	void AppendFloat64(TArray<uint8>& Out, double Value)
 	{
-		Out.Add(0xCA);
-		uint32 Bits = 0;
-		FMemory::Memcpy(&Bits, &Value, sizeof(float));
+		Out.Add(0xCB);
+		uint64 Bits = 0;
+		FMemory::Memcpy(&Bits, &Value, sizeof(double));
+		Out.Add(static_cast<uint8>(Bits >> 56));
+		Out.Add(static_cast<uint8>(Bits >> 48));
+		Out.Add(static_cast<uint8>(Bits >> 40));
+		Out.Add(static_cast<uint8>(Bits >> 32));
 		Out.Add(static_cast<uint8>(Bits >> 24));
 		Out.Add(static_cast<uint8>(Bits >> 16));
 		Out.Add(static_cast<uint8>(Bits >> 8));
@@ -79,14 +83,15 @@ namespace
 		Out.Append(Bytes, ByteCount);
 	}
 
-	/** 将属性值数组打包为 MessagePack array（元素为 float32）。 */
-	TArray<uint8> PackPropertyValues(const TArray<float>& InValues)
+	/** 将属性值数组打包为 MessagePack array（首个元素为时间，其余为 float64 属性值）。 */
+	TArray<uint8> PackPropertyValues(const TArray<float>& InValues, double InTime)
 	{
 		TArray<uint8> Payload;
-		AppendArrayHeader(Payload, InValues.Num());
+		AppendArrayHeader(Payload, InValues.Num() + 1);
+		AppendFloat64(Payload, InTime);
 		for (float Value : InValues)
 		{
-			AppendFloat32(Payload, Value);
+			AppendFloat64(Payload, static_cast<double>(Value));
 		}
 		return Payload;
 	}
@@ -183,19 +188,19 @@ void FDoodleLiveLinkWebSocketServer::OnClientConnected(INetworkingWebSocket* Soc
 	// 断开时从列表移除，避免向已关闭的连接发送数据。
 	const FString Endpoint = Socket->RemoteEndPoint(true);
 	Socket->SetSocketClosedCallBack(FWebSocketInfoCallBack::CreateLambda([this, Socket, Endpoint]()
-	{
-		const int32 RemovedCount = Clients.Remove(Socket);
-		if (RemovedCount > 0)
 		{
-			UE_LOG(LogDoodleLiveLink, Log, TEXT("WebSocket 客户端已断开：%s"), *Endpoint);
-		}
-	}));
+			const int32 RemovedCount = Clients.Remove(Socket);
+			if (RemovedCount > 0)
+			{
+				UE_LOG(LogDoodleLiveLink, Log, TEXT("WebSocket 客户端已断开：%s"), *Endpoint);
+			}
+		}));
 
 	// 收到客户端消息时回传属性名列表。
 	Socket->SetReceiveCallBack(FWebSocketPacketReceivedCallBack::CreateLambda([this, Socket](void* Data, int32 DataSize)
-	{
-		OnClientMessage(Socket, Data, DataSize);
-	}));
+		{
+			OnClientMessage(Socket, Data, DataSize);
+		}));
 
 	UE_LOG(LogDoodleLiveLink, Log, TEXT("WebSocket 客户端已连接：%s"), *Endpoint);
 }
@@ -216,8 +221,8 @@ void FDoodleLiveLinkWebSocketServer::OnClientMessage(INetworkingWebSocket* Socke
 
 void FDoodleLiveLinkWebSocketServer::Broadcast(const FLiveLinkBaseFrameData& InFrameData)
 {
-	// 将属性值打包为 MessagePack array 后广播。
-	const TArray<uint8> Payload = PackPropertyValues(InFrameData.PropertyValues);
+	// 首个元素为源时间戳（秒），其余为属性值，整体打包为 MessagePack array 后广播。
+	const TArray<uint8> Payload = PackPropertyValues(InFrameData.PropertyValues, InFrameData.WorldTime.GetSourceTime());
 	if (Payload.Num() == 0)
 	{
 		return;
