@@ -25,6 +25,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstring>
+#include <memory>
 #include <string>
 #include <thread>
 #include <vector>
@@ -55,93 +56,34 @@ namespace {
 // 缓冲区负载类型
 enum class buffer_type : std::int32_t { k_names = 0, k_values = 1 };
 
-// 缓冲区头, 用于标识负载类型与元素个数
-struct buffer_header {
-  buffer_type type;
-  std::int32_t count;
+// 解析后的负载数据, 通过裸指针在缓冲区中传递, 避免二次拷贝
+struct payload {
+  buffer_type type{};
+  std::vector<std::string> names{};
+  std::vector<double> values{};
 };
 
-// 解析一条 WebSocket 消息, 判断是属性名还是属性值, 并写入内存池缓冲区
-// 缓冲布局: buffer_header + (names: [int32 长度 + 字节] * count | values: double * count)
-void fill_buffer(MCharBuffer& in_storage, const std::string& in_msg) {
+// 解析一条 WebSocket 消息, 判断是属性名还是属性值, 并填充到负载中
+bool fill_payload(payload& in_payload, const std::string& in_msg) {
   try {
     msgpack::object_handle l_handle = msgpack::unpack(in_msg.data(), in_msg.size());
     msgpack::object l_obj            = l_handle.get();
-    if (l_obj.type != msgpack::type::ARRAY || l_obj.via.array.size == 0) return;
+    if (l_obj.type != msgpack::type::ARRAY || l_obj.via.array.size == 0) return false;
 
-    auto* l_out = in_storage.ptr();
-    const auto l_first_type = l_obj.via.array.ptr[0].type;
-    if (l_first_type == msgpack::type::STR) {
-      std::vector<std::string> l_names{};
-      l_obj.convert(l_names);
-      auto* l_cursor  = l_out + sizeof(buffer_header);
-      auto l_remaining = in_storage.size() - sizeof(buffer_header);
-      std::int32_t l_count{0};
-      for (const auto& l_name : l_names) {
-        const auto l_len = static_cast<std::int64_t>(l_name.size());
-        if (l_len + static_cast<std::int64_t>(sizeof(l_len)) > l_remaining) break;
-        std::memcpy(l_cursor, &l_len, sizeof(l_len));
-        l_cursor += sizeof(l_len);
-        std::memcpy(l_cursor, l_name.data(), l_len);
-        l_cursor += l_len;
-        l_remaining -= sizeof(l_len) + l_len;
-        ++l_count;
-      }
-      const buffer_header l_header{buffer_type::k_names, l_count};
-      std::memcpy(l_out, &l_header, sizeof(l_header));
+    if (l_obj.via.array.ptr[0].type == msgpack::type::STR) {
+      in_payload.type = buffer_type::k_names;
+      l_obj.convert(in_payload.names);
     } else {
+      in_payload.type = buffer_type::k_values;
       std::vector<float> l_values{};
       l_obj.convert(l_values);
-      auto* l_cursor = l_out + sizeof(buffer_header);
-      auto l_remaining = in_storage.size() - sizeof(buffer_header);
-      std::int32_t l_count{0};
-      for (const auto l_value : l_values) {
-        if (static_cast<std::int64_t>(sizeof(double)) > l_remaining) break;
-        const auto l_double = static_cast<double>(l_value);
-        std::memcpy(l_cursor, &l_double, sizeof(l_double));
-        l_cursor += sizeof(l_double);
-        l_remaining -= sizeof(l_double);
-        ++l_count;
-      }
-      const buffer_header l_header{buffer_type::k_values, l_count};
-      std::memcpy(l_out, &l_header, sizeof(l_header));
+      in_payload.values.assign(l_values.begin(), l_values.end());
     }
+    return true;
   } catch (const std::exception& e) {
     display_warning("解析 WebSocket 消息失败: {}", e.what());
+    return false;
   }
-}
-
-std::vector<std::string> decode_names(const char* in_data, long in_size) {
-  if (in_size < static_cast<long>(sizeof(buffer_header))) return {};
-  const auto* l_header = reinterpret_cast<const buffer_header*>(in_data);
-  if (l_header->type != buffer_type::k_names) return {};
-  auto* l_cursor = in_data + sizeof(buffer_header);
-  std::vector<std::string> l_names{};
-  l_names.reserve(l_header->count);
-  for (auto i = 0; i < l_header->count; ++i) {
-    std::int32_t l_len{};
-    std::memcpy(&l_len, l_cursor, sizeof(l_len));
-    l_cursor += sizeof(l_len);
-    l_names.emplace_back(l_cursor, l_len);
-    l_cursor += l_len;
-  }
-  return l_names;
-}
-
-std::vector<double> decode_values(const char* in_data, long in_size) {
-  if (in_size < static_cast<long>(sizeof(buffer_header))) return {};
-  const auto* l_header = reinterpret_cast<const buffer_header*>(in_data);
-  if (l_header->type != buffer_type::k_values) return {};
-  auto* l_cursor = in_data + sizeof(buffer_header);
-  std::vector<double> l_values{};
-  l_values.reserve(l_header->count);
-  for (auto i = 0; i < l_header->count; ++i) {
-    double l_double{};
-    std::memcpy(&l_double, l_cursor, sizeof(l_double));
-    l_cursor += sizeof(l_double);
-    l_values.push_back(l_double);
-  }
-  return l_values;
 }
 }  // namespace
 
@@ -302,8 +244,15 @@ void websocket_client_node::threadHandler(const char* serverName, const char* de
         beginThreadLoop();
         MCharBuffer l_storage{};
         if (acquireDataStorage(l_storage) == MS::kSuccess) {
-          fill_buffer(l_storage, l_msg);
-          pushThreadData(l_storage);
+          auto* l_payload = new payload{};
+          if (fill_payload(*l_payload, l_msg)) {
+            // 缓冲区中只存放 payload 裸指针
+            std::memcpy(l_storage.ptr(), &l_payload, sizeof(l_payload));
+            pushThreadData(l_storage);
+          } else {
+            delete l_payload;
+            releaseDataStorage(l_storage);
+          }
         }
         endThreadLoop();
 
@@ -326,10 +275,16 @@ MStatus websocket_client_node::compute(const MPlug& in_plug, MDataBlock& in_data
   MCharBuffer l_storage{};
   if (popThreadData(l_storage) != MS::kSuccess) return MS::kSuccess;
 
-  const auto* l_header = reinterpret_cast<const buffer_header*>(l_storage.ptr());
-  if (l_header->type == buffer_type::k_names) {
-    auto l_names = decode_names(l_storage.ptr(), l_storage.size());
-    MStatus l_status{};
+  payload* l_payload{};
+  std::memcpy(&l_payload, l_storage.ptr(), sizeof(l_payload));
+  releaseDataStorage(l_storage);
+
+  if (!l_payload) return MS::kSuccess;
+  std::unique_ptr<payload> l_guard{l_payload};
+
+  MStatus l_status{};
+  if (l_guard->type == buffer_type::k_names) {
+    const auto& l_names = l_guard->names;
     auto l_handle = in_data_block.outputArrayValue(output_names, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     auto l_builder = l_handle.builder(&l_status);
@@ -342,9 +297,8 @@ MStatus websocket_client_node::compute(const MPlug& in_plug, MDataBlock& in_data
     }
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_handle.set(l_builder));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_handle.setAllClean());
-  } else if (l_header->type == buffer_type::k_values) {
-    auto l_values = decode_values(l_storage.ptr(), l_storage.size());
-    MStatus l_status{};
+  } else if (l_guard->type == buffer_type::k_values) {
+    const auto& l_values = l_guard->values;
     auto l_handle = in_data_block.outputArrayValue(output_values, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     auto l_builder = l_handle.builder(&l_status);
@@ -359,7 +313,6 @@ MStatus websocket_client_node::compute(const MPlug& in_plug, MDataBlock& in_data
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_handle.setAllClean());
   }
 
-  releaseDataStorage(l_storage);
   return MS::kSuccess;
 }
 
