@@ -8,6 +8,8 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
+#include <boost/scope/scope_exit.hpp>
+#include <boost/scope/scope_fail.hpp>
 
 #include "data/maya_display.h"
 #include <chrono>
@@ -138,8 +140,8 @@ void websocket_client_node::postConstructor() {
 }
 
 void websocket_client_node::threadHandler(const char* serverName, const char* deviceName) {
-  const std::string l_ip   = serverName ? serverName : "127.0.0.1";
-  const int l_port         = deviceName ? std::atoi(deviceName) : 8890;
+  const std::string l_ip = serverName ? serverName : "127.0.0.1";
+  const int l_port       = deviceName ? std::atoi(deviceName) : 8890;
 
   while (!isDone()) {
     try {
@@ -164,31 +166,27 @@ void websocket_client_node::threadHandler(const char* serverName, const char* de
       while (!isDone()) {
         beast::error_code l_ec{};
         l_ws.read(l_buffer, l_ec);
+
+        boost::scope::scope_exit l_consume_buffer{[&]() { l_buffer.consume(l_buffer.size()); }};
         if (l_ec) {
-          if (l_ec == beast::error::timeout) {
-            l_buffer.consume(l_buffer.size());
-            continue;  // 空闲超时, 继续检查 isDone
-          }
-          break;  // 连接关闭或出错, 退出内层循环重连
+          if (l_ec == beast::error::timeout) continue;  // 空闲超时, 继续检查 isDone
+          break;                                        // 连接关闭或出错, 退出内层循环重连
         }
 
         const auto l_msg = beast::buffers_to_string(l_buffer.data());
         beginThreadLoop();
+        boost::scope::scope_exit l_end_thread_loop{[&]() { endThreadLoop(); }};
         MCharBuffer l_storage{};
         if (acquireDataStorage(l_storage) == MS::kSuccess) {
           auto l_payload = std::make_unique<payload>();
+          boost::scope::scope_exit l_release_data_storage{[&]() { releaseDataStorage(l_storage); }};
           if (fill_payload(*l_payload, l_msg)) {
-            // 缓冲区中只存放 payload 裸指针
             auto l_raw_payload = l_payload.release();
             std::memcpy(l_storage.ptr(), &l_raw_payload, sizeof(l_raw_payload));
             pushThreadData(l_storage);
-          } else {
-            releaseDataStorage(l_storage);
+            l_release_data_storage.set_active(false);  // 已 push, 取消 release
           }
         }
-        endThreadLoop();
-
-        l_buffer.consume(l_buffer.size());
       }
     } catch (const std::exception& e) {
       display_warning("WebSocket 连接异常: {}", e.what());
