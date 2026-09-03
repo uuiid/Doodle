@@ -33,6 +33,7 @@ target_link_libraries(test_main
         OpenSSL::SSL
         OpenSSL::Crypto
         unofficial::sqlite3::sqlite3
+        Eigen3::Eigen
 )
 target_compile_definitions(test_main
         PUBLIC
