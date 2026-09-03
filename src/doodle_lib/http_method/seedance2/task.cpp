@@ -24,6 +24,8 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/consign.hpp>
+#include <boost/asio/executor.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/scope/scope_exit.hpp>
 
@@ -35,6 +37,7 @@
 #include "sqlite_orm/orm/count.h"
 #include "sqlite_orm/orm/insert.h"
 #include "sqlite_orm/orm/select.h"
+#include <array>
 #include <chrono>
 #include <map>
 #include <memory>
@@ -160,13 +163,11 @@ class seedance2_task_run_manager {
       case sd2::task_status::running: {
         if (l_task_ptr->status_ != l_status) {
           l_task_ptr->status_ = l_status;
-          co_await l_sql.run_sql(
-              update(l_sql)
-                  .from<sd2::task>()
-                  .set(c(&sd2::task::status_) = l_task_ptr->status_)
-                  .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
-                  .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_)
-          );
+          co_await l_sql.run_sql(update(l_sql)
+                                     .from<sd2::task>()
+                                     .set(c(&sd2::task::status_) = l_task_ptr->status_)
+                                     .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
+                                     .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_));
         }
         socket_io::broadcast(
             socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_task_ptr->status_}
@@ -201,16 +202,14 @@ class seedance2_task_run_manager {
     l_task_ptr->status_   = l_status;
     l_task_ptr->ended_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
-    co_await l_sql.run_sql(
-        update(l_sql)
-            .from<sd2::task>()
-            .set(c(&sd2::task::status_) = l_task_ptr->status_)
-            .set(c(&sd2::task::ended_at_) = l_task_ptr->ended_at_)
-            .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
-            .set(c(&sd2::task::completion_tokens_) = l_task_ptr->completion_tokens_)
-            .set(c(&sd2::task::preview_file_) = l_task_ptr->preview_file_)
-            .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_)
-    );
+    co_await l_sql.run_sql(update(l_sql)
+                               .from<sd2::task>()
+                               .set(c(&sd2::task::status_) = l_task_ptr->status_)
+                               .set(c(&sd2::task::ended_at_) = l_task_ptr->ended_at_)
+                               .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
+                               .set(c(&sd2::task::completion_tokens_) = l_task_ptr->completion_tokens_)
+                               .set(c(&sd2::task::preview_file_) = l_task_ptr->preview_file_)
+                               .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_));
 
     if (l_status == sd2::task_status::succeeded && l_task_ptr->completion_tokens_ > 0) {
       // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
@@ -346,7 +345,25 @@ std::vector<sd2::task_similarity> get_task_similarity_for_person(
 }
 
 }  // namespace
-seedance2_subproject_task::seedance2_subproject_task() { seedance2_task_run_manager::Get().run(); }
+
+class seedance2_subproject_task::impl {
+  using strand_t = boost::asio::strand<std::decay_t<decltype(g_io_context())>::executor_type>;
+  std::array<strand_t, 5> executors_{
+      boost::asio::make_strand(g_io_context()), boost::asio::make_strand(g_io_context()),
+      boost::asio::make_strand(g_io_context()), boost::asio::make_strand(g_io_context()),
+      boost::asio::make_strand(g_io_context()),
+  };
+
+ public:
+  strand_t get_strand() {
+    static std::atomic<size_t> index{0};
+    return executors_[index++ % executors_.size()];
+  }
+};
+
+seedance2_subproject_task::seedance2_subproject_task() : pimpl_(std::make_shared<impl>()) {
+  seedance2_task_run_manager::Get().run();
+}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   person_.check_subproject_access(subproject_id_);
 
@@ -394,7 +411,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   auto l_ip  = co_await get_self_ip();
   auto l_req = add_ip_to_req(l_task->data_request_, l_ip);
 #ifdef DOODLE_SEED2
+  DOODLE_TO_EXECUTOR(pimpl_->get_strand())
   l_task->task_id_ = co_await l_client->run_task(l_req);  // 异步运行任务，不等待结果
+  DOODLE_TO_SELF()
 #endif
   {
     auto l_add_tokens = add_remaining_tokens_for_person(l_sql, person_.person_.uuid_id_, -l_task->completion_tokens_);
@@ -439,12 +458,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, delete_) 
   auto l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
   using namespace orm;
-  co_await l_sql.run_sql(
-      update(l_sql)
-          .from<sd2::task>()
-          .set(c(&sd2::task::archived_) = true)
-          .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_)
-  );
+  co_await l_sql.run_sql(update(l_sql)
+                             .from<sd2::task>()
+                             .set(c(&sd2::task::archived_) = true)
+                             .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_));
   co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
 }
 

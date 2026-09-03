@@ -11,6 +11,7 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
 #include <core/http/http_function.h>
+#include <memory>
 #include <sqlite_orm/orm/update.h>
 
 namespace doodle::http::seedance2 {
@@ -122,6 +123,8 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/task
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_task)
 seedance2_subproject_task();
+class impl;
+std::shared_ptr<impl> pimpl_;
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid subproject_id_{};
