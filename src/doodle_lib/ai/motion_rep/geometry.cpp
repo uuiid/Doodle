@@ -127,9 +127,9 @@ MatrixXfRow axis_angle_to_matrix(const MatrixXfRow& axis_angle) {
 
     // clang-format off
     result.row(i) <<
-        c + omc * Ksq_00,  -z * s + omc * Ksq_01,   y * s + omc * Ksq_02,
-        z * s + omc * Ksq_10,  c + omc * Ksq_11,  -x * s + omc * Ksq_12,
-       -y * s + omc * Ksq_20,   x * s + omc * Ksq_21,  c + omc * Ksq_22;
+        1.0f + omc * Ksq_00,  -z * s + omc * Ksq_01,   y * s + omc * Ksq_02,
+        z * s + omc * Ksq_10,  1.0f + omc * Ksq_11,  -x * s + omc * Ksq_12,
+       -y * s + omc * Ksq_20,   x * s + omc * Ksq_21,  1.0f + omc * Ksq_22;
     // clang-format on
   }
   return result;
