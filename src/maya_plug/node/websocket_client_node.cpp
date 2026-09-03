@@ -4,15 +4,16 @@
 
 #include "websocket_client_node.h"
 
-#include "data/maya_display.h"
-#include <data/maya_conv_str.h>
-
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
-#include <msgpack.hpp>
 
+#include "data/maya_display.h"
+#include <chrono>
+#include <cstdint>
+#include <cstring>
+#include <data/maya_conv_str.h>
 #include <maya/MArrayDataBuilder.h>
 #include <maya/MArrayDataHandle.h>
 #include <maya/MFnDependencyNode.h>
@@ -21,14 +22,12 @@
 #include <maya/MPlug.h>
 #include <maya/MStatus.h>
 #include <maya/MString.h>
-
-#include <chrono>
-#include <cstdint>
-#include <cstring>
 #include <memory>
+#include <msgpack.hpp>
 #include <string>
 #include <thread>
 #include <vector>
+
 
 namespace doodle::maya_plug {
 namespace beast     = boost::beast;
@@ -67,7 +66,7 @@ struct payload {
 bool fill_payload(payload& in_payload, const std::string& in_msg) {
   try {
     msgpack::object_handle l_handle = msgpack::unpack(in_msg.data(), in_msg.size());
-    msgpack::object l_obj            = l_handle.get();
+    msgpack::object l_obj           = l_handle.get();
     if (l_obj.type != msgpack::type::ARRAY || l_obj.via.array.size == 0) return false;
 
     if (l_obj.via.array.ptr[0].type == msgpack::type::STR) {
@@ -137,50 +136,50 @@ MStatus websocket_client_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_values));
   }
 
-  // 基类设备节点属性 (serverName, deviceName, output, live, frameRate)
-  {
-    MFnTypedAttribute l_typed_attr{};
-    serverName = l_typed_attr.create("serverName", "srv", MFnData::kString, MObject::kNullObj, &l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(false));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(serverName));
-  }
-  {
-    MFnTypedAttribute l_typed_attr{};
-    deviceName = l_typed_attr.create("deviceName", "dev", MFnData::kString, MObject::kNullObj, &l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(false));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(deviceName));
-  }
-  {
-    MFnTypedAttribute l_typed_attr{};
-    output = l_typed_attr.create("output", "out", MFnData::kString, MObject::kNullObj, &l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(false));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setWritable(false));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output));
-  }
-  {
-    MFnNumericAttribute l_numeric_attr{};
-    live = l_numeric_attr.create("live", "live", MFnNumericData::kBoolean, 1.0, &l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(live));
-  }
-  {
-    MFnNumericAttribute l_numeric_attr{};
-    frameRate = l_numeric_attr.create("frameRate", "fps", MFnNumericData::kDouble, 24.0, &l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(frameRate));
-  }
+  // // 基类设备节点属性 (serverName, deviceName, output, live, frameRate)
+  // {
+  //   MFnTypedAttribute l_typed_attr{};
+  //   serverName = l_typed_attr.create("serverName", "srv", MFnData::kString, MObject::kNullObj, &l_status);
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(true));
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(false));
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(serverName));
+  // }
+  // {
+  //   MFnTypedAttribute l_typed_attr{};
+  //   deviceName = l_typed_attr.create("deviceName", "dev", MFnData::kString, MObject::kNullObj, &l_status);
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(true));
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(false));
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(deviceName));
+  // }
+  // {
+  //   MFnTypedAttribute l_typed_attr{};
+  //   output = l_typed_attr.create("output", "out", MFnData::kString, MObject::kNullObj, &l_status);
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(false));
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setWritable(false));
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(true));
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output));
+  // }
+  // {
+  //   MFnNumericAttribute l_numeric_attr{};
+  //   live = l_numeric_attr.create("live", "live", MFnNumericData::kBoolean, 1.0, &l_status);
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(live));
+  // }
+  // {
+  //   MFnNumericAttribute l_numeric_attr{};
+  //   frameRate = l_numeric_attr.create("frameRate", "fps", MFnNumericData::kDouble, 24.0, &l_status);
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
+  //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(frameRate));
+  // }
 
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(ip_address, output_values));
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(port, output_values));
@@ -220,8 +219,8 @@ void websocket_client_node::threadHandler(const char* serverName, const char* de
 
       // 设置超时, 使阻塞读可被 isDone 打断
       websocket::stream_base::timeout l_timeout{};
-      l_timeout.idle_timeout      = std::chrono::milliseconds{500};
-      l_timeout.keep_alive_pings  = false;
+      l_timeout.idle_timeout     = std::chrono::milliseconds{500};
+      l_timeout.keep_alive_pings = false;
       l_ws.set_option(l_timeout);
 
       l_ws.handshake(l_ip, "/");
@@ -244,13 +243,13 @@ void websocket_client_node::threadHandler(const char* serverName, const char* de
         beginThreadLoop();
         MCharBuffer l_storage{};
         if (acquireDataStorage(l_storage) == MS::kSuccess) {
-          auto* l_payload = new payload{};
+          auto l_payload = std::make_unique<payload>();
           if (fill_payload(*l_payload, l_msg)) {
             // 缓冲区中只存放 payload 裸指针
-            std::memcpy(l_storage.ptr(), &l_payload, sizeof(l_payload));
+            auto l_raw_payload = l_payload.release();
+            std::memcpy(l_storage.ptr(), &l_raw_payload, sizeof(l_raw_payload));
             pushThreadData(l_storage);
           } else {
-            delete l_payload;
             releaseDataStorage(l_storage);
           }
         }
@@ -285,7 +284,7 @@ MStatus websocket_client_node::compute(const MPlug& in_plug, MDataBlock& in_data
   MStatus l_status{};
   if (l_guard->type == buffer_type::k_names) {
     const auto& l_names = l_guard->names;
-    auto l_handle = in_data_block.outputArrayValue(output_names, &l_status);
+    auto l_handle       = in_data_block.outputArrayValue(output_names, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     auto l_builder = l_handle.builder(&l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
@@ -299,7 +298,7 @@ MStatus websocket_client_node::compute(const MPlug& in_plug, MDataBlock& in_data
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_handle.setAllClean());
   } else if (l_guard->type == buffer_type::k_values) {
     const auto& l_values = l_guard->values;
-    auto l_handle = in_data_block.outputArrayValue(output_values, &l_status);
+    auto l_handle        = in_data_block.outputArrayValue(output_values, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     auto l_builder = l_handle.builder(&l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
