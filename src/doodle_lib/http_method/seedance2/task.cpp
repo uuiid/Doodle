@@ -25,7 +25,6 @@
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/consign.hpp>
 #include <boost/asio/executor.hpp>
-#include <boost/asio/strand.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/scope/scope_exit.hpp>
 
@@ -37,7 +36,6 @@
 #include "sqlite_orm/orm/count.h"
 #include "sqlite_orm/orm/insert.h"
 #include "sqlite_orm/orm/select.h"
-#include <array>
 #include <chrono>
 #include <map>
 #include <memory>
@@ -88,6 +86,10 @@ void video_create_picture(const FSys::path& in_video_path, const uuid& in_id) {
   FSys::rename(in_video_path, l_file_picture);
 }
 
+// 定义在下方匿名命名空间, 前向声明供 async_run 提交任务使用
+boost::asio::awaitable<std::string> get_self_ip();
+nlohmann::json add_ip_to_req(const nlohmann::json& in_req, const std::string& in_ip);
+
 class seedance2_task_run_manager {
   struct task_info {
     explicit task_info(const sd2::task& in_task, const std::string& in_app_secret)
@@ -105,10 +107,30 @@ class seedance2_task_run_manager {
         .columns(object<sd2::task>(), &ai_studio::app_secret_)
         .from<sd2::task>()
         .where(
-            c(&sd2::task::status_) == sd2::task_status::queued || c(&sd2::task::status_) == sd2::task_status::running
+            c(&sd2::task::status_) == sd2::task_status::preparing || c(&sd2::task::status_) == sd2::task_status::queued ||
+            c(&sd2::task::status_) == sd2::task_status::running
         )
         .left_outer_join<ai_studio>(&ai_studio::uuid_id_, &sd2::task::ai_studio_id_)()
         .to_vector<task_info>();
+  }
+
+  boost::asio::awaitable<void> submit_task(
+      const sd2::task& in_task, const std::shared_ptr<seedance2_client>& in_client
+  ) try {
+    auto l_ip      = co_await get_self_ip();
+    auto l_req     = add_ip_to_req(in_task.data_request_, l_ip);
+    auto l_task_id = co_await in_client->run_task(l_req);
+
+    auto l_sql = get_sqlite_database();
+    using namespace orm;
+    co_await l_sql.run_sql(update(l_sql)
+                               .from<sd2::task>()
+                               .set(c(&sd2::task::task_id_) = l_task_id)
+                               .set(c(&sd2::task::status_) = sd2::task_status::queued)
+                               .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_));
+  } catch (...) {
+    auto l_err_str = boost::current_exception_diagnostic_information();
+    SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "提交任务 {} 失败: {}", in_task.uuid_id_, l_err_str);
   }
 
   boost::asio::awaitable<void> async_run() {
@@ -128,7 +150,11 @@ class seedance2_task_run_manager {
           l_client->set_logger(g_logger_ctrl().get_http());
           l_client_map[l_task_info.app_secret_] = l_client;
         }
-        co_await query_task_and_down(l_task_info.task_, l_client);
+        if (l_task_info.task_.status_ == sd2::task_status::preparing) {
+          co_await submit_task(l_task_info.task_, l_client);
+        } else {
+          co_await query_task_and_down(l_task_info.task_, l_client);
+        }
       }
 
       l_timer.expires_after(5s);
@@ -158,6 +184,7 @@ class seedance2_task_run_manager {
     using namespace orm;
 
     switch (l_status) {
+      case sd2::task_status::preparing:
       case sd2::task_status::queued:
         co_return;
       case sd2::task_status::running: {
@@ -346,22 +373,7 @@ std::vector<sd2::task_similarity> get_task_similarity_for_person(
 
 }  // namespace
 
-class seedance2_subproject_task::impl {
-  using strand_t = boost::asio::strand<std::decay_t<decltype(g_io_context())>::executor_type>;
-  std::array<strand_t, 5> executors_{
-      boost::asio::make_strand(g_io_context()), boost::asio::make_strand(g_io_context()),
-      boost::asio::make_strand(g_io_context()), boost::asio::make_strand(g_io_context()),
-      boost::asio::make_strand(g_io_context()),
-  };
-
- public:
-  strand_t get_strand() {
-    static std::atomic<size_t> index{0};
-    return executors_[index++ % executors_.size()];
-  }
-};
-
-seedance2_subproject_task::seedance2_subproject_task() : pimpl_(std::make_shared<impl>()) {
+seedance2_subproject_task::seedance2_subproject_task() {
   seedance2_task_run_manager::Get().run();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
@@ -404,17 +416,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
     DOODLE_CHICK_HTTP(l_result == 1, unauthorized, "模型 {} 或者分辨率 {} 未被授权", l_model, l_resolution);
   }
 
-  auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
-  auto l_studio = l_sql.get_by_uuid<ai_studio>(l_task->ai_studio_id_);
-  l_client->set_token(l_studio.app_secret_);
-  l_client->set_logger(g_logger_ctrl().get_http());
-  auto l_ip  = co_await get_self_ip();
-  auto l_req = add_ip_to_req(l_task->data_request_, l_ip);
-#ifdef DOODLE_SEED2
-  DOODLE_TO_EXECUTOR(pimpl_->get_strand())
-  l_task->task_id_ = co_await l_client->run_task(l_req);  // 异步运行任务，不等待结果
-  DOODLE_TO_SELF()
-#endif
   {
     auto l_add_tokens = add_remaining_tokens_for_person(l_sql, person_.person_.uuid_id_, -l_task->completion_tokens_);
     auto l_install    = orm::insert(l_sql).into<sd2::task>().values(*l_task);
