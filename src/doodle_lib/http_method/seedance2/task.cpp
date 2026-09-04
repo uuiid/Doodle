@@ -135,9 +135,8 @@ class seedance2_task_run_manager {
       // 只有 resource not found / timeout while fetching resource 才重试, 其他错误直接失败
       std::string l_message{};
       if (l_response.contains("error")) l_message = l_response.at("error").value("message", std::string{});
-      const bool l_retryable =
-          l_message.find("resource not found") != std::string::npos ||
-          l_message.find("timeout while fetching resource") != std::string::npos;
+      const bool l_retryable = l_message.find("resource not found") != std::string::npos ||
+                               l_message.find("timeout while fetching resource") != std::string::npos;
       if (l_retryable) {
         const auto l_retry_count = in_task.retry_count_ + 1;
         l_update.set(c(&sd2::task::retry_count_) = l_retry_count);
@@ -150,6 +149,9 @@ class seedance2_task_run_manager {
       }
     }
     co_await l_sql.run_sql(l_update);
+    socket_io::broadcast(
+        socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_task_ptr->status_}
+    );
   } catch (...) {
     auto l_err_str = boost::current_exception_diagnostic_information();
     SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "提交任务 {} 失败: {}", in_task.uuid_id_, l_err_str);
