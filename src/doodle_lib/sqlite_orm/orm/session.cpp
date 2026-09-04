@@ -272,6 +272,18 @@ void session::rename_column(
   auto l_stmt = sqlite_stmt(*this, l_sql);
   l_stmt.step();
 }
+void session::add_column(
+    const std::string& table_name, const std::string& column_name, const std::string& column_type,
+    std::optional<std::string> in_default_value
+) {
+  if (table_name.empty() || column_name.empty() || column_type.empty())
+    throw std::invalid_argument("Table, column and type names cannot be empty");
+  auto l_sql = fmt::format(R"(ALTER TABLE "{}" ADD COLUMN "{}" {})", table_name, column_name, column_type);
+  if (in_default_value) l_sql += fmt::format(" DEFAULT {}", *in_default_value);
+  l_sql += ";";
+  auto l_stmt = sqlite_stmt(*this, l_sql);
+  l_stmt.step();
+}
 
 void session::create_table(const std::type_index& table_name) {
   auto& l_s = *data_->s_;

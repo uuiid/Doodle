@@ -102,7 +102,7 @@ struct upgrade_3_t : sqlite_upgrade {
     auto l_s = in_data.create_session();
     if (l_s.pragma().user_version() != 20) return;
     // 为 seedance2_task_2 添加 retry_count 列
-    l_s.exec(R"(ALTER TABLE "seedance2_task_2" ADD COLUMN "retry_count" INTEGER NOT NULL DEFAULT 0;)");
+    l_s.add_column("seedance2_task_2", "retry_count", "INTEGER", "0");
     l_s.pragma().user_version(g_current_version);
   }
   ~upgrade_3_t() override = default;
