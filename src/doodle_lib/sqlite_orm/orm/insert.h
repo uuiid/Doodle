@@ -20,7 +20,6 @@ struct DOODLELIB_API insert_t : public statement_info_base_t {
   struct insert_state_t {
     std::vector<column_info_ptr> columns_;
     bind_value_collector_t values_;
-    std::shared_ptr<column_operations_base_t> wheres_;
     std::string into_table_name_;
     session s_{};
     std::shared_ptr<sqlite_stmt> stmt_;
@@ -141,12 +140,7 @@ struct DOODLELIB_API insert_t : public statement_info_base_t {
     return *this;
   }
 
-  template <typename T>
-  insert_t where(T&& condition_fun) {
-    auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
-    state_->wheres_          = l_condition_fun_ptr;
-    return *this;
-  }
+ 
   template <typename IntoTable>
   insert_t into() {
     state_->into_table_name_ = state_->s_.get_table_name<IntoTable>();
@@ -157,6 +151,8 @@ struct DOODLELIB_API insert_t : public statement_info_base_t {
   std::string to_sql(const session& s, const to_sql_ctx& in_ctx) const override;
   void prepare(session& s, const to_sql_ctx& ctx) override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
+
+  operator bool() const;
 };
 
 inline auto insert(const session& s) -> insert_t {

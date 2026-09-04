@@ -84,4 +84,8 @@ std::int64_t insert_t::operator()() {
   }
 }
 
+insert_t::operator bool() const {
+  return state_ && state_->executed_ && !state_->columns_.empty() && !state_->into_table_name_.empty();
+}
+
 }  // namespace doodle::orm

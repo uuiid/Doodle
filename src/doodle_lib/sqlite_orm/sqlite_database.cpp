@@ -1131,7 +1131,13 @@ boost::asio::awaitable<void> sqlite_database::run_sql(orm::sql_modify_statement_
 
   DOODLE_TO_SQLITE_THREAD()
   auto l_g = session_.transaction();
-  for (auto&& i : in_sqls) std::visit([&](auto&& in_sql) { in_sql(); }, i);
+  for (auto&& i : in_sqls)
+    std::visit(
+        [&](auto&& in_sql) {
+          if (in_sql) in_sql();
+        },
+        i
+    );
 
   l_g.commit();
   DOODLE_TO_SELF();

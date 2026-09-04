@@ -280,7 +280,11 @@ class DOODLELIB_API sqlite_database {
     (args.set_session(session_), ...);
     DOODLE_TO_SQLITE_THREAD();
     auto l_g = session_.transaction();
-    (std::invoke(std::forward<Args>(args)), ...);
+    (
+        [&]() {
+          if (args) std::invoke(std::forward<Args>(args));
+        }(),
+        ...);
     l_g.commit();
     DOODLE_TO_SELF();
   }

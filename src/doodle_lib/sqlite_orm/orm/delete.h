@@ -48,6 +48,8 @@ struct DOODLELIB_API delete_t : public statement_info_base_t {
   std::string to_sql(const session& s, const to_sql_ctx& ctx) const override;
   void prepare(session& s, const to_sql_ctx& ctx) override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
+
+  operator bool() const;
 };
 inline delete_t delete_from(const session& s) {
   delete_t l_delete{};

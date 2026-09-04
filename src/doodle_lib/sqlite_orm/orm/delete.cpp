@@ -32,4 +32,8 @@ delete_t delete_t::operator()() {
   state_->stmt_->step();
   return *this;
 }
+
+delete_t::operator bool() const {
+  return state_ && state_->stmt_ && !state_->from_table_name_.empty() && state_->wheres_;
+}
 }  // namespace doodle::orm
