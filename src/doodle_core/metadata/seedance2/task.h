@@ -87,6 +87,7 @@ struct DOODLE_CORE_API task {
     j["completion_tokens"]     = p.completion_tokens_;
     j["ai_generate_entity_id"] = p.ai_generate_entity_id_;
     j["subproject_id"]         = p.subproject_id_;
+    j["retry_count"]           = p.retry_count_;
   }
   friend void from_json(const nlohmann::json& j, task& p) {
     j.at("data_request").get_to(p.data_request_);
