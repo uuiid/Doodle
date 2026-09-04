@@ -26,6 +26,8 @@ class websocket_record_node : public MPxNode {
   static MObject output_names;
   // 属性值列表 (每帧为 [时间, 通道值...])
   static MObject output_values;
+  // 录制时的帧率
+  static MObject output_fps;
 
   MStatus compute(const MPlug& in_plug, MDataBlock& in_data_block) override;
 };

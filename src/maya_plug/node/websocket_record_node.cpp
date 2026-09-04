@@ -13,6 +13,7 @@
 namespace doodle::maya_plug {
 MObject websocket_record_node::output_names{};
 MObject websocket_record_node::output_values{};
+MObject websocket_record_node::output_fps{};
 
 MTypeId websocket_record_node::doodle_id = MTypeId{0x00000004};
 
@@ -43,6 +44,15 @@ MStatus websocket_record_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setArray(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_values));
+  }
+  {  // 录制帧率
+    MFnNumericAttribute l_numeric_attr{};
+    output_fps = l_numeric_attr.create("output_fps", "out_f", MFnNumericData::kDouble, 0, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_fps));
   }
 
   return l_status;

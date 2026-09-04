@@ -148,6 +148,13 @@ MStatus websocket_record_stop::doIt(const MArgList& in_list) {
   MObject l_record_obj = l_fn_node.create(websocket_record_node::doodle_id, &l_status);
   maya_chick(l_status);
 
+  // 写入录制帧率
+  {
+    MPlug l_plug = l_fn_node.findPlug(websocket_record_node::output_fps, true, &l_status);
+    maya_chick(l_status);
+    maya_chick(l_plug.setValue(details::fps()));
+  }
+
   // 写入属性名列表
   {
     MPlug l_plug = l_fn_node.findPlug(websocket_record_node::output_names, true, &l_status);
