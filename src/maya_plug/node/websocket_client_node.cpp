@@ -9,7 +9,6 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/scope/scope_exit.hpp>
-#include <boost/scope/scope_fail.hpp>
 
 #include "data/maya_display.h"
 #include <chrono>
@@ -45,6 +44,10 @@ class websocket_client_node::impl_t {
  public:
   impl_t()  = default;
   ~impl_t() = default;
+
+  bool recording_{false};
+  std::vector<std::string> recorded_names_{};
+  std::vector<double> recorded_values_{};
 };
 
 namespace {
@@ -215,7 +218,8 @@ MStatus websocket_client_node::compute(const MPlug& in_plug, MDataBlock& in_data
   MStatus l_status{};
   if (l_guard->type == buffer_type::k_names) {
     const auto& l_names = l_guard->names;
-    auto l_handle       = in_data_block.outputArrayValue(output_names, &l_status);
+    if (impl()->recording_) impl()->recorded_names_ = l_names;
+    auto l_handle = in_data_block.outputArrayValue(output_names, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     auto l_builder = l_handle.builder(&l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
@@ -229,7 +233,12 @@ MStatus websocket_client_node::compute(const MPlug& in_plug, MDataBlock& in_data
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_handle.setAllClean());
   } else if (l_guard->type == buffer_type::k_values) {
     const auto& l_values = l_guard->values;
-    auto l_handle        = in_data_block.outputArrayValue(output_values, &l_status);
+    if (impl()->recording_) {
+      // 每帧记录 [时间, 通道值...]
+      impl()->recorded_values_.push_back(l_guard->time);
+      impl()->recorded_values_.insert(impl()->recorded_values_.end(), l_values.begin(), l_values.end());
+    }
+    auto l_handle = in_data_block.outputArrayValue(output_values, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     auto l_builder = l_handle.builder(&l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
@@ -244,6 +253,17 @@ MStatus websocket_client_node::compute(const MPlug& in_plug, MDataBlock& in_data
   }
 
   return MS::kSuccess;
+}
+
+void websocket_client_node::start_record() {
+  impl()->recording_ = true;
+  impl()->recorded_names_.clear();
+  impl()->recorded_values_.clear();
+}
+
+std::tuple<std::vector<std::string>, std::vector<double>> websocket_client_node::stop_record() {
+  impl()->recording_ = false;
+  return {std::move(impl()->recorded_names_), std::move(impl()->recorded_values_)};
 }
 
 }  // namespace doodle::maya_plug
