@@ -8,6 +8,9 @@
 
 #include <maya/MSelectionList.h>
 
+#include <string>
+#include <vector>
+
 namespace doodle::maya_plug {
 
 namespace websocket_record_start_ns {
@@ -36,6 +39,12 @@ class websocket_record_stop
   websocket_record_stop();
   ~websocket_record_stop() override;
   MStatus doIt(const MArgList& in_list) override;
+
+ private:
+  // 使用 Boost.Math 将记录的数据插值重采样到当前帧率
+  static std::vector<double> resample_to_frame_rate(
+      const std::vector<std::string>& in_names, const std::vector<double>& in_values
+  );
 };
 
 }  // namespace doodle::maya_plug
