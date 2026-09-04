@@ -37,5 +37,34 @@ namespace AutomationTool
 			// We don't want the SDK dir / CookerSupportFiles
 			BuildParams.CookerSupportFilesSubdirectory = null;
 		}
+
+		protected override void ModifyDeploymentContext(ProjectParams Params, DeploymentContext SC)
+		{
+			ModifyStageContext Context = CreateContext(Params, SC);
+
+			DefaultModifyDeploymentContext(Params, SC, Context);
+
+			Context.Apply(SC);
+
+			string PlatName = SC.StageTargetPlatform.PlatformType.ToString();
+
+			// Copy .target receipt to project and engine bin
+			SC.FilesToStage.NonUFSFiles.Add(
+				new StagedFileReference($"{Context.ProjectName}/Binaries/{PlatName}/{Context.ProjectName}.target"),
+				new FileReference($"Engine/Binaries/{PlatName}/{Context.ProjectName}.target"));
+
+			SC.FilesToStage.NonUFSFiles.Add(
+				new StagedFileReference($"Engine/Binaries/{PlatName}/{Context.ProjectName}.target"),
+				new FileReference($"Engine/Binaries/{PlatName}/{Context.ProjectName}.target"));
+
+			// Stage TargetInfo and target script. Necessary to avoid "Running incorrect executable for target (...)"
+			SC.FilesToStage.NonUFSFiles.Add(
+				new StagedFileReference($"{Context.ProjectName}/Source/{Context.ProjectName}.Target.cs"),
+				new FileReference($"Engine/Source/Programs/{Context.ProjectName}/Source/{Context.ProjectName}.Target.cs"));
+
+			SC.FilesToStage.NonUFSFiles.Add(
+				new StagedFileReference($"{Context.ProjectName}/Intermediate/TargetInfo.json"),
+				new FileReference($"Engine/Source/Programs/{Context.ProjectName}/Intermediate/TargetInfo.json"));
+		}
 	}
 }
