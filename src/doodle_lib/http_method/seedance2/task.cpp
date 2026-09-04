@@ -45,6 +45,7 @@
 #include <regex>
 #include <spdlog/spdlog.h>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <vector>
 
@@ -117,17 +118,33 @@ class seedance2_task_run_manager {
   boost::asio::awaitable<void> submit_task(
       const sd2::task& in_task, const std::shared_ptr<seedance2_client>& in_client
   ) try {
-    auto l_ip      = co_await get_self_ip();
-    auto l_req     = add_ip_to_req(in_task.data_request_, l_ip);
-    auto l_task_id = co_await in_client->run_task(l_req);
-
-    auto l_sql     = get_sqlite_database();
+    static constexpr std::string_view l_timeout_fetch{"timeout while fetching resource"};
+    static constexpr std::string_view l_resource_not_found{"resource not found"};
+    // resource not found / timeout while fetching resource 时重试 100 次, 其他错误直接失败
+    nlohmann::json l_response{};
+    for (int i = 0; i < 100; ++i) {
+      auto l_ip  = co_await get_self_ip();
+      auto l_req = add_ip_to_req(in_task.data_request_, l_ip);
+      l_response = co_await in_client->run_task(l_req);
+      if (!l_response.contains("error")) break;
+      const std::string l_message = l_response.at("error").value("message", std::string{});
+      if (l_message.find(l_timeout_fetch) == std::string::npos &&
+          l_message.find(l_resource_not_found) == std::string::npos)
+        break;
+    }
+    auto l_sql = get_sqlite_database();
     using namespace orm;
-    co_await l_sql.run_sql(update(l_sql)
-                               .from<sd2::task>()
-                               .set(c(&sd2::task::task_id_) = l_task_id)
-                               .set(c(&sd2::task::status_) = sd2::task_status::queued)
-                               .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_));
+    auto l_update = update(l_sql)
+                        .from<sd2::task>()
+                        .set(c(&sd2::task::data_response_) = l_response)
+                        .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_);
+    if (l_response.contains("id")) {
+      l_update.set(c(&sd2::task::task_id_) = l_response.at("id").get<std::string>());
+      l_update.set(c(&sd2::task::status_) = sd2::task_status::queued);
+    } else {
+      l_update.set(c(&sd2::task::status_) = sd2::task_status::failed);
+    }
+    co_await l_sql.run_sql(l_update);
   } catch (...) {
     auto l_err_str = boost::current_exception_diagnostic_information();
     SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "提交任务 {} 失败: {}", in_task.uuid_id_, l_err_str);
