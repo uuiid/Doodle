@@ -118,21 +118,11 @@ class seedance2_task_run_manager {
   boost::asio::awaitable<void> submit_task(
       const sd2::task& in_task, const std::shared_ptr<seedance2_client>& in_client
   ) try {
-    static constexpr std::string_view l_timeout_fetch{"timeout while fetching resource"};
-    static constexpr std::string_view l_resource_not_found{"resource not found"};
-    // resource not found / timeout while fetching resource 时重试 100 次, 其他错误直接失败
-    nlohmann::json l_response{};
-    for (int i = 0; i < 100; ++i) {
-      auto l_ip  = co_await get_self_ip();
-      auto l_req = add_ip_to_req(in_task.data_request_, l_ip);
-      l_response = co_await in_client->run_task(l_req);
-      if (!l_response.contains("error")) break;
-      const std::string l_message = l_response.at("error").value("message", std::string{});
-      if (l_message.find(l_timeout_fetch) == std::string::npos &&
-          l_message.find(l_resource_not_found) == std::string::npos)
-        break;
-    }
-    auto l_sql = get_sqlite_database();
+    auto l_ip       = co_await get_self_ip();
+    auto l_req      = add_ip_to_req(in_task.data_request_, l_ip);
+    auto l_response = co_await in_client->run_task(l_req);
+
+    auto l_sql      = get_sqlite_database();
     using namespace orm;
     auto l_update = update(l_sql)
                         .from<sd2::task>()
@@ -142,7 +132,22 @@ class seedance2_task_run_manager {
       l_update.set(c(&sd2::task::task_id_) = l_response.at("id").get<std::string>());
       l_update.set(c(&sd2::task::status_) = sd2::task_status::queued);
     } else {
-      l_update.set(c(&sd2::task::status_) = sd2::task_status::failed);
+      // 只有 resource not found / timeout while fetching resource 才重试, 其他错误直接失败
+      std::string l_message{};
+      if (l_response.contains("error")) l_message = l_response.at("error").value("message", std::string{});
+      const bool l_retryable =
+          l_message.find("resource not found") != std::string::npos ||
+          l_message.find("timeout while fetching resource") != std::string::npos;
+      if (l_retryable) {
+        const auto l_retry_count = in_task.retry_count_ + 1;
+        l_update.set(c(&sd2::task::retry_count_) = l_retry_count);
+        if (l_retry_count >= 100) {
+          l_update.set(c(&sd2::task::status_) = sd2::task_status::failed);
+        }
+        // 未达到 100 次时保持 preparing, 等待下一轮 async_run 重试
+      } else {
+        l_update.set(c(&sd2::task::status_) = sd2::task_status::failed);
+      }
     }
     co_await l_sql.run_sql(l_update);
   } catch (...) {

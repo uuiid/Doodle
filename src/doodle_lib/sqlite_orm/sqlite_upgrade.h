@@ -18,5 +18,6 @@ class sqlite_upgrade {
 
 std::shared_ptr<sqlite_upgrade> upgrade_init();
 std::shared_ptr<sqlite_upgrade> upgrade_1();
+std::shared_ptr<sqlite_upgrade> upgrade_2();
 
 }  // namespace doodle::details

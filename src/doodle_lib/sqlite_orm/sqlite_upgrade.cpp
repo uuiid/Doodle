@@ -34,7 +34,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 20;
+constexpr std::size_t g_current_version = 21;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -96,7 +96,20 @@ struct upgrade_2_t : sqlite_upgrade {
   ~upgrade_2_t() override = default;
 };
 
+struct upgrade_3_t : sqlite_upgrade {
+  explicit upgrade_3_t() {}
+  void upgrade(sqlite_storage& in_data) override {
+    auto l_s = in_data.create_session();
+    if (l_s.pragma().user_version() != 20) return;
+    // 为 seedance2_task_2 添加 retry_count 列
+    l_s.exec(R"(ALTER TABLE "seedance2_task_2" ADD COLUMN "retry_count" INTEGER NOT NULL DEFAULT 0;)");
+    l_s.pragma().user_version(g_current_version);
+  }
+  ~upgrade_3_t() override = default;
+};
+
 std::shared_ptr<sqlite_upgrade> upgrade_init() { return std::make_shared<upgrade_init_t>(); }
 std::shared_ptr<sqlite_upgrade> upgrade_1() { return std::make_shared<upgrade_2_t>(); }
+std::shared_ptr<sqlite_upgrade> upgrade_2() { return std::make_shared<upgrade_3_t>(); }
 
 }  // namespace doodle::details

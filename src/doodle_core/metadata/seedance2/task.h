@@ -64,6 +64,7 @@ struct DOODLE_CORE_API task {
   };  // 任务完成所需的token数量，默认为20万，具体数值可根据实际情况调整
   uuid ai_generate_entity_id_;  // 内部使用的UUID，对应ai_generate_entity中的uuid_id_
   uuid subproject_id_;          // 对应 subproject 的 uuid_id_
+  std::int64_t retry_count_{0};  // 重试次数
   // 归档
   bool archived_;
   // to json

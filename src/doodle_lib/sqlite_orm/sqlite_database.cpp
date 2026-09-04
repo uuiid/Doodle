@@ -94,6 +94,7 @@ void sqlite_storage::regs_all() {
       .add_column("completion_tokens", &seedance2::task::completion_tokens_)
       .add_column("ai_generate_entity_id", &seedance2::task::ai_generate_entity_id_)
       .add_column("subproject_id", &seedance2::task::subproject_id_)
+      .add_column("retry_count", &seedance2::task::retry_count_)
       .add_column("archived", &seedance2::task::archived_)
       .add_foreign_key(&seedance2::task::project_uuid_id_, &project::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&seedance2::task::user_id_, &person::uuid_id_, foreign_key_action::set_null)
@@ -1112,7 +1113,7 @@ void sqlite_storage::open_(FSys::path in_path, std::int32_t in_flags) {
 }
 
 void sqlite_storage::upgrade() {
-  auto l_list = {details::upgrade_init(), details::upgrade_1()};
+  auto l_list = {details::upgrade_init(), details::upgrade_1(), details::upgrade_2()};
   for (auto&& i : l_list) {
     i->upgrade(*this);
   }
