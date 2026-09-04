@@ -23,11 +23,13 @@ Write-Host "打包 DoodleLiveLink (Cooked Editor)"
 Write-Host "  项目: $ProjectArg"
 Write-Host "  输出: $ArchiveArg"
 
-& $RunUAT MakeCookedEditor `
+# DoodleLiveLink 是 in-tree 编辑器程序，没有游戏目标，使用自定义 UAT 命令
+# （Engine/Source/Programs/AutomationTool/DoodleLiveLink/DoodleLiveLink.Automation.cs）
+& $RunUAT MakeDoodleLiveLinkEditor `
     -project="$ProjectArg" `
     -platform=Win64 `
     -clientconfig=Development `
-    -cook -stage -archive `
+    -build -cook -stage -archive `
     -archivedirectory="$ArchiveArg" `
     -unattended -nop4
 
