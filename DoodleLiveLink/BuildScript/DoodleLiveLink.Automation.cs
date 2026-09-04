@@ -66,22 +66,9 @@ namespace AutomationTool
 				new StagedFileReference($"{Context.ProjectName}/Intermediate/TargetInfo.json"),
 				new FileReference($"Engine/Source/Programs/{Context.ProjectName}/Intermediate/TargetInfo.json"));
 
-			// Move PDBs to debug (otherwise -nodebuginfo doesn't exclude them and staging fails on missing third-party .pdb)
-			SC.FilesToStage.NonUFSDebugFiles.Union(SC.FilesToStage.NonUFSFiles.Where(x => x.Key.HasExtension(".pdb")));
-
-			// Remove any files from NonUFS that were also added to Debug
-			SC.FilesToStage.NonUFSFiles = SC.FilesToStage.NonUFSFiles.Where(x => !SC.FilesToStage.NonUFSDebugFiles.ContainsKey(x.Key)).ToDictionary(x => x.Key, x => x.Value);
-
-			// Make sure there are no restricted folders in the output
-			HashSet<StagedFileReference> RestrictedFiles = new HashSet<StagedFileReference>();
-			foreach (string RestrictedName in SC.RestrictedFolderNames)
-			{
-				RestrictedFiles.UnionWith(SC.FilesToStage.NonUFSDebugFiles.Keys.Where(x => x.ContainsName(RestrictedName)));
-			}
-			foreach (StagedFileReference RestrictedFile in RestrictedFiles)
-			{
-				SC.FilesToStage.NonUFSDebugFiles.Remove(RestrictedFile);
-			}
+			// 不复制 PDB 文件
+			SC.FilesToStage.NonUFSFiles = SC.FilesToStage.NonUFSFiles.Where(x => !x.Key.HasExtension(".pdb")).ToDictionary(x => x.Key, x => x.Value);
+			SC.FilesToStage.NonUFSDebugFiles = SC.FilesToStage.NonUFSDebugFiles.Where(x => !x.Key.HasExtension(".pdb")).ToDictionary(x => x.Key, x => x.Value);
 		}
 	}
 }
