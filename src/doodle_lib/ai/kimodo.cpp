@@ -511,8 +511,11 @@ motion_output kimodo::generate(const generate_arg& segments) {
   output.root_positions  = std::move(pp_result.root_positions);
   output.posed_joints    = std::move(pp_result.posed_joints);
   output.global_rot_mats = std::move(pp_result.global_rot_mats);
-  // 最后将骨骼位置添加到 root_positions 中
+  // 将根骨骼平移到目标世界位置：根位置与所有关节位置需同步平移，否则骨骼会与根错位
   output.root_positions.rowwise() += segments.root_trajectory_;
+  for (Eigen::Index j = 0; j < output.posed_joints.cols(); j += 3) {
+    output.posed_joints.middleCols(j, 3).rowwise() += segments.root_trajectory_;
+  }
   return output;
 }
 
