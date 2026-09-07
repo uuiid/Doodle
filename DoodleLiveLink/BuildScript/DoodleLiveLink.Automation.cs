@@ -70,6 +70,19 @@ namespace AutomationTool
 			// 不复制 PDB 文件
 			SC.FilesToStage.NonUFSFiles = SC.FilesToStage.NonUFSFiles.Where(x => !x.Key.HasExtension(".pdb")).ToDictionary(x => x.Key, x => x.Value);
 			SC.FilesToStage.NonUFSDebugFiles = SC.FilesToStage.NonUFSDebugFiles.Where(x => !x.Key.HasExtension(".pdb")).ToDictionary(x => x.Key, x => x.Value);
+
+			// 清理 restricted 子目录（Engine/Binaries/Win64/{Android,IOS,...}），避免 staging 失败
+			HashSet<StagedFileReference> RestrictedFiles = new HashSet<StagedFileReference>();
+			foreach (string RestrictedName in SC.RestrictedFolderNames)
+			{
+				RestrictedFiles.UnionWith(SC.FilesToStage.NonUFSFiles.Keys.Where(x => x.ContainsName(RestrictedName)));
+				RestrictedFiles.UnionWith(SC.FilesToStage.NonUFSDebugFiles.Keys.Where(x => x.ContainsName(RestrictedName)));
+			}
+			foreach (StagedFileReference RestrictedFile in RestrictedFiles)
+			{
+				SC.FilesToStage.NonUFSFiles.Remove(RestrictedFile);
+				SC.FilesToStage.NonUFSDebugFiles.Remove(RestrictedFile);
+			}
 		}
 	}
 }
