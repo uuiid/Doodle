@@ -138,9 +138,12 @@ describe('seedance2 episodes 测试', function () {
 
   it('GET /api/seedance2/subproject/{subproject_id}/episodes — 获取剧集列表', async function () {
     expect(subprojectId).to.not.be.null;
+    expect(episodeId).to.not.be.null;
     const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/episodes`)
       .set(authHeader);
     expect(req.status).to.equal(200);
+    expect(req.body).to.be.an('array');
+    expect(req.body.some((e) => e.id === episodeId)).to.equal(true);
     console.log('GET episodes list 返回值:', JSON.stringify(req.body, null, 2));
   });
 
