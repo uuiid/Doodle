@@ -33,3 +33,34 @@ get:
                       description: 预览文件，仅存在预览时返回
   security:
     - bearerAuth: []
+put:
+  tags:
+    - AI生成实体
+  summary: 重置剧集下所有实体的生成次数
+  description: 非外包人员可将指定剧集下所有实体的生成次数重置为 0
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: episode_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 重置成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              episode_id:
+                type: string
+                format: uuid
+  security:
+    - bearerAuth: []
