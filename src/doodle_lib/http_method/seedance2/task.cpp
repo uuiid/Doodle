@@ -249,6 +249,8 @@ class seedance2_task_run_manager {
       case sd2::task_status::cancelled:
       case sd2::task_status::failed:
       case sd2::task_status::expired:
+        // 以上状态不扣费
+        l_task_ptr->completion_tokens_ = 0;
         break;
     }
 
