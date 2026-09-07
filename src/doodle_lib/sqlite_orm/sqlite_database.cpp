@@ -1113,7 +1113,7 @@ void sqlite_storage::open_(FSys::path in_path, std::int32_t in_flags) {
 }
 
 void sqlite_storage::upgrade() {
-  auto l_list = {details::upgrade_init(), details::upgrade_1(), details::upgrade_2()};
+  auto l_list = {details::upgrade_init(), details::upgrade_1()};
   for (auto&& i : l_list) {
     i->upgrade(*this);
   }

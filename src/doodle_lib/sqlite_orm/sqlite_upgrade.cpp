@@ -34,7 +34,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 21;
+constexpr std::size_t g_current_version = 22;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -88,28 +88,21 @@ void backup(orm::session& in_data) {
 struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t() {}
   void upgrade(sqlite_storage& in_data) override {
-    // auto l_s = in_data.create_session();
-    // if (l_s.pragma().user_version() == 19) {
-    // }
-    // l_s.pragma().user_version(g_current_version);
+    using namespace orm;
+    auto l_s = in_data.create_session();
+    if (l_s.pragma().user_version() == 21) {
+      // 所有失败的任务不再扣费, 清空其 completion_tokens_
+      update(l_s)
+          .from<seedance2::task>()
+          .set(c(&seedance2::task::completion_tokens_) = 0)
+          .where(c(&seedance2::task::status_) == seedance2::task_status::failed)();
+    }
+    l_s.pragma().user_version(g_current_version);
   }
   ~upgrade_2_t() override = default;
 };
 
-struct upgrade_3_t : sqlite_upgrade {
-  explicit upgrade_3_t() {}
-  void upgrade(sqlite_storage& in_data) override {
-    auto l_s = in_data.create_session();
-    if (l_s.pragma().user_version() != 20) return;
-    // 为 seedance2_task_2 添加 retry_count 列
-    l_s.add_column("seedance2_task_2", "retry_count", "INTEGER", "0");
-    l_s.pragma().user_version(g_current_version);
-  }
-  ~upgrade_3_t() override = default;
-};
-
 std::shared_ptr<sqlite_upgrade> upgrade_init() { return std::make_shared<upgrade_init_t>(); }
 std::shared_ptr<sqlite_upgrade> upgrade_1() { return std::make_shared<upgrade_2_t>(); }
-std::shared_ptr<sqlite_upgrade> upgrade_2() { return std::make_shared<upgrade_3_t>(); }
 
 }  // namespace doodle::details
