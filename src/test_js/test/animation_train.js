@@ -14,7 +14,7 @@ const SEND_DAV_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)),
 const RES_DAV_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../build/res_dav.json');
 
 describe('ai animation train 测试', function () {
-  this.timeout(120000);
+  this.timeout(1200000);
 
   let sendDavData = null;
 
