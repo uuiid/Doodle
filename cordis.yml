@@ -1,0 +1,36 @@
+# Doodle 项目 LSP 代码导航配置
+# 此文件为参考文档，实际配置加载自 web profile 的 cordis.patch.yml
+#
+# 依赖链（5 个包）：
+#   dsh-fs-local → dsh-subprocess-local → dsh-lsp → dsh-lsp-stdio → dsh-tool-lsp
+#   （前两个已包含在 dsh-base bundle 中）
+#
+# 语言服务器：clangd 22.1.6 (VS Code 扩展, windows+grpc)
+# compile_commands.json：build/Ninja_debug/compile_commands.json（由 .clangd 配置引用）
+
+- insert:
+    - id: lsp
+      name: '@deepseek-ai/dsh-lsp'
+    - id: lsp-stdio
+      name: '@deepseek-ai/dsh-lsp-stdio'
+      config:
+        servers:
+          cpp:
+            command: D:\tmp\clang+llvm-21.1.8-x86_64-pc-windows-msvc\bin\clangd.exe
+            args:
+              - '--background-index'
+              - '--clang-tidy'
+            extensionToLanguage:
+              '.cpp': cpp
+              '.cxx': cpp
+              '.cc': cpp
+              '.c++': cpp
+              '.C': cpp
+              '.c': c
+              '.h': cpp
+              '.hpp': cpp
+              '.hxx': cpp
+              '.hh': cpp
+              '.inl': cpp
+    - id: tool-lsp
+      name: '@deepseek-ai/dsh-tool-lsp'
