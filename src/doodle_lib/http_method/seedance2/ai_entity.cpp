@@ -54,7 +54,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, get)
                       .left_outer_join<sd2::ai_preview_file>(
                           &sd2::ai_generate_entity::preview_file_, &sd2::ai_preview_file::uuid_id_
                       )
-                      .where(c(&sd2::ai_generate_entity::ai_episode_id_) == episode_id_)()
+                      .where(c(&sd2::ai_generate_entity::ai_episode_id_) == episode_id_)
+                      .order_by(&sd2::ai_generate_entity::name_)()
                       .to_vector<ai_generate_entity_with_preview_file>();
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
@@ -95,19 +96,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_insta
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/preview
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_preview, post) {
   person_.check_subproject_access(subproject_id_);
-  auto l_sql     = get_sqlite_database();
-  auto l_entity  = l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_);
-  auto l_file    = in_handle->get_file();
-  auto l_preview = std::make_shared<sd2::ai_preview_file>();
+  auto l_sql            = get_sqlite_database();
+  auto l_entity         = l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_);
+  auto l_file           = in_handle->get_file();
+  auto l_preview        = std::make_shared<sd2::ai_preview_file>();
   l_preview->extension_ = ".png";
   co_await l_sql.install(l_preview);
   using namespace orm;
-  co_await l_sql.run_sql(
-      update(l_sql)
-          .from<sd2::ai_generate_entity>()
-          .set(c(&sd2::ai_generate_entity::preview_file_) = l_preview->uuid_id_)
-          .where(c(&sd2::ai_generate_entity::uuid_id_) == l_entity.uuid_id_)
-  );
+  co_await l_sql.run_sql(update(l_sql)
+                             .from<sd2::ai_generate_entity>()
+                             .set(c(&sd2::ai_generate_entity::preview_file_) = l_preview->uuid_id_)
+                             .where(c(&sd2::ai_generate_entity::uuid_id_) == l_entity.uuid_id_));
 
   auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview->uuid_id_, l_file.extension().string());
