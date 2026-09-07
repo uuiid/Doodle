@@ -157,6 +157,7 @@ void sqlite_storage::regs_all() {
       .add_column("subproject_id", &seedance2::ai_episode::subproject_id_, not_null())
       .add_column("entity_id", &seedance2::ai_episode::entity_id_)
       .add_column("created_at", &seedance2::ai_episode::created_at_)
+      .add_column("limit_count", &seedance2::ai_episode::limit_count_, default_value("0"s))
       .add_foreign_key(&seedance2::ai_episode::entity_id_, &entity::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(
           &seedance2::ai_episode::subproject_id_, &seedance2::subproject::uuid_id_, foreign_key_action::cascade

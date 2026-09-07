@@ -17,10 +17,13 @@ struct DOODLE_CORE_API ai_episode {
 
   uuid entity_id_;  // 对应的 entity.h
 
+  std::int64_t limit_count_{0};  // 次数限制
+
   constexpr static auto put_property_list() {
     return std::tuple{
         std::pair{"name", &ai_episode::name_},  //
-        std::pair{"description", &ai_episode::description_}
+        std::pair{"description", &ai_episode::description_},
+        std::pair{"limit_count", &ai_episode::limit_count_}
     };
   }
 
@@ -33,6 +36,7 @@ struct DOODLE_CORE_API ai_episode {
     j["created_at"]    = p.created_at_;
     j["subproject_id"] = p.subproject_id_;
     j["entity_id"]     = p.entity_id_;
+    j["limit_count"]   = p.limit_count_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, ai_episode& p) {
@@ -40,6 +44,7 @@ struct DOODLE_CORE_API ai_episode {
     j.at("subproject_id").get_to(p.subproject_id_);
     if (j.contains("description")) j.at("description").get_to(p.description_);
     if (j.contains("entity_id")) j.at("entity_id").get_to(p.entity_id_);
+    if (j.contains("limit_count")) j.at("limit_count").get_to(p.limit_count_);
   }
 };
 
