@@ -33,7 +33,5 @@ delete_t delete_t::operator()() {
   return *this;
 }
 
-delete_t::operator bool() const {
-  return state_ && state_->stmt_ && !state_->from_table_name_.empty() && state_->wheres_;
-}
+delete_t::operator bool() const { return state_ && !state_->from_table_name_.empty() && state_->wheres_; }
 }  // namespace doodle::orm
