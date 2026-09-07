@@ -88,4 +88,27 @@ post_process_result post_process_motion(
     float root_margin = 0.04f
 );
 
+// ======================================================================
+// retarget_rotations
+// ======================================================================
+
+/// @brief 将源骨骼下的全局旋转重定向到目标骨骼（支持不同 T-pose）
+///
+/// 模型输出的旋转相对源骨骼 T-pose 定义；当目标骨骼 neutral_joints（T-pose）不同时，
+/// 直接把源局部旋转套到目标骨骼上会得到错误的姿态（世界骨骼方向对不上）。
+/// 此函数用每个关节「控制」的子骨骼方向（父→首个子关节）构造偏移，在全局旋转空间做变换：
+///
+///     G_tgt[j] = G_src[j] · A[j]^{-1}
+///
+/// 其中 A[j] 是把源子骨骼方向转到目标子骨骼方向的最小旋转（叶子关节 A=I）。这样目标
+/// 骨骼在运动中的世界骨骼方向与源骨骼一致，即保持「手势/姿态」。
+///
+/// @param src_skeleton 源骨骼（模型骨骼）
+/// @param tgt_skeleton 目标骨骼（层级相同、T-pose 可不同）
+/// @param src_global_rot_mats [N, J*9] 源全局旋转矩阵
+/// @return [N, J*9] 目标局部旋转矩阵
+MatrixXfRow retarget_rotations(
+    const skeleton_base& src_skeleton, const skeleton_base& tgt_skeleton, const MatrixXfRow& src_global_rot_mats
+);
+
 }  // namespace doodle::ai

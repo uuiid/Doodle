@@ -12,12 +12,55 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 
+#include <Eigen/Geometry>
+
 #include <algorithm>
 #include <cmath>
 #include <spdlog/spdlog.h>
 #include <unordered_map>
 
 namespace doodle::ai {
+
+namespace {
+using Matrix3f = Eigen::Matrix3f;
+using Vector3f = Eigen::Vector3f;
+
+/// @brief 最小旋转，使 R @ from ~= to（两向量均为单位向量）
+Matrix3f rotation_from_two_vectors(Vector3f from, Vector3f to) {
+  constexpr float kEps = 1e-8f;
+  const float na       = from.norm();
+  const float nb       = to.norm();
+  if (na < kEps || nb < kEps) return Matrix3f::Identity();
+
+  from.normalize();
+  to.normalize();
+
+  const float c = std::clamp(from.dot(to), -1.0f, 1.0f);
+  if (c > 1.0f - kEps) return Matrix3f::Identity();
+
+  if (c < -1.0f + kEps) {
+    // 反向：绕任意垂直于 from 的轴旋转 180°
+    Vector3f axis = (std::abs(from.x()) < 0.9f) ? Vector3f::UnitX().cross(from) : Vector3f::UnitY().cross(from);
+    axis.normalize();
+    return Eigen::AngleAxisf(std::acos(-1.0f), axis).toRotationMatrix();
+  }
+
+  const Vector3f axis = from.cross(to).normalized();
+  return Eigen::AngleAxisf(std::acos(c), axis).toRotationMatrix();
+}
+
+Matrix3f get_rot(const MatrixXfRow& m, Eigen::Index row, std::int64_t j) {
+  Matrix3f R;
+  for (Eigen::Index r = 0; r < 3; ++r)
+    for (Eigen::Index c = 0; c < 3; ++c) R(r, c) = m(row, j * 9 + r * 3 + c);
+  return R;
+}
+
+void set_rot(MatrixXfRow& m, Eigen::Index row, std::int64_t j, const Matrix3f& R) {
+  for (Eigen::Index r = 0; r < 3; ++r)
+    for (Eigen::Index c = 0; c < 3; ++c) m(row, j * 9 + r * 3 + c) = R(r, c);
+}
+}  // namespace
 
 // ======================================================================
 // create_working_rig_from_skeleton
@@ -507,6 +550,58 @@ post_process_result post_process_motion(
       std::move(fk_res.posed_joints),
       std::move(fk_res.global_rot_mats),
   };
+}
+
+// ======================================================================
+// retarget_rotations
+// ======================================================================
+
+MatrixXfRow retarget_rotations(
+    const skeleton_base& src_skeleton, const skeleton_base& tgt_skeleton, const MatrixXfRow& src_global_rot_mats
+) {
+  const Eigen::Index total = src_global_rot_mats.rows();
+  const std::int64_t J     = src_skeleton.nbjoints_;
+  DOODLE_CHICK(src_skeleton.nbjoints_ == tgt_skeleton.nbjoints_, "源/目标骨骼关节数不一致: {} vs {}", J, tgt_skeleton.nbjoints_);
+  DOODLE_CHICK(src_global_rot_mats.cols() == J * 9, "全局旋转矩阵列数 {} 不匹配 J*9 = {}", src_global_rot_mats.cols(), J * 9);
+
+  // 逐关节计算偏移 A[j]：把源子骨骼方向（j→首个子关节）转到目标子骨骼方向（叶子关节为单位阵）
+  std::vector<Matrix3f> offset(static_cast<std::size_t>(J), Matrix3f::Identity());
+  for (std::int64_t j = 0; j < J; ++j) {
+    // 找首个直接子关节
+    std::int64_t child = -1;
+    for (std::int64_t k = 0; k < J; ++k) {
+      if (src_skeleton.joint_parents_[static_cast<std::size_t>(k)] == j) {
+        child = k;
+        break;
+      }
+    }
+    if (child < 0) continue;  // 叶子关节：A = I
+
+    Vector3f d_src(
+        src_skeleton.neutral_joints_(child, 0) - src_skeleton.neutral_joints_(j, 0),
+        src_skeleton.neutral_joints_(child, 1) - src_skeleton.neutral_joints_(j, 1),
+        src_skeleton.neutral_joints_(child, 2) - src_skeleton.neutral_joints_(j, 2)
+    );
+    Vector3f d_tgt(
+        tgt_skeleton.neutral_joints_(child, 0) - tgt_skeleton.neutral_joints_(j, 0),
+        tgt_skeleton.neutral_joints_(child, 1) - tgt_skeleton.neutral_joints_(j, 1),
+        tgt_skeleton.neutral_joints_(child, 2) - tgt_skeleton.neutral_joints_(j, 2)
+    );
+    // R 满足 R·d_src = d_tgt
+    offset[static_cast<std::size_t>(j)] = rotation_from_two_vectors(d_src, d_tgt);
+  }
+
+  // G_tgt[j] = G_src[j] · A[j]^{-1}：把源全局旋转改换到目标骨骼的 rest 朝向
+  MatrixXfRow tgt_global(total, J * 9);
+  for (Eigen::Index f = 0; f < total; ++f) {
+    for (std::int64_t j = 0; j < J; ++j) {
+      const Matrix3f A = offset[static_cast<std::size_t>(j)];
+      const Matrix3f G = get_rot(src_global_rot_mats, f, j);
+      set_rot(tgt_global, f, j, G * A.transpose());
+    }
+  }
+
+  return tgt_skeleton.global_rots_to_local_rots(tgt_global);
 }
 
 }  // namespace doodle::ai
