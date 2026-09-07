@@ -20,6 +20,7 @@ namespace AutomationTool
 				, DLCName: DLCName
 				, BasedOnReleaseVersion: BasedOnReleaseVersion
 				, DedicatedServer: bIsCookedCooker
+				, SkipBuildClient: true
 				, NoClient: bIsCookedCooker
 				, OptionalContent: true
 				, ClientCookedTargets: new ParamList<string>() // Prevent AutodetectSettings from looking for a game target
