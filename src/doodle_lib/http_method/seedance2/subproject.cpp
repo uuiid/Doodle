@@ -37,10 +37,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, get) {
   auto l_sql = get_sqlite_database();
   using namespace orm;
 
-  auto l_query = select(l_sql)
-                     .columns(object<sd2::subproject>(), object<sd2::ai_preview_file>())
-                     .from<sd2::subproject>()
-                     .left_outer_join<sd2::ai_preview_file>(&sd2::subproject::preview_file_, &sd2::ai_preview_file::uuid_id_);
+  auto l_query =
+      select(l_sql)
+          .columns(object<sd2::subproject>(), object<sd2::ai_preview_file>())
+          .from<sd2::subproject>()
+          .order_by(&sd2::subproject::name_)
+          .left_outer_join<sd2::ai_preview_file>(&sd2::subproject::preview_file_, &sd2::ai_preview_file::uuid_id_);
 
   // 非制片/管理员只能看到自己参与的子项目
   if (!person_.is_manager()) {
@@ -67,7 +69,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, get) {
   std::vector<seedance2_subproject_and_person> l_result;
   l_result.reserve(l_subprojects.size());
   for (auto&& [l_sp, l_preview] : l_subprojects) {
-    auto& l_item                          = l_result.emplace_back(std::move(l_sp), std::move(l_preview));
+    auto& l_item = l_result.emplace_back(std::move(l_sp), std::move(l_preview));
     if (l_person_map.contains(l_item.uuid_id_)) l_item.persons_ = std::move(l_person_map[l_item.uuid_id_]);
   }
 
@@ -129,12 +131,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, delete_) {
   } else {
     auto l_subproject = l_sql.get_by_uuid<sd2::subproject>(id_);
     using namespace orm;
-    co_await l_sql.run_sql(
-        update(l_sql)
-            .from<sd2::subproject>()
-            .set(c(&sd2::subproject::archived_) = true)
-            .where(c(&sd2::subproject::uuid_id_) == l_subproject.uuid_id_)
-    );
+    co_await l_sql.run_sql(update(l_sql)
+                               .from<sd2::subproject>()
+                               .set(c(&sd2::subproject::archived_) = true)
+                               .where(c(&sd2::subproject::uuid_id_) == l_subproject.uuid_id_));
   }
 
   co_return in_handle->make_msg_204();
@@ -142,19 +142,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, delete_) {
 
 // /api/seedance2/subproject/{id}/preview
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_preview, post) {
-  auto l_sql       = get_sqlite_database();
-  auto l_subproject = l_sql.get_by_uuid<sd2::subproject>(id_);
-  auto l_file      = in_handle->get_file();
-  auto l_preview   = std::make_shared<sd2::ai_preview_file>();
+  auto l_sql            = get_sqlite_database();
+  auto l_subproject     = l_sql.get_by_uuid<sd2::subproject>(id_);
+  auto l_file           = in_handle->get_file();
+  auto l_preview        = std::make_shared<sd2::ai_preview_file>();
   l_preview->extension_ = ".png";
   co_await l_sql.install(l_preview);
   using namespace orm;
-  co_await l_sql.run_sql(
-      update(l_sql)
-          .from<sd2::subproject>()
-          .set(c(&sd2::subproject::preview_file_) = l_preview->uuid_id_)
-          .where(c(&sd2::subproject::uuid_id_) == l_subproject.uuid_id_)
-  );
+  co_await l_sql.run_sql(update(l_sql)
+                             .from<sd2::subproject>()
+                             .set(c(&sd2::subproject::preview_file_) = l_preview->uuid_id_)
+                             .where(c(&sd2::subproject::uuid_id_) == l_subproject.uuid_id_));
 
   auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview->uuid_id_, l_file.extension().string());
