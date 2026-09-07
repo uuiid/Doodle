@@ -5,7 +5,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { URL } from './config.js';
+import { URL as BASE_URL } from './config.js';
+
+const URL = BASE_URL.replace(':50025', ':50024');
 
 const MODEL_PATH = 'D:\\ai_mod\\onnx-models--nvidia--Kimodo-SOMA-RP-v1.1';
 const SEND_DAV_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../build/send_dav.json');
