@@ -97,6 +97,7 @@ struct upgrade_2_t : sqlite_upgrade {
           .set(c(&seedance2::task::completion_tokens_) = 0)
           .where(c(&seedance2::task::status_) == seedance2::task_status::failed)();
       l_s.add_column("seedance2_ai_episode", "limit_count", "INTEGER", "0");
+      l_s.rebuild_table<seedance2::ai_generate_entity>({"generate_count", "main_task_id"});
     }
     l_s.pragma().user_version(g_current_version);
   }
