@@ -60,6 +60,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, get)
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, put) {
+  person_.check_subproject_access(subproject_id_);
+  person_.check_not_outsourcer();
+
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_update = update(l_sql)
+                      .from<sd2::ai_generate_entity>()
+                      .set(c(&sd2::ai_generate_entity::generate_count_) = 0)
+                      .where(c(&sd2::ai_generate_entity::ai_episode_id_) == episode_id_);
+  co_await l_sql.run_sql(l_update);
+
+  co_return in_handle->make_msg(nlohmann::json{{"episode_id", episode_id_}});
+}
+
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_instance, get) {
   person_.check_subproject_access(subproject_id_);
