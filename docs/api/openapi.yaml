@@ -129,6 +129,8 @@ paths:
     $ref: paths/api_seedance2_subproject_{subproject_id}_task_{id}.yaml
   /api/seedance2/task:
     $ref: paths/api_seedance2_task.yaml
+  /api/seedance2/task/run:
+    $ref: paths/api_seedance2_task_run.yaml
   /api/seedance2/task/{date_start}-{date_end}:
     $ref: paths/api_seedance2_task_{date_start}-{date_end}.yaml
   /api/seedance2/tokens:

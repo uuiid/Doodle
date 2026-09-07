@@ -133,6 +133,13 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(seedance2_task)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
+// 任务运行管理器: 获取运行状态 / 启动运行循环
+// /api/seedance2/task/run
+DOODLE_HTTP_JWT_FUN(seedance2_task_run)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+// 
 // /api/seedance2/task/{date}-{date}
 DOODLE_HTTP_JWT_FUN(seedance2_task_date)
 DOODLE_HTTP_FUN_OVERRIDE(get)

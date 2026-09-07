@@ -19,6 +19,12 @@ get:
         type: integer
         default: 0
       description: 分页偏移量
+    - name: status
+      in: query
+      required: false
+      schema:
+        $ref: ../components/schemas/TaskStatus.yaml
+      description: 按任务状态过滤
   responses:
     '200':
       description: 任务列表

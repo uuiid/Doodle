@@ -1,0 +1,36 @@
+get:
+  tags:
+    - 任务
+  summary: 获取任务运行管理器状态
+  description: 查询后台任务运行循环当前是否处于运行状态。
+  responses:
+    '200':
+      description: 运行状态
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              running:
+                type: boolean
+                description: 运行循环是否处于运行中
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - 任务
+  summary: 启动任务运行管理器
+  description: 启动后台任务运行循环，处理准备中、排队中、运行中的任务。
+  responses:
+    '200':
+      description: 启动结果与运行状态
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              running:
+                type: boolean
+                description: 运行循环是否处于运行中
+  security:
+    - bearerAuth: []

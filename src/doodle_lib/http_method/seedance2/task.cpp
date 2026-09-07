@@ -287,6 +287,8 @@ class seedance2_task_run_manager {
     return instance;
   }
 
+  bool is_running() const { return is_running_; }
+
   void run() {
     if (is_running_.exchange(true)) return;
     boost::asio::co_spawn(
@@ -527,9 +529,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
 
   std::int32_t l_size   = 100;
   std::int32_t l_offset = 0;
+  std::optional<sd2::task_status> l_status;
   for (auto&& [key, value, has_value] : in_handle->url_.params()) {
     if (key == "size") l_size = std::stoi(value);
     if (key == "offset") l_offset = std::stoi(value);
+    if (key == "status") l_status = nlohmann::json(value).get<sd2::task_status>();
   }
 
   auto l_query = select(l_sql)
@@ -546,7 +550,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
                     .where(c(&sd2::subproject_person_link::person_id_) == person_.person_.uuid_id_)) &&
         !c(&sd2::task::archived_)
     );
+  if (l_status) l_query.where(c(&sd2::task::status_) == *l_status);
   co_return in_handle->make_msg(nlohmann::json{} = l_query.limit(l_size).offset(l_offset)().to_vector());
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_run, get) {
+  co_return in_handle->make_msg(nlohmann::json{{"running", seedance2_task_run_manager::Get().is_running()}});
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_run, post) {
+  seedance2_task_run_manager::Get().run();
+  co_return in_handle->make_msg(nlohmann::json{{"running", seedance2_task_run_manager::Get().is_running()}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_date, get) {
   auto l_sql = get_sqlite_database();
