@@ -7,12 +7,12 @@
     import create_joint
     create_joint.create_animation_from_response(
         r'E:\Doodle\build\response2.json',
-        r'E:\Doodle\build\joint.json'
+        r'E:\Doodle\build\send_dav.json'
     )
 
 两个 JSON 来源:
-  - response2.json: kimodo::generate() 返回的 motion_output 序列化结果
-  - joint.json:     骨骼定义 (bone_order_names, joint_parents, neutral_joints)
+  - response2.json: kimodo 生成接口返回的动画数据 (local_rot_mats, smooth_root_pos, global_root_heading)
+  - send_dav.json: 请求数据，其 skeleton 字段定义骨骼 (name, parent_idx, neutral_joint)
 """
 
 import json
@@ -45,15 +45,12 @@ def rotation_matrix_to_euler_xyz(m):
 
 
 def create_joints_from_skeleton(skeleton_data):
-    """根据骨骼定义创建 Maya 关节层级，返回 {index: joint_name}。"""
-    bone_names = skeleton_data["bone_order_names"]
-    joint_parents = skeleton_data["joint_parents"]
-    neutral_joints = skeleton_data["neutral_joints"]
-
+    """根据 send_dav.json 的 skeleton 列表创建 Maya 关节层级，返回 {index: joint_name}。"""
     created = {}
-    for i, name in enumerate(bone_names):
-        pos = neutral_joints[i]
-        parent_idx = joint_parents[i]
+    for i, joint_def in enumerate(skeleton_data):
+        name = joint_def["name"]
+        pos = joint_def["neutral_joint"]
+        parent_idx = joint_def["parent_idx"]
 
         cmds.select(clear=True)
         if parent_idx >= 0 and parent_idx in created:
@@ -139,16 +136,16 @@ def apply_animation_from_response(created_joints, response_data):
     print(f"Animation applied: {num_frames} frames, {num_joints} joints")
 
 
-def create_animation_from_response(response_json_path, skeleton_json_path):
-    """主入口：从两个 JSON 文件创建完整的骨骼动画。"""
-    with open(skeleton_json_path, "r") as f:
-        skeleton_json = json.load(f)
-    skeleton_data = skeleton_json["skeleton"]
+def create_animation_from_response(response_json_path, send_dav_json_path):
+    """主入口：从 send_dav.json 的 skeleton 字段创建骨骼，从 response JSON 应用动画。"""
+    with open(send_dav_json_path, "r") as f:
+        send_dav_json = json.load(f)
+    skeleton_data = send_dav_json["skeleton"]
 
     with open(response_json_path, "r") as f:
         response_data = json.load(f)
 
-    print(f"Creating {len(skeleton_data['bone_order_names'])} joints...")
+    print(f"Creating {len(skeleton_data)} joints...")
     created_joints = create_joints_from_skeleton(skeleton_data)
 
     print(f"Applying animation ({len(response_data['local_rot_mats'])} frames)...")
@@ -158,16 +155,8 @@ def create_animation_from_response(response_json_path, skeleton_json_path):
     return created_joints
 
 
-# 保留旧接口兼容
-def create_joints_from_json(json_path):
-    """旧接口：仅创建骨骼，不添加动画。"""
-    with open(json_path, "r") as f:
-        data = json.load(f)
-    return create_joints_from_skeleton(data["skeleton"])
-
-
 if __name__ == "__main__":
     create_animation_from_response(
-        r"E:\Doodle\build\response2.json",
-        r"E:\Doodle\build\joint.json"
+        r"E:\Doodle\build\res_dav.json",
+        r"E:\Doodle\build\send_dav.json"
     )
