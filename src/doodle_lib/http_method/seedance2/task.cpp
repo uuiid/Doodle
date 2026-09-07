@@ -401,7 +401,11 @@ std::vector<sd2::task_similarity> get_task_similarity_for_person(
 
 }  // namespace
 
-seedance2_subproject_task::seedance2_subproject_task() { seedance2_task_run_manager::Get().run(); }
+seedance2_subproject_task::seedance2_subproject_task() {
+#ifdef NDEBUG
+  seedance2_task_run_manager::Get().run();
+#endif
+}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   person_.check_subproject_access(subproject_id_);
 
