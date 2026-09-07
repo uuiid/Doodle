@@ -44,6 +44,39 @@ def rotation_matrix_to_euler_xyz(m):
     return rx, ry, rz
 
 
+def axis_angle_to_rotation_matrix(v):
+    """轴角向量 → 3×3 旋转矩阵（行主序，与 geometry.cpp 的 Rodrigues 一致）。"""
+    x, y, z = v[0], v[1], v[2]
+    angle = math.sqrt(x * x + y * y + z * z)
+    if angle < 1e-6:
+        # 小角度近似 R ≈ I + skew(v)
+        return [
+            [1.0, -z, y],
+            [z, 1.0, -x],
+            [-y, x, 1.0],
+        ]
+    x /= angle
+    y /= angle
+    z /= angle
+    c = math.cos(angle)
+    s = math.sin(angle)
+    omc = 1.0 - c
+    ksq_00 = -y * y - z * z
+    ksq_01 = x * y
+    ksq_02 = x * z
+    ksq_10 = x * y
+    ksq_11 = -x * x - z * z
+    ksq_12 = y * z
+    ksq_20 = x * z
+    ksq_21 = y * z
+    ksq_22 = -x * x - y * y
+    return [
+        [1.0 + omc * ksq_00, -z * s + omc * ksq_01, y * s + omc * ksq_02],
+        [z * s + omc * ksq_10, 1.0 + omc * ksq_11, -x * s + omc * ksq_12],
+        [-y * s + omc * ksq_20, x * s + omc * ksq_21, 1.0 + omc * ksq_22],
+    ]
+
+
 def create_joints_from_skeleton(skeleton_data):
     """根据 send_dav.json 的 skeleton 列表创建 Maya 关节层级，返回 {index: joint_name}。"""
     created = {}
@@ -136,6 +169,59 @@ def apply_animation_from_response(created_joints, response_data):
     print(f"Animation applied: {num_frames} frames, {num_joints} joints")
 
 
+def create_constraint_joints(send_dav_json, skeleton_data):
+    """将 segment.constraint_lst 创建为约束姿态骨骼，置于 constraint_lst 组下。"""
+    segment = send_dav_json.get("segment", {})
+    constraint_lst = segment.get("constraint_lst", [])
+    if not constraint_lst:
+        return
+
+    cmds.select(clear=True)
+    constraint_group = cmds.group(empty=True, name="constraint_lst")
+
+    for c, constraint in enumerate(constraint_lst):
+        sub_group = cmds.group(empty=True, name=f"constraint_{c}")
+        cmds.parent(sub_group, constraint_group)
+
+        created = {}
+        for i, joint_def in enumerate(skeleton_data):
+            name = joint_def["name"]
+            pos = joint_def["neutral_joint"]
+            parent_idx = joint_def["parent_idx"]
+
+            cmds.select(clear=True)
+            if parent_idx >= 0 and parent_idx in created:
+                cmds.select(created[parent_idx])
+
+            jnt = cmds.joint(name=name, position=(pos[0], pos[1], pos[2]))
+            created[i] = jnt
+
+        for i, jnt in created.items():
+            cmds.setAttr(f"{jnt}.jointOrientX", 0)
+            cmds.setAttr(f"{jnt}.jointOrientY", 0)
+            cmds.setAttr(f"{jnt}.jointOrientZ", 0)
+            cmds.setAttr(f"{jnt}.radius", 0.02)
+
+        # 姿态：根位移 + 各关节局部旋转（轴角，与 constraint_set.cpp 的 from_dict 一致）
+        local_joints_rot = constraint["local_joints_rot"]
+        root_positions = constraint["root_positions"]
+        frame_rot = local_joints_rot[0]
+        root_pos = root_positions[0]
+
+        root_jnt = created[0]
+        cmds.xform(root_jnt, ws=True, t=(root_pos[0], root_pos[1], root_pos[2]))
+
+        for j, jnt in created.items():
+            rot_mat = axis_angle_to_rotation_matrix(frame_rot[j])
+            euler = rotation_matrix_to_euler_xyz(rot_mat)
+            cmds.xform(jnt, ws=False, ro=(math.degrees(euler[0]),
+                                           math.degrees(euler[1]),
+                                           math.degrees(euler[2])))
+
+        cmds.parent(created[0], sub_group)
+        print(f"  constraint {c} ({constraint.get('type')}) created")
+
+
 def create_animation_from_response(response_json_path, send_dav_json_path):
     """主入口：从 send_dav.json 的 skeleton 字段创建骨骼，从 response JSON 应用动画。"""
     with open(send_dav_json_path, "r") as f:
@@ -150,6 +236,8 @@ def create_animation_from_response(response_json_path, send_dav_json_path):
 
     print(f"Applying animation ({len(response_data['local_rot_mats'])} frames)...")
     apply_animation_from_response(created_joints, response_data)
+
+    create_constraint_joints(send_dav_json, skeleton_data)
 
     print("Done.")
     return created_joints
