@@ -25,7 +25,7 @@ describe('ai animation train 测试', function () {
   it('POST /api/doodle/ai/animation/train/settings — 加载 Kimodo 模型', async function () {
     const req = await request.post(`${URL}/api/doodle/ai/animation/train/settings`)
       .send({ model_path: MODEL_PATH });
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     expect(req.body).to.have.property('model_path', MODEL_PATH);
     expect(req.body).to.have.property('skeleton');
     console.log('POST settings 返回模型路径:', req.body.model_path);
@@ -35,7 +35,7 @@ describe('ai animation train 测试', function () {
     expect(sendDavData).to.not.be.null;
     const req = await request.post(`${URL}/api/doodle/ai/animation/train`)
       .send(sendDavData);
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     expect(req.body).to.have.property('local_rot_mats');
     expect(req.body).to.have.property('global_rot_mats');
     expect(req.body).to.have.property('root_positions');
