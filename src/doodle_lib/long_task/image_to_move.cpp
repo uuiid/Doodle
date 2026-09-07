@@ -5,11 +5,12 @@
 #include "image_to_move.h"
 
 #include <doodle_core/exception/exception.h>
-#include <doodle_core/metadata/image_size.h>
-#include <doodle_lib/core/core_set.h>
 #include <doodle_core/metadata/episodes.h>
+#include <doodle_core/metadata/image_size.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/user.h>
+
+#include <doodle_lib/core/core_set.h>
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
@@ -18,6 +19,7 @@
 #include <opencv2/opencv.hpp>
 #include <spdlog/spdlog.h>
 #include <utility>
+
 
 namespace doodle {
 namespace detail {
@@ -133,8 +135,9 @@ void create_move(
     l_size = get_image_size(l_image);
   }
   const cv::Size k_size{l_size.width, l_size.height};
-  auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 25, k_size};
-  auto k_image = cv::Mat{};
+  auto video = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 25, k_size};
+  video.set(cv::VIDEOWRITER_PROP_QUALITY, 100);
+  auto k_image           = cv::Mat{};
   const auto& k_size_len = l_vector.size();
   auto l_gamma           = create_gamma_LUT_table(l_vector.empty() ? 1.0 : l_vector.front().gamma_t);
   for (auto& l_image : l_vector) {
@@ -151,7 +154,7 @@ void create_move(
       SPDLOG_LOGGER_ERROR(in_logger, "{} 图片读取失败 跳过", l_image.path_attr);
       continue;
     }
-    if (k_image.cols != k_size.width || k_image.rows != k_size.height) cv::resize(k_image, k_image, k_size);
+    // if (k_image.cols != k_size.width || k_image.rows != k_size.height) cv::resize(k_image, k_image, k_size);
 
     if (l_image.gamma_t) {
       cv::LUT(k_image, l_gamma, k_image);
