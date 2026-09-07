@@ -100,17 +100,17 @@ describe('seedance2 person link 测试', function () {
 
 });
 
-describe('seedance2 classification 测试', function () {
+describe('seedance2 episodes 测试', function () {
 
   const authHeader = { 'Cookie': `access_token_cookie=${JWT}` };
   let subprojectId = null;
-  let classificationId = null;
+  let episodeId = null;
 
   before(async function () {
     const req = await request.post(`${URL}/api/seedance2/subproject`)
       .set(authHeader)
       .send({
-        name: 'test_subproject_classification',
+        name: 'test_subproject_episodes',
         project_id: 'c340051a-45a6-4af1-a750-efefe639c75b',
       });
     subprojectId = req.body.id;
@@ -122,51 +122,51 @@ describe('seedance2 classification 测试', function () {
     }
   });
 
-  it('POST /api/seedance2/subproject/{subproject_id}/classification — 创建分类', async function () {
+  it('POST /api/seedance2/subproject/{subproject_id}/episodes — 创建剧集', async function () {
     expect(subprojectId).to.not.be.null;
-    const req = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/classification`)
+    const req = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/episodes`)
       .set(authHeader)
       .send({
         name: 'sc001',
         subproject_id: subprojectId,
-        description: '测试分类',
+        description: '测试剧集',
       });
     expect(req.status).to.equal(201);
-    classificationId = req.body.id;
-    console.log('POST classification 返回值:', JSON.stringify(req.body, null, 2));
+    episodeId = req.body.id;
+    console.log('POST episodes 返回值:', JSON.stringify(req.body, null, 2));
   });
 
-  it('GET /api/seedance2/subproject/{subproject_id}/classification — 获取分类列表', async function () {
+  it('GET /api/seedance2/subproject/{subproject_id}/episodes — 获取剧集列表', async function () {
     expect(subprojectId).to.not.be.null;
-    const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/classification`)
+    const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/episodes`)
       .set(authHeader);
     expect(req.status).to.equal(200);
-    console.log('GET classification list 返回值:', JSON.stringify(req.body, null, 2));
+    console.log('GET episodes list 返回值:', JSON.stringify(req.body, null, 2));
   });
 
-  it('GET /api/seedance2/subproject/{subproject_id}/classification/{classification_id} — 获取分类详情', async function () {
-    expect(classificationId).to.not.be.null;
-    const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/classification/${classificationId}`)
+  it('GET /api/seedance2/subproject/{subproject_id}/episodes/{episode_id} — 获取剧集详情', async function () {
+    expect(episodeId).to.not.be.null;
+    const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/episodes/${episodeId}`)
       .set(authHeader);
     expect(req.status).to.equal(200);
-    console.log('GET classification instance 返回值:', JSON.stringify(req.body, null, 2));
+    console.log('GET episodes instance 返回值:', JSON.stringify(req.body, null, 2));
   });
 
-  it('PUT /api/seedance2/subproject/{subproject_id}/classification/{classification_id} — 更新分类', async function () {
-    expect(classificationId).to.not.be.null;
-    const req = await request.put(`${URL}/api/seedance2/subproject/${subprojectId}/classification/${classificationId}`)
+  it('PUT /api/seedance2/subproject/{subproject_id}/episodes/{episode_id} — 更新剧集', async function () {
+    expect(episodeId).to.not.be.null;
+    const req = await request.put(`${URL}/api/seedance2/subproject/${subprojectId}/episodes/${episodeId}`)
       .set(authHeader)
-      .send({ name: 'sc001_updated', description: '更新后的分类' });
+      .send({ name: 'sc001_updated', description: '更新后的剧集' });
     expect(req.status).to.equal(200);
-    console.log('PUT classification 返回值:', JSON.stringify(req.body, null, 2));
+    console.log('PUT episodes 返回值:', JSON.stringify(req.body, null, 2));
   });
 
-  it('DELETE /api/seedance2/subproject/{subproject_id}/classification/{classification_id} — 删除分类', async function () {
-    expect(classificationId).to.not.be.null;
-    const req = await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}/classification/${classificationId}`)
+  it('DELETE /api/seedance2/subproject/{subproject_id}/episodes/{episode_id} — 删除剧集', async function () {
+    expect(episodeId).to.not.be.null;
+    const req = await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}/episodes/${episodeId}`)
       .set(authHeader);
     expect(req.status).to.equal(200);
-    console.log('DELETE classification 返回值:', JSON.stringify(req.body, null, 2));
+    console.log('DELETE episodes 返回值:', JSON.stringify(req.body, null, 2));
   });
 
 });
@@ -176,7 +176,7 @@ describe('seedance2 entity 测试', function () {
   const authHeader = { 'Cookie': `access_token_cookie=${JWT}` };
   const projectId = 'c340051a-45a6-4af1-a750-efefe639c75b';
   let subprojectId = null;
-  let classificationId = null;
+  let episodeId = null;
   let entityId = null;
 
   before(async function () {
@@ -188,13 +188,13 @@ describe('seedance2 entity 测试', function () {
       });
     subprojectId = subReq.body.id;
 
-    const clsReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/classification`)
+    const clsReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/episodes`)
       .set(authHeader)
       .send({
         name: 'sc001',
         subproject_id: subprojectId,
       });
-    classificationId = clsReq.body.id;
+    episodeId = clsReq.body.id;
   });
 
   after(async function () {
@@ -203,14 +203,14 @@ describe('seedance2 entity 测试', function () {
     }
   });
 
-  it('POST /api/seedance2/subproject/{subproject_id}/classification/{classification_id}/entity — 创建实体', async function () {
-    expect(classificationId).to.not.be.null;
-    const req = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/classification/${classificationId}/entity`)
+  it('POST /api/seedance2/subproject/{subproject_id}/entity — 创建实体', async function () {
+    expect(episodeId).to.not.be.null;
+    const req = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity`)
       .set(authHeader)
       .send({
         name: 'test_entity',
         project_uuid_id: projectId,
-        ai_generate_classification_id: classificationId,
+        ai_episode_id: episodeId,
       });
     expect(req.status).to.equal(201);
     entityId = req.body.id;
@@ -229,9 +229,9 @@ describe('seedance2 entity 测试', function () {
     console.log('POST entity reference 返回值:', JSON.stringify(req.body, null, 2));
   });
 
-  it('GET /api/seedance2/subproject/{subproject_id}/classification/{classification_id}/entity — 获取实体列表', async function () {
-    expect(classificationId).to.not.be.null;
-    const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/classification/${classificationId}/entity`)
+  it('GET /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}/entity — 获取实体列表', async function () {
+    expect(episodeId).to.not.be.null;
+    const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/episodes/${episodeId}/entity`)
       .set(authHeader);
     expect(req.status).to.equal(200);
     console.log('GET entity list 返回值:', JSON.stringify(req.body, null, 2));
@@ -269,7 +269,7 @@ describe('seedance2 task', function () {
   const authHeader = { 'Cookie': `access_token_cookie=${JWT}` };
   const projectId = 'c340051a-45a6-4af1-a750-efefe639c75b';
   let subprojectId = null;
-  let classificationId = null;
+  let episodeId = null;
   let entityId = null;
   let taskId = null;
 
@@ -282,20 +282,20 @@ describe('seedance2 task', function () {
       });
     subprojectId = subReq.body.id;
 
-    const clsReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/classification`)
+    const clsReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/episodes`)
       .set(authHeader)
       .send({
         name: 'sc001',
         subproject_id: subprojectId,
       });
-    classificationId = clsReq.body.id;
+    episodeId = clsReq.body.id;
 
-    const entReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/classification/${classificationId}/entity`)
+    const entReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity`)
       .set(authHeader)
       .send({
         name: 'test_entity',
         project_uuid_id: projectId,
-        ai_generate_classification_id: classificationId,
+        ai_episode_id: episodeId,
       });
     entityId = entReq.body.id;
   });
