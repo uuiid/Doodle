@@ -13,7 +13,7 @@ $RunUAT = Join-Path $EngineRoot "Engine\Build\BatchFiles\RunUAT.bat"
 if (-not (Test-Path $RunUAT)) { throw "找不到 RunUAT: $RunUAT" }
 
 if (-not $ArchiveDirectory) {
-    $ArchiveDirectory = Join-Path $PSScriptRoot "Release"
+    $ArchiveDirectory = Join-Path $PSScriptRoot "../build/DoodleLiveLink"
 }
 
 # UAT 需要正斜杠路径
