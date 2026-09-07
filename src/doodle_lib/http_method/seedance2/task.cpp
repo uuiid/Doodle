@@ -257,24 +257,36 @@ class seedance2_task_run_manager {
     l_task_ptr->status_   = l_status;
     l_task_ptr->ended_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
-    co_await l_sql.run_sql(update(l_sql)
-                               .from<sd2::task>()
-                               .set(c(&sd2::task::status_) = l_task_ptr->status_)
-                               .set(c(&sd2::task::ended_at_) = l_task_ptr->ended_at_)
-                               .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
-                               .set(c(&sd2::task::completion_tokens_) = l_task_ptr->completion_tokens_)
-                               .set(c(&sd2::task::preview_file_) = l_task_ptr->preview_file_)
-                               .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_));
-
+    sql_modify_statement_vector_t l_sqls;
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<sd2::task>()
+            .set(c(&sd2::task::status_) = l_task_ptr->status_)
+            .set(c(&sd2::task::ended_at_) = l_task_ptr->ended_at_)
+            .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
+            .set(c(&sd2::task::completion_tokens_) = l_task_ptr->completion_tokens_)
+            .set(c(&sd2::task::preview_file_) = l_task_ptr->preview_file_)
+            .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_)
+    );
     if (l_status == sd2::task_status::succeeded && l_task_ptr->completion_tokens_ > 0) {
       // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
-      co_await l_sql.run_sql(add_remaining_tokens_for_person(
+      l_sqls.emplace_back(add_remaining_tokens_for_person(
           l_sql, in_task.user_id_, in_task.completion_tokens_ - l_task_ptr->completion_tokens_
       ));
     } else {
       // 任务失败或者其他状态，返还 token
-      co_await l_sql.run_sql(add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_));
+      l_sqls.emplace_back(add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_));
     }
+    if (l_status != sd2::task_status::succeeded) {
+      // 失败时回滚生成次数
+      l_sqls.emplace_back(
+          update(l_sql)
+              .from<sd2::ai_generate_entity>()
+              .set(c(&sd2::ai_generate_entity::generate_count_) = c(&sd2::ai_generate_entity::generate_count_) - 1)
+              .where(c(&sd2::ai_generate_entity::uuid_id_) == in_task.ai_generate_entity_id_)
+      );
+    }
+    co_await l_sql.run_sql(std::move(l_sqls));
     socket_io::broadcast(
         socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_task_ptr->status_}
     );
@@ -447,17 +459,29 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
                         .to_single();
     DOODLE_CHICK_HTTP(l_result == 1, unauthorized, "模型 {} 或者分辨率 {} 未被授权", l_model, l_resolution);
   }
-
   {
-    auto l_add_tokens = add_remaining_tokens_for_person(l_sql, person_.person_.uuid_id_, -l_task->completion_tokens_);
-    auto l_install    = orm::insert(l_sql).into<sd2::task>().values(*l_task);
+    using namespace orm;
+    auto l_entity  = l_sql.get_by_uuid<sd2::ai_generate_entity>(l_task->ai_generate_entity_id_);
+    auto l_episode = l_sql.get_by_uuid<sd2::ai_episode>(l_entity.ai_episode_id_);
+    DOODLE_CHICK_HTTP(
+        l_entity.generate_count_ < l_episode.limit_count_, bad_request, "生成次数已达上限 {} 次", l_episode.limit_count_
+    );
+  }
+  {
+    using namespace orm;
     auto l_result_map = get_task_similarity_for_person(l_sql, *l_task);
-    if (l_result_map.empty()) {
-      co_await l_sql.run_sql(l_add_tokens, l_install);
-    } else {
-      auto l_install_similarities = orm::insert(l_sql).into<sd2::task_similarity>().set_range(l_result_map);
-      co_await l_sql.run_sql(l_add_tokens, l_install, l_install_similarities);
-    }
+
+    sql_modify_statement_vector_t l_sqls;
+    l_sqls.emplace_back(add_remaining_tokens_for_person(l_sql, person_.person_.uuid_id_, -l_task->completion_tokens_));
+    l_sqls.emplace_back(insert(l_sql).into<sd2::task>().values(*l_task));
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<sd2::ai_generate_entity>()
+            .set(c(&sd2::ai_generate_entity::generate_count_) = c(&sd2::ai_generate_entity::generate_count_) + 1)
+            .where(c(&sd2::ai_generate_entity::uuid_id_) == l_task->ai_generate_entity_id_)
+    );
+    l_sqls.emplace_back(insert(l_sql).into<sd2::task_similarity>().set_range(l_result_map));
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
   seedance2_task_run_manager::Get().run();
   co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});
