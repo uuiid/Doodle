@@ -70,9 +70,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
   if (!l_attends.empty()) {
     auto& l_att = l_attends.front();
     if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
-      nlohmann::json l_json{};
+      auto l_json = nlohmann::json::array();
       if (l_att.type_ != attendance_helper::att_enum::max) l_json = l_attends;
-      co_return in_handle->make_msg(l_json.dump());
+      co_return in_handle->make_msg(l_json);
     }
   }
 
