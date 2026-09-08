@@ -437,4 +437,18 @@ struct seedance2_task_update_broadcast_t {
   }
 };
 
+struct seedance2_entity_reference_new_broadcast_t {
+  static constexpr std::string_view event_name_ = "seedance2:entity-reference:new";
+  static constexpr std::string_view namespace_  = "/events";
+  uuid reference_id_;
+  uuid entity_id_;
+  uuid preview_file_id_;
+  // to json
+  friend void to_json(nlohmann::json& j, const seedance2_entity_reference_new_broadcast_t& p) {
+    j["reference_id"]    = p.reference_id_;
+    j["entity_id"]       = p.entity_id_;
+    j["preview_file_id"] = p.preview_file_id_;
+  }
+};
+
 }  // namespace doodle::socket_io
