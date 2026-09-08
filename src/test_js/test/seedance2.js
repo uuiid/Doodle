@@ -214,6 +214,7 @@ describe('seedance2 entity 测试', function () {
         name: 'test_entity',
         project_uuid_id: projectId,
         ai_episode_id: episodeId,
+        ai_category_id: '01a03b8f-d9f3-71f1-808f-a098a698c889'
       });
     expect(req.status).to.equal(201);
     entityId = req.body.id;
@@ -257,14 +258,6 @@ describe('seedance2 entity 测试', function () {
     console.log('PUT entity 返回值:', JSON.stringify(req.body, null, 2));
   });
 
-  it('DELETE /api/seedance2/subproject/{subproject_id}/entity/{entity_id} — 删除实体', async function () {
-    expect(entityId).to.not.be.null;
-    const req = await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}/entity/${entityId}`)
-      .set(authHeader);
-    expect(req.status).to.equal(200);
-    console.log('DELETE entity 返回值:', JSON.stringify(req.body, null, 2));
-  });
-
   it('POST /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/depth — 上传视频进行深度估计', async function () {
     this.timeout(330000);
     expect(entityId).to.not.be.null;
@@ -275,6 +268,14 @@ describe('seedance2 entity 测试', function () {
       .timeout(300000);
     expect(req.status).to.equal(200);
     console.log('POST depth 返回值:', JSON.stringify(req.body, null, 2));
+  });
+  
+  it('DELETE /api/seedance2/subproject/{subproject_id}/entity/{entity_id} — 删除实体', async function () {
+    expect(entityId).to.not.be.null;
+    const req = await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}/entity/${entityId}`)
+      .set(authHeader);
+    expect(req.status).to.equal(200);
+    console.log('DELETE entity 返回值:', JSON.stringify(req.body, null, 2));
   });
 
 });
