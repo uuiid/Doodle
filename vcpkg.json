@@ -117,7 +117,10 @@
     "depths-cpp",
     {
       "name": "onnxruntime",
-      "default-features": true
+      "default-features": true,
+      "features": [
+        "cuda"
+      ]
     }
   ],
   "vcpkg-configuration": {
