@@ -315,4 +315,10 @@ uuid media_id_{};
 doodle::seedance2::media_role role_{};
 DOODLE_HTTP_FUN_END()
 
+// /api/doodle/ai/depth/video
+DOODLE_HTTP_JWT_FUN(doodle_ai_depth_estimation_video)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+
 }  // namespace doodle::http::seedance2
