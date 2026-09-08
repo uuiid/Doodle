@@ -2,6 +2,7 @@
 
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/authorization.h>
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/crashpad.h>
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>
@@ -15,8 +16,15 @@
 #include <doodle_lib/platform/win/register_file_type.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
+#include <jwt-cpp/jwt.h>
+
+#include <boost/dll.hpp>
 #include <opencv2/core/utility.hpp>
+#include <tlhelp32.h>
+#include <iphlpapi.h>
+#include <windows.h>
 #include <winreg/WinReg.hpp>
+
 
 namespace doodle {
 
@@ -215,9 +223,75 @@ bool kitsu_supplement_main::init() {
   }
   // 初始化路由
   auto l_rout_ptr = http::create_kitsu_route_2(l_args.kitsu_front_end_path_);
+  // 关闭可能存在的旧实例
+  // stop_previous_instance(l_args.port_, l_args.secret_);
   // 开始运行服务器
   http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
 
   return true;
 }
+void kitsu_supplement_main::stop_previous_instance(std::uint16_t port, const std::string& in_secret) {
+  if (port == 0) return;  // 随机端口，无需检查
+
+  // 1. 获取当前进程名
+  auto l_current_exe = boost::dll::program_location().filename().wstring();
+
+  // 2. 查找同名进程（排除自身），并记录其 PID
+  DWORD l_other_pid = 0;
+  {
+    HANDLE l_snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (l_snapshot == INVALID_HANDLE_VALUE) return;
+    PROCESSENTRY32W l_pe{};
+    l_pe.dwSize = sizeof(l_pe);
+    if (Process32FirstW(l_snapshot, &l_pe)) {
+      do {
+        if (l_pe.th32ProcessID != GetCurrentProcessId() &&
+            _wcsicmp(l_pe.szExeFile, l_current_exe.c_str()) == 0) {
+          l_other_pid = l_pe.th32ProcessID;
+          break;
+        }
+      } while (Process32NextW(l_snapshot, &l_pe));
+    }
+    CloseHandle(l_snapshot);
+  }
+  if (l_other_pid == 0) return;
+
+  // 3. 使用 GetExtendedTcpTable 检查同名进程是否在监听 port
+  {
+    DWORD l_size = 0;
+    GetExtendedTcpTable(nullptr, &l_size, FALSE, AF_INET, TCP_TABLE_OWNER_PID_LISTENER, 0);
+    auto l_buf = std::make_unique<std::uint8_t[]>(l_size);
+    auto* l_table = reinterpret_cast<MIB_TCPTABLE_OWNER_PID*>(l_buf.get());
+    if (GetExtendedTcpTable(l_table, &l_size, FALSE, AF_INET, TCP_TABLE_OWNER_PID_LISTENER, 0) != NO_ERROR)
+      return;
+
+    bool l_port_found = false;
+    for (DWORD i = 0; i < l_table->dwNumEntries; ++i) {
+      auto& l_row = l_table->table[i];
+      if (l_row.dwOwningPid == l_other_pid &&
+          ntohs(static_cast<std::uint16_t>(l_row.dwLocalPort)) == port) {
+        l_port_found = true;
+        break;
+      }
+    }
+    if (!l_port_found) return;
+  }
+
+  // 4. 生成 bot token（参考 login.cpp）
+  auto l_token = jwt::create()
+                     .set_payload_claim("identity_type", jwt::claim{std::string{"bot"}})
+                     .set_issued_at(chrono::system_clock::now())
+                     .set_id(fmt::to_string(core_set::get_set().get_uuid()))
+                     .set_subject(fmt::to_string(core_set::get_set().get_uuid()))
+                     .set_not_before(chrono::system_clock::now())
+                     .set_expires_at(chrono::system_clock::now() + chrono::days{7})
+                     .sign(jwt::algorithm::hs256{in_secret});
+
+  // 5. 创建 kitsu_client 并调用 stop_server
+  default_logger_raw()->info("发现旧实例正在监听端口 {}，发送 stop-server 请求", port);
+  auto l_client = kitsu::kitsu_client{fmt::format("http://127.0.0.1:{}", port)};
+  l_client.set_token(l_token);
+  l_client.stop_server();
+}
+
 }  // namespace doodle

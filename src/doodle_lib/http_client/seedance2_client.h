@@ -31,7 +31,7 @@ class DOODLELIB_API seedance2_client : public std::enable_shared_from_this<seeda
   void set_token(const std::string& in_token) { token_ = in_token; }
   const std::string& get_token() const { return token_; }
 
-  boost::asio::awaitable<std::string> run_task(const nlohmann::json& in_task);
+  boost::asio::awaitable<nlohmann::json> run_task(const nlohmann::json& in_task);
   // 取消任务
   boost::asio::awaitable<void> cancel_task(const std::string& in_task_id);
 

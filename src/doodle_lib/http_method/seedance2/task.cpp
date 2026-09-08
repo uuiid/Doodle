@@ -24,6 +24,7 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/consign.hpp>
+#include <boost/asio/executor.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/scope/scope_exit.hpp>
 
@@ -44,6 +45,7 @@
 #include <regex>
 #include <spdlog/spdlog.h>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <vector>
 
@@ -85,6 +87,10 @@ void video_create_picture(const FSys::path& in_video_path, const uuid& in_id) {
   FSys::rename(in_video_path, l_file_picture);
 }
 
+// 定义在下方匿名命名空间, 前向声明供 async_run 提交任务使用
+boost::asio::awaitable<std::string> get_self_ip();
+nlohmann::json add_ip_to_req(const nlohmann::json& in_req, const std::string& in_ip);
+
 class seedance2_task_run_manager {
   struct task_info {
     explicit task_info(const sd2::task& in_task, const std::string& in_app_secret)
@@ -102,10 +108,55 @@ class seedance2_task_run_manager {
         .columns(object<sd2::task>(), &ai_studio::app_secret_)
         .from<sd2::task>()
         .where(
+            c(&sd2::task::status_) == sd2::task_status::preparing ||
             c(&sd2::task::status_) == sd2::task_status::queued || c(&sd2::task::status_) == sd2::task_status::running
         )
         .left_outer_join<ai_studio>(&ai_studio::uuid_id_, &sd2::task::ai_studio_id_)()
         .to_vector<task_info>();
+  }
+
+  boost::asio::awaitable<void> submit_task(
+      const sd2::task& in_task, const std::shared_ptr<seedance2_client>& in_client
+  ) try {
+    sd2::task_status l_status{};
+    auto l_ip       = co_await get_self_ip();
+    auto l_req      = add_ip_to_req(in_task.data_request_, l_ip);
+    auto l_response = co_await in_client->run_task(l_req);
+    auto l_sql      = get_sqlite_database();
+    using namespace orm;
+    auto l_update = update(l_sql)
+                        .from<sd2::task>()
+                        .set(c(&sd2::task::data_response_) = l_response)
+                        .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_);
+    if (l_response.contains("id")) {
+      l_update.set(c(&sd2::task::task_id_) = l_response.at("id").get<std::string>());
+      l_update.set(c(&sd2::task::status_) = sd2::task_status::queued);
+      l_status = sd2::task_status::queued;
+    } else {
+      // 只有 resource not found / timeout while fetching resource 才重试, 其他错误直接失败
+      std::string l_message{};
+      if (l_response.contains("error")) l_message = l_response.at("error").value("message", std::string{});
+      const bool l_retryable = l_message.find("timeout while fetching resource") != std::string::npos;
+      if (l_retryable) {
+        const auto l_retry_count = in_task.retry_count_ + 1;
+        l_update.set(c(&sd2::task::retry_count_) = l_retry_count);
+        if (l_retry_count >= 100) {
+          l_update.set(c(&sd2::task::status_) = sd2::task_status::failed);
+          l_status = sd2::task_status::failed;
+        }
+        // 未达到 100 次时保持 preparing, 等待下一轮 async_run 重试
+      } else {
+        l_update.set(c(&sd2::task::status_) = sd2::task_status::failed);
+        l_status = sd2::task_status::failed;
+      }
+    }
+    co_await l_sql.run_sql(l_update);
+    socket_io::broadcast(
+        socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_status}
+    );
+  } catch (...) {
+    auto l_err_str = boost::current_exception_diagnostic_information();
+    SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "提交任务 {} 失败: {}", in_task.uuid_id_, l_err_str);
   }
 
   boost::asio::awaitable<void> async_run() {
@@ -125,7 +176,11 @@ class seedance2_task_run_manager {
           l_client->set_logger(g_logger_ctrl().get_http());
           l_client_map[l_task_info.app_secret_] = l_client;
         }
-        co_await query_task_and_down(l_task_info.task_, l_client);
+        if (l_task_info.task_.status_ == sd2::task_status::preparing) {
+          co_await submit_task(l_task_info.task_, l_client);
+        } else {
+          co_await query_task_and_down(l_task_info.task_, l_client);
+        }
       }
 
       l_timer.expires_after(5s);
@@ -152,14 +207,20 @@ class seedance2_task_run_manager {
                                                       : sd2::task_status::failed
     };
     auto l_sql = get_sqlite_database();
+    using namespace orm;
 
     switch (l_status) {
+      case sd2::task_status::preparing:
       case sd2::task_status::queued:
         co_return;
       case sd2::task_status::running: {
         if (l_task_ptr->status_ != l_status) {
           l_task_ptr->status_ = l_status;
-          co_await l_sql.update(l_task_ptr);
+          co_await l_sql.run_sql(update(l_sql)
+                                     .from<sd2::task>()
+                                     .set(c(&sd2::task::status_) = l_task_ptr->status_)
+                                     .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
+                                     .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_));
         }
         socket_io::broadcast(
             socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_task_ptr->status_}
@@ -188,23 +249,44 @@ class seedance2_task_run_manager {
       case sd2::task_status::cancelled:
       case sd2::task_status::failed:
       case sd2::task_status::expired:
+        // 以上状态不扣费
+        l_task_ptr->completion_tokens_ = 0;
         break;
     }
 
     l_task_ptr->status_   = l_status;
     l_task_ptr->ended_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
-    co_await l_sql.update(l_task_ptr);
-
+    sql_modify_statement_vector_t l_sqls;
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<sd2::task>()
+            .set(c(&sd2::task::status_) = l_task_ptr->status_)
+            .set(c(&sd2::task::ended_at_) = l_task_ptr->ended_at_)
+            .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
+            .set(c(&sd2::task::completion_tokens_) = l_task_ptr->completion_tokens_)
+            .set(c(&sd2::task::preview_file_) = l_task_ptr->preview_file_)
+            .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_)
+    );
     if (l_status == sd2::task_status::succeeded && l_task_ptr->completion_tokens_ > 0) {
       // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
-      co_await l_sql.run_sql(add_remaining_tokens_for_person(
+      l_sqls.emplace_back(add_remaining_tokens_for_person(
           l_sql, in_task.user_id_, in_task.completion_tokens_ - l_task_ptr->completion_tokens_
       ));
     } else {
       // 任务失败或者其他状态，返还 token
-      co_await l_sql.run_sql(add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_));
+      l_sqls.emplace_back(add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_));
     }
+    if (l_status != sd2::task_status::succeeded) {
+      // 失败时回滚生成次数
+      l_sqls.emplace_back(
+          update(l_sql)
+              .from<sd2::ai_generate_entity>()
+              .set(c(&sd2::ai_generate_entity::generate_count_) = c(&sd2::ai_generate_entity::generate_count_) - 1)
+              .where(c(&sd2::ai_generate_entity::uuid_id_) == in_task.ai_generate_entity_id_)
+      );
+    }
+    co_await l_sql.run_sql(std::move(l_sqls));
     socket_io::broadcast(
         socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_task_ptr->status_}
     );
@@ -218,6 +300,8 @@ class seedance2_task_run_manager {
     static seedance2_task_run_manager instance;
     return instance;
   }
+
+  bool is_running() const { return is_running_; }
 
   void run() {
     if (is_running_.exchange(true)) return;
@@ -330,7 +414,12 @@ std::vector<sd2::task_similarity> get_task_similarity_for_person(
 }
 
 }  // namespace
-seedance2_subproject_task::seedance2_subproject_task() { seedance2_task_run_manager::Get().run(); }
+
+seedance2_subproject_task::seedance2_subproject_task() {
+#ifdef NDEBUG
+  seedance2_task_run_manager::Get().run();
+#endif
+}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   person_.check_subproject_access(subproject_id_);
 
@@ -370,26 +459,29 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
                         .to_single();
     DOODLE_CHICK_HTTP(l_result == 1, unauthorized, "模型 {} 或者分辨率 {} 未被授权", l_model, l_resolution);
   }
-
-  auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
-  auto l_studio = l_sql.get_by_uuid<ai_studio>(l_task->ai_studio_id_);
-  l_client->set_token(l_studio.app_secret_);
-  l_client->set_logger(g_logger_ctrl().get_http());
-  auto l_ip  = co_await get_self_ip();
-  auto l_req = add_ip_to_req(l_task->data_request_, l_ip);
-#ifdef DOODLE_SEED2
-  l_task->task_id_ = co_await l_client->run_task(l_req);  // 异步运行任务，不等待结果
-#endif
   {
-    auto l_add_tokens = add_remaining_tokens_for_person(l_sql, person_.person_.uuid_id_, -l_task->completion_tokens_);
-    auto l_install    = orm::insert(l_sql).into<sd2::task>().values(*l_task);
+    using namespace orm;
+    auto l_entity  = l_sql.get_by_uuid<sd2::ai_generate_entity>(l_task->ai_generate_entity_id_);
+    auto l_episode = l_sql.get_by_uuid<sd2::ai_episode>(l_entity.ai_episode_id_);
+    DOODLE_CHICK_HTTP(
+        l_entity.generate_count_ < l_episode.limit_count_, bad_request, "生成次数已达上限 {} 次", l_episode.limit_count_
+    );
+  }
+  {
+    using namespace orm;
     auto l_result_map = get_task_similarity_for_person(l_sql, *l_task);
-    if (l_result_map.empty()) {
-      co_await l_sql.run_sql(l_add_tokens, l_install);
-    } else {
-      auto l_install_similarities = orm::insert(l_sql).into<sd2::task_similarity>().set_range(l_result_map);
-      co_await l_sql.run_sql(l_add_tokens, l_install, l_install_similarities);
-    }
+
+    sql_modify_statement_vector_t l_sqls;
+    l_sqls.emplace_back(add_remaining_tokens_for_person(l_sql, person_.person_.uuid_id_, -l_task->completion_tokens_));
+    l_sqls.emplace_back(insert(l_sql).into<sd2::task>().values(*l_task));
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<sd2::ai_generate_entity>()
+            .set(c(&sd2::ai_generate_entity::generate_count_) = c(&sd2::ai_generate_entity::generate_count_) + 1)
+            .where(c(&sd2::ai_generate_entity::uuid_id_) == l_task->ai_generate_entity_id_)
+    );
+    l_sqls.emplace_back(insert(l_sql).into<sd2::task_similarity>().set_range(l_result_map));
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
   seedance2_task_run_manager::Get().run();
   co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});
@@ -400,7 +492,29 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
 
   auto l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
-  DOODLE_CHICK_HTTP(l_task.status_ == sd2::task_status::queued, bad_request, "只有排队中的任务可以删除");
+  DOODLE_CHICK_HTTP(
+      l_task.status_ == sd2::task_status::preparing || l_task.status_ == sd2::task_status::queued, bad_request,
+      "只有准备中或排队中的任务可以取消"
+  );
+
+  // preparing 状态尚未提交到外部, 直接置为 cancelled 并归还 token
+  if (l_task.status_ == sd2::task_status::preparing) {
+    using namespace orm;
+    co_await l_sql.run_sql(
+        update(l_sql)
+            .from<sd2::task>()
+            .set(c(&sd2::task::status_) = sd2::task_status::cancelled)
+            .set(
+                c(&sd2::task::ended_at_) =
+                    chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}
+            )
+            .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_),
+        add_remaining_tokens_for_person(l_sql, l_task.user_id_, l_task.completion_tokens_)
+    );
+    l_task.status_ = sd2::task_status::cancelled;
+    co_return in_handle->make_msg(nlohmann::json{} = l_task);
+  }
+
   auto l_studio = l_sql.get_by_uuid<ai_studio>(person_.get_ai_studio_id());
   auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
 
@@ -411,19 +525,23 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
   const sd2::task_status l_status{
       l_res.contains("status") ? l_res.at("status").get<sd2::task_status>() : sd2::task_status::failed
   };
-  DOODLE_CHICK_HTTP(l_status == sd2::task_status::queued, bad_request, "只有排队中的任务可以删除");
+  DOODLE_CHICK_HTTP(l_status == sd2::task_status::queued, bad_request, "只有排队中的任务可以取消");
 #ifdef DOODLE_SEED2
   co_await l_client->cancel_task(l_task.task_id_);
 #endif
+  co_await l_sql.run_sql(add_remaining_tokens_for_person(l_sql, l_task.user_id_, l_task.completion_tokens_));
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, delete_) {
   person_.check_subproject_access(subproject_id_);
-  auto l_sql        = get_sqlite_database();
-  auto l_task       = std::make_shared<sd2::task>(l_sql.get_by_uuid<sd2::task>(id_));
-  l_task->archived_ = true;
-  co_await l_sql.update(l_task);
+  auto l_sql  = get_sqlite_database();
+  auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
+  using namespace orm;
+  co_await l_sql.run_sql(update(l_sql)
+                             .from<sd2::task>()
+                             .set(c(&sd2::task::archived_) = true)
+                             .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_));
   co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
 }
 
@@ -441,9 +559,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
 
   std::int32_t l_size   = 100;
   std::int32_t l_offset = 0;
+  std::optional<sd2::task_status> l_status;
   for (auto&& [key, value, has_value] : in_handle->url_.params()) {
     if (key == "size") l_size = std::stoi(value);
     if (key == "offset") l_offset = std::stoi(value);
+    if (key == "status") l_status = nlohmann::json(value).get<sd2::task_status>();
   }
 
   auto l_query = select(l_sql)
@@ -460,7 +580,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
                     .where(c(&sd2::subproject_person_link::person_id_) == person_.person_.uuid_id_)) &&
         !c(&sd2::task::archived_)
     );
+  if (l_status) l_query.where(c(&sd2::task::status_) == *l_status);
   co_return in_handle->make_msg(nlohmann::json{} = l_query.limit(l_size).offset(l_offset)().to_vector());
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_run, get) {
+  co_return in_handle->make_msg(nlohmann::json{{"running", seedance2_task_run_manager::Get().is_running()}});
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_run, post) {
+  seedance2_task_run_manager::Get().run();
+  co_return in_handle->make_msg(nlohmann::json{{"running", seedance2_task_run_manager::Get().is_running()}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_date, get) {
   auto l_sql = get_sqlite_database();

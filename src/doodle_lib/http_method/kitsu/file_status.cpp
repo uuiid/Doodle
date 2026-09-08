@@ -13,7 +13,7 @@
 
 
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> data_file_status::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_file_status, get) {
   co_return in_handle->make_msg(nlohmann::json::array());
 }
 

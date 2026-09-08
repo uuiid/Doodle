@@ -120,13 +120,7 @@ find_file(vcomp140_dll
         NO_DEFAULT_PATH
 )
 
-install(FILES ${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll 
-        ${libomp140_x86_64_dll}
-        ${vcomp140_dll}
-        ${PROJECT_BINARY_DIR}/bin/libmp3lame.dll
-        $<TARGET_FILE:7zip::7zip>
-        DESTINATION bin
-)
+
 install(FILES ${crashpad_handler_exe}
         DESTINATION bin
 )

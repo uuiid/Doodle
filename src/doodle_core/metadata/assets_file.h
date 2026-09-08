@@ -31,6 +31,17 @@ struct database_t {
 
   std::vector<uuid> uuid_parents_{};  // 多对多关系
 
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"label", &database_t::label_},                  //
+        std::pair{"path", &database_t::path_},                    //
+        std::pair{"notes", &database_t::notes_},                  //
+        std::pair{"active", &database_t::active_},                //
+        std::pair{"has_thumbnail", &database_t::has_thumbnail_},  //
+        std::pair{"extension", &database_t::extension_},          //
+    };
+  }
+
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const database_t& p) {
     j["id"]            = p.uuid_id_;
     j["label"]         = p.label_;

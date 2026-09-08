@@ -10,19 +10,13 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> data_attachment_files_file::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_attachment_files_file, get) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   auto l_attachment_file = l_sql.get_by_uuid<attachment_file>(id_);
 
   if (l_attachment_file.comment_id_.is_nil() && l_attachment_file.chat_message_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::not_found, "未找到对应的文件"});
-  // if (!l_attachment_file.comment_id_.is_nil()) {
-  //   auto l_task = l_sql.get_by_uuid<task>(l_sql.get_by_uuid<comment>(l_attachment_file.comment_id_).object_id_);
-  //   person_.check_project_access(l_task.project_id_);
-  // }
   auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "files" / "attachments" /
                 FSys::split_uuid_path(fmt::to_string(l_attachment_file.uuid_id_));
   auto l_ext = l_attachment_file.extension_;

@@ -45,7 +45,6 @@ struct database_t {
   std::int32_t id_{};
   uuid uuid_id_{};
   std::string label_{};
-  /// 这个数据不在数据库中
   uuid uuid_parent_{};
   std::int32_t order_{};
 

@@ -26,6 +26,11 @@ struct DOODLELIB_API delete_t : public statement_info_base_t {
  public:
   delete_t() : state_(std::make_shared<delete_state_t>()) {}
 
+  inline delete_t set_session(const session& s) {
+    state_->s_ = s;
+    return *this;
+  }
+
   template <typename T>
   delete_t where(T&& condition_fun) {
     auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
@@ -43,6 +48,8 @@ struct DOODLELIB_API delete_t : public statement_info_base_t {
   std::string to_sql(const session& s, const to_sql_ctx& ctx) const override;
   void prepare(session& s, const to_sql_ctx& ctx) override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
+
+  operator bool() const;
 };
 inline delete_t delete_from(const session& s) {
   delete_t l_delete{};

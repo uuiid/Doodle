@@ -29,7 +29,7 @@
 
 namespace doodle::http {
 
-boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(up_file_base, post) {
   if (in_handle->content_type_ != detail::content_type::application_nuknown)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
   if (in_handle->req_header_.count(boost::beast::http::field::content_disposition) == 0)
@@ -81,7 +81,7 @@ void up_file_base::move_file(session_data_ptr in_handle) {
   FSys::rename(l_tmp_path, l_path);
   SPDLOG_LOGGER_INFO(in_handle->logger_, "转移文件 {} {}", l_tmp_path, l_path);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::head(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(up_file_base, head) {
   std::string l_name{in_handle->req_header_[boost::beast::http::field::content_disposition]};
   FSys::path l_d{l_name};
   try {
@@ -98,11 +98,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::head
   auto l_path     = l_dir / file_path_;
   co_return in_handle->make_msg(l_path, http_header_ctrl{.mine_type_ = {}});
 }
-boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(up_file_base, get) {
   query_task_info(in_handle);
   co_return in_handle->make_msg(nlohmann::json{{"file_path", gen_file_path()}});
 }
-boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::delete_(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(up_file_base, delete_) {
   query_task_info(in_handle);
   auto l_gen_path    = gen_file_path();
   auto l_dir         = root_path_ / l_gen_path;

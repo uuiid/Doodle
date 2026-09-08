@@ -11,6 +11,7 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
 #include <core/http/http_function.h>
+#include <memory>
 #include <sqlite_orm/orm/update.h>
 
 namespace doodle::http::seedance2 {
@@ -101,6 +102,7 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}/entity
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_generate_entity)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid subproject_id_{};
 uuid episode_id_{};
 DOODLE_HTTP_FUN_END()
@@ -132,6 +134,13 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(seedance2_task)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
+// 任务运行管理器: 获取运行状态 / 启动运行循环
+// /api/seedance2/task/run
+DOODLE_HTTP_JWT_FUN(seedance2_task_run)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+//
 // /api/seedance2/task/{date}-{date}
 DOODLE_HTTP_JWT_FUN(seedance2_task_date)
 DOODLE_HTTP_FUN_OVERRIDE(get)
@@ -304,6 +313,18 @@ uuid canvas_id_{};
 uuid node_id_{};
 uuid media_id_{};
 doodle::seedance2::media_role role_{};
+DOODLE_HTTP_FUN_END()
+
+// /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/depth
+DOODLE_HTTP_JWT_FUN(doodle_ai_depth_estimation_video)
+doodle_ai_depth_estimation_video();
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid subproject_id_{};
+uuid entity_id_{};
+
+private:
+class impl;
+std::shared_ptr<impl> depth_impl_;
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http::seedance2

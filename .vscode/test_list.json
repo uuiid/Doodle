@@ -1,30 +1,8 @@
 {
   "options": [
-    "xlsx_table/computing_time",
-    "dingding/access_token",
-    "dingding/get_user_by_mobile",
-    "dingding/get_attendance_updatedata",
-    "auto_light/only_server",
-    "auto_light/only_works",
-    "auto_light/server_and_works",
-    "rpc_server/base",
-    "rpc_server/list_users",
-    "kitsu/authenticated",
-    "kitsu/get_ue_plugin",
-    "kitsu/get_task_directly",
-    "kitsu/get_user",
-    "kitsu/get_task",
-    "kitsu/up_file",
-    "kitsu/up_file_ue",
-    "kitsu/create_comment_task",
-    "auto_light_test/utf16_test",
-    "move_test/add_audio",
-    "move_test/conv_audio",
-    "move_test/text_video",
     "data/http_client",
     "data/mu_sqlorm",
-    "data/sqlite_orm_dynamic_where"
-
-
+    "data/sqlite_orm_dynamic_where",
+    "geometry_axis_angle"
   ]
 }

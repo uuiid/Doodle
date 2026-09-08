@@ -38,51 +38,50 @@
 #include <vector>
 
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> departments::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments, get) {
   person_.check_admin();
   auto l_list = get_sqlite_database().get_all<department>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> departments_instance::put(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments_instance, put) {
   person_.check_admin();
-  auto l_sql            = get_sqlite_database();
-  auto l_department_ptr = std::make_shared<department>(l_sql.get_by_uuid<department>(id_));
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新部门 department_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_department_ptr->name_
-  );
-  in_handle->get_json().get_to(*l_department_ptr);
-  co_await l_sql.update(l_department_ptr);
+  using namespace orm;
+  auto l_update =
+      update(l_sql).from<department>().set_from_ref<department>(l_json).where(c(&department::uuid_id_) == id_);
+  co_await l_sql.run_sql(l_update);
+
+  auto l_department = l_sql.get_by_uuid<department>(id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新部门 department_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_department_ptr->name_
+      person_.person_.get_full_name(), id_, l_department.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_department_ptr);
+  co_return in_handle->make_msg(nlohmann::json{} = l_department);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> studios::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, get) {
   person_.check_admin();
   auto l_list = get_sqlite_database().get_all<studio>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, post) {
   person_.check_admin();
-  auto l_sql    = get_sqlite_database();
-  auto l_studio = std::make_shared<studio>();
-  in_handle->get_json().get_to(*l_studio);
-  DOODLE_CHICK(!l_studio->name_.empty(), "工作室名称不可为空");
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始创建工作室 name {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_studio->name_
-  );
-  co_await l_sql.install(l_studio);
+  auto l_sql = get_sqlite_database();
+  studio l_studio{};
+  in_handle->get_json().get_to(l_studio);
+  DOODLE_CHICK(!l_studio.name_.empty(), "工作室名称不可为空");
+
+  using namespace orm;
+  auto l_install = insert(l_sql).into<studio>().values(l_studio);
+  co_await l_sql.run_sql(l_install);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建工作室 studio_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_studio->uuid_id_, l_studio->name_
+      person_.person_.get_full_name(), l_studio.uuid_id_, l_studio.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_studio);
+  co_return in_handle->make_msg(nlohmann::json{} = l_studio);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
   person_.check_admin();
@@ -92,100 +91,110 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
       g_logger_ctrl().get_http(), "用户 {}({}) 删除 工作室 {}", person_.person_.email_, person_.person_.get_full_name(),
       l_studio.name_
   );
-  co_await l_sql.remove<studio>(l_studio.uuid_id_);
+  using namespace orm;
+  auto l_delete = delete_from(l_sql).from<studio>().where(c(&studio::uuid_id_) == l_studio.uuid_id_);
+  co_await l_sql.run_sql(l_delete);
   co_return in_handle->make_msg_204();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, put) {
   person_.check_admin();
-  auto l_sql        = get_sqlite_database();
-  auto l_studio_ptr = std::make_shared<studio>(l_sql.get_by_uuid<studio>(id_));
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+  if (l_json.contains("name")) DOODLE_CHICK(!l_json.at("name").get<std::string>().empty(), "工作室名称不可为空");
 
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新工作室 studio_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_studio_ptr->name_
-  );
-  in_handle->get_json().get_to(*l_studio_ptr);
-  DOODLE_CHICK(!l_studio_ptr->name_.empty(), "工作室名称不可为空");
-  co_await l_sql.update(l_studio_ptr);
+  using namespace orm;
+  auto l_update = update(l_sql).from<studio>().set_from_ref<studio>(l_json).where(c(&studio::uuid_id_) == id_);
+  co_await l_sql.run_sql(l_update);
+
+  auto l_studio = l_sql.get_by_uuid<studio>(id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新工作室 studio_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_studio_ptr->name_
+      person_.person_.get_full_name(), id_, l_studio.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_studio_ptr);
+  co_return in_handle->make_msg(nlohmann::json{} = l_studio);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> task_types::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_types, get) {
   person_.check_admin();
   auto l_list = get_sqlite_database().get_all<task_type>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_types, post) {
   person_.check_admin();
-  auto l_args = std::make_shared<task_type>(in_handle->get_json().get<task_type>());
+  auto l_args = in_handle->get_json().get<task_type>();
   auto l_sql  = get_sqlite_database();
-  co_await l_sql.install(l_args);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_args);
+  using namespace orm;
+  auto l_install = insert(l_sql).into<task_type>().values(l_args);
+  co_await l_sql.run_sql(l_install);
+  co_return in_handle->make_msg(nlohmann::json{} = l_args);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> custom_actions::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(custom_actions, get) {
   person_.check_admin();
 
   co_return in_handle->make_msg(nlohmann::json::array());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> status_automations::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, get) {
   person_.check_admin();
   auto l_list = get_sqlite_database().get_all<status_automation>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, post) {
   person_.check_admin();
-  auto l_sql               = get_sqlite_database();
-  auto l_status_automation = std::make_shared<status_automation>();
-  in_handle->get_json().get_to(*l_status_automation);
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始创建状态自动化", person_.person_.email_,
-      person_.person_.get_full_name()
-  );
-  co_await l_sql.install(l_status_automation);
+  auto l_sql = get_sqlite_database();
+  status_automation l_status_automation{};
+  in_handle->get_json().get_to(l_status_automation);
+
+  using namespace orm;
+  auto l_install = insert(l_sql).into<status_automation>().values(l_status_automation);
+  co_await l_sql.run_sql(l_install);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建状态自动化 status_automation_id {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_status_automation->uuid_id_
+      person_.person_.get_full_name(), l_status_automation.uuid_id_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_status_automation);
+  co_return in_handle->make_msg(nlohmann::json{} = l_status_automation);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_instance::put(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, put) {
   person_.check_admin();
-  auto l_sql            = get_sqlite_database();
-  auto l_asset_type_ptr = std::make_shared<asset_type>(l_sql.get_by_uuid<asset_type>(id_));
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新资产类型 asset_type_id {} name {} task_type_count {}",
-      person_.person_.email_, person_.person_.get_full_name(), id_, l_asset_type_ptr->name_,
-      l_asset_type_ptr->task_types_.size()
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls;
+  l_sqls.emplace_back(
+      update(l_sql).from<asset_type>().set_from_ref<asset_type>(l_json).where(c(&asset_type::uuid_id_) == id_)
   );
-  in_handle->get_json().get_to(*l_asset_type_ptr);
 
-  auto l_task_type_asset_type_link_list = std::make_shared<std::vector<task_type_asset_type_link>>();
-  for (auto&& l_task_type_id : l_asset_type_ptr->task_types_) {
-    l_task_type_asset_type_link_list->emplace_back(
-        task_type_asset_type_link{
-            .asset_type_id_ = l_asset_type_ptr->uuid_id_,
-            .task_type_id_  = l_task_type_id,
-        }
+  // 重建 task_type_asset_type_link 关联
+  if (l_json.contains("task_types")) {
+    l_sqls.emplace_back(
+        delete_from(l_sql).from<task_type_asset_type_link>().where(c(&task_type_asset_type_link::asset_type_id_) == id_)
     );
+    std::vector<task_type_asset_type_link> l_task_type_asset_type_link_list{};
+    for (auto&& l_task_type_id : l_json.at("task_types").get<std::vector<uuid>>()) {
+      l_task_type_asset_type_link_list.emplace_back(
+          task_type_asset_type_link{.asset_type_id_ = id_, .task_type_id_ = l_task_type_id}
+      );
+    }
+    if (!l_task_type_asset_type_link_list.empty())
+      l_sqls.emplace_back(
+          insert(l_sql).into<task_type_asset_type_link>().set_range(l_task_type_asset_type_link_list)
+      );
   }
-  co_await l_sql.remove_task_type_asset_type_link_by_asset_type(l_asset_type_ptr->uuid_id_);
-  co_await l_sql.install_range(l_task_type_asset_type_link_list);
-  co_await l_sql.update(l_asset_type_ptr);
+  co_await l_sql.run_sql(std::move(l_sqls));
+
+  auto l_asset_type        = l_sql.get_by_uuid<asset_type>(id_);
+  l_asset_type.task_types_ = select(l_sql)
+                                 .columns(&task_type_asset_type_link::task_type_id_)
+                                 .from<task_type_asset_type_link>()
+                                 .where(c(&task_type_asset_type_link::asset_type_id_) == id_)()
+                                 .to_vector();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新资产类型 asset_type_id {} name {} task_type_count {}",
-      person_.person_.email_, person_.person_.get_full_name(), id_, l_asset_type_ptr->name_,
-      l_asset_type_ptr->task_types_.size()
+      person_.person_.email_, person_.person_.get_full_name(), id_, l_asset_type.name_, l_asset_type.task_types_.size()
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_asset_type_ptr);
+  co_return in_handle->make_msg(nlohmann::json{} = l_asset_type);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, delete_) {
@@ -196,66 +205,76 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, delete_) {
       g_logger_ctrl().get_http(), "用户 {}({}) 删除资产类型 {}", person_.person_.email_,
       person_.person_.get_full_name(), l_asset_type.name_
   );
-  co_await l_sql.remove<asset_type>(l_asset_type.uuid_id_);
+  using namespace orm;
+  auto l_delete = delete_from(l_sql).from<asset_type>().where(c(&asset_type::uuid_id_) == l_asset_type.uuid_id_);
+  co_await l_sql.run_sql(l_delete);
   co_return in_handle->make_msg_204();
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types, post) {
   person_.check_admin();
-  auto l_args = std::make_shared<asset_type>(in_handle->get_json().get<asset_type>());
-  auto l_sql  = get_sqlite_database();
-  co_await l_sql.install(l_args);
-  auto l_task_type_asset_type_link_list = std::make_shared<std::vector<task_type_asset_type_link>>();
+  asset_type l_args = in_handle->get_json().get<asset_type>();
+  auto l_sql        = get_sqlite_database();
 
-  for (auto&& l_task_type_id : l_args->task_types_) {
-    l_task_type_asset_type_link_list->emplace_back(
+  using namespace orm;
+  auto l_install = insert(l_sql).into<asset_type>().values(l_args);
+
+  std::vector<task_type_asset_type_link> l_task_type_asset_type_link_list{};
+  for (auto&& l_task_type_id : l_args.task_types_) {
+    l_task_type_asset_type_link_list.emplace_back(
         task_type_asset_type_link{
-            .asset_type_id_ = l_args->uuid_id_,
+            .asset_type_id_ = l_args.uuid_id_,
             .task_type_id_  = l_task_type_id,
         }
     );
   }
-  if (!l_task_type_asset_type_link_list->empty()) co_await l_sql.install_range(l_task_type_asset_type_link_list);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_args);
+
+  if (l_task_type_asset_type_link_list.empty()) {
+    co_await l_sql.run_sql(l_install);
+  } else {
+    auto l_installs = insert(l_sql).into<task_type_asset_type_link>().set_range(l_task_type_asset_type_link_list);
+    co_await l_sql.run_sql(l_install, l_installs);
+  }
+  co_return in_handle->make_msg(nlohmann::json{} = l_args);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_task_status::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status, post) {
   person_.check_admin();
-  auto l_sql    = get_sqlite_database();
-  auto l_status = std::make_shared<task_status>();
-  in_handle->get_json().get_to(*l_status);
+  auto l_sql = get_sqlite_database();
+  task_status l_status{};
+  in_handle->get_json().get_to(l_status);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始创建任务状态 name {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_status->name_
+      person_.person_.get_full_name(), l_status.name_
   );
-  co_await l_sql.install(l_status);
+  using namespace orm;
+  auto l_install = insert(l_sql).into<task_status>().values(l_status);
+  co_await l_sql.run_sql(l_install);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建任务状态 task_status_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_status->uuid_id_, l_status->name_
+      person_.person_.get_full_name(), l_status.uuid_id_, l_status.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_status);
+  co_return in_handle->make_msg(nlohmann::json{} = l_status);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_instance::put(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status_instance, put) {
   person_.check_admin();
-  auto l_sql    = get_sqlite_database();
-  auto l_status = std::make_shared<task_status>(l_sql.get_by_uuid<task_status>(id_));
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新任务状态 task_status_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_status->name_
-  );
-  in_handle->get_json().get_to(*l_status);
-  co_await l_sql.update(l_status);
+  using namespace orm;
+  auto l_update =
+      update(l_sql).from<task_status>().set_from_ref<task_status>(l_json).where(c(&task_status::uuid_id_) == id_);
+  co_await l_sql.run_sql(l_update);
+
+  auto l_status = l_sql.get_by_uuid<task_status>(id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新任务状态 task_status_id {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_status->name_
+      person_.person_.get_full_name(), id_, l_status.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_status);
+  co_return in_handle->make_msg(nlohmann::json{} = l_status);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> doodle_backup::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_backup, post) {
   person_.check_admin();
   FSys::path l_file{
       core_set::get_set().get_cache_root("backup") /
@@ -298,7 +317,7 @@ boost::asio::awaitable<void> check_http_connection_count_and_stop_server() {
 }
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> doodle_stop_server::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_stop_server, post) {
   person_.check_admin();
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始停止服务器", person_.person_.email_, person_.person_.get_full_name()
@@ -323,15 +342,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_updata_logs, get) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_updata_logs, post) {
   person_.check_admin();
   using namespace orm;
-  auto l_sql         = get_sqlite_database();
-  auto l_updata_logs = std::make_shared<updata_logs>();
-  in_handle->get_json().get_to(*l_updata_logs);
-  co_await l_sql.install(l_updata_logs);
+  auto l_sql = get_sqlite_database();
+  updata_logs l_updata_logs{};
+  in_handle->get_json().get_to(l_updata_logs);
+  auto l_install = insert(l_sql).into<updata_logs>().values(l_updata_logs);
+  co_await l_sql.run_sql(l_install);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建更新日志 updata_logs_id {} log {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_updata_logs->uuid_id_, l_updata_logs->log_
+      person_.person_.get_full_name(), l_updata_logs.uuid_id_, l_updata_logs.log_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_updata_logs);
+  co_return in_handle->make_msg(nlohmann::json{} = l_updata_logs);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_production_specifications, get) {
   auto l_ctx  = g_ctx().get<kitsu_ctx_t>();

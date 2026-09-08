@@ -3,14 +3,26 @@ required:
   - type
   - frame_indices
 description: >
-  运动约束。type 决定其余字段含义：
+  运动约束。type 决定其余字段含义。
+
+  所有约束均基于 SOMA30 骨骼（由 `create_soma_skeleton_30` 创建），
+  共 30 个关节，编号 0~29（与 `bone_order_names_` 顺序一致）：
+
+  Hips, Spine1, Spine2, Chest, Neck1, Neck2, Head, Jaw, LeftEye, RightEye,
+  LeftShoulder, LeftArm, LeftForeArm, LeftHand, LeftHandThumbEnd, LeftHandMiddleEnd,
+  RightShoulder, RightArm, RightForeArm, RightHand, RightHandThumbEnd, RightHandMiddleEnd,
+  LeftLeg, LeftShin, LeftFoot, LeftToeBase, RightLeg, RightShin, RightFoot, RightToeBase
+
+  根关节为 Hips（索引 0）。
 
   - `root2d`：根轨迹约束，需 `smooth_root`，可选 `global_root_heading`
 
-  - `fullbody`：全身约束，需 `local_joints_rot`、`root_positions`，可选 `smooth_root`
+  - `fullbody`：全身约束，固定所有 30 个关节的全局位置与旋转，需
+  `local_joints_rot`（每帧 30 个关节的轴角）、`root_positions`，可选 `smooth_root`
 
   - `end-effector` / `left-hand` / `right-hand` / `left-foot` /
-  `right-foot`：末端执行器约束，需 `local_joints_rot`、`root_positions`，可选
+  `right-foot`：末端执行器约束，固定指定关节（`joint_names`）的全局位置与旋转，
+  需 `local_joints_rot`（每帧 30 个关节的轴角）、`root_positions`，可选
   `smooth_root`、`joint_names`
 properties:
   type:
@@ -49,7 +61,10 @@ properties:
     description: 全局根朝向序列（每帧 [cos, sin]，选填）
   local_joints_rot:
     type: array
-    description: 局部关节旋转（轴角，可 [K, J, 3] 或 [K*J, 3] 扁平格式）
+    description: >-
+      局部关节旋转（轴角，可 [K, J, 3] 或 [K*J, 3] 扁平格式）。J 为骨骼关节数，
+      SOMA30 骨骼 J=30，即每帧 30 个关节、每个关节 3 个轴角分量；扁平格式总行数须为
+      K*30。
     items:
       type: array
       items:
@@ -62,9 +77,12 @@ properties:
       maxItems: 3
       items:
         type: number
-    description: 根关节世界坐标序列（每帧 [x, y, z]）
+    description: 根关节（Hips，索引 0）世界坐标序列（每帧 [x, y, z]），共 K 帧
   joint_names:
     type: array
     items:
       type: string
-    description: 约束关节名称列表（end-effector 系列选填）
+    description: >-
+      约束关节名称列表（end-effector 系列选填）。取值须为上述 30 个关节名之一；
+      缺省时 end-effector 不选任何关节（应显式给出），left-hand/right-hand/left-foot/
+      right-foot 分别固定为 LeftHand/RightHand/LeftFoot/RightFoot。

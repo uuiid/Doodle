@@ -30,6 +30,17 @@ struct database_t {
 
   std::string dingding_id_{};  // 钉钉id
   uuid person_id_{};
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"start_time", &database_t::start_time_},   //
+        std::pair{"end_time", &database_t::end_time_},       //
+        std::pair{"remark", &database_t::remark_},           //
+        std::pair{"type", &database_t::type_},               //
+        // std::pair{"create_date", &database_t::create_date_}  //
+    };
+  }
+
   friend void to_json(nlohmann::json& j, const database_t& p) {
     j["id"]         = p.uuid_id_;
     j["start_time"] = p.start_time_;

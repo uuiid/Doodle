@@ -53,7 +53,7 @@ std::string get_file_deflate(const FSys::path& in_path) {
 }
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(kitsu_front_end, get) {
   auto l_path = make_doc_path(root_path_, in_handle->url_.segments());
 
   co_return in_handle->make_msg(
@@ -64,7 +64,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::g
               }
   );
 }
-boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::head(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(kitsu_front_end, head) {
   auto l_path = make_doc_path(root_path_, in_handle->url_.segments());
   boost::beast::http::response<boost::beast::http::file_body> l_res{
       boost::beast::http::status::ok, in_handle->version_

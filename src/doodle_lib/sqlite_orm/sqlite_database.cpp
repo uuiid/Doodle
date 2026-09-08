@@ -63,6 +63,7 @@
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 #include <tuple>
+#include <variant>
 #include <vector>
 
 namespace doodle {
@@ -93,6 +94,7 @@ void sqlite_storage::regs_all() {
       .add_column("completion_tokens", &seedance2::task::completion_tokens_)
       .add_column("ai_generate_entity_id", &seedance2::task::ai_generate_entity_id_)
       .add_column("subproject_id", &seedance2::task::subproject_id_)
+      .add_column("retry_count", &seedance2::task::retry_count_)
       .add_column("archived", &seedance2::task::archived_)
       .add_foreign_key(&seedance2::task::project_uuid_id_, &project::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&seedance2::task::user_id_, &person::uuid_id_, foreign_key_action::set_null)
@@ -155,6 +157,7 @@ void sqlite_storage::regs_all() {
       .add_column("subproject_id", &seedance2::ai_episode::subproject_id_, not_null())
       .add_column("entity_id", &seedance2::ai_episode::entity_id_)
       .add_column("created_at", &seedance2::ai_episode::created_at_)
+      .add_column("limit_count", &seedance2::ai_episode::limit_count_, default_value("0"s))
       .add_foreign_key(&seedance2::ai_episode::entity_id_, &entity::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(
           &seedance2::ai_episode::subproject_id_, &seedance2::subproject::uuid_id_, foreign_key_action::cascade
@@ -193,6 +196,8 @@ void sqlite_storage::regs_all() {
       .add_column("shot_uuid_id", &seedance2::ai_generate_entity::shot_uuid_id_)
       .add_column("project_uuid_id", &seedance2::ai_generate_entity::project_uuid_id_, not_null())
       .add_column("preview_file", &seedance2::ai_generate_entity::preview_file_)
+      .add_column("generate_count", &seedance2::ai_generate_entity::generate_count_, default_value("0"s))
+      .add_column("main_task_id", &seedance2::ai_generate_entity::main_task_id_)
       .add_foreign_key(
           &seedance2::ai_generate_entity::ai_episode_id_, &seedance2::ai_episode::uuid_id_, foreign_key_action::cascade
       )
@@ -207,6 +212,9 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(
           &seedance2::ai_generate_entity::preview_file_, &seedance2::ai_preview_file::uuid_id_,
           foreign_key_action::set_null
+      )
+      .add_foreign_key(
+          &seedance2::ai_generate_entity::main_task_id_, &seedance2::task::uuid_id_, foreign_key_action::set_null
       );
 
   reg_table<seedance2::ai_entity_reference_preview>("seedance2_ai_entity_reference_preview")
@@ -394,7 +402,11 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(
           &work_xlsx_task_info_helper::database_t::person_id_, &person::uuid_id_, foreign_key_action::cascade
       )
-      .add_index(&work_xlsx_task_info_helper::database_t::year_month_);
+      .add_index(&work_xlsx_task_info_helper::database_t::year_month_)
+      .add_unique_index(
+          &work_xlsx_task_info_helper::database_t::kitsu_task_ref_id_,
+          &work_xlsx_task_info_helper::database_t::year_month_, &work_xlsx_task_info_helper::database_t::person_id_
+      );
 
   reg_table<attachment_file>("attachment_file")
       .add_column("id", &attachment_file::id_, primary_key(), autoincrement())
@@ -1118,6 +1130,23 @@ void sqlite_storage::upgrade() {
     l_s.pragma().recursive_triggers(true);
     l_s.pragma().journal_mode(orm::journal_mode_t::wal);
   }
+}
+
+boost::asio::awaitable<void> sqlite_database::run_sql(orm::sql_modify_statement_vector_t in_sqls) {
+  for (auto&& i : in_sqls) std::visit([&](auto&& in_sql) { in_sql.set_session(session_); }, i);
+
+  DOODLE_TO_SQLITE_THREAD()
+  auto l_g = session_.transaction();
+  for (auto&& i : in_sqls)
+    std::visit(
+        [&](auto&& in_sql) {
+          if (in_sql) in_sql();
+        },
+        i
+    );
+
+  l_g.commit();
+  DOODLE_TO_SELF();
 }
 
 boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {

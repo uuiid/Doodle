@@ -18,9 +18,7 @@
 
 namespace doodle::http::model_library {
 
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets::get(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets, get) {
   person_.check_user();
   using namespace orm;
   auto l_sql  = get_sqlite_database();
@@ -41,9 +39,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   l_json = l_list;
   co_return in_handle->make_msg(l_json);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets::post(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets, post) {
   person_.check_supervisor();
   auto l_json                                           = in_handle->get_json();
   std::shared_ptr<assets_file_helper::database_t> l_ptr = std::make_shared<assets_file_helper::database_t>();
@@ -71,22 +67,22 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_instance::put(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_instance, put) {
   person_.check_supervisor();
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
-  std::shared_ptr<assets_file_helper::database_t> const l_ptr =
-      std::make_shared<assets_file_helper::database_t>(l_sql.get_by_uuid<assets_file_helper::database_t>(id_));
-  in_handle->get_json().get_to(*l_ptr);
-  co_await l_sql.update<assets_file_helper::database_t>(l_ptr);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql)
+          .from<assets_file_helper::database_t>()
+          .set_from_ref<assets_file_helper::database_t>(l_json)
+          .where(c(&assets_file_helper::database_t::uuid_id_) == id_)
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<assets_file_helper::database_t>(id_));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_instance::delete_(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_instance, delete_) {
   person_.check_supervisor();
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 删除 资产库文件 {} ", person_.person_.email_,

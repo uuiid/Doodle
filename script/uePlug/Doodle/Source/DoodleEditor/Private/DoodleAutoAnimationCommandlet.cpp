@@ -1311,39 +1311,10 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 	if (UMoviePipelineConsoleVariableSetting* ConsoleVar = Cast<UMoviePipelineConsoleVariableSetting>(
 		Config->FindOrAddSettingByClass(UMoviePipelineConsoleVariableSetting::StaticClass())))
 	{
-		ConsoleVar->AddOrUpdateConsoleVariable("r.ScreenPercentage", 100.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.AmbientOcclusion.Denoiser", 0.0);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.AmbientOcclusion.Denoiser.TemporalAccumulation", 0.0);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.DiffuseIndirect.Denoiser", 0.0);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.Reflections.Denoiser", 0.0);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.Reflections.Denoiser.ReconstructionSamples", 0.0);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.Shadow.Denoiser", 0.0);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.Shadow.Denoiser.TemporalAccumulation", 0.0);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.GlobalIllumination.Denoiser.TemporalAccumulation", 0.0);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.MotionBlurQuality", 4.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.MotionBlurSeparable", 1.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.DepthOfFieldQuality", 4.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.BloomQuality", 5.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.Tonemapper.Quality", 5.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.RayTracing.Shadows.SamplesPerPixel", 64.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.Tonemapper.Sharpen", 1.500000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.TemporalAASamples", 32.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.TemporalAACurrentFrameWeight", 0.100000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.SSR.Quality", 4.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.SSR.HalfResSceneColor", 0.0);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.ShadowQuality", 5.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.Shadow.MaxResolution", 4096.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.Shadow.DistanceScale", 2.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.AmbientOcclusionLevels", 3.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.AmbientOcclusionRadiusScale", 2.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.Streaming.MipBias", -3.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.MaxAnisotropy", 16.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.HZBOcclusion", 1.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.VolumetricFog", 1.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.DepthOfFieldQuality", 4.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.MotionBlurQuality", 4.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.VT.TileSize", 128.000000);
-		ConsoleVar->AddOrUpdateConsoleVariable("r.VT.PoolSizeScale", 6);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.MotionBlurQuality", 0.0);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.DefaultFeature.MotionBlur", 0.0);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.Streaming.UseFixedPoolSize", 1.0);
+		ConsoleVar->AddOrUpdateConsoleVariable("r.Streaming.PoolSize", 4096.0);
 	}
 
 	// 设置抗拒齿方法

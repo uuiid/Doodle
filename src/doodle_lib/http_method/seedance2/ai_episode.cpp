@@ -20,7 +20,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode, get) {
   auto l_result = select(l_sql)
                       .columns(object<sd2::ai_episode>())
                       .from<sd2::ai_episode>()
-                      .where(c(&sd2::ai_episode::subproject_id_) == subproject_id_)()
+                      .where(c(&sd2::ai_episode::subproject_id_) == subproject_id_)
+                      .order_by(&sd2::ai_episode::name_)()
                       .to_vector();
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
@@ -36,13 +37,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode, post) {
   l_episode->subproject_id_ = subproject_id_;
   using namespace orm;
   auto l_limit            = std::make_shared<sd2::ai_episode_model_resolution_limit>();
-  auto l_install_1 = insert(l_sql).into<sd2::ai_episode>().values(*l_episode);
+  auto l_install_1        = insert(l_sql).into<sd2::ai_episode>().values(*l_episode);
   l_limit->ai_episode_id_ = l_episode->uuid_id_;
   l_limit->model_name_    = "doubao-seedance-2-0-mini-260615";
   l_limit->resolution_    = "480p";
-  auto l_install_2 = insert(l_sql).into<sd2::ai_episode_model_resolution_limit>().values(*l_limit);
+  auto l_install_2        = insert(l_sql).into<sd2::ai_episode_model_resolution_limit>().values(*l_limit);
   co_await l_sql.run_sql(l_install_1, l_install_2);
-  
+
   co_return in_handle->make_msg(nlohmann::json{} = *l_episode);
 }
 
@@ -59,16 +60,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, get
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, put) {
   person_.check_manager();
   person_.check_not_outsourcer();
-  auto l_sql     = get_sqlite_database();
-  auto l_json    = in_handle->get_json();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
-  auto l_episode = std::make_shared<sd2::ai_episode>(l_sql.get_by_uuid<sd2::ai_episode>(episode_id_));
-  if (l_json.contains("name")) l_json.at("name").get_to(l_episode->name_);
-  if (l_json.contains("description")) l_json.at("description").get_to(l_episode->description_);
+  using namespace orm;
+  auto l_update = update(l_sql).from<sd2::ai_episode>().set_from_ref<sd2::ai_episode>(l_json).where(
+      c(&sd2::ai_episode::uuid_id_) == episode_id_
+  );
+  co_await l_sql.run_sql(l_update);
 
-  co_await l_sql.update(l_episode);
-
-  co_return in_handle->make_msg(nlohmann::json{} = *l_episode);
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::ai_episode>(episode_id_));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, delete_) {

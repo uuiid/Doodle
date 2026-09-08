@@ -545,9 +545,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
 }
 }  // namespace auto_task
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_export_rig_sk::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_rig_sk, get) {
   auto l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<task>(task_id_);
   if (l_task.task_type_id_ != task_type::get_binding_id() && l_task.task_type_id_ != task_type::get_simulation_id())
@@ -682,9 +680,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_export_anim_fbx::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_anim_fbx, get) {
   auto l_sql            = get_sqlite_database();
   auto l_task           = l_sql.get_by_uuid<task>(task_id_);
   auto l_proj           = l_sql.get_by_uuid<project>(l_task.project_id_);
@@ -710,7 +706,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync, get) {
   auto l_sql            = get_sqlite_database();
   auto l_task           = l_sql.get_by_uuid<task>(task_id_);
   auto l_shot_entity    = l_sql.get_by_uuid<entity>(l_task.entity_id_);

@@ -22,6 +22,19 @@ struct DOODLE_CORE_API playlist {
 
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"name", &playlist::name_},                   //
+        std::pair{"project_id", &playlist::project_id_},       //
+        std::pair{"task_type_id", &playlist::task_type_id_},   //
+        std::pair{"for_client", &playlist::for_client_},       //
+        std::pair{"for_entity", &playlist::for_entity_},       //
+        std::pair{"episodes_id", &playlist::episodes_id_},     //
+        std::pair{"is_for_all", &playlist::is_for_all_},       //
+    };
+  }
+
   // to json
   friend void to_json(nlohmann::json& j, const playlist& p) {
     j["id"]           = p.uuid_id_;
@@ -54,6 +67,15 @@ struct DOODLE_CORE_API playlist_shot {
   uuid entity_id_;
   uuid preview_id_;
   std::int32_t order_index_;
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"entity_id", &playlist_shot::entity_id_},        //
+        std::pair{"sequence_id", &playlist_shot::entity_id_},      //
+        std::pair{"preview_file_id", &playlist_shot::preview_id_}, //
+        std::pair{"order_index", &playlist_shot::order_index_},    //
+    };
+  }
 
   // from json
   friend void from_json(const nlohmann::json& j, playlist_shot& p) {

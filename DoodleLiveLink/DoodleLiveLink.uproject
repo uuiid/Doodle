@@ -1,0 +1,10 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{25D896BF-4A9A-226F-C40C-2FACF327C549}",
+	"Category": "",
+	"Description": "",
+	"TargetPlatforms": [
+		"Windows"
+	],
+	"DisableEnginePluginsByDefault": true
+}

@@ -127,7 +127,7 @@ session_data::session_data(boost::asio::ip::tcp::socket in_socket, http_route_pt
       ) {
 }
 
-boost::asio::awaitable<void> session_data::run() try {
+boost::asio::awaitable<void> session_data::run() {
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     request_parser_ = std::make_shared<empty_request_parser_type>();
     std::visit([](auto&& in_ptr) { in_ptr->body_limit(g_body_limit); }, request_parser_);
@@ -164,9 +164,6 @@ boost::asio::awaitable<void> session_data::run() try {
     if (!keep_alive_) co_return;
     stream_->expires_after(timeout_);
   }
-} catch (...) {
-  // auto l_err_str = boost::current_exception_diagnostic_information();
-  // SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), l_err_str);
 }
 
 void session_data::set_session() {

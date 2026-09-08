@@ -4,6 +4,8 @@
 #include <doodle_core/metadata/base.h>
 
 #include <string>
+#include <tuple>
+#include <utility>
 
 namespace doodle::seedance2 {
 /// 这个是 ai 生成中的实体, 包含有一系列 task 任务, 用来生成视频或者图片
@@ -17,6 +19,23 @@ struct DOODLE_CORE_API ai_generate_entity {
   uuid shot_uuid_id_;     // 选填 对应的 entity.h 
   uuid project_uuid_id_;  // 必填 内部使用的UUID，对应项目中的uuid_id_
   uuid preview_file_;     // 选填 对应 ai_preview_file
+
+  std::int64_t generate_count_{0};  // 生成次数
+  uuid main_task_id_;               // 主要 task, 对应 task.h
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"name", &ai_generate_entity::name_},
+        // std::pair{"ai_episode_id", &ai_generate_entity::ai_episode_id_},
+        std::pair{"description", &ai_generate_entity::description_},
+        // std::pair{"ai_category_id", &ai_generate_entity::ai_category_id_},
+        // std::pair{"shot_uuid_id", &ai_generate_entity::shot_uuid_id_},
+        // std::pair{"project_uuid_id", &ai_generate_entity::project_uuid_id_},
+        std::pair{"preview_file", &ai_generate_entity::preview_file_},
+        std::pair{"main_task_id", &ai_generate_entity::main_task_id_}
+    };
+  }
+
   // to json
   friend void to_json(nlohmann::json& j, const ai_generate_entity& p) {
     j["id"]              = p.uuid_id_;
@@ -27,6 +46,8 @@ struct DOODLE_CORE_API ai_generate_entity {
     j["shot_uuid_id"]    = p.shot_uuid_id_;
     j["project_uuid_id"] = p.project_uuid_id_;
     j["preview_file"]    = p.preview_file_;
+    j["generate_count"]  = p.generate_count_;
+    j["main_task_id"]    = p.main_task_id_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, ai_generate_entity& p) {
@@ -37,6 +58,8 @@ struct DOODLE_CORE_API ai_generate_entity {
     if (j.contains("description")) j.at("description").get_to(p.description_);
     if (j.contains("shot_uuid_id")) j.at("shot_uuid_id").get_to(p.shot_uuid_id_);
     if (j.contains("preview_file")) j.at("preview_file").get_to(p.preview_file_);
+    if (j.contains("generate_count")) j.at("generate_count").get_to(p.generate_count_);
+    if (j.contains("main_task_id")) j.at("main_task_id").get_to(p.main_task_id_);
   }
 };
 

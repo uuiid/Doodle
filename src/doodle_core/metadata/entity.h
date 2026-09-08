@@ -83,6 +83,13 @@ struct DOODLE_CORE_API entity_shot_extend {
 
   static bool has_extend_data(const nlohmann::json& j) { return j.contains("frame_in") || j.contains("frame_out"); }
 
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"frame_in", &entity_shot_extend::frame_in_},
+        std::pair{"frame_out", &entity_shot_extend::frame_out_},
+    };
+  }
+
   // to json
   friend void to_json(nlohmann::json& j, const entity_shot_extend& p) {
     j["entity_id"] = p.entity_id_;
@@ -126,6 +133,20 @@ struct DOODLE_CORE_API entity_asset_extend {
     return j.contains("ji_shu_lie") || j.contains("deng_ji") || j.contains("gui_dang") || j.contains("bian_hao") ||
            j.contains("pin_yin_ming_cheng") || j.contains("ban_ben") || j.contains("ji_du") ||
            j.contains("kai_shi_ji_shu") || j.contains("chang_ci");
+  }
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"ji_shu_lie", &entity_asset_extend::ji_shu_lie_},                  //
+        std::pair{"deng_ji", &entity_asset_extend::deng_ji_},                        //
+        std::pair{"gui_dang", &entity_asset_extend::gui_dang_},                      //
+        std::pair{"bian_hao", &entity_asset_extend::bian_hao_},                      //
+        std::pair{"pin_yin_ming_cheng", &entity_asset_extend::pin_yin_ming_cheng_},  //
+        std::pair{"ban_ben", &entity_asset_extend::ban_ben_},                        //
+        std::pair{"ji_du", &entity_asset_extend::ji_du_},                            //
+        std::pair{"kai_shi_ji_shu", &entity_asset_extend::kai_shi_ji_shu_},          //
+        std::pair{"chang_ci", &entity_asset_extend::chang_ci_},                      //
+    };
   }
 
   // to json
@@ -242,6 +263,21 @@ struct DOODLE_CORE_API entity {
   std::vector<uuid> entities_out;
   std::vector<uuid> entity_concept_links_;
   std::vector<uuid> instance_casting_;
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"description", &entity::description_},               //
+        std::pair{"entity_type_id", &entity::entity_type_id_},         //
+        std::pair{"is_shared", &entity::is_shared_},                   //
+        std::pair{"name", &entity::name_},                             //
+        std::pair{"ready_for", &entity::ready_for_},                   //
+        std::pair{"canceled", &entity::canceled_},                     //
+        std::pair{"code", &entity::code_},                             //
+        std::pair{"status", &entity::status_},                         //
+        std::pair{"is_casting_standby", &entity::is_casting_standby_}, //
+        std::pair{"parent_id", &entity::parent_id_},                   //
+    };
+  }
 
   // to json
   friend void to_json(nlohmann::json& j, const entity& p) {

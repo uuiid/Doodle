@@ -41,6 +41,11 @@ void broadcast(const Struct& in_struct, const std::shared_ptr<sid_ctx>& in_ctx =
       std::string{in_struct.event_name_}, nlohmann::json{} = in_struct, std::string{in_struct.namespace_}, in_ctx
   );
 }
+// 延迟广播, 直到调用
+template <BroadcastStruct Struct>
+auto broadcast_deferred(const Struct& in_struct, const std::shared_ptr<sid_ctx>& in_ctx = nullptr) {
+  return [in_struct, in_ctx]() { broadcast(in_struct, in_ctx); };
+}
 
 struct asset_new_broadcast_t {
   static constexpr std::string_view event_name_ = "asset:new";
@@ -429,6 +434,20 @@ struct seedance2_task_update_broadcast_t {
   friend void to_json(nlohmann::json& j, const seedance2_task_update_broadcast_t& p) {
     j["task_id"] = p.task_id_;
     j["status"]  = p.status_;
+  }
+};
+
+struct seedance2_entity_reference_new_broadcast_t {
+  static constexpr std::string_view event_name_ = "seedance2:entity-reference:new";
+  static constexpr std::string_view namespace_  = "/events";
+  uuid reference_id_;
+  uuid entity_id_;
+  uuid preview_file_id_;
+  // to json
+  friend void to_json(nlohmann::json& j, const seedance2_entity_reference_new_broadcast_t& p) {
+    j["reference_id"]    = p.reference_id_;
+    j["entity_id"]       = p.entity_id_;
+    j["preview_file_id"] = p.preview_file_id_;
   }
 };
 

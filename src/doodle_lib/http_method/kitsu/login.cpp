@@ -31,7 +31,7 @@ struct login_data {
 };
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> authenticated::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(authenticated, get) {
   nlohmann::json l_r{};
   l_r["authenticated"] = true;
   l_r["user"]          = person_.person_;
@@ -40,39 +40,49 @@ boost::asio::awaitable<boost::beast::http::message_generator> authenticated::get
   co_return in_handle->make_msg(l_r.dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> organisations::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(organisations, get) {
   auto l_org = get_sqlite_database().get_all<organisation>();
   co_return in_handle->make_msg((nlohmann::json{l_org.empty() ? organisation::get_default() : l_org.front()}).dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_login, post) {
   auto l_data = in_handle->get_json().get<login_data>();
   auto l_sql  = get_sqlite_database();
 
   if (l_data.email_.empty() || l_data.password_.empty())
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "email 或 password 为空"});
-  auto l_p = std::make_shared<person>(l_sql.get_person_for_email(l_data.email_));
-  if (!l_p->active_) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "用户未激活"});
+  auto l_p = l_sql.get_person_for_email(l_data.email_);
+  if (!l_p.active_) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "用户未激活"});
 
-  if (l_p->login_failed_attemps_ > 5 && l_p->last_login_failed_ &&
-      (l_p->last_login_failed_->get_sys_time() + 1min) > chrono::system_clock::now())
+  if (l_p.login_failed_attemps_ > 5 && l_p.last_login_failed_ &&
+      (l_p.last_login_failed_->get_sys_time() + 1min) > chrono::system_clock::now())
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "密码错误超过5次,请1分钟后再试"});
 
-  if (!bcrypt::validatePassword(l_data.password_, l_p->password_)) {
-    ++l_p->login_failed_attemps_;
-    l_p->last_login_failed_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-    co_await l_sql.update(l_p);
+  if (!bcrypt::validatePassword(l_data.password_, l_p.password_)) {
+    using namespace orm;
+    co_await l_sql.run_sql(
+        update(l_sql)
+            .from<person>()
+            .set(c(&person::login_failed_attemps_) = c(&person::login_failed_attemps_) + 1)
+            .set(c(&person::last_login_failed_) =
+                     std::optional{chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}})
+            .where(c(&person::uuid_id_) == l_p.uuid_id_)
+    );
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "密码错误"});
   }
-  if (l_p->login_failed_attemps_ > 0) {
-    l_p->login_failed_attemps_ = 0;
-    co_await l_sql.update(l_p);
+  if (l_p.login_failed_attemps_ > 0) {
+    using namespace orm;
+    co_await l_sql.run_sql(
+        update(l_sql).from<person>().set(c(&person::login_failed_attemps_) = 0).where(
+            c(&person::uuid_id_) == l_p.uuid_id_
+        )
+    );
   }
-  default_logger_raw()->info("用户 {} 登录", l_p->email_);
+  default_logger_raw()->info("用户 {} 登录", l_p.email_);
 
   nlohmann::json l_json{};
 
-  l_json["user"]         = *l_p;
+  l_json["user"]         = l_p;
   auto l_org             = l_sql.get_all<organisation>();
   l_json["organisation"] = l_org.empty() ? organisation::get_default() : l_org.front();
   l_json["login"]        = true;
@@ -80,8 +90,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(s
   auto l_access_token    = jwt::create()
                             .set_payload_claim("identity_type", jwt::claim{"person"s})
                             .set_issued_at(chrono::system_clock::now())
-                            .set_id(fmt::to_string(l_p->uuid_id_))
-                            .set_subject(fmt::to_string(l_p->uuid_id_))
+                            .set_id(fmt::to_string(l_p.uuid_id_))
+                            .set_subject(fmt::to_string(l_p.uuid_id_))
                             .set_not_before(chrono::system_clock::now())
                             .set_expires_at(chrono::system_clock::now() + chrono::days{7})
                             .sign(jwt::algorithm::hs256{l_ctx.secret_});
@@ -89,8 +99,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(s
   auto l_refresh_token   = jwt::create()
                              .set_payload_claim("identity_type", jwt::claim{"person"s})
                              .set_issued_at(chrono::system_clock::now())
-                             .set_id(fmt::to_string(l_p->uuid_id_))
-                             .set_subject(fmt::to_string(l_p->uuid_id_))
+                             .set_id(fmt::to_string(l_p.uuid_id_))
+                             .set_subject(fmt::to_string(l_p.uuid_id_))
                              .set_not_before(chrono::system_clock::now())
                              .set_expires_at(chrono::system_clock::now() + chrono::days{15})
                              .sign(jwt::algorithm::hs256{l_ctx.secret_});
@@ -124,7 +134,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(s
   co_return boost::beast::http::message_generator{std::move(l_res)};
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> auth_refresh_token::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_refresh_token, get) {
   default_logger_raw()->info("用户 {} 刷新 token", person_.person_.email_);
 
   nlohmann::json l_json{};

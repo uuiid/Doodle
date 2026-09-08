@@ -4,6 +4,8 @@
 #include <doodle_core/metadata/base.h>
 
 #include <string>
+#include <tuple>
+#include <utility>
 
 namespace doodle::seedance2 {
 enum class DOODLE_CORE_API ai_category_type {
@@ -16,6 +18,15 @@ struct DOODLE_CORE_API ai_category {
   std::string name_;                               ///< 类别名称 必填
   std::string description_;                        ///< 类别描述 选填
   ai_category_type type_{ai_category_type::shot};  ///< 类别类型 必填
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"name", &ai_category::name_},
+        std::pair{"description", &ai_category::description_},
+        // std::pair{"type", &ai_category::type_}
+    };
+  }
+
   // to json
   friend void to_json(nlohmann::json& j, const ai_category& p) {
     j["id"]          = p.uuid_id_;

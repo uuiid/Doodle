@@ -145,29 +145,11 @@ class DOODLELIB_API sqlite_database {
     install_unsafe<T>(in_data);
     DOODLE_TO_SELF();
   }
-  template <typename T>
-  boost::asio::awaitable<void> update(std::shared_ptr<T> in_data) {
-    DOODLE_CHICK(in_data, "不可传入空指针");
-    if constexpr (has_uuid_id<T>) {
-      DOODLE_CHICK(!in_data->uuid_id_.is_nil(), "传入的数据实体 uuid_id_ 为空");
-      in_data->id_ = uuid_to_id<T>(in_data->uuid_id_);
-    }
-    DOODLE_CHICK(in_data->id_ != 0, "不可传入空指针");
 
-    DOODLE_TO_SQLITE_THREAD();
-    update_unsafe<T>(in_data);
-    DOODLE_TO_SELF();
-  }
   template <typename T>
   void install_unsafe(std::shared_ptr<T> in_data) {
     using namespace orm;
     in_data->id_ = orm::insert(*this).into<T>().values(*in_data)();
-  }
-
-  template <typename T>
-  void update_unsafe(std::shared_ptr<T> in_data) {
-    using namespace orm;
-    orm::update(*this).from<T>().set_value(*in_data).where(c(&T::id_) == in_data->id_)();
   }
 
   /**
@@ -222,7 +204,7 @@ class DOODLELIB_API sqlite_database {
         l_is_begin = false;
         l_update.set_value(i)();
       } else
-        l_update.rebind(i)();
+        l_update.rebind_obj(i)();
     }
     l_g.commit();
     DOODLE_TO_SELF();
@@ -295,12 +277,18 @@ class DOODLELIB_API sqlite_database {
 
   template <typename... Args>
   boost::asio::awaitable<void> run_sql(Args&&... args) {
+    (args.set_session(session_), ...);
     DOODLE_TO_SQLITE_THREAD();
     auto l_g = session_.transaction();
-    (std::invoke(std::forward<Args>(args)), ...);
+    (
+        [&]() {
+          if (args) std::invoke(std::forward<Args>(args));
+        }(),
+        ...);
     l_g.commit();
     DOODLE_TO_SELF();
   }
+  boost::asio::awaitable<void> run_sql(orm::sql_modify_statement_vector_t in_sqls);
 
   std::vector<attendance_helper::database_t> get_attendance(
       const uuid& in_person_id, const chrono::local_days& in_data

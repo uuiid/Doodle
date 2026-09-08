@@ -86,6 +86,7 @@ FSys::path play_blast::play_blast_(const MTime& in_start, const MTime& in_end, c
   MGlobal::executeCommand(R"(setAttr "hardwareRenderingGlobals.multiSampleEnable" 0;)");
   MGlobal::executeCommand(R"(setAttr "hardwareRenderingGlobals.ssaoEnable" 0;)");
   MGlobal::executeCommand(R"(setAttr "hardwareRenderingGlobals.textureMaxResMode" 0;)");
+  MGlobal::executeCommand(R"(setAttr "hardwareRenderingGlobals.renderMode" 3;)");
   MStatus k_s{};
 
   auto k_cam = maya_camera::conjecture();

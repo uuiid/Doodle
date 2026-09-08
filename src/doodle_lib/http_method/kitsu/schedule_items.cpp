@@ -12,18 +12,14 @@
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_schedule_items_task_types::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_schedule_items_task_types, get) {
   co_return in_handle->make_msg(nlohmann::json::array());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_schedule_items::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_schedule_items, get) {
   co_return in_handle->make_msg(nlohmann::json::array());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_milestones::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_milestones, get) {
   co_return in_handle->make_msg(nlohmann::json::array());
 }
 

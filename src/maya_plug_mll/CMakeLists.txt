@@ -37,8 +37,6 @@ set_target_properties(
         doodle_maya PROPERTIES SUFFIX "_${Maya_Version}.mll"
 )
 
-configure_file(doodle.mod.in ${PROJECT_BINARY_DIR}/plug/maya/doodle.mod)
-
 # 添加fbx动态库复制
 add_custom_command(
         TARGET doodle_maya

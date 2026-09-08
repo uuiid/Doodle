@@ -43,3 +43,4 @@ target_sources(
 
 add_subdirectory(AnimProcessing)
 add_subdirectory(Math)
+add_subdirectory(depth_anything)

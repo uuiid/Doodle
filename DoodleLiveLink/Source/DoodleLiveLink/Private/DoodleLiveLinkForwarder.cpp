@@ -1,0 +1,184 @@
+// Copyright Epic Games, Inc. All Rights Reserved.
+
+#include "DoodleLiveLinkForwarder.h"
+
+#include "DoodleLiveLink.h"
+#include "Features/IModularFeatures.h"
+#include "ILiveLinkClient.h"
+#include "LiveLinkFaceSourceBlueprint.h"
+#include "LiveLinkRole.h"
+
+FDoodleLiveLinkForwarder::~FDoodleLiveLinkForwarder()
+{
+	UnregisterFrameCallback();
+}
+
+void FDoodleLiveLinkForwarder::SetFrameSink(TFunction<void(const FLiveLinkBaseFrameData&)> InSink)
+{
+	FrameSink = MoveTemp(InSink);
+}
+
+void FDoodleLiveLinkForwarder::ConnectSource(const FString& InAddress, uint16 InPort, const FString& InSubjectName)
+{
+	LiveLinkFaceAddress = InAddress;
+	LiveLinkFacePort = InPort;
+	LiveLinkFaceSubjectName = InSubjectName;
+
+	if (!bLiveLinkFaceSourceCreated)
+	{
+		bool bSucceeded = false;
+		ULiveLinkFaceSourceBlueprint::CreateLiveLinkFaceSource(LiveLinkFaceSourceHandle, bSucceeded);
+		if (!bSucceeded)
+		{
+			UE_LOG(LogDoodleLiveLink, Error, TEXT("创建 Live Link Face 源失败"));
+			return;
+		}
+
+		bLiveLinkFaceSourceCreated = true;
+	}
+
+	bool bConnected = false;
+	ULiveLinkFaceSourceBlueprint::Connect(LiveLinkFaceSourceHandle, LiveLinkFaceSubjectName, LiveLinkFaceAddress, bConnected, LiveLinkFacePort);
+
+	if (!bConnected)
+	{
+		UE_LOG(LogDoodleLiveLink, Error, TEXT("Live Link Face 源连接失败（%s:%d）"), *LiveLinkFaceAddress, LiveLinkFacePort);
+		return;
+	}
+
+	UE_LOG(LogDoodleLiveLink, Log, TEXT("Live Link Face 源已连接（%s:%d, Subject=%s）"), *LiveLinkFaceAddress, LiveLinkFacePort, *LiveLinkFaceSubjectName);
+
+	RegisterFrameCallback();
+}
+
+void FDoodleLiveLinkForwarder::RegisterFrameCallback()
+{
+	UnregisterFrameCallback();
+
+	ILiveLinkClient* LiveLinkClient = nullptr;
+	if (IModularFeatures::Get().IsModularFeatureAvailable(ILiveLinkClient::ModularFeatureName))
+	{
+		LiveLinkClient = &IModularFeatures::Get().GetModularFeature<ILiveLinkClient>(ILiveLinkClient::ModularFeatureName);
+	}
+
+	if (!LiveLinkClient)
+	{
+		return;
+	}
+
+	// subject 由源异步创建，且 OnLiveLinkSubjectAdded 广播早于 SetSubjectEnabled，
+	// 因此同时监听「添加」与「启用」事件，确保 subject 启用后再注册帧回调。
+	LiveLinkSubjectAddedHandle = LiveLinkClient->OnLiveLinkSubjectAdded().AddRaw(this, &FDoodleLiveLinkForwarder::OnLiveLinkSubjectAdded);
+	LiveLinkSubjectEnabledChangedHandle = LiveLinkClient->OnLiveLinkSubjectEnabledChanged().AddRaw(this, &FDoodleLiveLinkForwarder::OnLiveLinkSubjectEnabledChanged);
+
+	// 重连时 Subject 可能已存在，立即尝试注册一次。
+	TryRegisterLiveLinkFaceFrames();
+}
+
+void FDoodleLiveLinkForwarder::UnregisterFrameCallback()
+{
+	ILiveLinkClient* LiveLinkClient = nullptr;
+	if (IModularFeatures::Get().IsModularFeatureAvailable(ILiveLinkClient::ModularFeatureName))
+	{
+		LiveLinkClient = &IModularFeatures::Get().GetModularFeature<ILiveLinkClient>(ILiveLinkClient::ModularFeatureName);
+	}
+
+	if (LiveLinkClient)
+	{
+		if (LiveLinkSubjectAddedHandle.IsValid())
+		{
+			LiveLinkClient->OnLiveLinkSubjectAdded().Remove(LiveLinkSubjectAddedHandle);
+			LiveLinkSubjectAddedHandle.Reset();
+		}
+
+		if (LiveLinkSubjectEnabledChangedHandle.IsValid())
+		{
+			LiveLinkClient->OnLiveLinkSubjectEnabledChanged().Remove(LiveLinkSubjectEnabledChangedHandle);
+			LiveLinkSubjectEnabledChangedHandle.Reset();
+		}
+
+		if (LiveLinkFaceStaticDataHandle.IsValid() || LiveLinkFaceFrameDataHandle.IsValid())
+		{
+			LiveLinkClient->UnregisterSubjectFramesHandle(
+				FLiveLinkSubjectName(FName(*LiveLinkFaceSubjectName)),
+				LiveLinkFaceStaticDataHandle,
+				LiveLinkFaceFrameDataHandle);
+		}
+	}
+
+	LiveLinkFaceStaticDataHandle.Reset();
+	LiveLinkFaceFrameDataHandle.Reset();
+	LiveLinkFacePropertyNames.Reset();
+}
+
+void FDoodleLiveLinkForwarder::OnLiveLinkSubjectAdded(FLiveLinkSubjectKey InSubjectKey)
+{
+	// 仅处理与当前 Subject 名匹配的主题。
+	if (InSubjectKey.SubjectName.Name.ToString() != LiveLinkFaceSubjectName)
+	{
+		return;
+	}
+
+	TryRegisterLiveLinkFaceFrames();
+}
+
+void FDoodleLiveLinkForwarder::OnLiveLinkSubjectEnabledChanged(FLiveLinkSubjectKey InSubjectKey, bool bNewEnabled)
+{
+	// 仅在匹配且启用时尝试注册，避开 OnLiveLinkSubjectAdded 早于 SetSubjectEnabled 的时序问题。
+	if (!bNewEnabled || InSubjectKey.SubjectName.Name.ToString() != LiveLinkFaceSubjectName)
+	{
+		return;
+	}
+
+	TryRegisterLiveLinkFaceFrames();
+}
+
+void FDoodleLiveLinkForwarder::TryRegisterLiveLinkFaceFrames()
+{
+	if (LiveLinkFaceStaticDataHandle.IsValid() || LiveLinkFaceFrameDataHandle.IsValid())
+	{
+		return;
+	}
+
+	ILiveLinkClient* LiveLinkClient = nullptr;
+	if (IModularFeatures::Get().IsModularFeatureAvailable(ILiveLinkClient::ModularFeatureName))
+	{
+		LiveLinkClient = &IModularFeatures::Get().GetModularFeature<ILiveLinkClient>(ILiveLinkClient::ModularFeatureName);
+	}
+
+	if (!LiveLinkClient)
+	{
+		return;
+	}
+
+	TSubclassOf<ULiveLinkRole> SubjectRole;
+	LiveLinkClient->RegisterForSubjectFrames(
+		FLiveLinkSubjectName(FName(*LiveLinkFaceSubjectName)),
+		FOnLiveLinkSubjectStaticDataAdded::FDelegate::CreateRaw(this, &FDoodleLiveLinkForwarder::OnLiveLinkFaceStaticData),
+		FOnLiveLinkSubjectFrameDataAdded::FDelegate::CreateRaw(this, &FDoodleLiveLinkForwarder::OnLiveLinkFaceFrameData),
+		LiveLinkFaceStaticDataHandle,
+		LiveLinkFaceFrameDataHandle,
+		SubjectRole);
+}
+
+void FDoodleLiveLinkForwarder::OnLiveLinkFaceStaticData(FLiveLinkSubjectKey InSubjectKey, TSubclassOf<ULiveLinkRole> InSubjectRole,
+                                                         const FLiveLinkStaticDataStruct& InStaticData)
+{
+	const FLiveLinkBaseStaticData* BaseData = InStaticData.GetBaseData();
+	if (BaseData)
+	{
+		LiveLinkFacePropertyNames = BaseData->PropertyNames;
+	}
+}
+
+void FDoodleLiveLinkForwarder::OnLiveLinkFaceFrameData(FLiveLinkSubjectKey InSubjectKey, TSubclassOf<ULiveLinkRole> InSubjectRole,
+                                                       const FLiveLinkFrameDataStruct& InFrameData)
+{
+	const FLiveLinkBaseFrameData* BaseData = InFrameData.GetBaseData();
+	if (!BaseData || !FrameSink)
+	{
+		return;
+	}
+
+	FrameSink(*BaseData);
+}

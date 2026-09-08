@@ -1,5 +1,6 @@
 type: string
 enum:
+  - preparing
   - queued
   - running
   - cancelled
@@ -7,6 +8,7 @@ enum:
   - failed
   - expired
 description: |
+  preparing - 准备提交,
   queued - 排队中,
   running - 运行中,
   cancelled - 已取消（24h后自动删除）,

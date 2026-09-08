@@ -4,6 +4,8 @@
 #include <doodle_core/metadata/base.h>
 
 #include <string>
+#include <tuple>
+#include <utility>
 
 namespace doodle::seedance2 {
 struct DOODLE_CORE_API subproject {
@@ -16,6 +18,16 @@ struct DOODLE_CORE_API subproject {
   bool archived_{false};
 
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"name", &subproject::name_},                  //
+        std::pair{"project_id", &subproject::project_id_},      //
+        std::pair{"preview_file", &subproject::preview_file_},  //
+        std::pair{"archived", &subproject::archived_}           //
+
+    };
+  }
 
   // to json
   friend void to_json(nlohmann::json& j, const subproject& p) {

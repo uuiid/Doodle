@@ -10,6 +10,13 @@ post:
     - `segment`：单个运动段对象（单段生成，内部转为单元素数组）
 
     可选传 `skeleton`（用于最终重定向，层级须与模型骨骼相同且处于原点）与 `root_trajectory`（根位置偏移）。
+
+    骨骼约定：约束与重定向均基于 SOMA30 骨骼（`create_soma_skeleton_30` 创建），共 30 个关节，
+    顺序为 Hips, Spine1, Spine2, Chest, Neck1, Neck2, Head, Jaw, LeftEye, RightEye, LeftShoulder,
+    LeftArm, LeftForeArm, LeftHand, LeftHandThumbEnd, LeftHandMiddleEnd, RightShoulder, RightArm,
+    RightForeArm, RightHand, RightHandThumbEnd, RightHandMiddleEnd, LeftLeg, LeftShin, LeftFoot,
+    LeftToeBase, RightLeg, RightShin, RightFoot, RightToeBase，根关节为 Hips（索引 0）。
+    约束详细说明见 `constraint_lst` 引用的 `Constraint` 模型。
   requestBody:
     required: true
     content:

@@ -62,6 +62,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
       g_logger_ctrl().get_http(), "用户 {}({}) 更新任务 job_id {} status {} -> {} ", person_.person_.email_,
       person_.person_.get_full_name(), job_id_, l_job.status_, l_job_ptr->status_
   );
+
+  using namespace orm;
+  auto l_update = update(l_sql)
+                      .from<server_task_info>()
+                      .set_from_ref<server_task_info>(l_json)
+                      .where(c(&server_task_info::uuid_id_) == job_id_);
   if (l_job.status_ != l_job_ptr->status_ && l_job_ptr->status_ == server_task_info_status::submitted) {
     SPDLOG_LOGGER_WARN(
         g_logger_ctrl().get_http(), "任务 {} 由 {} 变更为 {}", l_job_ptr->uuid_id_, l_job.status_, l_job_ptr->status_
@@ -69,8 +75,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
     l_job_ptr->run_computer_id_ = boost::uuids::nil_uuid();
     l_job_ptr->end_time_.reset();
     l_job_ptr->run_time_.reset();
+    l_update
+        .set(c(&server_task_info::run_computer_id_) = boost::uuids::nil_uuid())
+        .set(c(&server_task_info::end_time_) = std::optional<server_task_info::zoned_time>{})
+        .set(c(&server_task_info::run_time_) = std::optional<server_task_info::zoned_time>{});
   }
-  co_await l_sql.update(l_job_ptr);
+  co_await l_sql.run_sql(l_update);
 
   if (l_job_ptr->run_computer_id_ != l_job.run_computer_id_) {
     SPDLOG_LOGGER_WARN(

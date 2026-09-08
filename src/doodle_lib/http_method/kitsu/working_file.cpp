@@ -339,9 +339,7 @@ std::vector<working_file_and_link> get_working_files_for_entity(
   return l_working_files;
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_working_file::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_working_file, get) {
   auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的镜头 id ");
@@ -351,9 +349,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity(project_id_, id_, {}));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_sequences_working_file::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_working_file, get) {
   auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的序列 id ");
@@ -362,9 +358,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity(project_id_, {}, id_));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_entity_working_file::get(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_entity_working_file, get) {
   auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
@@ -406,9 +400,7 @@ struct map_to_json {
   }
 };
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_entity_working_file_many::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_entity_working_file_many, post) {
   auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<project>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");

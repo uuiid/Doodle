@@ -9,7 +9,11 @@
 
 #include <boost/rational.hpp>
 
+#include "sqlite_orm/orm/fwd.h"
+#include "sqlite_orm/orm/session.h"
+#include "sqlite_orm/orm/update.h"
 #include <memory>
+#include <spdlog/spdlog.h>
 #include <variant>
 
 //
@@ -293,13 +297,8 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
         break;
     }
   }
-
-  // #ifndef NDEBUG
-  //     auto l_logger = session_data_->logger_;
-  //     l_logger->log(log_loc(), level::info, "work_pair_p: {}", fmt::join(l_rules_.work_pair_p, ", "));
-  //     l_logger->log(log_loc(), level::info, "work: {}", l_time_clock_.debug_print());
-  // #endif
-
+  SPDLOG_DEBUG("work_pair_p: {}", fmt::join(l_rules_.work_pair_p, ", "));
+  SPDLOG_DEBUG("work: {}", l_time_clock_.debug_print());
   // 排除绝对时间
   for (auto l_begin = l_begin_time; l_begin <= l_end_time; l_begin += chrono::days{1}) {
     for (auto&& l_deduction :
@@ -491,16 +490,19 @@ std::string patch_time(
       auto l_end = in_time_clock.next_time(l_begin_time, in_block[i].duration_);
       if (l_end >= l_time_end) l_end = l_time_end;
       if (i + 1 == in_block.size()) l_end = l_time_end;
+      auto l_info             = in_time_clock.get_time_info(l_begin_time, l_end);
+      std::string l_remark    = fmt::format("{}", fmt::join(l_info, ", "));
       in_block[i].start_time_ = l_begin_time;
       in_block[i].end_time_   = l_end;
       in_block[i].duration_   = in_time_clock(l_begin_time, l_end);
+      in_block[i].remark_     = l_remark;
       l_begin_time            = l_end;
     }
   }
   return {};
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time, post) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
   auto l_json = in_handle->get_json();
@@ -553,7 +555,31 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::po
 
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time::get(session_data_ptr in_handle) {
+
+orm::update_t set_work_xlsx_task_info(
+    const std::vector<work_xlsx_task_info_helper::database_t>& in_data, decltype(get_sqlite_database())& in_sql
+) {
+  using namespace orm;
+  auto l_update = update(in_sql).from<work_xlsx_task_info_helper::database_t>();
+  for (auto l_begin = true; auto&& l_task : in_data) {
+    if (l_begin) {
+      l_update = l_update
+                     .set(
+                         c(&work_xlsx_task_info_helper::database_t::start_time_) = l_task.start_time_,
+                         c(&work_xlsx_task_info_helper::database_t::end_time_)   = l_task.end_time_,
+                         c(&work_xlsx_task_info_helper::database_t::duration_)   = l_task.duration_,
+                         c(&work_xlsx_task_info_helper::database_t::remark_)     = l_task.remark_
+                     )
+                     .where(c(&work_xlsx_task_info_helper::database_t::id_) = l_task.id_);
+      l_begin  = false;
+    } else {
+      l_update.rebind(l_task.start_time_, l_task.end_time_, l_task.duration_, l_task.remark_, l_task.id_);
+    }
+  }
+  return l_update;
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time, get) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_logger    = in_handle->logger_;
   auto l_sql       = get_sqlite_database();
@@ -565,7 +591,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::ge
   *l_block_ptr |= ranges::actions::sort;
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_add, post) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
   auto l_json                         = in_handle->get_json();
@@ -576,9 +602,22 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
       person_.person_.email_, person_.person_.get_full_name(), user_id_,
       fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()}), l_data.task_id
   );
-  auto l_sql  = get_sqlite_database();
-  auto l_user = l_sql.get_by_uuid<person>(user_id_);
+  auto l_sql      = get_sqlite_database();
+  auto l_user     = l_sql.get_by_uuid<person>(user_id_);
+  auto l_existing = l_sql.get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
+  DOODLE_CHICK_HTTP(
+      std::ranges::all_of(
+          l_existing, [&](const auto& l_e) { return l_e.year_month_ == chrono::local_days{year_month_ / 1}; }
+      ),
+      bad_request, "year_month_ 不一致"
+  );
+  DOODLE_CHICK_HTTP(!l_data.task_id.is_nil(), bad_request, "task_id is nil");
+  DOODLE_CHICK_HTTP(
+      !std::ranges::any_of(l_existing, [&](const auto& l_e) { return l_e.kitsu_task_ref_id_ == l_data.task_id; }),
+      bad_request, "task {} 已存在", l_data.task_id
+  );
 
+  orm::sql_modify_statement_vector_t l_modify_statements{};
   {
     work_xlsx_task_info_helper::database_t l_data_work{
         .start_time_ =
@@ -608,13 +647,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
         chrono::time_point_cast<chrono::local_time_pos::duration>(l_data_work.end_time_.get_local_time()), l_begin_time,
         l_end_time
     );
-    co_await l_sql.install(std::make_shared<work_xlsx_task_info_helper::database_t>(std::move(l_data_work)));
+    using namespace orm;
+    l_modify_statements.emplace_back(insert(l_sql).into<work_xlsx_task_info_helper::database_t>().values(l_data_work));
   }
   auto l_block_ptr  = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block_ptr      = l_sql.get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
   auto l_time_clock = create_time_clock(year_month_, l_user.uuid_id_);
   recomputing_time_run(year_month_, l_time_clock, *l_block_ptr);
-  co_await l_sql.update_range(l_block_ptr);
+  if (!l_block_ptr->empty()) l_modify_statements.emplace_back(set_work_xlsx_task_info(*l_block_ptr, l_sql));
+  co_await l_sql.run_sql(std::move(l_modify_statements));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成追加工时 user_id {} year_month {} 总条目 {}", person_.person_.email_,
@@ -625,7 +666,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_custom::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_custom, post) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_json                                = in_handle->get_json();
   computing_time_post_req_custom_data l_data = l_json.get<computing_time_post_req_custom_data>();
@@ -644,43 +685,40 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_cus
   auto l_sql  = get_sqlite_database();
 
   auto l_user = l_sql.get_by_uuid<person>(l_data.user_id_);
-  co_await l_sql.install(
-      std::make_shared<work_xlsx_task_info_helper::database_t>(
-          work_xlsx_task_info_helper::database_t{
-              .start_time_ =
-                  work_xlsx_task_info_helper::database_t::zoned_time{
-                      chrono::current_zone(),
-                      chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(
-                          l_data.start_time
-                      )
-                  },
-              .end_time_ =
-                  work_xlsx_task_info_helper::database_t::zoned_time{
-                      chrono::current_zone(),
-                      chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(
-                          l_data.end_time
-                      )
-                  },
-              .user_remark_  = l_data.remark,
-              .year_month_   = chrono::local_days{l_data.year_month_ / 1},
-              .person_id_    = l_user.uuid_id_,
-              .season_       = l_data.season,
-              .episode_      = l_data.episode,
-              .name_         = l_data.name,
-              .grade_        = l_data.grade,
-              .project_id_   = l_data.project_id,
-              .project_name_ = l_data.project_name_
-          }
-
-      )
-
-  );
+  orm::sql_modify_statement_vector_t l_modify_statements{};
+  {
+    work_xlsx_task_info_helper::database_t l_data_work{
+        .start_time_ =
+            work_xlsx_task_info_helper::database_t::zoned_time{
+                chrono::current_zone(),
+                chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(l_data.start_time)
+            },
+        .end_time_ =
+            work_xlsx_task_info_helper::database_t::zoned_time{
+                chrono::current_zone(),
+                chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(l_data.end_time)
+            },
+        .user_remark_  = l_data.remark,
+        .year_month_   = chrono::local_days{l_data.year_month_ / 1},
+        .person_id_    = l_user.uuid_id_,
+        .season_       = l_data.season,
+        .episode_      = l_data.episode,
+        .name_         = l_data.name,
+        .grade_        = l_data.grade,
+        .project_id_   = l_data.project_id,
+        .project_name_ = l_data.project_name_
+    };
+    using namespace orm;
+    l_modify_statements.emplace_back(insert(l_sql).into<work_xlsx_task_info_helper::database_t>().values(l_data_work));
+  }
 
   auto l_block_ptr  = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block_ptr      = l_sql.get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{l_data.year_month_ / 1});
   auto l_time_clock = create_time_clock(l_data.year_month_, l_user.uuid_id_);
   recomputing_time_run(l_data.year_month_, l_time_clock, *l_block_ptr);
-  co_await l_sql.update_range(l_block_ptr);
+  auto l_session = l_sql.get_session();
+  if (!l_block_ptr->empty()) l_modify_statements.emplace_back(set_work_xlsx_task_info(*l_block_ptr, l_sql));
+  co_await l_sql.run_sql(std::move(l_modify_statements));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成自定义工时 user_id {} year_month {} 总条目 {}",
@@ -692,7 +730,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_cus
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sort::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_sort, post) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_json = in_handle->get_json();
   auto l_data = l_json.get<std::vector<uuid>>();
@@ -737,7 +775,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sor
 
   auto l_time_clock = create_time_clock(year_month_, l_user.uuid_id_);
   recomputing_time_run(year_month_, l_time_clock, *l_block_sort);
-  co_await l_sql.update_range(l_block_sort);
+  if (!l_block_sort->empty()) {
+    auto l_update = set_work_xlsx_task_info(*l_block_sort, l_sql);
+    co_await l_sql.run_sql(std::move(l_update));
+  }
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成排序工时 user_id {} year_month {}", person_.person_.email_,
@@ -747,7 +788,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sor
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_sort));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_average::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_average, post) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
   SPDLOG_LOGGER_WARN(
@@ -763,7 +804,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_ave
 
   auto l_time_clock = create_time_clock(year_month_, user_id_);
   average_time_run(year_month_, l_time_clock, *l_block);
-  co_await l_sql.update_range(l_block);
+
+  if (!l_block->empty()) {
+    auto l_update = set_work_xlsx_task_info(*l_block, l_sql);
+    co_await l_sql.run_sql(std::move(l_update));
+  }
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成平均工时 user_id {} year_month {} 条目 {}", person_.person_.email_,
@@ -774,7 +819,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_ave
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_patch::patch(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_patch, patch) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_json = in_handle->get_json();
 
@@ -814,54 +859,68 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     auto l_timer_clock = create_time_clock(year_month_, l_user.uuid_id_);
     if (auto l_err = patch_time(l_timer_clock, *l_block_ptr, task_id_, *l_duration, in_handle->logger_);
         l_err.empty()) {
-      co_await l_sql.update_range(l_block_ptr);
+      if (!l_block_ptr->empty()) {
+        auto l_update = set_work_xlsx_task_info(*l_block_ptr, l_sql);
+        co_await l_sql.run_sql(std::move(l_update));
+      }
     } else {
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, l_err);
     }
   } else if (l_comment) {
-    auto l_block_ptr_value = std::make_shared<work_xlsx_task_info_helper::database_t>();
+    using namespace orm;
     for (auto&& l_b : *l_block_ptr) {
       if (l_b.uuid_id_ == task_id_) {
-        l_b.user_remark_   = *l_comment;
-        *l_block_ptr_value = l_b;
+        l_b.user_remark_ = *l_comment;
+        co_await l_sql.run_sql(update(l_sql)
+                                   .from<work_xlsx_task_info_helper::database_t>()
+                                   .set(c(&work_xlsx_task_info_helper::database_t::user_remark_) = *l_comment)
+                                   .where(c(&work_xlsx_task_info_helper::database_t::uuid_id_) == task_id_));
         break;
       }
     }
-    co_await l_sql.update(l_block_ptr_value);
   } else if (l_eps) {
-    auto l_block_ptr_value = std::make_shared<work_xlsx_task_info_helper::database_t>();
+    using namespace orm;
     for (auto&& l_b : *l_block_ptr) {
       if (l_b.uuid_id_ == task_id_) {
-        l_b.episode_       = *l_eps;
-        *l_block_ptr_value = l_b;
+        l_b.episode_ = *l_eps;
+        co_await l_sql.run_sql(update(l_sql)
+                                   .from<work_xlsx_task_info_helper::database_t>()
+                                   .set(c(&work_xlsx_task_info_helper::database_t::episode_) = *l_eps)
+                                   .where(c(&work_xlsx_task_info_helper::database_t::uuid_id_) == task_id_));
         break;
       }
     }
-    co_await l_sql.update(l_block_ptr_value);
   }
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_delete::delete_(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_delete, delete_) {
   auto l_sql                                    = get_sqlite_database();
 
   work_xlsx_task_info_helper::database_t l_task = l_sql.get_by_uuid<work_xlsx_task_info_helper::database_t>(id_);
   if (l_task.person_id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
   SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "delete task id {} user id {}", l_task.uuid_id_, l_task.person_id_);
-  co_await l_sql.remove<work_xlsx_task_info_helper::database_t>(l_task.id_);
+
   chrono::year_month_day l_year_month_day{l_task.year_month_};
   chrono::year_month l_year_month{l_year_month_day.year(), l_year_month_day.month()};
 
-  auto l_block_ptr  = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr      = l_sql.get_work_xlsx_task_info(l_task.person_id_, l_task.year_month_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_modify_statements{};
+  l_modify_statements.emplace_back(delete_from(l_sql).from<work_xlsx_task_info_helper::database_t>().where(
+      c(&work_xlsx_task_info_helper::database_t::id_) == l_task.id_
+  ));
+
+  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  *l_block_ptr     = l_sql.get_work_xlsx_task_info(l_task.person_id_, l_task.year_month_);
+  std::erase_if(*l_block_ptr, [&](const auto& l_e) { return l_e.uuid_id_ == id_; });
 
   auto l_time_clock = create_time_clock(l_year_month, l_task.person_id_);
   recomputing_time_run(l_year_month, l_time_clock, *l_block_ptr);
 
-  co_await l_sql.update_range(l_block_ptr);
+  if (!l_block_ptr->empty()) l_modify_statements.emplace_back(set_work_xlsx_task_info(*l_block_ptr, l_sql));
+
+  co_await l_sql.run_sql(std::move(l_modify_statements));
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 

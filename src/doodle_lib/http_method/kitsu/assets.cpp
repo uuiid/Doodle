@@ -89,7 +89,7 @@ struct projects_assets_new_post_data {
   }
 };
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_new::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(projects_assets_new, post) {
   projects_assets_new_post_data l_data{};
   l_data.project_id = project_id_;
   person_.check_project_manager(l_data.project_id);
@@ -103,7 +103,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       person_.person_.get_full_name(), l_data.project_id, l_data.name, l_data.asset_type_id
   );
 
-  auto l_entity = std::make_shared<entity>(entity{
+  auto l_sql   = get_sqlite_database();
+  entity l_entity{
       .name_           = l_data.name,
       .description_    = l_data.description,
       .is_shared_      = l_data.is_shared,
@@ -112,37 +113,40 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       .entity_type_id_ = l_data.asset_type_id,
       .source_id_      = l_data.source_id,
       .created_by_     = person_.person_.uuid_id_,
-  });
-  auto l_sql    = get_sqlite_database();
-  co_await l_sql.install(l_entity);
+  };
+  using namespace orm;
+  auto l_install = insert(l_sql).into<entity>().values(l_entity);
+
   nlohmann::json l_json_ret{};
-  l_json_ret = *l_entity;
+  l_json_ret = l_entity;
   if (entity_asset_extend::has_extend_data(l_json)) {
-    auto l_entity_extend = std::make_shared<entity_asset_extend>(entity_asset_extend{
-        .entity_id_ = l_entity->uuid_id_,
-    });
-    l_json.get_to(*l_entity_extend);
+    entity_asset_extend l_entity_extend{
+        .entity_id_ = l_entity.uuid_id_,
+    };
+    l_json.get_to(l_entity_extend);
 
     DOODLE_CHICK(
-        l_entity_extend->check_all_fields_no_backslash(), "entity_asset_extend 字段不能包含反斜杠 '\\'，请检查输入数据"
+        l_entity_extend.check_all_fields_no_backslash(), "entity_asset_extend 字段不能包含反斜杠 '\\'，请检查输入数据"
     )
 
-    co_await l_sql.install(l_entity_extend);
-    // l_json_ret = *l_entity_extend;
-    l_json_ret.update(*l_entity_extend);
+    auto l_install_extend = insert(l_sql).into<entity_asset_extend>().values(l_entity_extend);
+    co_await l_sql.run_sql(l_install, l_install_extend);
+    l_json_ret.update(l_entity_extend);
+  } else {
+    co_await l_sql.run_sql(l_install);
   }
   socket_io::broadcast(
       socket_io::asset_new_broadcast_t{
-          .asset_id_   = l_entity->uuid_id_,
-          .asset_type_ = l_entity->entity_type_id_,
-          .project_id_ = l_entity->project_id_
+          .asset_id_   = l_entity.uuid_id_,
+          .asset_type_ = l_entity.entity_type_id_,
+          .project_id_ = l_entity.project_id_
       }
   );
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 创建资产 asset_id {} asset_type_id {}",
-      person_.person_.email_, person_.person_.get_full_name(), l_entity->project_id_, l_entity->uuid_id_,
-      l_entity->entity_type_id_
+      person_.person_.email_, person_.person_.get_full_name(), l_entity.project_id_, l_entity.uuid_id_,
+      l_entity.entity_type_id_
   );
 
   co_return in_handle->make_msg(l_json_ret);
@@ -468,10 +472,10 @@ auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_ur
 
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_assets_with_tasks::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets_with_tasks, get) {
   co_return in_handle->make_msg(nlohmann::json{} = make_with_tasks_sql_result(person_.person_, in_handle->url_, {}));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, get) {
   auto l_sql = get_sqlite_database();
   auto l_t   = make_with_tasks_sql_result(person_.person_, in_handle->url_, id_);
   if (l_t.empty())
@@ -488,10 +492,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get
   l_json.update(l_t[0]);
   co_return in_handle->make_msg(l_json);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> asset_details::delete_(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, delete_) {
   auto l_sql = get_sqlite_database();
-  auto l_ass = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
-  person_.check_delete_access(l_ass->project_id_);
+  auto l_ass = l_sql.get_by_uuid<entity>(id_);
+  person_.check_delete_access(l_ass.project_id_);
   bool l_force{};
   for (auto&& l_i : in_handle->url_.params()) {
     if (l_i.key == "force") l_force = true;
@@ -499,27 +503,26 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details::del
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 删除实体 {}", person_.person_.email_, person_.person_.get_full_name(),
-      l_ass->uuid_id_
+      id_
   );
   if (!l_force) {
-    l_ass->canceled_ = true;
-    co_await l_sql.update(l_ass);
-    co_return in_handle->make_msg(nlohmann::json{} = *l_ass);
+    l_ass.canceled_ = true;
+    using namespace orm;
+    auto l_update = update(l_sql).from<entity>().set(c(&entity::canceled_) = true).where(c(&entity::uuid_id_) == id_);
+    co_await l_sql.run_sql(l_update);
+    co_return in_handle->make_msg(nlohmann::json{} = l_ass);
   }
-  auto l_task     = l_sql.get_tasks_for_entity(l_ass->uuid_id_);
+  auto l_task     = l_sql.get_tasks_for_entity(l_ass.uuid_id_);
   auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
-  co_await l_sql.remove<task>(l_task_ids);
-  co_await l_sql.remove<entity>(l_ass->uuid_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ass);
+  using namespace orm;
+  auto l_delete = delete_from(l_sql).from<entity>().where(c(&entity::uuid_id_) == l_ass.uuid_id_);
+  co_await l_sql.run_sql(l_delete);
+  co_return in_handle->make_msg(nlohmann::json{} = l_ass);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> shared_used::get(session_data_ptr in_handle) {
-  co_return in_handle->make_msg(nlohmann::json::array());
-}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shared_used, get) { co_return in_handle->make_msg(nlohmann::json::array()); }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_assets_cast_in::get(session_data_ptr in_handle) {
-  co_return in_handle->make_msg(nlohmann::json::array());
-}
-boost::asio::awaitable<boost::beast::http::message_generator> data_assets::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets_cast_in, get) { co_return in_handle->make_msg(nlohmann::json::array()); }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets, get) {
   auto l_sql = get_sqlite_database();
   bool l_is_shared{};
   for (auto&& [key, value, has] : in_handle->url_.params())

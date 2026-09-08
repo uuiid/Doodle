@@ -10,7 +10,7 @@
 
 namespace doodle::http::seedance2 {
 
-boost::asio::awaitable<std::string> seedance2_client::run_task(const nlohmann::json& in_task) {
+boost::asio::awaitable<nlohmann::json> seedance2_client::run_task(const nlohmann::json& in_task) {
   boost::beast::http::request<boost::beast::http::string_body> req{
       boost::beast::http::verb::post, "/api/v3/contents/generations/tasks", 11
   };
@@ -21,7 +21,7 @@ boost::asio::awaitable<std::string> seedance2_client::run_task(const nlohmann::j
   req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
   req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
   boost::beast::http::response<http::basic_json_body> l_res{};
-  http_client_ptr_->set_timeout(300s);
+  http_client_ptr_->set_timeout(1800s);
   try {
     co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
   } catch (...) {
@@ -31,14 +31,7 @@ boost::asio::awaitable<std::string> seedance2_client::run_task(const nlohmann::j
         }
     );
   }
-
-  DOODLE_CHICK(
-      l_res.result() == boost::beast::http::status::ok, "run_task error: {} {}", l_res.result(), l_res.body().dump()
-  );
-
-  auto& l_json = l_res.body();
-  DOODLE_CHICK(l_json.contains("id"), "run_task response error: {}", l_json.dump());
-  co_return l_json.at("id").get<std::string>();
+  co_return l_res.body();
 }
 boost::asio::awaitable<void> seedance2_client::cancel_task(const std::string& in_task_id) {
   boost::beast::http::request<boost::beast::http::empty_body> req{

@@ -1,4 +1,4 @@
-﻿# 确定最低版本
+# 确定最低版本
 cmake_minimum_required(VERSION 4.2)
 
 # 添加模块文件(辅助cmake寻找需要的动态库)
@@ -124,12 +124,15 @@ find_package(crashpad CONFIG REQUIRED)
 find_package(tokenizers_cpp CONFIG REQUIRED)
 # onnxruntime
 find_package(onnxruntime CONFIG REQUIRED)
+# 深度估计
+find_package(depths-cpp CONFIG REQUIRED)
 # 寻找 cnpy
 find_package(cnpy CONFIG REQUIRED)
 # 数据库
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 # 字符串对比库
 find_package(rapidfuzz CONFIG REQUIRED)
+find_package(msgpack-cxx CONFIG REQUIRED)
 # Debug 模式下启用测试
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     enable_testing()

@@ -10,7 +10,7 @@
 
 namespace doodle::http::model_library {
 
-boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_link::post(http::session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(assets_tree_link, post) {
   auto l_sql = get_sqlite_database();
   if (l_sql.has_assets_tree_assets_link(id_, assets_id_)) co_return in_handle->make_msg(nlohmann::json{});
   SPDLOG_LOGGER_WARN(
@@ -23,9 +23,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_link::
   co_await l_sql.install<assets_file_helper::link_parent_t>(l_link);
   co_return in_handle->make_msg(nlohmann::json{});
 }
-boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_link::delete_(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(assets_tree_link, delete_) {
   auto l_sql = get_sqlite_database();
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 从 资产库节点 {} 移除 资产库文件 {} ", person_.person_.email_,

@@ -91,6 +91,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
 
 void ai_train_animation::load_model(const std::string& model_path) {
   init_ort_env();
+  if (impl_ptr_->model_ && impl_ptr_->model_->is_valid()) return;
   impl_ptr_->init(model_path);
 }
 

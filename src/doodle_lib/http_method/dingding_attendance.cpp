@@ -54,15 +54,13 @@ auto create_clock_leave(const chrono::year_month_day& in_date) {
 }
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_create_post::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
   auto l_logger                 = in_handle->logger_;
 
   auto l_json_1                 = in_handle->get_json();
   chrono::year_month_day l_date = l_json_1["work_date"].get<chrono::year_month_day>();
 
-  auto l_sql                 = get_sqlite_database();
+  auto l_sql                    = get_sqlite_database();
   auto l_user                   = l_sql.get_by_uuid<person>(id_);
   auto& l_d                     = g_ctx().get<dingding::dingding_company>();
   auto l_studio                 = l_sql.get_by_uuid<studio>(l_user.studio_id_);
@@ -72,9 +70,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   if (!l_attends.empty()) {
     auto& l_att = l_attends.front();
     if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
-      nlohmann::json l_json{};
+      auto l_json = nlohmann::json::array();
       if (l_att.type_ != attendance_helper::att_enum::max) l_json = l_attends;
-      co_return in_handle->make_msg(l_json.dump());
+      co_return in_handle->make_msg(l_json);
     }
   }
 
@@ -167,21 +165,48 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     };
     l_attendance_install_list->emplace_back(std::move(l_attendance));
   }
-  if (l_modify_user) co_await l_sql.update(std::make_shared<person>(l_user));
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls;
+
+  if (l_modify_user) {
+    l_sqls.emplace_back(update(l_sql)
+                            .from<person>()
+                            .set(c(&person::dingding_id_) = l_user.dingding_id_)
+                            .where(c(&person::uuid_id_) == l_user.uuid_id_));
+  }
 
   if (!l_attends.empty()) {
     std::vector<std::int64_t> l_rem{};
     for (auto&& id : l_attends) {
       l_rem.emplace_back(id.id_);
     }
-    co_await l_sql.remove<attendance_helper::database_t>(l_rem);
+    l_sqls.emplace_back(
+        delete_from(l_sql).from<attendance_helper::database_t>().where(c(&attendance_helper::database_t::id_).in(l_rem))
+    );
   }
   if (!l_attendance_update_list->empty()) {
-    co_await l_sql.update_range<attendance_helper::database_t>(l_attendance_update_list);
+    auto l_update = update(l_sql).from<attendance_helper::database_t>();
+    for (auto l_is_begin = true; auto&& l_e : *l_attendance_update_list) {
+      if (l_is_begin) {
+        l_update
+            .set(
+                c(&attendance_helper::database_t::remark_)      = l_e.remark_,
+                c(&attendance_helper::database_t::type_)        = l_e.type_,
+                c(&attendance_helper::database_t::create_date_) = l_e.create_date_,
+                c(&attendance_helper::database_t::update_time_) = l_e.update_time_
+            )
+            .where(c(&attendance_helper::database_t::id_) == l_e.id_);
+        l_is_begin = false;
+      } else {
+        l_update.rebind(l_e.remark_, l_e.type_, l_e.create_date_, l_e.update_time_, l_e.id_);
+      }
+    }
+    l_sqls.emplace_back(std::move(l_update));
   }
   if (!l_attendance_install_list->empty()) {
-    co_await l_sql.install_range<attendance_helper::database_t>(l_attendance_install_list);
+    l_sqls.emplace_back(insert(l_sql).into<attendance_helper::database_t>().set_range(*l_attendance_install_list));
   }
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_attendance_list = ranges::views::concat(*l_attendance_update_list, *l_attendance_install_list) |
                            ranges::to<std::vector<attendance_helper::database_t>>();
@@ -191,10 +216,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     return l_attendance.type_ == attendance_helper::att_enum::max;
   });
   nlohmann::json l_json{};
-  l_json = l_attendance_list;
-  co_return in_handle->make_msg(l_json.dump());
+  if (!l_attendance_list.empty())
+    l_json = l_attendance_list;
+  else
+    l_json = nlohmann::json::array();
+  co_return in_handle->make_msg(l_json);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_get, get) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   std::vector<chrono::local_days> l_date_list{};
   auto l_end = chrono::local_days{chrono::year_month_day{year_month_ / chrono::last}};
@@ -211,11 +239,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 
   nlohmann::json l_json{};
   l_json = l_list;
-  co_return in_handle->make_msg(l_json.dump());
+  co_return in_handle->make_msg(l_json);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_id_custom::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_id_custom, post) {
   if (id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
   auto l_data = std::make_shared<attendance_helper::database_t>(
@@ -230,28 +256,28 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   const chrono::year_month_day l_date{l_data->create_date_};
   co_await l_sql.install(l_data);
   co_await recomputing_time(l_user.uuid_id_, chrono::year_month{l_date.year(), l_date.month()});
-  co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
+  co_return in_handle->make_msg((nlohmann::json{} = *l_data));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom::put(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, put) {
   if (id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
-  auto l_data = std::make_shared<attendance_helper::database_t>(
-      get_sqlite_database().get_by_uuid<attendance_helper::database_t>(id_)
-  );
-  in_handle->get_json().get_to(*l_data);
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
-  const chrono::year_month_day l_date{l_data->create_date_};
-  auto l_sql = get_sqlite_database();
-  co_await l_sql.update(l_data);
-  co_await recomputing_time(l_data->person_id_, chrono::year_month{l_date.year(), l_date.month()});
-  co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
+  using namespace orm;
+  auto l_update =
+      update(l_sql).from<attendance_helper::database_t>().set_from_ref<attendance_helper::database_t>(l_json).where(
+          c(&attendance_helper::database_t::uuid_id_) == id_
+      );
+  co_await l_sql.run_sql(l_update);
+
+  auto l_data = l_sql.get_by_uuid<attendance_helper::database_t>(id_);
+  const chrono::year_month_day l_date{l_data.create_date_};
+  co_await recomputing_time(l_data.person_id_, chrono::year_month{l_date.year(), l_date.month()});
+  co_return in_handle->make_msg((nlohmann::json{} = l_data));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom::delete_(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, delete_) {
   auto l_sql  = get_sqlite_database();
   auto l_data = l_sql.get_by_uuid<attendance_helper::database_t>(id_);
   if (l_data.person_id_ != person_.person_.uuid_id_) person_.check_supervisor();
@@ -262,7 +288,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   );
 
   co_await l_sql.remove<attendance_helper::database_t>(id_);
-  co_return in_handle->make_msg((nlohmann::json{} = id_).dump());
+  co_return in_handle->make_msg((nlohmann::json{} = id_));
 }
 
 }  // namespace doodle::http

@@ -654,4 +654,17 @@ boost::asio::awaitable<std::tuple<std::string, std::vector<std::string>>> kitsu_
   );
 }
 
+void kitsu_client::stop_server() const {
+  boost::beast::http::request<boost::beast::http::string_body> l_req{
+      boost::beast::http::verb::post, "/api/doodle/stop-server", 11
+  };
+  set_req_headers(l_req);
+  l_req.body() = "{}";
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  http_client_ptr_->read_and_write_sync(l_req, l_res);
+  if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::no_content &&
+      l_res.result() != boost::beast::http::status::created)
+    throw_exception(doodle_error{"kitsu stop server error {} {}", l_res.result(), l_res.body()});
+}
+
 }  // namespace doodle::kitsu

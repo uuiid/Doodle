@@ -5,6 +5,7 @@
 
 #include <boost/core/noncopyable.hpp>
 
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -133,6 +134,11 @@ class DOODLELIB_API session {
   // 重命名列
   void rename_column(
       const std::string& table_name, const std::string& old_column_name, const std::string& new_column_name
+  );
+  // 添加列, 默认值可选
+  void add_column(
+      const std::string& table_name, const std::string& column_name, const std::string& column_type,
+      std::optional<std::string> in_default_value = std::nullopt
   );
   // 单独创建某张表
   void create_table(const std::type_index& table_name);

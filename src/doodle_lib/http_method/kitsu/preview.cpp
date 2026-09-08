@@ -2,6 +2,7 @@
 // Created by TD on 25-3-27.
 //
 
+#include "doodle_core/exception/exception.h"
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/organisation.h>
@@ -26,7 +27,6 @@
 #include <boost/exception/diagnostic_information.hpp>
 
 #include "kitsu_reg_url.h"
-#include "sqlite_orm/sqlite_select_data.h"
 #include <algorithm>
 #include <filesystem>
 #include <long_task/image_to_move.h>
@@ -56,9 +56,7 @@ std::vector<preview_file> get_preview_files_by_entity_id(const uuid& in_entity_i
 }
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comments_add_preview::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comments_add_preview, post) {
   person_.check_task_action_access(task_id_);
   auto l_sql      = get_sqlite_database();
 
@@ -148,11 +146,11 @@ cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
     auto l_new_cv = l_image.clone();
     auto l_size_  = cv::Size{
         size.first, size.second == 0
-                         ? boost::numeric_cast<std::int32_t>(
+                        ? boost::numeric_cast<std::int32_t>(
                               boost::numeric_cast<double>(l_image.rows) / boost::numeric_cast<double>(l_image.cols) *
                               boost::numeric_cast<double>(size.first)
                           )
-                         : std::int32_t{size.second}
+                        : std::int32_t{size.second}
     };
     cv::resize(l_new_cv, l_new_cv, l_size_, 0, 0);
     cv::imwrite(l_path.generic_string(), l_new_cv);
@@ -218,9 +216,12 @@ auto create_video_tile_image(cv::VideoCapture& in_capture, const handle_video_fi
 }  // namespace
 namespace preview {
 video_info_t get_video_duration(const FSys::path& in_path) {
-  auto l_video    = cv::VideoCapture{in_path.generic_string()};
-  auto l_fps      = static_cast<std::int32_t>(l_video.get(cv::CAP_PROP_FPS));
-  auto l_duration = l_video.get(cv::CAP_PROP_FRAME_COUNT) / l_video.get(cv::CAP_PROP_FPS);
+  auto l_video = cv::VideoCapture{in_path.generic_string()};
+  DOODLE_CHICK(l_video.isOpened(), "无法打开视频文件: {}", in_path.generic_string());
+  auto l_fps_raw = l_video.get(cv::CAP_PROP_FPS);
+  DOODLE_CHICK(l_fps_raw > 0.0, "无法获取视频帧率: {}", in_path.generic_string());
+  auto l_fps      = boost::numeric_cast<std::int32_t>(std::lround(l_fps_raw));
+  auto l_duration = l_video.get(cv::CAP_PROP_FRAME_COUNT) / l_fps_raw;
   return video_info_t{
       l_duration,
       cv::Size{
@@ -269,9 +270,9 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: {} ", in_path.generic_string()});
   save_variants(l_frame, in_preview_file->uuid_id_);
 
-  auto l_tiles = create_video_tile_image(l_video, l_files);
-  auto l_path  = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" /
-                FSys::split_uuid_path(fmt::format("{}.png", in_preview_file->uuid_id_));
+  auto l_tiles       = create_video_tile_image(l_video, l_files);
+  auto l_path        = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" /
+                       FSys::split_uuid_path(fmt::format("{}.png", in_preview_file->uuid_id_));
   auto l_path_backup = FSys::add_time_stamp(l_path);
   if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   cv::imwrite(l_path_backup.generic_string(), l_tiles);
@@ -291,7 +292,18 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
       g_io_context(),
       [in_preview_file]() -> boost::asio::awaitable<void> {
         auto l_sql = get_sqlite_database();
-        co_await l_sql.update(in_preview_file);
+        using namespace orm;
+        co_await l_sql.run_sql(
+            update(l_sql)
+                .from<preview_file>()
+                .set(c(&preview_file::file_size_) = in_preview_file->file_size_)
+                .set(c(&preview_file::status_) = in_preview_file->status_)
+                .set(
+                    c(&preview_file::updated_at_) =
+                        chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}
+                )
+                .where(c(&preview_file::uuid_id_) == in_preview_file->uuid_id_)
+        );
       },
       boost::asio::detached
   );
@@ -319,7 +331,7 @@ image_info_t convert_to_png(const FSys::path& in_path) {
 }
 
 }  // namespace preview
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_files::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
   auto l_sql          = get_sqlite_database();
   auto l_preview_file = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(id_));
   if (!l_preview_file->original_name_.empty())
@@ -363,14 +375,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     auto l_prj_size = l_prj.get_resolution();
 
     auto l_duration = preview::get_video_duration(l_new_path);
-    DOODLE_CHICK(l_duration.size_.width > 0 && l_duration.size_.height > 0, "无法获取视频尺寸");
-    DOODLE_CHICK(l_duration.fps_ > 0, "无法获取视频帧率");
-    DOODLE_CHICK(l_duration.fps_ == l_prj.fps_, "无法获取视频帧率");
+    DOODLE_CHICK_HTTP(
+        l_duration.size_.width > 0 && l_duration.size_.height > 0, bad_request, "无法获取视频尺寸, 当前 {}x{}",
+        l_duration.size_.width, l_duration.size_.height
+    );
+    DOODLE_CHICK_HTTP(l_duration.fps_ > 0, bad_request, "无法获取视频帧率, 当前 {}", l_duration.fps_);
+    DOODLE_CHICK_HTTP(
+        l_duration.fps_ == l_prj.fps_, bad_request, "视频帧率不匹配, 当前 {} 项目 {}", l_duration.fps_, l_prj.fps_
+    );
 
     boost::asio::post(
         g_pool_strand(),
-        [l_new_path, fps = l_prj.fps_, l_preview_file, size = cv::Size{l_prj_size.first, l_prj_size.second}]() {
-          http_connection_guard l_connection_guard{};
+        [l_new_path, fps = l_prj.fps_, l_preview_file, size = cv::Size{l_prj_size.first, l_prj_size.second},
+         l_connection_guard = http_connection_guard{}]() {
           preview::handle_video_file(
               l_new_path, fps, size, l_preview_file,
               std::make_shared<progress_data>(l_preview_file->uuid_id_, "preview-video:process")
@@ -388,19 +405,38 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
   } else
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "不支持的预览文件格式"});
 
-  l_preview_file->file_size_ = FSys::exists(l_file) ? FSys::file_size(l_file) : 0;
-  co_await l_sql.update(l_preview_file);
+  l_preview_file->file_size_  = FSys::exists(l_file) ? FSys::file_size(l_file) : 0;
+  l_preview_file->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+  using namespace orm;
+  co_await l_sql.run_sql(update(l_sql)
+                             .from<preview_file>()
+                             .set(c(&preview_file::extension_) = l_preview_file->extension_)
+                             .set(c(&preview_file::original_name_) = l_preview_file->original_name_)
+                             .set(c(&preview_file::width_) = l_preview_file->width_)
+                             .set(c(&preview_file::height_) = l_preview_file->height_)
+                             .set(c(&preview_file::duration_) = l_preview_file->duration_)
+                             .set(c(&preview_file::status_) = l_preview_file->status_)
+                             .set(c(&preview_file::file_size_) = l_preview_file->file_size_)
+                             .set(c(&preview_file::updated_at_) = l_preview_file->updated_at_)
+                             .where(c(&preview_file::uuid_id_) == l_preview_file->uuid_id_));
 
   // 更新task
   if (l_preview_file->position_ == 1) {
-    auto l_task                   = std::make_shared<task>(l_sql.get_by_uuid<task>(l_preview_file->task_id_));
-    l_task->last_preview_file_id_ = l_preview_file->uuid_id_;
-    co_await l_sql.update(l_task);
-    if (auto l_prj = l_sql.get_by_uuid<project>(l_task->project_id_); l_prj.is_set_preview_automated_) {
-      auto l_entity              = std::make_shared<entity>(l_sql.get_by_uuid<entity>(l_task->entity_id_));
-      l_entity->preview_file_id_ = l_preview_file->uuid_id_;
+    auto l_task = l_sql.get_by_uuid<task>(l_preview_file->task_id_);
+    co_await l_sql.run_sql(
+        update(l_sql)
+            .from<task>()
+            .set(c(&task::last_preview_file_id_) = l_preview_file->uuid_id_)
+            .set(c(&task::updated_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()})
+            .where(c(&task::uuid_id_) == l_task.uuid_id_)
+    );
+    if (auto l_prj = l_sql.get_by_uuid<project>(l_task.project_id_); l_prj.is_set_preview_automated_) {
+      auto l_entity = l_sql.get_by_uuid<entity>(l_task.entity_id_);
+      co_await l_sql.run_sql(update(l_sql)
+                                 .from<entity>()
+                                 .set(c(&entity::preview_file_id_) = l_preview_file->uuid_id_)
+                                 .where(c(&entity::uuid_id_) == l_entity.uuid_id_));
       // 发送事件 "preview-file:set-main"
-      co_await l_sql.update(l_entity);
     }
   }
 
@@ -415,9 +451,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comments_preview_files::post(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comments_preview_files, post) {
   auto l_sql  = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(task_id_));
   person_.check_task_action_access(*l_task);
@@ -473,9 +507,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_files_set_main_preview::put(
-    session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_set_main_preview, put) {
   auto l_sql          = get_sqlite_database();
   auto l_preview_file = l_sql.get_by_uuid<preview_file>(id_);
 
@@ -495,7 +527,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "mp4文件不支持设置为主预览文件"});
   } else {
     l_ent->preview_file_id_ = l_preview_file.uuid_id_;
-    co_await l_sql.update(l_ent);
+    using namespace orm;
+    co_await l_sql.run_sql(update(l_sql)
+                               .from<entity>()
+                               .set(c(&entity::preview_file_id_) = l_preview_file.uuid_id_)
+                               .where(c(&entity::uuid_id_) == l_ent->uuid_id_));
     // 发送事件 "preview-file:set-main"
   }
 

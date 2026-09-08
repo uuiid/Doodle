@@ -1,12 +1,17 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/bind_value.h>
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/session.h>
 
+#include <cstdint>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 namespace doodle::orm {
@@ -40,6 +45,7 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
     session s_{};
     std::shared_ptr<sqlite_stmt> stmt_;
     bind_value_collector_t bind_variants_{};
+    bind_value_collector_t bind_variants_for_rebind_{};
   };
 
   friend update_t update(const session& s);
@@ -59,6 +65,11 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
 
  public:
   update_t() : state_(std::make_shared<update_state_t>()) {}
+
+  inline update_t set_session(const session& s) {
+    state_->s_ = s;
+    return *this;
+  }
 
   template <typename T>
   update_t where(T&& condition_fun) {
@@ -83,6 +94,35 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
     (l_iter_fun(in_columns), ...);
     return *this;
   }
+  /// 从 json 中提取属性列表声明的字段, 按类型检查后生成 SET 表达式
+  template <typename Tuple>
+  update_t set_from_ref(const nlohmann::json& in_json, const Tuple& in_property_list) {
+    return set_from_ref_impl(in_json, in_property_list, std::make_index_sequence<std::tuple_size_v<Tuple>>{});
+  }
+  template <typename T>
+  update_t set_from_ref(const nlohmann::json& in_json) {
+    from<T>();
+    if constexpr (has_updated_at<T>) {
+      column_operations l_col{&T::updated_at_};
+      l_col = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+      ;
+      this->set(std::move(l_col));
+    }
+    return set_from_ref_impl(
+        in_json, T::put_property_list(), std::make_index_sequence<std::tuple_size_v<decltype(T::put_property_list())>>{}
+    );
+  }
+
+  template <typename... RebindValue>
+  update_t rebind(RebindValue&&... in_arg) {
+    auto l_iter_fun = [this](auto&& in_value) {
+      using value_type = std::decay_t<decltype(in_value)>;
+      state_->bind_variants_for_rebind_.bind_values_.push_back(bind_value_t{in_value});
+    };
+    (l_iter_fun(in_arg), ...);
+    return *this;
+  }
+
   template <typename T>
   update_t set_value(T&& in_object) {
     using Table = std::decay_t<T>;
@@ -107,7 +147,7 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
   }
 
   template <typename T>
-  update_t rebind(T&& in_object) {
+  update_t rebind_obj(T&& in_object) {
     using Table = std::decay_t<T>;
     if constexpr (has_updated_at<T>)
       in_object.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
@@ -135,6 +175,30 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
   std::string to_sql(const session& s, const to_sql_ctx& ctx) const override;
 
   update_t operator()();
+  operator bool() const;
+
+ private:
+  /// 按成员指针类型检查 json 值, 通过后写入 SET 表达式
+  template <typename MemberPtr>
+  static void assign_json_value(column_operations& in_col, const nlohmann::json& in_json) {
+    using value_t = class_attr_type_t<std::decay_t<MemberPtr>>;
+    in_col        = in_json.get<value_t>();
+    // return true;
+  }
+
+  template <typename Pair>
+  void apply_json_property(const nlohmann::json& in_json, const Pair& in_pair) {
+    if (!in_json.contains(in_pair.first)) return;
+    column_operations l_col{in_pair.second};
+    assign_json_value<decltype(in_pair.second)>(l_col, in_json.at(in_pair.first));
+    this->set(std::move(l_col));
+  }
+
+  template <typename Tuple, std::size_t... I>
+  update_t set_from_ref_impl(const nlohmann::json& in_json, const Tuple& in_property_list, std::index_sequence<I...>) {
+    (apply_json_property(in_json, std::get<I>(in_property_list)), ...);
+    return *this;
+  }
 };
 
 inline update_t update(const session& s) {

@@ -37,9 +37,7 @@ void check_data(const assets_helper::database_t& in_data) {
   }
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree::get(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree, get) {
   person_.check_user();
   auto l_list = get_sqlite_database().get_all<assets_helper::database_t>();
 
@@ -48,14 +46,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   co_return in_handle->make_msg(l_json);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree::post(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree, post) {
   person_.check_supervisor();
   auto l_json = in_handle->get_json();
   std::shared_ptr<assets_helper::database_t> l_ptr =
       std::make_shared<assets_helper::database_t>(in_handle->get_json().get<assets_helper::database_t>());
-  auto l_sql                        = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
 
   if (!l_ptr->uuid_parent_.is_nil()) {
     if (auto l_list = l_sql.uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_); l_list == 0)
@@ -68,9 +64,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   );
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree::patch(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree, patch) {
   person_.check_supervisor();
   auto l_values = std::make_shared<std::vector<assets_helper::database_t>>(
       in_handle->get_json().get<std::vector<assets_helper::database_t>>()
@@ -80,30 +74,45 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
     check_data(l_value);
     l_value.id_ = l_sql.uuid_to_id<assets_helper::database_t>(l_value.uuid_id_);
   }
-  co_await l_sql.update_range<assets_helper::database_t>(l_values);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls;
+  if (!l_values->empty()) {
+    auto l_update = update(l_sql).from<assets_helper::database_t>();
+    for (auto l_is_begin = true; auto&& l_e : *l_values) {
+      if (l_is_begin) {
+        l_update
+            .set(
+                c(&assets_helper::database_t::label_)       = l_e.label_,
+                c(&assets_helper::database_t::uuid_parent_) = l_e.uuid_parent_,
+                c(&assets_helper::database_t::order_)       = l_e.order_
+            )
+            .where(c(&assets_helper::database_t::id_) == l_e.id_);
+        l_is_begin = false;
+      } else {
+        l_update.rebind(l_e.label_, l_e.uuid_parent_, l_e.order_, l_e.id_);
+      }
+    }
+    l_sqls.emplace_back(std::move(l_update));
+  }
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{} = *l_values);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree_instance::put(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree_instance, put) {
   person_.check_supervisor();
-  auto l_sql                        = get_sqlite_database();
+  auto l_sql   = get_sqlite_database();
 
-  auto l_value =
-      std::make_shared<assets_helper::database_t>(l_sql.get_by_uuid<assets_helper::database_t>(id_));
+  auto l_value = std::make_shared<assets_helper::database_t>(l_sql.get_by_uuid<assets_helper::database_t>(id_));
   in_handle->get_json().get_to(*l_value);
   check_data(*l_value);
   co_await l_sql.install<assets_helper::database_t>(l_value);
   co_return in_handle->make_msg(nlohmann::json{} = *l_value);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree_instance::delete_(
-    http::session_data_ptr in_handle
-) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree_instance, delete_) {
   person_.check_supervisor();
   auto l_uuid = boost::lexical_cast<uuid>(id_);
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   if (l_sql.has_assets_tree_assets_link(l_uuid) || l_sql.has_assets_tree_child(l_uuid))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
   SPDLOG_LOGGER_WARN(

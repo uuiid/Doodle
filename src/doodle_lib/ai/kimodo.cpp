@@ -488,16 +488,34 @@ motion_output kimodo::generate(const generate_arg& segments) {
       segments.skeleton_->nbjoints_ == skeleton_->nbjoints_, "重定向骨骼关节数 {} 与模型骨骼 {} 不匹配",
       segments.skeleton_->nbjoints_, skeleton_->nbjoints_
   );
+  // 相同关节数但父级不同的骨骼无法直接重定向
+  DOODLE_CHICK(
+      segments.skeleton_->joint_parents_ == skeleton_->joint_parents_, "重定向骨骼层级与模型骨骼不一致，无法重定向"
+  );
+
+  // 方案 B: 基于全局旋转 + rest-pose 变换的真正重定向（世界骨骼方向一致）
+  MatrixXfRow retargeted_local = retarget_rotations(*skeleton_, *segments.skeleton_, output.global_rot_mats);
+
+  // 根位置按目标骨骼腿长重新对齐（保持 XZ 轨迹，仅调整 Y 使脚着地）
+  auto hip_height = [](const skeleton_base& s) {
+    return s.neutral_joints_(s.root_idx_, 1) - s.neutral_joints_.col(1).minCoeff() + s.above_ground_offset_;
+  };
+  MatrixXfRow retargeted_root = output.root_positions;
+  retargeted_root.col(1).array() += (hip_height(*segments.skeleton_) - hip_height(*skeleton_));
+
   MatrixXfRow contacts_float = output.foot_contacts.cast<float>();
   auto pp_result             = post_process_motion(
-      output.local_rot_mats, output.root_positions, contacts_float, *segments.skeleton_, 1, total_frames, {}, 0.5f, 0.0f
+      retargeted_local, retargeted_root, contacts_float, *segments.skeleton_, 1, total_frames, {}, 0.5f, 0.0f
   );
   output.local_rot_mats  = std::move(pp_result.local_rot_mats);
   output.root_positions  = std::move(pp_result.root_positions);
   output.posed_joints    = std::move(pp_result.posed_joints);
   output.global_rot_mats = std::move(pp_result.global_rot_mats);
-  // 最后将骨骼位置添加到 root_positions 中
+  // 将根骨骼平移到目标世界位置：根位置与所有关节位置需同步平移，否则骨骼会与根错位
   output.root_positions.rowwise() += segments.root_trajectory_;
+  for (Eigen::Index j = 0; j < output.posed_joints.cols(); j += 3) {
+    output.posed_joints.middleCols(j, 3).rowwise() += segments.root_trajectory_;
+  }
   return output;
 }
 

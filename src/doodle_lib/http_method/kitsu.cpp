@@ -287,6 +287,10 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<doodle_ai_volcano_engine_inference_materials_image>("/api/doodle/ai/volcano-engine/inference/materials/image"_url)
       .reg_t<doodle_ai_volcano_engine_inference_materials_image_id>(
           "/api/doodle/ai/volcano-engine/inference/materials/image/{}.png"_url(&doodle_ai_volcano_engine_inference_materials_image_id::id_))
+      .reg_t<seedance2::doodle_ai_depth_estimation_video>(
+          "/api/seedance2/subproject/{}/entity/{}/depth"_url(
+              &seedance2::doodle_ai_depth_estimation_video::subproject_id_,
+              &seedance2::doodle_ai_depth_estimation_video::entity_id_))
       .reg_t<actions_projects_shots_import_frame_range>("/api/actions/projects/{}/shots/import/frame-range"_url(
         &actions_projects_shots_import_frame_range::project_id_
       ))
@@ -401,6 +405,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &seedance2::seedance2_subproject_ai_category_entity::category_id_
       ))
       .reg_t<seedance2::seedance2_task>("/api/seedance2/task"_url)
+      .reg_t<seedance2::seedance2_task_run>("/api/seedance2/task/run"_url)
       .reg_t<seedance2::seedance2_task_date>("/api/seedance2/task/{}-{}"_url(
         &seedance2::seedance2_task_date::date_start_,
         &seedance2::seedance2_task_date::date_end_

@@ -14,5 +14,6 @@ target_sources(
         ai_episode.cpp
         category.cpp
         subproject.cpp
+        depth_video.cpp
 )
 

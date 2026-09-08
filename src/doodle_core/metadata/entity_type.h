@@ -22,6 +22,16 @@ struct DOODLE_CORE_API asset_type {
   std::vector<uuid> task_types_;
   bool archived_;
 
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"name", &asset_type::name_},              //
+        std::pair{"short_name", &asset_type::short_name_},  //
+        std::pair{"description", &asset_type::description_},  //
+        std::pair{"archived", &asset_type::archived_},      //
+        // task_types_ 经由 task_type_asset_type_link 表单独维护, 不在此列
+    };
+  }
+
   constexpr static uuid get_shot_id() {
     // c8b65ac0-e0b7-4da5-b4d2-9b466be0788e
     return {{0xc8, 0xb6, 0x5a, 0xc0, 0xe0, 0xb7, 0x4d, 0xa5, 0xb4, 0xd2, 0x9b, 0x46, 0x6b, 0xe0, 0x78, 0x8e}};

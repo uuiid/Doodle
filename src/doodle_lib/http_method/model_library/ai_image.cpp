@@ -8,12 +8,12 @@
 #include <spdlog/spdlog.h>
 
 namespace doodle::http::model_library {
-boost::asio::awaitable<boost::beast::http::message_generator> ai_image::get(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_image, get) {
   auto l_sql = get_sqlite_database();
   auto l_list = l_sql.get_all<ai_image_metadata>();
   co_return in_handle->make_msg(nlohmann::json{} = l_list);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> ai_image::post(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_image, post) {
   auto l_sql = get_sqlite_database();
   auto l_ai_image         = std::make_shared<ai_image_metadata>();
   l_ai_image->author_     = person_.person_.uuid_id_;
@@ -26,7 +26,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> ai_image::post(ses
   co_return in_handle->make_msg(nlohmann::json{} = *l_ai_image);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> ai_image_instance::delete_(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_image_instance, delete_) {
   auto l_sql = get_sqlite_database();
   co_await l_sql.remove<ai_image_metadata>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = id_);

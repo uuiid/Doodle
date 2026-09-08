@@ -36,6 +36,7 @@ target_link_libraries(doodle_maya_lib
         Fbx::Fbx-static
         CGAL::CGAL
         dnacalib::dnacalib
+        msgpack-cxx
 )
 
 target_compile_options(
