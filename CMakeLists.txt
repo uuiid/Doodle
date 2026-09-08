@@ -1,4 +1,4 @@
-﻿# 确定最低版本
+# 确定最低版本
 cmake_minimum_required(VERSION 4.2)
 
 # 添加模块文件(辅助cmake寻找需要的动态库)
@@ -124,6 +124,8 @@ find_package(crashpad CONFIG REQUIRED)
 find_package(tokenizers_cpp CONFIG REQUIRED)
 # onnxruntime
 find_package(onnxruntime CONFIG REQUIRED)
+# 深度估计
+find_package(depths-cpp CONFIG REQUIRED)
 # 寻找 cnpy
 find_package(cnpy CONFIG REQUIRED)
 # 数据库

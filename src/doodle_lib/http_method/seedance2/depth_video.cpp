@@ -146,6 +146,7 @@ boost::asio::awaitable<void> run_depth_estimation(
           .preview_file_id_ = in_preview->uuid_id_
       }
   );
+  co_return;
 }
 
 }  // namespace doodle::http::seedance2

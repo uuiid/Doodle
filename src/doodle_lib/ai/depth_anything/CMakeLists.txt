@@ -9,5 +9,5 @@ target_sources(doodle_lib
 
 target_link_libraries(doodle_lib
     PUBLIC
-    depths-cpp::depths-cpp
+    depths-cpp
 )
