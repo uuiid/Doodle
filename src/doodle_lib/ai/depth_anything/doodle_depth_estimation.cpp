@@ -16,9 +16,8 @@ class doodle_depth_estimation::impl {
   depth::Config config_;
   std::unique_ptr<DepthAnything> engine_;
 };
-
-doodle_depth_estimation::doodle_depth_estimation(
-    const std::filesystem::path& in_model_path, bool in_use_cuda)
+doodle_depth_estimation::doodle_depth_estimation() = default;
+doodle_depth_estimation::doodle_depth_estimation(const std::filesystem::path& in_model_path, bool in_use_cuda)
     : impl_(std::make_unique<impl>()) {
   impl_->config_.modelPath = in_model_path.generic_string();
   impl_->config_.provider  = in_use_cuda ? depth::Provider::Auto : depth::Provider::CPU;
@@ -27,17 +26,12 @@ doodle_depth_estimation::doodle_depth_estimation(
 
 doodle_depth_estimation::~doodle_depth_estimation() = default;
 
-cv::Mat doodle_depth_estimation::predict(const cv::Mat& in_image) {
-  return impl_->engine_->predict(in_image);
-}
+cv::Mat doodle_depth_estimation::predict(const cv::Mat& in_image) { return impl_->engine_->predict(in_image); }
 
-std::vector<cv::Mat> doodle_depth_estimation::predict_batch(
-    const std::vector<cv::Mat>& in_images) {
+std::vector<cv::Mat> doodle_depth_estimation::predict_batch(const std::vector<cv::Mat>& in_images) {
   return impl_->engine_->predictBatch(in_images);
 }
 
-bool doodle_depth_estimation::is_metric() const {
-  return impl_->engine_->isMetric();
-}
+bool doodle_depth_estimation::is_metric() const { return impl_->engine_->isMetric(); }
 
 }  // namespace doodle::ai

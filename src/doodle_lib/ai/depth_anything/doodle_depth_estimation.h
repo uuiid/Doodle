@@ -10,9 +10,9 @@
 #include <doodle_lib/ai/depth_anything/depth_anything_fwd.h>
 #include <doodle_lib/configure/doodle_lib_export.h>
 
-#include <opencv2/core/mat.hpp>
 #include <filesystem>
 #include <memory>
+#include <opencv2/core/mat.hpp>
 #include <vector>
 
 namespace doodle::ai {
@@ -21,10 +21,19 @@ class DOODLELIB_API doodle_depth_estimation {
   class impl;
 
  public:
+  doodle_depth_estimation();
   /// @param in_model_path ONNX 模型文件路径
   /// @param in_use_cuda  是否尝试 GPU 加速（Auto 模式：TensorRT → CUDA → CPU）
   explicit doodle_depth_estimation(const std::filesystem::path& in_model_path, bool in_use_cuda = true);
   ~doodle_depth_estimation();
+
+  // move constructor and move assignment operator
+  doodle_depth_estimation(doodle_depth_estimation&&) noexcept            = default;
+  doodle_depth_estimation& operator=(doodle_depth_estimation&&) noexcept = default;
+
+  // delete copy constructor and copy assignment operator
+  doodle_depth_estimation(const doodle_depth_estimation&) = delete;
+  doodle_depth_estimation& operator=(const doodle_depth_estimation&) = delete;
 
   /// 单帧深度估计，返回 CV_32FC1 深度图（输入分辨率）
   cv::Mat predict(const cv::Mat& in_image);
