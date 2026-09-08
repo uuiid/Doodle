@@ -12,6 +12,7 @@ const URL = BASE_URL.replace(':50025', ':50024');
 const MODEL_PATH = 'D:\\ai_mod\\onnx-models--nvidia--Kimodo-SOMA-RP-v1.1';
 const SEND_DAV_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../build/send_dav.json');
 const RES_DAV_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../build/res_dav.json');
+const RES_SETTINGS_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../build/res_dav_settings.json');
 
 describe('ai animation train 测试', function () {
   this.timeout(1200000);
@@ -29,6 +30,7 @@ describe('ai animation train 测试', function () {
     expect(req.body).to.have.property('model_path', MODEL_PATH);
     expect(req.body).to.have.property('skeleton');
     console.log('POST settings 返回模型路径:', req.body.model_path);
+    fs.writeFileSync(RES_SETTINGS_PATH, JSON.stringify(req.body, null, 2));
   });
 
   it('POST /api/doodle/ai/animation/train — 生成动画', async function () {
