@@ -20,6 +20,7 @@
 
 #include <doodle_lib/ai/depth_anything/doodle_depth_estimation.h>
 
+#include "core/global_function.h"
 #include <core/http/http_function.h>
 #include <filesystem>
 #include <opencv2/opencv.hpp>
@@ -79,7 +80,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
 
   // 5. 异步触发深度估计（不阻塞响应）
   boost::asio::co_spawn(
-      g_io_context(),
+      g_strand(),
       run_depth_estimation(l_ref, l_preview, entity_id_, l_file_tmp, l_file_picture, l_file_thumbnail),
       boost::asio::detached
   );
