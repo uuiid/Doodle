@@ -114,6 +114,7 @@
     "dnacalib",
     "crashpad",
     "tokenizers-cpp",
+    "depths-cpp",
     {
       "name": "onnxruntime",
       "default-features": true
