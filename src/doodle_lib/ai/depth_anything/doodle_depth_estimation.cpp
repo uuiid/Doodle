@@ -19,9 +19,10 @@ class doodle_depth_estimation::impl {
 doodle_depth_estimation::doodle_depth_estimation() = default;
 doodle_depth_estimation::doodle_depth_estimation(const std::filesystem::path& in_model_path, bool in_use_cuda)
     : impl_(std::make_unique<impl>()) {
-  impl_->config_.modelPath = in_model_path.generic_string();
-  impl_->config_.provider  = in_use_cuda ? depth::Provider::Auto : depth::Provider::CPU;
-  impl_->engine_           = std::make_unique<DepthAnything>(impl_->config_);
+  impl_->config_.modelPath   = in_model_path.generic_string();
+  impl_->config_.process_res = 504;
+  impl_->config_.provider    = in_use_cuda ? depth::Provider::Auto : depth::Provider::CPU;
+  impl_->engine_             = std::make_unique<DepthAnything>(impl_->config_);
 }
 // move constructor and move assignment operator
 doodle_depth_estimation::doodle_depth_estimation(doodle_depth_estimation&&) noexcept            = default;
