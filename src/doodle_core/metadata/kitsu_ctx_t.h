@@ -32,6 +32,13 @@ struct kitsu_ctx_t {
   /// 服务器 协议和域名(基本在发送电子邮件时使用)
   std::string domain_protocol_;
   std::string domain_name_;
+  /// 深度估计模型路径（相对于 root_ 或绝对路径）
+  std::filesystem::path depth_model_path_{"models/depth/da3mono_large.onnx"};
+
+  FSys::path get_depth_model_path() {
+    if (depth_model_path_.is_absolute()) return depth_model_path_;
+    return root_ / depth_model_path_;
+  }
   // 获取制作规范 md文件
   FSys::path get_production_specifications_file() { return root_ / "production_specifications.md"; }
   FSys::path get_ue_plugins_version_file() { return root_ / "ue_plugins_version.txt"; }
