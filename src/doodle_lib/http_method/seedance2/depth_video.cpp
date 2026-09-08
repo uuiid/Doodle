@@ -11,6 +11,7 @@
 #include <doodle_core/metadata/seedance2/ai_generate_entity.h>
 #include <doodle_core/metadata/seedance2/ai_preview_file.h>
 
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/seedance2/reg.h>
@@ -30,24 +31,28 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
   person_.check_subproject_access(subproject_id_);
   person_.check_not_outsourcer();
 
-  auto l_sql    = get_sqlite_database();
-  auto l_entity = std::make_shared<sd2::ai_generate_entity>(l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_));
-  auto l_file   = in_handle->get_file();
-  auto l_ext    = l_file.extension().string();
+  auto l_sql      = get_sqlite_database();
+  auto l_entity   = std::make_shared<sd2::ai_generate_entity>(l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_));
+  auto l_file     = in_handle->get_file();
+  auto l_ext      = l_file.extension().string();
   auto l_is_video = l_ext == ".mp4" || l_ext == ".mov" || l_ext == ".avi";
 
   DOODLE_CHICK(l_is_video, "请上传视频文件 (.mp4/.mov/.avi)");
 
-  // 1. 创建 ai_preview_file 记录
-  auto l_preview        = std::make_shared<sd2::ai_preview_file>();
-  l_preview->extension_ = l_ext;
-  co_await l_sql.install(l_preview);
+  // 1. 预生成 UUID
+  auto& l_set    = core_set::get_set();
+  auto l_preview = std::make_shared<sd2::ai_preview_file>();
+  using namespace orm;
+  l_preview->extension_         = l_ext;
+  auto l_install_1              = insert(l_sql).into<sd2::ai_preview_file>().values(*l_preview);
 
-  // 2. 创建 ai_entity_reference_preview 记录（关联到当前实体）
   auto l_ref                    = std::make_shared<sd2::ai_entity_reference_preview>();
   l_ref->ai_generate_entity_id_ = entity_id_;
   l_ref->preview_file_          = l_preview->uuid_id_;
-  co_await l_sql.install(l_ref);
+  auto l_install_2              = insert(l_sql).into<sd2::ai_entity_reference_preview>().values(*l_ref);
+
+  // 2. 一次提交两个 insert — 遵循 ai_episode.cpp 模式
+  co_await l_sql.run_sql(l_install_1, l_install_2);
 
   // 3. 存储路径
   auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
@@ -72,10 +77,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
   // 5. 保存原始视频到最终路径
   FSys::rename(l_file, l_file_picture);
 
-  co_return in_handle->make_msg(nlohmann::json{
-      {"reference", *l_ref},
-      {"preview",   *l_preview}
-  });
+  co_return in_handle->make_msg(nlohmann::json{{"reference", *l_ref}, {"preview", *l_preview}});
 }
 
 }  // namespace doodle::http::seedance2
