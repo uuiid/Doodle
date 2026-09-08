@@ -28,11 +28,11 @@ class DOODLELIB_API doodle_depth_estimation {
   ~doodle_depth_estimation();
 
   // move constructor and move assignment operator
-  doodle_depth_estimation(doodle_depth_estimation&&) noexcept            = default;
-  doodle_depth_estimation& operator=(doodle_depth_estimation&&) noexcept = default;
+  doodle_depth_estimation(doodle_depth_estimation&&) noexcept;
+  doodle_depth_estimation& operator=(doodle_depth_estimation&&) noexcept;
 
   // delete copy constructor and copy assignment operator
-  doodle_depth_estimation(const doodle_depth_estimation&) = delete;
+  doodle_depth_estimation(const doodle_depth_estimation&)            = delete;
   doodle_depth_estimation& operator=(const doodle_depth_estimation&) = delete;
 
   /// 单帧深度估计，返回 CV_32FC1 深度图（输入分辨率）

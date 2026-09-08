@@ -23,8 +23,10 @@ doodle_depth_estimation::doodle_depth_estimation(const std::filesystem::path& in
   impl_->config_.provider  = in_use_cuda ? depth::Provider::Auto : depth::Provider::CPU;
   impl_->engine_           = std::make_unique<DepthAnything>(impl_->config_);
 }
-
-doodle_depth_estimation::~doodle_depth_estimation() = default;
+// move constructor and move assignment operator
+doodle_depth_estimation::doodle_depth_estimation(doodle_depth_estimation&&) noexcept            = default;
+doodle_depth_estimation& doodle_depth_estimation::operator=(doodle_depth_estimation&&) noexcept = default;
+doodle_depth_estimation::~doodle_depth_estimation()                                             = default;
 
 cv::Mat doodle_depth_estimation::predict(const cv::Mat& in_image) { return impl_->engine_->predict(in_image); }
 
