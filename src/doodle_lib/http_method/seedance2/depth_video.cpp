@@ -11,6 +11,7 @@
 #include <doodle_core/metadata/seedance2/ai_generate_entity.h>
 #include <doodle_core/metadata/seedance2/ai_preview_file.h>
 
+#include <doodle_lib/ai/depth_anything/doodle_depth_estimation.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
@@ -18,25 +19,81 @@
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
-#include <doodle_lib/ai/depth_anything/doodle_depth_estimation.h>
+#include <boost/asio/consign.hpp>
+#include <boost/asio/post.hpp>
 
 #include "core/global_function.h"
 #include <core/http/http_function.h>
 #include <filesystem>
 #include <opencv2/opencv.hpp>
+#include <utility>
 
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 
-// 前向声明：后台异步深度估计任务
-boost::asio::awaitable<void> run_depth_estimation(
-    std::shared_ptr<sd2::ai_entity_reference_preview> in_ref,
-    std::shared_ptr<sd2::ai_preview_file> in_preview,
-    uuid in_entity_id,
-    FSys::path in_input_path,
-    FSys::path in_output_path,
-    FSys::path in_thumbnail_path
-);
+// PIMPL — 深度估计模型只加载一次，通过 clone() 的 shared_ptr 共享
+class doodle_ai_depth_estimation_video::impl {
+ public:
+  ai::doodle_depth_estimation estimator_;
+  FSys::path model_path_;
+  explicit impl(const std::filesystem::path& in_path) : model_path_(in_path) {
+    boost::asio::post(g_strand(), [this]() {
+      estimator_ = std::move(ai::doodle_depth_estimation{model_path_, false});
+    });
+  }
+
+  // 后台异步深度估计 — 遵循 task.cpp:289-292 的 run_sql + broadcast 模式
+  boost::asio::awaitable<void> run_depth_estimation(
+      std::shared_ptr<sd2::ai_entity_reference_preview> in_ref, std::shared_ptr<sd2::ai_preview_file> in_preview,
+      uuid in_entity_id, FSys::path in_input_path, FSys::path in_output_path, FSys::path in_thumbnail_path
+  ) {
+    // 1. 打开临时视频，逐帧推理，直接写入最终路径
+    auto l_capture = cv::VideoCapture{in_input_path.generic_string()};
+    auto l_fps     = l_capture.get(cv::CAP_PROP_FPS);
+    auto l_width   = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_WIDTH));
+    auto l_height  = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_HEIGHT));
+
+    auto l_writer  = cv::VideoWriter{
+        in_output_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), l_fps, cv::Size{l_width, l_height}
+    };
+
+    cv::Mat l_frame, l_depth, l_depth_color;
+    bool l_first_frame = true;
+    while (l_capture.read(l_frame)) {
+      l_depth = estimator_.predict(l_frame);
+      cv::normalize(l_depth, l_depth, 0, 255, cv::NORM_MINMAX, CV_8U);
+      cv::applyColorMap(l_depth, l_depth_color, cv::COLORMAP_TURBO);
+      l_writer.write(l_depth_color);
+
+      // 2. 第一帧同时生成缩略图
+      if (l_first_frame) {
+        l_first_frame = false;
+        if (auto l_p = in_thumbnail_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+        auto l_resize = std::min(500.0 / l_depth_color.cols, 500.0 / l_depth_color.rows);
+        cv::Mat l_thumb;
+        cv::resize(l_depth_color, l_thumb, cv::Size(l_depth_color.cols * l_resize, l_depth_color.rows * l_resize));
+        cv::imwrite(in_thumbnail_path.generic_string(), l_thumb);
+      }
+    }
+
+    // 3. 释放 VideoCapture 后才能删除临时文件
+    l_capture.release();
+    l_writer.release();
+    FSys::remove(in_input_path);
+
+    // 4. 广播完成 — 使用已有的 reference / preview id
+    socket_io::broadcast(
+        socket_io::seedance2_entity_reference_new_broadcast_t{
+            .reference_id_ = in_ref->uuid_id_, .entity_id_ = in_entity_id, .preview_file_id_ = in_preview->uuid_id_
+        }
+    );
+    co_return;
+  }
+};
+
+doodle_ai_depth_estimation_video::doodle_ai_depth_estimation_video() : depth_impl_(nullptr) {
+  depth_impl_ = std::make_shared<impl>(g_ctx().get<kitsu_ctx_t>().get_depth_model_path());
+}
 
 // POST /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/depth
 // 上传视频 → 创建 ai_preview_file + ai_entity_reference_preview → 存盘 → 生成缩略图
@@ -81,73 +138,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
   // 5. 异步触发深度估计（不阻塞响应）
   boost::asio::co_spawn(
       g_strand(),
-      run_depth_estimation(l_ref, l_preview, entity_id_, l_file_tmp, l_file_picture, l_file_thumbnail),
-      boost::asio::detached
+      depth_impl_->run_depth_estimation(l_ref, l_preview, entity_id_, l_file_tmp, l_file_picture, l_file_thumbnail),
+      boost::asio::consign(boost::asio::detached, http_connection_guard{})
   );
 
   co_return in_handle->make_msg(nlohmann::json{{"reference", *l_ref}, {"preview", *l_preview}});
-}
-
-// 后台异步深度估计 — 遵循 task.cpp:289-292 的 run_sql + broadcast 模式
-// 从临时文件读取原始视频，深度转换后输出到最终路径，删除临时文件
-boost::asio::awaitable<void> run_depth_estimation(
-    std::shared_ptr<sd2::ai_entity_reference_preview> in_ref,
-    std::shared_ptr<sd2::ai_preview_file> in_preview,
-    uuid in_entity_id,
-    FSys::path in_input_path,
-    FSys::path in_output_path,
-    FSys::path in_thumbnail_path
-) {
-  auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
-
-  // 1. 加载深度估计模型
-  ai::doodle_depth_estimation l_estimator(l_ctx.get_depth_model_path(), false);
-
-  // 2. 打开临时视频，逐帧推理，直接写入最终路径
-  auto l_capture = cv::VideoCapture{in_input_path.generic_string()};
-  auto l_fps     = l_capture.get(cv::CAP_PROP_FPS);
-  auto l_width   = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_WIDTH));
-  auto l_height  = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_HEIGHT));
-
-  auto l_writer = cv::VideoWriter{
-      in_output_path.generic_string(),
-      cv::VideoWriter::fourcc('m', 'p', '4', 'v'), l_fps,
-      cv::Size{l_width, l_height}
-  };
-
-  cv::Mat l_frame, l_depth, l_depth_color;
-  bool l_first_frame = true;
-  while (l_capture.read(l_frame)) {
-    l_depth = l_estimator.predict(l_frame);
-    cv::normalize(l_depth, l_depth, 0, 255, cv::NORM_MINMAX, CV_8U);
-    cv::applyColorMap(l_depth, l_depth_color, cv::COLORMAP_TURBO);
-    l_writer.write(l_depth_color);
-
-    // 3. 第一帧同时生成缩略图
-    if (l_first_frame) {
-      l_first_frame = false;
-      if (auto l_p = in_thumbnail_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-      auto l_resize = std::min(500.0 / l_depth_color.cols, 500.0 / l_depth_color.rows);
-      cv::Mat l_thumb;
-      cv::resize(l_depth_color, l_thumb, cv::Size(l_depth_color.cols * l_resize, l_depth_color.rows * l_resize));
-      cv::imwrite(in_thumbnail_path.generic_string(), l_thumb);
-    }
-  }
-
-  // 4. 释放 VideoCapture 后才能删除临时文件
-  l_capture.release();
-  l_writer.release();
-  FSys::remove(in_input_path);
-
-  // 5. 广播完成 — 使用已有的 reference / preview id
-  socket_io::broadcast(
-      socket_io::seedance2_entity_reference_new_broadcast_t{
-          .reference_id_    = in_ref->uuid_id_,
-          .entity_id_       = in_entity_id,
-          .preview_file_id_ = in_preview->uuid_id_
-      }
-  );
-  co_return;
 }
 
 }  // namespace doodle::http::seedance2

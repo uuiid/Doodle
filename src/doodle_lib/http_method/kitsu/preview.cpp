@@ -386,8 +386,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
 
     boost::asio::post(
         g_pool_strand(),
-        [l_new_path, fps = l_prj.fps_, l_preview_file, size = cv::Size{l_prj_size.first, l_prj_size.second}]() {
-          http_connection_guard l_connection_guard{};
+        [l_new_path, fps = l_prj.fps_, l_preview_file, size = cv::Size{l_prj_size.first, l_prj_size.second},
+         l_connection_guard = http_connection_guard{}]() {
           preview::handle_video_file(
               l_new_path, fps, size, l_preview_file,
               std::make_shared<progress_data>(l_preview_file->uuid_id_, "preview-video:process")

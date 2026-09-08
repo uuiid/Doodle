@@ -140,7 +140,7 @@ DOODLE_HTTP_JWT_FUN(seedance2_task_run)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
-// 
+//
 // /api/seedance2/task/{date}-{date}
 DOODLE_HTTP_JWT_FUN(seedance2_task_date)
 DOODLE_HTTP_FUN_OVERRIDE(get)
@@ -317,9 +317,14 @@ DOODLE_HTTP_FUN_END()
 
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/depth
 DOODLE_HTTP_JWT_FUN(doodle_ai_depth_estimation_video)
+doodle_ai_depth_estimation_video();
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid subproject_id_{};
 uuid entity_id_{};
+
+private:
+class impl;
+std::shared_ptr<impl> depth_impl_;
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http::seedance2
