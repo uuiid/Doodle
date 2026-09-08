@@ -1,28 +1,22 @@
 # https://github.com/microsoft/onnxruntime/blob/v1.22.1/tools/python/util/vcpkg_helpers.py
 message(WARNING "The port requires 'onnx' port build with CMake option ONNX_DISABLE_STATIC_REGISTRATION=ON")
-
-vcpkg_from_github(
-    OUT_SOURCE_PATH SOURCE_PATH
-    REPO microsoft/onnxruntime
-    REF "v${VERSION}"
-    SHA512 9ea05f5279fc93fd243a967f3664aaabe9216f6e3ce9358ead662653984476e9cb0cb950947f31f8602541224c946a3ceac91d7c1990ffe2b8314d61361c300f
-    PATCHES
-    # CUDA 需要把 cudnn/cutlass/nvrtc 切到 vcpkg 提供的包（fix-cmake-cuda.patch）。
-        fix-cmake-cuda.patch
-    # 1.29.0: core/providers/cuda/llm/attention.cc 无条件引用 kCutlassSafeMaskFilterValue，
-    # 该常量被 USE_MEMORY_EFFICIENT_ATTENTION 保护，而 vcpkg 通过 INVERTED_FEATURES 关闭了它，
-    # 故把常量定义移到宏保护之外（fix-attention-guard.patch）。
-        fix-attention-guard.patch
-)
-
- 
-
 if(VCPKG_TARGET_IS_OSX OR VCPKG_TARGET_IS_IOS)
     if("framework" IN_LIST FEATURES)
         # The Objective-C API requires onnxruntime_BUILD_SHARED_LIB
         vcpkg_check_linkage(ONLY_DYNAMIC_LIBRARY)
     endif()
 endif()
+
+vcpkg_from_github(
+    OUT_SOURCE_PATH SOURCE_PATH
+    REPO microsoft/onnxruntime
+    REF "v${VERSION}"
+    SHA512 373c51575ada457b8aead5d195a5f3eba62fb747b6370a2a9889fff875c40ea30af8fd49104d58cc86f79247410e829086b0979f37ca8635c6dd34960e9cc424
+    PATCHES
+        fix-cmake.patch # .framework install, external library workarounds(abseil-cpp, eigen3)
+        fix-cmake-cuda.patch
+        fix-protobuf-include.patch
+)
 
 find_program(PROTOC NAMES protoc PATHS "${CURRENT_HOST_INSTALLED_DIR}/tools/protobuf" REQUIRED NO_DEFAULT_PATH NO_CMAKE_PATH)
 message(STATUS "Using protoc: ${PROTOC}")
@@ -62,7 +56,6 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
         mimalloc  onnxruntime_USE_MIMALLOC
         valgrind  onnxruntime_USE_VALGRIND
         xnnpack   onnxruntime_USE_XNNPACK
-        kleidiai  onnxruntime_USE_KLEIDIAI
         nnapi     onnxruntime_USE_NNAPI_BUILTIN
         azure     onnxruntime_USE_AZURE
         test      onnxruntime_BUILD_UNIT_TESTS

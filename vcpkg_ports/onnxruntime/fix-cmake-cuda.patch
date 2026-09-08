@@ -12,30 +12,33 @@ diff --git a/cmake/external/cudnn_frontend.cmake b/cmake/external/cudnn_frontend
 index d89ab0f..c28568f 100644
 --- a/cmake/external/cudnn_frontend.cmake
 +++ b/cmake/external/cudnn_frontend.cmake
-@@ -1,5 +1,7 @@
+@@ -1,4 +1,5 @@
+-
 +find_package(cudnn_frontend CONFIG REQUIRED) # cudnn-frontend 1.13.0+
 +return()
- 
- # The cudnn_frontend shim only loads the CUDA runtime / driver libraries with
- # their Linux names (libcudart.so.*, libcuda.so.1) when NV_CUDNN_FRONTEND_USE_DYNAMIC_LOADING
- # is enabled. On Windows this always fails (dlopen is mapped to LoadLibrary), so patch the
- # shim to use the Windows DLL names (cudart64_*.dll, nvcuda.dll).
+ onnxruntime_fetchcontent_declare(
+   cudnn_frontend
+   URL ${DEP_URL_cudnn_frontend}
 diff --git a/cmake/onnxruntime_providers_cuda.cmake b/cmake/onnxruntime_providers_cuda.cmake
 index 91707c4..243783b 100644
 --- a/cmake/onnxruntime_providers_cuda.cmake
 +++ b/cmake/onnxruntime_providers_cuda.cmake
-@@ -208,4 +208,5 @@
-     target_compile_options(onnxruntime_providers_cuda PRIVATE
-       "$<$<COMPILE_LANGUAGE:CXX>:/permissive>"
-+      "$<$<COMPILE_LANGUAGE:CXX>:/bigobj>"
-       "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler /permissive>"
-     )
-@@ -415,3 +416,3 @@
--      target_link_libraries(${target} PRIVATE CUDA::cublasLt CUDA::cublas cudnn_frontend CUDA::curand CUDA::cudart CUDA::cuda_driver
-+      target_link_libraries(${target} PRIVATE CUDA::cublasLt CUDA::cublas cudnn_frontend CUDA::curand CUDA::cudart CUDA::cuda_driver CUDA::nvrtc
+@@ -149,6 +149,9 @@
+     onnxruntime_add_shared_library_module(onnxruntime_providers_cuda ${onnxruntime_providers_cuda_all_srcs})
+   endif()
+ 
++  if(MSVC)
++    target_compile_options(onnxruntime_providers_cuda PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/bigobj>)
++  endif()
+   if(WIN32)
+     # FILE_NAME preprocessor definition is used in onnxruntime_providers_cuda.rc
+     target_compile_definitions(onnxruntime_providers_cuda PRIVATE FILE_NAME=\"onnxruntime_providers_cuda.dll\")
+@@ -240,9 +240,9 @@
+-      target_link_libraries(${target} PRIVATE CUDA::cublasLt CUDA::cublas cudnn_frontend CUDA::curand CUDA::cudart
++      target_link_libraries(${target} PRIVATE CUDA::cublasLt CUDA::cublas cudnn_frontend CUDA::curand CUDA::cudart CUDA::nvrtc
                ${ABSEIL_LIBS} ${ONNXRUNTIME_PROVIDERS_SHARED} Boost::mp11 safeint_interface)
      endif()
-@@ -419,3 +420,3 @@
+ 
 -    include(cutlass)
 -    target_include_directories(${target} PRIVATE ${cutlass_SOURCE_DIR}/include ${cutlass_SOURCE_DIR}/examples ${cutlass_SOURCE_DIR}/tools/util/include)
 +    find_package(NvidiaCutlass REQUIRED)

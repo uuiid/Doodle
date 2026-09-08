@@ -1,6 +1,6 @@
 {
   "name": "onnxruntime",
-  "version-semver": "1.29.0",
+  "version-semver": "1.23.2",
   "description": "ONNX Runtime: cross-platform, high performance ML inferencing and training accelerator",
   "homepage": "https://github.com/microsoft/onnxruntime",
   "license": "MIT",
@@ -8,7 +8,7 @@
   "dependencies": [
     {
       "name": "abseil",
-      "version>=": "20250814.0"
+      "version>=": "20250512.1"
     },
     {
       "name": "boost-config",
@@ -36,17 +36,17 @@
     "nlohmann-json",
     {
       "name": "onnx",
-      "version>=": "1.22.0"
+      "version>=": "1.19.0"
     },
     "optional-lite",
     {
       "name": "protobuf",
-      "version>=": "6.33.6"
+      "version>=": "3.21.12"
     },
     {
       "name": "protobuf",
       "host": true,
-      "version>=": "6.33.6"
+      "version>=": "3.21.12"
     },
     "re2",
     "safeint",
@@ -79,16 +79,9 @@
       "description": "Build a macOS/iOS framework, Objective-C library",
       "supports": "osx | ios"
     },
-    "kleidiai": {
-      "description": "Build kleidiai support",
-      "supports": "arm64",
-      "dependencies": [
-        "kleidiai"
-      ]
-    },
     "openvino": {
       "description": "Build with OpenVINO support",
-      "supports": "!(osx | ios | android | emscripten) & !static",
+      "supports": "!(osx | ios | android | emscripten)",
       "dependencies": [
         {
           "name": "openvino",
