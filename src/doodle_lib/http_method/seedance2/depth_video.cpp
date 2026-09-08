@@ -1,9 +1,8 @@
 //
 // Created by TD on 25-7-12.
 //
-// 深度估计视频 HTTP 处理
+// 深度估计参考 — 遵循 seedance2_subproject_entity_reference 模式
 // POST: 上传视频 → 创建 ai_preview_file + ai_entity_reference_preview → 存盘 → 返回 JSON
-// GET:  查询所有深度视频记录（JOIN ai_preview_file）
 //
 
 #include "doodle_core/doodle_core_fwd.h"
@@ -25,28 +24,16 @@
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 
-namespace {
-
-/// 与 ai_entity_reference_preview_with_preview_file 模式一致
-struct depth_video_with_preview_file : public sd2::ai_entity_reference_preview {
-  sd2::ai_preview_file preview_{};
-
-  friend void to_json(nlohmann::json& j, const depth_video_with_preview_file& p) {
-    to_json(j, static_cast<const sd2::ai_entity_reference_preview>(p));
-    j["preview"] = p.preview_;
-  }
-};
-
-}  // namespace
-
-// POST /api/doodle/ai/depth/video
+// POST /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/depth
 // 上传视频 → 创建 ai_preview_file + ai_entity_reference_preview → 存盘 → 生成缩略图
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
+  person_.check_subproject_access(subproject_id_);
   person_.check_not_outsourcer();
 
-  auto l_sql      = get_sqlite_database();
-  auto l_file     = in_handle->get_file();
-  auto l_ext      = l_file.extension().string();
+  auto l_sql    = get_sqlite_database();
+  auto l_entity = std::make_shared<sd2::ai_generate_entity>(l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_));
+  auto l_file   = in_handle->get_file();
+  auto l_ext    = l_file.extension().string();
   auto l_is_video = l_ext == ".mp4" || l_ext == ".mov" || l_ext == ".avi";
 
   DOODLE_CHICK(l_is_video, "请上传视频文件 (.mp4/.mov/.avi)");
@@ -56,10 +43,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
   l_preview->extension_ = l_ext;
   co_await l_sql.install(l_preview);
 
-  // 2. 创建 ai_entity_reference_preview 记录
-  //    ai_generate_entity_id_ 为 nil 表示独立的深度估计记录（不关联任何实体）
+  // 2. 创建 ai_entity_reference_preview 记录（关联到当前实体）
   auto l_ref                    = std::make_shared<sd2::ai_entity_reference_preview>();
-  l_ref->ai_generate_entity_id_ = {};
+  l_ref->ai_generate_entity_id_ = entity_id_;
   l_ref->preview_file_          = l_preview->uuid_id_;
   co_await l_sql.install(l_ref);
 
@@ -90,22 +76,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
       {"reference", *l_ref},
       {"preview",   *l_preview}
   });
-}
-
-// GET /api/doodle/ai/depth/video
-// 查询所有深度视频记录（ai_generate_entity_id_ 为 nil 的独立记录）
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, get) {
-  auto l_sql = get_sqlite_database();
-  using namespace orm;
-  auto l_result = select(l_sql)
-                      .columns(object<sd2::ai_entity_reference_preview>(), object<sd2::ai_preview_file>())
-                      .from<sd2::ai_entity_reference_preview>()
-                      .join<sd2::ai_preview_file>(
-                          c(&sd2::ai_entity_reference_preview::preview_file_) == c(&sd2::ai_preview_file::uuid_id_)
-                      )
-                      .where(c(&sd2::ai_entity_reference_preview::ai_generate_entity_id_).is_null())()
-                      .to_vector<depth_video_with_preview_file>();
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
 }  // namespace doodle::http::seedance2
