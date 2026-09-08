@@ -37,12 +37,14 @@ class doodle_ai_depth_estimation_video::impl {
   ai::doodle_depth_estimation estimator_;
   FSys::path model_path_;
   explicit impl(const std::filesystem::path& in_path) : model_path_(in_path) {
+    // 这里使用 g_strand() 异步加载模型, 这样必须排在 run_depth_estimation 方法之前调用，否则可能出现 estimator_
+    // 尚未初始化的情况
     boost::asio::post(g_strand(), [this]() {
       estimator_ = std::move(ai::doodle_depth_estimation{model_path_, false});
     });
   }
 
-  // 后台异步深度估计 — 遵循 task.cpp:289-292 的 run_sql + broadcast 模式
+  // 后台异步深度估计 — 遵循 task.cpp:289-292 的 run_sql + broadcast 模式, 使用 g_strand() 保证线程安全
   boost::asio::awaitable<void> run_depth_estimation(
       std::shared_ptr<sd2::ai_entity_reference_preview> in_ref, std::shared_ptr<sd2::ai_preview_file> in_preview,
       uuid in_entity_id, FSys::path in_input_path, FSys::path in_output_path, FSys::path in_thumbnail_path
