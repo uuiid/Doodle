@@ -265,6 +265,18 @@ describe('seedance2 entity 测试', function () {
     console.log('DELETE entity 返回值:', JSON.stringify(req.body, null, 2));
   });
 
+  it('POST /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/depth — 上传视频进行深度估计', async function () {
+    this.timeout(330000);
+    expect(entityId).to.not.be.null;
+    const mp4Path = 'D:\\无标题(1).mp4';
+    const req = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity/${entityId}/depth`)
+      .set(authHeader)
+      .attach('file', fs.createReadStream(mp4Path), '无标题(1).mp4')
+      .timeout(300000);
+    expect(req.status).to.equal(200);
+    console.log('POST depth 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
 });
 
 describe('seedance2 task', function () {
