@@ -45,38 +45,66 @@ class doodle_ai_depth_estimation_video::impl {
   ) {
     // 在需要时加载
     if (!estimator_) estimator_ = std::move(ai::doodle_depth_estimation{model_path_, false});
-    // 1. 打开临时视频，逐帧推理，直接写入最终路径
-    auto l_capture = cv::VideoCapture{in_input_path.generic_string()};
-    auto l_fps     = l_capture.get(cv::CAP_PROP_FPS);
-    auto l_width   = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_WIDTH));
-    auto l_height  = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_HEIGHT));
 
-    auto l_writer  = cv::VideoWriter{
-        in_output_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), l_fps, cv::Size{l_width, l_height}
-    };
+    // 1. RAII 管理 VideoCapture / VideoWriter 生命周期
+    {
+      auto l_capture = cv::VideoCapture{in_input_path.generic_string()};
+      auto l_fps     = l_capture.get(cv::CAP_PROP_FPS);
+      auto l_width   = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_WIDTH));
+      auto l_height  = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_HEIGHT));
 
-    cv::Mat l_frame, l_depth, l_depth_color;
-    bool l_first_frame = true;
-    while (l_capture.read(l_frame)) {
-      l_depth = estimator_.predict(l_frame);
-      cv::normalize(l_depth, l_depth, 0, 255, cv::NORM_MINMAX, CV_8U);
-      cv::applyColorMap(l_depth, l_depth_color, cv::COLORMAP_TURBO);
-      l_writer.write(l_depth_color);
+      auto l_writer  = cv::VideoWriter{
+          in_output_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), l_fps,
+          cv::Size{l_width, l_height}
+      };
 
-      // 2. 第一帧同时生成缩略图
-      if (l_first_frame) {
-        l_first_frame = false;
-        if (auto l_p = in_thumbnail_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-        auto l_resize = std::min(500.0 / l_depth_color.cols, 500.0 / l_depth_color.rows);
-        cv::Mat l_thumb;
-        cv::resize(l_depth_color, l_thumb, cv::Size(l_depth_color.cols * l_resize, l_depth_color.rows * l_resize));
-        cv::imwrite(in_thumbnail_path.generic_string(), l_thumb);
+      static constexpr int kBatchSize = 30;
+      std::vector<cv::Mat> l_frames;
+      l_frames.reserve(kBatchSize);
+      bool l_first_batch = true;
+
+      cv::Mat l_frame;
+      while (l_capture.read(l_frame)) {
+        l_frames.push_back(l_frame.clone());
+        if (static_cast<int>(l_frames.size()) >= kBatchSize) {
+          auto l_depths = estimator_.predict_batch(l_frames);
+
+          for (auto& l_depth : l_depths) {
+            cv::Mat l_depth_color;
+            cv::normalize(l_depth, l_depth, 0, 255, cv::NORM_MINMAX, CV_8U);
+            cv::applyColorMap(l_depth, l_depth_color, cv::COLORMAP_TURBO);
+            l_writer.write(l_depth_color);
+
+            // 2. 第一帧同时生成缩略图
+            if (l_first_batch) {
+              l_first_batch = false;
+              if (auto l_p = in_thumbnail_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+              auto l_resize = std::min(500.0 / l_depth_color.cols, 500.0 / l_depth_color.rows);
+              cv::Mat l_thumb;
+              cv::resize(
+                  l_depth_color, l_thumb, cv::Size(l_depth_color.cols * l_resize, l_depth_color.rows * l_resize)
+              );
+              cv::imwrite(in_thumbnail_path.generic_string(), l_thumb);
+            }
+          }
+          l_frames.clear();
+        }
       }
-    }
 
-    // 3. 释放 VideoCapture 后才能删除临时文件
-    l_capture.release();
-    l_writer.release();
+      // 处理剩余帧
+      if (!l_frames.empty()) {
+        auto l_depths = estimator_.predict_batch(l_frames);
+        for (auto& l_depth : l_depths) {
+          cv::Mat l_depth_color;
+          cv::normalize(l_depth, l_depth, 0, 255, cv::NORM_MINMAX, CV_8U);
+          cv::applyColorMap(l_depth, l_depth_color, cv::COLORMAP_TURBO);
+          l_writer.write(l_depth_color);
+        }
+      }
+
+      // 3. 离开作用域时 RAII 自动析构 VideoCapture / VideoWriter
+    }  // l_capture, l_writer 在此析构
+
     FSys::remove(in_input_path);
 
     // 4. 广播完成 — 使用已有的 reference / preview id
