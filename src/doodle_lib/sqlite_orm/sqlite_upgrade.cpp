@@ -91,6 +91,8 @@ struct upgrade_2_t : sqlite_upgrade {
     using namespace orm;
     auto l_s = in_data.create_session();
     if (l_s.pragma().user_version() == 21) {
+      backup(l_s);
+      auto l_guard = l_s.transaction();
       // 所有失败的任务不再扣费, 清空其 completion_tokens_
       update(l_s)
           .from<seedance2::task>()
@@ -98,6 +100,7 @@ struct upgrade_2_t : sqlite_upgrade {
           .where(c(&seedance2::task::status_) == seedance2::task_status::failed)();
       l_s.add_column("seedance2_ai_episode", "limit_count", "INTEGER", "0");
       l_s.rebuild_table<seedance2::ai_generate_entity>({"generate_count", "main_task_id"});
+      l_guard.commit();
     }
     l_s.pragma().user_version(g_current_version);
   }
