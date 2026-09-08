@@ -266,10 +266,10 @@ describe('seedance2 entity 测试', function () {
       .set(authHeader)
       .attach('file', fs.createReadStream(mp4Path), 'test_depth.mp4')
       .timeout(300000);
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     console.log('POST depth 返回值:', JSON.stringify(req.body, null, 2));
   });
-  
+
   it('DELETE /api/seedance2/subproject/{subproject_id}/entity/{entity_id} — 删除实体', async function () {
     expect(entityId).to.not.be.null;
     const req = await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}/entity/${entityId}`)
