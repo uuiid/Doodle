@@ -44,6 +44,8 @@ class DOODLELIB_API doodle_depth_estimation {
   /// 是否为度量深度模型（输出单位为米）
   bool is_metric() const;
 
+  operator bool() const;
+
  private:
   std::unique_ptr<impl> impl_;
 };

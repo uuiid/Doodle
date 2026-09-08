@@ -33,5 +33,6 @@ std::vector<cv::Mat> doodle_depth_estimation::predict_batch(const std::vector<cv
 }
 
 bool doodle_depth_estimation::is_metric() const { return impl_->engine_->isMetric(); }
+doodle_depth_estimation::operator bool() const { return static_cast<bool>(impl_ && impl_->engine_); }
 
 }  // namespace doodle::ai

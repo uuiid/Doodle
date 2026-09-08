@@ -36,13 +36,15 @@ class doodle_ai_depth_estimation_video::impl {
  public:
   ai::doodle_depth_estimation estimator_;
   FSys::path model_path_;
-  explicit impl(const std::filesystem::path& in_path) : estimator_(in_path, false), model_path_(in_path) {}
+  explicit impl(const std::filesystem::path& in_path) : estimator_(), model_path_(in_path) {}
 
   // 后台异步深度估计 — 遵循 task.cpp:289-292 的 run_sql + broadcast 模式, 使用 g_strand() 保证线程安全
   boost::asio::awaitable<void> run_depth_estimation(
       std::shared_ptr<sd2::ai_entity_reference_preview> in_ref, std::shared_ptr<sd2::ai_preview_file> in_preview,
       uuid in_entity_id, FSys::path in_input_path, FSys::path in_output_path, FSys::path in_thumbnail_path
   ) {
+    // 在需要时加载
+    if (!estimator_) estimator_ = std::move(ai::doodle_depth_estimation{model_path_, false});
     // 1. 打开临时视频，逐帧推理，直接写入最终路径
     auto l_capture = cv::VideoCapture{in_input_path.generic_string()};
     auto l_fps     = l_capture.get(cv::CAP_PROP_FPS);
