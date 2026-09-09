@@ -494,38 +494,40 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
   );
 
   // preparing 状态尚未提交到外部, 直接置为 cancelled 并归还 token
-  if (l_task.status_ == sd2::task_status::preparing) {
-    using namespace orm;
-    co_await l_sql.run_sql(
-        update(l_sql)
-            .from<sd2::task>()
-            .set(c(&sd2::task::status_) = sd2::task_status::cancelled)
-            .set(
-                c(&sd2::task::ended_at_) =
-                    chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}
-            )
-            .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_),
-        add_remaining_tokens_for_person(l_sql, l_task.user_id_, l_task.completion_tokens_)
-    );
-    l_task.status_ = sd2::task_status::cancelled;
-    co_return in_handle->make_msg(nlohmann::json{} = l_task);
+  if (l_task.status_ != sd2::task_status::preparing) {
+    auto l_studio = l_sql.get_by_uuid<ai_studio>(person_.get_ai_studio_id());
+    auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
+
+    l_client->set_token(l_studio.app_secret_);
+    l_client->set_logger(g_logger_ctrl().get_http());
+    DOODLE_CHICK_HTTP(!l_task.task_id_.empty(), internal_server_error, "task id 为空, 无法查询");
+    auto l_res = co_await l_client->query_task(l_task.task_id_);
+    const sd2::task_status l_status{
+        l_res.contains("status") ? l_res.at("status").get<sd2::task_status>() : sd2::task_status::failed
+    };
+    DOODLE_CHICK_HTTP(l_status == sd2::task_status::queued, bad_request, "只有排队中的任务可以取消");
+#ifdef DOODLE_SEED2
+    co_await l_client->cancel_task(l_task.task_id_);
+#endif
   }
 
-  auto l_studio = l_sql.get_by_uuid<ai_studio>(person_.get_ai_studio_id());
-  auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
-
-  l_client->set_token(l_studio.app_secret_);
-  l_client->set_logger(g_logger_ctrl().get_http());
-  DOODLE_CHICK_HTTP(!l_task.task_id_.empty(), internal_server_error, "task id 为空, 无法查询");
-  auto l_res = co_await l_client->query_task(l_task.task_id_);
-  const sd2::task_status l_status{
-      l_res.contains("status") ? l_res.at("status").get<sd2::task_status>() : sd2::task_status::failed
-  };
-  DOODLE_CHICK_HTTP(l_status == sd2::task_status::queued, bad_request, "只有排队中的任务可以取消");
-#ifdef DOODLE_SEED2
-  co_await l_client->cancel_task(l_task.task_id_);
-#endif
-  co_await l_sql.run_sql(add_remaining_tokens_for_person(l_sql, l_task.user_id_, l_task.completion_tokens_));
+  using namespace orm;
+  co_await l_sql.run_sql(
+      update(l_sql)
+          .from<sd2::task>()
+          .set(c(&sd2::task::status_) = sd2::task_status::cancelled)
+          .set(
+              c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}
+          )
+          .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_),
+      add_remaining_tokens_for_person(l_sql, l_task.user_id_, l_task.completion_tokens_),
+      update(l_sql)
+          .from<sd2::ai_generate_entity>()
+          .set(c(&sd2::ai_generate_entity::generate_count_) = c(&sd2::ai_generate_entity::generate_count_) - 1)
+          .where(c(&sd2::ai_generate_entity::uuid_id_) == l_task.ai_generate_entity_id_)
+  );
+  l_task.status_ = sd2::task_status::cancelled;
+  co_return in_handle->make_msg(nlohmann::json{} = l_task);
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
 }
 
