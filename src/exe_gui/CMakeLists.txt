@@ -128,6 +128,32 @@ install(FILES ${crashpad_handler_exe}
 install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/dict
         DESTINATION bin
 )
+# 复制 CUDA provider DLLs 到输出目录 — vcpkg 自动链接不处理运行时 DLL
+# 使用 $<IF:> 确保每个 copy_if_different 始终收到恰好 2 个参数
+add_custom_command(
+    TARGET doodle_kitsu_supplement
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<IF:$<CONFIG:Debug>,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/debug/bin/onnxruntime_providers_cuda.dll,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin/onnxruntime_providers_cuda.dll>"
+        "$<TARGET_FILE_DIR:doodle_kitsu_supplement>"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<IF:$<CONFIG:Debug>,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/debug/bin/onnxruntime_providers_shared.dll,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin/onnxruntime_providers_shared.dll>"
+        "$<TARGET_FILE_DIR:doodle_kitsu_supplement>"
+)
+# PDB 仅在 Debug 模式复制（Release 不复制）
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_custom_command(
+        TARGET doodle_kitsu_supplement
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/debug/bin/onnxruntime_providers_cuda.pdb"
+            "$<TARGET_FILE_DIR:doodle_kitsu_supplement>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/debug/bin/onnxruntime_providers_shared.pdb"
+            "$<TARGET_FILE_DIR:doodle_kitsu_supplement>"
+    )
+endif()
+
 # 最后实现camke修复
 install(CODE
         "
