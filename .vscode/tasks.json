@@ -139,7 +139,8 @@
       "problemMatcher": []
     },
     {
-      "label": "运行boost测试",
+      "label": "test boost",
+      "detail": "运行boost 测试",
       "type": "shell",
       "command": "${workspaceFolder}/build/Ninja_debug/bin/test_main.exe",
       "args": [
