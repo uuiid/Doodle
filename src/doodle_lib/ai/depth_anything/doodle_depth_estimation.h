@@ -24,7 +24,7 @@ class DOODLELIB_API doodle_depth_estimation {
   doodle_depth_estimation();
   /// @param in_model_path ONNX 模型文件路径
   /// @param in_use_cuda  是否尝试 GPU 加速（Auto 模式：TensorRT → CUDA → CPU）
-  explicit doodle_depth_estimation(const std::filesystem::path& in_model_path, bool in_use_cuda = true);
+  explicit doodle_depth_estimation(const std::filesystem::path& in_model_path);
   ~doodle_depth_estimation();
 
   // move constructor and move assignment operator

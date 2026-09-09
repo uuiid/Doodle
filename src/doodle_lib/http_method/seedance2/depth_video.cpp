@@ -44,7 +44,7 @@ class doodle_ai_depth_estimation_video::impl {
       uuid in_entity_id, FSys::path in_input_path, FSys::path in_output_path, FSys::path in_thumbnail_path
   ) {
     // 在需要时加载
-    if (!estimator_) estimator_ = std::move(ai::doodle_depth_estimation{model_path_, false});
+    if (!estimator_) estimator_ = std::move(ai::doodle_depth_estimation{model_path_});
 
     try {
       // 1. RAII 管理 VideoCapture / VideoWriter 生命周期
