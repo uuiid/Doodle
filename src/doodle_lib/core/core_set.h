@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace doodle {
 
@@ -83,8 +84,39 @@ class DOODLELIB_API core_set : public boost::noncopyable {
 };
 
 struct http_connection_guard {
-  http_connection_guard() { core_set::get_set().http_connection_count_.fetch_add(1, std::memory_order_relaxed); }
-  ~http_connection_guard() { core_set::get_set().http_connection_count_.fetch_sub(1, std::memory_order_relaxed); }
+  http_connection_guard() : owns_{true} {
+    core_set::get_set().http_connection_count_.fetch_add(1, std::memory_order_relaxed);
+  }
+  ~http_connection_guard() {
+    if (owns_) core_set::get_set().http_connection_count_.fetch_sub(1, std::memory_order_relaxed);
+  }
+
+  // 拷贝：新对象持有新的计数
+  http_connection_guard(const http_connection_guard&) : owns_{true} {
+    core_set::get_set().http_connection_count_.fetch_add(1, std::memory_order_relaxed);
+  }
+  http_connection_guard& operator=(const http_connection_guard& other) {
+    if (this != &other) {
+      if (!owns_) {
+        owns_ = true;
+        core_set::get_set().http_connection_count_.fetch_add(1, std::memory_order_relaxed);
+      }
+    }
+    return *this;
+  }
+
+  // 移动：转移所有权，源对象不再拥有计数
+  http_connection_guard(http_connection_guard&& other) noexcept : owns_{std::exchange(other.owns_, false)} {}
+  http_connection_guard& operator=(http_connection_guard&& other) noexcept {
+    if (this != &other) {
+      if (owns_) core_set::get_set().http_connection_count_.fetch_sub(1, std::memory_order_relaxed);
+      owns_ = std::exchange(other.owns_, false);
+    }
+    return *this;
+  }
+
+ private:
+  bool owns_{false};
 };
 
 void to_json(nlohmann::json& j, const core_set& p);
