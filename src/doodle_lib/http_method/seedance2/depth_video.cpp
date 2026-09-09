@@ -64,6 +64,7 @@ class doodle_ai_depth_estimation_video::impl {
         while (l_capture.read(l_frame)) {
           l_depth = estimator_.predict(l_frame);
           cv::normalize(l_depth, l_depth, 0, 255, cv::NORM_MINMAX, CV_8U);
+          cv::cvtColor(l_depth, l_depth, cv::COLOR_GRAY2BGR);
           l_writer.write(l_depth);
 
           // 2. 第一帧同时生成缩略图
