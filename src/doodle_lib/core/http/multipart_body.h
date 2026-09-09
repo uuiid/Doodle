@@ -16,10 +16,8 @@
 #include <boost/beast/core/buffers_cat.hpp>
 #include <boost/beast/core/buffers_suffix.hpp>
 #include <boost/beast/core/ostream.hpp>
-#include <boost/beast/core/static_buffer.hpp>
 #include <boost/beast/http.hpp>
 
-#include <core/http/multipart_body_value.h>
 #include <algorithm>
 #include <array>
 #include <cctype>
@@ -55,7 +53,7 @@ struct multipart_body {
     std::string boundary_{};
     std::optional<std::ofstream> out_file_;
     boost::beast::http::fields& fields_;
-    boost::beast::static_buffer<4096> buffer_;
+    std::string buffer_{};
     using boundary_searcher_type = decltype(std::boyer_moore_searcher{
         std::begin(std::declval<std::string>()), std::end(std::declval<std::string>())
     });
@@ -130,19 +128,51 @@ struct multipart_body {
         boost::to_lower(l_c);
         if (l_c == "content-disposition") {
           if (auto l_pos = in_header.find("name="); l_pos != in_header.npos) {
-            auto l_end_pos = in_header.find(';', l_pos);
-            part_.name     = in_header.substr(l_pos + 6, l_end_pos - (l_pos + 6) - 1);
-            if (l_end_pos == in_header.npos) part_.name.pop_back();
+            auto l_value_begin = l_pos + 5;  // "name=" is 5 chars
+            auto l_end_pos     = in_header.find(';', l_value_begin);
+            auto l_value       = in_header.substr(
+                l_value_begin, (l_end_pos != in_header.npos ? l_end_pos : in_header.size()) - l_value_begin
+            );
+            // 去除尾部 \r (如果存在)
+            if (!l_value.empty() && l_value.back() == '\r') l_value.pop_back();
+            // 处理引号
+            if (l_value.size() >= 2 && l_value.front() == '"' && l_value.back() == '"') {
+              part_.name = l_value.substr(1, l_value.size() - 2);
+            } else {
+              part_.name = std::move(l_value);
+            }
           }
           if (auto l_pos = in_header.find("filename="); l_pos != in_header.npos) {
-            auto l_end_pos  = in_header.find(';', l_pos);
-            part_.file_name = in_header.substr(l_pos + 10, l_end_pos - (l_pos + 10) - 1);
-            if (l_end_pos == in_header.npos) part_.file_name.pop_back();
+            auto l_value_begin = l_pos + 9;  // "filename=" is 9 chars
+            auto l_end_pos     = in_header.find(';', l_value_begin);
+            auto l_value       = in_header.substr(
+                l_value_begin, (l_end_pos != in_header.npos ? l_end_pos : in_header.size()) - l_value_begin
+            );
+            if (!l_value.empty() && l_value.back() == '\r') l_value.pop_back();
+            if (l_value.size() >= 2 && l_value.front() == '"' && l_value.back() == '"') {
+              part_.file_name = l_value.substr(1, l_value.size() - 2);
+            } else {
+              part_.file_name = std::move(l_value);
+            }
           }
         }
         if (l_c == "content-type") {
-          if (auto l_pos = in_header.find(':'); l_pos != in_header.npos) {
-            auto l_str         = in_header.substr(l_pos + 2, in_header.find(l_pos, ';'));
+          // in_header 格式: "Content-Type: value\r" 或 "Content-Type: value; charset=..."
+          auto l_value_begin = l_it + 1;
+          // 跳过前导空白
+          while (l_value_begin < in_header.size() &&
+                 (in_header[l_value_begin] == ' ' || in_header[l_value_begin] == '\t')) {
+            ++l_value_begin;
+          }
+          auto l_end_pos   = in_header.find(';', l_value_begin);
+          auto l_value_end = (l_end_pos != in_header.npos ? l_end_pos : in_header.size());
+          // 去除尾部空白和 \r
+          while (l_value_end > l_value_begin &&
+                 (in_header[l_value_end - 1] == ' ' || in_header[l_value_end - 1] == '\r')) {
+            --l_value_end;
+          }
+          if (l_value_end > l_value_begin) {
+            auto l_str         = in_header.substr(l_value_begin, l_value_end - l_value_begin);
             part_.content_type = detail::get_content_type(l_str);
           }
         }
@@ -172,7 +202,7 @@ struct multipart_body {
             if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
             out_file_ = std::make_optional<std::ofstream>(l_path, std::ios::out | std::ios::binary);
           }
-          (*out_file_) << std::string{in_begin, in_end};
+          out_file_->write(&*in_begin, std::distance(in_begin, in_end));
           break;
       }
     }
@@ -187,14 +217,15 @@ struct multipart_body {
         BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::invalid_argument);
         return 0;
       }
+      ec = {};
+
+      // 将输入数据追加到内部累积缓冲区
       auto const l_extra = boost::beast::buffer_bytes(in_buffers);
-      ec                 = {};
-      if (l_extra > 4096) {
-        BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::message_size);
-        return 0;
-      }
-      boost::asio::buffer_copy(buffer_.prepare(l_extra), in_buffers);
-      buffer_.commit(l_extra);
+      auto const l_old_size = buffer_.size();
+      buffer_.resize(l_old_size + l_extra);
+      boost::asio::buffer_copy(
+          boost::asio::mutable_buffer{buffer_.data() + l_old_size, l_extra}, in_buffers
+      );
 
       // 如果缓存不足以包含五个边界, 则继续等待, 保留现有数据, 继续接收
       if (buffer_.size() < boundary_.size() * 5) {
@@ -204,7 +235,7 @@ struct multipart_body {
         auto l_parse_size = paser(ec);
         if (ec) return 0;
         if (l_parse_size == 0) break;
-        buffer_.consume(l_parse_size);
+        buffer_.erase(0, l_parse_size);
         if (buffer_.size() < boundary_.size() * 5) break;
       } while (true);
 
@@ -218,7 +249,7 @@ struct multipart_body {
           std::end(newline_),
       };
       /// 使用boyer_moore算法查找边界
-      auto l_begin = boost::asio::buffers_begin(buffer_.data()), l_end = boost::asio::buffers_end(buffer_.data());
+      auto l_begin = buffer_.begin(), l_end = buffer_.end();
       switch (line_state_) {
         case parser_line_state::begin_parser: {
           auto&& [l_b, l_begin_b] = is_boundary(l_begin, l_end);
@@ -228,7 +259,7 @@ struct multipart_body {
             return 0;
           }
           line_state_ = parser_line_state::header;
-          l_size      = boundary_.size() + 2 + 2;  // --边界 + \r\n
+          l_size      = boundary_.size() + 4;  // --边界 + \r\n
           break;
         }
         case parser_line_state::header: {
@@ -249,14 +280,14 @@ struct multipart_body {
             case boundary: {
               // 找到边界, 说明数据结束
               add_data(l_begin, l_begin_b - 2);                                            // 去除换行
-              l_size      = std::distance(l_begin, l_begin_b) + boundary_.size() + 2 + 2;  // --边界 + \r\n
+              l_size      = std::distance(l_begin, l_begin_b) + boundary_.size() + 4;      // --边界 + \r\n
               line_state_ = parser_line_state::header;
               parser_part_end();
             } break;
             case boundary_end: {
               // 找到最后的边界, 说明数据结束
               add_data(l_begin, l_begin_b - 2);                                            // 去除换行
-              l_size      = std::distance(l_begin, l_begin_b) + boundary_.size() + 2 + 2;  // --边界--
+              l_size      = std::distance(l_begin, l_begin_b) + boundary_.size() + 6;      // --边界--\r\n
               line_state_ = parser_line_state::eof_end;
               parser_part_end();
             } break;
@@ -283,29 +314,30 @@ struct multipart_body {
 
       auto l_find_ = std::search(in_begin, in_end, *boundary_searcher_);
       if (l_find_ == in_end) {
-        // 没有找到边界, 说明数据有问题
+        // 没有找到完整边界 — 可能边界跨 buffer 分割, 返回 not_boundary
+        // (需要更多数据的情况由调用者通过检查缓冲区尾部的部分边界来处理)
         return {not_boundary, in_begin};
       }
 
-      // 需要读取 l_find_[-1], l_find_[-2]
-      if (std::distance(in_begin, l_find_) < 2) return {not_boundary, in_begin};
+      // 需要读取 l_find_[-1], l_find_[-2] 来检查 "--" 前缀
+      if (std::distance(in_begin, l_find_) < 2) return {need_more_data, in_begin};
 
       if (*(l_find_ - 1) != '-' || *(l_find_ - 2) != '-') {
-        // 边界前面不是 --
+        // 边界文本在数据中但前面不是 "--", 这是数据中的巧合匹配
         return {not_boundary, in_begin};
       }
 
       auto l_boundary_end = l_find_ + boundary_.size();
 
-      // 需要读取 l_boundary_end[0], l_boundary_end[1]
-      if (std::distance(l_boundary_end, in_end) < 2) return {boundary, l_find_ - 2};
+      // 需要读取 l_boundary_end[0], l_boundary_end[1] 来检查后缀
+      if (std::distance(l_boundary_end, in_end) < 2) return {need_more_data, l_find_ - 2};
 
       if (*(l_boundary_end) == '-' && *(l_boundary_end + 1) == '-') {
         return {boundary_end, l_find_ - 2};
       }
 
       if (*(l_boundary_end) != '\r' || *(l_boundary_end + 1) != '\n') {
-        // 边界后面不是换行符, 说明数据有问题
+        // 边界文本后面不是 \r\n, 这是数据中的巧合匹配
         return {not_boundary, in_begin};
       }
 
@@ -314,13 +346,22 @@ struct multipart_body {
 
     void finish(boost::system::error_code& ec) {
       ec = {};
-      if (buffer_.size() > 0) {
-        do {
-          auto l_parse_size = paser(ec);
-          if (ec) return;
-          if (l_parse_size == 0) break;
-          buffer_.consume(l_parse_size);
-        } while (true);
+      while (!buffer_.empty()) {
+        auto l_parse_size = paser(ec);
+        if (ec) return;
+        if (l_parse_size == 0) {
+          // eof_end 状态: 缓冲区中只剩下尾部空白 (如 \r\n), 直接清空
+          if (line_state_ == parser_line_state::eof_end) {
+            buffer_.clear();
+            return;
+          }
+          // 其他状态: 数据截断
+          if (!buffer_.empty()) {
+            BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::eof);
+          }
+          return;
+        }
+        buffer_.erase(0, l_parse_size);
       }
     }
   };

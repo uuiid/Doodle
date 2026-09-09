@@ -4,6 +4,7 @@
     "data/mu_sqlorm",
     "data/sqlite_orm_dynamic_where",
     "geometry_axis_angle",
-    "depth_estimation"
+    "depth_estimation",
+    "multipart_body"
   ]
 }

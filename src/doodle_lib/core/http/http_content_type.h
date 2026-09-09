@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include <doodle_lib/configure/doodle_lib_export.h>
+
+#include <string>
 #include <string_view>  // std::string_view
 namespace doodle::http::detail {
 enum class content_type {
@@ -32,7 +35,7 @@ enum class content_type {
   unknown
 };
 
-content_type get_content_type(const std::string_view& in_str);
-std::string extension_from_mime_type(detail::content_type in_mime_type);
+DOODLELIB_API content_type get_content_type(const std::string_view& in_str);
+DOODLELIB_API std::string extension_from_mime_type(detail::content_type in_mime_type);
 
 }  // namespace doodle::http::detail

@@ -3,6 +3,7 @@ target_sources(test_main
         data.cpp
         axis_angle.cpp
         depth_estimation.cpp
+        multipart_body_test.cpp
 )
 
  
