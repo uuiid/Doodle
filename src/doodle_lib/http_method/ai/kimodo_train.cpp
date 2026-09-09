@@ -11,30 +11,11 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <memory>
-#include <mutex>
-#include <onnxruntime_cxx_api.h>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
 
 namespace doodle::http {
-namespace {
-// 初始化 onnxruntime 环境
-void _init_ort_env() {
-  try {
-    auto env                         = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_WARNING, "doodle_ort");
-    core_set::get_set().ort_env_ptr_ = env;
-    SPDLOG_INFO("ONNX Runtime 环境初始化成功");
-  } catch (const Ort::Exception& e) {
-    SPDLOG_ERROR("ONNX Runtime 环境初始化失败: {}", e.what());
-  }
-}
-void init_ort_env() {
-  static std::once_flag l_flag{};
-  std::call_once(l_flag, &_init_ort_env);
-}
-
-}  // namespace
 
 struct ai_train_animation::impl {
   std::shared_ptr<doodle::ai::kimodo> model_{};
@@ -90,7 +71,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
 }
 
 void ai_train_animation::load_model(const std::string& model_path) {
-  init_ort_env();
   if (impl_ptr_->model_ && impl_ptr_->model_->is_valid()) return;
   impl_ptr_->init(model_path);
 }

@@ -1,4 +1,4 @@
-﻿//
+//
 // Created by TD on 2021/6/17.
 //
 
@@ -17,6 +17,8 @@
 
 #include <logger/logger.h>
 #include <memory>
+#include <mutex>
+#include <onnxruntime_cxx_api.h>
 #include <utility>
 #include <wil/result.h>
 
@@ -95,6 +97,16 @@ sqlite_database get_sqlite_database() {
   return sqlite_database{db->get_strand(), db->create_session()};
 }
 Ort::Env& get_ort_env() {
+  static std::once_flag l_flag{};
+  std::call_once(l_flag, []() {
+    try {
+      auto env                         = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_WARNING, "doodle_ort");
+      core_set::get_set().ort_env_ptr_ = env;
+      SPDLOG_INFO("ONNX Runtime 环境初始化成功");
+    } catch (const Ort::Exception& e) {
+      SPDLOG_ERROR("ONNX Runtime 环境初始化失败: {}", e.what());
+    }
+  });
   auto& env = core_set::get_set().ort_env_ptr_;
   DOODLE_CHICK(env, "错误: ONNX Runtime 环境未初始化")
   return *std::static_pointer_cast<Ort::Env>(env);
