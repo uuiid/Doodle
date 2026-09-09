@@ -29,8 +29,7 @@ put:
     - AI生成实体
   summary: 更新实体
   description: >-
-    非外包人员可更新。可更新字段：name, description, ai_episode_id, ai_category_id,
-    shot_uuid_id, preview_file
+    非外包人员可更新。可更新字段：name, description, preview_file, main_task_id
   parameters:
     - name: subproject_id
       in: path
@@ -56,19 +55,13 @@ put:
             description:
               type: string
               description: 实体描述（选填）
-            ai_episode_id:
-              type: string
-              format: uuid
-            ai_category_id:
-              type: string
-              format: uuid
-              description: 所属实体类别ID（选填，传null则移除分类）
-            shot_uuid_id:
-              type: string
-              format: uuid
             preview_file:
               type: string
               format: uuid
+            main_task_id:
+              type: string
+              format: uuid
+              description: 主要任务ID
   responses:
     '200':
       description: 更新后的实体信息

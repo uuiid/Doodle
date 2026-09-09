@@ -29,3 +29,11 @@ properties:
     type: string
     format: uuid
     description: 预览文件ID
+  generate_count:
+    type: integer
+    format: int64
+    description: 生成次数
+  main_task_id:
+    type: string
+    format: uuid
+    description: 主要任务ID

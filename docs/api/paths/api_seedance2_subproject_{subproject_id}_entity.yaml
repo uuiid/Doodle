@@ -19,6 +19,7 @@ post:
           required:
             - name
             - project_uuid_id
+            - ai_category_id
           properties:
             name:
               type: string
