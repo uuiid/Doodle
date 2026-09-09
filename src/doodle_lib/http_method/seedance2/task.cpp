@@ -258,17 +258,15 @@ class seedance2_task_run_manager {
     l_task_ptr->ended_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
     sql_modify_statement_vector_t l_sqls;
-    l_sqls.emplace_back(
-        update(l_sql)
-            .from<sd2::task>()
-            .set(c(&sd2::task::status_) = l_task_ptr->status_)
-            .set(c(&sd2::task::ended_at_) = l_task_ptr->ended_at_)
-            .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
-            .set(c(&sd2::task::completion_tokens_) = l_task_ptr->completion_tokens_)
-            .set(c(&sd2::task::preview_file_) = l_task_ptr->preview_file_)
-            .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_)
-    );
-    if (l_status == sd2::task_status::succeeded && l_task_ptr->completion_tokens_ > 0) {
+    l_sqls.emplace_back(update(l_sql)
+                            .from<sd2::task>()
+                            .set(c(&sd2::task::status_) = l_task_ptr->status_)
+                            .set(c(&sd2::task::ended_at_) = l_task_ptr->ended_at_)
+                            .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
+                            .set(c(&sd2::task::completion_tokens_) = l_task_ptr->completion_tokens_)
+                            .set(c(&sd2::task::preview_file_) = l_task_ptr->preview_file_)
+                            .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_));
+    if (l_status == sd2::task_status::succeeded) {
       // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
       l_sqls.emplace_back(add_remaining_tokens_for_person(
           l_sql, in_task.user_id_, in_task.completion_tokens_ - l_task_ptr->completion_tokens_
@@ -276,8 +274,6 @@ class seedance2_task_run_manager {
     } else {
       // 任务失败或者其他状态，返还 token
       l_sqls.emplace_back(add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_));
-    }
-    if (l_status != sd2::task_status::succeeded) {
       // 失败时回滚生成次数
       l_sqls.emplace_back(
           update(l_sql)
