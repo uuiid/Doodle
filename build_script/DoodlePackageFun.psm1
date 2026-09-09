@@ -1,4 +1,4 @@
-﻿class OffDays {
+class OffDays {
     [string]$name
     [string]$date
     [bool]$isOffDay
@@ -169,17 +169,26 @@ function Initialize-Doodle {
         if (-not (Test-Path "$OutPath\dist\Doodle-$DoodleVersion-win64.zip")) {
             # 复制一些脚本文件
             &robocopy "$DoodleKitsuRoot\mayaPlugins" "$DoodleInstallRoot/maya" /s /unilog+:$DoodleLogPath | Out-Null
-            # 将 $DoodleInstallRoot\bin 移动到 $DoodleInstallRoot\Doodle-$DoodleVersion-win64\bin
-            # 将 $DoodleInstallRoot\maya 移动到 $DoodleInstallRoot\Doodle-$DoodleVersion-win64\maya
-            New-Item "$DoodleInstallRoot\Doodle-$DoodleVersion-win64" -ItemType Directory | Out-Null
-            Move-Item "$DoodleInstallRoot\bin" "$DoodleInstallRoot\Doodle-$DoodleVersion-win64\bin"
-            Move-Item "$DoodleInstallRoot\maya" "$DoodleInstallRoot\Doodle-$DoodleVersion-win64\maya"
-            Compress-Archive -Path "$DoodleInstallRoot\*" -DestinationPath "$OutPath\dist\Doodle-$DoodleVersion-win64.zip" -Force
-            # 重新移动出来
-            Move-Item "$DoodleInstallRoot\Doodle-$DoodleVersion-win64\bin" "$DoodleInstallRoot\bin"
-            Move-Item "$DoodleInstallRoot\Doodle-$DoodleVersion-win64\maya" "$DoodleInstallRoot\maya"
-            # 删除文件夹
-            Remove-Item "$DoodleInstallRoot\Doodle-$DoodleVersion-win64" -Recurse -Force
+            # 使用 .NET ZipFile 直接创建带版本化目录前缀的 zip，无需移动文件
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            $zip = [System.IO.Compression.ZipFile]::Open(
+                "$OutPath\dist\Doodle-$DoodleVersion-win64.zip",
+                [System.IO.Compression.ZipArchiveMode]::Create
+            )
+            $base = "Doodle-$DoodleVersion-win64"
+            foreach ($folder in @("bin", "maya")) {
+                $sourceDir = "$DoodleInstallRoot\$folder"
+                if (Test-Path $sourceDir) {
+                    Get-ChildItem $sourceDir -Recurse -File | ForEach-Object {
+                        if ($_.Name -eq "onnxruntime_providers_cuda.dll") { return }
+                        $relative = $_.FullName.Substring($sourceDir.Length + 1)
+                        [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                            $zip, $_.FullName, "$base\$folder\$relative"
+                        )
+                    }
+                }
+            }
+            $zip.Dispose()
         }
         $Tags = $Tags[0..400]
         [array]::Reverse($Tags)
