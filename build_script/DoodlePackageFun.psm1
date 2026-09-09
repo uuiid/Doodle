@@ -170,7 +170,7 @@ function Initialize-Doodle {
             # 复制一些脚本文件
             &robocopy "$DoodleKitsuRoot\mayaPlugins" "$DoodleInstallRoot/maya" /s /unilog+:$DoodleLogPath | Out-Null
             # 使用 .NET ZipFile 直接创建带版本化目录前缀的 zip，无需移动文件
-            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
             $zip = [System.IO.Compression.ZipFile]::Open(
                 "$OutPath\dist\Doodle-$DoodleVersion-win64.zip",
                 [System.IO.Compression.ZipArchiveMode]::Create
@@ -179,7 +179,7 @@ function Initialize-Doodle {
             foreach ($folder in @("bin", "maya")) {
                 $sourceDir = "$DoodleInstallRoot\$folder"
                 if (Test-Path $sourceDir) {
-                    Get-ChildItem $sourceDir -Recurse -File | ForEach-Object {
+                    $null = Get-ChildItem $sourceDir -Recurse -File | ForEach-Object {
                         if ($_.Name -eq "onnxruntime_providers_cuda.dll") { return }
                         $relative = $_.FullName.Substring($sourceDir.Length + 1)
                         [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
