@@ -26,6 +26,25 @@ void LLM2Vec::init_session() {
   session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_BASIC);
   session_options.DisableMemPattern();
   session_options.DisableCpuMemArena();
+
+  // ---- 检测 CUDA 并启用 GPU 推理 ----
+  const std::vector<std::string> available_providers = Ort::GetAvailableProviders();
+  const bool has_cuda =
+      std::find(available_providers.begin(), available_providers.end(), "CUDAExecutionProvider") !=
+      available_providers.end();
+
+  if (has_cuda) {
+    OrtCUDAProviderOptions cuda_options{};
+    cuda_options.device_id              = 0;
+    cuda_options.cudnn_conv_algo_search = OrtCudnnConvAlgoSearchHeuristic;  // 快速预热
+    cuda_options.gpu_mem_limit          = 0;                                // 无显式限制
+    cuda_options.arena_extend_strategy  = 0;
+    session_options.AppendExecutionProvider_CUDA(cuda_options);
+    SPDLOG_INFO("CUDAExecutionProvider 已启用，使用 GPU 推理");
+  } else {
+    SPDLOG_INFO("CUDAExecutionProvider 不可用，使用 CPU 推理");
+  }
+
   session_      = std::make_unique<Ort::Session>(get_ort_env(), model_path_.wstring().c_str(), session_options);
   input_names_  = session_->GetInputNames();
   output_names_ = session_->GetOutputNames();

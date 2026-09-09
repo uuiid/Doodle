@@ -7,6 +7,7 @@
 
 #include "fwd.h"
 #include "kimodo.h"
+#include <algorithm>
 #include <array>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -85,6 +86,24 @@ void transformer_encoder_block::init_session() {
   // 禁用内存模式，防止基于首次运行 shape 预分配固定大小缓冲区
   session_options.DisableMemPattern();
   session_options.DisableCpuMemArena();
+
+  // ---- 检测 CUDA 并启用 GPU 推理 ----
+  const std::vector<std::string> available_providers = Ort::GetAvailableProviders();
+  const bool has_cuda =
+      std::find(available_providers.begin(), available_providers.end(), "CUDAExecutionProvider") !=
+      available_providers.end();
+
+  if (has_cuda) {
+    OrtCUDAProviderOptions cuda_options{};
+    cuda_options.device_id                = 0;
+    cuda_options.cudnn_conv_algo_search   = OrtCudnnConvAlgoSearchHeuristic;  // 快速预热
+    cuda_options.gpu_mem_limit            = 0;                                // 无显式限制
+    cuda_options.arena_extend_strategy    = 0;
+    session_options.AppendExecutionProvider_CUDA(cuda_options);
+    SPDLOG_INFO("CUDAExecutionProvider 已启用，使用 GPU 推理");
+  } else {
+    SPDLOG_INFO("CUDAExecutionProvider 不可用，使用 CPU 推理");
+  }
 
   auto onnx_path = model_dir_ / "transformer_core.onnx";
   DOODLE_CHICK(FSys::exists(onnx_path), "ONNX 模型文件不存在: {}", onnx_path.string());
