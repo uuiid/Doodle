@@ -43,6 +43,22 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments, get) {
   auto l_list = get_sqlite_database().get_all<department>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments, post) {
+  person_.check_admin();
+  auto l_sql = get_sqlite_database();
+  department l_department{};
+  in_handle->get_json().get_to(l_department);
+  DOODLE_CHICK(!l_department.name_.empty(), "部门名称不可为空");
+
+  using namespace orm;
+  auto l_install = insert(l_sql).into<department>().values(l_department);
+  co_await l_sql.run_sql(l_install);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成创建部门 department_id {} name {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_department.uuid_id_, l_department.name_
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = l_department);
+}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments_instance, put) {
   person_.check_admin();
   auto l_sql  = get_sqlite_database();

@@ -291,6 +291,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/departments
 DOODLE_HTTP_JWT_FUN(departments)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
 // /api/data/departments/{id}
 DOODLE_HTTP_JWT_FUN(departments_instance)
