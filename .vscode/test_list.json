@@ -3,6 +3,7 @@
     "data/http_client",
     "data/mu_sqlorm",
     "data/sqlite_orm_dynamic_where",
-    "geometry_axis_angle"
+    "geometry_axis_angle",
+    "depth_estimation"
   ]
 }
