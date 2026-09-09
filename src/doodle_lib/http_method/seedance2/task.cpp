@@ -460,7 +460,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
     auto l_entity  = l_sql.get_by_uuid<sd2::ai_generate_entity>(l_task->ai_generate_entity_id_);
     auto l_episode = l_sql.get_by_uuid<sd2::ai_episode>(l_entity.ai_episode_id_);
     DOODLE_CHICK_HTTP(
-        l_entity.generate_count_ < l_episode.limit_count_, bad_request, "生成次数已达上限 {} 次", l_episode.limit_count_
+        l_entity.generate_count_ < l_episode.limit_count_ || l_episode.limit_count_ == 0, bad_request,
+        "生成次数已达上限 {} 次", l_episode.limit_count_
     );
   }
   {
