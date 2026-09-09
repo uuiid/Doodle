@@ -171,24 +171,37 @@ function Initialize-Doodle {
             &robocopy "$DoodleKitsuRoot\mayaPlugins" "$DoodleInstallRoot/maya" /s /unilog+:$DoodleLogPath | Out-Null
             # 使用 .NET ZipFile 直接创建带版本化目录前缀的 zip，无需移动文件
             Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
+            Write-Host "开始打包 Doodle-$DoodleVersion-win64.zip"
             $zip = [System.IO.Compression.ZipFile]::Open(
                 "$OutPath\dist\Doodle-$DoodleVersion-win64.zip",
                 [System.IO.Compression.ZipArchiveMode]::Create
             )
             $base = "Doodle-$DoodleVersion-win64"
-            foreach ($folder in @("bin", "maya")) {
+            # 预先收集所有待打包文件，排除 onnxruntime_providers_cuda.dll
+            $files = foreach ($folder in @("bin", "maya")) {
                 $sourceDir = "$DoodleInstallRoot\$folder"
                 if (Test-Path $sourceDir) {
-                    $null = Get-ChildItem $sourceDir -Recurse -File | ForEach-Object {
-                        if ($_.Name -eq "onnxruntime_providers_cuda.dll") { return }
-                        $relative = $_.FullName.Substring($sourceDir.Length + 1)
-                        [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
-                            $zip, $_.FullName, "$base\$folder\$relative"
-                        )
-                    }
+                    Get-ChildItem $sourceDir -Recurse -File |
+                        Where-Object { $_.Name -ne "onnxruntime_providers_cuda.dll" } |
+                        ForEach-Object { [PSCustomObject]@{ File = $_; SourceDir = $sourceDir; Folder = $folder } }
                 }
             }
+            $total = $files.Count
+            $i = 0
+            foreach ($f in $files) {
+                $i++
+                $relative = $f.File.FullName.Substring($f.SourceDir.Length + 1)
+                $entryPath = "$base\$($f.Folder)\$relative"
+                Write-Progress -Activity "打包 Doodle-$DoodleVersion-win64.zip" `
+                    -Status "$i / $total  $relative" `
+                    -PercentComplete ([Math]::Floor($i * 100 / $total))
+                [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                    $zip, $f.File.FullName, $entryPath
+                ) | Out-Null
+            }
+            Write-Progress -Activity "打包 Doodle-$DoodleVersion-win64.zip" -Completed
             $zip.Dispose()
+            Write-Host "打包完成: $OutPath\dist\Doodle-$DoodleVersion-win64.zip ($total 个文件)"
         }
         $Tags = $Tags[0..400]
         [array]::Reverse($Tags)
