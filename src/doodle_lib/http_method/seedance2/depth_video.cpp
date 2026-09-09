@@ -59,22 +59,21 @@ class doodle_ai_depth_estimation_video::impl {
             cv::Size{l_width, l_height}
         };
 
-        cv::Mat l_frame, l_depth, l_depth_color;
+        cv::Mat l_frame, l_depth;
         bool l_first_frame = true;
         while (l_capture.read(l_frame)) {
           l_depth = estimator_.predict(l_frame);
           cv::normalize(l_depth, l_depth, 0, 255, cv::NORM_MINMAX, CV_8U);
-          cv::applyColorMap(l_depth, l_depth_color, cv::COLORMAP_TURBO);
-          l_writer.write(l_depth_color);
+          l_writer.write(l_depth);
 
           // 2. 第一帧同时生成缩略图
           if (l_first_frame) {
             l_first_frame = false;
             if (auto l_p = in_thumbnail_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-            auto l_resize = std::min(500.0 / l_depth_color.cols, 500.0 / l_depth_color.rows);
+            auto l_resize = std::min(500.0 / l_depth.cols, 500.0 / l_depth.rows);
             cv::Mat l_thumb;
             cv::resize(
-                l_depth_color, l_thumb, cv::Size(l_depth_color.cols * l_resize, l_depth_color.rows * l_resize)
+                l_depth, l_thumb, cv::Size(l_depth.cols * l_resize, l_depth.rows * l_resize)
             );
             cv::imwrite(in_thumbnail_path.generic_string(), l_thumb);
           }
