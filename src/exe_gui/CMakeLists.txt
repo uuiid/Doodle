@@ -96,6 +96,12 @@ install(TARGETS doodle_kitsu_supplement
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "api-ms-"
 )
+# CUDA provider DLLs 是 ONNX Runtime 动态加载的，RUNTIME_DEPENDENCIES 无法自动检测
+install(FILES
+        "$<IF:$<CONFIG:Debug>,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/debug/bin/onnxruntime_providers_cuda.dll,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin/onnxruntime_providers_cuda.dll>"
+        "$<IF:$<CONFIG:Debug>,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/debug/bin/onnxruntime_providers_shared.dll,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin/onnxruntime_providers_shared.dll>"
+        DESTINATION bin
+)
 
 
 
