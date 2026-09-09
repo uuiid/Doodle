@@ -466,11 +466,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   }
   {
     using namespace orm;
-    auto l_result_map = get_task_similarity_for_person(l_sql, *l_task);
-
     sql_modify_statement_vector_t l_sqls;
-    l_sqls.emplace_back(add_remaining_tokens_for_person(l_sql, person_.person_.uuid_id_, -l_task->completion_tokens_));
     l_sqls.emplace_back(insert(l_sql).into<sd2::task>().values(*l_task));
+    auto l_result_map = get_task_similarity_for_person(l_sql, *l_task);
+    l_sqls.emplace_back(add_remaining_tokens_for_person(l_sql, person_.person_.uuid_id_, -l_task->completion_tokens_));
     l_sqls.emplace_back(
         update(l_sql)
             .from<sd2::ai_generate_entity>()
