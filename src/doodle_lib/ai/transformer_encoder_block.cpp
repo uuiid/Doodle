@@ -89,16 +89,15 @@ void transformer_encoder_block::init_session() {
 
   // ---- 检测 CUDA 并启用 GPU 推理 ----
   const std::vector<std::string> available_providers = Ort::GetAvailableProviders();
-  const bool has_cuda =
-      std::find(available_providers.begin(), available_providers.end(), "CUDAExecutionProvider") !=
-      available_providers.end();
+  const bool has_cuda = std::find(available_providers.begin(), available_providers.end(), "CUDAExecutionProvider") !=
+                        available_providers.end();
 
-  if (has_cuda) {
+  if (has_cuda && false) {  // 这里先禁用掉这个 cuda 推理, 毕竟这个模型虽然大, 但是只推理一次, 基本上只有 不到1秒
     OrtCUDAProviderOptions cuda_options{};
-    cuda_options.device_id                = 0;
-    cuda_options.cudnn_conv_algo_search   = OrtCudnnConvAlgoSearchHeuristic;  // 快速预热
-    cuda_options.gpu_mem_limit            = 0;                                // 无显式限制
-    cuda_options.arena_extend_strategy    = 0;
+    cuda_options.device_id              = 0;
+    cuda_options.cudnn_conv_algo_search = OrtCudnnConvAlgoSearchHeuristic;  // 快速预热
+    cuda_options.gpu_mem_limit          = 0;                                // 无显式限制
+    cuda_options.arena_extend_strategy  = 0;
     session_options.AppendExecutionProvider_CUDA(cuda_options);
     SPDLOG_INFO("CUDAExecutionProvider 已启用，使用 GPU 推理");
   } else {
