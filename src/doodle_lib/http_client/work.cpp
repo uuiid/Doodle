@@ -138,9 +138,8 @@ uuid get_motherboard_uuid() {
 
 }  // namespace
 
-void http_work::run(const std::string& in_token, std::set<server_task_info_type> in_allowed_task_types) {
+void http_work::run(std::set<server_task_info_type> in_allowed_task_types) {
   executor_           = boost::asio::make_strand(g_io_context());
-  token_              = in_token;
   allowed_task_types_ = std::move(in_allowed_task_types);
   spdlog::flush_every(1s);
   logger_ = g_logger_ctrl().make_log("http_work");

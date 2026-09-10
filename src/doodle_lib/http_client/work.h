@@ -44,7 +44,6 @@ class DOODLELIB_API http_work : public std::enable_shared_from_this<http_work> {
 
   boost::asio::any_io_executor executor_{};
   logger_ptr logger_{};
-  std::string token_{};
   std::set<server_task_info_type> allowed_task_types_{};
   std::shared_ptr<boost::beast::websocket::stream<boost::beast::tcp_stream>> websocket_client_{};
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
@@ -67,7 +66,7 @@ class DOODLELIB_API http_work : public std::enable_shared_from_this<http_work> {
   http_work()  = default;
   ~http_work() = default;
 
-  void run(const std::string& in_token, std::set<server_task_info_type> in_allowed_task_types = {});
+  void run(std::set<server_task_info_type> in_allowed_task_types = {});
   void set_computer_status(computer_status in_status);
 };
 
