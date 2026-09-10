@@ -28,7 +28,7 @@ put:
   tags:
     - AI生成剧集
   summary: 更新剧集
-  description: 非外包人员可更新。可更新字段：name, description
+  description: 非外包人员可更新。可更新字段：name, description, limit_count
   parameters:
     - name: subproject_id
       in: path
@@ -53,6 +53,9 @@ put:
               type: string
             description:
               type: string
+            limit_count:
+              type: integer
+              format: int64
   responses:
     '200':
       description: 更新后的剧集信息

@@ -1,8 +1,31 @@
+get:
+  tags:
+    - AI生成剧集
+  summary: 获取剧集列表
+  description: 返回指定子项目下所有 AI 生成剧集，按名称排序
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 剧集列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/AiEpisode.yaml
+  security:
+    - bearerAuth: []
 post:
   tags:
     - AI生成剧集
   summary: 创建 AI 生成剧集
-  description: 非外包人员可创建。剧集如 "sc002"、"sc003" 等
+  description: 非外包人员可创建。剧集如 "sc002"、"sc003" 等。创建时自动添加默认模型分辨率限制（doubao-seedance-2-0-mini-260615 / 480p）
   parameters:
     - name: subproject_id
       in: path
@@ -29,6 +52,10 @@ post:
               type: string
               format: uuid
               description: 对应的 AI 生成实体
+            limit_count:
+              type: integer
+              format: int64
+              description: 生成次数限制，默认 0
   responses:
     '200':
       description: 创建成功
