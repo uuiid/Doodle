@@ -4,6 +4,10 @@
 
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/server_task_info_type.h>
+
+#include <set>
+
 namespace doodle {
 enum class computer_status { online, busy, free, offline, unknown };
 NLOHMANN_JSON_SERIALIZE_ENUM(
@@ -26,6 +30,8 @@ class computer {
   computer_status status_ = computer_status::online;
   chrono::system_zoned_time last_heartbeat_time_{chrono::current_zone(), chrono::system_clock::now()};
   uuid bot_uuid_;
+  // 允许执行的任务类型（会话级，由工作机连接时上报，不持久化）
+  std::set<server_task_info_type> allowed_task_types_{};
 
   constexpr static auto put_property_list() {
     return std::tuple{
@@ -43,6 +49,7 @@ class computer {
     j["id"]                  = p.uuid_id_;
     j["hardware_id"]         = p.hardware_id_;
     j["last_heartbeat_time"] = p.last_heartbeat_time_;
+    j["allowed_task_types"]  = p.allowed_task_types_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, computer& p) {
@@ -50,6 +57,7 @@ class computer {
     if (j.contains("status")) j.at("status").get_to(p.status_);
     j.at("hardware_id").get_to(p.hardware_id_);
     if (j.contains("last_heartbeat_time")) j.at("last_heartbeat_time").get_to(p.last_heartbeat_time_);
+    if (j.contains("allowed_task_types")) j.at("allowed_task_types").get_to(p.allowed_task_types_);
   }
 };
 

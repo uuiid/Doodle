@@ -17,6 +17,7 @@ target_sources(
         file_one_path.h
         computer.h
         server_task_info.h
+        server_task_info_type.h
         attendance.h
         work_xlsx_task_info.h
         scan_data_t.h

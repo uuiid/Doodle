@@ -6,6 +6,7 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/lib_warp/json_warp.h>
+#include <doodle_core/metadata/server_task_info_type.h>
 
 #include <cmath>
 #include <magic_enum/magic_enum_all.hpp>
@@ -44,41 +45,6 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                                  {server_task_info_status::failed, "failed"},
                                  {server_task_info_status::unknown, "unknown"},
                              }
-);
-
-enum class server_task_info_type : std::int32_t {
-  // 未知类型
-  unknown    = -1,
-  // 导出fbx任务
-  export_fbx = 0,
-  // 导出解算任务
-  export_sim,
-  // 自动灯光任务
-  auto_light,
-  // 合成视频
-  merge_video,
-  // 连接视频
-  connect_video,
-  // 检查maya文件
-  check_maya,
-  // 替换maya引用文件
-  replace_maya_ref,
-  // 创建骨骼
-  create_rig_sk,
-  // 同步文件
-  project_sync,
-};
-NLOHMANN_JSON_SERIALIZE_ENUM(
-    server_task_info_type, {
-                               {server_task_info_type::export_fbx, "export_fbx"},
-                               {server_task_info_type::export_sim, "export_sim"},
-                               {server_task_info_type::auto_light, "auto_light"},
-                               {server_task_info_type::merge_video, "merge_video"},
-                               {server_task_info_type::connect_video, "connect_video"},
-                               {server_task_info_type::check_maya, "check_maya"},
-                               {server_task_info_type::replace_maya_ref, "replace_maya_ref"},
-
-                           }
 );
 class server_task_info : boost::equality_comparable<server_task_info> {
  public:
