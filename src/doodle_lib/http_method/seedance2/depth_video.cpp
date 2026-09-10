@@ -61,7 +61,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
   auto l_task = std::make_shared<server_task_info>();
   l_task->type_      = server_task_info_type::depth_estimation;
   l_task->status_    = server_task_info_status::submitted;
-  l_task->task_id_   = entity_id_;
   l_task->submitter_ = person_.person_.uuid_id_;
   l_task->command_   = nlohmann::json{{"preview_id", l_preview->uuid_id_}};
   auto l_install_3   = insert(l_sql).into<server_task_info>().values(*l_task);
