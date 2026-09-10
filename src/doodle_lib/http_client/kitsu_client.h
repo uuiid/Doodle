@@ -166,6 +166,11 @@ class DOODLELIB_API kitsu_client {
 
   // get /api/ue-plugins/version
   boost::asio::awaitable<std::tuple<std::string, std::vector<std::string>>> get_ue_plugins_version() const;
+
+  // 深度估计文件传输 — GET /api/seedance2/depth/{depth_id}
+  boost::asio::awaitable<FSys::path> download_depth_file(uuid in_depth_id) const;
+  // 深度估计文件传输 — PUT /api/seedance2/depth/{depth_id}
+  boost::asio::awaitable<void> upload_depth_file(uuid in_depth_id, FSys::path in_file_path) const;
 };
 
 }  // namespace doodle::kitsu

@@ -667,4 +667,40 @@ void kitsu_client::stop_server() const {
     throw_exception(doodle_error{"kitsu stop server error {} {}", l_res.result(), l_res.body()});
 }
 
+boost::asio::awaitable<FSys::path> kitsu_client::download_depth_file(uuid in_depth_id) const {
+  auto l_url = fmt::format("/api/seedance2/depth/{}", in_depth_id);
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{boost::beast::http::verb::get, l_url, 11};
+  set_req_headers(l_req);
+  boost::beast::http::response<boost::beast::http::file_body> l_res{};
+  auto l_tmp_path = core_set::get_set().get_cache_root("depth_download") / fmt::format("{}.mp4", in_depth_id);
+  if (auto l_p = l_tmp_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  boost::system::error_code l_ec{};
+  l_res.body().open(l_tmp_path.generic_string().c_str(), boost::beast::file_mode::write, l_ec);
+  if (l_ec) throw_exception(doodle_error{"下载深度估计文件失败: 无法创建临时文件 {} {}", l_tmp_path, l_ec.message()});
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok)
+    throw_exception(doodle_error{"下载深度估计文件失败 {} {}", in_depth_id, l_res.result_int()});
+  co_return l_tmp_path;
+}
+
+boost::asio::awaitable<void> kitsu_client::upload_depth_file(uuid in_depth_id, FSys::path in_file_path) const {
+  auto l_url = fmt::format("/api/seedance2/depth/{}", in_depth_id);
+  boost::scope::scope_exit l_exit{[&]() {
+    http_client_ptr_->body_limit_.reset();
+    http_client_ptr_->set_timeout(30s);
+  }};
+  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
+  set_timeout_based_on_file_size(in_file_path);
+  boost::beast::http::request<boost::beast::http::file_body> l_req{boost::beast::http::verb::put, l_url, 11};
+  set_req_headers(l_req, "application/octet-stream");
+  boost::system::error_code l_ec{};
+  l_req.body().open(in_file_path.generic_string().c_str(), boost::beast::file_mode::read, l_ec);
+  if (l_ec) throw_exception(doodle_error{"上传深度估计文件失败: 无法打开文件 {} {}", in_file_path, l_ec.message()});
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::no_content)
+    throw_exception(doodle_error{"上传深度估计文件失败 {} {}", in_depth_id, l_res.result_int()});
+  co_return;
+}
+
 }  // namespace doodle::kitsu
