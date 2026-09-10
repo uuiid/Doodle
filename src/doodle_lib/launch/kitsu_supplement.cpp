@@ -16,15 +16,14 @@
 #include <doodle_lib/platform/win/register_file_type.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
-#include <jwt-cpp/jwt.h>
-
 #include <boost/dll.hpp>
+
+#include <iphlpapi.h>
+#include <jwt-cpp/jwt.h>
 #include <opencv2/core/utility.hpp>
 #include <tlhelp32.h>
-#include <iphlpapi.h>
 #include <windows.h>
 #include <winreg/WinReg.hpp>
-
 
 namespace doodle {
 
@@ -162,6 +161,10 @@ bool kitsu_supplement_main::init() {
     else
       l_args.port_ = 0;
     l_set.set_root("D:/sy_maigc");
+    // 初始化上下文
+    g_ctx().emplace<http::kitsu_ctx_t>(
+        l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_
+    );
     // 打开内存数据库
     l_set.database_->open();
     l_set.database_->upgrade();
@@ -237,7 +240,7 @@ void kitsu_supplement_main::stop_previous_instance(std::uint16_t port, const std
   auto l_current_exe = boost::dll::program_location().filename().wstring();
 
   // 2. 查找同名进程（排除自身），并记录其 PID
-  DWORD l_other_pid = 0;
+  DWORD l_other_pid  = 0;
   {
     HANDLE l_snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (l_snapshot == INVALID_HANDLE_VALUE) return;
@@ -245,8 +248,7 @@ void kitsu_supplement_main::stop_previous_instance(std::uint16_t port, const std
     l_pe.dwSize = sizeof(l_pe);
     if (Process32FirstW(l_snapshot, &l_pe)) {
       do {
-        if (l_pe.th32ProcessID != GetCurrentProcessId() &&
-            _wcsicmp(l_pe.szExeFile, l_current_exe.c_str()) == 0) {
+        if (l_pe.th32ProcessID != GetCurrentProcessId() && _wcsicmp(l_pe.szExeFile, l_current_exe.c_str()) == 0) {
           l_other_pid = l_pe.th32ProcessID;
           break;
         }
@@ -260,16 +262,14 @@ void kitsu_supplement_main::stop_previous_instance(std::uint16_t port, const std
   {
     DWORD l_size = 0;
     GetExtendedTcpTable(nullptr, &l_size, FALSE, AF_INET, TCP_TABLE_OWNER_PID_LISTENER, 0);
-    auto l_buf = std::make_unique<std::uint8_t[]>(l_size);
+    auto l_buf    = std::make_unique<std::uint8_t[]>(l_size);
     auto* l_table = reinterpret_cast<MIB_TCPTABLE_OWNER_PID*>(l_buf.get());
-    if (GetExtendedTcpTable(l_table, &l_size, FALSE, AF_INET, TCP_TABLE_OWNER_PID_LISTENER, 0) != NO_ERROR)
-      return;
+    if (GetExtendedTcpTable(l_table, &l_size, FALSE, AF_INET, TCP_TABLE_OWNER_PID_LISTENER, 0) != NO_ERROR) return;
 
     bool l_port_found = false;
     for (DWORD i = 0; i < l_table->dwNumEntries; ++i) {
       auto& l_row = l_table->table[i];
-      if (l_row.dwOwningPid == l_other_pid &&
-          ntohs(static_cast<std::uint16_t>(l_row.dwLocalPort)) == port) {
+      if (l_row.dwOwningPid == l_other_pid && ntohs(static_cast<std::uint16_t>(l_row.dwLocalPort)) == port) {
         l_port_found = true;
         break;
       }
