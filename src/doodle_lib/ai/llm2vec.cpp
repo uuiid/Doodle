@@ -29,11 +29,10 @@ void LLM2Vec::init_session() {
 
   // ---- 检测 CUDA 并启用 GPU 推理 ----
   const std::vector<std::string> available_providers = Ort::GetAvailableProviders();
-  const bool has_cuda =
-      std::find(available_providers.begin(), available_providers.end(), "CUDAExecutionProvider") !=
-      available_providers.end();
+  const bool has_cuda = std::find(available_providers.begin(), available_providers.end(), "CUDAExecutionProvider") !=
+                        available_providers.end();
 
-  if (has_cuda) {
+  if (has_cuda && false) {  // 这里先禁用掉这个 cuda 推理, 毕竟这个模型虽然大, 但是只推理一次, 基本上只有 不到1秒
     OrtCUDAProviderOptions cuda_options{};
     cuda_options.device_id              = 0;
     cuda_options.cudnn_conv_algo_search = OrtCudnnConvAlgoSearchHeuristic;  // 快速预热
@@ -134,7 +133,7 @@ std::vector<float_t> LLM2Vec::operator()(const std::string& instruction, const s
   // Step 3: 创建 ONNX Runtime 输入 tensor
   const std::int64_t seq_len = static_cast<std::int64_t>(tokenized.input_ids.size());
   const std::array<std::int64_t, 2> input_shape{1, seq_len};
-  auto memory_info      = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+  auto memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
 
   // 清除上一次推理的绑定，避免复用旧 shape 的缓冲区
   io_binding_->ClearBoundInputs();

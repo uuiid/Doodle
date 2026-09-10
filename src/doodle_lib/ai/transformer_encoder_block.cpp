@@ -92,7 +92,7 @@ void transformer_encoder_block::init_session() {
   const bool has_cuda = std::find(available_providers.begin(), available_providers.end(), "CUDAExecutionProvider") !=
                         available_providers.end();
 
-  if (has_cuda && false) {  // 这里先禁用掉这个 cuda 推理, 毕竟这个模型虽然大, 但是只推理一次, 基本上只有 不到1秒
+  if (has_cuda ) { 
     OrtCUDAProviderOptions cuda_options{};
     cuda_options.device_id              = 0;
     cuda_options.cudnn_conv_algo_search = OrtCudnnConvAlgoSearchHeuristic;  // 快速预热
