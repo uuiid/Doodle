@@ -10,11 +10,12 @@
 #include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/seedance2/ai_generate_entity.h>
 #include <doodle_core/metadata/seedance2/ai_preview_file.h>
+#include <doodle_core/metadata/server_task_info.h>
 
-#include <doodle_lib/ai/depth_anything/doodle_depth_estimation.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
+#include <doodle_lib/http_method/kitsu/computers.h>
 #include <doodle_lib/http_method/seedance2/reg.h>
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
@@ -30,75 +31,6 @@
 
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
-
-// PIMPL — 深度估计模型只加载一次，通过 clone() 的 shared_ptr 共享
-class doodle_ai_depth_estimation_video::impl {
- public:
-  ai::doodle_depth_estimation estimator_;
-  FSys::path model_path_;
-  explicit impl(const std::filesystem::path& in_path) : estimator_(), model_path_(in_path) {}
-
-  // 后台异步深度估计 — 遵循 task.cpp:289-292 的 run_sql + broadcast 模式, 使用 g_strand() 保证线程安全
-  boost::asio::awaitable<void> run_depth_estimation(
-      std::shared_ptr<sd2::ai_entity_reference_preview> in_ref, std::shared_ptr<sd2::ai_preview_file> in_preview,
-      uuid in_entity_id, FSys::path in_input_path, FSys::path in_output_path, FSys::path in_thumbnail_path
-  ) {
-    // 在需要时加载
-    if (!estimator_) estimator_ = std::move(ai::doodle_depth_estimation{model_path_});
-
-    try {
-      // 1. RAII 管理 VideoCapture / VideoWriter 生命周期
-      {
-        auto l_capture = cv::VideoCapture{in_input_path.generic_string()};
-        auto l_fps     = l_capture.get(cv::CAP_PROP_FPS);
-        auto l_width   = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_WIDTH));
-        auto l_height  = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_HEIGHT));
-
-        auto l_writer = cv::VideoWriter{
-            in_output_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), l_fps,
-            cv::Size{l_width, l_height}
-        };
-
-        cv::Mat l_frame, l_depth;
-        bool l_first_frame = true;
-        while (l_capture.read(l_frame)) {
-          l_depth = estimator_.predict(l_frame);
-          cv::normalize(l_depth, l_depth, 0, 255, cv::NORM_MINMAX, CV_8U);
-          cv::cvtColor(l_depth, l_depth, cv::COLOR_GRAY2BGR);
-          l_writer.write(l_depth);
-
-          // 2. 第一帧同时生成缩略图
-          if (l_first_frame) {
-            l_first_frame = false;
-            if (auto l_p = in_thumbnail_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-            auto l_resize = std::min(500.0 / l_depth.cols, 500.0 / l_depth.rows);
-            cv::Mat l_thumb;
-            cv::resize(
-                l_depth, l_thumb, cv::Size(l_depth.cols * l_resize, l_depth.rows * l_resize)
-            );
-            cv::imwrite(in_thumbnail_path.generic_string(), l_thumb);
-          }
-        }
-      }  // RAII: l_capture, l_writer 在此析构
-
-      FSys::remove(in_input_path);
-    } catch (const std::exception& l_ex) {
-      SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "深度估计异常: {}", l_ex.what());
-    }
-
-    // 4. 广播完成 — 使用已有的 reference / preview id
-    socket_io::broadcast(
-        socket_io::seedance2_entity_reference_new_broadcast_t{
-            .reference_id_ = in_ref->uuid_id_, .entity_id_ = in_entity_id, .preview_file_id_ = in_preview->uuid_id_
-        }
-    );
-    co_return;
-  }
-};
-
-doodle_ai_depth_estimation_video::doodle_ai_depth_estimation_video() : depth_impl_(nullptr) {
-  depth_impl_ = std::make_shared<impl>(g_ctx().get<kitsu_ctx_t>().get_depth_model_path());
-}
 
 // POST /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/depth
 // 上传视频 → 创建 ai_preview_file + ai_entity_reference_preview → 存盘 → 生成缩略图
@@ -140,14 +72,71 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
   // 4. 保存原始视频到临时文件
   FSys::rename(l_file, l_file_tmp);
 
-  // 5. 异步触发深度估计（不阻塞响应）
-  boost::asio::co_spawn(
-      g_strand(),
-      depth_impl_->run_depth_estimation(l_ref, l_preview, entity_id_, l_file_tmp, l_file_picture, l_file_thumbnail),
-      boost::asio::consign(boost::asio::detached, http_connection_guard{})
-  );
+  // 5. 创建分布式任务并提交到队列
+  auto l_task = std::make_shared<server_task_info>();
+  l_task->type_      = server_task_info_type::depth_estimation;
+  l_task->status_    = server_task_info_status::submitted;
+  l_task->task_id_   = entity_id_;
+  l_task->submitter_ = person_.person_.uuid_id_;
+  l_task->command_   = nlohmann::json{{"preview_id", l_preview->uuid_id_}};
+  co_await l_sql.install(l_task);
+  co_await computers_assign_task::get_instance().run_next_task();
 
   co_return in_handle->make_msg(nlohmann::json{{"reference", *l_ref}, {"preview", *l_preview}});
+}
+
+// GET /api/seedance2/depth/{depth_id} — 工作机下载输入视频
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_file, get) {
+  auto l_sql     = get_sqlite_database();
+  auto l_preview = l_sql.get_by_uuid<sd2::ai_preview_file>(depth_id_);
+  auto& l_ctx    = g_ctx().get<kitsu_ctx_t>();
+  auto l_file_picture = l_ctx.get_sd2_pictures_file(depth_id_, l_preview.extension_);
+  auto l_file_tmp     = l_file_picture;
+  l_file_tmp.replace_extension(".upload_tmp.mp4");
+  DOODLE_CHICK_HTTP(FSys::exists(l_file_tmp), not_found, "输入文件不存在");
+  co_return in_handle->make_msg(l_file_tmp, kitsu::mime_type(l_file_tmp.extension()));
+}
+
+// PUT /api/seedance2/depth/{depth_id} — 工作机上传深度估计结果视频
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_file, put) {
+  auto l_file = in_handle->get_file();
+  DOODLE_CHICK_HTTP(!l_file.empty() && FSys::exists(l_file), bad_request, "必须上传深度估计结果视频");
+
+  auto l_sql     = get_sqlite_database();
+  auto l_preview = l_sql.get_by_uuid<sd2::ai_preview_file>(depth_id_);
+  auto& l_ctx    = g_ctx().get<kitsu_ctx_t>();
+
+  auto l_file_picture   = l_ctx.get_sd2_pictures_file(depth_id_, l_preview.extension_);
+  auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(depth_id_);
+
+  if (auto l_p = l_file_picture.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+
+  FSys::rename(l_file, l_file_picture);
+
+  // 清理临时上传文件
+  auto l_file_tmp = l_file_picture;
+  l_file_tmp.replace_extension(".upload_tmp.mp4");
+  if (FSys::exists(l_file_tmp)) FSys::remove(l_file_tmp);
+
+  // 查找关联的 ai_entity_reference_preview 并广播完成
+  using namespace orm;
+  auto l_ref = select(l_sql)
+                   .columns(object<sd2::ai_entity_reference_preview>())
+                   .from<sd2::ai_entity_reference_preview>()
+                   .where(c(&sd2::ai_entity_reference_preview::preview_file_) == depth_id_)
+                   .limit(1)()
+                   .to_optional();
+
+  if (l_ref) {
+    socket_io::broadcast(
+        socket_io::seedance2_entity_reference_new_broadcast_t{
+            .reference_id_ = l_ref->uuid_id_, .entity_id_ = l_ref->ai_generate_entity_id_, .preview_file_id_ = depth_id_
+        }
+    );
+  }
+
+  co_return in_handle->make_msg_204();
 }
 
 }  // namespace doodle::http::seedance2

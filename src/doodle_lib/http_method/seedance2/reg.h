@@ -317,14 +317,16 @@ DOODLE_HTTP_FUN_END()
 
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/depth
 DOODLE_HTTP_JWT_FUN(doodle_ai_depth_estimation_video)
-doodle_ai_depth_estimation_video();
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid subproject_id_{};
 uuid entity_id_{};
+DOODLE_HTTP_FUN_END()
 
-private:
-class impl;
-std::shared_ptr<impl> depth_impl_;
+// /api/seedance2/depth/{depth_id}
+DOODLE_HTTP_JWT_FUN(doodle_ai_depth_estimation_file)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+uuid depth_id_;
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http::seedance2
