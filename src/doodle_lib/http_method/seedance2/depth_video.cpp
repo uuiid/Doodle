@@ -113,6 +113,20 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_file, put) {
 
   FSys::rename(l_file, l_file_picture);
 
+  // 从第一帧生成缩略图
+  {
+    auto l_capture = cv::VideoCapture{l_file_picture.generic_string()};
+    if (l_capture.isOpened()) {
+      cv::Mat l_frame;
+      if (l_capture.read(l_frame) && !l_frame.empty()) {
+        auto l_resize = std::min(500.0 / l_frame.cols, 500.0 / l_frame.rows);
+        cv::Mat l_thumb;
+        cv::resize(l_frame, l_thumb, cv::Size(l_frame.cols * l_resize, l_frame.rows * l_resize));
+        cv::imwrite(l_file_thumbnail.generic_string(), l_thumb);
+      }
+    }
+  }
+
   // 清理临时上传文件
   auto l_file_tmp = l_file_picture;
   l_file_tmp.replace_extension(".upload_tmp.mp4");
