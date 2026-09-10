@@ -26,7 +26,7 @@ void from_json(const nlohmann::json& j, generate_arg& p) {
   }
   if (j.contains("first_heading_angle") && j.at("first_heading_angle").is_number())
     j.at("first_heading_angle").get_to(p.first_heading_angle_);
-  if (j.contains("skeleton") && j.at("skeleton").is_object()) {
+  if (j.contains("skeleton") && j.at("skeleton").is_array()) {
     p.skeleton_ = std::make_shared<skeleton_base>();
     j.at("skeleton").get_to(*p.skeleton_);
   }
