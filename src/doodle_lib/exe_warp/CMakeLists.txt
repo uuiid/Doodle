@@ -13,6 +13,7 @@ target_sources(
         task_sync.h
         assets_update.h
         folder_watcher_anim_fbx.h
+        depth_estimation_task.h
         
         PRIVATE
         maya_exe.cpp
@@ -27,4 +28,5 @@ target_sources(
         task_sync.cpp
         assets_update.cpp
         folder_watcher_anim_fbx.cpp
+        depth_estimation_task.cpp
 )
