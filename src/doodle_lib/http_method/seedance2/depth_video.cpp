@@ -57,10 +57,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
   l_ref->preview_file_          = l_preview->uuid_id_;  // values() 后 uuid 已生成
   auto l_install_2              = insert(l_sql).into<sd2::ai_entity_reference_preview>().values(*l_ref);
 
-  // 2. 一次提交两个 insert — 遵循 ai_episode.cpp 模式
-  co_await l_sql.run_sql(l_install_1, l_install_2);
+  // 2. 创建分布式任务
+  auto l_task = std::make_shared<server_task_info>();
+  l_task->type_      = server_task_info_type::depth_estimation;
+  l_task->status_    = server_task_info_status::submitted;
+  l_task->task_id_   = entity_id_;
+  l_task->submitter_ = person_.person_.uuid_id_;
+  l_task->command_   = nlohmann::json{{"preview_id", l_preview->uuid_id_}};
+  auto l_install_3   = insert(l_sql).into<server_task_info>().values(*l_task);
 
-  // 3. 存储路径 — 原始视频暂存临时文件，转换后输出到最终路径
+  // 3. 一次提交三个 insert
+  co_await l_sql.run_sql(l_install_1, l_install_2, l_install_3);
+
+  // 4. 存储路径 — 原始视频暂存临时文件
   auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview->uuid_id_, l_ext);
   auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(l_preview->uuid_id_);
@@ -69,17 +78,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
 
   if (auto l_p = l_file_picture.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
 
-  // 4. 保存原始视频到临时文件
   FSys::rename(l_file, l_file_tmp);
 
-  // 5. 创建分布式任务并提交到队列
-  auto l_task = std::make_shared<server_task_info>();
-  l_task->type_      = server_task_info_type::depth_estimation;
-  l_task->status_    = server_task_info_status::submitted;
-  l_task->task_id_   = entity_id_;
-  l_task->submitter_ = person_.person_.uuid_id_;
-  l_task->command_   = nlohmann::json{{"preview_id", l_preview->uuid_id_}};
-  co_await l_sql.install(l_task);
   co_await computers_assign_task::get_instance().run_next_task();
 
   co_return in_handle->make_msg(nlohmann::json{{"reference", *l_ref}, {"preview", *l_preview}});
