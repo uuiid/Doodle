@@ -291,6 +291,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
           "/api/seedance2/subproject/{}/entity/{}/depth"_url(
               &seedance2::doodle_ai_depth_estimation_video::subproject_id_,
               &seedance2::doodle_ai_depth_estimation_video::entity_id_))
+      .reg_t<seedance2::doodle_ai_depth_estimation_file>(
+          "/api/seedance2/depth/{}"_url(&seedance2::doodle_ai_depth_estimation_file::depth_id_))
       .reg_t<actions_projects_shots_import_frame_range>("/api/actions/projects/{}/shots/import/frame-range"_url(
         &actions_projects_shots_import_frame_range::project_id_
       ))

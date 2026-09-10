@@ -2,6 +2,8 @@
 // Created by TD on 25-1-23.
 //
 
+#include <doodle_core/metadata/server_task_info_type.h>
+
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/http_client/work.h>
 #include <doodle_lib/http_method/local/local.h>
@@ -9,6 +11,7 @@
 #include <boost/url/url.hpp>
 
 #include <memory>
+#include <set>
 #include <spdlog/spdlog.h>
 
 namespace doodle::http::local {
@@ -24,10 +27,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, post) {
     co_return in_handle->make_msg_204();
   }
   SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "收到运行分布式任务的请求, 将尝试运行分布式任务");
+
+  // 解析允许的任务类型，默认允许 export_fbx 和 auto_light
+  std::set<server_task_info_type> l_allowed_task_types{
+      server_task_info_type::export_fbx, server_task_info_type::auto_light
+  };
+  if (auto l_json = in_handle->get_json(); l_json.contains("allowed_task_types")) {
+    l_allowed_task_types = l_json.at("allowed_task_types").get<std::set<server_task_info_type>>();
+  }
+
   auto l_woek                               = std::make_shared<http_work>();
   l_set.internal_distributed_render_client_ = l_woek;
-  l_woek->run(token_);
-  SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "分布式任务已经开始运行");
+  l_woek->run(token_, l_allowed_task_types);
+  SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "分布式任务已经开始运行, 允许的任务类型: {}", l_allowed_task_types);
   co_return in_handle->make_msg_204();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, delete_) { co_return in_handle->make_msg_204(); }

@@ -303,6 +303,13 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
   SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "让计算机 {} 执行下一个任务", in_computer->get_computer_id());
   auto l_sql  = get_sqlite_database();
   auto l_jobs = l_sql.get_server_tasks_by_submitted();
+  // 过滤：若计算机配置了允许的任务类型，只分配匹配的任务
+  if (in_computer->computer_) {
+    const auto& allowed = in_computer->computer_->allowed_task_types_;
+    if (!allowed.empty()) {
+      std::erase_if(l_jobs, [&allowed](const server_task_info& j) { return !allowed.contains(j.type_); });
+    }
+  }
   if (l_jobs.empty()) {
     in_computer->set_computer_status(computer_status::online);
     co_await l_sql.update_computer_status(in_computer->get_computer_id(), computer_status::online);
