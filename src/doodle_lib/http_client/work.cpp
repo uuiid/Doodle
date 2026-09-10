@@ -10,6 +10,7 @@
 
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/exe_warp/depth_estimation_task.h>
 #include <doodle_lib/exe_warp/export_fbx_arg.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/windows_hide.h>
@@ -137,9 +138,10 @@ uuid get_motherboard_uuid() {
 
 }  // namespace
 
-void http_work::run(const std::string& in_token) {
-  executor_ = boost::asio::make_strand(g_io_context());
-  token_    = in_token;
+void http_work::run(const std::string& in_token, std::set<server_task_info_type> in_allowed_task_types) {
+  executor_           = boost::asio::make_strand(g_io_context());
+  token_              = in_token;
+  allowed_task_types_ = std::move(in_allowed_task_types);
   spdlog::flush_every(1s);
   logger_ = g_logger_ctrl().make_log("http_work");
   boost::asio::co_spawn(
@@ -151,9 +153,10 @@ void http_work::run(const std::string& in_token) {
 }
 
 boost::asio::awaitable<void> http_work::async_run() {
-  this_computer_info_.hardware_id_ = get_motherboard_uuid();
-  this_computer_info_.name_        = boost::asio::ip::host_name();
-  this_computer_info_.status_      = computer_status::online;
+  this_computer_info_.hardware_id_        = get_motherboard_uuid();
+  this_computer_info_.name_               = boost::asio::ip::host_name();
+  this_computer_info_.status_             = computer_status::online;
+  this_computer_info_.allowed_task_types_ = allowed_task_types_;
   auto l_ip                        = core_set::get_set().server_ip;
   if (l_ip.starts_with("http://"))
     l_ip.erase(0, 7);
@@ -207,6 +210,11 @@ bool http_work::run_task(const server_task_info& in_task_info) {
   }
   if (in_task_info.type_ == server_task_info_type::export_fbx) {
     auto l_run = std::make_shared<export_fbx_arg_distributed>(in_task_info, shared_from_this());
+    boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
+    return true;
+  }
+  if (in_task_info.type_ == server_task_info_type::depth_estimation) {
+    auto l_run = std::make_shared<depth_estimation_distributed>(in_task_info, shared_from_this());
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
