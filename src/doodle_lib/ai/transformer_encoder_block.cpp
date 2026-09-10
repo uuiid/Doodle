@@ -92,7 +92,7 @@ void transformer_encoder_block::init_session() {
   const bool has_cuda = std::find(available_providers.begin(), available_providers.end(), "CUDAExecutionProvider") !=
                         available_providers.end();
 
-  if (has_cuda ) { 
+  if (has_cuda) {
     OrtCUDAProviderOptions cuda_options{};
     cuda_options.device_id              = 0;
     cuda_options.cudnn_conv_algo_search = OrtCudnnConvAlgoSearchHeuristic;  // 快速预热
@@ -393,6 +393,7 @@ MatrixXfRow transformer_encoder_block::forward(
   );
 
   float* onnx_output_data = ort_outputs.front().GetTensorMutableData<float>();
+#ifndef NDEBUG
   {  // 检查输出是否有 nan
     std::vector<std::int64_t> l_nan_indices{};
     for (std::int64_t i = 0; i < out_batch * out_seq_len * out_dim; ++i) {
@@ -402,6 +403,7 @@ MatrixXfRow transformer_encoder_block::forward(
       SPDLOG_WARN("seqTransEncoder ONNX {} 输出包含 {} 个 NaN", model_dir_, l_nan_indices.size());
     }
   }
+#endif
 
   // ---- 提取 pose_start_ind 之后的运动部分: [B*T, latent_dim] ----
   // onnx_output_data: [B, total_len, latent_dim] 需要 reshape 为 [B*total_len, latent_dim] 然后提取 pose_start_ind
