@@ -42,5 +42,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, post) {
   SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "分布式任务已经开始运行, 允许的任务类型: {}", l_allowed_task_types);
   co_return in_handle->make_msg_204();
 }
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, delete_) { co_return in_handle->make_msg_204(); }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, delete_) {
+  auto& l_set = core_set::get_set();
+  if (auto l_ptr = l_set.internal_distributed_render_client_.lock()) {
+    auto l_work = std::static_pointer_cast<http_work>(l_ptr);
+    l_work->cancel();
+    l_set.internal_distributed_render_client_.reset();
+    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "分布式任务已取消");
+  }
+  co_return in_handle->make_msg_204();
+}
 }  // namespace doodle::http::local

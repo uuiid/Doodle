@@ -22,6 +22,7 @@
 #include <boost/process.hpp>
 
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 
@@ -52,7 +53,7 @@ class DOODLELIB_API http_work : public std::enable_shared_from_this<http_work> {
   bool is_writing_{false};
   boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> message_queue_;
   boost::lockfree::spsc_value<boost::beast::websocket::ping_data> ping_message_;
-  boost::asio::cancellation_signal on_cancel_;
+  std::optional<boost::asio::cancellation_state> app_cancel_state_{};
   boost::asio::awaitable<void> async_write_msg();
 
  protected:
@@ -67,6 +68,7 @@ class DOODLELIB_API http_work : public std::enable_shared_from_this<http_work> {
   ~http_work() = default;
 
   void run(std::set<server_task_info_type> in_allowed_task_types = {});
+  void cancel();
   void set_computer_status(computer_status in_status);
 };
 

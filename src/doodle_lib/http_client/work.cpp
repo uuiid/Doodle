@@ -143,12 +143,18 @@ void http_work::run(std::set<server_task_info_type> in_allowed_task_types) {
   allowed_task_types_ = std::move(in_allowed_task_types);
   spdlog::flush_every(1s);
   logger_ = g_logger_ctrl().make_log("http_work");
+  app_cancel_state_.emplace(app_base::Get().on_cancel.slot());
   boost::asio::co_spawn(
       executor_, async_run(),
       boost::asio::bind_cancellation_slot(
-          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+          app_cancel_state_->slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
       )
   );
+}
+
+void http_work::cancel() {
+  app_cancel_state_.reset();
+  SPDLOG_LOGGER_INFO(logger_, "http_work 已发出取消信号");
 }
 
 boost::asio::awaitable<void> http_work::async_run() {
@@ -231,7 +237,7 @@ void http_work::begin_write_msg() {
   boost::asio::co_spawn(
       strand_, async_write_msg(),
       boost::asio::bind_cancellation_slot(
-          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+          app_cancel_state_->slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
       )
   );
 }
@@ -240,7 +246,7 @@ void http_work::begin_ping() {
   boost::asio::co_spawn(
       g_io_context(), async_ping_loop(),
       boost::asio::bind_cancellation_slot(
-          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+          app_cancel_state_->slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
       )
   );
 }
