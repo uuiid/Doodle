@@ -162,7 +162,7 @@ boost::asio::awaitable<void> http_work::async_run() {
   this_computer_info_.name_               = boost::asio::ip::host_name();
   this_computer_info_.status_             = computer_status::online;
   this_computer_info_.allowed_task_types_ = allowed_task_types_;
-  auto l_ip                        = core_set::get_set().server_ip;
+  auto l_ip                               = core_set::get_set().server_ip;
   if (l_ip.starts_with("http://"))
     l_ip.erase(0, 7);
   else if (l_ip.starts_with("https://"))
@@ -237,7 +237,7 @@ void http_work::begin_write_msg() {
   boost::asio::co_spawn(
       strand_, async_write_msg(),
       boost::asio::bind_cancellation_slot(
-          app_cancel_state_->slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
       )
   );
 }
@@ -246,7 +246,7 @@ void http_work::begin_ping() {
   boost::asio::co_spawn(
       g_io_context(), async_ping_loop(),
       boost::asio::bind_cancellation_slot(
-          app_cancel_state_->slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
       )
   );
 }
@@ -328,7 +328,7 @@ base_distributed_task::~base_distributed_task() {
 logger_ptr base_distributed_task::create_logger() const {
   auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
                        fmt::format("{}.log", task_info_.uuid_id_);
-  auto l_logger = std::make_shared<spdlog::async_logger>(
+  auto l_logger      = std::make_shared<spdlog::async_logger>(
       task_info_.name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
       spdlog::thread_pool()
   );
