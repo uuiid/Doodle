@@ -31,7 +31,7 @@ Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -Sc
     $Tmp = "D:\tmp"
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
     $LogPath = "$env:TEMP\build_$timestamp.log"
-    &robocopy "$Tmp\dist" "$Target\dist" /MIR /w:1 /NDL /NFL
+    &robocopy "$Tmp\dist" "$Target\dist" /XF web.config /MIR /w:1 /NDL /NFL
     
     if (!$CopyServer) { return; }
 
