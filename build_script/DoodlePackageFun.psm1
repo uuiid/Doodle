@@ -208,11 +208,11 @@ function Initialize-Doodle {
         #         寻找版本号 3.6.678 并放在最后
         #        $DoodleVersionList = $DoodleVersionList | Where-Object { $_ -ne "3.6.678" }
     }
-    Set-Content -Path "$OutPath\dist\version.txt" -Value ($Tags -join "`n") -NoNewline
+    Set-Content -Path "$OutPath\version.txt" -Value ($Tags -join "`n") -NoNewline
 
     Copy-Item $DoodleExePath -Destination "$OutPath\dist" -Force
-    mkdir "$OutPath\dist\seedance2\animation" -ErrorAction SilentlyContinue | Out-Null
-    Copy-Item $DoodleMp4 -Destination "$OutPath\dist\seedance2\animation\" -Force
+    mkdir "$OutPath\seedance2\animation" -ErrorAction SilentlyContinue | Out-Null
+    Copy-Item $DoodleMp4 -Destination "$OutPath\seedance2\animation\" -Force
 
 
     # 从github 下载网络资源
@@ -283,8 +283,8 @@ function Initialize-Doodle {
             isOffDay = $true
         }
     )
-    &robocopy $DoodleTimePath "$OutPath\dist\time" /MIR /unilog+:$DoodleLogPath | Out-Null
-    &robocopy $DoodleTimePath "$DoodleKitsuRoot\dist\time" /MIR /unilog+:$DoodleLogPath | Out-Null
+    &robocopy $DoodleTimePath "$OutPath\time" /MIR /unilog+:$DoodleLogPath | Out-Null
+    # &robocopy $DoodleTimePath "$DoodleKitsuRoot\time" /MIR /unilog+:$DoodleLogPath | Out-Null
 
     return $DoodleVersion;
 }

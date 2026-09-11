@@ -26,7 +26,7 @@ namespace {
 auto create_clock_overtime(const chrono::year_month_day& in_date) {
   business::work_clock2 l_work_clock{};
   auto l_r = business::rules::get_default();
-  holidaycn_time2 l_holidaycn_time{l_r.work_pair_p, g_ctx().get<kitsu_ctx_t>().front_end_root_ / "time"};
+  holidaycn_time2 l_holidaycn_time{l_r.work_pair_p, g_ctx().get<kitsu_ctx_t>().get_time()};
   // for (auto&& l_work_time : l_r.work_pair_p) {
   l_work_clock += std::make_tuple(chrono::local_days{in_date}, chrono::local_days{in_date} + chrono::days{1});
   // }
@@ -46,7 +46,7 @@ auto create_clock_overtime(const chrono::year_month_day& in_date) {
 auto create_clock_leave(const chrono::year_month_day& in_date) {
   business::work_clock2 l_work_clock{};
   auto l_r = business::rules::get_default();
-  // holidaycn_time2 l_holidaycn_time{l_r.work_pair_p, g_ctx().get<kitsu_ctx_t>().front_end_root_ / "time"};
+  // holidaycn_time2 l_holidaycn_time{l_r.work_pair_p, g_ctx().get<kitsu_ctx_t>().get_time()};
   for (auto&& [ben, end] : l_r.work_pair_p) {
     l_work_clock += std::make_tuple(chrono::local_days{in_date} + ben, chrono::local_days{in_date} + end);
   }

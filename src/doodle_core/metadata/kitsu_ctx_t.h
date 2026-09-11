@@ -11,7 +11,6 @@
 #include <fmt/format.h>
 #include <string>
 
-
 namespace doodle::http {
 
 struct kitsu_ctx_t {
@@ -119,6 +118,13 @@ struct kitsu_ctx_t {
   FSys::path get_outsource_pictures_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / "outsource" / get_preview_file_path(in_uuid, true, in_ext);
   }
+
+  // 获取时间
+  FSys::path get_time() { return root_ / "time"; }
+  // 获取版本
+  FSys::path get_version() { return root_ / "version.txt"; }
+  // seedance2 waiting
+  FSys::path get_seedance2_waiting() { return root_ / "seedance2" / "animation" / "waiting.mp4"; }
 
  private:
   FSys::path get_attachment_file_(const uuid& in_uuid) {

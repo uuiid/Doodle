@@ -28,11 +28,14 @@ Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -Sc
     param ($KitsuCookies, $CopyServer)
 
     $Target = "D:\kitsu"
+    $TargetData = "D:\kitsu_data"
     $Tmp = "D:\tmp"
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
     $LogPath = "$env:TEMP\build_$timestamp.log"
     &robocopy "$Tmp\dist" "$Target\dist" /XF web.config /MIR /w:1 /NDL /NFL
-    
+    &Robocopy "$Tmp\time" "$TargetData\time" /MIR /w:1 /NDL /NFL
+    &Robocopy "$Tmp\seedance2" "$TargetData\seedance2" /MIR /w:1 /NDL /NFL
+    Copy-Item -Path "$Tmp\version.txt" -Destination "$TargetData\version.txt" -Recurse -Force
     if (!$CopyServer) { return; }
 
     $Kitsu_Ip = "127.0.0.1"

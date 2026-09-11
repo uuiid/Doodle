@@ -641,7 +641,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures, get) {
   co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_animation_waiting, get) {
-  auto l_file = g_ctx().get<kitsu_ctx_t>().front_end_root_ / "seedance2" / "animation" / "waiting.mp4";
+  auto l_file = g_ctx().get<kitsu_ctx_t>().get_seedance2_waiting();
   DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "文件不存在");
   co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
 }
