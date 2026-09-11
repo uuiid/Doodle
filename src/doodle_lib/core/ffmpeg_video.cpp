@@ -1279,13 +1279,15 @@ class ffmpeg_video_resize::impl {
 
   void encode_audio_frame(av::AudioSamples& in_frame) {
     output_handle_.resample_audio_frame(in_frame);
-    output_low_handle_.resample_audio_frame(in_frame);
+    if (output_low_handle_.video_enc_ctx_.isValid()) output_low_handle_.resample_audio_frame(in_frame);
   }
   void encode_video_frame(av::VideoFrame& in_frame) {
     auto l_f = output_handle_.rescaler_.isValid() ? output_handle_.rescaler_.rescale(in_frame) : in_frame;
     output_handle_.encode_video_frame(l_f);
-    l_f = output_low_handle_.rescaler_.isValid() ? output_low_handle_.rescaler_.rescale(in_frame) : in_frame;
-    output_low_handle_.encode_video_frame(l_f);
+    if (output_low_handle_.video_enc_ctx_.isValid()) {
+      l_f = output_low_handle_.rescaler_.isValid() ? output_low_handle_.rescaler_.rescale(in_frame) : in_frame;
+      output_low_handle_.encode_video_frame(l_f);
+    }
     if (progress_data_) ++(*progress_data_);
   }
 
@@ -1332,17 +1334,34 @@ class ffmpeg_video_resize::impl {
         input_video_handle_.fixed_audio_channels_
     );
   }
+  // 单输出模式: 不调整分辨率, 仅调整 fps
+  void open_out(const FSys::path& in_path) {
+    const int l_src_width    = input_video_handle_.video_dec_ctx_.width();
+    const int l_src_height   = input_video_handle_.video_dec_ctx_.height();
+    const auto l_src_pix_fmt = input_video_handle_.video_dec_ctx_.pixelFormat().get();
+    output_handle_.open_output_video(in_path.string(), l_src_width, l_src_height);
+    const auto l_dst_pix_fmt = output_handle_.video_enc_ctx_.pixelFormat().get();
+    if (l_dst_pix_fmt != l_src_pix_fmt)
+      output_handle_.add_rescaler(
+          l_src_width, l_src_height, l_dst_pix_fmt, l_src_width, l_src_height, l_src_pix_fmt
+      );
+    output_handle_.open_output_audio();
+    output_handle_.add_resampler(
+        input_video_handle_.audio_dec_ctx_, input_video_handle_.audio_channel_layout_,
+        input_video_handle_.fixed_audio_channels_
+    );
+  }
 
   void process() {
     output_handle_.format_context_.writeHeader();
-    output_low_handle_.format_context_.writeHeader();
+    if (output_low_handle_.video_enc_ctx_.isValid()) output_low_handle_.format_context_.writeHeader();
 
     input_video_handle_.process(*this);
     output_handle_.flush();
-    output_low_handle_.flush();
+    if (output_low_handle_.video_enc_ctx_.isValid()) output_low_handle_.flush();
 
     output_handle_.format_context_.writeTrailer();
-    output_low_handle_.format_context_.writeTrailer();
+    if (output_low_handle_.video_enc_ctx_.isValid()) output_low_handle_.format_context_.writeTrailer();
   }
 };
 void ffmpeg_video_resize::process() {
@@ -1350,7 +1369,11 @@ void ffmpeg_video_resize::process() {
   auto l_now            = chrono::system_clock::now();
   l_impl.progress_data_ = progress_data_;
   l_impl.open(video_path_);
-  l_impl.open_out(out_high_path_, high_size_, out_low_path_, low_size_);
+  if (out_low_path_.empty()) {
+    l_impl.open_out(out_high_path_);
+  } else {
+    l_impl.open_out(out_high_path_, high_size_, out_low_path_, low_size_);
+  }
   l_impl.process();
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_long_task(), "ffmpeg_video_resize: {} resize video used {:%H:%M:%S} seconds", video_path_,

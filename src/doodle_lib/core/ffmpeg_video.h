@@ -93,6 +93,15 @@ class DOODLELIB_API ffmpeg_video_resize {
     // 低分辨率定义为宽度小于等于 1280
     low_size_ = cv::Size{1280, static_cast<int>(1280.0 / high_size_.width * high_size_.height)};
   }
+  // 只调整 fps, 不调整分辨率, 使用原视频大小
+  explicit ffmpeg_video_resize(
+      FSys::path in_video_path, FSys::path in_out_path, uuid in_task_info_id,
+      progress_data_ptr in_progress_data = nullptr
+  )
+      : video_path_(std::move(in_video_path)),
+        out_high_path_(std::move(in_out_path)),
+        task_info_id_(std::move(in_task_info_id)),
+        progress_data_(std::move(in_progress_data)) {}
   ~ffmpeg_video_resize() = default;
   // 调整视频大小
   void process();
