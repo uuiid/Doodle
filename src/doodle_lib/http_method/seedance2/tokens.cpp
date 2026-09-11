@@ -51,7 +51,8 @@ boost::asio::awaitable<void> set_remaining_tokens_for_person(const uuid& in_pers
 
 // 设置当周人员剩余可使用的 token 数量
 orm::update_t add_remaining_tokens_for_person(sqlite_database& in_sql, const uuid& in_person, std::int64_t in_tokens) {
-  DOODLE_CHICK(in_tokens != 0, "in_tokens must not be 0");
+  // DOODLE_CHICK(in_tokens != 0, "in_tokens must not be 0");
+  if (in_tokens == 0) return orm::update(in_sql).from<person>();
   using namespace orm;
 
   return orm::update(in_sql)
