@@ -35,6 +35,7 @@
 #include "reg.h"
 #include "sqlite_orm/orm/column_operations.h"
 #include "sqlite_orm/orm/count.h"
+#include "sqlite_orm/orm/fwd.h"
 #include "sqlite_orm/orm/insert.h"
 #include "sqlite_orm/orm/select.h"
 #include <chrono>
@@ -125,10 +126,12 @@ class seedance2_task_run_manager {
     auto l_response = co_await in_client->run_task(l_req);
     auto l_sql      = get_sqlite_database();
     using namespace orm;
+    sql_modify_statement_vector_t l_sql_modify_statements;
     auto l_update = update(l_sql)
                         .from<sd2::task>()
                         .set(c(&sd2::task::data_response_) = l_response)
                         .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_);
+    l_sql_modify_statements.push_back(l_update);
     if (l_response.contains("id")) {
       l_update.set(c(&sd2::task::task_id_) = l_response.at("id").get<std::string>());
       l_update.set(c(&sd2::task::status_) = sd2::task_status::queued);
@@ -151,7 +154,21 @@ class seedance2_task_run_manager {
         l_status = sd2::task_status::failed;
       }
     }
-    co_await l_sql.run_sql(l_update);
+    if (l_status == sd2::task_status::failed) {
+      // 任务失败或者其他状态，返还 token
+      l_sql_modify_statements.emplace_back(
+          add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_)
+      );
+      // 失败时回滚生成次数
+      l_sql_modify_statements.emplace_back(
+          update(l_sql)
+              .from<sd2::ai_generate_entity>()
+              .set(c(&sd2::ai_generate_entity::generate_count_) = c(&sd2::ai_generate_entity::generate_count_) - 1)
+              .where(c(&sd2::ai_generate_entity::uuid_id_) == in_task.ai_generate_entity_id_)
+      );
+    }
+
+    co_await l_sql.run_sql(l_sql_modify_statements);
     socket_io::broadcast(
         socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_status}
     );

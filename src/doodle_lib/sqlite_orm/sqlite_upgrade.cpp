@@ -97,7 +97,7 @@ struct upgrade_2_t : sqlite_upgrade {
       update(l_s)
           .from<seedance2::task>()
           .set(c(&seedance2::task::completion_tokens_) = 0)
-          .where(c(&seedance2::task::status_) == seedance2::task_status::cancelled)();
+          .where(c(&seedance2::task::status_) == seedance2::task_status::cancelled || c(&seedance2::task::status_) == seedance2::task_status::failed)();
       l_s.drop_table("seedance2_person_token");
       l_s.sync_schema();
       l_guard.commit();
