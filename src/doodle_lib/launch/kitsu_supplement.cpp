@@ -33,7 +33,7 @@ struct kitsu_supplement_args_t {
 
   FSys::path kitsu_front_end_path_{};
 
-  FSys::path kitsu_thumbnails_path_{};
+  FSys::path root_{};
   std::vector<std::string> deepseek_keys_{};
 
   /// 即梦授权
@@ -67,7 +67,7 @@ struct kitsu_supplement_args_t {
     in_json.at("port").get_to(out_obj.port_);
     in_json.at("db_path").get_to(out_obj.db_path_);
     in_json.at("kitsu_front_end_path").get_to(out_obj.kitsu_front_end_path_);
-    in_json.at("kitsu_thumbnails_path").get_to(out_obj.kitsu_thumbnails_path_);
+    in_json.at("root").get_to(out_obj.root_);
     in_json.at("deepseek_keys").get_to(out_obj.deepseek_keys_);
     if (in_json.contains("ji_meng_access_key_id"))
       in_json.at("ji_meng_access_key_id").get_to(out_obj.ji_meng_access_key_id_);
@@ -129,13 +129,13 @@ bool kitsu_supplement_main::init() {
   l_set.computers_assign_task_ptr_ = std::make_shared<http::computers_assign_task>();
   l_set.database_                  = std::make_shared<sqlite_storage>();
   kitsu_supplement_args_t l_args{
-      .port_                  = 80,
-      .db_path_               = "C:/kitsu_new.database",
-      .kitsu_front_end_path_  = "D:/kitsu/dist",
-      .kitsu_thumbnails_path_ = "D:/kitsu_data",
-      .secret_                = "22T0iwSHK7qkhdI6",
-      .domain_protocol_       = "http",
-      .domain_name_           = "192.168.40.188",
+      .port_                 = 80,
+      .db_path_              = "C:/kitsu_new.database",
+      .kitsu_front_end_path_ = "D:/kitsu/dist",
+      .root_                 = "D:/kitsu_data",
+      .secret_               = "22T0iwSHK7qkhdI6",
+      .domain_protocol_      = "http",
+      .domain_name_          = "192.168.40.188",
   };
 
   if (auto l_file_path = arg_({"config"}); l_file_path) {
@@ -147,7 +147,7 @@ bool kitsu_supplement_main::init() {
       return true;
     }
   }
-
+  if (auto l_root_path = arg_({"root"}); l_root_path) l_args.root_ = FSys::from_quotation_marks(l_root_path.str());
   if (arg_["local"]) {
     if (auto l_str = arg_({"port"}); l_str)
       l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
@@ -155,7 +155,7 @@ bool kitsu_supplement_main::init() {
       l_args.port_ = 0;
     l_set.set_root("D:/sy_maigc");
     // 初始化上下文
-    g_ctx().emplace<http::kitsu_ctx_t>(l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_);
+    g_ctx().emplace<http::kitsu_ctx_t>(l_args.root_, l_args.kitsu_front_end_path_);
     // 打开内存数据库
     l_set.database_->open();
     l_set.database_->upgrade();
@@ -173,11 +173,11 @@ bool kitsu_supplement_main::init() {
     else
       l_args.port_ = 0;
     // 调整一些特有的上下文
-    l_args.db_path_               = register_file_type::program_location().parent_path() / "epiboly.database";
-    l_args.kitsu_front_end_path_  = register_file_type::program_location().parent_path() / "dist";
-    l_args.kitsu_thumbnails_path_ = register_file_type::program_location().parent_path() / "thumbnails";
+    l_args.db_path_              = register_file_type::program_location().parent_path() / "epiboly.database";
+    l_args.kitsu_front_end_path_ = register_file_type::program_location().parent_path() / "dist";
+    l_args.root_                 = register_file_type::program_location().parent_path() / "root";
     // 初始化上下文
-    g_ctx().emplace<http::kitsu_ctx_t>(l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_);
+    g_ctx().emplace<http::kitsu_ctx_t>(l_args.root_, l_args.kitsu_front_end_path_);
     l_set.database_->open(l_args.db_path_);
     l_set.database_->upgrade();
     // 初始化授权上下文
@@ -203,9 +203,8 @@ bool kitsu_supplement_main::init() {
   l_set.ctx_ptr = l_ssl_ctx;
   {
     g_ctx().emplace<http::kitsu_ctx_t>(
-        l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_, l_args.deepseek_keys_,
-        l_args.ji_meng_access_key_id_, l_args.ji_meng_secret_access_key_, l_args.secret_, l_args.domain_protocol_,
-        l_args.domain_name_
+        l_args.root_, l_args.kitsu_front_end_path_, l_args.deepseek_keys_, l_args.ji_meng_access_key_id_,
+        l_args.ji_meng_secret_access_key_, l_args.secret_, l_args.domain_protocol_, l_args.domain_name_
     );
     if (!l_args.mail_config_.username_.empty() && !l_args.mail_config_.password_.empty())
       g_ctx().emplace<email::seed_email>(
