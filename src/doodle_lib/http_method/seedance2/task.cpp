@@ -238,11 +238,12 @@ class seedance2_task_run_manager {
             l_task_ptr->data_response_.at("content").contains("video_url")) {
           auto l_video_url = l_task_ptr->data_response_.at("content").at("video_url").get<std::string>();
           SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "任务 {} 完成，下载视频 {}", in_task.uuid_id_, l_video_url);
-          auto l_file                = co_await in_client->download_result(l_video_url);
+          auto l_file          = co_await in_client->download_result(l_video_url);
           // 使用 FFmpeg 调整视频 fps 为 25 (不调整分辨率)
-          auto l_adjusted_file =
-              l_file.parent_path() / (l_file.stem().string() + "_adj" + l_file.extension().string());
-          ffmpeg_video_resize{l_file, l_adjusted_file, in_task.uuid_id_}.process();
+          auto l_adjusted_file = l_file.parent_path() / (l_file.stem().string() + "_adj" + l_file.extension().string());
+          {
+            ffmpeg_video_resize{l_file, l_adjusted_file, in_task.uuid_id_}.process();
+          }
           auto l_preview_file        = std::make_shared<sd2::ai_preview_file>();
           l_preview_file->extension_ = ".mp4";
           co_await l_sql.install(l_preview_file);
