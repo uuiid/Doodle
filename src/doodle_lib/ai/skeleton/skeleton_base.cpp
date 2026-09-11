@@ -558,6 +558,7 @@ static skeleton_base form_skeleton_from_json(const std::vector<skeleton_base_jso
       get_soma_skeleton_30_semantic_groups()[4]         // hip [right, left]
   );
   apply_semantic_groups(skel, g);
+  skel.neutral_joints_.resize(skel.nbjoints_, 3);
   std::map<std::string, std::size_t> name_to_index;
   for (std::size_t i = 0; i < json_data.size(); ++i) name_to_index[json_data[i].name] = i;
   for (std::size_t i = 0; i < skel.bone_order_names_.size(); ++i) {
