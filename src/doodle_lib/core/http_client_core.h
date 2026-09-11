@@ -139,7 +139,7 @@ class http_stream_base {
     expires_after(timeout_);
     if (!is_open()) resolve_and_connect_sync();
 
-    expire_never();
+    expires_after(900s);
     boost::system::error_code l_ec{};
     boost::beast::http::write(*socket_, in_req, l_ec);
     if (l_ec) throw boost::system::system_error(l_ec);
@@ -382,7 +382,7 @@ class http_stream_base<SocketType>::read_and_write_compose_parser {
         BOOST_ASIO_CORO_YIELD self_->resolve_and_connect(std::move(self));
         if (in_ec) goto end_complete;
       }
-      self_->expire_never();
+      self_->expires_after(900s);
 
       BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(*self_->socket_, req_, std::move(self));
       if (in_ec) goto end_complete;
