@@ -45,8 +45,6 @@ Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -Sc
         "Authorization" = "Bearer $KitsuCookies"
     }
     $Target = "D:"
-    $Tmp = "D:\tmp"
-    $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
     # 进行数据库升级
     $sqlite_upgrade_script = "D:/sql.sql"
     $database_path = "C:\kitsu_new.database"
