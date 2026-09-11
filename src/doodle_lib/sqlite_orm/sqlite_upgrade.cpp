@@ -34,7 +34,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 23;
+constexpr std::size_t g_current_version = 24;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -90,7 +90,7 @@ struct upgrade_2_t : sqlite_upgrade {
   void upgrade(sqlite_storage& in_data) override {
     using namespace orm;
     auto l_s = in_data.create_session();
-    if (l_s.pragma().user_version() == 22) {
+    if (l_s.pragma().user_version() == 23) {
       backup(l_s);
       auto l_guard = l_s.transaction();
       // 所有取消的任务不再扣费, 清空其 completion_tokens_
