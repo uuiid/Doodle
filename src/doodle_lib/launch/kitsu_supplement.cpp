@@ -31,7 +31,6 @@ struct kitsu_supplement_args_t {
   std::uint16_t port_;
   FSys::path db_path_{};
 
-  std::string kitsu_token_{};
   FSys::path kitsu_front_end_path_{};
 
   FSys::path kitsu_thumbnails_path_{};
@@ -65,7 +64,6 @@ struct kitsu_supplement_args_t {
 
   // form json
   friend void from_json(const nlohmann::json& in_json, kitsu_supplement_args_t& out_obj) {
-    in_json.at("kitsu_token").get_to(out_obj.kitsu_token_);
     in_json.at("port").get_to(out_obj.port_);
     in_json.at("db_path").get_to(out_obj.db_path_);
     in_json.at("kitsu_front_end_path").get_to(out_obj.kitsu_front_end_path_);
@@ -131,13 +129,8 @@ bool kitsu_supplement_main::init() {
   l_set.computers_assign_task_ptr_ = std::make_shared<http::computers_assign_task>();
   l_set.database_                  = std::make_shared<sqlite_storage>();
   kitsu_supplement_args_t l_args{
-      .port_    = 80,
-      .db_path_ = "C:/kitsu_new.database",
-      .kitsu_token_ =
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-          "eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxNzU1MDUxMywianRpIjoiOTU0MDg1NjctMzE1OS00Y2MzLTljM2ItZmNiMzQ4MTIwNjU5IiwidHlw"
-          "ZSI6ImFjY2VzcyIsInN1YiI6ImU5OWMyNjZhLTk1ZjUtNDJmNS1hYmUxLWI0MTlkMjk4MmFiMCIsIm5iZiI6MTcxNzU1MDUxMywiZXhwIjox"
-          "NzY0NjMzNjAwLCJpZGVudGl0eV90eXBlIjoiYm90In0.xLV17bMK8VH0qavV4Ttbi43RhaBqpc1LtTUbRwu1684",
+      .port_                  = 80,
+      .db_path_               = "C:/kitsu_new.database",
       .kitsu_front_end_path_  = "D:/kitsu/dist",
       .kitsu_thumbnails_path_ = "D:/kitsu_data",
       .secret_                = "22T0iwSHK7qkhdI6",
@@ -162,9 +155,7 @@ bool kitsu_supplement_main::init() {
       l_args.port_ = 0;
     l_set.set_root("D:/sy_maigc");
     // 初始化上下文
-    g_ctx().emplace<http::kitsu_ctx_t>(
-        l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_
-    );
+    g_ctx().emplace<http::kitsu_ctx_t>(l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_);
     // 打开内存数据库
     l_set.database_->open();
     l_set.database_->upgrade();
@@ -186,9 +177,7 @@ bool kitsu_supplement_main::init() {
     l_args.kitsu_front_end_path_  = register_file_type::program_location().parent_path() / "dist";
     l_args.kitsu_thumbnails_path_ = register_file_type::program_location().parent_path() / "thumbnails";
     // 初始化上下文
-    g_ctx().emplace<http::kitsu_ctx_t>(
-        l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_
-    );
+    g_ctx().emplace<http::kitsu_ctx_t>(l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_);
     l_set.database_->open(l_args.db_path_);
     l_set.database_->upgrade();
     // 初始化授权上下文
@@ -214,7 +203,7 @@ bool kitsu_supplement_main::init() {
   l_set.ctx_ptr = l_ssl_ctx;
   {
     g_ctx().emplace<http::kitsu_ctx_t>(
-        l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_, l_args.deepseek_keys_,
+        l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_, l_args.deepseek_keys_,
         l_args.ji_meng_access_key_id_, l_args.ji_meng_secret_access_key_, l_args.secret_, l_args.domain_protocol_,
         l_args.domain_name_
     );

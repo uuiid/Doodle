@@ -2,20 +2,19 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/doodle_core_pch.h>
+#include <doodle_core/metadata/seedance2/canvas_media.h>
 
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/global_function.h>
-
-#include <doodle_core/metadata/seedance2/canvas_media.h>
 
 #include <filesystem>
 #include <fmt/format.h>
 #include <string>
 
+
 namespace doodle::http {
 
 struct kitsu_ctx_t {
-  std::string access_token_;
   /// 产生的资产储存位置
   std::filesystem::path root_;
   /// 前端部署的问价所在位置
@@ -42,7 +41,9 @@ struct kitsu_ctx_t {
   // 获取制作规范 md文件
   FSys::path get_production_specifications_file() { return root_ / "production_specifications.md"; }
   FSys::path get_ue_plugins_version_file() { return root_ / "ue_plugins_version.txt"; }
-  FSys::path get_ue_plugins_file(const std::int32_t in_major, const std::int32_t in_minor, const std::int32_t in_patch) {
+  FSys::path get_ue_plugins_file(
+      const std::int32_t in_major, const std::int32_t in_minor, const std::int32_t in_patch
+  ) {
     return root_ / "ue_plugins" / fmt::format("UE_{}.{}.{}.zip", in_major, in_minor, in_patch);
   }
 
@@ -52,16 +53,20 @@ struct kitsu_ctx_t {
   }
   // seedance2_pictures
   FSys::path get_sd2_pictures_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return root_ / "sd2" / "pictures" /
-           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
+    return root_ / "sd2" / "pictures" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
   }
   // seedance2_canvas_media — 按 media_role 路由到不同子目录，缩略图固定 .png
-  FSys::path get_sd2_canvas_media_file(const uuid& in_uuid, seedance2::media_role in_role, const std::string& in_ext = {}) {
+  FSys::path get_sd2_canvas_media_file(
+      const uuid& in_uuid, seedance2::media_role in_role, const std::string& in_ext = {}
+  ) {
     auto subdir = [&]() -> FSys::path {
       switch (in_role) {
-        case seedance2::media_role::thumbnail: return "thumbnails";
-        case seedance2::media_role::preview:   return "previews";
-        default:                               return {};
+        case seedance2::media_role::thumbnail:
+          return "thumbnails";
+        case seedance2::media_role::preview:
+          return "previews";
+        default:
+          return {};
       }
     }();
     auto path = FSys::path{"sd2"} / "canvas_media";
