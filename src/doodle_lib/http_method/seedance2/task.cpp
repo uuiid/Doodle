@@ -155,6 +155,10 @@ class seedance2_task_run_manager {
       }
     }
     if (l_status == sd2::task_status::failed) {
+      l_update.set(
+          c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
+          c(&sd2::task::completion_tokens_) = 0
+      );
       // 任务失败或者其他状态，返还 token
       l_sql_modify_statements.emplace_back(
           add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_)
@@ -542,7 +546,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
           .from<sd2::task>()
           .set(c(&sd2::task::status_) = sd2::task_status::cancelled)
           .set(
-              c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}
+              c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
+              c(&sd2::task::completion_tokens_) = 0
           )
           .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_),
       add_remaining_tokens_for_person(l_sql, l_task.user_id_, l_task.completion_tokens_),
