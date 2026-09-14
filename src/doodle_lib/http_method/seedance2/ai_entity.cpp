@@ -233,11 +233,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_reference_instance, dele
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview.uuid_id_, l_preview.extension_);
   auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(l_preview.uuid_id_);
 
+  using namespace orm;
+  co_await l_sql.run_sql(
+      delete_from(l_sql).from<sd2::ai_entity_reference_preview>().where(c(&sd2::ai_entity_reference_preview::uuid_id_) == id_),
+      delete_from(l_sql).from<sd2::ai_preview_file>().where(c(&sd2::ai_preview_file::uuid_id_) == l_ref->preview_file_)
+  );
+
   if (FSys::exists(l_file_picture)) FSys::remove(l_file_picture);
   if (FSys::exists(l_file_thumbnail)) FSys::remove(l_file_thumbnail);
-
-  co_await l_sql.remove<sd2::ai_entity_reference_preview>(id_);
-  co_await l_sql.remove<sd2::ai_preview_file>(l_ref->preview_file_);
 
   co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
 }
