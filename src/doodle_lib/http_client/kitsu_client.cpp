@@ -176,6 +176,45 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_tasks_full(const uuid& 
   co_return l_json;
 }
 
+boost::asio::awaitable<kitsu_client::entity_name_info> kitsu_client::get_entity_and_parent_name(
+    uuid in_entity_id, uuid in_parent_id
+) const {
+  entity_name_info l_result{};
+
+  // 获取当前实体
+  {
+    boost::beast::http::request<boost::beast::http::empty_body> l_req{
+        boost::beast::http::verb::get, fmt::format("/api/data/entities/{}", in_entity_id), 11
+    };
+    set_req_headers(l_req);
+    boost::beast::http::response<http::basic_json_body> l_res{};
+    co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+    if (l_res.result() != boost::beast::http::status::ok)
+      throw_exception(doodle_error{"kitsu get entity error {} {}", l_res.result(), l_res.body().dump()});
+    l_result.entity_name_ = l_res.body().value("name", "");
+  }
+
+  // 父实体id为空时直接返回
+  if (in_parent_id.is_nil()) {
+    co_return l_result;
+  }
+
+  // 获取父实体
+  {
+    boost::beast::http::request<boost::beast::http::empty_body> l_req{
+        boost::beast::http::verb::get, fmt::format("/api/data/entities/{}", in_parent_id), 11
+    };
+    set_req_headers(l_req);
+    boost::beast::http::response<http::basic_json_body> l_res{};
+    co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+    if (l_res.result() != boost::beast::http::status::ok)
+      throw_exception(doodle_error{"kitsu get parent entity error {} {}", l_res.result(), l_res.body().dump()});
+    l_result.parent_name_ = l_res.body().value("name", "");
+  }
+
+  co_return l_result;
+}
+
 boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(uuid in_task_id) const {
   project l_prj{};
   std::vector<working_file> l_list{};

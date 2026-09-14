@@ -94,6 +94,13 @@ class DOODLELIB_API kitsu_client {
 
   boost::asio::awaitable<project> get_project(uuid in_project_id) const;
   boost::asio::awaitable<nlohmann::json> get_tasks_full(const uuid& in_task_id) const;
+
+  struct entity_name_info {
+    std::string entity_name_;
+    std::string parent_name_;
+  };
+  /// 获取实体及父实体的名称，in_parent_id 为空时直接返回不查询父实体
+  boost::asio::awaitable<entity_name_info> get_entity_and_parent_name(uuid in_entity_id, uuid in_parent_id) const;
   boost::asio::awaitable<nlohmann::json> get_generate_uesk_file_arg(uuid in_task_id) const;
   boost::asio::awaitable<void> upload_asset_file_maya(uuid in_task_id, FSys::path in_file_path) const;
   /// 上传UE文件
