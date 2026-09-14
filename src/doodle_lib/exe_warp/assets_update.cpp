@@ -104,7 +104,7 @@ boost::asio::awaitable<void> update_movie_files::run() {
   auto l_parent_id   = l_task_json.at("entity").value("parent_id", uuid{});
   auto l_parent_name = l_parent_id.is_nil() ? ""s : co_await kitsu_client_->get_entity_name(l_parent_id);
   SPDLOG_LOGGER_INFO(logger_ptr_, "实体名称: {}, 父实体名称: {}", l_entity_name, l_parent_name);
-  const auto l_move_name = fmt::format("{}_{}_{}.mp4", l_prj.code_, l_entity_name, l_parent_name);
+  const auto l_move_name = fmt::format("{}_{}_{}.mp4", l_prj.code_, l_parent_name, l_entity_name);
   FSys::path l_movie_file{};
 
   static constexpr std::array<std::string_view, 3> k_image_exts{".png", ".jpg", ".jpeg"};
@@ -126,7 +126,7 @@ boost::asio::awaitable<void> update_movie_files::run() {
     if (movie_file_.filename() != FSys::path{l_move_name}) {
       auto l_target = core_set::get_set().get_cache_root("movie") / l_move_name;
       FSys::copy_file(movie_file_, l_target, FSys::copy_options::overwrite_existing);
-      l_movie_file      = l_target;
+      l_movie_file = l_target;
       SPDLOG_LOGGER_INFO(logger_ptr_, "视频文件名称不匹配, 复制 {} -> {}", movie_file_, l_movie_file);
     } else {
       l_movie_file = movie_file_;
