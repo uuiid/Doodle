@@ -1177,7 +1177,17 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 				UE_LOG(LogTemp, Error, TEXT("GroomMap not contains GroomCache or GroomBindingAsset for %s"),
 				*L_GroomAsset->GetName());
 			if (L_GroomCacheOrBind.GroomCache)
+			{
 				L_Com->SetGroomCache(L_GroomCacheOrBind.GroomCache);
+				// 对于 Guides 类型的 GroomCache，需确保 GroomAsset 已启用 SimulationCache，
+				// 否则 GetEffectiveGroomCacheType 会返回 None，导致 GroomCache 无效。
+				// 此逻辑与 UGroomComponent::PostEditChangeProperty 中对 bGroomCacheChanged 的处理保持一致。
+				if (L_GroomCacheOrBind.GroomCache->GetType() == EGroomCacheType::Guides
+					&& !L_GroomAsset->GetEnableSimulationCache())
+				{
+					L_GroomAsset->ValidateSimulationCache();
+				}
+			}
 			L_Com->Modify();
 			L_Actor->Modify();
 			if (!L_GroomCacheOrBind.GroomCache) continue;
