@@ -184,8 +184,8 @@ class seedance2_task_run_manager {
   boost::asio::awaitable<void> async_run() {
     boost::scope::scope_exit on_exit{[this]() { is_running_ = false; }};
     boost::asio::steady_timer l_timer{g_io_context()};
-    std::map<std::string, std::shared_ptr<seedance2_client>> l_client_map;
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+      std::map<std::string, std::shared_ptr<seedance2_client>> l_client_map;
       auto l_tasks = get_task();
       if (l_tasks.empty()) co_return;
       for (auto&& l_task_info : l_tasks) {
