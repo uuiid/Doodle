@@ -185,7 +185,8 @@ int UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 		: TEXT("");
 
 
-	const TObjectPtr<USkeleton> L_Skeleton = LoadObject<USkeleton>(nullptr, *L_Skin_Path);
+	const TObjectPtr<USkeletalMesh> L_SkinMesh = LoadObject<USkeletalMesh>(nullptr, *L_Skin_Path);
+	const TObjectPtr<USkeleton> L_Skeleton = L_SkinMesh ? L_SkinMesh->GetSkeleton() : nullptr;
 	auto [TmpSkeletalMesh, _] = CreateCharacterImportTask(FbxPath, L_Skeleton, false);
 
 	if (!TmpSkeletalMesh) // 空, 代表导入的是只有动画, 直接抛出异常失败
