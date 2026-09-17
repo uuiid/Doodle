@@ -315,58 +315,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, get) {
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 namespace {
-// 获取 ip , 访问 http://ip.sb, 返回值就是 ip, 不是json字段
-boost::asio::awaitable<std::string> get_self_ip() {
-  using http_client_t     = doodle::http::http_client_ssl;
-  using http_client_ptr_t = std::shared_ptr<http_client_ssl>;
-  auto l_client           = std::make_shared<http_client_t>("https://api.ip.sb", *core_set::get_set().ctx_ptr);
-  boost::beast::http::request<boost::beast::http::empty_body> l_req{boost::beast::http::verb::get, "/ip", 11};
-  l_req.set(boost::beast::http::field::host, l_client->server_ip_and_port_);
-  l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  boost::beast::http::response<boost::beast::http::string_body> l_res{};
-  // 3 次重试
-  for (int i = 0; i < 3; ++i) {
-    boost::beast::http::response<boost::beast::http::string_body> l_res{};
-    try {
-      co_await l_client->read_and_write(l_req, l_res, boost::asio::use_awaitable);
-      if (l_res.result() != boost::beast::http::status::ok)
-        throw_exception(doodle_error{"get_self_ip error {} {}", l_res.result(), l_res.body()});
-      auto l_ip = l_res.body();
-      if (l_ip.ends_with('\n')) l_ip.pop_back();
-      co_return l_ip;
-    } catch (const boost::system::system_error& e) {
-      if (e.code() == boost::asio::error::operation_aborted) throw;
-      SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "get_self_ip error: {}", e.what());
-      if (i == 2) throw;
-    } catch (...) {
-      auto l_err_str = boost::current_exception_diagnostic_information();
-      SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "get_self_ip error: {}", l_err_str);
-      if (i == 2) throw;
-    }
-  }
-  co_return std::string{};  // unreachable
-}
-// 将传入的 req 中的资源路径附加上服务器的 ip 地址，返回新的 req
-nlohmann::json add_ip_to_req(const nlohmann::json& in_req, const std::string& in_ip) {
-  nlohmann::json l_req = in_req;
-  for (auto&& l_value : l_req.at("content")) {
-    if (l_value.contains("image_url")) {
-      auto& l_url = l_value.at("image_url").at("url");
-      if (!l_url.get<std::string>().starts_with("http"))
-        l_url = fmt::format("http://{}:38192{}", in_ip, l_url.get<std::string>());
-    } else if (l_value.contains("video_url")) {
-      auto& l_url = l_value.at("video_url").at("url");
-      if (!l_url.get<std::string>().starts_with("http"))
-        l_url = fmt::format("http://{}:38192{}", in_ip, l_url.get<std::string>());
-    } else if (l_value.contains("audio_url")) {
-      auto& l_url = l_value.at("audio_url").at("url");
-      if (!l_url.get<std::string>().starts_with("http"))
-        l_url = fmt::format("http://{}:38192{}", in_ip, l_url.get<std::string>());
-    }
-  }
-  return l_req;
-}
-
 // 对比传入的任务和一批任务的相似度
 std::vector<sd2::task_similarity> compare_task_similarity(
     const sd2::task& in_task, const std::vector<std::tuple<uuid, std::string>>& in_tasks

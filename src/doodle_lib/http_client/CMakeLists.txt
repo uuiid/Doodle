@@ -6,10 +6,12 @@ target_sources(
         dingding_client.h
         seedance2_client.h
         ai_client_base.h
+        transfer_station_client.h
         PRIVATE
         work.cpp
         kitsu_client.cpp
         dingding_client.cpp
         seedance2_client.cpp
         ai_client_base.cpp
+        transfer_station_client.cpp
 )
