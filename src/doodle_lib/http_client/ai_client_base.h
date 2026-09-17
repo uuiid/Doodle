@@ -33,15 +33,14 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
 
   struct run_task_result_t {
     std::string task_id_;
-    std::string status_;
+    doodle::seedance2::task_status status_;
     nlohmann::json data_response_;
   };
 
   struct query_task_result_t {
     std::shared_ptr<ai_client_base> client_ptr_;
 
-    std::string task_id_;
-    std::string status_;
+    doodle::seedance2::task_status status_;
     bool is_timeout_{false};
     nlohmann::json data_response_;
     std::vector<std::string> result_files_;
