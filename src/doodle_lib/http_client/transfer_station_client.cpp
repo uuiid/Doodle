@@ -22,22 +22,22 @@ struct model_pricing {
 // 未在页面列出的模型按同系列最近模型估算
 constexpr model_pricing g_model_pricings[] = {
     // ─── nano-banana 系列 ───
-    {"nano-banana-fast", 440, true, true},
-    {"nano-banana-2", 1200, true, true},
-    {"nano-banana-2-lite", 440, true, true},
-    {"nano-banana-2-cl", 6000, true, false},
-    {"nano-banana-2-2k-cl", 9000, true, false},
-    {"nano-banana-2-4k-cl", 13000, true, false},
-    {"nano-banana-pro", 1800, true, true},
-    {"nano-banana-pro-cl", 10000, true, false},
-    {"nano-banana-pro-vip", 10000, true, false},
-    {"nano-banana-pro-4k-vip", 18000, true, false},
+    {"nano-banana-fast", 440, false, false},
+    {"nano-banana-2", 1200, false, false},
+    {"nano-banana-2-lite", 440, false, false},
+    {"nano-banana-2-cl", 6000, false, true},
+    {"nano-banana-2-2k-cl", 9000, false, true},
+    {"nano-banana-2-4k-cl", 13000, false, true},
+    {"nano-banana-pro", 1800, false, false},
+    {"nano-banana-pro-cl", 10000, false, true},
+    {"nano-banana-pro-vip", 10000, false, true},
+    {"nano-banana-pro-4k-vip", 18000, false, true},
     // ─── gpt-image 系列 ───
-    {"gpt-image-2", 600, true, true},
-    {"gpt-image-2-vip", 2000, true, true},
-    {"gpt-image-2.5", 600, true, true},
-    {"gpt-image-2.5-flare", 2000, true, true},
-    {"gpt-image-2.5-sunburst", 2400, true, true},
+    {"gpt-image-2", 600, false, false},
+    {"gpt-image-2-vip", 2000, false, false},
+    {"gpt-image-2.5", 600, false, false},
+    {"gpt-image-2.5-flare", 2000, false, false},
+    {"gpt-image-2.5-sunburst", 2400, false, false},
 };
 
 const model_pricing* find_pricing(std::string_view in_name) {
@@ -143,10 +143,29 @@ boost::asio::awaitable<ai_client_base::query_task_result_t> transfer_station_cli
   );
 
   query_task_result_t l_result;
-  l_result.client_ptr_        = shared_from_this();
-  l_result.data_response_     = l_res.body();
-  l_result.status_            = parse_status(l_result.data_response_);
-  l_result.completion_tokens_ = 0;
+  l_result.client_ptr_    = shared_from_this();
+  l_result.data_response_ = l_res.body();
+
+  // 按模型定价扣除积分
+  auto l_model            = in_task.data_request_.value("model", "");
+  const auto* l_pricing   = find_pricing(l_model);
+  auto l_raw_status       = l_result.data_response_.value("status", "");
+
+  if (l_raw_status == "succeeded") {
+    l_result.completion_tokens_ = l_pricing ? l_pricing->cost_points : 0;
+  } else if (l_raw_status == "failed") {
+    l_result.completion_tokens_ = (l_pricing && l_pricing->charge_on_failure) ? l_pricing->cost_points : 0;
+  } else if (l_raw_status == "violation") {
+    l_result.completion_tokens_ = (l_pricing && l_pricing->charge_on_violation) ? l_pricing->cost_points : 0;
+  } else {
+    l_result.completion_tokens_ = 0;  // running / 未知, 暂不扣
+  }
+
+  if (!l_pricing) {
+    logger_->warn("未找到模型定价: {}", l_model);
+  }
+
+  l_result.status_ = parse_status(l_result.data_response_);
 
   if (l_result.data_response_.contains("results") && l_result.data_response_.at("results").is_array()) {
     for (const auto& l_item : l_result.data_response_.at("results")) {
