@@ -1,20 +1,19 @@
 {
 	"folders": [
 		{
-			"path": ".",
-			"name": "doodleMain"
+			"path": "."
 		},
-		{
-			"path": "src/test_js"
-		},
-		{
-			"path": "external/kimodo",
-			"name": "kimodo"
-		},
-		{
-			"path": "D:/dev/dev",
-			"name": "开发日志"
-		},
+		// {
+		// 	"path": "src/test_js"
+		// },
+		// {
+		// 	"path": "external/kimodo",
+		// 	"name": "kimodo"
+		// },
+		// {
+		// 	"path": "D:/dev/dev",
+		// 	"name": "开发日志"
+		// },
 		// {
 		// 	"path": "E:/UnrealEngine",
 		// 	"name": "UnrealEngine"
