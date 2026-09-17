@@ -42,7 +42,76 @@ struct ai_generate_entity_with_preview_file : public sd2::ai_generate_entity {
     if (!p.preview_.uuid_id_.is_nil()) j["preview"] = p.preview_;
   }
 };
-namespace {}
+namespace {
+
+/// 将不足4秒的视频补齐到4秒，使用最后一帧重复填充
+/// @returns 指向（可能已补齐的）视频的 VideoCapture，已就绪可读取第一帧
+cv::Mat pad_video_to_4s(const FSys::path& in_path) {
+  auto l_fps         = 0.0;
+  auto l_frame_count = 0.0;
+  auto l_width       = 0;
+  auto l_height      = 0;
+  cv::Mat l_last_frame;
+  int l_needed_frames = 0;
+  FSys::path l_temp_path;
+  bool l_padded = false;
+  cv::Mat l_image{};
+
+  {
+    cv::VideoCapture l_capture{in_path.generic_string()};
+    if (!l_capture.isOpened()) throw_exception(doodle_error{"视频打开失败"});
+    l_capture >> l_image;
+
+    l_fps         = l_capture.get(cv::CAP_PROP_FPS);
+    l_frame_count = l_capture.get(cv::CAP_PROP_FRAME_COUNT);
+    auto l_count  = static_cast<int>(l_frame_count);
+
+    if (l_fps > 0.0 && l_count > 0 && (l_frame_count / l_fps) < 4.0) {
+      l_width  = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_WIDTH));
+      l_height = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_HEIGHT));
+
+      l_capture.set(cv::CAP_PROP_POS_FRAMES, l_count - 1);
+      l_capture >> l_last_frame;
+
+      if (!l_last_frame.empty()) {
+        auto l_target_frames = static_cast<int>(4.0 * l_fps + 0.999999);
+        l_needed_frames      = l_target_frames - l_count;
+
+        if (l_needed_frames > 0) {
+          l_temp_path = in_path;
+          l_temp_path.replace_extension(".padded_tmp.mp4");
+
+          {
+            auto l_writer = cv::VideoWriter{
+                l_temp_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), l_fps,
+                cv::Size{l_width, l_height}
+            };
+            l_writer.set(cv::VIDEOWRITER_PROP_QUALITY, 100);
+
+            l_capture.set(cv::CAP_PROP_POS_FRAMES, 0);
+            cv::Mat l_frame;
+            while (l_capture.read(l_frame)) {
+              l_writer << l_frame;
+            }
+            for (int i = 0; i < l_needed_frames; ++i) {
+              l_writer << l_last_frame;
+            }
+          }  // l_writer RAII 析构
+          l_padded = true;
+        }
+      }
+    }
+  }  // l_capture RAII 析构，释放文件句柄
+
+  if (l_padded) {
+    FSys::remove(in_path);
+    FSys::rename(l_temp_path, in_path);
+  }
+
+  return l_image;
+}
+
+}  // namespace
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, get) {
   person_.check_subproject_access(subproject_id_);
 
@@ -203,8 +272,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, post) 
 
     cv::Mat l_image{};
     if (l_is_video) {
-      auto l_video = cv::VideoCapture{l_file.generic_string()};
-      l_video >> l_image;
+      l_image = pad_video_to_4s(l_file);
       if (l_image.empty()) throw_exception(doodle_error{"视频解码失败"});
     } else {
       l_image = cv::imread(l_file.generic_string());
@@ -235,7 +303,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_reference_instance, dele
 
   using namespace orm;
   co_await l_sql.run_sql(
-      delete_from(l_sql).from<sd2::ai_entity_reference_preview>().where(c(&sd2::ai_entity_reference_preview::uuid_id_) == id_),
+      delete_from(l_sql).from<sd2::ai_entity_reference_preview>().where(
+          c(&sd2::ai_entity_reference_preview::uuid_id_) == id_
+      ),
       delete_from(l_sql).from<sd2::ai_preview_file>().where(c(&sd2::ai_preview_file::uuid_id_) == l_ref->preview_file_)
   );
 
