@@ -24,8 +24,8 @@ nlohmann::json transfer_station_client::add_ip_to_req(const nlohmann::json& in_r
 
   // mask: 可选字段, url 字符串
   if (l_req.contains("mask") && l_req.at("mask").is_string()) {
-    auto l_mask = l_req.at("mask").get<std::string>();
-    if (!l_mask.starts_with("http")) l_req["mask"] = fmt::format("http://{}:38192{}", in_ip, l_mask);
+    auto l_mask   = l_req.at("mask").get<std::string>();
+    l_req["mask"] = fmt::format("http://{}:38192{}", in_ip, l_mask);
   }
 
   return l_req;
