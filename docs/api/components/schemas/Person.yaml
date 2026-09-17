@@ -1,0 +1,156 @@
+type: object
+description: |
+  人员对象。出于安全考虑，响应中不含 `password`、`totp_secret`、`email_otp_secret`、
+  `fido_credentials`、`otp_recovery_codes`、`jti`、`dingding_id` 等敏感字段。
+properties:
+  id:
+    type: string
+    format: uuid
+    description: 人员ID
+  first_name:
+    type: string
+    description: 名
+  last_name:
+    type: string
+    description: 姓
+  full_name:
+    type: string
+    description: 全名，由 `first_name + " " + last_name` 拼接
+  email:
+    type: string
+    description: 邮箱
+  phone:
+    type: string
+    description: 电话
+  contract_type:
+    type: string
+    description: 合同类型
+    enum:
+      - open_ended
+      - fixed_term
+      - short_term
+      - freelance
+      - apprentice
+      - internship
+  active:
+    type: boolean
+    description: 是否启用
+  archived:
+    type: boolean
+    description: 是否归档
+  last_presence:
+    type: string
+    format: date-time
+    nullable: true
+    description: 最后在线时间
+  desktop_login:
+    type: string
+    description: 桌面端登录名
+  login_failed_attemps:
+    type: integer
+    description: 连续登录失败次数
+  last_login_failed:
+    type: string
+    format: date-time
+    nullable: true
+    description: 最后一次登录失败时间
+  totp_enabled:
+    type: boolean
+    description: 是否启用 TOTP
+  email_otp_enabled:
+    type: boolean
+    description: 是否启用邮箱 OTP
+  fido_enabled:
+    type: boolean
+    description: 是否启用 FIDO
+  preferred_two_factor_authentication:
+    type: integer
+    nullable: true
+    description: 首选双因子认证方式，按枚举底层整数序列化（0=totp，1=email_otp，2=fido），未设置时为 null
+  shotgun_id:
+    type: integer
+    nullable: true
+    description: Shotgun ID
+  timezone:
+    type: string
+    description: 时区
+  locale:
+    type: string
+    description: 语言区域
+  data:
+    type: string
+    description: 自定义数据
+  role:
+    type: string
+    description: 角色
+    enum:
+      - user
+      - admin
+      - supervisor
+      - manager
+      - client
+      - outsource
+      - producer
+      - vendor
+  has_avatar:
+    type: boolean
+    description: 是否有头像
+  notifications_enabled:
+    type: boolean
+    description: 是否启用通知
+  notifications_slack_enabled:
+    type: boolean
+    description: 是否启用 Slack 通知
+  notifications_slack_userid:
+    type: string
+    description: Slack 用户ID
+  notifications_mattermost_enabled:
+    type: boolean
+    description: 是否启用 Mattermost 通知
+  notifications_mattermost_userid:
+    type: string
+    description: Mattermost 用户ID
+  notifications_discord_enabled:
+    type: boolean
+    description: 是否启用 Discord 通知
+  notifications_discord_userid:
+    type: string
+    description: Discord 用户ID
+  is_bot:
+    type: boolean
+    description: 是否为机器人
+  expiration_date:
+    type: string
+    format: date-time
+    nullable: true
+    description: 账号过期时间
+  studio_id:
+    type: string
+    format: uuid
+    description: 所属工作室ID
+  is_generated_from_ldap:
+    type: boolean
+    description: 是否由 LDAP 同步生成
+  ldap_uid:
+    type: string
+    nullable: true
+    description: LDAP UID
+  departments:
+    type: array
+    description: 所属部门ID列表
+    items:
+      type: string
+      format: uuid
+  fido_devices:
+    type: array
+    description: FIDO 设备列表，当前恒为空数组
+    items:
+      type: object
+  remaining_completion_tokens:
+    type: integer
+    format: int64
+    description: 剩余 Token 配额
+  ai_studio_id:
+    type: string
+    format: uuid
+    description: 关联的 AI 工作室ID，未关联时为全 0 UUID

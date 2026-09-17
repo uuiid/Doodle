@@ -1,0 +1,74 @@
+post:
+  tags:
+    - AI工作室
+  summary: 将人员加入 AI 工作室
+  description: |
+    制片及以上权限。把 `person_id` 对应人员的 `ai_studio_id` 设为 `ai_studio_id`，
+    返回更新后的人员对象。
+
+    注意：该接口不校验 `ai_studio_id` 是否存在，直接写入人员记录。
+  parameters:
+    - name: ai_studio_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 工作室ID
+    - name: person_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 人员ID
+  responses:
+    '201':
+      description: 加入成功，返回更新后的人员对象
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Person.yaml
+    '401':
+      description: 未认证
+    '403':
+      description: 权限不足，需要制片及以上
+  security:
+    - bearerAuth: []
+delete:
+  tags:
+    - AI工作室
+  summary: 将人员移出 AI 工作室
+  description: |
+    制片及以上权限。把 `person_id` 对应人员的 `ai_studio_id` 置空，返回更新后的人员对象。
+
+    注意：路径中的 `ai_studio_id` 仅用于标识路由，实际不参与校验，
+    只要人员存在即会被移出其当前所属的工作室。
+  parameters:
+    - name: ai_studio_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 工作室ID
+    - name: person_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 人员ID
+  responses:
+    '200':
+      description: 移除成功，返回更新后的人员对象
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Person.yaml
+    '401':
+      description: 未认证
+    '403':
+      description: 权限不足，需要制片及以上
+  security:
+    - bearerAuth: []

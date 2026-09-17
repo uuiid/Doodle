@@ -1,0 +1,18 @@
+type: object
+description: |
+  AI 工作室。响应中不包含 `seedance2_key` / `transfer_station_key`，
+  密钥仅在写入时提交，不会回读。
+properties:
+  id:
+    type: string
+    format: uuid
+    description: 工作室ID
+  name:
+    type: string
+    description: 工作室名称
+  color:
+    type: string
+    description: 显示颜色
+  archived:
+    type: boolean
+    description: 是否归档

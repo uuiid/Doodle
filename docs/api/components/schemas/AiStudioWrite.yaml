@@ -1,0 +1,22 @@
+type: object
+description: |
+  AI 工作室写入字段，POST 与 PUT 共用。
+
+  全部字段均为选填：POST 时未提供的字段取默认值，PUT 时未提供的字段保持原值。
+  可写字段与 `ai_studio::put_property_list()` 保持一致。
+properties:
+  name:
+    type: string
+    description: 工作室名称
+  color:
+    type: string
+    description: 显示颜色
+  archived:
+    type: boolean
+    description: 是否归档
+  seedance2_key:
+    type: string
+    description: Seedance2 后端的 API Key，只写不读
+  transfer_station_key:
+    type: string
+    description: 中转站后端的 API Key，只写不读

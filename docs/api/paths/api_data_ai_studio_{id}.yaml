@@ -1,0 +1,85 @@
+get:
+  tags:
+    - AI工作室
+  summary: 获取 AI 工作室详情
+  description: 制片及以上权限
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 工作室ID
+  responses:
+    '200':
+      description: 工作室详情
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiStudio.yaml
+    '401':
+      description: 未认证
+    '403':
+      description: 权限不足，需要制片及以上
+  security:
+    - bearerAuth: []
+put:
+  tags:
+    - AI工作室
+  summary: 更新 AI 工作室
+  description: |
+    制片及以上权限，局部更新。
+
+    仅更新请求体中出现的字段，未出现的字段保持原值。
+    可写字段与 `ai_studio::put_property_list()` 一致：`name`、`color`、`archived`、
+    `seedance2_key`、`transfer_station_key`。
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 工作室ID
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/AiStudioWrite.yaml
+  responses:
+    '200':
+      description: 更新成功，返回更新后的对象
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiStudio.yaml
+    '401':
+      description: 未认证
+    '403':
+      description: 权限不足，需要制片及以上
+  security:
+    - bearerAuth: []
+delete:
+  tags:
+    - AI工作室
+  summary: 删除 AI 工作室
+  description: 制片及以上权限，物理删除
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 工作室ID
+  responses:
+    '204':
+      description: 删除成功，无响应体
+    '401':
+      description: 未认证
+    '403':
+      description: 权限不足，需要制片及以上
+  security:
+    - bearerAuth: []

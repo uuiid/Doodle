@@ -52,6 +52,9 @@ tags:
     x-displayName: 限额管理
   - name: AI生成剧集
     x-displayName: AI生成剧集
+  - name: AI工作室
+    description: AI 工作室 CRUD、后端密钥配置与人员关联
+    x-displayName: AI工作室
 paths:
   /api/doodle/ai/animation/train/settings:
     $ref: paths/api_doodle_ai_animation_train_settings.yaml
@@ -150,6 +153,12 @@ paths:
     $ref: paths/api_seedance2_tokens_person_date_{date}.yaml
   /api/seedance2/task-similarity:
     $ref: paths/api_seedance2_task-similarity.yaml
+  /api/data/ai_studio:
+    $ref: paths/api_data_ai_studio.yaml
+  /api/data/ai_studio/{id}:
+    $ref: paths/api_data_ai_studio_{id}.yaml
+  /api/data/ai_studio/{ai_studio_id}/person/{person_id}:
+    $ref: paths/api_data_ai_studio_{ai_studio_id}_person_{person_id}.yaml
 components:
   securitySchemes:
     bearerAuth:
@@ -177,3 +186,4 @@ x-tagGroups:
       - 任务
       - 限额管理
       - AI生成剧集
+      - AI工作室

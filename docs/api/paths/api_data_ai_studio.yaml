@@ -1,0 +1,45 @@
+post:
+  tags:
+    - AI工作室
+  summary: 创建 AI 工作室
+  description: |
+    创建新的 AI 工作室，返回创建后的对象。
+
+    仅要求登录（JWT），无额外角色校验。
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/AiStudioWrite.yaml
+  responses:
+    '201':
+      description: 创建成功
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiStudio.yaml
+    '401':
+      description: 未认证
+  security:
+    - bearerAuth: []
+get:
+  tags:
+    - AI工作室
+  summary: 获取 AI 工作室列表
+  description: 制片及以上权限，返回全部 AI 工作室
+  responses:
+    '200':
+      description: 工作室列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/AiStudio.yaml
+    '401':
+      description: 未认证
+    '403':
+      description: 权限不足，需要制片及以上
+  security:
+    - bearerAuth: []
