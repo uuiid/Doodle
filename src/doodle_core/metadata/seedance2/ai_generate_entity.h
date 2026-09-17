@@ -32,7 +32,8 @@ struct DOODLE_CORE_API ai_generate_entity {
         // std::pair{"shot_uuid_id", &ai_generate_entity::shot_uuid_id_},
         // std::pair{"project_uuid_id", &ai_generate_entity::project_uuid_id_},
         std::pair{"preview_file", &ai_generate_entity::preview_file_},
-        std::pair{"main_task_id", &ai_generate_entity::main_task_id_}
+        std::pair{"main_task_id", &ai_generate_entity::main_task_id_},
+        std::pair{"generate_count", &ai_generate_entity::generate_count_},
     };
   }
 
