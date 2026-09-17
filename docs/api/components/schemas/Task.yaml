@@ -25,7 +25,7 @@ properties:
     description: AI 请求数据
   file_extension:
     type: string
-    description: 文件扩展名
+    description: 结果文件扩展名（含点，如 `.mp4` / `.png`）；任务成功后按真实结果文件回填，未成功时为空
   data_response:
     type: object
     description: AI 响应数据

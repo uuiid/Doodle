@@ -43,9 +43,11 @@ post:
 
     `seedance2` 会校验 `model` 与 `resolution` 是否在所属剧集的授权列表内，并统计生成次数上限。
     `transfer_station` 的 `replyType` 由服务端固定注入为 `async`，调用方无需传递。
+    两种后端都会用 `model` + 分辨率做剧集授权校验（`transfer_station` 取 `imageSize`，没有则取 `aspectRatio`），
+    缺少模型或分辨率返回 400，未授权返回 401。
 
-    以下字段由服务端根据当前登录用户与路径参数覆盖，请求体中传值无效：
-    `user_id`、`ai_studio_id`、`subproject_id`、`file_extension`。
+    `user_id`、`ai_studio_id`、`subproject_id` 由服务端根据当前登录用户与路径参数覆盖，请求体中传值无效。
+    `file_extension` 不在创建时确定，而是在任务成功、结果文件落盘后按真实文件后缀回填。
   parameters:
     - name: subproject_id
       in: path

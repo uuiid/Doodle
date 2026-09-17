@@ -239,6 +239,8 @@ class seedance2_task_run_manager {
     using namespace orm;
     sql_modify_statement_vector_t l_sqls;
     uuid l_preview_file_id{};
+    // 非成功路径保持原值
+    std::string l_file_extension = in_task.file_extension_;
 
     switch (l_result.status_) {
       case sd2::task_status::preparing:
@@ -264,8 +266,10 @@ class seedance2_task_run_manager {
         }
         if (!l_result.result_file_paths_.empty()) {
           auto l_adjusted_file = l_result.result_file_paths_[0];
+          // 结果文件生成后, 从真实文件名取后缀
+          l_file_extension          = l_adjusted_file.extension().generic_string();
           sd2::ai_preview_file l_preview_file{};
-          l_preview_file.extension_ = l_adjusted_file.extension().generic_string();
+          l_preview_file.extension_ = l_file_extension;
           l_sqls.emplace_back(insert(l_sql).into<sd2::ai_preview_file>().values(l_preview_file));
           l_preview_file_id = l_preview_file.uuid_id_;
           create_preview_picture(l_adjusted_file, l_preview_file.uuid_id_);
@@ -289,6 +293,7 @@ class seedance2_task_run_manager {
                             )
                             .set(c(&sd2::task::data_response_) = l_result.data_response_)
                             .set(c(&sd2::task::completion_tokens_) = l_result.completion_tokens_)
+                            .set(c(&sd2::task::file_extension_) = l_file_extension)  // 成功后按真实结果文件设置
                             .set(c(&sd2::task::preview_file_) = l_preview_file_id)  // 非成功清零
                             .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_));
     l_sqls.emplace_back(add_remaining_tokens_for_person(
@@ -396,18 +401,20 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   auto l_json = in_handle->get_json();
 
   l_json.get_to(*l_task);
-  l_task->user_id_        = person_.person_.uuid_id_;
-  l_task->ai_studio_id_   = person_.get_ai_studio_id();
-  l_task->subproject_id_  = subproject_id_;
-  l_task->file_extension_ = ".mp4";
-  // data_request 必须有 content 字段，且 content 中可能 type 为 text 的字段
-  auto& l_content         = l_task->data_request_.at("content");
-  for (auto&& l_value : l_content)
-    if (l_value.contains("type") && l_value.at("type").get<std::string>() == "text")
-      l_task->text_prompt_ += l_value.at("text").get<std::string>() + "\n";
-  // 获取模型和分辨率字段(为必填项, 不检测存在)
-  std::string l_model      = l_task->data_request_.at("model").get<std::string>();
-  std::string l_resolution = l_task->data_request_.at("resolution").get<std::string>();
+  l_task->user_id_       = person_.person_.uuid_id_;
+  l_task->ai_studio_id_  = person_.get_ai_studio_id();
+  l_task->subproject_id_ = subproject_id_;
+  // file_extension_ 不再写死, 改为任务成功后按真实结果文件设置
+
+  // 用对应后端的客户端解析请求, 提取模型 / 分辨率 / 提示词
+  auto l_studio        = l_sql.get_by_uuid<ai_studio>(l_task->ai_studio_id_);
+  client_factory l_client_factory{};
+  auto l_client        = l_client_factory.get_client(*l_task, l_studio);
+  auto l_info          = l_client->collect_request_info(l_task->data_request_);
+  l_task->text_prompt_ = std::move(l_info.text_prompt_);
+
+  DOODLE_CHICK_HTTP(!l_info.model_.empty(), bad_request, "缺少模型名称");
+  DOODLE_CHICK_HTTP(!l_info.resolution_.empty(), bad_request, "缺少分辨率");
 
   {
     using namespace orm;
@@ -417,12 +424,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
                         .from<sd2::ai_episode_model_resolution_limit>()
                         .where(
                             c(&sd2::ai_episode_model_resolution_limit::ai_episode_id_) == l_entity.ai_episode_id_ &&
-                            c(&sd2::ai_episode_model_resolution_limit::model_name_) == l_model &&
-                            c(&sd2::ai_episode_model_resolution_limit::resolution_) == l_resolution
+                            c(&sd2::ai_episode_model_resolution_limit::model_name_) == l_info.model_ &&
+                            c(&sd2::ai_episode_model_resolution_limit::resolution_) == l_info.resolution_
                         )  //
                     ()
                         .to_single();
-    DOODLE_CHICK_HTTP(l_result == 1, unauthorized, "模型 {} 或者分辨率 {} 未被授权", l_model, l_resolution);
+    DOODLE_CHICK_HTTP(l_result == 1, unauthorized, "模型 {} 或者分辨率 {} 未被授权", l_info.model_, l_info.resolution_);
   }
   {
     using namespace orm;
@@ -465,10 +472,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
   // preparing 状态尚未提交到外部, 直接置为 cancelled 并归还 token
   if (l_task.status_ != sd2::task_status::preparing) {
     auto l_studio = l_sql.get_by_uuid<ai_studio>(person_.get_ai_studio_id());
-    auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
+    client_factory l_client_factory{};
+    auto l_client = l_client_factory.get_client(l_task, l_studio);
 
-    l_client->set_token(l_studio.transfer_station_key_);
-    l_client->set_logger(g_logger_ctrl().get_http());
     DOODLE_CHICK_HTTP(!l_task.task_id_.empty(), internal_server_error, "task id 为空, 无法查询");
     auto l_res = co_await l_client->query_task(l_task);
     DOODLE_CHICK_HTTP(l_res.status_ == sd2::task_status::queued, bad_request, "只有排队中的任务可以取消");

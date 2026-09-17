@@ -26,6 +26,8 @@ class DOODLELIB_API seedance2_client final : public ai_client_base {
   boost::asio::awaitable<void> cancel_task(const std::string& in_task_id) override;
   boost::asio::awaitable<void> download_result(query_task_result_t* in_data) override;
 
+  request_info_t collect_request_info(const nlohmann::json& in_request) const override;
+
   static bool is_timeout_error(const nlohmann::json& in_body);
 
  private:

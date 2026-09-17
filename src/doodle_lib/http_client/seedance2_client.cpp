@@ -46,6 +46,18 @@ bool seedance2_client::is_timeout_error(const nlohmann::json& in_body) {
 
 // ─── 子类方法 ─────────────────────────────────────────────────────────────────
 
+ai_client_base::request_info_t seedance2_client::collect_request_info(const nlohmann::json& in_request) const {
+  request_info_t l_info{};
+  if (in_request.contains("model")) l_info.model_ = in_request.at("model").get<std::string>();
+  if (in_request.contains("resolution")) l_info.resolution_ = in_request.at("resolution").get<std::string>();
+  // content 中 type 为 text 的项按顺序累加为提示词
+  if (in_request.contains("content") && in_request.at("content").is_array())
+    for (const auto& l_value : in_request.at("content"))
+      if (l_value.contains("type") && l_value.at("type").get<std::string>() == "text" && l_value.contains("text"))
+        l_info.text_prompt_ += l_value.at("text").get<std::string>() + "\n";
+  return l_info;
+}
+
 boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_task(const nlohmann::json& in_task) {
   auto l_ip  = co_await get_ip_str();
   auto l_req = add_ip_to_req(in_task, l_ip);

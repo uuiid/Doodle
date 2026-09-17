@@ -25,6 +25,8 @@ class DOODLELIB_API transfer_station_client final : public ai_client_base {
   boost::asio::awaitable<void> cancel_task(const std::string& in_task_id) override;
   boost::asio::awaitable<void> download_result(query_task_result_t* in_data) override;
 
+  request_info_t collect_request_info(const nlohmann::json& in_request) const override;
+
  private:
   static nlohmann::json add_ip_to_req(const nlohmann::json& in_req, std::string_view in_ip);
   static doodle::seedance2::task_status parse_status(const nlohmann::json& in_body);

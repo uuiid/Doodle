@@ -3,6 +3,7 @@ description: |
   Seedance2（火山方舟）请求体，原样透传给 `POST /api/v3/contents/generations/tasks`。
   服务端会读取 `model`、`resolution` 做剧集授权校验，并把 `content` 中 `type=text` 的文本拼接到 `text_prompt`。
   `content` 中的相对路径素材地址会被补全为 `http://<服务器IP>:38192<路径>`。
+  `model` 或 `resolution` 缺失时返回 400；该「模型 + 分辨率」组合未在剧集授权列表内时返回 401。
 required:
   - model
   - resolution

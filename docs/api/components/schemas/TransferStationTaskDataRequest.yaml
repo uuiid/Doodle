@@ -4,6 +4,10 @@ description: |
   服务端会强制注入 `replyType: "async"` 走异步轮询，并把 `images`、`mask` 中的相对路径素材地址补全为
   `http://<服务器IP>:38192<路径>`（`data:` 开头的 base64 与已带 `http` 前缀的地址原样保留）。
   该后端按模型积分计费，具体单价见 `model` 字段说明。
+
+  服务端会提取 `model` 与分辨率用于剧集授权校验：分辨率优先取 `imageSize`，
+  没有 `imageSize` 时取 `aspectRatio`。两者都缺失时返回 400；`model` 或该「模型 + 分辨率」组合
+  未在剧集授权列表内时返回 401。
 required:
   - model
   - prompt
@@ -12,16 +16,16 @@ properties:
     type: string
     description: |
       模型名称，决定本次任务的积分消耗。当前支持的模型与单次消耗积分：
-      nano-banana / nano-banana-fast / nano-banana-2-lite 440,
-      nano-banana-2 1200, nano-banana-pro / nano-banana-pro-vt 1800,
+      nano-banana-fast / nano-banana-2-lite 440,
+      nano-banana-2 1200, nano-banana-pro 1800,
       nano-banana-2-cl 6000, nano-banana-2-2k-cl 9000,
       nano-banana-pro-cl / nano-banana-pro-vip 10000,
       nano-banana-2-4k-cl 13000, nano-banana-pro-4k-vip 18000,
       gpt-image-2 / gpt-image-2.5 600, gpt-image-2-vip / gpt-image-2.5-flare 2000,
       gpt-image-2.5-sunburst 2400。
-      图片类模型均为失败返还、违规返还。
+      所有模型失败均返还积分；违规时 `-cl` 与 `-vip` 系列照常扣费，其余模型返还。
+      未登记定价的模型按 0 积分计费。
     enum:
-      - nano-banana
       - nano-banana-fast
       - nano-banana-2
       - nano-banana-2-lite
@@ -29,7 +33,6 @@ properties:
       - nano-banana-2-2k-cl
       - nano-banana-2-4k-cl
       - nano-banana-pro
-      - nano-banana-pro-vt
       - nano-banana-pro-cl
       - nano-banana-pro-vip
       - nano-banana-pro-4k-vip
@@ -53,10 +56,13 @@ properties:
       nano-banana-2 系列额外支持 1:4 / 4:1 / 1:8 / 8:1；
       gpt-image-2 与 gpt-image-2.5 支持比例或像素值（如 `1024x1024`），
       gpt-image-2-vip / gpt-image-2.5-flare / gpt-image-2.5-sunburst 仅支持 1-4K 像素值。
+
+      gpt-image 系列没有 `imageSize`，服务端会取本字段的值作为分辨率做授权校验，
+      因此剧集授权列表里登记的分辨率必须与这里填写的字符串完全一致（如 `1024x1024`）。
     example: '1:1'
   imageSize:
     type: string
-    description: 分辨率
+    description: 分辨率，仅 nano-banana 系列支持（gpt-image 系列没有该字段，用 `aspectRatio` 承载分辨率）；服务端优先用它做授权校验
     enum:
       - 1K
       - 2K

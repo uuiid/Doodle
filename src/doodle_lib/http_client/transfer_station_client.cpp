@@ -82,6 +82,19 @@ doodle::seedance2::task_status transfer_station_client::parse_status(const nlohm
 
 // ─── 子类方法 ─────────────────────────────────────────────────────────────────
 
+ai_client_base::request_info_t transfer_station_client::collect_request_info(const nlohmann::json& in_request) const {
+  request_info_t l_info{};
+  if (in_request.contains("model")) l_info.model_ = in_request.at("model").get<std::string>();
+  // nano-banana 系列用 imageSize(1K/2K/4K) 表示分辨率;
+  // gpt-image 系列没有 imageSize, 用 aspectRatio(比例或像素值, 如 "16:9" / "1024x1024")
+  if (in_request.contains("imageSize"))
+    l_info.resolution_ = in_request.at("imageSize").get<std::string>();
+  else if (in_request.contains("aspectRatio"))
+    l_info.resolution_ = in_request.at("aspectRatio").get<std::string>();
+  if (in_request.contains("prompt")) l_info.text_prompt_ = in_request.at("prompt").get<std::string>();
+  return l_info;
+}
+
 boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_client::run_task(
     const nlohmann::json& in_task
 ) {
