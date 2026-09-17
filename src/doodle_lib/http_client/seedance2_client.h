@@ -29,8 +29,6 @@ class DOODLELIB_API seedance2_client final : public ai_client_base {
   static bool is_timeout_error(const nlohmann::json& in_body);
 
  private:
-  boost::asio::awaitable<FSys::path> download_raw_file(std::string_view in_file_url);
-
   static nlohmann::json add_ip_to_req(const nlohmann::json& in_req, std::string_view in_ip);
   static doodle::seedance2::task_status parse_status(const nlohmann::json& in_body);
 };

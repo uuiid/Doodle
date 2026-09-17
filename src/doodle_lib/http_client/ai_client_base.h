@@ -58,5 +58,6 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
 
  protected:
   boost::asio::awaitable<std::string> get_ip_str();
+  boost::asio::awaitable<FSys::path> download_raw_file(std::string_view in_file_url);
 };
 }  // namespace doodle::http::seedance2
