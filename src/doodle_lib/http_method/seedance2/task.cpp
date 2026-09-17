@@ -107,7 +107,7 @@ class seedance2_task_run_manager {
     auto l_sql = get_sqlite_database();
     using namespace orm;
     return select(l_sql)
-        .columns(object<sd2::task>(), &ai_studio::app_secret_)
+        .columns(object<sd2::task>(), &ai_studio::transfer_station_key_)
         .from<sd2::task>()
         .where(
             c(&sd2::task::status_) == sd2::task_status::preparing ||
@@ -527,7 +527,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
     auto l_studio = l_sql.get_by_uuid<ai_studio>(person_.get_ai_studio_id());
     auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
 
-    l_client->set_token(l_studio.app_secret_);
+    l_client->set_token(l_studio.transfer_station_key_);
     l_client->set_logger(g_logger_ctrl().get_http());
     DOODLE_CHICK_HTTP(!l_task.task_id_.empty(), internal_server_error, "task id 为空, 无法查询");
     auto l_res = co_await l_client->query_task(l_task.task_id_);

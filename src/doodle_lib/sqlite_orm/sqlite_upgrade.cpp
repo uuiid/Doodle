@@ -34,7 +34,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 25;
+constexpr std::size_t g_current_version = 26;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -90,16 +90,12 @@ struct upgrade_2_t : sqlite_upgrade {
   void upgrade(sqlite_storage& in_data) override {
     using namespace orm;
     auto l_s = in_data.create_session();
-    if (l_s.pragma().user_version() == 24) {
+    if (l_s.pragma().user_version() == 25) {
       backup(l_s);
       auto l_guard = l_s.transaction();
-      // 所有取消的任务不再扣费, 清空其 completion_tokens_
-      update(l_s)
-          .from<seedance2::task>()
-          .set(c(&seedance2::task::completion_tokens_) = 0)
-          .where(c(&seedance2::task::status_) == seedance2::task_status::cancelled || c(&seedance2::task::status_) == seedance2::task_status::failed)();
-      l_s.drop_table("seedance2_person_token");
-      l_s.sync_schema();
+      l_s.rename_column("ai_studio", "app_key", "seedance2_key");
+      l_s.rename_column("ai_studio", "app_secret", "transfer_station_key");
+      l_s.exec("ALTER TABLE seedance2_task_2 ADD COLUMN backend TEXT NOT NULL DEFAULT 'seedance2'");
       l_guard.commit();
     }
     l_s.pragma().user_version(g_current_version);

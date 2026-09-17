@@ -11,17 +11,17 @@ struct DOODLE_CORE_API ai_studio {
   DOODLE_BASE_FIELDS();
   std::string name_;
   std::string color_;
-  std::string app_key_;
-  std::string app_secret_;
+  std::string seedance2_key_;
+  std::string transfer_station_key_;
   bool archived_;
 
   constexpr static auto put_property_list() {
     return std::tuple{
-        std::pair{"name", &ai_studio::name_},              //
-        std::pair{"color", &ai_studio::color_},            //
-        std::pair{"archived", &ai_studio::archived_},      //
-        std::pair{"app_key", &ai_studio::app_key_},        //
-        std::pair{"app_secret", &ai_studio::app_secret_},  //
+        std::pair{"name", &ai_studio::name_},                                    //
+        std::pair{"color", &ai_studio::color_},                                  //
+        std::pair{"archived", &ai_studio::archived_},                            //
+        std::pair{"seedance2_key", &ai_studio::seedance2_key_},                  //
+        std::pair{"transfer_station_key", &ai_studio::transfer_station_key_},    //
     };
   }
 
@@ -37,8 +37,8 @@ struct DOODLE_CORE_API ai_studio {
     if (j.contains("name")) j.at("name").get_to(p.name_);
     if (j.contains("color")) j.at("color").get_to(p.color_);
     if (j.contains("archived")) j.at("archived").get_to(p.archived_);
-    if (j.contains("app_key")) j.at("app_key").get_to(p.app_key_);
-    if (j.contains("app_secret")) j.at("app_secret").get_to(p.app_secret_);
+    if (j.contains("seedance2_key")) j.at("seedance2_key").get_to(p.seedance2_key_);
+    if (j.contains("transfer_station_key")) j.at("transfer_station_key").get_to(p.transfer_station_key_);
   }
 };
 }  // namespace doodle

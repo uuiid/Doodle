@@ -42,11 +42,22 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
      {task_status::failed, "failed"},
      {task_status::expired, "expired"}}
 );
+// 后端分类
+enum class task_backend {
+  seedance2,          // 豆包/火山方舟 Seedance2
+  transfer_station,   // 中转站
+};
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    task_backend,
+    {{task_backend::seedance2, "seedance2"}, {task_backend::transfer_station, "transfer_station"}}
+);
+
 struct DOODLE_CORE_API task {
   DOODLE_BASE_FIELDS();
   uuid user_id_;
   task_status status_{task_status::preparing};
   task_type type_{task_type::video};
+  task_backend backend_{task_backend::seedance2};
   nlohmann::json data_request_;
   std::string text_prompt_;
   uuid preview_file_;  // 对应 ai_preview_file
@@ -73,6 +84,7 @@ struct DOODLE_CORE_API task {
     j["user_id"]               = p.user_id_;
     j["status"]                = p.status_;
     j["type"]                  = p.type_;
+    j["backend"]               = p.backend_;
     j["text_prompt"]           = p.text_prompt_;
     j["preview_file"]          = p.preview_file_;
     j["data_request"]          = p.data_request_;
@@ -94,6 +106,7 @@ struct DOODLE_CORE_API task {
     j.at("ai_studio_id").get_to(p.ai_studio_id_);
     j.at("project_uuid_id").get_to(p.project_uuid_id_);
     j.at("type").get_to(p.type_);
+    j.at("backend").get_to(p.backend_);
     j.at("ai_generate_entity_id").get_to(p.ai_generate_entity_id_);
 
     if (j.contains("archived")) j.at("archived").get_to(p.archived_);

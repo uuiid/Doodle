@@ -81,6 +81,7 @@ void sqlite_storage::regs_all() {
       .add_column("user_id", &seedance2::task::user_id_)
       .add_column("status", &seedance2::task::status_)
       .add_column("type", &seedance2::task::type_, not_null())
+      .add_column("backend", &seedance2::task::backend_, not_null())
       .add_column("data_request", &seedance2::task::data_request_)
       .add_column("text_prompt", &seedance2::task::text_prompt_)
       .add_column("preview_file", &seedance2::task::preview_file_)
@@ -250,8 +251,8 @@ void sqlite_storage::regs_all() {
       .add_column("uuid_id", &ai_studio::uuid_id_, unique(), not_null())
       .add_column("name", &ai_studio::name_, not_null())
       .add_column("color", &ai_studio::color_)
-      .add_column("app_key", &ai_studio::app_key_)
-      .add_column("app_secret", &ai_studio::app_secret_)
+      .add_column("seedance2_key", &ai_studio::seedance2_key_)
+      .add_column("transfer_station_key", &ai_studio::transfer_station_key_)
       .add_column("archived", &ai_studio::archived_);
 
   reg_table<outsource_studio_authorization>("outsource_studio_authorization")
