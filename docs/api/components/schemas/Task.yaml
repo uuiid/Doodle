@@ -11,6 +11,8 @@ properties:
     $ref: ./TaskStatus.yaml
   type:
     $ref: ./TaskType.yaml
+  backend:
+    $ref: ./TaskBackend.yaml
   text_prompt:
     type: string
     description: 文本提示词
@@ -51,3 +53,11 @@ properties:
     type: string
     format: uuid
     description: 所属AI生成实体ID
+  subproject_id:
+    type: string
+    format: uuid
+    description: 所属子项目ID
+  retry_count:
+    type: integer
+    format: int64
+    description: 提交失败后的重试次数

@@ -32,7 +32,20 @@ post:
   summary: 创建 AI 生成任务
   description: |
     提交一个新的 AI 生成任务。会检查当前用户剩余 Token 是否充足，不足则拒绝。
-    任务创建后异步运行，扣除对应 Token。
+    任务创建后异步运行，按所选后端扣费。
+
+    `backend` 决定 `data_request` 的结构、下游接口与计费方式：
+
+    | backend | 下游接口 | `data_request` 结构 | 计费 |
+    | --- | --- | --- | --- |
+    | `seedance2` | 火山方舟 `/api/v3/contents/generations/tasks` | `model` + `resolution` + `content[]` | 按 `completion_tokens`（默认 20 万） |
+    | `transfer_station` | 中转站（Grsai）`/v1/api/generate` | `model` + `prompt` + `images[]` 等 | 按模型积分单价 |
+
+    `seedance2` 会校验 `model` 与 `resolution` 是否在所属剧集的授权列表内，并统计生成次数上限。
+    `transfer_station` 的 `replyType` 由服务端固定注入为 `async`，调用方无需传递。
+
+    以下字段由服务端根据当前登录用户与路径参数覆盖，请求体中传值无效：
+    `user_id`、`ai_studio_id`、`subproject_id`、`file_extension`。
   parameters:
     - name: subproject_id
       in: path
@@ -57,14 +70,20 @@ post:
             - ai_studio_id
             - project_uuid_id
             - type
+            - backend
             - ai_generate_entity_id
           properties:
             data_request:
-              type: object
-              description: AI 请求数据（content 等）
+              description: AI 请求数据，结构由 `backend` 决定
+              oneOf:
+                - $ref: ../components/schemas/Seedance2TaskDataRequest.yaml
+                - $ref: ../components/schemas/TransferStationTaskDataRequest.yaml
+            backend:
+              $ref: ../components/schemas/TaskBackend.yaml
             ai_studio_id:
               type: string
               format: uuid
+              description: AI Studio ID（服务端会用当前用户的 Studio 覆盖）
             project_uuid_id:
               type: string
               format: uuid

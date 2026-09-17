@@ -1,0 +1,7 @@
+type: string
+enum:
+  - seedance2
+  - transfer_station
+description: |
+  seedance2 - 豆包/火山方舟 Seedance2 后端（异步任务轮询，按 completion_tokens 计费）,
+  transfer_station - 中转站后端（Grsai，按模型积分计费，失败/违规按模型策略返还）

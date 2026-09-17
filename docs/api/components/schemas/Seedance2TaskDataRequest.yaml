@@ -1,0 +1,73 @@
+type: object
+description: |
+  Seedance2（火山方舟）请求体，原样透传给 `POST /api/v3/contents/generations/tasks`。
+  服务端会读取 `model`、`resolution` 做剧集授权校验，并把 `content` 中 `type=text` 的文本拼接到 `text_prompt`。
+  `content` 中的相对路径素材地址会被补全为 `http://<服务器IP>:38192<路径>`。
+required:
+  - model
+  - resolution
+  - content
+properties:
+  model:
+    type: string
+    description: 模型名称，必须在该剧集已授权的「模型 + 分辨率」组合内
+    example: doubao-seedance-1-0-pro-250528
+  resolution:
+    type: string
+    description: 分辨率，必须在该剧集已授权的「模型 + 分辨率」组合内
+    example: 1080p
+  content:
+    type: array
+    description: 输入内容列表
+    items:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            - text
+            - image_url
+            - video_url
+            - audio_url
+          description: 内容类型
+        text:
+          type: string
+          description: '`type=text` 时的提示词文本，会按顺序累加到 `text_prompt`'
+        image_url:
+          type: object
+          description: '`type=image_url` 时的参考图'
+          required:
+            - url
+          properties:
+            url:
+              type: string
+              description: 图片地址；相对路径会补全为 `http://<服务器IP>:38192<路径>`
+        video_url:
+          type: object
+          description: '`type=video_url` 时的参考视频'
+          required:
+            - url
+          properties:
+            url:
+              type: string
+              description: 视频地址；相对路径会补全为 `http://<服务器IP>:38192<路径>`
+        audio_url:
+          type: object
+          description: '`type=audio_url` 时的参考音频'
+          required:
+            - url
+          properties:
+            url:
+              type: string
+              description: 音频地址；相对路径会补全为 `http://<服务器IP>:38192<路径>`
+example:
+  model: doubao-seedance-1-0-pro-250528
+  resolution: 1080p
+  content:
+    - type: text
+      text: 一只边牧在草地上奔跑
+    - type: image_url
+      image_url:
+        url: /api/seedance2/subproject/00000000-0000-0000-0000-000000000000/reference/11111111-1111-1111-1111-111111111111/file

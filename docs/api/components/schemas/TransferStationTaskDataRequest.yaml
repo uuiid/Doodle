@@ -1,0 +1,87 @@
+type: object
+description: |
+  中转站（Grsai）请求体，原样透传给 `POST /v1/api/generate`。
+  服务端会强制注入 `replyType: "async"` 走异步轮询，并把 `images`、`mask` 中的相对路径素材地址补全为
+  `http://<服务器IP>:38192<路径>`（`data:` 开头的 base64 与已带 `http` 前缀的地址原样保留）。
+  该后端按模型积分计费，具体单价见 `model` 字段说明。
+required:
+  - model
+  - prompt
+properties:
+  model:
+    type: string
+    description: |
+      模型名称，决定本次任务的积分消耗。当前支持的模型与单次消耗积分：
+      nano-banana / nano-banana-fast / nano-banana-2-lite 440,
+      nano-banana-2 1200, nano-banana-pro / nano-banana-pro-vt 1800,
+      nano-banana-2-cl 6000, nano-banana-2-2k-cl 9000,
+      nano-banana-pro-cl / nano-banana-pro-vip 10000,
+      nano-banana-2-4k-cl 13000, nano-banana-pro-4k-vip 18000,
+      gpt-image-2 / gpt-image-2.5 600, gpt-image-2-vip / gpt-image-2.5-flare 2000,
+      gpt-image-2.5-sunburst 2400。
+      图片类模型均为失败返还、违规返还。
+    enum:
+      - nano-banana
+      - nano-banana-fast
+      - nano-banana-2
+      - nano-banana-2-lite
+      - nano-banana-2-cl
+      - nano-banana-2-2k-cl
+      - nano-banana-2-4k-cl
+      - nano-banana-pro
+      - nano-banana-pro-vt
+      - nano-banana-pro-cl
+      - nano-banana-pro-vip
+      - nano-banana-pro-4k-vip
+      - gpt-image-2
+      - gpt-image-2-vip
+      - gpt-image-2.5
+      - gpt-image-2.5-flare
+      - gpt-image-2.5-sunburst
+  prompt:
+    type: string
+    description: 提示词
+  images:
+    type: array
+    description: 参考图列表，支持 base64（`data:image/png;base64,...`）与 URL；相对路径会补全为 `http://<服务器IP>:38192<路径>`
+    items:
+      type: string
+  aspectRatio:
+    type: string
+    description: |
+      画面比例。nano-banana 系列支持 auto / 1:1 / 16:9 / 9:16 / 4:3 / 3:4 / 3:2 / 2:3 / 5:4 / 4:5 / 21:9，
+      nano-banana-2 系列额外支持 1:4 / 4:1 / 1:8 / 8:1；
+      gpt-image-2 与 gpt-image-2.5 支持比例或像素值（如 `1024x1024`），
+      gpt-image-2-vip / gpt-image-2.5-flare / gpt-image-2.5-sunburst 仅支持 1-4K 像素值。
+    example: '1:1'
+  imageSize:
+    type: string
+    description: 分辨率
+    enum:
+      - 1K
+      - 2K
+      - 4K
+  quality:
+    type: string
+    description: 生成质量，需模型支持；gpt-image-2 仅 auto，gpt-image-2-vip 为 medium，gpt-image-2.5-flare 支持 low/medium/high，gpt-image-2.5-sunburst 支持 low/medium/high/xhigh/max
+    enum:
+      - auto
+      - low
+      - medium
+      - high
+      - xhigh
+      - max
+  background:
+    type: string
+    description: 背景参数，仅 gpt-image-2-vip / gpt-image-2.5-flare / gpt-image-2.5-sunburst 支持
+    enum:
+      - transparent
+  mask:
+    type: string
+    description: 蒙版图片地址；相对路径会补全为 `http://<服务器IP>:38192<路径>`
+example:
+  model: nano-banana-2
+  prompt: 生成一张边牧与古牧正在抖音直播间直播带货截图
+  images: []
+  aspectRatio: '1:1'
+  imageSize: 1K
