@@ -38,7 +38,7 @@ core_set::core_set()
       p_doc(get_pwd() / "doodle"),
       maya_version(2024),
 #ifdef NDEBUG
-      server_ip("http://192.168.40.188")
+      server_ip("http://192.168.40.188:50025")
 #else
       server_ip("http://192.168.20.89:50025")
 #endif
