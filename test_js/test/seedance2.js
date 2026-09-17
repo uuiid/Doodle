@@ -313,12 +313,20 @@ describe('seedance2 task', function () {
       .set(authHeader)
       .send({ model_name: model, resolution });
 
+    // 实体必须同时带 ai_category_id 与 ai_episode_id:
+    // ai_category_id 是 ai_generate_entity 反序列化的必填项, ai_episode_id 用于提交任务时的模型授权校验
+    const catReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/category`)
+      .set(authHeader)
+      .send({ name: 'cat_task', type: 'shot', description: '任务测试类别' });
+    const categoryId = catReq.body.id;
+
     const entReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity`)
       .set(authHeader)
       .send({
         name: 'test_entity',
         project_uuid_id: projectId,
         ai_episode_id: episodeId,
+        ai_category_id: categoryId,
       });
     entityId = entReq.body.id;
   });
@@ -343,7 +351,7 @@ describe('seedance2 task', function () {
             { type: 'image_url', image_url: { url: "/api/seedance2/pictures/01a01da2-876d-7208-803f-e1b7938d15d9.png" } }
           ],
         },
-        ai_studio_id: '00000000-0000-0000-0000-000000000000',
+        ai_studio_id: '019e2075-6e42-718e-809e-33a92410c682',
         project_uuid_id: projectId,
         type: 'video',
         ai_generate_entity_id: entityId,
@@ -533,7 +541,7 @@ describe('seedance2 task — transfer_station 后端', function () {
         aspectRatio: '1:1',
         images: [],
       },
-      ai_studio_id: '00000000-0000-0000-0000-000000000000',
+      ai_studio_id: '019e2075-6e42-718e-809e-33a92410c682',
       project_uuid_id: projectId,
       type: 'picture',
       ai_generate_entity_id: entityId,
@@ -572,12 +580,20 @@ describe('seedance2 task — transfer_station 后端', function () {
       .set(authHeader)
       .send({ model_name: model, resolution });
 
+    // 实体必须同时带 ai_category_id 与 ai_episode_id:
+    // ai_category_id 是 ai_generate_entity 反序列化的必填项, ai_episode_id 用于提交任务时的模型授权校验
+    const catReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/category`)
+      .set(authHeader)
+      .send({ name: 'cat_transfer_station', type: 'shot', description: '中转站测试类别' });
+    const categoryId = catReq.body.id;
+
     const entReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity`)
       .set(authHeader)
       .send({
         name: 'test_entity_transfer_station',
         project_uuid_id: projectId,
         ai_episode_id: episodeId,
+        ai_category_id: categoryId,
       });
     entityId = entReq.body.id;
   });
@@ -643,7 +659,8 @@ describe('seedance2 task — transfer_station 后端', function () {
     expect(createReq.status).to.equal(201);
 
     // 异步运行器拾取 preparing 任务后, 因未登记定价直接置为 failed
-    const task = await waitForTaskStatus(createReq.body.id, ['failed']);
+    // 轮询窗口取满 this.timeout, 因为运行器可能先处理上一条仍在 preparing 的任务
+    const task = await waitForTaskStatus(createReq.body.id, ['failed'], 80000);
     expect(task.status).to.equal('failed');
     expect(JSON.stringify(task.data_response)).to.include('未登记定价');
     // 失败任务不扣费
