@@ -14,7 +14,7 @@
 namespace doodle::http::seedance2 {
 
 class DOODLELIB_API transfer_station_client final : public ai_client_base {
-  constexpr static std::string_view g_default_host{"https://grsaiapi.com"};
+  constexpr static std::string_view g_default_host{"https://grsai.dakka.com.cn"};
 
  public:
   explicit transfer_station_client(boost::asio::ssl::context& in_ctx)
