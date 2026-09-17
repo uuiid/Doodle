@@ -5,10 +5,11 @@ target_sources(
         kitsu_client.h
         dingding_client.h
         seedance2_client.h
-
+        ai_client_base.h
         PRIVATE
         work.cpp
         kitsu_client.cpp
         dingding_client.cpp
         seedance2_client.cpp
+        ai_client_base.cpp
 )
