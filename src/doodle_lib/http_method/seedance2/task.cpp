@@ -91,10 +91,10 @@ void video_create_picture(const FSys::path& in_video_path, const uuid& in_id) {
 
 class seedance2_task_run_manager {
   struct task_info {
-    explicit task_info(const sd2::task& in_task, const std::string& in_app_secret)
+    explicit task_info(const sd2::task& in_task, const ai_studio& in_app_secret)
         : task_(in_task), app_secret_(in_app_secret) {}
     sd2::task task_;
-    std::string app_secret_;
+    ai_studio app_secret_;
   };
 
   std::atomic_bool is_running_{false};
@@ -103,7 +103,7 @@ class seedance2_task_run_manager {
     auto l_sql = get_sqlite_database();
     using namespace orm;
     return select(l_sql)
-        .columns(object<sd2::task>(), &ai_studio::transfer_station_key_)
+        .columns(object<sd2::task>(), object<ai_studio>())
         .from<sd2::task>()
         .where(
             c(&sd2::task::status_) == sd2::task_status::preparing ||
