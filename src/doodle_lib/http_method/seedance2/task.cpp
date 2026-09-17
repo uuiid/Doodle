@@ -243,8 +243,8 @@ class seedance2_task_run_manager {
       case sd2::task_status::cancelled:
       case sd2::task_status::failed:
       case sd2::task_status::expired:
-        // 以上状态不扣费
-        l_result.completion_tokens_ = 0;
+        // 以上状态要按照 l_result.completion_tokens_ 是否是 0 来判断是否返还 token, 如果是 0, 返还 token, 不是的话,
+        // 正常扣费
         break;
     }
 
@@ -259,14 +259,10 @@ class seedance2_task_run_manager {
                             .set(c(&sd2::task::completion_tokens_) = l_result.completion_tokens_)
                             .set(c(&sd2::task::preview_file_) = l_preview_file_id)  // 非成功清零
                             .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_));
-    if (l_result.status_ == sd2::task_status::succeeded) {
-      // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
-      l_sqls.emplace_back(add_remaining_tokens_for_person(
-          l_sql, in_task.user_id_, in_task.completion_tokens_ - l_result.completion_tokens_
-      ));
-    } else {
-      // 任务失败或者其他状态，返还 token
-      l_sqls.emplace_back(add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_));
+    l_sqls.emplace_back(add_remaining_tokens_for_person(
+        l_sql, in_task.user_id_, in_task.completion_tokens_ - l_result.completion_tokens_
+    ));
+    if (l_result.status_ != sd2::task_status::succeeded) {
       // 失败时回滚生成次数
       l_sqls.emplace_back(
           update(l_sql)
