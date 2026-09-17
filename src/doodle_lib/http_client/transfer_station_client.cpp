@@ -98,6 +98,16 @@ ai_client_base::request_info_t transfer_station_client::collect_request_info(con
 boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_client::run_task(
     const nlohmann::json& in_task
 ) {
+  // 未登记定价的模型不允许提交, 否则会按 0 积分计费
+  auto l_model = in_task.value("model", std::string{});
+  if (find_pricing(l_model) == nullptr) {
+    logger_->error("模型 {} 未登记定价, 拒绝提交", l_model);
+    run_task_result_t l_result{};
+    l_result.status_        = doodle::seedance2::task_status::failed;
+    l_result.data_response_ = nlohmann::json{{"error", fmt::format("模型 {} 未登记定价, 不允许提交", l_model)}};
+    co_return l_result;
+  }
+
   auto l_ip               = co_await get_ip_str();
   auto l_req_body         = add_ip_to_req(in_task, l_ip);
   l_req_body["replyType"] = "async";

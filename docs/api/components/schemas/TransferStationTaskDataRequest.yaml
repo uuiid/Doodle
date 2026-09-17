@@ -8,6 +8,7 @@ description: |
   服务端会提取 `model` 与分辨率用于剧集授权校验：分辨率优先取 `imageSize`，
   没有 `imageSize` 时取 `aspectRatio`。两者都缺失时返回 400；`model` 或该「模型 + 分辨率」组合
   未在剧集授权列表内时返回 401。
+  `model` 必须在下方枚举的已登记定价列表内，否则任务提交时即失败。
 required:
   - model
   - prompt
@@ -24,7 +25,7 @@ properties:
       gpt-image-2 / gpt-image-2.5 600, gpt-image-2-vip / gpt-image-2.5-flare 2000,
       gpt-image-2.5-sunburst 2400。
       所有模型失败均返还积分；违规时 `-cl` 与 `-vip` 系列照常扣费，其余模型返还。
-      未登记定价的模型按 0 积分计费。
+      未登记定价的模型会被直接拒绝提交：任务置为 `failed`、返还 token 并回滚生成次数，不会发出下游请求。
     enum:
       - nano-banana-fast
       - nano-banana-2
