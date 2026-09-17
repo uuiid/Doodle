@@ -1,8 +1,10 @@
 #include <doodle_core/exception/exception.h>
+
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/orm/session.h>
 
 #include "storage.h"
+
 
 namespace doodle::orm {
 session::session_data::~session_data() {
@@ -157,7 +159,7 @@ void session::sync_schema() {
       // SPDLOG_DEBUG("Table already exists, skipping creation: {}", table->name_);
       continue;
     }
-    if (table->name_ == "sqlite_master") continue;
+    if (table->name_ == "sqlite_master" || table->name_ == "pragma_foreign_key_check") continue;
 
     auto l_create_table_sql = table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
     auto l_stmt             = sqlite_stmt{*this, l_create_table_sql};
@@ -201,7 +203,7 @@ void session::rebuild_table(const std::type_index& table_name, const std::vector
   auto l_table_index = l_s.type_to_table_index_.at(table_name);
   auto& l_old_table  = l_s.tables_[l_table_index];
   // 预先关闭外键约束检查，以避免在重建表时出现外键约束错误
-  
+
   auto l_transaction = transaction();
   {
     auto l_new_table   = l_old_table->clone();
