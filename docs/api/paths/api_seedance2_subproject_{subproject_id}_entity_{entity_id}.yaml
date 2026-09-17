@@ -29,7 +29,7 @@ put:
     - AI生成实体
   summary: 更新实体
   description: >-
-    非外包人员可更新。可更新字段：name, description, preview_file, main_task_id
+    非外包人员可更新。可更新字段：name, description, preview_file, main_task_id, generate_count
   parameters:
     - name: subproject_id
       in: path
@@ -62,6 +62,10 @@ put:
               type: string
               format: uuid
               description: 主要任务ID
+            generate_count:
+              type: integer
+              format: int64
+              description: 生成次数
   responses:
     '200':
       description: 更新后的实体信息
