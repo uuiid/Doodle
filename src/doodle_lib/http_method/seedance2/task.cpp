@@ -19,7 +19,9 @@
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/http_client/ai_client_base.h>
 #include <doodle_lib/http_client/seedance2_client.h>
+#include <doodle_lib/http_client/transfer_station_client.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/asio/awaitable.hpp>
@@ -89,12 +91,42 @@ void video_create_picture(const FSys::path& in_video_path, const uuid& in_id) {
   FSys::rename(in_video_path, l_file_picture);
 }
 
+class client_factory {
+  struct client_pair {
+    std::shared_ptr<seedance2_client> seedance2_{};
+    std::shared_ptr<transfer_station_client> transfer_station_{};
+  };
+  std::map<uuid, client_pair> clients_;
+
+ public:
+  std::shared_ptr<ai_client_base> get_client(const sd2::task& in_task, const ai_studio& in_studio) {
+    auto& l_pair = clients_[in_studio.uuid_id_];
+
+    if (in_task.backend_ == sd2::task_backend::transfer_station) {
+      if (!l_pair.transfer_station_) {
+        l_pair.transfer_station_ = std::make_shared<transfer_station_client>(*core_set::get_set().ctx_ptr);
+        l_pair.transfer_station_->set_token(in_studio.transfer_station_key_);
+        l_pair.transfer_station_->set_logger(g_logger_ctrl().get_http());
+      }
+      return l_pair.transfer_station_;
+    }
+
+    // 默认 seedance2
+    if (!l_pair.seedance2_) {
+      l_pair.seedance2_ = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
+      l_pair.seedance2_->set_token(in_studio.seedance2_key_);
+      l_pair.seedance2_->set_logger(g_logger_ctrl().get_http());
+    }
+    return l_pair.seedance2_;
+  }
+};
+
 class seedance2_task_run_manager {
   struct task_info {
-    explicit task_info(const sd2::task& in_task, const ai_studio& in_app_secret)
-        : task_(in_task), app_secret_(in_app_secret) {}
+    explicit task_info(const sd2::task& in_task, const ai_studio& in_ai_studio)
+        : task_(in_task), ai_studio_(in_ai_studio) {}
     sd2::task task_;
-    ai_studio app_secret_;
+    ai_studio ai_studio_;
   };
 
   std::atomic_bool is_running_{false};
@@ -114,7 +146,7 @@ class seedance2_task_run_manager {
   }
 
   boost::asio::awaitable<void> submit_task(
-      const sd2::task& in_task, const std::shared_ptr<seedance2_client>& in_client
+      const sd2::task& in_task, const std::shared_ptr<ai_client_base>& in_client
   ) try {
     sd2::task_status l_status{};
     auto l_result = co_await in_client->run_task(in_task.data_request_);
@@ -165,19 +197,11 @@ class seedance2_task_run_manager {
     boost::scope::scope_exit on_exit{[this]() { is_running_ = false; }};
     boost::asio::steady_timer l_timer{g_io_context()};
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-      std::map<std::string, std::shared_ptr<seedance2_client>> l_client_map;
       auto l_tasks = get_task();
       if (l_tasks.empty()) co_return;
+      client_factory l_client_factory{};
       for (auto&& l_task_info : l_tasks) {
-        std::shared_ptr<seedance2_client> l_client;
-        if (l_client_map.contains(l_task_info.app_secret_)) {
-          l_client = l_client_map[l_task_info.app_secret_];
-        } else {
-          l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
-          l_client->set_token(l_task_info.app_secret_);
-          l_client->set_logger(g_logger_ctrl().get_http());
-          l_client_map[l_task_info.app_secret_] = l_client;
-        }
+        auto l_client = l_client_factory.get_client(l_task_info.task_, l_task_info.ai_studio_);
         if (l_task_info.task_.status_ == sd2::task_status::preparing) {
           co_await submit_task(l_task_info.task_, l_client);
         } else {
@@ -191,7 +215,7 @@ class seedance2_task_run_manager {
   }
 
   boost::asio::awaitable<void> query_task_and_down(
-      const sd2::task& in_task, const std::shared_ptr<seedance2_client>& in_client
+      const sd2::task& in_task, const std::shared_ptr<ai_client_base>& in_client
   ) try {
     ai_client_base::query_task_result_t l_result;
     try {
