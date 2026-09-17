@@ -89,10 +89,6 @@ void video_create_picture(const FSys::path& in_video_path, const uuid& in_id) {
   FSys::rename(in_video_path, l_file_picture);
 }
 
-// 定义在下方匿名命名空间, 前向声明供 async_run 提交任务使用
-boost::asio::awaitable<std::string> get_self_ip();
-nlohmann::json add_ip_to_req(const nlohmann::json& in_req, const std::string& in_ip);
-
 class seedance2_task_run_manager {
   struct task_info {
     explicit task_info(const sd2::task& in_task, const std::string& in_app_secret)
@@ -121,40 +117,25 @@ class seedance2_task_run_manager {
       const sd2::task& in_task, const std::shared_ptr<seedance2_client>& in_client
   ) try {
     sd2::task_status l_status{};
-    auto l_ip       = co_await get_self_ip();
-    auto l_req      = add_ip_to_req(in_task.data_request_, l_ip);
-    auto l_response = co_await in_client->run_task(l_req);
-    auto l_sql      = get_sqlite_database();
+    auto l_result = co_await in_client->run_task(in_task.data_request_);
+    auto l_sql    = get_sqlite_database();
     using namespace orm;
     sql_modify_statement_vector_t l_sql_modify_statements;
     auto l_update = update(l_sql)
                         .from<sd2::task>()
-                        .set(c(&sd2::task::data_response_) = l_response)
+                        .set(c(&sd2::task::data_response_) = l_result.data_response_)
                         .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_);
     l_sql_modify_statements.push_back(l_update);
-    if (l_response.contains("id")) {
-      l_update.set(c(&sd2::task::task_id_) = l_response.at("id").get<std::string>());
+    if (l_result.status_ == sd2::task_status::queued) {
+      l_update.set(c(&sd2::task::task_id_) = l_result.task_id_);
       l_update.set(c(&sd2::task::status_) = sd2::task_status::queued);
       l_status = sd2::task_status::queued;
+    } else if (l_result.status_ == sd2::task_status::failed && l_result.is_timeout_ && in_task.retry_count_ < 100) {
+      l_update.set(c(&sd2::task::retry_count_) = c(&sd2::task::retry_count_) + 1);
+      l_status = sd2::task_status::preparing;
     } else {
-      // 只有 resource not found / timeout while fetching resource 才重试, 其他错误直接失败
-      std::string l_message{};
-      if (l_response.contains("error")) l_message = l_response.at("error").value("message", std::string{});
-      const bool l_retryable = l_message.find("timeout while fetching resource") != std::string::npos;
-      if (l_retryable) {
-        const auto l_retry_count = in_task.retry_count_ + 1;
-        l_update.set(c(&sd2::task::retry_count_) = l_retry_count);
-        if (l_retry_count >= 100) {
-          l_update.set(c(&sd2::task::status_) = sd2::task_status::failed);
-          l_status = sd2::task_status::failed;
-        }
-        // 未达到 100 次时保持 preparing, 等待下一轮 async_run 重试
-      } else {
-        l_update.set(c(&sd2::task::status_) = sd2::task_status::failed);
-        l_status = sd2::task_status::failed;
-      }
-    }
-    if (l_status == sd2::task_status::failed) {
+      l_update.set(c(&sd2::task::status_) = sd2::task_status::failed);
+      l_status = sd2::task_status::failed;
       l_update.set(
           c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
           c(&sd2::task::completion_tokens_) = 0
@@ -171,7 +152,6 @@ class seedance2_task_run_manager {
               .where(c(&sd2::ai_generate_entity::uuid_id_) == in_task.ai_generate_entity_id_)
       );
     }
-
     co_await l_sql.run_sql(l_sql_modify_statements);
     socket_io::broadcast(
         socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_status}
@@ -213,65 +193,50 @@ class seedance2_task_run_manager {
   boost::asio::awaitable<void> query_task_and_down(
       const sd2::task& in_task, const std::shared_ptr<seedance2_client>& in_client
   ) try {
-    auto l_task_ptr = std::make_shared<sd2::task>(in_task);
+    ai_client_base::query_task_result_t l_result;
     try {
-      const auto l_task_info     = co_await in_client->query_task(in_task.task_id_);
-      l_task_ptr->data_response_ = l_task_info;
+      l_result = co_await in_client->query_task(in_task.task_id_);
     } catch (const doodle_error& in_err) {
       SPDLOG_LOGGER_ERROR(
           g_logger_ctrl().get_main_error(), "查询任务 {} 失败, 错误: {}", in_task.uuid_id_, in_err.what()
       );
-      l_task_ptr->status_        = sd2::task_status::failed;
-      l_task_ptr->data_response_ = in_err.what();
+      l_result.status_        = sd2::task_status::failed;
+      l_result.data_response_ = in_err.what();
     }
-    const sd2::task_status l_status{
-        l_task_ptr->data_response_.contains("status") ? l_task_ptr->data_response_.at("status").get<sd2::task_status>()
-                                                      : sd2::task_status::failed
-    };
     auto l_sql = get_sqlite_database();
     using namespace orm;
+    sql_modify_statement_vector_t l_sqls;
+    uuid l_preview_file_id{};
 
-    switch (l_status) {
+    switch (l_result.status_) {
       case sd2::task_status::preparing:
       case sd2::task_status::queued:
         co_return;
       case sd2::task_status::running: {
-        if (l_task_ptr->status_ != l_status) {
-          l_task_ptr->status_ = l_status;
+        if (in_task.status_ != l_result.status_) {
           co_await l_sql.run_sql(update(l_sql)
                                      .from<sd2::task>()
-                                     .set(c(&sd2::task::status_) = l_task_ptr->status_)
-                                     .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
-                                     .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_));
+                                     .set(c(&sd2::task::status_) = l_result.status_)
+                                     .set(c(&sd2::task::data_response_) = l_result.data_response_)
+                                     .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_));
         }
         socket_io::broadcast(
-            socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_task_ptr->status_}
+            socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_result.status_}
         );
         co_return;
       }
       case sd2::task_status::succeeded: {
-        if (l_task_ptr->data_response_.contains("usage") &&
-            l_task_ptr->data_response_.at("usage").contains("completion_tokens")) {
-          l_task_ptr->completion_tokens_ =
-              l_task_ptr->data_response_.at("usage").at("completion_tokens").get<std::int64_t>();
+        // 重新查询一次以获取 result_files_, 并下载
+        if (!l_result.result_files_.empty()) {
+          co_await l_result.download();
         }
-        if (l_task_ptr->data_response_.contains("content") &&
-            l_task_ptr->data_response_.at("content").contains("video_url")) {
-          auto l_video_url = l_task_ptr->data_response_.at("content").at("video_url").get<std::string>();
-          SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "任务 {} 完成，下载视频 {}", in_task.uuid_id_, l_video_url);
-          auto l_file          = co_await in_client->download_result(l_video_url);
-          // 使用 FFmpeg 调整视频 fps 为 25 (不调整分辨率)
-          auto l_adjusted_file = l_file.parent_path() / (l_file.stem().string() + "_adj" + l_file.extension().string());
-          {
-            ffmpeg_video_resize{l_file, l_adjusted_file, in_task.uuid_id_}.process();
-          }
-          auto l_preview_file        = std::make_shared<sd2::ai_preview_file>();
-          l_preview_file->extension_ = ".mp4";
-          co_await l_sql.install(l_preview_file);
-          l_task_ptr->preview_file_ = l_preview_file->uuid_id_;
-          video_create_picture(l_adjusted_file, l_preview_file->uuid_id_);
-          // 清理下载的原始文件
-          FSys::remove(l_file);
+        if (!l_result.result_file_paths_.empty()) {
+          auto l_adjusted_file = l_result.result_file_paths_[0];
+          sd2::ai_preview_file l_preview_file{};
+          l_preview_file.extension_ = l_adjusted_file.extension().generic_string();
+          l_sqls.emplace_back(insert(l_sql).into<sd2::ai_preview_file>().values(l_preview_file));
+          l_preview_file_id = l_preview_file.uuid_id_;
+          video_create_picture(l_adjusted_file, l_preview_file.uuid_id_);
         }
         break;
       }
@@ -279,26 +244,25 @@ class seedance2_task_run_manager {
       case sd2::task_status::failed:
       case sd2::task_status::expired:
         // 以上状态不扣费
-        l_task_ptr->completion_tokens_ = 0;
+        l_result.completion_tokens_ = 0;
         break;
     }
 
-    l_task_ptr->status_   = l_status;
-    l_task_ptr->ended_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-
-    sql_modify_statement_vector_t l_sqls;
     l_sqls.emplace_back(update(l_sql)
                             .from<sd2::task>()
-                            .set(c(&sd2::task::status_) = l_task_ptr->status_)
-                            .set(c(&sd2::task::ended_at_) = l_task_ptr->ended_at_)
-                            .set(c(&sd2::task::data_response_) = l_task_ptr->data_response_)
-                            .set(c(&sd2::task::completion_tokens_) = l_task_ptr->completion_tokens_)
-                            .set(c(&sd2::task::preview_file_) = l_task_ptr->preview_file_)
-                            .where(c(&sd2::task::uuid_id_) == l_task_ptr->uuid_id_));
-    if (l_status == sd2::task_status::succeeded) {
+                            .set(c(&sd2::task::status_) = l_result.status_)
+                            .set(
+                                c(&sd2::task::ended_at_) =
+                                    chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}
+                            )
+                            .set(c(&sd2::task::data_response_) = l_result.data_response_)
+                            .set(c(&sd2::task::completion_tokens_) = l_result.completion_tokens_)
+                            .set(c(&sd2::task::preview_file_) = l_preview_file_id)  // 非成功清零
+                            .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_));
+    if (l_result.status_ == sd2::task_status::succeeded) {
       // 为负数时, 如果任务成功，说明实际消耗的 token 比预估的少，返还差值
       l_sqls.emplace_back(add_remaining_tokens_for_person(
-          l_sql, in_task.user_id_, in_task.completion_tokens_ - l_task_ptr->completion_tokens_
+          l_sql, in_task.user_id_, in_task.completion_tokens_ - l_result.completion_tokens_
       ));
     } else {
       // 任务失败或者其他状态，返还 token
@@ -313,7 +277,7 @@ class seedance2_task_run_manager {
     }
     co_await l_sql.run_sql(std::move(l_sqls));
     socket_io::broadcast(
-        socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_task_ptr->status_}
+        socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_result.status_}
     );
   } catch (...) {
     auto l_err_str = boost::current_exception_diagnostic_information();
@@ -531,10 +495,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
     l_client->set_logger(g_logger_ctrl().get_http());
     DOODLE_CHICK_HTTP(!l_task.task_id_.empty(), internal_server_error, "task id 为空, 无法查询");
     auto l_res = co_await l_client->query_task(l_task.task_id_);
-    const sd2::task_status l_status{
-        l_res.contains("status") ? l_res.at("status").get<sd2::task_status>() : sd2::task_status::failed
-    };
-    DOODLE_CHICK_HTTP(l_status == sd2::task_status::queued, bad_request, "只有排队中的任务可以取消");
+    DOODLE_CHICK_HTTP(l_res.status_ == sd2::task_status::queued, bad_request, "只有排队中的任务可以取消");
 #ifdef DOODLE_SEED2
     co_await l_client->cancel_task(l_task.task_id_);
 #endif
@@ -557,7 +518,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
           .where(c(&sd2::ai_generate_entity::uuid_id_) == l_task.ai_generate_entity_id_)
   );
   l_task.status_ = sd2::task_status::cancelled;
-  co_return in_handle->make_msg(nlohmann::json{} = l_task);
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
 }
 

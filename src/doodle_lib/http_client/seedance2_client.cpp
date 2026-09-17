@@ -79,7 +79,8 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
       !l_result.data_response_.at("id").get<std::string>().empty())
     l_result.task_id_ = l_result.data_response_.at("id").get<std::string>();
 
-  l_result.status_     = parse_status(l_result.data_response_);
+  l_result.status_ =
+      l_result.task_id_.empty() ? doodle::seedance2::task_status::failed : doodle::seedance2::task_status::queued;
   l_result.is_timeout_ = is_timeout_error(l_result.data_response_);
 
   co_return l_result;
