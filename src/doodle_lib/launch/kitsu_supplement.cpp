@@ -129,7 +129,7 @@ bool kitsu_supplement_main::init() {
   l_set.computers_assign_task_ptr_ = std::make_shared<http::computers_assign_task>();
   l_set.database_                  = std::make_shared<sqlite_storage>();
   kitsu_supplement_args_t l_args{
-      .port_                 = 80,
+      .port_                 = 50025,
       .db_path_              = "C:/kitsu_new.database",
       .kitsu_front_end_path_ = "D:/kitsu/dist",
       .root_                 = "D:/kitsu_data",
