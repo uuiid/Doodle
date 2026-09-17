@@ -70,25 +70,33 @@ auto get_sd2_tasks_for_person(const uuid& in_person_id) {
       .to_vector();
 }
 
-void video_create_picture(const FSys::path& in_video_path, const uuid& in_id) {
-  auto l_file_picture   = g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_file(in_id, ".mp4");
+// 从扩展名推断是否为视频, 其余按图片处理
+void create_preview_picture(const FSys::path& in_file_path, const uuid& in_id) {
+  auto l_ext            = in_file_path.extension().generic_string();
+  auto l_is_video       = l_ext == ".mp4" || l_ext == ".mov" || l_ext == ".avi";
+  auto l_file_picture   = g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_file(in_id, l_ext);
   auto l_file_thumbnail = g_ctx().get<kitsu_ctx_t>().get_sd2_thumbnail_file(in_id);
   if (auto l_p = l_file_picture.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   {
     // 生成预览文件
-    auto l_video = cv::VideoCapture{in_video_path.generic_string()};
-    // 读取第一帧生成预览文件
     cv::Mat l_image{};
-    l_video >> l_image;
-    if (l_image.empty()) throw_exception(doodle_error{"视频解码失败"});
+    if (l_is_video) {
+      auto l_video = cv::VideoCapture{in_file_path.generic_string()};
+      // 读取第一帧生成预览文件
+      l_video >> l_image;
+      if (l_image.empty()) throw_exception(doodle_error{"视频解码失败"});
+    } else {
+      l_image = cv::imread(in_file_path.generic_string());
+      if (l_image.empty()) throw_exception(doodle_error{"图片解码失败"});
+    }
     auto l_resize = std::min(500.0 / l_image.cols, 500.0 / l_image.rows);
     cv::resize(l_image, l_image, cv::Size(l_image.cols * l_resize, l_image.rows * l_resize));
 
     if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
     cv::imwrite(l_file_thumbnail.generic_string(), l_image);
   }
-  FSys::rename(in_video_path, l_file_picture);
+  FSys::rename(in_file_path, l_file_picture);
 }
 
 class client_factory {
@@ -260,7 +268,7 @@ class seedance2_task_run_manager {
           l_preview_file.extension_ = l_adjusted_file.extension().generic_string();
           l_sqls.emplace_back(insert(l_sql).into<sd2::ai_preview_file>().values(l_preview_file));
           l_preview_file_id = l_preview_file.uuid_id_;
-          video_create_picture(l_adjusted_file, l_preview_file.uuid_id_);
+          create_preview_picture(l_adjusted_file, l_preview_file.uuid_id_);
         }
         break;
       }
