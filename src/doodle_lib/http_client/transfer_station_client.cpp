@@ -8,6 +8,46 @@
 
 namespace doodle::http::seedance2 {
 
+namespace {
+
+struct model_pricing {
+  std::string_view name;
+  std::int64_t cost_points;
+  bool charge_on_failure;    // false = 失败返还
+  bool charge_on_violation;  // false = 违规返还
+};
+
+// 数据来源: https://grsai.com/zh/dashboard/models
+// 所有图片模型均为按次计费, 失败/违规均返还积分
+// 未在页面列出的模型按同系列最近模型估算
+constexpr model_pricing g_model_pricings[] = {
+    // ─── nano-banana 系列 ───
+    {"nano-banana-fast", 440, true, true},
+    {"nano-banana-2", 1200, true, true},
+    {"nano-banana-2-lite", 440, true, true},
+    {"nano-banana-2-cl", 6000, true, false},
+    {"nano-banana-2-2k-cl", 9000, true, false},
+    {"nano-banana-2-4k-cl", 13000, true, false},
+    {"nano-banana-pro", 1800, true, true},
+    {"nano-banana-pro-cl", 10000, true, false},
+    {"nano-banana-pro-vip", 10000, true, false},
+    {"nano-banana-pro-4k-vip", 18000, true, false},
+    // ─── gpt-image 系列 ───
+    {"gpt-image-2", 600, true, true},
+    {"gpt-image-2-vip", 2000, true, true},
+    {"gpt-image-2.5", 600, true, true},
+    {"gpt-image-2.5-flare", 2000, true, true},
+    {"gpt-image-2.5-sunburst", 2400, true, true},
+};
+
+const model_pricing* find_pricing(std::string_view in_name) {
+  for (const auto& l_p : g_model_pricings)
+    if (l_p.name == in_name) return &l_p;
+  return nullptr;
+}
+
+}  // namespace
+
 // ─── 工具方法 ────────────────────────────────────────────────────────────────
 
 nlohmann::json transfer_station_client::add_ip_to_req(const nlohmann::json& in_req, std::string_view in_ip) {
@@ -117,8 +157,11 @@ boost::asio::awaitable<ai_client_base::query_task_result_t> transfer_station_cli
 
   co_return l_result;
 }
-
-boost::asio::awaitable<void> transfer_station_client::cancel_task(const std::string& in_task_id) { co_return; }
+// 不支持
+boost::asio::awaitable<void> transfer_station_client::cancel_task(const std::string& in_task_id) {
+  throw_exception(doodle_error{"transfer_station_client::cancel_task not supported"});
+  co_return;
+}
 
 boost::asio::awaitable<void> transfer_station_client::download_result(query_task_result_t* in_data) {
   for (auto& l_url : in_data->result_files_) {
