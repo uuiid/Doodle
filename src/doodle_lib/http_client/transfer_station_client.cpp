@@ -125,10 +125,10 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_clien
 }
 
 boost::asio::awaitable<ai_client_base::query_task_result_t> transfer_station_client::query_task(
-    const std::string& in_task_id
+    const doodle::seedance2::task& in_task
 ) {
   boost::beast::http::request<boost::beast::http::string_body> req{
-      boost::beast::http::verb::get, fmt::format("/v1/api/result?id={}", in_task_id), 11
+      boost::beast::http::verb::get, fmt::format("/v1/api/result?id={}", in_task.task_id_), 11
   };
   req.set(boost::beast::http::field::content_type, "application/json");
   req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));

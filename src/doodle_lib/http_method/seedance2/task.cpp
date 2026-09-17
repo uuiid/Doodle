@@ -195,7 +195,7 @@ class seedance2_task_run_manager {
   ) try {
     ai_client_base::query_task_result_t l_result;
     try {
-      l_result = co_await in_client->query_task(in_task.task_id_);
+      l_result = co_await in_client->query_task(in_task);
     } catch (const doodle_error& in_err) {
       SPDLOG_LOGGER_ERROR(
           g_logger_ctrl().get_main_error(), "查询任务 {} 失败, 错误: {}", in_task.uuid_id_, in_err.what()
@@ -442,7 +442,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
     l_client->set_token(l_studio.transfer_station_key_);
     l_client->set_logger(g_logger_ctrl().get_http());
     DOODLE_CHICK_HTTP(!l_task.task_id_.empty(), internal_server_error, "task id 为空, 无法查询");
-    auto l_res = co_await l_client->query_task(l_task.task_id_);
+    auto l_res = co_await l_client->query_task(l_task);
     DOODLE_CHICK_HTTP(l_res.status_ == sd2::task_status::queued, bad_request, "只有排队中的任务可以取消");
 #ifdef DOODLE_SEED2
     co_await l_client->cancel_task(l_task.task_id_);

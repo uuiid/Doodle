@@ -22,7 +22,7 @@ class DOODLELIB_API seedance2_client final : public ai_client_base {
       : ai_client_base(std::string{g_sd2_host_url}, in_ctx) {}
 
   boost::asio::awaitable<run_task_result_t> run_task(const nlohmann::json& in_task) override;
-  boost::asio::awaitable<query_task_result_t> query_task(const std::string& in_task_id) override;
+  boost::asio::awaitable<query_task_result_t> query_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<void> cancel_task(const std::string& in_task_id) override;
   boost::asio::awaitable<void> download_result(query_task_result_t* in_data) override;
 
