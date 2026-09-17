@@ -4,39 +4,35 @@
 
 #pragma once
 
-#include <doodle_core/metadata/seedance2/task.h>
+#include "ai_client_base.h"
 
-#include <doodle_lib/core/http_client_core.h>
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/metadata/seedance2/task.h>
 
 #include <nlohmann/json_fwd.hpp>
 #include <string>
+#include <string_view>
 
 namespace doodle::http::seedance2 {
 
-class DOODLELIB_API seedance2_client : public std::enable_shared_from_this<seedance2_client> {
-  using http_client_t     = doodle::http::http_client_ssl;
-  using http_client_ptr_t = std::shared_ptr<http_client_t>;
-
-  http_client_ptr_t http_client_ptr_{};
-  std::string token_;
-  logger_ptr logger_{spdlog::default_logger()};
+class DOODLELIB_API seedance2_client final : public ai_client_base {
   constexpr static std::string_view g_sd2_host_url{"https://ark.cn-beijing.volces.com"};
 
  public:
   explicit seedance2_client(boost::asio::ssl::context& in_ctx)
-      : http_client_ptr_{std::make_shared<http_client_t>(std::string{g_sd2_host_url}, in_ctx)} {}
+      : ai_client_base(std::string{g_sd2_host_url}, in_ctx) {}
 
-  void set_logger(logger_ptr in_logger) { logger_ = std::move(in_logger); }
-  void set_token(const std::string& in_token) { token_ = in_token; }
-  const std::string& get_token() const { return token_; }
+  boost::asio::awaitable<run_task_result_t> run_task(const nlohmann::json& in_task) override;
+  boost::asio::awaitable<query_task_result_t> query_task(const std::string& in_task_id) override;
+  boost::asio::awaitable<void> cancel_task(const std::string& in_task_id) override;
+  boost::asio::awaitable<void> download_result(query_task_result_t* in_data) override;
 
-  boost::asio::awaitable<nlohmann::json> run_task(const nlohmann::json& in_task);
-  // 取消任务
-  boost::asio::awaitable<void> cancel_task(const std::string& in_task_id);
+  static bool is_timeout_error(const nlohmann::json& in_body);
 
-  // 查询任务
-  boost::asio::awaitable<nlohmann::json> query_task(const std::string& in_task_id);
-  boost::asio::awaitable<FSys::path> download_result(std::string in_file_url);
+ private:
+  boost::asio::awaitable<FSys::path> download_raw_file(std::string_view in_file_url);
+
+  static nlohmann::json add_ip_to_req(const nlohmann::json& in_req, std::string_view in_ip);
+  static doodle::seedance2::task_status parse_status(const nlohmann::json& in_body);
 };
+
 }  // namespace doodle::http::seedance2

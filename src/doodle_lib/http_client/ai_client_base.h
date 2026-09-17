@@ -19,6 +19,7 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
   using http_client_t     = doodle::http::http_client_ssl;
   using http_client_ptr_t = std::shared_ptr<http_client_t>;
 
+ protected:
   http_client_ptr_t http_client_ptr_{};
   std::string token_;
   logger_ptr logger_{spdlog::default_logger()};
@@ -34,6 +35,7 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
   struct run_task_result_t {
     std::string task_id_;
     doodle::seedance2::task_status status_;
+    bool is_timeout_{false};
     nlohmann::json data_response_;
   };
 
@@ -42,6 +44,7 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
 
     doodle::seedance2::task_status status_;
     bool is_timeout_{false};
+    std::int64_t completion_tokens_{0};
     nlohmann::json data_response_;
     std::vector<std::string> result_files_;
     std::vector<FSys::path> result_file_paths_;
@@ -54,6 +57,6 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
   virtual boost::asio::awaitable<void> download_result(query_task_result_t* in_data)            = 0;
 
  protected:
-  std::string get_ip_str();
+  boost::asio::awaitable<std::string> get_ip_str();
 };
 }  // namespace doodle::http::seedance2
