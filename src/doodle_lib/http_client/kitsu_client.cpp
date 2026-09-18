@@ -437,6 +437,20 @@ boost::asio::awaitable<void> kitsu_client::upload_shot_animation_auto_light(
   }
   co_return;
 }
+
+boost::asio::awaitable<void> kitsu_client::upload_shot_animation_auto_light_movie(
+    uuid in_shot_task_id, std::vector<FSys::path> in_file_path
+) const {
+  for (auto&& l_path : in_file_path) {
+    SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", l_path);
+    co_await upload_asset_file(
+        fmt::format("/api/doodle/data/shots/{}/file/auto-light-movie", in_shot_task_id), l_path,
+        base64_encode(l_path.filename().generic_string())
+    );
+  }
+  co_return;
+}
+
 boost::asio::awaitable<void> kitsu_client::remove_asset_file_maya(const uuid& in_uuid) {
   return remove_asset_file(fmt::format("/api/doodle/data/assets/{}/file/maya", in_uuid));
 }
@@ -454,6 +468,9 @@ boost::asio::awaitable<void> kitsu_client::remove_shot_animation_export_file(con
 }
 boost::asio::awaitable<void> kitsu_client::remove_shot_animation_auto_light(const uuid& in_uuid) {
   return remove_asset_file(fmt::format("/api/doodle/data/shots/{}/file/auto-light", in_uuid));
+}
+boost::asio::awaitable<void> kitsu_client::remove_shot_animation_auto_light_movie(const uuid& in_uuid) {
+  return remove_asset_file(fmt::format("/api/doodle/data/shots/{}/file/auto-light-movie", in_uuid));
 }
 
 boost::asio::awaitable<kitsu_client::file_info> kitsu_client::upload_shot_animation_maya_heap(

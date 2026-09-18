@@ -270,4 +270,10 @@ FSys::path doodle_data_shots_file_auto_light::gen_file_path() {
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
 }
 
+FSys::path doodle_data_shots_file_auto_light_movie::gen_file_path() {
+  episodes l_episodes{episode_};
+  shot l_shot{shot_};
+  return get_shots_auto_lighting_upload_movie_path(l_episodes, l_shot);
+}
+
 }  // namespace doodle::http

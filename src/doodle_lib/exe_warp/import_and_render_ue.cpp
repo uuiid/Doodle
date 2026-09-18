@@ -260,9 +260,10 @@ boost::asio::awaitable<void> run_ue_assembly_base::run() {
 
   // 合成视屏
   logger_ptr_->warn("开始合成视屏 :{}", arg_.create_move_path_);
+  std::vector<FSys::path> l_move_paths{};
   {
     boost::system::error_code l_ec{};
-    auto l_move_paths = clean_1001_before_frame(arg_.out_file_dir_, arg_.begin_time_);
+    l_move_paths = clean_1001_before_frame(arg_.out_file_dir_, arg_.begin_time_);
     detail::create_move(
         arg_.create_move_path_, logger_ptr_, movie::image_attr::make_default_attr(l_move_paths), arg_.size_
     );
@@ -281,6 +282,7 @@ boost::asio::awaitable<void> run_ue_assembly_base::run() {
       );
   }
   co_await kitsu_client_->upload_shot_animation_auto_light(arg_.shot_task_id_, l_update_args);
+  co_await kitsu_client_->upload_shot_animation_auto_light_movie(arg_.shot_task_id_, l_move_paths);
 
   co_await kitsu_client_->comment_task(
       kitsu::kitsu_client::comment_task_arg{
@@ -310,8 +312,8 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
   auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
                        fmt::format("{}.log", task_info_.uuid_id_);
 
-  logger_ptr_   = create_logger();
-  kitsu_client_ = create_kitsu_client();
+  logger_ptr_        = create_logger();
+  kitsu_client_      = create_kitsu_client();
   kitsu_client_->set_logger(logger_ptr_);
 
   std::string l_error_msg{};

@@ -439,6 +439,9 @@ FSys::path get_shots_auto_lighting_upload_simulation_name(
   return FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", episode_) /
          fmt::format("{}{:03}_sc{:03}", project_code_, episode_, shot_) / "Import_JS";
 }
+FSys::path get_shots_auto_lighting_upload_movie_path(const episodes& episode_, const shot& shot_) {
+  return FSys::path{"03_Workflow"} / "Shot" / fmt::format("EP{:04}", episode_) / "MovieRenders" / fmt::format("SC{:03}", shot_);
+}
 
 FSys::path conv_ue_game_path(const FSys::path& in_path) {
   auto l_str = in_path.generic_string();

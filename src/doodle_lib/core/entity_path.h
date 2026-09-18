@@ -108,6 +108,7 @@ FSys::path get_shots_auto_lighting_upload_animation_name(
 FSys::path get_shots_auto_lighting_upload_simulation_name(
     const episodes& episode_, const shot& shot_, const std::string& project_code_
 );
+FSys::path get_shots_auto_lighting_upload_movie_path(const episodes& episode_, const shot& shot_);
 
 // 将路径转换为 ue_game 路径
 FSys::path conv_ue_game_path(const FSys::path& in_path);
