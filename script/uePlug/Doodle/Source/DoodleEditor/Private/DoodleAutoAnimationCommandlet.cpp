@@ -187,7 +187,7 @@ int UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 
 	const TObjectPtr<USkeletalMesh> L_SkinMesh = LoadObject<USkeletalMesh>(nullptr, *L_Skin_Path);
 	const TObjectPtr<USkeleton> L_Skeleton = L_SkinMesh ? L_SkinMesh->GetSkeleton() : nullptr;
-	auto [TmpSkeletalMesh, _] = CreateCharacterImportTask(FbxPath, L_Skeleton, false);
+	auto [TmpSkeletalMesh, _] = CreateCharacterImportTask(FbxPath, L_Skeleton, false, false);
 
 	if (!TmpSkeletalMesh) // 空, 代表导入的是只有动画, 直接抛出异常失败
 	{
@@ -857,7 +857,7 @@ UGeometryCache* UDoodleAutoAnimationCommandlet::CreateGeometryImportTask(const F
 
 TPair<USkeletalMesh*, UAnimSequence*> UDoodleAutoAnimationCommandlet::CreateCharacterImportTask(
 	const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton,
-	bool bImportAnimations)
+	bool bImportAnimations, bool bImportOnlyAnimations)
 {
 	UInterchangeManager& L_InterchangeManager = UInterchangeManager::GetInterchangeManager();
 
@@ -876,7 +876,7 @@ TPair<USkeletalMesh*, UAnimSequence*> UDoodleAutoAnimationCommandlet::CreateChar
 	UInterchangeGenericAssetsPipeline* L_AssetPipeline = NewObject<UInterchangeGenericAssetsPipeline>(L_SourceData);
 	L_AssetPipeline->CommonMeshesProperties->bRecomputeNormals = false;
 	L_AssetPipeline->CommonMeshesProperties->bRecomputeTangents = false;
-	L_AssetPipeline->CommonSkeletalMeshesAndAnimationsProperties->bImportOnlyAnimations = InSkeleton != nullptr;
+	L_AssetPipeline->CommonSkeletalMeshesAndAnimationsProperties->bImportOnlyAnimations = bImportOnlyAnimations;
 	L_AssetPipeline->CommonSkeletalMeshesAndAnimationsProperties->Skeleton = InSkeleton;
 	L_AssetPipeline->AnimationPipeline->bImportAnimations = bImportAnimations;
 	L_AssetPipeline->MaterialPipeline->bImportMaterials = false;
@@ -1090,7 +1090,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			break;
 		case EImportFilesType2::Character:
 			{
-				const auto AnimSeq = CreateCharacterImportTask(Path, Skeleton, true).Value;
+				const auto AnimSeq = CreateCharacterImportTask(Path, Skeleton, true, true).Value;
 				if (!Mesh) continue;
 				if (!AnimSeq) continue;
 				//------------------
