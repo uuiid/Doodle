@@ -188,9 +188,10 @@
     },
     {
       "label": "copy db",
-      "detail": "复制数据库文件",
+      "detail": "复制数据库文件, 可选择只复制或先备份再复制",
       "type": "shell",
-      "command": "${workspaceFolder}/build_script/copy_db.ps1",
+      // 整个命令行写在 command 中, 使 ${input:copy_db_opt} 能展开为多个开关 (args 中每项会被当成单个参数)
+      "command": "& '${workspaceFolder}/build_script/copy_db.ps1' ${input:copy_db_opt}",
       "args": [],
       "problemMatcher": [
         {
@@ -359,6 +360,16 @@
         "-CopyServer",
         "-BuildSd2",
         ""
+      ]
+    },
+    {
+      "id": "copy_db_opt",
+      "type": "pickString",
+      "description": "选择数据库操作",
+      "default": "-Copy",
+      "options": [
+        "-Copy",
+        "-Backup -Copy"
       ]
     },
     {

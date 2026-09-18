@@ -1,7 +1,7 @@
 param (
   [switch]$Backup,
   [switch]$Copy,
-  [string]$Kitsu_Ip = "192.168.40.188:50025"
+  [string]$Kitsu_Ip = "192.168.40.188"
 )
 
 $BackupShare = "\\$Kitsu_Ip\Users\Administrator\AppData\Local\Temp\doodle\backup"
