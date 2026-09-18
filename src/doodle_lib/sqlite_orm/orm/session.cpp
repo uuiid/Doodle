@@ -5,7 +5,6 @@
 
 #include "storage.h"
 
-
 namespace doodle::orm {
 session::session_data::~session_data() {
   if (connection_ && s_) s_->add_thread_db(connection_);
@@ -159,7 +158,9 @@ void session::sync_schema() {
       // SPDLOG_DEBUG("Table already exists, skipping creation: {}", table->name_);
       continue;
     }
-    if (table->name_ == "sqlite_master" || table->name_ == "pragma_foreign_key_check") continue;
+    if (table->type_index_ == typeid(detail::pragma_foreign_key_check_entry) ||
+        table->type_index_ == typeid(detail::sqlite_master_entry))
+      continue;
 
     auto l_create_table_sql = table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
     auto l_stmt             = sqlite_stmt{*this, l_create_table_sql};
