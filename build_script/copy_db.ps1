@@ -62,6 +62,15 @@ function Copy-LatestDatabase {
     $q = "update project set path = '$ProjectPath' where id=$($p.id);";
     Invoke-SqliteQuery -DataSource $DataDestination -Query $q;
   }
+
+  Invoke-SqliteQuery -DataSource $DataDestination -Query @"
+update seedance2_task_2
+set status='failed',
+    completion_tokens=0
+where status == 'preparing';
+"@
+
+
   $version = Invoke-SqliteQuery -DataSource $DataDestination -Query "pragma user_version;"
   Write-Host "当前数据库版本为 $($version[0].user_version)"
 }
