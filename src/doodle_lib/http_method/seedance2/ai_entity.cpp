@@ -309,9 +309,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_reference_instance, dele
       delete_from(l_sql).from<sd2::ai_preview_file>().where(c(&sd2::ai_preview_file::uuid_id_) == l_ref->preview_file_)
   );
 
-  if (FSys::exists(l_file_picture)) FSys::remove(l_file_picture);
-  if (FSys::exists(l_file_thumbnail)) FSys::remove(l_file_thumbnail);
-
   co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
 }
 
