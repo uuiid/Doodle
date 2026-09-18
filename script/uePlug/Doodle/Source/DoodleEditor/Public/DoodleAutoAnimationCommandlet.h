@@ -43,7 +43,7 @@ struct FImportFiles2
 	GENERATED_BODY()
 
 	UPROPERTY()
-	EImportFilesType2 Type{EImportFilesType2::Geometry};
+	EImportFilesType2 Type{ EImportFilesType2::Geometry };
 
 	UPROPERTY()
 	FString Path;
@@ -76,7 +76,7 @@ struct FImageSize
 };
 
 /**
- * 
+ *
  */
 UCLASS()
 class DOODLEEDITOR_API UDoodleAutoAnimationCommandlet : public UCommandlet
@@ -127,7 +127,7 @@ private:
 	UGeometryCache* CreateGeometryImportTask(const FString& InFbxPath);
 	/// 创建角色导入任务
 	TPair<USkeletalMesh*, UAnimSequence*> CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton,
-	                                                                bool bImportAnimations = true);
+		bool bImportAnimations, bool bImportOnlyAnimations);
 
 	/// 创建 groom 毛发
 	UGroomCache* CreateGroomImportTask(const FString& InAbcPath, const FSoftObjectPath& InGroomAssetPath);
@@ -147,9 +147,9 @@ private:
 	FString SequencePath;
 	FString ImportPath;
 
-	FFrameRate Rate{25, 1};
-	FFrameRate TickRate{60000, 1};
-	FFrameNumber Offset{50};
+	FFrameRate Rate{ 25, 1 };
+	FFrameRate TickRate{ 60000, 1 };
+	FFrameNumber Offset{ 50 };
 
 
 	/// 传入的主关卡, 用来拿到主关卡中的子关卡, 不进行渲染
@@ -168,8 +168,8 @@ private:
 	UPROPERTY()
 	TObjectPtr<UWorld> TheRenderWorld;
 
-	FFrameNumber L_Start{1001};
-	FFrameNumber L_End{1200};
+	FFrameNumber L_Start{ 1001 };
+	FFrameNumber L_End{ 1200 };
 	int32 FrameTick{};
 	//-----------
 	UPROPERTY()
