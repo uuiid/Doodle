@@ -45,6 +45,8 @@ void any_column_info_t::set_struct_value(const sqlite_stmt& stmt, int columnInde
 
 rowid_column_info_t::rowid_column_info_t(std::type_index in_table_index)
     : table_info_ptr_(std::make_shared<table_info_t>(in_table_index)) {}
+rowid_column_info_t::rowid_column_info_t(std::string in_table_name)
+    : table_info_ptr_(std::make_shared<table_name_info_t>(std::move(in_table_name))) {}
 std::string rowid_column_info_t::get_column_name(const session& s, const to_sql_ctx& ctx) const {
   auto l_table_name = table_info_ptr_->to_sql(s, ctx);
   return fmt::format("{}.rowid", l_table_name);

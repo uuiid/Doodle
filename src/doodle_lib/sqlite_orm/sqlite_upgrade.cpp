@@ -93,8 +93,15 @@ struct upgrade_1_t : sqlite_upgrade {
     auto l_s = in_data.create_session();
     if (l_s.pragma().user_version() == g_previous_version) {
       backup(l_s);
-      auto l_guard = l_s.transaction();
-      l_guard.commit();
+      // PRAGMA foreign_keys 在事务内是 no-op, 必须在 BEGIN 之前关闭.
+      // 关闭后 ON DELETE CASCADE / SET NULL 不触发, 被"孤立"的子行交给下一轮 fixpoint 处理.
+      l_s.pragma().foreign_keys(false);
+      {
+        auto l_guard = l_s.transaction();
+        in_data.fix_foreign_key_violations(l_s);
+        l_guard.commit();
+      }
+      l_s.pragma().foreign_keys(true);
     }
     l_s.pragma().user_version(g_current_version);
   }

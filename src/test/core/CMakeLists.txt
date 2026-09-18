@@ -4,6 +4,7 @@ target_sources(test_main
         axis_angle.cpp
         depth_estimation.cpp
         multipart_body_test.cpp
+        sqlite_fk_fix.cpp
 )
 
  

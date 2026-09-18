@@ -66,6 +66,11 @@
 #include <variant>
 #include <vector>
 
+#include <algorithm>
+#include <map>
+#include <set>
+#include <string>
+
 namespace doodle {
 
 void sqlite_storage::regs_all() {
@@ -1131,6 +1136,50 @@ void sqlite_storage::upgrade() {
     l_s.pragma().recursive_triggers(true);
     l_s.pragma().journal_mode(orm::journal_mode_t::wal);
   }
+}
+
+std::size_t sqlite_storage::fix_foreign_key_violations(
+    orm::session& in_session, std::size_t in_max_rounds, std::size_t in_chunk_size
+) {
+  using namespace orm;
+  if (in_chunk_size == 0) in_chunk_size = 500;
+  std::size_t l_total_deleted{0};
+  for (std::size_t l_round = 0; l_round < in_max_rounds; ++l_round) {
+    auto l_bad = in_session.pragma().foreign_key_check();
+    if (l_bad.empty()) {
+      SPDLOG_INFO("foreign_key_check: 第 {} 轮已无违规, 累计删除 {} 行", l_round, l_total_deleted);
+      return l_total_deleted;
+    }
+
+    // 同一子行违反多个外键会产生多条记录, 需按 (表, rowid) 去重
+    std::map<std::string, std::set<std::int64_t>> l_grouped{};
+    for (const auto& l_entry : l_bad) l_grouped[l_entry.table].insert(l_entry.rowid);
+
+    std::size_t l_round_deleted{0};
+    for (const auto& [l_table, l_rowids] : l_grouped) {
+      std::vector<std::int64_t> l_v{l_rowids.begin(), l_rowids.end()};
+      for (std::size_t l_i = 0; l_i < l_v.size(); l_i += in_chunk_size) {
+        auto l_end = std::min(l_i + in_chunk_size, l_v.size());
+        std::vector<std::int64_t> l_chunk{l_v.begin() + l_i, l_v.begin() + l_end};
+        delete_from(in_session).from(l_table).where(c(rowid_column(l_table)).in(l_chunk))();
+        l_round_deleted += l_chunk.size();
+      }
+      SPDLOG_INFO("foreign_key_check 第 {} 轮: 表 {} 删除 {} 行", l_round + 1, l_table, l_rowids.size());
+    }
+    SPDLOG_INFO(
+        "foreign_key_check 第 {} 轮: {} 条违规 / {} 张表, 删除 {} 行", l_round + 1, l_bad.size(), l_grouped.size(),
+        l_round_deleted
+    );
+    l_total_deleted += l_round_deleted;
+
+    // 无进展说明剩下的都无法按 rowid 处理, 继续循环也不会收敛
+    if (l_round_deleted == 0) {
+      SPDLOG_ERROR("foreign_key_check: 第 {} 轮无删除但仍有 {} 条违规, 停止清理", l_round + 1, l_bad.size());
+      return l_total_deleted;
+    }
+  }
+  SPDLOG_ERROR("foreign_key_check: 达到最大轮数 {}, 累计删除 {} 行", in_max_rounds, l_total_deleted);
+  return l_total_deleted;
 }
 
 boost::asio::awaitable<void> sqlite_database::run_sql(orm::sql_modify_statement_vector_t in_sqls) {

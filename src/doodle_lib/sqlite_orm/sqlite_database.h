@@ -15,8 +15,8 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
 
-#include "sqlite_orm/orm/delete.h"
-#include "sqlite_orm/orm/session.h"
+#include <doodle_lib/sqlite_orm/orm/delete.h>
+#include <doodle_lib/sqlite_orm/orm/session.h>
 #include <optional>
 #include <range/v3/view/unique.hpp>
 #include <stdexcept>
@@ -68,6 +68,14 @@ class DOODLELIB_API sqlite_storage : public orm::storage {
   void regs_all();
   // 升级
   void upgrade();
+  // 反复执行 PRAGMA foreign_key_check 并删除违规行, 直到没有违规为止.
+  // 不管理事务: 由调用方决定事务边界, 且需在 BEGIN 之前 PRAGMA foreign_keys = OFF.
+  // @param in_max_rounds 最大轮数
+  // @param in_chunk_size 单条 DELETE 的最大 rowid 数 (绑定参数上限保护)
+  // @return 累计删除的行数
+  std::size_t fix_foreign_key_violations(
+      orm::session& in_session, std::size_t in_max_rounds = 50, std::size_t in_chunk_size = 500
+  );
   strand_type get_strand() { return strand_; }
 };
 

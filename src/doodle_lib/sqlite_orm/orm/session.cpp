@@ -387,6 +387,26 @@ std::int32_t session::pragma_t::user_version() {
   l_stmt.step();
   return l_stmt.get_column_value<std::int32_t>(0);
 }
+std::vector<detail::pragma_foreign_key_check_entry> session::pragma_t::foreign_key_check() {
+  sqlite_stmt l_stmt{};
+  l_stmt.prepare(s_, "PRAGMA foreign_key_check;");
+  std::vector<detail::pragma_foreign_key_check_entry> l_result{};
+  while (l_stmt.step_not_throw() == SQLITE_ROW) {
+    auto l_table = l_stmt.get_column_value<std::string>(0);
+    if (l_stmt.column_is_null(1)) {
+      // WITHOUT ROWID 表的违规行 rowid 为 NULL, 无法按 rowid 定位, 只能报告
+      SPDLOG_WARN("foreign_key_check: 表 {} 的违规行 rowid 为 NULL (WITHOUT ROWID), 已跳过", l_table);
+      continue;
+    }
+    detail::pragma_foreign_key_check_entry l_entry{};
+    l_entry.table  = std::move(l_table);
+    l_entry.rowid  = l_stmt.get_column_value<std::int32_t>(1);
+    l_entry.parent = l_stmt.get_column_value<std::string>(2);
+    l_entry.fkid   = l_stmt.get_column_value<std::int32_t>(3);
+    l_result.push_back(std::move(l_entry));
+  }
+  return l_result;
+}
 
 void session::pragma_t::run(std::string_view in_pragma_sql, bool in_value) {
   auto l_sql  = fmt::format("PRAGMA {} = {};", in_pragma_sql, in_value ? "ON" : "OFF");

@@ -84,12 +84,18 @@ auto any_column() {
 struct rowid_column_info_t : public base_column_info_t {
   table_info_base_ptr table_info_ptr_;
   explicit rowid_column_info_t(std::type_index in_table_index);
+  // 运行时只知道表名的场景
+  explicit rowid_column_info_t(std::string in_table_name);
   std::string get_column_name(const session& s, const to_sql_ctx& ctx) const override;
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
 };
 template <typename Table>
 auto rowid_column() {
   return rowid_column_info_t{typeid(Table)};
+}
+// 运行时表名版本: rowid_column("playlist_shot") 生成 playlist_shot.rowid
+inline auto rowid_column(std::string in_table_name) {
+  return rowid_column_info_t{std::move(in_table_name)};
 }
 template <typename T>
 inline constexpr bool is_alias_column_t_v = std::is_base_of_v<alias_column_info_t, std::remove_cvref_t<T>> ||

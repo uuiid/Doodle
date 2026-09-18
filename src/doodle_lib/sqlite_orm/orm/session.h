@@ -22,7 +22,7 @@ class DOODLELIB_API session {
   };
   std::shared_ptr<session_data> data_;
 
-  struct pragma_t {
+  struct DOODLELIB_API pragma_t {
     void synchronous(std::int32_t in_sync);
     void journal_mode(journal_mode_t in_mode);
     void recursive_triggers(bool in_recursive);
@@ -30,6 +30,10 @@ class DOODLELIB_API session {
     void locking_mode(bool in_exclusive);
     std::int32_t user_version();
     void user_version(std::int32_t version);
+    // 查询外键约束违规行 (等价于 PRAGMA foreign_key_check;)
+    // 必须走 PRAGMA 语句形式: 库中若存在同名真实表会遮蔽这个 eponymous 虚拟表,
+    // 使 `SELECT ... FROM pragma_foreign_key_check` 静默返回 0 行.
+    std::vector<detail::pragma_foreign_key_check_entry> foreign_key_check();
 
    private:
     session& s_;
@@ -75,7 +79,7 @@ class DOODLELIB_API session {
 
   operator bool() const { return data_ && data_->connection_ && data_->s_; }
 
-  struct transaction_guard : public boost::noncopyable {
+  struct DOODLELIB_API transaction_guard : public boost::noncopyable {
    private:
     void begin();
     sqlite_connection_ptr connection_;

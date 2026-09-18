@@ -42,6 +42,11 @@ struct DOODLELIB_API delete_t : public statement_info_base_t {
     state_->from_table_name_ = state_->s_.get_table_name<FromTable>();
     return *this;
   }
+  // 运行时表名版本, 用于只持有表名字符串的场景 (例如 PRAGMA foreign_key_check 的结果)
+  delete_t from(std::string in_table_name) {
+    state_->from_table_name_ = std::move(in_table_name);
+    return *this;
+  }
 
   delete_t operator()();
 
