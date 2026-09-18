@@ -45,10 +45,14 @@ boost::asio::awaitable<FSys::path> ai_client_base::download_raw_file(std::string
 
   boost::urls::url l_url{in_file_url};
   auto l_url_path = std::string{l_url.encoded_path()};
-  auto l_ext      = FSys::path{l_url_path}.extension();
-  auto l_client   = std::make_shared<http_client_ssl>(std::string{in_file_url}, *core_set::get_set().ctx_ptr);
+  if (l_url_path.empty()) l_url_path = "/";
+  auto l_ext        = FSys::path{l_url_path}.extension();
+  // 请求行必须带上查询串: 火山引擎等对象存储的签名 URL 把鉴权信息放在 query 里, 丢掉会 403
+  auto l_url_target = std::string{l_url.encoded_target()};
+  if (l_url_target.empty() || l_url_target.front() != '/') l_url_target = l_url_path + l_url_target;
+  auto l_client = std::make_shared<http_client_ssl>(std::string{in_file_url}, *core_set::get_set().ctx_ptr);
 
-  boost::beast::http::request<boost::beast::http::empty_body> req{boost::beast::http::verb::get, l_url_path, 11};
+  boost::beast::http::request<boost::beast::http::empty_body> req{boost::beast::http::verb::get, l_url_target, 11};
   req.set(boost::beast::http::field::accept, "*/*");
   req.set(boost::beast::http::field::host, l_client->server_ip_);
   req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
