@@ -18,10 +18,14 @@ r"""
         root_group='anim_a')
     create_joint.create_animation_from_response(
         r'E:\Doodle\build\res_dav_2.json',
-        r'E:\Doodle\build\send_dav.json',
+        r'E:\Doodle\build\res_dav_settings.json',
         root_group='anim_b')
-注意: 同名关节在第二次创建时会被 Maya 自动加数字后缀 (Hips1, Spine11, ...)，
-按组名区分两套骨骼即可 (如 'anim_a|Hips' 与 'anim_b|Hips')。
+
+重要: Maya 允许 anim_a|Hips 与 anim_b|Hips 这样同名但不同层级的节点同时存在，
+此时用短名调用 xform / setKeyframe / parent 只会命中其中一个（通常是先创建的
+那套），结果是第二套骨骼完全静止、关键帧全打在上一套上。因此本脚本所有关节都
+按完整 DAG 路径 (|anim_b|Hips|Spine1) 寻址，create_joints_from_skeleton 返回的
+也是完整路径；apply_animation_from_response 必须传入对应的 root_group。
 
 两个 JSON 来源:
   - response2.json: kimodo 生成接口返回的动画数据 (local_rot_mats, smooth_root_pos, global_root_heading)
@@ -91,7 +95,7 @@ def axis_angle_to_rotation_matrix(v):
 
 
 def get_or_create_root_group(root_group):
-    """获取或创建收纳一套骨骼的根组（空变换组），返回实际组名。
+    """获取或创建收纳一套骨骼的根组（空变换组），返回完整路径（如 '|anim_a'）。
 
     root_group 为空 (None / '') 时返回 None，表示不建组、直接放在世界层级。
     组已存在时直接复用，便于脚本重复运行而不产生嵌套组。
@@ -100,61 +104,121 @@ def get_or_create_root_group(root_group):
         return None
     if cmds.objExists(root_group):
         print(f"  reusing existing root group '{root_group}'")
-        return root_group
-    group = cmds.group(empty=True, name=root_group)
-    print(f"  created root group '{group}'")
-    return group
+        return to_full_path(root_group)
+    full = to_full_path(cmds.group(empty=True, name=root_group))
+    print(f"  created root group '{full}'")
+    return full
 
 
-def parent_joints_to_root_group(created, skeleton_data, root_group):
-    """把所有根关节 (parent_idx < 0) 挂到 root_group 下，保持世界坐标不变。"""
-    if not root_group:
-        return
-    root_joints = [
-        created[i]
-        for i, joint_def in enumerate(skeleton_data)
-        if joint_def["parent_idx"] < 0
-    ]
-    if not root_joints:
-        return
-    # 默认不带 -relative，Maya 会补偿局部矩阵以保持世界变换
-    cmds.parent(root_joints, root_group)
+def to_full_path(node):
+    """把 Maya 返回的节点引用规范化成完整 DAG 路径。
+
+    Maya 创建节点时返回值不固定：名字唯一时返回短名 ('Hips')，与已有同名节点
+    冲突时返回部分路径 ('anim_b|Hips')。两种都要转成 '|anim_b|Hips' 才能唯一定位。
+    """
+    if not node:
+        return node
+    if node.startswith("|"):
+        return node
+    if "|" in node:
+        return "|" + node  # 部分路径，补上世界根
+
+    matches = cmds.ls(node, long=True) or []
+    if not matches:
+        return node
+    # 同名节点可能有多个，优先取世界层级（路径里只有一个 '|'）的那个
+    for match in matches:
+        if match.count("|") == 1:
+            return match
+    return matches[0]
+
+
+def joint_full_path(parent_path, created_name):
+    """由唯一已知的父路径 + Maya 返回的名字拼出精确的完整路径。
+
+    created_name 可能是 'Hips' 或 'anim_b|Hips'，只取最后一段短名即可：
+    父路径本身就是唯一的，因此拼接结果一定指向刚创建的那个关节。
+    """
+    return f"{parent_path}|{created_name.rsplit('|', 1)[-1]}"
+
+
+def resolve_joint_path(jnt, root_group=None):
+    """把关节引用解析成完整 DAG 路径，保证同名不同层级的骨骼不会被选错。
+
+    已经是完整路径（以 '|' 开头）时原样返回；否则用 cmds.ls 找出全部同名节点，
+    优先取 root_group 下的那个，其次取世界层级的那个。
+    """
+    if not jnt or jnt.startswith("|"):
+        return jnt
+
+    candidates = cmds.ls(jnt, long=True) or []
+    if not candidates:
+        return jnt
+
+    if root_group:
+        prefix = to_full_path(root_group) + "|"
+        for candidate in candidates:
+            if candidate.startswith(prefix):
+                return candidate
+
+    # 没有根组时优先取世界层级的节点（完整路径里只有一个 '|'）
+    for candidate in candidates:
+        if candidate.count("|") == 1:
+            return candidate
+
+    return candidates[0]
 
 
 def create_joints_from_skeleton(skeleton_data, root_group=None):
-    """根据 send_dav.json 的 skeleton 列表创建 Maya 关节层级，返回 {index: joint_name}。
+    """根据 send_dav.json 的 skeleton 列表创建 Maya 关节层级。
 
-    root_group: 非空时，创建完成后把根关节挂到该组下。传入不同的根组即可在同一
-                场景中创建多套骨骼（如两段动画的对比）。
+    root_group: 非空时把根关节直接建在该空组下（组不存在则新建）。传入不同的根组
+                即可在同一场景中创建多套骨骼（如两段动画的对比）。这里是完整路径。
+
+    返回 {index: 完整 DAG 路径}，例如 {0: '|anim_a|Hips', 1: '|anim_a|Hips|Spine1'}。
+    返回完整路径是必须的：两套骨骼的同名关节位于不同层级，只有完整路径才能唯一定位。
     """
+    root_parent = root_group or ""
+
     created = {}
     for i, joint_def in enumerate(skeleton_data):
         name = joint_def["name"]
         pos = joint_def["neutral_joint"]
         parent_idx = joint_def["parent_idx"]
 
+        # 父节点一律用完整路径选择：短名会在两套同名骨骼中命中先创建的那一套，
+        # 导致第二套骨骼被挂到第一套下面
+        if parent_idx is not None and parent_idx >= 0 and parent_idx in created:
+            parent_path = created[parent_idx]
+        else:
+            parent_path = root_parent
+
         cmds.select(clear=True)
-        if parent_idx >= 0 and parent_idx in created:
-            cmds.select(created[parent_idx])
+        if parent_path:
+            cmds.select(parent_path)
 
         jnt = cmds.joint(name=name, position=(pos[0], pos[1], pos[2]))
-        created[i] = jnt
+        created[i] = joint_full_path(parent_path, jnt)
 
     # 将关节 orient 归零，以便直接用旋转矩阵驱动
-    for i, jnt in created.items():
+    for jnt in created.values():
         cmds.setAttr(f"{jnt}.jointOrientX", 0)
         cmds.setAttr(f"{jnt}.jointOrientY", 0)
         cmds.setAttr(f"{jnt}.jointOrientZ", 0)
         # 设置 radius 为 0.02，便于在 Maya 中查看
         cmds.setAttr(f"{jnt}.radius", 0.02)
 
-    parent_joints_to_root_group(created, skeleton_data, root_group)
-
     return created
 
 
-def apply_animation_from_response(created_joints, response_data):
-    """将 motion_output 数据作为关键帧动画应用到已创建的关节上。"""
+def apply_animation_from_response(created_joints, response_data, root_group=None):
+    """将 motion_output 数据作为关键帧动画应用到已创建的关节上。
+
+    root_group: 这套骨骼所属的根组，必须传入。Maya 中 anim_a|Hips 与 anim_b|Hips
+                同名但层级不同，用短名调用 xform / setKeyframe 会默认命中先创建的
+                那套骨骼，表现为第二套骨骼完全静止、关键帧全打在上一套上。这里先把
+                所有关节统一解析成完整 DAG 路径，再按路径操作。
+    """
     # posed_joints = response_data["posed_joints"]            # [T, J, 3]
     local_rot_mats = response_data["local_rot_mats"]  # [T, J, 3, 3]
     smooth_root_pos = response_data["smooth_root_pos"]  # [T, 3]
@@ -164,6 +228,10 @@ def apply_animation_from_response(created_joints, response_data):
 
     num_frames = len(local_rot_mats)
     num_joints = len(local_rot_mats[0])
+
+    # 同名关节必须带层级访问，否则会操作到另一套骨骼上
+    joints = {i: resolve_joint_path(jnt, root_group)
+              for i, jnt in created_joints.items()}
 
     cmds.currentUnit(time=f"{fps}fps")
     start_frame = 1
@@ -180,7 +248,7 @@ def apply_animation_from_response(created_joints, response_data):
         cmds.currentTime(frame)
 
         # --- 根关节 (Hips, index=0) ---
-        root_jnt = created_joints[0]
+        root_jnt = joints[0]
         sp = smooth_root_pos[t]
         cmds.xform(root_jnt, ws=True, t=(sp[0], sp[1], sp[2]))
 
@@ -209,7 +277,7 @@ def apply_animation_from_response(created_joints, response_data):
 
         # --- 其他关节 ---
         for j in range(1, num_joints):
-            jnt = created_joints[j]
+            jnt = joints[j]
             rot_mat = local_rot_mats[t][j]
             euler = rotation_matrix_to_euler_xyz(rot_mat)
             cmds.xform(
@@ -243,11 +311,15 @@ def create_constraint_joints(send_dav_json, skeleton_data, root_group=None):
         return
 
     cmds.select(clear=True)
-    constraint_group = cmds.group(empty=True, name="constraint_lst")
+    constraint_group = to_full_path(cmds.group(empty=True, name="constraint_lst"))
 
     for c, constraint in enumerate(constraint_lst):
-        sub_group = cmds.group(empty=True, name=f"constraint_{c}")
+        sub_group = to_full_path(cmds.group(empty=True, name=f"constraint_{c}"))
         cmds.parent(sub_group, constraint_group)
+
+        # 约束骨骼直接建在子组下，路径从创建起就唯一，无需事后搬动根关节；
+        # 注意子组刚被搬到 constraint_lst 下，路径要按新的父路径重算
+        sub_parent = joint_full_path(constraint_group, sub_group)
 
         created = {}
         for i, joint_def in enumerate(skeleton_data):
@@ -255,14 +327,19 @@ def create_constraint_joints(send_dav_json, skeleton_data, root_group=None):
             pos = joint_def["neutral_joint"]
             parent_idx = joint_def["parent_idx"]
 
+            if parent_idx is not None and parent_idx >= 0 and parent_idx in created:
+                parent_path = created[parent_idx]
+            else:
+                parent_path = sub_parent
+
             cmds.select(clear=True)
-            if parent_idx >= 0 and parent_idx in created:
-                cmds.select(created[parent_idx])
+            if parent_path:
+                cmds.select(parent_path)
 
             jnt = cmds.joint(name=name, position=(pos[0], pos[1], pos[2]))
-            created[i] = jnt
+            created[i] = joint_full_path(parent_path, jnt)
 
-        for i, jnt in created.items():
+        for jnt in created.values():
             cmds.setAttr(f"{jnt}.jointOrientX", 0)
             cmds.setAttr(f"{jnt}.jointOrientY", 0)
             cmds.setAttr(f"{jnt}.jointOrientZ", 0)
@@ -290,11 +367,42 @@ def create_constraint_joints(send_dav_json, skeleton_data, root_group=None):
                 ),
             )
 
-        cmds.parent(created[0], sub_group)
         print(f"  constraint {c} ({constraint.get('type')}) created")
 
     if root_group:
         cmds.parent(constraint_group, root_group)
+
+
+def verify_animation(created_joints, root_group=None):
+    """校验骨骼确实挂在目标根组下、且每个关节都拿到了关键帧。
+
+    同名关节在不同层级共存时，Maya 按短名选择会命中另一套骨骼（或因为路径失效
+    直接报错中断），表现为某个根组下的骨骼"完全静止、没有关键帧"。这里显式检查，
+    把静默失败变成可见告警。
+    """
+    problems = []
+
+    if root_group:
+        prefix = to_full_path(root_group) + "|"
+        for jnt in created_joints.values():
+            if not jnt.startswith(prefix):
+                problems.append(f"'{jnt}' 不在根组 '{root_group}' 下")
+                break
+
+    missing = [
+        jnt
+        for jnt in created_joints.values()
+        if not (cmds.keyframe(jnt, q=True, keyframeCount=True) or 0)
+    ]
+    if missing:
+        problems.append(f"{len(missing)} 个关节没有关键帧 (前几个: {missing[:3]})")
+
+    if problems:
+        print("  WARNING: " + "; ".join(problems))
+        return False
+
+    print(f"  verified: {len(created_joints)} 个关节都在目标根组下且已打关键帧")
+    return True
 
 
 def create_animation_from_response(
@@ -310,7 +418,8 @@ def create_animation_from_response(
     注意: 每次调用都会设置场景时间单位与播放范围；若两段动画帧数不同，播放范围
           以最后一次调用为准（已烘焙的关键帧不受影响，可直接拖动时间轴查看）。
 
-    返回值仍为 created_joints ({index: joint_name})，与不传 root_group 时一致。
+    返回 {index: 完整 DAG 路径}，例如 {0: '|anim_a|Hips'}。必须是完整路径：
+    anim_a|Hips 与 anim_b|Hips 同名不同层级，只有完整路径能唯一定位。
     """
     with open(send_dav_json_path, "r") as f:
         send_dav_json = json.load(f)
@@ -328,9 +437,11 @@ def create_animation_from_response(
     created_joints = create_joints_from_skeleton(skeleton_data, group)
 
     print(f"Applying animation ({len(response_data['local_rot_mats'])} frames)...")
-    apply_animation_from_response(created_joints, response_data)
+    apply_animation_from_response(created_joints, response_data, group)
 
     create_constraint_joints(send_dav_json, skeleton_data, group)
+
+    verify_animation(created_joints, group)
 
     print(f"Done{f' (root group: {group})' if group else ''}.")
     return created_joints

@@ -50,7 +50,7 @@ describe('ai animation train 测试', function () {
     console.log('POST train 返回值字段:', Object.keys(req.body));
     fs.writeFileSync(RES_DAV_PATH, JSON.stringify(req.body, null, 2));
   });
-  it('POST /api/doodle/ai/animation/train — 生成动画(重定向)', async function () {
+  it('POST /api/doodle/ai/animation/train — 生成动画', async function () {
     expect(sendDavData2).to.not.be.null;
     const req = await request.post(`${URL}/api/doodle/ai/animation/train`)
       .send(sendDavData2);
