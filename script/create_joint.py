@@ -1,4 +1,4 @@
-"""
+r"""
 从 motion_output JSON 创建 Maya 骨骼动画。
 
 用法: 在 Maya Script Editor 中运行:
@@ -9,6 +9,19 @@
         r'E:\Doodle\build\response2.json',
         r'E:\Doodle\build\send_dav.json'
     )
+
+对比两段动画（重定向结果是否有区别）: 每次调用传入不同的 root_group，
+每套骨骼会被收纳到各自的根组下，可在同一场景中并排查看:
+    create_joint.create_animation_from_response(
+        r'E:\Doodle\build\res_dav.json',
+        r'E:\Doodle\build\send_dav.json',
+        root_group='anim_a')
+    create_joint.create_animation_from_response(
+        r'E:\Doodle\build\res_dav_2.json',
+        r'E:\Doodle\build\send_dav.json',
+        root_group='anim_b')
+注意: 同名关节在第二次创建时会被 Maya 自动加数字后缀 (Hips1, Spine11, ...)，
+按组名区分两套骨骼即可 (如 'anim_a|Hips' 与 'anim_b|Hips')。
 
 两个 JSON 来源:
   - response2.json: kimodo 生成接口返回的动画数据 (local_rot_mats, smooth_root_pos, global_root_heading)
@@ -77,8 +90,43 @@ def axis_angle_to_rotation_matrix(v):
     ]
 
 
-def create_joints_from_skeleton(skeleton_data):
-    """根据 send_dav.json 的 skeleton 列表创建 Maya 关节层级，返回 {index: joint_name}。"""
+def get_or_create_root_group(root_group):
+    """获取或创建收纳一套骨骼的根组（空变换组），返回实际组名。
+
+    root_group 为空 (None / '') 时返回 None，表示不建组、直接放在世界层级。
+    组已存在时直接复用，便于脚本重复运行而不产生嵌套组。
+    """
+    if not root_group:
+        return None
+    if cmds.objExists(root_group):
+        print(f"  reusing existing root group '{root_group}'")
+        return root_group
+    group = cmds.group(empty=True, name=root_group)
+    print(f"  created root group '{group}'")
+    return group
+
+
+def parent_joints_to_root_group(created, skeleton_data, root_group):
+    """把所有根关节 (parent_idx < 0) 挂到 root_group 下，保持世界坐标不变。"""
+    if not root_group:
+        return
+    root_joints = [
+        created[i]
+        for i, joint_def in enumerate(skeleton_data)
+        if joint_def["parent_idx"] < 0
+    ]
+    if not root_joints:
+        return
+    # 默认不带 -relative，Maya 会补偿局部矩阵以保持世界变换
+    cmds.parent(root_joints, root_group)
+
+
+def create_joints_from_skeleton(skeleton_data, root_group=None):
+    """根据 send_dav.json 的 skeleton 列表创建 Maya 关节层级，返回 {index: joint_name}。
+
+    root_group: 非空时，创建完成后把根关节挂到该组下。传入不同的根组即可在同一
+                场景中创建多套骨骼（如两段动画的对比）。
+    """
     created = {}
     for i, joint_def in enumerate(skeleton_data):
         name = joint_def["name"]
@@ -100,14 +148,16 @@ def create_joints_from_skeleton(skeleton_data):
         # 设置 radius 为 0.02，便于在 Maya 中查看
         cmds.setAttr(f"{jnt}.radius", 0.02)
 
+    parent_joints_to_root_group(created, skeleton_data, root_group)
+
     return created
 
 
 def apply_animation_from_response(created_joints, response_data):
     """将 motion_output 数据作为关键帧动画应用到已创建的关节上。"""
     # posed_joints = response_data["posed_joints"]            # [T, J, 3]
-    local_rot_mats = response_data["local_rot_mats"]        # [T, J, 3, 3]
-    smooth_root_pos = response_data["smooth_root_pos"]      # [T, 3]
+    local_rot_mats = response_data["local_rot_mats"]  # [T, J, 3, 3]
+    smooth_root_pos = response_data["smooth_root_pos"]  # [T, 3]
     global_root_heading = response_data["global_root_heading"]  # [T, 2]
     fps = response_data.get("fps", 30.0)
     fps = int(fps)
@@ -122,7 +172,7 @@ def apply_animation_from_response(created_joints, response_data):
         minTime=start_frame,
         maxTime=start_frame + num_frames - 1,
         animationStartTime=start_frame,
-        animationEndTime=start_frame + num_frames - 1
+        animationEndTime=start_frame + num_frames - 1,
     )
 
     for t in range(num_frames):
@@ -140,9 +190,15 @@ def apply_animation_from_response(created_joints, response_data):
 
         root_rot_mat = local_rot_mats[t][0]
         root_euler = rotation_matrix_to_euler_xyz(root_rot_mat)
-        cmds.xform(root_jnt, ws=False, ro=(math.degrees(root_euler[0]),
-                                            math.degrees(root_euler[1] + heading_angle),
-                                            math.degrees(root_euler[2])))
+        cmds.xform(
+            root_jnt,
+            ws=False,
+            ro=(
+                math.degrees(root_euler[0]),
+                math.degrees(root_euler[1] + heading_angle),
+                math.degrees(root_euler[2]),
+            ),
+        )
 
         cmds.setKeyframe(root_jnt, attribute="translateX")
         cmds.setKeyframe(root_jnt, attribute="translateY")
@@ -156,9 +212,15 @@ def apply_animation_from_response(created_joints, response_data):
             jnt = created_joints[j]
             rot_mat = local_rot_mats[t][j]
             euler = rotation_matrix_to_euler_xyz(rot_mat)
-            cmds.xform(jnt, ws=False, ro=(math.degrees(euler[0]),
-                                           math.degrees(euler[1]),
-                                           math.degrees(euler[2])))
+            cmds.xform(
+                jnt,
+                ws=False,
+                ro=(
+                    math.degrees(euler[0]),
+                    math.degrees(euler[1]),
+                    math.degrees(euler[2]),
+                ),
+            )
             cmds.setKeyframe(jnt, attribute="rotateX")
             cmds.setKeyframe(jnt, attribute="rotateY")
             cmds.setKeyframe(jnt, attribute="rotateZ")
@@ -169,8 +231,12 @@ def apply_animation_from_response(created_joints, response_data):
     print(f"Animation applied: {num_frames} frames, {num_joints} joints")
 
 
-def create_constraint_joints(send_dav_json, skeleton_data):
-    """将 segment.constraint_lst 创建为约束姿态骨骼，置于 constraint_lst 组下。"""
+def create_constraint_joints(send_dav_json, skeleton_data, root_group=None):
+    """将 segment.constraint_lst 创建为约束姿态骨骼，置于 constraint_lst 组下。
+
+    root_group: 非空时，constraint_lst 组也会挂到该根组下，使多套骨骼的约束
+                姿态随各自的动画一起分组、互不混淆。
+    """
     segment = send_dav_json.get("segment", {})
     constraint_lst = segment.get("constraint_lst", [])
     if not constraint_lst:
@@ -214,16 +280,38 @@ def create_constraint_joints(send_dav_json, skeleton_data):
         for j, jnt in created.items():
             rot_mat = axis_angle_to_rotation_matrix(frame_rot[j])
             euler = rotation_matrix_to_euler_xyz(rot_mat)
-            cmds.xform(jnt, ws=False, ro=(math.degrees(euler[0]),
-                                           math.degrees(euler[1]),
-                                           math.degrees(euler[2])))
+            cmds.xform(
+                jnt,
+                ws=False,
+                ro=(
+                    math.degrees(euler[0]),
+                    math.degrees(euler[1]),
+                    math.degrees(euler[2]),
+                ),
+            )
 
         cmds.parent(created[0], sub_group)
         print(f"  constraint {c} ({constraint.get('type')}) created")
 
+    if root_group:
+        cmds.parent(constraint_group, root_group)
 
-def create_animation_from_response(response_json_path, send_dav_json_path):
-    """主入口：从 send_dav.json 的 skeleton 字段创建骨骼，从 response JSON 应用动画。"""
+
+def create_animation_from_response(
+    response_json_path, send_dav_json_path, root_group=None
+):
+    """主入口：从 send_dav.json 的 skeleton 字段创建骨骼，从 response JSON 应用动画。
+
+    root_group: 非空时创建/复用该空组，本次调用产生的骨骼与约束姿态都收纳在其中。
+                对不同的 response JSON 传入不同的根组，即可在同一场景中生成多套
+                骨骼动画，用于对比两段动画（如两次重定向结果）是否有区别。
+                组不存在时按传入名新建，因此实际组名恒等于 root_group。
+
+    注意: 每次调用都会设置场景时间单位与播放范围；若两段动画帧数不同，播放范围
+          以最后一次调用为准（已烘焙的关键帧不受影响，可直接拖动时间轴查看）。
+
+    返回值仍为 created_joints ({index: joint_name})，与不传 root_group 时一致。
+    """
     with open(send_dav_json_path, "r") as f:
         send_dav_json = json.load(f)
     skeleton_data = send_dav_json["skeleton"]
@@ -231,20 +319,32 @@ def create_animation_from_response(response_json_path, send_dav_json_path):
     with open(response_json_path, "r") as f:
         response_data = json.load(f)
 
-    print(f"Creating {len(skeleton_data)} joints...")
-    created_joints = create_joints_from_skeleton(skeleton_data)
+    group = get_or_create_root_group(root_group)
+
+    print(
+        f"Creating {len(skeleton_data)} joints..."
+        + (f" under '{group}'" if group else "")
+    )
+    created_joints = create_joints_from_skeleton(skeleton_data, group)
 
     print(f"Applying animation ({len(response_data['local_rot_mats'])} frames)...")
     apply_animation_from_response(created_joints, response_data)
 
-    create_constraint_joints(send_dav_json, skeleton_data)
+    create_constraint_joints(send_dav_json, skeleton_data, group)
 
-    print("Done.")
+    print(f"Done{f' (root group: {group})' if group else ''}.")
     return created_joints
 
 
 if __name__ == "__main__":
+    # 对比两段动画：分别放入不同的根组，可在同一场景中并排查看重定向结果
     create_animation_from_response(
         r"E:\Doodle\build\res_dav.json",
-        r"E:\Doodle\build\send_dav.json"
+        r"E:\Doodle\build\send_dav.json",
+        root_group="anim_a",
+    )
+    create_animation_from_response(
+        r"E:\Doodle\build\res_dav_2.json",
+        r"E:\Doodle\build\res_dav_settings.json",  # 发送的数据中, 不存在骨骼, 所以使用的是标准骨骼, 直接使用setting 获取的骨骼
+        root_group="anim_b",
     )
