@@ -267,7 +267,7 @@ class seedance2_task_run_manager {
         if (!l_result.result_file_paths_.empty()) {
           auto l_adjusted_file = l_result.result_file_paths_[0];
           // 结果文件生成后, 从真实文件名取后缀
-          l_file_extension          = l_adjusted_file.extension().generic_string();
+          l_file_extension     = l_adjusted_file.extension().generic_string();
           sd2::ai_preview_file l_preview_file{};
           l_preview_file.extension_ = l_file_extension;
           l_sqls.emplace_back(insert(l_sql).into<sd2::ai_preview_file>().values(l_preview_file));
@@ -294,7 +294,7 @@ class seedance2_task_run_manager {
                             .set(c(&sd2::task::data_response_) = l_result.data_response_)
                             .set(c(&sd2::task::completion_tokens_) = l_result.completion_tokens_)
                             .set(c(&sd2::task::file_extension_) = l_file_extension)  // 成功后按真实结果文件设置
-                            .set(c(&sd2::task::preview_file_) = l_preview_file_id)  // 非成功清零
+                            .set(c(&sd2::task::preview_file_) = l_preview_file_id)   // 非成功清零
                             .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_));
     l_sqls.emplace_back(add_remaining_tokens_for_person(
         l_sql, in_task.user_id_, in_task.completion_tokens_ - l_result.completion_tokens_
@@ -385,11 +385,7 @@ std::vector<sd2::task_similarity> get_task_similarity_for_person(
 
 }  // namespace
 
-seedance2_subproject_task::seedance2_subproject_task() {
-#ifdef NDEBUG
-  seedance2_task_run_manager::Get().run();
-#endif
-}
+seedance2_subproject_task::seedance2_subproject_task() { seedance2_task_run_manager::Get().run(); }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   person_.check_subproject_access(subproject_id_);
 
@@ -407,7 +403,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   // file_extension_ 不再写死, 改为任务成功后按真实结果文件设置
 
   // 用对应后端的客户端解析请求, 提取模型 / 分辨率 / 提示词
-  auto l_studio        = l_sql.get_by_uuid<ai_studio>(l_task->ai_studio_id_);
+  auto l_studio          = l_sql.get_by_uuid<ai_studio>(l_task->ai_studio_id_);
   client_factory l_client_factory{};
   auto l_client        = l_client_factory.get_client(*l_task, l_studio);
   auto l_info          = l_client->collect_request_info(l_task->data_request_);
