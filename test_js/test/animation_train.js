@@ -10,11 +10,11 @@ import { URL as BASE_URL } from './config.js';
 const URL = BASE_URL.replace(':50025', ':50024');
 
 const MODEL_PATH = 'D:\\ai_mod\\onnx-models--nvidia--Kimodo-SOMA-RP-v1.1';
-const SEND_DAV_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../build/send_dav.json');
-const SEND_DAV_PATH_2 = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../build/send_dav_2.json');
-const RES_DAV_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../build/res_dav.json');
-const RES_DAV_PATH_2 = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../build/res_dav_2.json');
-const RES_SETTINGS_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../build/res_dav_settings.json');
+const SEND_DAV_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../build/send_dav.json');
+const SEND_DAV_PATH_2 = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../build/send_dav_2.json');
+const RES_DAV_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../build/res_dav.json');
+const RES_DAV_PATH_2 = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../build/res_dav_2.json');
+const RES_SETTINGS_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../build/res_dav_settings.json');
 
 describe('ai animation train 测试', function () {
   this.timeout(1200000);
