@@ -34,8 +34,9 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 26;
-}
+constexpr std::size_t g_previous_version = 25;
+constexpr std::size_t g_current_version  = g_previous_version + 1;
+}  // namespace
 
 struct upgrade_init_t : sqlite_upgrade {
   explicit upgrade_init_t() {}
@@ -85,32 +86,22 @@ void backup(orm::session& in_data) {
 }
 }  // namespace
 
-struct upgrade_2_t : sqlite_upgrade {
-  explicit upgrade_2_t() {}
+struct upgrade_1_t : sqlite_upgrade {
+  explicit upgrade_1_t() {}
   void upgrade(sqlite_storage& in_data) override {
     using namespace orm;
     auto l_s = in_data.create_session();
-    if (l_s.pragma().user_version() == 25) {
+    if (l_s.pragma().user_version() == g_previous_version) {
       backup(l_s);
       auto l_guard = l_s.transaction();
-      l_s.rename_column("ai_studio", "app_key", "seedance2_key");
-      l_s.rename_column("ai_studio", "app_secret", "transfer_station_key");
-      l_s.exec("ALTER TABLE seedance2_task_2 ADD COLUMN backend TEXT NOT NULL DEFAULT 'seedance2'");
-      // 删除历史遗留的 pragma_foreign_key_check 真实表。
-      // 该表由 reg_table<pragma_foreign_key_check_entry> + sync_schema 建出，
-      // 它会遮蔽 SQLite 的同名 eponymous 虚拟表，使
-      // `SELECT ... FROM pragma_foreign_key_check` 永远返回 0 行（静默假阴性）。
-      // 删掉之后该查询才会命中真正的 PRAGMA 虚拟表。
-      // 注：session::sync_schema 已跳过该表名，不会再次创建。
-      l_s.drop_table("pragma_foreign_key_check");
       l_guard.commit();
     }
     l_s.pragma().user_version(g_current_version);
   }
-  ~upgrade_2_t() override = default;
+  ~upgrade_1_t() override = default;
 };
 
 std::shared_ptr<sqlite_upgrade> upgrade_init() { return std::make_shared<upgrade_init_t>(); }
-std::shared_ptr<sqlite_upgrade> upgrade_1() { return std::make_shared<upgrade_2_t>(); }
+std::shared_ptr<sqlite_upgrade> upgrade_1() { return std::make_shared<upgrade_1_t>(); }
 
 }  // namespace doodle::details
