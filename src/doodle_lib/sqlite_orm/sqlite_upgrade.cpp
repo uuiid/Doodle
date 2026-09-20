@@ -97,6 +97,12 @@ void backup(orm::session& in_data) {
 //     project), 避免"删一个字典项"静默清空大批业务数据
 //   * 列声明为 NOT NULL 却配 ON DELETE SET NULL 的两处 (comment.person_id /
 //     seedance2_subproject.created_user_id) -> no_action, 否则删 person 必然撞 NOT NULL 约束
+//   * 补齐此前是裸列的外键: comment.object_id / assets_tab.parent_uuid /
+//     work_xlsx_task_info_tab.project_id
+//   * 两处可空的可选归属补 set_null 外键: task.last_preview_file_id -> preview_file,
+//     work_xlsx_task_info_tab.kitsu_task_ref_id -> task
+//   * 补 3 处唯一索引: preview_file 取消单列 unique, project_asset_type_link /
+//     project_person_link / project_status_automation_link / project_preview_background_file_link
 //   * 不再生成与被引用列 UNIQUE 自动索引重复的冗余索引
 //
 // 条件用 `> 27 就跳过` 而不是 `== 27 才执行`: 本步骤的内容是此前所有升级动作的**并集**, 所以
@@ -125,10 +131,16 @@ struct upgrade_1_t : sqlite_upgrade {
       const auto l_fk_was_on = l_s.pragma().foreign_keys();
       l_s.pragma().foreign_keys(false);
       boost::scope::scope_exit l_fk_guard([&l_s, l_fk_was_on]() { l_s.pragma().foreign_keys(l_fk_was_on); });
-      auto l_guard   = l_s.transaction();
+      auto l_guard = l_s.transaction();
+      // 2a. 先把**可空可选归属列**上的悬空引用置空. 必须在 fix_foreign_key_violations 之前:
+      //     后者是按"孤儿子行"删行的, 而 task.last_preview_file_id 这类列上的行本身是有效任务,
+      //     只是指向了已删除的预览文件 —— 交给它处理就会把任务整行删掉.
+      const auto l_nulled  = in_data.null_dangling_optional_references(l_s);
       auto l_deleted = in_data.fix_foreign_key_violations(l_s);
       l_guard.commit();
-      SPDLOG_INFO("upgrade 27->28: 重建 {} 张表, 清理 {} 行外键孤儿", l_rebuilt, l_deleted);
+      SPDLOG_INFO(
+          "upgrade 27->28: 重建 {} 张表, 置空 {} 行悬空引用, 清理 {} 行外键孤儿", l_rebuilt, l_nulled, l_deleted
+      );
     }
 
     // 3. 清理**未注册的遗留表**上的冗余索引: 它们不在 regs_all() 里, 重建碰不到

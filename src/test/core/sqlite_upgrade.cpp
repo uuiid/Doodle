@@ -11,6 +11,7 @@
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
+#include <boost/scope/scope_exit.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <cstdint>
@@ -220,6 +221,102 @@ BOOST_AUTO_TEST_CASE(upgrade_brings_older_db_up_to_current) {
     BOOST_TEST(report_redundant_indexes(l_session, "v26 升级后") == 0);
     BOOST_TEST(scalar_text(l_session, "PRAGMA integrity_check;") == "ok");
     BOOST_TEST(l_session.pragma().foreign_key_check().empty());
+  }
+
+  remove_db(l_db);
+}
+
+// null_dangling_optional_references 必须把悬空引用**置空**, 而不是删行.
+//
+// 这是它与 fix_foreign_key_violations 的关键区别, 也是本次最容易搞错的地方:
+// 后者处理的行本身就不该存在 (孤儿子行), 而 task.last_preview_file_id 这类可空可选归属列上的行
+// 是**有效任务**, 只是指向了已经删除的预览文件. 交给 fix_foreign_key_violations 处理就会把
+// 79 个任务整行删掉 —— 真实库上正是这个数量.
+BOOST_AUTO_TEST_CASE(dangling_optional_references_are_nulled_not_deleted) {
+  app_base l_app{};
+  backup_cleaner l_cleaner{};
+  auto l_db = temp_db("dangling");
+  remove_db(l_db);
+
+  {
+    sqlite_storage l_storage{};
+    l_storage.open(l_db);
+    l_storage.upgrade();
+
+    auto l_session = l_storage.create_session();
+
+    // 造数据时必须关外键: 悬空引用正是要模拟的非法状态, 开着外键根本插不进去.
+    // 关闭状态不能泄漏, 用 guard 恢复.
+    {
+      const auto l_fk_was_on = l_session.pragma().foreign_keys();
+      l_session.pragma().foreign_keys(false);
+      boost::scope::scope_exit l_fk_guard(
+          [&l_session, l_fk_was_on]() { l_session.pragma().foreign_keys(l_fk_was_on); }
+      );
+
+      // 一个真实存在的预览文件, 用来构造"有效引用"
+      exec_sql(l_session, R"(
+        INSERT INTO preview_file (uuid, revision, position, source, file_size, status, validation_status,
+                                  width, height, duration, shotgun_id, is_movie, created_at, updated_at)
+        VALUES (x'000000000000000000000000000000A1', 0, 0, '', 0, '', '', 0, 0, 0.0, 0, 0, '', '');)");
+      // 两个任务: 一个指向存在的预览文件 (有效), 一个指向不存在的 (悬空)
+      exec_sql(l_session, R"(
+        INSERT INTO task (uuid, priority, difficulty, duration, estimation, completion_rate, retake_count,
+                          sort_order, nb_assets_ready, shotgun_id, nb_drawings, created_at, updated_at,
+                          last_preview_file_id)
+        VALUES (x'000000000000000000000000000000B1', 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, '', '',
+                x'000000000000000000000000000000A1');)");
+      exec_sql(l_session, R"(
+        INSERT INTO task (uuid, priority, difficulty, duration, estimation, completion_rate, retake_count,
+                          sort_order, nb_assets_ready, shotgun_id, nb_drawings, created_at, updated_at,
+                          last_preview_file_id)
+        VALUES (x'000000000000000000000000000000B2', 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, '', '',
+                x'000000000000000000000000000000FF');)");
+      // 工时记录: 一条指向存在的任务 (有效), 一条指向不存在的 (悬空)
+      exec_sql(l_session, R"(
+        INSERT INTO work_xlsx_task_info_tab (uuid_id, start_time, end_time, duration, year_month, kitsu_task_ref_id)
+        VALUES (x'000000000000000000000000000000C1', '', '', 0, 202601, x'000000000000000000000000000000B1');)");
+      exec_sql(l_session, R"(
+        INSERT INTO work_xlsx_task_info_tab (uuid_id, start_time, end_time, duration, year_month, kitsu_task_ref_id)
+        VALUES (x'000000000000000000000000000000C2', '', '', 0, 202601, x'000000000000000000000000000000FF');)");
+    }
+
+    // 前置: 两处悬空确实存在, 外键检查能看到
+    BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM task;") == 2);
+    BOOST_TEST(!l_session.pragma().foreign_key_check().empty());
+
+    auto l_nulled = l_storage.null_dangling_optional_references(l_session);
+    BOOST_TEST_MESSAGE(fmt::format("置空 {} 行悬空引用", l_nulled));
+    BOOST_TEST(l_nulled == 2);
+
+    // 关键: 行都还在, 只是引用被置空
+    BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM task;") == 2);
+    BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM work_xlsx_task_info_tab;") == 2);
+    BOOST_TEST(
+        scalar_int(l_session, "SELECT count(*) FROM task WHERE uuid = x'000000000000000000000000000000B2';") == 1
+    );
+    BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM task WHERE last_preview_file_id IS NULL;") == 1);
+    BOOST_TEST(
+        scalar_int(l_session, "SELECT count(*) FROM work_xlsx_task_info_tab WHERE kitsu_task_ref_id IS NULL;") == 1
+    );
+    // 有效引用不能被误伤
+    BOOST_TEST(
+        scalar_int(
+            l_session, "SELECT count(*) FROM task WHERE last_preview_file_id = x'000000000000000000000000000000A1';"
+        ) == 1
+    );
+    BOOST_TEST(
+        scalar_int(
+            l_session,
+            "SELECT count(*) FROM work_xlsx_task_info_tab WHERE kitsu_task_ref_id = "
+            "x'000000000000000000000000000000B1';"
+        ) == 1
+    );
+    // 置空之后外键检查必须干净
+    BOOST_TEST(l_session.pragma().foreign_key_check().empty());
+
+    // 幂等: 再跑一次不应该再改任何东西
+    BOOST_TEST(l_storage.null_dangling_optional_references(l_session) == 0);
   }
 
   remove_db(l_db);

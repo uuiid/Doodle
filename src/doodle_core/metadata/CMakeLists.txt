@@ -44,7 +44,6 @@ target_sources(
         working_file.h
         software.h
         playlist.h
-        ai_image_metadata.h
         kitsu_ctx_t.h
         updata_logs.h
         

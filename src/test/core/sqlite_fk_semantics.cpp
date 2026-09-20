@@ -163,6 +163,9 @@ BOOST_AUTO_TEST_CASE(dictionary_foreign_keys_are_no_action) {
         // 本次补齐的两个业务引用外键
         {  "assets_tab",        "parent_uuid",   "CASCADE"},  // 自引用树, 与 entity.parent_id 一致
         {"work_xlsx_task_info_tab",       "project_id",   "CASCADE"},
+        // 可空的可选归属: 目标没了就把引用置空, 行本身保留 (绝不能是 CASCADE, 那会删掉有效业务行)
+        {       "task", "last_preview_file_id", "SET NULL"},
+        {"work_xlsx_task_info_tab", "kitsu_task_ref_id", "SET NULL"},
     };
 
     for (const auto& l_e : l_expect) {

@@ -94,6 +94,13 @@ class DOODLELIB_API sqlite_storage : public orm::storage {
   // 按"先子表后父表"的顺序删除: 开着外键时 DROP TABLE 会做一次隐式 DELETE, 顺序反了会先删父表.
   // @return 实际删除的表数量
   std::size_t drop_obsolete_tables(orm::session& in_session);
+  // 把**可空的可选归属列**上已经悬空的引用置空.
+  // 与 fix_foreign_key_violations 的区别很关键: 后者删的是"孤儿子行"(行本身就不该存在),
+  // 而这里的行本身是有效的, 只是指向了一个已不存在的对象 —— 直接删行会丢业务数据
+  // (真实库里有 79 个任务的 last_preview_file_id 悬空, 按孤儿删掉就是删掉 79 个任务).
+  // 因此必须在 fix_foreign_key_violations **之前**调用.
+  // @return 被置空的行数
+  std::size_t null_dangling_optional_references(orm::session& in_session);
   strand_type get_strand() { return strand_; }
 };
 

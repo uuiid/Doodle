@@ -13,9 +13,9 @@
 |------|-------------|-------------|
 | `user_version` | 27 | 28 |
 | 业务表 | 76 | 73 |
-| 索引 | 262 | 225 |
+| 索引 | 262 | 229 |
 | 纯冗余索引 | 35 | 0 |
-| 外键总数 | 131 | 131（成分变了，见 4.1） |
+| 外键总数 | 131 | 133（成分变了，见 4.1） |
 | 外键违规行 | 12,466 | 0 |
 | `_backup` 残留表 | 0 | 0 |
 | `integrity_check` | ok | ok |
@@ -112,20 +112,23 @@
 
 **此前是裸列，本次补上约束：**
 
-| 表 | 列 | 引用 | 动作 |
-|----|----|------|------|
-| `assets_tab` | `parent_uuid` | `assets_tab(uuid_id)` | `CASCADE` |
-| `work_xlsx_task_info_tab` | `project_id` | `project(uuid)` | `CASCADE` |
+| 表 | 列 | 引用 | 动作 | 补约束前的悬空行 |
+|----|----|------|------|-----------------|
+| `assets_tab` | `parent_uuid` | `assets_tab(uuid_id)` | `CASCADE` | 0 |
+| `work_xlsx_task_info_tab` | `project_id` | `project(uuid)` | `CASCADE` | 0 |
+| `task` | `last_preview_file_id` | `preview_file(uuid)` | `SET NULL` | 79（置空，见 4.6） |
+| `work_xlsx_task_info_tab` | `kitsu_task_ref_id` | `task(uuid)` | `SET NULL` | 20（置空，见 4.6） |
 
-两者在真实库中都是 **0 条孤儿**，可以直接补约束而无需清理数据。
 `assets_tab.parent_uuid` 是自引用树，动作与同类的 `entity.parent_id` / `entity.source_id` 保持一致。
+后两列是可空的可选归属，用 `SET NULL`；它们存量有悬空值，处理方式见 4.6。
 
 **此外，生产库（v27）里 `comment.object_id` 根本没有外键**——它指向 `entity(uuid)` 的旧声明
 在真实数据上对全部 53 万行都不成立。重建会把它按当前声明改成 `task(uuid)` 并加上 `CASCADE`。
 
-> 这三处是「重建会补上当前声明里有、老库里没有的外键」的体现，也解释了为什么
-> 升级前后外键总数都是 131：**+3（上面三个）−3（随废弃表一起消失的
-> `ai_image_metadata.author` 与 `metadata_descriptor_department_link` 的两个）**。
+> 这三处是「重建会补上当前声明里有、老库里没有的外键」的体现。
+> 升级前后外键总数 131 → 133，是 **+5（上表四行，加上 `comment.object_id`）
+> −3（随废弃表一起消失的 `ai_image_metadata.author` 与
+> `metadata_descriptor_department_link` 的两个）** 的结果。
 > 这类差异必须靠重建前后来对比外键清单才能发现，不能靠加减法推算。
 
 ### 4.2 删除的废弃表
@@ -154,7 +157,7 @@
 | 构建清单 | `http_method/model_library/CMakeLists.txt` |
 
 **这是一处对外可见的接口删除**。判断依据是表内 0 行、且功能与 `seedance2` 那套 AI 能力重复。
-类型定义 `doodle_core/metadata/ai_image_metadata.h` 本身暂时保留（属公开类型，删除另议）。
+类型定义 `doodle_core/metadata/ai_image_metadata.h` 也已删除（确认仓库与 `docs/api` 中均无引用）。
 
 ### 4.4 废弃但保留的列
 
@@ -173,10 +176,29 @@
 | `preview_file` | `name` 单列 `unique()` | 取消 | 同一个 `name` 在不同 `task`/`revision` 下本就会重复出现，单列唯一会让合法数据插不进去。唯一性由 `(name, task_id, revision)` 复合唯一索引保证 |
 | `project_asset_type_link` | 无唯一索引 | `(project_id, asset_type_id)` 唯一 | 否则同一对（项目, 资产类型）可以重复插入 |
 | `project_person_link` | 无唯一索引 | `(project_id, person_id)` 唯一 | 同上 |
+| `project_status_automation_link` | 无唯一索引 | `(project_id, status_automation_id)` 唯一 | 同上 |
+| `project_preview_background_file_link` | 无唯一索引 | `(project_id, preview_background_file_id)` 唯一 | 同上（该表当前 0 行） |
 
 加唯一索引前已确认真实库中**不存在重复行**，因此不会因建索引失败而中断升级。
 
-### 4.6 未处理
+### 4.6 悬空的可选归属引用：置空而非删行
+
+`task.last_preview_file_id` 与 `work_xlsx_task_info_tab.kitsu_task_ref_id` 此前是裸列。
+补外键之前必须处理存量悬空值，而**怎么处理是有区别的**：
+
+| 列 | 非空行 | 其中悬空 | 处理 |
+|----|--------|----------|------|
+| `task.last_preview_file_id` | 93,195 | 79 | 置空 |
+| `work_xlsx_task_info_tab.kitsu_task_ref_id` | 21,280 | 20 | 置空 |
+
+这两列是可空的可选归属，外键动作用 `SET NULL`。存量悬空值也必须**置空**：
+
+> `fix_foreign_key_violations` 是**删行**的（它处理的"孤儿子行"本身就不该存在）。
+> 如果把这 79 行交给它处理，删掉的不是引用，而是 **79 个有效任务**。
+> 所以升级流程里新增了 `null_dangling_optional_references`，并且必须排在
+> `fix_foreign_key_violations` **之前**。
+
+### 4.7 未处理
 
 | 表 | 说明 |
 |----|------|
@@ -207,7 +229,8 @@
 - **未注册的遗留表**：不参与重建，需要 `drop_redundant_indexes` 显式处理
   （真实库上删掉 4 个；它只按**常量参数**调用 `pragma_index_info`，不依赖相关子查询）。
 
-两者合计把 35 个纯冗余索引清到 0，索引总数 262 → 225。
+两者合计把 35 个纯冗余索引清到 0。索引总数 262 → 229（本次新增 4 个外键子列索引与
+4 个唯一索引，所以不是简单地从 262 减去 35）。
 
 ---
 
@@ -230,15 +253,21 @@
 ## 七、升级机制
 
 `ON DELETE` 写在 DDL 里，所以**任何外键动作的改动都必须重建表**。v27 → v28 的单步升级
-（`details::upgrade_1_t`）依次做四件事：
+（`details::upgrade_1_t`）依次做：
 
 | 步骤 | 作用 |
 |------|------|
 | `backup(l_s)` | 升级前把整库备份到 cache 目录的 `backup/kitsu_<时间戳>.db` |
 | `rebuild_all_tables(l_s)` | 按当前 ORM 声明重建**每一个已注册的表**（`CREATE` 新表 → `INSERT ... SELECT` → `DROP` 旧表 → `RENAME`），使新的外键动作生效 |
-| `fix_foreign_key_violations` | 关外键 + 事务，删除所有孤儿行；`drop_redundant_indexes` 清理未注册表上的冗余索引；`drop_obsolete_tables` 删除废弃表 |
+| `null_dangling_optional_references` | 关外键 + 事务内，把可空可选归属列上的悬空引用**置空**（见 4.6）。**必须排在下一步之前** |
+| `fix_foreign_key_violations` | 同事务内，删除所有孤儿子行 |
+| `drop_redundant_indexes` | 清理未注册的遗留表上的冗余索引（它们不参与重建） |
+| `drop_obsolete_tables` | 删除已从 `regs_all()` 摘掉的废弃表（同样不参与重建） |
 | `vacuum()` | 回收空间（需要一份等大的临时空间） |
 | `user_version(28)` | 标记完成 |
+
+**顺序很关键**：`null_dangling_optional_references` 与 `fix_foreign_key_violations` 一个置空、
+一个删行，作用在同一批违规行上。顺序反了，79 个有效任务会被当成孤儿删掉。
 
 ### 7.1 版本判断用 `> 27 就跳过`，不是 `== 27`
 
@@ -265,13 +294,19 @@
 
 ## 八、已知遗留问题
 
-- `preview_file.source_file_id` 仍是废弃列，只是本次不删（见 4.4）。
-- `doodle_core/metadata/ai_image_metadata.h` 类型定义已无使用者，可另行删除。
-- `entity_asset_extend_2.entity_id → entity` 曾有 134 条真孤儿（该列为 `NOT NULL`，
-  无法置空），已由本次迁移清理。
-- `task.last_preview_file_id`、`work_xlsx_task_info_tab.kitsu_task_ref_id` 在清理后仍有孤儿，
-  补约束前需要再清一次。
-- `project_preview_background_file_link`、`project_status_automation_link` 也没有唯一索引。
+本次审计列出的项目都已处理完毕。剩下的只有一项需要留意：
+
+- `preview_file.source_file_id` 仍是废弃列（整列为 NULL），声明被有意保留，删除属于下一次变更（见 4.4）。
+
+此外，`seedance2_canvas_element` 等开发中的表未做审计（见 4.7）。
+
+### 8.1 后续值得复查的方向
+
+- `fix_foreign_key_violations` 对所有违规一律**删行**。目前只有
+  `task.last_preview_file_id` / `work_xlsx_task_info_tab.kitsu_task_ref_id` 两列需要"置空"语义，
+  已由 `null_dangling_optional_references` 单独处理。以后每补一个**可空可选归属**外键，
+  都要同步往那张表里加一行，否则存量悬空值会被当成孤儿删掉整行。
+- 补约束前务必先用第 4.6 节的查询确认悬空行数，并判断该列该"置空"还是该"删行"。
 
 ---
 

@@ -421,6 +421,10 @@ void sqlite_storage::regs_all() {
           &work_xlsx_task_info_helper::database_t::project_id_, &project::uuid_id_, foreign_key_action::cascade
       )
       .add_index(&work_xlsx_task_info_helper::database_t::year_month_)
+      // kitsu_task_ref_id 是可空的可选引用: 任务没了就把引用置空, 不删这条工时记录
+      .add_foreign_key(
+          &work_xlsx_task_info_helper::database_t::kitsu_task_ref_id_, &task::uuid_id_, foreign_key_action::set_null
+      )
       .add_unique_index(
           &work_xlsx_task_info_helper::database_t::kitsu_task_ref_id_,
           &work_xlsx_task_info_helper::database_t::year_month_, &work_xlsx_task_info_helper::database_t::person_id_
@@ -611,6 +615,8 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(&task::task_status_id_, &task_status::uuid_id_, foreign_key_action::no_action)
       .add_foreign_key(&task::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&task::assigner_id_, &person::uuid_id_, foreign_key_action::set_null)
+      // last_preview_file_id 是可空的可选归属: 预览文件没了就把引用置空, 不删任务本身
+      .add_foreign_key(&task::last_preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null)
       .add_unique_index(&task::name_, &task::project_id_, &task::task_type_id_, &task::entity_id_);
 
   reg_table<entity_link>("entity_link")
@@ -749,6 +755,10 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(
           &project_status_automation_link::status_automation_id_, &status_automation::uuid_id_,
           foreign_key_action::cascade
+      )
+      // 一个项目与一条状态自动化只能有一条关联
+      .add_unique_index(
+          &project_status_automation_link::project_id_, &project_status_automation_link::status_automation_id_
       );
 
   reg_table<project_preview_background_file_link>("project_preview_background_file_link")
@@ -763,6 +773,11 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(
           &project_preview_background_file_link::preview_background_file_id_, &preview_background_file::uuid_id_,
           foreign_key_action::cascade
+      )
+      // 一个项目与一张预览背景图只能有一条关联
+      .add_unique_index(
+          &project_preview_background_file_link::project_id_,
+          &project_preview_background_file_link::preview_background_file_id_
       );
 
   reg_table<project>("project")
@@ -1325,6 +1340,49 @@ std::size_t sqlite_storage::drop_obsolete_tables(orm::session& in_session) {
   }
   SPDLOG_INFO("drop_obsolete_tables: 共删除 {} 张废弃表", l_dropped);
   return l_dropped;
+}
+
+std::size_t sqlite_storage::null_dangling_optional_references(orm::session& in_session) {
+  using namespace orm;
+  // 可空的可选归属列. 表/列/目标必须与 regs_all() 里的外键声明保持一致.
+  struct optional_ref_t {
+    const char* table_;
+    const char* column_;
+    const char* ref_table_;
+    const char* ref_column_;
+  };
+  static constexpr optional_ref_t g_refs[]{
+      {"task", "last_preview_file_id", "preview_file", "uuid"},
+      {"work_xlsx_task_info_tab", "kitsu_task_ref_id", "task", "uuid"},
+  };
+  std::size_t l_nulled{0};
+  for (const auto& l_ref : g_refs) {
+    // 悬空 = 本列非空, 但目标表里找不到对应的行
+    auto l_where = fmt::format(
+        R"("{0}"."{1}" IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "{2}" WHERE "{2}"."{3}" = "{0}"."{1}"))",
+        l_ref.table_, l_ref.column_, l_ref.ref_table_, l_ref.ref_column_
+    );
+    // 先数再改: UPDATE 的影响行数不好从 sqlite_stmt 上取, 而这两个查询的匹配集合完全相同
+    std::int64_t l_count{0};
+    {
+      auto l_stmt = sqlite_stmt{
+          in_session, fmt::format(R"(SELECT count(*) FROM "{0}" WHERE {1};)", l_ref.table_, l_where)
+      };
+      l_stmt.step();
+      l_count = l_stmt.get_column_value<std::int64_t>(0);
+    }
+    if (l_count == 0) continue;
+    {
+      auto l_stmt = sqlite_stmt{
+          in_session, fmt::format(R"(UPDATE "{0}" SET "{1}" = NULL WHERE {2};)", l_ref.table_, l_ref.column_, l_where)
+      };
+      l_stmt.step();
+    }
+    SPDLOG_INFO("null_dangling_optional_references: {}.{} 置空 {} 行", l_ref.table_, l_ref.column_, l_count);
+    l_nulled += static_cast<std::size_t>(l_count);
+  }
+  SPDLOG_INFO("null_dangling_optional_references: 共置空 {} 行悬空引用", l_nulled);
+  return l_nulled;
 }
 
 boost::asio::awaitable<void> sqlite_database::run_sql(orm::sql_modify_statement_vector_t in_sqls) {

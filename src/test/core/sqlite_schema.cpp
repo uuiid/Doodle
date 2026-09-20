@@ -166,7 +166,10 @@ BOOST_AUTO_TEST_CASE(schema_cleanup_shape_is_correct) {
       const char* columns_;
     };
     for (const auto& l_link : {link_t{"project_asset_type_link", "project_id,asset_type_id"},
-                               link_t{"project_person_link", "project_id,person_id"}}) {
+                               link_t{"project_person_link", "project_id,person_id"},
+                               link_t{"project_status_automation_link", "project_id,status_automation_id"},
+                               link_t{"project_preview_background_file_link",
+                                      "project_id,preview_background_file_id"}}) {
       auto l_unique = count_indexes(l_session, l_link.table_, l_link.columns_, true);
       BOOST_TEST_MESSAGE(fmt::format("{}({}) 唯一索引数 = {}", l_link.table_, l_link.columns_, l_unique));
       BOOST_TEST(l_unique == 1);

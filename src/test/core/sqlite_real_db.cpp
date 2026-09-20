@@ -424,7 +424,8 @@ BOOST_AUTO_TEST_CASE(upgrade_to_v28_on_real_db) {
     BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM comment") > 0);
     BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM task") > 0);
 
-    // 升级后的整体结构. 外键总数前后都是 131, 但成分变了:
+    // 升级后的整体结构. 外键总数 131 -> 133: 新增 task.last_preview_file_id 与
+    // work_xlsx_task_info_tab.kitsu_task_ref_id 两个 set_null 外键 (其余 +3/-3 相互抵消, 见下).
     //   +3: comment.object_id (此前库里根本没有这个外键)、assets_tab.parent_uuid、
     //       work_xlsx_task_info_tab.project_id
     //   -3: 随废弃表一起消失的 ai_image_metadata.author 与 metadata_descriptor_department_link 的两个
@@ -439,9 +440,25 @@ BOOST_AUTO_TEST_CASE(upgrade_to_v28_on_real_db) {
     );
     BOOST_TEST_MESSAGE(fmt::format("升级后结构: 业务表={} 索引={} 外键={}", l_tables, l_indexes, l_fks));
     BOOST_TEST(l_tables == 73);
-    BOOST_TEST(l_fks == 131);
+    BOOST_TEST(l_fks == 133);
     // 重建会删掉旧表上全部索引再按当前声明重建, 索引数只应减少
     BOOST_TEST(l_indexes < 262);
+
+    // 两处可空可选归属的悬空引用必须被**置空**而不是删行 —— 升级前分别有 79 / 20 行
+    for (const auto& [l_table, l_column, l_ref] :
+         {std::tuple{"task", "last_preview_file_id", "preview_file"},
+          std::tuple{"work_xlsx_task_info_tab", "kitsu_task_ref_id", "task"}}) {
+      auto l_dangling = scalar_int(
+          l_session,
+          fmt::format(
+              R"(SELECT count(*) FROM "{0}" WHERE "{1}" IS NOT NULL
+                   AND NOT EXISTS (SELECT 1 FROM "{2}" WHERE "{2}"."uuid" = "{0}"."{1}");)",
+              l_table, l_column, l_ref
+          )
+      );
+      BOOST_TEST_MESSAGE(fmt::format("升级后 {}.{} 悬空引用 = {}", l_table, l_column, l_dangling));
+      BOOST_TEST(l_dangling == 0);
+    }
   }
 
   // 升级确实在动数据之前做了备份
