@@ -1168,6 +1168,16 @@ void sqlite_storage::upgrade() {
   // register_custom_extension, 由 only_open_db 对每条新连接执行.
   auto l_s = create_session();
   l_s.pragma().journal_mode(orm::journal_mode_t::wal);
+
+  // 升级的最后做一次 WAL 检查点: 把上面各步骤 (含刚写下的 user_version) 落在 WAL 里的内容
+  // 写回主库文件, 并把 WAL 截断, 让升级结束后的 .db 文件自身就是完整的.
+  // 放在 journal_mode(WAL) 之后, 是因为库不在 WAL 模式时检查点只是空操作; 放在这里也顺带
+  // 覆盖了全新库那条路径 (upgrade_init_t 建表 + 插内置常量). 此刻 HTTP 监听还没起来,
+  // 没有别的读者, truncate 不会被 SQLITE_BUSY 挡住.
+  // truncate 成功后 SQLite 约定两个计数都归零 (日志已被截断成 0 字节), 所以计数不能当作
+  // "干了多少活"的证据, 出没出错靠异常判断.
+  const auto l_ckpt = l_s.wal_checkpoint(orm::wal_checkpoint_mode_t::truncate);
+  SPDLOG_INFO("upgrade: WAL 检查点 (truncate) 完成, 计数 {} / {}", l_ckpt.log_frames_, l_ckpt.checkpointed_frames_);
 }
 
 std::size_t sqlite_storage::fix_foreign_key_violations(

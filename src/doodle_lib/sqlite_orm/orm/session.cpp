@@ -144,6 +144,22 @@ void session::vacuum() {
   auto l_stmt = sqlite_stmt(*this, l_sql);
   l_stmt.step();
 }
+wal_checkpoint_result_t session::wal_checkpoint(wal_checkpoint_mode_t in_mode) {
+  auto l_db = get_connection();
+  wal_checkpoint_result_t l_result{};
+  // 库名传 "main" 而不是 nullptr: nullptr 的含义是"所有已 attach 的 WAL 库", 那种情况下 SQLite
+  // 明确说明输出参数是 undefined (多个库没法用一个计数表达). 本项目从不 ATTACH, 传 "main"
+  // 才能拿到有定义的帧数; 非 WAL 库则按文档返回 SQLITE_OK + {-1, -1}.
+  const auto l_r = ::sqlite3_wal_checkpoint_v2(
+      *l_db, "main", static_cast<std::int32_t>(in_mode), &l_result.log_frames_, &l_result.checkpointed_frames_
+  );
+  // BUSY / LOCKED 不是失败: 有别的连接正读着 WAL, 这次只写回了一部分, 帧数已经如实返回.
+  // 其余返回码才是真出错.
+  if (l_r != SQLITE_OK && l_r != SQLITE_BUSY && l_r != SQLITE_LOCKED) {
+    throw_exception(doodle_error{fmt::format("WAL 检查点失败: {}", sqlite3_errmsg(*l_db))});
+  }
+  return l_result;
+}
 void session::exec(std::string_view sql) {
   auto l_stmt = sqlite_stmt(*this, std::string(sql));
   l_stmt.step();

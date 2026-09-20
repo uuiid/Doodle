@@ -30,6 +30,25 @@ enum class journal_mode_t { delete_, truncate, persist, memory, wal, off };
 // PRAGMA auto_vacuum 的取值, 数值与 SQLite 一致
 enum class auto_vacuum_t : std::int32_t { none = 0, full = 1, incremental = 2 };
 
+// sqlite3_wal_checkpoint_v2 的检查点模式, 数值与 SQLite 的 SQLITE_CHECKPOINT_* 一致.
+// passive 不等任何读者, 能写回多少算多少; full 会等到没有读者再写回全部;
+// restart 在 full 之上还要求后续写事务从 WAL 开头重新写; truncate 再额外把 WAL 截断成 0 字节.
+enum class wal_checkpoint_mode_t : std::int32_t {
+  passive  = 0,
+  full     = 1,
+  restart  = 2,
+  truncate = 3,
+};
+
+// WAL 检查点的结果.
+// 库不在 WAL 模式 (或检查点因错误没能执行) 时两个字段都是 -1.
+// truncate 模式成功时两个字段**恒为 0** —— 这是 SQLite 的约定 (日志已截断成 0 字节, 计数自然
+// 归零), 不代表没干活; 想看 WAL 里积了多少帧要用 passive.
+struct wal_checkpoint_result_t {
+  std::int32_t log_frames_{0};           // WAL 中的总帧数
+  std::int32_t checkpointed_frames_{0};  // 已写回主库文件的帧数
+};
+
 struct column_info {
   std::string name_;
   table_columns_t ptr_;

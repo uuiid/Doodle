@@ -140,6 +140,13 @@ class DOODLELIB_API session {
   bool trigger_exists(const std::string& trigger_name);
   // vacuum数据库
   void vacuum();
+  // WAL 检查点 (sqlite3_wal_checkpoint_v2): 把 WAL 里已提交的内容写回主库文件.
+  // 库不在 WAL 模式时是空操作, 返回 {-1, -1}.
+  // 注意 truncate 模式**成功时两个计数恒为 0** (SQLite 的约定: 日志已被截断成 0 字节),
+  // 不代表没干活 —— 想看 WAL 里积了多少帧要用 passive.
+  // 有别的连接正读着 WAL 时返回的已写回帧数会小于总帧数, 这不算失败 —— 要"全部写回"就得用
+  // full / restart / truncate, 它们会等读者结束 (受 busy_timeout 限制, 未设置时不等待).
+  wal_checkpoint_result_t wal_checkpoint(wal_checkpoint_mode_t in_mode = wal_checkpoint_mode_t::truncate);
   // 运行任意SQL
   void exec(std::string_view sql);
   // 同步schema

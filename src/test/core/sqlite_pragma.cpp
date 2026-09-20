@@ -1,5 +1,5 @@
 //
-// pragma_t 的 vacuum_into / auto_vacuum / incremental_vacuum 测试
+// session / pragma_t 的 wal_checkpoint / vacuum_into / auto_vacuum / incremental_vacuum 测试
 //
 
 #include <doodle_lib/core/app_base.h>
@@ -208,6 +208,67 @@ BOOST_AUTO_TEST_CASE(incremental_vacuum_frees_pages) {
     BOOST_TEST(scalar_int(l_session, "PRAGMA freelist_count;") == 0);
 
     BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM pv_row") == 100);
+    BOOST_TEST(scalar_text(l_session, "PRAGMA integrity_check;") == "ok");
+  }
+
+  remove_db(l_db);
+}
+
+// wal_checkpoint: WAL 模式下把 WAL 写回主库并截断; 非 WAL 模式下是空操作
+BOOST_AUTO_TEST_CASE(wal_checkpoint_flushes_and_truncates) {
+  app_base l_app{};
+  auto l_db = temp_db("walckpt");
+  remove_db(l_db);
+
+  {
+    sqlite_storage l_storage{};
+    l_storage.open(l_db);
+    reg_pv_table(l_storage);
+    auto l_session = l_storage.create_session();
+    l_session.create_table<pv_row>();
+
+    // 还没切到 WAL: 检查点什么都不做, 两个计数都保持 -1 —— 这是 SQLite 在没开 WAL 时的约定,
+    // 也正是"升级最后那次检查点必须放在 journal_mode(WAL) 之后"的原因
+    auto l_none = l_session.wal_checkpoint(wal_checkpoint_mode_t::truncate);
+    BOOST_TEST(l_none.log_frames_ == -1);
+    BOOST_TEST(l_none.checkpointed_frames_ == -1);
+
+    l_session.pragma().journal_mode(journal_mode_t::wal);
+    BOOST_TEST(scalar_text(l_session, "PRAGMA journal_mode;") == "wal");
+
+    // 写一批数据, 让 WAL 里确实有内容
+    {
+      auto l_guard = l_session.transaction();
+      for (std::int64_t l_i = 1; l_i <= 2000; ++l_i)
+        insert(l_session).into<pv_row>().set(c(&pv_row::id_) = l_i, c(&pv_row::payload_) = std::string(200, 'y'))();
+      l_guard.commit();
+    }
+
+    // 先 passive 看一眼 WAL 里到底积了多少帧 —— truncate 成功后按 SQLite 的约定返回 0/0,
+    // 光看它看不出检查点到底干了多少活
+    auto l_passive = l_session.wal_checkpoint(wal_checkpoint_mode_t::passive);
+    BOOST_TEST_MESSAGE(
+        fmt::format("passive: 总帧 {} / 已写回 {}", l_passive.log_frames_, l_passive.checkpointed_frames_)
+    );
+    BOOST_TEST(l_passive.log_frames_ >= 0);
+    BOOST_TEST(l_passive.checkpointed_frames_ == l_passive.log_frames_);
+
+    // truncate: 成功后 WAL 被截断成 0 字节, 两个计数按约定都是 0
+    auto l_ckpt = l_session.wal_checkpoint(wal_checkpoint_mode_t::truncate);
+    BOOST_TEST_MESSAGE(fmt::format("truncate: 总帧 {} / 已写回 {}", l_ckpt.log_frames_, l_ckpt.checkpointed_frames_));
+    BOOST_TEST(l_ckpt.log_frames_ == 0);
+    BOOST_TEST(l_ckpt.checkpointed_frames_ == 0);
+
+    // truncate 之后 WAL 必须是空的 (文件被整个删掉也算空)
+    auto l_wal = FSys::path{l_db.generic_string() + "-wal"};
+    std::error_code l_ec{};
+    auto l_wal_size = FSys::exists(l_wal, l_ec) ? FSys::file_size(l_wal, l_ec) : std::uintmax_t{0};
+    BOOST_TEST_MESSAGE(fmt::format("检查点后 WAL 大小 = {}", l_wal_size));
+    BOOST_TEST(l_wal_size == 0);
+
+    // 数据没丢, 模式也没被改掉
+    BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM pv_row") == 2000);
+    BOOST_TEST(scalar_text(l_session, "PRAGMA journal_mode;") == "wal");
     BOOST_TEST(scalar_text(l_session, "PRAGMA integrity_check;") == "ok");
   }
 
