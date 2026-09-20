@@ -538,19 +538,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time, post) {
       l_user.uuid_id_, chrono::local_days{year_month_ / 1}
   );
   {  // 检查除空以外的id是否重复
-    std::map<uuid, std::size_t> l_map;
+    // 本请求会把该人员该月的工时整月重写(上面的 l_ids 删掉 person_id + year_month_ 为该月 1 日的全部行),
+    // 写入的行与提交列表一一对应, 所以"每个任务每个月只能有一个"(对应 work_xlsx_task_info_tab 上
+    // kitsu_task_ref_id + year_month + person_id 的唯一索引)就是对提交列表按任务引用去重.
+    // 原实现遍历的是本请求的输出缓冲 l_block_ptr(此处必为空), 而且比较的是行的 uuid_id_ 而不是任务引用,
+    // 所以永远不会触发; 改成去读数据库里的当月行则会让"整月重提"永远失败, 与整月重写的语义矛盾.
+    std::set<uuid> l_task_ids{};
     for (auto&& l_task : l_data) {
       if (l_task.task_id.is_nil())
         co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "task_id 不可为空");
-      l_map[l_task.task_id]++;
-    }
-    if (l_map.contains(uuid{})) l_map.erase(uuid{});
-    if (std::ranges::any_of(l_map, [](const auto& p) { return p.second > 1; }))
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "提交的task id 有重复");
-    std::set<uuid> l_block_ids{};
-    for (auto&& l_task : *l_block_ptr) l_block_ids.emplace(l_task.uuid_id_);
-    for (auto&& l_task : l_data) {
-      if (l_block_ids.contains(l_task.task_id))
+      if (!l_task_ids.emplace(l_task.task_id).second)
         co_return in_handle->make_error_code_msg(
             boost::beast::http::status::bad_request, fmt::format("每个任务每个月只能有一个 {}", l_task.task_id)
         );

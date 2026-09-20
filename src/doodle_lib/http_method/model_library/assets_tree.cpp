@@ -105,12 +105,23 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree_instance, put) {
   person_.check_supervisor();
   auto l_sql   = get_sqlite_database();
 
+  // 该接口更新 URL 指定的节点: 先读出旧行(节点不存在时 get_by_uuid 抛错), 再把请求体叠加到旧行上.
+  // 因此这里必须走 update; 原实现走的是 install(新增), 而 install 断言 id_ == 0, 该分支永远抛
+  // "必须传入id为0的新实体"; 断言随 install 一起删除后, 会退化成带非 0 id 的 INSERT, 撞 uuid_id 唯一约束.
+  auto l_json  = in_handle->get_json();
   auto l_value = std::make_shared<assets_helper::database_t>(l_sql.get_by_uuid<assets_helper::database_t>(id_));
-  in_handle->get_json().get_to(*l_value);
+  l_json.get_to(*l_value);
+  // 节点身份以 URL 为准, 请求体里的 id 不改变它
+  l_value->uuid_id_ = id_;
   check_data(*l_value);
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(insert(l_sql).into<assets_helper::database_t>().values(*l_value));
+  l_sqls.emplace_back(
+      update(l_sql)
+          .from<assets_helper::database_t>()
+          .set_from_ref<assets_helper::database_t>(l_json)
+          .where(c(&assets_helper::database_t::uuid_id_) == id_)
+  );
   co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{} = *l_value);
 }

@@ -55,6 +55,15 @@ struct database_t {
     return {assets_helper::database_t{.uuid_id_ = get_lable_id(), .label_ = "标签", .uuid_parent_ = {}, .order_ = 0}};
   }
 
+  /// 可由请求体更新的字段; 键名与 to_json/from_json 一致
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"label", &database_t::label_},            //
+        std::pair{"parent_id", &database_t::uuid_parent_},  //
+        std::pair{"order", &database_t::order_},            //
+    };
+  }
+
   friend void to_json(nlohmann::json& j, const database_t& v) {
     j["id"]        = v.uuid_id_;
     j["label"]     = v.label_;
