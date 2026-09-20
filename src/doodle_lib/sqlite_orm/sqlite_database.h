@@ -76,6 +76,12 @@ class DOODLELIB_API sqlite_storage : public orm::storage {
   std::size_t fix_foreign_key_violations(
       orm::session& in_session, std::size_t in_max_rounds = 50, std::size_t in_chunk_size = 500
   );
+  // 重建所有已注册的实体表 (逐表调用 session::rebuild_table).
+  // 跳过: 伪表 (sqlite_master / pragma_foreign_key_check)、FTS5 虚拟表、以及库中尚未创建的表.
+  // 期间会临时关闭外键约束 (重建会 DROP TABLE, 开着外键会触发级联或约束错误).
+  // 注意: 重建 entity 这类被 FTS 触发器引用的表后, FTS 索引需要另行重建.
+  // @return 实际重建的表数量
+  std::size_t rebuild_all_tables(orm::session& in_session);
   strand_type get_strand() { return strand_; }
 };
 

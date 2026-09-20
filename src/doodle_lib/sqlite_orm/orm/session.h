@@ -27,6 +27,10 @@ class DOODLELIB_API session {
     void journal_mode(journal_mode_t in_mode);
     void recursive_triggers(bool in_recursive);
     void foreign_keys(bool in_foreign_keys);
+    // SQLite 3.25+ 的 ALTER TABLE RENAME 会重新解析库中所有触发器和视图.
+    // 重建表时旧表刚被 DROP, 引用了它的触发器会解析失败
+    // (error in trigger xxx: no such table: yyy), 需要临时开启 legacy 行为关闭该重解析.
+    void legacy_alter_table(bool in_legacy);
     void locking_mode(bool in_exclusive);
     std::int32_t user_version();
     void user_version(std::int32_t version);

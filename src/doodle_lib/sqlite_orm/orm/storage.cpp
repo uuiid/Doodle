@@ -170,9 +170,10 @@ sqlite_stmt::~sqlite_stmt() { sqlite3_finalize(stmt_); }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace {
-void sqlite_database_error_log_callback(void* pArg, int iErrCode, const char* zMsg) {
-  if (auto l_logger = static_cast<spdlog::logger*>(pArg); l_logger)
-    l_logger->error(fmt::format("{} {}", iErrCode, zMsg));
+void sqlite_database_error_log_callback(void* /*pArg*/, int iErrCode, const char* zMsg) {
+  // 必须在回调时重新获取默认 logger. 若在注册时缓存裸指针, 默认 logger 一旦被替换或销毁,
+  // 回调再解引用就是悬垂指针 (表现为 sqlite3_log -> spdlog 崩溃, 例如外键约束中止时).
+  if (auto l_logger = spdlog::default_logger(); l_logger) l_logger->error(fmt::format("{} {}", iErrCode, zMsg));
 }
 }  // namespace
 
@@ -253,7 +254,7 @@ void storage::add_thread_db(const sqlite_connection_ptr& in_ptr) {
 void storage::open_(FSys::path in_path, std::int32_t in_flags) {
   static std::once_flag l_flag{};
   std::call_once(l_flag, []() {
-    sqlite3_config(SQLITE_CONFIG_LOG, sqlite_database_error_log_callback, spdlog::default_logger_raw());
+    sqlite3_config(SQLITE_CONFIG_LOG, sqlite_database_error_log_callback, nullptr);
   });
   if (!has_reg_table<detail::sqlite_master_entry>()) reg_sqlite_master_entry(*this);
 

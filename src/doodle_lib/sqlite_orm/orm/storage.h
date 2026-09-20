@@ -272,6 +272,9 @@ class DOODLELIB_API storage : public boost::noncopyable {
   template <typename T>
   std::string get_table_name() const;
   std::string get_table_name(std::type_index in_type_index) const;
+
+  // 全部已注册表的信息 (含虚拟表), 供批量维护操作枚举使用
+  const std::vector<std::shared_ptr<table_info_base>>& get_all_reg_tables() const { return tables_; }
 };
 
 }  // namespace orm

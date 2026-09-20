@@ -5,6 +5,8 @@
 
 #include "storage.h"
 
+#include <boost/scope/scope_exit.hpp>
+
 namespace doodle::orm {
 session::session_data::~session_data() {
   if (connection_ && s_) s_->add_thread_db(connection_);
@@ -229,6 +231,16 @@ void session::rebuild_table(const std::type_index& table_name, const std::vector
     );
     //   删除旧表
     auto l_drop_sql    = fmt::format(R"(DROP TABLE "{}";)", l_old_table->name_);
+    // 复制数据前先删掉本表上的触发器, 避免 INSERT ... SELECT 触发它们:
+    // 例如 entity 的 FTS 同步触发器会把每一行重复写进 entity_fts, 污染索引.
+    // 函数末尾的触发器重建逻辑会把它们恢复.
+    for (const auto& trigger : l_s.triggers_) {
+      if (!trigger->info_->table_name_ || trigger->info_->table_name_->to_sql(*this, to_sql_ctx{}) != l_old_table->name_)
+        continue;
+      auto l_drop_trigger_stmt =
+          sqlite_stmt{*this, fmt::format(R"(DROP TRIGGER IF EXISTS "{}";)", trigger->info_->name_)};
+      l_drop_trigger_stmt.step();
+    }
     // 执行 SQL 语句
     auto l_create_stmt = sqlite_stmt{*this, l_create_sql};
     l_create_stmt.step();
@@ -236,8 +248,16 @@ void session::rebuild_table(const std::type_index& table_name, const std::vector
     l_copy_stmt.step();
     auto l_drop_stmt = sqlite_stmt{*this, l_drop_sql};
     l_drop_stmt.step();
-    auto l_rename_stmt = sqlite_stmt{*this, l_rename_sql};
-    l_rename_stmt.step();
+    {
+      // SQLite 3.25+ 的 ALTER TABLE RENAME 会重新解析库中所有触发器和视图. 此刻旧表刚被 DROP,
+      // 引用了它的触发器会解析失败 (error in trigger xxx: no such table: yyy).
+      // legacy_alter_table=ON 关闭该重解析; 而本次要改的名字 (<name>_backup -> <name>) 本来就没有
+      // 任何对象引用, 不需要 SQLite 去改写引用.
+      pragma().legacy_alter_table(true);
+      boost::scope::scope_exit l_legacy_guard([this]() { pragma().legacy_alter_table(false); });
+      auto l_rename_stmt = sqlite_stmt{*this, l_rename_sql};
+      l_rename_stmt.step();
+    }
     auto l_all_triggers = get_all_trigger_names();
     // 5. 创建索引和触发器
     for (const auto& index : l_old_table->indexes_) {
@@ -246,6 +266,10 @@ void session::rebuild_table(const std::type_index& table_name, const std::vector
       l_stmt.step();
     }
     for (const auto& trigger : l_s.triggers_) {
+      // 只重建属于当前表的触发器. 其它表的触发器不能碰: 它们引用的表在本库中可能并不存在
+      // (例如只建了部分表的库), 直接 CREATE 会报 no such table.
+      if (!trigger->info_->table_name_ || trigger->info_->table_name_->to_sql(*this, to_sql_ctx{}) != l_old_table->name_)
+        continue;
       if (l_all_triggers.contains(trigger->info_->name_)) {
         // SPDLOG_DEBUG("Trigger already exists, skipping creation: {}", trigger->info_->name_);
         continue;
@@ -380,6 +404,7 @@ void session::pragma_t::journal_mode(journal_mode_t in_mode) {
 }
 void session::pragma_t::recursive_triggers(bool in_recursive) { run("recursive_triggers", in_recursive); }
 void session::pragma_t::foreign_keys(bool in_foreign_keys) { run("foreign_keys", in_foreign_keys); }
+void session::pragma_t::legacy_alter_table(bool in_legacy) { run("legacy_alter_table", in_legacy); }
 void session::pragma_t::locking_mode(bool in_exclusive) { run("locking_mode", in_exclusive ? "EXCLUSIVE" : "NORMAL"); }
 void session::pragma_t::user_version(std::int32_t version) { run("user_version", version); }
 std::int32_t session::pragma_t::user_version() {

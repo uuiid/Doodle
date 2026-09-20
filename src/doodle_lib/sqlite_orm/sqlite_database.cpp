@@ -71,6 +71,8 @@
 #include <set>
 #include <string>
 
+#include <boost/scope/scope_exit.hpp>
+
 namespace doodle {
 
 void sqlite_storage::regs_all() {
@@ -1180,6 +1182,40 @@ std::size_t sqlite_storage::fix_foreign_key_violations(
   }
   SPDLOG_ERROR("foreign_key_check: 达到最大轮数 {}, 累计删除 {} 行", in_max_rounds, l_total_deleted);
   return l_total_deleted;
+}
+
+std::size_t sqlite_storage::rebuild_all_tables(orm::session& in_session) {
+  using namespace orm;
+  auto l_all_db_tables = in_session.get_all_table_names();
+  // 重建过程会 DROP TABLE; 开着外键会触发级联或约束错误.
+  // PRAGMA foreign_keys 在事务内是 no-op, 所以必须在 rebuild_table 开启事务之前关闭.
+  in_session.pragma().foreign_keys(false);
+  // 中途抛异常时必须恢复外键, 否则整个会话都会在关闭外键的状态下继续跑
+  boost::scope::scope_exit l_fk_guard([&in_session]() { in_session.pragma().foreign_keys(true); });
+  std::size_t l_count{0};
+  for (const auto& l_table : get_all_reg_tables()) {
+    // 伪表: sqlite_master 不能 DROP; pragma_foreign_key_check 是 eponymous 虚拟表
+    if (l_table->type_index_ == typeid(orm::detail::sqlite_master_entry) ||
+        l_table->type_index_ == typeid(orm::detail::pragma_foreign_key_check_entry)) {
+      SPDLOG_DEBUG("rebuild_all_tables: 跳过伪表 {}", l_table->name_);
+      continue;
+    }
+    // FTS5 虚拟表不能按普通表重建: 外部内容表不允许直接写索引
+    if (dynamic_cast<table_fts_info*>(l_table.get()) != nullptr) {
+      SPDLOG_INFO("rebuild_all_tables: 跳过 FTS5 虚拟表 {}", l_table->name_);
+      continue;
+    }
+    // 已注册但库中尚未建表 (例如新增的表还没 sync_schema)
+    if (!l_all_db_tables.contains(l_table->name_)) {
+      SPDLOG_DEBUG("rebuild_all_tables: 库中不存在 {}, 跳过", l_table->name_);
+      continue;
+    }
+    SPDLOG_INFO("rebuild_all_tables: 重建 {}", l_table->name_);
+    in_session.rebuild_table(l_table->type_index_);
+    ++l_count;
+  }
+  SPDLOG_INFO("rebuild_all_tables: 完成, 共重建 {} 张表", l_count);
+  return l_count;
 }
 
 boost::asio::awaitable<void> sqlite_database::run_sql(orm::sql_modify_statement_vector_t in_sqls) {

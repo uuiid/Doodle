@@ -5,6 +5,7 @@ target_sources(test_main
         depth_estimation.cpp
         multipart_body_test.cpp
         sqlite_fk_fix.cpp
+        sqlite_rebuild.cpp
 )
 
  
