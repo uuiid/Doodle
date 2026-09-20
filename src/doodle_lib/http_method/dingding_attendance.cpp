@@ -206,12 +206,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
   if (!l_attendance_install_list->empty()) {
     l_sqls.emplace_back(insert(l_sql).into<attendance_helper::database_t>().set_range(*l_attendance_install_list));
   }
+
+  // 本次请求把该日考勤整体重写, 重算时用"该日旧行全部丢弃 + 更新/新增列表"叠加到当月考勤上
+  attendance_delta_t l_delta{};
+  l_delta.replaced_days_.emplace_back(chrono::local_days{l_date});
+  l_delta.upsert_ = *l_attendance_update_list;
+  for (auto&& l_i : *l_attendance_install_list) l_delta.upsert_.emplace_back(l_i);
+  l_sqls.emplace_back(
+      recomputing_time(l_sql, l_user.uuid_id_, chrono::year_month{l_date.year(), l_date.month()}, l_delta)
+  );
+
   co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_attendance_list = ranges::views::concat(*l_attendance_update_list, *l_attendance_install_list) |
                            ranges::to<std::vector<attendance_helper::database_t>>();
 
-  co_await recomputing_time(l_user.uuid_id_, chrono::year_month{l_date.year(), l_date.month()});
   std::erase_if(l_attendance_list, [](const auto& l_attendance) {
     return l_attendance.type_ == attendance_helper::att_enum::max;
   });
@@ -254,8 +263,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_id_custom, post) {
   l_data->person_id_ = l_user.uuid_id_;
 
   const chrono::year_month_day l_date{l_data->create_date_};
-  co_await l_sql.install(l_data);
-  co_await recomputing_time(l_user.uuid_id_, chrono::year_month{l_date.year(), l_date.month()});
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<attendance_helper::database_t>().values(*l_data));
+
+  attendance_delta_t l_delta{};
+  l_delta.upsert_.emplace_back(*l_data);
+  l_sqls.emplace_back(
+      recomputing_time(l_sql, l_user.uuid_id_, chrono::year_month{l_date.year(), l_date.month()}, l_delta)
+  );
+
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg((nlohmann::json{} = *l_data));
 }
 
@@ -265,17 +283,35 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, put) {
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
-  using namespace orm;
-  auto l_update =
-      update(l_sql).from<attendance_helper::database_t>().set_from_ref<attendance_helper::database_t>(l_json).where(
-          c(&attendance_helper::database_t::uuid_id_) == id_
-      );
-  co_await l_sql.run_sql(l_update);
-
+  // 先读旧行: 更新语句不会改动 create_date_/person_id_(不在 put_property_list 里), 所以旧行的这两个字段就是更新后的值
   auto l_data = l_sql.get_by_uuid<attendance_helper::database_t>(id_);
   const chrono::year_month_day l_date{l_data.create_date_};
-  co_await recomputing_time(l_data.person_id_, chrono::year_month{l_date.year(), l_date.month()});
-  co_return in_handle->make_msg((nlohmann::json{} = l_data));
+
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      update(l_sql).from<attendance_helper::database_t>().set_from_ref<attendance_helper::database_t>(l_json).where(
+          c(&attendance_helper::database_t::uuid_id_) == id_
+      )
+  );
+
+  // 重算用的当月考勤: 把本次 JSON 里出现的字段叠加到旧行上(字段存在性语义与 set_from_ref 一致)
+  attendance_delta_t l_delta{};
+  {
+    attendance_helper::database_t l_patched = l_data;
+    from_json(l_json, l_patched);
+    // create_date 不在 put_property_list 中, 更新语句改不了它, 这里保持与数据库一致
+    l_patched.create_date_ = l_data.create_date_;
+    l_delta.upsert_.emplace_back(std::move(l_patched));
+  }
+  l_sqls.emplace_back(
+      recomputing_time(l_sql, l_data.person_id_, chrono::year_month{l_date.year(), l_date.month()}, l_delta)
+  );
+
+  co_await l_sql.run_sql(std::move(l_sqls));
+
+  auto l_data_after = l_sql.get_by_uuid<attendance_helper::database_t>(id_);
+  co_return in_handle->make_msg((nlohmann::json{} = l_data_after));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, delete_) {
   auto l_sql  = get_sqlite_database();
@@ -287,7 +323,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, delete_) {
       person_.person_.get_full_name(), l_data.uuid_id_
   );
 
-  co_await l_sql.remove<attendance_helper::database_t>(id_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      delete_from(l_sql).from<attendance_helper::database_t>().where(
+          c(&attendance_helper::database_t::uuid_id_) == id_
+      )
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg((nlohmann::json{} = id_));
 }
 

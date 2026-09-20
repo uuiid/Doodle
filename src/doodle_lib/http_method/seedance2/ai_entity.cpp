@@ -26,7 +26,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity, post) {
   auto l_entity = std::make_shared<sd2::ai_generate_entity>();
   l_json.get_to(*l_entity);
 
-  co_await l_sql.install(l_entity);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<sd2::ai_generate_entity>().values(*l_entity));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_entity);
 }
@@ -135,11 +138,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, put)
 
   auto l_sql = get_sqlite_database();
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   auto l_update = update(l_sql)
                       .from<sd2::ai_generate_entity>()
                       .set(c(&sd2::ai_generate_entity::generate_count_) = 0)
                       .where(c(&sd2::ai_generate_entity::ai_episode_id_) == episode_id_);
-  co_await l_sql.run_sql(l_update);
+  l_sqls.emplace_back(std::move(l_update));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{{"episode_id", episode_id_}});
 }
@@ -160,10 +165,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_insta
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   auto l_update = update(l_sql).from<sd2::ai_generate_entity>().set_from_ref<sd2::ai_generate_entity>(l_json).where(
       c(&sd2::ai_generate_entity::uuid_id_) == entity_id_
   );
-  co_await l_sql.run_sql(l_update);
+  l_sqls.emplace_back(std::move(l_update));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_));
 }
@@ -172,7 +179,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_insta
   person_.check_manager();
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
-  co_await l_sql.remove<sd2::ai_generate_entity>(entity_id_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      delete_from(l_sql).from<sd2::ai_generate_entity>().where(c(&sd2::ai_generate_entity::uuid_id_) == entity_id_)
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{{"entity_id", entity_id_}});
 }
@@ -185,12 +197,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_preview, post) {
   auto l_file           = in_handle->get_file();
   auto l_preview        = std::make_shared<sd2::ai_preview_file>();
   l_preview->extension_ = ".png";
-  co_await l_sql.install(l_preview);
   using namespace orm;
-  co_await l_sql.run_sql(update(l_sql)
-                             .from<sd2::ai_generate_entity>()
-                             .set(c(&sd2::ai_generate_entity::preview_file_) = l_preview->uuid_id_)
-                             .where(c(&sd2::ai_generate_entity::uuid_id_) == l_entity.uuid_id_));
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<sd2::ai_preview_file>().values(*l_preview));
+  l_sqls.emplace_back(
+      update(l_sql)
+          .from<sd2::ai_generate_entity>()
+          .set(c(&sd2::ai_generate_entity::preview_file_) = l_preview->uuid_id_)
+          .where(c(&sd2::ai_generate_entity::uuid_id_) == l_entity.uuid_id_)
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview->uuid_id_, l_file.extension().string());
@@ -254,12 +270,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, post) 
 
   auto l_preview        = std::make_shared<sd2::ai_preview_file>();
   l_preview->extension_ = l_ext;
-  co_await l_sql.install(l_preview);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<sd2::ai_preview_file>().values(*l_preview));
 
   auto l_ref                    = std::make_shared<sd2::ai_entity_reference_preview>();
   l_ref->ai_generate_entity_id_ = entity_id_;
   l_ref->preview_file_          = l_preview->uuid_id_;
-  co_await l_sql.install(l_ref);
+  l_sqls.emplace_back(insert(l_sql).into<sd2::ai_entity_reference_preview>().values(*l_ref));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview->uuid_id_, l_ext);
@@ -302,12 +321,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_reference_instance, dele
   auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(l_preview.uuid_id_);
 
   using namespace orm;
-  co_await l_sql.run_sql(
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
       delete_from(l_sql).from<sd2::ai_entity_reference_preview>().where(
           c(&sd2::ai_entity_reference_preview::uuid_id_) == id_
-      ),
+      )
+  );
+  l_sqls.emplace_back(
       delete_from(l_sql).from<sd2::ai_preview_file>().where(c(&sd2::ai_preview_file::uuid_id_) == l_ref->preview_file_)
   );
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
 }

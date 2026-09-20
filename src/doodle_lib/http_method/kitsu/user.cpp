@@ -230,12 +230,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person, post) {
       person_.person_.get_full_name(), l_person->email_
   );
 
-  co_await l_sql.install(l_person);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<person>().values(*l_person));
   auto l_person_deps = std::make_shared<std::vector<person_department_link>>();
   for (auto&& l_dep : l_person->departments_) {
     l_person_deps->emplace_back(person_department_link{.person_id_ = l_person->uuid_id_, .department_id_ = l_dep});
   }
-  co_await l_sql.install_range(l_person_deps);
+  if (!l_person_deps->empty())
+    l_sqls.emplace_back(insert(l_sql).into<person_department_link>().set_range(*l_person_deps));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建用户 person_id {} email {} 部门数量 {}", person_.person_.email_,
@@ -260,14 +264,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person_instance, put) {
   }
 
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   auto l_update = update(l_sql).from<person>().set_from_ref<person>(l_json).where(c(&person::uuid_id_) == id_);
   if (l_person->dingding_id_ != l_old_person.dingding_id_)
     l_update.set(c(&person::dingding_id_) = l_person->dingding_id_);
-  co_await l_sql.run_sql(l_update);
+  l_sqls.emplace_back(std::move(l_update));
   if (l_old_person.departments_ != l_person->departments_) {
-    using namespace orm;
-    co_await l_sql.remove(
-        orm::delete_from(l_sql).from<person_department_link>().where(
+    l_sqls.emplace_back(
+        delete_from(l_sql).from<person_department_link>().where(
             c(&person_department_link::person_id_) == l_person->uuid_id_
         )
     );
@@ -276,8 +280,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person_instance, put) {
     for (auto&& l_dep : l_person->departments_) {
       l_person_deps->emplace_back(person_department_link{.person_id_ = l_person->uuid_id_, .department_id_ = l_dep});
     }
-    co_await l_sql.install_range(l_person_deps);
+    if (!l_person_deps->empty())
+      l_sqls.emplace_back(insert(l_sql).into<person_department_link>().set_range(*l_person_deps));
   }
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新用户 person_id {} email {}", person_.person_.email_,
@@ -311,12 +317,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   DOODLE_CHICK(l_password == l_password_2, "两次输入密码不一致");
   l_person->password_ = bcrypt::generateHash(l_password);
   using namespace orm;
-  co_await l_sql.run_sql(
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
       update(l_sql)
           .from<person>()
           .set(c(&person::password_) = l_person->password_)
           .where(c(&person::uuid_id_) == person_id_)
   );
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_change_password, post) {
@@ -330,12 +338,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_change_password, post) {
   DOODLE_CHICK(l_password == l_password_2, "两次输入密码不一致");
   l_person->password_ = bcrypt::generateHash(l_password);
   using namespace orm;
-  co_await l_sql.run_sql(
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
       update(l_sql)
           .from<person>()
           .set(c(&person::password_) = l_person->password_)
           .where(c(&person::uuid_id_) == l_person->uuid_id_)
   );
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 }  // namespace doodle::http

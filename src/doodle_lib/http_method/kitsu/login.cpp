@@ -60,7 +60,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_login, post) {
 
   if (!bcrypt::validatePassword(l_data.password_, l_p.password_)) {
     using namespace orm;
-    co_await l_sql.run_sql(
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
         update(l_sql)
             .from<person>()
             .set(c(&person::login_failed_attemps_) = c(&person::login_failed_attemps_) + 1)
@@ -68,15 +69,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_login, post) {
                      std::optional{chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}})
             .where(c(&person::uuid_id_) == l_p.uuid_id_)
     );
+    co_await l_sql.run_sql(std::move(l_sqls));
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "密码错误"});
   }
   if (l_p.login_failed_attemps_ > 0) {
     using namespace orm;
-    co_await l_sql.run_sql(
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
         update(l_sql).from<person>().set(c(&person::login_failed_attemps_) = 0).where(
             c(&person::uuid_id_) == l_p.uuid_id_
         )
     );
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
   default_logger_raw()->info("用户 {} 登录", l_p.email_);
 

@@ -175,13 +175,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_update_annotations, put
   l_prev.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
   using namespace orm;
-  co_await l_sql.run_sql(
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
       update(l_sql)
           .from<preview_file>()
           .set(c(&preview_file::annotations_) = l_prev.annotations_)
           .set(c(&preview_file::updated_at_) = l_prev.updated_at_)
           .where(c(&preview_file::uuid_id_) == l_prev.uuid_id_)
   );
+  co_await l_sql.run_sql(std::move(l_sqls));
   socket_io::broadcast(
       socket_io::preview_file_annotation_update_broadcast_t{
           .preview_file_id_ = l_prev.uuid_id_,
@@ -541,7 +543,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 开始创建播放列表 project_id {} name {}", person_.person_.email_,
       person_.person_.get_full_name(), l_playlist->project_id_, l_playlist->name_
   );
-  co_await l_sql.install(l_playlist);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<playlist>().values(*l_playlist));
+  co_await l_sql.run_sql(std::move(l_sqls));
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建播放列表 project_id {} playlist_id {} name {}",
       person_.person_.email_, person_.person_.get_full_name(), l_playlist->project_id_, l_playlist->uuid_id_,
@@ -745,9 +750,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, put) {
   auto l_json = in_handle->get_json();
  
   using namespace orm;
-  co_await l_sql.run_sql(
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
       update(l_sql).from<playlist>().set_from_ref<playlist>(l_json).where(c(&playlist::uuid_id_) == id_)
   );
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_playlist_updated = l_sql.get_by_uuid<playlist>(id_);
 
@@ -771,7 +778,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, delete_) {
       g_logger_ctrl().get_http(), "{}({}) 删除播放列表 {}", person_.person_.email_, person_.person_.get_full_name(),
       l_playlist.name_
   );
-  co_await l_sql.remove<playlist>(l_playlist.id_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(delete_from(l_sql).from<playlist>().where(c(&playlist::id_) == l_playlist.id_));
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg_204();
 }
 
@@ -793,7 +803,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
   ;
   if (l_playlist_shot->order_index_ <= 0)  // 如果没有指定顺序，则放在最后
     l_playlist_shot->order_index_ = count_playlist_shots_by_playlist_shot_id(playlist_id_) * 100;
-  co_await l_sql.install(l_playlist_shot);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<playlist_shot>().values(*l_playlist_shot));
+  co_await l_sql.run_sql(std::move(l_sqls));
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
       "用户 {}({}) 完成在播放列表中添加镜头 playlist_id {} entity_id {} playlist_shot_id {} order_index {}",
@@ -814,12 +827,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, put) {
   auto l_json          = in_handle->get_json();
 
   using namespace orm;
-  co_await l_sql.run_sql(
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
       update(l_sql)
           .from<playlist_shot>()
           .set_from_ref<playlist_shot>(l_json)
           .where(c(&playlist_shot::uuid_id_) == shot_id_)
   );
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_playlist_shot = l_sql.get_by_uuid<playlist_shot>(shot_id_);
 
@@ -840,7 +855,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, delete_) {
       g_logger_ctrl().get_http(), "{}({}) 删除播放列表 {} 中的镜头 {}", person_.person_.email_,
       person_.person_.get_full_name(), l_playlist.name_, shot_id_
   );
-  co_await l_sql.remove<playlist_shot>(shot_id_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(delete_from(l_sql).from<playlist_shot>().where(c(&playlist_shot::uuid_id_) == shot_id_));
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg_204();
 }
 namespace {
@@ -886,7 +904,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_sequences_create_review_playlists, po
   l_playlist->name_       = fmt::format("Review Playlist - {}", l_sequence.name_);
   l_playlist->project_id_ = l_sequence.project_id_;
   l_playlist->for_entity_ = "shot";
-  co_await l_sql.install(l_playlist);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<playlist>().values(*l_playlist));
   auto l_playlist_shots = std::make_shared<std::vector<playlist_shot>>();
   for (auto&& l_preview_file : get_sequence_shots_preview(sequence_id_)) {
     l_playlist_shots->push_back(
@@ -898,7 +918,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_sequences_create_review_playlists, po
         }
     );
   }
-  co_await l_sql.install_range(l_playlist_shots);
+  if (!l_playlist_shots->empty())
+    l_sqls.emplace_back(insert(l_sql).into<playlist_shot>().set_range(*l_playlist_shots));
+  co_await l_sql.run_sql(std::move(l_sqls));
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建 Review 播放列表 sequence_id {} playlist_id {} shot_count {}",
       person_.person_.email_, person_.person_.get_full_name(), sequence_id_, l_playlist->uuid_id_,

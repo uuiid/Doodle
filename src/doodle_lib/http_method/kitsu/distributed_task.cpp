@@ -56,7 +56,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
   l_ptr->command_ = auto_task::shot_render_light(project_id_, id_);
 #endif
   auto l_sql = get_sqlite_database();
-  co_await l_sql.install(l_ptr);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<server_task_info>().values(*l_ptr));
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_await computers_assign_task::get_instance().run_next_task();
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 提交 UE 装配任务 project_id {} task_id {} job_id {} computer_id {}",
@@ -104,7 +107,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_export_anim_fbx, p
   auto l_ptr      = make_server_task_info_from_json(in_handle->get_json(), person_.person_.uuid_id_, id_);
   l_ptr->type_    = server_task_info_type::export_fbx;
   l_ptr->command_ = shot_export_anim_fbx(project_id_, id_);
-  co_await l_sql.install(l_ptr);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<server_task_info>().values(*l_ptr));
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_await computers_assign_task::get_instance().run_next_task();
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 提交动画导出任务 project_id {} task_id {} job_id {} computer_id {}",

@@ -135,21 +135,26 @@ struct compose_video_impl_t : public std::enable_shared_from_this<compose_video_
   boost::asio::awaitable<void> update_preview_file_and_create_comment(std::string in_error_msg) {
     auto l_sql = get_sqlite_database();
     using namespace orm;
-    co_await l_sql.run_sql(update(l_sql)
-                               .from<preview_file>()
-                               .set(c(&preview_file::status_) = preview_file_statuses::broken)
-                               .where(c(&preview_file::uuid_id_) == preview_file_->uuid_id_));
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<preview_file>()
+            .set(c(&preview_file::status_) = preview_file_statuses::broken)
+            .where(c(&preview_file::uuid_id_) == preview_file_->uuid_id_)
+    );
 
     if (auto l_comm = l_sql.get_last_comment(target_preview_file_.task_id_); l_comm) {
-      auto l_update = update(l_sql)
-                          .from<comment>()
-                          .set(
-                              c(&comment::text_)      = fmt::format("视频合成失败 {}", in_error_msg),
-                              c(&comment::person_id_) = l_comm->person_id_
-                          )
-                          .where(c(&comment::uuid_id_) == l_comm->uuid_id_);
-      co_await l_sql.run_sql(l_update);
+      l_sqls.emplace_back(
+          update(l_sql)
+              .from<comment>()
+              .set(
+                  c(&comment::text_)      = fmt::format("视频合成失败 {}", in_error_msg),
+                  c(&comment::person_id_) = l_comm->person_id_
+              )
+              .where(c(&comment::uuid_id_) == l_comm->uuid_id_)
+      );
     }
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
 };
 
@@ -212,10 +217,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
         get_preview_files_by_entity_id_and_simulation_task_type_and_lighting_animation(l_task.entity_id_);
     if (!l_preview_files.has_value()) {
       using namespace orm;
-      co_await l_sql.run_sql(update(l_sql)
-                                 .from<preview_file>()
-                                 .set(c(&preview_file::status_) = preview_file_statuses::broken)
-                                 .where(c(&preview_file::uuid_id_) == preview_file_id_));
+      sql_modify_statement_vector_t l_sqls{};
+      l_sqls.emplace_back(
+          update(l_sql)
+              .from<preview_file>()
+              .set(c(&preview_file::status_) = preview_file_statuses::broken)
+              .where(c(&preview_file::uuid_id_) == preview_file_id_)
+      );
       if (auto l_comm = l_sql.get_last_comment(l_task.uuid_id_); l_comm) {
         auto l_comm_ptr = std::make_shared<comment>(l_comm.value());
         l_comm_ptr->text_ += fmt::format(
@@ -224,11 +232,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
             preview_file_id_, l_preview_file.task_id_, l_task.project_id_, l_file.filename().generic_string(),
             l_file.extension().generic_string()
         );
-        co_await l_sql.run_sql(update(l_sql)
-                                   .from<comment>()
-                                   .set(c(&comment::text_) = l_comm_ptr->text_)
-                                   .where(c(&comment::uuid_id_) == l_comm_ptr->uuid_id_));
+        l_sqls.emplace_back(
+            update(l_sql)
+                .from<comment>()
+                .set(c(&comment::text_) = l_comm_ptr->text_)
+                .where(c(&comment::uuid_id_) == l_comm_ptr->uuid_id_)
+        );
       }
+      co_await l_sql.run_sql(std::move(l_sqls));
     }
     DOODLE_CHICK_HTTP(l_preview_files.has_value(), bad_request, "没有找到相关的预览文件");
     // 选择最新的预览文件
@@ -260,13 +271,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   auto l_preview_file_ptr       = std::make_shared<preview_file>(l_preview_file);
   {
     using namespace orm;
-    co_await l_sql.run_sql(update(l_sql)
-                               .from<preview_file>()
-                               .set(c(&preview_file::extension_) = l_preview_file.extension_)
-                               .set(c(&preview_file::original_name_) = l_preview_file.original_name_)
-                               .set(c(&preview_file::width_) = l_preview_file.width_)
-                               .set(c(&preview_file::height_) = l_preview_file.height_)
-                               .where(c(&preview_file::uuid_id_) == preview_file_id_));
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<preview_file>()
+            .set(c(&preview_file::extension_) = l_preview_file.extension_)
+            .set(c(&preview_file::original_name_) = l_preview_file.original_name_)
+            .set(c(&preview_file::width_) = l_preview_file.width_)
+            .set(c(&preview_file::height_) = l_preview_file.height_)
+            .where(c(&preview_file::uuid_id_) == preview_file_id_)
+    );
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
 
   auto l_compose_video_impl = std::make_shared<compose_video_impl_t>(
@@ -381,21 +396,26 @@ struct run_actions_playlists_preview_files_create_review {
   boost::asio::awaitable<void> update_preview_file_and_create_comment(std::string in_error_msg) {
     auto l_sql = get_sqlite_database();
     using namespace orm;
-    co_await l_sql.run_sql(update(l_sql)
-                               .from<preview_file>()
-                               .set(c(&preview_file::status_) = preview_file_statuses::broken)
-                               .where(c(&preview_file::uuid_id_) == data_ptr_->review_preview_file_->uuid_id_));
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<preview_file>()
+            .set(c(&preview_file::status_) = preview_file_statuses::broken)
+            .where(c(&preview_file::uuid_id_) == data_ptr_->review_preview_file_->uuid_id_)
+    );
 
     if (auto l_comm = l_sql.get_last_comment(data_ptr_->review_preview_file_->task_id_); l_comm) {
-      auto l_update = update(l_sql)
-                          .from<comment>()
-                          .set(
-                              c(&comment::text_)      = fmt::format("视频合成失败 {}", in_error_msg),
-                              c(&comment::person_id_) = l_comm->person_id_
-                          )
-                          .where(c(&comment::uuid_id_) == l_comm->uuid_id_);
-      co_await l_sql.run_sql(l_update);
+      l_sqls.emplace_back(
+          update(l_sql)
+              .from<comment>()
+              .set(
+                  c(&comment::text_)      = fmt::format("视频合成失败 {}", in_error_msg),
+                  c(&comment::person_id_) = l_comm->person_id_
+              )
+              .where(c(&comment::uuid_id_) == l_comm->uuid_id_)
+      );
     }
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
 };
 

@@ -54,11 +54,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets, post) {
           boost::beast::http::status::not_found, fmt::format("未找到父节点 {}", i)
       );
 
-  co_await l_sql.install<assets_file_helper::database_t>(l_ptr);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<assets_file_helper::database_t>().values(*l_ptr));
   auto l_link = std::make_shared<std::vector<assets_file_helper::link_parent_t>>();
   for (auto&& i : l_ptr->uuid_parents_)
     l_link->emplace_back(assets_file_helper::link_parent_t{.assets_type_uuid_ = i, .assets_uuid_ = l_ptr->uuid_id_});
-  co_await l_sql.install_range<assets_file_helper::link_parent_t>(l_link);
+  if (!l_link->empty()) l_sqls.emplace_back(insert(l_sql).into<assets_file_helper::link_parent_t>().set_range(*l_link));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 创建 资产库文件 {} ", person_.person_.email_,
@@ -73,12 +76,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_instance, put) {
   auto l_json = in_handle->get_json();
 
   using namespace orm;
-  co_await l_sql.run_sql(
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
       update(l_sql)
           .from<assets_file_helper::database_t>()
           .set_from_ref<assets_file_helper::database_t>(l_json)
           .where(c(&assets_file_helper::database_t::uuid_id_) == id_)
   );
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<assets_file_helper::database_t>(id_));
 }
 
@@ -89,7 +94,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_instance, delete_) {
       person_.person_.get_full_name(), id_
   );
   auto l_sql = get_sqlite_database();
-  co_await l_sql.remove<assets_file_helper::database_t>(id_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      delete_from(l_sql).from<assets_file_helper::database_t>().where(
+          c(&assets_file_helper::database_t::uuid_id_) == id_
+      )
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{});
 }
 

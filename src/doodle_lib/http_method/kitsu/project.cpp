@@ -104,9 +104,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_instance, put) {
   );
   auto l_json = in_handle->get_json();
   using namespace orm;
-  co_await l_sql.run_sql(
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
       update(l_sql).from<project>().set_from_ref<project>(l_json).where(c(&project::uuid_id_) == id_)
   );
+  co_await l_sql.run_sql(std::move(l_sqls));
   auto l_project_updated = l_sql.get_by_uuid<project>(id_);
 
   SPDLOG_LOGGER_WARN(
@@ -129,7 +131,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_projects, post) {
   );
 
   l_prj->project_status_id_ = l_sql.get_project_status_open();
-  co_await l_sql.install(l_prj);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<project>().values(*l_prj));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建项目 project_id {} name {}", person_.person_.email_,
@@ -150,9 +155,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_task_types, post) {
       person_.person_.get_full_name(), id_, l_prj_task_type_link->task_type_id_
   );
 
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   if (auto l_t = l_sql.get_project_task_type_link(id_, l_prj_task_type_link->task_type_id_); !l_t) {
-    co_await l_sql.install(l_prj_task_type_link);
+    l_sqls.emplace_back(insert(l_sql).into<project_task_type_link>().values(*l_prj_task_type_link));
   }
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成设置项目 {} 任务类型 task_type_id {}", person_.person_.email_,
@@ -169,8 +177,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(project_settings_task_types, delete_) {
   );
   auto l_sql = get_sqlite_database();
 
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   if (auto l_t = l_sql.get_project_task_type_link(project_id_, task_type_id_); l_t)
-    co_await l_sql.remove<project_task_status_link>(l_t->uuid_id_);
+    l_sqls.emplace_back(
+        delete_from(l_sql).from<project_task_status_link>().where(
+            c(&project_task_status_link::uuid_id_) == l_t->uuid_id_
+        )
+    );
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg_204();
 }
 
@@ -188,7 +203,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_task_status, post) {
 
   l_prj_task_status_link->project_id_     = id_;
   l_prj_task_status_link->task_status_id_ = l_status_id;
-  if (!l_sql.get_project_task_status_link(id_, l_status_id)) co_await l_sql.install(l_prj_task_status_link);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  if (!l_sql.get_project_task_status_link(id_, l_status_id))
+    l_sqls.emplace_back(insert(l_sql).into<project_task_status_link>().values(*l_prj_task_status_link));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成设置项目 {} 任务状态 task_status_id {}", person_.person_.email_,
@@ -209,8 +228,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_asset_types, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 开始设置项目 {} 资产类型 asset_type_id {}", person_.person_.email_,
       person_.person_.get_full_name(), id_, l_prj_asset_type_link->asset_type_id_
   );
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   if (!l_sql.get_project_asset_type_link(id_, l_prj_asset_type_link->asset_type_id_))
-    co_await l_sql.install(l_prj_asset_type_link);
+    l_sqls.emplace_back(insert(l_sql).into<project_asset_type_link>().values(*l_prj_asset_type_link));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成设置项目 {} 资产类型 asset_type_id {}", person_.person_.email_,
@@ -244,7 +266,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_create_tasks, post) {
     l_task->task_type_id_   = l_task_type.uuid_id_;
     l_task->entity_id_      = l_entities[0].uuid_id_;
     l_task->task_status_id_ = l_task_status.uuid_id_;
-    co_await l_sql.install(l_task);
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(insert(l_sql).into<task>().values(*l_task));
+    co_await l_sql.run_sql(std::move(l_sqls));
 
     nlohmann::json l_json_r{};
     auto&& l_task_json                    = l_json_r.emplace_back(*l_task);
@@ -284,7 +309,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_create_tasks, post) {
         }
     );
   }
-  co_await l_sql.install_range(l_tasks);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  if (!l_tasks->empty()) l_sqls.emplace_back(insert(l_sql).into<task>().set_range(*l_tasks));
+  co_await l_sql.run_sql(std::move(l_sqls));
   nlohmann::json l_json_r{};
   l_json_r = *l_tasks;
   for (auto&& i : l_json_r) {
@@ -324,7 +352,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_projects_team, post) {
     auto l_team         = std::make_shared<project_person_link>();
     l_team->project_id_ = id_;
     l_team->person_id_  = l_add_team;
-    co_await l_sql.install(l_team);
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(insert(l_sql).into<project_person_link>().values(*l_team));
+    co_await l_sql.run_sql(std::move(l_sqls));
     socket_io::broadcast(socket_io::project_update_broadcast_t{.project_id_ = id_});
   }
   auto l_prj = l_sql.get_by_uuid<project>(id_);
@@ -347,7 +378,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_team_person, delete_) {
   ;
 
   if (auto l_id = get_project_person_id_by_project_id_and_person_id(project_id_, person_id_); l_id.has_value()) {
-    co_await l_sql.remove<project_person_link>(l_id.value());
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
+        delete_from(l_sql).from<project_person_link>().where(c(&project_person_link::id_) == l_id.value())
+    );
+    co_await l_sql.run_sql(std::move(l_sqls));
     socket_io::broadcast(socket_io::project_update_broadcast_t{.project_id_ = project_id_});
   }
   co_return in_handle->make_msg_204();
@@ -367,17 +403,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_type_links, post) {
       l_sql.get_project_task_type_link(l_args.project_id_, l_args.task_type_id_).value_or(l_args)
   );
   l_ptr->priority_ = l_args.priority_.value_or(0);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   if (!l_ptr->id_)
-    co_await l_sql.install(l_ptr);
-  else {
-    using namespace orm;
-    co_await l_sql.run_sql(
+    l_sqls.emplace_back(insert(l_sql).into<project_task_type_link>().values(*l_ptr));
+  else
+    l_sqls.emplace_back(
         update(l_sql)
             .from<project_task_type_link>()
             .set(c(&project_task_type_link::priority_) = l_ptr->priority_)
             .where(c(&project_task_type_link::uuid_id_) == l_ptr->uuid_id_)
     );
-  }
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成设置项目 {} 任务类型关联 id {} task_type_id {} priority {}",
@@ -401,7 +438,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_status_automations, pos
 
   auto l_prj = l_sql.get_by_uuid<project>(id_);
   if (std::ranges::find(l_prj.status_automations_, l_ptr->status_automation_id_) == l_prj.status_automations_.end()) {
-    co_await l_sql.install(l_ptr);
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(insert(l_sql).into<project_status_automation_link>().values(*l_ptr));
+    co_await l_sql.run_sql(std::move(l_sqls));
     l_prj.status_automations_.push_back(l_ptr->status_automation_id_);
   }
 
@@ -423,7 +463,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_status_automations_inst
   ;
   if (auto l_id = get_project_status_automation_id_by_project_id_and_status_id(project_id_, status_automation_id_);
       l_id.has_value()) {
-    co_await l_sql.remove<project_status_automation_link>(l_id.value());
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
+        delete_from(l_sql).from<project_status_automation_link>().where(
+            c(&project_status_automation_link::id_) == l_id.value()
+        )
+    );
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
   auto l_prj = l_sql.get_by_uuid<project>(project_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_prj);

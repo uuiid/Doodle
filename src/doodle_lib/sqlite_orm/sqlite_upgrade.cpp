@@ -65,7 +65,7 @@ struct upgrade_init_t : sqlite_upgrade {
   for (const auto& v : class_name::get_all_constant()) {     \
     if (l_session.uuid_to_id<class_name>(v.uuid_id_) == 0) { \
       auto l_s = std::make_shared<class_name>(v);            \
-      l_session.install_unsafe<class_name>(l_s);             \
+      orm::insert(l_session).into<class_name>().values(*l_s)(); \
     }                                                        \
   }
 

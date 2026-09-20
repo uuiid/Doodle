@@ -105,7 +105,6 @@ class DOODLELIB_API sqlite_storage : public orm::storage {
 class DOODLELIB_API sqlite_database {
   using strand_type = boost::asio::strand<boost::asio::io_context::executor_type>;
   strand_type strand_;
-  static constexpr std::size_t g_step_size{100};
   orm::session session_{};
 
  public:
@@ -155,170 +154,6 @@ class DOODLELIB_API sqlite_database {
   auto this_executor = co_await boost::asio::this_coro::executor;     \
   co_await boost::asio::dispatch(boost::asio::bind_executor(strand_, boost::asio::use_awaitable));
 
-  /// 测试成员字段 uuid_id_ 是否存在，以及是否是 uuid 类型
-  template <typename T, typename = void>
-  struct has_uuid_id_impl : std::false_type {};
-
-  template <typename T>
-  struct has_uuid_id_impl<T, std::enable_if_t<std::is_same_v<uuid, decltype(std::declval<T>().uuid_id_)>>>
-      : std::true_type {};
-
-  template <typename T>
-  static constexpr bool has_uuid_id = has_uuid_id_impl<T>::value;
-
-  template <typename T>
-  boost::asio::awaitable<void> install(std::shared_ptr<T> in_data) {
-    using namespace orm;
-    DOODLE_CHICK(in_data, "不可传入空指针");
-    DOODLE_CHICK(in_data->id_ == 0, "必须传入id为0的新实体");
-
-    DOODLE_TO_SQLITE_THREAD();
-    install_unsafe<T>(in_data);
-    DOODLE_TO_SELF();
-  }
-
-  template <typename T>
-  void install_unsafe(std::shared_ptr<T> in_data) {
-    using namespace orm;
-    in_data->id_ = orm::insert(*this).into<T>().values(*in_data)();
-  }
-
-  /**
-   *
-   * @tparam T 任意优化类别
-   * @param in_data 传入的数据
-   * @return 插入的id(不包含更新的id)
-   */
-  template <typename T>
-  boost::asio::awaitable<void> install_range(std::shared_ptr<std::vector<T>> in_data) {
-    DOODLE_CHICK(in_data, "不可传入空指针");
-    if (in_data->empty()) co_return;
-    auto l_id_is_zero = std::ranges::all_of(*in_data, [](const auto& in_) { return in_.id_ == 0; });
-    DOODLE_CHICK(l_id_is_zero, "传入的数据实体 id_ 必须全部为0");
-
-    DOODLE_TO_SQLITE_THREAD();
-    auto l_g    = session_.transaction();
-    auto l_size = in_data->size();
-    using namespace orm;
-    auto l_insert = orm::insert(*this).into<T>();
-    l_insert.set_range (*in_data)();
-    l_g.commit();
-    DOODLE_TO_SELF();
-
-    if constexpr (has_uuid_id<T>) {
-      std::map<uuid, std::int64_t> l_id_map{};
-      std::vector<uuid> l_uuids = *in_data | ranges::views::transform([](const auto& in_) { return in_.uuid_id_; }) |
-                                  ranges::to<std::vector<uuid>>();
-
-      for (auto&& [key, val] :
-           select(*this).columns(&T::id_, &T::uuid_id_).template from<T>().where(c(&T::uuid_id_).in(l_uuids))()) {
-        l_id_map[val] = key;
-      }
-      for (std::size_t i = 0; i < l_size; ++i) {
-        (*in_data)[i].id_ = l_id_map[(*in_data)[i].uuid_id_];
-      }
-    }
-  }
-  template <typename T>
-  boost::asio::awaitable<void> update_range(std::shared_ptr<std::vector<T>> in_data) {
-    DOODLE_CHICK(in_data, "不可传入空指针");
-    if (in_data->empty()) co_return;
-    auto l_id_not_zero = std::ranges::all_of(*in_data, [](const auto& in_) { return in_.id_ != 0; });
-    DOODLE_CHICK(l_id_not_zero, "传入的数据实体 id_ 不可为0");
-
-    DOODLE_TO_SQLITE_THREAD();
-    auto l_g = session_.transaction();
-    using namespace orm;
-    auto l_update = orm::update(*this).from<T>();
-    for (auto l_is_begin = true; auto&& i : *in_data) {
-      if (l_is_begin) {
-        l_is_begin = false;
-        l_update.set_value(i)();
-      } else
-        l_update.rebind_obj(i)();
-    }
-    l_g.commit();
-    DOODLE_TO_SELF();
-  }
-
-  template <typename T>
-  boost::asio::awaitable<void> remove(std::vector<std::int64_t> in_data) {
-    DOODLE_TO_SQLITE_THREAD();
-    if (in_data.empty()) co_return;
-    auto l_g = session_.transaction();
-    for (auto i = 0; i < in_data.size();) {
-      auto l_end = std::min(i + g_step_size, in_data.size());
-      std::vector<std::int64_t> l_v{in_data.begin() + i, in_data.begin() + l_end};
-      using namespace orm;
-      delete_from(*this).from<T>().where(c(&T::id_).in(l_v))();
-      i = l_end;
-    }
-    l_g.commit();
-    DOODLE_TO_SELF();
-  }
-  template <typename T>
-  boost::asio::awaitable<void> remove(std::vector<std::int32_t> in_data) {
-    DOODLE_TO_SQLITE_THREAD();
-    if (in_data.empty()) co_return;
-    auto l_g = session_.transaction();
-    for (auto i = 0; i < in_data.size();) {
-      auto l_end = std::min(i + g_step_size, in_data.size());
-      std::vector<std::int64_t> l_v{in_data.begin() + i, in_data.begin() + l_end};
-      using namespace orm;
-      delete_from(*this).from<T>().where(c(&T::id_).in(l_v))();
-      i = l_end;
-    }
-    l_g.commit();
-    DOODLE_TO_SELF();
-  }
-  template <typename T>
-  boost::asio::awaitable<void> remove(std::int64_t in_data) {
-    DOODLE_TO_SQLITE_THREAD();
-    using namespace orm;
-    delete_from(*this).from<T>().where(c(&T::id_) == in_data)();
-    DOODLE_TO_SELF();
-  }
-  template <typename T>
-  boost::asio::awaitable<void> remove(std::vector<uuid> in_data) {
-    DOODLE_TO_SQLITE_THREAD();
-    if (in_data.empty()) co_return;
-    auto l_g = session_.transaction();
-    for (auto i = 0; i < in_data.size();) {
-      auto l_end = std::min(i + g_step_size, in_data.size());
-      std::vector<uuid> l_v{in_data.begin() + i, in_data.begin() + l_end};
-      using namespace orm;
-      delete_from(*this).from<T>().where(c(&T::uuid_id_).in(l_v))();
-      i = l_end;
-    }
-    l_g.commit();
-    DOODLE_TO_SELF();
-  }
-  template <typename T>
-  boost::asio::awaitable<void> remove(uuid in_data) {
-    DOODLE_TO_SQLITE_THREAD();
-    using namespace orm;
-    delete_from(*this).from<T>().where(c(&T::uuid_id_) == in_data)();
-    DOODLE_TO_SELF();
-  }
-
-  boost::asio::awaitable<void> remove(orm::delete_t in_delete);
-  boost::asio::awaitable<void> update(orm::update_t in_update);
-
-  boost::asio::awaitable<void> mark_all_notifications_as_read(uuid in_user_id);
-
-  template <typename... Args>
-  boost::asio::awaitable<void> run_sql(Args&&... args) {
-    (args.set_session(session_), ...);
-    DOODLE_TO_SQLITE_THREAD();
-    auto l_g = session_.transaction();
-    (
-        [&]() {
-          if (args) std::invoke(std::forward<Args>(args));
-        }(),
-        ...);
-    l_g.commit();
-    DOODLE_TO_SELF();
-  }
   boost::asio::awaitable<void> run_sql(orm::sql_modify_statement_vector_t in_sqls);
 
   std::vector<attendance_helper::database_t> get_attendance(
@@ -407,11 +242,9 @@ class DOODLELIB_API sqlite_database {
   /// 获取播放序列对应的实体
   std::vector<playlist_shot> get_playlist_shot_entity(const uuid& in_playlist_id);
 
-  boost::asio::awaitable<void> remove_playlist_shot_for_playlist(const uuid& in_playlist_id);
   std::optional<task_type_asset_type_link> get_task_type_asset_type_link(
       const uuid& in_task_type_id, const uuid& in_asset_type_id
   );
-  boost::asio::awaitable<void> remove_task_type_asset_type_link_by_asset_type(const uuid& in_asset_type_id);
   uuid get_project_status_open();
   uuid get_project_status_closed();
 
@@ -420,13 +253,9 @@ class DOODLELIB_API sqlite_database {
 
   // 是给外包授权的实体
   bool is_entity_outsourced(const uuid& in_entity_id, const uuid& in_studio_id, const uuid& in_parent_id = uuid{});
-  // 删除sequence下的所有casting数据
-  boost::asio::awaitable<void> remove_sequence_casting(const uuid& in_sequence_id);
   // 按照计算机id 获取工作
   std::vector<server_task_info> get_server_tasks_by_submitted();
   // 获取镜头任务对应的 场景资产的扩展数据 如果没有, 抛出异常, 大于一个, 抛出异常
   entity_asset_extend_value get_entity_shot_extend_by_task(const uuid& in_shot_id);
-  // 更新计算机状态
-  boost::asio::awaitable<void> update_computer_status(const uuid& in_computer_id, computer_status in_status);
 };
 }  // namespace doodle

@@ -19,35 +19,6 @@
 
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
-namespace {  // 设置所有人员当周剩余可使用的 token 数量,
-boost::asio::awaitable<void> set_remaining_tokens_all_persons(std::int64_t in_tokens) {
-  auto l_sql = get_sqlite_database();
-  using namespace orm;
-
-  co_await l_sql.run_sql(
-      orm::update(l_sql)
-          .from<person>()
-          .set(c(&person::remaining_completion_tokens_) = in_tokens)
-          .where(c(&person::archived_) == false)
-  );
-  co_return;
-}
-// 设置当周人员剩余可使用的 token 数量
-boost::asio::awaitable<void> set_remaining_tokens_for_person(const uuid& in_person, std::int64_t in_tokens) {
-  if (in_tokens == 0) co_return;
-  auto l_sql = get_sqlite_database();
-  using namespace orm;
-
-  co_await l_sql.run_sql(
-      orm::update(l_sql)
-          .from<person>()
-          .set(c(&person::remaining_completion_tokens_) = in_tokens)
-          .where(c(&person::uuid_id_) == in_person)
-  );
-
-  co_return;
-}
-}  // namespace
 
 // 设置当周人员剩余可使用的 token 数量
 orm::update_t add_remaining_tokens_for_person(sqlite_database& in_sql, const uuid& in_person, std::int64_t in_tokens) {
@@ -79,7 +50,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens, post) {
   auto l_json = in_handle->get_json();
   std::int64_t l_remaining_tokens{200'0000};  // 默认值, 如果没有传入 remaining_tokens 字段, 则设置为 2000000
   if (l_json.contains("remaining_tokens")) l_remaining_tokens = l_json.at("remaining_tokens").get<std::int64_t>();
-  co_await set_remaining_tokens_all_persons(l_remaining_tokens);
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      update(l_sql)
+          .from<person>()
+          .set(c(&person::remaining_completion_tokens_) = l_remaining_tokens)
+          .where(c(&person::archived_) == false)
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", l_remaining_tokens}});
 }
 
@@ -124,7 +104,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺少remaining_tokens字段"});
 
   std::int64_t l_remaining_tokens = l_json.at("remaining_tokens").get<std::int64_t>();
-  co_await set_remaining_tokens_for_person(l_others_person.uuid_id_, l_remaining_tokens);  // 计算差值进行更新
+  if (l_remaining_tokens != 0) {
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<person>()
+            .set(c(&person::remaining_completion_tokens_) = l_remaining_tokens)
+            .where(c(&person::uuid_id_) == l_others_person.uuid_id_)
+    );
+    co_await l_sql.run_sql(std::move(l_sqls));
+  }
   co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", l_remaining_tokens}});
 }
 namespace {
@@ -307,7 +297,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date, post) {
 
   auto l_list_vector = std::make_shared<std::vector<sd2::person_token>>();
   for (auto&& [l_person_id, l_tokens] : l_token_map) l_list_vector->emplace_back(l_tokens);
-  co_await l_sql.install_range(l_list_vector);
+  sql_modify_statement_vector_t l_sqls{};
+  if (!l_list_vector->empty())
+    l_sqls.emplace_back(insert(l_sql).into<sd2::person_token>().set_range(*l_list_vector));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_list_vector);
 }

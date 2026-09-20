@@ -57,7 +57,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree, post) {
     if (auto l_list = l_sql.uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_); l_list == 0)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
   }
-  co_await l_sql.install<assets_helper::database_t>(l_ptr);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<assets_helper::database_t>().values(*l_ptr));
+  co_await l_sql.run_sql(std::move(l_sqls));
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 创建 资产库节点 {} (父节点 {}) ", person_.person_.email_,
       person_.person_.get_full_name(), l_ptr->uuid_id_, l_ptr->uuid_parent_
@@ -105,7 +108,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree_instance, put) {
   auto l_value = std::make_shared<assets_helper::database_t>(l_sql.get_by_uuid<assets_helper::database_t>(id_));
   in_handle->get_json().get_to(*l_value);
   check_data(*l_value);
-  co_await l_sql.install<assets_helper::database_t>(l_value);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<assets_helper::database_t>().values(*l_value));
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{} = *l_value);
 }
 
@@ -127,7 +133,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree_instance, delete_) 
   //   }
   //   co_await l_sql.remove<assets_file_helper::database_t>(l_rem);
   // }
-  co_await l_sql.remove<assets_helper::database_t>(l_uuid);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      delete_from(l_sql).from<assets_helper::database_t>().where(c(&assets_helper::database_t::uuid_id_) == l_uuid)
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{});
 }

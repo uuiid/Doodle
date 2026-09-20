@@ -21,8 +21,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, post) {
   l_json.get_to(l_ai_studio);
 
   using namespace orm;
-  auto l_install = insert(l_sql).into<ai_studio>().values(l_ai_studio);
-  co_await l_sql.run_sql(l_install);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<ai_studio>().values(l_ai_studio));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建 AI 工作室 id {} name {}", person_.person_.email_,
@@ -50,8 +51,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, put) {
   auto l_json = in_handle->get_json();
 
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   auto l_update = update(l_sql).from<ai_studio>().set_from_ref<ai_studio>(l_json).where(c(&ai_studio::uuid_id_) == id_);
-  co_await l_sql.run_sql(l_update);
+  l_sqls.emplace_back(std::move(l_update));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_ai_studio = l_sql.get_by_uuid<ai_studio>(id_);
 
@@ -73,8 +76,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, delete_) {
 
   l_sql.uuid_to_id<ai_studio>(id_);
   using namespace orm;
-  auto l_delete = delete_from(l_sql).from<ai_studio>().where(c(&ai_studio::uuid_id_) == id_);
-  co_await l_sql.run_sql(l_delete);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(delete_from(l_sql).from<ai_studio>().where(c(&ai_studio::uuid_id_) == id_));
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg_204();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, post) {
@@ -82,11 +86,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, post
   auto l_sql = get_sqlite_database();
   {
     using namespace orm;
-    auto l_update = update(l_sql)
-                        .from<person>()
-                        .set(c(&person::ai_studio_id_) = ai_studio_id_)
-                        .where(c(&person::uuid_id_) == person_id_);
-    co_await l_sql.run_sql(l_update);
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<person>()
+            .set(c(&person::ai_studio_id_) = ai_studio_id_)
+            .where(c(&person::uuid_id_) == person_id_)
+    );
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
 
   SPDLOG_LOGGER_WARN(
@@ -106,9 +113,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, dele
   );
   {
     using namespace orm;
-    auto l_update =
-        update(l_sql).from<person>().set(c(&person::ai_studio_id_) = uuid{}).where(c(&person::uuid_id_) == person_id_);
-    co_await l_sql.run_sql(l_update);
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
+        update(l_sql).from<person>().set(c(&person::ai_studio_id_) = uuid{}).where(c(&person::uuid_id_) == person_id_)
+    );
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<person>(person_id_));
 }

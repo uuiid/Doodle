@@ -298,7 +298,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_sequences, post) {
     l_entity_ptr->entity_type_id_ =
         l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_;
     l_entity_ptr->created_by_ = person_.person_.uuid_id_;
-    co_await l_sql.install(l_entity_ptr);
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(insert(l_sql).into<entity>().values(*l_entity_ptr));
+    co_await l_sql.run_sql(std::move(l_sqls));
     socket_io::broadcast(
         socket_io::sequence_new_broadcast_t{.sequence_id_ = l_entity_ptr->uuid_id_, .project_id_ = id_}
     );
@@ -342,12 +345,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_sequence_instance, delete_) {
     if (key == "force" && has) l_force = true;
   if (!l_force) {
     using namespace orm;
-    co_await l_sql.run_sql(
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
         update(l_sql)
             .from<entity>()
             .set(c(&entity::canceled_) = true)
             .where(c(&entity::uuid_id_) == l_sequence->uuid_id_)
     );
+    co_await l_sql.run_sql(std::move(l_sqls));
     socket_io::broadcast(
         socket_io::sequence_update_broadcast_t{
             .sequence_id_ = l_sequence->uuid_id_, .project_id_ = l_sequence->project_id_
@@ -356,8 +361,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_sequence_instance, delete_) {
   } else {
     auto l_task     = l_sql.get_tasks_for_entity(l_sequence->uuid_id_);
     auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
-    co_await l_sql.remove<task>(l_task_ids);
-    co_await l_sql.remove<entity>(l_sequence->uuid_id_);
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
+    if (!l_task_ids.empty())
+      l_sqls.emplace_back(delete_from(l_sql).from<task>().where(c(&task::uuid_id_).in(l_task_ids)));
+    l_sqls.emplace_back(delete_from(l_sql).from<entity>().where(c(&entity::uuid_id_) == l_sequence->uuid_id_));
+    co_await l_sql.run_sql(std::move(l_sqls));
     socket_io::broadcast(
         socket_io::sequence_delete_broadcast_t{
             .sequence_id_ = l_sequence->uuid_id_, .project_id_ = l_sequence->project_id_
@@ -413,7 +422,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_task_types_create_tasks, pos
     );
     l_result.emplace_back(actions_projects_task_types_create_tasks_result{l_task, l_task_type, l_task_status});
   }
-  if (!l_tasks->empty()) co_await l_sql.install_range(l_tasks);
+  if (!l_tasks->empty()) {
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(insert(l_sql).into<task>().set_range(*l_tasks));
+    co_await l_sql.run_sql(std::move(l_sqls));
+  }
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 批量创建任务 task_type_id {} 数量 {}",

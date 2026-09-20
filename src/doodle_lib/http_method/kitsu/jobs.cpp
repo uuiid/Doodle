@@ -64,6 +64,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   );
 
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   auto l_update = update(l_sql)
                       .from<server_task_info>()
                       .set_from_ref<server_task_info>(l_json)
@@ -80,7 +81,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
         .set(c(&server_task_info::end_time_) = std::optional<server_task_info::zoned_time>{})
         .set(c(&server_task_info::run_time_) = std::optional<server_task_info::zoned_time>{});
   }
-  co_await l_sql.run_sql(l_update);
+  l_sqls.emplace_back(std::move(l_update));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   if (l_job_ptr->run_computer_id_ != l_job.run_computer_id_) {
     SPDLOG_LOGGER_WARN(
@@ -104,7 +106,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, delete_) {
         boost::beast::http::status::method_not_allowed, "任务正在运行中, 无法删除"
     );
   }
-  co_await l_sql.remove<server_task_info>(job_id_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      delete_from(l_sql).from<server_task_info>().where(c(&server_task_info::uuid_id_) == job_id_)
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 删除任务 job_id {}({}) status {} ", person_.person_.email_,
       person_.person_.get_full_name(), job_id_, l_job.name_, l_job.status_

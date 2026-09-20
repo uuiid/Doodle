@@ -36,13 +36,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode, post) {
   l_json.get_to(*l_episode);
   l_episode->subproject_id_ = subproject_id_;
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   auto l_limit            = std::make_shared<sd2::ai_episode_model_resolution_limit>();
   auto l_install_1        = insert(l_sql).into<sd2::ai_episode>().values(*l_episode);
   l_limit->ai_episode_id_ = l_episode->uuid_id_;
   l_limit->model_name_    = "doubao-seedance-2-0-mini-260615";
   l_limit->resolution_    = "480p";
-  auto l_install_2        = insert(l_sql).into<sd2::ai_episode_model_resolution_limit>().values(*l_limit);
-  co_await l_sql.run_sql(l_install_1, l_install_2);
+  l_sqls.emplace_back(std::move(l_install_1));
+  l_sqls.emplace_back(insert(l_sql).into<sd2::ai_episode_model_resolution_limit>().values(*l_limit));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_episode);
 }
@@ -64,10 +66,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, put
   auto l_json = in_handle->get_json();
 
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   auto l_update = update(l_sql).from<sd2::ai_episode>().set_from_ref<sd2::ai_episode>(l_json).where(
       c(&sd2::ai_episode::uuid_id_) == episode_id_
   );
-  co_await l_sql.run_sql(l_update);
+  l_sqls.emplace_back(std::move(l_update));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::ai_episode>(episode_id_));
 }
@@ -76,7 +80,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, del
   person_.check_manager();
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
-  co_await l_sql.remove<sd2::ai_episode>(episode_id_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(delete_from(l_sql).from<sd2::ai_episode>().where(c(&sd2::ai_episode::uuid_id_) == episode_id_));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{{"episode_id", episode_id_}});
 }
@@ -105,7 +112,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_model_resolut
   l_limit->ai_episode_id_ = episode_id_;
   l_json.get_to(*l_limit);
 
-  co_await l_sql.install(l_limit);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<sd2::ai_episode_model_resolution_limit>().values(*l_limit));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_limit);
 }
@@ -115,7 +125,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_model_resolution_limit_i
   person_.check_manager();
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
-  co_await l_sql.remove<sd2::ai_episode_model_resolution_limit>(limit_id_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      delete_from(l_sql).from<sd2::ai_episode_model_resolution_limit>().where(
+          c(&sd2::ai_episode_model_resolution_limit::uuid_id_) == limit_id_
+      )
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{{"limit_id", limit_id_}});
 }

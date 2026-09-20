@@ -230,11 +230,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_user_notification, put) {
   );
 
   using namespace orm;
-  co_await l_sql.run_sql(
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
       update(l_sql).from<notification>().set(c(&notification::read_) = l_read).where(
           c(&notification::uuid_id_) == id_
       )
   );
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_not = l_sql.get_by_uuid<notification>(id_);
 
@@ -252,7 +254,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_user_notifications_mark_all_as_read, 
       person_.person_.get_full_name()
   );
 
-  co_await l_sql.mark_all_notifications_as_read(person_.person_.uuid_id_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      update(l_sql)
+          .from<notification>()
+          .set(c(&notification::read_) = true)
+          .where(c(&notification::person_id_) == person_.person_.uuid_id_ && c(&notification::read_) == false)
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成将所有通知标记已读", person_.person_.email_,

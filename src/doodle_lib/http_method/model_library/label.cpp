@@ -20,7 +20,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(assets_tree_link, post) {
   auto l_link               = std::make_shared<assets_file_helper::link_parent_t>();
   l_link->assets_type_uuid_ = id_;
   l_link->assets_uuid_      = assets_id_;
-  co_await l_sql.install<assets_file_helper::link_parent_t>(l_link);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<assets_file_helper::link_parent_t>().values(*l_link));
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(assets_tree_link, delete_) {
@@ -31,7 +34,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(assets_tree_link, delete_) {
   );
   if (!l_sql.has_assets_tree_assets_link(id_, assets_id_)) co_return in_handle->make_msg(nlohmann::json{});
   auto l_link = l_sql.get_assets_tree_assets_link(id_, assets_id_);
-  co_await l_sql.remove<assets_file_helper::link_parent_t>(l_link.id_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      delete_from(l_sql).from<assets_file_helper::link_parent_t>().where(
+          c(&assets_file_helper::link_parent_t::id_) == l_link.id_
+      )
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{});
 }
 

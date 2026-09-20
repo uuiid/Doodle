@@ -85,7 +85,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, post) {
   l_json.get_to(*l_subproject);
   l_subproject->created_user_id_ = person_.person_.uuid_id_;
 
-  co_await l_sql.install(l_subproject);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<sd2::subproject>().values(*l_subproject));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_subproject);
 }
@@ -105,10 +108,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, put) {
   auto l_json = in_handle->get_json();
 
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   auto l_update = update(l_sql).from<sd2::subproject>().set_from_ref<sd2::subproject>(l_json).where(
       c(&sd2::subproject::uuid_id_) == id_
   );
-  co_await l_sql.run_sql(l_update);
+  l_sqls.emplace_back(std::move(l_update));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::subproject>(id_));
 }
@@ -125,17 +130,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, delete_) {
     }
   }
 
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   if (l_force) {
     person_.check_admin();
-    co_await l_sql.remove<sd2::subproject>(id_);
+    l_sqls.emplace_back(delete_from(l_sql).from<sd2::subproject>().where(c(&sd2::subproject::uuid_id_) == id_));
   } else {
     auto l_subproject = l_sql.get_by_uuid<sd2::subproject>(id_);
-    using namespace orm;
-    co_await l_sql.run_sql(update(l_sql)
-                               .from<sd2::subproject>()
-                               .set(c(&sd2::subproject::archived_) = true)
-                               .where(c(&sd2::subproject::uuid_id_) == l_subproject.uuid_id_));
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<sd2::subproject>()
+            .set(c(&sd2::subproject::archived_) = true)
+            .where(c(&sd2::subproject::uuid_id_) == l_subproject.uuid_id_)
+    );
   }
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg_204();
 }
@@ -147,12 +156,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_preview, post) {
   auto l_file           = in_handle->get_file();
   auto l_preview        = std::make_shared<sd2::ai_preview_file>();
   l_preview->extension_ = ".png";
-  co_await l_sql.install(l_preview);
   using namespace orm;
-  co_await l_sql.run_sql(update(l_sql)
-                             .from<sd2::subproject>()
-                             .set(c(&sd2::subproject::preview_file_) = l_preview->uuid_id_)
-                             .where(c(&sd2::subproject::uuid_id_) == l_subproject.uuid_id_));
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<sd2::ai_preview_file>().values(*l_preview));
+  l_sqls.emplace_back(
+      update(l_sql)
+          .from<sd2::subproject>()
+          .set(c(&sd2::subproject::preview_file_) = l_preview->uuid_id_)
+          .where(c(&sd2::subproject::uuid_id_) == l_subproject.uuid_id_)
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview->uuid_id_, l_file.extension().string());
@@ -199,7 +212,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_person_link, post) {
   l_json.get_to(*l_link);
   l_link->subproject_id_ = subproject_id_;
 
-  co_await l_sql.install(l_link);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<sd2::subproject_person_link>().values(*l_link));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_link);
 }
@@ -214,7 +230,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_person_link, delete_) {
     co_return in_handle->make_msg(nlohmann::json{{"subproject_id", subproject_id_}, {"person_id", l_person_id}});
 
   auto l_sql = get_sqlite_database();
-  co_await l_sql.remove<sd2::subproject_person_link>(l_link->uuid_id_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      delete_from(l_sql).from<sd2::subproject_person_link>().where(
+          c(&sd2::subproject_person_link::uuid_id_) == l_link->uuid_id_
+      )
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{{"subproject_id", subproject_id_}, {"person_id", l_person_id}});
 }

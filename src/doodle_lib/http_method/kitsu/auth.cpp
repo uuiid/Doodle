@@ -140,11 +140,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, put) {
   auto l_person = l_sql.get_person_for_email(l_arg.email);
   {
     using namespace orm;
-    auto l_update = update(l_sql)
-                        .from<person>()
-                        .set(c(&person::password_) = bcrypt::generateHash(l_arg.password))
-                        .where(c(&person::uuid_id_) == l_person.uuid_id_);
-    co_await l_sql.run_sql(l_update);
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<person>()
+            .set(c(&person::password_) = bcrypt::generateHash(l_arg.password))
+            .where(c(&person::uuid_id_) == l_person.uuid_id_)
+    );
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
   co_return in_handle->make_msg(nlohmann::json{{"success", "Password changed"}});
 }

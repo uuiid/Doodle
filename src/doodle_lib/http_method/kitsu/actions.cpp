@@ -73,9 +73,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_clear_assignation, put) {
 
   if (!l_assignee_ids.empty()) {
     using namespace orm;
-    co_await l_sql.run_sql(
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
         delete_from(l_sql).from<assignees_table>().where(c(&assignees_table::id_).in(l_assignee_ids))
     );
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
 
   co_return in_handle->make_msg(nlohmann::json{} = l_args.task_id_);

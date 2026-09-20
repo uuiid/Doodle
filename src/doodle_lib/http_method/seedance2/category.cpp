@@ -33,7 +33,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category, post) {
   auto l_category = std::make_shared<sd2::ai_category>();
   l_json.get_to(*l_category);
 
-  co_await l_sql.install(l_category);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<sd2::ai_category>().values(*l_category));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_category);
 }
@@ -55,10 +58,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category_instance, pu
   auto l_json = in_handle->get_json();
 
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   auto l_update = update(l_sql).from<sd2::ai_category>().set_from_ref<sd2::ai_category>(l_json).where(
       c(&sd2::ai_category::uuid_id_) == category_id_
   );
-  co_await l_sql.run_sql(l_update);
+  l_sqls.emplace_back(std::move(l_update));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::ai_category>(category_id_));
 }
@@ -68,8 +73,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category_instance, de
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   using namespace orm;
-
-  co_await l_sql.remove<sd2::ai_category>(category_id_);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      delete_from(l_sql).from<sd2::ai_category>().where(c(&sd2::ai_category::uuid_id_) == category_id_)
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{{"category_id", category_id_}});
 }

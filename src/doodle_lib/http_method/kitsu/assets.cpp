@@ -115,7 +115,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(projects_assets_new, post) {
       .created_by_     = person_.person_.uuid_id_,
   };
   using namespace orm;
-  auto l_install = insert(l_sql).into<entity>().values(l_entity);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<entity>().values(l_entity));
 
   nlohmann::json l_json_ret{};
   l_json_ret = l_entity;
@@ -129,11 +130,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(projects_assets_new, post) {
         l_entity_extend.check_all_fields_no_backslash(), "entity_asset_extend 字段不能包含反斜杠 '\\'，请检查输入数据"
     )
 
-    auto l_install_extend = insert(l_sql).into<entity_asset_extend>().values(l_entity_extend);
-    co_await l_sql.run_sql(l_install, l_install_extend);
+    l_sqls.emplace_back(insert(l_sql).into<entity_asset_extend>().values(l_entity_extend));
+    co_await l_sql.run_sql(std::move(l_sqls));
     l_json_ret.update(l_entity_extend);
   } else {
-    co_await l_sql.run_sql(l_install);
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
   socket_io::broadcast(
       socket_io::asset_new_broadcast_t{
@@ -508,15 +509,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, delete_) {
   if (!l_force) {
     l_ass.canceled_ = true;
     using namespace orm;
-    auto l_update = update(l_sql).from<entity>().set(c(&entity::canceled_) = true).where(c(&entity::uuid_id_) == id_);
-    co_await l_sql.run_sql(l_update);
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
+        update(l_sql).from<entity>().set(c(&entity::canceled_) = true).where(c(&entity::uuid_id_) == id_)
+    );
+    co_await l_sql.run_sql(std::move(l_sqls));
     co_return in_handle->make_msg(nlohmann::json{} = l_ass);
   }
   auto l_task     = l_sql.get_tasks_for_entity(l_ass.uuid_id_);
   auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
   using namespace orm;
-  auto l_delete = delete_from(l_sql).from<entity>().where(c(&entity::uuid_id_) == l_ass.uuid_id_);
-  co_await l_sql.run_sql(l_delete);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(delete_from(l_sql).from<entity>().where(c(&entity::uuid_id_) == l_ass.uuid_id_));
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{} = l_ass);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shared_used, get) { co_return in_handle->make_msg(nlohmann::json::array()); }

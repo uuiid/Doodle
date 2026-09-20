@@ -345,10 +345,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_shots, post) {
       .parent_id_      = l_args.sequence_id_,
       .created_by_     = person_.person_.uuid_id_
   });
-  co_await l_sql.install(l_shot);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<entity>().values(*l_shot));
   auto l_shot_extend =
       std::make_shared<entity_shot_extend>(entity_shot_extend{.entity_id_ = l_shot->uuid_id_, .frame_in_ = 1001});
-  co_await l_sql.install(l_shot_extend);
+  l_sqls.emplace_back(insert(l_sql).into<entity_shot_extend>().values(*l_shot_extend));
+  co_await l_sql.run_sql(std::move(l_sqls));
   socket_io::broadcast(
       socket_io::shot_new_broadcast_t{
           .shot_id_ = l_shot->uuid_id_, .episode_id_ = l_args.sequence_id_, .project_id_ = project_id_
@@ -426,7 +429,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_task_types_shots_create_task
         }
     );
   }
-  if (!l_tasks->empty()) co_await l_sql.install_range(l_tasks);
+  if (!l_tasks->empty()) {
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(insert(l_sql).into<task>().set_range(*l_tasks));
+    co_await l_sql.run_sql(std::move(l_sqls));
+  }
 
   for (auto&& l_task : *l_tasks)
     l_results.emplace_back(actions_projects_task_types_create_tasks_result{l_task, l_task_type, l_task_status});
@@ -460,20 +467,26 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_shot, delete_) {
   l_force = l_force || person_.is_outsourcer();  // 这里比较特殊, 外包商可以直接删除, 不需要先标记为取消
   if (!l_force) {
     using namespace orm;
-    co_await l_sql.run_sql(
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
         update(l_sql)
             .from<entity>()
             .set(c(&entity::canceled_) = true)
             .where(c(&entity::uuid_id_) == l_shot->uuid_id_)
     );
+    co_await l_sql.run_sql(std::move(l_sqls));
     socket_io::broadcast(
         socket_io::shot_update_broadcast_t{.shot_id_ = l_shot->uuid_id_, .project_id_ = l_shot->project_id_}
     );
   } else {
     auto l_task     = l_sql.get_tasks_for_entity(l_shot->uuid_id_);
     auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
-    co_await l_sql.remove<task>(l_task_ids);
-    co_await l_sql.remove<entity>(l_shot->uuid_id_);
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
+    if (!l_task_ids.empty())
+      l_sqls.emplace_back(delete_from(l_sql).from<task>().where(c(&task::uuid_id_).in(l_task_ids)));
+    l_sqls.emplace_back(delete_from(l_sql).from<entity>().where(c(&entity::uuid_id_) == l_shot->uuid_id_));
+    co_await l_sql.run_sql(std::move(l_sqls));
 
     socket_io::broadcast(
         socket_io::shot_delete_broadcast_t{.shot_id_ = l_shot->uuid_id_, .project_id_ = l_shot->project_id_}

@@ -84,12 +84,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comments_add_preview, post) {
   l_preview_file->name_      = core_set::get_set().get_uuid_str();
   l_preview_file->status_    = preview_file_statuses::processing;
   l_preview_file->extension_ = "mp4";
-  co_await l_sql.install(l_preview_file);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<preview_file>().values(*l_preview_file));
 
   auto l_preview_link              = std::make_shared<comment_preview_link>();
   l_preview_link->comment_id_      = comment_id_;
   l_preview_link->preview_file_id_ = l_preview_file->uuid_id_;
-  co_await l_sql.install(l_preview_link);
+  l_sqls.emplace_back(insert(l_sql).into<comment_preview_link>().values(*l_preview_link));
+  co_await l_sql.run_sql(std::move(l_sqls));
   // 产生事件( "preview-file:new", "comment:update")
   socket_io::broadcast(
       socket_io::preview_file_new_broadcast_t{
@@ -293,7 +296,8 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
       [in_preview_file]() -> boost::asio::awaitable<void> {
         auto l_sql = get_sqlite_database();
         using namespace orm;
-        co_await l_sql.run_sql(
+        sql_modify_statement_vector_t l_sqls{};
+        l_sqls.emplace_back(
             update(l_sql)
                 .from<preview_file>()
                 .set(c(&preview_file::file_size_) = in_preview_file->file_size_)
@@ -304,6 +308,7 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
                 )
                 .where(c(&preview_file::uuid_id_) == in_preview_file->uuid_id_)
         );
+        co_await l_sql.run_sql(std::move(l_sqls));
       },
       boost::asio::detached
   );
@@ -408,22 +413,25 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
   l_preview_file->file_size_  = FSys::exists(l_file) ? FSys::file_size(l_file) : 0;
   l_preview_file->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
   using namespace orm;
-  co_await l_sql.run_sql(update(l_sql)
-                             .from<preview_file>()
-                             .set(c(&preview_file::extension_) = l_preview_file->extension_)
-                             .set(c(&preview_file::original_name_) = l_preview_file->original_name_)
-                             .set(c(&preview_file::width_) = l_preview_file->width_)
-                             .set(c(&preview_file::height_) = l_preview_file->height_)
-                             .set(c(&preview_file::duration_) = l_preview_file->duration_)
-                             .set(c(&preview_file::status_) = l_preview_file->status_)
-                             .set(c(&preview_file::file_size_) = l_preview_file->file_size_)
-                             .set(c(&preview_file::updated_at_) = l_preview_file->updated_at_)
-                             .where(c(&preview_file::uuid_id_) == l_preview_file->uuid_id_));
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      update(l_sql)
+          .from<preview_file>()
+          .set(c(&preview_file::extension_) = l_preview_file->extension_)
+          .set(c(&preview_file::original_name_) = l_preview_file->original_name_)
+          .set(c(&preview_file::width_) = l_preview_file->width_)
+          .set(c(&preview_file::height_) = l_preview_file->height_)
+          .set(c(&preview_file::duration_) = l_preview_file->duration_)
+          .set(c(&preview_file::status_) = l_preview_file->status_)
+          .set(c(&preview_file::file_size_) = l_preview_file->file_size_)
+          .set(c(&preview_file::updated_at_) = l_preview_file->updated_at_)
+          .where(c(&preview_file::uuid_id_) == l_preview_file->uuid_id_)
+  );
 
   // 更新task
   if (l_preview_file->position_ == 1) {
     auto l_task = l_sql.get_by_uuid<task>(l_preview_file->task_id_);
-    co_await l_sql.run_sql(
+    l_sqls.emplace_back(
         update(l_sql)
             .from<task>()
             .set(c(&task::last_preview_file_id_) = l_preview_file->uuid_id_)
@@ -432,13 +440,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
     );
     if (auto l_prj = l_sql.get_by_uuid<project>(l_task.project_id_); l_prj.is_set_preview_automated_) {
       auto l_entity = l_sql.get_by_uuid<entity>(l_task.entity_id_);
-      co_await l_sql.run_sql(update(l_sql)
-                                 .from<entity>()
-                                 .set(c(&entity::preview_file_id_) = l_preview_file->uuid_id_)
-                                 .where(c(&entity::uuid_id_) == l_entity.uuid_id_));
+      l_sqls.emplace_back(
+          update(l_sql)
+              .from<entity>()
+              .set(c(&entity::preview_file_id_) = l_preview_file->uuid_id_)
+              .where(c(&entity::uuid_id_) == l_entity.uuid_id_)
+      );
       // 发送事件 "preview-file:set-main"
     }
   }
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
@@ -482,12 +493,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comments_preview_files, post) {
   l_preview_file->name_      = core_set::get_set().get_uuid_str();
   l_preview_file->status_    = preview_file_statuses::processing;
   l_preview_file->extension_ = "mp4";
-  co_await l_sql.install(l_preview_file);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<preview_file>().values(*l_preview_file));
 
   auto l_preview_link              = std::make_shared<comment_preview_link>();
   l_preview_link->comment_id_      = comment_id_;
   l_preview_link->preview_file_id_ = l_preview_file->uuid_id_;
-  co_await l_sql.install(l_preview_link);
+  l_sqls.emplace_back(insert(l_sql).into<comment_preview_link>().values(*l_preview_link));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   socket_io::broadcast(
       socket_io::preview_file_new_broadcast_t{
@@ -528,10 +542,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_set_main_preview, put) 
   } else {
     l_ent->preview_file_id_ = l_preview_file.uuid_id_;
     using namespace orm;
-    co_await l_sql.run_sql(update(l_sql)
-                               .from<entity>()
-                               .set(c(&entity::preview_file_id_) = l_preview_file.uuid_id_)
-                               .where(c(&entity::uuid_id_) == l_ent->uuid_id_));
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<entity>()
+            .set(c(&entity::preview_file_id_) = l_preview_file.uuid_id_)
+            .where(c(&entity::uuid_id_) == l_ent->uuid_id_)
+    );
+    co_await l_sql.run_sql(std::move(l_sqls));
     // 发送事件 "preview-file:set-main"
   }
 

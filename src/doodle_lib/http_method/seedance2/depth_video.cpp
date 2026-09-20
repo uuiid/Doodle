@@ -49,13 +49,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
   // 1. insert::values() 自动生成 uuid_id_（insert.h:92-93）
   auto l_preview = std::make_shared<sd2::ai_preview_file>();
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   l_preview->extension_         = l_ext;
-  auto l_install_1              = insert(l_sql).into<sd2::ai_preview_file>().values(*l_preview);
+  l_sqls.emplace_back(insert(l_sql).into<sd2::ai_preview_file>().values(*l_preview));
 
   auto l_ref                    = std::make_shared<sd2::ai_entity_reference_preview>();
   l_ref->ai_generate_entity_id_ = entity_id_;
   l_ref->preview_file_          = l_preview->uuid_id_;  // values() 后 uuid 已生成
-  auto l_install_2              = insert(l_sql).into<sd2::ai_entity_reference_preview>().values(*l_ref);
+  l_sqls.emplace_back(insert(l_sql).into<sd2::ai_entity_reference_preview>().values(*l_ref));
 
   // 2. 创建分布式任务
   auto l_task = std::make_shared<server_task_info>();
@@ -63,10 +64,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
   l_task->status_    = server_task_info_status::submitted;
   l_task->submitter_ = person_.person_.uuid_id_;
   l_task->command_   = nlohmann::json{{"preview_id", l_preview->uuid_id_}};
-  auto l_install_3   = insert(l_sql).into<server_task_info>().values(*l_task);
+  l_sqls.emplace_back(insert(l_sql).into<server_task_info>().values(*l_task));
 
   // 3. 一次提交三个 insert
-  co_await l_sql.run_sql(l_install_1, l_install_2, l_install_3);
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   // 4. 存储路径 — 原始视频暂存临时文件
   auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();

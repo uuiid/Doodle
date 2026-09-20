@@ -711,10 +711,26 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_copy, post) {
         person_.person_.email_, person_.person_.get_full_name(), project_id_, l_arg.source_sequence_id_,
         l_arg.target_sequence_id_, l_install_entity_links->size()
     );
-    co_await l_sql.remove_sequence_casting(l_arg.target_sequence_id_);
     using namespace orm;
-    auto l_install = insert(l_sql).into<entity_link>().set_range(*l_install_entity_links);
-    co_await l_sql.run_sql(l_install);
+    sql_modify_statement_vector_t l_sqls{};
+    {
+      // 删除目标 sequence 下已有的 casting 数据
+      auto l_shot     = alias<entity>("shot");
+      auto l_sequence = alias<entity>("sequence");
+      l_sqls.emplace_back(
+          delete_from(l_sql)
+              .from<entity_link>()
+              .where(c(&entity_link::id_)
+                         .in(select(l_sql)
+                                 .columns(&entity_link::id_)
+                                 .from<entity_link>()
+                                 .join(l_shot, &entity_link::entity_in_id_, l_shot->*&entity::uuid_id_)
+                                 .join(l_sequence, l_shot->*&entity::parent_id_, l_sequence->*&entity::uuid_id_)
+                                 .where(c(l_sequence->*&entity::uuid_id_) == l_arg.target_sequence_id_)))
+      );
+    }
+    l_sqls.emplace_back(insert(l_sql).into<entity_link>().set_range(*l_install_entity_links));
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
   co_return in_handle->make_msg(
       nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, l_arg.target_sequence_id_)

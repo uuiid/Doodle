@@ -437,8 +437,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_comment, put) {
   }
 
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   auto l_update = update(l_sql).from<comment>().set_from_ref<comment>(l_json).where(c(&comment::uuid_id_) == id_);
-  co_await l_sql.run_sql(l_update);
+  l_sqls.emplace_back(std::move(l_update));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_comment = l_sql.get_by_uuid<comment>(id_);
 

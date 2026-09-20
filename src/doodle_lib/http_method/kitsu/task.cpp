@@ -98,17 +98,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status_links, post) {
           .value_or(project_task_status_link{})
   );
   l_json.get_to(*l_task_status_link);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   if (l_task_status_link->id_ == 0)
-    co_await l_sql.install(l_task_status_link);
-  else {
-    using namespace orm;
-    co_await l_sql.run_sql(
+    l_sqls.emplace_back(insert(l_sql).into<project_task_status_link>().values(*l_task_status_link));
+  else
+    l_sqls.emplace_back(
         update(l_sql)
             .from<project_task_status_link>()
             .set_from_ref<project_task_status_link>(l_json)
             .where(c(&project_task_status_link::uuid_id_) == l_task_status_link->uuid_id_)
     );
-  }
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成设置任务状态关联 id {} project_id {} task_status_id {}",
@@ -130,9 +131,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks, put) {
   );
   auto l_json = in_handle->get_json();
   using namespace orm;
-  co_await l_sql.run_sql(
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
       update(l_sql).from<task>().set_from_ref<task>(l_json).where(c(&task::uuid_id_) == id_)
   );
+  co_await l_sql.run_sql(std::move(l_sqls));
   auto l_task_updated = l_sql.get_by_uuid<task>(id_);
   // l_task->assigner_id_ = l_person->person_.uuid_id_;
 
@@ -675,7 +678,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks, delete_) {
       g_logger_ctrl().get_http(), "用户 {}({}) 删除任务 {} ", person_.person_.email_, person_.person_.get_full_name(),
       l_task.uuid_id_
   );
-  co_await l_sql.remove<task>(id_);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(delete_from(l_sql).from<task>().where(c(&task::uuid_id_) == id_));
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg_204();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks_full, get) {

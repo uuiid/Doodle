@@ -264,7 +264,19 @@ struct computing_time_post_req_custom_data {
   }
 };
 
-business::work_clock2 create_time_clock(const chrono::year_month& in_year_month, const uuid& in_user_id) {
+/// 时间钟需要读取的考勤日期范围: 当月 1 号到次月 3 号
+std::vector<chrono::local_days> get_time_clock_attendance_days(const chrono::year_month& in_year_month) {
+  chrono::local_days l_begin_time{chrono::local_days{in_year_month / chrono::day{1}}},
+      l_end_time{chrono::local_days{in_year_month / chrono::last} + chrono::days{3}};
+  std::vector<chrono::local_days> l_days{};
+  for (auto l_it = l_begin_time; l_it <= l_end_time; l_it += chrono::days{1}) l_days.emplace_back(l_it);
+  return l_days;
+}
+
+business::work_clock2 create_time_clock(
+    const chrono::year_month& in_year_month, const uuid& in_user_id,
+    const std::vector<attendance_helper::database_t>& in_attendance
+) {
   business::work_clock2 l_time_clock_{};
   auto l_rules_ = business::rules::get_default();
   chrono::local_days l_begin_time{chrono::local_days{in_year_month / chrono::day{1}}},
@@ -282,10 +294,7 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
   l_holidaycn_time.set_clock(l_time_clock_);
 
   // 调整请假等调整
-  auto l_sql = get_sqlite_database();
-  std::vector<chrono::local_days> l_days{};
-  for (auto l_it = l_begin_time; l_it <= l_end_time; l_it += chrono::days{1}) l_days.emplace_back(l_it);
-  for (auto&& l_att : l_sql.get_attendance(in_user_id, l_days)) {
+  for (auto&& l_att : in_attendance) {
     switch (l_att.type_) {
       case attendance_helper::att_enum::overtime:
         l_time_clock_ += std::make_tuple(l_att.start_time_, l_att.end_time_, l_att.remark_);
@@ -307,6 +316,13 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
   }
   l_time_clock_.cut_interval(l_begin_time, l_end_time);
   return l_time_clock_;
+}
+
+business::work_clock2 create_time_clock(const chrono::year_month& in_year_month, const uuid& in_user_id) {
+  auto l_sql = get_sqlite_database();
+  return create_time_clock(
+      in_year_month, in_user_id, l_sql.get_attendance(in_user_id, get_time_clock_attendance_days(in_year_month))
+  );
 }
 
 // 计算时间
@@ -521,7 +537,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time, post) {
   auto l_ids       = get_work_xlsx_task_info_helper_database_t_id_by_person_id_and_year_month(
       l_user.uuid_id_, chrono::local_days{year_month_ / 1}
   );
-  co_await l_sql.remove<work_xlsx_task_info_helper::database_t>(l_ids);
   {  // 检查除空以外的id是否重复
     std::map<uuid, std::size_t> l_map;
     for (auto&& l_task : l_data) {
@@ -545,7 +560,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time, post) {
   auto l_time_clock = create_time_clock(year_month_, l_user.uuid_id_);
   computing_time_run(year_month_, l_time_clock, l_user.uuid_id_, l_data, *l_block_ptr);
 
-  co_await l_sql.install_range(l_block_ptr);
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  if (!l_ids.empty())
+    l_sqls.emplace_back(
+        delete_from(l_sql).from<work_xlsx_task_info_helper::database_t>().where(
+            c(&work_xlsx_task_info_helper::database_t::id_).in(l_ids)
+        )
+    );
+  if (!l_block_ptr->empty())
+    l_sqls.emplace_back(insert(l_sql).into<work_xlsx_task_info_helper::database_t>().set_range(*l_block_ptr));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成提交工时 user_id {} year_month {} 写入 {}", person_.person_.email_,
@@ -776,8 +801,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_sort, post) {
   auto l_time_clock = create_time_clock(year_month_, l_user.uuid_id_);
   recomputing_time_run(year_month_, l_time_clock, *l_block_sort);
   if (!l_block_sort->empty()) {
-    auto l_update = set_work_xlsx_task_info(*l_block_sort, l_sql);
-    co_await l_sql.run_sql(std::move(l_update));
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(set_work_xlsx_task_info(*l_block_sort, l_sql));
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
 
   SPDLOG_LOGGER_WARN(
@@ -806,8 +833,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_average, post) {
   average_time_run(year_month_, l_time_clock, *l_block);
 
   if (!l_block->empty()) {
-    auto l_update = set_work_xlsx_task_info(*l_block, l_sql);
-    co_await l_sql.run_sql(std::move(l_update));
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(set_work_xlsx_task_info(*l_block, l_sql));
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
 
   SPDLOG_LOGGER_WARN(
@@ -860,36 +889,46 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_patch, patch) {
     if (auto l_err = patch_time(l_timer_clock, *l_block_ptr, task_id_, *l_duration, in_handle->logger_);
         l_err.empty()) {
       if (!l_block_ptr->empty()) {
-        auto l_update = set_work_xlsx_task_info(*l_block_ptr, l_sql);
-        co_await l_sql.run_sql(std::move(l_update));
+        using namespace orm;
+        sql_modify_statement_vector_t l_sqls{};
+        l_sqls.emplace_back(set_work_xlsx_task_info(*l_block_ptr, l_sql));
+        co_await l_sql.run_sql(std::move(l_sqls));
       }
     } else {
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, l_err);
     }
   } else if (l_comment) {
     using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
     for (auto&& l_b : *l_block_ptr) {
       if (l_b.uuid_id_ == task_id_) {
         l_b.user_remark_ = *l_comment;
-        co_await l_sql.run_sql(update(l_sql)
-                                   .from<work_xlsx_task_info_helper::database_t>()
-                                   .set(c(&work_xlsx_task_info_helper::database_t::user_remark_) = *l_comment)
-                                   .where(c(&work_xlsx_task_info_helper::database_t::uuid_id_) == task_id_));
+        l_sqls.emplace_back(
+            update(l_sql)
+                .from<work_xlsx_task_info_helper::database_t>()
+                .set(c(&work_xlsx_task_info_helper::database_t::user_remark_) = *l_comment)
+                .where(c(&work_xlsx_task_info_helper::database_t::uuid_id_) == task_id_)
+        );
         break;
       }
     }
+    co_await l_sql.run_sql(std::move(l_sqls));
   } else if (l_eps) {
     using namespace orm;
+    sql_modify_statement_vector_t l_sqls{};
     for (auto&& l_b : *l_block_ptr) {
       if (l_b.uuid_id_ == task_id_) {
         l_b.episode_ = *l_eps;
-        co_await l_sql.run_sql(update(l_sql)
-                                   .from<work_xlsx_task_info_helper::database_t>()
-                                   .set(c(&work_xlsx_task_info_helper::database_t::episode_) = *l_eps)
-                                   .where(c(&work_xlsx_task_info_helper::database_t::uuid_id_) == task_id_));
+        l_sqls.emplace_back(
+            update(l_sql)
+                .from<work_xlsx_task_info_helper::database_t>()
+                .set(c(&work_xlsx_task_info_helper::database_t::episode_) = *l_eps)
+                .where(c(&work_xlsx_task_info_helper::database_t::uuid_id_) == task_id_)
+        );
         break;
       }
     }
+    co_await l_sql.run_sql(std::move(l_sqls));
   }
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
@@ -924,13 +963,29 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_delete, delete_) {
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
-boost::asio::awaitable<void> recomputing_time(const uuid& in_person_id, const chrono::year_month& in_year_month) {
-  auto l_sql         = get_sqlite_database();
+orm::update_t recomputing_time(
+    sqlite_database& in_sql, const uuid& in_person_id, const chrono::year_month& in_year_month,
+    const attendance_delta_t& in_delta
+) {
+  // 读当月考勤, 并把本次请求待写入的改动在内存里叠加进去, 使时间钟与"先提交再重算"一致
+  auto l_attendance = in_sql.get_attendance(in_person_id, get_time_clock_attendance_days(in_year_month));
+  std::erase_if(l_attendance, [&](const attendance_helper::database_t& in_) {
+    return std::ranges::find(in_delta.replaced_days_, in_.create_date_) != in_delta.replaced_days_.end() ||
+           std::ranges::find(in_delta.removed_uuids_, in_.uuid_id_) != in_delta.removed_uuids_.end();
+  });
+  for (auto&& l_upsert : in_delta.upsert_) {
+    if (auto l_it = std::ranges::find(l_attendance, l_upsert.uuid_id_, &attendance_helper::database_t::uuid_id_);
+        l_it != l_attendance.end())
+      *l_it = l_upsert;
+    else
+      l_attendance.emplace_back(l_upsert);
+  }
+
   auto l_block_ptr   = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr       = l_sql.get_work_xlsx_task_info(in_person_id, chrono::local_days{in_year_month / 1});
-  auto l_timer_clock = create_time_clock(in_year_month, in_person_id);
+  *l_block_ptr       = in_sql.get_work_xlsx_task_info(in_person_id, chrono::local_days{in_year_month / 1});
+  auto l_timer_clock = create_time_clock(in_year_month, in_person_id, l_attendance);
   recomputing_time_run(in_year_month, l_timer_clock, *l_block_ptr);
-  co_return co_await l_sql.update_range(l_block_ptr);
+  return set_work_xlsx_task_info(*l_block_ptr, in_sql);
 }
 
 }  // namespace doodle::http

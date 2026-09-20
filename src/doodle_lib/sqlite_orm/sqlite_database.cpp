@@ -1412,16 +1412,6 @@ boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
   DOODLE_TO_SELF();
 }
 
-boost::asio::awaitable<void> sqlite_database::remove(orm::delete_t in_delete) {
-  DOODLE_TO_SQLITE_THREAD()
-  in_delete();
-  DOODLE_TO_SELF();
-}
-boost::asio::awaitable<void> sqlite_database::update(orm::update_t in_update) {
-  DOODLE_TO_SQLITE_THREAD()
-  in_update();
-  DOODLE_TO_SELF();
-}
 
 std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
     const uuid& in_person_id, const chrono::local_days& in_data
@@ -1854,16 +1844,6 @@ std::optional<entity_link> sqlite_database::get_entity_link(const uuid& in_entit
       .to_optional();
 }
 
-boost::asio::awaitable<void> sqlite_database::mark_all_notifications_as_read(uuid in_user_id) {
-  DOODLE_TO_SQLITE_THREAD();
-  using namespace orm;
-  orm::update(*this)
-      .from<notification>()
-      .set(c(&notification::read_) = true)
-      .where(c(&notification::person_id_) == in_user_id && c(&notification::read_) == false)();
-  DOODLE_TO_SELF();
-  co_return;
-}
 
 std::optional<entity_asset_extend_value> sqlite_database::get_entity_asset_extend(const uuid& in_entity_id) {
   using namespace orm;
@@ -1902,13 +1882,6 @@ std::vector<playlist_shot> sqlite_database::get_playlist_shot_entity(const uuid&
       .order_by(&playlist_shot::order_index_)()
       .to_vector();
 }
-boost::asio::awaitable<void> sqlite_database::remove_playlist_shot_for_playlist(const uuid& in_playlist_id) {
-  using namespace orm;
-  DOODLE_TO_SQLITE_THREAD();
-  delete_from(*this).from<playlist_shot>().where(c(&playlist_shot::playlist_id_) == in_playlist_id)();
-  DOODLE_TO_SELF();
-  co_return;
-}
 std::optional<task_type_asset_type_link> sqlite_database::get_task_type_asset_type_link(
     const uuid& in_task_type_id, const uuid& in_asset_type_id
 ) {
@@ -1919,18 +1892,6 @@ std::optional<task_type_asset_type_link> sqlite_database::get_task_type_asset_ty
       .from<task_type_asset_type_link>()
       .where(c(&task_type_asset_type_link::task_type_id_) == in_task_type_id && c(&task_type_asset_type_link::asset_type_id_) == in_asset_type_id)()
       .to_optional();
-}
-boost::asio::awaitable<void> sqlite_database::remove_task_type_asset_type_link_by_asset_type(
-    const uuid& in_asset_type_id
-) {
-  using namespace orm;
-
-  DOODLE_TO_SQLITE_THREAD();
-  delete_from(*this)
-      .from<task_type_asset_type_link>()
-      .where(c(&task_type_asset_type_link::asset_type_id_) == in_asset_type_id)();
-  DOODLE_TO_SELF();
-  co_return;
 }
 
 uuid sqlite_database::get_project_status_open() {
@@ -1975,28 +1936,6 @@ bool sqlite_database::is_entity_outsourced(
              .to_single() > 0;
 }
 
-boost::asio::awaitable<void> sqlite_database::remove_sequence_casting(const uuid& in_sequence_id) {
-  DOODLE_TO_SQLITE_THREAD();
-  using namespace orm;
-  auto l_shot     = alias<entity>("shot");
-  auto l_sequence = alias<entity>("sequence");
-  delete_from(*this)
-      .from<entity_link>()
-
-      .where(c(&entity_link::id_)
-                 .in(
-                     select(*this)
-                         .columns(&entity_link::id_)
-                         .from<entity_link>()
-                         .join(l_shot, &entity_link::entity_in_id_, l_shot->*&entity::uuid_id_)
-                         .join(l_sequence, l_shot->*&entity::parent_id_, l_sequence->*&entity::uuid_id_)
-                         .where(c(l_sequence->*&entity::uuid_id_) == in_sequence_id)
-
-                 ))();
-
-  DOODLE_TO_SELF();
-  co_return;
-}
 
 std::vector<server_task_info> sqlite_database::get_server_tasks_by_submitted() {
   using namespace orm;
@@ -2040,17 +1979,6 @@ entity_asset_extend_value sqlite_database::get_entity_shot_extend_by_task(const 
 
   DOODLE_CHICK(l_assets.size() == 1, "错误, 找个了 {} 个对应的地编资产", l_assets.size());
   return std::make_from_tuple<entity_asset_extend_value>(l_assets.front());
-}
-boost::asio::awaitable<void> sqlite_database::update_computer_status(
-    const uuid& in_computer_id, computer_status in_status
-) {
-  DOODLE_TO_SQLITE_THREAD();
-  using namespace orm;
-  orm::update(*this)
-      .from<computer>()
-      .set(c(&computer::status_) = in_status)
-      .where(c(&computer::uuid_id_) == in_computer_id)();
-  DOODLE_TO_SELF();
 }
 
 }  // namespace doodle

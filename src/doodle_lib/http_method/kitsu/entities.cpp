@@ -48,10 +48,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
   l_json.get_to(*l_entt);
   nlohmann::json l_res{};
   const bool l_can_update = person_.is_project_supervisor(l_entt->project_id_);
+
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   if (l_can_update) {
-    using namespace orm;
     auto l_update = update(l_sql).from<entity>().set_from_ref<entity>(l_json).where(c(&entity::uuid_id_) == id_);
-    if (l_update) co_await l_sql.run_sql(l_update);
+    if (l_update) l_sqls.emplace_back(std::move(l_update));
   }
   l_res = *l_entt;
   if (entity_asset_extend::has_extend_data(l_json)) {
@@ -59,16 +61,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
     if (auto l_list_ext = get_entity_asset_extend_by_entity_id(l_entt->uuid_id_); l_list_ext.has_value()) {
       *l_ext_ptr = l_list_ext.value();
       l_json.get_to(*l_ext_ptr);
-      using namespace orm;
       auto l_update = update(l_sql)
                           .from<entity_asset_extend>()
                           .set_from_ref<entity_asset_extend>(l_json)
                           .where(c(&entity_asset_extend::entity_id_) == l_entt->uuid_id_);
-      if (l_update) co_await l_sql.run_sql(l_update);
+      if (l_update) l_sqls.emplace_back(std::move(l_update));
     } else {
       l_json.get_to(*l_ext_ptr);
       l_ext_ptr->entity_id_ = l_entt->uuid_id_;
-      co_await l_sql.install(l_ext_ptr);
+      l_sqls.emplace_back(insert(l_sql).into<entity_asset_extend>().values(*l_ext_ptr));
     }
     l_res.update(*l_ext_ptr);
   }
@@ -76,19 +77,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
     entity_shot_extend l_new_ext{};
     if (auto l_list_ext = get_entity_shot_extend_by_entity_id(l_entt->uuid_id_); l_list_ext.has_value()) {
       l_json.get_to(l_new_ext);
-      using namespace orm;
       auto l_update = update(l_sql)
                           .from<entity_shot_extend>()
                           .set_from_ref<entity_shot_extend>(l_json)
                           .where(c(&entity_shot_extend::entity_id_) == l_entt->uuid_id_);
-      if (l_update) co_await l_sql.run_sql(l_update);
+      if (l_update) l_sqls.emplace_back(std::move(l_update));
     } else {
       l_json.get_to(l_new_ext);
       l_new_ext.entity_id_ = l_entt->uuid_id_;
-      co_await l_sql.install(std::make_shared<entity_shot_extend>(l_new_ext));
+      auto l_new_ptr       = std::make_shared<entity_shot_extend>(l_new_ext);
+      l_sqls.emplace_back(insert(l_sql).into<entity_shot_extend>().values(*l_new_ptr));
     }
     l_res.update(l_new_ext);
   }
+
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新实体 entity_id {} project_id {} updated {}",

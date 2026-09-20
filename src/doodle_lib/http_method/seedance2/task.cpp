@@ -192,7 +192,7 @@ class seedance2_task_run_manager {
               .where(c(&sd2::ai_generate_entity::uuid_id_) == in_task.ai_generate_entity_id_)
       );
     }
-    co_await l_sql.run_sql(l_sql_modify_statements);
+    co_await l_sql.run_sql(std::move(l_sql_modify_statements));
     socket_io::broadcast(
         socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_status}
     );
@@ -248,11 +248,14 @@ class seedance2_task_run_manager {
         co_return;
       case sd2::task_status::running: {
         if (in_task.status_ != l_result.status_) {
-          co_await l_sql.run_sql(update(l_sql)
-                                     .from<sd2::task>()
-                                     .set(c(&sd2::task::status_) = l_result.status_)
-                                     .set(c(&sd2::task::data_response_) = l_result.data_response_)
-                                     .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_));
+          l_sqls.emplace_back(
+              update(l_sql)
+                  .from<sd2::task>()
+                  .set(c(&sd2::task::status_) = l_result.status_)
+                  .set(c(&sd2::task::data_response_) = l_result.data_response_)
+                  .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_)
+          );
+          co_await l_sql.run_sql(std::move(l_sqls));
         }
         socket_io::broadcast(
             socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_result.status_}
@@ -481,7 +484,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
   }
 
   using namespace orm;
-  co_await l_sql.run_sql(
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
       update(l_sql)
           .from<sd2::task>()
           .set(c(&sd2::task::status_) = sd2::task_status::cancelled)
@@ -489,13 +493,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
               c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
               c(&sd2::task::completion_tokens_) = 0
           )
-          .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_),
-      add_remaining_tokens_for_person(l_sql, l_task.user_id_, l_task.completion_tokens_),
+          .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_)
+  );
+  l_sqls.emplace_back(add_remaining_tokens_for_person(l_sql, l_task.user_id_, l_task.completion_tokens_));
+  l_sqls.emplace_back(
       update(l_sql)
           .from<sd2::ai_generate_entity>()
           .set(c(&sd2::ai_generate_entity::generate_count_) = c(&sd2::ai_generate_entity::generate_count_) - 1)
           .where(c(&sd2::ai_generate_entity::uuid_id_) == l_task.ai_generate_entity_id_)
   );
+  co_await l_sql.run_sql(std::move(l_sqls));
   l_task.status_ = sd2::task_status::cancelled;
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
 }
@@ -505,10 +512,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, delete_) 
   auto l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
   using namespace orm;
-  co_await l_sql.run_sql(update(l_sql)
-                             .from<sd2::task>()
-                             .set(c(&sd2::task::archived_) = true)
-                             .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_));
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      update(l_sql)
+          .from<sd2::task>()
+          .set(c(&sd2::task::archived_) = true)
+          .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_)
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
 }
 

@@ -51,8 +51,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments, post) {
   DOODLE_CHICK(!l_department.name_.empty(), "部门名称不可为空");
 
   using namespace orm;
-  auto l_install = insert(l_sql).into<department>().values(l_department);
-  co_await l_sql.run_sql(l_install);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<department>().values(l_department));
+  co_await l_sql.run_sql(std::move(l_sqls));
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建部门 department_id {} name {}", person_.person_.email_,
       person_.person_.get_full_name(), l_department.uuid_id_, l_department.name_
@@ -65,9 +66,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments_instance, put) {
   auto l_json = in_handle->get_json();
 
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   auto l_update =
       update(l_sql).from<department>().set_from_ref<department>(l_json).where(c(&department::uuid_id_) == id_);
-  co_await l_sql.run_sql(l_update);
+  l_sqls.emplace_back(std::move(l_update));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_department = l_sql.get_by_uuid<department>(id_);
 
@@ -91,8 +94,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, post) {
   DOODLE_CHICK(!l_studio.name_.empty(), "工作室名称不可为空");
 
   using namespace orm;
-  auto l_install = insert(l_sql).into<studio>().values(l_studio);
-  co_await l_sql.run_sql(l_install);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<studio>().values(l_studio));
+  co_await l_sql.run_sql(std::move(l_sqls));
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建工作室 studio_id {} name {}", person_.person_.email_,
       person_.person_.get_full_name(), l_studio.uuid_id_, l_studio.name_
@@ -108,8 +112,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
       l_studio.name_
   );
   using namespace orm;
-  auto l_delete = delete_from(l_sql).from<studio>().where(c(&studio::uuid_id_) == l_studio.uuid_id_);
-  co_await l_sql.run_sql(l_delete);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(delete_from(l_sql).from<studio>().where(c(&studio::uuid_id_) == l_studio.uuid_id_));
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg_204();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, put) {
@@ -119,8 +124,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, put) {
   if (l_json.contains("name")) DOODLE_CHICK(!l_json.at("name").get<std::string>().empty(), "工作室名称不可为空");
 
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   auto l_update = update(l_sql).from<studio>().set_from_ref<studio>(l_json).where(c(&studio::uuid_id_) == id_);
-  co_await l_sql.run_sql(l_update);
+  l_sqls.emplace_back(std::move(l_update));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_studio = l_sql.get_by_uuid<studio>(id_);
 
@@ -140,8 +147,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_types, post) {
   auto l_args = in_handle->get_json().get<task_type>();
   auto l_sql  = get_sqlite_database();
   using namespace orm;
-  auto l_install = insert(l_sql).into<task_type>().values(l_args);
-  co_await l_sql.run_sql(l_install);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<task_type>().values(l_args));
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{} = l_args);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(custom_actions, get) {
@@ -161,8 +169,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, post) {
   in_handle->get_json().get_to(l_status_automation);
 
   using namespace orm;
-  auto l_install = insert(l_sql).into<status_automation>().values(l_status_automation);
-  co_await l_sql.run_sql(l_install);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<status_automation>().values(l_status_automation));
+  co_await l_sql.run_sql(std::move(l_sqls));
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建状态自动化 status_automation_id {}", person_.person_.email_,
       person_.person_.get_full_name(), l_status_automation.uuid_id_
@@ -222,8 +231,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, delete_) {
       person_.person_.get_full_name(), l_asset_type.name_
   );
   using namespace orm;
-  auto l_delete = delete_from(l_sql).from<asset_type>().where(c(&asset_type::uuid_id_) == l_asset_type.uuid_id_);
-  co_await l_sql.run_sql(l_delete);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(delete_from(l_sql).from<asset_type>().where(c(&asset_type::uuid_id_) == l_asset_type.uuid_id_));
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg_204();
 }
 
@@ -233,7 +243,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types, post) {
   auto l_sql        = get_sqlite_database();
 
   using namespace orm;
-  auto l_install = insert(l_sql).into<asset_type>().values(l_args);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<asset_type>().values(l_args));
 
   std::vector<task_type_asset_type_link> l_task_type_asset_type_link_list{};
   for (auto&& l_task_type_id : l_args.task_types_) {
@@ -245,12 +256,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types, post) {
     );
   }
 
-  if (l_task_type_asset_type_link_list.empty()) {
-    co_await l_sql.run_sql(l_install);
-  } else {
-    auto l_installs = insert(l_sql).into<task_type_asset_type_link>().set_range(l_task_type_asset_type_link_list);
-    co_await l_sql.run_sql(l_install, l_installs);
-  }
+  if (!l_task_type_asset_type_link_list.empty())
+    l_sqls.emplace_back(insert(l_sql).into<task_type_asset_type_link>().set_range(l_task_type_asset_type_link_list));
+  co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{} = l_args);
 }
 
@@ -264,8 +272,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status, post) {
       person_.person_.get_full_name(), l_status.name_
   );
   using namespace orm;
-  auto l_install = insert(l_sql).into<task_status>().values(l_status);
-  co_await l_sql.run_sql(l_install);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<task_status>().values(l_status));
+  co_await l_sql.run_sql(std::move(l_sqls));
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建任务状态 task_status_id {} name {}", person_.person_.email_,
       person_.person_.get_full_name(), l_status.uuid_id_, l_status.name_
@@ -278,9 +287,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status_instance, put) {
   auto l_json = in_handle->get_json();
 
   using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
   auto l_update =
       update(l_sql).from<task_status>().set_from_ref<task_status>(l_json).where(c(&task_status::uuid_id_) == id_);
-  co_await l_sql.run_sql(l_update);
+  l_sqls.emplace_back(std::move(l_update));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_status = l_sql.get_by_uuid<task_status>(id_);
 
@@ -361,8 +372,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_updata_logs, post) {
   auto l_sql = get_sqlite_database();
   updata_logs l_updata_logs{};
   in_handle->get_json().get_to(l_updata_logs);
-  auto l_install = insert(l_sql).into<updata_logs>().values(l_updata_logs);
-  co_await l_sql.run_sql(l_install);
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<updata_logs>().values(l_updata_logs));
+  co_await l_sql.run_sql(std::move(l_sqls));
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建更新日志 updata_logs_id {} log {}", person_.person_.email_,
       person_.person_.get_full_name(), l_updata_logs.uuid_id_, l_updata_logs.log_
