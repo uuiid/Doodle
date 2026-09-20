@@ -434,6 +434,41 @@ std::vector<detail::pragma_foreign_key_check_entry> session::pragma_t::foreign_k
   return l_result;
 }
 
+void session::pragma_t::vacuum_into(const FSys::path& in_path) {
+  // VACUUM INTO 接受字符串表达式; 这里把路径直接拼进 SQL, 因此需要按 SQL 字符串字面量的
+  // 规则把单引号写成两个 (SQLite 不使用反斜杠转义).
+  auto l_path = in_path.generic_string();
+  std::string l_escaped{};
+  l_escaped.reserve(l_path.size());
+  for (auto l_c : l_path) {
+    l_escaped.push_back(l_c);
+    if (l_c == '\'') l_escaped.push_back('\'');
+  }
+  auto l_stmt = sqlite_stmt{s_, fmt::format("VACUUM INTO '{}';", l_escaped)};
+  l_stmt.step();
+}
+
+auto_vacuum_t session::pragma_t::auto_vacuum() {
+  sqlite_stmt l_stmt{};
+  l_stmt.prepare(s_, "PRAGMA auto_vacuum;");
+  l_stmt.step();
+  return static_cast<auto_vacuum_t>(l_stmt.get_column_value<std::int32_t>(0));
+}
+
+void session::pragma_t::auto_vacuum(auto_vacuum_t in_mode) { run("auto_vacuum", static_cast<std::int32_t>(in_mode)); }
+
+void session::pragma_t::incremental_vacuum(std::int32_t in_pages) {
+  // 不带参数时 SQLite 归还全部空闲页
+  auto l_sql =
+      in_pages < 0 ? std::string{"PRAGMA incremental_vacuum;"} : fmt::format("PRAGMA incremental_vacuum({});", in_pages);
+  auto l_stmt = sqlite_stmt{s_, l_sql};
+  // 这条语句每归还一页就返回一行 (结果列数为 0, 所以命令行看不到任何输出),
+  // 必须一直步进到 SQLITE_DONE, 否则一次调用只会归还一页.
+  auto l_r = l_stmt.step_not_throw();
+  while (l_r == SQLITE_ROW) l_r = l_stmt.step_not_throw();
+  DOODLE_ORM_ERROR_SQLITE3(l_r, sqlite3_db_handle(l_stmt.stmt_));
+}
+
 void session::pragma_t::run(std::string_view in_pragma_sql, bool in_value) {
   auto l_sql  = fmt::format("PRAGMA {} = {};", in_pragma_sql, in_value ? "ON" : "OFF");
   auto l_stmt = sqlite_stmt(s_, l_sql);

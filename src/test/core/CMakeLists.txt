@@ -6,6 +6,8 @@ target_sources(test_main
         multipart_body_test.cpp
         sqlite_fk_fix.cpp
         sqlite_rebuild.cpp
+        sqlite_pragma.cpp
+        sqlite_real_db.cpp
 )
 
  

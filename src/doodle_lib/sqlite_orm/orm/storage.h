@@ -27,6 +27,9 @@ namespace orm {
 
 enum class journal_mode_t { delete_, truncate, persist, memory, wal, off };
 
+// PRAGMA auto_vacuum 的取值, 数值与 SQLite 一致
+enum class auto_vacuum_t : std::int32_t { none = 0, full = 1, incremental = 2 };
+
 struct column_info {
   std::string name_;
   table_columns_t ptr_;

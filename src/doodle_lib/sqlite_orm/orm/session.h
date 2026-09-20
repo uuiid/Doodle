@@ -38,6 +38,18 @@ class DOODLELIB_API session {
     // 必须走 PRAGMA 语句形式: 库中若存在同名真实表会遮蔽这个 eponymous 虚拟表,
     // 使 `SELECT ... FROM pragma_foreign_key_check` 静默返回 0 行.
     std::vector<detail::pragma_foreign_key_check_entry> foreign_key_check();
+    // VACUUM INTO 'path': 把数据库压紧后导出到新文件 (SQLite >= 3.27).
+    // 目标文件必须不存在; 不能在事务中执行.
+    void vacuum_into(const FSys::path& in_path);
+    // PRAGMA auto_vacuum 的查询与设置.
+    // 对非空库, 设置后需要再执行一次 VACUUM (或 vacuum_into) 才真正生效;
+    // 从 FULL/INCREMENTAL 降回 NONE 同样必须先 VACUUM, 否则设置不会生效.
+    auto_vacuum_t auto_vacuum();
+    void auto_vacuum(auto_vacuum_t in_mode);
+    // PRAGMA incremental_vacuum: 归还空闲页给文件系统 (需要 auto_vacuum = incremental).
+    // in_pages < 0 表示归还全部空闲页.
+    // 注意: 这条语句每归还一页返回一行 (结果列数为 0), 内部会一直步进到 SQLITE_DONE.
+    void incremental_vacuum(std::int32_t in_pages = -1);
 
    private:
     session& s_;
