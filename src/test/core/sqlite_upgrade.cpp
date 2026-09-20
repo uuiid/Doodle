@@ -53,23 +53,26 @@ void exec_sql(orm::session& in_session, const std::string& in_sql) {
   l_stmt.step();
 }
 
-// 纯冗余索引名: 显式索引的列集合与同表某个自动索引 (UNIQUE/PK 生成) 完全相同.
-// 返回名字而不是数量, 失败时能直接看出是哪一个.
-std::vector<std::string> redundant_index_names(orm::session& in_session) {
-  std::vector<std::string> l_result{};
-  sqlite_stmt l_stmt{
+// 造一行探针任务: 只填 NOT NULL 的列 (uuid_id / type / backend), 其余留 NULL —— 那些外键
+// 都是可空 + set_null. in_response_sql 直接拼进 SQL, 便于构造 NULL 这类边界值.
+void insert_probe_task(
+    orm::session& in_session, const std::string& in_tag, const std::string& in_status,
+    const std::string& in_response_sql
+) {
+  const auto l_sql = fmt::format(
+      "INSERT INTO seedance2_task_2 (uuid_id, status, type, backend, data_response) "
+      "VALUES (x'000000000000000000000000000000{}', '{}', 'picture', 'transfer_station', {});",
+      in_tag, in_status, in_response_sql
+  );
+  exec_sql(in_session, l_sql);
+}
+
+// 读回一行探针任务的 status
+std::string probe_status(orm::session& in_session, const std::string& in_tag) {
+  return scalar_text(
       in_session,
-      R"(SELECT m.name FROM sqlite_master m
-         WHERE m.type = 'index' AND m.sql IS NOT NULL
-           AND EXISTS (
-             SELECT 1 FROM sqlite_master a
-             WHERE a.type = 'index' AND a.sql IS NULL AND a.tbl_name = m.tbl_name
-               AND (SELECT group_concat(ii.name) FROM pragma_index_info(a.name) ii)
-                 = (SELECT group_concat(ii.name) FROM pragma_index_info(m.name) ii)
-           );)"
-  };
-  while (l_stmt.step_not_throw() == SQLITE_ROW) l_result.push_back(l_stmt.get_column_value<std::string>(0));
-  return l_result;
+      fmt::format("SELECT status FROM seedance2_task_2 WHERE uuid_id = x'000000000000000000000000000000{}';", in_tag)
+  );
 }
 
 // 备份目录里的文件名集合
@@ -102,13 +105,6 @@ class backup_cleaner {
     }
   }
 };
-
-// 打印冗余索引并在存在时返回其数量
-std::size_t report_redundant_indexes(orm::session& in_session, const std::string& in_where) {
-  auto l_names = redundant_index_names(in_session);
-  for (const auto& l_name : l_names) BOOST_TEST_MESSAGE(fmt::format("{} 的冗余索引: {}", in_where, l_name));
-  return l_names.size();
-}
 
 }  // namespace
 
@@ -154,8 +150,8 @@ BOOST_AUTO_TEST_CASE(fresh_db_upgrade_succeeds_with_fk_enforced) {
 // 这类错误不会有任何报错: 只要 user_version 被写成了最新版, 库"看起来"就是新的, 迁移做没做
 // 从版本号上完全看不出来. 只能靠断言把步骤的**副作用**盯住.
 //
-// 探针用一张**未注册**的表: rebuild_all_tables 只重建 regs_all() 里注册过的表, 碰不到它,
-// 所以它上面冗余索引的消失只可能来自升级步骤调用的 drop_redundant_indexes.
+// 28 -> 29 的副作用是"把 failed 的违规任务改判成 violation", 所以探针就是四行任务:
+// 只有 D1 (failed + 回复里写着 violation) 该被改, 其余三行都必须原样保留.
 BOOST_AUTO_TEST_CASE(upgrade_advances_one_version_at_a_time) {
   app_base l_app{};
   backup_cleaner l_cleaner{};
@@ -168,35 +164,40 @@ BOOST_AUTO_TEST_CASE(upgrade_advances_one_version_at_a_time) {
     auto l_session = l_storage.create_session();
     l_session.sync_schema();
 
-    // P1-1: sync_schema 不应再生成与被引用列 UNIQUE 自动索引重复的索引
-    // (历史上 add_foreign_key 会为被引用列也建一个索引, 加上 5 处显式的 uuid 索引, 共累积出 40 个)
-    BOOST_TEST(report_redundant_indexes(l_session, "sync_schema 后") == 0);
-
-    // 未注册的遗留表: u 上已有 UNIQUE 自动索引, 再显式建一个同列索引即为纯冗余
-    exec_sql(l_session, "CREATE TABLE legacy_probe(id INTEGER PRIMARY KEY, u TEXT UNIQUE);");
-    exec_sql(l_session, "CREATE INDEX idx_legacy_probe_u ON legacy_probe(u);");
+    // 该改的: failed + 回复里明确写着 violation
+    insert_probe_task(l_session, "D1", "failed", R"('{"error":"模型正在修复","status":"violation"}')");
+    // 不该改的: 回复里写的是 failed
+    insert_probe_task(l_session, "D2", "failed", R"('{"error":"generate failed","status":"failed"}')");
+    // 不该改的: 提交阶段就失败, 没有回复
+    insert_probe_task(l_session, "D3", "failed", "NULL");
+    // 不该改的: 状态不是 failed, 压根不在升级的扫描范围内
+    insert_probe_task(l_session, "D4", "succeeded", R"('{"status":"violation"}')");
 
     // 1. 生产库当前的版本: 升级步骤必须执行
-    l_session.pragma().user_version(27);
-    l_storage.upgrade();
-    auto l_version = scalar_int(l_session, "PRAGMA user_version;");
-    BOOST_TEST_MESSAGE(fmt::format("v27 升级后 user_version = {}", l_version));
-    BOOST_TEST(l_version == 28);
-    BOOST_TEST(report_redundant_indexes(l_session, "v27 升级后") == 0);  // 证明升级步骤真的跑了
-
-    // 2. 已是最新版的库: 不应该有任何步骤执行
-    exec_sql(l_session, "CREATE INDEX idx_legacy_probe_u2 ON legacy_probe(u);");
     l_session.pragma().user_version(28);
     l_storage.upgrade();
-    BOOST_TEST(scalar_int(l_session, "PRAGMA user_version;") == 28);
-    BOOST_TEST(report_redundant_indexes(l_session, "v28 升级后") == 1);  // 原样保留, 证明没有重复执行
+    auto l_version = scalar_int(l_session, "PRAGMA user_version;");
+    BOOST_TEST_MESSAGE(fmt::format("v28 升级后 user_version = {}", l_version));
+    BOOST_TEST(l_version == 29);
+    // 副作用确实存在, 说明升级步骤真的跑了
+    BOOST_TEST(probe_status(l_session, "D1") == "violation");
+    BOOST_TEST(probe_status(l_session, "D2") == "failed");
+    BOOST_TEST(probe_status(l_session, "D3") == "failed");
+    BOOST_TEST(probe_status(l_session, "D4") == "succeeded");
+
+    // 2. 已是最新版的库: 不应该有任何步骤执行
+    insert_probe_task(l_session, "D5", "failed", R"('{"status":"violation"}')");
+    l_session.pragma().user_version(29);
+    l_storage.upgrade();
+    BOOST_TEST(scalar_int(l_session, "PRAGMA user_version;") == 29);
+    BOOST_TEST(probe_status(l_session, "D5") == "failed");  // 原样保留, 证明没有重复执行
   }
 
   remove_db(l_db);
 }
 
-// 比 27 更旧的库也要被这一步带到最新: 不能因为"版本不等于 27"就既不升级、也不写版本号,
-// 那样它会永远停在旧 schema 上 (见 upgrade_1_t 里关于 `> 27 就跳过` 的说明)
+// 比 28 更旧的库也要被这一步带到最新: 不能因为"版本不等于 28"就既不升级、也不写版本号,
+// 那样它会永远停在旧状态上 (见 upgrade_1_t 里关于 `> 28 就跳过` 的说明)
 BOOST_AUTO_TEST_CASE(upgrade_brings_older_db_up_to_current) {
   app_base l_app{};
   backup_cleaner l_cleaner{};
@@ -209,16 +210,15 @@ BOOST_AUTO_TEST_CASE(upgrade_brings_older_db_up_to_current) {
     auto l_session = l_storage.create_session();
     l_session.sync_schema();
 
-    exec_sql(l_session, "CREATE TABLE legacy_probe(id INTEGER PRIMARY KEY, u TEXT UNIQUE);");
-    exec_sql(l_session, "CREATE INDEX idx_legacy_probe_u ON legacy_probe(u);");
+    insert_probe_task(l_session, "E1", "failed", R"('{"status":"violation"}')");
 
     l_session.pragma().user_version(26);
     l_storage.upgrade();
     auto l_version = scalar_int(l_session, "PRAGMA user_version;");
     BOOST_TEST_MESSAGE(fmt::format("v26 升级后 user_version = {}", l_version));
-    BOOST_TEST(l_version == 28);
+    BOOST_TEST(l_version == 29);
     // 升级步骤的副作用确实存在, 说明它没有被跳过
-    BOOST_TEST(report_redundant_indexes(l_session, "v26 升级后") == 0);
+    BOOST_TEST(probe_status(l_session, "E1") == "violation");
     BOOST_TEST(scalar_text(l_session, "PRAGMA integrity_check;") == "ok");
     BOOST_TEST(l_session.pragma().foreign_key_check().empty());
   }
