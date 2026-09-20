@@ -21,6 +21,7 @@
 #include <doodle_lib/lib_warp/boost_fmt_error.h>
 #include <doodle_lib/lib_warp/boost_fmt_url.h>
 #include <doodle_lib/logger/logger.h>
+#include <doodle_lib/sqlite_orm/orm/exception.h>
 
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/deferred.hpp>
@@ -148,6 +149,16 @@ boost::asio::awaitable<void> session_data::run() {
     } catch (const http_request_error& e) {
       logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
       l_gen = std::make_unique<boost::beast::http::message_generator>(make_error_code_msg(e.code_status_(), e.what()));
+    } catch (const orm::sqlite_orm_exception& e) {
+      // 数据库约束错误是**调用方的输入问题**, 不是服务端故障. 最典型的是删除仍被引用的字典项
+      // (project_status / task_type / task_status / asset_type ...): 这些外键现在都是 NO ACTION,
+      // 删除会撞 FOREIGN KEY constraint failed.
+      // 必须在这里拦下并映射成 400 —— 一旦落到下面的 catch(...), 响应体里会带上
+      // current_exception_diagnostic_information() 的完整堆栈和内部文件路径.
+      logger_->log(log_loc(), level::err, "数据库约束错误 {}", e.what());
+      l_gen = std::make_unique<boost::beast::http::message_generator>(
+          make_error_code_msg(boost::beast::http::status::bad_request, e.what())
+      );
     } catch (...) {
       auto l_err_str = boost::current_exception_diagnostic_information();
       logger_->log(log_loc(), level::err, "回复错误 {}", l_err_str);

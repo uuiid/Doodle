@@ -163,9 +163,12 @@ table_info& table_info::add_foreign_key(
   l_fk.on_delete_ = on_delete;
   l_fk.on_update_ = on_update;
   foreign_keys_.push_back(std::move(l_fk));
-  // 生成索引以优化外键约束的性能
+  // 为**子列**建索引: 删/改父行时 SQLite 要按子列反查, 没有索引会退化成全表扫描.
   add_index<T>(in_ptr);
-  add_index<RefTable>(in_ref_ptr);
+  // 这里**不能**再为被引用列建索引. 被引用列必须已是主键或唯一列 (否则 DML 会报
+  // "foreign key mismatch"), 而 UNIQUE 本身就会让 SQLite 自动生成 sqlite_autoindex_*,
+  // 再显式建一个同列索引完全是重复维护: 每次写父表要更新两份索引, 还要额外占空间.
+  // 历史上这里生成了 35 个这样的纯冗余索引.
   return *this;
 }
 template <typename T>

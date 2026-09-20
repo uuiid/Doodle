@@ -77,6 +77,20 @@ namespace doodle {
 
 void sqlite_storage::regs_all() {
   using namespace orm;
+  // 外键动作 (ON DELETE) 的约定:
+  //   * 父行是**业务数据** (project / entity / task / comment ...) → cascade:
+  //     子行离开父行没有意义, 删父行时一并删除是正确的.
+  //   * 父行是**字典数据** (task_type / task_status / asset_type / project_status ...) → no_action:
+  //     只有在没有任何业务数据引用它时才允许删除. 若用 cascade, "删一个字典项" 会变成静默清空
+  //     大批业务数据, 这类误删不可撤销.
+  //   * 父行是字典数据, 而子列是**可空的可选归属** (created_by / editor_id / assigner_id ...)
+  //     → set_null: 保留子行, 只清掉引用.
+  //   * **链接表** (xxx_link / assignations / playlist_shot ...) → cascade:
+  //     链接行本来就是字典项与业务对象的关联, 字典项删除时一并清理是正确的, 不该反过来阻止删除.
+  // 注意: 可空引用列未赋值时是 nil uuid, 由 sqlite_statement.h 绑定成 NULL, 而 NULL 永远满足外键,
+  // 所以"未赋值的可选引用"不会误报违规.
+  // 注意: 修改外键动作**不会**改动已有表 —— ON DELETE 是写进 CREATE TABLE 的, 必须重建表才能生效
+  // (sqlite_storage::rebuild_all_tables), 见 details::upgrade_1_t.
   reg_table<seedance2::ai_preview_file>("seedance2_ai_preview_file")
       .add_column("id", &seedance2::ai_preview_file::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::ai_preview_file::uuid_id_, unique(), not_null())
@@ -114,8 +128,7 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(
           &seedance2::task::ai_generate_entity_id_, &seedance2::ai_generate_entity::uuid_id_,
           foreign_key_action::set_null
-      )
-      .add_index(&seedance2::task::uuid_id_);
+      );
 
   reg_table<seedance2::task_similarity>("seedance2_task_similarity")
       .add_column("id", &seedance2::task_similarity::id_, primary_key(), autoincrement())
@@ -312,7 +325,8 @@ void sqlite_storage::regs_all() {
       .add_column("updated_at", &playlist::updated_at_)
       .add_foreign_key(&playlist::project_id_, &project::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&playlist::episodes_id_, &entity::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&playlist::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
+      // task_type 是字典数据: 有播放列表在用就不允许删除, 否则会连带删掉这些播放列表
+      .add_foreign_key(&playlist::task_type_id_, &task_type::uuid_id_, foreign_key_action::no_action)
       .add_unique_index(&playlist::name_, &playlist::project_id_, &playlist::episodes_id_);
 
   reg_table<server_task_info>("server_task_info_tab")
@@ -333,8 +347,7 @@ void sqlite_storage::regs_all() {
       .add_column("run_time_info", &server_task_info::run_time_info_)
       .add_foreign_key(&server_task_info::submitter_, &person::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&server_task_info::run_computer_id_, &computer::uuid_id_, foreign_key_action::set_null)
-      .add_foreign_key(&server_task_info::task_id_, &task::uuid_id_, foreign_key_action::cascade)
-      .add_index(&server_task_info::uuid_id_);
+      .add_foreign_key(&server_task_info::task_id_, &task::uuid_id_, foreign_key_action::cascade);
 
   reg_table<computer>("computer")
       .add_column("id", &computer::id_, primary_key())
@@ -389,7 +402,6 @@ void sqlite_storage::regs_all() {
       .add_column("dingding_id", &attendance_helper::database_t::dingding_id_)
       .add_column("person_id", &attendance_helper::database_t::person_id_)
       .add_foreign_key(&attendance_helper::database_t::person_id_, &person::uuid_id_, foreign_key_action::cascade)
-      .add_index(&attendance_helper::database_t::uuid_id_)
       .add_index(&attendance_helper::database_t::create_date_);
 
   reg_table<work_xlsx_task_info_helper::database_t>("work_xlsx_task_info_tab")
@@ -548,7 +560,8 @@ void sqlite_storage::regs_all() {
       .add_column("person_id", &comment::person_id_, not_null())
       .add_column("editor_id", &comment::editor_id_)
       .add_column("preview_file_id", &comment::preview_file_id_)
-      .add_foreign_key(&comment::task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade)
+      // task_status 是字典数据: 有评论引用该状态就不允许删除, 否则会连带删掉这些评论
+      .add_foreign_key(&comment::task_status_id_, &task_status::uuid_id_, foreign_key_action::no_action)
       // person_id 是 not_null (评论必须有作者), 不能配 ON DELETE SET NULL: 删除 person 时
       // SQLite 会尝试把该列置 NULL, 直接撞上 NOT NULL 约束而失败.
       // no_action 表示"有评论的人不允许删除", 既不丢数据, 报错也明确.
@@ -592,8 +605,9 @@ void sqlite_storage::regs_all() {
       .add_column("entity_id", &task::entity_id_)
       .add_column("assigner_id", &task::assigner_id_)
       .add_foreign_key(&task::project_id_, &project::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&task::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&task::task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade)
+      // task_type / task_status 是字典数据: 有任务在用就不允许删除, 否则会连带删掉这些任务
+      .add_foreign_key(&task::task_type_id_, &task_type::uuid_id_, foreign_key_action::no_action)
+      .add_foreign_key(&task::task_status_id_, &task_status::uuid_id_, foreign_key_action::no_action)
       .add_foreign_key(&task::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&task::assigner_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_unique_index(&task::name_, &task::project_id_, &task::task_type_id_, &task::entity_id_);
@@ -664,7 +678,8 @@ void sqlite_storage::regs_all() {
       .add_column("ready_for", &entity::ready_for_)
       .add_column("created_by", &entity::created_by_)
       .add_foreign_key(&entity::project_id_, &project::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&entity::entity_type_id_, &asset_type::uuid_id_, foreign_key_action::cascade)
+      // asset_type 是字典数据: 有实体在用就不允许删除, 否则会连带删掉这些实体
+      .add_foreign_key(&entity::entity_type_id_, &asset_type::uuid_id_, foreign_key_action::no_action)
       .add_foreign_key(&entity::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&entity::ready_for_, &task_type::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&entity::created_by_, &person::uuid_id_, foreign_key_action::set_null)
@@ -898,10 +913,11 @@ void sqlite_storage::regs_all() {
       .add_column("out_task_status_id", &status_automation::out_task_status_id_)
       .add_column("import_last_revision", &status_automation::import_last_revision_)
       .add_column("archived", &status_automation::archived_)
-      .add_foreign_key(&status_automation::in_task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&status_automation::in_task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&status_automation::out_task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&status_automation::out_task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade);
+      // task_type / task_status 是字典数据: 有自动化配置引用就不允许删除
+      .add_foreign_key(&status_automation::in_task_type_id_, &task_type::uuid_id_, foreign_key_action::no_action)
+      .add_foreign_key(&status_automation::in_task_status_id_, &task_status::uuid_id_, foreign_key_action::no_action)
+      .add_foreign_key(&status_automation::out_task_type_id_, &task_type::uuid_id_, foreign_key_action::no_action)
+      .add_foreign_key(&status_automation::out_task_status_id_, &task_status::uuid_id_, foreign_key_action::no_action);
 
   reg_table<task_type>("task_type")
       .add_column("id", &task_type::id_, primary_key(), autoincrement())
@@ -979,16 +995,14 @@ void sqlite_storage::regs_all() {
       .add_column("chat_token_slack", &organisation::chat_token_slack_)
       .add_column("chat_webhook_mattermost", &organisation::chat_webhook_mattermost_)
       .add_column("chat_token_discord", &organisation::chat_token_discord_)
-      .add_column("dark_theme_by_default", &organisation::dark_theme_by_default_)
-      .add_index(&organisation::uuid_id_);
+      .add_column("dark_theme_by_default", &organisation::dark_theme_by_default_);
 
   reg_table<updata_logs>("updata_logs")
       .add_column("id", &updata_logs::id_, primary_key(), autoincrement())
       .add_column("uuid", &updata_logs::uuid_id_, not_null(), unique())
       .add_column("log", &updata_logs::log_, not_null())
       .add_column("created_at", &updata_logs::created_at_, not_null())
-      .add_column("updated_at", &updata_logs::updated_at_, not_null())
-      .add_index(&updata_logs::uuid_id_);
+      .add_column("updated_at", &updata_logs::updated_at_, not_null());
 
   reg_virtual_table<entity_fts>("entity_fts")
       .add_column("uuid", &entity_fts::entity_id_, unindexed())
@@ -1240,6 +1254,64 @@ std::size_t sqlite_storage::rebuild_all_tables(orm::session& in_session) {
   }
   SPDLOG_INFO("rebuild_all_tables: 完成, 共重建 {} 张表", l_count);
   return l_count;
+}
+
+namespace {
+// 把查询结果的第一列收集为字符串列表
+std::vector<std::string> collect_first_column(orm::session& in_session, const std::string& in_sql) {
+  orm::sqlite_stmt l_stmt{in_session, in_sql};
+  std::vector<std::string> l_result{};
+  while (l_stmt.step_not_throw() == SQLITE_ROW) l_result.push_back(l_stmt.get_column_value<std::string>(0));
+  return l_result;
+}
+
+// 某索引的列名按索引内顺序连接成一个字符串, 便于比较列集合是否相同
+std::string index_columns_key(orm::session& in_session, const std::string& in_index) {
+  return fmt::format(
+      "{}", fmt::join(collect_first_column(in_session, fmt::format("SELECT name FROM pragma_index_info('{}');", in_index)), ",")
+  );
+}
+}  // namespace
+
+std::size_t sqlite_storage::drop_redundant_indexes(orm::session& in_session) {
+  using namespace orm;
+  // 全部走常量参数调用 pragma_* 表值函数 (相关子查询形式在不同 SQLite 版本行为不一致)
+  std::vector<std::string> l_drop{};
+  for (const auto& l_table : collect_first_column(
+           in_session, "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%';"
+       )) {
+    // 自动索引 (sql IS NULL) 由 UNIQUE / PRIMARY KEY 生成, 列集合即其列序
+    std::set<std::string> l_auto_keys{};
+    for (const auto& l_index : collect_first_column(
+             in_session,
+             fmt::format(
+                 "SELECT name FROM sqlite_master WHERE type = 'index' AND sql IS NULL AND tbl_name = '{}';", l_table
+             )
+         )) {
+      l_auto_keys.insert(index_columns_key(in_session, l_index));
+    }
+    if (l_auto_keys.empty()) continue;
+
+    // 显式索引中, 列集合与某个自动索引完全相同的即为纯冗余
+    for (const auto& l_index : collect_first_column(
+             in_session,
+             fmt::format(
+                 "SELECT name FROM sqlite_master WHERE type = 'index' AND sql IS NOT NULL AND tbl_name = '{}';",
+                 l_table
+             )
+         )) {
+      if (l_auto_keys.contains(index_columns_key(in_session, l_index))) {
+        SPDLOG_INFO("drop_redundant_indexes: {}.{} 与自动索引重复, 删除", l_table, l_index);
+        l_drop.push_back(l_index);
+      }
+    }
+  }
+  for (const auto& l_name : l_drop) {
+    auto l_stmt = sqlite_stmt{in_session, fmt::format(R"(DROP INDEX IF EXISTS "{}";)", l_name)};
+    l_stmt.step();
+  }
+  SPDLOG_INFO("drop_redundant_indexes: 共删除 {} 个纯冗余索引", l_drop.size());
+  return l_drop.size();
 }
 
 boost::asio::awaitable<void> sqlite_database::run_sql(orm::sql_modify_statement_vector_t in_sqls) {

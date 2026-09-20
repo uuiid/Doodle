@@ -10,14 +10,18 @@
 //
 
 #include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/test/unit_test.hpp>
 
+#include <boost/scope/scope_exit.hpp>
+
 #include <cstdint>
 #include <cstdlib>
 #include <map>
+#include <set>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -114,6 +118,38 @@ std::vector<std::string> diff_business_counts(
 std::string strip_quotes(std::string in_sql) {
   std::erase(in_sql, '"');
   return in_sql;
+}
+
+// 索引总数 (含 sqlite_autoindex_*)
+std::int64_t count_indexes(orm::session& in_session) {
+  return scalar_int(in_session, "SELECT count(*) FROM sqlite_master WHERE type = 'index';");
+}
+
+// 纯冗余索引数量: 显式索引的列集合与同表某个自动索引 (UNIQUE/PK 生成) 完全相同.
+// 若这个相关子查询形式不被支持会静默返回 0, 所以调用处都断言了期望值, 不会假通过.
+std::int64_t count_redundant_indexes(orm::session& in_session) {
+  return scalar_int(
+      in_session,
+      R"(SELECT count(*) FROM sqlite_master m
+         WHERE m.type = 'index' AND m.sql IS NOT NULL
+           AND EXISTS (
+             SELECT 1 FROM sqlite_master a
+             WHERE a.type = 'index' AND a.sql IS NULL AND a.tbl_name = m.tbl_name
+               AND (SELECT group_concat(ii.name) FROM pragma_index_info(a.name) ii)
+                 = (SELECT group_concat(ii.name) FROM pragma_index_info(m.name) ii)
+           );)"
+  );
+}
+
+// 备份目录里的文件名集合 (升级会往这里写一份完整备份)
+std::set<std::string> list_backup_files(const FSys::path& in_dir) {
+  std::set<std::string> l_result{};
+  std::error_code l_ec{};
+  if (!FSys::exists(in_dir, l_ec)) return l_result;
+  for (const auto& l_entry : FSys::directory_iterator{in_dir, l_ec}) {
+    if (l_entry.is_regular_file(l_ec)) l_result.insert(l_entry.path().filename().string());
+  }
+  return l_result;
 }
 
 // 未设置环境变量时打印提示并跳过
@@ -254,6 +290,149 @@ BOOST_AUTO_TEST_CASE(vacuum_into_on_real_db) {
   }
 
   remove_db(l_out);
+  remove_db(l_db);
+}
+
+// v28 迁移序列在真实库副本上的端到端验证: 重建全部表 -> 清理新暴露的孤儿 -> 清理冗余索引.
+//
+// 这里**不**调用 sqlite_storage::upgrade(): 它会先往 cache 目录写一份 ~750MB 的备份, 不适合放进
+// 测试. 取而代之是按升级步骤的顺序执行同样三步, 验证组合之后的最终状态.
+BOOST_AUTO_TEST_CASE(v28_migration_sequence_on_real_db) {
+  auto l_src = real_db_path();
+  if (skip_if_no_real_db(l_src)) return;
+  BOOST_REQUIRE(FSys::exists(l_src));
+  auto l_db = copy_real_db(l_src, "v28");
+
+  app_base l_app{};
+  {
+    sqlite_storage l_storage{};
+    l_storage.open(l_db);
+    auto l_session = l_storage.create_session();
+
+    auto l_counts_before    = all_table_counts(l_session);
+    auto l_fk_before        = fk_total(fk_by_child_parent(l_session));
+    auto l_comment_before   = scalar_int(l_session, "SELECT count(*) FROM comment");
+    auto l_redundant_before = count_redundant_indexes(l_session);
+    BOOST_TEST_MESSAGE(fmt::format(
+        "迁移前: 外键违规={} 冗余索引={} comment={}", l_fk_before, l_redundant_before, l_comment_before
+    ));
+    BOOST_TEST(l_redundant_before > 0);
+
+    // 1. 重建全部表, 落地新的外键目标/动作
+    BOOST_TEST(l_storage.rebuild_all_tables(l_session) > 0);
+
+    // 2. 清理重建后新暴露的孤儿子行 (与升级步骤一致: 关外键 + 事务)
+    std::int64_t l_deleted{0};
+    {
+      const auto l_fk_was_on = l_session.pragma().foreign_keys();
+      l_session.pragma().foreign_keys(false);
+      boost::scope::scope_exit l_fk_guard([&l_session, l_fk_was_on]() {
+        l_session.pragma().foreign_keys(l_fk_was_on);
+      });
+      auto l_tx  = l_session.transaction();
+      l_deleted  = static_cast<std::int64_t>(l_storage.fix_foreign_key_violations(l_session));
+      l_tx.commit();
+    }
+    BOOST_TEST_MESSAGE(fmt::format("清理外键孤儿子行 {} 行", l_deleted));
+    BOOST_TEST(l_deleted > 0);
+
+    // 3. 清理冗余索引
+    auto l_indexes_before  = count_indexes(l_session);
+    auto l_dropped         = static_cast<std::int64_t>(l_storage.drop_redundant_indexes(l_session));
+    BOOST_TEST_MESSAGE(fmt::format("删除纯冗余索引 {} 个", l_dropped));
+    BOOST_TEST(l_dropped > 0);
+    // 只该少掉这些冗余索引, 正常索引一个都不能被误删
+    BOOST_TEST_MESSAGE(fmt::format(
+        "索引总数 {} -> {}", l_indexes_before, count_indexes(l_session)
+    ));
+    BOOST_TEST(count_indexes(l_session) == l_indexes_before - l_dropped);
+
+    // 最终状态: 外键零违规、无冗余索引、无中间表残留、结构完好
+    auto l_fk_after = fk_by_child_parent(l_session);
+    for (const auto& [l_key, l_value] : l_fk_after)
+      BOOST_TEST_MESSAGE(fmt::format("剩余外键违规: {} = {}", l_key, l_value));
+    BOOST_TEST(l_fk_after.empty());
+    BOOST_TEST(count_redundant_indexes(l_session) == 0);
+    BOOST_TEST(backup_table_count(l_session) == 0);
+    BOOST_TEST(scalar_text(l_session, "PRAGMA integrity_check;") == "ok");
+
+    // 业务数据只少了被清理的孤儿行, 没有别的损失
+    auto l_comment_after = scalar_int(l_session, "SELECT count(*) FROM comment");
+    BOOST_TEST_MESSAGE(fmt::format("comment: {} -> {}", l_comment_before, l_comment_after));
+    BOOST_TEST(l_comment_after <= l_comment_before);
+    BOOST_TEST(l_comment_before - l_comment_after <= l_deleted);
+
+    auto l_changed = diff_business_counts(l_counts_before, all_table_counts(l_session));
+    for (const auto& l_msg : l_changed) BOOST_TEST_MESSAGE(fmt::format("行数变化: {}", l_msg));
+  }
+
+  remove_db(l_db);
+}
+
+// 真实库上跑**真正的**升级路径 sqlite_storage::upgrade(), 即生产库从 27 升到 28 的那一条.
+//
+// v28_migration_sequence_on_real_db 只验证三个步骤本身; 这个用例验证包在外面的那一层:
+// 版本判断、升级前的完整备份、以及 757MB 库上的 VACUUM (VACUUM 需要额外一份等大的临时空间,
+// 是整条路径里最容易在真实环境上失败的一步). 升级会往 cache 目录写一份完整备份,
+// 用例结束时只删掉**本次新建**的那一个, 不碰用户已有的备份.
+BOOST_AUTO_TEST_CASE(upgrade_to_v28_on_real_db) {
+  auto l_src = real_db_path();
+  if (skip_if_no_real_db(l_src)) return;
+  BOOST_REQUIRE(FSys::exists(l_src));
+  auto l_db = copy_real_db(l_src, "upgrade");
+
+  app_base l_app{};
+  auto l_backup_dir    = core_set::get_set().get_cache_root("backup");
+  auto l_backup_before = list_backup_files(l_backup_dir);
+
+  {
+    sqlite_storage l_storage{};
+    l_storage.open(l_db);
+    auto l_session   = l_storage.create_session();
+    auto l_version   = scalar_int(l_session, "PRAGMA user_version;");
+    auto l_fk_before = fk_total(fk_by_child_parent(l_session));
+    auto l_comment   = scalar_int(l_session, "SELECT count(*) FROM comment");
+    BOOST_TEST_MESSAGE(fmt::format(
+        "升级前: user_version={} 外键违规={} 冗余索引={} comment={}", l_version, l_fk_before,
+        count_redundant_indexes(l_session), l_comment
+    ));
+    // 这个用例的前提就是"生产库在 27"; 不满足说明拿到的是别的库, 断言出来而不是静默跑过
+    BOOST_TEST(l_version == 27);
+
+    l_storage.upgrade();
+
+    auto l_after = scalar_int(l_session, "PRAGMA user_version;");
+    BOOST_TEST_MESSAGE(fmt::format("升级后 user_version = {}", l_after));
+    BOOST_TEST(l_after == 28);
+    BOOST_TEST(scalar_text(l_session, "PRAGMA integrity_check;") == "ok");
+    // 升级必须把外键违规清干净, 否则此后任何 UPDATE 到这些行都会失败
+    auto l_fk_after = fk_by_child_parent(l_session);
+    for (const auto& [l_key, l_value] : l_fk_after)
+      BOOST_TEST_MESSAGE(fmt::format("剩余外键违规: {} = {}", l_key, l_value));
+    BOOST_TEST(l_fk_after.empty());
+    BOOST_TEST(count_redundant_indexes(l_session) == 0);
+    BOOST_TEST(backup_table_count(l_session) == 0);
+    // 数据库是可用的: 大表还在, 只是少了被清理的孤儿行
+    BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM comment") > 0);
+    BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM task") > 0);
+  }
+
+  // 升级确实在动数据之前做了备份
+  auto l_new_backups = [&]() {
+    std::vector<std::string> l_result{};
+    for (const auto& l_name : list_backup_files(l_backup_dir))
+      if (!l_backup_before.contains(l_name)) l_result.push_back(l_name);
+    return l_result;
+  }();
+  BOOST_TEST_MESSAGE(fmt::format("升级新建备份 {} 个", l_new_backups.size()));
+  BOOST_TEST(l_new_backups.size() == 1);
+  for (const auto& l_name : l_new_backups) {
+    auto l_file = l_backup_dir / l_name;
+    BOOST_TEST_MESSAGE(fmt::format("备份 {} = {:.1f} MB", l_name, FSys::file_size(l_file) / 1024.0 / 1024.0));
+    std::error_code l_ec{};
+    FSys::remove(l_file, l_ec);
+  }
+
   remove_db(l_db);
 }
 

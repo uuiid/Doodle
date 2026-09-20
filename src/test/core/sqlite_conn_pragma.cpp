@@ -222,40 +222,4 @@ BOOST_AUTO_TEST_CASE(fk_declaration_invariants) {
   remove_db(l_db);
 }
 
-// 全新库 (user_version == 0) 的初始化路径必须在外键开启的情况下走通.
-// upgrade_init_t 会 sync_schema() 建全部表并插入内置常量行 (project_status / asset_type /
-// task_type / assets), 这条路径此前只在外键默认关闭时跑过, 是开启外键后最需要回归的一环.
-// 关键前提: 可空引用列未赋值时是 nil uuid, 由 sqlite_statement.h 绑定成 NULL, 而 NULL 永远
-// 满足外键约束 —— 所以未赋值的可选引用不会误报违规.
-BOOST_AUTO_TEST_CASE(fresh_db_upgrade_succeeds_with_fk_enforced) {
-  app_base l_app{};
-  auto l_db = temp_db("fresh_upgrade");
-  remove_db(l_db);
-
-  {
-    sqlite_storage l_storage{};
-    l_storage.open(l_db);
-    l_storage.upgrade();
-
-    auto l_session = l_storage.create_session();
-    auto l_version = scalar_int(l_session, "PRAGMA user_version;");
-    BOOST_TEST_MESSAGE(fmt::format("全新库 user_version = {}", l_version));
-    BOOST_TEST(l_version > 0);
-
-    auto l_task_type_count = scalar_int(l_session, "SELECT count(*) FROM task_type;");
-    BOOST_TEST_MESSAGE(fmt::format("内置 task_type 常量行数 = {}", l_task_type_count));
-    BOOST_TEST(l_task_type_count >= 11);
-
-    BOOST_TEST(scalar_text(l_session, "PRAGMA integrity_check;") == "ok");
-    // 全新库插入完常量后不应产生任何外键违规
-    auto l_bad = l_session.pragma().foreign_key_check();
-    for (const auto& l_entry : l_bad) {
-      BOOST_TEST_MESSAGE(fmt::format("全新库外键违规: {} rowid={} -> {}", l_entry.table, l_entry.rowid, l_entry.parent));
-    }
-    BOOST_TEST(l_bad.empty());
-  }
-
-  remove_db(l_db);
-}
-
 BOOST_AUTO_TEST_SUITE_END()

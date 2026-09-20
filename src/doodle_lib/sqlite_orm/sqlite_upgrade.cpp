@@ -35,8 +35,9 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_previous_version = 26;
-constexpr std::size_t g_current_version  = g_previous_version + 1;
+// 版本号. 生产库当前是 27, 所以只需要一步 27 -> 28.
+constexpr std::size_t g_version_27      = 27;
+constexpr std::size_t g_current_version = 28;
 }  // namespace
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -87,27 +88,53 @@ void backup(orm::session& in_data) {
 }
 }  // namespace
 
+// 27 -> 28: 把 regs_all() 里累积的 schema 改动一次性落地到已有库.
+//
+// 外键的目标和动作都写在 CREATE TABLE 里, 光改 C++ 声明对已有表没有任何影响, 必须重建表.
+// 本次落地的内容:
+//   * comment.object_id 的外键目标 entity -> task (原先对全部数据都不成立)
+//   * 字典表外键 cascade -> no_action (task / entity / playlist / comment / status_automation /
+//     project), 避免"删一个字典项"静默清空大批业务数据
+//   * 列声明为 NOT NULL 却配 ON DELETE SET NULL 的两处 (comment.person_id /
+//     seedance2_subproject.created_user_id) -> no_action, 否则删 person 必然撞 NOT NULL 约束
+//   * 不再生成与被引用列 UNIQUE 自动索引重复的冗余索引
+//
+// 条件用 `> 27 就跳过` 而不是 `== 27 才执行`: 本步骤的内容是此前所有升级动作的**并集**, 所以
+// 任何比当前版本旧的库都能被它一次带到最新. 若写成 `== 27`, 版本停在 26 的库既不满足条件,
+// 也不会被写入新版本号, 于是永远留在旧 schema 上 —— 正是那种不报错、但迁移根本没做的失效方式.
 struct upgrade_1_t : sqlite_upgrade {
   explicit upgrade_1_t() {}
   void upgrade(sqlite_storage& in_data) override {
     using namespace orm;
     auto l_s = in_data.create_session();
-    if (l_s.pragma().user_version() == g_previous_version) {
-      backup(l_s);
-      // PRAGMA foreign_keys 在事务内是 no-op, 必须在 BEGIN 之前关闭.
-      // 关闭后 ON DELETE CASCADE / SET NULL 不触发, 被"孤立"的子行交给下一轮 fixpoint 处理.
-      // 连接级默认值已由 storage::register_custom_extension 统一设为 ON, 所以这里必须**显式**
-      // 关闭, 不能再依赖"默认就是 OFF". 关闭状态不能泄漏回连接池, 用 guard 恢复原值.
+    // 全新库 (user_version == 0) 已由 upgrade_init_t 建好并标成最新版, 到这里必然跳过
+    if (l_s.pragma().user_version() > g_version_27) return;
+    backup(l_s);
+
+    // 1. 重建全部已注册的表, 让新的 schema 生效
+    const auto l_rebuilt = in_data.rebuild_all_tables(l_s);
+
+    // 2. 重建会**新暴露**孤儿子行: comment.object_id 指向已删除任务的那些行, 在旧外键下
+    //    (指向 entity) 就是违规的, 换成指向 task 之后依然违规. 必须在重建之后清掉,
+    //    否则这些行此后任何 UPDATE 都会因外键约束失败.
+    //    PRAGMA foreign_keys 在事务内是 no-op, 必须在 BEGIN 之前关闭; 关闭后 ON DELETE
+    //    CASCADE / SET NULL 不触发, 被"孤立"的子行交给下一轮 fixpoint 处理.
+    //    连接级默认值已由 storage::register_custom_extension 统一设为 ON, 所以这里必须**显式**
+    //    关闭, 不能依赖"默认就是 OFF"; 关闭状态也不能泄漏回连接池, 用 guard 恢复原值.
+    {
       const auto l_fk_was_on = l_s.pragma().foreign_keys();
       l_s.pragma().foreign_keys(false);
       boost::scope::scope_exit l_fk_guard([&l_s, l_fk_was_on]() { l_s.pragma().foreign_keys(l_fk_was_on); });
-      {
-        auto l_guard = l_s.transaction();
-        in_data.fix_foreign_key_violations(l_s);
-        l_guard.commit();
-      }
-      l_s.vacuum();
+      auto l_guard   = l_s.transaction();
+      auto l_deleted = in_data.fix_foreign_key_violations(l_s);
+      l_guard.commit();
+      SPDLOG_INFO("upgrade 27->28: 重建 {} 张表, 清理 {} 行外键孤儿", l_rebuilt, l_deleted);
     }
+
+    // 3. 清理**未注册的遗留表**上的冗余索引: 它们不在 regs_all() 里, 重建碰不到
+    in_data.drop_redundant_indexes(l_s);
+
+    l_s.vacuum();
     l_s.pragma().user_version(g_current_version);
   }
   ~upgrade_1_t() override = default;

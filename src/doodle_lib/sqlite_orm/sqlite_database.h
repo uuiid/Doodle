@@ -83,6 +83,12 @@ class DOODLELIB_API sqlite_storage : public orm::storage {
   // 触发器的表不会把索引写重复.
   // @return 实际重建的表数量
   std::size_t rebuild_all_tables(orm::session& in_session);
+  // 删除"纯冗余索引": 某个显式索引的列集合与同表上 sqlite_autoindex_* (由 UNIQUE/PK 自动生成)
+  // 完全相同. 这种索引对查询毫无帮助, 只会在每次写该表时被重复维护并额外占空间.
+  // 对已注册的表, rebuild_all_tables 已经不会再生成它们; 本函数用于清理**未注册的遗留表** ——
+  // 那些表不在 regs_all() 里, 重建碰不到.
+  // @return 实际删除的索引数量
+  std::size_t drop_redundant_indexes(orm::session& in_session);
   strand_type get_strand() { return strand_; }
 };
 

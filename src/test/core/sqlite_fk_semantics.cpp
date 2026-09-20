@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <string>
 #include <system_error>
+#include <vector>
 
 BOOST_AUTO_TEST_SUITE(sqlite_fk_semantics)
 
@@ -40,6 +41,16 @@ std::int64_t scalar_int(orm::session& in_session, const std::string& in_sql) {
   sqlite_stmt l_stmt{in_session, in_sql};
   l_stmt.step();
   return l_stmt.get_column_value<std::int64_t>(0);
+}
+
+// 查询某表某列的外键删除动作 (pragma_foreign_key_list 的 on_delete)
+std::string fk_on_delete(orm::session& in_session, const std::string& in_table, const std::string& in_column) {
+  sqlite_stmt l_stmt{
+      in_session,
+      fmt::format(R"(SELECT on_delete FROM pragma_foreign_key_list('{}') WHERE "from" = '{}';)", in_table, in_column)
+  };
+  if (l_stmt.step_not_throw() != SQLITE_ROW) return "<不存在该外键>";
+  return l_stmt.get_column_value<std::string>(0);
 }
 
 // 返回 true 表示删除被外键约束拒绝
@@ -104,6 +115,60 @@ BOOST_AUTO_TEST_CASE(deleting_project_status_in_use_is_rejected) {
     const bool l_free_rejected = try_delete_project_status(l_session, l_free);
     BOOST_TEST(l_free_rejected == false);
     BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM project_status;") == 1);
+  }
+
+  remove_db(l_db);
+}
+
+// 字典表的外键必须是 NO ACTION, 链接表与业务表的外键必须保持 CASCADE.
+//
+// 两类一起断言, 是为了防止"改字典表时顺手把链接表也改了": 链接表如果用 NO ACTION, 删字典项时
+// 会被它自己的关联行挡住, 字典项反而永远删不掉 —— 这是把规则用错方向的典型后果.
+BOOST_AUTO_TEST_CASE(dictionary_foreign_keys_are_no_action) {
+  app_base l_app{};
+  auto l_db = temp_db("dict_fk");
+  remove_db(l_db);
+
+  {
+    sqlite_storage l_storage{};
+    l_storage.open(l_db);
+    auto l_session = l_storage.create_session();
+    l_session.sync_schema();
+
+    struct expect_t {
+      const char* table_;
+      const char* column_;
+      const char* on_delete_;
+    };
+    const std::vector<expect_t> l_expect{
+        // 字典数据 -> 业务数据: 有业务数据引用就不允许删除
+        {       "task",           "task_type_id", "NO ACTION"},
+        {       "task",         "task_status_id", "NO ACTION"},
+        {     "entity",        "entity_type_id", "NO ACTION"},
+        {   "playlist",         "task_type_id", "NO ACTION"},
+        {    "comment",       "task_status_id", "NO ACTION"},
+        {     "project",     "project_status_id", "NO ACTION"},
+        {  "status_automation",    "in_task_type_id", "NO ACTION"},
+        {  "status_automation",  "in_task_status_id", "NO ACTION"},
+        {  "status_automation",   "out_task_type_id", "NO ACTION"},
+        {  "status_automation", "out_task_status_id", "NO ACTION"},
+        // 链接表: 链接行就是字典项与业务对象的关联, 删字典项时一并清理, 不该反过来阻止删除
+        {"project_task_type_link",       "task_type_id",   "CASCADE"},
+        {"project_task_status_link",   "task_status_id",   "CASCADE"},
+        {"task_type_asset_type_link",    "asset_type_id",   "CASCADE"},
+        // 业务数据 -> 业务数据: 子行离开父行没有意义, 保持级联删除
+        {       "task",          "entity_id",   "CASCADE"},
+        {     "entity",         "project_id",   "CASCADE"},
+        {    "comment",          "object_id",   "CASCADE"},
+    };
+
+    for (const auto& l_e : l_expect) {
+      auto l_actual = fk_on_delete(l_session, l_e.table_, l_e.column_);
+      BOOST_TEST_MESSAGE(
+          fmt::format("{}.{}: on_delete = {} (期望 {})", l_e.table_, l_e.column_, l_actual, l_e.on_delete_)
+      );
+      BOOST_TEST(l_actual == l_e.on_delete_);
+    }
   }
 
   remove_db(l_db);
