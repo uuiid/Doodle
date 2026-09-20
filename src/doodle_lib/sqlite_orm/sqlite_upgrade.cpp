@@ -20,9 +20,11 @@
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 
 #include "core/core_set.h"
+#include "orm/delete.h"
 #include "sqlite_orm/orm/alias.h"
 #include "sqlite_orm/orm/exception.h"
 #include "sqlite_orm/orm/update.h"
+#include <chrono>
 #include <filesystem>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -142,6 +144,10 @@ struct upgrade_1_t : sqlite_upgrade {
           .from<sd2::task>()
           .set(c(&sd2::task::completion_tokens_) = 0)
           .where(c(&sd2::task::status_) == sd2::task_status::failed)();
+      // 删除 sd2::person_token 最近三天的内容, 避免错误的统计, 会有脚本自动生成的补偿任务处理
+      chrono::year_month_day l_delete_date =
+          chrono::floor<chrono::days>(std::chrono::system_clock::now() - std::chrono::hours(72));
+      delete_from(l_s).from<sd2::person_token>().where(c(&sd2::person_token::date_) >= l_delete_date)();
       l_guard.commit();
     }
     SPDLOG_INFO("upgrade 28->29: 检查 {} 条失败任务, 回填 {} 条 violation", l_failed.size(), l_fixed);
