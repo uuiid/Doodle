@@ -6,6 +6,7 @@ enum:
   - cancelled
   - succeeded
   - failed
+  - violation
   - expired
 description: |
   preparing - 准备提交,
@@ -14,4 +15,5 @@ description: |
   cancelled - 已取消（24h后自动删除）,
   succeeded - 成功,
   failed - 失败,
+  violation - 违规（内容审核未通过、账号配额或免费额度受限），是否扣费取决于模型定价的 charge_on_violation,
   expired - 超时

@@ -278,6 +278,7 @@ class seedance2_task_run_manager {
       }
       case sd2::task_status::cancelled:
       case sd2::task_status::failed:
+      case sd2::task_status::violation:
       case sd2::task_status::expired:
         // 以上状态要按照 l_result.completion_tokens_ 是否是 0 来判断是否返还 token, 如果是 0, 返还 token, 不是的话,
         // 正常扣费

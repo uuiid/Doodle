@@ -77,7 +77,10 @@ doodle::seedance2::task_status transfer_station_client::parse_status(const nlohm
   const auto& l_s = in_body.at("status").get_ref<const std::string&>();
   if (l_s == "running") return doodle::seedance2::task_status::running;
   if (l_s == "succeeded") return doodle::seedance2::task_status::succeeded;
-  return doodle::seedance2::task_status::failed;  // violation / failed / unknown
+  // 违规单独成一个状态, 不能并进 failed: 它的计费规则与失败不同
+  // (见 query_task 中的 charge_on_violation), 合并会产生「status=failed 却扣了费」的记录
+  if (l_s == "violation") return doodle::seedance2::task_status::violation;
+  return doodle::seedance2::task_status::failed;  // failed / unknown
 }
 
 // ─── 子类方法 ─────────────────────────────────────────────────────────────────

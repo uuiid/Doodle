@@ -13,6 +13,7 @@ running：任务运行中。
 cancelled：取消任务，取消状态24h自动删除（只支持排队中状态的任务被取消）。
 succeeded： 任务成功。（如发送失败，即5秒内没有接收到成功发送的信息，回调三次）
 failed：任务失败。（如发送失败，即5秒内没有接收到成功发送的信息，回调三次）
+violation：违规。如内容审核未通过、账号配额或免费额度受限。是否扣费取决于模型定价的 charge_on_violation。
 expired：任务超时，即任务处于运行中或排队中状态超过过期时间。可通过 execution_expires_after 字段设置过期时间。
 */
 enum class DOODLE_CORE_API task_status {
@@ -22,6 +23,7 @@ enum class DOODLE_CORE_API task_status {
   cancelled,
   succeeded,
   failed,
+  violation,
   expired,
 };
 
@@ -40,6 +42,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
      {task_status::cancelled, "cancelled"},
      {task_status::succeeded, "succeeded"},
      {task_status::failed, "failed"},
+     {task_status::violation, "violation"},
      {task_status::expired, "expired"}}
 );
 // 后端分类
