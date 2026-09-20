@@ -1,9 +1,10 @@
-# SQLite 数据库结构审计
+# SQLite 数据库结构审计与 v28 升级
 
 **审计日期**: 2026-09-20
 **审计对象**: `kitsu_new.db`（升级前 `user_version = 27`，757,231,616 字节）
 **目标版本**: `user_version = 28`
 **相关代码**: `src/doodle_lib/sqlite_orm/sqlite_database.cpp`、`sqlite_upgrade.cpp`、`orm/storage_impl.h`
+**状态**: 已上线，生产库与 `build/kitsu_new.db` 均已升至 v28；升级后的一次性代码清理见 9.2
 
 ---
 
@@ -373,14 +374,34 @@ SELECT count(*) FROM work_xlsx_task_info_tab w
 |----------|----------|
 | `src/test/core/sqlite_fk_semantics.cpp` | 字典表删除被拒 + 各表 `ON DELETE` 动作的声明回归 |
 | `src/test/core/sqlite_schema.cpp` | 空库建表、废弃表/列不再创建、唯一索引形态 |
-| `src/test/core/sqlite_upgrade.cpp` | 版本门控、新库/旧库升级路径 |
-| `src/test/core/sqlite_real_db.cpp` | 真实库端到端（需 `DOODLE_REAL_DB` 指向库文件） |
+| `src/test/core/sqlite_upgrade.cpp` | 版本门控、新库/旧库升级路径（**迁移路径的覆盖在这里**） |
+| `src/test/core/sqlite_real_db.cpp` | 真实库结构不变量（需 `DOODLE_REAL_DB` 指向库文件） |
 
 `sqlite_real_db` **不会修改所指向的数据库**：每个用例都先把 `DOODLE_REAL_DB` 复制到
 临时目录（连同 `-wal`/`-shm`）再在工作副本上操作，用例结束时删除工作副本。
-即便如此，指向真实库时仍建议先确认磁盘上有约 760 MB 的余量（`VACUUM` 需要等大临时空间）。
+即便如此，指向真实库时仍建议先确认磁盘上有约 650 MB 的余量（`VACUUM` 需要等大临时空间）。
 
 ```powershell
 $env:DOODLE_REAL_DB = "E:\Doodle\build\kitsu_new.db"
 .\build\Ninja_debug\bin\test_main.exe --run_test=sqlite_real_db
 ```
+
+### 9.2 迁移专用用例已退役（升级完成后）
+
+生产库与 `build/kitsu_new.db` 都升到 v28 之后，`sqlite_real_db` 里三个用例失去被测对象，
+已按下面的方式处理：
+
+| 用例 | 处理 | 原因 |
+|------|------|------|
+| `upgrade_to_v28_on_real_db` | **删除** | 断言 `user_version == 27`；库已是 28，升级直接跳过，也就没有备份、没有悬空引用可断言 |
+| `v28_migration_sequence_on_real_db` | **删除** | 断言"有冗余索引/有孤儿可删"；实际都是 0，清理动作已无事可做 |
+| `rebuild_all_tables_on_real_db` | **改写** | FK 违规集恒为空，原来按 key 逐个比较违规数的循环体从不执行（断言数 38→16）。改为断言 `fk_by_child_parent().empty()`（重建不得制造违规）与 comment 外键目标不变 |
+
+**迁移路径的覆盖没有丢失**：`sqlite_upgrade.cpp` 用合成旧库覆盖它 ——
+`upgrade_advances_one_version_at_a_time` 把 `user_version` 设为 27 再调 `upgrade()`，
+因此 `upgrade_1_t` 与其中的 `backup()` 仍被真实执行；`upgrade_brings_older_db_up_to_current`
+覆盖 v26 的情形。
+
+随用例一起删除的孤儿辅助函数：`count_indexes`、`count_redundant_indexes`、`list_backup_files`、
+`exec_sql`、`fk_total`，以及 include `<set>`、`<boost/scope/scope_exit.hpp>`、
+`<doodle_lib/core/core_set.h>`。

@@ -30,7 +30,6 @@ target_sources(
         pictures.cpp
         playlists.cpp
         attachment_files.cpp
-        metadata_descriptors.cpp
         entities.cpp
         schedule_items.cpp
         auth.cpp

@@ -284,9 +284,6 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(&outsource_studio_authorization::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_unique_index(&outsource_studio_authorization::studio_id_, &outsource_studio_authorization::entity_id_);
 
-  // ai_image_metadata 已废弃: 真实库中 0 行, 代码也不再使用.
-  // 表本身由升级步骤的 drop_obsolete_tables 删除 —— rebuild_all_tables 只处理这里注册过的表, 删不掉它.
-
   reg_table<playlist_shot>("playlist_shot")
       .add_column("id", &playlist_shot::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &playlist_shot::uuid_id_, unique(), not_null())
@@ -493,9 +490,11 @@ void sqlite_storage::regs_all() {
       .add_column("task_id", &preview_file::task_id_)
       .add_column("shotgun_id", &preview_file::shotgun_id_)
       .add_column("person_id", &preview_file::person_id_)
-      // source_file_id 已废弃: 真实库中整列为 NULL, 不再使用, 后期再删除.
+      // source_file_id 已废弃: 真实库中整列为 NULL, 不再使用.
       // 保留声明是有意的 —— 重建时列的拷贝清单来自 ORM 声明, 一旦删掉这一行, 本列就会在
-      // 重建中被真正删除, 那属于另一次变更, 不在本次升级范围内.
+      // 重建中被真正删除. 而重建只在升级步骤里跑, 所以真正删列需要一个新的 29 版本升级步骤;
+      // 该列同时出现在 preview_file 的 JSON 输出里 (doodle_core/metadata/preview_file.h),
+      // 删它属于接口变更, 需要单独评估. TODO: 排入 v29.
       .add_column("source_file_id", &preview_file::source_file_id_)
       .add_column("is_movie", &preview_file::is_movie_)
       .add_column("url", &preview_file::url_)
@@ -824,9 +823,6 @@ void sqlite_storage::regs_all() {
           &project::default_preview_background_file_id_, &preview_background_file::uuid_id_,
           foreign_key_action::set_null
       );
-
-  // metadata_descriptor 与 metadata_descriptor_department_link 已废弃: 真实库中都是 0 行,
-  // 代码也不再使用. 两张表由升级步骤的 drop_obsolete_tables 删除.
 
   reg_table<project_status>("project_status")
       .add_column("id", &project_status::id_, primary_key(), autoincrement())
