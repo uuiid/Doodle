@@ -137,6 +137,11 @@ struct upgrade_1_t : sqlite_upgrade {
             .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_)();
         ++l_fixed;
       }
+      // 失败的设置为 0
+      update(l_s)
+          .from<sd2::task>()
+          .set(c(&sd2::task::completion_tokens_) = 0)
+          .where(c(&sd2::task::status_) == sd2::task_status::failed)();
       l_guard.commit();
     }
     SPDLOG_INFO("upgrade 28->29: 检查 {} 条失败任务, 回填 {} 条 violation", l_failed.size(), l_fixed);
