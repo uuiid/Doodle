@@ -175,13 +175,13 @@ boost::asio::awaitable<ai_client_base::query_task_result_t> transfer_station_cli
   // 按模型定价扣除积分
   auto l_model            = in_task.data_request_.value("model", "");
   const auto* l_pricing   = find_pricing(l_model);
-  auto l_raw_status       = l_result.data_response_.value("status", "");
+  l_result.status_ = parse_status(l_result.data_response_);
 
-  if (l_raw_status == "succeeded") {
+  if (l_result.status_ == doodle::seedance2::task_status::succeeded) {
     l_result.completion_tokens_ = l_pricing ? l_pricing->cost_points : 0;
-  } else if (l_raw_status == "failed") {
+  } else if (l_result.status_ == doodle::seedance2::task_status::failed) {
     l_result.completion_tokens_ = (l_pricing && l_pricing->charge_on_failure) ? l_pricing->cost_points : 0;
-  } else if (l_raw_status == "violation") {
+  } else if (l_result.status_ == doodle::seedance2::task_status::violation) {
     l_result.completion_tokens_ = (l_pricing && l_pricing->charge_on_violation) ? l_pricing->cost_points : 0;
   } else {
     l_result.completion_tokens_ = 0;  // running / 未知, 暂不扣
@@ -190,9 +190,6 @@ boost::asio::awaitable<ai_client_base::query_task_result_t> transfer_station_cli
   if (!l_pricing) {
     logger_->warn("未找到模型定价: {}", l_model);
   }
-
-  l_result.status_ = parse_status(l_result.data_response_);
-
   if (l_result.data_response_.contains("results") && l_result.data_response_.at("results").is_array()) {
     for (const auto& l_item : l_result.data_response_.at("results")) {
       if (l_item.contains("url") && l_item.at("url").is_string())
