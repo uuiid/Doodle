@@ -16,7 +16,6 @@
 #include "doodle_core/metadata/seedance2/subproject.h"
 #include "doodle_core/metadata/seedance2/task.h"
 #include <doodle_core/exception/exception.h>
-#include <doodle_core/metadata/ai_image_metadata.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/attachment_file.h>
@@ -27,7 +26,6 @@
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/label.h>
-#include <doodle_core/metadata/metadata_descriptor.h>
 #include <doodle_core/metadata/notification.h>
 #include <doodle_core/metadata/organisation.h>
 #include <doodle_core/metadata/person.h>
@@ -491,9 +489,10 @@ void sqlite_storage::regs_all() {
       .add_column("task_id", &preview_file::task_id_)
       .add_column("shotgun_id", &preview_file::shotgun_id_)
       .add_column("person_id", &preview_file::person_id_)
-      // source_file_id 已废弃: 真实库中全为 NULL, 不再使用.
-      // 注释掉这一行后重建时就不再复制该列, 等于把它从库里删掉 —— 因为整列都是空值, 没有数据损失.
-      // .add_column("source_file_id", &preview_file::source_file_id_)
+      // source_file_id 已废弃: 真实库中整列为 NULL, 不再使用, 后期再删除.
+      // 保留声明是有意的 —— 重建时列的拷贝清单来自 ORM 声明, 一旦删掉这一行, 本列就会在
+      // 重建中被真正删除, 那属于另一次变更, 不在本次升级范围内.
+      .add_column("source_file_id", &preview_file::source_file_id_)
       .add_column("is_movie", &preview_file::is_movie_)
       .add_column("url", &preview_file::url_)
       .add_column("uploaded_movie_url", &preview_file::uploaded_movie_url_)

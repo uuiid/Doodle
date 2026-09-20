@@ -423,6 +423,25 @@ BOOST_AUTO_TEST_CASE(upgrade_to_v28_on_real_db) {
     // 数据库是可用的: 大表还在, 只是少了被清理的孤儿行
     BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM comment") > 0);
     BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM task") > 0);
+
+    // 升级后的整体结构. 外键总数前后都是 131, 但成分变了:
+    //   +3: comment.object_id (此前库里根本没有这个外键)、assets_tab.parent_uuid、
+    //       work_xlsx_task_info_tab.project_id
+    //   -3: 随废弃表一起消失的 ai_image_metadata.author 与 metadata_descriptor_department_link 的两个
+    auto l_tables = scalar_int(
+        l_session, "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%';"
+    );
+    auto l_indexes = scalar_int(l_session, "SELECT count(*) FROM sqlite_master WHERE type = 'index';");
+    auto l_fks     = scalar_int(
+        l_session,
+        R"(SELECT sum(c) FROM (SELECT (SELECT count(*) FROM pragma_foreign_key_list(m.name)) AS c
+             FROM sqlite_master m WHERE m.type = 'table' AND m.name NOT LIKE 'sqlite_%');)"
+    );
+    BOOST_TEST_MESSAGE(fmt::format("升级后结构: 业务表={} 索引={} 外键={}", l_tables, l_indexes, l_fks));
+    BOOST_TEST(l_tables == 73);
+    BOOST_TEST(l_fks == 131);
+    // 重建会删掉旧表上全部索引再按当前声明重建, 索引数只应减少
+    BOOST_TEST(l_indexes < 262);
   }
 
   // 升级确实在动数据之前做了备份

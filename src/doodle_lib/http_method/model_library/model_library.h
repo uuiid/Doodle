@@ -18,17 +18,8 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
 
-// "/api/doodle/ai_image"
-// 用于管理 AI 生成图片的元数据（创建/查询）
-DOODLE_HTTP_JWT_FUN(ai_image)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_OVERRIDE(post);
-DOODLE_HTTP_FUN_END()
-// "/api/doodle/ai_image/{id}"
-DOODLE_HTTP_JWT_FUN(ai_image_instance)
-DOODLE_HTTP_FUN_OVERRIDE(delete_);
-uuid id_{};
-DOODLE_HTTP_FUN_END()
+// "/api/doodle/ai_image" 与 "/api/doodle/ai_image/{id}" 已删除:
+// 对应的 ai_image_metadata 表在真实库中 0 行, 功能已被 seedance2 的 AI 能力取代.
 
 // "api/doodle/model_library/assets/{id}"
 DOODLE_HTTP_JWT_FUN(model_library_assets_instance)

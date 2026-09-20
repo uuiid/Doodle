@@ -2,8 +2,6 @@
 // Created by TD on 24-10-18.
 //
 
-#include <doodle_core/metadata/ai_image_metadata.h>
-
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
@@ -107,37 +105,26 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
 ) {
   std::string l_name{fmt::format("{}", id_)};
   FSys::path l_path = in_path;
-  std::pair<std::size_t, std::size_t> l_size{};
 
   switch (in_handle->content_type_) {
     // case detail::content_type::image_gif:
     case detail::content_type::image_jpeg:
     case detail::content_type::image_jpg:
     case detail::content_type::image_png:
-      l_size = create_thumbnail_image(in_handle->get_file(), l_path, FSys::split_uuid_path(l_name));
+      create_thumbnail_image(in_handle->get_file(), l_path, FSys::split_uuid_path(l_name));
       break;
     case detail::content_type::image_gif:
-      l_size = create_thumbnail_gif(in_handle->get_file(), l_path, FSys::split_uuid_path(l_name));
+      create_thumbnail_gif(in_handle->get_file(), l_path, FSys::split_uuid_path(l_name));
       break;
     case detail::content_type::video_mp4:
-      l_size = create_thumbnail_mp4(in_handle->get_file(), l_path, FSys::split_uuid_path(l_name));
+      create_thumbnail_mp4(in_handle->get_file(), l_path, FSys::split_uuid_path(l_name));
       break;
     default:
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
-      break;
   }
 
-  auto l_sql = get_sqlite_database();
-  if (auto l_id = l_sql.uuid_to_id<ai_image_metadata>(id_); l_id != 0) {
-    using namespace orm;
-    co_await l_sql.run_sql(
-        update(l_sql)
-            .from<ai_image_metadata>()
-            .set(c(&ai_image_metadata::width_) = static_cast<std::int32_t>(l_size.first))
-            .set(c(&ai_image_metadata::height_) = static_cast<std::int32_t>(l_size.second))
-            .where(c(&ai_image_metadata::uuid_id_) == id_)
-    );
-  }
+  // 原先这里会把生成的宽高回写到 ai_image_metadata; 该表与 /api/doodle/ai_image 接口已随本次
+  // 清理一起删除, 缩略图生成不再需要这一步, 因此不再接收 create_thumbnail_* 的返回值.
 
   co_return in_handle->make_msg(fmt::format(R"({{"id":"{}"}})", id_));
 }

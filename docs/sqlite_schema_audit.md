@@ -13,8 +13,9 @@
 |------|-------------|-------------|
 | `user_version` | 27 | 28 |
 | 业务表 | 76 | 73 |
+| 索引 | 262 | 225 |
 | 纯冗余索引 | 35 | 0 |
-| 外键总数 | 131 | 130 |
+| 外键总数 | 131 | 131（成分变了，见 4.1） |
 | 外键违规行 | 12,466 | 0 |
 | `_backup` 残留表 | 0 | 0 |
 | `integrity_check` | ok | ok |
@@ -79,7 +80,21 @@
 | `status_automation` | `out_task_status_id` | `task_status(uuid)` |
 | `project` | `project_status_id` | `project_status(uuid)` |
 
-### 3.2 行为变化（需要知会使用方）
+### 3.2 顺带修正的 2 个 `not_null` 列
+
+对比重建前后的外键清单时发现，另有两个外键也发生了变化：
+
+| 表 | 列 | 老库 | 现在 | 说明 |
+|----|----|------|------|------|
+| `comment` | `person_id` | `SET NULL` | `NO ACTION` | 该列是 `not_null()` |
+| `seedance2_subproject` | `created_user_id` | `SET NULL` | `NO ACTION` | 该列是 `not_null()` |
+
+这不是回归而是修正：**`ON DELETE SET NULL` 作用在 `NOT NULL` 列上本来就无法生效**——
+外键动作会执行一次「把该列更新为 NULL」，随即撞上非空约束，父行删除照样失败，
+只是错误信息变成难以理解的 `NOT NULL constraint failed`。改成 `NO ACTION` 后
+父行删除仍然被拒，但报的是明确的外键约束错误。
+
+### 3.3 行为变化（需要知会使用方）
 
 - 字典项被引用时**不能再删除**。此前 `DELETE` 会静默把所有引用它的业务数据一并级联删除
   （例如删一个 `task_status` 会删掉所有该状态的任务）。
@@ -93,7 +108,9 @@
 
 ## 四、本次结构变更清单
 
-### 4.1 新增外键（此前是裸列，无约束）
+### 4.1 新增/修正外键
+
+**此前是裸列，本次补上约束：**
 
 | 表 | 列 | 引用 | 动作 |
 |----|----|------|------|
@@ -103,25 +120,53 @@
 两者在真实库中都是 **0 条孤儿**，可以直接补约束而无需清理数据。
 `assets_tab.parent_uuid` 是自引用树，动作与同类的 `entity.parent_id` / `entity.source_id` 保持一致。
 
+**此外，生产库（v27）里 `comment.object_id` 根本没有外键**——它指向 `entity(uuid)` 的旧声明
+在真实数据上对全部 53 万行都不成立。重建会把它按当前声明改成 `task(uuid)` 并加上 `CASCADE`。
+
+> 这三处是「重建会补上当前声明里有、老库里没有的外键」的体现，也解释了为什么
+> 升级前后外键总数都是 131：**+3（上面三个）−3（随废弃表一起消失的
+> `ai_image_metadata.author` 与 `metadata_descriptor_department_link` 的两个）**。
+> 这类差异必须靠重建前后来对比外键清单才能发现，不能靠加减法推算。
+
 ### 4.2 删除的废弃表
 
 | 表 | 真实库行数 | 说明 |
 |----|-----------|------|
 | `metadata_descriptor` | 0 | 代码已不再使用 |
 | `metadata_descriptor_department_link` | 0 | 代码已不再使用 |
-| `ai_image_metadata` | 0 | 见 8.1，**待确认** |
+| `ai_image_metadata` | 0 | 连同其 REST 资源一起删除，见 4.3 |
 
 这三张表已从 `regs_all()` 摘除，因此 `rebuild_all_tables` 不会再处理它们。
 `rebuild_all_tables` 只遍历**已注册**的表，删不掉未注册的表，所以升级流程里必须有
 `drop_obsolete_tables` 这一步显式删除（见第七节）。
 
-### 4.3 删除的废弃列
+### 4.3 `ai_image_metadata` 及其 REST 资源
 
-| 表 | 列 | 真实库非空行数 |
-|----|----|---------------|
-| `preview_file` | `source_file_id` | 0（整列为 NULL） |
+该表虽然 0 行，但代码里仍挂着一整套对外接口，删表会让这些路径在运行时失败
+（ORM 找不到表注册，抛异常 → 500 且附带完整调用栈）。因此一并删除：
 
-### 4.4 唯一性约束修正
+| 删除对象 | 位置 |
+|----------|------|
+| `GET` 列表 / `POST` 创建 / `DELETE` 实例 | `http_method/model_library/ai_image.cpp`（整个文件） |
+| 路由注册 `/api/doodle/ai_image`、`/api/doodle/ai_image/{id}` | `http_method/kitsu.cpp` |
+| 处理类声明 | `http_method/model_library/model_library.h` |
+| 生成缩略图后回写宽高 | `http_method/model_library/thumbnail.cpp` |
+| 构建清单 | `http_method/model_library/CMakeLists.txt` |
+
+**这是一处对外可见的接口删除**。判断依据是表内 0 行、且功能与 `seedance2` 那套 AI 能力重复。
+类型定义 `doodle_core/metadata/ai_image_metadata.h` 本身暂时保留（属公开类型，删除另议）。
+
+### 4.4 废弃但保留的列
+
+| 表 | 列 | 真实库非空行数 | 处理 |
+|----|----|---------------|------|
+| `preview_file` | `source_file_id` | 0（整列为 NULL） | **保留声明**，仅标注废弃 |
+
+这里必须注意：重建时列的拷贝清单来自 **ORM 声明**而非数据库实际结构，
+所以一旦把 `add_column("source_file_id", ...)` 删掉，这一列就会在本次重建中被真正删除。
+既然决定「后期再删」，就**必须保留声明**，只加注释说明它已废弃。
+
+### 4.5 唯一性约束修正
 
 | 表 | 原状 | 现状 | 理由 |
 |----|------|------|------|
@@ -131,7 +176,7 @@
 
 加唯一索引前已确认真实库中**不存在重复行**，因此不会因建索引失败而中断升级。
 
-### 4.5 未处理
+### 4.6 未处理
 
 | 表 | 说明 |
 |----|------|
@@ -158,9 +203,11 @@
 ### 5.2 两种清理途径
 
 - **已注册的表**：重建时会按 `l_old_table->indexes_` 重新建索引，而 `DROP TABLE` 会连带删掉
-  表上所有索引，所以重建天然清掉多余的索引。
+  表上所有索引，所以重建天然清掉多余的索引（真实库上这一途径清掉了 31 个）。
 - **未注册的遗留表**：不参与重建，需要 `drop_redundant_indexes` 显式处理
-  （它只按**常量参数**调用 `pragma_index_info`，不依赖相关子查询）。
+  （真实库上删掉 4 个；它只按**常量参数**调用 `pragma_index_info`，不依赖相关子查询）。
+
+两者合计把 35 个纯冗余索引清到 0，索引总数 262 → 225。
 
 ---
 
@@ -210,24 +257,16 @@
 ### 7.3 注意事项
 
 - 重建时列的拷贝清单来自 **ORM 声明**，不是数据库实际的列。因此把某列从 `regs_all()`
-  里摘掉，等价于在重建时**删除该列**（第 4.3 节的 `source_file_id` 就是这样消失的）。
+  里摘掉，等价于在重建时**删除该列**。反过来说，想保留一列就必须保留它的声明——
+  即使该列已废弃（第 4.4 节的 `source_file_id` 正是因此保留声明）。
 - `VACUUM` 需要一份与库等大的临时空间。757 MB 的库要预留约 760 MB。
 
 ---
 
 ## 八、已知遗留问题
 
-### 8.1 待确认
-
-- `ai_image_metadata` 已从 `regs_all()` 摘除、并列入 `drop_obsolete_tables`。但代码中
-  仍有**一整套 REST 资源**在引用它：
-  `http_method/model_library/ai_image.cpp`（GET 列表 / POST 创建 / DELETE）、
-  `http_method/kitsu.cpp:217-218` 的两条路由注册、
-  `http_method/model_library/thumbnail.cpp:131-140` 的宽高回写。
-  表删掉后这些代码路径会在运行时失败，需要一并删除或保留该表。
-
-### 8.2 尚未处理
-
+- `preview_file.source_file_id` 仍是废弃列，只是本次不删（见 4.4）。
+- `doodle_core/metadata/ai_image_metadata.h` 类型定义已无使用者，可另行删除。
 - `entity_asset_extend_2.entity_id → entity` 曾有 134 条真孤儿（该列为 `NOT NULL`，
   无法置空），已由本次迁移清理。
 - `task.last_preview_file_id`、`work_xlsx_task_info_tab.kitsu_task_ref_id` 在清理后仍有孤儿，
@@ -285,11 +324,11 @@ SELECT "from", "table", "to", on_delete FROM pragma_foreign_key_list('task');
 | `src/test/core/sqlite_upgrade.cpp` | 版本门控、新库/旧库升级路径 |
 | `src/test/core/sqlite_real_db.cpp` | 真实库端到端（需 `DOODLE_REAL_DB` 指向库文件） |
 
-`sqlite_real_db` 会**修改**所指向的数据库（重建、清理、`VACUUM`、升到 v28），
-建议先复制一份再跑：
+`sqlite_real_db` **不会修改所指向的数据库**：每个用例都先把 `DOODLE_REAL_DB` 复制到
+临时目录（连同 `-wal`/`-shm`）再在工作副本上操作，用例结束时删除工作副本。
+即便如此，指向真实库时仍建议先确认磁盘上有约 760 MB 的余量（`VACUUM` 需要等大临时空间）。
 
 ```powershell
-Copy-Item kitsu_new.db kitsu_check.db
-$env:DOODLE_REAL_DB = "E:\Doodle\build\kitsu_check.db"
+$env:DOODLE_REAL_DB = "E:\Doodle\build\kitsu_new.db"
 .\build\Ninja_debug\bin\test_main.exe --run_test=sqlite_real_db
 ```

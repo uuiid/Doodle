@@ -145,12 +145,13 @@ BOOST_AUTO_TEST_CASE(schema_cleanup_shape_is_correct) {
       BOOST_TEST(l_exists == 0);
     }
 
-    // 2. preview_file.source_file_id 已废弃, 不再建列
+    // 2. preview_file.source_file_id 已废弃但**保留声明**: 重建时列的拷贝清单来自 ORM 声明,
+    //    一旦摘掉这一列就会在本次重建中被真正删除, 那属于另一次变更
     auto l_source_file_id = scalar_int(
         l_session, "SELECT count(*) FROM pragma_table_info('preview_file') WHERE name = 'source_file_id';"
     );
     BOOST_TEST_MESSAGE(fmt::format("preview_file.source_file_id 列数 = {}", l_source_file_id));
-    BOOST_TEST(l_source_file_id == 0);
+    BOOST_TEST(l_source_file_id == 1);
 
     // 3. preview_file.name 不能有单列唯一约束 (同一 name 在不同 task/revision 下合法重复),
     //    唯一性由 (name, task_id, revision) 复合唯一索引保证
