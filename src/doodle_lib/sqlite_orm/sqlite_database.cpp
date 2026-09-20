@@ -550,7 +550,10 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(&comment::person_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&comment::editor_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&comment::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null)
-      .add_foreign_key(&comment::object_id_, &entity::uuid_id_, foreign_key_action::cascade)
+      // comment.object_id 是配合 object_type 的关联对象 ID, 实际指向 task (object_type 默认即为 "Task").
+      // 原先是 REFERENCES entity(uuid), 但真实数据中没有一行 object_id 能匹配 entity.uuid,
+      // 该外键对全部数据都不成立, 已修正为指向 task.
+      .add_foreign_key(&comment::object_id_, &task::uuid_id_, foreign_key_action::cascade)
       .add_index(&comment::object_type_);
 
   reg_table<task>("task")

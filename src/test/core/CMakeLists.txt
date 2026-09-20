@@ -8,6 +8,7 @@ target_sources(test_main
         sqlite_rebuild.cpp
         sqlite_pragma.cpp
         sqlite_real_db.cpp
+        sqlite_schema.cpp
 )
 
  

@@ -109,6 +109,13 @@ std::vector<std::string> diff_business_counts(
   return l_result;
 }
 
+// 生成的 SQL 里被引用表名可能带引号也可能不带 (真实库中由旧代码建的表带引号,
+// 当前 to_sql 生成的表名不带引号), 比较前先统一去掉引号
+std::string strip_quotes(std::string in_sql) {
+  std::erase(in_sql, '"');
+  return in_sql;
+}
+
 // 未设置环境变量时打印提示并跳过
 bool skip_if_no_real_db(const FSys::path& in_path) {
   if (!in_path.empty()) return false;
@@ -158,15 +165,32 @@ BOOST_AUTO_TEST_CASE(rebuild_all_tables_on_real_db) {
     // FTS 索引与内容表同步: 复制数据时没有重复触发 entity 的 FTS 同步触发器
     BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM entity_fts_docsize") == l_docsize_before);
 
-    // 2. 除已知 schema 差异外, 不新增外键违规来源.
-    //    rebuild_all_tables 是按**当前代码的 ORM schema** 重建表的, 所以代码里比库新的外键会被落库.
-    //    已知差异: 代码里 comment.object_id 被声明为 REFERENCES entity(uuid), 但真实数据中
-    //    object_id 是配合 object_type 的多态引用列 (object_type 全部为 'Task'), 没有一行能匹配 entity.uuid.
+    // 2. 外键: rebuild_all_tables 是按**当前代码的 ORM schema** 重建表的, 所以代码里比库新的外键会被落库.
+    //    真实库的 comment 表还没有 object_id 外键, 重建会加上 comment.object_id -> task(uuid).
+    //    因此重建后会暴露出"任务已被删除"的孤儿评论; 预期数量等于重建前直接查出来的孤儿数.
+    auto l_orphan_comment = scalar_int(
+        l_session, "SELECT count(*) FROM comment c WHERE NOT EXISTS (SELECT 1 FROM task t WHERE t.uuid = c.object_id);"
+    );
+
     auto l_fk_after = fk_by_child_parent(l_session);
+
+    // 修正后的外键确实落库, 且指向 task 而不再是 entity
+    auto l_comment_raw = scalar_text(l_session, "SELECT sql FROM sqlite_master WHERE name = 'comment';");
+    BOOST_TEST_MESSAGE(
+        fmt::format("重建后 comment 表外键: {}", l_comment_raw.substr(l_comment_raw.rfind("FOREIGN KEY")))
+    );
+    auto l_comment_sql = strip_quotes(l_comment_raw);
+    BOOST_TEST(l_comment_sql.find("REFERENCES task(uuid)") != std::string::npos);
+    BOOST_TEST(l_comment_sql.find("REFERENCES entity(uuid)") == std::string::npos);
+    BOOST_TEST(!l_fk_after.contains("comment -> entity"));
+
     for (const auto& [l_key, l_value] : l_fk_after) {
       auto l_was = l_fk_before.contains(l_key) ? l_fk_before.at(l_key) : std::int64_t{0};
-      if (l_key == "comment -> entity") {
-        BOOST_TEST_MESSAGE(fmt::format("已知 schema 差异 (非本次回归): {} {} -> {}", l_key, l_was, l_value));
+      if (l_key == "comment -> task") {
+        BOOST_TEST_MESSAGE(fmt::format(
+            "新增外键暴露的孤儿评论: {} {} -> {} (重建前直接查询得到 {})", l_key, l_was, l_value, l_orphan_comment
+        ));
+        BOOST_TEST(l_value == l_orphan_comment);
         continue;
       }
       BOOST_TEST_MESSAGE(fmt::format("外键违规变化: {} {} -> {}", l_key, l_was, l_value));
