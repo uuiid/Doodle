@@ -1322,34 +1322,6 @@ std::size_t sqlite_storage::drop_redundant_indexes(orm::session& in_session) {
   return l_drop.size();
 }
 
-std::size_t sqlite_storage::drop_obsolete_tables(orm::session& in_session) {
-  using namespace orm;
-  // 已废弃的表: 代码里已不再注册, 但老库里还在. 数组顺序 = 删除顺序, 必须**先子表后父表**:
-  // 开着外键时 DROP TABLE 会先做一次隐式 DELETE, 顺序反了会先去删父表.
-  // 往这里加表之前先确认表内数据确实无用 (下面这三张在真实库中都是 0 行).
-  static constexpr const char* g_obsolete[]{
-      "metadata_descriptor_department_link",  // 子表: 引用 metadata_descriptor
-      "metadata_descriptor",
-      "ai_image_metadata",
-  };
-  std::size_t l_dropped{0};
-  for (const auto* l_name : g_obsolete) {
-    // DROP TABLE IF EXISTS 本身对不存在的表是 no-op, 但这里先判断一下, 好把"确实删掉了"计入返回值
-    auto l_exists = !collect_first_column(
-                        in_session,
-                        fmt::format("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = '{}';", l_name)
-                    )
-                        .empty();
-    if (!l_exists) continue;
-    auto l_stmt = sqlite_stmt{in_session, fmt::format(R"(DROP TABLE IF EXISTS "{}";)", l_name)};
-    l_stmt.step();
-    SPDLOG_INFO("drop_obsolete_tables: 已删除废弃表 {}", l_name);
-    ++l_dropped;
-  }
-  SPDLOG_INFO("drop_obsolete_tables: 共删除 {} 张废弃表", l_dropped);
-  return l_dropped;
-}
-
 std::size_t sqlite_storage::null_dangling_optional_references(orm::session& in_session) {
   using namespace orm;
   // 可空的可选归属列. 表/列/目标必须与 regs_all() 里的外键声明保持一致.

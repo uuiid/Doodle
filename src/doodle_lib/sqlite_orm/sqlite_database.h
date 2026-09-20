@@ -92,11 +92,6 @@ class DOODLELIB_API sqlite_storage : public orm::storage {
   // 那些表不在 regs_all() 里, 重建碰不到.
   // @return 实际删除的索引数量
   std::size_t drop_redundant_indexes(orm::session& in_session);
-  // 删除已废弃的表. rebuild_all_tables 只处理 regs_all() 里注册过的表, 所以从代码里摘掉的表
-  // 必须在这里显式删除, 否则会作为死表一直留在老库里.
-  // 按"先子表后父表"的顺序删除: 开着外键时 DROP TABLE 会做一次隐式 DELETE, 顺序反了会先删父表.
-  // @return 实际删除的表数量
-  std::size_t drop_obsolete_tables(orm::session& in_session);
   // 把**可空的可选归属列**上已经悬空的引用置空.
   // 与 fix_foreign_key_violations 的区别很关键: 后者删的是"孤儿子行"(行本身就不该存在),
   // 而这里的行本身是有效的, 只是指向了一个已不存在的对象 —— 直接删行会丢业务数据

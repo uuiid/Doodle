@@ -105,6 +105,10 @@ void backup(orm::session& in_data) {
 //     project_person_link / project_status_automation_link / project_preview_background_file_link
 //   * 不再生成与被引用列 UNIQUE 自动索引重复的冗余索引
 //
+// 注意: 三张废弃表 (metadata_descriptor / metadata_descriptor_department_link / ai_image_metadata)
+// 的删除动作**已从本步骤移除**. 生产库升级时已一次性删掉它们, 而它们不在 regs_all() 里, ORM
+// 完全不会碰. 代价是: 若还有停留在 v27 的库, 升级后会保留这三张空表 (不影响任何功能).
+//
 // 条件用 `> 27 就跳过` 而不是 `== 27 才执行`: 本步骤的内容是此前所有升级动作的**并集**, 所以
 // 任何比当前版本旧的库都能被它一次带到最新. 若写成 `== 27`, 版本停在 26 的库既不满足条件,
 // 也不会被写入新版本号, 于是永远留在旧 schema 上 —— 正是那种不报错、但迁移根本没做的失效方式.
@@ -142,9 +146,6 @@ struct upgrade_1_t : sqlite_upgrade {
 
     // 3. 清理**未注册的遗留表**上的冗余索引: 它们不在 regs_all() 里, 重建碰不到
     in_data.drop_redundant_indexes(l_s);
-
-    // 4. 删除已废弃的表: 从 regs_all() 里摘掉的表不会参与重建, 必须显式删, 否则会一直留在库里
-    in_data.drop_obsolete_tables(l_s);
 
     l_s.vacuum();
     l_s.pragma().user_version(g_current_version);

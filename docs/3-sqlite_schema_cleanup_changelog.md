@@ -141,8 +141,12 @@
 | `ai_image_metadata` | 0 | 连同其 REST 资源一起删除，见 4.3 |
 
 这三张表已从 `regs_all()` 摘除，因此 `rebuild_all_tables` 不会再处理它们。
-`rebuild_all_tables` 只遍历**已注册**的表，删不掉未注册的表，所以升级流程里必须有
-`drop_obsolete_tables` 这一步显式删除（见第七节）。
+`rebuild_all_tables` 只遍历**已注册**的表，删不掉未注册的表，所以升级流程里当时加了
+`drop_obsolete_tables` 这一步显式删除。
+
+> **后续变更（升级完成后）**：`drop_obsolete_tables` 已连同它的 `g_obsolete[]` 列表一起删除。
+> 生产库升级时这三张表已被一次性删掉，而它们不在 `regs_all()` 里，ORM 完全不会碰。
+> 代价：若还有停留在 v27 的库，升级后会保留这三张空表 —— 不影响任何功能。
 
 ### 4.3 `ai_image_metadata` 及其 REST 资源
 
@@ -270,9 +274,10 @@
 | `rebuild_all_tables(l_s)` | 按当前 ORM 声明重建**每一个已注册的表**（`CREATE` 新表 → `INSERT ... SELECT` → `DROP` 旧表 → `RENAME`），使新的外键动作生效 |
 | `fix_foreign_key_violations` | 关外键 + 事务内反复执行：**每一轮先置空**可空可选归属列上的悬空引用（见 4.6），**再删除**剩下的孤儿子行 |
 | `drop_redundant_indexes` | 清理未注册的遗留表上的冗余索引（它们不参与重建） |
-| `drop_obsolete_tables` | 删除已从 `regs_all()` 摘掉的废弃表（同样不参与重建） |
 | `vacuum()` | 回收空间（需要一份等大的临时空间） |
 | `user_version(28)` | 标记完成 |
+
+> 原本还有一步 `drop_obsolete_tables` 删除三张废弃表，升级完成后已删除（见 4.2）。
 
 **置空与删行的先后顺序是硬约束**：两者作用在同一批违规行上，顺序反了会把"唯一问题是悬空
 可选引用"的有效行整行删掉（见 4.6）。这个顺序被封装在 `fix_foreign_key_violations` 内部，
@@ -405,3 +410,13 @@ $env:DOODLE_REAL_DB = "E:\Doodle\build\kitsu_new.db"
 随用例一起删除的孤儿辅助函数：`count_indexes`、`count_redundant_indexes`、`list_backup_files`、
 `exec_sql`、`fk_total`，以及 include `<set>`、`<boost/scope/scope_exit.hpp>`、
 `<doodle_lib/core/core_set.h>`。
+
+### 9.3 同时删除的一次性代码
+
+| 删除项 | 位置 | 说明 |
+|--------|------|------|
+| `drop_obsolete_tables` + `g_obsolete[]` | `sqlite_database.{h,cpp}` | 三张废弃表的删除动作已完成，见 4.2 |
+| `session::rebuild_table` 的 `in_new_columns` 形参与模板重载 | `orm/session.{h,cpp}` | 唯一调用方 `rebuild_all_tables` 从不传列，仓库内无 `rebuild_table<...>` 调用点 |
+| `http_method/kitsu/metadata_descriptors.cpp`（8 行空壳） | 连同 `CMakeLists.txt` 条目 | 只声明了空 namespace，没有对应头文件 |
+| `regs_all()` 里两处墓碑注释 | `sqlite_database.cpp` | 内容与 `g_obsolete[]` 重复；该列表已随本函数一并删除，历史记录留在本文档 |
+| `build_script/fix_foreign_key_violations.ps1` | — | 离线修库脚本，作用已被应用内 `fix_foreign_key_violations` 覆盖 |

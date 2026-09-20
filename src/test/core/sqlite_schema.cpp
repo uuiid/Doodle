@@ -124,7 +124,9 @@ BOOST_AUTO_TEST_CASE(sync_schema_creates_all_tables) {
 }
 
 // 本次 schema 清理的结果: 废弃的表/列不再创建, 唯一性约束的形态正确.
-// 老库里的废弃表由升级步骤的 drop_obsolete_tables 删除 (rebuild_all_tables 只处理已注册的表).
+// 注意这里验证的是**新库**: 从 regs_all() 里摘掉的表不会被创建.
+// 老库里已经存在的那三张废弃表, 生产升级时已随 v27->v28 一次性删除; 之后 drop_obsolete_tables
+// 已被移除, 所以升级更旧的库不会再删它们 —— 它们不在 regs_all() 里, ORM 完全不会碰, 只是占位.
 BOOST_AUTO_TEST_CASE(schema_cleanup_shape_is_correct) {
   app_base l_app{};
   auto l_db = temp_db("cleanup");
