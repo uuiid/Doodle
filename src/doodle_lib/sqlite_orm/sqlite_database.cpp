@@ -781,7 +781,10 @@ void sqlite_storage::regs_all() {
       .add_column("production_category", &project::production_category_)
       .add_column("short_name", &project::short_name_)
       .add_column("asset_root_path", &project::asset_root_path_, default_value(""))
-      .add_foreign_key(&project::project_status_id_, &project_status::uuid_id_, foreign_key_action::cascade)
+      // 项目状态是字典数据, 只有在**没有任何项目处于该状态**时才允许删除.
+      // 原先是 ON DELETE CASCADE, 删一个项目状态会连带删掉该状态下的全部项目 ——
+      // 一次误删字典项就会静默清空大批业务数据. no_action 让删除直接报错, 由调用方先改项目状态.
+      .add_foreign_key(&project::project_status_id_, &project_status::uuid_id_, foreign_key_action::no_action)
       .add_foreign_key(
           &project::default_preview_background_file_id_, &preview_background_file::uuid_id_,
           foreign_key_action::set_null
