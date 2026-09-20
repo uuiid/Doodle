@@ -23,6 +23,7 @@
 #include "sqlite_orm/orm/alias.h"
 #include "sqlite_orm/orm/exception.h"
 #include "sqlite_orm/orm/update.h"
+#include <boost/scope/scope_exit.hpp>
 #include <filesystem>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -95,6 +96,11 @@ struct upgrade_1_t : sqlite_upgrade {
       backup(l_s);
       // PRAGMA foreign_keys 在事务内是 no-op, 必须在 BEGIN 之前关闭.
       // 关闭后 ON DELETE CASCADE / SET NULL 不触发, 被"孤立"的子行交给下一轮 fixpoint 处理.
+      // 连接级默认值已由 storage::register_custom_extension 统一设为 ON, 所以这里必须**显式**
+      // 关闭, 不能再依赖"默认就是 OFF". 关闭状态不能泄漏回连接池, 用 guard 恢复原值.
+      const auto l_fk_was_on = l_s.pragma().foreign_keys();
+      l_s.pragma().foreign_keys(false);
+      boost::scope::scope_exit l_fk_guard([&l_s, l_fk_was_on]() { l_s.pragma().foreign_keys(l_fk_was_on); });
       {
         auto l_guard = l_s.transaction();
         in_data.fix_foreign_key_violations(l_s);

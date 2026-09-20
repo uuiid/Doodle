@@ -138,7 +138,9 @@ void sqlite_storage::regs_all() {
       .add_column("archived", &seedance2::subproject::archived_)
       .add_column("created_at", &seedance2::subproject::created_at_)
       .add_foreign_key(&seedance2::subproject::project_id_, &project::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&seedance2::subproject::created_user_id_, &person::uuid_id_, foreign_key_action::set_null)
+      // created_user_id 是 not_null, 不能配 ON DELETE SET NULL: 删除 person 时 SQLite 会尝试
+      // 把该列置 NULL, 直接撞上 NOT NULL 约束而失败. no_action 表示"创建过子项目的人不允许删除".
+      .add_foreign_key(&seedance2::subproject::created_user_id_, &person::uuid_id_, foreign_key_action::no_action)
       .add_foreign_key(
           &seedance2::subproject::preview_file_, &seedance2::ai_preview_file::uuid_id_, foreign_key_action::set_null
       );
@@ -547,7 +549,10 @@ void sqlite_storage::regs_all() {
       .add_column("editor_id", &comment::editor_id_)
       .add_column("preview_file_id", &comment::preview_file_id_)
       .add_foreign_key(&comment::task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&comment::person_id_, &person::uuid_id_, foreign_key_action::set_null)
+      // person_id 是 not_null (评论必须有作者), 不能配 ON DELETE SET NULL: 删除 person 时
+      // SQLite 会尝试把该列置 NULL, 直接撞上 NOT NULL 约束而失败.
+      // no_action 表示"有评论的人不允许删除", 既不丢数据, 报错也明确.
+      .add_foreign_key(&comment::person_id_, &person::uuid_id_, foreign_key_action::no_action)
       .add_foreign_key(&comment::editor_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&comment::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null)
       // comment.object_id 是配合 object_type 的关联对象 ID, 实际指向 task (object_type 默认即为 "Task").
@@ -1120,6 +1125,15 @@ void sqlite_storage::regs_all() {
 }
 void sqlite_storage::register_custom_extension(sqlite3* in_sqlite) {
   tokenizer::register_jieba_tokenizer(get_fts5_api(in_sqlite));
+
+  // 连接级 PRAGMA 必须在这里设置. only_open_db() 是每条连接的唯一创建点, 本函数是它暴露给
+  // 子类的唯一钩子; 连接池会复用连接, 若改用某个临时 session 去设置, 只会影响恰好被它借到的
+  // 那一条连接, 其余连接仍是 SQLite 默认值 —— 尤其是 foreign_keys 默认 OFF, 会让全部外键
+  // 约束静默失效 (历史上 12452 条外键违规就是这么累积起来的).
+  // journal_mode 不在这里设: 它是写进库文件的持久设置, 只需设一次, 见 upgrade().
+  exec_pragma(in_sqlite, "PRAGMA foreign_keys = ON;");
+  exec_pragma(in_sqlite, "PRAGMA synchronous = NORMAL;");
+  exec_pragma(in_sqlite, "PRAGMA recursive_triggers = ON;");
 }
 void sqlite_storage::open_(FSys::path in_path, std::int32_t in_flags) {
   storage::open_(in_path, in_flags);
@@ -1134,13 +1148,13 @@ void sqlite_storage::upgrade() {
   for (auto&& i : l_list) {
     i->upgrade(*this);
   }
-  {
-    auto l_s = create_session();
-    l_s.pragma().foreign_keys(true);
-    l_s.pragma().synchronous(1);
-    l_s.pragma().recursive_triggers(true);
-    l_s.pragma().journal_mode(orm::journal_mode_t::wal);
-  }
+  // 这里只保留**库文件级**的持久设置. journal_mode(WAL) 会被写进库文件头, 对所有连接生效,
+  // 设一次即可.
+  // 而 foreign_keys / synchronous / recursive_triggers 都是**连接级**的, 原先在这里用临时
+  // session 设置只能影响到连接池中恰好被借到的那一条连接, 已统一移到
+  // register_custom_extension, 由 only_open_db 对每条新连接执行.
+  auto l_s = create_session();
+  l_s.pragma().journal_mode(orm::journal_mode_t::wal);
 }
 
 std::size_t sqlite_storage::fix_foreign_key_violations(
@@ -1192,9 +1206,13 @@ std::size_t sqlite_storage::rebuild_all_tables(orm::session& in_session) {
   auto l_all_db_tables = in_session.get_all_table_names();
   // 重建过程会 DROP TABLE; 开着外键会触发级联或约束错误.
   // PRAGMA foreign_keys 在事务内是 no-op, 所以必须在 rebuild_table 开启事务之前关闭.
+  const auto l_fk_was_on = in_session.pragma().foreign_keys();
   in_session.pragma().foreign_keys(false);
-  // 中途抛异常时必须恢复外键, 否则整个会话都会在关闭外键的状态下继续跑
-  boost::scope::scope_exit l_fk_guard([&in_session]() { in_session.pragma().foreign_keys(true); });
+  // 中途抛异常时必须恢复, 否则这条连接会带着关闭的外键状态回到连接池被后续 session 复用.
+  // 恢复成调用前的值而不是硬编码 true: 调用方可能本就在有意关闭外键.
+  boost::scope::scope_exit l_fk_guard([&in_session, l_fk_was_on]() {
+    in_session.pragma().foreign_keys(l_fk_was_on);
+  });
   std::size_t l_count{0};
   for (const auto& l_table : get_all_reg_tables()) {
     // 伪表: sqlite_master 不能 DROP; pragma_foreign_key_check 是 eponymous 虚拟表

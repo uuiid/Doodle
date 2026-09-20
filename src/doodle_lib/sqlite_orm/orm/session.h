@@ -26,7 +26,11 @@ class DOODLELIB_API session {
     void synchronous(std::int32_t in_sync);
     void journal_mode(journal_mode_t in_mode);
     void recursive_triggers(bool in_recursive);
+    // foreign_keys 是**连接级**设置, 且 SQLite 默认为 OFF.
+    // 本项目的连接级默认值由 storage::register_custom_extension 在每条连接创建时统一设置.
     void foreign_keys(bool in_foreign_keys);
+    // 查询当前连接的外键开关状态.
+    bool foreign_keys();
     // SQLite 3.25+ 的 ALTER TABLE RENAME 会重新解析库中所有触发器和视图.
     // 重建表时旧表刚被 DROP, 引用了它的触发器会解析失败
     // (error in trigger xxx: no such table: yyy), 需要临时开启 legacy 行为关闭该重解析.

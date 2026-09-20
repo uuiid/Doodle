@@ -242,8 +242,16 @@ class DOODLELIB_API storage : public boost::noncopyable {
   void add_thread_db(const sqlite_connection_ptr& in_ptr);
 
   virtual void open_(FSys::path in_path, std::int32_t in_flags);
-  // 注册自定义扩展
+  // 注册自定义扩展, 同时也是子类设置**连接级**选项的钩子.
+  // only_open_db() 是每条连接的唯一创建点, 且每条连接都会走这里, 所以
+  // foreign_keys / synchronous / recursive_triggers 这类连接级 PRAGMA 必须在这里设置:
+  // 连接池会复用连接, 若改用某个临时 session 设置, 只会影响恰好被它借到的那一条连接,
+  // 其余连接仍保持 SQLite 的默认值 (foreign_keys 默认 OFF).
   virtual void register_custom_extension(sqlite3* in_sqlite);
+
+  // 在裸 sqlite3 句柄上执行一条 PRAGMA 语句, 失败即抛异常.
+  // 供 register_custom_extension 使用 (此时还没有 session 可依托).
+  static void exec_pragma(sqlite3* in_db, std::string_view in_sql);
 
  public:
   storage() = default;

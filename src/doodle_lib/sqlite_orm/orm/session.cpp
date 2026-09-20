@@ -404,6 +404,12 @@ void session::pragma_t::journal_mode(journal_mode_t in_mode) {
 }
 void session::pragma_t::recursive_triggers(bool in_recursive) { run("recursive_triggers", in_recursive); }
 void session::pragma_t::foreign_keys(bool in_foreign_keys) { run("foreign_keys", in_foreign_keys); }
+bool session::pragma_t::foreign_keys() {
+  sqlite_stmt l_stmt{};
+  l_stmt.prepare(s_, "PRAGMA foreign_keys;");
+  l_stmt.step();
+  return l_stmt.get_column_value<std::int32_t>(0) != 0;
+}
 void session::pragma_t::legacy_alter_table(bool in_legacy) { run("legacy_alter_table", in_legacy); }
 void session::pragma_t::locking_mode(bool in_exclusive) { run("locking_mode", in_exclusive ? "EXCLUSIVE" : "NORMAL"); }
 void session::pragma_t::user_version(std::int32_t version) { run("user_version", version); }

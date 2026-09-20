@@ -310,6 +310,17 @@ session storage::create_session() { return session{*this}; }
 storage::~storage() = default;
 void storage::register_custom_extension(sqlite3* in_sqlite) {}
 
+void storage::exec_pragma(sqlite3* in_db, std::string_view in_sql) {
+  auto l_sql{std::string{in_sql}};
+  char* l_err_msg{nullptr};
+  auto l_r = ::sqlite3_exec(in_db, l_sql.c_str(), nullptr, nullptr, &l_err_msg);
+  if (l_r != SQLITE_OK) {
+    std::string l_msg = l_err_msg != nullptr ? l_err_msg : "unknown error";
+    ::sqlite3_free(l_err_msg);
+    throw sqlite_orm_exception(fmt::format("{}: {} (执行 {})", l_r, l_msg, l_sql));
+  }
+}
+
 std::string storage::get_table_name(std::type_index in_type_index) const {
   if (!type_to_table_index_.contains(in_type_index)) {
     throw std::runtime_error("Table not found for the given type");

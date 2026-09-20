@@ -6,6 +6,7 @@
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
+#include <boost/scope/scope_exit.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <cstdint>
@@ -39,8 +40,16 @@ void reg_test_tables(sqlite_storage& in_storage) {
       .add_foreign_key(&fk_child::parent_id_, &fk_parent::id_);
 }
 
-// 建表并插入 1 行合法子行 + 1 行违规子行 (parent_id = 999 不存在)
+// 建表并插入 1 行合法子行 + 1 行违规子行 (parent_id = 999 不存在).
+// 违规行是在模拟"外键约束尚未生效时期"遗留的历史脏数据, 所以必须在**关闭外键**的情况下写入:
+// 开着外键时 SQLite 会直接拒绝这种写入 (该行为由 sqlite_conn_pragma 用例单独覆盖).
 void seed(orm::session& in_session) {
+  const auto l_fk_was_on = in_session.pragma().foreign_keys();
+  in_session.pragma().foreign_keys(false);
+  boost::scope::scope_exit l_fk_guard([&in_session, l_fk_was_on]() {
+    in_session.pragma().foreign_keys(l_fk_was_on);
+  });
+
   in_session.create_table<fk_parent>();
   in_session.create_table<fk_child>();
   insert(in_session).into<fk_parent>().set(c(&fk_parent::id_) = 1, c(&fk_parent::name_) = "p")();
