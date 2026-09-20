@@ -195,8 +195,16 @@
 
 > `fix_foreign_key_violations` 是**删行**的（它处理的"孤儿子行"本身就不该存在）。
 > 如果把这 79 行交给它处理，删掉的不是引用，而是 **79 个有效任务**。
-> 所以升级流程里新增了 `null_dangling_optional_references`，并且必须排在
-> `fix_foreign_key_violations` **之前**。
+
+**置空必须发生在清理循环的每一轮之内，而不是循环之前。** 这一条是实测出来的：
+
+- 只把置空放在循环外时，循环内删除父行（例如某个任务被删）会让指向它的预览文件变成孤儿、
+  进而被删，于是**原本有效的任务**在下一轮因为引用悬空而被整行删掉。
+- 真实库上这个差别是**多删 142 个任务 + 108 条工时记录**（`task` 从 −97 变成 −239）。
+- 因此 `fix_foreign_key_violations` 每一轮都先调用 `null_dangling_optional_references`
+  再删孤儿行；两者一起才构成"按外键语义修复违规"。
+- `sqlite_real_db/upgrade_to_v28_on_real_db` 里有一条专门的回归断言：升级前把这些任务记下来，
+  升级后必须一个都没少。
 
 ### 4.7 未处理
 
@@ -259,15 +267,15 @@
 |------|------|
 | `backup(l_s)` | 升级前把整库备份到 cache 目录的 `backup/kitsu_<时间戳>.db` |
 | `rebuild_all_tables(l_s)` | 按当前 ORM 声明重建**每一个已注册的表**（`CREATE` 新表 → `INSERT ... SELECT` → `DROP` 旧表 → `RENAME`），使新的外键动作生效 |
-| `null_dangling_optional_references` | 关外键 + 事务内，把可空可选归属列上的悬空引用**置空**（见 4.6）。**必须排在下一步之前** |
-| `fix_foreign_key_violations` | 同事务内，删除所有孤儿子行 |
+| `fix_foreign_key_violations` | 关外键 + 事务内反复执行：**每一轮先置空**可空可选归属列上的悬空引用（见 4.6），**再删除**剩下的孤儿子行 |
 | `drop_redundant_indexes` | 清理未注册的遗留表上的冗余索引（它们不参与重建） |
 | `drop_obsolete_tables` | 删除已从 `regs_all()` 摘掉的废弃表（同样不参与重建） |
 | `vacuum()` | 回收空间（需要一份等大的临时空间） |
 | `user_version(28)` | 标记完成 |
 
-**顺序很关键**：`null_dangling_optional_references` 与 `fix_foreign_key_violations` 一个置空、
-一个删行，作用在同一批违规行上。顺序反了，79 个有效任务会被当成孤儿删掉。
+**置空与删行的先后顺序是硬约束**：两者作用在同一批违规行上，顺序反了会把"唯一问题是悬空
+可选引用"的有效行整行删掉（见 4.6）。这个顺序被封装在 `fix_foreign_key_violations` 内部，
+调用方无法搞错。
 
 ### 7.1 版本判断用 `> 27 就跳过`，不是 `== 27`
 
@@ -346,6 +354,15 @@ PRAGMA integrity_check;
 
 -- 某表的外键动作
 SELECT "from", "table", "to", on_delete FROM pragma_foreign_key_list('task');
+
+-- 可空可选归属列上的悬空引用（补约束前必须先查这个，再决定"置空"还是"删行"）
+SELECT count(*) FROM task t
+ WHERE t.last_preview_file_id IS NOT NULL
+   AND NOT EXISTS (SELECT 1 FROM preview_file p WHERE p.uuid = t.last_preview_file_id);
+
+SELECT count(*) FROM work_xlsx_task_info_tab w
+ WHERE w.kitsu_task_ref_id IS NOT NULL
+   AND NOT EXISTS (SELECT 1 FROM task t WHERE t.uuid = w.kitsu_task_ref_id);
 ```
 
 **注意**：`pragma_foreign_key_list` 的 `"from"` 是 SQL 关键字，必须加引号。

@@ -1180,10 +1180,20 @@ std::size_t sqlite_storage::fix_foreign_key_violations(
   using namespace orm;
   if (in_chunk_size == 0) in_chunk_size = 500;
   std::size_t l_total_deleted{0};
+  std::size_t l_total_nulled{0};
   for (std::size_t l_round = 0; l_round < in_max_rounds; ++l_round) {
+    // 每一轮都**先置空悬空的可选引用, 再删孤儿行**. 这个顺序不能颠倒, 也不能只放在循环外:
+    // 删父行会在同一轮里造出新的悬空引用, 而下一轮会把"唯一问题就是悬空可选引用"的行整行删掉,
+    // 可那些行本身是有效的 (真实库上会因此多删 142 个任务、108 条工时记录).
+    // 放在循环内, 每一轮新产生的悬空引用都能在被删之前先救回来.
+    const auto l_round_nulled = null_dangling_optional_references(in_session);
+    l_total_nulled += l_round_nulled;
+
     auto l_bad = in_session.pragma().foreign_key_check();
     if (l_bad.empty()) {
-      SPDLOG_INFO("foreign_key_check: 第 {} 轮已无违规, 累计删除 {} 行", l_round, l_total_deleted);
+      SPDLOG_INFO(
+          "foreign_key_check: 第 {} 轮已无违规, 累计置空 {} 行 / 删除 {} 行", l_round, l_total_nulled, l_total_deleted
+      );
       return l_total_deleted;
     }
 
@@ -1209,12 +1219,14 @@ std::size_t sqlite_storage::fix_foreign_key_violations(
     l_total_deleted += l_round_deleted;
 
     // 无进展说明剩下的都无法按 rowid 处理, 继续循环也不会收敛
-    if (l_round_deleted == 0) {
+    if (l_round_deleted == 0 && l_round_nulled == 0) {
       SPDLOG_ERROR("foreign_key_check: 第 {} 轮无删除但仍有 {} 条违规, 停止清理", l_round + 1, l_bad.size());
       return l_total_deleted;
     }
   }
-  SPDLOG_ERROR("foreign_key_check: 达到最大轮数 {}, 累计删除 {} 行", in_max_rounds, l_total_deleted);
+  SPDLOG_ERROR(
+      "foreign_key_check: 达到最大轮数 {}, 累计置空 {} 行 / 删除 {} 行", in_max_rounds, l_total_nulled, l_total_deleted
+  );
   return l_total_deleted;
 }
 
@@ -1357,6 +1369,26 @@ std::size_t sqlite_storage::null_dangling_optional_references(orm::session& in_s
   };
   std::size_t l_nulled{0};
   for (const auto& l_ref : g_refs) {
+    // 表或列不存在时跳过: 这张列表是全局的, 而调用方的库未必建全 (例如只建了几张表的测试库),
+    // 也可能来自更旧的版本. 缺表不是错误, 只是这里没有可清理的东西.
+    auto l_has_column = !collect_first_column(
+                             in_session,
+                             fmt::format(
+                                 "SELECT 1 FROM pragma_table_info('{}') WHERE name = '{}';", l_ref.table_,
+                                 l_ref.column_
+                             )
+                         )
+                             .empty();
+    auto l_has_ref_table = !collect_first_column(
+                                in_session,
+                                fmt::format(
+                                    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = '{}';",
+                                    l_ref.ref_table_
+                                )
+                            )
+                                .empty();
+    if (!l_has_column || !l_has_ref_table) continue;
+
     // 悬空 = 本列非空, 但目标表里找不到对应的行
     auto l_where = fmt::format(
         R"("{0}"."{1}" IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "{2}" WHERE "{2}"."{3}" = "{0}"."{1}"))",

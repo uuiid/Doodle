@@ -132,15 +132,12 @@ struct upgrade_1_t : sqlite_upgrade {
       l_s.pragma().foreign_keys(false);
       boost::scope::scope_exit l_fk_guard([&l_s, l_fk_was_on]() { l_s.pragma().foreign_keys(l_fk_was_on); });
       auto l_guard = l_s.transaction();
-      // 2a. 先把**可空可选归属列**上的悬空引用置空. 必须在 fix_foreign_key_violations 之前:
-      //     后者是按"孤儿子行"删行的, 而 task.last_preview_file_id 这类列上的行本身是有效任务,
-      //     只是指向了已删除的预览文件 —— 交给它处理就会把任务整行删掉.
-      const auto l_nulled  = in_data.null_dangling_optional_references(l_s);
+      // 2a. 清理外键违规. fix_foreign_key_violations 内部每一轮都会先置空悬空的可选归属引用,
+      //     再删孤儿行 —— 顺序反了会把"唯一问题是悬空可选引用"的有效行整行删掉
+      //     (真实库上是 142 个任务 + 108 条工时记录).
       auto l_deleted = in_data.fix_foreign_key_violations(l_s);
       l_guard.commit();
-      SPDLOG_INFO(
-          "upgrade 27->28: 重建 {} 张表, 置空 {} 行悬空引用, 清理 {} 行外键孤儿", l_rebuilt, l_nulled, l_deleted
-      );
+      SPDLOG_INFO("upgrade 27->28: 重建 {} 张表, 清理 {} 行外键孤儿", l_rebuilt, l_deleted);
     }
 
     // 3. 清理**未注册的遗留表**上的冗余索引: 它们不在 regs_all() 里, 重建碰不到

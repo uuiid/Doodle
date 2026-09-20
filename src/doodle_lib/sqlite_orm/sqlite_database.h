@@ -69,10 +69,13 @@ class DOODLELIB_API sqlite_storage : public orm::storage {
   // 升级
   void upgrade();
   // 反复执行 PRAGMA foreign_key_check 并删除违规行, 直到没有违规为止.
+  // **每一轮都会先调用 null_dangling_optional_references 把可空可选归属列上的悬空引用置空**,
+  // 再删剩下的孤儿行. 这个顺序是必须的: 删父行会在同一轮里造出新的悬空引用, 若只删不置空,
+  // 下一轮会把"唯一问题是悬空可选引用"的有效行整行删掉. 两者一起构成"按外键语义修复违规".
   // 不管理事务: 由调用方决定事务边界, 且需在 BEGIN 之前 PRAGMA foreign_keys = OFF.
   // @param in_max_rounds 最大轮数
   // @param in_chunk_size 单条 DELETE 的最大 rowid 数 (绑定参数上限保护)
-  // @return 累计删除的行数
+  // @return 累计删除的行数 (置空的行数记在日志里)
   std::size_t fix_foreign_key_violations(
       orm::session& in_session, std::size_t in_max_rounds = 50, std::size_t in_chunk_size = 500
   );
@@ -98,7 +101,7 @@ class DOODLELIB_API sqlite_storage : public orm::storage {
   // 与 fix_foreign_key_violations 的区别很关键: 后者删的是"孤儿子行"(行本身就不该存在),
   // 而这里的行本身是有效的, 只是指向了一个已不存在的对象 —— 直接删行会丢业务数据
   // (真实库里有 79 个任务的 last_preview_file_id 悬空, 按孤儿删掉就是删掉 79 个任务).
-  // 因此必须在 fix_foreign_key_violations **之前**调用.
+  // 通常不需要单独调用: fix_foreign_key_violations 每一轮都会先调用它再删行.
   // @return 被置空的行数
   std::size_t null_dangling_optional_references(orm::session& in_session);
   strand_type get_strand() { return strand_; }

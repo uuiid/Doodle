@@ -70,6 +70,11 @@ std::string scalar_text(orm::session& in_session, const std::string& in_sql) {
   return l_stmt.get_column_value<std::string>(0);
 }
 
+void exec_sql(orm::session& in_session, const std::string& in_sql) {
+  sqlite_stmt l_stmt{in_session, in_sql};
+  l_stmt.step();
+}
+
 // 以 _backup 结尾的残留中间表数量
 std::int64_t backup_table_count(orm::session& in_session) {
   return scalar_int(in_session, "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name GLOB '*_backup'");
@@ -204,10 +209,6 @@ BOOST_AUTO_TEST_CASE(rebuild_all_tables_on_real_db) {
     // 2. 外键: rebuild_all_tables 是按**当前代码的 ORM schema** 重建表的, 所以代码里比库新的外键会被落库.
     //    真实库的 comment 表还没有 object_id 外键, 重建会加上 comment.object_id -> task(uuid).
     //    因此重建后会暴露出"任务已被删除"的孤儿评论; 预期数量等于重建前直接查出来的孤儿数.
-    auto l_orphan_comment = scalar_int(
-        l_session, "SELECT count(*) FROM comment c WHERE NOT EXISTS (SELECT 1 FROM task t WHERE t.uuid = c.object_id);"
-    );
-
     auto l_fk_after = fk_by_child_parent(l_session);
 
     // 修正后的外键确实落库, 且指向 task 而不再是 entity
@@ -220,13 +221,40 @@ BOOST_AUTO_TEST_CASE(rebuild_all_tables_on_real_db) {
     BOOST_TEST(l_comment_sql.find("REFERENCES entity(uuid)") == std::string::npos);
     BOOST_TEST(!l_fk_after.contains("comment -> entity"));
 
+    // 重建会**新加**一些外键 —— 老库里根本没有这些约束. 对这些键, 违规数从 0 变成非 0 是正常的:
+    // 0 不代表"没有孤儿", 只代表"约束此前不存在". 所以预期值必须**直接查询**得到,
+    // 而不是放宽成"允许增加"; 否则重建真的制造孤儿时也会被放过.
+    // 其余所有外键的违规数都只能持平或下降 —— 重建本身不制造孤儿.
+    struct new_fk_t {
+      const char* key_;
+      const char* orphan_sql_;
+    };
+    const new_fk_t l_new_fks[]{
+        {"comment -> task",
+         "SELECT count(*) FROM comment c WHERE NOT EXISTS (SELECT 1 FROM task t WHERE t.uuid = c.object_id);"},
+        {"task -> preview_file",
+         "SELECT count(*) FROM task t WHERE t.last_preview_file_id IS NOT NULL AND NOT EXISTS "
+         "(SELECT 1 FROM preview_file p WHERE p.uuid = t.last_preview_file_id);"},
+        {"work_xlsx_task_info_tab -> task",
+         "SELECT count(*) FROM work_xlsx_task_info_tab w WHERE w.kitsu_task_ref_id IS NOT NULL AND NOT EXISTS "
+         "(SELECT 1 FROM task t WHERE t.uuid = w.kitsu_task_ref_id);"},
+    };
+
     for (const auto& [l_key, l_value] : l_fk_after) {
       auto l_was = l_fk_before.contains(l_key) ? l_fk_before.at(l_key) : std::int64_t{0};
-      if (l_key == "comment -> task") {
+      const new_fk_t* l_new = nullptr;
+      for (const auto& l_entry : l_new_fks) {
+        if (l_key == l_entry.key_) {
+          l_new = &l_entry;
+          break;
+        }
+      }
+      if (l_new != nullptr) {
+        auto l_expected = scalar_int(l_session, l_new->orphan_sql_);
         BOOST_TEST_MESSAGE(fmt::format(
-            "新增外键暴露的孤儿评论: {} {} -> {} (重建前直接查询得到 {})", l_key, l_was, l_value, l_orphan_comment
+            "新增外键暴露的孤儿: {} {} -> {} (重建前直接查询得到 {})", l_key, l_was, l_value, l_expected
         ));
-        BOOST_TEST(l_value == l_orphan_comment);
+        BOOST_TEST(l_value == l_expected);
         continue;
       }
       BOOST_TEST_MESSAGE(fmt::format("外键违规变化: {} {} -> {}", l_key, l_was, l_value));
@@ -399,7 +427,29 @@ BOOST_AUTO_TEST_CASE(upgrade_to_v28_on_real_db) {
     // 这个用例的前提就是"生产库在 27"; 不满足说明拿到的是别的库, 断言出来而不是静默跑过
     BOOST_TEST(l_version == 27);
 
+    // 升级前把"唯一问题就是悬空可选引用"的任务记下来, 升级后必须一个都没少.
+    // 用真实表而不是 TEMP 表: upgrade() 内部会自己 create_session(), TEMP 表只属于创建它的
+    // 那条连接, 跨不过去. 这张表不在 regs_all() 里, 重建/清冗余/删废弃表都不会碰它.
+    exec_sql(l_session, "DROP TABLE IF EXISTS test_dangling_task;");
+    exec_sql(l_session, R"(
+      CREATE TABLE test_dangling_task AS
+      SELECT uuid FROM task t WHERE t.last_preview_file_id IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM preview_file p WHERE p.uuid = t.last_preview_file_id);)");
+    auto l_dangling_saved = scalar_int(l_session, "SELECT count(*) FROM test_dangling_task;");
+
     l_storage.upgrade();
+
+    // 这些任务本身是有效的, 只是指向了已删除的预览文件. 它们只能被**置空引用**, 不能被删行.
+    // 曾经的实现把置空放在清理循环之外, 结果循环内删父行造出的新悬空引用在下一轮被当成孤儿,
+    // 多删了 142 个任务; 这个断言就是盯住那件事.
+    auto l_survived = scalar_int(
+        l_session,
+        "SELECT count(*) FROM test_dangling_task d WHERE EXISTS (SELECT 1 FROM task t WHERE t.uuid = d.uuid);"
+    );
+    BOOST_TEST_MESSAGE(fmt::format("悬空引用任务 {} 个, 升级后仍存在 {} 个", l_dangling_saved, l_survived));
+    BOOST_TEST(l_dangling_saved > 0);
+    BOOST_TEST(l_survived == l_dangling_saved);
+    exec_sql(l_session, "DROP TABLE test_dangling_task;");
 
     auto l_after = scalar_int(l_session, "PRAGMA user_version;");
     BOOST_TEST_MESSAGE(fmt::format("升级后 user_version = {}", l_after));
