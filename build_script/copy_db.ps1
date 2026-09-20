@@ -23,7 +23,7 @@ function Invoke-ServerBackup {
     $res = Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/backup" -Method Post -Headers $headers
   }
   # 服务器返回备份文件的完整路径 (json 字符串)
-  $l_backup_file = $res.Content | ConvertFrom-Json
+  $l_backup_file = $res.Content
   Write-Host "服务器备份完成: $l_backup_file"
   return $l_backup_file
 }
