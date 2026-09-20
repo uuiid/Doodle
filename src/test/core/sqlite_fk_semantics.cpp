@@ -160,6 +160,9 @@ BOOST_AUTO_TEST_CASE(dictionary_foreign_keys_are_no_action) {
         {       "task",          "entity_id",   "CASCADE"},
         {     "entity",         "project_id",   "CASCADE"},
         {    "comment",          "object_id",   "CASCADE"},
+        // 本次补齐的两个业务引用外键
+        {  "assets_tab",        "parent_uuid",   "CASCADE"},  // 自引用树, 与 entity.parent_id 一致
+        {"work_xlsx_task_info_tab",       "project_id",   "CASCADE"},
     };
 
     for (const auto& l_e : l_expect) {

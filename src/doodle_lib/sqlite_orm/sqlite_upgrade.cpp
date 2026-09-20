@@ -134,6 +134,9 @@ struct upgrade_1_t : sqlite_upgrade {
     // 3. 清理**未注册的遗留表**上的冗余索引: 它们不在 regs_all() 里, 重建碰不到
     in_data.drop_redundant_indexes(l_s);
 
+    // 4. 删除已废弃的表: 从 regs_all() 里摘掉的表不会参与重建, 必须显式删, 否则会一直留在库里
+    in_data.drop_obsolete_tables(l_s);
+
     l_s.vacuum();
     l_s.pragma().user_version(g_current_version);
   }

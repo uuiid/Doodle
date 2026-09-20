@@ -412,6 +412,14 @@ BOOST_AUTO_TEST_CASE(upgrade_to_v28_on_real_db) {
     BOOST_TEST(l_fk_after.empty());
     BOOST_TEST(count_redundant_indexes(l_session) == 0);
     BOOST_TEST(backup_table_count(l_session) == 0);
+    // 废弃表必须被 drop_obsolete_tables 真正删掉: 它们不在 regs_all() 里, 重建碰不到
+    for (const auto* l_name : {"metadata_descriptor", "metadata_descriptor_department_link", "ai_image_metadata"}) {
+      auto l_exists = scalar_int(
+          l_session, fmt::format("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = '{}';", l_name)
+      );
+      BOOST_TEST_MESSAGE(fmt::format("升级后废弃表 {} 是否仍存在: {}", l_name, l_exists));
+      BOOST_TEST(l_exists == 0);
+    }
     // 数据库是可用的: 大表还在, 只是少了被清理的孤儿行
     BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM comment") > 0);
     BOOST_TEST(scalar_int(l_session, "SELECT count(*) FROM task") > 0);

@@ -89,6 +89,11 @@ class DOODLELIB_API sqlite_storage : public orm::storage {
   // 那些表不在 regs_all() 里, 重建碰不到.
   // @return 实际删除的索引数量
   std::size_t drop_redundant_indexes(orm::session& in_session);
+  // 删除已废弃的表. rebuild_all_tables 只处理 regs_all() 里注册过的表, 所以从代码里摘掉的表
+  // 必须在这里显式删除, 否则会作为死表一直留在老库里.
+  // 按"先子表后父表"的顺序删除: 开着外键时 DROP TABLE 会做一次隐式 DELETE, 顺序反了会先删父表.
+  // @return 实际删除的表数量
+  std::size_t drop_obsolete_tables(orm::session& in_session);
   strand_type get_strand() { return strand_; }
 };
 

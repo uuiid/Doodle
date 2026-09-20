@@ -286,18 +286,8 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(&outsource_studio_authorization::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_unique_index(&outsource_studio_authorization::studio_id_, &outsource_studio_authorization::entity_id_);
 
-  reg_table<ai_image_metadata>("ai_image_metadata")
-      .add_column("id", &ai_image_metadata::id_, primary_key(), autoincrement())
-      .add_column("uuid_id", &ai_image_metadata::uuid_id_, unique(), not_null())
-      .add_column("prompt", &ai_image_metadata::prompt_)
-      .add_column("task_id", &ai_image_metadata::task_id_)
-      .add_column("category", &ai_image_metadata::category_)
-      .add_column("extension", &ai_image_metadata::extension_)
-      .add_column("width", &ai_image_metadata::width_)
-      .add_column("height", &ai_image_metadata::height_)
-      .add_column("created_at", &ai_image_metadata::created_at_)
-      .add_column("author", &ai_image_metadata::author_)
-      .add_foreign_key(&ai_image_metadata::author_, &person::uuid_id_, foreign_key_action::cascade);
+  // ai_image_metadata 已废弃: 真实库中 0 行, 代码也不再使用.
+  // 表本身由升级步骤的 drop_obsolete_tables 删除 —— rebuild_all_tables 只处理这里注册过的表, 删不掉它.
 
   reg_table<playlist_shot>("playlist_shot")
       .add_column("id", &playlist_shot::id_, primary_key(), autoincrement())
@@ -388,6 +378,10 @@ void sqlite_storage::regs_all() {
       .add_column("label", &assets_helper::database_t::label_, not_null())
       .add_column("parent_uuid", &assets_helper::database_t::uuid_parent_)
       .add_column("order", &assets_helper::database_t::order_, default_value("0"s), not_null())
+      // 自引用树: 删父节点时连带删除其子树, 与 entity.parent_id / source_id 的处理一致
+      .add_foreign_key(
+          &assets_helper::database_t::uuid_parent_, &assets_helper::database_t::uuid_id_, foreign_key_action::cascade
+      )
       .add_index(&assets_helper::database_t::label_);
 
   reg_table<attendance_helper::database_t>("attendance_tab")
@@ -423,6 +417,10 @@ void sqlite_storage::regs_all() {
       .add_column("project_name", &work_xlsx_task_info_helper::database_t::project_name_)
       .add_foreign_key(
           &work_xlsx_task_info_helper::database_t::person_id_, &person::uuid_id_, foreign_key_action::cascade
+      )
+      // project_id 是业务引用: 项目删除时对应的工时记录一并删除
+      .add_foreign_key(
+          &work_xlsx_task_info_helper::database_t::project_id_, &project::uuid_id_, foreign_key_action::cascade
       )
       .add_index(&work_xlsx_task_info_helper::database_t::year_month_)
       .add_unique_index(
@@ -473,7 +471,9 @@ void sqlite_storage::regs_all() {
   reg_table<preview_file>("preview_file")
       .add_column("id", &preview_file::id_, primary_key(), autoincrement())
       .add_column("uuid", &preview_file::uuid_id_, unique(), not_null())
-      .add_column("name", &preview_file::name_, unique())
+      // 这里不能声明 unique(): 同一个 name 在不同 task / revision 下本来就会重复出现,
+      // 单列唯一会让合法的预览文件插不进去. 真正的唯一性由下面 (name, task_id, revision) 复合索引保证.
+      .add_column("name", &preview_file::name_)
       .add_column("original_name", &preview_file::original_name_)
       .add_column("revision", &preview_file::revision_)
       .add_column("position", &preview_file::position_)
@@ -491,7 +491,9 @@ void sqlite_storage::regs_all() {
       .add_column("task_id", &preview_file::task_id_)
       .add_column("shotgun_id", &preview_file::shotgun_id_)
       .add_column("person_id", &preview_file::person_id_)
-      .add_column("source_file_id", &preview_file::source_file_id_)
+      // source_file_id 已废弃: 真实库中全为 NULL, 不再使用.
+      // 注释掉这一行后重建时就不再复制该列, 等于把它从库里删掉 —— 因为整列都是空值, 没有数据损失.
+      // .add_column("source_file_id", &preview_file::source_file_id_)
       .add_column("is_movie", &preview_file::is_movie_)
       .add_column("url", &preview_file::url_)
       .add_column("uploaded_movie_url", &preview_file::uploaded_movie_url_)
@@ -706,7 +708,9 @@ void sqlite_storage::regs_all() {
       .add_column("person_id", &project_person_link::person_id_, not_null())
       .add_column("shotgun_id", &project_person_link::shotgun_id_)
       .add_foreign_key(&project_person_link::project_id_, &project::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&project_person_link::person_id_, &person::uuid_id_, foreign_key_action::cascade);
+      .add_foreign_key(&project_person_link::person_id_, &person::uuid_id_, foreign_key_action::cascade)
+      // 一个项目与一个人之间只能有一条关联
+      .add_unique_index(&project_person_link::project_id_, &project_person_link::person_id_);
 
   reg_table<project_task_type_link>("project_task_type_link")
       .add_column("id", &project_task_type_link::id_, primary_key(), autoincrement())
@@ -734,7 +738,9 @@ void sqlite_storage::regs_all() {
       .add_column("project_id", &project_asset_type_link::project_id_, not_null())
       .add_column("asset_type_id", &project_asset_type_link::asset_type_id_, not_null())
       .add_foreign_key(&project_asset_type_link::project_id_, &project::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(&project_asset_type_link::asset_type_id_, &asset_type::uuid_id_, foreign_key_action::cascade);
+      .add_foreign_key(&project_asset_type_link::asset_type_id_, &asset_type::uuid_id_, foreign_key_action::cascade)
+      // 一个项目与一个资产类型之间只能有一条关联
+      .add_unique_index(&project_asset_type_link::project_id_, &project_asset_type_link::asset_type_id_);
 
   reg_table<project_status_automation_link>("project_status_automation_link")
       .add_column("id", &project_status_automation_link::id_, primary_key(), autoincrement())
@@ -805,28 +811,8 @@ void sqlite_storage::regs_all() {
           foreign_key_action::set_null
       );
 
-  reg_table<metadata_descriptor_department_link>("metadata_descriptor_department_link")
-      .add_column("id", &metadata_descriptor_department_link::id_, primary_key(), autoincrement())
-      .add_column("metadata_descriptor_id", &metadata_descriptor_department_link::metadata_descriptor_uuid_)
-      .add_column("department_id", &metadata_descriptor_department_link::department_uuid_)
-      .add_foreign_key(
-          &metadata_descriptor_department_link::metadata_descriptor_uuid_, &metadata_descriptor::uuid_id_,
-          foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          &metadata_descriptor_department_link::department_uuid_, &department::uuid_id_, foreign_key_action::cascade
-      );
-
-  reg_table<metadata_descriptor>("metadata_descriptor")
-      .add_column("id", &metadata_descriptor::id_, primary_key(), autoincrement())
-      .add_column("uuid", &metadata_descriptor::uuid_id_, not_null(), unique())
-      .add_column("name", &metadata_descriptor::name_, not_null())
-      .add_column("entity_type", &metadata_descriptor::entity_type_, not_null())
-      .add_column("project_id", &metadata_descriptor::project_uuid_, not_null())
-      .add_column("data_type", &metadata_descriptor::data_type_, not_null())
-      .add_column("field_name", &metadata_descriptor::field_name_, not_null())
-      .add_column("choices", &metadata_descriptor::choices_)
-      .add_column("for_client", &metadata_descriptor::for_client_);
+  // metadata_descriptor 与 metadata_descriptor_department_link 已废弃: 真实库中都是 0 行,
+  // 代码也不再使用. 两张表由升级步骤的 drop_obsolete_tables 删除.
 
   reg_table<project_status>("project_status")
       .add_column("id", &project_status::id_, primary_key(), autoincrement())
@@ -1312,6 +1298,34 @@ std::size_t sqlite_storage::drop_redundant_indexes(orm::session& in_session) {
   }
   SPDLOG_INFO("drop_redundant_indexes: 共删除 {} 个纯冗余索引", l_drop.size());
   return l_drop.size();
+}
+
+std::size_t sqlite_storage::drop_obsolete_tables(orm::session& in_session) {
+  using namespace orm;
+  // 已废弃的表: 代码里已不再注册, 但老库里还在. 数组顺序 = 删除顺序, 必须**先子表后父表**:
+  // 开着外键时 DROP TABLE 会先做一次隐式 DELETE, 顺序反了会先去删父表.
+  // 往这里加表之前先确认表内数据确实无用 (下面这三张在真实库中都是 0 行).
+  static constexpr const char* g_obsolete[]{
+      "metadata_descriptor_department_link",  // 子表: 引用 metadata_descriptor
+      "metadata_descriptor",
+      "ai_image_metadata",
+  };
+  std::size_t l_dropped{0};
+  for (const auto* l_name : g_obsolete) {
+    // DROP TABLE IF EXISTS 本身对不存在的表是 no-op, 但这里先判断一下, 好把"确实删掉了"计入返回值
+    auto l_exists = !collect_first_column(
+                        in_session,
+                        fmt::format("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = '{}';", l_name)
+                    )
+                        .empty();
+    if (!l_exists) continue;
+    auto l_stmt = sqlite_stmt{in_session, fmt::format(R"(DROP TABLE IF EXISTS "{}";)", l_name)};
+    l_stmt.step();
+    SPDLOG_INFO("drop_obsolete_tables: 已删除废弃表 {}", l_name);
+    ++l_dropped;
+  }
+  SPDLOG_INFO("drop_obsolete_tables: 共删除 {} 张废弃表", l_dropped);
+  return l_dropped;
 }
 
 boost::asio::awaitable<void> sqlite_database::run_sql(orm::sql_modify_statement_vector_t in_sqls) {
