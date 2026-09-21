@@ -1,0 +1,52 @@
+post:
+  tags:
+    - 深度估计
+  summary: 上传深度估计参考视频
+  description: |
+    上传实体的深度估计参考视频（仅支持 `.mp4` / `.mov` / `.avi`），非外包人员可上传。
+
+    服务端在一次事务中创建预览文件记录、实体参考记录与一个 `depth_estimation` 类型的分发任务，
+    随后把视频暂存为上传临时文件并触发任务分发。工作机通过
+    `GET /api/seedance2/depth/{depth_id}` 拉取该视频，处理完成后通过
+    `PUT /api/seedance2/depth/{depth_id}` 回传结果。
+
+    上传非视频文件会被拒绝（`DOODLE_CHICK` 抛出错误，不产生任何记录）。
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: entity_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            file:
+              type: string
+              format: binary
+              description: 视频文件（.mp4 / .mov / .avi）
+  responses:
+    '200':
+      description: 上传成功，返回实体参考记录与预览文件信息
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              reference:
+                $ref: ../components/schemas/AiEntityReferencePreview.yaml
+              preview:
+                $ref: ../components/schemas/AiPreviewFile.yaml
+                description: 预览文件记录，其 `id` 即后续工作机接口使用的 `depth_id`
+  security:
+    - bearerAuth: []

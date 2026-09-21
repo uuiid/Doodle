@@ -1,0 +1,72 @@
+get:
+  tags:
+    - 深度估计
+  summary: 下载深度估计输入视频（工作机专用）
+  description: |
+    > ⚠️ **仅供工作机（depth worker）使用，前端不可调用。**
+    > 该接口不做子项目权限校验，只按 `depth_id` 取文件，前端请改用
+    > `GET /api/seedance2/pictures/{id}.png` 或缩略图接口读取结果。
+
+    下载 `POST /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/depth`
+    暂存的输入视频，供工作机做深度估计推理。
+
+    返回的是上传暂存文件，其文件名固定为 `<preview_id>.upload_tmp.mp4`，
+    因此 `Content-Type` 固定为 `video/mp4`；原始上传文件也可能是 `.mov` / `.avi`，
+    工作机应按实际内容解码，不要依赖响应头判断容器格式。
+  parameters:
+    - name: depth_id
+      in: path
+      required: true
+      description: 预览文件 ID，即上传接口返回的 `preview.id`
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 输入视频二进制数据
+      content:
+        video/mp4: {}
+    '404':
+      description: 输入文件不存在（任务尚未上传或临时文件已被清理）
+  security:
+    - bearerAuth: []
+put:
+  tags:
+    - 深度估计
+  summary: 回传深度估计结果视频（工作机专用）
+  description: |
+    > ⚠️ **仅供工作机（depth worker）使用，前端不可调用。**
+    > 该接口不做子项目权限校验，只按 `depth_id` 写文件。
+
+    上传深度估计结果视频：文件被移动到预览文件正式路径，并从视频第一帧生成缩略图
+    （等比缩放到最长边 500px），同时清理上传暂存文件。
+
+    若存在 `preview_file` 指向该 `depth_id` 的实体参考记录，会通过 socket.io
+    广播 `seedance2:entity-reference:new`（namespace `/events`，载荷
+    `reference_id` / `entity_id` / `preview_file_id`）通知前端刷新。
+  parameters:
+    - name: depth_id
+      in: path
+      required: true
+      description: 预览文件 ID，即上传接口返回的 `preview.id`
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            file:
+              type: string
+              format: binary
+              description: 深度估计结果视频
+  responses:
+    '204':
+      description: 回传成功，无响应体
+    '400':
+      description: 未上传文件
+  security:
+    - bearerAuth: []
