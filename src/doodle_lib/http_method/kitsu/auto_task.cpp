@@ -26,6 +26,7 @@
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
+#include <doodle_lib/http_method/kitsu/auto_task.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
@@ -41,6 +42,7 @@
 #include <map>
 #include <memory>
 #include <range/v3/view/unique.hpp>
+#include <regex>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -76,10 +78,6 @@ auto get_entity_and_entity_asset_extend_by_shot_id(const uuid& in_shot_id) {
     )().to_vector();
 }
 
-struct sim_map_anim {
-  std::size_t to_fbx_idx_{};
-  std::size_t to_abc_idx_{};
-};
 // 检查是否存在多个场景
 auto check_multiple_scene(auto& in_vector) {
   auto l_r = std::count_if(in_vector.begin(), in_vector.end(), [](const auto& in_info) -> bool {
@@ -110,389 +108,542 @@ auto check_multiple_scene(auto& in_vector) {
 }  // namespace
 
 namespace auto_task {
-import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_project_id, const uuid& in_shot_id) {
-  auto l_sql         = get_sqlite_database();
-  auto l_shot_task   = l_sql.get_by_uuid<task>(in_shot_id);
-  auto l_shot_entity = l_sql.get_by_uuid<entity>(l_shot_task.entity_id_);
-  if (l_shot_entity.parent_id_.is_nil())
-    throw_exception(http_request_error{boost::beast::http::status::bad_request, "镜头实体缺少父级序列信息"});
-  auto l_episode_entity = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
-  auto l_prj            = l_sql.get_by_uuid<project>(in_project_id);
-  auto l_shot_extend    = l_sql.get_entity_shot_extend(l_shot_entity.uuid_id_);
-  DOODLE_CHICK_HTTP(l_shot_extend, bad_request, "镜头实体缺少扩展信息，请联系管理员添加扩展信息");
-  DOODLE_CHICK_HTTP(l_shot_extend->frame_in_, bad_request, "镜头实体扩展信息缺少帧率起始，请联系管理员添加扩展信息");
-  DOODLE_CHICK_HTTP(l_shot_extend->frame_out_, bad_request, "镜头实体扩展信息缺少帧率结束，请联系管理员添加扩展信息");
 
-  bool l_is_simulation_task = l_shot_task.task_type_id_ == task_type::get_simulation_task_id();
+// ---------------------------------------------------------------------------
+// 镜头输出路径条目类: 每个 run_ue_assembly_arg 的顶层路径字段对应一个类
+// 全部只做路径计算, 不访问数据库
+// ---------------------------------------------------------------------------
 
-  episodes l_episodes{l_episode_entity};
-  shot l_shot{l_shot_entity};
+std::string shot_path_identifier::import_suffix() const { return is_simulation_task_ ? "_JS" : "_DH"; }
 
-  import_and_render_ue_ns::run_ue_assembly_arg l_ret{};
-  l_ret.project_id_   = in_project_id;
-  l_ret.shot_task_id_ = in_shot_id;
-  l_ret.episodes_     = l_episodes;
-  l_ret.shot_         = l_shot;
-  l_ret.size_         = l_prj.get_resolution();
-  l_ret.begin_time_   = l_shot_extend->frame_in_.value();
-  l_ret.end_time_     = l_shot_extend->frame_out_.value();
+std::string shot_path_identifier::shot_dir_name() const {
+  return fmt::format("{}{:03}_sc{:03}", project_code_, episodes_, shot_);
+}
 
-  FSys::path l_shot_path_dir{};
-  FSys::path l_sim_shot_path_dir{};
-  std::set<std::string> l_sim_output_key{};
+std::string shot_path_identifier::ep_sc_name() const {
+  return fmt::format("{}_EP{:03}_SC{:03}", project_code_, episodes_, shot_);
+}
+
+std::string shot_path_identifier::game_shot_dir() const {
+  return fmt::format("{}/Shot/ep{:04}/{}", doodle_config::ue4_game, episodes_, shot_dir_name());
+}
+
+clear_path_entry::clear_path_entry(shot_path_identifier in_id) : id_(std::move(in_id)) {}
+
+FSys::path clear_path_entry::get() const {
+  return fmt::format("{}/Shot/ep{:04}/{}", doodle_config::ue4_content, id_.episodes_, id_.shot_dir_name());
+}
+
+movie_pipeline_config_entry::movie_pipeline_config_entry(shot_path_identifier in_id) : id_(std::move(in_id)) {}
+
+FSys::path movie_pipeline_config_entry::get() const {
+  return fmt::format("{}/{}_Config", id_.game_shot_dir(), id_.ep_sc_name());
+}
+
+level_sequence_import_entry::level_sequence_import_entry(shot_path_identifier in_id) : id_(std::move(in_id)) {}
+
+FSys::path level_sequence_import_entry::get() const {
+  auto l_suffix = id_.import_suffix();
+  return fmt::format("{}/Import{}/{}{}", id_.game_shot_dir(), l_suffix, id_.ep_sc_name(), l_suffix);
+}
+
+create_map_entry::create_map_entry(shot_path_identifier in_id) : id_(std::move(in_id)) {}
+
+FSys::path create_map_entry::get() const {
+  auto l_suffix = id_.import_suffix();
+  return fmt::format("{}/Import{}/{}{}_LV", id_.game_shot_dir(), l_suffix, id_.ep_sc_name(), l_suffix);
+}
+
+import_dir_entry::import_dir_entry(shot_path_identifier in_id) : id_(std::move(in_id)) {}
+
+FSys::path import_dir_entry::get() const {
+  return fmt::format("{}/Import{}/files/", id_.game_shot_dir(), id_.import_suffix());
+}
+
+render_map_entry::render_map_entry(shot_path_identifier in_id) : id_(std::move(in_id)) {}
+
+FSys::path render_map_entry::get() const {
+  return fmt::format("{}/Import{}/sc{:03}{}", id_.game_shot_dir(), id_.import_suffix(), id_.shot_, id_.import_suffix());
+}
+
+ue_main_project_path_entry::ue_main_project_path_entry(FSys::path in_scene_ue_path, FSys::path in_uproject_file)
+    : scene_ue_path_(std::move(in_scene_ue_path)), uproject_file_(std::move(in_uproject_file)) {}
+
+FSys::path ue_main_project_path_entry::get() const { return scene_ue_path_ / uproject_file_.filename(); }
+
+out_file_dir_entry::out_file_dir_entry(shot_path_identifier in_id, FSys::path in_scene_ue_path)
+    : id_(std::move(in_id)), scene_ue_path_(std::move(in_scene_ue_path)) {}
+
+FSys::path out_file_dir_entry::get() const {
+  return scene_ue_path_ / doodle_config::ue4_saved / doodle_config::ue4_movie_renders / id_.ep_sc_name();
+}
+
+create_move_path_entry::create_move_path_entry(FSys::path in_out_file_dir)
+    : out_file_dir_(std::move(in_out_file_dir)) {}
+
+FSys::path create_move_path_entry::get() const {
+  return out_file_dir_.parent_path() / out_file_dir_.filename().replace_extension(".mp4");
+}
+
+update_ue_path_entry::update_ue_path_entry(shot_path_identifier in_id, FSys::path in_scene_ue_path)
+    : id_(std::move(in_id)), scene_ue_path_(std::move(in_scene_ue_path)) {}
+
+FSys::path update_ue_path_entry::get() const {
+  auto l_path = id_.is_simulation_task_
+                    ? get_shots_auto_lighting_upload_simulation_name(id_.episodes_, id_.shot_, id_.project_code_)
+                    : get_shots_auto_lighting_upload_animation_name(id_.episodes_, id_.shot_, id_.project_code_);
+  return scene_ue_path_ / l_path;
+}
+
+original_map_entry::original_map_entry(
+    shot_path_identifier in_id, FSys::path in_project_path, entity in_episode_entity, FSys::path in_scene_ue_path,
+    FSys::path in_uproject_stem, entity_asset_extend_value in_scene_extend_value
+)
+    : id_(std::move(in_id)),
+      project_path_(std::move(in_project_path)),
+      episode_entity_(std::move(in_episode_entity)),
+      scene_ue_path_(std::move(in_scene_ue_path)),
+      uproject_stem_(std::move(in_uproject_stem)),
+      scene_extend_value_(std::move(in_scene_extend_value)) {
+  probe_pretreatment();
+}
+
+void original_map_entry::probe_pretreatment() {
+  // 默认使用主场景资产对应的 map
+  original_map_ = conv_ue_game_path(get_entity_ground_ue_map_name(scene_extend_value_));
+
+  auto l_path2  = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
+                  fmt::format("ep{:04}", id_.episodes_) / id_.shot_dir_name() / "Import_WB";
+  auto l_path3  = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
+                  fmt::format("ep{:04}", id_.episodes_) / id_.shot_dir_name() /
+                  fmt::format("{}{}", id_.ep_sc_name(), doodle_config::ue4_uasset_ext);
+  auto l_path4  = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
+                  fmt::format("ep{:04}", id_.episodes_) / id_.shot_dir_name() /
+                  fmt::format("{}_Zong{}", id_.ep_sc_name(), doodle_config::ue4_umap_ext);
+
+  auto l_source_path1 =
+      project_path_ / get_shots_ground_pretreatment_movie_path(episode_entity_) / uproject_stem_ / l_path2;
+  auto l_source_path2 =
+      project_path_ / get_shots_ground_pretreatment_movie_path(episode_entity_) / uproject_stem_ / l_path3;
+  auto l_source_path3 =
+      project_path_ / get_shots_ground_pretreatment_movie_path(episode_entity_) / uproject_stem_ / l_path4;
+  auto l_source_path4 = l_path2 / fmt::format("{}_WB{}", id_.ep_sc_name(), doodle_config::ue4_uasset_ext);
+
+  if (FSys::exists(l_source_path1) && FSys::exists(l_source_path2) && FSys::exists(l_source_path3) &&
+      FSys::exists(l_source_path4)) {
+    asset_copy_.emplace_back(l_source_path1, scene_ue_path_ / l_path2);
+    asset_copy_.emplace_back(l_source_path2, scene_ue_path_ / l_path3);
+    asset_copy_.emplace_back(l_source_path3, scene_ue_path_ / l_path4);
+    original_map_          = conv_ue_game_path(l_path4);
+    pretreatment_sequence_ = conv_ue_game_path(l_source_path4);
+  }
+}
+
+FSys::path original_map_entry::get() const { return original_map_; }
+
+ground_pretreatment_sequence_entry::ground_pretreatment_sequence_entry(FSys::path in_pretreatment_sequence)
+    : pretreatment_sequence_(std::move(in_pretreatment_sequence)) {}
+
+FSys::path ground_pretreatment_sequence_entry::get() const { return pretreatment_sequence_; }
+
+camera_file_path_entry::camera_file_path_entry(FSys::path in_camera_file) : camera_file_(std::move(in_camera_file)) {}
+
+FSys::path camera_file_path_entry::get() const { return camera_file_; }
+
+// ---------------------------------------------------------------------------
+// 持有全部路径条目类的结构体
+// ---------------------------------------------------------------------------
+
+shot_render_light_paths::shot_render_light_paths(const shot_path_context& in_ctx, FSys::path in_camera_file)
+    : clear_path_(in_ctx.id_),
+      movie_pipeline_config_(in_ctx.id_),
+      level_sequence_import_(in_ctx.id_),
+      create_map_(in_ctx.id_),
+      import_dir_(in_ctx.id_),
+      render_map_(in_ctx.id_),
+      ue_main_project_path_(in_ctx.scene_ue_path_, in_ctx.uproject_file_),
+      out_file_dir_(in_ctx.id_, in_ctx.scene_ue_path_),
+      create_move_path_(out_file_dir_.get()),
+      update_ue_path_(in_ctx.id_, in_ctx.scene_ue_path_),
+      original_map_(
+          in_ctx.id_, in_ctx.project_path_, in_ctx.episode_entity_, in_ctx.scene_ue_path_, in_ctx.uproject_file_.stem(),
+          in_ctx.scene_extend_value_
+      ),
+      ground_pretreatment_sequence_(original_map_.pretreatment_sequence()),
+      camera_file_path_(std::move(in_camera_file)) {}
+
+void shot_render_light_paths::apply_to(import_and_render_ue_ns::run_ue_assembly_arg& out) const {
+  out.camera_file_path_             = camera_file_path_.get();
+  out.ue_main_project_path_         = ue_main_project_path_.get();
+  out.update_ue_path_               = update_ue_path_.get();
+  out.clear_path_                   = clear_path_.get();
+  out.out_file_dir_                 = out_file_dir_.get();
+  out.original_map_                 = original_map_.get();
+  out.ground_pretreatment_sequence_ = ground_pretreatment_sequence_.get();
+  out.render_map_                   = render_map_.get();
+  out.create_map_                   = create_map_.get();
+  out.import_dir_                   = import_dir_.get();
+  out.movie_pipeline_config_        = movie_pipeline_config_.get();
+  out.level_sequence_import_        = level_sequence_import_.get();
+  out.create_move_path_             = create_move_path_.get();
+}
+
+// ---------------------------------------------------------------------------
+// 由原 shot_render_light 过程转换而来的计算类
+// ---------------------------------------------------------------------------
+
+shot_render_light_builder::shot_render_light_builder(shot_render_light_input in_input)
+    : input_(std::move(in_input)),
+      is_simulation_task_(input_.shot_task_.task_type_id_ == task_type::get_simulation_task_id()) {}
+
+shot_path_identifier shot_render_light_builder::make_identifier() const {
+  return shot_path_identifier{
+      .project_code_       = input_.prj_.code_,
+      .episodes_           = episodes{input_.episode_entity_},
+      .shot_               = shot{input_.shot_entity_},
+      .is_simulation_task_ = is_simulation_task_,
+  };
+}
+
+void shot_render_light_builder::fill_base() {
+  ret_.project_id_   = input_.project_id_;
+  ret_.shot_task_id_ = input_.shot_task_id_;
+  ret_.episodes_     = episodes{input_.episode_entity_};
+  ret_.shot_         = shot{input_.shot_entity_};
+  ret_.size_         = input_.prj_.get_resolution();
+  ret_.begin_time_   = input_.shot_extend_.frame_in_.value();
+  ret_.end_time_     = input_.shot_extend_.frame_out_.value();
+
   /// tag: 格式化路径
-  l_shot_path_dir = get_shots_animation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
-  if (l_is_simulation_task)
-    l_sim_shot_path_dir = get_shots_simulation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
+  shot_path_dir_ =
+      get_shots_animation_output_path(input_.episode_entity_.name_, input_.shot_entity_.name_, input_.prj_.code_);
+  if (is_simulation_task_)
+    sim_shot_path_dir_ =
+        get_shots_simulation_output_path(input_.episode_entity_.name_, input_.shot_entity_.name_, input_.prj_.code_);
 
-  l_shot_path_dir = l_prj.path_ / l_shot_path_dir;
-  if (l_is_simulation_task) l_sim_shot_path_dir = l_prj.path_ / l_sim_shot_path_dir;
-  auto l_shot_file_name =
-      get_shots_animation_file_name(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_).generic_string();
-  auto l_file_end_str = fmt::format("_{}-{}", l_shot_extend->frame_in_.value(), l_shot_extend->frame_out_.value());
+  shot_path_dir_ = input_.prj_.path_ / shot_path_dir_;
+  if (is_simulation_task_) sim_shot_path_dir_ = input_.prj_.path_ / sim_shot_path_dir_;
+  shot_file_name_ =
+      get_shots_animation_file_name(input_.episode_entity_.name_, input_.shot_entity_.name_, input_.prj_.code_)
+          .generic_string();
+  file_end_str_ = fmt::format("_{}-{}", input_.shot_extend_.frame_in_.value(), input_.shot_extend_.frame_out_.value());
+}
 
-  if (l_is_simulation_task) {
-    for (auto&& l_path : FSys::directory_iterator{l_sim_shot_path_dir}) {
-      auto l_stem = l_path.path().stem().string();
-      if (!(l_stem.starts_with(l_shot_file_name) && l_stem.ends_with(l_file_end_str) &&
-            (l_path.path().extension() == ".abc" || l_path.path().extension() == ".fbx")))
-        continue;
-      if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) continue;
-
-      l_ret.asset_infos_.emplace_back(
-          import_and_render_ue_ns::run_ue_assembly_asset_info{
-              .shot_output_path_ = l_path.path(),
-              .type_             = l_path.path().extension() == ".fbx" ? import_and_render_ue_ns::import_ue_type::char_
-                                                                       : import_and_render_ue_ns::import_ue_type::geo
-          }
-      );
-      const static std::regex l_sim_output_key_regex{R"((.*?)_((?:cloth|hair)(?:_[a-zA-Z]+)*)_\d+-\d+)"};
-      /*
-        ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_1001-1105
-        ZM_EP127_SC025_Ch006A_rig_ch_hair_cloth_1001-1105
-        ZM_EP127_SC025_Ch006A_rig_ch_cloth_1001-1105
-        ZM_EP127_SC025_Ch006A_rig_ch_hair_1001-1105
-        ZM_EP127_SC025_Ch006A_rig_ch_hair_dasbxs_1001-1105
-        ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_dasbxs_1001-1105
-        ZM_EP127_SC025_Ch006A_rig_ch_1001-1105
-        1. 先匹配出 cloth 或 hair 或 hair_XXX
-        2. 如果是 cloth, simulation_type_ = 0, type_ = geo
-        3. 如果是 hair, simulation_type_ = 1, type_ = geo
-        4. 如果是 hair_XXX, simulation_type_ = 1, type_ = groom, groom_name_ = XXX
-        5. 将匹配到的 cloth 或 hair 或 hair_XXX 去掉, 得到对应的 char_ 类型的 asset_info 的 stem, 并将 simulation_type_
-        |= 对应的值
-      */
-
-      std::smatch l_match;
-      if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) {
-        auto l_capture_group = l_match[2].str();
-
-        if (l_capture_group == "cloth")
-          l_ret.asset_infos_.back().simulation_type_.set(0),
-              l_ret.asset_infos_.back().type_ = import_and_render_ue_ns::import_ue_type::geo;
-        else if (l_capture_group == "hair")
-          l_ret.asset_infos_.back().simulation_type_.set(1),
-              l_ret.asset_infos_.back().type_ = import_and_render_ue_ns::import_ue_type::geo;
-        else if (l_capture_group == "cloth_hair" || l_capture_group == "hair_cloth") {
-          l_ret.asset_infos_.back().simulation_type_.set(0);
-          l_ret.asset_infos_.back().simulation_type_.set(1);
-        } else {
-          if (l_capture_group.starts_with("cloth_")) {
-            l_ret.asset_infos_.back().simulation_type_.set(0);
-            l_capture_group = l_capture_group.substr(6);  // remove "cloth_"
-          }
-
-          l_ret.asset_infos_.back().simulation_type_.set(1);
-          l_ret.asset_infos_.back().type_       = import_and_render_ue_ns::import_ue_type::groom;
-          l_ret.asset_infos_.back().groom_name_ = l_capture_group.substr(5);  // remove "hair_"
-        }
-      }
-
-      l_sim_output_key.emplace(l_stem);
-    }
-  }
-
-  for (auto&& l_path : FSys::directory_iterator{l_shot_path_dir}) {
-    auto l_stem = l_path.path().stem().string();
-    if (!(l_stem.starts_with(l_shot_file_name) && l_stem.ends_with(l_file_end_str) &&
-          l_path.path().extension() == ".fbx"))
-      continue;
-
-    if (l_sim_output_key.contains(l_stem)) continue;
-    if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) {
-      l_ret.camera_file_path_ = l_path.path();
-      continue;
-    }
-
-    l_ret.asset_infos_.emplace_back(
-        import_and_render_ue_ns::run_ue_assembly_asset_info{
-            .shot_output_path_ = l_path.path(), .type_ = import_and_render_ue_ns::import_ue_type::char_
-        }
-    );
-  }
-  if (l_ret.camera_file_path_.empty())
-    throw_exception(
-        http_request_error{
-            boost::beast::http::status::bad_request, "未找到镜头(camera)文件，请确保镜头文件已上传至服务器"
-        }
-    );
-
-  // 构建对应的寻找 sk 的 key map
-  for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
-    if (l_ret.asset_infos_[i].type_ != import_and_render_ue_ns::import_ue_type::char_) continue;
-
-    auto&& l_info = l_ret.asset_infos_[i];
-    auto l_stem   = l_info.shot_output_path_.stem().string();
-    auto l_key    = l_stem.substr(l_shot_file_name.size() + 1);             // add '_'
-    l_key         = l_key.substr(0, l_key.size() - l_file_end_str.size());  // remove "_{frame_in}-{frame_out}"
-    // find _rig and _Low
-    if (auto l_rig_post = l_key.find("_rig"); l_rig_post != std::string::npos) {
-      l_key = l_key.substr(0, l_rig_post);
-    } else if (auto l_low_post = l_key.find("_Low"); l_low_post != std::string::npos) {
-      l_key = l_key.substr(0, l_low_post + 4);
-    }
-    l_ret.asset_infos_[i].key_ = l_key;
-  }
-  /// 如果是解算, 还需要构建对应的解算 abc 文件和 fbx 文件对, 并将 fbx 的 simulation_type_ 赋值给 char_ 类型的
-  /// asset_info
-  // 解算文件对应的fbx文件的索引
-  if (l_is_simulation_task) {
-    std::vector<std::pair<std::string, std::size_t>> l_output_key_and_idx{};
-    for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
-      auto&& l_info = l_ret.asset_infos_[i];
-      auto l_stem   = l_info.shot_output_path_.stem().string().substr(l_shot_file_name.size() + 1);  // add '_'
-      const static std::regex l_sim_output_key_regex{R"((.*?)_((?:cloth|hair)(?:_[a-zA-Z]+)*)_\d+-\d+)"};
-      std::smatch l_match;
-      // remove _cloth or _hair or _hair_XXX
-      if (std::regex_match(l_stem, l_match, l_sim_output_key_regex))
-        l_stem = l_match[1].str();
-      else {
-        const static std::regex l_sim_output_key_regex{R"((.*?)_\d+-\d+)"};
-        if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) l_stem = l_match[1].str();
-      }
-      l_output_key_and_idx.emplace_back(l_stem, i);
-    }
-    for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
-      if (l_ret.asset_infos_[i].type_ == import_and_render_ue_ns::import_ue_type::char_) continue;
-      auto&& l_info = l_ret.asset_infos_[i];
-      auto&& l_stem = l_output_key_and_idx[i].first;
-
-      if (auto l_it = std::ranges::find_if(
-              l_output_key_and_idx,
-              [&](const auto& in_info) {
-                auto&& [l_stem_v, l_idx] = in_info;
-                auto&& l_info            = l_ret.asset_infos_[l_idx];
-                if (l_info.type_ != import_and_render_ue_ns::import_ue_type::char_) return false;
-                return l_stem_v == l_stem;
-              }
-          );
-          l_it != l_output_key_and_idx.end()) {
-        l_ret.asset_infos_[l_it->second].simulation_type_ |= l_info.simulation_type_;
-        l_info.key_ = l_ret.asset_infos_[l_it->second].key_;
-      }
-    }
-  }
-  std::map<std::string, std::vector<std::size_t>> l_asset_infos_key_map{};
-  for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
-    auto&& l_info = l_ret.asset_infos_[i];
-    if (l_info.key_.empty()) continue;
-    l_asset_infos_key_map[l_info.key_].emplace_back(i);
-  }
-
-  auto l_assets = get_entity_and_entity_asset_extend_by_shot_id(l_shot_entity.uuid_id_);
-  FSys::path l_scene_ue_path{"D:/sy_magic/ue_projects/"};  // 默认路径
-  /// 寻找主场景资产, 并生成对应的本地ue资产路径
-
-  auto&& [l_scene_asset, l_scene_asset_extend, l_jishu, l_kaishi_jishu] = *check_multiple_scene(l_assets);
+void shot_render_light_builder::resolve_scene_ue_path() {
+  const auto& l_scene_asset        = input_.scene_asset_.asset_;
+  const auto& l_scene_asset_extend = input_.scene_asset_.asset_extend_;
   DOODLE_CHICK_HTTP(l_scene_asset_extend.gui_dang_, bad_request, "场景资产 {} 缺少扩展信息 归档", l_scene_asset.name_);
   DOODLE_CHICK_HTTP(
       !l_scene_asset_extend.kai_shi_ji_shu_.is_nil(), bad_request, "场景资产 {} 缺少扩展信息 开始集数",
       l_scene_asset.name_
   );
-  entity_asset_extend_value l_scene_asset_extend_value{l_scene_asset_extend, l_jishu, l_kaishi_jishu};
+  scene_extend_value_ = entity_asset_extend_value{
+      l_scene_asset_extend, input_.scene_asset_.ji_shu_lie_name_, input_.scene_asset_.kai_shi_ji_shu_name_
+  };
 
-  const auto l_suffix = l_is_simulation_task ? "_JS" : "_DH";
-  auto l_ue_main_map  = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend_value) /
-                       get_entity_ground_ue_map_name(l_scene_asset_extend_value);
-  l_ret.original_map_ = conv_ue_game_path(get_entity_ground_ue_map_name(l_scene_asset_extend_value));
-  l_ret.clear_path_ =
-      fmt::format("{3}/Shot/ep{1:04}/{0}{1:03}_sc{2:03}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_content);
-  l_ret.movie_pipeline_config_ = fmt::format(
-      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}/{0}_EP{1:03}_SC{2:03}_Config", l_prj.code_, l_episodes, l_shot
-  );
-  l_ret.level_sequence_import_ = fmt::format(
-      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}/Import{3}/{0}_EP{1:03}_SC{2:03}{3}", l_prj.code_, l_episodes, l_shot,
-      l_suffix
-  );
-  l_ret.create_map_ = fmt::format(
-      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}/Import{3}/{0}_EP{1:03}_SC{2:03}{3}_LV", l_prj.code_, l_episodes, l_shot,
-      l_suffix
-  );
-  l_ret.import_dir_ =
-      fmt::format("/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}/Import{3}/files/", l_prj.code_, l_episodes, l_shot, l_suffix);
-  l_ret.render_map_ = fmt::format(
-      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}/Import{3}/sc{2:03}{3}", l_prj.code_, l_episodes, l_shot, l_suffix
-  );
-  auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ue_main_map);
-  if (l_uprj.empty())
+  auto l_ue_main_map = input_.prj_.path_ / get_entity_ground_ue_path(input_.prj_, scene_extend_value_) /
+                       get_entity_ground_ue_map_name(scene_extend_value_);
+  uproject_file_     = ue_exe_ns::find_ue_project_file(l_ue_main_map);
+  if (uproject_file_.empty())
     throw_exception(
         http_request_error{
             boost::beast::http::status::bad_request, "未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径",
             l_scene_asset.name_
         }
     );
-  l_scene_ue_path /= l_prj.code_;
-  l_scene_ue_path /= fmt::format("EP{:04}", l_episodes) / l_uprj.stem();
 
-  l_ret.ue_main_project_path_ = l_scene_ue_path / l_uprj.filename();
-  l_ret.out_file_dir_         = l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
-                        fmt::format("{}_EP{:03}_SC{:03}", l_prj.code_, l_episodes, l_shot);
-  l_ret.create_move_path_ =
-      l_ret.out_file_dir_.parent_path() / l_ret.out_file_dir_.filename().replace_extension(".mp4");
+  scene_ue_path_ = FSys::path{"D:/sy_magic/ue_projects/"};  // 默认路径
+  scene_ue_path_ /= input_.prj_.code_;
+  scene_ue_path_ /= fmt::format("EP{:04}", ret_.episodes_) / uproject_file_.stem();
 
-  l_ret.ue_asset_path_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
-  l_ret.ue_asset_path_.emplace_back(
-      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend_value) / doodle_config::ue4_content,
-      l_scene_ue_path / doodle_config::ue4_content
+  ret_.ue_asset_path_.emplace_back(uproject_file_, scene_ue_path_ / uproject_file_.filename());
+  ret_.ue_asset_path_.emplace_back(
+      input_.prj_.path_ / get_entity_ground_ue_path(input_.prj_, scene_extend_value_) / doodle_config::ue4_content,
+      scene_ue_path_ / doodle_config::ue4_content
   );
-  l_ret.ue_asset_path_.emplace_back(
-      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend_value) / doodle_config::ue4_config,
-      l_scene_ue_path / doodle_config::ue4_config
+  ret_.ue_asset_path_.emplace_back(
+      input_.prj_.path_ / get_entity_ground_ue_path(input_.prj_, scene_extend_value_) / doodle_config::ue4_config,
+      scene_ue_path_ / doodle_config::ue4_config
   );
-  {
-    // 还需要检查地编预调的路径, 有的话, 复制一下, 并调整使用地编预调的总关卡
-    auto l_path2 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
-                   fmt::format("ep{:04}", l_episodes) /
-                   fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_WB";
-    auto l_path3 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
-                   fmt::format("ep{:04}", l_episodes) /
-                   fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
-                   fmt::format("{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_uasset_ext);
-    auto l_path4 =
-        FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
-        fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
-        fmt::format("{}_EP{:03}_SC{:03}_Zong{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_umap_ext);
-    if (auto l_source_path1 =
-            l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path2,
-        l_source_path2 =
-            l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path3,
-        l_source_path3 =
-            l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path4,
-        l_source_path4 =
-            l_path2 /
-            fmt::format("{}_EP{:03}_SC{:03}_WB{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_uasset_ext);
-        FSys::exists(l_source_path1) && FSys::exists(l_source_path2) && FSys::exists(l_source_path3) &&
-        FSys::exists(l_source_path4)) {
-      l_ret.ue_asset_path_.emplace_back(l_source_path1, l_scene_ue_path / l_path2);
-      l_ret.ue_asset_path_.emplace_back(l_source_path2, l_scene_ue_path / l_path3);
-      l_ret.ue_asset_path_.emplace_back(l_source_path3, l_scene_ue_path / l_path4);
-      l_ret.original_map_                 = conv_ue_game_path(l_path4);
-      l_ret.ground_pretreatment_sequence_ = conv_ue_game_path(l_source_path4);
+}
+
+void shot_render_light_builder::scan_simulation_output() {
+  for (auto&& l_path : FSys::directory_iterator{sim_shot_path_dir_}) {
+    auto l_stem = l_path.path().stem().string();
+    if (!(l_stem.starts_with(shot_file_name_) && l_stem.ends_with(file_end_str_) &&
+          (l_path.path().extension() == ".abc" || l_path.path().extension() == ".fbx")))
+      continue;
+    if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) continue;
+
+    ret_.asset_infos_.emplace_back(
+        import_and_render_ue_ns::run_ue_assembly_asset_info{
+            .shot_output_path_ = l_path.path(),
+            .type_             = l_path.path().extension() == ".fbx" ? import_and_render_ue_ns::import_ue_type::char_
+                                                                     : import_and_render_ue_ns::import_ue_type::geo
+        }
+    );
+    const static std::regex l_sim_output_key_regex{R"((.*?)_((?:cloth|hair)(?:_[a-zA-Z]+)*)_\d+-\d+)"};
+    /*
+      ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_1001-1105
+      ZM_EP127_SC025_Ch006A_rig_ch_hair_cloth_1001-1105
+      ZM_EP127_SC025_Ch006A_rig_ch_cloth_1001-1105
+      ZM_EP127_SC025_Ch006A_rig_ch_hair_1001-1105
+      ZM_EP127_SC025_Ch006A_rig_ch_hair_dasbxs_1001-1105
+      ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_dasbxs_1001-1105
+      ZM_EP127_SC025_Ch006A_rig_ch_1001-1105
+      1. 先匹配出 cloth 或 hair 或 hair_XXX
+      2. 如果是 cloth, simulation_type_ = 0, type_ = geo
+      3. 如果是 hair, simulation_type_ = 1, type_ = geo
+      4. 如果是 hair_XXX, simulation_type_ = 1, type_ = groom, groom_name_ = XXX
+      5. 将匹配到的 cloth 或 hair 或 hair_XXX 去掉, 得到对应的 char_ 类型的 asset_info 的 stem, 并将 simulation_type_
+      |= 对应的值
+    */
+
+    std::smatch l_match;
+    if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) {
+      auto l_capture_group = l_match[2].str();
+
+      if (l_capture_group == "cloth")
+        ret_.asset_infos_.back().simulation_type_.set(0),
+            ret_.asset_infos_.back().type_ = import_and_render_ue_ns::import_ue_type::geo;
+      else if (l_capture_group == "hair")
+        ret_.asset_infos_.back().simulation_type_.set(1),
+            ret_.asset_infos_.back().type_ = import_and_render_ue_ns::import_ue_type::geo;
+      else if (l_capture_group == "cloth_hair" || l_capture_group == "hair_cloth") {
+        ret_.asset_infos_.back().simulation_type_.set(0);
+        ret_.asset_infos_.back().simulation_type_.set(1);
+      } else {
+        if (l_capture_group.starts_with("cloth_")) {
+          ret_.asset_infos_.back().simulation_type_.set(0);
+          l_capture_group = l_capture_group.substr(6);  // remove "cloth_"
+        }
+
+        ret_.asset_infos_.back().simulation_type_.set(1);
+        ret_.asset_infos_.back().type_       = import_and_render_ue_ns::import_ue_type::groom;
+        ret_.asset_infos_.back().groom_name_ = l_capture_group.substr(5);  // remove "hair_"
+      }
+    }
+
+    sim_output_key_.emplace(l_stem);
+  }
+}
+
+void shot_render_light_builder::scan_animation_output() {
+  for (auto&& l_path : FSys::directory_iterator{shot_path_dir_}) {
+    auto l_stem = l_path.path().stem().string();
+    if (!(l_stem.starts_with(shot_file_name_) && l_stem.ends_with(file_end_str_) &&
+          l_path.path().extension() == ".fbx"))
+      continue;
+
+    if (sim_output_key_.contains(l_stem)) continue;
+    if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) {
+      ret_.camera_file_path_ = l_path.path();
+      continue;
+    }
+
+    ret_.asset_infos_.emplace_back(
+        import_and_render_ue_ns::run_ue_assembly_asset_info{
+            .shot_output_path_ = l_path.path(), .type_ = import_and_render_ue_ns::import_ue_type::char_
+        }
+    );
+  }
+}
+
+void shot_render_light_builder::scan_shot_output() {
+  if (is_simulation_task_) scan_simulation_output();
+  scan_animation_output();
+  if (ret_.camera_file_path_.empty())
+    throw_exception(
+        http_request_error{
+            boost::beast::http::status::bad_request, "未找到镜头(camera)文件，请确保镜头文件已上传至服务器"
+        }
+    );
+}
+
+void shot_render_light_builder::build_asset_keys() {
+  // 构建对应的寻找 sk 的 key map
+  for (std::size_t i = 0; i < ret_.asset_infos_.size(); ++i) {
+    if (ret_.asset_infos_[i].type_ != import_and_render_ue_ns::import_ue_type::char_) continue;
+
+    auto&& l_info = ret_.asset_infos_[i];
+    auto l_stem   = l_info.shot_output_path_.stem().string();
+    auto l_key    = l_stem.substr(shot_file_name_.size() + 1);             // add '_'
+    l_key         = l_key.substr(0, l_key.size() - file_end_str_.size());  // remove "_{frame_in}-{frame_out}"
+    // find _rig and _Low
+    if (auto l_rig_post = l_key.find("_rig"); l_rig_post != std::string::npos) {
+      l_key = l_key.substr(0, l_rig_post);
+    } else if (auto l_low_post = l_key.find("_Low"); l_low_post != std::string::npos) {
+      l_key = l_key.substr(0, l_low_post + 4);
+    }
+    ret_.asset_infos_[i].key_ = l_key;
+  }
+}
+
+void shot_render_light_builder::pair_simulation_outputs() {
+  /// 如果是解算, 还需要构建对应的解算 abc 文件和 fbx 文件对, 并将 fbx 的 simulation_type_ 赋值给 char_ 类型的
+  /// asset_info
+  if (!is_simulation_task_) return;
+
+  // 解算文件对应的fbx文件的索引
+  std::vector<std::pair<std::string, std::size_t>> l_output_key_and_idx{};
+  for (std::size_t i = 0; i < ret_.asset_infos_.size(); ++i) {
+    auto&& l_info = ret_.asset_infos_[i];
+    auto l_stem   = l_info.shot_output_path_.stem().string().substr(shot_file_name_.size() + 1);  // add '_'
+    const static std::regex l_sim_output_key_regex{R"((.*?)_((?:cloth|hair)(?:_[a-zA-Z]+)*)_\d+-\d+)"};
+    std::smatch l_match;
+    // remove _cloth or _hair or _hair_XXX
+    if (std::regex_match(l_stem, l_match, l_sim_output_key_regex))
+      l_stem = l_match[1].str();
+    else {
+      const static std::regex l_sim_output_key_regex{R"((.*?)_\d+-\d+)"};
+      if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) l_stem = l_match[1].str();
+    }
+    l_output_key_and_idx.emplace_back(l_stem, i);
+  }
+  for (std::size_t i = 0; i < ret_.asset_infos_.size(); ++i) {
+    if (ret_.asset_infos_[i].type_ == import_and_render_ue_ns::import_ue_type::char_) continue;
+    auto&& l_info = ret_.asset_infos_[i];
+    auto&& l_stem = l_output_key_and_idx[i].first;
+
+    if (auto l_it = std::ranges::find_if(
+            l_output_key_and_idx,
+            [&](const auto& in_info) {
+              auto&& [l_stem_v, l_idx] = in_info;
+              auto&& l_info_v          = ret_.asset_infos_[l_idx];
+              if (l_info_v.type_ != import_and_render_ue_ns::import_ue_type::char_) return false;
+              return l_stem_v == l_stem;
+            }
+        );
+        l_it != l_output_key_and_idx.end()) {
+      ret_.asset_infos_[l_it->second].simulation_type_ |= l_info.simulation_type_;
+      l_info.key_ = ret_.asset_infos_[l_it->second].key_;
     }
   }
+}
 
-  {
-    auto l_path = l_is_simulation_task ? get_shots_auto_lighting_upload_simulation_name(l_episodes, l_shot, l_prj.code_)
-                                       : get_shots_auto_lighting_upload_animation_name(l_episodes, l_shot, l_prj.code_);
-    l_ret.update_ue_path_ = l_scene_ue_path / l_path;
+void shot_render_light_builder::build_paths() {
+  shot_path_context l_ctx{
+      .id_                 = make_identifier(),
+      .project_path_       = input_.prj_.path_,
+      .episode_entity_     = input_.episode_entity_,
+      .scene_ue_path_      = scene_ue_path_,
+      .uproject_file_      = uproject_file_,
+      .scene_extend_value_ = scene_extend_value_,
+  };
+  paths_.emplace(l_ctx, ret_.camera_file_path_);
+  paths_->apply_to(ret_);
+
+  // 地编预调命中时需要一并复制到场景工程的文件
+  for (auto&& l_info : paths_->original_map_.asset_copy()) ret_.ue_asset_path_.emplace_back(l_info);
+}
+
+void shot_render_light_builder::bind_asset_extends() {
+  std::map<std::string, std::vector<std::size_t>> l_asset_infos_key_map{};
+  for (std::size_t i = 0; i < ret_.asset_infos_.size(); ++i) {
+    auto&& l_info = ret_.asset_infos_[i];
+    if (l_info.key_.empty()) continue;
+    l_asset_infos_key_map[l_info.key_].emplace_back(i);
   }
 
-  for (auto&& [l_asset, l_asset_extend, l_jishu, l_kaishi_jishu] : l_assets) {
-    entity_asset_extend_value l_asset_extend_value{l_asset_extend, l_jishu, l_kaishi_jishu};
-    if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
-      auto l_key = fmt::format("Ch{}", l_asset_extend.bian_hao_);
+  for (auto&& l_row : input_.assets_) {
+    entity_asset_extend_value l_asset_extend_value{
+        l_row.asset_extend_, l_row.ji_shu_lie_name_, l_row.kai_shi_ji_shu_name_
+    };
+    if (l_row.asset_.entity_type_id_ == asset_type::get_character_id()) {
+      auto l_key = fmt::format("Ch{}", l_row.asset_extend_.bian_hao_);
       if (l_asset_infos_key_map.contains(l_key)) {
-        if (l_asset_extend.gui_dang_ && !l_asset_extend.kai_shi_ji_shu_.is_nil()) {
+        if (l_row.asset_extend_.gui_dang_ && !l_row.asset_extend_.kai_shi_ji_shu_.is_nil()) {
           for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
-            // if (l_ret.asset_infos_[l_idx].type_ == import_and_render_ue_ns::import_ue_type::char_)
-            l_ret.asset_infos_[l_idx].skin_path_ =
-                l_ret.asset_infos_[l_idx].simulation_type_.any()
-                    ? get_entity_sim_character_ue_name(l_asset_extend_value, l_ret.asset_infos_[l_idx].simulation_type_)
+            ret_.asset_infos_[l_idx].skin_path_ =
+                ret_.asset_infos_[l_idx].simulation_type_.any()
+                    ? get_entity_sim_character_ue_name(l_asset_extend_value, ret_.asset_infos_[l_idx].simulation_type_)
                     : get_entity_character_ue_name(l_asset_extend_value);
-            l_ret.asset_infos_[l_idx].ue_project_dir_ =
-                l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend_value);
-            l_ret.asset_infos_[l_idx].ban_ben_suffix_ =
-                l_asset_extend.ban_ben_.empty() ? "" : fmt::format("_{}", l_asset_extend.ban_ben_);
-            // l_ret.asset_infos_[l_idx].groom_bind_path_ = l_ret.asset_infos_[l_idx].skin_path_.parent_path() /
-            // "Groom";
-            l_ret.ue_asset_path_.emplace_back(
-                l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend_value) / doodle_config::ue4_content,
-                l_scene_ue_path / doodle_config::ue4_content
+            ret_.asset_infos_[l_idx].ue_project_dir_ =
+                input_.prj_.path_ / get_entity_character_ue_path(input_.prj_, l_asset_extend_value);
+            ret_.asset_infos_[l_idx].ban_ben_suffix_ =
+                l_row.asset_extend_.ban_ben_.empty() ? "" : fmt::format("_{}", l_row.asset_extend_.ban_ben_);
+            ret_.ue_asset_path_.emplace_back(
+                input_.prj_.path_ / get_entity_character_ue_path(input_.prj_, l_asset_extend_value) /
+                    doodle_config::ue4_content,
+                scene_ue_path_ / doodle_config::ue4_content
             );
-            if (!l_ret.asset_infos_[l_idx].groom_name_.empty())
-              l_ret.asset_infos_[l_idx].groom_bind_path_ = get_entity_character_ue_groom_name(
-                  l_asset_extend_value, l_ret.asset_infos_[l_idx].groom_name_,
-                  l_ret.asset_infos_[l_idx].simulation_type_
+            if (!ret_.asset_infos_[l_idx].groom_name_.empty())
+              ret_.asset_infos_[l_idx].groom_bind_path_ = get_entity_character_ue_groom_name(
+                  l_asset_extend_value, ret_.asset_infos_[l_idx].groom_name_, ret_.asset_infos_[l_idx].simulation_type_
               );
           }
         } else
           throw_exception(
               http_request_error{
                   boost::beast::http::status::bad_request, "资产 {} 缺少归档或开始集信息，无法生成 ue 资产路径",
-                  l_asset.name_
+                  l_row.asset_.name_
               }
           );
       }
 
-    } else if (l_asset.entity_type_id_ == asset_type::get_prop_id() ||
-               l_asset.entity_type_id_ == asset_type::get_effect_id()) {
+    } else if (
+        l_row.asset_.entity_type_id_ == asset_type::get_prop_id() ||
+        l_row.asset_.entity_type_id_ == asset_type::get_effect_id()
+    ) {
       auto l_key = fmt::format(
-          "{}{}{}", l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_.empty() ? "" : "_",
-          l_asset_extend.ban_ben_
+          "{}{}{}", l_row.asset_extend_.pin_yin_ming_cheng_, l_row.asset_extend_.ban_ben_.empty() ? "" : "_",
+          l_row.asset_extend_.ban_ben_
       );
       if (l_asset_infos_key_map.contains(l_key)) {
-        if (l_asset_extend.gui_dang_ && !l_asset_extend.kai_shi_ji_shu_.is_nil()) {
+        if (l_row.asset_extend_.gui_dang_ && !l_row.asset_extend_.kai_shi_ji_shu_.is_nil()) {
           for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
-            l_ret.asset_infos_[l_idx].skin_path_ =
-                l_ret.asset_infos_[l_idx].simulation_type_.any()
-                    ? get_entity_sim_prop_ue_name(l_asset_extend_value, l_ret.asset_infos_[l_idx].simulation_type_)
+            ret_.asset_infos_[l_idx].skin_path_ =
+                ret_.asset_infos_[l_idx].simulation_type_.any()
+                    ? get_entity_sim_prop_ue_name(l_asset_extend_value, ret_.asset_infos_[l_idx].simulation_type_)
                     : get_entity_prop_ue_name(l_asset_extend_value);
-            l_ret.asset_infos_[l_idx].ue_project_dir_ =
-                l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend_value);
-            l_ret.ue_asset_path_.emplace_back(
-                l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend_value) /
+            ret_.asset_infos_[l_idx].ue_project_dir_ =
+                input_.prj_.path_ / get_entity_prop_ue_path(input_.prj_, l_asset_extend_value);
+            ret_.ue_asset_path_.emplace_back(
+                input_.prj_.path_ / get_entity_prop_ue_path(input_.prj_, l_asset_extend_value) /
                     get_entity_prop_ue_public_files_path(),
-                l_scene_ue_path / get_entity_prop_ue_public_files_path()
+                scene_ue_path_ / get_entity_prop_ue_public_files_path()
             );
-            l_ret.ue_asset_path_.emplace_back(
-                l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend_value) /
+            ret_.ue_asset_path_.emplace_back(
+                input_.prj_.path_ / get_entity_prop_ue_path(input_.prj_, l_asset_extend_value) /
                     get_entity_prop_ue_files_path(l_asset_extend_value),
-                l_scene_ue_path / get_entity_prop_ue_files_path(l_asset_extend_value)
+                scene_ue_path_ / get_entity_prop_ue_files_path(l_asset_extend_value)
             );
           }
         } else
           throw_exception(
               http_request_error{
                   boost::beast::http::status::bad_request, "资产 {} 缺少归档或开始集信息，无法生成 ue 资产路径",
-                  l_asset.name_
+                  l_row.asset_.name_
               }
           );
       }
 
-    } else if (l_asset.entity_type_id_ == asset_type::get_ground_id()) {
+    } else if (l_row.asset_.entity_type_id_ == asset_type::get_ground_id()) {
       auto l_key = fmt::format(
-          "{}{}{}_Low", l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_.empty() ? "" : "_",
-          l_asset_extend.ban_ben_
+          "{}{}{}_Low", l_row.asset_extend_.pin_yin_ming_cheng_, l_row.asset_extend_.ban_ben_.empty() ? "" : "_",
+          l_row.asset_extend_.ban_ben_
       );
       if (l_asset_infos_key_map.contains(l_key)) {
         for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
-          l_ret.asset_infos_[l_idx].skin_path_ =
-              l_ret.asset_infos_[l_idx].simulation_type_.any()
-                  ? get_entity_sim_ground_ue_sk_name(l_asset_extend_value, l_ret.asset_infos_[l_idx].simulation_type_)
+          ret_.asset_infos_[l_idx].skin_path_ =
+              ret_.asset_infos_[l_idx].simulation_type_.any()
+                  ? get_entity_sim_ground_ue_sk_name(l_asset_extend_value, ret_.asset_infos_[l_idx].simulation_type_)
                   : get_entity_ground_ue_sk_name(l_asset_extend_value);
-          l_ret.asset_infos_[l_idx].ue_project_dir_ =
-              l_prj.path_ / get_entity_ground_ue_path(l_prj, l_asset_extend_value);
+          ret_.asset_infos_[l_idx].ue_project_dir_ =
+              input_.prj_.path_ / get_entity_ground_ue_path(input_.prj_, l_asset_extend_value);
         }
       }
     }
   }
+}
 
+void shot_render_light_builder::check_files() {
 #ifdef NDEBUG
-  for (auto&& l_path : l_ret.ue_asset_path_) {
+  for (auto&& l_path : ret_.ue_asset_path_) {
     DOODLE_CHICK_HTTP(!l_path.from_.empty(), bad_request, "UE 场景可能没有启动器等原因");
     DOODLE_CHICK_HTTP(FSys::exists(l_path.from_), bad_request, "UE 资产源路径不存在: {}", l_path.from_.string())
   }
-  for (auto&& l_info : l_ret.asset_infos_) {
+  for (auto&& l_info : ret_.asset_infos_) {
     DOODLE_CHICK_HTTP(
         !(!FSys::exists(l_info.ue_project_dir_ / l_info.skin_path_)), bad_request,
         "无法找到输出文件 {} 生成对应的 ue 资产路径: {}", l_info.shot_output_path_.string(),
@@ -531,8 +682,10 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
   }
 
 #endif
+}
 
-  for (auto&& l_info : l_ret.asset_infos_) {
+void shot_render_light_builder::conv_asset_game_paths() {
+  for (auto&& l_info : ret_.asset_infos_) {
     DOODLE_CHICK_HTTP(
         !(l_info.skin_path_.empty() && l_info.type_ == import_and_render_ue_ns::import_ue_type::char_), bad_request,
         "无法为输出文件 {} 生成对应的 ue 资产路径", l_info.shot_output_path_.string()
@@ -540,9 +693,68 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
     l_info.skin_path_       = conv_ue_game_path(l_info.skin_path_);
     l_info.groom_bind_path_ = conv_ue_game_path(l_info.groom_bind_path_);
   }
-
-  return l_ret;
 }
+
+import_and_render_ue_ns::run_ue_assembly_arg shot_render_light_builder::run() {
+  fill_base();
+  resolve_scene_ue_path();
+  scan_shot_output();
+  build_asset_keys();
+  pair_simulation_outputs();
+  build_paths();
+  bind_asset_extends();
+  check_files();
+  conv_asset_game_paths();
+  return std::move(ret_);
+}
+
+// ---------------------------------------------------------------------------
+// 查询包装: 数据库访问全部集中在这里, 计算类只接收已查询好的数据
+// ---------------------------------------------------------------------------
+
+import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_project_id, const uuid& in_shot_id) {
+  auto l_sql         = get_sqlite_database();
+  auto l_shot_task   = l_sql.get_by_uuid<task>(in_shot_id);
+  auto l_shot_entity = l_sql.get_by_uuid<entity>(l_shot_task.entity_id_);
+  if (l_shot_entity.parent_id_.is_nil())
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "镜头实体缺少父级序列信息"});
+  auto l_episode_entity = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
+  auto l_prj            = l_sql.get_by_uuid<project>(in_project_id);
+  auto l_shot_extend    = l_sql.get_entity_shot_extend(l_shot_entity.uuid_id_);
+  DOODLE_CHICK_HTTP(l_shot_extend, bad_request, "镜头实体缺少扩展信息，请联系管理员添加扩展信息");
+  DOODLE_CHICK_HTTP(l_shot_extend->frame_in_, bad_request, "镜头实体扩展信息缺少帧率起始，请联系管理员添加扩展信息");
+  DOODLE_CHICK_HTTP(l_shot_extend->frame_out_, bad_request, "镜头实体扩展信息缺少帧率结束，请联系管理员添加扩展信息");
+
+  auto l_assets   = get_entity_and_entity_asset_extend_by_shot_id(l_shot_entity.uuid_id_);
+  auto l_scene_it = check_multiple_scene(l_assets);
+  auto l_to_row   = [](const auto& in_row) -> shot_render_light_asset_row {
+    return shot_render_light_asset_row{
+        .asset_               = std::get<0>(in_row),
+        .asset_extend_        = std::get<1>(in_row),
+        .ji_shu_lie_name_     = std::get<2>(in_row),
+        .kai_shi_ji_shu_name_ = std::get<3>(in_row),
+    };
+  };
+  auto l_scene_row = l_to_row(*l_scene_it);
+  std::vector<shot_render_light_asset_row> l_rows{};
+  l_rows.reserve(l_assets.size());
+  for (auto&& l_row : l_assets) l_rows.emplace_back(l_to_row(l_row));
+
+  return shot_render_light_builder{
+      shot_render_light_input{
+          .project_id_     = in_project_id,
+          .shot_task_id_   = in_shot_id,
+          .prj_            = std::move(l_prj),
+          .shot_task_      = std::move(l_shot_task),
+          .shot_entity_    = std::move(l_shot_entity),
+          .episode_entity_ = std::move(l_episode_entity),
+          .shot_extend_    = *l_shot_extend,
+          .assets_         = std::move(l_rows),
+          .scene_asset_    = std::move(l_scene_row),
+      }
+  }.run();
+}
+
 }  // namespace auto_task
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_rig_sk, get) {
@@ -598,8 +810,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_rig_sk, get) {
     l_arg.ue_project_path_ = l_ue_scene_path / l_ue_project.filename();
     l_arg.update_ue_path_  = l_ue_scene_path / l_ue_name.parent_path();
 
-  } else if (l_asset.entity_type_id_ == asset_type::get_prop_id() ||
-             l_asset.entity_type_id_ == asset_type::get_effect_id()) {
+  } else if (
+      l_asset.entity_type_id_ == asset_type::get_prop_id() || l_asset.entity_type_id_ == asset_type::get_effect_id()
+  ) {
     auto l_ue_name    = get_entity_prop_ue_name(*l_asset_extends);
     auto l_ue_path    = get_entity_prop_ue_path(l_prj, *l_asset_extends);
     auto l_ue_project = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
@@ -728,7 +941,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync, get) {
 
   auto l_ue_main_map = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend_value) /
                        get_entity_ground_ue_map_name(l_scene_asset_extend_value);
-  auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ue_main_map);
+  auto&& l_uprj      = ue_exe_ns::find_ue_project_file(l_ue_main_map);
   DOODLE_CHICK_HTTP(
       !l_uprj.empty(), bad_request, "未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_
   );
@@ -758,8 +971,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync, get) {
           l_scene_ue_path / doodle_config::ue4_content
       );
 
-    } else if (l_asset.entity_type_id_ == asset_type::get_prop_id() ||
-               l_asset.entity_type_id_ == asset_type::get_effect_id()) {
+    } else if (
+        l_asset.entity_type_id_ == asset_type::get_prop_id() || l_asset.entity_type_id_ == asset_type::get_effect_id()
+    ) {
       DOODLE_CHICK_HTTP(l_asset_extend.gui_dang_, bad_request, "资产 {} 缺少扩展信息 归档", l_asset.name_);
       DOODLE_CHICK_HTTP(
           !l_asset_extend.kai_shi_ji_shu_.is_nil(), bad_request, "资产 {} 缺少扩展信息 开始集数", l_asset.name_

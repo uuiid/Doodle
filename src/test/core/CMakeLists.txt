@@ -12,6 +12,7 @@ target_sources(test_main
         sqlite_conn_pragma.cpp
         sqlite_fk_semantics.cpp
         sqlite_upgrade.cpp
+        shot_render_light_paths.cpp
 )
 
  
