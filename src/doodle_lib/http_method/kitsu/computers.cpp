@@ -98,11 +98,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, delete_) {
 
 class data_computers_socket_io_impl : public std::enable_shared_from_this<data_computers_socket_io_impl> {
   std::shared_ptr<boost::beast::websocket::stream<http::tcp_stream_type>> web_stream_;
-  std::shared_ptr<computer> computer_;
+  // computer 各属性的原子快照, 取代原先的 std::shared_ptr<computer> computer_。
+  // 写方恒为本对象的 strand_(见 run()), 读方可来自任意执行器; 发布用 release, 读取用 acquire。
+  // 标量属性直接存 std::atomic<T>, 非平凡可复制的属性用 atomic<shared_ptr<T>> 发布不可变副本。
+  std::atomic<uuid> uuid_id_{};
+  std::atomic<uuid> hardware_id_{};
+  std::atomic<computer_status> status_{computer_status::offline};
+  std::atomic<std::shared_ptr<std::set<server_task_info_type>>> allowed_task_types_{};
+
+  // 分配器视角的状态(get_computer_status / set_computer_status(computer_status) 读写)。
+  // 与上面的 status_ 并存以保持原有语义: init() 不写它, 因此首次心跳上报之前
+  // get_computer_status() 仍是 offline, 该计算机不会被分配任务。
   std::atomic<computer_status> last_status_{computer_status::offline};
-  // allowed_task_types_ 的不可变快照, 由本对象的 strand_ 发布,
-  // 供任务分配 strand 上的 run_next_task_impl 无锁安全读取(见 publish_allowed_task_types)
-  std::atomic<std::shared_ptr<std::set<server_task_info_type>>> allowed_task_types_snapshot_{};
 
   boost::asio::strand<boost::asio::io_context::executor_type> strand_;
   boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> message_queue_;
@@ -116,38 +123,36 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     co_await web_stream_->async_read(l_buffer);
     auto l_json =
         nlohmann::json::parse(boost::asio::buffers_begin(l_buffer.data()), boost::asio::buffers_end(l_buffer.data()));
-    auto l_computer_json            = l_json.get<computer>();
-    computer_                       = std::make_shared<computer>(l_computer_json);
-    computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
-    auto l_sql                      = get_sqlite_database();
-    ;
-    if (auto l_db_computer = get_entity_computer_by_hardware_id(computer_->hardware_id_); l_db_computer.has_value()) {
-      *computer_         = l_db_computer.value();
-      computer_->status_ = l_computer_json.status_;
+    auto l_computer_json       = l_json.get<computer>();
+    // ORM 的 insert/update 需要一个完整的 computer 对象, 这里保留一个局部副本(不再是成员)
+    auto l_row                 = l_computer_json;
+    l_row.last_heartbeat_time_ = std::chrono::system_clock::now();
+    auto l_sql                 = get_sqlite_database();
+    if (auto l_db_computer = get_entity_computer_by_hardware_id(l_row.hardware_id_); l_db_computer.has_value()) {
+      l_row         = l_db_computer.value();
+      l_row.status_ = l_computer_json.status_;
       using namespace orm;
       sql_modify_statement_vector_t l_sqls{};
       l_sqls.emplace_back(update(l_sql)
                               .from<computer>()
                               .set(c(&computer::status_) = l_computer_json.status_)
-                              .where(c(&computer::uuid_id_) == computer_->uuid_id_));
+                              .where(c(&computer::uuid_id_) == l_row.uuid_id_));
       co_await l_sql.run_sql(std::move(l_sqls));
     } else {
       using namespace orm;
       sql_modify_statement_vector_t l_sqls{};
-      l_sqls.emplace_back(insert(l_sql).into<computer>().values(*computer_));
+      l_sqls.emplace_back(insert(l_sql).into<computer>().values(l_row));
       co_await l_sql.run_sql(std::move(l_sqls));
     }
-    // 连接建立时先发布一次, 之后每次 set_computer_status 都会刷新
-    publish_allowed_task_types();
-  }
-  void write_msg(const std::string& in_msg) { message_queue_.push(in_msg); }
-  // 必须在 strand_ 上调用: 把当前 computer_->allowed_task_types_ 以不可变快照的形式原子发布,
-  // 其他执行器(任务分配 strand)只可能读到完整的旧值或完整的新值, 不会看到半更新的容器
-  void publish_allowed_task_types() {
-    allowed_task_types_snapshot_.store(
-        std::make_shared<std::set<server_task_info_type>>(computer_->allowed_task_types_), std::memory_order_release
+    // 逐属性发布快照, 之后每次 set_computer_status 都会刷新
+    uuid_id_.store(l_row.uuid_id_, std::memory_order_release);
+    hardware_id_.store(l_row.hardware_id_, std::memory_order_release);
+    status_.store(l_row.status_, std::memory_order_release);
+    allowed_task_types_.store(
+        std::make_shared<std::set<server_task_info_type>>(l_row.allowed_task_types_), std::memory_order_release
     );
   }
+  void write_msg(const std::string& in_msg) { message_queue_.push(in_msg); }
   friend class computers_assign_task;
 
   boost::asio::awaitable<void> async_run() {
@@ -156,29 +161,29 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     begin_ping();
     boost::scope::scope_exit l_{[this, sh = shared_from_this()]() {
       try {
-        auto l_sql                      = get_sqlite_database();
-        computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
-        computer_->status_              = computer_status::offline;
-        computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
+        auto l_uuid = uuid_id_.load(std::memory_order_acquire);
+        status_.store(computer_status::offline, std::memory_order_release);
         boost::asio::co_spawn(
             g_io_context(),
-            [l_computer = computer_]() -> boost::asio::awaitable<void> {
+            [l_uuid]() -> boost::asio::awaitable<void> {
               auto l_sql = get_sqlite_database();
               using namespace orm;
+              auto l_now   = chrono::system_clock::now();
+              auto l_zoned = chrono::system_zoned_time{chrono::current_zone(), l_now};
               sql_modify_statement_vector_t l_sqls{};
               l_sqls.emplace_back(update(l_sql)
                                       .from<computer>()
-                                      .set(c(&computer::status_) = l_computer->status_)
-                                      .set(c(&computer::last_heartbeat_time_) = l_computer->last_heartbeat_time_)
-                                      .where(c(&computer::uuid_id_) == l_computer->uuid_id_));
+                                      .set(c(&computer::status_) = computer_status::offline)
+                                      .set(c(&computer::last_heartbeat_time_) = l_zoned)
+                                      .where(c(&computer::uuid_id_) == l_uuid));
               co_await l_sql.run_sql(std::move(l_sqls));
             },
             boost::asio::detached
         );
-        socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
+        socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = l_uuid});
       } catch (...) {
         SPDLOG_LOGGER_ERROR(
-            g_logger_ctrl().get_http(), "清理计算机 {} 状态时发生异常: {}", computer_->uuid_id_,
+            g_logger_ctrl().get_http(), "清理计算机 {} 状态时发生异常: {}", get_computer_id(),
             boost::current_exception_diagnostic_information()
         );
       }
@@ -200,7 +205,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
       }
     } catch (...) {
       SPDLOG_LOGGER_ERROR(
-          g_logger_ctrl().get_http(), "计算机 {} 连接发生错误: {}", computer_->uuid_id_,
+          g_logger_ctrl().get_http(), "计算机 {} 连接发生错误: {}", get_computer_id(),
           boost::current_exception_diagnostic_information()
       );
     }
@@ -223,25 +228,30 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     }
   }
   boost::asio::awaitable<void> set_computer_status(std::reference_wrapper<computer> in_computer) {
-    auto l_sql                      = get_sqlite_database();
-    computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
-    computer_->status_              = in_computer.get().status_;
-    computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
-    computer_->allowed_task_types_  = in_computer.get().allowed_task_types_;
-    last_status_                    = computer_->status_;
-    // 本协程运行在 strand_ 上; 这里发布快照后, 任务分配 strand 才会看到新值
-    publish_allowed_task_types();
+    auto l_sql    = get_sqlite_database();
+    auto l_uuid   = uuid_id_.load(std::memory_order_acquire);
+    // name 从库中刷新(保持原有行为), 其余属性取自本次上报
+    auto l_status = in_computer.get().status_;
+    auto l_now    = chrono::system_clock::now();
+    auto l_zoned  = chrono::system_zoned_time{chrono::current_zone(), l_now};
+    // 本协程运行在 strand_ 上; 发布后任务分配 strand 才会看到新值
+    status_.store(l_status, std::memory_order_release);
+    allowed_task_types_.store(
+        std::make_shared<std::set<server_task_info_type>>(in_computer.get().allowed_task_types_),
+        std::memory_order_release
+    );
+    last_status_ = l_status;
     using namespace orm;
     sql_modify_statement_vector_t l_sqls{};
     l_sqls.emplace_back(update(l_sql)
                             .from<computer>()
-                            .set(c(&computer::status_) = computer_->status_)
-                            .set(c(&computer::last_heartbeat_time_) = computer_->last_heartbeat_time_)
-                            .where(c(&computer::uuid_id_) == computer_->uuid_id_));
+                            .set(c(&computer::status_) = l_status)
+                            .set(c(&computer::last_heartbeat_time_) = l_zoned)
+                            .where(c(&computer::uuid_id_) == l_uuid));
     co_await l_sql.run_sql(std::move(l_sqls));
-    if (computer_->status_ == computer_status::online) co_await computers_assign_task::get_instance().run_next_task();
+    if (l_status == computer_status::online) co_await computers_assign_task::get_instance().run_next_task();
 
-    socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
+    socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = l_uuid});
   }
   void begin_ping() {
     boost::asio::co_spawn(
@@ -280,10 +290,10 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
 
   void set_computer_status(computer_status in_status) { last_status_ = in_status; }
   computer_status get_computer_status() const { return last_status_; }
-  uuid get_computer_id() const { return computer_ ? computer_->uuid_id_ : uuid{}; }
+  uuid get_computer_id() const { return uuid_id_.load(std::memory_order_acquire); }
   // 可在任意执行器上安全调用: 返回允许任务类型的不可变快照(nullptr 表示尚未发布, 等价于不限制)
   std::shared_ptr<const std::set<server_task_info_type>> get_allowed_task_types() const {
-    return allowed_task_types_snapshot_.load(std::memory_order_acquire);
+    return allowed_task_types_.load(std::memory_order_acquire);
   }
 
   void run() {
@@ -343,7 +353,7 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
   auto l_jobs = l_sql.get_server_tasks_by_submitted();
   // 过滤：若计算机配置了允许的任务类型，只分配匹配的任务
   // 注意: 这里运行在分配器 strand 上, 而该字段由计算机自己的 strand 更新,
-  // 因此必须通过原子快照读取, 不能直接解引用 in_computer->computer_
+  // 因此只能通过 get_allowed_task_types() 读取原子快照
   if (auto l_allowed = in_computer->get_allowed_task_types(); l_allowed && !l_allowed->empty()) {
     std::erase_if(l_jobs, [&l_allowed](const server_task_info& j) { return !l_allowed->contains(j.type_); });
   }
