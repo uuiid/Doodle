@@ -218,10 +218,10 @@ sqlite_connection_ptr storage::get_thread_db() {
     if (l_idle < kMaxIdleTime) return std::move(l_entry.conn_);
 
     // 超时 → shared_ptr 析构，自动 sqlite3_close
-    SPDLOG_LOGGER_DEBUG(
-        g_logger_ctrl().get_main_error(), "回收空闲数据库连接 (空闲 {} 秒)",
-        std::chrono::duration_cast<std::chrono::seconds>(l_idle).count()
-    );
+    // SPDLOG_LOGGER_DEBUG(
+    //     g_logger_ctrl().get_main_error(), "回收空闲数据库连接 (空闲 {} 秒)",
+    //     std::chrono::duration_cast<std::chrono::seconds>(l_idle).count()
+    // );
     // 在这里保存一个超时的链接, 以便在没有可用连接时, 不需要直接创建新的连接, 而是可以使用这个超时的连接
     l_connection = std::move(l_entry.conn_);
   }
@@ -253,9 +253,7 @@ void storage::add_thread_db(const sqlite_connection_ptr& in_ptr) {
 
 void storage::open_(FSys::path in_path, std::int32_t in_flags) {
   static std::once_flag l_flag{};
-  std::call_once(l_flag, []() {
-    sqlite3_config(SQLITE_CONFIG_LOG, sqlite_database_error_log_callback, nullptr);
-  });
+  std::call_once(l_flag, []() { sqlite3_config(SQLITE_CONFIG_LOG, sqlite_database_error_log_callback, nullptr); });
   if (!has_reg_table<detail::sqlite_master_entry>()) reg_sqlite_master_entry(*this);
 
   if (in_path.empty()) in_path = ":memory:";
