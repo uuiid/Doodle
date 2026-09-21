@@ -29,6 +29,7 @@
 #include <functional>
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
 #include <memory>
+#include <set>
 #include <spdlog/spdlog.h>
 #include <string>
 
@@ -99,6 +100,9 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   std::shared_ptr<boost::beast::websocket::stream<http::tcp_stream_type>> web_stream_;
   std::shared_ptr<computer> computer_;
   std::atomic<computer_status> last_status_{computer_status::offline};
+  // allowed_task_types_ 的不可变快照, 由本对象的 strand_ 发布,
+  // 供任务分配 strand 上的 run_next_task_impl 无锁安全读取(见 publish_allowed_task_types)
+  std::atomic<std::shared_ptr<std::set<server_task_info_type>>> allowed_task_types_snapshot_{};
 
   boost::asio::strand<boost::asio::io_context::executor_type> strand_;
   boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> message_queue_;
@@ -133,8 +137,17 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
       l_sqls.emplace_back(insert(l_sql).into<computer>().values(*computer_));
       co_await l_sql.run_sql(std::move(l_sqls));
     }
+    // 连接建立时先发布一次, 之后每次 set_computer_status 都会刷新
+    publish_allowed_task_types();
   }
   void write_msg(const std::string& in_msg) { message_queue_.push(in_msg); }
+  // 必须在 strand_ 上调用: 把当前 computer_->allowed_task_types_ 以不可变快照的形式原子发布,
+  // 其他执行器(任务分配 strand)只可能读到完整的旧值或完整的新值, 不会看到半更新的容器
+  void publish_allowed_task_types() {
+    allowed_task_types_snapshot_.store(
+        std::make_shared<std::set<server_task_info_type>>(computer_->allowed_task_types_), std::memory_order_release
+    );
+  }
   friend class computers_assign_task;
 
   boost::asio::awaitable<void> async_run() {
@@ -216,6 +229,8 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
     computer_->allowed_task_types_  = in_computer.get().allowed_task_types_;
     last_status_                    = computer_->status_;
+    // 本协程运行在 strand_ 上; 这里发布快照后, 任务分配 strand 才会看到新值
+    publish_allowed_task_types();
     using namespace orm;
     sql_modify_statement_vector_t l_sqls{};
     l_sqls.emplace_back(update(l_sql)
@@ -266,10 +281,17 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   void set_computer_status(computer_status in_status) { last_status_ = in_status; }
   computer_status get_computer_status() const { return last_status_; }
   uuid get_computer_id() const { return computer_ ? computer_->uuid_id_ : uuid{}; }
+  // 可在任意执行器上安全调用: 返回允许任务类型的不可变快照(nullptr 表示尚未发布, 等价于不限制)
+  std::shared_ptr<const std::set<server_task_info_type>> get_allowed_task_types() const {
+    return allowed_task_types_snapshot_.load(std::memory_order_acquire);
+  }
 
   void run() {
+    // 整个连接生命周期(含 init/读写/关闭/ping)都必须跑在本对象的 strand_ 上:
+    // web_stream_ 是 boost::beast::websocket::stream, 非线程安全, 且下面的
+    // allowed_task_types_ 等状态也依赖单一执行器串行化。
     boost::asio::co_spawn(
-        g_io_context(), async_run(),
+        strand_, async_run(),
         boost::asio::bind_cancellation_slot(
             app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
         )
@@ -320,11 +342,10 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
   using namespace orm;
   auto l_jobs = l_sql.get_server_tasks_by_submitted();
   // 过滤：若计算机配置了允许的任务类型，只分配匹配的任务
-  if (in_computer->computer_) {
-    const auto& allowed = in_computer->computer_->allowed_task_types_;
-    if (!allowed.empty()) {
-      std::erase_if(l_jobs, [&allowed](const server_task_info& j) { return !allowed.contains(j.type_); });
-    }
+  // 注意: 这里运行在分配器 strand 上, 而该字段由计算机自己的 strand 更新,
+  // 因此必须通过原子快照读取, 不能直接解引用 in_computer->computer_
+  if (auto l_allowed = in_computer->get_allowed_task_types(); l_allowed && !l_allowed->empty()) {
+    std::erase_if(l_jobs, [&l_allowed](const server_task_info& j) { return !l_allowed->contains(j.type_); });
   }
   if (l_jobs.empty()) {
     in_computer->set_computer_status(computer_status::online);
