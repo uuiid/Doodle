@@ -175,7 +175,7 @@ boost::asio::awaitable<ai_client_base::query_task_result_t> transfer_station_cli
   // 按模型定价扣除积分
   auto l_model            = in_task.data_request_.value("model", "");
   const auto* l_pricing   = find_pricing(l_model);
-  l_result.status_ = parse_status(l_result.data_response_);
+  l_result.status_        = parse_status(l_result.data_response_);
 
   if (l_result.status_ == doodle::seedance2::task_status::succeeded) {
     l_result.completion_tokens_ = l_pricing ? l_pricing->cost_points : 0;
@@ -211,5 +211,12 @@ boost::asio::awaitable<void> transfer_station_client::download_result(query_task
     in_data->result_file_paths_.push_back(l_file);
   }
 }
-
+std::size_t transfer_station_client::default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const {
+  switch (in_task_type) {
+    case doodle::seedance2::task_type::video:
+      return doodle_config::g_max_task_completion_tokens;
+    default:
+      return 5000;
+  }
+}
 }  // namespace doodle::http::seedance2

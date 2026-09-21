@@ -58,13 +58,15 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
     std::string text_prompt_{};  // 提示词文本
   };
 
-  virtual boost::asio::awaitable<run_task_result_t> run_task(const nlohmann::json& in_task)     = 0;
-  virtual boost::asio::awaitable<void> cancel_task(const std::string& in_task_id)               = 0;
+  virtual boost::asio::awaitable<run_task_result_t> run_task(const nlohmann::json& in_task)              = 0;
+  virtual boost::asio::awaitable<void> cancel_task(const std::string& in_task_id)                        = 0;
   virtual boost::asio::awaitable<query_task_result_t> query_task(const doodle::seedance2::task& in_task) = 0;
-  virtual boost::asio::awaitable<void> download_result(query_task_result_t* in_data)            = 0;
+  virtual boost::asio::awaitable<void> download_result(query_task_result_t* in_data)                     = 0;
 
   // 解析请求体, 提取模型 / 分辨率 / 提示词
-  virtual request_info_t collect_request_info(const nlohmann::json& in_request) const = 0;
+  virtual request_info_t collect_request_info(const nlohmann::json& in_request) const                    = 0;
+  // 默认消耗的 tokens 数
+  virtual std::size_t default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const    = 0;
 
  protected:
   boost::asio::awaitable<std::string> get_ip_str();

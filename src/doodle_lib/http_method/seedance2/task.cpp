@@ -248,13 +248,11 @@ class seedance2_task_run_manager {
         co_return;
       case sd2::task_status::running: {
         if (in_task.status_ != l_result.status_) {
-          l_sqls.emplace_back(
-              update(l_sql)
-                  .from<sd2::task>()
-                  .set(c(&sd2::task::status_) = l_result.status_)
-                  .set(c(&sd2::task::data_response_) = l_result.data_response_)
-                  .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_)
-          );
+          l_sqls.emplace_back(update(l_sql)
+                                  .from<sd2::task>()
+                                  .set(c(&sd2::task::status_) = l_result.status_)
+                                  .set(c(&sd2::task::data_response_) = l_result.data_response_)
+                                  .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_));
           co_await l_sql.run_sql(std::move(l_sqls));
         }
         socket_io::broadcast(
@@ -409,9 +407,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   // 用对应后端的客户端解析请求, 提取模型 / 分辨率 / 提示词
   auto l_studio          = l_sql.get_by_uuid<ai_studio>(l_task->ai_studio_id_);
   client_factory l_client_factory{};
-  auto l_client        = l_client_factory.get_client(*l_task, l_studio);
-  auto l_info          = l_client->collect_request_info(l_task->data_request_);
-  l_task->text_prompt_ = std::move(l_info.text_prompt_);
+  auto l_client              = l_client_factory.get_client(*l_task, l_studio);
+  auto l_info                = l_client->collect_request_info(l_task->data_request_);
+  l_task->text_prompt_       = std::move(l_info.text_prompt_);
+  l_task->completion_tokens_ = l_client->default_consumed_tokens(l_task->type_);
 
   DOODLE_CHICK_HTTP(!l_info.model_.empty(), bad_request, "缺少模型名称");
   DOODLE_CHICK_HTTP(!l_info.resolution_.empty(), bad_request, "缺少分辨率");
@@ -485,16 +484,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
 
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(
-      update(l_sql)
-          .from<sd2::task>()
-          .set(c(&sd2::task::status_) = sd2::task_status::cancelled)
-          .set(
-              c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
-              c(&sd2::task::completion_tokens_) = 0
-          )
-          .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_)
-  );
+  l_sqls.emplace_back(update(l_sql)
+                          .from<sd2::task>()
+                          .set(c(&sd2::task::status_) = sd2::task_status::cancelled)
+                          .set(
+                              c(&sd2::task::ended_at_) =
+                                  chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
+                              c(&sd2::task::completion_tokens_) = 0
+                          )
+                          .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_));
   l_sqls.emplace_back(add_remaining_tokens_for_person(l_sql, l_task.user_id_, l_task.completion_tokens_));
   l_sqls.emplace_back(
       update(l_sql)
@@ -513,12 +511,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, delete_) 
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(
-      update(l_sql)
-          .from<sd2::task>()
-          .set(c(&sd2::task::archived_) = true)
-          .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_)
-  );
+  l_sqls.emplace_back(update(l_sql)
+                          .from<sd2::task>()
+                          .set(c(&sd2::task::archived_) = true)
+                          .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_));
   co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
 }

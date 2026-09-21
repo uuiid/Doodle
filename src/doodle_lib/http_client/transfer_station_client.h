@@ -4,10 +4,9 @@
 
 #pragma once
 
-#include "ai_client_base.h"
-
 #include <doodle_core/metadata/seedance2/task.h>
 
+#include "ai_client_base.h"
 #include <string>
 #include <string_view>
 
@@ -26,6 +25,7 @@ class DOODLELIB_API transfer_station_client final : public ai_client_base {
   boost::asio::awaitable<void> download_result(query_task_result_t* in_data) override;
 
   request_info_t collect_request_info(const nlohmann::json& in_request) const override;
+  std::size_t default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const override;
 
  private:
   static nlohmann::json add_ip_to_req(const nlohmann::json& in_req, std::string_view in_ip);

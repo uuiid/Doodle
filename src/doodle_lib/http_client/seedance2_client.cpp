@@ -1,5 +1,6 @@
 #include "seedance2_client.h"
 
+#include "doodle_core/configure/static_value.h"
 #include <doodle_core/exception/exception.h>
 
 #include <doodle_lib/core/core_set.h>
@@ -150,6 +151,15 @@ boost::asio::awaitable<void> seedance2_client::download_result(query_task_result
     ffmpeg_video_resize{l_raw_file, l_adj_file, core_set::get_set().get_uuid()}.process();
     FSys::remove(l_raw_file);
     in_data->result_file_paths_.push_back(l_adj_file);
+  }
+}
+
+std::size_t seedance2_client::default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const {
+  switch (in_task_type) {
+    case doodle::seedance2::task_type::video:
+      return doodle_config::g_max_task_completion_tokens;
+    default:
+      return 5000;
   }
 }
 
