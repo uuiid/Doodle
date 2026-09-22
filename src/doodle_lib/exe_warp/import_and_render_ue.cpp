@@ -324,7 +324,15 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
   task_info_.status_   = l_error_msg.empty() ? server_task_info_status::completed : server_task_info_status::failed;
   task_info_.end_time_ = {chrono::current_zone(), chrono::system_clock::now()};
   logger_ptr_->flush();
-  co_await kitsu_client_->put_job_info(task_info_.uuid_id_, nlohmann::json{} = task_info_);
+  try {
+    co_await kitsu_client_->put_job_info(
+        task_info_.uuid_id_, nlohmann::json{{"status", task_info_.status_}, {"end_time", task_info_.end_time_}}
+    );
+  } catch (const doodle_error& err) {
+    SPDLOG_LOGGER_ERROR(logger_ptr_, "更新任务信息失败: {}", err.what());
+  } catch (...) {
+    SPDLOG_LOGGER_ERROR(logger_ptr_, "更新任务信息失败: {}", boost::current_exception_diagnostic_information());
+  }
 }
 
 }  // namespace doodle
