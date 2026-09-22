@@ -37,6 +37,12 @@ enum class simulation_abc_import {
   without_abc,
 };
 
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    simulation_abc_import,
+
+    {{simulation_abc_import::with_abc, "with_abc"}, {simulation_abc_import::without_abc, "without_abc"}}
+)
+
 /// shot_render_light 的全部输入: 由调用方查询后传入, 本模块不访问数据库
 struct shot_render_light_input {
   uuid project_id_{};
