@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <map>
+#include <set>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -117,6 +118,37 @@ bool skip_if_no_real_db(const FSys::path& in_path) {
   return true;
 }
 
+// 备份目录里的文件名集合
+std::set<std::string> list_backup_files(const FSys::path& in_dir) {
+  std::set<std::string> l_result{};
+  std::error_code l_ec{};
+  if (!FSys::exists(in_dir, l_ec)) return l_result;
+  for (const auto& l_entry : FSys::directory_iterator{in_dir, l_ec}) {
+    if (l_entry.is_regular_file(l_ec)) l_result.insert(l_entry.path().filename().string());
+  }
+  return l_result;
+}
+
+// upgrade() 会往 cache 目录写一份整库备份 (真实库 700 MB 上下). 用例结束时只删掉**本次新建**的
+// 那几个, 不碰用户已有的备份 —— 否则每跑一次真实库测试就在用户缓存里留一份大文件.
+class backup_cleaner {
+  FSys::path dir_;
+  std::set<std::string> before_;
+
+ public:
+  backup_cleaner() : dir_(core_set::get_set().get_cache_root("backup")), before_(list_backup_files(dir_)) {}
+  backup_cleaner(const backup_cleaner&)            = delete;
+  backup_cleaner& operator=(const backup_cleaner&) = delete;
+  ~backup_cleaner() {
+    std::error_code l_ec{};
+    for (const auto& l_entry : FSys::directory_iterator{dir_, l_ec}) {
+      if (!l_entry.is_regular_file(l_ec)) continue;
+      if (before_.contains(l_entry.path().filename().string())) continue;
+      FSys::remove(l_entry.path(), l_ec);
+    }
+  }
+};
+
 }  // namespace
 
 // 真实库上重建全部表: 数据保留、FTS 索引不被写重复、无中间表残留、结构完好、可重复执行
@@ -127,10 +159,23 @@ BOOST_AUTO_TEST_CASE(rebuild_all_tables_on_real_db) {
   auto l_db = copy_real_db(l_src, "rebuild");
 
   app_base l_app{};
+  backup_cleaner l_cleaner{};
   {
     sqlite_storage l_storage{};
     l_storage.open(l_db);
+    // 先把副本带到当前版本, 与生产启动路径一致 (kitsu_supplement.cpp: open() -> upgrade()).
+    // 这一步是重建的前置条件, 不是可选装饰: rebuild_table 的列拷贝清单来自 **ORM 声明**
+    // (见 docs/3-sqlite_schema_cleanup_changelog.md 7.3), 声明里比旧库多的列会被写进
+    // INSERT ... SELECT, 在旧库上直接报 no such column.
+    l_storage.upgrade();
     auto l_session = l_storage.create_session();
+    auto l_version = scalar_int(l_session, "PRAGMA user_version;");
+    BOOST_TEST_MESSAGE(fmt::format("真实库副本升级后 user_version = {}", l_version));
+    BOOST_TEST(
+        scalar_int(
+            l_session, "SELECT count(*) FROM pragma_table_info('entity_asset_extend_2') WHERE name = 'te_xie';"
+        ) == 1
+    );
 
     auto l_entity_before  = scalar_int(l_session, "SELECT count(*) FROM entity");
     auto l_task_before    = scalar_int(l_session, "SELECT count(*) FROM task");

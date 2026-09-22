@@ -36,9 +36,9 @@
 
 namespace doodle::details {
 namespace {
-// 版本号. 生产库当前是 28, 所以只需要一步 28 -> 29.
-constexpr std::size_t g_version_28      = 28;
-constexpr std::size_t g_current_version = 29;
+// 版本号. 生产库当前是 29, 所以只需要一步 29 -> 30.
+constexpr std::size_t g_version_29      = 29;
+constexpr std::size_t g_current_version = 30;
 }  // namespace
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -87,67 +87,54 @@ void backup(orm::session& in_data) {
   };
   in_data.backup_to(l_file);
 }
+
+// 表上是否已有某列.
+// ALTER TABLE ADD COLUMN 没有 IF NOT EXISTS, 重复执行会报 "duplicate column name".
+// 版本号与 schema 可能被中途打断而对不上 (例如 ALTER 成功但 user_version 没写下去),
+// 所以执行前必须先查一次, 否则下次启动就会直接失败.
+bool has_column(orm::session& in_session, const std::string& in_table, const std::string& in_column) {
+  orm::sqlite_stmt l_stmt{
+      in_session, fmt::format("SELECT 1 FROM pragma_table_info('{}') WHERE name = '{}';", in_table, in_column)
+  };
+  return l_stmt.step_not_throw() == SQLITE_ROW;
+}
 }  // namespace
 
-// 28 -> 29: 把此前被并进 failed 的违规任务回填成 violation.
+// 29 -> 30: entity_asset_extend 增加「是否包含特写」te_xie (默认 false).
 //
-// 背景: 中转站返回的 status=violation 过去被 transfer_station_client::parse_status 一并算作
-// failed, 而计费却按模型定价的 charge_on_violation 单独判断 —— 于是违规任务会留下
-// 「status=failed 但 completion_tokens 不为 0」的记录. violation 现在是独立状态, 存量数据要按
-// data_response 里记录的原始状态回填.
+// 用 ALTER TABLE 补列, 不用 rebuild_table: 重建的列拷贝清单来自 ORM 声明 (session::rebuild_table),
+// 会把新列也写进 SELECT, 而旧表里没有这一列, 直接报 no such column.
+// 带 DEFAULT 0: 存量行在库层面就落成 0/false, 不依赖 ORM 读到 NULL 时的兜底行为.
 //
-// 只改状态, 不动 completion_tokens: 真实库上 8 条失败任务的 token 全是 0 (违规从未落在
-// charge_on_violation=true 的模型上), 计费无需修正. 将来若出现需要补扣的记录, 应另行处理.
-//
-// 条件用 `> 28 就跳过` 而不是 `== 28 才执行`: 版本更旧的库也能被这一步带到最新, 不会出现
+// 条件用 `> 29 就跳过` 而不是 `== 29 才执行`: 版本更旧的库也能被这一步带到最新, 不会出现
 // 「版本号写成了最新、迁移却没做」那种不报错的静默失效.
 //
-// 注意: 27 -> 28 的 schema 重建 (rebuild_all_tables / 外键孤儿清理 / 冗余索引清理) 已随生产库
-// 升到 28 而移除. 代价是: 仍停在 27 及更早的库不再补做那一步, 只会执行本步骤.
-struct upgrade_1_t : sqlite_upgrade {
-  explicit upgrade_1_t() {}
+// 注意: 27 -> 28 的 schema 重建 (rebuild_all_tables / 外键孤儿清理 / 冗余索引清理) 与
+// 28 -> 29 的 violation 回填都已随生产库升到 29 而移除 —— 生产库已经在 29 上, 那两步不会再
+// 执行; 仍停在 28 及更早的库只会执行本步骤 (代价是拿不到那两步的修复).
+//
+// 表不存在时本步骤会直接失败并中止升级, 这是刻意的: v29 生产库必然有 entity_asset_extend_2
+// (资产写入路径一直在用它), 缺表说明库已损坏, 静默跳过只会让 schema 与 ORM 声明长期不一致.
+struct upgrade_2_t : sqlite_upgrade {
+  explicit upgrade_2_t() {}
   void upgrade(sqlite_storage& in_data) override {
-    using namespace orm;
-    namespace sd2 = doodle::seedance2;
-    auto l_s      = in_data.create_session();
-    // 全新库 (user_version == 0) 已由 upgrade_init_t 建好并标成最新版, 到这里必然跳过
-    if (l_s.pragma().user_version() > g_version_28) return;
+    auto l_s = in_data.create_session();
+    // 全新库 (user_version == 0) 已由 upgrade_init_t 建好 (含 te_xie) 并标成最新版, 到这里必然跳过
+    if (l_s.pragma().user_version() > g_version_29) return;
     backup(l_s);
 
-    // 1. 取出全部失败任务, 逐条按 data_response 里记录的原始状态判断
-    auto l_failed = select(l_s)
-                        .columns(object<sd2::task>())
-                        .from<sd2::task>()
-                        .where(c(&sd2::task::status_) == sd2::task_status::failed)()
-                        .to_vector();
-
-    // 2. 只有回复里明确写着 violation 的才改判. data_response 为空 / 是字符串 / 没有 status 键的
-    //    (提交阶段就失败的任务拿不到完整回复) 一律跳过 —— 判不出来时保持原状, 不凭猜测改状态.
-    //    开事务: 要么这批状态全部回填, 要么一条都不改, 避免中途失败留下改了一半的库.
-    std::size_t l_fixed{0};
-    {
-      auto l_guard = l_s.transaction();
-      for (const auto& l_task : l_failed) {
-        if (!l_task.data_response_.is_object()) continue;
-        if (!l_task.data_response_.contains("status")) continue;
-        const auto& l_status = l_task.data_response_.at("status");
-        if (!l_status.is_string() || l_status.get_ref<const std::string&>() != "violation") continue;
-
-        update(l_s)
-            .from<sd2::task>()
-            .set(c(&sd2::task::status_) = sd2::task_status::violation)
-            .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_)();
-        ++l_fixed;
-      }
-      l_guard.commit();
+    if (has_column(l_s, "entity_asset_extend_2", "te_xie")) {
+      SPDLOG_INFO("upgrade 29->30: entity_asset_extend_2.te_xie 已存在, 跳过 ALTER");
+    } else {
+      l_s.add_column("entity_asset_extend_2", "te_xie", "INTEGER", "0");
+      SPDLOG_INFO("upgrade 29->30: 已添加 entity_asset_extend_2.te_xie (DEFAULT 0, 存量行读出 false)");
     }
-    SPDLOG_INFO("upgrade 28->29: 检查 {} 条失败任务, 回填 {} 条 violation", l_failed.size(), l_fixed);
     l_s.pragma().user_version(g_current_version);
   }
-  ~upgrade_1_t() override = default;
+  ~upgrade_2_t() override = default;
 };
 
 std::shared_ptr<sqlite_upgrade> upgrade_init() { return std::make_shared<upgrade_init_t>(); }
-std::shared_ptr<sqlite_upgrade> upgrade_1() { return std::make_shared<upgrade_1_t>(); }
+std::shared_ptr<sqlite_upgrade> upgrade_2() { return std::make_shared<upgrade_2_t>(); }
 
 }  // namespace doodle::details

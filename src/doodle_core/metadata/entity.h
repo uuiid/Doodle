@@ -116,6 +116,11 @@ struct DOODLE_CORE_API entity_asset_extend {
   std::optional<std::int32_t> ji_du_;
   uuid kai_shi_ji_shu_;  // 开始集数 对应集数
   std::optional<std::int32_t> chang_ci_{};
+  // 是否包含特写, 默认 false
+  // 放在最后是刻意的: ALTER TABLE ADD COLUMN 只能把列追加到表尾, 这样新建的库
+  // (CREATE TABLE 的列顺序 = 这里的声明顺序) 与升级上来的库列顺序完全一致.
+  bool te_xie_{false};
+
   // 检查 所有的 字段是否包含 '\', 如果包含之间返回 false, 否则返回 true
   bool check_all_fields_no_backslash() const {
     if (deng_ji_.find('\\') != std::string::npos) return false;
@@ -132,7 +137,7 @@ struct DOODLE_CORE_API entity_asset_extend {
   static bool has_extend_data(const nlohmann::json& j) {
     return j.contains("ji_shu_lie") || j.contains("deng_ji") || j.contains("gui_dang") || j.contains("bian_hao") ||
            j.contains("pin_yin_ming_cheng") || j.contains("ban_ben") || j.contains("ji_du") ||
-           j.contains("kai_shi_ji_shu") || j.contains("chang_ci");
+           j.contains("kai_shi_ji_shu") || j.contains("chang_ci") || j.contains("te_xie");
   }
 
   constexpr static auto put_property_list() {
@@ -146,6 +151,7 @@ struct DOODLE_CORE_API entity_asset_extend {
         std::pair{"ji_du", &entity_asset_extend::ji_du_},                            //
         std::pair{"kai_shi_ji_shu", &entity_asset_extend::kai_shi_ji_shu_},          //
         std::pair{"chang_ci", &entity_asset_extend::chang_ci_},                      //
+        std::pair{"te_xie", &entity_asset_extend::te_xie_},                          //
     };
   }
 
@@ -160,6 +166,7 @@ struct DOODLE_CORE_API entity_asset_extend {
     j["ji_du"]              = p.ji_du_;
     j["kai_shi_ji_shu"]     = p.kai_shi_ji_shu_;
     j["chang_ci"]           = p.chang_ci_;
+    j["te_xie"]             = p.te_xie_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, entity_asset_extend& p) {
@@ -180,6 +187,8 @@ struct DOODLE_CORE_API entity_asset_extend {
     if (j.contains("ji_du")) j.at("ji_du").get_to(p.ji_du_);
     if (j.contains("kai_shi_ji_shu")) j.at("kai_shi_ji_shu").get_to(p.kai_shi_ji_shu_);
     if (j.contains("chang_ci")) j.at("chang_ci").get_to(p.chang_ci_);
+    // 显式 null 保持默认值 false: get_to<bool> 遇到 null 会抛, 不能像 optional 那样直接取
+    if (j.contains("te_xie") && !j.at("te_xie").is_null()) j.at("te_xie").get_to(p.te_xie_);
   }
 };
 // entity_asset_extend 的值类型, 方便使用

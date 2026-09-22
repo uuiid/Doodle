@@ -180,7 +180,8 @@ struct with_tasks_get_result_t {
         ban_ben_(in_asset_extend.ban_ben_),
         ji_du_(in_asset_extend.ji_du_),
         kai_shi_ji_shu_(in_asset_extend.kai_shi_ji_shu_),
-        chang_ci_(in_asset_extend.chang_ci_) {}
+        chang_ci_(in_asset_extend.chang_ci_),
+        te_xie_(in_asset_extend.te_xie_) {}
 
   decltype(entity::uuid_id_) uuid_id_;
   decltype(entity::name_) name_;
@@ -205,6 +206,7 @@ struct with_tasks_get_result_t {
   decltype(entity_asset_extend::ji_du_) ji_du_;
   decltype(entity_asset_extend::kai_shi_ji_shu_) kai_shi_ji_shu_;
   decltype(entity_asset_extend::chang_ci_) chang_ci_;
+  decltype(entity_asset_extend::te_xie_) te_xie_;
 
   struct task_t {
     task_t() = default;
@@ -297,6 +299,7 @@ struct with_tasks_get_result_t {
     j["ji_du"]               = p.ji_du_;
     j["kai_shi_ji_shu"]      = p.kai_shi_ji_shu_;
     j["chang_ci"]            = p.chang_ci_;
+    j["te_xie"]              = p.te_xie_;
   }
 };
 

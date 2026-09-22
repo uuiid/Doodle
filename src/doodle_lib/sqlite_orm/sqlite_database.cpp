@@ -88,7 +88,7 @@ void sqlite_storage::regs_all() {
   // 注意: 可空引用列未赋值时是 nil uuid, 由 sqlite_statement.h 绑定成 NULL, 而 NULL 永远满足外键,
   // 所以"未赋值的可选引用"不会误报违规.
   // 注意: 修改外键动作**不会**改动已有表 —— ON DELETE 是写进 CREATE TABLE 的, 必须重建表才能生效
-  // (sqlite_storage::rebuild_all_tables), 见 details::upgrade_1_t.
+  // (sqlite_storage::rebuild_all_tables).
   reg_table<seedance2::ai_preview_file>("seedance2_ai_preview_file")
       .add_column("id", &seedance2::ai_preview_file::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::ai_preview_file::uuid_id_, unique(), not_null())
@@ -657,6 +657,9 @@ void sqlite_storage::regs_all() {
       .add_column("ji_du", &entity_asset_extend::ji_du_)
       .add_column("kai_shi_ji_shu", &entity_asset_extend::kai_shi_ji_shu_)
       .add_column("chang_ci", &entity_asset_extend::chang_ci_)
+      // 是否包含特写. 不加 default_value: table_info::to_sql 不输出 default_value_ (该选项已失效),
+      // 默认值由 C++ 成员初值 (te_xie_{false}) 与升级时的 ALTER ... DEFAULT 0 共同保证.
+      .add_column("te_xie", &entity_asset_extend::te_xie_)
       .add_foreign_key(&entity_asset_extend::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&entity_asset_extend::ji_shu_lie_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&entity_asset_extend::kai_shi_ji_shu_, &entity::uuid_id_, foreign_key_action::cascade)
@@ -1157,7 +1160,7 @@ void sqlite_storage::open_(FSys::path in_path, std::int32_t in_flags) {
 }
 
 void sqlite_storage::upgrade() {
-  auto l_list = {details::upgrade_init(), details::upgrade_1()};
+  auto l_list = {details::upgrade_init(), details::upgrade_2()};
   for (auto&& i : l_list) {
     i->upgrade(*this);
   }
