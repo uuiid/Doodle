@@ -1,0 +1,14 @@
+type: object
+description: 渲染尺寸，对应 `doodle::image_size`
+properties:
+  width:
+    type: integer
+    format: int32
+    description: 宽
+  height:
+    type: integer
+    format: int32
+    description: 高
+required:
+  - width
+  - height

@@ -1,0 +1,32 @@
+post:
+  tags:
+    - 图片
+  summary: 创建预览文件
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `pictures_preview_files::post`，实现见 `preview.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: pictures_preview_files_post
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {}
+  responses:
+    '201':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+    '400':
+      description: 无法获取视频尺寸, 当前 {}x{}；无法获取视频帧率, 当前 {}；视频帧率不匹配, 当前 {} 项目 {}；不允许重复上传预览文件, 请删除原有预览文件后再上传新的预览文件；请上传预览文件；不支持的预览文件格式
+  security:
+    - bearerAuth: []

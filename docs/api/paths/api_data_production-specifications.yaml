@@ -1,0 +1,19 @@
+get:
+  tags:
+    - 数据-制作规范
+  summary: 获取制作规范列表
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `data_production_specifications::get`，实现见 `base_data.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: data_production_specifications_get
+  responses:
+    '200':
+      description: 文件内容（`Content-Type` 由文件扩展名在运行时推导，未知扩展名回退为 `application/octet-stream`）
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+  security:
+    - bearerAuth: []

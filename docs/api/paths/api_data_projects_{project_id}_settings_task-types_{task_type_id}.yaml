@@ -1,0 +1,27 @@
+delete:
+  tags:
+    - 数据-项目
+  summary: 删除任务类型
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `project_settings_task_types::delete`，实现见 `project.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: project_settings_task_types_delete
+  parameters:
+    - name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: task_type_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: 成功，无响应体
+  security:
+    - bearerAuth: []

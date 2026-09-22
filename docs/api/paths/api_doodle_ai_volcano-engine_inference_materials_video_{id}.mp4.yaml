@@ -1,0 +1,26 @@
+get:
+  tags:
+    - Doodle
+  summary: 获取视频详情
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `doodle_ai_volcano_engine_inference_materials_video_id::get`，实现见 `pictures.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: doodle_ai_volcano_engine_inference_materials_video_id_get
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 文件内容
+      content:
+        video/mp4:
+          schema:
+            type: string
+            format: binary
+    '500':
+      description: 视频文件不存在 文件 {}

@@ -1,0 +1,40 @@
+get:
+  tags:
+    - UE插件
+  summary: 获取版本详情
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `ue_plugins_version_instance::get`，实现见 `base_data.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: ue_plugins_version_instance_get
+  parameters:
+    - name: version_major
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int32
+    - name: version_minor
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int32
+    - name: version_patch
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int32
+  responses:
+    '200':
+      description: 文件内容（`Content-Type` 由文件扩展名在运行时推导，未知扩展名回退为 `application/octet-stream`）
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    '500':
+      description: UE 插件版本文件不存在
+  security:
+    - bearerAuth: []

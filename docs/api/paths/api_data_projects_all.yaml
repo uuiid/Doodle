@@ -1,0 +1,18 @@
+get:
+  tags:
+    - 数据-项目
+  summary: 获取全部
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `project_all::get`，实现见 `project.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: project_all_get
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+  security:
+    - bearerAuth: []

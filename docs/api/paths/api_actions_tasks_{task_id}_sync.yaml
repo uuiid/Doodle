@@ -1,0 +1,27 @@
+get:
+  tags:
+    - 动作-任务
+  summary: 同步
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `actions_tasks_sync::get`，实现见 `auto_task.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: actions_tasks_sync_get
+  parameters:
+    - name: task_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+    '400':
+      description: 场景资产 {} 缺少扩展信息 归档；场景资产 {} 缺少扩展信息 开始集数；未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径；资产 {} 缺少扩展信息 归档；资产 {} 缺少扩展信息 开始集数；仅支持灯光和特效任务同步信息获取
+  security:
+    - bearerAuth: []

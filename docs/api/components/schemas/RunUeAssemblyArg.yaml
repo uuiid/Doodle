@@ -1,0 +1,117 @@
+type: object
+description: |
+  UE 装配参数，对应 `import_and_render_ue_ns::run_ue_assembly_arg`。
+  由 `auto_task::shot_render_light(project_id, shot_id, simulation_abc_import)` 生成，
+  既作为 GET 的响应体，也作为提交任务时 `command` 的内容。
+properties:
+  files:
+    type: array
+    description: 需要组装的资产条目
+    items:
+      $ref: ./RunUeAssemblyAssetInfo.yaml
+  camera_file_path:
+    type: string
+    description: 镜头(camera)文件路径，取自动画输出目录
+  ue_main_project_path:
+    type: string
+    description: UE 主工程（`.uproject`）路径
+  ue_asset_path:
+    type: array
+    description: 需要复制到 UE 工程的路径映射
+    items:
+      $ref: ./FileCopyInfo.yaml
+  update_ue_path:
+    type: string
+    description: 装配结果回传 UE 的路径（解算任务为 `.../Import_JS`，动画任务为 `.../Import_DH`）
+  clear_path:
+    type: string
+    description: 需要清理的路径
+  begin_time:
+    type: integer
+    format: int32
+    description: 起始帧
+  end_time:
+    type: integer
+    format: int32
+    description: 结束帧
+  out_file_dir:
+    type: string
+    description: 渲染输出目录
+  original_map:
+    type: string
+    description: 主场景 map 路径（UE UObject 形式）
+  render_map:
+    type: string
+    description: 渲染关卡，包含下面两个子关卡
+  create_map:
+    type: string
+    description: 创建的关卡（放置骨骼网格体）
+  import_dir:
+    type: string
+    description: 导入的 fbx 和 abc 路径
+  movie_pipeline_config:
+    type: string
+    description: 电影管线配置资产路径
+  level_sequence:
+    type: string
+    description: 渲染关卡序列（包的路径），包括下面的子关卡
+  size:
+    $ref: ./ImageSize.yaml
+  layering:
+    type: boolean
+    description: 是否分层渲染
+  create_move_path:
+    type: string
+    description: 合成视频的输出路径
+  shot:
+    type: object
+    description: 镜头号，对应 `doodle::shot`
+    properties:
+      shot:
+        type: integer
+        format: int32
+        description: 镜头号
+      shot_enum:
+        type: string
+        description: 镜头字母后缀
+    required:
+      - shot
+      - shot_enum
+  episodes:
+    type: integer
+    format: int32
+    description: 集数，对应 `doodle::episodes`
+  shot_task_id:
+    type: string
+    format: uuid
+    description: 镜头任务 ID
+  project_id:
+    type: string
+    format: uuid
+    description: 项目 ID
+  ground_pretreatment_sequence:
+    type: string
+    description: 地面预处理序列路径；没有时为空串（读取侧也允许该键缺失）
+required:
+  - files
+  - camera_file_path
+  - ue_main_project_path
+  - ue_asset_path
+  - update_ue_path
+  - clear_path
+  - begin_time
+  - end_time
+  - out_file_dir
+  - original_map
+  - render_map
+  - create_map
+  - import_dir
+  - movie_pipeline_config
+  - level_sequence
+  - size
+  - layering
+  - create_move_path
+  - shot
+  - episodes
+  - shot_task_id
+  - project_id

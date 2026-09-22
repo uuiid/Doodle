@@ -1,0 +1,40 @@
+get:
+  tags:
+    - 数据-任务类型
+  summary: 获取任务类型列表
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `task_types::get`，实现见 `base_data.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: task_types_get
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema: {}
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - 数据-任务类型
+  summary: 创建任务类型
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `task_types::post`，实现见 `base_data.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: task_types_post
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {}
+  responses:
+    '201':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+  security:
+    - bearerAuth: []

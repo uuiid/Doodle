@@ -1,0 +1,32 @@
+get:
+  tags:
+    - 数据-人员
+  summary: 获取工时详情
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `person_time_spents_day_table::get`，实现见 `time.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: person_time_spents_day_table_get
+  parameters:
+    - name: year
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int32
+    - name: month
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int32
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: array
+            items: {}
+  security:
+    - bearerAuth: []

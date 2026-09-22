@@ -1,0 +1,16 @@
+type: string
+description: |
+  解算任务 abc 输出的导入方式，对应 `auto_task::simulation_abc_import`（仅对解算任务有意义）：
+
+  - `with_abc`：abc 进入 UE 导入列表（既有行为）。
+  - `without_abc`：abc **不**进入 UE 导入列表。abc 仍会参与输出目录扫描、与角色的配对以及
+    文件存在性校验，只是在组装前从导入列表中剔除；角色仍使用解算皮肤
+    （如 `SK_Ch006A_cloth`），解算目录中的 fbx 等其余文件照常导入。
+    用于「sim 只导出不带布料的 fbx、或即便导出了 abc 也要一并去掉」的镜头。
+
+  注意：非法取值**不会**报错，会静默回退为 `with_abc`
+  （`NLOHMANN_JSON_SERIALIZE_ENUM` 的 `from_json` 以第一个条目兜底）。
+enum:
+  - with_abc
+  - without_abc
+default: with_abc

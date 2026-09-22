@@ -1,0 +1,27 @@
+get:
+  tags:
+    - 动作-任务
+  summary: 获取ue
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `actions_tasks_assets_update_ue::get`，实现见 `auto_task.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: actions_tasks_assets_update_ue_get
+  parameters:
+    - name: task_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+    '400':
+      description: 实体 {} 缺少资产扩展信息
+  security:
+    - bearerAuth: []

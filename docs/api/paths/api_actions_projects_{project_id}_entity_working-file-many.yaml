@@ -1,0 +1,32 @@
+post:
+  tags:
+    - 动作-项目
+  summary: 批量获取工作文件
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `actions_projects_entity_working_file_many::post`，实现见 `working_file.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: actions_projects_entity_working_file_many_post
+  parameters:
+    - name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {}
+  responses:
+    '201':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+    '404':
+      description: '未知的任务 id '
+  security:
+    - bearerAuth: []

@@ -1,0 +1,27 @@
+get:
+  tags:
+    - 动作-任务
+  summary: 导出绑定骨骼
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `actions_tasks_export_rig_sk::get`，实现见 `auto_task.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: actions_tasks_export_rig_sk_get
+  parameters:
+    - name: task_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+    '400':
+      description: 只有绑定任务才支持导出 rig sk；实体缺少资产扩展信息；仅支持角色和道具, 地编, 特效类型资产导出 rig sk
+  security:
+    - bearerAuth: []

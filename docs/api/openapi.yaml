@@ -60,7 +60,144 @@ tags:
   - name: AI工作室
     description: AI 工作室 CRUD、后端密钥配置与人员关联
     x-displayName: AI工作室
+  - name: Doodle
+    description: Kitsu Doodle API
+    x-displayName: Doodle
+  - name: UE插件
+    description: Kitsu UE 插件 API
+    x-displayName: UE插件
+  - name: UE装配
+    description: |
+      UE 自动灯光装配：生成装配参数、提交装配任务。
+      这些接口需要 JWT，且外包人员（`person_role_type::outsource`）不可调用。
+    x-displayName: UE装配
+  - name: 任务队列
+    description: Kitsu 任务队列 API
+    x-displayName: 任务队列
+  - name: 动作-人员
+    description: Kitsu 动作 API：人员 相关接口
+    x-displayName: 动作-人员
+  - name: 动作-任务
+    description: Kitsu 动作 API：任务 相关接口
+    x-displayName: 动作-任务
+  - name: 动作-实体
+    description: Kitsu 动作 API：实体 相关接口
+    x-displayName: 动作-实体
+  - name: 动作-序列
+    description: Kitsu 动作 API：序列 相关接口
+    x-displayName: 动作-序列
+  - name: 动作-播放列表
+    description: Kitsu 动作 API：播放列表 相关接口
+    x-displayName: 动作-播放列表
+  - name: 动作-用户
+    description: Kitsu 动作 API：用户 相关接口
+    x-displayName: 动作-用户
+  - name: 动作-项目
+    description: Kitsu 动作 API：项目 相关接口
+    x-displayName: 动作-项目
+  - name: 动作-预览文件
+    description: Kitsu 动作 API：预览文件 相关接口
+    x-displayName: 动作-预览文件
+  - name: 图片
+    description: Kitsu 图片 API
+    x-displayName: 图片
+  - name: 影片
+    description: Kitsu 影片 API
+    x-displayName: 影片
+  - name: 数据
+    description: Kitsu 数据 API
+    x-displayName: 数据
+  - name: 数据-人员
+    description: Kitsu 数据 API：人员 相关接口
+    x-displayName: 数据-人员
+  - name: 数据-任务
+    description: Kitsu 数据 API：任务 相关接口
+    x-displayName: 数据-任务
+  - name: 数据-任务状态
+    description: Kitsu 数据 API：任务状态 相关接口
+    x-displayName: 数据-任务状态
+  - name: 数据-任务状态关联
+    description: Kitsu 数据 API：任务状态关联 相关接口
+    x-displayName: 数据-任务状态关联
+  - name: 数据-任务类型
+    description: Kitsu 数据 API：任务类型 相关接口
+    x-displayName: 数据-任务类型
+  - name: 数据-任务类型关联
+    description: Kitsu 数据 API：任务类型关联 相关接口
+    x-displayName: 数据-任务类型关联
+  - name: 数据-制作规范
+    description: Kitsu 数据 API：制作规范 相关接口
+    x-displayName: 数据-制作规范
+  - name: 数据-实体
+    description: Kitsu 数据 API：实体 相关接口
+    x-displayName: 数据-实体
+  - name: 数据-实体类型
+    description: Kitsu 数据 API：实体类型 相关接口
+    x-displayName: 数据-实体类型
+  - name: 数据-工作室
+    description: Kitsu 数据 API：工作室 相关接口
+    x-displayName: 数据-工作室
+  - name: 数据-序列
+    description: Kitsu 数据 API：序列 相关接口
+    x-displayName: 数据-序列
+  - name: 数据-播放列表
+    description: Kitsu 数据 API：播放列表 相关接口
+    x-displayName: 数据-播放列表
+  - name: 数据-文件状态
+    description: Kitsu 数据 API：文件状态 相关接口
+    x-displayName: 数据-文件状态
+  - name: 数据-更新日志
+    description: Kitsu 数据 API：更新日志 相关接口
+    x-displayName: 数据-更新日志
+  - name: 数据-状态自动化
+    description: Kitsu 数据 API：状态自动化 相关接口
+    x-displayName: 数据-状态自动化
+  - name: 数据-用户
+    description: Kitsu 数据 API：用户 相关接口
+    x-displayName: 数据-用户
+  - name: 数据-组织
+    description: Kitsu 数据 API：组织 相关接口
+    x-displayName: 数据-组织
+  - name: 数据-自定义动作
+    description: Kitsu 数据 API：自定义动作 相关接口
+    x-displayName: 数据-自定义动作
+  - name: 数据-计算机
+    description: Kitsu 数据 API：计算机 相关接口
+    x-displayName: 数据-计算机
+  - name: 数据-评论
+    description: Kitsu 数据 API：评论 相关接口
+    x-displayName: 数据-评论
+  - name: 数据-资产
+    description: Kitsu 数据 API：资产 相关接口
+    x-displayName: 数据-资产
+  - name: 数据-输出类型
+    description: Kitsu 数据 API：输出类型 相关接口
+    x-displayName: 数据-输出类型
+  - name: 数据-部门
+    description: Kitsu 数据 API：部门 相关接口
+    x-displayName: 数据-部门
+  - name: 数据-镜头
+    description: Kitsu 数据 API：镜头 相关接口
+    x-displayName: 数据-镜头
+  - name: 数据-附件
+    description: Kitsu 数据 API：附件 相关接口
+    x-displayName: 数据-附件
+  - name: 数据-项目
+    description: Kitsu 数据 API：项目 相关接口
+    x-displayName: 数据-项目
+  - name: 数据-预览文件
+    description: Kitsu 数据 API：预览文件 相关接口
+    x-displayName: 数据-预览文件
+  - name: 系统
+    description: Kitsu 系统 API
+    x-displayName: 系统
+  - name: 认证
+    description: Kitsu 认证 API
+    x-displayName: 认证
 paths:
+  /api/actions/projects/{project_id}/shots/{shot_id}/run-ue-assembly:
+    $ref: >-
+      paths/api_actions_projects_{project_id}_shots_{shot_id}_run-ue-assembly.yaml
   /api/doodle/ai/animation/train/settings:
     $ref: paths/api_doodle_ai_animation_train_settings.yaml
   /api/doodle/ai/animation/train:
@@ -169,6 +306,315 @@ paths:
     $ref: paths/api_data_ai_studio_{id}.yaml
   /api/data/ai_studio/{ai_studio_id}/person/{person_id}:
     $ref: paths/api_data_ai_studio_{ai_studio_id}_person_{person_id}.yaml
+  /api/actions/entity/{entity_id}/working-file:
+    $ref: paths/api_actions_entity_{entity_id}_working-file.yaml
+  /api/actions/jobs/{job_id}/log:
+    $ref: paths/api_actions_jobs_{job_id}_log.yaml
+  /api/actions/persons/{id}/assign:
+    $ref: paths/api_actions_persons_{id}_assign.yaml
+  /api/actions/persons/{person_id}/change-password:
+    $ref: paths/api_actions_persons_{person_id}_change-password.yaml
+  /api/actions/playlists/{playlist_id}/preview-files/{preview_file_id}/create-review:
+    $ref: >-
+      paths/api_actions_playlists_{playlist_id}_preview-files_{preview_file_id}_create-review.yaml
+  /api/actions/preview-files/{id}/set-main-preview:
+    $ref: paths/api_actions_preview-files_{id}_set-main-preview.yaml
+  /api/actions/preview-files/{preview_file_id}/compose-video:
+    $ref: paths/api_actions_preview-files_{preview_file_id}_compose-video.yaml
+  /api/actions/preview-files/{preview_file_id}/update-annotations:
+    $ref: paths/api_actions_preview-files_{preview_file_id}_update-annotations.yaml
+  /api/actions/projects/{project_id}/casting/copy:
+    $ref: paths/api_actions_projects_{project_id}_casting_copy.yaml
+  /api/actions/projects/{project_id}/casting/replace:
+    $ref: paths/api_actions_projects_{project_id}_casting_replace.yaml
+  /api/actions/projects/{project_id}/entity/working-file-many:
+    $ref: paths/api_actions_projects_{project_id}_entity_working-file-many.yaml
+  /api/actions/projects/{project_id}/search:
+    $ref: paths/api_actions_projects_{project_id}_search.yaml
+  /api/actions/projects/{project_id}/sequences/{sequence_id}/casting/ue-assembly-harvest:
+    $ref: >-
+      paths/api_actions_projects_{project_id}_sequences_{sequence_id}_casting_ue-assembly-harvest.yaml
+  /api/actions/projects/{project_id}/sequences/{sequence_id}/working-file:
+    $ref: paths/api_actions_projects_{project_id}_sequences_{sequence_id}_working-file.yaml
+  /api/actions/projects/{project_id}/shots/import/frame-range:
+    $ref: paths/api_actions_projects_{project_id}_shots_import_frame-range.yaml
+  /api/actions/projects/{project_id}/shots/{shot_id}/run-export-anim-fbx:
+    $ref: paths/api_actions_projects_{project_id}_shots_{shot_id}_run-export-anim-fbx.yaml
+  /api/actions/projects/{project_id}/shots/{shot_id}/working-file:
+    $ref: paths/api_actions_projects_{project_id}_shots_{shot_id}_working-file.yaml
+  /api/actions/projects/{project_id}/task-types/{task_type_id}/assets/create-tasks:
+    $ref: paths/api_actions_projects_{project_id}_task-types_{task_type_id}_assets_create-tasks.yaml
+  /api/actions/projects/{project_id}/task-types/{task_type_id}/create-tasks/{entity_type}:
+    $ref: >-
+      paths/api_actions_projects_{project_id}_task-types_{task_type_id}_create-tasks_{entity_type}.yaml
+  /api/actions/projects/{project_id}/task-types/{task_type_id}/shots/create-tasks:
+    $ref: paths/api_actions_projects_{project_id}_task-types_{task_type_id}_shots_create-tasks.yaml
+  /api/actions/projects/{project_id}/tasks/comment-many:
+    $ref: paths/api_actions_projects_{project_id}_tasks_comment-many.yaml
+  /api/actions/sequences/{sequence_id}/create-review/playlists:
+    $ref: paths/api_actions_sequences_{sequence_id}_create-review_playlists.yaml
+  /api/actions/tasks/clear-assignation:
+    $ref: paths/api_actions_tasks_clear-assignation.yaml
+  /api/actions/tasks/{task_id}/assets/update/ue:
+    $ref: paths/api_actions_tasks_{task_id}_assets_update_ue.yaml
+  /api/actions/tasks/{task_id}/comment:
+    $ref: paths/api_actions_tasks_{task_id}_comment.yaml
+  /api/actions/tasks/{task_id}/comments/{comment_id}/add-preview:
+    $ref: paths/api_actions_tasks_{task_id}_comments_{comment_id}_add-preview.yaml
+  /api/actions/tasks/{task_id}/comments/{comment_id}/preview-files/{preview_file_id}:
+    $ref: >-
+      paths/api_actions_tasks_{task_id}_comments_{comment_id}_preview-files_{preview_file_id}.yaml
+  /api/actions/tasks/{task_id}/create-review:
+    $ref: paths/api_actions_tasks_{task_id}_create-review.yaml
+  /api/actions/tasks/{task_id}/export-anim-fbx:
+    $ref: paths/api_actions_tasks_{task_id}_export-anim-fbx.yaml
+  /api/actions/tasks/{task_id}/export-rig-sk:
+    $ref: paths/api_actions_tasks_{task_id}_export-rig-sk.yaml
+  /api/actions/tasks/{task_id}/modify-date-comment:
+    $ref: paths/api_actions_tasks_{task_id}_modify-date-comment.yaml
+  /api/actions/tasks/{task_id}/sync:
+    $ref: paths/api_actions_tasks_{task_id}_sync.yaml
+  /api/actions/tasks/{task_id}/sync/export-anim-fbx:
+    $ref: paths/api_actions_tasks_{task_id}_sync_export-anim-fbx.yaml
+  /api/actions/user/notifications/mark-all-as-read:
+    $ref: paths/api_actions_user_notifications_mark-all-as-read.yaml
+  /api/auth/authenticated:
+    $ref: paths/api_auth_authenticated.yaml
+  /api/auth/change-password:
+    $ref: paths/api_auth_change-password.yaml
+  /api/auth/login:
+    $ref: paths/api_auth_login.yaml
+  /api/auth/logout:
+    $ref: paths/api_auth_logout.yaml
+  /api/auth/refresh-token:
+    $ref: paths/api_auth_refresh-token.yaml
+  /api/auth/reset-password:
+    $ref: paths/api_auth_reset-password.yaml
+  /api/config:
+    $ref: paths/api_config.yaml
+  /api/data/assets:
+    $ref: paths/api_data_assets.yaml
+  /api/data/assets/with-tasks:
+    $ref: paths/api_data_assets_with-tasks.yaml
+  /api/data/assets/{asset_id}:
+    $ref: paths/api_data_assets_{asset_id}.yaml
+  /api/data/assets/{id}/cast-in:
+    $ref: paths/api_data_assets_{id}_cast-in.yaml
+  /api/data/attachment-files/{id}/file/{file_name}:
+    $ref: paths/api_data_attachment-files_{id}_file_{file_name}.yaml
+  /api/data/comments/{comment_id}:
+    $ref: paths/api_data_comments_{comment_id}.yaml
+  /api/data/computers:
+    $ref: paths/api_data_computers.yaml
+  /api/data/computers/{computer_id}:
+    $ref: paths/api_data_computers_{computer_id}.yaml
+  /api/data/custom-actions:
+    $ref: paths/api_data_custom-actions.yaml
+  /api/data/departments:
+    $ref: paths/api_data_departments.yaml
+  /api/data/departments/{id}:
+    $ref: paths/api_data_departments_{id}.yaml
+  /api/data/entities/{entity_id}/preview-files:
+    $ref: paths/api_data_entities_{entity_id}_preview-files.yaml
+  /api/data/entities/{id}:
+    $ref: paths/api_data_entities_{id}.yaml
+  /api/data/entities/{id}/news:
+    $ref: paths/api_data_entities_{id}_news.yaml
+  /api/data/entity-types:
+    $ref: paths/api_data_entity-types.yaml
+  /api/data/entity-types/{id}:
+    $ref: paths/api_data_entity-types_{id}.yaml
+  /api/data/file-status:
+    $ref: paths/api_data_file-status.yaml
+  /api/data/fix-preview-files-thumbnails:
+    $ref: paths/api_data_fix-preview-files-thumbnails.yaml
+  /api/data/jobs:
+    $ref: paths/api_data_jobs.yaml
+  /api/data/jobs/{job_id}:
+    $ref: paths/api_data_jobs_{job_id}.yaml
+  /api/data/organisations:
+    $ref: paths/api_data_organisations.yaml
+  /api/data/output-types:
+    $ref: paths/api_data_output-types.yaml
+  /api/data/persons:
+    $ref: paths/api_data_persons.yaml
+  /api/data/persons/day-offs/{year}/{month}:
+    $ref: paths/api_data_persons_day-offs_{year}_{month}.yaml
+  /api/data/persons/time-spents/day-table/{year}/{month}:
+    $ref: paths/api_data_persons_time-spents_day-table_{year}_{month}.yaml
+  /api/data/persons/{id}:
+    $ref: paths/api_data_persons_{id}.yaml
+  /api/data/persons/{person_id}/day-offs:
+    $ref: paths/api_data_persons_{person_id}_day-offs.yaml
+  /api/data/persons/{person_id}/day-offs/{date}:
+    $ref: paths/api_data_persons_{person_id}_day-offs_{date}.yaml
+  /api/data/playlists:
+    $ref: paths/api_data_playlists.yaml
+  /api/data/playlists/entities/{id}/preview-files:
+    $ref: paths/api_data_playlists_entities_{id}_preview-files.yaml
+  /api/data/playlists/{playlist_id}:
+    $ref: paths/api_data_playlists_{playlist_id}.yaml
+  /api/data/playlists/{playlist_id}/entities/{entity_id}:
+    $ref: paths/api_data_playlists_{playlist_id}_entities_{entity_id}.yaml
+  /api/data/playlists/{playlist_id}/shots/{shots_id}:
+    $ref: paths/api_data_playlists_{playlist_id}_shots_{shots_id}.yaml
+  /api/data/preview-files/{preview_file_id}:
+    $ref: paths/api_data_preview-files_{preview_file_id}.yaml
+  /api/data/production-specifications:
+    $ref: paths/api_data_production-specifications.yaml
+  /api/data/projects:
+    $ref: paths/api_data_projects.yaml
+  /api/data/projects/all:
+    $ref: paths/api_data_projects_all.yaml
+  /api/data/projects/{id}:
+    $ref: paths/api_data_projects_{id}.yaml
+  /api/data/projects/{id}/sequences:
+    $ref: paths/api_data_projects_{id}_sequences.yaml
+  /api/data/projects/{id}/settings/status-automations:
+    $ref: paths/api_data_projects_{id}_settings_status-automations.yaml
+  /api/data/projects/{id}/settings/task-types:
+    $ref: paths/api_data_projects_{id}_settings_task-types.yaml
+  /api/data/projects/{project_id}/asset-types/{asset_type_id}/assets/new:
+    $ref: paths/api_data_projects_{project_id}_asset-types_{asset_type_id}_assets_new.yaml
+  /api/data/projects/{project_id}/asset-types/{asset_type_id}/casting:
+    $ref: paths/api_data_projects_{project_id}_asset-types_{asset_type_id}_casting.yaml
+  /api/data/projects/{project_id}/assets/shared-used:
+    $ref: paths/api_data_projects_{project_id}_assets_shared-used.yaml
+  /api/data/projects/{project_id}/authorization:
+    $ref: paths/api_data_projects_{project_id}_authorization.yaml
+  /api/data/projects/{project_id}/authorization/{authorization_id}:
+    $ref: paths/api_data_projects_{project_id}_authorization_{authorization_id}.yaml
+  /api/data/projects/{project_id}/entities/{entity_id}/casting:
+    $ref: paths/api_data_projects_{project_id}_entities_{entity_id}_casting.yaml
+  /api/data/projects/{project_id}/milestones:
+    $ref: paths/api_data_projects_{project_id}_milestones.yaml
+  /api/data/projects/{project_id}/playlists:
+    $ref: paths/api_data_projects_{project_id}_playlists.yaml
+  /api/data/projects/{project_id}/playlists/temp:
+    $ref: paths/api_data_projects_{project_id}_playlists_temp.yaml
+  /api/data/projects/{project_id}/playlists/{playlist_id}:
+    $ref: paths/api_data_projects_{project_id}_playlists_{playlist_id}.yaml
+  /api/data/projects/{project_id}/schedule-items:
+    $ref: paths/api_data_projects_{project_id}_schedule-items.yaml
+  /api/data/projects/{project_id}/schedule-items/task-types:
+    $ref: paths/api_data_projects_{project_id}_schedule-items_task-types.yaml
+  /api/data/projects/{project_id}/sequences/all/casting:
+    $ref: paths/api_data_projects_{project_id}_sequences_all_casting.yaml
+  /api/data/projects/{project_id}/sequences/{sequence_id}/casting:
+    $ref: paths/api_data_projects_{project_id}_sequences_{sequence_id}_casting.yaml
+  /api/data/projects/{project_id}/settings/asset-types:
+    $ref: paths/api_data_projects_{project_id}_settings_asset-types.yaml
+  /api/data/projects/{project_id}/settings/status-automations/{status_automation_id}:
+    $ref: >-
+      paths/api_data_projects_{project_id}_settings_status-automations_{status_automation_id}.yaml
+  /api/data/projects/{project_id}/settings/task-status:
+    $ref: paths/api_data_projects_{project_id}_settings_task-status.yaml
+  /api/data/projects/{project_id}/settings/task-types/{task_type_id}:
+    $ref: paths/api_data_projects_{project_id}_settings_task-types_{task_type_id}.yaml
+  /api/data/projects/{project_id}/shots:
+    $ref: paths/api_data_projects_{project_id}_shots.yaml
+  /api/data/projects/{project_id}/team:
+    $ref: paths/api_data_projects_{project_id}_team.yaml
+  /api/data/projects/{project_id}/team/{person_id}:
+    $ref: paths/api_data_projects_{project_id}_team_{person_id}.yaml
+  /api/data/sequences/with-tasks:
+    $ref: paths/api_data_sequences_with-tasks.yaml
+  /api/data/sequences/{sequence_id}:
+    $ref: paths/api_data_sequences_{sequence_id}.yaml
+  /api/data/shots/with-tasks:
+    $ref: paths/api_data_shots_with-tasks.yaml
+  /api/data/shots/{shot_id}:
+    $ref: paths/api_data_shots_{shot_id}.yaml
+  /api/data/status-automations:
+    $ref: paths/api_data_status-automations.yaml
+  /api/data/studios:
+    $ref: paths/api_data_studios.yaml
+  /api/data/studios/{id}:
+    $ref: paths/api_data_studios_{id}.yaml
+  /api/data/task-status:
+    $ref: paths/api_data_task-status.yaml
+  /api/data/task-status-links:
+    $ref: paths/api_data_task-status-links.yaml
+  /api/data/task-status/{id}:
+    $ref: paths/api_data_task-status_{id}.yaml
+  /api/data/task-type-links:
+    $ref: paths/api_data_task-type-links.yaml
+  /api/data/task-types:
+    $ref: paths/api_data_task-types.yaml
+  /api/data/tasks/open-tasks:
+    $ref: paths/api_data_tasks_open-tasks.yaml
+  /api/data/tasks/{id}:
+    $ref: paths/api_data_tasks_{id}.yaml
+  /api/data/tasks/{id}/full:
+    $ref: paths/api_data_tasks_{id}_full.yaml
+  /api/data/tasks/{task_id}/comments:
+    $ref: paths/api_data_tasks_{task_id}_comments.yaml
+  /api/data/tasks/{task_id}/comments/{comment_id}:
+    $ref: paths/api_data_tasks_{task_id}_comments_{comment_id}.yaml
+  /api/data/tasks/{task_id}/comments/{comment_id}/ack:
+    $ref: paths/api_data_tasks_{task_id}_comments_{comment_id}_ack.yaml
+  /api/data/updata-logs:
+    $ref: paths/api_data_updata-logs.yaml
+  /api/data/user/context:
+    $ref: paths/api_data_user_context.yaml
+  /api/data/user/done-tasks:
+    $ref: paths/api_data_user_done-tasks.yaml
+  /api/data/user/notifications:
+    $ref: paths/api_data_user_notifications.yaml
+  /api/data/user/notifications/{id}:
+    $ref: paths/api_data_user_notifications_{id}.yaml
+  /api/data/user/tasks:
+    $ref: paths/api_data_user_tasks.yaml
+  /api/data/user/tasks-to-check:
+    $ref: paths/api_data_user_tasks-to-check.yaml
+  /api/data/user/time-spents:
+    $ref: paths/api_data_user_time-spents.yaml
+  /api/data/user/time-spents/{date}:
+    $ref: paths/api_data_user_time-spents_{date}.yaml
+  /api/doodle/ai/volcano-engine/inference/materials/image:
+    $ref: paths/api_doodle_ai_volcano-engine_inference_materials_image.yaml
+  /api/doodle/ai/volcano-engine/inference/materials/image/{id}.png:
+    $ref: paths/api_doodle_ai_volcano-engine_inference_materials_image_{id}.png.yaml
+  /api/doodle/ai/volcano-engine/inference/materials/video:
+    $ref: paths/api_doodle_ai_volcano-engine_inference_materials_video.yaml
+  /api/doodle/ai/volcano-engine/inference/materials/video/{id}.mp4:
+    $ref: paths/api_doodle_ai_volcano-engine_inference_materials_video_{id}.mp4.yaml
+  /api/doodle/ai/volcano-engine/inference/materials/video/{id}.png:
+    $ref: paths/api_doodle_ai_volcano-engine_inference_materials_video_{id}.png.yaml
+  /api/doodle/backup:
+    $ref: paths/api_doodle_backup.yaml
+  /api/doodle/stop-server:
+    $ref: paths/api_doodle_stop-server.yaml
+  /api/movies/low/preview-files/{id}.mp4:
+    $ref: paths/api_movies_low_preview-files_{id}.mp4.yaml
+  /api/movies/originals/preview-files/{id}.mp4:
+    $ref: paths/api_movies_originals_preview-files_{id}.mp4.yaml
+  /api/movies/originals/preview-files/{preview_file_id}/download:
+    $ref: paths/api_movies_originals_preview-files_{preview_file_id}_download.yaml
+  /api/movies/tiles/preview-files/{id}.png:
+    $ref: paths/api_movies_tiles_preview-files_{id}.png.yaml
+  /api/pictures/originals/preview-files/{id}.png:
+    $ref: paths/api_pictures_originals_preview-files_{id}.png.yaml
+  /api/pictures/originals/preview-files/{id}/download:
+    $ref: paths/api_pictures_originals_preview-files_{id}_download.yaml
+  /api/pictures/preview-files/{id}:
+    $ref: paths/api_pictures_preview-files_{id}.yaml
+  /api/pictures/previews/preview-files/{id}.png:
+    $ref: paths/api_pictures_previews_preview-files_{id}.png.yaml
+  /api/pictures/thumbnails-square/preview-files/{id}.png:
+    $ref: paths/api_pictures_thumbnails-square_preview-files_{id}.png.yaml
+  /api/pictures/thumbnails/organisations/{id}:
+    $ref: paths/api_pictures_thumbnails_organisations_{id}.yaml
+  /api/pictures/thumbnails/organisations/{id}.png:
+    $ref: paths/api_pictures_thumbnails_organisations_{id}.png.yaml
+  /api/pictures/thumbnails/persons/{id}.png:
+    $ref: paths/api_pictures_thumbnails_persons_{id}.png.yaml
+  /api/pictures/thumbnails/preview-files/{id}.png:
+    $ref: paths/api_pictures_thumbnails_preview-files_{id}.png.yaml
+  /api/ue-plugins/version:
+    $ref: paths/api_ue-plugins_version.yaml
+  /api/ue-plugins/version/{version_major}.{version_minor}.{version_patch}:
+    $ref: paths/api_ue-plugins_version_{version_major}.{version_minor}.{version_patch}.yaml
 components:
   securitySchemes:
     bearerAuth:
@@ -198,3 +644,67 @@ x-tagGroups:
       - 限额管理
       - AI生成剧集
       - AI工作室
+  - name: Kitsu 动作 API
+    tags:
+      - 动作-人员
+      - 动作-任务
+      - 动作-实体
+      - 动作-序列
+      - 动作-播放列表
+      - 动作-用户
+      - 动作-项目
+      - 动作-预览文件
+  - name: Kitsu 数据 API
+    tags:
+      - 数据
+      - 数据-人员
+      - 数据-任务
+      - 数据-任务状态
+      - 数据-任务状态关联
+      - 数据-任务类型
+      - 数据-任务类型关联
+      - 数据-制作规范
+      - 数据-实体
+      - 数据-实体类型
+      - 数据-工作室
+      - 数据-序列
+      - 数据-播放列表
+      - 数据-文件状态
+      - 数据-更新日志
+      - 数据-状态自动化
+      - 数据-用户
+      - 数据-组织
+      - 数据-自定义动作
+      - 数据-计算机
+      - 数据-评论
+      - 数据-资产
+      - 数据-输出类型
+      - 数据-部门
+      - 数据-镜头
+      - 数据-附件
+      - 数据-项目
+      - 数据-预览文件
+  - name: Kitsu 认证 API
+    tags:
+      - 认证
+  - name: Kitsu 系统 API
+    tags:
+      - 系统
+  - name: Kitsu 影片 API
+    tags:
+      - 影片
+  - name: Kitsu 图片 API
+    tags:
+      - 图片
+  - name: Kitsu Doodle API
+    tags:
+      - Doodle
+  - name: Kitsu UE 插件 API
+    tags:
+      - UE插件
+  - name: Kitsu 任务队列 API
+    tags:
+      - 任务队列
+  - name: Kitsu UE装配 API
+    tags:
+      - UE装配

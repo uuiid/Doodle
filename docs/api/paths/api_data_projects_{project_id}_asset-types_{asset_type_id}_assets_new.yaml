@@ -1,0 +1,37 @@
+post:
+  tags:
+    - 数据-项目
+  summary: 新建资产
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `projects_assets_new::post`，实现见 `assets.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: projects_assets_new_post
+  parameters:
+    - name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: asset_type_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {}
+  responses:
+    '201':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema: {}
+    '500':
+      description: entity_asset_extend 字段不能包含反斜杠 '\\'，请检查输入数据
+  security:
+    - bearerAuth: []

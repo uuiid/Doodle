@@ -1,0 +1,12 @@
+type: object
+description: 需要复制到 UE 工程的一对文件路径，对应 `import_and_render_ue_ns::file_copy_info`
+properties:
+  from:
+    type: string
+    description: 源路径（绝对路径，位于项目目录内）
+  to:
+    type: string
+    description: 目标路径（绝对路径，位于 UE 工程目录内）
+required:
+  - from
+  - to

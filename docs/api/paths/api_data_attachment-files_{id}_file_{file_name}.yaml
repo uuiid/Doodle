@@ -1,0 +1,35 @@
+get:
+  tags:
+    - 数据-附件
+  summary: 获取文件详情
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `data_attachment_files_file::get`，实现见 `attachment_files.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: data_attachment_files_file_get
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: file_name
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    '200':
+      description: 文件内容（`Content-Type` 由文件扩展名在运行时推导，未知扩展名回退为 `application/octet-stream`）
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    '404':
+      description: 未找到对应的文件
+    '401':
+      description: 权限不足
+  security:
+    - bearerAuth: []

@@ -1,0 +1,30 @@
+put:
+  tags:
+    - 数据-用户
+  summary: 更新通知
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `data_user_notification::put`，实现见 `notifications.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: data_user_notification_put
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {}
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+  security:
+    - bearerAuth: []

@@ -1,0 +1,19 @@
+get:
+  tags:
+    - 数据-用户
+  summary: 获取工时记录
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `data_user_time_spents_all::get`，实现见 `time.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: data_user_time_spents_all_get
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: array
+            items: {}
+  security:
+    - bearerAuth: []

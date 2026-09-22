@@ -1,0 +1,26 @@
+get:
+  tags:
+    - 数据-人员
+  summary: 获取调休记录
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `person_day_off_all::get`，实现见 `time.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: person_day_off_all_get
+  parameters:
+    - name: person_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: array
+            items: {}
+  security:
+    - bearerAuth: []

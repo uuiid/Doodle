@@ -1,0 +1,40 @@
+post:
+  tags:
+    - 动作-项目
+  summary: UE装配收割
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `actions_projects_sequences_casting_ue_assembly_harvest::post`，实现见 `casting.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: actions_projects_sequences_casting_ue_assembly_harvest_post
+  parameters:
+    - name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: sequence_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {}
+  responses:
+    '201':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+    '400':
+      description: 镜头 {} 实体扩展信息缺少帧起始，请联系管理员添加扩展信息；镜头 {} 实体扩展信息缺少帧结束，请联系管理员添加扩展信息
+    '401':
+      description: 权限不足
+  security:
+    - bearerAuth: []

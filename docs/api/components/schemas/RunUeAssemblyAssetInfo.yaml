@@ -1,0 +1,70 @@
+type: object
+description: |
+  需要 UE 组装的一个资产条目，对应 `import_and_render_ue_ns::run_ue_assembly_asset_info`。
+
+  条目来源有两处：动画输出目录（`03_Workflow/Shots/{ep}/fbx/{code}_{ep}_{shot}`）与解算输出目录
+  （`.../abc/{code}_{ep}_{shot}`）。带 `cloth` / `hair` 标记的解算输出会与同名的角色条目配对，
+  并把 `simulation_type` 合并到角色上。
+properties:
+  path:
+    type: string
+    description: 需要组装的 fbx / abc 路径（绝对路径）
+  skin_path:
+    type: string
+    description: |
+      组装使用的皮肤，UE UObject 路径，形如
+      `/Game/Character/{拼音名称}/Meshs/SK_Ch{编号}_{版本}.SK_Ch{编号}_{版本}`。
+      带模拟的角色使用解算皮肤（后缀 `_cloth` / `_hair`），其余使用普通皮肤。
+  type:
+    type: string
+    description: |
+      - `geo`：几何体。带 `cloth` / `hair` 标记的解算输出一律是 `geo`，**fbx 与 abc 不做区分**
+      - `char`：角色骨骼网格体
+      - `groom`：毛发
+    enum:
+      - geo
+      - char
+      - groom
+  simulation_type:
+    type: string
+    description: |
+      模拟类型位串，取 `std::bitset<2>::to_string()`（高位在左，第 0 位是布料、第 1 位是毛发）：
+
+      - `00`：无模拟
+      - `01`：带布料
+      - `10`：带毛发
+      - `11`：带布料 + 毛发
+    enum:
+      - '00'
+      - '01'
+      - '10'
+      - '11'
+  ue_project_dir:
+    type: string
+    description: UE 工程内的资产目录（用于拼出 `skin_path` 的磁盘绝对路径）
+  ban_ben_suffix:
+    type: string
+    description: 版本后缀，查找材质时做对应的版本转换
+  groom_bind_path:
+    type: string
+    description: 毛发绑定路径（若有）
+  groom_name:
+    type: string
+    description: 毛发名称（若有）
+  groom_and_bind_map:
+    type: array
+    description: 毛发与绑定的映射（若有），仅 Release 构建的 `check_files()` 会填充
+    items:
+      type: object
+      properties:
+        groom:
+          type: string
+        bind:
+          type: string
+      required:
+        - groom
+        - bind
+required:
+  - path
+  - skin_path
+  - type

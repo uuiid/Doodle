@@ -1,0 +1,91 @@
+type: object
+description: |
+  服务端任务，对应 `doodle::server_task_info`。
+  本接口既用它作为提交任务的请求体，也用同一个结构返回落库后的任务。
+properties:
+  id:
+    type: string
+    format: uuid
+    nullable: true
+    description: |
+      任务唯一 id。注意：这里返回的是 `uuid_id_`（任务的 uuid），**不是**自增主键 `id_`
+      —— `to_json` 中写作 `j["id"] = p.uuid_id_`。
+  status:
+    type: string
+    description: |
+      任务状态。提交接口会强制写成 `submitted`，请求体中的该字段无效。
+    enum:
+      - submitted
+      - assigned
+      - running
+      - completed
+      - canceled
+      - failed
+      - unknown
+  name:
+    type: string
+    description: 任务名称；请求体中为空时服务端用任务 uuid 填充。**请求体必填**
+  source_computer:
+    type: string
+    description: 提交任务的计算机。**请求体必填**
+  submitter:
+    type: string
+    format: uuid
+    nullable: true
+    description: 提交人 id，由服务端按当前登录用户填写
+  submit_time:
+    type: string
+    nullable: true
+    description: 提交时间，格式 `YYYY-MM-DDTHH:MM:SSZ`；由服务端填写
+  run_time:
+    type: string
+    nullable: true
+    description: 开始运行时间；未开始为 `null`
+  end_time:
+    type: string
+    nullable: true
+    description: 结束运行时间；未结束为 `null`
+  run_computer_id:
+    type: string
+    format: uuid
+    nullable: true
+    description: 分配到的计算机 id；未分配为 `null`
+  type:
+    type: string
+    description: |
+      任务类型。提交接口会强制写成 `auto_light`，请求体中的该字段无效。
+    enum:
+      - export_fbx
+      - export_sim
+      - auto_light
+      - merge_video
+      - connect_video
+      - check_maya
+      - replace_maya_ref
+      - depth_estimation
+  last_line_log:
+    type: string
+    description: 最后一行日志
+  run_time_info:
+    type: object
+    description: 运行时段信息（数组或对象，视服务端写入而定）
+  command:
+    type: object
+    description: |
+      任务参数。本接口的提交请求中该字段会被**覆盖**为服务端生成的装配参数，
+      内容为 `RunUeAssemblyArg`。
+  priority:
+    type: integer
+    format: int32
+    description: 优先级，默认 100
+  task_id:
+    type: string
+    format: uuid
+    nullable: true
+    description: 关联的业务任务（镜头任务）id，由服务端按 URL 路径参数填写
+  submitter_cookies:
+    type: string
+    description: 提交者的 cookies
+required:
+  - name
+  - source_computer

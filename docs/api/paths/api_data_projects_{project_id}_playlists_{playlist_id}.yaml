@@ -1,0 +1,33 @@
+get:
+  tags:
+    - 数据-项目
+  summary: 获取播放列表详情
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `data_project_playlists_instance::get`，实现见 `playlists.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: data_project_playlists_instance_get
+  parameters:
+    - name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: playlist_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+    '401':
+      description: 权限不足
+  security:
+    - bearerAuth: []

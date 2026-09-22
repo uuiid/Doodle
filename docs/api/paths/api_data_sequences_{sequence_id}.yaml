@@ -1,0 +1,46 @@
+get:
+  tags:
+    - 数据-序列
+  summary: 获取序列详情
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `data_sequence_instance::get`，实现见 `sequences.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: data_sequence_instance_get
+  parameters:
+    - name: sequence_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+  security:
+    - bearerAuth: []
+delete:
+  tags:
+    - 数据-序列
+  summary: 删除序列
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `data_sequence_instance::delete`，实现见 `sequences.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: data_sequence_instance_delete
+  parameters:
+    - name: sequence_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: 成功，无响应体
+  security:
+    - bearerAuth: []

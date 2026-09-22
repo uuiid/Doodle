@@ -1,0 +1,24 @@
+put:
+  tags:
+    - 动作-任务
+  summary: 清除分配
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `actions_tasks_clear_assignation::put`，实现见 `actions.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: actions_tasks_clear_assignation_put
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {}
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: array
+            items: {}
+  security:
+    - bearerAuth: []

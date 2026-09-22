@@ -1,0 +1,40 @@
+post:
+  tags:
+    - 动作-播放列表
+  summary: 创建审阅
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `actions_playlists_preview_files_create_review::post`，实现见 `compose_video.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: actions_playlists_preview_files_create_review_post
+  parameters:
+    - name: playlist_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: preview_file_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {}
+  responses:
+    '201':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+    '400':
+      description: 播放列表中没有任何镜头, 无法生成评审视频；没有找到字幕文件；没有找到配音文件；没有找到名称视频文件；没有找到片头视频文件；没有找到片尾视频文件；没有找到任何镜头预览视频, 无法生成评审视频
+    '401':
+      description: 权限不足
+  security:
+    - bearerAuth: []

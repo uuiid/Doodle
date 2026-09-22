@@ -1,0 +1,46 @@
+get:
+  tags:
+    - 数据-镜头
+  summary: 获取镜头详情
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `data_shot::get`，实现见 `shots.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: data_shot_get
+  parameters:
+    - name: shot_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+  security:
+    - bearerAuth: []
+delete:
+  tags:
+    - 数据-镜头
+  summary: 删除镜头
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `data_shot::delete`，实现见 `shots.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: data_shot_delete
+  parameters:
+    - name: shot_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: 成功，无响应体
+  security:
+    - bearerAuth: []

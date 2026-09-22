@@ -1,0 +1,121 @@
+get:
+  tags:
+    - UE装配
+  summary: 生成 UE 装配参数
+  description: |
+    按镜头任务计算 UE 自动灯光装配所需的全部参数并直接返回，**不落库、不提交任务**。
+
+    对应 `distributed_task.cpp` 中 `actions_projects_shots_run_ue_assembly` 的 `get` 实现，
+    参数由 `auto_task::shot_render_light(project_id, shot_id)` 生成。
+
+    要求 JWT；外包人员（`person_role_type::outsource`）调用会被 `check_not_outsourcer()`
+    拦下并返回 401。
+  parameters:
+    - name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 项目 ID
+    - name: shot_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: |
+        镜头任务 ID。
+        注册串为 `/api/actions/projects/{}/shots/{}/run-ue-assembly`（见 `kitsu.cpp`），
+        两个占位符分别绑定 `project_id_` 与 `id_`；`kitsu_reg_url.h:111` 的注释同样写作
+        shots 段的 `shot_id`。
+  responses:
+    '200':
+      description: 装配参数
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/RunUeAssemblyArg.yaml
+    '400':
+      description: |
+        参数生成失败。响应体为 `{"error": "<原因>", "code": <数字码>}`。常见原因：
+        镜头实体缺少父级序列信息 / 缺少扩展信息 / 扩展信息缺少起始或结束帧；
+        未找到镜头(camera)文件；资产缺少归档或开始集信息；
+        未找到场景对应的 ue 工程文件；无法为输出文件生成对应的 ue 资产路径。
+        Release 构建还会校验磁盘上的文件是否真实存在（`check_files()`），
+        失败同样返回 400，例如 `UE 资产源路径不存在: ...`。
+    '401':
+      description: 未认证，或权限不足（外包人员）
+    '500':
+      description: |
+        服务端错误。响应体同样为 `{"error": "<原因>", "code": <数字码>}`。
+        例如解算任务的角色没有任何模拟类型时，生成解算皮肤会失败。
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - UE装配
+  summary: 提交 UE 装配任务
+  description: |
+    计算装配参数并作为服务端任务落库，随后广播并尝试分配工作机。
+
+    对应 `distributed_task.cpp` 中 `actions_projects_shots_run_ue_assembly` 的 `post` 实现：
+
+    1. 用请求体构造 `server_task_info`，其中 `status` 强制为 `submitted`，
+       `submitter` / `submit_time` / `task_id` 由服务端填写；
+    2. 把 `type` 强制为 `auto_light`；
+    3. 把 `command` **覆盖**为 `auto_task::shot_render_light(...)` 生成的装配参数
+       —— 请求体里的 `command` 会被忽略；
+    4. 落库后调用 `computers_assign_task::run_next_task()`，并广播
+       `socket_io::server_task_info_new_broadcast`。
+
+    要求 JWT；外包人员调用会被 `check_not_outsourcer()` 拦下并返回 401。
+  parameters:
+    - name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 项目 ID
+    - name: shot_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 镜头任务 ID（注册串中的第二个占位符绑定 `id_` 成员）
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: ../components/schemas/ServerTaskInfo.yaml
+            - type: object
+              description: |
+                除 `server_task_info` 的字段外，本接口还额外接受 `simulation_abc_import`
+                （由 `distributed_task.cpp` 用 `l_json.value("simulation_abc_import", ...)` 读取，
+                缺省为 `with_abc`）。
+              properties:
+                simulation_abc_import:
+                  $ref: ../components/schemas/SimulationAbcImport.yaml
+  responses:
+    '201':
+      description: |
+        任务已提交，返回落库后的 `server_task_info`（`type` 为 `auto_light`，
+        `command` 为装配参数）。
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ServerTaskInfo.yaml
+    '400':
+      description: |
+        参数生成失败，响应体为 `{"error": "<原因>", "code": <数字码>}`，原因同 GET。
+    '401':
+      description: 未认证，或权限不足（外包人员）
+    '500':
+      description: |
+        服务端错误，响应体为 `{"error": "<原因>", "code": <数字码>}`
+  security:
+    - bearerAuth: []

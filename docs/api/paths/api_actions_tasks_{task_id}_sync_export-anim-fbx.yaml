@@ -1,0 +1,27 @@
+get:
+  tags:
+    - 动作-任务
+  summary: 导出动画fbx
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `actions_tasks_sync_export_anim_fbx::get`，实现见 `auto_task.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: actions_tasks_sync_export_anim_fbx_get
+  parameters:
+    - name: task_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: JSON 响应（字段结构尚未逐字段整理）
+      content:
+        application/json:
+          schema:
+            type: object
+    '400':
+      description: 镜头扩展信息不存在，无法导出动画 fbx；镜头扩展信息开始帧不存在，无法导出动画 fbx；镜头扩展信息结束帧不存在，无法导出动画 fbx
+  security:
+    - bearerAuth: []

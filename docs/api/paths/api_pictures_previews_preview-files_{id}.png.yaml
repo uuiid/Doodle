@@ -1,0 +1,28 @@
+get:
+  tags:
+    - 图片
+  summary: 获取预览文件预览
+  description: |
+    机器生成：注册于 `kitsu.cpp`，处理器为 `pictures_previews_preview_files::get`，实现见 `pictures.cpp`。
+
+    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+  operationId: pictures_previews_preview_files_get
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 文件内容
+      content:
+        image/png:
+          schema:
+            type: string
+            format: binary
+    '500':
+      description: 缩略图不存在 文件 {}
+  security:
+    - bearerAuth: []
