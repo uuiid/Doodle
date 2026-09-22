@@ -61,7 +61,7 @@ struct run_ue_assembly_asset_info {
   std::vector<std::pair<FSys::path, FSys::path>> groom_and_bind_map_;  // 毛发和绑定的映射, 如果有的话
 
   // 不需要序列化的
-  
+
   std::string key_;
   // to json
   friend void to_json(nlohmann::json& j, const run_ue_assembly_asset_info& p) {
@@ -219,15 +219,6 @@ class run_ue_assembly_base : public async_task {
   import_and_render_ue_ns::run_ue_assembly_arg arg_;
 
  private:
-};
-
-class run_ue_assembly_local : public run_ue_assembly_base {
- public:
-  uuid shot_task_id_{};
-  uuid project_id_{};
-
- protected:
-  boost::asio::awaitable<void> get_arg() override;
 };
 
 // 分布式任务, 日志需要发送给中心服务器

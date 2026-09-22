@@ -295,14 +295,6 @@ boost::asio::awaitable<void> run_ue_assembly_base::run() {
   );
 }
 
-boost::asio::awaitable<void> run_ue_assembly_local::get_arg() {
-  auto l_arg_json = co_await kitsu_client_->get_ue_assembly(project_id_, shot_task_id_);
-  l_arg_json.get_to(arg_);
-  arg_.project_id_   = project_id_;
-  arg_.shot_task_id_ = shot_task_id_;
-  co_return;
-}
-
 boost::asio::awaitable<void> run_ue_assembly_distributed::get_arg() {
   task_info_.command_.get_to(arg_);
   co_return;
