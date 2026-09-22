@@ -106,8 +106,8 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   std::atomic<std::shared_ptr<std::set<server_task_info_type>>> allowed_task_types_{};
 
   // 分配器视角的状态(get_computer_status / set_computer_status(computer_status) 读写)。
-  // 与上面的 status_ 并存以保持原有语义: init() 不写它, 因此首次心跳上报之前
-  // get_computer_status() 仍是 offline, 该计算机不会被分配任务。
+  // 由 init() 按注册消息首次发布, 之后每次 set_computer_status 刷新;
+  // 连接断开时置 offline(见 async_run 的读循环 scope_exit)。
   std::atomic<computer_status> last_status_{computer_status::offline};
 
   boost::asio::strand<boost::asio::io_context::executor_type> strand_;
@@ -149,6 +149,11 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     allowed_task_types_.store(
         std::make_shared<std::set<server_task_info_type>>(l_row.allowed_task_types_), std::memory_order_release
     );
+    // 注册消息本身就是一次状态上报, 必须在这里发布: 客户端连接时只发这一条消息,
+    // 之后没有周期性心跳(ping 是 websocket 控制帧, 不会走到 set_computer_status)。
+    // 漏掉这一行的话 last_status_ 会一直停在 offline —— 库里 status_ 是 online(UI 显示在线),
+    // 但 run_next_task 的在线判据永远不成立, 机器一个任务都拿不到。
+    last_status_.store(l_computer_json.status_, std::memory_order_release);
   }
   void write_msg(const std::string& in_msg) { message_queue_.push(in_msg); }
   friend class computers_assign_task;
@@ -178,8 +183,10 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
               l_sqls.emplace_back(update(l_sql)
                                       .from<server_task_info>()
                                       .set(c(&server_task_info::run_computer_id_) = uuid{})
-                                      .where(c(&server_task_info::run_computer_id_) == l_uuid &&
-                                             c(&server_task_info::status_) == server_task_info_status::running));
+                                      .where(
+                                          c(&server_task_info::run_computer_id_) == l_uuid &&
+                                          c(&server_task_info::status_) == server_task_info_status::running
+                                      ));
               co_await l_sql.run_sql(std::move(l_sqls));
             },
             boost::asio::detached
@@ -336,6 +343,10 @@ boost::asio::awaitable<void> computers_assign_task::register_computer(
       g_logger_ctrl().get_http(), "计算机 {} 注册成功, 当前在线计算机数量 {}", in_computer->get_computer_id(),
       computer_map_.size()
   );
+  // 注册后立刻尝试派发: 客户端连接时只发一条注册消息(由 init() 消费), 不会再有第二条消息
+  // 触发 run_next_task, 这里不补一次的话刚上线的机器拿不到任务。
+  // 若该机注册时上报的是 busy(重连时还有任务在跑), run_next_task 的在线判据会把它跳过。
+  co_await run_next_task();
 }
 
 void computers_assign_task::clear_offline_computer() {

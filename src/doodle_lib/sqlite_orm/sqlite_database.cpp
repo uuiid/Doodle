@@ -1160,7 +1160,9 @@ void sqlite_storage::open_(FSys::path in_path, std::int32_t in_flags) {
 }
 
 void sqlite_storage::upgrade() {
-  auto l_list = {details::upgrade_init(), details::upgrade_2()};
+  // upgrade_clear_orphan_task 不是版本迁移: 它不看 user_version, 每次升级都执行一次
+  // (清理上次异常退出留下的 running 任务绑定)
+  auto l_list = {details::upgrade_init(), details::upgrade_2(), details::upgrade_clear_orphan_task()};
   for (auto&& i : l_list) {
     i->upgrade(*this);
   }

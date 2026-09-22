@@ -14,6 +14,7 @@
 #include <doodle_core/metadata/seedance2/ai_generate_entity.h>
 #include <doodle_core/metadata/seedance2/ai_preview_file.h>
 #include <doodle_core/metadata/seedance2/task.h>
+#include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/task_type.h>
 
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
@@ -98,6 +99,15 @@ bool has_column(orm::session& in_session, const std::string& in_table, const std
   };
   return l_stmt.step_not_throw() == SQLITE_ROW;
 }
+
+// 表是否存在. 老库可能还没有某张表, 直接对不存在的表执行语句会让升级整个失败,
+// 而"表不存在"本身就意味着这一步没有要清理的数据.
+bool has_table(orm::session& in_session, const std::string& in_table) {
+  orm::sqlite_stmt l_stmt{
+      in_session, fmt::format("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = '{}';", in_table)
+  };
+  return l_stmt.step_not_throw() == SQLITE_ROW;
+}
 }  // namespace
 
 // 29 -> 30: entity_asset_extend 增加「是否包含特写」te_xie (默认 false).
@@ -136,5 +146,39 @@ struct upgrade_2_t : sqlite_upgrade {
 
 std::shared_ptr<sqlite_upgrade> upgrade_init() { return std::make_shared<upgrade_init_t>(); }
 std::shared_ptr<sqlite_upgrade> upgrade_2() { return std::make_shared<upgrade_2_t>(); }
+
+// 启动清理: 解绑所有 running 任务的 run_computer_id.
+//
+// 服务端重启(或工作机崩溃)时断开处理没机会执行, 库里会残留 status_ = running 且
+// run_computer_id 指向某台机器的任务. 派发判据里包含「库里没有绑在这台机器上的 running
+// 任务」(computers_assign_task::run_next_task), 所以这条残留绑定会让那台机器被永久挡住 ——
+// 即使它已经重启并上报 online, 也一个任务都拿不到.
+//
+// 只清绑定, 状态保留 running 供人工确认: 不改成 submitted, 避免工作机其实还在跑同一个
+// 任务时被重复执行.
+//
+// 刻意**不看也不写 user_version**: 这不是 schema 迁移, 而是每次启动都要重新执行的清理,
+// 版本号门控会让"上次启动留下的残留绑定"再也清不掉.
+struct upgrade_clear_orphan_task_t : sqlite_upgrade {
+  explicit upgrade_clear_orphan_task_t() {}
+  void upgrade(sqlite_storage& in_data) override {
+    auto l_s = in_data.create_session();
+    using namespace orm;
+    if (!has_table(l_s, "server_task_info_tab")) {
+      SPDLOG_INFO("upgrade: 启动清理: 库里没有 server_task_info_tab, 跳过 running 任务解绑");
+      return;
+    }
+    update(l_s)
+        .from<server_task_info>()
+        .set(c(&server_task_info::run_computer_id_) = uuid{})
+        .where(c(&server_task_info::status_) == server_task_info_status::running)();
+    SPDLOG_INFO("upgrade: 启动清理: 已解绑所有 running 任务的 run_computer_id");
+  }
+  ~upgrade_clear_orphan_task_t() override = default;
+};
+
+std::shared_ptr<sqlite_upgrade> upgrade_clear_orphan_task() {
+  return std::make_shared<upgrade_clear_orphan_task_t>();
+}
 
 }  // namespace doodle::details
