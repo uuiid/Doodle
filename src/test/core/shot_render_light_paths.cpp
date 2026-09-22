@@ -90,8 +90,8 @@ BOOST_AUTO_TEST_CASE(animation_paths) {
       "D:/sy_magic/ue_projects/LQ/EP0004/MyProject/Content/Shot/ep0004/LQ004_sc001/Import_DH"
   );
   // 地编预调不存在时回退到主场景 map
-  // 注意: conv_ue_game_path 内部执行 replace_extension(stem()), 因此结果是 "X.X" 而不是 "X";
-  // 这是既有行为(entity_path.cpp 未改动), 本次重构逐字保留, 故按实际值断言
+  // 注意: conv_ue_game_path 产出的是 UE 标准的 UObject 路径 "PackagePath.ObjectName" 形式,
+  // 因此结果是 "ChangJing.ChangJing" 而不是 "ChangJing", 这是 UE 加载 UObject 的正确格式
   BOOST_CHECK_EQUAL(l_paths.original_map_.get().generic_string(), "/Game/ChangJing/Map/ChangJing.ChangJing");
   BOOST_CHECK(l_paths.ground_pretreatment_sequence_.get().empty());
   BOOST_CHECK(l_paths.original_map_.asset_copy().empty());
