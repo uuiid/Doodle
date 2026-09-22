@@ -62,11 +62,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   auto l_update = update(l_sql).from<server_task_info>().set_from_ref<server_task_info>(l_json).where(
       c(&server_task_info::uuid_id_) == job_id_
   );
-  if (l_job.status_ == server_task_info_status::submitted && l_job.status_ != l_json.value("status_", l_job.status_)) {
-    SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_http(), "任务 {} 由 {} 变更为 {}", l_job.uuid_id_, l_job.status_,
-        l_json.value("status_", l_job.status_)
-    );
+  if (auto l_status = l_json.value("status_", l_job.status_);
+      l_status == server_task_info_status::submitted && l_job.status_ != l_status) {
+    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "任务 {} 由 {} 变更为 {}", l_job.uuid_id_, l_job.status_, l_status);
     l_update.set(c(&server_task_info::run_computer_id_) = boost::uuids::nil_uuid())
         .set(c(&server_task_info::end_time_) = std::optional<server_task_info::zoned_time>{})
         .set(c(&server_task_info::run_time_) = std::optional<server_task_info::zoned_time>{});
