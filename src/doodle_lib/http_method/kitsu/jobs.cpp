@@ -56,41 +56,25 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   auto l_sql  = get_sqlite_database();
   auto l_job  = l_sql.get_by_uuid<server_task_info>(job_id_);
   auto l_json = in_handle->get_json();
-  server_task_info l_job_new{};
-  l_json.get_to(l_job_new);
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 更新任务 job_id {} status {} -> {} ", person_.person_.email_,
-      person_.person_.get_full_name(), job_id_, l_job.status_, l_job_new.status_
-  );
 
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
   auto l_update = update(l_sql).from<server_task_info>().set_from_ref<server_task_info>(l_json).where(
       c(&server_task_info::uuid_id_) == job_id_
   );
-  if (l_job.status_ != l_job_new.status_ && l_job_new.status_ == server_task_info_status::submitted) {
+  if (l_job.status_ == server_task_info_status::submitted && l_job.status_ != l_json.value("status_", l_job.status_)) {
     SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_http(), "任务 {} 由 {} 变更为 {}", l_job_new.uuid_id_, l_job.status_, l_job_new.status_
+        g_logger_ctrl().get_http(), "任务 {} 由 {} 变更为 {}", l_job.uuid_id_, l_job.status_,
+        l_json.value("status_", l_job.status_)
     );
-    l_job_new.run_computer_id_ = boost::uuids::nil_uuid();
-    l_job_new.end_time_.reset();
-    l_job_new.run_time_.reset();
     l_update.set(c(&server_task_info::run_computer_id_) = boost::uuids::nil_uuid())
         .set(c(&server_task_info::end_time_) = std::optional<server_task_info::zoned_time>{})
         .set(c(&server_task_info::run_time_) = std::optional<server_task_info::zoned_time>{});
   }
   l_sqls.emplace_back(std::move(l_update));
   co_await l_sql.run_sql(std::move(l_sqls));
-
-  if (l_job_new.run_computer_id_ != l_job.run_computer_id_) {
-    SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_http(), "任务 {} 分配的计算机由 {} 变更为 {}, 将尝试让新计算机执行任务", l_job_new.uuid_id_,
-        l_job.run_computer_id_, l_job_new.run_computer_id_
-    );
-    co_await computers_assign_task::get_instance().run_next_task();
-  }
-  socket_io::broadcast(socket_io::server_task_info_update_broadcast_t{.server_task_info_id_ = l_job_new.uuid_id_});
-  co_return in_handle->make_msg(nlohmann::json{} = l_job_new);
+  socket_io::broadcast(socket_io::server_task_info_update_broadcast_t{.server_task_info_id_ = l_job.uuid_id_});
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<server_task_info>(job_id_));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, delete_) {
   person_.check_not_outsourcer();
