@@ -103,7 +103,6 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   // 标量属性直接存 std::atomic<T>, 非平凡可复制的属性用 atomic<shared_ptr<T>> 发布不可变副本。
   std::atomic<uuid> uuid_id_{};
   std::atomic<uuid> hardware_id_{};
-  std::atomic<computer_status> status_{computer_status::offline};
   std::atomic<std::shared_ptr<std::set<server_task_info_type>>> allowed_task_types_{};
 
   // 分配器视角的状态(get_computer_status / set_computer_status(computer_status) 读写)。
@@ -147,7 +146,6 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     // 逐属性发布快照, 之后每次 set_computer_status 都会刷新
     uuid_id_.store(l_row.uuid_id_, std::memory_order_release);
     hardware_id_.store(l_row.hardware_id_, std::memory_order_release);
-    status_.store(l_row.status_, std::memory_order_release);
     allowed_task_types_.store(
         std::make_shared<std::set<server_task_info_type>>(l_row.allowed_task_types_), std::memory_order_release
     );
@@ -162,7 +160,6 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     boost::scope::scope_exit l_{[this, sh = shared_from_this()]() {
       try {
         auto l_uuid = uuid_id_.load(std::memory_order_acquire);
-        status_.store(computer_status::offline, std::memory_order_release);
         boost::asio::co_spawn(
             g_io_context(),
             [l_uuid]() -> boost::asio::awaitable<void> {
@@ -235,7 +232,6 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     auto l_now    = chrono::system_clock::now();
     auto l_zoned  = chrono::system_zoned_time{chrono::current_zone(), l_now};
     // 本协程运行在 strand_ 上; 发布后任务分配 strand 才会看到新值
-    status_.store(l_status, std::memory_order_release);
     allowed_task_types_.store(
         std::make_shared<std::set<server_task_info_type>>(in_computer.get().allowed_task_types_),
         std::memory_order_release
