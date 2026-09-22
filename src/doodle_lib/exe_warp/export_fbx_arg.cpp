@@ -263,7 +263,9 @@ boost::asio::awaitable<void> export_fbx_arg_distributed::run() {
   task_info_.end_time_ = std::chrono::system_clock::now();
 
   if (!l_error_msg.empty()) logger_ptr_->error(l_error_msg);
-  co_await l_kitsu_client->put_job_info(task_info_.uuid_id_, nlohmann::json{} = task_info_);
+  co_await l_kitsu_client->put_job_info(
+      task_info_.uuid_id_, nlohmann::json{{"status", task_info_.status_}, {"end_time", task_info_.end_time_}}
+  );
 }
 
 boost::asio::awaitable<void> export_fbx_arg_epiboly::run() {

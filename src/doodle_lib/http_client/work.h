@@ -21,6 +21,7 @@
 #include <boost/lockfree/spsc_value.hpp>
 #include <boost/process.hpp>
 
+#include <atomic>
 #include <memory>
 #include <optional>
 #include <set>
@@ -50,11 +51,15 @@ class DOODLELIB_API http_work : public std::enable_shared_from_this<http_work> {
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
   boost::asio::awaitable<void> async_run();
   computer this_computer_info_;
-  bool is_writing_{false};
+  std::atomic<bool> is_writing_{false};
+  // 正在执行的任务数: 只有归零才向服务端上报 online, 否则服务端会以为这台机器空闲, 在任务没跑完时再派一个过来
+  std::atomic<int> running_task_count_{0};
   boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> message_queue_;
   boost::lockfree::spsc_value<boost::beast::websocket::ping_data> ping_message_;
   std::optional<boost::asio::cancellation_state> app_cancel_state_{};
   boost::asio::awaitable<void> async_write_msg();
+  // 上报收到的任务无法执行(置为 failed), 否则服务端库里这条任务会一直是 running, 一直挡住这台机器
+  boost::asio::awaitable<void> report_task_unsupported(const server_task_info& in_task_info);
 
  protected:
   bool run_task(const server_task_info& in_task_info);
@@ -70,6 +75,9 @@ class DOODLELIB_API http_work : public std::enable_shared_from_this<http_work> {
   void run(std::set<server_task_info_type> in_allowed_task_types = {});
   void cancel();
   void set_computer_status(computer_status in_status);
+  // 由 base_distributed_task 调用: 任务开始 / 结束(结束归零时才上报 online)
+  void task_started();
+  void task_finished();
 };
 
 class base_distributed_task {

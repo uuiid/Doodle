@@ -1962,6 +1962,17 @@ std::vector<server_task_info> sqlite_database::get_server_tasks_by_submitted() {
       .to_vector();
 }
 
+std::set<uuid> sqlite_database::get_running_task_computer_ids() {
+  using namespace orm;
+
+  // 只取绑定关系: 有 running 任务绑在身上的机器就还有未完成的工作
+  return select(*this)
+      .columns(&server_task_info::run_computer_id_)
+      .from<server_task_info>()
+      .where(c(&server_task_info::status_) == server_task_info_status::running)()
+      .to_set();
+}
+
 entity_asset_extend_value sqlite_database::get_entity_shot_extend_by_task(const uuid& in_shot_id) {
   using namespace orm;
   auto l_shot         = alias<entity>("shot");

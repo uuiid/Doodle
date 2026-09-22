@@ -6,6 +6,7 @@
 #include "depth_estimation_task.h"
 
 #include <doodle_core/metadata/kitsu_ctx_t.h>
+
 #include <doodle_lib/ai/depth_anything/doodle_depth_estimation.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/file_sys.h>
@@ -29,18 +30,18 @@ boost::asio::awaitable<void> depth_estimation_distributed::run() {
 
   SPDLOG_LOGGER_INFO(l_logger, "开始深度估计任务, preview_id: {}", args_.preview_id_);
 
+  std::string l_error_msg{};
   try {
     // 1. 下载输入视频
     auto l_input_path = co_await l_kitsu_client->download_depth_file(args_.preview_id_);
     SPDLOG_LOGGER_INFO(l_logger, "下载输入视频完成: {}", l_input_path);
 
     // 2. 加载模型并执行深度估计
-    auto& l_ctx      = g_ctx().get<kitsu_ctx_t>();
+    auto& l_ctx       = g_ctx().get<kitsu_ctx_t>();
     auto l_model_path = l_ctx.get_depth_model_path();
     ai::doodle_depth_estimation l_estimator{l_model_path};
 
-    auto l_output_path = core_set::get_set().get_cache_root("depth_output") /
-                         fmt::format("{}.mp4", args_.preview_id_);
+    auto l_output_path = core_set::get_set().get_cache_root("depth_output") / fmt::format("{}.mp4", args_.preview_id_);
     if (auto l_p = l_output_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
 
     {
@@ -49,7 +50,7 @@ boost::asio::awaitable<void> depth_estimation_distributed::run() {
       auto l_width   = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_WIDTH));
       auto l_height  = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_HEIGHT));
 
-      auto l_writer = cv::VideoWriter{
+      auto l_writer  = cv::VideoWriter{
           l_output_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), l_fps,
           cv::Size{l_width, l_height}
       };
@@ -75,13 +76,24 @@ boost::asio::awaitable<void> depth_estimation_distributed::run() {
 
   } catch (const std::exception& l_ex) {
     SPDLOG_LOGGER_ERROR(l_logger, "深度估计任务异常: {}", l_ex.what());
+    l_error_msg = l_ex.what();
     // 异常时也尝试清理临时文件
-    auto l_tmp_download = core_set::get_set().get_cache_root("depth_download") /
-                          fmt::format("{}.mp4", args_.preview_id_);
+    auto l_tmp_download =
+        core_set::get_set().get_cache_root("depth_download") / fmt::format("{}.mp4", args_.preview_id_);
     if (FSys::exists(l_tmp_download)) FSys::remove(l_tmp_download);
-    auto l_tmp_output = core_set::get_set().get_cache_root("depth_output") /
-                        fmt::format("{}.mp4", args_.preview_id_);
+    auto l_tmp_output = core_set::get_set().get_cache_root("depth_output") / fmt::format("{}.mp4", args_.preview_id_);
     if (FSys::exists(l_tmp_output)) FSys::remove(l_tmp_output);
+  }
+
+  // 必须上报终态: 否则服务端库里这条任务会一直是 running, 会一直挡住这台机器
+  task_info_.status_   = l_error_msg.empty() ? server_task_info_status::completed : server_task_info_status::failed;
+  task_info_.end_time_ = std::chrono::system_clock::now();
+  try {
+    co_await l_kitsu_client->put_job_info(
+        task_info_.uuid_id_, nlohmann::json{{"status", task_info_.status_}, {"end_time", task_info_.end_time_}}
+    );
+  } catch (const std::exception& l_ex) {
+    SPDLOG_LOGGER_ERROR(l_logger, "更新任务信息失败: {}", l_ex.what());
   }
 
   co_return;

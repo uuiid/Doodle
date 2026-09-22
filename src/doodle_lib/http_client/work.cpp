@@ -170,10 +170,13 @@ boost::asio::awaitable<void> http_work::async_run() {
   const boost::urls::url l_url{fmt::format("ws://{}/api/data/computers", l_ip)};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     try {
-      websocket_client_          = co_await make_websocket_stream(l_url);
+      websocket_client_ = co_await make_websocket_stream(l_url);
+      // 必须按真实状态上报: 重连时若还有任务在跑却报 online, 服务端会认为这台机器空闲, 再派一个任务过来。
+      // 这条注册消息本身就是一次状态上报, 不需要再补发一条(多发的那条正好会覆盖服务端刚设的 busy)
+      this_computer_info_.status_ =
+          running_task_count_.load(std::memory_order_acquire) > 0 ? computer_status::busy : computer_status::online;
       const auto l_computer_json = nlohmann::json(this_computer_info_).dump();
       co_await websocket_client_->async_write(boost::asio::buffer(l_computer_json));
-      set_computer_status(computer_status::online);
       begin_ping();
       while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
              boost::asio::cancellation_type::none) {
@@ -191,7 +194,10 @@ boost::asio::awaitable<void> http_work::async_run() {
           set_computer_status(computer_status::busy);
         else {
           SPDLOG_LOGGER_ERROR(logger_, "无法运行任务 {}，不支持的任务类型 {}", l_data.uuid_id_, l_data.type_);
-          set_computer_status(computer_status::online);
+          co_await report_task_unsupported(l_data);
+          set_computer_status(
+              running_task_count_.load(std::memory_order_acquire) > 0 ? computer_status::busy : computer_status::online
+          );
         }
       }
     } catch (const boost::system::system_error& e) {
@@ -208,22 +214,50 @@ boost::asio::awaitable<void> http_work::async_run() {
   co_return;
 }
 bool http_work::run_task(const server_task_info& in_task_info) {
+  // 计数必须在 co_spawn 之前加: 否则任务可能在计数之前就跑完并上报 online
   if (in_task_info.type_ == server_task_info_type::auto_light) {
     auto l_run = std::make_shared<run_ue_assembly_distributed>(in_task_info, shared_from_this());
+    task_started();
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
   if (in_task_info.type_ == server_task_info_type::export_fbx) {
     auto l_run = std::make_shared<export_fbx_arg_distributed>(in_task_info, shared_from_this());
+    task_started();
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
   if (in_task_info.type_ == server_task_info_type::depth_estimation) {
     auto l_run = std::make_shared<depth_estimation_distributed>(in_task_info, shared_from_this());
+    task_started();
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
   return false;
+}
+
+void http_work::task_started() { running_task_count_.fetch_add(1, std::memory_order_acq_rel); }
+
+void http_work::task_finished() {
+  // 只有全部任务都结束了才上报 online: 只要还有一个任务在跑, 服务端就不该再派新任务过来
+  if (running_task_count_.fetch_sub(1, std::memory_order_acq_rel) <= 1)
+    set_computer_status(computer_status::online);
+}
+
+boost::asio::awaitable<void> http_work::report_task_unsupported(const server_task_info& in_task_info) {
+  try {
+    auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+    l_client->set_token(in_task_info.submitter_cookies_);
+    auto l_task      = in_task_info;
+    l_task.status_   = server_task_info_status::failed;
+    l_task.end_time_ = std::chrono::system_clock::now();
+    co_await l_client->put_job_info(l_task.uuid_id_, nlohmann::json{} = l_task);
+  } catch (...) {
+    SPDLOG_LOGGER_ERROR(
+        logger_, "上报无法运行的任务 {} 失败: {}", in_task_info.uuid_id_, boost::current_exception_diagnostic_information()
+    );
+  }
+  co_return;
 }
 
 void http_work::set_computer_status(computer_status in_status) {
@@ -233,7 +267,8 @@ void http_work::set_computer_status(computer_status in_status) {
 }
 
 void http_work::begin_write_msg() {
-  if (is_writing_) return;
+  // 用 exchange 而不是先读后写: set_computer_status 可能来自 strand_ 之外的线程
+  if (is_writing_.exchange(true, std::memory_order_seq_cst)) return;
   boost::asio::co_spawn(
       strand_, async_write_msg(),
       boost::asio::bind_cancellation_slot(
@@ -253,9 +288,6 @@ void http_work::begin_ping() {
 
 boost::asio::awaitable<void> http_work::async_write_msg() {
   DOODLE_TO_EXECUTOR(strand_);
-  if (is_writing_) co_return;
-  is_writing_ = true;
-  boost::scope::scope_exit l_{[this]() { is_writing_ = false; }};
 
   try {
     if (ping_message_.read(boost::lockfree::uses_optional)) {
@@ -276,6 +308,10 @@ boost::asio::awaitable<void> http_work::async_write_msg() {
   } catch (const std::exception& e) {
     SPDLOG_LOGGER_ERROR(logger_, "处理 WebSocket 消息发生错误: {}", e.what());
   }
+  // 收尾: 先清标记再复查队列。若有人在"队列判空"和"清标记"之间入队, 他会看到 is_writing_ == true 而直接返回,
+  // 那条消息就没人发了(要等到下一次 set_computer_status 或 30s 后的 ping 才被捎带出去) —— 这里复查一次捞回来
+  is_writing_.store(false, std::memory_order_seq_cst);
+  if (!message_queue_.empty()) begin_write_msg();
 }
 template <class Mutex>
 class run_ue_assembly_distributed_sink : public spdlog::sinks::base_sink<Mutex>,
@@ -322,7 +358,7 @@ boost::asio::awaitable<void> http_work::async_ping_loop() {
   }
 }
 base_distributed_task::~base_distributed_task() {
-  if (http_work_ptr_) http_work_ptr_->set_computer_status(computer_status::online);
+  if (http_work_ptr_) http_work_ptr_->task_finished();
 }
 
 logger_ptr base_distributed_task::create_logger() const {

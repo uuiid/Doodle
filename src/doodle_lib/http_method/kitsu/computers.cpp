@@ -173,6 +173,13 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
                                       .set(c(&computer::status_) = computer_status::offline)
                                       .set(c(&computer::last_heartbeat_time_) = l_zoned)
                                       .where(c(&computer::uuid_id_) == l_uuid));
+              // 断开时把仍挂在这台机器名下的 running 任务解绑(状态保留 running 供人工确认),
+              // 否则该机器重连后会被这条孤儿任务一直挡住, 再也拿不到任务
+              l_sqls.emplace_back(update(l_sql)
+                                      .from<server_task_info>()
+                                      .set(c(&server_task_info::run_computer_id_) = uuid{})
+                                      .where(c(&server_task_info::run_computer_id_) == l_uuid &&
+                                             c(&server_task_info::status_) == server_task_info_status::running));
               co_await l_sql.run_sql(std::move(l_sqls));
             },
             boost::asio::detached
@@ -186,7 +193,12 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
       }
     }};
     try {
-      boost::scope::scope_exit l_{[this, sh = shared_from_this()]() { should_close_ = true; }};
+      boost::scope::scope_exit l_{[this, sh = shared_from_this()]() {
+        should_close_ = true;
+        // 读循环一结束就标记离线: 本对象还会被 ping 协程持有最多一个 ping 周期,
+        // 期间 run_next_task 不能把它当成在线机器派任务(派了也发不出去)
+        last_status_.store(computer_status::offline, std::memory_order_release);
+      }};
       while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
              boost::asio::cancellation_type::none) {
         // boost::beast::flat_buffer l_buffer{};
@@ -402,12 +414,22 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task() {
   DOODLE_TO_EXECUTOR(strand_);
   clear_offline_computer();
   SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "{}", fmt::join(computer_map_ | std::ranges::views::keys, ", "));
-  for (auto& [uuid, weak_ptr] : computer_map_) {
-    if (auto l_ptr = weak_ptr.lock();
-        !l_ptr->get_computer_id().is_nil() && l_ptr->get_computer_status() == computer_status::online) {
-      co_await run_next_task_impl(l_ptr);
-    }
+  // 判据必须包含服务端自有的事实: 库里是否还有绑在这台机器上的 running 任务。
+  // 只信客户端上报的 online 是不够的 —— 客户端在连接/重连时会多发一条 online,
+  // 那条过期的 online 会把 run_next_task_impl 刚设的 busy 覆盖掉, 同一台机器就会被派第二个任务。
+  auto l_running_computers = get_sqlite_database().get_running_task_computer_ids();
+  // 先快照再派发: 循环体里的 co_await 会挂起, 期间同 strand 上的 register_computer /
+  // clear_offline_computer 可能插入或删除 computer_map_ 的节点, 直接迭代会拿到失效迭代器
+  std::vector<std::shared_ptr<data_computers_socket_io_impl>> l_targets{};
+  for (auto& [l_id, l_weak_ptr] : computer_map_) {
+    auto l_ptr = l_weak_ptr.lock();
+    if (!l_ptr) continue;
+    auto l_computer_id = l_ptr->get_computer_id();
+    if (l_computer_id.is_nil() || l_ptr->get_computer_status() != computer_status::online) continue;
+    if (l_running_computers.contains(l_computer_id)) continue;
+    l_targets.emplace_back(std::move(l_ptr));
   }
+  for (auto& l_ptr : l_targets) co_await run_next_task_impl(l_ptr);
 }
 void data_computers::websocket_callback(
     boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle
