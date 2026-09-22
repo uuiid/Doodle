@@ -3,13 +3,16 @@
 //
 
 #include <doodle_core/metadata/entity.h>
+#include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
+#include <doodle_core/metadata/task_type.h>
 
 #include <doodle_lib/http_method/kitsu/auto_task.h>
 
 #include <boost/test/unit_test.hpp>
 
+#include <fstream>
 #include <set>
 #include <string>
 #include <vector>
@@ -189,8 +192,10 @@ BOOST_AUTO_TEST_CASE(entry_table_covers_all_run_arg_path_fields) {
 }
 
 /// 解算配对: cloth/hair/hair_XXX 标记与帧区间后缀都要被去掉
+/// 注意 shot_file_name 用生产实际传入的 get_shots_animation_file_name(...) = "{code}_{ep}_{shot}",
+/// 即 "ZM_EP127_SC025"; 剩下的 "Ch006A_rig_ch" 里只有 cloth/hair 是解算标记, rig_ch 是绑定名
 BOOST_AUTO_TEST_CASE(pair_sim_keys_strips_cloth_hair_markers) {
-  const std::string l_shot_file_name{"ZM_EP127_SC025_Ch006A"};
+  const std::string l_shot_file_name{"ZM_EP127_SC025"};
   const std::vector<std::string> l_stems{
       "ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_1001-1105",
       "ZM_EP127_SC025_Ch006A_rig_ch_hair_cloth_1001-1105",
@@ -204,7 +209,7 @@ BOOST_AUTO_TEST_CASE(pair_sim_keys_strips_cloth_hair_markers) {
   auto l_result = pair_sim_keys(l_stems, l_shot_file_name);
   BOOST_REQUIRE_EQUAL(l_result.size(), l_stems.size());
   for (std::size_t i = 0; i < l_result.size(); ++i) {
-    BOOST_CHECK_EQUAL(l_result[i].first, "rig_ch");
+    BOOST_CHECK_EQUAL(l_result[i].first, "Ch006A_rig_ch");
     BOOST_CHECK_EQUAL(l_result[i].second, i);
   }
 }
@@ -222,6 +227,234 @@ BOOST_AUTO_TEST_CASE(pair_sim_keys_without_marker) {
   BOOST_CHECK_EQUAL(l_result[0].second, 0);
   BOOST_CHECK_EQUAL(l_result[1].first, "Ch006A_rig_Low");
   BOOST_CHECK_EQUAL(l_result[1].second, 1);
+}
+
+// ---------------------------------------------------------------------------
+// 目录扫描与 abc 剔除: 这两件事要读文件系统, 因此在临时目录里造一棵真实的输出树。
+// 注意 check_files() 整体在 #ifdef NDEBUG 内, 而 test_main 只在 debug_doodle preset 构建,
+// 所以这里不需要真的准备 .uasset 文件; 若将来在 Release 下构建测试, 需要补上。
+// ---------------------------------------------------------------------------
+
+namespace {
+
+const uuid k_test_uuid{{0x01, 0x9f, 0x6a, 0x42, 0xa4, 0x9d, 0x71, 0xcd, 0x80, 0x37, 0xd8, 0x3d, 0xa7, 0xe0, 0x1f, 0x7c}
+};
+
+entity_asset_extend make_extend(std::string in_bian_hao) {
+  entity_asset_extend l_extend{};
+  l_extend.bian_hao_           = std::move(in_bian_hao);
+  l_extend.pin_yin_ming_cheng_ = "ChangJing";
+  l_extend.gui_dang_           = 1;
+  l_extend.kai_shi_ji_shu_     = k_test_uuid;
+  return l_extend;
+}
+
+/// 临时目录里的镜头输出树, 析构时整棵删除
+class shot_output_tree {
+ public:
+  shot_output_tree() : l_root_(FSys::temp_directory_path() / fmt::format("doodle_srl_scan_{}", next_index())) {
+    std::error_code l_ec{};
+    FSys::remove_all(l_root_, l_ec);
+    FSys::create_directories(fbx_dir());
+    FSys::create_directories(abc_dir());
+    // resolve_scene_ue_path() 经 find_ue_project_file() 从场景 map 路径逐级向上找 .uproject:
+    // map 路径本身必须存在, 且某个祖先目录里要有 .uproject, 否则会抛「未找到场景 ... 的 ue 工程文件」
+    const auto l_map = scene_map_path();
+    FSys::create_directories(l_map.parent_path());
+    touch(l_map.parent_path(), l_map.filename().string());
+    touch(prj_path(), "MyProject.uproject");
+  }
+  ~shot_output_tree() {
+    std::error_code l_ec{};
+    FSys::remove_all(l_root_, l_ec);
+  }
+  shot_output_tree(const shot_output_tree&)            = delete;
+  shot_output_tree& operator=(const shot_output_tree&) = delete;
+
+  [[nodiscard]] FSys::path prj_path() const { return l_root_ / "Project"; }
+  /// 动画输出目录 .../Shots/EP004/fbx/LQ_EP004_SC001
+  [[nodiscard]] FSys::path fbx_dir() const {
+    return prj_path() / "03_Workflow" / "Shots" / "EP004" / "fbx" / "LQ_EP004_SC001";
+  }
+  /// 解算输出目录 .../Shots/EP004/abc/LQ_EP004_SC001
+  [[nodiscard]] FSys::path abc_dir() const {
+    return prj_path() / "03_Workflow" / "Shots" / "EP004" / "abc" / "LQ_EP004_SC001";
+  }
+  /// 场景 map 路径。entity_path.h 的 get_entity_ground_ue_path()/get_entity_ground_ue_map_name()
+  /// 没有 DOODLELIB_API(该头文件整个不导出), 测试 exe 链接不到, 所以这里按同样的格式复刻一份:
+  ///   "BG/JD{gui_dang:02}_{kai_shi_ji_shu:02}/BG{bian_hao}/{pin}" / "Content/{pin}/Map/{pin}{_banben}.umap"
+  /// asset_root_path_ 为空。若那两个函数的格式变了, 这里要同步改, 否则会抛「未找到场景 ... 的 ue 工程文件」。
+  [[nodiscard]] FSys::path scene_map_path() const {
+    return prj_path() / "BG" / "JD01_04" / "BGSC" / "ChangJing" / "Content" / "ChangJing" / "Map" / "ChangJing.umap";
+  }
+
+  void touch(const FSys::path& in_dir, std::string_view in_file_name) const {
+    std::ofstream{(in_dir / in_file_name).string(), std::ios::binary}.close();
+  }
+
+ private:
+  static std::size_t next_index() {
+    static std::size_t l_counter{0};
+    return ++l_counter;
+  }
+
+  FSys::path l_root_;
+};
+
+/// 角色资产行, key 为 "Ch{bian_hao}" = Ch006A
+shot_render_light_asset_row make_character_row() {
+  entity l_asset{};
+  l_asset.entity_type_id_ = asset_type::get_character_id();
+  l_asset.name_           = "Ch006A";
+  return shot_render_light_asset_row{
+      .asset_               = l_asset,
+      .asset_extend_        = make_extend("006A"),
+      .ji_shu_lie_name_     = "S01",
+      .kai_shi_ji_shu_name_ = "EP004",
+  };
+}
+
+/// 主场景(地编)资产行, 用于推导 ue 主工程路径
+shot_render_light_asset_row make_scene_row() {
+  entity l_asset{};
+  l_asset.name_ = "ChangJing";
+  return shot_render_light_asset_row{
+      .asset_               = l_asset,
+      .asset_extend_        = make_extend("SC"),
+      .ji_shu_lie_name_     = "S01",
+      .kai_shi_ji_shu_name_ = "EP004",
+  };
+}
+
+shot_render_light_input make_scan_input(const shot_output_tree& in_tree, simulation_abc_import in_abc_import) {
+  shot_render_light_input l_input{};
+  l_input.project_id_              = k_test_uuid;
+  l_input.shot_task_id_            = k_test_uuid;
+  l_input.prj_.code_               = "LQ";
+  l_input.prj_.resolution_         = "1920x1080";
+  l_input.prj_.path_               = in_tree.prj_path();
+  l_input.shot_task_.task_type_id_ = task_type::get_simulation_task_id();
+  l_input.shot_entity_.name_       = "SC001";
+  l_input.episode_entity_.name_    = "EP004";
+  l_input.shot_extend_.frame_in_   = 1001;
+  l_input.shot_extend_.frame_out_  = 1105;
+  l_input.assets_                  = {make_character_row(), make_scene_row()};
+  l_input.scene_asset_             = make_scene_row();
+  l_input.abc_import_              = in_abc_import;
+  return l_input;
+}
+
+using arg_t = import_and_render_ue_ns::run_ue_assembly_arg;
+
+/// 按完整文件名查找条目 —— 同一布料的 fbx 与 abc 只有扩展名不同, 按 stem 查会混淆
+const import_and_render_ue_ns::run_ue_assembly_asset_info* find_asset_file(
+    const arg_t& in_arg, std::string_view in_file_name
+) {
+  for (auto&& l_info : in_arg.asset_infos_)
+    if (l_info.shot_output_path_.filename().string() == in_file_name) return &l_info;
+  return nullptr;
+}
+
+std::size_t count_abc(const arg_t& in_arg) {
+  std::size_t l_ret{};
+  for (auto&& l_info : in_arg.asset_infos_)
+    if (l_info.shot_output_path_.extension() == ".abc") ++l_ret;
+  return l_ret;
+}
+
+/// 造出「动画目录: 角色 + 相机」+「解算目录: 带 cloth 标记的 fbx 与 abc」这棵标准树
+void fill_cloth_tree(const shot_output_tree& in_tree) {
+  in_tree.touch(in_tree.fbx_dir(), "LQ_EP004_SC001_Ch006A_rig_ch_1001-1105.fbx");
+  in_tree.touch(in_tree.fbx_dir(), "LQ_EP004_SC001_camera_1001-1105.fbx");
+  in_tree.touch(in_tree.abc_dir(), "LQ_EP004_SC001_Ch006A_rig_ch_cloth_1001-1105.fbx");
+  in_tree.touch(in_tree.abc_dir(), "LQ_EP004_SC001_Ch006A_rig_ch_cloth_1001-1105.abc");
+}
+
+}  // namespace
+
+/// 既有形态: 解算目录的 fbx 与 abc 都进入导入列表
+BOOST_AUTO_TEST_CASE(scan_simulation_with_abc_keeps_abc) {
+  shot_output_tree l_tree{};
+  fill_cloth_tree(l_tree);
+
+  const auto l_ret = shot_render_light_builder{make_scan_input(l_tree, simulation_abc_import::with_abc)}.run();
+
+  BOOST_REQUIRE_EQUAL(l_ret.asset_infos_.size(), 3);
+  BOOST_CHECK_EQUAL(count_abc(l_ret), 1);
+  BOOST_CHECK_EQUAL(
+      l_ret.camera_file_path_.generic_string(),
+      (l_tree.fbx_dir() / "LQ_EP004_SC001_camera_1001-1105.fbx").generic_string()
+  );
+
+  // 角色: 被解算配对标上 cloth, 走解算皮肤
+  const auto* l_char = find_asset_file(l_ret, "LQ_EP004_SC001_Ch006A_rig_ch_1001-1105.fbx");
+  BOOST_REQUIRE(l_char != nullptr);
+  BOOST_CHECK(l_char->type_ == import_and_render_ue_ns::import_ue_type::char_);
+  BOOST_CHECK(l_char->simulation_type_.test(0));
+  BOOST_CHECK(l_char->skin_path_.generic_string().find("SK_Ch006A_cloth") != std::string::npos);
+  // 布料 fbx 与 abc 都是 geo, 且都与角色共用同一个 key
+  for (auto&& l_name :
+       {"LQ_EP004_SC001_Ch006A_rig_ch_cloth_1001-1105.fbx", "LQ_EP004_SC001_Ch006A_rig_ch_cloth_1001-1105.abc"}) {
+    const auto* l_geo = find_asset_file(l_ret, l_name);
+    BOOST_REQUIRE(l_geo != nullptr);
+    BOOST_CHECK(l_geo->type_ == import_and_render_ue_ns::import_ue_type::geo);
+    BOOST_CHECK_EQUAL(l_geo->key_, "Ch006A");
+    BOOST_CHECK(l_geo->skin_path_.generic_string().find("SK_Ch006A_cloth") != std::string::npos);
+  }
+}
+
+/// 新形态: 只把 abc 从导入列表剔除, 其余(含角色的解算皮肤)完全不变
+BOOST_AUTO_TEST_CASE(scan_simulation_without_abc_drops_abc_only) {
+  shot_output_tree l_tree{};
+  fill_cloth_tree(l_tree);
+
+  const auto l_with    = shot_render_light_builder{make_scan_input(l_tree, simulation_abc_import::with_abc)}.run();
+  const auto l_without = shot_render_light_builder{make_scan_input(l_tree, simulation_abc_import::without_abc)}.run();
+
+  BOOST_REQUIRE_EQUAL(l_with.asset_infos_.size(), 3);
+  BOOST_REQUIRE_EQUAL(l_without.asset_infos_.size(), 2);
+  BOOST_CHECK_EQUAL(count_abc(l_without), 0);
+  BOOST_CHECK_EQUAL(l_without.camera_file_path_.generic_string(), l_with.camera_file_path_.generic_string());
+
+  // 角色条目与 cloth fbx 条目必须原样保留, 且与 with_abc 完全一致
+  const auto* l_char = find_asset_file(l_without, "LQ_EP004_SC001_Ch006A_rig_ch_1001-1105.fbx");
+  BOOST_REQUIRE(l_char != nullptr);
+  BOOST_CHECK(l_char->type_ == import_and_render_ue_ns::import_ue_type::char_);
+  BOOST_CHECK(l_char->simulation_type_.test(0));
+  BOOST_CHECK(l_char->skin_path_.generic_string().find("SK_Ch006A_cloth") != std::string::npos);
+
+  const auto* l_char_with = find_asset_file(l_with, "LQ_EP004_SC001_Ch006A_rig_ch_1001-1105.fbx");
+  BOOST_REQUIRE(l_char_with != nullptr);
+  BOOST_CHECK_EQUAL(l_char->skin_path_.generic_string(), l_char_with->skin_path_.generic_string());
+  BOOST_CHECK(l_char->simulation_type_ == l_char_with->simulation_type_);
+
+  // 布料 fbx 仍在
+  const auto* l_cloth = find_asset_file(l_without, "LQ_EP004_SC001_Ch006A_rig_ch_cloth_1001-1105.fbx");
+  BOOST_REQUIRE(l_cloth != nullptr);
+  BOOST_CHECK(l_cloth->type_ == import_and_render_ue_ns::import_ue_type::geo);
+  BOOST_CHECK_EQUAL(l_cloth->key_, "Ch006A");
+  // abc 已剔除
+  BOOST_CHECK(find_asset_file(l_without, "LQ_EP004_SC001_Ch006A_rig_ch_cloth_1001-1105.abc") == nullptr);
+  // 路径约定不变: 仍是解算的 Import_JS
+  BOOST_CHECK(l_without.update_ue_path_.generic_string().find("Import_JS") != std::string::npos);
+}
+
+/// 动画任务不受影响
+BOOST_AUTO_TEST_CASE(scan_animation_task_unaffected) {
+  shot_output_tree l_tree{};
+  fill_cloth_tree(l_tree);
+
+  auto l_input                     = make_scan_input(l_tree, simulation_abc_import::without_abc);
+  l_input.shot_task_.task_type_id_ = task_type::get_animation_id();
+
+  const auto l_ret                 = shot_render_light_builder{std::move(l_input)}.run();
+
+  BOOST_REQUIRE_EQUAL(l_ret.asset_infos_.size(), 1);
+  BOOST_CHECK_EQUAL(count_abc(l_ret), 0);
+  BOOST_CHECK(l_ret.asset_infos_[0].type_ == import_and_render_ue_ns::import_ue_type::char_);
+  BOOST_CHECK(!l_ret.asset_infos_[0].simulation_type_.any());
+  BOOST_CHECK(l_ret.asset_infos_[0].skin_path_.generic_string().find("SK_Ch006A_cloth") == std::string::npos);
+  BOOST_CHECK(l_ret.update_ue_path_.generic_string().find("Import_DH") != std::string::npos);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

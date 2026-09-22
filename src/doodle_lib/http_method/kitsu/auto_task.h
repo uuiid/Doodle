@@ -29,6 +29,14 @@ struct shot_render_light_asset_row {
   std::string kai_shi_ji_shu_name_{};  // 开始集数实体名
 };
 
+/// 解算任务 abc 输出的导入方式
+enum class simulation_abc_import {
+  /// abc 进入 UE 导入列表 (既有行为)
+  with_abc,
+  /// abc 不进入 UE 导入列表: 仍参与扫描/配对/check_files() 校验, 仅在组装前剔除 (新形态)
+  without_abc,
+};
+
 /// shot_render_light 的全部输入: 由调用方查询后传入, 本模块不访问数据库
 struct shot_render_light_input {
   uuid project_id_{};
@@ -42,6 +50,8 @@ struct shot_render_light_input {
   std::vector<shot_render_light_asset_row> assets_{};
   /// 主场景(地编)资产, 同时也是 assets_ 中的一行
   shot_render_light_asset_row scene_asset_{};
+  /// 解算任务 abc 输出的导入方式; 仅当 shot_task_ 是解算任务时有意义
+  simulation_abc_import abc_import_{simulation_abc_import::with_abc};
 };
 
 /// 路径条目基类: 每个输出路径条目对应一个类
@@ -283,10 +293,12 @@ class DOODLELIB_API shot_render_light_path_set {
 /// 解算输出配对: 由各输出的文件 stem 得到 (配对 key, 下标)
 ///
 /// 先去掉 "{shot_file_name}_" 前缀, 再去掉 _cloth / _hair / _hair_XXX 标记或帧区间后缀,
-/// 得到对应 char 类型资产的 stem。例(shot_file_name = "ZM_EP127_SC025_Ch006A"):
-///   ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_1001-1105 -> rig_ch
-///   ZM_EP127_SC025_Ch006A_rig_ch_hair_dasbxs_1001-1105 -> rig_ch
-///   ZM_EP127_SC025_Ch006A_rig_ch_1001-1105 -> rig_ch
+/// 得到对应 char 类型资产的 stem。例(shot_file_name = "ZM_EP127_SC025"):
+///   ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_1001-1105 -> Ch006A_rig_ch
+///   ZM_EP127_SC025_Ch006A_rig_ch_hair_dasbxs_1001-1105 -> Ch006A_rig_ch
+///   ZM_EP127_SC025_Ch006A_rig_ch_1001-1105 -> Ch006A_rig_ch
+/// 其中 "rig_ch" 是绑定名, 只有 cloth / hair / hair_XXX 才是解算标记; 角色 fbx 与解算输出
+/// 必须共享同一段绑定名, 否则配不上, 角色会落到动画皮肤。
 [[nodiscard]] DOODLELIB_API std::vector<std::pair<std::string, std::size_t>> pair_sim_keys(
     const std::vector<std::string>& in_stems, std::string_view in_shot_file_name
 );
@@ -336,6 +348,8 @@ class DOODLELIB_API shot_render_light_builder {
   void bind_asset_extends(const scene_resolution& in_scene);
   /// NDEBUG 下的存在性校验与 groom binding 扫描
   void check_files();
+  /// 从导入列表中剔除 abc 资产(仅保留 fbx); 必须在 check_files() 之后调用
+  void drop_abc_assets();
   /// 将 skin_path_/groom_bind_path_ 转换为 /Game 路径
   void conv_asset_game_paths();
 
@@ -343,5 +357,8 @@ class DOODLELIB_API shot_render_light_builder {
   import_and_render_ue_ns::run_ue_assembly_arg ret_{};
 };
 
-import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_project_id, const uuid& in_shot_id);
+import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(
+    const uuid& in_project_id, const uuid& in_shot_id,
+    simulation_abc_import in_abc_import = simulation_abc_import::with_abc
+);
 }  // namespace doodle::http::auto_task
