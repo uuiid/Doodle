@@ -212,20 +212,20 @@ shot_pretreatment_probe shot_pretreatment_probe::run(const shot_path_context& in
   l_result.original_map_ = conv_ue_game_path(get_entity_ground_ue_map_name(l_scene.scene_extend_value_));
 
   auto l_path2           = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
-                 fmt::format("ep{:04}", l_id.episodes_) / l_id.shot_dir_name() / "Import_WB";
-  auto l_path3 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
-                 fmt::format("ep{:04}", l_id.episodes_) / l_id.shot_dir_name() /
-                 fmt::format("{}{}", l_id.ep_sc_name(), doodle_config::ue4_uasset_ext);
-  auto l_path4 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
-                 fmt::format("ep{:04}", l_id.episodes_) / l_id.shot_dir_name() /
-                 fmt::format("{}_Zong{}", l_id.ep_sc_name(), doodle_config::ue4_umap_ext);
+                           fmt::format("ep{:04}", l_id.episodes_) / l_id.shot_dir_name() / "Import_WB";
+  auto l_path3           = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
+                           fmt::format("ep{:04}", l_id.episodes_) / l_id.shot_dir_name() /
+                           fmt::format("{}{}", l_id.ep_sc_name(), doodle_config::ue4_uasset_ext);
+  auto l_path4           = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
+                           fmt::format("ep{:04}", l_id.episodes_) / l_id.shot_dir_name() /
+                           fmt::format("{}_Zong{}", l_id.ep_sc_name(), doodle_config::ue4_umap_ext);
 
-  auto l_uproject_stem = l_scene.uproject_file_.stem();
-  auto l_pretreatment  = get_shots_ground_pretreatment_movie_path(in_ctx.episode_entity_);
-  auto l_source_path1  = in_ctx.project_path_ / l_pretreatment / l_uproject_stem / l_path2;
-  auto l_source_path2  = in_ctx.project_path_ / l_pretreatment / l_uproject_stem / l_path3;
-  auto l_source_path3  = in_ctx.project_path_ / l_pretreatment / l_uproject_stem / l_path4;
-  auto l_source_path4  = l_path2 / fmt::format("{}_WB{}", l_id.ep_sc_name(), doodle_config::ue4_uasset_ext);
+  auto l_uproject_stem   = l_scene.uproject_file_.stem();
+  auto l_pretreatment    = get_shots_ground_pretreatment_movie_path(in_ctx.episode_entity_);
+  auto l_source_path1    = in_ctx.project_path_ / l_pretreatment / l_uproject_stem / l_path2;
+  auto l_source_path2    = in_ctx.project_path_ / l_pretreatment / l_uproject_stem / l_path3;
+  auto l_source_path3    = in_ctx.project_path_ / l_pretreatment / l_uproject_stem / l_path4;
+  auto l_source_path4    = l_path2 / fmt::format("{}_WB{}", l_id.ep_sc_name(), doodle_config::ue4_uasset_ext);
 
   if (FSys::exists(l_source_path1) && FSys::exists(l_source_path2) && FSys::exists(l_source_path3) &&
       FSys::exists(l_source_path4)) {
@@ -366,14 +366,16 @@ scene_resolution shot_render_light_builder::resolve_scene_ue_path() {
       l_scene_asset_extend, input_.scene_asset_.ji_shu_lie_name_, input_.scene_asset_.kai_shi_ji_shu_name_
   };
 
-  auto l_ue_main_map = input_.prj_.path_ / get_entity_ground_ue_path(input_.prj_, l_result.scene_extend_value_) /
-                       get_entity_ground_ue_map_name(l_result.scene_extend_value_);
+  auto l_ue_main_map      = input_.prj_.path_ / get_entity_ground_ue_path(input_.prj_, l_result.scene_extend_value_) /
+                            get_entity_ground_ue_map_name(l_result.scene_extend_value_);
   l_result.uproject_file_ = ue_exe_ns::find_ue_project_file(l_ue_main_map);
   if (l_result.uproject_file_.empty())
-    throw_exception(http_request_error{
-        boost::beast::http::status::bad_request, "未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径",
-        l_scene_asset.name_
-    });
+    throw_exception(
+        http_request_error{
+            boost::beast::http::status::bad_request, "未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径",
+            l_scene_asset.name_
+        }
+    );
 
   l_result.scene_ue_path_ = FSys::path{"D:/sy_magic/ue_projects/"};  // 默认路径
   l_result.scene_ue_path_ /= input_.prj_.code_;
@@ -404,11 +406,13 @@ std::set<std::string> shot_render_light_builder::scan_simulation_output(const ba
       continue;
     if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) continue;
 
-    ret_.asset_infos_.emplace_back(import_and_render_ue_ns::run_ue_assembly_asset_info{
-        .shot_output_path_ = l_path.path(),
-        .type_             = l_path.path().extension() == ".fbx" ? import_and_render_ue_ns::import_ue_type::char_
-                                                                 : import_and_render_ue_ns::import_ue_type::geo
-    });
+    ret_.asset_infos_.emplace_back(
+        import_and_render_ue_ns::run_ue_assembly_asset_info{
+            .shot_output_path_ = l_path.path(),
+            .type_             = l_path.path().extension() == ".fbx" ? import_and_render_ue_ns::import_ue_type::char_
+                                                                     : import_and_render_ue_ns::import_ue_type::geo
+        }
+    );
     const static std::regex l_sim_output_key_regex{R"((.*?)_((?:cloth|hair)(?:_[a-zA-Z]+)*)_\d+-\d+)"};
     /*
       ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_1001-1105
@@ -471,9 +475,11 @@ void shot_render_light_builder::scan_animation_output(
       continue;
     }
 
-    ret_.asset_infos_.emplace_back(import_and_render_ue_ns::run_ue_assembly_asset_info{
-        .shot_output_path_ = l_path.path(), .type_ = import_and_render_ue_ns::import_ue_type::char_
-    });
+    ret_.asset_infos_.emplace_back(
+        import_and_render_ue_ns::run_ue_assembly_asset_info{
+            .shot_output_path_ = l_path.path(), .type_ = import_and_render_ue_ns::import_ue_type::char_
+        }
+    );
   }
 }
 
@@ -481,9 +487,11 @@ void shot_render_light_builder::scan_shot_output(const base_info& in_base) {
   const auto l_sim_output_key = is_simulation_task() ? scan_simulation_output(in_base) : std::set<std::string>{};
   scan_animation_output(in_base, l_sim_output_key);
   if (ret_.camera_file_path_.empty())
-    throw_exception(http_request_error{
-        boost::beast::http::status::bad_request, "未找到镜头(camera)文件，请确保镜头文件已上传至服务器"
-    });
+    throw_exception(
+        http_request_error{
+            boost::beast::http::status::bad_request, "未找到镜头(camera)文件，请确保镜头文件已上传至服务器"
+        }
+    );
 }
 
 void shot_render_light_builder::build_asset_keys(const base_info& in_base) {
@@ -610,14 +618,18 @@ void shot_render_light_builder::bind_asset_extends(const scene_resolution& in_sc
               );
           }
         } else
-          throw_exception(http_request_error{
-              boost::beast::http::status::bad_request, "资产 {} 缺少归档或开始集信息，无法生成 ue 资产路径",
-              l_row.asset_.name_
-          });
+          throw_exception(
+              http_request_error{
+                  boost::beast::http::status::bad_request, "资产 {} 缺少归档或开始集信息，无法生成 ue 资产路径",
+                  l_row.asset_.name_
+              }
+          );
       }
 
-    } else if (l_row.asset_.entity_type_id_ == asset_type::get_prop_id() ||
-               l_row.asset_.entity_type_id_ == asset_type::get_effect_id()) {
+    } else if (
+        l_row.asset_.entity_type_id_ == asset_type::get_prop_id() ||
+        l_row.asset_.entity_type_id_ == asset_type::get_effect_id()
+    ) {
       auto l_key = fmt::format(
           "{}{}{}", l_row.asset_extend_.pin_yin_ming_cheng_, l_row.asset_extend_.ban_ben_.empty() ? "" : "_",
           l_row.asset_extend_.ban_ben_
@@ -643,10 +655,12 @@ void shot_render_light_builder::bind_asset_extends(const scene_resolution& in_sc
             );
           }
         } else
-          throw_exception(http_request_error{
-              boost::beast::http::status::bad_request, "资产 {} 缺少归档或开始集信息，无法生成 ue 资产路径",
-              l_row.asset_.name_
-          });
+          throw_exception(
+              http_request_error{
+                  boost::beast::http::status::bad_request, "资产 {} 缺少归档或开始集信息，无法生成 ue 资产路径",
+                  l_row.asset_.name_
+              }
+          );
       }
 
     } else if (l_row.asset_.entity_type_id_ == asset_type::get_ground_id()) {
@@ -770,10 +784,10 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(
   auto l_scene_it = check_multiple_scene(l_assets);
   auto l_to_row   = [](const auto& in_row) -> shot_render_light_asset_row {
     return shot_render_light_asset_row{
-          .asset_               = std::get<0>(in_row),
-          .asset_extend_        = std::get<1>(in_row),
-          .ji_shu_lie_name_     = std::get<2>(in_row),
-          .kai_shi_ji_shu_name_ = std::get<3>(in_row),
+        .asset_               = std::get<0>(in_row),
+        .asset_extend_        = std::get<1>(in_row),
+        .ji_shu_lie_name_     = std::get<2>(in_row),
+        .kai_shi_ji_shu_name_ = std::get<3>(in_row),
     };
   };
   auto l_scene_row = l_to_row(*l_scene_it);
@@ -781,18 +795,19 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(
   l_rows.reserve(l_assets.size());
   for (auto&& l_row : l_assets) l_rows.emplace_back(l_to_row(l_row));
 
-  return shot_render_light_builder{shot_render_light_input{
-                                       .project_id_     = in_project_id,
-                                       .shot_task_id_   = in_shot_id,
-                                       .prj_            = std::move(l_prj),
-                                       .shot_task_      = std::move(l_shot_task),
-                                       .shot_entity_    = std::move(l_shot_entity),
-                                       .episode_entity_ = std::move(l_episode_entity),
-                                       .shot_extend_    = *l_shot_extend,
-                                       .assets_         = std::move(l_rows),
-                                       .scene_asset_    = std::move(l_scene_row),
-                                       .abc_import_     = in_abc_import,
-                                   }
+  return shot_render_light_builder{
+      shot_render_light_input{
+          .project_id_     = in_project_id,
+          .shot_task_id_   = in_shot_id,
+          .prj_            = std::move(l_prj),
+          .shot_task_      = std::move(l_shot_task),
+          .shot_entity_    = std::move(l_shot_entity),
+          .episode_entity_ = std::move(l_episode_entity),
+          .shot_extend_    = *l_shot_extend,
+          .assets_         = std::move(l_rows),
+          .scene_asset_    = std::move(l_scene_row),
+          .abc_import_     = in_abc_import,
+      }
   }.run();
 }
 
@@ -824,9 +839,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_rig_sk, get) {
     auto l_maya_file_name = l_is_sim ? get_entity_simulation_character_asset_name(*l_asset_extends)
                                      : get_entity_character_rig_maya_name(*l_asset_extends);
 
-    auto l_base_name      = l_asset_extends->ban_ben_.empty()
-                                ? l_ue_name.stem().generic_string()
-                                : fmt::format("{}_{}", l_ue_name.stem().generic_string(), l_asset_extends->ban_ben_);
+    auto l_base_name      = l_ue_name.stem().generic_string();
     l_arg.skin_path_      = conv_ue_game_path(l_ue_name);
     l_arg.groom_path_     = l_arg.skin_path_.parent_path() / "Groom";
     l_arg.ban_ben_suffix_ = l_asset_extends->ban_ben_.empty() ? "" : fmt::format("_{}", l_asset_extends->ban_ben_);
@@ -851,8 +864,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_rig_sk, get) {
     l_arg.ue_project_path_ = l_ue_scene_path / l_ue_project.filename();
     l_arg.update_ue_path_  = l_ue_scene_path / l_ue_name.parent_path();
 
-  } else if (l_asset.entity_type_id_ == asset_type::get_prop_id() ||
-             l_asset.entity_type_id_ == asset_type::get_effect_id()) {
+  } else if (
+      l_asset.entity_type_id_ == asset_type::get_prop_id() || l_asset.entity_type_id_ == asset_type::get_effect_id()
+  ) {
     auto l_ue_name    = get_entity_prop_ue_name(*l_asset_extends);
     auto l_ue_path    = get_entity_prop_ue_path(l_prj, *l_asset_extends);
     auto l_ue_project = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
@@ -981,7 +995,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync, get) {
 
   auto l_ue_main_map = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend_value) /
                        get_entity_ground_ue_map_name(l_scene_asset_extend_value);
-  auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ue_main_map);
+  auto&& l_uprj      = ue_exe_ns::find_ue_project_file(l_ue_main_map);
   DOODLE_CHICK_HTTP(
       !l_uprj.empty(), bad_request, "未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_
   );
@@ -1011,8 +1025,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync, get) {
           l_scene_ue_path / doodle_config::ue4_content
       );
 
-    } else if (l_asset.entity_type_id_ == asset_type::get_prop_id() ||
-               l_asset.entity_type_id_ == asset_type::get_effect_id()) {
+    } else if (
+        l_asset.entity_type_id_ == asset_type::get_prop_id() || l_asset.entity_type_id_ == asset_type::get_effect_id()
+    ) {
       DOODLE_CHICK_HTTP(l_asset_extend.gui_dang_, bad_request, "资产 {} 缺少扩展信息 归档", l_asset.name_);
       DOODLE_CHICK_HTTP(
           !l_asset_extend.kai_shi_ji_shu_.is_nil(), bad_request, "资产 {} 缺少扩展信息 开始集数", l_asset.name_
