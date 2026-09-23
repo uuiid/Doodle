@@ -1,4 +1,4 @@
-﻿#include "DoodleEditor.h"
+#include "DoodleEditor.h"
 
 #include "Doodle/ContentBrowserMenuExtension.h"
 #include "Doodle/DoodleImportFbxUI.h"
@@ -28,7 +28,7 @@
 #include "ISequencerModule.h"
 #include "LevelSequence.h"
 //----------------文件管理
-#include "DoodleOrganizeCompoundWidget.h"
+#include "Doodle/Organize/DoodleOrganizeTab.h"
 #include "DoodleEffectLibraryWidget.h"
 #include "Interfaces/IPluginManager.h"
 #include "DoodleAutoAnimationCommandlet.h"
@@ -63,7 +63,7 @@ void FdoodleEditorModule::StartupModule()
 	);
 	PluginCommands->MapAction(
 		FDoodleCommands::Get().DoodleOrganizeWindow,
-		FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(UDoodleOrganizeCompoundWidget::Name); }),
+		FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(SDoodleOrganizeTab::Name); }),
 		FCanExecuteAction()
 	);
 	//-----------------------
@@ -88,7 +88,7 @@ void FdoodleEditorModule::StartupModule()
 		.SetDisplayName(LOCTEXT("FdoodleTabTitle2", "Doodle Import Fbx"))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
 	FGlobalTabmanager::Get() //文件管理
-		->RegisterNomadTabSpawner(UDoodleOrganizeCompoundWidget::Name, FOnSpawnTab::CreateStatic(&UDoodleOrganizeCompoundWidget::OnSpawnAction))
+		->RegisterNomadTabSpawner(SDoodleOrganizeTab::Name, FOnSpawnTab::CreateStatic(&SDoodleOrganizeTab::OnSpawnAction))
 		.SetDisplayName(FText::FromString(TEXT("文件分类整理")))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
 	//-----------
@@ -199,7 +199,7 @@ void FdoodleEditorModule::ShutdownModule()
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleImportFbxUI::UIName);
 	// zhanghang 变体相关 23/09/25
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(DoodleVariantCompoundWidget::Name);
-	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(UDoodleOrganizeCompoundWidget::Name);
+	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleOrganizeTab::Name);
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(UDoodleEffectLibraryWidget::Name);
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(UDoodleEffectLibraryEditWidget::Name);
 

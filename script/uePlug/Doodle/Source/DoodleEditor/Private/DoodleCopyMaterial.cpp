@@ -29,7 +29,7 @@
 #include "Rendering/SkeletalMeshModel.h"
 #include "MeshDescription.h"
 //文件夹整理
-#include "DoodleOrganizeCompoundWidget.h"
+#include "Doodle/Organize/DoodleOrganizeTab.h"
 #include "DoodleEffectLibraryWidget.h"
 #include "EditorUtilityLibrary.h"
 #include <BatchRenderQueue.h>
@@ -183,7 +183,7 @@ void DoodleCopyMat::Construct(const FArguments& Arg)
 							[
 								SNew(SButton).OnClicked_Lambda([this]() -> FReply
 									{
-										FGlobalTabmanager::Get()->TryInvokeTab(UDoodleOrganizeCompoundWidget::Name);
+										FGlobalTabmanager::Get()->TryInvokeTab(SDoodleOrganizeTab::Name);
 										return FReply::Handled();
 									})
 									[
