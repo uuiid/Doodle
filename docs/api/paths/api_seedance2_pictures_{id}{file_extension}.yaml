@@ -1,0 +1,44 @@
+get:
+  tags:
+    - 静态文件
+  summary: 获取图片/视频原始文件
+  description: |
+    按预览文件 ID 与扩展名获取落盘的原始文件（图片或视频）。
+
+    `file_extension` 由路由正则约束为「一个点 + 3~4 位字母数字」，**不固定为 `.png`**：
+    `.png` / `.jpg` / `.mp4` / `.webm` / `.mov` 等均可。服务端以 `<id><file_extension>` 拼接磁盘文件名，
+    并按扩展名推导 `Content-Type`（未收录的扩展名回退 `application/octet-stream`），
+    因此传错扩展名会得到 404 而不是 `.png` 的内容。
+
+    响应带 `Last-Modified` / `ETag`；请求带 `Range` 头时返回 206，支持 `HEAD`。
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 预览文件 ID
+    - name: file_extension
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 文件扩展名（含前导点），形如 `.png`、`.mp4`；仅接受点加 3~4 位字母数字
+  responses:
+    '200':
+      description: 图片/视频二进制数据（`Content-Type` 由扩展名推导）
+      content:
+        image/png: {}
+        image/jpeg: {}
+        video/mp4: {}
+        video/webm: {}
+        application/octet-stream: {}
+    '206':
+      description: 请求带 `Range` 头时返回的部分内容
+      content:
+        application/octet-stream: {}
+    '404':
+      description: 文件不存在
+  security:
+    - bearerAuth: []

@@ -3,9 +3,13 @@ get:
     - 任务
   summary: 获取所有可访问的任务
   description: |
-    获取当前用户可访问的所有任务列表，支持分页。
-    - 制片/管理员：查看所有任务
-    - 普通用户：仅查看自己参与的子项目下的任务
+    获取当前用户可访问的任务列表，按 `created_at` 倒序返回，支持分页与多条件过滤。
+    - 制片/管理员：查看所有任务（含已归档任务）
+    - 普通用户：仅查看自己参与的子项目下的任务，且不含已归档（`archived=true`）的任务
+
+    所有过滤条件之间为 AND 关系；`size` / `offset` 在过滤之后生效。
+    `task_type` 过滤的是任务响应中的 `type` 字段。
+    非法枚举值（`status` / `task_type`）、非法 UUID（`project` / `user_id`）或非法整数（`size` / `offset`）会导致请求失败。
   parameters:
     - name: size
       in: query
@@ -25,6 +29,26 @@ get:
       schema:
         $ref: ../components/schemas/TaskStatus.yaml
       description: 按任务状态过滤
+    - name: task_type
+      in: query
+      required: false
+      schema:
+        $ref: ../components/schemas/TaskType.yaml
+      description: 按任务类型过滤（图片/视频）
+    - name: project
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: 按项目 ID 过滤，匹配任务所属子项目的 `project_id`
+    - name: user_id
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: 按提交用户 ID 过滤
   responses:
     '200':
       description: 任务列表

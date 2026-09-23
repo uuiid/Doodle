@@ -223,8 +223,8 @@ paths:
       paths/api_canvas_{canvas_id}_node_{node_id}_media_{media_id}_file_{role}.yaml
   /api/seedance2/thumbnail/{id}.png:
     $ref: paths/api_seedance2_thumbnail_{id}.png.yaml
-  /api/seedance2/pictures/{id}.png:
-    $ref: paths/api_seedance2_pictures_{id}.png.yaml
+  /api/seedance2/pictures/{id}{file_extension}:
+    $ref: paths/api_seedance2_pictures_{id}{file_extension}.yaml
   /api/seedance2/animation/waiting.mp4:
     $ref: paths/api_seedance2_animation_waiting.mp4.yaml
   /api/seedance2/subproject:

@@ -5,7 +5,7 @@ get:
   description: |
     > ⚠️ **仅供工作机（depth worker）使用，前端不可调用。**
     > 该接口不做子项目权限校验，只按 `depth_id` 取文件，前端请改用
-    > `GET /api/seedance2/pictures/{id}.png` 或缩略图接口读取结果。
+    > `GET /api/seedance2/pictures/{id}{file_extension}` 或缩略图接口读取结果。
 
     下载 `POST /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/depth`
     暂存的输入视频，供工作机做深度估计推理。
