@@ -168,8 +168,23 @@ namespace DoodleOrganize
 		return !DoesAssetExistOnDisk(PackageOrObjectPath) && !DoesAssetExistInRegistry(PackageOrObjectPath, true);
 	}
 
+	bool IsAssetPathFreeForBatch(const FString& PackageOrObjectPath, const TSet<FString>* ReservedPackages)
+	{
+		if (!IsAssetPathFree(PackageOrObjectPath))
+		{
+			return false;
+		}
+		if (ReservedPackages == nullptr)
+		{
+			return true;
+		}
+		// 同一批里已经被别的资产预订的目标不能再给第二个资产用 ——
+		// 注册表和磁盘都还没变, 只有这里能发现这种冲突
+		return !ReservedPackages->Contains(StripObjectPath(PackageOrObjectPath));
+	}
+
 	bool TryMakeUniqueAssetPath(const FString& DesiredFolder, const FString& DesiredName,
-		FString& OutFolder, FString& OutName)
+		FString& OutFolder, FString& OutName, const TSet<FString>* ReservedPackages)
 	{
 		OutFolder.Reset();
 		OutName.Reset();
@@ -180,7 +195,7 @@ namespace DoodleOrganize
 		}
 
 		const FString DesiredPackage = CombinePackagePath(DesiredFolder, DesiredName);
-		if (IsAssetPathFree(DesiredPackage))
+		if (IsAssetPathFreeForBatch(DesiredPackage, ReservedPackages))
 		{
 			OutFolder = DesiredFolder;
 			OutName = DesiredName;
@@ -192,7 +207,7 @@ namespace DoodleOrganize
 		FString UniquePackage;
 		FString UniqueName;
 		AssetToolsModule.Get().CreateUniqueAssetName(DesiredPackage, TEXT(""), UniquePackage, UniqueName);
-		if (!UniquePackage.IsEmpty() && IsAssetPathFree(UniquePackage))
+		if (!UniquePackage.IsEmpty() && IsAssetPathFreeForBatch(UniquePackage, ReservedPackages))
 		{
 			OutFolder = FPackageName::GetLongPackagePath(UniquePackage);
 			OutName = UniqueName;
@@ -204,7 +219,7 @@ namespace DoodleOrganize
 		{
 			const FString CandidateName = FString::Printf(TEXT("%s_%d"), *DesiredName, Counter);
 			const FString CandidatePackage = CombinePackagePath(DesiredFolder, CandidateName);
-			if (IsAssetPathFree(CandidatePackage))
+			if (IsAssetPathFreeForBatch(CandidatePackage, ReservedPackages))
 			{
 				OutFolder = DesiredFolder;
 				OutName = CandidateName;

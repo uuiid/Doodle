@@ -3,6 +3,7 @@
 #include "Doodle/Organize/DoodleAssetOrganizer.h"
 
 #include "Doodle/Organize/DoodleAssetPathUtils.h"
+#include "Doodle/Organize/DoodleDirtyPackages.h"
 #include "Doodle/Organize/DoodleOrganizeRules.h"
 #include "Doodle/Organize/DoodleOrganizeSettings.h"
 #include "Doodle/Organize/DoodleRedirectFixup.h"
@@ -62,6 +63,10 @@ namespace
 		Into.NumRedirectorsLeft += From.NumRedirectorsLeft;
 		Into.NumRetargetedSoftReferences += From.NumRetargetedSoftReferences;
 		Into.RetargetedPackages.Append(From.RetargetedPackages);
+		Into.NumDirtyPackagesSaved += From.NumDirtyPackagesSaved;
+		Into.SavedDirtyPackages.Append(From.SavedDirtyPackages);
+		Into.NumRedirectorsDeleted += From.NumRedirectorsDeleted;
+		Into.bRanLoadAllPackagesPass = Into.bRanLoadAllPackagesPass || From.bRanLoadAllPackagesPass;
 		Into.Failures.Append(From.Failures);
 		Into.Skipped.Append(From.Skipped);
 		Into.Warnings.Append(From.Warnings);
@@ -290,6 +295,24 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 		return Report;
 	}
 
+	// ---- 整理前的脏包兜底 ----
+	// 未保存的包, 其依赖关系还没进资产注册表, 引擎的引用修复看不到它们。
+	// 先保存一次 => 依赖进注册表 => 引擎自己那一趟就能把它们一起修好。
+	// (和移动后的 RetargetSoftReferences 形成双保险)
+	if (UDoodleOrganizeSettings::Get().bSaveDirtyPackagesBeforeOrganize)
+	{
+		const FDoodleOrganizeReport DirtyReport = SaveDirtyPackagesGuard();
+		MergeReport(Report, DirtyReport);
+
+		if (DirtyReport.Result == EDoodleOrganizeResult::Cancelled)
+		{
+			// 用户拒绝保存未保存的工作 => 不要继续搬动
+			Report.Result = EDoodleOrganizeResult::Cancelled;
+			Report.ElapsedSeconds = FPlatformTime::Seconds() - StartTime;
+			return Report;
+		}
+	}
+
 	IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>(TEXT("AssetTools")).Get();
 	const TSharedRef<FPathPermissionList>& WritableFolders = AssetTools.GetWritableFolderPermissionList();
 
@@ -300,6 +323,11 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 	RenameData.Reserve(Requests.Num());
 	SourcePackages.Reserve(Requests.Num());
 	RenamedForConflict.Reserve(Requests.Num());
+
+	// 本批次已经分配出去的目标包名。注册表和磁盘在这一步都还没变,
+	// 所以两个同名资产会被分到同一个目标 —— 只有这个集合能挡住 (见 IsAssetPathFreeForBatch)。
+	TSet<FString> ReservedPackages;
+	ReservedPackages.Reserve(Requests.Num());
 
 	for (const FDoodleMoveRequest& Request : Requests)
 	{
@@ -347,7 +375,7 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 		if (Request.bRenameOnConflict)
 		{
 			const FString DesiredPackage = DoodleOrganize::CombinePackagePath(TargetFolder, DesiredName);
-			if (!DoodleOrganize::TryMakeUniqueAssetPath(TargetFolder, DesiredName, FinalFolder, FinalName))
+			if (!DoodleOrganize::TryMakeUniqueAssetPath(TargetFolder, DesiredName, FinalFolder, FinalName, &ReservedPackages))
 			{
 				Report.AddFailure(FString::Printf(TEXT("%s -> %s : 无法生成唯一资产名"), *SourcePackage, *TargetFolder));
 				continue;
@@ -358,7 +386,7 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 		else
 		{
 			const FString DesiredPackage = DoodleOrganize::CombinePackagePath(TargetFolder, DesiredName);
-			if (!DoodleOrganize::IsAssetPathFree(DesiredPackage))
+			if (!DoodleOrganize::IsAssetPathFreeForBatch(DesiredPackage, &ReservedPackages))
 			{
 				Report.AddFailure(FString::Printf(TEXT("%s -> %s : 目标已存在"), *SourcePackage, *DesiredPackage));
 				continue;
@@ -387,6 +415,9 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 			/*bOnlyFixSoftReferences*/ false, /*bAlsoRenameLocalizedVariants*/ true);
 		SourcePackages.Add(SourcePackage);
 		RenamedForConflict.Add(bRenamedForConflict);
+
+		// 预订这个目标, 后面的资产不能再选它 (否则同名资产会撞车, 见 IsAssetPathFreeForBatch)
+		ReservedPackages.Add(DoodleOrganize::CombinePackagePath(FinalFolder, FinalName));
 	}
 
 	if (RenameData.Num() == 0)
@@ -411,36 +442,72 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 		RenameResult = AssetTools.RenameAssets(RenameData) ? EAssetRenameResult::Success : EAssetRenameResult::Failure;
 	}
 
-	if (RenameResult == EAssetRenameResult::Failure)
-	{
-		for (const FString& SourcePackage : SourcePackages)
-		{
-			Report.AddFailure(FString::Printf(TEXT("%s : 引擎重命名失败 (EAssetRenameResult::Failure)"), *SourcePackage));
-		}
-		Report.Finalize();
-		Report.ElapsedSeconds = FPlatformTime::Seconds() - StartTime;
-		return Report;
-	}
+	// ---- 重要: 引擎的返回值是"这一批里有没有失败", 不是"有没有搬动" ----
+	//
+	// FixReferencesAndRename 最后一行是 `return ReportFailures(AssetsToRename, bWithDialog) == 0;`
+	// (AssetRenameManager.cpp:553) —— 只要**任何一个**资产重命名失败 (最典型的是目标已有同名资产),
+	// 整批就返回 Failure, 但**其余资产其实已经搬完了**。
+	//
+	// 真实案例: 224 个请求里有 7 个目标同名冲突, 引擎返回 Failure, 实际搬走了 217 个。
+	// 原实现看到 Failure 就把 224 条全部记成失败并直接 return —— 后果是:
+	//   1) 报告显示"移动 0", 用户完全不知道资产已经被搬走了;
+	//   2) Report.MovedPackages 是空的, 于是下面三道引用保护
+	//      (软引用补修 / bLoadAllPackages 第二趟 / 重定向器清理) 全部被跳过 ——
+	//      这才是"整理后引用丢失"最直接的成因。
+	//
+	// 所以这里不看返回值, 逐条按磁盘/注册表的事实核对到底搬没搬成。
+	const bool bEngineReportedFailure = (RenameResult == EAssetRenameResult::Failure);
 
 	if (RenameResult == EAssetRenameResult::Pending)
 	{
 		Report.AddWarning(TEXT("引擎返回 Pending (资产发现尚未完成), 请等扫描结束后重试"));
 	}
 
-	// ---- 后置: 用新路径重新解析, 并检查旧路径是否留了兜底 ----
+	// ---- 后置: 逐条核对真实结果, 并检查旧路径是否留了兜底 ----
 	for (int32 Index = 0; Index < SourcePackages.Num(); ++Index)
 	{
 		const FString& SourcePackage = SourcePackages[Index];
 		const FAssetRenameData& Data = RenameData[Index];
 		const FString FinalPackage = DoodleOrganize::CombinePackagePath(Data.NewPackagePath, Data.NewName);
 
+		// 事实核对: 旧/新路径上是否还有"真实资产"(重定向器不算)
+		const bool bOldRealExists = DoodleOrganize::DoesAssetExistOnDisk(SourcePackage)
+			|| DoodleOrganize::DoesAssetExistInRegistry(SourcePackage, /*bIncludeRedirectors*/ false);
+		const bool bNewRealExists = DoodleOrganize::DoesAssetExistOnDisk(FinalPackage)
+			|| DoodleOrganize::DoesAssetExistInRegistry(FinalPackage, /*bIncludeRedirectors*/ false);
+
 		FDoodleMoveOutcome Outcome;
 		Outcome.SourcePackage = SourcePackage;
 		Outcome.FinalPackage = FinalPackage;
-		Outcome.bMoved = true;
 		Outcome.bRenamedForConflict = RenamedForConflict[Index];
 
-		// 旧路径上还有东西 => 引擎留了重定向器 (引用安全网)
+		// 新路径上没有真实资产 => 这条确实没搬成
+		if (!bNewRealExists)
+		{
+			Outcome.bMoved = false;
+			Report.AddFailure(FString::Printf(
+				TEXT("%s -> %s : 引擎未完成移动%s"),
+				*SourcePackage, *FinalPackage,
+				bEngineReportedFailure ? TEXT(" (本批有其它资产重命名失败)") : TEXT("")));
+			RecordOutcome(MoveTemp(Outcome));
+			continue;
+		}
+
+		// 新路径有了, 但旧路径上的真实资产还在 => 目标已被占用, 是"没搬成"
+		if (bOldRealExists)
+		{
+			Outcome.bMoved = false;
+			Report.AddFailure(FString::Printf(
+				TEXT("%s -> %s : 目标已存在同名资产, 未移动"),
+				*SourcePackage, *FinalPackage));
+			RecordOutcome(MoveTemp(Outcome));
+			continue;
+		}
+
+		// 到这里才算真的搬成了
+		Outcome.bMoved = true;
+
+		// 旧路径上还有东西 (只可能是重定向器) => 引擎留了引用安全网
 		if (DoodleOrganize::DoesAssetExistOnDisk(SourcePackage)
 			|| DoodleOrganize::DoesAssetExistInRegistry(SourcePackage, /*bIncludeRedirectors*/ true))
 		{
@@ -496,9 +563,44 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 		}
 	}
 
-	// 旧路径上确实存在重定向器时, 才做一次修复 (默认不删除)
+	// ---- 第二趟: 让引擎自己把「地图里的引用者」也修好 ----
+	//
+	// 引擎的 bLoadAllPackages (AssetRenameManager.cpp:921) 决定地图引用者要不要真加载:
+	//   false -> 地图引用者不加载, 改成给旧路径留一个重定向器 (1028 行);
+	//   true  -> 全部加载并修好。
+	// 它被写死成 bSoftReferencesOnly (482 行), 而 bSoftReferencesOnly 只在**所有**条目的
+	// bOnlyFixSoftReferences 都为 true 时才成立 (390/431 行); 那一模式引擎不做重命名 (1766 行),
+	// 只修引用 —— 正是我们要的。所以这里用 (旧包 -> 新包) 再跑一趟。
+	//
+	// 这一趟同时会带上引擎的脏包兜底 (858-868 行), 与上面的 RetargetSoftReferences 互补:
+	//   - RetargetSoftReferences: 只覆盖内存里已加载的包 (不加载新的);
+	//   - 这一趟: 让引擎把注册表知道的软引用者(含地图)全部加载并修好。
+	if (UDoodleOrganizeSettings::Get().bFixMapReferencersWithLoadAllPackages && Report.MovedPackages.Num() > 0)
+	{
+		const FDoodleOrganizeReport LoadAllReport = FixReferencesOnlyForMovedPackages(Report.MovedPackages);
+		Report.bRanLoadAllPackagesPass = LoadAllReport.bRanLoadAllPackagesPass;
+		MergeReport(Report, LoadAllReport);
+	}
+
+	// 旧路径上确实存在重定向器时, 才做一次修复 (按设置决定是否删除)
 	const FDoodleOrganizeReport FixupReport = FixupRedirectorsForMovedPackages(Report.MovedPackages);
 	MergeReport(Report, FixupReport);
+
+	// 重定向器修/删完之后, "旧路径还剩多少" 要重新数一遍 —— 删掉的不该再算进去
+	if (UDoodleOrganizeSettings::Get().bDeleteRedirectorsAfterOrganize)
+	{
+		int32 NumLeft = 0;
+		for (const TPair<FName, FName>& Pair : Report.MovedPackages)
+		{
+			const FString OldPackage = Pair.Key.ToString();
+			if (DoodleOrganize::DoesAssetExistOnDisk(OldPackage)
+				|| DoodleOrganize::DoesAssetExistInRegistry(OldPackage, /*bIncludeRedirectors*/ true))
+			{
+				++NumLeft;
+			}
+		}
+		Report.NumRedirectorsLeft = NumLeft;
+	}
 
 	Report.Finalize();
 	Report.ElapsedSeconds = FPlatformTime::Seconds() - StartTime;
@@ -594,9 +696,133 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::FixupRedirectorsForMovedPackages(
 		return Report;
 	}
 
-	// 默认不删除重定向器 —— 删掉就少了旧路径这一层引用兜底
-	return DoodleOrganize::FixupRedirectorsForPaths(RedirectorPaths,
-		ERedirectFixupMode::LeaveFixedUpRedirectors);
+	// 按设置决定删不删:
+	//   - 删除是安全的 —— 引擎只会删「没有任何失败/被锁/保存失败引用者」的重定向器
+	//     (AssetFixUpRedirectors.cpp:948-950), 修不好的那些会留着;
+	//   - 但删除会让旧路径不再有兜底, 所以给用户一个开关 (默认删, 因为第二趟已经把
+	//     地图引用者都修好了, 兜底已经不需要了)。
+	const UDoodleOrganizeSettings& Settings = UDoodleOrganizeSettings::Get();
+	const ERedirectFixupMode Mode = Settings.bDeleteRedirectorsAfterOrganize
+		? ERedirectFixupMode::DeleteFixedUpRedirectors
+		: ERedirectFixupMode::LeaveFixedUpRedirectors;
+
+	FDoodleOrganizeReport FixupReport = DoodleOrganize::FixupRedirectorsForPaths(RedirectorPaths, Mode);
+
+	if (Mode == ERedirectFixupMode::DeleteFixedUpRedirectors)
+	{
+		// 删完之后旧路径上还剩多少重定向器 = 因为引用者修不好而保留下来的
+		int32 NumLeft = 0;
+		for (const FString& RedirectorPath : RedirectorPaths)
+		{
+			const FString PackageName = DoodleOrganize::StripObjectPath(RedirectorPath);
+			if (DoodleOrganize::DoesAssetExistOnDisk(PackageName)
+				|| DoodleOrganize::DoesAssetExistInRegistry(PackageName, /*bIncludeRedirectors*/ true))
+			{
+				++NumLeft;
+			}
+		}
+
+		FixupReport.NumRedirectorsDeleted = RedirectorPaths.Num() - NumLeft;
+
+		if (NumLeft > 0)
+		{
+			FixupReport.AddWarning(FString::Printf(
+				TEXT("有 %d 个重定向器没有被删除 (引用者保存失败/被锁/有其它错误), 它们仍然留在旧路径上。"),
+				NumLeft));
+		}
+	}
+
+	return FixupReport;
+}
+
+FDoodleOrganizeReport FDoodleAssetOrganizer::FixReferencesOnlyForMovedPackages(
+	const TMap<FName, FName>& MovedPackages) const
+{
+	FDoodleOrganizeReport Report;
+	Report.Operation = TEXT("FixReferencesOnly(LoadAllPackages)");
+
+	if (MovedPackages.Num() == 0)
+	{
+		Report.Finalize();
+		return Report;
+	}
+
+	// 只修引用不重命名: bOnlyFixSoftReferences = true
+	// 用 FAssetRenameData(OldObjectPath, NewObjectPath, bOnlyFixSoftReferences) 这个构造
+	// (IAssetTools.h:145) —— 引擎在那一模式下只取 OldObjectPath 的**包名** (AssetRenameManager.cpp:837),
+	// 而且 Asset 可以为空 ("This will work even if Asset is null because it has already been renamed")。
+	TArray<FAssetRenameData> RenameData;
+	RenameData.Reserve(MovedPackages.Num());
+
+	for (const TPair<FName, FName>& Pair : MovedPackages)
+	{
+		const FString OldPackage = Pair.Key.ToString();
+		const FString NewPackage = Pair.Value.ToString();
+
+		if (OldPackage.IsEmpty() || NewPackage.IsEmpty() || OldPackage == NewPackage)
+		{
+			continue;
+		}
+
+		RenameData.Emplace(
+			FSoftObjectPath(OldPackage),
+			FSoftObjectPath(NewPackage),
+			/*bInOnlyFixSoftReferences*/ true);
+	}
+
+	Report.NumRequested = RenameData.Num();
+	if (RenameData.Num() == 0)
+	{
+		Report.Finalize();
+		return Report;
+	}
+
+	IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>(TEXT("AssetTools")).Get();
+
+	// 这一趟会加载所有软引用者 (含地图), 可能比较慢
+	FScopedSlowTask SlowTask(1.0f, FText::FromString(
+		TEXT("加载并修复所有软引用者 (含地图)...")));
+	SlowTask.MakeDialog(/*bShowCancelButton*/ false);
+
+	const bool bOk = AssetTools.RenameAssets(RenameData);
+
+	Report.bRanLoadAllPackagesPass = true;
+	Report.NumMoved = RenameData.Num();
+
+	if (!bOk)
+	{
+		// 这一趟失败不致命: 前面的 RetargetSoftReferences 已经补过内存里的软引用
+		Report.AddWarning(TEXT(
+			"第二趟 (bLoadAllPackages) 引用修复返回失败; 地图里的引用可能仍然指向旧路径, "
+			"请检查诊断页的引用差异。"));
+	}
+	else
+	{
+		Report.AddWarning(FString::Printf(
+			TEXT("第二趟已加载所有软引用者 (含地图) 并修复引用: %d 个包。"), RenameData.Num()));
+	}
+
+	Report.Finalize();
+	return Report;
+}
+
+FDoodleOrganizeReport FDoodleAssetOrganizer::SaveDirtyPackagesGuard() const
+{
+	const UDoodleOrganizeSettings& Settings = UDoodleOrganizeSettings::Get();
+
+	// 需要确认时: 有 UI 就交给 UI 问; 没有 UI (命令行/脚本) 就**不擅自保存**用户的未保存工作
+	const bool bAsk = Settings.bAskBeforeSavingDirtyPackages;
+	auto AskFn = [this, bAsk](const TArray<FString>& DirtyNames) -> bool
+	{
+		if (!bAsk)
+		{
+			return true;
+		}
+		return DirtyPackageConfirm.IsBound() ? DirtyPackageConfirm.Execute(DirtyNames) : false;
+	};
+
+	return DoodleOrganize::SaveDirtyPackagesBeforeOrganize(
+		DoodleOrganize::GetGameRootPath(), bAsk, AskFn, /*bSave*/ true);
 }
 
 // ---------------------------------------------------------------------------

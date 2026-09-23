@@ -57,12 +57,25 @@ namespace DoodleOrganize
 	DOODLEEDITOR_API bool IsAssetPathFree(const FString& PackageOrObjectPath);
 
 	/**
+	 * 批量场景下的空闲判定: 除了磁盘/注册表, 还要看这一批里有没有别的资产已经预订了同一个目标。
+	 *
+	 * 没有这一步时, 两个同名资产 (例如 /Game/CZ721/Meshs/10/ysMSK_fg01 与
+	 * /Game/Character/test_1/Texture/ysMSK_fg01) 会被分配到同一个目标包 ——
+	 * 注册表和磁盘当时都还没变, 只有批次内预订能发现这种冲突。引擎随后会让这一个失败,
+	 * 并且因为 FixReferencesAndRename 是"有任一失败就整批返回 Failure", 还会连带
+	 * 让上层误判整批都失败。
+	 */
+	DOODLEEDITOR_API bool IsAssetPathFreeForBatch(const FString& PackageOrObjectPath, const TSet<FString>* ReservedPackages);
+
+	/**
 	 * 求一个磁盘+注册表都不冲突的 (目录, 名字)。
 	 * 若 DesiredFolder/DesiredName 本身可用则原样返回; 否则用引擎的 CreateUniqueAssetName,
 	 * 并额外校验磁盘 (注册表看不见的"幽灵"文件会走手工递增分支)。
+	 *
+	 * @param ReservedPackages 本批次已分配出去的目标包名; 传 nullptr 表示只查磁盘/注册表
 	 */
 	DOODLEEDITOR_API bool TryMakeUniqueAssetPath(const FString& DesiredFolder, const FString& DesiredName,
-		FString& OutFolder, FString& OutName);
+		FString& OutFolder, FString& OutName, const TSet<FString>* ReservedPackages = nullptr);
 
 	/** 文件系统路径 -> 长包路径 */
 	DOODLEEDITOR_API bool TryConvertFilenameToPackagePath(const FString& InFilename, FString& OutPackagePath);

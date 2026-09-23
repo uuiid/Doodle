@@ -97,6 +97,53 @@ public:
 	UPROPERTY(config, EditAnywhere, Category = "整理|诊断", meta = (DisplayName = "报告中最多列出的引用边数"))
 	int32 MaxReportedEdges = 500;
 
+	/**
+	 * 【地图引用者】移动后追加一趟「只修引用、不重命名」的引擎修复。
+	 *
+	 * 引擎的 FAssetRenameManager::LoadReferencingPackages 有一个 bLoadAllPackages 开关
+	 * (AssetRenameManager.cpp:921), 它决定「地图里的引用者」要不要真的加载:
+	 *   - false: 地图引用者不加载, 改成给旧路径留一个重定向器 (1028 行);
+	 *   - true : 全部加载并修好, 不留重定向器。
+	 * 这个开关没法直接设, 它被写死成 bSoftReferencesOnly (482 行), 而
+	 * bSoftReferencesOnly 只有在**所有**待重命名条目的 bOnlyFixSoftReferences 都为 true 时
+	 * 才成立 (390/431 行)。而 bOnlyFixSoftReferences == true 时引擎**不做重命名**
+	 * (1766 行), 只修引用 —— 正好就是我们要的第二趟。
+	 *
+	 * 所以这里在移动完成后, 用 (旧包 -> 新包) + bOnlyFixSoftReferences=true 再调一次
+	 * RenameAssets, 让引擎把所有软引用者 (含地图、含未保存的脏包) 都加载并修好。
+	 * 代价是这一趟会加载较多包。默认开。
+	 */
+	UPROPERTY(config, EditAnywhere, Category = "整理|诊断", meta = (DisplayName = "移动后加载所有软引用者修复地图引用 (bLoadAllPackages)"))
+	bool bFixMapReferencersWithLoadAllPackages = true;
+
+	/**
+	 * 整理后清除重定向器 (旧路径不再保留引用兜底)。
+	 *
+	 * 安全前提: 引擎的 FixupReferencers 只会删除「没有任何失败/被锁/保存失败引用者」的
+	 * 重定向器 (AssetFixUpRedirectors.cpp:948-950), 所以删除是安全的 —— 修不好的那些会留着。
+	 * 另外它仍会弹一次 "Redirector Update Report" 对话框。
+	 */
+	UPROPERTY(config, EditAnywhere, Category = "整理|清理", meta = (DisplayName = "整理后清除重定向器"))
+	bool bDeleteRedirectorsAfterOrganize = true;
+
+	/**
+	 * 整理前检测到未保存(脏)的包时自动保存它们。
+	 *
+	 * 为什么有用: 引擎的引用修复只用资产注册表的引用者集合, 而脏包的依赖关系还没进注册表;
+	 * 先保存一次, 这些包就进了注册表, 引擎自己那一趟就能把它们修好 —— 和
+	 * bRetargetSoftReferencesAfterMove 形成双保险。
+	 */
+	UPROPERTY(config, EditAnywhere, Category = "整理|安全", meta = (DisplayName = "整理前自动保存未保存的包 (脏包兜底)"))
+	bool bSaveDirtyPackagesBeforeOrganize = true;
+
+	/**
+	 * 自动保存脏包之前先弹窗确认 (列出会被保存的包)。
+	 * 关掉 = 静默保存 (仍然只在 bSaveDirtyPackagesBeforeOrganize 打开时生效)。
+	 * 注意: 没有 UI 的调用方 (命令行/脚本) 在需要确认时**不会**擅自保存。
+	 */
+	UPROPERTY(config, EditAnywhere, Category = "整理|安全", meta = (DisplayName = "自动保存脏包前先确认"))
+	bool bAskBeforeSavingDirtyPackages = true;
+
 	/** 访问入口 (首次访问时做一次旧 ini 迁移) */
 	static const UDoodleOrganizeSettings& Get();
 

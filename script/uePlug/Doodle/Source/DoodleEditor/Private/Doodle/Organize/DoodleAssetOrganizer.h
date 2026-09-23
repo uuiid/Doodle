@@ -13,6 +13,12 @@ namespace DoodleOrganize
 }
 
 /**
+ * 由 UI 层注入的「要不要保存这些脏包」确认回调。
+ * 服务层不弹窗: 需要问用户时通过这个委托把问题交给 UI; 没有绑定就不擅自保存。
+ */
+DECLARE_DELEGATE_RetVal_OneParam(bool, FDoodleConfirmSaveDirtyPackages, const TArray<FString>& /*DirtyPackageNames*/);
+
+/**
  * 资产整理服务层。所有资产写操作都集中在这里。
  * 这一层不出现任何 Slate 类型, 也不弹窗; 失败通过 FDoodleOrganizeReport 返回。
  */
@@ -20,6 +26,12 @@ class DOODLEEDITOR_API FDoodleAssetOrganizer
 {
 public:
 	FDoodleAssetOrganizer();
+
+	/** 注入确认回调 (UI 层在 Construct 里设置一次) */
+	void SetDirtyPackageConfirmDelegate(FDoodleConfirmSaveDirtyPackages InDelegate)
+	{
+		DirtyPackageConfirm = MoveTemp(InDelegate);
+	}
 
 	/**
 	 * 一次调用搬一批。
@@ -77,6 +89,22 @@ private:
 	/** 地图被搬动后, 处理它的 __ExternalActors__ 目录 (否则 WP 的 actor 会失联) */
 	void HandleWorldExternalActors(FDoodleOrganizeReport& Report) const;
 
-	/** 把旧路径上确实存在的重定向器修一遍 (默认不删除) */
+	/** 把旧路径上确实存在的重定向器修一遍 (按设置决定是否删除) */
 	FDoodleOrganizeReport FixupRedirectorsForMovedPackages(const TMap<FName, FName>& MovedPackages) const;
+
+	/**
+	 * 第二趟: 只修引用、不重命名。
+	 *
+	 * 用 (旧包 -> 新包) + bOnlyFixSoftReferences = true 再调一次 RenameAssets, 这样
+	 * bSoftReferencesOnly 成立 => 引擎的 bLoadAllPackages 变成 true => 地图里的引用者
+	 * 也会被加载并修好 (而不是留一个重定向器), 未保存的脏包也会被一起修
+	 * (AssetRenameManager.cpp:482/843/858-868/1028/1766)。
+	 */
+	FDoodleOrganizeReport FixReferencesOnlyForMovedPackages(const TMap<FName, FName>& MovedPackages) const;
+
+	/** 整理前把未保存的脏包保存掉 (让依赖进注册表, 引擎那趟才能修) */
+	FDoodleOrganizeReport SaveDirtyPackagesGuard() const;
+
+	/** UI 注入的确认回调 */
+	FDoodleConfirmSaveDirtyPackages DirtyPackageConfirm;
 };

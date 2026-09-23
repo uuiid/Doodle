@@ -135,7 +135,7 @@ TSharedRef<SWidget> SDoodleOrganizePanel::BuildTabBar()
 			.Padding(2.0f)
 			[
 				SNew(SCheckBox)
-					.Style(FAppStyle::Get(), "ToolBar.ToggleButton")
+					// .Style(FAppStyle::Get(), "ToolBar.ToggleButton")
 					.IsChecked(this, &SDoodleOrganizePanel::GetTabCheckState, Tab)
 					.OnCheckStateChanged(this, &SDoodleOrganizePanel::OnTabCheckStateChanged, Tab)
 					[
@@ -596,6 +596,42 @@ TSharedRef<SWidget> SDoodleOrganizePanel::BuildDiagnosticsTab()
 // 统一操作入口
 // ---------------------------------------------------------------------------
 
+FDoodleAssetOrganizer SDoodleOrganizePanel::MakeOrganizer()
+{
+	FDoodleAssetOrganizer Organizer;
+
+	// 服务层不弹窗: 整理前发现未保存的包时, 回调到这里问用户
+	Organizer.SetDirtyPackageConfirmDelegate(
+		FDoodleConfirmSaveDirtyPackages::CreateSP(this, &SDoodleOrganizePanel::ConfirmSaveDirtyPackages));
+
+	return Organizer;
+}
+
+bool SDoodleOrganizePanel::ConfirmSaveDirtyPackages(const TArray<FString>& DirtyPackageNames)
+{
+	FString Message = FString::Printf(
+		TEXT("检测到 %d 个未保存的包。\n\n")
+		TEXT("引擎的引用修复只看资产注册表, 未保存的包的依赖关系还不在里面 —— ")
+		TEXT("先保存它们, 这些包里的引用才能被引擎一起修好。\n\n"),
+		DirtyPackageNames.Num());
+
+	const int32 MaxShown = 30;
+	for (int32 Index = 0; Index < DirtyPackageNames.Num() && Index < MaxShown; ++Index)
+	{
+		Message += FString::Printf(TEXT("  %s\n"), *DirtyPackageNames[Index]);
+	}
+	if (DirtyPackageNames.Num() > MaxShown)
+	{
+		Message += FString::Printf(TEXT("  ... 还有 %d 个\n"), DirtyPackageNames.Num() - MaxShown);
+	}
+
+	Message += TEXT("\n现在保存并继续整理吗? (选「否」将中止整理, 不会改动任何资产)");
+
+	return DoodleOrganize::Confirm(
+		FText::FromString(TEXT("整理前保存未保存的包")),
+		FText::FromString(Message)) == EAppReturnType::Yes;
+}
+
 void SDoodleOrganizePanel::RunOperation(const FText& OperationName, TFunctionRef<FDoodleOrganizeReport()> Operation)
 {
 	const UDoodleOrganizeSettings& Settings = UDoodleOrganizeSettings::Get();
@@ -787,7 +823,7 @@ FReply SDoodleOrganizePanel::OnOrganizeSelected()
 
 	RunOperation(FText::FromString(TEXT("整理选中资源")), [this, FolderName]()
 	{
-		FDoodleAssetOrganizer Organizer;
+		FDoodleAssetOrganizer Organizer = MakeOrganizer();
 		return Organizer.OrganizeSelected(GetContentBrowserSelection(), FolderName);
 	});
 
@@ -823,9 +859,9 @@ FReply SDoodleOrganizePanel::OnOrganizeAll()
 		return FReply::Handled();
 	}
 
-	RunOperation(FText::FromString(TEXT("整理所有资源")), [CharacterName]()
+	RunOperation(FText::FromString(TEXT("整理所有资源")), [this, CharacterName]()
 	{
-		FDoodleAssetOrganizer Organizer;
+		FDoodleAssetOrganizer Organizer = MakeOrganizer();
 		return Organizer.OrganizeCharacterAssets(CharacterName);
 	});
 
@@ -1045,9 +1081,9 @@ void SDoodleOrganizePanel::OnConsolidateOne(TSharedPtr<FDoodleDupRowItem> Item)
 
 void SDoodleOrganizePanel::OnRenameCommitted(const FAssetData& Asset, const FString& Folder, const FString& NewName)
 {
-	RunOperation(FText::FromString(TEXT("重命名")), [Asset, Folder, NewName]()
+	RunOperation(FText::FromString(TEXT("重命名")), [this, Asset, Folder, NewName]()
 	{
-		FDoodleAssetOrganizer Organizer;
+		FDoodleAssetOrganizer Organizer = MakeOrganizer();
 		return Organizer.RenameAssetTo(Asset, Folder, NewName);
 	});
 
@@ -1074,9 +1110,9 @@ FReply SDoodleOrganizePanel::OnAddSuffix()
 		return FReply::Handled();
 	}
 
-	RunOperation(FText::FromString(TEXT("添加后缀")), [Selection, Suffix]()
+	RunOperation(FText::FromString(TEXT("添加后缀")), [this, Selection, Suffix]()
 	{
-		FDoodleAssetOrganizer Organizer;
+		FDoodleAssetOrganizer Organizer = MakeOrganizer();
 		return Organizer.AddSuffix(Selection, Suffix);
 	});
 
@@ -1099,9 +1135,9 @@ FReply SDoodleOrganizePanel::OnRemoveSuffix()
 		return FReply::Handled();
 	}
 
-	RunOperation(FText::FromString(TEXT("去除后缀")), [Selection, Suffix]()
+	RunOperation(FText::FromString(TEXT("去除后缀")), [this, Selection, Suffix]()
 	{
-		FDoodleAssetOrganizer Organizer;
+		FDoodleAssetOrganizer Organizer = MakeOrganizer();
 		return Organizer.RemoveSuffix(Selection, Suffix);
 	});
 
@@ -1217,9 +1253,9 @@ FReply SDoodleOrganizePanel::OnPullEngineTextures()
 		return FReply::Handled();
 	}
 
-	RunOperation(FText::FromString(TEXT("本地化引擎贴图")), [FolderName]()
+	RunOperation(FText::FromString(TEXT("本地化引擎贴图")), [this, FolderName]()
 	{
-		FDoodleAssetOrganizer Organizer;
+		FDoodleAssetOrganizer Organizer = MakeOrganizer();
 		return Organizer.PullEngineTexturesReferencedByMaterials(FolderName);
 	});
 
@@ -1235,9 +1271,9 @@ FReply SDoodleOrganizePanel::OnResizeTextures()
 		return FReply::Handled();
 	}
 
-	RunOperation(FText::FromString(TEXT("重置贴图尺寸")), []()
+	RunOperation(FText::FromString(TEXT("重置贴图尺寸")), [this]()
 	{
-		FDoodleAssetOrganizer Organizer;
+		FDoodleAssetOrganizer Organizer = MakeOrganizer();
 		return Organizer.ResizeTexturesToPowerOfTwo(DoodleOrganize::GetGameRootPath());
 	});
 
@@ -1257,9 +1293,9 @@ FReply SDoodleOrganizePanel::OnDeleteEmptyDirectories()
 		return FReply::Handled();
 	}
 
-	RunOperation(FText::FromString(TEXT("删除空文件夹")), []()
+	RunOperation(FText::FromString(TEXT("删除空文件夹")), [this]()
 	{
-		FDoodleAssetOrganizer Organizer;
+		FDoodleAssetOrganizer Organizer = MakeOrganizer();
 		return Organizer.DeleteEmptyDirectories(DoodleOrganize::GetGameRootPath());
 	});
 

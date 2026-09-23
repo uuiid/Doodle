@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Doodle/Organize/DoodleAssetOrganizer.h"
 #include "Doodle/Organize/DoodleOrganizeTypes.h"
 #include "Doodle/Organize/DoodleTextureDedup.h"
 #include "Doodle/Organize/UI/DoodleOrganizeRowItems.h"
@@ -60,6 +61,15 @@ private:
 
 	// ---- 统一操作入口 ----
 	void RunOperation(const FText& OperationName, TFunctionRef<FDoodleOrganizeReport()> Operation);
+
+	/**
+	 * 整理前发现未保存的包时, 由服务层回调过来问用户。
+	 * 这是服务层「不弹窗」约束的落地方式: 弹窗留在 UI 层。
+	 */
+	bool ConfirmSaveDirtyPackages(const TArray<FString>& DirtyPackageNames);
+
+	/** 建一个已经接好 UI 回调的 organizer (服务层需要问用户时回调到这里) */
+	FDoodleAssetOrganizer MakeOrganizer();
 
 	// ---- 命令: 整理 ----
 	FReply OnOrganizeSelected();

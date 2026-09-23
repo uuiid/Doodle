@@ -211,4 +211,88 @@ bool FDoodleOrganizeRetargetPathTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+/**
+ * 批次内目标预订的回归测试。
+ *
+ * 真实事故: 224 个请求里有两个同名资产 (例如 /Game/CZ721/Meshs/10/ysMSK_fg01 与
+ * /Game/Character/test_1/Texture/ysMSK_fg01) 都被分到 /Game/Character/test_2/Texture/ysMSK_fg01。
+ * 注册表和磁盘在分配时都还没变, 所以 TryMakeUniqueAssetPath 认为目标空闲;
+ * 引擎随后让这 7 个撞车的失败, 并且因为"有任一失败就整批返回 Failure"
+ * (AssetRenameManager.cpp:553), 上层误判整批 224 个都失败 —— 连带把三道引用保护全部跳过。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDoodleOrganizeBatchReservationTest,
+	"Doodle.Organize.PathUtils.BatchReservation",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDoodleOrganizeBatchReservationTest::RunTest(const FString& Parameters)
+{
+	// 用一个磁盘/注册表上都不存在的目录, 保证结果只取决于预订集合
+	const FString Folder = TEXT("/Game/DoodleOrganizeTest_NotOnDisk/Texture");
+	const FString Desired = TEXT("ysMSK_fg01");
+	const FString DesiredPackage = DoodleOrganize::CombinePackagePath(Folder, Desired);
+
+	// ---- 没有预订时: 目标空闲 ----
+	{
+		TestTrue(TEXT("未预订且不存在时应空闲"),
+			DoodleOrganize::IsAssetPathFreeForBatch(DesiredPackage, nullptr));
+
+		TSet<FString> Empty;
+		TestTrue(TEXT("空预订集合时应空闲"),
+			DoodleOrganize::IsAssetPathFreeForBatch(DesiredPackage, &Empty));
+	}
+
+	// ---- 已被本批别的资产预订: 不再空闲 ----
+	{
+		TSet<FString> Reserved;
+		Reserved.Add(DesiredPackage);
+
+		TestFalse(TEXT("已被本批预订时不应空闲"),
+			DoodleOrganize::IsAssetPathFreeForBatch(DesiredPackage, &Reserved));
+
+		// 预订别的路径不影响本路径
+		TSet<FString> OtherReserved;
+		OtherReserved.Add(DoodleOrganize::CombinePackagePath(Folder, TEXT("其它资产")));
+		TestTrue(TEXT("预订别的路径不应影响本路径"),
+			DoodleOrganize::IsAssetPathFreeForBatch(DesiredPackage, &OtherReserved));
+	}
+
+	// ---- 核心回归: 同一批里两次分配同名资产必须得到两个不同的目标 ----
+	{
+		TSet<FString> Reserved;
+
+		FString Folder1, Name1;
+		TestTrue(TEXT("第一个应分配到原名"),
+			DoodleOrganize::TryMakeUniqueAssetPath(Folder, Desired, Folder1, Name1, &Reserved));
+		TestEqual(TEXT("第一个名字"), Name1, Desired);
+		Reserved.Add(DoodleOrganize::CombinePackagePath(Folder1, Name1));
+
+		FString Folder2, Name2;
+		TestTrue(TEXT("第二个应能分配到别的名字"),
+			DoodleOrganize::TryMakeUniqueAssetPath(Folder, Desired, Folder2, Name2, &Reserved));
+		TestNotEqual(TEXT("第二个名字必须与第一个不同"), Name2, Name1);
+
+		const FString Package1 = DoodleOrganize::CombinePackagePath(Folder1, Name1);
+		const FString Package2 = DoodleOrganize::CombinePackagePath(Folder2, Name2);
+		TestNotEqual(TEXT("两个目标包必须不同"), Package2, Package1);
+
+		// 第三个也应该拿到新名字 (能持续分配)
+		Reserved.Add(Package2);
+		FString Folder3, Name3;
+		TestTrue(TEXT("第三个应能分配到别的名字"),
+			DoodleOrganize::TryMakeUniqueAssetPath(Folder, Desired, Folder3, Name3, &Reserved));
+		TestNotEqual(TEXT("第三个名字必须与前两个不同"), Name3, Name1);
+		TestNotEqual(TEXT("第三个名字必须与前两个不同 (2)"), Name3, Name2);
+	}
+
+	// ---- 不传预订集合时保持旧行为 (向后兼容) ----
+	{
+		FString Folder1, Name1;
+		TestTrue(TEXT("不传预订集合时仍可用"),
+			DoodleOrganize::TryMakeUniqueAssetPath(Folder, Desired, Folder1, Name1));
+		TestEqual(TEXT("不传预订集合时给原名"), Name1, Desired);
+	}
+
+	return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

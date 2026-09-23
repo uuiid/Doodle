@@ -54,6 +54,18 @@ struct DOODLEEDITOR_API FDoodleOrganizeReport
 	/** 被补修过的引用者包名 (已被标脏, 需要用户保存才会落盘) */
 	TArray<FString> RetargetedPackages;
 
+	/** 整理前被自动保存的脏包数量 (先落盘 -> 依赖进注册表 -> 引擎那趟也能修) */
+	int32 NumDirtyPackagesSaved = 0;
+
+	/** 被自动保存的脏包名 */
+	TArray<FString> SavedDirtyPackages;
+
+	/** 第二趟 (bLoadAllPackages=true) 是否真的跑了 */
+	bool bRanLoadAllPackagesPass = false;
+
+	/** 整理后被删除的重定向器数量 */
+	int32 NumRedirectorsDeleted = 0;
+
 	/** "src -> dst : reason" */
 	TArray<FString> Failures;
 	/** "path : reason" */
@@ -146,10 +158,32 @@ struct DOODLEEDITOR_API FDoodleOrganizeReport
 		{
 			return FText::FromString(FString::Printf(TEXT("[%s] %s"), *Operation, ResultToString(Result)));
 		}
-		return FText::FromString(FString::Printf(
-			TEXT("[%s] %s  请求 %d / 移动 %d / 改名 %d / 跳过 %d / 失败 %d / 保留重定向器 %d  (%.2fs)"),
+
+		FString Out = FString::Printf(
+			TEXT("[%s] %s  请求 %d / 移动 %d / 改名 %d / 跳过 %d / 失败 %d / 保留重定向器 %d"),
 			*Operation, ResultToString(Result),
-			NumRequested, NumMoved, NumRenamed, NumSkipped, NumFailed, NumRedirectorsLeft, ElapsedSeconds));
+			NumRequested, NumMoved, NumRenamed, NumSkipped, NumFailed, NumRedirectorsLeft);
+
+		// 只在真的发生时显示, 免得报告条太长
+		if (NumDirtyPackagesSaved > 0)
+		{
+			Out += FString::Printf(TEXT(" / 保存脏包 %d"), NumDirtyPackagesSaved);
+		}
+		if (NumRetargetedSoftReferences > 0)
+		{
+			Out += FString::Printf(TEXT(" / 补修软引用 %d"), NumRetargetedSoftReferences);
+		}
+		if (bRanLoadAllPackagesPass)
+		{
+			Out += TEXT(" / 已加载全部软引用者");
+		}
+		if (NumRedirectorsDeleted > 0)
+		{
+			Out += FString::Printf(TEXT(" / 删除重定向器 %d"), NumRedirectorsDeleted);
+		}
+
+		Out += FString::Printf(TEXT("  (%.2fs)"), ElapsedSeconds);
+		return FText::FromString(Out);
 	}
 
 	FString ToDetailedText() const
