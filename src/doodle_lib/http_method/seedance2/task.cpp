@@ -41,6 +41,7 @@
 #include "sqlite_orm/orm/insert.h"
 #include "sqlite_orm/orm/select.h"
 #include <chrono>
+#include <magic_enum/magic_enum.hpp>
 #include <map>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
@@ -533,11 +534,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
 
   std::int32_t l_size   = 100;
   std::int32_t l_offset = 0;
-  std::optional<sd2::task_status> l_status;
+  std::optional<sd2::task_status> l_status{};
+  std::optional<sd2::task_type> l_task_type{};
+  uuid l_project{};
+  uuid l_user_id{};
   for (auto&& [key, value, has_value] : in_handle->url_.params()) {
     if (key == "size") l_size = std::stoi(value);
     if (key == "offset") l_offset = std::stoi(value);
-    if (key == "status") l_status = nlohmann::json(value).get<sd2::task_status>();
+    if (key == "status") l_status = magic_enum::enum_cast<sd2::task_status>(value).value();
+    if (key == "task_type") l_task_type = magic_enum::enum_cast<sd2::task_type>(value).value();
+    if (key == "project") l_project = from_uuid_str(value);
+    if (key == "user_id") l_user_id = from_uuid_str(value);
   }
 
   auto l_query = select(l_sql)
@@ -555,6 +562,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
         !c(&sd2::task::archived_)
     );
   if (l_status) l_query.where(c(&sd2::task::status_) == *l_status);
+  if (l_task_type) l_query.where(c(&sd2::task::type_) == *l_task_type);
+  if (!l_project.is_nil()) l_query.where(c(&sd2::subproject::project_id_) == l_project);
+  if (!l_user_id.is_nil()) l_query.where(c(&sd2::task::user_id_) == l_user_id);
   co_return in_handle->make_msg(nlohmann::json{} = l_query.limit(l_size).offset(l_offset)().to_vector());
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_run, get) {
