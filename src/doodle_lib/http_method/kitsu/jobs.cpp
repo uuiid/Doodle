@@ -65,9 +65,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   if (auto l_status = l_json.value("status_", l_job.status_);
       l_status == server_task_info_status::submitted && l_job.status_ != l_status) {
     SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "任务 {} 由 {} 变更为 {}", l_job.uuid_id_, l_job.status_, l_status);
-    l_update.set(c(&server_task_info::run_computer_id_) = boost::uuids::nil_uuid())
-        .set(c(&server_task_info::end_time_) = std::optional<server_task_info::zoned_time>{})
-        .set(c(&server_task_info::run_time_) = std::optional<server_task_info::zoned_time>{});
+    // l_update.set(c(&server_task_info::run_computer_id_) = boost::uuids::nil_uuid())
+    //     .set(c(&server_task_info::end_time_) = std::optional<server_task_info::zoned_time>{})
+    //     .set(c(&server_task_info::run_time_) = std::optional<server_task_info::zoned_time>{});
   }
   l_sqls.emplace_back(std::move(l_update));
   co_await l_sql.run_sql(std::move(l_sqls));
