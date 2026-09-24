@@ -140,8 +140,8 @@ struct DOODLE_CORE_API ai_light_session {
     j["prompt_text"]      = p.prompt_text_;
     j["state"]            = p.state_;
     j["current_iteration"] = p.current_iteration_;
-    j["judgement_due_at"] = p.judgement_due_at_ ? json_opt(p.judgement_due_at_) : nlohmann::json{};
-    j["suspended_at"]     = p.suspended_at_ ? json_opt(p.suspended_at_) : nlohmann::json{};
+    j["judgement_due_at"] = p.judgement_due_at_;
+    j["suspended_at"]     = p.suspended_at_;
     j["failure_reason"]   = p.failure_reason_;
     j["created_at"]       = p.created_at_;
     j["updated_at"]       = p.updated_at_;
@@ -156,10 +156,8 @@ struct DOODLE_CORE_API ai_light_session {
     if (j.contains("prompt_text")) j.at("prompt_text").get_to(p.prompt_text_);
     if (j.contains("state")) j.at("state").get_to(p.state_);
     if (j.contains("current_iteration")) j.at("current_iteration").get_to(p.current_iteration_);
-    if (j.contains("judgement_due_at") && !j.at("judgement_due_at").is_null())
-      j.at("judgement_due_at").get_to(p.judgement_due_at_.emplace());
-    if (j.contains("suspended_at") && !j.at("suspended_at").is_null())
-      j.at("suspended_at").get_to(p.suspended_at_.emplace());
+    if (j.contains("judgement_due_at")) j.at("judgement_due_at").get_to(p.judgement_due_at_);
+    if (j.contains("suspended_at")) j.at("suspended_at").get_to(p.suspended_at_);
     if (j.contains("failure_reason")) j.at("failure_reason").get_to(p.failure_reason_);
   }
 };

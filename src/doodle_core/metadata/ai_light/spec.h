@@ -332,7 +332,7 @@ struct DOODLE_CORE_API lighting_spec_t {
     j["evidence"]        = p.evidence_;
     j["human_confirmed"] = p.human_confirmed_;
     j["confirmed_by"]    = p.confirmed_by_;
-    j["confirmed_at"]    = p.confirmed_at_ ? json_opt(p.confirmed_at_) : nlohmann::json{};
+    j["confirmed_at"]    = p.confirmed_at_;
     j["degrade_level"]   = p.degrade_level_;
   }
   friend void from_json(const nlohmann::json& j, lighting_spec_t& p) {
@@ -345,8 +345,7 @@ struct DOODLE_CORE_API lighting_spec_t {
     if (j.contains("evidence")) j.at("evidence").get_to(p.evidence_);
     if (j.contains("human_confirmed")) j.at("human_confirmed").get_to(p.human_confirmed_);
     if (j.contains("confirmed_by")) j.at("confirmed_by").get_to(p.confirmed_by_);
-    if (j.contains("confirmed_at") && !j.at("confirmed_at").is_null())
-      j.at("confirmed_at").get_to(p.confirmed_at_.emplace());
+    if (j.contains("confirmed_at")) j.at("confirmed_at").get_to(p.confirmed_at_);
     if (j.contains("degrade_level")) j.at("degrade_level").get_to(p.degrade_level_);
   }
 };

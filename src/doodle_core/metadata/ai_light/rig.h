@@ -295,7 +295,7 @@ struct DOODLE_CORE_API shape_t {
 
   friend void to_json(nlohmann::json& j, const shape_t& p) {
     j["source_radius_cm"] = p.source_radius_cm_;
-    j["ies"]              = p.ies_.empty() ? nlohmann::json{} : json_val(p.ies_);
+    j["ies"]              = p.ies_;
     if (p.inner_cone_deg_) j["inner_cone_deg"] = *p.inner_cone_deg_;
     if (p.outer_cone_deg_) j["outer_cone_deg"] = *p.outer_cone_deg_;
   }

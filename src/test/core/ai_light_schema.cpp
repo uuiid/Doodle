@@ -117,7 +117,7 @@ lighting_rig_t make_probe_rig(const uuid& in_session_id, std::int32_t in_iterati
   l_key.intensity_ = intensity_t{intensity_unit::candela, 12.0};
   l_key.color_     = color_t{color_mode::temperature, 4300.0, {}, {}};
   // ies_ 是 std::string 字段，给个非空值 —— 空字符串会让 JSON 往返断言变成空转，
-  // 而 `nlohmann::json{some_string}` 会静默变成单元素数组（见 common.h 的 json_val 说明），
+  // 而 `nlohmann::json{some_string}` 会静默变成单元素数组（见 common.h 的说明），
   // 那种错只有非空值才暴露得出来。
   l_key.shape_     = shape_t{25.0, "IES/spot_soft.ies", 25.0, 45.0};
   l_key.shadows_   = shadows_t{true, 0.6};

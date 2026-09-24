@@ -265,7 +265,7 @@ struct DOODLE_CORE_API ai_light_candidate {
     j["render_ms"]        = p.render_ms_;
     j["light_count"]      = p.light_count_;
     j["metrics"]          = p.metrics_;
-    j["vlm_score"]        = p.vlm_score_ ? json_opt(p.vlm_score_) : nlohmann::json{};
+    j["vlm_score"]        = p.vlm_score_;
     j["vlm_delta"]        = p.vlm_delta_;
     j["is_selected"]      = p.is_selected_;
     j["is_accepted"]      = p.is_accepted_;
@@ -288,8 +288,7 @@ struct DOODLE_CORE_API ai_light_candidate {
     if (j.contains("render_ms")) j.at("render_ms").get_to(p.render_ms_);
     if (j.contains("light_count")) j.at("light_count").get_to(p.light_count_);
     if (j.contains("metrics")) j.at("metrics").get_to(p.metrics_);
-    if (j.contains("vlm_score") && !j.at("vlm_score").is_null())
-      j.at("vlm_score").get_to(p.vlm_score_.emplace());
+    if (j.contains("vlm_score")) j.at("vlm_score").get_to(p.vlm_score_);
     if (j.contains("vlm_delta")) j.at("vlm_delta").get_to(p.vlm_delta_);
     if (j.contains("is_selected")) j.at("is_selected").get_to(p.is_selected_);
     if (j.contains("is_accepted")) j.at("is_accepted").get_to(p.is_accepted_);

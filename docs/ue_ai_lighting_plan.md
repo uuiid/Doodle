@@ -1146,14 +1146,27 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
 
 **实现期发现、值得记住的两个坑（本轮）**：
 
-1. **`nlohmann::json{*opt}` 是列表初始化，会静默变成单元素数组。**
-   `nlohmann::json` 有 `basic_json(initializer_list_t)` 构造函数，而列表初始化会**优先**
-   匹配它。于是 `j["at"] = nlohmann::json{*p.at_}` 写出的是 `{"at": ["2026-...Z"]}`
-   而不是 `{"at": "2026-...Z"}`。这个坑极其隐蔽：代码合法、编译通过、写库成功，
-   只有读回来时才在 `from_json` 里对着数组抛 `type_error.303`，而报错信息里
-   **完全看不出是哪个字段写坏的**。同一个坑对 `std::string` / `double` / 结构体一样成立
-   （`rig.h` 的 `ies_` 就是这么丢的）。统一改用 `common.h` 的 `json_opt()` / `json_val()`，
-   并加了一条专门钉住 JSON **形状**（而不只是值）的回归用例 ——
+1. **`std::optional` 的 JSON 序列化用库自带的，别自己写；而 `nlohmann::json{*opt}` 是列表初始化，会静默变成单元素数组。**
+   先说结论：nlohmann 从 C++17 起自带 `std::optional` 的读写（本工程 vcpkg 装的是 3.12.0，
+   编译期 `JSON_HAS_CPP_17` 成立，所以一定生效）——
+   读在 `nlohmann/detail/conversions/from_json.hpp:52-63`（`null` → `nullopt`，
+   否则 `opt.emplace(j.get<T>())`），写在同目录 `to_json.hpp:271-281`
+   （有值 → `j = *opt`，无值 → `j = nullptr`）。所以**直接赋值**就是对的形式，
+   既不需要三元转换也不需要助手函数：
+
+   ```cpp
+   j["judgement_due_at"] = p.judgement_due_at_;        // 对
+   if (j.contains("x")) j.at("x").get_to(p.x_);        // 对，null 自动变 nullopt
+   ```
+
+   而**花括号是错的**：`nlohmann::json` 有 `basic_json(initializer_list_t)` 构造函数，
+   列表初始化会**优先**匹配它，于是 `j["at"] = nlohmann::json{*p.at_}` 写出的是
+   `{"at": ["2026-...Z"]}` 而不是 `{"at": "2026-...Z"}`。这个坑极其隐蔽：
+   代码合法、编译通过、写库成功，只有读回来时才在 `from_json` 里对着数组抛
+   `type_error.303`，而报错信息里**完全看不出是哪个字段写坏的**。同一个坑对
+   `std::string` / `double` / 结构体一样成立（`rig.h` 的 `ies_` 就是这么丢的）。
+   要用显式转换就用括号 `nlohmann::json(x)`（括号走普通重载决议）。
+   说明写在 `common.h`，并加了一条专门钉住 JSON **形状**（而不只是值）的回归用例 ——
    值相等掩盖不了多包一层数组。
 2. **`get_by_uuid` 查不到行时抛的是 `std::runtime_error("No rows returned")`，
    不是 `sqlite_orm_exception`。** 只接后者的话，「取一个不存在的 id」会一路冒到

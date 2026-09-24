@@ -87,7 +87,7 @@ struct DOODLE_CORE_API ai_light_judgement_t {
 
   friend void to_json(nlohmann::json& j, const ai_light_judgement_t& p) {
     j["by"]                   = p.by_;
-    j["at"]                   = p.at_ ? json_opt(p.at_) : nlohmann::json{};
+    j["at"]                   = p.at_;
     j["decision"]             = p.decision_;
     j["selected_candidate_id"] = p.selected_candidate_id_;
     j["feedback_text"]        = p.feedback_text_;
@@ -95,7 +95,7 @@ struct DOODLE_CORE_API ai_light_judgement_t {
   }
   friend void from_json(const nlohmann::json& j, ai_light_judgement_t& p) {
     if (j.contains("by")) j.at("by").get_to(p.by_);
-    if (j.contains("at") && !j.at("at").is_null()) j.at("at").get_to(p.at_.emplace());
+    if (j.contains("at")) j.at("at").get_to(p.at_);
     if (j.contains("decision")) j.at("decision").get_to(p.decision_);
     if (j.contains("selected_candidate_id")) j.at("selected_candidate_id").get_to(p.selected_candidate_id_);
     if (j.contains("feedback_text")) j.at("feedback_text").get_to(p.feedback_text_);
@@ -201,11 +201,11 @@ struct DOODLE_CORE_API ai_light_iteration {
     j["state"]               = p.state_;
     j["axes"]                = p.axes_;
     j["server_task_info_id"] = p.server_task_info_id_;
-    j["dispatch_at"]         = p.dispatch_at_ ? json_opt(p.dispatch_at_) : nlohmann::json{};
-    j["render_at"]           = p.render_at_ ? json_opt(p.render_at_) : nlohmann::json{};
+    j["dispatch_at"]         = p.dispatch_at_;
+    j["render_at"]           = p.render_at_;
     j["render_ms_total"]     = p.render_ms_total_;
     j["judged_by"]           = p.judged_by_;
-    j["judged_at"]           = p.judged_at_ ? json_opt(p.judged_at_) : nlohmann::json{};
+    j["judged_at"]           = p.judged_at_;
     j["judgement"]           = p.judgement_;
     j["failure_reason"]      = p.failure_reason_;
     j["created_at"]          = p.created_at_;
@@ -219,14 +219,11 @@ struct DOODLE_CORE_API ai_light_iteration {
     if (j.contains("state")) j.at("state").get_to(p.state_);
     if (j.contains("axes")) j.at("axes").get_to(p.axes_);
     if (j.contains("server_task_info_id")) j.at("server_task_info_id").get_to(p.server_task_info_id_);
-    if (j.contains("dispatch_at") && !j.at("dispatch_at").is_null())
-      j.at("dispatch_at").get_to(p.dispatch_at_.emplace());
-    if (j.contains("render_at") && !j.at("render_at").is_null())
-      j.at("render_at").get_to(p.render_at_.emplace());
+    if (j.contains("dispatch_at")) j.at("dispatch_at").get_to(p.dispatch_at_);
+    if (j.contains("render_at")) j.at("render_at").get_to(p.render_at_);
     if (j.contains("render_ms_total")) j.at("render_ms_total").get_to(p.render_ms_total_);
     if (j.contains("judged_by")) j.at("judged_by").get_to(p.judged_by_);
-    if (j.contains("judged_at") && !j.at("judged_at").is_null())
-      j.at("judged_at").get_to(p.judged_at_.emplace());
+    if (j.contains("judged_at")) j.at("judged_at").get_to(p.judged_at_);
     if (j.contains("judgement")) j.at("judgement").get_to(p.judgement_);
     if (j.contains("failure_reason")) j.at("failure_reason").get_to(p.failure_reason_);
   }

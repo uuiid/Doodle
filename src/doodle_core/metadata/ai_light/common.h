@@ -59,27 +59,31 @@ T json_get_or_default(const nlohmann::json& in_json) {
   return in_json.get<T>();
 }
 
-/// 把 std::optional<T> 写进 JSON：有值转成对应 JSON，无值写 null。
-///
-/// **不要手写 `j = opt ? nlohmann::json{*opt} : nlohmann::json{}`。**
-/// `nlohmann::json{x}` 是**列表初始化**，会优先匹配 json 的
-/// `basic_json(initializer_list_t)` 构造函数，结果是单元素数组 `[x]` 而不是 `x`。
-/// 这个坑极其隐蔽：代码合法、编译通过、写库成功，只有读回来时才炸 ——
-/// `from_json` 里 `get_ref<const std::string&>()` 对着数组抛 type_error.303，
-/// 而报错信息里完全看不出是哪个字段写坏的。同一个坑对
-/// std::string / double / 结构体 一样成立（`nlohmann::json{some_string}` 也是数组）。
-///
-/// `nlohmann::json(x)`（括号）才是普通重载决议，会走 adl_serializer / to_json。
-template <typename T>
-nlohmann::json json_opt(const std::optional<T>& in_opt) {
-  if (!in_opt.has_value()) return nlohmann::json{};
-  return nlohmann::json(*in_opt);
-}
-
-/// 单值转 JSON 的显式入口，作用同上：括号而不是花括号。
-template <typename T>
-nlohmann::json json_val(const T& in_value) {
-  return nlohmann::json(in_value);
-}
+// ---------------------------------------------------------------------------
+// std::optional ↔ JSON：**用库自带的，不要自己写**
+// ---------------------------------------------------------------------------
+//
+// nlohmann 从 C++17 起自带 std::optional 的序列化，本工程用的版本有，
+// 且本工程编译时 JSON_HAS_CPP_17 成立，所以它一定生效：
+//
+//   读：nlohmann/detail/conversions/from_json.hpp:52-63
+//       null      → std::nullopt
+//       其它      → opt.emplace(j.get<T>())
+//   写：nlohmann/detail/conversions/to_json.hpp:271-281
+//       有值      → j = *opt（递归走 T 自己的 to_json / adl_serializer）
+//       无值      → j = nullptr
+//
+// 所以直接赋值就行，不要写 `opt ? X : Y` 这种三元转换，也不要包一层助手函数：
+//
+//     j["judgement_due_at"] = p.judgement_due_at_;          // 对
+//     if (j.contains("x")) j.at("x").get_to(p.x_);          // 对（null 自动变 nullopt）
+//
+// **唯一的坑是别用花括号**：`nlohmann::json{*p.at_}` 是列表初始化，
+// 会优先匹配 basic_json(initializer_list_t) 构造函数，结果是**单元素数组** `[x]`
+// 而不是 `x`。这个坑极其隐蔽：代码合法、编译通过、写库成功，只有读回来时才炸 ——
+// from_json 里 get_ref<const std::string&>() 对着数组抛 type_error.303，
+// 而报错信息完全看不出是哪个字段写坏的。同一个坑对 std::string / double /
+// 结构体一样成立（`nlohmann::json{some_string}` 也是数组，rig.h 的 ies_ 就这么丢过）。
+// 要么直接赋值，要么用括号 `nlohmann::json(x)`（括号走普通重载决议）。
 
 }  // namespace doodle::ai_light

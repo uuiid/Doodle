@@ -59,10 +59,10 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
     j["session"]            = p.session_;
     j["references"]         = p.references_;
     j["spec_history"]       = p.spec_history_;
-    j["current_spec"]       = p.current_spec_ ? json_opt(p.current_spec_) : nlohmann::json{};
+    j["current_spec"]       = p.current_spec_;
     j["iterations"]         = p.iterations_;
     j["candidates"]         = p.candidates_;
-    j["accepted_candidate"] = p.accepted_candidate_ ? json_opt(p.accepted_candidate_) : nlohmann::json{};
+    j["accepted_candidate"] = p.accepted_candidate_;
     j["is_waiting_human"]   = p.is_waiting_human_;
     j["is_judgement_overdue"] = p.is_judgement_overdue_;
     // 前端渲染进度条要用，省得自己数
@@ -72,12 +72,10 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
     if (j.contains("session")) j.at("session").get_to(p.session_);
     if (j.contains("references")) j.at("references").get_to(p.references_);
     if (j.contains("spec_history")) j.at("spec_history").get_to(p.spec_history_);
-    if (j.contains("current_spec") && !j.at("current_spec").is_null())
-      j.at("current_spec").get_to(p.current_spec_.emplace());
+    if (j.contains("current_spec")) j.at("current_spec").get_to(p.current_spec_);
     if (j.contains("iterations")) j.at("iterations").get_to(p.iterations_);
     if (j.contains("candidates")) j.at("candidates").get_to(p.candidates_);
-    if (j.contains("accepted_candidate") && !j.at("accepted_candidate").is_null())
-      j.at("accepted_candidate").get_to(p.accepted_candidate_.emplace());
+    if (j.contains("accepted_candidate")) j.at("accepted_candidate").get_to(p.accepted_candidate_);
     if (j.contains("is_waiting_human")) j.at("is_waiting_human").get_to(p.is_waiting_human_);
     if (j.contains("is_judgement_overdue")) j.at("is_judgement_overdue").get_to(p.is_judgement_overdue_);
   }
