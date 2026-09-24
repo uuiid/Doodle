@@ -617,13 +617,11 @@ std::optional<ai_light_session_detail_t> build_session_detail(sqlite_database& i
     l_ret.emplace();
     l_ret->session_ = in_sql.get_by_uuid<ai_light_session>(in_session_id);
   } catch (const orm::sqlite_orm_exception& in_err) {
-    // 会话不存在是**正常的 404**，不是服务端故障，所以转成 nullopt 而不是
-    // 让它冒到路由层的 catch(...) 变成 500。
-    SPDLOG_LOGGER_DEBUG(g_logger_ctrl().get_http(), "读取 AI 灯光会话 {} 失败: {}", in_session_id, in_err.what());
-    return std::nullopt;
-  } catch (const std::runtime_error& in_err) {
-    // get_by_uuid 查不到行时抛的是 to_single() 的 std::runtime_error("No rows returned")，
-    // **不是** sqlite_orm_exception —— 两个都要接住，否则「查一个不存在的会话」会变成 500。
+    // 会话不存在是**正常的 404**，转成 nullopt 让调用方决定（路由层翻成 404）。
+    // 但**只吞 404**：其它 sqlite_orm_exception（约束损坏、库文件坏了…）是真故障，
+    // 必须照常上抛成 500。以前这里把整类异常都吞成 nullopt，于是一个真正的库错误
+    // 会伪装成「会话不存在」—— 排查方向直接被带偏。
+    if (in_err.code_status_() != boost::beast::http::status::not_found) throw;
     SPDLOG_LOGGER_DEBUG(g_logger_ctrl().get_http(), "AI 灯光会话 {} 不存在: {}", in_session_id, in_err.what());
     return std::nullopt;
   }

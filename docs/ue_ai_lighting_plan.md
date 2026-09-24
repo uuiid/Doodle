@@ -1091,7 +1091,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | 路由注册 | `http_method/kitsu.cpp` 的 `create_kitsu_route_2`（**只注册主服务器**，客户端不跑 LLM） |
 | 图片变体导出 | `http_method/kitsu/preview.{h,cpp}` 的 `preview::save_variants`（从匿名命名空间提到 `preview` 命名空间，供定稿复用；不另写一套尺寸，否则预览列表页读到的图与既有预览文件不一致） |
 | 读模型 | `ai_light_session_detail_t`（`doodle_core/metadata/ai_light/view.h`），六表一次聚合，并带出 `candidate_count_per_iteration`（前端不自己写死 6） |
-| 测试 | `src/test/core/ai_light_state.cpp`（15 用例 / 143 断言，含 JSON 形状回归）；全量回归 79 用例 / 808 断言通过 |
+| 测试 | `src/test/core/ai_light_state.cpp`（15 用例 / 143 断言，含 JSON 形状回归）+ `src/test/core/sqlite_not_found.cpp`（5 用例 / 11 断言，钉 ORM 的 404 语义）；全量回归 84 用例 / 819 断言通过 |
 
 **状态机**（`advance_session` 是唯一的推进入口，`/spec`、`/spec/confirm`、`/iterate`、
 镜头页入口都调它，所以「同一步骤从不同入口进来行为一致」是结构性保证的）：
@@ -1168,9 +1168,42 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
    要用显式转换就用括号 `nlohmann::json(x)`（括号走普通重载决议）。
    说明写在 `common.h`，并加了一条专门钉住 JSON **形状**（而不只是值）的回归用例 ——
    值相等掩盖不了多包一层数组。
-2. **`get_by_uuid` 查不到行时抛的是 `std::runtime_error("No rows returned")`，
-   不是 `sqlite_orm_exception`。** 只接后者的话，「取一个不存在的 id」会一路冒到
-   `http_session_data` 的 `catch (...)` 变成 **500**，而正确答案是 404。
-   统一收在 `ai_light.cpp` 的 `try_get_by_uuid()` 与 `build_session_detail()` 里。
+2. **「查不到行」的异常语义在 ORM 层统一了，不要在调用点各自翻译。**
+   起因是一个很隐蔽的类型关系：`to_single()` 原来抛 `std::runtime_error("No rows returned")`，
+   它与 `sqlite_orm_exception` 是**兄弟**（都直接继承 `std::runtime_error`），
+   所以 `catch (const sqlite_orm_exception&)` 接不住它 —— 于是「取一个不存在的 id」
+   会一路冒到 `http_session_data` 的 `catch (...)` 变成 **500**，而正确答案是 404。
+   当时的补救办法是在 `ai_light.cpp` 里包一层 `try_get_by_uuid()`，把**所有**
+   `std::exception` 都翻成 `nullopt` → 404。那个办法有两个毛病：每个调用点都要写一遍；
+   而且它顺手把「库真的坏了」也伪装成了「资源不存在」，排查方向直接被带偏。
+
+   现在改成在**抛出点**声明语义：
+
+   - `orm::sqlite_orm_exception` 新增 `code_status_()`（默认 `bad_request`，
+     沿用 `doodle_error` 的访问器命名），既有抛出点（外键 NO ACTION 撞
+     `FOREIGN KEY constraint failed`、`rebind_range` 参数数量不匹配等）行为不变；
+   - `to_single()` 结果集为空时抛 `sqlite_orm_exception{404}`，消息里带上**表名**
+     （`"ai_light_preset 中查不到该行"`）—— HTTP 层把它直接当 404 的响应体，
+     而 `"No rows returned"` 既看不出是哪张表，也看不出是「不存在」还是「查询写错了」；
+   - `http_session_data.cpp` 的 `catch (const orm::sqlite_orm_exception&)` 直接取
+     `e.code_status_()` 当响应码，不再硬编码 400；
+   - `to_optional()` 语义不变（空结果集 → `nullopt`），它是「允许没有」的显式通道。
+
+   于是 `ai_light.cpp` 的 `try_get_by_uuid()` 整个删掉，四处调用点直接 `get_by_uuid`；
+   `build_session_detail()` 也**只吞 404**，其它 `sqlite_orm_exception` 照常上抛成 500。
+
+   契约钉在 `src/test/core/sqlite_not_found.cpp`：断言的是**状态码数值**而不是
+   「抛了异常」—— 状态码是行为，不是注释。
+
+   **这次改动顺带暴露的两个既有缺陷**（同一个「异常类型对不上」的病根，
+   不修的话新状态码会从它们的 catch 缝里漏出去）：
+
+   - `auth.cpp` 的 `catch (const doodle_error&)` 从来没生效过 —— `get_person_for_email`
+     走的 `to_single` 抛的是 `std::runtime_error`，与 `doodle_error` 是兄弟，接不住。
+     于是「给未注册邮箱发重置」一路变成 500，而作者写的 400 + `Email not listed in
+     database.` 是死代码。已改成只翻译 404。
+   - `login.cpp` 里 `get_person_for_email` 查不到时，如果放任 ORM 的 404 出到响应，
+     等于给**未登录**接口开了一个「这个邮箱注册过没有」的查询口（用户枚举）。
+     已自己翻译成 400 + 「邮箱或密码错误」，与「密码错误」回同一句话，不区分两者。
 
 

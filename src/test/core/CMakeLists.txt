@@ -11,6 +11,7 @@ target_sources(test_main
         sqlite_schema.cpp
         sqlite_conn_pragma.cpp
         sqlite_fk_semantics.cpp
+        sqlite_not_found.cpp
         sqlite_upgrade.cpp
         ai_light_schema.cpp
         ai_light_state.cpp

@@ -216,10 +216,18 @@ struct select_t::result_type_t {
   // to set
   std::set<type> to_set();
 
-  // to single value, 如果结果集有多于1行, 则抛出异常
+  // to single value, 如果结果集为空, 抛 sqlite_orm_exception(404)
   type to_single();
   // to optional
   std::optional<type> to_optional();
+
+ private:
+  /// 出错信息里用的表名。只在抛异常路径上调用（走一次虚函数），不影响正常查询。
+  /// 取不到时退回 "结果集"，绝不为了拼一条错误消息再抛一个异常。
+  std::string table_name_for_error() const {
+    if (!select_.impl_ || !select_.impl_->from_table_name_) return "结果集";
+    return select_.impl_->from_table_name_->to_sql(select_.impl_->s_, to_sql_ctx{});
+  }
 };
 
 inline select_t select(const session& s) {

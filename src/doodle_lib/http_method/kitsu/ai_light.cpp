@@ -46,33 +46,17 @@ using namespace orm;
 // 路由类都带 _route 后缀，不会遮蔽任何实体名（见 ai_light.h 顶部的说明）。
 using namespace doodle::ai_light;
 
-/// 按 uuid 取行，查不到返回 nullopt。
-///
-/// get_by_uuid 在查不到行时抛的是 to_single() 的 std::runtime_error("No rows returned")，
-/// **不是** sqlite_orm_exception。只接后者的话，「取一个不存在的 id」会一路冒到
-/// http_session_data 的 catch(...) 变成 500，而正确答案是 404。
-/// 这个坑踩过一次了，所以统一收在这里，不再让每个处理函数各写一遍。
-template <typename T>
-std::optional<T> try_get_by_uuid(sqlite_database& in_sql, const uuid& in_uuid) {
-  try {
-    return in_sql.get_by_uuid<T>(in_uuid);
-  } catch (const std::exception&) {
-    return std::nullopt;
-  }
-}
-
 /// 查会话并做项目级权限校验。返回会话本体。
 ///
 /// 为什么每次都要回查 project：路由上的 {id} 是会话 id，而权限判定要的是项目 id，
 /// 会话行是唯一权威来源。让前端传 project_id 来「帮忙」只会引入一处可伪造的输入。
+///
+/// 会话不存在时 get_by_uuid → to_single 会抛 sqlite_orm_exception{404}，
+/// 由 http_session_data 统一翻成 404，这里不再自己 try/catch。
 ai_light_session load_session_checked(const http_jwt_fun::http_jwt_t& in_person, sqlite_database& in_sql, const uuid& in_session_id) {
-  auto l_session = try_get_by_uuid<ai_light_session>(in_sql, in_session_id);
-  if (!l_session.has_value())
-    throw_exception(
-        http_request_error{boost::beast::http::status::not_found, fmt::format("AI 灯光会话 {} 不存在", in_session_id)}
-    );
-  in_person.check_project_access(l_session->project_id_);
-  return std::move(*l_session);
+  auto l_session = in_sql.get_by_uuid<ai_light_session>(in_session_id);
+  in_person.check_project_access(l_session.project_id_);
+  return l_session;
 }
 
 /// 终态会话一律只读
@@ -384,13 +368,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, delete_) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
 
-  ai_light_reference l_ref{};
-  {
-    auto l_row = try_get_by_uuid<ai_light_reference>(l_sql, id_);
-    if (!l_row.has_value())
-      throw_exception(http_request_error{boost::beast::http::status::not_found, fmt::format("参考图 {} 不存在", id_)});
-    l_ref = std::move(*l_row);
-  }
+  // 参考图不存在时 get_by_uuid 抛 sqlite_orm_exception{404}，由 http_session_data 统一翻成 404
+  auto l_ref     = l_sql.get_by_uuid<ai_light_reference>(id_);
   auto l_session = load_session_checked(person_, l_sql, l_ref.session_id_);
   check_session_mutable(l_session);
 
@@ -421,13 +400,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_image_route, get) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
 
-  ai_light_reference l_ref{};
-  {
-    auto l_row = try_get_by_uuid<ai_light_reference>(l_sql, id_);
-    if (!l_row.has_value())
-      throw_exception(http_request_error{boost::beast::http::status::not_found, fmt::format("参考图 {} 不存在", id_)});
-    l_ref = std::move(*l_row);
-  }
+  // 参考图不存在时 get_by_uuid 抛 sqlite_orm_exception{404}，由 http_session_data 统一翻成 404
+  auto l_ref = l_sql.get_by_uuid<ai_light_reference>(id_);
   person_.check_project_access(l_sql.get_by_uuid<ai_light_session>(l_ref.session_id_).project_id_);
 
   DOODLE_CHICK(FSys::exists(l_ref.file_path_), "参考图文件不存在 文件 {}", l_ref.file_path_.generic_string());
@@ -442,13 +416,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_image_route, get) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
 
-  ai_light_candidate l_cand{};
-  {
-    auto l_row = try_get_by_uuid<ai_light_candidate>(l_sql, id_);
-    if (!l_row.has_value())
-      throw_exception(http_request_error{boost::beast::http::status::not_found, fmt::format("候选 {} 不存在", id_)});
-    l_cand = std::move(*l_row);
-  }
+  // 候选不存在时 get_by_uuid 抛 sqlite_orm_exception{404}，由 http_session_data 统一翻成 404
+  auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(id_);
   person_.check_project_access(l_sql.get_by_uuid<ai_light_session>(l_cand.session_id_).project_id_);
 
   // 未渲染与「文件丢了」是两件事，给不同的话术，省得美术以为是自己的操作错了。

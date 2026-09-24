@@ -108,7 +108,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, post) {
   person l_person;
   try {
     l_person = l_sql.get_person_for_email(l_email);
-  } catch (const doodle_error& e) {
+  } catch (const orm::sqlite_orm_exception& e) {
+    // 原来是 catch (const doodle_error&) —— 那个 catch 从来没生效过：
+    // get_person_for_email 走的 to_single 抛的是 std::runtime_error，
+    // 与 doodle_error 是兄弟关系，接不住，于是「给未注册邮箱发重置」一路变成 500。
+    // 现在 to_single 抛 sqlite_orm_exception{404}，这里只翻译 404；
+    // 其它库错误照常上抛成 500，不再被伪装成「邮箱不存在」。
+    if (e.code_status_() != boost::beast::http::status::not_found) throw;
     throw_exception(
         http_request_error{
             boost::beast::http::status::bad_request,

@@ -51,7 +51,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_login, post) {
 
   if (l_data.email_.empty() || l_data.password_.empty())
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "email 或 password 为空"});
-  auto l_p = l_sql.get_person_for_email(l_data.email_);
+
+  // 邮箱查不到时 get_person_for_email → to_single 会抛 sqlite_orm_exception{404}。
+  // 这里**必须**自己翻译掉：让「404 + person 中查不到该行」直接出到响应里，
+  // 等于给这个未登录接口开了一个「这个邮箱注册过没有」的查询口（用户枚举），
+  // 而且 404 也不是登录失败的语义（登录失败是 400/401）。
+  // 注意与「密码错误」回**同一句话**，不能区分「邮箱不存在」和「密码不对」。
+  person l_p{};
+  try {
+    l_p = l_sql.get_person_for_email(l_data.email_);
+  } catch (const orm::sqlite_orm_exception& in_err) {
+    if (in_err.code_status_() != boost::beast::http::status::not_found) throw;
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "邮箱或密码错误"});
+  }
   if (!l_p.active_) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "用户未激活"});
 
   if (l_p.login_failed_attemps_ > 5 && l_p.last_login_failed_ &&

@@ -210,7 +210,13 @@ std::set<typename select_t::result_type_t<TableColumns...>::type> select_t::resu
 template <typename... TableColumns>
 typename select_t::result_type_t<TableColumns...>::type select_t::result_type_t<TableColumns...>::to_single() {
   auto l_iter = begin();
-  if (l_iter == end()) throw std::runtime_error("No rows returned");
+  if (l_iter == end())
+    // 「一行都没有」是 404 而不是 400：这是**目标资源不存在**，不是调用方把参数写错了。
+    // 消息里带上表名 —— HTTP 层现在把它直接当 404 的响应体，而 "No rows returned"
+    // 这种话既看不出是哪张表，也看不出是「不存在」还是「查询写错了」。
+    throw sqlite_orm_exception{
+        fmt::format("{} 中查不到该行", table_name_for_error()), boost::beast::http::status::not_found
+    };
   type l_result = *l_iter;
   ++l_iter;
   if (l_iter != end())  // throw std::runtime_error("More than one row returned");
