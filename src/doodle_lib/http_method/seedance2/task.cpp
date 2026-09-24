@@ -465,8 +465,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
   auto l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
   DOODLE_CHICK_HTTP(
-      l_task.status_ == sd2::task_status::preparing || l_task.status_ == sd2::task_status::queued, bad_request,
-      "只有准备中或排队中的任务可以取消"
+      l_task.status_ == sd2::task_status::preparing || l_task.status_ == sd2::task_status::queued ||
+          (l_task.status_ == sd2::task_status::running && l_task.backend_ == sd2::task_backend::seedance2),
+      bad_request, "只有准备中或排队中,运行中的任务可以取消"
   );
 
   // preparing 状态尚未提交到外部, 直接置为 cancelled 并归还 token
@@ -477,7 +478,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
 
     DOODLE_CHICK_HTTP(!l_task.task_id_.empty(), internal_server_error, "task id 为空, 无法查询");
     auto l_res = co_await l_client->query_task(l_task);
-    DOODLE_CHICK_HTTP(l_res.status_ == sd2::task_status::queued, bad_request, "只有排队中的任务可以取消");
+    DOODLE_CHICK_HTTP(
+        (l_res.status_ == sd2::task_status::queued || l_res.status_ == sd2::task_status::running) &&
+            l_task.backend_ == sd2::task_backend::seedance2,
+        bad_request, "只有排队中和运行中的任务可以取消"
+    );
 #ifdef DOODLE_SEED2
     co_await l_client->cancel_task(l_task.task_id_);
 #endif
