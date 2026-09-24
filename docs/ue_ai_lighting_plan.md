@@ -831,17 +831,24 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 **要改什么**
 
 1. **任务类型**：`server_task_info_type` 加 `ai_light`（`doodle_core/metadata/server_task_info_type.h:20` 附近）。
-2. **提交端点**：新增 `/api/actions/projects/{}/shots/{}/ai-light`，照 `http_method/kitsu/distributed_task.cpp:49-74` 的 `actions_projects_shots_run_ue_assembly::post` 写：构造 `server_task_info`，`type_ = ai_light`，`command_ = {baseline, candidates[]}`（`command_` 是自由 JSON，可直接承载，无需改表结构），insert 后调 `run_next_task()` + `socket_io::broadcast`。
+2. **派发**：**不单开提交端点**（早期方案里的 `/api/actions/projects/{}/shots/{}/ai-light` 已废弃）。
+   派发逻辑内嵌在编排层 `advance_session()` → `generate_candidates()` 里：构造 `server_task_info`
+   （`type_ = ai_light`，`command_ = {session_id, iteration, spec_id, candidates[], baseline_level}`，
+   `command_` 是自由 JSON，无需改表结构），**事务提交之后**再调
+   `computers_assign_task::get_instance().run_next_task()` + `socket_io::broadcast`。
+   放在事务之后是有意的：任务行已落库，派发失败也只是「暂时没人领」，
+   `computers_assign_task` 下次轮询会再捡起来，不会丢。
+   不单开端点的理由：建会话入口与 `/iterate` 都要派发，抽在编排层里只有一份实现，
+   而独立的提交端点会变成第二个可以绕过归属校验的入口。
 3. **派发逻辑**：**零改动**。`computers.cpp:376-378` 已按 `computer.allowed_task_types_` 通用过滤。
 4. **LLM/VLM 客户端**：新增 `deepseek_client`（继承 `http_client/ai_client_base.h`，OpenAI 兼容，支持 chat + vision）。**必须在主服务器**——`--local` 的 `kitsu_ctx_t` 是两参构造，没有 key。
-5. **AI 路由**：**已落地（本轮）**，13 条，全部注册在 `create_kitsu_route_2`（主服务器），
+5. **AI 路由**：**已落地（本轮）**，12 条，全部注册在 `create_kitsu_route_2`（主服务器），
    声明在 `doodle_lib/http_method/kitsu/ai_light.h`，处理函数在 `ai_light.cpp`：
 
    | 方法与路径 | 说明 |
    |---|---|
-   | `POST /api/actions/projects/{project_id}/shots/{id}/ai-light` | 镜头页入口：建会话 + 跑第一步 |
    | `GET  /api/doodle/ai/light/shot/{entity_id}/session` | **该镜头**下的会话列表（含历史，新的在前） |
-   | `POST /api/doodle/ai/light/shot/{entity_id}/session` | **为该镜头**建会话（提示词必填；`entity_id` 以路径为准） |
+   | `POST /api/doodle/ai/light/shot/{entity_id}/session` | **唯一建会话入口**：为该镜头建会话**并跑第一步**，返回六表聚合详情 |
    | `GET  /api/doodle/ai/light/session/{id}` | 详情（六表聚合读模型） |
    | `DELETE /api/doodle/ai/light/session/{id}` | 删会话（产物先进备份区；已定稿禁止删） |
    | `GET  /api/doodle/ai/light/session/{session_id}/reference` | 参考图列表 |
@@ -887,9 +894,18 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    是两件事 —— 只要动画的优先级更高，定稿图就会被挂到动画任务下，而按 task_id 分组**不会报错**，
    只会静静地出现在错误的分类里。按 id 匹配同时不依赖名称文本（可本地化）。
 
-   `POST /api/actions/projects/{project_id}/shots/{id}/ai-light` 同样处理，
-   并且额外比对 `entity.project_id_ == 路径 project_id_`：本路由的项目在路径里，
-   但路径也是客户端给的，同样可能和镜头不一致 —— 错 URL 应该报 400，而不是默默建一条归属矛盾的会话。
+   `POST /api/actions/projects/{project_id}/shots/{id}/ai-light` **已删除**。
+   它和 `POST /shot/{entity_id}/session` 做的是同一件事（建会话 + 跑第一步），
+   而它多带一个 `project_id` 在路径里，反而给了「镜头与项目不一致」的伪造空间 ——
+   现在归属三键全部从镜头解析，没有第二个入口可以绕开这道校验。
+
+   **唯一的建会话入口在建完之后立刻跑第一步**（`draft` → 蒸馏 Spec → `awaiting_spec_confirm`），
+   而不是只建一个空会话再让前端自己接一发 `/spec`：镜头页点一次按钮就该拿到一份待确认的 Spec。
+   但这一步**绝不能**把整个请求变成非 2xx —— 会话已经落库了，
+   前端一旦拿不到 session id，重试只会造出重复会话（而参考图挂在会话上，重复会话意味着重传）。
+   所以只吞「接缝未实现」这一种能力缺口，其余错误照常抛出，并在响应里带 `advance_error`。
+   响应返回**六表聚合详情**（`ai_light_session_detail_t`，含 `session_` 在内，是会话本体的超集），
+   这样前端一次就能拿到 `advance_session` 刚写入的 Spec，不必再补一发 GET。
 
    **两个 501 端点不是占位桩**：权限、状态校验、会话查找全部真实执行，只有最里层的
    LLM 接缝抛 `not_implemented`（→ HTTP 501，见 §15.4）。所以现在调它们得到的是

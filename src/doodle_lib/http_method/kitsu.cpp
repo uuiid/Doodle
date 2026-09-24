@@ -307,10 +307,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       // 只注册在主服务器：LLM/VLM 调用只在主服务器做（只有它持有 deepseek_keys_），
       // 客户端只跑 worker 侧。所以这里**不**放进 create_kitsu_local_route。
       // ---------------------------------------------------------------------
-      .reg_t<ai_light::shot_entry_route>("/api/actions/projects/{}/shots/{}/ai-light"_url(
-        &ai_light::shot_entry_route::project_id_,
-        &ai_light::shot_entry_route::id_
-      ))
       .reg_t<ai_light::shot_session_route>("/api/doodle/ai/light/shot/{}/session"_url(
         &ai_light::shot_session_route::entity_id_
       ))

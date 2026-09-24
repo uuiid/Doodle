@@ -29,7 +29,7 @@
 namespace doodle::http::ai_light {
 
 // GET  /api/doodle/ai/light/shot/{entity_id}/session   该镜头下的会话列表（含历史，新的在前）
-// POST /api/doodle/ai/light/shot/{entity_id}/session   为该镜头建会话（提示词必填；参考图走下面的 reference 接口）
+// POST /api/doodle/ai/light/shot/{entity_id}/session   为该镜头建会话**并跑第一步**（唯一入口）
 //
 // 为什么镜头 id 进**路径**而不是当查询参数：
 //   ai_light_session.entity_id_ 是必填（NOT NULL）的镜头 id，会话的归属就是「某个镜头」，
@@ -39,6 +39,12 @@ namespace doodle::http::ai_light {
 //   /api/doodle/ai/light/session/{id} 已经是「按**会话 id** 取详情 / 删会话」，
 //   而镜头 id 与会话 id 都是 uuid，形状上无法区分，路由只能任选其一 ——
 //   那是不可接受的歧义（表现为「有时 404 有时 200」，且取决于注册顺序）。
+//
+// 这是**唯一**的建会话入口：原先并存的
+//   POST /api/actions/projects/{project_id}/shots/{id}/ai-light
+// 已删除。两者做的是同一件事（建会话 + 跑第一步），
+// 而它多带一个 project_id 在路径里，反而给了「镜头与项目不一致」的伪造空间；
+// 现在归属三键（entity / project / 灯光任务）全部从镜头解析，没有第二个入口可绕。
 DOODLE_HTTP_JWT_FUN(shot_session_route)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
@@ -113,14 +119,6 @@ DOODLE_HTTP_JWT_FUN(preset_instance_route)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
-
-// POST /api/actions/projects/{project_id}/shots/{id}/ai-light
-// 镜头页入口：建会话 + 跑第一步。与 /iterate 共用 advance_session()，只是入口不同。
-DOODLE_HTTP_JWT_FUN(shot_entry_route)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid project_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 

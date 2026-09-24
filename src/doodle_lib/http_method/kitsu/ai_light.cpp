@@ -15,6 +15,8 @@
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/project.h>
+// 必须显式包含：get_tasks_for_entity_and_task_type() 返回 std::optional<task>，
+// 而 task_status.h 只给了 task 的前置声明，实例化 optional<task> 需要完整类型。
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_type.h>
 
@@ -257,19 +259,48 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   // 标题默认取**镜头名**：会话锚在镜头上，镜头名比任务名更贴切，也少一次 task 查询。
   if (l_session.title_.empty()) l_session.title_ = l_entity.name_;
 
-  sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(insert(l_sql).into<ai_light_session>().values(l_session));
-  co_await l_sql.run_sql(std::move(l_sqls));
+  {
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(insert(l_sql).into<ai_light_session>().values(l_session));
+    co_await l_sql.run_sql(std::move(l_sqls));
+  }
 
   // 挂起扫描器懒启动：第一次有 AI 灯光请求时拉起，之后常驻。
   // 放在这里而不是启动流程里，是为了不依赖任何初始化顺序。
   ai_light_suspend_scanner::Get().run();
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 创建 AI 灯光会话 {}（镜头 {}，{} 字提示词）", person_.person_.email_,
-      person_.person_.get_full_name(), l_session.uuid_id_, l_session.entity_id_, l_session.prompt_text_.size()
+      g_logger_ctrl().get_http(), "用户 {}({}) 为镜头 {} 创建 AI 灯光会话 {}（{} 字提示词）", person_.person_.email_,
+      person_.person_.get_full_name(), l_session.entity_id_, l_session.uuid_id_, l_session.prompt_text_.size()
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_session);
+
+  // ---------------------------------------------------------------
+  // 建完会话立刻跑第一步（draft → 蒸馏 Spec → awaiting_spec_confirm）
+  // ---------------------------------------------------------------
+  // 这是本接口与原先两个入口合并后的行为：镜头页点一次按钮就该拿到一份待确认的 Spec，
+  // 而不是先建一个空会话再让前端自己接一发 /spec。
+  //
+  // 关键约束：会话**已经落库了**，所以这一步绝不能把整个请求变成非 2xx ——
+  // 前端一旦拿不到 session id，重试只会造出重复会话（而参考图挂在会话上，
+  // 重复会话意味着重传）。因此只吞「接缝未实现」这一种能力缺口，其余错误照常抛出。
+  std::string l_advance_error{};
+  try {
+    co_await advance_session(l_sql, l_session);
+  } catch (const doodle_error& in_err) {
+    if (in_err.code_status_() != boost::beast::http::status::not_implemented) throw;
+    l_advance_error = in_err.what();
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_http(), "AI 灯光会话 {} 已创建，但首步推进未完成: {}", l_session.uuid_id_, l_advance_error
+    );
+  }
+
+  // 返回**六表聚合详情**而不是会话本体：advance_session 可能刚写入了 Spec，
+  // 前端需要一次拿到完整状态，否则得再补一发 GET（多一次往返，且中间态可能已经变了）。
+  // 详情里本来就含 session_，是会话本体的超集。
+  auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
+  auto l_ret    = nlohmann::json{} = *l_detail;
+  if (!l_advance_error.empty()) l_ret["advance_error"] = l_advance_error;
+  co_return in_handle->make_msg(l_ret);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, get) {
@@ -832,75 +863,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, delete_) {
   l_sqls.emplace_back(delete_from(l_sql).from<ai_light_preset>().where(c(&ai_light_preset::uuid_id_) == id_));
   co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg_204();
-}
-
-// ===========================================================================
-// 镜头页入口（与 /iterate 分工：这里是「建会话 + 跑第一步」）
-// ===========================================================================
-
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_entry_route, post) {
-  person_.check_not_outsourcer();
-  auto l_sql  = get_sqlite_database();
-  auto l_json = in_handle->get_json();
-
-  // 与 /shot/{entity_id}/session 同样的道理：项目以**实体**为准。
-  // 本路由的 project_id 在路径里，但路径是客户端给的，它同样可能和镜头不一致；
-  // 这里多一道比对，把「URL 声称的项目 ≠ 镜头真实所属项目」这种错 URL 挡在 400，
-  // 而不是默默造出一条归属矛盾（甚至跨项目）的会话。
-  auto l_entity = l_sql.get_by_uuid<entity>(id_);
-  DOODLE_CHICK_HTTP(
-      l_entity.project_id_ == project_id_, bad_request,
-      fmt::format("镜头 {} 不属于项目 {}", id_, project_id_)
-  );
-
-  ai_light_session l_session{};
-  l_json.get_to(l_session);
-  // 归属由路由、实体与登录态决定，不接受请求体覆盖
-  l_session.project_id_ = l_entity.project_id_;
-  l_session.entity_id_  = id_;
-  l_session.task_id_    = resolve_lighting_task_id(l_sql, id_);
-  l_session.submitter_  = person_.person_.uuid_id_;
-  l_session.state_      = ai_light_session_state::draft;
-  l_session.current_iteration_ = 0;
-  l_session.failure_reason_    = "";
-
-  DOODLE_CHICK_HTTP(
-      !l_session.prompt_text_.empty(), bad_request,
-      "缺少 prompt_text —— 提示词是权威意图，不允许空着建会话"
-  );
-  person_.check_project_access(l_entity.project_id_);
-  if (l_session.title_.empty()) l_session.title_ = l_entity.name_;
-
-  {
-    sql_modify_statement_vector_t l_sqls{};
-    l_sqls.emplace_back(insert(l_sql).into<ai_light_session>().values(l_session));
-    co_await l_sql.run_sql(std::move(l_sqls));
-  }
-  ai_light_suspend_scanner::Get().run();
-
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 从镜头页创建 AI 灯光会话 {}（镜头 {}）", person_.person_.email_,
-      person_.person_.get_full_name(), l_session.uuid_id_, id_
-  );
-
-  // 会话已经落库了，所以下面这一步**绝不能**让整个请求失败：
-  // 一旦返回非 2xx，前端就拿不到 session id，重试只会造出重复会话。
-  // 因此只吞「接缝未实现」这一种能力缺口，其余错误照常抛出。
-  std::string l_advance_error{};
-  try {
-    co_await advance_session(l_sql, l_session);
-  } catch (const doodle_error& in_err) {
-    if (in_err.code_status_() != boost::beast::http::status::not_implemented) throw;
-    l_advance_error = in_err.what();
-    SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_http(), "AI 灯光会话 {} 已创建，但首步推进未完成: {}", l_session.uuid_id_, l_advance_error
-    );
-  }
-
-  auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
-  auto l_ret    = nlohmann::json{} = *l_detail;
-  if (!l_advance_error.empty()) l_ret["advance_error"] = l_advance_error;
-  co_return in_handle->make_msg(l_ret);
 }
 
 }  // namespace doodle::http::ai_light
