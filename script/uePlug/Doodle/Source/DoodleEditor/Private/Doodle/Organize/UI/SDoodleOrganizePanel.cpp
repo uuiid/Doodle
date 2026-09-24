@@ -636,6 +636,12 @@ void SDoodleOrganizePanel::RunOperation(const FText& OperationName, TFunctionRef
 {
 	const UDoodleOrganizeSettings& Settings = UDoodleOrganizeSettings::Get();
 
+	// 面板自己在操作前后还有两步 (快照采集 / 悬空软引用扫描), 它们不计入 Report.ElapsedSeconds,
+	// 但同样占用用户等待时间, 所以单独计时并打日志。
+	const double PanelStartTime = FPlatformTime::Seconds();
+	double PanelPreSeconds = 0.0;
+	double PanelPostSeconds = 0.0;
+
 	// 1) 操作前快照
 	FString SnapshotFilename;
 	if (Settings.bAutoSnapshotBeforeOrganize)
@@ -661,6 +667,8 @@ void SDoodleOrganizePanel::RunOperation(const FText& OperationName, TFunctionRef
 	{
 		Transaction = MakeUnique<FScopedTransaction>(OperationName);
 	}
+
+	PanelPreSeconds = FPlatformTime::Seconds() - PanelStartTime;
 
 	// 3) 执行
 	const double StartTime = FPlatformTime::Seconds();
@@ -737,6 +745,14 @@ void SDoodleOrganizePanel::RunOperation(const FText& OperationName, TFunctionRef
 	}
 
 	// 5) 呈现
+	PanelPostSeconds = FPlatformTime::Seconds() - PanelStartTime - PanelPreSeconds - Report.ElapsedSeconds;
+
+	// 面板侧阶段耗时: 总耗时异常时能一眼看出是"操作本身慢"还是"前后处理慢"
+	UE_LOG(LogTemp, Display,
+		TEXT("[DoodleOrganize] 面板耗时 [%s]: 操作前(快照) %.2fs / 操作本身 %.2fs / 操作后(校验+扫描) %.2fs / 合计 %.2fs"),
+		*OperationName.ToString(), PanelPreSeconds, Report.ElapsedSeconds, PanelPostSeconds,
+		PanelPreSeconds + Report.ElapsedSeconds + PanelPostSeconds);
+
 	LastReport = Report;
 	RefreshReportBar();
 	DoodleOrganize::NotifyReport(Report, ReportFile);

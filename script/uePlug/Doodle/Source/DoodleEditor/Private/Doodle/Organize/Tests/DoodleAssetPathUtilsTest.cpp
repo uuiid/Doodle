@@ -295,4 +295,62 @@ bool FDoodleOrganizeBatchReservationTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+/**
+ * 原地改名的判定回归。
+ *
+ * 真实事故: 对 /Game/Character/test_2/Meshs/mmtou30 用「添加后缀 aaa」,
+ * 报告「跳过 1 : 已经在目标目录, 未做改动」—— 一个都没改。
+ *
+ * 原因: AddSuffix 只改名字、不改目录 (DestinationFolder == 当前目录),
+ * 而"原地不动"的判定只比了目录 (IsUnderPackagePath), 于是把"只改名"误判成"原地不动"。
+ * 正确判定必须比较**完整的包路径** (目录 + 名字)。
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDoodleOrganizeInPlaceRenameTest,
+	"Doodle.Organize.PathUtils.InPlaceRename",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDoodleOrganizeInPlaceRenameTest::RunTest(const FString& Parameters)
+{
+	const FString Folder = TEXT("/Game/Character/test_2/Meshs");
+	const FString Source = TEXT("/Game/Character/test_2/Meshs/mmtou30");
+
+	// ---- 只改名 (添加后缀): 目录相同但包路径不同 => 必须继续, 不能跳过 ----
+	{
+		const FString DesiredPackage = DoodleOrganize::CombinePackagePath(Folder, TEXT("mmtou30_aaa"));
+
+		TestNotEqual(TEXT("加了后缀的包路径应与原路径不同"), DesiredPackage, Source);
+		TestFalse(TEXT("只改名不应被判为原地不动"),
+			DesiredPackage.Equals(Source, ESearchCase::CaseSensitive));
+	}
+
+	// ---- 目录和名字都没变: 才是真正的原地不动 ----
+	{
+		const FString DesiredPackage = DoodleOrganize::CombinePackagePath(Folder, TEXT("mmtou30"));
+		TestEqual(TEXT("目录+名字都没变时包路径应相同"), DesiredPackage, Source);
+		TestTrue(TEXT("目录+名字都没变应判为原地不动"),
+			DesiredPackage.Equals(Source, ESearchCase::CaseSensitive));
+	}
+
+	// ---- 去后缀 (从 mmtou30_aaa 变回 mmtou30) 也必须继续 ----
+	{
+		const FString Suffixed = TEXT("/Game/Character/test_2/Meshs/mmtou30_aaa");
+		FString UnSuffixed;
+		TestTrue(TEXT("应能剥掉 aaa 后缀"),
+			DoodleOrganize::MakeUnsuffixedName(TEXT("mmtou30_aaa"), TEXT("aaa"), UnSuffixed));
+		TestEqual(TEXT("去后缀后的名字"), UnSuffixed, FString(TEXT("mmtou30")));
+
+		const FString DesiredPackage = DoodleOrganize::CombinePackagePath(Folder, UnSuffixed);
+		TestNotEqual(TEXT("去后缀后的包路径应与带后缀的不同"), DesiredPackage, Suffixed);
+	}
+
+	// ---- 换目录 (整理) 仍然要判为需要移动 ----
+	{
+		const FString DesiredPackage = DoodleOrganize::CombinePackagePath(
+			TEXT("/Game/Character/test_2/Texture"), TEXT("mmtou30"));
+		TestNotEqual(TEXT("换目录应判为需要移动"), DesiredPackage, Source);
+	}
+
+	return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

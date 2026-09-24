@@ -252,6 +252,25 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 {
 	const double StartTime = FPlatformTime::Seconds();
 
+	// 阶段耗时。实测出现过"1 个资产 194 秒"的现场 (日志里那一帧卡了 194.47 秒,
+	// 同期 DDC 共享缓存维护跑了 157.9 秒), 光看总耗时无法定位, 所以把各阶段分开记。
+	// 见文件末尾的 UE_LOG 输出。
+	double PhaseMark = StartTime;
+	double PhaseDirtyGuard = 0.0;
+	double PhaseSubmit = 0.0;
+	double PhaseVerify = 0.0;
+	double PhaseRetarget = 0.0;
+	double PhaseLoadAll = 0.0;
+	double PhaseFixup = 0.0;
+
+	auto LapPhase = [&PhaseMark]() -> double
+	{
+		const double Now = FPlatformTime::Seconds();
+		const double Delta = Now - PhaseMark;
+		PhaseMark = Now;
+		return Delta;
+	};
+
 	FDoodleOrganizeReport Report;
 	Report.Operation = bUseDialog ? TEXT("MoveAssets(Dialog)") : TEXT("MoveAssets(Batch)");
 	Report.NumRequested = Requests.Num();
@@ -316,6 +335,8 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 	IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>(TEXT("AssetTools")).Get();
 	const TSharedRef<FPathPermissionList>& WritableFolders = AssetTools.GetWritableFolderPermissionList();
 
+	PhaseDirtyGuard = LapPhase();
+
 	// ---- 预处理: 跳过 / 求唯一名 / 权限检查 ----
 	TArray<FAssetRenameData> RenameData;
 	TArray<FString> SourcePackages;
@@ -350,11 +371,23 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 		FString TargetFolder = Request.DestinationFolder;
 		TargetFolder.RemoveFromEnd(TEXT("/"));
 
-		// 关键修正: 资产本来就在目标目录时直接跳过。
-		// 原实现用 DoesAssetExist(目标路径) 判断, 命中的永远是"自己", 于是必然改名成 Name_1 / Name_2。
-		if (DoodleOrganize::IsUnderPackagePath(SourcePackage, TargetFolder))
+		const FString DesiredName = Request.DestinationName.IsEmpty()
+			? Asset.AssetName.ToString()
+			: Request.DestinationName;
+
+		// 关键修正 (第二轮): 只有「目录和名字都没变」才算原地不动。
+		//
+		// 原来只比目录 (IsUnderPackagePath), 于是 AddSuffix / RemoveSuffix / 原地改名
+		// 这类"目录不变、只改名字"的操作会被整批当成"已经在目标目录"跳过 —— 一个都不改。
+		// 实测: 对 /Game/Character/test_2/Meshs/mmtou30 加后缀 aaa,
+		//       报告「跳过 1 : 已经在目标目录, 未做改动」。
+		//
+		// 注意仍然不能用 DoesAssetExist(目标路径) 判断 —— 原地改名时命中的可能是"自己",
+		// 那正是旧实现必然产生 Name_1 / Name_2 的原因。这里做的是包路径字符串比较。
+		const FString DesiredPackage = DoodleOrganize::CombinePackagePath(TargetFolder, DesiredName);
+		if (DesiredPackage.Equals(SourcePackage, ESearchCase::CaseSensitive))
 		{
-			Report.AddSkip(FString::Printf(TEXT("%s : 已经在目标目录, 未做改动"), *SourcePackage));
+			Report.AddSkip(FString::Printf(TEXT("%s : 已经在目标路径, 未做改动"), *SourcePackage));
 
 			FDoodleMoveOutcome Outcome;
 			Outcome.SourcePackage = SourcePackage;
@@ -364,17 +397,12 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 			continue;
 		}
 
-		const FString DesiredName = Request.DestinationName.IsEmpty()
-			? Asset.AssetName.ToString()
-			: Request.DestinationName;
-
 		FString FinalFolder;
 		FString FinalName;
 		bool bRenamedForConflict = false;
 
 		if (Request.bRenameOnConflict)
 		{
-			const FString DesiredPackage = DoodleOrganize::CombinePackagePath(TargetFolder, DesiredName);
 			if (!DoodleOrganize::TryMakeUniqueAssetPath(TargetFolder, DesiredName, FinalFolder, FinalName, &ReservedPackages))
 			{
 				Report.AddFailure(FString::Printf(TEXT("%s -> %s : 无法生成唯一资产名"), *SourcePackage, *TargetFolder));
@@ -385,7 +413,6 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 		}
 		else
 		{
-			const FString DesiredPackage = DoodleOrganize::CombinePackagePath(TargetFolder, DesiredName);
 			if (!DoodleOrganize::IsAssetPathFreeForBatch(DesiredPackage, &ReservedPackages))
 			{
 				Report.AddFailure(FString::Printf(TEXT("%s -> %s : 目标已存在"), *SourcePackage, *DesiredPackage));
@@ -422,8 +449,17 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 
 	if (RenameData.Num() == 0)
 	{
+		// 全是跳过 (例如"已经在目标路径") 时也会走到这里 ——
+		// 实测这里出现过 194 秒的异常耗时, 所以这条提前返回同样要记阶段耗时。
+		PhaseVerify = LapPhase();
+
 		Report.Finalize();
 		Report.ElapsedSeconds = FPlatformTime::Seconds() - StartTime;
+
+		UE_LOG(LogTemp, Display,
+			TEXT("[DoodleOrganize] 阶段耗时 请求 %d (无实际移动): 准备(含脏包兜底) %.2fs / 构建请求 %.2fs / 合计 %.2fs"),
+			Report.NumRequested, PhaseDirtyGuard, PhaseVerify, Report.ElapsedSeconds);
+
 		return Report;
 	}
 
@@ -457,6 +493,8 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 	//
 	// 所以这里不看返回值, 逐条按磁盘/注册表的事实核对到底搬没搬成。
 	const bool bEngineReportedFailure = (RenameResult == EAssetRenameResult::Failure);
+
+	PhaseSubmit = LapPhase();
 
 	if (RenameResult == EAssetRenameResult::Pending)
 	{
@@ -528,6 +566,8 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 	// 地图被搬动后, 它的 __ExternalActors__ 目录必须跟着走
 	HandleWorldExternalActors(Report);
 
+	PhaseVerify = LapPhase();
+
 	// ---- 核心修复: 补上引擎漏掉的软引用 ----
 	//
 	// FAssetRenameManager::PopulateAssetReferencers (AssetRenameManager.cpp:809-870) 的引用者
@@ -563,6 +603,8 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 		}
 	}
 
+	PhaseRetarget = LapPhase();
+
 	// ---- 第二趟: 让引擎自己把「地图里的引用者」也修好 ----
 	//
 	// 引擎的 bLoadAllPackages (AssetRenameManager.cpp:921) 决定地图引用者要不要真加载:
@@ -582,9 +624,13 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 		MergeReport(Report, LoadAllReport);
 	}
 
+	PhaseLoadAll = LapPhase();
+
 	// 旧路径上确实存在重定向器时, 才做一次修复 (按设置决定是否删除)
 	const FDoodleOrganizeReport FixupReport = FixupRedirectorsForMovedPackages(Report.MovedPackages);
 	MergeReport(Report, FixupReport);
+
+	PhaseFixup = LapPhase();
 
 	// 重定向器修/删完之后, "旧路径还剩多少" 要重新数一遍 —— 删掉的不该再算进去
 	if (UDoodleOrganizeSettings::Get().bDeleteRedirectorsAfterOrganize)
@@ -604,6 +650,15 @@ FDoodleOrganizeReport FDoodleAssetOrganizer::MoveAssetsInternal(TArrayView<const
 
 	Report.Finalize();
 	Report.ElapsedSeconds = FPlatformTime::Seconds() - StartTime;
+
+	// 阶段耗时: 总耗时异常时 (实测出现过 1 个资产 194 秒) 靠这行定位是哪一段卡住的。
+	// 注意: 这里只统计"本函数内部"的耗时。面板在操作前后还会做快照采集和悬空软引用扫描,
+	// 那些不在这段里 —— 它们由 RunOperation 自己另算。
+	UE_LOG(LogTemp, Display,
+		TEXT("[DoodleOrganize] 阶段耗时 请求 %d: 准备(含脏包兜底) %.2fs / 提交重命名 %.2fs / 结果核对 %.2fs / 软引用补修 %.2fs / 第二趟(加载全部软引用者) %.2fs / 重定向器 %.2fs / 合计 %.2fs"),
+		Report.NumRequested, PhaseDirtyGuard, PhaseSubmit, PhaseVerify, PhaseRetarget, PhaseLoadAll, PhaseFixup,
+		Report.ElapsedSeconds);
+
 	return Report;
 }
 
