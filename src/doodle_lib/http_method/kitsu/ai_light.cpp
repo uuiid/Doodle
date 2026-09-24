@@ -192,7 +192,7 @@ ai_light_session_detail_t load_detail_checked(
 // 会话
 // ===========================================================================
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_route, post) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   person_.check_not_outsourcer();
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
@@ -201,11 +201,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_route, post) {
   l_json.get_to(l_session);
   l_session.submitter_ = person_.person_.uuid_id_;
 
+  // 镜头 id 以**路径**为准。请求体里就算带了 entity_id 也被这里覆盖 ——
+  // 路径是 URL 的一部分，两者不一致时让它赢；否则同一个请求会有两个「真相」，
+  // 而库里的 entity_id_ 会取决于谁后写，排查时完全看不出来。
+  l_session.entity_id_ = entity_id_;
+
   DOODLE_CHICK_HTTP(
       !l_session.project_id_.is_nil(), bad_request, "缺少 project_id"
   );
   DOODLE_CHICK_HTTP(!l_session.task_id_.is_nil(), bad_request, "缺少 task_id");
-  DOODLE_CHICK_HTTP(!l_session.entity_id_.is_nil(), bad_request, "缺少 entity_id");
   DOODLE_CHICK_HTTP(
       !l_session.prompt_text_.empty(), bad_request,
       "缺少 prompt_text —— 提示词是权威意图，不允许空着建会话"
@@ -236,26 +240,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_route, post) {
   co_return in_handle->make_msg(nlohmann::json{} = l_session);
 }
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_route, get) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, get) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
 
-  auto l_entity_id  = query_uuid(in_handle->url_, "entity_id");
-  auto l_project_id = query_uuid(in_handle->url_, "project_id");
-  DOODLE_CHICK_HTTP(
-      l_entity_id.has_value() || l_project_id.has_value(), bad_request,
-      "需要 entity_id 或 project_id 之一"
-  );
+  // 镜头 id 来自路径，必填 —— 不再有「按 project_id 列出该项目全部会话」这个分支。
+  // 那是「项目管理视角」的查询，而本接口的定位是镜头页，归属明确；
+  // 两种语义挤在一个 URL 上，权限检查的粒度也会跟着含糊
+  // （按项目查只需查一次权限，按镜头查得逐个会话查）。
+  auto l_sessions = l_sql.get_ai_light_sessions_by_entity(entity_id_);
 
-  std::vector<ai_light_session> l_sessions{};
-  if (l_entity_id.has_value()) {
-    // 镜头页入口：查该镜头下全部会话（含历史），新的在前
-    l_sessions = l_sql.get_ai_light_sessions_by_entity(*l_entity_id);
-    for (const auto& l_s : l_sessions) person_.check_project_access(l_s.project_id_);
-  } else {
-    person_.check_project_access(*l_project_id);
-    l_sessions = l_sql.get_ai_light_sessions_by_project(*l_project_id);
-  }
+  // 权限逐个会话校验：会话行的 project_id_ 是唯一权威来源。
+  // 列表为空时不校验也不会漏任何东西（没有可泄露的内容）。
+  for (const auto& l_s : l_sessions) person_.check_project_access(l_s.project_id_);
 
   co_return in_handle->make_msg(nlohmann::json{{"data", l_sessions}});
 }

@@ -28,11 +28,21 @@
 
 namespace doodle::http::ai_light {
 
-// POST /api/doodle/ai/light/session          建会话（提示词必填；参考图走下面的 reference 接口）
-// GET  /api/doodle/ai/light/session          列表（?entity_id= 或 ?project_id=）
-DOODLE_HTTP_JWT_FUN(session_route)
+// GET  /api/doodle/ai/light/shot/{entity_id}/session   该镜头下的会话列表（含历史，新的在前）
+// POST /api/doodle/ai/light/shot/{entity_id}/session   为该镜头建会话（提示词必填；参考图走下面的 reference 接口）
+//
+// 为什么镜头 id 进**路径**而不是当查询参数：
+//   ai_light_session.entity_id_ 是必填（NOT NULL）的镜头 id，会话的归属就是「某个镜头」，
+//   所以「这个镜头的会话集合」本身就是一个一等资源。前端镜头页只面对一个 URL。
+//
+// 为什么不是 /session/{entity_id}（少一层）：
+//   /api/doodle/ai/light/session/{id} 已经是「按**会话 id** 取详情 / 删会话」，
+//   而镜头 id 与会话 id 都是 uuid，形状上无法区分，路由只能任选其一 ——
+//   那是不可接受的歧义（表现为「有时 404 有时 200」，且取决于注册顺序）。
+DOODLE_HTTP_JWT_FUN(shot_session_route)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
 
 // GET    /api/doodle/ai/light/session/{id}   会话详情（六表聚合读模型）

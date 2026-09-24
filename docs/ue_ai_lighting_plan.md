@@ -840,8 +840,8 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    | 方法与路径 | 说明 |
    |---|---|
    | `POST /api/actions/projects/{project_id}/shots/{id}/ai-light` | 镜头页入口：建会话 + 跑第一步 |
-   | `GET  /api/doodle/ai/light/session` | 列表（`?entity_id=` 或 `?project_id=`） |
-   | `POST /api/doodle/ai/light/session` | 建会话（提示词必填） |
+   | `GET  /api/doodle/ai/light/shot/{entity_id}/session` | **该镜头**下的会话列表（含历史，新的在前） |
+   | `POST /api/doodle/ai/light/shot/{entity_id}/session` | **为该镜头**建会话（提示词必填；`entity_id` 以路径为准） |
    | `GET  /api/doodle/ai/light/session/{id}` | 详情（六表聚合读模型） |
    | `DELETE /api/doodle/ai/light/session/{id}` | 删会话（产物先进备份区；已定稿禁止删） |
    | `GET  /api/doodle/ai/light/session/{session_id}/reference` | 参考图列表 |
@@ -857,6 +857,16 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    | `GET  /api/doodle/ai/light/preset` | 预设库列表（`?enabled_only=false` 取全部） |
    | `POST /api/doodle/ai/light/preset` | 新建预设（美术整理的第一批走这里导入） |
    | `GET/PUT/DELETE /api/doodle/ai/light/preset/{id}` | 预设单条 |
+
+   **镜头 id 进路径，不是查询参数。** `ai_light_session.entity_id_` 是必填（NOT NULL）的镜头 id，
+   会话的归属就是「某个镜头」，所以「这个镜头的会话集合」本身是一等资源，
+   前端镜头页只面对一个 URL（原先的 `GET /session?entity_id=|project_id=` 已废弃）。
+   之所以要多加一层 `shot/` 而不是直接 `/session/{entity_id}`：
+   `/api/doodle/ai/light/session/{id}` 已经是「按**会话 id** 取详情 / 删会话」，
+   而镜头 id 与会话 id 都是 uuid，**形状上无法区分**，路由只能任选其一 ——
+   症状是「有时 404 有时 200」而且取决于注册顺序，属于最难查的一类 bug。
+   `POST` 的 `entity_id` 以路径为准（请求体里带了也会被覆盖）：
+   同一个请求不能有两个「真相」，否则库里的值取决于谁后写。
 
    **两个 501 端点不是占位桩**：权限、状态校验、会话查找全部真实执行，只有最里层的
    LLM 接缝抛 `not_implemented`（→ HTTP 501，见 §15.4）。所以现在调它们得到的是

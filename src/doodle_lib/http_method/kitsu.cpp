@@ -311,7 +311,9 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &ai_light::shot_entry_route::project_id_,
         &ai_light::shot_entry_route::id_
       ))
-      .reg_t<ai_light::session_route>("/api/doodle/ai/light/session"_url)
+      .reg_t<ai_light::shot_session_route>("/api/doodle/ai/light/shot/{}/session"_url(
+        &ai_light::shot_session_route::entity_id_
+      ))
       .reg_t<ai_light::session_instance_route>("/api/doodle/ai/light/session/{}"_url(
         &ai_light::session_instance_route::id_
       ))
