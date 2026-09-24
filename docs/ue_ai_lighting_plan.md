@@ -685,7 +685,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 
 | 表 | 职责 |
 |---|---|
-| `ai_light_session` | 一次灯光工作：提示词原文、状态机、当前轮次、4 小时挂起时限 |
+| `ai_light_session` | 一次灯光工作：提示词原文、状态机、当前轮次、4 小时挂起时限。归属三键 `project_id` / `entity_id`(镜头) / `task_id`(该镜头的灯光任务) **全部由服务端解析**，见 §13.1 |
 | `ai_light_reference` | 多张参考图，**每张单独留显示空间统计**（多图冲突要能回溯到具体哪张图） |
 | `ai_light_spec` | 灯光目标，会话内按 `revision` 版本化；含 `degrade_level` / `human_confirmed` / `conflict_resolution` |
 | `ai_light_iteration` | 一轮：轴安排、派发任务、渲染耗时、人工判断记录 |
@@ -867,6 +867,29 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    症状是「有时 404 有时 200」而且取决于注册顺序，属于最难查的一类 bug。
    `POST` 的 `entity_id` 以路径为准（请求体里带了也会被覆盖）：
    同一个请求不能有两个「真相」，否则库里的值取决于谁后写。
+
+   **归属三键全部由服务端解析，客户端一个都不用传**（`project_id` / `task_id` 都不在请求体里）：
+
+   | 键 | 来源 | 为什么不由客户端给 |
+   |---|---|---|
+   | `entity_id_` | 路径 `{entity_id}` | 它就是这个 URL 标识的资源 |
+   | `project_id_` | `entity.project_id_` | 客户端给 project_id 时，服务端只能校验「用户对那个项目有没有权限」，**管不了镜头和项目是否一致** —— 于是能把 A 项目的镜头挂到 B 项目下（用户对 B 有权限即可），造出归属矛盾的会话，之后所有按项目的列表都会显示它 |
+   | `task_id_` | 该镜头的**灯光任务**：`get_tasks_for_entity_and_task_type(entity_id, task_type::get_lighting_id())` | 见下 |
+
+   **`task_id_` 为什么必须解析而不是留空**：它不只是个标签 ——
+   `build_accepted_preview_file` 用它填 `preview_file.task_id_`，而
+   `get_preview_files_for_entity` 是 `from<task>().join<preview_file>(task.uuid_id_ == preview_file.task_id_)`
+   的 **inner join**。留 NULL 的话已定稿候选图**永远不会出现在镜头的预览面板里**，
+   而且不报错 —— 属于「看起来成功、实际丢结果」。所以找不到灯光任务时直接 400。
+
+   用 `task_type::get_lighting_id()` 这个常量按 **id** 精确匹配，而不是「按 `task_type.priority_`
+   挑优先级最高的任务」：`priority_` 是**预览面板的展示顺序**，拿它当「哪个任务是这次灯光工作的」
+   是两件事 —— 只要动画的优先级更高，定稿图就会被挂到动画任务下，而按 task_id 分组**不会报错**，
+   只会静静地出现在错误的分类里。按 id 匹配同时不依赖名称文本（可本地化）。
+
+   `POST /api/actions/projects/{project_id}/shots/{id}/ai-light` 同样处理，
+   并且额外比对 `entity.project_id_ == 路径 project_id_`：本路由的项目在路径里，
+   但路径也是客户端给的，同样可能和镜头不一致 —— 错 URL 应该报 400，而不是默默建一条归属矛盾的会话。
 
    **两个 501 端点不是占位桩**：权限、状态校验、会话查找全部真实执行，只有最里层的
    LLM 接缝抛 `not_implemented`（→ HTTP 501，见 §15.4）。所以现在调它们得到的是

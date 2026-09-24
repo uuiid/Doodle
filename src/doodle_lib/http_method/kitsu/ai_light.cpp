@@ -16,6 +16,7 @@
 #include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/task.h>
+#include <doodle_core/metadata/task_type.h>
 
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/entity_path.h>
@@ -57,6 +58,30 @@ ai_light_session load_session_checked(const http_jwt_fun::http_jwt_t& in_person,
   auto l_session = in_sql.get_by_uuid<ai_light_session>(in_session_id);
   in_person.check_project_access(l_session.project_id_);
   return l_session;
+}
+
+/// 从镜头解析出本次会话归属的 Kitsu 任务 —— 即该镜头的**灯光任务**。
+///
+/// 为什么按 task_type id 精确匹配，而不是「按任务类型优先级挑一个」：
+/// `task_type::priority_` 是**预览面板的展示顺序**（灯光/动画/合成…），
+/// 拿它当「哪个任务是这次灯光工作的」是两件不同的事 —— 只要动画的优先级更高，
+/// 定稿图就会被挂到动画任务下。而 `get_preview_files_for_entity` 是按 task_id 分组的，
+/// 挂错组**不会报错**，只会静静地出现在错误的分类里，属于最难发现的一类问题。
+/// 灯光任务类型的 id 在本工程是常量（task_type.h:62），比 id 既准确又不依赖名称文本（可本地化）。
+///
+/// 找不到时**必须失败**，不能退化成 nil：`preview_file.task_id_` 是指向 task 的外键，
+/// 且 `get_preview_files_for_entity` 用 inner join 关联 task，
+/// nil 会让定稿图永远进不了镜头的预览面板 —— 那是「看起来成功、实际丢结果」。
+uuid resolve_lighting_task_id(sqlite_database& in_sql, const uuid& in_entity_id) {
+  auto l_task = in_sql.get_tasks_for_entity_and_task_type(in_entity_id, task_type::get_lighting_id());
+  if (!l_task.has_value())
+    throw_exception(
+        http_request_error{
+            boost::beast::http::status::bad_request,
+            fmt::format("镜头 {} 没有灯光任务，无法建立 AI 灯光会话", in_entity_id)
+        }
+    );
+  return l_task->uuid_id_;
 }
 
 /// 终态会话一律只读
@@ -197,24 +222,31 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
+  // 镜头是唯一的归属锚点：先查实体，**项目从实体上取**，不接受请求体传。
+  //
+  // 这不只是省一个入参。以前 project_id 由请求体给，服务端只能校验
+  // 「用户对那个项目有没有权限」，**管不了镜头和项目是否真的一致** ——
+  // 于是可以把 A 项目的镜头挂到 B 项目下（用户对 B 有权限即可），
+  // 造出一条「镜头在 A、项目在 B」的会话，之后所有按项目的列表都会显示它。
+  // 现在归属只有一个真相：entity.project_id_。
+  //
+  // 镜头不存在时 get_by_uuid → to_single 抛 sqlite_orm_exception{404}，由 HTTP 层统一翻。
+  auto l_entity = l_sql.get_by_uuid<entity>(entity_id_);
+
   ai_light_session l_session{};
   l_json.get_to(l_session);
-  l_session.submitter_ = person_.person_.uuid_id_;
+  l_session.submitter_  = person_.person_.uuid_id_;
+  // 路径、实体、镜头的灯光任务分别覆盖请求体里的同名字段：
+  // 归属只有一个真相，客户端传什么都改变不了它。
+  l_session.entity_id_  = entity_id_;
+  l_session.project_id_ = l_entity.project_id_;
+  l_session.task_id_    = resolve_lighting_task_id(l_sql, entity_id_);
+  person_.check_project_access(l_session.project_id_);
 
-  // 镜头 id 以**路径**为准。请求体里就算带了 entity_id 也被这里覆盖 ——
-  // 路径是 URL 的一部分，两者不一致时让它赢；否则同一个请求会有两个「真相」，
-  // 而库里的 entity_id_ 会取决于谁后写，排查时完全看不出来。
-  l_session.entity_id_ = entity_id_;
-
-  DOODLE_CHICK_HTTP(
-      !l_session.project_id_.is_nil(), bad_request, "缺少 project_id"
-  );
-  DOODLE_CHICK_HTTP(!l_session.task_id_.is_nil(), bad_request, "缺少 task_id");
   DOODLE_CHICK_HTTP(
       !l_session.prompt_text_.empty(), bad_request,
       "缺少 prompt_text —— 提示词是权威意图，不允许空着建会话"
   );
-  person_.check_project_access(l_session.project_id_);
 
   // 状态与轮次由服务端定，不接受客户端传（否则能伪造出 awaiting_judgement 的会话）
   l_session.state_             = ai_light_session_state::draft;
@@ -222,8 +254,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   l_session.judgement_due_at_  = std::nullopt;
   l_session.suspended_at_      = std::nullopt;
   l_session.failure_reason_    = "";
-  if (l_session.title_.empty())
-    l_session.title_ = l_sql.get_by_uuid<task>(l_session.task_id_).name_;
+  // 标题默认取**镜头名**：会话锚在镜头上，镜头名比任务名更贴切，也少一次 task 查询。
+  if (l_session.title_.empty()) l_session.title_ = l_entity.name_;
 
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(insert(l_sql).into<ai_light_session>().values(l_session));
@@ -811,23 +843,33 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_entry_route, post) {
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
+  // 与 /shot/{entity_id}/session 同样的道理：项目以**实体**为准。
+  // 本路由的 project_id 在路径里，但路径是客户端给的，它同样可能和镜头不一致；
+  // 这里多一道比对，把「URL 声称的项目 ≠ 镜头真实所属项目」这种错 URL 挡在 400，
+  // 而不是默默造出一条归属矛盾（甚至跨项目）的会话。
+  auto l_entity = l_sql.get_by_uuid<entity>(id_);
+  DOODLE_CHICK_HTTP(
+      l_entity.project_id_ == project_id_, bad_request,
+      fmt::format("镜头 {} 不属于项目 {}", id_, project_id_)
+  );
+
   ai_light_session l_session{};
   l_json.get_to(l_session);
-  // 归属由路由与登录态决定，不接受请求体覆盖
-  l_session.project_id_ = project_id_;
+  // 归属由路由、实体与登录态决定，不接受请求体覆盖
+  l_session.project_id_ = l_entity.project_id_;
   l_session.entity_id_  = id_;
+  l_session.task_id_    = resolve_lighting_task_id(l_sql, id_);
   l_session.submitter_  = person_.person_.uuid_id_;
   l_session.state_      = ai_light_session_state::draft;
   l_session.current_iteration_ = 0;
   l_session.failure_reason_    = "";
 
-  DOODLE_CHICK_HTTP(!l_session.task_id_.is_nil(), bad_request, "缺少 task_id");
   DOODLE_CHICK_HTTP(
       !l_session.prompt_text_.empty(), bad_request,
       "缺少 prompt_text —— 提示词是权威意图，不允许空着建会话"
   );
-  person_.check_project_access(project_id_);
-  if (l_session.title_.empty()) l_session.title_ = l_sql.get_by_uuid<task>(l_session.task_id_).name_;
+  person_.check_project_access(l_entity.project_id_);
+  if (l_session.title_.empty()) l_session.title_ = l_entity.name_;
 
   {
     sql_modify_statement_vector_t l_sqls{};
