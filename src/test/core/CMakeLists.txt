@@ -13,6 +13,7 @@ target_sources(test_main
         sqlite_fk_semantics.cpp
         sqlite_upgrade.cpp
         ai_light_schema.cpp
+        ai_light_state.cpp
         shot_render_light_paths.cpp
 )
 

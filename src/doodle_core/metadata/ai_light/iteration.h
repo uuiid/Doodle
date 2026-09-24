@@ -87,7 +87,7 @@ struct DOODLE_CORE_API ai_light_judgement_t {
 
   friend void to_json(nlohmann::json& j, const ai_light_judgement_t& p) {
     j["by"]                   = p.by_;
-    j["at"]                   = p.at_ ? nlohmann::json{*p.at_} : nlohmann::json{};
+    j["at"]                   = p.at_ ? json_opt(p.at_) : nlohmann::json{};
     j["decision"]             = p.decision_;
     j["selected_candidate_id"] = p.selected_candidate_id_;
     j["feedback_text"]        = p.feedback_text_;
@@ -201,11 +201,11 @@ struct DOODLE_CORE_API ai_light_iteration {
     j["state"]               = p.state_;
     j["axes"]                = p.axes_;
     j["server_task_info_id"] = p.server_task_info_id_;
-    j["dispatch_at"]         = p.dispatch_at_ ? nlohmann::json{*p.dispatch_at_} : nlohmann::json{};
-    j["render_at"]           = p.render_at_ ? nlohmann::json{*p.render_at_} : nlohmann::json{};
+    j["dispatch_at"]         = p.dispatch_at_ ? json_opt(p.dispatch_at_) : nlohmann::json{};
+    j["render_at"]           = p.render_at_ ? json_opt(p.render_at_) : nlohmann::json{};
     j["render_ms_total"]     = p.render_ms_total_;
     j["judged_by"]           = p.judged_by_;
-    j["judged_at"]           = p.judged_at_ ? nlohmann::json{*p.judged_at_} : nlohmann::json{};
+    j["judged_at"]           = p.judged_at_ ? json_opt(p.judged_at_) : nlohmann::json{};
     j["judgement"]           = p.judgement_;
     j["failure_reason"]      = p.failure_reason_;
     j["created_at"]          = p.created_at_;

@@ -2397,7 +2397,8 @@ std::optional<ai_light::ai_light_candidate> sqlite_database::get_ai_light_accept
     const uuid& in_session_id
 ) {
   using namespace orm;
-  // 每会话至多一个，由 ai_light_candidate 上的 partial unique index 在库层强制
+  // 每会话至多一个定稿候选：由 accepted_session_id 上的可空唯一索引在库层强制
+  // （非定稿行为 NULL，唯一索引不约束 NULL；写入必须走 mark_accepted()）。
   return select(*this)
       .columns(object<ai_light::ai_light_candidate>())
       .from<ai_light::ai_light_candidate>()

@@ -116,7 +116,10 @@ lighting_rig_t make_probe_rig(const uuid& in_session_id, std::int32_t in_iterati
   l_key.offset_    = offset_t{-45.0, 30.0, 3.0};
   l_key.intensity_ = intensity_t{intensity_unit::candela, 12.0};
   l_key.color_     = color_t{color_mode::temperature, 4300.0, {}, {}};
-  l_key.shape_     = shape_t{25.0, {}, 25.0, 45.0};
+  // ies_ 是 std::string 字段，给个非空值 —— 空字符串会让 JSON 往返断言变成空转，
+  // 而 `nlohmann::json{some_string}` 会静默变成单元素数组（见 common.h 的 json_val 说明），
+  // 那种错只有非空值才暴露得出来。
+  l_key.shape_     = shape_t{25.0, "IES/spot_soft.ies", 25.0, 45.0};
   l_key.shadows_   = shadows_t{true, 0.6};
   l_key.channels_  = {0, 1, 0};
   l_key.mobility_  = light_mobility::movable;
@@ -416,8 +419,10 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     BOOST_TEST(l_cands.size() == 6);
     for (std::size_t l_i = 0; l_i != l_cands.size(); ++l_i) {
       BOOST_TEST(l_cands[l_i].candidate_index_ == static_cast<std::int32_t>(l_i));
-      // JSON 往返无损 —— 这是「下发 UE 的载荷 == 库里存的东西」的前提
-      BOOST_TEST(nlohmann::json{l_cands[l_i].get_rig()} == nlohmann::json{l_rigs[l_i]});
+      // JSON 往返无损 —— 这是「下发 UE 的载荷 == 库里存的东西」的前提。
+      // 用括号而不是花括号构造 json：`nlohmann::json{rig}` 是列表初始化，
+      // 会变成单元素数组 [rig]，两边都包一层数组就掩盖了真实的字段差异。
+      BOOST_TEST(nlohmann::json(l_cands[l_i].get_rig()) == nlohmann::json(l_rigs[l_i]));
       // 真实列与 rig 副本一致
       BOOST_TEST(en(l_cands[l_i].variant_axis_) == en(variant_axis_kind::key_fill_ratio));
       BOOST_TEST(l_cands[l_i].session_id_ == l_session_row.uuid_id_);

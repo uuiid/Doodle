@@ -140,8 +140,8 @@ struct DOODLE_CORE_API ai_light_session {
     j["prompt_text"]      = p.prompt_text_;
     j["state"]            = p.state_;
     j["current_iteration"] = p.current_iteration_;
-    j["judgement_due_at"] = p.judgement_due_at_ ? nlohmann::json{*p.judgement_due_at_} : nlohmann::json{};
-    j["suspended_at"]     = p.suspended_at_ ? nlohmann::json{*p.suspended_at_} : nlohmann::json{};
+    j["judgement_due_at"] = p.judgement_due_at_ ? json_opt(p.judgement_due_at_) : nlohmann::json{};
+    j["suspended_at"]     = p.suspended_at_ ? json_opt(p.suspended_at_) : nlohmann::json{};
     j["failure_reason"]   = p.failure_reason_;
     j["created_at"]       = p.created_at_;
     j["updated_at"]       = p.updated_at_;

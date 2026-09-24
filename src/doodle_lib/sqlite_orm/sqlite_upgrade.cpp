@@ -167,7 +167,9 @@ struct upgrade_2_t : sqlite_upgrade {
 // 也就是说它只能新增、不能修改, 这正是本步骤需要的。
 //
 // 之所以不用 create_table(单个 type_index): 它只建表、不建索引
-// (session.cpp:326-337), 那六张表的唯一索引与 partial unique index 就得手写 SQL。
+// (session.cpp:326-337), 那六张表的唯一索引就得手写 SQL。
+// （定稿唯一性用的是 accepted_session_id 上的可空唯一索引，不是 partial index ——
+//  本库生成 partial index 时会把条件写成绑定参数，SQLite 拒绝，见 sqlite_database.h。）
 //
 // 条件用 `> 30 就跳过` 的写法与 upgrade_2_t 一致: 版本更旧的库也能被带到最新。
 // 全新库 (user_version == 0) 已由 upgrade_init_t 的 sync_schema 建好并标成最新版, 到这里必然跳过。

@@ -265,7 +265,7 @@ struct DOODLE_CORE_API ai_light_candidate {
     j["render_ms"]        = p.render_ms_;
     j["light_count"]      = p.light_count_;
     j["metrics"]          = p.metrics_;
-    j["vlm_score"]        = p.vlm_score_ ? nlohmann::json{*p.vlm_score_} : nlohmann::json{};
+    j["vlm_score"]        = p.vlm_score_ ? json_opt(p.vlm_score_) : nlohmann::json{};
     j["vlm_delta"]        = p.vlm_delta_;
     j["is_selected"]      = p.is_selected_;
     j["is_accepted"]      = p.is_accepted_;

@@ -11,4 +11,5 @@ target_sources(
         iteration.h
         candidate.h
         preset.h
+        view.h
 )

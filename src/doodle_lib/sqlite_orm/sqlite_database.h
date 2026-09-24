@@ -319,7 +319,15 @@ class DOODLELIB_API sqlite_database {
   std::optional<ai_light::ai_light_candidate> get_ai_light_selected_candidate(
       const uuid& in_session_id, std::int32_t in_iteration
   );
-  /// 定稿候选（每会话至多一个，由 partial unique index 保证）
+  /// 定稿候选（每会话至多一个）。
+  ///
+  /// 库层约束由 ai_light_candidate.accepted_session_id 上的**唯一索引**承担：
+  /// 该列可空（非定稿行为 NULL，SQLite 唯一索引不约束 NULL），定稿时写入会话 id。
+  /// 原方案想用 `WHERE is_accepted` 的 partial unique index，但本库的
+  /// column_operations.h 生成 partial index 时把条件硬编码成 `{} == ?` 绑定参数，
+  /// SQLite 直接拒绝（parameters prohibited in partial index WHERE clauses），
+  /// 而 create_trigger_t 又不支持 WHEN/RAISE。所以改用可空唯一列 —— 效果等价，
+  /// 且写入必须经 ai_light_candidate::mark_accepted()，不能直接赋值绕过。
   std::optional<ai_light::ai_light_candidate> get_ai_light_accepted_candidate(const uuid& in_session_id);
 
   /// 预设库。enabled_only = true 时只取启用的。

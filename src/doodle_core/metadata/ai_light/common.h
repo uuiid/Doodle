@@ -8,6 +8,7 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <cstdint>
 #include <string_view>
 
 namespace doodle::ai_light {
@@ -17,6 +18,12 @@ constexpr std::string_view g_rig_schema_version{"1.1"};
 /// LightingSpec 版本（docs/ue_ai_lighting_plan.md §4.2）
 /// 1.2 → 1.3：Tier B 取消后 tier 与 degrade_level 信息等价，删掉 tier，只留 degrade_level。
 constexpr std::string_view g_spec_schema_version{"1.3"};
+
+/// 每轮候选数量（决策 1：固定 6）。
+/// §6.6 护栏要求同轮候选的**灯集合与角色完全一致**，只有轴参数不同 ——
+/// 否则指标差异会被灯数差异淹没，美术的选择无法归因到轴，搜索梯度就失效了。
+/// 护栏校验由候选生成接缝负责，这里只提供唯一的数字来源，免得 6 散落在路由与编排里。
+constexpr std::int32_t g_candidate_count{6};
 
 /// 闭区间 [low, high]。Spec 的目标全部是区间而不是点值 —— 这是「参考是近似而非精确」
 /// 这一前提在数据契约上的体现，也是评判层「落点是否在区间内」的判据。
@@ -50,6 +57,29 @@ template <typename T>
 T json_get_or_default(const nlohmann::json& in_json) {
   if (in_json.is_null()) return T{};
   return in_json.get<T>();
+}
+
+/// 把 std::optional<T> 写进 JSON：有值转成对应 JSON，无值写 null。
+///
+/// **不要手写 `j = opt ? nlohmann::json{*opt} : nlohmann::json{}`。**
+/// `nlohmann::json{x}` 是**列表初始化**，会优先匹配 json 的
+/// `basic_json(initializer_list_t)` 构造函数，结果是单元素数组 `[x]` 而不是 `x`。
+/// 这个坑极其隐蔽：代码合法、编译通过、写库成功，只有读回来时才炸 ——
+/// `from_json` 里 `get_ref<const std::string&>()` 对着数组抛 type_error.303，
+/// 而报错信息里完全看不出是哪个字段写坏的。同一个坑对
+/// std::string / double / 结构体 一样成立（`nlohmann::json{some_string}` 也是数组）。
+///
+/// `nlohmann::json(x)`（括号）才是普通重载决议，会走 adl_serializer / to_json。
+template <typename T>
+nlohmann::json json_opt(const std::optional<T>& in_opt) {
+  if (!in_opt.has_value()) return nlohmann::json{};
+  return nlohmann::json(*in_opt);
+}
+
+/// 单值转 JSON 的显式入口，作用同上：括号而不是花括号。
+template <typename T>
+nlohmann::json json_val(const T& in_value) {
+  return nlohmann::json(in_value);
 }
 
 }  // namespace doodle::ai_light

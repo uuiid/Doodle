@@ -130,6 +130,9 @@ struct handle_video_file_t {
   std::shared_ptr<preview_file> preview_file_;
 };
 
+}  // namespace
+
+namespace preview {
 cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
   DOODLE_CHICK(!in_image.empty(), "保存变体图片时输入图片为空");
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
@@ -163,6 +166,10 @@ cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
   );
   return l_size;
 }
+
+}  // namespace preview
+
+namespace {
 
 cv::Size save_watermarked_image(const cv::Mat& in_image, const uuid& in_id) {
   DOODLE_CHICK(!in_image.empty(), "保存加水印图片时输入图片为空");
@@ -359,7 +366,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
   );
   if (auto l_ext = l_file.extension(); is_image_extension(l_ext)) {
     auto l_file_image = cv::imread(l_file.generic_string());
-    auto l_size       = save_variants(l_file_image, l_preview_file->uuid_id_);
+    auto l_size       = preview::save_variants(l_file_image, l_preview_file->uuid_id_);
     save_watermarked_image(l_file_image, l_preview_file->uuid_id_);
     /// 将原始文件添加到相应的位置中
     auto l_new_path = g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(l_preview_file->uuid_id_);

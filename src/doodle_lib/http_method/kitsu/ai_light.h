@@ -1,0 +1,117 @@
+//
+// AI 灯光：HTTP 路由（docs/ue_ai_lighting_plan.md §13.1 第 5 项）
+//
+// 只声明路由类；处理函数在 ai_light.cpp，业务编排在 ai_light_orchestrator.{h,cpp}。
+// 分成独立头文件而不是塞进 kitsu_reg_url.h（那份已经 850+ 行）：
+// 按特性分文件是本工程的既有做法，先例是 seedance2/reg.h。
+//
+// 全部注册在 create_kitsu_route_2（主服务器）——**不注册到 create_kitsu_local_route**。
+// 原因：LLM/VLM 调用只在主服务器上做（只有它持有 kitsu_ctx_t.deepseek_keys_；
+// --local 用的是两参构造、没有 key）。客户端只跑 worker 侧（§13.3），不碰这些路由。
+//
+// ---------------------------------------------------------------------------
+// 为什么类名带 _route 后缀
+// ---------------------------------------------------------------------------
+// 表实体叫 doodle::ai_light::ai_light_session，而路由类位于 doodle::http::ai_light。
+// 若路由类也叫 ai_light_session，在 http::ai_light 里这个名字会**遮蔽**实体类型
+// （内层命名空间优先），于是 `ai_light_session l_s{};` 拿到的是路由类而不是表实体 ——
+// 这是一个编译期能过、语义完全错位的陷阱。加 _route 后缀彻底消除歧义。
+//
+
+#pragma once
+
+#include <doodle_lib/core/http/http_route.h>
+#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/http_method/http_jwt_fun.h>
+
+#include <core/http/http_function.h>
+
+namespace doodle::http::ai_light {
+
+// POST /api/doodle/ai/light/session          建会话（提示词必填；参考图走下面的 reference 接口）
+// GET  /api/doodle/ai/light/session          列表（?entity_id= 或 ?project_id=）
+DOODLE_HTTP_JWT_FUN(session_route)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+
+// GET    /api/doodle/ai/light/session/{id}   会话详情（六表聚合读模型）
+// DELETE /api/doodle/ai/light/session/{id}   删会话（含参考图与候选，目录先进备份）
+DOODLE_HTTP_JWT_FUN(session_instance_route)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
+// GET  /api/doodle/ai/light/session/{session_id}/reference   参考图列表
+// POST /api/doodle/ai/light/session/{session_id}/reference   多图上传（multipart）
+DOODLE_HTTP_JWT_FUN(reference_route)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid session_id_{};
+DOODLE_HTTP_FUN_END()
+
+// DELETE /api/doodle/ai/light/reference/{id}   删单张参考图（含文件）
+DOODLE_HTTP_JWT_FUN(reference_instance_route)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
+// GET /api/doodle/ai/light/reference/{id}/image   参考图取图
+DOODLE_HTTP_JWT_FUN(reference_image_route)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
+// GET /api/doodle/ai/light/candidate/{id}/image   中间候选取图（只有定稿才进 preview_file）
+DOODLE_HTTP_JWT_FUN(candidate_image_route)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
+// GET  /api/doodle/ai/light/spec     Spec 版本列表（?session_id=）
+// POST /api/doodle/ai/light/spec     生成 Spec —— **本轮返回 501**（LLM 接缝未实现）
+DOODLE_HTTP_JWT_FUN(spec_route)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+
+// POST /api/doodle/ai/light/spec/confirm   人工闸门 1：确认 Spec（+ 冲突裁决），随后触发首轮候选
+DOODLE_HTTP_JWT_FUN(spec_confirm_route)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+
+// POST /api/doodle/ai/light/iterate   生成一轮候选并派发 —— **本轮返回 501**（LLM 接缝未实现）
+DOODLE_HTTP_JWT_FUN(iterate_route)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+
+// POST /api/doodle/ai/light/judge   人工闸门 2：定稿 / 继续迭代 / 全否
+DOODLE_HTTP_JWT_FUN(judge_route)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+
+// GET  /api/doodle/ai/light/preset         预设库列表（?enabled_only=false 取全部）
+// POST /api/doodle/ai/light/preset         新建预设（美术整理的第一批走这里导入）
+DOODLE_HTTP_JWT_FUN(preset_route)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+
+// GET/PUT/DELETE /api/doodle/ai/light/preset/{id}
+DOODLE_HTTP_JWT_FUN(preset_instance_route)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
+// POST /api/actions/projects/{project_id}/shots/{id}/ai-light
+// 镜头页入口：建会话 + 跑第一步。与 /iterate 共用 advance_session()，只是入口不同。
+DOODLE_HTTP_JWT_FUN(shot_entry_route)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid project_id_{};
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
+}  // namespace doodle::http::ai_light

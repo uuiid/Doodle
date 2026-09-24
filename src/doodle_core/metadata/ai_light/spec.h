@@ -332,7 +332,7 @@ struct DOODLE_CORE_API lighting_spec_t {
     j["evidence"]        = p.evidence_;
     j["human_confirmed"] = p.human_confirmed_;
     j["confirmed_by"]    = p.confirmed_by_;
-    j["confirmed_at"]    = p.confirmed_at_ ? nlohmann::json{*p.confirmed_at_} : nlohmann::json{};
+    j["confirmed_at"]    = p.confirmed_at_ ? json_opt(p.confirmed_at_) : nlohmann::json{};
     j["degrade_level"]   = p.degrade_level_;
   }
   friend void from_json(const nlohmann::json& j, lighting_spec_t& p) {

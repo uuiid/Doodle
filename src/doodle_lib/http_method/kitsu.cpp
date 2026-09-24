@@ -33,6 +33,7 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include "ai/ai_main.h"
+#include "kitsu/ai_light.h"
 #include "kitsu/kitsu_reg_url.h"
 #include "seedance2/reg.h"
 
@@ -298,6 +299,41 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_projects_sequences_casting_ue_assembly_harvest>("/api/actions/projects/{}/sequences/{}/casting/ue-assembly-harvest"_url(
         &actions_projects_sequences_casting_ue_assembly_harvest::project_id_,
         &actions_projects_sequences_casting_ue_assembly_harvest::id_
+      ))
+
+      // ---------------------------------------------------------------------
+      // AI 灯光（docs/ue_ai_lighting_plan.md §13.1 第 5 项）
+      //
+      // 只注册在主服务器：LLM/VLM 调用只在主服务器做（只有它持有 deepseek_keys_），
+      // 客户端只跑 worker 侧。所以这里**不**放进 create_kitsu_local_route。
+      // ---------------------------------------------------------------------
+      .reg_t<ai_light::shot_entry_route>("/api/actions/projects/{}/shots/{}/ai-light"_url(
+        &ai_light::shot_entry_route::project_id_,
+        &ai_light::shot_entry_route::id_
+      ))
+      .reg_t<ai_light::session_route>("/api/doodle/ai/light/session"_url)
+      .reg_t<ai_light::session_instance_route>("/api/doodle/ai/light/session/{}"_url(
+        &ai_light::session_instance_route::id_
+      ))
+      .reg_t<ai_light::reference_route>("/api/doodle/ai/light/session/{}/reference"_url(
+        &ai_light::reference_route::session_id_
+      ))
+      .reg_t<ai_light::reference_instance_route>("/api/doodle/ai/light/reference/{}"_url(
+        &ai_light::reference_instance_route::id_
+      ))
+      .reg_t<ai_light::reference_image_route>("/api/doodle/ai/light/reference/{}/image"_url(
+        &ai_light::reference_image_route::id_
+      ))
+      .reg_t<ai_light::candidate_image_route>("/api/doodle/ai/light/candidate/{}/image"_url(
+        &ai_light::candidate_image_route::id_
+      ))
+      .reg_t<ai_light::spec_route>("/api/doodle/ai/light/spec"_url)
+      .reg_t<ai_light::spec_confirm_route>("/api/doodle/ai/light/spec/confirm"_url)
+      .reg_t<ai_light::iterate_route>("/api/doodle/ai/light/iterate"_url)
+      .reg_t<ai_light::judge_route>("/api/doodle/ai/light/judge"_url)
+      .reg_t<ai_light::preset_route>("/api/doodle/ai/light/preset"_url)
+      .reg_t<ai_light::preset_instance_route>("/api/doodle/ai/light/preset/{}"_url(
+        &ai_light::preset_instance_route::id_
       ))
 
       .reg_t<seedance2::seedance2_thumbnail>("/api/seedance2/thumbnail/{}.png"_url(&seedance2::seedance2_thumbnail::id_))

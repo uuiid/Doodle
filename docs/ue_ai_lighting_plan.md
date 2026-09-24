@@ -834,21 +834,51 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 2. **提交端点**：新增 `/api/actions/projects/{}/shots/{}/ai-light`，照 `http_method/kitsu/distributed_task.cpp:49-74` 的 `actions_projects_shots_run_ue_assembly::post` 写：构造 `server_task_info`，`type_ = ai_light`，`command_ = {baseline, candidates[]}`（`command_` 是自由 JSON，可直接承载，无需改表结构），insert 后调 `run_next_task()` + `socket_io::broadcast`。
 3. **派发逻辑**：**零改动**。`computers.cpp:376-378` 已按 `computer.allowed_task_types_` 通用过滤。
 4. **LLM/VLM 客户端**：新增 `deepseek_client`（继承 `http_client/ai_client_base.h`，OpenAI 兼容，支持 chat + vision）。**必须在主服务器**——`--local` 的 `kitsu_ctx_t` 是两参构造，没有 key。
-5. **AI 路由**：
-   - `/api/doodle/ai/light/spec`：提示词 + 多张参考 → LightingSpec（含聚合与冲突检测）
-   - `/api/doodle/ai/light/spec/confirm`：人工闸门 1（确认/冲突裁决）
-   - `/api/doodle/ai/light/iterate`：生成一轮候选并派发
-   - `/api/doodle/ai/light/judge`：**人工闸门 2**（accept / continue_iteration / reject_all + 反馈）
-   - `/api/doodle/ai/light/session/{id}`：轮次与候选查询
-   - `/api/doodle/ai/light/preset`：预设库 CRUD
-   - `/api/doodle/ai/light/reference/{id}/image`、`/candidate/{id}/image`：参考图与中间候选的取图
-     （这两类**不注册 `preview_file`**，见 §10.2）
+5. **AI 路由**：**已落地（本轮）**，13 条，全部注册在 `create_kitsu_route_2`（主服务器），
+   声明在 `doodle_lib/http_method/kitsu/ai_light.h`，处理函数在 `ai_light.cpp`：
+
+   | 方法与路径 | 说明 |
+   |---|---|
+   | `POST /api/actions/projects/{project_id}/shots/{id}/ai-light` | 镜头页入口：建会话 + 跑第一步 |
+   | `GET  /api/doodle/ai/light/session` | 列表（`?entity_id=` 或 `?project_id=`） |
+   | `POST /api/doodle/ai/light/session` | 建会话（提示词必填） |
+   | `GET  /api/doodle/ai/light/session/{id}` | 详情（六表聚合读模型） |
+   | `DELETE /api/doodle/ai/light/session/{id}` | 删会话（产物先进备份区；已定稿禁止删） |
+   | `GET  /api/doodle/ai/light/session/{session_id}/reference` | 参考图列表 |
+   | `POST /api/doodle/ai/light/session/{session_id}/reference` | 多图上传（multipart，统一转 PNG） |
+   | `DELETE /api/doodle/ai/light/reference/{id}` | 删单张参考图（含文件） |
+   | `GET  /api/doodle/ai/light/reference/{id}/image` | 参考图取图 |
+   | `GET  /api/doodle/ai/light/candidate/{id}/image` | 中间候选取图（只有定稿才进 `preview_file`） |
+   | `GET  /api/doodle/ai/light/spec` | Spec 版本列表 |
+   | `POST /api/doodle/ai/light/spec` | 生成 Spec —— **本轮返回 501**（见 §15.4） |
+   | `POST /api/doodle/ai/light/spec/confirm` | 人工闸门 1：确认 Spec + 冲突裁决，随后触发首轮 |
+   | `POST /api/doodle/ai/light/iterate` | 生成一轮候选并派发 —— **本轮返回 501**（见 §15.4） |
+   | `POST /api/doodle/ai/light/judge` | **人工闸门 2**（accept / continue_iteration / reject_all） |
+   | `GET  /api/doodle/ai/light/preset` | 预设库列表（`?enabled_only=false` 取全部） |
+   | `POST /api/doodle/ai/light/preset` | 新建预设（美术整理的第一批走这里导入） |
+   | `GET/PUT/DELETE /api/doodle/ai/light/preset/{id}` | 预设单条 |
+
+   **两个 501 端点不是占位桩**：权限、状态校验、会话查找全部真实执行，只有最里层的
+   LLM 接缝抛 `not_implemented`（→ HTTP 501，见 §15.4）。所以现在调它们得到的是
+   「参数错了明确报错、参数对了告诉你能力还没到」，而不是一个假装成功的 200。
+   `/judge` 的滑块通道（`feedback_axes`）**本轮即可用**：文本结构化是补充通道，
+   接缝未实现时降级为「文本原样留存 + 只用滑块轴」，判断本身完全成立。
 6. **轮次编排**：`awaiting_judgement` 会话状态、超时挂起、跨会话恢复（§10.3）。
+   **已落地**：`doodle_lib/http_method/kitsu/ai_light_orchestrator.{h,cpp}`
+   （`advance_session` / `apply_judgement` / `mark_iteration_rendered` /
+   `scan_overdue_sessions` / `build_session_detail` + 挂起扫描器）。
+   编排层**不依赖 HTTP**（不 include `http_jwt_fun` / `session_data`），所以单测
+   不需要伪造 JWT 或起服务器，能直接构造「处于某状态的会话」再调它。
 7. **数据表**：`ai_light_session` / `ai_light_reference` / `ai_light_spec` / `ai_light_iteration` /
    `ai_light_candidate` / `ai_light_preset`，进 `sqlite_database` 的 upgrade 与 ORM 注册（§10.2）。
    **结构体与注册已落地**（`doodle_core/metadata/ai_light/`、`user_version` 30 → 31）。
 8. **参考文件接收**：复用 `http_method/up_file.h` 的 `doodle_data_shots_file_auto_light` 模式；DeepSeek Files API 的 `file_id` 缓存也放这里。
+   **文件接收已落地**（`POST /session/{id}/reference`，多图 + 统一转 PNG + 序号 `max+1` 不覆盖）；
+   DeepSeek Files API 的 `file_id` 缓存随 `deepseek_client` 一起做。
+   **参考图统计（亮度分位/色板/对比/白平衡/削波率）本轮未落地**，`stats_confidence_ = 0`，
+   会话自动以 `prompt_only` 级别运行 —— 这是 §4.2 本就定义的降级级别，不是临时凑合。
 9. **反馈结构化**：`/judge` 收到的自然语言反馈经 LLM 转成 `feedback_axes`。
+   接缝 `structure_feedback()` 已就位（本轮返回 501），调用方捕获后降级为纯滑块反馈。
 
 ---
 
@@ -1050,4 +1080,84 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    选这条路而不是去改 ORM 的 `to_str_value_t` 让它内联字面量：那要顺带重写 string / uuid / 枚举 / optional
    各自的 SQL 字面量规则（等于把 binder 的存储格式再实现一遍），而 `insert_t` 的触发器路径也在用那套代码 ——
    为了一个索引去动全库查询共用的序列化，代价与风险都不成比例。
+
+### 15.4 已落地（路由层 + 编排层 + 状态机）
+
+| 项 | 落点 |
+|---|---|
+| 路由声明 | `src/doodle_lib/http_method/kitsu/ai_light.h`（13 个路由类） |
+| 路由处理 | `src/doodle_lib/http_method/kitsu/ai_light.cpp` |
+| 编排 / 状态机 | `src/doodle_lib/http_method/kitsu/ai_light_orchestrator.{h,cpp}` |
+| 路由注册 | `http_method/kitsu.cpp` 的 `create_kitsu_route_2`（**只注册主服务器**，客户端不跑 LLM） |
+| 图片变体导出 | `http_method/kitsu/preview.{h,cpp}` 的 `preview::save_variants`（从匿名命名空间提到 `preview` 命名空间，供定稿复用；不另写一套尺寸，否则预览列表页读到的图与既有预览文件不一致） |
+| 读模型 | `ai_light_session_detail_t`（`doodle_core/metadata/ai_light/view.h`），六表一次聚合，并带出 `candidate_count_per_iteration`（前端不自己写死 6） |
+| 测试 | `src/test/core/ai_light_state.cpp`（15 用例 / 143 断言，含 JSON 形状回归）；全量回归 79 用例 / 808 断言通过 |
+
+**状态机**（`advance_session` 是唯一的推进入口，`/spec`、`/spec/confirm`、`/iterate`、
+镜头页入口都调它，所以「同一步骤从不同入口进来行为一致」是结构性保证的）：
+
+| 触发 | 起始状态 | 结果状态 |
+|---|---|---|
+| 建会话（`POST /session`、镜头页入口） | — | `draft` |
+| `POST /spec`（改提示词 + 可选排除参考图） | `draft` / `suspended` | `awaiting_spec_confirm` |
+| `POST /spec/confirm` | `awaiting_spec_confirm` | `generating`（接缝失败则回滚，Spec 确认**保留**） |
+| `POST /iterate` | `generating` / `suspended` | 仍 `generating`（已派发，等渲染） |
+| `mark_iteration_rendered()`（worker 回填，M3 接入） | `generating` | `awaiting_judgement`（**此时才起算 4 小时**） |
+| `/judge` accept | `awaiting_judgement` | `accepted`（终态） |
+| `/judge` continue_iteration | `awaiting_judgement` | `generating` |
+| `/judge` reject_all | `awaiting_judgement` | `rejected`（终态） |
+| 挂起扫描器 | `awaiting_judgement` 且超时 | `suspended` |
+
+**接缝（本轮返回 501，不是占位桩）**：
+
+```cpp
+// 三个接缝都在 ai_light_orchestrator.cpp，参数被显式 (void) 引用一次，
+// 免得「未使用参数」的告警掩盖了「接缝没实现」这件事。
+generate_spec(req)                       -> spec_generation_result_t    // 缺 deepseek_client + 参考图统计
+generate_candidates(req)                 -> candidate_generation_result_t // 缺 deepseek_client + 预设检索
+structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 deepseek_client
+```
+
+**接缝契约（D3）**：接缝抛异常 ⇒ `advance_session` 把会话状态**回滚到入口状态**并记录
+`failure_reason_`，然后原样重抛。`failed` 保留给不可恢复错误，不用来表达「能力还没到」。
+理由是：半成品比失败更糟 —— 一个「有 Spec 但没有候选」的会话会让前端以为可以判断了。
+接缝实现者不得留下非幂等的部分写入。`/spec/confirm` 的 Spec 确认**不随回滚撤销**：
+确认是人工动作，不该因为下游能力缺失而被撤销。
+
+**其它本轮定下的取舍**：
+
+1. **`/judge` 的滑块通道本轮即可用**。`feedback_axes` 直接从请求体取（决策 11：滑块为默认），
+   `structure_feedback` 只是补充通道；捕获到 501 就降级为「文本原样留存 + 只用滑块轴」，
+   判断本身完全成立。所以「缺 LLM」不会让闸门 2 不可用。
+2. **定稿的三处写入必须同事务**。`preview_file` 行、候选的定稿标记与 `preview_file_id_`、
+   会话状态分两个事务提交就会出现「预览文件已建但候选没标定稿」的半成品。
+   所以调用方（HTTP 层）负责碰文件（OpenCV 读图 + `save_variants` 落变体），
+   `apply_judgement` 负责一次事务落库 —— `preview_file` 按**值**传入，
+   因为 ORM 的 `values()` 会回填 `uuid_id_` / `created_at_` 这类服务端生成字段。
+3. **`is_selected_` 与 `is_accepted_` 是两个语义，不合并**。前者专指「被选为下一轮基准」
+   （续轮 warm start 的起点），后者指「定稿」。定稿时**不**置 `is_selected_` ——
+   定稿没有下一轮，混用会让续轮查询拿到一张已定稿的图。
+4. **中间候选与参考图都不进 `preview_file`**（决策 1）。每轮 6 张全注册会把任务的预览列表
+   冲垮，也会把「交付物」这个概念稀释掉。中间图走 `/candidate/{id}/image`，
+   EXR 一律不下发浏览器（线性数据、体积大、浏览器渲染不了）。
+5. **`/api/actions/.../ai-light` 吞掉「接缝未实现」这一种错误**。会话已经落库了，
+   若返回非 2xx，前端就拿不到 session id，重试只会造出重复会话。
+   所以只吞 501（能力缺口），其余错误照常抛出，并把 `advance_error` 带在响应里。
+
+**实现期发现、值得记住的两个坑（本轮）**：
+
+1. **`nlohmann::json{*opt}` 是列表初始化，会静默变成单元素数组。**
+   `nlohmann::json` 有 `basic_json(initializer_list_t)` 构造函数，而列表初始化会**优先**
+   匹配它。于是 `j["at"] = nlohmann::json{*p.at_}` 写出的是 `{"at": ["2026-...Z"]}`
+   而不是 `{"at": "2026-...Z"}`。这个坑极其隐蔽：代码合法、编译通过、写库成功，
+   只有读回来时才在 `from_json` 里对着数组抛 `type_error.303`，而报错信息里
+   **完全看不出是哪个字段写坏的**。同一个坑对 `std::string` / `double` / 结构体一样成立
+   （`rig.h` 的 `ies_` 就是这么丢的）。统一改用 `common.h` 的 `json_opt()` / `json_val()`，
+   并加了一条专门钉住 JSON **形状**（而不只是值）的回归用例 ——
+   值相等掩盖不了多包一层数组。
+2. **`get_by_uuid` 查不到行时抛的是 `std::runtime_error("No rows returned")`，
+   不是 `sqlite_orm_exception`。** 只接后者的话，「取一个不存在的 id」会一路冒到
+   `http_session_data` 的 `catch (...)` 变成 **500**，而正确答案是 404。
+   统一收在 `ai_light.cpp` 的 `try_get_by_uuid()` 与 `build_session_detail()` 里。
+
 

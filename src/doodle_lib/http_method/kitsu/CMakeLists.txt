@@ -11,6 +11,8 @@ target_sources(
         computing_time.h
         auto_task.h
         computers.h
+        ai_light.h
+        ai_light_orchestrator.h
         
         PRIVATE
         kitsu_reg_url.cpp
@@ -49,5 +51,7 @@ target_sources(
         computers.cpp
         ai_studio.cpp
         jobs.cpp
+        ai_light.cpp
+        ai_light_orchestrator.cpp
 )
  
