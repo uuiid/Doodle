@@ -76,3 +76,4 @@ target_sources(
 )
 add_subdirectory(bvh)
 add_subdirectory(seedance2)
+add_subdirectory(ai_light)

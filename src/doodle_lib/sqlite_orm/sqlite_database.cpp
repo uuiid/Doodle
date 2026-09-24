@@ -16,6 +16,7 @@
 #include "doodle_core/metadata/seedance2/subproject.h"
 #include "doodle_core/metadata/seedance2/task.h"
 #include <doodle_core/exception/exception.h>
+#include <doodle_core/metadata/ai_light/ai_light.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/attachment_file.h>
@@ -343,6 +344,196 @@ void sqlite_storage::regs_all() {
       .add_column("last_heartbeat_time", &computer::last_heartbeat_time_)
       .add_column("bot_uuid", &computer::bot_uuid_)
       .add_foreign_key(&computer::bot_uuid_, &person::uuid_id_, foreign_key_action::cascade);
+
+  // ---------------------------------------------------------------------------
+  // AI 灯光（docs/ue_ai_lighting_plan.md §10.2）
+  //
+  // 六张表的关系：
+  //   session 1─n reference（多张参考图，每张单独留统计）
+  //   session 1─n spec     （会话内版本化的目标，revision 递增）
+  //   session 1─n iteration 1─n candidate（每轮 6 个候选）
+  //   preset 独立
+  //
+  // 有意不做的事（理由见 doodle_core/metadata/ai_light/session.h 顶部注释）：
+  //   * 不放 current_spec_id / accepted_candidate_id 这类冗余指针，一律靠查询得出，
+  //     避免循环外键把 fix_foreign_key_violations 的轮次分析复杂化；
+  //   * 不放 base_candidate_id（那会造成 iteration → candidate → iteration 的跨表循环）；
+  //   * 嵌套结构（rig / metrics / intent / targets / judgement …）一律以 nlohmann::json
+  //     落库 —— ORM 的列类型不覆盖嵌套结构体与 std::map，只有 nlohmann::json 可以。
+  // ---------------------------------------------------------------------------
+
+  reg_table<ai_light::ai_light_session>("ai_light_session")
+      .add_column("id", &ai_light::ai_light_session::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &ai_light::ai_light_session::uuid_id_, unique(), not_null())
+      .add_column("project_id", &ai_light::ai_light_session::project_id_, not_null())
+      .add_column("task_id", &ai_light::ai_light_session::task_id_, not_null())
+      .add_column("entity_id", &ai_light::ai_light_session::entity_id_, not_null())
+      .add_column("submitter", &ai_light::ai_light_session::submitter_)
+      .add_column("title", &ai_light::ai_light_session::title_)
+      .add_column("prompt_text", &ai_light::ai_light_session::prompt_text_)
+      .add_column("state", &ai_light::ai_light_session::state_)
+      .add_column("current_iteration", &ai_light::ai_light_session::current_iteration_)
+      .add_column("judgement_due_at", &ai_light::ai_light_session::judgement_due_at_)
+      .add_column("suspended_at", &ai_light::ai_light_session::suspended_at_)
+      .add_column("failure_reason", &ai_light::ai_light_session::failure_reason_)
+      .add_column("created_at", &ai_light::ai_light_session::created_at_)
+      .add_column("updated_at", &ai_light::ai_light_session::updated_at_)
+      .add_foreign_key(&ai_light::ai_light_session::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&ai_light::ai_light_session::task_id_, &task::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&ai_light::ai_light_session::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&ai_light::ai_light_session::submitter_, &person::uuid_id_, foreign_key_action::set_null)
+      // 挂起扫描器按 state 过滤（state = awaiting_judgement AND judgement_due_at < now）
+      .add_index(&ai_light::ai_light_session::state_)
+      .add_index(&ai_light::ai_light_session::entity_id_);
+
+  reg_table<ai_light::ai_light_reference>("ai_light_reference")
+      .add_column("id", &ai_light::ai_light_reference::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &ai_light::ai_light_reference::uuid_id_, unique(), not_null())
+      .add_column("session_id", &ai_light::ai_light_reference::session_id_, not_null())
+      .add_column("ordinal", &ai_light::ai_light_reference::ordinal_)
+      .add_column("file_path", &ai_light::ai_light_reference::file_path_)
+      .add_column("thumbnail_path", &ai_light::ai_light_reference::thumbnail_path_)
+      .add_column("width", &ai_light::ai_light_reference::width_)
+      .add_column("height", &ai_light::ai_light_reference::height_)
+      .add_column("stats", &ai_light::ai_light_reference::stats_)
+      .add_column("stats_confidence", &ai_light::ai_light_reference::stats_confidence_)
+      .add_column("is_outlier", &ai_light::ai_light_reference::is_outlier_)
+      .add_column("excluded_reason", &ai_light::ai_light_reference::excluded_reason_)
+      .add_column("created_at", &ai_light::ai_light_reference::created_at_)
+      .add_foreign_key(
+          &ai_light::ai_light_reference::session_id_, &ai_light::ai_light_session::uuid_id_,
+          foreign_key_action::cascade
+      )
+      .add_unique_index(&ai_light::ai_light_reference::session_id_, &ai_light::ai_light_reference::ordinal_);
+
+  reg_table<ai_light::ai_light_spec>("ai_light_spec")
+      .add_column("id", &ai_light::ai_light_spec::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &ai_light::ai_light_spec::uuid_id_, unique(), not_null())
+      .add_column("session_id", &ai_light::ai_light_spec::session_id_, not_null())
+      .add_column("revision", &ai_light::ai_light_spec::revision_, not_null())
+      .add_column("schema_version", &ai_light::ai_light_spec::schema_version_)
+      .add_column("intent", &ai_light::ai_light_spec::intent_)
+      .add_column("targets", &ai_light::ai_light_spec::targets_)
+      .add_column("reference_stats", &ai_light::ai_light_spec::reference_stats_)
+      .add_column("evidence", &ai_light::ai_light_spec::evidence_)
+      .add_column("degrade_level", &ai_light::ai_light_spec::degrade_level_)
+      .add_column("human_confirmed", &ai_light::ai_light_spec::human_confirmed_)
+      .add_column("confirmed_by", &ai_light::ai_light_spec::confirmed_by_)
+      .add_column("confirmed_at", &ai_light::ai_light_spec::confirmed_at_)
+      .add_column("conflict_resolution", &ai_light::ai_light_spec::conflict_resolution_)
+      .add_column("created_at", &ai_light::ai_light_spec::created_at_)
+      .add_column("updated_at", &ai_light::ai_light_spec::updated_at_)
+      .add_foreign_key(
+          &ai_light::ai_light_spec::session_id_, &ai_light::ai_light_session::uuid_id_, foreign_key_action::cascade
+      )
+      .add_foreign_key(&ai_light::ai_light_spec::confirmed_by_, &person::uuid_id_, foreign_key_action::set_null)
+      .add_unique_index(&ai_light::ai_light_spec::session_id_, &ai_light::ai_light_spec::revision_);
+
+  reg_table<ai_light::ai_light_iteration>("ai_light_iteration")
+      .add_column("id", &ai_light::ai_light_iteration::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &ai_light::ai_light_iteration::uuid_id_, unique(), not_null())
+      .add_column("session_id", &ai_light::ai_light_iteration::session_id_, not_null())
+      .add_column("iteration", &ai_light::ai_light_iteration::iteration_, not_null())
+      .add_column("spec_id", &ai_light::ai_light_iteration::spec_id_, not_null())
+      .add_column("state", &ai_light::ai_light_iteration::state_)
+      .add_column("axes", &ai_light::ai_light_iteration::axes_)
+      .add_column("server_task_info_id", &ai_light::ai_light_iteration::server_task_info_id_)
+      .add_column("dispatch_at", &ai_light::ai_light_iteration::dispatch_at_)
+      .add_column("render_at", &ai_light::ai_light_iteration::render_at_)
+      .add_column("render_ms_total", &ai_light::ai_light_iteration::render_ms_total_)
+      .add_column("judged_by", &ai_light::ai_light_iteration::judged_by_)
+      .add_column("judged_at", &ai_light::ai_light_iteration::judged_at_)
+      .add_column("judgement", &ai_light::ai_light_iteration::judgement_)
+      .add_column("failure_reason", &ai_light::ai_light_iteration::failure_reason_)
+      .add_column("created_at", &ai_light::ai_light_iteration::created_at_)
+      .add_column("updated_at", &ai_light::ai_light_iteration::updated_at_)
+      .add_foreign_key(
+          &ai_light::ai_light_iteration::session_id_, &ai_light::ai_light_session::uuid_id_,
+          foreign_key_action::cascade
+      )
+      // Spec 是业务父行：Spec 被删（会话重读参考导致版本回退）时本轮目标已不成立
+      .add_foreign_key(
+          &ai_light::ai_light_iteration::spec_id_, &ai_light::ai_light_spec::uuid_id_, foreign_key_action::cascade
+      )
+      // 任务行被删时置空，轮次记录必须保留（它承载了人工判断的历史）
+      .add_foreign_key(
+          &ai_light::ai_light_iteration::server_task_info_id_, &server_task_info::uuid_id_,
+          foreign_key_action::set_null
+      )
+      .add_foreign_key(&ai_light::ai_light_iteration::judged_by_, &person::uuid_id_, foreign_key_action::set_null)
+      .add_unique_index(&ai_light::ai_light_iteration::session_id_, &ai_light::ai_light_iteration::iteration_);
+
+  reg_table<ai_light::ai_light_candidate>("ai_light_candidate")
+      .add_column("id", &ai_light::ai_light_candidate::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &ai_light::ai_light_candidate::uuid_id_, unique(), not_null())
+      .add_column("iteration_id", &ai_light::ai_light_candidate::iteration_id_, not_null())
+      .add_column("session_id", &ai_light::ai_light_candidate::session_id_, not_null())
+      .add_column("candidate_index", &ai_light::ai_light_candidate::candidate_index_, not_null())
+      .add_column("variant_axis", &ai_light::ai_light_candidate::variant_axis_)
+      .add_column("variant_value", &ai_light::ai_light_candidate::variant_value_)
+      .add_column("variant_label", &ai_light::ai_light_candidate::variant_label_)
+      .add_column("rig", &ai_light::ai_light_candidate::rig_)
+      .add_column("render_png_path", &ai_light::ai_light_candidate::render_png_path_)
+      .add_column("render_exr_path", &ai_light::ai_light_candidate::render_exr_path_)
+      .add_column("render_status", &ai_light::ai_light_candidate::render_status_)
+      .add_column("render_ms", &ai_light::ai_light_candidate::render_ms_)
+      .add_column("light_count", &ai_light::ai_light_candidate::light_count_)
+      .add_column("metrics", &ai_light::ai_light_candidate::metrics_)
+      .add_column("vlm_score", &ai_light::ai_light_candidate::vlm_score_)
+      .add_column("vlm_delta", &ai_light::ai_light_candidate::vlm_delta_)
+      .add_column("is_selected", &ai_light::ai_light_candidate::is_selected_)
+      .add_column("is_accepted", &ai_light::ai_light_candidate::is_accepted_)
+      .add_column("accepted_session_id", &ai_light::ai_light_candidate::accepted_session_id_)
+      .add_column("preview_file_id", &ai_light::ai_light_candidate::preview_file_id_)
+      .add_column("created_at", &ai_light::ai_light_candidate::created_at_)
+      .add_foreign_key(
+          &ai_light::ai_light_candidate::iteration_id_, &ai_light::ai_light_iteration::uuid_id_,
+          foreign_key_action::cascade
+      )
+      // session_id 是有意冗余：前端按会话拉候选是最热路径，少一次 join。
+      // 插入后永不修改，所以没有一致性风险。
+      .add_foreign_key(
+          &ai_light::ai_light_candidate::session_id_, &ai_light::ai_light_session::uuid_id_,
+          foreign_key_action::cascade
+      )
+      // 定稿候选才注册 preview_file；中间候选走专用取图接口
+      .add_foreign_key(
+          &ai_light::ai_light_candidate::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null
+      )
+      .add_unique_index(
+          &ai_light::ai_light_candidate::iteration_id_, &ai_light::ai_light_candidate::candidate_index_
+      )
+      .add_index(&ai_light::ai_light_candidate::session_id_)
+      // 每会话至多一个定稿候选。
+      //
+      // 这里用的是**普通**唯一索引 + 可空列，不是 `WHERE is_accepted = 1` 的 partial index ——
+      // SQLite 禁止 partial index 的 WHERE 里出现绑定参数
+      // ("parameters prohibited in partial index WHERE clauses")，
+      // 而本库的 create_unique_index().where(c(&T::col) == true) 生成的正是带 `?` 的比较式
+      // （只有 `== nullptr` 会生成无参数的 IS NULL，entity 表 parent_id 的先例靠的就是这一点）。
+      //
+      // SQLite 的 UNIQUE 索引把 NULL 视为互不相等，所以「定稿才填 session_id、否则 NULL」
+      // 这一列上的普通唯一索引与 partial index 等价：非定稿行全 NULL 互不冲突，
+      // 定稿行每会话只能有一行。写入必须走 ai_light_candidate::mark_accepted()。
+      .add_unique_index(&ai_light::ai_light_candidate::accepted_session_id_);
+
+  reg_table<ai_light::ai_light_preset>("ai_light_preset")
+      .add_column("id", &ai_light::ai_light_preset::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &ai_light::ai_light_preset::uuid_id_, unique(), not_null())
+      .add_column("name", &ai_light::ai_light_preset::name_, not_null())
+      .add_column("tags", &ai_light::ai_light_preset::tags_)
+      .add_column("embedding", &ai_light::ai_light_preset::embedding_)
+      .add_column("embedding_dim", &ai_light::ai_light_preset::embedding_dim_)
+      .add_column("rig_fragment", &ai_light::ai_light_preset::rig_fragment_)
+      .add_column("applicable", &ai_light::ai_light_preset::applicable_)
+      .add_column("stats_target", &ai_light::ai_light_preset::stats_target_)
+      .add_column("enabled", &ai_light::ai_light_preset::enabled_)
+      .add_column("source", &ai_light::ai_light_preset::source_)
+      .add_column("created_by", &ai_light::ai_light_preset::created_by_)
+      .add_column("created_at", &ai_light::ai_light_preset::created_at_)
+      .add_column("updated_at", &ai_light::ai_light_preset::updated_at_)
+      .add_foreign_key(&ai_light::ai_light_preset::created_by_, &person::uuid_id_, foreign_key_action::set_null)
+      .add_unique_index(&ai_light::ai_light_preset::name_);
 
   reg_table<assets_file_helper::link_parent_t>("assets_link_parent_t")
       .add_column("id", &assets_file_helper::link_parent_t::id_, primary_key())
@@ -1160,9 +1351,11 @@ void sqlite_storage::open_(FSys::path in_path, std::int32_t in_flags) {
 }
 
 void sqlite_storage::upgrade() {
-  // upgrade_clear_orphan_task 不是版本迁移: 它不看 user_version, 每次升级都执行一次
-  // (清理上次异常退出留下的 running 任务绑定)
-  auto l_list = {details::upgrade_init(), details::upgrade_2(), details::upgrade_clear_orphan_task()};
+  // 顺序即版本顺序, 新迁移追加在 upgrade_clear_orphan_task 之前 ——
+  // 那个是启动清理, 必须排在所有 schema 迁移之后跑 (它要依赖 server_task_info_tab 已经存在).
+  auto l_list = {
+      details::upgrade_init(), details::upgrade_2(), details::upgrade_3(), details::upgrade_clear_orphan_task()
+  };
   for (auto&& i : l_list) {
     i->upgrade(*this);
   }
@@ -2005,6 +2198,234 @@ entity_asset_extend_value sqlite_database::get_entity_shot_extend_by_task(const 
 
   DOODLE_CHICK(l_assets.size() == 1, "错误, 找个了 {} 个对应的地编资产", l_assets.size());
   return std::make_from_tuple<entity_asset_extend_value>(l_assets.front());
+}
+
+// ---------------------------------------------------------------------------
+// AI 灯光查询（docs/ue_ai_lighting_plan.md）
+//
+// 只读。会话/轮次的状态推进由轮次编排负责，不往这里塞业务写操作。
+// ---------------------------------------------------------------------------
+
+std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_by_entity(
+    const uuid& in_entity_id
+) {
+  using namespace orm;
+  return select(*this)
+      .columns(object<ai_light::ai_light_session>())
+      .from<ai_light::ai_light_session>()
+      .where(c(&ai_light::ai_light_session::entity_id_) == in_entity_id)
+      .order_by(&ai_light::ai_light_session::created_at_, false)()
+      .to_vector();
+}
+
+std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_by_project(
+    const uuid& in_project_id
+) {
+  using namespace orm;
+  return select(*this)
+      .columns(object<ai_light::ai_light_session>())
+      .from<ai_light::ai_light_session>()
+      .where(c(&ai_light::ai_light_session::project_id_) == in_project_id)
+      .order_by(&ai_light::ai_light_session::created_at_, false)()
+      .to_vector();
+}
+
+std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_by_state(
+    ai_light::ai_light_session_state in_state
+) {
+  using namespace orm;
+  return select(*this)
+      .columns(object<ai_light::ai_light_session>())
+      .from<ai_light::ai_light_session>()
+      .where(c(&ai_light::ai_light_session::state_) == in_state)
+      .order_by(&ai_light::ai_light_session::judgement_due_at_)()
+      .to_vector();
+}
+
+std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_overdue_judgement() {
+  using namespace orm;
+  // 判定时钟用 judgement_due_at 而不是 updated_at：
+  // updated_at 会被任何一次更新刷新（ORM 的 update 路径自动刷），
+  // 拿它当超时基准会让「美术看了但没判断」的会话永远不过期。
+  //
+  // 这里用 TEXT 上的 `<` 比较时间：zoned_time 的落库格式是 fmt::to_string(sys_time)，
+  // 即 "YYYY-MM-DD HH:MM:SS[.小数]"，字段定宽零填充，所以字典序与时间序一致。
+  // 绑定值走的是同一个 binder，格式必然一致。
+  const chrono::system_zoned_time l_now{chrono::current_zone(), chrono::system_clock::now()};
+  return select(*this)
+      .columns(object<ai_light::ai_light_session>())
+      .from<ai_light::ai_light_session>()
+      .where(
+          (c(&ai_light::ai_light_session::state_) == ai_light::ai_light_session_state::awaiting_judgement) &&
+          (c(&ai_light::ai_light_session::judgement_due_at_) < l_now)
+      )()
+      .to_vector();
+}
+
+std::vector<ai_light::ai_light_reference> sqlite_database::get_ai_light_references(const uuid& in_session_id) {
+  using namespace orm;
+  return select(*this)
+      .columns(object<ai_light::ai_light_reference>())
+      .from<ai_light::ai_light_reference>()
+      .where(c(&ai_light::ai_light_reference::session_id_) == in_session_id)
+      .order_by(&ai_light::ai_light_reference::ordinal_)()
+      .to_vector();
+}
+
+std::vector<ai_light::ai_light_spec> sqlite_database::get_ai_light_specs(const uuid& in_session_id) {
+  using namespace orm;
+  return select(*this)
+      .columns(object<ai_light::ai_light_spec>())
+      .from<ai_light::ai_light_spec>()
+      .where(c(&ai_light::ai_light_spec::session_id_) == in_session_id)
+      .order_by(&ai_light::ai_light_spec::revision_)()
+      .to_vector();
+}
+
+std::optional<ai_light::ai_light_spec> sqlite_database::get_current_ai_light_spec(const uuid& in_session_id) {
+  using namespace orm;
+  // 「当前 Spec」= 会话内 revision 最大的一行。刻意不存 current_spec_id 冗余指针，
+  // 那会和 ai_light_spec.session_id 形成循环外键，把外键孤儿清理的轮次分析复杂化。
+  return select(*this)
+      .columns(object<ai_light::ai_light_spec>())
+      .from<ai_light::ai_light_spec>()
+      .where(c(&ai_light::ai_light_spec::session_id_) == in_session_id)
+      .order_by(&ai_light::ai_light_spec::revision_, false)
+      .limit(1)()
+      .to_optional();
+}
+
+std::optional<ai_light::ai_light_spec> sqlite_database::get_ai_light_spec(
+    const uuid& in_session_id, std::int32_t in_revision
+) {
+  using namespace orm;
+  return select(*this)
+      .columns(object<ai_light::ai_light_spec>())
+      .from<ai_light::ai_light_spec>()
+      .where(
+          c(&ai_light::ai_light_spec::session_id_) == in_session_id &&
+          c(&ai_light::ai_light_spec::revision_) == in_revision
+      )
+      .limit(1)()
+      .to_optional();
+}
+
+std::vector<ai_light::ai_light_iteration> sqlite_database::get_ai_light_iterations(const uuid& in_session_id) {
+  using namespace orm;
+  return select(*this)
+      .columns(object<ai_light::ai_light_iteration>())
+      .from<ai_light::ai_light_iteration>()
+      .where(c(&ai_light::ai_light_iteration::session_id_) == in_session_id)
+      .order_by(&ai_light::ai_light_iteration::iteration_)()
+      .to_vector();
+}
+
+std::optional<ai_light::ai_light_iteration> sqlite_database::get_ai_light_iteration(
+    const uuid& in_session_id, std::int32_t in_iteration
+) {
+  using namespace orm;
+  return select(*this)
+      .columns(object<ai_light::ai_light_iteration>())
+      .from<ai_light::ai_light_iteration>()
+      .where(
+          c(&ai_light::ai_light_iteration::session_id_) == in_session_id &&
+          c(&ai_light::ai_light_iteration::iteration_) == in_iteration
+      )
+      .limit(1)()
+      .to_optional();
+}
+
+std::optional<ai_light::ai_light_iteration> sqlite_database::get_ai_light_iteration_by_task(
+    const uuid& in_server_task_info_id
+) {
+  using namespace orm;
+  // 工作机报完渲染结果后靠这条反查回填候选
+  return select(*this)
+      .columns(object<ai_light::ai_light_iteration>())
+      .from<ai_light::ai_light_iteration>()
+      .where(c(&ai_light::ai_light_iteration::server_task_info_id_) == in_server_task_info_id)
+      .limit(1)()
+      .to_optional();
+}
+
+std::vector<ai_light::ai_light_candidate> sqlite_database::get_ai_light_candidates(const uuid& in_iteration_id) {
+  using namespace orm;
+  return select(*this)
+      .columns(object<ai_light::ai_light_candidate>())
+      .from<ai_light::ai_light_candidate>()
+      .where(c(&ai_light::ai_light_candidate::iteration_id_) == in_iteration_id)
+      .order_by(&ai_light::ai_light_candidate::candidate_index_)()
+      .to_vector();
+}
+
+std::vector<ai_light::ai_light_candidate> sqlite_database::get_ai_light_candidates_by_session(
+    const uuid& in_session_id
+) {
+  using namespace orm;
+  // session_id 是 ai_light_candidate 上的冗余列，正是为了这条查询免 join
+  return select(*this)
+      .columns(object<ai_light::ai_light_candidate>())
+      .from<ai_light::ai_light_candidate>()
+      .where(c(&ai_light::ai_light_candidate::session_id_) == in_session_id)
+      .order_by(&ai_light::ai_light_candidate::created_at_)
+      .order_by(&ai_light::ai_light_candidate::candidate_index_)()
+      .to_vector();
+}
+
+std::optional<ai_light::ai_light_candidate> sqlite_database::get_ai_light_selected_candidate(
+    const uuid& in_session_id, std::int32_t in_iteration
+) {
+  using namespace orm;
+  // 本轮起点 = 上一轮被美术选中作为基准的候选。
+  // 刻意不存 base_candidate_id 列：那会造成 iteration → candidate → iteration 的跨表循环外键。
+  return select(*this)
+      .columns(object<ai_light::ai_light_candidate>())
+      .from<ai_light::ai_light_candidate>()
+      .join<ai_light::ai_light_iteration>(
+          &ai_light::ai_light_candidate::iteration_id_, &ai_light::ai_light_iteration::uuid_id_
+      )
+      .where(
+          (c(&ai_light::ai_light_iteration::session_id_) == in_session_id) &&
+          (c(&ai_light::ai_light_iteration::iteration_) == in_iteration) &&
+          (c(&ai_light::ai_light_candidate::is_selected_) == true)
+      )
+      .limit(1)()
+      .to_optional();
+}
+
+std::optional<ai_light::ai_light_candidate> sqlite_database::get_ai_light_accepted_candidate(
+    const uuid& in_session_id
+) {
+  using namespace orm;
+  // 每会话至多一个，由 ai_light_candidate 上的 partial unique index 在库层强制
+  return select(*this)
+      .columns(object<ai_light::ai_light_candidate>())
+      .from<ai_light::ai_light_candidate>()
+      .where(
+          (c(&ai_light::ai_light_candidate::session_id_) == in_session_id) &&
+          (c(&ai_light::ai_light_candidate::is_accepted_) == true)
+      )
+      .limit(1)()
+      .to_optional();
+}
+
+std::vector<ai_light::ai_light_preset> sqlite_database::get_ai_light_presets(bool in_enabled_only) {
+  using namespace orm;
+  auto l_select = select(*this).columns(object<ai_light::ai_light_preset>()).from<ai_light::ai_light_preset>();
+  if (in_enabled_only) l_select.where(c(&ai_light::ai_light_preset::enabled_) == true);
+  // 全表取出后在内存里算余弦相似度：sqlite 没有向量索引，
+  // 而首批预设是几十条（美术整理的三点布光/伦勃朗/剪影/夜景霓虹 + 内置），全表扫描完全够用。
+  return l_select.order_by(&ai_light::ai_light_preset::name_)().to_vector();
+}
+
+std::optional<ai_light::ai_light_preset> sqlite_database::get_ai_light_preset(const uuid& in_preset_id) {
+  using namespace orm;
+  return select(*this)
+      .columns(object<ai_light::ai_light_preset>())
+      .from<ai_light::ai_light_preset>()
+      .where(c(&ai_light::ai_light_preset::uuid_id_) == in_preset_id)
+      .limit(1)()
+      .to_optional();
 }
 
 }  // namespace doodle

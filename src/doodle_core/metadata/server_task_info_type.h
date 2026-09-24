@@ -32,6 +32,8 @@ enum class server_task_info_type : std::int32_t {
   project_sync,
   // 深度估计
   depth_estimation,
+  // AI 灯光：一次派发渲染一轮 6 个候选
+  ai_light,
 };
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
@@ -44,6 +46,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                                {server_task_info_type::check_maya, "check_maya"},
                                {server_task_info_type::replace_maya_ref, "replace_maya_ref"},
                                {server_task_info_type::depth_estimation, "depth_estimation"},
+                               {server_task_info_type::ai_light, "ai_light"},
                            }
 );
 

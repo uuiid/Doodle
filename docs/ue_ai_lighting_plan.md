@@ -177,7 +177,7 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
 
 ```jsonc
 {
-  "schema_version": "1.2",
+  "schema_version": "1.3",
   "spec_id": "uuid", "session_id": "uuid",
 
   "intent": {                        // 来自人工提示词，权威
@@ -219,10 +219,13 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
   "evidence": { /* 每个字段的来源与置信度 */ },
   "human_confirmed": false,          // 人工闸门 1
   "confirmed_by": null, "confirmed_at": null,
-  "tier": "stats_only",              // stats_only | prompt_only
-  "degrade_level": "full|stats_only|prompt_only"
+  "degrade_level": "stats_only"      // stats_only | prompt_only
 }
 ```
+
+> **1.2 → 1.3 的变更**：删掉 `tier`，只保留 `degrade_level`。
+> Tier B 取消后两者信息等价 —— `degrade_level` 原本的 `full` 值依赖 Tier B 的位姿反解，已不可达，
+> 所以它的取值集合塌缩成与 `tier` 相同的 `stats_only | prompt_only`。留两个字段只会让人误以为有区别。
 
 ### 4.3 灯光方案 LightingRig（候选 / 定稿 / 会话记录 / 数据库存储）
 
@@ -240,7 +243,7 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
   },
   "provenance": { "model": "deepseek-flash", "prompt_hash": "...",
                   "reference": ["ref_01.png","ref_02.png"], "seed": 12345,
-                  "tier": "stats_only" },
+                  "tier": "stats_only" },   // 自由文本标注，不参与判定；降级等级以 Spec.degrade_level 为准
   "baseline_level": "/Game/.../RenderMap",   // 本轮起点（只读）
   "globals": {
     "exposure": { "method": "manual", "ev100_bias": -0.3 },
@@ -298,8 +301,8 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
   "state": "awaiting_judgement",       // generated|dispatched|rendering|awaiting_judgement|judged
   "judgement": {                       // 人工闸门 2
     "by": "person_uuid", "at": "...",
-    "decision": "accept|continue|reject_all",
-    "selected_rig_id": "...",          // 选哪个作为下一轮基准
+    "decision": "accept|continue_iteration|reject_all",
+    "selected_candidate_id": "...",    // 选哪个作为下一轮基准
     "feedback_text": "主光再低一点，色温再冷一点",
     "feedback_axes": {                 // 结构化反馈（由 LLM 从 feedback_text 提取）
       "key_elevation_delta": -15, "kelvin_delta": -600
@@ -307,6 +310,13 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
   }
 }
 ```
+
+> **两处命名调整**（为了让 DB 存的值与 JSON 一致）：
+> - `decision` 的 `"continue"` → `"continue_iteration"`：`continue` 是 C++ 关键字，
+>   枚举项只能叫 `continue_iteration`；而本库把枚举按 C++ 名存成 TEXT，
+>   所以 JSON 字符串必须跟着改，否则同一份数据在 DB 与 JSON 里是两个值。
+> - `selected_rig_id` → `selected_candidate_id`：它指向的是候选的主键
+>   （rig 的身份就是候选的身份，没必要两个名字）。
 
 ---
 
@@ -384,7 +394,7 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
 
 | 项 | 变化 |
 |---|---|
-| `LightingSpec.tier` | `stats_only \| multiview \| prompt_only` → `stats_only \| prompt_only` |
+| `LightingSpec.tier` | `stats_only \| multiview \| prompt_only` → **字段删除**（取值塌缩成与 `degrade_level` 相同，Spec schema 升 1.3） |
 | 降级等级 | 三级 → 两级（§12.1） |
 | 里程碑 | M7 从路线图移除 |
 | `reference_stats.usable_for_physical_solve` | 恒为 `false`，成为常量而非判断结果 |
@@ -667,15 +677,53 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 
 ### 10.2 新增任务类型与数据表
 
-- 任务类型：`server_task_info_type::ai_light`
-- 表：
-  - `ai_light_job`：输入（提示、参考文件、场景）、状态、迭代轮次
-  - `ai_light_spec`：LightingSpec（含 `tier` / `degrade_level` / `conflicts` / `human_confirmed`）+ 多参考图与聚合中间产物
-  - `ai_light_session`：会话（当前轮次、状态 `awaiting_judgement` 等、跨会话可恢复）
-  - `ai_light_iteration`：轮次（候选列表、渲染产物、人工判断记录）
-  - `ai_light_rig`：版本化 IR + 是否被选中/接受
-  - `light_preset`：预设库 + embedding
-- 资产路径复用 `get_shots_auto_lighting_upload_path` / `get_shots_auto_lighting_upload_movie_path`（`core/entity_path.cpp:425-445`）
+- 任务类型：`server_task_info_type::ai_light`（追加在枚举末尾）
+- 资产路径复用 `get_shots_auto_lighting_upload_path`（`core/entity_path.cpp:425-445`），
+  AI 灯光产物挂在其下的 `AI_Light/<会话 uuid>/`
+
+**六张表**（`user_version` 30 → 31，全部是新表，迁移只需 `sync_schema()`）：
+
+| 表 | 职责 |
+|---|---|
+| `ai_light_session` | 一次灯光工作：提示词原文、状态机、当前轮次、4 小时挂起时限 |
+| `ai_light_reference` | 多张参考图，**每张单独留显示空间统计**（多图冲突要能回溯到具体哪张图） |
+| `ai_light_spec` | 灯光目标，会话内按 `revision` 版本化；含 `degrade_level` / `human_confirmed` / `conflict_resolution` |
+| `ai_light_iteration` | 一轮：轴安排、派发任务、渲染耗时、人工判断记录 |
+| `ai_light_candidate` | 每轮 6 个候选：rig 全量、显示空间指标、VLM 判分、是否被选中/定稿 |
+| `ai_light_preset` | 预设库 + embedding |
+
+**相对早期方案的三处调整**（理由见下）：
+
+1. **`ai_light_job` 合并进 `ai_light_session`** —— 两者职责完全重叠（都是「一次灯光工作的输入 + 状态」），
+   拆两张只会带来同步负担。
+2. **`ai_light_rig` 合并进 `ai_light_candidate`** —— rig 是候选的属性而非独立实体；
+   拆开后「rig 属于哪一轮哪个候选」还要靠关联表，纯属多余。
+3. **新增 `ai_light_reference`** —— 早期方案漏了：参考图必有多张，
+   且每张图的原始统计必须留存，否则美术无法看到「到底是哪张图把色温拉偏了」，§5.3 的人工裁决无从下手。
+
+**落库约定**（沿用既有 ORM 事实，见 `doodle_core/metadata/ai_light/`）：
+
+- 枚举按 `magic_enum` 的 **C++ 名** 存 TEXT，所以枚举项名必须与 JSON 字符串一致，且绝不重命名已有项
+- 嵌套结构（`rig` / `metrics` / `intent` / `targets` / `judgement` …）一律以 `nlohmann::json` 落库 ——
+  ORM 的列类型不覆盖嵌套结构体与 `std::map`
+- **不做冗余指针、不做循环外键**：「当前 Spec」= 会话内 `revision` 最大的一行，
+  「本轮起点」= 上一轮 `is_selected` 的候选，「定稿候选」= `is_accepted` 的候选，
+  全部靠查询得出。每会话至多一个定稿由 `accepted_session_id` 上的普通唯一索引在库层强制
+  （定稿才填 session_id、否则为 NULL；SQLite 的唯一索引把 NULL 视为互不相等，于是等价于
+  `WHERE is_accepted = 1` 的 partial index —— 为什么不能直接用 partial index 见 §15.3）。
+- 「等人工判断」是**会话/轮次状态**，不进 `server_task_info_status`
+
+**`preview_file` 的复用边界**：
+
+| 产物 | 进 `preview_file`？ | 取图方式 |
+|---|---|---|
+| 参考图（多张） | 否 | `/api/doodle/ai/light/reference/{uuid}/image` |
+| 中间候选渲染（6 × N 轮） | 否 | `/api/doodle/ai/light/candidate/{uuid}/image` |
+| **定稿候选渲染** | **是** | 复用现有预览接口，`source = auto_light_generate` |
+
+这样镜头的预览列表只呈现交付结果，不会被 6×N 张中间候选淹没，
+也不需要给所有现有预览列表页加 `source` 过滤。
+
 
 ### 10.3 轮次编排（新增，核心）
 
@@ -686,13 +734,15 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
   → 置 session.state = awaiting_judgement → 通知前端
   → 等人工判断（可能数小时/数天）
   → 收到判断：
-       accept        → 走定稿（⑤）
-       continue      → 据 feedback_axes 生成下一轮候选 → 回到派发
-       reject_all    → 回到规划层重新出方案（或结束）
+       accept            → 走定稿（⑤）
+       continue_iteration → 据 feedback_axes 生成下一轮候选 → 回到派发
+       reject_all        → 回到规划层重新出方案（或结束）
 ```
 
 - 「等待人工判断」是**会话状态**，不是任务状态（避免污染 `server_task_info_status`）
 - **美术 4 小时以上不判断 → 会话转挂起**（不占资源；恢复后从 `awaiting_judgement` 继续）
+- 挂起判定用会话上专门的 `judgement_due_at` 列，**不用 `updated_at`** ——
+  `updated_at` 会被任何一次更新刷新，拿它当超时基准会让「美术看了但没判断」的会话永远不过期
 
 ### 10.4 分布式派发必须遵守的既有契约
 
@@ -788,11 +838,15 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    - `/api/doodle/ai/light/spec`：提示词 + 多张参考 → LightingSpec（含聚合与冲突检测）
    - `/api/doodle/ai/light/spec/confirm`：人工闸门 1（确认/冲突裁决）
    - `/api/doodle/ai/light/iterate`：生成一轮候选并派发
-   - `/api/doodle/ai/light/judge`：**人工闸门 2**（accept / continue / reject_all + 反馈）
+   - `/api/doodle/ai/light/judge`：**人工闸门 2**（accept / continue_iteration / reject_all + 反馈）
    - `/api/doodle/ai/light/session/{id}`：轮次与候选查询
    - `/api/doodle/ai/light/preset`：预设库 CRUD
+   - `/api/doodle/ai/light/reference/{id}/image`、`/candidate/{id}/image`：参考图与中间候选的取图
+     （这两类**不注册 `preview_file`**，见 §10.2）
 6. **轮次编排**：`awaiting_judgement` 会话状态、超时挂起、跨会话恢复（§10.3）。
-7. **数据表**：`ai_light_job` / `ai_light_spec` / `ai_light_session` / `ai_light_iteration` / `ai_light_rig` / `light_preset`，进 `sqlite_database` 的 upgrade 与 ORM 注册。
+7. **数据表**：`ai_light_session` / `ai_light_reference` / `ai_light_spec` / `ai_light_iteration` /
+   `ai_light_candidate` / `ai_light_preset`，进 `sqlite_database` 的 upgrade 与 ORM 注册（§10.2）。
+   **结构体与注册已落地**（`doodle_core/metadata/ai_light/`、`user_version` 30 → 31）。
 8. **参考文件接收**：复用 `http_method/up_file.h` 的 `doodle_data_shots_file_auto_light` 模式；DeepSeek Files API 的 `file_id` 缓存也放这里。
 9. **反馈结构化**：`/judge` 收到的自然语言反馈经 LLM 转成 `feedback_axes`。
 
@@ -967,3 +1021,33 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 1. **性能基线**：灯数与单轮渲染时间已确认暂不设限，但需要在 M1 实测记录——6 个候选 × 实际灯数的单轮耗时，作为 M6 是否拆分多机并行的依据，也是后续要不要加回硬上限的依据。
 2. **全局调色反解的实际精度**（§9.2）：需在真实参考上验证「分布匹配求得的全局变换」能否干净地落到 UE 的 Color Grading 参数上。若映射误差大，退化为 §9.3 的灵敏度标定搜索——流程不受影响，只是少了一个热启动。
 3. **统计量的实际可信度**：虽然已确认以全局调色为主，仍应在首批真实参考上抽查是否存在局部改图污染，据此决定是否需要启用外点剔除。
+
+### 15.3 已落地（数据库层）
+
+| 项 | 落点 |
+|---|---|
+| 六张表的结构体 | `src/doodle_core/metadata/ai_light/`（`common.h` / `rig.h` / `spec.h` / `session.h` / `reference.h` / `iteration.h` / `candidate.h` / `preset.h` / `ai_light.h`） |
+| ORM 注册 | `sqlite_database.cpp` 的 6 个 `reg_table` 块（含定稿唯一索引） |
+| 迁移 30 → 31 | `sqlite_upgrade.cpp` 的 `upgrade_3_t` + `upgrade_3()`；版本常量拆出 `g_version_30`，避免 `upgrade_2_t` 把库直接标成最新而让这一步被静默跳过 |
+| 查询方法 | `sqlite_database.h/.cpp` 的 19 个 `get_ai_light_*` |
+| 产物路径 | `core/entity_path.h/.cpp` 的 `get_ai_light_session_path` / `_reference_path` / `_iteration_path` / `_candidate_path` |
+| 任务类型 | `server_task_info_type::ai_light` |
+| 测试 | `src/test/core/ai_light_schema.cpp`（建表、版本门控、JSON 往返无损、定稿唯一性、挂起时限比较） |
+
+**实现期发现、值得记住的三个坑**：
+
+1. **ORM 的列类型不覆盖嵌套结构体与 `std::map`** —— 只有 `nlohmann::json` 可以。所以 `rig` / `metrics` / `intent` / `targets` / `judgement` 全部以 JSON 列落库，
+   靠 `get_xxx()` / `set_xxx()` 做类型化访问。这不是偷懒：直接把 `lighting_rig_t` 当列成员会编译不过。
+2. **`user_version` 与「每一步各写自己的目标版本」必须配套** —— 若 `upgrade_2_t` 仍写 `g_current_version`，
+   29 版库会被直接标成 31，`upgrade_3_t` 的 `> 30` 门控随即跳过建表，而且**版本号上看不出任何异常**。
+   `src/test/core/sqlite_upgrade.cpp` 里专门有一组用例盯住这种「静默跳过」。
+3. **本库的 ORM 表达不出带 `= 值` 条件的 partial index** —— SQLite 明确禁止 partial index 的 `WHERE` 里出现绑定参数
+   （`parameters prohibited in partial index WHERE clauses`），而 `create_unique_index().where(c(&T::col) == true)`
+   生成的正是带 `?` 的比较式；只有 `== nullptr` 会生成无参数的 `IS NULL`（`entity` 表的 `parent_id` 先例靠的就是这一点）。
+   所以「每会话至多一个定稿候选」改用**可空列 + 普通唯一索引**表达：
+   `ai_light_candidate.accepted_session_id` 定稿时写入 `session_id`、否则保持 NULL，
+   写入必须走 `mark_accepted()`（它同时维护 `is_accepted_`，两列一旦分叉约束就失效）。
+   选这条路而不是去改 ORM 的 `to_str_value_t` 让它内联字面量：那要顺带重写 string / uuid / 枚举 / optional
+   各自的 SQL 字面量规则（等于把 binder 的存储格式再实现一遍），而 `insert_t` 的触发器路径也在用那套代码 ——
+   为了一个索引去动全库查询共用的序列化，代价与风险都不成比例。
+

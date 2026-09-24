@@ -1,7 +1,7 @@
 //
 // 数据库版本升级测试.
 //
-// 升级器的结构是"一步一个版本": upgrade_N_t 各自判断自己该不该跑 (当前只剩 29 -> 30).
+// 升级器的结构是"一步一个版本": upgrade_N_t 各自判断自己该不该跑 (当前是 29 -> 30 -> 31).
 // 这种结构下最危险的错误是"跳过"—— 某个步骤没执行, 但 user_version 被写成了最新版,
 // 于是库看起来是新的, 实际迁移根本没做. 这里的用例专门盯住这一点.
 //
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(fresh_db_upgrade_succeeds_with_fk_enforced) {
     auto l_session = l_storage.create_session();
     auto l_version = scalar_int(l_session, "PRAGMA user_version;");
     BOOST_TEST_MESSAGE(fmt::format("全新库 user_version = {}", l_version));
-    BOOST_TEST(l_version == 30);
+    BOOST_TEST(l_version == 31);
 
     // 新建的库直接就是最新 schema: te_xie 列由 regs_all() 的声明建出来, 不需要升级补
     BOOST_TEST(has_column(l_session, "entity_asset_extend_2", "te_xie"));
@@ -194,12 +194,12 @@ BOOST_AUTO_TEST_CASE(upgrade_29_to_30_adds_te_xie_column) {
       insert_probe_extend(l_session, "D1");
     }
 
-    // 1. 生产库当前的版本: 升级步骤必须执行
+    // 1. 29 版库: 两步迁移都要执行 —— upgrade_2_t 补列, upgrade_3_t 建 AI 灯光表
     l_session.pragma().user_version(29);
     l_storage.upgrade();
     auto l_version = scalar_int(l_session, "PRAGMA user_version;");
     BOOST_TEST_MESSAGE(fmt::format("v29 升级后 user_version = {}", l_version));
-    BOOST_TEST(l_version == 30);
+    BOOST_TEST(l_version == 31);
     // 副作用确实存在, 说明升级步骤真的跑了
     BOOST_TEST(has_column(l_session, "entity_asset_extend_2", "te_xie"));
     // 存量行在库层面就落成 0: 前端读到的就是默认 false
@@ -208,9 +208,9 @@ BOOST_AUTO_TEST_CASE(upgrade_29_to_30_adds_te_xie_column) {
     // 2. 已是最新版的库: 不应该有任何步骤执行.
     //    再把列删掉跑一次 —— 列没有回来, 才证明这一步被版本号挡住了, 而不是"恰好幂等".
     drop_te_xie(l_session);
-    l_session.pragma().user_version(30);
+    l_session.pragma().user_version(31);
     l_storage.upgrade();
-    BOOST_TEST(scalar_int(l_session, "PRAGMA user_version;") == 30);
+    BOOST_TEST(scalar_int(l_session, "PRAGMA user_version;") == 31);
     BOOST_TEST(!has_column(l_session, "entity_asset_extend_2", "te_xie"));
   }
 
@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(upgrade_brings_older_db_up_to_current) {
     l_storage.upgrade();
     auto l_version = scalar_int(l_session, "PRAGMA user_version;");
     BOOST_TEST_MESSAGE(fmt::format("v26 升级后 user_version = {}", l_version));
-    BOOST_TEST(l_version == 30);
+    BOOST_TEST(l_version == 31);
     // 升级步骤的副作用确实存在, 说明它没有被跳过
     BOOST_TEST(has_column(l_session, "entity_asset_extend_2", "te_xie"));
     BOOST_TEST(scalar_text(l_session, "PRAGMA integrity_check;") == "ok");

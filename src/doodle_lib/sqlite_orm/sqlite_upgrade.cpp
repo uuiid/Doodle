@@ -37,9 +37,18 @@
 
 namespace doodle::details {
 namespace {
-// 版本号. 生产库当前是 29, 所以只需要一步 29 -> 30.
+// 版本号. 生产库当前是 30, 所以只需要一步 30 -> 31 (AI 灯光建表).
+//
+// 注意 g_current_version 与各步骤的目标版本是两回事:
+//   * g_current_version 是「全部迁移做完之后的版本」, 只有最后一步和 upgrade_init_t 该写它;
+//   * 中间步骤必须写**自己的目标版本** (upgrade_2_t 写 g_version_30)。
+// 早先 upgrade_2_t 写的是 g_current_version, 那时两者恰好都等于 30 所以没暴露问题。
+// 一旦把 g_current_version 提到 31, 若 upgrade_2_t 仍写 g_current_version,
+// 停在 29 的库会被直接标成 31, 于是 upgrade_3_t 的 `> 30 就跳过` 判定成立、
+// AI 灯光那六张表永远不会被建出来 —— 而且不报任何错。所以这里必须拆开。
 constexpr std::size_t g_version_29      = 29;
-constexpr std::size_t g_current_version = 30;
+constexpr std::size_t g_version_30      = 30;
+constexpr std::size_t g_current_version = 31;
 }  // namespace
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -139,13 +148,45 @@ struct upgrade_2_t : sqlite_upgrade {
       l_s.add_column("entity_asset_extend_2", "te_xie", "INTEGER", "0");
       SPDLOG_INFO("upgrade 29->30: 已添加 entity_asset_extend_2.te_xie (DEFAULT 0, 存量行读出 false)");
     }
-    l_s.pragma().user_version(g_current_version);
+    // 写本步骤自己的目标版本, 不是 g_current_version —— 见文件顶部版本号注释
+    l_s.pragma().user_version(g_version_30);
   }
   ~upgrade_2_t() override = default;
 };
 
+// 30 -> 31: 建 AI 灯光六张表 (docs/ue_ai_lighting_plan.md §10.2).
+//
+// 这一步没有 ALTER, 因为全部改动都是**新表**:
+//   ai_light_session / ai_light_reference / ai_light_spec /
+//   ai_light_iteration / ai_light_candidate / ai_light_preset
+//
+// sync_schema() 的语义正好够用 (见 orm/session.cpp:168-217):
+//   * 表已存在 → 直接 continue, **不会给已有表加列、改列**, 所以对存量 schema 零风险;
+//   * 表不存在 → 建表;
+//   * 索引/触发器逐个按名字查, 缺哪个建哪个。
+// 也就是说它只能新增、不能修改, 这正是本步骤需要的。
+//
+// 之所以不用 create_table(单个 type_index): 它只建表、不建索引
+// (session.cpp:326-337), 那六张表的唯一索引与 partial unique index 就得手写 SQL。
+//
+// 条件用 `> 30 就跳过` 的写法与 upgrade_2_t 一致: 版本更旧的库也能被带到最新。
+// 全新库 (user_version == 0) 已由 upgrade_init_t 的 sync_schema 建好并标成最新版, 到这里必然跳过。
+struct upgrade_3_t : sqlite_upgrade {
+  explicit upgrade_3_t() {}
+  void upgrade(sqlite_storage& in_data) override {
+    auto l_s = in_data.create_session();
+    if (l_s.pragma().user_version() > g_version_30) return;
+    backup(l_s);
+    l_s.sync_schema();
+    l_s.pragma().user_version(g_current_version);
+    SPDLOG_INFO("upgrade 30->31: 已创建 AI 灯光六张表 (ai_light_session / _reference / _spec / _iteration / _candidate / _preset)");
+  }
+  ~upgrade_3_t() override = default;
+};
+
 std::shared_ptr<sqlite_upgrade> upgrade_init() { return std::make_shared<upgrade_init_t>(); }
 std::shared_ptr<sqlite_upgrade> upgrade_2() { return std::make_shared<upgrade_2_t>(); }
+std::shared_ptr<sqlite_upgrade> upgrade_3() { return std::make_shared<upgrade_3_t>(); }
 
 // 启动清理: 解绑所有 running 任务的 run_computer_id.
 //

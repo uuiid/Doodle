@@ -55,6 +55,15 @@ struct link_parent_t;
 namespace work_xlsx_task_info_helper {
 struct database_t;
 }
+namespace ai_light {
+struct ai_light_session;
+struct ai_light_reference;
+struct ai_light_spec;
+struct ai_light_iteration;
+struct ai_light_candidate;
+struct ai_light_preset;
+enum class ai_light_session_state;
+}  // namespace ai_light
 }  // namespace doodle
 namespace doodle {
 
@@ -259,5 +268,64 @@ class DOODLELIB_API sqlite_database {
   std::set<uuid> get_running_task_computer_ids();
   // 获取镜头任务对应的 场景资产的扩展数据 如果没有, 抛出异常, 大于一个, 抛出异常
   entity_asset_extend_value get_entity_shot_extend_by_task(const uuid& in_shot_id);
+
+  // ---------------------------------------------------------------------------
+  // AI 灯光（docs/ue_ai_lighting_plan.md）
+  //
+  // 这里刻意只放**查询**：会话/轮次的状态推进由轮次编排负责，
+  // 不往 sqlite_database 里塞业务写操作。
+  //
+  // 几个「当前」是靠查询得出而不是靠冗余指针列的，对应关系：
+  //   当前 Spec     = 会话内 revision 最大的一行   → get_current_ai_light_spec
+  //   本轮起点      = 上一轮 is_selected 的候选     → get_ai_light_selected_candidate
+  //   定稿候选      = is_accepted 的候选            → get_ai_light_accepted_candidate
+  // ---------------------------------------------------------------------------
+
+  /// 镜头下的全部会话，新的在前。Shot 页入口。
+  std::vector<ai_light::ai_light_session> get_ai_light_sessions_by_entity(const uuid& in_entity_id);
+  /// 项目下的全部会话，新的在前
+  std::vector<ai_light::ai_light_session> get_ai_light_sessions_by_project(const uuid& in_project_id);
+  /// 按状态查会话。**4 小时挂起扫描器**用它捞 awaiting_judgement。
+  std::vector<ai_light::ai_light_session> get_ai_light_sessions_by_state(
+      ai_light::ai_light_session_state in_state
+  );
+  /// 已过判断时限、仍停在 awaiting_judgement 的会话（挂起扫描器的精确查询）
+  std::vector<ai_light::ai_light_session> get_ai_light_sessions_overdue_judgement();
+
+  /// 会话的参考图，按 ordinal 升序
+  std::vector<ai_light::ai_light_reference> get_ai_light_references(const uuid& in_session_id);
+
+  /// 会话的全部 Spec 版本，revision 升序
+  std::vector<ai_light::ai_light_spec> get_ai_light_specs(const uuid& in_session_id);
+  /// 当前生效的 Spec（revision 最大的一行）
+  std::optional<ai_light::ai_light_spec> get_current_ai_light_spec(const uuid& in_session_id);
+  /// 指定版本的 Spec
+  std::optional<ai_light::ai_light_spec> get_ai_light_spec(const uuid& in_session_id, std::int32_t in_revision);
+
+  /// 会话的全部轮次，iteration 升序
+  std::vector<ai_light::ai_light_iteration> get_ai_light_iterations(const uuid& in_session_id);
+  /// 指定轮次
+  std::optional<ai_light::ai_light_iteration> get_ai_light_iteration(
+      const uuid& in_session_id, std::int32_t in_iteration
+  );
+  /// 按分布式任务反查轮次（工作机报完结果后回填用）
+  std::optional<ai_light::ai_light_iteration> get_ai_light_iteration_by_task(const uuid& in_server_task_info_id);
+
+  /// 一轮的全部候选，candidate_index 升序
+  std::vector<ai_light::ai_light_candidate> get_ai_light_candidates(const uuid& in_iteration_id);
+  /// 会话的全部候选（跨轮），按轮次与候选序号升序
+  std::vector<ai_light::ai_light_candidate> get_ai_light_candidates_by_session(const uuid& in_session_id);
+  /// 被选中作为下一轮基准的候选（warm start 起点）
+  std::optional<ai_light::ai_light_candidate> get_ai_light_selected_candidate(
+      const uuid& in_session_id, std::int32_t in_iteration
+  );
+  /// 定稿候选（每会话至多一个，由 partial unique index 保证）
+  std::optional<ai_light::ai_light_candidate> get_ai_light_accepted_candidate(const uuid& in_session_id);
+
+  /// 预设库。enabled_only = true 时只取启用的。
+  /// 检索本身（余弦相似度）在内存里做：sqlite 没有向量索引，
+  /// 而首批规模是几十条，全表扫描完全够用。
+  std::vector<ai_light::ai_light_preset> get_ai_light_presets(bool in_enabled_only = true);
+  std::optional<ai_light::ai_light_preset> get_ai_light_preset(const uuid& in_preset_id);
 };
 }  // namespace doodle

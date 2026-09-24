@@ -443,6 +443,36 @@ FSys::path get_shots_auto_lighting_upload_movie_path(const episodes& episode_, c
   return FSys::path{"03_Workflow"} / "Shot" / fmt::format("EP{:04}", episode_) / "MovieRenders" / fmt::format("SC{:03}", shot_);
 }
 
+// AI 灯光产物落盘。挂在自动灯光上传目录下再分 AI_Light/<会话 uuid>/，
+// 跟着项目一起归档；参考图与中间候选渲染都不进 preview_file（见头文件说明）。
+FSys::path get_ai_light_session_path(
+    const episodes& episode_, const entity_asset_extend_value& ground_extend_, const uuid& in_session_id
+) {
+  return get_shots_auto_lighting_upload_path(episode_, ground_extend_) / "AI_Light" /
+         boost::uuids::to_string(in_session_id);
+}
+
+FSys::path get_ai_light_reference_path(
+    const episodes& episode_, const entity_asset_extend_value& ground_extend_, const uuid& in_session_id
+) {
+  return get_ai_light_session_path(episode_, ground_extend_, in_session_id) / "ref";
+}
+
+FSys::path get_ai_light_iteration_path(
+    const episodes& episode_, const entity_asset_extend_value& ground_extend_, const uuid& in_session_id,
+    std::int32_t in_iteration
+) {
+  return get_ai_light_session_path(episode_, ground_extend_, in_session_id) / fmt::format("it_{:03}", in_iteration);
+}
+
+FSys::path get_ai_light_candidate_path(
+    const episodes& episode_, const entity_asset_extend_value& ground_extend_, const uuid& in_session_id,
+    std::int32_t in_iteration, std::int32_t in_candidate_index, bool in_linear
+) {
+  return get_ai_light_iteration_path(episode_, ground_extend_, in_session_id, in_iteration) /
+         fmt::format("cand_{:02}{}", in_candidate_index, in_linear ? ".exr" : ".png");
+}
+
 FSys::path conv_ue_game_path(const FSys::path& in_path) {
   auto l_str = in_path.generic_string();
   boost::replace_all(l_str, doodle_config::ue4_content, doodle_config::ue4_game);
