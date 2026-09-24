@@ -14,7 +14,10 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/server_task_info.h>
 
-#include <doodle_lib/core/app_base.h>
+// 注：本文件曾经还包含 app_base.h / boost/asio/co_spawn.hpp / steady_timer.hpp /
+// use_awaitable.hpp —— 它们只服务于那个已删除的 4 小时挂起扫描器（常驻后台协程）。
+// 过期现在是纯派生标志，这里不再有任何后台任务，所以一并去掉：
+// 留着这些 include 会让人以为这儿还跑着一个循环。
 #include <doodle_lib/core/entity_path.h>
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
@@ -23,13 +26,8 @@
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
-#include <boost/asio/co_spawn.hpp>
-#include <boost/asio/steady_timer.hpp>
-#include <boost/asio/use_awaitable.hpp>
-#include <boost/system/error_code.hpp>
 #include <magic_enum/magic_enum.hpp>
 
-#include <algorithm>
 #include <chrono>
 #include <exception>
 #include <string>
