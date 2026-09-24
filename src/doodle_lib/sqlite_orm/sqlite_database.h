@@ -285,12 +285,12 @@ class DOODLELIB_API sqlite_database {
   std::vector<ai_light::ai_light_session> get_ai_light_sessions_by_entity(const uuid& in_entity_id);
   /// 项目下的全部会话，新的在前
   std::vector<ai_light::ai_light_session> get_ai_light_sessions_by_project(const uuid& in_project_id);
-  /// 按状态查会话。**4 小时挂起扫描器**用它捞 awaiting_judgement。
+  /// 按状态查会话（前端「待办」列表用它捞 awaiting_judgement）。
+  /// 注意「已过期」不再是一个状态，所以这个查询捞不到它 —— 过期由
+  /// `ai_light_session::is_judgement_overdue()` 在 C++ 侧实时算，读模型带出 is_judgement_overdue_。
   std::vector<ai_light::ai_light_session> get_ai_light_sessions_by_state(
       ai_light::ai_light_session_state in_state
   );
-  /// 已过判断时限、仍停在 awaiting_judgement 的会话（挂起扫描器的精确查询）
-  std::vector<ai_light::ai_light_session> get_ai_light_sessions_overdue_judgement();
 
   /// 会话的参考图，按 ordinal 升序
   std::vector<ai_light::ai_light_reference> get_ai_light_references(const uuid& in_session_id);

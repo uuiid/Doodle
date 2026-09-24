@@ -245,7 +245,8 @@ BOOST_AUTO_TEST_CASE(judge_accept_marks_candidate_and_session) {
     co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j, l_pf);
   });
 
-  // 会话进入终态，且挂起时限被清掉 —— 否则挂起扫描器还会来碰它
+  // 会话进入终态，且判断时限被清掉 —— 过期标志因此自动变 false，
+  // 不需要任何人去「清理」它（这正是把过期做成派生标志的好处）
   auto l_session = l_fx.reload_session();
   BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::accepted));
   BOOST_TEST(!l_session.judgement_due_at_.has_value());
@@ -466,41 +467,57 @@ BOOST_AUTO_TEST_CASE(awaiting_judgement_sets_due_at_four_hours_ahead) {
   BOOST_TEST(l_iter.render_ms_total_ > 0);
 }
 
-BOOST_AUTO_TEST_CASE(scan_overdue_suspends_only_overdue_and_is_idempotent) {
+BOOST_AUTO_TEST_CASE(overdue_session_stays_awaiting_judgement_and_stays_judgeable) {
   app_base l_app{};
   const auto l_now = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
 
-  // 过期会话：时限已过 5 小时
-  fixture_t l_over{"scan_overdue"};
-  l_over.session_.judgement_due_at_ =
+  fixture_t l_fx{"overdue_stays_judgeable"};
+
+  // 把判断时限拨到 5 小时前 —— 等价于「美术已经拖了 5 小时」
+  l_fx.session_.judgement_due_at_ =
       chrono::system_zoned_time{chrono::current_zone(), l_now.get_sys_time() - std::chrono::hours{5}};
-  update(l_over.orm_)
+  update(l_fx.orm_)
       .from<ai_light_session>()
-      .set(c(&ai_light_session::judgement_due_at_) = l_over.session_.judgement_due_at_)
-      .where(c(&ai_light_session::uuid_id_) == l_over.session_.uuid_id_)();
+      .set(c(&ai_light_session::judgement_due_at_) = l_fx.session_.judgement_due_at_)
+      .where(c(&ai_light_session::uuid_id_) == l_fx.session_.uuid_id_)();
 
-  // 未过期会话：时限还有 4 小时
-  fixture_t l_fresh{"scan_fresh"};
-  l_fresh.session_.judgement_due_at_ =
-      chrono::system_zoned_time{chrono::current_zone(), l_now.get_sys_time() + std::chrono::hours{4}};
-  update(l_fresh.orm_)
-      .from<ai_light_session>()
-      .set(c(&ai_light_session::judgement_due_at_) = l_fresh.session_.judgement_due_at_)
-      .where(c(&ai_light_session::uuid_id_) == l_fresh.session_.uuid_id_)();
+  // 过期是**实时派生**的标志：状态不变，读模型把标志带出去。
+  // 以前这里会被后台扫描器物化成 suspended 状态。
+  auto l_detail = build_session_detail(*l_fx.sql_, l_fx.session_.uuid_id_);
+  BOOST_TEST(l_detail.has_value());
+  BOOST_TEST(en(l_detail->session_.state_) == en(ai_light_session_state::awaiting_judgement));
+  BOOST_TEST(l_detail->is_judgement_overdue_);
+  // 过期不代表「不用管了」，它仍然在等人工动作 —— 否则前端会把它从待办里漏掉
+  BOOST_TEST(l_detail->is_waiting_human_);
 
-  const auto l_count = scan_overdue_sessions(*l_over.sql_);
-  BOOST_TEST(l_count == 1);
+  // ---- 关键回归 ----
+  // 超时**不**能剥夺判断能力。删掉 suspended 之前，这里会撞上
+  // apply_judgement 的「不在等人工判断」400，而没有任何路径能从 suspended 回到
+  // awaiting_judgement —— 于是已经渲染好的 6 个候选再也挑不了，
+  // 只能走 /spec 重出方案，白扔一整轮渲染。这才是删掉那个状态的理由。
+  auto l_args  = load_for_judge(l_fx);
+  auto l_j     = make_judgement(judgement_decision::accept, l_fx.candidates_.at(2).uuid_id_);
+  auto l_pf    = make_probe_preview_file();
+  bool l_threw = false;
+  try {
+    run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
+      co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j, l_pf);
+    });
+  } catch (const std::exception& in_err) {
+    l_threw = true;
+    BOOST_TEST_MESSAGE(fmt::format("超时会话判断失败: {}", in_err.what()));
+  }
+  BOOST_TEST(!l_threw);
 
-  auto l_suspended = l_over.reload_session();
-  BOOST_TEST(en(l_suspended.state_) == en(ai_light_session_state::suspended));
-  BOOST_TEST(l_suspended.suspended_at_.has_value());
+  auto l_session = l_fx.reload_session();
+  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::accepted));
+  BOOST_TEST(!l_session.judgement_due_at_.has_value());
 
-  // 没过期的不许被挂起 —— 「只挂起过期的」是这条规则的全部意义
-  BOOST_TEST(en(l_fresh.reload_session().state_) == en(ai_light_session_state::awaiting_judgement));
-
-  // 幂等：已挂起的会话不再是 awaiting_judgement，第二次扫描不该重复计数
-  BOOST_TEST(scan_overdue_sessions(*l_over.sql_) == 0);
-  BOOST_TEST(en(l_over.reload_session().state_) == en(ai_light_session_state::suspended));
+  // 判断完就不该再过期 —— 标志跟着状态走，不需要任何人去清理它。
+  // 这也是删掉 suspended_at 之后仍然成立的不变量。
+  auto l_after = build_session_detail(*l_fx.sql_, l_fx.session_.uuid_id_);
+  BOOST_TEST(l_after.has_value());
+  BOOST_TEST(!l_after->is_judgement_overdue_);
 }
 
 // ===========================================================================
@@ -639,43 +656,6 @@ BOOST_AUTO_TEST_CASE(advance_session_rolls_back_to_entry_state_on_seam_failure) 
 // 预设库
 // ===========================================================================
 
-BOOST_AUTO_TEST_CASE(advance_session_rolls_back_to_suspended_when_entry_was_suspended) {
-  app_base l_app{};
-  fixture_t l_fx{
-      "advance_rollback_suspended", ai_light_session_state::suspended, ai_light_iteration_state::generated, 0, false
-  };
-
-  // 挂起时间必须一起活下来：它记录「美术是什么时候离开的」，
-  // 一次失败的重出方案不该把这个事实抹掉。
-  l_fx.session_.suspended_at_ =
-      chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now() - std::chrono::hours{6}};
-  update(l_fx.orm_)
-      .from<ai_light_session>()
-      .set(c(&ai_light_session::suspended_at_) = l_fx.session_.suspended_at_)
-      .where(c(&ai_light_session::uuid_id_) == l_fx.session_.uuid_id_)();
-
-  auto l_session = l_fx.reload_session();
-  bool l_threw   = false;
-  try {
-    run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
-      co_await advance_session(*l_fx.sql_, l_session);
-    });
-  } catch (const doodle_error& in_err) {
-    l_threw = true;
-    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::not_implemented);
-  }
-  BOOST_TEST(l_threw);
-
-  // 回滚到 **suspended**，而不是被悄悄降级成 draft。
-  // 「suspended 与 draft 都走 generate_spec」这条分派很容易让人以为两者等价，
-  // 从而在推进前顺手把状态改成 draft —— 那会让回滚落到错误的状态，
-  // 而这类偏差在状态机里是最难查的。
-  auto l_after = l_fx.reload_session();
-  BOOST_TEST(en(l_after.state_) == en(ai_light_session_state::suspended));
-  BOOST_TEST(l_after.suspended_at_.has_value());
-  BOOST_TEST(!l_after.failure_reason_.empty());
-  BOOST_TEST(l_fx.sql_->get_ai_light_specs(l_after.uuid_id_).empty());
-}
 BOOST_AUTO_TEST_CASE(preset_crud_roundtrip) {
   app_base l_app{};
   fixture_t l_fx{"preset_crud"};
@@ -758,15 +738,13 @@ BOOST_AUTO_TEST_CASE(optional_and_time_fields_serialize_as_scalars) {
   nlohmann::json l_empty_json = l_empty;
   BOOST_TEST(l_empty_json.at("at").is_null());
 
-  // 会话的两个时间 optional 同理
+  // 会话的时间 optional 同理
   ai_light_session l_session{};
   l_session.mark_awaiting_judgement();
   nlohmann::json l_s_json = l_session;
   BOOST_TEST(l_s_json.at("judgement_due_at").is_string());
-  BOOST_TEST(l_s_json.at("suspended_at").is_null());
   auto l_s_back = l_s_json.get<ai_light_session>();
   BOOST_TEST(l_s_back.judgement_due_at_.has_value());
-  BOOST_TEST(!l_s_back.suspended_at_.has_value());
   BOOST_TEST(l_s_back.is_judgement_overdue(chrono::system_zoned_time{
       chrono::current_zone(), l_now.get_sys_time() + std::chrono::hours{5}
   }));

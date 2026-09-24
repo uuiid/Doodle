@@ -525,10 +525,13 @@ BOOST_AUTO_TEST_CASE(single_accepted_candidate_is_enforced_by_db) {
   remove_db(l_db);
 }
 
-// 4 小时挂起判定依赖 zoned_time 的 TEXT 字典序比较.
-// 这个假设必须被验证: 一旦格式变化（例如补零宽度不一致），比较结果就会静默错掉,
-// 表现是「会话该挂起却没挂起」或「刚进入等判断就被挂起」.
-BOOST_AUTO_TEST_CASE(overdue_judgement_query_orders_time_correctly) {
+// 4 小时过期判定依赖 judgement_due_at 经 TEXT 列往返后仍然算得对.
+// 这个假设必须被验证: 一旦格式变化（例如补零宽度不一致）或读回时解析偏了,
+// 判定就会静默错掉, 表现是「会话该催了却不催」或「刚进入等判断就被判过期」.
+//
+// 删掉挂起扫描器之后这条判据更关键了: 过期不再有任何后台任务去物化它,
+// is_judgement_overdue() 是**唯一**的过期来源, 它算错就没有第二个地方能发现.
+BOOST_AUTO_TEST_CASE(overdue_judgement_survives_text_roundtrip) {
   app_base l_app{};
   auto l_db = temp_db("overdue");
   remove_db(l_db);
@@ -555,7 +558,7 @@ BOOST_AUTO_TEST_CASE(overdue_judgement_query_orders_time_correctly) {
     l_pending.entity_id_        = core_set::get_set().get_uuid();
     l_pending.judgement_due_at_ = chrono::system_zoned_time{l_now.get_sys_time() + std::chrono::hours{1}};
 
-    // 状态不对: 即使时限已过也不算挂起对象
+    // 状态不对: 即使时限已过也不算过期（判定必须带上状态这一项）
     ai_light_session l_other_state = l_overdue;
     l_other_state.entity_id_        = core_set::get_set().get_uuid();
     l_other_state.state_            = ai_light_session_state::draft;
@@ -566,17 +569,18 @@ BOOST_AUTO_TEST_CASE(overdue_judgement_query_orders_time_correctly) {
       insert(l_session).into<ai_light_session>().values(l_other_state)();
     });
 
-    auto l_result = l_sql.get_ai_light_sessions_overdue_judgement();
-    BOOST_TEST_MESSAGE(fmt::format("过期待判断会话数 = {}", l_result.size()));
-    BOOST_TEST(l_result.size() == 1);
-    BOOST_TEST(l_result.front().uuid_id_ == l_overdue.uuid_id_);
+    // 全部从库里读回来再判 —— 判的是落库格式，不是内存里的对象
+    auto l_back = l_sql.get_by_uuid<ai_light_session>(l_overdue.uuid_id_);
+    BOOST_TEST(l_back.judgement_due_at_.has_value());
+    BOOST_TEST(l_back.is_judgement_overdue(l_now));
 
-    // 挂起迁移本身
-    auto l_row = l_result.front();
-    l_row.mark_suspended();
-    BOOST_TEST(en(l_row.state_) == en(ai_light_session_state::suspended));
-    BOOST_TEST(l_row.suspended_at_.has_value());
-    BOOST_TEST(!l_row.is_judgement_overdue(l_now));
+    BOOST_TEST(!l_sql.get_by_uuid<ai_light_session>(l_pending.uuid_id_).is_judgement_overdue(l_now));
+    BOOST_TEST(!l_sql.get_by_uuid<ai_light_session>(l_other_state.uuid_id_).is_judgement_overdue(l_now));
+
+    // 过期的会话状态仍然是 awaiting_judgement —— 过期不改变状态，
+    // 所以它照样能被 /judge 判断（见 ai_light_state.cpp 的回归用例）
+    BOOST_TEST(en(l_back.state_) == en(ai_light_session_state::awaiting_judgement));
+    BOOST_TEST(is_waiting_human(l_back.state_));
   }
 
   remove_db(l_db);

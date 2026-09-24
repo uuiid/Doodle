@@ -46,10 +46,6 @@ namespace {
 
 using namespace std::chrono_literals;
 
-/// 挂起扫描器的间隔。5 分钟远小于 4 小时的时限，
-/// 所以「超时」到「被挂起」之间的观测延迟最多 5 分钟，足够前端把它当实时状态用。
-constexpr auto g_suspend_scan_interval = 5min;
-
 /// failure_reason_ 的长度上限。失败原因要给人看、要给前端显示，
 /// 但 boost 的诊断信息可能带整条调用栈，不截断会把这列撑成日志垃圾场。
 constexpr std::size_t g_failure_reason_max = 512;
@@ -121,7 +117,6 @@ orm::sql_modify_statement_t make_session_update(sqlite_database& in_sql, const a
           c(&ai_light_session::state_) = in_session.state_,
           c(&ai_light_session::current_iteration_) = in_session.current_iteration_,
           c(&ai_light_session::judgement_due_at_) = in_session.judgement_due_at_,
-          c(&ai_light_session::suspended_at_) = in_session.suspended_at_,
           c(&ai_light_session::failure_reason_) = in_session.failure_reason_
       )
       .where(c(&ai_light_session::uuid_id_) == in_session.uuid_id_);
@@ -168,10 +163,9 @@ boost::asio::awaitable<void> advance_session(sqlite_database& in_sql, ai_light_s
 
   try {
     // ---------------------------------------------------------------
-    // 第一步：draft / suspended 且尚无 Spec → 蒸馏出 LightingSpec
+    // 第一步：draft 且尚无 Spec → 蒸馏出 LightingSpec
     // ---------------------------------------------------------------
-    if (l_entry_state == ai_light_session_state::draft ||
-        l_entry_state == ai_light_session_state::suspended) {
+    if (l_entry_state == ai_light_session_state::draft) {
       auto l_refs = in_sql.get_ai_light_references(in_session.uuid_id_);
 
       spec_generation_request_t l_req{};
@@ -567,47 +561,6 @@ boost::asio::awaitable<void> mark_iteration_rendered(
 }
 
 // ===========================================================================
-// 挂起扫描
-// ===========================================================================
-
-std::int32_t scan_overdue_sessions(sqlite_database& in_sql) {
-  const auto l_now = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-
-  orm::sql_modify_statement_vector_t l_sqls{};
-  std::int32_t l_count{0};
-  for (auto&& l_session : in_sql.get_ai_light_sessions_overdue_judgement()) {
-    // 二次确认：查询用的是 SQL 的字典序比较，判定用的是 zoned_time 比较。
-    // 两者在固定宽度零填充的格式下等价，但这是「库层实现细节」级别的假设，
-    // 在这里再确认一次，代价可忽略，换来的是「扫到的必挂起」这个不变量。
-    if (!l_session.is_judgement_overdue(l_now)) continue;
-    l_session.mark_suspended();
-    l_sqls.emplace_back(make_session_update(in_sql, l_session));
-    ++l_count;
-  }
-  if (l_sqls.empty()) return 0;
-
-  // 扫描器是同步函数而 run_sql 是协程：这里不能 co_await。
-  // 所以扫描器把「查 + 改」拆开：本函数负责查与判定（可同步完成），
-  // 落库由调用方在协程里做。见 ai_light_suspend_scanner::async_run()。
-  // 为了让单测能直接验「幂等 + 只挂起过期的」，这里用同步的 ORM 直接提交：
-  // 与 run_sql 的差别只有 strand 跳转与事务包裹，而扫描是单线程串行的。
-  auto l_guard = in_sql.get_session().transaction();
-  for (auto&& l_stmt : l_sqls) {
-    std::visit(
-        [&](auto&& in_stmt) {
-          in_stmt.set_session(in_sql.get_session());
-          in_stmt();
-        },
-        l_stmt
-    );
-  }
-  l_guard.commit();
-
-  SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "AI 灯光挂起扫描：{} 个会话超过 4 小时未判断，已挂起", l_count);
-  return l_count;
-}
-
-// ===========================================================================
 // 读模型
 // ===========================================================================
 
@@ -668,43 +621,6 @@ boost::asio::awaitable<std::vector<axis_step_t>> structure_feedback(
   (void)in_feedback_text;
   throw_not_implemented("structure_feedback", "deepseek_client（方案 §13.1 第 9 项）");
   co_return std::vector<axis_step_t>{};
-}
-
-// ===========================================================================
-// 挂起扫描器
-// ===========================================================================
-
-ai_light_suspend_scanner& ai_light_suspend_scanner::Get() {
-  static ai_light_suspend_scanner l_instance{};
-  return l_instance;
-}
-
-void ai_light_suspend_scanner::run() {
-  if (is_running_.exchange(true)) return;
-  boost::asio::co_spawn(
-      g_io_context(), async_run(),
-      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
-  );
-}
-
-boost::asio::awaitable<void> ai_light_suspend_scanner::async_run() {
-  auto l_timer            = std::make_shared<boost::asio::steady_timer>(g_io_context());
-  auto l_cancel_state     = co_await boost::asio::this_coro::cancellation_state;
-  while (l_cancel_state.cancelled() == boost::asio::cancellation_type::none) {
-    try {
-      auto l_sql = get_sqlite_database();
-      scan_overdue_sessions(l_sql);
-    } catch (const std::exception& in_err) {
-      // 单次扫描失败不能让扫描器退出 —— 否则一次数据库抖动就永久失去挂起能力。
-      SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "AI 灯光挂起扫描失败: {}", in_err.what());
-    }
-    l_timer->expires_after(g_suspend_scan_interval);
-    co_await l_timer->async_wait(boost::asio::use_awaitable);
-    l_cancel_state = co_await boost::asio::this_coro::cancellation_state;
-  }
-  is_running_ = false;
-  SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "AI 灯光挂起扫描器已退出");
-  co_return;
 }
 
 }  // namespace doodle::ai_light

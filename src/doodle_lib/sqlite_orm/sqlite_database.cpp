@@ -374,7 +374,11 @@ void sqlite_storage::regs_all() {
       .add_column("state", &ai_light::ai_light_session::state_)
       .add_column("current_iteration", &ai_light::ai_light_session::current_iteration_)
       .add_column("judgement_due_at", &ai_light::ai_light_session::judgement_due_at_)
-      .add_column("suspended_at", &ai_light::ai_light_session::suspended_at_)
+      // 曾经的 suspended_at 列已随 suspended 状态一起删掉，**没有做数据库迁移**：
+      // 该列是可空的、且不再有任何代码引用它（ORM 的列清单来自声明，
+      // select/insert 都不会碰到它），所以老库里留下的那一列是惰性的；
+      // 新建库则不再有这一列。user_version 因此保持 31 不变。
+      // 前提是当前分支不会进生产 —— 详见 memory 里记录的分支约定。
       .add_column("failure_reason", &ai_light::ai_light_session::failure_reason_)
       .add_column("created_at", &ai_light::ai_light_session::created_at_)
       .add_column("updated_at", &ai_light::ai_light_session::updated_at_)
@@ -382,7 +386,8 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(&ai_light::ai_light_session::task_id_, &task::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&ai_light::ai_light_session::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&ai_light::ai_light_session::submitter_, &person::uuid_id_, foreign_key_action::set_null)
-      // 挂起扫描器按 state 过滤（state = awaiting_judgement AND judgement_due_at < now）
+      // 按 state 过滤（前端「待办」列表）。过期不再是一个状态，所以不再需要
+      // judgement_due_at 上的索引来支撑后台扫描 —— 过期改由 C++ 侧实时算。
       .add_index(&ai_light::ai_light_session::state_)
       .add_index(&ai_light::ai_light_session::entity_id_);
 
@@ -2239,26 +2244,6 @@ std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_b
       .from<ai_light::ai_light_session>()
       .where(c(&ai_light::ai_light_session::state_) == in_state)
       .order_by(&ai_light::ai_light_session::judgement_due_at_)()
-      .to_vector();
-}
-
-std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_overdue_judgement() {
-  using namespace orm;
-  // 判定时钟用 judgement_due_at 而不是 updated_at：
-  // updated_at 会被任何一次更新刷新（ORM 的 update 路径自动刷），
-  // 拿它当超时基准会让「美术看了但没判断」的会话永远不过期。
-  //
-  // 这里用 TEXT 上的 `<` 比较时间：zoned_time 的落库格式是 fmt::to_string(sys_time)，
-  // 即 "YYYY-MM-DD HH:MM:SS[.小数]"，字段定宽零填充，所以字典序与时间序一致。
-  // 绑定值走的是同一个 binder，格式必然一致。
-  const chrono::system_zoned_time l_now{chrono::current_zone(), chrono::system_clock::now()};
-  return select(*this)
-      .columns(object<ai_light::ai_light_session>())
-      .from<ai_light::ai_light_session>()
-      .where(
-          (c(&ai_light::ai_light_session::state_) == ai_light::ai_light_session_state::awaiting_judgement) &&
-          (c(&ai_light::ai_light_session::judgement_due_at_) < l_now)
-      )()
       .to_vector();
 }
 

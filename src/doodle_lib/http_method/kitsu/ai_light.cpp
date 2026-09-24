@@ -254,7 +254,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   l_session.state_             = ai_light_session_state::draft;
   l_session.current_iteration_ = 0;
   l_session.judgement_due_at_  = std::nullopt;
-  l_session.suspended_at_      = std::nullopt;
   l_session.failure_reason_    = "";
   // 标题默认取**镜头名**：会话锚在镜头上，镜头名比任务名更贴切，也少一次 task 查询。
   if (l_session.title_.empty()) l_session.title_ = l_entity.name_;
@@ -264,10 +263,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
     l_sqls.emplace_back(insert(l_sql).into<ai_light_session>().values(l_session));
     co_await l_sql.run_sql(std::move(l_sqls));
   }
-
-  // 挂起扫描器懒启动：第一次有 AI 灯光请求时拉起，之后常驻。
-  // 放在这里而不是启动流程里，是为了不依赖任何初始化顺序。
-  ai_light_suspend_scanner::Get().run();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 为镜头 {} 创建 AI 灯光会话 {}（{} 字提示词）", person_.person_.email_,
@@ -569,10 +564,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_route, post) {
     co_await l_sql.run_sql(std::move(l_sqls));
   }
 
-  // 注意：**不**在这里把 suspended 改成 draft。advance_session 的分派本来就同时接受
-  // draft 与 suspended（两者都要走 generate_spec），所以不需要也不该提前改状态 ——
-  // 提前改会让「接缝失败回滚到入口状态」这条契约变成回滚到 draft，
-  // 与文档写的不一致，而状态机最难查的正是这种「回滚落到哪」的偏差。
+  // 注意：**不**在这里把状态改成 draft。advance_session 的分派本来就只看 draft，
+  // 提前改会让「接缝失败回滚到入口状态」这条契约变成回滚到 draft ——
+  // 而状态机最难查的正是这种「回滚落到哪」的偏差。
 
   // 走到这里参数都合法。接缝未实现时 advance_session 会抛 501 并把状态回滚到入口状态。
   co_await advance_session(l_sql, l_session);
@@ -669,10 +663,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iterate_route, post) {
   auto l_session = load_session_checked(person_, l_sql, l_session_id);
 
   DOODLE_CHICK_HTTP(
-      l_session.state_ == ai_light_session_state::generating ||
-          l_session.state_ == ai_light_session_state::suspended,
-      bad_request,
-      "会话 {} 处于状态 {}，不能生成候选（需要 generating 或 suspended）", l_session.uuid_id_,
+      l_session.state_ == ai_light_session_state::generating, bad_request,
+      "会话 {} 处于状态 {}，不能生成候选（需要 generating）", l_session.uuid_id_,
       magic_enum::enum_name(l_session.state_)
   );
 

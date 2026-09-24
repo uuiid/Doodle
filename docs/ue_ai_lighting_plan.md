@@ -58,7 +58,7 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
 | 9 | **每轮固定 6 个候选** | 一次 UE 启动渲染 6 个；渲染时间与美术浏览负担的平衡点 |
 | 10 | **只做候选级挑选**，不做逐 op 接受/拒绝 | 判断粒度 = 候选；省掉 N 倍预览渲染 |
 | 11 | **反馈滑块与自然语言都支持，滑块为默认** | 滑块给精确轴增量；自然语言给自由表达（由 LLM 结构化） |
-| 12 | **美术 4 小时以上不判断算挂起** | 会话转挂起，不占资源；恢复后继续 |
+| 12 | **美术 4 小时以上不判断算过期** | **不改状态**，只让读模型带出 `is_judgement_overdue`；判断入口永远可用 |
 | 13 | **不允许改动几何/材质** | 可改范围锁定：灯光 + 环境光/雾/天空 + 后处理/调色 |
 | 14 | **取消 Tier B 多视角联合反解** | 唯一务实的位姿来源（人工对位）被否，只剩自动重定位，收益/成本比不成立（§5.6） |
 | 15 | **预设库首批由美术整理** | 三点布光 / 伦勃朗 / 剪影 / 夜景霓虹…；`ADoodleAssetsPreview` 三档作起点 |
@@ -127,7 +127,7 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
 - 每一轮是一个**独立的分布式任务**（跑完就 `completed`）
 - 「等待人工判断」是**会话状态**（`awaiting_judgement`），**不是任务状态** —— 避免污染 `server_task_info_status` 状态机
 - 轮次状态全部落库，可跨会话、跨天恢复
-- 需要超时/放弃机制（美术长期不判断 → 会话挂起，不占资源）
+- 需要超时/放弃机制（美术长期不判断 → 会话被标记为过期，前端据此催办）
 
 ---
 
@@ -685,7 +685,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 
 | 表 | 职责 |
 |---|---|
-| `ai_light_session` | 一次灯光工作：提示词原文、状态机、当前轮次、4 小时挂起时限。归属三键 `project_id` / `entity_id`(镜头) / `task_id`(该镜头的灯光任务) **全部由服务端解析**，见 §13.1 |
+| `ai_light_session` | 一次灯光工作：提示词原文、状态机、当前轮次、4 小时判断时限。归属三键 `project_id` / `entity_id`(镜头) / `task_id`(该镜头的灯光任务) **全部由服务端解析**，见 §13.1 |
 | `ai_light_reference` | 多张参考图，**每张单独留显示空间统计**（多图冲突要能回溯到具体哪张图） |
 | `ai_light_spec` | 灯光目标，会话内按 `revision` 版本化；含 `degrade_level` / `human_confirmed` / `conflict_resolution` |
 | `ai_light_iteration` | 一轮：轴安排、派发任务、渲染耗时、人工判断记录 |
@@ -740,9 +740,23 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 ```
 
 - 「等待人工判断」是**会话状态**，不是任务状态（避免污染 `server_task_info_status`）
-- **美术 4 小时以上不判断 → 会话转挂起**（不占资源；恢复后从 `awaiting_judgement` 继续）
-- 挂起判定用会话上专门的 `judgement_due_at` 列，**不用 `updated_at`** ——
+- **美术 4 小时以上不判断 → 会话被标记为「已过期」**：`judgement_due_at_` 已过 ⇒ 读模型的
+  `is_judgement_overdue` 为真。**状态不变**，会话仍是 `awaiting_judgement`。
+- 过期判定用会话上专门的 `judgement_due_at` 列，**不用 `updated_at`** ——
   `updated_at` 会被任何一次更新刷新，拿它当超时基准会让「美术看了但没判断」的会话永远不过期
+- **为什么过期不是一个状态**（曾经叫 `suspended`，已删除）：过期是
+  `state == awaiting_judgement && now > judgement_due_at_` 的纯派生事实，实时算得出来。
+  物化成状态的代价是实的：`apply_judgement` 只接受 `awaiting_judgement`，而没有任何路径
+  从 `suspended` 回到 `awaiting_judgement`（`mark_awaiting_judgement()` 只在渲染回填里调用，
+  而渲染早就完成了）—— 于是美术超时回来后，**已经渲染好的 6 个候选再也判断不了**，
+  只能走 `/spec` 重出方案，白扔一整轮渲染。更刺眼的是 `is_judgement_overdue()` 当时也要求
+  状态是 `awaiting_judgement`，所以挂起后这个标志会从 true 翻成 false：
+  恰恰在「真的过期了」那一刻，过期信号消失了。
+- 挂起原计划里的收益是「不占资源」，但那是空头支票：会话进入 `awaiting_judgement` 的前提
+  就是渲染已完成、worker 已归还，此时没有农场槽位、没有 UE 授权、没有 GPU 被占，
+  6 张 PNG 只是躺在磁盘上（挂起也不删它们）。
+- 因此**没有后台扫描器**：过期不需要任何人去物化，前端按 `is_judgement_overdue` 催办即可。
+  这也顺带消掉了一个「常驻后台任务挂了没人发现」的失败面。
 
 ### 10.4 分布式派发必须遵守的既有契约
 
@@ -781,7 +795,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | LLM 数值不可靠 | 多轮迭代 + 候选生成；LLM 只给结构与初值；schema 硬边界 |
 | **人工判断往返慢、轮次少** | 每轮固定 6 个沿轴变化的候选（一次往返换更多信息）；一次 UE 启动渲染全部 6 个；warm start |
 | **人工判断只是 yes/no → 收敛慢** | 候选沿语义轴变化（判断六），把选择变成梯度 |
-| **美术长期不判断 → 会话挂起** | `awaiting_judgement` 状态 + 超时/挂起机制，不占资源 |
+| **美术长期不判断** | `awaiting_judgement` 状态 + 读模型的 `is_judgement_overdue` 标志（纯派生，不改状态） |
 | **参考被 AI 改到物理不可解** | **不尝试物理反解**，显式记录 `usable_for_physical_solve=false`；用显示空间统计 |
 | **多图统计互相冲突** | 逐维度置信度 + 冲突标记 → 人工裁决；**不自动平均掉冲突** |
 | **目标里的调色部分靠灯够不到** | 后处理/调色纳入必需原语；Spec 里区分 `ownership.lighting` / `ownership.grading` |
@@ -912,10 +926,9 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    「参数错了明确报错、参数对了告诉你能力还没到」，而不是一个假装成功的 200。
    `/judge` 的滑块通道（`feedback_axes`）**本轮即可用**：文本结构化是补充通道，
    接缝未实现时降级为「文本原样留存 + 只用滑块轴」，判断本身完全成立。
-6. **轮次编排**：`awaiting_judgement` 会话状态、超时挂起、跨会话恢复（§10.3）。
+6. **轮次编排**：`awaiting_judgement` 会话状态、4 小时过期标志、跨会话恢复（§10.3）。
    **已落地**：`doodle_lib/http_method/kitsu/ai_light_orchestrator.{h,cpp}`
-   （`advance_session` / `apply_judgement` / `mark_iteration_rendered` /
-   `scan_overdue_sessions` / `build_session_detail` + 挂起扫描器）。
+   （`advance_session` / `apply_judgement` / `mark_iteration_rendered` / `build_session_detail`）。
    编排层**不依赖 HTTP**（不 include `http_jwt_fun` / `session_data`），所以单测
    不需要伪造 JWT 或起服务器，能直接构造「处于某状态的会话」再调它。
 7. **数据表**：`ai_light_session` / `ai_light_reference` / `ai_light_spec` / `ai_light_iteration` /
@@ -1085,7 +1098,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | 每轮候选数量 | **6 个** | §2 决策 9、§6.2 |
 | 判断粒度 | **只做候选级挑选**，不做逐 op 接受/拒绝 | §2 决策 10、§8.1 |
 | 反馈形式 | **滑块与自然语言都支持，滑块为默认** | §2 决策 11、§14.3 |
-| 会话挂起 | **美术 4 小时以上不判断算挂起** | §2 决策 12、§10.3 |
+| 会话过期 | **美术 4 小时以上不判断算过期**（不改状态，只置标志） | §2 决策 12、§10.3 |
 | 人工对位相机 | **不做** → Tier B 多视角联合反解随之取消 | §2 决策 14、§5.6 |
 | 几何/材质 | **不允许改动**；范围锁定为灯光 + 环境光/雾/天空 + 后处理/调色 | §2 决策 13、§6.6 |
 | 预设库首批 | **由美术整理一批**（三点布光 / 伦勃朗 / 剪影 / 夜景霓虹…） | §2 决策 15、§6.4 |
@@ -1111,7 +1124,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | 查询方法 | `sqlite_database.h/.cpp` 的 19 个 `get_ai_light_*` |
 | 产物路径 | `core/entity_path.h/.cpp` 的 `get_ai_light_session_path` / `_reference_path` / `_iteration_path` / `_candidate_path` |
 | 任务类型 | `server_task_info_type::ai_light` |
-| 测试 | `src/test/core/ai_light_schema.cpp`（建表、版本门控、JSON 往返无损、定稿唯一性、挂起时限比较） |
+| 测试 | `src/test/core/ai_light_schema.cpp`（建表、版本门控、JSON 往返无损、定稿唯一性、过期时限经 TEXT 列往返后仍判得对） |
 
 **实现期发现、值得记住的三个坑**：
 
@@ -1134,13 +1147,13 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 
 | 项 | 落点 |
 |---|---|
-| 路由声明 | `src/doodle_lib/http_method/kitsu/ai_light.h`（13 个路由类） |
+| 路由声明 | `src/doodle_lib/http_method/kitsu/ai_light.h`（12 个路由类） |
 | 路由处理 | `src/doodle_lib/http_method/kitsu/ai_light.cpp` |
 | 编排 / 状态机 | `src/doodle_lib/http_method/kitsu/ai_light_orchestrator.{h,cpp}` |
 | 路由注册 | `http_method/kitsu.cpp` 的 `create_kitsu_route_2`（**只注册主服务器**，客户端不跑 LLM） |
 | 图片变体导出 | `http_method/kitsu/preview.{h,cpp}` 的 `preview::save_variants`（从匿名命名空间提到 `preview` 命名空间，供定稿复用；不另写一套尺寸，否则预览列表页读到的图与既有预览文件不一致） |
 | 读模型 | `ai_light_session_detail_t`（`doodle_core/metadata/ai_light/view.h`），六表一次聚合，并带出 `candidate_count_per_iteration`（前端不自己写死 6） |
-| 测试 | `src/test/core/ai_light_state.cpp`（15 用例 / 143 断言，含 JSON 形状回归）+ `src/test/core/sqlite_not_found.cpp`（5 用例 / 11 断言，钉 ORM 的 404 语义）；全量回归 84 用例 / 819 断言通过 |
+| 测试 | `src/test/core/ai_light_state.cpp`（14 用例 / 138 断言，含 JSON 形状回归与「超时会话仍可判断」回归）+ `src/test/core/sqlite_not_found.cpp`（5 用例 / 11 断言，钉 ORM 的 404 语义）；全量回归 83 用例 / 815 断言通过 |
 
 **状态机**（`advance_session` 是唯一的推进入口，`/spec`、`/spec/confirm`、`/iterate`、
 镜头页入口都调它，所以「同一步骤从不同入口进来行为一致」是结构性保证的）：
@@ -1148,14 +1161,23 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | 触发 | 起始状态 | 结果状态 |
 |---|---|---|
 | 建会话（`POST /session`、镜头页入口） | — | `draft` |
-| `POST /spec`（改提示词 + 可选排除参考图） | `draft` / `suspended` | `awaiting_spec_confirm` |
+| `POST /spec`（改提示词 + 可选排除参考图） | `draft` | `awaiting_spec_confirm` |
 | `POST /spec/confirm` | `awaiting_spec_confirm` | `generating`（接缝失败则回滚，Spec 确认**保留**） |
-| `POST /iterate` | `generating` / `suspended` | 仍 `generating`（已派发，等渲染） |
+| `POST /iterate` | `generating` | 仍 `generating`（已派发，等渲染） |
 | `mark_iteration_rendered()`（worker 回填，M3 接入） | `generating` | `awaiting_judgement`（**此时才起算 4 小时**） |
 | `/judge` accept | `awaiting_judgement` | `accepted`（终态） |
 | `/judge` continue_iteration | `awaiting_judgement` | `generating` |
 | `/judge` reject_all | `awaiting_judgement` | `rejected`（终态） |
-| 挂起扫描器 | `awaiting_judgement` 且超时 | `suspended` |
+
+**没有「过期」这一行**：4 小时超时**不是一次状态转换**，而是 `awaiting_judgement` 上的一个
+实时派生标志（`is_judgement_overdue`）。曾经它是 `suspended` 状态 + 常驻扫描器，已删除 ——
+理由见 §10.3 与决策 12：那个状态会让超时后的候选再也判断不了。
+
+`advance_session` 的分派**只看状态**，所以「同一个状态只能有一个后继步骤」是结构性约束。
+`awaiting_judgement` 没有可推进的步骤（该做的是 `/judge`，不是再推一步）。
+这也是删掉 `suspended` 的另一个理由：它让「重出方案」和「出候选」两种恢复意图挤进同一个
+状态，而状态本身区分不了它们 —— 当时的症状是 `/iterate` 的错误文案说「生成候选」，
+实际却走成了「重出 Spec」。
 
 **接缝（本轮返回 501，不是占位桩）**：
 
@@ -1189,11 +1211,18 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
 4. **中间候选与参考图都不进 `preview_file`**（决策 1）。每轮 6 张全注册会把任务的预览列表
    冲垮，也会把「交付物」这个概念稀释掉。中间图走 `/candidate/{id}/image`，
    EXR 一律不下发浏览器（线性数据、体积大、浏览器渲染不了）。
-5. **`/api/actions/.../ai-light` 吞掉「接缝未实现」这一种错误**。会话已经落库了，
-   若返回非 2xx，前端就拿不到 session id，重试只会造出重复会话。
-   所以只吞 501（能力缺口），其余错误照常抛出，并把 `advance_error` 带在响应里。
+5. **统一入口 `POST /api/doodle/ai/light/shot/{entity_id}/session` 吞掉「接缝未实现」这一种错误。**
+   会话已经落库了，若返回非 2xx，前端就拿不到 session id，重试只会造出重复会话
+   （参考图 cascade 挂在会话上，重复会话意味着重传）。所以只吞 501（能力缺口），
+   其余错误照常抛出，并把 `advance_error` 带在响应里。
+6. **「过期」不做成会话状态，也不留后台扫描器**（决策 12）。它是 `judgement_due_at_` 的
+   纯派生标志，读模型带出 `is_judgement_overdue` 即可。做成状态会**关掉唯一的判断入口**：
+   `apply_judgement` 只接受 `awaiting_judgement`，而没有任何路径能从那个状态回到
+   `awaiting_judgement`，于是超时后的候选再也判断不了 —— 详见 §10.3。
+   代价是前端必须自己看这个标志来催办（没有服务端推送），换来的是判断入口永远可用、
+   少一个常驻后台任务、少一个「任务挂了没人发现」的失败面。
 
-**实现期发现、值得记住的两个坑（本轮）**：
+**实现期发现、值得记住的三个坑（本轮）**：
 
 1. **`std::optional` 的 JSON 序列化用库自带的，别自己写；而 `nlohmann::json{*opt}` 是列表初始化，会静默变成单元素数组。**
    先说结论：nlohmann 从 C++17 起自带 `std::optional` 的读写（本工程 vcpkg 装的是 3.12.0，
@@ -1254,5 +1283,29 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
    - `login.cpp` 里 `get_person_for_email` 查不到时，如果放任 ORM 的 404 出到响应，
      等于给**未登录**接口开了一个「这个邮箱注册过没有」的查询口（用户枚举）。
      已自己翻译成 400 + 「邮箱或密码错误」，与「密码错误」回同一句话，不区分两者。
+
+3. **删掉一个「既是枚举值又是数据库列」的状态时，可以不升 `user_version`** ——
+   但成立的**前提必须逐条核实**，不能当成通则。
+
+   本轮删掉了 `ai_light_session_state::suspended` 与 `ai_light_session::suspended_at_`。
+   `sync_schema()` 跳过已存在的表（不加列也不改列），所以「不迁移」本身不需要做什么；
+   真正让「不迁移」成立的是另外两条：
+
+   - 那一列是**可空**的（`add_column` 没带 `not_null()`），老库里留着它不会让任何 `insert` 失败；
+   - ORM 的列清单来自 `reg_table` 声明，`select(object<T>())` 与 `insert` 都只碰声明过的列，
+     所以老库里那一列对代码是**惰性**的（既不读也不写）。
+
+   于是：老库留着这一列（无害），新建库没有这一列，`user_version` 保持 31。
+   代价是**同一个 schema 有两个物理形态**。这对只在测试环境跑的分支可以接受
+   （见 memory 里记录的分支约定：非 `master` 分支不进生产），但一旦要进生产，
+   要么补一次重建，要么明确接受两种形态并存。
+
+   对照 `preview_file.source_file_id`（`sqlite_database.cpp:689-694`）：那里**保留**了列声明，
+   注释写得很清楚 —— 重建时列的拷贝清单来自 ORM 声明，删掉声明会让该列在将来的重建中
+   真的消失，而它同时还出现在 `preview_file` 的 JSON 输出里，删它属于接口变更。
+   换句话说：**列声明是「重建之后还要不要这一列」的唯一真相来源**，
+   删不删它取决于你要不要它在重建后存在，而不是取决于它现在有没有人用。
+   本轮 `suspended_at_` 是连 JSON 一起删的（它从未进过生产，改接口无成本），
+   所以两种处理都对，但**必须是有意选的**，不能是顺手删的。
 
 

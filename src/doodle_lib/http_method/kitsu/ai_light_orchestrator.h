@@ -123,7 +123,7 @@ DOODLELIB_API boost::asio::awaitable<std::vector<axis_step_t>> structure_feedbac
 
 /// 会话状态推进的唯一入口。按 in_session.state_ 分派：
 ///
-///   draft / suspended 且尚无 Spec
+///   draft 且尚无 Spec
 ///       → generate_spec 接缝 → 写 ai_light_spec(revision = max+1)
 ///       → session = awaiting_spec_confirm
 ///   generating 且已有已确认的 Spec
@@ -134,6 +134,10 @@ DOODLELIB_API boost::asio::awaitable<std::vector<axis_step_t>> structure_feedbac
 /// 失败时回滚会话状态到进入时的状态、记 failure_reason_，然后重新抛出。
 /// 这样不会留下卡在 generating 的会话，也不会丢已上传的参考图
 /// （参考图的外键 cascade 挂在会话上，删会话才会连带删图）。
+///
+/// 分派只看状态，所以**同一个状态只能有一个后继步骤**。「等判断」的会话
+/// 没有可推进的步骤（该做的是 /judge，不是再推一步）—— 这正是删掉 suspended 的原因之一：
+/// 它让「重出方案」和「出候选」两种恢复意图挤进同一个状态，而状态本身区分不了它们。
 DOODLELIB_API boost::asio::awaitable<void> advance_session(sqlite_database& in_sql, ai_light_session in_session);
 
 /// 人工闸门 2 的状态推进。**纯 DB，不碰文件与 LLM** —— 单测直接调它。
@@ -169,35 +173,9 @@ DOODLELIB_API boost::asio::awaitable<void> mark_iteration_rendered(
     sqlite_database& in_sql, const uuid& in_server_task_info_id, const std::vector<ai_light_candidate>& in_candidates
 );
 
-/// 挂起扫描器的可测内核：把已过判断时限、仍停在 awaiting_judgement 的会话转成 suspended。
-/// 返回被挂起的会话条数。重复调用幂等（第二次返回 0）。
-DOODLELIB_API std::int32_t scan_overdue_sessions(sqlite_database& in_sql);
-
 /// 组装会话详情读模型。会话不存在时返回 nullopt。
 DOODLELIB_API std::optional<ai_light_session_detail_t> build_session_detail(
     sqlite_database& in_sql, const uuid& in_session_id
 );
-
-// ===========================================================================
-// 挂起扫描器（常驻后台）
-// ===========================================================================
-
-/// 4 小时不判断 → 会话挂起（决策 11）。
-///
-/// 与 seedance2 的 task_run_manager（seedance2/task.cpp:331-337）的关键差别：
-/// **空结果不退出循环**。超时会在完全没人操作服务器时自然发生，所以扫描器必须常驻；
-/// seedance2 那个「没活就 co_return、由路由重新拉起」的写法在这里会漏掉所有超时。
-class DOODLELIB_API ai_light_suspend_scanner {
-  std::atomic_bool is_running_{false};
-
- public:
-  static ai_light_suspend_scanner& Get();
-  /// 幂等：已在跑就直接返回
-  void run();
-  bool is_running() const { return is_running_; }
-
- private:
-  boost::asio::awaitable<void> async_run();
-};
 
 }  // namespace doodle::ai_light
