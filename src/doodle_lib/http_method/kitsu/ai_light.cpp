@@ -94,13 +94,6 @@ void check_session_mutable(const ai_light_session& in_session) {
   );
 }
 
-std::optional<uuid> query_uuid(const boost::url& in_url, std::string_view in_key) {
-  for (auto&& [l_key, l_value, l_has] : in_url.params()) {
-    if (l_key == in_key && l_has) return from_uuid_str(l_value);
-  }
-  return std::nullopt;
-}
-
 bool query_bool(const boost::url& in_url, std::string_view in_key, bool in_default) {
   for (auto&& [l_key, l_value, l_has] : in_url.params()) {
     if (l_key == in_key && l_has) return l_value == "true" || l_value == "1";
@@ -495,9 +488,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_route, get) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
 
-  auto l_session_id = query_uuid(in_handle->url_, "session_id");
-  DOODLE_CHICK_HTTP(l_session_id.has_value(), bad_request, "需要 session_id");
-  auto l_session = load_session_checked(person_, l_sql, *l_session_id);
+  // session_id 来自路径（/session/{session_id}/spec）。路由的 uuid 正则已保证它是合法 uuid，
+  // 所以这里不需要存在性校验 —— 与 reference_route 等既有路由一致。
+  auto l_session = load_session_checked(person_, l_sql, session_id_);
 
   auto l_specs = l_sql.get_ai_light_specs(l_session.uuid_id_);
   co_return in_handle->make_msg(
@@ -513,9 +506,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_route, post) {
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
-  auto l_session_id = l_json.value("session_id", uuid{});
-  DOODLE_CHICK_HTTP(!l_session_id.is_nil(), bad_request, "缺少 session_id");
-  auto l_session = load_session_checked(person_, l_sql, l_session_id);
+  // session_id 来自路径；请求体里带了也忽略（路径为准，见 ai_light.h 顶部的约定）
+  auto l_session = load_session_checked(person_, l_sql, session_id_);
   check_session_mutable(l_session);
 
   // 重出方案时允许顺手改提示词（美术看完第一版目标才发现自己没说清是常事）
@@ -575,9 +567,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_confirm_route, post) {
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
-  auto l_session_id = l_json.value("session_id", uuid{});
-  DOODLE_CHICK_HTTP(!l_session_id.is_nil(), bad_request, "缺少 session_id");
-  auto l_session = load_session_checked(person_, l_sql, l_session_id);
+  // session_id 来自路径；请求体里带了也忽略（路径为准）
+  auto l_session = load_session_checked(person_, l_sql, session_id_);
 
   auto l_spec = l_sql.get_current_ai_light_spec(l_session.uuid_id_);
   DOODLE_CHICK_HTTP(
@@ -650,12 +641,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_confirm_route, post) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iterate_route, post) {
   person_.check_not_outsourcer();
-  auto l_sql  = get_sqlite_database();
-  auto l_json = in_handle->get_json();
+  auto l_sql = get_sqlite_database();
 
-  auto l_session_id = l_json.value("session_id", uuid{});
-  DOODLE_CHICK_HTTP(!l_session_id.is_nil(), bad_request, "缺少 session_id");
-  auto l_session = load_session_checked(person_, l_sql, l_session_id);
+  // 刻意**不**调用 in_handle->get_json()：会话在路径上，这个动作端点不需要请求体。
+  // 而 get_json() 在 content-type 不是 application/json、或体里不是 json 时会直接抛
+  // 400「body 不是 json」（http_session_data.cpp:443-450）—— 留着这一行会让
+  // 「空体调用 /iterate」莫名其妙地失败。这也正是 session_id 不该放请求体的一个具体后果。
+  auto l_session = load_session_checked(person_, l_sql, session_id_);
 
   DOODLE_CHICK_HTTP(
       l_session.state_ == ai_light_session_state::generating, bad_request,
@@ -679,9 +671,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
-  auto l_session_id = l_json.value("session_id", uuid{});
-  DOODLE_CHICK_HTTP(!l_session_id.is_nil(), bad_request, "缺少 session_id");
-  auto l_session = load_session_checked(person_, l_sql, l_session_id);
+  // session_id 来自路径；请求体里带了也忽略（路径为准）
+  auto l_session = load_session_checked(person_, l_sql, session_id_);
 
   auto l_iteration = l_sql.get_ai_light_iteration(l_session.uuid_id_, l_session.current_iteration_);
   DOODLE_CHICK_HTTP(

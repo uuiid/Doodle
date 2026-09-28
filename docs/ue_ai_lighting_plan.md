@@ -879,11 +879,11 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    | `DELETE /api/doodle/ai/light/reference/{id}` | 删单张参考图（含文件） |
    | `GET  /api/doodle/ai/light/reference/{id}/image` | 参考图取图 |
    | `GET  /api/doodle/ai/light/candidate/{id}/image` | 中间候选取图（只有定稿才进 `preview_file`） |
-   | `GET  /api/doodle/ai/light/spec` | Spec 版本列表 |
-   | `POST /api/doodle/ai/light/spec` | 生成 Spec：`draft` 出第一版，`awaiting_spec_confirm` 重出（**要求已有参考图**，否则 400）—— 本轮返回 501（见 §15.4） |
-   | `POST /api/doodle/ai/light/spec/confirm` | 人工闸门 1：确认 Spec + 冲突裁决，随后触发首轮 |
-   | `POST /api/doodle/ai/light/iterate` | 生成一轮候选并派发 —— **本轮返回 501**（见 §15.4） |
-   | `POST /api/doodle/ai/light/judge` | **人工闸门 2**（accept / continue_iteration / reject_all） |
+   | `GET  /api/doodle/ai/light/session/{session_id}/spec` | Spec 版本列表 |
+   | `POST /api/doodle/ai/light/session/{session_id}/spec` | 生成 Spec：`draft` 出第一版，`awaiting_spec_confirm` 重出（**要求已有参考图**，否则 400）—— 本轮返回 501（见 §15.4） |
+   | `POST /api/doodle/ai/light/session/{session_id}/spec/confirm` | 人工闸门 1：确认 Spec + 冲突裁决，随后触发首轮 |
+   | `POST /api/doodle/ai/light/session/{session_id}/iterate` | 生成一轮候选并派发 —— **本轮返回 501**（见 §15.4）；无需请求体 |
+   | `POST /api/doodle/ai/light/session/{session_id}/judge` | **人工闸门 2**（accept / continue_iteration / reject_all） |
    | `GET  /api/doodle/ai/light/preset` | 预设库列表（`?enabled_only=false` 取全部） |
    | `POST /api/doodle/ai/light/preset` | 新建预设（美术整理的第一批走这里导入） |
    | `GET/PUT/DELETE /api/doodle/ai/light/preset/{id}` | 预设单条 |
@@ -891,6 +891,24 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    **镜头 id 进路径，不是查询参数。** `ai_light_session.entity_id_` 是必填（NOT NULL）的镜头 id，
    会话的归属就是「某个镜头」，所以「这个镜头的会话集合」本身是一等资源，
    前端镜头页只面对一个 URL（原先的 `GET /session?entity_id=|project_id=` 已废弃）。
+
+   **同理，会话作用域的动作一律挂 `/session/{session_id}/<动作>`。**
+   `spec` / `spec/confirm` / `iterate` / `judge` 都是「对某个会话做一件事」，
+   会话身份就该在 URL 上。改之前 `session_id` 在三个地方出现过：`GET /spec` 走查询参数、
+   各 `POST` 走请求体、`/reference` 走路径 —— 同一个资源三种写法，前端每接一个接口都要先确认一次。
+   放请求体还有第二个问题：体里带 `session_id` 时，服务端要么校验「体和路径是不是同一个」，
+   要么悄悄覆盖其中一个，两种做法都留下「两个真相」。**路径为准，体里的 `session_id` 忽略。**
+
+   这套嵌套是安全的，不会和 `/session/{id}`（会话详情）撞，也不会互相前缀吞并：
+   `{}` 对 uuid 展开成**只含十六进制与连字符**的正则（`http_function.h` 的 `g_uuid_regex`），
+   而路由匹配用的是 `std::regex_match` —— **整串匹配**。所以 `/session/<uuid>/spec` 与
+   `/session/<uuid>/spec/confirm` 互为前缀也不会互相吞掉。副产品是路径里给一个畸形 uuid
+   会**直接不匹配**（落到 404 兜底），而不是进到 `from_uuid_str` 去抛异常 —— 比查询参数更好。
+
+   顺带一个具体后果：`/iterate` 的请求体因此变成空的。而 `get_json()` 在 content-type 不是
+   `application/json` 时会抛 400「body 不是 json」（`http_session_data.cpp:443-450`），
+   所以这个动作端点**必须不再调用 `get_json()`** —— 否则「空体调用 `/iterate`」会莫名其妙地失败。
+
    之所以要多加一层 `shot/` 而不是直接 `/session/{entity_id}`：
    `/api/doodle/ai/light/session/{id}` 已经是「按**会话 id** 取详情 / 删会话」，
    而镜头 id 与会话 id 都是 uuid，**形状上无法区分**，路由只能任选其一 ——
@@ -1192,6 +1210,10 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | `/judge` accept | `awaiting_judgement` | `accepted`（终态） |
 | `/judge` continue_iteration | `awaiting_judgement` | `generating` |
 | `/judge` reject_all | `awaiting_judgement` | `rejected`（终态） |
+
+本表的 `POST /spec`、`POST /spec/confirm`、`POST /iterate`、`/judge` 都是**简写**，
+完整路径一律是 `/api/doodle/ai/light/session/{session_id}/<动作>` ——
+`session_id` 走**路径**，不在查询参数、也不在请求体里（路由表见 §13.1）。
 
 **没有「过期」这一行**：4 小时超时**不是一次状态转换**，而是 `awaiting_judgement` 上的一个
 实时派生标志（`is_judgement_overdue`）。曾经它是 `suspended` 状态 + 常驻扫描器，已删除 ——

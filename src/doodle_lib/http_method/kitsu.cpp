@@ -325,10 +325,18 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<ai_light::candidate_image_route>("/api/doodle/ai/light/candidate/{}/image"_url(
         &ai_light::candidate_image_route::id_
       ))
-      .reg_t<ai_light::spec_route>("/api/doodle/ai/light/spec"_url)
-      .reg_t<ai_light::spec_confirm_route>("/api/doodle/ai/light/spec/confirm"_url)
-      .reg_t<ai_light::iterate_route>("/api/doodle/ai/light/iterate"_url)
-      .reg_t<ai_light::judge_route>("/api/doodle/ai/light/judge"_url)
+      .reg_t<ai_light::spec_route>("/api/doodle/ai/light/session/{}/spec"_url(
+        &ai_light::spec_route::session_id_
+      ))
+      .reg_t<ai_light::spec_confirm_route>("/api/doodle/ai/light/session/{}/spec/confirm"_url(
+        &ai_light::spec_confirm_route::session_id_
+      ))
+      .reg_t<ai_light::iterate_route>("/api/doodle/ai/light/session/{}/iterate"_url(
+        &ai_light::iterate_route::session_id_
+      ))
+      .reg_t<ai_light::judge_route>("/api/doodle/ai/light/session/{}/judge"_url(
+        &ai_light::judge_route::session_id_
+      ))
       .reg_t<ai_light::preset_route>("/api/doodle/ai/light/preset"_url)
       .reg_t<ai_light::preset_instance_route>("/api/doodle/ai/light/preset/{}"_url(
         &ai_light::preset_instance_route::id_

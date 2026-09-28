@@ -45,6 +45,22 @@ namespace doodle::http::ai_light {
 // 已删除。两者做的是同一件事（建会话 + 跑第一步），
 // 而它多带一个 project_id 在路径里，反而给了「镜头与项目不一致」的伪造空间；
 // 现在归属三键（entity / project / 灯光任务）全部从镜头解析，没有第二个入口可绕。
+//
+// ---------------------------------------------------------------------------
+// 为什么会话作用域的动作统一挂 /session/{session_id}/<动作>
+// ---------------------------------------------------------------------------
+// session_id 曾经出现在三个地方：GET /spec 走**查询参数**，各 POST 走**请求体**，
+// /reference 走**路径** —— 同一个资源三种写法，前端每接一个接口都要先确认一次。
+// 现在统一成路径：动作是对「某个会话」做的，会话身份就该在 URL 上。
+//
+// 不放请求体的另一个理由：体里带 session_id 时，服务端要么校验「体和路径是不是同一个」，
+// 要么悄悄覆盖其中一个 —— 两种做法都留下「两个真相」。**路径为准，体里的 session_id 忽略。**
+//
+// 不会和 /session/{id}（会话详情）撞，也不会互相前缀吞并：
+//   {} 对 uuid 展开成只含十六进制与连字符的正则（http_function.h 的 g_uuid_regex），
+//   而路由匹配用的是 std::regex_match —— **整串匹配**。所以 /session/<uuid>/spec 与
+//   /session/<uuid>/spec/confirm 互为前缀也不会互相吞掉；路径里给一个畸形 uuid
+//   直接不匹配（落到 404），不会进到 from_uuid_str 去抛异常 —— 比查询参数的行为更好。
 DOODLE_HTTP_JWT_FUN(shot_session_route)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
@@ -85,26 +101,35 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-// GET  /api/doodle/ai/light/spec     Spec 版本列表（?session_id=）
-// POST /api/doodle/ai/light/spec     生成 Spec —— **本轮返回 501**（LLM 接缝未实现）
+// GET  /api/doodle/ai/light/session/{session_id}/spec    Spec 版本列表
+// POST /api/doodle/ai/light/session/{session_id}/spec    生成 Spec：draft 出第一版，
+//                                                        awaiting_spec_confirm 重出（要求已有参考图，否则 400）
+//                                                        —— **本轮返回 501**（LLM 接缝未实现）
 DOODLE_HTTP_JWT_FUN(spec_route)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid session_id_{};
 DOODLE_HTTP_FUN_END()
 
-// POST /api/doodle/ai/light/spec/confirm   人工闸门 1：确认 Spec（+ 冲突裁决），随后触发首轮候选
+// POST /api/doodle/ai/light/session/{session_id}/spec/confirm   人工闸门 1：
+//                                   确认 Spec（+ 冲突裁决），随后触发首轮候选
 DOODLE_HTTP_JWT_FUN(spec_confirm_route)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid session_id_{};
 DOODLE_HTTP_FUN_END()
 
-// POST /api/doodle/ai/light/iterate   生成一轮候选并派发 —— **本轮返回 501**（LLM 接缝未实现）
+// POST /api/doodle/ai/light/session/{session_id}/iterate   生成一轮候选并派发
+//                                                          —— **本轮返回 501**（LLM 接缝未实现）
+//                                                          无需请求体：会话在路径上
 DOODLE_HTTP_JWT_FUN(iterate_route)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid session_id_{};
 DOODLE_HTTP_FUN_END()
 
-// POST /api/doodle/ai/light/judge   人工闸门 2：定稿 / 继续迭代 / 全否
+// POST /api/doodle/ai/light/session/{session_id}/judge   人工闸门 2：定稿 / 继续迭代 / 全否
 DOODLE_HTTP_JWT_FUN(judge_route)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid session_id_{};
 DOODLE_HTTP_FUN_END()
 
 // GET  /api/doodle/ai/light/preset         预设库列表（?enabled_only=false 取全部）
