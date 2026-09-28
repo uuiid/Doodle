@@ -88,11 +88,6 @@ function Start-GitPull {
         throw "Git pull failed with exit code $($Result.ExitCode)"
     }
     if ($id -ne (Get-GitCommendID -Path $WorkingDirectory)) {
-        Write-Host "开始构建"
-        $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "build" -WorkingDirectory $WorkingDirectory -RedirectStandardOutput $LogPath -NoNewWindow -Wait -PassThru
-        if ($NpmResult.ExitCode -ne 0) {
-            throw "Build failed with exit code $($NpmResult.ExitCode)"
-        }
         return $true;
     }
     return $false;
@@ -108,7 +103,14 @@ function Initialize-Sd2 {
     $DoodleLogPath = "$env:TEMP\build_sd2.log"
     $is_run = Start-GitPull -Remote "origin" -Branch "master" -WorkingDirectory $DoodleSdRoot -LogPath $DoodleLogPath
     if ($is_run) {
-        Write-Host "开始构建SD.exe"
+        # 客户端: vite build --base ./ + electron-builder, 产物 release\SyAIStudio.exe (nsis 安装包) 与 release\SyAIStudio-portable.exe
+        Write-Host "开始构建客户端 SyAIStudio.exe"
+        $ClientResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "pack:win" -WorkingDirectory $DoodleSdRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
+        if ($ClientResult.ExitCode -ne 0) {
+            throw "Client build failed with exit code $($ClientResult.ExitCode)"
+        }
+        # 前端: pack:win 内部的 build:electron 会把 dist 重建成相对路径 (base ./), 必须最后再构建一次线上版本 (base /) 供 nginx 使用
+        Write-Host "开始构建前端"
         $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "build" -WorkingDirectory $DoodleSdRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
         if ($NpmResult.ExitCode -ne 0) {
             throw "Build failed with exit code $($NpmResult.ExitCode)"
@@ -145,7 +147,11 @@ function Initialize-Doodle {
     Write-Host "开始检查文件"
 
     Start-GitPull -Remote "loc" -Branch "master_sy_new3" -WorkingDirectory $DoodleKitsuRoot -LogPath $DoodleLogPath
- 
+    Write-Host "开始构建"
+    $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "build" -WorkingDirectory $DoodleKitsuRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
+    if ($NpmResult.ExitCode -ne 0) {
+        throw "Build failed with exit code $($NpmResult.ExitCode)"
+    }
     if ($BackupPdb) {
         Write-Host "开始备份 PDB 文件 和 EXE 文件"
         if (-not (Test-Path "$DoodleBuildRoot\pdb\$DoodleVersion\")) {
@@ -182,8 +188,8 @@ function Initialize-Doodle {
                 $sourceDir = "$DoodleInstallRoot\$folder"
                 if (Test-Path $sourceDir) {
                     Get-ChildItem $sourceDir -Recurse -File |
-                        Where-Object { $_.Name -ne "onnxruntime_providers_cuda.dll" } |
-                        ForEach-Object { [PSCustomObject]@{ File = $_; SourceDir = $sourceDir; Folder = $folder } }
+                    Where-Object { $_.Name -ne "onnxruntime_providers_cuda.dll" } |
+                    ForEach-Object { [PSCustomObject]@{ File = $_; SourceDir = $sourceDir; Folder = $folder } }
                 }
             }
             $total = $files.Count
