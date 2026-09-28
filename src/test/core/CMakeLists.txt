@@ -15,6 +15,7 @@ target_sources(test_main
         sqlite_upgrade.cpp
         ai_light_schema.cpp
         ai_light_state.cpp
+        ai_light_stats.cpp
         shot_render_light_paths.cpp
 )
 

@@ -351,9 +351,31 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
 | 暗角 / 提黑 / 光晕等痕迹 | 归入 `grading_hints` | 中 |
 | 受光方向倾向 | 只作**软提示**，不作约束 | **低**（PS 可造假的渐变） |
 
+**已落地**（`doodle_lib/http_method/kitsu/ai_light_stats.{h,cpp}`）：上表除「受光方向倾向」与
+「光晕」之外都算了，逐图产出 `reference_image_stats_t` + `stats_confidence_`，随上传写入
+`ai_light_reference.stats_` / `stats_confidence_`。实现时定下的三个口径：
+
+- **对比度 = p90 − p10**，不是标准差。锁定的默认目标 `lighting_targets_t::contrast_{0.55, 0.75}`
+  只在分位差下成立：同一画面的 p90 − p10 典型是 0.55~0.8，而标准差只有 0.15~0.25，
+  用标准差会让这个默认区间把每张图都判成「对比不足」。§5.2 的措辞本就是「分位差或标准差」。
+- **调色板 k = 5**，`cv::setRNGSeed(0)` 固定种子。不固定的话 k-means++ 的初始化每次不同，
+  同一张图会算出不同调色板 —— 「同一输入同一结果」是 Spec 版本对比与单测能成立的前提。
+  缩到 ≤256×256 再聚类：k-means 的代价与像素数成正比，而占比的统计误差在 1% 量级，
+  远小于「丢掉 share < 1% 的尾部簇」那个阈值。
+- **`retouch_score_` 是下界**：只实现了暗角一类签名（判据是「四条边的中点都比中心暗」），
+  所以它只会**低估**后处理痕迹，不会误伤；它只按下限 0.7 倍的系数影响置信度，不做门控。
+  与「中央亮、四周暗的布光」不可区分 —— 这是单图信息的固有极限，§5.2 本就把这类痕迹定为「中」。
+
+**色温是显示空间规则的唯一例外**：`white_balance_kelvin_` 内部先线性化 sRGB 再算 CCT。
+Kelvin 是线性光色度坐标上的物理尺度，直接在 sRGB 编码值上算会偏几百 K，而色温区间只有
+~800K 宽（默认 `[3400, 4200]`），偏差会直接把「落点」判错。详见 §8.2。
+
 **受光方向为什么只作软提示**：PS 的加减光和渐变会伪造方向线索。方向主要由提示词与预设库决定，或由美术在候选挑选中隐式选定。
 
 **已确认参考以全局调色为主**，这提升了统计量的可信度：全局调色不改变空间结构，调色板、亮度分位、对比度这些量都能被完整迁移；相反，若参考含大量局部改图（加减光、重绘），这些量会被局部编辑污染。因此当前默认对统计量给予较高置信度，同时保留外点剔除能力以防局部编辑。
+
+**单图统计（本节的①）已落地，多图聚合（②）还没有**：所以 `is_outlier_` / `excluded_reason_`
+暂时恒为 `false` / 空 —— 外点判定必须跨图比较，属于 §5.3。
 
 ### 5.3 多图聚合与冲突检测
 
@@ -578,6 +600,12 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 
 - **主指标在显示空间（色调映射后）计算**：参考是美术在显示空间里调出来的成片，它的亮度分布、对比、调色板都是显示空间的量。拿线性空间的渲染去比显示空间的参考，必然对不上。
 - **EXR（线性）只用于工程检查**：曝光余量、裁剪、灯光强度是否超出物理合理范围。
+- **唯一例外：色温**。`white_balance_kelvin_` 必须先把 sRGB 线性化，再走 XYZ 色度坐标求 CCT
+  （`ai_light_stats.cpp` 的 `estimate_kelvin`，用 McCamy 近似）。
+  理由：Kelvin 是**线性光**色度上的物理尺度，直接在 sRGB 编码值上算会偏几百 K ——
+  而色温区间只有 ~800K 宽（默认 `[3400, 4200]`），这点偏差足以把「落点在不在区间内」判反。
+  其余指标（分位、对比、调色板、削波率、痕迹）都留在显示空间。
+  这一条必须写明：不然下一个实现者会在显示空间上算 CCT，而错得很安静。
 
 ### 8.3 指标清单
 
@@ -779,7 +807,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | **M0 地基** | IR + Spec schema、双端序列化、commandlet 骨架 + `inventory`/`apply_ops`（含 `set_grading`）/`render_preview` | 手工写一份 Spec + 一个候选 → 跑 commandlet → 出图；幂等性单测通过 |
 | **M1 单轮管线** | 提交（提示词+多图）→ Spec → 候选生成 → 派发 → 渲染 → 前端展示 → 人工判断 | 完整跑通一轮：美术在浏览器上看到 6 个候选并能给出判断 |
 | **M2 多轮迭代** | 反馈结构化 + 轴收缩 + 轮次持久化 + 跨会话恢复 | 3 轮内收敛到美术接受；中途关掉浏览器再回来能继续 |
-| **M3 参考驱动** | 多图统计聚合 + 冲突检测 + 人工裁决 + `degrade_level` 判定 | 目标区间稳定、冲突能被人正确裁决 |
+| **M3 参考驱动** | 多图统计聚合 + 冲突检测 + 人工裁决 + `degrade_level` 判定（**①单图统计已落地**，见 §15.5；②聚合与冲突检测待做） | 目标区间稳定、冲突能被人正确裁决 |
 | **M4 决策辅助** | 区间满足率 + VLM 判分呈现在候选旁 | 美术盲测认可辅助信息有用 |
 | **M5 定稿** | `snapshot`/`commit` 应用到正式关卡/序列 | 定稿可回滚，结果与候选一致 |
 | **M6 生产化** | 批量派发（整集/整序列）、性能预算、回归基线 | 基线纳入 CI |
@@ -813,16 +841,24 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | 等级 | 条件 | 行为 |
 |---|---|---|
 | `stats_only` | 多图统计聚合可用（**默认，唯一主路径**） | 用显示空间目标区间 + 提示词 |
-| `prompt_only` | 参考图的**统计**不可用（OpenCV 分析层未落地），或参考之间完全冲突 | 只用提示词 + 预设库检索 |
+| `prompt_only` | 参考图的**统计**不可用（参考读不出、或全是老库里没统计的历史行），或参考之间完全冲突 | 只用提示词 + 预设库检索 |
 
 > **`degrade_level` 描述的是「统计可用性」，不是「有没有参考图」。**
 > 这一条必须说清：蒸馏 Spec 时参考图**必然存在**（`advance_session` 会校验，为空直接 400），
 > 所以 `prompt_only` 只可能表示「有图但没有可用的统计量」。
-> 在 OpenCV 统计层落地之前，`reference_route` 把 `stats_confidence_` 写成 0，
-> 于是 `references_have_stats()` 恒为 false、`stats_only` 目前**不可达** ——
-> 也就是说现在参考图能到达接缝（`references_` 非空），但按本表它还不会参与目标区间。
-> 要让参考图真正影响 Spec，需要统计层落地，或给本枚举补一个「有图无统计」的取值
-> （后者是 Spec schema 1.3 的变更，应与 M3 的接缝契约一起定）。
+>
+> **统计层已落地**（`ai_light_stats`），`reference_route` 现在会在上传时算统计并写
+> `stats_confidence_` —— 它有一个 **0.05 的地板**，所以「分析成功」与
+> `references_have_stats()` 的判据 `stats_confidence_ > 0.0` 是等价的：
+> 低置信度是一个**数值**，不是**缺失**。纯色块这类退化参考必须走 §8.5 第 4 条的
+> 「不崩 + 低置信度」，而不是伪装成「统计层没落地」。
+> 于是 `references_have_stats()` 对任何「有图且都能解码」的会话为真、`stats_only` 可达。
+>
+> 但它**暂时不可观测**：`advance_session` 把 `degrade_level_` 填进
+> `spec_generation_request_t` 之后就交给 `generate_spec`，而后者仍是 501、什么都不落库。
+> 也就是说这条现在只是「把输入准备对了」，真正能看出降级级别要等接缝落地。
+> **多图聚合（§5.3 的②）也还没有**，所以 `stats_only` 的「聚合可用」严格说只到了
+> 「单图统计可用」这一步；②落地后才是本表字面上的含义。
 
 ---
 
@@ -979,8 +1015,11 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 8. **参考文件接收**：复用 `http_method/up_file.h` 的 `doodle_data_shots_file_auto_light` 模式；DeepSeek Files API 的 `file_id` 缓存也放这里。
    **文件接收已落地**（`POST /session/{id}/reference`，多图 + 统一转 PNG + 序号 `max+1` 不覆盖）；
    DeepSeek Files API 的 `file_id` 缓存随 `deepseek_client` 一起做。
-   **参考图统计（亮度分位/色板/对比/白平衡/削波率）本轮未落地**，`stats_confidence_ = 0`，
-   会话自动以 `prompt_only` 级别运行 —— 这是 §4.2 本就定义的降级级别，不是临时凑合。
+   **参考图统计已落地**（`doodle_lib/http_method/kitsu/ai_light_stats.{h,cpp}`）：上传时在
+   **已落盘**的 PNG 上算 `reference_image_stats_t` 的七个字段（亮度分位 / 色板 / 对比 /
+   色温 / 削波率 / 修图痕迹）与 `stats_confidence_`，写进 `ai_light_reference`。
+   算法口径见 §5.2，色温的显示空间例外见 §8.2。**多图聚合与冲突检测（§5.3 的②）未落地** ——
+   它的唯一消费者 `generate_spec` 还是 501，所以单独一步做。
 9. **反馈结构化**：`/judge` 收到的自然语言反馈经 LLM 转成 `feedback_axes`。
    接缝 `structure_feedback()` 已就位（本轮返回 501），调用方捕获后降级为纯滑块反馈。
 
@@ -1195,7 +1234,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | 路由注册 | `http_method/kitsu.cpp` 的 `create_kitsu_route_2`（**只注册主服务器**，客户端不跑 LLM） |
 | 图片变体导出 | `http_method/kitsu/preview.{h,cpp}` 的 `preview::save_variants`（从匿名命名空间提到 `preview` 命名空间，供定稿复用；不另写一套尺寸，否则预览列表页读到的图与既有预览文件不一致） |
 | 读模型 | `ai_light_session_detail_t`（`doodle_core/metadata/ai_light/view.h`），六表一次聚合，并带出 `candidate_count_per_iteration`（前端不自己写死 6） |
-| 测试 | `src/test/core/ai_light_state.cpp`（16 用例 / 149 断言，含 JSON 形状回归、「超时会话仍可判断」回归、「无参考图不蒸馏」、「`awaiting_spec_confirm` 可重出」）+ `src/test/core/sqlite_not_found.cpp`（5 用例 / 11 断言，钉 ORM 的 404 语义）；全量回归 85 用例 / 826 断言通过 |
+| 测试 | `src/test/core/ai_light_state.cpp`（16 用例 / 149 断言，含 JSON 形状回归、「超时会话仍可判断」回归、「无参考图不蒸馏」、「`awaiting_spec_confirm` 可重出」）+ `src/test/core/sqlite_not_found.cpp`（5 用例 / 11 断言，钉 ORM 的 404 语义）+ §15.5 的统计层套件；全量回归 100 用例 / 885 断言通过 |
 
 **状态机**（`advance_session` 是唯一的推进入口，`/spec`、`/spec/confirm`、`/iterate`、
 镜头页入口都调它，所以「同一步骤从不同入口进来行为一致」是结构性保证的）：
@@ -1225,12 +1264,36 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 状态，而状态本身区分不了它们 —— 当时的症状是 `/iterate` 的错误文案说「生成候选」，
 实际却走成了「重出 Spec」。
 
+### 15.5 已落地（参考图统计层 = §5.1 的①）
+
+| 项 | 内容 |
+|---|---|
+| 模块 | `doodle_lib/http_method/kitsu/ai_light_stats.{h,cpp}`，**不含 HTTP 依赖**（与 `ai_light_orchestrator` 同性质，单测直接调） |
+| 入口 | `analyze_display_image(const cv::Mat&)` 纯函数（显示空间 8bit BGR → `reference_image_stats_t` + `confidence`）；`analyze_reference_file(const FSys::path&)` 读已落盘 PNG，读不出返回 `nullopt` |
+| 接入点 | `http_method/kitsu/ai_light.cpp` 的 `reference_route::post`：在 `FSys::rename` **之后**统计（统计描述的是最终存下来的工件），写 `set_stats(...)` + `stats_confidence_`；读不出直接 400 |
+| 度量口径 | 见 §5.2（对比度 = p90 − p10；调色板 k=5 且固定随机种子；`retouch_score_` 是下界）与 §8.2（色温是显示空间规则的唯一例外） |
+| 导出 | 两个函数都带 `DOODLELIB_API` —— `doodle_lib` 是 SHARED、`test_main` 是独立 exe，不加导出宏测试会**链接失败** |
+| 置信度 | `min(1, sqrt(w·h/(1280·720))) × (1 − 0.5·retouch) × content_factor`，clamp 到 **[0.05, 1]**。地板保证「分析成功」≡`references_have_stats()` 为真（低置信度是数值，不是缺失） |
+| 测试 | `src/test/core/ai_light_stats.cpp`（15 用例 / 59 断言），全喂合成图：纯黑/纯白/渐变的分位与削波率、中灰 → **6500K**（整条 sRGB→线性→XYZ→McCamy 链的锚点）、冷暖排序、纯色块回落、调色板簇数与 **RGB 通道序**、确定性、灰度/BGRA 等价、空图与 32F 抛错、对称暗角 vs 单侧压暗、痕迹压低置信度、分辨率单调、读文件路径 |
+| 不改 | `convert_to_png` / `image_info_t` / 任何数据库列与 JSON 字段（`reference_image_stats_t` 的七个字段是已锁定契约，本轮只是把它填满）；`user_version` 保持 31 |
+| 未做 | §5.3 的多图聚合与冲突检测（②）；`is_outlier_` / `excluded_reason_` 仍恒为 `false` / 空；光晕、局部重绘这类频率域痕迹（所以 `retouch_score_` 是下界）；已上传历史行的统计**不回填** |
+
+**统计层顺手堵掉的一个洞**：`preview::convert_to_png` 对 `.png` 输入**不做解码校验**
+（`if (l_cv.empty())` 那个判断在非 PNG 分支里），所以「后缀是 .png、内容不是图片」的文件
+会带着 `size_ = 0×0` 一路走到入库，留下一条尺寸 0×0、看起来只是「统计不可用」的坏记录。
+新代码在统计这步读不出就 400，把这个洞堵住了 —— 但没有改 `convert_to_png` 本身
+（它还被 `pictures.cpp` 用，改动会外溢）。
+
+**一个实测暴露出来的 OpenCV 细节**：第一版拿浮点亮度直接做 `[0,1]` 的 256 bin 直方图，
+结果**整幅纯白图的分位全是 0** —— 原因是 `cv::calcHist` 的范围是 `[low, high)` 半开区间。
+完整分析与修法见 §15.4 的坑 5。
+
 **接缝（本轮返回 501，不是占位桩）**：
 
 ```cpp
 // 三个接缝都在 ai_light_orchestrator.cpp，参数被显式 (void) 引用一次，
 // 免得「未使用参数」的告警掩盖了「接缝没实现」这件事。
-generate_spec(req)                       -> spec_generation_result_t    // 缺 deepseek_client + 参考图统计
+generate_spec(req)                       -> spec_generation_result_t    // 缺 deepseek_client（参考图统计已落地，见 §15.5）
 generate_candidates(req)                 -> candidate_generation_result_t // 缺 deepseek_client + 预设检索
 structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 deepseek_client
 ```
@@ -1268,7 +1331,7 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
    代价是前端必须自己看这个标志来催办（没有服务端推送），换来的是判断入口永远可用、
    少一个常驻后台任务、少一个「任务挂了没人发现」的失败面。
 
-**实现期发现、值得记住的四个坑（本轮）**：
+**实现期发现、值得记住的五个坑（本轮）**：
 
 1. **`std::optional` 的 JSON 序列化用库自带的，别自己写；而 `nlohmann::json{*opt}` 是列表初始化，会静默变成单元素数组。**
    先说结论：nlohmann 从 C++17 起自带 `std::optional` 的读写（本工程 vcpkg 装的是 3.12.0，
@@ -1382,5 +1445,19 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
    `/spec/confirm` 会**先把状态改成 `generating`** 再调 `advance_session`，
    所以 `advance_session(awaiting_spec_confirm)` 只有一个意图。**判断这条约束时，
    要看的是 `advance_session` 的分派输入，而不是「哪些路由会碰这个状态」。**
+
+5. **`cv::calcHist` 的范围是 `[low, high)` 半开区间 —— 值恰好等于上界的像素会被静默丢掉。**
+
+   第一版统计层用 256 个 bin 覆盖浮点亮度的 `[0, 1]`，看起来毫无问题。实际后果是：
+   **整幅纯白图的直方图是空的**（所有像素的亮度都是 `1.0` = 上界，一个都没计进去），
+   于是 `cv::sum(hist) == 0`，三个分位一起返回 0，对比度、`content_factor`、置信度全错。
+   而且它只在「有像素恰好取到上界」时发作 —— 纯白、成片过曝白、纯色块都会命中，
+   黑图（下界是闭的）、灰图、渐变图都正常，所以只测后几种的组合漏掉它。
+
+   修法不是「把上界加个 epsilon」（那是碰运气），而是**换一个 bin 与取值一一对应的量**：
+   先把亮度量化成 8bit 等级，再用 `[0, 256)` 的 256 个 bin 统计。等级 0 与 255 都是闭的，
+   纯黑恰好得 0、纯白恰好得 1，顺带还消掉了「全在 bin 0 却报 0.002」这种别扭值。
+   一般化的教训：**凡是库函数收「范围 + 桶数」，先确认边界是开还是闭，再找一个
+   边界不可能被取到的量纲**（这里是 256 个离散等级，而不是连续的 `[0,1]`）。
 
 

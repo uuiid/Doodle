@@ -27,6 +27,7 @@
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/ai_light.h>
 #include <doodle_lib/http_method/kitsu/ai_light_orchestrator.h>
+#include <doodle_lib/http_method/kitsu/ai_light_stats.h>
 #include <doodle_lib/http_method/kitsu/preview.h>
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib/sqlite_orm/orm/orm.h>
@@ -371,7 +372,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
   std::vector<ai_light_reference> l_added{};
   for (auto&& l_file : l_files) {
     // 统一转 PNG：参考图来自「原始渲染 + AI/PS 修图」，格式五花八门，
-    // 而下游统计（未落地）与前端展示都只认 PNG。
+    // 而下游统计与前端展示都只认 PNG。
     auto l_info = preview::convert_to_png(l_file);
     DOODLE_CHICK_HTTP(
         !l_info.path_.empty(), bad_request, "参考图 {} 无法解析为图片",
@@ -385,12 +386,23 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
     FSys::rename(l_info.path_, l_ref.file_path_);
     l_ref.width_  = l_info.size_.width;
     l_ref.height_ = l_info.size_.height;
-    // 统计（亮度分位/色板/对比/白平衡/削波率）需要 OpenCV 分析层，本轮未落地。
-    // 留空 + confidence = 0，会话自动以 prompt_only 降级运行 —— 这是方案 §4.2
-    // 本就定义的降级级别，不是临时凑合。
-    l_ref.stats_            = nlohmann::json{};
-    l_ref.stats_confidence_ = 0.0;
-    l_ref.is_outlier_       = false;
+
+    // 统计在**已落盘**的 PNG 上算：统计描述的是最终存下来的那个工件，
+    // 不是转换过程中的中间产物（也就不会出现「库里的统计和文件里的像素不是同一张图」）。
+    auto l_analysis = ai_light::analyze_reference_file(l_ref.file_path_);
+    // 刚才在同一个请求里成功解码并转存过它，现在读不出属于内部不一致，不是可降级的情况 ——
+    // 所以是 400 而不是「留空 + confidence = 0」。后者会让一条 0×0 的坏记录
+    // 看起来像一张合法的、只是「统计不可用」的参考图。
+    DOODLE_CHICK_HTTP(
+        l_analysis.has_value(), bad_request, "参考图 {} 落盘后无法解码，无法统计",
+        l_ref.file_path_.filename().generic_string()
+    );
+    // 用 set_stats 而不是直接赋值：nlohmann 的花括号初始化会静默变成单元素数组
+    // （见 ai_light/common.h 顶部那个坑），而 set_stats 内部的赋值走 ADL 的 to_json。
+    l_ref.set_stats(l_analysis->stats_);
+    l_ref.stats_confidence_ = l_analysis->confidence_;
+    // 外点判定需要跨图比较（§5.3），属于多图聚合，这里一律先标 false。
+    l_ref.is_outlier_ = false;
     l_added.push_back(l_ref);
   }
 

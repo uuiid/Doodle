@@ -84,6 +84,10 @@ struct DOODLE_CORE_API reference_image_stats_t {
   clip_rate_value_t clip_rate_{};
   /// 修图痕迹强度 0..1。参考图本身就是 AI/PS 修过的产物，
   /// 这个分数越高，越说明该图的统计不能当「物理真值」用（只能当氛围目标）。
+  ///
+  /// **当前实现只覆盖暗角一类签名（ai_light_stats 的 vignette_score），所以它是下界**：
+  /// 光晕、局部重绘、频率域痕迹需要多尺度分析，未实现。它只用来压低 stats_confidence_，
+  /// 不做任何门控，所以「漏检」的代价是置信度偏高而不是行为错误。
   double retouch_score_{0.0};
 
   friend void to_json(nlohmann::json& j, const reference_image_stats_t& p) {

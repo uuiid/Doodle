@@ -98,8 +98,13 @@ session_paths_t resolve_session_paths(sqlite_database& in_sql, const ai_light_se
   return l_ret;
 }
 
-/// 会话的参考图统计是否够用。只要有一张图的 stats_ 非空就认为可用 ——
-/// 统计落地之前这里恒为 false，于是自动走 prompt_only 降级（方案 §4.2）。
+/// 会话的参考图统计是否够用。只要有一张图分析成功就认为可用。
+///
+/// `stats_confidence_` 有 0.05 的**地板**（ai_light_stats 的 compute_confidence），
+/// 所以「分析成功」与「confidence > 0」是等价的 —— 低置信度是一个数值，不是缺失。
+/// 真正的缺失只有一种：统计层还没落地时的空 `stats_`（老库里的历史行）。
+///
+/// 不看 `is_outlier_`：被人工排除的图仍要交给接缝自行裁决（它拿得到那个标记）。
 bool references_have_stats(const std::vector<ai_light_reference>& in_references) {
   return std::any_of(in_references.begin(), in_references.end(), [](const ai_light_reference& in_ref) {
     return !in_ref.stats_.is_null() && in_ref.stats_confidence_ > 0.0;
