@@ -226,6 +226,22 @@ ai_light_judgement_t make_judgement(judgement_decision in_decision, const uuid& 
   return l_j;
 }
 
+/// 给会话补一张参考图。
+///
+/// advance_session 在蒸馏 Spec 之前会校验参考图非空（决策 1：参考必有多张），
+/// 所以凡是要走到 spec 分支的用例都得先有这一张 —— 反过来，缺了它就只会拿到 400。
+ai_light_reference add_reference(fixture_t& in_fx, std::int32_t in_ordinal = 0) {
+  ai_light_reference l_ref{};
+  l_ref.session_id_       = in_fx.session_.uuid_id_;
+  l_ref.ordinal_          = in_ordinal;
+  l_ref.file_path_        = FSys::path{"AI_Light"} / "ref" / fmt::format("ref_{:02}.png", in_ordinal);
+  l_ref.width_            = 1920;
+  l_ref.height_           = 1080;
+  l_ref.stats_confidence_ = 0.0;
+  insert(in_fx.orm_).into<ai_light_reference>().values(l_ref)();
+  return l_ref;
+}
+
 }  // namespace
 
 // ===========================================================================
@@ -626,9 +642,14 @@ BOOST_AUTO_TEST_CASE(generation_seams_report_not_implemented) {
 
 BOOST_AUTO_TEST_CASE(advance_session_rolls_back_to_entry_state_on_seam_failure) {
   app_base l_app{};
-  // draft + 有提示词 → advance_session 会走 generate_spec，而那是 501。
+  // draft + 有提示词 + 有参考图 → advance_session 会走 generate_spec，而那是 501。
   // 刻意不要子行（Spec/轮次/候选）：这样「什么都没写进去」才能被干净地断言出来。
   fixture_t l_fx{"advance_rollback", ai_light_session_state::draft, ai_light_iteration_state::generated, 0, false};
+
+  // 参考图是 spec 分支的前置条件；同时它也是这条用例的第二个观察点 ——
+  // 回滚承诺「不会丢已上传的参考图」，而参考图挂在会话上（cascade），
+  // 所以回滚只能改会话行，绝不能碰参考图。这一点此前没有被断言过。
+  const auto l_ref = add_reference(l_fx);
 
   auto l_session = l_fx.reload_session();
   BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::draft));
@@ -650,6 +671,66 @@ BOOST_AUTO_TEST_CASE(advance_session_rolls_back_to_entry_state_on_seam_failure) 
   BOOST_TEST(!l_after.failure_reason_.empty());
   BOOST_TEST(l_fx.sql_->get_ai_light_specs(l_after.uuid_id_).empty());
   BOOST_TEST(l_fx.sql_->get_ai_light_iterations(l_after.uuid_id_).empty());
+
+  // 参考图必须还在（回滚只写会话行）
+  auto l_refs_after = l_fx.sql_->get_ai_light_references(l_after.uuid_id_);
+  BOOST_TEST(l_refs_after.size() == 1);
+  BOOST_TEST(l_refs_after.front().uuid_id_ == l_ref.uuid_id_);
+}
+
+BOOST_AUTO_TEST_CASE(advance_session_from_draft_without_references_is_rejected) {
+  app_base l_app{};
+  // 有提示词、有 Spec 之外的什么都没关系 —— 就是没有参考图
+  fixture_t l_fx{"draft_no_refs", ai_light_session_state::draft, ai_light_iteration_state::generated, 0, false};
+
+  auto l_session = l_fx.reload_session();
+  bool l_threw   = false;
+  try {
+    run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
+      co_await advance_session(*l_fx.sql_, l_session);
+    });
+  } catch (const doodle_error& in_err) {
+    l_threw = true;
+    // 必须是 400（入参不齐），**不是** 501 —— 501 会让人以为只差接缝实现
+    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
+  }
+  BOOST_TEST(l_threw);
+
+  // 校验刻意放在 try 之外：不走回滚，所以 failure_reason_ 必须仍然是空的。
+  // 否则美术会在会话页上看到一条看起来像「AI 失败」的提示，而其实只是没传图。
+  auto l_after = l_fx.reload_session();
+  BOOST_TEST(en(l_after.state_) == en(ai_light_session_state::draft));
+  BOOST_TEST(l_after.failure_reason_.empty());
+  BOOST_TEST(l_fx.sql_->get_ai_light_specs(l_after.uuid_id_).empty());
+}
+
+BOOST_AUTO_TEST_CASE(advance_session_redistills_from_awaiting_spec_confirm) {
+  app_base l_app{};
+  // 已经有 Spec revision 1、正处于「等人工确认」—— 也就是美术看完第一版才发现没说清的状态
+  fixture_t l_fx{
+      "redistill", ai_light_session_state::awaiting_spec_confirm, ai_light_iteration_state::generated, 0, true
+  };
+  add_reference(l_fx);
+
+  auto l_session = l_fx.reload_session();
+  bool l_threw   = false;
+  try {
+    run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
+      co_await advance_session(*l_fx.sql_, l_session);
+    });
+  } catch (const doodle_error& in_err) {
+    l_threw = true;
+    // 这条断言就是本用例的全部意义：awaiting_spec_confirm 被 spec 分支接受（501），
+    // 而不是掉进「当前没有可推进的步骤」的 400。没有它，「重出方案」就是空话 ——
+    // /spec 只有第一次（draft）能成功。
+    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::not_implemented);
+  }
+  BOOST_TEST(l_threw);
+
+  // 接缝在写库**之前**抛，所以不该留下半成品 Spec；状态回滚到入口状态
+  auto l_after = l_fx.reload_session();
+  BOOST_TEST(en(l_after.state_) == en(ai_light_session_state::awaiting_spec_confirm));
+  BOOST_TEST(l_fx.sql_->get_ai_light_specs(l_after.uuid_id_).size() == 1);
 }
 
 // ===========================================================================

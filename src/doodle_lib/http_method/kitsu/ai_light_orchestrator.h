@@ -123,7 +123,7 @@ DOODLELIB_API boost::asio::awaitable<std::vector<axis_step_t>> structure_feedbac
 
 /// 会话状态推进的唯一入口。按 in_session.state_ 分派：
 ///
-///   draft 且尚无 Spec
+///   draft / awaiting_spec_confirm（前置：会话已有参考图）
 ///       → generate_spec 接缝 → 写 ai_light_spec(revision = max+1)
 ///       → session = awaiting_spec_confirm
 ///   generating 且已有已确认的 Spec
@@ -131,13 +131,16 @@ DOODLELIB_API boost::asio::awaitable<std::vector<axis_step_t>> structure_feedbac
 ///       → 建 server_task_info{type = ai_light} → run_next_task() + broadcast
 ///       → session 保持 generating（渲染中）；渲染完由 mark_iteration_rendered 转 awaiting_judgement
 ///
+/// 参考图为空时**拒绝**（400，且不写 failure_reason_）：Spec 的输入是提示词 + 参考图，
+/// 少了参考图就只能蒸出一份 prompt-only 的方案，而那是主输入的静默丢失。
+/// 因此建会话接口**不**调本函数 —— 建会话时参考图还不可能存在（见 shot_session_route::post）。
+///
 /// 失败时回滚会话状态到进入时的状态、记 failure_reason_，然后重新抛出。
 /// 这样不会留下卡在 generating 的会话，也不会丢已上传的参考图
 /// （参考图的外键 cascade 挂在会话上，删会话才会连带删图）。
 ///
-/// 分派只看状态，所以**同一个状态只能有一个后继步骤**。「等判断」的会话
-/// 没有可推进的步骤（该做的是 /judge，不是再推一步）—— 这正是删掉 suspended 的原因之一：
-/// 它让「重出方案」和「出候选」两种恢复意图挤进同一个状态，而状态本身区分不了它们。
+/// 分派只看状态，所以**同一个状态只能有一个后继步骤** —— 这是结构性约束。
+/// 「等判断」的会话没有可推进的步骤（该做的是 /judge，不是再推一步）。
 DOODLELIB_API boost::asio::awaitable<void> advance_session(sqlite_database& in_sql, ai_light_session in_session);
 
 /// 人工闸门 2 的状态推进。**纯 DB，不碰文件与 LLM** —— 单测直接调它。

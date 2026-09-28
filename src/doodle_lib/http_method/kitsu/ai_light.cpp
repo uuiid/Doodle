@@ -270,32 +270,27 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   );
 
   // ---------------------------------------------------------------
-  // 建完会话立刻跑第一步（draft → 蒸馏 Spec → awaiting_spec_confirm）
+  // 建会话**不**蒸馏 Spec
   // ---------------------------------------------------------------
-  // 这是本接口与原先两个入口合并后的行为：镜头页点一次按钮就该拿到一份待确认的 Spec，
-  // 而不是先建一个空会话再让前端自己接一发 /spec。
+  // Spec 的输入是「提示词 + 参考图」，而参考图只能在会话存在**之后**上传
+  // （reference_route 要 session_id，而 session_id 是本接口的返回值）。
+  // 所以在这里调 advance_session，get_ai_light_references() 必然为空 ——
+  // 蒸出来的是一份「只用提示词」的方案，参考图这个主输入被静默丢掉。
   //
-  // 关键约束：会话**已经落库了**，所以这一步绝不能把整个请求变成非 2xx ——
-  // 前端一旦拿不到 session id，重试只会造出重复会话（而参考图挂在会话上，
-  // 重复会话意味着重传）。因此只吞「接缝未实现」这一种能力缺口，其余错误照常抛出。
-  std::string l_advance_error{};
-  try {
-    co_await advance_session(l_sql, l_session);
-  } catch (const doodle_error& in_err) {
-    if (in_err.code_status_() != boost::beast::http::status::not_implemented) throw;
-    l_advance_error = in_err.what();
-    SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_http(), "AI 灯光会话 {} 已创建，但首步推进未完成: {}", l_session.uuid_id_, l_advance_error
-    );
-  }
+  // 曾经这里确实会立刻跑第一步（理由写成「镜头页点一次按钮就该拿到待确认的 Spec」），
+  // 但那个行为只在接缝抛 501 时才看起来没事：失败回滚把状态退回 draft，
+  // 于是后续 /spec 恰好还能走通。一旦接缝实现，会话就会停在 awaiting_spec_confirm ——
+  // 而那时 /spec 已经进不去了（advance_session 当时还没有这个状态的分支，
+  // 现在补上了 —— 所以修完这一处之后，重出方案这条路才真正通）。
+  // 参考图从此永远无法影响方案。这个 bug 会在「工具刚开始能用」的那一刻才出现。
+  //
+  // 正确顺序：建会话（draft）→ 传参考图 → POST /spec 蒸馏 → /spec/confirm → 派发。
+  // 蒸馏由 /spec 触发，且它会校验参考图非空（见 advance_session）。
 
-  // 返回**六表聚合详情**而不是会话本体：advance_session 可能刚写入了 Spec，
-  // 前端需要一次拿到完整状态，否则得再补一发 GET（多一次往返，且中间态可能已经变了）。
-  // 详情里本来就含 session_，是会话本体的超集。
+  // 返回**六表聚合详情**而不是会话本体：形状与 GET /session/{id}、/spec、/iterate、/judge
+  // 一致，前端只需要一套解析。新建会话时 references 为空、current_spec 为 null。
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
-  auto l_ret    = nlohmann::json{} = *l_detail;
-  if (!l_advance_error.empty()) l_ret["advance_error"] = l_advance_error;
-  co_return in_handle->make_msg(l_ret);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, get) {

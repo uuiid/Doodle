@@ -129,6 +129,23 @@ orm::sql_modify_statement_t make_session_update(sqlite_database& in_sql, const a
 boost::asio::awaitable<void> advance_session(sqlite_database& in_sql, ai_light_session in_session) {
   const auto l_entry_state = in_session.state_;
 
+  // Spec 蒸馏的输入是「提示词 + 参考图」（决策 1：参考必有多张）。
+  // 参考图清单为空时直接拒绝，**不**静默降级：否则「没传图」和「图传了但统计不可用」
+  // 会落进同一个 degrade_level，出问题时看不出是哪一种。
+  //
+  // 放在 try 之外是有意的：这是入参校验，不该走回滚、也不该往会话上写 failure_reason_ ——
+  // 否则美术会在会话页上看到一条看起来像「AI 失败」的提示。
+  //
+  // 不看 is_outlier_：被人工排除的图仍要交给接缝自行裁决（它拿得到 is_outlier_ 标记），
+  // 这与 references_have_stats() 同样不筛该标记的做法一致。
+  if (l_entry_state == ai_light_session_state::draft ||
+      l_entry_state == ai_light_session_state::awaiting_spec_confirm) {
+    DOODLE_CHICK_HTTP(
+        !in_sql.get_ai_light_references(in_session.uuid_id_).empty(), bad_request,
+        "会话 {} 还没有参考图，无法蒸馏 Spec（决策 1：参考必有多张）", in_session.uuid_id_
+    );
+  }
+
   /// 失败收尾：把会话状态退回进入时的状态并记下原因，然后由调用方重新抛出。
   ///
   /// 为什么是「回滚」而不是「置 failed」：failed 是终态，会话一旦进去就没法再用，
@@ -161,9 +178,15 @@ boost::asio::awaitable<void> advance_session(sqlite_database& in_sql, ai_light_s
 
   try {
     // ---------------------------------------------------------------
-    // 第一步：draft 且尚无 Spec → 蒸馏出 LightingSpec
+    // 第一步：draft / awaiting_spec_confirm 且尚无已确认 Spec → 蒸馏出 LightingSpec
+    //
+    // 两个入口状态，同一个意图：产出（或重出）当前版本的方案。
+    // 这不违反「一个状态只能有一个后继步骤」：awaiting_spec_confirm 上还有一个
+    // /spec/confirm，但它会**先把状态改成 generating** 再调 advance_session
+    // （ai_light.cpp 的 spec_confirm_route），所以落到本分支的只有「重出」这一个意图。
     // ---------------------------------------------------------------
-    if (l_entry_state == ai_light_session_state::draft) {
+    if (l_entry_state == ai_light_session_state::draft ||
+        l_entry_state == ai_light_session_state::awaiting_spec_confirm) {
       auto l_refs = in_sql.get_ai_light_references(in_session.uuid_id_);
 
       spec_generation_request_t l_req{};

@@ -813,7 +813,16 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | 等级 | 条件 | 行为 |
 |---|---|---|
 | `stats_only` | 多图统计聚合可用（**默认，唯一主路径**） | 用显示空间目标区间 + 提示词 |
-| `prompt_only` | 参考不可用/完全冲突 | 只用提示词 + 预设库检索 |
+| `prompt_only` | 参考图的**统计**不可用（OpenCV 分析层未落地），或参考之间完全冲突 | 只用提示词 + 预设库检索 |
+
+> **`degrade_level` 描述的是「统计可用性」，不是「有没有参考图」。**
+> 这一条必须说清：蒸馏 Spec 时参考图**必然存在**（`advance_session` 会校验，为空直接 400），
+> 所以 `prompt_only` 只可能表示「有图但没有可用的统计量」。
+> 在 OpenCV 统计层落地之前，`reference_route` 把 `stats_confidence_` 写成 0，
+> 于是 `references_have_stats()` 恒为 false、`stats_only` 目前**不可达** ——
+> 也就是说现在参考图能到达接缝（`references_` 非空），但按本表它还不会参与目标区间。
+> 要让参考图真正影响 Spec，需要统计层落地，或给本枚举补一个「有图无统计」的取值
+> （后者是 Spec schema 1.3 的变更，应与 M3 的接缝契约一起定）。
 
 ---
 
@@ -862,7 +871,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    | 方法与路径 | 说明 |
    |---|---|
    | `GET  /api/doodle/ai/light/shot/{entity_id}/session` | **该镜头**下的会话列表（含历史，新的在前） |
-   | `POST /api/doodle/ai/light/shot/{entity_id}/session` | **唯一建会话入口**：为该镜头建会话**并跑第一步**，返回六表聚合详情 |
+   | `POST /api/doodle/ai/light/shot/{entity_id}/session` | **唯一建会话入口**：为该镜头建会话（`draft`，**不**蒸馏 Spec），返回六表聚合详情 |
    | `GET  /api/doodle/ai/light/session/{id}` | 详情（六表聚合读模型） |
    | `DELETE /api/doodle/ai/light/session/{id}` | 删会话（产物先进备份区；已定稿禁止删） |
    | `GET  /api/doodle/ai/light/session/{session_id}/reference` | 参考图列表 |
@@ -871,7 +880,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    | `GET  /api/doodle/ai/light/reference/{id}/image` | 参考图取图 |
    | `GET  /api/doodle/ai/light/candidate/{id}/image` | 中间候选取图（只有定稿才进 `preview_file`） |
    | `GET  /api/doodle/ai/light/spec` | Spec 版本列表 |
-   | `POST /api/doodle/ai/light/spec` | 生成 Spec —— **本轮返回 501**（见 §15.4） |
+   | `POST /api/doodle/ai/light/spec` | 生成 Spec：`draft` 出第一版，`awaiting_spec_confirm` 重出（**要求已有参考图**，否则 400）—— 本轮返回 501（见 §15.4） |
    | `POST /api/doodle/ai/light/spec/confirm` | 人工闸门 1：确认 Spec + 冲突裁决，随后触发首轮 |
    | `POST /api/doodle/ai/light/iterate` | 生成一轮候选并派发 —— **本轮返回 501**（见 §15.4） |
    | `POST /api/doodle/ai/light/judge` | **人工闸门 2**（accept / continue_iteration / reject_all） |
@@ -909,15 +918,30 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    只会静静地出现在错误的分类里。按 id 匹配同时不依赖名称文本（可本地化）。
 
    `POST /api/actions/projects/{project_id}/shots/{id}/ai-light` **已删除**。
-   它和 `POST /shot/{entity_id}/session` 做的是同一件事（建会话 + 跑第一步），
+   它和 `POST /shot/{entity_id}/session` 建的是同一个会话，
    而它多带一个 `project_id` 在路径里，反而给了「镜头与项目不一致」的伪造空间 ——
    现在归属三键全部从镜头解析，没有第二个入口可以绕开这道校验。
 
-   **唯一的建会话入口在建完之后立刻跑第一步**（`draft` → 蒸馏 Spec → `awaiting_spec_confirm`），
-   而不是只建一个空会话再让前端自己接一发 `/spec`：镜头页点一次按钮就该拿到一份待确认的 Spec。
-   但这一步**绝不能**把整个请求变成非 2xx —— 会话已经落库了，
-   前端一旦拿不到 session id，重试只会造出重复会话（而参考图挂在会话上，重复会话意味着重传）。
-   所以只吞「接缝未实现」这一种能力缺口，其余错误照常抛出，并在响应里带 `advance_error`。
+   **建会话不蒸馏 Spec**，蒸馏由 `POST /spec` 触发。原因不是「少一次 LLM 调用」，而是顺序问题：
+
+   Spec 的输入是「提示词 + 参考图」，而参考图只能在会话存在**之后**上传 ——
+   `POST /session/{id}/reference` 要 `session_id`，而 `session_id` 正是建会话接口的返回值。
+   在建会话的同一个请求里蒸馏，`get_ai_light_references()` **必然为空**，
+   蒸出来的是一份「只用提示词」的方案，参考图这个主输入被静默丢掉。
+
+   早先的实现确实在这里立刻跑第一步（`shot_entry_route` 合并进来时带过来的，
+   理由写成「镜头页点一次按钮就该拿到一份待确认的 Spec」）。它只在接缝抛 501 时看起来没事：
+   失败回滚把状态退回 `draft`，于是后续 `/spec` 恰好还能走通。
+   **一旦接缝实现，会话就会停在 `awaiting_spec_confirm`，而那时 `/spec` 已经进不去了**
+   （`advance_session` 当时没有这个状态的分支），参考图从此永远无法影响方案。
+   也就是说这个缺陷被安排在「工具刚开始能用」的那一刻才出现。
+
+   正确顺序：建会话（`draft`）→ 传参考图 → `POST /spec` 蒸馏 → `POST /spec/confirm` → 派发。
+   这与 §14 提交页的流程一致（提示词与参考图是**输入**，出方案是**动作**）。
+
+   `advance_session` 在蒸馏前校验参考图非空，为空直接 **400**（不写 `failure_reason_`、
+   不走回滚）。这样「没传图」不会被静默降级成 `prompt_only`：
+   `degrade_level` 描述的是**统计可用性**，不是「有没有参考图」，两者混在一个取值里就查不出来了。
    响应返回**六表聚合详情**（`ai_light_session_detail_t`，含 `session_` 在内，是会话本体的超集），
    这样前端一次就能拿到 `advance_session` 刚写入的 Spec，不必再补一发 GET。
 
@@ -1153,15 +1177,15 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | 路由注册 | `http_method/kitsu.cpp` 的 `create_kitsu_route_2`（**只注册主服务器**，客户端不跑 LLM） |
 | 图片变体导出 | `http_method/kitsu/preview.{h,cpp}` 的 `preview::save_variants`（从匿名命名空间提到 `preview` 命名空间，供定稿复用；不另写一套尺寸，否则预览列表页读到的图与既有预览文件不一致） |
 | 读模型 | `ai_light_session_detail_t`（`doodle_core/metadata/ai_light/view.h`），六表一次聚合，并带出 `candidate_count_per_iteration`（前端不自己写死 6） |
-| 测试 | `src/test/core/ai_light_state.cpp`（14 用例 / 138 断言，含 JSON 形状回归与「超时会话仍可判断」回归）+ `src/test/core/sqlite_not_found.cpp`（5 用例 / 11 断言，钉 ORM 的 404 语义）；全量回归 83 用例 / 815 断言通过 |
+| 测试 | `src/test/core/ai_light_state.cpp`（16 用例 / 149 断言，含 JSON 形状回归、「超时会话仍可判断」回归、「无参考图不蒸馏」、「`awaiting_spec_confirm` 可重出」）+ `src/test/core/sqlite_not_found.cpp`（5 用例 / 11 断言，钉 ORM 的 404 语义）；全量回归 85 用例 / 826 断言通过 |
 
 **状态机**（`advance_session` 是唯一的推进入口，`/spec`、`/spec/confirm`、`/iterate`、
 镜头页入口都调它，所以「同一步骤从不同入口进来行为一致」是结构性保证的）：
 
 | 触发 | 起始状态 | 结果状态 |
 |---|---|---|
-| 建会话（`POST /session`、镜头页入口） | — | `draft` |
-| `POST /spec`（改提示词 + 可选排除参考图） | `draft` | `awaiting_spec_confirm` |
+| 建会话（`POST /session`、镜头页入口） | — | `draft`（**不到** `awaiting_spec_confirm`：参考图只能在会话存在后上传，蒸馏由 `/spec` 触发） |
+| `POST /spec`（改提示词 + 可选排除参考图；**要求已有参考图**） | `draft` / `awaiting_spec_confirm` | `awaiting_spec_confirm`（重出则 revision+1，旧的留在历史里） |
 | `POST /spec/confirm` | `awaiting_spec_confirm` | `generating`（接缝失败则回滚，Spec 确认**保留**） |
 | `POST /iterate` | `generating` | 仍 `generating`（已派发，等渲染） |
 | `mark_iteration_rendered()`（worker 回填，M3 接入） | `generating` | `awaiting_judgement`（**此时才起算 4 小时**） |
@@ -1211,10 +1235,10 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
 4. **中间候选与参考图都不进 `preview_file`**（决策 1）。每轮 6 张全注册会把任务的预览列表
    冲垮，也会把「交付物」这个概念稀释掉。中间图走 `/candidate/{id}/image`，
    EXR 一律不下发浏览器（线性数据、体积大、浏览器渲染不了）。
-5. **统一入口 `POST /api/doodle/ai/light/shot/{entity_id}/session` 吞掉「接缝未实现」这一种错误。**
-   会话已经落库了，若返回非 2xx，前端就拿不到 session id，重试只会造出重复会话
-   （参考图 cascade 挂在会话上，重复会话意味着重传）。所以只吞 501（能力缺口），
-   其余错误照常抛出，并把 `advance_error` 带在响应里。
+5. **建会话接口不吞任何接缝错误 —— 因为它不调接缝。** 早先建会话会立刻跑第一步，
+   所以需要「吞掉 501 以免前端拿不到 session id 而重试建重复会话」这套说法；
+   现在建会话只 insert，`POST /spec` / `/iterate` 的 501 一律原样返回 ——
+   那是能力缺口，前端应该看到，而不是被包装成一个「成功但少了点东西」的 2xx。
 6. **「过期」不做成会话状态，也不留后台扫描器**（决策 12）。它是 `judgement_due_at_` 的
    纯派生标志，读模型带出 `is_judgement_overdue` 即可。做成状态会**关掉唯一的判断入口**：
    `apply_judgement` 只接受 `awaiting_judgement`，而没有任何路径能从那个状态回到
@@ -1222,7 +1246,7 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
    代价是前端必须自己看这个标志来催办（没有服务端推送），换来的是判断入口永远可用、
    少一个常驻后台任务、少一个「任务挂了没人发现」的失败面。
 
-**实现期发现、值得记住的三个坑（本轮）**：
+**实现期发现、值得记住的四个坑（本轮）**：
 
 1. **`std::optional` 的 JSON 序列化用库自带的，别自己写；而 `nlohmann::json{*opt}` 是列表初始化，会静默变成单元素数组。**
    先说结论：nlohmann 从 C++17 起自带 `std::optional` 的读写（本工程 vcpkg 装的是 3.12.0，
@@ -1307,5 +1331,34 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
    删不删它取决于你要不要它在重建后存在，而不是取决于它现在有没有人用。
    本轮 `suspended_at_` 是连 JSON 一起删的（它从未进过生产，改接口无成本），
    所以两种处理都对，但**必须是有意选的**，不能是顺手删的。
+
+4. **「未实现的接缝」会把流程缺陷掩盖成正常行为 —— 所以接缝的 501 要当成一等状态来对待。**
+
+   建会话接口曾经在同一个请求里「insert 会话 + 立刻蒸馏 Spec」。这看起来很贴心
+   （点一次按钮就拿到待确认的方案），实际是错的：Spec 的输入是提示词 + 参考图，
+   而参考图只能在会话存在**之后**上传（要 `session_id`，而它是这个请求的返回值），
+   所以那一刻 `get_ai_light_references()` **必然为空**，蒸出来的是丢掉主输入的结果。
+
+   为什么没被发现：`generate_spec` 还没实现，抛 501 → 回滚把状态退回 `draft` →
+   后续 `/spec` **恰好**还能走通。全部测试、全部手工验证都是绿的。
+   **缺陷被安排在「接缝实现」那一刻生效** —— 而那正是这个工具第一次真正干活的时候。
+
+   教训有两条，都可复用：
+
+   - **一个请求里不要做「创建 + 依赖创建结果的后续步骤」。** 依赖项（这里是参考图）
+     在响应返回前不可能存在，所以那一步只能拿到空输入。这类缺陷不会报错，只会产出
+     一份看起来正常、实际缺了主输入的结果。
+   - **别把「501 被吞掉」当作流程正确的证据。** 回滚把状态退回入口，会让下游步骤
+     意外地仍然可用 —— 于是失败路径比成功路径更「能跑通」。反过来说，
+     凡是有接缝抛 501 的流程，都必须再问一次：**接缝实现之后，这条路径还成立吗？**
+     本轮就是这样问出来的：把 `generate_spec` 换成「返回值」而不是「抛异常」，
+     会话就会停在 `awaiting_spec_confirm`，而那时 `/spec` 已经进不去。
+
+   顺带一条：修好之后蒸馏改由 `/spec` 触发，于是"同一个状态只能有一个后继步骤"
+   这条约束需要重新核对 —— `awaiting_spec_confirm` 上同时挂着 `/spec`（重出）与
+   `/spec/confirm`（确认后出候选），看起来违反了它。其实不违反，因为
+   `/spec/confirm` 会**先把状态改成 `generating`** 再调 `advance_session`，
+   所以 `advance_session(awaiting_spec_confirm)` 只有一个意图。**判断这条约束时，
+   要看的是 `advance_session` 的分派输入，而不是「哪些路由会碰这个状态」。**
 
 
