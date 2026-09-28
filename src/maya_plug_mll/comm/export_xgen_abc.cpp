@@ -331,16 +331,8 @@ class xgen_alembic_out {
     // 写入动画
     using namespace XGenRenderAPI;
     if (!in_cache->get(PrimitiveCache::PrimIsSpline)) return;
-    auto& l_curve_data         = render_curve_data_;
-    auto l_inited              = render_init_;
-
-    // 获取 taper 和 ramp 参数：从 XgSplinePrimitive 读取缓存的 taper/taperStart 与宽度渐变曲线
-    const auto* l_spline_prim  = dynamic_cast<const XgSplinePrimitive*>(in_patch->description()->activePrimitive());
-    const float l_taper        = l_spline_prim ? l_spline_prim->cTaper() : 0.0f;
-    const float l_taper_start  = l_spline_prim ? l_spline_prim->cTaperStart() : 0.0f;
-    const auto& l_ramp         = l_spline_prim ? l_spline_prim->getRampUI() : SgRampUIComp{};
-    const bool l_has_ramp      = l_spline_prim && !l_ramp.isConstant();
-    const bool l_has_width_mod = l_taper > 0.0f || l_has_ramp;
+    auto& l_curve_data = render_curve_data_;
+    auto l_inited      = render_init_;
 
     if (!l_inited) {
       auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
@@ -359,48 +351,58 @@ class xgen_alembic_out {
         l_curve_data.uvs_.reserve(l_total_points + l_curve_data.uvs_.size());
         // 获取宽度 width
         l_curve_data.widths_.reserve(l_total_points + l_curve_data.widths_.size());
-        const auto l_const_width         = in_cache->get(PrimitiveCache::ConstantWidth);
-        const bool l_has_per_curve_width = in_cache->getSize(PrimitiveCache::Widths) > 0;
-        const auto* l_per_curve_width    = l_has_per_curve_width ? in_cache->get(PrimitiveCache::Widths) : nullptr;
+        // 宽度: PrimitiveCache::Widths 是逐顶点的最终宽度, width 表达式、widthRamp 宽度渐变、
+        // taper 都已经由 XGen 烘焙在里面, 数量为 sum(max(NumVertices[z] - 2, 0)), 即每条曲线
+        // 与下面写入的顶点窗口([起点 + 1, 起点 + 1 + (顶点数 - 2)))一一对应。
+        // 参考 devkit 中的渲染器实现: xgenArnoldProcedural/XgArnoldProcedural.cpp 直接
+        //   radius[w] = pWidths[w] * 0.5f  (XGen 的宽度是直径, Arnold 需要半径)
+        // xgenRendermanProcedural/XgRendermanProcedural.cpp 同样直接使用 varying float width,
+        // 二者都不再自行乘一次 ramp/taper。
+        // 因此这里必须按顶点原样取用: 若再乘一次 ramp/taper, 宽度会被重复衰减,
+        // 导出结果比 Maya 自带导出更细(存在 widthRamp 时尤其明显)。
+        unsigned int l_expected_widths{};
+        for (auto z = 0; z < l_num_size; ++z) {
+          if (l_num[z] > 2) l_expected_widths += static_cast<unsigned int>(l_num[z]) - 2;
+        }
+        const auto l_widths_size = in_cache->getSize(PrimitiveCache::Widths);
+        // 逐顶点宽度数量与顶点数不匹配(理论上不会发生)时退回常量宽度
+        const auto* l_vertex_width =
+            l_widths_size > 0 && l_widths_size == l_expected_widths ? in_cache->get(PrimitiveCache::Widths) : nullptr;
+        const auto l_const_width = in_cache->get(PrimitiveCache::ConstantWidth);
 
         // U_XS/V_XS 是 XGen 提供的表面根部 UV（每图元一个值，逐顶点展开）
-        const bool l_has_uv              = in_cache->getSize(PrimitiveCache::U_XS) == l_num_size &&
-                              in_cache->getSize(PrimitiveCache::V_XS) == l_num_size;
-        const auto* l_u       = l_has_uv ? in_cache->get(PrimitiveCache::U_XS) : nullptr;
-        const auto* l_v       = l_has_uv ? in_cache->get(PrimitiveCache::V_XS) : nullptr;
-        const auto* l_face_id = l_has_uv ? in_cache->get(PrimitiveCache::FaceID_XS) : nullptr;
+        const bool l_has_uv      = in_cache->getSize(PrimitiveCache::U_XS) == l_num_size &&
+                                   in_cache->getSize(PrimitiveCache::V_XS) == l_num_size;
+        const auto* l_u          = l_has_uv ? in_cache->get(PrimitiveCache::U_XS) : nullptr;
+        const auto* l_v          = l_has_uv ? in_cache->get(PrimitiveCache::V_XS) : nullptr;
+        const auto* l_face_id    = l_has_uv ? in_cache->get(PrimitiveCache::FaceID_XS) : nullptr;
 
         std::size_t l_index_off{};
+        // 逐顶点宽度按曲线顺序紧密排列, 每条曲线 (顶点数 - 2) 个, 因此单独维护一个宽度下标
+        std::size_t l_width_off{};
         for (auto z = 0; z < l_num_size; ++z) {
           const auto l_curve_verts = l_num[z];
-          boost::scope::scope_exit l_exit{[&]() { l_index_off += l_curve_verts; }};
+          boost::scope::scope_exit l_exit{[&]() {
+            l_index_off += l_curve_verts;
+            if (l_curve_verts > 2) l_width_off += static_cast<std::size_t>(l_curve_verts) - 2;
+          }};
           // 顶点数 <= 2 的曲线无法构成有意义的 cubic 曲线（去掉首尾后 <= 0），
           // 且负值传入 Alembic 内部会触发 boost::numeric_cast::negative_overflow
           if (l_curve_verts <= 2) continue;
 
           const auto l_store_verts = l_curve_verts - 2;
           creare_curve(l_pos + l_index_off + 1, l_store_verts, l_curve_data.points_, l_curve_data.knots_);
-          
+
           l_curve_data.vertices_.emplace_back(l_store_verts);
 
-          // 宽度展开到每个顶点（kVertexScope），应用 ramp 渐变 + taper 衰减
+          // 宽度展开到每个顶点（kVertexScope）: 直接取 XGen 烘焙好的逐顶点宽度,
+          // 顶点数与上面写入的 Points 完全一致(都是 顶点数 - 2, 首尾各去掉一个 CV)
           {
-            const auto l_root_w = l_has_per_curve_width ? l_per_curve_width[z] : l_const_width;
-            if (l_has_width_mod && l_store_verts > 1) {
-              l_curve_data.widths_.reserve(l_curve_data.widths_.size() + l_store_verts);
-              const float l_inv_taper_range = 1.0f / std::max(0.001f, 1.0f - l_taper_start);
-              for (auto v = 0; v < l_store_verts; ++v) {
-                const float t             = static_cast<float>(v) / static_cast<float>(l_store_verts - 1);
-                // ramp 倍率：沿曲线长度的宽度渐变曲线
-                const float l_ramp_scale  = l_has_ramp ? l_ramp.getValue(t) : 1.0f;
-                // taper 倍率：从 taperStart 开始线性缩减到末端
-                const float l_taper_scale = (l_taper <= 0.0f || t <= l_taper_start)
-                                                ? 1.0f
-                                                : (1.0f - l_taper * (t - l_taper_start) * l_inv_taper_range);
-                l_curve_data.widths_.emplace_back(l_root_w * l_ramp_scale * l_taper_scale);
-              }
+            if (l_vertex_width) {
+              const auto* l_begin = l_vertex_width + l_width_off;
+              l_curve_data.widths_.insert(l_curve_data.widths_.end(), l_begin, l_begin + l_store_verts);
             } else {
-              l_curve_data.widths_.insert(l_curve_data.widths_.end(), l_store_verts, l_root_w);
+              l_curve_data.widths_.insert(l_curve_data.widths_.end(), l_store_verts, l_const_width);
             }
           }
 
@@ -435,8 +437,8 @@ class xgen_alembic_out {
 
         const bool l_has_uv = in_cache->getSize(PrimitiveCache::U_XS) == l_num_size &&
                               in_cache->getSize(PrimitiveCache::V_XS) == l_num_size;
-        const auto* l_u = l_has_uv ? in_cache->get(PrimitiveCache::U_XS) : nullptr;
-        const auto* l_v = l_has_uv ? in_cache->get(PrimitiveCache::V_XS) : nullptr;
+        const auto* l_u     = l_has_uv ? in_cache->get(PrimitiveCache::U_XS) : nullptr;
+        const auto* l_v     = l_has_uv ? in_cache->get(PrimitiveCache::V_XS) : nullptr;
 
         std::size_t l_index_off{};
         for (auto z = 0; z < l_num_size; ++z) {
