@@ -62,7 +62,7 @@ bool DOODLELIB_API is_hidden(const FSys::path& in_file_path);
  * @param in_file_path 文件名称
  * @return 分裂后重新组合的文件名称
  */
-FSys::path split_uuid_path(const FSys::path& in_file_path);
+FSys::path DOODLELIB_API split_uuid_path(const FSys::path& in_file_path);
 bool copy_diff(const FSys::path& from, const FSys::path& to, logger_ptr in_logger = nullptr);
 // 比较两个文件是否不同(简单, 使用文件大小和最后修改时间)
 bool DOODLELIB_API is_diff(const FSys::path& in_path1, const FSys::path& in_path2);

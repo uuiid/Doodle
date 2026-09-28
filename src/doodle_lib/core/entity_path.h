@@ -110,38 +110,6 @@ FSys::path get_shots_auto_lighting_upload_simulation_name(
 );
 FSys::path get_shots_auto_lighting_upload_movie_path(const episodes& episode_, const shot& shot_);
 
-// ---------------------------------------------------------------------------
-// AI 灯光（docs/ue_ai_lighting_plan.md）产物落盘
-//
-// 全部挂在自动灯光上传目录下再分 AI_Light/<会话 uuid>/，跟着项目一起归档：
-//   <auto_lighting_upload>/AI_Light/<session_uuid>/ref/ref_00.png
-//   <auto_lighting_upload>/AI_Light/<session_uuid>/it_001/cand_00.png
-//   <auto_lighting_upload>/AI_Light/<session_uuid>/it_001/cand_00.exr
-//
-// 参考图与中间候选渲染都**不注册 preview_file**，由专用接口从这些路径直接提供；
-// 只有定稿候选才注册 preview_file（source = auto_light_generate），
-// 免得镜头预览列表被 6×N 张候选淹没。
-// ---------------------------------------------------------------------------
-
-/// AI 灯光会话根目录
-FSys::path get_ai_light_session_path(
-    const episodes& episode_, const entity_asset_extend_value& ground_extend_, const uuid& in_session_id
-);
-/// 会话的参考图目录
-FSys::path get_ai_light_reference_path(
-    const episodes& episode_, const entity_asset_extend_value& ground_extend_, const uuid& in_session_id
-);
-/// 某一轮的候选渲染目录
-FSys::path get_ai_light_iteration_path(
-    const episodes& episode_, const entity_asset_extend_value& ground_extend_, const uuid& in_session_id,
-    std::int32_t in_iteration
-);
-/// 单个候选的渲染图路径。in_linear = true 取线性 EXR（不下发浏览器），false 取显示空间 PNG。
-FSys::path get_ai_light_candidate_path(
-    const episodes& episode_, const entity_asset_extend_value& ground_extend_, const uuid& in_session_id,
-    std::int32_t in_iteration, std::int32_t in_candidate_index, bool in_linear = false
-);
-
 // 将路径转换为 ue_game 路径
 FSys::path conv_ue_game_path(const FSys::path& in_path);
 // 将 ue_game 路径转换为 正常路径

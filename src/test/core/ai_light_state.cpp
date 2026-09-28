@@ -16,9 +16,15 @@
 //   把 sqlite_database 绑到它的 strand 上 —— run_sql() 的 dispatch 就落在这个
 //   io_context 里，可以被 run() 跑完。
 //
+// 另外钉住「预分配的 uuid 不会被 ORM 改写」这条不变式：路由层与编排层都是先定
+// uuid、再用它算文件名或被别人引用（见文件末尾那条用例）。它是「磁盘上的文件名」
+// 与「库里的 uuid」同源的唯一保证，一旦被破坏，参考图会写得进取不出、候选回传必 404。
+//
 
 #include <doodle_core/metadata/ai_light/ai_light.h>
+#include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/preview_file.h>
+#include <doodle_core/metadata/server_task_info.h>
 
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
@@ -844,6 +850,115 @@ BOOST_AUTO_TEST_CASE(optional_and_time_fields_serialize_as_scalars) {
   BOOST_TEST(l_detail_json.at("accepted_candidate").is_null());
   // 每轮候选数是唯一数字来源，读模型要把它带出去（前端不自己写死 6）
   BOOST_TEST(l_detail_json.at("candidate_count_per_iteration").get<std::int32_t>() == g_candidate_count);
+}
+
+// 预分配的 uuid 不会被 ORM 改写 —— 这是「文件名用 uuid」与「库里存的 uuid」同源的唯一保证。
+//
+// 为什么值得单测：路由层（ai_light.cpp 里先定 uuid 再算参考图路径）与编排层
+// （ai_light_orchestrator.cpp 里先定轮次/候选/任务的 uuid 再互相引用）都是**先定后用**，
+// 而 ORM 的 values() 只在 uuid 为 nil 时回填（orm/insert.h:93 与 :122）。哪天它改成无条件
+// 回填，磁盘上的文件名与库里的 uuid 就会错位：参考图变成「写得进、再取不出」（拿库里的
+// uuid 重算路径，算不到那个文件），轮次变成「回传必 404」（mark_iteration_rendered 按
+// 任务 uuid 反查不到），候选的 iteration_id_ 也会指向一个不存在的轮次。
+//
+// 这里刻意走**延迟执行**：values() 之后对象就销毁，语句到 run_sql() 才落库，与两个生产
+// 调用点的时序完全一致 —— 顺带钉住 bind_value_t 是拷贝语义（它装的是 std::any）。
+BOOST_AUTO_TEST_CASE(pre_assigned_uuid_survives_the_deferred_insert) {
+  // 与本文件其它用例一样，必须先有一个 app_base：夹具里 core_set::get_set() 之类
+  // 都要经过 doodle_lib 的单例（impl::self 只在 app_base 构造时才被赋值），
+  // 少了它这里会在夹具构造阶段就空指针崩掉。
+  app_base l_app{};
+  fixture_t l_f{"preset_uuid"};
+  doodle::http::kitsu_ctx_t l_ctx{};
+  l_ctx.root_            = FSys::path{"preset_root"};
+
+  // 四个 uuid 一律先定下来，再用它算路径 / 被引用（与生产调用点的次序一致）
+  const auto l_ref_uuid  = core_set::get_set().get_uuid();
+  const auto l_task_uuid = core_set::get_set().get_uuid();
+  const auto l_it_uuid   = core_set::get_set().get_uuid();
+  const auto l_cand_uuid = core_set::get_set().get_uuid();
+
+  // --- 参考图：文件名用它自己的 uuid ---
+  ai_light_reference l_ref{};
+  l_ref.uuid_id_        = l_ref_uuid;
+  l_ref.session_id_     = l_f.session_.uuid_id_;
+  l_ref.ordinal_        = 99;  // 夹具不造参考图；取个大值，将来夹具扩充也不会撞 (session_id, ordinal) 唯一索引
+  l_ref.width_          = 1920;
+  l_ref.height_         = 1080;
+  l_ref.file_path_      = l_ctx.get_ai_light_reference_file(l_f.session_.uuid_id_, l_ref.uuid_id_);
+  const auto l_ref_path = l_ref.file_path_;
+
+  // --- 任务 + 轮次：轮次引用任务的 uuid ---
+  server_task_info l_task{};
+  l_task.uuid_id_     = l_task_uuid;
+  l_task.name_        = "probe";
+  l_task.status_      = server_task_info_status::submitted;
+  l_task.submitter_   = l_f.session_.submitter_;
+  l_task.submit_time_ = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  l_task.task_id_     = l_f.session_.task_id_;
+  l_task.type_        = server_task_info_type::ai_light;
+
+  ai_light_iteration l_it{};
+  l_it.uuid_id_             = l_it_uuid;
+  l_it.session_id_          = l_f.session_.uuid_id_;
+  l_it.iteration_           = 2;  // 夹具已用第 1 轮
+  l_it.spec_id_             = l_f.spec_.uuid_id_;
+  l_it.server_task_info_id_ = l_task.uuid_id_;  // 必须在任务 uuid 定下来之后
+
+  // --- 候选：iteration_id_ 指向轮次，两个渲染路径都用自己的 uuid ---
+  ai_light_candidate l_cand{};
+  l_cand.uuid_id_         = l_cand_uuid;
+  l_cand.iteration_id_    = l_it.uuid_id_;
+  l_cand.session_id_      = l_f.session_.uuid_id_;
+  l_cand.candidate_index_ = 0;
+  l_cand.render_status_   = candidate_render_status::pending;
+  l_cand.render_png_path_ = l_ctx.get_ai_light_candidate_file(l_f.session_.uuid_id_, 2, l_cand.uuid_id_, false);
+  l_cand.render_exr_path_ = l_ctx.get_ai_light_candidate_file(l_f.session_.uuid_id_, 2, l_cand.uuid_id_, true);
+  const auto l_png_path   = l_cand.render_png_path_;
+  const auto l_exr_path   = l_cand.render_exr_path_;
+
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_f.orm_).into<ai_light_reference>().values(l_ref));
+  l_sqls.emplace_back(insert(l_f.orm_).into<server_task_info>().values(l_task));
+  l_sqls.emplace_back(insert(l_f.orm_).into<ai_light_iteration>().values(l_it));
+  l_sqls.emplace_back(insert(l_f.orm_).into<ai_light_candidate>().values(l_cand));
+
+  // 1) 回填只补 nil：预分配的一个都不许动
+  BOOST_TEST(l_ref.uuid_id_ == l_ref_uuid);
+  BOOST_TEST(l_task.uuid_id_ == l_task_uuid);
+  BOOST_TEST(l_it.uuid_id_ == l_it_uuid);
+  BOOST_TEST(l_cand.uuid_id_ == l_cand_uuid);
+
+  run_coro(l_f.ctx_, [&]() -> boost::asio::awaitable<void> { co_await l_f.sql_->run_sql(std::move(l_sqls)); });
+
+  // 2) 参考图：库里的 uuid 必须能重算出磁盘上那个文件名（夹具不造参考图，所以只有这一行）
+  const auto l_refs = l_f.sql_->get_ai_light_references(l_f.session_.uuid_id_);
+  BOOST_REQUIRE(l_refs.size() == 1);
+  BOOST_TEST(l_refs.front().uuid_id_ == l_ref_uuid);
+  BOOST_TEST(l_refs.front().file_path_ == l_ref_path);
+  BOOST_TEST(
+      l_ctx.get_ai_light_reference_file(l_f.session_.uuid_id_, l_refs.front().uuid_id_) == l_refs.front().file_path_
+  );
+
+  // 3) 轮次：按任务 uuid 能反查回来（mark_iteration_rendered 的入口）
+  const auto l_it_back = l_f.sql_->get_ai_light_iteration_by_task(l_task_uuid);
+  BOOST_REQUIRE(l_it_back.has_value());
+  BOOST_TEST(l_it_back->uuid_id_ == l_it_uuid);
+  BOOST_TEST(l_it_back->server_task_info_id_ == l_task_uuid);
+
+  // 4) 候选：iteration_id_ 就是预分配的轮次 uuid（「候选属于本轮」的校验靠它）
+  const auto l_cands = l_f.sql_->get_ai_light_candidates(l_it_uuid);
+  BOOST_REQUIRE(l_cands.size() == 1);
+  BOOST_TEST(l_cands.front().uuid_id_ == l_cand_uuid);
+  BOOST_TEST(l_cands.front().iteration_id_ == l_it_uuid);
+  BOOST_TEST(l_cands.front().render_png_path_ == l_png_path);
+  BOOST_TEST(l_cands.front().render_exr_path_ == l_exr_path);
+  BOOST_TEST(
+      l_ctx.get_ai_light_candidate_file(l_f.session_.uuid_id_, 2, l_cands.front().uuid_id_, false) == l_png_path
+  );
+  BOOST_TEST(
+      l_ctx.get_ai_light_candidate_file(l_f.session_.uuid_id_, 2, l_cands.front().uuid_id_, true) == l_exr_path
+  );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

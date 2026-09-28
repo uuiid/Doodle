@@ -14,14 +14,12 @@
 #include <doodle_core/metadata/ai_light/ai_light.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/preview_file.h>
-#include <doodle_core/metadata/project.h>
 // 必须显式包含：get_tasks_for_entity_and_task_type() 返回 std::optional<task>，
 // 而 task_status.h 只给了 task 的前置声明，实例化 optional<task> 需要完整类型。
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_type.h>
 
 #include <doodle_lib/core/core_set.h>
-#include <doodle_lib/core/entity_path.h>
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
@@ -102,35 +100,32 @@ bool query_bool(const boost::url& in_url, std::string_view in_key, bool in_defau
   return in_default;
 }
 
-/// 会话产物目录的绝对路径。拿不到基准时返回 nullopt（例如镜头还没建资产扩展）。
-std::optional<FSys::path> session_dir(sqlite_database& in_sql, const ai_light_session& in_session) {
-  try {
-    auto l_shot = in_sql.get_by_uuid<entity>(in_session.entity_id_);
-    if (l_shot.parent_id_.is_nil()) return std::nullopt;
-    auto l_prj           = in_sql.get_by_uuid<project>(in_session.project_id_);
-    auto l_episode       = episodes{in_sql.get_by_uuid<entity>(l_shot.parent_id_)};
-    auto l_ground_extend = in_sql.get_entity_shot_extend_by_task(in_session.entity_id_);
-    return l_prj.path_ / get_ai_light_session_path(l_episode, l_ground_extend, in_session.uuid_id_);
-  } catch (const std::exception&) {
-    return std::nullopt;
-  }
+/// 会话产物目录。挂在资产根（kitsu_ctx_t::root_）下、按会话 uuid 命名 + 两级分桶。
+///
+/// 为什么不在 project.path_ 下：会话产物是 uuid 标识的生成物，与 sd2 / pictures / jobs
+/// 同性质，本来就该和它们放在同一个根下。这样也**不再依赖 episode / shot / 项目路径** ——
+/// 于是少掉「镜头没建资产扩展就传不了参考图」这一整类失败（旧实现要查三次库才能算出目录）。
+FSys::path session_dir(const ai_light_session& in_session) {
+  return g_ctx().get<kitsu_ctx_t>().get_ai_light_session_dir(in_session.uuid_id_);
 }
 
-/// 删会话时把产物整体移进项目备份区。
+/// 删会话时把产物整体移进备份区。
 ///
 /// 为什么不直接删：一次会话的产物（参考图 + 每轮 6 张渲染）动辄上百 MB，
-/// 而且是「这版为什么没被选」的唯一证据。up_file_base 的既有做法就是先进
-/// project.path_/backup/<YYYY_MM_DD_HH>/，这里沿用同一套语义。
-void backup_session_dir(sqlite_database& in_sql, const ai_light_session& in_session) {
-  auto l_src = session_dir(in_sql, in_session);
-  if (!l_src.has_value() || !FSys::exists(*l_src)) return;
+/// 而且是「这版为什么没被选」的唯一证据。
+///
+/// 备份目标是 root_/ai_light/backup/<YYYY_MM_DD_HH>/<会话 uuid>/，与 up_file_base 的做法同构
+/// （它备份到 root_path_/backup/<小时>/）：备份挂在**源自己这一片**根下，源与目标必然同卷，
+/// rename 才不会因为「root_ 在本地盘、项目在 NAS」而失败。
+void backup_session_dir(const ai_light_session& in_session) {
+  auto l_src = session_dir(in_session);
+  if (!FSys::exists(l_src)) return;
   try {
-    auto l_prj = in_sql.get_by_uuid<project>(in_session.project_id_);
-    auto l_dst = l_prj.path_ / "backup" /
-                 fmt::format("{:%Y_%m_%d_%H}", chrono::floor<chrono::hours>(chrono::system_clock::now())) /
-                 fmt::format("ai_light_{}", in_session.uuid_id_);
+    auto l_dst = g_ctx().get<kitsu_ctx_t>().get_ai_light_backup_dir(
+        in_session.uuid_id_, fmt::format("{:%Y_%m_%d_%H}", chrono::floor<chrono::hours>(chrono::system_clock::now()))
+    );
     if (!FSys::exists(l_dst.parent_path())) FSys::create_directories(l_dst.parent_path());
-    FSys::rename(*l_src, l_dst);
+    FSys::rename(l_src, l_dst);
     SPDLOG_LOGGER_WARN(
         g_logger_ctrl().get_http(), "AI 灯光会话 {} 产物已备份到 {}", in_session.uuid_id_, l_dst.generic_string()
     );
@@ -322,7 +317,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, delete_) {
       "会话 {} 已定稿，不能删除；定稿候选已作为预览文件挂在任务上", l_session.uuid_id_
   );
 
-  backup_session_dir(l_sql, l_session);
+  backup_session_dir(l_session);
 
   sql_modify_statement_vector_t l_sqls{};
   // 参考图 / Spec / 轮次 / 候选的外键都是 cascade，删会话行即连带删净。
@@ -356,15 +351,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
   auto l_files = in_handle->get_files();
   DOODLE_CHICK_HTTP(!l_files.empty(), bad_request, "请上传至少一张参考图");
 
-  auto l_dir = session_dir(l_sql, l_session);
-  DOODLE_CHICK_HTTP(
-      l_dir.has_value(), bad_request,
-      "镜头 {} 缺少资产扩展信息，无法推算参考图目录", l_session.entity_id_
-  );
-  auto l_ref_dir = l_dir->parent_path() / "ref";
+  // 参考图目录在**会话目录之内**：<root>/ai_light/<分桶>/<会话 uuid>/ref/。
+  // 不能用 session_dir().parent_path() / "ref" —— 那是会话目录的**兄弟**目录，
+  // 会让同一镜头的所有会话共用一个 ref/，于是两个会话的参考图互相覆盖、
+  // 删会话时又因为真正的会话目录不存在而备份不到。
+  auto& l_ctx    = g_ctx().get<kitsu_ctx_t>();
+  auto l_ref_dir = l_ctx.get_ai_light_reference_dir(l_session.uuid_id_);
   if (!FSys::exists(l_ref_dir)) FSys::create_directories(l_ref_dir);
 
-  // 已有参考图占用的序号，新图从 max+1 开始 —— 不覆盖既有图。
+  // 序号只表示**展示顺序**（前端按它排参考图），文件名不再依赖它 ——
+  // 文件名是各自的 uuid，所以即使序号被复用也绝不会覆盖既有图。
   auto l_existing = l_sql.get_ai_light_references(l_session.uuid_id_);
   std::int32_t l_next = 0;
   for (const auto& l_r : l_existing) l_next = std::max(l_next, l_r.ordinal_ + 1);
@@ -382,7 +378,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
     ai_light_reference l_ref{};
     l_ref.session_id_ = l_session.uuid_id_;
     l_ref.ordinal_    = l_next++;
-    l_ref.file_path_  = l_ref_dir / fmt::format("ref_{:02}.png", l_ref.ordinal_);
+    // uuid 必须在这里就定下来，不能等 ORM 在 insert 时回填：文件名要用它，
+    // nil uuid 会让所有参考图写进同一个路径（先例：build_accepted_preview_file）。
+    l_ref.uuid_id_    = core_set::get_set().get_uuid();
+    l_ref.file_path_  = l_ctx.get_ai_light_reference_file(l_session.uuid_id_, l_ref.uuid_id_);
     FSys::rename(l_info.path_, l_ref.file_path_);
     l_ref.width_  = l_info.size_.width;
     l_ref.height_ = l_info.size_.height;

@@ -706,8 +706,23 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 ### 10.2 新增任务类型与数据表
 
 - 任务类型：`server_task_info_type::ai_light`（追加在枚举末尾）
-- 资产路径复用 `get_shots_auto_lighting_upload_path`（`core/entity_path.cpp:425-445`），
-  AI 灯光产物挂在其下的 `AI_Light/<会话 uuid>/`
+- 资产路径**不再**复用 `get_shots_auto_lighting_upload_path`（那条会随项目/剧集/镜头命名漂移，
+  且没建资产扩展就算不出目录）——会话产物是 uuid 标识的生成物，与 `sd2`/`pictures`/`jobs` 同性质，
+  所以挂在**资产根** `kitsu_ctx_t::root_` 下、按 uuid 命名，见 §15.4「产物路径」：
+
+  ```
+  <root>/ai_light/<会话 uuid[0:3]>/<会话 uuid[3:6]>/<会话 uuid>/ref/<参考图 uuid>.png
+  <root>/ai_light/<会话 uuid[0:3]>/<会话 uuid[3:6]>/<会话 uuid>/it_001/<候选 uuid>.png
+  <root>/ai_light/<会话 uuid[0:3]>/<会话 uuid[3:6]>/<会话 uuid>/it_001/<候选 uuid>.exr
+  <root>/ai_light/backup/<YYYY_MM_DD_HH>/<会话 uuid>/          ← 删会话时整体搬到这儿
+  ```
+
+  **文件名一律是各自的 uuid**（不是序号）：序号落盘会撞车（同一目录两张图都叫 `ref_00.png`），
+  而 uuid 天然唯一，序号退回为纯展示顺序。**只有会话目录分桶**（`split_uuid_path`，与 `sd2`/`jobs` 一致）；
+  一个会话的参考图是几十张、单轮候选固定 6 张，内层再分桶只有噪声。
+  代价：产物不再跟着项目目录归档，改跟资产根的生命周期走；收益：路径不再依赖
+  episode/shot 元数据，`session_dir` 与编排层算候选路径都**不用查库**，「镜头没建资产扩展就传不了参考图」
+  这一整类失败随之消失。
 
 **六张表**（`user_version` 30 → 31，全部是新表，迁移只需 `sync_schema()`）：
 
@@ -1203,7 +1218,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | ORM 注册 | `sqlite_database.cpp` 的 6 个 `reg_table` 块（含定稿唯一索引） |
 | 迁移 30 → 31 | `sqlite_upgrade.cpp` 的 `upgrade_3_t` + `upgrade_3()`；版本常量拆出 `g_version_30`，避免 `upgrade_2_t` 把库直接标成最新而让这一步被静默跳过 |
 | 查询方法 | `sqlite_database.h/.cpp` 的 19 个 `get_ai_light_*` |
-| 产物路径 | `core/entity_path.h/.cpp` 的 `get_ai_light_session_path` / `_reference_path` / `_iteration_path` / `_candidate_path` |
+| 产物路径 | `doodle_core/metadata/kitsu_ctx_t.h` 的 `get_ai_light_session_dir` / `_reference_dir` / `_reference_file` / `_iteration_dir` / `_candidate_file` / `_backup_dir`（**唯一**布局真相来源；原先在 `core/entity_path.h/.cpp` 的四个 `get_ai_light_*_path` 已删除，见坑 6） |
 | 任务类型 | `server_task_info_type::ai_light` |
 | 测试 | `src/test/core/ai_light_schema.cpp`（建表、版本门控、JSON 往返无损、定稿唯一性、过期时限经 TEXT 列往返后仍判得对） |
 
@@ -1234,7 +1249,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | 路由注册 | `http_method/kitsu.cpp` 的 `create_kitsu_route_2`（**只注册主服务器**，客户端不跑 LLM） |
 | 图片变体导出 | `http_method/kitsu/preview.{h,cpp}` 的 `preview::save_variants`（从匿名命名空间提到 `preview` 命名空间，供定稿复用；不另写一套尺寸，否则预览列表页读到的图与既有预览文件不一致） |
 | 读模型 | `ai_light_session_detail_t`（`doodle_core/metadata/ai_light/view.h`），六表一次聚合，并带出 `candidate_count_per_iteration`（前端不自己写死 6） |
-| 测试 | `src/test/core/ai_light_state.cpp`（16 用例 / 149 断言，含 JSON 形状回归、「超时会话仍可判断」回归、「无参考图不蒸馏」、「`awaiting_spec_confirm` 可重出」）+ `src/test/core/sqlite_not_found.cpp`（5 用例 / 11 断言，钉 ORM 的 404 语义）+ §15.5 的统计层套件；全量回归 100 用例 / 885 断言通过 |
+| 测试 | `src/test/core/ai_light_state.cpp`（17 用例 / 167 断言，含 JSON 形状回归、「超时会话仍可判断」回归、「无参考图不蒸馏」、「`awaiting_spec_confirm` 可重出」，以及钉住「预分配 uuid 不被 ORM 改写」的延迟插入回归 —— 见坑 6）+ `src/test/core/sqlite_not_found.cpp`（5 用例 / 11 断言，钉 ORM 的 404 语义）+ `src/test/core/ai_light_paths.cpp`（8 用例 / 23 断言，钉产物落盘布局，见坑 6）+ §15.5 的统计层套件；全量回归 109 用例 / 926 断言通过 |
 
 **状态机**（`advance_session` 是唯一的推进入口，`/spec`、`/spec/confirm`、`/iterate`、
 镜头页入口都调它，所以「同一步骤从不同入口进来行为一致」是结构性保证的）：
@@ -1331,7 +1346,7 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
    代价是前端必须自己看这个标志来催办（没有服务端推送），换来的是判断入口永远可用、
    少一个常驻后台任务、少一个「任务挂了没人发现」的失败面。
 
-**实现期发现、值得记住的五个坑（本轮）**：
+**实现期发现、值得记住的六个坑（本轮）**：
 
 1. **`std::optional` 的 JSON 序列化用库自带的，别自己写；而 `nlohmann::json{*opt}` 是列表初始化，会静默变成单元素数组。**
    先说结论：nlohmann 从 C++17 起自带 `std::optional` 的读写（本工程 vcpkg 装的是 3.12.0，
@@ -1459,5 +1474,62 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
    纯黑恰好得 0、纯白恰好得 1，顺带还消掉了「全在 bin 0 却报 0.002」这种别扭值。
    一般化的教训：**凡是库函数收「范围 + 桶数」，先确认边界是开还是闭，再找一个
    边界不可能被取到的量纲**（这里是 256 个离散等级，而不是连续的 `[0,1]`）。
+
+6. **把产物从「项目目录下」挪到「资产根 + uuid 命名」，路径计算里的元数据依赖会一起消失 ——
+   依赖消失之后，原来被它挡着的两个缺陷才露出来。**
+
+   旧写法是 `session_dir = project.path_ / get_ai_light_session_path(episode, ground_extend, 会话 uuid)`，
+   为了拼出这条相对路径得先查三次库（镜头实体、项目、镜头资产扩展），于是长出了三条「算不出目录」的
+   失败分支。改成
+
+   ```cpp
+   root_ / "ai_light" / FSys::split_uuid_path(fmt::to_string(会话 uuid))   // 见 §10.2
+   ```
+
+   之后：`session_dir` 与编排层算候选路径**都不用再查库**（编排层那个只为算基准而存在的
+   `resolve_session_paths` 连结构体一起删掉了）；「镜头没有父实体」「镜头缺少资产扩展信息」
+   两条 400 随之消失（它们本来只是路径计算的前置条件，不是业务规则）；工作机侧同理只依赖
+   `root_`，而任务载荷里已经带了 `session_id` / `iteration` / `candidate_id`，足以重算出**一模一样**的路径。
+
+   顺带露出来两个缺陷 —— 都在当前**不可达**的分支里（接缝还抛 501），所以测试全绿也照不出来：
+
+   - `reference_route::post` 用的是 `session_dir(...).parent_path() / "ref"` —— 那是会话目录的
+     **兄弟**目录（与 `entity_path.h` 自己声明的 `<会话 uuid>/ref/` 都不符）。后果：同一镜头的所有会话
+     共用一个 `ref/`，两个会话的 `ref_00.png` 互相覆盖；而删会话时 `backup_session_dir` 搬的是
+     `<会话 uuid>` 目录（那目录压根不存在），参考图全成孤儿。已改为走 `get_ai_light_reference_dir()`
+     （在会话目录**之内**），并由 `ai_light_paths.cpp` 用 `parent_path()` 相等把它钉住。
+   - `ai_light_iteration.server_task_info_id_` 与 `ai_light_candidate.iteration_id_` 落库为 **nil**：
+     两处都在 ORM 的 `values()` 回填 uuid **之前**读了 `l_task.uuid_id_` / `l_it.uuid_id_`。
+     后果是 `mark_iteration_rendered()`（按任务 uuid 反查轮次）永远 404，候选也永远「不属于本轮」。
+     修法与「候选渲染图用 uuid 命名」同源：**uuid 必须在被引用之前显式分配** ——
+     `orm::insert().values()` 只回填 nil 的 uuid（`orm/sqlite_orm/orm/insert.h:92-94`；
+     批量版本在 `:119-128`），预先分配的值会被保留，所以显式 `core_set::get_set().get_uuid()` 是安全且必要的。
+     这条「预分配不被改写」由 `ai_light_state.cpp::pre_assigned_uuid_survives_the_deferred_insert` 钉住：
+     它按生产次序先定 uuid、再算文件名/被引用，走**延迟执行**（`values()` 之后对象即销毁、语句到
+     `run_sql()` 才落库），最后校验库里的 uuid 能重算出磁盘上那个文件名、任务 uuid 能反查回轮次。
+     顺带确认了两件事：`uuid_id` 不是主键（主键是自增 `id`，所以它不会被 insert 语句当主键跳过），
+     以及 `bind_value_t` 装的是 `std::any`（值拷贝），延迟执行不依赖源对象的生命周期。
+
+   一般化的教训两条：
+
+   - **用 uuid 做文件名时，「谁先生成这个 uuid」就变成了正确性问题。** 一个实体只要它的 uuid 会进入
+     路径（或被别的行提前引用），就必须在构造那一刻定下来。等 ORM 回填是最省事、也最容易在
+     「恰好不可达」的路径上埋雷的写法。先例早就有：`build_accepted_preview_file` 里那段注释
+     （「uuid 必须在这里就定下来，不能等 ORM 在 insert 时回填」）说的就是同一件事。
+   - **不可达分支上的缺陷不会自己消失。** 本轮修掉的两处都在 501 之后，改之前测试全绿、改之后也全绿，
+     唯一能暴露它们的是「读一遍这段代码，问它一旦可达会怎样」。这与坑 4 是同一个教训的另一面。
+   - **测试夹具的一个既有前提**（本轮踩过一次，记清楚免得再踩）：`test_main` 里凡是要碰库/单例的
+     用例，都**必须先构造一个 `app_base`**。原因：`doodle_lib::impl::self` 是文件级静态指针，
+     只在 `doodle_lib` 构造时被赋值（`doodle_lib.cpp:36/40`），而 `doodle_lib::Get()` 直接解引用它
+     （`:52`）—— 没有活着的 `app_base`（它持有 `doodle_lib_ptr`）时就是**空指针解引用**。
+     `ai_light_state.cpp` 里每个用例开头那句 `app_base l_app{};` 就是干这个的。
+     实证：新加的「预分配 uuid 不被改写」用例最初漏了这行，**单独跑**该用例就在夹具构造阶段
+     崩在 `address 0x10`（跑全量却可能不崩 —— 前面的套件已经把 `impl::self` 指到别处了，
+     于是变成"悬垂但看起来能用"，比直接崩更难查）。补上 `app_base` 即通过。
+     换句话说 `g_ctx()` 在测试里**是可用的**，前提就是那句 `app_base l_app{}`；
+     将来给 `generate_candidates` 写端到端用例，用现有 fixture + 这行即可。
+     而 `ai_light_paths.cpp` 走的是另一条路：它在**栈上**构造 `kitsu_ctx_t` 直接调那六个方法
+     （头文件内联、只读 `root_` 与入参），完全不碰库与单例 —— 所以它既不需要 `app_base`，
+     也不会被这套单例语义牵连。
 
 

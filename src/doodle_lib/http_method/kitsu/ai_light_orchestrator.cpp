@@ -11,14 +11,16 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/ai_light/ai_light.h>
 #include <doodle_core/metadata/entity.h>
-#include <doodle_core/metadata/project.h>
+#include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/server_task_info.h>
 
 // 注：本文件曾经还包含 app_base.h / boost/asio/co_spawn.hpp / steady_timer.hpp /
 // use_awaitable.hpp —— 它们只服务于那个已删除的 4 小时挂起扫描器（常驻后台协程）。
 // 过期现在是纯派生标志，这里不再有任何后台任务，所以一并去掉：
 // 留着这些 include 会让人以为这儿还跑着一个循环。
-#include <doodle_lib/core/entity_path.h>
+// 同理，entity_path.h 与 project.h 也已去掉：它们只服务于那个已删除的
+// resolve_session_paths（产物路径改由 kitsu_ctx_t 按会话 uuid 生成，不查库）。
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/computers.h>
@@ -67,35 +69,6 @@ std::string brief_error(const std::exception& in_err) {
           in_seam, in_needs
       )
   };
-}
-
-/// 会话产物的落盘基准。
-///
-/// 为什么要有它：get_shots_auto_lighting_upload_path 返回的是**相对项目根**的路径
-/// （entity_path.cpp:425-429 拼的是 "03_Workflow/Shot/EP####/<拼音>"）。
-/// 落库与下发 worker 都用绝对路径，免得两边基准不同却都「看起来对」。
-struct session_paths_t {
-  FSys::path project_root_{};
-  episodes episode_{};
-  entity_asset_extend_value ground_extend_{};
-};
-
-/// 解析会话产物的落盘基准。任何一步缺失都会抛（由 advance_session 统一转成
-/// failure_reason_ + 状态回滚）—— 算不出往哪渲染，就不该派发任务。
-session_paths_t resolve_session_paths(sqlite_database& in_sql, const ai_light_session& in_session) {
-  auto l_shot = in_sql.get_by_uuid<entity>(in_session.entity_id_);
-  DOODLE_CHICK_HTTP(
-      !l_shot.parent_id_.is_nil(), bad_request,
-      "镜头实体 {} 没有父实体，无法推算 AI 灯光产物目录", in_session.entity_id_
-  );
-  auto l_prj = in_sql.get_by_uuid<project>(in_session.project_id_);
-
-  session_paths_t l_ret{};
-  l_ret.project_root_  = l_prj.path_;
-  // episodes 是可从 episode 实体构造的元数据类型（先例 up_file.cpp:260）
-  l_ret.episode_       = episodes{in_sql.get_by_uuid<entity>(l_shot.parent_id_)};
-  l_ret.ground_extend_ = in_sql.get_entity_shot_extend_by_task(in_session.entity_id_);
-  return l_ret;
 }
 
 /// 会话的参考图统计是否够用。只要有一张图分析成功就认为可用。
@@ -289,9 +262,16 @@ boost::asio::awaitable<void> advance_session(sqlite_database& in_sql, ai_light_s
           "候选生成接缝返回了 {} 个候选，方案 §6.6 要求恰好 {} 个", l_res.rigs_.size(), g_candidate_count
       );
 
-      auto l_paths = resolve_session_paths(in_sql, in_session);
+      // 产物路径一律由 kitsu_ctx_t 按 uuid 生成（挂在资产根 root_ 下），
+      // 不再依赖 episode / shot / 项目路径 —— 所以这里没有「算不出目录」的失败分支。
+      // 注意加 http:: 限定：kitsu_ctx_t 在 doodle::http 里，而本文件在 doodle::ai_light。
+      auto& l_ctx = g_ctx().get<http::kitsu_ctx_t>();
 
       ai_light_iteration l_it{};
+      // uuid 必须在这里就定下来，不能等 ORM 在 insert 时回填：下面的候选要把
+      // 它写进 iteration_id_（mark_iteration_rendered 按这个校验「候选属于本轮」），
+      // 而那时 l_it 的 insert 语句还没构造。
+      l_it.uuid_id_    = core_set::get_set().get_uuid();
       l_it.session_id_ = in_session.uuid_id_;
       l_it.iteration_  = l_iteration;
       l_it.spec_id_    = l_spec->uuid_id_;
@@ -299,8 +279,9 @@ boost::asio::awaitable<void> advance_session(sqlite_database& in_sql, ai_light_s
       l_it.set_axes(l_res.axes_);
 
       // 分布式任务载荷（方案 §13.1 第 5 项：server_task_info.command_ 已有 JSON 列，
-      // 不需要改那张表）。worker 端从 session_id/iteration/candidate_index 自己重算
-      // 路径，与服务端落库用的是同一套 entity_path 助手，所以两边必然一致。
+      // 不需要改那张表）。worker 端拿 session_id/iteration/candidate_id 自己重算路径，
+      // 与服务端落库用的是同一套 kitsu_ctx_t 方法（都挂 root_ 下、文件名都是 uuid），
+      // 所以两边必然一致 —— 前提是 worker 配到同一个 root_（pictures/movies 早就这么依赖）。
       nlohmann::json l_candidates = nlohmann::json::array();
       orm::sql_modify_statement_vector_t l_sqls{};
       for (std::int32_t l_i = 0; l_i < g_candidate_count; ++l_i) {
@@ -313,19 +294,18 @@ boost::asio::awaitable<void> advance_session(sqlite_database& in_sql, ai_light_s
         l_rig.rig_id_          = uuid{};
 
         ai_light_candidate l_cand{};
+        // uuid 必须在这里就定下来，不能等 ORM 在 insert 时回填：渲染图文件名就是它，
+        // nil uuid 会让 6 个候选全部指向同一个路径（先例：build_accepted_preview_file）。
+        l_cand.uuid_id_         = core_set::get_set().get_uuid();
         l_cand.iteration_id_    = l_it.uuid_id_;
         l_cand.session_id_      = in_session.uuid_id_;
         l_cand.candidate_index_ = l_i;
         l_cand.set_rig(l_rig);
         l_cand.sync_from_rig();  // 轴三列从 rig 同步过来（DB 列是查询权威）
-        l_cand.render_png_path_ = l_paths.project_root_ / get_ai_light_candidate_path(
-                                                           l_paths.episode_, l_paths.ground_extend_,
-                                                           in_session.uuid_id_, l_iteration, l_i, false
-                                                       );
-        l_cand.render_exr_path_ = l_paths.project_root_ / get_ai_light_candidate_path(
-                                                           l_paths.episode_, l_paths.ground_extend_,
-                                                           in_session.uuid_id_, l_iteration, l_i, true
-                                                       );
+        l_cand.render_png_path_ =
+            l_ctx.get_ai_light_candidate_file(in_session.uuid_id_, l_iteration, l_cand.uuid_id_, false);
+        l_cand.render_exr_path_ =
+            l_ctx.get_ai_light_candidate_file(in_session.uuid_id_, l_iteration, l_cand.uuid_id_, true);
         l_cand.render_status_ = candidate_render_status::pending;
 
         l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_candidate>().values(l_cand));
@@ -355,6 +335,10 @@ boost::asio::awaitable<void> advance_session(sqlite_database& in_sql, ai_light_s
           // 基线关卡：worker 复制它再套灯光，不动原关卡（方案 §9）
           {"baseline_level", l_res.rigs_.front().baseline_level_},
       };
+      // 同上：uuid 要在被引用之前定下来。mark_iteration_rendered() 是**按任务 uuid**
+      // 反查轮次的（get_ai_light_iteration_by_task），这里若读到 nil，
+      // 轮次的 server_task_info_id_ 就落库为 nil，渲染回传必然 404。
+      l_task.uuid_id_           = core_set::get_set().get_uuid();
       l_it.server_task_info_id_ = l_task.uuid_id_;
       l_it.dispatch_at_         = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
 
