@@ -1,0 +1,67 @@
+post:
+  tags:
+    - Doodle
+  summary: 提交生成 uesk 文件任务
+  description: |
+    提交「导出绑定骨骼（生成 UE 骨骼文件）」任务（`type` 强制为 `create_rig_sk`），
+    由本机 Maya 导出并把结果回传到 Kitsu。
+
+    处理器为 `local::task_instance_generate_uesk_file::post`，实现见
+    `http_method/local/task_info.cpp`：
+
+    1. 用请求体构造 `server_task_info`（`name`、`source_computer` 必填），
+       `submit_time` 由服务端填写，`submitter` / `task_id` / `run_computer_id` 置为 nil uuid；
+    2. `type` **强制**为 `create_rig_sk`
+       （⚠️ 该取值不在 `server_task_info_type` 的 JSON 序列化表中，按 nlohmann 的缺省规则，
+       返回体里的 `type` 会显示为 `export_fbx`，服务端内部仍是 `create_rig_sk`）；
+    3. URL 中的 `{id}` 作为 Kitsu 任务 id 写入参数（`export_rig_sk_arg::task_id_`），
+       请求头中的令牌被透传给 Kitsu 客户端；
+    4. 请求体中的 `path` 被读作待处理的 Maya 文件路径（**必填**，实现为无保护取值）；
+    5. `command` 记录为 `export_rig_sk_arg` 的 JSON，任务提交后立即广播 Socket.IO
+       事件 `doodle:task_info:update`。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」；
+    路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时注册。
+  operationId: local_task_instance_generate_uesk_file_post
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Kitsu 任务 id
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: ../components/schemas/ServerTaskInfo.yaml
+            - type: object
+              required:
+                - path
+              description: |
+                除 `server_task_info` 的字段外，本接口只读取一个字段 `path`：
+                处理器是手工构造 `export_rig_sk_arg` 的，**没有**调用它的 `from_json`，
+                因此 `export_rig_sk_arg` 的其它字段（如 `import_game_path`、
+                `update_ue_path`、`ue_project_path`、`ue_asset_copy_path`、
+                `rename_map`、`ban_ben_suffix`、`skin_path`、`groom_path`、
+                `create_task_comment`）在本接口上给出也不会生效。
+              properties:
+                path:
+                  type: string
+                  description: 待处理的 Maya 文件路径（必填）
+  responses:
+    '201':
+      description: |
+        已提交的任务（`type` 为 `create_rig_sk`，`command` 为导出骨骼参数）。
+        返回的是 `server_task_info` 的 JSON 文本。
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ServerTaskInfo.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+  security:
+    - bearerAuth: []

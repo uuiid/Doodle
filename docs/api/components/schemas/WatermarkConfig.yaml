@@ -1,0 +1,36 @@
+type: object
+description: |
+  水印配置，对应 `tools_add_watermark_arg_t`（`http_method/local/movie.cpp`）。
+  配置文件位于 `<缓存根>/tools_add_watermark.config`。
+  注意 `to_json` 不输出 `image_size`，故 GET 的返回体中通常没有该字段。
+properties:
+  image_paths:
+    type: array
+    description: 待处理的图片路径列表
+    items:
+      type: string
+  out_path:
+    type: string
+    description: 输出目录
+  watermark_text:
+    type: string
+    description: 水印文字，缺省 `水印示例`
+  watermark_color:
+    type: string
+    description: 水印颜色，形如 `#RRGGBB`，缺省 `#FF0000`
+  watermark_opacity:
+    type: number
+    format: double
+    description: 水印透明度 0~1，缺省 0.5
+  watermark_size:
+    type: array
+    description: 水印间距 `[宽, 高]`，缺省 `[120, 210]`
+    items:
+      type: integer
+      format: int32
+    minItems: 2
+    maxItems: 2
+  watermark_height:
+    type: integer
+    format: int32
+    description: 水印高度，缺省 30

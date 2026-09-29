@@ -1,7 +1,8 @@
 type: object
 description: |
   服务端任务，对应 `doodle::server_task_info`。
-  本接口既用它作为提交任务的请求体，也用同一个结构返回落库后的任务。
+  既是提交任务时的请求体，也是任务提交/查询接口的返回结构
+  （`to_json` 的键即下列属性，`from_json` 只把 `name` 与 `source_computer` 当作必填）。
 properties:
   id:
     type: string
@@ -13,7 +14,9 @@ properties:
   status:
     type: string
     description: |
-      任务状态。提交接口会强制写成 `submitted`，请求体中的该字段无效。
+      任务状态。部分提交接口会在服务端强制改写该字段（例如
+      `/api/actions/projects/{project_id}/shots/{shot_id}/run-ue-assembly` 强制为
+      `submitted`）；本地任务还可用 `PATCH /api/doodle/task/{id}` 修改。
     enum:
       - submitted
       - assigned
@@ -32,7 +35,9 @@ properties:
     type: string
     format: uuid
     nullable: true
-    description: 提交人 id，由服务端按当前登录用户填写
+    description: |
+      提交人 id。主服务器接口按当前登录用户填写；本地任务接口
+      （`/api/doodle/task*` 等）一律置为 nil uuid。
   submit_time:
     type: string
     nullable: true
@@ -53,7 +58,15 @@ properties:
   type:
     type: string
     description: |
-      任务类型。提交接口会强制写成 `auto_light`，请求体中的该字段无效。
+      任务类型。部分提交接口会在服务端强制改写该字段（例如 UE 装配接口强制为
+      `auto_light`、`/api/doodle/task/{id}/inspect` 强制为 `check_maya`）。
+
+      ⚠️ JSON 序列化表（`server_task_info_type.h`）只登记了下列取值，
+      **不含** `create_rig_sk` 与 `project_sync`；按 nlohmann 的缺省规则，
+      这两个取值在 JSON 中会落回第一项 `export_fbx`（服务端内部仍按正确类型执行），
+      因此调用 `/api/doodle/task/{id}/generate_uesk_file`、
+      `/api/actions/project/{project_id}/sync` 等接口时，
+      返回体里的 `type` 会显示为 `export_fbx`。
     enum:
       - export_fbx
       - export_sim
@@ -63,6 +76,7 @@ properties:
       - check_maya
       - replace_maya_ref
       - depth_estimation
+      - ai_light
   last_line_log:
     type: string
     description: 最后一行日志
@@ -72,8 +86,9 @@ properties:
   command:
     type: object
     description: |
-      任务参数。本接口的提交请求中该字段会被**覆盖**为服务端生成的装配参数，
-      内容为 `RunUeAssemblyArg`。
+      任务参数。各提交接口写入各自的参数结构（例如 `RunUeAssemblyArg`、
+      `export_fbx_arg`、`qcloth_arg`、`task_sync` 等）；
+      `POST /api/doodle/task` 则取请求体的 `task_data` 字段。
   priority:
     type: integer
     format: int32

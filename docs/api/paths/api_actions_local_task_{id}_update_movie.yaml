@@ -1,0 +1,69 @@
+post:
+  tags:
+    - 动作-本地
+  summary: 提交更新任务影片文件任务
+  description: |
+    把本机的影片（或渲染出的图片序列目录）作为任务产物上传到 Kitsu，并给任务添加评论、
+    把任务状态置为「接近完成」。
+
+    处理器为 `local::actions_local_task_update_movie_files::post`，实现见
+    `http_method/local/task_info.cpp`；实际执行体为 `update_movie_files::run`
+    （`exe_warp/assets_update.cpp`）：
+
+    1. 用请求体构造 `server_task_info`（`name`、`source_computer` 必填），
+       `submit_time` 由服务端填写，`submitter` / `task_id` / `run_computer_id` 置为 nil uuid；
+    2. `type` 被写作 `project_sync`（实现如此，未随接口语义单独取值）
+       （⚠️ 该取值不在 `server_task_info_type` 的 JSON 序列化表中，按 nlohmann 的缺省规则，
+       返回体里的 `type` 会显示为 `export_fbx`，服务端内部仍是 `project_sync`）；
+    3. URL 中的 `{id}` 作为 Kitsu 任务 id 写入参数；
+    4. `path` 可为**目录**（取其下 `.png`/`.jpg`/`.jpeg` 图片合成为视频，
+       并校验图片比例与项目分辨率一致）或**视频文件**（文件名不匹配时会复制到缓存目录
+       并重命名为 `<项目code>_<父实体名>_<实体名>.mp4`，同时校验视频比例）；
+    5. 校验失败（路径为空、找不到图片、比例不符等）抛出 `doodle_error`，返回 500。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」；
+    该令牌用于回调 Kitsu。路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时注册。
+  operationId: actions_local_task_update_movie_files_post
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Kitsu 任务 id
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: ../components/schemas/ServerTaskInfo.yaml
+            - type: object
+              description: |
+                除 `server_task_info` 的字段外，还接受 `update_movie_files` 的字段
+                （见 `exe_warp/assets_update.cpp` 的 `from_json`）。
+              properties:
+                task_id:
+                  type: string
+                  format: uuid
+                  description: Kitsu 任务 id；缺省用 URL 中的 `{id}`，请求体中给出时会覆盖它
+                path:
+                  type: string
+                  description: 影片文件路径，或存放图片序列的目录
+  responses:
+    '201':
+      description: 已提交的任务，返回 `server_task_info` 的 JSON
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ServerTaskInfo.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '500':
+      description: |
+        执行参数不满足要求，例如「视频文件路径不能为空」「任务ID不能为空」
+        「无法找到目录下 ... 中的图片文件」「图片比例与项目分辨率不符」
+        「视频比例与项目分辨率不符」
+  security:
+    - bearerAuth: []

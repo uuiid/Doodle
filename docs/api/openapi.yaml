@@ -83,12 +83,20 @@ tags:
   - name: 动作-实体
     description: Kitsu 动作 API：实体 相关接口
     x-displayName: 动作-实体
+  - name: 动作-工具
+    description: Kitsu 动作 API：工具 相关接口（本机图片后处理，如水印）
+    x-displayName: 动作-工具
   - name: 动作-序列
     description: Kitsu 动作 API：序列 相关接口
     x-displayName: 动作-序列
   - name: 动作-播放列表
     description: Kitsu 动作 API：播放列表 相关接口
     x-displayName: 动作-播放列表
+  - name: 动作-本地
+    description: |
+      Kitsu 动作 API：本地模式（`kitsu_supplement --local`）下的工作机接口。
+      这些路由只在本地模式注册，多数要求请求头携带 Kitsu 令牌（透传给 Kitsu 调用）。
+    x-displayName: 动作-本地
   - name: 动作-用户
     description: Kitsu 动作 API：用户 相关接口
     x-displayName: 动作-用户
@@ -310,6 +318,16 @@ paths:
     $ref: paths/api_actions_entity_{entity_id}_working-file.yaml
   /api/actions/jobs/{job_id}/log:
     $ref: paths/api_actions_jobs_{job_id}_log.yaml
+  /api/actions/local/task/run:
+    $ref: paths/api_actions_local_task_run.yaml
+  /api/actions/local/task/{id}/update/movie:
+    $ref: paths/api_actions_local_task_{id}_update_movie.yaml
+  /api/actions/local/task/{id}/update/movie/compose:
+    $ref: paths/api_actions_local_task_{id}_update_movie_compose.yaml
+  /api/actions/local/task/{id}/update/ue:
+    $ref: paths/api_actions_local_task_{id}_update_ue.yaml
+  /api/actions/local/watch_file/maya_anim:
+    $ref: paths/api_actions_local_watch_file_maya_anim.yaml
   /api/actions/persons/{id}/assign:
     $ref: paths/api_actions_persons_{id}_assign.yaml
   /api/actions/persons/{person_id}/change-password:
@@ -323,6 +341,8 @@ paths:
     $ref: paths/api_actions_preview-files_{preview_file_id}_compose-video.yaml
   /api/actions/preview-files/{preview_file_id}/update-annotations:
     $ref: paths/api_actions_preview-files_{preview_file_id}_update-annotations.yaml
+  /api/actions/project/{project_id}/sync:
+    $ref: paths/api_actions_project_{project_id}_sync.yaml
   /api/actions/projects/{project_id}/casting/copy:
     $ref: paths/api_actions_projects_{project_id}_casting_copy.yaml
   /api/actions/projects/{project_id}/casting/replace:
@@ -338,8 +358,12 @@ paths:
     $ref: paths/api_actions_projects_{project_id}_sequences_{sequence_id}_working-file.yaml
   /api/actions/projects/{project_id}/shots/import/frame-range:
     $ref: paths/api_actions_projects_{project_id}_shots_import_frame-range.yaml
+  /api/actions/projects/{project_id}/shots/{shot_id}/export-anim-fbx:
+    $ref: paths/api_actions_projects_{project_id}_shots_{shot_id}_export-anim-fbx.yaml
   /api/actions/projects/{project_id}/shots/{shot_id}/run-export-anim-fbx:
     $ref: paths/api_actions_projects_{project_id}_shots_{shot_id}_run-export-anim-fbx.yaml
+  /api/actions/projects/{project_id}/shots/{shot_id}/update-sim-abc:
+    $ref: paths/api_actions_projects_{project_id}_shots_{shot_id}_update-sim-abc.yaml
   /api/actions/projects/{project_id}/shots/{shot_id}/working-file:
     $ref: paths/api_actions_projects_{project_id}_shots_{shot_id}_working-file.yaml
   /api/actions/projects/{project_id}/task-types/{task_type_id}/assets/create-tasks:
@@ -376,6 +400,8 @@ paths:
     $ref: paths/api_actions_tasks_{task_id}_sync.yaml
   /api/actions/tasks/{task_id}/sync/export-anim-fbx:
     $ref: paths/api_actions_tasks_{task_id}_sync_export-anim-fbx.yaml
+  /api/actions/tools/add-watermark:
+    $ref: paths/api_actions_tools_add-watermark.yaml
   /api/actions/user/notifications/mark-all-as-read:
     $ref: paths/api_actions_user_notifications_mark-all-as-read.yaml
   /api/auth/authenticated:
@@ -583,6 +609,22 @@ paths:
     $ref: paths/api_doodle_ai_volcano-engine_inference_materials_video_{id}.png.yaml
   /api/doodle/backup:
     $ref: paths/api_doodle_backup.yaml
+  /api/doodle/local_setting:
+    $ref: paths/api_doodle_local_setting.yaml
+  /api/doodle/local_setting/tmp_dir/server_task:
+    $ref: paths/api_doodle_local_setting_tmp_dir_server_task.yaml
+  /api/doodle/task:
+    $ref: paths/api_doodle_task.yaml
+  /api/doodle/task/{id}:
+    $ref: paths/api_doodle_task_{id}.yaml
+  /api/doodle/task/{id}/generate_uesk_file:
+    $ref: paths/api_doodle_task_{id}_generate_uesk_file.yaml
+  /api/doodle/task/{id}/inspect:
+    $ref: paths/api_doodle_task_{id}_inspect.yaml
+  /api/doodle/task/{id}/log:
+    $ref: paths/api_doodle_task_{id}_log.yaml
+  /api/doodle/video/thumbnail:
+    $ref: paths/api_doodle_video_thumbnail.yaml
   /api/doodle/stop-server:
     $ref: paths/api_doodle_stop-server.yaml
   /api/movies/low/preview-files/{id}.mp4:
@@ -649,8 +691,10 @@ x-tagGroups:
       - 动作-人员
       - 动作-任务
       - 动作-实体
+      - 动作-工具
       - 动作-序列
       - 动作-播放列表
+      - 动作-本地
       - 动作-用户
       - 动作-项目
       - 动作-预览文件

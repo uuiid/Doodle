@@ -1,0 +1,32 @@
+get:
+  tags:
+    - Doodle
+  summary: 获取本地任务日志
+  description: |
+    以文件形式返回任务的日志：`<缓存根>/server_task/<任务id>.log`。
+
+    处理器为 `local::task_instance_log::get`，实现见 `http_method/local/task_info.cpp`：
+    日志文件不存在时返回 404「日志不存在」；`Content-Type` 取文件扩展名对应的 MIME
+    并追加 `; charset=utf-8`（`.log` → `text/plain; charset=utf-8`）。
+
+    该处理器继承自 `http_function`（不是 `local_http_fun`），不校验请求头；
+    路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时注册。
+  operationId: local_task_instance_log_get
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 任务 id
+  responses:
+    '200':
+      description: 日志文件内容
+      content:
+        text/plain:
+          schema:
+            type: string
+            format: binary
+    '404':
+      description: '日志不存在（`{"error": "日志不存在", "code": <数字码>}`）'

@@ -1,0 +1,78 @@
+post:
+  tags:
+    - 动作-项目
+  summary: 提交项目文件同步任务
+  description: |
+    按给定任务列表，把 Kitsu 上的文件同步到本机（下载），并把本机变更过的文件上传回 Kitsu。
+
+    处理器为 `local::actions_project_sync_local::post`，实现见
+    `http_method/local/task_info.cpp`；实际执行体为 `task_sync::run`
+    （`exe_warp/task_sync.cpp`）：
+
+    1. 用请求体构造 `server_task_info`（`name`、`source_computer` 必填），
+       `submit_time` 由服务端填写，`submitter` / `task_id` / `run_computer_id` 置为 nil uuid；
+    2. `type` **强制**为 `project_sync`
+       （⚠️ 该取值不在 `server_task_info_type` 的 JSON 序列化表中，按 nlohmann 的缺省规则，
+       返回体里的 `type` 会显示为 `export_fbx`，服务端内部仍是 `project_sync`）；
+    3. 请求体的 `task_ids` / `upload` / `download` 三个字段**均必填**
+       （`task_sync::from_json` 用无保护取值读取）；
+    4. `download` 为真时把各任务的下载清单同步到本机工作根目录（`user_work_root`）；
+       `upload` 为真时把 `update_file_list` 中时间较新的文件上传，并给对应任务加评论
+       「自动同步文件 …」、状态置为完成；
+    5. **URL 中的 `{project_id}` 当前实现并未使用**，仅用于路由匹配；
+    6. `command` 记录为 `task_sync` 的 JSON，提交后广播 Socket.IO 事件
+       `doodle:task_info:update`。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」；
+    该令牌用于回调 Kitsu。路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时注册。
+  operationId: actions_project_sync_local_post
+  parameters:
+    - name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 项目 id（当前实现未使用该值）
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: ../components/schemas/ServerTaskInfo.yaml
+            - type: object
+              required:
+                - task_ids
+                - upload
+                - download
+              description: |
+                除 `server_task_info` 的字段外，还需提供 `task_sync` 的三个字段
+                （见 `exe_warp/task_sync.h` 的 `from_json`）。
+              properties:
+                task_ids:
+                  type: array
+                  description: 需要同步的 Kitsu 任务 id 列表
+                  items:
+                    type: string
+                    format: uuid
+                upload:
+                  type: boolean
+                  description: 是否上传本机变更过的文件
+                download:
+                  type: boolean
+                  description: 是否下载 Kitsu 上的文件到本机
+  responses:
+    '201':
+      description: |
+        已提交的任务（`type` 为 `project_sync`）。返回的是 `server_task_info` 的 JSON 文本。
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ServerTaskInfo.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '500':
+      description: 同步过程中出错（例如「未找到本地UE项目 …」）
+  security:
+    - bearerAuth: []

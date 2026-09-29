@@ -1,0 +1,118 @@
+get:
+  tags:
+    - Doodle
+  summary: 获取本地任务列表
+  description: |
+    返回本进程内存中的全部任务（`local::task_info_manager`），**不读数据库**。
+
+    处理器为 `local::task::get`，实现见 `http_method/local/task_info.cpp`：
+
+    - 可选查询参数 `type` 按 `server_task_info_type` 过滤，无法识别的取值按 `unknown`
+      处理（即不过滤）；
+    - 返回前会用每个任务的日志文件（`<缓存根>/server_task/<任务id>.log`）填充
+      `last_line_log`。
+
+    该处理器继承自 `http_function`（不是 `local_http_fun`），不校验请求头；
+    但该路由只在 `kitsu_supplement --local` 模式**且进程启动时授权有效**
+    （`create_kitsu_local_route` 中的 `authorization::is_valid()` 判断）时才会注册，
+    否则返回 404。
+  operationId: local_task_get
+  parameters:
+    - name: type
+      in: query
+      required: false
+      schema:
+        type: string
+        description: 任务类型
+        enum:
+          - unknown
+          - export_fbx
+          - export_sim
+          - auto_light
+          - merge_video
+          - connect_video
+          - check_maya
+          - replace_maya_ref
+          - create_rig_sk
+          - project_sync
+          - depth_estimation
+          - ai_light
+      description: 按任务类型过滤；缺省或无法识别时不进行过滤
+  responses:
+    '200':
+      description: 任务列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/ServerTaskInfo.yaml
+post:
+  tags:
+    - Doodle
+  summary: 提交本地任务
+  description: |
+    提交一个由本机执行的长任务：任务只登记在**内存**（`task_info_manager`），
+    不入库；随后立即返回任务对象，实际执行在事件循环中延迟约 1 秒后开始。
+
+    处理器为 `local::task::post`，实现见 `http_method/local/task_info.cpp`：
+
+    1. 用请求体构造 `server_task_info` —— 其中 `name`、`source_computer` 是必填
+       （见 `server_task_info` 的 `from_json`）；
+    2. 服务端覆盖 `submit_time`（当前时间），并把 `submitter`、`task_id`、
+       `run_computer_id` 置为 nil uuid；`status` 保持请求体给的取值（缺省 `submitted`）；
+       `name` 为空串时用任务 uuid 填充；
+    3. `command`（即任务的执行参数）取请求体的 **`task_data`** 字段，
+       请求体里的 `command` 字段在本接口中被忽略；
+    4. 依据 `task_data` 中的**判别键**选择执行参数类型（键值本身只需存在）：
+
+       | `task_data` 中的键 | 参数类型 | 说明 |
+       | --- | --- | --- |
+       | `replace_ref_file` | `qcloth_arg` | 解算；服务端还会用 `task_data.project.path` 与 `task_data.project.asset_root_path` 拼出 `sim_path`（这两个键在该分支下必须存在） |
+       | `file_list` | `replace_file_arg` | 替换 Maya 引用文件 |
+       | `image_to_move` | `image_to_move` | 图片合成为视频 |
+       | `connect_video` | `connect_video_t` | 连接视频 |
+       | 以上都没有 | `export_fbx_arg` | 导出 fbx（缺省分支） |
+
+       注意：这些判别键与其参数字段都位于 `task_data` 的**顶层**（不是嵌套对象）；
+       例如 `image_to_move` 分支要求顶层同现 `image_to_move`、`path`、`out_path`、
+       `image_size`、`shot`、`episodes`、`user_name`；
+       `connect_video` 分支要求顶层同现 `connect_video`、`out_path`、`paths`、`image_size`。
+
+    5. 任务进度与状态通过 Socket.IO（命名空间 `/events`）广播：
+       事件 `doodle:task_info:update`（载荷为完整任务对象）与
+       `doodle:task_info:progress`（载荷 `{"id", "progress"}`）；
+       任务日志写入 `<缓存根>/server_task/<任务id>.log`。
+
+    ⚠️ 实现顺序是**先登记任务、再解析 `task_data`**（源码中的注释声称相反），
+    因此 `task_data` 解析失败抛错时，任务仍会留在内存任务列表中（状态 `submitted`），
+    只是不会真正执行。
+
+    该处理器继承自 `http_function`（不是 `local_http_fun`），不校验请求头；
+    但该路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时才会注册。
+  operationId: local_task_post
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: ../components/schemas/ServerTaskInfo.yaml
+            - type: object
+              required:
+                - task_data
+              properties:
+                task_data:
+                  type: object
+                  description: |
+                    任务执行参数，落库/记录为任务的 `command`。
+                    顶层判别键见上文表格；各分支的具体字段以对应参数类型的 `from_json` 为准。
+  responses:
+    '201':
+      description: |
+        已登记的任务（返回的是 `server_task_info` 的 JSON 文本）。
+        `status` 通常为 `submitted`，`command` 为服务端整理后的 `task_data`。
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ServerTaskInfo.yaml

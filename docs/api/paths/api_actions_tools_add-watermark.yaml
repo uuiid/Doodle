@@ -1,0 +1,211 @@
+get:
+  tags:
+    - 动作-工具
+  summary: 获取水印配置 / 渲染水印预览
+  description: |
+    读取本机保存的水印配置；带 `preview` 查询参数时改为渲染一张预览图。
+
+    处理器为 `local::tools_add_watermark::get`，实现见 `http_method/local/movie.cpp`：
+
+    - 配置来自 `<缓存根>/tools_add_watermark.config`（JSON，由 POST / PUT 写入）；
+      文件不存在时返回一份默认配置；
+    - **`preview` 参数只判断是否出现，取值被忽略**；
+    - 带 `preview` 时，用当前配置在 `image_size`（缺省 1920×1080）大小的黑色画布上
+      绘制水印并返回 PNG；
+    - 注意配置的序列化（`to_json`）**不包含 `image_size`**，
+      因此不带 `preview` 的返回体里没有该字段。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」。
+    路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时注册。
+  operationId: tools_add_watermark_get
+  parameters:
+    - name: preview
+      in: query
+      required: false
+      schema:
+        type: string
+      description: 只要出现该参数即渲染预览图（取值被忽略）
+  responses:
+    '200':
+      description: |
+        水印配置（不带 `preview`）或预览 PNG（带 `preview`，`Content-Type: image/png`）
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/WatermarkConfig.yaml
+        image/png:
+          schema:
+            type: string
+            format: binary
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - 动作-工具
+  summary: 批量给图片添加水印
+  description: |
+    保存水印配置，并在后台异步给 `image_paths` 中的每张图片加上水印，输出到 `out_path`。
+
+    处理器为 `local::tools_add_watermark::post`，实现见 `http_method/local/movie.cpp`：
+
+    1. 把**原始请求体**（不是重新序列化的结构）写入
+       `<缓存根>/tools_add_watermark.config`，因此请求体中给出的 `image_size` 会被保留；
+    2. `out_path` 不存在时自动创建；
+    3. 立即返回 `{"id": "<本次任务 uuid>"}`，实际处理在事件循环中异步执行；
+    4. 每处理完一张图片广播一次 Socket.IO 事件 `tools:add-watermark:progress`
+       （命名空间 `/events`），载荷字段为 `id` / `progress` / `image_path` / `output_path`
+       （`progress` 恒为 `0`：实现从不更新该计数，只按图片逐条广播）；
+    5. 输出文件名为输入文件名改扩展名为 `.png`，写入 `out_path` 目录。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」。
+  operationId: tools_add_watermark_post
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - image_paths
+            - out_path
+          properties:
+            image_paths:
+              type: array
+              description: 待处理的图片路径列表
+              items:
+                type: string
+            out_path:
+              type: string
+              description: 输出目录，不存在时自动创建
+            watermark_text:
+              type: string
+              description: 水印文字，缺省 `水印示例`
+            watermark_color:
+              type: string
+              description: 水印颜色，形如 `#RRGGBB`，缺省 `#FF0000`
+            watermark_opacity:
+              type: number
+              format: double
+              description: 水印透明度 0~1，缺省 0.5，超出范围会被夹到区间内
+            watermark_size:
+              type: array
+              description: 水印间距 `[宽, 高]`，缺省 `[120, 210]`
+              items:
+                type: integer
+                format: int32
+              minItems: 2
+              maxItems: 2
+            watermark_height:
+              type: integer
+              format: int32
+              description: 水印高度，缺省 30
+            image_size:
+              type: array
+              description: 处理时的图片尺寸 `[宽, 高]`，缺省 `[1920, 1080]`
+              items:
+                type: integer
+                format: int32
+              minItems: 2
+              maxItems: 2
+  responses:
+    '201':
+      description: 任务已创建
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: 本次水印任务的 id（进度广播中回传该 id）
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '500':
+      description: 图片处理失败
+  security:
+    - bearerAuth: []
+put:
+  tags:
+    - 动作-工具
+  summary: 保存水印配置并渲染预览图
+  description: |
+    保存请求体中的水印配置，并用**该请求体的参数**渲染一张预览 PNG 返回。
+
+    处理器为 `local::tools_add_watermark::put`，实现见 `http_method/local/movie.cpp`：
+
+    - 与 POST 相同，原始请求体会写入 `<缓存根>/tools_add_watermark.config`；
+    - `image_paths` / `out_path` 会被 `from_json` 无保护地读取，**两者仍必须给出**
+      （否则返回 500）；但本接口**不做批量处理**，直接在黑色画布上渲染预览图；
+    - 返回 `image/png`（HTTP 200）；
+    - ⚠️ 颜色通道：PUT 把 `#RRGGBB` 按 R、G、B 顺序直接填进 OpenCV 的 **BGR**
+      `cv::Scalar(B,G,R)`，因此预览里的红蓝通道互换（GET 的 `preview` 与 POST
+      的填法顺序才是正确的）。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」。
+  operationId: tools_add_watermark_put
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - image_paths
+            - out_path
+          description: 字段与 POST 相同；预览只用到水印相关字段与 `image_size`。
+          properties:
+            image_paths:
+              type: array
+              description: 图片路径列表（本接口不处理，仅参与配置保存，但**必填**）
+              items:
+                type: string
+            out_path:
+              type: string
+              description: 输出目录（本接口不使用，但**必填**）
+            watermark_text:
+              type: string
+              description: 水印文字，缺省 `水印示例`
+            watermark_color:
+              type: string
+              description: 水印颜色，形如 `#RRGGBB`，缺省 `#FF0000`
+            watermark_opacity:
+              type: number
+              format: double
+              description: 水印透明度 0~1，缺省 0.5
+            watermark_size:
+              type: array
+              description: 水印间距 `[宽, 高]`，缺省 `[120, 210]`
+              items:
+                type: integer
+                format: int32
+              minItems: 2
+              maxItems: 2
+            watermark_height:
+              type: integer
+              format: int32
+              description: 水印高度，缺省 30
+            image_size:
+              type: array
+              description: 预览画布尺寸 `[宽, 高]`，缺省 `[1920, 1080]`
+              items:
+                type: integer
+                format: int32
+              minItems: 2
+              maxItems: 2
+  responses:
+    '200':
+      description: 预览图 PNG
+      content:
+        image/png:
+          schema:
+            type: string
+            format: binary
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '500':
+      description: 预览渲染失败
+  security:
+    - bearerAuth: []

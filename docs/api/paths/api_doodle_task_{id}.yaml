@@ -1,0 +1,113 @@
+get:
+  tags:
+    - Doodle
+  summary: 获取本地任务（实现返回全部任务）
+  description: |
+    ⚠️ 与直觉不同：处理器 `local::task_instance::get`（实现见 `http_method/local/task_info.cpp`）
+    **忽略 URL 中的 `{id}`**，直接返回本进程内存中的**全部任务列表**，
+    等价于不带 `type` 过滤的 `GET /api/doodle/task`
+    （唯一差别：本接口不填充各项的 `last_line_log`）。
+
+    该处理器继承自 `http_function`（不是 `local_http_fun`），不校验请求头；
+    路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时注册。
+  operationId: local_task_instance_get
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 任务 id（当前实现忽略该参数）
+  responses:
+    '200':
+      description: 任务列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/ServerTaskInfo.yaml
+patch:
+  tags:
+    - Doodle
+  summary: 修改本地任务状态或名称
+  description: |
+    只识别请求体中的 `status` 与 `name` 两个字段，其余字段一概忽略。
+
+    处理器为 `local::task_instance::patch`，实现见 `http_method/local/task_info.cpp`：
+
+    - 原状态为 `running` 且新状态为 `canceled` 时，会触发该任务的取消信号
+      （实际执行中的任务就此被取消）；
+    - 返回修改后的任务对象；
+    - 实现未对「id 不存在」做空值检查（`get_task_info` 返回空指针后直接解引用），
+      因此 `id` 必须是当前内存中存在的任务 id。
+
+    该处理器继承自 `http_function`（不是 `local_http_fun`），不校验请求头。
+  operationId: local_task_instance_patch
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 任务 id
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              description: 新状态；置为 `canceled` 可取消正在运行的任务
+              enum:
+                - submitted
+                - assigned
+                - running
+                - completed
+                - canceled
+                - failed
+                - unknown
+            name:
+              type: string
+              description: 新名称
+  responses:
+    '200':
+      description: 修改后的任务
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ServerTaskInfo.yaml
+delete:
+  tags:
+    - Doodle
+  summary: 删除本地任务
+  description: |
+    从内存的任务表中移除任务，仅删除内存记录（日志文件保留）。
+
+    处理器为 `local::task_instance::delete_`，实现见 `http_method/local/task_info.cpp`：
+    任务状态为 `running` 时拒绝删除并返回 405；成功时返回空 JSON 对象 `{}`。
+    与 PATCH 相同，实现未对「id 不存在」做空值检查。
+
+    该处理器继承自 `http_function`（不是 `local_http_fun`），不校验请求头。
+  operationId: local_task_instance_delete
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 任务 id
+  responses:
+    '200':
+      description: 删除成功，返回空对象 `{}`
+      content:
+        application/json:
+          schema:
+            type: object
+    '405':
+      description: '任务正在运行中，无法删除（`{"error": "任务正在运行中, 无法删除", "code": <数字码>}`）'

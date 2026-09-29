@@ -1,0 +1,70 @@
+get:
+  tags:
+    - Doodle
+  summary: 获取最近一次生成的视频缩略图
+  description: |
+    从进程内缓存中取出最近一次 POST 生成的缩略图（PNG）。
+
+    处理器为 `local::video_thumbnail::get`，实现见 `http_method/local/movie.cpp`。
+    缓存是容量为 1 的 LRU（`fixed_sized_cache<uuid, std::vector<uchar>, LRUCachePolicy>(1)`，
+    键为常量 nil uuid），因此**同一时刻只保留一张缩略图**，且进程重启后即失效；
+    缓存为空时返回 400（错误文案沿用「视频文件不存在」）。
+
+    该处理器继承自 `http_function`（不是 `local_http_fun`），不校验请求头；
+    整条本地路由只在 `kitsu_supplement --local` 模式下注册。
+  operationId: local_video_thumbnail_get
+  responses:
+    '200':
+      description: 缩略图 PNG
+      content:
+        image/png:
+          schema:
+            type: string
+            format: binary
+    '400':
+      description: '尚无缓存（返回 `{"error": "视频文件不存在", "code": <数字码>}`）'
+post:
+  tags:
+    - Doodle
+  summary: 生成视频缩略图
+  description: |
+    打开本机视频文件，按归一化时间取一帧并编码为 PNG 返回，同时写入进程内缓存
+    （随后可用 GET 再次取回）。
+
+    处理器为 `local::video_thumbnail::post`，实现见 `http_method/local/movie.cpp`：
+
+    1. `time` 先被夹到 `[0, 1]`，再乘以总帧数得到帧号，并夹到 `[0, 总帧数-1]`；
+    2. 解码失败（`mp4 打开失败` / `图片解码失败`）抛出 `doodle_error`，返回 500。
+
+    该处理器继承自 `http_function`（不是 `local_http_fun`），不校验请求头；
+    整条本地路由只在 `kitsu_supplement --local` 模式下注册。
+  operationId: local_video_thumbnail_post
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - video_path
+            - time
+          properties:
+            video_path:
+              type: string
+              description: 本机视频文件路径（`FSys::path`）
+            time:
+              type: number
+              format: double
+              description: 取帧位置，归一化到 0~1（0 为第一帧，1 为最后一帧）
+  responses:
+    '200':
+      description: 缩略图 PNG
+      content:
+        image/png:
+          schema:
+            type: string
+            format: binary
+    '400':
+      description: '视频文件不存在（`{"error": "视频文件不存在", "code": <数字码>}`）'
+    '500':
+      description: 视频打开失败（`mp4 打开失败`）或图片解码失败（`图片解码失败`）

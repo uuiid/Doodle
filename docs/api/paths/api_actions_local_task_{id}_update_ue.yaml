@@ -1,0 +1,63 @@
+post:
+  tags:
+    - 动作-本地
+  summary: 提交更新任务 UE 文件任务
+  description: |
+    把本机 UE 工程中需要更新的文件上传到 Kitsu 任务。
+
+    处理器为 `local::actions_local_task_update_ue_files::post`，实现见
+    `http_method/local/task_info.cpp`；实际执行体为 `update_ue_files::run`
+    （`exe_warp/assets_update.cpp`）：
+
+    1. 用请求体构造 `server_task_info`（`name`、`source_computer` 必填），
+       `submit_time` 由服务端填写，`submitter` / `task_id` / `run_computer_id` 置为 nil uuid；
+    2. `type` 被写作 `project_sync`（实现如此，未随接口语义单独取值）
+       （⚠️ 该取值不在 `server_task_info_type` 的 JSON 序列化表中，按 nlohmann 的缺省规则，
+       返回体里的 `type` 会显示为 `export_fbx`，服务端内部仍是 `project_sync`）；
+    3. URL 中的 `{id}` 作为 Kitsu 任务 id 写入参数；
+    4. `path` 指向 UE 工程文件，服务端会在其所在目录下查找需要更新的文件并上传；
+       公共资源文件 `a_PropPublicFiles` 不存在时跳过（记警告，不报错）。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」；
+    该令牌用于回调 Kitsu。路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时注册。
+  operationId: actions_local_task_update_ue_files_post
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Kitsu 任务 id
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: ../components/schemas/ServerTaskInfo.yaml
+            - type: object
+              description: |
+                除 `server_task_info` 的字段外，还接受 `update_ue_files` 的字段
+                （见 `exe_warp/assets_update.cpp` 的 `from_json`）。
+              properties:
+                task_id:
+                  type: string
+                  format: uuid
+                  description: Kitsu 任务 id；缺省用 URL 中的 `{id}`，请求体中给出时会覆盖它
+                path:
+                  type: string
+                  description: UE 工程文件路径
+  responses:
+    '201':
+      description: 已提交的任务，返回 `server_task_info` 的 JSON
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ServerTaskInfo.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '500':
+      description: 执行失败（UE 工程定位失败、上传失败等）
+  security:
+    - bearerAuth: []

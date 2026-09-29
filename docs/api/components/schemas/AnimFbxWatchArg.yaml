@@ -1,0 +1,26 @@
+type: object
+description: |
+  自动上传动画文件的监视项，对应
+  `doodle::exe_warp::folder_watcher_anim_fbx::watch_arg`。
+  注意 JSON 键名沿用 C++ 成员名，**带尾部下划线**（由
+  `NLOHMANN_DEFINE_TYPE_INTRUSIVE(watch_arg, path_, project_id_, task_id_, file_name_)` 生成）。
+properties:
+  path_:
+    type: string
+    description: 被监视的文件路径（服务端返回时已拼接本机工作根目录）
+  project_id_:
+    type: string
+    format: uuid
+    description: 所属项目 id
+  task_id_:
+    type: string
+    format: uuid
+    description: 关联的 Kitsu 任务 id
+  file_name_:
+    type: string
+    description: 期望生成/监视的动画文件名
+required:
+  - path_
+  - project_id_
+  - task_id_
+  - file_name_
