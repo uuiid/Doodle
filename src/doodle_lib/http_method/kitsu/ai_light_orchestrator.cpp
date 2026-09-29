@@ -609,10 +609,12 @@ std::optional<ai_light_session_detail_t> build_session_detail(sqlite_database& i
 // ===========================================================================
 
 boost::asio::awaitable<spec_generation_result_t> generate_spec(const spec_generation_request_t& in_request) {
-  // 参考图统计（§13.1 第 8 项）与 deepseek_client（第 4 项）都还没落地。
+  // 推理通道已经有了（seedance2_client 的方舟 Responses + task.cpp 的 run_inference_task），
+  // 缺的是接缝自己要做的事：把提示词、参考图统计（§13.1 第 8 项）组装成归一化请求信封，
+  // 再把返回的 result_json_ 映射成 spec。
   // 参数在这里被显式引用一次，免得「未使用参数」的告警掩盖了「接缝没实现」这件事。
   (void)in_request;
-  throw_not_implemented("generate_spec", "deepseek_client（方案 §13.1 第 4 项）与参考图统计（第 8 项）");
+  throw_not_implemented("generate_spec", "接缝本体：提示词/参考图统计（§13.1 第 8 项）组装为 Requests 信封并映射 spec");
   co_return spec_generation_result_t{};
 }
 
@@ -620,7 +622,7 @@ boost::asio::awaitable<candidate_generation_result_t> generate_candidates(
     const candidate_generation_request_t& in_request
 ) {
   (void)in_request;
-  throw_not_implemented("generate_candidates", "deepseek_client（方案 §13.1 第 4 项）与预设库检索");
+  throw_not_implemented("generate_candidates", "接缝本体：轴安排 + 预设库检索 + 调用推理并落候选");
   co_return candidate_generation_result_t{};
 }
 
@@ -629,7 +631,7 @@ boost::asio::awaitable<std::vector<axis_step_t>> structure_feedback(
 ) {
   (void)in_session_id;
   (void)in_feedback_text;
-  throw_not_implemented("structure_feedback", "deepseek_client（方案 §13.1 第 9 项）");
+  throw_not_implemented("structure_feedback", "接缝本体：把自然语言反馈结构化为 axis_step（§13.1 第 9 项）");
   co_return std::vector<axis_step_t>{};
 }
 

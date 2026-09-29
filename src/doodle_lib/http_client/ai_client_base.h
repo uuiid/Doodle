@@ -28,7 +28,10 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
   explicit ai_client_base(std::string in_host_url, boost::asio::ssl::context& in_ctx)
       : http_client_ptr_{std::make_shared<http_client_t>(std::move(in_host_url), in_ctx)} {}
 
-  void set_logger(logger_ptr in_logger) { logger_ = std::move(in_logger); }
+  /// 注意 in_logger 可能为空：`g_logger_ctrl().get_http()` 就是 `spdlog::get("http")`，
+  /// 在 http logger 还没建起来的宿主里（单测、只初始化了一半的 worker）返回 nullptr。
+  /// 直接存下来会在第一次 `logger_->xxx()` 时崩在 0x8 上 —— 所以这里回落到 default_logger。
+  void set_logger(logger_ptr in_logger) { logger_ = in_logger ? std::move(in_logger) : spdlog::default_logger(); }
   void set_token(const std::string& in_token) { token_ = in_token; }
   const std::string& get_token() const { return token_; }
 

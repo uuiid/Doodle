@@ -9,9 +9,14 @@
 // ---------------------------------------------------------------------------
 // 三个「接缝」：本轮有意留空的部分
 // ---------------------------------------------------------------------------
-// generate_spec / generate_candidates / structure_feedback 需要 deepseek_client
-// （方案 §13.1 第 4 项）与参考图统计（第 8 项），两者都还没实现，所以它们统一抛
-// `doodle_error{status::not_implemented}`，由 http_session_data.cpp:149-151 映射成 501。
+// generate_spec / generate_candidates / structure_feedback 的**接缝本体**还没写：提示词与
+// 参考图统计（第 8 项）怎么组装成请求信封、返回的 result_json_ 怎么映射成 spec / 候选 / axis_step。
+//
+// 注意「缺推理客户端」这条已经不成立了：通道已经落地在
+// `seedance2_client`（方舟 Responses API）+ `run_inference_task`（http_method/seedance2/task.cpp），
+// 接缝接上时直接调它们即可（用法见 docs/ue_ai_lighting_plan.md §15.6）。
+// 在此之前三个接缝统一抛 `doodle_error{status::not_implemented}`，
+// 由 http_session_data.cpp:149-151 映射成 501。
 //
 // 签名先定下来，下一里程碑只改这三个函数的函数体，路由层与状态机不动。
 //

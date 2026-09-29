@@ -1573,14 +1573,15 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
 | 项 | 落点 |
 |---|---|
 | 推理请求体 / 响应解析 / 重试 | `doodle_lib/http_client/seedance2_client.{h,cpp}` 的 `build_inference_body` / `parse_inference_response` / `extract_output_text` / `should_retry` / `is_sensitive_content_error` / `strip_code_fence`（全是**静态纯函数**，可离线单测） |
-| 同步执行入口 | `run_inference_task(in_task, in_sql, in_client)`（`http_method/seedance2/task.cpp`，声明在 `seedance2/reg.h`）：一次调用拿结果 → 任务行**插入即终态** + 扣费，同一个事务 |
+| 同步执行入口 | `run_inference_task(in_task, in_sql, in_client)`（`http_method/seedance2/task.cpp`，声明在 `seedance2/inference_task.h`）：一次调用拿结果 → 任务行**插入即终态** + 扣费，同一个事务 |
 | 客户端分发 | `ai_client_base::run_task(const sd2::task&)`；`seedance2_client` 按 `type_ == task_type::inference` 分流到 `run_inference_task`（客户端内部那个），`transfer_station_client` 直接返回失败（它没有推理接口） |
+| 推理入口头文件 | `http_method/seedance2/inference_task.h`（`make_inference_client` / `run_inference_task` 的**唯一声明处**）。单独立一份是因为 `reg.h` 里有「相对 `doodle_lib` 根」的 include 写法（测试目标引用不到），且它是路由注册头、依赖太重；`reg.h` 在命名空间外用一行 include 把它带进来 |
 | 数据模型 | `task_type::inference`（**只能追加**）；`task.ai_light_iteration_id_`（FK → `ai_light_iteration.uuid_id_`，可空）、`task.result_text_`；`person_token.inference_count_` |
 | 产物 URL 鉴权 | 新增 `http_client/url_sign.{h,cpp}`（HMAC-SHA256 短时效签名）+ `http_jwt_or_signed_fun` 基类（`DOODLE_HTTP_SIGNED_FUN`）：cookie/Bearer **优先**，签名只作兜底且**只对 GET** 生效 |
 | 鉴权优先级 | `try_session_auth()` → `try_signed_url()` → 抛出统一 401（顺序不能反，理由见下） |
 | 转签的路由 | `seedance2/pictures`、`kitsu/ai_light` 的 `reference_image_route` / `candidate_image_route`、四条约 `doodle_ai_volcano_engine_inference_materials_*`（POST 上传仍要会话） |
 | 常量 | `doodle_config::g_ark_inference_model{deepseek-v4-1-flash-260910}` / `_timeout{180s}` / `_max_retry{3}` / `_default_max_output_tokens{4096}` / `_default_consumed_tokens{5万}` |
-| 测试 | `src/test/core/url_sign.cpp`（11 用例 / 35 断言）、`seedance2_inference.cpp`（17 用例 / 74 断言）、`seedance2_task_model.cpp`（7 用例 / 33 断言）；全量回归 **144 用例 / 1068 断言**通过（本轮之前是 109 / 926） |
+| 测试 | `src/test/core/url_sign.cpp`（11 用例 / 35 断言）、`seedance2_inference.cpp`（17 用例 / 74 断言）、`seedance2_task_model.cpp`（7 用例 / 33 断言）、`seedance2_task_pipeline.cpp`（6 用例 / 35 断言，见下「给没被调用过的代码补测」）；全量回归 **150 用例 / 1103 断言**通过（本轮之前是 109 / 926） |
 
 **接缝怎么用**（下一步接上 `generate_spec` / `generate_candidates` / `structure_feedback` 就照这个形状）：
 
@@ -1652,7 +1653,31 @@ const auto l_result = co_await run_inference_task(l_task, l_sql, l_client);
 （仍然给 `submit_task` 补了一个 `succeeded` 分支：万一将来有人从公共提交路径建推理任务，
 它不会被下面那条 `else` 误判成失败并退款。）
 
-**六个坑（本轮）**：
+**给没被调用过的代码补测（发现「实现了但没跑过」之后做的事）**
+
+起因是一个诊断问题：`task.cpp` 里 `make_inference_client` / `run_inference_task` 是不是没人用？
+查下来确实没有调用方 —— 唯一的调用者是三个接缝，而接缝按计划还是 501（同名的
+`seedance2_client::run_inference_task` 是**另一个**东西，它在用，容易看错）。
+于是这两个函数当时的状态是「编译链接全绿，一次都没运行过」，连带三件事没人验：
+①「插入即终态 + 扣费同事务」到底对不对；②失败任务会不会误扣费；③取不到 usage 时写进去的是哪个数。
+
+修法是**用假客户端把它们真跑一遍**，而不是「读一遍觉得没问题」。`ai_client_base` 有 6 个纯虚函数
+（`seedance2_client` 是 `final`，不能继承），除 `run_task` 之外都空实现即可 ——
+不需要网络、不需要真 key，就把整条结算管线跑起来了：
+
+| 用例 | 钉住的不变式 |
+|---|---|
+| `succeeded_inference_inserts_a_final_row_and_bills_total_tokens` | 成功行落库为终态（`succeeded` / `task_id_` / `result_text_` / `ended_at_`）、**按 `total_tokens` 而不是调用方预扣值**结算、扣费正好等于该值、行**不在**管理器的 `preparing/queued/running` 集合里（方案 A 的前提） |
+| `failed_inference_is_recorded_but_not_billed` | 失败也落库（`data_response_` 保留原始错误便于对账），但 `completion_tokens_` 记 0、余额**一分不动** |
+| `missing_usage_falls_back_to_the_precharge_not_the_generation_default` | 响应没带 usage 时退回调用方给的预扣值，**不是** `task.completion_tokens_` 的默认值 50 万（坑 5 的回归） |
+| `transfer_station_backend_fails_before_touching_the_network` | 用**真** `transfer_station_client`：它在取 IP / 发请求之前就拒绝推理，于是这条同样没跑过的分支也被覆盖，且落库失败、不计费 |
+| `make_inference_client_picks_the_backend_and_carries_credentials` | 后端选择正确（`dynamic_cast` 到具体类）、凭据按后端取、**每次新建**（坑 6 的回归）、签名密钥「有 `kitsu_ctx_t` 才带」 |
+| `without_an_ssl_context_the_factory_reports_instead_of_crashing` | 没有 `ctx_ptr` 时抛 `doodle_error`，而不是崩在 `SSL_new` 里（坑 12） |
+
+写这份测试的过程本身又挖出**四个真问题**（下面的坑 9–12）：三个是「只有库外调用方才会暴露」的，
+一个是「换个宿主就崩」。这就是「补测」与「补注释」的区别 —— 注释不会让 LNK2019 出现。
+
+**本轮的坑（12 条）**：
 
 1. **Responses 的 `input_image.image_url` 是字符串，生成 API 才是 `{"url": ...}` 对象。**
    两个形状长得像但差一层，共用一个只认对象的遍历器会在 Responses 体上抛 `type_error`，
@@ -1722,5 +1747,42 @@ tools/function calling、不做方舟 Files API 上传（`file_id` 只能作为�
    在测试里它尤其阴：断言自己写错了，看起来却像被测代码有问题。
    规矩很简单：**要转换就用括号 `nlohmann::json(x)`，要构造对象/数组就用成对的
    `{{"k", v}}` / `nlohmann::json::array({...})`**，不要用单个值的花括号。
+
+9. **定义写在匿名命名空间里 = 内部链接：编译链接全绿，但动态库里根本不导出。**
+   `task.cpp` 的结构是 `namespace doodle::http::seedance2 { namespace { …client_factory… } … }`，
+   而 `make_inference_client` / `run_inference_task` 当初被写在了那个匿名命名空间**里面**。
+   于是它们是 `doodle::http::seedance2::(anonymous)::xxx`，与头文件里声明的同名函数是**两个不同的实体**：
+   库内不受影响（没人调用），也**不会报错**，直到测试（库外目标）引用时才以
+   `LNK2019: unresolved external symbol` 暴露，而 MSVC 的提示里还带着 `dllimport` 字样，
+   很容易被误读成「忘了 `DOODLELIB_API`」（先加了宏，错误照旧，才找到真因）。
+   两个可复用的判断：
+   - 「同名的成员函数在别处正常工作」会把人带偏 —— `seedance2_client::run_inference_task` 一直在用，
+     与这个自由函数毫无关系；
+   - **只要一个函数从未被库外代码引用过，就无法证明它有外部链接**。给它补一个调用方（哪怕只是测试）
+     是唯一能自动发现这件事的办法 —— 这正是坑 9–12 的共同来源。
+
+10. **`#include` 写在 `namespace` 里会把被包含头的命名空间整个嵌套进去。**
+    搬声明时第一版把 `#include ".../inference_task.h"` 留在了 `reg.h` 的命名空间块内，
+    那份头里的 `namespace doodle::http::seedance2` 就变成了
+    `doodle::http::seedance2::doodle::http::seedance2`，于是 `task_status` / `task_backend`
+    全部「不是 `doodle::http::seedance2` 的成员」，而报错指向的是 `reg.h` 打开的命名空间那一行 ——
+    看起来像 `task.cpp` 自己的问题。规矩：**头文件只在文件顶部、命名空间外包含**。
+    顺带的设计改进：入口声明从「路由注册头」里挪到 `inference_task.h`，
+    测试就不必为了两个函数把整套路由类拉进来。
+
+11. **`set_logger(nullptr)` 是一个必崩的输入。** `g_logger_ctrl().get_http()` 的实现就是
+    `spdlog::get("http")`，在任何没建过 http logger 的宿主里返回 `nullptr`（单测宿主、只初始化了一半的
+    worker），而 `transfer_station_client::run_task` 的推理拒绝分支第一行就是 `logger_->error(...)`
+    —— 崩在地址 `0x8`（`shared_ptr` 内部的空指针解引用）。修法在 `ai_client_base::set_logger`：
+    空就回落到 `spdlog::default_logger()`。这条不是「测试环境的问题」：任何 logger 未就绪的部署
+    都会以同样的方式炸，而崩一个 `0x8` 完全看不出跟日志有关。
+
+12. **`core_set::get_set().ctx_ptr` 只有主服务器初始化才有。** 它由
+    `launch/kitsu_supplement.cpp` 赋值（`tlsv12_client`），worker / 单测宿主里是空的。
+    `make_inference_client` 原先直接 `*ctx_ptr`：空指针解引用退化成一个**空引用**交给
+    `ssl::context`，最终在 `SSL_new` 读 `SSL_CTX*` 时崩在 `0x8` —— 与坑 11 同一个地址、
+    完全相同的误导性。现在用 `DOODLE_CHICK` 明确报错。这条对下一步的 worker 端
+    `run_ai_light_distributed` 是**必需**的：worker 迟早要在没有服务器初始化的情况下建客户端，
+    那时它应该得到一句「ssl context 未初始化」，而不是一个 `0x8`。
 
 

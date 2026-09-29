@@ -137,59 +137,6 @@ class client_factory {
   }
 };
 
-std::shared_ptr<ai_client_base> make_inference_client(const ai_studio& in_studio, sd2::task_backend in_backend) {
-  std::shared_ptr<ai_client_base> l_client{};
-  if (in_backend == sd2::task_backend::transfer_station)
-    l_client = std::make_shared<transfer_station_client>(*core_set::get_set().ctx_ptr);
-  else
-    l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
-
-  l_client->set_token(
-      in_backend == sd2::task_backend::transfer_station ? in_studio.transfer_station_key_ : in_studio.seedance2_key_
-  );
-  l_client->set_logger(g_logger_ctrl().get_http());
-  l_client->set_url_sign_secret(client_factory::get_url_sign_secret());
-  return l_client;
-}
-
-boost::asio::awaitable<ai_client_base::run_task_result_t> run_inference_task(
-    const sd2::task& in_task, sqlite_database& in_sql, const std::shared_ptr<ai_client_base>& in_client
-) {
-  auto l_result = co_await in_client->run_task(in_task);
-
-  const bool l_ok = l_result.status_ == sd2::task_status::succeeded;
-  auto l_task     = in_task;
-  l_task.status_       = l_ok ? sd2::task_status::succeeded : sd2::task_status::failed;
-  l_task.task_id_      = l_result.task_id_;
-  l_task.ended_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-  l_task.data_response_ = l_result.data_response_;
-  l_task.result_text_   = l_result.result_text_;
-  // 推理按 total_tokens 计费(文本+多图的**输入**才是成本大头); 拿不到 usage 就退回调用方给的预扣值。
-  // 失败不计费(completion_tokens_ 记 0), 但原始响应仍留在 data_response_ 里便于对账。
-  l_task.completion_tokens_ = l_ok ? (l_result.total_tokens_ > 0 ? l_result.total_tokens_ : in_task.completion_tokens_)
-                                   : std::int64_t{0};
-
-  {
-    // 一个事务: 插入(终态) + 扣费。因为插入就是终态, 后台管理器(只捞
-    // preparing/queued/running)永远看不到这条任务, 所以不存在重复提交。
-    using namespace orm;
-    sql_modify_statement_vector_t l_sqls;
-    l_sqls.emplace_back(insert(in_sql).into<sd2::task>().values(l_task));
-    if (l_task.completion_tokens_ > 0)
-      l_sqls.emplace_back(add_remaining_tokens_for_person(in_sql, l_task.user_id_, -l_task.completion_tokens_));
-    co_await in_sql.run_sql(std::move(l_sqls));
-  }
-
-  SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "推理任务 {} 结束: status {} tokens {} -> {}", l_task.uuid_id_,
-      magic_enum::enum_name(l_task.status_), l_result.total_tokens_, l_task.completion_tokens_
-  );
-  socket_io::broadcast(
-      socket_io::seedance2_task_update_broadcast_t{.task_id_ = l_task.uuid_id_, .status_ = l_task.status_}
-  );
-  co_return l_result;
-}
-
 class seedance2_task_run_manager {
   struct task_info {
     explicit task_info(const sd2::task& in_task, const ai_studio& in_ai_studio)
@@ -415,6 +362,70 @@ class seedance2_task_run_manager {
 };
 
 }  // namespace
+
+// ─── 推理入口(声明在 inference_task.h) ──────────────────────────────────────
+// 这两个函数**必须在匿名命名空间之外**：写在 namespace { 里会变成内部链接的另一组函数,
+// 编译链接都不报错, 但 shared library 里根本不导出它们 —— 直到有库外调用方
+// (接缝 / 单测) 引用时才以 LNK2019 暴露出来。位置固定在匿名命名空间之后。
+
+std::shared_ptr<ai_client_base> make_inference_client(const ai_studio& in_studio, sd2::task_backend in_backend) {
+  // 没有 ssl context 就没有客户端。主服务器的初始化会建好它（launch/kitsu_supplement.cpp
+  // 里的 ctx_ptr），但 worker / 单测宿主没有。原来的写法直接 `*ctx_ptr` —— 空指针解引用退化成一个
+  // 空引用, 崩在 SSL_new 内部的 0x8 上, 报错完全没有指向性。这里换成明确的异常。
+  auto l_ctx = core_set::get_set().ctx_ptr;
+  DOODLE_CHICK(l_ctx != nullptr, "ssl context 未初始化(见 core_set::ctx_ptr), 无法创建推理客户端");
+
+  std::shared_ptr<ai_client_base> l_client{};
+  if (in_backend == sd2::task_backend::transfer_station)
+    l_client = std::make_shared<transfer_station_client>(*l_ctx);
+  else
+    l_client = std::make_shared<seedance2_client>(*l_ctx);
+
+  l_client->set_token(
+      in_backend == sd2::task_backend::transfer_station ? in_studio.transfer_station_key_ : in_studio.seedance2_key_
+  );
+  l_client->set_logger(g_logger_ctrl().get_http());
+  l_client->set_url_sign_secret(client_factory::get_url_sign_secret());
+  return l_client;
+}
+
+boost::asio::awaitable<ai_client_base::run_task_result_t> run_inference_task(
+    const sd2::task& in_task, sqlite_database& in_sql, const std::shared_ptr<ai_client_base>& in_client
+) {
+  auto l_result = co_await in_client->run_task(in_task);
+
+  const bool l_ok = l_result.status_ == sd2::task_status::succeeded;
+  auto l_task     = in_task;
+  l_task.status_       = l_ok ? sd2::task_status::succeeded : sd2::task_status::failed;
+  l_task.task_id_      = l_result.task_id_;
+  l_task.ended_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+  l_task.data_response_ = l_result.data_response_;
+  l_task.result_text_   = l_result.result_text_;
+  // 推理按 total_tokens 计费(文本+多图的**输入**才是成本大头); 拿不到 usage 就退回调用方给的预扣值。
+  // 失败不计费(completion_tokens_ 记 0), 但原始响应仍留在 data_response_ 里便于对账。
+  l_task.completion_tokens_ = l_ok ? (l_result.total_tokens_ > 0 ? l_result.total_tokens_ : in_task.completion_tokens_)
+                                   : std::int64_t{0};
+
+  {
+    // 一个事务: 插入(终态) + 扣费。因为插入就是终态, 后台管理器(只捞
+    // preparing/queued/running)永远看不到这条任务, 所以不存在重复提交。
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls;
+    l_sqls.emplace_back(insert(in_sql).into<sd2::task>().values(l_task));
+    if (l_task.completion_tokens_ > 0)
+      l_sqls.emplace_back(add_remaining_tokens_for_person(in_sql, l_task.user_id_, -l_task.completion_tokens_));
+    co_await in_sql.run_sql(std::move(l_sqls));
+  }
+
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_http(), "推理任务 {} 结束: status {} tokens {} -> {}", l_task.uuid_id_,
+      magic_enum::enum_name(l_task.status_), l_result.total_tokens_, l_task.completion_tokens_
+  );
+  socket_io::broadcast(
+      socket_io::seedance2_task_update_broadcast_t{.task_id_ = l_task.uuid_id_, .status_ = l_task.status_}
+  );
+  co_return l_result;
+}
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, get) {
   person_.check_subproject_access(subproject_id_);

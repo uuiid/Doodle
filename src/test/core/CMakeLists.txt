@@ -21,6 +21,7 @@ target_sources(test_main
         url_sign.cpp
         seedance2_inference.cpp
         seedance2_task_model.cpp
+        seedance2_task_pipeline.cpp
 )
 
  
