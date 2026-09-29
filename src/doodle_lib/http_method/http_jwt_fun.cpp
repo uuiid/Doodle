@@ -11,6 +11,8 @@
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
 
+#include <doodle_lib/core/global_function.h>
+#include <doodle_lib/http_client/url_sign.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
@@ -18,6 +20,71 @@
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
 
 namespace doodle::http {
+
+bool http_jwt_or_signed_fun::try_signed_url(const session_data_ptr& in_handle) {
+  // 签名只授权「读」, 所以仅 GET; POST/DELETE 等一律走会话鉴权
+  if (in_handle->method() != boost::beast::http::verb::get) return false;
+  if (!g_ctx().contains<kitsu_ctx_t>()) return false;
+
+  auto&& l_params = in_handle->url_.params();
+  auto l_exp_it   = l_params.find(url_sign_t::g_exp_key);
+  auto l_sig_it   = l_params.find(url_sign_t::g_sig_key);
+  if (l_exp_it == l_params.end() || l_sig_it == l_params.end()) return false;
+  if (!(*l_exp_it)->has_value || !(*l_sig_it)->has_value) return false;
+
+  // 待签名的路径部分必须与签名时**逐字节**一致: 用 encoded_path() 而不是 path(),
+  // 后者会做百分号解码(".../Program%20Files/..." -> ".../Program Files/..."), 于是含转义的
+  // 路径会与签名串对不上, 表现成一律 401。
+  auto l_path_view = in_handle->url_.encoded_path();
+  const std::string l_path{l_path_view.data(), l_path_view.size()};
+  const std::string l_exp{(*l_exp_it)->value};
+  const std::string l_sig{(*l_sig_it)->value};
+  // uid 可选: 没有人员上下文的调用方可以不传
+  auto l_uid_it = l_params.find(url_sign_t::g_uid_key);
+  const std::string l_uid{
+      (l_uid_it != l_params.end() && (*l_uid_it)->has_value) ? std::string{(*l_uid_it)->value} : std::string{}
+  };
+
+  std::string l_reason{};
+  if (!url_sign_t::verify(
+          l_path, l_exp, l_uid, l_sig, g_ctx().get<kitsu_ctx_t>().secret_, url_sign_t::now_seconds(), &l_reason
+      )) {
+    SPDLOG_LOGGER_DEBUG(g_logger_ctrl().get_http(), "签名 URL 校验失败 path [{}]: {}", l_path, l_reason);
+    return false;
+  }
+
+  // 签名合法 = 凭据合法, 但授权校验仍在 handler 里按人员身份照常执行
+  if (!l_uid.empty()) load_person(from_uuid_str(l_uid));
+
+  SPDLOG_LOGGER_TRACE(g_logger_ctrl().get_http(), "签名 URL 通过 path [{}] uid [{}]", l_path, l_uid);
+  return true;
+}
+
+bool http_jwt_or_signed_fun::try_session_auth(const session_data_ptr& in_handle) {
+  try {
+    // 复用会话鉴权的**唯一一份**实现(cookie/Bearer -> JWT 校验 -> load_person),
+    // 这里不重写一遍取凭据的逻辑, 否则两条路径的取法迟早会漂移。
+    http_jwt_fun::parse_header(in_handle);
+    return true;
+  } catch (const http_request_error& e) {
+    // 只吞 401 这类「凭据问题」: 没带凭据 / JWT 过期或校验失败 / 未注册 / 已冻结。
+    // 其他异常(库坏了、内存不够……)照常上抛 —— 不能被签名兜底掩盖成一次静默重试。
+    SPDLOG_LOGGER_DEBUG(g_logger_ctrl().get_http(), "会话鉴权未通过, 转签名兜底: {}", e.what());
+    return false;
+  }
+}
+
+void http_jwt_or_signed_fun::parse_header(const session_data_ptr& in_handle) {
+  // 优先级: **先 cookie / Bearer**(与 http_jwt_fun 完全一致) -> 再短时效签名 URL。
+  //
+  // 顺序不能反: 会话凭据里的身份来自登录态, 而 uid 来自 URL。若先看签名, 一个已登录的
+  // 管理员点开别人签发的图片 URL 时, 就会以 URL 里的 uid 去做授权校验(被别人降权);
+  // 先会话则始终以「当前登录的人」为准。
+  if (try_session_auth(in_handle)) return;
+  if (try_signed_url(in_handle)) return;
+  // 两条路都不通: 再走一次会话路径, 把统一的 401("请先登录" / "cookie 验证错误")抛出去
+  http_jwt_fun::parse_header(in_handle);
+}
 
 void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
   if (in_handle->method() == boost::beast::http::verb::options) return;
@@ -50,14 +117,18 @@ void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
     );
   }
   auto l_uuid = from_uuid_str(l_jwt_decode.get_subject());
-  auto l_sql  = get_sqlite_database();
-  // default_logger_raw()->warn("{}", l_uuid);
-  if (l_sql.uuid_to_id<person>(l_uuid) == 0)
+  load_person(l_uuid);
+}
+
+void http_jwt_fun::load_person(const uuid& in_uuid) {
+  auto l_sql = get_sqlite_database();
+  // default_logger_raw()->warn("{}", in_uuid);
+  if (l_sql.uuid_to_id<person>(in_uuid) == 0)
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先注册"});
   {
     using namespace orm;
     auto l_person =
-        select(l_sql).columns(object<person>()).from<person>().where(c(&person::uuid_id_) == l_uuid)().to_single();
+        select(l_sql).columns(object<person>()).from<person>().where(c(&person::uuid_id_) == in_uuid)().to_single();
     l_person.departments_ = select(l_sql)
                                 .columns(&person_department_link::department_id_)
                                 .from<person_department_link>()

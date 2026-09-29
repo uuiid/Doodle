@@ -7,6 +7,7 @@ target_sources(
         seedance2_client.h
         ai_client_base.h
         transfer_station_client.h
+        url_sign.h
         PRIVATE
         work.cpp
         kitsu_client.cpp
@@ -14,4 +15,5 @@ target_sources(
         seedance2_client.cpp
         ai_client_base.cpp
         transfer_station_client.cpp
+        url_sign.cpp
 )

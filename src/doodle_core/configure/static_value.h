@@ -1,9 +1,10 @@
-﻿//
+//
 // Created by TD on 2021/6/17.
 //
 
 #pragma once
 #include <array>
+#include <chrono>
 #include <string_view>
 
 namespace doodle {
@@ -62,5 +63,15 @@ constexpr std::string_view set_task_state{R"(set_task_state)"};
 
 constexpr std::int64_t g_max_task_completion_tokens{50'0000};                        // 一个任务预先消耗的最大token数量
 constexpr std::int64_t g_max_completion_tokens{g_max_task_completion_tokens * 100};  // 当周任务消耗的最大token数量
+
+// ─── 火山方舟 Responses API(同步推理) ────────────────────────────────────────
+// 见 src/doodle_lib/http_client/seedance2_client.h 的 build_inference_body()
+constexpr std::string_view g_ark_inference_model{"deepseek-v4-1-flash-260910"};  // 请求未指定 model 时的缺省
+constexpr auto g_ark_inference_timeout{std::chrono::seconds(180)};               // 单次推理的读取超时
+constexpr std::size_t g_ark_inference_max_retry{3};                              // 429/5xx 的最大尝试次数
+constexpr std::int64_t g_ark_inference_default_max_output_tokens{4096};          // 缺省最大输出 token
+// 推理任务的预扣上限; 真正计费按响应里的 total_tokens(输入占大头), 差额会退补。
+// 推理任务通常是服务端同步结算(插入即终态), 这个值主要用于「按标准提交路径」时的配额检查。
+constexpr std::int64_t g_ark_inference_default_consumed_tokens{50'000};
 }  // namespace doodle_config
 }  // namespace doodle

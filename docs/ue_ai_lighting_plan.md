@@ -747,6 +747,9 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 **落库约定**（沿用既有 ORM 事实，见 `doodle_core/metadata/ai_light/`）：
 
 - 枚举按 `magic_enum` 的 **C++ 名** 存 TEXT，所以枚举项名必须与 JSON 字符串一致，且绝不重命名已有项
+  （JSON 那一侧还有 `NLOHMANN_JSON_SERIALIZE_ENUM` 认不出就**静默回落**的坑，见 §15.6 坑 7；
+  本节说的「下发派发任务类型」`server_task_info_type::ai_light` 与推理任务的
+  `seedance2::task_type::inference` 是**两个不同的枚举**，别混）
 - 嵌套结构（`rig` / `metrics` / `intent` / `targets` / `judgement` …）一律以 `nlohmann::json` 落库 ——
   ORM 的列类型不覆盖嵌套结构体与 `std::map`
 - **不做冗余指针、不做循环外键**：「当前 Spec」= 会话内 `revision` 最大的一行，
@@ -915,7 +918,24 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    不单开端点的理由：建会话入口与 `/iterate` 都要派发，抽在编排层里只有一份实现，
    而独立的提交端点会变成第二个可以绕过归属校验的入口。
 3. **派发逻辑**：**零改动**。`computers.cpp:376-378` 已按 `computer.allowed_task_types_` 通用过滤。
-4. **LLM/VLM 客户端**：新增 `deepseek_client`（继承 `http_client/ai_client_base.h`，OpenAI 兼容，支持 chat + vision）。**必须在主服务器**——`--local` 的 `kitsu_ctx_t` 是两参构造，没有 key。
+4. **LLM/VLM 客户端**：原计划是「新增 `deepseek_client`（继承 `http_client/ai_client_base.h`，OpenAI 兼容，
+   支持 chat + vision）」。**实施时改成了复用 `seedance2_client` + 火山方舟 Responses API**（§15.6），
+   理由是四条实地约束：
+
+   - 仓库里已经有**同一个厂商**的 Ark 客户端（`seedance2_client`，`https://ark.cn-beijing.volces.com`），
+     连 TLS 上下文、超时、`Bearer` 取 key、`ai_client_base` 的错误约定都是现成的；
+     新写一个 client 等于把这套东西抄一遍，且多一份要维护的凭据读取路径；
+   - Responses API 一个请求里同时吃文本与图片（`input_text` + `input_image`），
+     正好是 `generate_spec` / `structure_feedback` 需要的形态（参考图统计 + 提示词）；
+   - 走 `ai_client_base::run_task(const sd2::task&)` 的**同一条**管线，
+     于是 token 计费、`person_token` 日统计、任务行与前台展示全部复用既有实现，
+     不需要为 LLM 调用另起一套记账；
+   - 凭据仍在 `kitsu_ctx_t`（`seedance2_key_` / `ai_studio`），**必须在主服务器**这条约束不变。
+
+   接缝本身（`generate_spec` / `generate_candidates` / `structure_feedback`）**仍返回 501**：
+   本轮交付的是「可用的推理通道 + 数据模型 + 鉴权」，把它们接上去是下一步
+   （调 `make_inference_client()` + `run_inference_task()` 即可，参数与返回值已经定好）。
+
 5. **AI 路由**：**已落地（本轮）**，12 条，全部注册在 `create_kitsu_route_2`（主服务器），
    声明在 `doodle_lib/http_method/kitsu/ai_light.h`，处理函数在 `ai_light.cpp`：
 
@@ -1209,6 +1229,18 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 1. **性能基线**：灯数与单轮渲染时间已确认暂不设限，但需要在 M1 实测记录——6 个候选 × 实际灯数的单轮耗时，作为 M6 是否拆分多机并行的依据，也是后续要不要加回硬上限的依据。
 2. **全局调色反解的实际精度**（§9.2）：需在真实参考上验证「分布匹配求得的全局变换」能否干净地落到 UE 的 Color Grading 参数上。若映射误差大，退化为 §9.3 的灵敏度标定搜索——流程不受影响，只是少了一个热启动。
 3. **统计量的实际可信度**：虽然已确认以全局调色为主，仍应在首批真实参考上抽查是否存在局部改图污染，据此决定是否需要启用外点剔除。
+4. **方舟 Responses 的四条实测项**（§15.6 的推理通道已按文档实现并离线单测，但以下四条只能拿真 key 打一次才知道）：
+   - **模型名**：`deepseek-v4-1-flash-260910` 这类纯 Model ID 是否被本账号接受
+     （AK/SK 鉴权才必须用 `ep-*` 接入点；我们走 API Key，理由见 §15.6）；
+   - **`text.format` 的形状**：文档正文是平铺 `{type,name,schema,strict}`，而 Python SDK 的示例是
+     chat 那种嵌套变体 —— 两边冲突。实现默认发**平铺**形状，若真机 400 就降级（降级点已收敛在
+     `build_inference_body()` 一处）；
+   - **`input_image` 的可用性**：本账号的该模型是否真的接受图片输入（参考图统计要喂图）；
+   - **`thinking: disabled`** 是否被接受（有的模型只允许 `enabled`/`auto`）。
+5. **FK 前向引用已实测通过（无需再验）**：`seedance2_task_2` 注册在 `ai_light_iteration` **之前**，
+   新加的 `ai_light_iteration_id` 外键在 CREATE TABLE 时指向了尚未注册的表 —— SQLite 允许这样做，
+   实测建表/重建/外键语义用例（`sqlite_schema` / `sqlite_rebuild` / `sqlite_fk_*` / `ai_light_schema`）
+   全绿。这一条列在这里是为了**关掉**它，不必再怀疑。
 
 ### 15.3 已落地（数据库层）
 
@@ -1531,5 +1563,164 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
      而 `ai_light_paths.cpp` 走的是另一条路：它在**栈上**构造 `kitsu_ctx_t` 直接调那六个方法
      （头文件内联、只读 `root_` 与入参），完全不碰库与单例 —— 所以它既不需要 `app_base`，
      也不会被这套单例语义牵连。
+
+### 15.6 已落地（推理接入：火山方舟 Responses API）
+
+三个接缝（§15.5 末尾）缺的都是「一个能同步拿到结构化文本的 LLM」。本轮把这件事落成
+**可用的推理通道**：`seedance2_client` 除了异步生成，还能走方舟的 **Responses API** 做同步推理，
+并且把任务、token、素材 URL 全部接到既有的 `sd2::task` 管线上。接缝本身仍抛 501（下一步再接）。
+
+| 项 | 落点 |
+|---|---|
+| 推理请求体 / 响应解析 / 重试 | `doodle_lib/http_client/seedance2_client.{h,cpp}` 的 `build_inference_body` / `parse_inference_response` / `extract_output_text` / `should_retry` / `is_sensitive_content_error` / `strip_code_fence`（全是**静态纯函数**，可离线单测） |
+| 同步执行入口 | `run_inference_task(in_task, in_sql, in_client)`（`http_method/seedance2/task.cpp`，声明在 `seedance2/reg.h`）：一次调用拿结果 → 任务行**插入即终态** + 扣费，同一个事务 |
+| 客户端分发 | `ai_client_base::run_task(const sd2::task&)`；`seedance2_client` 按 `type_ == task_type::inference` 分流到 `run_inference_task`（客户端内部那个），`transfer_station_client` 直接返回失败（它没有推理接口） |
+| 数据模型 | `task_type::inference`（**只能追加**）；`task.ai_light_iteration_id_`（FK → `ai_light_iteration.uuid_id_`，可空）、`task.result_text_`；`person_token.inference_count_` |
+| 产物 URL 鉴权 | 新增 `http_client/url_sign.{h,cpp}`（HMAC-SHA256 短时效签名）+ `http_jwt_or_signed_fun` 基类（`DOODLE_HTTP_SIGNED_FUN`）：cookie/Bearer **优先**，签名只作兜底且**只对 GET** 生效 |
+| 鉴权优先级 | `try_session_auth()` → `try_signed_url()` → 抛出统一 401（顺序不能反，理由见下） |
+| 转签的路由 | `seedance2/pictures`、`kitsu/ai_light` 的 `reference_image_route` / `candidate_image_route`、四条约 `doodle_ai_volcano_engine_inference_materials_*`（POST 上传仍要会话） |
+| 常量 | `doodle_config::g_ark_inference_model{deepseek-v4-1-flash-260910}` / `_timeout{180s}` / `_max_retry{3}` / `_default_max_output_tokens{4096}` / `_default_consumed_tokens{5万}` |
+| 测试 | `src/test/core/url_sign.cpp`（11 用例 / 35 断言）、`seedance2_inference.cpp`（17 用例 / 74 断言）、`seedance2_task_model.cpp`（7 用例 / 33 断言）；全量回归 **144 用例 / 1068 断言**通过（本轮之前是 109 / 926） |
+
+**接缝怎么用**（下一步接上 `generate_spec` / `generate_candidates` / `structure_feedback` 就照这个形状）：
+
+```cpp
+auto l_sql    = get_sqlite_database();
+auto l_studio = l_sql.get_by_uuid<ai_studio>(会话的 ai_studio_id);
+auto l_client = make_inference_client(l_studio);          // 每次新建, 不共享
+
+sd2::task l_task{};
+l_task.type_                  = sd2::task_type::inference;
+l_task.backend_               = sd2::task_backend::seedance2;
+l_task.user_id_               = 触发人;                    // 同时是签名 URL 里的 uid
+l_task.ai_studio_id_          = l_studio.uuid_id_;
+l_task.ai_light_iteration_id_ = 轮次 uuid;                 // spec 蒸馏阶段还没有轮次 -> 留 nil
+l_task.text_prompt_           = 提示词;                    // 去重(compare_task_similarity)与前台展示都读它
+l_task.data_request_          = nlohmann::json{
+    {"input_text", ...}, {"images", 参考图路径数组}, {"json_schema", schema}, ...   // 见 build_inference_body
+};
+
+const auto l_result = co_await run_inference_task(l_task, l_sql, l_client);
+// l_result.status_ / result_text_ / result_json_ / total_tokens_; 任务行已落终态并已扣费
+```
+
+`data_request_` 里不要自己拼方舟的 `input[]`/`model`/`store` —— 归一化信封（`input_text` / `images` /
+`json_schema` …）由 `build_inference_body()` 翻译，签名与公网前缀由客户端在发请求前补。
+
+**鉴权顺序为什么必须是「先会话、后签名」**：第一版实现把 `try_signed_url()` 放在了前面（谁先写在前面谁赢），
+这**违背了本轮定下的「cookie / Bearer 优先」**。两者都能通过，但语义不同：
+
+- 会话凭据里的身份来自**登录态**；
+- 签名里的 `uid` 来自 **URL**。
+
+先看签名，一个已登录的管理员点开别人签发的图片 URL 时，就会以 URL 里的 uid 去做
+`check_project_access()` 一类的授权校验 —— 权限被 URL 静默改写。先看会话则永远以「当前登录的人」为准，
+签名只在**没有会话凭据时**（方舟取图那条路径）才成为身份来源。
+
+实现是 `try_session_auth()`：它**复用** `http_jwt_fun::parse_header()` 而不是重写一遍取凭据逻辑
+（否则 cookie / Bearer / 查询参数的取法迟早漂移），只把 401 类的 `http_request_error` 吞掉转签名兜底；
+数据库故障这类异常照常上抛，不会被兜底掩盖。两条都不通过时再抛一次会话路径的 401，
+于是错误文案与普通受保护路由完全一致（`请先登录` / `cookie 验证错误`）。
+
+这一条**没有单测**：`session_data` 的 `method_verb_` 只能从真实 socket 解析出来，且默认是 `verb::unknown`，
+构造一个「带 cookie 且带签名」的请求要塞进整套 socket + 路由。所以它靠的是上面这段代码审查结论，
+`url_sign_t::verify` 本身有 35 条断言覆盖。若要补测，得先给 `session_data` 一个可注入的构造路径。
+
+**为什么必须先做「签名 URL」才能谈推理**：素材在站点内是 `/api/seedance2/pictures/<uuid>.png`
+这类路径，第三方（方舟）要去取图，而**它带不了我们的 cookie**；会话 JWT 是长效的（cookie 365 天）
+且服务端没有吊销名单，不能放进 URL。签名提供的是「短时效 + 绑完整路径 + 绑人 + 只 GET」：
+泄漏出去的签名最多让第三方在那一条路径上、以那个人的身份读一张图，且十分钟后失效。
+这四条是本轮的实施取舍：
+
+1. **签名只签路径部分**。规范串是 `<path>\n<exp>\n<uid>`，`sign_path` 取 `?` 之前的路径参与签名，
+   再把 `exp/uid/sig` 追加到原查询串之后 —— 顺序反过来（先补公网前缀再签名，或把查询串也签进去）
+   都会让签名串与校验时的规范串不一致。
+2. **带 scheme 的 URL 一律原样返回**。`data:` 内联 base64、对象存储签名 URL、方舟自己的 URL
+   都不能补前缀：`to_public_url` 原先只放过 `http(s)://`，会把 `data:image/png;base64,...`
+   拼成 `http://ip:38192data:image/png;base64,...`（旧代码对 `images[]` 是**无条件**加前缀，
+   这个洞一直在，只是没有 base64 调用方）。
+3. **`uid` 是真的加载人员，不是装饰**。`http_jwt_or_signed_fun` 校验通过后会 `load_person(uid)`，
+   于是 handler 里的 `check_project_access` / `check_not_outsourcer` 照常生效；`uid` 为空则
+   fail-closed（需要人员校验的 handler 会拒绝），而不是「免检」。
+4. **签名只是兜底，不改变原有优先级**。`parse_header` 先走 cookie/Bearer，只有都没有签名参数时
+   才落到签名 —— 于是前端行为完全不变，跨站 `<img>` 因为 `SameSite=Lax` 发不出 cookie 才会用到签名。
+
+**推理任务的形态（方案 A）**：接缝**同步**等结果，任务行**插入时就是终态**（`succeeded`/`failed`
++ `ended_at_` + `data_response_` + `result_text_`），插入与扣费在**同一个 `run_sql` 事务**里。
+后台的 `seedance2_task_run_manager` 只捞 `preparing/queued/running`（`task.cpp` 的 `get_task()`），
+所以它**永远看不到这条任务** —— 不需要给 `submit_task` 加等待原语，也不需要预扣/退补。
+（仍然给 `submit_task` 补了一个 `succeeded` 分支：万一将来有人从公共提交路径建推理任务，
+它不会被下面那条 `else` 误判成失败并退款。）
+
+**六个坑（本轮）**：
+
+1. **Responses 的 `input_image.image_url` 是字符串，生成 API 才是 `{"url": ...}` 对象。**
+   两个形状长得像但差一层，共用一个只认对象的遍历器会在 Responses 体上抛 `type_error`，
+   而这类错会一路冒成 500。`ai_client_base::for_each_media_url` 同时吃两种形状
+   （`content[].{image_url,video_url,audio_url}.url` 与 `input[].content[].image_url`），
+   并把「补前缀 + 签名」收敛到唯一的 `to_public_url`。
+   顺带修掉 `transfer_station_client` 的 `images[]` / `mask`：它过去对元素**无条件**加前缀。
+2. **`thinking` 打开时 `output[0]` 是 `reasoning` 项，不是答案。** 取 `output[0]` 会拿到思维链，
+   更常见的表现是「拿不到文本、json 解析失败」。必须遍历 `output[]` 找 `type == "message"`，
+   再拼其中 `type == "output_text"` 的 `text`。这一点有专门用例（`output[0]` 是 reasoning）。
+3. **`store` 的缺省是 `true`** —— 不显式关掉就会把提示词与素材留在方舟侧，与 §8.5 的
+   「离线可复现」冲突。我们固定 `store: false`；代价是**不能用 `previous_response_id` 做多轮**
+   （它要求服务端留存历史），所以「改一版」这件事只能靠**我们的**轮次语义传递：
+   `spec_generation_request_t.previous_spec_` 本来就是显式输入，比服务端隐式历史更可控。
+   另外 `instructions` 与 `caching` 是互斥组合（同时发会 400），所以从不发 `caching`。
+4. **`text.format` 的形状在文档里自相矛盾**（平铺 `{type,name,schema,strict}` vs Python SDK 那种
+   chat 嵌套变体）。默认发**平铺**形状；若真机返回 400，再降级成 SDK 形状 —— 这条列在 §15.2 的待实测里。
+5. **`completion_tokens_` 的默认值是 50 万**（`g_max_task_completion_tokens`，给异步视频预留的上限）。
+   推理任务按 **`total_tokens`** 计费（**输入**才是成本大头：多图 + 长提示词），
+   必须显式赋值，否则配额与每日统计立刻失真；失败记 0 但**保留原始响应**便于对账。
+   `default_consumed_tokens(task_type::inference)` 给的是「按标准提交路径」时的预扣上限（5 万），
+   与生成类任务的 50 万区分开。
+6. **每次推理都新建客户端，重试时重新取 IP 并重新签名。** `http_client_ssl` 内部只有一个
+   `socket_` 且**没有锁**（`read_and_write` 是「写完立刻读整包」的一次性组合），共享给并发请求
+   会串包 —— 所以 `make_inference_client` 每次调用都 `make_shared`，不复用 `client_factory` 的缓存。
+   重试路径上必须重新签名：默认 TTL 只有 10 分钟，指数退避三次后旧签名可能已经过期，
+   而「签名过期」会表现成一个与真实故障无关的 401/403。`operation_aborted`（会话取消）不重试。
+
+**保留的边界**：不做 SSE 流式（仓库的 `http_client_ssl` 是一次性组合，读不到增量）、不做
+tools/function calling、不做方舟 Files API 上传（`file_id` 只能作为输入引用）、不做本地 JSON Schema
+校验（vcpkg 里只有 nlohmann-json）、不升 `user_version`（非 master 分支，见 §15.4 坑 3）。
+`exp/uid/sig` 会进服务端日志与 `data_request_` 的往返，这是接受的风险（10 分钟 TTL + 路径绑定），
+38192 也没有 TLS —— 上线前若要收敛，应换成一跳内的对象存储直传或带鉴权的代理。
+
+7. **`NLOHMANN_JSON_SERIALIZE_ENUM` 生成的 `from_json` 认不出字符串时**不抛**，而是静默落到第一个枚举值。**
+
+   这是本轮最值得记住的一条，因为它直接改变了「加一个枚举值」这件事的风险评估。
+   `nlohmann/detail/macro_scope.hpp:247`：
+
+   ```cpp
+   e = ((it != std::end(m)) ? it : std::begin(m))->first;   // 不匹配 -> 第一个枚举值
+   ```
+
+   于是两件事同时成立，而之前只想到了第一件：
+
+   | 路径 | 老服务端遇到新值 / 拼错的值 | 后果 |
+   |---|---|---|
+   | 数据库（`sqlite_statement.h` 的 magic_enum 反查） | 抛 | 至少不是静默错 |
+   | JSON（`SERIALIZE_ENUM`） | **静默变成 `task_type::picture`** | 一个 `"type": "infer"` 的拼写错误会安静地生成一张图片 |
+
+   修法不是「小心别拼错」，而是在**解析入口**把回落堵住：`task.h` 新增
+   `checked_enum_from_json<Enum>(json, 字段名)`，用 `magic_enum::enum_cast` 校验后再赋值，
+   认不出就抛 `type_error`（与 `get_to` 失败同类）。`task::from_json` 的 `type` / `backend`
+   都改走它，测试 `unknown_type_is_rejected_instead_of_becoming_picture` 钉住「不会变成 picture」。
+
+   顺带确认了一个之前只在脑子里推过的事实：`checked_enum_from_json` 用 magic_enum 校验，
+   等于**在运行期强制**「JSON 名 == magic_enum 名」这条约定 —— 两条路径的名字从此不可能悄悄分叉。
+
+   **但老二进制里没有这道闸**，所以「先升服务端、再产生 `inference` 行」这条顺序仍然必须遵守，
+   而且理由要改成：老服务端收到 `"type": "inference"` 不会报错，它会把它当成一个**图片任务**。
+   这类「不报错的错」比抛异常危险得多。
+
+8. **`nlohmann::json{值}` 是列表初始化，会静默包成单元素数组 —— 本轮在测试里又踩了一次。**
+   §15.4 坑 1 记的是同一个坑（当时是 `std::optional`）。这次的表现是
+   `nlohmann::json(枚举).get<std::string>()` 与 `nlohmann::json{枚举}.get<std::string>()`
+   **一个对一个抛 302**；`nlohmann::json{task}` 同理（`at()` 直接报 "cannot use at() with array"）。
+   在测试里它尤其阴：断言自己写错了，看起来却像被测代码有问题。
+   规矩很简单：**要转换就用括号 `nlohmann::json(x)`，要构造对象/数组就用成对的
+   `{{"k", v}}` / `nlohmann::json::array({...})`**，不要用单个值的花括号。
 
 

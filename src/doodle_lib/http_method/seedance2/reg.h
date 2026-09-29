@@ -4,12 +4,16 @@
 
 #pragma once
 #include "doodle_core/doodle_core_fwd.h"
+#include <doodle_core/metadata/ai_studio.h>
 #include <doodle_core/metadata/seedance2/canvas_media.h>
+#include <doodle_core/metadata/seedance2/task.h>
 
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/http_client/ai_client_base.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
+#include <boost/asio/awaitable.hpp>
 #include <core/http/http_function.h>
 #include <memory>
 #include <sqlite_orm/orm/update.h>
@@ -22,6 +26,29 @@ orm::update_t add_remaining_tokens_for_person(
 // 获取当周人员可以使用的 token 数量
 std::int64_t get_remaining_tokens_for_person(const uuid& in_person_id);
 
+// ─── 推理任务(火山方舟 Responses API) ────────────────────────────────────────
+// 设计: 推理走「方案 A」—— 调用方(接缝)同步等待结果, 任务行**插入即终态**,
+// 且插入与 token 扣减在同一个事务里, 所以后台的 seedance2_task_run_manager
+// (5 秒轮询 preparing/queued/running) 永远看不到这条任务, 不会重复提交。
+//
+// 与生成任务的差别:
+//   * 没有 result_files_/preview_file_(结果是一段文本, 落在 task.result_text_);
+//   * 没有预扣/退补: 计费按响应的 total_tokens 当场结算(输入 token 占大头);
+//   * 不落方舟侧(请求固定 store=false), 因此也没有 previous_response_id 的多轮。
+
+/// 构造一个推理客户端。**每次调用都新建**: http_client_ssl 内部只有一个 socket 且无锁,
+/// 共享给并发请求会串包。
+/// in_backend 决定用哪个后端; 目前只有 seedance2 支持推理, transfer_station 会返回失败结果。
+std::shared_ptr<ai_client_base> make_inference_client(
+    const ai_studio& in_studio, doodle::seedance2::task_backend in_backend = doodle::seedance2::task_backend::seedance2
+);
+
+/// 同步执行一次推理并把任务行落成终态(见上面的说明)。失败也会落库(便于审计与前台展示),
+/// 但 completion_tokens_ 记 0(不计费); 原始响应始终保留在 data_response_ 里。
+boost::asio::awaitable<ai_client_base::run_task_result_t> run_inference_task(
+    const doodle::seedance2::task& in_task, sqlite_database& in_sql, const std::shared_ptr<ai_client_base>& in_client
+);
+
 // 任务相关 ------------------
 // /api/seedance2/thumbnail/{id}.png
 DOODLE_HTTP_JWT_FUN(seedance2_thumbnail)
@@ -29,7 +56,8 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/pictures/{id}{file_extension}
-DOODLE_HTTP_FUN(seedance2_pictures)
+// 这个路由要把 URL 交给第三方(方舟)取图, 所以除会话鉴权外还接受短时效签名 URL
+DOODLE_HTTP_SIGNED_FUN(seedance2_pictures)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 file_extension_t file_extension_{};

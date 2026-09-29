@@ -4,6 +4,7 @@
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/lib_warp/boost_fmt_beast.h>
 
+#include <boost/uuid/uuid_io.hpp>
 #include <fmt/format.h>
 
 namespace doodle::http::seedance2 {
@@ -50,23 +51,24 @@ const model_pricing* find_pricing(std::string_view in_name) {
 
 // ─── 工具方法 ────────────────────────────────────────────────────────────────
 
-nlohmann::json transfer_station_client::add_ip_to_req(const nlohmann::json& in_req, std::string_view in_ip) {
+nlohmann::json transfer_station_client::add_ip_to_req(
+    const nlohmann::json& in_req, std::string_view in_ip, std::string_view in_secret, std::string_view in_uid
+) {
   nlohmann::json l_req = in_req;
 
   // images: 可选数组, 元素可能是 base64(data:) 或 url
   if (l_req.contains("images") && l_req.at("images").is_array()) {
     for (auto& l_value : l_req.at("images")) {
       if (!l_value.is_string()) continue;
-      auto l_url = l_value.get<std::string>();
-      l_value    = fmt::format("http://{}:38192{}", in_ip, l_url);
+      // 这里过去对元素**无条件**加前缀, 会把已经是绝对 URL 的元素(对象存储签名 URL 等)拼坏,
+      // 现在统一走 to_public_url: 绝对 URL 原样保留, 站点内路径补前缀并签名。
+      l_value = to_public_url(l_value.get<std::string>(), in_ip, in_secret, in_uid);
     }
   }
 
   // mask: 可选字段, url 字符串
-  if (l_req.contains("mask") && l_req.at("mask").is_string()) {
-    auto l_mask   = l_req.at("mask").get<std::string>();
-    l_req["mask"] = fmt::format("http://{}:38192{}", in_ip, l_mask);
-  }
+  if (l_req.contains("mask") && l_req.at("mask").is_string())
+    l_req["mask"] = to_public_url(l_req.at("mask").get<std::string>(), in_ip, in_secret, in_uid);
 
   return l_req;
 }
@@ -99,10 +101,19 @@ ai_client_base::request_info_t transfer_station_client::collect_request_info(con
 }
 
 boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_client::run_task(
-    const nlohmann::json& in_task
+    const doodle::seedance2::task& in_task
 ) {
+  // 中转站只做图片/视频生成, 不支持同步推理
+  if (in_task.type_ == doodle::seedance2::task_type::inference) {
+    logger_->error("中转站后端不支持推理任务");
+    run_task_result_t l_result{};
+    l_result.status_        = doodle::seedance2::task_status::failed;
+    l_result.data_response_ = nlohmann::json{{"error", "中转站后端不支持推理任务"}};
+    co_return l_result;
+  }
+
   // 未登记定价的模型不允许提交, 否则会按 0 积分计费
-  auto l_model = in_task.value("model", std::string{});
+  auto l_model = in_task.data_request_.value("model", std::string{});
   if (find_pricing(l_model) == nullptr) {
     logger_->error("模型 {} 未登记定价, 拒绝提交", l_model);
     run_task_result_t l_result{};
@@ -111,8 +122,12 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_clien
     co_return l_result;
   }
 
-  auto l_ip               = co_await get_ip_str();
-  auto l_req_body         = add_ip_to_req(in_task, l_ip);
+  auto l_ip = co_await get_ip_str();
+  auto l_req_body =
+      add_ip_to_req(
+          in_task.data_request_, l_ip, url_sign_secret_,
+          in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_)
+      );
   l_req_body["replyType"] = "async";
 
   boost::beast::http::request<boost::beast::http::string_body> req{
@@ -215,6 +230,9 @@ std::size_t transfer_station_client::default_consumed_tokens(const doodle::seeda
   switch (in_task_type) {
     case doodle::seedance2::task_type::video:
       return doodle_config::g_max_task_completion_tokens;
+    case doodle::seedance2::task_type::inference:
+      // 中转站后端不支持推理, 走到这里说明路由配置错了
+      return doodle_config::g_ark_inference_default_consumed_tokens;
     default:
       return 5000;
   }

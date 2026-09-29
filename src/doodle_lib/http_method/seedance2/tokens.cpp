@@ -170,16 +170,18 @@ auto get_date_person_tokens(const decltype(get_sqlite_database())& in_sql, const
       }
       if (l_type == sd2::task_type::video) ++l_token_map.at(l_user_id).video_count_;
       if (l_type == sd2::task_type::picture) ++l_token_map.at(l_user_id).picture_count_;
+      if (l_type == sd2::task_type::inference) ++l_token_map.at(l_user_id).inference_count_;
     } else {
       l_token_map.emplace(
           l_user_id, sd2::person_token{
-                         .date_           = chrono::year_month_day{in_date},
-                         .person_id_      = l_user_id,
-                         .token_consumed_ = l_tokens,
-                         .task_count_     = 1,
-                         .project_count_  = 1,
-                         .video_count_    = (l_type == sd2::task_type::video ? 1 : 0),
-                         .picture_count_  = (l_type == sd2::task_type::picture ? 1 : 0),
+                         .date_            = chrono::year_month_day{in_date},
+                         .person_id_       = l_user_id,
+                         .token_consumed_  = l_tokens,
+                         .task_count_      = 1,
+                         .project_count_   = 1,
+                         .video_count_     = (l_type == sd2::task_type::video ? 1 : 0),
+                         .picture_count_   = (l_type == sd2::task_type::picture ? 1 : 0),
+                         .inference_count_ = (l_type == sd2::task_type::inference ? 1 : 0),
                      }
       );
       l_project_map[l_user_id].insert(l_project_id);

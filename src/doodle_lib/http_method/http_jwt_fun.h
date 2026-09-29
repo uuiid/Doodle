@@ -77,7 +77,51 @@ class DOODLELIB_API http_jwt_fun : public http_function {
 
  protected:
   http_jwt_t person_{};
+
+  /// 按 uuid 加载人员(含部门链接与冻结检查), 会话鉴权与签名 URL 鉴权共用。
+  /// 未注册或已冻结会抛 401。
+  void load_person(const uuid& in_uuid);
 };
 #define DOODLE_HTTP_JWT_FUN(fun_name) DOODLE_HTTP_FUN_C(fun_name, ::doodle::http::http_jwt_fun)
+
+/**
+ * 会话鉴权 **或** 短时效签名 URL, 二选一通过。
+ *
+ * 用途: 需要把站点内的素材 URL 交给第三方(火山方舟)去取图的路由。第三方无法携带我们的
+ * cookie, 而会话 JWT 长效且无吊销名单, 不能放进 URL, 所以这类路由额外接受
+ * `?exp=<unix>&uid=<人员>&sig=<hmac>` 的签名(见 url_sign_t)。
+ *
+ * 优先级: **先 cookie / Bearer**(浏览器与客户端的正常路径, 行为与 http_jwt_fun 完全一致),
+ * 都没有或都不通过时, 才尝试签名兜底; 签名只对 **GET** 生效。
+ *
+ * 「先会话、后签名」这个顺序是有意的, 不是随手写的: 会话凭据里的身份来自登录态, 而 uid 来自 URL。
+ * 一个已登录的管理员点开别人签发的图片 URL 时, 应当仍然以**自己**的身份通过授权校验,
+ * 而不是被 URL 里的 uid 降级成别人的权限。
+ *
+ * uid 会**真正加载 person_**(与 cookie 路径同一套校验: 注册、冻结、部门链接), 所以派生
+ * handler 里的 check_project_access 等授权校验在签名路径下照常生效 —— 签名换的是凭据,
+ * 不是绕过授权。uid 为空时不加载 person_, 需要人员校验的 handler 会 fail-closed。
+ */
+class DOODLELIB_API http_jwt_or_signed_fun : public http_jwt_fun {
+ public:
+  using http_jwt_fun::http_jwt_fun;
+
+ protected:
+  void parse_header(const session_data_ptr& in_handle) override;
+  /**
+   * 先按会话鉴权(cookie / Bearer)试一次; 失败返回 false 而不是抛。
+   *
+   * 只吞 401 一类的 `http_request_error`(没带凭据 / JWT 过期 / 未注册 / 已冻结),
+   * 其他异常(例如数据库真的坏了)照常上抛 —— 否则会被签名兜底掩盖成一次「静默的重试」。
+   *
+   * 注意 `http_jwt_fun::parse_header` 本来就有两条**短路**: OPTIONS 预检、以及没有
+   * `kitsu_ctx_t`(本地模式)。它们不抛异常, 所以这里会返回 true —— 与改动前的行为一致,
+   * 不是本函数引入的放宽。
+   */
+  bool try_session_auth(const session_data_ptr& in_handle);
+  /// 校验签名 URL; 命中且校验通过返回 true(并已按 uid 加载 person_)
+  bool try_signed_url(const session_data_ptr& in_handle);
+};
+#define DOODLE_HTTP_SIGNED_FUN(fun_name) DOODLE_HTTP_FUN_C(fun_name, ::doodle::http::http_jwt_or_signed_fun)
 
 }  // namespace doodle::http

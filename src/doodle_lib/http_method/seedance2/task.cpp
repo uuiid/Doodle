@@ -116,6 +116,7 @@ class client_factory {
         l_pair.transfer_station_ = std::make_shared<transfer_station_client>(*core_set::get_set().ctx_ptr);
         l_pair.transfer_station_->set_token(in_studio.transfer_station_key_);
         l_pair.transfer_station_->set_logger(g_logger_ctrl().get_http());
+        l_pair.transfer_station_->set_url_sign_secret(get_url_sign_secret());
       }
       return l_pair.transfer_station_;
     }
@@ -125,10 +126,69 @@ class client_factory {
       l_pair.seedance2_ = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
       l_pair.seedance2_->set_token(in_studio.seedance2_key_);
       l_pair.seedance2_->set_logger(g_logger_ctrl().get_http());
+      l_pair.seedance2_->set_url_sign_secret(get_url_sign_secret());
     }
     return l_pair.seedance2_;
   }
+
+  /// 公网素材 URL 的签名密钥(主服务器才有注册表密钥; 拿不到就不签名)
+  static std::string get_url_sign_secret() {
+    return g_ctx().contains<kitsu_ctx_t>() ? g_ctx().get<kitsu_ctx_t>().secret_ : std::string{};
+  }
 };
+
+std::shared_ptr<ai_client_base> make_inference_client(const ai_studio& in_studio, sd2::task_backend in_backend) {
+  std::shared_ptr<ai_client_base> l_client{};
+  if (in_backend == sd2::task_backend::transfer_station)
+    l_client = std::make_shared<transfer_station_client>(*core_set::get_set().ctx_ptr);
+  else
+    l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
+
+  l_client->set_token(
+      in_backend == sd2::task_backend::transfer_station ? in_studio.transfer_station_key_ : in_studio.seedance2_key_
+  );
+  l_client->set_logger(g_logger_ctrl().get_http());
+  l_client->set_url_sign_secret(client_factory::get_url_sign_secret());
+  return l_client;
+}
+
+boost::asio::awaitable<ai_client_base::run_task_result_t> run_inference_task(
+    const sd2::task& in_task, sqlite_database& in_sql, const std::shared_ptr<ai_client_base>& in_client
+) {
+  auto l_result = co_await in_client->run_task(in_task);
+
+  const bool l_ok = l_result.status_ == sd2::task_status::succeeded;
+  auto l_task     = in_task;
+  l_task.status_       = l_ok ? sd2::task_status::succeeded : sd2::task_status::failed;
+  l_task.task_id_      = l_result.task_id_;
+  l_task.ended_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+  l_task.data_response_ = l_result.data_response_;
+  l_task.result_text_   = l_result.result_text_;
+  // 推理按 total_tokens 计费(文本+多图的**输入**才是成本大头); 拿不到 usage 就退回调用方给的预扣值。
+  // 失败不计费(completion_tokens_ 记 0), 但原始响应仍留在 data_response_ 里便于对账。
+  l_task.completion_tokens_ = l_ok ? (l_result.total_tokens_ > 0 ? l_result.total_tokens_ : in_task.completion_tokens_)
+                                   : std::int64_t{0};
+
+  {
+    // 一个事务: 插入(终态) + 扣费。因为插入就是终态, 后台管理器(只捞
+    // preparing/queued/running)永远看不到这条任务, 所以不存在重复提交。
+    using namespace orm;
+    sql_modify_statement_vector_t l_sqls;
+    l_sqls.emplace_back(insert(in_sql).into<sd2::task>().values(l_task));
+    if (l_task.completion_tokens_ > 0)
+      l_sqls.emplace_back(add_remaining_tokens_for_person(in_sql, l_task.user_id_, -l_task.completion_tokens_));
+    co_await in_sql.run_sql(std::move(l_sqls));
+  }
+
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_http(), "推理任务 {} 结束: status {} tokens {} -> {}", l_task.uuid_id_,
+      magic_enum::enum_name(l_task.status_), l_result.total_tokens_, l_task.completion_tokens_
+  );
+  socket_io::broadcast(
+      socket_io::seedance2_task_update_broadcast_t{.task_id_ = l_task.uuid_id_, .status_ = l_task.status_}
+  );
+  co_return l_result;
+}
 
 class seedance2_task_run_manager {
   struct task_info {
@@ -158,7 +218,7 @@ class seedance2_task_run_manager {
       const sd2::task& in_task, const std::shared_ptr<ai_client_base>& in_client
   ) try {
     sd2::task_status l_status{};
-    auto l_result = co_await in_client->run_task(in_task.data_request_);
+    auto l_result = co_await in_client->run_task(in_task);
     auto l_sql    = get_sqlite_database();
     using namespace orm;
     sql_modify_statement_vector_t l_sql_modify_statements;
@@ -167,7 +227,24 @@ class seedance2_task_run_manager {
                         .set(c(&sd2::task::data_response_) = l_result.data_response_)
                         .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_);
     l_sql_modify_statements.push_back(l_update);
-    if (l_result.status_ == sd2::task_status::queued) {
+    if (l_result.status_ == sd2::task_status::succeeded) {
+      // 同步推理任务(task_type::inference): run_task 一次调用就有结果。
+      // 方案 A 的接缝走 run_inference_task(), 不会经这里; 但公共提交路径若建了推理任务,
+      // 也必须在这一步结算, 否则会被下面那条 else 误判成失败。
+      const auto l_actual_tokens = l_result.total_tokens_ > 0 ? l_result.total_tokens_ : in_task.completion_tokens_;
+      l_update.set(
+          c(&sd2::task::status_) = sd2::task_status::succeeded,
+          c(&sd2::task::task_id_) = l_result.task_id_,
+          c(&sd2::task::result_text_) = l_result.result_text_,
+          c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
+          c(&sd2::task::completion_tokens_) = l_actual_tokens
+      );
+      l_status = sd2::task_status::succeeded;
+      // 预扣的是 default_consumed_tokens, 按实际的 total_tokens 退补
+      l_sql_modify_statements.emplace_back(
+          add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_ - l_actual_tokens)
+      );
+    } else if (l_result.status_ == sd2::task_status::queued) {
       l_update.set(c(&sd2::task::task_id_) = l_result.task_id_);
       l_update.set(c(&sd2::task::status_) = sd2::task_status::queued);
       l_status = sd2::task_status::queued;
@@ -400,6 +477,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   auto l_json = in_handle->get_json();
 
   l_json.get_to(*l_task);
+  // 推理任务(task_type::inference)不走这条前端提交路径: 它由服务端接缝同步执行并直接落终态
+  // (见 run_inference_task), 不需要 ai_generate_entity / 分辨率 / 当周配额预扣。
+  // 不在这里明确拒绝的话, 下面那句「缺少分辨率」会给出误导性的错误。
+  DOODLE_CHICK_HTTP(
+      l_task->type_ != sd2::task_type::inference, bad_request, "推理任务由服务端执行, 不能通过子项目任务接口提交"
+  );
   l_task->user_id_       = person_.person_.uuid_id_;
   l_task->ai_studio_id_  = person_.get_ai_studio_id();
   l_task->subproject_id_ = subproject_id_;

@@ -3,7 +3,9 @@
 #include <doodle_core/metadata/base.h>
 
 #include <chrono>
+#include <magic_enum/magic_enum.hpp>
 #include <string>
+#include <string_view>
 
 namespace doodle::seedance2 {
 /**
@@ -28,11 +30,30 @@ enum class DOODLE_CORE_API task_status {
 };
 
 // 任务类别 图片,视频等
+//
+// 注意：新值只能**追加在末尾**。枚举在库里以 magic_enum 推出来的**名字串**存储
+// (sqlite_statement.h:270-275)，读取时用 enum_cast 反查、认不出就抛
+// (sqlite_statement.h:283-284)。所以：
+//   * 重排或改名会让历史行读不出来；
+//   * **必须先升服务端**再产生 "inference" 这类行, 但理由比"读不出来"更糟:
+//     - 库这条路径(老服务端)读到认不出的名字串会抛(至少不是静默错)；
+//     - JSON 这条路径(老服务端收到新前端的 `"type":"inference"`)会**静默变成 picture**
+//       —— nlohmann 的 SERIALIZE_ENUM 认不出就落到第一个枚举值
+//       (nlohmann/detail/macro_scope.hpp:247)。本文件已用 checked_enum_from_json() 把这个
+//       静默回落堵住, 但**老二进制里没有这道闸**, 所以顺序仍然必须是「先升服务端」。
+//   * JSON 名必须与 magic_enum 推出来的名字一致（都是 inference）：checked_enum_from_json()
+//     用 magic_enum 校验, 不一致会直接抛。
 enum class DOODLE_CORE_API task_type {
   picture,
   video,
+  /// 同步推理（火山方舟 Responses API）。它不是异步生成任务：run_task 一次调用
+  /// 就拿到结果，任务行直接落终态（见 seedance2/task.cpp 的 run_inference_task）。
+  inference,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(task_type, {{task_type::picture, "picture"}, {task_type::video, "video"}});
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    task_type,
+    {{task_type::picture, "picture"}, {task_type::video, "video"}, {task_type::inference, "inference"}}
+);
 NLOHMANN_JSON_SERIALIZE_ENUM(
     task_status,
 
@@ -55,6 +76,28 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {{task_backend::seedance2, "seedance2"}, {task_backend::transfer_station, "transfer_station"}}
 );
 
+/**
+ * 从 JSON 里取枚举, 认不出就抛。
+ *
+ * 为什么不能直接用 NLOHMANN_JSON_SERIALIZE_ENUM 生成的 from_json: 它对**认不出的**输入
+ * 不抛异常, 而是静默落到第一个枚举值
+ * (nlohmann/detail/macro_scope.hpp:247 —— `(it != end ? it : begin)->first`)。
+ * 于是 `"type": "infer"`(拼错) 或旧客户端发来的 `"inference"`(服务端还没升)
+ * 会**静默变成一个图片生成任务**, 而不是报错。
+ *
+ * 而库里走的是另一条路(sqlite_statement.h 的 magic_enum 反查), 认不出就抛 —— 两条路径
+ * 必须一致, 否则「库里读不出来」和「JSON 里悄悄变样」会同时存在。顺带这也让
+ * 「JSON 名必须等于 magic_enum 名」这条约定在运行期被强制住。
+ */
+template <typename Enum>
+Enum checked_enum_from_json(const nlohmann::json& in_json, std::string_view in_field) {
+  const auto l_name = in_json.get<std::string>();
+  if (const auto l_value = magic_enum::enum_cast<Enum>(l_name); l_value.has_value()) return *l_value;
+  throw nlohmann::json::type_error::create(
+      302, std::string{"未知的 "} + std::string{in_field} + " 取值: " + l_name, &in_json
+  );
+}
+
 struct DOODLE_CORE_API task {
   DOODLE_BASE_FIELDS();
   uuid user_id_;
@@ -73,11 +116,20 @@ struct DOODLE_CORE_API task {
   chrono::system_zoned_time ended_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   uuid project_uuid_id_;  // 内部使用的UUID，对应项目中的uuid_id_
-  std::int64_t completion_tokens_{
-      doodle_config::g_max_task_completion_tokens
-  };  // 任务完成所需的token数量，默认为20万，具体数值可根据实际情况调整
+  /// 任务计费口径:
+  ///   * 生成类任务 = 外部服务返回的 completion_tokens(提交时先按 default_consumed_tokens 预扣, 结算时退补);
+  ///   * 推理任务(type_ == inference) = 方舟响应的 **total_tokens**(输入 token 才是成本大头),
+  ///     由 run_inference_task 当场结算, **必须显式赋值** —— 否则会沿用下面的默认值, 污染配额与统计。
+  std::int64_t completion_tokens_{doodle_config::g_max_task_completion_tokens};  // 默认上限, 见 g_max_task_completion_tokens
   uuid ai_generate_entity_id_;  // 内部使用的UUID，对应ai_generate_entity中的uuid_id_
   uuid subproject_id_;          // 对应 subproject 的 uuid_id_
+
+  /// 外键 → ai_light_iteration.uuid_id_。AI 灯光的推理任务（type_ == inference）指向它所属的轮次。
+  /// 可空：spec 蒸馏发生在轮次建立之前、结构反馈是会话级的，这两类任务该字段为 nil。
+  uuid ai_light_iteration_id_;
+  /// 推理任务的输出文本（type_ == inference）；生成类任务恒空，结果在 preview_file_/data_response_。
+  std::string result_text_;
+
   std::int64_t retry_count_{0};  // 重试次数
   // 归档
   bool archived_;
@@ -102,17 +154,22 @@ struct DOODLE_CORE_API task {
     j["completion_tokens"]     = p.completion_tokens_;
     j["ai_generate_entity_id"] = p.ai_generate_entity_id_;
     j["subproject_id"]         = p.subproject_id_;
+    j["ai_light_iteration_id"] = p.ai_light_iteration_id_;
+    j["result_text"]           = p.result_text_;
     j["retry_count"]           = p.retry_count_;
   }
   friend void from_json(const nlohmann::json& j, task& p) {
     j.at("data_request").get_to(p.data_request_);
     j.at("ai_studio_id").get_to(p.ai_studio_id_);
     j.at("project_uuid_id").get_to(p.project_uuid_id_);
-    j.at("type").get_to(p.type_);
-    j.at("backend").get_to(p.backend_);
+    // type / backend 必须显式校验: 见 checked_enum_from_json() 的注释
+    p.type_    = checked_enum_from_json<task_type>(j.at("type"), "type");
+    p.backend_ = checked_enum_from_json<task_backend>(j.at("backend"), "backend");
     j.at("ai_generate_entity_id").get_to(p.ai_generate_entity_id_);
 
     if (j.contains("archived")) j.at("archived").get_to(p.archived_);
+    if (j.contains("ai_light_iteration_id")) j.at("ai_light_iteration_id").get_to(p.ai_light_iteration_id_);
+    if (j.contains("result_text")) j.at("result_text").get_to(p.result_text_);
   }
 };
 // 统计每人, 每天的 token 消耗量
@@ -130,17 +187,20 @@ struct DOODLE_CORE_API person_token {
   std::int64_t video_count_{0};
   // 图片类的数量
   std::int64_t picture_count_{0};
+  // 推理类的数量（AI 灯光等同步推理任务）
+  std::int64_t inference_count_{0};
 
   // to json
   friend void to_json(nlohmann::json& j, const person_token& p) {
-    j["id"]            = p.uuid_id_;
-    j["date"]          = p.date_;
-    j["person_id"]     = p.person_id_;
-    j["token_amount"]  = p.token_consumed_;
-    j["task_count"]    = p.task_count_;
-    j["project_count"] = p.project_count_;
-    j["video_count"]   = p.video_count_;
-    j["picture_count"] = p.picture_count_;
+    j["id"]              = p.uuid_id_;
+    j["date"]            = p.date_;
+    j["person_id"]       = p.person_id_;
+    j["token_amount"]    = p.token_consumed_;
+    j["task_count"]      = p.task_count_;
+    j["project_count"]   = p.project_count_;
+    j["video_count"]     = p.video_count_;
+    j["picture_count"]   = p.picture_count_;
+    j["inference_count"] = p.inference_count_;
   }
 };
 // task 任务和之前任务的相似度, 用于判断是否重复提交任务

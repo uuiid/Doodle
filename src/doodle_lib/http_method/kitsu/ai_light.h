@@ -90,13 +90,15 @@ uuid id_{};
 DOODLE_HTTP_FUN_END()
 
 // GET /api/doodle/ai/light/reference/{id}/image   参考图取图
-DOODLE_HTTP_JWT_FUN(reference_image_route)
+// 会作为 VLM 判分/推理的输入交给方舟, 所以支持短时效签名 URL(uid 参与签名并真正加载人员,
+// handler 里的项目权限校验在签名路径下照常生效)
+DOODLE_HTTP_SIGNED_FUN(reference_image_route)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
 // GET /api/doodle/ai/light/candidate/{id}/image   中间候选取图（只有定稿才进 preview_file）
-DOODLE_HTTP_JWT_FUN(candidate_image_route)
+DOODLE_HTTP_SIGNED_FUN(candidate_image_route)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
