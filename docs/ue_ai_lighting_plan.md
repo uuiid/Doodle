@@ -1579,7 +1579,7 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
 | 数据模型 | `task_type::inference`（**只能追加**）；`task.ai_light_iteration_id_`（FK → `ai_light_iteration.uuid_id_`，可空）、`task.result_text_`；`person_token.inference_count_` |
 | 产物 URL 鉴权 | 新增 `http_client/url_sign.{h,cpp}`（HMAC-SHA256 短时效签名）+ `http_jwt_or_signed_fun` 基类（`DOODLE_HTTP_SIGNED_FUN`）：cookie/Bearer **优先**，签名只作兜底且**只对 GET** 生效 |
 | 鉴权优先级 | `try_session_auth()` → `try_signed_url()` → 抛出统一 401（顺序不能反，理由见下） |
-| 转签的路由 | `seedance2/pictures`、`kitsu/ai_light` 的 `reference_image_route` / `candidate_image_route`、四条约 `doodle_ai_volcano_engine_inference_materials_*`（POST 上传仍要会话） |
+| 转签的路由 | `seedance2/pictures`、`kitsu/ai_light` 的 `reference_image_route` / `candidate_image_route`（`/api/doodle/ai/volcano-engine/**` 那四条已按「不再使用」删除，见下） |
 | 常量 | `doodle_config::g_ark_inference_model{deepseek-v4-1-flash-260910}` / `_timeout{180s}` / `_max_retry{3}` / `_default_max_output_tokens{4096}` / `_default_consumed_tokens{5万}` |
 | 测试 | `src/test/core/url_sign.cpp`（11 用例 / 35 断言）、`seedance2_inference.cpp`（17 用例 / 74 断言）、`seedance2_task_model.cpp`（7 用例 / 33 断言）、`seedance2_task_pipeline.cpp`（6 用例 / 35 断言，见下「给没被调用过的代码补测」）；全量回归 **150 用例 / 1103 断言**通过（本轮之前是 109 / 926） |
 
@@ -1607,6 +1607,22 @@ const auto l_result = co_await run_inference_task(l_task, l_sql, l_client);
 
 `data_request_` 里不要自己拼方舟的 `input[]`/`model`/`store` —— 归一化信封（`input_text` / `images` /
 `json_schema` …）由 `build_inference_body()` 翻译，签名与公网前缀由客户端在发请求前补。
+
+**已删除：`/api/doodle/ai/volcano-engine/**` 下四条素材路由**（本轮确认不再使用后清掉）。
+删掉的是「通用素材上传 + 取图」这一套，不是 AI 灯光的参考图通道 —— 后者走
+`kitsu/ai_light` 的 `reference_image_route` / `candidate_image_route`，与这些产物路径无关。
+
+| 删除项 | 位置 |
+|---|---|
+| 四个路由类的声明 | `http_method/kitsu/kitsu_reg_url.h`（`DOODLE_HTTP_SIGNED_FUN` 那四个） |
+| 五条注册（video 的 `.mp4` 与 `.png` 两条都指向同一个类） | `http_method/kitsu.cpp` |
+| 四个处理器实现 | `http_method/kitsu/pictures.cpp`（video 上传里的「读首帧做缩略图」一并删除） |
+| 产物路径 | `kitsu_ctx_t::get_inference_materials_video/_image`（除这四个处理器外无人使用，属同一功能的死代码） |
+| OpenAPI 生成物 | `docs/api/openapi.yaml` 的 5 条 path + `docs/api/paths/api_doodle_ai_volcano-engine_*.yaml` 5 个文件 |
+
+删除后 `DOODLE_HTTP_SIGNED_FUN` / `http_jwt_or_signed_fun` 仍有三个使用者
+（`seedance2/pictures` 与 `ai_light` 的两条图片路由），所以那套签名鉴权**不动**。
+`preview::convert_to_png` 仍被 `ai_light.cpp` 使用，也保留。
 
 **鉴权顺序为什么必须是「先会话、后签名」**：第一版实现把 `try_signed_url()` 放在了前面（谁先写在前面谁赢），
 这**违背了本轮定下的「cookie / Bearer 优先」**。两者都能通过，但语义不同：

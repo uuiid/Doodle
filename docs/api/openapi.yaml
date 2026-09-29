@@ -571,16 +571,6 @@ paths:
     $ref: paths/api_data_user_time-spents.yaml
   /api/data/user/time-spents/{date}:
     $ref: paths/api_data_user_time-spents_{date}.yaml
-  /api/doodle/ai/volcano-engine/inference/materials/image:
-    $ref: paths/api_doodle_ai_volcano-engine_inference_materials_image.yaml
-  /api/doodle/ai/volcano-engine/inference/materials/image/{id}.png:
-    $ref: paths/api_doodle_ai_volcano-engine_inference_materials_image_{id}.png.yaml
-  /api/doodle/ai/volcano-engine/inference/materials/video:
-    $ref: paths/api_doodle_ai_volcano-engine_inference_materials_video.yaml
-  /api/doodle/ai/volcano-engine/inference/materials/video/{id}.mp4:
-    $ref: paths/api_doodle_ai_volcano-engine_inference_materials_video_{id}.mp4.yaml
-  /api/doodle/ai/volcano-engine/inference/materials/video/{id}.png:
-    $ref: paths/api_doodle_ai_volcano-engine_inference_materials_video_{id}.png.yaml
   /api/doodle/backup:
     $ref: paths/api_doodle_backup.yaml
   /api/doodle/stop-server:

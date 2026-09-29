@@ -279,14 +279,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_computers>("/api/data/computers"_url)
       .reg_t<data_computers_instance>("/api/data/computers/{}"_url(&data_computers_instance::computer_id_))
       .reg_t<actions_projects_search>("/api/actions/projects/{}/search"_url(&actions_projects_search::project_id_))
-      .reg_t<doodle_ai_volcano_engine_inference_materials_video>("/api/doodle/ai/volcano-engine/inference/materials/video"_url)
-      .reg_t<doodle_ai_volcano_engine_inference_materials_video_id>(
-          "/api/doodle/ai/volcano-engine/inference/materials/video/{}.mp4"_url(&doodle_ai_volcano_engine_inference_materials_video_id::id_))
-      .reg_t<doodle_ai_volcano_engine_inference_materials_video_id>(
-          "/api/doodle/ai/volcano-engine/inference/materials/video/{}.png"_url(&doodle_ai_volcano_engine_inference_materials_video_id::id_))
-      .reg_t<doodle_ai_volcano_engine_inference_materials_image>("/api/doodle/ai/volcano-engine/inference/materials/image"_url)
-      .reg_t<doodle_ai_volcano_engine_inference_materials_image_id>(
-          "/api/doodle/ai/volcano-engine/inference/materials/image/{}.png"_url(&doodle_ai_volcano_engine_inference_materials_image_id::id_))
       .reg_t<seedance2::doodle_ai_depth_estimation_video>(
           "/api/seedance2/subproject/{}/entity/{}/depth"_url(
               &seedance2::doodle_ai_depth_estimation_video::subproject_id_,

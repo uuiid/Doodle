@@ -805,25 +805,6 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid project_id_{};
 DOODLE_HTTP_FUN_END()
 
-// /api/doodle/ai/volcano-engine/inference/materials/video
-// 上传走会话鉴权(POST 不接受签名), 取图支持短时效签名 URL(要交给方舟)
-DOODLE_HTTP_SIGNED_FUN(doodle_ai_volcano_engine_inference_materials_video)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_FUN_END()
-// /api/doodle/ai/volcano-engine/inference/materials/video/{id}.mp4
-DOODLE_HTTP_SIGNED_FUN(doodle_ai_volcano_engine_inference_materials_video_id)
-uuid id_{};
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_END()
-// /api/doodle/ai/volcano-engine/inference/materials/image
-DOODLE_HTTP_SIGNED_FUN(doodle_ai_volcano_engine_inference_materials_image)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_FUN_END()
-// /api/doodle/ai/volcano-engine/inference/materials/image/{id}.png
-DOODLE_HTTP_SIGNED_FUN(doodle_ai_volcano_engine_inference_materials_image_id)
-uuid id_{};
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_END()
 // /api/data/ai_studio
 DOODLE_HTTP_JWT_FUN(data_ai_studio)
 DOODLE_HTTP_FUN_OVERRIDE(post)
