@@ -1,0 +1,15 @@
+# dsh-tool-everything bundle patch
+#
+# 把 esearch 工具挂进 DSH 工具注册表。config 全部可选：
+#   endpoint   Everything HTTP 服务地址（默认 http://127.0.0.1:8099/）
+#   esPath     es.exe 路径；配置后仅在 HTTP 传输失败时兜底
+#   scopes     允许的搜索根目录白名单；模型未给 path 时取第一个
+#   maxResults 单次返回上限（默认 50，硬上限 500）
+#   timeoutMs  单次查询预算（默认 30000）
+#   guidanceOrder 系统提示词里本工具指引段的排序值（默认 1390；设 999 顶到所有工具指引之前）
+- insert:
+    - id: tool-everything
+      name: dsh-tool-everything
+      config:
+        scopes:
+          - E:\Doodle

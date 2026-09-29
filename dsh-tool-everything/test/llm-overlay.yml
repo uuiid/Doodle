@@ -1,0 +1,26 @@
+# 仅用于测试：复用 web profile 的 volcengine provider 配置
+# （dsh esplugin --patch E:\Doodle\dsh-tool-everything\test\llm-overlay.yml ...）
+- id: llm-pi-ai
+  name: "@deepseek-ai/dsh-llm-pi-ai"
+  config:
+    providers:
+      volcengine:
+        displayName: 火山
+        apiKeyEnv: VOLCENGINE_API_KEY
+        api: openai-responses
+        baseURL: https://ark.cn-beijing.volces.com/api/v3
+        models:
+          - id: deepseek-v4-1-flash-260910
+            name: deepseek-v4-1-flash
+            reasoningEfforts:
+              low: low
+              high: high
+              max: max
+            input:
+              - text
+              - image
+- id: agent-default-model
+  name: "@deepseek-ai/dsh-agent-default-model"
+  config:
+    provider: volcengine
+    model: deepseek-v4-1-flash-260910
