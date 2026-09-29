@@ -98,6 +98,9 @@ class DOODLELIB_API http_jwt_fun : public http_function {
  * 一个已登录的管理员点开别人签发的图片 URL 时, 应当仍然以**自己**的身份通过授权校验,
  * 而不是被 URL 里的 uid 降级成别人的权限。
  *
+ * 同理, 请求里带会话凭据时签名兜底**根本不参与**(见 try_signed_url): 会话凭据过期/冻结就按会话
+ * 路径报 401, 不会退回签名身份。
+ *
  * uid 会**真正加载 person_**(与 cookie 路径同一套校验: 注册、冻结、部门链接), 所以派生
  * handler 里的 check_project_access 等授权校验在签名路径下照常生效 —— 签名换的是凭据,
  * 不是绕过授权。uid 为空时不加载 person_, 需要人员校验的 handler 会 fail-closed。
@@ -108,18 +111,10 @@ class DOODLELIB_API http_jwt_or_signed_fun : public http_jwt_fun {
 
  protected:
   void parse_header(const session_data_ptr& in_handle) override;
-  /**
-   * 先按会话鉴权(cookie / Bearer)试一次; 失败返回 false 而不是抛。
-   *
-   * 只吞 401 一类的 `http_request_error`(没带凭据 / JWT 过期 / 未注册 / 已冻结),
-   * 其他异常(例如数据库真的坏了)照常上抛 —— 否则会被签名兜底掩盖成一次「静默的重试」。
-   *
-   * 注意 `http_jwt_fun::parse_header` 本来就有两条**短路**: OPTIONS 预检、以及没有
-   * `kitsu_ctx_t`(本地模式)。它们不抛异常, 所以这里会返回 true —— 与改动前的行为一致,
-   * 不是本函数引入的放宽。
-   */
-  bool try_session_auth(const session_data_ptr& in_handle);
-  /// 校验签名 URL; 命中且校验通过返回 true(并已按 uid 加载 person_)
+
+  /// 校验签名 URL; 命中且校验通过返回 true(并已按 uid 加载 person_)。
+  /// 请求带会话凭据(cookie 的 access_token_cookie / Authorization 的 Bearer)时**直接返回 false**,
+  /// 把结论让给会话路径: 会话凭据在场就不该由签名决定身份, 过期/冻结也照常 401。
   bool try_signed_url(const session_data_ptr& in_handle);
 };
 #define DOODLE_HTTP_SIGNED_FUN(fun_name) DOODLE_HTTP_FUN_C(fun_name, ::doodle::http::http_jwt_or_signed_fun)

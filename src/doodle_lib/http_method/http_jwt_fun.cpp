@@ -24,6 +24,13 @@ namespace doodle::http {
 bool http_jwt_or_signed_fun::try_signed_url(const session_data_ptr& in_handle) {
   // 签名只授权「读」, 所以仅 GET; POST/DELETE 等一律走会话鉴权
   if (in_handle->method() != boost::beast::http::verb::get) return false;
+  // 请求带了会话凭据(cookie 里的 access_token_cookie / Authorization 的 Bearer)**就不再兜底到签名**:
+  // 身份与结论一律交给会话路径(有效则通过, 过期或冻结则 401), 免得 URL 里的 uid 盖掉登录态的身份。
+  // 判断看的是「凭据本身」而不是 cookie 头是否为空 —— 一个无关 cookie 不该让第三方签名请求失去兜底。
+  // 检测口径与 http_jwt_fun::parse_header 的取法保持一致(cookie 在前, Bearer 在后)。
+  const std::string l_cookie{in_handle->req_header_[boost::beast::http::field::cookie]};
+  const std::string l_auth{in_handle->req_header_[boost::beast::http::field::authorization]};
+  if (l_cookie.find("access_token_cookie=") != std::string::npos || l_auth.starts_with("Bearer ")) return false;
   if (!g_ctx().contains<kitsu_ctx_t>()) return false;
 
   auto&& l_params = in_handle->url_.params();
@@ -60,27 +67,15 @@ bool http_jwt_or_signed_fun::try_signed_url(const session_data_ptr& in_handle) {
   return true;
 }
 
-bool http_jwt_or_signed_fun::try_session_auth(const session_data_ptr& in_handle) {
-  try {
-    // 复用会话鉴权的**唯一一份**实现(cookie/Bearer -> JWT 校验 -> load_person),
-    // 这里不重写一遍取凭据的逻辑, 否则两条路径的取法迟早会漂移。
-    http_jwt_fun::parse_header(in_handle);
-    return true;
-  } catch (const http_request_error& e) {
-    // 只吞 401 这类「凭据问题」: 没带凭据 / JWT 过期或校验失败 / 未注册 / 已冻结。
-    // 其他异常(库坏了、内存不够……)照常上抛 —— 不能被签名兜底掩盖成一次静默重试。
-    SPDLOG_LOGGER_DEBUG(g_logger_ctrl().get_http(), "会话鉴权未通过, 转签名兜底: {}", e.what());
-    return false;
-  }
-}
-
 void http_jwt_or_signed_fun::parse_header(const session_data_ptr& in_handle) {
   // 优先级: **先 cookie / Bearer**(与 http_jwt_fun 完全一致) -> 再短时效签名 URL。
   //
   // 顺序不能反: 会话凭据里的身份来自登录态, 而 uid 来自 URL。若先看签名, 一个已登录的
   // 管理员点开别人签发的图片 URL 时, 就会以 URL 里的 uid 去做授权校验(被别人降权);
   // 先会话则始终以「当前登录的人」为准。
-  if (try_session_auth(in_handle)) return;
+  //
+  // 这条顺序在 try_signed_url 里还有第二道保险: 请求一旦带了会话凭据, 签名兜底直接不参与
+  // (即便会话凭据已过期, 也按会话路径报 401, 不会静默降级成签名身份)。
   if (try_signed_url(in_handle)) return;
   // 两条路都不通: 再走一次会话路径, 把统一的 401("请先登录" / "cookie 验证错误")抛出去
   http_jwt_fun::parse_header(in_handle);
@@ -96,11 +91,15 @@ void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
     l_jwt = l_jwt.substr(l_it + 20, l_jwt.find(';', l_it) - l_it - 20);
   else if (auto l_it_b = l_jwt.find("Bearer "); l_it_b != std::string::npos)
     l_jwt = l_jwt.substr(l_it_b + 7, l_jwt.find(' ', l_it_b) - l_it_b - 7);
-  else if (auto l_it1 = in_handle->url_.params().find("access_token_cookie");
-           l_it1 != in_handle->url_.params().end() && (*l_it1)->has_value)
+  else if (
+      auto l_it1 = in_handle->url_.params().find("access_token_cookie");
+      l_it1 != in_handle->url_.params().end() && (*l_it1)->has_value
+  )
     l_jwt = (*l_it1)->value;
-  else if (auto l_it2 = in_handle->url_.params().find("access_token");
-           l_it2 != in_handle->url_.params().end() && (*l_it2)->has_value)
+  else if (
+      auto l_it2 = in_handle->url_.params().find("access_token");
+      l_it2 != in_handle->url_.params().end() && (*l_it2)->has_value
+  )
     l_jwt = (*l_it2)->value;
   if (l_jwt.empty()) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
   // std::string l_l_jwt_str{l_jwt};
@@ -134,7 +133,7 @@ void http_jwt_fun::load_person(const uuid& in_uuid) {
                                 .from<person_department_link>()
                                 .where(c(&person_department_link::person_id_) == l_person.uuid_id_)()
                                 .to_vector();
-    person_ = {l_person};
+    person_               = {l_person};
   }
 
   if (!person_.person_.active_)
