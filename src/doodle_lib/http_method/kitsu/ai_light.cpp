@@ -566,8 +566,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_route, post) {
   // 提前改会让「接缝失败回滚到入口状态」这条契约变成回滚到 draft ——
   // 而状态机最难查的正是这种「回滚落到哪」的偏差。
 
-  // 走到这里参数都合法。接缝未实现时 advance_session 会抛 501 并把状态回滚到入口状态。
-  co_await advance_session(l_sql, l_session);
+  // 走到这里参数都合法。接缝失败时 advance_session 会抛错并把状态回滚到入口状态。
+  // 触发人显式传下去：它是**本次调用**的属性（计费主体 + 签名 URL 的 uid），
+  // 不是会话的属性 —— 同一次灯光工作完全可能换个人来重出方案。
+  co_await advance_session(l_sql, l_session, person_.person_.uuid_id_);
 
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
@@ -640,7 +642,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_confirm_route, post) {
       person_.person_.get_full_name(), l_session.uuid_id_, l_spec->revision_
   );
 
-  co_await advance_session(l_sql, l_session);
+  co_await advance_session(l_sql, l_session, person_.person_.uuid_id_);
 
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
@@ -666,8 +668,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iterate_route, post) {
       magic_enum::enum_name(l_session.state_)
   );
 
-  // 接缝未实现时抛 501，advance_session 已把状态回滚 —— 会话保持可重试。
-  co_await advance_session(l_sql, l_session);
+  // generate_candidates 仍是 501，抛错时 advance_session 已把状态回滚 —— 会话保持可重试。
+  co_await advance_session(l_sql, l_session, person_.person_.uuid_id_);
 
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = *l_detail);

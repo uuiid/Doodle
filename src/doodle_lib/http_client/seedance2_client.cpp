@@ -124,12 +124,17 @@ nlohmann::json seedance2_client::build_inference_body(const nlohmann::json& in_r
       l_content.push_back(std::move(l_item));
     }
   }
-  l_body["input"] = nlohmann::json::array({nlohmann::json{{"role", "user"}, {"content", std::move(l_content)}}});
+  // input 项是 InputItem: type 固定 "message"(文档原话「取值固定为 message」), 不能只发 role。
+  l_body["input"] = nlohmann::json::array(
+      {nlohmann::json{{"type", "message"}, {"role", "user"}, {"content", std::move(l_content)}}}
+  );
 
   // 不把提示词与素材留在方舟侧
   l_body["store"] = false;
-  l_body["max_output_tokens"] =
-      in_request.value("max_output_tokens", doodle_config::g_ark_inference_default_max_output_tokens);
+  // max_output_tokens **缺省不发**: 结构化输出要求全字段 required, 输出长度不可预估, 而截断
+  // 之后 result_json_ 只剩半个 JSON —— 那个失败面跟"schema 不合规被拒"完全分不出来。
+  // 交给模型/账号侧决定上限; 只有调用方显式指定了才发。
+  if (in_request.contains("max_output_tokens")) l_body["max_output_tokens"] = in_request.at("max_output_tokens");
   if (in_request.contains("temperature")) l_body["temperature"] = in_request.at("temperature");
   if (in_request.contains("top_p")) l_body["top_p"] = in_request.at("top_p");
 

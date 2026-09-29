@@ -598,38 +598,30 @@ BOOST_AUTO_TEST_CASE(session_detail_reports_overdue_flag) {
 }
 
 // ===========================================================================
-// 接缝：本轮明确返回 501，且失败不留半成品
+// 接缝：未实现的仍明确返回 501（generate_spec 已实现，见 §15.7）
 // ===========================================================================
 
-BOOST_AUTO_TEST_CASE(generation_seams_report_not_implemented) {
+BOOST_AUTO_TEST_CASE(unimplemented_seams_report_not_implemented) {
   app_base l_app{};
 
-  // 两个接缝都必须以 501 明确报出「能力还没到」，而不是假装成功。
+  // 还没实现的接缝必须以 501 明确报出「能力还没到」，而不是假装成功。
   // 这很重要：静默返回空结果会让上游写出一个「成功但没有候选」的会话，
   // 而 501 让前端和调用方都能一眼看出该做什么。
-  spec_generation_request_t l_spec_req{};
-  l_spec_req.session_id_  = core_set::get_set().get_uuid();
-  l_spec_req.prompt_text_ = "冷、硬、孤独";
-
+  //
+  // generate_spec 已经不在这条用例里了 —— 它现在会真的去解析工作室、发推理请求，
+  // 单测宿主没有 SSL context，所以它的成功路径只能在真机验证；
+  // 它能离线验证的那部分（纯函数）在 ai_light_spec_prompt.cpp 里。
   candidate_generation_request_t l_cand_req{};
   l_cand_req.session_id_ = core_set::get_set().get_uuid();
 
   boost::asio::io_context l_ctx{};
-  bool l_spec_threw = false;
   bool l_cand_threw = false;
-  try {
-    run_coro(l_ctx, [&]() -> boost::asio::awaitable<void> { co_await generate_spec(l_spec_req); });
-  } catch (const doodle_error& in_err) {
-    l_spec_threw = true;
-    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::not_implemented);
-  }
   try {
     run_coro(l_ctx, [&]() -> boost::asio::awaitable<void> { co_await generate_candidates(l_cand_req); });
   } catch (const doodle_error& in_err) {
     l_cand_threw = true;
     BOOST_TEST(in_err.code_status_() == boost::beast::http::status::not_implemented);
   }
-  BOOST_TEST(l_spec_threw);
   BOOST_TEST(l_cand_threw);
 
   // 文本反馈结构化也是接缝，但它是**可选**通道：调用方要能捕获 501 后降级，
@@ -646,9 +638,53 @@ BOOST_AUTO_TEST_CASE(generation_seams_report_not_implemented) {
   BOOST_TEST(l_fb_threw);
 }
 
+/// generate_spec 的第一道闸门：解析不出触发人就无法解析工作室、更无法计费。
+/// 这是它在单测里唯一能跑到的那段（失败在联网之前）。
+BOOST_AUTO_TEST_CASE(generate_spec_rejects_unresolvable_operator) {
+  app_base l_app{};
+  fixture_t l_fx{"spec_operator", ai_light_session_state::draft, ai_light_iteration_state::generated, 0, false};
+  add_reference(l_fx);
+
+  auto l_session = l_fx.reload_session();
+
+  // 1) operator_id 为 nil 且会话也没有 submitter → 400（不是 500，也不是「静默记到别人头上」）
+  l_session.submitter_ = uuid{};
+  {
+    spec_generation_request_t l_req{};
+    l_req.session_id_  = l_session.uuid_id_;
+    l_req.prompt_text_ = "冷、硬、孤独";
+    bool l_threw       = false;
+    try {
+      run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> { co_await generate_spec(*l_fx.sql_, l_req); });
+    } catch (const doodle_error& in_err) {
+      l_threw = true;
+      BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
+    }
+    BOOST_TEST(l_threw);
+  }
+
+  // 2) operator_id 指向一个不存在的 person → 也是 400
+  {
+    spec_generation_request_t l_req{};
+    l_req.session_id_    = l_session.uuid_id_;
+    l_req.operator_id_   = core_set::get_set().get_uuid();
+    l_req.prompt_text_   = "冷、硬、孤独";
+    bool l_threw         = false;
+    try {
+      run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> { co_await generate_spec(*l_fx.sql_, l_req); });
+    } catch (const doodle_error& in_err) {
+      l_threw = true;
+      BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
+    }
+    BOOST_TEST(l_threw);
+  }
+}
+
 BOOST_AUTO_TEST_CASE(advance_session_rolls_back_to_entry_state_on_seam_failure) {
   app_base l_app{};
-  // draft + 有提示词 + 有参考图 → advance_session 会走 generate_spec，而那是 501。
+  // draft + 有提示词 + 有参考图 → advance_session 会走 generate_spec。
+  // 而 fixture 的 submitter_ 是个不存在的 person，所以接缝在**联网之前**就以
+  // bad_request 失败 —— 正好用来验「接缝抛错 → 回滚」这条契约。
   // 刻意不要子行（Spec/轮次/候选）：这样「什么都没写进去」才能被干净地断言出来。
   fixture_t l_fx{"advance_rollback", ai_light_session_state::draft, ai_light_iteration_state::generated, 0, false};
 
@@ -663,11 +699,12 @@ BOOST_AUTO_TEST_CASE(advance_session_rolls_back_to_entry_state_on_seam_failure) 
   bool l_threw = false;
   try {
     run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
-      co_await advance_session(*l_fx.sql_, l_session);
+      // operator_id 传 nil → 由 advance_session 回落到 session.submitter_（不存在的 person）
+      co_await advance_session(*l_fx.sql_, l_session, uuid{});
     });
   } catch (const doodle_error& in_err) {
     l_threw = true;
-    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::not_implemented);
+    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
   }
   BOOST_TEST(l_threw);
 
@@ -693,7 +730,7 @@ BOOST_AUTO_TEST_CASE(advance_session_from_draft_without_references_is_rejected) 
   bool l_threw   = false;
   try {
     run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
-      co_await advance_session(*l_fx.sql_, l_session);
+      co_await advance_session(*l_fx.sql_, l_session, uuid{});
     });
   } catch (const doodle_error& in_err) {
     l_threw = true;
@@ -722,14 +759,15 @@ BOOST_AUTO_TEST_CASE(advance_session_redistills_from_awaiting_spec_confirm) {
   bool l_threw   = false;
   try {
     run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
-      co_await advance_session(*l_fx.sql_, l_session);
+      co_await advance_session(*l_fx.sql_, l_session, uuid{});
     });
   } catch (const doodle_error& in_err) {
     l_threw = true;
-    // 这条断言就是本用例的全部意义：awaiting_spec_confirm 被 spec 分支接受（501），
-    // 而不是掉进「当前没有可推进的步骤」的 400。没有它，「重出方案」就是空话 ——
-    // /spec 只有第一次（draft）能成功。
-    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::not_implemented);
+    // 400 在这里**不足以**说明问题：状态机「没有可推进的步骤」也是 400。
+    // 真正要证的是「awaiting_spec_confirm 被 spec 分支接住、真的去蒸馏了」，
+    // 所以下面还要看 failure_reason_ 里是谁在报错。fixture 的 submitter_ 是
+    // 个不存在的 person，所以接缝必然以 bad_request 收场 —— 那正是「进去了」的证据。
+    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
   }
   BOOST_TEST(l_threw);
 
@@ -737,6 +775,11 @@ BOOST_AUTO_TEST_CASE(advance_session_redistills_from_awaiting_spec_confirm) {
   auto l_after = l_fx.reload_session();
   BOOST_TEST(en(l_after.state_) == en(ai_light_session_state::awaiting_spec_confirm));
   BOOST_TEST(l_fx.sql_->get_ai_light_specs(l_after.uuid_id_).size() == 1);
+  // 这条断言就是本用例的全部意义：失败原因必须来自**接缝**（解析不出触发人），
+  // 而不是状态机那句「当前没有可推进的步骤」。没有它，「重出方案」就是空话 ——
+  // /spec 只有第一次（draft）能成功，而两种失败又都是 400，状态码分不出来。
+  BOOST_TEST(l_after.failure_reason_.find("没有可推进的步骤") == std::string::npos);
+  BOOST_TEST(!l_after.failure_reason_.empty());
 }
 
 // ===========================================================================

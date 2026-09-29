@@ -374,8 +374,13 @@ Kelvin 是线性光色度坐标上的物理尺度，直接在 sRGB 编码值上�
 
 **已确认参考以全局调色为主**，这提升了统计量的可信度：全局调色不改变空间结构，调色板、亮度分位、对比度这些量都能被完整迁移；相反，若参考含大量局部改图（加减光、重绘），这些量会被局部编辑污染。因此当前默认对统计量给予较高置信度，同时保留外点剔除能力以防局部编辑。
 
-**单图统计（本节的①）已落地，多图聚合（②）还没有**：所以 `is_outlier_` / `excluded_reason_`
-暂时恒为 `false` / 空 —— 外点判定必须跨图比较，属于 §5.3。
+**单图统计（本节的①）与多图聚合（本节的②）都已落地**。逐图统计在
+`doodle_lib/http_method/kitsu/ai_light_stats.cpp` 的 `analyze_display_image()` /
+`analyze_reference_file()`，随上传写入 `ai_light_reference.stats_` / `stats_confidence_`；
+多图聚合在同一个文件的 `aggregate_reference_stats()`，由 `POST /session/{id}/spec` 在蒸馏
+Spec 前调用一次（§15.7）。`is_outlier_` / `excluded_reason_` 仍是**人工排除**字段，聚合器
+**不写**它们 —— 自动疑点走 `suspected_outlier_ids_`，最终落在 Spec 的
+`conflict_resolution_` 里（见 §5.3 与 §15.7 的决定 D3）。
 
 ### 5.3 多图聚合与冲突检测
 
@@ -383,6 +388,20 @@ Kelvin 是线性光色度坐标上的物理尺度，直接在 sRGB 编码值上�
 2. 逐维度取中位数（或按面积/清晰度加权）
 3. **冲突检测**：维度内离散度超阈值 → 标记 `conflicts`，**不自动平均掉**
 4. 冲突维度进入人工闸门 1 裁决，或降级为「该维度不设目标」
+
+**已落地**（`ai_light_stats.cpp` 的 `aggregate_reference_stats()`，返回 `aggregated_reference_stats_t`）：
+
+| 步 | 落法 |
+|---|---|
+| 1 逐图提取 | 调用方传进来的 `ai_light_reference::stats_`；**人工排除的图不参与**（`is_outlier_ == true` 直接跳过），也不发给模型 |
+| 2 逐维度取中位数 | 取**中位数**而不是均值（§5.3 原文的「或按面积/清晰度加权」没做：参考图是同一场景的不同角度，没有哪张更权威）；同时留下极差区间作为目标区间 |
+| 3 冲突检测 | 逐维算 `dimension_spread_`（P90−P10 的相对离散度），超 `g_conflict_spread_threshold` 的维度记进 `stats_.conflicts_`，**不自动平均掉** |
+| 附录 | 逐维置信度 `per_dimension_confidence_`（由各图 `stats_confidence_` 与离散度共同压低）；疑似外点 `suspected_outlier_ids_`（维度距离 > `g_outlier_score_threshold = 2.5`） |
+
+两处与本节原文的口径差：外点阈值计划里写的是 `d > 3.0`，**实现定在 2.5**（参考图数量少，
+3.0 在 5~8 张样本上几乎抓不到偏得明显的图，而抓错只是「标记为疑点」而非剔除，代价不对等）；
+冲突维度**没有**降级为「不设目标」的实现 —— 聚合器照常给出区间，是否采纳由模型与人工闸门 1 决定，
+这也是「聚合做事实、模型做取舍」的分工。
 
 ### 5.4 视频 → 关键帧序列
 
@@ -932,9 +951,9 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
      不需要为 LLM 调用另起一套记账；
    - 凭据仍在 `kitsu_ctx_t`（`seedance2_key_` / `ai_studio`），**必须在主服务器**这条约束不变。
 
-   接缝本身（`generate_spec` / `generate_candidates` / `structure_feedback`）**仍返回 501**：
-   本轮交付的是「可用的推理通道 + 数据模型 + 鉴权」，把它们接上去是下一步
-   （调 `make_inference_client()` + `run_inference_task()` 即可，参数与返回值已经定好）。
+   **接缝进度**（随实施推进更新）：`generate_spec` **已接上**（§15.7），
+   `generate_candidates` / `structure_feedback` **仍返回 501**。
+   接法就是 `make_inference_client()` + `run_inference_task()`，参数与返回值早已定好。
 
 5. **AI 路由**：**已落地（本轮）**，12 条，全部注册在 `create_kitsu_route_2`（主服务器），
    声明在 `doodle_lib/http_method/kitsu/ai_light.h`，处理函数在 `ai_light.cpp`：
@@ -951,9 +970,9 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    | `GET  /api/doodle/ai/light/reference/{id}/image` | 参考图取图 |
    | `GET  /api/doodle/ai/light/candidate/{id}/image` | 中间候选取图（只有定稿才进 `preview_file`） |
    | `GET  /api/doodle/ai/light/session/{session_id}/spec` | Spec 版本列表 |
-   | `POST /api/doodle/ai/light/session/{session_id}/spec` | 生成 Spec：`draft` 出第一版，`awaiting_spec_confirm` 重出（**要求已有参考图**，否则 400）—— 本轮返回 501（见 §15.4） |
+   | `POST /api/doodle/ai/light/session/{session_id}/spec` | 生成 Spec：`draft` 出第一版，`awaiting_spec_confirm` 重出（**要求已有参考图**，否则 400）—— **已实现**（§15.7）：聚合统计 + 一次方舟推理；失败时会话状态回滚、Spec 版本不变 |
    | `POST /api/doodle/ai/light/session/{session_id}/spec/confirm` | 人工闸门 1：确认 Spec + 冲突裁决，随后触发首轮 |
-   | `POST /api/doodle/ai/light/session/{session_id}/iterate` | 生成一轮候选并派发 —— **本轮返回 501**（见 §15.4）；无需请求体 |
+   | `POST /api/doodle/ai/light/session/{session_id}/iterate` | 生成一轮候选并派发 —— **仍返回 501**（接缝 `generate_candidates` 未实现，见 §15.4）；无需请求体 |
    | `POST /api/doodle/ai/light/session/{session_id}/judge` | **人工闸门 2**（accept / continue_iteration / reject_all） |
    | `GET  /api/doodle/ai/light/preset` | 预设库列表（`?enabled_only=false` 取全部） |
    | `POST /api/doodle/ai/light/preset` | 新建预设（美术整理的第一批走这里导入） |
@@ -1236,7 +1255,20 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
      chat 那种嵌套变体 —— 两边冲突。实现默认发**平铺**形状，若真机 400 就降级（降级点已收敛在
      `build_inference_body()` 一处）；
    - **`input_image` 的可用性**：本账号的该模型是否真的接受图片输入（参考图统计要喂图）；
-   - **`thinking: disabled`** 是否被接受（有的模型只允许 `enabled`/`auto`）。
+   - **`thinking: disabled`** 是否被接受（有的模型只允许 `enabled`/`auto`）；
+   - **`thinking` 关闭时的蒸馏质量**：结构化任务**不发** `thinking`（§15.6 坑 2 的取答案路径
+     要求 `output[0]` 不是 reasoning 项）。代价是少了思维链，`intent` 可能偏浅 —— 若实测明显变差，
+     退路是改成 `thinking: auto`；解析端已按「遍历 `output[]` 找 `message`」写好，不用改。
+   - **全字段 `required` 的严格 schema 是否被照做**：`build_spec_json_schema()` 每层都要求列全
+     所有字段（严格结构化输出的要求），于是「本维度不设目标」**不能靠省略字段表达**，只能写进
+     `conflicts`（§15.7）。真机上要看模型是否照做。
+     `evidence` 曾经是 `additionalProperties: <条目 schema>` 的自由键字典，**已改成 17 个固定键 +
+     全 required**（§15.7 坑 19）—— 严格结构化输出不接受自由字典，这一条不必再实测。
+   - **不设 `max_output_tokens` 之后的实际输出长度**（§15.7 坑 21）：模型按自己的上限出。若真的被截断，
+     `result_json_` 会是 null → 接缝抛 502，而它与「`text.format` 形状被拒」的表现**无法区分** ——
+     真机上若见 502，先去 `data_response_` 看 `status` 是不是 `incomplete`。
+   - **`input` 项是否必须显式带 `type:"message"`**（§15.7 坑 20）：文档写 InputItem 的 `type` 取值固定
+     `"message"`，但没写「省略会怎样」。我们改为**显式发**，这一条的实测价值只在于「确认加了没被拒」。
 5. **FK 前向引用已实测通过（无需再验）**：`seedance2_task_2` 注册在 `ai_light_iteration` **之前**，
    新加的 `ai_light_iteration_id` 外键在 CREATE TABLE 时指向了尚未注册的表 —— SQLite 允许这样做，
    实测建表/重建/外键语义用例（`sqlite_schema` / `sqlite_rebuild` / `sqlite_fk_*` / `ai_light_schema`）
@@ -1800,5 +1832,210 @@ tools/function calling、不做方舟 Files API 上传（`file_id` 只能作为�
     完全相同的误导性。现在用 `DOODLE_CHICK` 明确报错。这条对下一步的 worker 端
     `run_ai_light_distributed` 是**必需**的：worker 迟早要在没有服务器初始化的情况下建客户端，
     那时它应该得到一句「ssl context 未初始化」，而不是一个 `0x8`。
+
+### 15.7 已落地（接缝 1：`generate_spec` —— 提示词 + 参考图统计 → LightingSpec）
+
+§5 讲的是「提示词 + 多张参考图 → 一份结构化照明目标」该怎么做；§15.5 落地了其中的**感知层**
+（①单图统计、②多图聚合），§15.6 落地了**推理通道**。本轮把两者接起来：
+`POST /api/doodle/ai/light/session/{id}/spec` 从 501 变成**真的跑一次推理并落库一版 Spec**。
+
+一次调用的数据流：
+
+```
+POST /session/{id}/spec
+  → ai_light::spec_route::post
+      · 读会话与参考图（get_ai_light_references）
+      · 操作人 = JWT 里的 person（http_jwt_t::person_.person_.uuid_id_）
+      · co_await advance_session(in_sql, l_session, l_operator)
+          → 入口校验：会话至少已有一张参考图（决策 1「参考必有多张」）
+          → 逐图读**已落库**的 stats_（不重新算图 —— 统计是感知层的活）
+          → co_await generate_spec(in_sql, l_req)
+              · aggregate_reference_stats(l_req.references_)          // 纯函数，§15.5 的②
+              · person / ai_studio 解析（解析不出 → 400，不是 500）
+              · sd2::task + make_inference_client + run_inference_task // §15.6：一次同步推理
+              · map_spec_result(result_json_, l_agg)                  // 纯函数：统计为底、LLM 为覆盖
+          → 同一事务：insert(ai_light_spec) + update(会话 state=generating, current_iteration=0)
+          → 失败：整段回滚到入口状态 + 写 failure_reason_，**Spec 版本不变**
+```
+
+| 项 | 落点 |
+|---|---|
+| 接缝本体 | `http_method/kitsu/ai_light_orchestrator.cpp` 的 `generate_spec(in_sql, in_request)` `:1317` |
+| 离线可测的 5 个纯函数 | 同文件 `build_spec_instructions()` `:810` / `build_spec_json_schema()` `:852` / `build_spec_input_text()` `:975` / `build_spec_request()` `:1079` / `map_spec_result()` `:1108`（声明在 `ai_light_orchestrator.h`，**必须留在 `doodle::ai_light` 命名空间内**，见坑 9） |
+| 请求 / 结果结构 | `spec_generation_request_t{ session_id_, project_id_, operator_id_, prompt_text_, references_, degrade_level_, previous_spec_ }`；`spec_generation_result_t{ spec_, evidence_, reference_stats_, conflict_resolution_ }` |
+| 状态机 | `advance_session(in_sql, in_session, in_operator_id)` `:124`（新签名，见 D1） |
+| 参考图 URL | `http_method/kitsu/ai_light.h` 的 `g_reference_image_path_template` + `reference_image_url(uuid)`。放在路由头是因为 `/api/doodle/ai/light/reference/{}/image` 的注册要用**字面量**喂 `_url` 这个 UDL，`constexpr std::string_view` 递不进去 |
+| 指令串 | `build_spec_instructions()`：§6.1 职责边界两侧 + §6.3 冲突四条 + **§5.5 六行映射表原文** + 单位口径（对比度 = 显示空间 `p90 − p10`；色温 Kelvin；区间是定长 `[low, high]`）+ 「不许改几何 / 材质」 |
+| 输出 schema | `build_spec_json_schema()`：平铺 `{intent, targets, evidence, conflicts}`，逐层 `additionalProperties:false` 且**全字段 required**；`palette` / `ownership` / `space` 刻意**不在** schema 里（见下表）。`evidence` 不是自由字典，而是 `g_evidence_paths` 那 **17 个固定键**（`additionalProperties:false` + 全 required），且只列**模型能写**的字段路径（坑 19） |
+| 测试 | **新建** `src/test/core/ai_light_spec_prompt.cpp`（套件 `ai_light_spec_prompt`，10 用例，全离线）；`ai_light_stats.cpp` 补 7 个聚合用例；`ai_light_state.cpp` 改 3 处调用点并新增/改写 3 个用例 |
+
+**五条实现决定（D1–D5）**
+
+- **D1 改签名，不引入隐式全局。** `generate_spec(sqlite_database&, const spec_generation_request_t&)`；
+  `advance_session(sqlite_database&, ai_light_session, uuid in_operator_id)`；请求体新增 `project_id_`（写
+  `sd2::task.project_uuid_id_`）与 `operator_id_`（**计费主体**，同时也是签名 URL 里的 uid）。
+  `in_operator_id` **刻意不给默认值**：有默认值的话，新调用点漏传就会把 `add_remaining_tokens_for_person`
+  的账静默记到别人头上。nil 时在 `advance_session` 内回落到 `session.submitter_`，两者都 nil → 400
+  （既解析不出工作室、也无法计费）。操作人**不加会话列**：它是「每次调用」的属性，加列会逼出一次迁移且语义错。
+- **D2 聚合放在统计层。** `aggregate_reference_stats` 在 `ai_light_stats.{h,cpp}`，不在编排层：§5.1–§5.3
+  整章是感知层，显示空间度量学口径（含「色温要先线性化」这唯一的例外）**只能有一处定义**。
+- **D3 外点只算不写。** `is_outlier_` / `excluded_reason_` 是**人工排除**字段（`spec_route::post` 写的是
+  `excluded_reason_ = "人工排除"`）。自动判定写进去会让两种语义在同一列里不可区分。自动疑点走
+  `suspected_outlier_ids_` → `conflict_resolution_.resolved_` 持久化，交人工裁决。
+- **D4 落库的降级级别以事实为准。** 调用方预判的 `degrade_level_` 不再直接落库；落的是
+  `spec_generation_result_t.spec_.degrade_level_`（接缝按 `aggregated_reference_stats_t` 的
+  `per_dimension_confidence_` 是否为空判定）。两者会在「有 stats 行但置信度全 0」「全部图被人工排除」时
+  **分叉** —— 那两种情况下调用方的预判是 `stats_only`，而事实是「没有可用统计」。
+- **D5 受控的副作用例外。** `generate_spec` **不写任何 `ai_light_*` 表**（Spec 的 insert 由 `advance_session`
+  在自己的事务里做），但它经 `run_inference_task` 写一条 `sd2::task` 终态行并**扣费**。这一个副作用
+  **有意保留**：推理确实发生了，必须留痕计费；否则「调用方回滚会话状态」会连带抹掉 `person_token` 的扣费。
+
+**口径差（计划 vs 实现，以代码为准）**
+
+| 位置 | 计划里写的 | 实现里落的 | 为什么 |
+|---|---|---|---|
+| 自动疑点阈值 | `d > 3.0` | `g_outlier_score_threshold = 2.5` | 参考图本来就少；抓错的代价（只是标成疑点 —— 仍进聚合、只是多一条线索给人工）远低于漏掉的代价，所以取得更敏感 |
+| 冲突维度 | 「降级为不设目标」 | 照常给区间，只标冲突 + 压低置信度（地板 0.05） | 「清零」的语义是「没有统计」，那是 `prompt_only` 降级。**「有统计但互相矛盾」必须由人工闸门 1 裁决**，实现无权替它决定 |
+
+**服务端钉死 vs LLM 可覆盖（`map_spec_result` 的边界）**
+
+| 字段 | 谁说了算 | 理由 |
+|---|---|---|
+| `schema_version_` / `session_id_` / `human_confirmed_` / `confirmed_by_` / `confirmed_at_` | **服务端** | 与 LLM 无关的事实 |
+| `targets_.space_` | **服务端**（恒 `display_srgb`） | 全部统计都在显示空间算，换空间得重算 |
+| `targets_.palette_` | **服务端**（整块取自聚合） | 颜色只能来自统计，不接受 LLM 编造 —— 所以 schema 里根本没有 `palette` |
+| `targets_.ownership_` | **服务端** | 责任归属是产品决策（§6.6），不该每轮由模型重新发明 |
+| `reference_stats_` | **服务端**（整块） | 它是**证据**，不是结论 |
+| `intent_` 全部 | LLM | 这就是「把提示词变成结构化意图」 |
+| `targets_` 的标量区间 / `grading_hints_` | LLM | 与聚合值逐元素比（`1e-9` 容差）：相等 → `evidence.source = reference_stats`；不等 → `prompt`（§6.3 提示词优先） |
+| `evidence_` | **服务端**（LLM 给的那份**根本不读**） | `map_spec_result` 完全用 `put_evidence()` 自己组装，末尾 `l_spec.evidence_ = l_ret.evidence_`。schema 里的 `evidence` 只是要求模型**自述**每个字段的理由（便于人工审阅原始响应），不参与解析。LLM 没给到的字段路径，按 `default_value` / `scene_facts` + 置信度 0.3 补一条，于是 evidence 永远覆盖全部目标字段（下游评判层可以无条件按字段路径查证据） |
+| `conflicts_` | LLM，**并入服务端集合** | LLM 报的冲突加 `"llm: "` 前缀并入 `reference_stats_.conflicts_`；聚合器算出的冲突**不会被覆盖** |
+
+**为什么 LLM 的每个字段都要校验**：`NLOHMANN_JSON_SERIALIZE_ENUM` 的 `from_json` 认不出字符串时
+**静默落到第一个枚举值**（§15.6 坑 7）。所以 `map_spec_result` 里没有任何一处用裸 `get<Enum>()` ——
+枚举一律走 `magic_enum::enum_cast`，认不出就**保留统计推导的值**并记一条 `default_value` 的 evidence
+（例如 `hardness = "super_hard"` 不会变成 `hard`）。同理 `result_json_` 不是 object（含 null）直接
+`bad_gateway`，**不二次解析 `result_text_`**（`parse_inference_response` 内部已做过 `strip_code_fence` + parse）。
+
+**方舟合规性修复（拿「创建 Response」文档逐字段核对线格式后改的三处）**
+
+前两处是**形状错**（真机会 400），第三处是**缺省值错**（只在长输出时、以「别处的错」的形式暴露）：
+
+| # | 位置 | 错在哪 | 改法 |
+|---|---|---|---|
+| A | `build_spec_json_schema()` 的 `evidence` | 用了 `additionalProperties: <条目 schema>` 自由字典，与 `strict` 互斥 | 改成 `g_evidence_paths` 的 **17 个固定键** + 全 required + `additionalProperties:false`（坑 19） |
+| B | `seedance2_client.cpp:127` 的 `input[]` 项 | 缺 `type:"message"`（文档写 InputItem 的 `type` 取值固定为 `"message"`） | 显式补上（坑 20） |
+| C | `build_inference_body()` 的 `max_output_tokens` | 缺省替调用方塞了 4096；大 schema 被截断后的表现与「形状被拒」重合 | 缺省**不发**该键（坑 21） |
+
+核对中确认**本来就对**、不必再动的四处：`content[].type == "input_text"`、`input_image.image_url` 是
+**字符串**、`detail` 位于 `input.content.detail`、结构化输出用 `text.format`（Chat 才是 `response_format`）。
+
+**测试**
+
+| 用例（`ai_light_spec_prompt.cpp`） | 钉住的不变式 |
+|---|---|
+| `json_schema_matches_cpp_enums`（`:167`） | schema 里出现的枚举串与 C++ 枚举名**逐字一致**（用 `magic_enum::enum_names` 交叉验证）—— 两边一旦分叉，真机上的合法输出会被我们判成非法 |
+| `json_schema_is_strict_object`（`:197`） | 逐层 `additionalProperties:false` 且全字段 `required`；并断言 `palette` / `ownership` **不出现**在 schema 里。此外钉住 `evidence` 的键集合**恰好**是 `g_evidence_paths` 那 17 条（排序后逐个比对）、`required` 是同一集合、`additionalProperties == false`，且 `targets.palette` / `reference_stats` **不在**其中（坑 19 的回归） |
+| `input_text_carries_prompt_and_stats`（`:236`） | 四段文本齐全；提示词原文被标注为「权威意图」；逐图统计带在段里 |
+| `build_request_omits_images_when_empty`（`:275`） | 没有可用参考图时**整个 `images` 键不发**（空数组会被方舟当成「有一张空图」）；有图时只发未被人工排除的那些，且是**站点内相对路径** |
+| `map_result_pins_server_owned_fields`（`:317`） | `schema_version` / `space` / `palette` / `ownership` / `reference_stats` 全被服务端钉死，LLM 给什么都改不动 |
+| `map_result_without_stats_degrades_to_prompt_only`（`:349`） | 聚合无统计时降级级别是 `prompt_only`（D4） |
+| `map_result_prompt_overrides_stats_target`（`:357`） | LLM 给 `[2900,3100]`、统计是 `[4000,4200]` → 取 LLM 且 `evidence.source == prompt` |
+| `map_result_echo_marks_reference_stats`（`:379`） | LLM 原样回显统计值 → `source == reference_stats`，且**不**记进 overridden 维度 |
+| `map_result_falls_back_on_illegal_enum`（`:392`） | `hardness = "super_hard"` → 不静默落枚举首值，保留统计推导值 + 一条 `default_value` evidence |
+| `map_result_rejects_non_object`（`:431`） | 非 object 的 `result_json_` → `bad_gateway`（`:441`、`:450` 两条断言） |
+
+- `ai_light_stats.cpp` 的 7 个聚合用例在 `:391`–`:603`（`aggregate_takes_median_but_keeps_range_as_interval` 32 断言 /
+  `aggregate_skips_excluded_and_statless_references` 8 / `aggregate_flags_conflict_without_narrowing_or_zeroing` 8 /
+  `aggregate_expands_zero_width_intervals_for_a_single_reference` 15 / `aggregate_without_usable_stats_degrades_without_throwing` 9 /
+  `aggregate_reports_suspected_outlier_without_touching_the_record` 7 / `aggregate_palette_shares_become_cross_image_intervals` 46）。
+  它们钉的是 §5.3 的三条契约：**取中位数但区间取极差**（绝不用平均值收窄）、**冲突只标记不清零**、
+  **外点只报不写**。
+- `ai_light_state.cpp`：`unimplemented_seams_report_not_implemented` 只剩 `generate_candidates` /
+  `structure_feedback` 两条 501 断言；新增 `generate_spec_rejects_unresolvable_operator`（operator 为 nil 且
+  submitter 也为 nil、以及 operator 指向不存在的 person，两条都断言 400）；两个回滚用例的期望从
+  `not_implemented` 改成 `bad_request`，并额外断言 `failure_reason_` **不是**「没有可推进的步骤」——
+  光看状态码分不出「状态机无步骤」与「接缝失败」。
+
+**本轮的坑（承 §15.6 的 12 条，13–18）**
+
+13. **`ai_light_reference::get_stats()` 返回的是值，不是 `optional`。** `reference.h:142` 是
+    `json_get_or_default<reference_image_stats_t>(stats_)`，而 `json_get_or_default<T>` 返回 `T`（null → `T{}`）。
+    第一版按 optional 用（`has_value()` / `->`）直接编译失败。判「这张图到底有没有统计」必须与匿名命名空间的
+    `references_have_stats()` 用**同一谓词**：`!stats_.is_null() && stats_confidence_ > 0.0`。
+    **只看 `is_null()` 不够**：`stats_confidence_` 是统计可信度，0 表示不该用；聚合器也是这么筛的 ——
+    两处判据一旦分叉，接缝发给模型的图与它算出来的统计就会来自**不同的图集**。
+14. **测试不能包含路由头。** `doodle_lib/http_method/kitsu/ai_light.h:27` 写的是
+    `#include <core/http/http_function.h>`（相对 `doodle_lib` 根），而 `test_main` 的 include 路径是
+    `-IE:\Doodle\src\test -IE:\Doodle\src -IE:\Doodle\src\doodle_core\..`，**没有** `E:\Doodle\src\doodle_lib`
+    → `fatal error C1083: Cannot open include file: 'core/http/http_function.h'`。
+    这正是 `inference_task.h` 当初被单独拆出来的同一个原因。于是测试里没法调 `reference_image_url()`，
+    断言改为**测试自己拼**期望 URL：`fmt::format("/api/doodle/ai/light/reference/{}/image", boost::uuids::to_string(l_id))`。
+    这反而更对：测试要钉的是**线格式**，跟着实现走就测不出格式漂移。
+15. **`reference_image_url` 不在 `doodle::ai_light`。** 它和 `g_reference_image_path_template` 声明在路由头里，
+    命名空间是 `doodle::http::ai_light`。接缝里必须写全名 `http::ai_light::reference_image_url(...)`，
+    否则 `error C3861: 'reference_image_url': identifier not found`。
+16. **沙箱不允许被启动的子进程写真实 `%TEMP%`。** 症状极具误导性：24 个用例同时报
+    `doodle::orm::sqlite_orm_exception: 14: unable to open database file`（每个建临时库的用例）与
+    `critical check cv::imwrite(...) has failed`（写临时 PNG 的用例），看起来像 ORM / OpenCV 坏了，
+    其实是 `std::filesystem::temp_directory_path()`（`C:\Users\TD\AppData\Local\Temp`）对**子进程**不可写 ——
+    同一个 shell 直接 `Set-Content` 到该目录却成功。跑测试前把 `$env:TEMP` 与 `$env:TMP` 都指向工作区内目录
+    （`E:\Doodle\build\test_tmp`）即可（`GetTempPathW` 先读 `TMP` 再读 `TEMP`，两个都设最稳）。
+17. **`cmake --build … *> log` 之后不要用 `Select-String` / `$LASTEXITCODE` 判成败。** 本机的 `Select-String`
+    （含 `-AllMatches`）与 `Where-Object -match` 会**静默返回空**，于是失败的构建被报成 BUILD OK；
+    而 `$LASTEXITCODE` 会被 `set_env.ps1` 包装脚本重置，同样不可信。可靠做法只有一个：**构建日志落文件，
+    再用 grep 工具搜** `FAILED|error C|fatal error|ninja: build stopped`。另外 `cmake --build … | Select-Object -Last N`
+    会让后台作业报 exit 0（管道最后一个命令的退出码），即使 ninja 已经失败。
+18. **Boost.Test 打不出普通枚举与 vector 迭代器**（`print_helper.hpp: static_assert failed:
+    'Type has to implement operator<< to be printable'`）。前者要套一层
+    `template <typename E> std::string en(E in_e) { return std::string{magic_enum::enum_name(in_e)}; }`
+    再比 `BOOST_TEST(en(a) == en(b))`；后者（`std::find(...) != end()` 这类）要**先落成 `const bool`** 再断言。
+    这不是被测代码的问题，但报错位置会指到断言那一行，很容易误判成实现有 bug。
+19. **严格结构化输出（`strict`）不接受 `additionalProperties: <条目 schema>` 这种自由字典。** `evidence`
+    原本设计成「键 = 字段路径，值 = `{source, confidence, note}`」的字典，schema 里用 `additionalProperties`
+    指向条目 schema —— 这是合法的 JSON Schema，但 OpenAI 系的严格模式要求**每个 object 都
+    `additionalProperties:false`**，自由字典与 `strict` 互斥，最可能的真机表现是一句 400。
+    修法：把它变成**有限键集合** —— `g_evidence_paths`（17 条字段路径，`:666`）逐键指向同一份条目 schema +
+    全 required + `additionalProperties:false`。**这反而是更真的建模**：这张字典的键从来就是有限的，
+    而且只该列**模型能写**的字段。`targets.palette` / `reference_stats` 是服务端口径（`map_spec_result`
+    整块钉死，模型改不动），让模型为它们编理由没有意义，所以**刻意不放进 schema**。
+    > 顺带一个更省事的观察：**LLM 返回的 `evidence` 我们根本不读** —— `l_ret.evidence_` 完全由服务端
+    > `put_evidence()` 组装（`:753` 定义，14 个调用点），末尾 `l_spec.evidence_ = l_ret.evidence_`。
+    > 所以 schema 里这个字段与其说是给解析用的，不如说是**要求模型自述理由**（便于事后审阅原始响应）。
+    > 将来若要精简 schema，这整块可以删掉而不影响任何代码路径。**改 schema 前先 grep 一遍「这个字段
+    > 到底有没有被读」**，能省掉一整轮「改了 schema 却什么都没发生」的困惑。
+20. **Responses 的 `input[]` 项要显式带 `type:"message"`。** 文档写 InputItem 的 `type` 取值固定为
+    `"message"`、`content[].type` 固定为 `"input_text"`。实现原来只发了 `role` + `content` ——
+    `content[]` 那层是对的，**`input[]` 这层漏了 `type`**。这与坑 1（`image_url` 是字符串）属于同一类错：
+    Responses 与 Chat 的形状只差一层，必须**逐层**照抄文档。补上后回归直接断言 `input[0].type == "message"`
+    （`seedance2_inference.cpp` 的 `body_uses_responses_shape_with_string_image_url`）。
+21. **`max_output_tokens` 的缺省值是个静默陷阱，干脆不发。** `build_inference_body` 原来写的是
+    `in_request.value("max_output_tokens", g_ark_inference_default_max_output_tokens)`（4096，
+    `static_value.h:72`）。对 `build_spec_json_schema()` 这种**每层都全字段 required** 的 schema，4096
+    偏紧；一旦被截断，方舟返回 `status == incomplete` + 半截文本 → json 解析失败 → `result_json_` 变 null
+    → 接缝抛 502。**最坏的是失败面重合**：它和「`text.format` 平铺形状被真机拒绝」的表现一模一样
+    （都是 502 + `result_json_` null），会把人引到错误的方向去查。
+    改法：**完全不发这个键**（让模型用自己的上限），只在调用方显式给了才发 ——
+    `if (in_request.contains("max_output_tokens")) l_body["max_output_tokens"] = in_request.at("max_output_tokens");`
+    `build_spec_request()` 相应删掉那一行。`g_ark_inference_default_max_output_tokens` 因此**再无任何引用**，
+    作为「想自己设上限的调用方」的配置旋钮保留（注释已改写）。
+    > 一般教训：**给一个「未指定」的请求参数塞缺省值，等于替调用方做了一个它没做的决定** ——
+    > 而且这个决定只在长输出时、以「别处的错」的形式暴露出来。
+
+**保留的边界**：不做 worker 侧推理（`--local` 没有 `deepseek_keys_`，LLM 只跑主服务器）、不做本地 JSON Schema
+校验（vcpkg 里只有 nlohmann-json，schema 由方舟侧强制）、**接缝不重试**（重试全在客户端内：
+`g_ark_inference_max_retry` / `should_retry` 覆盖 429/5xx/408）、`generate_candidates` 与 `structure_feedback`
+仍返回 501。**单测宿主既没有 `core_set::ctx_ptr` 也没有 http logger**，所以单测只覆盖 5 个纯函数与
+`advance_session` 的失败分支；`generate_spec` 的成功路径（真发一次推理）没有单测 ——
+它依赖的推理通道自己的测试在 §15.6。
+
+**回归**：全量 `test_main` **168 用例 / 1317 断言全通过、exit 0**（§15.6 时是 150 / 1103，
+§15.3–§15.5 之间到 161 / 1182，本轮 +7 用例；A/B/C 三处修复后断言 1307 → 1317）。其中本轮的四个 AI 灯光套件：
+`ai_light_schema` 6 用例 · `ai_light_state` 18（171 断言）· `ai_light_stats` 22（184 断言）·
+`ai_light_spec_prompt` 10（83 断言）；另含 `sqlite_real_db`（真实生产库副本上的 `rebuild_all_tables` 往返）、
+`sqlite_upgrade`、`sqlite_schema`、`sqlite_fk_semantics`、`sqlite_conn_pragma`。
+
+> 跑测试的环境要求（坑 16）：先把 `$env:TEMP` 与 `$env:TMP` 指向工作区内目录，否则所有建临时库 /
+> 写临时 PNG 的用例会以「无法打开数据库文件」的形式集体失败。
 
 

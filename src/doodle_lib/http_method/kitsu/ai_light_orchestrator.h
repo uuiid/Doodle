@@ -7,24 +7,24 @@
 // 路由层（http_method/kitsu/ai_light.h）只是这一层的薄包装。
 //
 // ---------------------------------------------------------------------------
-// 三个「接缝」：本轮有意留空的部分
+// 三个「接缝」：接入 LLM 的三个位置
 // ---------------------------------------------------------------------------
-// generate_spec / generate_candidates / structure_feedback 的**接缝本体**还没写：提示词与
-// 参考图统计（第 8 项）怎么组装成请求信封、返回的 result_json_ 怎么映射成 spec / 候选 / axis_step。
+// generate_spec 已落地（见 §15.7）：提示词 + 多图统计 → LightingSpec。它走已落地的
+// 方舟 Responses 通道（`seedance2_client` + `run_inference_task`，用法见 §15.6）。
 //
-// 注意「缺推理客户端」这条已经不成立了：通道已经落地在
-// `seedance2_client`（方舟 Responses API）+ `run_inference_task`（http_method/seedance2/task.cpp），
-// 接缝接上时直接调它们即可（用法见 docs/ue_ai_lighting_plan.md §15.6）。
-// 在此之前三个接缝统一抛 `doodle_error{status::not_implemented}`，
+// generate_candidates / structure_feedback 的**接缝本体**还没写：基线 rig 与 Spec 怎么
+// 采样出 6 个候选、自由文本怎么映射成轴调整，以及返回的 result_json_ 怎么映射。
+// 在此之前这两个接缝抛 `doodle_error{status::not_implemented}`，
 // 由 http_session_data.cpp:149-151 映射成 501。
-//
-// 签名先定下来，下一里程碑只改这三个函数的函数体，路由层与状态机不动。
 //
 // 接缝契约（实现方必须遵守）：
 //   1. 抛出即视为「本轮无法推进」。调用方 advance_session() 会把会话状态回滚到进入时的
 //      状态并记录 failure_reason_，所以实现方**不需要**自己清理状态。
 //   2. 但必须保证「抛之前没有落库」，或者「落库的部分是幂等可重入的」——
 //      调用方只回滚会话状态这一列，不会回滚接缝自己写下的东西。
+//      **受控例外**：generate_spec 经由 run_inference_task 写下一行推理任务与对应的
+//      扣费记录。这是有意保留的 —— 推理确实发生了，抹掉它等于抹掉计费凭证。
+//      除此之外它不写任何 ai_light_* 表（聚合结果全部随返回值交给调用方落库）。
 //   3. 返回值必须自洽：候选数量 == g_candidate_count，且满足 §6.6 护栏
 //      （同轮候选的灯集合与角色完全一致，只有轴参数不同）。调用方会再校验一次，
 //      不合规直接判失败 —— 护栏是硬约束，不能靠实现方自觉。
@@ -39,6 +39,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio/awaitable.hpp>
+#include <nlohmann/json.hpp>
 
 #include <atomic>
 #include <cstdint>
@@ -55,13 +56,21 @@ namespace doodle::ai_light {
 
 struct DOODLELIB_API spec_generation_request_t {
   uuid session_id_{};
+  /// 写入 sd2::task.project_uuid_id_（可空 FK）。只为归属可查，接缝内部不依赖它。
+  uuid project_id_{};
+  /// 触发人（person uuid）= 计费主体 + 签名 URL 里的 uid。
+  ///
+  /// 必须显式传入、**不给默认值**：`run_inference_task` 会按 `user_id_` 扣
+  /// `person_token`，一旦有默认值，将来新增调用点忘记传就会把费用静默记到别人头上。
+  /// 为 nil 时由 advance_session 回落到 `ai_light_session.submitter_`。
+  uuid operator_id_{};
   /// 人工提示词原文（权威意图）。包含氛围、角色性格、故事上下文、背景设定。
   std::string prompt_text_{};
-  /// 已上传的参考图。本轮它们的 stats_ 恒为空（统计未实现），
-  /// 所以实际能用的只有 file_path_ / width_ / height_。
+  /// 已上传的参考图。stats_ 已由统计层填好（§15.5），未分析过的图为 null（降级路径）。
   std::vector<ai_light_reference> references_{};
-  /// 参考图统计缺失时只能是 prompt_only。方案 §4.2 本就定义了这两个降级级别，
-  /// 所以「统计没落地」不是临时凑合，而是走既有降级路径。
+  /// 调用方按 references_have_stats() 给出的**预判**。接缝以它为初值，但若聚合器发现
+  /// 根本没有可用统计就降级为 prompt_only —— 落库的 degrade_level_ 以事实为准（决定 D4）：
+  /// 「有 stats 行但置信度全 0」「全部图被人工排除」这类情况下两者会分叉。
   spec_degrade_level degrade_level_{spec_degrade_level::prompt_only};
   /// 重出方案时的上一版（美术对上一版不满意 → 重新蒸馏）
   std::optional<lighting_spec_t> previous_spec_{};
@@ -76,9 +85,56 @@ struct DOODLELIB_API spec_generation_result_t {
   conflict_resolution_t conflict_resolution_{};
 };
 
-/// 提示词（+ 参考图统计）→ LightingSpec。**本轮抛 501。**
+/// 提示词（+ 参考图统计）→ LightingSpec。
+///
+/// in_sql 用来解析 `operator_id_ → person.ai_studio_id_ → ai_studio`（取推理密钥）
+/// 并交给 run_inference_task 落任务行与扣费。**不引入任何隐式全局**（决定 D1）。
+///
+/// 失败一律抛 doodle_error：内容违规 → bad_request；推理失败/输出不合解析 → bad_gateway；
+/// 工作室或人员缺失 → bad_request。调用方 advance_session 负责回滚会话状态。
+/// **本函数不写任何 ai_light_* 表**（受控例外见文件头的契约 2）。
 DOODLELIB_API boost::asio::awaitable<spec_generation_result_t> generate_spec(
-    const spec_generation_request_t& in_request
+    sqlite_database& in_sql, const spec_generation_request_t& in_request
+);
+
+// ---------------------------------------------------------------------------
+// 接缝 1 的离线可测部件
+// ---------------------------------------------------------------------------
+// generate_spec 被拆成「纯函数组信封/映射」+「一次真实网络调用」，前一半可以完全离线单测
+// （单测宿主没有 SSL context / http logger，generate_spec 的成功路径没法在单测里跑）。
+//
+// **这些定义必须在命名空间 doodle::ai_light 内，绝不能放进匿名命名空间** ——
+// 匿名命名空间是内部链接：库内全绿，库外引用直接 LNK2019（§15.6 第 9 条踩过）。
+//
+// 参数用 `const aggregated_reference_stats_t&`（只前向声明）而不是把
+// ai_light_stats.h 拖进来：那会把 opencv 头带进每一个包含本头文件的 TU。
+// 调用方与单测按需自己包含 ai_light_stats.h。
+
+struct aggregated_reference_stats_t;
+
+/// 交给 LLM 的系统指令：职责边界（§6.1）、冲突规则（§6.3，**提示词优先于参考**）、
+/// 性格 → 灯光语言映射表（§5.5）、单位口径、禁止事项（不得改几何/材质）。
+DOODLELIB_API std::string build_spec_instructions();
+
+/// 结构化输出契约（方舟 Responses 的 text.format）。平铺形状，见 §15.6 第 4 条。
+DOODLELIB_API nlohmann::json build_spec_json_schema();
+
+/// 用户消息正文：提示词原文 + 逐图统计摘要 + 聚合目标 + 上一版投影。
+DOODLELIB_API std::string build_spec_input_text(
+    const spec_generation_request_t& in_request, const aggregated_reference_stats_t& in_aggregated
+);
+
+/// 归一化推理信封（build_inference_body 的输入）。**不发** images 为空数组。
+DOODLELIB_API nlohmann::json build_spec_request(
+    const spec_generation_request_t& in_request, const aggregated_reference_stats_t& in_aggregated
+);
+
+/// LLM 结果 → spec_generation_result_t。服务端钉死 space/palette/ownership/schema_version/
+/// reference_stats/身份字段；LLM 只能给 intent、targets 的标量区间与 grading_hints、
+/// evidence、conflicts。枚举用 magic_enum::enum_cast 校验，认不出回退默认并记 evidence。
+/// in_result_json 非 object（含 null）抛 doodle_error{status::bad_gateway}。
+DOODLELIB_API spec_generation_result_t map_spec_result(
+    const nlohmann::json& in_result_json, const aggregated_reference_stats_t& in_aggregated
 );
 
 // ===========================================================================
@@ -146,7 +202,14 @@ DOODLELIB_API boost::asio::awaitable<std::vector<axis_step_t>> structure_feedbac
 ///
 /// 分派只看状态，所以**同一个状态只能有一个后继步骤** —— 这是结构性约束。
 /// 「等判断」的会话没有可推进的步骤（该做的是 /judge，不是再推一步）。
-DOODLELIB_API boost::asio::awaitable<void> advance_session(sqlite_database& in_sql, ai_light_session in_session);
+///
+/// in_operator_id 是本次推进的触发人（person uuid），转手给 generate_spec 做计费主体与
+/// 签名 URL 的 uid。**不给默认值**：见 spec_generation_request_t::operator_id_ 的说明。
+/// 为 nil 时回落到 in_session.submitter_；两者都 nil 抛 bad_request（无法解析工作室、
+/// 无法计费）—— 这条在 try 内，所以照常回滚并记 failure_reason_。
+DOODLELIB_API boost::asio::awaitable<void> advance_session(
+    sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
+);
 
 /// 人工闸门 2 的状态推进。**纯 DB，不碰文件与 LLM** —— 单测直接调它。
 ///

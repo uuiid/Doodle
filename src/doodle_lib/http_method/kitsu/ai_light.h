@@ -89,6 +89,19 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
+// 参考图取图的站点内路径模板。两处**必须一致**：
+//   1) kitsu.cpp 里 reference_image_route 的路由注册（那处只能写字面量 ——
+//      operator""_url 是 UDL，接不了变量）；
+//   2) 接缝 generate_spec 拼给方舟的 images（站点内相对路径，由 to_public_url
+//      补公网前缀 + 短时效签名；绝对磁盘路径 file_path_ 绝不能外发）。
+// 放在这里是为了让「模板」只有一个定义，路由注册那边靠注释对齐。
+constexpr std::string_view g_reference_image_path_template{"/api/doodle/ai/light/reference/{}/image"};
+
+/// 参考图的站点内取图路径（未签名）。接缝用它，别自己拼字符串。
+inline std::string reference_image_url(const uuid& in_id) {
+  return fmt::format(g_reference_image_path_template, boost::uuids::to_string(in_id));
+}
+
 // GET /api/doodle/ai/light/reference/{id}/image   参考图取图
 // 会作为 VLM 判分/推理的输入交给方舟, 所以支持短时效签名 URL(uid 参与签名并真正加载人员,
 // handler 里的项目权限校验在签名路径下照常生效)
@@ -106,7 +119,8 @@ DOODLE_HTTP_FUN_END()
 // GET  /api/doodle/ai/light/session/{session_id}/spec    Spec 版本列表
 // POST /api/doodle/ai/light/session/{session_id}/spec    生成 Spec：draft 出第一版，
 //                                                        awaiting_spec_confirm 重出（要求已有参考图，否则 400）
-//                                                        —— **本轮返回 501**（LLM 接缝未实现）
+//                                                        已实现（§15.7）：统计聚合 + 一次方舟推理。
+//                                                        失败时会话状态回滚，Spec 版本不变（可重试）。
 DOODLE_HTTP_JWT_FUN(spec_route)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)

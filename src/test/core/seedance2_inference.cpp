@@ -101,8 +101,14 @@ BOOST_AUTO_TEST_CASE(body_defaults_are_offline_safe) {
   // caching 与 instructions 互斥(方舟会 400), 我们从不发 caching
   BOOST_CHECK_EQUAL(l_body.contains("caching"), false);
   BOOST_CHECK_EQUAL(l_body.at("thinking").at("type").get<std::string>(), "disabled");
+  // max_output_tokens 缺省**不发**：结构化输出长度不可预估，截断之后的半个 JSON 与
+  // 「schema 不合规被拒」的失败面分不出来，所以上限交给模型/账号侧；只有显式指定才发。
+  BOOST_CHECK_EQUAL(l_body.contains("max_output_tokens"), false);
   BOOST_CHECK_EQUAL(
-      l_body.at("max_output_tokens").get<std::int64_t>(), doodle_config::g_ark_inference_default_max_output_tokens
+      seedance2_client::build_inference_body(nlohmann::json{{"input_text", "x"}, {"max_output_tokens", 1234}})
+          .at("max_output_tokens")
+          .get<std::int64_t>(),
+      1234
   );
 
   // 空串(会话没配模型)也要回落到缺省, 不能带着 model:"" 打过去
@@ -122,6 +128,8 @@ BOOST_AUTO_TEST_CASE(body_uses_responses_shape_with_string_image_url) {
   });
 
   const auto& l_input = l_body.at("input").at(0);
+  // InputItem 的 type 固定 "message"（文档原话），只发 role 是不够的。
+  BOOST_CHECK_EQUAL(l_input.at("type").get<std::string>(), "message");
   BOOST_CHECK_EQUAL(l_input.at("role").get<std::string>(), "user");
 
   const auto& l_content = l_input.at("content");

@@ -69,7 +69,10 @@ constexpr std::int64_t g_max_completion_tokens{g_max_task_completion_tokens * 10
 constexpr std::string_view g_ark_inference_model{"deepseek-v4-1-flash-260910"};  // 请求未指定 model 时的缺省
 constexpr auto g_ark_inference_timeout{std::chrono::seconds(180)};               // 单次推理的读取超时
 constexpr std::size_t g_ark_inference_max_retry{3};                              // 429/5xx 的最大尝试次数
-constexpr std::int64_t g_ark_inference_default_max_output_tokens{4096};          // 缺省最大输出 token
+// max_output_tokens **没有缺省值**: build_inference_body() 只在调用方显式给了才发这个键。
+// 结构化输出要求全字段 required, 长度不可预估, 一旦截断 result_json_ 就只剩半个 JSON,
+// 那个失败面跟「schema 不合规被拒」分不出来。这个常量留给想自己设上限的调用方。
+constexpr std::int64_t g_ark_inference_default_max_output_tokens{4096};
 // 推理任务的预扣上限; 真正计费按响应里的 total_tokens(输入占大头), 差额会退补。
 // 推理任务通常是服务端同步结算(插入即终态), 这个值主要用于「按标准提交路径」时的配额检查。
 constexpr std::int64_t g_ark_inference_default_consumed_tokens{50'000};
