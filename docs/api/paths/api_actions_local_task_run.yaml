@@ -1,0 +1,76 @@
+get:
+  tags:
+    - 动作-本地
+  summary: 查询分布式任务客户端是否在运行
+  description: |
+    返回本机是否已有分布式任务客户端在运行（`core_set::internal_distributed_render_client_.lock() != nullptr`）。
+
+    处理器为 `local::actions_local_task_run::get`，实现见 `http_method/local/event.cpp`。
+    该处理器继承自 `http_function`（不是 `local_http_fun`），不校验请求头；
+    路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时注册。
+  operationId: actions_local_task_run_get
+  responses:
+    '200':
+      description: 是否正在运行分布式任务
+      content:
+        application/json:
+          schema:
+            type: boolean
+post:
+  tags:
+    - 动作-本地
+  summary: 启动分布式任务客户端
+  description: |
+    启动本机的分布式任务客户端（`http_work`），开始从 Kitsu 任务队列领取并执行任务。
+
+    处理器为 `local::actions_local_task_run::post`，实现见 `http_method/local/event.cpp`：
+
+    - 已有分布式任务在运行时不报错，仅记录警告并直接返回 204；
+    - 请求体可选字段 `allowed_task_types` 指定允许领取的任务类型集合，
+      缺省为 `["export_fbx", "auto_light"]`；
+    - 成功启动后返回 204（无响应体）。
+
+    该处理器继承自 `http_function`（不是 `local_http_fun`），不校验请求头；
+    路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时注册。
+  operationId: actions_local_task_run_post
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            allowed_task_types:
+              type: array
+              description: 允许领取的任务类型；缺省为 `["export_fbx", "auto_light"]`
+              items:
+                type: string
+                enum:
+                  - unknown
+                  - export_fbx
+                  - export_sim
+                  - auto_light
+                  - merge_video
+                  - connect_video
+                  - check_maya
+                  - replace_maya_ref
+                  - create_rig_sk
+                  - project_sync
+                  - depth_estimation
+                  - ai_light
+  responses:
+    '204':
+      description: 已启动（或已有实例在运行），无响应体
+delete:
+  tags:
+    - 动作-本地
+  summary: 停止分布式任务客户端
+  description: |
+    取消并释放本机的分布式任务客户端；没有在运行时也直接返回 204。
+
+    处理器为 `local::actions_local_task_run::delete_`，实现见 `http_method/local/event.cpp`。
+    该处理器继承自 `http_function`（不是 `local_http_fun`），不校验请求头。
+  operationId: actions_local_task_run_delete
+  responses:
+    '204':
+      description: 已停止，无响应体

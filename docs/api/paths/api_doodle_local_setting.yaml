@@ -1,0 +1,89 @@
+get:
+  tags:
+    - Doodle
+  summary: 获取本地设置
+  description: |
+    读取本机的运行设置（Maya / UE 路径、并发数、超时、工作根目录等）。
+
+    处理器为 `local::local_setting::get`，实现见 `http_method/local/local_setting.cpp`。
+    该处理器继承自 `http_function`（**不是** `local_http_fun`），因此**不校验请求头**；
+    但整条本地路由只在 `kitsu_supplement --local` 模式下注册（见 `launch/kitsu_supplement.cpp`，
+    端口由 `--port` 指定，缺省 0 即随机端口），非本地模式访问会得到 404。
+
+    `maya_path` 由 `maya_exe_ns::find_maya_path()` 现场探测，探测失败时记错误日志并返回空路径。
+  operationId: local_setting_get
+  responses:
+    '200':
+      description: 本地设置
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/LocalSetting.yaml
+post:
+  tags:
+    - Doodle
+  summary: 更新本地设置
+  description: |
+    逐字段更新本机设置并写回本地配置文件（`core_set::save()`），随后按 GET 的结构回显全量设置。
+
+    处理器为 `local::local_setting::post`，实现见 `http_method/local/local_setting.cpp`。
+    请求体中未出现的字段保持原值。
+
+    字段语义：
+
+    - `maya_parallel_quantity`：同时运行的最大 Maya 任务数，同时会更新
+      `maya_ctx::queue_` 的并发上限；
+    - `authorize`：授权令牌字符串，通过 `authorization::load_authorization_data()` 校验，
+      校验通过才保存（校验失败时该字段被忽略，不会报错）；
+    - `UE_path`：UE 引擎根目录（形如 `D:\Program Files\Epic Games\UE_5.4`），
+      非空且目录下不存在 `Engine/Binaries/Win64/UnrealEditor.exe` 时返回 400。
+      ⚠️ 校验发生在赋值**之后**，因此返回 400 时该非法值仍已写入进程内设置
+      （只是不会 `save()` 落盘，磁盘配置保持旧值）；
+    - `UE_version` / `timeout` / `user_work_root`：UE 版本号、任务超时（秒）、用户工作根目录；
+    - `maya_version`：Maya 版本号，接受整数或数字字符串。
+
+    与 GET 相同，该处理器不校验请求头，且只在本地模式下注册。
+  operationId: local_setting_post
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          description: 所有字段均可选，只提交需要修改的字段。
+          properties:
+            maya_parallel_quantity:
+              type: integer
+              format: int32
+              description: 同时运行的最大 Maya 任务数
+            authorize:
+              type: string
+              description: 授权令牌；校验通过后才保存
+            UE_path:
+              type: string
+              description: UE 引擎根目录，须包含 `Engine/Binaries/Win64/UnrealEditor.exe`
+            UE_version:
+              type: string
+              description: UE 版本号
+            timeout:
+              type: integer
+              format: int32
+              description: 任务超时时间（秒）
+            user_work_root:
+              type: string
+              description: 用户工作根目录
+            maya_version:
+              oneOf:
+                - type: integer
+                  format: int32
+                - type: string
+              description: Maya 版本号，接受整数或数字字符串
+  responses:
+    '201':
+      description: 更新后的本地设置，结构同 GET
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/LocalSetting.yaml
+    '400':
+      description: '`UE_path` 不是有效的 UE 引擎目录（缺少 `UnrealEditor.exe`），响应体为 `{"error": "UE4路径不正确", "code": <数字码>}`'

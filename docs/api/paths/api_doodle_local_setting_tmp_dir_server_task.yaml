@@ -1,0 +1,29 @@
+get:
+  tags:
+    - Doodle
+  summary: 获取服务端任务临时目录
+  description: |
+    返回本机存放服务端任务临时文件的目录（`core_set::get_cache_root("server_task")`）。
+
+    处理器为 `local::local_setting_tmp_dir_server_task::get`，实现见
+    `http_method/local/local_setting.cpp`。该处理器继承自 `local_http_fun`，
+    请求头必须带非空的 `Authorization: Bearer <token>`（或 `access_token_cookie`），
+    否则返回 401「请先登录」；该令牌在后续调用 Kitsu 接口时透传使用。
+
+    整条本地路由只在 `kitsu_supplement --local` 模式下注册，非本地模式访问会得到 404。
+  operationId: local_setting_tmp_dir_server_task_get
+  responses:
+    '200':
+      description: 临时目录
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              tmp_dir:
+                type: string
+                description: 服务端任务临时目录的绝对路径
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+  security:
+    - bearerAuth: []

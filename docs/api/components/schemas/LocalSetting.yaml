@@ -1,0 +1,34 @@
+type: object
+description: |
+  本机运行设置，对应 `doodle::core_set`（`core_set.h:39-58`）中会随本地设置接口读写的字段。
+  GET / POST `/api/doodle/local_setting` 均返回该结构。
+properties:
+  maya_parallel_quantity:
+    type: integer
+    format: int32
+    description: 同时运行的最大 Maya 任务数（`core_set::p_max_thread`）
+  authorize:
+    type: boolean
+    description: |
+      当前授权是否有效（`authorization::is_valid()`）。
+      注意这里是**布尔值**，而 POST 的请求体里同名字段接受的是**令牌字符串**。
+  maya_path:
+    type: string
+    description: 探测到的 Maya 可执行文件路径；探测失败时为空字符串
+  UE_path:
+    type: string
+    description: UE 引擎根目录（`core_set::ue4_path`）
+  UE_version:
+    type: string
+    description: UE 版本号（`core_set::ue4_version`）
+  timeout:
+    type: integer
+    format: int32
+    description: 任务超时时间（秒，`core_set::timeout`）
+  user_work_root:
+    type: string
+    description: 用户工作根目录（`core_set::user_work_root_`）
+  maya_version:
+    type: integer
+    format: int32
+    description: Maya 版本号（`core_set::maya_version`）

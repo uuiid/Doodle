@@ -1,0 +1,71 @@
+post:
+  tags:
+    - 动作-项目
+  summary: 提交更新解算（sim abc）任务
+  description: |
+    针对某个镜头任务提交「更新解算 abc」任务，由本机处理解算文件的导出/上传。
+
+    处理器为 `local::actions_projects_shots_update_sim_abc_local::post`，实现见
+    `http_method/local/task_info.cpp`：
+
+    1. 用请求体构造 `server_task_info`（`name`、`source_computer` 必填），
+       `submit_time` 由服务端填写，`submitter` / `task_id` / `run_computer_id` 置为 nil uuid；
+    2. `type` **强制**为 `export_sim`；
+    3. URL 中的 `{shot_id}` 作为 Kitsu 任务 id 写入参数（`qcloth_update_arg::task_id_`），
+       请求体里同时给出 `task_id` 时会覆盖它；
+    4. `command` 记录为 `qcloth_update_arg` 的 JSON（`path` = 解算 abc 所在目录），
+       任务提交后立即广播 Socket.IO 事件 `doodle:task_info:update`；
+    5. **URL 中的 `{project_id}` 当前实现并未使用**，仅用于路由匹配。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」；
+    该令牌用于回调 Kitsu。路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时注册。
+  operationId: actions_projects_shots_update_sim_abc_local_post
+  parameters:
+    - name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 项目 id（当前实现未使用该值）
+    - name: shot_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 镜头任务 id
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: ../components/schemas/ServerTaskInfo.yaml
+            - type: object
+              description: |
+                除 `server_task_info` 的字段外，请求体顶层即为 `qcloth_update_arg` 的字段
+                （见 `exe_warp/qcloth_arg.cpp` 的 `from_json`，均为可选）。
+              properties:
+                path:
+                  type: string
+                  description: 解算 abc 文件所在目录（`alembic_file_dir_`）
+                task_id:
+                  type: string
+                  format: uuid
+                  description: Kitsu 任务 id；缺省用 URL 中的 `{shot_id}`，请求体中给出时会覆盖它
+  responses:
+    '201':
+      description: |
+        已提交的任务（`type` 为 `export_sim`，`command` 为解算更新参数）。
+        返回的是 `server_task_info` 的 JSON 文本。
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ServerTaskInfo.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '500':
+      description: 提交或执行失败
+  security:
+    - bearerAuth: []

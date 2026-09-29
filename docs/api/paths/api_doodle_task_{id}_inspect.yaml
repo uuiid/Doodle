@@ -1,0 +1,93 @@
+post:
+  tags:
+    - Doodle
+  summary: 提交 Maya 文件检查任务
+  description: |
+    提交一个 Maya 模型检查任务（`type` 强制为 `check_maya`），由本机 Maya 执行并回传检查结果。
+
+    处理器为 `local::task_inspect_instance::post`，实现见 `http_method/local/task_info.cpp`：
+
+    1. 用请求体构造 `server_task_info`（`name`、`source_computer` 必填），
+       `submit_time` 由服务端填写，`submitter` / `task_id` / `run_computer_id` 置为 nil uuid；
+    2. `type` **强制**为 `check_maya`；
+    3. URL 中的 `{id}` 作为 **Kitsu 任务 id** 传给检查参数（用于回传检查结果），
+       同时请求头里的令牌会被透传（`inspect_file_arg(token_, id_)`）；
+    4. `command` 记录为 `inspect_file_arg` 的 JSON（含各项检查开关）。
+
+    检查开关在解析请求体**之前**全部预置为 `true`，请求体里给出 `false` 才会关闭。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」；
+    路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时注册。
+  operationId: local_task_inspect_instance_post
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Kitsu 任务 id（检查结果回传的目标任务）
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: ../components/schemas/ServerTaskInfo.yaml
+            - type: object
+              description: |
+                除 `server_task_info` 的字段外，请求体顶层即为 `inspect_file_arg` 的字段
+                （见 `exe_warp/inspect_maya.cpp` 的 `from_json`）。
+              properties:
+                path:
+                  type: string
+                  description: 待检查的 Maya 文件路径（`maya_exe_ns::arg` 的 `path`）
+                out_path_file:
+                  type: string
+                  description: Maya 批处理输出 JSON 的路径，缺省由服务端生成
+                surface_5:
+                  type: boolean
+                  description: 五边面检查
+                rename_check:
+                  type: boolean
+                  description: 重命名检查
+                name_length_check:
+                  type: boolean
+                  description: 名称长度检查
+                history_check:
+                  type: boolean
+                  description: 模型历史/数值检查
+                special_copy_check:
+                  type: boolean
+                  description: 特殊复制检查
+                uv_check:
+                  type: boolean
+                  description: UV 正反面检查
+                kframe_check:
+                  type: boolean
+                  description: 模型 K 帧检查
+                space_name_check:
+                  type: boolean
+                  description: 空间名称检查
+                only_default_camera_check:
+                  type: boolean
+                  description: 仅默认相机检查
+                too_many_point_check:
+                  type: boolean
+                  description: 多余点数检查
+                multi_uv_inspection:
+                  type: boolean
+                  description: 多 UV 检查
+  responses:
+    '201':
+      description: |
+        已提交的任务（`type` 为 `check_maya`，`command` 为检查参数）。
+        返回的是 `server_task_info` 的 JSON 文本。
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ServerTaskInfo.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+  security:
+    - bearerAuth: []

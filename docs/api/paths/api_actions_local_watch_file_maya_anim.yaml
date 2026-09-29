@@ -1,0 +1,101 @@
+get:
+  tags:
+    - 动作-本地
+  summary: 获取正在监视的动画文件目录
+  description: |
+    返回当前正在监视的目录列表（`folder_watcher_anim_fbx` 已变更/监视的文件项）；
+    尚未启动监视时返回空数组。
+
+    处理器为 `local::actions_local_watch_file_maya_anim::get`，实现见
+    `http_method/local/task_info.cpp`，内部通过 strand 串行化访问监视器
+    （`folder_watcher_anim_fbx` 线程不安全）。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」。
+  operationId: actions_local_watch_file_maya_anim_get
+  responses:
+    '200':
+      description: 监视项列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/AnimFbxWatchArg.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - 动作-本地
+  summary: 开始监视动画文件（自动上传）
+  description: |
+    按给定的 Kitsu 任务 id 建立文件监视：文件一旦出现/变化即自动上传动画文件。
+
+    处理器为 `local::actions_local_watch_file_maya_anim::post`，实现见
+    `http_method/local/task_info.cpp`：
+
+    1. 请求体必须包含 `task_ids`（实现为无保护取值，缺省会解析失败）；
+    2. 对每个任务调用 Kitsu 的 `GET /api/actions/tasks/{task_id}/sync/export-anim-fbx`
+       取回监视参数（`project_id_` / `task_id_` / `file_name_` / `path_`），
+       并把 `path_` 拼接在本机 `user_work_root` 之下；
+    3. 目录不存在时自动创建，随后开始监视（重复调用会用新的列表替换监视项）；
+    4. 返回整理后的监视项数组。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」；
+    该令牌同时用于后续自动上传。路由只在 `kitsu_supplement --local` 模式且进程启动时
+    授权有效时注册。
+  operationId: actions_local_watch_file_maya_anim_post
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - task_ids
+          properties:
+            task_ids:
+              type: array
+              description: Kitsu 任务 id 列表
+              items:
+                type: string
+                format: uuid
+  responses:
+    '201':
+      description: 已开始监视的项（`path` 为拼接到本机工作根目录后的绝对路径）
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/AnimFbxWatchArg.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '500':
+      description: 取监视信息失败或目录创建失败
+  security:
+    - bearerAuth: []
+delete:
+  tags:
+    - 动作-本地
+  summary: 停止监视动画文件
+  description: |
+    停止并释放文件监视器（重复调用无副作用）。
+
+    处理器为 `local::actions_local_watch_file_maya_anim::delete_`，实现见
+    `http_method/local/task_info.cpp`，返回空 JSON 对象 `{}`。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」。
+  operationId: actions_local_watch_file_maya_anim_delete
+  responses:
+    '200':
+      description: 已停止监视，返回空对象 `{}`
+      content:
+        application/json:
+          schema:
+            type: object
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+  security:
+    - bearerAuth: []

@@ -1,0 +1,93 @@
+post:
+  tags:
+    - 动作-项目
+  summary: 提交导出动画 fbx 任务（本地）
+  description: |
+    针对某个镜头任务提交本机导出动画 fbx 的任务。
+
+    处理器为 `local::actions_projects_shots_export_anim_fbx_local::post`，实现见
+    `http_method/local/task_info.cpp`：
+
+    1. 用请求体构造 `server_task_info`（`name`、`source_computer` 必填），
+       `submit_time` 由服务端填写，`submitter` / `task_id` / `run_computer_id` 置为 nil uuid；
+    2. `type` **强制**为 `export_fbx`；
+    3. URL 中的 `{shot_id}` 作为 Kitsu 任务 id 写入参数（`export_fbx_arg::task_id_`），
+       请求头中的令牌被透传给 Kitsu 客户端；
+    4. `command` 记录为 `export_fbx_arg` 的 JSON（见下表字段），任务提交后立即广播
+       Socket.IO 事件 `doodle:task_info:update`；
+    5. **URL 中的 `{project_id}` 当前实现并未使用**，仅用于路由匹配。
+
+    与主服务器上的 `/api/actions/projects/{project_id}/shots/{shot_id}/run-export-anim-fbx`
+    不同，本接口由**本机**执行导出（本地模式）。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」；
+    路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时注册。
+  operationId: actions_projects_shots_export_anim_fbx_local_post
+  parameters:
+    - name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 项目 id（当前实现未使用该值）
+    - name: shot_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 镜头任务 id
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: ../components/schemas/ServerTaskInfo.yaml
+            - type: object
+              description: |
+                除 `server_task_info` 的字段外，请求体顶层即为 `export_fbx_arg` 的字段
+                （见 `exe_warp/export_fbx_arg.cpp` 的 `from_json`，均为可选）。
+              properties:
+                path:
+                  type: string
+                  description: 待导出的 Maya 文件路径（`maya_exe_ns::arg` 的 `path`）
+                out_path_file:
+                  type: string
+                  description: Maya 批处理输出 JSON 的路径，缺省由服务端生成
+                create_play_blast:
+                  type: boolean
+                  description: 是否创建 playblast
+                camera_film_aperture:
+                  type: number
+                  format: double
+                  description: 相机片门孔径
+                image_size:
+                  $ref: ../components/schemas/ImageSize.yaml
+                only_upload:
+                  type: boolean
+                  description: 是否只上传、不重新导出
+                frame_in:
+                  type: integer
+                  format: int32
+                  description: 起始帧
+                frame_out:
+                  type: integer
+                  format: int32
+                  description: 结束帧
+  responses:
+    '201':
+      description: |
+        已提交的任务（`type` 为 `export_fbx`，`command` 为导出参数）。
+        返回的是 `server_task_info` 的 JSON 文本。
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ServerTaskInfo.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '500':
+      description: 提交或执行失败
+  security:
+    - bearerAuth: []

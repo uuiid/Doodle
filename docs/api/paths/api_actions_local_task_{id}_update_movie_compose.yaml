@@ -1,0 +1,63 @@
+post:
+  tags:
+    - 动作-本地
+  summary: 提交合成送审影片任务
+  description: |
+    把本机目录下的 PNG 图片序列合成为视频，作为「送审特效样片」上传到 Kitsu 任务。
+
+    处理器为 `local::actions_local_task_update_movie_compose::post`，实现见
+    `http_method/local/task_info.cpp`；实际执行体为 `update_movie_compose_files::run`
+    （`exe_warp/assets_update.cpp`）：
+
+    1. 用请求体构造 `server_task_info`（`name`、`source_computer` 必填），
+       `submit_time` 由服务端填写，`submitter` / `task_id` / `run_computer_id` 置为 nil uuid；
+    2. `type` 被写作 `project_sync`（实现如此，未随接口语义单独取值）
+       （⚠️ 该取值不在 `server_task_info_type` 的 JSON 序列化表中，按 nlohmann 的缺省规则，
+       返回体里的 `type` 会显示为 `export_fbx`，服务端内部仍是 `project_sync`）；
+    3. URL 中的 `{id}` 作为 Kitsu 任务 id 写入参数 —— 注意本接口的
+       `from_json` **不读取** `task_id`（源码中该行被注释掉），请求体里给 `task_id` 无效；
+    4. `path` 指向存有 `.png` 图片序列的目录，服务端会校验图片比例与项目分辨率一致，
+       合成到缓存目录后按「送审特效样片」评论上传；
+    5. 校验失败（路径为空、目录下没有图片、比例不符等）抛出 `doodle_error`，返回 500。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则返回 401「请先登录」；
+    该令牌用于回调 Kitsu。路由只在 `kitsu_supplement --local` 模式且进程启动时授权有效时注册。
+  operationId: actions_local_task_update_movie_compose_post
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Kitsu 任务 id
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: ../components/schemas/ServerTaskInfo.yaml
+            - type: object
+              description: |
+                除 `server_task_info` 的字段外，还接受 `update_movie_compose_files` 的
+                `path` 字段（见 `exe_warp/assets_update.cpp` 的 `from_json`）。
+              properties:
+                path:
+                  type: string
+                  description: 视频合成图片目录（其中的 `.png` 会被合成为视频）
+  responses:
+    '201':
+      description: 已提交的任务，返回 `server_task_info` 的 JSON
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ServerTaskInfo.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '500':
+      description: |
+        执行参数不满足要求，例如「视频合成文件路径不能为空」「任务ID不能为空」
+        「视频合成文件 ... 不存在」「视频合成路径 ... 下没有找到图片文件」
+  security:
+    - bearerAuth: []
