@@ -86,12 +86,12 @@ struct DOODLE_CORE_API ai_light_judgement_t {
   std::map<std::string, double> feedback_axes_{};
 
   friend void to_json(nlohmann::json& j, const ai_light_judgement_t& p) {
-    j["by"]                   = p.by_;
-    j["at"]                   = p.at_;
-    j["decision"]             = p.decision_;
+    j["by"]                    = p.by_;
+    j["at"]                    = p.at_;
+    j["decision"]              = p.decision_;
     j["selected_candidate_id"] = p.selected_candidate_id_;
-    j["feedback_text"]        = p.feedback_text_;
-    j["feedback_axes"]        = p.feedback_axes_;
+    j["feedback_text"]         = p.feedback_text_;
+    j["feedback_axes"]         = p.feedback_axes_;
   }
   friend void from_json(const nlohmann::json& j, ai_light_judgement_t& p) {
     if (j.contains("by")) j.at("by").get_to(p.by_);
@@ -175,9 +175,7 @@ struct DOODLE_CORE_API ai_light_iteration {
   // --- 类型化访问器 ---
   iteration_axes_t get_axes() const { return json_get_or_default<iteration_axes_t>(axes_); }
   void set_axes(const iteration_axes_t& in_axes) { axes_ = in_axes; }
-  ai_light_judgement_t get_judgement() const {
-    return json_get_or_default<ai_light_judgement_t>(judgement_);
-  }
+  ai_light_judgement_t get_judgement() const { return json_get_or_default<ai_light_judgement_t>(judgement_); }
   void set_judgement(const ai_light_judgement_t& in_judgement) { judgement_ = in_judgement; }
 
   /// 记录一次人工判断，并把整轮推进到 judged。

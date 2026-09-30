@@ -18,6 +18,7 @@ target_sources(test_main
         ai_light_stats.cpp
         ai_light_spec_prompt.cpp
         ai_light_candidates.cpp
+        ai_light_feedback.cpp
         ai_light_paths.cpp
         shot_render_light_paths.cpp
         url_sign.cpp

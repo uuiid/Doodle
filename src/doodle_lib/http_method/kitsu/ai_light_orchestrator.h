@@ -11,20 +11,20 @@
 // ---------------------------------------------------------------------------
 // generate_spec 已落地（见 §15.7）：提示词 + 多图统计 → LightingSpec。
 // generate_candidates 已落地（见 §15.8）：Spec + 基线 rig + 上一轮反馈轴 → 本轮 6 个候选。
-// 两者都走已落地的方舟 Responses 通道（`seedance2_client` + `run_inference_task`，
-// 用法见 §15.6）。
-//
-// structure_feedback 的**接缝本体**还没写：自由文本怎么映射成轴调整。在此之前它抛
-// `doodle_error{status::not_implemented}`，由 http_session_data.cpp:149-151 映射成 501。
+// structure_feedback 已落地（见 §15.9）：自由文本 → 轴方向，填进
+//   ai_light_judgement_t::feedback_axes_，下一轮当**约束**用。
+// 三者都走已落地的方舟 Responses 通道（`seedance2_client` + `run_inference_task`，
+// 用法见 §15.6）。**仓库里已经没有 not_implemented 的接缝了。**
 //
 // 接缝契约（实现方必须遵守）：
 //   1. 抛出即视为「本轮无法推进」。调用方 advance_session() 会把会话状态回滚到进入时的
 //      状态并记录 failure_reason_，所以实现方**不需要**自己清理状态。
 //   2. 但必须保证「抛之前没有落库」，或者「落库的部分是幂等可重入的」——
 //      调用方只回滚会话状态这一列，不会回滚接缝自己写下的东西。
-//      **受控例外**：generate_spec / generate_candidates 经由 run_inference_task 写下一行
-//      推理任务与对应的扣费记录。这是有意保留的 —— 推理确实发生了，抹掉它等于抹掉计费
-//      凭证。除此之外它们不写任何 ai_light_* 表（返回值全部交给调用方落库）。
+//      **受控例外**：generate_spec / generate_candidates / structure_feedback 经由
+//      run_inference_task 写下一行推理任务与对应的扣费记录。这是有意保留的 —— 推理确实
+//      发生了，抹掉它等于抹掉计费凭证。除此之外它们不写任何 ai_light_* 表
+//      （返回值全部交给调用方落库）。
 //   3. 返回值必须自洽：候选数量 == g_candidate_count，且满足 §6.6 护栏
 //      （同轮候选的灯集合与角色完全一致，只有轴参数不同）。调用方会再校验一次，
 //      不合规直接判失败 —— 护栏是硬约束，不能靠实现方自觉。
@@ -268,14 +268,83 @@ DOODLELIB_API candidate_generation_result_t map_candidate_result(
 // 接缝 3：自由文本反馈 → 结构化轴调整
 // ===========================================================================
 
-/// 把「主光再低一点，色温再冷一点」这类自由文本转成轴调整（方案 §13.1 第 9 项）。
+struct DOODLELIB_API feedback_structuring_request_t {
+  uuid session_id_{};
+  /// 写入 sd2::task.project_uuid_id_（可空 FK）。只为归属可查，接缝内部不依赖它。
+  uuid project_id_{};
+  /// 触发人（person uuid）= 计费主体。语义与默认值规则同 spec_generation_request_t::operator_id_
+  /// （**不给默认值**：有默认值则新调用点漏传会把扣费静默记到别人头上）。
+  uuid operator_id_{};
+  /// 被判断的这一轮。进 sd2::task.ai_light_iteration_id_，用于反查「哪一次推理结构化了
+  /// 哪一轮的反馈」。落 iteration 行本身仍由调用方做（契约 2）。
+  uuid iteration_id_{};
+  /// 从 1 开始
+  std::int32_t iteration_{0};
+  /// 美术的原话。**逐字进提示词** —— 改写它等于替美术重新表述需求。
+  std::string feedback_text_{};
+  /// 这次判断的决定。只有 continue_iteration 才值得调本接缝：
+  /// accept / reject_all 会终止会话，结构化出来的轴没有下一轮可以作用（§15.9 决定 D16）。
+  judgement_decision decision_{judgement_decision::continue_iteration};
+  /// 美术选中的候选（可为 nil）。**文本最可能指的就是它** —— 提示词会把它的完整 rig
+  /// 摊给模型看（「第 3 个太黄了」需要一个明确的「第 3 个」）。
+  uuid selected_candidate_id_{};
+  /// 当前轮 Spec。调用方加载（与另两条接缝一致：接缝拿的是纯值输入，可离线测）。
+  lighting_spec_t spec_{};
+  /// 本轮的全部候选。OFAT 不变量（§15.8）保证「基线 rig + 各候选的轴档位」足以描述
+  /// 全部 6 张图，所以提示词只需展开第 0 个。
+  std::vector<ai_light_candidate> candidates_{};
+  /// 美术已经用滑块给出的方向（决策 5：滑块是默认通道）。这些轴不必再让模型给，
+  /// 调用方合并时也不会被文本覆盖 —— 显式拖出的数值比自然语言精确。
+  std::map<std::string, double> slider_axes_{};
+};
+
+/// 「主光再低一点，色温再冷一点」这类自由文本 → 轴调整。
 ///
-/// **滑块路径不走这里**（决策 5：滑块为默认），所以缺了它 /judge 依然完全可用 ——
-/// 调用方捕获 not_implemented 后降级为「文本原样留存、轴为空」，判断照常成功。
-/// **本轮抛 501。**
+/// 返回的每个 axis_step_t **恰好一个 steps_ 元素**：judge 只传「下一轮的中心值」，
+/// 完整档位安排由下一轮 generate_candidates 的 axes_ 决定。空 vector 是合法结果
+/// （「再调调看」这类没有方向的反馈）—— 不是错误。
+///
+/// in_sql 用来解析 `operator_id_ → person.ai_studio_id_ → ai_studio`（取推理密钥）
+/// 并交给 run_inference_task 落任务行与扣费（契约 2 的受控例外）。
+///
+/// 失败一律抛 doodle_error（形状违规 → bad_gateway；人员/工作室缺失 → bad_request）。
+/// **语义无效的轴不抛错，在源头丢弃**：none / 0 / 未知轴名 / key_fill_ratio <= 0
+/// 若传下去，下一轮会以「轴无实质变化」抛 502，那时病根与表现隔了一次人工判断。
 DOODLELIB_API boost::asio::awaitable<std::vector<axis_step_t>> structure_feedback(
-    const uuid& in_session_id, const std::string& in_feedback_text
+    sqlite_database& in_sql, const feedback_structuring_request_t& in_request
 );
+
+// ---------------------------------------------------------------------------
+// 接缝 3 的离线可测部件
+// ---------------------------------------------------------------------------
+// 与前两条接缝同样的分法：纯函数组信封/映射 + 一次真实网络调用。
+
+/// 系统指令：翻译环节的角色 + **共用**的轴值语义段（与 apply_axis_step 同一份口径）
+/// + 只给方向 / 最多 2 条轴 / 别为凑数编一条 等约束。
+DOODLELIB_API std::string build_feedback_instructions();
+
+/// 结构化输出契约：{understanding, axes[{axis, value, reason}]}。
+/// axis 的 enum 复用接缝 2 的 make_axis_enum_schema()（已剔除 none）；axes.maxItems == 2，
+/// **刻意不设 minItems**（空数组是「美术没给出方向」的合法表达）。
+DOODLELIB_API nlohmann::json build_feedback_json_schema();
+
+/// 用户消息正文：美术原话 + 决定 + Spec 目标 + 本轮 6 个候选的对照结构 +
+/// 选中候选的完整 rig + 当前 key:fill 比 + 滑块已给的方向。
+DOODLELIB_API std::string build_feedback_input_text(const feedback_structuring_request_t& in_request);
+
+/// 归一化推理信封。与另两条接缝一致：不发 images / image_detail / max_output_tokens / thinking。
+DOODLELIB_API http::seedance2::inference_request_t build_feedback_request(
+    const feedback_structuring_request_t& in_request
+);
+
+/// LLM 结果 → 轴方向。形状违规抛 bad_gateway；语义无效的轴丢弃并记 WARN（见结构体注释）。
+DOODLELIB_API std::vector<axis_step_t> map_feedback_result(const nlohmann::json& in_result_json);
+
+/// 当前 key:fill 比值（key 强度 / Σfill 强度）。条件与 apply_axis_step 的 key_fill_ratio
+/// 分支完全一致：key 存在且 > 0、fill 与 key **同 intensity_unit_**（不同量纲没有比值）、
+/// fill 和 > 0；否则 nullopt。
+/// 提示词与执行器共用它 —— key_fill_ratio 是**绝对值**轴，模型必须知道现状才能给出新值。
+DOODLELIB_API std::optional<double> key_fill_ratio_of(const lighting_rig_t& in_rig);
 
 // ===========================================================================
 // 状态机

@@ -598,38 +598,57 @@ BOOST_AUTO_TEST_CASE(session_detail_reports_overdue_flag) {
 }
 
 // ===========================================================================
-// 接缝：未实现的仍明确返回 501（generate_spec 见 §15.7，generate_candidates 见 §15.8）
+// 接缝的第一道闸门：解析不出触发人就无法解析工作室、更无法计费
+// （generate_spec 见 §15.7，generate_candidates 见 §15.8，structure_feedback 见 §15.9）
 // ===========================================================================
 
-BOOST_AUTO_TEST_CASE(unimplemented_seams_report_not_implemented) {
+/// structure_feedback 的第一道闸门。三条接缝共用 make_seam_client()，所以这里验的是
+/// 「共用样板的第一道判定确实在**联网之前**发生」—— 500 与 400 的区别会决定 `/judge`
+/// 是「降级继续」还是「整次判断失败」。
+/// 三条接缝落地后已经没有 501 端点，所以那条「未实现接缝报 501」的用例已被它替换。
+BOOST_AUTO_TEST_CASE(structure_feedback_rejects_unresolvable_operator) {
   app_base l_app{};
+  fixture_t l_fx{"feedback_operator", ai_light_session_state::awaiting_judgement,
+                 ai_light_iteration_state::awaiting_judgement, 1, true};
 
-  // 还没实现的接缝必须以 501 明确报出「能力还没到」，而不是假装成功。
-  // 这很重要：静默返回空结果会让上游写出一个「成功但没有候选」的会话，
-  // 而 501 让前端和调用方都能一眼看出该做什么。
-  //
-  // generate_spec 与 generate_candidates 已经不在这条用例里了 —— 它们现在会真的去解析
-  // 工作室、发推理请求，单测宿主没有 SSL context，所以成功路径只能在真机验证；
-  // 它们能离线验证的那部分（纯函数）分别在 ai_light_spec_prompt.cpp 与
-  // ai_light_candidates.cpp 里。
-  boost::asio::io_context l_ctx{};
+  auto l_session = l_fx.reload_session();
 
-  // 文本反馈结构化也是接缝，但它是**可选**通道：调用方要能捕获 501 后降级，
-  // 所以这里验的是「它抛 501」，而不是「它返回空」。
-  bool l_fb_threw = false;
-  try {
-    run_coro(l_ctx, [&]() -> boost::asio::awaitable<void> {
-      co_await structure_feedback(core_set::get_set().get_uuid(), "暖一点、柔一点");
-    });
-  } catch (const doodle_error& in_err) {
-    l_fb_threw = true;
-    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::not_implemented);
+  // 1) operator_id 为 nil → 400（不是 500，也不是「静默记到别人头上」）
+  {
+    feedback_structuring_request_t l_req{};
+    l_req.session_id_      = l_session.uuid_id_;
+    l_req.feedback_text_   = "暖一点、柔一点";
+    l_req.operator_id_     = uuid{};
+    bool l_threw           = false;
+    try {
+      run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
+        co_await structure_feedback(*l_fx.sql_, l_req);
+      });
+    } catch (const doodle_error& in_err) {
+      l_threw = true;
+      BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
+    }
+    BOOST_TEST(l_threw);
   }
-  BOOST_TEST(l_fb_threw);
-}
 
-/// generate_spec 的第一道闸门：解析不出触发人就无法解析工作室、更无法计费。
-/// 这是它在单测里唯一能跑到的那段（失败在联网之前）。
+  // 2) operator_id 指向一个不存在的 person → 也是 400
+  {
+    feedback_structuring_request_t l_req{};
+    l_req.session_id_    = l_session.uuid_id_;
+    l_req.feedback_text_ = "暖一点、柔一点";
+    l_req.operator_id_   = core_set::get_set().get_uuid();
+    bool l_threw         = false;
+    try {
+      run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
+        co_await structure_feedback(*l_fx.sql_, l_req);
+      });
+    } catch (const doodle_error& in_err) {
+      l_threw = true;
+      BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
+    }
+    BOOST_TEST(l_threw);
+  }
+}
 BOOST_AUTO_TEST_CASE(generate_spec_rejects_unresolvable_operator) {
   app_base l_app{};
   fixture_t l_fx{"spec_operator", ai_light_session_state::draft, ai_light_iteration_state::generated, 0, false};

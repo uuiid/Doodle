@@ -54,6 +54,7 @@
 #include <exception>
 #include <functional>
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -80,19 +81,6 @@ std::string brief_error(const std::exception& in_err) {
   l_what.resize(g_failure_reason_max);
   l_what += "...(已截断)";
   return l_what;
-}
-
-/// 接缝的统一退出方式。抛 doodle_error 且状态码为 not_implemented，
-/// 由 http_session_data.cpp:149-151 映射成 HTTP 501。
-[[noreturn]] void throw_not_implemented(std::string_view in_seam, std::string_view in_needs) {
-  throw doodle_error{
-      boost::beast::http::status::not_implemented,
-      fmt::format(
-          "AI 灯光接缝 {} 尚未实现：它依赖 {}。方案 §13.1 把这两项排在路由层之后，"
-          "本轮的 /spec 与 /iterate 会返回本错误；会话状态保持不变，可以稍后重试。",
-          in_seam, in_needs
-      )
-  };
 }
 
 /// 会话的参考图统计是否够用。只要有一张图分析成功就认为可用。
@@ -1401,7 +1389,11 @@ constexpr std::size_t g_preset_prompt_top_k = 12;
 
 /// 轴值语义（§15.8 的表）。提示词与 apply_axis_step 共用同一份口径：
 /// 模型按它给档位，服务端按同一套公式应用 —— 两边不一致时美术会看到「轴变了但图没变」。
-constexpr std::string_view g_axis_semantics_text = R"AXIS(每个轴的 value 都是**增量**（不是绝对值），中性值是 0；只有 key_fill_ratio 例外，它本身就是目标比值。
+///
+/// **只放语义，不放约束**（§15.9 决定）：接缝 2 的「恰好 5 个档位 / 档位不要取 0」是排轴
+/// 环节的硬约束，接缝 3 只给**一个**方向值，两者约束不同。把它们混在这一段里，
+/// 接缝 3 的提示词会连带继承一套不适用的档位规则。
+constexpr std::string_view g_axis_value_semantics_text = R"AXIS(每个轴的 value 都是**增量**（不是绝对值），中性值是 0；只有 key_fill_ratio 例外，它本身就是目标比值。
 - key_direction     方位角增量（度）。正负决定主光往哪边偏；常见档位 -60 / -30 / +30 / +60。
 - key_fill_ratio    目标 key:fill 比值（绝对，如 3 / 6 / 10）。服务端按「当前比值 ÷ 目标比值」缩放补光强度。
 - kelvin            色温增量（K）。同时作用于灯光色温与全局白平衡；常见档位 -800 / -400 / +400 / +800。
@@ -1409,10 +1401,6 @@ constexpr std::string_view g_axis_semantics_text = R"AXIS(每个轴的 value 都
 - ambient_level     环境光相对增减（-1..+1）。作用于天光强度与 role=ambient 的灯；常见档位 -0.4 / +0.4。
 - grading_strength  调色强度增量（-1..+1），只放大/缩小「偏离中性的量」（对比、饱和、提黑、暗角、光晕）；
                     常见档位 -0.35 / +0.35。
-
-硬约束：所有轴加起来必须有恰好 5 个档位（1 个基线 + 5 个变异 = 6 个候选）。
-档位不要取 0：0 档等价于基线，会得到一个与基线一模一样的候选，服务端会因此判本轮失败。
-最多声明 2 个轴（每轮只动少数几个自由度，美术才看得出差别从哪来）。
 )AXIS";
 
 /// 可选的搜索轴：variant_axis_kind 去掉 none（none 是「这是基线」的标记，不是可搜索的自由度）。
@@ -1676,7 +1664,12 @@ std::string build_candidates_instructions() {
            "6 个候选 = 1 个基线 + 5 个变异，由服务端按你的轴计划机械展开 —— 你**只给一套灯**，\n"
            "不要输出 6 套 rig。这样 6 张图的灯集合与角色必然一致（方案 §6.6 的护栏）。\n\n"
            "【轴值语义】\n";
-  l_out += g_axis_semantics_text;
+  l_out += g_axis_value_semantics_text;
+  // 排轴环节专属的硬约束。放在这里而不是语义段里：接缝 3 复用同一份语义段，
+  // 但它的产出是「每条轴一个方向值」，套用这套档位规则会自相矛盾（§15.9 决定）。
+  l_out += "\n硬约束：所有轴加起来必须有恰好 5 个档位（1 个基线 + 5 个变异 = 6 个候选）。\n"
+           "档位不要取 0：0 档等价于基线，会得到一个与基线一模一样的候选，服务端会因此判本轮失败。\n"
+           "最多声明 2 个轴（每轮只动少数几个自由度，美术才看得出差别从哪来）。\n";
   l_out += "\n【第一轮与后续轮次】\n"
            "首轮（没有上一轮 rig）：从 Spec 与预设出发搭一套完整灯集合，档位取**大跨度**，\n"
            "目的是先把搜索空间铺开，让美术一眼看出各方向差在哪。\n"
@@ -1938,6 +1931,32 @@ lighting_rig_t build_base_rig(const nlohmann::json& in_json) {
   return l_rig;
 }
 
+/// 当前 key:fill 比。除了 apply_axis_step，接缝 3 的提示词也要用它 —— key_fill_ratio 是
+/// **绝对值**轴，模型必须知道现状才能给出新值（「对比再强一点」不是一个可直接使用的数字）。
+///
+/// 与 apply_axis_step 的判定条件**逐条一致**：key 存在且强度 > 0、所有 fill 灯与 key
+/// **同 intensity_unit_**（坎德拉与勒克斯不是同一个量纲，比值没有意义）、fill 强度和 > 0。
+std::optional<double> key_fill_ratio_of(const lighting_rig_t& in_rig) {
+  // 这里不调 first_light_with_role：它取的是可写引用（apply_axis_step 要改灯），
+  // 而本函数是只读的。
+  const light_t* l_key = nullptr;
+  for (const auto& l_light : in_rig.lights_)
+    if (l_light.role_ == light_role::key) {
+      l_key = &l_light;
+      break;
+    }
+  if (l_key == nullptr) return std::nullopt;
+  if (l_key->intensity_.value_ <= 0.0) return std::nullopt;
+  double l_fill_sum = 0.0;
+  for (const auto& l_light : in_rig.lights_) {
+    if (l_light.role_ != light_role::fill) continue;
+    if (l_light.intensity_.unit_ != l_key->intensity_.unit_) return std::nullopt;
+    l_fill_sum += l_light.intensity_.value_;
+  }
+  if (l_fill_sum <= 0.0) return std::nullopt;
+  return l_key->intensity_.value_ / l_fill_sum;
+}
+
 bool apply_axis_step(lighting_rig_t& io_rig, const variant_axis_t& in_axis) {
   const double l_v = in_axis.value_;
   switch (in_axis.axis_) {
@@ -1957,19 +1976,11 @@ bool apply_axis_step(lighting_rig_t& io_rig, const variant_axis_t& in_axis) {
 
     case variant_axis_kind::key_fill_ratio: {
       if (l_v <= 0.0) return false;
-      auto* l_key = first_light_with_role(io_rig, light_role::key);
-      if (l_key == nullptr) return false;
-      if (l_key->intensity_.value_ <= 0.0) return false;
-      double l_fill_sum = 0.0;
-      for (const auto& l_light : io_rig.lights_) {
-        if (l_light.role_ != light_role::fill) continue;
-        // 单位不同就不能比：坎德拉与勒克斯不是同一个量纲（lux 还随距离变），比值没有意义。
-        if (l_light.intensity_.unit_ != l_key->intensity_.unit_) return false;
-        l_fill_sum += l_light.intensity_.value_;
-      }
-      if (l_fill_sum <= 0.0) return false;
-      // 当前比值 = key / fill；要让比值等于目标，就按 当前/目标 缩放补光。
-      const double l_scale = (l_key->intensity_.value_ / l_fill_sum) / l_v;
+      // 当前比值走 key_fill_ratio_of()，与接缝 3 提示词里给模型的数字同一份定义。
+      const auto l_current = key_fill_ratio_of(io_rig);
+      if (!l_current.has_value()) return false;
+      // 要让比值等于目标，就按 当前/目标 缩放补光。
+      const double l_scale = *l_current / l_v;
       if (l_scale == 1.0) return false;
       for (auto& l_light : io_rig.lights_)
         if (l_light.role_ == light_role::fill) l_light.intensity_.value_ *= l_scale;
@@ -2205,29 +2216,42 @@ candidate_generation_result_t map_candidate_result(
   return l_ret;
 }
 
-boost::asio::awaitable<spec_generation_result_t> generate_spec(
-    sqlite_database& in_sql, const spec_generation_request_t& in_request
-) {
-  // ---- 1) 统计聚合（纯计算，无 IO；无可用统计也不抛，走 prompt_only 降级）----
-  const auto l_agg = aggregate_reference_stats(in_request.references_);
+// ---------------------------------------------------------------------------
+// 三条接缝共用的样板：触发人 → AI 工作室 → 客户端，以及推理结果的成败判定
+// ---------------------------------------------------------------------------
+// 抽出来的理由很实际：generate_spec / generate_candidates / structure_feedback 会逐字
+// 重复同一段约 60 行，而其中「什么算可解释的失败（400）」是一条**判定** ——
+// 三份拷贝里任何一份漂移，都会让同一个失败在不同接缝上给出不同的状态码。
+namespace {
 
-  // ---- 2) 触发人 → AI 工作室（推理密钥的来源）----
-  // 用 select + to_optional 而不是 get_by_uuid<T>：后者内部是 to_single()，
-  // 「查不到」会变成一条 sqlite 异常（HTTP 500），而这里应当是 400 语义。
+struct resolved_inference_t {
+  std::shared_ptr<http::seedance2::ai_client_base> client_{};
+  uuid studio_id_{};
+};
+
+/// 触发人 → person → ai_studio → 推理客户端。
+///
+/// 用 select + to_optional 而不是 get_by_uuid<T>：后者内部是 to_single()，「查不到」会变成
+/// 一条 sqlite 异常（HTTP 500），而这里应当是 400 语义。
+/// 每次推理都**新建**客户端：http_client_ssl 内部只有一个 socket 且无锁（§15.6 第 6 条）。
+/// in_what 只用于措辞（出错信息要指明哪条接缝），不参与任何判定。
+resolved_inference_t make_seam_client(
+    sqlite_database& in_sql, const uuid& in_operator_id, std::string_view in_what
+) {
   DOODLE_CHICK_HTTP(
-      !in_request.operator_id_.is_nil(), bad_request,
-      "generate_spec 缺少触发人（operator_id），无法解析 AI 工作室与计费主体"
+      !in_operator_id.is_nil(), bad_request, "{} 缺少触发人（operator_id），无法解析 AI 工作室与计费主体",
+      in_what
   );
   const auto l_person =
-      select(in_sql).columns(object<person>()).from<person>().where(c(&person::uuid_id_) == in_request.operator_id_)()
+      select(in_sql).columns(object<person>()).from<person>().where(c(&person::uuid_id_) == in_operator_id)()
           .to_optional();
   DOODLE_CHICK_HTTP(
-      l_person.has_value(), bad_request, "找不到触发人 {}（person 不存在），无法解析 AI 工作室",
-      in_request.operator_id_
+      l_person.has_value(), bad_request, "{} 找不到触发人 {}（person 不存在），无法解析 AI 工作室", in_what,
+      in_operator_id
   );
   DOODLE_CHICK_HTTP(
-      !l_person->ai_studio_id_.is_nil(), bad_request, "触发人 {} 未关联 AI 工作室，无法调用推理接口",
-      in_request.operator_id_
+      !l_person->ai_studio_id_.is_nil(), bad_request, "{} 的触发人 {} 未关联 AI 工作室，无法调用推理接口",
+      in_what, in_operator_id
   );
   const auto l_studio = select(in_sql)
                             .columns(object<ai_studio>())
@@ -2235,18 +2259,62 @@ boost::asio::awaitable<spec_generation_result_t> generate_spec(
                             .where(c(&ai_studio::uuid_id_) == l_person->ai_studio_id_)()
                             .to_optional();
   DOODLE_CHICK_HTTP(
-      l_studio.has_value(), bad_request, "找不到 AI 工作室 {}（配置可能已被删除）", l_person->ai_studio_id_
+      l_studio.has_value(), bad_request, "{} 找不到 AI 工作室 {}（配置可能已被删除）", in_what,
+      l_person->ai_studio_id_
   );
 
-  // 每次推理都新建客户端：http_client_ssl 内部只有一个 socket 且无锁（§15.6 第 6 条）。
-  auto l_client = http::seedance2::make_inference_client(*l_studio);
+  resolved_inference_t l_out{};
+  l_out.studio_id_ = l_studio->uuid_id_;
+  l_out.client_    = http::seedance2::make_inference_client(*l_studio);
+  return l_out;
+}
+
+/// 一次推理的成败判定。重试全在客户端内做完了（g_ark_inference_max_retry），这里不重试。
+/// 内容违规 → 400（可解释：改提示词/换图能解决），其余失败 → 502；
+/// result_json_ 非 object（含 null）也是 502 —— 输出不合解析不是调用方的错。
+void chick_inference_ok(const http::seedance2::ai_client_base::run_task_result_t& in_result, std::string_view in_what) {
+  const auto l_brief_of = [&in_result]() {
+    return in_result.result_text_.substr(0, std::min<std::size_t>(200, in_result.result_text_.size()));
+  };
+  if (in_result.status_ != seedance2::task_status::succeeded) {
+    const auto l_brief = l_brief_of();
+    if (http::seedance2::seedance2_client::is_sensitive_content_error(in_result.data_response_)) {
+      throw_exception(doodle_error{
+          boost::beast::http::status::bad_request, "{} 被内容安全策略拒绝：{}", in_what,
+          l_brief.empty() ? in_result.error_code_ : l_brief
+      });
+    }
+    throw_exception(doodle_error{
+        boost::beast::http::status::bad_gateway, "{} 推理失败（status={}, error_code={}, 超时={}）：{}", in_what,
+        magic_enum::enum_name(in_result.status_), in_result.error_code_, in_result.is_timeout_, l_brief
+    });
+  }
+  // result_json_ 由 parse_inference_response 填好（内部已做过 strip_code_fence + parse），
+  // 调用方**不要**二次解析 result_text_。
+  if (!in_result.result_json_.is_object()) {
+    throw_exception(doodle_error{
+        boost::beast::http::status::bad_gateway, "{} 的模型输出不是合法 JSON 对象：{}", in_what, l_brief_of()
+    });
+  }
+}
+
+}  // namespace
+
+boost::asio::awaitable<spec_generation_result_t> generate_spec(
+    sqlite_database& in_sql, const spec_generation_request_t& in_request
+) {
+  // ---- 1) 统计聚合（纯计算，无 IO；无可用统计也不抛，走 prompt_only 降级）----
+  const auto l_agg = aggregate_reference_stats(in_request.references_);
+
+  // ---- 2) 触发人 → AI 工作室 → 客户端 ----
+  auto l_resolved = make_seam_client(in_sql, in_request.operator_id_, "generate_spec");
 
   // ---- 3) 组装任务与归一化信封 ----
   seedance2::task l_task{};
   l_task.type_                  = seedance2::task_type::inference;  // not_null，必须显式赋值
   l_task.backend_               = seedance2::task_backend::seedance2;  // 同上
   l_task.user_id_               = in_request.operator_id_;  // 计费主体 + 签名 URL 的 uid
-  l_task.ai_studio_id_          = l_studio->uuid_id_;
+  l_task.ai_studio_id_          = l_resolved.studio_id_;
   l_task.project_uuid_id_       = in_request.project_id_;
   l_task.ai_light_iteration_id_ = uuid{};                   // 蒸馏阶段还没有轮次，留 nil
   l_task.text_prompt_           = in_request.prompt_text_;   // 去重与前台展示都读它
@@ -2257,32 +2325,10 @@ boost::asio::awaitable<spec_generation_result_t> generate_spec(
   // run_inference_task 自己一个事务里落终态任务行 + 扣费（§15.6 的方案 A）。
   // 这是本接缝唯一的副作用，且**有意保留**：推理确实发生了，必须留痕计费 ——
   // 否则调用方回滚会话状态时会连带把 person_token 的扣费抹掉（契约 2 的受控例外）。
-  auto l_result = co_await http::seedance2::run_inference_task(l_task, in_sql, l_client);
+  auto l_result = co_await http::seedance2::run_inference_task(l_task, in_sql, l_resolved.client_);
 
-  // ---- 4) 失败映射：重试全在客户端内做完了（g_ark_inference_max_retry），这里不重试 ----
-  if (l_result.status_ != seedance2::task_status::succeeded) {
-    const auto l_brief = l_result.result_text_.substr(0, std::min<std::size_t>(200, l_result.result_text_.size()));
-    if (http::seedance2::seedance2_client::is_sensitive_content_error(l_result.data_response_)) {
-      // 内容违规是可解释的失败：改提示词/换图能解决，所以是 400 而不是 502。
-      throw_exception(doodle_error{
-          boost::beast::http::status::bad_request, "灯光方案蒸馏被内容安全策略拒绝：{}",
-          l_brief.empty() ? l_result.error_code_ : l_brief
-      });
-    }
-    throw_exception(doodle_error{
-        boost::beast::http::status::bad_gateway, "推理失败（status={}, error_code={}, 超时={}）：{}",
-        magic_enum::enum_name(l_result.status_), l_result.error_code_, l_result.is_timeout_, l_brief
-    });
-  }
-
-  // result_json_ 由 parse_inference_response 填好（内部已做过 strip_code_fence + parse），
-  // **不要**在这里二次解析 result_text_。
-  if (!l_result.result_json_.is_object()) {
-    const auto l_brief = l_result.result_text_.substr(0, std::min<std::size_t>(200, l_result.result_text_.size()));
-    throw_exception(doodle_error{
-        boost::beast::http::status::bad_gateway, "模型输出不是合法 JSON 对象，无法映射为 LightingSpec：{}", l_brief
-    });
-  }
+  // ---- 4) 成败判定（内容违规 400 / 其它失败 502 / 输出非 object 502）----
+  chick_inference_ok(l_result, "generate_spec");
 
   // ---- 5) 映射 ----
   auto l_ret = map_spec_result(l_result.result_json_, l_agg);
@@ -2302,42 +2348,15 @@ boost::asio::awaitable<spec_generation_result_t> generate_spec(
 boost::asio::awaitable<candidate_generation_result_t> generate_candidates(
     sqlite_database& in_sql, const candidate_generation_request_t& in_request
 ) {
-  // ---- 1) 触发人 → AI 工作室（推理密钥的来源）----
-  // 同 generate_spec：用 select + to_optional 而不是 get_by_uuid<T> —— 后者内部是 to_single()，
-  // 「查不到」会变成一条 sqlite 异常（HTTP 500），而这里应当是 400 语义。
-  DOODLE_CHICK_HTTP(
-      !in_request.operator_id_.is_nil(), bad_request,
-      "generate_candidates 缺少触发人（operator_id），无法解析 AI 工作室与计费主体"
-  );
-  const auto l_person =
-      select(in_sql).columns(object<person>()).from<person>().where(c(&person::uuid_id_) == in_request.operator_id_)()
-          .to_optional();
-  DOODLE_CHICK_HTTP(
-      l_person.has_value(), bad_request, "找不到触发人 {}（person 不存在），无法解析 AI 工作室",
-      in_request.operator_id_
-  );
-  DOODLE_CHICK_HTTP(
-      !l_person->ai_studio_id_.is_nil(), bad_request, "触发人 {} 未关联 AI 工作室，无法调用推理接口",
-      in_request.operator_id_
-  );
-  const auto l_studio = select(in_sql)
-                            .columns(object<ai_studio>())
-                            .from<ai_studio>()
-                            .where(c(&ai_studio::uuid_id_) == l_person->ai_studio_id_)()
-                            .to_optional();
-  DOODLE_CHICK_HTTP(
-      l_studio.has_value(), bad_request, "找不到 AI 工作室 {}（配置可能已被删除）", l_person->ai_studio_id_
-  );
-
-  // 每次推理都新建客户端：http_client_ssl 内部只有一个 socket 且无锁（§15.6 第 6 条）。
-  auto l_client = http::seedance2::make_inference_client(*l_studio);
+  // ---- 1) 触发人 → AI 工作室 → 客户端 ----
+  auto l_resolved = make_seam_client(in_sql, in_request.operator_id_, "generate_candidates");
 
   // ---- 2) 组装任务与归一化信封 ----
   seedance2::task l_task{};
   l_task.type_                  = seedance2::task_type::inference;       // not_null，必须显式赋值
   l_task.backend_               = seedance2::task_backend::seedance2;    // 同上
   l_task.user_id_               = in_request.operator_id_;               // 计费主体 + 签名 URL 的 uid
-  l_task.ai_studio_id_          = l_studio->uuid_id_;
+  l_task.ai_studio_id_          = l_resolved.studio_id_;
   l_task.project_uuid_id_       = in_request.project_id_;
   // 与 generate_spec 的区别：调用方在调用**之前**就把 iteration 的 uuid 铸造好了，
   // 所以这条推理任务能反查到「哪一次推理生成了第 N 轮候选」。
@@ -2350,32 +2369,10 @@ boost::asio::awaitable<candidate_generation_result_t> generate_candidates(
   // run_inference_task 自己一个事务里落终态任务行 + 扣费（§15.6 的方案 A）。
   // 这是本接缝唯一的副作用，且**有意保留**：推理确实发生了，必须留痕计费 ——
   // 否则调用方回滚会话状态时会连带把 person_token 的扣费抹掉（契约 2 的受控例外）。
-  auto l_result = co_await http::seedance2::run_inference_task(l_task, in_sql, l_client);
+  auto l_result = co_await http::seedance2::run_inference_task(l_task, in_sql, l_resolved.client_);
 
-  // ---- 3) 失败映射：重试全在客户端内做完了（g_ark_inference_max_retry），这里不重试 ----
-  if (l_result.status_ != seedance2::task_status::succeeded) {
-    const auto l_brief = l_result.result_text_.substr(0, std::min<std::size_t>(200, l_result.result_text_.size()));
-    if (http::seedance2::seedance2_client::is_sensitive_content_error(l_result.data_response_)) {
-      // 内容违规是可解释的失败：改提示词能解决，所以是 400 而不是 502。
-      throw_exception(doodle_error{
-          boost::beast::http::status::bad_request, "候选生成被内容安全策略拒绝：{}",
-          l_brief.empty() ? l_result.error_code_ : l_brief
-      });
-    }
-    throw_exception(doodle_error{
-        boost::beast::http::status::bad_gateway, "推理失败（status={}, error_code={}, 超时={}）：{}",
-        magic_enum::enum_name(l_result.status_), l_result.error_code_, l_result.is_timeout_, l_brief
-    });
-  }
-
-  // result_json_ 由 parse_inference_response 填好（内部已做过 strip_code_fence + parse），
-  // **不要**在这里二次解析 result_text_。
-  if (!l_result.result_json_.is_object()) {
-    const auto l_brief = l_result.result_text_.substr(0, std::min<std::size_t>(200, l_result.result_text_.size()));
-    throw_exception(doodle_error{
-        boost::beast::http::status::bad_gateway, "模型输出不是合法 JSON 对象，无法映射为候选：{}", l_brief
-    });
-  }
+  // ---- 3) 成败判定（内容违规 400 / 其它失败 502 / 输出非 object 502）----
+  chick_inference_ok(l_result, "generate_candidates");
 
   // ---- 4) 映射（物化基线 + 轴计划校验/回退 + OFAT 展开 + ops diff + 自洽检查）----
   auto l_ret = map_candidate_result(l_result.result_json_, in_request);
@@ -2390,13 +2387,310 @@ boost::asio::awaitable<candidate_generation_result_t> generate_candidates(
   co_return l_ret;
 }
 
+// ===========================================================================
+// 接缝 3：自由文本反馈 → 结构化轴调整（方案 §6.2 / §13.1 第 9 项）
+// ===========================================================================
+//
+// 与前两条接缝同样的分层：纯函数组信封/映射 + 一次真实网络调用。
+// 产出比它们窄得多 —— 不是一套 rig、也不是一份方案，只是「往哪个方向动、动多少」。
+// 这个窄产出正是「滑块是默认通道、文本是补充通道」的实现形态：两条通道最终写进
+// 同一个 std::map<std::string,double>，再由 advance_session:307-319 变成 axis_step_t。
+
+namespace {
+
+/// 模型最多能给几条轴。**这不是审美选择而是硬约束**：下一轮的 parse_axis_plan() 只接受
+/// 1..g_axis_max_count(2) 条，而 feedback_axes_ 是「这些轴必须出现在你的 axes 里」的
+/// **约束** —— 给 3 条，模型无论如何都满足不了，轴计划必然被弃用，文本通道静默失效。
+constexpr std::size_t g_feedback_axis_max_count = g_axis_max_count;
+
+/// 一个方向的文字说明（reason）会作为 axis_step_t::label_ 落库并回显给美术。
+/// 它是 TEXT 列，模型可以长篇大论，截断避免一次输出撑爆这一列。
+constexpr std::size_t g_feedback_label_max_len = 200;
+
+/// 6.000 -> "6"，0.350 -> "0.35"，-800.000 -> "-800"。
+/// 给模型和美术看的数字不该带尾随零：提示词里写 "key:fill = 6.000" 会让人以为那是测量值。
+std::string trim_number(double in_value) {
+  std::string l_out = fmt::format("{:.3f}", in_value);
+  if (l_out.find('.') == std::string::npos) return l_out;
+  l_out.erase(l_out.find_last_not_of('0') + 1);
+  if (!l_out.empty() && l_out.back() == '.') l_out.pop_back();
+  return l_out;
+}
+
+}  // namespace
+
+std::string build_feedback_instructions() {
+  std::string l_out{};
+  l_out +=
+      "你是电影灯光指导的**翻译**环节：美术刚看完一轮渲染，用一句大白话说了他想要什么。\n"
+      "你要把这句大白话翻译成灯光轴上的**方向**，由下一轮的排轴环节把它变成具体的档位。\n"
+      "你**不**负责出灯、也**不**负责出档位表 —— 只判断「往哪个轴、往哪边、动多少」。\n\n";
+  // 与 apply_axis_step 同一份口径（§15.9）：模型按它给方向，服务端按同一套公式应用。
+  l_out += "【轴值语义】\n";
+  l_out += g_axis_value_semantics_text;
+  l_out += "\n【约束】\n";
+  l_out += fmt::format(
+      "- 每条轴只给**一个**数值（value）：这是下一轮的中心值，不是档位表。\n"
+      "- 最多给 {} 条轴。下一轮只接受不超过 {} 条 —— 给多了整份轴计划会被丢弃，你的翻译就白做了。\n"
+      "- 不要给 none（那不是方向）；不要给 0（0 等于「没有变化」，同样读不出方向）。\n"
+      "- key_fill_ratio 是**绝对**比值，必须参考下面给出的「当前 key:fill 比」来定新值；\n"
+      "  其余五个轴都是**增量**，正负决定方向。\n"
+      "- 一个方向只由一条轴承担：别让两条轴说同一件事（比如既抬环境光又压对比）。\n"
+      "- 美术没有给出任何方向时（只是说「再调调看」「换一批」），axes 就给**空数组** ——\n"
+      "  不要为了凑数编一条，那会让下一轮往一个错的方向收缩。\n\n"
+      "【输出要求】\n"
+      "只输出符合给定 JSON Schema 的 JSON。不要输出解释文字，不要用 Markdown 代码块。\n"
+      "understanding 用一句中文说清你的理解（给人工核对用）。\n",
+      g_feedback_axis_max_count, g_feedback_axis_max_count
+  );
+  return l_out;
+}
+
+nlohmann::json build_feedback_json_schema() {
+  nlohmann::json l_axis_item{};
+  l_axis_item["type"]                 = "object";
+  l_axis_item["additionalProperties"] = false;
+  l_axis_item["properties"]           = nlohmann::json{
+      {"axis", make_axis_enum_schema()},
+      {"value", {{"type", "number"}}},
+      {"reason", {{"type", "string"}}},
+  };
+  l_axis_item["required"] = nlohmann::json::array({"axis", "value", "reason"});
+
+  nlohmann::json l_axes{};
+  l_axes["type"]  = "array";
+  l_axes["items"] = std::move(l_axis_item);
+  // 只设上限、**不设 minItems**：空数组是「美术没给出方向」的合法表达（决定 D13），
+  // 加了 minItems 会逼模型编一条不存在的方向。
+  l_axes["maxItems"] = g_feedback_axis_max_count;
+
+  nlohmann::json l_schema{};
+  l_schema["type"]                 = "object";
+  l_schema["additionalProperties"] = false;
+  l_schema["properties"]           = nlohmann::json{
+      {"understanding", {{"type", "string"}, {"description", "你对美术这句话的理解，一句话"}}},
+      {"axes", std::move(l_axes)},
+  };
+  l_schema["required"] = nlohmann::json::array({"understanding", "axes"});
+  return l_schema;
+}
+
+std::string build_feedback_input_text(const feedback_structuring_request_t& in_request) {
+  std::string l_out{};
+  // ---- 1) 美术的原话（逐字）----
+  l_out += "【美术的原话（权威，一字不改）】\n";
+  l_out += in_request.feedback_text_;
+  l_out += "\n";
+
+  // ---- 2) 这次判断的决定 + 选中的候选 ----
+  // 选中候选的**序号**（candidate_index_，从 0 开始）而不是 uuid：原话里的「第 3 个」
+  // 指的就是界面上的排序，模型与美术必须看到同一个编号。
+  std::int32_t l_selected_index = -1;
+  if (!in_request.selected_candidate_id_.is_nil())
+    for (const auto& l_cand : in_request.candidates_)
+      if (l_cand.uuid_id_ == in_request.selected_candidate_id_) l_selected_index = l_cand.candidate_index_;
+
+  l_out += "\n【这次判断的决定】\n";
+  l_out += fmt::format("决定 = {}", magic_enum::enum_name(in_request.decision_));
+  if (l_selected_index >= 0) {
+    l_out += fmt::format("；美术选中了候选 #{}", l_selected_index);
+  } else if (!in_request.selected_candidate_id_.is_nil()) {
+    l_out += fmt::format("；美术选中了候选 {}（不在这轮的候选列表里）", in_request.selected_candidate_id_);
+  } else {
+    l_out += "；美术没有指定候选";
+  }
+  l_out += "\n";
+
+  // ---- 3) Spec 目标（与前两条接缝同一个投影函数）----
+  l_out += "\n【已确认的灯光方案（LightingSpec，人工已确认）】\n";
+  l_out += fmt::format("降级级别 = {}\n", magic_enum::enum_name(in_request.spec_.degrade_level_));
+  l_out += describe_spec_brief(in_request.spec_);
+  l_out += "\n";
+
+  // ---- 4) 本轮 6 个候选的对照结构 ----
+  // OFAT 不变量（§15.8）：候选 0 是基线，其余各自只沿一条轴变一个档位 ——
+  // 所以「基线 rig + 每个候选的轴档位」足以描述全部 6 张图，不必展开 6 套完整 rig
+  // （那会把提示词撑大 6 倍，而多出来的信息只有重复）。
+  l_out += fmt::format("\n【本轮（第 {} 轮）这 6 个候选是怎么来的】\n", in_request.iteration_);
+  const lighting_rig_t l_base_rig =
+      in_request.candidates_.empty() ? lighting_rig_t{} : in_request.candidates_.front().get_rig();
+  if (in_request.candidates_.empty()) {
+    l_out += "本轮候选还没落库。请只依据 Spec 与美术的原话判断方向。\n";
+  } else {
+    l_out += fmt::format("#0 基线：{}\n", describe_rig_brief(l_base_rig));
+    for (const auto& l_cand : in_request.candidates_) {
+      if (l_cand.candidate_index_ == 0) continue;
+      const auto& l_axis = l_cand.get_rig().variant_axis_;
+      l_out += fmt::format(
+          "#{}  轴={}  值={}  {}\n", l_cand.candidate_index_, magic_enum::enum_name(l_axis.axis_),
+          trim_number(l_axis.value_), l_axis.label_
+      );
+    }
+  }
+
+  // ---- 5) 选中候选的完整 rig ----
+  if (l_selected_index >= 0) {
+    for (const auto& l_cand : in_request.candidates_) {
+      if (l_cand.candidate_index_ != l_selected_index) continue;
+      l_out += "\n【美术选中的那套（原话最可能指的就是它）】\n";
+      l_out += describe_rig_brief(l_cand.get_rig());
+      l_out += "\n";
+      break;
+    }
+  }
+
+  // ---- 6) 当前 key:fill 比（绝对量轴必须知道现状）----
+  if (!in_request.candidates_.empty()) {
+    const auto l_ratio = key_fill_ratio_of(l_base_rig);
+    l_out += "\n【当前 key:fill 比】\n";
+    if (l_ratio.has_value()) {
+      l_out += fmt::format("{}（基线 rig 的主光强度 ÷ 全部补光强度之和）\n", trim_number(*l_ratio));
+    } else {
+      l_out += "算不出来（缺主光 / 缺补光 / 主光与补光强度单位不同）—— 这时不要给 key_fill_ratio 轴。\n";
+    }
+  }
+
+  // ---- 7) 滑块已经给出的方向 ----
+  l_out += "\n【美术已经用滑块给出的方向】\n";
+  if (in_request.slider_axes_.empty()) {
+    l_out += "没有（美术只写了字）。\n";
+  } else {
+    for (const auto& [l_name, l_value] : in_request.slider_axes_)
+      l_out += fmt::format("{} = {}\n", l_name, trim_number(l_value));
+    // 决策 5 + §15.9 决定 D9：滑块是默认通道，同一轴上滑块优先。
+    l_out += "这些轴美术已经自己拖过了，**不要再给**（给了也会被滑块的数值覆盖）。\n";
+  }
+  l_out += "\n";
+  return l_out;
+}
+
+http::seedance2::inference_request_t build_feedback_request(const feedback_structuring_request_t& in_request) {
+  http::seedance2::inference_request_t l_req{};
+  l_req.instructions_       = build_feedback_instructions();
+  l_req.input_text_         = build_feedback_input_text(in_request);
+  l_req.temperature_        = 0.2;
+  l_req.json_schema_        = build_feedback_json_schema();
+  l_req.json_schema_name_   = "lighting_feedback";
+  l_req.json_schema_strict_ = true;
+  // 刻意不发（与 build_candidates_request 同样的三条理由）：
+  //   * images / image_detail —— 固定这一轮的候选图在浏览器里，没进本请求；没有 images
+  //     还发 image_detail 就是给「不存在的输入」配参数（§15.6 坑 21）。
+  //   * max_output_tokens —— 缺省 4096 会截断，而截断的表现（result_json_ 变 null）
+  //     与「schema 被拒」无法区分。
+  //   * thinking —— 缺省 disabled；结构化任务开 thinking 会让 output[0] 变成 reasoning。
+  return l_req;
+}
+
+std::vector<axis_step_t> map_feedback_result(const nlohmann::json& in_result_json) {
+  // ---- 形状违规：抛错（协议被无视）----
+  DOODLE_CHICK_HTTP(
+      in_result_json.is_object(), bad_gateway, "文本反馈结构化的模型输出不是 JSON 对象：{}",
+      in_result_json.is_null() ? std::string{"null"} : in_result_json.dump().substr(0, 200)
+  );
+  DOODLE_CHICK_HTTP(
+      in_result_json.contains("understanding") && in_result_json.at("understanding").is_string(), bad_gateway,
+      "文本反馈结构化的模型输出缺 understanding（或它不是字符串）"
+  );
+  DOODLE_CHICK_HTTP(
+      in_result_json.contains("axes") && in_result_json.at("axes").is_array(), bad_gateway,
+      "文本反馈结构化的模型输出缺 axes（或它不是数组）"
+  );
+  const auto& l_axes = in_result_json.at("axes");
+  DOODLE_CHICK_HTTP(
+      l_axes.size() <= g_feedback_axis_max_count, bad_gateway,
+      "文本反馈结构化给了 {} 条轴，超过下一轮能接受的 {} 条", l_axes.size(), g_feedback_axis_max_count
+  );
+
+  // ---- 语义无效：在源头丢弃 ----
+  // 为什么不抛错：unknown 轴名与 advance_session:314 的既有容错一致；none / 0 是「没有变化」
+  // 的合法语义，但它一旦传下去，下一轮 advance_session 会把它变成 axis_step_t，
+  // apply_axis_step() 对 0/none 恒返回 false，最终以「轴无实质变化」抛 502 ——
+  // 那时病根与表现之间隔了一次**人工判断**（美术得先白判一轮）。丢弃在这里是最短的修复路径。
+  //
+  // 这里**不记日志**：本函数是离线可测的纯函数，而单测宿主没有 HTTP logger
+  // （同 ai_light_stats.cpp 的 aggregate_reference_stats）。丢弃的条数由接缝本体
+  // 用「模型给了几条 vs 我们留下几条」在日志里体现。
+  std::vector<axis_step_t> l_out{};
+  for (const auto& l_item : l_axes) {
+    DOODLE_CHICK_HTTP(
+        l_item.is_object() && l_item.contains("axis") && l_item.at("axis").is_string(), bad_gateway,
+        "文本反馈结构化的 axes 元素缺 axis（或它不是字符串）"
+    );
+    const auto l_name = l_item.at("axis").get<std::string>();
+    const auto l_kind = magic_enum::enum_cast<variant_axis_kind>(l_name);
+    if (!l_kind.has_value() || *l_kind == variant_axis_kind::none) continue;
+    // 同一条轴出现两次时取第一个：保持确定性，别让「最后一个赢」取决于模型输出顺序。
+    const bool l_dup = std::any_of(
+        l_out.begin(), l_out.end(), [&l_kind](const axis_step_t& in_s) { return in_s.axis_ == *l_kind; }
+    );
+    if (l_dup) continue;
+    DOODLE_CHICK_HTTP(
+        l_item.contains("value") && l_item.at("value").is_number(), bad_gateway,
+        "文本反馈结构化的轴 {} 缺 value（或它不是数字）", l_name
+    );
+    const double l_value = l_item.at("value").get<double>();
+    if (!std::isfinite(l_value) || l_value == 0.0) continue;
+    // key_fill_ratio 是比值，负值/零没有意义（apply_axis_step 对 <= 0 也直接返回 false）。
+    if (*l_kind == variant_axis_kind::key_fill_ratio && l_value <= 0.0) continue;
+
+    axis_step_t l_step{};
+    l_step.axis_ = *l_kind;
+    // 每条轴**恰好一个值**（决定 D11）：调用方只取 front() 当下一轮的中心值，
+    // 完整档位表由下一轮 generate_candidates 的 axes_ 决定。
+    l_step.steps_ = {l_value};
+    auto l_reason = std::string{};
+    if (l_item.contains("reason") && l_item.at("reason").is_string()) l_reason = l_item.at("reason").get<std::string>();
+    if (l_reason.empty()) l_reason = std::string{magic_enum::enum_name(*l_kind)};
+    l_step.label_ = l_reason.substr(0, std::min<std::size_t>(g_feedback_label_max_len, l_reason.size()));
+    l_out.emplace_back(std::move(l_step));
+  }
+  return l_out;
+}
+
 boost::asio::awaitable<std::vector<axis_step_t>> structure_feedback(
-    const uuid& in_session_id, const std::string& in_feedback_text
+    sqlite_database& in_sql, const feedback_structuring_request_t& in_request
 ) {
-  (void)in_session_id;
-  (void)in_feedback_text;
-  throw_not_implemented("structure_feedback", "接缝本体：把自然语言反馈结构化为 axis_step（§13.1 第 9 项）");
-  co_return std::vector<axis_step_t>{};
+  // ---- 1) 触发人 → AI 工作室 → 客户端 ----
+  auto l_resolved = make_seam_client(in_sql, in_request.operator_id_, "structure_feedback");
+
+  // ---- 2) 组装任务与归一化信封 ----
+  seedance2::task l_task{};
+  l_task.type_             = seedance2::task_type::inference;     // not_null，必须显式赋值
+  l_task.backend_          = seedance2::task_backend::seedance2;  // 同上
+  l_task.user_id_          = in_request.operator_id_;             // 计费主体 + 签名 URL 的 uid
+  l_task.ai_studio_id_     = l_resolved.studio_id_;
+  l_task.project_uuid_id_  = in_request.project_id_;
+  // 与另两条接缝的区别：这里记的是「哪一轮的反馈被结构化了」，用于把一次计费对回一次人工判断。
+  l_task.ai_light_iteration_id_ = in_request.iteration_id_;
+  l_task.text_prompt_           = fmt::format(
+      "AI 灯光会话 {} 第 {} 轮的文本反馈", in_request.session_id_, in_request.iteration_
+  );
+  l_task.completion_tokens_ = doodle_config::g_ark_inference_default_consumed_tokens;
+  l_task.data_request_      = build_feedback_request(in_request);
+
+  // run_inference_task 自己一个事务里落终态任务行 + 扣费（§15.6 的方案 A）。
+  // 这是本接缝唯一的副作用，且**有意保留**：推理确实发生了，必须留痕计费 ——
+  // 否则调用方降级时会把 person_token 的扣费一起抹掉（契约 2 的受控例外）。
+  auto l_result = co_await http::seedance2::run_inference_task(l_task, in_sql, l_resolved.client_);
+
+  // ---- 3) 成败判定（内容违规 400 / 其它失败 502 / 输出非 object 502）----
+  chick_inference_ok(l_result, "structure_feedback");
+
+  // ---- 4) 映射（形状违规抛错；语义无效的轴丢弃）----
+  auto l_steps = map_feedback_result(l_result.result_json_);
+
+  // 「模型给了几条 vs 我们留下几条」是唯一能观测到「轴被丢弃」的地方（map_feedback_result
+  // 是纯函数、不记日志），所以这里连原始 axes 一起记下来。
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_http(),
+      "AI 灯光会话 {} 第 {} 轮文本反馈结构化完成：模型给 {} 条轴、留下 {} 条，理解=\"{}\"，原始 axes={}，"
+      "token in/out/total={}/{}/{}",
+      in_request.session_id_, in_request.iteration_, l_result.result_json_.at("axes").size(), l_steps.size(),
+      l_result.result_json_.value("understanding", std::string{}), l_result.result_json_.at("axes").dump(),
+      l_result.input_tokens_, l_result.output_tokens_, l_result.total_tokens_
+  );
+
+  co_return l_steps;
 }
 
 }  // namespace doodle::ai_light
