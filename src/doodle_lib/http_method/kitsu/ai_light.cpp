@@ -85,14 +85,6 @@ uuid resolve_lighting_task_id(sqlite_database& in_sql, const uuid& in_entity_id)
   return l_task->uuid_id_;
 }
 
-/// 终态会话一律只读
-void check_session_mutable(const ai_light_session& in_session) {
-  DOODLE_CHICK_HTTP(
-      !is_terminal(in_session.state_), bad_request, "会话 {} 已处于终态 {}，不能再修改",
-      in_session.uuid_id_, magic_enum::enum_name(in_session.state_)
-  );
-}
-
 bool query_bool(const boost::url& in_url, std::string_view in_key, bool in_default) {
   for (auto&& [l_key, l_value, l_has] : in_url.params()) {
     if (l_key == in_key && l_has) return l_value == "true" || l_value == "1";
@@ -310,13 +302,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, delete_) {
   auto l_sql     = get_sqlite_database();
   auto l_session = load_session_checked(person_, l_sql, id_);
 
-  // 定稿的会话禁止删除：它的 preview_file 已经挂在任务上，删掉会话会让交付记录失去出处。
-  // 要撤销就先在别处显式撤销定稿（候选上有 clear_accepted() 与之配套）。
-  DOODLE_CHICK_HTTP(
-      l_session.state_ != ai_light_session_state::accepted, bad_request,
-      "会话 {} 已定稿，不能删除；定稿候选已作为预览文件挂在任务上", l_session.uuid_id_
-  );
-
+  // 会话没有终态，所以这里不再有「已定稿不能删」的闸门（§15.10 决定 D21）。
+  //
+  // 定稿图**不会**跟着会话一起消失：它由 preview::save_variants() 落在图片预览文件目录
+  // （get_pictures_preview_file(uuid)），不在会话目录里；而 ai_light_candidate.preview_file_id_
+  // → preview_file 的外键是 set_null（不是 cascade），所以删会话级联删候选之后，
+  // preview_file 行仍然挂在灯光任务上，交付记录不会失去出处。
+  // 下面备份的是会话自己的产物目录（参考图 + 每轮渲染的 PNG / EXR）。
   backup_session_dir(l_session);
 
   sql_modify_statement_vector_t l_sqls{};
@@ -346,7 +338,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
   person_.check_not_outsourcer();
   auto l_sql     = get_sqlite_database();
   auto l_session = load_session_checked(person_, l_sql, session_id_);
-  check_session_mutable(l_session);
 
   auto l_files = in_handle->get_files();
   DOODLE_CHICK_HTTP(!l_files.empty(), bad_request, "请上传至少一张参考图");
@@ -425,7 +416,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, delete_) {
   // 参考图不存在时 get_by_uuid 抛 sqlite_orm_exception{404}，由 http_session_data 统一翻成 404
   auto l_ref     = l_sql.get_by_uuid<ai_light_reference>(id_);
   auto l_session = load_session_checked(person_, l_sql, l_ref.session_id_);
-  check_session_mutable(l_session);
 
   // 先删库再删文件：反过来的话，删文件成功而删库失败就会留下指向空文件的记录，
   // 而记录还在就仍会被拿去统计。
@@ -519,7 +509,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_route, post) {
 
   // session_id 来自路径；请求体里带了也忽略（路径为准，见 ai_light.h 顶部的约定）
   auto l_session = load_session_checked(person_, l_sql, session_id_);
-  check_session_mutable(l_session);
 
   // 重出方案时允许顺手改提示词（美术看完第一版目标才发现自己没说清是常事）
   if (l_json.contains("prompt_text")) l_json.at("prompt_text").get_to(l_session.prompt_text_);

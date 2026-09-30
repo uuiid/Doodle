@@ -17,8 +17,7 @@ class sqlite_upgrade {
 };
 
 std::shared_ptr<sqlite_upgrade> upgrade_init();
-std::shared_ptr<sqlite_upgrade> upgrade_2();
-// 30 -> 31: 建 AI 灯光六张表
+// 30 -> 31: 建 AI 灯光六张表（生产库当前是 30，这是 30 之后的唯一步骤）
 std::shared_ptr<sqlite_upgrade> upgrade_3();
 // 非版本迁移: 不看 user_version、也不写 user_version, 每次升级都执行一次(启动清理)
 std::shared_ptr<sqlite_upgrade> upgrade_clear_orphan_task();

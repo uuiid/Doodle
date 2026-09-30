@@ -1370,7 +1370,8 @@ void sqlite_storage::upgrade() {
   // 顺序即版本顺序, 新迁移追加在 upgrade_clear_orphan_task 之前 ——
   // 那个是启动清理, 必须排在所有 schema 迁移之后跑 (它要依赖 server_task_info_tab 已经存在).
   auto l_list = {
-      details::upgrade_init(), details::upgrade_2(), details::upgrade_3(), details::upgrade_clear_orphan_task()
+      details::upgrade_init(), details::upgrade_3(),
+      details::upgrade_clear_orphan_task()
   };
   for (auto&& i : l_list) {
     i->upgrade(*this);

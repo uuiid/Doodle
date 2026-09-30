@@ -799,7 +799,8 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
   ORM 的列类型不覆盖嵌套结构体与 `std::map`
 - **不做冗余指针、不做循环外键**：「当前 Spec」= 会话内 `revision` 最大的一行，
   「本轮起点」= 上一轮 `is_selected` 的候选，「定稿候选」= `is_accepted` 的候选，
-  全部靠查询得出。每会话至多一个定稿由 `accepted_session_id` 上的普通唯一索引在库层强制
+  全部靠查询得出。定稿是**可移动的单指针**（再次定稿会先解除上一次，旧 `preview_file` 不删，
+  见 §15.10），每会话至多一个定稿由 `accepted_session_id` 上的普通唯一索引在库层强制
   （定稿才填 session_id、否则为 NULL；SQLite 的唯一索引把 NULL 视为互不相等，于是等价于
   `WHERE is_accepted = 1` 的 partial index —— 为什么不能直接用 partial index 见 §15.3）。
 - 「等人工判断」是**会话/轮次状态**，不进 `server_task_info_status`
@@ -1336,7 +1337,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 |---|---|
 | 六张表的结构体 | `src/doodle_core/metadata/ai_light/`（`common.h` / `rig.h` / `spec.h` / `session.h` / `reference.h` / `iteration.h` / `candidate.h` / `preset.h` / `ai_light.h`） |
 | ORM 注册 | `sqlite_database.cpp` 的 6 个 `reg_table` 块（含定稿唯一索引） |
-| 迁移 30 → 31 | `sqlite_upgrade.cpp` 的 `upgrade_3_t` + `upgrade_3()`；版本常量拆出 `g_version_30`，避免 `upgrade_2_t` 把库直接标成最新而让这一步被静默跳过 |
+| 迁移 30 → 31 | `sqlite_upgrade.cpp` 的 `upgrade_3_t` + `upgrade_3()`（门控常量 `g_version_30`）。**生产库停在 30，而这是 30 之后的唯一步骤**：29 → 30（`upgrade_2_t`）已随该步骤进入生产而移除，31 → 32 的终态改写也已撤销（见 §15.10），所以链条终点是 31、升级链只认 30 及以上的库 |
 | 查询方法 | `sqlite_database.h/.cpp` 的 19 个 `get_ai_light_*` |
 | 产物路径 | `doodle_core/metadata/kitsu_ctx_t.h` 的 `get_ai_light_session_dir` / `_reference_dir` / `_reference_file` / `_iteration_dir` / `_candidate_file` / `_backup_dir`（**唯一**布局真相来源；原先在 `core/entity_path.h/.cpp` 的四个 `get_ai_light_*_path` 已删除，见坑 6） |
 | 任务类型 | `server_task_info_type::ai_light` |
@@ -1346,9 +1347,14 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 
 1. **ORM 的列类型不覆盖嵌套结构体与 `std::map`** —— 只有 `nlohmann::json` 可以。所以 `rig` / `metrics` / `intent` / `targets` / `judgement` 全部以 JSON 列落库，
    靠 `get_xxx()` / `set_xxx()` 做类型化访问。这不是偷懒：直接把 `lighting_rig_t` 当列成员会编译不过。
-2. **`user_version` 与「每一步各写自己的目标版本」必须配套** —— 若 `upgrade_2_t` 仍写 `g_current_version`，
-   29 版库会被直接标成 31，`upgrade_3_t` 的 `> 30` 门控随即跳过建表，而且**版本号上看不出任何异常**。
-   `src/test/core/sqlite_upgrade.cpp` 里专门有一组用例盯住这种「静默跳过」。
+2. **`user_version` 与「每一步各写自己的目标版本」必须配套** —— 当时 `upgrade_2_t`（29 → 30）若仍写
+   `g_current_version`，29 版库会被直接标成 31，`upgrade_3_t` 的 `> 30` 门控随即跳过建表，而且**版本号上
+   看不出任何异常**。`src/test/core/sqlite_upgrade.cpp` 里专门有一组用例盯住这种「静默跳过」。
+   规则是「**只有最后一步和 `upgrade_init_t` 写 `g_current_version`**」，判据只有一个：这一步是不是最后一步。
+   `upgrade_2_t` 现已随该步骤进入生产而移除（同一取舍的先例：27 → 28、28 → 29），版本化步骤只剩 30 → 31
+   一步，所以它写 `g_current_version` 是正确的 —— **将来在它前后再插步骤时必须回头检查这一行**。
+   代价是刻意的：**升级链只认 30 及以上**，停在 30 之前的库（例如开发机上的旧备份）会拿到 AI 灯光六张表
+   但缺 `entity_asset_extend_2.te_xie` 列，读写那张表会报 `no such column`，需要重建或手工补列。
 3. **本库的 ORM 表达不出带 `= 值` 条件的 partial index** —— SQLite 明确禁止 partial index 的 `WHERE` 里出现绑定参数
    （`parameters prohibited in partial index WHERE clauses`），而 `create_unique_index().where(c(&T::col) == true)`
    生成的正是带 `?` 的比较式；只有 `== nullptr` 会生成无参数的 `IS NULL`（`entity` 表的 `parent_id` 先例靠的就是这一点）。
@@ -1381,9 +1387,16 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | `POST /spec/confirm` | `awaiting_spec_confirm` | `generating`（接缝失败则回滚，Spec 确认**保留**） |
 | `POST /iterate` | `generating` | 仍 `generating`（已派发，等渲染） |
 | `mark_iteration_rendered()`（worker 回填，M3 接入） | `generating` | `awaiting_judgement`（**此时才起算 4 小时**） |
-| `/judge` accept | `awaiting_judgement` | `accepted`（终态） |
+| `/judge` accept（定稿，**可重复**） | `awaiting_judgement` | `generating`（**不是终态**，见下方说明） |
 | `/judge` continue_iteration | `awaiting_judgement` | `generating` |
-| `/judge` reject_all | `awaiting_judgement` | `rejected`（终态） |
+| `/judge` reject_all | `awaiting_judgement` | `generating`（**不是终态**，见下方说明） |
+
+**三个判断都回到 `generating`，因为会话没有终态**（§15.10）：美术对同一个镜头的灯光可能是
+**无限轮**的调整 —— 今天定稿，明天导演改意见，回来接着调。定稿因此不再是终点，而是把
+「当前定稿」这个指针移到这一张（`accepted_session_id` 上的唯一索引仍然保证每会话至多一个，
+再次定稿会先解除上一次；旧 `preview_file` 不删，它是已经交付过的图）。`reject_all` 也不再终止，
+只表示「这一轮全部不要」。一轮只能判断一次（`apply_judgement` 的 `iteration.state_ != judged` 闸门），
+所以「再来一轮」必须经 `POST /iterate`。
 
 本表的 `POST /spec`、`POST /spec/confirm`、`POST /iterate`、`/judge` 都是**简写**，
 完整路径一律是 `/api/doodle/ai/light/session/{session_id}/<动作>` ——
@@ -1433,7 +1446,8 @@ structure_feedback(in_sql, req)      -> std::vector<axis_step_t>      // 已落�
 ```
 
 **接缝契约（D3）**：接缝抛异常 ⇒ `advance_session` 把会话状态**回滚到入口状态**并记录
-`failure_reason_`，然后原样重抛。`failed` 保留给不可恢复错误，不用来表达「能力还没到」。
+`failure_reason_`，然后原样重抛。失败**没有独立状态**（§15.10 起 `failed` 已取消）：
+`failure_reason_` 是失败的唯一记录，会话永远停在「可以重试」的那个状态上。
 理由是：半成品比失败更糟 —— 一个「有 Spec 但没有候选」的会话会让前端以为可以判断了。
 接缝实现者不得留下非幂等的部分写入。`/spec/confirm` 的 Spec 确认**不随回滚撤销**：
 确认是人工动作，不该因为下游能力缺失而被撤销。
@@ -1449,8 +1463,9 @@ structure_feedback(in_sql, req)      -> std::vector<axis_step_t>      // 已落�
    `apply_judgement` 负责一次事务落库 —— `preview_file` 按**值**传入，
    因为 ORM 的 `values()` 会回填 `uuid_id_` / `created_at_` 这类服务端生成字段。
 3. **`is_selected_` 与 `is_accepted_` 是两个语义，不合并**。前者专指「被选为下一轮基准」
-   （续轮 warm start 的起点），后者指「定稿」。定稿时**不**置 `is_selected_` ——
-   定稿没有下一轮，混用会让续轮查询拿到一张已定稿的图。
+   （续轮 warm start 的起点），后者指「当前定稿」。会话没有终态之后（§15.10）定稿**也**置
+   `is_selected_`：定稿后接着调时，下一轮的 warm start 应该从定稿那套 rig 出发（那是目前最好的一张），
+   而不是回到 LLM 的原始基线。两个字段因此可以在同一行上同时为真，但各自的含义没有变。
 4. **中间候选与参考图都不进 `preview_file`**（决策 1）。每轮 6 张全注册会把任务的预览列表
    冲垮，也会把「交付物」这个概念稀释掉。中间图走 `/candidate/{id}/image`，
    EXR 一律不下发浏览器（线性数据、体积大、浏览器渲染不了）。
@@ -2421,5 +2436,151 @@ judge_route::post
 501 断言删除、两条「解析不出触发人」的断言增加）。本轮六个 AI 灯光套件：`ai_light_schema` 6（126 断言）·
 `ai_light_state` 18（171）· `ai_light_stats` 22（184）· `ai_light_spec_prompt` 11（117）·
 `ai_light_candidates` 15（214）· `ai_light_feedback` **11（84）**。
+
+### 15.10 已落地（取消会话的三个终态：`accepted` / `rejected` / `failed`）
+
+**需求（用户原话，m02347）**：「将 `src/doodle_core/metadata/ai_light/session.h:64~69` 选中的几个状态全部取消,
+我们不再使用 这几个状态, 基本情况是美术可能无限的调整某个镜头灯光, 使用可行」。
+
+一句话：**会话不再有终态**。定稿不再是终点，全否也不再是终止，失败没有独立状态。会话是一个长期工作台，
+美术对同一个镜头的灯光可以无限轮调整。
+
+**数据流**
+
+```
+/judge
+  └─ apply_judgement(sqlite_database&, ai_light_session&, ai_light_iteration&,
+                     const ai_light_judgement_t&, std::optional<preview_file>)
+       ├─ 闸门：轮次属于会话 · session.state_ == awaiting_judgement · iteration.state_ != judged
+       ├─ accept ─┬─ 解除上一次定稿（clear_accepted() + 清 preview_file_id_，**同事务先跑**）
+       │          ├─ mark_accepted() + preview_file_id_ = 新的 preview_file
+       │          └─ is_selected_ = true   ← 下一轮 warm start 从**定稿那套 rig** 出发
+       ├─ continue_iteration ── is_selected_ = true
+       ├─ reject_all ────────── 不选候选（下一轮从 LLM 基线重新开始）
+       └─ 三者**都** mark_judged(generating)   ← 没有终态，`POST /iterate` 立刻可用
+```
+
+**项 / 落点**
+
+| 项 | 落点 |
+|---|---|
+| 状态枚举（删三个量 + 三对 JSON 映射 + `is_terminal`） | `src/doodle_core/metadata/ai_light/session.h`（枚举上方注释重写为「会话状态机 —— **没有终态**」） |
+| 三个决定的会话状态 | `src/doodle_lib/http_method/kitsu/ai_light_orchestrator.cpp` 的 `apply_judgement()`：原 `switch` 换成 `const ai_light_session_state l_next_state = generating;` |
+| 定稿指针（可移动） | 同上，accept 分支**之前**的解除块（`clear_accepted()` + `preview_file_id_ = uuid{}` + 同事务 UPDATE） |
+| 定稿也置 `is_selected_` | 同上，候选 UPDATE 之前的统一赋值（D20） |
+| 会话可变性（删 `check_session_mutable` + 三个调用点） | `src/doodle_lib/http_method/kitsu/ai_light.cpp` |
+| 删会话不再需要定稿闸门 | 同上，`session_instance_route::delete_`（改为注释说明交付物为什么不受影响） |
+| 数据迁移 | **没有** —— 见下方「**没有数据迁移**」一节（30 版库没有 `ai_light_*` 表，表由 30 → 31 新建，出生即空）。`sqlite_upgrade.cpp` 里**不留任何改写逻辑** |
+| 版本常量 | `sqlite_upgrade.cpp`：`g_version_30` / `g_current_version = 31`（`g_version_29` 已随 29 → 30 那一步移除）；`upgrade_3_t` 是 30 之后的**唯一**一步，所以它写 `g_current_version` |
+| 测试 | `src/test/core/ai_light_state.cpp`（改 5 处 + 新增 1 用例）· `ai_light_schema.cpp`（`by_state(accepted)`→`generating`；版本断言**仍是 31**，去掉了 31→32 那一段叙述）· `sqlite_upgrade.cpp`（版本断言**仍是 31**；无新增用例） |
+| 文档 | 本节 · §13.1（状态机表 + 接缝契约 + 取舍第 3 条）· §10.2（冗余指针）· `docs/ue_ai_lighting_frontend.md`（9 处） |
+
+**实现决定（承 §15.7 的 D1–D5、§15.8 的 D6–D8、§15.9 的 D9–D16，续 D17–D23）**
+
+| # | 决定 | 理由 |
+|---|---|---|
+| D17 | 三个决定**都**落到 `generating` | 它是唯一能再出一轮的状态（`POST /iterate` 只接受它）。判完之后唯一的前进方向就是再出一轮 |
+| D18 | `mark_judged()` 继续清空 `judgement_due_at_` | 语义不变；过期仍是 `awaiting_judgement` 上的派生标志（§15.4） |
+| D19 | 定稿**可重复**：accept 前先解除上一次定稿（同事务），旧 `preview_file` **不删** | 库层 `accepted_session_id` 唯一索引是已记录的设计保证（§10.2 / §15.3），不先解除旧行必然撞唯一约束；而旧的 `preview_file` 已挂在 `task_id_` 上，是交付物，删掉等于抹掉美术交付过的一张图 |
+| D20 | 定稿**也**置 `is_selected_ = true` | 原代码刻意不置，理由是「定稿没有下一轮」；无限轮之后理由消失 —— 定稿后接着调时 warm start 应从定稿那套 rig 出发，而不是回到 LLM 原始基线 |
+| D21 | 删掉「定稿后不能删会话」的闸门 | 定稿图由 `preview::save_variants()` 落在**图片预览文件目录**（`get_pictures_preview_file(uuid)`），不在 `root_/ai_light/<会话>` 下；`ai_light_candidate.preview_file_id_` → `preview_file` 的 FK 是 **set_null**（`sqlite_database.cpp:516-518`）不是 cascade，所以删会话不会动交付物 |
+| D22 | **不需要任何数据迁移**；`upgrade_4_t` 与其改写语句**一并删除** | 30 版库里根本没有 `ai_light_*` 表（唯一的建表者就是 30 → 31 这一步），六张表出生即空 → 生产库里**不可能**存在 `accepted`/`rejected`/`failed` 三个字符串；删枚举量也不是 schema 变更（`state` 是 TEXT 列）。留一步改不到任何行的迁移就是死代码（判断依据见下方「没有数据迁移」） |
+| D23 | `get_ai_light_sessions_by_state()` 保留，只改测试里的引用 | 它是通用查询，与终态是否存在无关 |
+
+**没有数据迁移（30 → 31 是 30 之后的唯一步）**
+
+本轮最初写过一个 `upgrade_4_t`（31 → 32：`UPDATE ai_light_session SET state = 'generating' WHERE state IN ('accepted', 'rejected', 'failed');`），**现已整体删除**。撤销的理由是它一行都改不到：
+
+| 项 | 内容 |
+|---|---|
+| 生产目标库的版本 | **30**，而 30 之后的升级**从未推送过** —— 生产库里根本没有 `ai_light_*` 表 |
+| 那六张表从哪来 | 唯一的建表者是 `upgrade_3_t`（30 → 31）里的 `sync_schema()`，所以表**出生即空** |
+| 因此 | 任何受支持的升级路径上都不存在 `accepted` / `rejected` / `failed` 的行 → 那条 UPDATE 是**死代码** |
+| 删枚举量本身 | 不是 schema 变更：`state` 是以 magic_enum 枚举名存的 **TEXT 列**，列的定义、类型、约束都没动 |
+| 版本号 | `g_current_version = 31`（`g_version_30` 保留作 `upgrade_3_t` 的门控；`g_version_29` 已随 29 → 30 那一步移除）；`upgrade_3_t` 是最后一步，所以它写 `g_current_version` |
+| 升级列表 | `sqlite_database.cpp` 为 `upgrade_init, upgrade_3, upgrade_clear_orphan_task`（29 → 30 的 `upgrade_2()` 已随该步骤进入生产而移除） |
+| 先例 | §15.4 坑 3：删掉「既是枚举值又是数据库列」的状态可以不动 `user_version`，但前提必须逐条核实（本例的前提更强：表都还不存在） |
+| 代价 | 只影响**我们自己跑出来的开发机库**（见下方「保留的边界」） |
+
+判断依据（**以后遇到同类问题照这个顺序问**）：① 这个枚举列在**生产库实际会出现的版本**上有没有行？② 那些行有没有可能存着被删掉的字符串？③ 删除动作本身改不改列定义？三条都答「没有 / 不改」才敢不迁移。坑 28 记的是「答错就要付 500」的代价，不是「必须迁移」。
+
+**口径差（文档原文 vs 实现，以代码为准）**
+
+| 项 | 原文 | 实现 | 为什么 |
+|---|---|---|---|
+| 会话状态数 | §15.4 的状态机表写 7 个状态、`accepted`/`rejected` 是终态 | **4 个状态，无终态**；三个决定都 → `generating` | 本轮需求；§13.1 的状态机表已同步 |
+| `is_selected_` 与 `is_accepted_` | §13.1 取舍第 3 条：「是两个语义，**不合并**」 | 仍然不合并，但**定稿也置 `is_selected_`** | 两个字段含义没变，只是现在可以在同一行上同时为真（D20） |
+| `failed` 的用途 | §15.4 / 接缝契约：「`failed` 保留给不可恢复错误」 | `failed` **已取消**；`failure_reason_` 是失败的唯一记录 | 没有任何代码路径写过 `failed`，保留一个没人写的终态只会让人以为失败会被标记 |
+| 「定稿后不能删会话」 | `ai_light.cpp:313-318` 的 400 + 前端文档 §5.4 | 闸门删除 | D21 |
+| 前端「终态判定」段 | 前端文档 §4.2：「任何写动作都会 400 `会话 {} 已处于终态 {}`」 | 整段删除；不存在「会话已结束所以只读」的分支 | 同上 |
+| 迁移 31 → 32 | 本节初稿：`upgrade_4_t` 改写存量终态 | **整步撤销，没有数据迁移** | 30 之后的升级从未推送 → 生产库里没有 `ai_light_*` 表，表由 30 → 31 新建、出生即空（见上节） |
+
+**服务端钉死 vs 模型可覆盖**
+
+| 字段 | 谁定 |
+|---|---|
+| 判完之后会话进入哪个状态 | **服务端**：只有 `generating` 一个出口（模型/前端都没有发言权） |
+| 「当前定稿」是哪一个候选 | **服务端**：库层 `accepted_session_id` 上的唯一索引，写入只能走 `mark_accepted()` |
+| 旧状态字符串的命运 | **不存在**：生产库里不可能出现它们（表由 30 → 31 新建且出生即空），所以没有迁移、也没有客户端参与 |
+| 三个决定的**区别** | **服务端**：定稿必须带 `preview_file`、续轮必须有 `selected_candidate_id`、全否必须没有 —— 三条都是 `apply_judgement` 入口的硬校验 |
+
+**测试**
+
+| 文件 / 用例 | 钉什么 |
+|---|---|
+| `ai_light_state/judge_accept_marks_candidate_and_session`（改） | 定稿后会话是 `generating`（**不是终态**）；定稿候选 `is_selected_` **也为真**（D20）；`get_ai_light_selected_candidate(session, 1)` 返回的就是定稿候选（下一轮 warm start 的起点） |
+| `ai_light_state/judge_continue_keeps_session_iterable`（改） | 删掉 `!is_terminal(...)`（函数已不存在），其余不变：回到 `generating`、候选被标 `is_selected_`、不产生 `preview_file` |
+| `ai_light_state/judge_reject_all_keeps_session_iterable`（原 `..._terminates_session`，改名 + 改断言） | 全否后是 `generating` 且**不是**「等人工」；仍然不选任何候选；轮次仍是 `judged` |
+| **新增** `ai_light_state/judge_accept_moves_the_accepted_pointer` | **D19 的守门人**：先造一个已经是「当前定稿」的旧候选（带自己的 `preview_file`），再对另一张候选走一次 accept → 旧候选的 `is_accepted_`/`accepted_session_id_`/`preview_file_id_` 全被清、`is_accepted_candidate()` 变 false，但**它的 `preview_file` 行仍在**；新候选成为唯一「当前定稿」；不抛唯一约束异常 |
+| `ai_light_state/judge_on_terminal_session_is_rejected` | **整段删除** —— 它断言的前提（会话可以是终态）已不存在 |
+| `ai_light_state/overdue_session_stays_awaiting_judgement_and_stays_judgeable`（改） | 超时判断后状态由 `accepted` 变 `generating`；其余（超时不剥夺判断能力）不变 |
+| `ai_light_schema/*`（改） | `get_ai_light_sessions_by_state(accepted)` → `generating`；版本断言**保持 31**（`upgrade_30_to_31_creates_ai_light_tables` 从 30 出发、终点 31；`upgrade_gating_skips_ai_light_when_already_latest` 从 31 出发仍停 31 —— 后者就是门控本身） |
+| `sqlite_upgrade/upgrade_31_to_32_rewrites_legacy_terminal_states` | **整段删除** —— 它钉的那一步（31 → 32 改写）已撤销；该文件里四处 `== 32` 的版本断言一并改回 `31`，随它引入的 `#include <doodle_core/metadata/ai_light/session.h>` 也一并去掉 |
+
+**本轮的坑（承 §15.6 的 12 条、§15.7 的 13–21、§15.8 的 22–24、§15.9 的 25–27，续 28–30）**
+
+28. **ORM 的枚举读出器对不认识的字符串是「抛」，不是「回落」。** `sqlite_statement.h:279-287`：
+    空串 → `static_cast<T>(0)`，**非空但不认识 → `throw std::runtime_error("Failed to parse enum value from
+    string: ...")`**。所以库里只要留着被删掉的枚举名，那些行此后每次读都是 500，而且自己不会好。
+    一般教训：**判断「删枚举量要不要配迁移」的依据是「生产库实际会不会出现那些行」，而不是「删了枚举量」
+    这个动作本身** —— 本轮前者答「不会」（表由 30 → 31 新建且出生即空），所以整个迁移被撤销。
+29. **同一个「删枚举量」动作，DB 侧炸、JSON 侧静默。** DB 侧见坑 28；而 JSON 侧
+    `NLOHMANN_JSON_SERIALIZE_ENUM::from_json` 遇到不认识的字符串会**回落到第一个枚举量**
+    （`nlohmann/detail/macro_scope.hpp:247`）—— 把 `accepted` 静默读成 `draft`。两侧行为相反，
+    必须分别判断：DB 侧靠迁移，JSON 侧只能靠「这些字段不来自请求体」（`ai_light_session_state` 是
+    服务端所有，前端不回传），并把它记在这里当已知边界。
+30. **版本常量陷阱会复现，而且是无声的；正确写法取决于「它是不是最后一步」。** 规则：**非最后一步写自己的
+    目标版本常量，只有最后一步和 `upgrade_init_t` 写 `g_current_version`。**
+    本轮先踩到、后拆掉：曾把 `g_current_version` 提到 32 并新增 `upgrade_4_t`，于是 `upgrade_3_t` 里那句
+    `user_version(g_current_version)` 会让**经 30→31 走过的库在同一次启动里被 stamp 成 32**，
+    `upgrade_4_t` 的 `> 31` 判定成立、**静默跳过**数据改写 —— 版本号看起来完全正确，数据却还是坏的。
+    随后整个 31 → 32 被撤销（30 之后的升级从未推送，D22），`g_current_version` 回到 31、`upgrade_3_t`
+    重新成为最后一步，于是它写 `g_current_version` 又变回正确写法。
+    **所以增减升级步骤时必须回头检查这一行** —— 它与 §15.3 顶部记的 29→30 那次是同一个错误模式。
+
+**保留的边界**：M2 之前 worker 侧还没有 `ai_light` 派发注册（`http_client/work.cpp` 的派发表、
+`allowed_task_types_`），所以「定稿 → 继续 → 再定稿」的完整链只在**单测**里跑通，
+真机上还没有一轮渲染回环；前端页面同样尚未实现（本轮只同步了交接文档）。
+`POST /iterate` 仍只接受 `generating`，一轮只能判断一次 —— 「同一张候选反复判断」不在本轮范围内
+（要重复调整就先出一轮，这也让每一轮的 6 张图有明确的出处）。
+
+**另一条边界：开发机上的库要自己处理。** 我们自己跑开发/测试时产生过的库可能停在 31（或更高）并且含
+`accepted` / `rejected` / `failed` 行。它们不是生产目标，所以代码侧不做兼容（`upgrade_3_t` 的 `> 30`
+门控会把它们整个跳过），读那些行会抛枚举解析异常（坑 28）。一次性处理办法：手工执行
+`UPDATE ai_light_session SET state = 'generating' WHERE state IN ('accepted', 'rejected', 'failed');`，
+或者直接删掉那个本地库。
+
+**回归**：全量 `test_main` **196 用例 / 1657 断言全通过、exit 0**。本轮先后落过三次：§15.10 的三终态改动
+（当时 198 / 1671）→ 撤销 31 → 32 那一步并删掉它的迁移用例（197 / 1663）→ 移除已进生产的 29 → 30
+与它的用例（**196 / 1657**；§15.9 末尾的基线是 197 / 1660）。本轮相关套件：
+`ai_light_schema` 6（126 断言）· `ai_light_state` **18（174）** · `ai_light_stats` 22（184）·
+`ai_light_spec_prompt` 11（117）· `ai_light_candidates` 15（214）· `ai_light_feedback` 11（84）·
+`sqlite_upgrade` **3（21）**。
+`ai_light_state` 的用例数没变（删掉 `judge_on_terminal_session_is_rejected`、补上
+`judge_accept_moves_the_accepted_pointer`），断言数由 171 增到 174；`sqlite_upgrade` 由 5 例 35 断言降到
+3 例 21 断言 —— `upgrade_31_to_32_rewrites_legacy_terminal_states` 整段删除（8 条断言），
+`upgrade_29_to_30_adds_te_xie_column` 整段删除、`upgrade_brings_older_db_up_to_current` 改写成只钉
+「从 v26 出发也会被带到 31 且建出 `ai_light_session`」（删掉 te_xie 与探针行的断言，顺带删掉
+`drop_te_xie` / `insert_probe_extend` / `probe_te_xie` 三个只服务于它的助手）。
 
 

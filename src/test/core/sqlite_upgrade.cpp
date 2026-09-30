@@ -1,7 +1,9 @@
 //
 // 数据库版本升级测试.
 //
-// 升级器的结构是"一步一个版本": upgrade_N_t 各自判断自己该不该跑 (当前是 29 -> 30 -> 31).
+// 升级器的结构是"一步一个版本": upgrade_N_t 各自判断自己该不该跑.
+// 本轮之前链条是 29 -> 30 -> 31; 29 -> 30 已随该步骤进入生产而移除 (见 sqlite_upgrade.cpp 顶部注释),
+// 所以现在**只剩 30 -> 31 一步** (生产库停在 30), 升级链也只认 30 及以上的库.
 // 这种结构下最危险的错误是"跳过"—— 某个步骤没执行, 但 user_version 被写成了最新版,
 // 于是库看起来是新的, 实际迁移根本没做. 这里的用例专门盯住这一点.
 //
@@ -61,31 +63,12 @@ bool has_column(orm::session& in_session, const std::string& in_table, const std
          ) > 0;
 }
 
-// 把新库里已经建好的 te_xie 列删掉, 造出 29 版形状的表 (SQLite >= 3.35 支持 DROP COLUMN).
-// 升级用例必须从"没有这一列"的库出发, 否则 ALTER 会被列存在性检查挡掉, 用例就成了空转.
-void drop_te_xie(orm::session& in_session) {
-  exec_sql(in_session, R"(ALTER TABLE entity_asset_extend_2 DROP COLUMN te_xie;)");
-}
-
-// 造一行探针资产扩展: 只填 NOT NULL 的 uuid / entity_id.
-// entity_id 指向并不存在的 entity 行, 所以调用方必须自己关掉外键 (见用例里的 guard).
-void insert_probe_extend(orm::session& in_session, const std::string& in_tag) {
-  exec_sql(
-      in_session,
-      fmt::format(
-          "INSERT INTO entity_asset_extend_2 (uuid, entity_id) "
-          "VALUES (x'000000000000000000000000000000{}', x'000000000000000000000000000000{}');",
-          in_tag, in_tag
-      )
-  );
-}
-
-// 读回探针行的 te_xie
-std::int64_t probe_te_xie(orm::session& in_session, const std::string& in_tag) {
+// 表是否存在
+bool has_table(orm::session& in_session, const std::string& in_table) {
   return scalar_int(
-      in_session,
-      fmt::format("SELECT te_xie FROM entity_asset_extend_2 WHERE uuid = x'000000000000000000000000000000{}';", in_tag)
-  );
+             in_session,
+             fmt::format("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = '{}';", in_table)
+         ) > 0;
 }
 
 // 备份目录里的文件名集合
@@ -161,65 +144,15 @@ BOOST_AUTO_TEST_CASE(fresh_db_upgrade_succeeds_with_fk_enforced) {
   remove_db(l_db);
 }
 
-// 升级步骤必须真的执行, 且不能对已经是最新版的库重复执行.
+// 比 30 更旧的库也会被剩下的那一步带到最新: 不能因为"版本不等于 30"就既不升级、也不写版本号,
+// 那样它会永远停在旧状态上.
 //
-// 这类错误不会有任何报错: 只要 user_version 被写成了最新版, 库"看起来"就是新的, 迁移做没做
-// 从版本号上完全看不出来. 只能靠断言把步骤的**副作用**盯住.
+// 本用例是 `> N 就跳过` 那个写法的守门人: 把 upgrade_3_t 的门控从 `> 30` 改成 `== 30`,
+// 这个从 v26 出发的库就会既不建表也不写版本号, 在这里失败.
 //
-// 29 -> 30 的副作用是"给 entity_asset_extend_2 补上 te_xie 列, 存量行读出 0/false".
-// 所以先从新库里删掉这一列造出 29 版形状, 并插一行存量探针.
-BOOST_AUTO_TEST_CASE(upgrade_29_to_30_adds_te_xie_column) {
-  app_base l_app{};
-  backup_cleaner l_cleaner{};
-  auto l_db = temp_db("gating");
-  remove_db(l_db);
-
-  {
-    sqlite_storage l_storage{};
-    l_storage.open(l_db);
-    auto l_session = l_storage.create_session();
-    l_session.sync_schema();
-
-    // 造 29 版形状: 新库建出来的表里已经有 te_xie, 先删掉
-    drop_te_xie(l_session);
-    BOOST_TEST(!has_column(l_session, "entity_asset_extend_2", "te_xie"));
-
-    // 存量行: 探针的 entity_id 指向不存在的 entity, 必须关外键才插得进去; 关闭状态用 guard 恢复
-    {
-      const auto l_fk_was_on = l_session.pragma().foreign_keys();
-      l_session.pragma().foreign_keys(false);
-      boost::scope::scope_exit l_fk_guard(
-          [&l_session, l_fk_was_on]() { l_session.pragma().foreign_keys(l_fk_was_on); }
-      );
-      insert_probe_extend(l_session, "D1");
-    }
-
-    // 1. 29 版库: 两步迁移都要执行 —— upgrade_2_t 补列, upgrade_3_t 建 AI 灯光表
-    l_session.pragma().user_version(29);
-    l_storage.upgrade();
-    auto l_version = scalar_int(l_session, "PRAGMA user_version;");
-    BOOST_TEST_MESSAGE(fmt::format("v29 升级后 user_version = {}", l_version));
-    BOOST_TEST(l_version == 31);
-    // 副作用确实存在, 说明升级步骤真的跑了
-    BOOST_TEST(has_column(l_session, "entity_asset_extend_2", "te_xie"));
-    // 存量行在库层面就落成 0: 前端读到的就是默认 false
-    BOOST_TEST(probe_te_xie(l_session, "D1") == 0);
-
-    // 2. 已是最新版的库: 不应该有任何步骤执行.
-    //    再把列删掉跑一次 —— 列没有回来, 才证明这一步被版本号挡住了, 而不是"恰好幂等".
-    drop_te_xie(l_session);
-    l_session.pragma().user_version(31);
-    l_storage.upgrade();
-    BOOST_TEST(scalar_int(l_session, "PRAGMA user_version;") == 31);
-    BOOST_TEST(!has_column(l_session, "entity_asset_extend_2", "te_xie"));
-  }
-
-  remove_db(l_db);
-}
-
-// 比 29 更旧的库也要被这一步带到最新: 不能因为"版本不等于 29"就既不升级、也不写版本号,
-// 那样它会永远停在旧状态上 (见 upgrade_2_t 里关于 `> 29 就跳过` 的说明).
-// 注意: 28 -> 29 的 violation 回填已随生产库升到 29 而移除, 所以 v26 的库只会补 te_xie 列.
+// 注意这里**只**断言版本号与整体健康: 29 -> 30 (给 entity_asset_extend_2 补 te_xie 列) 已随该步骤
+// 进入生产而移除, 所以 v26 的库跑完也拿不到 te_xie 列 —— 升级链现在只认 30 及以上,
+// 见 sqlite_upgrade.cpp 顶部版本号注释.
 BOOST_AUTO_TEST_CASE(upgrade_brings_older_db_up_to_current) {
   app_base l_app{};
   backup_cleaner l_cleaner{};
@@ -232,15 +165,13 @@ BOOST_AUTO_TEST_CASE(upgrade_brings_older_db_up_to_current) {
     auto l_session = l_storage.create_session();
     l_session.sync_schema();
 
-    drop_te_xie(l_session);
-
     l_session.pragma().user_version(26);
     l_storage.upgrade();
     auto l_version = scalar_int(l_session, "PRAGMA user_version;");
     BOOST_TEST_MESSAGE(fmt::format("v26 升级后 user_version = {}", l_version));
     BOOST_TEST(l_version == 31);
-    // 升级步骤的副作用确实存在, 说明它没有被跳过
-    BOOST_TEST(has_column(l_session, "entity_asset_extend_2", "te_xie"));
+    // 剩下的那一步的副作用确实存在, 说明它没有被跳过
+    BOOST_TEST(has_table(l_session, "ai_light_session"));
     BOOST_TEST(scalar_text(l_session, "PRAGMA integrity_check;") == "ok");
     BOOST_TEST(l_session.pragma().foreign_key_check().empty());
   }

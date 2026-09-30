@@ -24,7 +24,7 @@
 | **候选 candidate** | 一轮里的 6 个灯光设置之一，每个都会被真的渲染成一张图 | 主工作台的核心：6 张图并排 + 指标 + 判断 |
 | **语义轴 axis** | 6 个候选之间**唯一允许变化的维度**（主光方向/主辅比/色温/软硬/环境光/调色强度） | 候选卡片上「这张和基线差在哪」的说明；也是美术的**反馈旋钮** |
 | **人工闸门 1 / 2** | ①确认 Spec ②判断候选（挑选/继续/全否） | 两个必须由人点的按钮组 |
-| **定稿 accepted** | 美术挑中一个候选 → 该图注册成 Kitsu 的 preview file 挂到灯光任务上 | 终态；之后只读 |
+| **定稿 accept** | 美术挑中一个候选 → 该图注册成 Kitsu 的 preview file 挂到灯光任务上 | **不是终点**：会话随后回到 `generating`，可以继续调；再次定稿会把「当前定稿」指针移到新的一张 |
 | **预设 preset** | 可复用的灯光配方（`rig_fragment` + 适用场景 + 目标区间） | 全局共享资产，有独立的库管理页 |
 
 **角色**：美术（唯一操作者，做两次人工判断）；灯光指导/主管（复用 Kitsu 既有的任务状态、评论、审批流转，不由本特性新增）。
@@ -78,17 +78,21 @@ presets 与 jobs 是旁路工具页，不进主流程。
 
 ### 4.1 状态机（两层，别混）
 
-**会话层 `session.state`**（7 个值，JSON 字符串 = 枚举名）：
+**会话层 `session.state`**（**4 个值**，JSON 字符串 = 枚举名；**没有终态**）：
 
 ```
 draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm──▶ generating
   ▲                          │                                        │
   └──── 接缝失败回滚 ────────┘                                        │ worker 回填渲染
                                                                       ▼
-   accepted ◀──judge: accept──┐                              awaiting_judgement
-   rejected ◀──judge: reject_all──┘                                    │
-                             └──judge: continue_iteration──▶ generating ┘
+                    ┌──── judge（三个决定都一样）────▶ awaiting_judgement
+                    ▼
+                generating   ◀── 可以再按「继续迭代」出下一轮（无限轮）
 ```
+
+三个判断决定（`accept` 定稿 / `continue_iteration` 继续 / `reject_all` 全否）**都**回到
+`generating` —— 定稿不是终点，全否也不是终止，只表示「这一轮全部不要」。所以界面上**没有**
+「会话已结束」这种状态，也就**不需要**为它做只读分支。
 
 **轮次层 `iteration.state`**：`generated` → `dispatched` → `rendering` → `awaiting_judgement` → `judged`。
 （实现里 `dispatched`/`rendering` 目前**没有赋值点** —— worker 侧派发未接线，前端应把它们当「可能被跳过」。）
@@ -107,16 +111,16 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
 | `draft` | 提示词 + 参考图墙；提示「还没有灯光方案」 | 传/删参考图；**生成方案**（`POST /spec`） | `awaiting_spec_confirm` |
 | `awaiting_spec_confirm` | **闸门 1 卡片**：意图 + 目标区间 + 冲突维度 | **确认方案**（`POST /spec/confirm`）；**重新生成**（`POST /spec`，revision+1） | `generating` / 仍是 `awaiting_spec_confirm` |
 | `generating` | 进度状态：候选生成中 / 已派发渲染中；显示已渲染几张 | 轮询 `GET /session/{id}`；**重试生成**（`POST /iterate`） | 仍是 `generating` |
-| `awaiting_judgement` | **闸门 2 工作台**：6 张候选 + 指标 + 反馈面板 | **判断**（`POST /judge`，唯一动作） | `accepted` / `generating` / `rejected` |
-| `accepted` | 定稿图 + 「已挂到灯光任务的预览文件上」；只读 | 只读（`GET`）；删会话会被 400 拒绝 | — |
-| `rejected` | 「已全否并终止」；只读 | 只读；除 `GET` 外全部 400 | — |
-| `failed` | 「失败」+ `failure_reason`；只读 | 只读 | — |
+| `awaiting_judgement` | **闸门 2 工作台**：6 张候选 + 指标 + 反馈面板 | **判断**（`POST /judge`，唯一动作） | `generating`（三个决定都一样） |
 
 辅助布尔（读模型直接给，**不要自己算状态机**）：`is_waiting_human`（= `awaiting_spec_confirm || awaiting_judgement`）、
 `is_judgement_overdue`。
 
-**终态判定**：`accepted | rejected | failed` 是终态 —— 任何写动作（传图、删图、出 Spec、判断）都会 400
-`会话 {} 已处于终态 {}，不能再修改`。
+**没有终态**：会话永远停在上面 4 个状态之一，任何状态下写动作（传图、删图、出 Spec、判断）都只受
+「当前状态支不支持这个动作」约束，**不存在**「会话已结束所以只读」的分支。历史里的
+`accepted`/`rejected`/`failed` 三个字符串**从未进过生产库**（30 之后的数据库升级没有推送过，那六张表是
+随该次升级新建的，所以出生即空），因此既不存在需要迁移的历史数据、也不需要前端做兼容
+（见方案文档 §15.10）—— 如果老接口/老文档里还提到这三个值，一律忽略。
 
 ### 4.3 4 小时判断时限（不是状态，别做成分支）
 
@@ -262,14 +266,17 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
 
 1. **定稿（`accept`）**：必须先选一个候选。服务端会把它渲染成 Kitsu 的 preview file
    （`original_name = "ai_light_{会话 uuid}_cand{序号02}"`，挂在**灯光任务**上），同事务把候选标成 `is_accepted`。
-   成功后会广播 `preview-file:new`。**定稿后不能删会话**（400）。
+   成功后会广播 `preview-file:new`。定稿**不再锁住会话**：会话回到 `generating`，可以接着调、
+   再次定稿（会把「当前定稿」指针移到新的一张；旧的那张 `preview_file` 仍然留在灯光任务上，不会被删）。
 2. **继续迭代（`continue_iteration`）**：必须选一个候选作为下一轮基准（它成为下一轮的 warm start），
    然后给**反馈**：滑块（默认）和/或文本。会话回到 `generating`，服务端据 `feedback_axes` 生成下一轮 6 个候选。
    - 反馈**可以为空**（「再调调看」是合法输入）；此时下一轮由模型自行选轴。前端应给出明显提示
      「没有指定方向时，下一轮由 AI 自己选方向」，避免美术误以为自己的意见被采纳了。
    - 服务端把滑块轴的数值连同文本推导的轴一起写进本轮 judgement 的 `feedback_axes`，下一轮生成时作为**约束**
      （「这些轴必须出现在你的轴计划里」）。
-3. **全否（`reject_all`）**：终止会话（`rejected`），不选候选。前端必须二次确认（这是不可逆的）。
+3. **全否（`reject_all`）**：不选候选，会话回到 `generating` —— 它表示「**这一轮全部不要**」，
+   可以再出一轮（下一轮没有 warm start，从 LLM 的基线重新开始）。既然不是终止，它在语义上就
+   不是不可逆操作；仍建议做二次确认（免得误点白扔一轮渲染）。
 
 **轮次时间线**：`iterations[]` 按 `iteration` 升序，每轮显示：
 - `axes.strategy`（服务端记录的本轮生成策略，含「上一轮反馈如何被采纳」——这是美术理解「AI 有没有听我的」的窗口）；
@@ -282,8 +289,10 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
 `iterations[last].state` 进入 `awaiting_judgement`（或 `session.state` 变成 `awaiting_judgement`）。
 逐张图可用 `render_status` 显示「已渲染 x/6」。渲染是分钟级的（见 §8）。
 
-**已定稿会话（`accepted`）**：显示定稿图（走 `preview_file` 的图片接口，见 §9），并把「已挂到灯光任务的预览文件上」说清楚 ——
-这是这个特性的**交付物**：定稿图进了 Kitsu 的预览/评论/审批流程。
+**已经定稿过的会话**：详情里 `accepted_candidate` 非 null 时显示定稿图（走 `preview_file` 的图片接口，
+见 §9），并把「已挂到灯光任务的预览文件上」说清楚 —— 这是这个特性的**交付物**：定稿图进了 Kitsu 的
+预览/评论/审批流程。但会话**不会**因此变成只读：美术可以接着调、再出下一轮、再次定稿。
+界面上把「当前定稿」当成一个已交付的里程碑标记，而不是一个终态。
 
 ### 5.5 `/lighting/presets` —— 预设库管理
 
@@ -452,7 +461,6 @@ AI 灯光派发的任务类型是 `ai_light`（`server_task_info.type`），任�
 | 400 | `镜头 {} 没有灯光任务，无法建立 AI 灯光会话` | 该镜头没有灯光任务 | 引导去建任务 |
 | 400 | `会话 {} 还没有参考图，无法蒸馏 Spec（决策 1：参考必有多张）` | 顺序错 | 回到上传步骤；**不要**显示成 AI 失败（不写 `failure_reason`） |
 | 400 | `会话 {} 处于状态 {}，当前没有可推进的步骤` | 状态不对 | 刷新详情，按 §4.2 重新渲染按钮 |
-| 400 | `会话 {} 已处于终态 {}，不能再修改` | 会话已结束 | 切只读，隐藏写按钮 |
 | 400 | `定稿必须指定候选` / `候选 {} 不属于第 {} 轮` | 参数与服务端不一致 | 强制「先选候选再点定稿」 |
 | 400 | `轮次 {} 已经判断过了` | 重复提交 | 幂等处理：刷新详情，不报错 |
 | 400 | `参考图 {} 无法解析为图片` / `落盘后无法解码，无法统计` | 上传的文件不是有效图片 | 单张失败提示，不中断其余 |
@@ -475,7 +483,8 @@ AI 灯光派发的任务类型是 `ai_light`（`server_task_info.type`），任�
 **流程闭环**
 - [ ] 从镜头页能建会话、传多张参考图、出 Spec、确认 Spec、看到一轮 6 个候选渲染完成、判断、看到下一轮，最终定稿。
 - [ ] 定稿后能在 Kitsu 既有的预览文件流程里看到那张图（挂在灯光任务上），并能评论/审批。
-- [ ] 全否能终止会话，且会话页变只读。
+- [ ] 全否后会话仍可继续出一轮（不是终止，界面不变只读）。
+- [ ] 定稿后会话仍可继续调、可再次定稿；再次定稿后任务上能看到新的预览文件，旧的仍在。
 
 **闸门**
 - [ ] 闸门 1 未确认前无法进入候选生成（按钮不存在或服务端 400 有明确提示）。

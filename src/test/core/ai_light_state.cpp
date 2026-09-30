@@ -267,10 +267,11 @@ BOOST_AUTO_TEST_CASE(judge_accept_marks_candidate_and_session) {
     co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j, l_pf);
   });
 
-  // 会话进入终态，且判断时限被清掉 —— 过期标志因此自动变 false，
-  // 不需要任何人去「清理」它（这正是把过期做成派生标志的好处）
+  // 会话回到 generating（**没有终态**了），判断时限被清掉 —— 过期标志因此自动变 false，
+  // 不需要任何人去「清理」它（这正是把过期做成派生标志的好处）。
+  // 回到 generating 也意味着 /iterate 立即可用：定稿不是终点，美术还能接着调。
   auto l_session = l_fx.reload_session();
-  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::accepted));
+  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
   BOOST_TEST(!l_session.judgement_due_at_.has_value());
   BOOST_TEST(l_session.failure_reason_.empty());
 
@@ -286,13 +287,13 @@ BOOST_AUTO_TEST_CASE(judge_accept_marks_candidate_and_session) {
   auto l_j_back = l_iter.get_judgement();
   BOOST_TEST(l_j_back.feedback_axes_.at("key_fill_ratio") == 8.0);
 
-  // 被选中的候选：定稿标记 + preview_file。
+  // 被选中的候选：定稿标记 + preview_file + **同时是下一轮基准**。
   //
-  // 注意 is_selected_ **保持 false**：它专指「被选为下一轮基准」，而定稿没有下一轮。
-  // 这是两个不同的语义，不能为了「看起来统一」而合并 ——
-  // 「这一轮人挑了哪张」在定稿时读 accepted_candidate，续轮时读 selected_candidate。
+  // is_selected_ 与 is_accepted_ 仍然是两个语义（前者 = 下一轮基准，后者 = 当前定稿），
+  // 只是定稿不再是终点，所以两者现在可以在同一行上同时为真（§15.10 决定 D20）：
+  // 定稿之后接着调时，下一轮应当从定稿那套 rig 出发，而不是回到 LLM 的原始基线。
   auto l_picked = l_fx.reload_candidate(2);
-  BOOST_TEST(!l_picked.is_selected_);
+  BOOST_TEST(l_picked.is_selected_);
   BOOST_TEST(l_picked.is_accepted_);
   BOOST_TEST(l_picked.is_accepted_candidate());
   BOOST_TEST(l_picked.preview_file_id_ == l_pf.uuid_id_);
@@ -308,8 +309,11 @@ BOOST_AUTO_TEST_CASE(judge_accept_marks_candidate_and_session) {
   auto l_accepted = l_fx.sql_->get_ai_light_accepted_candidate(l_session.uuid_id_);
   BOOST_TEST(l_accepted.has_value());
   BOOST_TEST(l_accepted->uuid_id_ == l_picked.uuid_id_);
-  // 而「下一轮基准」这条查询必须是空的 —— 定稿没有下一轮，混用会让续轮逻辑拿到已定稿的图
-  BOOST_TEST(!l_fx.sql_->get_ai_light_selected_candidate(l_session.uuid_id_, 1).has_value());
+  // 「下一轮基准」这条查询指向**同一张** —— 定稿之后接着调，起点就是这张（决定 D20）。
+  // 它也是 advance_session 的 generating 分支在下一轮取 warm start 的入口。
+  auto l_warm = l_fx.sql_->get_ai_light_selected_candidate(l_session.uuid_id_, 1);
+  BOOST_TEST(l_warm.has_value());
+  BOOST_TEST(l_warm->uuid_id_ == l_picked.uuid_id_);
 
   // 定稿的 preview_file 与候选在同一事务里落库，必须查得到
   auto l_pf_row = l_fx.sql_->get_by_uuid<preview_file>(l_pf.uuid_id_);
@@ -332,7 +336,6 @@ BOOST_AUTO_TEST_CASE(judge_continue_keeps_session_iterable) {
   // 回到 generating：可以立刻再来一轮
   auto l_session = l_fx.reload_session();
   BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
-  BOOST_TEST(!is_terminal(l_session.state_));
   BOOST_TEST(!l_session.judgement_due_at_.has_value());
 
   // 续轮的起点是 is_selected 的候选，所以必须标上
@@ -350,7 +353,7 @@ BOOST_AUTO_TEST_CASE(judge_continue_keeps_session_iterable) {
   BOOST_TEST(l_iter.get_judgement().feedback_text_ == "还是太冷，暖一点");
 }
 
-BOOST_AUTO_TEST_CASE(judge_reject_all_terminates_session) {
+BOOST_AUTO_TEST_CASE(judge_reject_all_keeps_session_iterable) {
   app_base l_app{};
   fixture_t l_fx{"judge_reject"};
   auto l_args = load_for_judge(l_fx);
@@ -362,8 +365,9 @@ BOOST_AUTO_TEST_CASE(judge_reject_all_terminates_session) {
   });
 
   auto l_session = l_fx.reload_session();
-  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::rejected));
-  BOOST_TEST(is_terminal(l_session.state_));
+  // 全否**不再终止会话**：它只表示「这一轮全部不要」，会话照常可以再出一轮。
+  // 区别在动作层（全否不许选候选），不在会话状态。
+  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
   BOOST_TEST(!is_waiting_human(l_session.state_));
 
   // 全否不该选中任何候选
@@ -375,34 +379,67 @@ BOOST_AUTO_TEST_CASE(judge_reject_all_terminates_session) {
 }
 
 // ===========================================================================
-// 非法判断必须被挡住，且不能改动任何一行
+// 定稿是可移动的单指针：再次定稿会顶掉上一次，但旧交付物不回溯删除
 // ===========================================================================
 
-BOOST_AUTO_TEST_CASE(judge_on_terminal_session_is_rejected) {
+BOOST_AUTO_TEST_CASE(judge_accept_moves_the_accepted_pointer) {
   app_base l_app{};
-  // 直接造一个已经是终态的会话
-  fixture_t l_fx{"judge_terminal", ai_light_session_state::accepted};
+  fixture_t l_fx{"judge_accept_move"};
   auto l_args = load_for_judge(l_fx);
 
-  auto l_j = make_judgement(judgement_decision::continue_iteration, l_fx.candidates_.at(1).uuid_id_);
+  // 先造一个「上一次定稿」的候选（同会话、另一轮）+ 已注册的 preview_file。
+  // 会话没有终态之后「再一次定稿」是常态：今天定稿，明天导演改意见，回来接着调。
+  // 外键在 fixture 构造期间被关掉了（归属 id 指向不存在的 project/task/entity），
+  // 所以这里的 iteration_id 可以指向一个不存在的轮次 —— 与
+  // judge_selecting_candidate_from_another_iteration_is_rejected 同一手法。
+  auto l_old_pf = make_probe_preview_file();
+  insert(l_fx.orm_).into<preview_file>().values(l_old_pf)();
 
-  bool l_threw = false;
-  try {
-    run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
-      co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j);
-    });
-  } catch (const doodle_error& in_err) {
-    l_threw = true;
-    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
-  }
-  BOOST_TEST(l_threw);
+  ai_light_candidate l_old{};
+  l_old.iteration_id_    = core_set::get_set().get_uuid();
+  l_old.session_id_      = l_fx.session_.uuid_id_;
+  l_old.candidate_index_ = 0;
+  l_old.render_status_   = candidate_render_status::rendered;
+  l_old.mark_accepted();
+  l_old.preview_file_id_ = l_old_pf.uuid_id_;
+  insert(l_fx.orm_).into<ai_light_candidate>().values(l_old)();
 
-  // 会话仍是终态，轮次仍是待判断，候选一个都没动
-  BOOST_TEST(en(l_fx.reload_session().state_) == en(ai_light_session_state::accepted));
-  BOOST_TEST(en(l_fx.reload_iteration().state_) == en(ai_light_iteration_state::awaiting_judgement));
-  for (std::size_t l_i = 0; l_i != l_fx.candidates_.size(); ++l_i) {
-    BOOST_TEST(!l_fx.reload_candidate(l_i).is_selected_);
-  }
+  // 前置：库里确实已经有一个定稿，否则下面的用例会「因为没东西可顶」而空转
+  auto l_before = l_fx.sql_->get_ai_light_accepted_candidate(l_fx.session_.uuid_id_);
+  BOOST_TEST(l_before.has_value());
+  BOOST_TEST(l_before->uuid_id_ == l_old.uuid_id_);
+
+  // 现在定稿候选 2。若少了「先解除上一次定稿」这一步，这里会直接撞
+  // accepted_session_id 上的唯一索引（sqlite_orm_exception），根本走不到下面的断言 ——
+  // 这正是本用例盯住的回归。
+  auto l_pf = make_probe_preview_file();
+  auto l_j  = make_judgement(judgement_decision::accept, l_fx.candidates_.at(2).uuid_id_);
+  run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
+    co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j, l_pf);
+  });
+
+  // 旧那一行的定稿指针被摘掉……
+  auto l_old_back = l_fx.sql_->get_by_uuid<ai_light_candidate>(l_old.uuid_id_);
+  BOOST_TEST(!l_old_back.is_accepted_);
+  BOOST_TEST(l_old_back.accepted_session_id_.is_nil());
+  BOOST_TEST(l_old_back.preview_file_id_.is_nil());
+  BOOST_TEST(!l_old_back.is_accepted_candidate());
+  // ……但它的 preview_file 行还在：那是已经交付过的一张图，不能回溯删除
+  BOOST_TEST(l_fx.sql_->get_by_uuid<preview_file>(l_old_pf.uuid_id_).uuid_id_ == l_old_pf.uuid_id_);
+
+  // 新定稿唯一且正确
+  auto l_new = l_fx.reload_candidate(2);
+  BOOST_TEST(l_new.is_accepted_);
+  BOOST_TEST(l_new.is_accepted_candidate());
+  BOOST_TEST(l_new.accepted_session_id_ == l_fx.session_.uuid_id_);
+  BOOST_TEST(l_new.preview_file_id_ == l_pf.uuid_id_);
+
+  auto l_after = l_fx.sql_->get_ai_light_accepted_candidate(l_fx.session_.uuid_id_);
+  BOOST_TEST(l_after.has_value());
+  BOOST_TEST(l_after->uuid_id_ == l_new.uuid_id_);
+
+  // 会话照常可以再出一轮（没有终态）
+  BOOST_TEST(en(l_fx.reload_session().state_) == en(ai_light_session_state::generating));
 }
 
 BOOST_AUTO_TEST_CASE(judge_accept_without_preview_file_is_rejected) {
@@ -532,7 +569,7 @@ BOOST_AUTO_TEST_CASE(overdue_session_stays_awaiting_judgement_and_stays_judgeabl
   BOOST_TEST(!l_threw);
 
   auto l_session = l_fx.reload_session();
-  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::accepted));
+  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
   BOOST_TEST(!l_session.judgement_due_at_.has_value());
 
   // 判断完就不该再过期 —— 标志跟着状态走，不需要任何人去清理它。

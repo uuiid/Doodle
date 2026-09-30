@@ -37,16 +37,27 @@
 
 namespace doodle::details {
 namespace {
-// 版本号. 生产库当前是 30, 所以只需要一步 30 -> 31 (AI 灯光建表).
+// 版本号. 生产库当前是 30, 30 之后只有**一步**: 30 -> 31 (建 AI 灯光六张表).
 //
-// 注意 g_current_version 与各步骤的目标版本是两回事:
-//   * g_current_version 是「全部迁移做完之后的版本」, 只有最后一步和 upgrade_init_t 该写它;
-//   * 中间步骤必须写**自己的目标版本** (upgrade_2_t 写 g_version_30)。
-// 早先 upgrade_2_t 写的是 g_current_version, 那时两者恰好都等于 30 所以没暴露问题。
-// 一旦把 g_current_version 提到 31, 若 upgrade_2_t 仍写 g_current_version,
-// 停在 29 的库会被直接标成 31, 于是 upgrade_3_t 的 `> 30 就跳过` 判定成立、
-// AI 灯光那六张表永远不会被建出来 —— 而且不报任何错。所以这里必须拆开。
-constexpr std::size_t g_version_29      = 29;
+// 规则: **只有最后一步和 upgrade_init_t 写 g_current_version, 非最后的中间步骤写自己的目标版本常量。**
+// 判断某一步该不该写 g_current_version 只有一个依据: 它是不是最后一步。
+//
+// 违反这条规则的错误是无声的: 早期 upgrade_2_t (29 -> 30) 写的就是 g_current_version, 那时两者恰好都等于
+// 30 所以没暴露问题; 一旦 g_current_version 被提到更高而某个非最后步骤仍写它, 更旧的库会在同一次启动里被
+// stamp 过头, 那个后续步骤的 `> N 就跳过` 判定随即成立、**静默跳过**, 而版本号看起来完全正确。
+// 现在版本化步骤只剩 30 -> 31 一步, 所以 upgrade_3_t 写 g_current_version 是正确的;
+// **将来在它之前或之后再插步骤时, 必须回头检查这一行。**
+//
+// 29 -> 30 (upgrade_2_t: 给 entity_asset_extend_2 补 te_xie 列) 已随该步骤进入生产而**移除**。
+// 代价是刻意的: 升级链现在只认「30 及以上」。仍停在 30 之前的库 (例如开发机上的旧备份) 只会执行
+// 30 -> 31 —— 它能拿到 AI 灯光六张表, 但**拿不到 te_xie 列**, 于是 ORM 读写这张表时会报
+// "no such column"。这类库不受支持, 需要重建或手工补列。同一取舍的先例: 27 -> 28 与 28 -> 29
+// 两步也是随生产库推进而移除的 (见 docs/ue_ai_lighting_plan.md §15.3)。
+//
+// 另外, 删掉 ai_light_session_state 的 accepted / rejected / failed 三个枚举量**不需要数据迁移**:
+// 停在 30 的库里根本没有 ai_light_* 表 (唯一的建表者就是 30 -> 31 这一步), 六张表出生即空,
+// 所以任何生产库里都不可能存在那三个字符串; 删枚举量也不是 schema 变更 (state 是 TEXT 列)。
+// 详见 docs/ue_ai_lighting_plan.md §15.10。
 constexpr std::size_t g_version_30      = 30;
 constexpr std::size_t g_current_version = 31;
 }  // namespace
@@ -98,17 +109,6 @@ void backup(orm::session& in_data) {
   in_data.backup_to(l_file);
 }
 
-// 表上是否已有某列.
-// ALTER TABLE ADD COLUMN 没有 IF NOT EXISTS, 重复执行会报 "duplicate column name".
-// 版本号与 schema 可能被中途打断而对不上 (例如 ALTER 成功但 user_version 没写下去),
-// 所以执行前必须先查一次, 否则下次启动就会直接失败.
-bool has_column(orm::session& in_session, const std::string& in_table, const std::string& in_column) {
-  orm::sqlite_stmt l_stmt{
-      in_session, fmt::format("SELECT 1 FROM pragma_table_info('{}') WHERE name = '{}';", in_table, in_column)
-  };
-  return l_stmt.step_not_throw() == SQLITE_ROW;
-}
-
 // 表是否存在. 老库可能还没有某张表, 直接对不存在的表执行语句会让升级整个失败,
 // 而"表不存在"本身就意味着这一步没有要清理的数据.
 bool has_table(orm::session& in_session, const std::string& in_table) {
@@ -118,41 +118,6 @@ bool has_table(orm::session& in_session, const std::string& in_table) {
   return l_stmt.step_not_throw() == SQLITE_ROW;
 }
 }  // namespace
-
-// 29 -> 30: entity_asset_extend 增加「是否包含特写」te_xie (默认 false).
-//
-// 用 ALTER TABLE 补列, 不用 rebuild_table: 重建的列拷贝清单来自 ORM 声明 (session::rebuild_table),
-// 会把新列也写进 SELECT, 而旧表里没有这一列, 直接报 no such column.
-// 带 DEFAULT 0: 存量行在库层面就落成 0/false, 不依赖 ORM 读到 NULL 时的兜底行为.
-//
-// 条件用 `> 29 就跳过` 而不是 `== 29 才执行`: 版本更旧的库也能被这一步带到最新, 不会出现
-// 「版本号写成了最新、迁移却没做」那种不报错的静默失效.
-//
-// 注意: 27 -> 28 的 schema 重建 (rebuild_all_tables / 外键孤儿清理 / 冗余索引清理) 与
-// 28 -> 29 的 violation 回填都已随生产库升到 29 而移除 —— 生产库已经在 29 上, 那两步不会再
-// 执行; 仍停在 28 及更早的库只会执行本步骤 (代价是拿不到那两步的修复).
-//
-// 表不存在时本步骤会直接失败并中止升级, 这是刻意的: v29 生产库必然有 entity_asset_extend_2
-// (资产写入路径一直在用它), 缺表说明库已损坏, 静默跳过只会让 schema 与 ORM 声明长期不一致.
-struct upgrade_2_t : sqlite_upgrade {
-  explicit upgrade_2_t() {}
-  void upgrade(sqlite_storage& in_data) override {
-    auto l_s = in_data.create_session();
-    // 全新库 (user_version == 0) 已由 upgrade_init_t 建好 (含 te_xie) 并标成最新版, 到这里必然跳过
-    if (l_s.pragma().user_version() > g_version_29) return;
-    backup(l_s);
-
-    if (has_column(l_s, "entity_asset_extend_2", "te_xie")) {
-      SPDLOG_INFO("upgrade 29->30: entity_asset_extend_2.te_xie 已存在, 跳过 ALTER");
-    } else {
-      l_s.add_column("entity_asset_extend_2", "te_xie", "INTEGER", "0");
-      SPDLOG_INFO("upgrade 29->30: 已添加 entity_asset_extend_2.te_xie (DEFAULT 0, 存量行读出 false)");
-    }
-    // 写本步骤自己的目标版本, 不是 g_current_version —— 见文件顶部版本号注释
-    l_s.pragma().user_version(g_version_30);
-  }
-  ~upgrade_2_t() override = default;
-};
 
 // 30 -> 31: 建 AI 灯光六张表 (docs/ue_ai_lighting_plan.md §10.2).
 //
@@ -171,7 +136,11 @@ struct upgrade_2_t : sqlite_upgrade {
 // （定稿唯一性用的是 accepted_session_id 上的可空唯一索引，不是 partial index ——
 //  本库生成 partial index 时会把条件写成绑定参数，SQLite 拒绝，见 sqlite_database.h。）
 //
-// 条件用 `> 30 就跳过` 的写法与 upgrade_2_t 一致: 版本更旧的库也能被带到最新。
+// 这是 30 之后的唯一一步, 所以没有、也不需要任何数据改写: 六张表在这里出生即空,
+// 本轮取消会话终态 (accepted / rejected / failed) 只是删枚举量、不涉及 schema 变更。
+// 详见文件顶部版本号注释与 docs/ue_ai_lighting_plan.md §15.10。
+//
+// 条件用 `> 30 就跳过`: 版本更旧的库也一并被带到最新 (但它会缺 30 之前那些步骤补的列, 见顶部注释)。
 // 全新库 (user_version == 0) 已由 upgrade_init_t 的 sync_schema 建好并标成最新版, 到这里必然跳过。
 struct upgrade_3_t : sqlite_upgrade {
   explicit upgrade_3_t() {}
@@ -180,6 +149,9 @@ struct upgrade_3_t : sqlite_upgrade {
     if (l_s.pragma().user_version() > g_version_30) return;
     backup(l_s);
     l_s.sync_schema();
+    // 本步骤是 30 之后的**唯一**一步, 所以它写 g_current_version (= 31)。
+    // 将来若在它后面再插步骤, 这一行必须改成写自己的目标版本常量, 否则下一步会被静默跳过
+    // —— 见文件顶部版本号注释。
     l_s.pragma().user_version(g_current_version);
     SPDLOG_INFO("upgrade 30->31: 已创建 AI 灯光六张表 (ai_light_session / _reference / _spec / _iteration / _candidate / _preset)");
   }
@@ -187,7 +159,6 @@ struct upgrade_3_t : sqlite_upgrade {
 };
 
 std::shared_ptr<sqlite_upgrade> upgrade_init() { return std::make_shared<upgrade_init_t>(); }
-std::shared_ptr<sqlite_upgrade> upgrade_2() { return std::make_shared<upgrade_2_t>(); }
 std::shared_ptr<sqlite_upgrade> upgrade_3() { return std::make_shared<upgrade_3_t>(); }
 
 // 启动清理: 解绑所有 running 任务的 run_computer_id.

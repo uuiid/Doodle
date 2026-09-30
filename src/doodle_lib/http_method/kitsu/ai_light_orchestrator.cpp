@@ -140,10 +140,10 @@ boost::asio::awaitable<void> advance_session(
 
   /// 失败收尾：把会话状态退回进入时的状态并记下原因，然后由调用方重新抛出。
   ///
-  /// 为什么是「回滚」而不是「置 failed」：failed 是终态，会话一旦进去就没法再用，
-  /// 而已经上传的参考图挂在会话上（cascade），重试就意味着重传。接缝未实现、
-  /// LLM 超时、输出不合规这类问题都是可重试的，退回原状态既不留卡死的 generating，
-  /// 也不丢输入。failed 留给实现方自己判定的不可恢复错误。
+  /// 会话已经**没有终态**了（§15.10），所以这里退回原状态不是为了「让它可恢复」——
+  /// 而是为了不留一个卡死的 generating：接缝超时、模型输出不合规、解析不出工作室
+  /// 这类失败都是可重试的，退回原状态后美术直接再点一次即可，且不丢已经上传的参考图
+  /// （参考图挂在会话上，`cascade`）。失败的唯一记录是 `failure_reason_`。
   auto l_rollback = [&](const std::string& in_reason) -> boost::asio::awaitable<void> {
     in_session.state_          = l_entry_state;
     in_session.failure_reason_ = in_reason;
@@ -494,18 +494,52 @@ boost::asio::awaitable<void> apply_judgement(
       "定稿必须携带已构造好的 preview_file，其余判断不得携带"
   );
 
-  ai_light_session_state l_next_state{};
-  switch (in_judgement.decision_) {
-    case judgement_decision::accept:             l_next_state = ai_light_session_state::accepted; break;
-    case judgement_decision::continue_iteration: l_next_state = ai_light_session_state::generating; break;
-    case judgement_decision::reject_all:         l_next_state = ai_light_session_state::rejected; break;
-  }
+  // 三个决定都回到 generating（§15.10 决定 D17）：
+  //
+  // 会话**没有终态**了，所以这里不再有分支。generating 是唯一能再出一轮的状态
+  // （`advance_session` 的 generating 分支 = `POST /iterate`），而一个轮次判断完之后，
+  // 唯一的前进方向就是再出一轮 —— 美术对同一个镜头的灯光可以无限轮调整。
+  //
+  // 三个决定的区别在**动作层**，不在会话状态：定稿要带 preview_file 并落定稿指针，
+  // 续轮要有 selected_candidate（下一轮 warm start 的起点），全否则明确不许选候选。
+  const ai_light_session_state l_next_state = ai_light_session_state::generating;
 
   orm::sql_modify_statement_vector_t l_sqls{};
 
   // 定稿的 preview_file 与候选的定稿标记必须同事务，见头文件里的说明。
   if (in_accepted_preview_file.has_value())
     l_sqls.emplace_back(orm::insert(in_sql).into<preview_file>().values(*in_accepted_preview_file));
+
+  // ---- 定稿是**可移动的单指针**：先把上一次的定稿解除（§15.10 决定 D19）----
+  //
+  // `accepted_session_id` 上的唯一索引只允许每会话一行定稿，所以第二次定稿必须先
+  // 把上一次那行释放掉（置回 NULL），否则下面的 UPDATE 会直接撞唯一约束。
+  // 会话没有终态之后这是常态：今天定稿，明天导演改意见，回来接着调、再定稿一张。
+  //
+  // 旧候选的 preview_file **不删**：它已经作为交付物挂在这个镜头任务上
+  // （`ai_light_candidate.preview_file_id_` → `preview_file` 的 FK 是 set_null，
+  // 不是 cascade），删掉等于把美术已经交付过的一张图从任务的预览列表里抹掉。
+  // 这里只把「当前定稿」这个指针从旧候选上摘下来。
+  //
+  // 同一次请求重复定稿同一张（幂等重放）时无需解除：判断一下 uuid 相同就跳过，
+  // 避免先清后写同一行。
+  if (in_judgement.decision_ == judgement_decision::accept) {
+    if (auto l_prev = in_sql.get_ai_light_accepted_candidate(in_session.uuid_id_);
+        l_prev.has_value() && l_prev->uuid_id_ != in_judgement.selected_candidate_id_) {
+      l_prev->clear_accepted();
+      l_prev->preview_file_id_ = uuid{};
+      l_sqls.emplace_back(
+          orm::update(in_sql)
+              .from<ai_light_candidate>()
+              .set(
+                  c(&ai_light_candidate::is_accepted_) = l_prev->is_accepted_,
+                  c(&ai_light_candidate::accepted_session_id_) = l_prev->accepted_session_id_,
+                  c(&ai_light_candidate::preview_file_id_) = l_prev->preview_file_id_
+              )
+              .where(c(&ai_light_candidate::uuid_id_) == l_prev->uuid_id_)
+      );
+    }
+  }
 
   if (!in_judgement.selected_candidate_id_.is_nil()) {
     auto l_cand = in_sql.get_by_uuid<ai_light_candidate>(in_judgement.selected_candidate_id_);
@@ -518,15 +552,19 @@ boost::asio::awaitable<void> apply_judgement(
     if (in_judgement.decision_ == judgement_decision::accept) {
       // mark_accepted() 会同时写 is_accepted_ 与 accepted_session_id_；
       // 后者是「每会话至多一个定稿」这条约束在库层的载体，不能直接赋值绕过。
-      //
-      // 刻意**不**同时置 is_selected_：它专指「被选为下一轮基准」，而定稿没有下一轮。
-      // 两者混用会让续轮的 warm start 查询拿到一张已定稿的图（见
-      // get_ai_light_selected_candidate / get_ai_light_accepted_candidate 的分工）。
       l_cand.mark_accepted();
       l_cand.preview_file_id_ = in_accepted_preview_file->uuid_id_;
-    } else {
-      l_cand.is_selected_ = true;
     }
+    // 定稿与续轮都要把这张标成「下一轮基准」（§15.10 决定 D20）。
+    //
+    // 定稿原先刻意不置 is_selected_，理由是「定稿没有下一轮」—— 会话没有终态之后
+    // 这个理由不成立了：定稿之后接着调时，下一轮的 warm start
+    // （get_ai_light_selected_candidate）应该从**定稿那套 rig** 出发（那是目前最好的一张），
+    // 而不是回到 LLM 的原始基线。
+    //
+    // is_selected_ 与 is_accepted_ 仍然是两个语义（前者 = 下一轮基准，后者 = 当前定稿），
+    // 只是现在可以在同一行上同时为真。
+    l_cand.is_selected_ = true;
 
     l_sqls.emplace_back(
         orm::update(in_sql)

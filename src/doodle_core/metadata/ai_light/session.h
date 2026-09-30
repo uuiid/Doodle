@@ -50,23 +50,32 @@ namespace doodle::ai_light {
 /// 此时没有农场槽位、没有 UE 授权、没有 GPU 被占，6 张 PNG 只是躺在磁盘上。
 constexpr auto g_judgement_timeout = std::chrono::hours{4};
 
-/// 会话状态机
+/// 会话状态机 —— **没有终态**。
+///
+/// 曾经有 `accepted`（已定稿）/ `rejected`（全否并终止）/ `failed` 三个终态，现已全部取消：
+/// 美术对同一个镜头的灯光可能是**无限轮**的调整（今天定稿，明天导演改意见，回来接着调），
+/// 会话一旦进终态，`check_session_mutable()` 会把传图、删图、重出 Spec 全部挡成 400，
+/// 那段工作就只能新建一个会话重来 —— 输入、Spec、历史轮次全部作废。
+///
+/// 所以现在的模型是「会话是一个长期工作台」：
+///   * 定稿不再是终点，而是**可移动的单指针**（`ai_light_candidate.accepted_session_id`
+///     上的唯一索引仍然保证「当前定稿」只有一个，再次定稿会顶掉上一次）；
+///   * `reject_all` 也不再终止，它只表示「这一轮全部不要」，会话照常可以再出一轮；
+///   * 失败没有独立状态，`failure_reason_` 是唯一记录（`advance_session` 的接缝失败走回滚）。
+///
+/// 一轮只能判断一次（`apply_judgement` 的 `iteration.state_ != judged` 闸门），
+/// 所以「再来一轮」必须经 `POST /iterate` —— 这是有意的，见 §15.10。
 enum class ai_light_session_state {
   /// 已创建，提示词已录入，尚未产出 Spec
   draft,
   /// 人工闸门 1：Spec 待美术确认
   awaiting_spec_confirm,
-  /// 正在生成候选（LLM + 优化器）
+  /// 正在生成候选（LLM + 优化器）。**判断之后也回到这里**，所以它同时表示
+  /// 「可以再出一轮」——`POST /iterate` 只在这个状态下可用。
   generating,
   /// 人工闸门 2：6 个候选已渲染完，等美术挑。
   /// 美术迟迟不来**不会**改变这个状态，只会让 is_judgement_overdue() 变成 true。
   awaiting_judgement,
-  /// 已定稿
-  accepted,
-  /// 全部拒绝并终止
-  rejected,
-  /// 失败
-  failed,
 };
 NLOHMANN_JSON_SERIALIZE_ENUM(
     ai_light_session_state, {
@@ -74,17 +83,8 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                                 {ai_light_session_state::awaiting_spec_confirm, "awaiting_spec_confirm"},
                                 {ai_light_session_state::generating, "generating"},
                                 {ai_light_session_state::awaiting_judgement, "awaiting_judgement"},
-                                {ai_light_session_state::accepted, "accepted"},
-                                {ai_light_session_state::rejected, "rejected"},
-                                {ai_light_session_state::failed, "failed"},
                             }
 )
-
-/// 终态判定：终态会话不再接受判断与续轮。
-inline bool is_terminal(ai_light_session_state in_state) {
-  return in_state == ai_light_session_state::accepted || in_state == ai_light_session_state::rejected ||
-         in_state == ai_light_session_state::failed;
-}
 
 /// 是否处于「等人工动作」状态。前端「待办」列表用它。
 ///

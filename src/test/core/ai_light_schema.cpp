@@ -236,7 +236,9 @@ BOOST_AUTO_TEST_CASE(fresh_db_creates_ai_light_tables) {
   remove_db(l_db);
 }
 
-// 30 -> 31 的副作用: 六张表被建出来, 版本号推到 31.
+// 30 -> 31 的副作用: 六张表被建出来.
+// 生产库停在 30, 而 30 之后只有这一步 (取消会话终态不涉及 schema、也不需要数据迁移,
+// 见 docs/ue_ai_lighting_plan.md §15.10), 所以终点就是 31.
 BOOST_AUTO_TEST_CASE(upgrade_30_to_31_creates_ai_light_tables) {
   app_base l_app{};
   auto l_db = temp_db("from30");
@@ -268,6 +270,9 @@ BOOST_AUTO_TEST_CASE(upgrade_30_to_31_creates_ai_light_tables) {
 
 // 已是最新版的库: 六张表被删掉也不该被重建 —— 说明这一步被版本号挡住了,
 // 而不是「恰好幂等」.
+//
+// 起点取 31（= 最新版）而不是更旧的版本: 31 > 30 → upgrade_3_t 直接跳过,
+// 版本号也停在 31 不动. 这就是门控本身.
 BOOST_AUTO_TEST_CASE(upgrade_gating_skips_ai_light_when_already_latest) {
   app_base l_app{};
   auto l_db = temp_db("gating31");
@@ -382,9 +387,9 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     BOOST_TEST(en(l_sessions.front().state_) == en(ai_light_session_state::awaiting_judgement));
     BOOST_TEST(l_sessions.front().judgement_due_at_.has_value());
 
-    // 2. 按状态查（挂起扫描器的入口）
+    // 2. 按状态查。会话没有终态之后，这里只能拿还存在的状态来验「查不到别的东西」
     BOOST_TEST(l_sql.get_ai_light_sessions_by_state(ai_light_session_state::awaiting_judgement).size() == 1);
-    BOOST_TEST(l_sql.get_ai_light_sessions_by_state(ai_light_session_state::accepted).empty());
+    BOOST_TEST(l_sql.get_ai_light_sessions_by_state(ai_light_session_state::generating).empty());
 
     // 3. 参考图统计往返
     auto l_refs = l_sql.get_ai_light_references(l_session_row.uuid_id_);
