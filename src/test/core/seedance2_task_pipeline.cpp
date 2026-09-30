@@ -34,11 +34,15 @@
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
+// 协程用例支持（run_coro / run_coro_on_app / DOODLE_TEST_CASE_CORO）
+#include <test/test_coro.h>
+
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/strand.hpp>
+#include <boost/test/framework.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <chrono>
@@ -79,25 +83,9 @@ void remove_db(const FSys::path& in_path) {
   for (const auto* l_suffix : {"", "-wal", "-shm"}) FSys::remove(FSys::path{in_path.generic_string() + l_suffix}, l_ec);
 }
 
-/// 在自建 io_context 上跑一个协程并等待结束，把异常原样抛回调用方。
-/// 不用 co_spawn + detached：detached 会吞掉异常，而这些用例要看得见失败。
-void run_coro(boost::asio::io_context& in_ctx, std::function<boost::asio::awaitable<void>()> in_fun) {
-  std::exception_ptr l_err{};
-  boost::asio::co_spawn(
-      in_ctx,
-      [&]() -> boost::asio::awaitable<void> {
-        try {
-          co_await in_fun();
-        } catch (...) {
-          l_err = std::current_exception();
-        }
-      },
-      boost::asio::detached
-  );
-  in_ctx.run();
-  in_ctx.restart();
-  if (l_err) std::rethrow_exception(l_err);
-}
+/// 用例名当临时库标签：夹具由 BOOST_FIXTURE_TEST_CASE 默认构造（在用例体之前），
+/// 拿不到外面手写的 tag，用框架的当前用例名反而更准。
+std::string current_case_tag() { return boost::unit_test::framework::current_test_case().p_name; }
 
 // ─── 假客户端 ───────────────────────────────────────────────────────────────
 
@@ -181,19 +169,31 @@ struct scoped_ssl_ctx_t {
 ///
 /// 归属 id 指向并不存在的 project/task/ai_studio，所以构造期间关掉外键
 /// （与 ai_light_state.cpp / ai_light_schema.cpp 的做法一致）。
-/// 库绑到**自建** io_context 的 strand 上：run_sql() 的 dispatch 落在这里，能被 run() 跑完。
-struct fixture_t {
+/// 库绑到基类 io_context 的 strand 上：run_sql() 的 dispatch 落在这里，能被 run() 跑完。
+///
+/// 继承 coro_fixture_t 是为了让用例体直接写成协程：基类自带 io_context（ctx_）与把协程
+/// 跑到底的 run()。**不要**再声明一个 ctx_，否则会遮蔽基类那个（run() 用的是基类的）。
+struct fixture_t : doodle_test::coro_fixture_t {
+  /// app_base 必须是第一个成员，两个理由：
+  ///   1) 夹具的构造发生在用例体之前（BOOST_FIXTURE_TEST_CASE 会先默认构造夹具），而
+  ///      core_set::get_set() 之类的 doodle 单例要等 app_base 构造之后才可用
+  ///      （impl::self 只在 app_base 构造时赋值）；scoped_ssl_ctx_t 也依赖这一点；
+  ///   2) 它最后析构，保证库与 ssl context 先拆掉 —— 与改造前的次序一致。
+  app_base app_{};
+
   scoped_ssl_ctx_t ssl_ctx_{};
-  boost::asio::io_context ctx_{};
   sqlite_storage storage_{};
   orm::session orm_{};
   std::unique_ptr<sqlite_database> sql_{};
-  FSys::path path_{};
+  FSys::path path_{temp_db(current_case_tag())};
   bool fk_was_on_{true};
+  bool opened_{false};
 
   person user_{};
 
-  explicit fixture_t(const std::string& in_tag) : path_{temp_db(in_tag)} {
+  /// 默认构造（夹具只能这样被框架构造）：开库、关外键、插一个有余额的人员 ——
+  /// 这三件事每个用例都要，所以直接放在构造函数里。
+  fixture_t() {
     remove_db(path_);
     storage_.open(path_);
     storage_.upgrade();
@@ -210,11 +210,14 @@ struct fixture_t {
     user_.active_                      = true;
     user_.remaining_completion_tokens_ = 100'000;
     insert(orm_).into<person>().values(user_)();
+    opened_ = true;
   }
 
   ~fixture_t() {
-    orm_.pragma().foreign_keys(fk_was_on_);
-    sql_.reset();
+    if (opened_) {
+      orm_.pragma().foreign_keys(fk_was_on_);
+      sql_.reset();
+    }
     remove_db(path_);
   }
 
@@ -253,16 +256,11 @@ sd2::task make_inference_task(const person& in_user, std::int64_t in_precharge =
 
 // ─── 成功：插入即终态 + 按 total_tokens 结算 ────────────────────────────────
 
-BOOST_AUTO_TEST_CASE(succeeded_inference_inserts_a_final_row_and_bills_total_tokens) {
-  app_base l_app{};
-  fixture_t l_fx{"succeeded"};
-
+DOODLE_FIXTURE_TEST_CASE_CORO(succeeded_inference_inserts_a_final_row_and_bills_total_tokens, fixture_t) {
   auto l_client = std::make_shared<fake_client_t>(canned_result(sd2::task_status::succeeded, 1500));
   auto l_task   = make_inference_task(l_fx.user_);
 
-  run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
-    co_await run_inference_task(l_task, *l_fx.sql_, l_client);
-  });
+  co_await run_inference_task(l_task, *l_fx.sql_, l_client);
 
   const auto l_saved = l_fx.sql_->get_by_uuid<sd2::task>(l_task.uuid_id_);
   BOOST_CHECK_EQUAL(en(l_saved.status_), "succeeded");
@@ -287,16 +285,11 @@ BOOST_AUTO_TEST_CASE(succeeded_inference_inserts_a_final_row_and_bills_total_tok
 
 // ─── 失败：落库便于审计，但不计费 ───────────────────────────────────────────
 
-BOOST_AUTO_TEST_CASE(failed_inference_is_recorded_but_not_billed) {
-  app_base l_app{};
-  fixture_t l_fx{"failed"};
-
+DOODLE_FIXTURE_TEST_CASE_CORO(failed_inference_is_recorded_but_not_billed, fixture_t) {
   auto l_client = std::make_shared<fake_client_t>(canned_result(sd2::task_status::failed, 1500));
   auto l_task   = make_inference_task(l_fx.user_);
 
-  run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
-    co_await run_inference_task(l_task, *l_fx.sql_, l_client);
-  });
+  co_await run_inference_task(l_task, *l_fx.sql_, l_client);
 
   const auto l_saved = l_fx.sql_->get_by_uuid<sd2::task>(l_task.uuid_id_);
   BOOST_CHECK_EQUAL(en(l_saved.status_), "failed");
@@ -313,16 +306,11 @@ BOOST_AUTO_TEST_CASE(failed_inference_is_recorded_but_not_billed) {
 
 // ─── 没有 usage：退回预扣值，绝不能落到 50 万的默认值 ───────────────────────
 
-BOOST_AUTO_TEST_CASE(missing_usage_falls_back_to_the_precharge_not_the_generation_default) {
-  app_base l_app{};
-  fixture_t l_fx{"no_usage"};
-
+DOODLE_FIXTURE_TEST_CASE_CORO(missing_usage_falls_back_to_the_precharge_not_the_generation_default, fixture_t) {
   auto l_client = std::make_shared<fake_client_t>(canned_result(sd2::task_status::succeeded, 0));
   auto l_task   = make_inference_task(l_fx.user_, 8'000);
 
-  run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
-    co_await run_inference_task(l_task, *l_fx.sql_, l_client);
-  });
+  co_await run_inference_task(l_task, *l_fx.sql_, l_client);
 
   const auto l_saved = l_fx.sql_->get_by_uuid<sd2::task>(l_task.uuid_id_);
   BOOST_CHECK_EQUAL(en(l_saved.status_), "succeeded");
@@ -335,10 +323,7 @@ BOOST_AUTO_TEST_CASE(missing_usage_falls_back_to_the_precharge_not_the_generatio
 
 // ─── 中转站后端：不支持推理，落库失败而不是假装成功 ─────────────────────────
 
-BOOST_AUTO_TEST_CASE(transfer_station_backend_fails_before_touching_the_network) {
-  app_base l_app{};
-  fixture_t l_fx{"transfer_station"};
-
+DOODLE_FIXTURE_TEST_CASE_CORO(transfer_station_backend_fails_before_touching_the_network, fixture_t) {
   // 用**真**客户端：transfer_station_client::run_task 的推理分支在取 IP / 发请求之前就返回失败，
   // 所以这一条不需要网络，也正好覆盖了那条同样没跑过的分支。
   ai_studio l_studio{};
@@ -348,9 +333,7 @@ BOOST_AUTO_TEST_CASE(transfer_station_backend_fails_before_touching_the_network)
   auto l_task                    = make_inference_task(l_fx.user_);
   l_task.backend_                = sd2::task_backend::transfer_station;
 
-  run_coro(l_fx.ctx_, [&]() -> boost::asio::awaitable<void> {
-    co_await run_inference_task(l_task, *l_fx.sql_, l_client);
-  });
+  co_await run_inference_task(l_task, *l_fx.sql_, l_client);
 
   const auto l_saved = l_fx.sql_->get_by_uuid<sd2::task>(l_task.uuid_id_);
   BOOST_CHECK_EQUAL(en(l_saved.status_), "failed");

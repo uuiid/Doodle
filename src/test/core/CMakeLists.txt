@@ -1,5 +1,7 @@
 target_sources(test_main
         PRIVATE
+        # 测试基建自测（<test/test_coro.h>）：改过那个头文件就先跑它
+        coro_test_support.cpp
         data.cpp
         axis_angle.cpp
         depth_estimation.cpp
