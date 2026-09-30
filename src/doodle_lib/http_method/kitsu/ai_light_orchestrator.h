@@ -37,6 +37,9 @@
 #include <doodle_core/metadata/preview_file.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
+// 归一化推理信封(强类型)。这个头只依赖 nlohmann/json + STL, 不带任何 HTTP 依赖,
+// 所以不会破坏本文件顶部「这一层刻意不包含任何 HTTP 依赖」的约定。
+#include <doodle_lib/http_client/seedance2_inference_request.h>
 
 #include <boost/asio/awaitable.hpp>
 #include <nlohmann/json.hpp>
@@ -124,8 +127,9 @@ DOODLELIB_API std::string build_spec_input_text(
     const spec_generation_request_t& in_request, const aggregated_reference_stats_t& in_aggregated
 );
 
-/// 归一化推理信封（build_inference_body 的输入）。**不发** images 为空数组。
-DOODLELIB_API nlohmann::json build_spec_request(
+/// 归一化推理信封（build_inference_body 的输入）。**不发** images 为空数组 —— 由
+/// inference_request_t 的 to_json 保证：空 vector 不写 images 键。
+DOODLELIB_API http::seedance2::inference_request_t build_spec_request(
     const spec_generation_request_t& in_request, const aggregated_reference_stats_t& in_aggregated
 );
 

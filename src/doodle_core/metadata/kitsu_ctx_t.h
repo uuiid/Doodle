@@ -55,14 +55,17 @@ struct kitsu_ctx_t {
     return root_ / "sd2" / "pictures" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
   }
   // seedance2_canvas_media — 按 media_role 路由到不同子目录，缩略图固定 .png
+  // 注意: 这里的 media_role 必须写全 `doodle::seedance2::`。本结构体位于 namespace doodle::http 内,
+  // 一旦 `doodle::http::seedance2` 这个名字空间先被声明(例如先 include 了 http_client 下的头),
+  // 裸写 `seedance2::media_role` 就会优先绑定到 doodle::http::seedance2 而编译失败。
   FSys::path get_sd2_canvas_media_file(
-      const uuid& in_uuid, seedance2::media_role in_role, const std::string& in_ext = {}
+      const uuid& in_uuid, doodle::seedance2::media_role in_role, const std::string& in_ext = {}
   ) {
     auto subdir = [&]() -> FSys::path {
       switch (in_role) {
-        case seedance2::media_role::thumbnail:
+        case doodle::seedance2::media_role::thumbnail:
           return "thumbnails";
-        case seedance2::media_role::preview:
+        case doodle::seedance2::media_role::preview:
           return "previews";
         default:
           return {};
@@ -70,7 +73,7 @@ struct kitsu_ctx_t {
     }();
     auto path = FSys::path{"sd2"} / "canvas_media";
     if (!subdir.empty()) path /= subdir;
-    auto ext = in_role == seedance2::media_role::thumbnail ? ".png" : fix_ext(true, in_ext);
+    auto ext = in_role == doodle::seedance2::media_role::thumbnail ? ".png" : fix_ext(true, in_ext);
     return root_ / path / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ext));
   }
 

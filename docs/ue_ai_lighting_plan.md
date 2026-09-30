@@ -1629,9 +1629,9 @@ l_task.user_id_               = 触发人;                    // 同时是签名
 l_task.ai_studio_id_          = l_studio.uuid_id_;
 l_task.ai_light_iteration_id_ = 轮次 uuid;                 // spec 蒸馏阶段还没有轮次 -> 留 nil
 l_task.text_prompt_           = 提示词;                    // 去重(compare_task_similarity)与前台展示都读它
-l_task.data_request_          = nlohmann::json{
-    {"input_text", ...}, {"images", 参考图路径数组}, {"json_schema", schema}, ...   // 见 build_inference_body
-};
+// 信封由 build_spec_request() 以**强类型**给出(inference_request_t), 赋给 json 时走它的 to_json;
+// 落库键集与手写 json 完全一致
+l_task.data_request_          = build_spec_request(请求, 聚合统计);   // 字段见 build_inference_body
 
 const auto l_result = co_await run_inference_task(l_task, l_sql, l_client);
 // l_result.status_ / result_text_ / result_json_ / total_tokens_; 任务行已落终态并已扣费
@@ -1639,6 +1639,14 @@ const auto l_result = co_await run_inference_task(l_task, l_sql, l_client);
 
 `data_request_` 里不要自己拼方舟的 `input[]`/`model`/`store` —— 归一化信封（`input_text` / `images` /
 `json_schema` …）由 `build_inference_body()` 翻译，签名与公网前缀由客户端在发请求前补。
+
+归一化信封现在是**强类型结构体** `doodle::http::seedance2::inference_request_t`
+（`http_client/seedance2_inference_request.h`）：13 个键名与类型只写这一处，生产端填字段
+（`build_spec_request()` 直接返回它），消费端 `build_inference_body()` 按字段读。`data_request_`
+列仍然是 `nlohmann::json`（生成类任务共用该列），结构与 json 之间靠 `to_json` / `from_json` 转换 ——
+键缺失取默认值，**键存在但类型不符抛 `nlohmann::json::type_error`**（静默丢掉 `images` 等于发出一个
+没有参考图的请求）。因此落库形状与改造前一致，旧行不需要迁移；也不要用结构体去重序列化从库里读出来的
+`data_request_`（未知键会丢）。
 
 **已删除：`/api/doodle/ai/volcano-engine/**` 下四条素材路由**（本轮确认不再使用后清掉）。
 删掉的是「通用素材上传 + 取图」这一套，不是 AI 灯光的参考图通道 —— 后者走
@@ -1861,7 +1869,7 @@ POST /session/{id}/spec
 | 项 | 落点 |
 |---|---|
 | 接缝本体 | `http_method/kitsu/ai_light_orchestrator.cpp` 的 `generate_spec(in_sql, in_request)` `:1317` |
-| 离线可测的 5 个纯函数 | 同文件 `build_spec_instructions()` `:810` / `build_spec_json_schema()` `:852` / `build_spec_input_text()` `:975` / `build_spec_request()` `:1079` / `map_spec_result()` `:1108`（声明在 `ai_light_orchestrator.h`，**必须留在 `doodle::ai_light` 命名空间内**，见坑 9） |
+| 离线可测的 5 个纯函数 | 同文件 `build_spec_instructions()` `:810` / `build_spec_json_schema()` `:852` / `build_spec_input_text()` `:975` / `build_spec_request()` `:1079`（返回强类型信封 `http::seedance2::inference_request_t`，定义在 `http_client/seedance2_inference_request.h`）/ `map_spec_result()` `:1108`（声明在 `ai_light_orchestrator.h`，**必须留在 `doodle::ai_light` 命名空间内**，见坑 9） |
 | 请求 / 结果结构 | `spec_generation_request_t{ session_id_, project_id_, operator_id_, prompt_text_, references_, degrade_level_, previous_spec_ }`；`spec_generation_result_t{ spec_, evidence_, reference_stats_, conflict_resolution_ }` |
 | 状态机 | `advance_session(in_sql, in_session, in_operator_id)` `:124`（新签名，见 D1） |
 | 参考图 URL | `http_method/kitsu/ai_light.h` 的 `g_reference_image_path_template` + `reference_image_url(uuid)`。放在路由头是因为 `/api/doodle/ai/light/reference/{}/image` 的注册要用**字面量**喂 `_url` 这个 UDL，`constexpr std::string_view` 递不进去 |
@@ -2034,6 +2042,14 @@ POST /session/{id}/spec
 `ai_light_schema` 6 用例 · `ai_light_state` 18（171 断言）· `ai_light_stats` 22（184 断言）·
 `ai_light_spec_prompt` 10（83 断言）；另含 `sqlite_real_db`（真实生产库副本上的 `rebuild_all_tables` 往返）、
 `sqlite_upgrade`、`sqlite_schema`、`sqlite_fk_semantics`、`sqlite_conn_pragma`。
+
+**信封结构体化后的又一轮回归**（`build_spec_request()` 改返回 `http::seedance2::inference_request_t`，并删掉
+`build_inference_body(const nlohmann::json&)` 这个兼容重载之后）：全量 `test_main` **171 用例 / 1362 断言全通过、
+exit 0**（较基线 168 / 1317 为 +3 用例 / +45 断言，新增 `ai_light_spec_prompt/build_request_reaches_ark_body`
+与 `seedance2_inference` 的 `inference_request_round_trips_through_struct` / `inference_request_rejects_wrong_typed_keys`）。
+> 信封现在**只有一条入口** `build_inference_body(const inference_request_t&)`：裸 json 必须先显式
+> `json.get<inference_request_t>()`（落库路径 `run_inference_task()` 就是这么做的），于是不可能再出现
+> 「测试按 json 构造 body、生产按结构体构造」两套并行解析各说各话。
 
 > 跑测试的环境要求（坑 16）：先把 `$env:TEMP` 与 `$env:TMP` 指向工作区内目录，否则所有建临时库 /
 > 写临时 PNG 的用例会以「无法打开数据库文件」的形式集体失败。

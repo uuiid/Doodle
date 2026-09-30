@@ -1076,32 +1076,33 @@ std::string build_spec_input_text(
   return l_out;
 }
 
-nlohmann::json build_spec_request(
+http::seedance2::inference_request_t build_spec_request(
     const spec_generation_request_t& in_request, const aggregated_reference_stats_t& in_aggregated
 ) {
-  nlohmann::json l_req{};
-  l_req["instructions"]       = build_spec_instructions();
-  l_req["input_text"]         = build_spec_input_text(in_request, in_aggregated);
-  l_req["image_detail"]       = "high";
-  l_req["temperature"]        = 0.2;
-  l_req["json_schema"]        = build_spec_json_schema();
-  l_req["json_schema_name"]   = "lighting_spec";
-  l_req["json_schema_strict"] = true;
-  // 刻意**不发** max_output_tokens：schema 要求全字段 required（含 17 条 evidence），输出长度
+  // 直接填强类型信封：键名与类型只在 seedance2_inference_request.h 一处定义,
+  // 消费端 build_inference_body() 按字段读, 两侧改名/改类型会在编译期暴露。
+  http::seedance2::inference_request_t l_req{};
+  l_req.instructions_       = build_spec_instructions();
+  l_req.input_text_         = build_spec_input_text(in_request, in_aggregated);
+  l_req.image_detail_       = "high";
+  l_req.temperature_        = 0.2;
+  l_req.json_schema_        = build_spec_json_schema();
+  l_req.json_schema_name_   = "lighting_spec";
+  l_req.json_schema_strict_ = true;
+  // 刻意**不设** max_output_tokens：schema 要求全字段 required（含 17 条 evidence），输出长度
   // 不可预估，一旦被截断 result_json_ 就变成不可解析的半个 JSON —— 那个失败面与「平铺形状
   // 被拒」混在一起根本分不出来。上限交给模型/账号侧决定。
-  // 不发 thinking：缺省就是 disabled，而结构化任务开 thinking 会引入
+  // 不设 thinking：缺省就是 disabled，而结构化任务开 thinking 会引入
   // 「output[0] 是 reasoning 项」那条坑（§15.6 第 2 条）。
 
   // images 填**站点内相对路径**，由 to_public_url 补公网前缀 + 短时效签名；
   // 绝对磁盘路径（file_path_）绝不能外发。被人工排除的图不发。
-  std::vector<std::string> l_images{};
+  // 空 vector 不会写 images 键（to_json 保证），即「不发 images 空数组」。
   for (const auto& l_ref : in_request.references_) {
     if (l_ref.is_outlier_) continue;
     // reference_image_url 定义在路由头 ai_light.h 的 doodle::http::ai_light 命名空间里。
-    l_images.emplace_back(http::ai_light::reference_image_url(l_ref.uuid_id_));
+    l_req.images_.emplace_back(http::ai_light::reference_image_url(l_ref.uuid_id_));
   }
-  if (!l_images.empty()) l_req["images"] = l_images;
   return l_req;
 }
 
@@ -1360,6 +1361,7 @@ boost::asio::awaitable<spec_generation_result_t> generate_spec(
   l_task.ai_light_iteration_id_ = uuid{};                   // 蒸馏阶段还没有轮次，留 nil
   l_task.text_prompt_           = in_request.prompt_text_;   // 去重与前台展示都读它
   l_task.completion_tokens_     = doodle_config::g_ark_inference_default_consumed_tokens;
+  // 结构体 -> json 走 inference_request_t 的 to_json, 落库键集与手写 json 时完全一致
   l_task.data_request_          = build_spec_request(in_request, l_agg);
 
   // run_inference_task 自己一个事务里落终态任务行 + 扣费（§15.6 的方案 A）。

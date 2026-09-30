@@ -23,6 +23,12 @@
 
 #include <doodle_lib/http_method/kitsu/ai_light_orchestrator.h>
 #include <doodle_lib/http_method/kitsu/ai_light_stats.h>
+// 消费端（build_inference_body）：这里要钉的是「生产端信封 → 方舟 body」这条链，
+// 所以测试必须能拿到翻译器本体。它只依赖 nlohmann/json + 少量 HTTP 客户端基础设施，
+// 测试目标已经在 seedance2_inference.cpp 里 include 过（同一二进制），没有新增依赖。
+#include <doodle_lib/http_client/seedance2_client.h>
+
+#include <doodle_core/configure/static_value.h>
 
 #include <boost/test/unit_test.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -322,29 +328,54 @@ BOOST_AUTO_TEST_CASE(build_request_omits_images_when_empty) {
   spec_generation_request_t l_empty{};
   l_empty.prompt_text_ = "任意";
   const auto l_req_empty = build_spec_request(l_empty, l_agg);
-  // 空数组不能发：方舟对空 images 的处理没确认过，而「没有图」与「图是空列表」不该被它猜。
-  BOOST_TEST(!l_req_empty.contains("images"));
-  BOOST_TEST(l_req_empty.at("json_schema_name").get<std::string>() == "lighting_spec");
-  BOOST_TEST(l_req_empty.at("json_schema_strict").get<bool>() == true);
-  BOOST_TEST(l_req_empty.at("image_detail").get<std::string>() == "high");
+  // 信封现在是强类型结构体：键名与类型由 inference_request_t 在编译期钉住，这里直接读字段。
+  BOOST_TEST(l_req_empty.images_.empty());
+  BOOST_TEST(l_req_empty.json_schema_name_ == "lighting_spec");
+  BOOST_TEST(l_req_empty.json_schema_strict_.value_or(false) == true);
+  BOOST_TEST(l_req_empty.image_detail_.value_or("") == "high");
+  BOOST_TEST(l_req_empty.temperature_.value_or(0.0) == 0.2);
   // 不发 thinking：缺省就是 disabled，而开 thinking 会让 output[0] 变成 reasoning 项
   // （§15.6 第 2 条）——显式断言「我们没把它发出去」比依赖缺省值可靠。
-  BOOST_TEST(!l_req_empty.contains("thinking"));
-  BOOST_TEST(l_req_empty.at("instructions").get<std::string>().find("提示词") != std::string::npos);
+  BOOST_TEST(!l_req_empty.thinking_.has_value());
+  // 不发 max_output_tokens：截断会让 result_json_ 变成半个 JSON，失败面与「schema 不合规」分不开
+  BOOST_TEST(!l_req_empty.max_output_tokens_.has_value());
+  BOOST_TEST(l_req_empty.instructions_.value_or("").find("提示词") != std::string::npos);
+
+  // 线格式仍然要钉死：落库的 data_request_ 就是这份 json，旧行也必须还能读回来。
+  // 注意用拷贝初始化 `= l_req` 而不是 `nlohmann::json{l_req}`：花括号会走 initializer_list
+  // 构造，把信封裹成一个单元素数组。
+  const nlohmann::json l_json_empty = l_req_empty;
+  // 空数组不能发：方舟对空 images 的处理没确认过，而「没有图」与「图是空列表」不该被它猜。
+  BOOST_TEST(!l_json_empty.contains("images"));
+  BOOST_TEST(l_json_empty.at("json_schema_name").get<std::string>() == "lighting_spec");
+  BOOST_TEST(l_json_empty.at("json_schema_strict").get<bool>() == true);
+  BOOST_TEST(l_json_empty.at("image_detail").get<std::string>() == "high");
+  BOOST_TEST(!l_json_empty.contains("thinking"));
+  BOOST_TEST(!l_json_empty.contains("max_output_tokens"));
+  // 落库再读回来（结构体 -> json -> 结构体 -> json）必须是同一份信封：
+  // 这条守着「旧行可读、新行形状不变」。
+  const http::seedance2::inference_request_t l_back = l_json_empty.get<http::seedance2::inference_request_t>();
+  const nlohmann::json l_json_back                  = l_back;
+  BOOST_TEST(l_json_back == l_json_empty);
 
   // 全部图都被人工排除 → 仍然不发 images（排除的图不该再进入模型的视觉输入）
-  const auto l_only_outlier    = make_ref(0, true);
-  l_empty.references_          = {l_only_outlier};
-  const auto l_req_outlier     = build_spec_request(l_empty, l_agg);
-  BOOST_TEST(!l_req_outlier.contains("images"));
+  const auto l_only_outlier   = make_ref(0, true);
+  l_empty.references_         = {l_only_outlier};
+  const auto l_req_outlier    = build_spec_request(l_empty, l_agg);
+  const nlohmann::json l_json_outlier = l_req_outlier;
+  BOOST_TEST(l_req_outlier.images_.empty());
+  BOOST_TEST(!l_json_outlier.contains("images"));
 
   // 只有未被排除的图才发，且发的是**站点内相对路径**（由 to_public_url 补前缀 + 签名），
   // 而不是磁盘上的绝对路径 —— 后者既取不到也泄露部署结构。
-  const auto l_ok         = make_ref(0, false);
-  l_empty.references_     = {l_ok, l_only_outlier};
-  const auto l_req_ok     = build_spec_request(l_empty, l_agg);
-  BOOST_TEST(l_req_ok.contains("images"));
-  const auto l_images     = l_req_ok.at("images").get<std::vector<std::string>>();
+  const auto l_ok     = make_ref(0, false);
+  l_empty.references_ = {l_ok, l_only_outlier};
+  const auto l_req_ok = build_spec_request(l_empty, l_agg);
+  const nlohmann::json l_json_ok = l_req_ok;
+  BOOST_TEST(l_req_ok.images_.size() == 1);
+  BOOST_TEST(l_json_ok.contains("images"));
+  BOOST_TEST(l_json_ok.at("images").size() == 1);
+  const auto l_images = l_req_ok.images_;
   BOOST_TEST(l_images.size() == 1);
   // 期望值在这里独立拼出来（而不是调 ai_light.h 的 reference_image_url）：
   // 测试要钉的是**线格式**，跟着实现走就测不出格式漂移了。
@@ -352,6 +383,63 @@ BOOST_AUTO_TEST_CASE(build_request_omits_images_when_empty) {
       fmt::format("/api/doodle/ai/light/reference/{}/image", boost::uuids::to_string(l_ok.uuid_id_));
   BOOST_TEST(l_images.at(0) == l_expected_url);
   BOOST_TEST(l_images.at(0).find("/api/doodle/ai/light/reference/") == 0);
+}
+
+// 生产端 -> 消费端：信封必须能原样翻成方舟 Responses 请求体。
+// 这一条是这次结构体化的目的本身 —— 两侧一旦对同一个键的理解分叉，这里就会红。
+BOOST_AUTO_TEST_CASE(build_request_reaches_ark_body) {
+  const auto l_agg = make_agg();
+  const auto l_ok  = make_ref(0, false);
+
+  spec_generation_request_t l_request{};
+  l_request.prompt_text_ = "暖一点, 柔一点";
+  l_request.references_  = {l_ok};
+
+  const auto l_req  = build_spec_request(l_request, l_agg);
+  const auto l_body = http::seedance2::seedance2_client::build_inference_body(l_req);
+
+  // 提示词与素材都不留在方舟侧
+  BOOST_TEST(l_body.at("store").get<bool>() == false);
+  // 结构化输出必须是平铺的 text.format（§15.6 第 4 条），且 schema 就是我们的 schema 契约
+  const auto& l_format = l_body.at("text").at("format");
+  BOOST_TEST(l_format.at("type").get<std::string>() == "json_schema");
+  BOOST_TEST(l_format.at("name").get<std::string>() == "lighting_spec");
+  BOOST_TEST(l_format.at("strict").get<bool>() == true);
+  BOOST_TEST(l_format.at("schema").at("properties").contains("intent"));
+  BOOST_TEST(l_format.at("schema").at("properties").contains("evidence"));
+  BOOST_TEST(l_format.at("schema").at("properties").contains("targets"));
+  BOOST_TEST(l_format.at("schema").at("properties").contains("conflicts"));
+  // 不发 max_output_tokens：全字段 required + 长度不可预估 = 截断成半个 JSON 的失败面
+  BOOST_TEST(!l_body.contains("max_output_tokens"));
+  // 不发 reasoning_effort（信封里没设）
+  BOOST_TEST(!l_body.contains("reasoning"));
+  // thinking 缺省 disabled → 显式发 thinking.type=disabled
+  BOOST_TEST(l_body.at("thinking").at("type").get<std::string>() == "disabled");
+  BOOST_TEST(l_body.at("temperature").get<double>() == 0.2);
+  BOOST_TEST(l_body.at("model").get<std::string>() == std::string{doodle_config::g_ark_inference_model});
+
+  // input[0] 是 message，content 依次是文本与图片
+  const auto& l_item = l_body.at("input").at(0);
+  BOOST_TEST(l_item.at("type").get<std::string>() == "message");
+  BOOST_TEST(l_item.at("role").get<std::string>() == "user");
+  const auto& l_content = l_item.at("content");
+  BOOST_TEST(l_content.at(0).at("type").get<std::string>() == "input_text");
+  BOOST_TEST(l_content.at(0).at("text").get<std::string>().find("暖一点") != std::string::npos);
+  BOOST_TEST(l_content.at(1).at("type").get<std::string>() == "input_image");
+  // Responses 的 image_url 是**字符串**（生成 API 才是 {"url": ...} 对象）
+  BOOST_TEST(l_content.at(1).at("image_url").is_string());
+  BOOST_TEST(l_content.at(1).at("detail").get<std::string>() == "high");
+  BOOST_TEST(
+      l_content.at(1).at("image_url").get<std::string>() ==
+      fmt::format("/api/doodle/ai/light/reference/{}/image", boost::uuids::to_string(l_ok.uuid_id_))
+  );
+
+  // 没有参考图时：仍然能翻，只是 content 里只有文本
+  l_request.references_.clear();
+  const auto l_no_image = http::seedance2::seedance2_client::build_inference_body(
+      build_spec_request(l_request, l_agg)
+  );
+  BOOST_TEST(l_no_image.at("input").at(0).at("content").size() == 1);
 }
 
 // ===========================================================================

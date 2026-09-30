@@ -93,7 +93,9 @@ std::string url_path(std::string_view in_url) {
 // 请求体构造
 // ---------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(body_defaults_are_offline_safe) {
-  const auto l_body = seedance2_client::build_inference_body(nlohmann::json{{"input_text", "hello"}});
+  inference_request_t l_request{};
+  l_request.input_text_ = "hello";
+  const auto l_body     = seedance2_client::build_inference_body(l_request);
 
   BOOST_CHECK_EQUAL(l_body.at("model").get<std::string>(), std::string{doodle_config::g_ark_inference_model});
   // store 缺省是 true, 必须显式关掉: 提示词/素材不留在方舟侧
@@ -104,28 +106,29 @@ BOOST_AUTO_TEST_CASE(body_defaults_are_offline_safe) {
   // max_output_tokens 缺省**不发**：结构化输出长度不可预估，截断之后的半个 JSON 与
   // 「schema 不合规被拒」的失败面分不出来，所以上限交给模型/账号侧；只有显式指定才发。
   BOOST_CHECK_EQUAL(l_body.contains("max_output_tokens"), false);
+  inference_request_t l_with_limit{};
+  l_with_limit.input_text_        = "x";
+  l_with_limit.max_output_tokens_ = 1234;
   BOOST_CHECK_EQUAL(
-      seedance2_client::build_inference_body(nlohmann::json{{"input_text", "x"}, {"max_output_tokens", 1234}})
-          .at("max_output_tokens")
-          .get<std::int64_t>(),
-      1234
+      seedance2_client::build_inference_body(l_with_limit).at("max_output_tokens").get<std::int64_t>(), 1234
   );
 
   // 空串(会话没配模型)也要回落到缺省, 不能带着 model:"" 打过去
+  inference_request_t l_blank_model{};
+  l_blank_model.input_text_ = "x";
+  l_blank_model.model_      = std::string{};
   BOOST_CHECK_EQUAL(
-      seedance2_client::build_inference_body(nlohmann::json{{"input_text", "x"}, {"model", ""}})
-          .at("model")
-          .get<std::string>(),
+      seedance2_client::build_inference_body(l_blank_model).at("model").get<std::string>(),
       std::string{doodle_config::g_ark_inference_model}
   );
 }
 
 BOOST_AUTO_TEST_CASE(body_uses_responses_shape_with_string_image_url) {
-  const auto l_body   = seedance2_client::build_inference_body(nlohmann::json{
-        {"input_text", "看这张图"},
-        {"images", nlohmann::json::array({"/api/seedance2/pictures/a.png", "/api/seedance2/pictures/b.png"})},
-        {"image_detail", "high"},
-  });
+  inference_request_t l_request{};
+  l_request.input_text_   = "看这张图";
+  l_request.images_       = {"/api/seedance2/pictures/a.png", "/api/seedance2/pictures/b.png"};
+  l_request.image_detail_ = "high";
+  const auto l_body       = seedance2_client::build_inference_body(l_request);
 
   const auto& l_input = l_body.at("input").at(0);
   // InputItem 的 type 固定 "message"（文档原话），只发 role 是不够的。
@@ -145,23 +148,26 @@ BOOST_AUTO_TEST_CASE(body_uses_responses_shape_with_string_image_url) {
 }
 
 BOOST_AUTO_TEST_CASE(body_omits_thinking_when_auto_and_keeps_reasoning_effort) {
-  const auto l_body = seedance2_client::build_inference_body(
-      nlohmann::json{{"input_text", "x"}, {"thinking", "auto"}, {"reasoning_effort", "low"}}
-  );
+  inference_request_t l_request{};
+  l_request.input_text_       = "x";
+  l_request.thinking_         = "auto";
+  l_request.reasoning_effort_ = "low";
+  const auto l_body           = seedance2_client::build_inference_body(l_request);
   // auto = 不显式指定, 由模型自己决定
   BOOST_CHECK_EQUAL(l_body.contains("thinking"), false);
   BOOST_CHECK_EQUAL(l_body.at("reasoning").at("effort").get<std::string>(), "low");
 }
 
 BOOST_AUTO_TEST_CASE(body_attaches_flat_json_schema_format) {
-  const auto l_schema =
-      nlohmann::json{{"type", "object"}, {"properties", nlohmann::json{{"a", nlohmann::json{{"type", "string"}}}}}};
-  const auto l_body    = seedance2_client::build_inference_body(nlohmann::json{
-         {"input_text", "x"},
-         {"json_schema", l_schema},
-         {"json_schema_name", "lighting_target"},
-         {"json_schema_strict", false}
-  });
+  const auto l_schema = nlohmann::json{
+      {"type", "object"}, {"properties", nlohmann::json{{"a", nlohmann::json{{"type", "string"}}}}}
+  };
+  inference_request_t l_request{};
+  l_request.input_text_         = "x";
+  l_request.json_schema_        = l_schema;
+  l_request.json_schema_name_   = "lighting_target";
+  l_request.json_schema_strict_ = false;
+  const auto l_body             = seedance2_client::build_inference_body(l_request);
 
   const auto& l_format = l_body.at("text").at("format");
   BOOST_CHECK_EQUAL(l_format.at("type").get<std::string>(), "json_schema");
@@ -172,15 +178,68 @@ BOOST_AUTO_TEST_CASE(body_attaches_flat_json_schema_format) {
 }
 
 BOOST_AUTO_TEST_CASE(body_sends_instructions_when_given) {
-  const auto l_body =
-      seedance2_client::build_inference_body(nlohmann::json{{"instructions", "你是灯光师"}, {"input_text", "x"}});
+  inference_request_t l_request{};
+  l_request.instructions_ = "你是灯光师";
+  l_request.input_text_   = "x";
+  const auto l_body       = seedance2_client::build_inference_body(l_request);
   BOOST_CHECK_EQUAL(l_body.at("instructions").get<std::string>(), "你是灯光师");
   BOOST_CHECK_EQUAL(l_body.contains("caching"), false);
 }
 
-// ---------------------------------------------------------------------------
-// 响应解析
-// ---------------------------------------------------------------------------
+// 归一化信封现在是强类型(struct inference_request_t): json -> 结构体 -> json 必须原样往返,
+// 而「键存在但类型不符」必须抛错而不是静默丢掉 —— 丢掉 images 等于发出一个没有参考图的请求,
+// 这类静默不一致正是结构体化要消灭的东西。
+BOOST_AUTO_TEST_CASE(inference_request_round_trips_through_struct) {
+  const nlohmann::json l_source{
+      {"input_text", "x"},
+      {"instructions", "你是灯光师"},
+      {"images", nlohmann::json::array({"/api/a.png"})},
+      {"image_detail", "high"},
+      {"model", "m"},
+      {"temperature", 0.2},
+      {"top_p", 0.9},
+      {"max_output_tokens", 1234},
+      {"thinking", "enabled"},
+      {"reasoning_effort", "low"},
+      {"json_schema", nlohmann::json{{"type", "object"}}},
+      {"json_schema_name", "lighting_spec"},
+      {"json_schema_strict", false},
+  };
+  const auto l_envelope      = l_source.get<inference_request_t>();
+  const nlohmann::json l_back = l_envelope;
+  // 键集与取值都不许漂: 落库的 data_request_ 就是这份 json
+  BOOST_CHECK_EQUAL(l_back == l_source, true);
+
+  // 默认值的键(空串/未设 optional/非对象 schema)不该被写出来 —— 落库形状里没有多余的键
+  const nlohmann::json l_minimal = inference_request_t{};
+  BOOST_CHECK_EQUAL(l_minimal.empty(), true);
+
+  // 反过来: 键不存在时结构体取默认值, 不抛
+  const auto l_default = nlohmann::json{{"input_text", "x"}}.get<inference_request_t>();
+  BOOST_CHECK_EQUAL(l_default.images_.empty(), true);
+  BOOST_CHECK_EQUAL(l_default.image_detail_.has_value(), false);
+  BOOST_CHECK_EQUAL(l_default.json_schema_name_.empty(), true);
+  BOOST_CHECK_EQUAL(l_default.json_schema_strict_.has_value(), false);
+
+  // 非对象信封(null): 与改动前 .value() 在非对象上的行为一致, 全部取默认值
+  const auto l_from_null = nlohmann::json{}.get<inference_request_t>();
+  BOOST_CHECK_EQUAL(l_from_null.input_text_.empty(), true);
+}
+
+BOOST_AUTO_TEST_CASE(inference_request_rejects_wrong_typed_keys) {
+  // 注意: 这里必须先落到具名 json 变量再交给 BOOST_CHECK_THROW。宏只按**括号**切分实参,
+  // 直接把 `nlohmann::json{{"images", "x"}}` 写进宏里, 花括号中的逗号会被当成实参分隔符。
+  // images 必须是字符串数组: 类型不符时抛, 而不是悄悄发一个没有参考图的请求
+  const nlohmann::json l_images_not_array{{"images", "not-an-array"}};
+  const nlohmann::json l_images_int_array{{"images", nlohmann::json::array({1, 2})}};
+  const nlohmann::json l_bad_temperature{{"temperature", "warm"}};
+  const nlohmann::json l_bad_input_text{{"input_text", 42}};
+
+  BOOST_CHECK_THROW(l_images_not_array.get<inference_request_t>(), nlohmann::json::type_error);
+  BOOST_CHECK_THROW(l_images_int_array.get<inference_request_t>(), nlohmann::json::type_error);
+  BOOST_CHECK_THROW(l_bad_temperature.get<inference_request_t>(), nlohmann::json::type_error);
+  BOOST_CHECK_THROW(l_bad_input_text.get<inference_request_t>(), nlohmann::json::type_error);
+}
 BOOST_AUTO_TEST_CASE(parse_reads_the_message_item_not_the_reasoning_item) {
   const auto l_result = seedance2_client::parse_inference_response(completed_body_with_reasoning("答案是 42"), 200);
 
@@ -345,9 +404,10 @@ BOOST_AUTO_TEST_CASE(add_ip_to_req_covers_generation_shape) {
 }
 
 BOOST_AUTO_TEST_CASE(add_ip_to_req_covers_responses_shape) {
-  const auto l_req = seedance2_client::build_inference_body(
-      nlohmann::json{{"input_text", "看这个"}, {"images", nlohmann::json::array({"/api/a.png"})}}
-  );
+  inference_request_t l_request{};
+  l_request.input_text_ = "看这个";
+  l_request.images_     = {"/api/a.png"};
+  const auto l_req      = seedance2_client::build_inference_body(l_request);
   const auto l_out = ai_client_base::add_ip_to_req(l_req, g_ip, g_secret, g_uid);
   const auto l_url = l_out.at("input").at(0).at("content").at(1).at("image_url").get<std::string>();
 

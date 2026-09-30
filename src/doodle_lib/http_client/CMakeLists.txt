@@ -5,6 +5,7 @@ target_sources(
         kitsu_client.h
         dingding_client.h
         seedance2_client.h
+        seedance2_inference_request.h
         ai_client_base.h
         transfer_station_client.h
         url_sign.h

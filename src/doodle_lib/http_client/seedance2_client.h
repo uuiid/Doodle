@@ -7,6 +7,7 @@
 #include <doodle_core/metadata/seedance2/task.h>
 
 #include "ai_client_base.h"
+#include "seedance2_inference_request.h"
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 #include <string_view>
@@ -21,7 +22,7 @@ namespace doodle::http::seedance2 {
  * - 推理: POST /api/v3/responses                    (同步, 一次调用拿结果)
  *
  * 推理请求体由调用方按**归一化信封**给出(data_request_), 由 build_inference_body() 翻成
- * 方舟格式; 归一化信封的字段见 build_inference_body() 的注释。
+ * 方舟格式; 归一化信封的字段见 inference_request_t(seedance2_inference_request.h)。
  */
 class DOODLELIB_API seedance2_client final : public ai_client_base {
   constexpr static std::string_view g_sd2_host_url{"https://ark.cn-beijing.volces.com"};
@@ -43,22 +44,11 @@ class DOODLELIB_API seedance2_client final : public ai_client_base {
   // 下面几个都是纯函数, 便于不联网单测。
 
   /**
-   * 把归一化请求信封翻成方舟 Responses 请求体。信封字段(全部选填, 但至少要有一个文本或图片):
-   *   model              模型名, 缺省用 doodle_config::g_ark_inference_model
-   *   instructions       系统指令(与 caching 互斥, 这里从不发 caching)
-   *   input_text         用户文本
-   *   images             图片数组, 元素为站点内路径或绝对 URL
-   *   image_detail       low|high|auto
-   *   temperature, top_p, max_output_tokens
-   *   thinking           enabled|disabled|auto(缺省 disabled)
-   *   reasoning_effort   minimal|low|medium|high
-   *   json_schema        结构化输出的 schema(对象)
-   *   json_schema_name   结构化输出的名字
-   *   json_schema_strict 是否 strict(缺省 true)
-   *
-   * 固定 store=false: 不把提示词/素材留在方舟侧。
+   * 把归一化请求信封(inference_request_t)翻成方舟 Responses 请求体。
+   * 字段语义与缺省值见 inference_request_t 的注释; 固定 store=false: 不把提示词/素材留在方舟侧。
+   * 传进来的信封已是强类型, 这里不再做任何字符串读键/类型猜测。
    */
-  static nlohmann::json build_inference_body(const nlohmann::json& in_request);
+  static nlohmann::json build_inference_body(const inference_request_t& in_request);
 
   /// 解析 Responses 响应; in_status_code 是 HTTP 状态码
   static run_task_result_t parse_inference_response(const nlohmann::json& in_body, int in_status_code);

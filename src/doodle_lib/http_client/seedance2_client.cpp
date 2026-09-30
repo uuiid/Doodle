@@ -37,6 +37,9 @@ bool seedance2_client::is_timeout_error(const nlohmann::json& in_body) {
 // ─── 子类方法 ─────────────────────────────────────────────────────────────────
 
 ai_client_base::request_info_t seedance2_client::collect_request_info(const nlohmann::json& in_request) const {
+  // 刻意保持宽容的字符串读键: 这个函数与**生成类**任务的 json 形状共用(前台提交路径),
+  // 那种 json 不是 inference_request_t, 不能按推理信封的严格类型去解析。推理信封的键名与类型
+  // 定义在 seedance2_inference_request.h 一处, 这里只挑提示词用的字段读。
   request_info_t l_info{};
   if (in_request.contains("model")) l_info.model_ = in_request.at("model").get<std::string>();
   if (in_request.contains("resolution")) l_info.resolution_ = in_request.at("resolution").get<std::string>();
@@ -102,24 +105,23 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
 
 // ─── 推理 (Responses API) ────────────────────────────────────────────────────
 
-nlohmann::json seedance2_client::build_inference_body(const nlohmann::json& in_request) {
+nlohmann::json seedance2_client::build_inference_body(const inference_request_t& in_request) {
   nlohmann::json l_body{};
   // 传了空串(会话没配模型)时也要回落到缺省值, 否则会带着 model:"" 打过去白跑一趟
-  const auto l_model = in_request.value("model", std::string{});
+  const auto l_model = in_request.model_.value_or(std::string{});
   l_body["model"]    = l_model.empty() ? std::string{doodle_config::g_ark_inference_model} : l_model;
 
   // instructions 与 caching 互斥(方舟会报 400 InvalidParameter), 这里从不发 caching
-  if (auto l_v = in_request.value("instructions", std::string{}); !l_v.empty()) l_body["instructions"] = l_v;
+  if (in_request.instructions_ && !in_request.instructions_->empty()) l_body["instructions"] = *in_request.instructions_;
 
   nlohmann::json l_content = nlohmann::json::array();
-  if (auto l_text = in_request.value("input_text", std::string{}); !l_text.empty())
-    l_content.push_back(nlohmann::json{{"type", "input_text"}, {"text", l_text}});
-  if (in_request.contains("images") && in_request.at("images").is_array()) {
-    const auto l_detail = in_request.value("image_detail", std::string{});
-    for (const auto& l_image : in_request.at("images")) {
-      if (!l_image.is_string()) continue;
+  if (!in_request.input_text_.empty())
+    l_content.push_back(nlohmann::json{{"type", "input_text"}, {"text", in_request.input_text_}});
+  if (!in_request.images_.empty()) {
+    const auto l_detail = in_request.image_detail_.value_or(std::string{});
+    for (const auto& l_image : in_request.images_) {
       // 注意: Responses 的 input_image.image_url 是**字符串**(生成 API 才是 {"url": ...} 对象)
-      nlohmann::json l_item{{"type", "input_image"}, {"image_url", l_image.get<std::string>()}};
+      nlohmann::json l_item{{"type", "input_image"}, {"image_url", l_image}};
       if (!l_detail.empty()) l_item["detail"] = l_detail;
       l_content.push_back(std::move(l_item));
     }
@@ -134,22 +136,22 @@ nlohmann::json seedance2_client::build_inference_body(const nlohmann::json& in_r
   // max_output_tokens **缺省不发**: 结构化输出要求全字段 required, 输出长度不可预估, 而截断
   // 之后 result_json_ 只剩半个 JSON —— 那个失败面跟"schema 不合规被拒"完全分不出来。
   // 交给模型/账号侧决定上限; 只有调用方显式指定了才发。
-  if (in_request.contains("max_output_tokens")) l_body["max_output_tokens"] = in_request.at("max_output_tokens");
-  if (in_request.contains("temperature")) l_body["temperature"] = in_request.at("temperature");
-  if (in_request.contains("top_p")) l_body["top_p"] = in_request.at("top_p");
+  if (in_request.max_output_tokens_) l_body["max_output_tokens"] = *in_request.max_output_tokens_;
+  if (in_request.temperature_) l_body["temperature"] = *in_request.temperature_;
+  if (in_request.top_p_) l_body["top_p"] = *in_request.top_p_;
 
   // 缺省关闭思考: 蒸馏/结构化输出不需要思维链, 还能省输出 token
-  const auto l_thinking = in_request.value("thinking", std::string{"disabled"});
+  const auto l_thinking = in_request.thinking_.value_or(std::string{"disabled"});
   if (!l_thinking.empty() && l_thinking != "auto") l_body["thinking"] = nlohmann::json{{"type", l_thinking}};
-  if (auto l_effort = in_request.value("reasoning_effort", std::string{}); !l_effort.empty())
-    l_body["reasoning"] = nlohmann::json{{"effort", l_effort}};
+  if (in_request.reasoning_effort_ && !in_request.reasoning_effort_->empty())
+    l_body["reasoning"] = nlohmann::json{{"effort", *in_request.reasoning_effort_}};
 
-  if (in_request.contains("json_schema") && in_request.at("json_schema").is_object()) {
+  if (in_request.json_schema_.is_object()) {
     nlohmann::json l_format{
         {"type", "json_schema"},
-        {"name", in_request.value("json_schema_name", std::string{"result"})},
-        {"schema", in_request.at("json_schema")},
-        {"strict", in_request.value("json_schema_strict", true)},
+        {"name", in_request.json_schema_name_.empty() ? std::string{"result"} : in_request.json_schema_name_},
+        {"schema", in_request.json_schema_},
+        {"strict", in_request.json_schema_strict_.value_or(true)},
     };
     l_body["text"] = nlohmann::json{{"format", std::move(l_format)}};
   }
@@ -254,7 +256,18 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
     const doodle::seedance2::task& in_task
 ) {
   const auto l_uid = in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_);
-  const auto l_body = build_inference_body(in_task.data_request_);
+  // 落库的 data_request_ 是归一化信封 json; 解析成强类型后交给 build_inference_body。
+  // 这里**只读不写回**: 任务行落库路径原样拷贝 json, 不能拿结构体重序列化(会丢未知键)。
+  inference_request_t l_envelope{};
+  try {
+    l_envelope = in_task.data_request_.get<inference_request_t>();
+  } catch (const nlohmann::json::exception& e) {
+    throw_exception(http_request_error{
+        boost::beast::http::status::internal_server_error,
+        fmt::format("推理信封无法解析(任务 {}): {}", boost::uuids::to_string(in_task.uuid_id_), e.what())
+    });
+  }
+  const auto l_body = build_inference_body(l_envelope);
 
   run_task_result_t l_result{};
   for (std::size_t l_attempt = 0; l_attempt < doodle_config::g_ark_inference_max_retry; ++l_attempt) {
