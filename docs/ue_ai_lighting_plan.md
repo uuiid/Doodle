@@ -1085,7 +1085,8 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    文本结构化是补充通道，接缝失败时降级为「文本原样留存 + 只用滑块轴」，判断本身完全成立。
 6. **轮次编排**：`awaiting_judgement` 会话状态、4 小时过期标志、跨会话恢复（§10.3）。
    **已落地**：`doodle_lib/http_method/kitsu/ai_light_orchestrator.{h,cpp}`
-   （`advance_session` / `apply_judgement` / `mark_iteration_rendered` / `build_session_detail`）。
+   （`advance_session` / `apply_judgement` / `mark_iteration_rendered` / `build_session_detail`；
+   三条接缝与校验层已拆成独立文件，见 §15.11）。
    编排层**不依赖 HTTP**（不 include `http_jwt_fun` / `session_data`），所以单测
    不需要伪造 JWT 或起服务器，能直接构造「处于某状态的会话」再调它。
 7. **数据表**：`ai_light_session` / `ai_light_reference` / `ai_light_spec` / `ai_light_iteration` /
@@ -1439,7 +1440,8 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 **接缝**（三条都原样保留，其中两条已落地）：
 
 ```cpp
-// 三个接缝都在 ai_light_orchestrator.cpp。
+// 三条接缝各在自己的文件里（ai_light_seam_{spec,candidates,feedback}.{h,cpp}，见 §15.11）；
+// ai_light_orchestrator.{h,cpp} 只留状态机（伞形头 + 四个状态机函数）。
 generate_spec(in_sql, req)           -> spec_generation_result_t      // 已落地，见 §15.7
 generate_candidates(in_sql, req)     -> candidate_generation_result_t // 已落地，见 §15.8
 structure_feedback(in_sql, req)      -> std::vector<axis_step_t>      // 已落地，见 §15.9
@@ -1939,8 +1941,8 @@ POST /session/{id}/spec
 
 | 项 | 落点 |
 |---|---|
-| 接缝本体 | `http_method/kitsu/ai_light_orchestrator.cpp` 的 `generate_spec(in_sql, in_request)` `:1317` |
-| 离线可测的 5 个纯函数 | 同文件 `build_spec_instructions()` `:810` / `build_spec_json_schema()` `:852` / `build_spec_input_text()` `:975` / `build_spec_request()` `:1079`（返回强类型信封 `http::seedance2::inference_request_t`，定义在 `http_client/seedance2_inference_request.h`）/ `map_spec_result()` `:1108`（声明在 `ai_light_orchestrator.h`，**必须留在 `doodle::ai_light` 命名空间内**，见坑 9） |
+| 接缝本体 | `http_method/kitsu/ai_light_seam_spec.cpp` 的 `generate_spec(in_sql, in_request)` `:565` |
+| 离线可测的 5 个纯函数 | 同文件 `build_spec_instructions()` `:120` / `build_spec_json_schema()` `:142` / `build_spec_input_text()` `:227` / `build_spec_request()` `:331`（返回强类型信封 `http::seedance2::inference_request_t`，定义在 `http_client/seedance2_inference_request.h`）/ `map_spec_result()` `:361`（声明在 `ai_light_seam_spec.h`，**必须留在 `doodle::ai_light` 命名空间内**，见坑 9）；服务器自组 `evidence_` 的 `put_evidence()` `:104` |
 | 请求 / 结果结构 | `spec_generation_request_t{ session_id_, project_id_, operator_id_, prompt_text_, references_, degrade_level_, previous_spec_ }`；`spec_generation_result_t{ spec_, evidence_, reference_stats_, conflict_resolution_ }` |
 | 状态机 | `advance_session(in_sql, in_session, in_operator_id)` `:124`（新签名，见 D1） |
 | 参考图 URL | `http_method/kitsu/ai_light.h` 的 `g_reference_image_path_template` + `reference_image_url(uuid)`。放在路由头是因为 `/api/doodle/ai/light/reference/{}/image` 的注册要用**字面量**喂 `_url` 这个 UDL，`constexpr std::string_view` 递不进去 |
@@ -2155,24 +2157,26 @@ advance_session(generating 分支)
             └─ expand_candidates(base, axes)  ← 纯确定性 OFAT：候选 0 = 基线，其余 5 个各沿一档
 ```
 
-| 项 | 落点（均在 `src/doodle_lib/http_method/kitsu/ai_light_orchestrator.cpp`，行号是起点，定位靠函数名） |
+| 项 | 落点（`src/doodle_lib/http_method/kitsu/`，行号是起点，定位靠函数名；接缝 2 已拆到 `ai_light_seam_candidates.{h,cpp}` 与 `ai_light_rig_ops.{h,cpp}`，见 §15.11） |
 |---|---|
-| 预算常量：档位 5 / 轴上限 2 / strategy 500 / 预设 top-k 12 | `:1391` `:1394` `:1397` `:1400` |
-| 轴语义与单位说明（嵌进 instructions 的原文） | `g_axis_semantics_text` `:1404` |
-| 通用灯光段落（§6.1 边界 + §5.5 六行表）**与接缝 1 共用** | `build_common_lighting_section()` `:857` |
-| 接缝 1 专属指令（§6.3 冲突规则） | `build_spec_instructions()` `:886` |
-| 接缝 2 专属指令（轴语义 + 输出要求） | `build_candidates_instructions()` `:1669` |
-| 输出 schema（轴计划 + 基线 rig，平铺、严格） | `build_candidates_json_schema()` `:1699` |
-| 输入文本（Spec 投影 + 命中预设 + 上一轮反馈） | `build_candidates_input_text()` `:1786` |
-| 信封 | `build_candidates_request()` `:1826` |
-| 默认轴计划（回退用） | `default_axis_plan()` `:1844` |
-| 把模型的 JSON 物化成基线 rig | `build_base_rig()` `:1868` |
-| 单轴增量的纯函数（不碰 IO） | `apply_axis_step()` `:1941` |
-| 确定性 OFAT 展开成恰好 6 个 | `expand_candidates()` `:2036` |
-| 基线 → 候选的差异（供 UE 侧精确增删） | `diff_rigs()` `:2066` |
-| 结果映射 + 护栏校验 | `map_candidate_result()` `:2126` |
-| 接缝本体（推理通道 + 失败映射） | `generate_candidates()` `:2302` |
-| 轴计划的严格解析（返回失败原因） | `parse_axis_plan()` `:1614` |
+| 预算常量：档位 5 / 轴上限 2 | `ai_light_rig_ops.h` 的 `g_axis_step_budget` / `g_axis_max_count` |
+| 预算常量：strategy 500 / 预设 top-k 12 | `ai_light_seam_candidates.cpp` 的 `g_strategy_max_len` / `g_preset_prompt_top_k` |
+| 轴语义与单位说明（嵌进 instructions 的原文） | `g_axis_value_semantics_text`（`ai_light_seam_common.h`，**接缝 2 与 3 共用**） |
+| 通用灯光段落（§6.1 边界 + §5.5 六行表）**与接缝 1 共用** | `ai_light_seam_common.cpp` 的 `build_common_lighting_section()` `:202` |
+| 接缝 1 专属指令（§6.3 冲突规则） | `ai_light_seam_spec.cpp` 的 `build_spec_instructions()` `:120` |
+| 接缝 2 专属指令（轴语义 + 输出要求） | `build_candidates_instructions()` `:198` |
+| 输出 schema（轴计划 + 基线 rig，平铺、严格） | `build_candidates_json_schema()` `:233` |
+| 输入文本（Spec 投影 + 命中预设 + 上一轮反馈） | `build_candidates_input_text()` `:286` |
+| 信封 | `build_candidates_request()` `:326` |
+| 默认轴计划（回退用） | `default_axis_plan()` `:344` |
+| 把模型的 JSON 物化成基线 rig | `build_base_rig()` `:368` |
+| 单轴增量的纯函数（不碰 IO） | `ai_light_rig_ops.cpp` 的 `apply_axis_step()` `:51` |
+| 确定性 OFAT 展开成恰好 6 个 | `ai_light_rig_ops.cpp` 的 `expand_candidates()` `:138` |
+| 基线 → 候选的差异（供 UE 侧精确增删） | `ai_light_rig_ops.cpp` 的 `diff_rigs()` `:168` |
+| 结果映射 + 护栏校验 | `ai_light_seam_candidates.cpp` 的 `map_candidate_result()` `:454` |
+| 接缝本体（推理通道 + 失败映射） | `generate_candidates()` `:536` |
+| 轴计划的严格解析（返回失败原因） | `parse_axis_plan()` `:143` |
+| 预设的词法检索（无 embedding，见 §6.4） | `pick_presets()` `:113` + `preset_lexical_score()` |
 
 **三条实现决定**
 
@@ -2315,21 +2319,21 @@ judge_route::post
   └─ apply_judgement() 落库 → 下一轮 advance_session 的 generating 分支读它当**约束**用（§15.8 数据流）
 ```
 
-| 项 | 落点（`src/doodle_lib/http_method/kitsu/`，行号是起点，定位靠函数名） |
+| 项 | 落点（`src/doodle_lib/http_method/kitsu/`，行号是起点，定位靠函数名；接缝 3 已拆到 `ai_light_seam_feedback.{h,cpp}`，见 §15.11） |
 |---|---|
-| 接缝 3 请求结构体（11 字段，含 `spec_` / `candidates_` / `slider_axes_`） | `ai_light_orchestrator.h:271` |
-| 双参签名 + 6 个纯函数声明 | `ai_light_orchestrator.h:313` `:324` `:347` |
+| 接缝 3 请求结构体（11 字段，含 `spec_` / `candidates_` / `slider_axes_`） | `ai_light_seam_feedback.h:262` 前（`: public seam_request_base_t`，三字段已上提到 `ai_light_seam_common.h` 的 `seam_request_base_t`） |
+| 双参签名 + 6 个纯函数声明 | `ai_light_seam_feedback.h` 的 `structure_feedback` / `build_feedback_*` / `map_feedback_result` |
 | 调用方（组装请求 + 合并 + 降级） | `ai_light.cpp:713`（`judge_route::post` 内） |
-| 轴值语义（与 `apply_axis_step` **共用同一份口径**） | `g_axis_value_semantics_text` `:1409` |
-| 当前 key:fill 比（`apply_axis_step` 的该分支也改用它） | `key_fill_ratio_of()` `:1952` |
-| 共用样板：解析工作室 / 统一失败映射（**三条接缝同用**） | `make_seam_client()` `:2251` · `chick_inference_ok()` `:2288` |
-| 反馈轴上限 2 / label 上限 200 / 数值裁剪 | `:2417` `:2421` · `trim_number()` `:2425` |
-| 接缝 3 专属指令（角色 + 轴语义 + 六条约束） | `build_feedback_instructions()` `:2435` |
-| 输出 schema（`understanding` + `axes[≤2]`） | `build_feedback_json_schema()` `:2462` |
-| 输入文本（七段） | `build_feedback_input_text()` `:2491` |
-| 信封 | `build_feedback_request()` `:2580` |
-| 结果映射（形状抛错 / 语义丢弃） | `map_feedback_result()` `:2597` |
-| 接缝本体（推理通道 + 失败映射） | `structure_feedback()` `:2663` |
+| 轴值语义（与 `apply_axis_step` **共用同一份口径**） | `g_axis_value_semantics_text`（`ai_light_seam_common.h`，**接缝 2 与 3 共用**） |
+| 当前 key:fill 比（`apply_axis_step` 的该分支也改用它） | `ai_light_rig_ops.cpp` 的 `key_fill_ratio_of()` `:30` |
+| 共用样板：解析工作室 / 统一失败映射（**三条接缝同用**） | `ai_light_seam_common.cpp` 的 `make_seam_client()` `:51` · `chick_inference_ok()` `:88` · `run_seam_inference()` `:116` |
+| 反馈轴上限 2 / label 上限 200 / 数值裁剪 | `ai_light_seam_feedback.cpp` 的 `g_feedback_axis_max_count` / `g_feedback_label_max_len` · `trim_number()` |
+| 接缝 3 专属指令（角色 + 轴语义 + 六条约束） | `build_feedback_instructions()` `:90` |
+| 输出 schema（`understanding` + `axes[≤2]`） | `build_feedback_json_schema()` `:117` |
+| 输入文本（七段） | `build_feedback_input_text()` `:138` |
+| 信封 | `build_feedback_request()` `:227` |
+| 结果映射（形状抛错 / 语义丢弃） | `map_feedback_result()` `:244` |
+| 接缝本体（推理通道 + 失败映射） | `structure_feedback()` `:310` |
 | 测试 | `src/test/core/ai_light_feedback.cpp`（11 用例 / 84 断言，全离线） |
 
 **八条实现决定**
@@ -2582,5 +2586,140 @@ judge_route::post
 `upgrade_29_to_30_adds_te_xie_column` 整段删除、`upgrade_brings_older_db_up_to_current` 改写成只钉
 「从 v26 出发也会被带到 31 且建出 `ai_light_session`」（删掉 te_xie 与探针行的断言，顺带删掉
 `drop_te_xie` / `insert_probe_extend` / `probe_te_xie` 三个只服务于它的助手）。
+
+### 15.11 已落地（编排层重构 + 统一 JSON 架构验证层）
+
+**需求（用户原话，m02972）**：「整理并重构 `src/doodle_lib/http_method/kitsu/ai_light_orchestrator.cpp`
+`src/doodle_lib/http_method/kitsu/ai_light_orchestrator.h` 中的类和方法, 尤其是对模型推理后的 json 架构验证」。
+
+一句话：**行为一字不改**，把当时的单文件（`ai_light_orchestrator.cpp` 约 2700 行 / `.h` 420 行）拆成
+「状态机 + 三条接缝 + 校验层 + rig 运算」，并把散落在三处的 JSON 读取器合并成一层；在此之上给模型输出
+接上 `json-schema-validator` 做**诊断**（决策 D-1，不做准入）。完整契约（诊断表 / 逐符号搬迁表 / 批次 0–7）
+在 `build/refactor_plan_v3.md`。
+
+**目标与动机（为什么要拆）**
+
+| 动机 | 具体症状 |
+|---|---|
+| 单文件过大 | 2734 行里同时有状态机、三条接缝的提示词/schema/解析、rig 运算、推理管道；改接缝 3 要滚过接缝 1 的 600 行 |
+| 读取器同形不同义 | `require_*`（抛）与 `opt_*`（返回 `optional` / 空容器）写法相似，且严格读取器的错误文本**硬编码**写成「候选基线 rig 的字段 …」—— 接缝 1/3 复用它时报错会指向错误的字段（本轮的 F1） |
+| 契约无处安放 | 三条接缝的宽容度完全不同（见下表），却只能靠读实现来判断 |
+| 无本地校验 | 模型输出是否合规只有 Ark 侧 `json_schema_strict=true` 的承诺；接缝自己读到第一个坏字段就抛，**看不到全部违规** |
+
+**新文件结构**（`src/doodle_lib/http_method/kitsu/`，行数 = 本轮落地时）
+
+| 文件 | 行数 | 职责 | 关键符号 |
+|---|---|---|---|
+| `ai_light_orchestrator.h` | 135 | **伞形头**：include 下面五个头 + 只声明状态机 4 个函数 | `advance_session` / `apply_judgement` / `mark_iteration_rendered` / `build_session_detail` |
+| `ai_light_orchestrator.cpp` | 752 | **只剩状态机**：入口/回滚/两个分支协程 + 上面 4 个函数 | `advance_session_spec_branch` `:139` · `advance_session_generating_branch` `:202` · `advance_session` `:395` |
+| `ai_light_json_validation.{h,cpp}` | 213 / 416 | **统一 JSON 层**：架构建造器 + 严格读取器 + 宽松读取器 + 诊断（②自检 / ③模型输出） | `schema_*` / `require_*` / `opt_*` / `validate_schema_is_wellformed` `:360` / `validate_model_output` `:390` / `join_violations` `:404` |
+| `ai_light_rig_ops.{h,cpp}` | 63 / 228 | rig 的纯运算（不碰 IO） | `key_fill_ratio_of` `:30` · `apply_axis_step` `:51` · `expand_candidates` `:138` · `diff_rigs` `:168`；`g_axis_step_budget` / `g_axis_max_count`（在头里） |
+| `ai_light_seam_common.{h,cpp}` | 152 / 310 | **三条接缝共用**：文本投影 + 布局助手 + **推理管道** | `first_light_with_role` `:156` · `join_strings` `:162` · `join_numbers` `:231` · `rgb_to_hex` `:171` · `describe_targets` `:179` · `describe_rig_brief` `:240` · `describe_spec_brief` `:264` · `describe_preset_brief` `:301` · `build_common_lighting_section` `:202` · `g_axis_value_semantics_text`（在头里）· `seam_request_base_t` `:111` · `seam_inference_result_t` `:130` · `run_seam_inference` `:146` |
+| `ai_light_seam_spec.{h,cpp}` | 107 / 605 | 接缝 1（宽松） | `build_spec_*` · `put_evidence` `:104` · `map_spec_result` `:361` · `generate_spec` `:565` |
+| `ai_light_seam_candidates.{h,cpp}` | 134 / 572 | 接缝 2（严格） | `pick_presets` `:113` · `parse_axis_plan` `:143` · `build_candidates_*` · `default_axis_plan` `:344` · `build_base_rig` `:368` · `map_candidate_result` `:454` · `generate_candidates` `:536` |
+| `ai_light_seam_feedback.{h,cpp}` | 105 / 352 | 接缝 3（混合） | `build_feedback_*` · `map_feedback_result` `:244` · `structure_feedback` `:310` |
+
+**依赖方向（单向，无环）**：`ai_light_json_validation` 只依赖 `nlohmann` 与 `doodle_core` 异常（**公共头不含
+`<nlohmann/json-schema.hpp>`** —— 校验库只出现在 `.cpp`）→ `ai_light_seam_common`（公共头**不含 HTTP**，推理
+客户端只在 `.cpp` 里拉）→ `ai_light_rig_ops`（借 `first_light_with_role`）→ 三条接缝 → 状态机。伞形头是唯一
+对外入口：调用方（`ai_light.cpp` + 4 个测试）只需 `#include "ai_light_orchestrator.h"`。
+
+**搬迁映射（原落点 → 现落点）**
+
+| 内容 | 原落点（拆分前） | 现落点 |
+|---|---|---|
+| 状态机 4 函数 + 回滚 lambda | `ai_light_orchestrator.cpp` 随处 | 同文件 `:118-752`（拆出两个分支协程，见 D-7） |
+| 接缝 1 全部（4 个 `build_spec_*` + `map_spec_result` + `generate_spec` + 白名单 + `g_evidence_paths` + `put_evidence`） | `:717-1221` + `:1703-1728` | `ai_light_seam_spec.{h,cpp}` |
+| 接缝 2 全部（`build_candidates_*` + `default_axis_plan` + `build_base_rig` + `parse_axis_plan` + `pick_presets` + `rig_substance` + `map_candidate_result` + `generate_candidates`） | `:1223-1698` + `:1730-1752` | `ai_light_seam_candidates.{h,cpp}` |
+| 接缝 3 全部（4 个 `build_feedback_*` + `map_feedback_result` + `structure_feedback` + `trim_number` + 两个上限常量） | `:1754-2032` | `ai_light_seam_feedback.{h,cpp}` |
+| `key_fill_ratio_of` / `apply_axis_step` / `expand_candidates` / `diff_rigs` + 两个轴常量 | `:1787-1988` + `:1302-1307` | `ai_light_rig_ops.{h,cpp}` |
+| `join_strings` / `join_numbers` / `rgb_to_hex` / `describe_targets` / `describe_rig_brief` / `describe_spec_brief` / `describe_preset_brief` / `build_common_lighting_section` / `g_axis_value_semantics_text` | 分散在 `:761-841` / `:1310-1459` | `ai_light_seam_common.{h,cpp}` |
+| `resolved_inference_t` / `make_seam_client` / `chick_inference_ok` + 三段 `generate_*` 的样板 | 匿名 ns `:1706-1782` + 三处各自复制 | `ai_light_seam_common.{h,cpp}` 的 `run_seam_inference()`（一处实现） |
+| `require_*` / `opt_*` / `is_one_of` / `make_*_schema` + 17 键 `g_evidence_paths` 之外的校验原语 | 三处各写一份 | `ai_light_json_validation.{h,cpp}` |
+| 三条请求结构体的公共三字段 | 三份重复（各自 6/4/3 行文档） | `seam_request_base_t`（`ai_light_seam_common.h:111`） |
+
+**三条策略必须保持不同的不变式（这是拆分的验收标准之一：拆完仍必须不同）**
+
+| 接缝 | 策略 | 缺字段 / 类型不符 | 语义无效 |
+| --- | --- | --- | --- |
+| spec（`map_spec_result`） | 宽松 | 保留统计默认值 + `put_evidence(default_value)` 留痕 | 自由文本枚举走白名单，不在白名单则弃用该字段 |
+| candidates（`build_base_rig` / `map_candidate_result`） | 严格 | 抛 502 | 轴计划非法 → **整体回退** `default_axis_plan()`，原因写进 `strategy_` |
+| feedback（`map_feedback_result`） | 混合 | 抛 502（形状） | 未知轴 / `none` / 0 / 非法比值 / 重复 → 静默丢弃，首个胜 |
+
+**实现决定（承 §15.7 的 D1–D5、§15.8 的 D6–D8、§15.9 的 D9–D16、§15.10 的 D17–D23，续 D-1 ~ D-7）**
+
+| # | 决定 | 理由 |
+|---|---|---|
+| D-1 | 引入 `json-schema-validator`（vcpkg port 2.4.0，MIT）**只做诊断**：②我们自己的 schema 是不是合法 draft-7、③模型输出对 schema 的全部违规；**不把违规升级为拒绝** | ①Ark 侧 `json_schema_strict=true` 已经保证合规输出；②spec 接缝**有意**容忍截断/不完整输出（靠默认值 + `evidence.source = default_value` 留痕），一道 schema 闸门会直接破坏这个设计；③`additionalProperties:false` 若当闸门，会把今天被静默忽略的「模型多回一个无关键」变成整轮 502。**升级路径**：真机日志证明模型从不违规后，某个接缝提升为 502 是**一行改动**（`validate_model_output` 非空时抛） |
+| D-2 | 每次调用**本地构造** validator（不共享、不加锁），schema 直接复用 `build_*_request()` 已建好的 `json_schema_` | 库 README 明确「校验是 const 且线程安全，但 validator 构造不是」；本地构造最简单，成本相对一次 LLM 调用可忽略；复用字段 = 诊断的 schema 与真正发出去的那份**必然同源** |
+| D-3 | 不给 schema 加 `default`，且**不使用 `validate()` 的返回值**（只调带 `error_handler` 的重载） | 库的 default-value 处理会返回 json patch，`$ref` 内出现 `default` 时会破坏 draft-7 语义；不取返回值 = 不可能被 patch 影响 |
+| D-4 | 三条接缝在拿到 `result_json_`、进 `map_*` **之前**调 `validate_model_output(...)`，用 `SPDLOG_LOGGER_WARN` 记**前 3 条**（`join_violations` 截断并标注省略数），带接缝名与轮次 | 控制流零变化；收益是「严格接缝今天读到第一个坏字段就抛，现在日志里能看到全部违规」 |
+| D-5 | 三条接缝的请求结构体上提 `seam_request_base_t{session_id_, project_id_, operator_id_}`，`run_seam_inference` 只收一个信封 | 管道真正要的就是这三样。**加基类是安全的**：全仓库对三个结构体只有「值初始化 + 逐字段赋值」，没有任何聚合初始化 |
+| D-6 | 推理样板收口成 `run_seam_inference(sqlite_database&, const seam_request_base_t&, seam, text_prompt, const http::seedance2::inference_request_t&, const uuid& iteration_id = {})`，返回**新的** `seam_inference_result_t{json_, input_tokens_, output_tokens_, total_tokens_}`，**不是** `run_task_result_t` | 信念封装的刻意偏离（plan §4 原签名返回 `run_task_result_t`）：`chick_inference_ok` 已经把 `status_`/`error_code_`/`is_timeout_` 消费成 `doodle_error`，调用方拿不到也不该关心它们。字段名与 `run_task_result_t` 的同名成员保持一致，好让三条接缝的日志语句**逐字不变**（只把 `result_json_` 换成 `json_`）。`iteration_id` 为 nil 表示这次推理不属于任何轮次（蒸馏阶段） |
+| D-7 | `advance_session` 拆出 `advance_session_spec_branch` / `advance_session_generating_branch` 两个协程，**两个分支都不捕获异常** | 两条分支各自是「一次接缝调用 + 一个事务」的完整闭环，彼此无共享状态（只有 `io_session` 是共享的）。回滚/重抛仍由 `advance_session` 统一负责（接缝契约 1），失败路径只有一份实现，也不可能出现「分支里吞掉异常」的岔路。**判定顺序与状态转移一字未改** |
+
+**服务端钉死 vs 模型可覆盖（本轮新增的行）**
+
+| 项 | 谁定 |
+|---|---|
+| 诊断结果是否影响本轮 | **服务端**：只看日志，控制流不变（D-1/D-4）；升级为 502 是将来的一次独立决策 |
+| schema 形状 | **服务端**：三个 schema 由 `ai_light_seam_*` 唯一构造，并有 shape digest golden 钉住（见下表） |
+| 模型输出违规时读哪几条 | **服务端**：前 3 条 + 省略数 |
+
+**测试**
+
+| 文件 / 用例 | 钉什么 |
+|---|---|
+| **新建** `src/test/core/ai_light_json_validation.cpp`（套件 `ai_light_json_validation`，9 用例 / 97 断言，全离线） | 建造器形状（`required` 自动生成 / 显式重载 / `schema_enum<E>` 剔除 `none`）；严格读取器的**接缝名 + 字段路径**措辞与 `bad_gateway`；`require_enum` 对未知字符串**必须抛**（钉住「绝不用裸 `get<>`」）；六条宽松读取器的缺失/错类型/正确三种输入；`check_schema_consistency` 对三个真实 schema 通过、对故意造的三类违规报错；三个真实 schema 经库判定为合法 draft-7；`validate_model_output` 的违规串是 `root.lights[0].softness` 形状的 json pointer |
+| **`schema_shape_digest_matches_frozen_golden`**（同上文件） | 把每个节点的 `path/type/required/additionalProperties/enum/min/max/minItems/maxItems` 摊平成排序后的多行字符串做 FNV-1a 摘要，与三份内嵌 golden 逐字比较 —— **spec `c4b1d8ee3aa3ef47` / candidates `227cb12da4693db1` / feedback `0e13ecb11cd3f474`**。批次 2（改用建造器重写三个 `build_*_json_schema`）后三份摘要**逐字不变**，这是「schema 结构等价」的最强证据 |
+| `ai_light_candidates/build_base_rig_requires_rgb_when_mode_is_rgb`（新增 1 用例 → 16 用例 / 223 断言） | F2/F3：`build_base_rig` 按 `color_mode` 路由，`rgb` 模式缺 `rgb` 必须抛（**不再**只在 `temperature` 分支里软处理） |
+| 其余五个 `ai_light_*` 套件 | **一行不改**（用例数/断言数与重构前逐个相同）—— 这正是「行为未变」的证明 |
+
+**新坑（承 §15.6 的 12 条、§15.7 的 13–21、§15.8 的 22–24、§15.9 的 25–27、§15.10 的 28–30，续 31–35）**
+
+31. **`using namespace orm;` 不是可选的，而漏掉它的报错会指向网络 API。** 搬走 `make_seam_client` 时漏了
+    `ai_light_orchestrator.cpp:71` 那行文件级 `using namespace orm;`，于是 `select(...)` 被解析成
+    **winsock2.h:2060 的 `select`** → `error C2660: 'select': function does not take 1 arguments`，
+    `object` 直接 `C3861: identifier not found`。`select_t` / `object` 的定义在
+    `sqlite_orm/orm/select.h`（`namespace doodle::orm`），**与 `sqlite_database.h` 的 include 无关**。
+    教训：搬走一段代码时，**文件级 `using` / 文件级常量也要跟着看一遍**；一个符号名与系统头撞车时，
+    编译器不会提示「你少了个 using」。
+32. **匿名命名空间 vs 导出。** 模板（`require_enum<E>` / `schema_enum<E>`）**必须 inline 在头里**（模板无法导出）；
+    非模板定义必须在**非匿名**命名空间且带 `DOODLELIB_API`，否则库外 LNK2019。公共头也**不得** include
+    `<nlohmann/json-schema.hpp>`：校验库只出现在 `.cpp`，公共 API 继续只暴露 `nlohmann::json`。
+33. **模板不能只声明。** `schema_enum<E>` 这类只有声明没有定义时，链接期才炸（LNK2019），而且**只在被使用时**
+    才出现 —— 看起来像「某个不相关的文件坏了」。
+34. **`schema_object` 的 `required` 自动生成假定「满配」。** 三个 schema 的 16 个 object 恰好都是
+    「`additionalProperties:false` + `required` 覆盖全部属性」（34 处命中已逐条核对），所以自动生成与现状等价；
+    将来要「部分必填」必须改用显式 `required` 的重载，**不能**先加属性再期待它自动变成可选。
+35. **诊断校验不得做准入，`validate_model_output` 永不抛。** 它把库异常也转成一条字符串；spec 接缝本就允许
+    截断输出（默认值 + `evidence.source = default_value` 留痕），一道闸门会直接破坏该设计。若将来要提升为
+    502，必须同时重看 §15.7 的宽容策略。
+
+**施工/工具坑（非产品行为，写给下一次搬文件的人）**
+
+- 搬运用「按**原始行号**单遍删除 + 先取原文再组装」，不要边删边算新行号；区间里若含「还要放进另一个新文件」
+  的助手（本轮 `first_light_with_role`），取区间时就要把它排除，否则 LNK2005 重复定义。
+- 模板正文用 `write` 写成带 `//__BODY__` 占位符的文件，再用 PowerShell `Get-Content` 取原文 `.Replace()` 回填
+  —— 避免在命令行里嵌中文与整段 C++。
+- **`edit` 工具在 PowerShell 改写过同一文件后会报 `cannot edit ...: file changed since it was read`**，重新 read 即可。
+- 每次链接前先删 `build/Ninja_debug/bin/test_main.exe`（被占用时 `LINK : fatal error LNK1168`）。
+- 管道后的 exit code 不可信（§15.10 已记）：必须 grep `error C[0-9]+|error LNK|FAILED:|ninja: build stopped`。
+
+**回归**
+
+- 全量 `test_main`：**218 用例 / 1781 断言全通过、exit 0**。与 plan §8 记的旧快照 196 / 1657 的差额 =
+  本轮新增 9 例/97 断言（`ai_light_json_validation`）+ 1 例/9 断言（`ai_light_candidates` 的 F2/F3 用例）
+  + 12 例/18 断言（`coro_test_support`，本轮未改动，只是不在那份旧快照里）。
+- 重构期间**每个批次**都构建 + 跑受影响套件；接缝拆分前后 `--run_test=ai_light_*` **恒为 101 用例 / 1028 断言**，
+  逐套件相同（拆分前 = 拆分后）。
+- 重构后逐套件：`ai_light_schema` 6(126) · `ai_light_state` 18(174) · `ai_light_stats` 22(184) ·
+  `ai_light_spec_prompt` 11(117) · `ai_light_candidates` **16(223)** · `ai_light_feedback` 11(84) ·
+  `ai_light_json_validation` **9(97)** · `ai_light_paths` 8(23)。
+
+**保留的边界**：`build/refactor_plan_v3.md` 是本轮契约（可留档可删）；`ai_light_orchestrator.{h,cpp}.bak2`
+是拆分前备份（可留档可删）；本轮**没有** `git commit`（由用户自己提交）。前端文档只引 HTTP 层，
+`grep -n 'ai_light_orchestrator' docs/ue_ai_lighting_frontend.md` 命中的两处（`:8` 契约来源、`:549` 接口契约细节）
+描述的是「服务端代码是权威」，拆分后依然成立，故未改。
 
 

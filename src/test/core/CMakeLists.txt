@@ -22,6 +22,7 @@ target_sources(test_main
         ai_light_candidates.cpp
         ai_light_feedback.cpp
         ai_light_paths.cpp
+        ai_light_json_validation.cpp
         shot_render_light_paths.cpp
         url_sign.cpp
         seedance2_inference.cpp

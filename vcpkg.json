@@ -85,6 +85,7 @@
     },
     "magic-enum",
     "nlohmann-json",
+    "json-schema-validator",
     "spdlog",
     "entt",
     "eigen3",

@@ -93,6 +93,8 @@ target_link_libraries(doodle_lib
         onnxruntime::onnxruntime
         cnpy::cnpy_static
         rapidfuzz::rapidfuzz
+        # AI 灯光接缝的模型输出架构校验（json 架构自检 + 诊断）
+        nlohmann_json_schema_validator::validator
 )
 
 
@@ -107,6 +109,12 @@ add_custom_command(
         TARGET doodle_lib
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/cppjieba/dict ${CMAKE_BINARY_DIR}/bin/dict
+)
+# 添加 json-schema-validator 动态库复制（AI 灯光接缝的模型输出架构校验，见 ai_light_json_validation.h）
+add_custom_command(
+        TARGET doodle_lib
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:nlohmann_json_schema_validator::validator> ${CMAKE_BINARY_DIR}/bin
 )
 
 target_compile_definitions(doodle_lib

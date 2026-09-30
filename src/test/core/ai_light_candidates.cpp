@@ -339,6 +339,52 @@ BOOST_AUTO_TEST_CASE(base_rig_rejects_illegal_values) {
   BOOST_CHECK_THROW(build_base_rig(l_no_lights), doodle_error);
 }
 
+/// F2/F3：颜色的三个分支**按 color_mode 路由，各自严格读**。
+/// 重构前 rgb 是「存在才校验」的两段式写法，模型答了 `color_mode = "rgb"` 却没给 rgb 时
+/// 会静默用结构体默认色物化 —— 一次明确的协议违规变成一盏看不出来的偏移灯，与
+/// 「裸 get<Enum> 静默落值」属于同一类问题。这里把三分支的「缺字段必须抛」与
+/// 「给了就按值物化」都钉住（非当前分支的字段缺失/null 仍然容忍，见用例末尾）。
+BOOST_AUTO_TEST_CASE(build_base_rig_requires_rgb_when_mode_is_rgb) {
+  auto l_rgb_missing = make_model_json();
+  l_rgb_missing["lights"][0]["color_mode"] = "rgb";
+  l_rgb_missing["lights"][0].erase("rgb");
+  BOOST_CHECK_THROW(build_base_rig(l_rgb_missing), doodle_error);
+
+  auto l_rgb_ok = make_model_json();
+  l_rgb_ok["lights"][0]["color_mode"] = "rgb";
+  l_rgb_ok["lights"][0]["rgb"]        = nlohmann::json::array({0.25, 0.5, 0.75});
+  const auto l_rig_rgb                = build_base_rig(l_rgb_ok);
+  BOOST_CHECK_CLOSE(l_rig_rgb.lights_.at(0).color_.rgb_.x_, 0.25, 1e-9);
+  BOOST_CHECK_CLOSE(l_rig_rgb.lights_.at(0).color_.rgb_.y_, 0.5, 1e-9);
+  BOOST_CHECK_CLOSE(l_rig_rgb.lights_.at(0).color_.rgb_.z_, 0.75, 1e-9);
+
+  auto l_kelvin_missing = make_model_json();
+  l_kelvin_missing["lights"][0].erase("kelvin");
+  BOOST_CHECK_THROW(build_base_rig(l_kelvin_missing), doodle_error);
+
+  auto l_filter_missing = make_model_json();
+  l_filter_missing["lights"][0]["color_mode"] = "filter";
+  l_filter_missing["lights"][0].erase("filter");
+  BOOST_CHECK_THROW(build_base_rig(l_filter_missing), doodle_error);
+
+  auto l_filter_ok = make_model_json();
+  l_filter_ok["lights"][0]["color_mode"] = "filter";
+  l_filter_ok["lights"][0]["filter"]     = "CTS";
+  BOOST_CHECK_EQUAL(build_base_rig(l_filter_ok).lights_.at(0).color_.filter_, std::string{"CTS"});
+
+  // 非当前分支的字段缺失/null 必须继续容忍：schema 里三分支都必填，但提示词明确说了
+  // 非本分支填中性占位 —— 这里把 rgb 整个删掉（temperature 分支用不到它）仍然要能物化。
+  auto l_other_branch_tolerated = make_model_json();
+  l_other_branch_tolerated["lights"][0].erase("rgb");
+  BOOST_CHECK_CLOSE(build_base_rig(l_other_branch_tolerated).lights_.at(0).color_.kelvin_, 5600.0, 1e-9);
+
+  // 反向同理：rgb 分支下 kelvin 为 null 不该抛（它不在当前分支的读路径上）。
+  auto l_rgb_ignores_kelvin = make_model_json();
+  l_rgb_ignores_kelvin["lights"][0]["color_mode"] = "rgb";
+  l_rgb_ignores_kelvin["lights"][0]["kelvin"]     = nullptr;
+  BOOST_CHECK(build_base_rig(l_rgb_ignores_kelvin).lights_.at(0).color_.mode_ == color_mode::rgb);
+}
+
 // ---------------------------------------------------------------------------
 // 单轴施加与 OFAT 展开
 // ---------------------------------------------------------------------------
