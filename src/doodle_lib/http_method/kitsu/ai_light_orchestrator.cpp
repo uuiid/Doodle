@@ -5,7 +5,13 @@
 //
 // 三个「接缝」（generate_spec / generate_candidates / structure_feedback）都在本文件末尾：
 //   * generate_spec —— 已实现（§15.7）：参考图统计聚合 + 一次火山方舟推理 + 结果映射。
-//   * generate_candidates / structure_feedback —— 仍抛 501。
+//   * generate_candidates —— 已实现（§15.8）：一次推理给出「基线 rig + 轴计划」，
+//     6 个候选由服务端确定性 OFAT 展开（§6.6 的灯集合一致性因此是构造性保证）。
+//   * structure_feedback —— 仍抛 501；调用方捕获后降级为纯滑块反馈。
+//
+// 接缝 2 的分层与接缝 1 相同（纯函数组信封/映射 + 一次网络调用），但多了一层**确定性展开**：
+// 模型只决定「往哪个方向搜」，不决定「第 N 张图是什么」。这是有意的 —— 见 build_candidates_input_text
+// 上方的注释与 §15.8。
 // 接缝的契约（抛即回滚、不得留下非幂等的部分写入、返回值必须自洽）见 ai_light_orchestrator.h 顶部。
 //
 
@@ -46,6 +52,7 @@
 #include <cmath>
 #include <cstdint>
 #include <exception>
+#include <functional>
 #include <map>
 #include <optional>
 #include <string>
@@ -174,6 +181,12 @@ boost::asio::awaitable<void> advance_session(
   std::string l_reason{"未知错误"};
 
   try {
+    // 触发人：本次调用的属性，不是会话的属性 —— 所以不进会话表（加列既逼出迁移、
+    // 语义也是错的：同一次灯光工作可能换人重出方案）。
+    // 没传时回落到会话提交人；两者都没有就没法解析工作室、也没法计费。
+    // 值在分支外取（两个接缝都要用它），校验留给各分支给出更贴切的消息。
+    const auto l_operator = in_operator_id.is_nil() ? in_session.submitter_ : in_operator_id;
+
     // ---------------------------------------------------------------
     // 第一步：draft / awaiting_spec_confirm 且尚无已确认 Spec → 蒸馏出 LightingSpec
     //
@@ -186,10 +199,6 @@ boost::asio::awaitable<void> advance_session(
         l_entry_state == ai_light_session_state::awaiting_spec_confirm) {
       auto l_refs = in_sql.get_ai_light_references(in_session.uuid_id_);
 
-      // 触发人：本次调用的属性，不是会话的属性 —— 所以不进会话表（加列既逼出迁移、
-      // 语义也是错的：同一次灯光工作可能换人重出方案）。
-      // 没传时回落到会话提交人；两者都没有就没法解析工作室、也没法计费。
-      const auto l_operator = in_operator_id.is_nil() ? in_session.submitter_ : in_operator_id;
       DOODLE_CHICK_HTTP(
           !l_operator.is_nil(), bad_request,
           "会话 {} 无法确定触发人（无 operator_id 且会话无 submitter），无法解析 AI 工作室与计费主体",
@@ -261,18 +270,42 @@ boost::asio::awaitable<void> advance_session(
 
       const auto l_iteration = in_session.current_iteration_ + 1;
 
+      DOODLE_CHICK_HTTP(
+          !l_operator.is_nil(), bad_request,
+          "会话 {} 无法确定触发人（无 operator_id 且会话无 submitter），无法解析 AI 工作室与计费主体",
+          in_session.uuid_id_
+      );
+
+      // iteration 的 uuid 在这里就铸造并随请求交给接缝：那条推理任务行（sd2::task）用
+      // ai_light_iteration_id_ 指回来，于是「哪一次推理生成了第 N 轮候选」可以反查。
+      // 落库时用的是同一个值，所以任务行、迭代行、候选行三者必然一致。
+      const auto l_iteration_id = core_set::get_set().get_uuid();
+
       candidate_generation_request_t l_req{};
-      l_req.session_id_  = in_session.uuid_id_;
-      l_req.iteration_   = l_iteration;
-      l_req.spec_        = l_spec->to_spec();
-      l_req.presets_     = in_sql.get_ai_light_presets(true);
+      l_req.session_id_   = in_session.uuid_id_;
+      l_req.project_id_   = in_session.project_id_;
+      l_req.operator_id_  = l_operator;
+      l_req.iteration_id_ = l_iteration_id;
+      l_req.iteration_    = l_iteration;
+      l_req.spec_         = l_spec->to_spec();
+      l_req.presets_      = in_sql.get_ai_light_presets(true);
+      l_req.prompt_text_  = in_session.prompt_text_;
+
+      // 上一轮的迭代行只查一次，同时喂给下面两件事。
+      const auto l_prev_it = in_sql.get_ai_light_iteration(in_session.uuid_id_, in_session.current_iteration_);
+
       // warm start：上一轮被选中的候选。首轮没有，由接缝从预设库起手。
-      if (auto l_base = in_sql.get_ai_light_selected_candidate(in_session.uuid_id_, in_session.current_iteration_);
-          l_base.has_value())
-        l_req.base_rig_ = l_base->get_rig();
+      //
+      // 必须同时要求「上一轮解的 Spec 就是当前这份」：Spec 升版之后（美术重出了方案）
+      // 上一轮的 rig 是照着旧目标打的，拿它当起点会让新目标从一开始就被旧方向带偏。
+      if (l_prev_it.has_value() && l_prev_it->spec_id_ == l_spec->uuid_id_) {
+        if (auto l_base = in_sql.get_ai_light_selected_candidate(in_session.uuid_id_, in_session.current_iteration_);
+            l_base.has_value())
+          l_req.base_rig_ = l_base->get_rig();
+      }
+
       // 上一轮人工给的轴调整（滑块通道）。首轮没有。
-      if (auto l_prev_it = in_sql.get_ai_light_iteration(in_session.uuid_id_, in_session.current_iteration_);
-          l_prev_it.has_value()) {
+      if (l_prev_it.has_value()) {
         auto l_j = l_prev_it->get_judgement();
         if (!l_j.feedback_axes_.empty()) {
           iteration_axes_t l_axes{};
@@ -285,7 +318,20 @@ boost::asio::awaitable<void> advance_session(
         }
       }
 
-      auto l_res = co_await generate_candidates(l_req);
+      // 本轮渲染的基线关卡。**目前为空** —— 取它需要复刻 shot_render_light_builder 的三段
+      // 私有推导（基英/集数 → 场景 UE 路径 → 地编预调探测），代价与风险都不合理，
+      // 所以本轮只透传、不解析（§15.8 的决定 D8）。空的基线意味着 worker 无法起手渲染，
+      // 所以这里明确告警而不是静默放过 —— 这是 M2（工作机执行器）开工前必须补上的一环。
+      if (l_req.baseline_level_.empty()) {
+        SPDLOG_LOGGER_WARN(
+            g_logger_ctrl().get_http(),
+            "AI 灯光会话 {} 第 {} 轮：baseline_level 为空（M2 阻塞项，见方案 §15.8 决定 D8）。"
+            "候选可以生成，但工作机拿不到起点关卡，无法渲染。",
+            in_session.uuid_id_, l_iteration
+        );
+      }
+
+      auto l_res = co_await generate_candidates(in_sql, l_req);
 
       // §6.6 护栏：候选数量与「灯集合一致」是硬约束，不能靠实现方自觉。
       // 数量在这里校验；灯集合一致性需要基线 rig 才谈得上，留到 worker 侧与
@@ -302,10 +348,11 @@ boost::asio::awaitable<void> advance_session(
       auto& l_ctx = g_ctx().get<http::kitsu_ctx_t>();
 
       ai_light_iteration l_it{};
-      // uuid 必须在这里就定下来，不能等 ORM 在 insert 时回填：下面的候选要把
-      // 它写进 iteration_id_（mark_iteration_rendered 按这个校验「候选属于本轮」），
-      // 而那时 l_it 的 insert 语句还没构造。
-      l_it.uuid_id_    = core_set::get_set().get_uuid();
+      // 用上面铸造好的那个 uuid，**不要**在这里另取一个：候选的 iteration_id_ 与
+      // mark_iteration_rendered 的「候选属于本轮」校验都指向它，而推理任务行
+      // （sd2::task.ai_light_iteration_id_）已经用它落了库 —— 再取一个新的就会
+      // 让「哪次推理生成本轮」这条链路断开。
+      l_it.uuid_id_    = l_iteration_id;
       l_it.session_id_ = in_session.uuid_id_;
       l_it.iteration_  = l_iteration;
       l_it.spec_id_    = l_spec->uuid_id_;
@@ -807,20 +854,11 @@ std::string describe_targets(const lighting_targets_t& in_targets) {
 
 }  // namespace
 
-std::string build_spec_instructions() {
-  return std::string{R"SPEC(你是电影灯光指导。把一个人工提示词与多张参考图的统计，蒸馏成一份可执行的灯光目标（LightingSpec）。
-
-【职责边界：你决定什么、不决定什么】
+std::string build_common_lighting_section() {
+  return std::string{R"LIGHT(【职责边界：你决定什么、不决定什么】
 你决定：灯的数量、角色、类型、相对方位；环境光 / 雾 / 天空 / 曝光 / 调色的整体倾向；增删改哪些灯（结构决策）。
 你不决定：最终精确强度 / 色温 / 距离的数值；直接写 UE API 调用或代码；逐帧关键帧的精确数值；预测渲染结果。
 绝对禁止：改变场景几何或材质。你的可改范围只有「灯光 + 环境光/雾/天空 + 后处理/调色」。
-
-【冲突规则：人工提示词优先于参考图】
-参考只提供环境与场景的结构与数值，提示词提供意图与语义。
-- 提示词与参考一致 → 直接合并，置信度提高。
-- 提示词明确、参考冲突 → 提示词胜出。
-- 提示词未提及、参考明确 → 参考胜出。
-- 提示词未提及、参考冲突 → 该维度不要设为硬目标，把它列进 conflicts，交人工裁决。
 
 【人物角色性格 → 灯光语言映射（提示词里最有价值、也最容易落不到灯上的字段）】
 | 性格维度 | key:fill 比 | 硬软 | 光位倾向 | 色温倾向 |
@@ -842,11 +880,29 @@ kelvin_bias 只能是 cool / warm / neutral。
 - 亮度分位 p10 / p50 / p90 是显示空间的归一化值（0 = 黑，1 = 白）。
 - 削波率 clip_rate 是 [0, 1] 的比例。
 - grading_hints.vignette / bloom 只能是 none / subtle / moderate / strong。
+)LIGHT"};
+}
+
+std::string build_spec_instructions() {
+  // 共用段（职责边界 + 性格映射表 + 单位口径）只允许有一处定义：两份提示词对「对比度是
+  // 什么」说法不一致，模型就会在两条接缝上给出互不相容的数值（见头文件的说明）。
+  std::string l_out{
+      "你是电影灯光指导。把一个人工提示词与多张参考图的统计，蒸馏成一份可执行的灯光目标（LightingSpec）。\n\n"
+  };
+  l_out += build_common_lighting_section();
+  l_out += R"LIGHT(
+【冲突规则：人工提示词优先于参考图】
+参考只提供环境与场景的结构与数值，提示词提供意图与语义。
+- 提示词与参考一致 → 直接合并，置信度提高。
+- 提示词明确、参考冲突 → 提示词胜出。
+- 提示词未提及、参考明确 → 参考胜出。
+- 提示词未提及、参考冲突 → 该维度不要设为硬目标，把它列进 conflicts，交人工裁决。
 
 【输出要求】
 只输出符合给定 JSON Schema 的 JSON。不要输出解释文字，不要用 Markdown 代码块。
 调色板（palette）与 ownership 不在 schema 里：颜色只能来自参考图统计，不接受你编造数值。
-)SPEC"};
+)LIGHT";
+  return l_out;
 }
 
 nlohmann::json build_spec_json_schema() {
@@ -1315,6 +1371,840 @@ spec_generation_result_t map_spec_result(
   return l_ret;
 }
 
+// ===========================================================================
+// 接缝 2：Spec + 基线 rig + 上一轮反馈轴 → 本轮 6 个候选（方案 §6.2 / §6.6 / §9.1）
+// ===========================================================================
+//
+// 分层与接缝 1 相同（纯函数组信封/映射 + 一次网络调用），但展开器是**确定性**的：
+// 模型只输出「一套基线灯集合 + 一份轴计划」，6 个候选由 expand_candidates() 机械展开。
+// 于是「同一基线 + 同一轴计划 → 同一组 rig」可以脱网复现（§8.5 第 1 条），
+// §6.6 的「同轮候选灯集合与角色完全一致」由构造直接保证，不需要事后校验。
+//
+// 为什么不给每个候选一次推理：§6.6 要求 6 个候选的灯集合与角色完全相同，只有轴参数不同。
+// 让模型分别生成 6 套 rig，就必须事后校验「灯集合是否真的一致」，而模型一旦漂移，本轮
+// 要么整体作废要么放弃护栏。分开「决策」（模型：往哪个方向搜）与「展开」（服务端：这 6 张
+// 图分别是什么）之后，护栏变成构造性事实。
+
+namespace {
+
+/// 轴计划允许的变异位总数：1 个基线 + 5 个变异位 == g_candidate_count。
+constexpr std::size_t g_axis_step_budget = static_cast<std::size_t>(g_candidate_count) - 1;
+
+/// 每轮最多声明几个轴。太多轴会让「差别从哪来」变得看不出来，而美术的判断正是收敛信号。
+constexpr std::size_t g_axis_max_count = 2;
+
+/// axes_.strategy_ 是 TEXT 列，模型可以长篇大论；截断避免一次输出把这一列撑爆。
+constexpr std::size_t g_strategy_max_len = 500;
+
+/// 提示词里最多列几个预设。预设库首批只有几十条，全在提示词里列一遍没有必要。
+constexpr std::size_t g_preset_prompt_top_k = 12;
+
+/// 轴值语义（§15.8 的表）。提示词与 apply_axis_step 共用同一份口径：
+/// 模型按它给档位，服务端按同一套公式应用 —— 两边不一致时美术会看到「轴变了但图没变」。
+constexpr std::string_view g_axis_semantics_text = R"AXIS(每个轴的 value 都是**增量**（不是绝对值），中性值是 0；只有 key_fill_ratio 例外，它本身就是目标比值。
+- key_direction     方位角增量（度）。正负决定主光往哪边偏；常见档位 -60 / -30 / +30 / +60。
+- key_fill_ratio    目标 key:fill 比值（绝对，如 3 / 6 / 10）。服务端按「当前比值 ÷ 目标比值」缩放补光强度。
+- kelvin            色温增量（K）。同时作用于灯光色温与全局白平衡；常见档位 -800 / -400 / +400 / +800。
+- hardness          硬软增量（-1..+1，正 = 更硬）。同时收紧影边缘与缩小光源半径；常见档位 -0.5 / +0.5。
+- ambient_level     环境光相对增减（-1..+1）。作用于天光强度与 role=ambient 的灯；常见档位 -0.4 / +0.4。
+- grading_strength  调色强度增量（-1..+1），只放大/缩小「偏离中性的量」（对比、饱和、提黑、暗角、光晕）；
+                    常见档位 -0.35 / +0.35。
+
+硬约束：所有轴加起来必须有恰好 5 个档位（1 个基线 + 5 个变异 = 6 个候选）。
+档位不要取 0：0 档等价于基线，会得到一个与基线一模一样的候选，服务端会因此判本轮失败。
+最多声明 2 个轴（每轮只动少数几个自由度，美术才看得出差别从哪来）。
+)AXIS";
+
+/// 可选的搜索轴：variant_axis_kind 去掉 none（none 是「这是基线」的标记，不是可搜索的自由度）。
+nlohmann::json make_axis_enum_schema() {
+  nlohmann::json l_enum = nlohmann::json::array();
+  const auto l_none     = magic_enum::enum_name(variant_axis_kind::none);
+  for (auto&& l_v : magic_enum::enum_names<variant_axis_kind>()) {
+    if (l_v == l_none) continue;
+    l_enum.emplace_back(l_v);
+  }
+  return nlohmann::json{{"type", "string"}, {"enum", l_enum}};
+}
+
+std::string join_numbers(const std::vector<double>& in_values) {
+  std::string l_ret{};
+  for (std::size_t l_i = 0; l_i < in_values.size(); ++l_i) {
+    if (l_i != 0) l_ret += ", ";
+    l_ret += fmt::format("{}", in_values[l_i]);
+  }
+  return l_ret;
+}
+
+// ---- 严格取值器 ----------------------------------------------------------
+// 基线 rig 的物化是「模型给什么就用什么」的那一段，所以这里**不用** issue 1 的
+// opt_xxx（那套是「能读就读、读不出用默认」）。strict schema 下缺字段本该不可能发生；
+// 发生了说明模型没遵守契约，静默取默认值会把「模型没按要求输出」变成一个看不出来的偏移。
+
+double require_number(const nlohmann::json& in_json, const char* in_key) {
+  DOODLE_CHICK_HTTP(
+      in_json.is_object() && in_json.contains(in_key) && in_json.at(in_key).is_number(), bad_gateway,
+      "候选基线 rig 的字段 {} 缺失或不是数字", in_key
+  );
+  return in_json.at(in_key).get<double>();
+}
+
+std::string require_string(const nlohmann::json& in_json, const char* in_key) {
+  DOODLE_CHICK_HTTP(
+      in_json.is_object() && in_json.contains(in_key) && in_json.at(in_key).is_string(), bad_gateway,
+      "候选基线 rig 的字段 {} 缺失或不是字符串", in_key
+  );
+  return in_json.at(in_key).get<std::string>();
+}
+
+bool require_bool(const nlohmann::json& in_json, const char* in_key) {
+  DOODLE_CHICK_HTTP(
+      in_json.is_object() && in_json.contains(in_key) && in_json.at(in_key).is_boolean(), bad_gateway,
+      "候选基线 rig 的字段 {} 缺失或不是布尔值", in_key
+  );
+  return in_json.at(in_key).get<bool>();
+}
+
+nlohmann::json require_number_array3(const nlohmann::json& in_json, const char* in_key) {
+  const bool l_ok = in_json.is_object() && in_json.contains(in_key) && in_json.at(in_key).is_array() &&
+                    in_json.at(in_key).size() == 3 && in_json.at(in_key).at(0).is_number() &&
+                    in_json.at(in_key).at(1).is_number() && in_json.at(in_key).at(2).is_number();
+  DOODLE_CHICK_HTTP(l_ok, bad_gateway, "候选基线 rig 的字段 {} 必须是 3 个数字的数组", in_key);
+  return in_json.at(in_key);
+}
+
+/// 枚举取值一律走 magic_enum::enum_cast 显式校验。**绝不能**用 NLOHMANN_JSON_SERIALIZE_ENUM
+/// 的裸 get<>：它遇到认不出的字符串**不抛**，而是静默落到第一个枚举值
+/// （nlohmann/detail/macro_scope.hpp:247）—— 那等于把「模型输出了一个非法灯角色」变成
+/// 一盏看起来正常的 key 灯，整轮候选都建立在一个错值上。
+template <typename E>
+E require_enum(const nlohmann::json& in_json, const char* in_key) {
+  const auto l_name = require_string(in_json, in_key);
+  const auto l_v    = magic_enum::enum_cast<E>(l_name);
+  DOODLE_CHICK_HTTP(
+      l_v.has_value(), bad_gateway, "候选基线 rig 的字段 {} = \"{}\" 不是合法的枚举取值", in_key, l_name
+  );
+  return *l_v;
+}
+
+// ---- rig 取值助手 --------------------------------------------------------
+
+light_t* first_light_with_role(lighting_rig_t& io_rig, light_role in_role) {
+  for (auto& l_light : io_rig.lights_)
+    if (l_light.role_ == in_role) return &l_light;
+  return nullptr;
+}
+
+/// 只比较「灯怎么打」的部分：身份字段（rig_id/spec_id/iteration/candidate_index）、
+/// variant_axis_、provenance_、ops_ 都由服务端另填，拿它们判「候选是否与基线相同」会误判。
+nlohmann::json rig_substance(const lighting_rig_t& in_rig) {
+  return nlohmann::json{{"globals", in_rig.globals_}, {"lights", in_rig.lights_}};
+}
+
+std::string describe_rig_brief(const lighting_rig_t& in_rig) {
+  std::string l_out = fmt::format(
+      "  globals: exposure_bias={:.2f} white_balance_kelvin={:.0f} sky_light_intensity={:.2f} fog_density={:.2f}\n"
+      "           grading(contrast={:.2f} saturation={:.2f} lift={:.2f} vignette={:.2f} bloom={:.2f})\n",
+      in_rig.globals_.exposure_.ev100_bias_, in_rig.globals_.white_balance_.kelvin_,
+      in_rig.globals_.environment_.sky_light_intensity_, in_rig.globals_.environment_.fog_density_,
+      in_rig.globals_.grading_.contrast_, in_rig.globals_.grading_.saturation_, in_rig.globals_.grading_.lift_,
+      in_rig.globals_.grading_.vignette_, in_rig.globals_.grading_.bloom_
+  );
+  l_out += fmt::format("  灯 {} 个：\n", in_rig.lights_.size());
+  for (const auto& l_light : in_rig.lights_) {
+    l_out += fmt::format(
+        "    role={} type={} azimuth={:.1f} elevation={:.1f} distance={:.2f} intensity={:.1f}({}) "
+        "kelvin={:.0f} softness={:.2f} radius_cm={:.1f} cast_shadows={}\n",
+        magic_enum::enum_name(l_light.role_), magic_enum::enum_name(l_light.type_), l_light.offset_.azimuth_deg_,
+        l_light.offset_.elevation_deg_, l_light.offset_.distance_m_, l_light.intensity_.value_,
+        magic_enum::enum_name(l_light.intensity_.unit_), l_light.color_.kelvin_, l_light.shadows_.softness_,
+        l_light.shape_.source_radius_cm_, l_light.shadows_.cast_ ? "true" : "false"
+    );
+  }
+  return l_out;
+}
+
+/// Spec 的紧凑投影。这里是给模型读的，不是给落库用的 —— 落库的完整形状在 ai_light_spec。
+std::string describe_spec_brief(const lighting_spec_t& in_spec) {
+  std::string l_out{};
+  l_out += fmt::format("  氛围: {}\n", join_strings(in_spec.intent_.atmosphere_, "、"));
+  l_out += fmt::format("  时间/天气: {} / {}\n", in_spec.intent_.time_of_day_, in_spec.intent_.weather_);
+  l_out += fmt::format("  场景设定: {}\n", in_spec.intent_.setting_);
+  if (!in_spec.intent_.source_motivation_.empty())
+    l_out += fmt::format("  光源动机: {}\n", join_strings(in_spec.intent_.source_motivation_, "、"));
+  if (!in_spec.intent_.story_context_.empty())
+    l_out += fmt::format("  故事上下文: {}\n", in_spec.intent_.story_context_);
+  for (const auto& l_person : in_spec.intent_.character_personality_) {
+    const auto& l_lang = l_person.lighting_language_;
+    const std::string l_ratio =
+        l_lang.key_fill_ratio_.has_value()
+            ? fmt::format("[{}, {}]", l_lang.key_fill_ratio_->low_, l_lang.key_fill_ratio_->high_)
+            : std::string{"未指定"};
+    l_out += fmt::format(
+        "  角色「{}」({}): key_fill_ratio={} hardness={} position_bias={} kelvin_bias={}\n", l_person.subject_,
+        l_person.trait_, l_ratio, l_lang.hardness_, l_lang.position_bias_, l_lang.kelvin_bias_
+    );
+  }
+  l_out += "  目标：\n";
+  l_out += describe_targets(in_spec.targets_);
+  if (!in_spec.targets_.palette_.empty()) {
+    l_out += fmt::format("  palette {} 色（颜色只能来自参考图统计）：", in_spec.targets_.palette_.size());
+    for (const auto& l_entry : in_spec.targets_.palette_)
+      l_out += fmt::format(
+          "{}[{:.2f},{:.2f}] ", rgb_to_hex(l_entry.color_), l_entry.share_.low_, l_entry.share_.high_
+      );
+    l_out += "\n";
+  }
+  if (!in_spec.reference_stats_.conflicts_.empty())
+    l_out += fmt::format(
+        "  参考图冲突维度（不要把它们当硬目标）：{}\n", join_strings(in_spec.reference_stats_.conflicts_, ", ")
+    );
+  return l_out;
+}
+
+/// 预设检索走词法，不走向量：全仓库**没有**可用于「按 Spec 检索预设」的查询向量生成器
+/// （唯一的 embedding 生成器是 ONNX 的 ai/llm2vec，被 kimodo 用，与预设的 CLIP 图编码
+/// 不是一回事）。中文没有词边界，所以用子串包含而不是分词 ——「霓虹」⊂「夜景霓虹」正是要的。
+std::size_t preset_lexical_score(const ai_light_preset& in_preset, const std::string& in_haystack) {
+  std::size_t l_score = 0;
+  if (!in_preset.name_.empty() && in_haystack.find(in_preset.name_) != std::string::npos) l_score += 4;
+  for (const auto& l_tag : in_preset.tags_)
+    if (!l_tag.empty() && in_haystack.find(l_tag) != std::string::npos) l_score += 2;
+  return l_score;
+}
+
+/// 同分按名字排序，保证同一份 Spec 得到同一份提示词（§8.5 第 1 条：可复现）。
+std::vector<const ai_light_preset*> pick_presets(
+    const candidate_generation_request_t& in_request, std::size_t in_top_k
+) {
+  std::string l_haystack = in_request.spec_.intent_.time_of_day_ + in_request.spec_.intent_.weather_ +
+                           in_request.spec_.intent_.setting_ + in_request.spec_.intent_.story_context_;
+  for (const auto& l_v : in_request.spec_.intent_.atmosphere_) l_haystack += l_v;
+  for (const auto& l_v : in_request.spec_.intent_.source_motivation_) l_haystack += l_v;
+  for (const auto& l_v : in_request.spec_.intent_.character_personality_) l_haystack += l_v.trait_ + l_v.subject_;
+
+  std::vector<const ai_light_preset*> l_cands{};
+  l_cands.reserve(in_request.presets_.size());
+  for (const auto& l_preset : in_request.presets_)
+    if (l_preset.enabled_) l_cands.emplace_back(&l_preset);
+
+  std::sort(l_cands.begin(), l_cands.end(), [&l_haystack](const ai_light_preset* in_l, const ai_light_preset* in_r) {
+    const auto l_sl = preset_lexical_score(*in_l, l_haystack);
+    const auto l_sr = preset_lexical_score(*in_r, l_haystack);
+    if (l_sl != l_sr) return l_sl > l_sr;
+    return in_l->name_ < in_r->name_;
+  });
+  if (l_cands.size() > in_top_k) l_cands.resize(in_top_k);
+  return l_cands;
+}
+
+std::string describe_preset_brief(const ai_light_preset& in_preset) {
+  const auto l_target = in_preset.get_stats_target();
+  return fmt::format(
+      "  - {}  tags=[{}]  stats_target(contrast=[{}, {}] kelvin=[{}, {}])\n", in_preset.name_,
+      join_strings(in_preset.tags_, ", "), l_target.contrast_.low_, l_target.contrast_.high_,
+      l_target.white_balance_kelvin_.low_, l_target.white_balance_kelvin_.high_
+  );
+}
+
+/// 解析并校验模型的轴计划。返回失败原因（nullopt = 合法）。
+///
+/// 校验项都针对「静默失败会变成 6 张看不出区别的图」这一类：轴名是否合法、是否重复、
+/// 档位总数够不够、有没有中性档。**不合法不抛错** —— 轴计划是模型的一种建议，弃用它
+/// 退回默认计划仍然能给出 6 个可用候选，比让整轮失败好。
+std::optional<std::string> parse_axis_plan(
+    const nlohmann::json& in_json, iteration_axes_t& out_axes, std::string& out_strategy
+) {
+  out_strategy = opt_string(in_json, "strategy").value_or(std::string{});
+  if (out_strategy.size() > g_strategy_max_len) out_strategy.resize(g_strategy_max_len);
+
+  if (!in_json.is_object() || !in_json.contains("axes") || !in_json.at("axes").is_array())
+    return std::string{"模型没有给出 axes 数组"};
+  const auto& l_axes_json = in_json.at("axes");
+  if (l_axes_json.empty() || l_axes_json.size() > g_axis_max_count)
+    return fmt::format("axes 有 {} 个（只允许 1..{} 个）", l_axes_json.size(), g_axis_max_count);
+
+  std::vector<axis_step_t> l_steps{};
+  std::size_t l_total = 0;
+  for (const auto& l_item : l_axes_json) {
+    if (!l_item.is_object() || !l_item.contains("axis") || !l_item.at("axis").is_string())
+      return std::string{"axes 的元素缺少 axis"};
+    const auto l_kind = magic_enum::enum_cast<variant_axis_kind>(l_item.at("axis").get<std::string>());
+    if (!l_kind.has_value()) return fmt::format("轴名 \"{}\" 不是合法的轴", l_item.at("axis").get<std::string>());
+    if (*l_kind == variant_axis_kind::none) return std::string{"none 不是可搜索的轴"};
+    for (const auto& l_prev : l_steps)
+      if (l_prev.axis_ == *l_kind) return fmt::format("轴 {} 出现了两次", magic_enum::enum_name(*l_kind));
+
+    if (!l_item.contains("steps") || !l_item.at("steps").is_array() || l_item.at("steps").empty())
+      return fmt::format("轴 {} 没有 steps", magic_enum::enum_name(*l_kind));
+
+    axis_step_t l_step{};
+    l_step.axis_  = *l_kind;
+    l_step.label_ = opt_string(l_item, "label").value_or(std::string{});
+    if (l_step.label_.empty()) l_step.label_ = std::string{magic_enum::enum_name(*l_kind)};
+    for (const auto& l_v : l_item.at("steps")) {
+      if (!l_v.is_number()) return fmt::format("轴 {} 的档位里有一个不是数字", magic_enum::enum_name(*l_kind));
+      const double l_value = l_v.get<double>();
+      // key_direction / kelvin / hardness / ambient_level / grading_strength 的中性值都是 0；
+      // key_fill_ratio 是比值，本身不存在 0 档。放行 0 档会当场产生一个与候选 0 相同的候选，
+      // 服务端的同一个候选检查会在后面判失败 —— 不如在这里给出可读的原因。
+      if (l_value == 0.0)
+        return fmt::format("轴 {} 的档位包含 0（等价于基线，会得到一个重复候选）", magic_enum::enum_name(*l_kind));
+      l_step.steps_.emplace_back(l_value);
+    }
+    l_total += l_step.steps_.size();
+    l_steps.emplace_back(std::move(l_step));
+  }
+  if (l_total != g_axis_step_budget)
+    return fmt::format(
+        "档位总数是 {}，必须是 {}（1 个基线 + {} 个变异 = {} 个候选）", l_total, g_axis_step_budget,
+        g_axis_step_budget, g_candidate_count
+    );
+
+  out_axes.axes_ = std::move(l_steps);
+  return std::nullopt;
+}
+
+}  // namespace
+
+std::string build_candidates_instructions() {
+  std::string l_out{"你是电影灯光指导的**执行**环节。已经有一份人工确认过的灯光方案（LightingSpec），"
+                    "现在要把它变成一组可以真的渲出来的灯光设置，并给出下一轮要试的方向。\n\n"};
+  l_out += build_common_lighting_section();
+  l_out += "\n【你要输出两样东西】\n"
+           "1) 一套**基线灯集合**（globals + lights）：这是本轮 6 个候选共同的起点。\n"
+           "2) 一份**轴计划**（axes）：在基线上沿哪几个方向、各试哪几档，共 5 个档位。\n"
+           "6 个候选 = 1 个基线 + 5 个变异，由服务端按你的轴计划机械展开 —— 你**只给一套灯**，\n"
+           "不要输出 6 套 rig。这样 6 张图的灯集合与角色必然一致（方案 §6.6 的护栏）。\n\n"
+           "【轴值语义】\n";
+  l_out += g_axis_semantics_text;
+  l_out += "\n【第一轮与后续轮次】\n"
+           "首轮（没有上一轮 rig）：从 Spec 与预设出发搭一套完整灯集合，档位取**大跨度**，\n"
+           "目的是先把搜索空间铺开，让美术一眼看出各方向差在哪。\n"
+           "后续轮：以上一轮美术选中的 rig 为起点，**只在需要改的地方改**，档位取**小跨度**，\n"
+           "在美术选中的区域附近收缩细化（§9.1：把人工判断从 yes/no 变成有效的搜索梯度）。\n\n"
+           "【约束】\n"
+           "- 至少要有 role=key 的主光：key_direction 与 key_fill_ratio 两个轴都作用在它身上，\n"
+           "  没有主光这两个轴就是空操作。\n"
+           "- 灯的角色与数量由你定，但同一轮内 6 个候选共用同一套灯（服务端保证）。\n"
+           "- 曝光在迭代期必须手动锁定（method 固定 manual、ev100_bias 人为给定），\n"
+           "  否则自动曝光会把强度改动吃掉，美术看到的差别来自测光而不是布光。\n"
+           "- 环境光也算灯：天光强度、雾密度在 globals 里给。\n\n"
+           "【输出要求】\n"
+           "只输出符合给定 JSON Schema 的 JSON。不要输出解释文字，不要用 Markdown 代码块。\n"
+           "color_mode 决定 color 的哪个分支生效：temperature 时填 kelvin，rgb 时填 rgb 三元组，\n"
+           "filter 时填 filter 名字；另外两个分支按 schema 给中性占位（rgb 填 [0,0,0]、filter 填空串）。\n";
+  return l_out;
+}
+
+nlohmann::json build_candidates_json_schema() {
+  nlohmann::json l_axis_item{};
+  l_axis_item["type"]                 = "object";
+  l_axis_item["additionalProperties"] = false;
+  l_axis_item["properties"]           = nlohmann::json{
+      {"axis", make_axis_enum_schema()},
+      {"steps",
+       nlohmann::json{
+           {"type", "array"}, {"items", {{"type", "number"}}}, {"minItems", 1}, {"maxItems", g_axis_step_budget}
+       }},
+      {"label", {{"type", "string"}}},
+  };
+  l_axis_item["required"] = nlohmann::json::array({"axis", "steps", "label"});
+
+  nlohmann::json l_globals{};
+  l_globals["type"]                 = "object";
+  l_globals["additionalProperties"] = false;
+  l_globals["properties"]           = nlohmann::json{
+      {"exposure_ev100_bias", {{"type", "number"}}},
+      {"white_balance_kelvin", {{"type", "number"}, {"minimum", 1500.0}, {"maximum", 15000.0}}},
+      {"sky_light_intensity", {{"type", "number"}, {"minimum", 0.0}}},
+      {"fog_density", {{"type", "number"}, {"minimum", 0.0}}},
+      {"grading_contrast", {{"type", "number"}, {"minimum", 0.0}, {"maximum", 3.0}}},
+      {"grading_saturation", {{"type", "number"}, {"minimum", 0.0}, {"maximum", 3.0}}},
+      {"grading_lift", {{"type", "number"}, {"minimum", 0.0}, {"maximum", 1.0}}},
+      {"grading_vignette", {{"type", "number"}, {"minimum", 0.0}, {"maximum", 1.0}}},
+      {"grading_bloom", {{"type", "number"}, {"minimum", 0.0}, {"maximum", 1.0}}},
+  };
+  l_globals["required"] = nlohmann::json::array(
+      {"exposure_ev100_bias", "white_balance_kelvin", "sky_light_intensity", "fog_density", "grading_contrast",
+       "grading_saturation", "grading_lift", "grading_vignette", "grading_bloom"}
+  );
+
+  nlohmann::json l_light{};
+  l_light["type"]                 = "object";
+  l_light["additionalProperties"] = false;
+  l_light["properties"]           = nlohmann::json{
+      {"role", make_enum_schema<light_role>()},
+      {"type", make_enum_schema<light_type>()},
+      {"azimuth_deg", {{"type", "number"}, {"minimum", -180.0}, {"maximum", 180.0}}},
+      {"elevation_deg", {{"type", "number"}, {"minimum", -90.0}, {"maximum", 90.0}}},
+      {"distance_m", {{"type", "number"}, {"minimum", 0.1}}},
+      {"intensity_unit", make_enum_schema<intensity_unit>()},
+      {"intensity", {{"type", "number"}, {"minimum", 0.0}}},
+      {"color_mode", make_enum_schema<color_mode>()},
+      {"kelvin", {{"type", "number"}, {"minimum", 1500.0}, {"maximum", 15000.0}}},
+      {"rgb",
+       nlohmann::json{
+           {"type", "array"},
+           {"items", {{"type", "number"}, {"minimum", 0.0}, {"maximum", 1.0}}},
+           {"minItems", 3},
+           {"maxItems", 3}
+       }},
+      {"filter", {{"type", "string"}}},
+      {"softness", {{"type", "number"}, {"minimum", 0.0}, {"maximum", 1.0}}},
+      {"source_radius_cm", {{"type", "number"}, {"minimum", 0.0}}},
+      {"cast_shadows", {{"type", "boolean"}}},
+      {"note", {{"type", "string"}}},
+  };
+  // 全字段必填：颜色三个分支只能有一个生效，但严格结构化输出不支持「条件必填」，
+  // 所以三个分支的字段都必填，非本分支的填中性占位（提示词里已说明）。
+  l_light["required"] = nlohmann::json::array(
+      {"role", "type", "azimuth_deg", "elevation_deg", "distance_m", "intensity_unit", "intensity", "color_mode",
+       "kelvin", "rgb", "filter", "softness", "source_radius_cm", "cast_shadows", "note"}
+  );
+
+  // 刻意没有：variant_axis / baseline_level / ops / rig_id / candidate_index / schema_version ——
+  // 这些是服务端的字段（谁在哪一轮、哪个候选、从哪个关卡起手），模型给它们没有意义，
+  // 而一旦进了 schema，模型就会开始编造它们。
+  nlohmann::json l_root{};
+  l_root["type"]                 = "object";
+  l_root["additionalProperties"] = false;
+  l_root["properties"]           = nlohmann::json{
+      {"strategy", {{"type", "string"}}},
+      {"axes",
+       nlohmann::json{
+           {"type", "array"}, {"items", l_axis_item}, {"minItems", 1}, {"maxItems", g_axis_max_count}
+       }},
+      {"globals", l_globals},
+      // 不设 maxItems：决策 17 明确「单镜头动态阴影灯上限先不限制」，这里加一个上限
+      // 等于在 schema 层偷偷引入一条新的性能约束。
+      {"lights", nlohmann::json{{"type", "array"}, {"items", l_light}, {"minItems", 1}}},
+  };
+  l_root["required"] = nlohmann::json::array({"strategy", "axes", "globals", "lights"});
+  return l_root;
+}
+
+std::string build_candidates_input_text(const candidate_generation_request_t& in_request) {
+  std::string l_out{};
+  l_out += fmt::format(
+      "【已确认的灯光方案（LightingSpec，人工已确认）】降级级别={}\n",
+      magic_enum::enum_name(in_request.spec_.degrade_level_)
+  );
+  l_out += describe_spec_brief(in_request.spec_);
+
+  const auto l_presets = pick_presets(in_request, g_preset_prompt_top_k);
+  if (l_presets.empty()) {
+    l_out += "\n【预设库】空的（或都被停用了）：请完全依据上面的方案自己给出一套基线灯集合。\n";
+  } else {
+    l_out += fmt::format("\n【可选预设（按标签匹配挑出的 {} 条，可以只借鉴其中一部分）】\n", l_presets.size());
+    for (const auto* l_preset : l_presets) l_out += describe_preset_brief(*l_preset);
+  }
+
+  if (in_request.base_rig_.has_value()) {
+    l_out += fmt::format(
+        "\n【上一轮美术选中的 rig（第 {} 轮的起点，warm start）】\n", in_request.iteration_ - 1
+    );
+    l_out += describe_rig_brief(*in_request.base_rig_);
+    l_out += "除非下面的 Spec 或反馈明确要求，**保持灯的角色与数量不变**，只调整数值与方位。\n";
+  } else {
+    l_out += "\n【首轮：没有上一轮的 rig】\n"
+             "请从上面的方案与预设出发给出一套完整的基线灯集合；首轮档位取大跨度。\n";
+  }
+
+  if (in_request.feedback_axes_.has_value() && !in_request.feedback_axes_->axes_.empty()) {
+    l_out += "\n【美术用滑块指定的方向（这些轴必须出现在你的 axes 里）】\n";
+    for (const auto& l_axis : in_request.feedback_axes_->axes_)
+      l_out += fmt::format("  {} = {}\n", magic_enum::enum_name(l_axis.axis_), join_numbers(l_axis.steps_));
+    l_out += "美术已经把方向指出来了：请让对应轴的档位覆盖（或落在）这个方向附近，"
+             "并把档位总数补齐到 5。\n";
+  } else if (in_request.iteration_ > 1) {
+    l_out += "\n【本轮没有滑块指定的方向】\n"
+             "美术只是要求继续迭代；请根据上一轮选中的 rig 与目标之间的差距自己选轴，档位取小跨度。\n";
+  }
+  return l_out;
+}
+
+http::seedance2::inference_request_t build_candidates_request(const candidate_generation_request_t& in_request) {
+  http::seedance2::inference_request_t l_req{};
+  l_req.instructions_       = build_candidates_instructions();
+  l_req.input_text_         = build_candidates_input_text(in_request);
+  l_req.temperature_        = 0.2;
+  l_req.json_schema_        = build_candidates_json_schema();
+  l_req.json_schema_name_   = "lighting_candidates";
+  l_req.json_schema_strict_ = true;
+  // 刻意**不发**的键，每一个都有理由：
+  //   images / image_detail  —— Spec 已经把参考蒸馏成数字目标了，生成阶段不需要再看图；
+  //                             没有 images 还发 image_detail 就是给「不存在的输入」配参数。
+  //   max_output_tokens      —— 缺省值 4096 会截断较大的输出，而截断的表现（result_json_ 变
+  //                             null）与「schema 被拒」无法区分，排查时会走错方向（§15.6 坑 21）。
+  //   thinking               —— 缺省 disabled；结构化任务开 thinking 会让 output[0] 变成
+  //                             reasoning（§15.7）。
+  return l_req;
+}
+
+iteration_axes_t default_axis_plan(const lighting_spec_t& in_spec) {
+  // 档位直接取自 §6.2 自己给出的数字（3:1 / 6:1 / 10:1 与冷暖），是「模型没能给出可用搜索
+  // 方向」时唯一有依据的起点。刻意不含中性档：中性档等于基线，会被同一个候选检查拦下。
+  iteration_axes_t l_axes{};
+  axis_step_t l_ratio{};
+  l_ratio.axis_  = variant_axis_kind::key_fill_ratio;
+  l_ratio.steps_ = {3.0, 6.0, 10.0};
+  l_ratio.label_ = "对比档位";
+  axis_step_t l_kelvin{};
+  l_kelvin.axis_  = variant_axis_kind::kelvin;
+  l_kelvin.steps_ = {-800.0, 800.0};
+  l_kelvin.label_ = "冷暖";
+  l_axes.axes_    = {l_ratio, l_kelvin};
+  l_axes.strategy_ = fmt::format(
+      "默认轴计划：先用 key:fill 的 {} 三档看对比结构，再用色温 {} 两档看冷暖。", join_numbers(l_ratio.steps_),
+      join_numbers(l_kelvin.steps_)
+  );
+  if (!in_spec.reference_stats_.conflicts_.empty())
+    l_axes.strategy_ += fmt::format(
+        "（参考图存在冲突维度，未设为硬目标：{}）", join_strings(in_spec.reference_stats_.conflicts_, ", ")
+    );
+  return l_axes;
+}
+
+lighting_rig_t build_base_rig(const nlohmann::json& in_json) {
+  DOODLE_CHICK_HTTP(in_json.is_object(), bad_gateway, "候选基线 rig 的输出不是 JSON 对象");
+  DOODLE_CHICK_HTTP(
+      in_json.contains("globals") && in_json.at("globals").is_object(), bad_gateway, "候选基线 rig 缺少 globals 对象"
+  );
+  DOODLE_CHICK_HTTP(
+      in_json.contains("lights") && in_json.at("lights").is_array() && !in_json.at("lights").empty(), bad_gateway,
+      "候选基线 rig 缺少 lights 数组（至少要有一盏灯）"
+  );
+  const auto& l_globals = in_json.at("globals");
+  const auto& l_lights  = in_json.at("lights");
+
+  lighting_rig_t l_rig{};
+  l_rig.schema_version_ = std::string{g_rig_schema_version};
+
+  l_rig.globals_.exposure_.ev100_bias_             = require_number(l_globals, "exposure_ev100_bias");
+  l_rig.globals_.exposure_.method_                 = "manual";  // §7.5：迭代期曝光必须手动锁定
+  l_rig.globals_.white_balance_.kelvin_            = require_number(l_globals, "white_balance_kelvin");
+  l_rig.globals_.white_balance_.tint_              = 0.0;       // 色偏暂不进 schema（见 §15.8 待实测）
+  l_rig.globals_.environment_.sky_light_intensity_ = require_number(l_globals, "sky_light_intensity");
+  l_rig.globals_.environment_.fog_density_         = require_number(l_globals, "fog_density");
+  l_rig.globals_.grading_.contrast_                = require_number(l_globals, "grading_contrast");
+  l_rig.globals_.grading_.saturation_              = require_number(l_globals, "grading_saturation");
+  l_rig.globals_.grading_.lift_                    = require_number(l_globals, "grading_lift");
+  l_rig.globals_.grading_.vignette_                = require_number(l_globals, "grading_vignette");
+  l_rig.globals_.grading_.bloom_                   = require_number(l_globals, "grading_bloom");
+
+  std::int32_t l_index = 0;
+  for (const auto& l_json : l_lights) {
+    DOODLE_CHICK_HTTP(l_json.is_object(), bad_gateway, "候选基线 rig 的 lights[{}] 不是对象", l_index);
+    light_t l_light{};
+    // id 由服务端生成：模型给的 id 可能与它自己的其它灯重名，而 id 是 ops_ 的对齐键，
+    // 重名会让 diff 与执行器都指向错误的灯。
+    l_light.id_                      = fmt::format("L{:02}", l_index++);
+    l_light.role_                    = require_enum<light_role>(l_json, "role");
+    l_light.type_                    = require_enum<light_type>(l_json, "type");
+    l_light.offset_.azimuth_deg_     = require_number(l_json, "azimuth_deg");
+    l_light.offset_.elevation_deg_   = require_number(l_json, "elevation_deg");
+    l_light.offset_.distance_m_      = require_number(l_json, "distance_m");
+    l_light.intensity_.unit_         = require_enum<intensity_unit>(l_json, "intensity_unit");
+    l_light.intensity_.value_        = require_number(l_json, "intensity");
+    l_light.shadows_.softness_       = std::clamp(require_number(l_json, "softness"), 0.0, 1.0);
+    l_light.shadows_.cast_           = require_bool(l_json, "cast_shadows");
+    l_light.shape_.source_radius_cm_ = std::max(0.0, require_number(l_json, "source_radius_cm"));
+    l_light.color_.mode_             = require_enum<color_mode>(l_json, "color_mode");
+    // rgb 在 schema 里是必填三元组，**形状与 color_mode 无关地校验**：长度不对就说明模型没有按
+    // schema 回答。若因为「当前模式用不到它」而静默忽略，一次明确的协议违规就变成了一盏看起来
+    // 完全正常的灯 —— 与裸 `get<Enum>()` 静默落值属于同一类问题。
+    if (const auto l_rgb_it = l_json.find("rgb"); l_rgb_it != l_json.end() && !l_rgb_it->is_null())
+      require_number_array3(l_json, "rgb");
+    switch (l_light.color_.mode_) {
+      case color_mode::temperature:
+        l_light.color_.kelvin_ = require_number(l_json, "kelvin");
+        break;
+      case color_mode::rgb: {
+        const auto l_rgb    = require_number_array3(l_json, "rgb");
+        l_light.color_.rgb_ = vec3_t{l_rgb.at(0).get<double>(), l_rgb.at(1).get<double>(), l_rgb.at(2).get<double>()};
+        break;
+      }
+      case color_mode::filter:
+        l_light.color_.filter_ = require_string(l_json, "filter");
+        break;
+      default:
+        break;
+    }
+    // 其余 IR 字段走结构体默认值（anchor 默认相机空间、channels 默认 [0,1,0] 主光走 Channel1、
+    // mobility=movable、origin=ai、cone 角留给执行器按灯型补）—— 这些是 IR 细节，
+    // 让模型填只会多一处可以填错的地方。
+    l_rig.lights_.emplace_back(std::move(l_light));
+  }
+  return l_rig;
+}
+
+bool apply_axis_step(lighting_rig_t& io_rig, const variant_axis_t& in_axis) {
+  const double l_v = in_axis.value_;
+  switch (in_axis.axis_) {
+    case variant_axis_kind::none:
+      return false;
+
+    case variant_axis_kind::key_direction: {
+      if (l_v == 0.0) return false;
+      auto* l_key = first_light_with_role(io_rig, light_role::key);
+      if (l_key == nullptr) return false;
+      double l_azimuth = std::fmod(l_key->offset_.azimuth_deg_ + l_v, 360.0);
+      if (l_azimuth > 180.0) l_azimuth -= 360.0;
+      if (l_azimuth < -180.0) l_azimuth += 360.0;
+      l_key->offset_.azimuth_deg_ = l_azimuth;
+      return true;
+    }
+
+    case variant_axis_kind::key_fill_ratio: {
+      if (l_v <= 0.0) return false;
+      auto* l_key = first_light_with_role(io_rig, light_role::key);
+      if (l_key == nullptr) return false;
+      if (l_key->intensity_.value_ <= 0.0) return false;
+      double l_fill_sum = 0.0;
+      for (const auto& l_light : io_rig.lights_) {
+        if (l_light.role_ != light_role::fill) continue;
+        // 单位不同就不能比：坎德拉与勒克斯不是同一个量纲（lux 还随距离变），比值没有意义。
+        if (l_light.intensity_.unit_ != l_key->intensity_.unit_) return false;
+        l_fill_sum += l_light.intensity_.value_;
+      }
+      if (l_fill_sum <= 0.0) return false;
+      // 当前比值 = key / fill；要让比值等于目标，就按 当前/目标 缩放补光。
+      const double l_scale = (l_key->intensity_.value_ / l_fill_sum) / l_v;
+      if (l_scale == 1.0) return false;
+      for (auto& l_light : io_rig.lights_)
+        if (l_light.role_ == light_role::fill) l_light.intensity_.value_ *= l_scale;
+      return true;
+    }
+
+    case variant_axis_kind::kelvin: {
+      if (l_v == 0.0) return false;
+      for (auto& l_light : io_rig.lights_) {
+        if (l_light.color_.mode_ != color_mode::temperature) continue;
+        l_light.color_.kelvin_ = std::clamp(l_light.color_.kelvin_ + l_v, 1500.0, 15000.0);
+      }
+      io_rig.globals_.white_balance_.kelvin_ =
+          std::clamp(io_rig.globals_.white_balance_.kelvin_ + l_v, 1500.0, 15000.0);
+      // 即便所有灯都不是色温模式，全局白平衡也已经变了，所以这里恒为「改了」；
+      // 真正没改的情况（已经在夹取边界上）由 map_candidate_result 的同一个候选检查兜住。
+      return true;
+    }
+
+    case variant_axis_kind::hardness: {
+      if (l_v == 0.0) return false;
+      bool l_applied = false;
+      for (auto& l_light : io_rig.lights_) {
+        const double l_softness = std::clamp(l_light.shadows_.softness_ - 0.5 * l_v, 0.0, 1.0);
+        const double l_radius   = std::max(0.0, l_light.shape_.source_radius_cm_ * (1.0 - 0.5 * l_v));
+        if (l_softness != l_light.shadows_.softness_ || l_radius != l_light.shape_.source_radius_cm_)
+          l_applied = true;
+        l_light.shadows_.softness_       = l_softness;
+        l_light.shape_.source_radius_cm_ = l_radius;
+      }
+      return l_applied;
+    }
+
+    case variant_axis_kind::ambient_level: {
+      if (l_v == 0.0) return false;
+      const double l_scale = std::clamp(1.0 + l_v, 0.0, 4.0);
+      io_rig.globals_.environment_.sky_light_intensity_ =
+          std::max(0.0, io_rig.globals_.environment_.sky_light_intensity_ * l_scale);
+      for (auto& l_light : io_rig.lights_)
+        if (l_light.role_ == light_role::ambient)
+          l_light.intensity_.value_ = std::max(0.0, l_light.intensity_.value_ * l_scale);
+      return true;
+    }
+
+    case variant_axis_kind::grading_strength: {
+      if (l_v == 0.0) return false;
+      // 只放大/缩小「偏离中性的量」：contrast/saturation 的中性值是 1，其余是 0。
+      // 不碰 lights_ —— 这个轴是纯调色的自由度，动灯会让「调色 vs 布光」两个方向混在一起。
+      const double l_scale = std::clamp(1.0 + l_v, 0.0, 3.0);
+      auto& l_grading      = io_rig.globals_.grading_;
+      l_grading.contrast_  = std::clamp(1.0 + (l_grading.contrast_ - 1.0) * l_scale, 0.0, 3.0);
+      l_grading.saturation_ = std::clamp(1.0 + (l_grading.saturation_ - 1.0) * l_scale, 0.0, 3.0);
+      l_grading.lift_       = std::clamp(l_grading.lift_ * l_scale, 0.0, 1.0);
+      l_grading.vignette_   = std::clamp(l_grading.vignette_ * l_scale, 0.0, 1.0);
+      l_grading.bloom_      = std::clamp(l_grading.bloom_ * l_scale, 0.0, 1.0);
+      return true;
+    }
+
+    default:
+      return false;
+  }
+}
+
+std::vector<lighting_rig_t> expand_candidates(const lighting_rig_t& in_base, const iteration_axes_t& in_axes) {
+  std::vector<lighting_rig_t> l_ret{};
+  l_ret.reserve(1 + g_axis_step_budget);
+
+  // 候选 0 是本轮基线：6 个候选是「1 个基线 + 5 个变异」，不是 6 个平行实验。
+  // 有基线在场，美术才看得出「这次改动做了什么」，ops_ 也才有参照物（§15.8）。
+  lighting_rig_t l_zero       = in_base;
+  l_zero.variant_axis_        = variant_axis_t{};
+  l_zero.variant_axis_.axis_  = variant_axis_kind::none;
+  l_zero.variant_axis_.value_ = 0.0;
+  l_zero.variant_axis_.label_ = "基线";
+  l_zero.ops_.clear();
+  l_ret.emplace_back(std::move(l_zero));
+
+  for (const auto& l_axis : in_axes.axes_) {
+    for (const double l_step : l_axis.steps_) {
+      lighting_rig_t l_rig = in_base;
+      variant_axis_t l_variant{};
+      l_variant.axis_  = l_axis.axis_;
+      l_variant.value_ = l_step;
+      l_variant.label_ = l_axis.label_;
+      l_rig.variant_axis_ = l_variant;
+      apply_axis_step(l_rig, l_variant);
+      l_rig.ops_.clear();
+      l_ret.emplace_back(std::move(l_rig));
+    }
+  }
+  return l_ret;
+}
+
+std::vector<light_op_t> diff_rigs(const lighting_rig_t& in_base, const lighting_rig_t& in_target) {
+  std::vector<light_op_t> l_ops{};
+  const std::string l_rationale =
+      in_target.variant_axis_.axis_ == variant_axis_kind::none
+          ? std::string{"基线"}
+          : fmt::format("{} {}", magic_enum::enum_name(in_target.variant_axis_.axis_), in_target.variant_axis_.value_);
+
+  // ---- 全局量：四块各对应一个 light_op_kind，只发真的变了的那几块 ----
+  // patch 用「目标值整块」而不是增量：语义是 set，与 UE 侧「按 op 精确设置」一致，
+  // 也与 §7.5 的「按 op 精确增删、不用 ClearAllLight」一致。
+  if (nlohmann::json{in_base.globals_} != nlohmann::json{in_target.globals_}) {
+    const std::pair<light_op_kind, const char*> l_blocks[] = {
+        {light_op_kind::set_exposure, "exposure_"},
+        {light_op_kind::set_white_balance, "white_balance_"},
+        {light_op_kind::set_environment, "environment_"},
+        {light_op_kind::set_grading, "grading_"},
+    };
+    const auto l_base_json = nlohmann::json{in_base.globals_};
+    const auto l_tgt_json  = nlohmann::json{in_target.globals_};
+    for (const auto& [l_kind, l_key] : l_blocks) {
+      if (!l_base_json.contains(l_key) || l_base_json.at(l_key) == l_tgt_json.at(l_key)) continue;
+      light_op_t l_op{};
+      l_op.op_        = l_kind;
+      l_op.patch_     = l_tgt_json.at(l_key);
+      l_op.rationale_ = l_rationale;
+      l_ops.emplace_back(std::move(l_op));
+    }
+  }
+
+  // ---- 逐灯：以 id_ 对齐。展开器只改变量、不增删灯，所以两边 id 集合必然相同，
+  //      这里也不会产生 add / remove（§6.6 的护栏正是这个意思）----
+  const auto l_count = std::min(in_base.lights_.size(), in_target.lights_.size());
+  for (std::size_t l_i = 0; l_i < l_count; ++l_i) {
+    const auto& l_base_light = in_base.lights_.at(l_i);
+    const auto& l_tgt_light  = in_target.lights_.at(l_i);
+    if (l_base_light.id_ != l_tgt_light.id_) continue;
+    // 逐子块比较（用类型化成员比较，patch 的键名是给执行器看的稳定名字）——
+    // 这样 patch 里只有真的变了的子块，审计和执行器都看得清「这次动了什么」。
+    nlohmann::json l_patch = nlohmann::json::object();
+    if (nlohmann::json{l_base_light.offset_} != nlohmann::json{l_tgt_light.offset_})
+      l_patch["offset"] = l_tgt_light.offset_;
+    if (nlohmann::json{l_base_light.intensity_} != nlohmann::json{l_tgt_light.intensity_})
+      l_patch["intensity"] = l_tgt_light.intensity_;
+    if (nlohmann::json{l_base_light.color_} != nlohmann::json{l_tgt_light.color_})
+      l_patch["color"] = l_tgt_light.color_;
+    if (nlohmann::json{l_base_light.shape_} != nlohmann::json{l_tgt_light.shape_})
+      l_patch["shape"] = l_tgt_light.shape_;
+    if (nlohmann::json{l_base_light.shadows_} != nlohmann::json{l_tgt_light.shadows_})
+      l_patch["shadows"] = l_tgt_light.shadows_;
+    if (l_patch.empty()) continue;
+    light_op_t l_op{};
+    l_op.op_        = light_op_kind::modify;
+    l_op.light_     = l_tgt_light.id_;
+    l_op.patch_     = std::move(l_patch);
+    l_op.rationale_ = l_rationale;
+    l_ops.emplace_back(std::move(l_op));
+  }
+  return l_ops;
+}
+
+candidate_generation_result_t map_candidate_result(
+    const nlohmann::json& in_result_json, const candidate_generation_request_t& in_request
+) {
+  DOODLE_CHICK_HTTP(
+      in_result_json.is_object(), bad_gateway, "候选生成接缝收到了非对象的推理结果（{}），无法映射为候选",
+      in_result_json.type_name()
+  );
+
+  // ---- 1) 物化基线 rig（模型给「灯怎么打」，服务端补 IR 细节）----
+  auto l_base = build_base_rig(in_result_json);
+
+  // ---- 2) 服务端钉死：身份与来源字段一律不取模型的值 ----
+  l_base.session_id_       = in_request.session_id_;
+  l_base.spec_id_          = in_request.spec_.spec_id_;
+  l_base.iteration_        = in_request.iteration_;
+  l_base.candidate_index_  = 0;
+  l_base.rig_id_           = uuid{};  // 由调用方一次性分配（接缝不落库，也不需要它唯一）
+  l_base.baseline_level_   = in_request.baseline_level_;
+  l_base.variant_axis_     = variant_axis_t{};
+  l_base.ops_.clear();
+  l_base.provenance_          = provenance_t{};
+  l_base.provenance_.model_   = doodle_config::g_ark_inference_model;
+  // prompt_hash_ 是「这份 rig 是从哪份输入推出来的」的审计指纹。用同一份 input_text 再算一次：
+  // 这里没有别的随机源（seed_ 恒 0），所以同一输入必然得到同一指纹（§8.5 第 1 条）。
+  l_base.provenance_.prompt_hash_ = std::to_string(std::hash<std::string>{}(build_candidates_input_text(in_request)));
+  l_base.provenance_.seed_        = 0;
+
+  // ---- 3) §9.1 的灵敏度前提：没有主光，两个最常用的轴会变成空操作 ----
+  DOODLE_CHICK_HTTP(
+      first_light_with_role(l_base, light_role::key) != nullptr, bad_gateway,
+      "候选基线 rig 里没有 role=key 的主光：key_direction / key_fill_ratio 两个轴都会变成空操作，"
+      "§9.1 要求的「候选之间真的在目标上有差异」无法成立"
+  );
+
+  // ---- 4) 轴计划：不合法就整体回退默认计划（不抛错）----
+  iteration_axes_t l_axes{};
+  std::string l_strategy{};
+  if (const auto l_reason = parse_axis_plan(in_result_json, l_axes, l_strategy); l_reason.has_value()) {
+    l_axes            = default_axis_plan(in_request.spec_);
+    const auto l_head = l_strategy.empty() ? std::string{} : fmt::format("模型策略：{}｜", l_strategy);
+    l_axes.strategy_  = fmt::format("{}模型给的轴计划被弃用：{}", l_head, *l_reason);
+    if (l_axes.strategy_.size() > g_strategy_max_len) l_axes.strategy_.resize(g_strategy_max_len);
+  } else {
+    l_axes.strategy_ = l_strategy;
+  }
+
+  // ---- 5) OFAT 展开 ----
+  auto l_rigs = expand_candidates(l_base, l_axes);
+
+  // ---- 6) 自洽（契约 3）：钉死身份、写 ops_、确认每个变异候选真的与基线不同 ----
+  for (std::size_t l_i = 0; l_i < l_rigs.size(); ++l_i) {
+    auto& l_rig            = l_rigs.at(l_i);
+    l_rig.session_id_      = in_request.session_id_;
+    l_rig.spec_id_         = in_request.spec_.spec_id_;
+    l_rig.iteration_       = in_request.iteration_;
+    l_rig.baseline_level_  = in_request.baseline_level_;
+    l_rig.candidate_index_ = static_cast<std::int32_t>(l_i);
+    l_rig.rig_id_          = uuid{};
+    l_rig.provenance_      = l_base.provenance_;
+    l_rig.ops_             = diff_rigs(l_base, l_rig);
+    if (l_i == 0) continue;
+    // §9.1 的「候选真的在目标上有差异」的最小实现：沿某个轴变了、但 rig 一个字节都没变，
+    // 说明这条轴在当前 rig 上不生效（缺 fill 灯、单位不可比、已经在夹取边界上……）。
+    // 返回 6 张一样的图比一次失败更糟 —— 那会让美术以为「这几个方向看起来一样」。
+    DOODLE_CHICK_HTTP(
+        !(rig_substance(l_rig) == rig_substance(l_base)), bad_gateway,
+        "候选 {} 沿轴 {} = {} 展开后与基线完全相同（这条轴在当前 rig 上不生效）",
+        l_i, magic_enum::enum_name(l_rig.variant_axis_.axis_), l_rig.variant_axis_.value_
+    );
+  }
+
+  candidate_generation_result_t l_ret{};
+  l_ret.rigs_ = std::move(l_rigs);
+  l_ret.axes_ = std::move(l_axes);
+  // 契约 3 的另一半：调用方还会再校验一次（500），这里先保证自己自洽。
+  DOODLE_CHICK_HTTP(
+      l_ret.rigs_.size() == static_cast<std::size_t>(g_candidate_count), internal_server_error,
+      "OFAT 展开后得到 {} 个候选，方案 §6.6 要求恰好 {}", l_ret.rigs_.size(), g_candidate_count
+  );
+  return l_ret;
+}
+
 boost::asio::awaitable<spec_generation_result_t> generate_spec(
     sqlite_database& in_sql, const spec_generation_request_t& in_request
 ) {
@@ -1410,11 +2300,94 @@ boost::asio::awaitable<spec_generation_result_t> generate_spec(
 }
 
 boost::asio::awaitable<candidate_generation_result_t> generate_candidates(
-    const candidate_generation_request_t& in_request
+    sqlite_database& in_sql, const candidate_generation_request_t& in_request
 ) {
-  (void)in_request;
-  throw_not_implemented("generate_candidates", "接缝本体：轴安排 + 预设库检索 + 调用推理并落候选");
-  co_return candidate_generation_result_t{};
+  // ---- 1) 触发人 → AI 工作室（推理密钥的来源）----
+  // 同 generate_spec：用 select + to_optional 而不是 get_by_uuid<T> —— 后者内部是 to_single()，
+  // 「查不到」会变成一条 sqlite 异常（HTTP 500），而这里应当是 400 语义。
+  DOODLE_CHICK_HTTP(
+      !in_request.operator_id_.is_nil(), bad_request,
+      "generate_candidates 缺少触发人（operator_id），无法解析 AI 工作室与计费主体"
+  );
+  const auto l_person =
+      select(in_sql).columns(object<person>()).from<person>().where(c(&person::uuid_id_) == in_request.operator_id_)()
+          .to_optional();
+  DOODLE_CHICK_HTTP(
+      l_person.has_value(), bad_request, "找不到触发人 {}（person 不存在），无法解析 AI 工作室",
+      in_request.operator_id_
+  );
+  DOODLE_CHICK_HTTP(
+      !l_person->ai_studio_id_.is_nil(), bad_request, "触发人 {} 未关联 AI 工作室，无法调用推理接口",
+      in_request.operator_id_
+  );
+  const auto l_studio = select(in_sql)
+                            .columns(object<ai_studio>())
+                            .from<ai_studio>()
+                            .where(c(&ai_studio::uuid_id_) == l_person->ai_studio_id_)()
+                            .to_optional();
+  DOODLE_CHICK_HTTP(
+      l_studio.has_value(), bad_request, "找不到 AI 工作室 {}（配置可能已被删除）", l_person->ai_studio_id_
+  );
+
+  // 每次推理都新建客户端：http_client_ssl 内部只有一个 socket 且无锁（§15.6 第 6 条）。
+  auto l_client = http::seedance2::make_inference_client(*l_studio);
+
+  // ---- 2) 组装任务与归一化信封 ----
+  seedance2::task l_task{};
+  l_task.type_                  = seedance2::task_type::inference;       // not_null，必须显式赋值
+  l_task.backend_               = seedance2::task_backend::seedance2;    // 同上
+  l_task.user_id_               = in_request.operator_id_;               // 计费主体 + 签名 URL 的 uid
+  l_task.ai_studio_id_          = l_studio->uuid_id_;
+  l_task.project_uuid_id_       = in_request.project_id_;
+  // 与 generate_spec 的区别：调用方在调用**之前**就把 iteration 的 uuid 铸造好了，
+  // 所以这条推理任务能反查到「哪一次推理生成了第 N 轮候选」。
+  l_task.ai_light_iteration_id_ = in_request.iteration_id_;
+  l_task.text_prompt_           = in_request.prompt_text_;
+  l_task.completion_tokens_     = doodle_config::g_ark_inference_default_consumed_tokens;
+  // 结构体 -> json 走 inference_request_t 的 to_json，落库键集与手写 json 时完全一致
+  l_task.data_request_          = build_candidates_request(in_request);
+
+  // run_inference_task 自己一个事务里落终态任务行 + 扣费（§15.6 的方案 A）。
+  // 这是本接缝唯一的副作用，且**有意保留**：推理确实发生了，必须留痕计费 ——
+  // 否则调用方回滚会话状态时会连带把 person_token 的扣费抹掉（契约 2 的受控例外）。
+  auto l_result = co_await http::seedance2::run_inference_task(l_task, in_sql, l_client);
+
+  // ---- 3) 失败映射：重试全在客户端内做完了（g_ark_inference_max_retry），这里不重试 ----
+  if (l_result.status_ != seedance2::task_status::succeeded) {
+    const auto l_brief = l_result.result_text_.substr(0, std::min<std::size_t>(200, l_result.result_text_.size()));
+    if (http::seedance2::seedance2_client::is_sensitive_content_error(l_result.data_response_)) {
+      // 内容违规是可解释的失败：改提示词能解决，所以是 400 而不是 502。
+      throw_exception(doodle_error{
+          boost::beast::http::status::bad_request, "候选生成被内容安全策略拒绝：{}",
+          l_brief.empty() ? l_result.error_code_ : l_brief
+      });
+    }
+    throw_exception(doodle_error{
+        boost::beast::http::status::bad_gateway, "推理失败（status={}, error_code={}, 超时={}）：{}",
+        magic_enum::enum_name(l_result.status_), l_result.error_code_, l_result.is_timeout_, l_brief
+    });
+  }
+
+  // result_json_ 由 parse_inference_response 填好（内部已做过 strip_code_fence + parse），
+  // **不要**在这里二次解析 result_text_。
+  if (!l_result.result_json_.is_object()) {
+    const auto l_brief = l_result.result_text_.substr(0, std::min<std::size_t>(200, l_result.result_text_.size()));
+    throw_exception(doodle_error{
+        boost::beast::http::status::bad_gateway, "模型输出不是合法 JSON 对象，无法映射为候选：{}", l_brief
+    });
+  }
+
+  // ---- 4) 映射（物化基线 + 轴计划校验/回退 + OFAT 展开 + ops diff + 自洽检查）----
+  auto l_ret = map_candidate_result(l_result.result_json_, in_request);
+
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_http(),
+      "AI 灯光会话 {} 第 {} 轮候选生成完成：候选 {} 个，轴 {} 条（{}），token in/out/total={}/{}/{}",
+      in_request.session_id_, in_request.iteration_, l_ret.rigs_.size(), l_ret.axes_.axes_.size(),
+      l_ret.axes_.strategy_, l_result.input_tokens_, l_result.output_tokens_, l_result.total_tokens_
+  );
+
+  co_return l_ret;
 }
 
 boost::asio::awaitable<std::vector<axis_step_t>> structure_feedback(

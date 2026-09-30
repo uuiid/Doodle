@@ -471,6 +471,12 @@ Spec 前调用一次（§15.7）。`is_outlier_` / `excluded_reason_` 仍是**�
 
 第一轮用较大的轴跨度（探索），后续轮次收缩（利用）。
 
+**实现约束（§15.8）**：`variant_axis_t` 只带**一条**轴（`axis_` + `value_` + `label_`），所以候选展开必须是
+**OFAT**（候选 0 = 基线，其余 5 个各沿一条轴变化一档），**不是**全因子组合。上表「每轴 2–3 档」在实现里的
+落法是**两种自由度的组合**：模型选 1–2 条轴（`g_axis_max_count`），**档位总数**固定为
+`g_axis_step_budget = g_candidate_count - 1 = 5`，由 `parse_axis_plan()` 硬校验；校验不过则退回
+`default_axis_plan(spec)` 的固定轴表。
+
 ### 6.3 提示词与参考的冲突规则
 
 **提示词优先于参考图。** 参考只提供「环境与场景的结构与数值」，提示词提供「意图与语义」。
@@ -500,6 +506,12 @@ Spec 前调用一次（§15.7）。`is_outlier_` / `excluded_reason_` 仍是**�
 
 流程：**intent + 参考统计目标 embedding → top-k 预设 → 候选骨架 → LLM 裁剪/组合/微调**。
 
+> **实现现状（§15.8 决定 D7）**：`embedding` 列已建好，但全仓库**没有可用的查询向量生成器** —— 唯一的
+> embedding 生成器是 ONNX 的 `src/doodle_lib/ai/llm2vec.{h,cpp}`（被 `src/doodle_lib/ai/kimodo.cpp` 用），
+> 需要 ONNX Runtime + 模型文件，且与预设的 CLIP 图编码不是同一个空间。所以本轮 `pick_presets()` 走
+> **词法匹配**（`preset_lexical_score()`：tags/name 与 Spec 的 `intent` 文本做子串打分），取
+> top-`g_preset_prompt_top_k`(12) **只送进 `input_text` 当知识注入**，不参与候选展开。向量检索留到有编码器时再接。
+
 ### 6.5 工具面（function calling schema）
 
 | 工具 | 作用 |
@@ -511,6 +523,12 @@ Spec 前调用一次（§15.7）。`is_outlier_` / `excluded_reason_` 仍是**�
 | `generate_candidates(spec, axes, n)` | 沿轴生成 N 个候选 rig |
 | `parse_feedback(text)` | 把美术反馈文本结构化为轴上的 delta |
 | `commit(rig)` | 定稿（唯一有副作用） |
+
+> **实现现状（§15.8）**：这张表里的 7 个「工具」**全部由我们的代码调用，模型从不调用任何工具**
+> （线格式里根本不发 `tools`，§15.6）—— 真正调用 LLM 的只有 `build_spec` 与 `generate_candidates`
+> （+ 未落地的 `parse_feedback`），另外四个（`inventory_lights` / `query_scene` / `list_presets` / `commit`）
+> 是 worker 侧或数据库侧的纯本地操作。因此上表 `generate_candidates(spec, axes, n)` 里的 `axes` 在
+> **有上一轮人工反馈时是输入**，在**首轮 / Spec 升版后是输出**（接缝自己排轴，见 §15.8 决定 D6）。
 
 ### 6.6 护栏（硬约束，schema 层面强制）
 
@@ -665,6 +683,12 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 - 沿语义轴（§6.2）生成差异化候选
 - 用灵敏度标定保证候选**真的在目标上有差异**（避免生成一堆看起来差不多的候选）
 - 第一轮大跨度探索，后续轮次在美术选中的区域收缩
+
+**本轮落地范围（§15.8）**：第一条（沿轴生成差异化候选）已由 `expand_candidates()` 确定性完成；
+**第二条「灵敏度标定」本轮不做** —— 它需要渲染回环（渲染 → 测落点 → 估灵敏度），属于 M2 之后。
+现在「候选在轴上确实不同」靠 `map_candidate_result()` 的**抛错**而非标定：任何一档轴经
+`apply_axis_step()` 后 rig 实质无变化，接缝直接 502。宁可这一轮失败，也不要发 6 张看起来一样的图
+去浪费美术的一次判断。
 
 ### 9.2 全局调色反解（grading 类目标的热启动）
 
@@ -891,11 +915,9 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 > 「不崩 + 低置信度」，而不是伪装成「统计层没落地」。
 > 于是 `references_have_stats()` 对任何「有图且都能解码」的会话为真、`stats_only` 可达。
 >
-> 但它**暂时不可观测**：`advance_session` 把 `degrade_level_` 填进
-> `spec_generation_request_t` 之后就交给 `generate_spec`，而后者仍是 501、什么都不落库。
-> 也就是说这条现在只是「把输入准备对了」，真正能看出降级级别要等接缝落地。
-> **多图聚合（§5.3 的②）也还没有**，所以 `stats_only` 的「聚合可用」严格说只到了
-> 「单图统计可用」这一步；②落地后才是本表字面上的含义。
+> **已可观测（§15.7 / §15.8）**：`generate_spec` 已落地，它按聚合器的结果判断并把 `degrade_level_` 落库，
+> 于是这条现在是真正能查的字段；`generate_candidates` 也已落地。**多图聚合（§5.3 的②）同样已落地**
+> （`aggregate_reference_stats()`），所以 `stats_only` 的「聚合可用」语义现在是完整的。
 
 ---
 
@@ -951,8 +973,8 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
      不需要为 LLM 调用另起一套记账；
    - 凭据仍在 `kitsu_ctx_t`（`seedance2_key_` / `ai_studio`），**必须在主服务器**这条约束不变。
 
-   **接缝进度**（随实施推进更新）：`generate_spec` **已接上**（§15.7），
-   `generate_candidates` / `structure_feedback` **仍返回 501**。
+   **接缝进度**（随实施推进更新）：`generate_spec` **已接上**（§15.7）、`generate_candidates` **已接上**（§15.8），
+   `structure_feedback` **仍返回 501**（调用方捕获后降级为纯滑块反馈，见本节第 ⑨ 项）。
    接法就是 `make_inference_client()` + `run_inference_task()`，参数与返回值早已定好。
 
 5. **AI 路由**：**已落地（本轮）**，12 条，全部注册在 `create_kitsu_route_2`（主服务器），
@@ -972,7 +994,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    | `GET  /api/doodle/ai/light/session/{session_id}/spec` | Spec 版本列表 |
    | `POST /api/doodle/ai/light/session/{session_id}/spec` | 生成 Spec：`draft` 出第一版，`awaiting_spec_confirm` 重出（**要求已有参考图**，否则 400）—— **已实现**（§15.7）：聚合统计 + 一次方舟推理；失败时会话状态回滚、Spec 版本不变 |
    | `POST /api/doodle/ai/light/session/{session_id}/spec/confirm` | 人工闸门 1：确认 Spec + 冲突裁决，随后触发首轮 |
-   | `POST /api/doodle/ai/light/session/{session_id}/iterate` | 生成一轮候选并派发 —— **仍返回 501**（接缝 `generate_candidates` 未实现，见 §15.4）；无需请求体 |
+   | `POST /api/doodle/ai/light/session/{session_id}/iterate` | 生成一轮候选并派发 —— **已实现**（接缝 `generate_candidates`，见 §15.8）；无需请求体 |
    | `POST /api/doodle/ai/light/session/{session_id}/judge` | **人工闸门 2**（accept / continue_iteration / reject_all） |
    | `GET  /api/doodle/ai/light/preset` | 预设库列表（`?enabled_only=false` 取全部） |
    | `POST /api/doodle/ai/light/preset` | 新建预设（美术整理的第一批走这里导入） |
@@ -1053,11 +1075,12 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    响应返回**六表聚合详情**（`ai_light_session_detail_t`，含 `session_` 在内，是会话本体的超集），
    这样前端一次就能拿到 `advance_session` 刚写入的 Spec，不必再补一发 GET。
 
-   **两个 501 端点不是占位桩**：权限、状态校验、会话查找全部真实执行，只有最里层的
-   LLM 接缝抛 `not_implemented`（→ HTTP 501，见 §15.4）。所以现在调它们得到的是
+   **501 端点不是占位桩**：权限、状态校验、会话查找全部真实执行，只有最里层的
+   LLM 接缝抛 `not_implemented`（→ HTTP 501，见 §15.4）。所以调它们得到的是
    「参数错了明确报错、参数对了告诉你能力还没到」，而不是一个假装成功的 200。
-   `/judge` 的滑块通道（`feedback_axes`）**本轮即可用**：文本结构化是补充通道，
-   接缝未实现时降级为「文本原样留存 + 只用滑块轴」，判断本身完全成立。
+   **随实施推进，两条已不再是 501**：`POST /spec`（§15.7）与 `POST /iterate`（§15.8）都已真的跑推理，
+   现在只剩 `structure_feedback` 一条。`/judge` 的滑块通道（`feedback_axes`）**从一开始就可用**：
+   文本结构化是补充通道，接缝未实现时降级为「文本原样留存 + 只用滑块轴」，判断本身完全成立。
 6. **轮次编排**：`awaiting_judgement` 会话状态、4 小时过期标志、跨会话恢复（§10.3）。
    **已落地**：`doodle_lib/http_method/kitsu/ai_light_orchestrator.{h,cpp}`
    （`advance_session` / `apply_judgement` / `mark_iteration_rendered` / `build_session_detail`）。
@@ -1072,8 +1095,8 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    **参考图统计已落地**（`doodle_lib/http_method/kitsu/ai_light_stats.{h,cpp}`）：上传时在
    **已落盘**的 PNG 上算 `reference_image_stats_t` 的七个字段（亮度分位 / 色板 / 对比 /
    色温 / 削波率 / 修图痕迹）与 `stats_confidence_`，写进 `ai_light_reference`。
-   算法口径见 §5.2，色温的显示空间例外见 §8.2。**多图聚合与冲突检测（§5.3 的②）未落地** ——
-   它的唯一消费者 `generate_spec` 还是 501，所以单独一步做。
+   算法口径见 §5.2，色温的显示空间例外见 §8.2。**多图聚合与冲突检测（§5.3 的②）已落地** ——
+   `aggregate_reference_stats()`（`http_method/kitsu/ai_light_stats.cpp`），随 §15.7 的 `generate_spec` 一起接上。
 9. **反馈结构化**：`/judge` 收到的自然语言反馈经 LLM 转成 `feedback_axes`。
    接缝 `structure_feedback()` 已就位（本轮返回 501），调用方捕获后降级为纯滑块反馈。
 
@@ -1273,6 +1296,16 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    新加的 `ai_light_iteration_id` 外键在 CREATE TABLE 时指向了尚未注册的表 —— SQLite 允许这样做，
    实测建表/重建/外键语义用例（`sqlite_schema` / `sqlite_rebuild` / `sqlite_fk_*` / `ai_light_schema`）
    全绿。这一条列在这里是为了**关掉**它，不必再怀疑。
+6. **候选生成的实测项**（§15.8，同样只能拿真 key 打一次才知道）：
+   - **模型是否真的会「排轴」**：`build_candidates_json_schema()` 要求它给出 1–2 条轴 + 档位合计 5，这是
+     把「探索方向」交给模型的唯一地方。若真机上它总给 1 轴 5 档、或干脆给 0 档，说明自由度太窄 ——
+     退路是回到 `default_axis_plan()` 的固定轴表（现在已经是回退路径，只需把「回退」从异常降级为常态）。
+   - **`axes[].steps[]` 的档位是否会重复**：`parse_axis_plan()` 只查**档位总数**不查去重，
+     `expand_candidates()` 也不去重 → 模型给 `[0,0,0,0,0]` 时会生成 5 个一模一样的候选。
+     `map_candidate_result()` 的「轴无实质变化即 502」能兜住（5 个都退化成基线），真机上若频繁触发 502，
+     就该在 `parse_axis_plan()` 里加去重校验。
+   - **预设词法匹配的质量**（§15.8 决定 D7）：中文没有词边界，`preset_lexical_score()` 是子串包含，
+     预设库词条多起来以后误命中会上升。真机上看 `input_text` 里命中的预设名是否合理。
 
 ### 15.3 已落地（数据库层）
 
@@ -1367,14 +1400,13 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 结果**整幅纯白图的分位全是 0** —— 原因是 `cv::calcHist` 的范围是 `[low, high)` 半开区间。
 完整分析与修法见 §15.4 的坑 5。
 
-**接缝（本轮返回 501，不是占位桩）**：
+**接缝**（三条都原样保留，其中两条已落地）：
 
 ```cpp
-// 三个接缝都在 ai_light_orchestrator.cpp，参数被显式 (void) 引用一次，
-// 免得「未使用参数」的告警掩盖了「接缝没实现」这件事。
-generate_spec(req)                       -> spec_generation_result_t    // 缺 deepseek_client（参考图统计已落地，见 §15.5）
-generate_candidates(req)                 -> candidate_generation_result_t // 缺 deepseek_client + 预设检索
-structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 deepseek_client
+// 三个接缝都在 ai_light_orchestrator.cpp。
+generate_spec(in_sql, req)           -> spec_generation_result_t      // 已落地，见 §15.7
+generate_candidates(in_sql, req)     -> candidate_generation_result_t // 已落地，见 §15.8
+structure_feedback(session_id, text) -> std::vector<axis_step_t>      // 仍 501（本节第 ⑨ 项）
 ```
 
 **接缝契约（D3）**：接缝抛异常 ⇒ `advance_session` 把会话状态**回滚到入口状态**并记录
@@ -1401,8 +1433,9 @@ structure_feedback(session_id, text)     -> std::vector<axis_step_t>    // 缺 d
    EXR 一律不下发浏览器（线性数据、体积大、浏览器渲染不了）。
 5. **建会话接口不吞任何接缝错误 —— 因为它不调接缝。** 早先建会话会立刻跑第一步，
    所以需要「吞掉 501 以免前端拿不到 session id 而重试建重复会话」这套说法；
-   现在建会话只 insert，`POST /spec` / `/iterate` 的 501 一律原样返回 ——
-   那是能力缺口，前端应该看到，而不是被包装成一个「成功但少了点东西」的 2xx。
+   现在建会话只 insert，`POST /spec` / `/iterate` 的接缝错误一律原样返回 ——
+   那是能力缺口或真实失败，前端应该看到，而不是被包装成一个「成功但少了点东西」的 2xx。
+   （这两条现已实现，见 §15.7 / §15.8；本条约束继续对 `structure_feedback` 生效。）
 6. **「过期」不做成会话状态，也不留后台扫描器**（决策 12）。它是 `judgement_due_at_` 的
    纯派生标志，读模型带出 `is_judgement_overdue` 即可。做成状态会**关掉唯一的判断入口**：
    `apply_judgement` 只接受 `awaiting_judgement`，而没有任何路径能从那个状态回到
@@ -1959,8 +1992,9 @@ POST /session/{id}/spec
   `aggregate_reports_suspected_outlier_without_touching_the_record` 7 / `aggregate_palette_shares_become_cross_image_intervals` 46）。
   它们钉的是 §5.3 的三条契约：**取中位数但区间取极差**（绝不用平均值收窄）、**冲突只标记不清零**、
   **外点只报不写**。
-- `ai_light_state.cpp`：`unimplemented_seams_report_not_implemented` 只剩 `generate_candidates` /
-  `structure_feedback` 两条 501 断言；新增 `generate_spec_rejects_unresolvable_operator`（operator 为 nil 且
+- `ai_light_state.cpp`：`unimplemented_seams_report_not_implemented` **只剩 `structure_feedback` 一条 501 断言**
+  （`generate_spec` 见 §15.7、`generate_candidates` 见 §15.8，各自落地后都删掉了对应的 501 断言）；新增
+  `generate_spec_rejects_unresolvable_operator`（operator 为 nil 且
   submitter 也为 nil、以及 operator 指向不存在的 person，两条都断言 400）；两个回滚用例的期望从
   `not_implemented` 改成 `bad_request`，并额外断言 `failure_reason_` **不是**「没有可推进的步骤」——
   光看状态码分不出「状态机无步骤」与「接缝失败」。
@@ -2032,8 +2066,8 @@ POST /session/{id}/spec
 
 **保留的边界**：不做 worker 侧推理（`--local` 没有 `deepseek_keys_`，LLM 只跑主服务器）、不做本地 JSON Schema
 校验（vcpkg 里只有 nlohmann-json，schema 由方舟侧强制）、**接缝不重试**（重试全在客户端内：
-`g_ark_inference_max_retry` / `should_retry` 覆盖 429/5xx/408）、`generate_candidates` 与 `structure_feedback`
-仍返回 501。**单测宿主既没有 `core_set::ctx_ptr` 也没有 http logger**，所以单测只覆盖 5 个纯函数与
+`g_ark_inference_max_retry` / `should_retry` 覆盖 429/5xx/408）、**只剩 `structure_feedback` 仍返回 501**
+（`generate_candidates` 见 §15.8）。**单测宿主既没有 `core_set::ctx_ptr` 也没有 http logger**，所以单测只覆盖 5 个纯函数与
 `advance_session` 的失败分支；`generate_spec` 的成功路径（真发一次推理）没有单测 ——
 它依赖的推理通道自己的测试在 §15.6。
 
@@ -2053,5 +2087,163 @@ exit 0**（较基线 168 / 1317 为 +3 用例 / +45 断言，新增 `ai_light_sp
 
 > 跑测试的环境要求（坑 16）：先把 `$env:TEMP` 与 `$env:TMP` 指向工作区内目录，否则所有建临时库 /
 > 写临时 PNG 的用例会以「无法打开数据库文件」的形式集体失败。
+
+---
+
+### 15.8 已落地（接缝 2：`generate_candidates` —— 排轴 + 一次推理 + 确定性展开）
+
+`POST /api/doodle/ai/light/session/{session_id}/iterate` 已可用（§13.1 第 ④ 项）。接缝 2 的形态与 §15.7 的接缝 1
+刻意**同形**：同一条推理通道、同一套严格取值器、同一套失败映射；区别只在「模型的产出被我们拿去做多少事」。
+
+```
+advance_session(generating 分支)
+  ├─ 收拢输入
+  │   ├─ get_current_ai_light_spec()  → to_spec()（必须 human_confirmed_）
+  │   ├─ get_ai_light_presets(true)   → 预设库（只取启用的）
+  │   ├─ get_ai_light_selected_candidate(session, current_iteration) → warm start
+  │   ├─ get_ai_light_iteration(session, current_iteration).get_judgement().feedback_axes_
+  │   │      → 人工滑块反馈（**不走 LLM**），逐项 magic_enum::enum_cast<variant_axis_kind>，认不出的键忽略
+  │   ├─ operator = in_operator_id ?: session.submitter_（都 nil → 400，无法解析工作室/计费主体）
+  │   └─ iteration_id = core_set::get_set().get_uuid()   ← 提前铸造（推理任务行要用它落库）
+  └─ generate_candidates(in_sql, req)
+       ├─ operator → person → ai_studio（与 generate_spec 同形；查不到 → 400）
+       ├─ build_candidates_instructions() + build_candidates_input_text(req)
+       ├─ build_candidates_request(req) → http::seedance2::inference_request_t
+       ├─ run_inference_task()          → result_json_（模型给的轴计划 + 基线 rig）
+       └─ map_candidate_result(json, req)
+            ├─ parse_axis_plan(json)       轴名 ∈ magic_enum、1..2 条轴、档位合计 == 5
+            │                              ↑ 任一不满足 → default_axis_plan(spec) 回退 + strategy_ 记「弃用」
+            ├─ build_base_rig(json)        严格取值器把模型给的基线物化成 light_t[]
+            └─ expand_candidates(base, axes)  ← 纯确定性 OFAT：候选 0 = 基线，其余 5 个各沿一档
+```
+
+| 项 | 落点（均在 `src/doodle_lib/http_method/kitsu/ai_light_orchestrator.cpp`，行号是起点，定位靠函数名） |
+|---|---|
+| 预算常量：档位 5 / 轴上限 2 / strategy 500 / 预设 top-k 12 | `:1391` `:1394` `:1397` `:1400` |
+| 轴语义与单位说明（嵌进 instructions 的原文） | `g_axis_semantics_text` `:1404` |
+| 通用灯光段落（§6.1 边界 + §5.5 六行表）**与接缝 1 共用** | `build_common_lighting_section()` `:857` |
+| 接缝 1 专属指令（§6.3 冲突规则） | `build_spec_instructions()` `:886` |
+| 接缝 2 专属指令（轴语义 + 输出要求） | `build_candidates_instructions()` `:1669` |
+| 输出 schema（轴计划 + 基线 rig，平铺、严格） | `build_candidates_json_schema()` `:1699` |
+| 输入文本（Spec 投影 + 命中预设 + 上一轮反馈） | `build_candidates_input_text()` `:1786` |
+| 信封 | `build_candidates_request()` `:1826` |
+| 默认轴计划（回退用） | `default_axis_plan()` `:1844` |
+| 把模型的 JSON 物化成基线 rig | `build_base_rig()` `:1868` |
+| 单轴增量的纯函数（不碰 IO） | `apply_axis_step()` `:1941` |
+| 确定性 OFAT 展开成恰好 6 个 | `expand_candidates()` `:2036` |
+| 基线 → 候选的差异（供 UE 侧精确增删） | `diff_rigs()` `:2066` |
+| 结果映射 + 护栏校验 | `map_candidate_result()` `:2126` |
+| 接缝本体（推理通道 + 失败映射） | `generate_candidates()` `:2302` |
+| 轴计划的严格解析（返回失败原因） | `parse_axis_plan()` `:1614` |
+
+**三条实现决定**
+
+**D6 —— 轴计划是双向的（这是接缝 2 与 §6.5 唯一实质性的偏离）。** §6.5 把 `generate_candidates(spec, axes, n)`
+写成「给定轴就机械展开」，`candidate_generation_request_t::feedback_axes_` 有值时确实是这个语义（滑块通道，
+不经 LLM）。但**首轮与 Spec 升版后没有任何上一轮可选**，轴必须有出处 —— 于是这两条路径由**模型给轴计划**，
+`default_axis_plan(spec)` 只作回退。理由：这正好落在 §6.1 划的界线上 ——「决定灯的数量/角色/类型/相对方位、
+选择/组合预设模板」是模型的活，「逐帧精确数值」不是；「排哪两条轴、各多少档」属于前者，「按轴把 rig 的某个
+子集改掉」属于后者且是纯算术。把后者交给模型只会引入「5 个候选其实改的是同一条轴的同一个方向」这类
+**不可检测**的错误。
+
+**D7 —— 预设检索走词法，不走向量。** 理由见 §6.4 的注（没有查询向量生成器）。`pick_presets()` 取
+top-`g_preset_prompt_top_k`(12) 只送进 `input_text` 当知识注入，不参与展开 —— 预设本轮的角色是「让模型知道
+我们有哪些成熟打法」，不是候选骨架。
+
+**D8 —— `baseline_level_` 本轮只透传（这是 M2 的阻塞项）。** 它由 `advance_session` 填、`map_candidate_result()`
+钉到每个 rig 上，**没有生产端**。真正算出这个值要走 `auto_task::shot_render_light(project_id, task_id)` 内部的
+三段私有逻辑：`shot_render_light_builder::fill_base()` 的 episodes/shot 推导、`resolve_scene_ue_path()`、
+`shot_pretreatment_probe::run()`；其中 `get_entity_and_entity_asset_extend_by_shot_id()` 还在
+`src/doodle_lib/http_method/kitsu/auto_task.cpp` 的**匿名命名空间**里，库外不可用，而复用整个
+`shot_render_light()` 又会带上 `check_files` / `scan_shot_output` 等一整串重失败面。
+现在 `baseline_level_` 为空时 `advance_session` 打 `WARN`（措辞含「M2 阻塞项，见方案 §15.8 决定 D8」）**不拦**；
+`lighting_rig_t::baseline_level_` 默认空串，JSON 往返无碍。**UE 侧执行器拿到空值必须拒绝**，而不是「就渲染
+当前关卡」—— 那会污染美术的工程。
+
+**口径差（计划/文档原文 vs 实现，以代码为准）**
+
+| 项 | 原文 | 实现 | 为什么 |
+|---|---|---|---|
+| 候选展开方式 | §6.2「每轴 2–3 档」× 6 个候选，读起来像全因子组合 | **OFAT**：候选 0 = 基线，其余 5 个各沿一档 | `variant_axis_t` 只有一条轴（`rig.h`），本来也表达不出组合 |
+| 档位预算 | §6.2 只说「每轴 2–3 档」 | 档位**总数**必须恰好 `g_axis_step_budget = 5` | 6 = 1 基线 + 5 变异，只能这么分；`parse_axis_plan()` 硬校验 |
+| 轴数 | 未明确 | 1..`g_axis_max_count = 2` | 全压在一条轴上会让 6 张图在同一维度单调铺开，美术看不出「换维度」；两条轴可以交叉 |
+| 预设检索 | §6.4 写 embedding → top-k | **词法子串打分** | 没有查询向量生成器（§6.4 注） |
+| `feedback_axes` 的键 | §4.4 样例 `{"key_elevation_delta": -15, "kelvin_delta": -600}` | 键必须是 `variant_axis_kind` 的**枚举名**（**没有 `key_elevation`**），value 是**增量**不是绝对值 | `advance_session` 用 `magic_enum::enum_cast` 解析键名；§4.4 的样例是早期版本，**代码为准** |
+| `image_detail` | 计划 §三.E 写发 `image_detail="high"` | **不发** | 接缝 2 没有 images；给「不存在的输入」配参数正是坑 21 的同一类错误 |
+| 回退时的 `strategy_` | 测试原断言含「默认轴计划」四字 | 实现是 `"{}模型给的轴计划被弃用：{}"` | 测试改为断言「弃用」+ 退回的轴表**逐条等于** `default_axis_plan(spec)`（坑 24） |
+
+**服务端钉死 vs 模型可覆盖**
+
+| 字段 | 谁定 |
+|---|---|
+| 6 个候选的 rig（含每条轴各自的一档） | **服务端**：`expand_candidates()` 确定性展开 |
+| 每个 rig 的身份字段 `session_id_` / `spec_id_` / `iteration_` / `candidate_index_` / `rig_id_` | **服务端**：`advance_session` 覆盖 —— 接缝只负责「灯怎么打」，不负责「这是第几个」 |
+| `baseline_level_` | **服务端**：透传，接缝不产生（D8） |
+| `schema_version_`、`exposure_.method_ = "manual"` | **服务端**（曝光必须手动锁定，§7.5） |
+| `provenance_`（`model_` / `prompt_hash_` / `seed_`） | **服务端**：`model_` 取自配置，`prompt_hash_` 由 Spec + 轴计划确定性算出 |
+| `ops_` | **服务端**：`diff_rigs()` 从「基线 rig → 候选 rig」的差算出，模型**不写 op** |
+| 灯的 `id_` / `role_` / `type_` / 锚点 / 偏移 / 强度 / 色彩 / 形状 / 阴影 | **模型**（在基线 rig 里给） |
+| 全局：曝光 / 白平衡 / 环境 / 调色 | **模型** |
+| 轴计划（哪 1–2 条轴、各多少档） | **模型**（校验不过则回退默认计划） |
+
+**为什么「候选展开」必须在我们这边，而不是交给模型**
+
+- 展开规则是**纯算术**（`apply_axis_step()` 按轴改 rig 的一个已知子集）。由我们展开时，第 i 个候选的
+  `variant_axis_` 是**构造出来的**，于是 §6.6「6 个候选的灯集合与角色完全相同」**天然成立** ——
+  测试 `expand_candidates_is_ofat_around_the_baseline` 逐个比较 6 个候选的灯 id 与 role 就是在钉这条。
+- 代价：模型**无法给组合式候选**（比如同时改色温与对比度）。这是有意的 —— 组合式候选一旦被选中，
+  下一轮在该点上收缩时无法归因到单轴，§6.2「把人工判断变成有效的搜索梯度」就失效了。
+- 副产品：`diff_rigs()` 把差异同时写成 `ops_`，UE 侧才能做**精确增删**（§7.5：`ClearAllLight()` 会清掉美术的
+  手工灯，不能复用）。测试 `map_result_pins_identity_and_emits_ops` 断言 ops 里**不出现 add/remove** ——
+  本轮的候选是从基线 rig 整体替换，不是增量编辑既有灯。
+
+**测试**（新建 `src/test/core/ai_light_candidates.cpp`，套件 `ai_light_candidates`，**15 用例 / 214 断言，全离线**）
+
+| 用例 | 钉什么 |
+|---|---|
+| `axis_enum_excludes_none` | schema 的轴枚举**不含 `none`** —— 模型不该被允许说「这条轴不变」，不变的那个是基线候选 |
+| `json_schema_is_strict_and_free_of_server_fields` | 每层 `required == properties` 且 `additionalProperties:false`；dump 里**不得**出现 `variant_axis`/`baseline_level`/`rig_id`/`candidate_index`/`schema_version`/`ops`；`lights` **不设 `maxItems`**（灯数由模型判断，决策 17 不设硬上限） |
+| `build_request_omits_absent_inputs` | 信封不含 `images`/`image_detail`/`max_output_tokens`/`thinking`；`text.format.name == "lighting_candidates"`、`strict == true`、`temperature == 0.2`；content 里没有 `input_image` |
+| `input_text_carries_spec_presets_and_feedback` | 四段文本都在（Spec / 预设 / warm start / 上一轮反馈）；**停用的预设不进**提示 |
+| `default_axis_plan_fills_six_candidates` | 回退计划自身就能填满 6 个候选 |
+| `base_rig_materializes_ids_and_locks_exposure` | 灯 id 依次 `L00`/`L01`/`L02`；`exposure_.method_ == "manual"`；`schema_version_ == g_rig_schema_version` |
+| `base_rig_rejects_illegal_values` | 非法 role / color_mode、缺 `fog_density`、`rgb` 非 3 元、空 `lights` **全部**抛 `doodle_error` |
+| `apply_axis_step_moves_only_the_named_axis` | 每条轴只动它该动的：`key_direction` 改方位角（含 360 环绕）且**不动补光**；`key_fill_ratio` 只缩补光且**主光不动**；`kelvin` 同时动灯与全局白平衡；`grading_strength` 只动调色不碰灯；`ambient_level` 天光与 ambient 灯同抬；无补光灯时 `key_fill_ratio` 返回 false |
+| `expand_candidates_is_ofat_around_the_baseline` | 候选 0 的 `axis == none`、其余逐轴逐档；**6 个候选的灯 id 与 role 逐个与基线相同**（§6.6）；展开器**不填** `ops_` |
+| `map_result_pins_identity_and_emits_ops` | 身份字段与 `baseline_level_` 钉死、`rig_id_` 为 nil、`provenance_.model_` 取自配置、候选 0 无 op 其余非空、ops 里不出现 add/remove |
+| `map_result_prompt_hash_is_deterministic` | 同一 Spec + 同一轴计划 → 同一 `prompt_hash_`（§8.5 第 ① 条「同一 Spec + 同一轴 → 同一组候选」的可测形式） |
+| `map_result_falls_back_on_illegal_axis_plan` | 0 档、未知轴名 `key_elevation` 都退回默认计划 |
+| `map_result_rejects_axis_without_effect` | 去掉补光灯后 `key_fill_ratio` 无实质变化 → 502 |
+| `map_result_rejects_missing_key_light` | 没有主光 → 502 |
+| `map_result_rejects_non_object` | 结果非 object → 502 |
+
+**本轮的坑（承 §15.6 的 12 条与 §15.7 的 13–21，22–24）**
+
+22. **`BOOST_CHECK_EQUAL_COLLECTIONS` 里不要写临时量的 `begin()/end()`。** `keys_of()` / `to_strings()` 这类
+    **按值返回 vector** 的助手，一次表达式里被调用两次会得到**两个不同临时对象**的迭代器 —— MSVC 调试
+    迭代器直接以 `vector(202): Assertion failed: vector iterators incompatible` **abort 整个用例**
+    （不是断言失败，是抛异常；`--report_level=detailed` 里表现为 `abort` 而不是 `failed`）。必须先把返回值
+    绑到 `const auto` 局部量再传 `begin()/end()`。
+23. **协议的必填字段要「形状与上下文无关地」校验。** `build_base_rig()` 一开始只在 `color_mode == rgb` 时
+    校验 `rgb` 三元组，于是 `color_mode="temperature"` + `rgb:[1,2]` 这种**明确的协议违规**被静默忽略，
+    产出一盏「看起来完全正常的灯」。这与 §15.7「裸 `get<Enum>()` 静默落值」是**同一类错误**：
+    **「模型没按 schema 回答」这件事必须暴露，不能因为它这次「用不到」就放过。**
+24. **口径断言的措辞是脆的，行为断言是稳的。** 测试原本断言 `strategy_` 含「默认轴计划」四个字，实现写的
+    是「模型给的轴计划被弃用」—— 两边都没错，但这类断言改一次文案就红一次。改成断言「含『弃用』」+
+    「退回的轴表**逐条等于** `default_axis_plan(spec)`」。一般建议：对回退/降级路径，断言**退回后的状态**，
+    而不是**说明退回的那句话**。
+
+**保留的边界**：接缝 2 同样**不落任何 `ai_light_*` 表**（§15.7 决定 D5 的受控例外继续适用：唯一副作用是
+`run_inference_task()` 自己那个事务里的推理任务行 + 扣费）；**不做灵敏度标定**（§9.1 第二条，需要渲染回环，
+M2 之后）；**不校验灯集合一致性** —— §6.6 的另一半留在 worker 侧，本轮没有 worker，能锁的只有
+「数量恰好 6」（`advance_session` 校验，失败 500）与「展开时灯集合相同」（`expand_candidates` 结构性保证）
+这两条；`structure_feedback` 仍 501（调用方捕获后降级为纯滑块反馈）。
+
+**回归**：全量 `test_main` **186 用例 / 1574 断言全通过、exit 0**（§15.7 末尾的基线是 171 / 1362，本轮
++15 用例 / +212 断言，全部来自新增的 `ai_light_candidates` 套件）。本轮五个 AI 灯光套件：
+`ai_light_schema` 6（126 断言）· `ai_light_state` 18（169）· `ai_light_stats` 22（184）·
+`ai_light_spec_prompt` 11（117）· `ai_light_candidates` **15（214）**；另含 `sqlite_real_db`
+（真实生产库副本上的 `rebuild_all_tables` 往返）、`sqlite_upgrade`、`sqlite_schema`、`sqlite_fk_semantics`、
+`sqlite_conn_pragma`。
 
 

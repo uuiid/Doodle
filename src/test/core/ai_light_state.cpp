@@ -598,7 +598,7 @@ BOOST_AUTO_TEST_CASE(session_detail_reports_overdue_flag) {
 }
 
 // ===========================================================================
-// 接缝：未实现的仍明确返回 501（generate_spec 已实现，见 §15.7）
+// 接缝：未实现的仍明确返回 501（generate_spec 见 §15.7，generate_candidates 见 §15.8）
 // ===========================================================================
 
 BOOST_AUTO_TEST_CASE(unimplemented_seams_report_not_implemented) {
@@ -608,21 +608,11 @@ BOOST_AUTO_TEST_CASE(unimplemented_seams_report_not_implemented) {
   // 这很重要：静默返回空结果会让上游写出一个「成功但没有候选」的会话，
   // 而 501 让前端和调用方都能一眼看出该做什么。
   //
-  // generate_spec 已经不在这条用例里了 —— 它现在会真的去解析工作室、发推理请求，
-  // 单测宿主没有 SSL context，所以它的成功路径只能在真机验证；
-  // 它能离线验证的那部分（纯函数）在 ai_light_spec_prompt.cpp 里。
-  candidate_generation_request_t l_cand_req{};
-  l_cand_req.session_id_ = core_set::get_set().get_uuid();
-
+  // generate_spec 与 generate_candidates 已经不在这条用例里了 —— 它们现在会真的去解析
+  // 工作室、发推理请求，单测宿主没有 SSL context，所以成功路径只能在真机验证；
+  // 它们能离线验证的那部分（纯函数）分别在 ai_light_spec_prompt.cpp 与
+  // ai_light_candidates.cpp 里。
   boost::asio::io_context l_ctx{};
-  bool l_cand_threw = false;
-  try {
-    run_coro(l_ctx, [&]() -> boost::asio::awaitable<void> { co_await generate_candidates(l_cand_req); });
-  } catch (const doodle_error& in_err) {
-    l_cand_threw = true;
-    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::not_implemented);
-  }
-  BOOST_TEST(l_cand_threw);
 
   // 文本反馈结构化也是接缝，但它是**可选**通道：调用方要能捕获 501 后降级，
   // 所以这里验的是「它抛 501」，而不是「它返回空」。

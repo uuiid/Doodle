@@ -668,7 +668,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iterate_route, post) {
       magic_enum::enum_name(l_session.state_)
   );
 
-  // generate_candidates 仍是 501，抛错时 advance_session 已把状态回滚 —— 会话保持可重试。
+  // generate_candidates 已落地（§15.8）：正常路径在这里真的排轴 + 跑一次推理 + 落 6 个候选，
+  // 接缝抛错时 advance_session 已把状态回滚 —— 会话保持可重试。
   co_await advance_session(l_sql, l_session, person_.person_.uuid_id_);
 
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);

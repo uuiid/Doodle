@@ -9,22 +9,22 @@
 // ---------------------------------------------------------------------------
 // 三个「接缝」：接入 LLM 的三个位置
 // ---------------------------------------------------------------------------
-// generate_spec 已落地（见 §15.7）：提示词 + 多图统计 → LightingSpec。它走已落地的
-// 方舟 Responses 通道（`seedance2_client` + `run_inference_task`，用法见 §15.6）。
+// generate_spec 已落地（见 §15.7）：提示词 + 多图统计 → LightingSpec。
+// generate_candidates 已落地（见 §15.8）：Spec + 基线 rig + 上一轮反馈轴 → 本轮 6 个候选。
+// 两者都走已落地的方舟 Responses 通道（`seedance2_client` + `run_inference_task`，
+// 用法见 §15.6）。
 //
-// generate_candidates / structure_feedback 的**接缝本体**还没写：基线 rig 与 Spec 怎么
-// 采样出 6 个候选、自由文本怎么映射成轴调整，以及返回的 result_json_ 怎么映射。
-// 在此之前这两个接缝抛 `doodle_error{status::not_implemented}`，
-// 由 http_session_data.cpp:149-151 映射成 501。
+// structure_feedback 的**接缝本体**还没写：自由文本怎么映射成轴调整。在此之前它抛
+// `doodle_error{status::not_implemented}`，由 http_session_data.cpp:149-151 映射成 501。
 //
 // 接缝契约（实现方必须遵守）：
 //   1. 抛出即视为「本轮无法推进」。调用方 advance_session() 会把会话状态回滚到进入时的
 //      状态并记录 failure_reason_，所以实现方**不需要**自己清理状态。
 //   2. 但必须保证「抛之前没有落库」，或者「落库的部分是幂等可重入的」——
 //      调用方只回滚会话状态这一列，不会回滚接缝自己写下的东西。
-//      **受控例外**：generate_spec 经由 run_inference_task 写下一行推理任务与对应的
-//      扣费记录。这是有意保留的 —— 推理确实发生了，抹掉它等于抹掉计费凭证。
-//      除此之外它不写任何 ai_light_* 表（聚合结果全部随返回值交给调用方落库）。
+//      **受控例外**：generate_spec / generate_candidates 经由 run_inference_task 写下一行
+//      推理任务与对应的扣费记录。这是有意保留的 —— 推理确实发生了，抹掉它等于抹掉计费
+//      凭证。除此之外它们不写任何 ai_light_* 表（返回值全部交给调用方落库）。
 //   3. 返回值必须自洽：候选数量 == g_candidate_count，且满足 §6.6 护栏
 //      （同轮候选的灯集合与角色完全一致，只有轴参数不同）。调用方会再校验一次，
 //      不合规直接判失败 —— 护栏是硬约束，不能靠实现方自觉。
@@ -147,26 +147,121 @@ DOODLELIB_API spec_generation_result_t map_spec_result(
 
 struct DOODLELIB_API candidate_generation_request_t {
   uuid session_id_{};
+  /// 写入 sd2::task.project_uuid_id_（可空 FK）。只为归属可查，接缝内部不依赖它。
+  uuid project_id_{};
+  /// 触发人（person uuid）= 计费主体。语义与默认值规则同 spec_generation_request_t::operator_id_
+  /// （**不给默认值**：有默认值则新调用点漏传会把扣费静默记到别人头上）。
+  /// 为 nil 时由 advance_session 回落到 ai_light_session.submitter_；两者都 nil 抛 bad_request。
+  uuid operator_id_{};
+  /// 本轮 iteration 的 uuid。调用方在调用**之前**铸造，好让接缝把它写进
+  /// sd2::task.ai_light_iteration_id_（可空 FK），从而能反查「哪一次推理生成了这一轮候选」。
+  /// 落 iteration 行本身仍由调用方在接缝返回后做（契约 2：接缝不写 ai_light_* 表）。
+  uuid iteration_id_{};
   /// 从 1 开始
   std::int32_t iteration_{1};
   lighting_spec_t spec_{};
-  /// warm start 起点 = 上一轮被选中的候选；首轮为空（从预设库起手）
+  /// warm start 起点 = 上一轮被选中的候选；首轮为空（从预设库起手）。
+  ///
+  /// 调用方只在「上一轮 iteration.spec_id_ 就是当前 Spec」时才填它 —— Spec 升版后上一轮
+  /// 的 rig 解的是旧目标，拿它当起点等于让新一轮从旧目标出发。
   std::optional<lighting_rig_t> base_rig_{};
   /// 上一轮人工判断指定的轴。滑块通道（默认）直接给数值，不经过 LLM。
   std::optional<iteration_axes_t> feedback_axes_{};
   /// 候选的预设库，供检索起手
   std::vector<ai_light_preset> presets_{};
+  /// 本轮渲染的**基线关卡**（UE UObject 路径，如 /Game/EP0001/Map/XXX.XXX），
+  /// 会被复制进每个候选 rig 的 lighting_rig_t::baseline_level_。
+  ///
+  /// **本轮由调用方透传，生产者尚未接线**（§15.8 M2 阻塞项）：正确来源是
+  /// auto_task::shot_render_light(...) 的 original_map_（含地编预调总关卡覆盖），
+  /// 但那个函数同时做解算资产配对与文件校验，失败面很广。为空时接缝只记 WARN 不拦 ——
+  /// UE worker（M2）落地前该字段没有消费者。
+  std::string baseline_level_{};
+  /// 人工提示词原文。只用于写入 sd2::task.text_prompt_（任务列表里可读）；
+  /// 接缝正文用的是 spec_.intent_，不重复塞进 input_text。
+  std::string prompt_text_{};
 };
 
 struct DOODLELIB_API candidate_generation_result_t {
-  /// 必须恰好 g_candidate_count 个
+  /// 必须恰好 g_candidate_count 个。第 0 个是本轮基线（variant_axis_.axis_ == none），
+  /// 其余各自只沿一条轴变化（§15.8 OFAT 不变量）。
   std::vector<lighting_rig_t> rigs_{};
   iteration_axes_t axes_{};
 };
 
-/// 基线 rig + Spec → 本轮候选。**本轮抛 501。**
+/// Spec + 基线 rig + 上一轮反馈轴 → 本轮候选。
+///
+/// in_sql 用来解析 `operator_id_ → person.ai_studio_id_ → ai_studio`（取推理密钥）
+/// 并交给 run_inference_task 落任务行与扣费。**不引入任何隐式全局**（决定 D1）。
+///
+/// 失败一律抛 doodle_error：内容违规 → bad_request；推理失败 / 输出不合解析 /
+/// 基线缺主光 / 变异候选与基线相同 → bad_gateway；工作室或人员缺失 → bad_request。
+/// 调用方 advance_session 负责回滚会话状态。**本函数不写任何 ai_light_* 表**。
 DOODLELIB_API boost::asio::awaitable<candidate_generation_result_t> generate_candidates(
+    sqlite_database& in_sql, const candidate_generation_request_t& in_request
+);
+
+// ---------------------------------------------------------------------------
+// 接缝 2 的离线可测部件
+// ---------------------------------------------------------------------------
+// 与接缝 1 同样的分法：纯函数组信封/映射 + 一次真实网络调用。约定也相同 ——
+// 必须定义在命名空间 doodle::ai_light 内（匿名命名空间 = 内部链接 = 库外 LNK2019）。
+//
+// 与接缝 1 的关键差别：**展开器是确定性的**（§8.5 第 1 条）。模型只输出「一套基线灯
+// 集合 + 一份轴计划」，6 个候选由 expand_candidates() 机械展开，所以
+// 「同一基线 + 同一轴计划 → 同一组 rig」可以脱网复现与断言。
+
+/// 抽取给 spec 与 candidates 共用的系统指令段：职责边界（§6.1）、性格 → 灯光语言映射表
+/// （§5.5）、单位口径。**只允许有一处定义** —— 两份提示词对「对比度是什么」说法不一致
+/// 会让模型在两条接缝上给出互不相容的数值。
+DOODLELIB_API std::string build_common_lighting_section();
+
+/// 交给 LLM 的系统指令：共用段 + 轴表（§6.2）+ §6.6 护栏 + 轴值语义（§15.8 表）+ 输出要求。
+DOODLELIB_API std::string build_candidates_instructions();
+
+/// 结构化输出契约（方舟 Responses 的 text.format）。形状见 §15.8：
+/// {strategy, axes[], globals{}, lights[]}，逐层 additionalProperties:false + 全字段必填。
+DOODLELIB_API nlohmann::json build_candidates_json_schema();
+
+/// 用户消息正文：Spec 紧凑投影 + 预设候选 + （若有）上一轮选中的 rig + （若有）反馈轴。
+DOODLELIB_API std::string build_candidates_input_text(const candidate_generation_request_t& in_request);
+
+/// 归一化推理信封。**不发 images**（Spec 已蒸馏了参考，生成阶段不需要图），
+/// **不发 max_output_tokens**（缺省 4096 会截断，见 §15.6 坑 21），**不发 thinking**。
+DOODLELIB_API http::seedance2::inference_request_t build_candidates_request(
     const candidate_generation_request_t& in_request
+);
+
+/// 没有可用轴计划时的确定性回退：两个轴、共 5 个变异位（1 基线 + 5 = g_candidate_count）。
+/// 档位取自 §6.2 自己给的数字，不含中性值（中性档等于基线，会被 §9.1 的同一个候选检查拦下）。
+DOODLELIB_API iteration_axes_t default_axis_plan(const lighting_spec_t& in_spec);
+
+/// 模型给的精简形状 → 本轮基线 rig。服务端拥有 IR 细节（anchor/channels/mobility/origin/
+/// id 生成），模型只给「灯怎么打」。枚举一律 magic_enum::enum_cast 校验，认不出抛 bad_gateway。
+DOODLELIB_API lighting_rig_t build_base_rig(const nlohmann::json& in_json);
+
+/// 把一条轴的一个档位应用到 rig 上，返回是否真的改动了（值为中性 / 缺主光 / 单位不可比 → false）。
+/// 轴值语义见 §15.8 的表；**UE 侧必须按同一份口径实现**。
+DOODLELIB_API bool apply_axis_step(lighting_rig_t& io_rig, const variant_axis_t& in_axis);
+
+/// OFAT 展开：复制 in_base 作候选 0（variant_axis_ = none），再按 in_axes 的声明顺序逐个
+/// 档位生成候选 1..N，每个候选只沿一条轴变化。返回大小 == 1 + Σ|steps|。
+DOODLELIB_API std::vector<lighting_rig_t> expand_candidates(
+    const lighting_rig_t& in_base, const iteration_axes_t& in_axes
+);
+
+/// 候选相对本轮基线的确定性 diff，写进 lighting_rig_t::ops_（候选 0 得空表）。
+/// 供审计与前端展示，也让 UE 执行器能直接「按 op 精确增删」（§7.5，不用 ClearAllLight）。
+DOODLELIB_API std::vector<light_op_t> diff_rigs(
+    const lighting_rig_t& in_base, const lighting_rig_t& in_target
+);
+
+/// LLM 结果 → candidate_generation_result_t。服务端钉死 schema_version/身份字段/
+/// baseline_level/provenance；轴计划不合法或档位总数不等于 g_candidate_count-1 时
+/// **整体回退 default_axis_plan() 并把原因追加进 axes_.strategy_**（不抛错）。
+/// in_result_json 非 object（含 null）抛 doodle_error{status::bad_gateway}。
+DOODLELIB_API candidate_generation_result_t map_candidate_result(
+    const nlohmann::json& in_result_json, const candidate_generation_request_t& in_request
 );
 
 // ===========================================================================
