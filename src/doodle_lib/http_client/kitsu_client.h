@@ -1,5 +1,6 @@
 #pragma once
 
+#include <doodle_core/metadata/ai_light/task_payload.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/project.h>
@@ -173,11 +174,13 @@ class DOODLELIB_API kitsu_client {
   // post /api/doodle/ai/light/render_report/{task_id} —— 工作机回传一轮 AI 灯光渲染结果（§15.12）
   boost::asio::awaitable<nlohmann::json> post_ai_light_render_report(uuid in_task_id, const nlohmann::json& in_report)
       const;
-  // post /api/doodle/ai/light/candidate/{candidate_id}/file/{render|render_linear}
-  // —— 工作机上传单个候选产物（D40）。in_linear=false 传显示空间 PNG（前端唯一展示的那张），
-  // true 传线性 EXR。成功判据是 204；失败抛 doodle_error，由调用方决定是否阻断本轮。
-  boost::asio::awaitable<void> upload_ai_light_candidate_render(
-      uuid in_candidate_id, FSys::path in_file_path, bool in_linear = false
+  // post /api/doodle/ai/light/candidate/{candidate_id}/file/{render|render_linear|render_movie}
+  // —— 工作机上传单个候选产物（D40）。role 决定 URL 段，也决定服务端把它落到哪里：
+  // render = 首帧海报 PNG（必传）、render_movie = 候选视频 mp4（必传）、render_linear = 线性 EXR（可选）。
+  // 成功判据是 204；失败抛 doodle_error，由调用方决定是否阻断本轮。
+  boost::asio::awaitable<void> upload_ai_light_candidate_file(
+      uuid in_candidate_id, FSys::path in_file_path,
+      ai_light::ai_light_candidate_file_role in_role = ai_light::ai_light_candidate_file_role::render
   ) const;
   // post /api/doodle/stop-server
   void stop_server() const;

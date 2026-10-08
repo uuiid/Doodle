@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(reference_files_are_named_by_their_own_uuid) {
 }
 
 // ---------------------------------------------------------------------------
-// 候选渲染：<会话>/<轮次 uuid>/<候选 uuid>.png|.exr
+// 候选产物：<会话>/<轮次 uuid>/<候选 uuid>.png|.exr|.mp4 与 <候选 uuid>/ 帧目录
 // ---------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(candidate_files_use_iteration_dir_and_their_own_uuid) {
   auto l_ctx           = make_ctx();
@@ -137,6 +137,27 @@ BOOST_AUTO_TEST_CASE(candidate_files_use_iteration_dir_and_their_own_uuid) {
   BOOST_CHECK_EQUAL(l_exr.filename().generic_string(), "abcdefab-1234-4567-89ab-cdefabcdefab.exr");
   // 默认参数就是不线性（PNG）—— 漏传时不能悄悄给出 EXR 路径。
   BOOST_CHECK_EQUAL(l_ctx.get_ai_light_candidate_file(l_session, l_iter_id, l_cand), l_png);
+}
+
+BOOST_AUTO_TEST_CASE(candidate_movie_and_frames_dir_are_named_by_their_own_uuid) {
+  auto l_ctx           = make_ctx();
+  const auto l_session = fixed_uuid(g_session_str);
+  const auto l_iter_id = fixed_uuid(g_iter_str);
+  const auto l_cand    = fixed_uuid("abcdefab-1234-4567-89ab-cdefabcdefab");
+
+  const auto l_iter   = l_ctx.get_ai_light_iteration_dir(l_session, l_iter_id);
+  const auto l_movie  = l_ctx.get_ai_light_candidate_movie_file(l_session, l_iter_id, l_cand);
+  const auto l_frames = l_ctx.get_ai_light_candidate_frames_dir(l_session, l_iter_id, l_cand);
+
+  // 一段视频一个文件：`<候选 uuid>.mp4`，与首帧海报同级、同 uuid
+  BOOST_CHECK_EQUAL(l_movie.parent_path(), l_iter);
+  BOOST_CHECK_EQUAL(l_movie.filename().generic_string(), "abcdefab-1234-4567-89ab-cdefabcdefab.mp4");
+  // MRQ 的逐帧 PNG 落在候选自己的子目录里：一轮 6 个候选各上百张帧，平铺在轮次目录下
+  // 会和 `.mp4`/`.png` 混成一团，人也没法看
+  BOOST_CHECK_EQUAL(l_frames.parent_path(), l_iter);
+  BOOST_CHECK_EQUAL(l_frames.filename().generic_string(), "abcdefab-1234-4567-89ab-cdefabcdefab");
+  BOOST_CHECK_EQUAL(l_movie.parent_path(), l_frames.parent_path());
+  BOOST_CHECK_NE(l_frames, l_movie);
 }
 
 BOOST_AUTO_TEST_CASE(iteration_dir_is_named_by_the_iteration_uuid) {
@@ -195,7 +216,9 @@ BOOST_AUTO_TEST_CASE(all_ai_light_artifacts_share_one_session_subtree) {
   for (const auto& l_path :
        {l_ctx.get_ai_light_reference_file(l_session, l_ref),
         l_ctx.get_ai_light_candidate_file(l_session, l_iter_id, l_cand, false),
-        l_ctx.get_ai_light_candidate_file(l_session, l_iter_id, l_cand, true)}) {
+        l_ctx.get_ai_light_candidate_file(l_session, l_iter_id, l_cand, true),
+        l_ctx.get_ai_light_candidate_movie_file(l_session, l_iter_id, l_cand),
+        l_ctx.get_ai_light_candidate_frames_dir(l_session, l_iter_id, l_cand)}) {
     BOOST_CHECK(l_path.generic_string().starts_with(l_session_dir.generic_string() + "/"));
   }
 }

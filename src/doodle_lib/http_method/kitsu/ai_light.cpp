@@ -480,6 +480,30 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_image_route, get) {
   co_return in_handle->make_msg(l_png_path, kitsu::mime_type(l_png_path.extension()));
 }
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
+  person_.check_not_outsourcer();
+  auto l_sql = get_sqlite_database();
+
+  // 与取海报同一条路径：鉴权、存在性、状态判定都一样，只是产物换成视频。
+  auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(id_);
+  person_.check_project_access(l_sql.get_by_uuid<ai_light_session>(l_cand.session_id_).project_id_);
+
+  DOODLE_CHICK_HTTP(
+      l_cand.render_status_ != candidate_render_status::pending, not_found,
+      "候选 {} 尚未渲染完成", l_cand.uuid_id_
+  );
+  DOODLE_CHICK_HTTP(
+      l_cand.render_status_ != candidate_render_status::failed, not_found,
+      "候选 {} 渲染失败", l_cand.uuid_id_
+  );
+  // 落点现算（D44）：候选行自带三个 uuid，不需要任何回查。
+  const FSys::path l_movie_path = candidate_movie_path(g_ctx().get<kitsu_ctx_t>(), l_cand);
+  DOODLE_CHICK(FSys::exists(l_movie_path), "候选视频不存在 文件 {}", l_movie_path.generic_string());
+
+  // 视频本体直发：make_msg(path, ...) 带 Range 支持，浏览器可以拖动进度条。
+  co_return in_handle->make_msg(l_movie_path, kitsu::mime_type(l_movie_path.extension()));
+}
+
 // ===========================================================================
 // Spec（闸门 1）
 // ===========================================================================
@@ -821,7 +845,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
 }
 
 // ===========================================================================
-// 工作机上传候选产物（D38~D42）
+// 工作机上传候选产物（首帧海报 / 候选视频 / 线性 EXR）
 // ===========================================================================
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
@@ -857,9 +881,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
 
   // 落点现算（D27/D40）：请求里根本没有路径信息，工作机伪造不了落点，
   // 最多只能往「服务端按命名规则算出来的那个文件名」里灌字节。
-  // 与取图路由、定稿路由、D41 的存在性判定用的是同一个函数（candidate_render_path）。
-  const bool l_linear   = role_ == ai_light_candidate_file_role::render_linear;
-  const FSys::path l_dst = candidate_render_path(g_ctx().get<kitsu_ctx_t>(), l_cand, l_linear);
+  // 与取海报/取视频路由、定稿路由、D41 的存在性判定用的是同一套函数。
+  auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
+  const bool l_linear    = role_ == doodle::ai_light::ai_light_candidate_file_role::render_linear;
+  const bool l_movie     = role_ == doodle::ai_light::ai_light_candidate_file_role::render_movie;
+  const FSys::path l_dst = l_movie ? candidate_movie_path(l_ctx, l_cand) : candidate_render_path(l_ctx, l_cand, l_linear);
 
   // 请求体已经被框架流到临时文件（save_bode_file → cache_root("http")/<uuid><ext>），
   // 这里只是把它搬到落点。用 copy + remove 而不是 up_file_base 那套 rename：
@@ -875,8 +901,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
         l_ec.message()
     );
   }
-  // 先写临时名再改名，避免「上传到一半」被前端读到半张图：
-  // 目标那个文件名正是取图路由要读的，原地写会让过程中出现一个不完整的 PNG。
+  // 先写临时名再改名，避免「上传到一半」被前端读到残缺的产物：
+  // 目标那个文件名正是取海报/取视频路由要读的，原地写会让过程中出现一个不完整的文件
+  // （视频尤其明显 —— 半截 mp4 播放器直接报错，而且可能被浏览器缓存住）。
   const FSys::path l_tmp_dst = l_dst.string() + ".uploading";
   FSys::copy_file(l_tmp, l_tmp_dst, FSys::copy_options::overwrite_existing, l_ec);
   DOODLE_CHICK_HTTP(
@@ -892,7 +919,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
 
   SPDLOG_LOGGER_INFO(
       g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）上传{}到位 {} {} 字节", id_, l_it.iteration_,
-      l_linear ? "线性 EXR" : "显示 PNG", l_dst.generic_string(), FSys::file_size(l_dst, l_ignored)
+      l_movie ? "候选视频" : (l_linear ? "线性 EXR" : "首帧海报"), l_dst.generic_string(),
+      FSys::file_size(l_dst, l_ignored)
   );
   co_return in_handle->make_msg_204();
 }

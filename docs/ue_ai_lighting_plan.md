@@ -19,7 +19,7 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
 **判断三：只有一条执行路径——自动模式；但每一轮的判断由美术人工给出。**
 没有 UE 编辑器内的实时调灯。每一次迭代都是：服务器生成候选 → 派发任务 → 工作机跑 UE 渲染 → 结果回到浏览器 → **美术判断** → 下一轮。因此：
 - UE 侧是**无头执行器**（commandlet），不需要常驻连接、不需要实时 op 应用、不需要撤销栈
-- 浏览器前端是**唯一交互面**，也顺带解决了「浏览器看不到 UE 视口」这个约束——因为不再需要实时视口，美术看的是渲染出来的静帧
+- 浏览器前端是**唯一交互面**，也顺带解决了「浏览器看不到 UE 视口」这个约束——因为不再需要实时视口，美术看的是渲染出来的成片（每候选一段几秒的视频 + 首帧海报）
 - 迭代是**异步、跨会话、可能间隔数小时**的（美术要开会、审片），所以轮次状态必须全部落库
 
 **判断四：参考是「美术调过的目标效果图」，不是物理真值；用显示空间的感知统计去匹配它，是正解而不是妥协。**
@@ -817,7 +817,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | 产物 | 进 `preview_file`？ | 取图方式 |
 |---|---|---|
 | 参考图（多张） | 否 | `/api/doodle/ai/light/reference/{uuid}/image` |
-| 中间候选渲染（6 × N 轮） | 否 | `/api/doodle/ai/light/candidate/{uuid}/image` |
+| 中间候选渲染（6 × N 轮） | 否 | 首帧海报 `/api/doodle/ai/light/candidate/{uuid}/image` + 成片 `/api/doodle/ai/light/candidate/{uuid}/movie` |
 | **定稿候选渲染** | **是** | 复用现有预览接口，`source = auto_light_generate` |
 
 这样镜头的预览列表只呈现交付结果，不会被 6×N 张中间候选淹没，
@@ -1244,7 +1244,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 
 ### 14.2 决策 2/3/4 带来的变化
 
-取消 UE 实时交互后，前端从「方案与评审」升级为**唯一交互面**，而且**不再受「看不到 UE 视口」的约束**——因为不需要实时视口，美术看的是渲染出来的静帧，这正是 Kitsu 已经擅长的事（preview files、对比、评论、状态流转）。
+取消 UE 实时交互后，前端从「方案与评审」升级为**唯一交互面**，而且**不再受「看不到 UE 视口」的约束**——因为不需要实时视口，美术看的是渲染出来的成片（每候选一段视频 + 首帧海报），这正是 Kitsu 已经擅长的事（preview files、对比、评论、状态流转）。
 
 ### 14.3 浏览器前端负责的内容
 
@@ -2865,7 +2865,7 @@ render_report_route → parse_round_render_report → apply_render_report
 | 组 | 用例 | 钉什么 |
 |---|---|---|
 | 解析 | `parse_full_round_keeps_every_field` · `parse_defaults_missing_loose_fields` · `parse_requires_candidates_array` · `parse_rejects_unknown_status` · `parse_rejects_bad_candidate_uuid` · `parse_rejects_non_object_candidate` · `parse_keeps_round_error_text` · `parse_drops_broken_metrics_only` | 严格/宽松分界逐条（含 `status="succeeded"` 必须 502 —— 钉住「不许静默回落」；`error` + 空 `candidates` 是合法报文） |
-| 落库 | `apply_report_advances_iteration_and_session` · `apply_report_keeps_paths_from_db` · `apply_report_partial_failure_still_advances` · `apply_report_error_without_rendered_writes_failure_reason` · `apply_report_all_failed_writes_failure_reason` | 轮次 `awaiting_judgement` + `render_ms_total_` 求和 + 会话 `awaiting_judgement`；**候选级失败不推翻整轮**，部分结果照落（失败那张仍是 `failed`，不伪造成出图）；轮级 `error_` 才是整轮失败（状态原地不动、只写 `failure_reason_`） |
+| 落库 | `apply_report_advances_iteration_and_session` · `apply_report_keeps_paths_derivable_from_the_row` · `apply_report_partial_failure_still_advances` · `apply_report_error_without_rendered_writes_failure_reason` · `apply_report_all_failed_writes_failure_reason` | 轮次 `awaiting_judgement` + `render_ms_total_` 求和 + 会话 `awaiting_judgement`；**候选级失败不推翻整轮**，部分结果照落（失败那张仍是 `failed`，不伪造成出图）；轮级 `error_` 才是整轮失败（状态原地不动、只写 `failure_reason_`） |
 | 归属/边界 | `apply_report_rejects_unknown_task`（404） · `apply_report_rejects_candidate_from_another_round`（400） · `apply_report_rejects_judged_iteration`（400） · `mark_iteration_failed_truncates_long_reason`（512 + `"...(已截断)"`） · `mark_iteration_failed_unknown_task_is_404` | 回传只认本轮、只认未判断的轮次（D27）；失败原因有长度上限 |
 
 **回归**：全量 `test_main` **236 用例 / 1847 断言全通过、exit 0**（§15.11 末尾的基线 218 / 1781 —— 用同一配对口径
@@ -2895,12 +2895,16 @@ render_report_route → parse_round_render_report → apply_render_report
 一次进程内把整轮 6 个候选各渲染一张 PNG + 一张 EXR，写到载荷给定的路径上（工作机在起 UE 之前
 已把相对路径拼成本地绝对路径），再写一份 `<out_dir>/render_report.json` 给工作机回传。
 
+> **候选产物改成视频后（§15.16），本节有两处不再成立**：① `-run=DoodleLighting` 不再是派发流程的入口
+> （派发改成无 `-run=` 启动 + PIE 执行器 + MRQ）；② 每候选不再是「一张 PNG + 一张 EXR」而是
+> 「一段 mp4 + 首帧海报」。本节里**仍然成立**的是建灯/调色/锚点换算那部分算法与引擎坑 41~46。
+
 **开工前由用户拍板的两件事**
 
 | 问题 | 决定 | 影响 |
 |---|---|---|
 | 预览用哪个机位 | **交付机位**：载荷 `camera_file_path_`（FBX 相机）经临时 level sequence 导入后求值 | 与美术成片同一机位，不用往载荷里加字段 |
-| 预览分辨率 | **1920×1080 固定常量**（`DoodleLightingCapture::PreviewWidth/PreviewHeight`） | 不进 wire 契约：出图尺寸服务端不参与（它只按 D27 重算路径） |
+| 预览分辨率 | **1920×1080 固定常量**（`DoodleLightingCapture::PreviewWidth/PreviewHeight`）—— 仅手工调试的 SceneCapture 路径；派发流程的分辨率由 MRQ 定（有电影管线配置资产就沿用，自建配置默认 1920×1080），见 §15.16 | 不进 wire 契约：出图尺寸服务端不参与（它只按命名规则现算落点） |
 
 **模块分工**（`.uplugin` 新增两条 Module 记录，现在是 8 个模块）
 
@@ -3071,7 +3075,7 @@ Main(-Params=<json>)
   ├─ D41 降级：rendered 但 candidate_render_path(ctx, 行, false) 算出的 PNG 不在 → failed + WARN，计数 l_missing_png
   ├─ D42 诊断：同法算出的 EXR 不在 → 只 WARN
   └─ 还有 rendered → mark_iteration_rendered（轮次 awaiting_judgement）
-      全被降级 → failure_reason_ = "轮次 {} 的 {} 个候选渲染成功但产物文件缺失，本轮无可判断结果"
+      全被降级 → failure_reason_ = "轮次 {} 的 {} 个候选渲染成功但产物文件缺失（海报或视频），本轮无可判断结果"
 ```
 
 **落点**
@@ -3169,7 +3173,7 @@ Main(-Params=<json>)
         ├─ D41：PNG 的落点 = candidate_render_path(ctx, 行, false)，文件不在 → 降级 failed
         ├─ D42：EXR 的落点同法算出，文件不在 → 只 WARN
         └─ 还有 rendered → mark_iteration_rendered（UPDATE 只写状态与数字）
-            全被降级 → failure_reason_ = "轮次 {} 的 {} 个候选渲染成功但产物文件缺失，本轮无可判断结果"
+            全被降级 → failure_reason_ = "轮次 {} 的 {} 个候选渲染成功但产物文件缺失（海报或视频），本轮无可判断结果"
 ```
 
 **改动落点**
@@ -3228,6 +3232,146 @@ Main(-Params=<json>)
 - **服务端候选指标复算**（D30 只写了一半）：`metrics_` 仍来自回传空值，`ai_light_stats::analyze_display_image`
   那条路没有接。
 - `baseline_level_` 的真实推导仍是 M2 阻断项；前端页面（§14）不在本轮。
+
+### 15.16 已落地（候选产物改视频：无 `-run=` 启动 + PIE 执行器 + MRQ —— D45~D50）
+
+**需求**（用户原话）
+
+> 「检查结构体 src/doodle_lib/exe_warp/import_and_render_ue.h:114~138, 我们在使用
+> src/doodle_core/metadata/ai_light/task_payload.h:113~149 ai_light_task_payload_t 运行渲染时,
+> 使用自动灯光已经准备好的相机和定序器, 并且输出渲染视频作为美术选择的参考, 而不是单纯的图片」
+
+**开工前由用户拍板的两件事**
+
+| 问题 | 决定 | 影响 |
+|---|---|---|
+| 每候选产物 | **mp4 + 首帧海报 PNG**，本轮**不出** EXR | 前端网格仍用海报，点开才播视频；EXR 的角色留在契约里但一轮不产 |
+| 渲染走哪条路 | **照 `auto_light` 渲染进程的形状**：无 `-run=` 启动 + PIE 执行器 + 每候选把 rig 建进 PIE 世界（MRQ 画质） | 工作机的命令行、UE 侧入口、命令集全部改；服务端契约加字段 |
+
+**一句话**：一轮 6 个候选各自变成「一段 mp4 + 一张首帧海报」；渲染交给 `auto_light` 已经生成好的那套资产
+（`render_map_` / `level_sequence_import_` / `movie_pipeline_config_`）+ 电影渲染管线（MRQ），
+rig 由我们在**每个 job 开始前**建进 PIE 世界。
+
+**为什么必须换掉原来的形状（两条引擎事实，都是这轮才查清的）**
+
+1. **`-run=` commandlet 里 MRQ 一帧都不渲**：MRQ 靠 `FCoreDelegates::OnBeginFrame` 推进帧
+   （`MoviePipeline.cpp:260`），而全引擎唯一的广播点是 `LaunchEngineLoop.cpp:5663`（`FEngineLoop::Tick` 内）；
+   `CommandletHelpers::TickEngine`（`Commandlet.cpp:127` 起）只 tick 引擎、泵 Slate、处理任务图，
+   **不广播它** → 管线会被建起来、参数量好，但永远等不到推进。
+2. **`MoviePipeline::FindCurrentWorld()` 只认 `Game` / `PIE` 世界**（`MoviePipelineUtils.h:26-48`），
+   而原来的 `SwapToWorld` 把换来的世界建成 `EWorldType::Editor`（`DoodleLightingExecutor.cpp`）→
+   in-process 执行器拿不到世界。
+
+→ 于是照 `auto_light` 的渲染步走：工作机**无 `-run=`** 启动编辑器，由插件模块挂在 `OnPreTick` 上的
+`UDoodleLightingRoundRunner` 驱动，用 **PIE 执行器**（自己会造 PIE 世界）逐候选渲染。
+PIE 世界是编辑器世界的复制，但**运行时 spawn 进 `GEditor->PlayWorld` 的 actor 会被渲进去** ——
+这正是我们可以逐候选换灯的原因。
+
+**实现决定表**
+
+| # | 决定 | 理由与代价 |
+|---|---|---|
+| D45 | 候选产物＝视频：渲染交 MRQ；有 `movie_pipeline_config_` 就 `SetConfiguration()`（**深拷贝**）后逐 job 改配置，缺失/加载失败就自建配置（1920×1080） | §15.13 当初拒绝 MRQ 的 D36 三条理由（要序列+配置资产、要第二个进程驱动、队列没有单 job 钩子）**都已不成立**：资产由 `auto_light` 生成好了、引擎子系统能在同一进程里跑、`OnIndividualJobStarted()` 就是逐 job 钩子。**D36 被取代** |
+| D46 | rig 注入点＝`UMoviePipelinePIEExecutor::OnIndividualJobStarted()`（在 `UMoviePipeline::Initialize` 之前、PIE 已起）；序列里的灯光 spawnable 在**内存里**剥掉；序列**永不落盘** | 引擎源码：`MoviePipelinePIEExecutor.cpp:296-316`（无延迟分支）先 `OnIndividualJobStartedImpl(...)` 再 `Initialize(...)`。序列里的灯是 `auto_light` 建的，会和候选 rig 抢光照；剥掉用公开 API 即可（`RemoveSpawnable`），不落盘所以不动资产 |
+| D47 | 每候选＝MRQ 的 **PNG 帧序列**（UE 只写帧）+ 工作机用 OpenCV 合成 `<候选 uuid>.mp4` + 首帧复制成海报；帧率取回传的 `frame_rate_`（= 序列 display rate），拿不到退 25 | UE 侧不装编码器插件（MP4 直出要额外插件），合成放工作机是既有的 `detail::create_move` 路径。`create_move` 因此新增 `std::int32_t in_fps = 25` 形参 —— 帧数是 UE 定的，帧率不对时长就会被拉长/压缩 |
+| D48 | 帧区间＝序列自己的 playback range（`auto_light` 的 `SetPlaybackRange`）；载荷另带 `frame_begin_` / `frame_end_` **只作诊断** | 少一个真相来源；真需要覆盖时用 `bUseCustomPlaybackRange` + `CustomStartFrame/CustomEndFrame` |
+| D49 | UE 侧 MRQ 设置对齐 `OnSaveReanderConfig`（`DoodleAutoAnimationCommandlet.cpp:1261-1362`）：PNG 输出 + `UMoviePipelineDeferredPassBase`；`OutputDirectory.Path` = 该候选的**绝对**帧目录、`FileNameFormat = "frame_{frame_number}"`、`ZeroPadFrameNumbers = 4`、`bUseCustomFrameRate=true` + `OutputFrameRate`；**只有没有配置资产时**才补 ConsoleVar（关运动模糊、固定流送池）、AA（TSR、1/1、预热 128）、GameOverride（cinematic、TextureStreaming=None）、Camera（FrameClose、Overscan 0） | 有美术/管线给的配置资产就听它的，没有才用我们自己的一套默认值；两套混着设会让「配置资产」变成假的 |
+| D50 | 上传角色扩为三元（`render` / `render_linear` / `render_movie`），枚举从 `ai_light.h` 搬到 `task_payload.h`（服务端与工作机共用一个定义）；**派发时 `level_sequence_` 为空 = 本轮不可渲染 → 抛错**（走既有回滚写 `failure_reason_`） | 枚举名会进 URL（路由正则由 `magic_enum::enum_names` 拼），所以定义必须只有一个；原来「基线关卡拿不到就 WARN 后照跑」在视频化之后必然产不出东西，晚失败不如早失败 |
+| D51 | 工作机收产物时**从载荷取位置**：按候选 **uuid** 反查那份「已拼成本地绝对路径」的副本（`l_ue_payload`），用它的 `frames_dir_` / `png_path_` / `movie_path_`；**不按命名规则重算**，也不按 `candidate_index_` 查 | UE 写的就是载荷给的位置（`DoodleLightingRoundRunner.cpp:169` 把 MRQ 的 `OutputDirectory.Path` 设成 `InCandidate.FramesDir`），所以载荷那份是「UE 实际用的值」；重算等于工作机再实现一遍服务端命名，服务端/工作机**版本偏斜**（键名没变、命名值变了 —— 这种漂移解码时不报错）会算到不存在的目录上，白丢一整轮。**不按下标**：`candidate_index_` 是弱键，错配会把 A 的成片挂到 B 的 uuid 上，美术对着别人的灯评判。**代价**：多一个「报告里的候选不在载荷里」分支（该候选判 failed，不猜） |
+
+**一轮的新形状**
+
+```
+iterate → 派发（装配硬前置：无 task_id / 装配抛错 / level_sequence 空 → 直接失败）
+  载荷：out_dir=<session>/<轮次 uuid>；候选 frames_dir=<候选 uuid>/、png_path=<候选 uuid>.png、
+        movie_path=<候选 uuid>.mp4、exr_path=<候选 uuid>.exr（全相对）+ render_map/level_sequence/movie_pipeline_config
+  工作机：相对 → 本地根 get_cache_root("ai_light")，拼成绝对路径（这一份是后面**唯一的路径权威**，D51）；删残留 render_report.json
+  UE（无 -run=）：UDoodleLightingRoundRunner
+        ├─ 读 -DoodleAiLightParams → 载入 render_map + level_sequence → 剥灯光 spawnable
+        ├─ 交付机位求一次姿态（PrepareAnchorCamera，随后拆掉导入物）
+        ├─ 逐候选一个 MRQ job（帧目录 = 该候选）+ PIE 执行器
+        │    每个 job 起渲前：ApplyCandidateToWorld(GEditor->PlayWorld, 候选)（灯 + 全局量）
+        └─ 写 <out_dir>/render_report.json（candidates[] + frame_rate）→ RequestExit
+  工作机：逐候选按 **uuid 从载荷**取帧目录/海报/成片位置（D51，不重算、不按下标）→ collect frames → 首帧→海报 → create_move(mp4, fps=frame_rate) → 上传海报 + mp4（都必传）
+  服务端：apply_render_report(sql, ctx, task_id, report)
+        ├─ D41：算出的海报或成片缺一 → 该候选降级 failed；全灭 → failure_reason_，轮次留 rendering
+        └─ 有 rendered → mark_iteration_rendered（轮次 awaiting_judgement）
+```
+
+**改动落点**
+
+| 层 | 文件 | 改了什么 |
+|---|---|---|
+| 契约 | `src\doodle_core\metadata\ai_light\task_payload.h` | 载荷加 `render_map_` / `level_sequence_` / `movie_pipeline_config_` / `frame_begin_` / `frame_end_`；候选加 `frames_dir_` / `movie_path_`；回传加 `frame_rate_`（轮级）与 `frame_count_`（候选，诊断）；新增 `ai_light_candidate_file_role{render, render_linear, render_movie}` + `make_candidate_frames_dir()` + `make_candidate_movie_file()`；头注释扩到 D38~D50 |
+| 命名 | `src\doodle_core\metadata\kitsu_ctx_t.h` | 新增 `get_ai_light_candidate_frames_dir()` / `get_ai_light_candidate_movie_file()`（都 `const`），目录树注释补五行 |
+| 服务端 | `ai_light_orchestrator.{h,cpp}` | 新增 `candidate_movie_path()` / `candidate_frames_dir()` 内联纯函数；派发段改用完整装配 + 两条硬前置；候选聚合 7 成员；`apply_render_report` 的 D41 同时查海报与成片（计数器 `l_missing_artifact`） |
+| 服务端 | `ai_light.{h,cpp}` + `kitsu.cpp` | 上传路由的 role 用全限定名（本文件就在 `doodle::http::ai_light` 里，写 `ai_light::x` 会命中内层命名空间自己）+ `render_movie` 落点；新增取成片路由 `candidate_movie_route`；`kitsu.cpp` 注册两条 |
+| 客户端 | `kitsu_client.{h,cpp}` | `upload_ai_light_candidate_file(uuid, FSys::path, ai_light::ai_light_candidate_file_role)`，URL 段用 `magic_enum::enum_name(role)`；新增 `#include <magic_enum/magic_enum.hpp>`（原文件没有，靠传递包含不可靠） |
+| 合成 | `long_task\image_to_move.{h,cpp}` | `create_move` 加 `std::int32_t in_fps = 25` |
+| 工作机 | `exe_warp\ai_light_render.{h,cpp}` | 全文重写：四样硬前置（`ue_project_path_` / `render_map_` / `level_sequence_` / `candidates_`）、`make_ue_payload()` 拼本地根、`collect_render_frames()` 按文件名排序、**无 `-run=`** 启动、逐候选合成 + 两个上传 + 回传 + 终态 |
+| UE 侧 | `DoodleLightingEditor\Public\DoodleLightingRoundRunner.h` + `Private\DoodleLightingRoundRunner.cpp`（**新增**） | 一轮的驱动者：读参数 → 载序列剥灯 → 交付机位 → 建 6 个 job → PIE 执行器 → 逐 job 建 rig → 写报告 → 退出 |
+| UE 侧 | `DoodleLightingEditor.{h,cpp}` | 模块启动时看见 `-DoodleAiLightParams=` 就造 runner 并挂 `OnPreTick` |
+| UE 侧 | `DoodleLightingExecutor.{h,cpp}` | 新增 `PrepareAnchorCamera()` / `ApplyCandidateToWorld()`；抽 `ReleaseDeliveryCamera()` / `BuildRigLights()`；旧 SceneCapture 路径保留但只剩手工调试用 |
+| UE 侧 | `DoodleLightingEditor.Build.cs` | 加 `MovieRenderPipelineCore/Editor/RenderPasses/Settings` |
+| UE 侧 | `DoodleLightingTypes.h` / `DoodleLightingJson.cpp` | 镜像新字段（`FramesDir` / `MoviePath` / `RenderMap` / `LevelSequence` / `MoviePipelineConfig` / `FrameBegin` / `FrameEnd` / `FrameCount` / `FrameRate`） |
+| 测试 | `src\test\core\ai_light_dispatch.cpp` · `ai_light_paths.cpp` | 夹具每候选三个探针（海报/成片/EXR）+ `candidate_movie()`；D41 用例改成「两个产物都要在」；新增「海报在、成片缺」用例；新增 wire 键冻结用例 `task_payload_json_keys_are_frozen`；路径用例补 mp4 与帧目录 |
+
+**wire 契约（外部契约，改键 = 改协议）**
+
+- 派发：`session_id / iteration / spec_id / out_dir / baseline_level / render_map / level_sequence /
+  movie_pipeline_config / frame_begin / frame_end / ue_project_path / camera_file_path / candidates[]`；
+  候选：`candidate_index / candidate_id / frames_dir / png_path / exr_path / movie_path / rig`。
+- 回传：`candidates[] / frame_rate / error`；候选：`candidate_index / candidate_id / status / render_ms /
+  light_count / frame_count / metrics` —— **回传里永远没有路径**（D27）。
+- 上传：`POST /api/doodle/ai/light/candidate/{候选 uuid}/file/{render|render_linear|render_movie}`（`application/octet-stream`，成功 204）。
+- 取用：海报 `GET …/candidate/{uuid}/image`；成片 `GET …/candidate/{uuid}/movie`（`video/mp4`，`make_msg` 自带 Range 支持）。
+
+**测试与回归**
+
+- `ai_light_dispatch`：24 用例（+1 wire 冻结，+1「海报在、成片缺」并合并原 D41 用例）；
+  `ai_light_paths`：补 mp4 与帧目录的黄金路径；
+  `ai_light_candidates`：17 用例（+1 `diff_rigs_emits_one_op_per_changed_global_block`，钉死全局量四块的 op
+  —— 这个 diff 在坑 57 里曾经**静默地一个 op 都不发**，此前没有任何用例覆盖 `diff_rigs`）。
+- 回归（本轮实测）：`--run_test=ai_light_*` → **128 用例 / 1357 断言全通过**；
+  全量 → **245 用例 / 2110 断言全通过、exit 0**（上一版基线 241 / 1969）。
+- 教训沿用：管道后的 exit code 不可信，要抓 `N test cases out of N passed`；Boost.Test detailed 汇总行在报告**开头**。
+
+**坑（续 §15.15 的 47~50）**
+
+51. **MRQ 不能在 `-run=` commandlet 里跑**（`OnBeginFrame` 不广播 + `FindCurrentWorld()` 不认 Editor 世界），
+    必须走「无 `-run=` 启动 + PIE 执行器」；这也是 `DoodleLightingCapture.h` 里 D36 那段注释被改写的原因。
+52. **`GetSpawnable(i)` 不是插入序**（`AddSpawnable` 内部 `InsertSorted` 按 guid 排），
+    剥灯光必须**倒着**遍历，别缓存下标。
+53. **`UMoviePipelineExecutorJob::SetConfiguration` 是深拷贝**（`Configuration->CopyFrom(InPreset)`），
+    所以逐 job 改输出目录安全；但**配置资产本身**若被改就会污染所有 job。
+54. **帧率取整**：`FFrameRate::AsDecimal()` 再 `RoundToInt`（整数除 `30000/1001` 会截断成 29）。
+55. **`<目标>.uploading` 再 rename** 对视频尤其重要：半截 mp4 播放器直接报错，还可能被浏览器缓存。
+56. **工作机不能再假设「报告里说 rendered 就算数」**：上传是独立一步（HTTP），UE 写盘 ≠ 服务端拿得到；
+    D41 因此同时查海报与成片两个文件。
+57. **`nlohmann::json{x}` 永远得到数组 `[x]`** —— 连 `std::string`、枚举、`std::optional` 都一样；
+    要对象得写拷贝初始化 `nlohmann::json j = x;`（或 `json(x)`）。这个陷阱在本模块里踩过三处：
+    派发载荷、回传报告（UE 侧按对象解析会直接失败），以及 `ai_light_rig_ops.cpp` 里对 `globals_` 的
+    四个子块 diff —— 数组上 `contains(...)` 恒为 false，于是**全局量的 op 一个都不发**且不报错。
+    **同一个 diff 还有第二个独立错因**：`l_blocks` 里的键写成了带尾下划线的 `"exposure_"` 等，
+    而 `globals_t` 的 `to_json` 键是 `exposure`/`white_balance`/`environment`/`grading`（`rig.h:508-511`）
+    —— 两处都改对之后才真的发 op；`ai_light_candidates.cpp::diff_rigs_emits_one_op_per_changed_global_block`
+    现在钉死这一点。教训：`contains()` 类的软查询失败**默认是静默的**，只要可能落空就必须有测试。
+    相关的既有说明在 `src\doodle_core\metadata\ai_light\common.h:86`。
+58. **`cv::VideoWriter{path, fourcc, fps, size}` 的 fps 形参是 `double`**：传 `std::int32_t` 进花括号初始化
+    是收窄转换，MSVC 直接 C2398（`requires a narrowing conversion`）→ 显式 `static_cast<double>(in_fps)`。
+59. **`create_move` 要写全限定 `::doodle::detail::create_move`**：工作机文件在 `namespace doodle` 里，
+    裸 `detail::` 会先命中 `doodle::http::detail`（`http_client/work.h:31`），报的是 C2039/C3861。
+
+**仍未落地**
+
+- **重新打包 UE 插件包**：`ue_exe.cpp` 的 `installUePath` 每次跑 UE 前都会用服务端的插件包覆盖
+  `Engine/Plugins/Doodle` —— 不打包，工作机上还是旧插件，`-DoodleAiLightParams` 没人认、
+  `UDoodleLightingRoundRunner` 不存在。（本机不能编译 UE 插件，D 组只做了 API 级核对。）
+- **真机一轮回环**：MRQ 在编辑器/PIE 形状下的实际行为、帧数、时长、上传体积都要真机确认。
+- **服务端候选指标复算**（D30 只写了一半）：`metrics_` 仍来自回传空值。
+- `baseline_level_` 的真实推导仍是 M2 阻断项；前端页面（§14）不在本轮。
+
+
 
 
 

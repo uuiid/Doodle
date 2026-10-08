@@ -257,41 +257,39 @@ boost::asio::awaitable<void> advance_session_generating_branch(
     }
   }
 
-  // 本轮渲染的基线关卡：直接复用镜头装配的现成推导。
+  // 本轮渲染的对象是 auto_light 装配出来的交付场景：关卡（render_map_）里有场景，
+  // 序列（level_sequence_import_）里有相机轨道、camera cut 与角色动画，配置资产
+  // （movie_pipeline_config_）里有这条镜头的 MRQ 画质设置。三者都由 shot_render_light()
+  // 现算 —— 它就是那三段推导（基英/集数 → 场景 UE 路径 → 地编预调探测）的唯一权威，
+  // 自己查库、自己推导，所以这里直接调它，不另写一遍。
   //
-  // 取它要复刻 shot_render_light_builder 的三段私有推导（基英/集数 → 场景 UE 路径 →
-  // 地编预调探测），而那段推导已经是自由函数 auto_task::shot_render_light()：它自己查库、
-  // 自己推导，正是这条路线的唯一权威 —— 所以这里直接调它，不另写一遍。
+  // 会话的 task_id_ 是灯光任务 id，与动画/解算任务指向同一个镜头实体。
   //
-  // 会话的 task_id_ 是灯光任务 id，与动画/解算任务指向同一个镜头实体，
-  // 所以拿到的就是本镜头的场景关卡、UE 工程与相机文件。
-  //
-  // 推导失败（缺 entity_shot_extend / frame_in / frame_out 等）**不让整轮失败**：
-  // 候选本身仍有价值，空基线由工作机在回传里报错（美术看到的是渲染失败，
-  // 而不是「AI 服务出错」）。
+  // 装配推导失败 / 序列为空 = 本轮不可渲染（D50）：候选本身虽然生成了，但工作机拿着一个
+  // 没有序列的载荷去起 UE，只会失败在更远的地方、现象与真正的原因无关。所以抛在这里，
+  // 由 advance_session 回滚会话状态并把原因写进 failure_reason_。
   import_and_render_ue_ns::run_ue_assembly_arg l_assembly{};
-  bool l_assembly_ok = false;
-  if (!io_session.task_id_.is_nil()) {
+  std::string l_assembly_err{};
+  if (io_session.task_id_.is_nil()) {
+    l_assembly_err = "会话没有关联镜头任务（task_id 为空）";
+  } else {
     try {
-      l_assembly    = http::auto_task::shot_render_light(io_session.project_id_, io_session.task_id_);
-      l_assembly_ok = true;
+      l_assembly = http::auto_task::shot_render_light(io_session.project_id_, io_session.task_id_);
     } catch (const std::exception& in_err) {
-      SPDLOG_LOGGER_WARN(
-          g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮：推导基线关卡失败（{}）", io_session.uuid_id_,
-          l_iteration, brief_error(in_err)
-      );
+      l_assembly_err = brief_error(in_err);
     }
   }
-  if (l_assembly_ok) l_req.baseline_level_ = l_assembly.original_map_.generic_string();
-
-  if (l_req.baseline_level_.empty()) {
-    SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_http(),
-        "AI 灯光会话 {} 第 {} 轮：baseline_level 为空。候选可以生成，"
-        "但工作机拿不到起点关卡，本轮渲染必然失败。",
-        io_session.uuid_id_, l_iteration
-    );
-  }
+  DOODLE_CHICK_HTTP(
+      l_assembly_err.empty(), internal_server_error,
+      "AI 灯光会话 {} 第 {} 轮：无法推导本镜头的渲染装配，本轮无法渲染（{}）", io_session.uuid_id_, l_iteration,
+      l_assembly_err
+  );
+  DOODLE_CHICK_HTTP(
+      !l_assembly.level_sequence_import_.empty(), internal_server_error,
+      "AI 灯光会话 {} 第 {} 轮：镜头装配没有给出 level sequence（{}），本轮无法渲染", io_session.uuid_id_,
+      l_iteration, l_assembly.level_sequence_import_.generic_string()
+  );
+  l_req.baseline_level_ = l_assembly.original_map_.generic_string();
 
   auto l_res = co_await generate_candidates(in_sql, l_req);
 
@@ -321,21 +319,33 @@ boost::asio::awaitable<void> advance_session_generating_branch(
   // 分布式任务载荷（方案 §13.1 第 5 项：server_task_info.command_ 已有 JSON 列，
   // 不需要改那张表）。形状由 ai_light_task_payload_t 冻结。
   //
+  // 这一轮渲染的是 auto_light 那条交付链路现成的场景：render_map_ 提供关卡，
+  // level_sequence_ 提供相机轨道、camera cut 与角色动画，movie_pipeline_config_ 提供
+  // 这条镜头的 MRQ 画质设置 —— 灯光候选只换灯，镜头运动与表演照原样（D45）。
+  // 三者都是包路径，UE 侧直接当 FSoftObjectPath / 命令行地图参数用。
+  //
   // 路径分两层：
-  //   * 载荷里只放**相对路径** —— 服务端定命名（out_dir_ = <session uuid>/<轮次 uuid>、
-  //     文件名 = <candidate_uuid>.png|.exr），工作机定根（自己的工作机本地缓存根）。
-  //     工作机不是共享盘上的进程：它写不了、也不该写服务端 root_ 底下的目录。
+  //   * 载荷里只放**相对路径** —— 服务端定命名（out_dir_ = <session uuid>/<轮次 uuid>；
+  //     候选文件名 = <candidate_uuid>.png|.exr、<candidate_uuid>.mp4、<candidate_uuid>/frame_*），
+  //     工作机定根（自己的工作机本地缓存根）。工作机不是共享盘上的进程：
+  //     它写不了、也不该写服务端 root_ 底下的目录。
   //   * 服务端**不存**路径（D44）：产物上传后落在按同一套命名规则算出来的位置，
-  //     要用时现算（candidate_render_path）。所以这里没有任何绝对路径要写库。
+  //     要用时现算（candidate_render_path / candidate_movie_path）。所以这里没有任何绝对路径要写库。
   ai_light_task_payload_t l_payload{};
-  l_payload.session_id_       = io_session.uuid_id_;
-  l_payload.iteration_        = l_iteration;
-  l_payload.spec_id_          = l_spec->uuid_id_;
+  l_payload.session_id_            = io_session.uuid_id_;
+  l_payload.iteration_             = l_iteration;
+  l_payload.spec_id_               = l_spec->uuid_id_;
   // 轮次目录名用**轮次 uuid**：候选行靠 iteration_id_ 就能算出落点，不必回查序号。
-  l_payload.out_dir_          = make_iteration_relative_dir(io_session.uuid_id_, l_it.uuid_id_);
-  l_payload.baseline_level_   = l_req.baseline_level_;
-  l_payload.ue_project_path_  = l_assembly_ok ? l_assembly.ue_main_project_path_.generic_string() : std::string{};
-  l_payload.camera_file_path_ = l_assembly_ok ? l_assembly.camera_file_path_.generic_string() : std::string{};
+  l_payload.out_dir_               = make_iteration_relative_dir(io_session.uuid_id_, l_it.uuid_id_);
+  l_payload.baseline_level_        = l_req.baseline_level_;
+  l_payload.render_map_            = l_assembly.render_map_.generic_string();
+  l_payload.level_sequence_        = l_assembly.level_sequence_import_.generic_string();
+  l_payload.movie_pipeline_config_ = l_assembly.movie_pipeline_config_.generic_string();
+  // 帧区间只作诊断：真正渲染哪一段由序列自己的 playback range 决定（D48）。
+  l_payload.frame_begin_           = l_assembly.begin_time_;
+  l_payload.frame_end_             = l_assembly.end_time_;
+  l_payload.ue_project_path_       = l_assembly.ue_main_project_path_.generic_string();
+  l_payload.camera_file_path_      = l_assembly.camera_file_path_.generic_string();
 
   orm::sql_modify_statement_vector_t l_sqls{};
   for (std::int32_t l_i = 0; l_i < g_candidate_count; ++l_i) {
@@ -359,12 +369,16 @@ boost::asio::awaitable<void> advance_session_generating_branch(
     l_cand.render_status_ = candidate_render_status::pending;
 
     l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_candidate>().values(l_cand));
-    // 载荷里带的是**相对文件名**（由 make_candidate_file_name 生成，与服务端算落点时
-    // 用的是同一个 helper，只是不带服务端那一长串根）：工作机拼上自己的本地根后交给 UE（D39）。
+    // 载荷里带的是**相对路径**（由 make_* 系列 helper 生成，与服务端算落点时用的是同一套
+    // 命名规则，只是不带服务端那一长串根）：工作机拼上自己的本地根后交给 UE（D39）。
+    // 每候选三样产物（D47）：MRQ 逐帧目录（frames_dir_，UE 往这里写 frame_*.png）、
+    // 视频（movie_path_，工作机用 OpenCV 合成）、首帧海报（png_path_，工作机从帧目录复制）。
+    // exr_path_ 本轮不产，保留在载荷里是为了线性交付那条线（D42）。
     l_payload.candidates_.push_back(
         ai_light_task_candidate_t{
-            l_i, l_cand.uuid_id_, make_candidate_file_name(l_cand.uuid_id_, false),
-            make_candidate_file_name(l_cand.uuid_id_, true), l_rig
+            l_i, l_cand.uuid_id_, make_candidate_frames_dir(l_cand.uuid_id_),
+            make_candidate_file_name(l_cand.uuid_id_, false), make_candidate_file_name(l_cand.uuid_id_, true),
+            make_candidate_movie_file(l_cand.uuid_id_), l_rig
         }
     );
   }
@@ -839,10 +853,10 @@ boost::asio::awaitable<void> apply_render_report(
   auto l_it = in_sql.get_ai_light_iteration_by_task(in_server_task_info_id);
   DOODLE_CHICK_HTTP(l_it.has_value(), not_found, "没有任务 {} 对应的 AI 灯光轮次", in_server_task_info_id);
 
-  // 整轮失败由 error_ 表达（UE 起不来 / 超时 / 载荷非法）；「一张 rendered 都没有」也算失败 ——
-  // 否则轮次会被推到 awaiting_judgement，美术面对 6 张不存在的图点「选第 3 张」。
-  // 注意：这只是**回报文里**的初判。文件是否真的存在在循环里逐张查（D41），
-  // 查完还要再判一次（l_any_rendered_after），否则「6 张都声称 rendered 但文件都不在」
+  // 整轮失败由 error_ 表达（UE 起不来 / 超时 / 载荷非法）；「一个 rendered 都没有」也算失败 ——
+  // 否则轮次会被推到 awaiting_judgement，美术面对 6 个不存在的候选视频点「选第 3 个」。
+  // 注意：这只是**回报文里**的初判。产物是否真的存在在循环里逐个查（D41），
+  // 查完还要再判一次（l_any_rendered_after），否则「6 个都声称 rendered 但产物都不在」
   // 会绕过这里的拦截，把空轮次推给美术。
   if (!in_report.error_.empty() ||
       !std::any_of(
@@ -862,7 +876,7 @@ boost::asio::awaitable<void> apply_render_report(
 
   std::vector<ai_light_candidate> l_candidates{};
   l_candidates.reserve(in_report.candidates_.size());
-  std::size_t l_missing_png = 0;
+  std::size_t l_missing_artifact = 0;
 
   for (const auto& l_rep : in_report.candidates_) {
     // 候选必须属于**本轮**（只查本轮，不查全库）：别的会话的候选 uuid 混进来必须拒掉，
@@ -886,18 +900,24 @@ boost::asio::awaitable<void> apply_render_report(
     l_cand.light_count_       = l_rep.light_count_;
     l_cand.metrics_           = l_rep.metrics_;
 
-    // D41：声称 rendered 就要能取到图。工作机的上传是**独立一步**（D40），
-    // 完全可能出现「UE 写了文件、报告说 rendered、上传那一步失败了」——
-    // 这时如果照样落 rendered，前端会拿到一个 404 的候选图，而美术的判断通道只能靠这张图。
-    // 降级成 failed 是**保守**选择：本轮其余候选照常进入判断，只是这张不可选。
+    // D41：声称 rendered 就要能取到产物。工作机的上传是**独立一步**（D40），
+    // 完全可能出现「UE 写了帧、报告说 rendered，但合成视频或上传那一步失败了」——
+    // 这时如果照样落 rendered，前端会拿到 404 的候选视频／海报，而美术的判断通道只有这两样。
+    // 两样都查：海报给网格用、视频给判断用，少哪一样这个候选都没法看。
+    // 降级成 failed 是**保守**选择：本轮其余候选照常进入判断，只是这个不可选。
     if (l_cand.render_status_ == candidate_render_status::rendered) {
-      const FSys::path l_png = candidate_render_path(in_ctx, l_cand, false);
-      if (!FSys::exists(l_png)) {
-        ++l_missing_png;
+      const FSys::path l_png       = candidate_render_path(in_ctx, l_cand, false);
+      const FSys::path l_movie     = candidate_movie_path(in_ctx, l_cand);
+      const bool l_png_exists      = FSys::exists(l_png);
+      const bool l_movie_exists    = FSys::exists(l_movie);
+      if (!l_png_exists || !l_movie_exists) {
+        ++l_missing_artifact;
         l_cand.render_status_ = candidate_render_status::failed;
         SPDLOG_LOGGER_WARN(
-            g_logger_ctrl().get_http(), "AI 灯光回传：候选 {}（轮次 {}）声称渲染成功，但产物不在 {}，已降级为失败",
-            l_cand.uuid_id_, l_it->iteration_, l_png.generic_string()
+            g_logger_ctrl().get_http(),
+            "AI 灯光回传：候选 {}（轮次 {}）声称渲染成功，但产物取不到（海报 {}：{}；视频 {}：{}），已降级为失败",
+            l_cand.uuid_id_, l_it->iteration_, l_png.generic_string(), l_png_exists ? "在" : "不在",
+            l_movie.generic_string(), l_movie_exists ? "在" : "不在"
         );
       }
     }
@@ -925,7 +945,10 @@ boost::asio::awaitable<void> apply_render_report(
   if (!l_any_rendered_after) {
     co_await mark_iteration_failed(
         in_sql, in_server_task_info_id,
-        fmt::format("轮次 {} 的 {} 个候选渲染成功但产物文件缺失，本轮无可判断结果", l_it->iteration_, l_missing_png)
+        fmt::format(
+            "轮次 {} 的 {} 个候选渲染成功但产物文件缺失（海报或视频），本轮无可判断结果", l_it->iteration_,
+            l_missing_artifact
+        )
     );
     co_return;
   }

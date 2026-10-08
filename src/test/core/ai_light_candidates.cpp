@@ -241,7 +241,9 @@ BOOST_AUTO_TEST_CASE(json_schema_is_strict_and_free_of_server_fields) {
 /// 给「未指定」的参数塞一个缺省值等于替调用方做了一个它没做的决定（§15.6 坑 21）。
 BOOST_AUTO_TEST_CASE(build_request_omits_absent_inputs) {
   const auto l_req     = make_request();
-  const auto l_envelope = nlohmann::json{build_candidates_request(l_req)};
+  // 拷贝初始化，**不要**写 nlohmann::json{...}：花括号走 initializer_list 构造，
+  // 得到的是单元素数组，下面的 contains 会全部假通过。
+  const nlohmann::json l_envelope = build_candidates_request(l_req);
   for (const char* l_key : {"images", "image_detail", "max_output_tokens", "thinking"})
     BOOST_TEST(!l_envelope.contains(l_key), l_key << " 不该被发送");
 
@@ -485,6 +487,75 @@ BOOST_AUTO_TEST_CASE(expand_candidates_is_ofat_around_the_baseline) {
     }
   }
   BOOST_CHECK_EQUAL(l_expect, static_cast<std::size_t>(g_candidate_count));
+}
+
+// ---------------------------------------------------------------------------
+// diff_rigs：ops 是执行器的唯一输入，静默丢 op == 「轴变了但图没变」
+// ---------------------------------------------------------------------------
+
+/// 全局量四块的 diff 曾经**一个 op 都不发**，而且是静默的：`nlohmann::json{globals_}` 花括号构造
+/// 得到单元素数组（数组上 contains() 恒 false，见 §15.16 坑 57），键名还写成了带尾下划线的
+/// `exposure_`（`globals_t` 的 to_json 键是 `exposure`/`white_balance`/`environment`/`grading`，无尾下划线）。
+/// 两个错叠在一起的表现完全一样：「调色改了，但这一轮没有任何全局量 op」。这个用例把
+/// 「改一块 → 恰好一个对应 op，patch 是目标整块」钉死。
+BOOST_AUTO_TEST_CASE(diff_rigs_emits_one_op_per_changed_global_block) {
+  const auto l_base = build_base_rig(make_model_json());
+
+  // 自己跟自己：一个 op 都不发（否则每轮都会下发一堆空改动）。
+  BOOST_TEST(diff_rigs(l_base, l_base).empty());
+
+  /// 只动一块 → 恰好一个对应 op；patch 是该块的目标值（set 语义），键名即 to_json 的名字。
+  auto l_one_block = [&](auto&& in_mutate, light_op_kind in_kind, const char* in_key) {
+    auto       l_tgt = l_base;
+    in_mutate(l_tgt);
+    const auto l_ops = diff_rigs(l_base, l_tgt);
+    BOOST_REQUIRE_EQUAL(l_ops.size(), 1u);
+    BOOST_CHECK_EQUAL(en(l_ops.at(0).op_), en(in_kind));
+    BOOST_TEST(l_ops.at(0).light_.empty());  // 全局量 op 不绑某一盏灯
+    BOOST_TEST(l_ops.at(0).patch_.contains(in_key));
+    return l_ops.at(0);
+  };
+
+  const auto l_exposure = l_one_block(
+      [](lighting_rig_t& io) { io.globals_.exposure_.ev100_bias_ = 0.5; }, light_op_kind::set_exposure, "ev100_bias"
+  );
+  BOOST_CHECK_CLOSE(l_exposure.patch_.at("ev100_bias").get<double>(), 0.5, 1e-9);
+
+  l_one_block(
+      [](lighting_rig_t& io) { io.globals_.white_balance_.kelvin_ = 4200.0; }, light_op_kind::set_white_balance, "kelvin"
+  );
+  l_one_block(
+      [](lighting_rig_t& io) { io.globals_.environment_.fog_density_ = 0.3; }, light_op_kind::set_environment,
+      "fog_density"
+  );
+  const auto l_grading =
+      l_one_block([](lighting_rig_t& io) { io.globals_.grading_.contrast_ = 1.4; }, light_op_kind::set_grading, "contrast");
+  BOOST_CHECK_CLOSE(l_grading.patch_.at("contrast").get<double>(), 1.4, 1e-9);
+  // patch 只装那一块：把整份 globals 塞进去会让执行器「顺手」改别的块。
+  BOOST_TEST(!l_grading.patch_.contains("sky_light_intensity"));
+
+  // 两块一起动 → 两个 op，顺序与实现里的表一致（exposure → white_balance → environment → grading）。
+  {
+    auto l_tgt                           = l_base;
+    l_tgt.globals_.grading_.vignette_    = 0.25;
+    l_tgt.globals_.exposure_.ev100_bias_ = -0.5;
+    const auto l_ops                     = diff_rigs(l_base, l_tgt);
+    BOOST_REQUIRE_EQUAL(l_ops.size(), 2u);
+    BOOST_CHECK_EQUAL(en(l_ops.at(0).op_), en(light_op_kind::set_exposure));
+    BOOST_CHECK_EQUAL(en(l_ops.at(1).op_), en(light_op_kind::set_grading));
+  }
+
+  // 逐灯：patch 只装真的变了的子块，并绑上那盏灯的语义 id（执行器按 id 定位，不按下标）。
+  {
+    auto l_tgt                           = l_base;
+    l_tgt.lights_.at(1).intensity_.value_ = 750.0;
+    const auto l_ops                      = diff_rigs(l_base, l_tgt);
+    BOOST_REQUIRE_EQUAL(l_ops.size(), 1u);
+    BOOST_CHECK_EQUAL(en(l_ops.at(0).op_), en(light_op_kind::modify));
+    BOOST_CHECK_EQUAL(l_ops.at(0).light_, l_base.lights_.at(1).id_);
+    BOOST_TEST(l_ops.at(0).patch_.contains("intensity"));
+    BOOST_TEST(!l_ops.at(0).patch_.contains("offset"));  // 没变的子块不出现
+  }
 }
 
 // ---------------------------------------------------------------------------

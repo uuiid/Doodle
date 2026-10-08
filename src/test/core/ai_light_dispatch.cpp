@@ -23,8 +23,9 @@
 // 路径也一字不变 —— 那就是那条规则的回归钉子。
 //
 //   4. 产物存在性（D41）—— 工作机的上传是**独立一步**，所以「报告说 rendered」
-//      不等于「那张图取得到」。落地时逐张按命名规则算出 PNG 再查在不在：不在就降级 failed；
-//      全都不在就走失败出口（否则美术会对着取不到的图点「选第 3 张」）。
+//      不等于「产物取得到」。落地时逐张按命名规则算出**首帧海报**与**候选视频**再查在不在：
+//      任缺一样就降级 failed（美术先扫海报、再点开视频判断，缺哪样这个候选都不成立）；
+//      全都不在就走失败出口（否则美术会对着取不到的产物点「选第 3 个」）。
 //      EXR 是可选的（D42）：文件不在只记一条 WARN，不降级、不阻断本轮。
 //
 //   5. 路径不落库（D44）—— 候选行上**没有**路径列，也没有那两个 JSON 键：
@@ -36,6 +37,7 @@
 //
 
 #include <doodle_core/metadata/ai_light/ai_light.h>
+#include <doodle_core/metadata/ai_light/task_payload.h>
 #include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/server_task_info.h>
 
@@ -211,6 +213,7 @@ struct fixture_t : doodle_test::coro_fixture_t {
       // 算出来的位置上。D41 落地后，指向不存在文件的 rendered 会被服务端降级成 failed，
       // 那是几条专门用例要构造的场景，不能混进默认形状里。
       write_probe_file(candidate_png(candidates_.size() - 1));
+      write_probe_file(candidate_movie(candidates_.size() - 1));
       write_probe_file(candidate_exr(candidates_.size() - 1));
     }
   }
@@ -222,13 +225,27 @@ struct fixture_t : doodle_test::coro_fixture_t {
   FSys::path candidate_exr(std::size_t in_index) const {
     return candidate_render_path(server_ctx_, candidates_.at(in_index), true);
   }
+  /// 候选视频：工作机把 MRQ 渲出来的帧合成 mp4 后上传到的地方
+  FSys::path candidate_movie(std::size_t in_index) const {
+    return candidate_movie_path(server_ctx_, candidates_.at(in_index));
+  }
 
-  /// 删掉某个候选的两份产物文件 —— 用来构造「报告说 rendered、图却不在」。
+  /// 删掉某个候选的三份产物文件 —— 用来构造「报告说 rendered、产物却不在」。
   void delete_candidate_files(std::size_t in_index) {
     std::error_code l_ec{};
     FSys::remove(candidate_png(in_index), l_ec);
+    FSys::remove(candidate_movie(in_index), l_ec);
     FSys::remove(candidate_exr(in_index), l_ec);
     BOOST_REQUIRE(!FSys::exists(candidate_png(in_index)));
+    BOOST_REQUIRE(!FSys::exists(candidate_movie(in_index)));
+  }
+
+  /// 只删视频：海报仍在 —— 这两个是**都要在**的（D41），缺一个整条候选降级。
+  void delete_candidate_movie(std::size_t in_index) {
+    std::error_code l_ec{};
+    FSys::remove(candidate_movie(in_index), l_ec);
+    BOOST_REQUIRE(!FSys::exists(candidate_movie(in_index)));
+    BOOST_REQUIRE(FSys::exists(candidate_png(in_index)));
   }
 
   /// 只删 EXR：PNG 仍在，用来验证「可选产物缺了不降级」（D42）。
@@ -600,13 +617,13 @@ DOODLE_FIXTURE_TEST_CASE_CORO(mark_iteration_failed_unknown_task_is_404, fixture
 // ===========================================================================
 // 第四段：产物存在性（D41）
 //
-// 工作机的上传是**独立一步**（D40）：UE 写完文件、报告也写了 rendered，上传那一步仍可能
-// 失败。所以「报告说渲染成功」只是主张，能不能取到图要服务端自己看文件。
-// 为什么宁可降级也不用别的手段（比如让前端容忍 404）：美术的判断通道只有这张 PNG，
-// 对着取不到的图点「选第 3 张」，这一轮的人力和一次派发就白费了。
+// 工作机的上传是**独立一步**（D40）：MRQ 写完帧、工作机合成视频与首帧海报、报告也写了
+// rendered，上传那一步仍可能失败。所以「报告说渲染成功」只是主张，能不能取到产物要服务端
+// 自己看文件。候选的产物是**两样**（海报 + 视频，D45），缺哪一样都不成立：美术先扫海报、
+// 再点开视频判断，对着取不到的产物点「选第 3 个」，这一轮的人力和一次派发就白费了。
 // ===========================================================================
 
-DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_missing_png_only_for_that_candidate, fixture_t) {
+DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_missing_artifacts_only_for_that_candidate, fixture_t) {
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 3);
   l_fx.delete_candidate_files(1);
 
@@ -615,14 +632,14 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_missing_png_only_for_that_
       *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 3))
   );
 
-  // 其余候选照常推进：一张图传丢了不该让整轮作废（§7.5 第 9 条的候选级隔离）
+  // 其余候选照常推进：一个候选的产物传丢了不该让整轮作废（§7.5 第 9 条的候选级隔离）
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::awaiting_judgement));
   BOOST_TEST(l_session.failure_reason_.empty());
 
   BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::rendered));
-  // 声称 rendered 但图不在 → 降级 failed（留在库里的是「这张不可选」，不是一个 404 链接）
+  // 声称 rendered 但产物不在 → 降级 failed（留在库里的是「这个不可选」，不是一个 404 链接）
   BOOST_TEST(en(l_fx.reload_candidate(1).render_status_) == en(candidate_render_status::failed));
   BOOST_TEST(en(l_fx.reload_candidate(2).render_status_) == en(candidate_render_status::rendered));
   // 路径本身不动：它是「服务端应有产物的地方」（按命名规则现算，D44），不是上传结果
@@ -631,12 +648,27 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_missing_png_only_for_that_
   BOOST_TEST(!FSys::exists(candidate_render_path(l_fx.server_ctx_, l_cand1, false)));
 }
 
-DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_png_missing_writes_failure_reason, fixture_t) {
+DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_when_only_the_movie_is_missing, fixture_t) {
+  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
+  l_fx.delete_candidate_movie(0);
+
+  co_await apply_render_report(
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2))
+  );
+
+  // 海报在、视频缺：这个候选判不了 —— 美术点开发现播不出来，等于没渲
+  BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::failed));
+  BOOST_TEST(en(l_fx.reload_candidate(1).render_status_) == en(candidate_render_status::rendered));
+  BOOST_TEST(en(l_fx.reload_iteration().state_) == en(ai_light_iteration_state::awaiting_judgement));
+  BOOST_TEST(l_fx.reload_session().failure_reason_.empty());
+}
+
+DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_artifacts_missing_writes_failure_reason, fixture_t) {
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
   l_fx.delete_candidate_files(0);
   l_fx.delete_candidate_files(1);
 
-  // 全部「渲染成功」但产物一张都不在：这批回传在语义上等于什么都没渲出来，
+  // 全部「渲染成功」但产物一件都不在：这批回传在语义上等于什么都没渲出来，
   // 必须走失败出口 —— 推到 awaiting_judgement 就是让美术看 6 个 404。
   co_await apply_render_report(
       *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2))
@@ -644,7 +676,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_png_missing_writes_failure_reason
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
-  BOOST_TEST(l_session.failure_reason_ == std::string{"轮次 1 的 2 个候选渲染成功但产物文件缺失，本轮无可判断结果"});
+  BOOST_TEST(l_session.failure_reason_ == std::string{"轮次 1 的 2 个候选渲染成功但产物文件缺失（海报或视频），本轮无可判断结果"});
   // D28：失败不是终态 —— 轮次状态原地不动，美术再点一次 /iterate 就重派
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::rendering));
   BOOST_TEST(!l_it.render_at_.has_value());
@@ -666,6 +698,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_missing_exr_does_not_block, fixture_t
 
   BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::rendered));
   BOOST_TEST(candidate_render_path(l_fx.server_ctx_, l_fx.reload_candidate(0), false) == l_fx.candidate_png(0));
+  // 海报与视频都在（缺 EXR 之所以不阻断，是因为这两样才是判断通道）
+  BOOST_TEST(FSys::exists(candidate_movie_path(l_fx.server_ctx_, l_fx.reload_candidate(0))));
 
   // 库里没有 EXR 记录可清（D44）—— 那条路径本来就是现算的，所以这里钉的是：缺 EXR 之后
   // 候选行**一个字段都没被这条回传改动**，只有 render_status_ 等诊断数字按常规落库。
@@ -683,8 +717,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_reported_failure_plus_downgrade_leave
   l_fx.delete_candidate_files(0);
   l_fx.delete_candidate_files(2);
 
-  // 「报告里本来就说 failed」和「声称 rendered 但图不在被降级」交错：两种口味的不可用
-  // 混在同一条回传里，最终判定必须只看**降级之后还剩几张能看的**。
+  // 「报告里本来就说 failed」和「声称 rendered 但产物不在被降级」交错：两种口味的不可用
+  // 混在同一条回传里，最终判定必须只看**降级之后还剩几个能看的**。
   auto l_json = ok_report(l_fx, 3);
   l_json["candidates"].at(1)["status"] = "failed";
 
@@ -692,9 +726,9 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_reported_failure_plus_downgrade_leave
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
-  // 注意计数是**2**（被降级的那两张），报告里本来就 failed 的那张不算「声称成功而缺文件」——
+  // 注意计数是**2**（被降级的那两个），报告里本来就 failed 的那个不算「声称成功而缺产物」——
   // 说明写给人看的原因串时数的是「这次是哪儿出的问题」，不是候选总数。
-  BOOST_TEST(l_session.failure_reason_ == std::string{"轮次 1 的 2 个候选渲染成功但产物文件缺失，本轮无可判断结果"});
+  BOOST_TEST(l_session.failure_reason_ == std::string{"轮次 1 的 2 个候选渲染成功但产物文件缺失（海报或视频），本轮无可判断结果"});
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::rendering));
   // 降级只发生在内存里的候选副本上，失败出口不写候选行（D28）——库里仍是 pending
   BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::pending));
@@ -703,9 +737,10 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_reported_failure_plus_downgrade_leave
 // ===========================================================================
 // 第五段：路径派生（D44）
 //
-// 候选行上没有路径列，也没有那两个 JSON 键：路径 = candidate_render_path(ctx, 行, linear)，
-// 吃的是行自带的 session_id_ / iteration_id_ / uuid_id_ 三个 uuid。这一段盯的就是「它确实是
-// 纯函数」—— 同一行算两次同一个结果、不同行不撞、只有 root_ 变结果才跟着变。
+// 候选行上没有路径列，也没有那两个 JSON 键：路径 = candidate_render_path(ctx, 行, linear)
+// 与 candidate_movie_path(ctx, 行) / candidate_frames_dir(ctx, 行)，吃的都是行自带的
+// session_id_ / iteration_id_ / uuid_id_ 三个 uuid。这一段盯的就是「它们确实是纯函数」——
+// 同一行算两次同一个结果、不同行不撞、只有 root_ 变结果才跟着变。
 // ===========================================================================
 
 // 纯同步用例：体里一个 co_await 都没有，用 CORO 宏展开出的函数不是协程 → C4716
@@ -724,6 +759,16 @@ BOOST_FIXTURE_TEST_CASE(candidate_render_path_is_a_pure_function_of_the_row, fix
   );
   BOOST_TEST(candidate_render_path(l_fx.server_ctx_, l_c0, false).extension().generic_string() == ".png");
   BOOST_TEST(candidate_render_path(l_fx.server_ctx_, l_c0, true).extension().generic_string() == ".exr");
+
+  // 视频与帧目录是同族派生：同一个候选 uuid —— 一个是轮次目录下的 `<uuid>.mp4`，
+  // 另一个是 `<uuid>/` 子目录（MRQ 把几百张 frame_*.png 写进去，不与同级文件混在一起）
+  BOOST_TEST(candidate_movie_path(l_fx.server_ctx_, l_c0).filename().generic_string() == fmt::to_string(l_c0.uuid_id_) + ".mp4");
+  BOOST_TEST(
+      candidate_movie_path(l_fx.server_ctx_, l_c0).parent_path() ==
+      candidate_frames_dir(l_fx.server_ctx_, l_c0).parent_path()
+  );
+  BOOST_TEST(candidate_frames_dir(l_fx.server_ctx_, l_c0).filename().generic_string() == fmt::to_string(l_c0.uuid_id_));
+  BOOST_TEST(candidate_movie_path(l_fx.server_ctx_, l_c0) != candidate_render_path(l_fx.server_ctx_, l_c0, false));
 
   // ② 文件名是候选 uuid；父目录两级分别是「轮次 uuid」与「会话目录」
   BOOST_TEST(
@@ -748,6 +793,73 @@ BOOST_FIXTURE_TEST_CASE(candidate_render_path_is_a_pure_function_of_the_row, fix
       candidate_render_path(l_other, l_c0, false).lexically_relative(l_other.root_) ==
       candidate_render_path(l_fx.server_ctx_, l_c0, false).lexically_relative(l_fx.server_ctx_.root_)
   );
+}
+
+// ===========================================================================
+// 第六段：wire 契约冻结
+//
+// 载荷与回传报文是**跨进程契约**：服务端在这里写载荷、工作机读它并把相对路径拼成本地绝对路径
+// 喂给 UE，UE 侧还有一份手写的镜像解析（`script/uePlug/Doodle/Source/DoodleLighting/*Json.cpp`）。
+// 键名一改，改的这一侧照常编译、另一侧只是静默取到默认值 —— 到真机上表现为「渲染任务莫名失败」。
+// 所以键名在这里钉死：**加键是安全的**（两侧都按「缺了就默认」读），改键名必须同步改 UE 侧
+// 并同时改这条用例。
+// ===========================================================================
+
+BOOST_FIXTURE_TEST_CASE(task_payload_json_keys_are_frozen, fixture_t) {
+  auto& l_fx = *this;
+  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+
+  ai_light_task_candidate_t l_cand{};
+  l_cand.candidate_index_ = 0;
+  l_cand.candidate_id_    = l_fx.candidates_.at(0).uuid_id_;
+  l_cand.frames_dir_      = make_candidate_frames_dir(l_cand.candidate_id_);
+  l_cand.png_path_        = make_candidate_file_name(l_cand.candidate_id_, false);
+  l_cand.movie_path_      = make_candidate_movie_file(l_cand.candidate_id_);
+
+  ai_light_task_payload_t l_payload{};
+  l_payload.session_id_ = l_fx.session_.uuid_id_;
+  l_payload.out_dir_    = make_iteration_relative_dir(l_fx.session_.uuid_id_, l_fx.iteration_.uuid_id_);
+  l_payload.candidates_.push_back(l_cand);
+
+  // 拷贝初始化，**不要**写 nlohmann::json{l_payload}：花括号会走 initializer_list 构造，
+  // 结果是一个单元素数组（`[payload]`），下面所有 contains 都会失败。
+  const nlohmann::json l_j = l_payload;
+  for (const auto* l_key : {"session_id", "iteration", "spec_id", "out_dir", "baseline_level", "render_map",
+                            "level_sequence", "movie_pipeline_config", "frame_begin", "frame_end",
+                            "ue_project_path", "camera_file_path", "candidates"}) {
+    BOOST_TEST(l_j.contains(l_key));
+  }
+
+  BOOST_REQUIRE_EQUAL(l_j.at("candidates").size(), 1u);
+  const auto& l_jc = l_j.at("candidates").at(0);
+  for (const auto* l_key : {"candidate_index", "candidate_id", "frames_dir", "png_path", "exr_path", "movie_path", "rig"}) {
+    BOOST_TEST(l_jc.contains(l_key));
+  }
+
+  // 回传只有数值与状态（D27）：多出任何一个 path 键，就说明有人在报文里塞了路径
+  candidate_render_report_t l_cr{};
+  l_cr.candidate_id_ = l_cand.candidate_id_;
+  round_render_report_t l_report{};
+  l_report.candidates_.push_back(l_cr);
+  l_report.frame_rate_ = 24;
+
+  const nlohmann::json l_jr = l_report;
+  for (const auto* l_key : {"candidates", "frame_rate", "error"}) BOOST_TEST(l_jr.contains(l_key));
+  const auto& l_jrc = l_jr.at("candidates").at(0);
+  for (const auto* l_key :
+       {"candidate_index", "candidate_id", "status", "render_ms", "light_count", "frame_count", "metrics"}) {
+    BOOST_TEST(l_jrc.contains(l_key));
+  }
+  BOOST_TEST(!l_jrc.contains("png_path"));
+  BOOST_TEST(!l_jrc.contains("movie_path"));
+
+  // 往返一次：from_json 是宽松读（缺键即默认），所以这里同时验了键名拼写对得上
+  const auto l_back = l_j.get<ai_light_task_payload_t>();
+  BOOST_TEST(l_back.session_id_ == l_payload.session_id_);
+  BOOST_TEST(l_back.out_dir_ == l_payload.out_dir_);
+  BOOST_TEST(l_back.candidates_.size() == 1u);
+  BOOST_TEST(l_back.candidates_.at(0).candidate_id_ == l_cand.candidate_id_);
+  BOOST_TEST(l_back.candidates_.at(0).movie_path_ == l_cand.movie_path_);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

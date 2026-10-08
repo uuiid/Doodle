@@ -21,7 +21,7 @@
 | **参考图 reference** | 美术上传的氛围参考（同一场景的不同角度，可能被PS/AI调过色），多张 | 上传、排序（`ordinal`）、人工排除、统计摘要 |
 | **Spec** | 服务端把「提示词 + 参考图统计」蒸馏出的**灯光方案**：意图 + 数值目标区间 | **人工闸门 1**：美术必须确认它，才会开始出候选 |
 | **轮次 iteration** | 一次「生成 6 个候选 → 渲染 → 交给美术判」的完整循环 | 时间线；`state` 表示这一轮走到哪 |
-| **候选 candidate** | 一轮里的 6 个灯光设置之一，每个都会被真的渲染成一张图 | 主工作台的核心：6 张图并排 + 指标 + 判断 |
+| **候选 candidate** | 一轮里的 6 个灯光设置之一，每个都会被真的渲染成一段视频（另配首帧海报） | 主工作台的核心：6 个候选并排（海报 + 播放器）+ 指标 + 判断 |
 | **语义轴 axis** | 6 个候选之间**唯一允许变化的维度**（主光方向/主辅比/色温/软硬/环境光/调色强度） | 候选卡片上「这张和基线差在哪」的说明；也是美术的**反馈旋钮** |
 | **人工闸门 1 / 2** | ①确认 Spec ②判断候选（挑选/继续/全否） | 两个必须由人点的按钮组 |
 | **定稿 accept** | 美术挑中一个候选 → 该图注册成 Kitsu 的 preview file 挂到灯光任务上 | **不是终点**：会话随后回到 `generating`，可以继续调；再次定稿会把「当前定稿」指针移到新的一张 |
@@ -36,10 +36,12 @@
 
 这六条是**架构性约束**，不是风格偏好。前五条来自方案 §14.4/§14.5，第六条来自实现事实。
 
-1. **EXR 不下发浏览器。** 服务端给两份产物：PNG（显示空间，用于显示/判据/VLM 判分）+ 线性 EXR（留服务端做工程检查）。
-   前端**只**拿 PNG + 数值指标。**候选对象里根本没有路径字段**（D44）：产物路径由服务端按
-   「会话 uuid / 轮次 uuid / 候选 uuid」现算、不落库、不进 JSON —— 取图一律用
-   `GET /api/doodle/ai/light/candidate/{uuid}/image`，不要自己拼路径，也不要假设响应里有 `render_png_path` / `render_exr_path`。
+1. **只有海报与成片下发浏览器（EXR 不下发）。** 每个候选的产物是**一段 mp4**（含相机运动的成片）加**一张首帧海报 PNG**；
+   线性 EXR 是可选项（当前一轮不产），留服务端做工程检查。前端**只**拿海报 + 成片 + 数值指标。
+   **候选对象里根本没有路径字段**（D44）：产物路径由服务端按
+   「会话 uuid / 轮次 uuid / 候选 uuid」现算、不落库、不进 JSON —— 取海报一律用
+   `GET /api/doodle/ai/light/candidate/{uuid}/image`，取成片用 `GET /api/doodle/ai/light/candidate/{uuid}/movie`，
+   不要自己拼路径，也不要假设响应里有 `render_png_path` / `render_exr_path`。
 2. **规划逻辑不要放到前端。** 现有 AIScript 模式是浏览器直连 DeepSeek —— 灯光规划**不能照抄**：
    提示词模板、Spec 词表、IR schema 校验一旦在 JS 与 C++ 各存一份，必然漂移。
    前端只调 `/api/doodle/ai/light/*`；**不要复用 `/api/doodle/deepseek/key`**，不要在前端拼提示词、不要在前端算轴。
@@ -235,7 +237,9 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
 ```
 
 **候选卡片（每张）显示**：
-- 图：`GET /api/doodle/ai/light/candidate/{id}/image`（**只发 PNG**；`pending` → 404「尚未渲染完成」，`failed` → 404「渲染失败」）。
+- 海报：`GET /api/doodle/ai/light/candidate/{id}/image`（**只发 PNG**；`pending` → 404「尚未渲染完成」，`failed` → 404「渲染失败」）。
+- 成片：`GET /api/doodle/ai/light/candidate/{id}/movie`（`video/mp4`，**支持 Range** —— 用原生 `<video>` 播、让它自己分段拉，
+  不要一次请求整段）。同一个候选的海报与成片**要么都在、要么都不在**：服务端只在两者都取得到时才算这个候选 `rendered`。
 - `candidate_index`（0 = 基线）、`variant_axis` + `variant_value` + `variant_label`
   —— 这是「这 6 张差在哪」的唯一解释字段，**必须显示**（美术看不懂轴名就用中文映射，见 §6 表格）。
 - `render_status`（`pending`/`rendered`/`failed`）、`render_ms`、`light_count`。
@@ -429,7 +433,8 @@ AI 灯光派发的任务类型是 `ai_light`（`server_task_info.type`），任�
 | 用途 | 接口 | 说明 |
 |---|---|---|
 | 参考图 | `GET /api/doodle/ai/light/reference/{id}/image` | 上传时已转 PNG；不要用 `file_path`（服务端磁盘路径） |
-| 中间候选图 | `GET /api/doodle/ai/light/candidate/{id}/image` | `pending`/`failed` → 404（含中文原因）；磁盘缺文件 → 500 |
+| 中间候选海报 | `GET /api/doodle/ai/light/candidate/{id}/image` | `pending`/`failed` → 404（含中文原因）；磁盘缺文件 → 500 |
+| 中间候选成片 | `GET /api/doodle/ai/light/candidate/{id}/movie` | `video/mp4`，带 Range（原生播放器可直接拖进度）；缺失同样 404/500 |
 | 定稿图 | 走 preview file 的既有图片接口（按 `preview_file_id`） | 定稿候选的 `preview_file_id` 非 nil；也可从 `/api/data/entities/{entity_id}/preview-files` 拿到 |
 
 - **签名 URL**：取图的两条路由同时接受「会话 JWT」**或**「短时效签名 URL」
@@ -469,7 +474,7 @@ AI 灯光派发的任务类型是 `ai_light`（`server_task_info.type`），任�
 | 400 | `{} 被内容安全策略拒绝：{}` | LLM 拒答 | 提示改提示词/换参考图后重试 |
 | 502 | `{} 推理失败（status={}, error_code={}, 超时={}）：{}` | 上游推理失败 | 可重试；带 `error_code` 便于反馈 |
 | 502 | `{} 的模型输出不是合法 JSON 对象` | 模型输出不合 schema | 可重试（偶发） |
-| 500 | `候选渲染图不存在 文件 {}` | 服务端产物缺失 | 提示联系维护，不要重试 |
+| 500 | `候选渲染图不存在 文件 {}` / `候选视频不存在 文件 {}` | 服务端产物缺失（海报或成片） | 提示联系维护，不要重试 |
 | 404 | 候选 `尚未渲染完成` / `渲染失败` | 图还没好/坏了 | 用 `render_status` 决定显示占位图还是失败标记 |
 | 404 | `AI 灯光会话 {} 不存在` | 会话被删/不存在 | 回列表页 |
 
@@ -483,7 +488,7 @@ AI 灯光派发的任务类型是 `ai_light`（`server_task_info.type`），任�
 ## 11. 验收标准（可勾选）
 
 **流程闭环**
-- [ ] 从镜头页能建会话、传多张参考图、出 Spec、确认 Spec、看到一轮 6 个候选渲染完成、判断、看到下一轮，最终定稿。
+- [ ] 从镜头页能建会话、传多张参考图、出 Spec、确认 Spec、看到一轮 6 个候选渲染完成（每个候选有首帧海报 + 可播放的成片）、判断、看到下一轮，最终定稿。
 - [ ] 定稿后能在 Kitsu 既有的预览文件流程里看到那张图（挂在灯光任务上），并能评论/审批。
 - [ ] 全否后会话仍可继续出一轮（不是终止，界面不变只读）。
 - [ ] 定稿后会话仍可继续调、可再次定稿；再次定稿后任务上能看到新的预览文件，旧的仍在。

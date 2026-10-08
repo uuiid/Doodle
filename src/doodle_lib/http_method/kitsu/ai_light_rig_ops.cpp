@@ -175,15 +175,18 @@ std::vector<light_op_t> diff_rigs(const lighting_rig_t& in_base, const lighting_
   // ---- 全局量：四块各对应一个 light_op_kind，只发真的变了的那几块 ----
   // patch 用「目标值整块」而不是增量：语义是 set，与 UE 侧「按 op 精确设置」一致，
   // 也与 §7.5 的「按 op 精确增删、不用 ClearAllLight」一致。
-  if (nlohmann::json{in_base.globals_} != nlohmann::json{in_target.globals_}) {
+  // 注意用**拷贝初始化**而不是 nlohmann::json{x}：花括号走 initializer_list 构造，得到的是
+  // 单元素数组，下面的 contains / at(...) 会全部落空 —— 结果就是「全局量变了却一个 op 都不发」。
+  // 键名必须与 lighting_globals_t 的 to_json 完全一致（rig.h:508-511，**没有**尾下划线）。
+  const nlohmann::json l_base_json = in_base.globals_;
+  const nlohmann::json l_tgt_json  = in_target.globals_;
+  if (l_base_json != l_tgt_json) {
     const std::pair<light_op_kind, const char*> l_blocks[] = {
-        {light_op_kind::set_exposure, "exposure_"},
-        {light_op_kind::set_white_balance, "white_balance_"},
-        {light_op_kind::set_environment, "environment_"},
-        {light_op_kind::set_grading, "grading_"},
+        {light_op_kind::set_exposure, "exposure"},
+        {light_op_kind::set_white_balance, "white_balance"},
+        {light_op_kind::set_environment, "environment"},
+        {light_op_kind::set_grading, "grading"},
     };
-    const auto l_base_json = nlohmann::json{in_base.globals_};
-    const auto l_tgt_json  = nlohmann::json{in_target.globals_};
     for (const auto& [l_kind, l_key] : l_blocks) {
       if (!l_base_json.contains(l_key) || l_base_json.at(l_key) == l_tgt_json.at(l_key)) continue;
       light_op_t l_op{};
@@ -203,16 +206,18 @@ std::vector<light_op_t> diff_rigs(const lighting_rig_t& in_base, const lighting_
     if (l_base_light.id_ != l_tgt_light.id_) continue;
     // 逐子块比较（用类型化成员比较，patch 的键名是给执行器看的稳定名字）——
     // 这样 patch 里只有真的变了的子块，审计和执行器都看得清「这次动了什么」。
+    // 用**圆括号**构造 json（花括号会得到单元素数组，虽然这里两侧同形后比较结果不变，
+    // 但下一个改这里的人会以为它是对象 —— §15.16 坑 57）。
     nlohmann::json l_patch = nlohmann::json::object();
-    if (nlohmann::json{l_base_light.offset_} != nlohmann::json{l_tgt_light.offset_})
+    if (nlohmann::json(l_base_light.offset_) != nlohmann::json(l_tgt_light.offset_))
       l_patch["offset"] = l_tgt_light.offset_;
-    if (nlohmann::json{l_base_light.intensity_} != nlohmann::json{l_tgt_light.intensity_})
+    if (nlohmann::json(l_base_light.intensity_) != nlohmann::json(l_tgt_light.intensity_))
       l_patch["intensity"] = l_tgt_light.intensity_;
-    if (nlohmann::json{l_base_light.color_} != nlohmann::json{l_tgt_light.color_})
+    if (nlohmann::json(l_base_light.color_) != nlohmann::json(l_tgt_light.color_))
       l_patch["color"] = l_tgt_light.color_;
-    if (nlohmann::json{l_base_light.shape_} != nlohmann::json{l_tgt_light.shape_})
+    if (nlohmann::json(l_base_light.shape_) != nlohmann::json(l_tgt_light.shape_))
       l_patch["shape"] = l_tgt_light.shape_;
-    if (nlohmann::json{l_base_light.shadows_} != nlohmann::json{l_tgt_light.shadows_})
+    if (nlohmann::json(l_base_light.shadows_) != nlohmann::json(l_tgt_light.shadows_))
       l_patch["shadows"] = l_tgt_light.shadows_;
     if (l_patch.empty()) continue;
     light_op_t l_op{};

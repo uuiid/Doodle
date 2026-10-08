@@ -129,8 +129,10 @@ struct kitsu_ctx_t {
   // root_ 下、和它们同一套约定，而不是挂在项目目录下：
   //
   //   <root>/ai_light/<s[0:3]>/<s[3:6]>/<会话 uuid>/ref/<参考图 uuid>.png
-  //   <root>/ai_light/<s[0:3]>/<s[3:6]>/<会话 uuid>/<轮次 uuid>/<候选 uuid>.png
-  //   <root>/ai_light/<s[0:3]>/<s[3:6]>/<会话 uuid>/<轮次 uuid>/<候选 uuid>.exr
+  //   <root>/ai_light/<s[0:3]>/<s[3:6]>/<会话 uuid>/<轮次 uuid>/<候选 uuid>.png      ← 首帧海报
+  //   <root>/ai_light/<s[0:3]>/<s[3:6]>/<会话 uuid>/<轮次 uuid>/<候选 uuid>.mp4      ← 视频
+  //   <root>/ai_light/<s[0:3]>/<s[3:6]>/<会话 uuid>/<轮次 uuid>/<候选 uuid>/frame_*.png ← MRQ 逐帧
+  //   <root>/ai_light/<s[0:3]>/<s[3:6]>/<会话 uuid>/<轮次 uuid>/<候选 uuid>.exr      ← 可选，本轮不产
   //
   // 四个要点：
   //   * **文件名就是各自的 uuid**，不用序号（序号落盘会撞车：同一目录下两张图都叫 ref_00）。
@@ -142,6 +144,9 @@ struct kitsu_ctx_t {
   //     随会话数线性膨胀；而一个会话的参考图是几十张、单轮候选固定 6 张，内层再分桶只有噪声。
   ///   * 因为只依赖 root_ 与会话 uuid，**不依赖 episode / shot / 项目路径** ——
   //     少掉「算不出产物目录就没法上传参考图」这一整类失败。
+  //
+  // 帧序列放在候选自己的子目录里（<候选 uuid>/，D45/D47）：一轮 MRQ 会写出上百个 frame_*.png，
+  // 与同级的 .mp4/.png 混在一个目录里没法看；合成成 mp4 之后这些帧就只是工作机的现场。
   //
   // 参考图与中间候选渲染都**不注册 preview_file**，由专用接口从这些路径直接提供；
   // 只有定稿候选才注册（source = auto_light_generate），免得镜头预览列表被 6×N 张候选淹没。
@@ -174,6 +179,19 @@ struct kitsu_ctx_t {
   ) const {
     return get_ai_light_iteration_dir(in_session_id, in_iteration_id) /
            fmt::format("{}{}", in_candidate_id, in_linear ? ".exr" : ".png");
+  }
+  /// 单个候选的 MRQ 帧序列目录（D47）：文件名是 MRQ 自己定的 `frame_<帧号>.png`，
+  /// 目录名是候选 uuid（不然后一轮的帧会盖住前一轮）。
+  FSys::path get_ai_light_candidate_frames_dir(
+      const uuid& in_session_id, const uuid& in_iteration_id, const uuid& in_candidate_id
+  ) const {
+    return get_ai_light_iteration_dir(in_session_id, in_iteration_id) / fmt::to_string(in_candidate_id);
+  }
+  /// 单个候选的视频（D47）：工作机把帧序列合成成它。
+  FSys::path get_ai_light_candidate_movie_file(
+      const uuid& in_session_id, const uuid& in_iteration_id, const uuid& in_candidate_id
+  ) const {
+    return get_ai_light_iteration_dir(in_session_id, in_iteration_id) / fmt::format("{}.mp4", in_candidate_id);
   }
   /// 删会话时的备份目标。
   ///

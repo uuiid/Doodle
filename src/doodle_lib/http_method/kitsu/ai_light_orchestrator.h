@@ -138,12 +138,28 @@ inline FSys::path candidate_render_path(
   );
 }
 
+/// 候选视频的落点（D44/D47）：与 candidate_render_path 同一套推导，只是产物换成 `.mp4`。
+inline FSys::path candidate_movie_path(const http::kitsu_ctx_t& in_ctx, const ai_light_candidate& in_candidate) {
+  return in_ctx.get_ai_light_candidate_movie_file(
+      in_candidate.session_id_, in_candidate.iteration_id_, in_candidate.uuid_id_
+  );
+}
+
+/// 候选 MRQ 帧序列的目录（D44/D47）：只有工作机与诊断用得上，服务端不判它的存在
+/// （帧是工作机的中间产物，合成完就没有意义了）。
+inline FSys::path candidate_frames_dir(const http::kitsu_ctx_t& in_ctx, const ai_light_candidate& in_candidate) {
+  return in_ctx.get_ai_light_candidate_frames_dir(
+      in_candidate.session_id_, in_candidate.iteration_id_, in_candidate.uuid_id_
+  );
+}
+
 /// worker 回传渲染完成后调用（§10.3 的「落 iteration → 置 awaiting_judgement」）。
 ///
 /// 本轮没有 worker（§13.3 未做），所以这个函数只提供入口并纳入单测；
 /// worker 里程碑把回传处理接上即可，状态机本身不用改。
 /// in_candidates 是回传的候选，只填 render_ms_ / light_count_ / metrics_ ——
-/// 路径不在回传里，落库时按 candidate_render_path 现算（D44）。
+/// 路径不在回传里，落库时按 candidate_render_path 现算（D44）；frame_count_ 是回传里的
+/// **诊断**字段（工作机与 UE 用它判断帧序列是否完整），候选行没有对应的列，不落库。
 DOODLELIB_API boost::asio::awaitable<void> mark_iteration_rendered(
     sqlite_database& in_sql, const uuid& in_server_task_info_id, const std::vector<ai_light_candidate>& in_candidates
 );
@@ -164,10 +180,10 @@ DOODLELIB_API round_render_report_t parse_round_render_report(const nlohmann::js
 /// 处理一次工作机回传：解析结果 → 落候选行 → 推进轮次/会话状态。
 ///
 /// 两条出口：
-///   * 至少一张图 `rendered` → 组装候选（产物落点按 `candidate_render_path()` 现算，
-///     D27：回传里没有路径，也没有可信任的入参）后交给 `mark_iteration_rendered()`，
-///     轮次转 `awaiting_judgement`、起算 4 小时；
-///   * 整轮失败（`error_` 非空，或没有任何 `rendered`，或所有 `rendered` 的图都不在
+///   * 至少一个候选「海报 + 视频」都在（产物落点按 `candidate_render_path()` /
+///     `candidate_movie_path()` 现算，D27：回传里没有路径，也没有可信任的入参）→
+///     组装候选后交给 `mark_iteration_rendered()`，轮次转 `awaiting_judgement`、起算 4 小时；
+///   * 整轮失败（`error_` 非空，或没有任何 `rendered`，或所有 `rendered` 的产物都不在
 ///     算出来的落点上 —— D41）→ 转 `mark_iteration_failed()`，
 ///     **不动状态机状态、不动候选行**，只把原因写进 `session.failure_reason_`（D28）。
 ///     失败不是终态：美术随时可以再点一次 `/iterate`。

@@ -334,11 +334,16 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &ai_light::render_report_route::task_id_
       ))
       // 工作机上传候选产物（D40）。role 那个 URL 段是 scoped enum，
-      // 路由宏会把它展开成 (render|render_linear) 的白名单正则，所以拼错的 role 进不来。
+      // 路由宏会把它展开成 (render|render_linear|render_movie) 的白名单正则，
+      // 所以拼错的 role 进不来。
       // 这条 URL 的字面量必须和 ai_light.h 的 g_candidate_file_path_template 一致
       // （UDL 接不了常量，只能两处对齐）。
       .reg_t<ai_light::candidate_file_route>("/api/doodle/ai/light/candidate/{}/file/{}"_url(
         &ai_light::candidate_file_route::id_, &ai_light::candidate_file_route::role_
+      ))
+      // 取候选视频。与取海报的 .../image 是一对：网格用海报、播放用视频。
+      .reg_t<ai_light::candidate_movie_route>("/api/doodle/ai/light/candidate/{}/movie"_url(
+        &ai_light::candidate_movie_route::id_
       ))
       .reg_t<ai_light::preset_route>("/api/doodle/ai/light/preset"_url)
       .reg_t<ai_light::preset_instance_route>("/api/doodle/ai/light/preset/{}"_url(

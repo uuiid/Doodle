@@ -15,6 +15,8 @@
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_method/kitsu.h>
 
+#include <magic_enum/magic_enum.hpp>
+
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/ip/host_name.hpp>
 #include <boost/beast/http/empty_body.hpp>
@@ -310,14 +312,15 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_maya(uuid in_task_i
   );
 }
 
-boost::asio::awaitable<void> kitsu_client::upload_ai_light_candidate_render(
-    uuid in_candidate_id, FSys::path in_file_path, bool in_linear
+boost::asio::awaitable<void> kitsu_client::upload_ai_light_candidate_file(
+    uuid in_candidate_id, FSys::path in_file_path, ai_light::ai_light_candidate_file_role in_role
 ) const {
+  // URL 段直接用枚举名（magic_enum），与服务端路由的正则白名单同源；
   // 这段 URL 的字面量与 ai_light.h 的 g_candidate_file_path_template 是同一份契约
   // （服务端路由注册那边也只能写字面量，UDL 接不了常量）。改一处必须改两处。
   return upload_asset_file(
       fmt::format(
-          "/api/doodle/ai/light/candidate/{}/file/{}", in_candidate_id, in_linear ? "render_linear" : "render"
+          "/api/doodle/ai/light/candidate/{}/file/{}", in_candidate_id, magic_enum::enum_name(in_role)
       ),
       in_file_path, base64_encode(in_file_path.filename().generic_string())
   );

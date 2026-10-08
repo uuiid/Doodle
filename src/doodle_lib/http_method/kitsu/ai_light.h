@@ -155,26 +155,28 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid task_id_{};
 DOODLE_HTTP_FUN_END()
 
-// 候选产物的两种角色。做成 scoped enum 是为了让它当 URL 段：路由宏会把所有枚举名
-// 拼成正则白名单（core/http/http_function.h:181-183），拼错的名字根本进不来，
-// handler 里也就不需要再写一遍字符串比较（避免「白名单」和「比较」两处漂移）。
-enum class ai_light_candidate_file_role { render, render_linear };
-
-// 工作机上候选产物的站点内路径模板。**两处必须一致**：
+// 候选产物的上传路径模板。**两处必须一致**：
 //   1) kitsu.cpp 里 candidate_file_route 的路由注册（那处只能写字面量 ——
 //      operator""_url 是 UDL，接不了变量）；
-//   2) 工作机 kitsu_client::upload_ai_light_candidate_render 拼的 URL。工作机二进制
+//   2) 工作机 kitsu_client::upload_ai_light_candidate_file 拼的 URL。工作机二进制
 //      不该为了一个字符串去 include 服务端路由头，所以那边照字面量拼，靠这条注释对齐。
+//
+// 角色枚举本身定义在 doodle_core（`doodle::ai_light::ai_light_candidate_file_role`）：
+// 服务端路由与工作机客户端都要拼同一个 URL 段，枚举放两边都能看见的地方才不会漂移。
+// 注意写成**全限定名**：本文件就在 `doodle::http::ai_light` 里，直接写 `ai_light::x`
+// 会命中内层命名空间自己（命名空间名注入），指向 doodle::http::ai_light::x —— 找不到。
 constexpr std::string_view g_candidate_file_path_template{"/api/doodle/ai/light/candidate/{}/file/{}"};
 
-// POST /api/doodle/ai/light/candidate/{id}/file/{role}   工作机上传候选产物
+// POST /api/doodle/ai/light/candidate/{id}/file/{role}   工作机上传候选产物（§15.13）
 //
-//   role = render        → 显示空间 PNG（前端唯一展示的那张）：必传，缺了这张候选不可判断
+//   role = render        → 首帧海报 PNG：网格与列表里显示的那张，必传，缺了这张候选不可判断
+//   role = render_movie  → 候选视频 mp4（D45）：美术判断的主要依据，同样必传
 //   role = render_linear → 线性 EXR（§7.4）：可选产物，传失败只记一条 WARN，
-//                          不影响本轮转 awaiting_judgement（D42）
+//                          不影响本轮转 awaiting_judgement（D42）。本轮不产线性图
 //
-// 落盘位置**不由请求体决定**：服务端按候选行的三个 uuid 现算（candidate_render_path，D27/D40），
-// 所以工作机既写不到别的候选上，也改不了任何路径 —— 它只能「往服务端算好的那个文件名里灌字节」。
+// 落盘位置**不由请求体决定**：服务端按候选行的三个 uuid 现算（candidate_render_path /
+// candidate_movie_path，D27/D40），所以工作机既写不到别的候选上，也改不了任何路径 ——
+// 它只能「往服务端算好的那个文件名里灌字节」。
 // 请求体就是文件本身（application/octet-stream + Content-Disposition，与 up_file_base 同一套约定），
 // 成功回 **204**（kitsu_client::upload_asset_file 只认 204）。
 // 调用方是 worker（与 render_report_route 同类）：鉴权沿用工作机那套 JWT，
@@ -182,7 +184,17 @@ constexpr std::string_view g_candidate_file_path_template{"/api/doodle/ai/light/
 DOODLE_HTTP_JWT_FUN(candidate_file_route)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
-ai_light_candidate_file_role role_{ai_light_candidate_file_role::render};
+doodle::ai_light::ai_light_candidate_file_role role_{doodle::ai_light::ai_light_candidate_file_role::render};
+DOODLE_HTTP_FUN_END()
+
+// GET /api/doodle/ai/light/candidate/{id}/movie   取候选视频（视频流）
+//
+// 与取海报的 candidate_image_route 是同一张图的两种取法：前端网格用海报（轻），
+// 点开某个候选播放视频（重）。响应体是 mp4 文件本体，`session_data::make_msg(path)`
+// 会带 Range 支持，浏览器能拖动进度。
+DOODLE_HTTP_JWT_FUN(candidate_movie_route)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid id_{};
 DOODLE_HTTP_FUN_END()
 
 // GET  /api/doodle/ai/light/preset         预设库列表（?enabled_only=false 取全部）

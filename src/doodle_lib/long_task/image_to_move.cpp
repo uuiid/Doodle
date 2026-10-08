@@ -112,7 +112,7 @@ image_size get_image_size(const cv::Mat& in_cv) { return image_size{in_cv.cols, 
 image_size get_image_size(const FSys::path& in_path) { return get_image_size(cv::imread(in_path.generic_string())); }
 void create_move(
     const FSys::path& in_out_path, logger_ptr in_logger, const std::vector<movie::image_attr>& in_vector,
-    const image_size& in_image_size
+    const image_size& in_image_size, std::int32_t in_fps
 
 ) {
   /// \brief 这里排序组件
@@ -135,7 +135,12 @@ void create_move(
     l_size = get_image_size(l_image);
   }
   const cv::Size k_size{l_size.width, l_size.height};
-  auto video = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 25, k_size};
+  // 帧率必须与序列的 display rate 一致，否则同一段动画的时长会被拉长/压缩
+  // （帧数是 UE 定的，这里只负责按正确速度把它们串起来）。
+  if (in_fps <= 0) in_fps = 25;
+  auto video = cv::VideoWriter{
+      in_out_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), static_cast<double>(in_fps), k_size
+  };
   video.set(cv::VIDEOWRITER_PROP_QUALITY, 100);
   auto k_image           = cv::Mat{};
   const auto& k_size_len = l_vector.size();

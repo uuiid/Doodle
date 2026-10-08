@@ -22,7 +22,7 @@ FSys::path create_out_path(
 );
 DOODLELIB_API void create_move(
     const FSys::path& in_out_path, logger_ptr in_msg, const std::vector<movie::image_attr>& in_vector,
-    const image_size& in_image_size = image_size{}
+    const image_size& in_image_size = image_size{}, std::int32_t in_fps = 25
 );
 image_size get_image_size(const FSys::path& in_path);
 
