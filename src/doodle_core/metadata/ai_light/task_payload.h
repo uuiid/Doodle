@@ -3,18 +3,31 @@
 //
 // 为什么单独一个头：这两组结构体的唯一用途就是**跨进程传输** ——
 //   服务端（http_method/kitsu/ai_light_orchestrator.cpp 写、ai_light.cpp 收）、
-//   工作机（exe_warp/ai_light_task.cpp 读与写）、
+//   工作机（exe_warp/ai_light_render.cpp 读与写）、
 //   UE commandlet（-Params=<file> 读、<out_dir>/render_report.json 写）。
 // 放在 doodle_core 是为了让两侧用**同一份** to_json / from_json：任何一侧自己拼
 // 字符串，就会出现「字段改名后另一侧静默取到默认值」的漂移，而那种故障只在真机
 // 派发时才暴露。所以键名宁可冻结，并用单测锁死
 // （test/core/ai_light_dispatch.cpp 的 task_payload_json_keys_are_frozen）。
 //
-// 路径策略：
-//   D29 —— 所有输出路径由**服务端**算好写进载荷，工作机与 commandlet 只按给的
-//          路径写文件，不自己拼目录（消除三方命名漂移）。
+// 路径策略（批 6 起：产物落在**工作机本地**，再 HTTP 上传；不再直写网络盘/UNC）：
+//   D38 —— 目录归属：http::kitsu_ctx_t 派生出来的目录（kitsu_ctx_t::root_ 底下这一片）
+//          只保证同一台机器同卷，**不是**共享盘；工作机的产物一律写进自己的工作机本地
+//          缓存根 core_set::get_set().get_cache_root(g_ai_light_local_cache_flag)。
+//          只有 core/entity_path.cpp 派生出来的项目/资产目录才在网络盘/UNC 上。
+//   D39 —— 载荷里的路径一律是**相对路径**：out_dir_ = <session_uuid>/it_<NNN>，
+//          候选的 png_path_ / exr_path_ = <candidate_uuid>.png | .exr。命名由服务端定、
+//          根由工作机定；工作机在起 UE 之前把两者拼成绝对路径（写进 -Params 的那份 JSON）。
+//   D40 —— 产物由工作机 POST 到 /api/doodle/ai/light/candidate/{id}/file/{render|render_linear}；
+//          服务端把收到的文件落到**库里**那条候选行的 render_png_path_ / render_exr_path_。
 //   D27 —— 服务端落库时**不信任**回传里的任何路径，一律用
 //          kitsu_ctx_t::get_ai_light_candidate_file 重算；回传只带数值与状态。
+//   D41 —— 回传说 rendered 的候选，服务端还要查那张 PNG 是否真的躺在库里那条路径上：
+//          不在就降级成 failed（否则美术会对着取不到的图点「选第 3 张」）。
+//   D42 —— EXR 是**可选**产物：工作机尽量传，传不上去/文件不在都只 WARN、不阻断本轮；
+//          服务端发现库里那条 EXR 路径指向的文件不在，就把它清空（路径与文件必须一致）。
+//   D43 —— 工作机本地产物**保留不删**（用户决定）：上传成功也不清，出问题时它是唯一的现场；
+//          只在日志里报路径，磁盘增长留给人工/后续定时清理。
 //
 
 #pragma once
@@ -36,6 +49,24 @@ namespace doodle::ai_light {
 /// 三方共用（服务端不读它、工作机读、UE 写），所以必须只有一个定义。
 constexpr std::string_view g_ai_light_render_report_file_name{"render_report.json"};
 
+/// 工作机本地产物根：`core_set::get_set().get_cache_root(g_ai_light_local_cache_flag)`（D38）。
+/// 与 kitsu_ctx_t::root_ 那一套（"ai_light" 也是它的一级目录）**故意同名**：同名不代表同盘，
+/// 一个是工作机缓存根，一个是服务端数据根，唯一共同点是都以 "ai_light" 分片。
+constexpr std::string_view g_ai_light_local_cache_flag{"ai_light"};
+
+/// 本轮相对目录（D39）：`<session_uuid>/it_<NNN>`（相对工作机缓存根）。
+/// 末两级与服务端 kitsu_ctx_t::get_ai_light_iteration_dir 同名，方便人对照两边目录。
+inline std::string make_iteration_relative_dir(const uuid& in_session_id, std::int32_t in_iteration) {
+  return fmt::format("{}/it_{:03}", in_session_id, in_iteration);
+}
+
+/// 候选产物相对文件名（D39）：`<candidate_uuid>.png` / `.exr`。
+/// **这个文件名是两侧共用的契约**：服务端落库路径
+/// （kitsu_ctx_t::get_ai_light_candidate_file）用的是同一个字符串，改动必须同步改两处。
+inline std::string make_candidate_file_name(const uuid& in_candidate_id, bool in_linear) {
+  return fmt::format("{}{}", in_candidate_id, in_linear ? ".exr" : ".png");
+}
+
 // ---------------------------------------------------------------------------
 // 派发：服务端 → 工作机 → commandlet
 // ---------------------------------------------------------------------------
@@ -45,7 +76,8 @@ struct DOODLE_CORE_API ai_light_task_candidate_t {
   /// 第几个候选（0 = 基线）。同时是输出文件名的序号（见 get_ai_light_candidate_file）。
   std::int32_t candidate_index_{0};
   uuid candidate_id_{};
-  /// 输出路径由服务端算好（D29）：display 空间 PNG + 线性 EXR 双输出（§7.4）。
+  /// **相对路径**（相对 out_dir_，D39）：display 空间 PNG + 线性 EXR 双输出（§7.4）。
+  /// 由服务端的 make_candidate_file_name 生成，工作机拼上本地根之后才交给 UE。
   FSys::path png_path_{};
   FSys::path exr_path_{};
   /// 目标 rig。**含 ops_**：expand_candidates 已按轴展开、diff_rigs 已算出与基线的差，
@@ -74,7 +106,9 @@ struct DOODLE_CORE_API ai_light_task_payload_t {
   uuid session_id_{};
   std::int32_t iteration_{0};
   uuid spec_id_{};
-  /// 本轮目录。commandlet 在这里写 g_ai_light_render_report_file_name，工作机在这里读。
+  /// 本轮目录，**相对工作机本地缓存根**（D39）。commandlet 在这里写
+  /// g_ai_light_render_report_file_name，工作机在这里读 —— 两边拿到的都是绝对路径，
+  /// 因为工作机起 UE 之前已经把它拼成了绝对路径（载荷本身只带相对路径）。
   FSys::path out_dir_{};
   /// 基线关卡（复制源；**源资产永不修改**，§13.4）。
   std::string baseline_level_{};
@@ -110,7 +144,8 @@ struct DOODLE_CORE_API ai_light_task_payload_t {
 // 回传：工作机 → 服务端
 // ---------------------------------------------------------------------------
 
-/// 单个候选的渲染结果。**不带路径**（D27：服务端重算），只带状态与数值。
+/// 单个候选的渲染结果。**不带路径**（D27：服务端用库里的路径重算/D41：再查文件在不在），
+/// 只带状态与数值。
 struct DOODLE_CORE_API candidate_render_report_t {
   std::int32_t candidate_index_{0};
   uuid candidate_id_{};

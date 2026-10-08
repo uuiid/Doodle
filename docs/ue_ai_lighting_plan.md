@@ -620,6 +620,9 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 - `DoodleLightingEditor`（Editor）：**commandlet + 执行器 + 渲染**（无面板）
 
 > 命令类模块必须是 Editor 类型（`UCommandlet` 需要），所以 `DoodleLightingEditor` 仍然存在，但内容比 v3.1 少得多。
+>
+> **落点状态（2026-08 实施）**：两个模块**已落地**，共 20 个文件，见 §15.13（`DoodleLighting` 11 个文件 =
+> IR/JSON/报告/纯换算；`DoodleLightingEditor` 9 个文件 = 捕获装置/执行器/commandlet）。UE 侧代码未在本机编译过。
 
 ---
 
@@ -875,6 +878,11 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | **M4 决策辅助** | 区间满足率 + VLM 判分呈现在候选旁 | 美术盲测认可辅助信息有用 |
 | **M5 定稿** | `snapshot`/`commit` 应用到正式关卡/序列 | 定稿可回滚，结果与候选一致 |
 | **M6 生产化** | 批量派发（整集/整序列）、性能预算、回归基线 | 基线纳入 CI |
+
+> **M1 进度（2026-08）**：设计链路的**服务端段已完成** —— 提交/参考图、`generate_spec`（§15.7）、
+> `generate_candidates`（§15.8）、派发（§15.12）、回传落库（§15.12）、UE 侧两个插件模块（§15.13，
+> 未编译）都已落地。**未完成的 M1 剩余项**：浏览器页面本身（§14 + `docs\ue_ai_lighting_frontend.md`，
+> 不在本项目实现）与真机一轮回环；另外候选的 `metrics_` 复算仍缺（§15.12 末尾），M4 的区间满足率依赖它。
 
 > 与 v3.1 相比：原 M1「交互闭环（Slate 面板）」取消，替换为「单轮管线」；前端工作提前到 M1；M2 新增跨会话恢复；原 M7（Tier B 多视角联合反解）因人工对位被否而移除（§5.6）。
 
@@ -1141,6 +1149,18 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 4. **不要在工作机上放 key**：VLM 判分走「工作机回传渲染图 → 主服务器评分」。
 5. **回传体积**：N 个候选 × 多帧 PNG 可能很大，需要压缩与增量上传（复用现有 `upload_shot_animation_auto_light` 模式）。
 
+> **实施偏差（2026-08，见 §15.12 / §15.13）**：
+> ① `run_task()` 分支已加（`work.cpp:237`），新任务类在 `exe_warp/ai_light_render.{h,cpp}`（未抽公共基类，
+>    直接复用 `base_distributed_task` + `async_run_ue` 设施）；
+> ② `allowed_task_types` 默认集合**也加了** `ai_light`（`event.cpp:31-38`）—— 与第 2 条相反，是实施时的选择
+>    （工作机与主服务器都要显式开，否则默认不派）；
+> ③ **不走「回传图给服务器」**：出图由 UE 直接写到主服务器给的共享路径（D29），回传的只是一份
+>    `render_report.json` 摘要（D26/D27/D30），所以第 5 条的体积问题不存在；
+>    —— **（批 6 已改）这条对「路径」的描述作废**：产物落**工作机本地**、再逐张 HTTP 上传，
+>    见 §15.14 的 D38/D39/D40；回传仍然只带摘要这一点不变。
+> ④ UE 命令行必须带 **`-AllowCommandletRendering`**（否则 `CommandletHelpers::TickEngine` 不 tick 渲染），
+>    见 `exe_warp/ai_light_render.cpp:53-58`。
+
 ---
 
 ### 13.4 ④ UE doodle plug（`E:\Doodle\script\uePlug\Doodle`）
@@ -1163,6 +1183,14 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 7. **`render_preview` 双输出**：PNG（显示空间，主判据）+ 线性 EXR（工程检查）。
 8. **失败隔离**：单候选失败不影响其他候选。
 9. **插件版本发布**：模块变更后必须发新版本包（对应 13.2 第 2 条）。
+
+> **实施偏差（2026-08，见 §15.13 —— 本节其余条目仍是设计原文）**：
+> ① **不复制基线关卡**（D37）：`LoadObject<UWorld>` 后换 `GWorld`，不 `DuplicateAsset`/不 `SaveLoadedAssets`/不落盘；
+> ② **不按 op 增删灯，而是按 `rig.lights_` 全量重建**（D31；`diff_rigs()` 永不产生 add/remove），
+>    因此也不去改 `ClearAllLight()` —— 我们只销毁自己建的 actor（美术手工灯一概不碰）；
+> ③ **不用 MRQ**（D36）：`USceneCaptureComponent2D` 出 LDR PNG + 线性 EXR，8 次丢弃式预热抓帧；
+> ④ 预览机位取载荷 `camera_file_path_` 的交付机位（临时 level sequence 导入 FBX），分辨率 1920×1080 常量；
+> ⑤ `metrics` 不由 UE 计算（D30），服务端复算〔**尚未落地**，见 §15.12 末尾〕。
 
 ---
 
@@ -2721,5 +2749,387 @@ judge_route::post
 是拆分前备份（可留档可删）；本轮**没有** `git commit`（由用户自己提交）。前端文档只引 HTTP 层，
 `grep -n 'ai_light_orchestrator' docs/ue_ai_lighting_frontend.md` 命中的两处（`:8` 契约来源、`:549` 接口契约细节）
 描述的是「服务端代码是权威」，拆分后依然成立，故未改。
+
+### 15.12 已落地（派发链路：服务端 → 工作机 → UE commandlet → 回传 —— 服务端 + 工作机两段）
+
+**需求（用户原话，m04090）**：「安排 ai_light 工作的派发功能」。
+
+一句话：「一轮 6 个候选」不再只是库里的一张表，而是**真的被派到一台工作机上去渲染、并把结果写回库**，
+让会话沿既有的 `generating → awaiting_judgement` 走完闭环（§10.4 的实现）。本轮落地的是**服务端 + 工作机**
+两段；UE 侧的 `DoodleLighting` commandlet 是同一批计划的下一段（见本节末尾「未落地」）。
+
+**链路**
+
+```
+POST /api/doodle/ai/light/session/{id}/iterate
+  └─ advance_session（generating 分支，ai_light_orchestrator.cpp:202）
+       ├─ generate_candidates(...)                     ← §15.8：6 个 rig + 候选行的产物路径
+       ├─ shot_render_light(project_id, task_id_)      ← 基线关卡 / .uproject / 相机文件（§7.1）
+       ├─ ai_light_task_payload_t → server_task_info.command_（type_ = ai_light）
+       └─ run_next_task() + broadcast(server-task-info:new)
+                    ↓ 工作机 run_next_task（客户端报在线 + 无 running 任务）
+http_work::run_task（work.cpp:237）→ ai_light_round_distributed::run()
+       ├─ UnrealEditor-Cmd.exe <uproject> … -run=DoodleLighting -Params=<tmp>.json
+       ├─ 读 <out_dir>/render_report.json
+       ├─ POST /api/doodle/ai/light/render_report/{task_id}   （回传；不带任何路径）
+       └─ put_job_info（终态）→ 析构时 task_finished() 归还机器
+                    ↓
+render_report_route → parse_round_render_report → apply_render_report
+       ├─ 至少一张 rendered → mark_iteration_rendered（轮次 awaiting_judgement + 会话 await）
+       └─ error_ 非空或无一张 rendered → mark_iteration_failed（只写会话 failure_reason_）
+```
+
+**载荷契约**（`src/doodle_core/metadata/ai_light/task_payload.h`，JSON 键**冻结**）
+
+| 结构 | JSON 键 |
+|---|---|
+| `ai_light_task_payload_t`（`:73`） | `session_id` · `iteration` · `spec_id` · `out_dir` · `baseline_level` · `ue_project_path` · `camera_file_path` · `candidates[]` |
+| `ai_light_task_candidate_t`（`:44`） | `candidate_index` · `candidate_id` · `png_path` · `exr_path` · `rig`（完整 `lighting_rig_t`，UE 侧照它 apply_ops） |
+| `round_render_report_t`（`:143`） | `candidates[]` · `error`（**没有**成功标志位：一轮的结果就是这 N 条 + 一句错误文本） |
+| `candidate_render_report_t`（`:114`） | `candidate_index` · `candidate_id` · `status` · `render_ms` · `light_count` · `metrics`（**不含路径**，D27） |
+
+报告文件名常量：`g_ai_light_render_report_file_name{"render_report.json"}`（`:37`）；工作机在起 UE **之前**先删掉
+`<out_dir>/render_report.json` 的残留，否则 commandlet 崩在写报告之前时会把上一轮的报告当成本轮结果回传。
+
+**严格 / 宽松分界**（`parse_round_render_report`，`round_render_report` 接缝名 `ai_light_orchestrator.cpp:756`）
+
+| 字段 | 策略 |
+|---|---|
+| `candidates`（数组本身） · 每个元素的 `candidate_id` · `status` | **严格**：缺失/类型不符/未知枚举串 → `bad_gateway`（`status` 走 `json_val::require_enum<candidate_render_status>`，钉死「不许 nlohmann 静默回落到 `pending`」；uuid 由 `json_at_path` + `get<uuid>()` 包 try/catch 翻成 502，因为校验层没有 uuid 读取器） |
+| `candidate_index` · `render_ms` · `light_count` · `metrics` · 轮级 `error` | **宽松**：缺失取默认（下标 / 0 / 0 / 默认 `candidate_metrics_t` / 空串）；`metrics` 形状不符只丢这一个字段并 WARN，候选本身仍算 rendered |
+
+**服务端落点**（行号是起点，定位靠函数名）
+
+| 项 | 落点 |
+|---|---|
+| 载荷 / 回传类型 + 报告文件名 | `src/doodle_core/metadata/ai_light/task_payload.h`（`:37` / `:44` / `:73` / `:114` / `:143`）；登记 `doodle_core/metadata/ai_light/CMakeLists.txt` 与伞形头 `ai_light.h` |
+| 基线关卡推导（D8 从「只透传」改成「真的去问」） | `ai_light_orchestrator.cpp:282-295`：`http::auto_task::shot_render_light(io_session.project_id_, io_session.task_id_)` → `l_req.baseline_level_ = l_assembly.original_map_.generic_string()` |
+| 载荷组装 + 进 `command_` | 同文件 `:339-346`（`out_dir_` = `l_ctx.get_ai_light_iteration_dir(...)`）· `:395 l_task.command_ = l_payload;` —— **批 6 改**：载荷里放的是相对路径（`make_iteration_relative_dir` / `make_candidate_file_name`），库里的候选行仍是服务端绝对路径，见 §15.14 |
+| 回传解析 | `parse_round_render_report` `:760` |
+| 整轮失败落库 | `mark_iteration_failed` `:828`（原因经 `brief_text` 截断到 512 + `"...(已截断)"`，`brief_text` 在 `:85`） |
+| 回传落库 | `apply_render_report` `:852`（两条出口在 `:864`；`:899-903` **沿用候选行里已有的** PNG/EXR 路径） |
+| 声明 | `ai_light_orchestrator.h:142` / `:155` / `:161`（都带 `DOODLELIB_API`） |
+| 回传路由 | 声明 `ai_light.h:158`（`DOODLE_HTTP_JWT_FUN(render_report_route)`，**不做项目权限检查** —— 调用方是工作机的机器 JWT，与 `/api/data/jobs/{id}` 同一信任级）· 注册 `kitsu.cpp:333` `/api/doodle/ai/light/render_report/{}` · 实现 `ai_light.cpp:790`（先查任务类型必须是 `ai_light`，再解析、落库，回执带 `iteration_state` / `session_state` / `failure_reason`） |
+| 客户端方法 | `kitsu_client.h:174` / `kitsu_client.cpp:694` `post_ai_light_render_report(uuid, const nlohmann::json&)`（接受 200/201；回执按非严格 JSON 解析 —— 回执解析失败不该让工作机把整轮判失败） |
+| 顺手修 | `ai_light.h` 的 `iterate_route` 头注释删掉过时的「本轮返回 501（LLM 接缝未实现）」 |
+
+**工作机落点**
+
+| 项 | 落点 |
+|---|---|
+| 任务类 | `src/doodle_lib/exe_warp/ai_light_render.{h,cpp}`：`ai_light_round_distributed : base_distributed_task`，成员只有 `ai_light::ai_light_task_payload_t payload_` + `awaitable<void> run()`（与 `depth_estimation_distributed` 同形，`run()` 不是虚覆盖） |
+| 载荷反序列化 | `payload_ = task_info_.command_.get<ai_light::ai_light_task_payload_t>();` + 三条硬前置（`baseline_level_` / `ue_project_path_` / `candidates_` 非空，否则 `throw_exception(doodle_error{...})`） |
+| 起 UE | `async_run_ue({ue_project_path_, "-windowed", "-log", "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended", "-run=DoodleLighting", fmt::format("-Params={}", tmp)}, logger, kitsu_client, /*create_lock=*/true, run_time_info)`（`create_lock=true`：UE 是整机独占资源，`async_run_ue` 内部拿全局 `ue_ctx` 队列闸） |
+| 派发分支 | `src/doodle_lib/http_client/work.cpp:237`（`server_task_info_type::ai_light` → `make_shared` + `task_started()` + `co_spawn(..., consign(detached, l_run))` + `return true`） |
+| 默认允许类型 | `src/doodle_lib/http_method/local/event.cpp:31-38` 加入 `ai_light`（不加的话 `--local` 的工作机拒绝这类任务，`run_next_task` 永远挑不到它） |
+| 终态 | `run()` 返回前 `put_job_info`（§10.4 契约）；`task_finished()` 由 `~base_distributed_task`（`work.cpp:360`）在析构时归还机器 |
+| CMake | `src/doodle_lib/exe_warp/CMakeLists.txt`（PUBLIC `ai_light_render.h` / PRIVATE `ai_light_render.cpp`） |
+
+**实现决定（承 §15.7 的 D1–D5、§15.8 的 D6–D8、§15.9 的 D9–D16、§15.10 的 D17–D23、§15.11 的 D-1~D-7，续 D24–D29；批 6 的路径策略改由 D38–D43 取代，见 §15.14）**
+
+| # | 决定 | 理由 |
+|---|---|---|
+| D24 | 只走 `server_task_info.command_` **一条**载荷通道：不新增表、不给 `server_task_info` 加 ai_light 专用字段 | `server_task_info` 已经是派发的事实载体（`/api/data/jobs/{id}` 的机器 JWT、`run_next_task` 的在线/占用检查、`broadcast` 全是现成的）；加字段等于把同一份信息存两处，而两边会漂移 |
+| D25 | 产物路径**只在服务端产生**（`kitsu_ctx_t` 按会话/轮次/候选 uuid），载荷里的 `png_path_`/`exr_path_` 只是**告知**，回传报文里根本不含路径 | UE 侧不需要知道目录布局；工作机也不该有权决定服务端把图记在哪。**批 6 的修订**：文件名仍由服务端定，但载荷里传的是**相对路径**（根由工作机定），落库路径也由服务端定 —— 见 D39/D40 |
+| D26 | 整轮失败用**轮级** `error_`，候选级失败用每条 `status=failed` | §7.5 第 9 条：单候选失败不能让整轮失败。两条通道语义不同，不能混用一个标志位 |
+| D27 | 回传是**不可信输入**：`candidate_id` 必须属于本轮（只查本轮），路径不接受 | 一个坏回传不能改到别人的候选行上 |
+| D28 | 失败**不是终态**：`mark_iteration_failed` 只写会话 `failure_reason_`，不动轮次状态、不动候选行 | 与 §15.10（会话没有终态）一致；美术再点一次 `/iterate` 就该能重试 |
+| D29 | UE 侧只认一个 JSON 入口：`-Params=<file>`，**不新增命令行 key** | 与 §13.4 的建议一致；`DoodleAutoAnimationCommandlet` 的 `Main()` 已经只有 `Params` / `ImportRig` 两个 key，命令行的形状越少越好 |
+
+**本轮的坑（承 §15.6 的 12 条 … §15.11 的 31–35，续 36–40）**
+
+36. **`ai_light_candidate::metrics_` 是 JSON 列，不是 `candidate_metrics_t`。** 读库行写 `l_cand.metrics_.contrast_` 会得到
+    `error C2039: 'contrast_': is not a member of nlohmann::json`；必须 `l_cand.get_metrics().contrast_`（访问器
+    `candidate.h:213-214`）。`candidate_render_report_t::metrics_` 才是 typed —— **同一份数据在「报文里」和「库里」
+    是两种类型**，这是本轮最容易写错的一行。
+37. **用例体里一个 `co_await` 都没有时，`DOODLE_FIXTURE_TEST_CASE_CORO` 展开出的函数不是协程。**
+    `src/test/test_coro.h:253-259` 把它展开成 `static awaitable<void> body(fixture&)`，没有 `co_await` 就没有
+    「协程魔法」，于是「返回类型不是 void 却没有 return」→ `error C4716: '...': must return a value`（8 个纯同步
+    用例一起报）。纯同步用例改用 `BOOST_FIXTURE_TEST_CASE(name, fixture_t) { auto& l_fx = *this; ... }`。
+38. **`task_payload.h` 的四个结构体全在 `doodle::ai_light`，而工作机代码在 `doodle::http`。** 漏限定会得到
+    `error C2065: 'round_render_report_t': undeclared identifier` + 一串 `C2672 json::get` / `C7595 fmt::fstring`
+    级联（错误都指向使用处，根因在类型名上）。
+39. **`run_ue_assembly_arg` 在 `doodle::import_and_render_ue_ns`，不在 `doodle::http::auto_task`。**
+    写成 `http::auto_task::run_ue_assembly_arg` 会得到 `error C2039: ... is not a member of 'doodle::http::auto_task'`
+    + 一串 `error C2065 'l_assembly': undeclared identifier`。函数 `shot_render_light()` 在 `doodle::http::auto_task`，
+    **返回类型在另一个命名空间** —— 用 `auto` 或写全限定都能避开。
+40. **`test_main` 里 `g_ctx()` 不可用（悬垂指针），所以「成功路径依赖全局上下文」的代码等于不可测。**
+    `apply_render_report` 初版用 `g_ctx().get<http::kitsu_ctx_t>()` 重算产物路径，于是唯一的成功路径只有真机能跑，
+    而它恰恰是最容易出错的一段。改成读候选行里已存的路径后，单测能覆盖到转发/落库/状态流转的全部入口
+    （语义等价：路径在派发那一轮就写好了，回传也不带路径）。先例见 `src/test/core/ai_light_paths.cpp:7-10`。
+
+**测试**（新建 `src/test/core/ai_light_dispatch.cpp`，套件 `ai_light_dispatch`，**18 用例 / 66 断言**）
+
+| 组 | 用例 | 钉什么 |
+|---|---|---|
+| 解析 | `parse_full_round_keeps_every_field` · `parse_defaults_missing_loose_fields` · `parse_requires_candidates_array` · `parse_rejects_unknown_status` · `parse_rejects_bad_candidate_uuid` · `parse_rejects_non_object_candidate` · `parse_keeps_round_error_text` · `parse_drops_broken_metrics_only` | 严格/宽松分界逐条（含 `status="succeeded"` 必须 502 —— 钉住「不许静默回落」；`error` + 空 `candidates` 是合法报文） |
+| 落库 | `apply_report_advances_iteration_and_session` · `apply_report_keeps_paths_from_db` · `apply_report_partial_failure_still_advances` · `apply_report_error_without_rendered_writes_failure_reason` · `apply_report_all_failed_writes_failure_reason` | 轮次 `awaiting_judgement` + `render_ms_total_` 求和 + 会话 `awaiting_judgement`；**候选级失败不推翻整轮**，部分结果照落（失败那张仍是 `failed`，不伪造成出图）；轮级 `error_` 才是整轮失败（状态原地不动、只写 `failure_reason_`） |
+| 归属/边界 | `apply_report_rejects_unknown_task`（404） · `apply_report_rejects_candidate_from_another_round`（400） · `apply_report_rejects_judged_iteration`（400） · `mark_iteration_failed_truncates_long_reason`（512 + `"...(已截断)"`） · `mark_iteration_failed_unknown_task_is_404` | 回传只认本轮、只认未判断的轮次（D27）；失败原因有长度上限 |
+
+**回归**：全量 `test_main` **236 用例 / 1847 断言全通过、exit 0**（§15.11 末尾的基线 218 / 1781 —— 用同一配对口径
+统计，差额 = 新增 `ai_light_dispatch` 18 用例 / 66 断言）。本轮 `--run_test=ai_light_*` **119 用例 / 1094 断言**
+（上一轮 101 / 1028）。本轮 RFC 相关四个改动面都构建过：`doodle_lib.dll` + `test_main.exe` 链接通过。
+
+**保留的边界 / 未落地**
+
+- ~~**UE 侧 `DoodleLighting`（Runtime）/ `DoodleLightingEditor`（Editor）两个模块尚未创建**（§7.6 的落点）。~~
+  **已由 §15.13 补上**（两个模块 + `UDoodleLightingCommandlet`，20 个文件；UE 侧未编译，真机前置 = 重新打包插件包）。
+  在此之前，把 `ai_light` 派给工作机会在「UE 起来后找不到 `-run=DoodleLighting`」处失败，并按 D26
+  回传一份整轮失败报告（会话上留 `failure_reason_`）—— **不会静默**，这是有意选的失败形态。
+- **`baseline_level_` 推导失败只 WARN + 空串**（D8 保留）：候选仍然有价值（下次再派），工作机的硬前置会
+  拒掉空基线并回传失败原因。M2 的阻断项依然是「谁在真实链路上产出 `baseline_level_`」，本轮把它接到了
+  `shot_render_light()` 上，但**没有在真机上验证过这条推导**。
+- ~~**预览机位与分辨率未定**~~ **已定（§15.13）**：预览用交付机位（`camera_file_path_` 的 FBX 经临时
+  level sequence 导入），分辨率 1920×1080 固定常量，**都不进载荷**。
+- **候选的 `metrics_` 目前还是空的**（§15.13 的 D30 §「工作机/UE 不算指标」只写了一半）：服务端还没在
+  `apply_render_report` 里对回传的 PNG 调 `ai_light_stats::analyze_display_image` 复算显示空间指标，
+  因此落库的 `candidate_metrics_t` 既没有逐维标量也没有 `landings_`/`satisfaction_` —— 下一轮
+  `structure_feedback` 要用它做 §8.1 的「区间满足率 + 落点」时会拿到空值。这是紧接着的一步。
+- 前端页面、M2 灵敏度标定、真机一轮渲染回环都不在本轮；本轮**没有** `git commit`（由用户自己提交）。
+
+### 15.13 已落地（UE 侧：`DoodleLighting` + `DoodleLightingEditor` 两个插件模块 —— 一次进程渲染一整轮）
+
+**需求**：填掉 §15.12 末尾「未落地」的第一条 —— 让工作机命令行里的 `-run=DoodleLighting` 真的存在：
+一次进程内把整轮 6 个候选各渲染一张 PNG + 一张 EXR，按 D29 写到服务端给定的路径上，再写一份
+`<out_dir>/render_report.json` 给工作机回传。
+
+> **批 6 已改**：「写到服务端给定的路径上」这一句作废 —— 批 6 起 UE 写**工作机本地**路径
+> （工作机在起 UE 之前把载荷里的相对路径拼成本地绝对路径再写进 `-Params`），产物随后由工作机
+> HTTP 上传到服务端；UE 插件本身一行未改。见 §15.14。下面的 20 个文件、坑 41–46、
+> 「8 次预热 / 1920×1080 / 交付机位 / 以 rig 全量建灯」等结论都仍然成立。
+
+**开工前由用户拍板的两件事**
+
+| 问题 | 决定 | 影响 |
+|---|---|---|
+| 预览用哪个机位 | **交付机位**：载荷 `camera_file_path_`（FBX 相机）经临时 level sequence 导入后求值 | 与美术成片同一机位，不用往载荷里加字段 |
+| 预览分辨率 | **1920×1080 固定常量**（`DoodleLightingCapture::PreviewWidth/PreviewHeight`） | 不进 wire 契约：出图尺寸服务端不参与（它只按 D27 重算路径） |
+
+**模块分工**（`.uplugin` 新增两条 Module 记录，现在是 8 个模块）
+
+| 模块 | 类型 / 加载阶段 | 内容 | 为什么分开 |
+|---|---|---|---|
+| `DoodleLighting` | Runtime / Default / Win64 | `Source\DoodleLighting\`：IR 镜像（枚举 + 结构体 + 双向字符串转换）、JSON 严格读/写、报告文件读写、纯换算（`ops`） | 数据层不依赖编辑器；「服务端读的 json 就是这里写的」只有一份实现 |
+| `DoodleLightingEditor` | **Editor / Default** / Win64 | `Source\DoodleLightingEditor\`：捕获装置、执行器（换世界/落灯/全局量）、`UDoodleLightingCommandlet` | 依赖 UnrealEd / Sequencer / MovieSceneTools / FBX / OpenEXR，都是编辑器模块 |
+
+`DoodleLightingEditor` 的 `LoadingPhase` 必须是 `Default`：`-run=X` 的类查找发生在插件加载阶段之后，
+`PostEngineInit` 有找不到 `UDoodleLightingCommandlet` 的风险（`doodleEditor` 装 `UDoodleAutoAnimationCommandlet`
+用的就是 `Default`）。
+
+**入口契约（工作机 → UE）**
+
+```
+UnrealEditor-Cmd.exe <uproject> -windowed -log -AllowStdOutLogVerbosity -ForceLogFlush -Unattended \
+    -AllowCommandletRendering -run=DoodleLighting -Params=<载荷 json>
+```
+
+- `-AllowCommandletRendering` **不能漏**：`CommandletHelpers::TickEngine` 只在这个开关出现时才 tick 渲染
+  （`Engine\Source\Runtime\Engine\Private\Commandlets\Commandlet.cpp:161`），否则我们抓到的是一张没渲染过的画面。
+  已加进 `src\doodle_lib\exe_warp\ai_light_render.cpp:53-58` 的参数表。
+- `-run=DoodleLighting` → 引擎补 `Commandlet` 后缀后 `FindFirstObject`，所以类名精确是 `UDoodleLightingCommandlet`，
+  **不需要任何注册代码**（`LaunchEngineLoop.cpp:2291-2299`）。
+- 载荷是**裸 UTF-8**（工作机 `FSys::write_tmp_file` 写出），commandlet 读的时候手工摘 BOM
+  （`LoadUtf8File`）——工作机那一侧是按不带 BOM 的 UTF-8 用 nlohmann 读回报告的。
+- 报告固定写 `<out_dir>\render_report.json`（`DoodleLightingReport::MakeReportPath` ↔ 服务端
+  `g_ai_light_render_report_file_name`），并且用 `ForceUTF8WithoutBOM` 保存；`metrics` 字段**整块不写**（D30）。
+
+**执行器设计决定**
+
+| 编号 | 决定 | 理由 |
+|---|---|---|
+| D30 | 工作机 / UE **不算指标**：`metrics` 留空 | 显示空间指标由服务端用既有 `ai_light_stats` 对 PNG 复算，避免两处实现同一套度量（也避免 UE 侧再做一遍色调映射口径） |
+| D31 | 执行器**幂等落「期望状态」**：以 `rig.lights_`（全量灯集）+ `rig.globals_` 为准逐候选重建；`rig.ops_` 只作审计 | `diff_rigs()` 永不产生 add/remove（§6.6 护栏），只按 `ops` 执行会一盏灯都建不出来 |
+| D32 | 锚点换算在 UE 侧（`rig.h:69-71` 明确「执行器负责换算成世界坐标」）：相机空间 → 主体点 = 相机前向射线命中点（打不到就用相机位置 + 前向 ×5m）；方位角以相机前向为 0、向右为正；仰角以过主体点的水平面为 0；距离单位米 | 服务端只存语义坐标，世界坐标依赖关卡内容 |
+| D33 | 灯型细节默认值：spot 外 45°/内 25°（载荷给了用载荷）；rect 宽高 = `source_radius_cm`×2；`softness` → point/spot/rect 的 `SourceRadius`、directional 的 `LightSourceAngle`；单位 candela/lumen/lux/unitless → `ELightUnits`；mobility static_light/stationary/movable → Static/Stationary/Movable | 载荷没有的字段只能由执行器补，且必须写下来（否则「同一个 rig 两台机器出两张不同的图」） |
+| D34 | 全局量落点：曝光 → PP `AutoExposureMinBrightness=MaxBrightness=1.0` + `AutoExposureBias`；白平衡 → PP `WhiteTemp`/`WhiteTint`；环境 → `ASkyLight` 强度 + `AExponentialHeightFog` 密度；调色 → PP `ColorContrast`/`ColorSaturation`/`ColorGain=(1+lift)`/`VignetteIntensity`/`BloomIntensity` | §7.5 的曝光锁与冻结后处理基线（`PostProcessVolumeConfig` 那组值）是美术验收基准，必须照抄 |
+| D35 | 预览分辨率 1920×1080 常量 | 见上表（用户拍板） |
+| D36 | **不用 MRQ，用 `USceneCaptureComponent2D`**：LDR 通道 `RTF_RGBA8_SRGB` + `SCS_FinalColorLDR` → PNG；HDR 通道 `RTF_RGBA16f` + `SCS_FinalColorHDR` → EXR（线性工作色彩空间、无色调曲线） | MRQ 要 level sequence + `UMoviePipelinePrimaryConfig` 资产，现网那条链路还要**第二个进程**驱动；队列没有单帧/同步 API，6 个候选之间换灯也没有可靠的 per-job 生效点。SceneCapture 在一次启动内确定性地出一帧。保真代价：Lumen GI 没有成片前的预热帧，靠 8 次丢弃式预热抓帧收敛（`g_warmup_iterations`） |
+| D37 | **不复制关卡**：`LoadObject<UWorld>(nullptr, 包路径)` 后换 `GWorld` 用，全程不 `DuplicateAsset`/不 `SaveLoadedAssets`/不 `MarkPackageDirty` | 现有链路复制工作副本是因为它要把改动落盘、再由第二个进程的 MRQ 从磁盘资产渲染；我们单进程内渲染、退出即丢弃 ——「源资产永不修改」成立得更彻底，也不往 `/Game/` 写临时关卡。美术手工灯不删（§7.5 的 `ClearAllLight` 会连美术灯一起清掉，只清我们自己建的 actor） |
+
+**文件清单**（20 个新文件）
+
+| 文件 | 职责 |
+|---|---|
+| `Source\DoodleLighting\DoodleLighting.Build.cs` | Runtime 模块依赖（Core/CoreUObject/Engine/Json/JsonUtilities；Private 空 —— 数据层不依赖编辑器） |
+| `Source\DoodleLighting\Public\DoodleLighting.h` · `Private\DoodleLighting.cpp` | `FDoodleLightingModule` + `IMPLEMENT_MODULE` |
+| `Source\DoodleLighting\Public\DoodleLightingTypes.h` · `Private\DoodleLightingTypes.cpp` | 服务端 IR 的镜像：10 个枚举（含 `EDoodleRenderStatus{Pending,Rendered,Failed}` —— **没有 Succeeded**，与服务端 `candidate.h:34-45` 同名）+ 23 个结构体 + `DOODLE_LIGHTING_ENUM_IMPL` 生成的双向转换 |
+| `Source\DoodleLighting\Public\DoodleLightingJson.h` · `Private\DoodleLightingJson.cpp` | `ParseTaskPayload` / `ParseLightingRig` / `SerializeTaskPayload` / `SerializeRoundReport` / `ParseRoundReport`；报错一律带字段路径（例 `candidates[3].rig.lights[1].role：缺失或不是字符串`）；严格 = 服务端 `to_json` 无条件写出的键 |
+| `Source\DoodleLighting\Public\DoodleLightingReport.h` · `Private\DoodleLightingReport.cpp` | `MakeReportPath` / `WriteReportFile`（`ForceUTF8WithoutBOM`）/ `ReadReportFile` |
+| `Source\DoodleLighting\Public\DoodleLightingOps.h` · `Private\DoodleLightingOps.cpp` | 纯换算：灯型/单位/半径/锥角/锚点定位（`ResolveLightPlacement`，可单测的那一层） |
+| `Source\DoodleLightingEditor\DoodleLightingEditor.Build.cs` | Editor 模块依赖：去掉 MRQ 四件，加 `Sequencer`/`MovieSceneTools`/`FBX`/`Imath`/`UEOpenExr`/`UEOpenExrRTTI` + `bEnableExceptions = true`（OpenEXR 的异常是 `std::exception` 派生） |
+| `Source\DoodleLightingEditor\Public\DoodleLightingEditor.h` · `Private\DoodleLightingEditor.cpp` | `FDoodleLightingEditorModule` |
+| `Source\DoodleLightingEditor\Public\DoodleLightingCapture.h` · `Private\DoodleLightingCapture.cpp` | 两个 `ASceneCapture2D` + `FCaptureScope`（Create/Destroy/SyncCamera/SetPostProcessSettings/CaptureFrame）+ `WritePng`（`IImageWrapper`）/`WriteExr`（OpenEXR，`FExrMemStreamOut : Imf::OStream` 照抄 `MoviePipelineEXROutput.cpp:54-108`）+ `ApplyFrozenPostProcessBaseline` |
+| `Source\DoodleLightingEditor\Public\DoodleLightingExecutor.h` · `Private\DoodleLightingExecutor.cpp` | `PrepareRound`（换世界 + 临时 level sequence + FBX 交付机位 + 捕获装置）/ `RenderCandidate`（清上一候选的 AI 灯 → 全局量 → 按 rig 全量建灯 → 预热 → 抓帧 → 写 PNG/EXR）/ `FinishRound` / `GetCameraView` |
+| `Source\DoodleLightingEditor\Public\DoodleLightingCommandlet.h` · `Private\DoodleLightingCommandlet.cpp` | `UDoodleLightingCommandlet::Main`：`ParseCommandLine(*Params, …, ParamsMap)` 取 `Params` → 读载荷 → 逐候选调执行器并计时 → 写整轮报告；**载荷解析不出 `out_dir` 时也要能写出报告**（先从裸 json 抠 `out_dir`，会话才不会在 `generating` 上干等） |
+
+**一轮的时序（UE 进程内）**
+
+```
+Main(-Params=<json>)
+  ├─ LoadUtf8File + FJsonSerializer → ParseTaskPayload      （失败：写 {error} 报告后返回 1）
+  ├─ PrepareRound：LoadObject<UWorld>(baseline_level)
+  │     → DestroyWorldContext/ DestroyWorld / GWorld = 新世界 / CreateNewWorldContext / InitWorld
+  │     → FCaptureScope::Create（LDR + HDR 两个 SceneCapture2D）
+  │     → 临时 ULevelSequence（/Temp/DoodleLightingCamera_<guid>）+ SpawnActor<ACineCameraActor>
+  │       + AddPossessable/BindPossessableObject + UMovieSceneSpawnableActorBinding
+  │       + UMovieSceneSpawnTrack/SpawnSection + CreateCameraCutSectionForCamera
+  │       + LevelSequencePlayer->Play() + FBX 导入（ReadyFBXForImport → ImportFBXCameraToExisting
+  │         → ImportFBXIfReady）+ 求值出 Location/Rotation/HFOV
+  └─ 每个候选：
+        清掉上一候选的 AI 灯 → 全局量（PP 设置同时写捕获组件与关卡 PP 体积）
+        → 以 rig.lights 全量建灯（含手工灯之上叠加）→ 8 次预热抓帧（丢结果）
+        → CaptureFrame → WritePng(<candidate.png_path>) + WriteExr(<candidate.exr_path>)
+        → 记候选报告（status=rendered/failed、render_ms、light_count）
+  └─ FinishRound（销毁 AI 灯/捕获装置/自建 PP 体积/临时序列 actor，回收世界）
+  └─ WriteReportFile(<out_dir>/render_report.json)
+```
+
+**这一轮踩到的引擎侧坑（下次改 UE 代码直接照着避）**
+
+41. **`USkyLightComponent` 没有 `SetLightColor`**（`SkyLightComponent.h` 只有 `SetIntensity` /
+    `SetLowerHemisphereColor`）。天空光的颜色是它自己的 `LightColor` 语义 → 载荷给 RGB/色纸时**只告警、不动**。
+42. **相机切换轨不在绑定 GUID 下**：`UMovieScene::FindTrack<T>(const FGuid&)` 拿不到它，要用
+    `UMovieScene::GetCameraCutTrack()`（`MovieScene.h:754`）。`CreateCameraCutSectionForCamera` 返回 **void**，
+    切轨句柄只能从 `UMovieSceneCameraCutSection::GetCameraBindingID()` 拿（`MovieSceneToolHelpers.h:438`）。
+43. **`CommandletHelpers::TickEngine` 声明在 `Commandlets/Commandlet.h:189`**（`namespace CommandletHelpers`），
+    不在 `Commandlets/CommandletHelpers.h`（那个头只有 `BuildCommandletProcessArguments`）。
+44. **`FMovieSceneBindingReferences` 是 struct 不是 UObject**（`MovieSceneBindingReferences.h:71`，
+    `GetReference` 在 `:81`），`UMovieSceneSequence::GetBindingReferences()` 返回指针（`MovieSceneSequence.h:97`）。
+45. **执行器里的「每候选清理列表」不能装长期对象**：机位 actor 与自建的 PP 体积如果进了
+    `G_AiSpawnedActors`，第二个候选开头就会被连根删掉（自建 PP 体积现在由 `G_PostProcessVolumeOwned`
+    在 `FinishRound` 里单独销毁）。
+46. **EXR 只能自己调 OpenEXR**：`ImageWrapper` 的 `ExrImageWrapper.cpp` 在 5.7 只有读路径
+    （没实现 `SetRaw`/`GetCompressed`）；头文件靠 `Imath`/`UEOpenExr`/`UEOpenExrRTTI` 三个模块名拿到，
+    并且模块必须开 `bEnableExceptions`。
+
+**验证状态（重要：本轮的 UE 代码没有在本机编译过）**
+
+- 仓库里 `E:\Doodle\script` 下只有**打包好的插件副本**（`uePlug\5.7\Plugins\Doodle_*` 里的 `HostProject.uproject`），
+  源码树 `E:\Doodle\script\uePlug\Doodle` 没有 HostProject、也没有插件打包/构建脚本 —— 所以这 20 个文件
+  **只做了 API 级核对（对着 `E:\UnrealEngine\Engine\Source` 的 5.7 源码逐个查签名），没有 compile 验证**。
+  真机验证的前置动作：**重新打包插件包**（`ue_exe.cpp:84-128` 的 `installUePath` 每次跑 UE 前会用
+  `get_ue_plugin(version)` 下载插件包覆盖 `Engine/Plugins/Doodle`，不打包就还是旧包、没有 `DoodleLighting`）。
+- C++ 侧本轮唯一的改动是工作机命令行加 `-AllowCommandletRendering`：`Ninja_debug` 构建通过
+  （`[5/5] Linking CXX executable bin\test_main.exe`），`--run_test=ai_light_*` **119 用例 / 1094 断言 exit 0**
+  （与 §15.12 基线一致；全量基线 236 / 1847）。本轮**没有** `git commit`（由用户自己提交）。
+
+**仍未落地**
+
+- 真机一轮回环（工作机 → UE → 出图 → 回传 → `awaiting_judgement`）没跑过；`baseline_level_` 的真实推导
+  也仍是 M2 阻断项（§15.12 那条）。
+- 前端页面（§14）、M2 灵敏度标定、参考图与候选的并排 UI 都不在本轮。
+
+### 15.14 已落地（批 6：产物落工作机本地 + HTTP 上传 —— D38~D43）
+
+**用户指令（原文）**
+
+> 修改方案, 这里的输出目录改为工作机本地目录, 在输出后, 使用 http 上传, 并记录 使用 http::kitsu_ctx_t 类中,
+> 生成的目录不在 网络盘/UNC 挂载, 使用 http 上传, 而在 src/doodle_lib/core/entity_path.h
+> src/doodle_lib/core/entity_path.cpp 文件中, 生成的目录才会使用  网络盘/UNC 挂载
+
+**这条规则是全局的（不只 ai_light）：两族目录**
+
+| 目录族 | 派生者 | 位置保证 | 谁能用 |
+|---|---|---|---|
+| `http::kitsu_ctx_t` 派生 | `kitsu_ctx_t::root_` 底下（`get_ai_light_session_dir` / `get_ai_light_iteration_dir` / `get_ai_light_candidate_file` …） | **只保证同一台机器同卷**（`:173-174` 的注释就是为这件事写的：备份挂在同一片根下，`FSys::rename` 才不会因为「源在本地盘、项目在 NAS」失败）。**不是**共享盘 | 只有**这台机器自己**（服务端进程、或工作机上它自己那份 `g_ctx().get<kitsu_ctx_t>()`，先例 `depth_estimation_task.cpp:40`） |
+| `core::entity_path` 派生 | `get_shots_animation_output_path` / `get_shots_auto_lighting_upload_path` / `get_entity_character_rig_maya_path` … | 项目 / 资产路径，**在网络盘 / UNC 上**（判定工具：`FSys::is_windows_remote_path`，`file_sys.cpp:209-211`，看根是否 `//`） | 全公司机器 |
+| （工作机本地缓存） | `core_set::get_set().get_cache_root(sub)`（`core_set.h:31`，会建目录） | 工作机自己的本地盘 | 只有该工作机 |
+
+**所以**：工作机的渲染产物**不能**写 `kitsu_ctx_t` 派生出来的目录 —— 那份 `root_` 是**服务端**的
+`"D:/kitsu_data"`（`launch/kitsu_supplement.cpp:150`），对工作机来说既可能不存在、也可能隔着网络；
+写进去就退化成「工作机直写服务端盘」。改法 = UE 写**工作机本地**，工作机再 HTTP 上传。
+
+**实现决定（承 §15.12 的 D24–D29、§15.13，续 D38–D43）**
+
+| # | 决定 | 理由 |
+|---|---|---|
+| D38 | 目录归属按上表：`kitsu_ctx_t` 派生目录只保证同机同卷、不是共享盘；工作机产物写 `core_set::get_set().get_cache_root(g_ai_light_local_cache_flag)`；只有 `entity_path` 派生的项目/资产目录才在网络盘/UNC | 用户指令；`kitsu_ctx_t::root_` 是服务端的数据根，工作机对它的「可见性」纯属偶然 |
+| D39 | 载荷里的路径一律**相对**：`out_dir_ = <session_uuid>/it_<NNN>`，候选 `png_path_`/`exr_path_ = <candidate_uuid>.png|.exr`。命名服务端定、根工作机定，工作机起 UE 之前拼成绝对路径写进 `-Params` 那份 JSON | 服务端定命名才能让「库里那条路径」与「上传落点」永远是同一个字符串；根由工作机定才能本机写；相对路径让两侧目录布局各自演化而不破契约 |
+| D40 | 工作机 POST 到 `/api/doodle/ai/light/candidate/{id}/file/{render｜render_linear}`，服务端把文件落到**库里**那条候选行的 `render_png_path_` / `render_exr_path_` | 落点是库里的值，所以工作机连「服务端把图放哪儿」都不需要知道，也不需要传路径 |
+| D41 | 回传说 `rendered` 的候选，服务端还要查那张 PNG 是否真的躺在库里那条路径上；不在就降级 `failed`，全被降级则走整轮失败出口 | 上传是独立一步（D40）：UE 写了文件、报告说 rendered、上传失败 → 前端拿到 404 图，而美术唯一的判断通道就是这张 PNG。降级是保守选择（会把「其实渲出来了但没传上来」也判失败，可接受） |
+| D42 | EXR 是**可选**产物：工作机尽量传，文件不在 / 传失败都只 WARN、不阻断本轮；服务端发现库里那条 EXR 路径指向的文件不在，就把它**清空** | 前端永不展示 EXR；但「路径与文件必须一致」要守住，否则将来读 EXR 的人拿到一条悬空路径 |
+| D43 | 工作机本地产物**保留不删**（用户决定）：上传成功也不清，只在日志里报路径 | 出问题时它是唯一的现场；磁盘增长留给人工 / 后续定时清理 |
+| D27（不变） | 回传仍然只带状态与数值，**不带路径**；服务端落库时按 `kitsu_ctx_t::get_ai_light_candidate_file` 重算路径 | 见 §15.12；批 6 只是把「路径指向的文件由上传产生」补上 |
+
+**一轮的新形状（批 6）**
+
+```
+服务端 advance_session(generating)
+  ├─ 库里候选行写**服务端绝对路径**：kitsu_ctx_t::get_ai_light_candidate_file(session, it, cand)（不变）
+  └─ 载荷里写**相对路径**：out_dir = make_iteration_relative_dir(session, it)
+                          候选 png_path/exr_path = make_candidate_file_name(cand_id, linear)
+工作机 ai_light_round_distributed::run
+  ├─ l_local_root = core_set::get_set().get_cache_root(g_ai_light_local_cache_flag)
+  ├─ make_ue_payload(payload_, l_local_root)：out_dir / 每个候选的 png|exr 拼成工作机绝对路径
+  ├─ 跑 UE（-Params=<那份拼好的 JSON>，命令行与批 4 完全一致）
+  ├─ 读 <本地 out_dir>/render_report.json
+  ├─ **逐候选上传**（必须在回传报告之前！D41 靠它）：
+  │     PNG 不在本地 / 上传失败 → 该候选改成 failed（PNG 必传）
+  │     EXR 不在本地 / 上传失败 → 只 WARN（D42）
+  ├─ POST /api/doodle/ai/light/render_report/{task_id}（只带状态与数值）
+  └─ put_job_info（终态）；本地产物目录保留不删（D43），只打日志
+服务端 render_report_route → apply_render_report
+  ├─ 任一条 rendered？否则 mark_iteration_failed（D28：只写会话 failure_reason_）
+  ├─ 逐条覆盖 render_status_/render_ms_/light_count_/metrics_（D27：路径沿用库里的）
+  ├─ D41 降级：rendered 但 PNG 路径空 / 文件不在 → failed + WARN，计数 l_missing_png
+  ├─ D42 清理：EXR 路径非空但文件不在 → 清空该路径 + WARN
+  └─ 还有 rendered → mark_iteration_rendered（轮次 awaiting_judgement）
+      全被降级 → failure_reason_ = "轮次 {} 的 {} 个候选渲染成功但产物文件缺失，本轮无可判断结果"
+```
+
+**落点**
+
+| 项 | 落点 |
+|---|---|
+| D38–D43 的文字定义 + 三个契约件 | `src/doodle_core/metadata/ai_light/task_payload.h`（相对路径构造在 `make_iteration_relative_dir` / `make_candidate_file_name`；本地缓存分片名 `g_ai_light_local_cache_flag{"ai_light"}`） |
+| 服务端上传路由 | 声明 `ai_light.h:166`（`enum class ai_light_candidate_file_role{render, render_linear}`，role 段是 scoped enum → 路由宏自动展开白名单正则）· `:187`（`candidate_file_route`）· 路径模板常量 `g_candidate_file_path_template` · 注册 `kitsu.cpp:338` `/api/doodle/ai/light/candidate/{}/file/{}` · 实现 `ai_light.cpp:828` |
+| 服务端 D41/D42 | `ai_light_orchestrator.cpp::apply_render_report`（PNG 降级 + EXR 清空），include `<doodle_lib/core/file_sys.h>` `:40` |
+| 工作机上传递归 | `src/doodle_lib/http_client/kitsu_client.cpp::upload_ai_light_candidate_render(uuid, path, bool linear)` → 复用私有 helper `upload_asset_file`（octet-stream + Content-Disposition + Last-Modified，**只认 204**）；URL 用相对路径 `/api/doodle/ai/light/candidate/{}/file/{role}` |
+| 工作机改造 | `src/doodle_lib/exe_warp/ai_light_render.cpp`（`make_ue_payload` + 本地根拼接 + 上传循环 + 保留不删）· `ai_light_render.h` 头注释 |
+| UE 侧 | **一行未改**（`DoodleLighting*` 那 20 个文件完全不动）：UE 只按载荷给的 `PngPath`/`ExrPath` 写文件、按 `OutDir` 写报告，工作机把绝对路径塞进载荷即可 |
+
+**服务端上传路由的逐条约束（写前端 / 写工作机的人会踩）**
+
+- content-type 必须是 `application/octet-stream`（框架把任何 `application/*` 都归到
+  `detail::content_type::application_nuknown`，与 `up_file.cpp:33` 判法一致），否则 **400**。
+- 请求体由框架先流到临时文件（`http_session_data.cpp:220-231`，落
+  `core_set::get_set().get_cache_root("http")/<uuid><ext>`），路由用 `in_handle->get_file()` 拿它。
+- 落点取自**库里**候选行（`render_png_path_` / `render_exr_path_`），库里为空 → 400「没有登记落库路径」。
+- 轮次已 `judged` → 400 拒绝上传；`awaiting_judgement` 期间**允许重传**（美术发现图坏了、工作机重跑）。
+- 落盘先写 `<目标>.uploading` 再 `FSys::rename` 到目标：避免前端正好读到半张图。
+  **故意不复用 `up_file_base`**（`up_file.h:22-40`）：那套是「按项目+任务类型派生目录」，
+  本路由的落点不是派生的，而且它的 `move_file` 在目标已存在时的先备份再 `rename` 在跨卷时会抛。
+- 成功回 **204**（`kitsu_client::upload_asset_file` 只接受 204；非 204 → 抛 `doodle_error` → 工作机把该候选判 failed）。
+- 授权：`person_.check_not_outsourcer()`，**不做** `check_project_access`（调用方是工作机的机器 JWT，
+  只认候选 uuid —— 与 `render_report_route` 同一信任级）。
+
+**测试与回归**
+
+- `src/test/core/ai_light_dispatch.cpp` 新增「第四段：产物存在性（D41，批 6）」4 个用例：
+  `..._downgrades_missing_png_only_for_that_candidate`（13 断言）· `..._all_png_missing_writes_failure_reason`（10）·
+  `..._clears_missing_exr_path`（12）· `..._reported_failure_plus_downgrade_leaves_nothing`（11）。
+  注意第 4 个用例：`failure_reason_` 里的计数只数**被降级的**那些，报告里本来就 `failed` 的不算。
+- 夹具跟着改了：`media_dir_`（`temp_directory_path()/doodle_test_ai_light_dispatch_media_<case>`，析构 `remove_all`）
+  + `write_probe_file()` 造**真文件**，`render_png_path_`/`render_exr_path_` 指向它们 ——
+  否则 D41 生效后所有「推进到 `awaiting_judgement`」的用例都会因降级而红
+  （原来夹具把路径写成 `AI_Light/it_001/cand_00.png`，那个文件根本不存在）。
+  `apply_report_keeps_paths_from_db` 的断言随之改成与夹具成员比较。
+- `Ninja_debug` 构建通过（`[80/80] Linking CXX executable bin\test_main.exe`，零 error）；
+  `--run_test=ai_light_*` exit 0；全量 **240 用例 / 1944 断言 exit 0**
+  （§15.13 基线 236 / 1847 → +4 用例 = 这 4 个 D41 用例，+97 断言）。本轮**没有** `git commit`（由用户自己提交）。
+
+**仍未落地**
+
+- **重新打包 UE 插件包**：`ue_exe.cpp:84-128` 的 `installUePath` 每次跑 UE 前都会用
+  `get_ue_plugin(version)` 覆盖 `Engine/Plugins/Doodle`，不打包就还是旧包（没有 `DoodleLighting`）——
+  批 4 的 20 个文件因此至今没有 compile 验证（见 §15.13），批 6 **没有加重这个缺口**（UE 侧零改动）。
+- **真机一轮回环**（工作机 → UE → 出图 → 上传 → 回传 → `awaiting_judgement`）仍未跑过。
+- **服务端候选指标复算**（D30 只写了一半）：UE / 工作机不算指标，`metrics_` 目前来自回传里的空值，
+  落库后下一轮 `structure_feedback` 的 §8.1「区间满足率 + 落点」会拿到空值。做法 =
+  用 `ai_light_stats::analyze_display_image`（`ai_light_stats.h:59`）算候选 PNG，
+  再对 spec 的 `targets_` 填 `landings_` / `satisfaction_`。
+- `baseline_level_` 的真实推导仍是 M2 阻断项（§15.12 那条不变）；前端页面（§14）不在本轮。
+
+
 
 

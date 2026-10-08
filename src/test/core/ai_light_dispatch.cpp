@@ -21,6 +21,11 @@
 // 为什么专门钉一条「路径不变」：回传报文里**不带**产物路径（D27），服务端只能用自己库里
 // 那份（派发时就写好的）。这里断言渲染完成后候选行的路径一字不变，就是那条规则的回归钉子。
 //
+//   4. 产物存在性（D41，批 6）—— 工作机的上传是**独立一步**，所以「报告说 rendered」
+//      不等于「那张图取得到」。落地时逐张查 PNG 在不在：不在就降级 failed；
+//      全都不在就走失败出口（否则美术会对着取不到的图点「选第 3 张」）。
+//      EXR 是可选的（D42）：文件不在只清空那条库路径，不降级、不阻断本轮。
+//
 // 为什么不经过 HTTP 层：路由只是 get_json + parse + apply 三步，语义全在这两个函数里；
 // 单测直接调它们能拿到确定的错误码。JWT / 任务类型这些代理层的东西只有真机能验，
 // 不在份内（ai_light.cpp 的路由覆盖不到）。
@@ -49,6 +54,7 @@
 
 #include <chrono>
 #include <exception>
+#include <fstream>
 #include <functional>
 #include <memory>
 #include <string>
@@ -82,6 +88,16 @@ void remove_db(const FSys::path& in_path) {
 /// 用例名当临时库标签（夹具由框架在用例体之前默认构造，拿不到外面写的 tag）
 std::string current_case_tag() { return boost::unit_test::framework::current_test_case().p_name; }
 
+/// 写一个占位文件。D41 之后「候选可判断」是靠 `FSys::exists(render_png_path_)` 判的，
+/// 所以夹具必须造**真文件** —— 内容无关紧要，在不在才是全部语义。
+void write_probe_file(const FSys::path& in_path) {
+  FSys::create_directories(in_path.parent_path());
+  std::ofstream l_of{in_path, std::ios::binary | std::ios::trunc};
+  l_of << 'p';
+  l_of.close();
+  BOOST_REQUIRE_MESSAGE(FSys::exists(in_path), "夹具占位文件没写成功：" + in_path.generic_string());
+}
+
 /// 「会话 + Spec + 一轮 + N 个候选」。归属 id 指向并不存在的 project/task/entity，
 /// 而这几列都是 NOT NULL，所以构造期间关掉外键（与 ai_light_state.cpp 一致），析构时恢复。
 ///
@@ -96,6 +112,11 @@ struct fixture_t : doodle_test::coro_fixture_t {
   orm::session orm_{};
   std::unique_ptr<sqlite_database> sql_{};
   FSys::path path_{temp_db(current_case_tag())};
+  /// 候选产物文件放在这里（用例名当标签，避免并行/串行跑同一个用例时互相踩）。
+  /// 清理放在析构：这些用例多数只关心「文件在不在」，谁删了谁没删都写在用例里。
+  FSys::path media_dir_{
+      FSys::temp_directory_path() / fmt::format("doodle_test_ai_light_dispatch_media_{}", current_case_tag())
+  };
   bool fk_was_on_{true};
   bool opened_{false};
 
@@ -122,6 +143,8 @@ struct fixture_t : doodle_test::coro_fixture_t {
       sql_.reset();
     }
     remove_db(path_);
+    std::error_code l_ec{};
+    FSys::remove_all(media_dir_, l_ec);
   }
 
   fixture_t(const fixture_t&)            = delete;
@@ -170,10 +193,31 @@ struct fixture_t : doodle_test::coro_fixture_t {
       // 派发时是 pending，渲染完成后服务端回填成 rendered
       l_cand.render_status_   = candidate_render_status::pending;
       l_cand.light_count_     = 0;
-      l_cand.render_png_path_ = FSys::path{"AI_Light"} / "it_001" / fmt::format("cand_{:02}.png", l_i);
+      // 产物路径在派发那一轮就写进库（D27），回传只改状态与诊断数字。夹具照这个形状
+      // 造**真文件**：D41 落地后，指向不存在文件的 rendered 会被服务端降级成 failed，
+      // 那是几条专门用例要构造的场景，不能混进默认形状里。
+      l_cand.render_png_path_ = media_dir_ / fmt::format("cand_{:02}.png", l_i);
+      l_cand.render_exr_path_ = media_dir_ / fmt::format("cand_{:02}.exr", l_i);
+      write_probe_file(l_cand.render_png_path_);
+      write_probe_file(l_cand.render_exr_path_);
       insert(orm_).into<ai_light_candidate>().values(l_cand)();
       candidates_.push_back(l_cand);
     }
+  }
+
+  /// 删掉某个候选的两份产物文件（库里那两列不动）—— 用来构造「报告说 rendered、图却不在」。
+  void delete_candidate_files(std::size_t in_index) {
+    std::error_code l_ec{};
+    FSys::remove(candidates_.at(in_index).render_png_path_, l_ec);
+    FSys::remove(candidates_.at(in_index).render_exr_path_, l_ec);
+    BOOST_REQUIRE(!FSys::exists(candidates_.at(in_index).render_png_path_));
+  }
+
+  /// 只删 EXR：PNG 仍在，用来验证「可选产物缺了不降级、只清空库路径」。
+  void delete_candidate_exr(std::size_t in_index) {
+    std::error_code l_ec{};
+    FSys::remove(candidates_.at(in_index).render_exr_path_, l_ec);
+    BOOST_REQUIRE(!FSys::exists(candidates_.at(in_index).render_exr_path_));
   }
 
   ai_light_session reload_session() { return sql_->get_by_uuid<ai_light_session>(session_.uuid_id_); }
@@ -375,8 +419,10 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_keeps_paths_from_db, fixture_t) {
   // 回传报文里不带路径（D27）：产物路径只能来自派发那一轮写进库里的那份。
   // 这里断言它一字不变 —— 一旦有人又拿回传内容去改路径，这条立刻红。
   const auto l_cand = l_fx.reload_candidate(0);
-  BOOST_TEST(l_cand.render_png_path_.generic_string() == std::string{"AI_Light/it_001/cand_00.png"});
-  BOOST_TEST(l_cand.render_exr_path_.empty());
+  BOOST_TEST(l_cand.render_png_path_ == l_fx.candidates_.at(0).render_png_path_);
+  // EXR 文件在，那条路径也原样保留（不存在才会被清空，见 D41 那几条用例）
+  BOOST_TEST(l_cand.render_exr_path_ == l_fx.candidates_.at(0).render_exr_path_);
+  BOOST_TEST(!l_cand.render_exr_path_.empty());
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_partial_failure_still_advances, fixture_t) {
@@ -527,4 +573,102 @@ DOODLE_FIXTURE_TEST_CASE_CORO(mark_iteration_failed_unknown_task_is_404, fixture
   BOOST_TEST(l_fx.reload_session().failure_reason_.empty());
 }
 
+// ===========================================================================
+// 第四段：产物存在性（D41，批 6）
+//
+// 工作机的上传是**独立一步**（D40）：UE 写完文件、报告也写了 rendered，上传那一步仍可能
+// 失败。所以「报告说渲染成功」只是主张，能不能取到图要服务端自己看文件。
+// 为什么宁可降级也不用别的手段（比如让前端容忍 404）：美术的判断通道只有这张 PNG，
+// 对着取不到的图点「选第 3 张」，这一轮的人力和一次派发就白费了。
+// ===========================================================================
+
+DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_missing_png_only_for_that_candidate, fixture_t) {
+  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 3);
+  l_fx.delete_candidate_files(1);
+
+  // 三条都报 rendered，但第 2 条的产物文件不在
+  co_await apply_render_report(
+      *l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 3))
+  );
+
+  // 其余候选照常推进：一张图传丢了不该让整轮作废（§7.5 第 9 条的候选级隔离）
+  const auto l_it      = l_fx.reload_iteration();
+  const auto l_session = l_fx.reload_session();
+  BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::awaiting_judgement));
+  BOOST_TEST(l_session.failure_reason_.empty());
+
+  BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::rendered));
+  // 声称 rendered 但图不在 → 降级 failed（留在库里的是「这张不可选」，不是一个 404 链接）
+  BOOST_TEST(en(l_fx.reload_candidate(1).render_status_) == en(candidate_render_status::failed));
+  BOOST_TEST(en(l_fx.reload_candidate(2).render_status_) == en(candidate_render_status::rendered));
+  // 路径本身不动：它是派发时就登记好的「服务端应有产物的地方」，不是上传结果
+  BOOST_TEST(l_fx.reload_candidate(1).render_png_path_ == l_fx.candidates_.at(1).render_png_path_);
+}
+
+DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_png_missing_writes_failure_reason, fixture_t) {
+  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
+  l_fx.delete_candidate_files(0);
+  l_fx.delete_candidate_files(1);
+
+  // 全部「渲染成功」但产物一张都不在：这批回传在语义上等于什么都没渲出来，
+  // 必须走失败出口 —— 推到 awaiting_judgement 就是让美术看 6 个 404。
+  co_await apply_render_report(
+      *l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2))
+  );
+
+  const auto l_it      = l_fx.reload_iteration();
+  const auto l_session = l_fx.reload_session();
+  BOOST_TEST(l_session.failure_reason_ == std::string{"轮次 1 的 2 个候选渲染成功但产物文件缺失，本轮无可判断结果"});
+  // D28：失败不是终态 —— 轮次状态原地不动，美术再点一次 /iterate 就重派
+  BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::rendering));
+  BOOST_TEST(!l_it.render_at_.has_value());
+  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
+}
+
+DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_clears_missing_exr_path, fixture_t) {
+  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
+  l_fx.delete_candidate_exr(0);
+
+  co_await apply_render_report(
+      *l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2))
+  );
+
+  // EXR 是可选产物（D42）：缺了不降级、不阻断本轮
+  const auto l_it = l_fx.reload_iteration();
+  BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::awaiting_judgement));
+  BOOST_TEST(l_fx.reload_session().failure_reason_.empty());
+
+  BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::rendered));
+  BOOST_TEST(l_fx.reload_candidate(0).render_png_path_ == l_fx.candidates_.at(0).render_png_path_);
+  // ……但库里那条指向不存在文件的记录要清掉：留着的唯一效果是让每个读它的人自己判存在
+  BOOST_TEST(l_fx.reload_candidate(0).render_exr_path_.empty());
+
+  // 旁边那条 EXR 文件在，路径原样保留 —— 清空是「文件不在」触发的，不是无条件清空
+  BOOST_TEST(l_fx.reload_candidate(1).render_exr_path_ == l_fx.candidates_.at(1).render_exr_path_);
+  BOOST_TEST(!l_fx.reload_candidate(1).render_exr_path_.empty());
+}
+
+DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_reported_failure_plus_downgrade_leaves_nothing, fixture_t) {
+  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 3);
+  l_fx.delete_candidate_files(0);
+  l_fx.delete_candidate_files(2);
+
+  // 「报告里本来就说 failed」和「声称 rendered 但图不在被降级」交错：两种口味的不可用
+  // 混在同一条回传里，最终判定必须只看**降级之后还剩几张能看的**。
+  auto l_json = ok_report(l_fx, 3);
+  l_json["candidates"].at(1)["status"] = "failed";
+
+  co_await apply_render_report(*l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
+
+  const auto l_it      = l_fx.reload_iteration();
+  const auto l_session = l_fx.reload_session();
+  // 注意计数是**2**（被降级的那两张），报告里本来就 failed 的那张不算「声称成功而缺文件」——
+  // 说明写给人看的原因串时数的是「这次是哪儿出的问题」，不是候选总数。
+  BOOST_TEST(l_session.failure_reason_ == std::string{"轮次 1 的 2 个候选渲染成功但产物文件缺失，本轮无可判断结果"});
+  BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::rendering));
+  // 降级只发生在内存里的候选副本上，失败出口不写候选行（D28）——库里仍是 pending
+  BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::pending));
+}
+
 BOOST_AUTO_TEST_SUITE_END()
+

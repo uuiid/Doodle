@@ -822,6 +822,85 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
 }
 
 // ===========================================================================
+// 工作机上传候选产物（方案 §15.13 批 6，D38~D41）
+// ===========================================================================
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
+  // 与 render_report_route 同类：调用方是工作机，不做项目权限检查（它不是项目成员）。
+  person_.check_not_outsourcer();
+
+  // 请求体必须是文件本身。任何 application/* 都会被框架归到 application_nuknown
+  // （http_content_type.cpp:17），kitsu_client::upload_asset_file 发的正是 octet-stream；
+  // 显式挡一道是为了让「误把 JSON 发到这个路由」变成一句明确的 400，
+  // 而不是落到下面 get_file() 返回空路径再报「上传体为空」。
+  DOODLE_CHICK_HTTP(
+      in_handle->content_type_ == detail::content_type::application_nuknown, bad_request,
+      "候选产物的上传体必须是 application/octet-stream，收到的是 {}",
+      magic_enum::enum_name(in_handle->content_type_)
+  );
+
+  // 这里刻意**不**复用 up_file_base 那套（root_path_ / gen_file_path / move_file）：
+  // 那套是「按项目+任务类型派生目录」，而本路由的落点不是派生的 —— 它就是候选行里
+  // 已经写好的那一个绝对路径。硬套过来要么多一层无意义的目录推导，要么得把
+  // move_file 的 rename 换成跨卷安全的复制（http 缓存根与服务端数据根常常不同盘），
+  // 两件都是在给一条直路加弯。
+  auto l_sql = get_sqlite_database();
+  // 候选不存在时 get_by_uuid 抛 sqlite_orm_exception{404}，由 http_session_data 统一翻成 404。
+  auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(id_);
+
+  // 只挡 judged：轮次判定之后就不该再有字节进来（迟到的 worker 会改掉美术已经看过的图）。
+  // awaiting_judgement 期间**允许**重传 —— 「上传失败后重试」是正常路径，不该被状态机挡住。
+  auto l_it = l_sql.get_by_uuid<ai_light_iteration>(l_cand.iteration_id_);
+  DOODLE_CHICK_HTTP(
+      l_it.state_ != ai_light_iteration_state::judged, bad_request, "AI 灯光轮次 {} 已判定，不再接受候选产物上传",
+      l_it.iteration_
+  );
+
+  // 落点取库里的值（D27/D40）：请求里根本没有路径信息，工作机也就伪造不了落点，
+  // 最多只能往「服务端已经算好的那个文件名」里灌字节。
+  const bool l_linear = role_ == ai_light_candidate_file_role::render_linear;
+  const FSys::path l_dst = l_linear ? l_cand.render_exr_path_ : l_cand.render_png_path_;
+  DOODLE_CHICK_HTTP(
+      !l_dst.empty(), bad_request, "候选 {} 没有登记 {} 的落库路径", id_, l_linear ? "EXR" : "PNG"
+  );
+
+  // 请求体已经被框架流到临时文件（save_bode_file → cache_root("http")/<uuid><ext>），
+  // 这里只是把它搬到落点。用 copy + remove 而不是 up_file_base 那套 rename：
+  // 目标已存在时 Windows 的 rename 会直接失败，而重传同一个候选是允许的。
+  const FSys::path l_tmp = in_handle->get_file();
+  DOODLE_CHICK_HTTP(FSys::exists(l_tmp), bad_request, "候选 {} 的上传体为空", id_);
+
+  std::error_code l_ec{};
+  if (l_dst.has_parent_path()) {
+    FSys::create_directories(l_dst.parent_path(), l_ec);
+    DOODLE_CHICK_HTTP(
+        !l_ec, internal_server_error, "候选 {} 产物目录创建失败 {}：{}", id_, l_dst.parent_path().generic_string(),
+        l_ec.message()
+    );
+  }
+  // 先写临时名再改名，避免「上传到一半」被前端读到半张图：
+  // 前端取图用的是候选行里那个路径，直接原地写会让过程中出现一个不完整的 PNG。
+  const FSys::path l_tmp_dst = l_dst.string() + ".uploading";
+  FSys::copy_file(l_tmp, l_tmp_dst, FSys::copy_options::overwrite_existing, l_ec);
+  DOODLE_CHICK_HTTP(
+      !l_ec, internal_server_error, "候选 {} 产物写入失败 {}：{}", id_, l_tmp_dst.generic_string(), l_ec.message()
+  );
+  FSys::rename(l_tmp_dst, l_dst, l_ec);
+  DOODLE_CHICK_HTTP(
+      !l_ec, internal_server_error, "候选 {} 产物落位失败 {}：{}", id_, l_dst.generic_string(), l_ec.message()
+  );
+  // 临时文件搬完就删（up_file_base 是 rename 走的，不留；这里是 copy，得自己收尾）。
+  std::error_code l_ignored{};
+  FSys::remove(l_tmp, l_ignored);
+
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）上传{}到位 {} {} 字节", id_, l_it.iteration_,
+      l_linear ? "线性 EXR" : "显示 PNG", l_dst.generic_string(), FSys::file_size(l_dst, l_ignored)
+  );
+  co_return in_handle->make_msg_204();
+}
+
+// ===========================================================================
 // 预设库
 // ===========================================================================
 

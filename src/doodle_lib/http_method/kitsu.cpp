@@ -333,6 +333,13 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<ai_light::render_report_route>("/api/doodle/ai/light/render_report/{}"_url(
         &ai_light::render_report_route::task_id_
       ))
+      // 工作机上传候选产物（§15.13 批 6 D40）。role 那个 URL 段是 scoped enum，
+      // 路由宏会把它展开成 (render|render_linear) 的白名单正则，所以拼错的 role 进不来。
+      // 这条 URL 的字面量必须和 ai_light.h 的 g_candidate_file_path_template 一致
+      // （UDL 接不了常量，只能两处对齐）。
+      .reg_t<ai_light::candidate_file_route>("/api/doodle/ai/light/candidate/{}/file/{}"_url(
+        &ai_light::candidate_file_route::id_, &ai_light::candidate_file_route::role_
+      ))
       .reg_t<ai_light::preset_route>("/api/doodle/ai/light/preset"_url)
       .reg_t<ai_light::preset_instance_route>("/api/doodle/ai/light/preset/{}"_url(
         &ai_light::preset_instance_route::id_

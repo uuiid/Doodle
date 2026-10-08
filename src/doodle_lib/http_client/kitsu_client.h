@@ -173,6 +173,12 @@ class DOODLELIB_API kitsu_client {
   // post /api/doodle/ai/light/render_report/{task_id} —— 工作机回传一轮 AI 灯光渲染结果（§15.12）
   boost::asio::awaitable<nlohmann::json> post_ai_light_render_report(uuid in_task_id, const nlohmann::json& in_report)
       const;
+  // post /api/doodle/ai/light/candidate/{candidate_id}/file/{render|render_linear}
+  // —— 工作机上传单个候选产物（§15.13 批 6 D40）。in_linear=false 传显示空间 PNG（前端唯一展示的那张），
+  // true 传线性 EXR。成功判据是 204；失败抛 doodle_error，由调用方决定是否阻断本轮。
+  boost::asio::awaitable<void> upload_ai_light_candidate_render(
+      uuid in_candidate_id, FSys::path in_file_path, bool in_linear = false
+  ) const;
   // post /api/doodle/stop-server
   void stop_server() const;
   // 获取下一个任务

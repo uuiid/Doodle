@@ -17,18 +17,20 @@
 // 部分写入、返回值必须自洽）见该头顶部。
 //
 
-#include "ai_light_json_validation.h"
 #include "ai_light_orchestrator.h"
-#include "ai_light_rig_ops.h"
-#include "ai_light_seam_common.h"
 
+#include <doodle_core/configure/static_value.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/ai_light/ai_light.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/server_task_info.h>
-#include <doodle_core/configure/static_value.h>
+
+#include "ai_light_json_validation.h"
+#include "ai_light_rig_ops.h"
+#include "ai_light_seam_common.h"
+
 
 // 注：本文件曾经还包含 app_base.h / boost/asio/co_spawn.hpp / steady_timer.hpp /
 // use_awaitable.hpp —— 它们只服务于那个已删除的 4 小时挂起扫描器（常驻后台协程）。
@@ -37,6 +39,7 @@
 // 同理，entity_path.h 与 project.h 也已去掉：它们只服务于那个已删除的
 // resolve_session_paths（产物路径改由 kitsu_ctx_t 按会话 uuid 生成，不查库）。
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
@@ -50,9 +53,6 @@
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
-#include <magic_enum/magic_enum.hpp>
-#include <nlohmann/json.hpp>
-
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -60,13 +60,16 @@
 #include <cstdint>
 #include <exception>
 #include <functional>
+#include <magic_enum/magic_enum.hpp>
 #include <map>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+
 
 namespace doodle::ai_light {
 
@@ -110,10 +113,10 @@ orm::sql_modify_statement_t make_session_update(sqlite_database& in_sql, const a
   return update(in_sql)
       .from<ai_light_session>()
       .set(
-          c(&ai_light_session::state_) = in_session.state_,
+          c(&ai_light_session::state_)             = in_session.state_,
           c(&ai_light_session::current_iteration_) = in_session.current_iteration_,
-          c(&ai_light_session::judgement_due_at_) = in_session.judgement_due_at_,
-          c(&ai_light_session::failure_reason_) = in_session.failure_reason_
+          c(&ai_light_session::judgement_due_at_)  = in_session.judgement_due_at_,
+          c(&ai_light_session::failure_reason_)    = in_session.failure_reason_
       )
       .where(c(&ai_light_session::uuid_id_) == in_session.uuid_id_);
 }
@@ -146,25 +149,24 @@ boost::asio::awaitable<void> advance_session_spec_branch(
 
   DOODLE_CHICK_HTTP(
       !in_operator.is_nil(), bad_request,
-      "会话 {} 无法确定触发人（无 operator_id 且会话无 submitter），无法解析 AI 工作室与计费主体",
-      io_session.uuid_id_
+      "会话 {} 无法确定触发人（无 operator_id 且会话无 submitter），无法解析 AI 工作室与计费主体", io_session.uuid_id_
   );
 
   spec_generation_request_t l_req{};
-  l_req.session_id_    = io_session.uuid_id_;
-  l_req.project_id_    = io_session.project_id_;
-  l_req.operator_id_   = in_operator;
-  l_req.prompt_text_   = io_session.prompt_text_;
-  l_req.references_    = l_refs;
-  l_req.degrade_level_ = references_have_stats(l_refs) ? spec_degrade_level::stats_only
-                                                       : spec_degrade_level::prompt_only;
+  l_req.session_id_  = io_session.uuid_id_;
+  l_req.project_id_  = io_session.project_id_;
+  l_req.operator_id_ = in_operator;
+  l_req.prompt_text_ = io_session.prompt_text_;
+  l_req.references_  = l_refs;
+  l_req.degrade_level_ =
+      references_have_stats(l_refs) ? spec_degrade_level::stats_only : spec_degrade_level::prompt_only;
   if (auto l_prev = in_sql.get_current_ai_light_spec(io_session.uuid_id_); l_prev.has_value())
     l_req.previous_spec_ = l_prev->to_spec();
 
-  auto l_res = co_await generate_spec(in_sql, l_req);
+  auto l_res       = co_await generate_spec(in_sql, l_req);
 
   // revision = 现有最大 + 1。get_ai_light_specs 按 revision 升序返回。
-  auto l_history  = in_sql.get_ai_light_specs(io_session.uuid_id_);
+  auto l_history   = in_sql.get_ai_light_specs(io_session.uuid_id_);
   const auto l_rev = l_history.empty() ? 1 : l_history.back().revision_ + 1;
 
   ai_light_spec l_spec{};
@@ -177,11 +179,11 @@ boost::asio::awaitable<void> advance_session_spec_branch(
   // 降级级别以**接缝按事实判定的结果**为准，不用调用方那个预判（决定 D4）：
   // 「参考图有 stats 行但置信度全 0」或「全部图被人工排除」时，调用方看
   // references_have_stats() 会以为是 stats_only，而实际聚合出一无所有。
-  l_spec.degrade_level_ = l_res.spec_.degrade_level_;
+  l_spec.degrade_level_      = l_res.spec_.degrade_level_;
   // 新出的方案一律未确认：人工闸门 1 必须重新过一遍。
-  l_spec.human_confirmed_ = false;
-  l_spec.confirmed_by_    = uuid{};
-  l_spec.confirmed_at_    = std::nullopt;
+  l_spec.human_confirmed_    = false;
+  l_spec.confirmed_by_       = uuid{};
+  l_spec.confirmed_at_       = std::nullopt;
 
   io_session.state_          = ai_light_session_state::awaiting_spec_confirm;
   io_session.failure_reason_ = "";
@@ -206,22 +208,17 @@ boost::asio::awaitable<void> advance_session_generating_branch(
     sqlite_database& in_sql, ai_light_session& io_session, const uuid& in_operator
 ) {
   auto l_spec = in_sql.get_current_ai_light_spec(io_session.uuid_id_);
+  DOODLE_CHICK_HTTP(l_spec.has_value(), bad_request, "会话 {} 还没有 Spec，无法生成候选", io_session.uuid_id_);
   DOODLE_CHICK_HTTP(
-      l_spec.has_value(), bad_request,
-      "会话 {} 还没有 Spec，无法生成候选", io_session.uuid_id_
-  );
-  DOODLE_CHICK_HTTP(
-      l_spec->human_confirmed_, bad_request,
-      "会话 {} 的 Spec revision {} 尚未经人工确认（闸门 1），不允许生成候选", io_session.uuid_id_,
-      l_spec->revision_
+      l_spec->human_confirmed_, bad_request, "会话 {} 的 Spec revision {} 尚未经人工确认（闸门 1），不允许生成候选",
+      io_session.uuid_id_, l_spec->revision_
   );
 
   const auto l_iteration = io_session.current_iteration_ + 1;
 
   DOODLE_CHICK_HTTP(
       !in_operator.is_nil(), bad_request,
-      "会话 {} 无法确定触发人（无 operator_id 且会话无 submitter），无法解析 AI 工作室与计费主体",
-      io_session.uuid_id_
+      "会话 {} 无法确定触发人（无 operator_id 且会话无 submitter），无法解析 AI 工作室与计费主体", io_session.uuid_id_
   );
 
   // iteration 的 uuid 在这里就铸造并随请求交给接缝：那条推理任务行（sd2::task）用
@@ -230,14 +227,14 @@ boost::asio::awaitable<void> advance_session_generating_branch(
   const auto l_iteration_id = core_set::get_set().get_uuid();
 
   candidate_generation_request_t l_req{};
-  l_req.session_id_   = io_session.uuid_id_;
-  l_req.project_id_   = io_session.project_id_;
-  l_req.operator_id_  = in_operator;
-  l_req.iteration_id_ = l_iteration_id;
-  l_req.iteration_    = l_iteration;
-  l_req.spec_         = l_spec->to_spec();
-  l_req.presets_      = in_sql.get_ai_light_presets(true);
-  l_req.prompt_text_  = io_session.prompt_text_;
+  l_req.session_id_    = io_session.uuid_id_;
+  l_req.project_id_    = io_session.project_id_;
+  l_req.operator_id_   = in_operator;
+  l_req.iteration_id_  = l_iteration_id;
+  l_req.iteration_     = l_iteration;
+  l_req.spec_          = l_spec->to_spec();
+  l_req.presets_       = in_sql.get_ai_light_presets(true);
+  l_req.prompt_text_   = io_session.prompt_text_;
 
   // 上一轮的迭代行只查一次，同时喂给下面两件事。
   const auto l_prev_it = in_sql.get_ai_light_iteration(io_session.uuid_id_, io_session.current_iteration_);
@@ -309,8 +306,7 @@ boost::asio::awaitable<void> advance_session_generating_branch(
   // 数量在这里校验；灯集合一致性需要基线 rig 才谈得上，留到 worker 侧与
   // 候选落库后的回归检查里做（本轮无 worker，先锁住数量这一半）。
   DOODLE_CHICK_HTTP(
-      static_cast<std::int32_t>(l_res.rigs_.size()) == g_candidate_count,
-      internal_server_error,
+      static_cast<std::int32_t>(l_res.rigs_.size()) == g_candidate_count, internal_server_error,
       "候选生成接缝返回了 {} 个候选，方案 §6.6 要求恰好 {} 个", l_res.rigs_.size(), g_candidate_count
   );
 
@@ -332,22 +328,26 @@ boost::asio::awaitable<void> advance_session_generating_branch(
   l_it.set_axes(l_res.axes_);
 
   // 分布式任务载荷（方案 §13.1 第 5 项：server_task_info.command_ 已有 JSON 列，
-  // 不需要改那张表）。形状由 ai_light_task_payload_t 冻结（§15.12 批 0）：
-  // 产物路径**只在服务端产生**，工作机不查库、不连数据库，拿到 payload 就能起手
-  // —— 两边用的是同一套 kitsu_ctx_t 方法（都挂 root_ 下、文件名都是 uuid），
-  // 所以服务端落库与工作机写盘必然一致（前提是 worker 配到同一个 root_）。
+  // 不需要改那张表）。形状由 ai_light_task_payload_t 冻结（§15.12 批 0）。
+  //
+  // 路径分两层（批 6 D38/D39/D40）：
+  //   * 载荷里只放**相对路径** —— 服务端定命名（out_dir_ = <session>/it_NNN、
+  //     文件名 = <candidate_uuid>.png|.exr），工作机定根（自己的工作机本地缓存根）。
+  //     工作机不是共享盘上的进程：它写不了、也不该写服务端 root_ 底下的目录。
+  //   * 库里那两列（render_png_path_ / render_exr_path_）仍然是**服务端绝对路径**：
+  //     产物由工作机上传来落在这里，前端取图也走这里（D27 不变）。
   ai_light_task_payload_t l_payload{};
   l_payload.session_id_       = io_session.uuid_id_;
   l_payload.iteration_        = l_iteration;
   l_payload.spec_id_          = l_spec->uuid_id_;
-  l_payload.out_dir_          = l_ctx.get_ai_light_iteration_dir(io_session.uuid_id_, l_iteration);
+  l_payload.out_dir_          = make_iteration_relative_dir(io_session.uuid_id_, l_iteration);
   l_payload.baseline_level_   = l_req.baseline_level_;
   l_payload.ue_project_path_  = l_assembly_ok ? l_assembly.ue_main_project_path_.generic_string() : std::string{};
   l_payload.camera_file_path_ = l_assembly_ok ? l_assembly.camera_file_path_.generic_string() : std::string{};
 
   orm::sql_modify_statement_vector_t l_sqls{};
   for (std::int32_t l_i = 0; l_i < g_candidate_count; ++l_i) {
-    auto l_rig = l_res.rigs_.at(static_cast<std::size_t>(l_i));
+    auto l_rig             = l_res.rigs_.at(static_cast<std::size_t>(l_i));
     // 身份字段由服务端补齐：接缝只负责「灯怎么打」，不负责「这是第几个」。
     l_rig.session_id_      = io_session.uuid_id_;
     l_rig.spec_id_         = l_spec->uuid_id_;
@@ -371,9 +371,13 @@ boost::asio::awaitable<void> advance_session_generating_branch(
     l_cand.render_status_ = candidate_render_status::pending;
 
     l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_candidate>().values(l_cand));
-    // 载荷里带上服务端算好的两个产物路径：工作机不重算、也不查库（决定 D25）。
+    // 载荷里带的是**相对文件名**（与服务端落库路径的文件名同一个 helper 生成，
+    // 只是不带服务端那一长串根）：工作机拼上自己的本地根后交给 UE（D39）。
     l_payload.candidates_.push_back(
-        ai_light_task_candidate_t{l_i, l_cand.uuid_id_, l_cand.render_png_path_, l_cand.render_exr_path_, l_rig}
+        ai_light_task_candidate_t{
+            l_i, l_cand.uuid_id_, make_candidate_file_name(l_cand.uuid_id_, false),
+            make_candidate_file_name(l_cand.uuid_id_, true), l_rig
+        }
     );
   }
 
@@ -381,18 +385,18 @@ boost::asio::awaitable<void> advance_session_generating_branch(
   // 「等美术判断」**不是** server_task_info_status —— 那是分布式渲染任务的状态，
   // 两者混用会让工作机的空闲判定错乱（方案 §10.4）。
   server_task_info l_task{};
-  l_task.name_       = fmt::format("AI 灯光 {} 轮 {}", io_session.title_.empty() ? "会话" : io_session.title_, l_iteration);
-  l_task.status_     = server_task_info_status::submitted;
-  l_task.submitter_  = io_session.submitter_;
-  l_task.submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  l_task.task_id_    = io_session.task_id_;
+  l_task.name_   = fmt::format("AI 灯光 {} 轮 {}", io_session.title_.empty() ? "会话" : io_session.title_, l_iteration);
+  l_task.status_ = server_task_info_status::submitted;
+  l_task.submitter_         = io_session.submitter_;
+  l_task.submit_time_       = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  l_task.task_id_           = io_session.task_id_;
   // 用专门的 ai_light 类型，**不要**复用 auto_light ——
   // auto_light 是既有的「跑 UE 装配」管线（distributed_task.cpp:54），
   // 它的 command_ 形状与本轮完全不同，复用会让工作机按错误的解析方式处理。
-  l_task.type_       = server_task_info_type::ai_light;
+  l_task.type_              = server_task_info_type::ai_light;
   // 载荷形状由 ai_light_task_payload_t 冻结（§15.12 批 0），不在这里就地拼 JSON：
   // 工作机与服务端共用同一个 struct 的 to_json/from_json，键名改一处两边同时改。
-  l_task.command_    = l_payload;
+  l_task.command_           = l_payload;
   // 同上：uuid 要在被引用之前定下来。mark_iteration_rendered() 是**按任务 uuid**
   // 反查轮次的（get_ai_light_iteration_by_task），这里若读到 nil，
   // 轮次的 server_task_info_id_ 就落库为 nil，渲染回传必然 404。
@@ -506,8 +510,8 @@ boost::asio::awaitable<void> advance_session(
     // 其它状态：没有可推进的步骤
     // ---------------------------------------------------------------
     DOODLE_CHICK_HTTP(
-        false, bad_request, "会话 {} 处于状态 {}，当前没有可推进的步骤",
-        in_session.uuid_id_, magic_enum::enum_name(l_entry_state)
+        false, bad_request, "会话 {} 处于状态 {}，当前没有可推进的步骤", in_session.uuid_id_,
+        magic_enum::enum_name(l_entry_state)
     );
   } catch (...) {
     // 注意：C++ 标准禁止在 catch 处理块里 co_await，所以这里只**收集**失败信息，
@@ -538,29 +542,27 @@ boost::asio::awaitable<void> apply_judgement(
     const ai_light_judgement_t& in_judgement, std::optional<preview_file> in_accepted_preview_file
 ) {
   DOODLE_CHICK_HTTP(
-      in_iteration.session_id_ == in_session.uuid_id_, bad_request,
-      "轮次 {} 不属于会话 {}", in_iteration.uuid_id_, in_session.uuid_id_
+      in_iteration.session_id_ == in_session.uuid_id_, bad_request, "轮次 {} 不属于会话 {}", in_iteration.uuid_id_,
+      in_session.uuid_id_
   );
   DOODLE_CHICK_HTTP(
       in_session.state_ == ai_light_session_state::awaiting_judgement, bad_request,
       "会话 {} 处于状态 {}，不在等人工判断", in_session.uuid_id_, magic_enum::enum_name(in_session.state_)
   );
   DOODLE_CHICK_HTTP(
-      in_iteration.state_ != ai_light_iteration_state::judged, bad_request,
-      "轮次 {} 已经判断过了", in_iteration.iteration_
+      in_iteration.state_ != ai_light_iteration_state::judged, bad_request, "轮次 {} 已经判断过了",
+      in_iteration.iteration_
   );
 
   const bool l_needs_candidate = in_judgement.decision_ == judgement_decision::accept ||
                                  in_judgement.decision_ == judgement_decision::continue_iteration;
   DOODLE_CHICK_HTTP(
-      l_needs_candidate == !in_judgement.selected_candidate_id_.is_nil(), bad_request,
-      "判断 {} 与选中的候选 {} 不匹配", magic_enum::enum_name(in_judgement.decision_),
-      in_judgement.selected_candidate_id_
+      l_needs_candidate == !in_judgement.selected_candidate_id_.is_nil(), bad_request, "判断 {} 与选中的候选 {} 不匹配",
+      magic_enum::enum_name(in_judgement.decision_), in_judgement.selected_candidate_id_
   );
   DOODLE_CHICK_HTTP(
       (in_judgement.decision_ == judgement_decision::accept) == in_accepted_preview_file.has_value(),
-      internal_server_error,
-      "定稿必须携带已构造好的 preview_file，其余判断不得携带"
+      internal_server_error, "定稿必须携带已构造好的 preview_file，其余判断不得携带"
   );
 
   // 三个决定都回到 generating（§15.10 决定 D17）：
@@ -601,9 +603,9 @@ boost::asio::awaitable<void> apply_judgement(
           orm::update(in_sql)
               .from<ai_light_candidate>()
               .set(
-                  c(&ai_light_candidate::is_accepted_) = l_prev->is_accepted_,
+                  c(&ai_light_candidate::is_accepted_)         = l_prev->is_accepted_,
                   c(&ai_light_candidate::accepted_session_id_) = l_prev->accepted_session_id_,
-                  c(&ai_light_candidate::preview_file_id_) = l_prev->preview_file_id_
+                  c(&ai_light_candidate::preview_file_id_)     = l_prev->preview_file_id_
               )
               .where(c(&ai_light_candidate::uuid_id_) == l_prev->uuid_id_)
       );
@@ -614,8 +616,8 @@ boost::asio::awaitable<void> apply_judgement(
     auto l_cand = in_sql.get_by_uuid<ai_light_candidate>(in_judgement.selected_candidate_id_);
     // 跨轮误选是最容易犯又最难查的错：第 3 轮点了第 2 轮的图。
     DOODLE_CHICK_HTTP(
-        l_cand.iteration_id_ == in_iteration.uuid_id_, bad_request,
-        "候选 {} 不属于第 {} 轮", l_cand.uuid_id_, in_iteration.iteration_
+        l_cand.iteration_id_ == in_iteration.uuid_id_, bad_request, "候选 {} 不属于第 {} 轮", l_cand.uuid_id_,
+        in_iteration.iteration_
     );
 
     if (in_judgement.decision_ == judgement_decision::accept) {
@@ -639,10 +641,10 @@ boost::asio::awaitable<void> apply_judgement(
         orm::update(in_sql)
             .from<ai_light_candidate>()
             .set(
-                c(&ai_light_candidate::is_selected_) = l_cand.is_selected_,
-                c(&ai_light_candidate::is_accepted_) = l_cand.is_accepted_,
+                c(&ai_light_candidate::is_selected_)         = l_cand.is_selected_,
+                c(&ai_light_candidate::is_accepted_)         = l_cand.is_accepted_,
                 c(&ai_light_candidate::accepted_session_id_) = l_cand.accepted_session_id_,
-                c(&ai_light_candidate::preview_file_id_) = l_cand.preview_file_id_
+                c(&ai_light_candidate::preview_file_id_)     = l_cand.preview_file_id_
             )
             .where(c(&ai_light_candidate::uuid_id_) == l_cand.uuid_id_)
     );
@@ -653,7 +655,7 @@ boost::asio::awaitable<void> apply_judgement(
       orm::update(in_sql)
           .from<ai_light_iteration>()
           .set(
-              c(&ai_light_iteration::state_) = in_iteration.state_,
+              c(&ai_light_iteration::state_)     = in_iteration.state_,
               c(&ai_light_iteration::judgement_) = in_iteration.judgement_,
               c(&ai_light_iteration::judged_by_) = in_iteration.judged_by_,
               c(&ai_light_iteration::judged_at_) = in_iteration.judged_at_
@@ -683,13 +685,10 @@ boost::asio::awaitable<void> mark_iteration_rendered(
     sqlite_database& in_sql, const uuid& in_server_task_info_id, const std::vector<ai_light_candidate>& in_candidates
 ) {
   auto l_it = in_sql.get_ai_light_iteration_by_task(in_server_task_info_id);
+  DOODLE_CHICK_HTTP(l_it.has_value(), not_found, "没有任务 {} 对应的 AI 灯光轮次", in_server_task_info_id);
   DOODLE_CHICK_HTTP(
-      l_it.has_value(), not_found, "没有任务 {} 对应的 AI 灯光轮次",
-      in_server_task_info_id
-  );
-  DOODLE_CHICK_HTTP(
-      l_it->state_ != ai_light_iteration_state::judged, bad_request,
-      "轮次 {} 已经判断过了，不接受渲染回填", l_it->iteration_
+      l_it->state_ != ai_light_iteration_state::judged, bad_request, "轮次 {} 已经判断过了，不接受渲染回填",
+      l_it->iteration_
   );
 
   auto l_session = in_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
@@ -699,20 +698,19 @@ boost::asio::awaitable<void> mark_iteration_rendered(
   for (const auto& l_cand : in_candidates) {
     // 回填只认属于本轮的候选：worker 报错轮次时宁可少填，也不要串轮。
     DOODLE_CHICK_HTTP(
-        l_cand.iteration_id_ == l_it->uuid_id_, bad_request,
-        "候选 {} 不属于轮次 {}", l_cand.uuid_id_, l_it->iteration_
+        l_cand.iteration_id_ == l_it->uuid_id_, bad_request, "候选 {} 不属于轮次 {}", l_cand.uuid_id_, l_it->iteration_
     );
     l_total_ms += l_cand.render_ms_;
     l_sqls.emplace_back(
         orm::update(in_sql)
             .from<ai_light_candidate>()
             .set(
-                c(&ai_light_candidate::render_status_) = l_cand.render_status_,
+                c(&ai_light_candidate::render_status_)   = l_cand.render_status_,
                 c(&ai_light_candidate::render_png_path_) = l_cand.render_png_path_,
                 c(&ai_light_candidate::render_exr_path_) = l_cand.render_exr_path_,
-                c(&ai_light_candidate::render_ms_) = l_cand.render_ms_,
-                c(&ai_light_candidate::light_count_) = l_cand.light_count_,
-                c(&ai_light_candidate::metrics_) = l_cand.metrics_
+                c(&ai_light_candidate::render_ms_)       = l_cand.render_ms_,
+                c(&ai_light_candidate::light_count_)     = l_cand.light_count_,
+                c(&ai_light_candidate::metrics_)         = l_cand.metrics_
             )
             .where(c(&ai_light_candidate::uuid_id_) == l_cand.uuid_id_)
     );
@@ -725,8 +723,7 @@ boost::asio::awaitable<void> mark_iteration_rendered(
       orm::update(in_sql)
           .from<ai_light_iteration>()
           .set(
-              c(&ai_light_iteration::state_) = l_it->state_,
-              c(&ai_light_iteration::render_at_) = l_it->render_at_,
+              c(&ai_light_iteration::state_) = l_it->state_, c(&ai_light_iteration::render_at_) = l_it->render_at_,
               c(&ai_light_iteration::render_ms_total_) = l_it->render_ms_total_
           )
           .where(c(&ai_light_iteration::uuid_id_) == l_it->uuid_id_)
@@ -740,8 +737,8 @@ boost::asio::awaitable<void> mark_iteration_rendered(
   co_await in_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮渲染完成，{} 个候选待判断（整轮 {} ms）",
-      l_session.uuid_id_, l_it->iteration_, in_candidates.size(), l_total_ms
+      g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮渲染完成，{} 个候选待判断（整轮 {} ms）", l_session.uuid_id_,
+      l_it->iteration_, in_candidates.size(), l_total_ms
   );
   co_return;
 }
@@ -759,13 +756,13 @@ constexpr std::string_view g_render_report_seam{"round_render_report"};
 
 round_render_report_t parse_round_render_report(const nlohmann::json& in_json) {
   round_render_report_t l_ret{};
-  l_ret.error_ = json_val::opt_string(in_json, "error").value_or("");
+  l_ret.error_            = json_val::opt_string(in_json, "error").value_or("");
 
   const auto l_candidates = json_val::require_array(in_json, g_render_report_seam, "candidates");
   l_ret.candidates_.reserve(l_candidates.size());
 
   for (std::size_t i = 0; i < l_candidates.size(); ++i) {
-    const auto l_base = fmt::format("candidates[{}]", i);
+    const auto l_base  = fmt::format("candidates[{}]", i);
 
     // 数组元素必须是对象。带上下标路径再报错，比「解析失败」四个字有用得多。
     const auto* l_item = json_val::json_at_path(in_json, l_base);
@@ -795,8 +792,7 @@ round_render_report_t parse_round_render_report(const nlohmann::json& in_json) {
       );
     }
 
-    l_cand.status_ =
-        json_val::require_enum<candidate_render_status>(in_json, g_render_report_seam, l_base + ".status");
+    l_cand.status_ = json_val::require_enum<candidate_render_status>(in_json, g_render_report_seam, l_base + ".status");
 
     // 以下四个是宽松字段（D26：缺失取默认、形状不符丢弃）：
     //   * candidate_index 缺失时按下标推 —— 工作机的回传顺序就是派发顺序；
@@ -857,18 +853,19 @@ boost::asio::awaitable<void> apply_render_report(
 
   // 整轮失败由 error_ 表达（UE 起不来 / 超时 / 载荷非法）；「一张 rendered 都没有」也算失败 ——
   // 否则轮次会被推到 awaiting_judgement，美术面对 6 张不存在的图点「选第 3 张」。
-  const bool l_any_rendered = std::any_of(
-      in_report.candidates_.begin(), in_report.candidates_.end(),
-      [](const candidate_render_report_t& in_cand) { return in_cand.status_ == candidate_render_status::rendered; }
-  );
-  if (!in_report.error_.empty() || !l_any_rendered) {
+  // 注意：这只是**回报文里**的初判。文件是否真的存在在循环里逐张查（D41），
+  // 查完还要再判一次（l_any_rendered_after），否则「6 张都声称 rendered 但文件都不在」
+  // 会绕过这里的拦截，把空轮次推给美术。
+  if (!in_report.error_.empty() ||
+      !std::any_of(
+          in_report.candidates_.begin(), in_report.candidates_.end(),
+          [](const candidate_render_report_t& in_cand) { return in_cand.status_ == candidate_render_status::rendered; }
+      )) {
     co_await mark_iteration_failed(
         in_sql, in_server_task_info_id,
-        !in_report.error_.empty() ? in_report.error_
-                                  : fmt::format(
-                                        "轮次 {} 的 {} 个候选全部渲染失败", l_it->iteration_,
-                                        in_report.candidates_.size()
-                                    )
+        !in_report.error_.empty()
+            ? in_report.error_
+            : fmt::format("轮次 {} 的 {} 个候选全部渲染失败", l_it->iteration_, in_report.candidates_.size())
     );
     co_return;
   }
@@ -877,14 +874,14 @@ boost::asio::awaitable<void> apply_render_report(
 
   std::vector<ai_light_candidate> l_candidates{};
   l_candidates.reserve(in_report.candidates_.size());
+  std::size_t l_missing_png = 0;
 
   for (const auto& l_rep : in_report.candidates_) {
     // 候选必须属于**本轮**（只查本轮，不查全库）：别的会话的候选 uuid 混进来必须拒掉，
     // 否则一个坏回传就能改到别人的候选行上。
-    const auto l_found = std::find_if(
-        l_round.begin(), l_round.end(),
-        [&](const ai_light_candidate& in_cand) { return in_cand.uuid_id_ == l_rep.candidate_id_; }
-    );
+    const auto l_found = std::find_if(l_round.begin(), l_round.end(), [&](const ai_light_candidate& in_cand) {
+      return in_cand.uuid_id_ == l_rep.candidate_id_;
+    });
     DOODLE_CHICK_HTTP(
         l_found != l_round.end(), bad_request, "候选 {} 不属于 AI 灯光轮次 {}", l_rep.candidate_id_, l_it->iteration_
     );
@@ -902,7 +899,49 @@ boost::asio::awaitable<void> apply_render_report(
     l_cand.light_count_       = l_rep.light_count_;
     l_cand.metrics_           = l_rep.metrics_;
 
+    // D41：声称 rendered 就要能取到图。工作机的上传是**独立一步**（D40），
+    // 完全可能出现「UE 写了文件、报告说 rendered、上传那一步失败了」——
+    // 这时如果照样落 rendered，前端会拿到一个 404 的候选图，而美术的判断通道只能靠这张图。
+    // 降级成 failed 是**保守**选择：本轮其余候选照常进入判断，只是这张不可选。
+    if (l_cand.render_status_ == candidate_render_status::rendered) {
+      const bool l_png_ok = !l_cand.render_png_path_.empty() && FSys::exists(l_cand.render_png_path_);
+      if (!l_png_ok) {
+        ++l_missing_png;
+        l_cand.render_status_ = candidate_render_status::failed;
+        SPDLOG_LOGGER_WARN(
+            g_logger_ctrl().get_http(), "AI 灯光回传：候选 {}（轮次 {}）声称渲染成功，但产物不在 {}，已降级为失败",
+            l_cand.uuid_id_, l_it->iteration_, l_cand.render_png_path_.generic_string()
+        );
+      }
+    }
+
+    // EXR 是**可选**产物（D42：工作机传不上去不阻断本轮）。所以这里不做任何降级，
+    // 只处理一件事：库里登记了 EXR 路径、文件却不在，就把那条路径清掉。
+    // 留一条指向不存在文件的记录迟早出事 —— 将来读 render_exr_path_ 的人必须自己判存在，
+    // 而「判了存在」和「清空」语义不同：前者是「读了才知道没有」，后者是「本来就没有」。
+    if (!l_cand.render_exr_path_.empty() && !FSys::exists(l_cand.render_exr_path_)) {
+      SPDLOG_LOGGER_WARN(
+          g_logger_ctrl().get_http(), "AI 灯光回传：候选 {}（轮次 {}）的线性 EXR 不在 {}，清空该路径", l_cand.uuid_id_,
+          l_it->iteration_, l_cand.render_exr_path_.generic_string()
+      );
+      l_cand.render_exr_path_.clear();
+    }
+
     l_candidates.emplace_back(std::move(l_cand));
+  }
+
+  // 存在性判定之后**再判一次**「还有没有能看的候选」：全部被上面的降级砍掉时，
+  // 这一轮没有任何可判断的东西，必须走失败出口，而不能推成 awaiting_judgement。
+  const bool l_any_rendered_after =
+      std::any_of(l_candidates.begin(), l_candidates.end(), [](const ai_light_candidate& in_cand) {
+        return in_cand.render_status_ == candidate_render_status::rendered;
+      });
+  if (!l_any_rendered_after) {
+    co_await mark_iteration_failed(
+        in_sql, in_server_task_info_id,
+        fmt::format("轮次 {} 的 {} 个候选渲染成功但产物文件缺失，本轮无可判断结果", l_it->iteration_, l_missing_png)
+    );
+    co_return;
   }
 
   // 落库与状态流转全部复用原有那一份实现：两条入口（单测 / worker 回传）走同一段事务，
@@ -930,20 +969,19 @@ std::optional<ai_light_session_detail_t> build_session_detail(sqlite_database& i
     return std::nullopt;
   }
 
-  auto& l_detail = *l_ret;
-  l_detail.references_     = in_sql.get_ai_light_references(in_session_id);
-  l_detail.spec_history_   = in_sql.get_ai_light_specs(in_session_id);
-  l_detail.current_spec_   = in_sql.get_current_ai_light_spec(in_session_id);
-  l_detail.iterations_     = in_sql.get_ai_light_iterations(in_session_id);
-  l_detail.candidates_     = in_sql.get_ai_light_candidates_by_session(in_session_id);
-  l_detail.accepted_candidate_ = in_sql.get_ai_light_accepted_candidate(in_session_id);
+  auto& l_detail                 = *l_ret;
+  l_detail.references_           = in_sql.get_ai_light_references(in_session_id);
+  l_detail.spec_history_         = in_sql.get_ai_light_specs(in_session_id);
+  l_detail.current_spec_         = in_sql.get_current_ai_light_spec(in_session_id);
+  l_detail.iterations_           = in_sql.get_ai_light_iterations(in_session_id);
+  l_detail.candidates_           = in_sql.get_ai_light_candidates_by_session(in_session_id);
+  l_detail.accepted_candidate_   = in_sql.get_ai_light_accepted_candidate(in_session_id);
 
-  l_detail.is_waiting_human_ = is_waiting_human(l_detail.session_.state_);
+  l_detail.is_waiting_human_     = is_waiting_human(l_detail.session_.state_);
   l_detail.is_judgement_overdue_ = l_detail.session_.is_judgement_overdue(
       chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()}
   );
   return l_ret;
 }
-
 
 }  // namespace doodle::ai_light

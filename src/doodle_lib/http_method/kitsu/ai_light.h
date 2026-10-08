@@ -160,6 +160,36 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid task_id_{};
 DOODLE_HTTP_FUN_END()
 
+// 候选产物的两种角色。做成 scoped enum 是为了让它当 URL 段：路由宏会把所有枚举名
+// 拼成正则白名单（core/http/http_function.h:181-183），拼错的名字根本进不来，
+// handler 里也就不需要再写一遍字符串比较（避免「白名单」和「比较」两处漂移）。
+enum class ai_light_candidate_file_role { render, render_linear };
+
+// 工作机上候选产物的站点内路径模板。**两处必须一致**：
+//   1) kitsu.cpp 里 candidate_file_route 的路由注册（那处只能写字面量 ——
+//      operator""_url 是 UDL，接不了变量）；
+//   2) 工作机 kitsu_client::upload_ai_light_candidate_render 拼的 URL。工作机二进制
+//      不该为了一个字符串去 include 服务端路由头，所以那边照字面量拼，靠这条注释对齐。
+constexpr std::string_view g_candidate_file_path_template{"/api/doodle/ai/light/candidate/{}/file/{}"};
+
+// POST /api/doodle/ai/light/candidate/{id}/file/{role}   工作机上候选产物（§15.13 批 6，D38~D41）
+//
+//   role = render        → 显示空间 PNG（前端唯一展示的那张）：必传，缺了这张候选不可判断
+//   role = render_linear → 线性 EXR（§7.4）：尽量传；工作机那张传失败只清空库里的
+//                          render_exr_path_，不影响本轮转 awaiting_judgement（决定 A）
+//
+// 落盘位置**不由请求体决定**：按候选行库里的 render_png_path_ / render_exr_path_ 写（D27/D40），
+// 所以工作机既写不到别的候选上，也改不了任何路径 —— 它只能「往服务端算好的那个文件名里灌字节」。
+// 请求体就是文件本身（application/octet-stream + Content-Disposition，与 up_file_base 同一套约定），
+// 成功回 **204**（kitsu_client::upload_asset_file 只认 204）。
+// 调用方是 worker（与 render_report_route 同类）：鉴权沿用工作机那套 JWT，
+// 不做项目权限检查 —— 工作机不是项目成员。但比回传多一道：候选必须真实存在（否则 404）。
+DOODLE_HTTP_JWT_FUN(candidate_file_route)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid id_{};
+ai_light_candidate_file_role role_{ai_light_candidate_file_role::render};
+DOODLE_HTTP_FUN_END()
+
 // GET  /api/doodle/ai/light/preset         预设库列表（?enabled_only=false 取全部）
 // POST /api/doodle/ai/light/preset         新建预设（美术整理的第一批走这里导入）
 DOODLE_HTTP_JWT_FUN(preset_route)
