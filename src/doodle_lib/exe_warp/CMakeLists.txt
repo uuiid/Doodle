@@ -14,6 +14,7 @@ target_sources(
         assets_update.h
         folder_watcher_anim_fbx.h
         depth_estimation_task.h
+        ai_light_render.h
         
         PRIVATE
         maya_exe.cpp
@@ -29,4 +30,5 @@ target_sources(
         assets_update.cpp
         folder_watcher_anim_fbx.cpp
         depth_estimation_task.cpp
+        ai_light_render.cpp
 )

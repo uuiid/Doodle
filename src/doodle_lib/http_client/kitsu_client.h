@@ -170,6 +170,9 @@ class DOODLELIB_API kitsu_client {
   // put /api/actions/jobs/{job_id}/log
   boost::asio::awaitable<void> put_job_log(uuid in_job_id, std::shared_ptr<std::string> in_log) const;
   void put_job_log_sync(const uuid& in_job_id, const std::string& in_log) const;
+  // post /api/doodle/ai/light/render_report/{task_id} —— 工作机回传一轮 AI 灯光渲染结果（§15.12）
+  boost::asio::awaitable<nlohmann::json> post_ai_light_render_report(uuid in_task_id, const nlohmann::json& in_report)
+      const;
   // post /api/doodle/stop-server
   void stop_server() const;
   // 获取下一个任务

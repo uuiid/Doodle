@@ -691,6 +691,24 @@ void kitsu_client::put_job_log_sync(const uuid& in_job_id, const std::string& in
     throw_exception(doodle_error{"kitsu put job info error {} {}", l_res.result(), l_res.body()});
 }
 
+boost::asio::awaitable<nlohmann::json> kitsu_client::post_ai_light_render_report(
+    uuid in_task_id, const nlohmann::json& in_report
+) const {
+  boost::beast::http::request<boost::beast::http::string_body> l_req{
+      boost::beast::http::verb::post, fmt::format("/api/doodle/ai/light/render_report/{}", in_task_id), 11
+  };
+  set_req_headers(l_req, "application/json");
+  l_req.body() = in_report.dump();
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  // 这条路由用 make_msg 返回 201（POST 惯例，见 docs/ue_ai_lighting_frontend.md 的坑 1）
+  if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
+    throw_exception(doodle_error{"kitsu post ai light render report error {} {}", l_res.result(), l_res.body()});
+  // 回执只是给人看的（轮次 + 两条状态），解析失败不该让工作机把整轮判成失败
+  if (l_res.body().empty()) co_return nlohmann::json{};
+  co_return nlohmann::json::parse(l_res.body(), nullptr, false);
+}
+
 boost::asio::awaitable<void> kitsu_client::get_next_job(uuid in_computer_id) const {
   // put /api/data/jobs
   boost::beast::http::request<boost::beast::http::string_body> l_req{

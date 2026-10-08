@@ -10,6 +10,7 @@
 
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/exe_warp/ai_light_render.h>
 #include <doodle_lib/exe_warp/depth_estimation_task.h>
 #include <doodle_lib/exe_warp/export_fbx_arg.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
@@ -229,6 +230,14 @@ bool http_work::run_task(const server_task_info& in_task_info) {
   }
   if (in_task_info.type_ == server_task_info_type::depth_estimation) {
     auto l_run = std::make_shared<depth_estimation_distributed>(in_task_info, shared_from_this());
+    task_started();
+    boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
+    return true;
+  }
+  if (in_task_info.type_ == server_task_info_type::ai_light) {
+    // AI 灯光一轮（6 个候选）的渲染。载荷在 command_ 里（ai_light_task_payload_t），
+    // 渲染报告由任务自己回传到 /api/doodle/ai/light/render_report/{task_id}。
+    auto l_run = std::make_shared<ai_light_round_distributed>(in_task_info, shared_from_this());
     task_started();
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;

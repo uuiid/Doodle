@@ -329,6 +329,10 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<ai_light::judge_route>("/api/doodle/ai/light/session/{}/judge"_url(
         &ai_light::judge_route::session_id_
       ))
+      // 工作机回传渲染结果（§15.12）。与上面几条不同：调用方是 worker 而不是浏览器。
+      .reg_t<ai_light::render_report_route>("/api/doodle/ai/light/render_report/{}"_url(
+        &ai_light::render_report_route::task_id_
+      ))
       .reg_t<ai_light::preset_route>("/api/doodle/ai/light/preset"_url)
       .reg_t<ai_light::preset_instance_route>("/api/doodle/ai/light/preset/{}"_url(
         &ai_light::preset_instance_route::id_

@@ -39,9 +39,11 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/http_client/seedance2_client.h>
 #include <doodle_lib/http_method/kitsu/ai_light.h>
 #include <doodle_lib/http_method/kitsu/ai_light_stats.h>
+#include <doodle_lib/http_method/kitsu/auto_task.h>
 #include <doodle_lib/http_method/kitsu/computers.h>
 #include <doodle_lib/http_method/seedance2/inference_task.h>
 #include <doodle_lib/logger/logger.h>
@@ -264,15 +266,39 @@ boost::asio::awaitable<void> advance_session_generating_branch(
     }
   }
 
-  // 本轮渲染的基线关卡。**目前为空** —— 取它需要复刻 shot_render_light_builder 的三段
-  // 私有推导（基英/集数 → 场景 UE 路径 → 地编预调探测），代价与风险都不合理，
-  // 所以本轮只透传、不解析（§15.8 的决定 D8）。空的基线意味着 worker 无法起手渲染，
-  // 所以这里明确告警而不是静默放过 —— 这是 M2（工作机执行器）开工前必须补上的一环。
+  // 本轮渲染的基线关卡：直接复用镜头装配的现成推导。
+  //
+  // §15.8 的决定 D8 原本「只透传不解析」，理由是取它要复刻 shot_render_light_builder 的
+  // 三段私有推导（基英/集数 → 场景 UE 路径 → 地编预调探测）。那段推导后来被抽成了自由函数
+  // auto_task::shot_render_light()，它自己查库、自己推导，正是这条路线的唯一权威 ——
+  // 所以这里改为直接调它，而不是再写一遍（§15.12 批 2）。
+  //
+  // 会话的 task_id_ 是灯光任务 id，与动画/解算任务指向同一个镜头实体，
+  // 所以拿到的就是本镜头的场景关卡、UE 工程与相机文件。
+  //
+  // 推导失败（缺 entity_shot_extend / frame_in / frame_out 等）**不让整轮失败**：
+  // 候选本身仍有价值，空基线由工作机在回传里报错（美术看到的是渲染失败，
+  // 而不是「AI 服务出错」）。
+  import_and_render_ue_ns::run_ue_assembly_arg l_assembly{};
+  bool l_assembly_ok = false;
+  if (!io_session.task_id_.is_nil()) {
+    try {
+      l_assembly    = http::auto_task::shot_render_light(io_session.project_id_, io_session.task_id_);
+      l_assembly_ok = true;
+    } catch (const std::exception& in_err) {
+      SPDLOG_LOGGER_WARN(
+          g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮：推导基线关卡失败（{}）", io_session.uuid_id_,
+          l_iteration, brief_error(in_err)
+      );
+    }
+  }
+  if (l_assembly_ok) l_req.baseline_level_ = l_assembly.original_map_.generic_string();
+
   if (l_req.baseline_level_.empty()) {
     SPDLOG_LOGGER_WARN(
         g_logger_ctrl().get_http(),
-        "AI 灯光会话 {} 第 {} 轮：baseline_level 为空（M2 阻塞项，见方案 §15.8 决定 D8）。"
-        "候选可以生成，但工作机拿不到起点关卡，无法渲染。",
+        "AI 灯光会话 {} 第 {} 轮：baseline_level 为空。候选可以生成，"
+        "但工作机拿不到起点关卡，本轮渲染必然失败。",
         io_session.uuid_id_, l_iteration
     );
   }
@@ -306,10 +332,19 @@ boost::asio::awaitable<void> advance_session_generating_branch(
   l_it.set_axes(l_res.axes_);
 
   // 分布式任务载荷（方案 §13.1 第 5 项：server_task_info.command_ 已有 JSON 列，
-  // 不需要改那张表）。worker 端拿 session_id/iteration/candidate_id 自己重算路径，
-  // 与服务端落库用的是同一套 kitsu_ctx_t 方法（都挂 root_ 下、文件名都是 uuid），
-  // 所以两边必然一致 —— 前提是 worker 配到同一个 root_（pictures/movies 早就这么依赖）。
-  nlohmann::json l_candidates = nlohmann::json::array();
+  // 不需要改那张表）。形状由 ai_light_task_payload_t 冻结（§15.12 批 0）：
+  // 产物路径**只在服务端产生**，工作机不查库、不连数据库，拿到 payload 就能起手
+  // —— 两边用的是同一套 kitsu_ctx_t 方法（都挂 root_ 下、文件名都是 uuid），
+  // 所以服务端落库与工作机写盘必然一致（前提是 worker 配到同一个 root_）。
+  ai_light_task_payload_t l_payload{};
+  l_payload.session_id_       = io_session.uuid_id_;
+  l_payload.iteration_        = l_iteration;
+  l_payload.spec_id_          = l_spec->uuid_id_;
+  l_payload.out_dir_          = l_ctx.get_ai_light_iteration_dir(io_session.uuid_id_, l_iteration);
+  l_payload.baseline_level_   = l_req.baseline_level_;
+  l_payload.ue_project_path_  = l_assembly_ok ? l_assembly.ue_main_project_path_.generic_string() : std::string{};
+  l_payload.camera_file_path_ = l_assembly_ok ? l_assembly.camera_file_path_.generic_string() : std::string{};
+
   orm::sql_modify_statement_vector_t l_sqls{};
   for (std::int32_t l_i = 0; l_i < g_candidate_count; ++l_i) {
     auto l_rig = l_res.rigs_.at(static_cast<std::size_t>(l_i));
@@ -336,8 +371,9 @@ boost::asio::awaitable<void> advance_session_generating_branch(
     l_cand.render_status_ = candidate_render_status::pending;
 
     l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_candidate>().values(l_cand));
-    l_candidates.push_back(
-        nlohmann::json{{"candidate_index", l_i}, {"candidate_id", l_cand.uuid_id_}, {"rig", l_rig}}
+    // 载荷里带上服务端算好的两个产物路径：工作机不重算、也不查库（决定 D25）。
+    l_payload.candidates_.push_back(
+        ai_light_task_candidate_t{l_i, l_cand.uuid_id_, l_cand.render_png_path_, l_cand.render_exr_path_, l_rig}
     );
   }
 
@@ -354,14 +390,9 @@ boost::asio::awaitable<void> advance_session_generating_branch(
   // auto_light 是既有的「跑 UE 装配」管线（distributed_task.cpp:54），
   // 它的 command_ 形状与本轮完全不同，复用会让工作机按错误的解析方式处理。
   l_task.type_       = server_task_info_type::ai_light;
-  l_task.command_    = nlohmann::json{
-      {"session_id", io_session.uuid_id_},
-      {"iteration", l_iteration},
-      {"spec_id", l_spec->uuid_id_},
-      {"candidates", l_candidates},
-      // 基线关卡：worker 复制它再套灯光，不动原关卡（方案 §9）
-      {"baseline_level", l_res.rigs_.front().baseline_level_},
-  };
+  // 载荷形状由 ai_light_task_payload_t 冻结（§15.12 批 0），不在这里就地拼 JSON：
+  // 工作机与服务端共用同一个 struct 的 to_json/from_json，键名改一处两边同时改。
+  l_task.command_    = l_payload;
   // 同上：uuid 要在被引用之前定下来。mark_iteration_rendered() 是**按任务 uuid**
   // 反查轮次的（get_ai_light_iteration_by_task），这里若读到 nil，
   // 轮次的 server_task_info_id_ 就落库为 nil，渲染回传必然 404。
@@ -844,10 +875,6 @@ boost::asio::awaitable<void> apply_render_report(
 
   auto l_round = in_sql.get_ai_light_candidates(l_it->uuid_id_);
 
-  // 产物路径不信任回传（D27）：按 uuid 重算，与派发时写进候选行的是同一套 kitsu_ctx_t 方法。
-  // 注意加 http:: 限定 —— kitsu_ctx_t 在 doodle::http 里，而本文件在 doodle::ai_light。
-  auto& l_ctx = g_ctx().get<http::kitsu_ctx_t>();
-
   std::vector<ai_light_candidate> l_candidates{};
   l_candidates.reserve(in_report.candidates_.size());
 
@@ -862,20 +889,18 @@ boost::asio::awaitable<void> apply_render_report(
         l_found != l_round.end(), bad_request, "候选 {} 不属于 AI 灯光轮次 {}", l_rep.candidate_id_, l_it->iteration_
     );
 
-    // 只填 mark_iteration_rendered 会写的列。它按 uuid_id_ 定位行，其余字段是给它的
-    // 归属校验（iteration_id_）与落库内容（状态/耗时/灯数/指标）用的。
-    ai_light_candidate l_cand{};
-    l_cand.uuid_id_       = l_rep.candidate_id_;
-    l_cand.iteration_id_  = l_it->uuid_id_;
-    l_cand.session_id_    = l_it->session_id_;
-    l_cand.render_status_ = l_rep.status_;
-    l_cand.render_ms_     = l_rep.render_ms_;
-    l_cand.light_count_   = l_rep.light_count_;
-    l_cand.metrics_       = l_rep.metrics_;
-    l_cand.render_png_path_ =
-        l_ctx.get_ai_light_candidate_file(l_it->session_id_, l_it->iteration_, l_rep.candidate_id_, false);
-    l_cand.render_exr_path_ =
-        l_ctx.get_ai_light_candidate_file(l_it->session_id_, l_it->iteration_, l_rep.candidate_id_, true);
+    // 产物路径既不信任回传（D27），也不在这里重算：候选行的 render_png_path_ / render_exr_path_
+    // 在派发那一轮（advance_session_generating_branch）就按会话/轮次/候选 uuid 写好了，
+    // 直接沿用库里的值即可 —— 回传报文里本来就不带路径，工作机传什么都改不到它。
+    //
+    // 这里曾经用 g_ctx().get<http::kitsu_ctx_t>() 重算一遍。改成读库不是语义变化，是**可测性**：
+    // test_main 里 g_ctx() 不可用（见 src/test/core/ai_light_paths.cpp:7-10），走全局上下文
+    // 会把整条成功路径变成「只有真机能跑」，而那正是回传最容易出错的一段。
+    ai_light_candidate l_cand = *l_found;
+    l_cand.render_status_     = l_rep.status_;
+    l_cand.render_ms_         = l_rep.render_ms_;
+    l_cand.light_count_       = l_rep.light_count_;
+    l_cand.metrics_           = l_rep.metrics_;
 
     l_candidates.emplace_back(std::move(l_cand));
   }

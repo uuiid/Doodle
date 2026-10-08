@@ -135,7 +135,8 @@ uuid session_id_{};
 DOODLE_HTTP_FUN_END()
 
 // POST /api/doodle/ai/light/session/{session_id}/iterate   生成一轮候选并派发
-//                                                          —— **本轮返回 501**（LLM 接缝未实现）
+//                                                          接缝已落地（§15.8）：排轴 + 一次推理 +
+//                                                          落 6 个候选 + 派任务；失败回滚可重试
 //                                                          无需请求体：会话在路径上
 DOODLE_HTTP_JWT_FUN(iterate_route)
 DOODLE_HTTP_FUN_OVERRIDE(post)
@@ -146,6 +147,17 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(judge_route)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid session_id_{};
+DOODLE_HTTP_FUN_END()
+
+// POST /api/doodle/ai/light/render_report/{task_id}   工作机回传一轮渲染结果（§15.12）
+//
+// 调用方是 **doodle worker**，不是浏览器：鉴权沿用 data_jobs_instance 那套 JWT
+// （工作机的 kitsu_client 用同一组凭据回传任务状态），但不做项目权限检查 ——
+// 工作机不是项目成员，它只认任务 uuid。路径参数是 server_task_info 的 uuid，
+// 轮次由服务端按它反查（get_ai_light_iteration_by_task），回传体里不带 session/iteration。
+DOODLE_HTTP_JWT_FUN(render_report_route)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid task_id_{};
 DOODLE_HTTP_FUN_END()
 
 // GET  /api/doodle/ai/light/preset         预设库列表（?enabled_only=false 取全部）

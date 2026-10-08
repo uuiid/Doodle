@@ -14,6 +14,7 @@
 #include <doodle_core/metadata/ai_light/ai_light.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/preview_file.h>
+#include <doodle_core/metadata/server_task_info.h>
 // 必须显式包含：get_tasks_for_entity_and_task_type() 返回 std::optional<task>，
 // 而 task_status.h 只给了 task 的前置声明，实例化 optional<task> 需要完整类型。
 #include <doodle_core/metadata/task.h>
@@ -780,6 +781,44 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
 
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
+}
+
+// ===========================================================================
+// 工作机回传：一轮候选的渲染结果（方案 §15.12）
+// ===========================================================================
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
+  // 调用方是 doodle worker（不是浏览器）：鉴权沿用 data_jobs_instance 那套 JWT ——
+  // 工作机的 kitsu_client 用同一组凭据回传任务状态，所以这里也走 person_；
+  // 但**不**做 check_project_access：工作机不是项目成员，它只认任务 uuid。
+  person_.check_not_outsourcer();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+
+  // task_id 来自路径，回传体里不带 session/iteration：轮次由服务端按任务 uuid 反查
+  // （get_ai_light_iteration_by_task），这是两边唯一认的关联方式。
+  auto l_task = l_sql.get_by_uuid<server_task_info>(task_id_);
+  DOODLE_CHICK_HTTP(
+      l_task.type_ == server_task_info_type::ai_light, bad_request, "任务 {} 的类型是 {}，不是 AI 灯光任务",
+      task_id_, magic_enum::enum_name(l_task.type_)
+  );
+
+  // 形状错误在这里抛 502（不再往下走）；语义问题交给 apply_render_report 裁决：
+  // 整轮失败 → 只写会话的 failure_reason_（不是终态）；至少一张渲染成功 → 落库并转 awaiting_judgement。
+  auto l_report = parse_round_render_report(l_json);
+  co_await apply_render_report(l_sql, task_id_, l_report);
+
+  // 回执带上轮次与两条状态，工作机据此写日志。人工判断闸门不在这里。
+  nlohmann::json l_out{{"task_id", task_id_}};
+  if (auto l_it = l_sql.get_ai_light_iteration_by_task(task_id_); l_it.has_value()) {
+    auto l_session = l_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
+    l_out["session_id"]      = l_it->session_id_;
+    l_out["iteration"]       = l_it->iteration_;
+    l_out["iteration_state"] = l_it->state_;
+    l_out["session_state"]   = l_session.state_;
+    l_out["failure_reason"]  = l_session.failure_reason_;
+  }
+  co_return in_handle->make_msg(l_out);
 }
 
 // ===========================================================================
