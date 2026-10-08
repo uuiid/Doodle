@@ -2,9 +2,9 @@
 // AI 灯光分布式任务：一轮候选的渲染（工作机侧）
 //
 // 服务端把整轮载荷塞进 server_task_info.command_（ai_light::ai_light_task_payload_t），
-// 这里**只起一次 UE**（DoodleLighting commandlet），UE 侧用 auto_light 已经生成好的
-// 关卡序列 + 电影管线配置逐候选走 MRQ 渲染出一帧帧 PNG；回到这里再把帧合成
-// <候选 uuid>.mp4、把首帧复制成 <候选 uuid>.png 当海报，两个都 HTTP 上传回服务端
+// 这里**只起一次 UE**（不带 -run=，进程靠插件模块的 UDoodleLightingRoundRunner 驱动，D46），
+// UE 侧用 auto_light 已经生成好的关卡序列 + 电影管线配置在 PIE 世界里逐候选走 MRQ 渲染出一帧帧 PNG；
+// 回到这里再把帧合成 <候选 uuid>.mp4、把首帧复制成 <候选 uuid>.png 当海报，两个都 HTTP 上传回服务端
 // （POST /api/doodle/ai/light/candidate/{id}/file/{render|render_movie}），
 // 最后把 <out_dir>/render_report.json 回传给 POST /api/doodle/ai/light/render_report/{task_id}。
 //

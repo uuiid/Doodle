@@ -1,16 +1,17 @@
 # AI 灯光「派发功能」交接文档
 
 > 需求原话（用户）：**「安排 ai_light 工作的派发功能」**。
-> 目标：把一轮 6 个候选真正派到工作机 → UE commandlet 渲染 → 回传落库，让会话从
+> 目标：把一轮 6 个候选真正派到工作机 → UE 渲染（MRQ，无 `-run=`）→ 回传落库，让会话从
 > `generating` 走到 `awaiting_judgement`（人工判断闸门 2 之前的那一段）。
 >
 > **当前状态：服务端 + 工作机编译通过、单测全绿（全量 245 用例 / 2110 断言 exit 0）；
-> UE 侧两个插件模块源码已写完（新增 `UDoodleLightingRoundRunner`），但
+> UE 侧两个插件模块源码已写完（新增 `UDoodleLightingRoundRunner`，批 9 已删掉旧的
+> SceneCapture/commandlet 路径），但
 > **本机无法编译 UE 代码**（`E:\Doodle\script` 下只有打包好的插件副本，没有 HostProject 也没有打包脚本），
 > 只做了 API 级核对 —— 真机验证前必须重新打包插件包。**
 > 设计记录见 `docs\ue_ai_lighting_plan.md` **§15.12**（服务端/工作机）· **§15.13**（UE 侧）·
 > **§15.14**（产物落工作机本地 + HTTP 上传，D38~D43）· **§15.15**（产物路径改「现算」，D44）·
-> **§15.16**（候选产物改视频：无 `-run=` 启动 + PIE + MRQ，D45~D50）。
+> **§15.16**（候选产物改视频：无 `-run=` 启动 + PIE + MRQ，D45~D50）· **§15.17**（删旧 SceneCapture/commandlet 路径）。
 
 ## 一、链路（现在的真实形状）
 
@@ -116,18 +117,27 @@ render_report_route → parse_round_render_report → apply_render_report(sql, c
 ### UE 侧插件（`script\uePlug\Doodle\Source\DoodleLighting{,Editor}`，20 个文件）
 `script\uePlug\Doodle\Source\DoodleLighting\`（11 个文件）· `script\uePlug\Doodle\Source\DoodleLightingEditor\`（9 个文件）
 
+> **批 9（删掉旧的 SceneCapture / commandlet 路径，用户指令）**：`DoodleLightingCommandlet.{h,cpp}` 已删；
+> `DoodleLightingCapture.{h,cpp}` 只剩 `ApplyFrozenPostProcessBaseline`（冻结后处理基线，MRQ 路线仍要它，
+> 由执行器的 `BuildPostProcessSettings` 调用）；`DoodleLightingExecutor.{h,cpp}` 里
+> `PrepareRound`/`FinishRound`/`RenderCandidate`/`GetCameraView` 与 `SwapToWorld`/`NormalizeLevelPath`/
+> `G_Capture`/`g_warmup_iterations`/`WritePng`/`WriteExr` 已删（现在编辑器模块 11 → 9 个文件）。
+> 详见设计文档 §15.17。
+
 - 机位：**交付机位**（载荷 `camera_file_path_` 的 FBX 经临时 level sequence 导入，只借来求一次姿态，
   随后 `ReleaseDeliveryCamera()` 把导入物拆掉 —— 它不该跟着进 PIE）；分辨率由 MRQ 定
   （有 `movie_pipeline_config_` 就沿用它的，自建配置默认 1920×1080）。
 - `Doodle.uplugin` 两条 Module：`DoodleLighting`（Runtime/Default/Win64）、
   `DoodleLightingEditor`（**Editor/Default**/Win64）。
-- `DoodleLightingEditor.Build.cs`：带 `Sequencer`/`MovieSceneTools`/`FBX`/`Imath`/`UEOpenExr`/`UEOpenExrRTTI`
+- `DoodleLightingEditor.Build.cs`：带 `Sequencer`/`MovieSceneTools`/`FBX`
   + **`MovieRenderPipelineCore`/`MovieRenderPipelineEditor`/`MovieRenderPipelineRenderPasses`/`MovieRenderPipelineSettings`**
-  + `bEnableExceptions = true`。
+  + `AssetTools`/`EditorSubsystem`/`EditorScriptingUtilities`/`UnrealEd`/`AssetRegistry`。
+  批 9：`ImageCore`/`ImageWrapper`/`Imath`/`UEOpenExr`/`UEOpenExrRTTI` 与 `bEnableExceptions = true`
+  都是为那个已删的 PNG/EXR 写盘器开的，已撤；`RenderCore`/`RHI` 保留（本机不能编译 UE，不为纯清洁动作冒险）。
 - **派发入口（D45）**：**无 `-run=`** 的编辑器启动，只认 `-DoodleAiLightParams=<json>`；
   `FDoodleLightingEditorModule::StartupModule()` 看见这个参数就 `NewObject<UDoodleLightingRoundRunner>` +
   `AddToRoot()` + 挂 `FSlateApplication::Get().OnPreTick()`（先例 `DoodleEditor.cpp:180-184`）。
-  `-run=DoodleLighting`（`UDoodleLightingCommandlet`）只剩**手工调试**用途。
+  批 9：`-run=DoodleLighting`（`UDoodleLightingCommandlet`）**已删除** —— 候选产物是视频，commandlet 里 MRQ 一帧都渲不出（见下条），且已无调用者。
 - **渲染方式 = MRQ + PIE 执行器**（取代当初的 D36 `USceneCaptureComponent2D`）：
   `UMoviePipelineQueueSubsystem`（`GEditor->GetEditorSubsystem<>()`）+ `AllocateNewJob` 逐候选一个 job +
   `UMoviePipelinePIEExecutor` + 逐 job 钩子 `OnIndividualJobStarted()`（在 `UMoviePipeline::Initialize` 之前、
@@ -137,10 +147,10 @@ render_report_route → parse_round_render_report → apply_render_report(sql, c
 - **为什么不能是 `-run=` commandlet**：① MRQ 靠 `FCoreDelegates::OnBeginFrame` 推进，全引擎只有
   `LaunchEngineLoop.cpp:5663`（`FEngineLoop::Tick`）广播它，`CommandletHelpers::TickEngine` 不广播 →
   管线建起来却一帧不渲；② `MoviePipeline::FindCurrentWorld()` 只认 `Game`/`PIE` 世界。
-- **D37 = 不复制关卡**（`LoadObject<UWorld>` 后换 `GWorld`，不 `DuplicateAsset`/不 `SaveLoadedAssets`/不 `MarkPackageDirty`）；
+- **D37 = 不复制关卡、不落盘**（关卡由载荷 `render_map` 经 `LoadObject<UWorld>` 取来，交给编辑器跑 PIE：
+  `DoodleLightingRoundRunner.cpp:324`；不 `DuplicateAsset`/不 `SaveLoadedAssets`/不 `MarkPackageDirty`。
+  批 9 起**不再有「换 GWorld」那一步** —— `SwapToWorld` 已随旧路径删除）；
   **D31 = 以 `rig.lights_` 全量重建**（`rig.ops_` 只审计，`diff_rigs` 永不产生 add）；**D30 = UE 不算指标**（`metrics` 不写）。
-- 手工调试的 commandlet 仍然：`-run=DoodleLighting -Params=<json>` **必须**带 `-AllowCommandletRendering`
-  （`CommandletHelpers::TickEngine` 少这个开关不 tick 渲染）。
 
 ### 测试（`src/test/core/ai_light_dispatch.cpp`，已登记 `src/test/core/CMakeLists.txt`）
 - **24 用例**：解析组 8 例（严格/宽松分界逐条）、落库组 5 例（两条出口 + 部分失败仍前进）、
@@ -251,7 +261,7 @@ render_report_route → parse_round_render_report → apply_render_report(sql, c
 | UE 侧现有 commandlet（照它写） | `script\uePlug\Doodle\Source\DoodleEditor\{Public,Private}\DoodleAutoAnimationCommandlet.{h,cpp}` |
 | UE 侧插件清单 | `script\uePlug\Doodle\Doodle.uplugin`（引擎里的部署副本 `E:\UnrealEngine\Engine\Plugins\Doodle`） |
 | **UE 侧 Runtime 模块（新）** | `script\uePlug\Doodle\Source\DoodleLighting\`（`DoodleLighting.Build.cs`；`Public\DoodleLighting{,Types,Json,Report,Ops}.h` + 同名 `Private\*.cpp`） |
-| **UE 侧 Editor 模块（新）** | `script\uePlug\Doodle\Source\DoodleLightingEditor\`（`DoodleLightingEditor.Build.cs`；`Public\DoodleLighting{,Capture,Executor,Commandlet,RoundRunner}.h` + 同名 `Private\*.cpp`；派发入口是 `DoodleLightingRoundRunner`，`Executor` 提供 `PrepareAnchorCamera`/`ApplyCandidateToWorld`） |
+| **UE 侧 Editor 模块（新）** | `script\uePlug\Doodle\Source\DoodleLightingEditor\`（`DoodleLightingEditor.Build.cs`；`Public\DoodleLighting{,Capture,Executor,RoundRunner}.h` + 同名 `Private\*.cpp`；派发入口是 `DoodleLightingRoundRunner`，`Executor` 提供 `PrepareAnchorCamera`/`ApplyCandidateToWorld`，`Capture` 只剩 `ApplyFrozenPostProcessBaseline` —— 批 9 已删 `DoodleLightingCommandlet.{h,cpp}`） |
 | 工作机 UE 命令行 | `src\doodle_lib\exe_warp\ai_light_render.cpp`（**无 `-run=`**，`-DoodleAiLightParams=<json>`；帧→mp4 合成与两个上传也在这里） |
 | 新单测 | `src\test\core\ai_light_dispatch.cpp` |
 | 设计文档 | `docs\ue_ai_lighting_plan.md`（§7.x UE 契约、§15.12 服务端/工作机、§15.13 UE 侧、§15.14 本地上传 D38~D43、§15.15 路径现算 D44、§15.16 候选产物改视频 D45~D50） |

@@ -30,10 +30,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, post) {
 
   // 解析允许的任务类型，默认允许 export_fbx、auto_light 和 ai_light
   //
-  // ai_light 是 AI 灯光一轮候选的渲染（§15.12）：载荷在 command_ 里，
-  // 由 exe_warp/ai_light_render.cpp 起一次 UE 的 DoodleLighting commandlet 全渲染。
-  // 注意它需要 UE 侧插件已装（installUePath 会先拉插件包），否则 commandlet 会失败、
-  // 并由工作机回传一份「整轮失败」的报告 —— 会话的 failure_reason_ 会写明原因，不是静默失败。
+  // ai_light 是 AI 灯光一轮候选的渲染（§15.12/§15.16）：载荷在 command_ 里，
+  // 由 exe_warp/ai_light_render.cpp 起一次 UE：不带 -run=，进程内由插件模块的
+  // UDoodleLightingRoundRunner 驱动 MRQ 在 PIE 世界里逐候选出帧。
+  // 注意它需要 UE 侧插件已装（installUePath 会先拉插件包），否则工作机会回传一份「整轮失败」
+  // 的报告 —— 会话的 failure_reason_ 会写明原因，不是静默失败。
   std::set<server_task_info_type> l_allowed_task_types{
       server_task_info_type::export_fbx, server_task_info_type::auto_light, server_task_info_type::ai_light
   };
