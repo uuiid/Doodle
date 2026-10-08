@@ -172,13 +172,13 @@ enum class ai_light_candidate_file_role { render, render_linear };
 //      不该为了一个字符串去 include 服务端路由头，所以那边照字面量拼，靠这条注释对齐。
 constexpr std::string_view g_candidate_file_path_template{"/api/doodle/ai/light/candidate/{}/file/{}"};
 
-// POST /api/doodle/ai/light/candidate/{id}/file/{role}   工作机上候选产物（§15.13 批 6，D38~D41）
+// POST /api/doodle/ai/light/candidate/{id}/file/{role}   工作机上候选产物（§15.13 批 6，D38~D41；落点批 7 / D44）
 //
 //   role = render        → 显示空间 PNG（前端唯一展示的那张）：必传，缺了这张候选不可判断
-//   role = render_linear → 线性 EXR（§7.4）：尽量传；工作机那张传失败只清空库里的
-//                          render_exr_path_，不影响本轮转 awaiting_judgement（决定 A）
+//   role = render_linear → 线性 EXR（§7.4）：尽量传；工作机那张传失败只记一条 WARN，
+//                          不影响本轮转 awaiting_judgement（D42）
 //
-// 落盘位置**不由请求体决定**：按候选行库里的 render_png_path_ / render_exr_path_ 写（D27/D40），
+// 落盘位置**不由请求体决定**：服务端按候选行的三个 uuid 现算（candidate_render_path，D27/D40/D44），
 // 所以工作机既写不到别的候选上，也改不了任何路径 —— 它只能「往服务端算好的那个文件名里灌字节」。
 // 请求体就是文件本身（application/octet-stream + Content-Disposition，与 up_file_base 同一套约定），
 // 成功回 **204**（kitsu_client::upload_asset_file 只认 204）。

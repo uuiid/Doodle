@@ -310,10 +310,9 @@ boost::asio::awaitable<void> advance_session_generating_branch(
       "候选生成接缝返回了 {} 个候选，方案 §6.6 要求恰好 {} 个", l_res.rigs_.size(), g_candidate_count
   );
 
-  // 产物路径一律由 kitsu_ctx_t 按 uuid 生成（挂在资产根 root_ 下），
-  // 不再依赖 episode / shot / 项目路径 —— 所以这里没有「算不出目录」的失败分支。
-  // 注意加 http:: 限定：kitsu_ctx_t 在 doodle::http 里，而本文件在 doodle::ai_light。
-  auto& l_ctx = g_ctx().get<http::kitsu_ctx_t>();
+  // 产物路径**不是**库里的列（批 7 / D44）：候选行自带 session_id_ / iteration_id_ /
+  // uuid_id_，路径由 candidate_render_path() 现算，所以本函数不写任何路径数据。
+  // 这里也不再需要 kitsu_ctx_t —— 少一个运行期依赖。
 
   ai_light_iteration l_it{};
   // 用上面铸造好的那个 uuid，**不要**在这里另取一个：候选的 iteration_id_ 与
@@ -330,17 +329,18 @@ boost::asio::awaitable<void> advance_session_generating_branch(
   // 分布式任务载荷（方案 §13.1 第 5 项：server_task_info.command_ 已有 JSON 列，
   // 不需要改那张表）。形状由 ai_light_task_payload_t 冻结（§15.12 批 0）。
   //
-  // 路径分两层（批 6 D38/D39/D40）：
-  //   * 载荷里只放**相对路径** —— 服务端定命名（out_dir_ = <session>/it_NNN、
+  // 路径分两层（批 6 D38/D39/D40，批 7 D44 收尾）：
+  //   * 载荷里只放**相对路径** —— 服务端定命名（out_dir_ = <session>/<轮次 uuid>、
   //     文件名 = <candidate_uuid>.png|.exr），工作机定根（自己的工作机本地缓存根）。
   //     工作机不是共享盘上的进程：它写不了、也不该写服务端 root_ 底下的目录。
-  //   * 库里那两列（render_png_path_ / render_exr_path_）仍然是**服务端绝对路径**：
-  //     产物由工作机上传来落在这里，前端取图也走这里（D27 不变）。
+  //   * 服务端**不存**路径（D44）：产物上传后落在按同一套命名规则算出来的位置，
+  //     要用时现算（candidate_render_path）。所以这里没有任何绝对路径要写库。
   ai_light_task_payload_t l_payload{};
   l_payload.session_id_       = io_session.uuid_id_;
   l_payload.iteration_        = l_iteration;
   l_payload.spec_id_          = l_spec->uuid_id_;
-  l_payload.out_dir_          = make_iteration_relative_dir(io_session.uuid_id_, l_iteration);
+  // 轮次目录名用**轮次 uuid**（批 7）：候选行靠 iteration_id_ 就能算出路径，不必回查序号。
+  l_payload.out_dir_          = make_iteration_relative_dir(io_session.uuid_id_, l_it.uuid_id_);
   l_payload.baseline_level_   = l_req.baseline_level_;
   l_payload.ue_project_path_  = l_assembly_ok ? l_assembly.ue_main_project_path_.generic_string() : std::string{};
   l_payload.camera_file_path_ = l_assembly_ok ? l_assembly.camera_file_path_.generic_string() : std::string{};
@@ -364,10 +364,6 @@ boost::asio::awaitable<void> advance_session_generating_branch(
     l_cand.candidate_index_ = l_i;
     l_cand.set_rig(l_rig);
     l_cand.sync_from_rig();  // 轴三列从 rig 同步过来（DB 列是查询权威）
-    l_cand.render_png_path_ =
-        l_ctx.get_ai_light_candidate_file(io_session.uuid_id_, l_iteration, l_cand.uuid_id_, false);
-    l_cand.render_exr_path_ =
-        l_ctx.get_ai_light_candidate_file(io_session.uuid_id_, l_iteration, l_cand.uuid_id_, true);
     l_cand.render_status_ = candidate_render_status::pending;
 
     l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_candidate>().values(l_cand));
@@ -701,16 +697,16 @@ boost::asio::awaitable<void> mark_iteration_rendered(
         l_cand.iteration_id_ == l_it->uuid_id_, bad_request, "候选 {} 不属于轮次 {}", l_cand.uuid_id_, l_it->iteration_
     );
     l_total_ms += l_cand.render_ms_;
+    // 不写路径（批 7 / D44）：库里没有那两列了，要路径时按 candidate_render_path() 现算
+    // （上传路由、取图路由、apply_render_report 的 D41/D42 都这么做）。
     l_sqls.emplace_back(
         orm::update(in_sql)
             .from<ai_light_candidate>()
             .set(
-                c(&ai_light_candidate::render_status_)   = l_cand.render_status_,
-                c(&ai_light_candidate::render_png_path_) = l_cand.render_png_path_,
-                c(&ai_light_candidate::render_exr_path_) = l_cand.render_exr_path_,
-                c(&ai_light_candidate::render_ms_)       = l_cand.render_ms_,
-                c(&ai_light_candidate::light_count_)     = l_cand.light_count_,
-                c(&ai_light_candidate::metrics_)         = l_cand.metrics_
+                c(&ai_light_candidate::render_status_) = l_cand.render_status_,
+                c(&ai_light_candidate::render_ms_)     = l_cand.render_ms_,
+                c(&ai_light_candidate::light_count_)   = l_cand.light_count_,
+                c(&ai_light_candidate::metrics_)       = l_cand.metrics_
             )
             .where(c(&ai_light_candidate::uuid_id_) == l_cand.uuid_id_)
     );
@@ -846,7 +842,8 @@ boost::asio::awaitable<void> mark_iteration_failed(
 }
 
 boost::asio::awaitable<void> apply_render_report(
-    sqlite_database& in_sql, const uuid& in_server_task_info_id, const round_render_report_t& in_report
+    sqlite_database& in_sql, const http::kitsu_ctx_t& in_ctx, const uuid& in_server_task_info_id,
+    const round_render_report_t& in_report
 ) {
   auto l_it = in_sql.get_ai_light_iteration_by_task(in_server_task_info_id);
   DOODLE_CHICK_HTTP(l_it.has_value(), not_found, "没有任务 {} 对应的 AI 灯光轮次", in_server_task_info_id);
@@ -886,13 +883,12 @@ boost::asio::awaitable<void> apply_render_report(
         l_found != l_round.end(), bad_request, "候选 {} 不属于 AI 灯光轮次 {}", l_rep.candidate_id_, l_it->iteration_
     );
 
-    // 产物路径既不信任回传（D27），也不在这里重算：候选行的 render_png_path_ / render_exr_path_
-    // 在派发那一轮（advance_session_generating_branch）就按会话/轮次/候选 uuid 写好了，
-    // 直接沿用库里的值即可 —— 回传报文里本来就不带路径，工作机传什么都改不到它。
+    // 产物路径既不在回传里（D27），也不在库里（批 7 / D44）：它就是候选行那三个 uuid 的
+    // 纯函数，所以现算一次 —— `in_ctx` 是唯一的运行期输入（布局基准是它的 root_）。
     //
-    // 这里曾经用 g_ctx().get<http::kitsu_ctx_t>() 重算一遍。改成读库不是语义变化，是**可测性**：
-    // test_main 里 g_ctx() 不可用（见 src/test/core/ai_light_paths.cpp:7-10），走全局上下文
-    // 会把整条成功路径变成「只有真机能跑」，而那正是回传最容易出错的一段。
+    // 为什么把 ctx 做成参数、而不是在这里取 g_ctx()：test_main 里 g_ctx() 不可用
+    // （见 src/test/core/ai_light_paths.cpp:7-10），走全局上下文会把整条成功路径变成
+    // 「只有真机能跑」，而那正是回传最容易出错的一段。ctx 可以在栈上构造，于是这段可测。
     ai_light_candidate l_cand = *l_found;
     l_cand.render_status_     = l_rep.status_;
     l_cand.render_ms_         = l_rep.render_ms_;
@@ -904,27 +900,28 @@ boost::asio::awaitable<void> apply_render_report(
     // 这时如果照样落 rendered，前端会拿到一个 404 的候选图，而美术的判断通道只能靠这张图。
     // 降级成 failed 是**保守**选择：本轮其余候选照常进入判断，只是这张不可选。
     if (l_cand.render_status_ == candidate_render_status::rendered) {
-      const bool l_png_ok = !l_cand.render_png_path_.empty() && FSys::exists(l_cand.render_png_path_);
-      if (!l_png_ok) {
+      const FSys::path l_png = candidate_render_path(in_ctx, l_cand, false);
+      if (!FSys::exists(l_png)) {
         ++l_missing_png;
         l_cand.render_status_ = candidate_render_status::failed;
         SPDLOG_LOGGER_WARN(
             g_logger_ctrl().get_http(), "AI 灯光回传：候选 {}（轮次 {}）声称渲染成功，但产物不在 {}，已降级为失败",
-            l_cand.uuid_id_, l_it->iteration_, l_cand.render_png_path_.generic_string()
+            l_cand.uuid_id_, l_it->iteration_, l_png.generic_string()
         );
       }
     }
 
-    // EXR 是**可选**产物（D42：工作机传不上去不阻断本轮）。所以这里不做任何降级，
-    // 只处理一件事：库里登记了 EXR 路径、文件却不在，就把那条路径清掉。
-    // 留一条指向不存在文件的记录迟早出事 —— 将来读 render_exr_path_ 的人必须自己判存在，
-    // 而「判了存在」和「清空」语义不同：前者是「读了才知道没有」，后者是「本来就没有」。
-    if (!l_cand.render_exr_path_.empty() && !FSys::exists(l_cand.render_exr_path_)) {
+    // EXR 是**可选**产物（D42：工作机传不上去不阻断本轮），所以这里不降级。
+    // 批 7 起库里没有 EXR 路径可清了（D44），只留一条诊断：算出来的 EXR 不在时记一笔，
+    // 让「这一轮的线性图没上来」在日志里看得见。
+    // 「留了一条指向不存在文件的陈旧记录」那类问题随那两列一起消失了 —— 路径是现算的。
+    const FSys::path l_exr = candidate_render_path(in_ctx, l_cand, true);
+    if (!FSys::exists(l_exr)) {
       SPDLOG_LOGGER_WARN(
-          g_logger_ctrl().get_http(), "AI 灯光回传：候选 {}（轮次 {}）的线性 EXR 不在 {}，清空该路径", l_cand.uuid_id_,
-          l_it->iteration_, l_cand.render_exr_path_.generic_string()
+          g_logger_ctrl().get_http(),
+          "AI 灯光回传：候选 {}（轮次 {}）的线性 EXR 不在 {}（可选产物，不影响本轮判断）", l_cand.uuid_id_,
+          l_it->iteration_, l_exr.generic_string()
       );
-      l_cand.render_exr_path_.clear();
     }
 
     l_candidates.emplace_back(std::move(l_cand));

@@ -197,7 +197,6 @@ struct fixture_t : doodle_test::coro_fixture_t {
       l_cand.render_status_   = candidate_render_status::rendered;
       l_cand.render_ms_       = 18000 + l_i * 100;
       l_cand.light_count_     = 2;
-      l_cand.render_png_path_ = FSys::path{"AI_Light"} / "it_001" / fmt::format("cand_{:02}.png", l_i);
       insert(orm_).into<ai_light_candidate>().values(l_cand)();
       candidates_.push_back(l_cand);
     }
@@ -951,17 +950,17 @@ DOODLE_FIXTURE_TEST_CASE_CORO(pre_assigned_uuid_survives_the_deferred_insert, fi
   l_it.spec_id_             = l_fx.spec_.uuid_id_;
   l_it.server_task_info_id_ = l_task.uuid_id_;  // 必须在任务 uuid 定下来之后
 
-  // --- 候选：iteration_id_ 指向轮次，两个渲染路径都用自己的 uuid ---
+  // --- 候选：iteration_id_ 指向轮次；渲染路径**不是列**（批 7 / D44），由三个 uuid 现算 ---
   ai_light_candidate l_cand{};
   l_cand.uuid_id_         = l_cand_uuid;
   l_cand.iteration_id_    = l_it.uuid_id_;
   l_cand.session_id_      = l_fx.session_.uuid_id_;
   l_cand.candidate_index_ = 0;
   l_cand.render_status_   = candidate_render_status::pending;
-  l_cand.render_png_path_ = l_ctx.get_ai_light_candidate_file(l_fx.session_.uuid_id_, 2, l_cand.uuid_id_, false);
-  l_cand.render_exr_path_ = l_ctx.get_ai_light_candidate_file(l_fx.session_.uuid_id_, 2, l_cand.uuid_id_, true);
-  const auto l_png_path   = l_cand.render_png_path_;
-  const auto l_exr_path   = l_cand.render_exr_path_;
+  const auto l_png_path =
+      l_ctx.get_ai_light_candidate_file(l_fx.session_.uuid_id_, l_it.uuid_id_, l_cand.uuid_id_, false);
+  const auto l_exr_path =
+      l_ctx.get_ai_light_candidate_file(l_fx.session_.uuid_id_, l_it.uuid_id_, l_cand.uuid_id_, true);
 
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(insert(l_fx.orm_).into<ai_light_reference>().values(l_ref));
@@ -997,13 +996,20 @@ DOODLE_FIXTURE_TEST_CASE_CORO(pre_assigned_uuid_survives_the_deferred_insert, fi
   BOOST_REQUIRE(l_cands.size() == 1);
   BOOST_TEST(l_cands.front().uuid_id_ == l_cand_uuid);
   BOOST_TEST(l_cands.front().iteration_id_ == l_it_uuid);
-  BOOST_TEST(l_cands.front().render_png_path_ == l_png_path);
-  BOOST_TEST(l_cands.front().render_exr_path_ == l_exr_path);
+  // 产物路径不再落库（批 7 / D44），但候选行自带三个 uuid，所以路径仍然可复现：
+  // 轮次目录以轮次 uuid 命名、文件以候选 uuid 命名，与 insert 之前算出来的完全一致。
+  BOOST_TEST(l_png_path.parent_path().filename().generic_string() == fmt::to_string(l_it_uuid));
+  BOOST_TEST(l_png_path.filename().generic_string() == fmt::to_string(l_cand_uuid) + ".png");
+  BOOST_TEST(l_exr_path.filename().generic_string() == fmt::to_string(l_cand_uuid) + ".exr");
   BOOST_TEST(
-      l_ctx.get_ai_light_candidate_file(l_fx.session_.uuid_id_, 2, l_cands.front().uuid_id_, false) == l_png_path
+      l_ctx.get_ai_light_candidate_file(
+          l_cands.front().session_id_, l_cands.front().iteration_id_, l_cands.front().uuid_id_, false
+      ) == l_png_path
   );
   BOOST_TEST(
-      l_ctx.get_ai_light_candidate_file(l_fx.session_.uuid_id_, 2, l_cands.front().uuid_id_, true) == l_exr_path
+      l_ctx.get_ai_light_candidate_file(
+          l_cands.front().session_id_, l_cands.front().iteration_id_, l_cands.front().uuid_id_, true
+      ) == l_exr_path
   );
 }
 

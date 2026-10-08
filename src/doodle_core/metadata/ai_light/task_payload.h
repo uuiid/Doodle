@@ -15,19 +15,28 @@
 //          只保证同一台机器同卷，**不是**共享盘；工作机的产物一律写进自己的工作机本地
 //          缓存根 core_set::get_set().get_cache_root(g_ai_light_local_cache_flag)。
 //          只有 core/entity_path.cpp 派生出来的项目/资产目录才在网络盘/UNC 上。
-//   D39 —— 载荷里的路径一律是**相对路径**：out_dir_ = <session_uuid>/it_<NNN>，
+//   D39 —— 载荷里的路径一律是**相对路径**：out_dir_ = <session_uuid>/<轮次 uuid>，
 //          候选的 png_path_ / exr_path_ = <candidate_uuid>.png | .exr。命名由服务端定、
 //          根由工作机定；工作机在起 UE 之前把两者拼成绝对路径（写进 -Params 的那份 JSON）。
 //   D40 —— 产物由工作机 POST 到 /api/doodle/ai/light/candidate/{id}/file/{render|render_linear}；
-//          服务端把收到的文件落到**库里**那条候选行的 render_png_path_ / render_exr_path_。
-//   D27 —— 服务端落库时**不信任**回传里的任何路径，一律用
-//          kitsu_ctx_t::get_ai_light_candidate_file 重算；回传只带数值与状态。
-//   D41 —— 回传说 rendered 的候选，服务端还要查那张 PNG 是否真的躺在库里那条路径上：
+//          服务端把收到的文件落到**按命名规则算出来的**那个位置（它不再落库，见 D44）。
+//   D27 —— 服务端落库时**不信任**回传里的任何路径（回传里本来也没有路径）：一律按
+//          kitsu_ctx_t 的命名规则现算；回传只带数值与状态。
+//   D41 —— 回传说 rendered 的候选，服务端按命名规则算出 PNG 路径，再查那个文件是否真的在：
 //          不在就降级成 failed（否则美术会对着取不到的图点「选第 3 张」）。
 //   D42 —— EXR 是**可选**产物：工作机尽量传，传不上去/文件不在都只 WARN、不阻断本轮；
-//          服务端发现库里那条 EXR 路径指向的文件不在，就把它清空（路径与文件必须一致）。
+//          服务端只按需判存在（批 7 起 EXR 路径也不落库，没有「悬空记录」可清）。
 //   D43 —— 工作机本地产物**保留不删**（用户决定）：上传成功也不清，出问题时它是唯一的现场；
 //          只在日志里报路径，磁盘增长留给人工/后续定时清理。
+//   D44 —— **候选行不再存渲染路径**（批 7）：render_png_path_ / render_exr_path_ 两列、
+//          以及候选 JSON 里的 render_png_path / render_exr_path 两个键，一并撤掉；
+//          路径改由 doodle_lib 的 candidate_render_path(ctx, candidate, linear) 现算
+//          （它就是 kitsu_ctx_t::get_ai_light_candidate_file 的薄包装）。
+//          为什么撤：候选行已经带齐 session_id_ / iteration_id_ / uuid_id_，路径是这三个的
+//          纯函数，存下来等于把同一件事记两遍；而那两个键还会把**服务端磁盘路径**带进前端契约
+//          （前端取图只按 uuid 走 /candidate/{uuid}/image，本来也不需要路径）。
+//          代价：库里不再有「文件实际在哪」的记录 —— root_ 变了而文件没搬时，旧列反而更准；
+//          将来若出现**非派生**产物（人工补图、对象存储），得把列加回来。
 //
 
 #pragma once
@@ -54,10 +63,11 @@ constexpr std::string_view g_ai_light_render_report_file_name{"render_report.jso
 /// 一个是工作机缓存根，一个是服务端数据根，唯一共同点是都以 "ai_light" 分片。
 constexpr std::string_view g_ai_light_local_cache_flag{"ai_light"};
 
-/// 本轮相对目录（D39）：`<session_uuid>/it_<NNN>`（相对工作机缓存根）。
-/// 末两级与服务端 kitsu_ctx_t::get_ai_light_iteration_dir 同名，方便人对照两边目录。
-inline std::string make_iteration_relative_dir(const uuid& in_session_id, std::int32_t in_iteration) {
-  return fmt::format("{}/it_{:03}", in_session_id, in_iteration);
+/// 本轮相对目录（D39）：`<session_uuid>/<轮次 uuid>`（相对工作机缓存根）。
+/// 末一级与服务端 kitsu_ctx_t::get_ai_light_iteration_dir 同名（都是轮次 uuid），
+/// 方便人对照两边目录。
+inline std::string make_iteration_relative_dir(const uuid& in_session_id, const uuid& in_iteration_id) {
+  return fmt::format("{}/{}", in_session_id, in_iteration_id);
 }
 
 /// 候选产物相对文件名（D39）：`<candidate_uuid>.png` / `.exr`。
@@ -73,7 +83,8 @@ inline std::string make_candidate_file_name(const uuid& in_candidate_id, bool in
 
 /// 派发载荷里的一个候选。
 struct DOODLE_CORE_API ai_light_task_candidate_t {
-  /// 第几个候选（0 = 基线）。同时是输出文件名的序号（见 get_ai_light_candidate_file）。
+  /// 第几个候选（0 = 基线）。**只用于排序与显示**：产物文件名用的是 candidate_id_，
+  /// 不是这个序号（文件名契约见 make_candidate_file_name）。
   std::int32_t candidate_index_{0};
   uuid candidate_id_{};
   /// **相对路径**（相对 out_dir_，D39）：display 空间 PNG + 线性 EXR 双输出（§7.4）。

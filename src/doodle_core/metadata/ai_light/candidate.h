@@ -136,7 +136,7 @@ struct DOODLE_CORE_API vlm_delta_t {
 // ---------------------------------------------------------------------------
 // 表实体：ai_light_candidate
 // ---------------------------------------------------------------------------
-
+// 灯光候选
 struct DOODLE_CORE_API ai_light_candidate {
   DOODLE_BASE_FIELDS()
 
@@ -162,10 +162,10 @@ struct DOODLE_CORE_API ai_light_candidate {
   nlohmann::json rig_{};
 
   // --- 渲染产物 ---
-  /// 显示空间 PNG，主判据，也是前端唯一展示的图
-  FSys::path render_png_path_{};
-  /// 线性 EXR，仅供服务端工程检查，**绝不下发浏览器**
-  FSys::path render_exr_path_{};
+  // 路径**不是列**（批 7 / D44）：显示空间 PNG 与线性 EXR 的落点由 doodle_lib 的
+  // candidate_render_path(ctx, *this, in_linear) 现算（= kitsu_ctx_t 的命名规则，
+  // 会话 / 轮次 / 候选三个 uuid 本来就在行上）。所以这里只有状态与实测数值；
+  // 也正因为如此，候选 JSON 里不再出现服务端磁盘路径（前端取图只按 uuid）。
   candidate_render_status render_status_{candidate_render_status::pending};
   /// 实测渲染耗时（决策 17：先不设硬上限，但要记录）
   std::int64_t render_ms_{0};
@@ -202,7 +202,7 @@ struct DOODLE_CORE_API ai_light_candidate {
 
   /// **只有 is_accepted 的候选才填**。中间候选不注册 preview_file，
   /// 免得镜头预览列表被 6×N 张候选淹没；中间候选由
-  /// /api/doodle/ai/light/candidate/{uuid}/image 从 render_png_path_ 直接提供。
+  /// /api/doodle/ai/light/candidate/{uuid}/image 按命名规则算出 PNG 路径直接提供。
   uuid preview_file_id_{};
 
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
@@ -219,19 +219,19 @@ struct DOODLE_CORE_API ai_light_candidate {
   /// 调用点：候选落库前。DB 列是查询权威（用来统计「哪条轴最常被选中」）。
   void sync_from_rig() {
     if (rig_.is_null()) return;
-    const auto l_rig   = get_rig();
-    variant_axis_      = l_rig.variant_axis_.axis_;
-    variant_value_     = l_rig.variant_axis_.value_;
-    variant_label_     = l_rig.variant_axis_.label_;
-    candidate_index_   = l_rig.candidate_index_;
-    session_id_        = l_rig.session_id_;
+    const auto l_rig = get_rig();
+    variant_axis_    = l_rig.variant_axis_.axis_;
+    variant_value_   = l_rig.variant_axis_.value_;
+    variant_label_   = l_rig.variant_axis_.label_;
+    candidate_index_ = l_rig.candidate_index_;
+    session_id_      = l_rig.session_id_;
   }
   /// 反向：把真实列写回 rig 副本（构造 rig 时调用）
   void sync_to_rig() {
-    auto l_rig            = get_rig();
-    l_rig.variant_axis_   = variant_axis_t{variant_axis_, variant_value_, variant_label_};
+    auto l_rig             = get_rig();
+    l_rig.variant_axis_    = variant_axis_t{variant_axis_, variant_value_, variant_label_};
     l_rig.candidate_index_ = candidate_index_;
-    l_rig.session_id_     = session_id_;
+    l_rig.session_id_      = session_id_;
     set_rig(l_rig);
   }
 
@@ -251,27 +251,25 @@ struct DOODLE_CORE_API ai_light_candidate {
   bool is_accepted_candidate() const { return !accepted_session_id_.is_nil() && accepted_session_id_ == session_id_; }
 
   friend void to_json(nlohmann::json& j, const ai_light_candidate& p) {
-    j["id"]               = p.uuid_id_;
-    j["iteration_id"]     = p.iteration_id_;
-    j["session_id"]       = p.session_id_;
-    j["candidate_index"]  = p.candidate_index_;
-    j["variant_axis"]     = p.variant_axis_;
-    j["variant_value"]    = p.variant_value_;
-    j["variant_label"]    = p.variant_label_;
-    j["rig"]              = p.rig_;
-    j["render_png_path"]  = p.render_png_path_;
-    j["render_exr_path"]  = p.render_exr_path_;
-    j["render_status"]    = p.render_status_;
-    j["render_ms"]        = p.render_ms_;
-    j["light_count"]      = p.light_count_;
-    j["metrics"]          = p.metrics_;
-    j["vlm_score"]        = p.vlm_score_;
-    j["vlm_delta"]        = p.vlm_delta_;
-    j["is_selected"]      = p.is_selected_;
-    j["is_accepted"]      = p.is_accepted_;
+    j["id"]                  = p.uuid_id_;
+    j["iteration_id"]        = p.iteration_id_;
+    j["session_id"]          = p.session_id_;
+    j["candidate_index"]     = p.candidate_index_;
+    j["variant_axis"]        = p.variant_axis_;
+    j["variant_value"]       = p.variant_value_;
+    j["variant_label"]       = p.variant_label_;
+    j["rig"]                 = p.rig_;
+    j["render_status"]       = p.render_status_;
+    j["render_ms"]           = p.render_ms_;
+    j["light_count"]         = p.light_count_;
+    j["metrics"]             = p.metrics_;
+    j["vlm_score"]           = p.vlm_score_;
+    j["vlm_delta"]           = p.vlm_delta_;
+    j["is_selected"]         = p.is_selected_;
+    j["is_accepted"]         = p.is_accepted_;
     j["accepted_session_id"] = p.accepted_session_id_;
-    j["preview_file_id"]  = p.preview_file_id_;
-    j["created_at"]       = p.created_at_;
+    j["preview_file_id"]     = p.preview_file_id_;
+    j["created_at"]          = p.created_at_;
   }
   friend void from_json(const nlohmann::json& j, ai_light_candidate& p) {
     if (j.contains("id")) j.at("id").get_to(p.uuid_id_);
@@ -282,8 +280,6 @@ struct DOODLE_CORE_API ai_light_candidate {
     if (j.contains("variant_value")) j.at("variant_value").get_to(p.variant_value_);
     if (j.contains("variant_label")) j.at("variant_label").get_to(p.variant_label_);
     if (j.contains("rig")) j.at("rig").get_to(p.rig_);
-    if (j.contains("render_png_path")) j.at("render_png_path").get_to(p.render_png_path_);
-    if (j.contains("render_exr_path")) j.at("render_exr_path").get_to(p.render_exr_path_);
     if (j.contains("render_status")) j.at("render_status").get_to(p.render_status_);
     if (j.contains("render_ms")) j.at("render_ms").get_to(p.render_ms_);
     if (j.contains("light_count")) j.at("light_count").get_to(p.light_count_);

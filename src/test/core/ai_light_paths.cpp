@@ -27,10 +27,12 @@ namespace {
 /// 免得把 Windows 盘符写进期望值。
 const FSys::path g_root{"test_root"};
 
-/// 固定的会话 / 参考图 / 候选 uuid：黄金路径要能手抄核对，不能用随机 uuid。
+/// 固定的会话 / 轮次 / 参考图 / 候选 uuid：黄金路径要能手抄核对，不能用随机 uuid。
 uuid fixed_uuid(const char* in_str) { return boost::uuids::string_generator{}(in_str); }
 
 const char* g_session_str = "c9f2b8c0-4a1d-4e3b-9f5c-7d6e0a2f3b8d";
+/// 轮次 uuid（批 7 起轮次目录用 uuid 而不是 it_001 序号）。
+const char* g_iter_str = "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b";
 
 kitsu_ctx_t make_ctx() {
   kitsu_ctx_t l_ctx{};
@@ -110,37 +112,51 @@ BOOST_AUTO_TEST_CASE(reference_files_are_named_by_their_own_uuid) {
 }
 
 // ---------------------------------------------------------------------------
-// 候选渲染：<会话>/it_001/<候选 uuid>.png|.exr
+// 候选渲染：<会话>/<轮次 uuid>/<候选 uuid>.png|.exr
 // ---------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(candidate_files_use_iteration_dir_and_their_own_uuid) {
   auto l_ctx           = make_ctx();
   const auto l_session = fixed_uuid(g_session_str);
+  const auto l_iter_id = fixed_uuid(g_iter_str);
   const auto l_cand    = fixed_uuid("abcdefab-1234-4567-89ab-cdefabcdefab");
 
-  const auto l_iter1   = l_ctx.get_ai_light_iteration_dir(l_session, 1);
-  BOOST_CHECK_EQUAL(l_iter1.generic_string(), "test_root/ai_light/c9f/2b8/c9f2b8c0-4a1d-4e3b-9f5c-7d6e0a2f3b8d/it_001");
+  // 目录名就是**轮次自己的 uuid**（批 7）：候选行自带 session_id_ 与 iteration_id_，
+  // 「候选 → 路径」于是是一次纯计算，不必回查轮次行拿序号。
+  const auto l_iter1 = l_ctx.get_ai_light_iteration_dir(l_session, l_iter_id);
+  BOOST_CHECK_EQUAL(
+      l_iter1.generic_string(),
+      "test_root/ai_light/c9f/2b8/c9f2b8c0-4a1d-4e3b-9f5c-7d6e0a2f3b8d/5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b"
+  );
+  // 轮次目录必须挂在本会话目录之下（不是与会话目录同级）。
+  BOOST_CHECK_EQUAL(l_iter1.parent_path(), l_ctx.get_ai_light_session_dir(l_session));
 
   // 同一个候选的两张图同名不同扩展名：显示空间 PNG 给前端，线性 EXR 留工程检查（§8）。
-  const auto l_png = l_ctx.get_ai_light_candidate_file(l_session, 1, l_cand, false);
-  const auto l_exr = l_ctx.get_ai_light_candidate_file(l_session, 1, l_cand, true);
+  const auto l_png = l_ctx.get_ai_light_candidate_file(l_session, l_iter_id, l_cand, false);
+  const auto l_exr = l_ctx.get_ai_light_candidate_file(l_session, l_iter_id, l_cand, true);
   BOOST_CHECK_EQUAL(l_png.parent_path(), l_iter1);
   BOOST_CHECK_EQUAL(l_png.filename().generic_string(), "abcdefab-1234-4567-89ab-cdefabcdefab.png");
   BOOST_CHECK_EQUAL(l_exr.filename().generic_string(), "abcdefab-1234-4567-89ab-cdefabcdefab.exr");
   // 默认参数就是不线性（PNG）—— 漏传时不能悄悄给出 EXR 路径。
-  BOOST_CHECK_EQUAL(l_ctx.get_ai_light_candidate_file(l_session, 1, l_cand), l_png);
+  BOOST_CHECK_EQUAL(l_ctx.get_ai_light_candidate_file(l_session, l_iter_id, l_cand), l_png);
 }
 
-BOOST_AUTO_TEST_CASE(iteration_dir_is_zero_padded_and_differs_per_round) {
+BOOST_AUTO_TEST_CASE(iteration_dir_is_named_by_the_iteration_uuid) {
   auto l_ctx           = make_ctx();
   const auto l_session = fixed_uuid(g_session_str);
+  const auto l_iter_a  = fixed_uuid(g_iter_str);
+  const auto l_iter_b  = fixed_uuid("00000000-1111-4222-8333-444444444444");
 
-  // 轮次序号补零到三位：目录名要能直接按字典序排序（it_002 < it_010）。
-  BOOST_CHECK_EQUAL(l_ctx.get_ai_light_iteration_dir(l_session, 12).filename().generic_string(), "it_012");
-  BOOST_CHECK_NE(l_ctx.get_ai_light_iteration_dir(l_session, 1), l_ctx.get_ai_light_iteration_dir(l_session, 2));
-  // 候选目录属于会话目录，不跨会话串（两个会话的第 1 轮不能撞在一起）。
+  // 每一轮一个目录，名字就是它的 uuid（旧实现是 it_001 这种补零序号 —— 序号要求路径
+  // 反查「轮次表里那个可变的 iteration_ 字段」，uuid 则自带在候选行上）。
+  BOOST_CHECK_EQUAL(l_ctx.get_ai_light_iteration_dir(l_session, l_iter_a).filename().generic_string(), g_iter_str);
   BOOST_CHECK_NE(
-      l_ctx.get_ai_light_iteration_dir(l_session, 1),
-      l_ctx.get_ai_light_iteration_dir(fixed_uuid("00000000-1111-4222-8333-444444444444"), 1)
+      l_ctx.get_ai_light_iteration_dir(l_session, l_iter_a), l_ctx.get_ai_light_iteration_dir(l_session, l_iter_b)
+  );
+  // 候选目录属于会话目录，不跨会话串（两个会话的同一轮次 uuid 相同也不能撞在一起，
+  // —— uuid 理论上不会相同，但这里钉的是「会话目录这一级必须参与」）。
+  BOOST_CHECK_NE(
+      l_ctx.get_ai_light_iteration_dir(l_session, l_iter_a),
+      l_ctx.get_ai_light_iteration_dir(fixed_uuid("00000000-1111-4222-8333-444444444444"), l_iter_a)
   );
 }
 
@@ -170,6 +186,7 @@ BOOST_AUTO_TEST_CASE(backup_dir_is_under_the_same_root_as_the_source) {
 BOOST_AUTO_TEST_CASE(all_ai_light_artifacts_share_one_session_subtree) {
   auto l_ctx               = make_ctx();
   const auto l_session     = fixed_uuid(g_session_str);
+  const auto l_iter_id     = fixed_uuid(g_iter_str);
   const auto l_ref         = fixed_uuid("1a2b3c4d-5e6f-4a1b-8c2d-3e4f5a6b7c8d");
   const auto l_cand        = fixed_uuid("abcdefab-1234-4567-89ab-cdefabcdefab");
   const auto l_session_dir = l_ctx.get_ai_light_session_dir(l_session);
@@ -178,8 +195,8 @@ BOOST_AUTO_TEST_CASE(all_ai_light_artifacts_share_one_session_subtree) {
   // 不需要知道里面有哪些文件（旧布局做不到 —— 参考图根本不在会话目录里）。
   for (const auto& l_path :
        {l_ctx.get_ai_light_reference_file(l_session, l_ref),
-        l_ctx.get_ai_light_candidate_file(l_session, 1, l_cand, false),
-        l_ctx.get_ai_light_candidate_file(l_session, 1, l_cand, true)}) {
+        l_ctx.get_ai_light_candidate_file(l_session, l_iter_id, l_cand, false),
+        l_ctx.get_ai_light_candidate_file(l_session, l_iter_id, l_cand, true)}) {
     BOOST_CHECK(l_path.generic_string().starts_with(l_session_dir.generic_string() + "/"));
   }
 }

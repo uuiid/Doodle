@@ -140,16 +140,16 @@ preview_file build_accepted_preview_file(
     sqlite_database& in_sql, const ai_light_session& in_session, const ai_light_candidate& in_candidate,
     const uuid& in_person_id
 ) {
+  // 产物路径是现算的（批 7 / D44），所以这里只判「算出来的那张图在不在」；
+  // 库里没有「登记过路径」这种中间状态，也就不需要「还没渲染」这条分支 —— 没渲染完的候选
+  // 走到这里时文件本来就不在，下面那条 400 的消息已经把话说清楚了。
+  const FSys::path l_png_path = candidate_render_path(g_ctx().get<kitsu_ctx_t>(), in_candidate, false);
   DOODLE_CHICK_HTTP(
-      !in_candidate.render_png_path_.empty(), bad_request, "候选 {} 还没有渲染产物，无法定稿",
-      in_candidate.uuid_id_
-  );
-  DOODLE_CHICK_HTTP(
-      FSys::exists(in_candidate.render_png_path_), bad_request,
-      "候选 {} 的渲染图不存在（{}），无法定稿", in_candidate.uuid_id_, in_candidate.render_png_path_.generic_string()
+      FSys::exists(l_png_path), bad_request,
+      "候选 {} 的渲染图不存在（{}），无法定稿", in_candidate.uuid_id_, l_png_path.generic_string()
   );
 
-  auto l_image = cv::imread(in_candidate.render_png_path_.generic_string());
+  auto l_image = cv::imread(l_png_path.generic_string());
   DOODLE_CHICK_HTTP(
       !l_image.empty(), internal_server_error, "候选 {} 的渲染图无法读取",
       in_candidate.uuid_id_
@@ -474,12 +474,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_image_route, get) {
       l_cand.render_status_ != candidate_render_status::failed, not_found,
       "候选 {} 渲染失败", l_cand.uuid_id_
   );
+  // 路径现算（批 7 / D44）：候选行自带三个 uuid，不需要任何回查。
+  const FSys::path l_png_path = candidate_render_path(g_ctx().get<kitsu_ctx_t>(), l_cand, false);
   DOODLE_CHICK(
-      FSys::exists(l_cand.render_png_path_), "候选渲染图不存在 文件 {}", l_cand.render_png_path_.generic_string()
+      FSys::exists(l_png_path), "候选渲染图不存在 文件 {}", l_png_path.generic_string()
   );
 
   // 只发 PNG（显示空间）。EXR 是线性数据、体积大且浏览器渲染不了，绝不下发。
-  co_return in_handle->make_msg(l_cand.render_png_path_, kitsu::mime_type(l_cand.render_png_path_.extension()));
+  co_return in_handle->make_msg(l_png_path, kitsu::mime_type(l_png_path.extension()));
 }
 
 // ===========================================================================
@@ -805,8 +807,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
 
   // 形状错误在这里抛 502（不再往下走）；语义问题交给 apply_render_report 裁决：
   // 整轮失败 → 只写会话的 failure_reason_（不是终态）；至少一张渲染成功 → 落库并转 awaiting_judgement。
+  // ctx 传进去只为一件事：算产物落点（批 7 / D44 —— 路径不落库了，D41 的存在性判定得现算）。
   auto l_report = parse_round_render_report(l_json);
-  co_await apply_render_report(l_sql, task_id_, l_report);
+  co_await apply_render_report(l_sql, g_ctx().get<kitsu_ctx_t>(), task_id_, l_report);
 
   // 回执带上轮次与两条状态，工作机据此写日志。人工判断闸门不在这里。
   nlohmann::json l_out{{"task_id", task_id_}};
@@ -822,7 +825,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
 }
 
 // ===========================================================================
-// 工作机上传候选产物（方案 §15.13 批 6，D38~D41）
+// 工作机上传候选产物（方案 §15.13 批 6，D38~D41；落点计算批 7 / D44）
 // ===========================================================================
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
@@ -840,8 +843,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
   );
 
   // 这里刻意**不**复用 up_file_base 那套（root_path_ / gen_file_path / move_file）：
-  // 那套是「按项目+任务类型派生目录」，而本路由的落点不是派生的 —— 它就是候选行里
-  // 已经写好的那一个绝对路径。硬套过来要么多一层无意义的目录推导，要么得把
+  // 那套是「按项目+任务类型派生目录」，它的输入是项目与任务；本路由的落点由**候选行**决定
+  // （candidate_render_path，批 7 / D44）。硬套过来要么多一层无意义的目录推导，要么得把
   // move_file 的 rename 换成跨卷安全的复制（http 缓存根与服务端数据根常常不同盘），
   // 两件都是在给一条直路加弯。
   auto l_sql = get_sqlite_database();
@@ -856,13 +859,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
       l_it.iteration_
   );
 
-  // 落点取库里的值（D27/D40）：请求里根本没有路径信息，工作机也就伪造不了落点，
-  // 最多只能往「服务端已经算好的那个文件名」里灌字节。
-  const bool l_linear = role_ == ai_light_candidate_file_role::render_linear;
-  const FSys::path l_dst = l_linear ? l_cand.render_exr_path_ : l_cand.render_png_path_;
-  DOODLE_CHICK_HTTP(
-      !l_dst.empty(), bad_request, "候选 {} 没有登记 {} 的落库路径", id_, l_linear ? "EXR" : "PNG"
-  );
+  // 落点现算（D27/D40/D44）：请求里根本没有路径信息，工作机伪造不了落点，
+  // 最多只能往「服务端按命名规则算出来的那个文件名」里灌字节。
+  //
+  // 落点不是「库里存的那一个」—— 库里没有路径列了（批 7 / D44），看到的这条路径
+  // 与取图路由、定稿路由、D41 存在性判定用的是同一个函数（candidate_render_path）。
+  const bool l_linear   = role_ == ai_light_candidate_file_role::render_linear;
+  const FSys::path l_dst = candidate_render_path(g_ctx().get<kitsu_ctx_t>(), l_cand, l_linear);
 
   // 请求体已经被框架流到临时文件（save_bode_file → cache_root("http")/<uuid><ext>），
   // 这里只是把它搬到落点。用 copy + remove 而不是 up_file_base 那套 rename：

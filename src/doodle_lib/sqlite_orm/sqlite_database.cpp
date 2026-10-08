@@ -489,8 +489,7 @@ void sqlite_storage::regs_all() {
       .add_column("variant_value", &ai_light::ai_light_candidate::variant_value_)
       .add_column("variant_label", &ai_light::ai_light_candidate::variant_label_)
       .add_column("rig", &ai_light::ai_light_candidate::rig_)
-      .add_column("render_png_path", &ai_light::ai_light_candidate::render_png_path_)
-      .add_column("render_exr_path", &ai_light::ai_light_candidate::render_exr_path_)
+      // 产物路径**没有列**（批 7 / D44）：由 session_id_ / iteration_id_ / uuid_id_ 现算。
       .add_column("render_status", &ai_light::ai_light_candidate::render_status_)
       .add_column("render_ms", &ai_light::ai_light_candidate::render_ms_)
       .add_column("light_count", &ai_light::ai_light_candidate::light_count_)

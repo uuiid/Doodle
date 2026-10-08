@@ -18,13 +18,17 @@
 //   3. 归属校验 —— 任务号查不到轮次 404；候选不属本轮 400。后者是安全边界：一个坏回传
 //      不能改到别的会话的行上。
 //
-// 为什么专门钉一条「路径不变」：回传报文里**不带**产物路径（D27），服务端只能用自己库里
-// 那份（派发时就写好的）。这里断言渲染完成后候选行的路径一字不变，就是那条规则的回归钉子。
+// 为什么专门钉一条「路径与回传无关」：回传报文里**不带**产物路径（D27），服务端只用
+// 命名规则现算（D44）。这些用例断言渲染完成后候选项的三个 uuid 一字不变，因而算出来的
+// 路径也一字不变 —— 那就是那条规则的回归钉子。
 //
 //   4. 产物存在性（D41，批 6）—— 工作机的上传是**独立一步**，所以「报告说 rendered」
-//      不等于「那张图取得到」。落地时逐张查 PNG 在不在：不在就降级 failed；
+//      不等于「那张图取得到」。落地时逐张按命名规则算出 PNG 再查在不在：不在就降级 failed；
 //      全都不在就走失败出口（否则美术会对着取不到的图点「选第 3 张」）。
-//      EXR 是可选的（D42）：文件不在只清空那条库路径，不降级、不阻断本轮。
+//      EXR 是可选的（D42）：文件不在只记一条 WARN，不降级、不阻断本轮。
+//
+//   5. 路径不落库（D44，批 7）—— 候选行上**没有**路径列，也没有那两个 JSON 键：
+//      路径 = candidate_render_path(ctx, 候选行, linear)，纯函数，吃候选行自带的三个 uuid。
 //
 // 为什么不经过 HTTP 层：路由只是 get_json + parse + apply 三步，语义全在这两个函数里；
 // 单测直接调它们能拿到确定的错误码。JWT / 任务类型这些代理层的东西只有真机能验，
@@ -88,7 +92,7 @@ void remove_db(const FSys::path& in_path) {
 /// 用例名当临时库标签（夹具由框架在用例体之前默认构造，拿不到外面写的 tag）
 std::string current_case_tag() { return boost::unit_test::framework::current_test_case().p_name; }
 
-/// 写一个占位文件。D41 之后「候选可判断」是靠 `FSys::exists(render_png_path_)` 判的，
+/// 写一个占位文件。D41 之后「候选可判断」是靠 `FSys::exists(candidate_render_path(...))` 判的，
 /// 所以夹具必须造**真文件** —— 内容无关紧要，在不在才是全部语义。
 void write_probe_file(const FSys::path& in_path) {
   FSys::create_directories(in_path.parent_path());
@@ -102,7 +106,8 @@ void write_probe_file(const FSys::path& in_path) {
 /// 而这几列都是 NOT NULL，所以构造期间关掉外键（与 ai_light_state.cpp 一致），析构时恢复。
 ///
 /// 与 ai_light_state.cpp 的那份是同一个形状，但只留回传用例要的部分：
-/// 候选行带 render_png_path_（「路径只能来自库」那条用例靠它）。
+/// 候选行只带三个 uuid，产物路径由 candidate_render_path 现算（D44）；
+/// 服务端数据根用 media_dir_，于是产物都落在临时目录里，析构时一并清掉。
 struct fixture_t : doodle_test::coro_fixture_t {
   /// app_base 必须是第一个成员：core_set::get_set() 之类的单例要等它构造之后才可用，
   /// 而夹具的构造发生在用例体之前。它最后析构，保证库先拆掉。
@@ -117,6 +122,9 @@ struct fixture_t : doodle_test::coro_fixture_t {
   FSys::path media_dir_{
       FSys::temp_directory_path() / fmt::format("doodle_test_ai_light_dispatch_media_{}", current_case_tag())
   };
+  /// 服务端数据根（kitsu_ctx_t::root_）也挂在 media_dir_ 下：产物路径于是全落在临时目录里，
+  /// 析构时随 media_dir_ 一起清掉。注意不能叫 ctx_ —— 基类的 ctx_ 是 asio 的 io_context。
+  http::kitsu_ctx_t server_ctx_{};
   bool fk_was_on_{true};
   bool opened_{false};
 
@@ -131,6 +139,10 @@ struct fixture_t : doodle_test::coro_fixture_t {
     storage_.upgrade();
     orm_ = storage_.create_session();
     sql_ = std::make_unique<sqlite_database>(boost::asio::make_strand(ctx_), orm_);
+
+    // 服务端数据根 <临时目录>/…_media_<用例名>/server_root：与生产同形状（root_/ai_light/…），
+    // 只是不在 D: 上。
+    server_ctx_.root_ = media_dir_ / "server_root";
 
     fk_was_on_ = orm_.pragma().foreign_keys();
     orm_.pragma().foreign_keys(false);
@@ -193,31 +205,38 @@ struct fixture_t : doodle_test::coro_fixture_t {
       // 派发时是 pending，渲染完成后服务端回填成 rendered
       l_cand.render_status_   = candidate_render_status::pending;
       l_cand.light_count_     = 0;
-      // 产物路径在派发那一轮就写进库（D27），回传只改状态与诊断数字。夹具照这个形状
-      // 造**真文件**：D41 落地后，指向不存在文件的 rendered 会被服务端降级成 failed，
-      // 那是几条专门用例要构造的场景，不能混进默认形状里。
-      l_cand.render_png_path_ = media_dir_ / fmt::format("cand_{:02}.png", l_i);
-      l_cand.render_exr_path_ = media_dir_ / fmt::format("cand_{:02}.exr", l_i);
-      write_probe_file(l_cand.render_png_path_);
-      write_probe_file(l_cand.render_exr_path_);
       insert(orm_).into<ai_light_candidate>().values(l_cand)();
       candidates_.push_back(l_cand);
+      // 库里没有路径可写（D44）：路径由候选行现算，所以夹具按**同一个函数**把真文件造在
+      // 算出来的位置上。D41 落地后，指向不存在文件的 rendered 会被服务端降级成 failed，
+      // 那是几条专门用例要构造的场景，不能混进默认形状里。
+      write_probe_file(candidate_png(candidates_.size() - 1));
+      write_probe_file(candidate_exr(candidates_.size() - 1));
     }
   }
 
-  /// 删掉某个候选的两份产物文件（库里那两列不动）—— 用来构造「报告说 rendered、图却不在」。
-  void delete_candidate_files(std::size_t in_index) {
-    std::error_code l_ec{};
-    FSys::remove(candidates_.at(in_index).render_png_path_, l_ec);
-    FSys::remove(candidates_.at(in_index).render_exr_path_, l_ec);
-    BOOST_REQUIRE(!FSys::exists(candidates_.at(in_index).render_png_path_));
+  /// 服务端认为候选产物**应该**在的地方（D44）：与生产代码同一个函数，测试里不自己拼字符串。
+  FSys::path candidate_png(std::size_t in_index) const {
+    return candidate_render_path(server_ctx_, candidates_.at(in_index), false);
+  }
+  FSys::path candidate_exr(std::size_t in_index) const {
+    return candidate_render_path(server_ctx_, candidates_.at(in_index), true);
   }
 
-  /// 只删 EXR：PNG 仍在，用来验证「可选产物缺了不降级、只清空库路径」。
+  /// 删掉某个候选的两份产物文件 —— 用来构造「报告说 rendered、图却不在」。
+  void delete_candidate_files(std::size_t in_index) {
+    std::error_code l_ec{};
+    FSys::remove(candidate_png(in_index), l_ec);
+    FSys::remove(candidate_exr(in_index), l_ec);
+    BOOST_REQUIRE(!FSys::exists(candidate_png(in_index)));
+  }
+
+  /// 只删 EXR：PNG 仍在，用来验证「可选产物缺了不降级」（D42）。
   void delete_candidate_exr(std::size_t in_index) {
     std::error_code l_ec{};
-    FSys::remove(candidates_.at(in_index).render_exr_path_, l_ec);
-    BOOST_REQUIRE(!FSys::exists(candidates_.at(in_index).render_exr_path_));
+    FSys::remove(candidate_exr(in_index), l_ec);
+    BOOST_REQUIRE(!FSys::exists(candidate_exr(in_index)));
+    BOOST_REQUIRE(FSys::exists(candidate_png(in_index)));
   }
 
   ai_light_session reload_session() { return sql_->get_by_uuid<ai_light_session>(session_.uuid_id_); }
@@ -390,7 +409,7 @@ BOOST_FIXTURE_TEST_CASE(parse_drops_broken_metrics_only, fixture_t) {
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_advances_iteration_and_session, fixture_t) {
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
 
-  co_await apply_render_report(*l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2)));
+  co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2)));
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
@@ -411,18 +430,23 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_advances_iteration_and_session, fixtu
   }
 }
 
-DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_keeps_paths_from_db, fixture_t) {
+DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_keeps_paths_derivable_from_the_row, fixture_t) {
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
 
-  co_await apply_render_report(*l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 1)));
+  co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 1)));
 
-  // 回传报文里不带路径（D27）：产物路径只能来自派发那一轮写进库里的那份。
-  // 这里断言它一字不变 —— 一旦有人又拿回传内容去改路径，这条立刻红。
+  // 回传报文里不带路径（D27），候选行上也没有路径列（D44）：路径是候选行三个 uuid 的纯函数。
+  // 所以这里的钉子分两半 —— 行本身（uuid 三件套）没被回传改写，且算出来的仍是夹具造真文件
+  // 的那个位置。一旦有人拿回传内容去动 uuid / 改命名规则，这条立刻红。
   const auto l_cand = l_fx.reload_candidate(0);
-  BOOST_TEST(l_cand.render_png_path_ == l_fx.candidates_.at(0).render_png_path_);
-  // EXR 文件在，那条路径也原样保留（不存在才会被清空，见 D41 那几条用例）
-  BOOST_TEST(l_cand.render_exr_path_ == l_fx.candidates_.at(0).render_exr_path_);
-  BOOST_TEST(!l_cand.render_exr_path_.empty());
+  BOOST_TEST(l_cand.uuid_id_ == l_fx.candidates_.at(0).uuid_id_);
+  BOOST_TEST(l_cand.iteration_id_ == l_fx.candidates_.at(0).iteration_id_);
+  BOOST_TEST(l_cand.session_id_ == l_fx.candidates_.at(0).session_id_);
+  BOOST_TEST(candidate_render_path(l_fx.server_ctx_, l_cand, false) == l_fx.candidate_png(0));
+  BOOST_TEST(candidate_render_path(l_fx.server_ctx_, l_cand, true) == l_fx.candidate_exr(0));
+  // 夹具造的是真文件，所以这两条同时说明「算出来的落点就是文件所在的地方」
+  BOOST_TEST(FSys::exists(candidate_render_path(l_fx.server_ctx_, l_cand, false)));
+  BOOST_TEST(FSys::exists(candidate_render_path(l_fx.server_ctx_, l_cand, true)));
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_partial_failure_still_advances, fixture_t) {
@@ -433,7 +457,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_partial_failure_still_advances, fixtu
   auto l_json = ok_report(l_fx, 2);
   l_json["candidates"].at(1)["status"] = "failed";
 
-  co_await apply_render_report(*l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
+  co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
@@ -452,7 +476,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_error_without_rendered_writes_failure
   l_json["candidates"].at(1)["status"] = "failed";
   l_json["error"]                      = "UE 启动失败：DoodleLighting commandlet 未找到";
 
-  co_await apply_render_report(*l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
+  co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
@@ -473,7 +497,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_failed_writes_failure_reason, fix
   auto l_json = ok_report(l_fx, 3);
   for (auto& l_c : l_json["candidates"]) l_c["status"] = "failed";
 
-  co_await apply_render_report(*l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
+  co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
 
   const auto l_session = l_fx.reload_session();
   BOOST_TEST(l_session.failure_reason_ == std::string{"轮次 1 的 3 个候选全部渲染失败"});
@@ -497,7 +521,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_unknown_task, fixture_t) {
   // 真调用一次，确认未知任务号确实抛 404（而不是把哪一行悄悄改坏）
   bool l_threw = false;
   try {
-    co_await apply_render_report(*l_fx.sql_, core_set::get_set().get_uuid(), parse_round_render_report(ok_report(l_fx, 1)));
+    co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, core_set::get_set().get_uuid(), parse_round_render_report(ok_report(l_fx, 1)));
   } catch (const doodle_error& in_err) {
     l_threw = true;
     BOOST_TEST(in_err.code_status_() == boost::beast::http::status::not_found);
@@ -514,7 +538,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_candidate_from_another_round,
 
   bool l_threw = false;
   try {
-    co_await apply_render_report(*l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
+    co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
   } catch (const doodle_error& in_err) {
     l_threw = true;
     BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
@@ -532,7 +556,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_judged_iteration, fixture_t) 
 
   bool l_threw = false;
   try {
-    co_await apply_render_report(*l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 1)));
+    co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 1)));
   } catch (const doodle_error& in_err) {
     l_threw = true;
     BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
@@ -588,7 +612,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_missing_png_only_for_that_
 
   // 三条都报 rendered，但第 2 条的产物文件不在
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 3))
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 3))
   );
 
   // 其余候选照常推进：一张图传丢了不该让整轮作废（§7.5 第 9 条的候选级隔离）
@@ -601,8 +625,10 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_missing_png_only_for_that_
   // 声称 rendered 但图不在 → 降级 failed（留在库里的是「这张不可选」，不是一个 404 链接）
   BOOST_TEST(en(l_fx.reload_candidate(1).render_status_) == en(candidate_render_status::failed));
   BOOST_TEST(en(l_fx.reload_candidate(2).render_status_) == en(candidate_render_status::rendered));
-  // 路径本身不动：它是派发时就登记好的「服务端应有产物的地方」，不是上传结果
-  BOOST_TEST(l_fx.reload_candidate(1).render_png_path_ == l_fx.candidates_.at(1).render_png_path_);
+  // 路径本身不动：它是「服务端应有产物的地方」（按命名规则现算，D44），不是上传结果
+  const auto l_cand1 = l_fx.reload_candidate(1);
+  BOOST_TEST(candidate_render_path(l_fx.server_ctx_, l_cand1, false) == l_fx.candidate_png(1));
+  BOOST_TEST(!FSys::exists(candidate_render_path(l_fx.server_ctx_, l_cand1, false)));
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_png_missing_writes_failure_reason, fixture_t) {
@@ -613,7 +639,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_png_missing_writes_failure_reason
   // 全部「渲染成功」但产物一张都不在：这批回传在语义上等于什么都没渲出来，
   // 必须走失败出口 —— 推到 awaiting_judgement 就是让美术看 6 个 404。
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2))
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2))
   );
 
   const auto l_it      = l_fx.reload_iteration();
@@ -625,12 +651,12 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_png_missing_writes_failure_reason
   BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
 }
 
-DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_clears_missing_exr_path, fixture_t) {
+DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_missing_exr_does_not_block, fixture_t) {
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
   l_fx.delete_candidate_exr(0);
 
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2))
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2))
   );
 
   // EXR 是可选产物（D42）：缺了不降级、不阻断本轮
@@ -639,13 +665,17 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_clears_missing_exr_path, fixture_t) {
   BOOST_TEST(l_fx.reload_session().failure_reason_.empty());
 
   BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::rendered));
-  BOOST_TEST(l_fx.reload_candidate(0).render_png_path_ == l_fx.candidates_.at(0).render_png_path_);
-  // ……但库里那条指向不存在文件的记录要清掉：留着的唯一效果是让每个读它的人自己判存在
-  BOOST_TEST(l_fx.reload_candidate(0).render_exr_path_.empty());
+  BOOST_TEST(candidate_render_path(l_fx.server_ctx_, l_fx.reload_candidate(0), false) == l_fx.candidate_png(0));
 
-  // 旁边那条 EXR 文件在，路径原样保留 —— 清空是「文件不在」触发的，不是无条件清空
-  BOOST_TEST(l_fx.reload_candidate(1).render_exr_path_ == l_fx.candidates_.at(1).render_exr_path_);
-  BOOST_TEST(!l_fx.reload_candidate(1).render_exr_path_.empty());
+  // 库里没有 EXR 记录可清（D44）—— 那条路径本来就是现算的，所以这里钉的是：缺 EXR 之后
+  // 候选行**一个字段都没被这条回传改动**，只有 render_status_ 等诊断数字按常规落库。
+  const auto l_cand0 = l_fx.reload_candidate(0);
+  BOOST_TEST(l_cand0.uuid_id_ == l_fx.candidates_.at(0).uuid_id_);
+  BOOST_TEST(l_cand0.iteration_id_ == l_fx.candidates_.at(0).iteration_id_);
+  // 旁边的 EXR 文件在，算出来的路径也指向真文件 —— 「缺 EXR 才有 WARN」的另一半对照
+  BOOST_TEST(FSys::exists(candidate_render_path(l_fx.server_ctx_, l_fx.reload_candidate(1), true)));
+  // 0 号的 EXR 文件确实没了：上面那条「不降级」不是因为文件其实还在
+  BOOST_TEST(!FSys::exists(candidate_render_path(l_fx.server_ctx_, l_cand0, true)));
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_reported_failure_plus_downgrade_leaves_nothing, fixture_t) {
@@ -658,7 +688,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_reported_failure_plus_downgrade_leave
   auto l_json = ok_report(l_fx, 3);
   l_json["candidates"].at(1)["status"] = "failed";
 
-  co_await apply_render_report(*l_fx.sql_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
+  co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
@@ -668,6 +698,56 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_reported_failure_plus_downgrade_leave
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::rendering));
   // 降级只发生在内存里的候选副本上，失败出口不写候选行（D28）——库里仍是 pending
   BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::pending));
+}
+
+// ===========================================================================
+// 第五段：路径派生（D44，批 7）
+//
+// 候选行上不再有路径列，也不再有那两个 JSON 键：路径 = candidate_render_path(ctx, 行, linear)，
+// 吃的是行自带的 session_id_ / iteration_id_ / uuid_id_ 三个 uuid。这一段盯的就是「它确实是
+// 纯函数」—— 同一行算两次同一个结果、不同行不撞、只有 root_ 变结果才跟着变。
+// ===========================================================================
+
+// 纯同步用例：体里一个 co_await 都没有，用 CORO 宏展开出的函数不是协程 → C4716（§15.14 坑 37）
+BOOST_FIXTURE_TEST_CASE(candidate_render_path_is_a_pure_function_of_the_row, fixture_t) {
+  auto& l_fx = *this;
+  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 3);
+
+  const auto l_c0 = l_fx.reload_candidate(0);
+  const auto l_c1 = l_fx.reload_candidate(1);
+
+  // ① 同一行算两次一样（纯函数），PNG/EXR 同名不同扩展名
+  BOOST_TEST(candidate_render_path(l_fx.server_ctx_, l_c0, false) == candidate_render_path(l_fx.server_ctx_, l_c0));
+  BOOST_TEST(
+      candidate_render_path(l_fx.server_ctx_, l_c0, false).stem() ==
+      candidate_render_path(l_fx.server_ctx_, l_c0, true).stem()
+  );
+  BOOST_TEST(candidate_render_path(l_fx.server_ctx_, l_c0, false).extension().generic_string() == ".png");
+  BOOST_TEST(candidate_render_path(l_fx.server_ctx_, l_c0, true).extension().generic_string() == ".exr");
+
+  // ② 文件名是候选 uuid；父目录两级分别是「轮次 uuid」与「会话目录」
+  BOOST_TEST(
+      candidate_render_path(l_fx.server_ctx_, l_c0, false).filename().generic_string() ==
+      fmt::to_string(l_c0.uuid_id_) + ".png"
+  );
+  BOOST_TEST(
+      candidate_render_path(l_fx.server_ctx_, l_c0, false).parent_path().filename().generic_string() ==
+      fmt::to_string(l_c0.iteration_id_)
+  );
+  BOOST_TEST(
+      candidate_render_path(l_fx.server_ctx_, l_c0, false).parent_path().parent_path() ==
+      l_fx.server_ctx_.get_ai_light_session_dir(l_c0.session_id_)
+  );
+
+  // ③ 同一轮的不同候选不撞（文件名带各自 uuid），根也参与：换个 root_ 结果整体平移
+  BOOST_TEST(candidate_render_path(l_fx.server_ctx_, l_c0, false) != candidate_render_path(l_fx.server_ctx_, l_c1, false));
+  http::kitsu_ctx_t l_other{};
+  l_other.root_ = l_fx.media_dir_ / "another_root";
+  BOOST_TEST(candidate_render_path(l_other, l_c0, false) != candidate_render_path(l_fx.server_ctx_, l_c0, false));
+  BOOST_TEST(
+      candidate_render_path(l_other, l_c0, false).lexically_relative(l_other.root_) ==
+      candidate_render_path(l_fx.server_ctx_, l_c0, false).lexically_relative(l_fx.server_ctx_.root_)
+  );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
