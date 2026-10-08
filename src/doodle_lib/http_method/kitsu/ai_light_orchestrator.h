@@ -33,6 +33,7 @@
 #pragma once
 
 #include <doodle_core/metadata/ai_light/preset.h>
+#include <doodle_core/metadata/ai_light/task_payload.h>
 #include <doodle_core/metadata/ai_light/view.h>
 #include <doodle_core/metadata/preview_file.h>
 
@@ -125,6 +126,40 @@ DOODLELIB_API boost::asio::awaitable<void> apply_judgement(
 /// in_candidates 是回传的候选（含 render_png_path_ / render_ms_ / light_count_ / metrics_）。
 DOODLELIB_API boost::asio::awaitable<void> mark_iteration_rendered(
     sqlite_database& in_sql, const uuid& in_server_task_info_id, const std::vector<ai_light_candidate>& in_candidates
+);
+
+/// 解析工作机回传的整轮结果（§15.12 的 wire 契约，见 ai_light/task_payload.h）。
+///
+/// 严格/宽松的分界（决策 D26）：
+///   * `candidates`、每个元素的 `candidate_id` / `status` 是**严格**字段 —— 缺了或值不认识
+///     就抛 `bad_gateway`。理由：状态不认识时无法判断「这张图能不能给美术看」，
+///     猜一个默认值等于把回传错误变成看不出来的偏移。
+///   * `candidate_index` / `render_ms` / `light_count` / `metrics` 是**宽松**字段 ——
+///     缺失取默认、形状不符丢弃（+ WARN）。它们是数值与诊断数据，丢一个不该让整轮的
+///     图白渲染。
+///
+/// 纯函数（不落库、不读服务端状态），单测直接喂 JSON 即可。
+DOODLELIB_API round_render_report_t parse_round_render_report(const nlohmann::json& in_json);
+
+/// 处理一次工作机回传：解析结果 → 落候选行 → 推进轮次/会话状态。
+///
+/// 两条出口：
+///   * 至少一张图 `rendered` → 组装候选（**产物路径由服务端重算**，D27：不信任回传入参）
+///     后交给 `mark_iteration_rendered()`，轮次转 `awaiting_judgement`、起算 4 小时；
+///   * 整轮失败（`error_` 非空，或没有任何 `rendered`）→ 转 `mark_iteration_failed()`，
+///     **不动状态机状态、不动候选行**，只把原因写进 `session.failure_reason_`（D28）。
+///     失败不是终态：美术随时可以再点一次 `/iterate`。
+///
+/// 抛出的错误（都来自解析或归属校验，属「回传不可用」）：任务号查不到轮次 → 404；
+/// 候选不属于该轮次 → 400。
+DOODLELIB_API boost::asio::awaitable<void> apply_render_report(
+    sqlite_database& in_sql, const uuid& in_server_task_info_id, const round_render_report_t& in_report
+);
+
+/// 整轮失败收尾：只写 `session.failure_reason_`（截断到 512），状态与候选行一概不动（D28）。
+/// 任务号查不到轮次抛 404。
+DOODLELIB_API boost::asio::awaitable<void> mark_iteration_failed(
+    sqlite_database& in_sql, const uuid& in_server_task_info_id, const std::string& in_reason
 );
 
 /// 组装会话详情读模型。会话不存在时返回 nullopt。

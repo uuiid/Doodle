@@ -80,13 +80,14 @@ using namespace std::chrono_literals;
 /// 但 boost 的诊断信息可能带整条调用栈，不截断会把这列撑成日志垃圾场。
 constexpr std::size_t g_failure_reason_max = 512;
 
-std::string brief_error(const std::exception& in_err) {
-  std::string l_what{in_err.what()};
-  if (l_what.size() <= g_failure_reason_max) return l_what;
-  l_what.resize(g_failure_reason_max);
-  l_what += "...(已截断)";
-  return l_what;
+std::string brief_text(std::string in_what) {
+  if (in_what.size() <= g_failure_reason_max) return in_what;
+  in_what.resize(g_failure_reason_max);
+  in_what += "...(已截断)";
+  return in_what;
 }
+
+std::string brief_error(const std::exception& in_err) { return brief_text(in_err.what()); }
 
 /// 会话的参考图统计是否够用。只要有一张图分析成功就认为可用。
 ///
@@ -711,6 +712,177 @@ boost::asio::awaitable<void> mark_iteration_rendered(
       g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮渲染完成，{} 个候选待判断（整轮 {} ms）",
       l_session.uuid_id_, l_it->iteration_, in_candidates.size(), l_total_ms
   );
+  co_return;
+}
+
+// ===========================================================================
+// 状态机：工作机渲染回传（§15.12）
+// ===========================================================================
+
+namespace {
+
+/// 回传载荷的接缝名。错误消息与诊断日志共用同一个字符串，免得两侧各写一份漂移。
+constexpr std::string_view g_render_report_seam{"round_render_report"};
+
+}  // namespace
+
+round_render_report_t parse_round_render_report(const nlohmann::json& in_json) {
+  round_render_report_t l_ret{};
+  l_ret.error_ = json_val::opt_string(in_json, "error").value_or("");
+
+  const auto l_candidates = json_val::require_array(in_json, g_render_report_seam, "candidates");
+  l_ret.candidates_.reserve(l_candidates.size());
+
+  for (std::size_t i = 0; i < l_candidates.size(); ++i) {
+    const auto l_base = fmt::format("candidates[{}]", i);
+
+    // 数组元素必须是对象。带上下标路径再报错，比「解析失败」四个字有用得多。
+    const auto* l_item = json_val::json_at_path(in_json, l_base);
+    DOODLE_CHICK_HTTP(
+        l_item != nullptr && l_item->is_object(), bad_gateway, "{}：字段 {} 缺失或类型不符合（期望对象）",
+        g_render_report_seam, l_base
+    );
+
+    candidate_render_report_t l_cand{};
+
+    // candidate_id 是严格字段：它对不上任何既存候选时整轮回传都没意义（apply_render_report 会拒）。
+    //
+    // 手写「取 + 转」的理由：校验层**没有** uuid 读取器 —— 模型输出里从不出现 uuid
+    // （候选身份一律由服务端钉），所以当初没有造。这里把 nlohmann 的解析异常翻成
+    // 同一套 bad_gateway 措辞，好让「回传坏了」在美术那边只有一种说法。
+    const auto l_id_path = l_base + ".candidate_id";
+    const auto* l_id     = json_val::json_at_path(in_json, l_id_path);
+    DOODLE_CHICK_HTTP(
+        l_id != nullptr && l_id->is_string(), bad_gateway, "{}：字段 {} 缺失或类型不符合（期望 uuid 字符串）",
+        g_render_report_seam, l_id_path
+    );
+    try {
+      l_cand.candidate_id_ = l_id->get<uuid>();
+    } catch (const std::exception& in_err) {
+      DOODLE_CHICK_HTTP(
+          false, bad_gateway, "{}：字段 {} 不是合法的 uuid（{}）", g_render_report_seam, l_id_path, in_err.what()
+      );
+    }
+
+    l_cand.status_ =
+        json_val::require_enum<candidate_render_status>(in_json, g_render_report_seam, l_base + ".status");
+
+    // 以下四个是宽松字段（D26：缺失取默认、形状不符丢弃）：
+    //   * candidate_index 缺失时按下标推 —— 工作机的回传顺序就是派发顺序；
+    //   * render_ms / light_count 缺失记 0。这不会把失败判成成功：判据只有 status_；
+    //   * metrics 是诊断数据（给美术看落点、给 VLM 评分用），形状错就丢，不让它把
+    //     6 张已经渲出来的图作废。
+    l_cand.candidate_index_ =
+        static_cast<std::int32_t>(json_val::opt_number(*l_item, "candidate_index").value_or(static_cast<double>(i)));
+    l_cand.render_ms_   = static_cast<std::int64_t>(json_val::opt_number(*l_item, "render_ms").value_or(0.0));
+    l_cand.light_count_ = static_cast<std::int32_t>(json_val::opt_number(*l_item, "light_count").value_or(0.0));
+
+    if (l_item->contains("metrics")) {
+      try {
+        l_item->at("metrics").get_to(l_cand.metrics_);
+      } catch (const std::exception& in_err) {
+        SPDLOG_LOGGER_WARN(
+            g_logger_ctrl().get_http(), "AI 灯光回传：候选 {} 的 metrics 不合规，已丢弃（{}）", l_cand.candidate_id_,
+            in_err.what()
+        );
+      }
+    }
+
+    l_ret.candidates_.emplace_back(std::move(l_cand));
+  }
+
+  return l_ret;
+}
+
+boost::asio::awaitable<void> mark_iteration_failed(
+    sqlite_database& in_sql, const uuid& in_server_task_info_id, const std::string& in_reason
+) {
+  auto l_it = in_sql.get_ai_light_iteration_by_task(in_server_task_info_id);
+  DOODLE_CHICK_HTTP(l_it.has_value(), not_found, "没有任务 {} 对应的 AI 灯光轮次", in_server_task_info_id);
+
+  auto l_session            = in_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
+  l_session.failure_reason_ = brief_text(in_reason);
+
+  // 只写会话这一行。iteration.state 与候选状态**都不动**（D28）：
+  // 失败不是终态，美术再点一次 /iterate 就能重派一轮，而候选行保持 pending 也正好表达
+  // 「这一轮没出图」。会话上的 failure_reason_ 是唯一给人看的记录 —— 前端看板靠它
+  // 说明「这轮为什么没有图」。
+  orm::sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(make_session_update(in_sql, l_session));
+  co_await in_sql.run_sql(std::move(l_sqls));
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮渲染失败（会话停留在 {}）：{}", l_session.uuid_id_,
+      l_it->iteration_, magic_enum::enum_name(l_session.state_), l_session.failure_reason_
+  );
+  co_return;
+}
+
+boost::asio::awaitable<void> apply_render_report(
+    sqlite_database& in_sql, const uuid& in_server_task_info_id, const round_render_report_t& in_report
+) {
+  auto l_it = in_sql.get_ai_light_iteration_by_task(in_server_task_info_id);
+  DOODLE_CHICK_HTTP(l_it.has_value(), not_found, "没有任务 {} 对应的 AI 灯光轮次", in_server_task_info_id);
+
+  // 整轮失败由 error_ 表达（UE 起不来 / 超时 / 载荷非法）；「一张 rendered 都没有」也算失败 ——
+  // 否则轮次会被推到 awaiting_judgement，美术面对 6 张不存在的图点「选第 3 张」。
+  const bool l_any_rendered = std::any_of(
+      in_report.candidates_.begin(), in_report.candidates_.end(),
+      [](const candidate_render_report_t& in_cand) { return in_cand.status_ == candidate_render_status::rendered; }
+  );
+  if (!in_report.error_.empty() || !l_any_rendered) {
+    co_await mark_iteration_failed(
+        in_sql, in_server_task_info_id,
+        !in_report.error_.empty() ? in_report.error_
+                                  : fmt::format(
+                                        "轮次 {} 的 {} 个候选全部渲染失败", l_it->iteration_,
+                                        in_report.candidates_.size()
+                                    )
+    );
+    co_return;
+  }
+
+  auto l_round = in_sql.get_ai_light_candidates(l_it->uuid_id_);
+
+  // 产物路径不信任回传（D27）：按 uuid 重算，与派发时写进候选行的是同一套 kitsu_ctx_t 方法。
+  // 注意加 http:: 限定 —— kitsu_ctx_t 在 doodle::http 里，而本文件在 doodle::ai_light。
+  auto& l_ctx = g_ctx().get<http::kitsu_ctx_t>();
+
+  std::vector<ai_light_candidate> l_candidates{};
+  l_candidates.reserve(in_report.candidates_.size());
+
+  for (const auto& l_rep : in_report.candidates_) {
+    // 候选必须属于**本轮**（只查本轮，不查全库）：别的会话的候选 uuid 混进来必须拒掉，
+    // 否则一个坏回传就能改到别人的候选行上。
+    const auto l_found = std::find_if(
+        l_round.begin(), l_round.end(),
+        [&](const ai_light_candidate& in_cand) { return in_cand.uuid_id_ == l_rep.candidate_id_; }
+    );
+    DOODLE_CHICK_HTTP(
+        l_found != l_round.end(), bad_request, "候选 {} 不属于 AI 灯光轮次 {}", l_rep.candidate_id_, l_it->iteration_
+    );
+
+    // 只填 mark_iteration_rendered 会写的列。它按 uuid_id_ 定位行，其余字段是给它的
+    // 归属校验（iteration_id_）与落库内容（状态/耗时/灯数/指标）用的。
+    ai_light_candidate l_cand{};
+    l_cand.uuid_id_       = l_rep.candidate_id_;
+    l_cand.iteration_id_  = l_it->uuid_id_;
+    l_cand.session_id_    = l_it->session_id_;
+    l_cand.render_status_ = l_rep.status_;
+    l_cand.render_ms_     = l_rep.render_ms_;
+    l_cand.light_count_   = l_rep.light_count_;
+    l_cand.metrics_       = l_rep.metrics_;
+    l_cand.render_png_path_ =
+        l_ctx.get_ai_light_candidate_file(l_it->session_id_, l_it->iteration_, l_rep.candidate_id_, false);
+    l_cand.render_exr_path_ =
+        l_ctx.get_ai_light_candidate_file(l_it->session_id_, l_it->iteration_, l_rep.candidate_id_, true);
+
+    l_candidates.emplace_back(std::move(l_cand));
+  }
+
+  // 落库与状态流转全部复用原有那一份实现：两条入口（单测 / worker 回传）走同一段事务，
+  // 免得「回传路径」与「测试路径」慢慢长成两套语义。
+  co_await mark_iteration_rendered(in_sql, in_server_task_info_id, l_candidates);
   co_return;
 }
 

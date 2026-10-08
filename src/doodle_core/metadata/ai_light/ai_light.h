@@ -14,6 +14,7 @@
 //   candidate.h  候选（每轮 6 个，含 rig 全量与显示空间指标）
 //   preset.h     预设库
 //   view.h       读模型（会话详情聚合体，不落表）
+//   task_payload.h  派发/回传载荷（server_task_info.command_ 的 wire 契约，见 §15.12）
 //
 // 三条贯穿全层的约定：
 //   1. 枚举按 magic_enum 的 C++ 名存 TEXT（sqlite_orm/orm/sqlite_statement.h:269-287）。
@@ -34,4 +35,5 @@
 #include <doodle_core/metadata/ai_light/rig.h>
 #include <doodle_core/metadata/ai_light/session.h>
 #include <doodle_core/metadata/ai_light/spec.h>
+#include <doodle_core/metadata/ai_light/task_payload.h>
 #include <doodle_core/metadata/ai_light/view.h>

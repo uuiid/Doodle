@@ -12,4 +12,5 @@ target_sources(
         candidate.h
         preset.h
         view.h
+        task_payload.h
 )
