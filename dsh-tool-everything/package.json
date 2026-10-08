@@ -1,6 +1,6 @@
 {
   "name": "dsh-tool-everything",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Everything-powered file and content search tool for DeepSeek Harness. Queries the Everything HTTP server (or es.exe) with a mandatory path scope, so a content search can never degrade into a full-disk scan.",
   "type": "module",
   "main": "lib/index.js",
@@ -21,9 +21,9 @@
   ],
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.4",
-    "@deepseek-ai/dsh-tools": "^0.1.7-rc.2",
-    "@deepseek-ai/dsh-llm": "^0.1.7-rc.2",
-    "@deepseek-ai/dsh-agent": "^0.1.7-rc.2",
+    "@deepseek-ai/dsh-tools": "^0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm": "^0.2.0-rc.2",
+    "@deepseek-ai/dsh-agent": "^0.2.0-rc.2",
     "@deepseek-ai/schemastery": "~3.18.4"
   },
   "scripts": {
