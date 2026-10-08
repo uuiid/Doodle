@@ -43,8 +43,8 @@
 // 所以不会破坏本文件顶部「这一层刻意不包含任何 HTTP 依赖」的约定。
 #include <doodle_lib/http_client/seedance2_inference_request.h>
 
-// 本头是**伞形头**（§15.11）：三条接缝、rig 纯运算、共用部件各自成文件，本头把它们与
-// 状态机一起收在同一个命名空间下 —— 对外仍然只需包含 ai_light_orchestrator.h 一个头。
+// 本头是**伞形头**：三条接缝、rig 纯运算、共用部件各自成文件，本头把它们与状态机
+// 一起收在同一个命名空间下 —— 对外仍然只需包含 ai_light_orchestrator.h 一个头。
 #include "ai_light_rig_ops.h"
 #include "ai_light_seam_candidates.h"
 #include "ai_light_seam_common.h"
@@ -120,11 +120,11 @@ DOODLELIB_API boost::asio::awaitable<void> apply_judgement(
     const ai_light_judgement_t& in_judgement, std::optional<preview_file> in_accepted_preview_file = {}
 );
 
-/// 候选渲染产物的落点（批 7 / D44）：**唯一**的计算处。
+/// 候选渲染产物的落点（D44）：**唯一**的计算处。
 ///
 /// 会话 / 轮次 / 候选三个 uuid 都在候选行上（`session_id_` / `iteration_id_` / `uuid_id_`），
-/// 所以「候选 → 产物路径」是一次纯计算：库里不再有 render_png_path_ / render_exr_path_ 两列，
-/// 候选 JSON 里也没有这两个键（D44）。需要 ctx 只因为它要 `root_`。
+/// 所以「候选 → 产物路径」是一次纯计算：候选没有路径列，候选 JSON 里也没有路径键。
+/// 需要 ctx 只因为它要 `root_`。
 ///
 /// 为什么把 ctx 做成参数、而不是在函数里取 `g_ctx()`：
 ///   * 布局基准是 `kitsu_ctx_t::root_`，那是运行期配置，不属于候选行；
@@ -142,8 +142,8 @@ inline FSys::path candidate_render_path(
 ///
 /// 本轮没有 worker（§13.3 未做），所以这个函数只提供入口并纳入单测；
 /// worker 里程碑把回传处理接上即可，状态机本身不用改。
-/// in_candidates 是回传的候选（render_ms_ / light_count_ / metrics_ ——
-/// 路径不在回传里，落库时用 candidate_render_path 现算，D44）。
+/// in_candidates 是回传的候选，只填 render_ms_ / light_count_ / metrics_ ——
+/// 路径不在回传里，落库时按 candidate_render_path 现算（D44）。
 DOODLELIB_API boost::asio::awaitable<void> mark_iteration_rendered(
     sqlite_database& in_sql, const uuid& in_server_task_info_id, const std::vector<ai_light_candidate>& in_candidates
 );
@@ -164,8 +164,8 @@ DOODLELIB_API round_render_report_t parse_round_render_report(const nlohmann::js
 /// 处理一次工作机回传：解析结果 → 落候选行 → 推进轮次/会话状态。
 ///
 /// 两条出口：
-///   * 至少一张图 `rendered` → 组装候选（产物路径按 `candidate_render_path()` 现算，
-///     D27/D44：回传里根本没有路径，也没有可信任的入参）后交给 `mark_iteration_rendered()`，
+///   * 至少一张图 `rendered` → 组装候选（产物落点按 `candidate_render_path()` 现算，
+///     D27：回传里没有路径，也没有可信任的入参）后交给 `mark_iteration_rendered()`，
 ///     轮次转 `awaiting_judgement`、起算 4 小时；
 ///   * 整轮失败（`error_` 非空，或没有任何 `rendered`，或所有 `rendered` 的图都不在
 ///     算出来的落点上 —— D41）→ 转 `mark_iteration_failed()`，

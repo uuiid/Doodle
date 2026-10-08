@@ -1,17 +1,17 @@
 //
-// AI 灯光分布式任务：一轮候选的渲染（工作机侧，方案 §15.12 / §15.13 批 6）
+// AI 灯光分布式任务：一轮候选的渲染（工作机侧）
 //
 // 服务端把整轮载荷塞进 server_task_info.command_（ai_light::ai_light_task_payload_t），
 // 这里**只起一次 UE**（DoodleLighting commandlet）渲染全部候选，然后把产物 HTTP 上传回
 // 服务端（POST /api/doodle/ai/light/candidate/{id}/file/{render|render_linear}），
 // 最后把 <out_dir>/render_report.json 回传给 POST /api/doodle/ai/light/render_report/{task_id}。
 //
-// 批 6 起产物落**工作机本地**（D38/D39：载荷里只有相对路径，本地根由本机定），
-// 不再直写服务端推广出来的网络盘/UNC 目录；UE 侧因此一行都不用改 —— 它本来就只认
-// 载荷给的 PngPath/ExrPath，是这里在起 UE 之前把相对路径拼成了本地绝对路径。
+// 产物落**工作机本地**（D38/D39）：载荷里只有相对路径，本地根由本机定，不写服务端的
+// 网络盘/UNC 目录；UE 侧因此一行都不用改 —— 它本来就只认载荷给的 PngPath/ExrPath，
+// 是这里在起 UE 之前把相对路径拼成了本地绝对路径。
 //
 // 职责边界：
-//   - 灯怎么打、**服务端**的落库路径怎么算，全在服务端 —— 这里只搬运与执行，
+//   - 灯怎么打、**服务端**的产物落点怎么算，全在服务端 —— 这里只搬运与执行，
 //     本地怎么落由本机定；
 //   - 单张候选渲染失败不该让整轮失败（方案 §7.5 第 9 条）：commandlet 逐候选写
 //     status/error，这里原样回传（只补一条「PNG 传不上去就等于没渲染成功」），

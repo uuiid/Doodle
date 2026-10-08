@@ -1,6 +1,6 @@
 //
 // AI 灯光 · 接缝 3：自由文本反馈 → 结构化轴调整
-// （docs/ue_ai_lighting_plan.md §15.9；从 ai_light_orchestrator.h 拆出，见 §15.11）
+// （设计见 docs/ue_ai_lighting_plan.md §15.9）
 //
 // 与前两条接缝同样的分法：纯函数组信封/映射 + 一次真实网络调用。
 //
@@ -100,6 +100,6 @@ DOODLELIB_API http::seedance2::inference_request_t build_feedback_request(
 /// 能在单测里直接调用 —— 「哪个轴被丢了、为什么」由调用方在接缝外按需补日志。
 DOODLELIB_API std::vector<axis_step_t> map_feedback_result(const nlohmann::json& in_result_json);
 
-// key_fill_ratio_of 已搬到 ai_light_rig_ops.h（它在接缝 3 的提示词里被引用，但本身是纯 rig 读取）。
+// key_fill_ratio_of 定义在 ai_light_rig_ops.h（它在接缝 3 的提示词里被引用，但本身是纯 rig 读取）。
 
 }  // namespace doodle::ai_light

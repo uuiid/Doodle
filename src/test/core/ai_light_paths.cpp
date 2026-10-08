@@ -31,7 +31,7 @@ const FSys::path g_root{"test_root"};
 uuid fixed_uuid(const char* in_str) { return boost::uuids::string_generator{}(in_str); }
 
 const char* g_session_str = "c9f2b8c0-4a1d-4e3b-9f5c-7d6e0a2f3b8d";
-/// 轮次 uuid（批 7 起轮次目录用 uuid 而不是 it_001 序号）。
+/// 轮次 uuid：轮次目录就以它命名（不用序号）。
 const char* g_iter_str = "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b";
 
 kitsu_ctx_t make_ctx() {
@@ -64,8 +64,8 @@ BOOST_AUTO_TEST_CASE(session_dir_is_not_under_any_project_path) {
   auto l_ctx              = make_ctx();
   const auto l_dir        = l_ctx.get_ai_light_session_dir(fixed_uuid(g_session_str));
 
-  // 旧实现挂在 project.path_（"03_Workflow/Shot/EP####/…"）下。产品是 uuid 标识的生成物，
-  // 与 sd2/pictures/jobs 同性质，落盘不该再依赖项目/剧集/镜头 —— 这一条是那个边界的回归钉子。
+  // 产物落盘只依赖 root_ 与会话 uuid，**不依赖**项目/剧集/镜头路径
+  // （product 是 uuid 标识的生成物，与 sd2/pictures/jobs 同性质）—— 这一条是那个边界的回归钉子。
   const std::string l_str = l_dir.generic_string();
   BOOST_CHECK_EQUAL(l_str.find("03_Workflow"), std::string::npos);
   BOOST_CHECK_EQUAL(l_str.find("Shot"), std::string::npos);
@@ -80,9 +80,9 @@ BOOST_AUTO_TEST_CASE(reference_dir_sits_inside_the_session_dir) {
   const auto l_session = fixed_uuid(g_session_str);
   const auto l_ref     = fixed_uuid("1a2b3c4d-5e6f-4a1b-8c2d-3e4f5a6b7c8d");
 
-  // 回归钉子：曾经这里是 session_dir().parent_path() / "ref" —— 会话目录的**兄弟**目录，
-  // 于是同一镜头的所有会话共用一处 ref/，两个会话的参考图互相覆盖，
-  // 删会话时又因为真正的会话目录不存在而备份不到。参考图目录必须在会话目录**之内**。
+  // 回归钉子：参考图目录必须在**会话目录之内**。若做成会话目录的兄弟目录
+  // （session_dir().parent_path() / "ref"），同一镜头的多个会话就共用一处 ref/，
+  // 参考图会互相覆盖，删会话时也因真正的会话目录不存在而备份不到。
   const auto l_file    = l_ctx.get_ai_light_reference_file(l_session, l_ref);
 
   BOOST_CHECK_EQUAL(l_file.parent_path(), l_ctx.get_ai_light_reference_dir(l_session));
@@ -102,8 +102,7 @@ BOOST_AUTO_TEST_CASE(reference_files_are_named_by_their_own_uuid) {
   const auto l_a       = fixed_uuid("11111111-2222-4333-8444-555555555555");
   const auto l_b       = fixed_uuid("66666666-7777-4888-8999-aaaaaaaaaaaa");
 
-  // 两个不同的参考图必然两条路径 —— 旧实现按序号命名（ref_00.png），
-  // 序号一旦被复用就会静默覆盖既有图。
+  // 文件名必须是各自的 uuid：按序号命名（ref_00.png）一旦序号被复用就会静默覆盖既有图。
   BOOST_CHECK_NE(l_ctx.get_ai_light_reference_file(l_session, l_a), l_ctx.get_ai_light_reference_file(l_session, l_b));
   BOOST_CHECK_EQUAL(
       l_ctx.get_ai_light_reference_file(l_session, l_a).filename().generic_string(),
@@ -120,7 +119,7 @@ BOOST_AUTO_TEST_CASE(candidate_files_use_iteration_dir_and_their_own_uuid) {
   const auto l_iter_id = fixed_uuid(g_iter_str);
   const auto l_cand    = fixed_uuid("abcdefab-1234-4567-89ab-cdefabcdefab");
 
-  // 目录名就是**轮次自己的 uuid**（批 7）：候选行自带 session_id_ 与 iteration_id_，
+  // 目录名就是**轮次自己的 uuid**：候选行自带 session_id_ 与 iteration_id_，
   // 「候选 → 路径」于是是一次纯计算，不必回查轮次行拿序号。
   const auto l_iter1 = l_ctx.get_ai_light_iteration_dir(l_session, l_iter_id);
   BOOST_CHECK_EQUAL(
@@ -146,8 +145,8 @@ BOOST_AUTO_TEST_CASE(iteration_dir_is_named_by_the_iteration_uuid) {
   const auto l_iter_a  = fixed_uuid(g_iter_str);
   const auto l_iter_b  = fixed_uuid("00000000-1111-4222-8333-444444444444");
 
-  // 每一轮一个目录，名字就是它的 uuid（旧实现是 it_001 这种补零序号 —— 序号要求路径
-  // 反查「轮次表里那个可变的 iteration_ 字段」，uuid 则自带在候选行上）。
+  // 每一轮一个目录，名字就是它的 uuid。用序号（it_001）会要求路径反查「轮次表里那个
+  // 可变的 iteration_ 字段」，uuid 则自带在候选行上。
   BOOST_CHECK_EQUAL(l_ctx.get_ai_light_iteration_dir(l_session, l_iter_a).filename().generic_string(), g_iter_str);
   BOOST_CHECK_NE(
       l_ctx.get_ai_light_iteration_dir(l_session, l_iter_a), l_ctx.get_ai_light_iteration_dir(l_session, l_iter_b)
@@ -192,7 +191,7 @@ BOOST_AUTO_TEST_CASE(all_ai_light_artifacts_share_one_session_subtree) {
   const auto l_session_dir = l_ctx.get_ai_light_session_dir(l_session);
 
   // 参考图与候选都在会话目录之下：删会话时整个目录搬进备份区就能一次搬干净，
-  // 不需要知道里面有哪些文件（旧布局做不到 —— 参考图根本不在会话目录里）。
+  // 不需要知道里面有哪些文件。
   for (const auto& l_path :
        {l_ctx.get_ai_light_reference_file(l_session, l_ref),
         l_ctx.get_ai_light_candidate_file(l_session, l_iter_id, l_cand, false),

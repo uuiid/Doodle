@@ -162,10 +162,9 @@ struct DOODLE_CORE_API ai_light_candidate {
   nlohmann::json rig_{};
 
   // --- 渲染产物 ---
-  // 路径**不是列**（批 7 / D44）：显示空间 PNG 与线性 EXR 的落点由 doodle_lib 的
-  // candidate_render_path(ctx, *this, in_linear) 现算（= kitsu_ctx_t 的命名规则，
-  // 会话 / 轮次 / 候选三个 uuid 本来就在行上）。所以这里只有状态与实测数值；
-  // 也正因为如此，候选 JSON 里不再出现服务端磁盘路径（前端取图只按 uuid）。
+  // 这里只有状态与实测数值：**路径不是列**（D44）。显示空间 PNG 与线性 EXR 的落点由
+  // doodle_lib 的 candidate_render_path(ctx, *this, in_linear) 现算（= kitsu_ctx_t 的命名
+  // 规则，会话 / 轮次 / 候选三个 uuid 本来就在行上），候选 JSON 里也不带服务端磁盘路径。
   candidate_render_status render_status_{candidate_render_status::pending};
   /// 实测渲染耗时（决策 17：先不设硬上限，但要记录）
   std::int64_t render_ms_{0};

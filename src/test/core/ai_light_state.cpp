@@ -283,8 +283,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(judge_accept_marks_candidate_and_session, fixture_
 
   // 被选中的候选：定稿标记 + preview_file + **同时是下一轮基准**。
   //
-  // is_selected_ 与 is_accepted_ 仍然是两个语义（前者 = 下一轮基准，后者 = 当前定稿），
-  // 只是定稿不再是终点，所以两者现在可以在同一行上同时为真（§15.10 决定 D20）：
+  // is_selected_ 与 is_accepted_ 是两个语义（前者 = 下一轮基准，后者 = 当前定稿），
+  // 定稿不是终点，所以两者可以在同一行上同时为真（§15.10 决定 D20）：
   // 定稿之后接着调时，下一轮应当从定稿那套 rig 出发，而不是回到 LLM 的原始基线。
   auto l_picked = l_fx.reload_candidate(2);
   BOOST_TEST(l_picked.is_selected_);
@@ -950,7 +950,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(pre_assigned_uuid_survives_the_deferred_insert, fi
   l_it.spec_id_             = l_fx.spec_.uuid_id_;
   l_it.server_task_info_id_ = l_task.uuid_id_;  // 必须在任务 uuid 定下来之后
 
-  // --- 候选：iteration_id_ 指向轮次；渲染路径**不是列**（批 7 / D44），由三个 uuid 现算 ---
+  // --- 候选：iteration_id_ 指向轮次；渲染路径**不是列**（D44），由三个 uuid 现算 ---
   ai_light_candidate l_cand{};
   l_cand.uuid_id_         = l_cand_uuid;
   l_cand.iteration_id_    = l_it.uuid_id_;
@@ -996,7 +996,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(pre_assigned_uuid_survives_the_deferred_insert, fi
   BOOST_REQUIRE(l_cands.size() == 1);
   BOOST_TEST(l_cands.front().uuid_id_ == l_cand_uuid);
   BOOST_TEST(l_cands.front().iteration_id_ == l_it_uuid);
-  // 产物路径不再落库（批 7 / D44），但候选行自带三个 uuid，所以路径仍然可复现：
+  // 产物路径不落库（D44），但候选行自带三个 uuid，所以路径可复现：
   // 轮次目录以轮次 uuid 命名、文件以候选 uuid 命名，与 insert 之前算出来的完全一致。
   BOOST_TEST(l_png_path.parent_path().filename().generic_string() == fmt::to_string(l_it_uuid));
   BOOST_TEST(l_png_path.filename().generic_string() == fmt::to_string(l_cand_uuid) + ".png");

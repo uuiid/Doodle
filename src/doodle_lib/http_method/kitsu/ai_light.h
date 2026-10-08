@@ -40,21 +40,16 @@ namespace doodle::http::ai_light {
 //   而镜头 id 与会话 id 都是 uuid，形状上无法区分，路由只能任选其一 ——
 //   那是不可接受的歧义（表现为「有时 404 有时 200」，且取决于注册顺序）。
 //
-// 这是**唯一**的建会话入口：原先并存的
-//   POST /api/actions/projects/{project_id}/shots/{id}/ai-light
-// 已删除。两者做的是同一件事（建会话 + 跑第一步），
-// 而它多带一个 project_id 在路径里，反而给了「镜头与项目不一致」的伪造空间；
-// 现在归属三键（entity / project / 灯光任务）全部从镜头解析，没有第二个入口可绕。
+// 这是**唯一**的建会话入口：建会话 + 跑第一步只有这一条路。归属三键
+// （entity / project / 灯光任务）全部从镜头解析 —— URL 里不放 project_id，
+// 因为那会给出「镜头与项目不一致」的伪造空间，而且等于第二个入口。
 //
 // ---------------------------------------------------------------------------
 // 为什么会话作用域的动作统一挂 /session/{session_id}/<动作>
 // ---------------------------------------------------------------------------
-// session_id 曾经出现在三个地方：GET /spec 走**查询参数**，各 POST 走**请求体**，
-// /reference 走**路径** —— 同一个资源三种写法，前端每接一个接口都要先确认一次。
-// 现在统一成路径：动作是对「某个会话」做的，会话身份就该在 URL 上。
-//
-// 不放请求体的另一个理由：体里带 session_id 时，服务端要么校验「体和路径是不是同一个」，
-// 要么悄悄覆盖其中一个 —— 两种做法都留下「两个真相」。**路径为准，体里的 session_id 忽略。**
+// 会话身份一律走**路径**：动作是对「某个会话」做的。不放请求体的理由：体里带
+// session_id 时，服务端要么校验「体和路径是不是同一个」，要么悄悄覆盖其中一个 ——
+// 两种做法都留下「两个真相」。**路径为准，体里的 session_id 忽略。**
 //
 // 不会和 /session/{id}（会话详情）撞，也不会互相前缀吞并：
 //   {} 对 uuid 展开成只含十六进制与连字符的正则（http_function.h 的 g_uuid_regex），
@@ -172,13 +167,13 @@ enum class ai_light_candidate_file_role { render, render_linear };
 //      不该为了一个字符串去 include 服务端路由头，所以那边照字面量拼，靠这条注释对齐。
 constexpr std::string_view g_candidate_file_path_template{"/api/doodle/ai/light/candidate/{}/file/{}"};
 
-// POST /api/doodle/ai/light/candidate/{id}/file/{role}   工作机上候选产物（§15.13 批 6，D38~D41；落点批 7 / D44）
+// POST /api/doodle/ai/light/candidate/{id}/file/{role}   工作机上传候选产物
 //
 //   role = render        → 显示空间 PNG（前端唯一展示的那张）：必传，缺了这张候选不可判断
-//   role = render_linear → 线性 EXR（§7.4）：尽量传；工作机那张传失败只记一条 WARN，
+//   role = render_linear → 线性 EXR（§7.4）：可选产物，传失败只记一条 WARN，
 //                          不影响本轮转 awaiting_judgement（D42）
 //
-// 落盘位置**不由请求体决定**：服务端按候选行的三个 uuid 现算（candidate_render_path，D27/D40/D44），
+// 落盘位置**不由请求体决定**：服务端按候选行的三个 uuid 现算（candidate_render_path，D27/D40），
 // 所以工作机既写不到别的候选上，也改不了任何路径 —— 它只能「往服务端算好的那个文件名里灌字节」。
 // 请求体就是文件本身（application/octet-stream + Content-Disposition，与 up_file_base 同一套约定），
 // 成功回 **204**（kitsu_client::upload_asset_file 只认 204）。

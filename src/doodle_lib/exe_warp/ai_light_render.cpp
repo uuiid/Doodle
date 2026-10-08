@@ -1,5 +1,5 @@
 //
-// AI 灯光分布式任务：一轮候选的渲染（工作机侧，方案 §15.12 / §15.13 批 6）
+// AI 灯光分布式任务：一轮候选的渲染（工作机侧）
 //
 
 #include "ai_light_render.h"
@@ -52,7 +52,7 @@ boost::asio::awaitable<void> ai_light_round_distributed::run() {
   ai_light::round_render_report_t l_report{};
   std::string l_error_msg{};
   // 本轮的本地输出目录。声明在 try 外面是为了在异常路径的日志里也能报出来 ——
-  // 用户明确要求「本地产物不删」，那就得让日志说清去哪儿捡（D43）。
+  // 本地产物不删（D43），那就得让日志说清去哪儿捡。
   FSys::path l_local_out_dir{};
 
   try {
@@ -65,9 +65,8 @@ boost::asio::awaitable<void> ai_light_round_distributed::run() {
     if (payload_.ue_project_path_.empty()) throw_exception(doodle_error{"载荷里没有 .uproject 路径，无法启动 UE"});
     if (payload_.candidates_.empty()) throw_exception(doodle_error{"载荷里没有候选，没有可渲染的东西"});
 
-    // D38：产物落工作机本地缓存根，不落网络盘/UNC。服务端给的 out_dir_ 是相对路径
-    // （<session>/it_<NNN>），根由本机定 —— 这正是 D39 要的效果：同一份约定，
-    // 每台工作机各写各的盘。
+    // 产物落工作机本地缓存根，不落网络盘/UNC（D38）。服务端给的 out_dir_ 是相对路径
+    // （<session uuid>/<轮次 uuid>），根由本机定 —— 同一份约定，每台工作机各写各的盘。
     const FSys::path l_local_root =
         core_set::get_set().get_cache_root(FSys::path{ai_light::g_ai_light_local_cache_flag});
     l_local_out_dir              = l_local_root / payload_.out_dir_;
@@ -110,8 +109,8 @@ boost::asio::awaitable<void> ai_light_round_distributed::run() {
 
     // ---------------------------------------------------------------------
     // 上传产物（D40）。这一步必须在回传报告**之前**做完：服务端 apply_render_report
-    // 会按报告里说 rendered 的候选去查那张 PNG 到底在不在库里那条路径上（D41），
-    // 而路径上的文件正是这里上传过去的。
+    // 会按报告里说 rendered 的候选去查那张 PNG 到底在不在算出来的落点上（D41），
+    // 而那里的文件正是这里上传过去的。
     //
     // PNG 必传：它缺失就等于这个候选不可判断，所以上传失败要如实把状态改成 failed，
     // 而不是让服务端以为有一张能看的图（美术的判断通道只有这张 PNG）。
@@ -182,7 +181,7 @@ boost::asio::awaitable<void> ai_light_round_distributed::run() {
     if (l_error_msg.empty()) l_error_msg = l_ex.what();
   }
 
-  // D43（用户决定）：本地产物**不删**。上传成功也不清 —— 出问题时它是唯一的现场，
+  // 本地产物**不删**（D43）：上传成功也不清 —— 出问题时它是唯一的现场，
   // 磁盘增长交给人工/后续定时清理。这里只把路径打进日志，方便事后去捡。
   if (!l_local_out_dir.empty())
     SPDLOG_LOGGER_INFO(l_logger, "AI 灯光第 {} 轮结束，本地产物目录（保留不删）：{}", payload_.iteration_, l_local_out_dir.generic_string());

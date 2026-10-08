@@ -135,12 +135,12 @@ struct kitsu_ctx_t {
   // 四个要点：
   //   * **文件名就是各自的 uuid**，不用序号（序号落盘会撞车：同一目录下两张图都叫 ref_00）。
   //     uuid 必须提前分配好，不能等 ORM 在 insert 时回填 —— 路径就是它的函数。
-  //   * **轮次目录也用轮次 uuid，不用 it_001 序号**（批 7）：候选行自带 session_id_ 与
-  //     iteration_id_，于是「候选 → 产物路径」是一次纯计算，不必回查轮次行拿序号；
-  //     序号那套会让路径依赖「另一张表里那个可变字段」。
+  //   * **轮次目录也用轮次 uuid，不用序号**：候选行自带 session_id_ 与 iteration_id_，
+  //     于是「候选 → 产物路径」是一次纯计算，不必回查轮次行；序号会让路径依赖
+  //     「另一张表里那个可变字段」（也就没法只凭候选行算出落点）。
   //   * **只有会话目录分桶**（split_uuid_path，与 sd2/jobs 一致）。分桶是为了不让单个目录
   //     随会话数线性膨胀；而一个会话的参考图是几十张、单轮候选固定 6 张，内层再分桶只有噪声。
-  //   * 因为只依赖 root_ 与会话 uuid，**不再依赖 episode / shot / 项目路径** ——
+  ///   * 因为只依赖 root_ 与会话 uuid，**不依赖 episode / shot / 项目路径** ——
   //     少掉「算不出产物目录就没法上传参考图」这一整类失败。
   //
   // 参考图与中间候选渲染都**不注册 preview_file**，由专用接口从这些路径直接提供；
@@ -151,7 +151,7 @@ struct kitsu_ctx_t {
   ///
   /// 这一组 AI 灯光 getter 都是 `const` 的：它们只按 uuid 拼路径，不改任何状态。
   /// 于是「候选 → 产物路径」可以做成吃 `const kitsu_ctx_t&` 的纯函数
-  /// （`doodle::ai_light::candidate_render_path`，批 7 / D44）。
+  /// （`doodle::ai_light::candidate_render_path`，D44）。
   FSys::path get_ai_light_session_dir(const uuid& in_session_id) const {
     return root_ / "ai_light" / FSys::split_uuid_path(fmt::to_string(in_session_id));
   }

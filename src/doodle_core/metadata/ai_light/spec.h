@@ -284,7 +284,7 @@ struct DOODLE_CORE_API reference_stats_t {
   std::vector<std::string> conflicts_{};
   /// 检测到参考图被 AI/PS 修过（参考图本身就是修图产物，这里记的是「修图痕迹的强度」）
   bool retouch_detected_{false};
-  /// 恒为 false：不做物理反解（Tier B 已取消）。保留字段是为了让工件自描述，
+  /// 恒为 false：本工具不做物理反解。保留字段是为了让工件自描述，
   /// 避免下游误以为可以做物理反解。
   bool usable_for_physical_solve_{false};
 

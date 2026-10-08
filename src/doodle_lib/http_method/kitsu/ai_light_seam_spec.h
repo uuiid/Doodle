@@ -1,8 +1,8 @@
 //
 // AI 灯光 · 接缝 1：提示词（+ 参考图统计）→ LightingSpec
-// （docs/ue_ai_lighting_plan.md §15.7；从 ai_light_orchestrator.h 拆出，见 §15.11）
+// （设计见 docs/ue_ai_lighting_plan.md §15.7）
 //
-// generate_spec 被拆成「纯函数组信封/映射」+「一次真实网络调用」，前一半可以完全离线单测
+// 接缝分两层：纯函数组信封/映射 + 一次真实网络调用，前一层可以完全离线单测
 // （单测宿主没有 SSL context / http logger，成功路径没法在单测里跑）。
 //
 // 伞形头 ai_light_orchestrator.h 会 include 本头 —— 对外仍然只需包含伞形头一个头。

@@ -1,35 +1,33 @@
 //
 // AI 灯光：模型输出 JSON 架构（schema）与读取/校验的**唯一一层**
-// （docs/ue_ai_lighting_plan.md §15.11；重构方案 §3）
+// （设计见 docs/ue_ai_lighting_plan.md §15.11）
 //
-// 这一层存在的理由：三条接缝此前各写了一套「模型输出怎么读」，其中被复用的那套把接缝名
-// 硬编码在错误消息里（「候选基线 rig 的字段 …」），另两条接缝一复用就会报错措辞错人。
-// 现在 schema 形状与取值器只有一处定义，接缝名与字段路径由调用方传进来。
+// 这一层存在的理由：三条接缝读同一套「模型输出」，而它们需要的错误消息里必须带**自己的**
+// 接缝名（「候选基线 rig 的字段 …」）与字段路径 —— 把接缝名硬编码进读取器会让其余接缝
+// 报错措辞错人。所以 schema 形状与取值器只有一处定义，接缝名与字段路径由调用方传进来。
 //
 // 本层提供三件事：
-//   1. 建造 schema（§3.1）：三个接缝的 json_schema 都由这里的建造器拼出来。
-//      **required 默认等于全部 properties** —— 三个接缝现有的 16 个 object 本来就是
-//      「满配 additionalProperties:false + required 覆盖全部属性」，所以自动生成 required
-//      与现状等价（方案 §3.1 已逐条核对）。需要「部分必填」时用显式 required 的重载。
-//   2. 读取 schema（§3.2 严格 / §3.3 宽松）：
+//   1. 建造 schema：三个接缝的 json_schema 都由这里的建造器拼出来。
+//      **required 默认等于全部 properties** —— 三个接缝的 object 都是「满配
+//      additionalProperties:false + required 覆盖全部属性」，自动生成 required 与之一致。
+//      需要「部分必填」时用显式 required 的重载。
+//   2. 读取 schema（严格 / 宽松两族）：
 //      * 严格读取器抛 doodle_error{bad_gateway}，消息形如
 //        「<接缝>：字段 <路径> 缺失或类型不符合（期望数字）」；
 //      * 宽松读取器返回 optional / 空容器，**永不抛**。
-//   3. 架构校验（§3.4）：我们自己的三条约定自检 + 用 pboettch/json-schema-validator 校验
+//   3. 架构校验：我们自己的三条约定自检 + 用 pboettch/json-schema-validator 校验
 //      「schema 本身是不是合法 draft-7」与「模型输出违反了我们 schema 的哪些地方」。
 //      **决策 D-1：校验结果只作诊断（写日志），不作准入闸门。** 三条理由：
 //        * 方舟侧 `json_schema_strict = true` 已经保证合规输出；
 //        * spec 接缝**有意**容忍截断/不完整的输出（靠统计默认值 + evidence.source =
 //          default_value 留痕），一道 schema 闸门会直接破坏这个设计；
-//        * `additionalProperties:false` 若当闸门，会把今天被静默忽略的「模型多回一个无关键」
+//        * `additionalProperties:false` 若当闸门，会把本来被静默忽略的「模型多回一个无关键」
 //          升级成整轮 502。
-//      升级路径：真机日志证明模型从不违规后，把某个接缝的违规提升为 502 是**一行改动**
-//      （validate_model_output() 非空时抛），届时另开一次决策。
+//      要改成闸门是一行（validate_model_output() 非空时抛），但那属于产品决策，须另议。
 //
 // 不变约定（改动前先读这三条）：
 //   * 模板（require_enum<E> / schema_enum<E>）**必须 inline 在本头里** —— 模板无法导出；
-//     非模板函数定义在 .cpp 里并带 DOODLELIB_API（放匿名命名空间 = 内部链接 = LNK2019，
-//     本仓库既有教训）。
+//     非模板函数定义在 .cpp 里并带 DOODLELIB_API（放匿名命名空间 = 内部链接 = LNK2019）。
 //   * 本头**不得 include <nlohmann/json-schema.hpp>**：校验库只出现在 .cpp 里，
 //     我们的公共 API 继续只暴露 nlohmann::json。
 //   * 枚举一律走 magic_enum::enum_cast 显式校验。**绝不能**用

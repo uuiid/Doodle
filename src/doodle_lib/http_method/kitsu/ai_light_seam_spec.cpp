@@ -1,6 +1,6 @@
 //
 // AI 灯光 · 接缝 1 实现：提示词（+ 参考图统计）→ LightingSpec
-// （docs/ue_ai_lighting_plan.md §15.7；从 ai_light_orchestrator.cpp 拆出，见 §15.11）
+// （设计见 docs/ue_ai_lighting_plan.md §15.7）
 //
 // 离线可测部件（build_spec_instructions / build_spec_json_schema / build_spec_input_text /
 // build_spec_request / map_spec_result）与联网入口 generate_spec 都定义在这里；
@@ -90,15 +90,11 @@ constexpr std::array<std::string_view, 17> g_evidence_paths{
     "targets.grading_hints.lifted_blacks", "targets.grading_hints.bloom",
 };
 
-// 架构（schema）的**形状**建造器已全部移到 ai_light_json_validation.h 的 json_val::schema_*：
-// 原先这里的 make_string_enum_schema / make_enum_schema / make_interval_schema /
-// make_string_array_schema 是三份手抄的形状，接缝 3 落地时直接复制了接缝 1 的写法。
-// 现在三个接缝共用同一份定义（重构方案 §3.1）。
-//
+// 架构（schema）的**形状**建造器与取值器都在 ai_light_json_validation.h 的 json_val::：
+// 三个接缝共用同一份定义，避免同名形状各写一遍（形状一致也便于统一改）。
 // 取值器（is_one_of / opt_object / opt_string / opt_bool / opt_interval / opt_string_array）
-// 也搬到了同一个头（§3.2 严格 / §3.3 宽松，并补齐了 opt_number / opt_one_of）。
-// 搬家的实际理由是这两类函数**每条接缝都要用**：原先这一份把「候选基线 rig」硬编码在
-// 错误消息里，另两条接缝一复用就会报错措辞错人（F1）。
+// 同样在那儿（严格 / 宽松两族）。共用是必须的：错误消息里要带接缝名，
+// 硬编码在某一处会让别的接缝报错措辞错人。
 
 
 void put_evidence(
@@ -204,10 +200,9 @@ nlohmann::json build_spec_json_schema() {
   });
 
   // evidence 是**固定键**字典，键就是 g_evidence_paths 那 17 条字段路径。
-  // 曾经这里是 `additionalProperties = <条目 schema>` 的自由字典，那是错的：
-  // 严格结构化输出要求每个 object 都 additionalProperties:false，自由字典会被判成
-  // 不合规（这类 schema 最典型的真机 400）。固定键不需要改语义 —— evidence 的键本来
-  // 就是有限集合（可写字段就那么些），只是当初误以为"枚举不完"。
+  // 不能用 `additionalProperties = <条目 schema>` 那种自由字典：严格结构化输出要求每个
+  // object 都 additionalProperties:false，自由字典会被判成不合规（这类 schema 最典型的
+  // 真机 400）。而 evidence 的键本来就是有限集合（可写字段就那么些），固定键不丢表达力。
   nlohmann::json l_evidence_props = nlohmann::json::object();
   for (auto&& l_path : g_evidence_paths) l_evidence_props[std::string{l_path}] = l_evidence_entry;
   const auto l_evidence = json_val::schema_object(std::move(l_evidence_props));

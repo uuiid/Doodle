@@ -14,7 +14,7 @@
 //     机制，循环外键会让「删父行 → 造出新的悬空引用」的分析变复杂，宁可多一次带索引查询。
 //   * 不用 updated_at 当业务时钟 —— 任何更新都会刷新它（ORM 的 update 路径会自动刷），
 //     所以 4 小时过期判定单开 judgement_due_at 列。
-//   * 不把「过期」做成一个状态（曾经叫 suspended）—— 它是 judgement_due_at 的纯派生事实，
+//   * 不把「过期」做成一个状态 —— 它是 judgement_due_at 的纯派生事实，
 //     物化成状态只会让「等判断」这条唯一的判断入口被自己关掉。见 g_judgement_timeout。
 //
 
@@ -37,30 +37,26 @@ namespace doodle::ai_light {
 /// 它是 `state == awaiting_judgement && now > judgement_due_at_` 的纯函数，
 /// `is_judgement_overdue()` 随时算得出来，读模型也把它带出去了（`is_judgement_overdue_`）。
 ///
-/// 曾经它被物化成一个 `suspended` 状态，代价很实在：
-/// `apply_judgement` 只接受 `awaiting_judgement`，而**没有任何路径从 suspended 回到
-/// awaiting_judgement**（`mark_awaiting_judgement()` 只在渲染回填里调用，而渲染早就完成了）。
-/// 于是美术超时回来时，**已经渲染好的 6 个候选再也判断不了** ——
-/// `/judge` 报「不在等人工判断」，只能走 `/spec` 重出方案，白扔一整轮渲染。
-/// 更刺眼的是 `is_judgement_overdue()` 当时也要求状态是 `awaiting_judgement`，
-/// 所以挂起后这个标志会从 true 翻成 false：恰恰在「真的过期了」那一刻，过期信号消失了。
+/// 这一点必须守住：`apply_judgement` 只接受 `awaiting_judgement`，若把过器物化成一个
+/// 新状态，就没有任何路径能回到 `awaiting_judgement`（`mark_awaiting_judgement()` 只在
+/// 渲染回填里调用，而渲染早已完成）—— 美术超时回来时，**已经渲染好的 6 个候选再也判断不了**，
+/// 只能走 `/spec` 重出方案，白扔一整轮渲染。同理，`is_judgement_overdue()` 也不能要求
+/// 状态是 awaiting_judgement，否则恰恰在「真的过期了」那一刻过期信号会消失。
 ///
-/// 顺带一提，挂起原计划里的收益是「不占资源」，但那是空头支票：
-/// 会话进入 `awaiting_judgement` 的前提就是渲染已完成、worker 已归还，
-/// 此时没有农场槽位、没有 UE 授权、没有 GPU 被占，6 张 PNG 只是躺在磁盘上。
+/// 另外「挂起能省资源」在这里是空头支票：会话进入 `awaiting_judgement` 的前提就是渲染已完成、
+/// worker 已归还，此时没有农场槽位、没有 UE 授权、没有 GPU 被占，6 张 PNG 只是躺在磁盘上。
 constexpr auto g_judgement_timeout = std::chrono::hours{4};
 
 /// 会话状态机 —— **没有终态**。
 ///
-/// 曾经有 `accepted`（已定稿）/ `rejected`（全否并终止）/ `failed` 三个终态，现已全部取消：
 /// 美术对同一个镜头的灯光可能是**无限轮**的调整（今天定稿，明天导演改意见，回来接着调），
-/// 会话一旦进终态，`check_session_mutable()` 会把传图、删图、重出 Spec 全部挡成 400，
-/// 那段工作就只能新建一个会话重来 —— 输入、Spec、历史轮次全部作废。
+/// 所以这里不设终态：一旦有终态，`check_session_mutable()` 会把传图、删图、重出 Spec
+/// 全部挡成 400，那段工作就只能新建一个会话重来 —— 输入、Spec、历史轮次全部作废。
 ///
-/// 所以现在的模型是「会话是一个长期工作台」：
-///   * 定稿不再是终点，而是**可移动的单指针**（`ai_light_candidate.accepted_session_id`
+/// 于是模型是「会话是一个长期工作台」：
+///   * 定稿**不是终点**，而是**可移动的单指针**（`ai_light_candidate.accepted_session_id`
 ///     上的唯一索引仍然保证「当前定稿」只有一个，再次定稿会顶掉上一次）；
-///   * `reject_all` 也不再终止，它只表示「这一轮全部不要」，会话照常可以再出一轮；
+///   * `reject_all` **不终止会话**，它只表示「这一轮全部不要」，会话照常可以再出一轮；
 ///   * 失败没有独立状态，`failure_reason_` 是唯一记录（`advance_session` 的接缝失败走回滚）。
 ///
 /// 一轮只能判断一次（`apply_judgement` 的 `iteration.state_ != judged` 闸门），

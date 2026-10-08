@@ -359,7 +359,7 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
       l_cand.set_rig(make_probe_rig(l_session_row.uuid_id_, 1, l_i));
       // 真实列从 rig 副本同步过来（生产路径也是这样）
       l_cand.sync_from_rig();
-      // 路径不是列（批 7 / D44）：候选行只留状态与数值，路径由 candidate_render_path 现算。
+      // 路径不是列（D44）：候选行只留状态与数值，路径由 candidate_render_path 现算。
       l_cand.render_status_   = candidate_render_status::rendered;
       l_cand.render_ms_       = 18000 + l_i * 100;
       l_cand.light_count_     = 2;

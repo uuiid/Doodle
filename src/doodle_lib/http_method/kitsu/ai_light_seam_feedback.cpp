@@ -1,6 +1,6 @@
 //
 // AI 灯光 · 接缝 3 实现：自由文本反馈 → 结构化轴调整
-// （docs/ue_ai_lighting_plan.md §15.9；从 ai_light_orchestrator.cpp 拆出，见 §15.11）
+// （设计见 docs/ue_ai_lighting_plan.md §15.9）
 //
 // 离线可测部件（build_feedback_* / map_feedback_result 及其文件内助手）与联网入口
 // structure_feedback 都定义在这里；声明在 ai_light_seam_feedback.h。

@@ -1,9 +1,9 @@
 //
 // AI 灯光：模型输出 JSON 架构验证层的离线测试
-// （docs/ue_ai_lighting_plan.md §15.11；重构方案 §8）
+// （设计见 docs/ue_ai_lighting_plan.md §15.11）
 //
 // 这一层全是纯函数（没有 sqlite、没有协程、没有 HTTP），所以它能在单测宿主里被完整覆盖 ——
-// 这是把「模型输出怎么读」抽出来的一大收益：重构前它散在三条接缝里，只有真机才能验。
+// 把「模型输出怎么读」集中到一层，收益就是它不必等真机才能验。
 //
 // 刻意不 include 路由头 `http_method/kitsu/ai_light.h`（它会拉进 <core/http/http_function.h>，
 // 而测试目标的 include 路径没有 doodle_lib 根）—— 与 ai_light_candidates.cpp 同一约定。
@@ -41,19 +41,19 @@ std::string en(E in_value) {
 
 /// 三个生产 schema 的**形状摘要**（FNV-1a 64，十六进制）。
 ///
-/// 冻结时机：**重构前**（本轮批次 1b），生成方式就是把三个值打印出来抄进来
+/// 生成方式就是把三个值打印出来抄进来
 /// （见 schema_shape_digest_matches_frozen_golden 里的 BOOST_TEST_MESSAGE）。
 ///
-/// 这是重构最重要的护栏：批 2 要把三个 schema 改用内核建造器重写（手写 → `schema_object` /
-/// `schema_array` / `schema_enum`），结构与取值必须**逐字等价**；摘要不一样就说明「等价重写」
-/// 这句话不成立，必须回头核对而不是改 golden。
+/// 这是形状层的护栏：三个 schema 全部由内核建造器（`schema_object` / `schema_array` /
+/// `schema_enum`）拼出来，任何建造器改动都必须让摘要保持原值；摘要不一样就说明
+/// 「只改了实现、没改形状」这句话不成立，要回头核对而不是改 golden。
 ///
-/// 摘要器对 `required` / `enum` 的**数组顺序不敏感**（见 canonicalize）—— 建造器按属性名字典序
-/// 生成 required，手工版本按书写顺序，两者语义相同，不该被判成改动。
-// 冻结的 schema 形状摘要。**批 2 用内核建造器重写三个 build_*_json_schema 之后，这三个值必须一字不变**
-// —— 它们就是「重建验证层没有改变任何一个 schema 的形状」的机器可判定证据（方案 §8）。
-// 生成方式：先跑一次 `--run_test=ai_light_json_validation --log_level=message`，从
-// 「spec digest = …」三行里抄回来。改动 schema 形状时**必须**同步改这三个常量，并在 §15.11 里说明为什么。
+/// 摘要器对 `required` / `enum` 的**数组顺序不敏感**（见 canonicalize）—— 建造器按属性名
+/// 字典序生成 required，与书写顺序无关，两者语义相同，不该被判成改动。
+// 冻结的 schema 形状摘要：这三个值必须一字不变 —— 它们是「建造器没有改变任何一个 schema
+// 的形状」的机器可判定证据。生成方式：先跑一次
+// `--run_test=ai_light_json_validation --log_level=message`，从「spec digest = …」三行里抄回来。
+// 真要改 schema 形状时**必须**同步改这三个常量，并在设计文档里说明为什么。
 constexpr std::string_view g_golden_spec_digest       = "c4b1d8ee3aa3ef47";
 constexpr std::string_view g_golden_candidates_digest = "227cb12da4693db1";
 constexpr std::string_view g_golden_feedback_digest   = "0e13ecb11cd3f474";

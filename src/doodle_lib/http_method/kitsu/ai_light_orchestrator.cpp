@@ -5,14 +5,14 @@
 //
 // 本文件只装**状态机**：advance_session / apply_judgement / mark_iteration_rendered /
 // build_session_detail，以及它自己的两个小助手。三条「接缝」（generate_spec /
-// generate_candidates / structure_feedback）、rig 纯运算、共用部件与 JSON 架构层都已按
-// §15.11 拆到同目录的独立文件：
+// generate_candidates / structure_feedback）、rig 纯运算、共用部件与 JSON 架构层在同目录的
+// 独立文件里：
 //   * `ai_light_seam_spec.{h,cpp}`        —— 蒸馏 Spec（§15.7）
 //   * `ai_light_seam_candidates.{h,cpp}`  —— 基线 rig + 轴计划 + OFAT 展开（§15.8）
 //   * `ai_light_seam_feedback.{h,cpp}`    —— 自由文本 → 轴方向（§15.9）
 //   * `ai_light_rig_ops.{h,cpp}`          —— 轴施加 / OFAT 展开 / ops diff / key:fill 比
 //   * `ai_light_seam_common.{h,cpp}`      —— 接缝共用提示词片段 + 描述 + 推理管道
-//   * `ai_light_json_validation.{h,cpp}`  —— schema 建造器 + 严格/宽松读取器 + 架构诊断（方案 §3）
+//   * `ai_light_json_validation.{h,cpp}`  —— schema 建造器 + 严格/宽松读取器 + 架构诊断
 // 对外仍然只需包含伞形头 `ai_light_orchestrator.h`。接缝的契约（抛即回滚、不得留下非幂等的
 // 部分写入、返回值必须自洽）见该头顶部。
 //
@@ -32,12 +32,6 @@
 #include "ai_light_seam_common.h"
 
 
-// 注：本文件曾经还包含 app_base.h / boost/asio/co_spawn.hpp / steady_timer.hpp /
-// use_awaitable.hpp —— 它们只服务于那个已删除的 4 小时挂起扫描器（常驻后台协程）。
-// 过期现在是纯派生标志，这里不再有任何后台任务，所以一并去掉：
-// 留着这些 include 会让人以为这儿还跑着一个循环。
-// 同理，entity_path.h 与 project.h 也已去掉：它们只服务于那个已删除的
-// resolve_session_paths（产物路径改由 kitsu_ctx_t 按会话 uuid 生成，不查库）。
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/global_function.h>
@@ -131,9 +125,9 @@ namespace {
 
 /// 第一步：draft / awaiting_spec_confirm → 蒸馏出 LightingSpec。
 ///
-/// 从 advance_session 里拆出来（方案 §6）：这一段本身就是「一次接缝调用 + 一个事务」的完整
-/// 闭环，与下面出候选那一段没有共享状态 —— 唯一的共享是 `io_session`（状态与
-/// `failure_reason_` 由本函数直接改，因为回滚要用到它们）。
+/// 独立成函数：这一段本身就是「一次接缝调用 + 一个事务」的完整闭环，与下面出候选那一段
+/// 没有共享状态 —— 唯一的共享是 `io_session`（状态与 `failure_reason_` 由本函数直接改，
+/// 因为回滚要用到它们）。
 ///
 /// **本函数不捕获任何异常**：接缝契约 1 说「抛 = 本轮无法推进」，回滚与重抛由调用方统一做。
 /// 这样两个分支的失败路径只有一份实现，也不会出现「分支里吞掉了异常」这种岔路。
@@ -265,10 +259,9 @@ boost::asio::awaitable<void> advance_session_generating_branch(
 
   // 本轮渲染的基线关卡：直接复用镜头装配的现成推导。
   //
-  // §15.8 的决定 D8 原本「只透传不解析」，理由是取它要复刻 shot_render_light_builder 的
-  // 三段私有推导（基英/集数 → 场景 UE 路径 → 地编预调探测）。那段推导后来被抽成了自由函数
-  // auto_task::shot_render_light()，它自己查库、自己推导，正是这条路线的唯一权威 ——
-  // 所以这里改为直接调它，而不是再写一遍（§15.12 批 2）。
+  // 取它要复刻 shot_render_light_builder 的三段私有推导（基英/集数 → 场景 UE 路径 →
+  // 地编预调探测），而那段推导已经是自由函数 auto_task::shot_render_light()：它自己查库、
+  // 自己推导，正是这条路线的唯一权威 —— 所以这里直接调它，不另写一遍。
   //
   // 会话的 task_id_ 是灯光任务 id，与动画/解算任务指向同一个镜头实体，
   // 所以拿到的就是本镜头的场景关卡、UE 工程与相机文件。
@@ -310,9 +303,8 @@ boost::asio::awaitable<void> advance_session_generating_branch(
       "候选生成接缝返回了 {} 个候选，方案 §6.6 要求恰好 {} 个", l_res.rigs_.size(), g_candidate_count
   );
 
-  // 产物路径**不是**库里的列（批 7 / D44）：候选行自带 session_id_ / iteration_id_ /
-  // uuid_id_，路径由 candidate_render_path() 现算，所以本函数不写任何路径数据。
-  // 这里也不再需要 kitsu_ctx_t —— 少一个运行期依赖。
+  // 产物落点**不是**库里的列（D44）：候选行自带 session_id_ / iteration_id_ / uuid_id_，
+  // 路径由 candidate_render_path() 现算，所以本函数不写任何路径数据，也不需要 kitsu_ctx_t。
 
   ai_light_iteration l_it{};
   // 用上面铸造好的那个 uuid，**不要**在这里另取一个：候选的 iteration_id_ 与
@@ -327,10 +319,10 @@ boost::asio::awaitable<void> advance_session_generating_branch(
   l_it.set_axes(l_res.axes_);
 
   // 分布式任务载荷（方案 §13.1 第 5 项：server_task_info.command_ 已有 JSON 列，
-  // 不需要改那张表）。形状由 ai_light_task_payload_t 冻结（§15.12 批 0）。
+  // 不需要改那张表）。形状由 ai_light_task_payload_t 冻结。
   //
-  // 路径分两层（批 6 D38/D39/D40，批 7 D44 收尾）：
-  //   * 载荷里只放**相对路径** —— 服务端定命名（out_dir_ = <session>/<轮次 uuid>、
+  // 路径分两层：
+  //   * 载荷里只放**相对路径** —— 服务端定命名（out_dir_ = <session uuid>/<轮次 uuid>、
   //     文件名 = <candidate_uuid>.png|.exr），工作机定根（自己的工作机本地缓存根）。
   //     工作机不是共享盘上的进程：它写不了、也不该写服务端 root_ 底下的目录。
   //   * 服务端**不存**路径（D44）：产物上传后落在按同一套命名规则算出来的位置，
@@ -339,7 +331,7 @@ boost::asio::awaitable<void> advance_session_generating_branch(
   l_payload.session_id_       = io_session.uuid_id_;
   l_payload.iteration_        = l_iteration;
   l_payload.spec_id_          = l_spec->uuid_id_;
-  // 轮次目录名用**轮次 uuid**（批 7）：候选行靠 iteration_id_ 就能算出路径，不必回查序号。
+  // 轮次目录名用**轮次 uuid**：候选行靠 iteration_id_ 就能算出落点，不必回查序号。
   l_payload.out_dir_          = make_iteration_relative_dir(io_session.uuid_id_, l_it.uuid_id_);
   l_payload.baseline_level_   = l_req.baseline_level_;
   l_payload.ue_project_path_  = l_assembly_ok ? l_assembly.ue_main_project_path_.generic_string() : std::string{};
@@ -367,8 +359,8 @@ boost::asio::awaitable<void> advance_session_generating_branch(
     l_cand.render_status_ = candidate_render_status::pending;
 
     l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_candidate>().values(l_cand));
-    // 载荷里带的是**相对文件名**（与服务端落库路径的文件名同一个 helper 生成，
-    // 只是不带服务端那一长串根）：工作机拼上自己的本地根后交给 UE（D39）。
+    // 载荷里带的是**相对文件名**（由 make_candidate_file_name 生成，与服务端算落点时
+    // 用的是同一个 helper，只是不带服务端那一长串根）：工作机拼上自己的本地根后交给 UE（D39）。
     l_payload.candidates_.push_back(
         ai_light_task_candidate_t{
             l_i, l_cand.uuid_id_, make_candidate_file_name(l_cand.uuid_id_, false),
@@ -390,7 +382,7 @@ boost::asio::awaitable<void> advance_session_generating_branch(
   // auto_light 是既有的「跑 UE 装配」管线（distributed_task.cpp:54），
   // 它的 command_ 形状与本轮完全不同，复用会让工作机按错误的解析方式处理。
   l_task.type_              = server_task_info_type::ai_light;
-  // 载荷形状由 ai_light_task_payload_t 冻结（§15.12 批 0），不在这里就地拼 JSON：
+  // 载荷形状由 ai_light_task_payload_t 冻结，不在这里就地拼 JSON：
   // 工作机与服务端共用同一个 struct 的 to_json/from_json，键名改一处两边同时改。
   l_task.command_           = l_payload;
   // 同上：uuid 要在被引用之前定下来。mark_iteration_rendered() 是**按任务 uuid**
@@ -448,7 +440,7 @@ boost::asio::awaitable<void> advance_session(
 
   /// 失败收尾：把会话状态退回进入时的状态并记下原因，然后由调用方重新抛出。
   ///
-  /// 会话已经**没有终态**了（§15.10），所以这里退回原状态不是为了「让它可恢复」——
+  /// 会话**没有终态**（§15.10），所以这里退回原状态不是为了「让它可恢复」——
   /// 而是为了不留一个卡死的 generating：接缝超时、模型输出不合规、解析不出工作室
   /// 这类失败都是可重试的，退回原状态后美术直接再点一次即可，且不丢已经上传的参考图
   /// （参考图挂在会话上，`cascade`）。失败的唯一记录是 `failure_reason_`。
@@ -563,9 +555,9 @@ boost::asio::awaitable<void> apply_judgement(
 
   // 三个决定都回到 generating（§15.10 决定 D17）：
   //
-  // 会话**没有终态**了，所以这里不再有分支。generating 是唯一能再出一轮的状态
-  // （`advance_session` 的 generating 分支 = `POST /iterate`），而一个轮次判断完之后，
-  // 唯一的前进方向就是再出一轮 —— 美术对同一个镜头的灯光可以无限轮调整。
+  // 会话**没有终态**，所以这里没有分支：三个决定都回到 generating。
+  // generating 是唯一能再出一轮的状态（`advance_session` 的 generating 分支 = `POST /iterate`），
+  // 而一个轮次判断完之后，唯一的前进方向就是再出一轮 —— 美术对同一个镜头的灯光可以无限轮调整。
   //
   // 三个决定的区别在**动作层**，不在会话状态：定稿要带 preview_file 并落定稿指针，
   // 续轮要有 selected_candidate（下一轮 warm start 的起点），全否则明确不许选候选。
@@ -624,13 +616,12 @@ boost::asio::awaitable<void> apply_judgement(
     }
     // 定稿与续轮都要把这张标成「下一轮基准」（§15.10 决定 D20）。
     //
-    // 定稿原先刻意不置 is_selected_，理由是「定稿没有下一轮」—— 会话没有终态之后
-    // 这个理由不成立了：定稿之后接着调时，下一轮的 warm start
+    // 定稿也置 is_selected_：会话没有终态，定稿之后接着调时，下一轮的 warm start
     // （get_ai_light_selected_candidate）应该从**定稿那套 rig** 出发（那是目前最好的一张），
     // 而不是回到 LLM 的原始基线。
     //
-    // is_selected_ 与 is_accepted_ 仍然是两个语义（前者 = 下一轮基准，后者 = 当前定稿），
-    // 只是现在可以在同一行上同时为真。
+    // is_selected_ 与 is_accepted_ 是两个语义（前者 = 下一轮基准，后者 = 当前定稿），
+    // 但在同一行上可以同时为真。
     l_cand.is_selected_ = true;
 
     l_sqls.emplace_back(
@@ -697,8 +688,8 @@ boost::asio::awaitable<void> mark_iteration_rendered(
         l_cand.iteration_id_ == l_it->uuid_id_, bad_request, "候选 {} 不属于轮次 {}", l_cand.uuid_id_, l_it->iteration_
     );
     l_total_ms += l_cand.render_ms_;
-    // 不写路径（批 7 / D44）：库里没有那两列了，要路径时按 candidate_render_path() 现算
-    // （上传路由、取图路由、apply_render_report 的 D41/D42 都这么做）。
+    // 这里只写状态与实测数值；产物落点按 candidate_render_path() 现算，
+    // 与上传 / 取图 / 回传处理用的是同一个函数（D44）。
     l_sqls.emplace_back(
         orm::update(in_sql)
             .from<ai_light_candidate>()
@@ -883,7 +874,7 @@ boost::asio::awaitable<void> apply_render_report(
         l_found != l_round.end(), bad_request, "候选 {} 不属于 AI 灯光轮次 {}", l_rep.candidate_id_, l_it->iteration_
     );
 
-    // 产物路径既不在回传里（D27），也不在库里（批 7 / D44）：它就是候选行那三个 uuid 的
+    // 产物落点既不在回传里（D27），也不在候选行里（D44）：它就是候选行那三个 uuid 的
     // 纯函数，所以现算一次 —— `in_ctx` 是唯一的运行期输入（布局基准是它的 root_）。
     //
     // 为什么把 ctx 做成参数、而不是在这里取 g_ctx()：test_main 里 g_ctx() 不可用
@@ -911,10 +902,8 @@ boost::asio::awaitable<void> apply_render_report(
       }
     }
 
-    // EXR 是**可选**产物（D42：工作机传不上去不阻断本轮），所以这里不降级。
-    // 批 7 起库里没有 EXR 路径可清了（D44），只留一条诊断：算出来的 EXR 不在时记一笔，
-    // 让「这一轮的线性图没上来」在日志里看得见。
-    // 「留了一条指向不存在文件的陈旧记录」那类问题随那两列一起消失了 —— 路径是现算的。
+    // EXR 是**可选**产物（D42：工作机传不上去不阻断本轮），所以这里不降级，只留一条诊断：
+    // 算出来的 EXR 不在时记一笔，让「这一轮的线性图没上来」在日志里看得见。
     const FSys::path l_exr = candidate_render_path(in_ctx, l_cand, true);
     if (!FSys::exists(l_exr)) {
       SPDLOG_LOGGER_WARN(

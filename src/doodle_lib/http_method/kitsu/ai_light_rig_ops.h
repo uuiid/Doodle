@@ -6,8 +6,8 @@
 // 口径实现轴值语义 —— 「模型按它给档位，服务端按同一套公式应用」，两边不一致时
 // 美术会看到「轴变了但图没变」（§15.8 / §15.11）。
 //
-// 从 ai_light_orchestrator.h 拆出（重构方案 §2/§4）：状态机、三条接缝、rig 运算各自
-// 一个文件。本文件不依赖另外三个 —— 它是接缝 2 与接缝 3 的**下游**工具，不是接缝本身。
+// 独立成文件：状态机、三条接缝、rig 运算各占一个文件。本文件不依赖另外三个 ——
+// 它是接缝 2 与接缝 3 的**下游**工具，不是接缝本身。
 //
 
 #pragma once
@@ -28,8 +28,7 @@ namespace doodle::ai_light {
 ///
 /// 与 g_candidate_count 一样是**产品常量**：expand_candidates 的 reserve、
 /// parse_axis_plan / build_candidates_json_schema 的档位上限共用它，
-/// 所以它必须是唯一的一份定义（原先在 ai_light_orchestrator.cpp 的匿名命名空间里，
-/// 拆文件后放这里，见 §15.11）。
+/// 所以它必须是唯一的一份定义（放在这里，三个文件的公共上游）。
 inline constexpr std::size_t g_axis_step_budget = static_cast<std::size_t>(g_candidate_count) - 1;
 
 /// 每轮最多声明几个轴。太多轴会让「差别从哪来」变得看不出来，而美术的判断正是收敛信号。

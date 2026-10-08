@@ -1,6 +1,6 @@
 //
 // AI 灯光 · 接缝 2：基线 rig + Spec → 本轮 6 个候选
-// （docs/ue_ai_lighting_plan.md §15.8；从 ai_light_orchestrator.h 拆出，见 §15.11）
+// （设计见 docs/ue_ai_lighting_plan.md §15.8）
 //
 // 与接缝 1 同样的分法：纯函数组信封/映射 + 一次真实网络调用。约定也相同 ——
 // 必须定义在命名空间 doodle::ai_light 内（匿名命名空间 = 内部链接 = 库外 LNK2019）。
@@ -91,9 +91,9 @@ DOODLELIB_API boost::asio::awaitable<candidate_generation_result_t> generate_can
 // 接缝 2 的离线可测部件
 // ---------------------------------------------------------------------------
 
-// build_common_lighting_section() 已搬到 ai_light_seam_common.h（三条接缝共用的库内部件）。
-// 它不再从伞形头导出：唯一的两个调用方（接缝 1 与接缝 2 的 build_*_instructions）都在库内，
-// 而 seam_common 头将来要 include 推理客户端头 —— 把它挂进伞形头会把 HTTP 依赖带给每一个
+// build_common_lighting_section() 定义在 ai_light_seam_common.h（三条接缝共用的库内部件）。
+// 它不从伞形头导出：唯一的两个调用方（接缝 1 与接缝 2 的 build_*_instructions）都在库内，
+// 而 seam_common 头要 include 推理客户端头 —— 把它挂进伞形头会把 HTTP 依赖带给每一个
 // 包含本头的 TU。
 
 /// 交给 LLM 的系统指令：共用段 + 轴表（§6.2）+ §6.6 护栏 + 轴值语义（§15.8 表）+ 输出要求。
@@ -120,7 +120,7 @@ DOODLELIB_API iteration_axes_t default_axis_plan(const lighting_spec_t& in_spec)
 /// id 生成），模型只给「灯怎么打」。枚举一律 magic_enum::enum_cast 校验，认不出抛 bad_gateway。
 DOODLELIB_API lighting_rig_t build_base_rig(const nlohmann::json& in_json);
 
-// apply_axis_step / expand_candidates / diff_rigs 与两个轴计划常量已搬到 ai_light_rig_ops.h：
+// apply_axis_step / expand_candidates / diff_rigs 与两个轴计划常量定义在 ai_light_rig_ops.h：
 // 它们是纯 rig 运算，既不碰数据库也不碰接缝信封，放在接缝头里会让「接缝」这个词失去边界。
 
 /// LLM 结果 → candidate_generation_result_t。服务端钉死 schema_version/身份字段/

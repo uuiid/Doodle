@@ -4,9 +4,9 @@
 // 这里放的都是实现细节：跨接缝共用的常量、字符串拼装、rig/spec/预设的紧凑摘要。故意不做成
 // 公共 API —— 一旦导出就会有人从外面依赖，而它们的形状会随提示词一起变。
 //
-// 从 ai_light_orchestrator.h/.cpp 拆出（重构方案 §2/§4）。本头**不含任何 HTTP 依赖**
+// 本头**不含任何 HTTP 依赖**
 // （不 include http_jwt_fun / session_data / 推理客户端），所以单测可以直接调用其中的纯函数：
-// 单测宿主没有 core_set::ctx_ptr、没有 SSL context、没有 HTTP logger（§15.6）。
+// 单测宿主没有 core_set::ctx_ptr、没有 SSL context、没有 HTTP logger。
 //
 // 分工：本文件只有「纯函数 + 纯文本」。工具（`ai_light_rig_ops.h`）在另一侧，接缝的
 // 请求/映射在自己的 `ai_light_seam_*.h` 里；三者都靠本头共享措辞与口径。

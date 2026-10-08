@@ -2,7 +2,7 @@
 // AI 灯光：接缝 1 的离线可测部件（docs/ue_ai_lighting_plan.md §15.7）
 //
 // generate_spec 本体要联网（方舟 Responses）且需要 SSL context，单测宿主两样都没有，
-// 所以这里盯的是它被拆出来的那一半 —— 组装推理信封 + 把模型输出映射回 LightingSpec。
+// 所以这里盯的是**离线那一半** —— 组装推理信封 + 把模型输出映射回 LightingSpec。
 // 这半决定了「服务端究竟把什么交给模型、又把模型的什么当作事实」，是能离线钉死的部分。
 //
 // 这份测试的两个立场（与实现里的注释一致）：
@@ -14,7 +14,7 @@
 
 // 刻意**不**包含路由头 http_method/kitsu/ai_light.h：它 include 了
 // <core/http/http_function.h>（相对 doodle_lib 根的写法），而测试目标的 include 路径里
-// 没有 E:\Doodle\src\doodle_lib（这也是 inference_task.h 当初被单独拆出来的同一个原因）。
+// 没有 E:\Doodle\src\doodle_lib。
 // 所以这里不引用 ai_light.h 的 reference_image_url，改成在下面按线格式自己拼期望值 ——
 // 这反而更好：测试独立钉住 URL 形状，而不是跟着实现一起改。
 #include <doodle_lib/core/core_set.h>

@@ -1,6 +1,6 @@
 //
 // AI 灯光 · 接缝 2 实现：基线 rig + Spec → 本轮 6 个候选
-// （docs/ue_ai_lighting_plan.md §15.8；从 ai_light_orchestrator.cpp 拆出，见 §15.11）
+// （设计见 docs/ue_ai_lighting_plan.md §15.8）
 //
 // 离线可测部件（build_candidates_* / default_axis_plan / build_base_rig / parse_axis_plan /
 // map_candidate_result 及其文件内助手）与联网入口 generate_candidates 都定义在这里；
@@ -84,9 +84,9 @@ constexpr std::size_t g_preset_prompt_top_k = 12;
 // （那套是「能读就读、读不出用默认」）。strict schema 下缺字段本该不可能发生；发生了说明
 // 模型没遵守契约，静默取默认值会把「模型没按要求输出」变成一个看不出来的偏移。
 //
-// 实现已搬到 ai_light_json_validation.h 的 json_val::require_*（§3.2）：接缝名与字段路径
-// 改由调用方传入（F1），枚举一律走 magic_enum::enum_cast 显式校验。原先这里那一份把
-// 「候选基线 rig」写死在消息里 —— 只能在接缝 2 用，而这正是需要搬家的一部分原因。
+// 实现在 ai_light_json_validation.h 的 json_val::require_*：接缝名与字段路径由调用方传入，
+// 枚举一律走 magic_enum::enum_cast 显式校验。这样错误消息里带的是**调用方**的接缝名，
+// 同一个读取器三条接缝都能用。
 
 // ---- rig 取值助手 --------------------------------------------------------
 

@@ -37,7 +37,9 @@
 这六条是**架构性约束**，不是风格偏好。前五条来自方案 §14.4/§14.5，第六条来自实现事实。
 
 1. **EXR 不下发浏览器。** 服务端给两份产物：PNG（显示空间，用于显示/判据/VLM 判分）+ 线性 EXR（留服务端做工程检查）。
-   前端**只**拿 PNG + 数值指标。候选对象里的 `render_exr_path` 是服务端磁盘路径，**不要读、不要展示、不要拼接**。
+   前端**只**拿 PNG + 数值指标。**候选对象里根本没有路径字段**（D44）：产物路径由服务端按
+   「会话 uuid / 轮次 uuid / 候选 uuid」现算、不落库、不进 JSON —— 取图一律用
+   `GET /api/doodle/ai/light/candidate/{uuid}/image`，不要自己拼路径，也不要假设响应里有 `render_png_path` / `render_exr_path`。
 2. **规划逻辑不要放到前端。** 现有 AIScript 模式是浏览器直连 DeepSeek —— 灯光规划**不能照抄**：
    提示词模板、Spec 词表、IR schema 校验一旦在 JS 与 C++ 各存一份，必然漂移。
    前端只调 `/api/doodle/ai/light/*`；**不要复用 `/api/doodle/deepseek/key`**，不要在前端拼提示词、不要在前端算轴。

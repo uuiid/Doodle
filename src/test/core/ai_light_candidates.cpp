@@ -2,7 +2,7 @@
 // AI 灯光：接缝 2 的离线可测部件（docs/ue_ai_lighting_plan.md §15.8）
 //
 // generate_candidates 本体要联网（火山方舟 Responses）且需要 SSL context，单测宿主两样都没有，
-// 所以这里盯的是它被拆出来的那一半 —— 组装推理信封 + 把「基线 rig + 轴计划」映射成 6 个候选。
+// 所以这里盯的是**离线那一半** —— 组装推理信封 + 把「基线 rig + 轴计划」映射成 6 个候选。
 //
 // 这份测试钉的是三件事：
 //   1) 服务端钉死的字段（身份、schema_version、exposure.method）**不因模型输出而改变**；

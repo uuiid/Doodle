@@ -22,12 +22,12 @@
 // 命名规则现算（D44）。这些用例断言渲染完成后候选项的三个 uuid 一字不变，因而算出来的
 // 路径也一字不变 —— 那就是那条规则的回归钉子。
 //
-//   4. 产物存在性（D41，批 6）—— 工作机的上传是**独立一步**，所以「报告说 rendered」
+//   4. 产物存在性（D41）—— 工作机的上传是**独立一步**，所以「报告说 rendered」
 //      不等于「那张图取得到」。落地时逐张按命名规则算出 PNG 再查在不在：不在就降级 failed；
 //      全都不在就走失败出口（否则美术会对着取不到的图点「选第 3 张」）。
 //      EXR 是可选的（D42）：文件不在只记一条 WARN，不降级、不阻断本轮。
 //
-//   5. 路径不落库（D44，批 7）—— 候选行上**没有**路径列，也没有那两个 JSON 键：
+//   5. 路径不落库（D44）—— 候选行上**没有**路径列，也没有那两个 JSON 键：
 //      路径 = candidate_render_path(ctx, 候选行, linear)，纯函数，吃候选行自带的三个 uuid。
 //
 // 为什么不经过 HTTP 层：路由只是 get_json + parse + apply 三步，语义全在这两个函数里；
@@ -598,7 +598,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(mark_iteration_failed_unknown_task_is_404, fixture
 }
 
 // ===========================================================================
-// 第四段：产物存在性（D41，批 6）
+// 第四段：产物存在性（D41）
 //
 // 工作机的上传是**独立一步**（D40）：UE 写完文件、报告也写了 rendered，上传那一步仍可能
 // 失败。所以「报告说渲染成功」只是主张，能不能取到图要服务端自己看文件。
@@ -701,14 +701,14 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_reported_failure_plus_downgrade_leave
 }
 
 // ===========================================================================
-// 第五段：路径派生（D44，批 7）
+// 第五段：路径派生（D44）
 //
-// 候选行上不再有路径列，也不再有那两个 JSON 键：路径 = candidate_render_path(ctx, 行, linear)，
+// 候选行上没有路径列，也没有那两个 JSON 键：路径 = candidate_render_path(ctx, 行, linear)，
 // 吃的是行自带的 session_id_ / iteration_id_ / uuid_id_ 三个 uuid。这一段盯的就是「它确实是
 // 纯函数」—— 同一行算两次同一个结果、不同行不撞、只有 root_ 变结果才跟着变。
 // ===========================================================================
 
-// 纯同步用例：体里一个 co_await 都没有，用 CORO 宏展开出的函数不是协程 → C4716（§15.14 坑 37）
+// 纯同步用例：体里一个 co_await 都没有，用 CORO 宏展开出的函数不是协程 → C4716
 BOOST_FIXTURE_TEST_CASE(candidate_render_path_is_a_pure_function_of_the_row, fixture_t) {
   auto& l_fx = *this;
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 3);

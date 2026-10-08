@@ -760,10 +760,14 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 
   ```
   <root>/ai_light/<会话 uuid[0:3]>/<会话 uuid[3:6]>/<会话 uuid>/ref/<参考图 uuid>.png
-  <root>/ai_light/<会话 uuid[0:3]>/<会话 uuid[3:6]>/<会话 uuid>/it_001/<候选 uuid>.png
-  <root>/ai_light/<会话 uuid[0:3]>/<会话 uuid[3:6]>/<会话 uuid>/it_001/<候选 uuid>.exr
+  <root>/ai_light/<会话 uuid[0:3]>/<会话 uuid[3:6]>/<会话 uuid>/<轮次 uuid>/<候选 uuid>.png
+  <root>/ai_light/<会话 uuid[0:3]>/<会话 uuid[3:6]>/<会话 uuid>/<轮次 uuid>/<候选 uuid>.exr
   <root>/ai_light/backup/<YYYY_MM_DD_HH>/<会话 uuid>/          ← 删会话时整体搬到这儿
   ```
+
+  > 轮次目录名就是**轮次自己的 uuid**（不用 `it_001` 那种序号）：候选行自带 `session_id_` 与
+  > `iteration_id_`，于是「候选 → 产物路径」是一次纯计算，不必回查轮次行去拿那个可变的
+  > `iteration_` 序号（见 §15.15 的 D44）。
 
   **文件名一律是各自的 uuid**（不是序号）：序号落盘会撞车（同一目录两张图都叫 `ref_00.png`），
   而 uuid 天然唯一，序号退回为纯展示顺序。**只有会话目录分桶**（`split_uuid_path`，与 `sd2`/`jobs` 一致）；
@@ -1154,10 +1158,8 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 >    直接复用 `base_distributed_task` + `async_run_ue` 设施）；
 > ② `allowed_task_types` 默认集合**也加了** `ai_light`（`event.cpp:31-38`）—— 与第 2 条相反，是实施时的选择
 >    （工作机与主服务器都要显式开，否则默认不派）；
-> ③ **不走「回传图给服务器」**：出图由 UE 直接写到主服务器给的共享路径（D29），回传的只是一份
->    `render_report.json` 摘要（D26/D27/D30），所以第 5 条的体积问题不存在；
->    —— **（批 6 已改）这条对「路径」的描述作废**：产物落**工作机本地**、再逐张 HTTP 上传，
->    见 §15.14 的 D38/D39/D40；回传仍然只带摘要这一点不变。
+> ③ **回传的只是一份** `render_report.json` 摘要（D26/D27/D30）：产物落**工作机本地**、逐张 HTTP 上传，
+>    所以第 5 条的体积问题不存在（见 §15.14 的 D38/D39/D40）。
 > ④ UE 命令行必须带 **`-AllowCommandletRendering`**（否则 `CommandletHelpers::TickEngine` 不 tick 渲染），
 >    见 `exe_warp/ai_light_render.cpp:53-58`。
 
@@ -2804,10 +2806,10 @@ render_report_route → parse_round_render_report → apply_render_report
 |---|---|
 | 载荷 / 回传类型 + 报告文件名 | `src/doodle_core/metadata/ai_light/task_payload.h`（`:37` / `:44` / `:73` / `:114` / `:143`）；登记 `doodle_core/metadata/ai_light/CMakeLists.txt` 与伞形头 `ai_light.h` |
 | 基线关卡推导（D8 从「只透传」改成「真的去问」） | `ai_light_orchestrator.cpp:282-295`：`http::auto_task::shot_render_light(io_session.project_id_, io_session.task_id_)` → `l_req.baseline_level_ = l_assembly.original_map_.generic_string()` |
-| 载荷组装 + 进 `command_` | 同文件 `:339-346`（`out_dir_` = `l_ctx.get_ai_light_iteration_dir(...)`）· `:395 l_task.command_ = l_payload;` —— **批 6 改**：载荷里放的是相对路径（`make_iteration_relative_dir` / `make_candidate_file_name`），库里的候选行仍是服务端绝对路径，见 §15.14 |
+| 载荷组装 + 进 `command_` | 同文件 `:339-346`（`out_dir_` = `make_iteration_relative_dir(会话 uuid, 轮次 uuid)`；候选行不写路径列）· `:395 l_task.command_ = l_payload;` —— 载荷里放的是相对路径（`make_iteration_relative_dir` / `make_candidate_file_name`），见 §15.14 |
 | 回传解析 | `parse_round_render_report` `:760` |
 | 整轮失败落库 | `mark_iteration_failed` `:828`（原因经 `brief_text` 截断到 512 + `"...(已截断)"`，`brief_text` 在 `:85`） |
-| 回传落库 | `apply_render_report` `:852`（两条出口在 `:864`；`:899-903` **沿用候选行里已有的** PNG/EXR 路径） |
+| 回传落库 | `apply_render_report(sql, ctx, task_id, report)`（两条出口；产物落点按 `candidate_render_path(ctx, …)` 现算，D41/D44） |
 | 声明 | `ai_light_orchestrator.h:142` / `:155` / `:161`（都带 `DOODLELIB_API`） |
 | 回传路由 | 声明 `ai_light.h:158`（`DOODLE_HTTP_JWT_FUN(render_report_route)`，**不做项目权限检查** —— 调用方是工作机的机器 JWT，与 `/api/data/jobs/{id}` 同一信任级）· 注册 `kitsu.cpp:333` `/api/doodle/ai/light/render_report/{}` · 实现 `ai_light.cpp:790`（先查任务类型必须是 `ai_light`，再解析、落库，回执带 `iteration_state` / `session_state` / `failure_reason`） |
 | 客户端方法 | `kitsu_client.h:174` / `kitsu_client.cpp:694` `post_ai_light_render_report(uuid, const nlohmann::json&)`（接受 200/201；回执按非严格 JSON 解析 —— 回执解析失败不该让工作机把整轮判失败） |
@@ -2825,12 +2827,12 @@ render_report_route → parse_round_render_report → apply_render_report
 | 终态 | `run()` 返回前 `put_job_info`（§10.4 契约）；`task_finished()` 由 `~base_distributed_task`（`work.cpp:360`）在析构时归还机器 |
 | CMake | `src/doodle_lib/exe_warp/CMakeLists.txt`（PUBLIC `ai_light_render.h` / PRIVATE `ai_light_render.cpp`） |
 
-**实现决定（承 §15.7 的 D1–D5、§15.8 的 D6–D8、§15.9 的 D9–D16、§15.10 的 D17–D23、§15.11 的 D-1~D-7，续 D24–D29；批 6 的路径策略改由 D38–D43 取代，见 §15.14）**
+**实现决定（承 §15.7 的 D1–D5、§15.8 的 D6–D8、§15.9 的 D9–D16、§15.10 的 D17–D23、§15.11 的 D-1~D-7、§15.14 的 D38–D43，续 D24–D29 + D44）**
 
 | # | 决定 | 理由 |
 |---|---|---|
 | D24 | 只走 `server_task_info.command_` **一条**载荷通道：不新增表、不给 `server_task_info` 加 ai_light 专用字段 | `server_task_info` 已经是派发的事实载体（`/api/data/jobs/{id}` 的机器 JWT、`run_next_task` 的在线/占用检查、`broadcast` 全是现成的）；加字段等于把同一份信息存两处，而两边会漂移 |
-| D25 | 产物路径**只在服务端产生**（`kitsu_ctx_t` 按会话/轮次/候选 uuid），载荷里的 `png_path_`/`exr_path_` 只是**告知**，回传报文里根本不含路径 | UE 侧不需要知道目录布局；工作机也不该有权决定服务端把图记在哪。**批 6 的修订**：文件名仍由服务端定，但载荷里传的是**相对路径**（根由工作机定），落库路径也由服务端定 —— 见 D39/D40 |
+| D25 | 产物命名**只在服务端产生**（`kitsu_ctx_t` 按会话/轮次/候选 uuid），载荷里的 `png_path_`/`exr_path_` 只是**告知**且是相对路径（根由工作机定，见 D39/D40），回传报文里根本不含路径 | UE 侧不需要知道目录布局；工作机也不该有权决定服务端把图记在哪。候选行也不存路径：「服务端把图记在哪」由命名规则唯一决定（D44） |
 | D26 | 整轮失败用**轮级** `error_`，候选级失败用每条 `status=failed` | §7.5 第 9 条：单候选失败不能让整轮失败。两条通道语义不同，不能混用一个标志位 |
 | D27 | 回传是**不可信输入**：`candidate_id` 必须属于本轮（只查本轮），路径不接受 | 一个坏回传不能改到别人的候选行上 |
 | D28 | 失败**不是终态**：`mark_iteration_failed` 只写会话 `failure_reason_`，不动轮次状态、不动候选行 | 与 §15.10（会话没有终态）一致；美术再点一次 `/iterate` 就该能重试 |
@@ -2890,13 +2892,8 @@ render_report_route → parse_round_render_report → apply_render_report
 ### 15.13 已落地（UE 侧：`DoodleLighting` + `DoodleLightingEditor` 两个插件模块 —— 一次进程渲染一整轮）
 
 **需求**：填掉 §15.12 末尾「未落地」的第一条 —— 让工作机命令行里的 `-run=DoodleLighting` 真的存在：
-一次进程内把整轮 6 个候选各渲染一张 PNG + 一张 EXR，按 D29 写到服务端给定的路径上，再写一份
-`<out_dir>/render_report.json` 给工作机回传。
-
-> **批 6 已改**：「写到服务端给定的路径上」这一句作废 —— 批 6 起 UE 写**工作机本地**路径
-> （工作机在起 UE 之前把载荷里的相对路径拼成本地绝对路径再写进 `-Params`），产物随后由工作机
-> HTTP 上传到服务端；UE 插件本身一行未改。见 §15.14。下面的 20 个文件、坑 41–46、
-> 「8 次预热 / 1920×1080 / 交付机位 / 以 rig 全量建灯」等结论都仍然成立。
+一次进程内把整轮 6 个候选各渲染一张 PNG + 一张 EXR，写到载荷给定的路径上（工作机在起 UE 之前
+已把相对路径拼成本地绝对路径），再写一份 `<out_dir>/render_report.json` 给工作机回传。
 
 **开工前由用户拍板的两件事**
 
@@ -3019,7 +3016,7 @@ Main(-Params=<json>)
   也仍是 M2 阻断项（§15.12 那条）。
 - 前端页面（§14）、M2 灵敏度标定、参考图与候选的并排 UI 都不在本轮。
 
-### 15.14 已落地（批 6：产物落工作机本地 + HTTP 上传 —— D38~D43）
+### 15.14 已落地（产物落工作机本地 + HTTP 上传 —— D38~D43）
 
 **用户指令（原文）**
 
@@ -3044,35 +3041,35 @@ Main(-Params=<json>)
 | # | 决定 | 理由 |
 |---|---|---|
 | D38 | 目录归属按上表：`kitsu_ctx_t` 派生目录只保证同机同卷、不是共享盘；工作机产物写 `core_set::get_set().get_cache_root(g_ai_light_local_cache_flag)`；只有 `entity_path` 派生的项目/资产目录才在网络盘/UNC | 用户指令；`kitsu_ctx_t::root_` 是服务端的数据根，工作机对它的「可见性」纯属偶然 |
-| D39 | 载荷里的路径一律**相对**：`out_dir_ = <session_uuid>/it_<NNN>`，候选 `png_path_`/`exr_path_ = <candidate_uuid>.png|.exr`。命名服务端定、根工作机定，工作机起 UE 之前拼成绝对路径写进 `-Params` 那份 JSON | 服务端定命名才能让「库里那条路径」与「上传落点」永远是同一个字符串；根由工作机定才能本机写；相对路径让两侧目录布局各自演化而不破契约 |
-| D40 | 工作机 POST 到 `/api/doodle/ai/light/candidate/{id}/file/{render｜render_linear}`，服务端把文件落到**库里**那条候选行的 `render_png_path_` / `render_exr_path_` | 落点是库里的值，所以工作机连「服务端把图放哪儿」都不需要知道，也不需要传路径 |
-| D41 | 回传说 `rendered` 的候选，服务端还要查那张 PNG 是否真的躺在库里那条路径上；不在就降级 `failed`，全被降级则走整轮失败出口 | 上传是独立一步（D40）：UE 写了文件、报告说 rendered、上传失败 → 前端拿到 404 图，而美术唯一的判断通道就是这张 PNG。降级是保守选择（会把「其实渲出来了但没传上来」也判失败，可接受） |
-| D42 | EXR 是**可选**产物：工作机尽量传，文件不在 / 传失败都只 WARN、不阻断本轮；服务端发现库里那条 EXR 路径指向的文件不在，就把它**清空** | 前端永不展示 EXR；但「路径与文件必须一致」要守住，否则将来读 EXR 的人拿到一条悬空路径 |
-| D43 | 工作机本地产物**保留不删**（用户决定）：上传成功也不清，只在日志里报路径 | 出问题时它是唯一的现场；磁盘增长留给人工 / 后续定时清理 |
-| D27（不变） | 回传仍然只带状态与数值，**不带路径**；服务端落库时按 `kitsu_ctx_t::get_ai_light_candidate_file` 重算路径 | 见 §15.12；批 6 只是把「路径指向的文件由上传产生」补上 |
+| D39 | 载荷里的路径一律**相对**：`out_dir_ = <session_uuid>/<轮次 uuid>`，候选 `png_path_`/`exr_path_ = <candidate_uuid>.png|.exr`。命名服务端定、根工作机定，工作机起 UE 之前拼成绝对路径写进 `-Params` 那份 JSON | 命名只有一处定，才能让「服务端要用时算出来的位置」与「工作机上传的落点」永远是同一个字符串；根由工作机定才能本机写；相对路径让两侧目录布局各自演化而不破契约 |
+| D40 | 工作机 POST 到 `/api/doodle/ai/light/candidate/{id}/file/{render｜render_linear}`，服务端把文件落到按候选行现算出来的落点上（`candidate_render_path`，D44） | 落点由候选行三个 uuid 定，所以工作机连「服务端把图放哪儿」都不需要知道，也不需要传路径，更伪造不了落点 |
+| D41 | 回传说 `rendered` 的候选，服务端按命名规则算出该候选的 PNG 落点，查文件是否真的在；不在就降级 `failed`，全被降级则走整轮失败出口 | 上传是独立一步（D40）：UE 写了文件、报告说 rendered、上传失败 → 前端拿到 404 图，而美术唯一的判断通道就是这张 PNG。降级是保守选择（会把「其实渲出来了但没传上来」也判失败，可接受） |
+| D42 | EXR 是**可选**产物：工作机尽量传，文件不在 / 传失败都只 WARN、不阻断本轮；服务端按需判存在即可（EXR 不落库，所以没有「悬空记录」要清） | 前端永不展示 EXR；它缺失不影响本轮的判断，也就不该让整轮失败 |
+| D43 | 工作机本地产物**保留不删**：上传成功也不清，只在日志里报路径 | 出问题时它是唯一的现场；磁盘增长留给人工 / 后续定时清理 |
+| D27（不变） | 回传仍然只带状态与数值，**不带路径**；产物位置一律按 `kitsu_ctx_t` 的命名规则现算 | 见 §15.12 / §15.15 的 D44 |
 
-**一轮的新形状（批 6）**
+**一轮的形状**
 
 ```
 服务端 advance_session(generating)
-  ├─ 库里候选行写**服务端绝对路径**：kitsu_ctx_t::get_ai_light_candidate_file(session, it, cand)（不变）
-  └─ 载荷里写**相对路径**：out_dir = make_iteration_relative_dir(session, it)
+  ├─ 候选行只写状态与数值（**不写路径**，D44）
+  └─ 载荷里写**相对路径**：out_dir = make_iteration_relative_dir(session, iteration_uuid)
                           候选 png_path/exr_path = make_candidate_file_name(cand_id, linear)
 工作机 ai_light_round_distributed::run
   ├─ l_local_root = core_set::get_set().get_cache_root(g_ai_light_local_cache_flag)
   ├─ make_ue_payload(payload_, l_local_root)：out_dir / 每个候选的 png|exr 拼成工作机绝对路径
-  ├─ 跑 UE（-Params=<那份拼好的 JSON>，命令行与批 4 完全一致）
+  ├─ 跑 UE（-Params=<那份拼好的 JSON>；命令行见 §15.13）
   ├─ 读 <本地 out_dir>/render_report.json
   ├─ **逐候选上传**（必须在回传报告之前！D41 靠它）：
   │     PNG 不在本地 / 上传失败 → 该候选改成 failed（PNG 必传）
   │     EXR 不在本地 / 上传失败 → 只 WARN（D42）
   ├─ POST /api/doodle/ai/light/render_report/{task_id}（只带状态与数值）
   └─ put_job_info（终态）；本地产物目录保留不删（D43），只打日志
-服务端 render_report_route → apply_render_report
+服务端 render_report_route → apply_render_report(sql, ctx, task_id, report)
   ├─ 任一条 rendered？否则 mark_iteration_failed（D28：只写会话 failure_reason_）
-  ├─ 逐条覆盖 render_status_/render_ms_/light_count_/metrics_（D27：路径沿用库里的）
-  ├─ D41 降级：rendered 但 PNG 路径空 / 文件不在 → failed + WARN，计数 l_missing_png
-  ├─ D42 清理：EXR 路径非空但文件不在 → 清空该路径 + WARN
+  ├─ 逐条覆盖 render_status_/render_ms_/light_count_/metrics_（D27：路径不在回传里）
+  ├─ D41 降级：rendered 但 candidate_render_path(ctx, 行, false) 算出的 PNG 不在 → failed + WARN，计数 l_missing_png
+  ├─ D42 诊断：同法算出的 EXR 不在 → 只 WARN
   └─ 还有 rendered → mark_iteration_rendered（轮次 awaiting_judgement）
       全被降级 → failure_reason_ = "轮次 {} 的 {} 个候选渲染成功但产物文件缺失，本轮无可判断结果"
 ```
@@ -3083,7 +3080,7 @@ Main(-Params=<json>)
 |---|---|
 | D38–D43 的文字定义 + 三个契约件 | `src/doodle_core/metadata/ai_light/task_payload.h`（相对路径构造在 `make_iteration_relative_dir` / `make_candidate_file_name`；本地缓存分片名 `g_ai_light_local_cache_flag{"ai_light"}`） |
 | 服务端上传路由 | 声明 `ai_light.h:166`（`enum class ai_light_candidate_file_role{render, render_linear}`，role 段是 scoped enum → 路由宏自动展开白名单正则）· `:187`（`candidate_file_route`）· 路径模板常量 `g_candidate_file_path_template` · 注册 `kitsu.cpp:338` `/api/doodle/ai/light/candidate/{}/file/{}` · 实现 `ai_light.cpp:828` |
-| 服务端 D41/D42 | `ai_light_orchestrator.cpp::apply_render_report`（PNG 降级 + EXR 清空），include `<doodle_lib/core/file_sys.h>` `:40` |
+| 服务端 D41/D42 | `ai_light_orchestrator.cpp::apply_render_report`（按现算的落点判存在：PNG 降级 + EXR 只 WARN），include `<doodle_lib/core/file_sys.h>` |
 | 工作机上传递归 | `src/doodle_lib/http_client/kitsu_client.cpp::upload_ai_light_candidate_render(uuid, path, bool linear)` → 复用私有 helper `upload_asset_file`（octet-stream + Content-Disposition + Last-Modified，**只认 204**）；URL 用相对路径 `/api/doodle/ai/light/candidate/{}/file/{role}` |
 | 工作机改造 | `src/doodle_lib/exe_warp/ai_light_render.cpp`（`make_ue_payload` + 本地根拼接 + 上传循环 + 保留不删）· `ai_light_render.h` 头注释 |
 | UE 侧 | **一行未改**（`DoodleLighting*` 那 20 个文件完全不动）：UE 只按载荷给的 `PngPath`/`ExrPath` 写文件、按 `OutDir` 写报告，工作机把绝对路径塞进载荷即可 |
@@ -3094,7 +3091,8 @@ Main(-Params=<json>)
   `detail::content_type::application_nuknown`，与 `up_file.cpp:33` 判法一致），否则 **400**。
 - 请求体由框架先流到临时文件（`http_session_data.cpp:220-231`，落
   `core_set::get_set().get_cache_root("http")/<uuid><ext>`），路由用 `in_handle->get_file()` 拿它。
-- 落点取自**库里**候选行（`render_png_path_` / `render_exr_path_`），库里为空 → 400「没有登记落库路径」。
+- 落点由**候选行**现算（`candidate_render_path(ctx, 候选行, linear)`，D44）；请求里根本没有路径信息，
+  所以工作机伪造不了落点，最多只能往「服务端算出来的那个文件名」里灌字节。
 - 轮次已 `judged` → 400 拒绝上传；`awaiting_judgement` 期间**允许重传**（美术发现图坏了、工作机重跑）。
 - 落盘先写 `<目标>.uploading` 再 `FSys::rename` 到目标：避免前端正好读到半张图。
   **故意不复用 `up_file_base`**（`up_file.h:22-40`）：那套是「按项目+任务类型派生目录」，
@@ -3105,30 +3103,131 @@ Main(-Params=<json>)
 
 **测试与回归**
 
-- `src/test/core/ai_light_dispatch.cpp` 新增「第四段：产物存在性（D41，批 6）」4 个用例：
+- `src/test/core/ai_light_dispatch.cpp`「第四段：产物存在性（D41）」的 4 个用例：
   `..._downgrades_missing_png_only_for_that_candidate`（13 断言）· `..._all_png_missing_writes_failure_reason`（10）·
-  `..._clears_missing_exr_path`（12）· `..._reported_failure_plus_downgrade_leaves_nothing`（11）。
+  `..._missing_exr_does_not_block`（12）· `..._reported_failure_plus_downgrade_leaves_nothing`（11）。
   注意第 4 个用例：`failure_reason_` 里的计数只数**被降级的**那些，报告里本来就 `failed` 的不算。
-- 夹具跟着改了：`media_dir_`（`temp_directory_path()/doodle_test_ai_light_dispatch_media_<case>`，析构 `remove_all`）
-  + `write_probe_file()` 造**真文件**，`render_png_path_`/`render_exr_path_` 指向它们 ——
-  否则 D41 生效后所有「推进到 `awaiting_judgement`」的用例都会因降级而红
-  （原来夹具把路径写成 `AI_Light/it_001/cand_00.png`，那个文件根本不存在）。
-  `apply_report_keeps_paths_from_db` 的断言随之改成与夹具成员比较。
-- `Ninja_debug` 构建通过（`[80/80] Linking CXX executable bin\test_main.exe`，零 error）；
-  `--run_test=ai_light_*` exit 0；全量 **240 用例 / 1944 断言 exit 0**
-  （§15.13 基线 236 / 1847 → +4 用例 = 这 4 个 D41 用例，+97 断言）。本轮**没有** `git commit`（由用户自己提交）。
+- 夹具：`media_dir_`（`temp_directory_path()/doodle_test_ai_light_dispatch_media_<case>`，析构 `remove_all`）
+  + `write_probe_file()` 造**真文件**，并用 `candidate_png()` / `candidate_exr()` 两个助手
+  （= `candidate_render_path(server_ctx_, 候选行, linear)`）拿到落点 —— D41 判存在，夹具就必须有真文件，
+  否则所有「推进到 `awaiting_judgement`」的用例都会因降级而红。
+- `Ninja_debug` 构建通过（零 error）；`--run_test=ai_light_*` **124 用例 / 1216 断言** exit 0；
+  全量 **241 用例 / 1969 断言 exit 0**。本轮**没有** `git commit`（由用户自己提交）。
 
 **仍未落地**
 
 - **重新打包 UE 插件包**：`ue_exe.cpp:84-128` 的 `installUePath` 每次跑 UE 前都会用
   `get_ue_plugin(version)` 覆盖 `Engine/Plugins/Doodle`，不打包就还是旧包（没有 `DoodleLighting`）——
-  批 4 的 20 个文件因此至今没有 compile 验证（见 §15.13），批 6 **没有加重这个缺口**（UE 侧零改动）。
+  §15.13 的 20 个文件因此至今没有 compile 验证（UE 侧零改动，所以这个缺口没有被加重）。
 - **真机一轮回环**（工作机 → UE → 出图 → 上传 → 回传 → `awaiting_judgement`）仍未跑过。
 - **服务端候选指标复算**（D30 只写了一半）：UE / 工作机不算指标，`metrics_` 目前来自回传里的空值，
   落库后下一轮 `structure_feedback` 的 §8.1「区间满足率 + 落点」会拿到空值。做法 =
   用 `ai_light_stats::analyze_display_image`（`ai_light_stats.h:59`）算候选 PNG，
   再对 spec 的 `targets_` 填 `landings_` / `satisfaction_`。
 - `baseline_level_` 的真实推导仍是 M2 阻断项（§15.12 那条不变）；前端页面（§14）不在本轮。
+
+
+---
+
+### 15.15 已落地（产物路径改「现算」 —— D44）
+
+**用户指令（原文）**
+
+> 检查 src/doodle_core/metadata/ai_light/candidate.h:164~168 中 , 渲染文件路径属性, 他们在
+> src/doodle_lib/http_method/kitsu/ai_light_orchestrator.cpp:367~370 这被赋值, 然后, 存库使用,
+> 不这样做, 直接将 属性改为方法, 每次重新计算, 是否可行? 会比现在的方法更好吗
+
+> 这里不就是 src/doodle_core/metadata/ai_light/candidate.h:146 in_session_id 参数吗, 同时 ,
+> 去除前端契约, 前端不可获取这两个路径, 是否可行
+
+用户的拍板：**做，并把轮次目录名一并换成轮次 uuid**。
+
+**一句话方案**：候选行不记录「产物在哪」——路径 = `candidate_render_path(ctx, 候选行, linear)`，
+吃候选行自带的 `session_id_` / `iteration_id_` / `uuid_id_` 三个 uuid。
+
+**为什么可行（三条缺一不可）**
+
+1. 候选行自带三个 uuid（`session_id_` 本来就是有意冗余的列，`candidate.h:146`）——不需要回查轮次行；
+2. 轮次目录名就用**轮次自己的 uuid**，于是连「目录名」都是候选行自带的（若用 `it_<序号>`，
+   必须查一次轮次行才拼得出来）；
+3. `kitsu_ctx_t` 的六个 AI 灯光 getter 补上 `const` 后是**纯拼路径**函数 —— 于是派生函数谁都能调，
+   不需要 `g_ctx()`（这一点是 test_main 里必须的，见 D27 的由来）。
+
+**决定（承 §15.14 的 D38–D43，续 D44）**
+
+| # | 决定 | 理由 |
+|---|---|---|
+| D44 | 候选**不存渲染路径**：`ai_light_candidate` 只有 `render_status_` 与实测数值，没有 `render_png_path_` / `render_exr_path_` 两列；候选 JSON 里也没有路径键。路径由 `candidate_render_path(const http::kitsu_ctx_t&, const ai_light_candidate&, bool linear = false)` 现算，轮次目录名就是轮次 uuid | ① 候选行已经有三个 uuid，再存一份路径 = 同一事实记两遍，且两份可能漂移（`root_` 变了、目录被搬了）；② 存下来就把**服务端磁盘路径**带进了对外契约（候选 JSON），而前端只该拿到 uuid 与图片字节；③ 目录名用 uuid 之后连序号都不用查，「候选 → 路径」是一次纯计算。**代价**：库里没有「文件实际在哪」的记录（只能按规则找）；EXR 缺失退化成「读的时候判存在」；将来若出现**非派生**产物（人工补图、换对象存储）得重新引入一个显式路径字段 |
+
+**一轮的形状（与 §15.14 那张图的差别只有「落点」一列）**
+
+```
+派发：out_dir_ = <session uuid>/<轮次 uuid>（相对，D39）
+      候选行只写 render_status_ / 实测数值（D44）
+工作机：拼本地根 → UE → 逐候选上传（PNG 必传 / EXR 尽力，D42）→ 回传报告
+服务端：apply_render_report(sql, ctx, task_id, report)
+        ├─ D41：PNG 的落点 = candidate_render_path(ctx, 行, false)，文件不在 → 降级 failed
+        ├─ D42：EXR 的落点同法算出，文件不在 → 只 WARN
+        └─ 还有 rendered → mark_iteration_rendered（UPDATE 只写状态与数字）
+            全被降级 → failure_reason_ = "轮次 {} 的 {} 个候选渲染成功但产物文件缺失，本轮无可判断结果"
+```
+
+**改动落点**
+
+| 项 | 落点 |
+|---|---|
+| 命名规则（唯一真相） | `kitsu_ctx_t.h`：`get_ai_light_iteration_dir(session, iteration_id)` = 会话目录 / `fmt::to_string(iteration_id)`；`get_ai_light_candidate_file(session, iteration_id, candidate, linear)` = 轮次目录 / `<候选 uuid>.png|.exr`；六个 `get_ai_light_*` 全部 `const` |
+| 派生函数 | `ai_light_orchestrator.h`：`inline FSys::path candidate_render_path(const http::kitsu_ctx_t&, const ai_light_candidate&, bool in_linear = false)` —— **只**吃 ctx 的 `root_`，所以不做成成员、也不在函数里取 `g_ctx()` |
+| 候选行 | `candidate.h`：没有 `FSys::path` 字段，也没有那两个 JSON 键（`render_status_` 与数值保留） |
+| 建表 | `src/doodle_lib/sqlite_orm/sqlite_database.cpp` 的 `reg_table<ai_light::ai_light_candidate>` 里没有路径列 |
+| 派发 | `ai_light_orchestrator.cpp`：`l_payload.out_dir_ = make_iteration_relative_dir(io_session.uuid_id_, l_it.uuid_id_)`；候选循环不写路径，**本函数也不需要 `kitsu_ctx_t`** |
+| 落库 | `mark_iteration_rendered` 的候选 UPDATE 只写 `render_status_` / `render_ms_` / `light_count_` / `metrics_` |
+| 回传 | `apply_render_report` 签名带 `const http::kitsu_ctx_t& in_ctx`（第 2 参）：D41 按现算查存在，D42 只 WARN |
+| 上传路由 | `ai_light.cpp::candidate_file_route::post`：`l_dst = candidate_render_path(ctx, l_cand, l_linear)` |
+| 取图 / 定稿 | `candidate_image_route::get`、`build_accepted_preview_file` 同样现算 |
+| 工作机 | `task_payload.h` 的 `make_iteration_relative_dir(session, iteration_id)` 末级是轮次 uuid；`exe_warp/ai_light_render.cpp` **零改动**（它只用 `make_candidate_file_name` 与 `out_dir_`） |
+| 前端契约 | `docs/ue_ai_lighting_frontend.md:39-42`：候选对象里没有路径字段，取图只走 `/candidate/{uuid}/image` |
+
+**迁移：不用加版本号**
+
+`upgrade_3_t` 的 `sync_schema()` 对已存在的表只 `continue`（不加列、不改列、不删列），所以「没有路径列」
+这件事只需 `reg_table` 里不写那两行 —— **不要**新增 `g_version_31 → 32`。已经在 v31 上的开发库会留下两个
+没人引用的列（ORM 只 SELECT / INSERT 映射过的列），无害；生产库从 30 直接升上来就根本没有这两列。
+
+**坑（续 §15.14 的 41–46）**
+
+47. **测试夹具的成员不能叫 `ctx_`。** `doodle_test::coro_fixture_t` 的 `ctx_` 是 asio `io_context`
+    （夹具自己就在 `make_strand(ctx_)`），同名会静默遮蔽 —— 夹具里的 `kitsu_ctx_t` 成员叫 `server_ctx_`。
+48. **`sync_schema()` 不删列**，所以「候选没有路径列」这件事在磁盘上对老库没有痕迹 ——
+    别把「老库列还在」当成改漏了。
+49. **JSON 键是对外契约**：去掉候选对象里的两个路径键必须同步改 `docs/ue_ai_lighting_frontend.md`，
+    否则前端会以为它们还在。
+50. **纯同步用例不能用 `DOODLE_FIXTURE_TEST_CASE_CORO`**（§15.14 坑 37 同一条）：新增的
+    `candidate_render_path_is_a_pure_function_of_the_row` 体里一个 `co_await` 都没有 → `error C4716:
+    ...: must return a value`；改用 `BOOST_FIXTURE_TEST_CASE(name, fixture_t) { auto& l_fx = *this; ... }`。
+
+**测试与回归**
+
+- 改：`ai_light_paths.cpp`（黄金路径用固定轮次 uuid，用例 `iteration_dir_is_named_by_the_iteration_uuid`）·
+  `ai_light_state.cpp`（夹具无路径列；`pre_assigned_uuid_survives_the_deferred_insert` 改为「路径仍可
+  由三个 uuid 复现」）· `ai_light_schema.cpp`（夹具无路径列）·
+  `ai_light_dispatch.cpp`（夹具新增 `server_ctx_`（root 挂 `media_dir_`）+ `candidate_png()`/`candidate_exr()`
+  两个助手，真文件按**同一个函数**造；12 处 `apply_render_report` 调用带 ctx；
+  `apply_report_keeps_paths_derivable_from_the_row`；`apply_report_missing_exr_does_not_block`）。
+- 新增：`candidate_render_path_is_a_pure_function_of_the_row`（同一行两次结果相同、PNG/EXR 同名不同
+  扩展名、文件名是候选 uuid、父目录是轮次 uuid、祖父是会话目录、同轮不同候选不撞、只换 `root_` 时
+  相对路径不变）。
+- 构建：`Ninja_debug` 零 error（`[4/4] Linking CXX executable bin\test_main.exe`）。
+- 回归：`--run_test=ai_light_*` → `124 test cases out of 241 passed`、1216 断言、exit 0；
+  全量 **241 用例 / 1969 断言全部通过、exit 0**。本轮**没有** `git commit`（由用户自己提交）。
+
+**仍未落地**（与 §15.14 那份一致）
+
+- **重新打包 UE 插件包**仍是 §15.13 那 20 个文件 compile 验证的前置（UE 侧零改动）。
+- **真机一轮回环**（工作机 → UE → 出图 → 上传 → 回传 → `awaiting_judgement`）仍未跑过。
+- **服务端候选指标复算**（D30 只写了一半）：`metrics_` 仍来自回传空值，`ai_light_stats::analyze_display_image`
+  那条路没有接。
+- `baseline_level_` 的真实推导仍是 M2 阻断项；前端页面（§14）不在本轮。
 
 
 

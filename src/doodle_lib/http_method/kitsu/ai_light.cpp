@@ -96,8 +96,9 @@ bool query_bool(const boost::url& in_url, std::string_view in_key, bool in_defau
 /// 会话产物目录。挂在资产根（kitsu_ctx_t::root_）下、按会话 uuid 命名 + 两级分桶。
 ///
 /// 为什么不在 project.path_ 下：会话产物是 uuid 标识的生成物，与 sd2 / pictures / jobs
-/// 同性质，本来就该和它们放在同一个根下。这样也**不再依赖 episode / shot / 项目路径** ——
-/// 于是少掉「镜头没建资产扩展就传不了参考图」这一整类失败（旧实现要查三次库才能算出目录）。
+/// 同性质，本来就该和它们放在同一个根下。这样目录只依赖 root_ 与会话 uuid，
+/// **不依赖 episode / shot / 项目路径** —— 于是没有「镜头没建资产扩展就传不了参考图」
+/// 这一整类失败。
 FSys::path session_dir(const ai_light_session& in_session) {
   return g_ctx().get<kitsu_ctx_t>().get_ai_light_session_dir(in_session.uuid_id_);
 }
@@ -140,9 +141,7 @@ preview_file build_accepted_preview_file(
     sqlite_database& in_sql, const ai_light_session& in_session, const ai_light_candidate& in_candidate,
     const uuid& in_person_id
 ) {
-  // 产物路径是现算的（批 7 / D44），所以这里只判「算出来的那张图在不在」；
-  // 库里没有「登记过路径」这种中间状态，也就不需要「还没渲染」这条分支 —— 没渲染完的候选
-  // 走到这里时文件本来就不在，下面那条 400 的消息已经把话说清楚了。
+  // 落点是现算的（D44），所以这里只有一条判定：算出来的那张图在不在。
   const FSys::path l_png_path = candidate_render_path(g_ctx().get<kitsu_ctx_t>(), in_candidate, false);
   DOODLE_CHICK_HTTP(
       FSys::exists(l_png_path), bad_request,
@@ -259,12 +258,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   // 所以在这里调 advance_session，get_ai_light_references() 必然为空 ——
   // 蒸出来的是一份「只用提示词」的方案，参考图这个主输入被静默丢掉。
   //
-  // 曾经这里确实会立刻跑第一步（理由写成「镜头页点一次按钮就该拿到待确认的 Spec」），
-  // 但那个行为只在接缝抛 501 时才看起来没事：失败回滚把状态退回 draft，
-  // 于是后续 /spec 恰好还能走通。一旦接缝实现，会话就会停在 awaiting_spec_confirm ——
-  // 而那时 /spec 已经进不去了（advance_session 当时还没有这个状态的分支，
-  // 现在补上了 —— 所以修完这一处之后，重出方案这条路才真正通）。
-  // 参考图从此永远无法影响方案。这个 bug 会在「工具刚开始能用」的那一刻才出现。
+  // 如果在这里跑第一步，蒸出来的必然是一份「只用提示词」的方案 —— 参考图这个主输入
+  // 会被静默丢掉，而那时 /spec 又进不去（会话已经停在 awaiting_spec_confirm），
+  // 参考图从此永远无法影响方案。这个 bug 只在「接缝真的开始工作」那一刻才暴露。
   //
   // 正确顺序：建会话（draft）→ 传参考图 → POST /spec 蒸馏 → /spec/confirm → 派发。
   // 蒸馏由 /spec 触发，且它会校验参考图非空（见 advance_session）。
@@ -279,8 +275,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, get) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
 
-  // 镜头 id 来自路径，必填 —— 不再有「按 project_id 列出该项目全部会话」这个分支。
-  // 那是「项目管理视角」的查询，而本接口的定位是镜头页，归属明确；
+  // 镜头 id 来自路径，必填：本接口的定位是镜头页，归属明确，不提供
+  // 「按 project_id 列出该项目全部会话」那种项目管理视角的查询 ——
   // 两种语义挤在一个 URL 上，权限检查的粒度也会跟着含糊
   // （按项目查只需查一次权限，按镜头查得逐个会话查）。
   auto l_sessions = l_sql.get_ai_light_sessions_by_entity(entity_id_);
@@ -303,7 +299,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, delete_) {
   auto l_sql     = get_sqlite_database();
   auto l_session = load_session_checked(person_, l_sql, id_);
 
-  // 会话没有终态，所以这里不再有「已定稿不能删」的闸门（§15.10 决定 D21）。
+  // 会话没有终态，所以删会话不设前置闸门（§15.10 决定 D21）。
   //
   // 定稿图**不会**跟着会话一起消失：它由 preview::save_variants() 落在图片预览文件目录
   // （get_pictures_preview_file(uuid)），不在会话目录里；而 ai_light_candidate.preview_file_id_
@@ -351,8 +347,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
   auto l_ref_dir = l_ctx.get_ai_light_reference_dir(l_session.uuid_id_);
   if (!FSys::exists(l_ref_dir)) FSys::create_directories(l_ref_dir);
 
-  // 序号只表示**展示顺序**（前端按它排参考图），文件名不再依赖它 ——
-  // 文件名是各自的 uuid，所以即使序号被复用也绝不会覆盖既有图。
+  // 序号只表示**展示顺序**（前端按它排参考图）；文件名是各自的 uuid，
+  // 所以即使序号被复用也绝不会覆盖既有图。
   auto l_existing = l_sql.get_ai_light_references(l_session.uuid_id_);
   std::int32_t l_next = 0;
   for (const auto& l_r : l_existing) l_next = std::max(l_next, l_r.ordinal_ + 1);
@@ -474,7 +470,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_image_route, get) {
       l_cand.render_status_ != candidate_render_status::failed, not_found,
       "候选 {} 渲染失败", l_cand.uuid_id_
   );
-  // 路径现算（批 7 / D44）：候选行自带三个 uuid，不需要任何回查。
+  // 落点现算（D44）：候选行自带三个 uuid，不需要任何回查。
   const FSys::path l_png_path = candidate_render_path(g_ctx().get<kitsu_ctx_t>(), l_cand, false);
   DOODLE_CHICK(
       FSys::exists(l_png_path), "候选渲染图不存在 文件 {}", l_png_path.generic_string()
@@ -805,9 +801,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
       task_id_, magic_enum::enum_name(l_task.type_)
   );
 
-  // 形状错误在这里抛 502（不再往下走）；语义问题交给 apply_render_report 裁决：
+  // 形状错误在这里抛 502；语义问题交给 apply_render_report 裁决：
   // 整轮失败 → 只写会话的 failure_reason_（不是终态）；至少一张渲染成功 → 落库并转 awaiting_judgement。
-  // ctx 传进去只为一件事：算产物落点（批 7 / D44 —— 路径不落库了，D41 的存在性判定得现算）。
+  // ctx 传进去只为一件事：算产物落点（D41 的存在性判定要现算）。
   auto l_report = parse_round_render_report(l_json);
   co_await apply_render_report(l_sql, g_ctx().get<kitsu_ctx_t>(), task_id_, l_report);
 
@@ -825,7 +821,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
 }
 
 // ===========================================================================
-// 工作机上传候选产物（方案 §15.13 批 6，D38~D41；落点计算批 7 / D44）
+// 工作机上传候选产物（D38~D42）
 // ===========================================================================
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
@@ -844,7 +840,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
 
   // 这里刻意**不**复用 up_file_base 那套（root_path_ / gen_file_path / move_file）：
   // 那套是「按项目+任务类型派生目录」，它的输入是项目与任务；本路由的落点由**候选行**决定
-  // （candidate_render_path，批 7 / D44）。硬套过来要么多一层无意义的目录推导，要么得把
+  // （candidate_render_path）。硬套过来要么多一层无意义的目录推导，要么得把
   // move_file 的 rename 换成跨卷安全的复制（http 缓存根与服务端数据根常常不同盘），
   // 两件都是在给一条直路加弯。
   auto l_sql = get_sqlite_database();
@@ -859,11 +855,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
       l_it.iteration_
   );
 
-  // 落点现算（D27/D40/D44）：请求里根本没有路径信息，工作机伪造不了落点，
+  // 落点现算（D27/D40）：请求里根本没有路径信息，工作机伪造不了落点，
   // 最多只能往「服务端按命名规则算出来的那个文件名」里灌字节。
-  //
-  // 落点不是「库里存的那一个」—— 库里没有路径列了（批 7 / D44），看到的这条路径
-  // 与取图路由、定稿路由、D41 存在性判定用的是同一个函数（candidate_render_path）。
+  // 与取图路由、定稿路由、D41 的存在性判定用的是同一个函数（candidate_render_path）。
   const bool l_linear   = role_ == ai_light_candidate_file_role::render_linear;
   const FSys::path l_dst = candidate_render_path(g_ctx().get<kitsu_ctx_t>(), l_cand, l_linear);
 
@@ -882,7 +876,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
     );
   }
   // 先写临时名再改名，避免「上传到一半」被前端读到半张图：
-  // 前端取图用的是候选行里那个路径，直接原地写会让过程中出现一个不完整的 PNG。
+  // 目标那个文件名正是取图路由要读的，原地写会让过程中出现一个不完整的 PNG。
   const FSys::path l_tmp_dst = l_dst.string() + ".uploading";
   FSys::copy_file(l_tmp, l_tmp_dst, FSys::copy_options::overwrite_existing, l_ec);
   DOODLE_CHICK_HTTP(

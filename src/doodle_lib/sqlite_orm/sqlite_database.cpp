@@ -385,11 +385,9 @@ void sqlite_storage::regs_all() {
       .add_column("state", &ai_light::ai_light_session::state_)
       .add_column("current_iteration", &ai_light::ai_light_session::current_iteration_)
       .add_column("judgement_due_at", &ai_light::ai_light_session::judgement_due_at_)
-      // 曾经的 suspended_at 列已随 suspended 状态一起删掉，**没有做数据库迁移**：
-      // 该列是可空的、且不再有任何代码引用它（ORM 的列清单来自声明，
-      // select/insert 都不会碰到它），所以老库里留下的那一列是惰性的；
-      // 新建库则不再有这一列。user_version 因此保持 31 不变。
-      // 前提是当前分支不会进生产 —— 详见 memory 里记录的分支约定。
+      // 这里就是会话表的完整列清单：ORM 的 select/insert 只看声明，所以清单之外的列
+      // （老库里可能因为历史原因多出来的那几列）是惰性的、不会被读写，
+      // user_version 也无需为「少了一列」而增加。
       .add_column("failure_reason", &ai_light::ai_light_session::failure_reason_)
       .add_column("created_at", &ai_light::ai_light_session::created_at_)
       .add_column("updated_at", &ai_light::ai_light_session::updated_at_)
@@ -397,8 +395,8 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(&ai_light::ai_light_session::task_id_, &task::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&ai_light::ai_light_session::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&ai_light::ai_light_session::submitter_, &person::uuid_id_, foreign_key_action::set_null)
-      // 按 state 过滤（前端「待办」列表）。过期不再是一个状态，所以不再需要
-      // judgement_due_at 上的索引来支撑后台扫描 —— 过期改由 C++ 侧实时算。
+      // 按 state 过滤（前端「待办」列表）。过期不是一个状态、不在库里改任何东西
+      // （过期改由 C++ 侧按 judgement_due_at 实时算），所以这里不需要它的索引。
       .add_index(&ai_light::ai_light_session::state_)
       .add_index(&ai_light::ai_light_session::entity_id_);
 
@@ -489,7 +487,7 @@ void sqlite_storage::regs_all() {
       .add_column("variant_value", &ai_light::ai_light_candidate::variant_value_)
       .add_column("variant_label", &ai_light::ai_light_candidate::variant_label_)
       .add_column("rig", &ai_light::ai_light_candidate::rig_)
-      // 产物路径**没有列**（批 7 / D44）：由 session_id_ / iteration_id_ / uuid_id_ 现算。
+      // 产物路径**没有列**：由 session_id_ / iteration_id_ / uuid_id_ 现算（D44）。
       .add_column("render_status", &ai_light::ai_light_candidate::render_status_)
       .add_column("render_ms", &ai_light::ai_light_candidate::render_ms_)
       .add_column("light_count", &ai_light::ai_light_candidate::light_count_)
