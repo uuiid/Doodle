@@ -4,6 +4,7 @@ target_sources(test_main
         axis_angle.cpp
         depth_estimation.cpp
         multipart_body_test.cpp
+        http_listener_port_shm.cpp
         sqlite_fk_fix.cpp
         sqlite_rebuild.cpp
         sqlite_pragma.cpp
