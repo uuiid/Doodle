@@ -36,7 +36,8 @@ public:
 
 	/// `FSlateApplication::OnPreTick` 的入口：等资产注册表加载完，然后起渲染。
 	/// 载荷从命令行 `-DoodleAiLightParams=<json 路径>` 读（队列路线：工作机起进程的那条）。
-	void Main();
+	/// 形参是 `OnPreTick` 的 `float DeltaTime` —— 委托绑定要求签名逐字对齐，省掉它编译不过（C2665）。
+	void Main(float InDeltaTime);
 
 	/// 引擎内原生路线（D52/D53）的入口：计划由调用方在**内存里**给（本机客户端读完桥目录后直接调用），
 	/// 不经过命令行、也不写报告文件 —— 回传由客户端做（D54 的 `render_report_local`）。
@@ -74,9 +75,10 @@ private:
 	const FDoodleTaskCandidate* FindCandidate(const FString& InCandidateId) const;
 	FDoodleCandidateReport* FindCandidateReport(const FString& InCandidateId);
 
-	/// 数一个目录里的 `.png` 帧数。数不出来返回 0（当失败处理）。
-	/// 注意：.cpp 里的实现就叫这个名字；历史上头里曾错写成一个不存在的 `CountRenderFrames`（死声明）。
-	static int32 CountPngFrames(const FString& InFramesDir);
+	/// 数一个目录里的 `.png` 帧数的是 .cpp 匿名命名空间里的自由函数（`CountPngFrames`），
+	/// 不是这个类的成员 —— 这里曾经声明过一个 `static int32 CountRenderFrames(...)`，
+	/// 名字和实现都不对，是条死声明；加 `CountPngFrames` 进来又会变成
+	/// 「声明了 static 成员但 .cpp 只定义了自由函数」的 LNK2019。所以类里不留声明。
 
 	/// 载荷 json 的绝对路径（诊断用）。引擎内原生路线为空。
 	FString PayloadPath;

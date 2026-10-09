@@ -4,12 +4,12 @@
 #include "DoodleLightingOps.h"
 
 #include "Bindings/MovieSceneCustomBinding.h"
+#include "Bindings/MovieSceneSpawnableActorBinding.h"
 #include "Bindings/MovieSceneSpawnableBinding.h"
 #include "Channels/MovieSceneChannelProxy.h"
 #include "Channels/MovieSceneDoubleChannel.h"
 #include "CineCameraActor.h"
 #include "CineCameraComponent.h"
-#include "CommandletHelpers.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
 #include "Components/PointLightComponent.h"
@@ -48,6 +48,11 @@ namespace DoodleLightingExecutor
 {
 	namespace
 	{
+		// `DoodleLightingOps.h` 里的换算函数都在 `DoodleLightingOps` 命名空间里，而本文件里的
+		// 调用点是裸名（`ResolveIntensityUnits(...)` 等）。这里补一次限定，不然 MSVC 报一串
+		// C3861「identifier not found」——而且它会连带把后面的行也带歪（C2737/C2672）。
+		using namespace DoodleLightingOps;
+
 		/// 整轮状态。这个执行器一次进程只服务一轮 6 个候选，所以用文件级状态而不是类。
 		UWorld* G_World = nullptr;
 
@@ -96,12 +101,19 @@ namespace DoodleLightingExecutor
 				{
 					GEngine->ForceGarbageCollection(true);
 					GEngine->ConditionalCollectGarbage();
-					CommandletHelpers::TickEngine(G_World);
+					// 推进一帧让 GC 真的落地。UE 5.7 没有 CommandletHelpers::TickEngine（那个
+					// 辅助函数已从引擎里删掉，5.7 的 CommandletHelpers 只剩 BuildCommandletProcessArguments），
+					// 直接 tick 世界即可 —— 原来用 TickEngine 就是因为旧 commandlet 在主循环之外跑，
+					// 现在这条路已经不在 commandlet 里了（批 9 删掉 `-run=DoodleLighting`）。
+					G_World->Tick(LEVELTICK_All, 0.0f);
 				}
 			}
 		}
 
-		ELightMobilityType ToMobility(EDoodleLightMobility InMobility)
+		// 返回类型是 `EComponentMobility::Type`（EngineTypes.h:3786 的 `namespace EComponentMobility { enum Type : int }`）。
+		// 这里原来写的是 `ELightMobilityType` —— 那个类型在引擎里根本不存在，MSVC 找不到类型名就往下
+		// 解析成 C4430/C2146，然后整块匿名命名空间里的助手函数全部「identifier not found」。
+		EComponentMobility::Type ToMobility(EDoodleLightMobility InMobility)
 		{
 			switch (InMobility)
 			{
@@ -241,7 +253,7 @@ namespace DoodleLightingExecutor
 				if (InLight.Intensity.Unit != EDoodleIntensityUnit::Lux)
 				{
 					OutWarnings.Add(FString::Printf(TEXT("灯 %s：平行光只认 lux，载荷给的是 %s，按 lux 处理"),
-					                                *InLight.Id, *DoodleLightIntensityUnitToString(InLight.Intensity.Unit)));
+					                                *InLight.Id, *DoodleIntensityUnitToString(InLight.Intensity.Unit)));
 				}
 				return;
 			}
@@ -413,7 +425,12 @@ namespace DoodleLightingExecutor
 			                                                L_CameraBindingId.GetRelativeSequenceID(), L_BindingMap, L_ImportSettings, L_FbxParams);
 			L_FbxImporter->ReleaseScene();
 
-			CommandletHelpers::TickEngine(G_World);
+			// 推一帧，把刚导入的轨道应用到绑定 actor 上（见 DestroyAiSpawnedActors 里关于
+			// UE 5.7 删掉 CommandletHelpers::TickEngine 的说明）。
+			if (G_World != nullptr)
+			{
+				G_World->Tick(LEVELTICK_All, 0.0f);
+			}
 			return ResolveCameraView(OutError);
 		}
 
@@ -428,7 +445,11 @@ namespace DoodleLightingExecutor
 			}
 
 			G_CameraPlayer->Play();
-			CommandletHelpers::TickEngine(G_World);
+			// 推一帧让播放器把姿态写到绑定的相机 actor 上（下面还要读它）。
+			if (G_World != nullptr)
+			{
+				G_World->Tick(LEVELTICK_All, 0.0f);
+			}
 
 			G_CameraLocation = G_CameraActor->GetActorLocation();
 			G_CameraRotation = G_CameraActor->GetActorRotation();

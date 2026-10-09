@@ -244,7 +244,7 @@ void UDoodleLightingRoundRunner::RequestExit(int32 InExitCode)
 	FPlatformMisc::RequestExitWithStatus(false, static_cast<uint8>(FMath::Clamp(InExitCode, 0, 255)));
 }
 
-void UDoodleLightingRoundRunner::Main()
+void UDoodleLightingRoundRunner::Main(float InDeltaTime)
 {
 	if (bRoundStarted)
 	{
@@ -391,7 +391,7 @@ bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
 	// 锚点换算要用机位姿态：把交付机位 FBX 导进来求一次姿态，随后立刻拆掉 ——
 	// 它不该跟着进 PIE（灯的位置是相对机位算的，机位本身由序列的 camera cut 决定）
 	{
-		FRoundContext L_Context;
+		DoodleLightingExecutor::FRoundContext L_Context;
 		L_Context.CameraFilePath = Payload.CameraFilePath;
 		FString L_CameraError;
 		if (!DoodleLightingExecutor::PrepareAnchorCamera(L_Context, L_CameraError))
@@ -614,7 +614,9 @@ void UDoodleLightingRoundRunner::OnExecutorFinished(UMoviePipelineExecutorBase* 
 		       L_RenderedCount, L_FailedCount, L_Round.FrameRate);
 		if (RoundFinished.IsBound())
 		{
-			RoundFinished.Execute(L_Round);
+			// 多播委托的调用是 `Broadcast`（`MulticastDelegateBase.h:281`）：`Execute` 只属于
+			// 单播 `TDelegate`，写 `Execute` 会报 C2039。
+			RoundFinished.Broadcast(L_Round);
 		}
 		return;
 	}

@@ -32,7 +32,9 @@ namespace
 				return FVector::ForwardVector;
 			case EDoodleAnchorSpace::Camera:
 			default:
-				return InFrame.CameraForward.GetSafeNormal(FVector::ForwardVector);
+				// UE 5.7 的签名是 GetSafeNormal(Tolerance, ResultIfZero)：传 FVector 当第一个实参
+				// 会去匹配 Tolerance（double）→ C2664。零向量兜底必须走第二个形参。
+				return InFrame.CameraForward.GetSafeNormal(UE_DOUBLE_SMALL_NUMBER, FVector::ForwardVector);
 		}
 	}
 }  // namespace
@@ -57,7 +59,9 @@ ELightUnits DoodleLightingOps::ResolveIntensityUnits(EDoodleIntensityUnit InUnit
 	{
 		case EDoodleIntensityUnit::Candela: return ELightUnits::Candelas;
 		case EDoodleIntensityUnit::Lumen: return ELightUnits::Lumens;
-		case EDoodleIntensityUnit::Lux: return ELightUnits::Lux;
+		// UE 5.7 的 ELightUnits 只有 Unitless/Candelas/Lumens/EV/Nits（Scene.h:74-81），
+		// 没有照度单位 Lux；IR 的 lux 只能落到最接近的亮度单位 Nits（非同量纲，执行器按此近似处理）。
+		case EDoodleIntensityUnit::Lux: return ELightUnits::Nits;
 		case EDoodleIntensityUnit::Unitless:
 		default: return ELightUnits::Unitless;
 	}
@@ -81,17 +85,20 @@ float DoodleLightingOps::ResolveDirectionalSourceAngleDeg(const FDoodleLight& In
 void DoodleLightingOps::ResolveSpotConeDeg(const FDoodleLight& InLight, float& OutInnerDeg, float& OutOuterDeg)
 {
 	// IR 的锥角是 optional：服务端建基线 rig 时留空（ai_light_seam_candidates.cpp:446-448 的交待）。
-	const bool bHasOuter = InLight.Shape.OuterConeDeg > 0.0;
-	const bool bHasInner = InLight.Shape.InnerConeDeg > 0.0;
-	OutOuterDeg = bHasOuter ? static_cast<float>(InLight.Shape.OuterConeDeg) : GDefaultSpotOuterDeg;
-	OutInnerDeg = bHasInner ? static_cast<float>(InLight.Shape.InnerConeDeg) : OutOuterDeg * (GDefaultSpotInnerDeg / GDefaultSpotOuterDeg);
+	// TOptional 不能直接跟字面量比较、也不能 static_cast（C2678/C2440），必须先 IsSet 再解引用；
+	// 另外「值是 0」与「没填」在这里同义，所以判 IsSet 后再看是否 > 0。
+	const bool bHasOuter = InLight.Shape.OuterConeDeg.IsSet() && InLight.Shape.OuterConeDeg.GetValue() > 0.0;
+	const bool bHasInner = InLight.Shape.InnerConeDeg.IsSet() && InLight.Shape.InnerConeDeg.GetValue() > 0.0;
+	OutOuterDeg = bHasOuter ? static_cast<float>(InLight.Shape.OuterConeDeg.GetValue()) : GDefaultSpotOuterDeg;
+	OutInnerDeg = bHasInner ? static_cast<float>(InLight.Shape.InnerConeDeg.GetValue())
+	                        : OutOuterDeg * (GDefaultSpotInnerDeg / GDefaultSpotOuterDeg);
 	OutOuterDeg = FMath::Clamp(OutOuterDeg, 1.0f, 89.0f);
 	OutInnerDeg = FMath::Clamp(OutInnerDeg, 0.0f, OutOuterDeg);
 }
 
 FVector DoodleLightingOps::MakeFallbackSubjectPoint(const FVector& InCameraLocation, const FVector& InCameraForward)
 {
-	return InCameraLocation + InCameraForward.GetSafeNormal(FVector::ForwardVector) * 500.0;  // 5m
+	return InCameraLocation + InCameraForward.GetSafeNormal(UE_DOUBLE_SMALL_NUMBER, FVector::ForwardVector) * 500.0;  // 5m
 }
 
 bool DoodleLightingOps::ResolveLightPlacement(

@@ -47,9 +47,21 @@ public class DoodleLightingEditor : ModuleRules
 				"MovieRenderPipelineEditor",
 				"MovieRenderPipelineRenderPasses",
 				"MovieRenderPipelineSettings",
+				// `MoviePipelineEXROutput.h`（上面那个 RenderPasses 模块的公开头）会 include
+				// `Imath/ImathBox.h` 与 OpenEXR 的头，而 RenderPasses 把 Imath/UEOpenExr 声明成
+				// **Private** 依赖 —— 私有依赖不会传递给消费者，所以我们自己得再买一次单，
+				// 否则编译到 `MoviePipelineEXROutput.h` 就 C1083 'Imath/ImathBox.h'。
+				"Imath",
+				"UEOpenExr",
+				"UEOpenExrRTTI",
 				"FBX",
 				// 引擎路径 / 插件目录
 				"Projects",
+				// 编辑器面板（Part B）：Slate 控件 + 菜单/tab 注册
+				"Slate",
+				"SlateCore",
+				"ToolMenus",
+				"WorkspaceMenuStructure",
 			}
 		);
 	}
