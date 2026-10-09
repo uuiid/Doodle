@@ -66,11 +66,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   for (auto& p : l_maya_file.out_file_list) {
     SPDLOG_LOGGER_WARN(logger_ptr_, "导出 {}", p);
 
-    for (auto&& l_ufile : {
-             (l_import_root / p.stem()).replace_extension(doodle_config::ue4_uasset_ext),
-             (l_import_root / fmt::format("{}_Skeleton", p.stem())).replace_extension(doodle_config::ue4_uasset_ext),
-             (l_import_root / fmt::format("{}_PhysicsAsset", p.stem())).replace_extension(doodle_config::ue4_uasset_ext)
-         }) {
+    for (auto&& l_ufile : FSys::list_files(l_import_root, doodle_config::ue4_uasset_ext)) {
       if (FSys::exists(l_ufile)) {
         SPDLOG_LOGGER_WARN(logger_ptr_, "删除旧的资产 {}", l_ufile);
         FSys::remove(l_ufile);
@@ -97,7 +93,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
         .skin_path_      = impl_.skin_path_,
         .groom_path_     = impl_.groom_path_.generic_string()
     };
-    // 文件暂时不删除, 用来调试 
+    // 文件暂时不删除, 用来调试
     auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
 
     if (l_ue_project.empty()) throw doodle_error{"无法找到UE项目文件 {}", impl_.ue_project_path_};
