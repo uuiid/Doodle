@@ -90,3 +90,6 @@ CMakeUserPresets.json
 
 # Ignore serena onboarding memories and related metadata
 .serena/memories/
+
+doodle_plug_dev_5
+UnrealEngine
