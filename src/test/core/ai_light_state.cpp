@@ -484,7 +484,9 @@ DOODLE_FIXTURE_TEST_CASE_CORO(awaiting_judgement_sets_due_at_four_hours_ahead, f
   // 走真实的「渲染完成 → 等判断」路径，验证时限是在**这里**起算的
   // （而不是派发时起算：渲染期间美术本来就没法判断）
   const auto l_before = std::chrono::system_clock::now();
-  co_await mark_iteration_rendered(*l_fx.sql_, l_fx.iteration_.server_task_info_id_, l_fx.candidates_);
+  co_await mark_iteration_rendered(
+      *l_fx.sql_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, l_fx.candidates_
+  );
 
   auto l_session = l_fx.reload_session();
   BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::awaiting_judgement));

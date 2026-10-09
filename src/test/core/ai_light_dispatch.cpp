@@ -426,7 +426,8 @@ BOOST_FIXTURE_TEST_CASE(parse_drops_broken_metrics_only, fixture_t) {
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_advances_iteration_and_session, fixture_t) {
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
 
-  co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2)));
+  co_await apply_render_report(
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 2)));
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
@@ -450,7 +451,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_advances_iteration_and_session, fixtu
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_keeps_paths_derivable_from_the_row, fixture_t) {
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
 
-  co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 1)));
+  co_await apply_render_report(
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 1)));
 
   // 回传报文里不带路径（D27），候选行上也没有路径列（D44）：路径是候选行三个 uuid 的纯函数。
   // 所以这里的钉子分两半 —— 行本身（uuid 三件套）没被回传改写，且算出来的仍是夹具造真文件
@@ -474,7 +476,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_partial_failure_still_advances, fixtu
   auto l_json = ok_report(l_fx, 2);
   l_json["candidates"].at(1)["status"] = "failed";
 
-  co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
+  co_await apply_render_report(
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(l_json));
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
@@ -493,7 +496,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_error_without_rendered_writes_failure
   l_json["candidates"].at(1)["status"] = "failed";
   l_json["error"]                      = "UE 启动失败：DoodleLighting commandlet 未找到";
 
-  co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
+  co_await apply_render_report(
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(l_json));
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
@@ -514,7 +518,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_failed_writes_failure_reason, fix
   auto l_json = ok_report(l_fx, 3);
   for (auto& l_c : l_json["candidates"]) l_c["status"] = "failed";
 
-  co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
+  co_await apply_render_report(
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(l_json));
 
   const auto l_session = l_fx.reload_session();
   BOOST_TEST(l_session.failure_reason_ == std::string{"轮次 1 的 3 个候选全部渲染失败"});
@@ -538,7 +543,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_unknown_task, fixture_t) {
   // 真调用一次，确认未知任务号确实抛 404（而不是把哪一行悄悄改坏）
   bool l_threw = false;
   try {
-    co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, core_set::get_set().get_uuid(), parse_round_render_report(ok_report(l_fx, 1)));
+    co_await apply_render_report(
+      *l_fx.sql_, l_fx.server_ctx_, core_set::get_set().get_uuid(), ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 1)));
   } catch (const doodle_error& in_err) {
     l_threw = true;
     BOOST_TEST(in_err.code_status_() == boost::beast::http::status::not_found);
@@ -555,7 +561,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_candidate_from_another_round,
 
   bool l_threw = false;
   try {
-    co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
+    co_await apply_render_report(
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(l_json));
   } catch (const doodle_error& in_err) {
     l_threw = true;
     BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
@@ -573,7 +580,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_judged_iteration, fixture_t) 
 
   bool l_threw = false;
   try {
-    co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 1)));
+    co_await apply_render_report(
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 1)));
   } catch (const doodle_error& in_err) {
     l_threw = true;
     BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
@@ -592,7 +600,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(mark_iteration_failed_truncates_long_reason, fixtu
   // 回传里塞一段 UE 的完整 stderr 是很常见的。会话行不能因此被撑爆 ——
   // brief_text 截到 512 字节后加「已截断」标记（前端靠它知道后面还有内容）。
   const std::string l_long(600, 'x');
-  co_await mark_iteration_failed(*l_fx.sql_, l_fx.iteration_.server_task_info_id_, l_long);
+  co_await mark_iteration_failed(
+      *l_fx.sql_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, l_long);
 
   const auto l_reason = l_fx.reload_session().failure_reason_;
   const std::string l_tail{"...(已截断)"};
@@ -605,7 +614,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(mark_iteration_failed_unknown_task_is_404, fixture
 
   bool l_threw = false;
   try {
-    co_await mark_iteration_failed(*l_fx.sql_, core_set::get_set().get_uuid(), "谁也说不清为什么");
+    co_await mark_iteration_failed(
+      *l_fx.sql_, core_set::get_set().get_uuid(), ai_light_iteration_locator_t{}, "谁也说不清为什么");
   } catch (const doodle_error& in_err) {
     l_threw = true;
     BOOST_TEST(in_err.code_status_() == boost::beast::http::status::not_found);
@@ -629,7 +639,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_missing_artifacts_only_for
 
   // 三条都报 rendered，但第 2 条的产物文件不在
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 3))
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 3))
   );
 
   // 其余候选照常推进：一个候选的产物传丢了不该让整轮作废（§7.5 第 9 条的候选级隔离）
@@ -653,7 +663,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_when_only_the_movie_is_mis
   l_fx.delete_candidate_movie(0);
 
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2))
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 2))
   );
 
   // 海报在、视频缺：这个候选判不了 —— 美术点开发现播不出来，等于没渲
@@ -671,7 +681,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_artifacts_missing_writes_failure_
   // 全部「渲染成功」但产物一件都不在：这批回传在语义上等于什么都没渲出来，
   // 必须走失败出口 —— 推到 awaiting_judgement 就是让美术看 6 个 404。
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2))
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 2))
   );
 
   const auto l_it      = l_fx.reload_iteration();
@@ -688,7 +698,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_missing_exr_does_not_block, fixture_t
   l_fx.delete_candidate_exr(0);
 
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(ok_report(l_fx, 2))
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 2))
   );
 
   // EXR 是可选产物（D42）：缺了不降级、不阻断本轮
@@ -722,7 +732,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_reported_failure_plus_downgrade_leave
   auto l_json = ok_report(l_fx, 3);
   l_json["candidates"].at(1)["status"] = "failed";
 
-  co_await apply_render_report(*l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, parse_round_render_report(l_json));
+  co_await apply_render_report(
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(l_json));
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
@@ -860,6 +871,63 @@ BOOST_FIXTURE_TEST_CASE(task_payload_json_keys_are_frozen, fixture_t) {
   BOOST_TEST(l_back.candidates_.size() == 1u);
   BOOST_TEST(l_back.candidates_.at(0).candidate_id_ == l_cand.candidate_id_);
   BOOST_TEST(l_back.candidates_.at(0).movie_path_ == l_cand.movie_path_);
+}
+
+// 引擎内路线（D52/D54）的返回体是**第三种 wire 形状**：本机客户端读它起 UE，UE 侧面板写的
+// 桥文件也是这个结构（`script/uePlug/Doodle/Source/DoodleLighting/*Json.cpp` 手写镜像）。
+// 它与工作机载荷的差别正是最容易改坏的地方：
+//   1. 顶层多 `iteration_id` —— 引擎内路线没有任务行，回传只能靠「会话 + 轮次号」定位（D54），
+//      轮次 uuid 与轮次号缺一个都回不去；
+//   2. 顶层**没有** `spec_id` / `baseline_level` —— 那两个是工作机载荷专有的。
+// 候选那一层必须与工作机载荷**逐键相同**（UE 侧共用一份候选解析）。
+BOOST_FIXTURE_TEST_CASE(launch_plan_json_keys_are_frozen, fixture_t) {
+  auto& l_fx = *this;
+  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+
+  ai_light_task_candidate_t l_cand{};
+  l_cand.candidate_index_ = 0;
+  l_cand.candidate_id_    = l_fx.candidates_.at(0).uuid_id_;
+  l_cand.frames_dir_      = make_candidate_frames_dir(l_cand.candidate_id_);
+  l_cand.png_path_        = make_candidate_file_name(l_cand.candidate_id_, false);
+  l_cand.movie_path_      = make_candidate_movie_file(l_cand.candidate_id_);
+
+  ai_light_launch_plan_t l_plan{};
+  l_plan.session_id_   = l_fx.session_.uuid_id_;
+  l_plan.iteration_id_ = l_fx.iteration_.uuid_id_;
+  l_plan.iteration_    = 1;
+  l_plan.out_dir_      = make_iteration_relative_dir(l_fx.session_.uuid_id_, l_fx.iteration_.uuid_id_);
+  l_plan.frame_begin_  = 0;
+  l_plan.frame_end_    = 47;
+  l_plan.candidates_.push_back(l_cand);
+
+  // 同样是拷贝初始化：花括号会得到单元素数组
+  const nlohmann::json l_j = l_plan;
+  for (const auto* l_key : {"session_id", "iteration_id", "iteration", "out_dir", "render_map", "level_sequence",
+                            "movie_pipeline_config", "frame_begin", "frame_end", "ue_project_path",
+                            "camera_file_path", "candidates"}) {
+    BOOST_TEST(l_j.contains(l_key));
+  }
+  BOOST_TEST(!l_j.contains("spec_id"));
+  BOOST_TEST(!l_j.contains("baseline_level"));
+
+  BOOST_REQUIRE_EQUAL(l_j.at("candidates").size(), 1u);
+  const auto& l_jc = l_j.at("candidates").at(0);
+  for (const auto* l_key : {"candidate_index", "candidate_id", "frames_dir", "png_path", "exr_path", "movie_path", "rig"}) {
+    BOOST_TEST(l_jc.contains(l_key));
+  }
+
+  const auto l_back = l_j.get<ai_light_launch_plan_t>();
+  BOOST_TEST(l_back.session_id_ == l_plan.session_id_);
+  BOOST_TEST(l_back.iteration_id_ == l_plan.iteration_id_);
+  BOOST_TEST(l_back.iteration_ == l_plan.iteration_);
+  BOOST_TEST(l_back.frame_end_ == l_plan.frame_end_);
+  BOOST_TEST(l_back.candidates_.size() == 1u);
+  BOOST_TEST(l_back.candidates_.at(0).movie_path_ == l_cand.movie_path_);
+  // 轮次号必须真能定位（D54）：拿回来的会话 + 轮次号要能在库里查到这一轮，
+  // 而且查到的行就是报文里那个轮次 uuid —— 本机客户端回传时就靠这一对。
+  const auto l_found = l_fx.sql_->get_ai_light_iteration(l_back.session_id_, l_back.iteration_);
+  BOOST_REQUIRE(l_found.has_value());
+  BOOST_TEST(l_found->uuid_id_ == l_plan.iteration_id_);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

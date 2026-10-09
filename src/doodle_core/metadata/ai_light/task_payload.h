@@ -53,6 +53,15 @@
 //          前端取图与取视频只按 uuid 走 /candidate/{uuid}/image 与 /candidate/{uuid}/movie。
 //          代价：库里没有「文件实际在哪」的记录（root_ 变了而文件没搬时无从察觉）；
 //          若将来出现**非派生**产物（人工补图、对象存储），需要重新引入一个显式的路径字段。
+//   D52 —— 引擎内直跑：UE 内置插件可以在**编辑器进程内**完成一轮渲染（进程内 MRQ + 世界回滚），
+//          不再依赖外挂 UnrealEditor-Cmd。面板本身**不连网络**（见 D53）。
+//   D53 —— 编辑器面板与网络解耦：面板把「本轮该怎么渲」写成 ai_light_launch_plan_t 交给**本机
+//          的 Doodle 客户端**，由它起 UE、收产物、上传、回传。理由：UE 的 FHttpManager 只在引擎
+//          模块加载期读证书配置（HttpManager.cpp:340-404 / ModuleManager.cpp:1365-1368），
+//          运行时挂自签证书钩子的时序不可靠；而 LLM 与统计本来就必须留在服务端。
+//   D54 —— 本地回传走 POST /api/doodle/ai/light/render_report_local/{session_id}/{iteration}：
+//          这条路线没有 server_task_info 行，所以 apply_render_report 的任务 id 参数可空
+//          （空 = 按会话 + 轮次定位）。D41/D42 的产物校验逻辑完全复用，不复制。
 //
 
 #pragma once
@@ -152,6 +161,69 @@ struct DOODLE_CORE_API ai_light_task_candidate_t {
     if (j.contains("exr_path")) j.at("exr_path").get_to(p.exr_path_);
     if (j.contains("movie_path")) j.at("movie_path").get_to(p.movie_path_);
     if (j.contains("rig")) j.at("rig").get_to(p.rig_);
+  }
+};
+
+/// 本地渲染计划（D53）：/iterate 把它一并返回给**发起方本机**，本机自己起 UE 渲染 ——
+/// 不再经过 server_task_info 队列与工作机 WS。
+///
+/// 为什么单独一个类型而不是复用 ai_light_task_payload_t：
+///   * 队列载荷是「服务端 → 工作机」的单向投递，里面有 spec_id_/baseline_level_ 之类
+///     只有工作机才需要的字段，且**落地时必然伴随一列 server_task_info**；
+///   * 本地计划是**请求的应答的一部分**，不含任何任务行，也不该让客户端看到任务概念。
+/// 形状与 ai_light_task_payload_t 的渲染段逐字一致（out_dir_ + 候选四路径 + rig），
+/// 这样两侧可以共用同一份「拼本地根 → 写 -Params」的代码（D51：位置只从载荷取，不重算）。
+///
+/// 路径语义与 D39 相同：全部**相对**本机缓存根（g_ai_light_local_cache_flag），
+/// 发起方拼上自己的根之后再交给 UE。
+struct DOODLE_CORE_API ai_light_launch_plan_t {
+  uuid session_id_{};
+  uuid iteration_id_{};
+  std::int32_t iteration_{0};
+  /// 本轮目录，相对本机缓存根（D39）。
+  FSys::path out_dir_{};
+  /// 渲染关卡包路径（D50：空 = 本轮不可渲染，服务端在响应里直接失败）。
+  std::string render_map_{};
+  /// auto_light 生成好的 level sequence 包路径（**空 = 本轮不可渲染**，D50）。
+  std::string level_sequence_{};
+  /// auto_light 生成好的 MRQ 配置资产（可空，D49）。
+  std::string movie_pipeline_config_{};
+  /// 帧区间，只作诊断（D48）。
+  std::int32_t frame_begin_{0};
+  std::int32_t frame_end_{0};
+  /// .uproject 绝对路径（本机起 UE 的第一个参数）。
+  std::string ue_project_path_{};
+  /// 与 auto_light 同源的相机文件（视频路径不用它，见 camera_file_path_ 的说明）。
+  std::string camera_file_path_{};
+  std::vector<ai_light_task_candidate_t> candidates_{};
+
+  friend void to_json(nlohmann::json& j, const ai_light_launch_plan_t& p) {
+    j["session_id"]            = p.session_id_;
+    j["iteration_id"]          = p.iteration_id_;
+    j["iteration"]             = p.iteration_;
+    j["out_dir"]               = p.out_dir_;
+    j["render_map"]            = p.render_map_;
+    j["level_sequence"]        = p.level_sequence_;
+    j["movie_pipeline_config"] = p.movie_pipeline_config_;
+    j["frame_begin"]           = p.frame_begin_;
+    j["frame_end"]             = p.frame_end_;
+    j["ue_project_path"]       = p.ue_project_path_;
+    j["camera_file_path"]      = p.camera_file_path_;
+    j["candidates"]            = p.candidates_;
+  }
+  friend void from_json(const nlohmann::json& j, ai_light_launch_plan_t& p) {
+    if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
+    if (j.contains("iteration_id")) j.at("iteration_id").get_to(p.iteration_id_);
+    if (j.contains("iteration")) j.at("iteration").get_to(p.iteration_);
+    if (j.contains("out_dir")) j.at("out_dir").get_to(p.out_dir_);
+    if (j.contains("render_map")) j.at("render_map").get_to(p.render_map_);
+    if (j.contains("level_sequence")) j.at("level_sequence").get_to(p.level_sequence_);
+    if (j.contains("movie_pipeline_config")) j.at("movie_pipeline_config").get_to(p.movie_pipeline_config_);
+    if (j.contains("frame_begin")) j.at("frame_begin").get_to(p.frame_begin_);
+    if (j.contains("frame_end")) j.at("frame_end").get_to(p.frame_end_);
+    if (j.contains("ue_project_path")) j.at("ue_project_path").get_to(p.ue_project_path_);
+    if (j.contains("camera_file_path")) j.at("camera_file_path").get_to(p.camera_file_path_);
+    if (j.contains("candidates")) j.at("candidates").get_to(p.candidates_);
   }
 };
 

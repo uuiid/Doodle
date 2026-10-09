@@ -155,6 +155,23 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid task_id_{};
 DOODLE_HTTP_FUN_END()
 
+// POST /api/doodle/ai/light/render_report_local/{session_id}/{iteration}   引擎内路线回传（D54）
+//
+// 与上面那条是**同一段逻辑的另一个入口**：轮次不是由任务 uuid 反查的（引擎内路线根本没有
+// server_task_info 行，D53），而是直接在路径上给出「会话 + 轮次号」，由
+// ai_light_iteration_locator_t 交给 apply_render_report。产物校验（D41/D42）、
+// 状态流转、失败收尾全部复用，不复制一份。
+//
+// 权限与浏览器调用者一致：调用方是本机 Doodle 客户端，用的是**发起人自己的 JWT**
+// （不是工作机凭据），所以这里做 check_project_access —— 与 render_report_route
+// 「工作机不是项目成员、不查项目权限」的前提正好相反。同一个镜头只有项目成员能渲，
+// 这条也没理由放开。
+DOODLE_HTTP_JWT_FUN(render_report_local_route)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid session_id_{};
+std::int32_t iteration_{0};
+DOODLE_HTTP_FUN_END()
+
 // 候选产物的上传路径模板。**两处必须一致**：
 //   1) kitsu.cpp 里 candidate_file_route 的路由注册（那处只能写字面量 ——
 //      operator""_url 是 UDL，接不了变量）；

@@ -682,10 +682,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iterate_route, post) {
 
   // generate_candidates 已落地（§15.8）：正常路径在这里真的排轴 + 跑一次推理 + 落 6 个候选，
   // 接缝抛错时 advance_session 已把状态回滚 —— 会话保持可重试。
-  co_await advance_session(l_sql, l_session, person_.person_.uuid_id_);
+  //
+  // 走的是**引擎内路线**（D52/D53）：不建 server_task_info、不派发，而是把「本轮该怎么渲」
+  // 一并放进响应（launch_plan）。发起方本机拿着它自己起 UE、收产物、上传、回传。
+  // 队列路线（工作机）仍在 advance_session 里保留着，两条路线的候选生成完全一致。
+  auto l_plan = co_await advance_session_local(l_sql, l_session, person_.person_.uuid_id_);
 
-  auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
+  auto l_detail       = build_session_detail(l_sql, l_session.uuid_id_);
+  nlohmann::json l_ret{};
+  l_ret               = *l_detail;  // 赋值而非 {} 构造：见 nlohmann::json{x} 的花括号陷阱
+  // 只在真的出了候选时才有计划：draft → Spec 那一步推进完是 nullopt，
+  // 这时**不要**放一个 null 进响应 —— 前端只需按「还没有 plan」处理。
+  if (l_plan.has_value()) l_ret["launch_plan"] = *l_plan;
+  co_return in_handle->make_msg(l_ret);
 }
 
 // ===========================================================================
@@ -828,8 +837,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
   // 形状错误在这里抛 502；语义问题交给 apply_render_report 裁决：
   // 整轮失败 → 只写会话的 failure_reason_（不是终态）；至少一张渲染成功 → 落库并转 awaiting_judgement。
   // ctx 传进去只为一件事：算产物落点（D41 的存在性判定要现算）。
+  // locator 传空：队列路线的轮次由任务 uuid 定位（D54）。
   auto l_report = parse_round_render_report(l_json);
-  co_await apply_render_report(l_sql, g_ctx().get<kitsu_ctx_t>(), task_id_, l_report);
+  co_await apply_render_report(l_sql, g_ctx().get<kitsu_ctx_t>(), task_id_, ai_light_iteration_locator_t{}, l_report);
 
   // 回执带上轮次与两条状态，工作机据此写日志。人工判断闸门不在这里。
   nlohmann::json l_out{{"task_id", task_id_}};
@@ -841,6 +851,66 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
     l_out["session_state"]   = l_session.state_;
     l_out["failure_reason"]  = l_session.failure_reason_;
   }
+  co_return in_handle->make_msg(l_out);
+}
+
+// ===========================================================================
+// 引擎内路线回传：一轮候选的渲染结果（D54）
+// ===========================================================================
+//
+// 与上面那条工作机回传的差别只有两处，其余全部复用：
+//   1) 定位方式：轮次在路径上（session_id + iteration），由 ai_light_iteration_locator_t
+//      交给 apply_render_report。引擎内路线**没有 server_task_info 行**（D53：面板不派发），
+//      所以拿不出任务 uuid，这也是 locator 存在的唯一理由。
+//   2) 权限：调用方是本机 Doodle 客户端，用发起人自己的 JWT，所以做 check_project_access。
+//      工作机那条相反（它不是项目成员，只认任务 uuid）；这里不放开。
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_local_route, post) {
+  person_.check_not_outsourcer();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+
+  // 会话必须存在且调用者有权限 —— 顺带把 project 归属查出来，省一次往返。
+  auto l_session = load_session_checked(person_, l_sql, session_id_);
+
+  // 轮次存在性在这里先挡一道：locator 找不到轮次时 apply_render_report 会静默返回 nullopt
+  // （那是队列路线「任务还在排队」的正常状态），但在这条路线上找不到轮次一定是调用方搞错了，
+  // 静默吞掉会变成「回传成功、状态没动」这种最难查的失败。
+  DOODLE_CHICK_HTTP(
+      l_sql.get_ai_light_iteration(l_session.uuid_id_, iteration_).has_value(), not_found,
+      "会话 {} 没有第 {} 轮", l_session.uuid_id_, iteration_
+  );
+
+  // 形状错误抛 502；语义问题（D41 产物缺失降级、D42 EXR 清理、全灭写 failure_reason_）
+  // 全部由 apply_render_report 裁决，与工作机路线共用同一段代码。
+  auto l_report = parse_round_render_report(l_json);
+  // 任务号给 nil：引擎内路线没有 server_task_info 行，定位完全靠 locator（D54）。
+  co_await apply_render_report(
+      l_sql, g_ctx().get<kitsu_ctx_t>(), uuid{},
+      ai_light_iteration_locator_t{l_session.uuid_id_, iteration_}, l_report
+  );
+
+  // 回执与工作机那条保持同形（task_id 除外 —— 这条路线没有任务），
+  // 让两边共用同一份解析代码的本机客户端不必分叉。
+  nlohmann::json l_out{};
+  l_out["session_id"] = l_session.uuid_id_;
+  l_out["iteration"]  = iteration_;
+  std::string l_it_state{};
+  std::string l_session_state{};
+  if (auto l_it = l_sql.get_ai_light_iteration(l_session.uuid_id_, iteration_); l_it.has_value()) {
+    auto l_session_after     = l_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
+    l_out["iteration_state"] = l_it->state_;
+    l_out["session_state"]   = l_session_after.state_;
+    l_out["failure_reason"]  = l_session_after.failure_reason_;
+    // 日志单独取名字而不是从 json 里 value() 回来：json 里的枚举是字符串（magic_enum 名），
+    // 从 json 取会得到 json 对象，fmt 不认，得先 get<std::string>()。
+    l_it_state               = std::string{magic_enum::enum_name(l_it->state_)};
+    l_session_state          = std::string{magic_enum::enum_name(l_session_after.state_)};
+  }
+
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_http(), "AI 灯光（引擎内路线）：会话 {} 第 {} 轮回传已受理，状态 {} / {}",
+      l_session.uuid_id_, iteration_, l_it_state, l_session_state
+  );
   co_return in_handle->make_msg(l_out);
 }
 

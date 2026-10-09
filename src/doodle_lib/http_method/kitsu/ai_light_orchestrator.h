@@ -96,6 +96,34 @@ DOODLELIB_API boost::asio::awaitable<void> advance_session(
     sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
 );
 
+/// 引擎内路线的推进（D52/D53）：走完 Spec / 候选生成那一步后**不建任务行**，
+/// 而是把「本轮该怎么渲」作为 ai_light_launch_plan_t 返回给调用方，由发起方本机自己渲染。
+///
+/// 与 advance_session 共用同一个分支实现，差别只在 generating 分支的末尾：
+/// 一个建 server_task_info + run_next_task（下放工作机），一个填 launch plan 直接返回。
+///
+/// 为什么返回 std::optional 而不是 out 参数：
+///   * 非 generating 状态（例如 draft / awaiting_spec_confirm）推进的是 Spec 那一步，
+///     **没有**渲染计划可给 —— 调用方看到 nullopt 应当按「只推进了状态」处理，不是错误；
+///   * 生成分支失败（装配推不出来、接缝抛错）照 advance_session 的老规矩办：
+///     回滚会话状态 + 写 failure_reason_，然后**重新抛出**。
+DOODLELIB_API boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_local(
+    sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
+);
+
+/// 回传定位（D54）：队列路线用任务 uuid 找轮次，引擎内路线没有任务行，改用「会话 + 轮次号」。
+///
+/// 存在的理由：`mark_iteration_rendered` / `mark_iteration_failed` / `apply_render_report`
+/// 三段都要先定位轮次，而两条入口（worker 回传、本地客户端回传）只差这一步。
+/// 用可空任务号 + 可空会话号表达，而不是重载两个函数：重载会让每个调用点各挑一个，
+/// 而「任务号为空时回落到会话号」这条回退逻辑就没人负责了。
+struct DOODLELIB_API ai_light_iteration_locator_t {
+  /// 会话 uuid。任务号为空时必填。
+  uuid session_id_{};
+  /// 轮次号（会话内的 1、2、3…，不是轮次 uuid）。任务号为空时必填。
+  std::int32_t iteration_{0};
+};
+
 /// 人工闸门 2 的状态推进。**纯 DB，不碰文件与 LLM** —— 单测直接调它。
 ///
 /// 前置条件（由调用方校验）：
@@ -160,8 +188,11 @@ inline FSys::path candidate_frames_dir(const http::kitsu_ctx_t& in_ctx, const ai
 /// in_candidates 是回传的候选，只填 render_ms_ / light_count_ / metrics_ ——
 /// 路径不在回传里，落库时按 candidate_render_path 现算（D44）；frame_count_ 是回传里的
 /// **诊断**字段（工作机与 UE 用它判断帧序列是否完整），候选行没有对应的列，不落库。
+///
+/// in_server_task_info_id 为 nil 时按 in_locator（会话 + 轮次号）定位（D54）。
 DOODLELIB_API boost::asio::awaitable<void> mark_iteration_rendered(
-    sqlite_database& in_sql, const uuid& in_server_task_info_id, const std::vector<ai_light_candidate>& in_candidates
+    sqlite_database& in_sql, const uuid& in_server_task_info_id, const ai_light_iteration_locator_t& in_locator,
+    const std::vector<ai_light_candidate>& in_candidates
 );
 
 /// 解析工作机回传的整轮结果（§15.12 的 wire 契约，见 ai_light/task_payload.h）。
@@ -189,17 +220,19 @@ DOODLELIB_API round_render_report_t parse_round_render_report(const nlohmann::js
 ///     失败不是终态：美术随时可以再点一次 `/iterate`。
 ///
 /// in_ctx 只用于算产物落点，所以是 const 引用。
-/// 抛出的错误（都来自解析或归属校验，属「回传不可用」）：任务号查不到轮次 → 404；
+/// in_server_task_info_id 为 nil 时按 in_locator 定位（D54，引擎内路线没有任务行）。
+/// 抛出的错误（都来自解析或归属校验，属「回传不可用」）：定位不到轮次 → 404；
 /// 候选不属于该轮次 → 400。
 DOODLELIB_API boost::asio::awaitable<void> apply_render_report(
     sqlite_database& in_sql, const http::kitsu_ctx_t& in_ctx, const uuid& in_server_task_info_id,
-    const round_render_report_t& in_report
+    const ai_light_iteration_locator_t& in_locator, const round_render_report_t& in_report
 );
 
 /// 整轮失败收尾：只写 `session.failure_reason_`（截断到 512），状态与候选行一概不动（D28）。
-/// 任务号查不到轮次抛 404。
+/// 定位不到轮次抛 404（任务号为空时按 in_locator 的会话 + 轮次号定位，D54）。
 DOODLELIB_API boost::asio::awaitable<void> mark_iteration_failed(
-    sqlite_database& in_sql, const uuid& in_server_task_info_id, const std::string& in_reason
+    sqlite_database& in_sql, const uuid& in_server_task_info_id, const ai_light_iteration_locator_t& in_locator,
+    const std::string& in_reason
 );
 
 /// 组装会话详情读模型。会话不存在时返回 nullopt。
