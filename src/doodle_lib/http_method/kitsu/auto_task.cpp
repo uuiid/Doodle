@@ -28,6 +28,7 @@
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/auto_task.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/logger/logger.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
@@ -761,11 +762,35 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light_builder::run() {
   return std::move(ret_);
 }
 
+shot_render_light_result shot_render_light_builder::run_with_sync() {
+  const auto l_base  = fill_base();
+  const auto l_scene = resolve_scene_ue_path();
+  scan_shot_output(l_base);
+  build_asset_keys(l_base);
+  pair_simulation_outputs(l_base);
+  build_paths(l_scene);
+  bind_asset_extends(l_scene);
+  check_files();
+  if (input_.abc_import_ == simulation_abc_import::without_abc) drop_abc_assets();
+  conv_asset_game_paths();
+  // 同步清单必须在 conv_asset_game_paths() 之后算: 它读的是最终的 ue_asset_path_
+  build_assembly_files(l_scene);
+  return shot_render_light_result{
+      .arg_            = std::move(ret_),
+      // 工作机工程根(相对 user_work_root_): 与 task_sync 的本地缓存口径一致
+      .project_dir_    = FSys::path{input_.prj_.code_} / l_scene.scene_extend_value_.bian_hao_ /
+                         l_scene.uproject_file_.stem(),
+      .assembly_files_ = std::move(assembly_files_),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // 查询包装: 数据库访问全部集中在这里, 计算类只接收已查询好的数据
 // ---------------------------------------------------------------------------
 
-import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(
+namespace {
+/// 查询并组装 builder 的输入(数据库访问只在这里发生)
+shot_render_light_input make_shot_render_light_input(
     const uuid& in_project_id, const uuid& in_shot_id, simulation_abc_import in_abc_import
 ) {
   auto l_sql         = get_sqlite_database();
@@ -795,20 +820,54 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(
   l_rows.reserve(l_assets.size());
   for (auto&& l_row : l_assets) l_rows.emplace_back(l_to_row(l_row));
 
-  return shot_render_light_builder{
-      shot_render_light_input{
-          .project_id_     = in_project_id,
-          .shot_task_id_   = in_shot_id,
-          .prj_            = std::move(l_prj),
-          .shot_task_      = std::move(l_shot_task),
-          .shot_entity_    = std::move(l_shot_entity),
-          .episode_entity_ = std::move(l_episode_entity),
-          .shot_extend_    = *l_shot_extend,
-          .assets_         = std::move(l_rows),
-          .scene_asset_    = std::move(l_scene_row),
-          .abc_import_     = in_abc_import,
-      }
-  }.run();
+  return shot_render_light_input{
+      .project_id_     = in_project_id,
+      .shot_task_id_   = in_shot_id,
+      .prj_            = std::move(l_prj),
+      .shot_task_      = std::move(l_shot_task),
+      .shot_entity_    = std::move(l_shot_entity),
+      .episode_entity_ = std::move(l_episode_entity),
+      .shot_extend_    = *l_shot_extend,
+      .assets_         = std::move(l_rows),
+      .scene_asset_    = std::move(l_scene_row),
+      .abc_import_     = in_abc_import,
+  };
+}
+}  // namespace
+
+void shot_render_light_builder::build_assembly_files(const scene_resolution& in_scene) {
+  assembly_files_.clear();
+  assembly_files_.reserve(ret_.ue_asset_path_.size());
+  for (auto&& l_info : ret_.ue_asset_path_) {
+    if (l_info.from_.empty()) continue;
+    // to_ 是服务端缓存根的绝对路径; 减掉工程根前缀才拿到工作机要用的相对路径。
+    // 只在两处都换成正斜杠比较之外, 直接用词法相对: 不碰文件系统, 也不要求目标存在。
+    auto l_rel = l_info.to_.lexically_relative(in_scene.scene_ue_path_);
+    if (l_rel.empty() || l_rel.native().starts_with(L"..")) {
+      // 落不到工程根底下的条目无处安放, 跳过(记 WARN), 总比在别的机器上乱写强
+      SPDLOG_LOGGER_WARN(
+          g_logger_ctrl().get_main_error(), "AI 灯光装配同步: 目标 {} 不在场景工程根 {} 之下, 已跳过",
+          l_info.to_.string(), in_scene.scene_ue_path_.string()
+      );
+      continue;
+    }
+    assembly_files_.emplace_back(
+        ::doodle::ai_light::ai_light_assembly_file_t{.from_ = l_info.from_, .to_ = std::move(l_rel)}
+    );
+  }
+}
+
+import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(
+    const uuid& in_project_id, const uuid& in_shot_id, simulation_abc_import in_abc_import
+) {
+  return shot_render_light_builder{make_shot_render_light_input(in_project_id, in_shot_id, in_abc_import)}.run();
+}
+
+shot_render_light_result shot_render_light_with_sync(
+    const uuid& in_project_id, const uuid& in_shot_id, simulation_abc_import in_abc_import
+) {
+  auto l_builder = shot_render_light_builder{make_shot_render_light_input(in_project_id, in_shot_id, in_abc_import)};
+  return l_builder.run_with_sync();
 }
 
 }  // namespace auto_task

@@ -4,6 +4,7 @@
 
 #pragma once
 #include "doodle_core/doodle_core_fwd.h"
+#include <doodle_core/metadata/ai_light/task_payload.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/task.h>
@@ -16,6 +17,7 @@
 #include <set>
 #include <string>
 #include <string_view>
+#include <doodle_core/metadata/ai_light/task_payload.h>
 #include <utility>
 #include <vector>
 
@@ -309,6 +311,21 @@ class DOODLELIB_API shot_render_light_path_set {
     const std::vector<std::string>& in_stems, std::string_view in_shot_file_name
 );
 
+/// shot_render_light 的结果: 装配参数 + **给工作机的同步信息**(D57)
+///
+/// 为什么不把这些字段直接塞进 run_ue_assembly_arg: 那个类型是**服务端自己**跑组装用的
+/// (distributed_task.cpp 的 /run_ue_assembly 与 AI 灯光链路共用), 它的 `ue_asset_path_`
+/// 语义是「服务端缓存根的绝对目标」; 而同步清单的语义是「工作机工程根下的相对目标」。
+/// 两个语义塞进同一个 JSON 字段, 迟早会把服务端盘符写到工作机上去。
+struct DOODLELIB_API shot_render_light_result {
+  import_and_render_ue_ns::run_ue_assembly_arg arg_{};
+  /// 工作机上的工程根, **相对 core_set::get_set().user_work_root_**:
+  /// `{项目code}/{场景归档编号}/{uproj stem}` —— 与 task_sync 的本地缓存口径一致。
+  FSys::path project_dir_{};
+  /// 起 UE 之前要同步进本地缓存的装配素材(D57)
+  std::vector<::doodle::ai_light::ai_light_assembly_file_t> assembly_files_{};
+};
+
 /// 由 shot_render_light 过程转换而来的类: 只做路径与资产装配计算, 不访问数据库
 ///
 /// 各阶段的数据一律经参数与返回值传递, 只有 input_(输入)与 ret_(累积输出)是成员,
@@ -319,6 +336,10 @@ class DOODLELIB_API shot_render_light_builder {
 
   /// 计算并返回 UE 装配参数(与原 shot_render_light 函数等价)
   [[nodiscard]] import_and_render_ue_ns::run_ue_assembly_arg run();
+
+  /// 计算装配参数, 并额外算出工作机同步信息(D57): 工程根 + 装配文件清单
+  // 注意: 类本身已带 DOODLELIB_API, 成员上再写一遍是 C2487(dll 接口类的成员不得重复声明 dll 接口)。
+  [[nodiscard]] shot_render_light_result run_with_sync();
 
  private:
   /// fill_base 的产物: 镜头输出目录 / 解算输出目录 / 输出文件名 / 帧区间后缀
@@ -354,16 +375,31 @@ class DOODLELIB_API shot_render_light_builder {
   void bind_asset_extends(const scene_resolution& in_scene);
   /// NDEBUG 下的存在性校验与 groom binding 扫描
   void check_files();
+  /// 由 ue_asset_path_ 生成给工作机的装配同步清单(D57)
+  ///
+  /// 与 ue_asset_path_ 的差别只有一处: 这里的 `to_` 是**相对场景工程根**的相对路径
+  /// (`lexically_relative(scene_ue_path_)`), 因为目标根由工作机自己定(user_work_root_);
+  /// `ue_asset_path_` 的 `to_` 则是服务端缓存根的绝对路径 —— 服务端自己跑组装时才用它。
+  /// 落在 in_scene.scene_ue_path_ 之外的条目无法相对化, 一律跳过并记 WARN。
+  void build_assembly_files(const scene_resolution& in_scene);
   /// 从导入列表中剔除 abc 资产(仅保留 fbx); 必须在 check_files() 之后调用
   void drop_abc_assets();
   /// 将 skin_path_/groom_bind_path_ 转换为 /Game 路径
   void conv_asset_game_paths();
 
-  shot_render_light_input input_{};
+  [[nodiscard]] shot_render_light_input input_{};
   import_and_render_ue_ns::run_ue_assembly_arg ret_{};
+  /// 工作机装配同步清单(D57): 只在 run_with_sync() 里填充
+  std::vector<::doodle::ai_light::ai_light_assembly_file_t> assembly_files_{};
 };
 
 import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(
+    const uuid& in_project_id, const uuid& in_shot_id,
+    simulation_abc_import in_abc_import = simulation_abc_import::with_abc
+);
+
+/// 同 shot_render_light, 但额外算出工作机同步信息(D57); shot_render_light 本身保持不变
+[[nodiscard]] DOODLELIB_API shot_render_light_result shot_render_light_with_sync(
     const uuid& in_project_id, const uuid& in_shot_id,
     simulation_abc_import in_abc_import = simulation_abc_import::with_abc
 );

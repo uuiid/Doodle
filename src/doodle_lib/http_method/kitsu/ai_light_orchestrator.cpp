@@ -276,17 +276,21 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
   // 装配推导失败 / 序列为空 = 本轮不可渲染（D50）：候选本身虽然生成了，但工作机拿着一个
   // 没有序列的载荷去起 UE，只会失败在更远的地方、现象与真正的原因无关。所以抛在这里，
   // 由 advance_session 回滚会话状态并把原因写进 failure_reason_。
-  import_and_render_ue_ns::run_ue_assembly_arg l_assembly{};
+  // 用 _with_sync 变体：装配参数之外还要拿到「工作机工程根 + 装配文件同步清单」，
+  // 队列出口把它们一并下发给工作机（D57：UE 工程是每台机器的本地缓存，共享盘素材
+  // 必须先差分拷进去，否则工作机上没有工程可开）。
+  http::auto_task::shot_render_light_result l_assembly_res{};
   std::string l_assembly_err{};
   if (io_session.task_id_.is_nil()) {
     l_assembly_err = "会话没有关联镜头任务（task_id 为空）";
   } else {
     try {
-      l_assembly = http::auto_task::shot_render_light(io_session.project_id_, io_session.task_id_);
+      l_assembly_res = http::auto_task::shot_render_light_with_sync(io_session.project_id_, io_session.task_id_);
     } catch (const std::exception& in_err) {
       l_assembly_err = brief_error(in_err);
     }
   }
+  auto&& l_assembly = l_assembly_res.arg_;
   DOODLE_CHICK_HTTP(
       l_assembly_err.empty(), internal_server_error,
       "AI 灯光会话 {} 第 {} 轮：无法推导本镜头的渲染装配，本轮无法渲染（{}）", io_session.uuid_id_, l_iteration,
@@ -404,6 +408,10 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
     l_plan.frame_end_             = l_assembly.end_time_;
     l_plan.ue_project_path_       = l_assembly.ue_main_project_path_.generic_string();
     l_plan.camera_file_path_      = l_assembly.camera_file_path_.generic_string();
+    // D57：引擎内路线由发起方本机渲染，装配文件同样要同步到**本机**缓存。
+    // 本机就是发起方，路径与清单一起带走，由客户端在起 UE 之前差分拷贝。
+    l_plan.project_dir_           = l_assembly_res.project_dir_;
+    l_plan.assembly_files_        = std::move(l_assembly_res.assembly_files_);
     l_plan.candidates_            = std::move(l_payload_candidates);
 
     // 轮次行的 server_task_info_id_ 留 nil：这条路线**没有**任务行，
@@ -437,6 +445,11 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
   l_payload.frame_end_             = l_assembly.end_time_;
   l_payload.ue_project_path_       = l_assembly.ue_main_project_path_.generic_string();
   l_payload.camera_file_path_      = l_assembly.camera_file_path_.generic_string();
+  // D57：工作机上没有这份 UE 工程缓存，装配素材必须下发同步清单。
+  // ue_project_path_ 仍是服务端路径（保留给日志与老工作机），工作机会按
+  // project_dir_ + 本机 user_work_root_ 自算工程根并覆盖它。
+  l_payload.project_dir_           = l_assembly_res.project_dir_;
+  l_payload.assembly_files_        = std::move(l_assembly_res.assembly_files_);
   l_payload.candidates_            = std::move(l_payload_candidates);
 
   // 任务行。status 保持 submitted，由 computers_assign_task 派发时推进。

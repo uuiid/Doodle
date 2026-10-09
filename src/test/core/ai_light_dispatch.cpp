@@ -837,7 +837,7 @@ BOOST_FIXTURE_TEST_CASE(task_payload_json_keys_are_frozen, fixture_t) {
   const nlohmann::json l_j = l_payload;
   for (const auto* l_key : {"session_id", "iteration", "spec_id", "out_dir", "baseline_level", "render_map",
                             "level_sequence", "movie_pipeline_config", "frame_begin", "frame_end",
-                            "ue_project_path", "camera_file_path", "candidates"}) {
+                            "ue_project_path", "camera_file_path", "project_dir", "assembly_files", "candidates"}) {
     BOOST_TEST(l_j.contains(l_key));
   }
 
@@ -904,7 +904,7 @@ BOOST_FIXTURE_TEST_CASE(launch_plan_json_keys_are_frozen, fixture_t) {
   const nlohmann::json l_j = l_plan;
   for (const auto* l_key : {"session_id", "iteration_id", "iteration", "out_dir", "render_map", "level_sequence",
                             "movie_pipeline_config", "frame_begin", "frame_end", "ue_project_path",
-                            "camera_file_path", "candidates"}) {
+                            "camera_file_path", "project_dir", "assembly_files", "candidates"}) {
     BOOST_TEST(l_j.contains(l_key));
   }
   BOOST_TEST(!l_j.contains("spec_id"));
@@ -928,6 +928,123 @@ BOOST_FIXTURE_TEST_CASE(launch_plan_json_keys_are_frozen, fixture_t) {
   const auto l_found = l_fx.sql_->get_ai_light_iteration(l_back.session_id_, l_back.iteration_);
   BOOST_REQUIRE(l_found.has_value());
   BOOST_TEST(l_found->uuid_id_ == l_plan.iteration_id_);
+}
+
+// 装配同步字段（D57）的往返：工作机靠 project_dir_ 与本机 user_work_root_ 自算工程根，
+// 靠 assembly_files_ 把共享盘上的素材差分拷进去。这两项一旦在 wire 上丢了，
+// 工作机会退回服务端算出的 ue_project_path_ —— 那条路径在工作机上根本不存在，
+// 表现为「UE 起不来」，而不是任何一处编译期或运行期的显式报错。
+//   * from_ 是**共享盘/UNC 绝对路径**（只读源），必须原样带过去；
+//   * to_ 是**相对工程根**的相对路径，绝不能带盘符（带盘符就等于把工作机的根写死了）。
+BOOST_FIXTURE_TEST_CASE(assembly_files_round_trip, fixture_t) {
+  auto& l_fx = *this;
+  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+
+  const FSys::path l_prj_dir = FSys::path{"LQ"} / "BG001" / "MyProject";
+  const std::vector<ai_light_assembly_file_t> l_files{
+      {.from_ = FSys::path{R"(\\192.168.10.220\share\LQ\BG\JD01_01\BG001\pin_yin\UE5\MyProject.uproject)"},
+       .to_   = FSys::path{"MyProject.uproject"}},
+      {.from_ = FSys::path{R"(\\192.168.10.220\share\LQ\BG\JD01_01\BG001\pin_yin\UE5\Content\Shot\ep0001)"},
+       .to_   = FSys::path{"Content"} / "Shot" / "ep0001"},
+  };
+
+  ai_light_task_payload_t l_payload{};
+  l_payload.session_id_     = l_fx.session_.uuid_id_;
+  l_payload.iteration_      = 1;
+  l_payload.out_dir_        = make_iteration_relative_dir(l_fx.session_.uuid_id_, l_fx.iteration_.uuid_id_);
+  l_payload.project_dir_    = l_prj_dir;
+  l_payload.assembly_files_ = l_files;
+
+  // 拷贝初始化（理由同 :835）：nlohmann::json{l_payload} 的花括号会走 initializer_list 构造。
+  const nlohmann::json l_j = l_payload;
+  // 注意: 不能写 BOOST_TEST(l_j.at("project_dir") == l_prj_dir) —— json 与 std::filesystem::path
+  // 之间有多条候选 operator==(nlohmann 的与 std::filesystem 的), 会触发 C2666 二义性。
+  // 一律先取字符串再比, 既避开二义性, 也顺带把「线上就是字符串」这件事显式化。
+  // 比较用 string() 而不是 generic_string(): 本仓没有启用 adl_serializer<std::filesystem::path>
+  // (json_warp.h 里那份是注释), FSys::path 走 nlohmann 内建转换, Windows 下落地的是**反斜杠**
+  // 形式 —— generic_string() 的正斜杠在这里必然不等, 那是断言写法问题, 不是往返丢信息。
+  BOOST_TEST(l_j.at("project_dir").get<std::string>() == l_prj_dir.string());
+  BOOST_REQUIRE_EQUAL(l_j.at("assembly_files").size(), 2u);
+  // 键名 from/to 也是契约的一部分：UE 侧与工作机按同名读
+  BOOST_TEST(l_j.at("assembly_files").at(0).contains("from"));
+  BOOST_TEST(l_j.at("assembly_files").at(0).contains("to"));
+
+  const auto l_back = l_j.get<ai_light_task_payload_t>();
+  BOOST_TEST(l_back.project_dir_ == l_prj_dir);
+  BOOST_REQUIRE_EQUAL(l_back.assembly_files_.size(), 2u);
+  // 逐字段比而不是比整个结构体：ai_light_assembly_file_t 没有 operator<<，
+  // BOOST_TEST 在失败时要打印双方，会触发 print_helper 的 static_assert（编译期即失败）。
+  for (std::size_t l_i = 0; l_i < l_files.size(); ++l_i) {
+    BOOST_TEST(l_back.assembly_files_.at(l_i).from_ == l_files.at(l_i).from_);
+    BOOST_TEST(l_back.assembly_files_.at(l_i).to_ == l_files.at(l_i).to_);
+  }
+  // to_ 必须是相对路径：工作机会把它拼到**本机**根上，带盘符就会写到别人机器上的路径
+  for (auto&& l_f : l_back.assembly_files_) {
+    BOOST_TEST(!l_f.to_.is_absolute());
+    BOOST_TEST(!l_f.to_.has_root_name());
+  }
+  // from_ 必须是绝对路径（共享盘/UNC）：相对路径无从拷贝
+  for (auto&& l_f : l_back.assembly_files_) BOOST_TEST(l_f.from_.is_absolute());
+
+  // project_dir_ 同理：相对 user_work_root_，不能带根
+  BOOST_TEST(!l_back.project_dir_.is_absolute());
+  BOOST_TEST(!l_back.project_dir_.has_root_name());
+}
+
+// 老载荷（没有这两个键）必须还能读：from_json 一律 contains 读，缺键即默认。
+// 这是滚动升级期间的正常状态 —— 服务端先升、工作机后升，中间那段时间工作机拿到的是新载荷，
+// 而服务端回退到旧版本时工作机拿到的是旧载荷。两侧都不能崩。
+BOOST_FIXTURE_TEST_CASE(assembly_files_absent_is_tolerated, fixture_t) {
+  auto& l_fx = *this;
+  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+
+  ai_light_task_payload_t l_payload{};
+  l_payload.session_id_       = l_fx.session_.uuid_id_;
+  l_payload.iteration_        = 1;
+  l_payload.out_dir_          = make_iteration_relative_dir(l_fx.session_.uuid_id_, l_fx.iteration_.uuid_id_);
+  l_payload.ue_project_path_  = "D:/sy_magic/ue_projects/LQ/EP0004/MyProject/MyProject.uproject";
+
+  // 必须用拷贝初始化再 dump()/parse() 往返，不能写 nlohmann::json{l_payload}：
+  // 花括号优先选 initializer_list 构造，对象**在构造时就已经是数组**了（parse 也救不回来），
+  // 随后 l_j.erase("project_dir") 直接抛 [json.exception.type_error.307] cannot use erase() with array。
+  // （同一个坑在 :835 与 common.h:81-84 有记录。）经字符串往返同时也更贴近线上真实形态。
+  auto l_j = nlohmann::json::parse(nlohmann::json(l_payload).dump());
+  BOOST_REQUIRE(l_j.is_object());
+  l_j.erase("project_dir");
+  l_j.erase("assembly_files");
+
+  const auto l_back = l_j.get<ai_light_task_payload_t>();
+  BOOST_TEST(l_back.project_dir_.empty());
+  BOOST_TEST(l_back.assembly_files_.empty());
+  // 回退依据仍在：工作机据此判断「这是老载荷」，不做同步、直接用原路径
+  BOOST_TEST(l_back.ue_project_path_ == l_payload.ue_project_path_);
+}
+
+// 引擎内路线（D52）同样要能带走同步清单：发起方本机就是渲染机，装配文件也要下到本机。
+BOOST_FIXTURE_TEST_CASE(launch_plan_carries_assembly_files, fixture_t) {
+  auto& l_fx = *this;
+  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+
+  ai_light_launch_plan_t l_plan{};
+  l_plan.session_id_   = l_fx.session_.uuid_id_;
+  l_plan.iteration_id_ = l_fx.iteration_.uuid_id_;
+  l_plan.iteration_    = 1;
+  l_plan.out_dir_      = make_iteration_relative_dir(l_fx.session_.uuid_id_, l_fx.iteration_.uuid_id_);
+  l_plan.project_dir_  = FSys::path{"LQ"} / "BG001" / "MyProject";
+  l_plan.assembly_files_.push_back(
+      ai_light_assembly_file_t{
+          .from_ = FSys::path{R"(\\192.168.10.220\share\LQ\BG\JD01_01\BG001\pin_yin\UE5\Config)"},
+          .to_   = FSys::path{"Config"}}
+  );
+
+  // 拷贝初始化（理由同 :835）：nlohmann::json{l_plan} 的花括号会走 initializer_list 构造。
+  const nlohmann::json l_j = l_plan;
+  const auto l_back        = l_j.get<ai_light_launch_plan_t>();
+  BOOST_TEST(l_back.project_dir_ == l_plan.project_dir_);
+  BOOST_REQUIRE_EQUAL(l_back.assembly_files_.size(), 1u);
+  BOOST_TEST(l_back.assembly_files_.at(0).from_ == l_plan.assembly_files_.at(0).from_);
+  BOOST_TEST(l_back.assembly_files_.at(0).to_ == l_plan.assembly_files_.at(0).to_);
+  BOOST_TEST(!l_back.assembly_files_.at(0).to_.is_absolute());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

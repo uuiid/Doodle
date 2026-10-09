@@ -2,6 +2,7 @@
 // Created by td_main on 2023/8/3.
 //
 #pragma once
+#include <doodle_lib/configure/doodle_lib_export.h>
 #include <doodle_core/configure/static_value.h>
 #include <doodle_lib/core/global_function.h>
 
@@ -27,7 +28,9 @@ boost::asio::awaitable<void> run_http_listener(
 );
 }  // namespace detail
 
-void run_http_listener(
+/// 监听器协程的启动入口, 测试直接链接本符号, 必须导出
+/// (原先缺 DOODLELIB_API, test_main 链接时表现为 LNK2019 未解析外部符号)
+DOODLELIB_API void run_http_listener(
     boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr,
     std::uint16_t in_port = doodle_config::http_port
 );

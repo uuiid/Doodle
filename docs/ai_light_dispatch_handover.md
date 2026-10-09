@@ -53,7 +53,20 @@ render_report_route → parse_round_render_report → apply_render_report(sql, c
 - `g_ai_light_render_report_file_name{"render_report.json"}` —— 渲染进程写、工作机读。
 - `ai_light_task_payload_t`（派发，进 `server_task_info.command_`）：键
   `session_id / iteration / spec_id / out_dir / baseline_level / render_map / level_sequence /
-  movie_pipeline_config / frame_begin / frame_end / ue_project_path / camera_file_path / candidates`。
+  movie_pipeline_config / frame_begin / frame_end / ue_project_path / camera_file_path / project_dir /
+  assembly_files / candidates`。
+- `ai_light_assembly_file_t`（**D57 装配同步清单**）：键 `from / to`。
+  - `from` = 共享盘/UNC 上的**只读源**（`prj_.path_ / ...`，绝对路径）。
+  - `to` = **相对工程缓存根**的相对路径（不带盘符），工作机把它拼到**本机** `user_work_root_` 上。
+  - 为什么不复用 `import_and_render_ue_ns::file_copy_info`：后者 `to_` 是服务端算出的缓存根**绝对**路径，
+    语义不同 —— 工作机的缓存根与生成端的根本不是同一个盘符/目录。
+- `project_dir_`（键 `project_dir`）：`{项目code}/{场景编号}/{uproject 文件名去后缀}`，相对 `user_work_root_`。
+- **D57**：`D:/sy_magic/ue_projects/{code}/EP{集数}/{工程名}` 是**每台工作机各自的缓存**，不是网络盘。
+  自动组装必须先按 `assembly_files_` 把共享盘素材差分拷进本机缓存，再起 UE
+  （多个 UE 同时打开网络盘上的同一个工程是非法的）。**老载荷没有这两个键**：`from_json` 全走
+  `contains`，缺键即默认，工作机退回直接用 `ue_project_path_`（滚动升级期间两侧都不崩）。
+  冻结用例：`assembly_files_round_trip` / `assembly_files_absent_is_tolerated` /
+  `launch_plan_carries_assembly_files`。
 - `ai_light_task_candidate_t`：键 `candidate_index / candidate_id / frames_dir / png_path / exr_path / movie_path / rig`
   （rig 含 `ops_`）。
 - `round_render_report_t`：键 `candidates / frame_rate / error`（`frame_rate` = 序列 display rate，工作机据此合成视频）。
@@ -83,14 +96,21 @@ render_report_route → parse_round_render_report → apply_render_report(sql, c
 
 ### 服务端 · 派发与路由（`ai_light.{h,cpp}` + `kitsu.cpp`）
 - 渲染装配推导（D8 / D50）：`ai_light_orchestrator.cpp` 派发段
-  调 `http::auto_task::shot_render_light(io_session.project_id_, io_session.task_id_)`（`auto_task.cpp:768-812`），
-  取 `original_map_`（→ `baseline_level_`）/ `ue_main_project_path_` / `camera_file_path_` /
-  `render_map_` / `level_sequence_import_` / `movie_pipeline_config_` / `begin_time_` / `end_time_`。
+  调 `http::auto_task::shot_render_light_with_sync(io_session.project_id_, io_session.task_id_)`
+  （`auto_task.cpp`；返回 `shot_render_light_result{arg_, project_dir_, assembly_files_}`，
+  取 `arg_` 的 `original_map_`（→ `baseline_level_`）/ `ue_main_project_path_` / `camera_file_path_` /
+  `render_map_` / `level_sequence_import_` / `movie_pipeline_config_` / `begin_time_` / `end_time_`）。
+  **注意**：旧的 `shot_render_light(...)` 仍然保留且语义不变（`distributed_task.cpp:22,57` 仍在用），
+  它内部就是 `shot_render_light_builder{make_shot_render_light_input(...)}.run()`；
+  带同步清单的版本走 `.run_with_sync()`，两条 run 路径阶段顺序完全一致，
+  只是后者多一步 `build_assembly_files(l_scene)` 并按 `ue_asset_path_` 逐个 `lexically_relative(scene_ue_path_)`
+  生成相对目标（落在工程根之外的目标跳过 + WARN）。
   **两条硬前置**：没有 task_id 或装配抛错 →
   `"AI 灯光会话 {} 第 {} 轮：无法推导本镜头的渲染装配，本轮无法渲染（{}）"`；
   `level_sequence_import_` 空 → `"…：镜头装配没有给出 level sequence（{}），本轮无法渲染"`
   （不再「WARN 后照跑」）。
-- 载荷组装（候选 7 成员聚合 + 上述装配字段）、进 `command_`。
+- 载荷组装（候选 7 成员聚合 + 上述装配字段 + `project_dir_` / `assembly_files_`）、进 `command_`。
+  引擎内路线（`iterate` → `launch_plan`）同样带这两项。
 - 回传路由：声明 `ai_light.h:158` · 注册 `kitsu.cpp:333`（`/api/doodle/ai/light/render_report/{}`）·
   实现 `ai_light.cpp:790`（先查任务类型必须是 `ai_light`，再解析、落库，回执带 `iteration_state` /
   `session_state` / `failure_reason`）。**不做项目权限检查** —— 调用方是工作机的机器 JWT。
@@ -102,10 +122,20 @@ render_report_route → parse_round_render_report → apply_render_report(sql, c
   `ai_light::ai_light_task_payload_t payload_` + `run()`。
   - **四条硬前置**：`ue_project_path_` / `render_map_` / `level_sequence_` / `candidates_` 非空，
     否则抛 `doodle_error`（`movie_pipeline_config_` 空只 WARN）。
+  - **起 UE 前先同步装配文件（D57）**：`sync_assembly_files(payload_, l_logger)` ——
+    `user_work_root_` 为**本机** UE 工程缓存根，空的则抛
+    `"工作机没有配置 UE 工程缓存根（user_work_root），无法把装配文件同步到本地，本轮无法渲染"`；
+    `project_dir_` 拼到它下面（空则直接用根），逐条 `FSys::copy_diff(from_, l_prj_dir / to_)`
+    （**差分**拷贝：mtime/size 相同就跳过，所以反复跑同一镜头的成本可接受）；
+    拼出 `l_uproject = l_prj_dir / <ue_project_path_ 的文件名>`，取不到就抛
+    `"装配同步后仍找不到 UE 工程文件 {}，无法启动 UE"`。
+    紧接着 `fix_project(l_uproject)` + `fix_config(l_uproject)`（改 `.uproject` 插件段与
+    `Config/DefaultEngine.ini` —— 服务端同步过来的 Config 未必是本机要的那份）。
+    **`assembly_files_` 为空 = 老服务端载荷**：只 WARN，退回用 `ue_project_path_` 原路径。
   - **起 UE 前先删 `<out_dir>/render_report.json` 残留**（否则渲染进程崩在写报告前会回传上一轮结果）。
-  - `async_run_ue({ue_project_path_, render_map_, "-log", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
+  - `async_run_ue({l_uproject.generic_string(), render_map_, "-log", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
     "-Unattended", "-DoodleAiLightParams=<tmp>.json"}, logger, kitsu_client, /*create_lock=*/true, run_time_info)`
-    —— **无 `-run=`**（D45）。
+    —— 首元素是**同步后**的本机工程路径；**无 `-run=`**（D45）。
   - 报告读回后逐候选：`collect_render_frames()` 按文件名排序收 `frame_*.png` → 少于 2 张记 failed →
     `copy_file(首帧 → 海报)` + `detail::create_move(mp4, logger, make_default_attr(frames), {}, fps)` →
     上传海报（`render`）与成片（`render_movie`），**任一失败 → 该候选 failed**；本轮不产 EXR。
@@ -276,13 +306,26 @@ Remove-Item 'E:\Doodle\build\Ninja_debug\bin\test_main.exe' -Force -EA SilentlyC
 $env:TEMP = $env:TMP = 'E:\Doodle\build\vcpkg_tmp'; $env:VCPKG_KEEP_ENV_VARS = 'TEMP;TMP'
 & 'E:\Doodle\build_script\build\set_env.ps1' cmake --build 'E:\Doodle\build\Ninja_debug' --target test_main
 
-# 测试（workdir = build\Ninja_debug\bin）
-$env:TEMP = $env:TMP = 'E:\Doodle\build\test_tmp'
-.\test_main.exe --run_test=ai_light_* --log_level=error --report_level=detailed
+# 测试（**在仓库根目录**跑，不要 cd 到 bin）
+$env:TEMP = $env:TMP = 'E:\Doodle\build\Ninja_debug\test_tmp'
+.\build\Ninja_debug\bin\test_main.exe --run_test=ai_light_* --log_level=error --report_level=detailed
 ```
 
+- **必须在仓库根目录运行**：夹具用 `FSys::temp_directory_path()` 建临时库，而 `app_base` 会在
+  当前目录下解析自己的数据根 —— 用 `workdir=build\Ninja_debug\bin` 跑会让**每个**用例在夹具构造阶段
+  就死在 `doodle::orm::sqlite_orm_exception: 14: unable to open database file`，
+  看起来像「全部用例都坏了」，其实只是启动目录不对。另外记得先建好 `$env:TEMP` 指向的目录。
+- **构建前必须先跑 `build_script\build\set_env.ps1`**（它内部 `vcvars64.bat` 灌 MSVC 环境再调 cmake）：
+  否则会看到 `doodle_core_pch.h(7): fatal error C1083: Cannot open include file: 'chrono'` ——
+  那是**环境缺失**，不是代码错误，别去改代码。
 - **不要跑 `Ninja_release`**（只浪费编译时间）。
 - 管道后的 exit code **不可信**：一律回看日志里的 `error C[0-9]+` / `error LNK` / `FAILED:` / `ninja: build stopped`。
+- **`doodle_lib` 的 DLL 导出宏是 `test_main` 能否链接的前提**：`src\doodle_lib\core\http\` 下新增的
+  自由函数若声明上没有 `DOODLELIB_API`，本模块内能编过、`doodle_lib.dll` 也能链出来，
+  但 `test_main` 会报 `LNK2019: 无法解析的外部符号 doodle::http::xxx`。
+  排查用：`dumpbin /SYMBOLS <obj>` 确认符号**已定义** → 看 `test_main.rsp` 确认 `.lib` **已传给链接器** →
+  `dumpbin` 查 `.lib` 索引与 DLL 导出表（这才是真相）。修法：加
+  `#include <doodle_lib/configure/doodle_lib_export.h>` 并在**声明**前加 `DOODLELIB_API`（定义处不用改）。
 - 基线：全量 **245 用例 / 2110 断言全通过、exit 0**；`ai_light_*` **128 用例 / 1357 断言** exit 0；
   `ai_light_dispatch` **24 用例**（其中 5 个盯 D41 的产物存在性、1 个盯 D44 的路径纯度、1 个冻结 wire 键名）、
   `ai_light_candidates` **17 用例**（其中 1 个钉 `diff_rigs` 的全局量 op）。
@@ -296,6 +339,10 @@ $env:TEMP = $env:TMP = 'E:\Doodle\build\test_tmp'
   夹具的 asio `io_context` 成员叫 `ctx_`，别的上下文别用这个名字（会静默遮蔽）；
   `task_payload.h` 的类型都在 `doodle::ai_light`；`run_ue_assembly_arg` 在 `doodle::import_and_render_ue_ns`；
   `test_main` 里 `g_ctx()` 不可用，成功路径不要依赖它（所以产物落点由参数传 ctx 现算）。
+- **D57 前置**：`http_listener_port_shm` 那三个既有缺陷（`offset_t` 命名空间、缺 `DOODLELIB_API`、
+  测试里 `g_io_context` 少了限定）必须先修，否则 `test_main` 根本构建不出来。详见
+  `docs/ue_ai_lighting_plan.md` §15.18。该套件本身在本机仍失败 5 例（运行时 `CreateFileMapping`
+  一律「拒绝访问」，非本次改动引入，未修）。
 - **UE 侧代码在本机无法编译**：`E:\Doodle\script` 下只有打包好的插件副本（`uePlug\5.7\Plugins\Doodle_*`），
   没有 HostProject、也没有插件打包脚本 —— 那 20 个文件只做了对照 `E:\UnrealEngine\Engine\Source` 的 API 级核对。
 - 本轮所有改动 **未 git commit**（由用户自己提交）。

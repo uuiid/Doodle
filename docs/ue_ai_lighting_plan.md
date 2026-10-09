@@ -3444,6 +3444,106 @@ iterate → 派发（装配硬前置：无 task_id / 装配抛错 / level_sequen
 真机验证前仍必须**重新打包插件包**（`ue_exe.cpp` 的 `installUePath` 每次跑 UE 前都会覆盖
 `Engine/Plugins/Doodle`）。
 
+### 15.18 已落地（批 10：装配工程同步到工作机本地缓存 —— D57）
+
+**需求**（用户原话）
+
+> 「检查 `src/doodle_lib/http_method/kitsu/auto_task.cpp:976~1175` 同步, 并且以任务灯光为准, 在
+> `src/doodle_lib/exe_warp/ai_light_render.h:41~50` 类 `ai_light_round_distributed` 运行在工作机上时,
+> 使用 `src/doodle_lib/http_method/kitsu/ai_light_orchestrator.cpp:284~288` 生成的组装文件只在某一台
+> 运行过组装任务的工作机上存在, 那么, 我们在这里进行配置时, 工作机极大概率不会有这些文件, 是否是这样的,
+> 如果是, 那么参考 `src/doodle_lib/http_method/kitsu/auto_task.cpp:976~1175` 同步方案, 对文件进行下载,
+> 这样再运行才不会出错」
+
+**开工前由用户拍板的两件事**
+
+| 问题 | 决定 | 影响 |
+|---|---|---|
+| `ue_project_path_` 谁算 | **工作机自算** | 载荷带 `project_dir_`（相对 `user_work_root_`），工作机拼本机根；服务端算出的 `ue_project_path_` 退化为「文件名来源 + 老服务端回退」 |
+| 同步范围 | **叠加灯光分支那批额外目录** | 除基础装配（uproject / Content / Config / 角色 / 道具 / 地面）外，还要带 `Import_Vfx` / `Vfx` / `Import_WB` 及其两个 `.umap`/`.uasset` |
+
+**一句话**：载荷不再只说「工程在哪」，而是**带上「要拷贝什么、拷到工程的哪个相对位置」的清单**；
+工作机在起 UE 之前把这些文件差分拷进**本机**的工程缓存，再启动编辑器。
+
+**四条引擎/现场事实（为什么原形状必然出错）**
+
+1. **`D:/sy_magic/ue_projects/{项目code}/EP{集数}/{工程名}` 是每台工作机各自的缓存**，不是网络盘。
+   `resolve_scene_ue_path`（`auto_task.cpp:380-382`）把这个路径写进装配参数，
+   而它指向的是**生成这轮装配的那台机器**上的目录。别的机器上根本没有（用户 m00136/m00148）。
+2. **共享盘上的素材都在 UNC**（`prj_.path_ / ...`），任何机器可读 —— 所以「拷什么」有稳定的来源，
+   缺的只是「拷到哪」这个**本机**概念。
+3. **多个 UE 同时打开网络盘上的同一个工程是非法的**（用户 m00148：先把共享盘文件复制到本地再组装，
+   这是必须的）。所以不能退化成「直接开网络盘那份」。
+4. **工作机上没有任何版本管理软件**（用户 m00148）：不能用 git/Perforce 那套，
+   上传走 HTTP、组装走 `auto_task.cpp:976-1175` 的既有同步协议。
+
+**落地形状（六处改动）**
+
+| 位置 | 改动 |
+|---|---|
+| `src\doodle_core\metadata\ai_light\task_payload.h` | 新增 `ai_light_assembly_file_t{from_, to_}`（键 `from`/`to`）；`ai_light_task_payload_t` 与 `ai_light_launch_plan_t` 各加 `project_dir_` + `assembly_files_`；补 D57 决策注释 |
+| `src\doodle_lib\http_method\kitsu\auto_task.{h,cpp}` | 新增 `shot_render_light_result{arg_, project_dir_, assembly_files_}`、`shot_render_light_builder::run_with_sync()` 与 `build_assembly_files()`、自由函数 `shot_render_light_with_sync(...)`；把原 `shot_render_light` 的取数段抽成 `make_shot_render_light_input(...)`（两个入口共用） |
+| `src\doodle_lib\http_method\kitsu\ai_light_orchestrator.cpp` | 派发段改调 `shot_render_light_with_sync`；两条出口（引擎内 `launch_plan` / 队列 `payload`）各多填 3 行 |
+| `src\doodle_lib\exe_warp\ai_light_render.cpp` | 起 UE 前插 `sync_assembly_files(...)` + `fix_project` / `fix_config`；UE 命令行首元素改用**同步后**的 `l_uproject` |
+| `src\test\core\ai_light_dispatch.cpp` | 两个键冻结用例扩键；新增 `assembly_files_round_trip` / `assembly_files_absent_is_tolerated` / `launch_plan_carries_assembly_files` |
+| `docs\ai_light_dispatch_handover.md` | 契约表、编排段、工作机段补 D57 |
+
+**为什么 `to_` 是相对路径、`from_` 是绝对路径**
+
+- `to_` 由服务端用 `l_info.to_.lexically_relative(in_scene.scene_ue_path_)` 算出，**必须**相对：
+  它会被工作机拼到**本机**的 `user_work_root_` 上。带盘符就等于把某台机器的目录写死进 wire 契约，
+  换一台机器就写到别人机器上去了。
+- `from_` 保留共享盘的绝对 UNC 原样：它就是拷贝源，相对路径无从定位。
+- 落点不在工程根之下的条目（`lexically_relative` 落空或以 `..` 开头）**跳过 + WARN**，
+  不让一条越界的路径把整轮同步搞崩。
+
+**为什么不复用 `import_and_render_ue_ns::file_copy_info`**
+
+两者的 `to_` 语义不同：`file_copy_info::to_` 是**服务端算出的缓存根绝对路径**（供
+`run_ue_assembly_base::run()` 在**服务端本机**拷贝用，`import_and_render_ue.cpp:201-203`），
+而同步清单的 `to_` 是**相对工作机根**。混用一个类型会让「这是谁的根」这个最关键的信息消失，
+所以另立 `ai_light_assembly_file_t`。
+
+**老服务端的回退（滚动升级）**
+
+`from_json` 一律 `contains` 读：老载荷没有这两个键 → `assembly_files_` 为空 →
+工作机只 WARN「载荷里没有装配同步清单，直接用载荷给的工程路径」，退回原行为；
+`ue_project_path_` **保留**，正是为了这条回退路径。两侧都不会因为对端版本旧而崩。
+
+**同时修掉的三个既有缺陷（与 D57 无关，但阻塞构建/链接）**
+
+都由提交 `eb18b3754`（"HTTP 监听器将内核分配端口写入共享内存"）引入，**该提交落地时
+`test_main` 就已经编不过**（已用 `git stash` 把三处修复全部撤掉、只留其它改动重建复现：
+`error C2039: 'offset_t': is not a member of 'boost::interprocess::shared_memory_object'`
+在纯 HEAD 上原样出现，且 `doodle_lib.dll` 直接构建失败）。
+
+1. `src\doodle_lib\core\http\http_listener_port_shm.cpp:20`：`offset_t` 在 Boost 1.90 已不是
+   `shared_memory_object` 的嵌套类型，而是 `boost::interprocess` 命名空间作用域下的 typedef
+   （`boost/interprocess/detail/os_file_functions.hpp:60`）→ 改为 `boost::interprocess::offset_t`。
+2. `src\doodle_lib\core\http\http_listener_port_shm.h` 与 `src\doodle_lib\core\http\http_listener.h`：
+   三个函数（`publish_listener_port` / `read_listener_port` / `run_http_listener`）**声明上没有导出宏**，
+   因此从未进入 DLL 导出表 → `test_main` 链接时表现为
+   `LNK2019: 无法解析的外部符号 doodle::http::publish_listener_port` 等 3 个
+   （`LNK1120: 3 个无法解析的外部命令`）。排查顺序（记下来省得重走）：先用 `dumpbin /SYMBOLS`
+   确认 .cpp 的 obj **确实定义了**符号 → 再确认 `test_main.rsp` 确实把 `doodle_lib.lib`
+   传给了链接器 → 再用 `dumpbin` 查 `.lib` 索引（三个符号一个都没有）、查 DLL 导出表（1524 个具名导出里没有）。
+   修法照本仓既有模式（`http_content_type.h:7`）：加 `#include <doodle_lib/configure/doodle_lib_export.h>`
+   并在**声明**前加 `DOODLELIB_API`（定义处不需要）。
+3. `src\test\core\http_listener_port_shm.cpp:108`：`g_io_context()` 声明在 `namespace doodle`
+   （`global_function.h`），而该文件只 `using namespace doodle::http` → 加 `::doodle::` 限定。
+
+**`http_listener_port_shm` 测试套件在本机仍然失败（5 例，与 D57 无关）**：该套件在运行时
+`CreateFileMapping`/`OpenFileMapping` 一律返回「拒绝访问」，`publish_listener_port` 因此返回
+false，`BOOST_REQUIRE` 直接判负；在跑全量时还叠加成一次 `memory access violation at address 0x50`。
+单独探测证明本机**允许**创建同名共享内存（`CreateFileMappingW("doodle_http_listener_port")`
+返回有效句柄、`GetLastError()==0`），所以不是简单的权限不足，而是 `test_main.exe` 进程环境下的
+Boost.Interprocess 路径问题；非本次改动引入，**未修**（不在 D57 范围内）。
+
+**仍未落到真机**：本机没有工作机环境，`user_work_root_` 的真值、共享盘 UNC 的实际可达性、
+以及首轮同步的体量（整份 `Content` 差分拷贝的耗时）都**没有实测**。
+真机验证时重点看：第一次同步的时长、`fix_project` 后 `.uproject` 的插件段是否被改对、
+以及 `Check_files` 在 `#ifdef NDEBUG` 下读的全是**服务端**路径这件事是否也需要跟着放宽。
+
 
 
 

@@ -13,6 +13,7 @@
 
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/file_sys.h>
+#include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib/long_task/image_to_move.h>
@@ -69,6 +70,59 @@ std::vector<FSys::path> collect_render_frames(const FSys::path& in_frames_dir) {
   return l_frames;
 }
 
+/// 把共享盘上的装配素材差分拷进**本机的 UE 工程缓存**，返回本机上真正可用的 .uproject 路径（D57）。
+///
+/// 为什么必须做这一步：载荷里的 `ue_project_path_` 是**服务端**算出来的
+/// （`D:/sy_magic/ue_projects/{code}/EP{ep:04}/{stem}`），那是服务端自己那份缓存；工作机上没有它，
+/// 更没有工程里该有的 Content/Config/插件 —— 直接拿去起 UE 只会得到「工程打不开」。
+/// UE 工程是**每台机器各一份的本地缓存**：共享盘（UNC）上的素材是只读源，必须先差分拷贝进本地，
+/// 才能被引擎打开。这也是唯一可行的做法 —— 多台机器同时打开同一个工程是非法的。
+///
+/// 口径与人工组装链路（auto_task.cpp 的 tasks/sync 与 import_and_render_ue_ns::run()）逐字一致：
+///   根 = core_set::get_set().user_work_root_ / project_dir_（{code}/{归档编号}/{uproj stem}）
+///   逐条 = FSys::copy_diff(from_, 根 / to_)
+/// 所以同一条镜头无论是人工组装还是 AI 灯光，命中同一份本地缓存，不会各拷一份出来。
+FSys::path sync_assembly_files(
+    const ai_light::ai_light_task_payload_t& in_payload, std::shared_ptr<spdlog::logger> in_logger
+) {
+  // 老载荷没有这两个字段（服务端还没升级）：回退到 ue_project_path_，保持原行为不倒退。
+  if (in_payload.assembly_files_.empty()) {
+    SPDLOG_LOGGER_WARN(
+        in_logger,
+        "AI 灯光第 {} 轮：载荷里没有装配同步清单，直接用载荷给的工程路径 {}（若工作机上没这份缓存，UE 会起不来）",
+        in_payload.iteration_, in_payload.ue_project_path_
+    );
+    return FSys::path{in_payload.ue_project_path_};
+  }
+
+  const FSys::path l_work_root = core_set::get_set().user_work_root_;
+  if (l_work_root.empty())
+    throw_exception(
+        doodle_error{"工作机没有配置 UE 工程缓存根（user_work_root），无法把装配文件同步到本地，本轮无法渲染"}
+    );
+  // project_dir_ 是**相对** user_work_root_ 的（D57）；拿不到就用根兜底，
+  // 但那样工程根是猜的，所以只在服务端漏填时才走这条路。
+  const FSys::path l_prj_dir = in_payload.project_dir_.empty() ? l_work_root : l_work_root / in_payload.project_dir_;
+
+  if (!FSys::exists(l_prj_dir)) FSys::create_directories(l_prj_dir);
+
+  SPDLOG_LOGGER_INFO(
+      in_logger, "AI 灯光第 {} 轮：同步 {} 个装配文件到本地工程 {}", in_payload.iteration_,
+      in_payload.assembly_files_.size(), l_prj_dir.generic_string()
+  );
+  for (auto&& l_file : in_payload.assembly_files_) {
+    DOODLE_CHICK(!l_file.from_.empty(), "装配同步清单里有一条空的源路径，无法同步");
+    // copy_diff 按 mtime/大小差分：本地已有且不旧的文件会被跳过，所以重复轮次几乎不花时间。
+    FSys::copy_diff(l_file.from_, l_prj_dir / l_file.to_, in_logger);
+  }
+
+  // 起 UE 用的是**本地**那份 .uproject：服务端路径里的文件名就是工程文件名。
+  const auto l_uproject = l_prj_dir / FSys::path{in_payload.ue_project_path_}.filename();
+  if (!FSys::exists(l_uproject))
+    throw_exception(doodle_error{"装配同步后仍找不到 UE 工程文件 {}，无法启动 UE", l_uproject.generic_string()});
+  return l_uproject;
+}
+
 }  // namespace
 
 boost::asio::awaitable<void> ai_light_round_distributed::run() {
@@ -115,6 +169,14 @@ boost::asio::awaitable<void> ai_light_round_distributed::run() {
     const FSys::path l_report_path = l_local_out_dir / ai_light::g_ai_light_render_report_file_name;
     if (FSys::exists(l_report_path)) FSys::remove(l_report_path);
 
+    // D57：先把装配文件同步进本机工程缓存，再起 UE。这一步在**渲染关卡**算好之前做，
+    // 因为它决定的是「本机到底有没有这个工程」——工程都没有，关卡包路径无从谈起。
+    const FSys::path l_uproject = sync_assembly_files(payload_, l_logger);
+    // 与人工组装链路同样收尾：补 .uproject 的插件段与 Config/DefaultEngine.ini。
+    // 共享盘那份工程里的这两处可能是别的机器上的形状，装配完之后必须按本机重写。
+    import_and_render_ue_ns::fix_project(l_uproject);
+    import_and_render_ue_ns::fix_config(l_uproject);
+
     // 启动形状与 auto_light 的渲染步一致：**不带 `-run=`**，直接把渲染关卡当第一个位置参数交给编辑器，
     // 由编辑器模块自己读参数、自己起 PIE 渲染（D46）。
     //
@@ -127,7 +189,7 @@ boost::asio::awaitable<void> ai_light_round_distributed::run() {
     const nlohmann::json l_payload_json = l_ue_payload;
     auto l_tmp_path = FSys::write_tmp_file("ai_light", l_payload_json.dump(), ".json");
     const auto l_ue_arg = std::vector<std::string>{
-        payload_.ue_project_path_, payload_.render_map_, "-log", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
+        l_uproject.generic_string(), payload_.render_map_, "-log", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
         "-Unattended", fmt::format("-DoodleAiLightParams={}", l_tmp_path.generic_string())};
 
     // create_lock = true：UE 是整台机器的独占资源，async_run_ue 内部会拿全局队列锁。

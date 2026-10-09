@@ -17,7 +17,10 @@ namespace doodle::http {
 namespace {
 using shared_memory_object = boost::interprocess::shared_memory_object;
 using mapped_region        = boost::interprocess::mapped_region;
-using offset_t             = shared_memory_object::offset_t;
+// Boost 1.90: offset_t 不再是 shared_memory_object 的嵌套类型, 改由
+// boost/interprocess/detail/os_file_functions.hpp 在 boost::interprocess 作用域直接提供
+// (Windows 分支 typedef __int64 offset_t)。写 shared_memory_object::offset_t 会 C2039。
+using offset_t = boost::interprocess::offset_t;
 }  // namespace
 
 bool publish_listener_port(std::uint16_t in_port) {

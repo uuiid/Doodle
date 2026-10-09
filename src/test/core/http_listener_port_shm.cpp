@@ -105,7 +105,9 @@ BOOST_AUTO_TEST_CASE(listener_publishes_the_kernel_assigned_port) {
   run_http_listener(l_io, l_route, 0);
 
   // 监听器协程被 co_spawn 到 app 的全局 io_context 上, 跑到写入那一步才会发布端口
-  auto& l_app_io = g_io_context();
+  // g_io_context() 声明在 namespace doodle 下(global_function.h), 而本文件的 using 只带进了
+  // doodle::http —— 不加 ::doodle:: 限定会得到 C3861 'g_io_context': identifier not found。
+  auto& l_app_io = ::doodle::g_io_context();
   l_app_io.restart();
   l_app_io.run_for(std::chrono::milliseconds{500});
 

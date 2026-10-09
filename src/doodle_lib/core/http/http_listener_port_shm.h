@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <doodle_lib/configure/doodle_lib_export.h>
+
 #include <cstdint>
 #include <string_view>
 
@@ -47,7 +49,7 @@ constexpr std::string_view g_listener_port_shm_name{"doodle_http_listener_port"}
  * @param in_port 实际监听端口
  * @return 写入成功返回 true
  */
-bool publish_listener_port(std::uint16_t in_port);
+DOODLELIB_API bool publish_listener_port(std::uint16_t in_port);
 
 /**
  * @brief 从固定共享内存读取监听端口
@@ -57,6 +59,6 @@ bool publish_listener_port(std::uint16_t in_port);
  * @param out_port 读取成功时写入该参数
  * @return 读取且校验通过返回 true
  */
-bool read_listener_port(std::uint16_t& out_port);
+DOODLELIB_API bool read_listener_port(std::uint16_t& out_port);
 
 }  // namespace doodle::http
