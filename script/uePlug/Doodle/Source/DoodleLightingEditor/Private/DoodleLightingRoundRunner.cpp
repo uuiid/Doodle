@@ -259,6 +259,38 @@ void UDoodleLightingRoundRunner::Main()
 	StartRound();
 }
 
+void UDoodleLightingRoundRunner::StartRoundFromLaunchPlan(const FDoodleLaunchPlan& InPlan)
+{
+	// 引擎内原生路线（D52/D53）：本机客户端读完桥目录后在**内存里**把计划交过来。
+	// 与队列路线的三处差别：
+	//   1) 计划里没有 spec_id / baseline_level（本机用不上），多了 iteration_id（回传定位用）；
+	//   2) 不写 render_report.json —— 回传由客户端走 `render_report_local`（D54），
+	//      UE 这边的整轮回传结果只在内存里攒着，由客户端拉走；
+	//   3) 渲染完**不退出进程**（D56）：美术还要留在编辑器里看这一轮的结果。
+	bRoundStarted = true;
+	bInteractiveMode = true;
+
+	Payload = FDoodleTaskPayload();
+	Payload.SessionId = InPlan.SessionId;
+	Payload.Iteration = InPlan.Iteration;
+	Payload.OutDir = InPlan.OutDir;
+	Payload.RenderMap = InPlan.RenderMap;
+	Payload.LevelSequence = InPlan.LevelSequence;
+	Payload.MoviePipelineConfig = InPlan.MoviePipelineConfig;
+	Payload.FrameBegin = InPlan.FrameBegin;
+	Payload.FrameEnd = InPlan.FrameEnd;
+	Payload.UeProjectPath = InPlan.UeProjectPath;
+	Payload.CameraFilePath = InPlan.CameraFilePath;
+	Payload.Candidates = InPlan.Candidates;
+
+	FString L_StartError;
+	if (!StartRoundInternal(L_StartError))
+	{
+		// 交互模式没有报告文件可写：只能把原因留在日志里（客户端的超时兜底会收这个会话）
+		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] 本机一轮没能开始：%s"), *L_StartError);
+	}
+}
+
 void UDoodleLightingRoundRunner::StartRound()
 {
 	bRoundStarted = true;
@@ -306,10 +338,25 @@ void UDoodleLightingRoundRunner::StartRound()
 		RequestExit(1);
 		return;
 	}
+
+	FString L_StartError;
+	if (!StartRoundInternal(L_StartError))
+	{
+		FailRound(L_StartError);
+	}
+}
+
+bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
+{
+	if (Payload.OutDir.IsEmpty())
+	{
+		OutError = TEXT("计划/载荷里没有 out_dir");
+		return false;
+	}
 	if (Payload.Candidates.IsEmpty())
 	{
-		FailRound(TEXT("载荷里没有候选"));
-		return;
+		OutError = TEXT("计划/载荷里没有候选");
+		return false;
 	}
 
 	// 回传条目先按候选铺好：谁渲出来就翻谁的状态，没渲到的留在 Pending（= 没成功）
@@ -324,14 +371,14 @@ void UDoodleLightingRoundRunner::StartRound()
 	UWorld* L_RenderWorld = LoadObject<UWorld>(nullptr, *NormalizePackagePath(Payload.RenderMap));
 	if (L_RenderWorld == nullptr)
 	{
-		FailRound(FString::Printf(TEXT("渲染关卡加载失败：%s"), *Payload.RenderMap));
-		return;
+		OutError = FString::Printf(TEXT("渲染关卡加载失败：%s"), *Payload.RenderMap);
+		return false;
 	}
 	ULevelSequence* L_Sequence = LoadObject<ULevelSequence>(nullptr, *NormalizePackagePath(Payload.LevelSequence));
 	if (L_Sequence == nullptr)
 	{
-		FailRound(FString::Printf(TEXT("关卡序列加载失败：%s"), *Payload.LevelSequence));
-		return;
+		OutError = FString::Printf(TEXT("关卡序列加载失败：%s"), *Payload.LevelSequence);
+		return false;
 	}
 
 	const int32 L_StrippedLights = StripLightSpawnables(*L_Sequence);
@@ -349,8 +396,8 @@ void UDoodleLightingRoundRunner::StartRound()
 		FString L_CameraError;
 		if (!DoodleLightingExecutor::PrepareAnchorCamera(L_Context, L_CameraError))
 		{
-			FailRound(FString::Printf(TEXT("机位准备失败：%s"), *L_CameraError));
-			return;
+			OutError = FString::Printf(TEXT("机位准备失败：%s"), *L_CameraError);
+			return false;
 		}
 	}
 
@@ -358,14 +405,14 @@ void UDoodleLightingRoundRunner::StartRound()
 		GEditor != nullptr ? GEditor->GetEditorSubsystem<UMoviePipelineQueueSubsystem>() : nullptr;
 	if (L_Subsystem == nullptr)
 	{
-		FailRound(TEXT("拿不到 UMoviePipelineQueueSubsystem，建不了渲染队列"));
-		return;
+		OutError = TEXT("拿不到 UMoviePipelineQueueSubsystem，建不了渲染队列");
+		return false;
 	}
 	UMoviePipelineQueue* L_Queue = L_Subsystem->GetQueue();
 	if (L_Queue == nullptr)
 	{
-		FailRound(TEXT("电影渲染队列不可用"));
-		return;
+		OutError = TEXT("电影渲染队列不可用");
+		return false;
 	}
 	L_Queue->DeleteAllJobs();
 
@@ -385,8 +432,8 @@ void UDoodleLightingRoundRunner::StartRound()
 		UMoviePipelineExecutorJob* L_Job = L_Queue->AllocateNewJob(UMoviePipelineExecutorJob::StaticClass());
 		if (L_Job == nullptr)
 		{
-			FailRound(TEXT("建渲染 job 失败"));
-			return;
+			OutError = TEXT("建渲染 job 失败");
+			return false;
 		}
 		// JobName 就是候选 uuid：回调里靠它认人（回调只给 job，不给候选）
 		L_Job->JobName = L_Candidate.CandidateId;
@@ -403,8 +450,8 @@ void UDoodleLightingRoundRunner::StartRound()
 	UMoviePipelinePIEExecutor* L_Executor = NewObject<UMoviePipelinePIEExecutor>(GetTransientPackage());
 	if (L_Executor == nullptr)
 	{
-		FailRound(TEXT("建 PIE 渲染执行器失败"));
-		return;
+		OutError = TEXT("建 PIE 渲染执行器失败");
+		return false;
 	}
 	L_Executor->AddToRoot();
 	L_Executor->SetIsRenderingOffscreen(true);
@@ -416,6 +463,7 @@ void UDoodleLightingRoundRunner::StartRound()
 	UE_LOG(LogTemp, Log, TEXT("[DoodleLighting] 起渲染：%d 个候选，关卡 %s，序列 %s"),
 	       Payload.Candidates.Num(), *Payload.RenderMap, *Payload.LevelSequence);
 	L_Subsystem->RenderQueueWithExecutorInstance(L_Executor);
+	return true;
 }
 
 void UDoodleLightingRoundRunner::FailRound(const FString& InError)
@@ -555,6 +603,20 @@ void UDoodleLightingRoundRunner::OnExecutorFinished(UMoviePipelineExecutorBase* 
 	{
 		// 整轮全灭走轮级通道：会话那边记一条说得清的原因，而不是「6 个候选都失败」
 		L_Round.Error = FString::Printf(TEXT("%d 个候选全部渲染失败"), L_FailedCount);
+	}
+
+	if (bInteractiveMode)
+	{
+		// 引擎内原生路线（D52/D53）：**不写报告文件、不退出进程**。
+		// 回传由本机客户端做（它调 `render_report_local`，D54），美术还要留在编辑器里看这一轮。
+		// 这里的 CandidateReports 就是留在内存里的那一份，客户端通过 OnRoundFinished 回调取走。
+		UE_LOG(LogTemp, Log, TEXT("[DoodleLighting] 本机一轮渲染结束：成功 %d / 失败 %d，%d fps（停在这里，不退出）"),
+		       L_RenderedCount, L_FailedCount, L_Round.FrameRate);
+		if (RoundFinished.IsBound())
+		{
+			RoundFinished.Execute(L_Round);
+		}
+		return;
 	}
 
 	FString L_WriteError;

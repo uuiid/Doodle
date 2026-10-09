@@ -367,6 +367,31 @@ struct DOODLELIGHTING_API FDoodleTaskPayload
 	TArray<FDoodleTaskCandidate> Candidates;
 };
 
+/// 引擎内原生路线（D52）的**启动计划**：服务端 `/iterate` 直接回给调用方的那一份。
+///
+/// 它与 `FDoodleTaskPayload` 的差别只有两处，都是刻意的：
+///   - **没有 `spec_id` / `baseline_level`**：队列路线里它们是给工作机记日志用的，本机路线不需要；
+///   - 多一个 `iteration_id`（轮次 uuid）：本机路线没有 `server_task_info` 行，回传时服务端只能用
+///     「会话 + 轮次」定位（D54），而磁盘目录名就是轮次 uuid（D44）。
+/// 候选结构与 `FDoodleTaskCandidate` 逐字相同 —— 面板把计划交给客户端，客户端再原样喂给 Runner。
+struct DOODLELIGHTING_API FDoodleLaunchPlan
+{
+	FString SessionId;
+	/// 轮次 uuid。就是磁盘上的 `<out_dir>/it_xxx` 那个轮次目录名（D44），也是回传定位键（D54）
+	FString IterationId;
+	int32 Iteration = 1;
+	/// 工作机/本机本地缓存根下的**相对**目录（D39）：`<session_uuid>/it_<iteration_uuid>`
+	FString OutDir;
+	FString RenderMap;
+	FString LevelSequence;
+	FString MoviePipelineConfig;
+	int32 FrameBegin = 0;
+	int32 FrameEnd = 0;
+	FString UeProjectPath;
+	FString CameraFilePath;
+	TArray<FDoodleTaskCandidate> Candidates;
+};
+
 // ---------------------------------------------------------------------------
 // 回传报文（服务端 round_render_report_t / candidate_render_report_t）
 // ---------------------------------------------------------------------------

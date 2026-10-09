@@ -18,10 +18,25 @@ namespace
 
 	bool GetObject(const TSharedPtr<FJsonObject>& In, const TCHAR* InKey, const FString& InPath, TSharedPtr<FJsonObject>& OutValue, FString& OutError)
 	{
-		if (!In->TryGetObjectField(InKey, OutValue) || !OutValue.IsValid())
+		// UE 5.7 的 TryGetObjectField 只有 `const TSharedPtr<FJsonObject>*&` 一种出参形式
+		// （JsonObject.h:293），**没有**收 `TSharedPtr<FJsonObject>&` 的重载；
+		// 直接传引用会去匹配 FAnsiStringView 那个重载，然后因为 TCHAR* 转不了 FAnsiStringView 报 C2665。
+		const TSharedPtr<FJsonObject>* LObject = nullptr;
+		if (!In->TryGetObjectField(InKey, LObject) || LObject == nullptr || !LObject->IsValid())
 		{
 			return Fail(OutError, InPath, TEXT("缺失或不是对象"));
 		}
+		OutValue = *LObject;
+		return true;
+	}
+
+	/// 可选对象字段：缺失或不是对象都只返回 false，**不**报错（对应服务端条件写出的键）。
+	/// 单独抽出来是因为 UE 5.7 的 TryGetObjectField 只收指针出参，直传引用编译不过（见 GetObject 的注释）。
+	bool TryGetObjectFieldPtr(const TSharedPtr<FJsonObject>& In, const TCHAR* InKey, TSharedPtr<FJsonObject>& OutValue)
+	{
+		const TSharedPtr<FJsonObject>* LObject = nullptr;
+		if (!In->TryGetObjectField(InKey, LObject) || LObject == nullptr) return false;
+		OutValue = *LObject;
 		return true;
 	}
 
@@ -347,14 +362,14 @@ bool DoodleLightingJson::ParseLightingRig(const TSharedPtr<FJsonObject>& InRoot,
 	}
 
 	TSharedPtr<FJsonObject> LObject;
-	if (InRoot->TryGetObjectField(TEXT("variant_axis"), LObject) && LObject.IsValid())
+	if (TryGetObjectFieldPtr(InRoot, TEXT("variant_axis"), LObject) && LObject.IsValid())
 	{
 		if (!GetEnum(LObject, TEXT("axis"), TEXT("rig.variant_axis.axis"), OutRig.VariantAxis.Axis, OutError, &DoodleVariantAxisFromString)) return false;
 		if (!GetNumber(LObject, TEXT("value"), TEXT("rig.variant_axis.value"), OutRig.VariantAxis.Value, OutError)) return false;
 		if (!GetString(LObject, TEXT("label"), TEXT("rig.variant_axis.label"), OutRig.VariantAxis.Label, OutError, false)) return false;
 	}
 
-	if (InRoot->TryGetObjectField(TEXT("provenance"), LObject) && LObject.IsValid())
+	if (TryGetObjectFieldPtr(InRoot, TEXT("provenance"), LObject) && LObject.IsValid())
 	{
 		GetString(LObject, TEXT("model"), TEXT("rig.provenance.model"), OutRig.Provenance.Model, OutError, false);
 		GetString(LObject, TEXT("prompt_hash"), TEXT("rig.provenance.prompt_hash"), OutRig.Provenance.PromptHash, OutError, false);
@@ -412,7 +427,7 @@ bool DoodleLightingJson::ParseLightingRig(const TSharedPtr<FJsonObject>& InRoot,
 			GetString(*LItem, TEXT("light"), LPath + TEXT(".light"), LOp.Light, OutError, false);
 			GetString(*LItem, TEXT("rationale"), LPath + TEXT(".rationale"), LOp.Rationale, OutError, false);
 			TSharedPtr<FJsonObject> LPatch;
-			if ((*LItem)->TryGetObjectField(TEXT("patch"), LPatch) && LPatch.IsValid())
+			if (TryGetObjectFieldPtr(*LItem, TEXT("patch"), LPatch) && LPatch.IsValid())
 			{
 				LOp.Patch = LPatch;
 			}
@@ -512,6 +527,94 @@ TSharedPtr<FJsonObject> DoodleLightingJson::SerializeTaskPayload(const FDoodleTa
 	return LRoot;
 }
 
+TSharedPtr<FJsonObject> DoodleLightingJson::SerializeLaunchPlan(const FDoodleLaunchPlan& InPlan)
+{
+	// 与 SerializeTaskPayload 的差别只有三处（都是刻意的，见 FDoodleLaunchPlan 的说明）：
+	// 没有 spec_id / baseline_level，多了 iteration_id。
+	TSharedRef<FJsonObject> LRoot = MakeShared<FJsonObject>();
+	LRoot->SetStringField(TEXT("session_id"), InPlan.SessionId);
+	LRoot->SetStringField(TEXT("iteration_id"), InPlan.IterationId);
+	LRoot->SetNumberField(TEXT("iteration"), InPlan.Iteration);
+	LRoot->SetStringField(TEXT("out_dir"), InPlan.OutDir);
+	LRoot->SetStringField(TEXT("render_map"), InPlan.RenderMap);
+	LRoot->SetStringField(TEXT("level_sequence"), InPlan.LevelSequence);
+	LRoot->SetStringField(TEXT("movie_pipeline_config"), InPlan.MoviePipelineConfig);
+	LRoot->SetNumberField(TEXT("frame_begin"), InPlan.FrameBegin);
+	LRoot->SetNumberField(TEXT("frame_end"), InPlan.FrameEnd);
+	LRoot->SetStringField(TEXT("ue_project_path"), InPlan.UeProjectPath);
+	LRoot->SetStringField(TEXT("camera_file_path"), InPlan.CameraFilePath);
+
+	TArray<TSharedPtr<FJsonValue>> LCandidates;
+	for (const FDoodleTaskCandidate& LCandidate : InPlan.Candidates)
+	{
+		TSharedRef<FJsonObject> LItem = MakeShared<FJsonObject>();
+		LItem->SetNumberField(TEXT("candidate_index"), LCandidate.CandidateIndex);
+		LItem->SetStringField(TEXT("candidate_id"), LCandidate.CandidateId);
+		LItem->SetStringField(TEXT("frames_dir"), LCandidate.FramesDir);
+		LItem->SetStringField(TEXT("png_path"), LCandidate.PngPath);
+		LItem->SetStringField(TEXT("exr_path"), LCandidate.ExrPath);
+		LItem->SetStringField(TEXT("movie_path"), LCandidate.MoviePath);
+		LCandidates.Add(MakeShared<FJsonValueObject>(LItem));
+	}
+	LRoot->SetArrayField(TEXT("candidates"), LCandidates);
+	return LRoot;
+}
+
+bool DoodleLightingJson::ParseLaunchPlan(const TSharedPtr<FJsonObject>& InRoot, FDoodleLaunchPlan& OutPlan, FString& OutError)
+{
+	if (!InRoot.IsValid())
+	{
+		OutError = TEXT("launch_plan：不是 JSON 对象");
+		return false;
+	}
+
+	if (!GetString(InRoot, TEXT("session_id"), TEXT("session_id"), OutPlan.SessionId, OutError)) return false;
+	// 轮次 uuid 是回传定位键（D54）与磁盘目录名（D44），缺了这条计划就没法用
+	if (!GetString(InRoot, TEXT("iteration_id"), TEXT("iteration_id"), OutPlan.IterationId, OutError)) return false;
+	if (!GetInt(InRoot, TEXT("iteration"), TEXT("iteration"), OutPlan.Iteration, OutError)) return false;
+	if (!GetString(InRoot, TEXT("out_dir"), TEXT("out_dir"), OutPlan.OutDir, OutError)) return false;
+	if (!GetString(InRoot, TEXT("render_map"), TEXT("render_map"), OutPlan.RenderMap, OutError)) return false;
+	if (!GetString(InRoot, TEXT("level_sequence"), TEXT("level_sequence"), OutPlan.LevelSequence, OutError)) return false;
+	GetString(InRoot, TEXT("movie_pipeline_config"), TEXT("movie_pipeline_config"), OutPlan.MoviePipelineConfig, OutError, false);
+	GetInt(InRoot, TEXT("frame_begin"), TEXT("frame_begin"), OutPlan.FrameBegin, OutError, false);
+	GetInt(InRoot, TEXT("frame_end"), TEXT("frame_end"), OutPlan.FrameEnd, OutError, false);
+	GetString(InRoot, TEXT("ue_project_path"), TEXT("ue_project_path"), OutPlan.UeProjectPath, OutError, false);
+	GetString(InRoot, TEXT("camera_file_path"), TEXT("camera_file_path"), OutPlan.CameraFilePath, OutError, false);
+
+	const TArray<TSharedPtr<FJsonValue>>* LCandidates = nullptr;
+	if (!GetArray(InRoot, TEXT("candidates"), TEXT("candidates"), LCandidates, OutError)) return false;
+	if (LCandidates->Num() == 0)
+	{
+		OutError = TEXT("candidates：数组为空");
+		return false;
+	}
+
+	OutPlan.Candidates.Reset();
+	for (int32 LIndex = 0; LIndex < LCandidates->Num(); ++LIndex)
+	{
+		const TSharedPtr<FJsonObject>* LItem = nullptr;
+		const FString LPath = FString::Printf(TEXT("candidates[%d]"), LIndex);
+		if (!(*LCandidates)[LIndex].IsValid() || !(*LCandidates)[LIndex]->TryGetObject(LItem) || LItem == nullptr)
+		{
+			return Fail(OutError, LPath, TEXT("不是对象"));
+		}
+		FDoodleTaskCandidate LCandidate;
+		if (!GetInt(*LItem, TEXT("candidate_index"), LPath + TEXT(".candidate_index"), LCandidate.CandidateIndex, OutError)) return false;
+		if (!GetString(*LItem, TEXT("candidate_id"), LPath + TEXT(".candidate_id"), LCandidate.CandidateId, OutError)) return false;
+		// frames_dir 在计划里是**相对工作机本地缓存根**的（D39），由客户端拼成绝对路径再喂给 Runner；
+		// png_path / exr_path / movie_path 同样是相对的，且 UE 不读它们。
+		if (!GetString(*LItem, TEXT("frames_dir"), LPath + TEXT(".frames_dir"), LCandidate.FramesDir, OutError)) return false;
+		GetString(*LItem, TEXT("png_path"), LPath + TEXT(".png_path"), LCandidate.PngPath, OutError, false);
+		GetString(*LItem, TEXT("exr_path"), LPath + TEXT(".exr_path"), LCandidate.ExrPath, OutError, false);
+		GetString(*LItem, TEXT("movie_path"), LPath + TEXT(".movie_path"), LCandidate.MoviePath, OutError, false);
+		// **刻意不读 rig**：计划是「本机自己写、本机自己读」，客户端把这份结构原样交给 Runner，
+		// 中间不经过 wire —— 和 SerializeTaskPayload 不写 rig 是同一个理由。要读的话得先有一个
+		// rig 的序列化器（目前只有反序列化），没必要为这条本机路线加。
+		OutPlan.Candidates.Add(MoveTemp(LCandidate));
+	}
+	return true;
+}
+
 TSharedPtr<FJsonObject> DoodleLightingJson::SerializeRoundReport(const FDoodleRoundReport& InReport)
 {
 	TSharedRef<FJsonObject> LRoot = MakeShared<FJsonObject>();
@@ -573,7 +676,7 @@ bool DoodleLightingJson::ParseRoundReport(const TSharedPtr<FJsonObject>& InRoot,
 		GetInt(*LItem, TEXT("light_count"), LPath + TEXT(".light_count"), LCandidate.LightCount, OutError, false);
 		GetInt(*LItem, TEXT("frame_count"), LPath + TEXT(".frame_count"), LCandidate.FrameCount, OutError, false);
 		TSharedPtr<FJsonObject> LMetrics;
-		if ((*LItem)->TryGetObjectField(TEXT("metrics"), LMetrics) && LMetrics.IsValid())
+		if (TryGetObjectFieldPtr(*LItem, TEXT("metrics"), LMetrics) && LMetrics.IsValid())
 		{
 			LCandidate.Metrics = LMetrics;
 		}

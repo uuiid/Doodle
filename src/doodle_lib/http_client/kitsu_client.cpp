@@ -725,6 +725,57 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::post_ai_light_render_report
   co_return nlohmann::json::parse(l_res.body(), nullptr, false);
 }
 
+boost::asio::awaitable<nlohmann::json> kitsu_client::post_ai_light_render_report_local(
+    uuid in_session_id, std::int32_t in_iteration, const nlohmann::json& in_report
+) const {
+  boost::beast::http::request<boost::beast::http::string_body> l_req{
+      boost::beast::http::verb::post,
+      fmt::format("/api/doodle/ai/light/render_report_local/{}/{}", in_session_id, in_iteration), 11
+  };
+  set_req_headers(l_req, "application/json");
+  l_req.body() = in_report.dump();
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
+    throw_exception(
+        doodle_error{"kitsu post ai light render report local error {} {}", l_res.result(), l_res.body()}
+    );
+  if (l_res.body().empty()) co_return nlohmann::json{};
+  co_return nlohmann::json::parse(l_res.body(), nullptr, false);
+}
+
+boost::asio::awaitable<nlohmann::json> kitsu_client::post_ai_light_session_iterate(uuid in_session_id) const {
+  // 这条路由的请求体是**空的**（服务器不调 get_json()），带上一个空对象也无妨
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::post, fmt::format("/api/doodle/ai/light/session/{}/iterate", in_session_id), 11
+  };
+  set_req_headers(l_req);
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
+    throw_exception(doodle_error{"kitsu post ai light iterate error {} {}", l_res.result(), l_res.body()});
+  if (l_res.body().empty()) co_return nlohmann::json{};
+  co_return nlohmann::json::parse(l_res.body(), nullptr, false);
+}
+
+boost::asio::awaitable<std::string> kitsu_client::login(const std::string& in_email, const std::string& in_password) {
+  // 本机客户端用发起人的身份调接口（引擎内原生路线），所以要像人一样登录拿 access_token。
+  boost::beast::http::request<boost::beast::http::string_body> l_req{
+      boost::beast::http::verb::post, "/api/auth/login", 11
+  };
+  set_req_headers(l_req, "application/json");
+  l_req.body() = nlohmann::json{{"email", in_email}, {"password", in_password}}.dump();
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok)
+    throw_exception(doodle_error{"登录失败 {} {}", l_res.result(), l_res.body()});
+  auto l_json = nlohmann::json::parse(l_res.body(), nullptr, false);
+  if (l_json.is_discarded() || !l_json.contains("access_token"))
+    throw_exception(doodle_error{"登录响应里没有 access_token：{}", l_res.body()});
+  kitsu_token_ = l_json.at("access_token").get<std::string>();
+  co_return kitsu_token_;
+}
+
 boost::asio::awaitable<void> kitsu_client::get_next_job(uuid in_computer_id) const {
   // put /api/data/jobs
   boost::beast::http::request<boost::beast::http::string_body> l_req{

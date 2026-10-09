@@ -25,6 +25,12 @@ namespace DoodleLightingJson
 	/// 写整份派发载荷（本地调试用：可以把载荷 dump 出来重放）。
 	DOODLELIGHTING_API TSharedPtr<FJsonObject> SerializeTaskPayload(const FDoodleTaskPayload& InPayload);
 
+	/// 写一份启动计划（引擎内原生路线 D52：面板写进桥目录，本机客户端读走）。
+	DOODLELIGHTING_API TSharedPtr<FJsonObject> SerializeLaunchPlan(const FDoodleLaunchPlan& InPlan);
+
+	/// 读一份启动计划。键与服务端 `ai_light_launch_plan_t` 逐字对应。
+	DOODLELIGHTING_API bool ParseLaunchPlan(const TSharedPtr<FJsonObject>& InRoot, FDoodleLaunchPlan& OutPlan, FString& OutError);
+
 	/// 写整轮回传报文（= commandlet 落盘的 render_report.json 内容）。
 	DOODLELIGHTING_API TSharedPtr<FJsonObject> SerializeRoundReport(const FDoodleRoundReport& InReport);
 

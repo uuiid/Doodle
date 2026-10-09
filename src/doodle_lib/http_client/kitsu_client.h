@@ -174,6 +174,17 @@ class DOODLELIB_API kitsu_client {
   // post /api/doodle/ai/light/render_report/{task_id} —— 工作机回传一轮 AI 灯光渲染结果（§15.12）
   boost::asio::awaitable<nlohmann::json> post_ai_light_render_report(uuid in_task_id, const nlohmann::json& in_report)
       const;
+  // post /api/doodle/ai/light/render_report_local/{session_id}/{iteration} —— 引擎内原生路线回传（D54）。
+  // 这条路线没有 server_task_info 行，所以轮次在路径上；身份是发起人 JWT（不是工作机），
+  // 服务端因此会做项目权限检查（与工作机那条相反）。
+  boost::asio::awaitable<nlohmann::json> post_ai_light_render_report_local(
+      uuid in_session_id, std::int32_t in_iteration, const nlohmann::json& in_report
+  ) const;
+  // post /api/doodle/ai/light/session/{session_id}/iterate —— 推进会话。本机客户端用它拿 launch_plan（D55）：
+  // 服务端这条路线**不建队列任务**，直接把这一轮要渲染的东西放在响应的 launch_plan 键里返回。
+  boost::asio::awaitable<nlohmann::json> post_ai_light_session_iterate(uuid in_session_id) const;
+  // post /api/auth/login —— 本机客户端用发起人身份登录，拿到 access_token 后由 set_req_headers 带上。
+  boost::asio::awaitable<std::string> login(const std::string& in_email, const std::string& in_password);
   // post /api/doodle/ai/light/candidate/{candidate_id}/file/{render|render_linear|render_movie}
   // —— 工作机上传单个候选产物（D40）。role 决定 URL 段，也决定服务端把它落到哪里：
   // render = 首帧海报 PNG（必传）、render_movie = 候选视频 mp4（必传）、render_linear = 线性 EXR（可选）。
