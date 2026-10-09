@@ -6,6 +6,7 @@
 
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/http/http_listener_port_shm.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/doodle_lib_fwd.h>
@@ -30,7 +31,11 @@ boost::asio::awaitable<void> detail::run_http_listener(
     };
     l_acceptor.listen(boost::asio::socket_base::max_listen_connections);
     auto l_local_endpoint = l_acceptor.local_endpoint();
-    std::cout << l_local_endpoint.port() << std::endl;
+    auto l_port           = static_cast<std::uint16_t>(l_local_endpoint.port());
+    std::cout << l_port << std::endl;
+    // 把实际监听端口写进固定共享内存, 供其它进程读取(--port 0 时只有这里知道真实端口)
+    // 失败不影响监听, publish_listener_port 内部只记日志不抛异常
+    publish_listener_port(l_port);
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
       auto [l_ec, l_socket] = co_await l_acceptor.async_accept();
       if (l_ec) {
