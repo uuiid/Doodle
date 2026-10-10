@@ -221,8 +221,6 @@ void session::rebuild_table(const std::type_index& table_name) {
   if (!l_s.type_to_table_index_.contains(table_name)) throw std::runtime_error("Table not found for the given type");
   auto l_table_index = l_s.type_to_table_index_.at(table_name);
   auto& l_old_table  = l_s.tables_[l_table_index];
-  // 预先关闭外键约束检查，以避免在重建表时出现外键约束错误
-
   auto l_transaction = transaction();
   {
     auto l_new_table   = l_old_table->clone();

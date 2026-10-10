@@ -140,6 +140,7 @@ struct upgrade_3_t : sqlite_upgrade {
     auto l_s = in_data.create_session();
     if (l_s.pragma().user_version() > g_version_30) return;
     backup(l_s);
+    l_s.pragma().foreign_keys(false);
     l_s.sync_schema();
     // 这两列都必须存在于旧表里, 且必须都在 rebuild_table **之前**补上. 原因是 rebuild_table 的
     // 列拷贝清单来自 **ORM 声明**而不是库里的实际列 (见 orm/session.cpp:236-242 与
@@ -158,6 +159,7 @@ struct upgrade_3_t : sqlite_upgrade {
     // 将来若在它后面再插步骤, 这一行必须改成写自己的目标版本常量, 否则下一步会被静默跳过
     // —— 见文件顶部版本号注释。
     l_s.pragma().user_version(g_current_version);
+    l_s.pragma().foreign_keys(true);
     SPDLOG_INFO(
         "upgrade 30->31: 已创建 AI 灯光六张表 (ai_light_session / _reference / _spec / _iteration / _candidate / "
         "_preset)"
