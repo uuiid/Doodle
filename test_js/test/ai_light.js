@@ -153,7 +153,7 @@ describe('AI 灯光 —— 会话（shot_session / session_instance）', functio
         })
     );
 
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     const body = req.body;
 
     // 顶层就是 ai_light_session_detail_t 的十个键
@@ -282,7 +282,7 @@ describe('AI 灯光 —— 参考图（reference）', function () {
         .set(authHeader)
         .send({ prompt_text: PROMPT_TEXT, title: 'AI 灯光参考图测试' })
     );
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     sessionId = req.body.session.id;
   });
 
@@ -447,7 +447,7 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
         .set(authHeader)
         .send({ prompt_text: PROMPT_TEXT, title: 'AI 灯光 Spec 测试' })
     );
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     sessionId = req.body.session.id;
   });
 
@@ -631,7 +631,7 @@ describe('AI 灯光 —— 迭代与判断（iterate / judge）', function () {
         .set(authHeader)
         .send({ prompt_text: PROMPT_TEXT, title: 'AI 灯光迭代测试' })
     );
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     sessionId = req.body.session.id;
   });
 
@@ -833,7 +833,7 @@ describe('AI 灯光 —— 回传（render_report / render_report_local）', fun
         .set(authHeader)
         .send({ prompt_text: PROMPT_TEXT, title: 'AI 灯光回传测试' })
     );
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     sessionId = req.body.session.id;
   });
 
@@ -932,7 +932,7 @@ describe('AI 灯光 —— 回传（render_report / render_report_local）', fun
         .send({ candidates: [], frame_rate: 24, error: 'UE 启动失败' })
     );
 
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     expect(req.body).to.have.keys(['session_id', 'iteration', 'iteration_state', 'session_state', 'failure_reason']);
     expect(req.body.session_id).to.equal(sessionId);
     expect(req.body.iteration).to.equal(iteration);
