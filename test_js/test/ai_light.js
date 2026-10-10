@@ -316,7 +316,7 @@ describe('AI 灯光 —— 参考图（reference）', function () {
 
     const req = await send(() => builder);
 
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     expect(req.body).to.have.property('data');
     expect(req.body.data).to.have.lengthOf(picked.length);
 
