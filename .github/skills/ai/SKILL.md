@@ -1,5 +1,7 @@
 ---
-agent: ask
+name: ai
+description: 骨骼蒙皮权重推理ai
+disable-model-invocation: true
 ---
 # cross_attention_bone_weight
 在3D动画的制作环节中, 绑定人物头部的模型权重基本上是非常一致的, 

@@ -1,10 +1,9 @@
 ---
-description: "重构 HTTP put 处理器：将‘读取实体 → 改写 → update 整体写回’替换为 orm::update 链式（JSON 用 set_from_ref<T>，程序化用 set(c(&T::f_)=v)、条件 set、自增）配合 run_sql 执行"
 name: refactor-put-set-from-ref
+description: 重构 HTTP put 处理器：将‘读取实体 → 改写 → update 整体写回’替换为 orm::update 链式（JSON 用 set_from_ref<T>，程序化用 set(c(&T::f_)=v)、条件 set、自增）配合 run_sql 执行
+disable-model-invocation: true
 argument-hint: "选择要重构的 put 处理器"
-agent: "agent"
 ---
-
 将选中的 HTTP `put` 处理器重构为使用 `orm::update` 链式写法，统一通过 `run_sql` 执行。
 
 核心目标是消除「读取实体 → 修改字段 → `co_await l_sql.update(l_entity)` 整体写回」。按数据来源分两种改写方式：
