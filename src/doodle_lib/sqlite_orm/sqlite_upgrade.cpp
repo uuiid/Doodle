@@ -109,14 +109,6 @@ void backup(orm::session& in_data) {
   in_data.backup_to(l_file);
 }
 
-// 表是否存在. 老库可能还没有某张表, 直接对不存在的表执行语句会让升级整个失败,
-// 而"表不存在"本身就意味着这一步没有要清理的数据.
-bool has_table(orm::session& in_session, const std::string& in_table) {
-  orm::sqlite_stmt l_stmt{
-      in_session, fmt::format("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = '{}';", in_table)
-  };
-  return l_stmt.step_not_throw() == SQLITE_ROW;
-}
 }  // namespace
 
 // 30 -> 31: 建 AI 灯光六张表 (docs/ue_ai_lighting_plan.md §10.2).
@@ -149,11 +141,16 @@ struct upgrade_3_t : sqlite_upgrade {
     if (l_s.pragma().user_version() > g_version_30) return;
     backup(l_s);
     l_s.sync_schema();
+
+    l_s.rebuild_table<seedance2::task>();
     // 本步骤是 30 之后的**唯一**一步, 所以它写 g_current_version (= 31)。
     // 将来若在它后面再插步骤, 这一行必须改成写自己的目标版本常量, 否则下一步会被静默跳过
     // —— 见文件顶部版本号注释。
     l_s.pragma().user_version(g_current_version);
-    SPDLOG_INFO("upgrade 30->31: 已创建 AI 灯光六张表 (ai_light_session / _reference / _spec / _iteration / _candidate / _preset)");
+    SPDLOG_INFO(
+        "upgrade 30->31: 已创建 AI 灯光六张表 (ai_light_session / _reference / _spec / _iteration / _candidate / "
+        "_preset)"
+    );
   }
   ~upgrade_3_t() override = default;
 };
@@ -191,8 +188,6 @@ struct upgrade_clear_orphan_task_t : sqlite_upgrade {
   ~upgrade_clear_orphan_task_t() override = default;
 };
 
-std::shared_ptr<sqlite_upgrade> upgrade_clear_orphan_task() {
-  return std::make_shared<upgrade_clear_orphan_task_t>();
-}
+std::shared_ptr<sqlite_upgrade> upgrade_clear_orphan_task() { return std::make_shared<upgrade_clear_orphan_task_t>(); }
 
 }  // namespace doodle::details
