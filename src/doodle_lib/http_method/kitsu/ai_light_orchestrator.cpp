@@ -27,11 +27,6 @@
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/server_task_info.h>
 
-#include "ai_light_json_validation.h"
-#include "ai_light_rig_ops.h"
-#include "ai_light_seam_common.h"
-
-
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/global_function.h>
@@ -47,6 +42,11 @@
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
+#include <boost/exception/diagnostic_information.hpp>
+
+#include "ai_light_json_validation.h"
+#include "ai_light_rig_ops.h"
+#include "ai_light_seam_common.h"
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -63,7 +63,6 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-
 
 namespace doodle::ai_light {
 
@@ -182,11 +181,11 @@ boost::asio::awaitable<spec_branch_result> advance_session_spec_branch(
   // 降级级别以**接缝按事实判定的结果**为准，不用调用方那个预判（决定 D4）：
   // 「参考图有 stats 行但置信度全 0」或「全部图被人工排除」时，调用方看
   // references_have_stats() 会以为是 stats_only，而实际聚合出一无所获。
-  l_spec.degrade_level_      = l_res.spec_.degrade_level_;
+  l_spec.degrade_level_           = l_res.spec_.degrade_level_;
   // 新出的方案一律未确认：人工闸门 1 必须重新过一遍。
-  l_spec.human_confirmed_    = false;
-  l_spec.confirmed_by_       = uuid{};
-  l_spec.confirmed_at_       = std::nullopt;
+  l_spec.human_confirmed_         = false;
+  l_spec.confirmed_by_            = uuid{};
+  l_spec.confirmed_at_            = std::nullopt;
 
   // 会话行的新值在**副本**上组装：新状态 + 清空失败原因。原 in_session 一字不改。
   ai_light_session l_session_next = in_session;
@@ -198,8 +197,7 @@ boost::asio::awaitable<spec_branch_result> advance_session_spec_branch(
       in_session.uuid_id_, l_rev, magic_enum::enum_name(l_spec.degrade_level_), l_req.references_.size()
   );
   co_return spec_branch_result{
-      .sqls_ = {orm::insert(in_sql).into<ai_light_spec>().values(l_spec),
-                make_session_update(in_sql, l_session_next)}
+      .sqls_ = {orm::insert(in_sql).into<ai_light_spec>().values(l_spec), make_session_update(in_sql, l_session_next)}
   };
 }
 
@@ -325,12 +323,12 @@ boost::asio::awaitable<generating_branch_result> advance_session_generating_bran
   );
   DOODLE_CHICK_HTTP(
       !l_assembly.level_sequence_import_.empty(), internal_server_error,
-      "AI 灯光会话 {} 第 {} 轮：镜头装配没有给出 level sequence（{}），本轮无法渲染", in_session.uuid_id_,
-      l_iteration, l_assembly.level_sequence_import_.generic_string()
+      "AI 灯光会话 {} 第 {} 轮：镜头装配没有给出 level sequence（{}），本轮无法渲染", in_session.uuid_id_, l_iteration,
+      l_assembly.level_sequence_import_.generic_string()
   );
   l_req.baseline_level_ = l_assembly.original_map_.generic_string();
 
-  auto l_res = co_await generate_candidates(in_sql, l_req);
+  auto l_res            = co_await generate_candidates(in_sql, l_req);
 
   // §6.6 护栏：候选数量与「灯集合一致」是硬约束，不能靠实现方自觉。
   // 数量在这里校验；灯集合一致性需要基线 rig 才谈得上，留到 worker 侧与
@@ -419,7 +417,7 @@ boost::asio::awaitable<generating_branch_result> advance_session_generating_bran
   // 会话行的新值在**副本**上组装：轮次号前进、清空失败原因、状态**留在 generating**
   // （候选已经生成、渲染还没回来；转 awaiting_judgement 由 mark_iteration_rendered() 负责，
   // §10.3，两条路线共用）。原 in_session 一字不改 —— 失败时调用方不需要任何回滚动作。
-  ai_light_session l_session_next  = in_session;
+  ai_light_session l_session_next   = in_session;
   l_session_next.current_iteration_ = l_iteration;
   l_session_next.failure_reason_    = "";
 
@@ -454,7 +452,8 @@ boost::asio::awaitable<generating_branch_result> advance_session_generating_bran
     l_sqls.emplace_back(make_session_update(in_sql, l_session_next));
 
     SPDLOG_LOGGER_INFO(
-        g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮 {} 个候选已生成（引擎内路线，渲染计划已返回，等待发起方本机渲染）",
+        g_logger_ctrl().get_http(),
+        "AI 灯光会话 {} 第 {} 轮 {} 个候选已生成（引擎内路线，渲染计划已返回，等待发起方本机渲染）",
         in_session.uuid_id_, l_iteration, g_candidate_count
     );
     co_return generating_branch_result{.sqls_ = std::move(l_sqls), .plan_ = std::move(l_plan)};
@@ -531,7 +530,7 @@ boost::asio::awaitable<void> advance_session(
   // 参考图清单为空时直接拒绝，**不**静默降级：否则「没传图」和「图传了但统计不可用」
   // 会落进同一个 degrade_level，出问题时看不出是哪一种。
   //
-  // 放在 try 之外是有意的：这是入参校验，不该走回滚、也不该往会话上写 failure_reason_ ——
+  // 入参校验放在分派之前：它不该往会话上写 failure_reason_ ——
   // 否则美术会在会话页上看到一条看起来像「AI 失败」的提示。
   //
   // 不看 is_outlier_：被人工排除的图仍要交给接缝自行裁决（它拿得到 is_outlier_ 标记），
@@ -544,93 +543,53 @@ boost::asio::awaitable<void> advance_session(
     );
   }
 
-  std::exception_ptr l_err{};
-  std::string l_reason{"未知错误"};
+  // 推进失败时**不落库、不记录 failure_reason_**：同步请求的失败原因由 HTTP 响应体描述
+  // （http_session_data.cpp:313 把 doodle_error::what() 放进 body），前端无论状态码是多少
+  // 都读 body 显示。这里再写一列只是重复，而且会与「异步失败」抢同一个字段。
+  // 异步失败（工作机回传渲染结果）没有人可对话，仍走 mark_iteration_failed() 落库。
+  // 异常自然向上抛，由 HTTP 层转成状态码 + body。
+  const auto l_operator = in_operator_id.is_nil() ? in_session.submitter_ : in_operator_id;
 
-  try {
-    // 触发人：本次调用的属性，不是会话的属性 —— 所以不进会话表（加列既逼出迁移、
-    // 语义也是错的：同一次灯光工作可能换人重出方案）。
-    // 没传时回落到会话提交人；两者都没有就没法解析工作室、也没法计费。
-    // 值在分支外取（两个接缝都要用它），校验留给各分支给出更贴切的消息。
-    const auto l_operator = in_operator_id.is_nil() ? in_session.submitter_ : in_operator_id;
-
-    // ---------------------------------------------------------------
-    // 第一步：draft / awaiting_spec_confirm 且尚无已确认 Spec → 蒸馏出 LightingSpec
-    //
-    // 两个入口状态，同一个意图：产出（或重出）当前版本的方案。
-    // 这不违反「一个状态只能有一个后继步骤」：awaiting_spec_confirm 上还有一个
-    // /spec/confirm，但它会**先把状态改成 generating** 再调 advance_session
-    // （ai_light.cpp 的 spec_confirm_route），所以落到本分支的只有「重出」这一个意图。
-    // ---------------------------------------------------------------
-    if (l_entry_state == ai_light_session_state::draft ||
-        l_entry_state == ai_light_session_state::awaiting_spec_confirm) {
-      // 分支只算 SQL 不落库：抛错时库里一行没动，所以调用方**不需要**任何回滚动作
-      // （run_sql 自身就是原子的，见 sqlite_database.cpp:1610）。
-      // 只有走到这里 —— 分支成功返回 —— 才提交。
-      auto l_res = co_await advance_session_spec_branch(in_sql, in_session, l_operator);
-      co_await in_sql.run_sql(std::move(l_res.sqls_));
-      co_return;
-    }
-
-    if (l_entry_state == ai_light_session_state::generating) {
-      // 队列路线：建任务行 + 派发（忽略返回的渲染计划 —— 它只给引擎内路线用）。
-      auto l_res = co_await advance_session_generating_branch(in_sql, in_session, l_operator, false);
-      co_await in_sql.run_sql(std::move(l_res.sqls_));
-
-      // 派发 + 广播。放在 run_sql 之后：任务行已经落库，派发失败也只是「暂时没人领」，
-      // computers_assign_task 下次轮询会再捡起来，不会丢。
-      if (l_res.dispatch_) co_await http::computers_assign_task::get_instance().run_next_task();
-      if (!l_res.broadcast_task_id_.is_nil())
-        socket_io::broadcast(
-            socket_io::server_task_info_new_broadcast_t{.server_task_info_id_ = l_res.broadcast_task_id_}
-        );
-      co_return;
-    }
-
-    // ---------------------------------------------------------------
-    // 其它状态：没有可推进的步骤
-    // ---------------------------------------------------------------
-    DOODLE_CHICK_HTTP(
-        false, bad_request, "会话 {} 处于状态 {}，当前没有可推进的步骤", in_session.uuid_id_,
-        magic_enum::enum_name(l_entry_state)
-    );
-  } catch (...) {
-    // 注意：C++ 标准禁止在 catch 处理块里 co_await，所以这里只**收集**失败信息，
-    // 记原因与重抛都放到 catch 之外。这样也顺带保证了记原因发生在异常对象销毁之前。
-    l_err    = std::current_exception();
-    l_reason = "未知错误";
-    try {
-      throw;
-    } catch (const std::exception& in_err) {
-      // 直接取 what()，**不截断**：boost 的诊断信息可能带整条调用栈，长度无所谓 ——
-      // 截断会让真正的原因（往往在末尾的 cause 那一段）先被砍掉。
-      l_reason = in_err.what();
-    } catch (...) {
-      l_reason = "非 std::exception 类型的错误";
-    }
+  // ---------------------------------------------------------------
+  // 第一步：draft / awaiting_spec_confirm 且尚无已确认 Spec → 蒸馏出 LightingSpec
+  //
+  // 两个入口状态，同一个意图：产出（或重出）当前版本的方案。
+  // 这不违反「一个状态只能有一个后继步骤」：awaiting_spec_confirm 上还有一个
+  // /spec/confirm，但它会**先把状态改成 generating** 再调 advance_session
+  // （ai_light.cpp 的 spec_confirm_route），所以落到本分支的只有「重出」这一个意图。
+  // ---------------------------------------------------------------
+  if (l_entry_state == ai_light_session_state::draft ||
+      l_entry_state == ai_light_session_state::awaiting_spec_confirm) {
+    // 分支只算 SQL 不落库：抛错时库里一行没动，所以调用方**不需要**任何回滚动作
+    // （run_sql 自身就是原子的，见 sqlite_database.cpp:1610）。
+    // 只有走到这里 —— 分支成功返回 —— 才提交。
+    auto l_res = co_await advance_session_spec_branch(in_sql, in_session, l_operator);
+    co_await in_sql.run_sql(std::move(l_res.sqls_));
+    co_return;
   }
 
-  if (l_err) {
-    // 没有回滚：分支不落库、也不碰会话的状态列，所以库里本来就没变过。
-    // 这里只把原因写进会话 —— 前端看板靠它说明「这次为什么没推进」。写不进去也不能
-    // 把原始异常吞掉（原始异常比这条记录重要得多），所以只记 ERROR 日志。
-    try {
-      ai_light_session l_session{in_session};
-      l_session.failure_reason_ = l_reason;
-      orm::sql_modify_statement_vector_t l_sqls{};
-      l_sqls.emplace_back(make_session_update(in_sql, l_session));
-      co_await in_sql.run_sql(std::move(l_sqls));
-    } catch (const std::exception& in_err) {
-      SPDLOG_LOGGER_ERROR(
-          g_logger_ctrl().get_main_error(), "AI 灯光会话 {} 记录失败原因失败: {}", in_session.uuid_id_, in_err.what()
+  if (l_entry_state == ai_light_session_state::generating) {
+    // 队列路线：建任务行 + 派发（忽略返回的渲染计划 —— 它只给引擎内路线用）。
+    auto l_res = co_await advance_session_generating_branch(in_sql, in_session, l_operator, false);
+    co_await in_sql.run_sql(std::move(l_res.sqls_));
+
+    // 派发 + 广播。放在 run_sql 之后：任务行已经落库，派发失败也只是「暂时没人领」，
+    // computers_assign_task 下次轮询会再捡起来，不会丢。
+    if (l_res.dispatch_) co_await http::computers_assign_task::get_instance().run_next_task();
+    if (!l_res.broadcast_task_id_.is_nil())
+      socket_io::broadcast(
+          socket_io::server_task_info_new_broadcast_t{.server_task_info_id_ = l_res.broadcast_task_id_}
       );
-    }
-    SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_http(), "AI 灯光会话 {} 推进失败（停留在 {}）: {}", in_session.uuid_id_,
-        magic_enum::enum_name(l_entry_state), l_reason
-    );
-    std::rethrow_exception(l_err);
+    co_return;
   }
+
+  // ---------------------------------------------------------------
+  // 其它状态：没有可推进的步骤
+  // ---------------------------------------------------------------
+  DOODLE_CHICK_HTTP(
+      false, bad_request, "会话 {} 处于状态 {}，当前没有可推进的步骤", in_session.uuid_id_,
+      magic_enum::enum_name(l_entry_state)
+  );
 }
 
 boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_local(
@@ -649,66 +608,30 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_lo
     );
   }
 
-  std::optional<ai_light_launch_plan_t> l_plan{};
-  std::exception_ptr l_err{};
-  std::string l_reason{"未知错误"};
+  // 与 advance_session 逐字一致的准入校验与失败策略：失败原因交给 HTTP 响应体描述，
+  // 不写 failure_reason_（详见 advance_session 顶部的说明）。
+  const auto l_operator = in_operator_id.is_nil() ? in_session.submitter_ : in_operator_id;
 
-  try {
-    const auto l_operator = in_operator_id.is_nil() ? in_session.submitter_ : in_operator_id;
-
-    if (l_entry_state == ai_light_session_state::draft ||
-        l_entry_state == ai_light_session_state::awaiting_spec_confirm) {
-      // 这一步没有渲染计划可给：Spec 出完会话进 awaiting_spec_confirm（闸门 1），
-      // 候选要等人工确认之后再走一次调用。返回 nullopt 让调用方照常回详情。
-      auto l_res = co_await advance_session_spec_branch(in_sql, in_session, l_operator);
-      co_await in_sql.run_sql(std::move(l_res.sqls_));
-      co_return l_plan;
-    }
-
-    if (l_entry_state == ai_light_session_state::generating) {
-      auto l_res = co_await advance_session_generating_branch(in_sql, in_session, l_operator, true);
-      co_await in_sql.run_sql(std::move(l_res.sqls_));
-      // 引擎内路线不建任务行，所以既不派发也不广播（dispatch_ = false、task id = nil）。
-      co_return std::move(l_res.plan_);
-    }
-
-    DOODLE_CHICK_HTTP(
-        false, bad_request, "会话 {} 处于状态 {}，当前没有可推进的步骤", in_session.uuid_id_,
-        magic_enum::enum_name(l_entry_state)
-    );
-  } catch (...) {
-    // 同 advance_session：catch 里不能 co_await，只收集。
-    l_err    = std::current_exception();
-    l_reason = "未知错误";
-    try {
-      throw;
-    } catch (const std::exception& in_err) {
-      l_reason = in_err.what();
-    } catch (...) {
-      l_reason = "非 std::exception 类型的错误";
-    }
+  if (l_entry_state == ai_light_session_state::draft ||
+      l_entry_state == ai_light_session_state::awaiting_spec_confirm) {
+    // 这一步没有渲染计划可给：Spec 出完会话进 awaiting_spec_confirm（闸门 1），
+    // 候选要等人工确认之后再走一次调用。返回 nullopt 让调用方照常回详情。
+    auto l_res = co_await advance_session_spec_branch(in_sql, in_session, l_operator);
+    co_await in_sql.run_sql(std::move(l_res.sqls_));
+    co_return std::optional<ai_light_launch_plan_t>{};
   }
 
-  if (l_err) {
-    // 同 advance_session：没有回滚，只记原因。
-    try {
-      ai_light_session l_session{in_session};
-      l_session.failure_reason_ = l_reason;
-      orm::sql_modify_statement_vector_t l_sqls{};
-      l_sqls.emplace_back(make_session_update(in_sql, l_session));
-      co_await in_sql.run_sql(std::move(l_sqls));
-    } catch (const std::exception& in_err) {
-      SPDLOG_LOGGER_ERROR(
-          g_logger_ctrl().get_main_error(), "AI 灯光会话 {} 记录失败原因失败: {}", in_session.uuid_id_, in_err.what()
-      );
-    }
-    SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_http(), "AI 灯光会话 {} 推进失败（引擎内路线，停留在 {}）: {}", in_session.uuid_id_,
-        magic_enum::enum_name(l_entry_state), l_reason
-    );
-    std::rethrow_exception(l_err);
+  if (l_entry_state == ai_light_session_state::generating) {
+    auto l_res = co_await advance_session_generating_branch(in_sql, in_session, l_operator, true);
+    co_await in_sql.run_sql(std::move(l_res.sqls_));
+    // 引擎内路线不建任务行，所以既不派发也不广播（dispatch_ = false、task id = nil）。
+    co_return std::move(l_res.plan_);
   }
-  co_return l_plan;
+
+  DOODLE_CHICK_HTTP(
+      false, bad_request, "会话 {} 处于状态 {}，当前没有可推进的步骤", in_session.uuid_id_,
+      magic_enum::enum_name(l_entry_state)
+  );
 }
 
 // ===========================================================================
@@ -883,9 +806,7 @@ boost::asio::awaitable<void> mark_iteration_rendered(
     const std::vector<ai_light_candidate>& in_candidates
 ) {
   auto l_it = locate_iteration(in_sql, in_server_task_info_id, in_locator);
-  DOODLE_CHICK_HTTP(
-      l_it.has_value(), not_found, "没有任务 {} 对应的 AI 灯光轮次", in_server_task_info_id
-  );
+  DOODLE_CHICK_HTTP(l_it.has_value(), not_found, "没有任务 {} 对应的 AI 灯光轮次", in_server_task_info_id);
   DOODLE_CHICK_HTTP(
       l_it->state_ != ai_light_iteration_state::judged, bad_request, "轮次 {} 已经判断过了，不接受渲染回填",
       l_it->iteration_
@@ -1026,9 +947,7 @@ boost::asio::awaitable<void> mark_iteration_failed(
     const std::string& in_reason
 ) {
   auto l_it = locate_iteration(in_sql, in_server_task_info_id, in_locator);
-  DOODLE_CHICK_HTTP(
-      l_it.has_value(), not_found, "没有任务 {} 对应的 AI 灯光轮次", in_server_task_info_id
-  );
+  DOODLE_CHICK_HTTP(l_it.has_value(), not_found, "没有任务 {} 对应的 AI 灯光轮次", in_server_task_info_id);
 
   auto l_session            = in_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
   l_session.failure_reason_ = in_reason;
@@ -1053,9 +972,7 @@ boost::asio::awaitable<void> apply_render_report(
     const ai_light_iteration_locator_t& in_locator, const round_render_report_t& in_report
 ) {
   auto l_it = locate_iteration(in_sql, in_server_task_info_id, in_locator);
-  DOODLE_CHICK_HTTP(
-      l_it.has_value(), not_found, "没有任务 {} 对应的 AI 灯光轮次", in_server_task_info_id
-  );
+  DOODLE_CHICK_HTTP(l_it.has_value(), not_found, "没有任务 {} 对应的 AI 灯光轮次", in_server_task_info_id);
 
   // 整轮失败由 error_ 表达（UE 起不来 / 超时 / 载荷非法）；「一个 rendered 都没有」也算失败 ——
   // 否则轮次会被推到 awaiting_judgement，美术面对 6 个不存在的候选视频点「选第 3 个」。
@@ -1110,10 +1027,10 @@ boost::asio::awaitable<void> apply_render_report(
     // 两样都查：海报给网格用、视频给判断用，少哪一样这个候选都没法看。
     // 降级成 failed 是**保守**选择：本轮其余候选照常进入判断，只是这个不可选。
     if (l_cand.render_status_ == candidate_render_status::rendered) {
-      const FSys::path l_png       = candidate_render_path(in_ctx, l_cand, false);
-      const FSys::path l_movie     = candidate_movie_path(in_ctx, l_cand);
-      const bool l_png_exists      = FSys::exists(l_png);
-      const bool l_movie_exists    = FSys::exists(l_movie);
+      const FSys::path l_png    = candidate_render_path(in_ctx, l_cand, false);
+      const FSys::path l_movie  = candidate_movie_path(in_ctx, l_cand);
+      const bool l_png_exists   = FSys::exists(l_png);
+      const bool l_movie_exists = FSys::exists(l_movie);
       if (!l_png_exists || !l_movie_exists) {
         ++l_missing_artifact;
         l_cand.render_status_ = candidate_render_status::failed;
@@ -1131,9 +1048,8 @@ boost::asio::awaitable<void> apply_render_report(
     const FSys::path l_exr = candidate_render_path(in_ctx, l_cand, true);
     if (!FSys::exists(l_exr)) {
       SPDLOG_LOGGER_WARN(
-          g_logger_ctrl().get_http(),
-          "AI 灯光回传：候选 {}（轮次 {}）的线性 EXR 不在 {}（可选产物，不影响本轮判断）", l_cand.uuid_id_,
-          l_it->iteration_, l_exr.generic_string()
+          g_logger_ctrl().get_http(), "AI 灯光回传：候选 {}（轮次 {}）的线性 EXR 不在 {}（可选产物，不影响本轮判断）",
+          l_cand.uuid_id_, l_it->iteration_, l_exr.generic_string()
       );
     }
 

@@ -82,12 +82,12 @@ render_report_route → parse_round_render_report → apply_render_report(sql, c
 
 | 函数 | 位置 | 职责 |
 | --- | --- | --- |
-| `brief_error` | `.cpp:85` | `return in_err.what();` —— **不截断**（§15.21 已撤掉 `brief_text` / 512 上限）。截断会把真正的原因（往往在末尾的 cause 那一段）先砍掉 |
-| `advance_session` | `.cpp` 状态机入口 | 按入口状态分派到 spec 分支 / generating 分支；**分支只算 SQL 不落库**，成功路径上才 `run_sql`；接缝抛错时**不回滚、不改状态**，只写 `failure_reason_` 再重抛（§15.21） |
+| （错误摘要 helper 已全部删除） | — | `brief_text` 与 `brief_error` **都不存在了**（§15.21 撤 `brief_text`，§15.22 撤 `brief_error`）。失败原因一律直接取 `in_err.what()`，**不截断** —— 截断会把真正的原因（往往在末尾的 cause 那一段）先砍掉 |
+| `advance_session` | `.cpp` 状态机入口 | 按入口状态分派到 spec 分支 / generating 分支；**分支只算 SQL 不落库**，成功路径上才 `run_sql`；失败**原样上抛**（不落库、不改状态、不回滚）—— 原因由 HTTP 响应体承载，前端读 body 显示（§15.21、§15.23） |
 | `apply_judgement` | `.cpp` | 定稿 / 续轮 / 全否三种决定都回到 `generating`（D17）；定稿同时置 `is_selected_`（D20） |
 | `parse_round_render_report` | `.cpp:760` | **严格**：`candidates` / 元素的 `candidate_id` / `status`（`json_val::require_enum<candidate_render_status>`，不许静默回落）→ 502；**宽松**：`candidate_index` / `render_ms` / `light_count` / `metrics` / 轮级 `error` 缺失取默认、形状不符丢该字段 + WARN |
 | `mark_iteration_rendered` | `.cpp` | 候选 UPDATE 只写 `render_status_` / `render_ms_` / `light_count_` / `metrics_`；轮次转 `awaiting_judgement` + 起算 4 小时 |
-| `mark_iteration_failed` | `.cpp:828` | 整轮失败收尾：**只**写 `session.failure_reason_`，轮次状态与候选行一概不动（D28） |
+| `mark_iteration_failed` | `.cpp:828` | 整轮失败收尾：**只**写 `session.failure_reason_`，轮次状态与候选行一概不动（D28）。**这是 `failure_reason_` 现在唯一的写入点** —— 异步路径（工作机回传）没有人能看到响应体，所以必须落库（§15.23） |
 | `apply_render_report` | `.cpp:844` | 签名 `(sqlite_database&, const http::kitsu_ctx_t&, const uuid& task_id, const round_render_report_t&)`；两条出口：有 `rendered`（且落点的 PNG 真的在，D41）→ `mark_iteration_rendered`；否则 → 失败出口 |
 | `candidate_render_path` | `.h:133` | 产物落点的**唯一**计算处（D44，`inline`） |
 | `build_session_detail` | `.cpp` | 六表聚合读模型 |

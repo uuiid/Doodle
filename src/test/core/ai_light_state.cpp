@@ -696,39 +696,44 @@ DOODLE_FIXTURE_TEST_CASE_CORO(generate_spec_rejects_unresolvable_operator, fixtu
   }
 }
 
-DOODLE_FIXTURE_TEST_CASE_CORO(advance_session_rolls_back_to_entry_state_on_seam_failure, fixture_t) {
+DOODLE_FIXTURE_TEST_CASE_CORO(advance_session_leaves_nothing_on_seam_failure, fixture_t) {
   // draft + 有提示词 + 有参考图 → advance_session 会走 generate_spec。
   // 而 fixture 的 submitter_ 是个不存在的 person，所以接缝在**联网之前**就以
-  // bad_request 失败 —— 正好用来验「接缝抛错 → 回滚」这条契约。
+  // bad_request 失败 —— 正好用来验「接缝抛错 → 库里一行没动」这条契约。
   // 刻意不要子行（Spec/轮次/候选）：这样「什么都没写进去」才能被干净地断言出来。
   l_fx.build(ai_light_session_state::draft, ai_light_iteration_state::generated, 0, false);
 
   // 参考图是 spec 分支的前置条件；同时它也是这条用例的第二个观察点 ——
-  // 回滚承诺「不会丢已上传的参考图」，而参考图挂在会话上（cascade），
-  // 所以回滚只能改会话行，绝不能碰参考图。这一点此前没有被断言过。
+  // 失败承诺「不会丢已上传的参考图」，而参考图挂在会话上（cascade），
+  // 所以失败路径只能不碰会话行，绝不能碰参考图。
   const auto l_ref = add_reference(l_fx);
 
   auto l_session = l_fx.reload_session();
   BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::draft));
 
-  bool l_threw = false;
+  bool l_threw        = false;
+  std::string l_what{};
   try {
     // operator_id 传 nil → 由 advance_session 回落到 session.submitter_（不存在的 person）
     co_await advance_session(*l_fx.sql_, l_session, uuid{});
   } catch (const doodle_error& in_err) {
     l_threw = true;
+    l_what  = in_err.what();
     BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
   }
   BOOST_TEST(l_threw);
 
-  // 关键断言：状态回到入口状态，且**没有**生成任何 Spec —— 半成品比失败更糟
+  // 关键断言：状态留在入口状态，且**没有**生成任何 Spec —— 半成品比失败更糟。
+  // 「原因可见」这一点现在由异常自己承担（HTTP 层把它写进响应体的 error 字段），
+  // 不再落 failure_reason_：同步失败有对话方（前端读 body），异步失败才需要写列。
   auto l_after = l_fx.reload_session();
   BOOST_TEST(en(l_after.state_) == en(ai_light_session_state::draft));
-  BOOST_TEST(!l_after.failure_reason_.empty());
+  BOOST_TEST(l_after.failure_reason_.empty());
+  BOOST_TEST(!l_what.empty());
   BOOST_TEST(l_fx.sql_->get_ai_light_specs(l_after.uuid_id_).empty());
   BOOST_TEST(l_fx.sql_->get_ai_light_iterations(l_after.uuid_id_).empty());
 
-  // 参考图必须还在（回滚只写会话行）
+  // 参考图必须还在（失败路径不写会话行）
   auto l_refs_after = l_fx.sql_->get_ai_light_references(l_after.uuid_id_);
   BOOST_TEST(l_refs_after.size() == 1);
   BOOST_TEST(l_refs_after.front().uuid_id_ == l_ref.uuid_id_);
@@ -764,27 +769,34 @@ DOODLE_FIXTURE_TEST_CASE_CORO(advance_session_redistills_from_awaiting_spec_conf
 
   auto l_session = l_fx.reload_session();
   bool l_threw   = false;
+  std::string l_what{};
   try {
     co_await advance_session(*l_fx.sql_, l_session, uuid{});
   } catch (const doodle_error& in_err) {
     l_threw = true;
+    l_what  = in_err.what();
     // 400 在这里**不足以**说明问题：状态机「没有可推进的步骤」也是 400。
     // 真正要证的是「awaiting_spec_confirm 被 spec 分支接住、真的去蒸馏了」，
-    // 所以下面还要看 failure_reason_ 里是谁在报错。fixture 的 submitter_ 是
-    // 个不存在的 person，所以接缝必然以 bad_request 收场 —— 那正是「进去了」的证据。
+    // 所以还要看异常文本里是谁在报错。fixture 的 submitter_ 是个不存在的 person，
+    // 所以接缝必然以 bad_request 收场 —— 那正是「进去了」的证据。
     BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
   }
   BOOST_TEST(l_threw);
 
-  // 接缝在写库**之前**抛，所以不该留下半成品 Spec；状态回滚到入口状态
+  // 接缝在写库**之前**抛，所以不该留下半成品 Spec；状态留在入口状态
   auto l_after = l_fx.reload_session();
   BOOST_TEST(en(l_after.state_) == en(ai_light_session_state::awaiting_spec_confirm));
   BOOST_TEST(l_fx.sql_->get_ai_light_specs(l_after.uuid_id_).size() == 1);
-  // 这条断言就是本用例的全部意义：失败原因必须来自**接缝**（解析不出触发人），
+  // 这两条断言就是本用例的全部意义：失败原因必须来自**接缝**（解析不出触发人），
   // 而不是状态机那句「当前没有可推进的步骤」。没有它，「重出方案」就是空话 ——
   // /spec 只有第一次（draft）能成功，而两种失败又都是 400，状态码分不出来。
-  BOOST_TEST(l_after.failure_reason_.find("没有可推进的步骤") == std::string::npos);
-  BOOST_TEST(!l_after.failure_reason_.empty());
+  //
+  // 原因现在从**异常文本**读（原来读 failure_reason_）：同步失败不再落库，
+  // HTTP 层把 what() 写进响应体的 error 字段交给前端显示。
+  BOOST_TEST(l_what.find("没有可推进的步骤") == std::string::npos);
+  BOOST_TEST(l_what.find("触发人") != std::string::npos);
+  // 失败不落库：会话行上不该留下原因
+  BOOST_TEST(l_after.failure_reason_.empty());
 }
 
 // ===========================================================================

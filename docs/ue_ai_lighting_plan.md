@@ -1485,8 +1485,9 @@ generate_candidates(in_sql, req)     -> candidate_generation_result_t // 已落�
 structure_feedback(in_sql, req)      -> std::vector<axis_step_t>      // 已落地，见 §15.9
 ```
 
-**接缝契约（D3）**：接缝抛异常 ⇒ `advance_session` 记录 `failure_reason_`，然后原样重抛。失败
-**没有独立状态**（§15.10 起 `failed` 已取消）：`failure_reason_` 是失败的唯一记录，会话永远停在
+**接缝契约（D3）**：接缝抛异常 ⇒ 异常**原样向上抛**，由 HTTP 层把 `what()` 写进响应体
+（前端无论状态码是多少都读 body 显示）。失败
+**没有独立状态**（§15.10 起 `failed` 已取消）：会话永远停在
 「可以重试」的那个状态上。
 理由是：半成品比失败更糟 —— 一个「有 Spec 但没有候选」的会话会让前端以为可以判断了。
 接缝实现者不得留下非幂等的部分写入。
@@ -1496,6 +1497,10 @@ structure_feedback(in_sql, req)      -> std::vector<axis_step_t>      // 已落�
 > 是靠「压根没改过」实现的，而不是靠一次补偿写入。「不得留下非幂等的部分写入」这条要求随之更硬 ——
 > 调用方已经没有回滚动作可以兜底了。
 > `/spec/confirm` 的 Spec 确认不随失败撤销：确认是人工动作（SQL 也已单独提交），该行为不受本次修订影响。
+
+> **再次修订（§15.23）**：这里**也不再**写 `failure_reason_` 了。同步失败有对话方（前端读 body），
+> 再写一列只是重复、而且会和异步失败抢同一个字段。`failure_reason_` 现在**只**由
+> `mark_iteration_failed()` 写入 —— 那条路径是工作机在发请求，没有人能看到它的响应体。
 
 **其它本轮定下的取舍**：
 
@@ -2821,7 +2826,7 @@ render_report_route → parse_round_render_report → apply_render_report
 | 基线关卡推导（D8 从「只透传」改成「真的去问」） | `ai_light_orchestrator.cpp:282-295`：`http::auto_task::shot_render_light(io_session.project_id_, io_session.task_id_)` → `l_req.baseline_level_ = l_assembly.original_map_.generic_string()` |
 | 载荷组装 + 进 `command_` | 同文件 `:339-346`（`out_dir_` = `make_iteration_relative_dir(会话 uuid, 轮次 uuid)`；候选行不写路径列）· `:395 l_task.command_ = l_payload;` —— 载荷里放的是相对路径（`make_iteration_relative_dir` / `make_candidate_file_name`），见 §15.14 |
 | 回传解析 | `parse_round_render_report` `:760` |
-| 整轮失败落库 | `mark_iteration_failed` `:828`（原因**原样**写入，不截断 —— §15.21 撤掉了 `brief_text`） |
+| 整轮失败落库 | `mark_iteration_failed` `:828`（原因**原样**写入，不截断 —— §15.21 撤掉了 `brief_text`，§15.22 又撤掉了 `brief_error`） |
 | 回传落库 | `apply_render_report(sql, ctx, task_id, report)`（两条出口；产物落点按 `candidate_render_path(ctx, …)` 现算，D41/D44） |
 | 声明 | `ai_light_orchestrator.h:142` / `:155` / `:161`（都带 `DOODLELIB_API`） |
 | 回传路由 | 声明 `ai_light.h:158`（`DOODLE_HTTP_JWT_FUN(render_report_route)`，**不做项目权限检查** —— 调用方是工作机的机器 JWT，与 `/api/data/jobs/{id}` 同一信任级）· 注册 `kitsu.cpp:333` `/api/doodle/ai/light/render_report/{}` · 实现 `ai_light.cpp:790`（先查任务类型必须是 `ai_light`，再解析、落库，回执带 `iteration_state` / `session_state` / `failure_reason`） |
@@ -3723,3 +3728,65 @@ sql , 不在……这两个函数中运行 sql, 这样, 出现错误可以直接
 **验证**：`Ninja_debug` 的 `debug_doodle` 构建通过（`doodle_lib.dll` + `test_main.exe` 链接成功）；
 `--run_test="ai_light_*"` 全绿；全量测试套件除**既有的** `http_listener_port_shm/publish_then_read_round_trips`
 （`memory access violation at address 0x50`，与本改动无关，见 §15.18）之外全绿。
+
+## §15.22 删除 `brief_error`（退回裸 `in_err.what()`）
+
+**起因（m01723 原文）**：「去除 brief_error 方法」。
+
+§15.21 已经把 `brief_error` 掏空成 `return in_err.what();` —— 它只剩一个转发壳，
+却让每个 catch 点多一层间接、多一个「这个函数以后会不会又悄悄加逻辑」的悬念。本次直接删掉：
+
+| 位置 | 改动 |
+|---|---|
+| 匿名命名空间的 `brief_error`（原 `.cpp:82`） | **删除**（连注释一起）。那条「不截断、截断会先砍掉末尾的 cause 段」的理由没有丢：它改写在两个 catch 点的行内注释里 |
+| generating 分支的装配 try/catch（`.cpp:323`） | `l_assembly_err = brief_error(in_err);` → `l_assembly_err = in_err.what();` |
+| `advance_session` 的 catch（`.cpp:611`） | 同上，并补两行注释说明「直接取 `what()`、不截断」的理由 |
+| `advance_session_local` 的 catch（`.cpp:690`） | 同上 |
+
+**现在全库没有任何错误摘要 helper**：失败原因就是 `std::exception::what()` 原文。
+`failure_reason_` 因此**没有长度上限** —— 这是有意的（用户要在后期统一调整错误记录与返回值），
+但换错误处理方案时要记得该列当前仍是按短字符串设计的。
+
+**验证**：`debug_doodle` 构建通过、`doodle_lib.dll` 链接成功；`--run_test="ai_light_*"` 131 例全绿；
+`--run_test="!http_listener_port_shm"` 248 例全绿。
+
+## §15.23 同步推进失败不再落库（删除两段 catch）
+
+**起因（m01783）**：「是否可以这样更改 `ai_light_orchestrator.cpp:523~592`, 将异常直接传播到 http
+返回值, 不进行落库」。前提由用户在 m01790 补全：「前端的失败, 由 http 返回值描述, 并且不管 http
+错误码是多少, 都会读取 http 的 bod 作为错误显示」。
+
+**核实**：服务端确实把消息放进 body —— `session_data::make_error_code_msg()`
+（`http_session_data.cpp:313`）构造
+`nlohmann::json{{"error", in_str}, {"code", in_msg_code}}.dump()`；
+`http_request_error` 在 `:145-174` 被捕获后走 `make_error_code_msg(e.code_status_(), e.what())`
+—— **`what()` 原文进 body，状态码另行携带**。所以这条前端约定与现有的错误管道严丝合缝。
+
+**结论：可行，但有一处不能一起删。** `mark_iteration_failed()` 写 `session.failure_reason_`
+是**异步路径唯一的失败记录面** —— 工作机在发请求，它的 HTTP 客户端能看到响应体，**人看不到**。
+删掉它，会话页会出现「无限等待中」而没有任何解释。故只删同步路径的两段。
+
+| 位置 | 改动 |
+|---|---|
+| `advance_session` | 删除 try/catch/rethrow 与收尾落库（约 40 行），改为一条直线：取 `l_operator` → 按入口状态分派 → 分支返回后 `run_sql` 提交 → 拿 `dispatch_`/`broadcast_task_id_` 派发广播；异常自然上抛 |
+| `advance_session_local` | 同上；`std::optional<ai_light_launch_plan_t> l_plan{}` / `std::exception_ptr l_err{}` / `std::string l_reason{}` 三件套与整个 catch 一并消失，函数成一条直线 |
+| `mark_iteration_failed` | **保留**（异步路径的唯一记录面，见上） |
+
+**行为变化（需要知道）**：失败时 `failure_reason_` 既不写入、也不再被清空。
+成功路径写 `failure_reason_ = ""` 清掉上次失败记录的行为**保留**（它在分支的 `l_session_next` 上，
+与本次改动无关）。变的只是失败时不再留下痕迹 —— 原因现在只存在于那一次的响应体里。
+
+**规范依据**：这条改动落实 [cpp_guidelines.md](cpp_guidelines.md) §1.2
+「失败原因交给异常；只有『没有对话方』的失败才落库」。
+
+**测试**：两个用例原本断言被删掉的行为，已改写（不是删除 —— 它们各自的观察点仍然有价值）：
+- `advance_session_rolls_back_to_entry_state_on_seam_failure` → `advance_session_leaves_nothing_on_seam_failure`：
+  断言改为「状态留在入口状态 + 无 Spec/轮次 + 参考图还在 + `failure_reason_` **空**」，并新增
+  `BOOST_TEST(!l_what.empty())` 保住「失败原因是可见的」这个观察点。
+- `advance_session_redistills_from_awaiting_spec_confirm`：原因改从**异常文本**读
+  （`l_what.find("没有可推进的步骤") == npos` + 新增 `l_what.find("触发人") != npos`），
+  另加一条 `failure_reason_` 为空的断言。用例名不变 —— 它证的是「重出方案真的进了 spec 分支」，
+  与原因存哪里无关。
+
+**验证**：`debug_doodle` 构建通过、`doodle_lib.dll` + `test_main.exe` 链接成功；
+`--run_test="ai_light_*"` 全绿；`--run_test="!http_listener_port_shm"` 全绿。
