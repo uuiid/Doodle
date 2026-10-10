@@ -44,9 +44,9 @@ BOOST_AUTO_TEST_SUITE(http_listener_port_shm)
 BOOST_AUTO_TEST_CASE(publish_then_read_round_trips) {
   BOOST_REQUIRE(publish_listener_port(50021));
 
-  std::uint16_t l_port{0};
-  BOOST_REQUIRE(read_listener_port(l_port));
-  BOOST_CHECK_EQUAL(l_port, 50021);
+  auto l_port = read_listener_port();
+  BOOST_REQUIRE(l_port.has_value());
+  BOOST_CHECK_EQUAL(*l_port, 50021);
 }
 
 /// 后写入者直接覆盖旧值 —— 对应"新启动进程覆盖旧的"这一需求
@@ -54,22 +54,22 @@ BOOST_AUTO_TEST_CASE(second_publish_overwrites_the_first) {
   BOOST_REQUIRE(publish_listener_port(50021));
   BOOST_REQUIRE(publish_listener_port(51234));
 
-  std::uint16_t l_port{0};
-  BOOST_REQUIRE(read_listener_port(l_port));
-  BOOST_CHECK_EQUAL(l_port, 51234);
+  auto l_port = read_listener_port();
+  BOOST_REQUIRE(l_port.has_value());
+  BOOST_CHECK_EQUAL(*l_port, 51234);
 }
 
 /// 端口边界值不被截断
 BOOST_AUTO_TEST_CASE(port_boundaries_survive_round_trip) {
-  std::uint16_t l_port{0};
-
   BOOST_REQUIRE(publish_listener_port(1));
-  BOOST_REQUIRE(read_listener_port(l_port));
-  BOOST_CHECK_EQUAL(l_port, 1);
+  auto l_port = read_listener_port();
+  BOOST_REQUIRE(l_port.has_value());
+  BOOST_CHECK_EQUAL(*l_port, 1);
 
   BOOST_REQUIRE(publish_listener_port(65535));
-  BOOST_REQUIRE(read_listener_port(l_port));
-  BOOST_CHECK_EQUAL(l_port, 65535);
+  l_port = read_listener_port();
+  BOOST_REQUIRE(l_port.has_value());
+  BOOST_CHECK_EQUAL(*l_port, 65535);
 }
 
 /// 魔数不对时读取失败, 且不抛异常
@@ -77,8 +77,7 @@ BOOST_AUTO_TEST_CASE(read_rejects_bad_magic) {
   BOOST_REQUIRE(publish_listener_port(50021));
   corrupt_shm_magic(0xDEADBEEFU);
 
-  std::uint16_t l_port{0};
-  BOOST_CHECK(!read_listener_port(l_port));
+  BOOST_CHECK(!read_listener_port().has_value());
 
   // 收尾: 恢复成合法内容, 避免影响后续用例
   BOOST_REQUIRE(publish_listener_port(50024));
@@ -88,8 +87,7 @@ BOOST_AUTO_TEST_CASE(read_rejects_bad_magic) {
 BOOST_AUTO_TEST_CASE(publish_and_read_never_throw) {
   BOOST_CHECK_NO_THROW({
     publish_listener_port(50025);
-    std::uint16_t l_port{0};
-    read_listener_port(l_port);
+    read_listener_port();
   });
 }
 
@@ -111,11 +109,11 @@ BOOST_AUTO_TEST_CASE(listener_publishes_the_kernel_assigned_port) {
   l_app_io.restart();
   l_app_io.run_for(std::chrono::milliseconds{500});
 
-  std::uint16_t l_port{0};
-  BOOST_REQUIRE(read_listener_port(l_port));
-  BOOST_CHECK_NE(l_port, 1234);
+  auto l_port = read_listener_port();
+  BOOST_REQUIRE(l_port.has_value());
+  BOOST_CHECK_NE(*l_port, 1234);
   // 系统分配的一定是有效非零端口
-  BOOST_CHECK_GT(l_port, 0);
+  BOOST_CHECK_GT(*l_port, 0);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

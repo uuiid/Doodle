@@ -63,11 +63,12 @@ MObject get_shape(const MObject& in_object);
 MObject get_transform(const MObject& in_object);
 MDagPath get_dag_path(const MObject& in_object);
 
-void add_child(const MObject& in_praent, MObject& in_child);
+// 这三个的第二参数只被读、从不写（见 .cpp 定义）：不要因为名字带 in_ 就以为它是出参。
+void add_child(const MObject& in_praent, const MObject& in_child);
 void add_child(const MDagPath& in_praent, const MDagPath& in_child);
 
-void add_mat(const MObject& in_obj, MObject& in_ref_obj);
-void copy_mat(const MDagPath& in_obj, MDagPath& in_ref_obj);
+void add_mat(const MObject& in_obj, const MObject& in_ref_obj);
+void copy_mat(const MDagPath& in_obj, const MDagPath& in_ref_obj);
 std::string get_node_full_name(const MObject& in_obj);
 std::string get_node_full_name(const MDagPath& in_obj);
 std::string get_node_name(const MObject& in_obj, bool abs = false);

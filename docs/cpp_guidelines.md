@@ -57,6 +57,47 @@ boost::asio::awaitable<spec_branch_result> advance_session_spec_branch(...);
 `in_`/`io_` 前缀用在**真正会被修改**的入参上时，那正是本条禁止的形态：
 要么改成返回值，要么把「读」与「写」拆成两次调用。
 
+#### 存量盘点（2026-10 全库扫过一遍）
+
+扫了 `doodle_lib` 398 + `doodle_core` 116 + `maya_plug` 98 共 612 个源文件，
+**真正的业务级出参只有 11 处**，其中 4 处已修。剩下的是**有意保留**的，不是漏网：
+
+| 类别 | 数量 | 处置 |
+|---|---|---|
+| nlohmann `to_json` / `from_json`（含 friend） | ~430 | **豁免**：签名由库规定 |
+| `boost::system::error_code&`（`json_body.h` / `multipart_body.h` / `zlib_deflate_file_body.h`） | ~12 | **豁免**：Asio/Beast 规定 |
+| Maya SDK（`MPxNode::compute`、`MFn*`、`MStatus&`、`captureCallback`） | 多 | **豁免**：SDK 规定 |
+| 第三方 vendored（`bcrypt/`、`ai/Math/`、`ai/AnimProcessing/`，均带 NVIDIA Apache-2.0 头） | 17 | **豁免**：不是本库代码 |
+
+**注意**：`src/doodle_lib/sqlite_orm` **不是** vendored 库 —— 它是本项目自己写的 ORM
+（命名空间 `doodle::orm`，头注释 "Created by TD"）。只有它的虚接口
+（`collect_bind_variants(bind_value_collector_t&)`、`prepare(session&, const to_sql_ctx&)`）按框架规定豁免。
+
+已修正的 4 处：
+
+| 位置 | 改前 | 改后 |
+|---|---|---|
+| [url_sign.h:70](../src/doodle_lib/http_client/url_sign.h) | `static bool parse_exp(std::string_view, std::int64_t& out_exp)` | `static std::optional<std::int64_t> parse_exp(std::string_view)` |
+| [maya_tool.h:66](../src/maya_plug/data/maya_tool.h) | `add_child(const MObject&, MObject& in_child)` | `add_child(const MObject&, const MObject&)` — 函数体从不写它，只是漏了 `const` |
+| [maya_tool.h:69](../src/maya_plug/data/maya_tool.h) | `add_mat(const MObject&, MObject& in_ref_obj)` | 同上，`const` |
+| [maya_tool.h:70](../src/maya_plug/data/maya_tool.h) | `copy_mat(const MDagPath&, MDagPath& in_ref_obj)` | 同上，`const` |
+
+后三处值得记一笔：它们的参数**看起来**是出参（名字还带 `in_` 前缀），实际只被读。
+而紧挨着的 `add_child(const MDagPath&, const MDagPath&)` 重载本来就是全 `const` 的 ——
+同一组函数自相矛盾。**遇到「疑似出参」先读函数体**，有一半的候选其实是漏 `const`。
+
+有意保留的 7 处，各有正当理由（改动前先读这张表，别再重复判断）：
+
+| 位置 | 为什么不改 |
+|---|---|
+| `http_client_core.h` 的 `read_and_write(..., response<Resp>& out_res, ...)` | `async_compose` 的 composed operation：**响应在函数返回时还不存在**，只能在 await 期间填入。结构上必须用引用（约 45 个调用点） |
+| `ai_light_rig_ops.h:48` `apply_axis_step(lighting_rig_t& io_rig, ...)` | 真 in-out：就地改灯光再返回「是否变了」，`io_` 前缀已如实命名 |
+| `ai_light_seam_common.h:42` `first_light_with_role(lighting_rig_t& io_rig, ...)` | 返回的是 rig 内部的非 const 别名指针，取可写引用是刻意的 |
+| `ai_light_orchestrator.h:149` `apply_judgement(..., ai_light_session&, ai_light_iteration&, ...)` | 就地持久化 ORM 实体，返回三元组只会更糟 |
+| `ai_light_json_validation.cpp:78` `walk_schema_consistency(..., std::vector<std::string>& io_out)` | 递归累加器，改返回值要在每层合并 vector |
+| `auto_task.h:271` `apply_to(run_ue_assembly_arg& out)` | 往外部拥有的结构体里填 13 个字段，`out` 前缀已如实命名 |
+| `move_create.h:37` / `comment.h:8-9` | 就地修改已有对象（`set_*` 语义），改成返回值会打断调用方的既有流程 |
+
 ### 1.2 失败原因交给异常；只有「没有对话方」的失败才落库
 
 - **同步请求失败**（HTTP 路由内）：异常向上抛，由 HTTP 层把 `what()` 放进响应体

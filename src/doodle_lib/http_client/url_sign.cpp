@@ -49,16 +49,15 @@ std::string url_sign_t::sign_path(
   );
 }
 
-bool url_sign_t::parse_exp(std::string_view in_exp, std::int64_t& out_exp) {
-  if (in_exp.empty()) return false;
+std::optional<std::int64_t> url_sign_t::parse_exp(std::string_view in_exp) {
+  if (in_exp.empty()) return std::nullopt;
   std::int64_t l_value{};
   for (const auto l_ch : in_exp) {
-    if (l_ch < '0' || l_ch > '9') return false;
+    if (l_ch < '0' || l_ch > '9') return std::nullopt;
     l_value = l_value * 10 + (l_ch - '0');
-    if (l_value < 0) return false;  // 溢出
+    if (l_value < 0) return std::nullopt;  // 溢出
   }
-  out_exp = l_value;
-  return true;
+  return l_value;
 }
 
 bool url_sign_t::verify(
@@ -73,11 +72,11 @@ bool url_sign_t::verify(
   if (in_path.empty()) return l_fail("路径为空");
   if (in_exp.empty() || in_sig.empty()) return l_fail("缺少 exp/sig 参数");
 
-  std::int64_t l_exp{};
-  if (!parse_exp(in_exp, l_exp)) return l_fail("exp 不是合法的 unix 时间戳");
-  if (l_exp < in_now) return l_fail("签名已过期");
+  const auto l_exp = parse_exp(in_exp);
+  if (!l_exp) return l_fail("exp 不是合法的 unix 时间戳");
+  if (*l_exp < in_now) return l_fail("签名已过期");
 
-  const auto l_expect = sign(in_path, l_exp, in_uid, in_secret);
+  const auto l_expect = sign(in_path, *l_exp, in_uid, in_secret);
   if (l_expect.size() != in_sig.size()) return l_fail("签名长度不符");
 
   // 大小写不敏感比较: 第三方可能改动大小写, 但不该因此失效

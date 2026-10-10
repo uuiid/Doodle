@@ -193,15 +193,15 @@ BOOST_AUTO_TEST_CASE(canonical_is_path_newline_exp_newline_uid) {
 }
 
 BOOST_AUTO_TEST_CASE(parse_exp_only_accepts_decimal_digits) {
-  std::int64_t l_value{};
-  BOOST_CHECK_EQUAL(url_sign_t::parse_exp("1700000000", l_value), true);
-  BOOST_CHECK_EQUAL(l_value, 1700000000);
-  BOOST_CHECK_EQUAL(url_sign_t::parse_exp("", l_value), false);
-  BOOST_CHECK_EQUAL(url_sign_t::parse_exp("-1", l_value), false);
-  BOOST_CHECK_EQUAL(url_sign_t::parse_exp("1.5", l_value), false);
-  BOOST_CHECK_EQUAL(url_sign_t::parse_exp("0x10", l_value), false);
-  BOOST_CHECK_EQUAL(url_sign_t::parse_exp("17 00", l_value), false);
-  BOOST_CHECK_EQUAL(url_sign_t::parse_exp(" 1700000000", l_value), false);
+  const auto l_value = url_sign_t::parse_exp("1700000000");
+  BOOST_REQUIRE(l_value.has_value());
+  BOOST_CHECK_EQUAL(*l_value, 1700000000);
+  BOOST_CHECK(!url_sign_t::parse_exp("").has_value());
+  BOOST_CHECK(!url_sign_t::parse_exp("-1").has_value());
+  BOOST_CHECK(!url_sign_t::parse_exp("1.5").has_value());
+  BOOST_CHECK(!url_sign_t::parse_exp("0x10").has_value());
+  BOOST_CHECK(!url_sign_t::parse_exp("17 00").has_value());
+  BOOST_CHECK(!url_sign_t::parse_exp(" 1700000000").has_value());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

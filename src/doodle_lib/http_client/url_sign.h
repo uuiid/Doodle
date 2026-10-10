@@ -65,8 +65,9 @@ struct DOODLELIB_API url_sign_t {
       std::chrono::seconds in_ttl = g_default_ttl
   );
 
-  /// 解析查询串里的过期时间(纯十进制, 不做异常)
-  static bool parse_exp(std::string_view in_exp, std::int64_t& out_exp);
+  /// 解析查询串里的过期时间(纯十进制, 不做异常)。
+  /// 失败返回 nullopt —— 用返回值而不是 out 参数(C++ Core Guidelines F.17)。
+  static std::optional<std::int64_t> parse_exp(std::string_view in_exp);
 
   /**
    * 校验签名。in_path 为**不含查询串**的路径部分; in_uid 可为空串; in_now 由调用方传入

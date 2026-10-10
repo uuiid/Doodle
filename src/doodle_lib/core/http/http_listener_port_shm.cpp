@@ -59,31 +59,30 @@ bool publish_listener_port(std::uint16_t in_port) {
   }
 }
 
-bool read_listener_port(std::uint16_t& out_port) {
+std::optional<std::uint16_t> read_listener_port() {
   try {
     // open_only: 只读取, 不产生副作用, 也不会创建段
     shared_memory_object l_shm{
         boost::interprocess::open_only, std::string{g_listener_port_shm_name}.c_str(), boost::interprocess::read_only
     };
     mapped_region l_region{l_shm, boost::interprocess::read_only};
-    if (l_region.get_size() < sizeof(http_listener_port_shm_t)) return false;
+    if (l_region.get_size() < sizeof(http_listener_port_shm_t)) return std::nullopt;
 
     http_listener_port_shm_t l_data{};
     std::memcpy(&l_data, l_region.get_address(), sizeof(l_data));
     // 校验魔数与版本, 挡住从未写入过或已损坏的内容
-    if (l_data.magic_ != g_listener_port_shm_magic) return false;
-    if (l_data.version_ != g_listener_port_shm_version) return false;
+    if (l_data.magic_ != g_listener_port_shm_magic) return std::nullopt;
+    if (l_data.version_ != g_listener_port_shm_version) return std::nullopt;
 
-    out_port = l_data.port_;
-    return true;
+    return l_data.port_;
   } catch (const std::exception& in_err) {
     default_logger_raw()->log(log_loc(), level::err, "读取共享内存 {} 中的监听端口失败: {}", g_listener_port_shm_name, in_err.what());
-    return false;
+    return std::nullopt;
   } catch (...) {
     default_logger_raw()->log(
         log_loc(), level::err, "读取共享内存 {} 中的监听端口失败: 未知错误", g_listener_port_shm_name
     );
-    return false;
+    return std::nullopt;
   }
 }
 

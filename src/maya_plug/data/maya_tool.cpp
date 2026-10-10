@@ -204,7 +204,7 @@ MObject get_transform(const MObject& in_object) {
   DOODLE_CHICK(!k_r.isNull(), "没有找到变换");
   return k_r;
 }
-void add_child(const MObject& in_praent, MObject& in_child) {
+void add_child(const MObject& in_praent, const MObject& in_child) {
   add_child(get_dag_path(in_praent), get_dag_path(in_child));
 }
 void add_child(const MDagPath& in_praent, const MDagPath& in_child) {
@@ -222,7 +222,7 @@ void add_child(const MDagPath& in_praent, const MDagPath& in_child) {
   k_s = k_node.addChild(l_node);
   DOODLE_MAYA_CHICK(k_s);
 }
-void add_mat(const MObject& in_object, MObject& in_ref_obj) {
+void add_mat(const MObject& in_object, const MObject& in_ref_obj) {
   MStatus l_s{};
   auto k_mat = get_shading_engine(in_ref_obj);
   DOODLE_CHICK(k_mat.hasFn(MFn::kShadingEngine), "没有找到着色集");
@@ -230,7 +230,7 @@ void add_mat(const MObject& in_object, MObject& in_ref_obj) {
   DOODLE_MAYA_CHICK(l_s);
   l_set.addMember(in_object);
 }
-void maya_plug::copy_mat(const MDagPath& in_obj, MDagPath& in_ref_obj) {
+void maya_plug::copy_mat(const MDagPath& in_obj, const MDagPath& in_ref_obj) {
   MStatus l_s{};
   auto k_mat = get_shading_engine(in_ref_obj.node());
   DOODLE_CHICK(k_mat.hasFn(MFn::kShadingEngine), "没有找到着色集");

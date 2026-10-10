@@ -6,6 +6,7 @@
 #include <doodle_lib/configure/doodle_lib_export.h>
 
 #include <cstdint>
+#include <optional>
 #include <string_view>
 
 namespace doodle::http {
@@ -54,11 +55,10 @@ DOODLELIB_API bool publish_listener_port(std::uint16_t in_port);
 /**
  * @brief 从固定共享内存读取监听端口
  *
- * 会校验魔数与版本号, 因此从未写入过或内容损坏时返回 false。
+ * 会校验魔数与版本号, 因此从未写入过或内容损坏时返回 nullopt。
  *
- * @param out_port 读取成功时写入该参数
- * @return 读取且校验通过返回 true
+ * @return 读取且校验通过时返回端口号, 否则 nullopt
  */
-DOODLELIB_API bool read_listener_port(std::uint16_t& out_port);
+DOODLELIB_API std::optional<std::uint16_t> read_listener_port();
 
 }  // namespace doodle::http
