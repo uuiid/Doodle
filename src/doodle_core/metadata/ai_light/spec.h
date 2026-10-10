@@ -391,8 +391,9 @@ struct DOODLE_CORE_API ai_light_spec {
   nlohmann::json reference_stats_{};
   nlohmann::json evidence_{};
   spec_degrade_level degrade_level_{spec_degrade_level::stats_only};
-
+  // 是否已经确认
   bool human_confirmed_{false};
+  // 确认人和时间
   uuid confirmed_by_{};
   std::optional<chrono::system_zoned_time> confirmed_at_{};
   nlohmann::json conflict_resolution_{};
