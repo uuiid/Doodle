@@ -175,7 +175,7 @@ struct upgrade_clear_orphan_task_t : sqlite_upgrade {
   void upgrade(sqlite_storage& in_data) override {
     auto l_s = in_data.create_session();
     using namespace orm;
-    if (!has_table(l_s, "server_task_info_tab")) {
+    if (!l_s.has_reg_table<server_task_info>()) {
       SPDLOG_INFO("upgrade: 启动清理: 库里没有 server_task_info_tab, 跳过 running 任务解绑");
       return;
     }
