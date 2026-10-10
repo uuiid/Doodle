@@ -524,7 +524,7 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
     let up = request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`).set(authHeader);
     for (const img of images) up = up.attach('file', img);
     const upReq = await send(() => up);
-    expect(upReq.status).to.equal(200);
+    expect(upReq.status).to.equal(201);
 
     const req = await send(() =>
       request
@@ -533,7 +533,7 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
         .send({ prompt_text: PROMPT_TEXT })
     );
 
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     expect(req.body.session.state).to.equal('awaiting_spec_confirm');
     expect(req.body.spec_history).to.have.lengthOf(1);
 
@@ -575,7 +575,7 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
         .send({})
     );
 
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     // 确认后立即进入候选生成
     expect(req.body.session.state).to.equal('generating');
     expect(req.body.current_spec.human_confirmed).to.equal(true);
@@ -599,7 +599,7 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
         .send({})
     );
 
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     expect(req.body.already_confirmed).to.equal(true);
     // 重复确认不刷新时间戳（那是「谁在什么时候认的」的证据）
     expect(req.body.spec.confirmed_at).to.equal(confirmedAt);
@@ -703,13 +703,13 @@ describe('AI 灯光 —— 迭代与判断（iterate / judge）', function () {
     const images = listReferenceImages().slice(0, 2);
     let up = request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`).set(authHeader);
     for (const img of images) up = up.attach('file', img);
-    expect((await send(() => up)).status).to.equal(200);
+    expect((await send(() => up)).status).to.equal(201);
 
     expect(
       (await send(() =>
         request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec`).set(authHeader).send({})
       )).status
-    ).to.equal(200);
+    ).to.equal(201);
 
     expect(
       (await send(() =>
@@ -718,13 +718,13 @@ describe('AI 灯光 —— 迭代与判断（iterate / judge）', function () {
           .set(authHeader)
           .send({})
       )).status
-    ).to.equal(200);
+    ).to.equal(201);
 
     const req = await send(() =>
       request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/iterate`).set(authHeader).send({})
     );
 
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     // 引擎内路线：本轮该怎么渲放进 launch_plan
     expect(req.body).to.have.property('launch_plan');
 
@@ -805,7 +805,7 @@ describe('AI 灯光 —— 迭代与判断（iterate / judge）', function () {
         })
     );
 
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     expect(req.body.session.state).to.equal('generating');
     // 判断之后回到 generating，next iteration 由 /iterate 触发
     expect(req.body.session.judgement_due_at).to.equal(null);
