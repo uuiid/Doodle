@@ -16,7 +16,7 @@ enum class DOODLE_CORE_API media_role {
   variant,    // 其他变体
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     media_role, {
                     {media_role::original, "original"},
                     {media_role::thumbnail, "thumbnail"},

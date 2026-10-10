@@ -50,11 +50,11 @@ enum class DOODLE_CORE_API task_type {
   /// 就拿到结果，任务行直接落终态（见 seedance2/task.cpp 的 run_inference_task）。
   inference,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     task_type,
     {{task_type::picture, "picture"}, {task_type::video, "video"}, {task_type::inference, "inference"}}
 );
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     task_status,
 
     {{task_status::preparing, "preparing"},
@@ -71,7 +71,7 @@ enum class task_backend {
   seedance2,          // 豆包/火山方舟 Seedance2
   transfer_station,   // 中转站
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     task_backend,
     {{task_backend::seedance2, "seedance2"}, {task_backend::transfer_station, "transfer_station"}}
 );

@@ -18,7 +18,7 @@ enum class entity_status {
   complete,
   canceled,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     entity_status, {{entity_status::standby, "standby"},
                     {entity_status::running, "running"},
                     {entity_status::complete, "complete"},

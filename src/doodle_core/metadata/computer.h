@@ -10,7 +10,7 @@
 
 namespace doodle {
 enum class computer_status { online, busy, free, offline, unknown };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     computer_status, {{computer_status::unknown, "unknown"},
                       {computer_status::online, "online"},
                       {computer_status::busy, "busy"},

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <doodle_core/lib_warp/json_warp.h>
+
 #include <cstdint>
 #include <nlohmann/json.hpp>
 
@@ -36,7 +38,7 @@ enum class server_task_info_type : std::int32_t {
   ai_light,
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     server_task_info_type, {
                                {server_task_info_type::export_fbx, "export_fbx"},
                                {server_task_info_type::export_sim, "export_sim"},

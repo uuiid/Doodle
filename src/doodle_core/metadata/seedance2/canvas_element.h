@@ -18,7 +18,7 @@ enum class DOODLE_CORE_API canvas_element_type {
   group,   // 组合/分组
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     canvas_element_type,
     {
         {canvas_element_type::text, "text"},

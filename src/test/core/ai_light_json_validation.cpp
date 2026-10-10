@@ -92,6 +92,24 @@ constexpr std::array<std::string_view, 3> g_test_text_enum{"hard", "soft", "very
 
 }  // namespace
 
+/// 只为验证 DOODLE_JSON_SERIALIZE_ENUM_STRICT 语义而设的本地枚举。
+///
+/// 它刻意不落在任何真实数据结构上：本用例要证明的是宏本身「遇到未映射值抛 out_of_range.410」，
+/// 而不是某个业务枚举恰好怎么写。用真实枚举会让这条断言的含义随业务演进而漂移。
+///
+/// 位置很重要：必须与宏展开落在**同一个命名空间**（`doodle::ai_light`）里，
+/// 否则 `get<strict_probe_enum>()` 走 ADL 找不到 `from_json`，会静默退化成
+/// `nlohmann::json` 的隐式转换而不是报错 —— 这类错误表现为编译期的
+/// `enum_name` 模板推导失败，很容易被误读成 magic_enum 的问题。
+enum class strict_probe_enum { alpha, beta };
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
+    strict_probe_enum,
+    {
+        {strict_probe_enum::alpha, "alpha"},
+        {strict_probe_enum::beta, "beta"},
+    }
+)
+
 BOOST_AUTO_TEST_SUITE(ai_light_json_validation)
 
 BOOST_AUTO_TEST_CASE(path_resolver_handles_dots_indexes_and_garbage) {
@@ -233,6 +251,47 @@ BOOST_AUTO_TEST_CASE(enum_readers_validate_against_magic_enum_names) {
     (void)json_val::require_one_of(l_json, "候选生成", "role", g_test_text_enum);
   } catch (const doodle_error&) {
     l_threw = true;
+  }
+  BOOST_TEST(l_threw);
+}
+
+/// DOODLE_JSON_SERIALIZE_ENUM_STRICT 的核心语义：认不出的取值必须当场抛异常。
+///
+/// 这是「本库不再静默吞掉非法枚举」的唯一机器可判定证据 —— 旧的
+/// NLOHMANN_JSON_SERIALIZE_ENUM 在同样输入下会**静默返回第一个枚举值**（默认 alpha），
+/// 于是「模型给了垃圾」会变成一条看起来完全正常的业务数据。
+BOOST_AUTO_TEST_CASE(strict_enum_macro_throws_on_unmapped_value) {
+  // 1) 反序列化：认不出的字符串必须抛，而不是落到 alpha
+  bool                 l_threw = false;
+  const nlohmann::json l_bad   = nlohmann::json("gamma");
+  try {
+    (void)l_bad.get<strict_probe_enum>();
+  } catch (const nlohmann::detail::out_of_range& in_err) {
+    l_threw = true;
+    BOOST_TEST(in_err.id == 410);
+  }
+  BOOST_TEST(l_threw);
+
+  // 2) 映射内的取值照常工作（严格不等于不可用）
+  const nlohmann::json l_alpha = nlohmann::json("alpha");
+  const nlohmann::json l_beta  = nlohmann::json("beta");
+  BOOST_TEST(l_alpha.is_string());
+  BOOST_TEST(en(l_alpha.get<strict_probe_enum>()) == "alpha");
+  BOOST_TEST(en(l_beta.get<strict_probe_enum>()) == "beta");
+
+  // 序列化 -> 反序列化往返
+  const nlohmann::json l_ser = strict_probe_enum::beta;
+  BOOST_TEST(l_ser.get<std::string>() == "beta");
+  BOOST_TEST(en(l_ser.get<strict_probe_enum>()) == "beta");
+
+  // 3) 序列化：枚举值不在映射表中同样抛（这里用强转伪造一个未映射值）
+  l_threw = false;
+  try {
+    const nlohmann::json l_out = static_cast<strict_probe_enum>(99);
+    (void)l_out;
+  } catch (const nlohmann::detail::out_of_range& in_err) {
+    l_threw = true;
+    BOOST_TEST(in_err.id == 410);
   }
   BOOST_TEST(l_threw);
 }

@@ -36,7 +36,7 @@ enum class light_role {
   bounce,
   fx,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     light_role, {
                     {light_role::key, "key"},
                     {light_role::fill, "fill"},
@@ -56,7 +56,7 @@ enum class light_type {
   directional,
   sky,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     light_type, {
                     {light_type::point, "point"},
                     {light_type::spot, "spot"},
@@ -74,7 +74,7 @@ enum class anchor_space {
   world,
   subject,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     anchor_space, {
                       {anchor_space::camera, "camera"},
                       {anchor_space::world, "world"},
@@ -89,7 +89,7 @@ enum class intensity_unit {
   lux,
   unitless,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     intensity_unit, {
                         {intensity_unit::candela, "candela"},
                         {intensity_unit::lumen, "lumen"},
@@ -104,7 +104,7 @@ enum class color_mode {
   rgb,
   filter,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     color_mode, {
                     {color_mode::temperature, "temperature"},
                     {color_mode::rgb, "rgb"},
@@ -118,7 +118,7 @@ enum class light_mobility {
   stationary,
   movable,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     light_mobility, {
                         {light_mobility::static_light, "static_light"},
                         {light_mobility::stationary, "stationary"},
@@ -132,7 +132,7 @@ enum class light_origin {
   artist,
   inherited,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     light_origin, {
                       {light_origin::ai, "ai"},
                       {light_origin::artist, "artist"},
@@ -150,7 +150,7 @@ enum class variant_axis_kind {
   ambient_level,
   grading_strength,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     variant_axis_kind, {
                            {variant_axis_kind::none, "none"},
                            {variant_axis_kind::key_direction, "key_direction"},
@@ -172,7 +172,7 @@ enum class light_op_kind {
   set_exposure,
   set_white_balance,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     light_op_kind, {
                        {light_op_kind::add, "add"},
                        {light_op_kind::modify, "modify"},

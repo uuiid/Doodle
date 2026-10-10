@@ -15,7 +15,7 @@ enum class DOODLE_CORE_API canvas_background_mode {
   dots,   // 网点
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     canvas_background_mode,
     {
         {canvas_background_mode::blank, "blank"},

@@ -16,7 +16,7 @@
 namespace doodle {
 
 enum class inspect_file_type { model_maya };
-NLOHMANN_JSON_SERIALIZE_ENUM(inspect_file_type, {{inspect_file_type::model_maya, "model_maya"}});
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(inspect_file_type, {{inspect_file_type::model_maya, "model_maya"}});
 /**
  * @brief 检查文件
  * 使用 run 检查时, 会自动将 maya 文件向上一级移动, 并备份文件

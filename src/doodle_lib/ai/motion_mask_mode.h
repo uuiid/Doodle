@@ -3,6 +3,8 @@
 //
 #pragma once
 
+#include <doodle_core/lib_warp/json_warp.h>
+
 #include <nlohmann/json.hpp>
 
 namespace doodle::ai {
@@ -13,7 +15,7 @@ enum class motion_mask_mode {
   concat,  ///< motion_mask 与 x 拼接作为额外通道输入
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(motion_mask_mode, {
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(motion_mask_mode, {
   {motion_mask_mode::none, "none"},
   {motion_mask_mode::concat, "concat"},
 })

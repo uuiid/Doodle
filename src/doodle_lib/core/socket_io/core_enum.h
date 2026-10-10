@@ -8,7 +8,7 @@ enum class engine_io_packet_type : std::int8_t { open = 0, close, ping, pong, me
 
 enum class transport_type : std::int8_t { unknown, polling, websocket };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     transport_type, {{transport_type::unknown, "unknown"},
                      {transport_type::polling, "polling"},
                      {transport_type::websocket, "websocket"}}

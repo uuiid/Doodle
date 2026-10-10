@@ -28,7 +28,7 @@ enum class project_styles {
   vr,
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     project_styles, {{project_styles::e2d, "2D Animation"},
                      {project_styles::e2dpaper, "2D Animation (Paper)"},
                      {project_styles::e3d, "3D Animation"},

@@ -9,7 +9,7 @@
 namespace doodle {
 struct task;
 enum class status_automation_change_type { status, ready_for };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     status_automation_change_type,
     {
         {status_automation_change_type::status, "status"},

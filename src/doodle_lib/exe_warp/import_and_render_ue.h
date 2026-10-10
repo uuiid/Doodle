@@ -193,7 +193,7 @@ struct run_ue_assembly_arg {
       j.at("ground_pretreatment_sequence").get_to(p.ground_pretreatment_sequence_);
   }
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     import_ue_type, {
                         {import_ue_type::geo, "geo"},
                         {import_ue_type::char_, "char"},

@@ -16,7 +16,7 @@ enum class metadata_descriptor_data_type {
   boolean,
   checklist,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     metadata_descriptor_data_type,
     {
         {metadata_descriptor_data_type::string, "string"},

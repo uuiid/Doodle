@@ -11,7 +11,7 @@ namespace doodle {
 
 enum class software_enum { maya, unreal_engine, alembic, unreal_engine_sk, maya_sim, maya_rig };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     software_enum, {
                        {software_enum::maya, "maya"},  //
                        {software_enum::unreal_engine, "unreal_engine"},

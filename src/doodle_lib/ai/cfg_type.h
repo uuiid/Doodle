@@ -3,6 +3,8 @@
 //
 #pragma once
 
+#include <doodle_core/lib_warp/json_warp.h>
+
 #include <nlohmann/json.hpp>
 #include <string>
 
@@ -15,7 +17,7 @@ enum class cfg_type {
   separated   ///< out_uncond + w_text*(out_text - out_uncond) + w_constraint*(out_constraint - out_uncond)
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(cfg_type, {
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(cfg_type, {
   {cfg_type::nocfg, "nocfg"},
   {cfg_type::regular, "regular"},
   {cfg_type::separated, "separated"},

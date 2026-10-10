@@ -36,7 +36,7 @@ enum class candidate_render_status {
   rendered,
   failed,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     candidate_render_status, {
                                  {candidate_render_status::pending, "pending"},
                                  {candidate_render_status::rendered, "rendered"},

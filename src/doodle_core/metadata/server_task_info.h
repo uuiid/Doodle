@@ -35,7 +35,7 @@ enum class server_task_info_status {
   unknown,
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     server_task_info_status, {
                                  {server_task_info_status::submitted, "submitted"},
                                  {server_task_info_status::assigned, "assigned"},

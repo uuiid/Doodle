@@ -39,7 +39,7 @@ enum class simulation_abc_import {
   without_abc,
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     simulation_abc_import,
 
     {{simulation_abc_import::with_abc, "with_abc"}, {simulation_abc_import::without_abc, "without_abc"}}

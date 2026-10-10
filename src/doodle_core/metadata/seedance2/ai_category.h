@@ -42,7 +42,7 @@ struct DOODLE_CORE_API ai_category {
   }
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     ai_category_type, {
                           {ai_category_type::shot, "shot"},
                           {ai_category_type::assets, "assets"},

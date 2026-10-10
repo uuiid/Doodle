@@ -13,7 +13,7 @@
 namespace doodle {
 // 状态
 enum class preview_file_statuses { processing, ready, broken };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     preview_file_statuses, {
                                {preview_file_statuses::processing, "processing"},
                                {preview_file_statuses::ready, "ready"},
@@ -22,7 +22,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 )
 // 验证 状态
 enum class preview_file_validation_statuses { validated, rejected, neutral };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     preview_file_validation_statuses, {
                                           {preview_file_validation_statuses::validated, "validated"},
                                           {preview_file_validation_statuses::rejected, "rejected"},
@@ -40,7 +40,7 @@ enum class preview_file_source_enum {
   // 来自渲染输出
   render_output
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     preview_file_source_enum, {
                                   {preview_file_source_enum::webgui, "webgui"},
                                   {preview_file_source_enum::auto_light_generate, "auto_light_generate"},

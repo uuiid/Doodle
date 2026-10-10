@@ -1,4 +1,4 @@
-﻿//
+//
 // Created by TD on 2021/6/25.
 //
 
@@ -19,6 +19,61 @@
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
+
+/**
+ * @brief 严格枚举序列化宏, 遇到未映射值时抛出 out_of_range.410 异常
+ *
+ * 上游 nlohmann-json 自 3.13.0 起提供 @c NLOHMANN_JSON_SERIALIZE_ENUM_STRICT, 本库当前依赖
+ * 固定在 3.12.0, 尚无该宏, 且其宏体依赖 3.13.0 才引入的内部设施
+ * @c nlohmann::detail::templated_json_throw, 无法原样照搬。此处按上游语义补齐:
+ * 与 @c NLOHMANN_JSON_SERIALIZE_ENUM 同构, 但把"找不到映射就静默落到首项"换成抛异常:
+ * - 序列化: 枚举值不在映射表中 → out_of_range.410
+ * - 反序列化: JSON 值不在映射表中 → out_of_range.410 (异常信息带上该 JSON 值)
+ *
+ * 依赖的 @c nlohmann::detail::out_of_range::create / @c nlohmann::detail::concat 在 3.12.0 中均存在。
+ */
+#define DOODLE_JSON_SERIALIZE_ENUM_STRICT(ENUM_TYPE, ...)                                       \
+  template <typename BasicJsonType>                                                             \
+  inline void to_json(BasicJsonType& j, const ENUM_TYPE& e) {                                   \
+    static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");              \
+    static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                         \
+    auto it = std::find_if(                                                                     \
+        std::begin(m), std::end(m),                                                             \
+        [e](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool {                       \
+          return ej_pair.first == e;                                                            \
+        }                                                                                       \
+    );                                                                                          \
+    if (it != std::end(m)) {                                                                    \
+      j = it->second;                                                                           \
+    } else {                                                                                    \
+      throw nlohmann::detail::out_of_range::create(                                             \
+          410, "enum value out of range for " #ENUM_TYPE, nullptr                               \
+      );                                                                                        \
+    }                                                                                           \
+  }                                                                                             \
+  template <typename BasicJsonType>                                                             \
+  inline void from_json(const BasicJsonType& j, ENUM_TYPE& e) {                                 \
+    static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");              \
+    static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                         \
+    auto it = std::find_if(                                                                     \
+        std::begin(m), std::end(m),                                                             \
+        [&j](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool {                      \
+          return ej_pair.second == j;                                                           \
+        }                                                                                       \
+    );                                                                                          \
+    if (it != std::end(m)) {                                                                    \
+      e = it->first;                                                                            \
+    } else {                                                                                    \
+      throw nlohmann::detail::out_of_range::create(                                             \
+          410,                                                                                  \
+          nlohmann::detail::concat(                                                             \
+              "enum value out of range for " #ENUM_TYPE ": ",                                   \
+              j.dump(-1, ' ', false, nlohmann::detail::error_handler_t::replace)                \
+          ),                                                                                    \
+          &j                                                                                    \
+      );                                                                                        \
+    }                                                                                           \
+  }
 
 // partial specialization (full specialization works too)
 namespace nlohmann {

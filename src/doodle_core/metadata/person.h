@@ -19,7 +19,7 @@ enum class person_role_type {
   client,
   vendor,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     person_role_type, {{person_role_type::user, "user"},
                        {person_role_type::admin, "admin"},
                        {person_role_type::supervisor, "supervisor"},
@@ -37,7 +37,7 @@ enum class contract_types {
   apprentice,
   internship,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     contract_types, {{contract_types::open_ended, "open_ended"},
                      {contract_types::fixed_term, "fixed_term"},
                      {contract_types::short_term, "short_term"},

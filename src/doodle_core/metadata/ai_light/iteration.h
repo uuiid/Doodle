@@ -40,7 +40,7 @@ enum class ai_light_iteration_state {
   /// 已判断
   judged,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     ai_light_iteration_state, {
                                   {ai_light_iteration_state::generated, "generated"},
                                   {ai_light_iteration_state::dispatched, "dispatched"},
@@ -62,7 +62,7 @@ enum class judgement_decision {
   /// 全部拒绝，终止会话
   reject_all,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     judgement_decision, {
                             {judgement_decision::accept, "accept"},
                             {judgement_decision::continue_iteration, "continue_iteration"},

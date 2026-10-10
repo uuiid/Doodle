@@ -31,7 +31,7 @@ enum class preset_source {
   /// 从被接受的会话里回捞
   learned,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     preset_source, {
                        {preset_source::artist, "artist"},
                        {preset_source::builtin, "builtin"},

@@ -12,7 +12,7 @@ enum class att_enum : std::uint32_t {
   max      = 2
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     att_enum, {{att_enum::overtime, "overtime"}, {att_enum::leave, "leave"}, {att_enum::max, "max"}}
 
 )

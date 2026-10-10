@@ -73,7 +73,7 @@ enum class ai_light_session_state {
   /// 美术迟迟不来**不会**改变这个状态，只会让 is_judgement_overdue() 变成 true。
   awaiting_judgement,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     ai_light_session_state, {
                                 {ai_light_session_state::draft, "draft"},
                                 {ai_light_session_state::awaiting_spec_confirm, "awaiting_spec_confirm"},

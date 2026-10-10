@@ -24,7 +24,7 @@ enum class assets_type_enum {
   other,  // 基本是相机
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     assets_type_enum, {
                           {assets_type_enum::scene, "scene"},
                           {assets_type_enum::prop, "prop"},

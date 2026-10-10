@@ -37,7 +37,7 @@ enum class spec_degrade_level {
   /// 参考不可用/完全冲突 → 只用提示词 + 预设库检索
   prompt_only,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     spec_degrade_level, {
                             {spec_degrade_level::stats_only, "stats_only"},
                             {spec_degrade_level::prompt_only, "prompt_only"},
@@ -57,7 +57,7 @@ enum class evidence_source {
   /// 默认值兜底
   default_value,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     evidence_source, {
                          {evidence_source::reference_stats, "reference_stats"},
                          {evidence_source::prompt, "prompt"},
