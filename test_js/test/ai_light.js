@@ -46,7 +46,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const IMAGE_DIR = process.env.AI_LIGHT_IMAGE_DIR || path.resolve(__dirname, '..', '..', 'build', 'image');
 
 // 有灯光任务的镜头 id（建会话的唯一入口需要它）
-const ENTITY_ID = process.env.AI_LIGHT_ENTITY_ID || '';
+const ENTITY_ID = process.env.AI_LIGHT_ENTITY_ID || '019e8267-2505-70d6-8050-430e4565ad8e';
 
 // 是否跑完整链路（会真的调 LLM 推理、产生计费）
 const FULL_FLOW = process.env.AI_LIGHT_FULL_FLOW === '1';
