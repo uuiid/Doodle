@@ -1040,7 +1040,7 @@ describe('AI 灯光 —— 预设库（preset）', function () {
         })
     );
 
-    expect(req.status).to.equal(200);
+    expect(req.status).to.equal(201);
     expect(req.body).to.have.keys([
       'id', 'name', 'tags', 'embedding', 'embedding_dim', 'rig_fragment',
       'applicable', 'stats_target', 'enabled', 'source', 'created_by',
