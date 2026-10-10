@@ -17,10 +17,11 @@
 // 用法见 §15.6）。**仓库里已经没有 not_implemented 的接缝了。**
 //
 // 接缝契约（实现方必须遵守）：
-//   1. 抛出即视为「本轮无法推进」。调用方 advance_session() 会把会话状态回滚到进入时的
-//      状态并记录 failure_reason_，所以实现方**不需要**自己清理状态。
+//   1. 抛出即视为「本轮无法推进」。调用方 advance_session() 只把原因记进会话的
+//      failure_reason_，**不改会话状态、也不回滚** —— 状态机的分支自身不落库，
+//      所以抛错时库里本来就一行没动，实现方**不需要**自己清理状态。
 //   2. 但必须保证「抛之前没有落库」，或者「落库的部分是幂等可重入的」——
-//      调用方只回滚会话状态这一列，不会回滚接缝自己写下的东西。
+//      调用方不会回滚接缝自己写下的东西（它根本没有回滚动作）。
 //      **受控例外**：generate_spec / generate_candidates / structure_feedback 经由
 //      run_inference_task 写下一行推理任务与对应的扣费记录。这是有意保留的 —— 推理确实
 //      发生了，抹掉它等于抹掉计费凭证。除此之外它们不写任何 ai_light_* 表
@@ -81,8 +82,10 @@ namespace doodle::ai_light {
 /// 少了参考图就只能蒸出一份 prompt-only 的方案，而那是主输入的静默丢失。
 /// 因此建会话接口**不**调本函数 —— 建会话时参考图还不可能存在（见 shot_session_route::post）。
 ///
-/// 失败时回滚会话状态到进入时的状态、记 failure_reason_，然后重新抛出。
-/// 这样不会留下卡在 generating 的会话，也不会丢已上传的参考图
+/// 失败时不改会话状态、**也没有回滚动作**：分派到的分支只算 SQL 不落库（见 .cpp 里
+/// 各分支「返回 SQL 而不是就地执行」的说明），抛错时库里一行没动，所以退回原状态
+/// 是恒等操作 —— 唯一要做的是记 failure_reason_，然后重新抛出。
+/// 这样不会留下卡在 generating 的会话（本来就没改过），也不会丢已上传的参考图
 /// （参考图的外键 cascade 挂在会话上，删会话才会连带删图）。
 ///
 /// 分派只看状态，所以**同一个状态只能有一个后继步骤** —— 这是结构性约束。
@@ -91,7 +94,7 @@ namespace doodle::ai_light {
 /// in_operator_id 是本次推进的触发人（person uuid），转手给 generate_spec 做计费主体与
 /// 签名 URL 的 uid。**不给默认值**：见 spec_generation_request_t::operator_id_ 的说明。
 /// 为 nil 时回落到 in_session.submitter_；两者都 nil 抛 bad_request（无法解析工作室、
-/// 无法计费）—— 这条在 try 内，所以照常回滚并记 failure_reason_。
+/// 无法计费）—— 这条在 try 内，所以照常记 failure_reason_。
 DOODLELIB_API boost::asio::awaitable<void> advance_session(
     sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
 );
@@ -106,7 +109,7 @@ DOODLELIB_API boost::asio::awaitable<void> advance_session(
 ///   * 非 generating 状态（例如 draft / awaiting_spec_confirm）推进的是 Spec 那一步，
 ///     **没有**渲染计划可给 —— 调用方看到 nullopt 应当按「只推进了状态」处理，不是错误；
 ///   * 生成分支失败（装配推不出来、接缝抛错）照 advance_session 的老规矩办：
-///     回滚会话状态 + 写 failure_reason_，然后**重新抛出**。
+///     记 failure_reason_，然后**重新抛出**（同样没有回滚动作）。
 DOODLELIB_API boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_local(
     sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
 );
@@ -228,7 +231,7 @@ DOODLELIB_API boost::asio::awaitable<void> apply_render_report(
     const ai_light_iteration_locator_t& in_locator, const round_render_report_t& in_report
 );
 
-/// 整轮失败收尾：只写 `session.failure_reason_`（截断到 512），状态与候选行一概不动（D28）。
+/// 整轮失败收尾：只写 `session.failure_reason_`（不截断），状态与候选行一概不动（D28）。
 /// 定位不到轮次抛 404（任务号为空时按 in_locator 的会话 + 轮次号定位，D54）。
 DOODLELIB_API boost::asio::awaitable<void> mark_iteration_failed(
     sqlite_database& in_sql, const uuid& in_server_task_info_id, const ai_light_iteration_locator_t& in_locator,

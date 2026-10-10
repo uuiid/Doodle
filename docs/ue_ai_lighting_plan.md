@@ -1485,12 +1485,17 @@ generate_candidates(in_sql, req)     -> candidate_generation_result_t // 已落�
 structure_feedback(in_sql, req)      -> std::vector<axis_step_t>      // 已落地，见 §15.9
 ```
 
-**接缝契约（D3）**：接缝抛异常 ⇒ `advance_session` 把会话状态**回滚到入口状态**并记录
-`failure_reason_`，然后原样重抛。失败**没有独立状态**（§15.10 起 `failed` 已取消）：
-`failure_reason_` 是失败的唯一记录，会话永远停在「可以重试」的那个状态上。
+**接缝契约（D3）**：接缝抛异常 ⇒ `advance_session` 记录 `failure_reason_`，然后原样重抛。失败
+**没有独立状态**（§15.10 起 `failed` 已取消）：`failure_reason_` 是失败的唯一记录，会话永远停在
+「可以重试」的那个状态上。
 理由是：半成品比失败更糟 —— 一个「有 Spec 但没有候选」的会话会让前端以为可以判断了。
-接缝实现者不得留下非幂等的部分写入。`/spec/confirm` 的 Spec 确认**不随回滚撤销**：
-确认是人工动作，不该因为下游能力缺失而被撤销。
+接缝实现者不得留下非幂等的部分写入。
+
+> **已修订（§15.21）**：这里原本写的是「把会话状态**回滚到入口状态**」。撤掉回滚后语义**没有变弱**，
+> 反而变强：状态机的分支自身不落库，抛错时库里本来就一行没动，所以「会话停在可以重试的状态上」
+> 是靠「压根没改过」实现的，而不是靠一次补偿写入。「不得留下非幂等的部分写入」这条要求随之更硬 ——
+> 调用方已经没有回滚动作可以兜底了。
+> `/spec/confirm` 的 Spec 确认不随失败撤销：确认是人工动作（SQL 也已单独提交），该行为不受本次修订影响。
 
 **其它本轮定下的取舍**：
 
@@ -2816,7 +2821,7 @@ render_report_route → parse_round_render_report → apply_render_report
 | 基线关卡推导（D8 从「只透传」改成「真的去问」） | `ai_light_orchestrator.cpp:282-295`：`http::auto_task::shot_render_light(io_session.project_id_, io_session.task_id_)` → `l_req.baseline_level_ = l_assembly.original_map_.generic_string()` |
 | 载荷组装 + 进 `command_` | 同文件 `:339-346`（`out_dir_` = `make_iteration_relative_dir(会话 uuid, 轮次 uuid)`；候选行不写路径列）· `:395 l_task.command_ = l_payload;` —— 载荷里放的是相对路径（`make_iteration_relative_dir` / `make_candidate_file_name`），见 §15.14 |
 | 回传解析 | `parse_round_render_report` `:760` |
-| 整轮失败落库 | `mark_iteration_failed` `:828`（原因经 `brief_text` 截断到 512 + `"...(已截断)"`，`brief_text` 在 `:85`） |
+| 整轮失败落库 | `mark_iteration_failed` `:828`（原因**原样**写入，不截断 —— §15.21 撤掉了 `brief_text`） |
 | 回传落库 | `apply_render_report(sql, ctx, task_id, report)`（两条出口；产物落点按 `candidate_render_path(ctx, …)` 现算，D41/D44） |
 | 声明 | `ai_light_orchestrator.h:142` / `:155` / `:161`（都带 `DOODLELIB_API`） |
 | 回传路由 | 声明 `ai_light.h:158`（`DOODLE_HTTP_JWT_FUN(render_report_route)`，**不做项目权限检查** —— 调用方是工作机的机器 JWT，与 `/api/data/jobs/{id}` 同一信任级）· 注册 `kitsu.cpp:333` `/api/doodle/ai/light/render_report/{}` · 实现 `ai_light.cpp:790`（先查任务类型必须是 `ai_light`，再解析、落库，回执带 `iteration_state` / `session_state` / `failure_reason`） |
@@ -2874,7 +2879,7 @@ render_report_route → parse_round_render_report → apply_render_report
 |---|---|---|
 | 解析 | `parse_full_round_keeps_every_field` · `parse_defaults_missing_loose_fields` · `parse_requires_candidates_array` · `parse_rejects_unknown_status` · `parse_rejects_bad_candidate_uuid` · `parse_rejects_non_object_candidate` · `parse_keeps_round_error_text` · `parse_drops_broken_metrics_only` | 严格/宽松分界逐条（含 `status="succeeded"` 必须 502 —— 钉住「不许静默回落」；`error` + 空 `candidates` 是合法报文） |
 | 落库 | `apply_report_advances_iteration_and_session` · `apply_report_keeps_paths_derivable_from_the_row` · `apply_report_partial_failure_still_advances` · `apply_report_error_without_rendered_writes_failure_reason` · `apply_report_all_failed_writes_failure_reason` | 轮次 `awaiting_judgement` + `render_ms_total_` 求和 + 会话 `awaiting_judgement`；**候选级失败不推翻整轮**，部分结果照落（失败那张仍是 `failed`，不伪造成出图）；轮级 `error_` 才是整轮失败（状态原地不动、只写 `failure_reason_`） |
-| 归属/边界 | `apply_report_rejects_unknown_task`（404） · `apply_report_rejects_candidate_from_another_round`（400） · `apply_report_rejects_judged_iteration`（400） · `mark_iteration_failed_truncates_long_reason`（512 + `"...(已截断)"`） · `mark_iteration_failed_unknown_task_is_404` | 回传只认本轮、只认未判断的轮次（D27）；失败原因有长度上限 |
+| 归属/边界 | `apply_report_rejects_unknown_task`（404） · `apply_report_rejects_candidate_from_another_round`（400） · `apply_report_rejects_judged_iteration`（400） · `mark_iteration_failed_keeps_reason_verbatim`（原样落库，不截断 —— §15.21） · `mark_iteration_failed_unknown_task_is_404` | 回传只认本轮、只认未判断的轮次（D27）；失败原因完整保留 |
 
 **回归**：全量 `test_main` **236 用例 / 1847 断言全通过、exit 0**（§15.11 末尾的基线 218 / 1781 —— 用同一配对口径
 统计，差额 = 新增 `ai_light_dispatch` 18 用例 / 66 断言）。本轮 `--run_test=ai_light_*` **119 用例 / 1094 断言**
@@ -3482,7 +3487,7 @@ iterate → 派发（装配硬前置：无 task_id / 装配抛错 / level_sequen
 | 位置 | 改动 |
 |---|---|
 | `src\doodle_core\metadata\ai_light\task_payload.h` | 新增 `ai_light_assembly_file_t{from_, to_}`（键 `from`/`to`）；`ai_light_task_payload_t` 与 `ai_light_launch_plan_t` 各加 `project_dir_` + `assembly_files_`；补 D57 决策注释 |
-| `src\doodle_lib\http_method\kitsu\auto_task.{h,cpp}` | 新增 `shot_render_light_result{arg_, project_dir_, assembly_files_}`、`shot_render_light_builder::run_with_sync()` 与 `build_assembly_files()`、自由函数 `shot_render_light_with_sync(...)`；把原 `shot_render_light` 的取数段抽成 `make_shot_render_light_input(...)`（两个入口共用） |
+| `src\doodle_lib\http_method\kitsu\auto_task.{h,cpp}` | 新增 `shot_render_light_result{arg_, project_dir_, assembly_files_}`、`shot_render_light_builder::run_with_sync()` 与 `build_assembly_files()`、自由函数 `shot_render_light_with_sync(...)`；把原 `shot_render_light` 的取数段抽成 `make_shot_render_light_input(...)`（两个入口共用）**（此形状已被 §15.19 取代，见下）** |
 | `src\doodle_lib\http_method\kitsu\ai_light_orchestrator.cpp` | 派发段改调 `shot_render_light_with_sync`；两条出口（引擎内 `launch_plan` / 队列 `payload`）各多填 3 行 |
 | `src\doodle_lib\exe_warp\ai_light_render.cpp` | 起 UE 前插 `sync_assembly_files(...)` + `fix_project` / `fix_config`；UE 命令行首元素改用**同步后**的 `l_uproject` |
 | `src\test\core\ai_light_dispatch.cpp` | 两个键冻结用例扩键；新增 `assembly_files_round_trip` / `assembly_files_absent_is_tolerated` / `launch_plan_carries_assembly_files` |
@@ -3504,11 +3509,15 @@ iterate → 派发（装配硬前置：无 task_id / 装配抛错 / level_sequen
 而同步清单的 `to_` 是**相对工作机根**。混用一个类型会让「这是谁的根」这个最关键的信息消失，
 所以另立 `ai_light_assembly_file_t`。
 
-**老服务端的回退（滚动升级）**
+**版本兼容：不做**
 
-`from_json` 一律 `contains` 读：老载荷没有这两个键 → `assembly_files_` 为空 →
-工作机只 WARN「载荷里没有装配同步清单，直接用载荷给的工程路径」，退回原行为；
-`ue_project_path_` **保留**，正是为了这条回退路径。两侧都不会因为对端版本旧而崩。
+`from_json` 对这两个键直接 `at` 取（缺键即抛），工作机侧 `sync_assembly_files()` 也把
+`project_dir_` / `assembly_files_` 为空当成**错误载荷**直接 `DOODLE_CHICK` 抛错。
+理由（用户决定）：这条链路**还没有推送到生产**，不存在老载荷，留回退分支只会让
+「工作机上没有那份缓存」这个真正的错误被一句 WARN 掩盖过去，最后表现为 UE 起不来。
+`ue_project_path_` 仍然保留，但语义是**工程文件名**（队列路线）或**本机全路径**（引擎内路线），
+不再是「老载荷回退依据」。契约用例因此只有 `assembly_files_round_trip` /
+`launch_plan_carries_assembly_files` 两个（原先的 `assembly_files_absent_is_tolerated` 已删除）。
 
 **同时修掉的三个既有缺陷（与 D57 无关，但阻塞构建/链接）**
 
@@ -3544,8 +3553,173 @@ Boost.Interprocess 路径问题；非本次改动引入，**未修**（不在 D5
 真机验证时重点看：第一次同步的时长、`fix_project` 后 `.uproject` 的插件段是否被改对、
 以及 `Check_files` 在 `#ifdef NDEBUG` 下读的全是**服务端**路径这件事是否也需要跟着放宽。
 
+---
+
+### 15.19 已落地（批 11：AI 灯光装配推导改为「不扫描」的专用入口 —— 修订 D57 的落地形状）
+
+**起因（用户提出）**：`ai_light_orchestrator.cpp` 原来调 `shot_render_light_with_sync`，
+而这个函数会走完装配任务的**全套阶段**：扫描输出目录、抽 asset key、配对解算输出、
+按角色/道具/地面绑 `skin_path_`/`groom_bind_path_`、在 `#ifdef NDEBUG` 下逐条 `exists` 校验
+服务端网络盘。用户指出对 AI 灯光而言这部分**完全没有任何用处**，
+应当参照 `auto_task.cpp:1035-1234`（`task_sync` 的声明式清单写法）。
+
+**核实结论：用户判断成立，且可以精确划出边界**
+
+- 工作机 `ai_light_render.cpp` 读 `payload_` 的全部取值去重后**恰好只有**
+  `session_id_ / iteration_ / render_map_ / level_sequence_ / movie_pipeline_config_ /
+  ue_project_path_ / candidates_`（+ D57 新增两项）；对 `asset_infos_` / `camera_file_path_` /
+  `ue_asset_path_` **零引用**。
+- UE 侧 `script/uePlug/Doodle/Source/DoodleLightingEditor/Private/DoodleLightingRoundRunner.cpp`
+  只消费 `RenderMap`(`:277`/`:371`) / `LevelSequence`(`:279`/`:377`) /
+  `MoviePipelineConfig`(`:281`/`:422`) / `FrameBegin,FrameEnd`(`:389`) / `Candidates`(`:464`) /
+  `CameraFilePath`(`:283`→`:395`)；**没有任何** `SkinPath` / `Groom` / `AssetInfos` 的消费点。
+- 于是 `scan_shot_output` / `build_asset_keys` / `pair_simulation_outputs` / `bind_asset_extends` /
+  `check_files` / `drop_abc_assets` / `conv_asset_game_paths` 的产物在这条链路上**全无消费者**。
+- 真正要用的字段全部来自**纯路径计算**（`auto_task.cpp:124-126` 自己写着「全部只做路径计算,
+  不访问数据库」）与 project/entity 查询。
+
+**唯一不能省的磁盘访问有两处，都不是那套扫描**
+
+1. `shot_pretreatment_probe::run()`（`auto_task.cpp:207-240`）的 4 次 `FSys::exists`：
+   四条命中才把 `original_map_` 换成预调总关卡 —— 这是语义必需的（决定基线用哪张 map），
+   且它本来就在 `shot_render_light_path_set` 的构造函数内部跑，不额外增加成本。
+2. **交付机位 fbx**：`scan_animation_output`（`auto_task.cpp:464-496`）里靠扫目录找文件名含
+   `_camera_` 的 `.fbx`，找不到直接抛 `"未找到镜头(camera)文件，请确保镜头文件已上传至服务器"`。
+   核实过**没有**任何路径公式能算出它（`get_shots_animation_output_path` 只给到
+   `{code}_{episode}_{shot}` 前缀目录，`_camera_` 段是自由文本），而 UE 侧
+   `DoodleLightingExecutor::PrepareAnchorCamera` 硬性要求它非空
+   （`"载荷里没有交付机位 FBX（camera_file_path）"`），所以**必须保留**这次遍历。
+   但可以收窄成 `find_shot_camera_file()`：**只找相机**，不再顺手把其它 fbx 收成资产输出。
+
+**落地形状（替代 §15.18 的 `shot_render_light_result` / `run_with_sync`）**
+
+| 位置 | 改动 |
+|---|---|
+| `src\doodle_lib\http_method\kitsu\auto_task.h` | `shot_render_light_result` → **`shot_render_light_sync_result`**（窄类型，只带 `render_map_ / level_sequence_import_ / movie_pipeline_config_ / original_map_ / begin_time_ / end_time_ / project_dir_ / uproject_file_name_ / camera_file_path_ / assembly_files_`，**不再持有 `run_ue_assembly_arg`**）；`run_with_sync()` → **`run_sync_only()`**；新增 `find_shot_camera_file()` / `make_sync_identifier()`；`build_assembly_files(const shot_render_light_path_set&, const scene_resolution&)` 改签名 |
+| `src\doodle_lib\http_method\kitsu\auto_task.cpp` | `run_sync_only()` 只做 `resolve_scene_ue_path()` → `find_shot_camera_file()` → `shot_render_light_path_set`（纯路径）→ `build_assembly_files()`；`build_assembly_files` 改为 **task_sync 式逐条 `emplace_back`**，不再从 `ue_asset_path_` 反推 |
+| `src\doodle_lib\http_method\kitsu\ai_light_orchestrator.cpp` | 改调 `shot_render_light_sync_only`；`l_assembly` 直接绑定结果（不再 `.arg_`）；队列出口 `ue_project_path_` 改填 **`uproject_file_name_`**（工程文件名），引擎内出口填本机全路径 `project_dir_ / uproject_file_name_` |
+| `src\doodle_lib\exe_warp\ai_light_render.cpp` | `sync_assembly_files` 的注释与口径写清：`ue_project_path_` 可能给文件名也可能给老式绝对路径，**一律只取文件名**再挂本机工程根 |
+| `docs\ai_light_dispatch_handover.md` | 编排段与工作机段按新口径重写 |
+
+**同步清单按 task_sync 逐条对表**（`auto_task.cpp:1065-1158`）
+
+工程三件套（uproject / Content / Config）→ 逐角色 Content → 逐道具/特效的
+`get_entity_prop_ue_public_files_path()` 与 `get_entity_prop_ue_files_path()`（拼音为空则跳过）
+→ 自动灯光解算+动画产物 2 条 → 灯光分支额外目录（`Import_Vfx`、ep 级 `Vfx`、`Import_WB`、
+`{ep_sc}.uasset`、`{ep_sc}_Zong.umap`）→ 地编预调命中时那 3 条 `asset_copy_`。
+
+**必拷 / 可选的区分被取消**（用户决定）：`task_sync` 原本把后两个 `uasset`/`umap` 放进
+`download_option_file_list_`（仅当本地不存在才拷），但 AI 灯光只下发**一份**清单 ——
+客户端自己确认该不该覆盖，服务端只负责把「这条链路上可能要哪些文件」说全。
+契约因此不必再分两层。
+
+**`project_dir_` 口径统一为 task_sync 的 `{code}/{bian_hao_}/{uproj stem}`**（用户决定）。
+注意 `resolve_scene_ue_path()` 内部的 `scene_ue_path_` 用的是 `EP{episodes:04}`，两者形状不同；
+后者是**服务端**自己的缓存根（只在服务端拼绝对目标时用），前者才是**工作机**的工程根口径，
+所以本次统一不会影响服务端装配路径的既有行为。
+
+**改动后不变量**
+
+- `shot_render_light(...)` 与 `run()` **一字未动**：`distributed_task.cpp:22,57` 的
+  `/run_ue_assembly` 行为完全不变（构建时 `distributed_task.cpp.obj` 无需重编即可链接通过）。
+- 契约（`project_dir` / `assembly_files` 两个键、`from` 绝对 / `to` 相对）全部不变 ——
+  本条在 §15.20 修订：两个键改为**必需**，`from_json` 用 `at` 取值，容错用例已删除。
+
+**验证**：`Ninja_debug` 的 `debug_doodle` 全绿（`doodle_lib.dll` + `test_main.exe` +
+`doodle_kitsu_supplement.exe` 均链接成功）；`--run_test="ai_light_*"` **132 用例全通过**；
+`shot_render_light_paths` **9 用例全通过**；全量 **255 例仅 1 例失败**，即 §15.18 已记录的既有
+`http_listener_port_shm` 崩溃（与本改动无关）。
 
 
 
 
 
+
+
+---
+
+## §15.20 去掉 D57 的载荷兼容分支（两个键改为必需）
+
+**起因（用户提出，m01304 原文）**：「去除 老载荷照旧容错, 现在不做兼容, 这些代码都没有被推送到生产环境中」。
+
+**结论**：D57 引入的两个键 `project_dir` / `assembly_files` 从「缺键即默认、工作机回退」改为
+**必需键**。依据是这条链路**尚未推送到生产**—— 不存在任何老载荷，为它保留容错分支只会把
+「工作机上没有那份缓存」这个真正的错误降级成一句 WARN，最终表现为 UE 起不来而没人知道原因。
+
+**三处改动**
+
+| 位置 | 改动 |
+|---|---|
+| `src\doodle_core\metadata\ai_light\task_payload.h` | `ai_light_launch_plan_t::from_json` 与 `ai_light_task_payload_t::from_json` 的 `project_dir` / `assembly_files` 两行由 `if (j.contains(...)) j.at(...)` 改为直接的 `j.at(...).get_to(...)`（其余键保持原有 `contains` 口径，本次不动）；D57 注释块与两个字段的 doc 注释删去「老载荷回退」措辞，改写明这是必需键 |
+| `src\doodle_lib\exe_warp\ai_light_render.cpp` | `sync_assembly_files()` 删掉「`assembly_files_` 为空 → WARN + 返回 `ue_project_path_`」的整段回退；改为开头两条 `DOODLE_CHICK` 硬校验（`project_dir_` 空、`assembly_files_` 空各自抛错，均带轮次）；`l_prj_dir` 不再有「空则直接用根」的兜底；函数头注释重写，写明「载荷缺这两项就是错误的载荷」 |
+| `src\test\core\ai_light_dispatch.cpp` | 删除 `assembly_files_absent_is_tolerated` 用例（它验证的正是已取消的容错行为） |
+
+**保留不动的部分**：`ue_project_path_` 字段本身留着，但语义已明确为「队列路线 = 工程文件名」/
+「引擎内路线 = 本机全路径」，**不再是回退依据**；`ai_light_assembly_file_t::from_json` 本来就用
+`at`，无需改。`fix_project` / `fix_config` 的调用位置不变。
+
+**验证**：见本轮收口报告（构建 `Ninja_debug` 的 `debug_doodle`、`ai_light_*` 与
+`shot_render_light_paths` 套件）。
+
+---
+
+## §15.21 撤掉状态机的「回滚」，分支改为只算 SQL（修订 §15.4 / §15.11 / D-7）
+
+**起因（用户提出，m01421 原文）**：「关于 `ai_light_orchestrator.cpp:499~685` 这两个函数中的回滚方案,
+是否可以使用 将 `advance_session_spec_branch` 和 `advance_session_generating_branch` 函数直接返回将运行的
+sql , 不在……这两个函数中运行 sql, 这样, 出现错误可以直接抛出, 可以直接不用回滚, 未出现错误可以直接修改状态」。
+随后（m01457 原文）：「`brief_error` 不保留, 我会在后期调整整个错误记录以及返回值的问题, 先按照抛出完整堆栈做,
+无所谓长度, 按照上面那三步改」。
+
+**结论：方向成立，但被替换的不是「回滚」，而是回滚的一半。** 三条事实决定了这一点：
+
+1. **`run_sql` 自身就是原子的。** `sqlite_database::run_sql`（`src/doodle_lib/sqlite_orm/sqlite_database.cpp:1610`）
+   走 `session_.transaction()`（BEGIN）→ 逐条执行 → `commit()`；未提交时
+   `transaction_guard::~transaction_guard()`（`src/doodle_lib/sqlite_orm/orm/session.cpp:392`）承担 rollback。
+   所以两个分支里的 SQL **从来没有需要回滚过**。
+2. **`l_rollback` 回滚的是内存里的 `in_session`，不是 SQL 批次。** 而两个分支的全部失败点
+   （接缝 `generate_spec` / `generate_candidates`、装配推导、各条 `DOODLE_CHICK_HTTP`）都在 `run_sql`
+   **之前**——抛错时库里一行没动。旧写法先在内存里把 `io_session.state_` 改成新值再入批，这才需要
+   `l_rollback` 去「改回来」。
+3. **回滚在两个分支里从来是恒等操作。** 入口只可能是 `draft` / `awaiting_spec_confirm` / `generating`，
+   它们的「原状态」恰好就是「分支没改过」的那个值（`awaiting_judgement` 走不到有推进的分支，落在
+   400 那条）。所以 `l_rollback` 唯一实际效果是把 `failure_reason_` 写进去。
+
+**顺带修掉的一个既有错位**：`in_session` 是按值传入的局部量，而调用方在它外面就已改库 ——
+`ai_light.cpp` 的 `spec_confirm_route` 先 `l_session.state_ = generating`（内存）并落库，再
+`co_await advance_session(...)`（`ai_light.cpp:657`）。`advance_session` 接管的是**副本**，回滚也只写库里
+那一行，于是失败时库被退回 `awaiting_spec_confirm` 而调用方手里的 `l_session.state_` 仍是 `generating`。
+改成「分支只算 SQL」之后这个错位自然消失：状态不再是「谁先改了内存」，而是由调用方在成功路径上一次性提交。
+
+**落地形状（不是「分支直接返回 SQL」）**：`advance_session_generating_branch` 不只有 SQL —— 它还
+`co_await generate_candidates`、跑装配推导、末尾要派发 + 广播。让调用方执行一个「不知道里面有什么」的
+批次更糟。所以采用：
+
+| 位置 | 改动 |
+|---|---|
+| `advance_session_spec_branch` | 签名改为 `awaitable<spec_branch_result>(sqlite_database&, const ai_light_session&, const uuid&)`；**不再碰 `io_session`**，会话行的新值在副本 `l_session_next` 上组装；`co_return spec_branch_result{.sqls_ = {...}}` |
+| `advance_session_generating_branch` | 同上，返回 `awaitable<generating_branch_result>`（`sqls_` / `plan_` / `broadcast_task_id_` / `dispatch_` 四个字段）；语句先在**局部**批次上组装、函数末尾才 `co_return`，保证任何一条 `DOODLE_CHICK` 抛错时返回值压根没被构造出来；删除两处 `co_await in_sql.run_sql(...)` |
+| `struct spec_branch_result` / `struct generating_branch_result` | 只为承载返回值而存在的小结构体。**禁止非常量引用 out 参数**（C++ Core Guidelines F.17，用户强制规范）——即使包一层结构体更啰嗦，也必须用返回值 |
+| `struct generating_branch_result` | 除 `sqls_` 外还承载「派发与广播」这条**内部任务分发**（`uuid broadcast_task_id_`、`bool dispatch_`）。派发**不是**状态机落库的一部分，留在这里比让调用方去猜不透明批次里有什么更安全；它在 `run_sql` 之后执行，语义与旧代码一致 |
+| `advance_session` / `advance_session_local` | **删除两个 `l_rollback` lambda**（共 40 行）；成功路径改为 `auto l_res = co_await advance_session_spec_branch(...); co_await in_sql.run_sql(std::move(l_res.sqls_));`；catch 之后从「回滚 + 重抛」变成「只写 `failure_reason_` + 记 WARN + 重抛」，写失败只记 ERROR 日志、绝不吞掉原始异常 |
+| `brief_error` / `brief_text` / `g_failure_reason_max` | 删除 `g_failure_reason_max = 512` 与 `brief_text`；`brief_error` 改为 `return in_err.what();`（**不截断**）。`mark_iteration_failed` 的 `failure_reason_ = brief_text(in_reason)` 改为直接赋值。理由：截断会把真正的原因（往往在末尾的 cause 那一段）先砍掉；失败记录与返回值的整体调整放到后期做 |
+| `ai_light_orchestrator.h` | 接缝契约第 1 条改写为「调用方只把原因记进 `failure_reason_`，**不改会话状态、也不回滚**」；`advance_session` / `advance_session_local` 的失败说明同步改写；`mark_iteration_failed` 的「截断到 512」改为「不截断」 |
+| `src/test/core/ai_light_dispatch.cpp` | `mark_iteration_failed_truncates_long_reason` 改写为 `mark_iteration_failed_keeps_reason_verbatim`（600 字符原样落库） |
+
+**协程类型的一条硬约束（踩过一次）**：分支里要 `co_await` 接缝，所以它们**必须**是协程，返回类型也
+必须是能承载 `co_await` 的 awaitable。直接写 `orm::sql_modify_statement_vector_t advance_session_spec_branch(...)`
+并 `co_return l_sqls;` 会报
+`error C2039: 'promise_type': is not a member of 'std::coroutine_traits<doodle::orm::sql_modify_statement_vector_t,...>'`
+——裸的返回类型不是协程返回类型。**解法是包一层结果结构体**（`awaitable<spec_branch_result>`），
+而**不是**改走 out 参数：本项目**禁止非常量引用入参返回结果**（用户 m01651 定下的强制规范，
+依据 [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)，尤其 F.17
+「For "out" output values, prefer return values to output parameters」）——即使包结构体更啰嗦，
+也必须用返回值。
+
+**一个副作用（正面）**：改用返回值后，「抛错时不能留下半截批次」这条约束变得**结构上成立** ——
+中途抛错时返回值对象压根没被构造出来，而 out 参数形态下它是"已被部分的填过、只是约定不读"。
+约束从"靠约定"变成"靠类型"。
+
+**验证**：`Ninja_debug` 的 `debug_doodle` 构建通过（`doodle_lib.dll` + `test_main.exe` 链接成功）；
+`--run_test="ai_light_*"` 全绿；全量测试套件除**既有的** `http_listener_port_shm/publish_then_read_round_trips`
+（`memory access violation at address 0x50`，与本改动无关，见 §15.18）之外全绿。

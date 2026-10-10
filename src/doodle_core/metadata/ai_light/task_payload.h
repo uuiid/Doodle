@@ -74,7 +74,8 @@
 //              "{code}/{归档编号}/{uproj stem}" 口径逐字一致）。
 //          入口是工作机自算的（用户决定）：根由本机定，服务端只给相对形状 —— 与 D38/D39 同一条
 //          原则，只是这次连"从哪取"也要一并下发（装配源不在工作机上）。
-//          老载荷没有这两个键 → 工作机回退到 ue_project_path_（from_json 一律 contains 读）。
+//          这两个键是**必需键**：没有老载荷要兼容（D57 落地时链路还没上生产），
+//          from_json 直接 at() 取值，缺键即抛 —— 别为了"宽容"再退回 contains。
 //
 
 #pragma once
@@ -236,9 +237,8 @@ struct DOODLE_CORE_API ai_light_launch_plan_t {
   std::int32_t frame_begin_{0};
   std::int32_t frame_end_{0};
   /// .uproject 绝对路径（本机起 UE 的第一个参数）。
-  /// **队列路线**：这是**服务端**算出的路径（`D:/sy_magic/ue_projects/{code}/EP{ep:04}/{stem}`，
-  /// 服务端自己那份缓存），工作机上通常不存在 —— 工作机会按 `project_dir_` + 本机
-  /// `user_work_root_` 自算工程根并覆盖它（D57），这里保留只为老载荷兼容与日志对照。
+  /// **队列路线**：服务端只放**工程文件名**（不是路径）—— 工作机按 `project_dir_` + 本机
+  /// `user_work_root_` 自算工程根再挂上它（D57）。
   /// **引擎内路线**：发起方就是本机，这个路径是真的。
   std::string ue_project_path_{};
   /// 与 auto_light 同源的相机文件（视频路径不用它，见 camera_file_path_ 的说明）。
@@ -246,9 +246,9 @@ struct DOODLE_CORE_API ai_light_launch_plan_t {
   /// 装配工程根，**相对 `core_set::get_set().user_work_root_`**（D57）：
   /// `{项目code}/{场景归档编号}/{uproj stem}` —— 与 task_sync 的本地缓存口径逐字一致，
   /// 所以同一条镜头的两条链路（人工组装 / AI 灯光）命中同一份本地缓存。
-  /// 空 = 服务端没给（老载荷），工作机回退到 ue_project_path_。
   FSys::path project_dir_{};
-  /// 起 UE 之前要同步进本地缓存的装配素材（D57）。空 = 老载荷，工作机不做同步。
+  /// 起 UE 之前要同步进本地缓存的装配素材（D57）：`from_` = 共享盘/UNC 绝对路径，
+  /// `to_` = **相对 `project_dir_`** 的路径。空清单 = 本镜头没有要同步的东西。
   std::vector<ai_light_assembly_file_t> assembly_files_{};
   std::vector<ai_light_task_candidate_t> candidates_{};
 
@@ -280,8 +280,8 @@ struct DOODLE_CORE_API ai_light_launch_plan_t {
     if (j.contains("frame_end")) j.at("frame_end").get_to(p.frame_end_);
     if (j.contains("ue_project_path")) j.at("ue_project_path").get_to(p.ue_project_path_);
     if (j.contains("camera_file_path")) j.at("camera_file_path").get_to(p.camera_file_path_);
-    if (j.contains("project_dir")) j.at("project_dir").get_to(p.project_dir_);
-    if (j.contains("assembly_files")) j.at("assembly_files").get_to(p.assembly_files_);
+    j.at("project_dir").get_to(p.project_dir_);
+    j.at("assembly_files").get_to(p.assembly_files_);
     if (j.contains("candidates")) j.at("candidates").get_to(p.candidates_);
   }
 };
@@ -311,18 +311,17 @@ struct DOODLE_CORE_API ai_light_task_payload_t {
   std::int32_t frame_begin_{0};
   std::int32_t frame_end_{0};
   /// .uproject 绝对路径（UE 命令行的第一个参数）。
-  /// **队列路线**：这是**服务端**算出的路径，工作机上通常不存在 —— 工作机会按 `project_dir_`
-  /// 与本机 `user_work_root_` 自算工程根并覆盖它（D57）。保留它是为了老载荷兼容与日志对照。
+  /// **队列路线**：服务端只放**工程文件名**（不是路径）—— 工作机按 `project_dir_` 与本机
+  /// `user_work_root_` 自算工程根再挂上它（D57）。引擎内路线由发起方本机填全路径。
   std::string ue_project_path_{};
   /// 与 auto_light 同源的相机文件；空则由 commandlet 用关卡内相机。
   /// 视频路径不用它（相机在序列里），只有将来回退到静帧路径时才用得上。
   std::string camera_file_path_{};
   /// 装配工程根，**相对 `core_set::get_set().user_work_root_`**（D57）：
   /// `{项目code}/{场景归档编号}/{uproj stem}`，与 task_sync 的本地缓存口径一致。
-  /// 空 = 服务端没给（老载荷），工作机回退到 ue_project_path_。
   FSys::path project_dir_{};
   /// 起 UE 之前要同步进本地缓存的装配素材（D57）：`from_` = 共享盘/UNC 绝对路径，
-  /// `to_` = **相对 `project_dir_`** 的路径。空 = 老载荷，工作机不做同步。
+  /// `to_` = **相对 `project_dir_`** 的路径。空清单 = 本镜头没有要同步的东西。
   std::vector<ai_light_assembly_file_t> assembly_files_{};
   std::vector<ai_light_task_candidate_t> candidates_{};
 
@@ -356,8 +355,8 @@ struct DOODLE_CORE_API ai_light_task_payload_t {
     if (j.contains("frame_end")) j.at("frame_end").get_to(p.frame_end_);
     if (j.contains("ue_project_path")) j.at("ue_project_path").get_to(p.ue_project_path_);
     if (j.contains("camera_file_path")) j.at("camera_file_path").get_to(p.camera_file_path_);
-    if (j.contains("project_dir")) j.at("project_dir").get_to(p.project_dir_);
-    if (j.contains("assembly_files")) j.at("assembly_files").get_to(p.assembly_files_);
+    j.at("project_dir").get_to(p.project_dir_);
+    j.at("assembly_files").get_to(p.assembly_files_);
     if (j.contains("candidates")) j.at("candidates").get_to(p.candidates_);
   }
 };

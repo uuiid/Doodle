@@ -591,22 +591,22 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_judged_iteration, fixture_t) 
 }
 
 // ===========================================================================
-// 失败说明：截断与未知任务
+// 失败说明：不截断 与未知任务
 // ===========================================================================
 
-DOODLE_FIXTURE_TEST_CASE_CORO(mark_iteration_failed_truncates_long_reason, fixture_t) {
+DOODLE_FIXTURE_TEST_CASE_CORO(mark_iteration_failed_keeps_reason_verbatim, fixture_t) {
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
 
-  // 回传里塞一段 UE 的完整 stderr 是很常见的。会话行不能因此被撑爆 ——
-  // brief_text 截到 512 字节后加「已截断」标记（前端靠它知道后面还有内容）。
+  // 回传里塞一段 UE 的完整 stderr 是很常见的，boost 的诊断信息还会带整条调用栈。
+  // 决定：**不截断**（失败记录与返回值的整体调整放到后期做）—— 截断会把真正的原因
+  // （往往在末尾的 cause 那一段）先砍掉，反而更难查。所以原样落库。
   const std::string l_long(600, 'x');
   co_await mark_iteration_failed(
       *l_fx.sql_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, l_long);
 
   const auto l_reason = l_fx.reload_session().failure_reason_;
-  const std::string l_tail{"...(已截断)"};
-  BOOST_TEST(l_reason.size() == 512u + l_tail.size());
-  BOOST_TEST(l_reason.ends_with(l_tail));
+  BOOST_TEST(l_reason == l_long);
+  BOOST_TEST(l_reason.size() == 600u);
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(mark_iteration_failed_unknown_task_is_404, fixture_t) {
@@ -989,35 +989,6 @@ BOOST_FIXTURE_TEST_CASE(assembly_files_round_trip, fixture_t) {
   // project_dir_ 同理：相对 user_work_root_，不能带根
   BOOST_TEST(!l_back.project_dir_.is_absolute());
   BOOST_TEST(!l_back.project_dir_.has_root_name());
-}
-
-// 老载荷（没有这两个键）必须还能读：from_json 一律 contains 读，缺键即默认。
-// 这是滚动升级期间的正常状态 —— 服务端先升、工作机后升，中间那段时间工作机拿到的是新载荷，
-// 而服务端回退到旧版本时工作机拿到的是旧载荷。两侧都不能崩。
-BOOST_FIXTURE_TEST_CASE(assembly_files_absent_is_tolerated, fixture_t) {
-  auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
-
-  ai_light_task_payload_t l_payload{};
-  l_payload.session_id_       = l_fx.session_.uuid_id_;
-  l_payload.iteration_        = 1;
-  l_payload.out_dir_          = make_iteration_relative_dir(l_fx.session_.uuid_id_, l_fx.iteration_.uuid_id_);
-  l_payload.ue_project_path_  = "D:/sy_magic/ue_projects/LQ/EP0004/MyProject/MyProject.uproject";
-
-  // 必须用拷贝初始化再 dump()/parse() 往返，不能写 nlohmann::json{l_payload}：
-  // 花括号优先选 initializer_list 构造，对象**在构造时就已经是数组**了（parse 也救不回来），
-  // 随后 l_j.erase("project_dir") 直接抛 [json.exception.type_error.307] cannot use erase() with array。
-  // （同一个坑在 :835 与 common.h:81-84 有记录。）经字符串往返同时也更贴近线上真实形态。
-  auto l_j = nlohmann::json::parse(nlohmann::json(l_payload).dump());
-  BOOST_REQUIRE(l_j.is_object());
-  l_j.erase("project_dir");
-  l_j.erase("assembly_files");
-
-  const auto l_back = l_j.get<ai_light_task_payload_t>();
-  BOOST_TEST(l_back.project_dir_.empty());
-  BOOST_TEST(l_back.assembly_files_.empty());
-  // 回退依据仍在：工作机据此判断「这是老载荷」，不做同步、直接用原路径
-  BOOST_TEST(l_back.ue_project_path_ == l_payload.ue_project_path_);
 }
 
 // 引擎内路线（D52）同样要能带走同步清单：发起方本机就是渲染机，装配文件也要下到本机。

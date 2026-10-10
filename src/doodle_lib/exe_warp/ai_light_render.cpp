@@ -72,37 +72,38 @@ std::vector<FSys::path> collect_render_frames(const FSys::path& in_frames_dir) {
 
 /// 把共享盘上的装配素材差分拷进**本机的 UE 工程缓存**，返回本机上真正可用的 .uproject 路径（D57）。
 ///
-/// 为什么必须做这一步：载荷里的 `ue_project_path_` 是**服务端**算出来的
-/// （`D:/sy_magic/ue_projects/{code}/EP{ep:04}/{stem}`），那是服务端自己那份缓存；工作机上没有它，
-/// 更没有工程里该有的 Content/Config/插件 —— 直接拿去起 UE 只会得到「工程打不开」。
-/// UE 工程是**每台机器各一份的本地缓存**：共享盘（UNC）上的素材是只读源，必须先差分拷贝进本地，
-/// 才能被引擎打开。这也是唯一可行的做法 —— 多台机器同时打开同一个工程是非法的。
+/// 为什么必须做这一步：UE 工程不是共享盘上的东西，而是**每台机器各一份的本地缓存**。共享盘（UNC）
+/// 上的素材是只读源，必须先差分拷贝进本地缓存，才能被引擎打开。这也是唯一可行的做法 ——
+/// 多台机器同时打开同一个工程是非法的。
 ///
 /// 口径与人工组装链路（auto_task.cpp 的 tasks/sync 与 import_and_render_ue_ns::run()）逐字一致：
 ///   根 = core_set::get_set().user_work_root_ / project_dir_（{code}/{归档编号}/{uproj stem}）
 ///   逐条 = FSys::copy_diff(from_, 根 / to_)
 /// 所以同一条镜头无论是人工组装还是 AI 灯光，命中同一份本地缓存，不会各拷一份出来。
+///
+/// **载荷缺这两项就是错误的载荷**（D57 落地时链路还没上生产，不留兼容口子）：宁可在这里明确报错，
+/// 也不要退回服务端算的那条路径 —— 工作机上没有那份缓存，拿去起 UE 只会得到「工程打不开」。
 FSys::path sync_assembly_files(
     const ai_light::ai_light_task_payload_t& in_payload, std::shared_ptr<spdlog::logger> in_logger
 ) {
-  // 老载荷没有这两个字段（服务端还没升级）：回退到 ue_project_path_，保持原行为不倒退。
-  if (in_payload.assembly_files_.empty()) {
-    SPDLOG_LOGGER_WARN(
-        in_logger,
-        "AI 灯光第 {} 轮：载荷里没有装配同步清单，直接用载荷给的工程路径 {}（若工作机上没这份缓存，UE 会起不来）",
-        in_payload.iteration_, in_payload.ue_project_path_
-    );
-    return FSys::path{in_payload.ue_project_path_};
-  }
+  DOODLE_CHICK(
+      !in_payload.project_dir_.empty(),
+      "AI 灯光第 {} 轮的载荷里没有装配工程相对目录（project_dir），无法确定本机工程缓存位置",
+      in_payload.iteration_
+  );
+  DOODLE_CHICK(
+      !in_payload.assembly_files_.empty(),
+      "AI 灯光第 {} 轮的载荷里没有装配同步清单（assembly_files），无法把工程同步到本机",
+      in_payload.iteration_
+  );
 
   const FSys::path l_work_root = core_set::get_set().user_work_root_;
   if (l_work_root.empty())
     throw_exception(
         doodle_error{"工作机没有配置 UE 工程缓存根（user_work_root），无法把装配文件同步到本地，本轮无法渲染"}
     );
-  // project_dir_ 是**相对** user_work_root_ 的（D57）；拿不到就用根兜底，
-  // 但那样工程根是猜的，所以只在服务端漏填时才走这条路。
-  const FSys::path l_prj_dir = in_payload.project_dir_.empty() ? l_work_root : l_work_root / in_payload.project_dir_;
+  // project_dir_ 是**相对** user_work_root_ 的（D57）。
+  const FSys::path l_prj_dir = l_work_root / in_payload.project_dir_;
 
   if (!FSys::exists(l_prj_dir)) FSys::create_directories(l_prj_dir);
 
@@ -116,7 +117,8 @@ FSys::path sync_assembly_files(
     FSys::copy_diff(l_file.from_, l_prj_dir / l_file.to_, in_logger);
   }
 
-  // 起 UE 用的是**本地**那份 .uproject：服务端路径里的文件名就是工程文件名。
+  // 起 UE 用的是**本地**那份 .uproject：载荷里的 ue_project_path_ 只是工程文件名（D57），
+  // 挂到本机工程根下 —— 绝不带服务端盘符（那台机器上的路径在这里没有意义）。
   const auto l_uproject = l_prj_dir / FSys::path{in_payload.ue_project_path_}.filename();
   if (!FSys::exists(l_uproject))
     throw_exception(doodle_error{"装配同步后仍找不到 UE 工程文件 {}，无法启动 UE", l_uproject.generic_string()});

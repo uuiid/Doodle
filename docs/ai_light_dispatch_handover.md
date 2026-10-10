@@ -63,10 +63,10 @@ render_report_route → parse_round_render_report → apply_render_report(sql, c
 - `project_dir_`（键 `project_dir`）：`{项目code}/{场景编号}/{uproject 文件名去后缀}`，相对 `user_work_root_`。
 - **D57**：`D:/sy_magic/ue_projects/{code}/EP{集数}/{工程名}` 是**每台工作机各自的缓存**，不是网络盘。
   自动组装必须先按 `assembly_files_` 把共享盘素材差分拷进本机缓存，再起 UE
-  （多个 UE 同时打开网络盘上的同一个工程是非法的）。**老载荷没有这两个键**：`from_json` 全走
-  `contains`，缺键即默认，工作机退回直接用 `ue_project_path_`（滚动升级期间两侧都不崩）。
-  冻结用例：`assembly_files_round_trip` / `assembly_files_absent_is_tolerated` /
-  `launch_plan_carries_assembly_files`。
+  （多个 UE 同时打开网络盘上的同一个工程是非法的）。**这两个键是必需键**：链路还没上生产，
+  没有老载荷要兼容，`from_json` 直接 `at` 取值，缺键即抛 —— 工作机侧同样不设回退分支
+  （宁可明确报错，也不要拿服务端算的路径去起 UE，那台机器上没有那份缓存）。
+  冻结用例：`assembly_files_round_trip` / `launch_plan_carries_assembly_files`。
 - `ai_light_task_candidate_t`：键 `candidate_index / candidate_id / frames_dir / png_path / exr_path / movie_path / rig`
   （rig 含 `ops_`）。
 - `round_render_report_t`：键 `candidates / frame_rate / error`（`frame_rate` = 序列 display rate，工作机据此合成视频）。
@@ -82,8 +82,8 @@ render_report_route → parse_round_render_report → apply_render_report(sql, c
 
 | 函数 | 位置 | 职责 |
 | --- | --- | --- |
-| `brief_text` | `.cpp:85` | 截断到 512 + `"...(已截断)"`（`brief_error` 调它） |
-| `advance_session` | `.cpp` 状态机入口 | 按入口状态分派到 spec 分支 / generating 分支；接缝抛错时回滚到入口状态并写 `failure_reason_` |
+| `brief_error` | `.cpp:85` | `return in_err.what();` —— **不截断**（§15.21 已撤掉 `brief_text` / 512 上限）。截断会把真正的原因（往往在末尾的 cause 那一段）先砍掉 |
+| `advance_session` | `.cpp` 状态机入口 | 按入口状态分派到 spec 分支 / generating 分支；**分支只算 SQL 不落库**，成功路径上才 `run_sql`；接缝抛错时**不回滚、不改状态**，只写 `failure_reason_` 再重抛（§15.21） |
 | `apply_judgement` | `.cpp` | 定稿 / 续轮 / 全否三种决定都回到 `generating`（D17）；定稿同时置 `is_selected_`（D20） |
 | `parse_round_render_report` | `.cpp:760` | **严格**：`candidates` / 元素的 `candidate_id` / `status`（`json_val::require_enum<candidate_render_status>`，不许静默回落）→ 502；**宽松**：`candidate_index` / `render_ms` / `light_count` / `metrics` / 轮级 `error` 缺失取默认、形状不符丢该字段 + WARN |
 | `mark_iteration_rendered` | `.cpp` | 候选 UPDATE 只写 `render_status_` / `render_ms_` / `light_count_` / `metrics_`；轮次转 `awaiting_judgement` + 起算 4 小时 |
@@ -95,22 +95,38 @@ render_report_route → parse_round_render_report → apply_render_report(sql, c
 声明都在 `ai_light_orchestrator.h` 上（带 `DOODLELIB_API`）。
 
 ### 服务端 · 派发与路由（`ai_light.{h,cpp}` + `kitsu.cpp`）
-- 渲染装配推导（D8 / D50）：`ai_light_orchestrator.cpp` 派发段
-  调 `http::auto_task::shot_render_light_with_sync(io_session.project_id_, io_session.task_id_)`
-  （`auto_task.cpp`；返回 `shot_render_light_result{arg_, project_dir_, assembly_files_}`，
-  取 `arg_` 的 `original_map_`（→ `baseline_level_`）/ `ue_main_project_path_` / `camera_file_path_` /
-  `render_map_` / `level_sequence_import_` / `movie_pipeline_config_` / `begin_time_` / `end_time_`）。
-  **注意**：旧的 `shot_render_light(...)` 仍然保留且语义不变（`distributed_task.cpp:22,57` 仍在用），
-  它内部就是 `shot_render_light_builder{make_shot_render_light_input(...)}.run()`；
-  带同步清单的版本走 `.run_with_sync()`，两条 run 路径阶段顺序完全一致，
-  只是后者多一步 `build_assembly_files(l_scene)` 并按 `ue_asset_path_` 逐个 `lexically_relative(scene_ue_path_)`
-  生成相对目标（落在工程根之外的目标跳过 + WARN）。
+- 渲染装配推导（D8 / D50 / D57）：`ai_light_orchestrator.cpp` 派发段
+  调 `http::auto_task::shot_render_light_sync_only(io_session.project_id_, io_session.task_id_)`
+  （`auto_task.cpp`；返回 `shot_render_light_sync_result`）。
+  **这个入口刻意不是 `shot_render_light`**：AI 灯光链路不需要装配任务那套扫描/配对/校验 ——
+  它只带走真正有消费者的字段：`render_map_` / `level_sequence_import_` / `movie_pipeline_config_` /
+  `original_map_`（→ `baseline_level_`）/ `begin_time_` / `end_time_` / `camera_file_path_` /
+  `project_dir_` / `uproject_file_name_` / `assembly_files_`。
+  `asset_infos_` / `skin_path_` / `groom_bind_path_` / `ue_asset_path_` **一个都不算** ——
+  工作机与 UE 侧（`DoodleLightingRoundRunner`）从来不读它们。
+  **注意**：旧的 `shot_render_light(...)` 仍然保留且语义完全不变
+  （`distributed_task.cpp:22,57` 的 `/run_ue_assembly` 仍在用），它内部是
+  `shot_render_light_builder{make_shot_render_light_input(...)}.run()`，取数段两入口共用。
+  `run_sync_only()` 只做：`resolve_scene_ue_path()` → `find_shot_camera_file()`（**唯一**的目录遍历，
+  相机 fbx 的文件名含自由文本 `_camera_`，没有路径公式可算，而 UE 侧 `PrepareAnchorCamera`
+  把它当硬前置）→ `shot_render_light_path_set`（纯路径计算）→ `build_assembly_files()`。
+  地编预调那 4 次 `FSys::exists` 由路径集合的构造函数内部完成，不重复探。
   **两条硬前置**：没有 task_id 或装配抛错 →
   `"AI 灯光会话 {} 第 {} 轮：无法推导本镜头的渲染装配，本轮无法渲染（{}）"`；
   `level_sequence_import_` 空 → `"…：镜头装配没有给出 level sequence（{}），本轮无法渲染"`
   （不再「WARN 后照跑」）。
+- 同步清单的写法与 `task_sync`（`auto_task.cpp:1035-1234`）**同一形态**：路径一条条 `emplace_back`
+  列出来，不从别处的中间产物反推。`to_` 一律挂工程根（`{code}/{归档编号}/{uproj stem}`）之下，
+  `from_` 一律是共享盘真身。**不区分必拷/可选** —— 客户端自己判断该不该覆盖，
+  服务端只负责把「这条链路上可能要哪些文件」说全。
+  条目来源逐条对应 task_sync：工程三件套（uproject / Content / Config）、逐角色 Content、
+  逐道具/特效的公共与本体目录（拼音为空则跳过）、自动灯光解算+动画产物、
+  灯光分支额外目录（`Import_Vfx`、ep 级 `Vfx`、`Import_WB`、`{ep_sc}.uasset`、`{ep_sc}_Zong.umap`），
+  外加地编预调命中时那 3 条 `asset_copy_`。
 - 载荷组装（候选 7 成员聚合 + 上述装配字段 + `project_dir_` / `assembly_files_`）、进 `command_`。
-  引擎内路线（`iterate` → `launch_plan`）同样带这两项。
+  **队列路线的 `ue_project_path_` 放的是工程文件名（不是绝对路径）** —— 工程在每台工作机的
+  `user_work_root_` 下，只有工作机自己知道那是哪个盘（D57）。引擎内路线在发起方本机渲染，
+  所以那里给的是本机全路径（`project_dir_ / uproject_file_name_`）。
 - 回传路由：声明 `ai_light.h:158` · 注册 `kitsu.cpp:333`（`/api/doodle/ai/light/render_report/{}`）·
   实现 `ai_light.cpp:790`（先查任务类型必须是 `ai_light`，再解析、落库，回执带 `iteration_state` /
   `session_state` / `failure_reason`）。**不做项目权限检查** —— 调用方是工作机的机器 JWT。
@@ -123,15 +139,16 @@ render_report_route → parse_round_render_report → apply_render_report(sql, c
   - **四条硬前置**：`ue_project_path_` / `render_map_` / `level_sequence_` / `candidates_` 非空，
     否则抛 `doodle_error`（`movie_pipeline_config_` 空只 WARN）。
   - **起 UE 前先同步装配文件（D57）**：`sync_assembly_files(payload_, l_logger)` ——
+    `project_dir_` / `assembly_files_` 空的载荷**直接抛错**（`DOODLE_CHICK`，没有老载荷要兼容）；
     `user_work_root_` 为**本机** UE 工程缓存根，空的则抛
     `"工作机没有配置 UE 工程缓存根（user_work_root），无法把装配文件同步到本地，本轮无法渲染"`；
-    `project_dir_` 拼到它下面（空则直接用根），逐条 `FSys::copy_diff(from_, l_prj_dir / to_)`
+    `project_dir_` 拼到它下面，逐条 `FSys::copy_diff(from_, l_prj_dir / to_)`
     （**差分**拷贝：mtime/size 相同就跳过，所以反复跑同一镜头的成本可接受）；
-    拼出 `l_uproject = l_prj_dir / <ue_project_path_ 的文件名>`，取不到就抛
+    拼出 `l_uproject = l_prj_dir / <ue_project_path_ 的文件名>` —— **只取文件名再挂本机工程根，
+    绝不使用服务端盘符**（载荷给的本来就是文件名），取不到就抛
     `"装配同步后仍找不到 UE 工程文件 {}，无法启动 UE"`。
     紧接着 `fix_project(l_uproject)` + `fix_config(l_uproject)`（改 `.uproject` 插件段与
     `Config/DefaultEngine.ini` —— 服务端同步过来的 Config 未必是本机要的那份）。
-    **`assembly_files_` 为空 = 老服务端载荷**：只 WARN，退回用 `ue_project_path_` 原路径。
   - **起 UE 前先删 `<out_dir>/render_report.json` 残留**（否则渲染进程崩在写报告前会回传上一轮结果）。
   - `async_run_ue({l_uproject.generic_string(), render_map_, "-log", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
     "-Unattended", "-DoodleAiLightParams=<tmp>.json"}, logger, kitsu_client, /*create_lock=*/true, run_time_info)`
@@ -184,7 +201,7 @@ render_report_route → parse_round_render_report → apply_render_report(sql, c
 
 ### 测试（`src/test/core/ai_light_dispatch.cpp`，已登记 `src/test/core/CMakeLists.txt`）
 - **24 用例**：解析组 8 例（严格/宽松分界逐条）、落库组 5 例（两条出口 + 部分失败仍前进）、
-  归属组 5 例（404 / 400 / judged 拒回填 / 原因截断）、产物存在性 5 例（D41，含「海报在、成片缺」）、
+  归属组 5 例（404 / 400 / judged 拒回填 / 原因原样保留）、产物存在性 5 例（D41，含「海报在、成片缺」）、
   路径纯度 1 例（D44）、wire 契约冻结 1 例（`task_payload_json_keys_are_frozen`）。
 - 夹具造**真文件**：每个候选三个探针（海报 / 成片 / EXR），走 `write_probe_file()` 与
   `candidate_png()` / `candidate_movie()` / `candidate_exr()` —— D41 判的是「算出来的落点上有没有文件」，

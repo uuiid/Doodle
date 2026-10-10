@@ -75,19 +75,6 @@ namespace {
 
 using namespace std::chrono_literals;
 
-/// failure_reason_ 的长度上限。失败原因要给人看、要给前端显示，
-/// 但 boost 的诊断信息可能带整条调用栈，不截断会把这列撑成日志垃圾场。
-constexpr std::size_t g_failure_reason_max = 512;
-
-std::string brief_text(std::string in_what) {
-  if (in_what.size() <= g_failure_reason_max) return in_what;
-  in_what.resize(g_failure_reason_max);
-  in_what += "...(已截断)";
-  return in_what;
-}
-
-std::string brief_error(const std::exception& in_err) { return brief_text(in_err.what()); }
-
 /// 会话的参考图统计是否够用。只要有一张图分析成功就认为可用。
 ///
 /// `stats_confidence_` 有 0.05 的**地板**（ai_light_stats 的 compute_confidence），
@@ -129,42 +116,64 @@ namespace {
 /// 没有共享状态 —— 唯一的共享是 `io_session`（状态与 `failure_reason_` 由本函数直接改，
 /// 因为回滚要用到它们）。
 ///
-/// **本函数不捕获任何异常**：接缝契约 1 说「抛 = 本轮无法推进」，回滚与重抛由调用方统一做。
-/// 这样两个分支的失败路径只有一份实现，也不会出现「分支里吞掉了异常」这种岔路。
+/// **本函数不捕获任何异常，也不落库**：接缝契约 1 说「抛 = 本轮无法推进」，本函数只把
+/// 要写的语句**算出来返回**，执行与失败处理由调用方统一做。
+///
+/// 为什么改成「返回 SQL 而不是就地执行」（本次修订的核心）：
+///   * 失败点在 `run_sql` **之前** —— 接缝调用与入参校验抛错时，库还一行没动，
+///     所以调用方**不需要**任何回滚动作（`run_sql` 自己就是原子的：见
+///     sqlite_database.cpp:1610 的 `session_.transaction()` + 失败析构 rollback）；
+///   * 旧写法先在内存里把 `io_session.state_` 改成新值再入批，一旦抛错，库没变而内存
+///     已经变了 —— 这才需要那个 l_rollback lambda 去"改回来"。不提前改内存，回滚自然消失。
+///   所以本函数**不碰 `io_session`**：状态的新值写进返回的语句里，是否提交由调用方决定。
 ///
 /// 两个入口状态，同一个意图：产出（或重出）当前版本的方案。
 /// 这不违反「一个状态只能有一个后继步骤」：awaiting_spec_confirm 上还有一个 /spec/confirm，
 /// 但它会**先把状态改成 generating** 再调 advance_session（ai_light.cpp 的 spec_confirm_route），
 /// 所以落到本分支的只有「重出」这一个意图。
-boost::asio::awaitable<void> advance_session_spec_branch(
-    sqlite_database& in_sql, ai_light_session& io_session, const uuid& in_operator
+///
+/// 返回：`spec_branch_result`，装着要落库的语句（spec 行 + 会话行）。
+/// 之所以不是 `awaitable<sql_modify_statement_vector_t>`：本函数里 `co_await generate_spec(...)`，
+/// 所以它必须是个协程，而协程的返回类型必须是能承载 `co_await` 的 awaitable —— 裸的
+/// `sql_modify_statement_vector_t` 会让编译器报
+/// "promise_type is not a member of std::coroutine_traits<...>"。
+/// 于是包一层结构体（**用返回值，不用非常量引用 out 参数**：C++ Core Guidelines F.17）。
+///
+/// 语句在**局部**变量里攒，最后一次装进返回值：这样任何校验/接缝在中途抛错，
+/// 调用方手里根本不会拿到半成品批次（返回值压根没被构造出来）。
+struct spec_branch_result {
+  orm::sql_modify_statement_vector_t sqls_{};
+};
+
+boost::asio::awaitable<spec_branch_result> advance_session_spec_branch(
+    sqlite_database& in_sql, const ai_light_session& in_session, const uuid& in_operator
 ) {
-  auto l_refs = in_sql.get_ai_light_references(io_session.uuid_id_);
+  auto l_refs = in_sql.get_ai_light_references(in_session.uuid_id_);
 
   DOODLE_CHICK_HTTP(
       !in_operator.is_nil(), bad_request,
-      "会话 {} 无法确定触发人（无 operator_id 且会话无 submitter），无法解析 AI 工作室与计费主体", io_session.uuid_id_
+      "会话 {} 无法确定触发人（无 operator_id 且会话无 submitter），无法解析 AI 工作室与计费主体", in_session.uuid_id_
   );
 
   spec_generation_request_t l_req{};
-  l_req.session_id_  = io_session.uuid_id_;
-  l_req.project_id_  = io_session.project_id_;
+  l_req.session_id_  = in_session.uuid_id_;
+  l_req.project_id_  = in_session.project_id_;
   l_req.operator_id_ = in_operator;
-  l_req.prompt_text_ = io_session.prompt_text_;
+  l_req.prompt_text_ = in_session.prompt_text_;
   l_req.references_  = l_refs;
   l_req.degrade_level_ =
       references_have_stats(l_refs) ? spec_degrade_level::stats_only : spec_degrade_level::prompt_only;
-  if (auto l_prev = in_sql.get_current_ai_light_spec(io_session.uuid_id_); l_prev.has_value())
+  if (auto l_prev = in_sql.get_current_ai_light_spec(in_session.uuid_id_); l_prev.has_value())
     l_req.previous_spec_ = l_prev->to_spec();
 
   auto l_res       = co_await generate_spec(in_sql, l_req);
 
   // revision = 现有最大 + 1。get_ai_light_specs 按 revision 升序返回。
-  auto l_history   = in_sql.get_ai_light_specs(io_session.uuid_id_);
+  auto l_history   = in_sql.get_ai_light_specs(in_session.uuid_id_);
   const auto l_rev = l_history.empty() ? 1 : l_history.back().revision_ + 1;
 
   ai_light_spec l_spec{};
-  l_spec.session_id_ = io_session.uuid_id_;
+  l_spec.session_id_ = in_session.uuid_id_;
   l_spec.revision_   = l_rev;
   l_spec.from_spec(l_res.spec_);
   l_spec.set_evidence(l_res.evidence_);
@@ -172,26 +181,26 @@ boost::asio::awaitable<void> advance_session_spec_branch(
   l_spec.set_conflict_resolution(l_res.conflict_resolution_);
   // 降级级别以**接缝按事实判定的结果**为准，不用调用方那个预判（决定 D4）：
   // 「参考图有 stats 行但置信度全 0」或「全部图被人工排除」时，调用方看
-  // references_have_stats() 会以为是 stats_only，而实际聚合出一无所有。
+  // references_have_stats() 会以为是 stats_only，而实际聚合出一无所获。
   l_spec.degrade_level_      = l_res.spec_.degrade_level_;
   // 新出的方案一律未确认：人工闸门 1 必须重新过一遍。
   l_spec.human_confirmed_    = false;
   l_spec.confirmed_by_       = uuid{};
   l_spec.confirmed_at_       = std::nullopt;
 
-  io_session.state_          = ai_light_session_state::awaiting_spec_confirm;
-  io_session.failure_reason_ = "";
-
-  orm::sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_spec>().values(l_spec));
-  l_sqls.emplace_back(make_session_update(in_sql, io_session));
-  co_await in_sql.run_sql(std::move(l_sqls));
+  // 会话行的新值在**副本**上组装：新状态 + 清空失败原因。原 in_session 一字不改。
+  ai_light_session l_session_next = in_session;
+  l_session_next.state_           = ai_light_session_state::awaiting_spec_confirm;
+  l_session_next.failure_reason_  = "";
 
   SPDLOG_LOGGER_INFO(
       g_logger_ctrl().get_http(), "AI 灯光会话 {} 生成 Spec revision {}（降级级别 {}，参考图 {} 张）",
-      io_session.uuid_id_, l_rev, magic_enum::enum_name(l_spec.degrade_level_), l_req.references_.size()
+      in_session.uuid_id_, l_rev, magic_enum::enum_name(l_spec.degrade_level_), l_req.references_.size()
   );
-  co_return;
+  co_return spec_branch_result{
+      .sqls_ = {orm::insert(in_sql).into<ai_light_spec>().values(l_spec),
+                make_session_update(in_sql, l_session_next)}
+  };
 }
 
 /// 第二步：generating 且 Spec 已确认 → 出候选，然后按 in_local_only 分两条出口：
@@ -205,22 +214,40 @@ boost::asio::awaitable<void> advance_session_spec_branch(
 /// 差别只在末尾那一段，所以用一个分支参数而不是写两个函数：复制一遍的话，
 /// 上面那几十行校验会慢慢长成两套语义。
 ///
-/// 不加 try/catch 的理由同第一步。
-boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_generating_branch(
-    sqlite_database& in_sql, ai_light_session& io_session, const uuid& in_operator, bool in_local_only
+/// **不捕获异常、不落库**：同第一步，本函数只把语句算出来，`in_sql` 只用于查。
+///
+/// 唯一的例外是队列路线的派发与广播（见 generating_branch_result::dispatch_ 的说明）——
+/// 那是**内部任务分发**，不是「把某几行写进 ai_light_* 表」，留在这里比让调用方去猜
+/// 一个不透明批次里有什么更安全。
+///
+/// 返回 `generating_branch_result`（**用返回值，不用非常量引用 out 参数**：
+/// C++ Core Guidelines F.17）。语句在**局部**变量里攒，最后一次装进返回值 ——
+/// 任何校验/接缝/装配推导在中途抛错，调用方都拿不到半成品批次。
+struct generating_branch_result {
+  orm::sql_modify_statement_vector_t sqls_{};
+  /// 引擎内路线：交给发起方本机渲染的计划；队列路线必然空（D52/D53）。
+  std::optional<ai_light_launch_plan_t> plan_{};
+  /// 队列路线要广播的新任务号；nil 表示不广播（引擎内路线不建任务行）。
+  uuid broadcast_task_id_{};
+  /// 队列路线：落库之后调一次 computers_assign_task::run_next_task()。
+  bool dispatch_{false};
+};
+
+boost::asio::awaitable<generating_branch_result> advance_session_generating_branch(
+    sqlite_database& in_sql, const ai_light_session& in_session, const uuid& in_operator, bool in_local_only
 ) {
-  auto l_spec = in_sql.get_current_ai_light_spec(io_session.uuid_id_);
-  DOODLE_CHICK_HTTP(l_spec.has_value(), bad_request, "会话 {} 还没有 Spec，无法生成候选", io_session.uuid_id_);
+  auto l_spec = in_sql.get_current_ai_light_spec(in_session.uuid_id_);
+  DOODLE_CHICK_HTTP(l_spec.has_value(), bad_request, "会话 {} 还没有 Spec，无法生成候选", in_session.uuid_id_);
   DOODLE_CHICK_HTTP(
       l_spec->human_confirmed_, bad_request, "会话 {} 的 Spec revision {} 尚未经人工确认（闸门 1），不允许生成候选",
-      io_session.uuid_id_, l_spec->revision_
+      in_session.uuid_id_, l_spec->revision_
   );
 
-  const auto l_iteration = io_session.current_iteration_ + 1;
+  const auto l_iteration = in_session.current_iteration_ + 1;
 
   DOODLE_CHICK_HTTP(
       !in_operator.is_nil(), bad_request,
-      "会话 {} 无法确定触发人（无 operator_id 且会话无 submitter），无法解析 AI 工作室与计费主体", io_session.uuid_id_
+      "会话 {} 无法确定触发人（无 operator_id 且会话无 submitter），无法解析 AI 工作室与计费主体", in_session.uuid_id_
   );
 
   // iteration 的 uuid 在这里就铸造并随请求交给接缝：那条推理任务行（sd2::task）用
@@ -229,24 +256,24 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
   const auto l_iteration_id = core_set::get_set().get_uuid();
 
   candidate_generation_request_t l_req{};
-  l_req.session_id_    = io_session.uuid_id_;
-  l_req.project_id_    = io_session.project_id_;
+  l_req.session_id_    = in_session.uuid_id_;
+  l_req.project_id_    = in_session.project_id_;
   l_req.operator_id_   = in_operator;
   l_req.iteration_id_  = l_iteration_id;
   l_req.iteration_     = l_iteration;
   l_req.spec_          = l_spec->to_spec();
   l_req.presets_       = in_sql.get_ai_light_presets(true);
-  l_req.prompt_text_   = io_session.prompt_text_;
+  l_req.prompt_text_   = in_session.prompt_text_;
 
   // 上一轮的迭代行只查一次，同时喂给下面两件事。
-  const auto l_prev_it = in_sql.get_ai_light_iteration(io_session.uuid_id_, io_session.current_iteration_);
+  const auto l_prev_it = in_sql.get_ai_light_iteration(in_session.uuid_id_, in_session.current_iteration_);
 
   // warm start：上一轮被选中的候选。首轮没有，由接缝从预设库起手。
   //
   // 必须同时要求「上一轮解的 Spec 就是当前这份」：Spec 升版之后（美术重出了方案）
   // 上一轮的 rig 是照着旧目标打的，拿它当起点会让新目标从一开始就被旧方向带偏。
   if (l_prev_it.has_value() && l_prev_it->spec_id_ == l_spec->uuid_id_) {
-    if (auto l_base = in_sql.get_ai_light_selected_candidate(io_session.uuid_id_, io_session.current_iteration_);
+    if (auto l_base = in_sql.get_ai_light_selected_candidate(in_session.uuid_id_, in_session.current_iteration_);
         l_base.has_value())
       l_req.base_rig_ = l_base->get_rig();
   }
@@ -275,30 +302,30 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
   //
   // 装配推导失败 / 序列为空 = 本轮不可渲染（D50）：候选本身虽然生成了，但工作机拿着一个
   // 没有序列的载荷去起 UE，只会失败在更远的地方、现象与真正的原因无关。所以抛在这里，
-  // 由 advance_session 回滚会话状态并把原因写进 failure_reason_。
-  // 用 _with_sync 变体：装配参数之外还要拿到「工作机工程根 + 装配文件同步清单」，
-  // 队列出口把它们一并下发给工作机（D57：UE 工程是每台机器的本地缓存，共享盘素材
-  // 必须先差分拷进去，否则工作机上没有工程可开）。
-  http::auto_task::shot_render_light_result l_assembly_res{};
+  // 调用方不落库、不改状态，只记 failure_reason_ 再重抛。
+  // 用 sync_only 变体：AI 灯光链路只要「起 UE 要什么 + 工作机工程根 + 装配同步清单」，
+  // 不需要装配任务那套扫描/配对/校验（它算出来的 asset_infos_/skin_path_/ue_asset_path_
+  // 在 AI 灯光链路上没有任何消费者）。见 auto_task.h 的 shot_render_light_sync_result 说明。
+  http::auto_task::shot_render_light_sync_result l_assembly_res{};
   std::string l_assembly_err{};
-  if (io_session.task_id_.is_nil()) {
+  if (in_session.task_id_.is_nil()) {
     l_assembly_err = "会话没有关联镜头任务（task_id 为空）";
   } else {
     try {
-      l_assembly_res = http::auto_task::shot_render_light_with_sync(io_session.project_id_, io_session.task_id_);
+      l_assembly_res = http::auto_task::shot_render_light_sync_only(in_session.project_id_, in_session.task_id_);
     } catch (const std::exception& in_err) {
-      l_assembly_err = brief_error(in_err);
+      l_assembly_err = in_err.what();
     }
   }
-  auto&& l_assembly = l_assembly_res.arg_;
+  auto&& l_assembly = l_assembly_res;
   DOODLE_CHICK_HTTP(
       l_assembly_err.empty(), internal_server_error,
-      "AI 灯光会话 {} 第 {} 轮：无法推导本镜头的渲染装配，本轮无法渲染（{}）", io_session.uuid_id_, l_iteration,
+      "AI 灯光会话 {} 第 {} 轮：无法推导本镜头的渲染装配，本轮无法渲染（{}）", in_session.uuid_id_, l_iteration,
       l_assembly_err
   );
   DOODLE_CHICK_HTTP(
       !l_assembly.level_sequence_import_.empty(), internal_server_error,
-      "AI 灯光会话 {} 第 {} 轮：镜头装配没有给出 level sequence（{}），本轮无法渲染", io_session.uuid_id_,
+      "AI 灯光会话 {} 第 {} 轮：镜头装配没有给出 level sequence（{}），本轮无法渲染", in_session.uuid_id_,
       l_iteration, l_assembly.level_sequence_import_.generic_string()
   );
   l_req.baseline_level_ = l_assembly.original_map_.generic_string();
@@ -322,7 +349,7 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
   // （sd2::task.ai_light_iteration_id_）已经用它落了库 —— 再取一个新的就会
   // 让「哪次推理生成本轮」这条链路断开。
   l_it.uuid_id_    = l_iteration_id;
-  l_it.session_id_ = io_session.uuid_id_;
+  l_it.session_id_ = in_session.uuid_id_;
   l_it.iteration_  = l_iteration;
   l_it.spec_id_    = l_spec->uuid_id_;
   l_it.state_      = ai_light_iteration_state::generated;
@@ -347,15 +374,17 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
   // 用 lambda 生成「带相对路径的候选」而不是写两遍，是因为这段正是一轮渲染的
   // wire 契约所在 —— 两遍迟早会漂移，而漂移的表现是「本地路线算不出视频路径」这类
   // 只在真机上才发现的故障。
-  auto l_out_dir = make_iteration_relative_dir(io_session.uuid_id_, l_it.uuid_id_);
+  auto l_out_dir = make_iteration_relative_dir(in_session.uuid_id_, l_it.uuid_id_);
 
+  // 语句在**局部**批次上组装，函数末尾才装进返回值：这样任何一条 DOODLE_CHICK 抛错时，
+  // 返回值压根没被构造出来（正如库里一行没动），调用方不可能拿到半截批次。
   orm::sql_modify_statement_vector_t l_sqls{};
   std::vector<ai_light_task_candidate_t> l_payload_candidates{};
   l_payload_candidates.reserve(static_cast<std::size_t>(g_candidate_count));
   for (std::int32_t l_i = 0; l_i < g_candidate_count; ++l_i) {
     auto l_rig             = l_res.rigs_.at(static_cast<std::size_t>(l_i));
     // 身份字段由服务端补齐：接缝只负责「灯怎么打」，不负责「这是第几个」。
-    l_rig.session_id_      = io_session.uuid_id_;
+    l_rig.session_id_      = in_session.uuid_id_;
     l_rig.spec_id_         = l_spec->uuid_id_;
     l_rig.iteration_       = l_iteration;
     l_rig.candidate_index_ = l_i;
@@ -366,7 +395,7 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
     // nil uuid 会让 6 个候选全部指向同一个路径（先例：build_accepted_preview_file）。
     l_cand.uuid_id_         = core_set::get_set().get_uuid();
     l_cand.iteration_id_    = l_it.uuid_id_;
-    l_cand.session_id_      = io_session.uuid_id_;
+    l_cand.session_id_      = in_session.uuid_id_;
     l_cand.candidate_index_ = l_i;
     l_cand.set_rig(l_rig);
     l_cand.sync_from_rig();  // 轴三列从 rig 同步过来（DB 列是查询权威）
@@ -387,17 +416,19 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
     );
   }
 
-  io_session.current_iteration_ = l_iteration;
-  io_session.failure_reason_    = "";
-  // 状态**留在 generating**：候选已经生成、渲染还没回来。
-  // 转 awaiting_judgement 由 mark_iteration_rendered() 负责（§10.3），两条路线共用。
+  // 会话行的新值在**副本**上组装：轮次号前进、清空失败原因、状态**留在 generating**
+  // （候选已经生成、渲染还没回来；转 awaiting_judgement 由 mark_iteration_rendered() 负责，
+  // §10.3，两条路线共用）。原 in_session 一字不改 —— 失败时调用方不需要任何回滚动作。
+  ai_light_session l_session_next  = in_session;
+  l_session_next.current_iteration_ = l_iteration;
+  l_session_next.failure_reason_    = "";
 
   // ---------------------------------------------------------------------
   // 引擎内路线（D52/D53）：不建任务行、不派发、不广播，把渲染计划原样返回。
   // ---------------------------------------------------------------------
   if (in_local_only) {
     ai_light_launch_plan_t l_plan{};
-    l_plan.session_id_            = io_session.uuid_id_;
+    l_plan.session_id_            = in_session.uuid_id_;
     l_plan.iteration_id_          = l_it.uuid_id_;
     l_plan.iteration_             = l_iteration;
     l_plan.out_dir_               = l_out_dir;
@@ -406,7 +437,10 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
     l_plan.movie_pipeline_config_ = l_assembly.movie_pipeline_config_.generic_string();
     l_plan.frame_begin_           = l_assembly.begin_time_;
     l_plan.frame_end_             = l_assembly.end_time_;
-    l_plan.ue_project_path_       = l_assembly.ue_main_project_path_.generic_string();
+    // 引擎内路线在发起方本机渲染，所以这里给的是**本机**的工程文件全路径：
+    // 工程根(project_dir_) + 工程文件名，由本机自己拼。队列路线则留空，
+    // 由工作机用自己的 user_work_root_ 拼（D57：工程是每台机器各自的本地缓存）。
+    l_plan.ue_project_path_       = (l_assembly_res.project_dir_ / l_assembly_res.uproject_file_name_).generic_string();
     l_plan.camera_file_path_      = l_assembly.camera_file_path_.generic_string();
     // D57：引擎内路线由发起方本机渲染，装配文件同样要同步到**本机**缓存。
     // 本机就是发起方，路径与清单一起带走，由客户端在起 UE 之前差分拷贝。
@@ -417,21 +451,20 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
     // 轮次行的 server_task_info_id_ 留 nil：这条路线**没有**任务行，
     // 回传因此不能按任务号找轮次，改按会话 + 轮次号定位（D54 的 ai_light_iteration_locator_t）。
     l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_iteration>().values(l_it));
-    l_sqls.emplace_back(make_session_update(in_sql, io_session));
-    co_await in_sql.run_sql(std::move(l_sqls));
+    l_sqls.emplace_back(make_session_update(in_sql, l_session_next));
 
     SPDLOG_LOGGER_INFO(
         g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮 {} 个候选已生成（引擎内路线，渲染计划已返回，等待发起方本机渲染）",
-        io_session.uuid_id_, l_iteration, g_candidate_count
+        in_session.uuid_id_, l_iteration, g_candidate_count
     );
-    co_return std::optional<ai_light_launch_plan_t>{std::move(l_plan)};
+    co_return generating_branch_result{.sqls_ = std::move(l_sqls), .plan_ = std::move(l_plan)};
   }
 
   // ---------------------------------------------------------------------
   // 队列路线（默认）：建任务行 → 派发 → 广播，由工作机起 UE 渲染。
   // ---------------------------------------------------------------------
   ai_light_task_payload_t l_payload{};
-  l_payload.session_id_            = io_session.uuid_id_;
+  l_payload.session_id_            = in_session.uuid_id_;
   l_payload.iteration_             = l_iteration;
   l_payload.spec_id_               = l_spec->uuid_id_;
   // 轮次目录名用**轮次 uuid**：候选行靠 iteration_id_ 就能算出落点，不必回查序号。
@@ -443,11 +476,11 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
   // 帧区间只作诊断：真正渲染哪一段由序列自己的 playback range 决定（D48）。
   l_payload.frame_begin_           = l_assembly.begin_time_;
   l_payload.frame_end_             = l_assembly.end_time_;
-  l_payload.ue_project_path_       = l_assembly.ue_main_project_path_.generic_string();
+  l_payload.ue_project_path_       = l_assembly_res.uproject_file_name_.generic_string();
   l_payload.camera_file_path_      = l_assembly.camera_file_path_.generic_string();
   // D57：工作机上没有这份 UE 工程缓存，装配素材必须下发同步清单。
-  // ue_project_path_ 仍是服务端路径（保留给日志与老工作机），工作机会按
-  // project_dir_ + 本机 user_work_root_ 自算工程根并覆盖它。
+  // ue_project_path_ 这里放的是**工程文件名**（不是服务端绝对路径）：工作机按
+  // project_dir_ + 本机 user_work_root_ 拼出绝对路径，不再使用服务端盘符。
   l_payload.project_dir_           = l_assembly_res.project_dir_;
   l_payload.assembly_files_        = std::move(l_assembly_res.assembly_files_);
   l_payload.candidates_            = std::move(l_payload_candidates);
@@ -456,11 +489,11 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
   // 「等美术判断」**不是** server_task_info_status —— 那是分布式渲染任务的状态，
   // 两者混用会让工作机的空闲判定错乱（方案 §10.4）。
   server_task_info l_task{};
-  l_task.name_   = fmt::format("AI 灯光 {} 轮 {}", io_session.title_.empty() ? "会话" : io_session.title_, l_iteration);
+  l_task.name_   = fmt::format("AI 灯光 {} 轮 {}", in_session.title_.empty() ? "会话" : in_session.title_, l_iteration);
   l_task.status_ = server_task_info_status::submitted;
-  l_task.submitter_         = io_session.submitter_;
+  l_task.submitter_         = in_session.submitter_;
   l_task.submit_time_       = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  l_task.task_id_           = io_session.task_id_;
+  l_task.task_id_           = in_session.task_id_;
   // 用专门的 ai_light 类型，**不要**复用 auto_light ——
   // auto_light 是既有的「跑 UE 装配」管线（distributed_task.cpp:54），
   // 它的 command_ 形状与本轮完全不同，复用会让工作机按错误的解析方式处理。
@@ -477,21 +510,16 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_ge
 
   l_sqls.emplace_back(orm::insert(in_sql).into<server_task_info>().values(l_task));
   l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_iteration>().values(l_it));
-  l_sqls.emplace_back(make_session_update(in_sql, io_session));
-  co_await in_sql.run_sql(std::move(l_sqls));
-
-  // 派发 + 广播。放在事务之后：任务行已经落库，派发失败也只是「暂时没人领」，
-  // computers_assign_task 下次轮询会再捡起来，不会丢。
-  co_await http::computers_assign_task::get_instance().run_next_task();
-  socket_io::broadcast(socket_io::server_task_info_new_broadcast_t{.server_task_info_id_ = l_task.uuid_id_});
+  l_sqls.emplace_back(make_session_update(in_sql, l_session_next));
 
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮 {} 个候选已派发（任务 {}）", io_session.uuid_id_,
+      g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮 {} 个候选已派发（任务 {}）", in_session.uuid_id_,
       l_iteration, g_candidate_count, l_task.uuid_id_
   );
-  co_return std::optional<ai_light_launch_plan_t>{};
+  co_return generating_branch_result{
+      .sqls_ = std::move(l_sqls), .broadcast_task_id_ = l_task.uuid_id_, .dispatch_ = true
+  };
 }
-
 }  // namespace
 
 boost::asio::awaitable<void> advance_session(
@@ -516,33 +544,6 @@ boost::asio::awaitable<void> advance_session(
     );
   }
 
-  /// 失败收尾：把会话状态退回进入时的状态并记下原因，然后由调用方重新抛出。
-  ///
-  /// 会话**没有终态**（§15.10），所以这里退回原状态不是为了「让它可恢复」——
-  /// 而是为了不留一个卡死的 generating：接缝超时、模型输出不合规、解析不出工作室
-  /// 这类失败都是可重试的，退回原状态后美术直接再点一次即可，且不丢已经上传的参考图
-  /// （参考图挂在会话上，`cascade`）。失败的唯一记录是 `failure_reason_`。
-  auto l_rollback = [&](const std::string& in_reason) -> boost::asio::awaitable<void> {
-    in_session.state_          = l_entry_state;
-    in_session.failure_reason_ = in_reason;
-    // 时限/挂起时间也跟着回滚：进入时是 awaiting_judgement 的话它们不该被改，
-    // 而其它状态下它们本来就该是空的。
-    SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_http(), "AI 灯光会话 {} 推进失败（停留在 {}）: {}", in_session.uuid_id_,
-        magic_enum::enum_name(l_entry_state), in_reason
-    );
-    try {
-      orm::sql_modify_statement_vector_t l_sqls{};
-      l_sqls.emplace_back(make_session_update(in_sql, in_session));
-      co_await in_sql.run_sql(std::move(l_sqls));
-    } catch (const std::exception& in_err) {
-      // 回滚本身失败也不能把原始异常吞掉 —— 只记日志，让原始异常继续往上走。
-      SPDLOG_LOGGER_ERROR(
-          g_logger_ctrl().get_main_error(), "AI 灯光会话 {} 回滚失败: {}", in_session.uuid_id_, in_err.what()
-      );
-    }
-  };
-
   std::exception_ptr l_err{};
   std::string l_reason{"未知错误"};
 
@@ -563,13 +564,26 @@ boost::asio::awaitable<void> advance_session(
     // ---------------------------------------------------------------
     if (l_entry_state == ai_light_session_state::draft ||
         l_entry_state == ai_light_session_state::awaiting_spec_confirm) {
-      co_await advance_session_spec_branch(in_sql, in_session, l_operator);
+      // 分支只算 SQL 不落库：抛错时库里一行没动，所以调用方**不需要**任何回滚动作
+      // （run_sql 自身就是原子的，见 sqlite_database.cpp:1610）。
+      // 只有走到这里 —— 分支成功返回 —— 才提交。
+      auto l_res = co_await advance_session_spec_branch(in_sql, in_session, l_operator);
+      co_await in_sql.run_sql(std::move(l_res.sqls_));
       co_return;
     }
 
     if (l_entry_state == ai_light_session_state::generating) {
       // 队列路线：建任务行 + 派发（忽略返回的渲染计划 —— 它只给引擎内路线用）。
-      co_await advance_session_generating_branch(in_sql, in_session, l_operator, false);
+      auto l_res = co_await advance_session_generating_branch(in_sql, in_session, l_operator, false);
+      co_await in_sql.run_sql(std::move(l_res.sqls_));
+
+      // 派发 + 广播。放在 run_sql 之后：任务行已经落库，派发失败也只是「暂时没人领」，
+      // computers_assign_task 下次轮询会再捡起来，不会丢。
+      if (l_res.dispatch_) co_await http::computers_assign_task::get_instance().run_next_task();
+      if (!l_res.broadcast_task_id_.is_nil())
+        socket_io::broadcast(
+            socket_io::server_task_info_new_broadcast_t{.server_task_info_id_ = l_res.broadcast_task_id_}
+        );
       co_return;
     }
 
@@ -582,20 +596,39 @@ boost::asio::awaitable<void> advance_session(
     );
   } catch (...) {
     // 注意：C++ 标准禁止在 catch 处理块里 co_await，所以这里只**收集**失败信息，
-    // 回滚与重抛都放到 catch 之外。这样也顺带保证了回滚发生在异常对象销毁之前。
+    // 记原因与重抛都放到 catch 之外。这样也顺带保证了记原因发生在异常对象销毁之前。
     l_err    = std::current_exception();
     l_reason = "未知错误";
     try {
       throw;
     } catch (const std::exception& in_err) {
-      l_reason = brief_error(in_err);
+      // 直接取 what()，**不截断**：boost 的诊断信息可能带整条调用栈，长度无所谓 ——
+      // 截断会让真正的原因（往往在末尾的 cause 那一段）先被砍掉。
+      l_reason = in_err.what();
     } catch (...) {
       l_reason = "非 std::exception 类型的错误";
     }
   }
 
   if (l_err) {
-    co_await l_rollback(l_reason);
+    // 没有回滚：分支不落库、也不碰会话的状态列，所以库里本来就没变过。
+    // 这里只把原因写进会话 —— 前端看板靠它说明「这次为什么没推进」。写不进去也不能
+    // 把原始异常吞掉（原始异常比这条记录重要得多），所以只记 ERROR 日志。
+    try {
+      ai_light_session l_session{in_session};
+      l_session.failure_reason_ = l_reason;
+      orm::sql_modify_statement_vector_t l_sqls{};
+      l_sqls.emplace_back(make_session_update(in_sql, l_session));
+      co_await in_sql.run_sql(std::move(l_sqls));
+    } catch (const std::exception& in_err) {
+      SPDLOG_LOGGER_ERROR(
+          g_logger_ctrl().get_main_error(), "AI 灯光会话 {} 记录失败原因失败: {}", in_session.uuid_id_, in_err.what()
+      );
+    }
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_http(), "AI 灯光会话 {} 推进失败（停留在 {}）: {}", in_session.uuid_id_,
+        magic_enum::enum_name(l_entry_state), l_reason
+    );
     std::rethrow_exception(l_err);
   }
 }
@@ -616,27 +649,6 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_lo
     );
   }
 
-  // 回滚 lambda：与 advance_session 里那份语义相同（退回进入状态 + 记 failure_reason_）。
-  // 单独写一份而不是抽成共用函数，是因为它按引用捕获这个栈上的 in_session，
-  // 抽出去就得把 in_session 与 entry_state 一起当参数传，反而更难读。
-  auto l_rollback = [&](const std::string& in_reason) -> boost::asio::awaitable<void> {
-    in_session.state_          = l_entry_state;
-    in_session.failure_reason_ = in_reason;
-    SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_http(), "AI 灯光会话 {} 推进失败（引擎内路线，停留在 {}）: {}", in_session.uuid_id_,
-        magic_enum::enum_name(l_entry_state), in_reason
-    );
-    try {
-      orm::sql_modify_statement_vector_t l_sqls{};
-      l_sqls.emplace_back(make_session_update(in_sql, in_session));
-      co_await in_sql.run_sql(std::move(l_sqls));
-    } catch (const std::exception& in_err) {
-      SPDLOG_LOGGER_ERROR(
-          g_logger_ctrl().get_main_error(), "AI 灯光会话 {} 回滚失败: {}", in_session.uuid_id_, in_err.what()
-      );
-    }
-  };
-
   std::optional<ai_light_launch_plan_t> l_plan{};
   std::exception_ptr l_err{};
   std::string l_reason{"未知错误"};
@@ -648,13 +660,16 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_lo
         l_entry_state == ai_light_session_state::awaiting_spec_confirm) {
       // 这一步没有渲染计划可给：Spec 出完会话进 awaiting_spec_confirm（闸门 1），
       // 候选要等人工确认之后再走一次调用。返回 nullopt 让调用方照常回详情。
-      co_await advance_session_spec_branch(in_sql, in_session, l_operator);
+      auto l_res = co_await advance_session_spec_branch(in_sql, in_session, l_operator);
+      co_await in_sql.run_sql(std::move(l_res.sqls_));
       co_return l_plan;
     }
 
     if (l_entry_state == ai_light_session_state::generating) {
-      l_plan = co_await advance_session_generating_branch(in_sql, in_session, l_operator, true);
-      co_return l_plan;
+      auto l_res = co_await advance_session_generating_branch(in_sql, in_session, l_operator, true);
+      co_await in_sql.run_sql(std::move(l_res.sqls_));
+      // 引擎内路线不建任务行，所以既不派发也不广播（dispatch_ = false、task id = nil）。
+      co_return std::move(l_res.plan_);
     }
 
     DOODLE_CHICK_HTTP(
@@ -668,14 +683,29 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_lo
     try {
       throw;
     } catch (const std::exception& in_err) {
-      l_reason = brief_error(in_err);
+      l_reason = in_err.what();
     } catch (...) {
       l_reason = "非 std::exception 类型的错误";
     }
   }
 
   if (l_err) {
-    co_await l_rollback(l_reason);
+    // 同 advance_session：没有回滚，只记原因。
+    try {
+      ai_light_session l_session{in_session};
+      l_session.failure_reason_ = l_reason;
+      orm::sql_modify_statement_vector_t l_sqls{};
+      l_sqls.emplace_back(make_session_update(in_sql, l_session));
+      co_await in_sql.run_sql(std::move(l_sqls));
+    } catch (const std::exception& in_err) {
+      SPDLOG_LOGGER_ERROR(
+          g_logger_ctrl().get_main_error(), "AI 灯光会话 {} 记录失败原因失败: {}", in_session.uuid_id_, in_err.what()
+      );
+    }
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_http(), "AI 灯光会话 {} 推进失败（引擎内路线，停留在 {}）: {}", in_session.uuid_id_,
+        magic_enum::enum_name(l_entry_state), l_reason
+    );
     std::rethrow_exception(l_err);
   }
   co_return l_plan;
@@ -1001,7 +1031,7 @@ boost::asio::awaitable<void> mark_iteration_failed(
   );
 
   auto l_session            = in_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
-  l_session.failure_reason_ = brief_text(in_reason);
+  l_session.failure_reason_ = in_reason;
 
   // 只写会话这一行。iteration.state 与候选状态**都不动**（D28）：
   // 失败不是终态，美术再点一次 /iterate 就能重派一轮，而候选行保持 pending 也正好表达

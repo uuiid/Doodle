@@ -326,6 +326,16 @@ shot_path_identifier shot_render_light_builder::make_identifier() const {
   };
 }
 
+shot_path_identifier shot_render_light_builder::make_sync_identifier() const {
+  // AI 灯光只管「渲染本镜头」, 不区分解算/动画输出, 于是 import_suffix() 取 _DH 那一支
+  return shot_path_identifier{
+      .project_code_       = input_.prj_.code_,
+      .episodes_           = episodes{input_.episode_entity_},
+      .shot_               = shot{input_.shot_entity_},
+      .is_simulation_task_ = false,
+  };
+}
+
 shot_render_light_builder::base_info shot_render_light_builder::fill_base() {
   ret_.project_id_   = input_.project_id_;
   ret_.shot_task_id_ = input_.shot_task_id_;
@@ -762,26 +772,73 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light_builder::run() {
   return std::move(ret_);
 }
 
-shot_render_light_result shot_render_light_builder::run_with_sync() {
-  const auto l_base  = fill_base();
+shot_render_light_sync_result shot_render_light_builder::run_sync_only() {
+  // 只做「起 UE 要什么」这一件事: 不配对解算输出、不建 asset_infos_/skin_path_/groom_bind_path_、
+  // 不校验服务端网络盘。那些产物在 AI 灯光链路上没有任何消费者(工作机只读 payload 的
+  // render_map / level_sequence / movie_pipeline_config / camera_file_path / 帧区间 / 候选,
+  // UE 侧 DoodleLightingRoundRunner 同样), 所以连算都不算。
   const auto l_scene = resolve_scene_ue_path();
-  scan_shot_output(l_base);
-  build_asset_keys(l_base);
-  pair_simulation_outputs(l_base);
-  build_paths(l_scene);
-  bind_asset_extends(l_scene);
-  check_files();
-  if (input_.abc_import_ == simulation_abc_import::without_abc) drop_abc_assets();
-  conv_asset_game_paths();
-  // 同步清单必须在 conv_asset_game_paths() 之后算: 它读的是最终的 ue_asset_path_
-  build_assembly_files(l_scene);
-  return shot_render_light_result{
-      .arg_            = std::move(ret_),
-      // 工作机工程根(相对 user_work_root_): 与 task_sync 的本地缓存口径一致
-      .project_dir_    = FSys::path{input_.prj_.code_} / l_scene.scene_extend_value_.bian_hao_ /
-                         l_scene.uproject_file_.stem(),
-      .assembly_files_ = std::move(assembly_files_),
+  const auto l_id    = make_sync_identifier();
+
+  const auto l_ctx = shot_path_context{
+      .id_             = l_id,
+      .project_path_   = input_.prj_.path_,
+      .episode_entity_ = input_.episode_entity_,
+      .scene_           = l_scene,
   };
+
+  // 相机文件必须靠扫描才能拿到: 文件名里的 "_camera_" 段是自由文本, 没有路径公式
+  // (get_shots_animation_output_path 只给到 {code}_{episode}_{shot} 前缀目录)。
+  // 但 UE 侧 PrepareAnchorCamera 把它当硬前置("载荷里没有交付机位 FBX"), 所以省不掉。
+  // 这里只扫相机, 不再顺手收集 fbx 当资产输出 —— 那是装配任务才需要的。
+  const auto l_camera = find_shot_camera_file();
+
+  const shot_render_light_path_set l_paths{l_ctx, l_camera};
+
+  // 唯一保留的存在性探测: 决定基线用主场景 map 还是地编预调的预调总关卡。
+  // shot_render_light_path_set 的构造函数内部已经做过一次同样的探测(它要 original_map_),
+  // 所以这里直接取路径集合里的结果, 不重复探。
+  build_assembly_files(l_paths, l_scene);
+
+  return shot_render_light_sync_result{
+      .render_map_            = l_paths.render_map_.get(),
+      .level_sequence_import_ = l_paths.level_sequence_import_.get(),
+      .movie_pipeline_config_ = l_paths.movie_pipeline_config_.get(),
+      .original_map_          = l_paths.original_map_.get(),
+      .begin_time_            = input_.shot_extend_.frame_in_.value(),
+      .end_time_              = input_.shot_extend_.frame_out_.value(),
+      // 工程根按 task_sync 的口径(auto_task.cpp:1062): {code}/{归档编号}/{uproj stem}
+      .project_dir_           = FSys::path{input_.prj_.code_} / l_scene.scene_extend_value_.bian_hao_ /
+                                l_scene.uproject_file_.stem(),
+      .uproject_file_name_    = l_scene.uproject_file_.filename(),
+      .camera_file_path_      = l_paths.camera_file_path_.get(),
+      .assembly_files_        = std::move(assembly_files_),
+  };
+}
+
+FSys::path shot_render_light_builder::find_shot_camera_file() const {
+  const auto l_dir = input_.prj_.path_ / get_shots_animation_output_path(
+                                             input_.episode_entity_, input_.shot_entity_, input_.prj_
+                                         );
+  const auto l_shot_file_name =
+      get_shots_animation_file_name(input_.episode_entity_, input_.shot_entity_, input_.prj_).string();
+  const auto l_end_str =
+      fmt::format("_{}-{}", input_.shot_extend_.frame_in_.value(), input_.shot_extend_.frame_out_.value());
+
+  for (auto&& l_path : FSys::directory_iterator{l_dir}) {
+    const auto l_stem = l_path.path().stem().string();
+    if (!(l_stem.starts_with(l_shot_file_name) && l_stem.ends_with(l_end_str) &&
+          l_path.path().extension() == ".fbx"))
+      continue;
+    if (l_stem.find("_camera_") != std::string::npos) return l_path.path();
+  }
+
+  // 与 scan_shot_output 同一条错误口径: 没有机位就没法渲染
+  throw_exception(
+      http_request_error{
+          boost::beast::http::status::bad_request, "未找到镜头(camera)文件，请确保镜头文件已上传至服务器"
+      }
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -835,26 +892,115 @@ shot_render_light_input make_shot_render_light_input(
 }
 }  // namespace
 
-void shot_render_light_builder::build_assembly_files(const scene_resolution& in_scene) {
+void shot_render_light_builder::build_assembly_files(
+    const shot_render_light_path_set& in_paths, const scene_resolution& in_scene
+) {
+  // 与 task_sync(auto_task.cpp:1035-1234)同一个写法: 路径一条条列出来, 不去扫描目录、
+  // 也不从别处的中间产物反推。`to_` 一律挂 l_prj_dir(工程根)之下, `from_` 一律是共享盘真身。
+  const auto& l_prj  = input_.prj_;
+  const auto& l_prj_dir = FSys::path{l_prj.code_} / in_scene.scene_extend_value_.bian_hao_ /
+                          in_scene.uproject_file_.stem();
+  const auto& l_scene_extend_value = in_scene.scene_extend_value_;
+
   assembly_files_.clear();
-  assembly_files_.reserve(ret_.ue_asset_path_.size());
-  for (auto&& l_info : ret_.ue_asset_path_) {
-    if (l_info.from_.empty()) continue;
-    // to_ 是服务端缓存根的绝对路径; 减掉工程根前缀才拿到工作机要用的相对路径。
-    // 只在两处都换成正斜杠比较之外, 直接用词法相对: 不碰文件系统, 也不要求目标存在。
-    auto l_rel = l_info.to_.lexically_relative(in_scene.scene_ue_path_);
-    if (l_rel.empty() || l_rel.native().starts_with(L"..")) {
-      // 落不到工程根底下的条目无处安放, 跳过(记 WARN), 总比在别的机器上乱写强
-      SPDLOG_LOGGER_WARN(
-          g_logger_ctrl().get_main_error(), "AI 灯光装配同步: 目标 {} 不在场景工程根 {} 之下, 已跳过",
-          l_info.to_.string(), in_scene.scene_ue_path_.string()
-      );
-      continue;
-    }
+
+  /// 统一入口: 空 from_ 直接跳过(老数据里可能没有路径), 其余按 (from_, 相对 to_) 收下
+  auto l_add = [this, &l_prj_dir](FSys::path in_from, FSys::path in_to_relative) {
+    if (in_from.empty() || in_to_relative.empty()) return;
     assembly_files_.emplace_back(
-        ::doodle::ai_light::ai_light_assembly_file_t{.from_ = l_info.from_, .to_ = std::move(l_rel)}
+        ::doodle::ai_light::ai_light_assembly_file_t{
+            .from_ = std::move(in_from), .to_ = l_prj_dir / std::move(in_to_relative)
+        }
     );
+  };
+
+  // 工程本体三件套: uproject / Content / Config (task_sync auto_task.cpp:1065-1073 同款)
+  const auto l_ground_ue_path = get_entity_ground_ue_path(l_prj, l_scene_extend_value);
+  l_add(in_scene.uproject_file_, in_scene.uproject_file_.filename());
+  l_add(l_prj.path_ / l_ground_ue_path / doodle_config::ue4_content, FSys::path{doodle_config::ue4_content});
+  l_add(l_prj.path_ / l_ground_ue_path / doodle_config::ue4_config, FSys::path{doodle_config::ue4_config});
+
+  // 逐资产: 角色 Content / 道具特效的公共与本体目录 (task_sync auto_task.cpp:1075-1109 同款)
+  for (auto&& l_row : input_.assets_) {
+    entity_asset_extend_value l_asset_extend_value{
+        l_row.asset_extend_, l_row.ji_shu_lie_name_, l_row.kai_shi_ji_shu_name_
+    };
+    if (l_row.asset_.entity_type_id_ == asset_type::get_character_id()) {
+      l_add(
+          l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend_value) / doodle_config::ue4_content,
+          FSys::path{doodle_config::ue4_content}
+      );
+    } else if (
+        l_row.asset_.entity_type_id_ == asset_type::get_prop_id() ||
+        l_row.asset_.entity_type_id_ == asset_type::get_effect_id()
+    ) {
+      // 拼音名称为空时跳过(与 task_sync 一致): 没有拼音就拼不出目录
+      if (l_row.asset_extend_.pin_yin_ming_cheng_.empty()) continue;
+      const auto l_prop_ue_path = l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend_value);
+      l_add(l_prop_ue_path / get_entity_prop_ue_public_files_path(), get_entity_prop_ue_public_files_path());
+      l_add(l_prop_ue_path / get_entity_prop_ue_files_path(l_asset_extend_value),
+            get_entity_prop_ue_files_path(l_asset_extend_value));
+    }
+    // 地面只设 skin_path_, 没有要同步的目录(task_sync auto_task.cpp:1107-1108 是空分支)
   }
+
+  // 自动灯光产物: 解算与动画两条 (task_sync auto_task.cpp:1110-1116 同款)
+  {
+    const auto l_root   = l_prj.path_ / get_shots_auto_lighting_upload_path(
+                                            episodes{input_.episode_entity_}, l_scene_extend_value
+                                        );
+    const auto l_path_1 = get_shots_auto_lighting_upload_animation_name(
+        episodes{input_.episode_entity_}, shot{input_.shot_entity_}, l_prj.code_
+    );
+    const auto l_path_2 = get_shots_auto_lighting_upload_simulation_name(
+        episodes{input_.episode_entity_}, shot{input_.shot_entity_}, l_prj.code_
+    );
+    l_add(l_root / l_path_1, l_path_1);
+    l_add(l_root / l_path_2, l_path_2);
+  }
+
+  // 灯光分支额外要的目录 (task_sync auto_task.cpp:1118-1158 同款)
+  // 这里不区分必拷/可选: 客户端自己确认该不该覆盖, 服务端只把可能要的文件说全。
+  const auto l_episodes     = episodes{input_.episode_entity_};
+  const auto l_shot         = shot{input_.shot_entity_};
+  const auto l_uproj_stem   = in_scene.uproject_file_.stem();
+  const auto l_ep_sc_dir    = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
+                              fmt::format("ep{:04}", l_episodes) /
+                              fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot);
+
+  // 特效: Import_Vfx 与 ep 级 Vfx
+  const auto l_vfx_path  = l_ep_sc_dir / "Import_Vfx";
+  const auto l_vfx_path2 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
+                           fmt::format("ep{:04}", l_episodes) / "Vfx";
+  const auto l_vfx_root = l_prj.path_ / get_shots_effect_ue_path(input_.episode_entity_) / l_uproj_stem;
+  l_add(l_vfx_root / l_vfx_path, l_vfx_path);
+  l_add(l_vfx_root / l_vfx_path2, l_vfx_path2);
+
+  // 地编预调: Import_WB / {ep_sc}.uasset / {ep_sc}_Zong.umap
+  const auto l_light_root = l_prj.path_ / get_shots_ground_pretreatment_movie_path(input_.episode_entity_) /
+                            l_uproj_stem;
+  const auto l_light_path2 = l_ep_sc_dir / "Import_WB";
+  const auto l_light_path3 = l_ep_sc_dir /
+                             fmt::format("{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes, l_shot,
+                                         doodle_config::ue4_uasset_ext);
+  const auto l_light_path4 = l_ep_sc_dir /
+                             fmt::format("{}_EP{:03}_SC{:03}_Zong{}", l_prj.code_, l_episodes, l_shot,
+                                         doodle_config::ue4_umap_ext);
+  l_add(l_light_root / l_light_path2, l_light_path2);
+  l_add(l_light_root / l_light_path3, l_light_path3);
+  l_add(l_light_root / l_light_path4, l_light_path4);
+
+  // 地编预调命中时, 那 3 个文件也要一起进工程(探测结果就挂在路径集合上)
+  for (auto&& l_info : in_paths.asset_copy()) {
+    auto l_rel = l_info.to_.lexically_relative(in_scene.scene_ue_path_);
+    if (l_rel.empty() || l_rel.native().starts_with(L"..")) continue;
+    l_add(l_info.from_, std::move(l_rel));
+  }
+
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_long_task(), "AI 灯光装配同步: 工程根 {} 下待同步 {} 条", l_prj_dir.string(),
+      assembly_files_.size()
+  );
 }
 
 import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(
@@ -863,11 +1009,11 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(
   return shot_render_light_builder{make_shot_render_light_input(in_project_id, in_shot_id, in_abc_import)}.run();
 }
 
-shot_render_light_result shot_render_light_with_sync(
+shot_render_light_sync_result shot_render_light_sync_only(
     const uuid& in_project_id, const uuid& in_shot_id, simulation_abc_import in_abc_import
 ) {
-  auto l_builder = shot_render_light_builder{make_shot_render_light_input(in_project_id, in_shot_id, in_abc_import)};
-  return l_builder.run_with_sync();
+  return shot_render_light_builder{make_shot_render_light_input(in_project_id, in_shot_id, in_abc_import)}
+      .run_sync_only();
 }
 
 }  // namespace auto_task
