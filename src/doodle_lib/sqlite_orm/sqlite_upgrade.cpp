@@ -141,7 +141,7 @@ struct upgrade_3_t : sqlite_upgrade {
     if (l_s.pragma().user_version() > g_version_30) return;
     backup(l_s);
     l_s.sync_schema();
-
+    l_s.add_column("seedance2_task_2", "ai_light_iteration_id", orm::column_type::blob);
     l_s.rebuild_table<seedance2::task>();
     // 本步骤是 30 之后的**唯一**一步, 所以它写 g_current_version (= 31)。
     // 将来若在它后面再插步骤, 这一行必须改成写自己的目标版本常量, 否则下一步会被静默跳过

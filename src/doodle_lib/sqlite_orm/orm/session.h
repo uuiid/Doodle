@@ -166,7 +166,7 @@ class DOODLELIB_API session {
   );
   // 添加列, 默认值可选
   void add_column(
-      const std::string& table_name, const std::string& column_name, const std::string& column_type,
+      const std::string& table_name, const std::string& column_name, const column_type& column_type,
       std::optional<std::string> in_default_value = std::nullopt
   );
   // 单独创建某张表

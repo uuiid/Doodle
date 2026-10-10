@@ -3,9 +3,9 @@
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/orm/session.h>
 
-#include "storage.h"
-
 #include <boost/scope/scope_exit.hpp>
+
+#include "storage.h"
 
 namespace doodle::orm {
 session::session_data::~session_data() {
@@ -241,12 +241,13 @@ void session::rebuild_table(const std::type_index& table_name) {
         fmt::join(l_column_names, R"(", ")"), l_old_table->name_
     );
     //   删除旧表
-    auto l_drop_sql    = fmt::format(R"(DROP TABLE "{}";)", l_old_table->name_);
+    auto l_drop_sql = fmt::format(R"(DROP TABLE "{}";)", l_old_table->name_);
     // 复制数据前先删掉本表上的触发器, 避免 INSERT ... SELECT 触发它们:
     // 例如 entity 的 FTS 同步触发器会把每一行重复写进 entity_fts, 污染索引.
     // 函数末尾的触发器重建逻辑会把它们恢复.
     for (const auto& trigger : l_s.triggers_) {
-      if (!trigger->info_->table_name_ || trigger->info_->table_name_->to_sql(*this, to_sql_ctx{}) != l_old_table->name_)
+      if (!trigger->info_->table_name_ ||
+          trigger->info_->table_name_->to_sql(*this, to_sql_ctx{}) != l_old_table->name_)
         continue;
       auto l_drop_trigger_stmt =
           sqlite_stmt{*this, fmt::format(R"(DROP TRIGGER IF EXISTS "{}";)", trigger->info_->name_)};
@@ -279,7 +280,8 @@ void session::rebuild_table(const std::type_index& table_name) {
     for (const auto& trigger : l_s.triggers_) {
       // 只重建属于当前表的触发器. 其它表的触发器不能碰: 它们引用的表在本库中可能并不存在
       // (例如只建了部分表的库), 直接 CREATE 会报 no such table.
-      if (!trigger->info_->table_name_ || trigger->info_->table_name_->to_sql(*this, to_sql_ctx{}) != l_old_table->name_)
+      if (!trigger->info_->table_name_ ||
+          trigger->info_->table_name_->to_sql(*this, to_sql_ctx{}) != l_old_table->name_)
         continue;
       if (l_all_triggers.contains(trigger->info_->name_)) {
         // SPDLOG_DEBUG("Trigger already exists, skipping creation: {}", trigger->info_->name_);
@@ -311,10 +313,10 @@ void session::rename_column(
   l_stmt.step();
 }
 void session::add_column(
-    const std::string& table_name, const std::string& column_name, const std::string& column_type,
+    const std::string& table_name, const std::string& column_name, const column_type& column_type,
     std::optional<std::string> in_default_value
 ) {
-  if (table_name.empty() || column_name.empty() || column_type.empty())
+  if (table_name.empty() || column_name.empty())
     throw std::invalid_argument("Table, column and type names cannot be empty");
   auto l_sql = fmt::format(R"(ALTER TABLE "{}" ADD COLUMN "{}" {})", table_name, column_name, column_type);
   if (in_default_value) l_sql += fmt::format(" DEFAULT {}", *in_default_value);
@@ -476,12 +478,12 @@ void session::pragma_t::auto_vacuum(auto_vacuum_t in_mode) { run("auto_vacuum", 
 
 void session::pragma_t::incremental_vacuum(std::int32_t in_pages) {
   // 不带参数时 SQLite 归还全部空闲页
-  auto l_sql =
-      in_pages < 0 ? std::string{"PRAGMA incremental_vacuum;"} : fmt::format("PRAGMA incremental_vacuum({});", in_pages);
+  auto l_sql  = in_pages < 0 ? std::string{"PRAGMA incremental_vacuum;"}
+                             : fmt::format("PRAGMA incremental_vacuum({});", in_pages);
   auto l_stmt = sqlite_stmt{s_, l_sql};
   // 这条语句每归还一页就返回一行 (结果列数为 0, 所以命令行看不到任何输出),
   // 必须一直步进到 SQLITE_DONE, 否则一次调用只会归还一页.
-  auto l_r = l_stmt.step_not_throw();
+  auto l_r    = l_stmt.step_not_throw();
   while (l_r == SQLITE_ROW) l_r = l_stmt.step_not_throw();
   DOODLE_ORM_ERROR_SQLITE3(l_r, sqlite3_db_handle(l_stmt.stmt_));
 }
