@@ -141,7 +141,18 @@ struct upgrade_3_t : sqlite_upgrade {
     if (l_s.pragma().user_version() > g_version_30) return;
     backup(l_s);
     l_s.sync_schema();
+    // 这两列都必须存在于旧表里, 且必须都在 rebuild_table **之前**补上. 原因是 rebuild_table 的
+    // 列拷贝清单来自 **ORM 声明**而不是库里的实际列 (见 orm/session.cpp:236-242 与
+    // docs/3-sqlite_schema_cleanup_changelog.md 7.3), 它会生成
+    // `INSERT INTO ..._backup ("...", "result_text", ...) SELECT ... "result_text" FROM ...`.
+    // 一旦 result_text 在旧表里不存在, SQLite 会把双引号标识符**降级成字符串字面量** (DQS,
+    // 经 sqlite3_config(SQLITE_CONFIG_LOG) 回调报 warning 28 `double-quoted string literal: "result_text"`),
+    // 而**不是**报错: 重建看起来成功, 14k 行却全被写成字面量 'result_text', 静默丢数据.
+    // 所以这里刻意用 add_column 显式补列, 不能依赖 sync_schema —— 它对已存在的表直接 continue,
+    // **不会加列** (见本文件 120-124 行注释).
+    // 不需要先查列是否已存在: 上面的 `> 30 就跳过` 保证本步骤对一张库只跑一次.
     l_s.add_column("seedance2_task_2", "ai_light_iteration_id", orm::column_type::blob);
+    l_s.add_column("seedance2_task_2", "result_text", orm::column_type::text);
     l_s.rebuild_table<seedance2::task>();
     // 本步骤是 30 之后的**唯一**一步, 所以它写 g_current_version (= 31)。
     // 将来若在它后面再插步骤, 这一行必须改成写自己的目标版本常量, 否则下一步会被静默跳过
