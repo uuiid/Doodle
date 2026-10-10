@@ -101,7 +101,7 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
   // 需要补公网前缀; 而且这些路由现在要鉴权, 所以同时追加短时效签名(url_sign_t)。
   // 绝对 URL(对象存储签名 URL、方舟自己的 URL)一律原样保留。
 
-  /// 单个 URL 的改写: 站点内路径 -> http://{ip}:38192{path}?exp=..&uid=..&sig=..
+  /// 单个 URL 的改写: 站点内路径 -> http://{ip}:{core_set::public_url_port_}{path}?exp=..&uid=..&sig=..
   /// 带 scheme 的 URL(http/https/data/blob 等)一律原样返回;
   /// in_secret 为空时只补前缀、不追加签名。
   static std::string to_public_url(

@@ -20,14 +20,14 @@ std::string ai_client_base::to_public_url(
   // 再补前缀或再签名只会把它弄坏。
   if (in_url.starts_with("http://") || in_url.starts_with("https://")) return std::string{in_url};
   // 其它带 scheme 的 URL 同样原样保留: data: 内联 base64(中转站的 images[] 就支持)、blob: 等
-  // 都不是「站点内路径」, 补前缀会拼成 http://ip:38192data:... 这种废 URL。
+  // 都不是「站点内路径」, 补前缀会拼成 http://ip:{port}data:... 这种废 URL。
   if (const auto l_colon = in_url.find(':'); l_colon != std::string_view::npos && in_url.find('/') > l_colon)
     return std::string{in_url};
 
   // 站点内路径: 先签名(返回的仍是相对路径), 再补公网前缀
   auto l_path = std::string{in_url};
   if (!in_secret.empty()) l_path = url_sign_t::sign_path(l_path, in_uid, in_secret);
-  return fmt::format("http://{}:38192{}", in_ip, l_path);
+  return fmt::format("http://{}:{}{}", in_ip, core_set::get_set().public_url_port_, l_path);
 }
 
 nlohmann::json ai_client_base::add_ip_to_req(

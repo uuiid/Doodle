@@ -45,6 +45,9 @@ struct kitsu_supplement_args_t {
   std::string domain_protocol_;
   std::string domain_name_;
 
+  /// 对外公开素材 URL 的端口(写入 core_set::public_url_port_)
+  std::uint16_t public_url_port_ = 38192;
+
   struct mail_config_t {
     std::string address_;
     std::uint32_t port_;
@@ -77,6 +80,7 @@ struct kitsu_supplement_args_t {
     if (in_json.contains("domain_protocol")) in_json.at("domain_protocol").get_to(out_obj.domain_protocol_);
     if (in_json.contains("domain_name")) in_json.at("domain_name").get_to(out_obj.domain_name_);
     if (in_json.contains("secret")) in_json.at("secret").get_to(out_obj.secret_);
+    if (in_json.contains("public_url_port")) in_json.at("public_url_port").get_to(out_obj.public_url_port_);
   }
 };
 
@@ -136,6 +140,11 @@ bool kitsu_supplement_main::init() {
       .secret_               = "22T0iwSHK7qkhdI6",
       .domain_protocol_      = "http",
       .domain_name_          = "192.168.40.188",
+#ifdef NDEBUG
+      .public_url_port_ = 38192,
+#else
+      .public_url_port_ = 38193,
+#endif
   };
 
   if (auto l_file_path = arg_({"config"}); l_file_path) {
@@ -189,6 +198,8 @@ bool kitsu_supplement_main::init() {
     return true;
   }
   get_register_info(l_args);
+  // 对外公开素材 URL 的端口: 配置了就用配置值, 否则保留 core_set 的 debug/release 默认值
+  if (l_args.public_url_port_ != 0) l_set.public_url_port_ = l_args.public_url_port_;
   // 初始化cv线程
   cv::setNumThreads(::GetActiveProcessorCount(0));
 

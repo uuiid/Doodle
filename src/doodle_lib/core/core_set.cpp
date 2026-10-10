@@ -38,9 +38,11 @@ core_set::core_set()
       p_doc(get_pwd() / "doodle"),
       maya_version(2024),
 #ifdef NDEBUG
-      server_ip("http://192.168.40.188:50025")
+      server_ip("http://192.168.40.188:50025"),
+      public_url_port_(38192)
 #else
-      server_ip("http://192.168.20.89:50025")
+      server_ip("http://192.168.20.89:50025"),
+      public_url_port_(38193)
 #endif
 {
   if (!FSys::exists(p_doc)) FSys::create_directories(p_doc);
@@ -99,6 +101,8 @@ void to_json(nlohmann::json& j, const core_set& p) {
 
   j["authorize"]      = p.authorize_;
   j["user_work_root"] = p.user_work_root_;
+
+  j["public_url_port"] = p.public_url_port_;
 }
 
 void from_json(const nlohmann::json& j, core_set& p) {
@@ -117,6 +121,7 @@ void from_json(const nlohmann::json& j, core_set& p) {
 
   if (j.contains("authorize")) j.at("authorize").get_to(p.authorize_);
   if (j.contains("user_work_root")) j.at("user_work_root").get_to(p.user_work_root_);
+  if (j.contains("public_url_port")) j.at("public_url_port").get_to(p.public_url_port_);
 }
 
 }  // namespace doodle

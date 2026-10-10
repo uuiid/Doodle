@@ -50,6 +50,11 @@ class DOODLELIB_API core_set : public boost::noncopyable {
 
   std::string server_ip{};
 
+  // 对外公开素材 URL 时使用的端口(站点内相对路径补成 http://{ip}:{port}{path})。
+  // 注意: 这是「公开前缀」而非监听端口; 监听端口为 0(随机)时只有 run_http_listener 里
+  // publish_listener_port 知道真实端口, 本值仅作兜底。
+  std::uint16_t public_url_port_{38192};
+
   std::string authorize_{};
   void save();
   // 只读模式
