@@ -25,6 +25,7 @@ constexpr model_pricing g_model_pricings[] = {
     // ─── nano-banana 系列 ───
     {"nano-banana-fast", 440, false, false},
     {"nano-banana-2", 1200, false, false},
+    {"nano-banana-2.1", 1200, false, false},
     {"nano-banana-2-lite", 440, false, false},
     {"nano-banana-2-cl", 6000, false, true},
     {"nano-banana-2-2k-cl", 9000, false, true},
