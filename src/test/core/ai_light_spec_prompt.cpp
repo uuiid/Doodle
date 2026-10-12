@@ -438,10 +438,18 @@ BOOST_AUTO_TEST_CASE(map_result_echo_keeps_reference_stats_values) {
   // 取值与 stats 相同就说明模型认可了参考图统计。
   const auto l_ret = map_spec_result(make_llm_json(), l_agg);
 
+  // 夹具里 make_llm_json() 的 targets 与 make_agg().targets_ 逐字段同值,
+  // 所以这组断言同时验了「照抄不改写」: 模型值与统计值同值时, 最终取值仍是那个值.
   BOOST_TEST(std::abs(l_ret.spec_.targets_.contrast_.low_ - 0.55) < 1e-9);
-  // white_balance_kelvin 的统计中位数是 5600，模型抄的是区间 {5400, 5800} ——
-  // 模型给的是区间原样，服务端直接采用，不做「是否同一区间」的容差判定。
-  BOOST_TEST(std::abs(l_ret.spec_.targets_.white_balance_kelvin_.low_ - 5400.0) < 1e-9);
+  BOOST_TEST(std::abs(l_ret.spec_.targets_.contrast_.high_ - 0.75) < 1e-9);
+  BOOST_TEST(std::abs(l_ret.spec_.targets_.white_balance_kelvin_.low_ - 4000.0) < 1e-9);
+  BOOST_TEST(std::abs(l_ret.spec_.targets_.white_balance_kelvin_.high_ - 4200.0) < 1e-9);
+
+  // 统计口径的东西不因模型输出而改变（见文件头第 9-10 行）——模型根本没被允许给这些键.
+  BOOST_TEST(l_ret.spec_.targets_.palette_.size() == 2);
+  // 不能用花括号初始化列表: Boost.Test 会把它当惰性表达式解析 (C3329 / C2059).
+  const std::vector<std::string> l_ownership_want{"contrast", "vignette"};
+  BOOST_TEST(l_ret.spec_.targets_.ownership_.grading_ == l_ownership_want);
 }
 
 BOOST_AUTO_TEST_CASE(map_result_falls_back_on_illegal_enum) {
@@ -465,8 +473,10 @@ BOOST_AUTO_TEST_CASE(map_result_falls_back_on_illegal_enum) {
 
   // 非法值被丢弃 → 保留统计推导出来的值，而不是半截的模型值。
   BOOST_TEST(l_ret.spec_.targets_.grading_hints_.vignette_ == "subtle");
-  // 合法的 lifted_blacks 照常接受（别把整块 grading_hints 一起丢掉）
-  BOOST_TEST(l_ret.spec_.targets_.grading_hints_.lifted_blacks_ == true);
+  // lifted_blacks 是**值合法但取值相反**的字段: 模型给了 false, 统计推导出的是 true.
+  // 按「提示词优先」(§6.3) 采用模型的 false —— 这与上面 vignette 的「整块丢弃」不同:
+  // 校验只管值合不合法, 不管它与统计一致不一致.
+  BOOST_TEST(l_ret.spec_.targets_.grading_hints_.lifted_blacks_ == false);
 
   // 性格行本身有信息量（subject/trait 非空）→ 保留；但两个非法枚举字段都被清空。
   BOOST_TEST(l_ret.spec_.intent_.character_personality_.size() == 1);

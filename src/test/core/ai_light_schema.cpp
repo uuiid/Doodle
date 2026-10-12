@@ -75,12 +75,57 @@ bool has_table(orm::session& in_session, std::string_view in_table) {
          ) > 0;
 }
 
-// 把六张表全删掉, 造出「还没有 AI 灯光」的 30 版形状.
+// 把六张表全删掉, 造出「还没有 AI 灯光」的形状.
 // 迁移用例必须从这个形状出发, 否则表本来就在, 断言就变成了空转.
 void drop_ai_light_tables(orm::session& in_session) {
   // 先删子表, 免得外键把 DROP 挡住 (schema 里是 cascade, 但顺序删更直观)
   for (auto l_it = std::rbegin(g_ai_light_tables); l_it != std::rend(g_ai_light_tables); ++l_it)
     exec_sql(in_session, fmt::format("DROP TABLE IF EXISTS {};", *l_it));
+}
+
+// 30 -> 31 这一步除了建六张表, 还给 seedance2_task_2 补了 ai_light_iteration_id / result_text
+// (见 sqlite_upgrade.cpp upgrade_3_t 里的两次 add_column).
+// sync_schema() 是按**最新** schema 建的, 这两列已经在了 —— 想造真正的 30 版形状就得让它们缺席.
+//
+// 不处理会怎样: 迁移第一步就是 add_column 补列, 撞上已有列 → duplicate column name.
+// 迁移只在 user_version < 31 时跑一次, 真实库不会出现「同一张表重复加列」, 是夹具自己造的.
+//
+// 不能用 create_table<seedance2::task>() 重建: 它按 ORM 声明建表, 声明里**有**这两列
+// (sqlite_database.cpp:118-119), 建出来还是 31 版形状, 等于没删.
+// 也不能 ALTER TABLE ... DROP COLUMN: ai_light_iteration_id 被外键定义引用着, SQLite 直接拒绝
+// (`unknown column "ai_light_iteration_id" in foreign key definition`).
+// 所以这里手写一份**只含 30 版列**的建表语句 —— 列清单照抄 sqlite_database.cpp:99-121,
+// 去掉 ai_light_iteration_id / result_text 两列; 外键也一并去掉, 免得引用尚未建出的 ai_light_iteration.
+void rebuild_task_table_without_v31_columns(orm::session& in_session) {
+  in_session.pragma().foreign_keys(false);
+  exec_sql(in_session, "DROP TABLE IF EXISTS seedance2_task_2;");
+  exec_sql(
+      in_session,
+      R"(CREATE TABLE seedance2_task_2 (
+           id INTEGER PRIMARY KEY AUTOINCREMENT,
+           uuid_id TEXT NOT NULL UNIQUE,
+           user_id TEXT,
+           status INTEGER,
+           type INTEGER NOT NULL,
+           backend INTEGER NOT NULL,
+           data_request TEXT,
+           text_prompt TEXT,
+           preview_file TEXT,
+           file_extension TEXT,
+           data_response TEXT,
+           ai_studio_id TEXT,
+           task_id TEXT,
+           created_at TEXT,
+           ended_at TEXT,
+           project_uuid_id TEXT,
+           completion_tokens INTEGER,
+           ai_generate_entity_id TEXT,
+           subproject_id TEXT,
+           retry_count INTEGER,
+           archived INTEGER
+         );)"
+  );
+  in_session.pragma().foreign_keys(true);
 }
 
 // 关闭外键执行一段插入: 用例里构造的归属 id 指向并不存在的 project/task/entity,
@@ -245,8 +290,9 @@ BOOST_AUTO_TEST_CASE(upgrade_30_to_31_creates_ai_light_tables) {
     auto l_session = l_storage.create_session();
     l_session.sync_schema();
 
-    // 造 30 版形状: 还没有 AI 灯光
+    // 造 30 版形状: 还没有 AI 灯光, seedance2_task_2 也还没有迁移补的那两列
     drop_ai_light_tables(l_session);
+    rebuild_task_table_without_v31_columns(l_session);
     for (const auto& l_table : g_ai_light_tables) BOOST_TEST(!has_table(l_session, l_table));
 
     l_session.pragma().user_version(30);
@@ -280,6 +326,7 @@ BOOST_AUTO_TEST_CASE(upgrade_gating_skips_ai_light_when_already_latest) {
     l_session.sync_schema();
 
     drop_ai_light_tables(l_session);
+    rebuild_task_table_without_v31_columns(l_session);
     l_session.pragma().user_version(31);
     l_storage.upgrade();
 
