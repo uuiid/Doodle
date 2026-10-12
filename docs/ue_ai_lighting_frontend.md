@@ -32,9 +32,9 @@
 
 ---
 
-## 2. 六条硬约定（越界的实现要打回）
+## 2. 七条硬约定（越界的实现要打回）
 
-这六条是**架构性约束**，不是风格偏好。前五条来自方案 §14.4/§14.5，第六条来自实现事实。
+这七条是**架构性约束**，不是风格偏好。前五条来自方案 §14.4/§14.5，第六条来自实现事实，第七条是角色降级新增（决定 D-58）。
 
 1. **只有海报与成片下发浏览器（EXR 不下发）。** 每个候选的产物是**一段 mp4**（含相机运动的成片）加**一张首帧海报 PNG**；
    线性 EXR 是可选项（当前一轮不产），留服务端做工程检查。前端**只**拿海报 + 成片 + 数值指标。
@@ -42,16 +42,54 @@
    「会话 uuid / 轮次 uuid / 候选 uuid」现算、不落库、不进 JSON —— 取海报一律用
    `GET /api/doodle/ai/light/candidate/{uuid}/image`，取成片用 `GET /api/doodle/ai/light/candidate/{uuid}/movie`，
    不要自己拼路径，也不要假设响应里有 `render_png_path` / `render_exr_path`。
-2. **规划逻辑不要放到前端。** 现有 AIScript 模式是浏览器直连 DeepSeek —— 灯光规划**不能照抄**：
-   提示词模板、Spec 词表、IR schema 校验一旦在 JS 与 C++ 各存一份，必然漂移。
-   前端只调 `/api/doodle/ai/light/*`；**不要复用 `/api/doodle/deepseek/key`**，不要在前端拼提示词、不要在前端算轴。
+2. **~~规划逻辑不要放到前端。~~（本条第前半段已被 [ue_ai_lighting_role_downgrade.md](ue_ai_lighting_role_downgrade.md) 推翻，m00602）**
+   后端角色降级后，**提示词组装、模型回复解释、轴展开、rig 构造都属于前端**；服务端只保留凭据代理、openCV 参考图统计、IR 准入闸门。
+   原担忧（"提示词模板、Spec 词表、IR schema 校验在 JS 与 C++ 各存一份必然漂移"）由降级文档 §3.3.2 的**模板与 Schema 托管接口**消解：
+   `GET /api/doodle/ai/light/prompt_assets[/{name}]` 给出权威 `instructions` 与 `json_schema`，前端**读取**后原样塞进推理信封，不自己重写。
+   **仍然成立：前端不持有任何模型 key**，不直连 Ark；**不要复用 `/api/doodle/deepseek/key`**。
+   前端通过新增的 **`POST /api/doodle/ai/light/inference`** 网关发起推理（服务端代持凭据并计费），拿到**原始模型回复**后自行解释。
+   轮次编排、状态机、落库、派发、回传仍全在服务端。
+   降级**未落地前**，本节描述仍是当前权威。
 3. **对比视图不做差分图。** 参考图是异视角、且被人工调过色，逐像素差分没有意义还会误导美术。
    用**并排 + 统计指标对照 + 目标区间标记**。
 4. **`session_id` 只走路径。** 请求体里带 `session_id` 一律被忽略（避免「两个真相」）。
    路径里的 uuid 是**整串正则匹配**的：畸形 uuid 直接 404，不会 500。
 5. **不要自己写死 6。** 每轮候选数用读模型给的 `candidate_count_per_iteration`（当前是 6）。
+   降级后前端要自己展开候选（[ue_ai_lighting_role_downgrade.md](ue_ai_lighting_role_downgrade.md) §4.2），这条**更重要了**：
+   档位总数 `g_axis_step_budget = candidate_count - 1`，两者都从读模型取，不要各自硬编码。
 6. **不做逐 op 的接受/拒绝。** 判断粒度是**候选**（整张图），不是单个灯光操作。
    候选对象里的 `rig.ops` 是给执行器与服务端解释用的，**不是**让美术逐条勾选的清单。
+7. **`lights` + `globals` 是权威状态，`ops` 只是审计影子。**（降级新增，决定 D-58，见 §2.1）
+   前端提交候选时**必须给出已经折叠好的 `lights` + `globals`**；`ops` 可带可不带，带了也只被原样落库。
+
+### 2.1 `ops` 的语义定位（决定 D-58，路线 A）
+
+**背景。** UE 侧 `DoodleLightingExecutor.cpp:626-628` 的 `BuildRigLights` 头注释就是当前设计的官方表态：
+
+```cpp
+/// 按 rig 全量建灯（`rig.ops` 只做审计：`diff_rigs` 永不产生 add/remove，§6.6 同轮 6 个候选灯集合完全一致）。
+```
+
+`ApplyCandidateToWorld`（`:703-733`）的执行路径是：`DestroyAiSpawnedActors()` → 全局量落 PostProcessVolume / SkyLight / Fog → `BuildRigLights(L_Rig, ...)`（**只读 `InRig.Lights`**）。
+**`InRig.Ops` 从头到尾没有被读过一次。**
+
+**`ops` 是"派生审计"而不是"指令"。** `diff_rigs`（`src/doodle_lib/http_method/kitsu/ai_light_rig_ops.cpp:168-231`）的输入是 `(基线 rig, 目标 rig)` 两个**已经完整的** rig，输出是"这两者差在哪"；`patch_` 用**目标值整块**（语义是 set，不是增量），且注释明说「展开器只改变量、不增删灯，所以两边 id 集合必然相同，这里也不会产生 add / remove」。
+即：**`lights` 是权威状态，`ops` 是它的差分影子**；影子再生效一次就是重复应用。
+
+**采定的路线（A）：`ops` 保持为前端的本地编辑记录。**
+
+| 项 | 约定 |
+|---|---|
+| **权威状态** | `candidates[i].lights` 与 `candidates[i].globals`。服务端与 UE **只消费它们** |
+| **`ops` 的地位** | 可选的**编辑说明**，仅供展示、审计与回归对照；服务端原样落库，**任何执行路径都不得解释它** |
+| **UE 侧改动** | **零**。`BuildRigLights` 保持"按 `lights` 全量建灯" |
+| **前端职责** | 维护一个 `reduce(ops, baseRig) → {lights, globals}` 折叠器。这个折叠器**编辑 UI 本来就要有**（撤销栈、实时预览都需要当前完整状态），不是额外负担 |
+| **服务端闸门** | 若只提交了 `ops` 而没有折叠后的 `lights`/`globals`，IR 准入闸门直接 400：`候选 N：ops 是审计字段，lights/globals 才是权威状态（见 §2 第 7 条）` |
+
+**为什么不是路线 B（让 UE 解释 `ops`）。** 那会引入"两套状态表示都能生效"的长期复杂性，并且必须真正实现 `light_op_kind` 里的 `add` / `remove`——它们**目前从未被 `diff_rigs` 产生过**（语义是"已声明、未实现"），实现它们要回答"新灯的 id 谁分配""语义 id 与 UE actor 如何对应"等一串新问题，还要上真机验证（方案 §15.17.5 已记录"仍未落到真机"）。路线 A 用前端一个 `reduce` 就拿到了同样的表达力。
+
+> **给前端实现方的一句话**：你可以完全按 op 列表的心智写编辑逻辑，但**提交前必须折叠**。
+> `ops` 随包上传的价值在于让服务端与后续排障能看懂"这次改了什么"，它不参与执行。
 
 ---
 
@@ -526,9 +564,13 @@ AI 灯光派发的任务类型是 `ai_light`（`server_task_info.type`），任�
 1. **实时视口反馈** —— 已取消（UE 侧不做实时交互设置）。
 2. **逐 op 的接受/拒绝** —— 判断粒度是**候选**。
 3. **SceneFacts 采集** —— 由 UE commandlet 的 `inventory` 做。
-4. **提示词模板、轴计算、Spec 词表、IR schema 校验** —— 全在服务端（§2 第 2 条）。
+4. **~~提示词模板、轴计算、Spec 词表、IR schema 校验~~** —— **本条已被 [ue_ai_lighting_role_downgrade.md](ue_ai_lighting_role_downgrade.md) 推翻（m00602）。**
+   降级后：**提示词组装（`input_text`）、轴计算、Spec/候选的模型回复解释、rig 构造**都移到前端；
+   但 **IR schema 本身仍托管在服务端**（`GET /api/doodle/ai/light/prompt_assets[/{name}]` 读取，前端不重写），
+   **IR 准入闸门仍在服务端**（`POST /api/doodle/ai/light/session/{sid}/iteration` 校验候选数、`role=key` 主光、候选间 substance 差异）。
 5. **指标计算** —— 服务端（显示空间）；前端只呈现。
-6. **LLM 直连** —— 前端不持有任何模型 key。
+6. **LLM 直连** —— 前端不持有任何模型 key。**（本条不变，降级后依然成立）**
+   前端经 `POST /api/doodle/ai/light/inference` 网关发起推理，服务端代持凭据（`ai_studio.seedance2_key_`）并计费。
 
 ---
 
@@ -546,11 +588,34 @@ AI 灯光派发的任务类型是 `ai_light`（`server_task_info.type`），任�
 
 ---
 
+## 14. 交付边界（给前端实现方）
+
+**本文是需求与契约，不是实现。** 服务端方案方**不实现前端**，只负责：
+
+- 把接口、字段、状态机、错误码写到可照着实现的程度（本文 + `ue_ai_lighting_role_downgrade.md`）
+- 提供 §2 第 7 条 / §2.1 的 `ops` 契约与 IR 准入闸门
+- 角色降级落地后，提供 §2 第 2 条列出的三条新接口（`/inference` 网关、`/prompt_assets` 托管、`/iteration` 提交）
+
+**前端实现方需要自行决定的事**（本文不代答）：
+
+| # | 事项 | 为什么需要你定 |
+|---|---|---|
+| 1 | **宿主工程** | §13 第 1 条：生产前端 `D:\kitsu\dist` 只有构建产物无源码，`E:\doodle_vue\doodle` 是空白脚手架。落到哪个工程由你定 |
+| 2 | **`ops → lights/globals` 折叠器** | §2.1 要求提交前折叠。折叠逻辑属编辑 UI 自身需要，服务端不提供 |
+| 3 | **规划层的 TS 移植** | 降级后提示词组装、模型回复解释、轴展开、rig 构造都在前端，清单见 `ue_ai_lighting_role_downgrade.md` §4.2 |
+| 4 | **模板与 schema 的读取方式** | §2 第 2 条：`GET /prompt_assets` 给出权威 `instructions` / `json_schema`，**读取后原样使用，不要重写** |
+
+**降级未落地前的现状**：§2 第 2 条描述的服务端托管形态仍是当前权威；`POST /iterate` 仍存在且由服务端跑完整接缝；前端此时**不需要**持有任何规划逻辑。
+
+---
+
 ## 附：本文与方案文档的对应
 
 | 本文 | 方案文档 |
 |---|---|
 | §2 硬约定 | §14.4 / §14.5 |
+| §2 第 2 条 / §14 交付边界 | `ue_ai_lighting_role_downgrade.md` §3.3 / §4.2 |
+| §2 第 7 条 / §2.1 `ops` 契约 | `ue_ai_lighting_role_downgrade.md` §3.3.4.1 / §6.1（决定 D-58） |
 | §4 时间线、状态机 | §10.3 / §15.4 |
 | §5.4 主工作台、§7 指标看板 | §8.1 / §8.2 / §8.3 |
 | §6 六条轴与滑块规格 | §6.2 / §15.8 / §15.9 |
