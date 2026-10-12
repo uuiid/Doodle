@@ -15,6 +15,7 @@
 
 #include <doodle_core/configure/static_value.h>
 
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/http_client/seedance2_client.h>
 #include <doodle_lib/http_client/url_sign.h>
 
@@ -35,6 +36,9 @@ using namespace doodle::http::seedance2;
 const std::string g_ip{"1.2.3.4"};
 const std::string g_secret{"test-secret"};
 const std::string g_uid{"c9f2b8c0-4a1d-4e3b-9f5c-7d6e0a2f3b8d"};
+
+/// 公网前缀由 core_set::public_url_port_ 决定(默认 38192, debug 下 38193), 断言不能写死
+std::string g_public_prefix() { return fmt::format("http://{}:{}", g_ip, core_set::get_set().public_url_port_); }
 
 /// 一份「思考 + 答案」的完整响应: output[0] 是 reasoning, output[1] 才是 message
 nlohmann::json completed_body_with_reasoning(const std::string& in_text) {
@@ -346,7 +350,7 @@ BOOST_AUTO_TEST_CASE(should_retry_matrix) {
 // ---------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(to_public_url_prefixes_site_paths_and_keeps_foreign_urls) {
   // 站点内路径 -> 补公网前缀(没有密钥时不签名)
-  BOOST_CHECK_EQUAL(ai_client_base::to_public_url("/api/x.png", g_ip), "http://1.2.3.4:38192/api/x.png");
+  BOOST_CHECK_EQUAL(ai_client_base::to_public_url("/api/x.png", g_ip), g_public_prefix() + "/api/x.png");
   // 绝对 URL 原样(带自己的签名参数)
   BOOST_CHECK_EQUAL(
       ai_client_base::to_public_url("https://oss.example.com/a.png?sign=xyz", g_ip),
@@ -361,7 +365,7 @@ BOOST_AUTO_TEST_CASE(to_public_url_appends_a_verifiable_signature) {
   const auto l_url   = ai_client_base::to_public_url("/api/seedance2/pictures/a.png", g_ip, g_secret, g_uid);
   const auto l_query = parse_query(l_url);
 
-  BOOST_CHECK_EQUAL(l_url.starts_with("http://1.2.3.4:38192/api/seedance2/pictures/a.png?"), true);
+  BOOST_CHECK_EQUAL(l_url.starts_with(g_public_prefix() + "/api/seedance2/pictures/a.png?"), true);
   BOOST_CHECK_EQUAL(l_query.at(url_sign_t::g_uid_key.data()), g_uid);
   // 签名的路径必须与 URL 的路径一致(前缀是签名之后才补上的)
   BOOST_CHECK_EQUAL(url_path(l_url), "/api/seedance2/pictures/a.png");
@@ -390,10 +394,10 @@ BOOST_AUTO_TEST_CASE(add_ip_to_req_covers_generation_shape) {
 
   BOOST_CHECK_EQUAL(l_out.at("content").at(0).at("text").get<std::string>(), "hi");
   BOOST_CHECK_EQUAL(
-      l_out.at("content").at(1).at("image_url").at("url").get<std::string>(), "http://1.2.3.4:38192/api/a.png"
+      l_out.at("content").at(1).at("image_url").at("url").get<std::string>(), g_public_prefix() + "/api/a.png"
   );
   BOOST_CHECK_EQUAL(
-      l_out.at("content").at(2).at("video_url").at("url").get<std::string>(), "http://1.2.3.4:38192/api/b.mp4"
+      l_out.at("content").at(2).at("video_url").at("url").get<std::string>(), g_public_prefix() + "/api/b.mp4"
   );
   // 外链原样
   BOOST_CHECK_EQUAL(
@@ -412,7 +416,7 @@ BOOST_AUTO_TEST_CASE(add_ip_to_req_covers_responses_shape) {
   const auto l_url = l_out.at("input").at(0).at("content").at(1).at("image_url").get<std::string>();
 
   // Responses 形状(字符串 image_url)也要被改写并签名
-  BOOST_CHECK_EQUAL(l_url.starts_with("http://1.2.3.4:38192/api/a.png?"), true);
+  BOOST_CHECK_EQUAL(l_url.starts_with(g_public_prefix() + "/api/a.png?"), true);
   const auto l_query = parse_query(l_url);
   BOOST_CHECK_EQUAL(
       url_sign_t::verify(
