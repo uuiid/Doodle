@@ -429,7 +429,6 @@ void sqlite_storage::regs_all() {
       .add_column("intent", &ai_light::ai_light_spec::intent_)
       .add_column("targets", &ai_light::ai_light_spec::targets_)
       .add_column("reference_stats", &ai_light::ai_light_spec::reference_stats_)
-      .add_column("evidence", &ai_light::ai_light_spec::evidence_)
       .add_column("degrade_level", &ai_light::ai_light_spec::degrade_level_)
       .add_column("human_confirmed", &ai_light::ai_light_spec::human_confirmed_)
       .add_column("confirmed_by", &ai_light::ai_light_spec::confirmed_by_)

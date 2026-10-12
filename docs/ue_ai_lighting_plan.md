@@ -218,7 +218,7 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
     "usable_for_physical_solve": false       // 显式声明：不做物理反解
   },
 
-  "evidence": { /* 每个字段的来源与置信度 */ },
+  "conflict_resolution": { "resolved": {"overridden_dimensions": ["targets.contrast"]}, "note": "..." },
   "human_confirmed": false,          // 人工闸门 1
   "confirmed_by": null, "confirmed_at": null,
   "degrade_level": "stats_only"      // stats_only | prompt_only
@@ -1337,8 +1337,8 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    - **全字段 `required` 的严格 schema 是否被照做**：`build_spec_json_schema()` 每层都要求列全
      所有字段（严格结构化输出的要求），于是「本维度不设目标」**不能靠省略字段表达**，只能写进
      `conflicts`（§15.7）。真机上要看模型是否照做。
-     `evidence` 曾经是 `additionalProperties: <条目 schema>` 的自由键字典，**已改成 17 个固定键 +
-     全 required**（§15.7 坑 19）—— 严格结构化输出不接受自由字典，这一条不必再实测。
+     （这里曾经还有一个 `evidence` 固定键字典要实测；它已随 evidence 整条链路一起**删除**，
+     见 §15.7 决定 D-3，这一条随之作废。）
    - **不设 `max_output_tokens` 之后的实际输出长度**（§15.7 坑 21）：模型按自己的上限出。若真的被截断，
      `result_json_` 会是 null → 接缝抛 502，而它与「`text.format` 形状被拒」的表现**无法区分** ——
      真机上若见 502，先去 `data_response_` 看 `status` 是不是 `incomplete`。
@@ -1990,12 +1990,12 @@ POST /session/{id}/spec
 | 项 | 落点 |
 |---|---|
 | 接缝本体 | `http_method/kitsu/ai_light_seam_spec.cpp` 的 `generate_spec(in_sql, in_request)` `:565` |
-| 离线可测的 5 个纯函数 | 同文件 `build_spec_instructions()` `:120` / `build_spec_json_schema()` `:142` / `build_spec_input_text()` `:227` / `build_spec_request()` `:331`（返回强类型信封 `http::seedance2::inference_request_t`，定义在 `http_client/seedance2_inference_request.h`）/ `map_spec_result()` `:361`（声明在 `ai_light_seam_spec.h`，**必须留在 `doodle::ai_light` 命名空间内**，见坑 9）；服务器自组 `evidence_` 的 `put_evidence()` `:104` |
-| 请求 / 结果结构 | `spec_generation_request_t{ session_id_, project_id_, operator_id_, prompt_text_, references_, degrade_level_, previous_spec_ }`；`spec_generation_result_t{ spec_, evidence_, reference_stats_, conflict_resolution_ }` |
+| 离线可测的 5 个纯函数 | 同文件 `build_spec_instructions()` `:120` / `build_spec_json_schema()` `:142` / `build_spec_input_text()` `:227` / `build_spec_request()` `:331`（返回强类型信封 `http::seedance2::inference_request_t`，定义在 `http_client/seedance2_inference_request.h`）/ `map_spec_result()` `:361`（声明在 `ai_light_seam_spec.h`，**必须留在 `doodle::ai_light` 命名空间内**，见坑 9） |
+| 请求 / 结果结构 | `spec_generation_request_t{ session_id_, project_id_, operator_id_, prompt_text_, references_, degrade_level_, previous_spec_ }`；`spec_generation_result_t{ spec_, reference_stats_, conflict_resolution_ }` |
 | 状态机 | `advance_session(in_sql, in_session, in_operator_id)` `:124`（新签名，见 D1） |
 | 参考图 URL | `http_method/kitsu/ai_light.h` 的 `g_reference_image_path_template` + `reference_image_url(uuid)`。放在路由头是因为 `/api/doodle/ai/light/reference/{}/image` 的注册要用**字面量**喂 `_url` 这个 UDL，`constexpr std::string_view` 递不进去 |
 | 指令串 | `build_spec_instructions()`：§6.1 职责边界两侧 + §6.3 冲突四条 + **§5.5 六行映射表原文** + 单位口径（对比度 = 显示空间 `p90 − p10`；色温 Kelvin；区间是定长 `[low, high]`）+ 「不许改几何 / 材质」 |
-| 输出 schema | `build_spec_json_schema()`：平铺 `{intent, targets, evidence, conflicts}`，逐层 `additionalProperties:false` 且**全字段 required**；`palette` / `ownership` / `space` 刻意**不在** schema 里（见下表）。`evidence` 不是自由字典，而是 `g_evidence_paths` 那 **17 个固定键**（`additionalProperties:false` + 全 required），且只列**模型能写**的字段路径（坑 19） |
+| 输出 schema | `build_spec_json_schema()`：平铺 `{intent, targets, conflicts}`，逐层 `additionalProperties:false` 且**全字段 required**；`palette` / `ownership` / `space` 刻意**不在** schema 里（见下表）。`evidence` 整条链路已在 §15.7 决定 D-3 中删除 |
 | 测试 | **新建** `src/test/core/ai_light_spec_prompt.cpp`（套件 `ai_light_spec_prompt`，10 用例，全离线）；`ai_light_stats.cpp` 补 7 个聚合用例；`ai_light_state.cpp` 改 3 处调用点并新增/改写 3 个用例 |
 
 **五条实现决定（D1–D5）**
@@ -2036,14 +2036,14 @@ POST /session/{id}/spec
 | `targets_.ownership_` | **服务端** | 责任归属是产品决策（§6.6），不该每轮由模型重新发明 |
 | `reference_stats_` | **服务端**（整块） | 它是**证据**，不是结论 |
 | `intent_` 全部 | LLM | 这就是「把提示词变成结构化意图」 |
-| `targets_` 的标量区间 / `grading_hints_` | LLM | 与聚合值逐元素比（`1e-9` 容差）：相等 → `evidence.source = reference_stats`；不等 → `prompt`（§6.3 提示词优先） |
-| `evidence_` | **服务端**（LLM 给的那份**根本不读**） | `map_spec_result` 完全用 `put_evidence()` 自己组装，末尾 `l_spec.evidence_ = l_ret.evidence_`。schema 里的 `evidence` 只是要求模型**自述**每个字段的理由（便于人工审阅原始响应），不参与解析。LLM 没给到的字段路径，按 `default_value` / `scene_facts` + 置信度 0.3 补一条，于是 evidence 永远覆盖全部目标字段（下游评判层可以无条件按字段路径查证据） |
+| `targets_` 的标量区间 / `grading_hints_` | LLM | 与聚合值逐元素比（`1e-9` 容差）：相等 → 静默采用（视为认可参考统计）；不等 → 采用 LLM 值（§6.3 提示词优先）并把该字段路径记进 `conflict_resolution_.resolved_["overridden_dimensions"]` |
 | `conflicts_` | LLM，**并入服务端集合** | LLM 报的冲突加 `"llm: "` 前缀并入 `reference_stats_.conflicts_`；聚合器算出的冲突**不会被覆盖** |
 
 **为什么 LLM 的每个字段都要校验**：`NLOHMANN_JSON_SERIALIZE_ENUM` 的 `from_json` 认不出字符串时
 **静默落到第一个枚举值**（§15.6 坑 7）。所以 `map_spec_result` 里没有任何一处用裸 `get<Enum>()` ——
-枚举一律走 `magic_enum::enum_cast`，认不出就**保留统计推导的值**并记一条 `default_value` 的 evidence
-（例如 `hardness = "super_hard"` 不会变成 `hard`）。同理 `result_json_` 不是 object（含 null）直接
+枚举与自由文本枚举一律走白名单（`opt_one_of`），认不出就**保留统计推导的值**
+（例如 `hardness = "super_hard"` 不会变成 `hard`），非法取值不再逐字段留痕（§15.7 决定 D-3）。
+同理 `result_json_` 不是 object（含 null）直接
 `bad_gateway`，**不二次解析 `result_text_`**（`parse_inference_response` 内部已做过 `strip_code_fence` + parse）。
 
 **方舟合规性修复（拿「创建 Response」文档逐字段核对线格式后改的三处）**
@@ -2052,7 +2052,7 @@ POST /session/{id}/spec
 
 | # | 位置 | 错在哪 | 改法 |
 |---|---|---|---|
-| A | `build_spec_json_schema()` 的 `evidence` | 用了 `additionalProperties: <条目 schema>` 自由字典，与 `strict` 互斥 | 改成 `g_evidence_paths` 的 **17 个固定键** + 全 required + `additionalProperties:false`（坑 19） |
+| A | `build_spec_json_schema()` 的 `evidence` | 用了 `additionalProperties: <条目 schema>` 自由字典，与 `strict` 互斥 | 先改成 17 个固定键（坑 19），后**整块删除**（§15.7 决定 D-3） |
 | B | `seedance2_client.cpp:127` 的 `input[]` 项 | 缺 `type:"message"`（文档写 InputItem 的 `type` 取值固定为 `"message"`） | 显式补上（坑 20） |
 | C | `build_inference_body()` 的 `max_output_tokens` | 缺省替调用方塞了 4096；大 schema 被截断后的表现与「形状被拒」重合 | 缺省**不发**该键（坑 21） |
 
@@ -2063,15 +2063,15 @@ POST /session/{id}/spec
 
 | 用例（`ai_light_spec_prompt.cpp`） | 钉住的不变式 |
 |---|---|
-| `json_schema_matches_cpp_enums`（`:167`） | schema 里出现的枚举串与 C++ 枚举名**逐字一致**（用 `magic_enum::enum_names` 交叉验证）—— 两边一旦分叉，真机上的合法输出会被我们判成非法 |
-| `json_schema_is_strict_object`（`:197`） | 逐层 `additionalProperties:false` 且全字段 `required`；并断言 `palette` / `ownership` **不出现**在 schema 里。此外钉住 `evidence` 的键集合**恰好**是 `g_evidence_paths` 那 17 条（排序后逐个比对）、`required` 是同一集合、`additionalProperties == false`，且 `targets.palette` / `reference_stats` **不在**其中（坑 19 的回归） |
+| `json_schema_matches_cpp_enums`（`:167`） | schema 里出现的枚举串与白名单常量**逐字一致**（自由文本枚举只能对照 §5.5 的表，所以这里钉的是 `hardness` 恰好三档）—— 两边一旦分叉，真机上的合法输出会被我们判成非法 |
+| `json_schema_is_strict_object`（`:197`） | 逐层 `additionalProperties:false` 且全字段 `required`；并断言 `palette` / `ownership` **不出现**在 schema 里，根上**恰好** `{conflicts, intent, targets}` 三个键（`evidence` 已删，坑 19 / 决定 D-3 的回归） |
 | `input_text_carries_prompt_and_stats`（`:236`） | 四段文本齐全；提示词原文被标注为「权威意图」；逐图统计带在段里 |
 | `build_request_omits_images_when_empty`（`:275`） | 没有可用参考图时**整个 `images` 键不发**（空数组会被方舟当成「有一张空图」）；有图时只发未被人工排除的那些，且是**站点内相对路径** |
 | `map_result_pins_server_owned_fields`（`:317`） | `schema_version` / `space` / `palette` / `ownership` / `reference_stats` 全被服务端钉死，LLM 给什么都改不动 |
 | `map_result_without_stats_degrades_to_prompt_only`（`:349`） | 聚合无统计时降级级别是 `prompt_only`（D4） |
-| `map_result_prompt_overrides_stats_target`（`:357`） | LLM 给 `[2900,3100]`、统计是 `[4000,4200]` → 取 LLM 且 `evidence.source == prompt` |
-| `map_result_echo_marks_reference_stats`（`:379`） | LLM 原样回显统计值 → `source == reference_stats`，且**不**记进 overridden 维度 |
-| `map_result_falls_back_on_illegal_enum`（`:392`） | `hardness = "super_hard"` → 不静默落枚举首值，保留统计推导值 + 一条 `default_value` evidence |
+| `map_result_prompt_overrides_stats_target`（`:357`） | LLM 给区间与统计完全不同 → 取 LLM 的值，且该维度记进 `conflict_resolution_.resolved_["overridden_dimensions"]` |
+| `map_result_echo_keeps_reference_stats_values`（`:379`） | LLM 原样回显统计值 → 取值不动，且**不**记进 overridden 维度 |
+| `map_result_falls_back_on_illegal_enum`（`:392`） | `hardness = "super_hard"` → 不静默落枚举首值，保留统计推导值（取值断言，无证据表）；相邻合法字段照常接受 |
 | `map_result_rejects_non_object`（`:431`） | 非 object 的 `result_json_` → `bad_gateway`（`:441`、`:450` 两条断言） |
 
 - `ai_light_stats.cpp` 的 7 个聚合用例在 `:391`–`:603`（`aggregate_takes_median_but_keeps_range_as_interval` 32 断言 /
@@ -2121,19 +2121,13 @@ POST /session/{id}/spec
     `template <typename E> std::string en(E in_e) { return std::string{magic_enum::enum_name(in_e)}; }`
     再比 `BOOST_TEST(en(a) == en(b))`；后者（`std::find(...) != end()` 这类）要**先落成 `const bool`** 再断言。
     这不是被测代码的问题，但报错位置会指到断言那一行，很容易误判成实现有 bug。
-19. **严格结构化输出（`strict`）不接受 `additionalProperties: <条目 schema>` 这种自由字典。** `evidence`
-    原本设计成「键 = 字段路径，值 = `{source, confidence, note}`」的字典，schema 里用 `additionalProperties`
-    指向条目 schema —— 这是合法的 JSON Schema，但 OpenAI 系的严格模式要求**每个 object 都
-    `additionalProperties:false`**，自由字典与 `strict` 互斥，最可能的真机表现是一句 400。
-    修法：把它变成**有限键集合** —— `g_evidence_paths`（17 条字段路径，`:666`）逐键指向同一份条目 schema +
-    全 required + `additionalProperties:false`。**这反而是更真的建模**：这张字典的键从来就是有限的，
-    而且只该列**模型能写**的字段。`targets.palette` / `reference_stats` 是服务端口径（`map_spec_result`
-    整块钉死，模型改不动），让模型为它们编理由没有意义，所以**刻意不放进 schema**。
-    > 顺带一个更省事的观察：**LLM 返回的 `evidence` 我们根本不读** —— `l_ret.evidence_` 完全由服务端
-    > `put_evidence()` 组装（`:753` 定义，14 个调用点），末尾 `l_spec.evidence_ = l_ret.evidence_`。
-    > 所以 schema 里这个字段与其说是给解析用的，不如说是**要求模型自述理由**（便于事后审阅原始响应）。
-    > 将来若要精简 schema，这整块可以删掉而不影响任何代码路径。**改 schema 前先 grep 一遍「这个字段
-    > 到底有没有被读」**，能省掉一整轮「改了 schema 却什么都没发生」的困惑。
+19. **严格结构化输出（`strict`）不接受 `additionalProperties: <条目 schema>` 这种自由字典** ——
+    曾经 `evidence` 就踩在这上面，后来先改成 17 个固定键，再在 §15.7 决定 D-3 里**整块删除**。
+    教训保留下来，因为它适用于**任何**新加的 object 字段：
+    > 凡是 schema 里的 object，都必须**列出全部键**并配 `additionalProperties:false`；
+    > 自由字典（键随数据而变的 map）与 `strict` 互斥，真机表现为一句 400。
+    > 并且在给它设计形状之前，先 grep 一遍「这个字段到底有没有被读」—— `evidence` 就是典型的
+    > 「服务端自己组装、模型那份从不读」，白占一条 schema 约束（详见 D-3）。
 20. **Responses 的 `input[]` 项要显式带 `type:"message"`。** 文档写 InputItem 的 `type` 取值固定为
     `"message"`、`content[].type` 固定为 `"input_text"`。实现原来只发了 `role` + `content` ——
     `content[]` 那层是对的，**`input[]` 这层漏了 `type`**。这与坑 1（`image_url` 是字符串）属于同一类错：
@@ -2663,7 +2657,7 @@ judge_route::post
 | `ai_light_json_validation.{h,cpp}` | 213 / 416 | **统一 JSON 层**：架构建造器 + 严格读取器 + 宽松读取器 + 诊断（②自检 / ③模型输出） | `schema_*` / `require_*` / `opt_*` / `validate_schema_is_wellformed` `:360` / `validate_model_output` `:390` / `join_violations` `:404` |
 | `ai_light_rig_ops.{h,cpp}` | 63 / 228 | rig 的纯运算（不碰 IO） | `key_fill_ratio_of` `:30` · `apply_axis_step` `:51` · `expand_candidates` `:138` · `diff_rigs` `:168`；`g_axis_step_budget` / `g_axis_max_count`（在头里） |
 | `ai_light_seam_common.{h,cpp}` | 152 / 310 | **三条接缝共用**：文本投影 + 布局助手 + **推理管道** | `first_light_with_role` `:156` · `join_strings` `:162` · `join_numbers` `:231` · `rgb_to_hex` `:171` · `describe_targets` `:179` · `describe_rig_brief` `:240` · `describe_spec_brief` `:264` · `describe_preset_brief` `:301` · `build_common_lighting_section` `:202` · `g_axis_value_semantics_text`（在头里）· `seam_request_base_t` `:111` · `seam_inference_result_t` `:130` · `run_seam_inference` `:146` |
-| `ai_light_seam_spec.{h,cpp}` | 107 / 605 | 接缝 1（宽松） | `build_spec_*` · `put_evidence` `:104` · `map_spec_result` `:361` · `generate_spec` `:565` |
+| `ai_light_seam_spec.{h,cpp}` | 107 / 605 | 接缝 1（宽松） | `build_spec_*` · `map_spec_result` `:361` · `generate_spec` `:565` |
 | `ai_light_seam_candidates.{h,cpp}` | 134 / 572 | 接缝 2（严格） | `pick_presets` `:113` · `parse_axis_plan` `:143` · `build_candidates_*` · `default_axis_plan` `:344` · `build_base_rig` `:368` · `map_candidate_result` `:454` · `generate_candidates` `:536` |
 | `ai_light_seam_feedback.{h,cpp}` | 105 / 352 | 接缝 3（混合） | `build_feedback_*` · `map_feedback_result` `:244` · `structure_feedback` `:310` |
 
@@ -2677,20 +2671,20 @@ judge_route::post
 | 内容 | 原落点（拆分前） | 现落点 |
 |---|---|---|
 | 状态机 4 函数 + 回滚 lambda | `ai_light_orchestrator.cpp` 随处 | 同文件 `:118-752`（拆出两个分支协程，见 D-7） |
-| 接缝 1 全部（4 个 `build_spec_*` + `map_spec_result` + `generate_spec` + 白名单 + `g_evidence_paths` + `put_evidence`） | `:717-1221` + `:1703-1728` | `ai_light_seam_spec.{h,cpp}` |
+| 接缝 1 全部（4 个 `build_spec_*` + `map_spec_result` + `generate_spec` + 白名单） | `:717-1221` + `:1703-1728` | `ai_light_seam_spec.{h,cpp}` |
 | 接缝 2 全部（`build_candidates_*` + `default_axis_plan` + `build_base_rig` + `parse_axis_plan` + `pick_presets` + `rig_substance` + `map_candidate_result` + `generate_candidates`） | `:1223-1698` + `:1730-1752` | `ai_light_seam_candidates.{h,cpp}` |
 | 接缝 3 全部（4 个 `build_feedback_*` + `map_feedback_result` + `structure_feedback` + `trim_number` + 两个上限常量） | `:1754-2032` | `ai_light_seam_feedback.{h,cpp}` |
 | `key_fill_ratio_of` / `apply_axis_step` / `expand_candidates` / `diff_rigs` + 两个轴常量 | `:1787-1988` + `:1302-1307` | `ai_light_rig_ops.{h,cpp}` |
 | `join_strings` / `join_numbers` / `rgb_to_hex` / `describe_targets` / `describe_rig_brief` / `describe_spec_brief` / `describe_preset_brief` / `build_common_lighting_section` / `g_axis_value_semantics_text` | 分散在 `:761-841` / `:1310-1459` | `ai_light_seam_common.{h,cpp}` |
 | `resolved_inference_t` / `make_seam_client` / `chick_inference_ok` + 三段 `generate_*` 的样板 | 匿名 ns `:1706-1782` + 三处各自复制 | `ai_light_seam_common.{h,cpp}` 的 `run_seam_inference()`（一处实现） |
-| `require_*` / `opt_*` / `is_one_of` / `make_*_schema` + 17 键 `g_evidence_paths` 之外的校验原语 | 三处各写一份 | `ai_light_json_validation.{h,cpp}` |
+| `require_*` / `opt_*` / `is_one_of` / `make_*_schema` | 三处各写一份 | `ai_light_json_validation.{h,cpp}` |
 | 三条请求结构体的公共三字段 | 三份重复（各自 6/4/3 行文档） | `seam_request_base_t`（`ai_light_seam_common.h:111`） |
 
 **三条策略必须保持不同的不变式（这是拆分的验收标准之一：拆完仍必须不同）**
 
 | 接缝 | 策略 | 缺字段 / 类型不符 | 语义无效 |
 | --- | --- | --- | --- |
-| spec（`map_spec_result`） | 宽松 | 保留统计默认值 + `put_evidence(default_value)` 留痕 | 自由文本枚举走白名单，不在白名单则弃用该字段 |
+| spec（`map_spec_result`） | 宽松 | 保留统计默认值（不留痕） | 自由文本枚举走白名单，不在白名单则弃用该字段 |
 | candidates（`build_base_rig` / `map_candidate_result`） | 严格 | 抛 502 | 轴计划非法 → **整体回退** `default_axis_plan()`，原因写进 `strategy_` |
 | feedback（`map_feedback_result`） | 混合 | 抛 502（形状） | 未知轴 / `none` / 0 / 非法比值 / 重复 → 静默丢弃，首个胜 |
 
@@ -2698,13 +2692,33 @@ judge_route::post
 
 | # | 决定 | 理由 |
 |---|---|---|
-| D-1 | 引入 `json-schema-validator`（vcpkg port 2.4.0，MIT）**只做诊断**：②我们自己的 schema 是不是合法 draft-7、③模型输出对 schema 的全部违规；**不把违规升级为拒绝** | ①Ark 侧 `json_schema_strict=true` 已经保证合规输出；②spec 接缝**有意**容忍截断/不完整输出（靠默认值 + `evidence.source = default_value` 留痕），一道 schema 闸门会直接破坏这个设计；③`additionalProperties:false` 若当闸门，会把今天被静默忽略的「模型多回一个无关键」变成整轮 502。**升级路径**：真机日志证明模型从不违规后，某个接缝提升为 502 是**一行改动**（`validate_model_output` 非空时抛） |
+| D-1 | 引入 `json-schema-validator`（vcpkg port 2.4.0，MIT）**只做诊断**：②我们自己的 schema 是不是合法 draft-7、③模型输出对 schema 的全部违规；**不把违规升级为拒绝** | ①Ark 侧 `json_schema_strict=true` 已经保证合规输出；②spec 接缝**有意**容忍截断/不完整输出（靠统计默认值兜底），一道 schema 闸门会直接破坏这个设计；③`additionalProperties:false` 若当闸门，会把今天被静默忽略的「模型多回一个无关键」变成整轮 502。**升级路径**：真机日志证明模型从不违规后，某个接缝提升为 502 是**一行改动**（`validate_model_output` 非空时抛） |
 | D-2 | 每次调用**本地构造** validator（不共享、不加锁），schema 直接复用 `build_*_request()` 已建好的 `json_schema_` | 库 README 明确「校验是 const 且线程安全，但 validator 构造不是」；本地构造最简单，成本相对一次 LLM 调用可忽略；复用字段 = 诊断的 schema 与真正发出去的那份**必然同源** |
 | D-3 | 不给 schema 加 `default`，且**不使用 `validate()` 的返回值**（只调带 `error_handler` 的重载） | 库的 default-value 处理会返回 json patch，`$ref` 内出现 `default` 时会破坏 draft-7 语义；不取返回值 = 不可能被 patch 影响 |
 | D-4 | 三条接缝在拿到 `result_json_`、进 `map_*` **之前**调 `validate_model_output(...)`，用 `SPDLOG_LOGGER_WARN` 记**前 3 条**（`join_violations` 截断并标注省略数），带接缝名与轮次 | 控制流零变化；收益是「严格接缝今天读到第一个坏字段就抛，现在日志里能看到全部违规」 |
 | D-5 | 三条接缝的请求结构体上提 `seam_request_base_t{session_id_, project_id_, operator_id_}`，`run_seam_inference` 只收一个信封 | 管道真正要的就是这三样。**加基类是安全的**：全仓库对三个结构体只有「值初始化 + 逐字段赋值」，没有任何聚合初始化 |
 | D-6 | 推理样板收口成 `run_seam_inference(sqlite_database&, const seam_request_base_t&, seam, text_prompt, const http::seedance2::inference_request_t&, const uuid& iteration_id = {})`，返回**新的** `seam_inference_result_t{json_, input_tokens_, output_tokens_, total_tokens_}`，**不是** `run_task_result_t` | 信念封装的刻意偏离（plan §4 原签名返回 `run_task_result_t`）：`chick_inference_ok` 已经把 `status_`/`error_code_`/`is_timeout_` 消费成 `doodle_error`，调用方拿不到也不该关心它们。字段名与 `run_task_result_t` 的同名成员保持一致，好让三条接缝的日志语句**逐字不变**（只把 `result_json_` 换成 `json_`）。`iteration_id` 为 nil 表示这次推理不属于任何轮次（蒸馏阶段） |
 | D-7 | `advance_session` 拆出 `advance_session_spec_branch` / `advance_session_generating_branch` 两个协程，**两个分支都不捕获异常** | 两条分支各自是「一次接缝调用 + 一个事务」的完整闭环，彼此无共享状态（只有 `io_session` 是共享的）。回滚/重抛仍由 `advance_session` 统一负责（接缝契约 1），失败路径只有一份实现，也不可能出现「分支里吞掉异常」的岔路。**判定顺序与状态转移一字未改** |
+| D-8 | **删除 evidence 整条链路**（下节的 D-3 编号与此无关，见下表「D-3」） | 见 §15.7「evidence 为什么被删除」 |
+
+**evidence 为什么被删除（`evidence_source` 枚举 / `evidence_entry_t` / `put_evidence()` / schema 的 `evidence` 键 / `ai_light_spec::evidence_` 列 / 落库列全部移除）**
+
+一句话：它是**只写不读**的字段，而且读它的那个消费方（美术）也不会读。
+
+| # | 事实 | 影响 |
+|---|---|---|
+| E-1 | `map_spec_result` 里 **14 个调用点**写的都是「这个值来自提示词 0.6」「这个值来自统计 0.85」 | 这些信息**输入侧已经完全可得**：调色板/ownership/reference_stats 本来就是服务端从聚合结果整块抄的；`targets` 的每个区间只要和聚合值比一次就知道是不是被 LLM 改写，而那件事已经由 `conflict_resolution_.resolved_["overridden_dimensions"]` 表达了 |
+| E-2 | 「非法取值被丢弃」的 3 条留痕（`vignette` / `bloom` / `hardness` / `position_bias` / `kelvin_bias`） | 同一现象的**后果**已经写在最终取值里（非法值被丢弃 → 保留统计默认值）。留痕只对「解剖一条畸形响应」有价值，而那是 §15.6 的 `validate_model_output` 日志该干的事 |
+| E-3 | schema 里的 `evidence` 固定键字典 | 见坑 19：严格结构化输出不接受自由字典，为它维护 17 个键 + 全 required 是**纯负债**。删掉后 spec schema 只剩 `{intent, targets, conflicts}` |
+| E-4 | LLM 返回的那份 `evidence` **从来没被读过** | `map_spec_result` 完全用 `put_evidence()` 自组，`l_spec.evidence_ = l_ret.evidence_` 只是把同一份复制进 spec。schema 里那个字段的唯一作用是「让模型自述理由」，删掉不影响任何代码路径 |
+| E-5 | 数据库 `ai_light_spec` 表的 `evidence` 列 | 没有任何写入方之外的读取方，且它是逐字段字典——**建表迁移的负担大于它的价值** |
+
+**保留的替代物（「这个数字凭什么」仍然答得出来）**：
+`conflict_resolution_.resolved_["overridden_dimensions"]`（哪些维度被提示词改写）+ `conflict_resolution_.note_`
+（一句话说明）+ `reference_stats_.per_dimension_confidence` / `conflicts_`（参考图本身可不可信、哪里冲突）
++ `degrade_level_`（整轮降级）。合成的语义是：**没被列出改写的维度，值就来自参考图统计**。
+
+**由此改动的地方**：`spec.h`（枚举、`evidence_entry_t`、`lighting_spec_t`/`ai_light_spec` 两个 `evidence_` 列与访问器、`from_spec`/`to_spec` 的序列化点）、`ai_light_seam_spec.{h,cpp}`（结果字段、`g_evidence_paths`、`g_evidence_epsilon`、`put_evidence` 定义与 14 个调用点、schema 的 `evidence` 键）、`ai_light_orchestrator.cpp:178`（`l_spec.set_evidence(...)`）、`sqlite_database.cpp:432`（`add_column("evidence", ...)`）、`ai_light_spec_prompt.cpp` / `ai_light_schema.cpp` 两个测试，以及 `ue_ai_lighting_plan.md` / `ue_ai_lighting_frontend.md` 两处文档。
 
 **服务端钉死 vs 模型可覆盖（本轮新增的行）**
 
@@ -2741,7 +2755,7 @@ judge_route::post
     「`additionalProperties:false` + `required` 覆盖全部属性」（34 处命中已逐条核对），所以自动生成与现状等价；
     将来要「部分必填」必须改用显式 `required` 的重载，**不能**先加属性再期待它自动变成可选。
 35. **诊断校验不得做准入，`validate_model_output` 永不抛。** 它把库异常也转成一条字符串；spec 接缝本就允许
-    截断输出（默认值 + `evidence.source = default_value` 留痕），一道闸门会直接破坏该设计。若将来要提升为
+    截断输出（统计默认值兜底），一道闸门会直接破坏该设计。若将来要提升为
     502，必须同时重看 §15.7 的宽容策略。
 
 **施工/工具坑（非产品行为，写给下一次搬文件的人）**

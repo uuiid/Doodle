@@ -66,9 +66,6 @@ using namespace orm;
 
 namespace {
 
-/// 证据判定的浮点容差：LLM 把统计数字原样抄回来时不该因为最后一位误差被判成「改了值」。
-constexpr double g_evidence_epsilon = 1e-9;
-
 /// 下面的「自由文本枚举」在 spec.h 里是 std::string（取值写在注释里，不是 C++ 枚举）。
 /// 把取值收成一处常量，**schema 与校验共用** —— 否则「schema 里写了 subtle、校验却不认它」
 /// 这种漂移不会有任何编译期或运行期信号。
@@ -77,41 +74,13 @@ constexpr std::array<std::string_view, 3> g_hardness_values{"hard", "soft", "ver
 constexpr std::array<std::string_view, 3> g_position_bias_values{"side_high", "front_low", "back_high"};
 constexpr std::array<std::string_view, 3> g_kelvin_bias_values{"cool", "warm", "neutral"};
 
-/// 模型必须在 evidence 里逐字段交代来源的字段路径 —— 与 map_spec_result 的 put_evidence()
-/// 用的是同一套点分路径，将来若要合并模型的自我归因，两边键名天然对齐。
-/// 只列**模型可写**的字段：`targets.palette` 与 `reference_stats` 是服务端口径（模型改不了
-/// 它们），让模型为这些编理由没有意义。
-constexpr std::array<std::string_view, 17> g_evidence_paths{
-    "intent.atmosphere",        "intent.time_of_day",          "intent.weather",
-    "intent.source_motivation", "intent.character_personality", "intent.story_context",
-    "intent.setting",           "targets.contrast",            "targets.white_balance_kelvin",
-    "targets.luma_percentiles.p10", "targets.luma_percentiles.p50", "targets.luma_percentiles.p90",
-    "targets.clip_rate.high",   "targets.clip_rate.low",       "targets.grading_hints.vignette",
-    "targets.grading_hints.lifted_blacks", "targets.grading_hints.bloom",
-};
-
 // 架构（schema）的**形状**建造器与取值器都在 ai_light_json_validation.h 的 json_val::：
 // 三个接缝共用同一份定义，避免同名形状各写一遍（形状一致也便于统一改）。
 // 取值器（is_one_of / opt_object / opt_string / opt_bool / opt_interval / opt_string_array）
 // 同样在那儿（严格 / 宽松两族）。共用是必须的：错误消息里要带接缝名，
 // 硬编码在某一处会让别的接缝报错措辞错人。
 
-
-void put_evidence(
-    std::map<std::string, evidence_entry_t>& in_out, const std::string& in_path, evidence_source in_source,
-    double in_confidence, const std::string& in_note = {}
-) {
-  evidence_entry_t l_entry{};
-  l_entry.source_     = in_source;
-  l_entry.confidence_ = in_confidence;
-  l_entry.note_       = in_note;
-  in_out[in_path]     = l_entry;
-}
-
-
-
 }  // namespace
-
 
 std::string build_spec_instructions() {
   // 共用段（职责边界 + 性格映射表 + 单位口径）只允许有一处定义：两份提示词对「对比度是
@@ -193,20 +162,6 @@ nlohmann::json build_spec_json_schema() {
       {"grading_hints", l_grading},
   });
 
-  const auto l_evidence_entry = json_val::schema_object({
-      {"source", json_val::schema_enum<evidence_source>()},
-      {"confidence", json_val::schema_number(0.0, 1.0)},
-      {"note", json_val::schema_string()},
-  });
-
-  // evidence 是**固定键**字典，键就是 g_evidence_paths 那 17 条字段路径。
-  // 不能用 `additionalProperties = <条目 schema>` 那种自由字典：严格结构化输出要求每个
-  // object 都 additionalProperties:false，自由字典会被判成不合规（这类 schema 最典型的
-  // 真机 400）。而 evidence 的键本来就是有限集合（可写字段就那么些），固定键不丢表达力。
-  nlohmann::json l_evidence_props = nlohmann::json::object();
-  for (auto&& l_path : g_evidence_paths) l_evidence_props[std::string{l_path}] = l_evidence_entry;
-  const auto l_evidence = json_val::schema_object(std::move(l_evidence_props));
-
   // 全字段 required + strict：OpenAI / 方舟的严格结构化输出基本都要求 required 列全。
   // 代价是「不设目标」不能用「省略字段」表达 —— 那种情况请把该维度写进 conflicts，
   // 并在对应字段上照抄统计值（人工闸门 1 看到的正是这份 conflicts）。
@@ -214,7 +169,6 @@ nlohmann::json build_spec_json_schema() {
   return json_val::schema_object({
       {"intent", l_intent},
       {"targets", l_targets},
-      {"evidence", l_evidence},
       {"conflicts", l_string_array},
   });
 }
@@ -336,7 +290,7 @@ http::seedance2::inference_request_t build_spec_request(
   l_req.json_schema_        = build_spec_json_schema();
   l_req.json_schema_name_   = "lighting_spec";
   l_req.json_schema_strict_ = true;
-  // 刻意**不设** max_output_tokens：schema 要求全字段 required（含 17 条 evidence），输出长度
+  // 刻意**不设** max_output_tokens：schema 要求全字段 required，输出长度
   // 不可预估，一旦被截断 result_json_ 就变成不可解析的半个 JSON —— 那个失败面与「平铺形状
   // 被拒」混在一起根本分不出来。上限交给模型/账号侧决定。
   // 不设 thinking：缺省就是 disabled，而结构化任务开 thinking 会引入
@@ -383,44 +337,19 @@ spec_generation_result_t map_spec_result(
   const bool l_has_stats = !in_aggregated.stats_.per_dimension_confidence_.empty();
   l_spec.degrade_level_  = l_has_stats ? spec_degrade_level::stats_only : spec_degrade_level::prompt_only;
 
-  put_evidence(
-      l_ret.evidence_, "targets.palette", evidence_source::reference_stats, l_has_stats ? 0.8 : 0.3,
-      "调色板只来自参考图统计，不接受模型编造"
-  );
-  put_evidence(
-      l_ret.evidence_, "reference_stats", evidence_source::reference_stats,
-      in_aggregated.stats_.per_dimension_confidence_.empty()
-          ? 0.0
-          : [&] {
-              double l_sum = 0.0;
-              for (const auto& [l_key, l_value] : in_aggregated.stats_.per_dimension_confidence_) l_sum += l_value;
-              return l_sum / static_cast<double>(in_aggregated.stats_.per_dimension_confidence_.size());
-            }(),
-      fmt::format("{} 张图，聚合方式 {}", in_aggregated.stats_.image_count_, in_aggregated.stats_.aggregation_)
-  );
-
   // ---- 模型可覆盖：先记下被改动的维度，供 §6.3 的裁决留痕 ----
   std::vector<std::string> l_overridden{};
 
-  // contrast 等区间的 evidence 判定是**机械的**：与统计同名字段逐元素比较，
-  // 相等 → 模型只是把统计抄了回来（reference_stats）；不等 → 按「提示词优先」归因于提示词。
-  const auto l_apply_interval =
-      [&](const nlohmann::json& in_src, const char* in_key, interval_t& in_out, const std::string& in_path) {
-        const auto l_llm = json_val::opt_interval(in_src, in_key);
-        if (!l_llm.has_value()) return;
-        const bool l_same = std::abs(l_llm->low_ - in_out.low_) < g_evidence_epsilon &&
-                            std::abs(l_llm->high_ - in_out.high_) < g_evidence_epsilon;
-        in_out = *l_llm;
-        if (l_same) {
-          put_evidence(l_ret.evidence_, in_path, evidence_source::reference_stats, 0.8, "与参考图统计一致");
-        } else {
-          put_evidence(
-              l_ret.evidence_, in_path, evidence_source::prompt, 0.7,
-              "与参考图统计不一致：按 §6.3「提示词优先于参考」采用模型给出的值"
-          );
-          l_overridden.emplace_back(in_path);
-        }
-      };
+  // contrast 等区间的判定是**机械的**：与统计同名字段逐元素比较，相等 → 模型只是把统计
+  // 抄了回来；不等 → 按「提示词优先」归因于提示词，记进 overridden 供人工闸门 1 核对。
+  const auto l_apply_interval = [&](const nlohmann::json& in_src, const char* in_key, interval_t& in_out,
+                                    const std::string& in_path) {
+    const auto l_llm = json_val::opt_interval(in_src, in_key);
+    if (!l_llm.has_value()) return;
+    const bool l_same = l_llm->low_ == in_out.low_ && l_llm->high_ == in_out.high_;
+    in_out            = *l_llm;
+    if (!l_same) l_overridden.emplace_back(in_path);
+  };
 
   if (const auto l_targets_json = json_val::opt_object(in_result_json, "targets"); l_targets_json.has_value()) {
     l_apply_interval(*l_targets_json, "contrast", l_spec.targets_.contrast_, "targets.contrast");
@@ -443,26 +372,12 @@ spec_generation_result_t map_spec_result(
       if (const auto l_v = json_val::opt_one_of(*l_grading, "vignette", g_grading_strength_values);
           l_v.has_value()) {
         l_spec.targets_.grading_hints_.vignette_ = *l_v;
-        put_evidence(l_ret.evidence_, "targets.grading_hints.vignette", evidence_source::prompt, 0.6);
-      } else if (const auto l_raw = json_val::opt_string(*l_grading, "vignette"); l_raw.has_value()) {
-        // opt_one_of 已经把白名单外的取值滤成 nullopt，这里只负责把「模型给了什么」留痕。
-        put_evidence(
-            l_ret.evidence_, "targets.grading_hints.vignette", evidence_source::default_value, 0.3,
-            fmt::format("模型给出的取值 \"{}\" 不在允许集合内，已回退为统计推导值", *l_raw)
-        );
       }
       if (const auto l_v = json_val::opt_bool(*l_grading, "lifted_blacks"); l_v.has_value()) {
         l_spec.targets_.grading_hints_.lifted_blacks_ = *l_v;
-        put_evidence(l_ret.evidence_, "targets.grading_hints.lifted_blacks", evidence_source::prompt, 0.6);
       }
       if (const auto l_v = json_val::opt_one_of(*l_grading, "bloom", g_grading_strength_values); l_v.has_value()) {
         l_spec.targets_.grading_hints_.bloom_ = *l_v;
-        put_evidence(l_ret.evidence_, "targets.grading_hints.bloom", evidence_source::prompt, 0.6);
-      } else if (const auto l_raw = json_val::opt_string(*l_grading, "bloom"); l_raw.has_value()) {
-        put_evidence(
-            l_ret.evidence_, "targets.grading_hints.bloom", evidence_source::default_value, 0.3,
-            fmt::format("模型给出的取值 \"{}\" 不在允许集合内，已回退为统计推导值", *l_raw)
-        );
       }
     }
   }
@@ -486,28 +401,14 @@ spec_generation_result_t map_spec_result(
           if (const auto l_kf = json_val::opt_interval(*l_ll, "key_fill_ratio"); l_kf.has_value())
             l_cp.lighting_language_.key_fill_ratio_ = l_kf;
           // opt_one_of = 「读字符串 + 查白名单」一步：白名单外的取值直接变 nullopt，
-          // 于是「值非法」与「没给」在这里合流，二者都保留默认值、都由 else 分支留痕。
+          // 于是「值非法」与「没给」在这里合流，二者都保留默认值（见 §15.7 决定 D-1：
+          // 非法取值被丢弃这件事不再逐字段留痕，只体现在最终取值上）。
           if (const auto l_v = json_val::opt_one_of(*l_ll, "hardness", g_hardness_values); l_v.has_value())
             l_cp.lighting_language_.hardness_ = *l_v;
-          else if (const auto l_raw = json_val::opt_string(*l_ll, "hardness"); l_raw.has_value())
-            put_evidence(
-                l_ret.evidence_, "intent.character_personality.lighting_language.hardness",
-                evidence_source::default_value, 0.3, fmt::format("非法取值 \"{}\" 已丢弃", *l_raw)
-            );
           if (const auto l_v = json_val::opt_one_of(*l_ll, "position_bias", g_position_bias_values); l_v.has_value())
             l_cp.lighting_language_.position_bias_ = *l_v;
-          else if (const auto l_raw = json_val::opt_string(*l_ll, "position_bias"); l_raw.has_value())
-            put_evidence(
-                l_ret.evidence_, "intent.character_personality.lighting_language.position_bias",
-                evidence_source::default_value, 0.3, fmt::format("非法取值 \"{}\" 已丢弃", *l_raw)
-            );
           if (const auto l_v = json_val::opt_one_of(*l_ll, "kelvin_bias", g_kelvin_bias_values); l_v.has_value())
             l_cp.lighting_language_.kelvin_bias_ = *l_v;
-          else if (const auto l_raw = json_val::opt_string(*l_ll, "kelvin_bias"); l_raw.has_value())
-            put_evidence(
-                l_ret.evidence_, "intent.character_personality.lighting_language.kelvin_bias",
-                evidence_source::default_value, 0.3, fmt::format("非法取值 \"{}\" 已丢弃", *l_raw)
-            );
         }
         // 主语和性格都空的行没有信息量，丢掉而不是留一堆空壳。
         if (!l_cp.subject_.empty() || !l_cp.trait_.empty())
@@ -515,13 +416,6 @@ spec_generation_result_t map_spec_result(
       }
     }
 
-    if (!l_spec.intent_.atmosphere_.empty())
-      put_evidence(l_ret.evidence_, "intent.atmosphere", evidence_source::prompt, 0.8);
-    if (!l_spec.intent_.character_personality_.empty())
-      put_evidence(
-          l_ret.evidence_, "intent.character_personality", evidence_source::prompt, 0.7,
-          "按 §5.5 的性格→灯光语言映射表落成 lighting_language"
-      );
   }
 
   // ---- 冲突与冲突裁决 ----
@@ -552,8 +446,6 @@ spec_generation_result_t map_spec_result(
     );
   l_ret.conflict_resolution_.note_ = l_note;
 
-  // 返回值自洽（契约 3）：spec 里带着同一份 evidence，调用方无论读哪一份都一致。
-  l_spec.evidence_ = l_ret.evidence_;
   return l_ret;
 }
 
@@ -571,7 +463,7 @@ boost::asio::awaitable<spec_generation_result_t> generate_spec(
       co_await run_seam_inference(in_sql, in_request, "generate_spec", in_request.prompt_text_, l_request);
 
   // ---- 3) 架构诊断（§3.4，决策 D-1：只写日志，不作准入闸门）----
-  // spec 接缝**有意**容忍截断/不完整输出（靠统计默认值 + evidence.source=default_value 留痕），
+  // spec 接缝**有意**容忍截断/不完整输出（靠统计默认值兜底），
   // 一道 schema 闸门会直接破坏这个设计。所以这里报出违规也照常往下走：收益是日志里能看到
   // **全部**违规（宽松读取器读到坏字段只是跳过），而不是毫无信号。
   if (const auto l_bad = json_val::validate_model_output(l_result.json_, l_request.json_schema_, "generate_spec");

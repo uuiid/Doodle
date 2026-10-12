@@ -8,8 +8,8 @@
 // 这份测试的两个立场（与实现里的注释一致）：
 //   * 服务端口径的东西（调色板、ownership、space、schema_version、reference_stats）
 //     必须**不因模型输出而改变** —— 模型给什么都不该动；
-//   * 模型的区间值一旦与统计不同，就按 §6.3「提示词优先于参考」归因给提示词，
-//     并留下 evidence 与 conflict_resolution 的痕迹。
+//   * 模型的区间值一旦与统计不同，就按 §6.3「提示词优先于参考」采用模型的值，
+//     并把它记进 conflict_resolution 的 overridden_dimensions（人工闸门 1 看这个）。
 //
 
 // 刻意**不**包含路由头 http_method/kitsu/ai_light.h：它 include 了
@@ -102,7 +102,7 @@ ai_light_reference make_ref(std::int32_t in_ordinal, bool in_outlier) {
 }
 
 /// 一份**合法**的模型输出（各用例按需改其中一个字段）。
-/// 形状照 build_spec_json_schema() 的契约：intent / targets / evidence / conflicts 四键都在。
+/// 形状照 build_spec_json_schema() 的契约：intent / targets / conflicts 三键都在。
 nlohmann::json make_llm_json() {
   nlohmann::json l_clip{};
   l_clip["high"] = nlohmann::json::array({0.0, 0.01});
@@ -137,7 +137,6 @@ nlohmann::json make_llm_json() {
   nlohmann::json l_json{};
   l_json["intent"]    = l_intent;
   l_json["targets"]   = l_targets;
-  l_json["evidence"]  = nlohmann::json::object();
   l_json["conflicts"] = nlohmann::json::array();
   return l_json;
 }
@@ -149,11 +148,12 @@ std::string en(E in_e) {
   return std::string{magic_enum::enum_name(in_e)};
 }
 
-/// 把 evidence 里某个路径的 source 取出来；不存在时返回一个不会误判的哨兵。
-std::string evidence_source_of(const spec_generation_result_t& in_ret, const std::string& in_path) {
-  if (const auto l_it = in_ret.evidence_.find(in_path); l_it != in_ret.evidence_.end())
-    return std::string{magic_enum::enum_name(l_it->second.source_)};
-  return "(缺失)";
+/// 把 overridden_dimensions 取出来（不存在时返回空表）。
+std::vector<std::string> overridden_dimensions(const spec_generation_result_t& in_ret) {
+  if (const auto l_it = in_ret.conflict_resolution_.resolved_.find("overridden_dimensions");
+      l_it != in_ret.conflict_resolution_.resolved_.end())
+    return l_it->second.get<std::vector<std::string>>();
+  return {};
 }
 
 bool has_interval(const nlohmann::json& in_json, const char* in_key, const interval_t& in_want) {
@@ -173,22 +173,6 @@ BOOST_AUTO_TEST_SUITE(ai_light_spec_prompt)
 BOOST_AUTO_TEST_CASE(json_schema_matches_cpp_enums) {
   const auto l_schema = build_spec_json_schema();
 
-  // evidence.source 的允许值必须与 evidence_source 这个 C++ 枚举**逐字**一致：
-  // 枚举以 magic_enum 的 C++ 名存库，名字对不上就会静默落到第一个枚举值
-  // （NLOHMANN_JSON_SERIALIZE_ENUM 的 from_json 不抛，见 common.h / §15.6 第 7 条）。
-  // evidence 是**固定键**字典：每条路径都指向同一份条目 schema，任取一条即可取出 source 枚举。
-  const auto& l_ev = l_schema.at("properties").at("evidence");
-  BOOST_TEST(!l_ev.at("additionalProperties").is_object());
-  const auto l_src = l_ev.at("properties").at("intent.atmosphere").at("properties").at("source").at("enum");
-  auto l_got = l_src.get<std::vector<std::string>>();
-
-  std::vector<std::string> l_want{};
-  for (auto l_name : magic_enum::enum_names<evidence_source>()) l_want.emplace_back(l_name);
-
-  std::sort(l_got.begin(), l_got.end());
-  std::sort(l_want.begin(), l_want.end());
-  BOOST_TEST(l_got == l_want, boost::test_tools::per_element());
-
   // 自由文本枚举（不是 C++ 枚举，所以只能对照 §5.5 的表）——hardness 恰好三档。
   const auto l_hardness =
       l_schema.at("properties").at("intent").at("properties").at("character_personality").at("items").at("properties")
@@ -206,8 +190,8 @@ BOOST_AUTO_TEST_CASE(json_schema_is_strict_object) {
   BOOST_TEST(l_schema.at("type").get<std::string>() == "object");
   BOOST_TEST(l_schema.at("additionalProperties").get<bool>() == false);
 
-  // 根上恰好这四个键 —— 多一个都意味着「服务端没打算读它」（palette/ownership 就是这么被排除的）。
-  const std::vector<std::string> l_root_keys{"conflicts", "evidence", "intent", "targets"};
+  // 根上恰好这三个键 —— 多一个都意味着「服务端没打算读它」（palette/ownership 就是这么被排除的）。
+  const std::vector<std::string> l_root_keys{"conflicts", "intent", "targets"};
   // properties 是 object，不能 get<std::vector<std::string>>()（会抛 type_error.302）→ 显式收集键名。
   std::vector<std::string> l_keys{};
   for (auto l_it = l_schema.at("properties").begin(); l_it != l_schema.at("properties").end(); ++l_it)
@@ -235,48 +219,6 @@ BOOST_AUTO_TEST_CASE(json_schema_is_strict_object) {
   auto l_req = l_targets.at("required").get<std::vector<std::string>>();
   std::sort(l_req.begin(), l_req.end());
   BOOST_TEST(l_req == l_targets_required, boost::test_tools::per_element());
-
-  // evidence 的键必须是**固定集合**：`additionalProperties = <条目 schema>` 的自由字典在严格
-  // 结构化输出里不合规，是最典型的真机 400。键集合必须与实现里的 g_evidence_paths 一致。
-  const auto l_ev = l_schema.at("properties").at("evidence");
-  BOOST_TEST(l_ev.at("additionalProperties").get<bool>() == false);
-  BOOST_TEST(l_ev.at("type").get<std::string>() == "object");
-
-  const std::vector<std::string> l_ev_want{
-      "intent.atmosphere",
-      "intent.character_personality",
-      "intent.setting",
-      "intent.source_motivation",
-      "intent.story_context",
-      "intent.time_of_day",
-      "intent.weather",
-      "targets.clip_rate.high",
-      "targets.clip_rate.low",
-      "targets.contrast",
-      "targets.grading_hints.bloom",
-      "targets.grading_hints.lifted_blacks",
-      "targets.grading_hints.vignette",
-      "targets.luma_percentiles.p10",
-      "targets.luma_percentiles.p50",
-      "targets.luma_percentiles.p90",
-      "targets.white_balance_kelvin"};
-  BOOST_TEST(l_ev_want.size() == 17u);
-
-  std::vector<std::string> l_ev_keys{};
-  for (auto l_it = l_ev.at("properties").begin(); l_it != l_ev.at("properties").end(); ++l_it)
-    l_ev_keys.emplace_back(l_it.key());
-  std::sort(l_ev_keys.begin(), l_ev_keys.end());
-  BOOST_TEST(l_ev_keys == l_ev_want, boost::test_tools::per_element());
-
-  // 固定键同样要把 required 列全（strict 模式硬要求：properties 里每个键都必须在 required 里）
-  auto l_ev_req = l_ev.at("required").get<std::vector<std::string>>();
-  std::sort(l_ev_req.begin(), l_ev_req.end());
-  BOOST_TEST(l_ev_req == l_ev_want, boost::test_tools::per_element());
-
-  // 服务端口径的路径**不能**出现在模型的 evidence 里：模型改不了 palette / reference_stats，
-  // 让它为这些编理由毫无意义。
-  BOOST_TEST(!l_ev.at("properties").contains("targets.palette"));
-  BOOST_TEST(!l_ev.at("properties").contains("reference_stats"));
 }
 
 // ===========================================================================
@@ -406,7 +348,6 @@ BOOST_AUTO_TEST_CASE(build_request_reaches_ark_body) {
   BOOST_TEST(l_format.at("name").get<std::string>() == "lighting_spec");
   BOOST_TEST(l_format.at("strict").get<bool>() == true);
   BOOST_TEST(l_format.at("schema").at("properties").contains("intent"));
-  BOOST_TEST(l_format.at("schema").at("properties").contains("evidence"));
   BOOST_TEST(l_format.at("schema").at("properties").contains("targets"));
   BOOST_TEST(l_format.at("schema").at("properties").contains("conflicts"));
   // 不发 max_output_tokens：全字段 required + 长度不可预估 = 截断成半个 JSON 的失败面
@@ -473,9 +414,8 @@ BOOST_AUTO_TEST_CASE(map_result_pins_server_owned_fields) {
   // 有逐维置信度 → 事实上的 stats_only（决定 D4）。
   BOOST_TEST(en(l_ret.spec_.degrade_level_) == en(spec_degrade_level::stats_only));
 
-  // 返回值自洽（契约 3）：spec 里带的那份 evidence 与返回值的那份是同一份。
-  BOOST_TEST(l_ret.spec_.evidence_.size() == l_ret.evidence_.size());
-  BOOST_TEST(evidence_source_of(l_ret, "targets.palette") == "reference_stats");
+  // 模型照抄统计值 → 没有任何维度被改写，overridden_dimensions 不该出现。
+  BOOST_TEST(overridden_dimensions(l_ret).empty());
 }
 
 BOOST_AUTO_TEST_CASE(map_result_without_stats_degrades_to_prompt_only) {
@@ -497,26 +437,29 @@ BOOST_AUTO_TEST_CASE(map_result_prompt_overrides_stats_target) {
   // §6.3：提示词明确 + 参考冲突 → 提示词胜出。
   BOOST_TEST(std::abs(l_ret.spec_.targets_.contrast_.low_ - 0.90) < 1e-9);
   BOOST_TEST(std::abs(l_ret.spec_.targets_.contrast_.high_ - 0.95) < 1e-9);
-  // 并且必须**留痕**：evidence 说明它来自提示词，而不是被当成参考图统计。
-  BOOST_TEST(evidence_source_of(l_ret, "targets.contrast") == "prompt");
-  // 裁决记录里也要能看到是哪几个维度被改写了（人工闸门 1 要看这个）。
+  // 改写必须**留痕**：裁决记录里要看得到是哪几个维度被改写成了模型值
+  // （人工闸门 1 看的就是这个；证据链只保留在 conflict_resolution 一处）。
   BOOST_TEST(l_ret.conflict_resolution_.resolved_.contains("overridden_dimensions"));
-  const auto l_over = l_ret.conflict_resolution_.resolved_.at("overridden_dimensions").get<std::vector<std::string>>();
+  const auto l_over = overridden_dimensions(l_ret);
   // 先落成 bool：Boost.Test 也打不出 vector 的迭代器（同样 static_assert）。
   const bool l_contrast_overridden = std::find(l_over.begin(), l_over.end(), "targets.contrast") != l_over.end();
   BOOST_TEST(l_contrast_overridden);
   BOOST_TEST(l_ret.conflict_resolution_.note_.find("targets.contrast") != std::string::npos);
 }
 
-BOOST_AUTO_TEST_CASE(map_result_echo_marks_reference_stats) {
+BOOST_AUTO_TEST_CASE(map_result_echo_keeps_reference_stats_values) {
   const auto l_agg = make_agg();
-  // 模型照抄了统计值 → 归因给参考图统计（与「改写成别的值」必须区分开，
-  // 否则「提示词覆盖了参考」这个信号会被噪声淹没）。
+  // 模型照抄了统计值 → 取值不动，并且**不**留下改写记录。
+  // 这正是「提示词覆盖了参考」这个信号的另一半：没有 overridden_dimensions 就说明
+  // 模型认可了参考图统计，人工闸门 1 不需要额外核对。
   const auto l_ret = map_spec_result(make_llm_json(), l_agg);
 
   BOOST_TEST(std::abs(l_ret.spec_.targets_.contrast_.low_ - 0.55) < 1e-9);
-  BOOST_TEST(evidence_source_of(l_ret, "targets.contrast") == "reference_stats");
-  BOOST_TEST(evidence_source_of(l_ret, "targets.white_balance_kelvin") == "reference_stats");
+  // white_balance_kelvin 的统计中位数是 5600，模型抄的是区间 {5400, 5800} ——
+  // 区间是否「相同」按中点容差判定，判定为同一区间就不会被记进 overridden_dimensions。
+  BOOST_TEST(std::abs(l_ret.spec_.targets_.white_balance_kelvin_.low_ - 5400.0) < 1e-9);
+  const auto l_over = overridden_dimensions(l_ret);
+  BOOST_TEST(std::find(l_over.begin(), l_over.end(), "targets.white_balance_kelvin") == l_over.end());
   // 一个维度都没被改写 → 不该出现裁决痕迹
   BOOST_TEST(!l_ret.conflict_resolution_.resolved_.contains("overridden_dimensions"));
 }
@@ -542,9 +485,8 @@ BOOST_AUTO_TEST_CASE(map_result_falls_back_on_illegal_enum) {
 
   // 非法值被丢弃 → 保留统计推导出来的值，而不是半截的模型值。
   BOOST_TEST(l_ret.spec_.targets_.grading_hints_.vignette_ == "subtle");
-  BOOST_TEST(evidence_source_of(l_ret, "targets.grading_hints.vignette") == "default_value");
   // 合法的 lifted_blacks 照常接受（别把整块 grading_hints 一起丢掉）
-  BOOST_TEST(evidence_source_of(l_ret, "targets.grading_hints.lifted_blacks") == "prompt");
+  BOOST_TEST(l_ret.spec_.targets_.grading_hints_.lifted_blacks_ == true);
 
   // 性格行本身有信息量（subject/trait 非空）→ 保留；但两个非法枚举字段都被清空。
   BOOST_TEST(l_ret.spec_.intent_.character_personality_.size() == 1);
@@ -555,9 +497,6 @@ BOOST_AUTO_TEST_CASE(map_result_falls_back_on_illegal_enum) {
   // kelvin_bias 的允许值是 cool/warm/neutral，所以 "cold" 也不合法
   BOOST_TEST(l_cp.lighting_language_.kelvin_bias_.empty());
   BOOST_TEST(l_cp.lighting_language_.key_fill_ratio_.has_value());
-  BOOST_TEST(
-      evidence_source_of(l_ret, "intent.character_personality.lighting_language.hardness") == "default_value"
-  );
 }
 
 BOOST_AUTO_TEST_CASE(map_result_rejects_non_object) {

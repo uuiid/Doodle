@@ -9,7 +9,7 @@
 //      —— 供感知层、规划层、评判层在内存里传递，并序列化成 §4.2 的 JSON 形态。
 //   2) 表实体 ai_light_spec —— 落库用。它把上面那份 JSON 拆成若干列：
 //      可查询/可裁决的字段（revision / degrade_level / human_confirmed / confirmed_*）是真实列，
-//      嵌套结构（intent / targets / reference_stats / evidence）是 JSON 列。
+//      嵌套结构（intent / targets / reference_stats）是 JSON 列。
 //
 
 #pragma once
@@ -43,47 +43,6 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
                             {spec_degrade_level::prompt_only, "prompt_only"},
                         }
 )
-
-/// 统计量的可信度来源。用于 evidence 列。
-enum class evidence_source {
-  /// 来自参考图统计
-  reference_stats,
-  /// 来自人工提示词
-  prompt,
-  /// 来自预设库
-  preset,
-  /// 来自工程既有场景事实
-  scene_facts,
-  /// 默认值兜底
-  default_value,
-};
-DOODLE_JSON_SERIALIZE_ENUM_STRICT(
-    evidence_source, {
-                         {evidence_source::reference_stats, "reference_stats"},
-                         {evidence_source::prompt, "prompt"},
-                         {evidence_source::preset, "preset"},
-                         {evidence_source::scene_facts, "scene_facts"},
-                         {evidence_source::default_value, "default_value"},
-                     }
-)
-
-/// 单字段的来源与置信度
-struct DOODLE_CORE_API evidence_entry_t {
-  evidence_source source_{evidence_source::default_value};
-  double confidence_{0.0};
-  std::string note_{};
-
-  friend void to_json(nlohmann::json& j, const evidence_entry_t& p) {
-    j["source"]     = p.source_;
-    j["confidence"] = p.confidence_;
-    if (!p.note_.empty()) j["note"] = p.note_;
-  }
-  friend void from_json(const nlohmann::json& j, evidence_entry_t& p) {
-    if (j.contains("source")) j.at("source").get_to(p.source_);
-    if (j.contains("confidence")) j.at("confidence").get_to(p.confidence_);
-    if (j.contains("note")) j.at("note").get_to(p.note_);
-  }
-};
 
 /// 角色性格 → 灯光语言（docs/ue_ai_lighting_plan.md §5.5）。
 /// 这是「人物角色性格」这类人工提示词进入灯光参数的唯一通道：先落成可读的灯光语言，
@@ -315,8 +274,6 @@ struct DOODLE_CORE_API lighting_spec_t {
   lighting_intent_t intent_{};
   lighting_targets_t targets_{};
   reference_stats_t reference_stats_{};
-  /// 每个字段的来源与置信度，键为字段路径，如 "targets.contrast"
-  std::map<std::string, evidence_entry_t> evidence_{};
   bool human_confirmed_{false};  ///< 人工闸门 1
   uuid confirmed_by_{};
   std::optional<chrono::system_zoned_time> confirmed_at_{};
@@ -329,7 +286,6 @@ struct DOODLE_CORE_API lighting_spec_t {
     j["intent"]          = p.intent_;
     j["targets"]         = p.targets_;
     j["reference_stats"] = p.reference_stats_;
-    j["evidence"]        = p.evidence_;
     j["human_confirmed"] = p.human_confirmed_;
     j["confirmed_by"]    = p.confirmed_by_;
     j["confirmed_at"]    = p.confirmed_at_;
@@ -342,7 +298,6 @@ struct DOODLE_CORE_API lighting_spec_t {
     if (j.contains("intent")) j.at("intent").get_to(p.intent_);
     if (j.contains("targets")) j.at("targets").get_to(p.targets_);
     if (j.contains("reference_stats")) j.at("reference_stats").get_to(p.reference_stats_);
-    if (j.contains("evidence")) j.at("evidence").get_to(p.evidence_);
     if (j.contains("human_confirmed")) j.at("human_confirmed").get_to(p.human_confirmed_);
     if (j.contains("confirmed_by")) j.at("confirmed_by").get_to(p.confirmed_by_);
     if (j.contains("confirmed_at")) j.at("confirmed_at").get_to(p.confirmed_at_);
@@ -375,7 +330,7 @@ struct DOODLE_CORE_API conflict_resolution_t {
 /// created_at_ / updated_at_ 的**名字与类型必须一字不差** —— ORM 靠名字探测并自动填充
 /// （见 sqlite_orm/orm/insert.h:95-98）。
 ///
-/// intent / targets / reference_stats / evidence / conflict_resolution 都是 nlohmann::json：
+/// intent / targets / reference_stats / conflict_resolution 都是 nlohmann::json：
 /// 它们是嵌套结构，而 ORM 的列类型只覆盖标量/string/uuid/时间/枚举/vector<string>/json。
 /// 类型化取用走下面那组访问器。
 struct DOODLE_CORE_API ai_light_spec {
@@ -389,7 +344,6 @@ struct DOODLE_CORE_API ai_light_spec {
   nlohmann::json intent_{};
   nlohmann::json targets_{};
   nlohmann::json reference_stats_{};
-  nlohmann::json evidence_{};
   spec_degrade_level degrade_level_{spec_degrade_level::stats_only};
   // 是否已经确认
   bool human_confirmed_{false};
@@ -410,10 +364,6 @@ struct DOODLE_CORE_API ai_light_spec {
     return json_get_or_default<reference_stats_t>(reference_stats_);
   }
   void set_reference_stats(const reference_stats_t& in_stats) { reference_stats_ = in_stats; }
-  std::map<std::string, evidence_entry_t> get_evidence() const {
-    return json_get_or_default<std::map<std::string, evidence_entry_t>>(evidence_);
-  }
-  void set_evidence(const std::map<std::string, evidence_entry_t>& in_evidence) { evidence_ = in_evidence; }
   conflict_resolution_t get_conflict_resolution() const {
     return json_get_or_default<conflict_resolution_t>(conflict_resolution_);
   }
@@ -430,7 +380,6 @@ struct DOODLE_CORE_API ai_light_spec {
     l_ret.intent_          = get_intent();
     l_ret.targets_         = get_targets();
     l_ret.reference_stats_ = get_reference_stats();
-    l_ret.evidence_        = get_evidence();
     l_ret.human_confirmed_ = human_confirmed_;
     l_ret.confirmed_by_    = confirmed_by_;
     l_ret.confirmed_at_    = confirmed_at_;
@@ -444,7 +393,6 @@ struct DOODLE_CORE_API ai_light_spec {
     set_intent(in_spec.intent_);
     set_targets(in_spec.targets_);
     set_reference_stats(in_spec.reference_stats_);
-    set_evidence(in_spec.evidence_);
     human_confirmed_ = in_spec.human_confirmed_;
     confirmed_by_    = in_spec.confirmed_by_;
     confirmed_at_    = in_spec.confirmed_at_;

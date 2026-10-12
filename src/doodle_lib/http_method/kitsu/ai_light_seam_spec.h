@@ -47,9 +47,6 @@ struct DOODLELIB_API spec_generation_request_t : public seam_request_base_t {
 
 struct DOODLELIB_API spec_generation_result_t {
   lighting_spec_t spec_{};
-  /// 键为字段路径（如 "targets.contrast"），与 ai_light_spec::evidence_ 同形状 ——
-  /// evidence 的语义就是「这个字段是从哪来的、有多可信」，没有键就失去意义。
-  std::map<std::string, evidence_entry_t> evidence_{};
   reference_stats_t reference_stats_{};
   conflict_resolution_t conflict_resolution_{};
 };
@@ -98,7 +95,7 @@ DOODLELIB_API http::seedance2::inference_request_t build_spec_request(
 
 /// LLM 结果 → spec_generation_result_t。服务端钉死 space/palette/ownership/schema_version/
 /// reference_stats/身份字段；LLM 只能给 intent、targets 的标量区间与 grading_hints、
-/// evidence、conflicts。枚举用 magic_enum::enum_cast 校验，认不出回退默认并记 evidence。
+/// conflicts。自由文本枚举走白名单校验，认不出就保留统计推导的值。
 /// in_result_json 非 object（含 null）抛 doodle_error{status::bad_gateway}。
 DOODLELIB_API spec_generation_result_t map_spec_result(
     const nlohmann::json& in_result_json, const aggregated_reference_stats_t& in_aggregated

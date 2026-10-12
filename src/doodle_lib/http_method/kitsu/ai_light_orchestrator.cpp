@@ -175,7 +175,6 @@ boost::asio::awaitable<spec_branch_result> advance_session_spec_branch(
   l_spec.session_id_ = in_session.uuid_id_;
   l_spec.revision_   = l_rev;
   l_spec.from_spec(l_res.spec_);
-  l_spec.set_evidence(l_res.evidence_);
   l_spec.set_reference_stats(l_res.reference_stats_);
   l_spec.set_conflict_resolution(l_res.conflict_resolution_);
   // 降级级别以**接缝按事实判定的结果**为准，不用调用方那个预判（决定 D4）：

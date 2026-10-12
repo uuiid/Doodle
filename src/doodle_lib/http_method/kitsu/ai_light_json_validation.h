@@ -19,8 +19,8 @@
 //      「schema 本身是不是合法 draft-7」与「模型输出违反了我们 schema 的哪些地方」。
 //      **决策 D-1：校验结果只作诊断（写日志），不作准入闸门。** 三条理由：
 //        * 方舟侧 `json_schema_strict = true` 已经保证合规输出；
-//        * spec 接缝**有意**容忍截断/不完整的输出（靠统计默认值 + evidence.source =
-//          default_value 留痕），一道 schema 闸门会直接破坏这个设计；
+//        * spec 接缝**有意**容忍截断/不完整的输出（靠统计默认值兜底），一道 schema 闸门会直接
+//          破坏这个设计；
 //        * `additionalProperties:false` 若当闸门，会把本来被静默忽略的「模型多回一个无关键」
 //          升级成整轮 502。
 //      要改成闸门是一行（validate_model_output() 非空时抛），但那属于产品决策，须另议。
@@ -160,8 +160,8 @@ DOODLELIB_API std::string require_one_of(
 // 3.3 宽松读取器（std::optional / 空容器，永不抛）
 // ===========================================================================
 //
-// 这是 spec 接缝**有意为之**的宽容策略，不是缺陷：读不出就保留统计推导值，并由
-// put_evidence(..., evidence_source::default_value, ...) 留痕。语义与重构前逐条一致。
+// 这是 spec 接缝**有意为之**的宽容策略，不是缺陷：读不出就保留统计推导值。
+// 语义与重构前逐条一致（唯一变化：非法取值不再逐字段留痕，见 §15.7 决定 D-1）。
 
 /// 非 object / 非该键 / 该键不是 object → nullopt。
 DOODLELIB_API std::optional<nlohmann::json> opt_object(const nlohmann::json& in_parent, std::string_view in_key);
