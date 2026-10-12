@@ -84,7 +84,14 @@
       ]
     },
     "magic-enum",
-    "nlohmann-json",
+    {
+      "name": "nlohmann-json",
+      "default-features": false,
+      "features": [
+        "diagnostics"
+      ]
+    },
+    "json-schema-validator",
     "spdlog",
     "entt",
     "eigen3",
