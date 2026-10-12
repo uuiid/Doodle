@@ -292,7 +292,7 @@ class DOODLELIB_API sqlite_database {
       ai_light::ai_light_session_state in_state
   );
 
-  /// 会话的参考图，按 ordinal 升序
+  /// 会话的参考图，按 created_at 升序（= 上传先后顺序）
   std::vector<ai_light::ai_light_reference> get_ai_light_references(const uuid& in_session_id);
 
   /// 会话的全部 Spec 版本，revision 升序

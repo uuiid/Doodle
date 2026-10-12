@@ -322,13 +322,11 @@ describe('AI 灯光 —— 参考图（reference）', function () {
 
     req.body.data.forEach((ref, i) => {
       expect(ref).to.have.keys([
-        'id', 'session_id', 'ordinal', 'file_path', 'thumbnail_path', 'width',
+        'id', 'session_id', 'file_path', 'thumbnail_path', 'width',
         'height', 'stats', 'stats_confidence', 'is_outlier', 'excluded_reason',
         'created_at',
       ]);
       expect(ref.session_id).to.equal(sessionId);
-      // ordinal 是展示顺序，0 起、递增
-      expect(ref.ordinal).to.equal(i);
       // 服务端统一转 PNG 后才落盘
       expect(ref.file_path.toLowerCase()).to.match(/\.png$/);
       // 统计在已落盘的 PNG 上算出来：长宽必须真实
@@ -347,9 +345,9 @@ describe('AI 灯光 —— 参考图（reference）', function () {
 
     expect(req.status).to.equal(200);
     expect(req.body.data).to.be.an('array').with.lengthOf(2);
-    // 按 ordinal 升序
-    expect(req.body.data[0].ordinal).to.equal(0);
-    expect(req.body.data[1].ordinal).to.equal(1);
+    // 按 created_at 升序（= 上传先后顺序）；ordinal 列已删除
+    expect(new Date(req.body.data[0].created_at).getTime())
+      .to.be.at.most(new Date(req.body.data[1].created_at).getTime());
   });
 
   it('GET /reference/{id}/image — 取参考图（PNG 流）', async function () {

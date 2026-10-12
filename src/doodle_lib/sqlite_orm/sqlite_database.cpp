@@ -404,7 +404,6 @@ void sqlite_storage::regs_all() {
       .add_column("id", &ai_light::ai_light_reference::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &ai_light::ai_light_reference::uuid_id_, unique(), not_null())
       .add_column("session_id", &ai_light::ai_light_reference::session_id_, not_null())
-      .add_column("ordinal", &ai_light::ai_light_reference::ordinal_)
       .add_column("file_path", &ai_light::ai_light_reference::file_path_)
       .add_column("thumbnail_path", &ai_light::ai_light_reference::thumbnail_path_)
       .add_column("width", &ai_light::ai_light_reference::width_)
@@ -417,8 +416,7 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(
           &ai_light::ai_light_reference::session_id_, &ai_light::ai_light_session::uuid_id_,
           foreign_key_action::cascade
-      )
-      .add_unique_index(&ai_light::ai_light_reference::session_id_, &ai_light::ai_light_reference::ordinal_);
+      );
 
   reg_table<ai_light::ai_light_spec>("ai_light_spec")
       .add_column("id", &ai_light::ai_light_spec::id_, primary_key(), autoincrement())
@@ -2256,11 +2254,16 @@ std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_b
 
 std::vector<ai_light::ai_light_reference> sqlite_database::get_ai_light_references(const uuid& in_session_id) {
   using namespace orm;
+  // 按 created_at 升序 = 上传先后顺序。原先按 ordinal 排, 那个列已删除。
+  // 用 (created_at, uuid_id) 两个键: created_at 是秒级时间戳, 同一批上传里多张图可能落在
+  // 同一秒上, 只按它排会得到不稳定的顺序 (SQLite 不保证同值行的相对次序),
+  // 而调用方(前端展示、提示词里的逐图统计)都依赖这个顺序稳定。uuid_id 唯一, 足以破平。
   return select(*this)
       .columns(object<ai_light::ai_light_reference>())
       .from<ai_light::ai_light_reference>()
       .where(c(&ai_light::ai_light_reference::session_id_) == in_session_id)
-      .order_by(&ai_light::ai_light_reference::ordinal_)()
+      .order_by(&ai_light::ai_light_reference::created_at_)
+      .order_by(&ai_light::ai_light_reference::uuid_id_)()
       .to_vector();
 }
 

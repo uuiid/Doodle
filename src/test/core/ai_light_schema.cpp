@@ -366,7 +366,6 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     // --- 参考图: 每张单独留统计 ---
     ai_light_reference l_ref{};
     l_ref.session_id_ = l_session_row.uuid_id_;
-    l_ref.ordinal_    = 0;
     l_ref.file_path_  = FSys::path{"AI_Light"} / "ref" / "ref_00.png";
     l_ref.width_      = 1920;
     l_ref.height_     = 1080;

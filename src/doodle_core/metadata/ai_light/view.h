@@ -31,7 +31,7 @@ namespace doodle::ai_light {
 struct DOODLE_CORE_API ai_light_session_detail_t {
   ai_light_session session_{};
 
-  /// 参考图，按 ordinal 升序
+  /// 参考图，按 created_at 升序（= 上传先后顺序）
   std::vector<ai_light_reference> references_{};
 
   /// Spec 全部版本，revision 升序

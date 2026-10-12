@@ -199,10 +199,14 @@ std::string build_spec_input_text(
       "（不进聚合，也不发图给你；仅在此列出以便你理解被否掉的是什么）\n",
       in_request.references_.size(), l_excluded
   );
-  for (const auto& l_ref : in_request.references_) {
+  // 参考图原先有 ordinal_ 列, 提示词按它编号 (#0/#1/...). 该列已删除, 这里改用**列表下标**:
+  // in_request.references_ 本身就来自 get_ai_light_references(), 已按 created_at 升序,
+  // 所以下标与原 ordinal 表达的是同一件事(展示/上传顺序), 提示词文本对模型保持不变。
+  for (std::size_t l_i = 0; l_i < in_request.references_.size(); ++l_i) {
+    const auto& l_ref  = in_request.references_[l_i];
     const auto l_stats = l_ref.get_stats();
     l_out += fmt::format(
-        "- #{} {}x{} confidence={:.2f}{}\n", l_ref.ordinal_, l_ref.width_, l_ref.height_, l_ref.stats_confidence_,
+        "- #{} {}x{} confidence={:.2f}{}\n", l_i, l_ref.width_, l_ref.height_, l_ref.stats_confidence_,
         l_ref.is_outlier_ ? fmt::format("  已人工排除（{}）", l_ref.excluded_reason_) : std::string{}
     );
     // 判据与匿名命名空间的 references_have_stats() 一致：get_stats() 返回的是值类型，

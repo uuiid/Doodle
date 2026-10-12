@@ -74,10 +74,9 @@ aggregated_reference_stats_t make_agg(bool in_with_stats = true) {
   return l_agg;
 }
 
-ai_light_reference make_ref(std::int32_t in_ordinal, bool in_outlier) {
+ai_light_reference make_ref(bool in_outlier) {
   ai_light_reference l_ref{};
   l_ref.uuid_id_          = core_set::get_set().get_uuid();
-  l_ref.ordinal_          = in_ordinal;
   l_ref.width_            = 1920;
   l_ref.height_           = 1080;
   l_ref.stats_confidence_ = 0.8;
@@ -224,16 +223,17 @@ BOOST_AUTO_TEST_CASE(json_schema_is_strict_object) {
 BOOST_AUTO_TEST_CASE(input_text_carries_prompt_and_stats) {
   const auto l_agg = make_agg();
 
-  const auto l_excluded = make_ref(1, true);
+  const auto l_excluded = make_ref(true);
   spec_generation_request_t l_req{};
   l_req.prompt_text_ = "冷、硬、孤独，夜里一个人站在空旷街道上";
-  l_req.references_  = {make_ref(0, false), l_excluded};
+  l_req.references_  = {make_ref(false), l_excluded};
 
   const auto l_text = build_spec_input_text(l_req, l_agg);
 
   // ① 提示词原文必须原样出现：它是权威意图，被摘要或改写就等于换了输入。
   BOOST_TEST(l_text.find("冷、硬、孤独") != std::string::npos);
   // ② 逐图统计：两张图都要出现（被排除的要出现，好让模型知道被否掉的是什么）
+  // 编号来自列表下标（ordinal_ 列已删除），见 build_spec_input_text 里的说明。
   BOOST_TEST(l_text.find("#0") != std::string::npos);
   BOOST_TEST(l_text.find("#1") != std::string::npos);
   // 被人工排除的图必须被**标注**出来，否则模型会把它的统计当有效样本
@@ -297,7 +297,7 @@ BOOST_AUTO_TEST_CASE(build_request_omits_images_when_empty) {
   BOOST_TEST(l_json_back == l_json_empty);
 
   // 全部图都被人工排除 → 仍然不发 images（排除的图不该再进入模型的视觉输入）
-  const auto l_only_outlier   = make_ref(0, true);
+  const auto l_only_outlier   = make_ref(true);
   l_empty.references_         = {l_only_outlier};
   const auto l_req_outlier    = build_spec_request(l_empty, l_agg);
   const nlohmann::json l_json_outlier = l_req_outlier;
@@ -306,7 +306,7 @@ BOOST_AUTO_TEST_CASE(build_request_omits_images_when_empty) {
 
   // 只有未被排除的图才发，且发的是**站点内相对路径**（由 to_public_url 补前缀 + 签名），
   // 而不是磁盘上的绝对路径 —— 后者既取不到也泄露部署结构。
-  const auto l_ok     = make_ref(0, false);
+  const auto l_ok     = make_ref(false);
   l_empty.references_ = {l_ok, l_only_outlier};
   const auto l_req_ok = build_spec_request(l_empty, l_agg);
   const nlohmann::json l_json_ok = l_req_ok;
@@ -327,7 +327,7 @@ BOOST_AUTO_TEST_CASE(build_request_omits_images_when_empty) {
 // 这一条是这次结构体化的目的本身 —— 两侧一旦对同一个键的理解分叉，这里就会红。
 BOOST_AUTO_TEST_CASE(build_request_reaches_ark_body) {
   const auto l_agg = make_agg();
-  const auto l_ok  = make_ref(0, false);
+  const auto l_ok  = make_ref(false);
 
   spec_generation_request_t l_request{};
   l_request.prompt_text_ = "暖一点, 柔一点";

@@ -233,11 +233,10 @@ ai_light_judgement_t make_judgement(judgement_decision in_decision, const uuid& 
 ///
 /// advance_session 在蒸馏 Spec 之前会校验参考图非空（决策 1：参考必有多张），
 /// 所以凡是要走到 spec 分支的用例都得先有这一张 —— 反过来，缺了它就只会拿到 400。
-ai_light_reference add_reference(fixture_t& in_fx, std::int32_t in_ordinal = 0) {
+ai_light_reference add_reference(fixture_t& in_fx) {
   ai_light_reference l_ref{};
   l_ref.session_id_       = in_fx.session_.uuid_id_;
-  l_ref.ordinal_          = in_ordinal;
-  l_ref.file_path_        = FSys::path{"AI_Light"} / "ref" / fmt::format("ref_{:02}.png", in_ordinal);
+  l_ref.file_path_        = FSys::path{"AI_Light"} / "ref" / "ref_00.png";
   l_ref.width_            = 1920;
   l_ref.height_           = 1080;
   l_ref.stats_confidence_ = 0.0;
@@ -566,7 +565,6 @@ BOOST_AUTO_TEST_CASE(session_detail_aggregates_all_tables) {
   // 补一张参考图，让聚合里每一类都有内容
   ai_light_reference l_ref{};
   l_ref.session_id_       = l_fx.session_.uuid_id_;
-  l_ref.ordinal_          = 0;
   l_ref.file_path_        = FSys::path{"AI_Light"} / "ref" / "ref_00.png";
   l_ref.width_            = 1920;
   l_ref.height_           = 1080;
@@ -941,7 +939,6 @@ DOODLE_FIXTURE_TEST_CASE_CORO(pre_assigned_uuid_survives_the_deferred_insert, fi
   ai_light_reference l_ref{};
   l_ref.uuid_id_        = l_ref_uuid;
   l_ref.session_id_     = l_fx.session_.uuid_id_;
-  l_ref.ordinal_        = 99;  // 夹具不造参考图；取个大值，将来夹具扩充也不会撞 (session_id, ordinal) 唯一索引
   l_ref.width_          = 1920;
   l_ref.height_         = 1080;
   l_ref.file_path_      = l_ctx.get_ai_light_reference_file(l_fx.session_.uuid_id_, l_ref.uuid_id_);

@@ -347,11 +347,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
   auto l_ref_dir = l_ctx.get_ai_light_reference_dir(l_session.uuid_id_);
   if (!FSys::exists(l_ref_dir)) FSys::create_directories(l_ref_dir);
 
-  // 序号只表示**展示顺序**（前端按它排参考图）；文件名是各自的 uuid，
-  // 所以即使序号被复用也绝不会覆盖既有图。
-  auto l_existing = l_sql.get_ai_light_references(l_session.uuid_id_);
-  std::int32_t l_next = 0;
-  for (const auto& l_r : l_existing) l_next = std::max(l_next, l_r.ordinal_ + 1);
+  // 参考图不再有 ordinal 列: 展示顺序由 created_at 决定 (见 get_ai_light_references)。
+  // 文件名是各自的 uuid, 所以任何顺序变化都不会覆盖既有图。
 
   std::vector<ai_light_reference> l_added{};
   for (auto&& l_file : l_files) {
@@ -365,7 +362,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
 
     ai_light_reference l_ref{};
     l_ref.session_id_ = l_session.uuid_id_;
-    l_ref.ordinal_    = l_next++;
     // uuid 必须在这里就定下来，不能等 ORM 在 insert 时回填：文件名要用它，
     // nil uuid 会让所有参考图写进同一个路径（先例：build_accepted_preview_file）。
     l_ref.uuid_id_    = core_set::get_set().get_uuid();

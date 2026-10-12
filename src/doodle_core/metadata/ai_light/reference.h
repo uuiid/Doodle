@@ -118,8 +118,6 @@ struct DOODLE_CORE_API ai_light_reference {
   DOODLE_BASE_FIELDS()
 
   uuid session_id_{};
-  /// 0-based，前端按它排序
-  std::int32_t ordinal_{0};
 
   /// 图片落盘路径。不注册 preview_file，由专用接口提供。
   FSys::path file_path_{};
@@ -145,7 +143,6 @@ struct DOODLE_CORE_API ai_light_reference {
   friend void to_json(nlohmann::json& j, const ai_light_reference& p) {
     j["id"]                = p.uuid_id_;
     j["session_id"]        = p.session_id_;
-    j["ordinal"]           = p.ordinal_;
     j["file_path"]         = p.file_path_;
     j["thumbnail_path"]    = p.thumbnail_path_;
     j["width"]             = p.width_;
@@ -159,7 +156,6 @@ struct DOODLE_CORE_API ai_light_reference {
   friend void from_json(const nlohmann::json& j, ai_light_reference& p) {
     if (j.contains("id")) j.at("id").get_to(p.uuid_id_);
     if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
-    if (j.contains("ordinal")) j.at("ordinal").get_to(p.ordinal_);
     if (j.contains("file_path")) j.at("file_path").get_to(p.file_path_);
     if (j.contains("thumbnail_path")) j.at("thumbnail_path").get_to(p.thumbnail_path_);
     if (j.contains("width")) j.at("width").get_to(p.width_);
