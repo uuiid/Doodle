@@ -214,8 +214,7 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
     "image_count": 4, "aggregation": "median",
     "per_dimension_confidence": {"luma_percentiles": 0.85, "white_balance_kelvin": 0.5},
     "conflicts": ["white_balance_kelvin"],   // 冲突维度 → 交人工裁决（**仅服务端聚合器判定**，决定 D7）
-    "retouch_detected": true,
-    "usable_for_physical_solve": false       // 显式声明：不做物理反解
+    "retouch_detected": true
   },
 
   "human_confirmed": false,          // 人工闸门 1
@@ -443,7 +442,7 @@ Spec 前调用一次（§15.7）。`is_outlier_` / `excluded_reason_` 仍是**�
 | `LightingSpec.tier` | `stats_only \| multiview \| prompt_only` → **字段删除**（取值塌缩成与 `degrade_level` 相同，Spec schema 升 1.3） |
 | 降级等级 | 三级 → 两级（§12.1） |
 | 里程碑 | M7 从路线图移除 |
-| `reference_stats.usable_for_physical_solve` | 恒为 `false`，成为常量而非判断结果 |
+| `reference_stats.usable_for_physical_solve` | 恒为 `false`，成为常量而非判断结果；**最终连字段一并删除**（恒假的字段没有信息量，见 §15.7 决定 D8） |
 
 ---
 
@@ -911,7 +910,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | **人工判断往返慢、轮次少** | 每轮固定 6 个沿轴变化的候选（一次往返换更多信息）；一次 UE 启动渲染全部 6 个；warm start |
 | **人工判断只是 yes/no → 收敛慢** | 候选沿语义轴变化（判断六），把选择变成梯度 |
 | **美术长期不判断** | `awaiting_judgement` 状态 + 读模型的 `is_judgement_overdue` 标志（纯派生，不改状态） |
-| **参考被 AI 改到物理不可解** | **不尝试物理反解**，显式记录 `usable_for_physical_solve=false`；用显示空间统计 |
+| **参考被 AI 改到物理不可解** | **不尝试物理反解**，用显示空间统计（原先还显式记录 `usable_for_physical_solve=false`，该恒假字段已删，见 §15.7 决定 D8） |
 | **多图统计互相冲突** | 逐维度置信度 + 冲突标记 → 人工裁决；**不自动平均掉冲突** |
 | **目标里的调色部分靠灯够不到** | 后处理/调色纳入必需原语；Spec 里区分 `ownership.lighting` / `ownership.grading` |
 | **用调色"作弊"达成指标** | 惩罚项 + 提示美术：灯光几乎没变而调色大改视为未达成 |
@@ -2054,6 +2053,16 @@ POST /session/{id}/spec
   `9e666da14cfb8ad3`（candidates / feedback 两个 schema 未动）；
   `ai_light_spec_prompt.cpp` 的根键断言改为恰好 `{intent, targets}`，并新增一条「契约里不含 `conflicts`」
   的反向断言。
+- **D8 删除 `reference_stats.usable_for_physical_solve`（恒假常量字段）。** §5.3 的这条设计要求
+  「参考被 AI 改到物理不可解时不尝试反解，并显式记录一个标记」。实现上它是**写死 false、从不被读**的
+  字段：`ai_light_stats.cpp` 在 `aggregate_reference_stats` 里赋一次 `false`，`spec.h` 的 `from_json`
+  又强制回写 `false`（就是为了防止别人把它改成 true）。一个恒假的字段**不携带任何信息** ——
+  「本工具不做物理反解」是产品边界，属于文档与代码结构，不属于每个工件都要复述一遍的数据。
+  下游若真想判断「能不能做物理反解」，看到这个字段恒假也得不到任何新信息。
+  于是删除字段本体、`to_json` / `from_json` 两处序列化、生产者的赋值，以及三处只断言它为假的测试。
+  「不做物理反解」这条设计意图留在 §5.3 与 §11 的风险表里（见那两处的注）。
+  注：工件里**曾经**有过这个键的旧 Spec 行仍能正常 `from_json`（读取端本来就是 `contains` 判断，
+  未知键被忽略），无迁移问题。
 
 **口径差（计划 vs 实现，以代码为准）**
 

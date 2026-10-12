@@ -403,10 +403,8 @@ BOOST_AUTO_TEST_CASE(map_result_pins_server_owned_fields) {
   BOOST_TEST(l_ret.spec_.targets_.ownership_.grading_.at(0) == "contrast");
   BOOST_TEST(l_ret.spec_.targets_.space_ == "display_srgb");
 
-  // reference_stats 整块照抄聚合结果，且 usable_for_physical_solve_ 恒 false
-  // （参考图是全局调色为主，不足以做物理逆解 —— §5.3）。
+  // reference_stats 整块照抄聚合结果（参考图是全局调色为主，不足以做物理逆解 —— §5.3）。
   BOOST_TEST(l_ret.reference_stats_.image_count_ == 3);
-  BOOST_TEST(l_ret.reference_stats_.usable_for_physical_solve_ == false);
 
   // 有逐维置信度 → 事实上的 stats_only（决定 D4）。
   BOOST_TEST(en(l_ret.spec_.degrade_level_) == en(spec_degrade_level::stats_only));

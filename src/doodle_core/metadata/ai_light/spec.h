@@ -243,9 +243,6 @@ struct DOODLE_CORE_API reference_stats_t {
   std::vector<std::string> conflicts_{};
   /// 检测到参考图被 AI/PS 修过（参考图本身就是修图产物，这里记的是「修图痕迹的强度」）
   bool retouch_detected_{false};
-  /// 恒为 false：本工具不做物理反解。保留字段是为了让工件自描述，
-  /// 避免下游误以为可以做物理反解。
-  bool usable_for_physical_solve_{false};
 
   friend void to_json(nlohmann::json& j, const reference_stats_t& p) {
     j["image_count"]                = p.image_count_;
@@ -253,7 +250,6 @@ struct DOODLE_CORE_API reference_stats_t {
     j["per_dimension_confidence"]   = p.per_dimension_confidence_;
     j["conflicts"]                  = p.conflicts_;
     j["retouch_detected"]           = p.retouch_detected_;
-    j["usable_for_physical_solve"]  = p.usable_for_physical_solve_;
   }
   friend void from_json(const nlohmann::json& j, reference_stats_t& p) {
     if (j.contains("image_count")) j.at("image_count").get_to(p.image_count_);
@@ -261,8 +257,6 @@ struct DOODLE_CORE_API reference_stats_t {
     if (j.contains("per_dimension_confidence")) j.at("per_dimension_confidence").get_to(p.per_dimension_confidence_);
     if (j.contains("conflicts")) j.at("conflicts").get_to(p.conflicts_);
     if (j.contains("retouch_detected")) j.at("retouch_detected").get_to(p.retouch_detected_);
-    // usable_for_physical_solve 是常量 false，不从 JSON 读入，避免下游把它改成 true。
-    p.usable_for_physical_solve_ = false;
   }
 };
 

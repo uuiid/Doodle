@@ -191,7 +191,7 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
 | 目标区间 | `targets.luma_percentiles.{p10,p50,p90}`、`contrast`、`white_balance_kelvin`、`clip_rate.{high,low}`、`palette[].share` | **每个都是一对 `[low, high]`**，显示成区间条；`palette[].color` 用色块 |
 | 调色提示 | `targets.grading_hints.{vignette, lifted_blacks, bloom}` | 枚举徽标（`none/subtle/moderate/strong`、是/否） |
 | 责任划分 | `targets.ownership.{lighting, grading, shared}` | 三列维度名，说明「哪些指标归灯光、哪些归调色」（用于解释「为什么这张图的差异主要来自调色」） |
-| 参考统计 | `reference_stats.{image_count, aggregation, per_dimension_confidence, conflicts[], retouch_detected, usable_for_physical_solve}` | 几张图、怎么聚合的、哪些维度冲突 |
+| 参考统计 | `reference_stats.{image_count, aggregation, per_dimension_confidence, conflicts[], retouch_detected}` | 几张图、怎么聚合的、哪些维度冲突 |
 | 降级 | `degrade_level` | `stats_only` = 正常；`prompt_only` = **必须显眼提示**「参考图不可用/完全冲突，本方案只依据提示词与预设库」，否则美术会误以为参考图起了作用 |
 | 冲突 | `reference_stats.conflicts[]` | **机器没敢定死、要人来看**的维度列表（裁决结果目前无处回传，见下） |
 

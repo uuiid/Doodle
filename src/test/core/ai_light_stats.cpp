@@ -398,7 +398,6 @@ BOOST_AUTO_TEST_CASE(aggregate_takes_median_but_keeps_range_as_interval) {
 
   BOOST_CHECK_EQUAL(l_ret.stats_.image_count_, 3);
   BOOST_CHECK_EQUAL(l_ret.stats_.aggregation_, "median");
-  BOOST_TEST(!l_ret.stats_.usable_for_physical_solve_);  // 近似参考不用于物理逆解
   BOOST_CHECK_EQUAL(l_ret.targets_.space_, "display_srgb");
 
   // 中位数是 0.40，但区间是极差 [0.38, 0.42] —— 不是「中位数 ± 容差」。

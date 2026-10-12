@@ -619,7 +619,6 @@ aggregated_reference_stats_t aggregate_reference_stats(const std::vector<ai_ligh
   aggregated_reference_stats_t l_ret{};
   l_ret.stats_.image_count_               = static_cast<std::int32_t>(in_references.size());
   l_ret.stats_.aggregation_               = "median";
-  l_ret.stats_.usable_for_physical_solve_ = false;
 
   // ── ① 逐图提取：可用图筛选 ────────────────────────────────────────────────
   // 三条判据缺一不可：人工排除过 / 置信度为 0（统计层没跑过）/ stats 列还是 null。

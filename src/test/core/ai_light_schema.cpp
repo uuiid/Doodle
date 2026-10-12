@@ -448,8 +448,6 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     BOOST_TEST(l_cur->get_targets().ownership_.grading_.size() == 3);
     BOOST_TEST(l_cur->get_reference_stats().image_count_ == 4);
     BOOST_TEST(l_cur->get_reference_stats().conflicts_.size() == 1);
-    // 恒为 false 的常量: 不做物理反解
-    BOOST_TEST(!l_cur->get_reference_stats().usable_for_physical_solve_);
 
     // 5. 轮次
     auto l_iter_back = l_sql.get_ai_light_iteration(l_session_row.uuid_id_, 1);
