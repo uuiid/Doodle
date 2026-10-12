@@ -6,6 +6,7 @@
 
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/http/http_listener_port_shm.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>

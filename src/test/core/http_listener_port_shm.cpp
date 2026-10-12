@@ -93,18 +93,26 @@ BOOST_AUTO_TEST_CASE(publish_and_read_never_throw) {
 
 /// 端到端: 监听器用端口 0 启动后, 共享内存里必须是内核分配的真实端口
 /// 这正是 --local/--epiboly 不带 --port 时的路径, 也是本次改动的根因
-BOOST_AUTO_TEST_CASE(listener_publishes_the_kernel_assigned_port) {
+///
+/// 为什么必须带一个 app_base 夹具: g_ctx() 和 g_io_context() 解的都是 doodle_lib::impl::self,
+/// 而 impl::self 只在 doodle_lib(即 app_base 的成员 lib_ptr) 构造时才赋值。本文件以前没构造
+/// 过 app_base, 所以 run_http_listener 第一句 g_ctx().emplace<...>() 就是空指针写 ——
+/// 崩在用例体之后, boost 只能报出最后一个检查点, 看起来像 publish 那一行出错。
+/// 同一个坑在其他夹具里也有记录(见 ai_light_state.cpp:106-110)。
+struct listener_fixture_t {
+  ::doodle::app_base app_{};
+};
+
+BOOST_FIXTURE_TEST_CASE(listener_publishes_the_kernel_assigned_port, listener_fixture_t) {
   // 先塞一个假值, 确保下面读到的不是上一用例的残留
   BOOST_REQUIRE(publish_listener_port(1234));
 
   boost::asio::io_context l_io{};
   auto l_route = std::make_shared<http_route>();
   // port 0 => 由系统分配
+  // g_io_context() 返回的正是监听器协程被 co_spawn 到的那个 context, 所以下面跑它。
   run_http_listener(l_io, l_route, 0);
 
-  // 监听器协程被 co_spawn 到 app 的全局 io_context 上, 跑到写入那一步才会发布端口
-  // g_io_context() 声明在 namespace doodle 下(global_function.h), 而本文件的 using 只带进了
-  // doodle::http —— 不加 ::doodle:: 限定会得到 C3861 'g_io_context': identifier not found。
   auto& l_app_io = ::doodle::g_io_context();
   l_app_io.restart();
   l_app_io.run_for(std::chrono::milliseconds{500});

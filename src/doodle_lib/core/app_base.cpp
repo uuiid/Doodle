@@ -57,7 +57,19 @@ struct comline_data {
 
 app_base::app_base(std::int32_t argc, const wchar_t* const argv[]) : app_base(argc, comline_data{argc, argv}.argv_) {}
 
-app_base::~app_base() = default;
+app_base::~app_base() {
+  // sig_ptr 上挂着一个 async_wait, 回调捕获了 this。析构顺序是: sig_ptr 在 lib_ptr 之后
+  // 声明 => 先析构, 而 lib_ptr 里那个 io_context_ 要等 doodle_lib 析构才拆。若这里不管,
+  // 这个待处理的 signal_set 会一直活到 io_context_ 析构时才被销毁(取消), 那时 this 已经
+  // 不在了 —— 表现为析构阶段的访问违例(address 0xffffffffffffffff), 单测(如
+  // http_listener_port_shm)一构造 app_base 就必崩。
+  // 这里先显式取消并拆掉, 让取消回调在本对象仍存活时跑完。
+  if (sig_ptr) {
+    boost::system::error_code l_ec{};
+    sig_ptr->cancel(l_ec);
+    sig_ptr.reset();
+  }
+}
 
 app_base& app_base::Get() { return *self; }
 app_base* app_base::GetPtr() { return self; }

@@ -314,8 +314,22 @@ struct multipart_body {
 
       auto l_find_ = std::search(in_begin, in_end, *boundary_searcher_);
       if (l_find_ == in_end) {
-        // 没有找到完整边界 — 可能边界跨 buffer 分割, 返回 not_boundary
-        // (需要更多数据的情况由调用者通过检查缓冲区尾部的部分边界来处理)
+        // 没有找到完整边界。有两种可能:
+        //   a) 边界恰好跨 buffer 被切开 —— 缓冲区尾部是边界的**真前缀**,
+        //      必须返回 need_more_data 等待后续数据;
+        //   b) 缓冲区里确实暂时没有边界 —— 剩余部分都是数据。
+        // 之前这里一律返回 not_boundary, 于是 (a) 被当成数据: data 分支执行
+        // add_data(l_begin, l_end) 把含半个边界的整个缓冲区写进文件并清空,
+        // 该 part 的结束边界就此永久丢失 —— 表现为**静默少一个 part**
+        // (finish() 仍返回成功, 上传接口回 201 但参考图少一张)。
+        // 所以这里必须先排除 (a)。
+        const std::size_t l_avail = static_cast<std::size_t>(std::distance(in_begin, in_end));
+        const std::size_t l_max   = std::min(l_avail, boundary_.size() - 1);
+        for (std::size_t l_len = l_max; l_len > 0; --l_len) {
+          if (std::equal(boundary_.begin(), boundary_.begin() + l_len, in_end - l_len)) {
+            return {need_more_data, in_begin};
+          }
+        }
         return {not_boundary, in_begin};
       }
 
