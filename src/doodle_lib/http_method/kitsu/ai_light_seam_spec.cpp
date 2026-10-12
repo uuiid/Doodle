@@ -337,33 +337,28 @@ spec_generation_result_t map_spec_result(
   const bool l_has_stats = !in_aggregated.stats_.per_dimension_confidence_.empty();
   l_spec.degrade_level_  = l_has_stats ? spec_degrade_level::stats_only : spec_degrade_level::prompt_only;
 
-  // ---- 模型可覆盖：先记下被改动的维度，供 §6.3 的裁决留痕 ----
-  std::vector<std::string> l_overridden{};
-
-  // contrast 等区间的判定是**机械的**：与统计同名字段逐元素比较，相等 → 模型只是把统计
-  // 抄了回来；不等 → 按「提示词优先」归因于提示词，记进 overridden 供人工闸门 1 核对。
-  const auto l_apply_interval = [&](const nlohmann::json& in_src, const char* in_key, interval_t& in_out,
-                                    const std::string& in_path) {
+  // ---- 模型可覆盖 ----
+  // 注：被改写的维度**不再单独留痕**。原先记进 conflict_resolution_.resolved_["overridden_dimensions"]
+  // 供人工闸门 1 核对，该字段已随前端未实现而删除；「模型是否照抄了统计」这件事现在只能由
+  // 最终 target 取值与 stats 的对比看出（模型每次都会照抄统计值，见 map_result_echo 一类的用例）。
+  // 区间一律按「提示词优先」采用模型的值（§6.3）。
+  const auto l_apply_interval = [&](const nlohmann::json& in_src, const char* in_key, interval_t& in_out) {
     const auto l_llm = json_val::opt_interval(in_src, in_key);
     if (!l_llm.has_value()) return;
-    const bool l_same = l_llm->low_ == in_out.low_ && l_llm->high_ == in_out.high_;
-    in_out            = *l_llm;
-    if (!l_same) l_overridden.emplace_back(in_path);
+    in_out = *l_llm;
   };
 
   if (const auto l_targets_json = json_val::opt_object(in_result_json, "targets"); l_targets_json.has_value()) {
-    l_apply_interval(*l_targets_json, "contrast", l_spec.targets_.contrast_, "targets.contrast");
-    l_apply_interval(
-        *l_targets_json, "white_balance_kelvin", l_spec.targets_.white_balance_kelvin_, "targets.white_balance_kelvin"
-    );
+    l_apply_interval(*l_targets_json, "contrast", l_spec.targets_.contrast_);
+    l_apply_interval(*l_targets_json, "white_balance_kelvin", l_spec.targets_.white_balance_kelvin_);
     if (const auto l_luma = json_val::opt_object(*l_targets_json, "luma_percentiles"); l_luma.has_value()) {
-      l_apply_interval(*l_luma, "p10", l_spec.targets_.luma_percentiles_.p10_, "targets.luma_percentiles.p10");
-      l_apply_interval(*l_luma, "p50", l_spec.targets_.luma_percentiles_.p50_, "targets.luma_percentiles.p50");
-      l_apply_interval(*l_luma, "p90", l_spec.targets_.luma_percentiles_.p90_, "targets.luma_percentiles.p90");
+      l_apply_interval(*l_luma, "p10", l_spec.targets_.luma_percentiles_.p10_);
+      l_apply_interval(*l_luma, "p50", l_spec.targets_.luma_percentiles_.p50_);
+      l_apply_interval(*l_luma, "p90", l_spec.targets_.luma_percentiles_.p90_);
     }
     if (const auto l_clip = json_val::opt_object(*l_targets_json, "clip_rate"); l_clip.has_value()) {
-      l_apply_interval(*l_clip, "high", l_spec.targets_.clip_rate_.high_, "targets.clip_rate.high");
-      l_apply_interval(*l_clip, "low", l_spec.targets_.clip_rate_.low_, "targets.clip_rate.low");
+      l_apply_interval(*l_clip, "high", l_spec.targets_.clip_rate_.high_);
+      l_apply_interval(*l_clip, "low", l_spec.targets_.clip_rate_.low_);
     }
     if (const auto l_grading = json_val::opt_object(*l_targets_json, "grading_hints"); l_grading.has_value()) {
       // 自由文本枚举：**必须自己校验**。裸 get<std::string>() 不会拦下 "super_hard"，
@@ -418,33 +413,13 @@ spec_generation_result_t map_spec_result(
 
   }
 
-  // ---- 冲突与冲突裁决 ----
+  // ---- 冲突 ----
+  // 冲突维度记进 reference_stats_.conflicts_ 一处即可（前端提示美术裁决用这个）。
+  // 原先另有一份 conflict_resolution_ 同时承载 conflicts / llm_reported，是同数据双写，
+  // 随该字段一并删除。
   auto l_conflicts = json_val::opt_string_array(in_result_json, "conflicts");
   for (auto&& l_conflict : l_conflicts)
     l_ret.reference_stats_.conflicts_.emplace_back(fmt::format("llm: {}", l_conflict));
-
-  l_ret.conflict_resolution_.resolved_["conflicts"]                 = in_aggregated.stats_.conflicts_;
-  l_ret.conflict_resolution_.resolved_["per_dimension_confidence"]  = in_aggregated.stats_.per_dimension_confidence_;
-  if (!in_aggregated.suspected_outlier_ids_.empty()) {
-    // 只报不写：is_outlier_ 是人工排除字段，自动判定写进去会让两种语义在同一列里不可区分（决定 D3）。
-    nlohmann::json l_outliers = nlohmann::json::array();
-    for (const auto& l_id : in_aggregated.suspected_outlier_ids_) l_outliers.emplace_back(boost::uuids::to_string(l_id));
-    l_ret.conflict_resolution_.resolved_["suspected_outliers"] = l_outliers;
-  }
-  if (!l_overridden.empty()) l_ret.conflict_resolution_.resolved_["overridden_dimensions"] = l_overridden;
-  if (!l_conflicts.empty()) l_ret.conflict_resolution_.resolved_["llm_reported"] = l_conflicts;
-
-  std::string l_note = in_aggregated.stats_.conflicts_.empty()
-                           ? std::string{"参考图各维度一致：目标取多图中位数，区间取极差。"}
-                           : fmt::format(
-                                 "以下维度在参考图之间互相矛盾，未设为硬目标，需人工裁决：{}",
-                                 join_strings(in_aggregated.stats_.conflicts_, ", ")
-                             );
-  if (!l_overridden.empty())
-    l_note += fmt::format(
-        " 提示词与参考不一致、按 §6.3 采用提示词值的维度：{}", join_strings(l_overridden, ", ")
-    );
-  l_ret.conflict_resolution_.note_ = l_note;
 
   return l_ret;
 }

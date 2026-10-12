@@ -48,7 +48,6 @@ struct DOODLELIB_API spec_generation_request_t : public seam_request_base_t {
 struct DOODLELIB_API spec_generation_result_t {
   lighting_spec_t spec_{};
   reference_stats_t reference_stats_{};
-  conflict_resolution_t conflict_resolution_{};
 };
 
 /// 提示词（+ 参考图统计）→ LightingSpec。

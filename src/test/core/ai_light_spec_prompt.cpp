@@ -8,8 +8,9 @@
 // 这份测试的两个立场（与实现里的注释一致）：
 //   * 服务端口径的东西（调色板、ownership、space、schema_version、reference_stats）
 //     必须**不因模型输出而改变** —— 模型给什么都不该动；
-//   * 模型的区间值一旦与统计不同，就按 §6.3「提示词优先于参考」采用模型的值，
-//     并把它记进 conflict_resolution 的 overridden_dimensions（人工闸门 1 看这个）。
+//   * 模型的区间值一旦与统计不同，就按 §6.3「提示词优先于参考」采用模型的值。
+//     （原先还会把它记进 conflict_resolution 的 overridden_dimensions 供人工闸门 1 核对，
+//     该字段已删除；现在这条规则只体现在最终取值上。）
 //
 
 // 刻意**不**包含路由头 http_method/kitsu/ai_light.h：它 include 了
@@ -146,14 +147,6 @@ nlohmann::json make_llm_json() {
 template <typename E>
 std::string en(E in_e) {
   return std::string{magic_enum::enum_name(in_e)};
-}
-
-/// 把 overridden_dimensions 取出来（不存在时返回空表）。
-std::vector<std::string> overridden_dimensions(const spec_generation_result_t& in_ret) {
-  if (const auto l_it = in_ret.conflict_resolution_.resolved_.find("overridden_dimensions");
-      l_it != in_ret.conflict_resolution_.resolved_.end())
-    return l_it->second.get<std::vector<std::string>>();
-  return {};
 }
 
 bool has_interval(const nlohmann::json& in_json, const char* in_key, const interval_t& in_want) {
@@ -414,8 +407,8 @@ BOOST_AUTO_TEST_CASE(map_result_pins_server_owned_fields) {
   // 有逐维置信度 → 事实上的 stats_only（决定 D4）。
   BOOST_TEST(en(l_ret.spec_.degrade_level_) == en(spec_degrade_level::stats_only));
 
-  // 模型照抄统计值 → 没有任何维度被改写，overridden_dimensions 不该出现。
-  BOOST_TEST(overridden_dimensions(l_ret).empty());
+  // 模型照抄统计值 → 取值与 stats 一致（没有改写）。
+  BOOST_TEST(std::abs(l_ret.spec_.targets_.contrast_.low_ - l_agg.targets_.contrast_.low_) < 1e-9);
 }
 
 BOOST_AUTO_TEST_CASE(map_result_without_stats_degrades_to_prompt_only) {
@@ -437,31 +430,18 @@ BOOST_AUTO_TEST_CASE(map_result_prompt_overrides_stats_target) {
   // §6.3：提示词明确 + 参考冲突 → 提示词胜出。
   BOOST_TEST(std::abs(l_ret.spec_.targets_.contrast_.low_ - 0.90) < 1e-9);
   BOOST_TEST(std::abs(l_ret.spec_.targets_.contrast_.high_ - 0.95) < 1e-9);
-  // 改写必须**留痕**：裁决记录里要看得到是哪几个维度被改写成了模型值
-  // （人工闸门 1 看的就是这个；证据链只保留在 conflict_resolution 一处）。
-  BOOST_TEST(l_ret.conflict_resolution_.resolved_.contains("overridden_dimensions"));
-  const auto l_over = overridden_dimensions(l_ret);
-  // 先落成 bool：Boost.Test 也打不出 vector 的迭代器（同样 static_assert）。
-  const bool l_contrast_overridden = std::find(l_over.begin(), l_over.end(), "targets.contrast") != l_over.end();
-  BOOST_TEST(l_contrast_overridden);
-  BOOST_TEST(l_ret.conflict_resolution_.note_.find("targets.contrast") != std::string::npos);
 }
 
 BOOST_AUTO_TEST_CASE(map_result_echo_keeps_reference_stats_values) {
   const auto l_agg = make_agg();
-  // 模型照抄了统计值 → 取值不动，并且**不**留下改写记录。
-  // 这正是「提示词覆盖了参考」这个信号的另一半：没有 overridden_dimensions 就说明
-  // 模型认可了参考图统计，人工闸门 1 不需要额外核对。
+  // 模型照抄了统计值 → 取值不动。这是「提示词覆盖了参考」这个信号的另一半：
+  // 取值与 stats 相同就说明模型认可了参考图统计。
   const auto l_ret = map_spec_result(make_llm_json(), l_agg);
 
   BOOST_TEST(std::abs(l_ret.spec_.targets_.contrast_.low_ - 0.55) < 1e-9);
   // white_balance_kelvin 的统计中位数是 5600，模型抄的是区间 {5400, 5800} ——
-  // 区间是否「相同」按中点容差判定，判定为同一区间就不会被记进 overridden_dimensions。
+  // 模型给的是区间原样，服务端直接采用，不做「是否同一区间」的容差判定。
   BOOST_TEST(std::abs(l_ret.spec_.targets_.white_balance_kelvin_.low_ - 5400.0) < 1e-9);
-  const auto l_over = overridden_dimensions(l_ret);
-  BOOST_TEST(std::find(l_over.begin(), l_over.end(), "targets.white_balance_kelvin") == l_over.end());
-  // 一个维度都没被改写 → 不该出现裁决痕迹
-  BOOST_TEST(!l_ret.conflict_resolution_.resolved_.contains("overridden_dimensions"));
 }
 
 BOOST_AUTO_TEST_CASE(map_result_falls_back_on_illegal_enum) {

@@ -613,14 +613,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_confirm_route, post) {
       "会话 {} 处于状态 {}，不在等 Spec 确认", l_session.uuid_id_, magic_enum::enum_name(l_session.state_)
   );
 
-  // 冲突裁决：方案 §6.3 说冲突维度不自动平均，交人工。这里只记录，不改统计。
-  conflict_resolution_t l_resolution{};
-  if (l_json.contains("conflict_resolution")) l_json.at("conflict_resolution").get_to(l_resolution);
-
+  // 冲突裁决：方案 §6.3 说冲突维度不自动平均，交人工。裁决所需的冲突清单与逐维置信度
+  // 都已经在 Spec 的 reference_stats_ 里（conflicts_ / per_dimension_confidence_），
+  // 原先那个从请求体回填的 conflict_resolution_ 列已删除（前端从未实现）。
   l_spec->human_confirmed_ = true;
   l_spec->confirmed_by_    = person_.person_.uuid_id_;
   l_spec->confirmed_at_    = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-  l_spec->set_conflict_resolution(l_resolution);
 
   // 确认后立即进入候选生成（§10.3）。接缝未实现时会抛 501，
   // advance_session 会把会话状态回滚到 awaiting_spec_confirm，Spec 的确认**保留**
@@ -635,8 +633,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_confirm_route, post) {
             .set(
                 c(&ai_light_spec::human_confirmed_) = l_spec->human_confirmed_,
                 c(&ai_light_spec::confirmed_by_) = l_spec->confirmed_by_,
-                c(&ai_light_spec::confirmed_at_) = l_spec->confirmed_at_,
-                c(&ai_light_spec::conflict_resolution_) = l_spec->conflict_resolution_
+                c(&ai_light_spec::confirmed_at_) = l_spec->confirmed_at_
             )
             .where(c(&ai_light_spec::uuid_id_) == l_spec->uuid_id_)
     );

@@ -183,7 +183,6 @@ ai_light_spec make_probe_spec(const uuid& in_session_id, std::int32_t in_revisio
   l_stats.per_dimension_confidence_["white_balance_kelvin"] = 0.5;
   l_spec.set_reference_stats(l_stats);
 
-  l_spec.set_conflict_resolution(conflict_resolution_t{{{"white_balance_kelvin", nlohmann::json::array({3800.0, 4100.0})}}, "取两张冷光图的交集"});
   return l_spec;
 }
 
@@ -404,7 +403,6 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     BOOST_TEST(l_cur->get_reference_stats().conflicts_.size() == 1);
     // 恒为 false 的常量: 不做物理反解
     BOOST_TEST(!l_cur->get_reference_stats().usable_for_physical_solve_);
-    BOOST_TEST(l_cur->get_conflict_resolution().resolved_.size() == 1);
 
     // 5. 轮次
     auto l_iter_back = l_sql.get_ai_light_iteration(l_session_row.uuid_id_, 1);

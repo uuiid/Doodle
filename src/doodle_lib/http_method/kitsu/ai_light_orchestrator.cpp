@@ -176,7 +176,6 @@ boost::asio::awaitable<spec_branch_result> advance_session_spec_branch(
   l_spec.revision_   = l_rev;
   l_spec.from_spec(l_res.spec_);
   l_spec.set_reference_stats(l_res.reference_stats_);
-  l_spec.set_conflict_resolution(l_res.conflict_resolution_);
   // 降级级别以**接缝按事实判定的结果**为准，不用调用方那个预判（决定 D4）：
   // 「参考图有 stats 行但置信度全 0」或「全部图被人工排除」时，调用方看
   // references_have_stats() 会以为是 stats_only，而实际聚合出一无所获。

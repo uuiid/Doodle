@@ -83,7 +83,7 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
 └────────────────────────────┬─────────────────────────────────────────────┘
                              │
               ┌──────────────▼───────────────┐
-              │ 人工闸门 1：Spec 确认/冲突裁决 │  ← 浏览器
+              │ 人工闸门 1：Spec 确认（冲突列给人看）│  ← 浏览器
               └──────────────┬───────────────┘
                              │
 ┌────────────────────────────▼─────────────────────────────────────────────┐
@@ -218,7 +218,6 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
     "usable_for_physical_solve": false       // 显式声明：不做物理反解
   },
 
-  "conflict_resolution": { "resolved": {"overridden_dimensions": ["targets.contrast"]}, "note": "..." },
   "human_confirmed": false,          // 人工闸门 1
   "confirmed_by": null, "confirmed_at": null,
   "degrade_level": "stats_only"      // stats_only | prompt_only
@@ -381,8 +380,8 @@ Kelvin 是线性光色度坐标上的物理尺度，直接在 sRGB 编码值上�
 `analyze_reference_file()`，随上传写入 `ai_light_reference.stats_` / `stats_confidence_`；
 多图聚合在同一个文件的 `aggregate_reference_stats()`，由 `POST /session/{id}/spec` 在蒸馏
 Spec 前调用一次（§15.7）。`is_outlier_` / `excluded_reason_` 仍是**人工排除**字段，聚合器
-**不写**它们 —— 自动疑点走 `suspected_outlier_ids_`，最终落在 Spec 的
-`conflict_resolution_` 里（见 §5.3 与 §15.7 的决定 D3）。
+**不写**它们 —— 自动疑点走 `suspected_outlier_ids_`，由接缝 1 写进提示词供模型参考
+（见 §5.3 与 §15.7 的决定 D3）。
 
 ### 5.3 多图聚合与冲突检测
 
@@ -390,6 +389,10 @@ Spec 前调用一次（§15.7）。`is_outlier_` / `excluded_reason_` 仍是**�
 2. 逐维度取中位数（或按面积/清晰度加权）
 3. **冲突检测**：维度内离散度超阈值 → 标记 `conflicts`，**不自动平均掉**
 4. 冲突维度进入人工闸门 1 裁决，或降级为「该维度不设目标」
+
+> ⚠️ 第 4 步当前**只到「呈现 + 交给人看」为止**：`conflicts` 会落到 `reference_stats_.conflicts_`
+> 供前端展示，但美术「手工定这个维度」的裁决结果**没有回传与存储路径**
+> （原 `conflict_resolution` 字段已删，见 §15.7 决定 D6）。
 
 **已落地**（`ai_light_stats.cpp` 的 `aggregate_reference_stats()`，返回 `aggregated_reference_stats_t`）：
 
@@ -790,7 +793,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 |---|---|
 | `ai_light_session` | 一次灯光工作：提示词原文、状态机、当前轮次、4 小时判断时限。归属三键 `project_id` / `entity_id`(镜头) / `task_id`(该镜头的灯光任务) **全部由服务端解析**，见 §13.1 |
 | `ai_light_reference` | 多张参考图，**每张单独留显示空间统计**（多图冲突要能回溯到具体哪张图） |
-| `ai_light_spec` | 灯光目标，会话内按 `revision` 版本化；含 `degrade_level` / `human_confirmed` / `conflict_resolution` |
+| `ai_light_spec` | 灯光目标，会话内按 `revision` 版本化；含 `degrade_level` / `human_confirmed` |
 | `ai_light_iteration` | 一轮：轴安排、派发任务、渲染耗时、人工判断记录 |
 | `ai_light_candidate` | 每轮 6 个候选：rig 全量、显示空间指标、VLM 判分、是否被选中/定稿 |
 | `ai_light_preset` | 预设库 + embedding |
@@ -886,7 +889,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | **M0 地基** | IR + Spec schema、双端序列化、commandlet 骨架 + `inventory`/`apply_ops`（含 `set_grading`）/`render_preview` | 手工写一份 Spec + 一个候选 → 跑 commandlet → 出图；幂等性单测通过 |
 | **M1 单轮管线** | 提交（提示词+多图）→ Spec → 候选生成 → 派发 → 渲染 → 前端展示 → 人工判断 | 完整跑通一轮：美术在浏览器上看到 6 个候选并能给出判断 |
 | **M2 多轮迭代** | 反馈结构化 + 轴收缩 + 轮次持久化 + 跨会话恢复 | 3 轮内收敛到美术接受；中途关掉浏览器再回来能继续 |
-| **M3 参考驱动** | 多图统计聚合 + 冲突检测 + 人工裁决 + `degrade_level` 判定（**①单图统计已落地**，见 §15.5；②聚合与冲突检测待做） | 目标区间稳定、冲突能被人正确裁决 |
+| **M3 参考驱动** | 多图统计聚合 + 冲突检测 + 人工裁决 + `degrade_level` 判定（**①单图统计已落地**，见 §15.5；②聚合与冲突检测待做；③人工裁决的**结果存储路径缺失**，见 §15.7 决定 D6） | 目标区间稳定、冲突能被人正确裁决 |
 | **M4 决策辅助** | 区间满足率 + VLM 判分呈现在候选旁 | 美术盲测认可辅助信息有用 |
 | **M5 定稿** | `snapshot`/`commit` 应用到正式关卡/序列 | 定稿可回滚，结果与候选一致 |
 | **M6 生产化** | 批量派发（整集/整序列）、性能预算、回归基线 | 基线纳入 CI |
@@ -1016,7 +1019,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    | `GET  /api/doodle/ai/light/candidate/{id}/image` | 中间候选取图（只有定稿才进 `preview_file`） |
    | `GET  /api/doodle/ai/light/session/{session_id}/spec` | Spec 版本列表 |
    | `POST /api/doodle/ai/light/session/{session_id}/spec` | 生成 Spec：`draft` 出第一版，`awaiting_spec_confirm` 重出（**要求已有参考图**，否则 400）—— **已实现**（§15.7）：聚合统计 + 一次方舟推理；失败时会话状态回滚、Spec 版本不变 |
-   | `POST /api/doodle/ai/light/session/{session_id}/spec/confirm` | 人工闸门 1：确认 Spec + 冲突裁决，随后触发首轮 |
+   | `POST /api/doodle/ai/light/session/{session_id}/spec/confirm` | 人工闸门 1：确认 Spec（**不带裁决内容**，见 §15.7 D6），随后触发首轮 |
    | `POST /api/doodle/ai/light/session/{session_id}/iterate` | 生成一轮候选并派发 —— **已实现**（接缝 `generate_candidates`，见 §15.8）；无需请求体 |
    | `POST /api/doodle/ai/light/session/{session_id}/judge` | **人工闸门 2**（accept / continue_iteration / reject_all） |
    | `GET  /api/doodle/ai/light/preset` | 预设库列表（`?enabled_only=false` 取全部） |
@@ -1260,7 +1263,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 |---|---|---|
 | 任务提交 | 选镜头 → 填提示词 → 传多张参考图 → 提交 | 复用 `run-ue-assembly` 提交页与上传组件；新增 lighting action |
 | 参考素材管理 | 多张参考图上传、关联、缩略图、标注角度 | 复用 `/api/data/entities/{}/preview-files`、`/api/doodle/pictures/*` |
-| **人工闸门 1：Spec 确认** | 展示 intent + 目标区间 + 冲突维度，人工裁决 | **新增** |
+| **人工闸门 1：Spec 确认** | 展示 intent + 目标区间 + 冲突维度，人工确认（冲突裁决结果的回传路径待补，见 §15.7 D6） | **新增** |
 | **人工闸门 2：候选判断** | 候选接触表（并排 + 指标辅助）→ 挑选 / 反馈 / 接受 | **新增，核心页** |
 | 反馈输入 | 选一个继续 + 反馈（**滑块为默认**，自然语言可选） | 新增；滑块映射到轴增量，自然语言经 LLM 结构化；复用 AIScript 的对话式交互形态 |
 | 轮次与历史 | 每轮的候选、渲染、指标、判断记录、时间线 | 新增 `ai_light_iteration` 页面 |
@@ -1287,7 +1290,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 ### 14.6 需要新增的前端页面/路由
 
 - `/lighting/new` — 提交：提示词 + 多张参考图
-- `/lighting/spec/:specId` — **人工闸门 1**：Spec 确认与冲突裁决
+- `/lighting/spec/:specId` — **人工闸门 1**：Spec 确认（冲突维度只展示，裁决结果暂无回传路径，见 §15.7 D6）
 - `/lighting/session/:sessionId` — **人工闸门 2 + 主工作台**：候选接触表、指标辅助、挑选/反馈/接受、轮次时间线
 - `/lighting/presets` — 预设库管理
 - `/lighting/jobs` — 批量任务与农场进度
@@ -1991,7 +1994,7 @@ POST /session/{id}/spec
 |---|---|
 | 接缝本体 | `http_method/kitsu/ai_light_seam_spec.cpp` 的 `generate_spec(in_sql, in_request)` `:565` |
 | 离线可测的 5 个纯函数 | 同文件 `build_spec_instructions()` `:120` / `build_spec_json_schema()` `:142` / `build_spec_input_text()` `:227` / `build_spec_request()` `:331`（返回强类型信封 `http::seedance2::inference_request_t`，定义在 `http_client/seedance2_inference_request.h`）/ `map_spec_result()` `:361`（声明在 `ai_light_seam_spec.h`，**必须留在 `doodle::ai_light` 命名空间内**，见坑 9） |
-| 请求 / 结果结构 | `spec_generation_request_t{ session_id_, project_id_, operator_id_, prompt_text_, references_, degrade_level_, previous_spec_ }`；`spec_generation_result_t{ spec_, reference_stats_, conflict_resolution_ }` |
+| 请求 / 结果结构 | `spec_generation_request_t{ session_id_, project_id_, operator_id_, prompt_text_, references_, degrade_level_, previous_spec_ }`；`spec_generation_result_t{ spec_, reference_stats_ }`（原 `conflict_resolution_` 成员已删，理由见 §15.7 决定 D6） |
 | 状态机 | `advance_session(in_sql, in_session, in_operator_id)` `:124`（新签名，见 D1） |
 | 参考图 URL | `http_method/kitsu/ai_light.h` 的 `g_reference_image_path_template` + `reference_image_url(uuid)`。放在路由头是因为 `/api/doodle/ai/light/reference/{}/image` 的注册要用**字面量**喂 `_url` 这个 UDL，`constexpr std::string_view` 递不进去 |
 | 指令串 | `build_spec_instructions()`：§6.1 职责边界两侧 + §6.3 冲突四条 + **§5.5 六行映射表原文** + 单位口径（对比度 = 显示空间 `p90 − p10`；色温 Kelvin；区间是定长 `[low, high]`）+ 「不许改几何 / 材质」 |
@@ -2010,7 +2013,9 @@ POST /session/{id}/spec
   整章是感知层，显示空间度量学口径（含「色温要先线性化」这唯一的例外）**只能有一处定义**。
 - **D3 外点只算不写。** `is_outlier_` / `excluded_reason_` 是**人工排除**字段（`spec_route::post` 写的是
   `excluded_reason_ = "人工排除"`）。自动判定写进去会让两种语义在同一列里不可区分。自动疑点走
-  `suspected_outlier_ids_` → `conflict_resolution_.resolved_` 持久化，交人工裁决。
+  `suspected_outlier_ids_`，由接缝 1 写进提示词（`ai_light_seam_spec.cpp` 的「疑似外点」一行）供模型参考，
+  **不落库**（原先把 uuid 列表持久化到 `conflict_resolution_.resolved_["suspected_outliers"]`，
+  该字段已删，见 D6）。
 - **D4 落库的降级级别以事实为准。** 调用方预判的 `degrade_level_` 不再直接落库；落的是
   `spec_generation_result_t.spec_.degrade_level_`（接缝按 `aggregated_reference_stats_t` 的
   `per_dimension_confidence_` 是否为空判定）。两者会在「有 stats 行但置信度全 0」「全部图被人工排除」时
@@ -2018,6 +2023,19 @@ POST /session/{id}/spec
 - **D5 受控的副作用例外。** `generate_spec` **不写任何 `ai_light_*` 表**（Spec 的 insert 由 `advance_session`
   在自己的事务里做），但它经 `run_inference_task` 写一条 `sd2::task` 终态行并**扣费**。这一个副作用
   **有意保留**：推理确实发生了，必须留痕计费；否则「调用方回滚会话状态」会连带抹掉 `person_token` 的扣费。
+- **D6 删除 `conflict_resolution`（表列 + 内存字段 + 确认接口的请求体键）。** 该字段原有两个用途：
+  ① 落 `overridden_dimensions` / `note_` 作人工闸门 1 的来源追溯；② 落 `conflicts` / `per_dimension_confidence` /
+  `llm_reported` / `suspected_outliers` 作冲突线索。**前端尚未实现、且没有排期确认要用它**，故整体删除。
+  其中 ② 里前三项本就是 `reference_stats_.{conflicts_, per_dimension_confidence_}` 的**同数据双写**
+  （`ai_light_seam_spec.cpp` 在同一个函数里把聚合结果抄了两遍），删掉无损；代价是
+  ④ `suspected_outliers` 与 ① 的 `overridden_dimensions` 失去了持久化位置（见 D3 与上面的
+  「服务端钉死 vs LLM 可覆盖」表）。**若将来前端要做闸门 1 的追溯 UI，需要重新引入一个承接人工裁决
+  与改写留痕的字段**，届时修订 §4.2 工件形态与 §5.3 前端页。
+  删除范围：`spec.h` 的 `conflict_resolution_t` + 字段 + 两个访问器 + json 序列化、
+  `sqlite_database.cpp` 的 `add_column("conflict_resolution", ...)`、
+  `ai_light.cpp` 的 `spec_confirm_route` 请求体读取与 update 的 `set(...)`、
+  `ai_light_orchestrator.cpp` 的 `set_conflict_resolution`、`ai_light_seam_spec.{h,cpp}` 的结果成员与填充段。
+  注：sqlite_orm 的 `sync_schema` **不会 DROP** 旧库上已存在的该列，旧数据不动。
 
 **口径差（计划 vs 实现，以代码为准）**
 
@@ -2036,7 +2054,7 @@ POST /session/{id}/spec
 | `targets_.ownership_` | **服务端** | 责任归属是产品决策（§6.6），不该每轮由模型重新发明 |
 | `reference_stats_` | **服务端**（整块） | 它是**证据**，不是结论 |
 | `intent_` 全部 | LLM | 这就是「把提示词变成结构化意图」 |
-| `targets_` 的标量区间 / `grading_hints_` | LLM | 与聚合值逐元素比（`1e-9` 容差）：相等 → 静默采用（视为认可参考统计）；不等 → 采用 LLM 值（§6.3 提示词优先）并把该字段路径记进 `conflict_resolution_.resolved_["overridden_dimensions"]` |
+| `targets_` 的标量区间 / `grading_hints_` | LLM | 一律采用 LLM 给的值（§6.3 提示词优先）。原先还会把「与聚合值不同的字段路径」记进 `conflict_resolution_.resolved_["overridden_dimensions"]` 供人工闸门 1 核对，该字段已删（见 D6）——「模型是否照抄了统计」现在只能由最终取值与 `reference_stats_` 的对照看出 |
 | `conflicts_` | LLM，**并入服务端集合** | LLM 报的冲突加 `"llm: "` 前缀并入 `reference_stats_.conflicts_`；聚合器算出的冲突**不会被覆盖** |
 
 **为什么 LLM 的每个字段都要校验**：`NLOHMANN_JSON_SERIALIZE_ENUM` 的 `from_json` 认不出字符串时
@@ -2069,8 +2087,8 @@ POST /session/{id}/spec
 | `build_request_omits_images_when_empty`（`:275`） | 没有可用参考图时**整个 `images` 键不发**（空数组会被方舟当成「有一张空图」）；有图时只发未被人工排除的那些，且是**站点内相对路径** |
 | `map_result_pins_server_owned_fields`（`:317`） | `schema_version` / `space` / `palette` / `ownership` / `reference_stats` 全被服务端钉死，LLM 给什么都改不动 |
 | `map_result_without_stats_degrades_to_prompt_only`（`:349`） | 聚合无统计时降级级别是 `prompt_only`（D4） |
-| `map_result_prompt_overrides_stats_target`（`:357`） | LLM 给区间与统计完全不同 → 取 LLM 的值，且该维度记进 `conflict_resolution_.resolved_["overridden_dimensions"]` |
-| `map_result_echo_keeps_reference_stats_values`（`:379`） | LLM 原样回显统计值 → 取值不动，且**不**记进 overridden 维度 |
+| `map_result_prompt_overrides_stats_target`（`:357`） | LLM 给区间与统计完全不同 → 取 LLM 的值（§6.3 提示词优先）。原断言「该维度记进 `overridden_dimensions`」已随该字段删除（D6） |
+| `map_result_echo_keeps_reference_stats_values`（`:379`） | LLM 原样回显统计值 → 取值不动。原断言「**不**记进 overridden 维度」已随该字段删除（D6） |
 | `map_result_falls_back_on_illegal_enum`（`:392`） | `hardness = "super_hard"` → 不静默落枚举首值，保留统计推导值（取值断言，无证据表）；相邻合法字段照常接受 |
 | `map_result_rejects_non_object`（`:431`） | 非 object 的 `result_json_` → `bad_gateway`（`:441`、`:450` 两条断言） |
 
@@ -2707,16 +2725,17 @@ judge_route::post
 
 | # | 事实 | 影响 |
 |---|---|---|
-| E-1 | `map_spec_result` 里 **14 个调用点**写的都是「这个值来自提示词 0.6」「这个值来自统计 0.85」 | 这些信息**输入侧已经完全可得**：调色板/ownership/reference_stats 本来就是服务端从聚合结果整块抄的；`targets` 的每个区间只要和聚合值比一次就知道是不是被 LLM 改写，而那件事已经由 `conflict_resolution_.resolved_["overridden_dimensions"]` 表达了 |
+| E-1 | `map_spec_result` 里 **14 个调用点**写的都是「这个值来自提示词 0.6」「这个值来自统计 0.85」 | 这些信息**输入侧已经完全可得**：调色板/ownership/reference_stats 本来就是服务端从聚合结果整块抄的；`targets` 的每个区间只要和聚合值比一次就知道是不是被 LLM 改写，而那件事当时由 `conflict_resolution_.resolved_["overridden_dimensions"]` 表达（该字段后来也被删了，见 D6） |
 | E-2 | 「非法取值被丢弃」的 3 条留痕（`vignette` / `bloom` / `hardness` / `position_bias` / `kelvin_bias`） | 同一现象的**后果**已经写在最终取值里（非法值被丢弃 → 保留统计默认值）。留痕只对「解剖一条畸形响应」有价值，而那是 §15.6 的 `validate_model_output` 日志该干的事 |
 | E-3 | schema 里的 `evidence` 固定键字典 | 见坑 19：严格结构化输出不接受自由字典，为它维护 17 个键 + 全 required 是**纯负债**。删掉后 spec schema 只剩 `{intent, targets, conflicts}` |
 | E-4 | LLM 返回的那份 `evidence` **从来没被读过** | `map_spec_result` 完全用 `put_evidence()` 自组，`l_spec.evidence_ = l_ret.evidence_` 只是把同一份复制进 spec。schema 里那个字段的唯一作用是「让模型自述理由」，删掉不影响任何代码路径 |
 | E-5 | 数据库 `ai_light_spec` 表的 `evidence` 列 | 没有任何写入方之外的读取方，且它是逐字段字典——**建表迁移的负担大于它的价值** |
 
 **保留的替代物（「这个数字凭什么」仍然答得出来）**：
-`conflict_resolution_.resolved_["overridden_dimensions"]`（哪些维度被提示词改写）+ `conflict_resolution_.note_`
-（一句话说明）+ `reference_stats_.per_dimension_confidence` / `conflicts_`（参考图本身可不可信、哪里冲突）
-+ `degrade_level_`（整轮降级）。合成的语义是：**没被列出改写的维度，值就来自参考图统计**。
+`reference_stats_.per_dimension_confidence` / `conflicts_`（参考图本身可不可信、哪里冲突）
++ `degrade_level_`（整轮降级）。
+⚠️ 其中「哪些维度被提示词改写」那一半随着 `conflict_resolution` 的删除而**暂时丢失**（见 §15.7 决定 D6）——
+只靠最终取值与统计对照可以推出来，但没有留痕；前端要做追溯 UI 时需要补回一个承接字段。
 
 **由此改动的地方**：`spec.h`（枚举、`evidence_entry_t`、`lighting_spec_t`/`ai_light_spec` 两个 `evidence_` 列与访问器、`from_spec`/`to_spec` 的序列化点）、`ai_light_seam_spec.{h,cpp}`（结果字段、`g_evidence_paths`、`g_evidence_epsilon`、`put_evidence` 定义与 14 个调用点、schema 的 `evidence` 键）、`ai_light_orchestrator.cpp:178`（`l_spec.set_evidence(...)`）、`sqlite_database.cpp:432`（`add_column("evidence", ...)`）、`ai_light_spec_prompt.cpp` / `ai_light_schema.cpp` 两个测试，以及 `ue_ai_lighting_plan.md` / `ue_ai_lighting_frontend.md` 两处文档。
 

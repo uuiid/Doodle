@@ -433,7 +433,6 @@ void sqlite_storage::regs_all() {
       .add_column("human_confirmed", &ai_light::ai_light_spec::human_confirmed_)
       .add_column("confirmed_by", &ai_light::ai_light_spec::confirmed_by_)
       .add_column("confirmed_at", &ai_light::ai_light_spec::confirmed_at_)
-      .add_column("conflict_resolution", &ai_light::ai_light_spec::conflict_resolution_)
       .add_column("created_at", &ai_light::ai_light_spec::created_at_)
       .add_column("updated_at", &ai_light::ai_light_spec::updated_at_)
       .add_foreign_key(

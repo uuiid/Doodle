@@ -180,7 +180,7 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
   并说明「参考图提供场景的数值结构，提示词提供意图；两者冲突时以提示词为准」。
 - 失败重试：`POST /spec` 失败后会话回到进入时的状态（`draft`），**已传的参考图保留**，可以直接重试。
 
-### 5.3 `/lighting/spec/:specId` —— 人工闸门 1（Spec 确认与冲突裁决）
+### 5.3 `/lighting/spec/:specId` —— 人工闸门 1（Spec 确认）
 
 **显示什么**（数据来自会话详情的 `current_spec`；要对照 `spec_history` 看历史版本）：
 
@@ -191,16 +191,12 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
 | 目标区间 | `targets.luma_percentiles.{p10,p50,p90}`、`contrast`、`white_balance_kelvin`、`clip_rate.{high,low}`、`palette[].share` | **每个都是一对 `[low, high]`**，显示成区间条；`palette[].color` 用色块 |
 | 调色提示 | `targets.grading_hints.{vignette, lifted_blacks, bloom}` | 枚举徽标（`none/subtle/moderate/strong`、是/否） |
 | 责任划分 | `targets.ownership.{lighting, grading, shared}` | 三列维度名，说明「哪些指标归灯光、哪些归调色」（用于解释「为什么这张图的差异主要来自调色」） |
-| 来源追溯 | `conflict_resolution.{resolved, note}` | 被提示词改写掉的维度（`resolved.overridden_dimensions`）+ 一句话说明；**不再单独下发逐字段证据表**，界面上要回答「这个数字凭什么」只需对照本行的改写列表与上一行的 `reference_stats` |
 | 参考统计 | `reference_stats.{image_count, aggregation, per_dimension_confidence, conflicts[], retouch_detected, usable_for_physical_solve}` | 几张图、怎么聚合的、哪些维度冲突 |
 | 降级 | `degrade_level` | `stats_only` = 正常；`prompt_only` = **必须显眼提示**「参考图不可用/完全冲突，本方案只依据提示词与预设库」，否则美术会误以为参考图起了作用 |
-| 冲突 | `reference_stats.conflicts[]` | **要人工裁决**的维度列表（见下） |
+| 冲突 | `reference_stats.conflicts[]` | **机器没敢定死、要人来看**的维度列表（裁决结果目前无处回传，见下） |
 
 **操作**：
-- **确认方案** → `POST /api/doodle/ai/light/session/{session_id}/spec/confirm`，体可带冲突裁决：
-  ```json
-  { "conflict_resolution": { "resolved": { "<维度名>": <任意 JSON> }, "note": "为什么这么定" } }
-  ```
+- **确认方案** → `POST /api/doodle/ai/light/session/{session_id}/spec/confirm`，请求体**不带任何裁决内容**（该接口只做确认）。
   成功 → `state = generating`，服务端**随即触发首轮候选生成**（不用前端再调 `/iterate`）。
   该接口**幂等**：已确认过会直接返回 `{spec, session_state, already_confirmed: true}`，前端据此提示「已确认过」而不是报错。
 - **重新生成** → `POST .../spec`，体可带 `{prompt_text, excluded_reference_ids}`：
@@ -208,8 +204,13 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
     （写 `is_outlier=true`、`excluded_reason="人工排除"`）。
   - 重出即 revision+1，**旧版留在 `spec_history` 里**（前端要提供「查看上一版」的入口，否则美术无法回头）。
   - 该接口**只在 `draft` 或 `awaiting_spec_confirm` 状态可用**。
-- **冲突裁决的交互**：`reference_stats.conflicts` 里列出的维度，前端给一个「按提示词 / 按参考图 / 手工填一个区间」的三选一，
-  结果写进 `conflict_resolution.resolved`。服务端**只记录不改统计**（统计是事实，裁决是意图）。
+- **冲突维度的展示**：`reference_stats.conflicts` 里列出的维度现在**只展示、不接收裁决**。
+  原计划是让前端给一个「按提示词 / 按参考图 / 手工填一个区间」的三选一并写回 `conflict_resolution.resolved`，
+  该字段已从 Spec 与 `spec/confirm` 请求体中删除（前端未实现，且它的 `conflicts`/`per_dimension_confidence`
+  两项本就是 `reference_stats` 的同数据双写）。
+  ⚠️ 因此「美术手工改一个区间」这条路径**当前不可用** —— 要做的话需要先给 Spec 增加一个承接人工改写值的字段，
+  届时同步更新本节。当前界面把 `reference_stats.conflicts[]` 与 `per_dimension_confidence`
+  **如实展示**即可，让美术知道哪些维度是机器没敢定死的。
 - 确认按钮是**人工闸门**：不要自动确认、不要因为「置信度高」就替美术点。
 
 **注意**（服务端行为，前端要如实呈现）：

@@ -581,7 +581,7 @@ BOOST_AUTO_TEST_CASE(aggregate_reports_suspected_outlier_without_touching_the_re
   BOOST_TEST(l_ret.suspected_outlier_ids_.at(0) == l_wild_id);
 
   // 只报不写：疑点**仍留在聚合里** —— 区间上界仍被它拉到 0.90。
-  // 「疑似」是给人工的线索（写进 conflict_resolution_），不是自动剔除。
+  // 「疑似」是给人工的线索（接缝 1 会把它写进提示词给模型参考），不是自动剔除。
   BOOST_CHECK_EQUAL(l_ret.stats_.image_count_, 5);
   BOOST_CHECK_CLOSE(l_ret.targets_.luma_percentiles_.p50_.high_, 0.90, 1e-6);
 

@@ -305,22 +305,6 @@ struct DOODLE_CORE_API lighting_spec_t {
   }
 };
 
-/// 冲突维度的裁决结果（人工闸门 1 的一部分）
-struct DOODLE_CORE_API conflict_resolution_t {
-  /// 冲突维度名 → 被采纳的值（json 是为了容纳区间/调色板等不同形状）
-  std::map<std::string, nlohmann::json> resolved_{};
-  std::string note_{};
-
-  friend void to_json(nlohmann::json& j, const conflict_resolution_t& p) {
-    j["resolved"] = p.resolved_;
-    if (!p.note_.empty()) j["note"] = p.note_;
-  }
-  friend void from_json(const nlohmann::json& j, conflict_resolution_t& p) {
-    if (j.contains("resolved")) j.at("resolved").get_to(p.resolved_);
-    if (j.contains("note")) j.at("note").get_to(p.note_);
-  }
-};
-
 // ---------------------------------------------------------------------------
 // 表实体：ai_light_spec
 // ---------------------------------------------------------------------------
@@ -330,7 +314,7 @@ struct DOODLE_CORE_API conflict_resolution_t {
 /// created_at_ / updated_at_ 的**名字与类型必须一字不差** —— ORM 靠名字探测并自动填充
 /// （见 sqlite_orm/orm/insert.h:95-98）。
 ///
-/// intent / targets / reference_stats / conflict_resolution 都是 nlohmann::json：
+/// intent / targets / reference_stats 都是 nlohmann::json：
 /// 它们是嵌套结构，而 ORM 的列类型只覆盖标量/string/uuid/时间/枚举/vector<string>/json。
 /// 类型化取用走下面那组访问器。
 struct DOODLE_CORE_API ai_light_spec {
@@ -350,7 +334,6 @@ struct DOODLE_CORE_API ai_light_spec {
   // 确认人和时间
   uuid confirmed_by_{};
   std::optional<chrono::system_zoned_time> confirmed_at_{};
-  nlohmann::json conflict_resolution_{};
 
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
@@ -364,12 +347,6 @@ struct DOODLE_CORE_API ai_light_spec {
     return json_get_or_default<reference_stats_t>(reference_stats_);
   }
   void set_reference_stats(const reference_stats_t& in_stats) { reference_stats_ = in_stats; }
-  conflict_resolution_t get_conflict_resolution() const {
-    return json_get_or_default<conflict_resolution_t>(conflict_resolution_);
-  }
-  void set_conflict_resolution(const conflict_resolution_t& in_resolution) {
-    conflict_resolution_ = in_resolution;
-  }
 
   /// 拼出完整的 §4.2 工件形态（表实体 → 内存聚合体）
   lighting_spec_t to_spec() const {
@@ -403,7 +380,6 @@ struct DOODLE_CORE_API ai_light_spec {
     j = p.to_spec();
     j["id"]                  = p.uuid_id_;
     j["revision"]            = p.revision_;
-    j["conflict_resolution"] = p.conflict_resolution_;
     j["created_at"]          = p.created_at_;
     j["updated_at"]          = p.updated_at_;
   }
@@ -414,7 +390,6 @@ struct DOODLE_CORE_API ai_light_spec {
     p.from_spec(l_spec);
     if (j.contains("id")) j.at("id").get_to(p.uuid_id_);
     if (j.contains("revision")) j.at("revision").get_to(p.revision_);
-    if (j.contains("conflict_resolution")) j.at("conflict_resolution").get_to(p.conflict_resolution_);
   }
 };
 
