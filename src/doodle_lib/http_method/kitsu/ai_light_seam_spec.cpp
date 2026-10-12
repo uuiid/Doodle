@@ -95,7 +95,7 @@ std::string build_spec_instructions() {
 - 提示词与参考一致 → 直接合并，置信度提高。
 - 提示词明确、参考冲突 → 提示词胜出。
 - 提示词未提及、参考明确 → 参考胜出。
-- 提示词未提及、参考冲突 → 该维度不要设为硬目标，把它列进 conflicts，交人工裁决。
+- 提示词未提及、参考冲突 → 该维度不要设为硬目标：照抄参考图统计里的聚合值，不要自己另定一个区间。
 
 【输出要求】
 只输出符合给定 JSON Schema 的 JSON。不要输出解释文字，不要用 Markdown 代码块。
@@ -163,13 +163,17 @@ nlohmann::json build_spec_json_schema() {
   });
 
   // 全字段 required + strict：OpenAI / 方舟的严格结构化输出基本都要求 required 列全。
-  // 代价是「不设目标」不能用「省略字段」表达 —— 那种情况请把该维度写进 conflicts，
-  // 并在对应字段上照抄统计值（人工闸门 1 看到的正是这份 conflicts）。
+  // 代价是「不设目标」不能用「省略字段」表达 —— 那种情况请在该维度字段上照抄统计值，
+  // 把冲突判断留在服务端（见 build_spec_instructions 的冲突规则）。
   // 真机若仍 400，§15.2 的降级方案是换成 SDK 的嵌套 text.format 形状。
+  //
+  // 注：原先还有一个顶层 "conflicts" 字符串数组，让模型自报「哪些维度它拿不准」。
+  // 已删除（决定 D7）：冲突只有一个权威来源，就是聚合器写进 reference_stats_.conflicts_
+  // 的那份统计判断；模型自报既与它同质、又无法校验，只会让「谁报告的冲突」这一个字段
+  // 出现两种口径。所以 spec 根只剩 intent / targets 两个键。
   return json_val::schema_object({
       {"intent", l_intent},
       {"targets", l_targets},
-      {"conflicts", l_string_array},
   });
 }
 
@@ -414,12 +418,10 @@ spec_generation_result_t map_spec_result(
   }
 
   // ---- 冲突 ----
-  // 冲突维度记进 reference_stats_.conflicts_ 一处即可（前端提示美术裁决用这个）。
-  // 原先另有一份 conflict_resolution_ 同时承载 conflicts / llm_reported，是同数据双写，
-  // 随该字段一并删除。
-  auto l_conflicts = json_val::opt_string_array(in_result_json, "conflicts");
-  for (auto&& l_conflict : l_conflicts)
-    l_ret.reference_stats_.conflicts_.emplace_back(fmt::format("llm: {}", l_conflict));
+  // 冲突**只**由服务端的聚合器判定（aggregate_reference_stats 写 reference_stats_.conflicts_），
+  // 模型自报的 "conflicts" 键已随 schema 一并删除（决定 D7）：同一份冲突有两个来源、两种口径，
+  // 前端提示美术裁决时反而分不清哪条可信。所以这里不再读模型输出。
+  // 注：l_ret.reference_stats_ = in_aggregated.stats_ 已在上面拷过，conflicts_ 随之带入。
 
   return l_ret;
 }

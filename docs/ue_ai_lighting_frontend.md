@@ -208,6 +208,8 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
   原计划是让前端给一个「按提示词 / 按参考图 / 手工填一个区间」的三选一并写回 `conflict_resolution.resolved`，
   该字段已从 Spec 与 `spec/confirm` 请求体中删除（前端未实现，且它的 `conflicts`/`per_dimension_confidence`
   两项本就是 `reference_stats` 的同数据双写）。
+  另：这个列表**只由服务端聚合器判定**，模型不再自报冲突（顶层 `conflicts` 键已从输出 schema 删除，
+  见 §15.7 决定 D7），所以列表里不会再有 `"llm: "` 前缀的条目。
   ⚠️ 因此「美术手工改一个区间」这条路径**当前不可用** —— 要做的话需要先给 Spec 增加一个承接人工改写值的字段，
   届时同步更新本节。当前界面把 `reference_stats.conflicts[]` 与 `per_dimension_confidence`
   **如实展示**即可，让美术知道哪些维度是机器没敢定死的。

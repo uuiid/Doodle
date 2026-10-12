@@ -213,7 +213,7 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
   "reference_stats": {
     "image_count": 4, "aggregation": "median",
     "per_dimension_confidence": {"luma_percentiles": 0.85, "white_balance_kelvin": 0.5},
-    "conflicts": ["white_balance_kelvin"],   // 冲突维度 → 交人工裁决
+    "conflicts": ["white_balance_kelvin"],   // 冲突维度 → 交人工裁决（**仅服务端聚合器判定**，决定 D7）
     "retouch_detected": true,
     "usable_for_physical_solve": false       // 显式声明：不做物理反解
   },
@@ -1338,8 +1338,9 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
      要求 `output[0]` 不是 reasoning 项）。代价是少了思维链，`intent` 可能偏浅 —— 若实测明显变差，
      退路是改成 `thinking: auto`；解析端已按「遍历 `output[]` 找 `message`」写好，不用改。
    - **全字段 `required` 的严格 schema 是否被照做**：`build_spec_json_schema()` 每层都要求列全
-     所有字段（严格结构化输出的要求），于是「本维度不设目标」**不能靠省略字段表达**，只能写进
-     `conflicts`（§15.7）。真机上要看模型是否照做。
+     所有字段（严格结构化输出的要求），于是「本维度不设目标」**不能靠省略字段表达**，只能在该维度上
+     照抄参考图统计的聚合值（§15.7；原先还可以写进 `conflicts`，该通道已随决定 D7 删除）。
+     真机上要看模型是否照做。
      （这里曾经还有一个 `evidence` 固定键字典要实测；它已随 evidence 整条链路一起**删除**，
      见 §15.7 决定 D-3，这一条随之作废。）
    - **不设 `max_output_tokens` 之后的实际输出长度**（§15.7 坑 21）：模型按自己的上限出。若真的被截断，
@@ -1998,7 +1999,7 @@ POST /session/{id}/spec
 | 状态机 | `advance_session(in_sql, in_session, in_operator_id)` `:124`（新签名，见 D1） |
 | 参考图 URL | `http_method/kitsu/ai_light.h` 的 `g_reference_image_path_template` + `reference_image_url(uuid)`。放在路由头是因为 `/api/doodle/ai/light/reference/{}/image` 的注册要用**字面量**喂 `_url` 这个 UDL，`constexpr std::string_view` 递不进去 |
 | 指令串 | `build_spec_instructions()`：§6.1 职责边界两侧 + §6.3 冲突四条 + **§5.5 六行映射表原文** + 单位口径（对比度 = 显示空间 `p90 − p10`；色温 Kelvin；区间是定长 `[low, high]`）+ 「不许改几何 / 材质」 |
-| 输出 schema | `build_spec_json_schema()`：平铺 `{intent, targets, conflicts}`，逐层 `additionalProperties:false` 且**全字段 required**；`palette` / `ownership` / `space` 刻意**不在** schema 里（见下表）。`evidence` 整条链路已在 §15.7 决定 D-3 中删除 |
+| 输出 schema | `build_spec_json_schema()`：平铺 `{intent, targets}`，逐层 `additionalProperties:false` 且**全字段 required**；`palette` / `ownership` / `space` 刻意**不在** schema 里（见下表）。`evidence` 整条链路已在 §15.7 决定 D-3 中删除；顶层 `conflicts` 已在决定 D7 中删除 |
 | 测试 | **新建** `src/test/core/ai_light_spec_prompt.cpp`（套件 `ai_light_spec_prompt`，10 用例，全离线）；`ai_light_stats.cpp` 补 7 个聚合用例；`ai_light_state.cpp` 改 3 处调用点并新增/改写 3 个用例 |
 
 **五条实现决定（D1–D5）**
@@ -2036,6 +2037,23 @@ POST /session/{id}/spec
   `ai_light.cpp` 的 `spec_confirm_route` 请求体读取与 update 的 `set(...)`、
   `ai_light_orchestrator.cpp` 的 `set_conflict_resolution`、`ai_light_seam_spec.{h,cpp}` 的结果成员与填充段。
   注：sqlite_orm 的 `sync_schema` **不会 DROP** 旧库上已存在的该列，旧数据不动。
+- **D7 删除 spec schema 顶层的 `conflicts` 键（模型自报冲突的通道）。** D6 之后，`conflicts` 有**两个来源、
+  两种口径**：聚合器按逐维离散度（`g_conflict_spread_threshold`）判出的统计冲突，与模型在 `conflicts`
+  数组里自报的「我拿不准的维度」。接缝把后者加 `"llm: "` 前缀并进 `reference_stats_.conflicts_`，
+  于是前端提示美术裁决时**分不清哪条是哪种**，而这正是闸门 1 唯一要看的信号。模型自报既与统计判断同质、
+  又无法校验（它没有任何统计之外的依据），故整条通道删除：schema 根从 `{intent, targets, conflicts}`
+  缩到 `{intent, targets}`，`map_spec_result` 不再读该键，提示词的冲突规则改为「照抄参考图统计里的聚合值」
+  而不是「列进 conflicts」。
+  于是**冲突只有一个权威来源**：`ai_light_stats.cpp` 写的 `reference_stats_.conflicts_`（含
+  `no_usable_stats` / 逐维冲突 / `palette[i].share`）。它已有的三位消费者不受影响 ——
+  接缝 2 与接缝 3 都只用它给模型提示「这些维度不要当硬目标」（`ai_light_seam_common.cpp:294`、
+  `ai_light_seam_candidates.cpp:361`）。
+  代价：「模型自己觉得哪里拿不准」这一条线索消失。它与统计冲突同质、且模型总能在统计里读到同样的离散度
+  信息，故不认为有实质损失。
+  连带改动：`ai_light_json_validation.cpp` 的 `g_golden_spec_digest` 由 `c4b1d8ee3aa3ef47` 改为
+  `9e666da14cfb8ad3`（candidates / feedback 两个 schema 未动）；
+  `ai_light_spec_prompt.cpp` 的根键断言改为恰好 `{intent, targets}`，并新增一条「契约里不含 `conflicts`」
+  的反向断言。
 
 **口径差（计划 vs 实现，以代码为准）**
 
@@ -2055,7 +2073,7 @@ POST /session/{id}/spec
 | `reference_stats_` | **服务端**（整块） | 它是**证据**，不是结论 |
 | `intent_` 全部 | LLM | 这就是「把提示词变成结构化意图」 |
 | `targets_` 的标量区间 / `grading_hints_` | LLM | 一律采用 LLM 给的值（§6.3 提示词优先）。原先还会把「与聚合值不同的字段路径」记进 `conflict_resolution_.resolved_["overridden_dimensions"]` 供人工闸门 1 核对，该字段已删（见 D6）——「模型是否照抄了统计」现在只能由最终取值与 `reference_stats_` 的对照看出 |
-| `conflicts_` | LLM，**并入服务端集合** | LLM 报的冲突加 `"llm: "` 前缀并入 `reference_stats_.conflicts_`；聚合器算出的冲突**不会被覆盖** |
+| `conflicts_` | **服务端独占**（聚合器） | 冲突由逐维离散度判定。模型自报的 `conflicts` 通道已删除（见 D7）：同一份冲突有两个来源会让闸门 1 分不清哪条可信 |
 
 **为什么 LLM 的每个字段都要校验**：`NLOHMANN_JSON_SERIALIZE_ENUM` 的 `from_json` 认不出字符串时
 **静默落到第一个枚举值**（§15.6 坑 7）。所以 `map_spec_result` 里没有任何一处用裸 `get<Enum>()` ——
@@ -2082,7 +2100,7 @@ POST /session/{id}/spec
 | 用例（`ai_light_spec_prompt.cpp`） | 钉住的不变式 |
 |---|---|
 | `json_schema_matches_cpp_enums`（`:167`） | schema 里出现的枚举串与白名单常量**逐字一致**（自由文本枚举只能对照 §5.5 的表，所以这里钉的是 `hardness` 恰好三档）—— 两边一旦分叉，真机上的合法输出会被我们判成非法 |
-| `json_schema_is_strict_object`（`:197`） | 逐层 `additionalProperties:false` 且全字段 `required`；并断言 `palette` / `ownership` **不出现**在 schema 里，根上**恰好** `{conflicts, intent, targets}` 三个键（`evidence` 已删，坑 19 / 决定 D-3 的回归） |
+| `json_schema_is_strict_object`（`:197`） | 逐层 `additionalProperties:false` 且全字段 `required`；并断言 `palette` / `ownership` **不出现**在 schema 里，根上**恰好** `{intent, targets}` 两个键（`evidence` 已删，坑 19 / 决定 D-3 的回归；`conflicts` 已删，决定 D7） |
 | `input_text_carries_prompt_and_stats`（`:236`） | 四段文本齐全；提示词原文被标注为「权威意图」；逐图统计带在段里 |
 | `build_request_omits_images_when_empty`（`:275`） | 没有可用参考图时**整个 `images` 键不发**（空数组会被方舟当成「有一张空图」）；有图时只发未被人工排除的那些，且是**站点内相对路径** |
 | `map_result_pins_server_owned_fields`（`:317`） | `schema_version` / `space` / `palette` / `ownership` / `reference_stats` 全被服务端钉死，LLM 给什么都改不动 |

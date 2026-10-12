@@ -54,7 +54,12 @@ std::string en(E in_value) {
 // 的形状」的机器可判定证据。生成方式：先跑一次
 // `--run_test=ai_light_json_validation --log_level=message`，从「spec digest = …」三行里抄回来。
 // 真要改 schema 形状时**必须**同步改这三个常量，并在设计文档里说明为什么。
-constexpr std::string_view g_golden_spec_digest       = "c4b1d8ee3aa3ef47";
+//
+// spec 摘要于 2026-10-12 由 c4b1d8ee3aa3ef47 改为 9e666da14cfb8ad3：顶层的 "conflicts"
+// 字符串数组被删除（docs/ue_ai_lighting_plan.md §15.7 决定 D7）。冲突只有一个权威来源 ——
+// 聚合器写进 reference_stats_.conflicts_ 的统计判断；模型自报既与它同质、又无法校验，
+// 只会让「谁报告的冲突」出现两种口径。candidates / feedback 两个 schema 未动，摘要不变。
+constexpr std::string_view g_golden_spec_digest       = "9e666da14cfb8ad3";
 constexpr std::string_view g_golden_candidates_digest = "227cb12da4693db1";
 constexpr std::string_view g_golden_feedback_digest   = "0e13ecb11cd3f474";
 

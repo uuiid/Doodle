@@ -136,9 +136,10 @@ nlohmann::json make_llm_json() {
   l_intent["setting"]                = "空旷街道";
 
   nlohmann::json l_json{};
-  l_json["intent"]    = l_intent;
-  l_json["targets"]   = l_targets;
-  l_json["conflicts"] = nlohmann::json::array();
+  l_json["intent"]  = l_intent;
+  l_json["targets"] = l_targets;
+  // 故意不造 "conflicts" 键：它已从 schema 删除（决定 D7），模型的输出里不该再出现，
+  // 而 map_spec_result 也不读它 —— 冲突全部由聚合器判定。
   return l_json;
 }
 
@@ -183,8 +184,10 @@ BOOST_AUTO_TEST_CASE(json_schema_is_strict_object) {
   BOOST_TEST(l_schema.at("type").get<std::string>() == "object");
   BOOST_TEST(l_schema.at("additionalProperties").get<bool>() == false);
 
-  // 根上恰好这三个键 —— 多一个都意味着「服务端没打算读它」（palette/ownership 就是这么被排除的）。
-  const std::vector<std::string> l_root_keys{"conflicts", "intent", "targets"};
+  // 根上恰好这两个键 —— 多一个都意味着「服务端没打算读它」（palette/ownership 就是这么被排除的）。
+  // 原先还有第三个键 "conflicts"，已删除（决定 D7）：冲突只有一个权威来源，就是聚合器写进
+  // reference_stats_.conflicts_ 的那份统计判断，模型自报既同质又无法校验。
+  const std::vector<std::string> l_root_keys{"intent", "targets"};
   // properties 是 object，不能 get<std::vector<std::string>>()（会抛 type_error.302）→ 显式收集键名。
   std::vector<std::string> l_keys{};
   for (auto l_it = l_schema.at("properties").begin(); l_it != l_schema.at("properties").end(); ++l_it)
@@ -342,7 +345,8 @@ BOOST_AUTO_TEST_CASE(build_request_reaches_ark_body) {
   BOOST_TEST(l_format.at("strict").get<bool>() == true);
   BOOST_TEST(l_format.at("schema").at("properties").contains("intent"));
   BOOST_TEST(l_format.at("schema").at("properties").contains("targets"));
-  BOOST_TEST(l_format.at("schema").at("properties").contains("conflicts"));
+  // 契约里不该再有 conflicts：冲突由服务端聚合器判定，不问模型（决定 D7）。
+  BOOST_TEST(!l_format.at("schema").at("properties").contains("conflicts"));
   // 不发 max_output_tokens：全字段 required + 长度不可预估 = 截断成半个 JSON 的失败面
   BOOST_TEST(!l_body.contains("max_output_tokens"));
   // 不发 reasoning_effort（信封里没设）
