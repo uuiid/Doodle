@@ -6,38 +6,12 @@
 //   * 测试二进制不会被 http 头污染。
 // 路由层（http_method/kitsu/ai_light.h）只是这一层的薄包装。
 //
-// ---------------------------------------------------------------------------
-// 「接缝」：接入 LLM 的位置
-// ---------------------------------------------------------------------------
-// **一条都没有了**。三条接缝全部归前端：
-//   * generate_spec（提示词 + 多图统计 → LightingSpec）**归前端**：前端直接调推理网关
-//     （/session/{}/inference，见 ai_light.h）自己想怎么问就怎么问，
-//     服务端不再替它写提示词、也不再解释模型输出。
-//   * generate_candidates（Spec + 基线 rig + 反馈轴 → 6 个候选）**归前端**：
-//     候选由前端算好、经 POST /session/{}/iteration 提交，服务端只做 IR 准入闸门
-//     与落库（见 ai_light_submit.{h,cpp}）。
-//   * structure_feedback（自由文本 → 轴方向）**归前端**：判定的反馈轴由前端自己解释，
-//     服务端只把 feedback_text_ 原样落库（它那个 `feedback_axes_` 字段已一并删除）。
-//   三条的删除同属一次角色降级 —— 见 docs/ue_ai_lighting_role_downgrade.md。
-//   服务端不再自己演这一半模型；前端要问模型就走推理网关，网关只做凭据与本分计费。
+// 本文件不含任何 LLM 接缝调用：状态机只做校验、推进与落库，推理由前端直接调推理网关
+// （/session/{}/inference，见 ai_light.h）。角色降级见 docs/ue_ai_lighting_role_downgrade.md。
 //
-// **本文件已不包含任何接缝调用**：状态机只做校验、推进与落库。
-// 下面这段「接缝契约」为历史记录保留，它描述的是已验证过的接缝行为 ——
-// 若将来再把某条推理拉回服务端，实现方必须重新满足它。
+// 「受控例外」：唯一写推理任务行 + 扣费的入口是**推理网关**（ai_light.cpp 的 inference_route），
+// 它经由 run_inference_task 落一行任务与对应扣费 —— 推理确实发生了，抹掉它等于抹掉计费凭证。
 //
-// 接缝契约（历史，实现方必须遵守）：
-//   1. 抛出即视为「本轮无法推进」。调用方只把原因记进会话的 failure_reason_，
-//      **不改会话状态、也不回滚** —— 状态机的分支自身不落库，
-//      所以抛错时库里本来就一行没动，实现方**不需要**自己清理状态。
-//   2. 但必须保证「抛之前没有落库」，或者「落库的部分是幂等可重入的」——
-//      调用方不会回滚接缝自己写下的东西（它根本没有回滚动作）。
-//      **受控例外**：接缝经由 run_inference_task 写下一行推理任务
-//      与对应的扣费记录。这是有意保留的 —— 推理确实发生了，抹掉它等于抹掉计费凭证。
-//      除此之外它不写任何 ai_light_* 表（返回值全部交给调用方落库）。
-//   这条契约现在由**推理网关**（ai_light.cpp 的 inference_route）继承：它是唯一还会
-//   写推理任务行 + 扣费的入口（经由 run_inference_task）。
-//
-
 
 #pragma once
 
@@ -48,23 +22,6 @@
 #include <doodle_core/metadata/preview_file.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
-// 归一化推理信封(强类型)。这个头只依赖 nlohmann/json + STL, 不带任何 HTTP 依赖,
-// 所以不会破坏本文件顶部「这一层刻意不包含任何 HTTP 依赖」的约定。
-
-// 本头是**伞形头**：共用部件与状态机收在同一个命名空间下 ——
-// 对外仍然只需包含 ai_light_orchestrator.h 一个头。
-//
-// 曾经还 include 过 ai_light_seam_feedback.h（接缝 3 的离线部件）。**已删除** ——
-// 那条接缝的全部函数在生产里没有任何调用方：judge 路由已不再把美术的自由文本
-// 送去结构化（文本原样落库），它的输入正文组装又是唯一消费者
-// lighting_spec_t（该类型已随 Spec 闸门删除）。整条链连同它的单测一起移除。
-//
-// 曾经还 include 过 ai_light_rig_ops.h（key_fill_ratio_of / diff_rigs / g_axis_max_count）。
-// **已删除** —— 它的调用者是候选展开器与接缝 3 的提示词，两者都归前端之后，服务端这边
-// 三个符号一个调用点都没有（详见 docs/ue_ai_lighting_role_downgrade.md 的角色降级记录）。
-//
-// 曾经还 include 过 ai_light_seam_common.h（推理信封 + 推理管道）。**已删除** ——
-// 三条接缝归前端后 run_seam_inference 只剩推理网关一个调用方，已就地内联进 ai_light.cpp。
 
 #include <boost/asio/awaitable.hpp>
 #include <nlohmann/json.hpp>
@@ -81,21 +38,9 @@ namespace doodle::ai_light {
 // ===========================================================================
 // 状态机
 // ===========================================================================
-// 曾经这里有两个推进入口 advance_session（队列路线）与 advance_session_local（引擎内
-// 路线）。三条接缝（generate_spec / generate_candidates / structure_feedback）与候选生成
-// 在「角色降级」中全部归了前端之后，两个入口的函数体都只剩恒抛 400 的兜底分支：
-//   draft / awaiting_spec_confirm
-//       → 曾经是 generate_spec 接缝蒸馏方案。后继是 /session/{}/spec 提交与 /spec/confirm。
-//   generating 且已有已确认的 Spec
-//       → 曾经是 generate_candidates 接缝 → iteration + g_candidate_count 个 candidate
-//         → 建 server_task_info{type = ai_light} → run_next_task() + broadcast。
-//         后继是 POST /session/{}/iteration（ai_light_submit.h）：候选由前端算好交上来，
-//         服务端只做 IR 闸门 + 落库。
-// 两者已一并删除。**人工闸门 1（/spec/confirm）也已取消**，`awaiting_spec_confirm`
-// 这个状态随之从枚举里删除 —— 它的语义是「人工确认服务端蒸馏出的输出版本」，
-// 而服务端早已不蒸馏，没有可确认的对象。会话的 `draft → generating` 改由
-// **参考图上传**推进（reference_route::post）：「存在参考图」就是「可以开始干活」的判据。
-// 生成会话状态由此由这些提交接口自己推进，不再有「推进」这个空动作。
+// 没有「推进入口」这种东西：状态由各提交接口自己推进，不存在「推进」这个空动作。
+// 会话的 `draft → generating` 由**参考图上传**推进（reference_route::post）——
+// 「存在参考图」就是「可以开始干活」的判据。
 //
 // 参考图为空时**拒绝**候选提交（400，且不写 failure_reason_）：候选生成的前提是会话有
 // 提示词与参考图。因此建会话接口不推进状态 —— 建会话时参考图还不可能存在

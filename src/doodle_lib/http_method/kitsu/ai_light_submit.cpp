@@ -35,21 +35,17 @@ namespace {
 using namespace doodle::ai_light;
 
 // ===========================================================================
-// IR 准入闸门（角色降级 · 第二梯队新增）
+// IR 准入闸门
 // ===========================================================================
 //
-// 降级前，这三条约束是**接缝的返回值**上的断言：模型给的东西不合法，服务端自己知道。
-// 现在服务端已经没有那条接缝了（候选生成归前端），同样的三条约束就落在准入闸门上 ——
-// 不合法的东西不许落库。措辞沿用已删除的 map_candidate_result() 的原句
-// （原 ai_light_seam_candidates.cpp:481-523，该文件随接缝一起删除），
-// 这样历史错误信息与前端日志能对上，排查时不必重新学一套措辞。
+// 候选生成归前端，所以「模型给的东西合不合法」这件事从接缝的返回值断言
+// 移到了这道准入闸门：不合法的东西不许落库。
 //
 // 为什么闸门必须在服务端、不能只在前端：
 //   前端可以因为 bug 或被绕过而提交畸形候选，而落库的候选会被 UE 拿去建灯。
 //   6 张一样的图比一次失败更糟（美术会以为「这几个方向看起来一样」）。
 
-/// 只比较「灯怎么打」的部分。与已删除的 ai_light_seam_candidates.cpp:95-97 的 rig_substance
-/// 同义（那份随接缝一起删了，这里是唯一的一份）。
+/// 只比较「灯怎么打」的部分（globals + lights）。
 /// 身份字段（rig_id/iteration/candidate_index）、variant_axis_、provenance_、ops_
 /// 都由服务端另填，拿它们判「候选是否与基线相同」会误判。
 nlohmann::json rig_substance(const lighting_rig_t& in_rig) {
@@ -109,8 +105,7 @@ ai_light_session submit_load_session_checked(
 }
 
 /// 解析一个候选的 rig。身份字段（session/spec/iteration/candidate_index/rig_id/provenance）
-/// **不从前端取**，由调用方在落库前补齐 —— 沿用已删除的 map_candidate_result() 的
-/// 「身份字段由服务端钉死」那条纪律（原 ai_light_seam_candidates.cpp:504-513）。
+/// **不从前端取**，由调用方在落库前补齐 —— 身份字段一律由服务端钉死。
 lighting_rig_t parse_submitted_rig(const nlohmann::json& in_json, std::int32_t in_index) {
   DOODLE_CHICK_HTTP(
       in_json.is_object(), bad_request, "候选 {} 不是 JSON 对象", in_index
@@ -126,9 +121,8 @@ lighting_rig_t parse_submitted_rig(const nlohmann::json& in_json, std::int32_t i
 
   lighting_rig_t l_rig{};
   // globals / lights 走 NLohmann 的 from_json（rig.h:565-597 已定义）。
-  // 这里直接 get_to 硬解析，不走「接缝读取器」那套（曾经有过 ai_light_json_validation.h）：
-  // 那套是给模型输出用的（抛 bad_gateway 记在接缝上），前端提交的形状错误是 400。
-  // 两者的错误归属不同，措辞也不同。
+  // 这里直接 get_to 硬解析：前端提交的形状错误是 400，与「模型输出不合法记在接缝上」
+  // 的错误归属不同，措辞也不同。
   in_json.at("globals").get_to(l_rig.globals_);
   in_json.at("lights").get_to(l_rig.lights_);
   // ops 是审计影子（决定 D-58 路线 A）：收下但不参与任何判定，也不用于建灯。
@@ -227,10 +221,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   );
 
   // ---- 调用共用落库件 ----
-  // 说明：候选的落库、iteration 行、session 推进、launch_plan 装配全部复用
-  // write_submitted_iteration()（ai_light_orchestrator.h）。那一段原本在
-  // advance_session_generating_branch() 里（已随候选生成降级一起删除），
-  // 现在只剩这一条提交路线 —— 落库逻辑不再有第二份实现可漂移。
+  // 候选的落库、iteration 行、session 推进、launch_plan 装配全部复用
+  // write_submitted_iteration()（ai_light_orchestrator.h）—— 唯一的一份实现，
+  // 不存在第二份可漂移的落库逻辑。
   submit_iteration_request_t l_req{};
   l_req.session_id_    = l_session.uuid_id_;
   l_req.project_id_    = l_session.project_id_;

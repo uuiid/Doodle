@@ -137,11 +137,9 @@ DOODLE_HTTP_FUN_END()
 // 放在这里是为了让「模板」只有一个定义，路由注册那边靠注释对齐。
 constexpr std::string_view g_reference_image_path_template{"/api/doodle/ai/light/reference/{}/image"};
 
-/// 参考图的站点内取图路径（未签名）。接缝用它，别自己拼字符串。
+/// 参考图的站点内取图路径（未签名）。别自己拼字符串。
 ///
-/// 曾经的调用方之一（generate_spec）已删除；仍在用的是 candidates 接缝。
-/// 蒸馏方案归前端后，前端要自己把参考图 URL 拼进请求体 —— 那时这个模板
-/// 就是它该对齐的形状（也是本函数保留的原因）。
+/// 前端要把参考图 URL 拼进请求体发给推理网关时，这个模板就是它该对齐的形状。
 inline std::string reference_image_url(const uuid& in_id) {
   return fmt::format(g_reference_image_path_template, boost::uuids::to_string(in_id));
 }
@@ -160,27 +158,9 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-// 曾经有 GET/POST /api/doodle/ai/light/session/{session_id}/spec（Spec 版本列表 / 生成 Spec）
-// 与 POST /api/doodle/ai/light/session/{session_id}/spec/confirm（人工闸门 1）。**两条都已删除。**
-//
-// `spec` 那条的理由：
-//   * POST 是死接口。它最后剩下的动作只有「读会话、校验提示词非空、返回会话详情」，
-//     一个字节都不写 —— 而生产代码里**没有任何地方**会 insert 一行 ai_light_spec
-//     （只有测试会）。它承载不住自己的名字：既不能生成 Spec，也不是 Spec 的提交口。
-//   * 「生成 Spec」这个动作已经不在服务端：它归前端经推理网关自己完成
-//     （见 ai_light_orchestrator.h 的接缝说明）。
-//   * GET 的 Spec 版本列表是**冗余读**：会话详情（GET /session/{id}，即 build_session_detail
-//     的读模型）里已经带了 —— 现在那份数据本身也没了，见下。
-//   * 事实核查发现 ai_light_spec 是**一张空表**：全仓没有 insert 路径，于是「已确认的
-//     Spec 版本」这个落库概念整条删除（表、ORM 注册、三个读取方法、iteration/rig/载荷里的
-//     spec_id 都一并去掉）。后端不再做推理，这份输出版本由前端自己持有。
-//
-// `spec/confirm` 那条（人工闸门 1 本身）的理由，详见 ai_light.cpp 里那段说明，摘要：
-//   闸门 1 的语义是「人工确认服务端蒸馏出的输出版本」，而 Spec 蒸馏早已归前端 ——
-//   服务端没有可确认的对象。它的入口状态 `awaiting_spec_confirm` 全仓没有写侧，
-//   它写出的 generating 只有 /iteration 提交认，于是它实际只能成功一次，重试必报 400。
-//
-// 取消后会话的 `draft → generating` 由**参考图上传**推进（reference_route::post）：
+// 不存在 Spec 相关的路由：`/spec`（版本列表 / 生成）与 `/spec/confirm`（人工闸门 1）都没有了。
+// 服务端不生成 Spec、也不落库 Spec 版本 —— 这份输出版本由前端自己持有；
+// 会话的 `draft → generating` 由**参考图上传**推进（reference_route::post）：
 // 「有参考图」就是「可以开始干活」的判据，不再需要一次人工确认。
 
 // POST /api/doodle/ai/light/session/{session_id}/judge   人工闸门 2：定稿 / 继续迭代 / 全否

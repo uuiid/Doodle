@@ -4,14 +4,12 @@
 // 每个处理函数只做四件事：权限 → 校验入参 → 调编排层 → 组响应。
 // 状态推进与业务规则一律在 ai_light_orchestrator.cpp，这里不写状态机。
 //
-// 关于 LLM 接缝：曾经有两条 —— `/iterate` → generate_candidates、`/judge` 的文本通道 →
-// structure_feedback。两条**已全部删除**（角色降级 · 第二梯队）：推理归前端，服务端不再
-// 持有可漂移的提示词模板与 schema 真源，也就不再替前端跑推理。
+// 服务端不持有提示词模板与 schema 真源，也不替前端跑推理 —— 三条 LLM 接缝
+// （generate_spec / generate_candidates / structure_feedback）均已归前端，
+// 见 docs/ue_ai_lighting_role_downgrade.md。
 //
-// 第一条接缝 generate_spec（`/spec` POST → 蒸馏 LightingSpec）也**整条删除**（第三梯队）：
-// 蒸馏归前端，而那个接口退化成空写 —— 只剩「读会话 + 校验提示词非空 + 返回会话详情」，
-// 一个字节都不落库。**Spec 的提交入口目前不存在**，是本方案唯一未闭合的缺口，
-// 见 docs/ue_ai_lighting_role_downgrade.md §3.3 第三梯队的形态 A。
+// ⚠️ Spec 的提交入口目前不存在（`/spec` POST 已随第三梯队删除，退化成空写），
+// 是本方案唯一未闭合的缺口，见该文档 §3.3。
 //
 
 #include <doodle_core/configure/static_value.h>
@@ -265,12 +263,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   // ---------------------------------------------------------------
   // Spec 的输入是「提示词 + 参考图」，而参考图只能在会话存在**之后**上传
   // （reference_route 要 session_id，而 session_id 是本接口的返回值）。
+  // 建会话时 get_ai_light_references() 必然为空，若在此处推进状态就会基于一份
+  // 「只用提示词」的方案干活，参考图这个主输入被静默丢掉。
   //
-  // 曾经这里调 advance_session 立刻蒸馏 Spec —— 那样 get_ai_light_references()
-  // 必然为空，蒸出来的是一份「只用提示词」的方案，参考图这个主输入被静默丢掉。
-  // 那个入口连同函数已删除，本注释保留为「为什么建会话不推进状态」的理由。
-  //
-  // 正确顺序：建会话（draft）→ 传参考图 → POST /spec 提交方案 → /spec/confirm → 提交候选。
+  // 正确顺序：建会话（draft）→ 传参考图（推进到 generating）→ 提交候选。
 
   // 返回**多表聚合详情**而不是会话本体：形状与 GET /session/{id}、/judge 一致，
   // 前端只需要一套解析。新建会话时 references 与 candidates 都是空的。
@@ -435,11 +431,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
 
   // ---- 参考图落库与「开始干活」同事务：draft → generating ----
   //
-  // 曾经这一步由人工闸门 1（POST /session/{}/spec/confirm）负责。闸门删除后
-  // `draft → generating` 需要一个新的触发点，而**上传参考图是唯一能观测到
-  // 「输入齐了」的地方**：建会话时参考图还不可能存在（reference_route 要 session_id，
-  // 而 session_id 是建会话的返回值，见 shot_session_route::post 的说明），
-  // 所以「会话存在 + 有参考图」这个组合第一次成立就在本函数返回之前的这一刻。
+  // **上传参考图是唯一能观测到「输入齐了」的地方**：建会话时参考图还不可能存在
+  // （reference_route 要 session_id，而 session_id 是建会话的返回值，见
+  // shot_session_route::post 的说明），所以「会话存在 + 有参考图」这个组合
+  // 第一次成立就在本函数返回之前的这一刻。
   //
   // 只推 draft：awaiting_judgement 时上传参考图**不得**改状态（那一轮的候选还在等判断），
   // generating 时也不必重复写（补图不改变「可以再出一轮」的语义）。
@@ -602,42 +597,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
 }
 
 // ===========================================================================
-// 输出版本确认（人工闸门 1）—— **已取消**
+// 人工闸门 2：判断
 // ===========================================================================
 //
-// 这里曾经有三样东西，现在全没了：
-//   1. `spec_route` 的 get/post（GET/POST /session/{}/spec）。整条路由已删除：
-//      POST 只剩「读会话 + 校验提示词非空 + 返回会话详情」，不写任何东西；GET 的
-//      Spec 版本列表是同一份数据的第二个出口。
-//   2. `spec_confirm_route`（POST /session/{}/spec/confirm）—— **人工闸门 1 本身**。
-//      它做的唯一一件事是把会话状态推到 generating，其余全是注释。
-//   3. `ai_light_spec` 这张表 —— 空表，全仓没有任何 insert 路径，spec.h 里那些
-//      intent/targets/reference_stats 是早期「后端用大模型做灯光推理」方案的遗留。
-//
-// 为什么闸门 1 整个取消（而不只是删掉这条路由）：
-//   * 它挡住的东西在服务端**已经不存在**。闸门 1 的语义是「人工确认服务端蒸馏出的
-//     输出版本」—— 而 Spec 蒸馏早已归前端（见 ai_light_orchestrator.h 的角色降级说明），
-//     服务端手上没有可确认的版本，这个闸门就没有确认对象。
-//   * 唯一入口状态 `awaiting_spec_confirm` 是**没有任何写侧**的：全仓没有一处把会话
-//     置为该状态。而它自己写出的 generating 又只被 `/iteration` 提交接受
-//     （ai_light_submit.h），于是这条路由实际取值恒为「建会话后的 draft」。
-//   * 它是**一次性**的：第二次调用必报 400（状态已不是 awaiting_spec_confirm）。
-//     前端在候选提交被 IR 闸门拒绝后重试时补发一次 confirm，拿到的是一句
-//     「不在等确认」—— 与真实原因毫不相干的误导性报错。
-//
-// 取消后的状态机只剩**一个**闸门（人工闸门 2 = /judge），状态由提交接口自己推进：
+// 状态机只有这一个闸门。状态由提交接口自己推进：
 //   建会话 → draft
 //   上传参考图（reference_route，POST 里推进到 generating —— 见该处注释）
 //   前两轮提交候选 → POST /session/{}/iteration（要求 generating）
 //   渲染回传 → awaiting_judgement（mark_iteration_rendered）
 //   判断 → generating（apply_judgement）
-// 会话的 `draft → generating` 不再是一个独立的人工作业，它是「存在参考图、可以开始
-// 干活了」的同义语，所以推进由参考图上传这条路径负责 —— 那是唯一能观测到
-// 「输入齐了」的地方（建会话时参考图还不可能存在，见 shot_session_route::post）。
-
-// ===========================================================================
-// 人工闸门 2：判断
-// ===========================================================================
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   person_.check_not_outsourcer();
@@ -975,7 +943,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, delete_) {
 }
 
 // ---------------------------------------------------------------------------
-// 推理网关（角色降级 §3.1，原 ai_light_gateway.cpp）
+// 推理网关（角色降级 §3.1）
 // ---------------------------------------------------------------------------
 //
 // 只做三件事：权限 → 跑推理 → 组响应。
@@ -987,16 +955,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, delete_) {
 // （input / instructions / text.format ...），不再是本系统自己那套扁平键
 // （input_text / json_schema）：旧扁平键按契约**静默忽略**。
 //
-// 这里的推理管道（凭据解析 → 任务信封 → 计费 → 成败判定）曾经在 ai_light_seam_common.{h,cpp}
-// 里，由三条接缝共用。三条接缝归前端后它只剩本函数一个调用方，遂**就地内联到这里**，
-// 那个文件已删除。要点沿革（写在这里，免得后人以为这些设计是随手写的）：
+// 推理管道（凭据解析 → 任务信封 → 计费 → 成败判定）就在下面，不另立公共层：
 //   * 任务行落库的就是**要发出去的那份** json，不经结构体往返 —— 那次往返是一份手写白名单，
 //     会把前端透传进来的方舟键（input / tools / text.format…）静默吃掉。
 //   * 不传 text_prompt_：任务行要显示的那句话由 collect_request_info() 落库时自己从请求体读；
 //     调用方再抄一份进来就有了第二个真相，且抄的那份往往还是截断过的。
 //   * 副作用**只有** run_inference_task 自己那个事务（任务行 + 扣费），**有意保留**：
 //     推理确实发生了，必须留痕计费。
-
+//
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   // 外包人员不能触发推理 —— 与 judge_route 同一口径。
   // 它花的是工作室的钱，不是「只看一眼」的只读操作。

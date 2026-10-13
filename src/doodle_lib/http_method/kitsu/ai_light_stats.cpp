@@ -339,14 +339,13 @@ double compute_confidence(int in_width, int in_height, double in_contrast, doubl
 }  // namespace
 
 // ---------------------------------------------------------------------------
-// 对外的两层入口
+// 对外入口
 //
-// 第 1 层：单图统计（analyze_display_image / analyze_reference_file）——
-//         **活的**。参数图上传时（reference_route::post）同步算出统计落库。
-// 第 2 层：多图聚合与冲突检测 —— **已删除**（原 aggregate_reference_stats）。
-//         它算出的 aggregated_reference_stats_t 在生产里没有任何消费方：唯一的设计
-//         消费者是已删的 generate_spec 接缝。参考图的排除改由人工经
-//         PUT /api/doodle/ai/light/reference/{id} 决定，服务端不再自动做跨图聚合。
+// analyze_display_image / analyze_reference_file —— 单图统计。
+// 参数图上传时（reference_route::post）同步算出统计落库。
+//
+// 不做多图聚合与冲突检测：参考图的排除由人工经
+// PUT /api/doodle/ai/light/reference/{id} 决定，服务端不自动做跨图聚合。
 // ---------------------------------------------------------------------------
 
 reference_analysis_t analyze_display_image(const cv::Mat& in_display_bgr) {

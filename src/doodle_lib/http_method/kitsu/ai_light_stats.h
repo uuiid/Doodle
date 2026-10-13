@@ -11,20 +11,15 @@
 //
 // 本模块不含任何 HTTP 依赖，单测可以直接调（与 ai_light_orchestrator 同性质）。
 //
-// 本文件分两层：
-//   1) 单图统计（§5.1 的 ①）：analyze_display_image / analyze_reference_file。逐图提取，
-//      不做跨图比较 —— 所以 is_outlier_ / excluded_reason_ 不在这里决定。
-//   2) 多图聚合与冲突检测（§5.1 的 ②，即 §5.3）：**已删除**（aggregate_reference_stats）。
-//      它算出的 aggregated_reference_stats_t 在生产里没有任何消费方 —— 唯一的设计消费者
-//      是已删的 generate_spec 接缝。参考图排除改由人工经 PUT /reference/{id} 决定，
-//      服务端不再自动做跨图聚合。
+// 本模块做单图统计（§5.1 的 ①）：analyze_display_image / analyze_reference_file。逐图提取，
+// 不做跨图比较 —— 所以 is_outlier_ / excluded_reason_ 不在这里决定，参考图排除由人工经
+// PUT /reference/{id} 决定。跨图聚合与冲突检测（§5.1 的 ②，即 §5.3）不做。
 //
 // analyze_display_image 刻意做成可复用的纯函数：§8.1 的「A 目标区间满足」要拿
 // 渲染图算同一组指标，那时直接调它，不要再写第二份实现。
 //
-// 为什么聚合放在这一层而不是编排层：§5.1/§5.2/§5.3 整章都是感知层，而显示空间的度量学
-// 口径（含「色温要先线性化」这个唯一例外）只应该有一处定义。编排层于是只管
-// 「提示词 + 目标 → LLM → Spec」这件真正的接缝工作。
+// 显示空间的度量学口径（含「色温要先线性化」这个唯一例外）只应该有一处定义，
+// 所以它落在这一层。
 //
 
 #pragma once

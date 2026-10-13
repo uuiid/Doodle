@@ -9,21 +9,16 @@
 namespace doodle::http::ai_light {
 
 // ===========================================================================
-// 候选提交（角色降级 · 第二梯队）
+// 候选提交
 // ===========================================================================
 //
 // `POST /api/doodle/ai/light/session/{session_id}/iteration`
 //
-// 降级前，这一轮候选是服务端自己演的：`iterate_route` → `advance_session_local`
-// → `advance_session_generating_branch` 排轴 + 调 `generate_candidates` 接缝
-// （发一次 LLM 请求 + `map_candidate_result` 解析）→ 落 iteration + 6 个 candidate。
-// 那整条路已经随「候选生成归前端」一起删除，本路由是它唯一的替代品。
-//
-// 现在，**排轴与展开都归前端**（那 ~800 行本来就是纯函数），服务端只剩：
+// 排轴与展开都归前端（那 ~800 行本来就是纯函数），服务端只做四件事：
 //   1. 收下前端算好的轴计划与 6 个候选；
 //   2. 过 IR 准入闸门（候选数、主光、相邻差异 —— 见 ai_light.cpp 的 validate_candidates_ir）；
 //   3. 落 iteration + candidate（`ops_` 由前端算好随候选提交，服务端不再自己算 diff）；
-//   4. 回 `launch_plan`（与从前服务端自己生成时**同一形状**）。
+//   4. 回 `launch_plan`。
 //
 // 为什么"提交"不只写数据库而还要给 launch_plan：走的是**引擎内路线**（D52/D53），
 // 发起方本机拿着 plan 自己起 UE、收产物、上传、回传。plan 的装配与落库逻辑都在

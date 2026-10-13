@@ -4,30 +4,9 @@
 // 对应 docs/ue_ai_lighting_plan.md §10.3（状态流转）与 §10.4（派发契约）。
 //
 // 本文件只装**状态机**：apply_judgement / mark_iteration_rendered / build_session_detail，
-// 候选落库（write_submitted_iteration）与它自己的小助手。**本文件已不含任何接缝调用**。
-// 对外仍然只需包含伞形头 `ai_light_orchestrator.h`。接缝契约（历史）见该头顶部。
-//
-// 曾经还有 `ai_light_rig_ops.{h,cpp}`（key_fill_ratio_of / diff_rigs / g_axis_max_count）。
-// **已删除** —— 它的调用者是候选展开器与接缝 3 的提示词，两者都归前端之后，
-// 服务端这边三个符号一个调用点都没有。
-//
-// 曾经还有 `ai_light_seam_common.{h,cpp}`（推理信封 + 推理管道 + 提示词格式化工具）。
-// **已删除** —— 三条接缝归前端后，那条管道只剩推理网关一个调用方，已就地内联进
-// ai_light.cpp 的 inference_route；提示词格式化工具则随「服务端不再拼提示词」整体失去调用者。
-//
-// 曾经还有 `ai_light_json_validation.{h,cpp}`（schema 建造器 + 严格/宽松读取器 + 架构诊断）。
-// **已删除** —— schema 随「schema 归前端」失去全部调用者，读取器也只剩本文件的渲染报告
-// 解析在用；那处现在是就地 get<>() 硬解析（见 parse_round_render_report）。
-//
-// 曾经还有 `ai_light_seam_feedback.{h,cpp}`（接缝 3 的离线部件：提示词 / schema / 映射）。
-// **已删除** —— 那组纯函数在生产里没有任何调用方，见 ai_light_orchestrator.h 里的说明。
-//
-// 三条接缝**已全部删除**（角色降级 · 第二梯队，见
-// docs/ue_ai_lighting_role_downgrade.md）：
-//   * generate_spec      —— 前端自己调推理网关
-//   * generate_candidates —— 前端算好、经 POST /session/{}/iteration 提交，
-//     服务端只做 IR 准入闸门与落库（见 ai_light_submit.{h,cpp}）
-//   * structure_feedback —— 轴直接来自请求体滑块，文本原样留存
+// 候选落库（write_submitted_iteration）与它自己的小助手。不含任何 LLM 接缝调用 ——
+// 三条接缝（generate_spec / generate_candidates / structure_feedback）均已归前端，
+// 见 docs/ue_ai_lighting_role_downgrade.md。
 //
 
 #include "ai_light_orchestrator.h"
@@ -116,20 +95,13 @@ orm::sql_modify_statement_t make_session_update(sqlite_database& in_sql, const a
 // ===========================================================================
 // 状态机
 // ===========================================================================
-// 候选生成（generate_candidates 接缝 + 轴计划 + OFAT 展开 + 基线 rig 推导）**已删除**：
-// 服务端不再自己演模型，候选由前端算好后经 POST /session/{}/iteration 提交
+// 服务端不自己演模型：候选由前端算好后经 POST /session/{}/iteration 提交
 // （见 ai_light_submit.{h,cpp} 与 docs/ue_ai_lighting_role_downgrade.md）。
 //
-// 于是 generating 的语义变了：它不再是「服务端正在生成」，而是
-// **「等待前端提交本轮候选」**；推进动作是那次提交（POST /session/{}/iteration）。
+// generating 的语义是**「等待前端提交本轮候选」**；推进动作是那次提交
+// （POST /session/{}/iteration），没有独立的「推进入口」。
 //
-// 曾经有两个推进入口 advance_session（队列路线）与 advance_session_local（引擎内路线），
-// 在三条接缝与候选生成一起降级给前端之后，两者的函数体都只剩下恒抛 400 的兜底分支 ——
-// 没有任何状态能由它们推进。现已连同 POST /session/{}/iterate 与 /spec、/spec/confirm
-// 末尾的调用一起删除（曾经保留它们的理由是「接口还在、报错指路」，
-// 但一个恒定失败的接口只是垃圾端点，指路信息已由路由表与文档承担）。
-//
-// 引擎内路线的渲染计划（ai_light_launch_plan_t）现在只由 write_submitted_iteration 产出。
+// 引擎内路线的渲染计划（ai_light_launch_plan_t）只由 write_submitted_iteration 产出。
 
 // ===========================================================================
 // 候选落库（角色降级 · 第二梯队）
@@ -584,9 +556,7 @@ constexpr std::string_view g_render_report_seam{"round_render_report"};
 
 round_render_report_t parse_round_render_report(const nlohmann::json& in_json) {
   round_render_report_t l_ret{};
-  // 以下是一份**手写的直接解析**。原先走 ai_light_json_validation.h 那层读取器，那层已删除
-  // （schema 建造器随「schema 归前端」失去调用者，读取器只剩这里 5 个符号在用），
-  // 现在就地用 nlohmann 的 contains/at/get<> 硬解析。
+  // 就地用 nlohmann 的 contains/at/get<> 硬解析，不走 schema 读取器那层。
   //
   // 成败口径与原先逐条一致：
   //   * 形状不符（缺键 / 类型不对）→ 502 bad_gateway，措辞保持「<接缝>：字段 <路径> …」；
