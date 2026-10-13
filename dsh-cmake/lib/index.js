@@ -465,12 +465,12 @@ export function apply(ctx, config) {
       '常用 debug_doodle（doodle_kitsu_supplement + test_main）与 debug_maya（doodle_maya）；' +
       '(2) 传 buildDir —— `cmake --build <dir> --target <targets...>`。' +
       'preset 与 buildDir 二选一，都省略时用默认 build preset。' +
-      '默认 --parallel 8：更大并行度会让 cl 抢写 obj 文件而报 Permission denied。',
+      '默认 --parallel 16：更大并行度会让 cl 抢写 obj 文件而报 Permission denied。',
     parameters: {
       preset: { type: 'string', description: 'build preset 名，例如 debug_doodle。与 buildDir 二选一。' },
       buildDir: { type: 'string', description: '相对 repoRoot 的构建目录，例如 build/Ninja_debug。与 preset 二选一。' },
       targets: { type: 'array', items: { type: 'string' }, description: '要构建的目标；仅在与 buildDir 同用时有意义。' },
-      parallel: { type: 'integer', description: '并行度，默认 8。不要显著调大。' },
+      parallel: { type: 'integer', description: '并行度，默认 16。不要显著调大。' },
       cleanFirst: { type: 'boolean', description: '为 true 时先执行 --target clean 再构建，默认 false。' },
       extraArgs: { type: 'array', items: { type: 'string' }, description: '追加到 cmake 命令末尾的额外参数（谨慎使用）。' },
       timeoutMs: { type: 'integer', description: '本次调用的超时毫秒数，默认 3600000。' },
