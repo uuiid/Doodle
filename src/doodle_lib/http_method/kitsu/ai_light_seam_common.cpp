@@ -12,13 +12,10 @@
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
-#include <algorithm>
-#include <cmath>
 #include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <string>
 #include <string_view>
-#include <vector>
 
 
 namespace doodle::ai_light {
@@ -28,7 +25,7 @@ namespace doodle::ai_light {
 using namespace orm;
 
 // ---------------------------------------------------------------------------
-// 接缝共用的推理管道
+// 推理管道（曾经由三条接缝共用；接缝现已全部删除，唯一调用方是推理网关 ai_light.cpp）
 // ---------------------------------------------------------------------------
 //
 // 三条接缝的 `generate_spec`／`generate_candidates`／`structure_feedback` 原本各写一遍同样的 14 行
@@ -128,104 +125,14 @@ boost::asio::awaitable<seam_inference_result_t> run_seam_inference(
   co_return l_out;
 }
 
-std::string join_strings(const std::vector<std::string>& in_values, std::string_view in_sep) {
-  std::string l_ret{};
-  for (std::size_t l_i = 0; l_i < in_values.size(); ++l_i) {
-    if (l_i != 0) l_ret += in_sep;
-    l_ret += in_values[l_i];
-  }
-  return l_ret;
-}
-
-std::string rgb_to_hex(const vec3_t& in_color) {
-  const auto l_quantize = [](double in_v) { return static_cast<int>(std::lround(std::clamp(in_v, 0.0, 1.0) * 255.0)); };
-  return fmt::format("#{:02x}{:02x}{:02x}", l_quantize(in_color.x_), l_quantize(in_color.y_), l_quantize(in_color.z_));
-}
-
-/// 「提示词未提及 + 参考冲突 → 不设目标」这一支由聚合器完成：冲突维度不写进硬目标。
-std::string describe_targets(const lighting_targets_t& in_targets) {
-  std::string l_out{};
-  l_out += fmt::format(
-      "  contrast=[{}, {}]  white_balance_kelvin=[{}, {}]\n", in_targets.contrast_.low_, in_targets.contrast_.high_,
-      in_targets.white_balance_kelvin_.low_, in_targets.white_balance_kelvin_.high_
-  );
-  l_out += fmt::format(
-      "  luma p10=[{}, {}]  p50=[{}, {}]  p90=[{}, {}]\n", in_targets.luma_percentiles_.p10_.low_,
-      in_targets.luma_percentiles_.p10_.high_, in_targets.luma_percentiles_.p50_.low_,
-      in_targets.luma_percentiles_.p50_.high_, in_targets.luma_percentiles_.p90_.low_,
-      in_targets.luma_percentiles_.p90_.high_
-  );
-  l_out += fmt::format(
-      "  clip_rate high=[{}, {}]  low=[{}, {}]\n", in_targets.clip_rate_.high_.low_, in_targets.clip_rate_.high_.high_,
-      in_targets.clip_rate_.low_.low_, in_targets.clip_rate_.low_.high_
-  );
-  l_out += fmt::format(
-      "  grading_hints: vignette={} lifted_blacks={} bloom={}\n", in_targets.grading_hints_.vignette_,
-      in_targets.grading_hints_.lifted_blacks_ ? "true" : "false", in_targets.grading_hints_.bloom_
-  );
-  return l_out;
-}
-
-std::string build_common_lighting_section() {
-  return std::string{R"LIGHT(【职责边界：你决定什么、不决定什么】
-你决定：灯的数量、角色、类型、相对方位；环境光 / 雾 / 天空 / 曝光 / 调色的整体倾向；增删改哪些灯（结构决策）。
-你不决定：最终精确强度 / 色温 / 距离的数值；直接写 UE API 调用或代码；逐帧关键帧的精确数值；预测渲染结果。
-绝对禁止：改变场景几何或材质。你的可改范围只有「灯光 + 环境光/雾/天空 + 后处理/调色」。
-
-【单位与格式口径】
-- 对比度 = 显示空间（sRGB）亮度分位差 p90 − p10，不是标准差。
-- 色温用 Kelvin。
-- 所有区间都是长度为 2 的数组 [low, high]，且 low <= high。
-- 亮度分位 p10 / p50 / p90 是显示空间的归一化值（0 = 黑，1 = 白）。
-- 削波率 clip_rate 是 [0, 1] 的比例。
-- grading_hints.vignette / bloom 只能是 none / subtle / moderate / strong。
-)LIGHT"};
-}
-
-std::string join_numbers(const std::vector<double>& in_values) {
-  std::string l_ret{};
-  for (std::size_t l_i = 0; l_i < in_values.size(); ++l_i) {
-    if (l_i != 0) l_ret += ", ";
-    l_ret += fmt::format("{}", in_values[l_i]);
-  }
-  return l_ret;
-}
-
-std::string describe_rig_brief(const lighting_rig_t& in_rig) {
-  std::string l_out = fmt::format(
-      "  globals: exposure_bias={:.2f} white_balance_kelvin={:.0f} sky_light_intensity={:.2f} fog_density={:.2f}\n"
-      "           grading(contrast={:.2f} saturation={:.2f} lift={:.2f} vignette={:.2f} bloom={:.2f})\n",
-      in_rig.globals_.exposure_.ev100_bias_, in_rig.globals_.white_balance_.kelvin_,
-      in_rig.globals_.environment_.sky_light_intensity_, in_rig.globals_.environment_.fog_density_,
-      in_rig.globals_.grading_.contrast_, in_rig.globals_.grading_.saturation_, in_rig.globals_.grading_.lift_,
-      in_rig.globals_.grading_.vignette_, in_rig.globals_.grading_.bloom_
-  );
-  l_out += fmt::format("  灯 {} 个：\n", in_rig.lights_.size());
-  for (const auto& l_light : in_rig.lights_) {
-    l_out += fmt::format(
-        "    role={} type={} azimuth={:.1f} elevation={:.1f} distance={:.2f} intensity={:.1f}({}) "
-        "kelvin={:.0f} softness={:.2f} radius_cm={:.1f} cast_shadows={}\n",
-        magic_enum::enum_name(l_light.role_), magic_enum::enum_name(l_light.type_), l_light.offset_.azimuth_deg_,
-        l_light.offset_.elevation_deg_, l_light.offset_.distance_m_, l_light.intensity_.value_,
-        magic_enum::enum_name(l_light.intensity_.unit_), l_light.color_.kelvin_, l_light.shadows_.softness_,
-        l_light.shape_.source_radius_cm_, l_light.shadows_.cast_ ? "true" : "false"
-    );
-  }
-  return l_out;
-}
-
-// 曾经这里还有 describe_spec_brief(const lighting_spec_t&) —— Spec 的紧凑投影。
-// **已删除**：它的唯一调用方是接缝 3 的 build_feedback_input_text，而那条接缝已整条移除；
-// 它的入参类型 lighting_spec_t 本身也随 Spec 闸门删除。参考图目标若还要投影给人看，
-// 直接用下面的 describe_targets（它收的是 lighting_targets_t，仍然活着）。
-
-std::string describe_preset_brief(const ai_light_preset& in_preset) {
-  const auto l_target = in_preset.get_stats_target();
-  return fmt::format(
-      "  - {}  tags=[{}]  stats_target(contrast=[{}, {}] kelvin=[{}, {}])\n", in_preset.name_,
-      join_strings(in_preset.tags_, ", "), l_target.contrast_.low_, l_target.contrast_.high_,
-      l_target.white_balance_kelvin_.low_, l_target.white_balance_kelvin_.high_
-  );
-}
+// 曾经这里还有一整块**提示词格式化工具**（本文件后 99 行）：
+//   * join_strings / join_numbers / rgb_to_hex —— 字符串与颜色格式化
+//   * build_common_lighting_section / g_axis_value_semantics_text —— 共用提示词文本段
+//   * describe_targets / describe_rig_brief / describe_preset_brief —— 摘要投影
+//   * describe_spec_brief —— 更早一步随 Spec 闸门删除
+// **已全部删除** —— 它们的唯一消费者是接缝 2（候选生成）与接缝 3（反馈结构化）的
+// 提示词组装。那两条接缝归前端后服务端不再自己拼提示词：推理网关（ai_light.cpp）
+// 只做原样透传（前端给的键一律原样发往方舟 /responses）。保留会诱使后来人在服务端
+// 重新长出一套提示词口径，与前端的设计分叉。
 
 }  // namespace doodle::ai_light

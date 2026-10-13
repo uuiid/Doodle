@@ -1,93 +1,31 @@
 //
-// AI 灯光：两条接缝共用的**内部件**（私有头，不进公共 API）
+// AI 灯光：推理网关的**计费与准入层**（私有头，不进公共 API）
 //
-// 这里放的都是实现细节：跨接缝共用的常量、字符串拼装、rig/预设的紧凑摘要。故意不做成
-// 公共 API —— 一旦导出就会有人从外面依赖，而它们的形状会随提示词一起变。
+// 三条接缝（generate_spec / generate_candidates / structure_feedback）已随角色降级
+// 全部删除，归前端。本文件因此不再是「接缝共用件」—— 它现在只装一样东西：
+// 推理网关（ai_light.cpp）走的那条推理管道（凭据解析 → 任务信封 → 计费 → 成败判定）。
+//
+// 曾经这里还有一整块**提示词格式化工具**：join_strings / join_numbers / rgb_to_hex、
+// build_common_lighting_section、g_axis_value_semantics_text，以及
+// describe_targets / describe_rig_brief / describe_preset_brief 三个摘要投影。
+// **已全部删除** —— 它们的唯一消费者是接缝 2 / 接缝 3 的提示词组装，而服务端已不再
+// 自己拼提示词（网关只做原样透传，见 ai_light.cpp 的推理网关段）。
 //
 // 本头**不含任何 HTTP 依赖**
-// （不 include http_jwt_fun / session_data / 推理客户端），所以单测可以直接调用其中的纯函数：
-// 单测宿主没有 core_set::ctx_ptr、没有 SSL context、没有 HTTP logger。
-//
-// 分工：本文件只有「纯函数 + 纯文本」。接缝的请求/映射在自己的 `ai_light_seam_*.h` 里；
-// 两者都靠本头共享措辞与口径。（曾经在另一侧的 `ai_light_rig_ops.h` 已删除。）
+// （不 include http_jwt_fun / session_data / 推理客户端），单测可直接调用。
 //
 
 #pragma once
 
-#include <doodle_core/metadata/ai_light/preset.h>
-#include <doodle_core/metadata/ai_light/rig.h>
-#include <doodle_core/metadata/ai_light/spec.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio/awaitable.hpp>
 #include <nlohmann/json.hpp>
 
 #include <cstdint>
-#include <string>
-#include <string_view>
-#include <vector>
 
 namespace doodle::ai_light {
 
-// ---------------------------------------------------------------------------
-// 字符串与颜色格式化
-// ---------------------------------------------------------------------------
-
-/// 用 in_sep 连接字符串（空 vector → 空串）。
-std::string join_strings(const std::vector<std::string>& in_values, std::string_view in_sep);
-
-/// 数字列表的紧凑写法（", " 分隔）。只用于提示词，不参与任何判定。
-std::string join_numbers(const std::vector<double>& in_values);
-
-/// 色值 → "#rrggbb"（先 clamp 到 [0,1] 再量化 8 bit）。提示词里出现颜色统一走它 ——
-/// 直接打印三个浮点会让模型去猜哪个分量是 R。
-std::string rgb_to_hex(const vec3_t& in_color);
-
-// ---------------------------------------------------------------------------
-// 提示词共用的文本段
-// ---------------------------------------------------------------------------
-
-/// 抽取给 spec 与 candidates 共用的系统指令段：职责边界（§6.1）、单位口径。
-/// **只允许有一处定义** —— 两份提示词对「对比度是什么」说法不一致
-/// 会让模型在两条接缝上给出互不相容的数值。
-///
-/// ⚠️ 原 §5.5 的「人物角色性格 → 灯光语言映射表」已删除：它落成的
-/// `character_personality[].lighting_language` 随 generate_spec 接缝一起没了，
-/// 再让模型填这张表就无处可放。性格这类自然语言意图改由提示词原文直接承载。
-std::string build_common_lighting_section();
-
-/// 轴值语义（§15.8 的表）。接缝 2 与接缝 3 共用同一份口径：模型按它给档位，服务端按同一套
-/// 公式应用 —— 两边不一致时美术会看到「轴变了但图没变」。
-///
-/// **只放语义，不放约束**（§15.9 决定 D12）：接缝 2 的「恰好 5 个档位 / 档位不要取 0」是排轴
-/// 环节的硬约束，接缝 3 只给**一个**方向值，两者约束不同。混进这一段会让接缝 3 的提示词
-/// 连带继承一套不适用的档位规则。
-inline constexpr std::string_view g_axis_value_semantics_text = R"AXIS(每个轴的 value 都是**增量**（不是绝对值），中性值是 0；只有 key_fill_ratio 例外，它本身就是目标比值。
-- key_direction     方位角增量（度）。正负决定主光往哪边偏；常见档位 -60 / -30 / +30 / +60。
-- key_fill_ratio    目标 key:fill 比值（绝对，如 3 / 6 / 10）。服务端按「当前比值 ÷ 目标比值」缩放补光强度。
-- kelvin            色温增量（K）。同时作用于灯光色温与全局白平衡；常见档位 -800 / -400 / +400 / +800。
-- hardness          硬软增量（-1..+1，正 = 更硬）。同时收紧影边缘与缩小光源半径；常见档位 -0.5 / +0.5。
-- ambient_level     环境光相对增减（-1..+1）。作用于天光强度与 role=ambient 的灯；常见档位 -0.4 / +0.4。
-- grading_strength  调色强度增量（-1..+1），只放大/缩小「偏离中性的量」（对比、饱和、提黑、暗角、光晕）；
-                    常见档位 -0.35 / +0.35。
-)AXIS";
-
-// ---------------------------------------------------------------------------
-// 摘要（写进提示词，给模型与美术读）
-// ---------------------------------------------------------------------------
-
-/// 目标区间的紧凑投影（对比度 / 白平衡 / 亮度分位 / 削波 / 调色倾向）。
-std::string describe_targets(const lighting_targets_t& in_targets);
-
-/// 一版 rig 的紧凑投影（globals 概览 + 每盏灯的关键参数）。
-std::string describe_rig_brief(const lighting_rig_t& in_rig);
-
-/// 一条预设的紧凑投影，接缝 2 列候选预设时用。
-std::string describe_preset_brief(const ai_light_preset& in_preset);
-
-/// 曾经这里还有 describe_spec_brief(const lighting_spec_t&)。**已删除** ——
-/// 唯一调用方是接缝 3 的 build_feedback_input_text（整条接缝已移除），
-/// 而入参 lighting_spec_t 也随 Spec 闸门删除。见 .cpp 里的说明。
 
 // ---------------------------------------------------------------------------
 // 推理信封与推理管道（曾经由「两条接缝」共用；三条接缝现已全部删除，
