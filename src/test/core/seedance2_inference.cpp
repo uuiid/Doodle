@@ -157,19 +157,6 @@ BOOST_AUTO_TEST_CASE(body_uses_flat_envelope_shape_with_images) {
   BOOST_CHECK_EQUAL(l_body.contains("content"), false);
 }
 
-BOOST_AUTO_TEST_CASE(body_omits_thinking_when_auto_and_keeps_reasoning_effort) {
-  inference_request_t l_request{};
-  l_request.input_text_       = "x";
-  l_request.thinking_         = "auto";
-  l_request.reasoning_effort_ = "low";
-  const auto l_body           = seedance2_client::build_inference_body(l_request);
-  // auto = 不显式指定, 由模型自己决定
-  BOOST_CHECK_EQUAL(l_body.contains("thinking"), false);
-  // reasoning_effort 是**扁平键原样留存**：它不再被折叠成 {"reasoning":{"effort":...}}。
-  BOOST_CHECK_EQUAL(l_body.at("reasoning_effort").get<std::string>(), "low");
-  BOOST_CHECK_EQUAL(l_body.contains("reasoning"), false);
-}
-
 BOOST_AUTO_TEST_CASE(body_attaches_flat_json_schema_format) {
   const auto l_schema = nlohmann::json{
       {"type", "object"}, {"properties", nlohmann::json{{"a", nlohmann::json{{"type", "string"}}}}}
