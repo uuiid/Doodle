@@ -23,11 +23,11 @@ namespace doodle::http::seedance2 {
  *   * 客户端断开后上游仍会跑完并**照常计费**(官方最佳实践页明确写了这一点)。
  * 所以 timeout 是本后端的第一原则, 见 g_request_timeout。
  *
- * 于是基类的 4 个流程纯虚在这里只能是:
- *   * run_task     —— 真正干活的那个: 一次调用直接拿终态 + 图片文件;
+ * 于是基类的流程纯虚在这里只能是:
+ *   * submit_task  —— 真正干活的那个: 一次调用直接拿终态 + 图片文件(run_task 由基类默认转发过来);
  *   * query_task   —— 没有对应接口, 永远不该被调用(见 .cpp 的说明);
  *   * cancel_task  —— 同上;
- *   * download_result —— 下载动作发生在 run_task 内部, 所以也没有调用者。
+ *   * download_result —— 下载动作发生在 submit_task 内部, 所以也没有调用者。
  *
  * 请求形状(data_request_)沿用工程内既有的「扁平信封」, 即前端直接把该模型的请求体
  * 塞进 data_request_, 客户端只做定稿与素材 URL 改写, 不做结构体往返:
@@ -54,7 +54,10 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
   explicit apipy_image_client(boost::asio::ssl::context& in_ctx)
       : ai_client_base(std::string{g_default_host}, in_ctx) {}
 
-  boost::asio::awaitable<run_task_result_t> run_task(const doodle::seedance2::task& in_task) override;
+  /// 一次调用即终态: 发请求 → 解析 → **当场把图片下载落盘** → 填 result_files_ /
+  /// result_file_paths_ 返回。本后端没有 query_task 可以之后再取, 也没必要重写 run_task
+  /// (基类默认就是转发到这里)。
+  boost::asio::awaitable<run_task_result_t> submit_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<query_task_result_t> query_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<void> cancel_task(const std::string& in_task_id) override;
   boost::asio::awaitable<void> download_result(query_task_result_t* in_data) override;

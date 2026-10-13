@@ -97,7 +97,7 @@ ai_client_base::request_info_t seedance2_client::collect_request_info(const nloh
   return l_info;
 }
 
-boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_task(
+boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::submit_task(
     const doodle::seedance2::task& in_task
 ) {
   // 推理任务走同步的 Responses API: 一次调用就有结果, 不做异步提交

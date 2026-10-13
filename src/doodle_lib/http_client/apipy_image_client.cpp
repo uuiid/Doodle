@@ -141,7 +141,7 @@ std::size_t apipy_image_client::default_consumed_tokens(const doodle::seedance2:
   }
 }
 
-boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::run_task(
+boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::submit_task(
     const doodle::seedance2::task& in_task
 ) {
   run_task_result_t l_result{};
@@ -227,7 +227,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::ru
     co_return l_result;
   }
 
-  // 立刻落盘。这里必须**在 run_task 内**完成下载, 不能只把临时 URL 交出去:
+  // 立刻落盘。这里必须**在本函数内**完成下载, 不能只把临时 URL 交出去:
   // 官方说明 URL 是临时链接(约 24 小时失效), 过期后 404, 而本后端没有 query_task
   // 可以在之后再取一次。download_raw_file 自带 3 次重试与缓存目录落点。
   for (const auto& l_url : extract_image_urls(l_result.data_response_)) {
@@ -253,14 +253,14 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::ru
 // (官方最佳实践页明确写了「没有异步任务 ID、没有轮询接口」)。
 // 这三个函数只是为了让子类满足基类的纯虚签名而存在, 在正确接入下**永远不该被调用**:
 //   * query_task / cancel_task —— 没有对应接口;
-//   * download_result —— 下载发生在 run_task 内部(见上), 没有 query_task_result_t 可传。
+//   * download_result —— 下载发生在本类的 submit_task 内部(见上), 没有 query_task_result_t 可传。
 // 因此它们一律抛错而不是静默返回空结果: 静默返回会让调用方以为"查到了但没结果"。
 // 与 transfer_station_client::cancel_task 的处理方式一致。
 
 boost::asio::awaitable<ai_client_base::query_task_result_t> apipy_image_client::query_task(
     const doodle::seedance2::task& in_task
 ) {
-  throw_exception(doodle_error{"apipy_image_client 是同步后端, 任务在 run_task 里直接结束, 不支持 query_task"});
+  throw_exception(doodle_error{"apipy_image_client 是同步后端, 任务在 submit_task 里直接结束, 不支持 query_task"});
   co_return query_task_result_t{};
 }
 
@@ -270,7 +270,7 @@ boost::asio::awaitable<void> apipy_image_client::cancel_task(const std::string& 
 }
 
 boost::asio::awaitable<void> apipy_image_client::download_result(query_task_result_t* in_data) {
-  throw_exception(doodle_error{"apipy_image_client 的结果文件在 run_task 里已落盘, 不支持 download_result"});
+  throw_exception(doodle_error{"apipy_image_client 的结果文件在 submit_task 里已落盘, 不支持 download_result"});
   co_return;
 }
 

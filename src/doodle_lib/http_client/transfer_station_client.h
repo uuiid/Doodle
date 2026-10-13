@@ -19,7 +19,8 @@ class DOODLELIB_API transfer_station_client final : public ai_client_base {
   explicit transfer_station_client(boost::asio::ssl::context& in_ctx)
       : ai_client_base(std::string{g_default_host}, in_ctx) {}
 
-  boost::asio::awaitable<run_task_result_t> run_task(const doodle::seedance2::task& in_task) override;
+  /// 提交任务: 走中转站的异步生成接口, 返回 queued, 之后靠 query_task 轮询。
+  boost::asio::awaitable<run_task_result_t> submit_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<query_task_result_t> query_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<void> cancel_task(const std::string& in_task_id) override;
   boost::asio::awaitable<void> download_result(query_task_result_t* in_data) override;

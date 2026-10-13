@@ -20,6 +20,8 @@ namespace doodle::http::seedance2 {
  * - 生成: POST /api/v3/contents/generations/tasks  (异步, 提交后靠 query_task 轮询)
  * - 推理: POST /api/v3/responses                    (同步, 一次调用拿结果)
  *
+ * 两者都实现在 submit_task 里(由它按 in_task.type_ 分派), run_task 沿用基类默认转发。
+ *
  * 推理请求体由调用方按**扁平信封**给出(data_request_), 在 run_inference_task 里就地把
  * model/store 定稿后原样发给方舟 —— 中间不经过任何结构体往返(那个 inference_request_t
  * 已删除), 定稿逻辑也只有那一个调用点, 因此直接写在调用处, 不再单开一个头文件。
@@ -30,7 +32,8 @@ class DOODLELIB_API seedance2_client final : public ai_client_base {
  public:
   explicit seedance2_client(boost::asio::ssl::context& in_ctx) : ai_client_base(std::string{g_sd2_host_url}, in_ctx) {}
 
-  boost::asio::awaitable<run_task_result_t> run_task(const doodle::seedance2::task& in_task) override;
+  /// 提交任务。生成类走异步生成接口(返回 queued), 推理类走 Responses API(一次调用即终态)。
+  boost::asio::awaitable<run_task_result_t> submit_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<query_task_result_t> query_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<void> cancel_task(const std::string& in_task_id) override;
   boost::asio::awaitable<void> download_result(query_task_result_t* in_data) override;

@@ -50,7 +50,7 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
     std::string result_text_{};
     /// 推理任务按 text.format 的 json_schema 解析出来的结果；未要求结构化输出时为 null
     nlohmann::json result_json_{};
-    /// 由 run_task **一次调用**就产出文件的后端（同步生成类，如 API易 图片 API）用这两个字段：
+    /// 由「一次调用即产出文件」的后端（同步生成类，如 API易 图片 API）填这两个字段：
     /// 提交即出结果，没有 query_task 可以承载它们，所以结果文件只能挂在这里。
     /// 异步生成类任务（seedance2 / 中转站）留空 —— 它们的文件在 query_task_result_t 里回来。
     std::vector<std::string> result_files_;
@@ -83,19 +83,35 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
   };
 
   /**
-   * 提交任务。
+   * 提交任务(异步后端的入口)。
    *
-   * 参数从「纯 JSON 体」换成整个 task, 因为需要区分任务类型:
-   * - 生成类(picture/video): 走各自的异步生成接口, 返回 queued, 之后靠 query_task 轮询;
-   * - 推理类(inference): 走火山方舟 Responses API, **一次调用就拿到结果**(status_ 直接是
-   *   succeeded/failed), result_text_/result_json_/token 用量都在返回值里。
-   * 另外 in_task.user_id_ 会作为签名 URL 里的人员(uid), 让第三方取图时仍带上授权身份。
+   * 「提交」的契约: 把任务交给外部服务, **不等结果**。
+   * - 异步生成类(picture/video): 返回 queued + task_id_, 之后靠 query_task 轮询;
+   * - 同步单次调用类(方舟 Responses、API易 图片): 一次调用就带回终态, 直接返回
+   *   succeeded/failed, 结果(文本 / 文件)也一并填好。
    *
-   * 还有第三类后端: 同步生成类(API易 图片 API)。它既不是「提交后轮询」, 也不是「推理」,
-   * 而是**一次调用直接产出图片文件**, 所以 status_ 同样是终态, 结果文件填 result_files_ /
-   * result_file_paths_。这类后端的 query_task / cancel_task 没有对应接口(见各实现里的说明)。
+   * 参数从「纯 JSON 体」换成整个 task, 因为需要区分任务类型; 另外 in_task.user_id_ 会作为
+   * 签名 URL 里的人员(uid), 让第三方取图时仍带上授权身份。
    */
-  virtual boost::asio::awaitable<run_task_result_t> run_task(const doodle::seedance2::task& in_task)         = 0;
+  virtual boost::asio::awaitable<run_task_result_t> submit_task(const doodle::seedance2::task& in_task) = 0;
+
+  /**
+   * 执行任务。默认实现就是 submit_task —— 对「提交即结果」的后端, 两者是同一件事。
+   *
+   * 这样分层是为了让调用方只需要认 run_task 一个名字, 而各后端只实现自己真正会做的事:
+   * - 异步后端(seedance2_client / transfer_station_client)只实现 submit_task: 提交完返回
+   *   queued, 后续由 query_task 轮询, 结果文件在 query_task_result_t 里回来;
+   * - 同步后端(apipy_image_client)同样只实现 submit_task, 但它一次调用就落终态并把图片
+   *   下载落盘(填 result_files_ / result_file_paths_), 因为没有 query_task 可以之后再取。
+   *
+   * 换句话说: submit_task 是「后端实际与外部服务的那一次交互」, run_task 是「调用方看到的事」。
+   * 本函数保留为**可重写**的虚函数, 是为了给「调用方语义与提交语义确实不同」的后端留出口 ——
+   * 目前三个子类都走默认实现, 但这层间接不该由调用方各自去猜。
+   */
+  virtual boost::asio::awaitable<run_task_result_t> run_task(const doodle::seedance2::task& in_task) {
+    return submit_task(in_task);
+  }
+
   virtual boost::asio::awaitable<void> cancel_task(const std::string& in_task_id)                        = 0;
   virtual boost::asio::awaitable<query_task_result_t> query_task(const doodle::seedance2::task& in_task) = 0;
   virtual boost::asio::awaitable<void> download_result(query_task_result_t* in_data)                     = 0;

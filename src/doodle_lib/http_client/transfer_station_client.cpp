@@ -101,7 +101,7 @@ ai_client_base::request_info_t transfer_station_client::collect_request_info(con
   return l_info;
 }
 
-boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_client::run_task(
+boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_client::submit_task(
     const doodle::seedance2::task& in_task
 ) {
   // 中转站只做图片/视频生成, 不支持同步推理
