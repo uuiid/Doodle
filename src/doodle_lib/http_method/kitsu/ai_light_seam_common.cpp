@@ -12,14 +12,14 @@
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
-#include <magic_enum/magic_enum.hpp>
-
 #include <algorithm>
 #include <cmath>
+#include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
+
 
 namespace doodle::ai_light {
 
@@ -54,23 +54,22 @@ struct resolved_inference_t {
 /// 一条 sqlite 异常（HTTP 500），而这里应当是 400 语义。
 /// 每次推理都**新建**客户端：http_client_ssl 内部只有一个 socket 且无锁（§15.6 第 6 条）。
 /// `in_what` 只用于措辞（出错信息要指明哪次推理），不参与任何判定。
-resolved_inference_t make_seam_client(
-    sqlite_database& in_sql, const uuid& in_operator_id, std::string_view in_what
-) {
+resolved_inference_t make_seam_client(sqlite_database& in_sql, const uuid& in_operator_id, std::string_view in_what) {
   DOODLE_CHICK_HTTP(
-      !in_operator_id.is_nil(), bad_request, "{} 缺少触发人（operator_id），无法解析 AI 工作室与计费主体",
-      in_what
+      !in_operator_id.is_nil(), bad_request, "{} 缺少触发人（operator_id），无法解析 AI 工作室与计费主体", in_what
   );
-  const auto l_person =
-      select(in_sql).columns(object<person>()).from<person>().where(c(&person::uuid_id_) == in_operator_id)()
-          .to_optional();
+  const auto l_person = select(in_sql)
+                            .columns(object<person>())
+                            .from<person>()
+                            .where(c(&person::uuid_id_) == in_operator_id)()
+                            .to_optional();
   DOODLE_CHICK_HTTP(
       l_person.has_value(), bad_request, "{} 找不到触发人 {}（person 不存在），无法解析 AI 工作室", in_what,
       in_operator_id
   );
   DOODLE_CHICK_HTTP(
-      !l_person->ai_studio_id_.is_nil(), bad_request, "{} 的触发人 {} 未关联 AI 工作室，无法调用推理接口",
-      in_what, in_operator_id
+      !l_person->ai_studio_id_.is_nil(), bad_request, "{} 的触发人 {} 未关联 AI 工作室，无法调用推理接口", in_what,
+      in_operator_id
   );
   const auto l_studio = select(in_sql)
                             .columns(object<ai_studio>())
@@ -78,43 +77,13 @@ resolved_inference_t make_seam_client(
                             .where(c(&ai_studio::uuid_id_) == l_person->ai_studio_id_)()
                             .to_optional();
   DOODLE_CHICK_HTTP(
-      l_studio.has_value(), bad_request, "{} 找不到 AI 工作室 {}（配置可能已被删除）", in_what,
-      l_person->ai_studio_id_
+      l_studio.has_value(), bad_request, "{} 找不到 AI 工作室 {}（配置可能已被删除）", in_what, l_person->ai_studio_id_
   );
 
   resolved_inference_t l_out{};
   l_out.studio_id_ = l_studio->uuid_id_;
   l_out.client_    = http::seedance2::make_inference_client(*l_studio);
   return l_out;
-}
-
-/// 一次推理的成败判定。重试全在客户端内做完了（g_ark_inference_max_retry），这里不重试。
-/// 内容违规 → 400（可解释：改提示词/换图能解决），其余失败 → 502；
-/// result_json_ 非 object（含 null）也是 502 —— 输出不合解析不是调用方的错。
-void chick_inference_ok(const http::seedance2::ai_client_base::run_task_result_t& in_result, std::string_view in_what) {
-  const auto l_brief_of = [&in_result]() {
-    return in_result.result_text_.substr(0, std::min<std::size_t>(200, in_result.result_text_.size()));
-  };
-  if (in_result.status_ != seedance2::task_status::succeeded) {
-    const auto l_brief = l_brief_of();
-    if (http::seedance2::seedance2_client::is_sensitive_content_error(in_result.data_response_)) {
-      throw_exception(doodle_error{
-          boost::beast::http::status::bad_request, "{} 被内容安全策略拒绝：{}", in_what,
-          l_brief.empty() ? in_result.error_code_ : l_brief
-      });
-    }
-    throw_exception(doodle_error{
-        boost::beast::http::status::bad_gateway, "{} 推理失败（status={}, error_code={}, 超时={}）：{}", in_what,
-        magic_enum::enum_name(in_result.status_), in_result.error_code_, in_result.is_timeout_, l_brief
-    });
-  }
-  // result_json_ 由 parse_inference_response 填好（内部已做过 strip_code_fence + parse），
-  // 调用方**不要**二次解析 result_text_。
-  if (!in_result.result_json_.is_object()) {
-    throw_exception(doodle_error{
-        boost::beast::http::status::bad_gateway, "{} 的模型输出不是合法 JSON 对象：{}", in_what, l_brief_of()
-    });
-  }
 }
 
 }  // namespace
@@ -128,9 +97,9 @@ boost::asio::awaitable<seam_inference_result_t> run_seam_inference(
 
   // ---- 2) 组装任务与请求体 ----
   seedance2::task l_task{};
-  l_task.type_                  = seedance2::task_type::inference;  // not_null，必须显式赋值
+  l_task.type_                  = seedance2::task_type::inference;     // not_null，必须显式赋值
   l_task.backend_               = seedance2::task_backend::seedance2;  // 同上
-  l_task.user_id_               = in_request.operator_id_;  // 计费主体 + 签名 URL 的 uid
+  l_task.user_id_               = in_request.operator_id_;             // 计费主体 + 签名 URL 的 uid
   l_task.ai_studio_id_          = l_resolved.studio_id_;
   l_task.project_uuid_id_       = in_request.project_id_;
   // 与蒸馏阶段的区别：候选生成与反馈结构化的调用方在调用**之前**就把 iteration 的 uuid
@@ -149,10 +118,7 @@ boost::asio::awaitable<seam_inference_result_t> run_seam_inference(
   // run_inference_task 自己一个事务里落终态任务行 + 扣费（§15.6 的方案 A）。
   // 这是接缝唯一的副作用，且**有意保留**：推理确实发生了，必须留痕计费 ——
   // 否则调用方回滚会话状态时会连带把 person_token 的扣费抹掉（契约 2 的受控例外）。
-  auto l_result = co_await http::seedance2::run_inference_task(l_task, in_sql, l_resolved.client_);
-
-  // ---- 3) 成败判定（内容违规 400 / 其它失败 502 / 输出非 object 502）----
-  chick_inference_ok(l_result, "推理");
+  auto l_result                 = co_await http::seedance2::run_inference_task(l_task, in_sql, l_resolved.client_);
 
   seam_inference_result_t l_out{};
   l_out.json_          = l_result.result_json_;
@@ -172,9 +138,7 @@ std::string join_strings(const std::vector<std::string>& in_values, std::string_
 }
 
 std::string rgb_to_hex(const vec3_t& in_color) {
-  const auto l_quantize = [](double in_v) {
-    return static_cast<int>(std::lround(std::clamp(in_v, 0.0, 1.0) * 255.0));
-  };
+  const auto l_quantize = [](double in_v) { return static_cast<int>(std::lround(std::clamp(in_v, 0.0, 1.0) * 255.0)); };
   return fmt::format("#{:02x}{:02x}{:02x}", l_quantize(in_color.x_), l_quantize(in_color.y_), l_quantize(in_color.z_));
 }
 
