@@ -54,8 +54,6 @@ target_sources(
         jobs.cpp
         ai_light.cpp
         ai_light_orchestrator.cpp
-        ai_light_seam_common.h
-        ai_light_seam_common.cpp
         ai_light_stats.cpp
         ai_light_submit.cpp
         ai_light_submit.h

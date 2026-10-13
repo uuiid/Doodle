@@ -4,14 +4,16 @@
 // 对应 docs/ue_ai_lighting_plan.md §10.3（状态流转）与 §10.4（派发契约）。
 //
 // 本文件只装**状态机**：apply_judgement / mark_iteration_rendered / build_session_detail，
-// 候选落库（write_submitted_iteration）与它自己的小助手。**本文件已不含任何接缝调用**；
-// 共用部件在同目录的独立文件里：
-//   * `ai_light_seam_common.{h,cpp}`      —— 共用提示词片段 + 描述 + 推理管道
+// 候选落库（write_submitted_iteration）与它自己的小助手。**本文件已不含任何接缝调用**。
 // 对外仍然只需包含伞形头 `ai_light_orchestrator.h`。接缝契约（历史）见该头顶部。
 //
 // 曾经还有 `ai_light_rig_ops.{h,cpp}`（key_fill_ratio_of / diff_rigs / g_axis_max_count）。
 // **已删除** —— 它的调用者是候选展开器与接缝 3 的提示词，两者都归前端之后，
 // 服务端这边三个符号一个调用点都没有。
+//
+// 曾经还有 `ai_light_seam_common.{h,cpp}`（推理信封 + 推理管道 + 提示词格式化工具）。
+// **已删除** —— 三条接缝归前端后，那条管道只剩推理网关一个调用方，已就地内联进
+// ai_light.cpp 的 inference_route；提示词格式化工具则随「服务端不再拼提示词」整体失去调用者。
 //
 // 曾经还有 `ai_light_json_validation.{h,cpp}`（schema 建造器 + 严格/宽松读取器 + 架构诊断）。
 // **已删除** —— schema 随「schema 归前端」失去全部调用者，读取器也只剩本文件的渲染报告
@@ -55,8 +57,6 @@
 
 #include <boost/exception/diagnostic_information.hpp>
 
-#include "ai_light_seam_common.h"
-#include "ai_light_seam_common.h"
 #include <algorithm>
 #include <array>
 #include <chrono>

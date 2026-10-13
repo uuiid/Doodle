@@ -34,8 +34,8 @@
 //      **受控例外**：接缝经由 run_inference_task 写下一行推理任务
 //      与对应的扣费记录。这是有意保留的 —— 推理确实发生了，抹掉它等于抹掉计费凭证。
 //      除此之外它不写任何 ai_light_* 表（返回值全部交给调用方落库）。
-//   这条契约现在由**推理网关**（ai_light.cpp）继承：它是唯一还会
-//   经由 run_seam_inference 写推理任务行的入口。
+//   这条契约现在由**推理网关**（ai_light.cpp 的 inference_route）继承：它是唯一还会
+//   写推理任务行 + 扣费的入口（经由 run_inference_task）。
 //
 
 
@@ -62,7 +62,9 @@
 // 曾经还 include 过 ai_light_rig_ops.h（key_fill_ratio_of / diff_rigs / g_axis_max_count）。
 // **已删除** —— 它的调用者是候选展开器与接缝 3 的提示词，两者都归前端之后，服务端这边
 // 三个符号一个调用点都没有（详见 docs/ue_ai_lighting_role_downgrade.md 的角色降级记录）。
-#include "ai_light_seam_common.h"
+//
+// 曾经还 include 过 ai_light_seam_common.h（推理信封 + 推理管道）。**已删除** ——
+// 三条接缝归前端后 run_seam_inference 只剩推理网关一个调用方，已就地内联进 ai_light.cpp。
 
 #include <boost/asio/awaitable.hpp>
 #include <nlohmann/json.hpp>

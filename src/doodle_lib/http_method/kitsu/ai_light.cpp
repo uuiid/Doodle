@@ -14,10 +14,15 @@
 // 见 docs/ue_ai_lighting_role_downgrade.md §3.3 第三梯队的形态 A。
 //
 
+#include <doodle_core/configure/static_value.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/ai_light/ai_light.h>
+#include <doodle_core/metadata/ai_studio.h>
 #include <doodle_core/metadata/entity.h>
+#include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/preview_file.h>
+// 推理任务行（seedance2::task）与它的落库/计费入口。
+#include <doodle_core/metadata/seedance2/task.h>
 #include <doodle_core/metadata/server_task_info.h>
 // 必须显式包含：get_tasks_for_entity_and_task_type() 返回 std::optional<task>，
 // 而 task_status.h 只给了 task 的前置声明，实例化 optional<task> 需要完整类型。
@@ -27,11 +32,13 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/http_client/seedance2_client.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/ai_light.h>
 #include <doodle_lib/http_method/kitsu/ai_light_orchestrator.h>
 #include <doodle_lib/http_method/kitsu/ai_light_stats.h>
 #include <doodle_lib/http_method/kitsu/preview.h>
+#include <doodle_lib/http_method/seedance2/inference_task.h>
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
@@ -971,7 +978,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, delete_) {
 // 推理网关（角色降级 §3.1，原 ai_light_gateway.cpp）
 // ---------------------------------------------------------------------------
 //
-// 只做三件事：权限 → 调 run_seam_inference → 组响应。
+// 只做三件事：权限 → 跑推理 → 组响应。
 // **不组装提示词、不解释模型输出、不碰轴** —— 那三件事降级后都在前端。
 //
 // 请求体**原样透传**（见 build_gateway_inference_request）：除 `model`（服务端强制）外，
@@ -979,6 +986,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, delete_) {
 // 多模态输入都不需要动这里。前端请求体的形状以火山方舟 Responses API 为准
 // （input / instructions / text.format ...），不再是本系统自己那套扁平键
 // （input_text / json_schema）：旧扁平键按契约**静默忽略**。
+//
+// 这里的推理管道（凭据解析 → 任务信封 → 计费 → 成败判定）曾经在 ai_light_seam_common.{h,cpp}
+// 里，由三条接缝共用。三条接缝归前端后它只剩本函数一个调用方，遂**就地内联到这里**，
+// 那个文件已删除。要点沿革（写在这里，免得后人以为这些设计是随手写的）：
+//   * 任务行落库的就是**要发出去的那份** json，不经结构体往返 —— 那次往返是一份手写白名单，
+//     会把前端透传进来的方舟键（input / tools / text.format…）静默吃掉。
+//   * 不传 text_prompt_：任务行要显示的那句话由 collect_request_info() 落库时自己从请求体读；
+//     调用方再抄一份进来就有了第二个真相，且抄的那份往往还是截断过的。
+//   * 副作用**只有** run_inference_task 自己那个事务（任务行 + 扣费），**有意保留**：
+//     推理确实发生了，必须留痕计费。
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   // 外包人员不能触发推理 —— 与 judge_route 同一口径。
@@ -1000,34 +1017,80 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   auto l_session = l_sql.get_by_uuid<ai_light_session>(session_id_);
   person_.check_project_access(l_session.project_id_);
 
-  // ---- 3) 计费元数据 ----
+  // ---- 2) 计费元数据 ----
   //
   // `operator_id_` **只从 JWT 取**。请求体里若有 operator_id 键会被彻底忽略 ——
   // 这是结构性保证：没有任何代码路径能让外部值流进来（见 ai_light.h 的说明）。
-  // session_id 写入 base 是为了任务归属可查；分项用不到它。
-  seam_request_base_t l_base{};
-  l_base.operator_id_ = person_.person_.uuid_id_;
-  l_base.session_id_  = l_session.uuid_id_;
-  l_base.project_id_  = l_session.project_id_;
+  // session_id / project_id 只为任务归属可查，下面的解析用不到它们（网关不走
+  // 落库信封那条路，见 build_gateway_inference_request）。
+  const uuid& l_operator_id = person_.person_.uuid_id_;
 
-  // ---- 4) 跑推理（凭据 + 计费 + 成败判定全在 run_seam_inference 里，不复制）----
+  // ---- 3) 凭据：触发人 → person → ai_studio → 推理客户端 ----
   //
-  // 不再传 text_prompt_：任务行要显示的那句话由落库侧从请求体自己读（见 collect_request_info），
-  // 这里再传一份摘要等于同一份提示词存两处。
+  // 用 select + to_optional 而不是 get_by_uuid<T>：后者内部是 to_single()，「查不到」会变成
+  // 一条 sqlite 异常（HTTP 500），而这里应当是 400 语义。
+  // 每次推理都**新建**客户端：http_client_ssl 内部只有一个 socket 且无锁。
+  DOODLE_CHICK_HTTP(
+      !l_operator_id.is_nil(), bad_request, "推理缺少触发人（operator_id），无法解析 AI 工作室与计费主体"
+  );
+  const auto l_person = select(l_sql)
+                            .columns(object<person>())
+                            .from<person>()
+                            .where(c(&person::uuid_id_) == l_operator_id)()
+                            .to_optional();
+  DOODLE_CHICK_HTTP(
+      l_person.has_value(), bad_request, "推理找不到触发人 {}（person 不存在），无法解析 AI 工作室", l_operator_id
+  );
+  DOODLE_CHICK_HTTP(
+      !l_person->ai_studio_id_.is_nil(), bad_request, "推理的触发人 {} 未关联 AI 工作室，无法调用推理接口",
+      l_operator_id
+  );
+  const auto l_studio = select(l_sql)
+                            .columns(object<ai_studio>())
+                            .from<ai_studio>()
+                            .where(c(&ai_studio::uuid_id_) == l_person->ai_studio_id_)()
+                            .to_optional();
+  DOODLE_CHICK_HTTP(
+      l_studio.has_value(), bad_request, "推理找不到 AI 工作室 {}（配置可能已被删除）", l_person->ai_studio_id_
+  );
+
+  // ---- 4) 组装任务信封 ----
   //
-  // iteration_id 留 nil：网关不铸造轮次。降级后轮次由前端在 /session/{}/iteration 提交时
-  // 建立，所以这次推理「属于哪一轮」在网关这里还不存在（与蒸馏阶段同形）。
-  auto l_result       = co_await run_seam_inference(l_sql, l_base, l_json);
+  // 全名写 `doodle::seedance2::task`：本函数所在命名空间同时 `using namespace doodle::ai_light`
+  // 与 `using namespace orm`，而 `doodle::task` 这个名字也被占据 —— 写短名 `seedance2::task`
+  // 会被解析成 `doodle::task`。
+  doodle::seedance2::task l_task{};
+  l_task.type_              = doodle::seedance2::task_type::inference;     // not_null，必须显式赋值
+  l_task.backend_           = doodle::seedance2::task_backend::seedance2;  // 同上
+  l_task.user_id_           = l_operator_id;                               // 计费主体 + 签名 URL 的 uid
+  l_task.ai_studio_id_      = l_studio->uuid_id_;
+  l_task.project_uuid_id_   = l_session.project_id_;                       // 只为归属可查，内部不依赖
+  // 网关不铸造轮次：降级后轮次由前端在 /session/{}/iteration 提交时建立，
+  // 所以这次推理「属于哪一轮」在网关这里还不存在（与蒸馏阶段同形，留 nil）。
+  l_task.ai_light_iteration_id_ = {};
+  l_task.completion_tokens_     = doodle_config::g_ark_inference_default_consumed_tokens;
+  l_task.data_request_          = l_json;
+
+  // ---- 5) 跑推理（凭据 + 计费 + 成败判定全在这一句里，不复制）----
+  //
+  // run_inference_task 自己一个事务里落终态任务行 + 扣费。这是唯一的副作用，且**有意保留**：
+  // 推理确实发生了，必须留痕计费 —— 否则调用方回滚会话状态时会连带把 person_token 的扣费抹掉。
+  auto l_result = co_await http::seedance2::run_inference_task(
+      l_task, l_sql, http::seedance2::make_inference_client(*l_studio)
+  );
 
   SPDLOG_LOGGER_INFO(
       g_logger_ctrl().get_http(), "AI 灯光推理网关：会话 {} 完成一次推理（{} → {} token）", l_session.uuid_id_,
       l_result.input_tokens_, l_result.output_tokens_
   );
 
-  // ---- 5) 组响应。原始结果回传，服务端不做任何解释 ----
+  // ---- 6) 组响应。原始结果回传，服务端不做任何解释 ----
+  //
+  // **不带 task_id**：run_task_result_t 里没有这个字段，要带得改它的返回，
+  // 不列入第一梯队（见 C++ 计划 §7 第 1 条）。计费留痕在 seedance2::task 行里。
   co_return in_handle->make_msg(
       nlohmann::json{
-          {"result", l_result.json_},
+          {"result", l_result.result_json_},
           {"input_tokens", l_result.input_tokens_},
           {"output_tokens", l_result.output_tokens_},
           {"total_tokens", l_result.total_tokens_},

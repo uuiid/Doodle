@@ -328,9 +328,8 @@ DOODLE_HTTP_FUN_END()
 //   —— 给它们报 400 会让「只想改前端」的人被迫先动服务端。
 //
 // 响应体：{result, input_tokens, output_tokens, total_tokens}
-//   **不带 task_id**：seam_inference_result_t 没有这个字段（ai_light_seam_common.h），
-//   要带得改它 + run_inference_task 的返回，不列入第一梯队（见 C++ 计划 §7 第 1 条）。
-//   计费留痕在 seedance2::task 行里，可按 text_prompt_ 反查。
+//   **不带 task_id**：run_task_result_t 里没有这个字段，要带得改它的返回，
+//   不列入第一梯队（见 C++ 计划 §7 第 1 条）。计费留痕在 seedance2::task 行里。
 //
 // 错误码：
 //   400  body 不是 JSON 对象
