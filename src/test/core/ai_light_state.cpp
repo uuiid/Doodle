@@ -610,64 +610,34 @@ BOOST_AUTO_TEST_CASE(session_detail_reports_overdue_flag) {
 }
 
 // ===========================================================================
-// 接缝的第一道闸门：解析不出触发人就无法解析工作室、更无法计费
-// （generate_candidates 见 §15.8，structure_feedback 见 §15.9）
+// 接缝的闸门用例已随两条接缝一起删除。
+//
+// 曾经这里有两个用例：
+//   * structure_feedback_rejects_unresolvable_operator —— 验「接缝 3 解析不出触发人时
+//     报 400 而不是 500，且发生在联网之前」，因为那会决定 `/judge` 是「降级继续」还是
+//     「整次判断失败」（§15.9）。
+//   * 更早还有 generate_spec_rejects_unresolvable_operator，随 spec 接缝删除。
+//
+// 随「推理归前端」（角色降级 · 第二梯队）删除后，服务端不再替前端跑任何推理，
+// `run_seam_inference` 在这条路径上也就没有再被判定的调用方 —— 这条闸门只留在
+// 推理网关（`/inference` → ai_light_gateway.cpp）那条路径上，它的第一道判定
+// 由 ai_light_dispatch.cpp 的网关用例覆盖。
+//
+// 「解析触发人」本身的正确性不再是 AI 灯光的议题：那是计费主体解析，与接缝无关。
 // ===========================================================================
 
-/// structure_feedback 的第一道闸门。两条接缝共用 make_seam_client()，所以这里验的是
-/// 「共用样板的第一道判定确实在**联网之前**发生」—— 500 与 400 的区别会决定 `/judge`
-/// 是「降级继续」还是「整次判断失败」。
-/// 接缝落地后已经没有 501 端点，所以那条「未实现接缝报 501」的用例已被它替换。
-DOODLE_FIXTURE_TEST_CASE_CORO(structure_feedback_rejects_unresolvable_operator, fixture_t) {
-  // 只造 1 个候选：本用例盯的是第一道闸门（解析触发人），候选数不影响结论
-  l_fx.build(ai_light_session_state::awaiting_judgement, ai_light_iteration_state::awaiting_judgement, 1, true);
-
-  auto l_session = l_fx.reload_session();
-
-  // 1) operator_id 为 nil → 400（不是 500，也不是「静默记到别人头上」）
-  {
-    feedback_structuring_request_t l_req{};
-    l_req.session_id_      = l_session.uuid_id_;
-    l_req.feedback_text_   = "暖一点、柔一点";
-    l_req.operator_id_     = uuid{};
-    bool l_threw           = false;
-    try {
-      co_await structure_feedback(*l_fx.sql_, l_req);
-    } catch (const doodle_error& in_err) {
-      l_threw = true;
-      BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
-    }
-    BOOST_TEST(l_threw);
-  }
-
-  // 2) operator_id 指向一个不存在的 person → 也是 400
-  {
-    feedback_structuring_request_t l_req{};
-    l_req.session_id_    = l_session.uuid_id_;
-    l_req.feedback_text_ = "暖一点、柔一点";
-    l_req.operator_id_   = core_set::get_set().get_uuid();
-    bool l_threw         = false;
-    try {
-      co_await structure_feedback(*l_fx.sql_, l_req);
-    } catch (const doodle_error& in_err) {
-      l_threw = true;
-      BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
-    }
-    BOOST_TEST(l_threw);
-  }
-}
-
 // 曾经的 generate_spec_rejects_unresolvable_operator 用例随 spec 接缝一起删除。
-// 它验的是「spec 的第一道闸门（解析触发人）发生在联网之前」，而服务端已经不再蒸馏 Spec
-// —— 这道闸门现在只存在于 candidates / feedback 两条接缝里（见上面的 structure_feedback
-// 用例与 ai_light_candidates.cpp 里对应的那条）。
+// 它验的是「spec 的第一道闸门（解析触发人）发生在联网之前」，而服务端已经不再蒸馏 Spec。
+// （当时这条闸门还存在于 candidates / feedback 两条接缝里，那两条后来也删了 ——
+// 见本文件上面的说明。）
 //
 // 同样删除的三条 advance_session 用例：advance_session_leaves_nothing_on_seam_failure、
 // advance_session_from_draft_without_references_is_rejected、
 // advance_session_redistills_from_awaiting_spec_confirm。它们的共同前提是
 // 「draft / awaiting_spec_confirm 会走进 spec 分支」，而那个分支已删：
 //   * 前两条盯的是「spec 失败不落半成品 / 参考图必须还在」——现在 draft 状态下
-//     advance_session 根本不会走到推理，所以「失败」不再是这两条用例描述的那种失败。
+//     advance_session 根本不会走到推理（服务端已经完全没有推理），所以「失败」
+//     不再是这两条用例描述的那种失败。
 //     但「没有可推进的步骤时报 400 且不写库」这条契约仍然成立，由下面
 //     advance_session_without_references_reports_no_step 覆盖。
 //   * 第三条盯的是「awaiting_spec_confirm 被 spec 分支接住而不是落到兜底分支」。

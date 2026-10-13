@@ -2,9 +2,11 @@
 // 推理任务的对外入口：客户端工厂 + 同步执行并结算。
 //
 // 为什么单独一份头文件（而不是留在 reg.h 里）：
-//   1. reg.h 是**路由注册**头，包含它会把一整套路由类拖进来；而这两个函数是给接缝
-//      （ai_light_orchestrator 的 generate_candidates / structure_feedback）用的，
-//      与路由无关；
+//   1. reg.h 是**路由注册**头，包含它会把一整套路由类拖进来；而这两个函数是给
+//      推理网关（ai_light_gateway.cpp）与接缝共用管道（ai_light_seam_common.cpp）
+//      用的，与路由无关；
+//      （曾经的使用者还有接缝 generate_candidates / structure_feedback，
+//        两条均已随「推理归前端」删除）
 //   2. reg.h 里有 `#include <core/http/http_function.h>` 这种「相对 doodle_lib 根」的写法，
 //      测试目标没有把 src/doodle_lib 放进 include 路径 —— 在测试里包含 reg.h 会直接编译失败。
 //      把入口挪到这份自洽的头里，测试只需依赖它（seedance2_task_pipeline.cpp 就是这么做的）。

@@ -308,45 +308,12 @@ std::vector<axis_step_t> map_feedback_result(const nlohmann::json& in_result_jso
   return l_out;
 }
 
-boost::asio::awaitable<std::vector<axis_step_t>> structure_feedback(
-    sqlite_database& in_sql, const feedback_structuring_request_t& in_request
-) {
-  // ---- 1) 一次推理：触发人 → 工作室 → 客户端 → 任务信封 → 成败判定，全在 seam_common ----
-  // `text_prompt_` 记的是「哪一轮的反馈被结构化了」，用于把一次计费对回一次人工判断。
-  // 请求体先落地成局部变量：下面的诊断要把**同一份** schema 交给校验库（§3.4 明说不额外重建）。
-  // 已经转成 json：run_seam_inference 收 json，且落库与出网是同一份（见 seam_common.h）。
-  nlohmann::json l_request{};
-  to_json(l_request, build_feedback_request(in_request));
-  const auto l_result = co_await run_seam_inference(in_sql, in_request, l_request, in_request.iteration_id_);
-
-  // ---- 2) 架构诊断（§3.4，决策 D-1：只写日志，不作准入闸门）----
-  // 本条接缝是**混合**策略：形状违规（如 axes 超过 maxItems）在 map_feedback_result 里抛 502，
-  // 语义无效的轴静默丢弃。日志里的全部违规能区分「模型多回了东西（无害）」与「模型回的结构
-  // 真的不对（下一步就该收紧成闸门）」—— 后者才是决策 D-1 里那条一行改动的升级路径。
-  if (const auto l_bad =
-          json_val::validate_model_output(l_result.json_, l_request.at("json_schema"), "structure_feedback");
-      !l_bad.empty()) {
-    SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮文本反馈：模型输出有 {} 处不符合 schema（只诊断、不拒绝）：{}",
-        in_request.session_id_, in_request.iteration_, l_bad.size(), json_val::join_violations(l_bad)
-    );
-  }
-
-  // ---- 3) 映射（形状违规抛错；语义无效的轴丢弃）----
-  auto l_steps = map_feedback_result(l_result.json_);
-
-  // 「模型给了几条 vs 我们留下几条」是唯一能观测到「轴被丢弃」的地方（map_feedback_result
-  // 是纯函数、不记日志），所以这里连原始 axes 一起记下来。
-  SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(),
-      "AI 灯光会话 {} 第 {} 轮文本反馈结构化完成：模型给 {} 条轴、留下 {} 条，理解=\"{}\"，原始 axes={}，"
-      "token in/out/total={}/{}/{}",
-      in_request.session_id_, in_request.iteration_, l_result.json_.at("axes").size(), l_steps.size(),
-      l_result.json_.value("understanding", std::string{}), l_result.json_.at("axes").dump(),
-      l_result.input_tokens_, l_result.output_tokens_, l_result.total_tokens_
-  );
-
-  co_return l_steps;
-}
+// 曾经这里还有 `structure_feedback(sqlite_database&, const feedback_structuring_request_t&)` ——
+// 自由文本反馈的一次真实推理（接缝 3 的联网入口）。它已随「推理归前端」删除：
+// 后端不再持有可漂移的提示词模板与 schema 真源, 也就不该再替前端跑这次推理。
+//
+// 本文件现在只留**离线可测的纯函数部件**（build_feedback_instructions / _json_schema /
+// _input_text / _request / map_feedback_result）—— 它们是提示词与输出契约的唯一真源,
+// 前端从这里读取并原样使用。
 
 }  // namespace doodle::ai_light

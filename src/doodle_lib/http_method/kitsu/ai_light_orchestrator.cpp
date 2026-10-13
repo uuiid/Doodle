@@ -5,18 +5,20 @@
 //
 // 本文件只装**状态机**：advance_session / advance_session_local / apply_judgement /
 // mark_iteration_rendered / build_session_detail，候选落库（write_submitted_iteration）
-// 与它自己的小助手。**接缝只剩一条**（structure_feedback）；rig 纯运算、共用部件与
+// 与它自己的小助手。**本文件已不含任何接缝调用**；rig 纯运算、共用部件与
 // JSON 架构层在同目录的独立文件里：
-//   * `ai_light_seam_feedback.{h,cpp}`    —— 自由文本 → 轴方向（§15.9）
+//   * `ai_light_seam_feedback.{h,cpp}`    —— 接缝 3 的离线部件（提示词/schema/映射）
 //   * `ai_light_rig_ops.{h,cpp}`          —— ops diff / key:fill 比
-//   * `ai_light_seam_common.{h,cpp}`      —— 接缝共用提示词片段 + 描述 + 推理管道
+//   * `ai_light_seam_common.{h,cpp}`      —— 共用提示词片段 + 描述 + 推理管道
 //   * `ai_light_json_validation.{h,cpp}`  —— schema 建造器 + 严格/宽松读取器 + 架构诊断
-// 对外仍然只需包含伞形头 `ai_light_orchestrator.h`。接缝的契约（抛即回滚、不得留下非幂等的
-// 部分写入、返回值必须自洽）见该头顶部。
+// 对外仍然只需包含伞形头 `ai_light_orchestrator.h`。接缝契约（历史）见该头顶部。
 //
-// 候选生成接缝（generate_candidates，原 §15.8）**已删除**：候选改由前端算好、
-// 经 POST /session/{}/iteration 提交，服务端只做 IR 准入闸门与落库
-// （见 ai_light_submit.{h,cpp} 与 docs/ue_ai_lighting_role_downgrade.md）。
+// 三条接缝**已全部删除**（角色降级 · 第二梯队，见
+// docs/ue_ai_lighting_role_downgrade.md）：
+//   * generate_spec      —— 前端自己调推理网关
+//   * generate_candidates —— 前端算好、经 POST /session/{}/iteration 提交，
+//     服务端只做 IR 准入闸门与落库（见 ai_light_submit.{h,cpp}）
+//   * structure_feedback —— 轴直接来自请求体滑块，文本原样留存
 //
 
 #include "ai_light_orchestrator.h"

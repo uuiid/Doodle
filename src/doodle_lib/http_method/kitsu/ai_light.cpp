@@ -4,12 +4,11 @@
 // 每个处理函数只做四件事：权限 → 校验入参 → 调编排层 → 组响应。
 // 状态推进与业务规则一律在 ai_light_orchestrator.cpp，这里不写状态机。
 //
-// 关于两条 LLM 接缝（`/iterate` → generate_candidates、`/judge` 的文本通道 →
-// structure_feedback）：它们**不是**占位桩 —— 权限、状态校验、会话查找全部真实执行，
-// 接缝真的去跑一次推理。两条现已全部落地（方案 §15.8 / §15.9）；参数错了会明确报错，
-// 接缝失败时由 advance_session 回滚或就地降级。
+// 关于 LLM 接缝：曾经有两条 —— `/iterate` → generate_candidates、`/judge` 的文本通道 →
+// structure_feedback。两条**已全部删除**（角色降级 · 第二梯队）：推理归前端，服务端不再
+// 持有可漂移的提示词模板与 schema 真源，也就不再替前端跑推理。
 //
-// 曾经的第一条接缝 generate_spec（`/spec` POST → 蒸馏 LightingSpec）已删除：
+// 曾经的第一条接缝 generate_spec（`/spec` POST → 蒸馏 LightingSpec）也已删除：
 // 蒸馏方案现在完全归前端，`/spec` POST 只负责**提交**前端蒸好的方案。
 //
 
@@ -716,63 +715,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   l_judgement.by_ = person_.person_.uuid_id_;
   l_judgement.at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
-  // ---- 文本反馈 → 结构化轴（best effort，§15.9）----
+  // ---- 文本反馈不再结构化（推理归前端）----
   //
-  // 决策 5 把滑块定为默认通道，所以 feedback_axes 是**直接从请求体拿的**，
-  // 不经 LLM。文本是补充通道：能结构化就结构化，不能也不影响这次判断成立 ——
-  // 所以这里捕获**所有** doodle_error 后降级（文本原样留存），只让程序性错误冒出来。
-  //
-  // 只在 continue_iteration 时调：accept / reject_all 会终止会话，结构化出来的轴
-  // 没有下一轮可以作用，那一次推理是纯浪费的计费（§15.9 决定 D16）。
-  if (!l_judgement.feedback_text_.empty() &&
-      l_judgement.decision_ == judgement_decision::continue_iteration) {
-    try {
-      feedback_structuring_request_t l_fb_req{};
-      l_fb_req.session_id_            = l_session.uuid_id_;
-      l_fb_req.project_id_            = l_session.project_id_;
-      l_fb_req.operator_id_           = l_judgement.by_;
-      l_fb_req.iteration_id_          = l_iteration->uuid_id_;
-      l_fb_req.iteration_             = l_iteration->iteration_;
-      l_fb_req.feedback_text_         = l_judgement.feedback_text_;
-      l_fb_req.decision_              = l_judgement.decision_;
-      l_fb_req.selected_candidate_id_ = l_judgement.selected_candidate_id_;
-      l_fb_req.candidates_            = l_sql.get_ai_light_candidates(l_iteration->uuid_id_);
-      l_fb_req.slider_axes_           = l_judgement.feedback_axes_;
-
-      // 用 iteration 记下的**那一版** Spec：Spec 可以升版，取「最新一版」会把美术
-      // 当时看的图和现在的目标对错。走 get_ai_light_specs() 而不是 get_by_uuid<T>() ——
-      // 后者查不到会抛 sqlite 异常（500），而文本通道不该有让 /judge 失败的能力。
-      bool l_has_spec = false;
-      for (const auto& l_spec_row : l_sql.get_ai_light_specs(l_session.uuid_id_))
-        if (l_spec_row.uuid_id_ == l_iteration->spec_id_) {
-          l_fb_req.spec_ = l_spec_row.to_spec();
-          l_has_spec     = true;
-        }
-      if (!l_has_spec) {
-        SPDLOG_LOGGER_WARN(
-            g_logger_ctrl().get_http(),
-            "AI 灯光会话 {} 第 {} 轮的 Spec {} 查不到，文本反馈不做结构化；文本原样留存: {}",
-            l_session.uuid_id_, l_iteration->iteration_, l_iteration->spec_id_, l_judgement.feedback_text_
-        );
-      } else {
-        auto l_steps = co_await structure_feedback(l_sql, l_fb_req);
-        for (const auto& l_step : l_steps) {
-          if (l_step.steps_.empty()) continue;
-          const std::string l_name{magic_enum::enum_name(l_step.axis_)};
-          // 滑块优先（决策 5 / §15.9 决定 D9）：同一轴上美术显式拖出的数值比自然语言精确。
-          // 不做这个判断的话，「谁赢」只取决于下面两段的执行顺序 —— 那是偶然，不是设计。
-          if (l_judgement.feedback_axes_.contains(l_name)) continue;
-          l_judgement.feedback_axes_[l_name] = l_step.steps_.front();
-        }
-      }
-    } catch (const doodle_error& in_err) {
-      SPDLOG_LOGGER_WARN(
-          g_logger_ctrl().get_http(),
-          "AI 灯光会话 {} 的文本反馈未能结构化（{}），已按纯滑块反馈处理；文本原样留存: {}",
-          l_session.uuid_id_, in_err.code_status_(), l_judgement.feedback_text_
-      );
-    }
-  }
+  // 决策 5 把滑块定为默认通道，所以 feedback_axes 是**直接从请求体拿的**，不经 LLM。
+  // 曾经这里还有一条补充通道：把 feedback_text_ 交给接缝 3 做一次真实推理，把自由文本
+  // 转成轴方向再并进 feedback_axes_。那条通道已随「推理归前端」删除 —— 服务端不再持有
+  // 可漂移的提示词模板与 schema 真源，替前端跑这次推理也就失去了立足点。
+  // 现在文本**原样留存**在 l_judgement.feedback_text_ 里随判定落库。
 
   // ---- 定稿要先把图落成 preview_file 对象（文件动作），再交给 apply_judgement 同事务落库 ----
   std::optional<preview_file> l_preview_file{};

@@ -18,7 +18,6 @@ target_sources(
         ai_light_seam_feedback.h
         ai_light_stats.h
         ai_light_gateway.h
-        ai_light_prompt_assets.h
         
         PRIVATE
         kitsu_reg_url.cpp
@@ -66,7 +65,6 @@ target_sources(
         ai_light_json_validation.cpp
         ai_light_stats.cpp
         ai_light_gateway.cpp
-        ai_light_prompt_assets.cpp
         ai_light_submit.cpp
         ai_light_submit.h
 )

@@ -86,36 +86,36 @@ std::string describe_spec_brief(const lighting_spec_t& in_spec);
 std::string describe_preset_brief(const ai_light_preset& in_preset);
 
 // ---------------------------------------------------------------------------
-// 两条接缝共用的请求信封与推理管道
+// 推理信封与推理管道（曾经由「两条接缝」共用；三条接缝现已全部删除，
+// 唯一调用方是**推理网关** ai_light_gateway.cpp）
 // ---------------------------------------------------------------------------
 
-/// 两条接缝请求体共有的身份字段。
+/// 请求体共有的身份字段。
 ///
 /// 提到公共基类是为了让 `run_seam_inference` 只收一个信封：管道要的三样东西
-/// （计费主体、任务归属项目、会话）在两条接缝里语义完全相同，其余字段各自不同。
+/// （计费主体、任务归属项目、会话）语义完全相同，其余字段各自不同。
 ///
-/// 不给 `DOODLELIB_API`：这是库内部件，三个派生请求体自己带着 DLL 边界（基类只贡献
+/// 不给 `DOODLELIB_API`：这是库内部件，派生请求体自己带着 DLL 边界（基类只贡献
 /// 对象布局里的成员，消费侧读写成员不需要跨 DLL 的符号）。派生类作为 dllexport 类的
 /// 非导出基类，MSVC 只会给 C4275，而本工程已 `/wd4275`。
 struct seam_request_base_t {
   uuid session_id_{};
-  /// 写入 sd2::task.project_uuid_id_（可空 FK）。只为归属可查，接缝内部不依赖它。
+  /// 写入 sd2::task.project_uuid_id_（可空 FK）。只为归属可查，内部不依赖它。
   uuid project_id_{};
   /// 触发人（person uuid）= 计费主体 + 签名 URL 里的 uid。
   ///
   /// 必须显式传入、**不给默认值**：`run_inference_task` 会按 `user_id_` 扣
   /// `person_token`，一旦有默认值，将来新增调用点忘记传就会把费用静默记到别人头上。
-  /// 为 nil 时由 advance_session 回落到 `ai_light_session.submitter_`；两者都 nil 抛
+  /// 为 nil 时由网关回落到 `ai_light_session.submitter_`；两者都 nil 抛
   /// bad_request（判定在 `make_seam_client` 里）。
   uuid operator_id_{};
 };
 
-/// 一次接缝推理的产出：**只有**模型输出的 JSON 与三项 token 计数。
+/// 一次推理的产出：**只有**模型输出的 JSON 与三项 token 计数。
 ///
 /// 刻意不把 `run_task_result_t` 原样传出去：status / error_code / is_timeout 这些「为什么失败」
 /// 的信息已经被 `chick_inference_ok` 消费成了 `doodle_error`（400 或 502），调用方拿到它们
-/// 只会写出第二套互不相容的判定。字段名与 `run_task_result_t` 的同名成员保持一致，好让接缝
-/// 原有的日志语句逐字不变（只把 `result_json_` 换成 `json_`）。
+/// 只会写出第二套互不相容的判定。字段名与 `run_task_result_t` 的同名成员保持一致。
 struct seam_inference_result_t {
   nlohmann::json json_{};
   std::int64_t input_tokens_{0};
@@ -123,10 +123,10 @@ struct seam_inference_result_t {
   std::int64_t total_tokens_{0};
 };
 
-/// 两条接缝共用的推理管道：解析触发人 → 建客户端 → 组装任务行 → 跑推理 → 判定成败。
+/// 推理管道：解析触发人 → 建客户端 → 组装任务行 → 跑推理 → 判定成败。
 ///
-/// `in_data_request` 是已建造好的请求体 json（接缝侧传 `inference_request_t` 的 to_json 结果，
-/// 网关侧传前端 body 原样）；`in_iteration_id` 为 nil 表示这次推理不属于任何轮次。
+/// `in_data_request` 是已建造好的请求体 json（前端来的 body 原样）；`in_iteration_id`
+/// 为 nil 表示这次推理不属于任何轮次。
 ///
 /// 参数是 json 而不是 `inference_request_t`：落库的与发出去的必须是**同一份**东西，中间再
 /// 夹一次结构体往返就等于给前端透传的键加了一道静默白名单（不认识的键无声消失）。
@@ -140,8 +140,8 @@ struct seam_inference_result_t {
 /// 参数是把两者假耦合起来。
 ///
 /// 副作用**只有** `run_inference_task` 自己的那个事务（任务行 + 扣费）。抛 `doodle_error`
-/// 表示这次推理不成立（400 内容违规/参数不全，502 推理失败或输出不是合法 JSON 对象），
-/// 调用方按契约 1 回滚会话状态。
+/// 表示这次推理不成立（400 内容违规/参数不全，502 推理失败或输出不是合法 JSON 对象）。
+/// 注意：服务端已不再有「回滚会话状态」的调用方 —— 网关只把错误原样报给前端。
 boost::asio::awaitable<seam_inference_result_t> run_seam_inference(
     sqlite_database& in_sql, const seam_request_base_t& in_request, const nlohmann::json& in_data_request,
     const uuid& in_iteration_id = {}
