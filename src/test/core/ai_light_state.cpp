@@ -620,7 +620,7 @@ BOOST_AUTO_TEST_CASE(session_detail_reports_overdue_flag) {
 //
 // 随「推理归前端」（角色降级 · 第二梯队）删除后，服务端不再替前端跑任何推理，
 // `run_seam_inference` 在这条路径上也就没有再被判定的调用方 —— 这条闸门只留在
-// 推理网关（`/inference` → ai_light_gateway.cpp）那条路径上，它的第一道判定
+// 推理网关（`/inference` → ai_light.cpp）那条路径上，它的第一道判定
 // 由 ai_light_dispatch.cpp 的网关用例覆盖。
 //
 // 「解析触发人」本身的正确性不再是 AI 灯光的议题：那是计费主体解析，与接缝无关。

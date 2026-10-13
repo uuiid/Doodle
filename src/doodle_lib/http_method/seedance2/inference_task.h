@@ -3,7 +3,7 @@
 //
 // 为什么单独一份头文件（而不是留在 reg.h 里）：
 //   1. reg.h 是**路由注册**头，包含它会把一整套路由类拖进来；而这两个函数是给
-//      推理网关（ai_light_gateway.cpp）与接缝共用管道（ai_light_seam_common.cpp）
+//      推理网关（ai_light.cpp）与接缝共用管道（ai_light_seam_common.cpp）
 //      用的，与路由无关；
 //      （曾经的使用者还有接缝 generate_candidates / structure_feedback，
 //        两条均已随「推理归前端」删除）

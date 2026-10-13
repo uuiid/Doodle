@@ -34,7 +34,6 @@
 
 #include "ai/ai_main.h"
 #include "kitsu/ai_light.h"
-#include "kitsu/ai_light_gateway.h"
 #include "kitsu/kitsu_reg_url.h"
 #include "seedance2/reg.h"
 

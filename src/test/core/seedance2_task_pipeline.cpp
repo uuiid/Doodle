@@ -2,7 +2,7 @@
 // 推理任务的「执行 + 结算」管线测试：run_inference_task / make_inference_client.
 //
 // 为什么单独一份：
-//   这条管线的调用方是推理网关（ai_light_gateway.cpp）与接缝共用管道
+//   这条管线的调用方是推理网关（ai_light.cpp）与接缝共用管道
 //   （ai_light_seam_common.cpp）。曾经的两条 AI 灯光接缝（generate_candidates /
 //   structure_feedback）已随「推理归前端」删除，但管线本身**仍然活着** ——
 //   网关转发前端点名的那次推理时走的就是它，扣费凭证照旧要落库。
