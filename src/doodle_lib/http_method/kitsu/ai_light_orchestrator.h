@@ -243,4 +243,48 @@ DOODLELIB_API std::optional<ai_light_session_detail_t> build_session_detail(
     sqlite_database& in_sql, const uuid& in_session_id
 );
 
+// ===========================================================================
+// 候选落库（角色降级 · 第二梯队）
+// ===========================================================================
+
+/// 前端提交一轮候选的请求。
+///
+/// 存在的理由：降级前候选是服务端自己演的（`advance_session_generating_branch`
+/// 排轴 → `generate_candidates` → 落库），降级后候选是前端算好交上来的。
+/// 两条路线的**后半段完全相同**（钉身份、落 iteration/candidate、算基线差分、装 launch plan），
+/// 所以那一段抽成一个函数、两条路线共用 —— 各写一份必然漂移，
+/// 而漂移的表现是「本地路线算不出视频路径」这类只在真机上才发现的故障。
+///
+/// 请求里**没有** `seam` / `operator_id_`：前者不适用（这一轮不调模型），
+/// 后者只从 JWT 取（结构上不可伪造，比"校验后拒绝"彻底）。
+struct DOODLELIB_API submit_iteration_request_t {
+  uuid session_id_{};
+  uuid project_id_{};
+  uuid operator_id_{};
+  /// 本轮轮次号（1、2、3…）。调用方已校验 == current_iteration_ + 1。
+  std::int32_t iteration_{0};
+  /// 本轮沿用的 Spec。调用方已校验存在且已人工确认。
+  uuid spec_id_{};
+  /// 本轮轴计划（从前端提交的 `axes` 解析；缺省为空轴计划 = 基线轮）。
+  iteration_axes_t axes_{};
+  /// **权威状态**：恰好 g_candidate_count 个已展开的 rig。身份字段由本函数补齐。
+  std::vector<lighting_rig_t> rigs_{};
+  /// 装配推导要它定位镜头（会话的 task_id_）。
+  uuid task_id_{};
+};
+
+/// 把一轮候选落库，并返回渲染计划。**两条路线共用**。
+///
+/// in_local_only = true 走引擎内路线（D52/D53）：不建任务行、不派发、不广播，
+/// 返回 launch plan 由发起方本机渲染。false 走队列路线（下放工作机）。
+///
+/// 为什么返回 `std::optional<ai_light_launch_plan_t>` 而不是 out 参数（编码规范）：
+/// 队列路线**没有**本机渲染计划可给 —— 调用方看到 nullopt 应当按「已派发」处理。
+///
+/// 抛出的错误：装配推不出来 → internal_server_error；候选数不为 g_candidate_count
+/// → internal_server_error（调用方本应先过闸门，走到这里说明闸门被绕过了）。
+DOODLELIB_API boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_iteration(
+    sqlite_database& in_sql, const submit_iteration_request_t& in_request, bool in_local_only
+);
+
 }  // namespace doodle::ai_light

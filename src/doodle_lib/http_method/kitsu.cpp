@@ -34,6 +34,8 @@
 
 #include "ai/ai_main.h"
 #include "kitsu/ai_light.h"
+#include "kitsu/ai_light_gateway.h"
+#include "kitsu/ai_light_prompt_assets.h"
 #include "kitsu/kitsu_reg_url.h"
 #include "seedance2/reg.h"
 
@@ -328,6 +330,20 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       ))
       .reg_t<ai_light::judge_route>("/api/doodle/ai/light/session/{}/judge"_url(
         &ai_light::judge_route::session_id_
+      ))
+      // 推理网关（角色降级 §3.1）。降级后前端自己组装提示词、解释模型输出，
+      // 服务端只剩「代持凭据 + 计费 + 原始结果回传」这一件事，三条接缝共用一个入口。
+      // 挂在会话下是为了让权限校验的对象（会话行）就是 URL 上操作的对象。
+      .reg_t<ai_light::inference_route>("/api/doodle/ai/light/session/{}/inference"_url(
+        &ai_light::inference_route::session_id_
+      ))
+      // 提示词素材只读出口（角色降级 §3.3）。**与上面那条成对**：推理网关负责
+      // 「把前端组装好的东西发出去」，这条负责「前端组装时该用的模板从哪来」。
+      // 少了它，前端就只能自己重抄一份模板 —— 那正是本方案要消灭的漂移源。
+      // 两条 GET 都不接受路径参数以外的输入，也无状态。
+      .reg_t<ai_light::prompt_assets_route>("/api/doodle/ai/light/prompt_assets"_url)
+      .reg_t<ai_light::prompt_asset_route>("/api/doodle/ai/light/prompt_assets/{}"_url(
+        &ai_light::prompt_asset_route::name_
       ))
       // 工作机回传渲染结果（§15.12）。与上面几条不同：调用方是 worker 而不是浏览器。
       .reg_t<ai_light::render_report_route>("/api/doodle/ai/light/render_report/{}"_url(

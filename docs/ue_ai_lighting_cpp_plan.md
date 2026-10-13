@@ -125,93 +125,176 @@
 
 ### 3.1 【新增】推理网关路由
 
-**路由**：`POST /api/doodle/ai/light/inference`
+> **⚠️ 实现修正（已按落地代码回写）**：本条下列草稿形状有 **4 处**与最终落地不同，
+> 落地代码为准（`http_method/kitsu/ai_light_gateway.{h,cpp}`）：
+> 1. **路径挂到会话下**：`POST /api/doodle/ai/light/session/{session_id}/inference`，
+>    不再是 `POST /api/doodle/ai/light/inference`。理由：权限校验的对象就是会话行，
+>    放路径上则「URL 上操作的对象」与「鉴权查的对象」必然同一个。
+> 2. **`session_id` / `operator_id` 都不在请求体里**。前者来自路径，后者来自 JWT。
+> 3. **响应不带 `task_id`**（`seam_inference_result_t` 没有这个字段，见下方说明）。
+> 4. **`seam` 的值是接缝名**（`generate_spec` / `generate_candidates` / `structure_feedback`），
+>    不是草稿写的短名（`spec` / `candidates` / `feedback`）—— 与三条接缝实际调
+>    `run_seam_inference` 时传的字面量逐字一致，否则日志与计费台账里会分成两套名字。
+
+**路由**：`POST /api/doodle/ai/light/session/{session_id}/inference`
 
 **请求体形状**（在 `docs/ue_ai_lighting_role_downgrade.md` §3.3 已给，此处落实为 C++ 侧契约）：
 
 ```jsonc
 {
-  "seam": "spec" | "candidates" | "feedback",   // 决定计费归类与日志
-  "session_id": "uuid",                          // 仅用于 task 关联与权限校验
-  "operator_id": "uuid",                         // 必须 == JWT 里的本人，防代刷
-  "input_text": "...",                           // 前端组装的完整用户消息
-  "instructions": "...",                         // 可选；缺省时服务端从 /prompt_assets 取内置值
+  "seam": "generate_spec" | "generate_candidates" | "structure_feedback",  // 必填
+  "input_text": "...",                           // 必填；前端组装的完整用户消息
+  "instructions": "...",                         // 可选；缺省时服务端取内置值
   "json_schema": { ... },                        // 可选；缺省时取内置 schema
-  "images": [ { "data": "base64", "detail": "..." } ]   // 可选
+  "images": [ "base64..." ],                     // 可选
+  "model": "...", "temperature": 0.7, "top_p": 0.9, "max_output_tokens": 4096,
+  "thinking": "...", "reasoning_effort": "...", "image_detail": "...",
+  "json_schema_name": "ai_light_spec", "json_schema_strict": true
 }
+
+// 注意：**没有** session_id、**没有** operator_id —— 见下方「权限」段。
 ```
 
 **响应体形状**：
 
 ```jsonc
 {
-  "result": { ... },        // 模型返回的原始 JSON（已过 schema 校验）
-  "task_id": "uuid",        // 计费任务行 id，供前端做「这一次花了多少」的展示
-  "seam": "spec"
+  "result": { ... },         // 模型返回的原始 JSON，服务端**不做任何解释**
+  "seam": "generate_spec",
+  "input_tokens": 123, "output_tokens": 456, "total_tokens": 579
 }
+
+// **没有 task_id**：seam_inference_result_t 只有 json_ + 三项 token 计数
+// （ai_light_seam_common.h:130-135），要带得改它 + run_inference_task 的返回，
+// 不列入第一梯队（见 §7 待实测第 1 条）。计费留痕在 seedance2::task 行里。
 ```
 
 **实现落点**：新增 `src/doodle_lib/http_method/kitsu/ai_light_gateway.{h,cpp}`，
 类名 `inference_route`，在 `kitsu.cpp` 的 `create_kitsu_route_2` 内追加一行 `.reg_t<>`。
 
-**核心实现**（直接复用 `run_seam_inference`，**约 40 行**）：
+**核心实现**（直接复用 `run_seam_inference`，**约 60 行**）。
+
+先看**真实签名**（`ai_light_seam_common.h:146-150`，此处逐字引用）：
 
 ```cpp
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
-  auto l_json = get_json_body();                       // 现有 helper
-  auto l_seam = json_val::require_enum<seam_kind>(l_json, "inference", "seam");
-
-  // operator_id 必须等于 JWT 本人 —— 否则任何一个登录用户都能拿别人的工作室密钥刷量。
-  // 这一条是网关的**唯一**新权限点，必须在这里挡。
-  const uuid l_operator = get_person().person_id_;
-  auto l_body_operator   = json_val::require_uuid(l_json, "inference", "operator_id");
-  DOODLE_CHICK_HTTP(
-      l_body_operator == l_operator, forbidden,
-      "operator_id 与当前登录人员不一致"
-  );
-
-  seam_request_base_t l_base{};
-  l_base.operator_id_ = l_operator;
-  l_base.seam_        = l_seam;
-  // … 从 body 填 input_text / instructions / json_schema / images（见 3.1.1）
-
-  auto l_res = co_await run_seam_inference(in_sql, l_base, seam_name_of(l_seam));
-  co_return nlohmann::json{{"result", l_res.green_}, {"task_id", l_res.task_id_}, {"seam", seam_name_of(l_seam)}};
-}
+boost::asio::awaitable<seam_inference_result_t> run_seam_inference(
+    sqlite_database& in_sql, const seam_request_base_t& in_request, std::string_view in_seam,
+    std::string_view in_text_prompt, const http::seedance2::inference_request_t& in_data_request,
+    const uuid& in_iteration_id = {}
+);
 ```
 
-#### 3.1.1 网关需要的新输入形状 —— 一个必须解决的形状冲突
-
-**这是本计划唯一需要真正设计的 C++ 改点。**
-
-现有 `run_seam_inference` 的入参是 `seam_request_base_t&`，而三条接缝的
-`build_*_request()` 产出的都是 `http::seedance2::inference_request_t`
-（字段：`input_text_` / `instructions_` / `json_schema_` / `images_` 等）。
-
-**但 `inference_request_t` 不是 `seam_request_base_t`** —— 前者是「发给火山的信封」，
-后者是「接缝的计费与身份元数据」。现在两者能对上，是因为每条接缝的
-`build_*_request()` 把 `seam_request_base_t` 的字段**拷进**了 `inference_request_t`
-（`operator_id_` / `seam_` / `iteration_id_` 落在任务的 `task_payload` 上）。
-
-**处置（最小改动）**：给 `seam_request_base_t` 增加一个**可选的直通信封**字段：
+以及 `seam_request_base_t` 的**真实**字段（同名文件 `:111-122`）—— 只有三个，**没有 `seam_`**：
 
 ```cpp
-struct DOODLELIB_API seam_request_base_t {
-  uuid operator_id_{};
-  uuid project_id_{};
-  uuid task_id_{};
-  seam_kind seam_{seam_kind::spec};
-  // 新增（网关用）：前端已经组装好的信封。设了它，*_build_request 就原样返回，
-  // 不再从结构化的 request_t 现场组装。
-  std::optional<http::seedance2::inference_request_t> prebuilt_{};
+struct seam_request_base_t {   // 不给 DOODLELIB_API（内部件，见该处注释）
+  uuid session_id_{};
+  uuid project_id_{};   // 写 sd2::task.project_uuid_id_，只为归属可查
+  uuid operator_id_{};  // 计费主体 + 签名 URL 的 uid；**无默认值**，nil 时由 make_seam_client 抛
 };
 ```
 
-于是三条接缝的 `build_*_request()` 各加一个早退分支（**每处 3 行**）：
+所以网关**不需要**给 `seam_request_base_t` 加任何字段：信封（`in_data_request`）
+与计费元数据（`in_request`）本来就是**两个独立入参**。
 
 ```cpp
-if (in_request.prebuilt_.has_value()) return *in_request.prebuilt_;
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
+  auto l_json = get_json_body();
+  auto l_seam = json_val::require_enum<seam_kind>(l_json, "inference", "seam");  // 认不出 → 400
+
+  // operator_id 必须等于 JWT 本人 —— 否则任何一个登录用户都能拿别人的工作室密钥刷量。
+  // 这是网关**唯一**的新权限点，必须在这里挡（测试见 ai_light_gateway.cpp）。
+  const uuid l_operator = get_person().person_id_;
+
+  seam_request_base_t l_base{};
+  l_base.operator_id_ = l_operator;                                    // 显式传，不给默认值
+  l_base.session_id_  = json_val::require_uuid(l_json, "inference", "session_id");
+  l_base.project_id_  = load_detail_checked(get_person(), in_sql, l_base.session_id_).session_.project_id_;
+  // ↑ 权限口径与 judge_route / iterate_route 完全一致（ai_light.cpp:185 load_detail_checked）
+
+  // 信封：body 给了 json_schema 就用它，否则落到内置的那一份（§3.1.2）
+  auto l_req = build_gateway_inference_request(l_json, l_seam);
+
+  auto l_res = co_await run_seam_inference(
+      in_sql, l_base, seam_name_of(l_seam), /*in_text_prompt=*/std::string{l_req.input_text_}, l_req
+  );
+  co_return nlohmann::json{
+      {"result", l_res.json_}, {"seam", seam_name_of(l_seam)},
+      {"input_tokens", l_res.input_tokens_}, {"output_tokens", l_res.output_tokens_},
+      {"total_tokens", l_res.total_tokens_}
+  };
+}
 ```
+
+**落地代码**（**已实现**，见 `http_method/kitsu/ai_light_gateway.cpp`，约 214 行）：
+
+```cpp
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
+  person_.check_not_outsourcer();          // 与 judge_route / iterate_route 同口径
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+
+  // 权限：路径里的 {session_id} → check_project_access。
+  // 会话不存在时 get_by_uuid → to_single 抛 sqlite_orm_exception{404}。
+  auto l_session = l_sql.get_by_uuid<ai_light_session>(session_id_);
+  person_.check_project_access(l_session.project_id_);
+
+  const auto l_seam_name = resolve_seam_name(l_json);          // 白名单，未知 → 400
+  auto       l_request   = build_gateway_inference_request(l_json, l_seam_name);
+
+  // operator_id **只从 JWT 取**：请求体里若有 operator_id 键会被彻底忽略。
+  // 这是结构性保证 —— 没有任何代码路径能让外部值流进来。
+  seam_request_base_t l_base{};
+  l_base.operator_id_ = person_.person_.uuid_id_;
+  l_base.session_id_  = l_session.uuid_id_;
+  l_base.project_id_  = l_session.project_id_;
+
+  auto l_result = co_await run_seam_inference(
+      l_sql, l_base, l_seam_name, l_request.input_text_, l_request
+  );
+  co_return in_handle->make_msg(nlohmann::json{
+      {"result", l_result.json_}, {"seam", l_seam_name},
+      {"input_tokens", l_result.input_tokens_}, {"output_tokens", l_result.output_tokens_},
+      {"total_tokens", l_result.total_tokens_}
+  });
+}
+```
+
+**注意四处与旧草稿的差异**（已按真实代码修正）：
+
+1. `run_seam_inference` **没有** `task_id_` 返回值可用 —— `seam_inference_result_t`（`:130-135`）
+   只有 `json_` + 三项 token 计数。所以响应体里**不带 `task_id`**，
+   计费留痕在 `seedance2::task` 行里（`l_task.text_prompt_` = 前端传来的 `input_text`，可按它反查）。
+   若前端确实要 `task_id`，得改 `seam_inference_result_t` **并**改 `run_inference_task` 的返回，
+   **不列入第一梯队**（见 §7 待实测第 1 条）。
+2. `seam_request_base_t` **不加字段**。原草稿提议的 `prebuilt_` 字段是多余的 ——
+   信封本来就是独立入参，不需要往计费元数据里塞。
+3. **不另建 `seam_kind` 枚举**：用一个三项的白名单常量数组 + `resolve_seam_name()`
+   直接得到服务端内部 seam 名（就是接缝名本身）。枚举会让「接缝名字面量」与「枚举名」
+   之间多一层需要人工对齐的翻译，而白名单只有三项、且这张表就是唯一真源。
+   （`json_val::require_enum` 也不能直接用 —— 它抛 `bad_gateway`，那是给「模型输出」
+   用的口径；请求体给错了是调用方的问题，应当 400。）
+4. **不调 `load_detail_checked`**：那是 `ai_light.cpp` 里为详情页设计的（带 `detail` 结构）。
+   网关只要会话行本身，`get_by_uuid<ai_light_session>` + `check_project_access` 就是
+   它内部做的事，且 404 口径完全一致。
+
+**信封组装函数** `build_gateway_inference_request(const nlohmann::json&, std::string_view)`
+（**已实现**，放在 `ai_light_gateway.cpp` 的匿名 namespace 里 —— 它只服务这一个路由，
+不外传就不需要进头文件）：
+
+```cpp
+// 从网关 body 组装信封。instructions / json_schema 缺省时落到内置的那一份 ——
+// 内置值是**编译期常量**，前端从 /prompt_assets 读到的就是它，两者必须字节相同（§6 风险 6）。
+http::seedance2::inference_request_t build_gateway_inference_request(
+    const nlohmann::json& in_json, std::string_view in_seam
+);
+```
+
+**一处静默降级要点明**：`json_schema` 给的不是 object 时，`json_val::opt_object` 返回
+`nullopt`，于是**静默落回内置 schema**。这是有意的（宁可跑内置契约，也不发一个必然被
+火山拒掉的 schema），但它必须可发现 —— 调用点在 `l_json.contains("json_schema") &&
+!l_json.at("json_schema").is_object()` 时记一条 WARN。前端传错 schema 却「看起来成功了」
+是最难查的一类问题。
 
 **为什么不另开一个 `run_gateway_inference()`**：那会把「计费 + 成败判定」复制第二份，
 而这两件事现在只定义在 `run_seam_inference` 一处 —— 复制必然慢慢分叉。
@@ -257,15 +340,45 @@ if (in_request.prebuilt_.has_value()) return *in_request.prebuilt_;
 把三条接缝的 `build_*_instructions()` / `build_*_json_schema()` 以**只读**方式暴露，
 供前端「读取后原样使用，不要重写」。
 
-**实现**：新增 `ai_light_prompt_assets.{h,cpp}`，两个路由：
+**实现**（**已落地**，`ai_light_prompt_assets.{h,cpp}`，两个路由）：
 
-- `GET /api/doodle/ai/light/prompt_assets` → 列表 `[{name, seam, has_schema}]`
-- `GET /api/doodle/ai/light/prompt_assets/{name}` → `{name, instructions, json_schema}`
+- `GET /api/doodle/ai/light/prompt_assets`（无路径参数）
+  → `{"assets": [{"name", "has_schema", "instructions_chars", "schema_chars"}]}`
+- `GET /api/doodle/ai/light/prompt_assets/{name}`
+  → `{"name", "instructions", "json_schema", "json_schema_name", "json_schema_strict"}`
+
+**三处与旧草稿的差异**（已按落地代码回写）：
+
+1. **`{name}` 用接缝名本身**（`generate_spec` / `generate_candidates` / `structure_feedback`），
+   不是草稿写的短名（`spec` / `candidates` / `feedback`）。理由同 §3.1 第 4 点：
+   前端要拿 `name` 去当网关的 `seam` 用，两套名字之间的映射表就是下一个漂移点。
+2. **多了第四项 `common`**（= `build_common_lighting_section()`，即被 spec 与 candidates
+   的 instructions **包含**的那三段公共文本）。它只在 `/prompt_assets` 里合法，
+   **不是**网关的合法 `seam` —— 没有「只跑公共段」这种推理。所以两个白名单是
+   「前三个重叠、第四个不重叠」的关系，**不能合并成一个常量**。
+3. **`{name}` 的类型必须是 `FSys::path` 而不是 `std::string`**：`_url(...)` 的路径参数
+   只接受 uuid / number / 枚举 / `FSys::path`（`http_function.h:159-176` 的 `static_assert`
+   会拒掉 `std::string`），`FSys::path` 那一支用的正则就是「一个路径段」。
+   与 `kitsu_reg_url.h:479` 的 `data_attachment_files_file::file_name_` 同一写法。
+   取值时用 `.generic_string()` 收成字符串。
+
+**为什么要 `json_schema_name` / `json_schema_strict`**：它们是「往网关发这次推理时该带
+什么」的一部分。前端若只拿 schema 不带这两个，就得自己在 TS 里写死
+（`ai_light_<seam>` 与 `true`），那又是一处会与 C++ 漂移的常量。
+
+**`name` 未知 → 400，不是 404**。`{name}` 是一个四值白名单，不在白名单内是「参数非法」
+（调用方拼错了），而不是「这个资源不存在」—— 后者的语义会让人以为将来可能多出一个接缝，
+于是前端写出一个动态探测的分支。白名单即全部可能。
 
 **要点**：这三个 `build_*_instructions()` 现在**不在 `DOODLELIB_API` 之外可见**
 （它们声明在 seam 头里，伞形头 `ai_light_orchestrator.h` 会 include）——
 所以从路由层直接调是可行的，无需额外导出。**但必须逐字保留**（模板搬迁清单见
 `ue_ai_lighting_role_downgrade.md` §4.1），这条是前端视觉一致性的唯一保障。
+
+**命名遮蔽的坑**（落地时踩到）：这些函数在 `doodle::ai_light` 里，而路由类在
+`doodle::http::ai_light` —— 同名内层命名空间会**遮蔽**外层，直接写 `ai_light::build_spec_instructions()`
+会命中 `doodle::http::ai_light` 自己（找不到）。两个新 .cpp 都在匿名 namespace 里加了
+`using namespace doodle::ai_light;`（与 `ai_light.cpp:50` 同一写法）。
 
 ### 3.4 【删】规划层的服务端调用点
 
@@ -329,12 +442,10 @@ if (in_request.prebuilt_.has_value()) return *in_request.prebuilt_;
 | 文件 | 动作 | 估计行数 |
 |---|---|---|
 | `http_method/kitsu/ai_light_gateway.h` | **新增** | ~40 |
-| `http_method/kitsu/ai_light_gateway.cpp` | **新增** | ~160 |
+| `http_method/kitsu/ai_light_gateway.cpp` | **新增** | ~180（含 `build_gateway_inference_request`） |
 | `http_method/kitsu/ai_light_prompt_assets.h` | **新增** | ~30 |
 | `http_method/kitsu/ai_light_prompt_assets.cpp` | **新增** | ~120 |
 | `http_method/kitsu/ai_light_submit.{h,cpp}` | **新增**（3.5 的提交路由） | ~200 |
-| `http_method/kitsu/ai_light_seam_common.h` | 改：`seam_request_base_t` 加 `prebuilt_` | +6 |
-| `ai_light_seam_spec.cpp` / `_candidates.cpp` / `_feedback.cpp` | 改：`build_*_request()` 各加早退分支 | +3 ×3 |
 | `http_method/kitsu/ai_light.cpp` | 改：删 `iterate_route`（`:660-696`）、`spec_confirm_route` 重出分支 | −90 |
 | `http_method/kitsu/ai_light_orchestrator.cpp` | 改：删 `:168` / `:329` 两处接缝调用 | −60 |
 | `http_method/kitsu/ai_light.h` | 改：删 `iterate_route` 类，加 3 个新路由类 | ±30 |
@@ -343,6 +454,9 @@ if (in_request.prebuilt_.has_value()) return *in_request.prebuilt_;
 | `src/test/core/ai_light_gateway.cpp` | **新增测试** | ~150 |
 | `src/test/core/ai_light_submit.cpp` | **新增测试** | ~180 |
 | `src/test/core/CMakeLists.txt` | 改：加 2 个测试文件 | +2 |
+
+**第一梯队不动 `seam_request_base_t`**（原草稿提议的 `prebuilt_` 字段已撤销 —— 信封是
+`run_seam_inference` 的独立入参，不需要往计费元数据里塞东西）。
 
 **搬迁到前端的文件**（C++ 侧删除或降级为「仅供网关缺省值使用」）：
 
@@ -362,17 +476,20 @@ if (in_request.prebuilt_.has_value()) return *in_request.prebuilt_;
 
 ### 第一梯队：网关 + prompt_assets（**不动任何现有逻辑**）
 
-1. 加 `seam_request_base_t::prebuilt_` + 三处 3 行早退分支。
-2. 新增 `ai_light_gateway.{h,cpp}`，注册 `POST /inference`。
-3. 新增 `ai_light_prompt_assets.{h,cpp}`，注册两条 `GET`。
-4. 写 `src/test/core/ai_light_gateway.cpp`：
-   - `prebuilt_` 早退分支不改动原有 `build_*_request()` 的输出（**回归保护，最重要的一条**）
-   - `operator_id` 不一致 → 403
-   - 未知 `seam` → 400
-   - `json_schema` 缺省时落到内置 schema
+1. 新增 `ai_light_gateway.{h,cpp}`，注册 `POST /inference`（含 `build_gateway_inference_request`）。
+2. 新增 `ai_light_prompt_assets.{h,cpp}`，注册两条 `GET`。
+3. 写 `src/test/core/ai_light_gateway.cpp`：
+   - `build_gateway_inference_request` 在 `json_schema` 缺省时落到**内置 schema**，
+     且与 `build_*_json_schema()` 的输出**字节相同**（防模板漂移，§6 风险 6）
+   - 未知 `seam` → 400；未知 `session_id` → 404（走 `load_detail_checked`）
+   - `operator_id` 不来自 body 而来自 JWT —— 断言 body 里塞任何 operator 都无效
+   - `input_text` 逐字透传到任务的 `text_prompt_`（计费留痕可反查）
 
 **验收**：`--run_test="ai_light_*"` 全绿，且**现有 9 个 ai_light 测试文件一个不红**。
 此时前端可以开始用网关，服务端行为零变化。
+
+**本梯队不碰的东西**：`seam_request_base_t`、三条接缝的 `build_*_request()`、
+`ai_light_orchestrator.cpp`、`iterate_route`。网关是**纯增量**。
 
 ### 第二梯队：candidates 走新路（**第一次真正搬家**）
 
@@ -398,10 +515,10 @@ if (in_request.prebuilt_.has_value()) return *in_request.prebuilt_;
 
 | # | 风险 | 对策 |
 |---|---|---|
-| 1 | **计费口径分叉** | 网关与三条接缝**共用** `run_seam_inference`，不复制。测试里断言两条路的 `task_id` 都非空且 `seam2_task` 行数一致 |
+| 1 | **计费口径分叉** | 网关与三条接缝**共用** `run_seam_inference`，不复制。测试断言网关路径落下的 `seedance2::task` 行 `type_=inference` / `user_id_=operator` / `text_prompt_=input_text` |
 | 2 | **schema 漂移** | 前端从 `/prompt_assets` 读，不自己写。服务端内置 schema 是唯一真源 |
 | 3 | **`ops` 只带不带 `lights`** | §3.2 第 4 条闸门硬拒 400 |
-| 4 | **`operator_id` 越权刷量** | §3.1 的 403 判定（**唯一新权限点，必须有测试**） |
+| 4 | **越权刷量** | `operator_id` 只从 JWT 取、**不读 body**（§3.1）—— 这一条靠「不读」而不是「校验后拒绝」来保证，比 403 判定更彻底 |
 | 5 | **反馈质量静默下降** | §3.6 显式决策走法 A 或 B，不允许「删了 `structure_feedback` 调用但没人在前端补上」 |
 | 6 | **模板搬迁走样** | 逐字比对：`/prompt_assets` 返回的 `instructions` 与搬迁前 `build_*_instructions()` 的输出必须**字节相同** |
 | 7 | **枚举静默落值** | 网关校验沿用 `json_val` 的 `magic_enum::enum_cast`，**不得**改用 `NLOHMANN_JSON_SERIALIZE_ENUM` 裸 `get<>`（`ai_light_json_validation.h` 顶部已有约定） |
@@ -410,14 +527,18 @@ if (in_request.prebuilt_.has_value()) return *in_request.prebuilt_;
 
 ## 7. 待实测确认（不阻塞开工）
 
-1. **`inference_request_t` 的完整字段**：`build_*_request()` 里到底拷了哪些字段到任务
-   `task_payload`（这决定 `prebuilt_` 早退分支是否会漏掉某个计费相关字段）。
-   —— 三处早退分支的测试覆盖它。
-2. **前端能否拿到 `session_id` → 权限校验**：网关要不要校验该 session 属于当前用户？
-   现状 `judge_route` / `iterate_route` 都走 `load_detail_checked()`（`ai_light.cpp:185`），
-   网关也应按同口径校验，但**要确认前端在 spec 阶段是否已有 `session_id`**。
-3. **`/prompt_assets` 的缓存策略**：模板是编译期常量，可加 `Cache-Control`，但前端调试期
-   可能希望不缓存 —— 建议先不加头，留待实测。
+1. **`seam_inference_result_t` 要不要带任务 id**：现在它只有 `json_` + 三项 token 计数
+   （`ai_light_seam_common.h:130-135`）。若前端需要「这一次花了多少 / 哪个任务」，
+   要改 `seam_inference_result_t` **并**看 `run_inference_task` 能否回传 `task.uuid_id_`。
+   —— **第一梯队不阻塞**：先不带，前端的计费展示可以后加。
+2. **网关要不要校验 session 归属**：`load_detail_checked()`（`ai_light.cpp:185`）做
+   `check_project_access`。§3.1 已按同口径写，但要确认前端在 spec 阶段就已有 `session_id`。
+3. **`/prompt_assets` 的缓存策略**：模板是编译期常量，可加 `Cache-Control`，
+   但前端调试期可能希望不缓存 —— 建议先不加头，留待实测。
+4. **`seam_kind` 枚举是否已存在**：§3.1 用了 `json_val::require_enum<seam_kind>`。
+   若工程里没有这个枚举（现在 `run_seam_inference` 收的是 `std::string_view in_seam`），
+   则在 `ai_light_gateway.h` 里新增一个三值的 `enum class seam_kind { spec, candidates, feedback }`
+   + `seam_name_of()`，**不要**复用字符串字面量散落各处。
 
 ---
 
