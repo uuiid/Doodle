@@ -185,8 +185,9 @@ struct DOODLE_CORE_API ai_light_task_candidate_t {
   FSys::path png_path_{};
   FSys::path exr_path_{};
   FSys::path movie_path_{};
-  /// 目标 rig。**含 ops_**：expand_candidates 已按轴展开、diff_rigs 已算出与基线的差，
+  /// 目标 rig。**含 ops_**：前端已按轴展开候选、`diff_rigs` 已算出与基线的差，
   /// commandlet 直接 apply_ops 即可（§13.4），不需要它自己再算轴。
+  /// （从前这一步由服务端的 expand_candidates 做，它随候选生成降级一起删除。）
   lighting_rig_t rig_{};
 
   friend void to_json(nlohmann::json& j, const ai_light_task_candidate_t& p) {

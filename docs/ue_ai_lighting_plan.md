@@ -705,6 +705,11 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 `apply_axis_step()` 后 rig 实质无变化，接缝直接 502。宁可这一轮失败，也不要发 6 张看起来一样的图
 去浪费美术的一次判断。
 
+> ⚠️ **已被降级取代**：`expand_candidates()` / `apply_axis_step()` 与整条候选生成接缝**已删除**
+> （角色降级 · 第二梯队，见 [ue_ai_lighting_role_downgrade.md](ue_ai_lighting_role_downgrade.md) §5）。
+> 候选现在由前端算好提交；「一堆看起来一样的候选」改由**提交时的 IR 准入闸门**拦下
+> （`ai_light_submit.cpp` 的候选自检 + substance 差异比较）。
+
 ### 9.2 全局调色反解（grading 类目标的热启动）
 
 已确认**参考以全局调色为主**，这给出一个不需要位姿、不需要几何的解析机会：
@@ -983,6 +988,12 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    `computers_assign_task` 下次轮询会再捡起来，不会丢。
    不单开端点的理由：建会话入口与 `/iterate` 都要派发，抽在编排层里只有一份实现，
    而独立的提交端点会变成第二个可以绕过归属校验的入口。
+
+   > ⚠️ **已被降级取代**：`/iterate` 与 `generate_candidates()` 已删除，派发现在只发生在
+   > `advance_session_generating_branch` 里一次（候选由前端 `POST /iteration` 提交之后）。
+   > 第 2 条里「`command_` 的 `candidates[]`」现在的来源是前端提交的候选，
+   > 不再由服务端展开。「不单开提交端点」这条**理由随之失效** —— 降级后确实单开了
+   > `POST /session/{sid}/iteration`（见降级文档 §3.3.4）。上述文字作为历史决策记录保留。
 3. **派发逻辑**：**零改动**。`computers.cpp:376-378` 已按 `computer.allowed_task_types_` 通用过滤。
 4. **LLM/VLM 客户端**：原计划是「新增 `deepseek_client`（继承 `http_client/ai_client_base.h`，OpenAI 兼容，
    支持 chat + vision）」。**实施时改成了复用 `seedance2_client` + 火山方舟 Responses API**（§15.6），
@@ -998,9 +1009,10 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
      不需要为 LLM 调用另起一套记账；
    - 凭据仍在 `kitsu_ctx_t`（`seedance2_key_` / `ai_studio`），**必须在主服务器**这条约束不变。
 
-   **接缝进度**：三条接缝**全部接上** —— `generate_spec`（§15.7）、`generate_candidates`（§15.8）、
-   `structure_feedback`（§15.9）。**仓库里已经没有 `not_implemented` 的端点。**
-   接法就是 `make_inference_client()` + `run_inference_task()`，参数与返回值早已定好。
+   **接缝进度**：~~三条接缝**全部接上**~~ —— **接缝 1（`generate_spec`）与接缝 2（`generate_candidates`）
+   已按角色降级删除**，只剩接缝 3 `structure_feedback`（§15.9）仍在服务端；
+   `ai_light_prompt_assets` 保留全部提示词素材出口（前端自己拼信封）。
+   仓库里仍然没有 `not_implemented` 的端点。
 
 5. **AI 路由**：**已落地（本轮）**，12 条，全部注册在 `create_kitsu_route_2`（主服务器），
    声明在 `doodle_lib/http_method/kitsu/ai_light.h`，处理函数在 `ai_light.cpp`：
@@ -1019,7 +1031,8 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    | `GET  /api/doodle/ai/light/session/{session_id}/spec` | Spec 版本列表 |
    | `POST /api/doodle/ai/light/session/{session_id}/spec` | 生成 Spec：`draft` 出第一版，`awaiting_spec_confirm` 重出（**要求已有参考图**，否则 400）—— **已实现**（§15.7）：聚合统计 + 一次方舟推理；失败时会话状态回滚、Spec 版本不变 |
    | `POST /api/doodle/ai/light/session/{session_id}/spec/confirm` | 人工闸门 1：确认 Spec（**不带裁决内容**，见 §15.7 D6），随后触发首轮 |
-   | `POST /api/doodle/ai/light/session/{session_id}/iterate` | 生成一轮候选并派发 —— **已实现**（接缝 `generate_candidates`，见 §15.8）；无需请求体 |
+   | `POST /api/doodle/ai/light/session/{session_id}/iterate` | ~~生成一轮候选并派发~~ —— **已删除**（角色降级 · 第二梯队：服务端不再自己生成候选）。替代入口是下面的 `/iteration` |
+   | `POST /api/doodle/ai/light/session/{session_id}/iteration` | **候选提交 + 派发**：前端提交算好的候选与基线 rig，经 IR 准入门后写 submitted iteration 并派发 —— **已实现**（角色降级 · 第二梯队；见 `ai_light_submit.{h,cpp}`） |
    | `POST /api/doodle/ai/light/session/{session_id}/judge` | **人工闸门 2**（accept / continue_iteration / reject_all） |
    | `GET  /api/doodle/ai/light/preset` | 预设库列表（`?enabled_only=false` 取全部） |
    | `POST /api/doodle/ai/light/preset` | 新建预设（美术整理的第一批走这里导入） |

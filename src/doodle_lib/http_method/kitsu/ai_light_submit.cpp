@@ -25,7 +25,6 @@
 #include <vector>
 
 #include "ai_light_rig_ops.h"
-#include "ai_light_seam_candidates.h"
 #include "ai_light_submit.h"
 
 namespace doodle::http::ai_light {
@@ -41,16 +40,17 @@ using namespace doodle::ai_light;
 // ===========================================================================
 //
 // 降级前，这三条约束是**接缝的返回值**上的断言：模型给的东西不合法，服务端自己知道。
-// 降级后，候选是**前端交上来的**，同样的三条约束就变成了准入闸门 —— 不合法的东西
-// 不许落库。措辞逐字沿用 map_candidate_result() 的原句（ai_light_seam_candidates.cpp:481-523），
-// 这样同一份错误在两条路线上长得一样，排查时不必区分「哪条路出的」。
+// 现在服务端已经没有那条接缝了（候选生成归前端），同样的三条约束就落在准入闸门上 ——
+// 不合法的东西不许落库。措辞沿用已删除的 map_candidate_result() 的原句
+// （原 ai_light_seam_candidates.cpp:481-523，该文件随接缝一起删除），
+// 这样历史错误信息与前端日志能对上，排查时不必重新学一套措辞。
 //
 // 为什么闸门必须在服务端、不能只在前端：
 //   前端可以因为 bug 或被绕过而提交畸形候选，而落库的候选会被 UE 拿去建灯。
 //   6 张一样的图比一次失败更糟（美术会以为「这几个方向看起来一样」）。
 
-/// 只比较「灯怎么打」的部分。与 ai_light_seam_candidates.cpp:95-97 的 rig_substance 同义
-/// （那边在匿名 namespace 里，取不到，故此处按同一定义重写）。
+/// 只比较「灯怎么打」的部分。与已删除的 ai_light_seam_candidates.cpp:95-97 的 rig_substance
+/// 同义（那份随接缝一起删了，这里是唯一的一份）。
 /// 身份字段（rig_id/spec_id/iteration/candidate_index）、variant_axis_、provenance_、ops_
 /// 都由服务端另填，拿它们判「候选是否与基线相同」会误判。
 nlohmann::json rig_substance(const lighting_rig_t& in_rig) {
@@ -60,9 +60,7 @@ nlohmann::json rig_substance(const lighting_rig_t& in_rig) {
 /// 契约 3 的自洽检查（§6.6）：「同轮 6 个候选灯集合完全一致」是硬约束，
 /// 降级后没有任何一环替前端保证它。
 ///
-/// 为什么不用 ai_light_seam_common.h 的 first_light_with_role：它吃**非 const 引用**
-/// （给要改灯的调用方用），而这里只是读一下 —— 拿可写引用去只读检查，正是那个头注释
-/// 警告过的用法。这里自己遍历 const 版本。
+/// 这里自己遍历 const 版本，不复用别处的取值助手 —— 只读检查不该拿到可写引用。
 bool has_key_light(const lighting_rig_t& in_rig) {
   return std::any_of(
       in_rig.lights_.begin(), in_rig.lights_.end(), [](const light_t& in_light) { return in_light.role_ == light_role::key; }
@@ -71,8 +69,7 @@ bool has_key_light(const lighting_rig_t& in_rig) {
 
 /// 解析前端交上来的 `axes` 数组。**宽松**：识别不了的轴名直接丢弃并 WARN，
 /// 不抛错 —— 轴计划是"建议怎么渲"，本轮真渲什么由 candidates 决定（它们是权威状态）。
-/// 这与接缝里的 parse_axis_plan() 口径不同：那里模型给错轴要整体回退默认计划，
-/// 而前端给的轴名不认识时，候选已经按它自己的理解展开了，作用是把轴写进轮次行做审计。
+/// 前端给的轴名不认识时，候选已经按它自己的理解展开了，作用是把轴写进轮次行做审计。
 iteration_axes_t parse_submitted_axes(const nlohmann::json& in_json) {
   iteration_axes_t l_ret{};
   if (!in_json.contains("axes")) return l_ret;
@@ -113,8 +110,8 @@ ai_light_session submit_load_session_checked(
 }
 
 /// 解析一个候选的 rig。身份字段（session/spec/iteration/candidate_index/rig_id/provenance）
-/// **不从前端取**，由调用方在落库前补齐 —— 与接缝里 map_candidate_result() 的
-/// 「身份字段由服务端钉死」同一条纪律（ai_light_seam_candidates.cpp:504-513）。
+/// **不从前端取**，由调用方在落库前补齐 —— 沿用已删除的 map_candidate_result() 的
+/// 「身份字段由服务端钉死」那条纪律（原 ai_light_seam_candidates.cpp:504-513）。
 lighting_rig_t parse_submitted_rig(const nlohmann::json& in_json, std::int32_t in_index) {
   DOODLE_CHICK_HTTP(
       in_json.is_object(), bad_request, "候选 {} 不是 JSON 对象", in_index
@@ -240,9 +237,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
 
   // ---- 调用共用落库件 ----
   // 说明：候选的落库、iteration 行、session 推进、launch_plan 装配全部复用
-  // write_submitted_iteration()（ai_light_orchestrator.h）。降级前那一段在
-  // advance_session_generating_branch() 里，降级后两条路线共用同一个实现 ——
-  // 各写一份必然漂移，而漂移的表现是"本地路线算不出视频路径"这类只在真机上才发现的故障。
+  // write_submitted_iteration()（ai_light_orchestrator.h）。那一段原本在
+  // advance_session_generating_branch() 里（已随候选生成降级一起删除），
+  // 现在只剩这一条提交路线 —— 落库逻辑不再有第二份实现可漂移。
   submit_iteration_request_t l_req{};
   l_req.session_id_    = l_session.uuid_id_;
   l_req.project_id_    = l_session.project_id_;

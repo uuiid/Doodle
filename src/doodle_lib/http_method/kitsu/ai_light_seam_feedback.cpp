@@ -93,7 +93,8 @@ std::string build_feedback_instructions() {
       "你是电影灯光指导的**翻译**环节：美术刚看完一轮渲染，用一句大白话说了他想要什么。\n"
       "你要把这句大白话翻译成灯光轴上的**方向**，由下一轮的排轴环节把它变成具体的档位。\n"
       "你**不**负责出灯、也**不**负责出档位表 —— 只判断「往哪个轴、往哪边、动多少」。\n\n";
-  // 与 apply_axis_step 同一份口径（§15.9）：模型按它给方向，服务端按同一套公式应用。
+  // 与已删除的 apply_axis_step 同一份口径（§15.9）：模型按它给方向、按同一套公式理解轴，
+  // 前端再按这份口径把方向展开成档位表。
   l_out += "【轴值语义】\n";
   l_out += g_axis_value_semantics_text;
   l_out += "\n【约束】\n";
@@ -262,9 +263,9 @@ std::vector<axis_step_t> map_feedback_result(const nlohmann::json& in_result_jso
   );
 
   // ---- 语义无效：在源头丢弃 ----
-  // 为什么不抛错：unknown 轴名与 advance_session:314 的既有容错一致；none / 0 是「没有变化」
-  // 的合法语义，但它一旦传下去，下一轮 advance_session 会把它变成 axis_step_t，
-  // apply_axis_step() 对 0/none 恒返回 false，最终以「轴无实质变化」抛 502 ——
+  // 为什么不抛错：unknown 轴名与 advance_session 的既有容错一致；none / 0 是「没有变化」
+  // 的合法语义，但它一旦传下去，下一轮就会变成一条空转的轴 —— 前端照着它排轴会排出一批
+  // 视觉上无差别的候选，最终在提交时的 IR 准入闸门被拦下（「候选与基线无实质差异」）。
   // 那时病根与表现之间隔了一次**人工判断**（美术得先白判一轮）。丢弃在这里是最短的修复路径。
   //
   // 这里**不记日志**：本函数是离线可测的纯函数，而单测宿主没有 HTTP logger
@@ -290,13 +291,13 @@ std::vector<axis_step_t> map_feedback_result(const nlohmann::json& in_result_jso
     );
     const double l_value = l_item.at("value").get<double>();
     if (!std::isfinite(l_value) || l_value == 0.0) continue;
-    // key_fill_ratio 是比值，负值/零没有意义（apply_axis_step 对 <= 0 也直接返回 false）。
+    // key_fill_ratio 是比值，负值/零没有意义。
     if (*l_kind == variant_axis_kind::key_fill_ratio && l_value <= 0.0) continue;
 
     axis_step_t l_step{};
     l_step.axis_ = *l_kind;
     // 每条轴**恰好一个值**（决定 D11）：调用方只取 front() 当下一轮的中心值，
-    // 完整档位表由下一轮 generate_candidates 的 axes_ 决定。
+    // 完整档位表由**前端**下一轮自己排的轴计划决定（服务端不再展开候选）。
     l_step.steps_ = {l_value};
     auto l_reason = std::string{};
     if (l_item.contains("reason") && l_item.at("reason").is_string()) l_reason = l_item.at("reason").get<std::string>();

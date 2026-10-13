@@ -197,6 +197,7 @@ struct fixture_t : doodle_test::coro_fixture_t {
     insert(orm_).into<ai_light_iteration>().values(iteration_)();
 
     for (std::int32_t l_i = 0; l_i != in_count; ++l_i) {
+      // 候选由前端算好提交（服务端的展开器已删除），测试这里直接造候选行。
       ai_light_candidate l_cand{};
       l_cand.iteration_id_    = iteration_.uuid_id_;
       l_cand.session_id_      = session_.uuid_id_;

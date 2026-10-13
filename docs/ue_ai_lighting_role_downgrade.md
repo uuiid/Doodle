@@ -376,19 +376,22 @@ POST /api/doodle/ai/light/session/{sid}/iteration
 
 **验收**：同一段反馈文本，前端解释出的轴与服务端旧实现一致（可用现有单测的用例做对照）；轴名非法/值 0/超过 2 条仍被服务端丢弃。
 
-### 第二梯队：candidates（高风险高收益，主体工作）
+### 第二梯队：candidates（高风险高收益，主体工作）—— **已落地**
 
 **为什么第二批**：契约强制最重（`role=key`、档位总数、substance 差异），但收益也最大——提示词与轴计划迭代速度提升最明显。
 
 **改动**
 
-1. 新增 `POST /session/{sid}/iteration`（§3.3.4）+ IR 准入闸门（§3.5）
-2. 删除 `POST /session/{sid}/iterate`（服务端生成候选的入口）
-3. 删除 `ai_light_seam_candidates.{h,cpp}`（572 行）与 `generate_candidates` 的调用
-4. `advance_session_generating_branch` 里 `co_await generate_candidates` 调用点删除
-5. `ai_light_rig_ops.{h,cpp}` 的 `expand_candidates` / `diff_rigs` / `apply_axis_step`：**服务端可整体删除**，保留常量 `g_axis_step_budget` / `g_axis_max_count` / `g_candidate_count`（前端通过 `session_detail` 读，`docs/ue_ai_lighting_frontend.md:39-54` 第 5 条已要求"不要写死 6"）
-6. 前端实现：§4.2 全部类型级搬迁 + `build_candidates_input_text` + `map_candidate_result` 的三条判据
-7. ~~同步处理 §6.1 的 `ops` 阻塞点~~ —— **已定：路线 A**（决定 D-58，§3.3.4.1）。UE 侧零改动，前端提交前折叠 `ops → lights`+`globals`；服务端闸门拒绝只有 `ops` 的候选
+1. ✅ 新增 `POST /session/{sid}/iteration`（§3.3.4）+ IR 准入闸门（§3.5）—— 实现为 `ai_light_submit.{h,cpp}`
+2. ✅ 删除 `POST /session/{sid}/iterate`（服务端生成候选的入口）
+3. ✅ 删除 `ai_light_seam_candidates.{h,cpp}`（572 行）与 `generate_candidates` 的调用
+4. ✅ `advance_session_generating_branch` 里 `co_await generate_candidates` 调用点删除（连"跑接缝 + 护栏"整段与 `g_candidate_count` 个数护栏一起去掉：候选数由前端决定，服务端不再数）
+5. ✅ `ai_light_rig_ops.{h,cpp}` 的 `expand_candidates` / `diff_rigs` / `apply_axis_step`：服务端已整体删除，保留常量 `g_axis_step_budget` / `g_axis_max_count` / `g_candidate_count`（前端通过 `session_detail` 读，`docs/ue_ai_lighting_frontend.md:39-54` 第 5 条已要求"不要写死 6"）。
+   注：`diff_rigs` 的**生产**调用方随接缝一起没了，但 `ai_light_submit.cpp:45-83` 为 IR 准入闸门重写了一份等价的「只比灯怎么打」的子集比较，测试里仍需要它们做候选自检，故保留实现。
+6. ⏳ 前端实现：§4.2 全部类型级搬迁 + `build_candidates_input_text` + `map_candidate_result` 的三条判据（**不在本仓库**）
+7. ✅ ~~同步处理 §6.1 的 `ops` 阻塞点~~ —— **已定：路线 A**（决定 D-58，§3.3.4.1）。UE 侧零改动，前端提交前折叠 `ops → lights`+`globals`；服务端闸门拒绝只有 `ops` 的候选
+
+**落地后服务端剩下的**：`advance_session_generating_branch` 只做闸门校验（Spec 存在 / `human_confirmed_` / iteration 递增 / operator 非 nil）→ 推装配给 UE（`shot_render_light_sync_only`）→ 写 submitted iteration；候选与基线 rig 全由前端提交，服务端既不排轴也不展开。
 
 ### 第三梯队：spec（语义最纠结，建议最后或保持）
 

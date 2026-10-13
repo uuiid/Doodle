@@ -7,33 +7,33 @@
 // 路由层（http_method/kitsu/ai_light.h）只是这一层的薄包装。
 //
 // ---------------------------------------------------------------------------
-// 两个「接缝」：接入 LLM 的两个位置
+// 「接缝」：接入 LLM 的位置
 // ---------------------------------------------------------------------------
-// generate_candidates 已落地（见 §15.8）：Spec + 基线 rig + 上一轮反馈轴 → 本轮 6 个候选。
-// structure_feedback 已落地（见 §15.9）：自由文本 → 轴方向，填进
-//   ai_light_judgement_t::feedback_axes_，下一轮当**约束**用。
-// 两者都走已落地的方舟 Responses 通道（`seedance2_client` + `run_inference_task`，
-// 用法见 §15.6）。**仓库里已经没有 not_implemented 的接缝了。**
+// **只剩一条**：structure_feedback 已落地（见 §15.9）—— 自由文本 → 轴方向，填进
+//   ai_light_judgement_t::feedback_axes_，下一轮当**约束**用。走已落地的方舟 Responses
+//   通道（`seedance2_client` + `run_inference_task`，用法见 §15.6）。
 //
-// 曾经的第三条接缝 generate_spec（提示词 + 多图统计 → LightingSpec）**已删除**：
-// 蒸馏方案与「意会灯光 rig」这一步现在归前端 —— 前端直接调推理网关
-// （/session/{}/inference，见 ai_light_gateway.h）自己想怎么问就怎么问，
-// 服务端不再替它写提示词、也不再解释模型输出。
+// 曾经有两条接缝，现在都删了：
+//   * generate_spec（提示词 + 多图统计 → LightingSpec）**归前端**：前端直接调推理网关
+//     （/session/{}/inference，见 ai_light_gateway.h）自己想怎么问就怎么问，
+//     服务端不再替它写提示词、也不再解释模型输出。
+//   * generate_candidates（Spec + 基线 rig + 反馈轴 → 6 个候选）**归前端**：
+//     候选由前端算好、经 POST /session/{}/iteration 提交，服务端只做 IR 准入闸门
+//     与落库（见 ai_light_submit.{h,cpp}）。角色降级 · 第二梯队，见
+//     docs/ue_ai_lighting_role_downgrade.md。
+//   服务端不再自己演这一半模型 —— 剩下的自由度只有「判断反馈」这一条接缝。
 //
 // 接缝契约（实现方必须遵守）：
-//   1. 抛出即视为「本轮无法推进」。调用方 advance_session() 只把原因记进会话的
-//      failure_reason_，**不改会话状态、也不回滚** —— 状态机的分支自身不落库，
+//   1. 抛出即视为「本轮无法推进」。调用方只把原因记进会话的 failure_reason_，
+//      **不改会话状态、也不回滚** —— 状态机的分支自身不落库，
 //      所以抛错时库里本来就一行没动，实现方**不需要**自己清理状态。
 //   2. 但必须保证「抛之前没有落库」，或者「落库的部分是幂等可重入的」——
 //      调用方不会回滚接缝自己写下的东西（它根本没有回滚动作）。
-//      **受控例外**：generate_candidates / structure_feedback 经由
-//      run_inference_task 写下一行推理任务与对应的扣费记录。这是有意保留的 —— 推理确实
-//      发生了，抹掉它等于抹掉计费凭证。除此之外它们不写任何 ai_light_* 表
-//      （返回值全部交给调用方落库）。
-//   3. 返回值必须自洽：候选数量 == g_candidate_count，且满足 §6.6 护栏
-//      （同轮候选的灯集合与角色完全一致，只有轴参数不同）。调用方会再校验一次，
-//      不合规直接判失败 —— 护栏是硬约束，不能靠实现方自觉。
+//      **受控例外**：structure_feedback 经由 run_inference_task 写下一行推理任务
+//      与对应的扣费记录。这是有意保留的 —— 推理确实发生了，抹掉它等于抹掉计费凭证。
+//      除此之外它不写任何 ai_light_* 表（返回值全部交给调用方落库）。
 //
+
 
 #pragma once
 
@@ -48,10 +48,9 @@
 // 所以不会破坏本文件顶部「这一层刻意不包含任何 HTTP 依赖」的约定。
 #include <doodle_lib/http_client/seedance2_inference_request.h>
 
-// 本头是**伞形头**：两个接缝、rig 纯运算、共用部件各自成文件，本头把它们与状态机
+// 本头是**伞形头**：剩下的那条接缝、rig 纯运算、共用部件各自成文件，本头把它们与状态机
 // 一起收在同一个命名空间下 —— 对外仍然只需包含 ai_light_orchestrator.h 一个头。
 #include "ai_light_rig_ops.h"
-#include "ai_light_seam_candidates.h"
 #include "ai_light_seam_common.h"
 #include "ai_light_seam_feedback.h"
 
@@ -71,47 +70,49 @@ namespace doodle::ai_light {
 // 状态机
 // ===========================================================================
 
-/// 会话状态推进的唯一入口。按 in_session.state_ 分派：
+/// 会话状态推进的唯一入口。**角色降级后它已经没有可推进的步骤** —— 见下面的说明。
 ///
+/// 按 in_session.state_ 分派，而两条老分支都已归前端：
 ///   draft / awaiting_spec_confirm
-///       → **没有可推进的步骤**（400）。这一步曾经是 generate_spec 接缝，现在归前端：
-///         前端自己调推理网关蒸馏方案，再经 /session/{}/spec 提交上来。
+///       → 曾经是 generate_spec 接缝蒸馏方案（已删除）。后继是 /session/{}/spec 提交
+///         与 /spec/confirm，都不是 advance_session。
 ///   generating 且已有已确认的 Spec
-///       → generate_candidates 接缝 → 写 iteration + g_candidate_count 个 candidate
-///       → 建 server_task_info{type = ai_light} → run_next_task() + broadcast
-///       → session 保持 generating（渲染中）；渲染完由 mark_iteration_rendered 转 awaiting_judgement
+///       → 曾经是 generate_candidates 接缝 → iteration + g_candidate_count 个 candidate
+///         → 建 server_task_info{type = ai_light} → run_next_task() + broadcast
+///         （已删除，角色降级 · 第二梯队）。后继是 POST /session/{}/iteration
+///         （ai_light_submit.h）：候选由前端算好交上来，服务端只做 IR 闸门 + 落库。
+///
+/// 于是每个状态都落到兜底分支（400）。这个函数**保留**是刻意的：路由层与前端仍按原
+/// 契约调它，「该推的状态推不动」比「接口消失」更容易诊断 —— 报错信息里直接写明候选
+/// 该走哪个接口。也正因为如此，它现在既不落库、也不碰 in_sql / in_operator_id。
+///
+/// generating 的语义也随之变了：它不再是「服务端正在生成」，而是
+/// **「等待前端提交本轮候选」**（等待期由前端自己的推理耗时决定）。
 ///
 /// 参考图为空时**拒绝**（400，且不写 failure_reason_）：候选生成的前提是会话有提示词与
-/// 参考图（见 ai_light.cpp 的闸门）。因此建会话接口**不**调本函数 ——
+/// 参考图（见 ai_light.cpp 的闸门，现在由提交接口把关）。因此建会话接口**不**调本函数 ——
 /// 建会话时参考图还不可能存在（见 shot_session_route::post）。
 ///
-/// 失败时不改会话状态、**也没有回滚动作**：分派到的分支只算 SQL 不落库（见 .cpp 里
-/// 各分支「返回 SQL 而不是就地执行」的说明），抛错时库里一行没动，所以退回原状态
-/// 是恒等操作 —— 唯一要做的是记 failure_reason_，然后重新抛出。
-/// 这样不会留下卡在 generating 的会话（本来就没改过），也不会丢已上传的参考图
+/// 失败时不改会话状态、**也没有回滚动作**：分派到的分支只算 SQL 不落库，
+/// 抛错时库里一行没动，所以退回原状态是恒等操作 —— 唯一要做的是记 failure_reason_，
+/// 然后重新抛出。这样不会留下卡在 generating 的会话，也不会丢已上传的参考图
 /// （参考图的外键 cascade 挂在会话上，删会话才会连带删图）。
 ///
-/// 分派只看状态，所以**同一个状态只能有一个后继步骤** —— 这是结构性约束。
-/// 「等判断」的会话没有可推进的步骤（该做的是 /judge，不是再推一步）。
-///
-/// in_operator_id 是本次推进的触发人（person uuid），转手给 generate_candidates 做计费主体与
-/// 签名 URL 的 uid。为 nil 时回落到 in_session.submitter_；两者都 nil 抛 bad_request
-/// （无法解析工作室、无法计费）—— 这条在 try 内，所以照常记 failure_reason_。
+/// in_operator_id 是本次推进的触发人（person uuid），曾经转手给 generate_candidates 做
+/// 计费主体与签名 URL 的 uid。现在没有接缝可转手，参数只为守住 ABI 与调用契约而保留。
 DOODLELIB_API boost::asio::awaitable<void> advance_session(
     sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
 );
 
-/// 引擎内路线的推进（D52/D53）：走完候选生成那一步后**不建任务行**，
-/// 而是把「本轮该怎么渲」作为 ai_light_launch_plan_t 返回给调用方，由发起方本机自己渲染。
+/// 引擎内路线的推进（D52/D53）。**与 advance_session 一样，已经没有可推进的步骤**。
 ///
-/// 与 advance_session 共用同一个分支实现，差别只在 generating 分支的末尾：
-/// 一个建 server_task_info + run_next_task（下放工作机），一个填 launch plan 直接返回。
+/// 它曾经是「走完候选生成那一步后**不建任务行**，而是把『本轮该怎么渲』作为
+/// ai_light_launch_plan_t 返回给调用方，由发起方本机自己渲染」。候选生成降级给前端之后，
+/// 渲染计划改由**提交那一刻**产出：POST /session/{}/iteration（引擎内路线）走
+/// write_submitted_iteration(..., in_local_only = true)，当场把 launch plan 返回。
 ///
-/// 为什么返回 std::optional 而不是 out 参数：
-///   * 非 generating 状态推进不了任何东西，
-///     **没有**渲染计划可给 —— 调用方看到 nullopt 应当按「只推进了状态」处理，不是错误；
-///   * 生成分支失败（装配推不出来、接缝抛错）照 advance_session 的老规矩办：
-///     记 failure_reason_，然后**重新抛出**（同样没有回滚动作）。
+/// 所以本函数如今恒抛 400，保留它同样是为了「接口还在、报错指路」而不是静默 404。
+/// 参数与返回值形状不动 —— 调用方（本地客户端）的兼容性优先。
 DOODLELIB_API boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_local(
     sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
 );
@@ -251,9 +252,9 @@ DOODLELIB_API std::optional<ai_light_session_detail_t> build_session_detail(
 
 /// 前端提交一轮候选的请求。
 ///
-/// 存在的理由：降级前候选是服务端自己演的（`advance_session_generating_branch`
-/// 排轴 → `generate_candidates` → 落库），降级后候选是前端算好交上来的。
-/// 两条路线的**后半段完全相同**（钉身份、落 iteration/candidate、算基线差分、装 launch plan），
+/// 存在的理由：候选现在是前端算好交上来的（角色降级 · 第二梯队），服务端只做
+/// IR 准入闸门与落库。两条提交路线（队列 / 引擎内）的**后半段完全相同**
+/// （钉身份、落 iteration/candidate、算基线差分、装 launch plan），
 /// 所以那一段抽成一个函数、两条路线共用 —— 各写一份必然漂移，
 /// 而漂移的表现是「本地路线算不出视频路径」这类只在真机上才发现的故障。
 ///

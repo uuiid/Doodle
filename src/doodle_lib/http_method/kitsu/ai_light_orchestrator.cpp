@@ -3,17 +3,20 @@
 //
 // 对应 docs/ue_ai_lighting_plan.md §10.3（状态流转）与 §10.4（派发契约）。
 //
-// 本文件只装**状态机**：advance_session / apply_judgement / mark_iteration_rendered /
-// build_session_detail，以及它自己的两个小助手。两条「接缝」（generate_candidates /
-// structure_feedback）、rig 纯运算、共用部件与 JSON 架构层在同目录的
-// 独立文件里：
-//   * `ai_light_seam_candidates.{h,cpp}`  —— 基线 rig + 轴计划 + OFAT 展开（§15.8）
+// 本文件只装**状态机**：advance_session / advance_session_local / apply_judgement /
+// mark_iteration_rendered / build_session_detail，候选落库（write_submitted_iteration）
+// 与它自己的小助手。**接缝只剩一条**（structure_feedback）；rig 纯运算、共用部件与
+// JSON 架构层在同目录的独立文件里：
 //   * `ai_light_seam_feedback.{h,cpp}`    —— 自由文本 → 轴方向（§15.9）
-//   * `ai_light_rig_ops.{h,cpp}`          —— 轴施加 / OFAT 展开 / ops diff / key:fill 比
+//   * `ai_light_rig_ops.{h,cpp}`          —— ops diff / key:fill 比
 //   * `ai_light_seam_common.{h,cpp}`      —— 接缝共用提示词片段 + 描述 + 推理管道
 //   * `ai_light_json_validation.{h,cpp}`  —— schema 建造器 + 严格/宽松读取器 + 架构诊断
 // 对外仍然只需包含伞形头 `ai_light_orchestrator.h`。接缝的契约（抛即回滚、不得留下非幂等的
 // 部分写入、返回值必须自洽）见该头顶部。
+//
+// 候选生成接缝（generate_candidates，原 §15.8）**已删除**：候选改由前端算好、
+// 经 POST /session/{}/iteration 提交，服务端只做 IR 准入闸门与落库
+// （见 ai_light_submit.{h,cpp} 与 docs/ue_ai_lighting_role_downgrade.md）。
 //
 
 #include "ai_light_orchestrator.h"
@@ -103,187 +106,69 @@ orm::sql_modify_statement_t make_session_update(sqlite_database& in_sql, const a
 }  // namespace
 
 // ===========================================================================
-// 状态机：推进
+// 状态机
 // ===========================================================================
+// 候选生成（generate_candidates 接缝 + 轴计划 + OFAT 展开 + 基线 rig 推导）**已删除**：
+// 服务端不再自己演模型，候选由前端算好后经 POST /session/{}/iteration 提交
+// （见 ai_light_submit.{h,cpp} 与 docs/ue_ai_lighting_role_downgrade.md）。
+//
+// 于是 generating 的语义变了：它不再是「服务端正在生成」，而是
+// **「等待前端提交本轮候选」**。推进动作是那次提交，不是 advance_session；
+// 所以 advance_session(generating) 与其它状态一样，都是「没有可推进的步骤」（400）。
+//
+// 保留 advance_session / advance_session_local 两个入口而不是顺手删掉：路由层与
+// 前端仍然按原契约调它们，「该推的状态推不动」比「接口消失」更容易诊断 ——
+// 报错信息里直接写明候选该走哪个接口。
+//
+// 引擎内路线的渲染计划（ai_light_launch_plan_t）现在只由 write_submitted_iteration 产出。
 
-namespace {
-
-/// 第二步：generating 且 Spec 已确认 → 出候选，然后按 in_local_only 分两条出口：
-///
-///   * `false`（默认，队列路线）：建 server_task_info{type = ai_light} → run_next_task + 广播，
-///     由工作机起 UE 渲染（§10.4）；
-///   * `true`（引擎内路线，D52/D53）：**不建任务行、不派发、不广播**，把「本轮该怎么渲」
-///     填进返回值交给调用方（发起方本机自己渲染，见 ai_light_launch_plan_t 的说明）。
-///
-/// 两条出口共用前面全部内容（Spec 校验、warm start、接缝调用、轮次行、候选行、载荷装配）——
-/// 差别只在末尾那一段，所以用一个分支参数而不是写两个函数：复制一遍的话，
-/// 上面那几十行校验会慢慢长成两套语义。
-///
-/// **不捕获异常、不落库**：同第一步，本函数只把语句算出来，`in_sql` 只用于查。
-///
-/// 唯一的例外是队列路线的派发与广播（见 generating_branch_result::dispatch_ 的说明）——
-/// 那是**内部任务分发**，不是「把某几行写进 ai_light_* 表」，留在这里比让调用方去猜
-/// 一个不透明批次里有什么更安全。
-///
-/// 返回 `generating_branch_result`（**用返回值，不用非常量引用 out 参数**：
-/// C++ Core Guidelines F.17）。语句在**局部**变量里攒，最后一次装进返回值 ——
-/// 任何校验/接缝/装配推导在中途抛错，调用方都拿不到半成品批次。
-struct generating_branch_result {
-  orm::sql_modify_statement_vector_t sqls_{};
-  /// 引擎内路线：交给发起方本机渲染的计划；队列路线必然空（D52/D53）。
-  std::optional<ai_light_launch_plan_t> plan_{};
-  /// 队列路线要广播的新任务号；nil 表示不广播（引擎内路线不建任务行）。
-  uuid broadcast_task_id_{};
-  /// 队列路线：落库之后调一次 computers_assign_task::run_next_task()。
-  bool dispatch_{false};
-};
-
-boost::asio::awaitable<generating_branch_result> advance_session_generating_branch(
-    sqlite_database& in_sql, const ai_light_session& in_session, const uuid& in_operator, bool in_local_only
+boost::asio::awaitable<void> advance_session(
+    sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
 ) {
-  auto l_spec = in_sql.get_current_ai_light_spec(in_session.uuid_id_);
-  DOODLE_CHICK_HTTP(l_spec.has_value(), bad_request, "会话 {} 还没有 Spec，无法生成候选", in_session.uuid_id_);
-  DOODLE_CHICK_HTTP(
-      l_spec->human_confirmed_, bad_request, "会话 {} 的 Spec revision {} 尚未经人工确认（闸门 1），不允许生成候选",
-      in_session.uuid_id_, l_spec->revision_
-  );
+  (void)in_sql;
+  (void)in_operator_id;
+  const auto l_entry_state = in_session.state_;
 
-  const auto l_iteration = in_session.current_iteration_ + 1;
-
-  DOODLE_CHICK_HTTP(
-      !in_operator.is_nil(), bad_request,
-      "会话 {} 无法确定触发人（无 operator_id 且会话无 submitter），无法解析 AI 工作室与计费主体", in_session.uuid_id_
-  );
-
-  // iteration 的 uuid 在这里就铸造并随请求交给接缝：那条推理任务行（sd2::task）用
-  // ai_light_iteration_id_ 指回来，于是「哪一次推理生成了第 N 轮候选」可以反查。
-  // 落库时用的是同一个值，所以任务行、迭代行、候选行三者必然一致。
-  const auto l_iteration_id = core_set::get_set().get_uuid();
-
-  candidate_generation_request_t l_req{};
-  l_req.session_id_    = in_session.uuid_id_;
-  l_req.project_id_    = in_session.project_id_;
-  l_req.operator_id_   = in_operator;
-  l_req.iteration_id_  = l_iteration_id;
-  l_req.iteration_     = l_iteration;
-  l_req.spec_          = l_spec->to_spec();
-  l_req.presets_       = in_sql.get_ai_light_presets(true);
-  l_req.prompt_text_   = in_session.prompt_text_;
-
-  // 上一轮的迭代行只查一次，同时喂给下面两件事。
-  const auto l_prev_it = in_sql.get_ai_light_iteration(in_session.uuid_id_, in_session.current_iteration_);
-
-  // warm start：上一轮被选中的候选。首轮没有，由接缝从预设库起手。
+  // ---------------------------------------------------------------
+  // 推进失败时**不落库、不记录 failure_reason_**：同步请求的失败原因由 HTTP 响应体描述
+  // （http_session_data.cpp:313 把 doodle_error::what() 放进 body），前端无论状态码是多少
+  // 都读 body 显示。这里再写一列只是重复，而且会与「异步失败」抢同一个字段。
+  // 异步失败（工作机回传渲染结果）没有人可对话，仍走 mark_iteration_failed() 落库。
+  // 异常自然向上抛，由 HTTP 层转成状态码 + body。
   //
-  // 必须同时要求「上一轮解的 Spec 就是当前这份」：Spec 升版之后（美术重出了方案）
-  // 上一轮的 rig 是照着旧目标打的，拿它当起点会让新目标从一开始就被旧方向带偏。
-  if (l_prev_it.has_value() && l_prev_it->spec_id_ == l_spec->uuid_id_) {
-    if (auto l_base = in_sql.get_ai_light_selected_candidate(in_session.uuid_id_, in_session.current_iteration_);
-        l_base.has_value())
-      l_req.base_rig_ = l_base->get_rig();
-  }
-
-  // 上一轮人工给的轴调整（滑块通道）。首轮没有。
-  if (l_prev_it.has_value()) {
-    auto l_j = l_prev_it->get_judgement();
-    if (!l_j.feedback_axes_.empty()) {
-      iteration_axes_t l_axes{};
-      for (const auto& [l_name, l_value] : l_j.feedback_axes_) {
-        auto l_kind = magic_enum::enum_cast<variant_axis_kind>(l_name);
-        if (!l_kind.has_value()) continue;  // 未知轴名忽略，不让它把整轮拖垮
-        l_axes.axes_.emplace_back(axis_step_t{*l_kind, {l_value}, "人工反馈"});
-      }
-      l_req.feedback_axes_ = std::move(l_axes);
-    }
-  }
-
-  // 本轮渲染的对象是 auto_light 装配出来的交付场景：关卡（render_map_）里有场景，
-  // 序列（level_sequence_import_）里有相机轨道、camera cut 与角色动画，配置资产
-  // （movie_pipeline_config_）里有这条镜头的 MRQ 画质设置。三者都由 shot_render_light()
-  // 现算 —— 它就是那三段推导（基英/集数 → 场景 UE 路径 → 地编预调探测）的唯一权威，
-  // 自己查库、自己推导，所以这里直接调它，不另写一遍。
-  //
-  // 会话的 task_id_ 是灯光任务 id，与动画/解算任务指向同一个镜头实体。
-  //
-  // 装配推导失败 / 序列为空 = 本轮不可渲染（D50）：候选本身虽然生成了，但工作机拿着一个
-  // 没有序列的载荷去起 UE，只会失败在更远的地方、现象与真正的原因无关。所以抛在这里，
-  // 调用方不落库、不改状态，只记 failure_reason_ 再重抛。
-  // 用 sync_only 变体：AI 灯光链路只要「起 UE 要什么 + 工作机工程根 + 装配同步清单」，
-  // 不需要装配任务那套扫描/配对/校验（它算出来的 asset_infos_/skin_path_/ue_asset_path_
-  // 在 AI 灯光链路上没有任何消费者）。见 auto_task.h 的 shot_render_light_sync_result 说明。
-  http::auto_task::shot_render_light_sync_result l_assembly_res{};
-  std::string l_assembly_err{};
-  if (in_session.task_id_.is_nil()) {
-    l_assembly_err = "会话没有关联镜头任务（task_id 为空）";
-  } else {
-    try {
-      l_assembly_res = http::auto_task::shot_render_light_sync_only(in_session.project_id_, in_session.task_id_);
-    } catch (const std::exception& in_err) {
-      l_assembly_err = in_err.what();
-    }
-  }
-  auto&& l_assembly = l_assembly_res;
+  // 曾经这里的分派是：
+  //   draft / awaiting_spec_confirm → generate_spec 蒸馏 Spec（已删除，归前端）
+  //   generating                   → generate_candidates 接缝生成候选（已删除，归前端）
+  // 两个后继都归了前端，所以现在**没有任何状态**由本函数推进 —— 函数体只剩兜底报错。
+  // 「同一个状态只能有一个后继步骤」仍然成立：后继是前端的提交接口，不是这个函数。
+  // ---------------------------------------------------------------
   DOODLE_CHICK_HTTP(
-      l_assembly_err.empty(), internal_server_error,
-      "AI 灯光会话 {} 第 {} 轮：无法推导本镜头的渲染装配，本轮无法渲染（{}）", in_session.uuid_id_, l_iteration,
-      l_assembly_err
+      false, bad_request,
+      "会话 {} 处于状态 {}，当前没有可推进的步骤（候选生成已归前端：请用 POST "
+      "/ai_light/session/{{}}/iteration 提交本轮候选）",
+      in_session.uuid_id_, magic_enum::enum_name(l_entry_state)
   );
-  DOODLE_CHICK_HTTP(
-      !l_assembly.level_sequence_import_.empty(), internal_server_error,
-      "AI 灯光会话 {} 第 {} 轮：镜头装配没有给出 level sequence（{}），本轮无法渲染", in_session.uuid_id_, l_iteration,
-      l_assembly.level_sequence_import_.generic_string()
-  );
-  l_req.baseline_level_ = l_assembly.original_map_.generic_string();
-
-  auto l_res            = co_await generate_candidates(in_sql, l_req);
-
-  // §6.6 护栏：候选数量与「灯集合一致」是硬约束，不能靠实现方自觉。
-  // 数量在这里校验（接缝的返回值上）；降级后前端提交的那条路在路由层过闸门。
-  DOODLE_CHICK_HTTP(
-      static_cast<std::int32_t>(l_res.rigs_.size()) == g_candidate_count, internal_server_error,
-      "候选生成接缝返回了 {} 个候选，方案 §6.6 要求恰好 {} 个", l_res.rigs_.size(), g_candidate_count
-  );
-
-  // 落库与渲染计划装配交给共用件（角色降级 · 第二梯队抽出）：
-  // 前端提交候选的那条路（POST /session/{}/iteration）走的是同一个函数。
-  // 两条路线各写一份必然漂移，而漂移的表现是「本地路线算不出视频路径」这类
-  // 只在真机上才发现的故障。
-  //
-  // 注意：write_submitted_iteration **自己落库**（它内部 run_sql），所以这里不再
-  // 返回 sqls_。但队列路线的「派发 + 广播」仍由调用方（advance_session）做 ——
-  // 它需要任务行 uuid 与一个 dispatch 标志，因此共用件把任务行 uuid 回抛出来，
-  // 调用方据此置位，两者口径与降级前一致。
-  submit_iteration_request_t l_submit{};
-  l_submit.session_id_  = in_session.uuid_id_;
-  l_submit.project_id_  = in_session.project_id_;
-  l_submit.operator_id_ = in_operator;
-  l_submit.iteration_   = l_iteration;
-  l_submit.spec_id_     = l_spec->uuid_id_;
-  l_submit.axes_        = l_res.axes_;
-  l_submit.rigs_        = std::move(l_res.rigs_);
-  l_submit.task_id_     = in_session.task_id_;
-
-  // 上面已经推过装配（l_assembly_res / l_assembly），但共用件要自己再推一次才能
-  // 独立成立 —— 它也被前端提交那条路调用，那里没有现成的装配结果。
-  // 重复推导的代价是一次路径计算 + 4 次 FSys::exists（见 auto_task.cpp:124-126 的说明），
-  // 换来的是「两条路线共用同一段落库逻辑」。这是刻意的取舍。
-  uuid l_dispatch_task_id{};
-  auto l_plan = co_await write_submitted_iteration(in_sql, l_submit, in_local_only, l_dispatch_task_id);
-
-  // usage / 计费口径不变（generate_candidates 内部已落任务行并扣费）。
-  //
-  // 队列路线的派发/广播标志：共用件已经把任务行写进库了，但「派发」这一步
-  // （computers_assign_task + socket 广播）留在调用方 —— 降级前也是如此，
-  // 只是那时 sqls_ 还没执行，现在库已经写过，dispatch_ 仍然为 true 才能让
-  // 调用方在 run_sql 之后真的把它派出去。
-  co_return generating_branch_result{
-      .sqls_               = {},
-      .plan_               = std::move(l_plan),
-      .broadcast_task_id_  = l_dispatch_task_id,
-      .dispatch_           = !in_local_only
-  };
 }
-}  // namespace
+
+boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_local(
+    sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
+) {
+  (void)in_sql;
+  (void)in_operator_id;
+  const auto l_entry_state = in_session.state_;
+
+  // 与 advance_session 逐字一致的失败策略：失败原因交给 HTTP 响应体描述，
+  // 不写 failure_reason_（详见 advance_session 顶部的说明）。
+  //
+  // 引擎内路线同样不再在这里推进：候选由前端算好，渲染计划由那次提交
+  // （write_submitted_iteration）当场返回给发起方本机。见 ai_light_submit.h。
+  DOODLE_CHICK_HTTP(
+      false, bad_request,
+      "会话 {} 处于状态 {}，当前没有可推进的步骤（引擎内路线请用 POST "
+      "/ai_light/session/{}/iteration 提交候选并取回渲染计划）",
+      in_session.uuid_id_, magic_enum::enum_name(l_entry_state), in_session.uuid_id_
+  );
+}
 
 // ===========================================================================
 // 候选落库（角色降级 · 第二梯队）
@@ -496,75 +381,6 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
   // 反过来，任务行 uuid 只有这条路线有 —— 把它交给调用方去广播（本函数不做网络副作用）。
   out_broadcast_task_id = l_task.uuid_id_;
   co_return std::nullopt;
-}
-
-boost::asio::awaitable<void> advance_session(
-    sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
-) {
-  const auto l_entry_state = in_session.state_;
-
-  // ---------------------------------------------------------------
-  // 推进失败时**不落库、不记录 failure_reason_**：同步请求的失败原因由 HTTP 响应体描述
-  // （http_session_data.cpp:313 把 doodle_error::what() 放进 body），前端无论状态码是多少
-  // 都读 body 显示。这里再写一列只是重复，而且会与「异步失败」抢同一个字段。
-  // 异步失败（工作机回传渲染结果）没有人可对话，仍走 mark_iteration_failed() 落库。
-  // 异常自然向上抛，由 HTTP 层转成状态码 + body。
-  //
-  // 曾经这里先是「第一步：draft / awaiting_spec_confirm → generate_spec 蒸馏 Spec」。
-  // 那一步已删除：蒸馏方案现在归前端（前端直接调推理网关），服务端不再替它写提示词。
-  // 于是 draft / awaiting_spec_confirm 变成**没有可推进步骤**的状态，落到下面的兜底分支
-  // （400）—— 这与「同一个状态只能有一个后继步骤」一致：这两个状态的后继是
-  // /session/{}/spec 提交与 /spec/confirm，都不是 advance_session。
-  // ---------------------------------------------------------------
-  const auto l_operator = in_operator_id.is_nil() ? in_session.submitter_ : in_operator_id;
-
-  if (l_entry_state == ai_light_session_state::generating) {
-    // 队列路线：建任务行 + 派发（忽略返回的渲染计划 —— 它只给引擎内路线用）。
-    auto l_res = co_await advance_session_generating_branch(in_sql, in_session, l_operator, false);
-    co_await in_sql.run_sql(std::move(l_res.sqls_));
-
-    // 派发 + 广播。放在 run_sql 之后：任务行已经落库，派发失败也只是「暂时没人领」，
-    // computers_assign_task 下次轮询会再捡起来，不会丢。
-    if (l_res.dispatch_) co_await http::computers_assign_task::get_instance().run_next_task();
-    if (!l_res.broadcast_task_id_.is_nil())
-      socket_io::broadcast(
-          socket_io::server_task_info_new_broadcast_t{.server_task_info_id_ = l_res.broadcast_task_id_}
-      );
-    co_return;
-  }
-
-  // ---------------------------------------------------------------
-  // 其它状态：没有可推进的步骤
-  // ---------------------------------------------------------------
-  DOODLE_CHICK_HTTP(
-      false, bad_request, "会话 {} 处于状态 {}，当前没有可推进的步骤", in_session.uuid_id_,
-      magic_enum::enum_name(l_entry_state)
-  );
-}
-
-boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_local(
-    sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
-) {
-  const auto l_entry_state = in_session.state_;
-
-  // 与 advance_session 逐字一致的失败策略：失败原因交给 HTTP 响应体描述，
-  // 不写 failure_reason_（详见 advance_session 顶部的说明）。
-  //
-  // 曾经的「draft / awaiting_spec_confirm → 蒸馏 Spec」分支已删除（与 advance_session 同步）：
-  // 蒸馏归前端，这两个状态在这里同样没有可推进的步骤，落到下面的兜底分支。
-  const auto l_operator = in_operator_id.is_nil() ? in_session.submitter_ : in_operator_id;
-
-  if (l_entry_state == ai_light_session_state::generating) {
-    auto l_res = co_await advance_session_generating_branch(in_sql, in_session, l_operator, true);
-    co_await in_sql.run_sql(std::move(l_res.sqls_));
-    // 引擎内路线不建任务行，所以既不派发也不广播（dispatch_ = false、task id = nil）。
-    co_return std::move(l_res.plan_);
-  }
-
-  DOODLE_CHICK_HTTP(
-      false, bad_request, "会话 {} 处于状态 {}，当前没有可推进的步骤", in_session.uuid_id_,
-      magic_enum::enum_name(l_entry_state)
-  );
 }
 
 // ===========================================================================

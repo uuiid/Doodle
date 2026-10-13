@@ -59,7 +59,7 @@ struct DOODLELIB_API feedback_structuring_request_t : public seam_request_base_t
 /// 「主光再低一点，色温再冷一点」这类自由文本 → 轴调整。
 ///
 /// 返回的每个 axis_step_t **恰好一个 steps_ 元素**：judge 只传「下一轮的中心值」，
-/// 完整档位安排由下一轮 generate_candidates 的 axes_ 决定。空 vector 是合法结果
+/// 完整档位安排由下一轮**前端**自己排的轴计划决定（服务端不再展开候选）。空 vector 是合法结果
 /// （「再调调看」这类没有方向的反馈）—— 不是错误。
 ///
 /// in_sql 用来解析 `operator_id_ → person.ai_studio_id_ → ai_studio`（取推理密钥）

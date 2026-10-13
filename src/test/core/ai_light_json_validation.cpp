@@ -6,7 +6,7 @@
 // 把「模型输出怎么读」集中到一层，收益就是它不必等真机才能验。
 //
 // 刻意不 include 路由头 `http_method/kitsu/ai_light.h`（它会拉进 <core/http/http_function.h>，
-// 而测试目标的 include 路径没有 doodle_lib 根）—— 与 ai_light_candidates.cpp 同一约定。
+// 而测试目标的 include 路径没有 doodle_lib 根）—— 与 ai_light_feedback.cpp 同一约定。
 //
 #include <doodle_lib/http_method/kitsu/ai_light_json_validation.h>
 #include <doodle_lib/http_method/kitsu/ai_light_orchestrator.h>
@@ -50,17 +50,18 @@ std::string en(E in_value) {
 ///
 /// 摘要器对 `required` / `enum` 的**数组顺序不敏感**（见 canonicalize）—— 建造器按属性名
 /// 字典序生成 required，与书写顺序无关，两者语义相同，不该被判成改动。
-// 冻结的 schema 形状摘要：这两个值必须一字不变 —— 它们是「建造器没有改变任何一个 schema
-// 的形状」的机器可判定证据。生成方式：先跑一次
-// `--run_test=ai_light_json_validation --log_level=message`，从「candidates digest = …」两行里抄回来。
-// 真要改 schema 形状时**必须**同步改这两个常量，并在设计文档里说明为什么。
+// 冻结的 schema 形状摘要：这个值必须一字不变 —— 它是「建造器没有改变这个 schema 的
+// 形状」的机器可判定证据。生成方式：先跑一次
+// `--run_test=ai_light_json_validation --log_level=message`，从「feedback digest = …」那行里抄回来。
+// 真要改 schema 形状时**必须**同步改这个常量，并在设计文档里说明为什么。
 //
-// 曾经还有第三个 g_golden_spec_digest（值 9e666da14cfb8ad3，2026-10-12 由 c4b1d8ee3aa3ef47
-// 改来）：当时删掉了顶层 "conflicts" 字符串数组（docs/ue_ai_lighting_plan.md §15.7 决定 D7）。
-// 那个 schema 随 spec 接缝一起删除，金标准也不再需要 —— 它服务的对象已经不存在了。
-// candidates / feedback 两个 schema 未动，摘要一字未改。
-constexpr std::string_view g_golden_candidates_digest = "227cb12da4693db1";
-constexpr std::string_view g_golden_feedback_digest   = "0e13ecb11cd3f474";
+// 曾经还有两个金标准，都随各自的接缝一起删除（都归了前端）：
+//   * g_golden_spec_digest（值 9e666da14cfb8ad3，2026-10-12 由 c4b1d8ee3aa3ef47 改来）：
+//     当时删掉了顶层 "conflicts" 字符串数组（docs/ue_ai_lighting_plan.md §15.7 决定 D7）。
+//   * g_golden_candidates_digest（值 227cb12da4693db1）：随候选生成降级删除（角色降级 ·
+//     第二梯队），那条路的校验改由 ai_light_submit.cpp 的 IR 准入闸门承担。
+// feedback 的 schema 未动，摘要一字未改。
+constexpr std::string_view g_golden_feedback_digest = "0e13ecb11cd3f474";
 
 /// 规范化：递归下降，把 `required` / `enum` 数组排序（其余原样）。nlohmann::json 的对象键
 /// 本来就按 key 有序，所以「对象键排序」不需要额外动作。
@@ -383,7 +384,6 @@ BOOST_AUTO_TEST_CASE(consistency_check_catches_the_three_conventions) {
 BOOST_AUTO_TEST_CASE(wellformed_check_accepts_production_schemas_and_flags_broken_ones) {
   for (const auto& [l_name, l_schema] :
        std::initializer_list<std::pair<std::string_view, nlohmann::json>>{
-           {"generate_candidates", build_candidates_json_schema()},
            {"structure_feedback", build_feedback_json_schema()}
        }) {
     // 库校验：schema 本身是不是合法 draft-7。失败 = 我们的 bug，不是模型的错。
@@ -462,14 +462,11 @@ BOOST_AUTO_TEST_CASE(schema_shape_digest_matches_frozen_golden) {
   BOOST_TEST(shape_digest(l_order_a) == shape_digest(l_order_b));
   BOOST_TEST(shape_digest(l_order_a) != shape_digest(json_val::schema_object({{"x", json_val::schema_number()}})));
 
-  // 两条接缝的 schema 摘要。曾经这里还有第三个 spec —— 它随 spec 接缝一起删除，
-  // 连同它那条 g_golden_spec_digest 金标准。
-  const auto l_cand = shape_digest(build_candidates_json_schema());
-  const auto l_fb   = shape_digest(build_feedback_json_schema());
-  BOOST_TEST_MESSAGE("candidates digest = " << l_cand);
+  // 接缝的 schema 摘要。曾经这里还有 spec 与 candidates 两条 —— 它们随各自的接缝
+  // 一起删除（都归了前端），连同两条 g_golden_*_digest 金标准。
+  const auto l_fb = shape_digest(build_feedback_json_schema());
   BOOST_TEST_MESSAGE("feedback digest = " << l_fb);
 
-  BOOST_TEST(l_cand == g_golden_candidates_digest);
   BOOST_TEST(l_fb == g_golden_feedback_digest);
 }
 

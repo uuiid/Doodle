@@ -5,11 +5,11 @@
 // 所以这里盯的是**离线那一半** —— 组装推理信封 + 把模型给的「轴 + 一个方向值」映射成 axis_step。
 //
 // 这份测试钉的是三件事：
-//   1) 接缝 3 与接缝 2 共用**同一份**轴值语义，但不继承接缝 2 的档位规则
-//      （档位规则套在一个方向值上会自相矛盾）；
+//   1) 接缝 3 的轴值语义**自成一格**：judge 只给「下一轮的中心值」，
+//      完整档位表由前端下一轮自己排的轴计划决定（服务端的展开器已随候选生成降级删除）；
 //   2) 语义无效的轴（none / 0 / 未知轴名 / 非正 key:fill 比）在**源头**丢弃 ——
-//      它们一旦流到下一轮，apply_axis_step() 恒返回 false，最终以「轴无实质变化」在
-//      下一轮 /iterate 抛 502，而那时病根与表现之间已经隔了一次人工判断；
+//      它们一旦流到下一轮，前端照它排轴会排出一批视觉上无差别的候选，
+//      最终在提交时的 IR 准入闸门被拦下，而那时病根与表现之间已经隔了一次人工判断；
 //   3) 提示词里给模型的数字必须是**算得出来**的数字：key:fill 比算不出来时要明说
 //      「不要给这条轴」，而不是给一个假的比值。
 //
@@ -66,81 +66,36 @@ lighting_spec_t make_spec() {
   return l_spec;
 }
 
-/// 一份「模型合法输出」的最小样本：一盏主光 + 一盏补光 + 一盏环境灯。
-/// 主光与补光强度相同且同单位，于是基线 key:fill 比恰好是 1。
-nlohmann::json make_light_json(const char* in_role, double in_azimuth_deg) {
-  return nlohmann::json{
-      {"role", in_role},
-      {"type", "spot"},
-      {"azimuth_deg", in_azimuth_deg},
-      {"elevation_deg", 30.0},
-      {"distance_m", 3.0},
-      {"intensity_unit", "candela"},
-      {"intensity", 1000.0},
-      {"color_mode", "temperature"},
-      {"kelvin", 5600.0},
-      {"rgb", nlohmann::json::array({0.0, 0.0, 0.0})},
-      {"filter", ""},
-      {"softness", 0.5},
-      {"source_radius_cm", 20.0},
-      {"cast_shadows", true},
-      {"note", ""},
-  };
-}
-
-nlohmann::json make_globals_json() {
-  return nlohmann::json{
-      {"exposure_ev100_bias", 0.0},
-      {"white_balance_kelvin", 5600.0},
-      {"sky_light_intensity", 1.0},
-      {"fog_density", 0.0},
-      {"grading_contrast", 1.0},
-      {"grading_saturation", 1.0},
-      {"grading_lift", 0.0},
-      {"grading_vignette", 0.0},
-      {"grading_bloom", 0.0},
-  };
-}
-
-nlohmann::json make_model_json() {
-  return nlohmann::json{
-      {"strategy", "首轮大跨度探索对比结构。"},
-      {"axes",
-       nlohmann::json::array({
-           nlohmann::json{
-               {"axis", "key_fill_ratio"},
-               {"steps", nlohmann::json::array({3.0, 6.0, 10.0})},
-               {"label", "对比档位"}
-           },
-           nlohmann::json{{"axis", "kelvin"}, {"steps", nlohmann::json::array({-800.0, 800.0})}, {"label", "冷暖"}},
-       })},
-      {"globals", make_globals_json()},
-      {"lights",
-       nlohmann::json::array({
-           make_light_json("key", 45.0),
-           make_light_json("fill", -30.0),
-           make_light_json("ambient", 0.0),
-       })},
-  };
-}
-
-/// 6 个候选：直接复用接缝 2 的确定性展开器（build_base_rig + expand_candidates），
-/// 于是这里的候选与生产路径里落库的候选**在结构上完全同形** —— 包括每套 rig 的
+/// 6 个候选：手写死，与前端提交的候选**在结构上完全同形** —— 包括每套 rig 的
 /// variant_axis_（接缝 3 的提示词正是从候选 1..5 的 variant_axis_ 读轴与档位的）。
+/// （从前这里调 build_base_rig + expand_candidates 现算，那两个函数随候选生成降级一起删除。）
 std::vector<ai_light_candidate> make_candidates() {
-  iteration_axes_t l_axes{};
-  l_axes.axes_ = std::vector<axis_step_t>{
-      axis_step_t{variant_axis_kind::key_fill_ratio, {3.0, 6.0, 10.0}, "对比档位"},
-      axis_step_t{variant_axis_kind::kelvin, {-800.0, 800.0}, "冷暖"},
+  // 0 号是基线（axis_ == none），其余每套只沿一条轴变化 —— 与前端提交的候选同形（§15.8 OFAT）。
+  struct axis_slot_t {
+    variant_axis_kind axis_;
+    double            value_;
+    std::string       label_;
   };
-  const auto l_rigs = expand_candidates(build_base_rig(make_model_json()), l_axes);
+  const std::vector<axis_slot_t> l_slots{
+      {variant_axis_kind::none,           0.0,    "基线"       },
+      {variant_axis_kind::key_fill_ratio, 3.0,    "对比档位 3" },
+      {variant_axis_kind::key_fill_ratio, 6.0,    "对比档位 6" },
+      {variant_axis_kind::key_fill_ratio, 10.0,   "对比档位 10"},
+      {variant_axis_kind::kelvin,         -800.0, "冷暖 -800"  },
+      {variant_axis_kind::kelvin,         800.0,  "冷暖 800"   },
+  };
 
   std::vector<ai_light_candidate> l_out{};
-  for (std::size_t l_i = 0; l_i < l_rigs.size(); ++l_i) {
+  for (std::size_t l_i = 0; l_i < l_slots.size(); ++l_i) {
+    const auto& l_slot = l_slots.at(l_i);
+    lighting_rig_t l_rig{};
+    l_rig.candidate_index_ = static_cast<std::int32_t>(l_i);
+    l_rig.variant_axis_    = variant_axis_t{l_slot.axis_, l_slot.value_, l_slot.label_};
+
     ai_light_candidate l_cand{};
     l_cand.uuid_id_         = core_set::get_set().get_uuid();
     l_cand.candidate_index_ = static_cast<std::int32_t>(l_i);
-    l_cand.set_rig(l_rigs.at(l_i));
+    l_cand.set_rig(l_rig);
     l_out.emplace_back(std::move(l_cand));
   }
   return l_out;
@@ -242,22 +197,24 @@ BOOST_AUTO_TEST_CASE(axis_enum_excludes_none_and_schema_is_strict) {
     BOOST_TEST(l_dump.find(l_forbidden) == std::string::npos);
 }
 
-/// 接缝 3 与接缝 2 共用轴值语义，但**不能**继承接缝 2 的档位规则：
-/// 接缝 2 要 5 个档位、接缝 3 每条轴只给一个方向值，两套规则放一起是自相矛盾的指令。
-BOOST_AUTO_TEST_CASE(instructions_split_the_shared_semantics_from_seam2_constraints) {
-  const std::string l_fb   = build_feedback_instructions();
-  const std::string l_cand = build_candidates_instructions();
+/// 接缝 3 的提示词必须自洽：轴值语义（跟服务端同一个口径）与**它自己**的档位规则。
+///
+/// 从前这里是一条跨接缝断言 —— 对比接缝 2（`build_candidates_instructions`）确认「排轴的
+/// 档位规则留在接缝 2、不污染接缝 3」。接缝 2 随候选生成降级一起删除后，被对比的那一侧
+/// 已经不存在，跨接缝的那几条断言也随之失去意义。留下的是接缝 3 单侧的契约：
+/// 轴值语义必须在场，而**接缝 2 那套档位规则一条都不许混进来**（它们现在是自相矛盾的指令 ——
+/// 没有生成方会去展开 5 个档位，方向值由前端自己排轴时展开）。
+BOOST_AUTO_TEST_CASE(instructions_keep_shared_axis_semantics_and_drop_seam2_constraints) {
+  const std::string l_fb = build_feedback_instructions();
 
-  // 两边都必须带同一份轴值语义（口径唯一：模型按它给，服务端按同一套公式应用）。
+  // 轴值语义必须在场（口径唯一：模型按它给方向，前端按同一套公式展开档位）。
   BOOST_TEST(l_fb.find("增量") != std::string::npos);
-  BOOST_TEST(l_cand.find("增量") != std::string::npos);
   BOOST_TEST(l_fb.find("key_fill_ratio") != std::string::npos);
 
-  // 排轴的档位规则必须留在接缝 2。
+  // 接缝 2 的档位规则必须全部缺席 —— 现在没有任何一侧需要它们。
   BOOST_TEST(l_fb.find("恰好 5 个档位") == std::string::npos);
   BOOST_TEST(l_fb.find("档位不要取 0") == std::string::npos);
   BOOST_TEST(l_fb.find("最多声明 2 个轴") == std::string::npos);
-  BOOST_TEST(l_cand.find("恰好 5 个档位") != std::string::npos);
 
   // 接缝 3 自己的上限必须写进提示词：下一轮 parse_axis_plan() 只接受 2 条轴，
   // 而 feedback_axes 是**约束** —— 给 3 条会让整份轴计划被弃用、文本通道静默失效（决定 D12）。
@@ -339,21 +296,41 @@ BOOST_AUTO_TEST_CASE(input_text_survives_empty_candidates_and_no_selection) {
 
 /// key:fill 比是**绝对量**轴的基准值，算错方向就全错。所以单位不同时必须明说算不出来，
 /// 而不是给一个把 candela 和 lumen 加在一起的数字。
+///
+/// 从前这里用接缝 2 的 `build_base_rig(model_json)` 造 rig；那个解析器随候选生成降级一起
+/// 删除了（候选现在由前端算好提交）。`key_fill_ratio_of` 只读 `lights_` 的 role 与强度，
+/// 与 JSON 形状无关，所以这里直接手搭最小 rig —— 反而让用例不再被 schema 变动牵动。
+lighting_rig_t make_ratio_rig() {
+  lighting_rig_t l_rig{};
+  light_t l_key{};
+  l_key.id_             = "L00";
+  l_key.role_           = light_role::key;
+  l_key.intensity_.unit_  = intensity_unit::candela;
+  l_key.intensity_.value_ = 1000.0;
+  light_t l_fill{};
+  l_fill.id_             = "L01";
+  l_fill.role_           = light_role::fill;
+  l_fill.intensity_.unit_  = intensity_unit::candela;
+  l_fill.intensity_.value_ = 1000.0;
+  l_rig.lights_            = {l_key, l_fill};
+  return l_rig;
+}
+
 BOOST_AUTO_TEST_CASE(key_fill_ratio_of_is_unit_aware) {
   // 1) 主光 1000 + 补光 1000（同 candela）→ 1.0
-  auto l_rig           = build_base_rig(make_model_json());
+  auto l_rig           = make_ratio_rig();
   const auto l_ratio   = key_fill_ratio_of(l_rig);
   BOOST_TEST(l_ratio.has_value());
   BOOST_TEST(*l_ratio == 1.0);
 
   // 2) 补光换成别的量纲 → 算不出来（不是「大致等于 1」）
-  auto l_other_unit = build_base_rig(make_model_json());
+  auto l_other_unit = make_ratio_rig();
   for (auto& l_light : l_other_unit.lights_)
     if (l_light.role_ == light_role::fill) l_light.intensity_.unit_ = intensity_unit::lumen;
   BOOST_TEST(!key_fill_ratio_of(l_other_unit).has_value());
 
   // 3) 没有补光 → 除数 0，不许返回 inf
-  auto l_no_fill = build_base_rig(make_model_json());
+  auto l_no_fill = make_ratio_rig();
   l_no_fill.lights_.erase(
       std::remove_if(
           l_no_fill.lights_.begin(), l_no_fill.lights_.end(),
@@ -364,13 +341,13 @@ BOOST_AUTO_TEST_CASE(key_fill_ratio_of_is_unit_aware) {
   BOOST_TEST(!key_fill_ratio_of(l_no_fill).has_value());
 
   // 4) 主光强度为 0 → 比值没有意义
-  auto l_zero_key = build_base_rig(make_model_json());
+  auto l_zero_key = make_ratio_rig();
   for (auto& l_light : l_zero_key.lights_)
     if (l_light.role_ == light_role::key) l_light.intensity_.value_ = 0.0;
   BOOST_TEST(!key_fill_ratio_of(l_zero_key).has_value());
 
   // 5) 两盏补光按**和**算：1000 ÷ (1000 + 1000) = 0.5
-  auto l_two_fill = build_base_rig(make_model_json());
+  auto l_two_fill = make_ratio_rig();
   light_t l_fill_copy{};
   bool l_found_fill = false;
   for (const auto& l_light : l_two_fill.lights_)
@@ -421,8 +398,8 @@ BOOST_AUTO_TEST_CASE(map_result_returns_one_step_per_axis) {
 }
 
 /// 语义无效的轴在**源头**丢弃：none / 0 是「没有变化」，未知轴名是模型自由发挥，
-/// 非正的 key:fill 比在 apply_axis_step() 里也直接返回 false。
-/// 它们流到下一轮的表现是「下一轮 /iterate 抛 502」，而那时美术已经白判了一轮。
+/// 非正的 key:fill 比没有意义（前端照它排轴只会排出一批视觉上无差别的候选）。
+/// 它们流到下一轮的最终表现是「提交时 IR 准入闸门拦下」，而那时美术已经白判了一轮。
 /// 丢弃与「未知轴名忽略」的既有容错（advance_session）一致；形状违规才抛错。
 BOOST_AUTO_TEST_CASE(map_result_drops_none_zero_unknown_and_bad_ratio) {
   // 注意：`axes` 的 maxItems 校验发生在**语义过滤之前**（形状违规先于语义丢弃），
@@ -441,7 +418,7 @@ BOOST_AUTO_TEST_CASE(map_result_drops_none_zero_unknown_and_bad_ratio) {
   BOOST_TEST(l_drop(nlohmann::json::array({make_axis_line("kelvin", 0.0, "0 等于没有变化")})).empty());
   // 3) 未知轴名：模型自由发挥
   BOOST_TEST(l_drop(nlohmann::json::array({make_axis_line("key_elevation", -20.0, "轴名不存在")})).empty());
-  // 4) key_fill_ratio 非正：apply_axis_step() 对 <= 0 也直接返回 false
+  // 4) key_fill_ratio 非正：比值不能算成负的或 0
   BOOST_TEST(l_drop(nlohmann::json::array({make_axis_line("key_fill_ratio", -2.0, "比值不能是负的")})).empty());
   BOOST_TEST(l_drop(nlohmann::json::array({make_axis_line("key_fill_ratio", 0.0, "比值不能是 0")})).empty());
 

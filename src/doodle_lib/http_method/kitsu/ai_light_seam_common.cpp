@@ -156,12 +156,6 @@ boost::asio::awaitable<seam_inference_result_t> run_seam_inference(
   co_return l_out;
 }
 
-light_t* first_light_with_role(lighting_rig_t& io_rig, light_role in_role) {
-  for (auto& l_light : io_rig.lights_)
-    if (l_light.role_ == in_role) return &l_light;
-  return nullptr;
-}
-
 std::string join_strings(const std::vector<std::string>& in_values, std::string_view in_sep) {
   std::string l_ret{};
   for (std::size_t l_i = 0; l_i < in_values.size(); ++l_i) {
