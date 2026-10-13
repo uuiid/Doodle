@@ -22,7 +22,7 @@ namespace doodle::http::ai_light {
 // 现在，**排轴与展开都归前端**（那 ~800 行本来就是纯函数），服务端只剩：
 //   1. 收下前端算好的轴计划与 6 个候选；
 //   2. 过 IR 准入闸门（候选数、主光、相邻差异 —— 见 ai_light.cpp 的 validate_candidates_ir）；
-//   3. 落 iteration + candidate + **算基线差分**（`diff_rigs` 留在服务端，§3.7）；
+//   3. 落 iteration + candidate（`ops_` 由前端算好随候选提交，服务端不再自己算 diff）；
 //   4. 回 `launch_plan`（与从前服务端自己生成时**同一形状**）。
 //
 // 为什么"提交"不只写数据库而还要给 launch_plan：走的是**引擎内路线**（D52/D53），

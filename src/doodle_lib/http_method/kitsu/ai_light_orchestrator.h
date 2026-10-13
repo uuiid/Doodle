@@ -51,14 +51,17 @@
 // 归一化推理信封(强类型)。这个头只依赖 nlohmann/json + STL, 不带任何 HTTP 依赖,
 // 所以不会破坏本文件顶部「这一层刻意不包含任何 HTTP 依赖」的约定。
 
-// 本头是**伞形头**：rig 纯运算与共用部件各自成文件，本头把它们与状态机一起收在同一个
-// 命名空间下 —— 对外仍然只需包含 ai_light_orchestrator.h 一个头。
+// 本头是**伞形头**：共用部件与状态机收在同一个命名空间下 ——
+// 对外仍然只需包含 ai_light_orchestrator.h 一个头。
 //
 // 曾经还 include 过 ai_light_seam_feedback.h（接缝 3 的离线部件）。**已删除** ——
 // 那条接缝的全部函数在生产里没有任何调用方：judge 路由已不再把美术的自由文本
 // 送去结构化（文本原样落库），它的输入正文组装又是唯一消费者
 // lighting_spec_t（该类型已随 Spec 闸门删除）。整条链连同它的单测一起移除。
-#include "ai_light_rig_ops.h"
+//
+// 曾经还 include 过 ai_light_rig_ops.h（key_fill_ratio_of / diff_rigs / g_axis_max_count）。
+// **已删除** —— 它的调用者是候选展开器与接缝 3 的提示词，两者都归前端之后，服务端这边
+// 三个符号一个调用点都没有（详见 docs/ue_ai_lighting_role_downgrade.md 的角色降级记录）。
 #include "ai_light_seam_common.h"
 
 #include <boost/asio/awaitable.hpp>

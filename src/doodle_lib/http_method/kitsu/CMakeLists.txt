@@ -13,7 +13,6 @@ target_sources(
         computers.h
         ai_light.h
         ai_light_orchestrator.h
-        ai_light_rig_ops.h
         ai_light_stats.h
         
         PRIVATE
@@ -57,7 +56,6 @@ target_sources(
         ai_light_orchestrator.cpp
         ai_light_seam_common.h
         ai_light_seam_common.cpp
-        ai_light_rig_ops.cpp
         ai_light_stats.cpp
         ai_light_submit.cpp
         ai_light_submit.h

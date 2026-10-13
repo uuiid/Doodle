@@ -8,8 +8,8 @@
 // （不 include http_jwt_fun / session_data / 推理客户端），所以单测可以直接调用其中的纯函数：
 // 单测宿主没有 core_set::ctx_ptr、没有 SSL context、没有 HTTP logger。
 //
-// 分工：本文件只有「纯函数 + 纯文本」。工具（`ai_light_rig_ops.h`）在另一侧，接缝的
-// 请求/映射在自己的 `ai_light_seam_*.h` 里；三者都靠本头共享措辞与口径。
+// 分工：本文件只有「纯函数 + 纯文本」。接缝的请求/映射在自己的 `ai_light_seam_*.h` 里；
+// 两者都靠本头共享措辞与口径。（曾经在另一侧的 `ai_light_rig_ops.h` 已删除。）
 //
 
 #pragma once

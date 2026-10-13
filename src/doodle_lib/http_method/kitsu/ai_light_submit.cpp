@@ -24,7 +24,6 @@
 #include <utility>
 #include <vector>
 
-#include "ai_light_rig_ops.h"
 #include "ai_light_submit.h"
 
 namespace doodle::http::ai_light {
