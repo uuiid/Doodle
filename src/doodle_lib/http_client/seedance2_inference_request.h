@@ -17,8 +17,8 @@ namespace doodle::http::seedance2 {
 /**
  * 接缝侧自组信封时用的**具名键集**(方舟 Responses API 的 data_request_)。
  *
- * 用途只有一个: 三条接缝(`build_spec_request()` 等)按字段**填**一份 json 落进
- * `sd2::task.data_request_`。字段名集中在这里, 免得三个生产端各写各的字面量。
+ * 用途只有一个: 两条接缝(`build_candidates_request()` 等)按字段**填**一份 json 落进
+ * `sd2::task.data_request_`。字段名集中在这里, 免得两个生产端各写各的字面量。
  *
  * **它不再参与发射**: `run_inference_task` 把 `data_request_` 原样定稿后发给方舟, 不再经
  * 本结构体往返一趟 —— 那次往返是一份手写白名单, 不认识的前端字段会被静默吃掉, 与
@@ -64,7 +64,7 @@ struct DOODLELIB_API inference_request_t {
 };
 
 /**
- * 信封 -> json(**落库形状**)。emit 规则与改动前 build_spec_request() 手写的键集完全一致:
+ * 信封 -> json(**落库形状**)。emit 规则与改动前接缝手写的键集完全一致:
  * 值等于默认(空串/空数组/未设 optional/非对象 schema)的键一律不写, 所以落库形状没有变化。
  *
  * 注意 `if (in_request.max_output_tokens_)` 走的是 std::optional 的 has_value(), 因此

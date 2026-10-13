@@ -316,11 +316,7 @@ boost::asio::awaitable<std::vector<axis_step_t>> structure_feedback(
   // 已经转成 json：run_seam_inference 收 json，且落库与出网是同一份（见 seam_common.h）。
   nlohmann::json l_request{};
   to_json(l_request, build_feedback_request(in_request));
-  const auto l_result = co_await run_seam_inference(
-      in_sql, in_request,
-      fmt::format("AI 灯光会话 {} 第 {} 轮的文本反馈", in_request.session_id_, in_request.iteration_),
-      l_request, in_request.iteration_id_
-  );
+  const auto l_result = co_await run_seam_inference(in_sql, in_request, l_request, in_request.iteration_id_);
 
   // ---- 2) 架构诊断（§3.4，决策 D-1：只写日志，不作准入闸门）----
   // 本条接缝是**混合**策略：形状违规（如 axes 超过 maxItems）在 map_feedback_result 里抛 502，

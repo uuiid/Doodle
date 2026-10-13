@@ -543,9 +543,7 @@ boost::asio::awaitable<candidate_generation_result_t> generate_candidates(
   // 已经转成 json：run_seam_inference 收 json，且落库与出网是同一份（见 seam_common.h）。
   nlohmann::json l_request{};
   to_json(l_request, build_candidates_request(in_request));
-  const auto l_result = co_await run_seam_inference(
-      in_sql, in_request, in_request.prompt_text_, l_request, in_request.iteration_id_
-  );
+  const auto l_result = co_await run_seam_inference(in_sql, in_request, l_request, in_request.iteration_id_);
 
   // ---- 2) 架构诊断（§3.4，决策 D-1：只写日志，不作准入闸门）----
   // 本条接缝是**严格**策略：`build_base_rig` 读到第一个缺字段/类型不符就抛 502。日志里的

@@ -87,12 +87,16 @@ DOODLE_HTTP_FUN_END()
 // 参考图取图的站点内路径模板。两处**必须一致**：
 //   1) kitsu.cpp 里 reference_image_route 的路由注册（那处只能写字面量 ——
 //      operator""_url 是 UDL，接不了变量）；
-//   2) 接缝 generate_spec 拼给方舟的 images（站点内相对路径，由 to_public_url
+//   2) 接缝拼给方舟的 images（站点内相对路径，由 to_public_url
 //      补公网前缀 + 短时效签名；绝对磁盘路径 file_path_ 绝不能外发）。
 // 放在这里是为了让「模板」只有一个定义，路由注册那边靠注释对齐。
 constexpr std::string_view g_reference_image_path_template{"/api/doodle/ai/light/reference/{}/image"};
 
 /// 参考图的站点内取图路径（未签名）。接缝用它，别自己拼字符串。
+///
+/// 曾经的调用方之一（generate_spec）已删除；仍在用的是 candidates 接缝。
+/// 蒸馏方案归前端后，前端要自己把参考图 URL 拼进请求体 —— 那时这个模板
+/// 就是它该对齐的形状（也是本函数保留的原因）。
 inline std::string reference_image_url(const uuid& in_id) {
   return fmt::format(g_reference_image_path_template, boost::uuids::to_string(in_id));
 }

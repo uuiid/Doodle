@@ -2,9 +2,8 @@
 // 推理任务的「执行 + 结算」管线测试：run_inference_task / make_inference_client.
 //
 // 为什么单独一份：
-//   这两个函数唯一的调用方是三个 AI 灯光接缝（generate_spec / generate_candidates /
-//   structure_feedback），而接缝本轮仍是 501（见 ai_light_orchestrator.cpp 的
-//   throw_not_implemented）。也就是说，在此之前它们**一次都没运行过**：只经过编译和链接。
+//   这两个函数唯一的调用方是两条 AI 灯光接缝（generate_candidates /
+//   structure_feedback）。在此之前它们**一次都没运行过**：只经过编译和链接。
 //   纯函数部分（build_inference_body / parse_inference_response）由 seedance2_inference.cpp
 //   覆盖，但「插入即终态 + 扣费在同一个事务里」「失败不计费」「没有 usage 时退回预扣值」
 //   这几条只有把 run_inference_task 真跑一遍才能验。

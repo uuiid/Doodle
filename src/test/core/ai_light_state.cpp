@@ -610,13 +610,13 @@ BOOST_AUTO_TEST_CASE(session_detail_reports_overdue_flag) {
 
 // ===========================================================================
 // 接缝的第一道闸门：解析不出触发人就无法解析工作室、更无法计费
-// （generate_spec 见 §15.7，generate_candidates 见 §15.8，structure_feedback 见 §15.9）
+// （generate_candidates 见 §15.8，structure_feedback 见 §15.9）
 // ===========================================================================
 
-/// structure_feedback 的第一道闸门。三条接缝共用 make_seam_client()，所以这里验的是
+/// structure_feedback 的第一道闸门。两条接缝共用 make_seam_client()，所以这里验的是
 /// 「共用样板的第一道判定确实在**联网之前**发生」—— 500 与 400 的区别会决定 `/judge`
 /// 是「降级继续」还是「整次判断失败」。
-/// 三条接缝落地后已经没有 501 端点，所以那条「未实现接缝报 501」的用例已被它替换。
+/// 接缝落地后已经没有 501 端点，所以那条「未实现接缝报 501」的用例已被它替换。
 DOODLE_FIXTURE_TEST_CASE_CORO(structure_feedback_rejects_unresolvable_operator, fixture_t) {
   // 只造 1 个候选：本用例盯的是第一道闸门（解析触发人），候选数不影响结论
   l_fx.build(ai_light_session_state::awaiting_judgement, ai_light_iteration_state::awaiting_judgement, 1, true);
@@ -655,64 +655,37 @@ DOODLE_FIXTURE_TEST_CASE_CORO(structure_feedback_rejects_unresolvable_operator, 
     BOOST_TEST(l_threw);
   }
 }
-DOODLE_FIXTURE_TEST_CASE_CORO(generate_spec_rejects_unresolvable_operator, fixture_t) {
-  l_fx.build(ai_light_session_state::draft, ai_light_iteration_state::generated, 0, false);
-  add_reference(l_fx);
 
-  auto l_session = l_fx.reload_session();
+// 曾经的 generate_spec_rejects_unresolvable_operator 用例随 spec 接缝一起删除。
+// 它验的是「spec 的第一道闸门（解析触发人）发生在联网之前」，而服务端已经不再蒸馏 Spec
+// —— 这道闸门现在只存在于 candidates / feedback 两条接缝里（见上面的 structure_feedback
+// 用例与 ai_light_candidates.cpp 里对应的那条）。
+//
+// 同样删除的三条 advance_session 用例：advance_session_leaves_nothing_on_seam_failure、
+// advance_session_from_draft_without_references_is_rejected、
+// advance_session_redistills_from_awaiting_spec_confirm。它们的共同前提是
+// 「draft / awaiting_spec_confirm 会走进 spec 分支」，而那个分支已删：
+//   * 前两条盯的是「spec 失败不落半成品 / 参考图必须还在」——现在 draft 状态下
+//     advance_session 根本不会走到推理，所以「失败」不再是这两条用例描述的那种失败。
+//     但「没有可推进的步骤时报 400 且不写库」这条契约仍然成立，由下面
+//     advance_session_without_references_reports_no_step 覆盖。
+//   * 第三条盯的是「awaiting_spec_confirm 被 spec 分支接住而不是落到兜底分支」。
+//     分支删掉后这个区分消失了 —— 两个状态现在都走兜底，而兜底本身的行为由
+//     advance_session_unknown_state_is_rejected 一类用例覆盖。
+//
+// 保留 net 结论：**任何** advance_session 失败都不得留下半成品行、不得丢参考图、
+// 不得写 failure_reason_ —— 这条在下面仍然有断言。
 
-  // 1) operator_id 为 nil 且会话也没有 submitter → 400（不是 500，也不是「静默记到别人头上」）
-  l_session.submitter_ = uuid{};
-  {
-    spec_generation_request_t l_req{};
-    l_req.session_id_  = l_session.uuid_id_;
-    l_req.prompt_text_ = "冷、硬、孤独";
-    bool l_threw       = false;
-    try {
-      co_await generate_spec(*l_fx.sql_, l_req);
-    } catch (const doodle_error& in_err) {
-      l_threw = true;
-      BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
-    }
-    BOOST_TEST(l_threw);
-  }
-
-  // 2) operator_id 指向一个不存在的 person → 也是 400
-  {
-    spec_generation_request_t l_req{};
-    l_req.session_id_    = l_session.uuid_id_;
-    l_req.operator_id_   = core_set::get_set().get_uuid();
-    l_req.prompt_text_   = "冷、硬、孤独";
-    bool l_threw         = false;
-    try {
-      co_await generate_spec(*l_fx.sql_, l_req);
-    } catch (const doodle_error& in_err) {
-      l_threw = true;
-      BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
-    }
-    BOOST_TEST(l_threw);
-  }
-}
-
-DOODLE_FIXTURE_TEST_CASE_CORO(advance_session_leaves_nothing_on_seam_failure, fixture_t) {
-  // draft + 有提示词 + 有参考图 → advance_session 会走 generate_spec。
-  // 而 fixture 的 submitter_ 是个不存在的 person，所以接缝在**联网之前**就以
-  // bad_request 失败 —— 正好用来验「接缝抛错 → 库里一行没动」这条契约。
-  // 刻意不要子行（Spec/轮次/候选）：这样「什么都没写进去」才能被干净地断言出来。
+DOODLE_FIXTURE_TEST_CASE_CORO(advance_session_without_references_reports_no_step, fixture_t) {
+  // draft 没有参考图。曾经这是「spec 分支的前置条件不满足 → 400」，现在 spec 分支已删，
+  // 所以 draft 直接落到「当前没有可推进的步骤」的兜底分支 —— 同样是 400，
+  // 但**原因变了**，这条用例盯的就是这个原因。
   l_fx.build(ai_light_session_state::draft, ai_light_iteration_state::generated, 0, false);
 
-  // 参考图是 spec 分支的前置条件；同时它也是这条用例的第二个观察点 ——
-  // 失败承诺「不会丢已上传的参考图」，而参考图挂在会话上（cascade），
-  // 所以失败路径只能不碰会话行，绝不能碰参考图。
-  const auto l_ref = add_reference(l_fx);
-
   auto l_session = l_fx.reload_session();
-  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::draft));
-
-  bool l_threw        = false;
+  bool l_threw   = false;
   std::string l_what{};
   try {
-    // operator_id 传 nil → 由 advance_session 回落到 session.submitter_（不存在的 person）
     co_await advance_session(*l_fx.sql_, l_session, uuid{});
   } catch (const doodle_error& in_err) {
     l_threw = true;
@@ -721,80 +694,18 @@ DOODLE_FIXTURE_TEST_CASE_CORO(advance_session_leaves_nothing_on_seam_failure, fi
   }
   BOOST_TEST(l_threw);
 
-  // 关键断言：状态留在入口状态，且**没有**生成任何 Spec —— 半成品比失败更糟。
-  // 「原因可见」这一点现在由异常自己承担（HTTP 层把它写进响应体的 error 字段），
-  // 不再落 failure_reason_：同步失败有对话方（前端读 body），异步失败才需要写列。
+  // 校验刻意在 try 之外：不走回滚，所以 failure_reason_ 必须仍然是空的。
+  // 否则美术会在会话页上看到一条看起来像「AI 失败」的提示，而其实只是没传图 /
+  // 或者根本不该调这一步。
   auto l_after = l_fx.reload_session();
   BOOST_TEST(en(l_after.state_) == en(ai_light_session_state::draft));
   BOOST_TEST(l_after.failure_reason_.empty());
-  BOOST_TEST(!l_what.empty());
   BOOST_TEST(l_fx.sql_->get_ai_light_specs(l_after.uuid_id_).empty());
   BOOST_TEST(l_fx.sql_->get_ai_light_iterations(l_after.uuid_id_).empty());
 
-  // 参考图必须还在（失败路径不写会话行）
-  auto l_refs_after = l_fx.sql_->get_ai_light_references(l_after.uuid_id_);
-  BOOST_TEST(l_refs_after.size() == 1);
-  BOOST_TEST(l_refs_after.front().uuid_id_ == l_ref.uuid_id_);
-}
-
-DOODLE_FIXTURE_TEST_CASE_CORO(advance_session_from_draft_without_references_is_rejected, fixture_t) {
-  // 有提示词、有 Spec 之外的什么都没关系 —— 就是没有参考图
-  l_fx.build(ai_light_session_state::draft, ai_light_iteration_state::generated, 0, false);
-
-  auto l_session = l_fx.reload_session();
-  bool l_threw   = false;
-  try {
-    co_await advance_session(*l_fx.sql_, l_session, uuid{});
-  } catch (const doodle_error& in_err) {
-    l_threw = true;
-    // 必须是 400（入参不齐），**不是** 501 —— 501 会让人以为只差接缝实现
-    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
-  }
-  BOOST_TEST(l_threw);
-
-  // 校验刻意放在 try 之外：不走回滚，所以 failure_reason_ 必须仍然是空的。
-  // 否则美术会在会话页上看到一条看起来像「AI 失败」的提示，而其实只是没传图。
-  auto l_after = l_fx.reload_session();
-  BOOST_TEST(en(l_after.state_) == en(ai_light_session_state::draft));
-  BOOST_TEST(l_after.failure_reason_.empty());
-  BOOST_TEST(l_fx.sql_->get_ai_light_specs(l_after.uuid_id_).empty());
-}
-
-DOODLE_FIXTURE_TEST_CASE_CORO(advance_session_redistills_from_awaiting_spec_confirm, fixture_t) {
-  // 已经有 Spec revision 1、正处于「等人工确认」—— 也就是美术看完第一版才发现没说清的状态
-  l_fx.build(ai_light_session_state::awaiting_spec_confirm, ai_light_iteration_state::generated, 0, true);
-  add_reference(l_fx);
-
-  auto l_session = l_fx.reload_session();
-  bool l_threw   = false;
-  std::string l_what{};
-  try {
-    co_await advance_session(*l_fx.sql_, l_session, uuid{});
-  } catch (const doodle_error& in_err) {
-    l_threw = true;
-    l_what  = in_err.what();
-    // 400 在这里**不足以**说明问题：状态机「没有可推进的步骤」也是 400。
-    // 真正要证的是「awaiting_spec_confirm 被 spec 分支接住、真的去蒸馏了」，
-    // 所以还要看异常文本里是谁在报错。fixture 的 submitter_ 是个不存在的 person，
-    // 所以接缝必然以 bad_request 收场 —— 那正是「进去了」的证据。
-    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
-  }
-  BOOST_TEST(l_threw);
-
-  // 接缝在写库**之前**抛，所以不该留下半成品 Spec；状态留在入口状态
-  auto l_after = l_fx.reload_session();
-  BOOST_TEST(en(l_after.state_) == en(ai_light_session_state::awaiting_spec_confirm));
-  BOOST_TEST(l_fx.sql_->get_ai_light_specs(l_after.uuid_id_).size() == 1);
-  // 这两条断言就是本用例的全部意义：失败原因必须来自**接缝**（解析不出触发人），
-  // 而不是状态机那句「当前没有可推进的步骤」。没有它，「重出方案」就是空话 ——
-  // /spec 只有第一次（draft）能成功，而两种失败又都是 400，状态码分不出来。
-  //
-  // 原因现在从**异常文本**读（原来读 failure_reason_）：同步失败不再落库，
-  // HTTP 层把 what() 写进响应体的 error 字段交给前端显示。
-  BOOST_TEST(l_what.find("没有可推进的步骤") == std::string::npos);
-  BOOST_TEST(l_what.find("触发人") != std::string::npos);
-  // 失败不落库：会话行上不该留下原因
-  BOOST_TEST(l_after.failure_reason_.empty());
+  // 原因必须来自**状态机**（没有可推进的步骤），而不是别的地方 ——
+  // 上一版本这里断言的是「参考图」缺失，那是 spec 分支还在时的事。
+  BOOST_TEST(l_what.find("没有可推进的步骤") != std::string::npos);
 }
 
 // ===========================================================================

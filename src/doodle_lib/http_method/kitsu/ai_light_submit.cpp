@@ -253,7 +253,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   l_req.rigs_          = std::move(l_rigs);
   l_req.task_id_       = l_session.task_id_;  // 装配推导要它定位镜头
 
-  auto l_plan = co_await write_submitted_iteration(l_sql, l_req, true);
+  // 引擎内路线：这条路线不建任务行、不广播，所以任务号出参在这里必然保持 nil
+  // （出参是给「服务端自己生成候选」那条队列路线用的）。
+  uuid l_unused_task_id{};
+  auto l_plan = co_await write_submitted_iteration(l_sql, l_req, true, l_unused_task_id);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 向 AI 灯光会话 {} 提交了第 {} 轮 {} 个候选（前端展开）",

@@ -20,14 +20,20 @@
 // ---------------------------------------------------------------------------
 // 命名
 // ---------------------------------------------------------------------------
-// `name` 用的是流水线三阶段的名字（generate_spec / generate_candidates /
-// structure_feedback）。它们只在本路由里被校验，与别处没有耦合 —— 网关那条路径已经不认
-// `seam` 这个词了（请求按方舟 Responses 形状原样透传）。
-// 不用 `spec` / `candidates` 这种短名：那样同一个概念会在两处路由上长出两套名字，
+// `name` 用的是流水线阶段的名字（generate_candidates / structure_feedback）。
+// 它们只在本路由里被校验，与别处没有耦合 —— 网关那条路径已经不认 `seam` 这个词了
+// （请求按方舟 Responses 形状原样透传）。
+// 不用 `candidates` / `feedback` 这种短名：那样同一个概念会在两处路由上长出两套名字，
 // 而前端要把两套名字对应起来 —— 那张映射表就是下一个漂移点。
 //
+// 曾经还有第三个素材 `generate_spec`（蒸馏 LightingSpec 的 instructions/schema）。
+// 它随 spec 接缝一起删除了：蒸馏方案现在完全归前端 —— 包括那份提示词模板本身。
+// 于是「模板不能由前端重写」这条防漂移理由**只对 candidates / feedback 成立**：
+// 那两条接缝仍在服务端自组信封、仍共用这里的真源；而 spec 是前端自己调的推理，
+// 它用什么模板由前端自己定（服务端不再有可以漂移的对照物）。
+//
 // 额外提供 `common` —— build_common_lighting_section() 那三段（职责边界 / 性格→灯光语言
-// 映射表 / 单位口径）。它被 spec 与 candidates 的 instructions **包含**，单独暴露是为了：
+// 映射表 / 单位口径）。它被 candidates 的 instructions **包含**，单独暴露是为了：
 //   * 前端组装时知道「哪一段是公共的」；
 //   * 变更公共段时能一眼看出影响面（它是两条接缝的共享前提）。
 //
@@ -44,7 +50,7 @@
 
 namespace doodle::http::ai_light {
 
-// GET /api/doodle/ai/light/prompt_assets          三条接缝（+ common）的清单
+// GET /api/doodle/ai/light/prompt_assets          两条接缝（+ common）的清单
 //
 // 响应：{assets: [{name, has_schema, instructions_chars, schema_chars}]}
 //
@@ -71,7 +77,7 @@ DOODLE_HTTP_FUN_END()
 // `common` 只有 instructions，没有 schema —— 它的 json_schema 为 null。
 //
 // name 未知 → 400（不是 404）。**这是刻意的**：/prompt_assets/{name} 里 {name} 是
-// 一个三值（+common）的白名单，不在白名单内是「参数非法」（调用方拼错了），
+// 一个二值（+common）的白名单，不在白名单内是「参数非法」（调用方拼错了），
 // 而不是「这个资源不存在」—— 后者的语义会让人以为将来可能多出一个接缝，
 // 于是前端写出一个动态探测的分支。白名单即全部可能。
 DOODLE_HTTP_JWT_FUN(prompt_asset_route)

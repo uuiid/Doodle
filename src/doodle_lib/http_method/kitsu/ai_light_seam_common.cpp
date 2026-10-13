@@ -31,9 +31,9 @@ using namespace orm;
 // 接缝共用的推理管道
 // ---------------------------------------------------------------------------
 //
-// 三条接缝的 `generate_*`／`structure_feedback` 原本各写一遍同样的 14 行（解析触发人 →
+// 两条接缝的 `generate_candidates`／`structure_feedback` 原本各写一遍同样的 14 行（解析触发人 →
 // 建客户端 → 组装任务信封 → 跑推理 → 判定成败）。任何一处改了 token 计费或任务字段，
-// 另两处就悄悄落后 —— 收口到这一处后，「一次接缝推理长什么样」只有一个答案。
+// 另一处就悄悄落后 —— 收口到这一处后，「一次接缝推理长什么样」只有一个答案。
 
 namespace {
 
@@ -114,8 +114,8 @@ void chick_inference_ok(const http::seedance2::ai_client_base::run_task_result_t
 }  // namespace
 
 boost::asio::awaitable<seam_inference_result_t> run_seam_inference(
-    sqlite_database& in_sql, const seam_request_base_t& in_request, std::string_view in_text_prompt,
-    const nlohmann::json& in_data_request, const uuid& in_iteration_id
+    sqlite_database& in_sql, const seam_request_base_t& in_request, const nlohmann::json& in_data_request,
+    const uuid& in_iteration_id
 ) {
   // ---- 1) 触发人 → AI 工作室 → 客户端 ----
   auto l_resolved = make_seam_client(in_sql, in_request.operator_id_, "推理");
@@ -131,15 +131,17 @@ boost::asio::awaitable<seam_inference_result_t> run_seam_inference(
   // 铸造好了，所以这条推理任务能反查到「哪一次推理生成了第 N 轮候选 / 结构化过哪一轮反馈」。
   // 为 nil（蒸馏阶段）表示这次推理不属于任何轮次。
   l_task.ai_light_iteration_id_ = in_iteration_id;
-  l_task.text_prompt_           = std::string{in_text_prompt};  // 去重与前台展示都读它
+  // text_prompt_ 不在**这里**填：任务行要显示的那句话由 collect_request_info() 在
+  // run_inference_task 落库时从请求体自己读。调用方再抄一份带进来的话，同一份提示词
+  // 就有了第二个真相，而且抄进来的那版往往是截断过的摘要。
   l_task.completion_tokens_     = doodle_config::g_ark_inference_default_consumed_tokens;
   // 落库的就是**要发出去的那份** json, 不再经 inference_request_t 往返一趟: 那次往返是一份
   // 手写白名单, 网关透传进来的键(方舟的 input / tools / text.format…)会被静默吃掉。
-  // 接缝三条路径本来就自组扁平信封(调用方传 to_json 的结果进来), 形状不变。
+  // 接缝路径本来就自组扁平信封(调用方传 to_json 的结果进来), 形状不变。
   l_task.data_request_          = in_data_request;
 
   // run_inference_task 自己一个事务里落终态任务行 + 扣费（§15.6 的方案 A）。
-  // 这是三条接缝唯一的副作用，且**有意保留**：推理确实发生了，必须留痕计费 ——
+  // 这是接缝唯一的副作用，且**有意保留**：推理确实发生了，必须留痕计费 ——
   // 否则调用方回滚会话状态时会连带把 person_token 的扣费抹掉（契约 2 的受控例外）。
   auto l_result = co_await http::seedance2::run_inference_task(l_task, in_sql, l_resolved.client_);
 

@@ -7,14 +7,18 @@
 // 路由层（http_method/kitsu/ai_light.h）只是这一层的薄包装。
 //
 // ---------------------------------------------------------------------------
-// 三个「接缝」：接入 LLM 的三个位置
+// 两个「接缝」：接入 LLM 的两个位置
 // ---------------------------------------------------------------------------
-// generate_spec 已落地（见 §15.7）：提示词 + 多图统计 → LightingSpec。
 // generate_candidates 已落地（见 §15.8）：Spec + 基线 rig + 上一轮反馈轴 → 本轮 6 个候选。
 // structure_feedback 已落地（见 §15.9）：自由文本 → 轴方向，填进
 //   ai_light_judgement_t::feedback_axes_，下一轮当**约束**用。
-// 三者都走已落地的方舟 Responses 通道（`seedance2_client` + `run_inference_task`，
+// 两者都走已落地的方舟 Responses 通道（`seedance2_client` + `run_inference_task`，
 // 用法见 §15.6）。**仓库里已经没有 not_implemented 的接缝了。**
+//
+// 曾经的第三条接缝 generate_spec（提示词 + 多图统计 → LightingSpec）**已删除**：
+// 蒸馏方案与「意会灯光 rig」这一步现在归前端 —— 前端直接调推理网关
+// （/session/{}/inference，见 ai_light_gateway.h）自己想怎么问就怎么问，
+// 服务端不再替它写提示词、也不再解释模型输出。
 //
 // 接缝契约（实现方必须遵守）：
 //   1. 抛出即视为「本轮无法推进」。调用方 advance_session() 只把原因记进会话的
@@ -22,7 +26,7 @@
 //      所以抛错时库里本来就一行没动，实现方**不需要**自己清理状态。
 //   2. 但必须保证「抛之前没有落库」，或者「落库的部分是幂等可重入的」——
 //      调用方不会回滚接缝自己写下的东西（它根本没有回滚动作）。
-//      **受控例外**：generate_spec / generate_candidates / structure_feedback 经由
+//      **受控例外**：generate_candidates / structure_feedback 经由
 //      run_inference_task 写下一行推理任务与对应的扣费记录。这是有意保留的 —— 推理确实
 //      发生了，抹掉它等于抹掉计费凭证。除此之外它们不写任何 ai_light_* 表
 //      （返回值全部交给调用方落库）。
@@ -44,13 +48,12 @@
 // 所以不会破坏本文件顶部「这一层刻意不包含任何 HTTP 依赖」的约定。
 #include <doodle_lib/http_client/seedance2_inference_request.h>
 
-// 本头是**伞形头**：三条接缝、rig 纯运算、共用部件各自成文件，本头把它们与状态机
+// 本头是**伞形头**：两个接缝、rig 纯运算、共用部件各自成文件，本头把它们与状态机
 // 一起收在同一个命名空间下 —— 对外仍然只需包含 ai_light_orchestrator.h 一个头。
 #include "ai_light_rig_ops.h"
 #include "ai_light_seam_candidates.h"
 #include "ai_light_seam_common.h"
 #include "ai_light_seam_feedback.h"
-#include "ai_light_seam_spec.h"
 
 #include <boost/asio/awaitable.hpp>
 #include <nlohmann/json.hpp>
@@ -70,17 +73,17 @@ namespace doodle::ai_light {
 
 /// 会话状态推进的唯一入口。按 in_session.state_ 分派：
 ///
-///   draft / awaiting_spec_confirm（前置：会话已有参考图）
-///       → generate_spec 接缝 → 写 ai_light_spec(revision = max+1)
-///       → session = awaiting_spec_confirm
+///   draft / awaiting_spec_confirm
+///       → **没有可推进的步骤**（400）。这一步曾经是 generate_spec 接缝，现在归前端：
+///         前端自己调推理网关蒸馏方案，再经 /session/{}/spec 提交上来。
 ///   generating 且已有已确认的 Spec
 ///       → generate_candidates 接缝 → 写 iteration + g_candidate_count 个 candidate
 ///       → 建 server_task_info{type = ai_light} → run_next_task() + broadcast
 ///       → session 保持 generating（渲染中）；渲染完由 mark_iteration_rendered 转 awaiting_judgement
 ///
-/// 参考图为空时**拒绝**（400，且不写 failure_reason_）：Spec 的输入是提示词 + 参考图，
-/// 少了参考图就只能蒸出一份 prompt-only 的方案，而那是主输入的静默丢失。
-/// 因此建会话接口**不**调本函数 —— 建会话时参考图还不可能存在（见 shot_session_route::post）。
+/// 参考图为空时**拒绝**（400，且不写 failure_reason_）：候选生成的前提是会话有提示词与
+/// 参考图（见 ai_light.cpp 的闸门）。因此建会话接口**不**调本函数 ——
+/// 建会话时参考图还不可能存在（见 shot_session_route::post）。
 ///
 /// 失败时不改会话状态、**也没有回滚动作**：分派到的分支只算 SQL 不落库（见 .cpp 里
 /// 各分支「返回 SQL 而不是就地执行」的说明），抛错时库里一行没动，所以退回原状态
@@ -91,22 +94,21 @@ namespace doodle::ai_light {
 /// 分派只看状态，所以**同一个状态只能有一个后继步骤** —— 这是结构性约束。
 /// 「等判断」的会话没有可推进的步骤（该做的是 /judge，不是再推一步）。
 ///
-/// in_operator_id 是本次推进的触发人（person uuid），转手给 generate_spec 做计费主体与
-/// 签名 URL 的 uid。**不给默认值**：见 spec_generation_request_t::operator_id_ 的说明。
-/// 为 nil 时回落到 in_session.submitter_；两者都 nil 抛 bad_request（无法解析工作室、
-/// 无法计费）—— 这条在 try 内，所以照常记 failure_reason_。
+/// in_operator_id 是本次推进的触发人（person uuid），转手给 generate_candidates 做计费主体与
+/// 签名 URL 的 uid。为 nil 时回落到 in_session.submitter_；两者都 nil 抛 bad_request
+/// （无法解析工作室、无法计费）—— 这条在 try 内，所以照常记 failure_reason_。
 DOODLELIB_API boost::asio::awaitable<void> advance_session(
     sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
 );
 
-/// 引擎内路线的推进（D52/D53）：走完 Spec / 候选生成那一步后**不建任务行**，
+/// 引擎内路线的推进（D52/D53）：走完候选生成那一步后**不建任务行**，
 /// 而是把「本轮该怎么渲」作为 ai_light_launch_plan_t 返回给调用方，由发起方本机自己渲染。
 ///
 /// 与 advance_session 共用同一个分支实现，差别只在 generating 分支的末尾：
 /// 一个建 server_task_info + run_next_task（下放工作机），一个填 launch plan 直接返回。
 ///
 /// 为什么返回 std::optional 而不是 out 参数：
-///   * 非 generating 状态（例如 draft / awaiting_spec_confirm）推进的是 Spec 那一步，
+///   * 非 generating 状态推进不了任何东西，
 ///     **没有**渲染计划可给 —— 调用方看到 nullopt 应当按「只推进了状态」处理，不是错误；
 ///   * 生成分支失败（装配推不出来、接缝抛错）照 advance_session 的老规矩办：
 ///     记 failure_reason_，然后**重新抛出**（同样没有回滚动作）。
@@ -282,8 +284,18 @@ struct DOODLELIB_API submit_iteration_request_t {
 ///
 /// 抛出的错误：装配推不出来 → internal_server_error；候选数不为 g_candidate_count
 /// → internal_server_error（调用方本应先过闸门，走到这里说明闸门被绕过了）。
+///
+/// out_broadcast_task_id 是**出参**（不是返回值的一部分，因为返回值已经是「本机渲染计划
+/// 或没有」这个二选一）：队列路线上它被写成新建的任务行 uuid，供调用方广播
+/// `server_task_info_new_broadcast_t`；引擎内路线不建任务行，所以保持 nil。
+///
+/// 为什么用出参而不把它塞进返回值：**任务行 uuid 不只是队列路线的产物** —— 它是
+/// `ai_light_iteration.server_task_info_id_` 的来源（渲染回传按它反查轮次），而引擎内路线
+/// 根本不发生广播。做成返回值的一部分，就必须先造一个「带任务号的空渲染计划」这种
+/// 只在一条路线上有意义的形状；出参让「哪条路线关心它」在调用点上直接可见。
 DOODLELIB_API boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_iteration(
-    sqlite_database& in_sql, const submit_iteration_request_t& in_request, bool in_local_only
+    sqlite_database& in_sql, const submit_iteration_request_t& in_request, bool in_local_only,
+    uuid& out_broadcast_task_id
 );
 
 }  // namespace doodle::ai_light

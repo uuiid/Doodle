@@ -4,10 +4,13 @@
 // 每个处理函数只做四件事：权限 → 校验入参 → 调编排层 → 组响应。
 // 状态推进与业务规则一律在 ai_light_orchestrator.cpp，这里不写状态机。
 //
-// 关于三条 LLM 接缝（`/spec` POST → generate_spec、`/iterate` → generate_candidates、
-// `/judge` 的文本通道 → structure_feedback）：它们**不是**占位桩 —— 权限、状态校验、
-// 会话查找全部真实执行，接缝真的去跑一次推理。三条现已全部落地（方案 §15.7 / §15.8 /
-// §15.9）；参数错了会明确报错，接缝失败时由 advance_session 回滚或就地降级。
+// 关于两条 LLM 接缝（`/iterate` → generate_candidates、`/judge` 的文本通道 →
+// structure_feedback）：它们**不是**占位桩 —— 权限、状态校验、会话查找全部真实执行，
+// 接缝真的去跑一次推理。两条现已全部落地（方案 §15.8 / §15.9）；参数错了会明确报错，
+// 接缝失败时由 advance_session 回滚或就地降级。
+//
+// 曾经的第一条接缝 generate_spec（`/spec` POST → 蒸馏 LightingSpec）已删除：
+// 蒸馏方案现在完全归前端，`/spec` POST 只负责**提交**前端蒸好的方案。
 //
 
 #include <doodle_core/exception/exception.h>

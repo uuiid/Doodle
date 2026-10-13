@@ -4,10 +4,9 @@
 // 对应 docs/ue_ai_lighting_plan.md §10.3（状态流转）与 §10.4（派发契约）。
 //
 // 本文件只装**状态机**：advance_session / apply_judgement / mark_iteration_rendered /
-// build_session_detail，以及它自己的两个小助手。三条「接缝」（generate_spec /
-// generate_candidates / structure_feedback）、rig 纯运算、共用部件与 JSON 架构层在同目录的
+// build_session_detail，以及它自己的两个小助手。两条「接缝」（generate_candidates /
+// structure_feedback）、rig 纯运算、共用部件与 JSON 架构层在同目录的
 // 独立文件里：
-//   * `ai_light_seam_spec.{h,cpp}`        —— 蒸馏 Spec（§15.7）
 //   * `ai_light_seam_candidates.{h,cpp}`  —— 基线 rig + 轴计划 + OFAT 展开（§15.8）
 //   * `ai_light_seam_feedback.{h,cpp}`    —— 自由文本 → 轴方向（§15.9）
 //   * `ai_light_rig_ops.{h,cpp}`          —— 轴施加 / OFAT 展开 / ops diff / key:fill 比
@@ -108,96 +107,6 @@ orm::sql_modify_statement_t make_session_update(sqlite_database& in_sql, const a
 // ===========================================================================
 
 namespace {
-
-/// 第一步：draft / awaiting_spec_confirm → 蒸馏出 LightingSpec。
-///
-/// 独立成函数：这一段本身就是「一次接缝调用 + 一个事务」的完整闭环，与下面出候选那一段
-/// 没有共享状态 —— 唯一的共享是 `io_session`（状态与 `failure_reason_` 由本函数直接改，
-/// 因为回滚要用到它们）。
-///
-/// **本函数不捕获任何异常，也不落库**：接缝契约 1 说「抛 = 本轮无法推进」，本函数只把
-/// 要写的语句**算出来返回**，执行与失败处理由调用方统一做。
-///
-/// 为什么改成「返回 SQL 而不是就地执行」（本次修订的核心）：
-///   * 失败点在 `run_sql` **之前** —— 接缝调用与入参校验抛错时，库还一行没动，
-///     所以调用方**不需要**任何回滚动作（`run_sql` 自己就是原子的：见
-///     sqlite_database.cpp:1610 的 `session_.transaction()` + 失败析构 rollback）；
-///   * 旧写法先在内存里把 `io_session.state_` 改成新值再入批，一旦抛错，库没变而内存
-///     已经变了 —— 这才需要那个 l_rollback lambda 去"改回来"。不提前改内存，回滚自然消失。
-///   所以本函数**不碰 `io_session`**：状态的新值写进返回的语句里，是否提交由调用方决定。
-///
-/// 两个入口状态，同一个意图：产出（或重出）当前版本的方案。
-/// 这不违反「一个状态只能有一个后继步骤」：awaiting_spec_confirm 上还有一个 /spec/confirm，
-/// 但它会**先把状态改成 generating** 再调 advance_session（ai_light.cpp 的 spec_confirm_route），
-/// 所以落到本分支的只有「重出」这一个意图。
-///
-/// 返回：`spec_branch_result`，装着要落库的语句（spec 行 + 会话行）。
-/// 之所以不是 `awaitable<sql_modify_statement_vector_t>`：本函数里 `co_await generate_spec(...)`，
-/// 所以它必须是个协程，而协程的返回类型必须是能承载 `co_await` 的 awaitable —— 裸的
-/// `sql_modify_statement_vector_t` 会让编译器报
-/// "promise_type is not a member of std::coroutine_traits<...>"。
-/// 于是包一层结构体（**用返回值，不用非常量引用 out 参数**：C++ Core Guidelines F.17）。
-///
-/// 语句在**局部**变量里攒，最后一次装进返回值：这样任何校验/接缝在中途抛错，
-/// 调用方手里根本不会拿到半成品批次（返回值压根没被构造出来）。
-struct spec_branch_result {
-  orm::sql_modify_statement_vector_t sqls_{};
-};
-
-boost::asio::awaitable<spec_branch_result> advance_session_spec_branch(
-    sqlite_database& in_sql, const ai_light_session& in_session, const uuid& in_operator
-) {
-  auto l_refs = in_sql.get_ai_light_references(in_session.uuid_id_);
-
-  DOODLE_CHICK_HTTP(
-      !in_operator.is_nil(), bad_request,
-      "会话 {} 无法确定触发人（无 operator_id 且会话无 submitter），无法解析 AI 工作室与计费主体", in_session.uuid_id_
-  );
-
-  spec_generation_request_t l_req{};
-  l_req.session_id_  = in_session.uuid_id_;
-  l_req.project_id_  = in_session.project_id_;
-  l_req.operator_id_ = in_operator;
-  l_req.prompt_text_ = in_session.prompt_text_;
-  l_req.references_  = l_refs;
-  l_req.degrade_level_ =
-      references_have_stats(l_refs) ? spec_degrade_level::stats_only : spec_degrade_level::prompt_only;
-  if (auto l_prev = in_sql.get_current_ai_light_spec(in_session.uuid_id_); l_prev.has_value())
-    l_req.previous_spec_ = l_prev->to_spec();
-
-  auto l_res       = co_await generate_spec(in_sql, l_req);
-
-  // revision = 现有最大 + 1。get_ai_light_specs 按 revision 升序返回。
-  auto l_history   = in_sql.get_ai_light_specs(in_session.uuid_id_);
-  const auto l_rev = l_history.empty() ? 1 : l_history.back().revision_ + 1;
-
-  ai_light_spec l_spec{};
-  l_spec.session_id_ = in_session.uuid_id_;
-  l_spec.revision_   = l_rev;
-  l_spec.from_spec(l_res.spec_);
-  l_spec.set_reference_stats(l_res.reference_stats_);
-  // 降级级别以**接缝按事实判定的结果**为准，不用调用方那个预判（决定 D4）：
-  // 「参考图有 stats 行但置信度全 0」或「全部图被人工排除」时，调用方看
-  // references_have_stats() 会以为是 stats_only，而实际聚合出一无所获。
-  l_spec.degrade_level_           = l_res.spec_.degrade_level_;
-  // 新出的方案一律未确认：人工闸门 1 必须重新过一遍。
-  l_spec.human_confirmed_         = false;
-  l_spec.confirmed_by_            = uuid{};
-  l_spec.confirmed_at_            = std::nullopt;
-
-  // 会话行的新值在**副本**上组装：新状态 + 清空失败原因。原 in_session 一字不改。
-  ai_light_session l_session_next = in_session;
-  l_session_next.state_           = ai_light_session_state::awaiting_spec_confirm;
-  l_session_next.failure_reason_  = "";
-
-  SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "AI 灯光会话 {} 生成 Spec revision {}（降级级别 {}，参考图 {} 张）",
-      in_session.uuid_id_, l_rev, magic_enum::enum_name(l_spec.degrade_level_), l_req.references_.size()
-  );
-  co_return spec_branch_result{
-      .sqls_ = {orm::insert(in_sql).into<ai_light_spec>().values(l_spec), make_session_update(in_sql, l_session_next)}
-  };
-}
 
 /// 第二步：generating 且 Spec 已确认 → 出候选，然后按 in_local_only 分两条出口：
 ///
@@ -358,7 +267,8 @@ boost::asio::awaitable<generating_branch_result> advance_session_generating_bran
   // 独立成立 —— 它也被前端提交那条路调用，那里没有现成的装配结果。
   // 重复推导的代价是一次路径计算 + 4 次 FSys::exists（见 auto_task.cpp:124-126 的说明），
   // 换来的是「两条路线共用同一段落库逻辑」。这是刻意的取舍。
-  auto l_plan = co_await write_submitted_iteration(in_sql, l_submit, in_local_only);
+  uuid l_dispatch_task_id{};
+  auto l_plan = co_await write_submitted_iteration(in_sql, l_submit, in_local_only, l_dispatch_task_id);
 
   // usage / 计费口径不变（generate_candidates 内部已落任务行并扣费）。
   //
@@ -380,8 +290,12 @@ boost::asio::awaitable<generating_branch_result> advance_session_generating_bran
 // ===========================================================================
 // 见 ai_light_orchestrator.h 的 submit_iteration_request_t 说明。
 boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_iteration(
-    sqlite_database& in_sql, const submit_iteration_request_t& in_request, bool in_local_only
+    sqlite_database& in_sql, const submit_iteration_request_t& in_request, bool in_local_only,
+    uuid& out_broadcast_task_id
 ) {
+  // 出参先归零：队列路线之外的出口（引擎内路线、以及任何中途抛错）都不该让调用方
+  // 读到一个上一次调用残留的任务号 —— 那会让调用方广播一个无关的旧任务。
+  out_broadcast_task_id = uuid{};
   const auto l_iteration = in_request.iteration_;
 
   // §6.6 护栏：候选数量是硬约束。调用方本应先过这一条，走到这里仍不成立
@@ -579,6 +493,8 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
       l_iteration, g_candidate_count, l_task.uuid_id_
   );
   // 队列路线没有本机渲染计划：调用方看到 nullopt 应当按「已派发」处理（不是错误）。
+  // 反过来，任务行 uuid 只有这条路线有 —— 把它交给调用方去广播（本函数不做网络副作用）。
+  out_broadcast_task_id = l_task.uuid_id_;
   co_return std::nullopt;
 }
 
@@ -587,47 +503,20 @@ boost::asio::awaitable<void> advance_session(
 ) {
   const auto l_entry_state = in_session.state_;
 
-  // Spec 蒸馏的输入是「提示词 + 参考图」（决策 1：参考必有多张）。
-  // 参考图清单为空时直接拒绝，**不**静默降级：否则「没传图」和「图传了但统计不可用」
-  // 会落进同一个 degrade_level，出问题时看不出是哪一种。
-  //
-  // 入参校验放在分派之前：它不该往会话上写 failure_reason_ ——
-  // 否则美术会在会话页上看到一条看起来像「AI 失败」的提示。
-  //
-  // 不看 is_outlier_：被人工排除的图仍要交给接缝自行裁决（它拿得到 is_outlier_ 标记），
-  // 这与 references_have_stats() 同样不筛该标记的做法一致。
-  if (l_entry_state == ai_light_session_state::draft ||
-      l_entry_state == ai_light_session_state::awaiting_spec_confirm) {
-    DOODLE_CHICK_HTTP(
-        !in_sql.get_ai_light_references(in_session.uuid_id_).empty(), bad_request,
-        "会话 {} 还没有参考图，无法蒸馏 Spec（决策 1：参考必有多张）", in_session.uuid_id_
-    );
-  }
-
+  // ---------------------------------------------------------------
   // 推进失败时**不落库、不记录 failure_reason_**：同步请求的失败原因由 HTTP 响应体描述
   // （http_session_data.cpp:313 把 doodle_error::what() 放进 body），前端无论状态码是多少
   // 都读 body 显示。这里再写一列只是重复，而且会与「异步失败」抢同一个字段。
   // 异步失败（工作机回传渲染结果）没有人可对话，仍走 mark_iteration_failed() 落库。
   // 异常自然向上抛，由 HTTP 层转成状态码 + body。
-  const auto l_operator = in_operator_id.is_nil() ? in_session.submitter_ : in_operator_id;
-
-  // ---------------------------------------------------------------
-  // 第一步：draft / awaiting_spec_confirm 且尚无已确认 Spec → 蒸馏出 LightingSpec
   //
-  // 两个入口状态，同一个意图：产出（或重出）当前版本的方案。
-  // 这不违反「一个状态只能有一个后继步骤」：awaiting_spec_confirm 上还有一个
-  // /spec/confirm，但它会**先把状态改成 generating** 再调 advance_session
-  // （ai_light.cpp 的 spec_confirm_route），所以落到本分支的只有「重出」这一个意图。
+  // 曾经这里先是「第一步：draft / awaiting_spec_confirm → generate_spec 蒸馏 Spec」。
+  // 那一步已删除：蒸馏方案现在归前端（前端直接调推理网关），服务端不再替它写提示词。
+  // 于是 draft / awaiting_spec_confirm 变成**没有可推进步骤**的状态，落到下面的兜底分支
+  // （400）—— 这与「同一个状态只能有一个后继步骤」一致：这两个状态的后继是
+  // /session/{}/spec 提交与 /spec/confirm，都不是 advance_session。
   // ---------------------------------------------------------------
-  if (l_entry_state == ai_light_session_state::draft ||
-      l_entry_state == ai_light_session_state::awaiting_spec_confirm) {
-    // 分支只算 SQL 不落库：抛错时库里一行没动，所以调用方**不需要**任何回滚动作
-    // （run_sql 自身就是原子的，见 sqlite_database.cpp:1610）。
-    // 只有走到这里 —— 分支成功返回 —— 才提交。
-    auto l_res = co_await advance_session_spec_branch(in_sql, in_session, l_operator);
-    co_await in_sql.run_sql(std::move(l_res.sqls_));
-    co_return;
-  }
+  const auto l_operator = in_operator_id.is_nil() ? in_session.submitter_ : in_operator_id;
 
   if (l_entry_state == ai_light_session_state::generating) {
     // 队列路线：建任务行 + 派发（忽略返回的渲染计划 —— 它只给引擎内路线用）。
@@ -658,29 +547,12 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_lo
 ) {
   const auto l_entry_state = in_session.state_;
 
-  // 与 advance_session 逐字一致的前置校验：参考图为空直接 400，且**不**写 failure_reason_。
-  // 两条路线共用同一套准入条件是有意的 —— 「引擎内模式可以少传一张参考图」这种偏差
-  // 会让同一个会话在两种模式下蒸出不同的 Spec。
-  if (l_entry_state == ai_light_session_state::draft ||
-      l_entry_state == ai_light_session_state::awaiting_spec_confirm) {
-    DOODLE_CHICK_HTTP(
-        !in_sql.get_ai_light_references(in_session.uuid_id_).empty(), bad_request,
-        "会话 {} 还没有参考图，无法蒸馏 Spec（决策 1：参考必有多张）", in_session.uuid_id_
-    );
-  }
-
-  // 与 advance_session 逐字一致的准入校验与失败策略：失败原因交给 HTTP 响应体描述，
+  // 与 advance_session 逐字一致的失败策略：失败原因交给 HTTP 响应体描述，
   // 不写 failure_reason_（详见 advance_session 顶部的说明）。
+  //
+  // 曾经的「draft / awaiting_spec_confirm → 蒸馏 Spec」分支已删除（与 advance_session 同步）：
+  // 蒸馏归前端，这两个状态在这里同样没有可推进的步骤，落到下面的兜底分支。
   const auto l_operator = in_operator_id.is_nil() ? in_session.submitter_ : in_operator_id;
-
-  if (l_entry_state == ai_light_session_state::draft ||
-      l_entry_state == ai_light_session_state::awaiting_spec_confirm) {
-    // 这一步没有渲染计划可给：Spec 出完会话进 awaiting_spec_confirm（闸门 1），
-    // 候选要等人工确认之后再走一次调用。返回 nullopt 让调用方照常回详情。
-    auto l_res = co_await advance_session_spec_branch(in_sql, in_session, l_operator);
-    co_await in_sql.run_sql(std::move(l_res.sqls_));
-    co_return std::optional<ai_light_launch_plan_t>{};
-  }
 
   if (l_entry_state == ai_light_session_state::generating) {
     auto l_res = co_await advance_session_generating_branch(in_sql, in_session, l_operator, true);

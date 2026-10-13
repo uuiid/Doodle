@@ -169,7 +169,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   // 什么值合法全由方舟判定, 服务端替它把关只会让方舟改契约时这里成为第二份真相。
   // 唯一本系统自己消费的键是 `input`, 且它只用于抽台账摘要 —— 抽不出来也不拒绝请求。
   auto [l_request, l_input_brief] = build_gateway_inference_request(l_json);
-
   // 摘要抽不出来时**不拒绝**请求(只有图片的请求是合法的), 但必须可发现: 台账上一条空的
   // text_prompt_ 会让「这次推理问了什么」彻底断线, 而这正是排查内容违规时唯一要看的东西。
   if (l_input_brief.empty()) {
@@ -192,13 +191,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
 
   // ---- 4) 跑推理（凭据 + 计费 + 成败判定全在 run_seam_inference 里，不复制）----
   //
-  // text_prompt_ 传从 input 抽出的摘要：会话列表与计费台账上显示的就是「这次问了什么」，
-  // 而不是本网关自己编的一句话 —— 服务端不知道这次推理的业务含义，也不该假装知道。
-  // 传的是**摘要**不是原文：原文在 data_request_ 里逐字留着，这里只要够认出是哪一次。
+  // 不再传 text_prompt_：任务行要显示的那句话由落库侧从请求体自己读（见 collect_request_info），
+  // 这里再传一份摘要等于同一份提示词存两处。
   //
   // iteration_id 留 nil：网关不铸造轮次。降级后轮次由前端在 /session/{}/iteration 提交时
   // 建立，所以这次推理「属于哪一轮」在网关这里还不存在（与蒸馏阶段同形）。
-  auto l_result = co_await run_seam_inference(l_sql, l_base, l_input_brief, l_request);
+  auto l_result = co_await run_seam_inference(l_sql, l_base, l_request);
 
   SPDLOG_LOGGER_INFO(
     g_logger_ctrl().get_http(), "AI 灯光推理网关：会话 {} 完成一次推理（{} → {} token）", l_session.uuid_id_,

@@ -17,7 +17,6 @@ target_sources(
         ai_light_rig_ops.h
         ai_light_seam_candidates.h
         ai_light_seam_feedback.h
-        ai_light_seam_spec.h
         ai_light_stats.h
         ai_light_gateway.h
         ai_light_prompt_assets.h
@@ -61,7 +60,6 @@ target_sources(
         jobs.cpp
         ai_light.cpp
         ai_light_orchestrator.cpp
-        ai_light_seam_spec.cpp
         ai_light_seam_candidates.cpp
         ai_light_seam_feedback.cpp
         ai_light_seam_common.h

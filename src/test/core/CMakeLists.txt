@@ -20,7 +20,6 @@ target_sources(test_main
         ai_light_schema.cpp
         ai_light_state.cpp
         ai_light_stats.cpp
-        ai_light_spec_prompt.cpp
         ai_light_candidates.cpp
         ai_light_feedback.cpp
         ai_light_paths.cpp

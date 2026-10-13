@@ -1,7 +1,7 @@
 //
-// AI 灯光：三条接缝共用的**内部件**（私有头，不进公共 API）
+// AI 灯光：两条接缝共用的**内部件**（私有头，不进公共 API）
 //
-// 这里放的都是实现细节：跨接缝共用的常量、字符串拼装、rig/spec/预设的紧凑摘要。故意不做成
+// 这里放的都是实现细节：跨接缝共用的常量、字符串拼装、rig/预设的紧凑摘要。故意不做成
 // 公共 API —— 一旦导出就会有人从外面依赖，而它们的形状会随提示词一起变。
 //
 // 本头**不含任何 HTTP 依赖**
@@ -97,13 +97,13 @@ std::string describe_spec_brief(const lighting_spec_t& in_spec);
 std::string describe_preset_brief(const ai_light_preset& in_preset);
 
 // ---------------------------------------------------------------------------
-// 三条接缝共用的请求信封与推理管道
+// 两条接缝共用的请求信封与推理管道
 // ---------------------------------------------------------------------------
 
-/// 三条接缝请求体共有的身份字段。
+/// 两条接缝请求体共有的身份字段。
 ///
 /// 提到公共基类是为了让 `run_seam_inference` 只收一个信封：管道要的三样东西
-/// （计费主体、任务归属项目、会话）在三条接缝里语义完全相同，其余字段各自不同。
+/// （计费主体、任务归属项目、会话）在两条接缝里语义完全相同，其余字段各自不同。
 ///
 /// 不给 `DOODLELIB_API`：这是库内部件，三个派生请求体自己带着 DLL 边界（基类只贡献
 /// 对象布局里的成员，消费侧读写成员不需要跨 DLL 的符号）。派生类作为 dllexport 类的
@@ -125,8 +125,8 @@ struct seam_request_base_t {
 ///
 /// 刻意不把 `run_task_result_t` 原样传出去：status / error_code / is_timeout 这些「为什么失败」
 /// 的信息已经被 `chick_inference_ok` 消费成了 `doodle_error`（400 或 502），调用方拿到它们
-/// 只会写出第二套互不相容的判定。字段名与 `run_task_result_t` 的同名成员保持一致，好让三条
-/// 接缝原有的日志语句逐字不变（只把 `result_json_` 换成 `json_`）。
+/// 只会写出第二套互不相容的判定。字段名与 `run_task_result_t` 的同名成员保持一致，好让接缝
+/// 原有的日志语句逐字不变（只把 `result_json_` 换成 `json_`）。
 struct seam_inference_result_t {
   nlohmann::json json_{};
   std::int64_t input_tokens_{0};
@@ -134,14 +134,17 @@ struct seam_inference_result_t {
   std::int64_t total_tokens_{0};
 };
 
-/// 三条接缝共用的推理管道：解析触发人 → 建客户端 → 组装任务行 → 跑推理 → 判定成败。
+/// 两条接缝共用的推理管道：解析触发人 → 建客户端 → 组装任务行 → 跑推理 → 判定成败。
 ///
-/// `in_text_prompt` 是任务行的 `text_prompt_`（会话列表上显示的那句话）；`in_data_request`
-/// 是已建造好的请求体 json（接缝侧传 `inference_request_t` 的 to_json 结果，网关侧传前端 body
-/// 原样）；`in_iteration_id` 为 nil 表示这次推理不属于任何轮次（蒸馏阶段）。
+/// `in_data_request` 是已建造好的请求体 json（接缝侧传 `inference_request_t` 的 to_json 结果，
+/// 网关侧传前端 body 原样）；`in_iteration_id` 为 nil 表示这次推理不属于任何轮次。
 ///
 /// 参数是 json 而不是 `inference_request_t`：落库的与发出去的必须是**同一份**东西，中间再
 /// 夹一次结构体往返就等于给前端透传的键加了一道静默白名单（不认识的键无声消失）。
+///
+/// 不再有 `in_text_prompt`：它曾是任务行 `text_prompt_` 的来源（会话列表上显示的那句话），
+/// 而那句话是**从请求体里再抄一份**——同一份提示词存两处，两处迟早不一致，且抄的那份还是
+/// 截断过的。任务行要显示什么由 `collect_request_info()` 在落库时从请求体自己读。
 ///
 /// 不再有 `in_seam` 参数：接缝名曾是记账与措辞的键，现在「这条推理跑的是哪条接缝」既不进
 /// 任务行、也不影响任何判定 —— 它只存在于调用方的函数名里，让管道去收一个只有措辞用途的
@@ -151,8 +154,8 @@ struct seam_inference_result_t {
 /// 表示这次推理不成立（400 内容违规/参数不全，502 推理失败或输出不是合法 JSON 对象），
 /// 调用方按契约 1 回滚会话状态。
 boost::asio::awaitable<seam_inference_result_t> run_seam_inference(
-    sqlite_database& in_sql, const seam_request_base_t& in_request, std::string_view in_text_prompt,
-    const nlohmann::json& in_data_request, const uuid& in_iteration_id = {}
+    sqlite_database& in_sql, const seam_request_base_t& in_request, const nlohmann::json& in_data_request,
+    const uuid& in_iteration_id = {}
 );
 
 }  // namespace doodle::ai_light
