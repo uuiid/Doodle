@@ -33,7 +33,7 @@ export const Config = z.object({
   configureTimeoutMs: z.number().default(600000),
   buildTimeoutMs: z.number().default(3600000),
   cleanTimeoutMs: z.number().default(300000),
-  maxParallel: z.number().default(8),
+  maxParallel: z.number().default(16),
   maxOutputBytes: z.number().default(33554432),
   outputHeadBytes: z.number().default(4096),
   outputTailBytes: z.number().default(12288),
