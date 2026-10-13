@@ -495,7 +495,7 @@ export function apply(ctx, config) {
 
       const maxParallel = Number.isFinite(config.maxParallel) && config.maxParallel > 0
         ? Math.trunc(config.maxParallel)
-        : 8;
+        : 16;
       const parallel = typeof args.parallel === 'number' && Number.isFinite(args.parallel) && args.parallel > 0
         ? Math.min(Math.trunc(args.parallel), 256)
         : maxParallel;
