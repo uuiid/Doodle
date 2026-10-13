@@ -1,0 +1,43 @@
+{
+  "name": "dsh-cmake",
+  "version": "0.1.0",
+  "description": "CMake driver tool for DeepSeek Harness: configure, build and clean the Doodle project through build_script/build/set_env.ps1, with reliable exit-code propagation and structured MSVC/CMake diagnostics.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "MIT",
+  "files": [
+    "lib/**/*.js",
+    "cordis.patch.yml",
+    "locale/**/*.json",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.4",
+    "@deepseek-ai/dsh-tools": "^0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm": "^0.2.0-rc.2",
+    "@deepseek-ai/dsh-agent": "^0.2.0-rc.2",
+    "@deepseek-ai/schemastery": "~3.18.4"
+  },
+  "scripts": {
+    "check": "node --check lib/index.js",
+    "test": "node test/pure.mjs"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "cmake",
+    "ninja",
+    "msvc",
+    "cordis"
+  ]
+}

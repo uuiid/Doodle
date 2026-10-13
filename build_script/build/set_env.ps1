@@ -3,14 +3,38 @@
 # Posted by Andy S, modified by community. See post 'Timeline' for change history
 # Retrieved 2025-11-11, License - CC BY-SA 4.0
 
-Push-Location 'C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\'
-cmd /c "vcvars64.bat&set" |
-ForEach-Object {
-  if ($_ -match "=") {
-    $v = $_.split("="); set-item -force -path "ENV:\$($v[0])"  -value "$($v[1])"
-  }
+# 调用 vcvars64.bat 并把它的环境变量导入当前会话。
+#
+# 三个坑，都在这一行里躲开：
+#  1. 路径含空格 —— 某些环境（受限 shell、CI）下 cmd /c 的分词会把带引号的路径拆错，
+#     报 "不是内部或外部命令"。改用 8.3 短路径（无空格），由 FileSystemObject 运行时解析，
+#     避免把某台机器的 8.3 名写死。
+#  2. 环境变量值里也可能含 '='（如 __VSCMD_* / Flag 类变量），
+#     用 IndexOf('=') 定位首个分隔符，只切一次，避免值被截断。
+#  3. 不要把 cmd 的输出接进 PowerShell 管道 —— 受限环境下会触发
+#     "StandardOutputEncoding is only supported when standard output is redirected" 失败。
+#     改为把 `set` 的输出重定向到临时文件，再逐行读入。
+$VCVARS_DIR = 'C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build'
+try {
+  $fso = New-Object -ComObject Scripting.FileSystemObject
+  $VCVARS_DIR = $fso.GetFolder($VCVARS_DIR).ShortPath
+  [void][Runtime.InteropServices.Marshal]::ReleaseComObject($fso)
+} catch {
+  Write-Warning "无法解析 vcvars 短路径，改用长路径：$_"
 }
-Pop-Location
+
+$VCVARS_DUMP = [System.IO.Path]::GetTempFileName()
+try {
+  cmd /c "`"$VCVARS_DIR\vcvars64.bat`" >nul 2>&1 && set > `"$VCVARS_DUMP`""
+  foreach ($line in [System.IO.File]::ReadAllLines($VCVARS_DUMP)) {
+    $idx = $line.IndexOf('=')
+    if ($idx -gt 0) {
+      Set-Item -Force -Path "ENV:\$($line.Substring(0, $idx))" -Value $line.Substring($idx + 1)
+    }
+  }
+} finally {
+  Remove-Item -Force -ErrorAction SilentlyContinue $VCVARS_DUMP
+}
 write-host "`nVisual Studio Command Prompt variables set." -ForegroundColor Yellow
 $env:chcp = 65001
 $env:VSLANG = 1033
@@ -26,11 +50,20 @@ function Get-ChildProcesses ($ParentProcessId) {
 }
 
 
-Write-Host "First argument: $($args[1..($args.Count -1)])"
-if ($args.Length -ne 0) {
-  $CmakeProcess = Start-Process -FilePath $args[0] -ArgumentList $args[1..($args.Count - 1)] -WorkingDirectory $DoodleRoot -NoNewWindow -PassThru
-  while ($CmakeProcess.HasExited -eq $false) {
-    $CmakeProcess.Refresh()
-  }
+if ($args.Length -eq 0) {
+  Write-Host "No command requested; Visual Studio environment variables are set." -ForegroundColor Yellow
+  return
 }
+
+Write-Host "Running: $($args[0]) $($args[1..($args.Count - 1)] -join ' ')" -ForegroundColor Cyan
+# 用调用运算符而非 Start-Process：Start-Process -PassThru 的 .ExitCode 在受限环境下
+# 会返回 $null（进程句柄受限），无法可靠透传退出码。调用运算符的 $LASTEXITCODE 一致可靠。
+& $args[0] @($args[1..($args.Count - 1)])
+# $LASTEXITCODE 只在「被调用的是原生可执行文件」时才会被赋值；若目标不存在，调用运算符
+# 抛错、该变量保持上一次的值（可能是 $null）。先判空再取整，避免把失败静默成退出码 0。
+if ($null -eq $LASTEXITCODE) {
+  Write-Error "命令未产生退出码，视为失败：$($args[0])"
+  exit 1
+}
+exit [int]$LASTEXITCODE
 

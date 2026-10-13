@@ -1,0 +1,5 @@
+{
+  "name": "dsh-cmake",
+  "title": "CMake",
+  "description": "通过 set_env.ps1 驱动 Doodle 项目的 CMake 配置、构建与清理。"
+}

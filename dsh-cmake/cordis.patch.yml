@@ -1,0 +1,17 @@
+# dsh-cmake bundle patch
+#
+# 把 CMake 驱动工具挂进 DSH 工具注册表。config 全部可选：
+#   repoRoot          Doodle 仓库根目录（默认 E:\Doodle）
+#   cmakeExecutable   cmake.exe 路径（默认 C:/PROGRA~1/CMake/bin/cmake.exe）
+#   setEnvScript      set_env.ps1 相对 repoRoot 的路径（默认 build_script/build/set_env.ps1）
+#   powershellPath    PowerShell 可执行文件（默认 powershell.exe）
+#   defaultBuildDir   buildDir 缺省时的相对目录（默认 build）
+#   configureTimeoutMs / buildTimeoutMs / cleanTimeoutMs  各阶段超时
+#   maxParallel       传给 cmake --parallel 的默认值（默认 8）
+#   outputHeadBytes / outputTailBytes  输出头尾截断字节数
+#   guidanceOrder     系统提示词里本工具指引段的排序值（默认 1395）
+- insert:
+    - id: cmake
+      name: dsh-cmake
+      config:
+        repoRoot: E:\Doodle

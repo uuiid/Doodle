@@ -1,0 +1,5 @@
+{
+  "name": "dsh-cmake",
+  "title": "CMake",
+  "description": "Configure, build and clean the Doodle project through set_env.ps1."
+}
