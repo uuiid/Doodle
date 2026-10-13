@@ -87,7 +87,7 @@ struct DOODLELIB_API aggregated_reference_stats_t {
 /// stats_.per_dimension_confidence_ 是否为空来决定 degrade_level。
 ///
 /// 只读入参，绝不写回：is_outlier_ / excluded_reason_ 是**人工排除**字段
-/// （spec_route::post 写的是 excluded_reason_ = "人工排除"），自动判定写进去会让
+/// （reference_instance_route::put 写的，见 ai_light.h），自动判定写进去会让
 /// 两者在同一列里不可区分。自动疑点走 suspected_outlier_ids_，由调用方持久化。
 DOODLELIB_API aggregated_reference_stats_t aggregate_reference_stats(
     const std::vector<ai_light_reference>& in_references

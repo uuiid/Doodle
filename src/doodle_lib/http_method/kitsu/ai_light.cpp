@@ -8,8 +8,10 @@
 // structure_feedback。两条**已全部删除**（角色降级 · 第二梯队）：推理归前端，服务端不再
 // 持有可漂移的提示词模板与 schema 真源，也就不再替前端跑推理。
 //
-// 曾经的第一条接缝 generate_spec（`/spec` POST → 蒸馏 LightingSpec）也已删除：
-// 蒸馏方案现在完全归前端，`/spec` POST 只负责**提交**前端蒸好的方案。
+// 第一条接缝 generate_spec（`/spec` POST → 蒸馏 LightingSpec）也**整条删除**（第三梯队）：
+// 蒸馏归前端，而那个接口退化成空写 —— 只剩「读会话 + 校验提示词非空 + 返回会话详情」，
+// 一个字节都不落库。**Spec 的提交入口目前不存在**，是本方案唯一未闭合的缺口，
+// 见 docs/ue_ai_lighting_role_downgrade.md §3.3 第三梯队的形态 A。
 //
 
 #include <doodle_core/exception/exception.h>
@@ -591,47 +593,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
 // ===========================================================================
 // Spec（闸门 1）
 // ===========================================================================
-
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_route, get) {
-  person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
-
-  // session_id 来自路径（/session/{session_id}/spec）。路由的 uuid 正则已保证它是合法 uuid，
-  // 所以这里不需要存在性校验 —— 与 reference_route 等既有路由一致。
-  auto l_session = load_session_checked(person_, l_sql, session_id_);
-
-  auto l_specs = l_sql.get_ai_light_specs(l_session.uuid_id_);
-  co_return in_handle->make_msg(
-      nlohmann::json{
-          {"data", l_specs},
-          {"current_revision", l_specs.empty() ? 0 : l_specs.back().revision_},
-      }
-  );
-}
-
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_route, post) {
-  person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
-
-  // session_id 来自路径；请求体里带了也忽略（路径为准，见 ai_light.h 顶部的约定）
-  auto l_session = load_session_checked(person_, l_sql, session_id_);
-
-  // 提示词**不在这里改**：`prompt_text_` 是会话自己的属性，改它走
-  // PUT /api/doodle/ai/light/session/{id}（见 ai_light.h）。原先这里收 `prompt_text`
-  // 顺带写会话行 —— 那等于「改一句提示词」必须调一次「生成 Spec」，而改字本不该
-  // 顺带蒸馏一版（多一次 revision+1 与一次方舟推理），且让 prompt_text_ 有了第二个写入方。
-  //
-  // 这里只读会话现有的提示词做校验：蒸馏要它当权威意图（§6.3），空了就没法生成。
-  DOODLE_CHICK_HTTP(!l_session.prompt_text_.empty(), bad_request, "提示词不能为空");
-
-  // 注意：**不**在这里把状态改成 draft。状态只由 /spec/confirm 与提交接口推进。
-
-  // 走到这里参数都合法。这里曾经调 advance_session 触发服务端蒸馏 Spec，
-  // 该接缝已归前端，函数连同整条调用链已删除。
-
-  auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
-}
+//
+// 这里曾经有 spec_route 的 get/post（GET/POST /session/{}/spec）。整条路由已删除：
+// POST 最后只剩「读会话 + 校验提示词非空 + 返回会话详情」，不写任何东西，而生产代码里
+// 也没有任何地方会 insert 一行 ai_light_spec；GET 的 Spec 版本列表与会话详情里的
+// spec_history_ 是同一份数据的第二个出口。详见 ai_light.h 里那段说明。
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_confirm_route, post) {
   person_.check_not_outsourcer();

@@ -160,24 +160,20 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-// GET  /api/doodle/ai/light/session/{session_id}/spec    Spec 版本列表
-// POST /api/doodle/ai/light/session/{session_id}/spec    生成 Spec：draft 出第一版，
-//                                                        awaiting_spec_confirm 重出（要求已有参考图，否则 400）
-//                                                        已实现（§15.7）：统计聚合 + 一次方舟推理。
-//                                                        失败时会话状态回滚，Spec 版本不变（可重试）。
+// 曾经有 GET/POST /api/doodle/ai/light/session/{session_id}/spec（Spec 版本列表 / 生成 Spec）。
+// **整条路由已删除**，理由：
+//   * POST 是死接口。它最后剩下的动作只有「读会话、校验提示词非空、返回会话详情」，
+//     一个字节都不写 —— 而生产代码里**没有任何地方**会 insert 一行 ai_light_spec
+//     （只有测试会）。它承载不住自己的名字：既不能生成 Spec，也不是 Spec 的提交口。
+//   * 「生成 Spec」这个动作已经不在服务端：它归前端经推理网关自己完成
+//     （见 ai_light_orchestrator.h 的接缝说明）。
+//   * GET 的 Spec 版本列表是**冗余读**：会话详情（GET /session/{id}，即 build_session_detail
+//     的读模型）里已经带了 spec_history_ 与 current_spec_，前端「查看上一版」用那份数据即可。
+//     为同一份数据维护第二个出口，只会多一个需要同步的形状。
+// 于是 spec_confirm_route 与 judge_route 都以**当前 Spec**（会话内 revision 最大的一行）为准 ——
+// 见 sqlite_database.h 的 get_current_ai_light_spec。ai_light_spec 表与它的读取方法都保留：
+// judge/confirm 要读，会话详情的 spec_history 也要读。
 //
-// 请求体**不认任何键**。改了提示词想重出，先调 PUT /session/{id}（见 session_instance_route），
-// 再调本接口：
-//   **不再接受 `prompt_text`** —— 提示词是会话自己的属性，改它走会话的 PUT。
-//   **不再接受 `excluded_reference_ids`** —— 排除参考图是参考图自己的属性，
-//   改它走 PUT /reference/{id}（见 reference_instance_route 的说明）。
-// 本接口只做一件与它同名的事：按**当前**的提示词与参考图蒸馏一版 Spec。
-DOODLE_HTTP_JWT_FUN(spec_route)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid session_id_{};
-DOODLE_HTTP_FUN_END()
-
 // POST /api/doodle/ai/light/session/{session_id}/spec/confirm   人工闸门 1：
 //                                   确认 Spec（+ 冲突裁决），随后触发首轮候选
 DOODLE_HTTP_JWT_FUN(spec_confirm_route)

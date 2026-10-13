@@ -452,7 +452,7 @@ BOOST_AUTO_TEST_CASE(aggregate_takes_median_but_keeps_range_as_interval) {
 
 BOOST_AUTO_TEST_CASE(aggregate_skips_excluded_and_statless_references) {
   auto l_excluded             = make_reference(make_id(11), make_stats(0.90, 0.90, 0.95, 0.90, 9000.0), 1.0);
-  l_excluded.is_outlier_      = true;  // 与 spec_route::post 写出的语义一致
+  l_excluded.is_outlier_      = true;  // 与 reference_instance_route::put 写出的语义一致
   l_excluded.excluded_reason_ = "人工排除";
 
   const std::vector<ai_light_reference> l_refs{

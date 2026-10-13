@@ -123,7 +123,7 @@ presets 与 jobs 是旁路工具页，不进主流程。
 **会话层 `session.state`**（**4 个值**，JSON 字符串 = 枚举名；**没有终态**）：
 
 ```
-draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm──▶ generating
+draft ──前端提交 Spec──▶ awaiting_spec_confirm ──POST /spec/confirm──▶ generating
   ▲                          │                                        │
   └──── 接缝失败回滚 ────────┘                                        │ worker 回填渲染
                                                                       ▼
@@ -131,6 +131,14 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
                     ▼
                 generating   ◀── 可以再按「继续迭代」出下一轮（无限轮）
 ```
+
+> **Spec 由谁产生**：`draft → awaiting_spec_confirm` 这一步**没有 HTTP 入口**。Spec 的蒸馏
+> （读参考图统计 + 调模型）已经归前端：前端调推理网关，解释出 Spec 后由服务端落库。
+> **原 `POST /session/{sid}/spec` 已整条删除** —— 它最后只剩「读会话、校验提示词非空、返回
+> 会话详情」，一个字节都不写。Spec 的**读**也不再需要单独接口：会话详情里已经有
+> `spec_history` 与 `current_spec`。改提示词走 `PUT /session/{sid}`（见 5.3）。
+> ⚠️ **但落库入口还没建**：参考图聚合与 Spec 写入都仍是服务端内部函数，没有 HTTP 出口，
+> 所以这条边当前**走不通**（见 5.2 第 4 步与 role_downgrade §3.3 形态 A）。
 
 三个判断决定（`accept` 定稿 / `continue_iteration` 继续 / `reject_all` 全否）**都**回到
 `generating` —— 定稿不是终点，全否也不是终止，只表示「这一轮全部不要」。所以界面上**没有**
@@ -140,8 +148,9 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
 （实现里 `dispatched`/`rendering` 目前**没有赋值点** —— worker 侧派发未接线，前端应把它们当「可能被跳过」。）
 
 **关键事实**：
-- **`advance_session` 是唯一的推进入口**，`/spec`、`/spec/confirm`、`/iterate`、镜头页入口都走它。
-  「同一个状态只能有一个后继步骤」是结构性保证 —— 所以前端**不需要**猜「这一步该调哪个接口」：状态决定动作。
+- **推进入口按状态各有一个**：`/spec/confirm`（闸门 1）、`/iteration`（提交候选）、`/judge`（闸门 2）。
+  服务端曾经的唯一推进入口 `advance_session` 已随接缝下沉一起删除。
+  「同一个状态只能有一个后继步骤」仍是结构性保证 —— 状态决定动作，前端**不需要**猜接口。
 - **`generating → awaiting_judgement` 没有 HTTP 入口**，是 worker 回填渲染结果时由服务端自己完成的。
   前端在 `generating` 期间只能**轮询**（见 §8）。
 - **4 小时超时不是状态**（详见 4.3）。
@@ -150,9 +159,9 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
 
 | `session.state` | 界面该显示什么 | 允许的动作 | 动作后的状态 |
 |---|---|---|---|
-| `draft` | 提示词 + 参考图墙；提示「还没有灯光方案」 | 传/删参考图；**生成方案**（`POST /spec`） | `awaiting_spec_confirm` |
-| `awaiting_spec_confirm` | **闸门 1 卡片**：意图 + 目标区间 + 冲突维度 | **确认方案**（`POST /spec/confirm`）；**重新生成**（`POST /spec`，revision+1） | `generating` / 仍是 `awaiting_spec_confirm` |
-| `generating` | 进度状态：候选生成中 / 已派发渲染中；显示已渲染几张 | 轮询 `GET /session/{id}`；**重试生成**（`POST /iterate`） | 仍是 `generating` |
+| `draft` | 提示词 + 参考图墙；提示「还没有灯光方案」 | 传/删参考图；改提示词（`PUT /session/{id}`）；**生成方案**（前端调推理网关后提交 Spec —— ⚠️ 落库入口待建，见 5.2） | `awaiting_spec_confirm` |
+| `awaiting_spec_confirm` | **闸门 1 卡片**：意图 + 目标区间 + 冲突维度 | **确认方案**（`POST /spec/confirm`）；**重新生成**（同 `draft`：前端重新跑一次 Spec 提交，revision+1） | `generating` / 仍是 `awaiting_spec_confirm` |
+| `generating` | 进度状态：候选生成中 / 已派发渲染中；显示已渲染几张 | 轮询 `GET /session/{id}`；**提交候选**（`POST /iteration`） | 仍是 `generating` |
 | `awaiting_judgement` | **闸门 2 工作台**：6 张候选 + 指标 + 反馈面板 | **判断**（`POST /judge`，唯一动作） | `generating`（三个决定都一样） |
 
 辅助布尔（读模型直接给，**不要自己算状态机**）：`is_waiting_human`（= `awaiting_spec_confirm || awaiting_judgement`）、
@@ -207,10 +216,14 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
 3. 可选第 2.5 步：如果想排除某张调色过度的图，调
    `PUT /api/doodle/ai/light/reference/{reference_id}`，体 `{"is_outlier": true, "excluded_reason": "调色过度"}`（见 5.3）。
    排除是**参考图自己的属性**，与提 Spec 是两件独立的事，所以各走各的接口 —— 顺序随意。
-4. `POST /api/doodle/ai/light/session/{session_id}/spec`，体 `{}` → **201** + 会话详情（`state = awaiting_spec_confirm`，`current_spec` 有了）。
-   - 这一步会真的调 LLM 蒸馏，**耗时数秒到数十秒**：按钮必须进 loading、禁用重复点击、允许失败重试。
-   - **没有参考图必然 400**：`会话 {} 还没有参考图，无法蒸馏 Spec（决策 1：参考必有多张）`。
-     这条错误**不写 `failure_reason`、不回滚状态** —— 前端不要把它当「AI 失败」渲染，它就是「你还没传图」。
+4. **生成方案（不再是 HTTP 调用）**：前端调推理网关算出 Spec，再**提交给服务端落库**
+   → `state = awaiting_spec_confirm`，`current_spec` 有了。
+   - **原本的 `POST /session/{session_id}/spec` 已删除**，不要调它。
+   - ⚠️ **落库入口目前不存在**：参考图聚合（`aggregate_reference_stats`）与 Spec 落库都还是
+     服务端内部函数，**没有 HTTP 出口**。所以本步骤在当前代码上**还走不通** ——
+     需要先按 role_downgrade §3.3 形态 A 补一个提交接口。接入前请与后端确认。
+   - 这一步会真的调模型，**耗时数秒到数十秒**：按钮必须进 loading、禁用重复点击、允许失败重试。
+   - **没有参考图无法蒸馏**（决策 1：参考必有多张）—— 这是前端自己的闸门。
 5. 成功后跳到 `/lighting/spec/...`（闸门 1）。
 
 **交互细节**：
@@ -218,7 +231,7 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
   `is_outlier`/`excluded_reason`（人工排除过的）。
 - 提示词是**权威意图**（方案 §6.3：提示词优先于参考图）。placeholder 应给出可用的中文示例，
   并说明「参考图提供场景的数值结构，提示词提供意图；两者冲突时以提示词为准」。
-- 失败重试：`POST /spec` 失败后会话回到进入时的状态（`draft`），**已传的参考图保留**，可以直接重试。
+- 失败重试：Spec 生成失败后会话回到进入时的状态（`draft`），**已传的参考图保留**，可以直接重试。
 
 ### 5.3 `/lighting/spec/:specId` —— 人工闸门 1（Spec 确认）
 
@@ -239,27 +252,23 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
 - **确认方案** → `POST /api/doodle/ai/light/session/{session_id}/spec/confirm`，请求体**不带任何裁决内容**（该接口只做确认）。
   成功 → `state = generating`，服务端**随即触发首轮候选生成**（不用前端再调 `/iterate`）。
   该接口**幂等**：已确认过会直接返回 `{spec, session_state, already_confirmed: true}`，前端据此提示「已确认过」而不是报错。
-- **重新生成** → `POST .../spec`，体**不带任何键**（`{}`）：
-  - 服务端按**当前**的提示词与参考图蒸馏一版。想改提示词先调下面的「**改提示词**」，
-    再调本接口 —— 接口已不再接受 `prompt_text`，也不再接受 `excluded_reference_ids`
-    （排除改用「**排除参考图**」）。
-  - 「改字 + 重出」这个常见组合现在要连调两次（先 PUT 再 POST）。这是有意的：
-    改字不该顺带蒸馏一版，反过来蒸馏失败也不该让改字一起回滚。
+- **重新生成** → 与 5.2 第 4 步同一条路：前端重新跑一次 Spec 生成并提交（**没有 HTTP 入口**）。
+  - 想改提示词先调下面的「**改提示词**」，再重跑 —— 两件事相互独立。
   - 重出即 revision+1，**旧版留在 `spec_history` 里**（前端要提供「查看上一版」的入口，否则美术无法回头）。
-  - 该接口**只在 `draft` 或 `awaiting_spec_confirm` 状态可用**；提示词为空会是 400（见 5.1 的建会话约束）。
+  - 重出只在 `draft` 或 `awaiting_spec_confirm` 状态下有意义。
 - **改提示词** → `PUT /api/doodle/ai/light/session/{session_id}`，体 `{"prompt_text": "…"}`：
   - 只认这一个键，**给了才改**；**不允许空串**（400 `提示词不能为空`）—— 提示词是权威意图，
     Spec 蒸馏要拿它当依据（§6.3：提示词优先于参考图）。
   - 响应体是**整份会话详情**（与 `GET /session/{id}` 一致），前端可直接用它刷新闸门 1 的显示。
-  - 与 `/spec` 相互独立：改完不会自动重出，重出不会顺带改字。界面上「改完提示词顺手重出一版」
-    的按钮请显式连调两次，并在第二次失败时**不要**把提示词回滚（它已经落库了）。
+  - 与 Spec 生成相互独立：改完不会自动重出，重出也不顺带改字。界面上「改完提示词顺手重出一版」
+    的按钮请显式做两件事，并在第二件失败时**不要**把提示词回滚（它已经落库了）。
 - **排除参考图** → `PUT /api/doodle/ai/light/reference/{reference_id}`，体 `{"is_outlier": true, "excluded_reason": "…"}`：
   - 两个字段都可选，**给了才改**；`excluded_reason` 留空也允许。
   - **取消排除** → 传 `{"is_outlier": false}` 即可，服务端会**一并清空** `excluded_reason`
     （不会留下「未排除但带原因」的行）。想只改原因、不动排除状态，就只传 `excluded_reason`。
   - 响应体是改完的参考图整行（与 `GET /reference/{id}` 一致），前端可直接用它刷新那张卡片。
   - 排除只影响**后续**的 Spec 蒸馏（`is_outlier == true` 的图不参与聚合、也不发给模型）；
-    已生成的 Spec 不会因此变化 —— 想让它生效要在改完后重新 `POST .../spec`。
+    已生成的 Spec 不会因此变化 —— 想让它生效要在改完后重新跑一次 Spec 生成（见 5.2 第 4 步）。
 - **冲突维度的展示**：`reference_stats.conflicts` 里列出的维度现在**只展示、不接收裁决**。
   原计划是让前端给一个「按提示词 / 按参考图 / 手工填一个区间」的三选一并写回 `conflict_resolution.resolved`，
   该字段已从 Spec 与 `spec/confirm` 请求体中删除（前端未实现，且它的 `conflicts`/`per_dimension_confidence`
@@ -516,7 +525,7 @@ AI 灯光派发的任务类型是 `ai_light`（`server_task_info.type`），任�
 2. **权限失败是 `401 Unauthorized`（不是 403）**，消息 `权限不足`。
    **外包角色（`outsource`）在所有 AI 灯光接口上都是 401**；项目无权访问也是 401。
 3. 请求体里的 `session_id` 一律忽略；路径里的 uuid 畸形 → **404**（不会 500）。
-4. **仓库里已经没有 501 端点**。三条 LLM 接缝（`/spec`、`/iterate`、`/judge` 的文本通道）全部落地，
+4. **仓库里已经没有 501 端点**。三条 LLM 接缝（spec、candidates、feedback）全部落地，
    失败时给的是 **400（内容安全/参数）** 或 **502（推理失败）**，不是 501。
 
 **常见错误 → 前端动作**：

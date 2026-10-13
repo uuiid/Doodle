@@ -1028,8 +1028,8 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    | `DELETE /api/doodle/ai/light/reference/{id}` | 删单张参考图（含文件） |
    | `GET  /api/doodle/ai/light/reference/{id}/image` | 参考图取图 |
    | `GET  /api/doodle/ai/light/candidate/{id}/image` | 中间候选取图（只有定稿才进 `preview_file`） |
-   | `GET  /api/doodle/ai/light/session/{session_id}/spec` | Spec 版本列表 |
-   | `POST /api/doodle/ai/light/session/{session_id}/spec` | 生成 Spec：`draft` 出第一版，`awaiting_spec_confirm` 重出（**要求已有参考图**，否则 400）—— **已实现**（§15.7）：聚合统计 + 一次方舟推理；失败时会话状态回滚、Spec 版本不变 |
+   | ~~`GET  /api/doodle/ai/light/session/{session_id}/spec`~~ | ~~Spec 版本列表~~ —— **已删除**：与会话详情里的 `spec_history` 是同一份数据的第二个出口 |
+   | ~~`POST /api/doodle/ai/light/session/{session_id}/spec`~~ | ~~生成 Spec~~ —— **已删除**（角色降级 · 第三梯队）：蒸馏归前端经推理网关完成，而该接口最后只剩「读会话 + 校验提示词非空 + 返回会话详情」，不写任何东西。**Spec 由谁落库尚未定**（见 role_downgrade §3.3 第三梯队的形态 A） |
    | `POST /api/doodle/ai/light/session/{session_id}/spec/confirm` | 人工闸门 1：确认 Spec（**不带裁决内容**，见 §15.7 D6），随后触发首轮 |
    | `POST /api/doodle/ai/light/session/{session_id}/iterate` | ~~生成一轮候选并派发~~ —— **已删除**（角色降级 · 第二梯队：服务端不再自己生成候选）。替代入口是下面的 `/iteration` |
    | `POST /api/doodle/ai/light/session/{session_id}/iteration` | **候选提交 + 派发**：前端提交算好的候选与基线 rig，经 IR 准入门后写 submitted iteration 并派发 —— **已实现**（角色降级 · 第二梯队；见 `ai_light_submit.{h,cpp}`） |

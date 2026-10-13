@@ -285,7 +285,7 @@ POST /api/doodle/ai/light/session/{sid}/iteration
 |---|---|
 | `POST /session/{sid}/iterate` | **删除**。它现在"刻意不读请求体"、由服务端跑完整接缝；降级后这个语义不存在 |
 | `POST /session/{sid}/judge` 的文本→轴通道 | **删除**（`ai_light.cpp:716-772` 整段）。前端提交结构化 `feedback_axes`，不再需要服务端调 LLM 做结构化 |
-| `POST /session/{sid}/spec` | **改造**：不再内部调 LLM，只读**当前**的 `prompt_text_` 与参考图并落一版 Spec（提示词本身的修改已移到 `PUT /session/{sid}`，见 §3.3 的说明） |
+| `POST /session/{sid}/spec` | **删除**（第三梯队落地后）。它最后只剩「读会话 + 校验提示词非空 + 返回会话详情」，一个字节都不写；`GET` 的 Spec 版本列表也一并删除（与会话详情的 `spec_history` 重复）。**改提示词**改走 `PUT /session/{sid}`。**Spec 的落库入口目前不存在** —— 见 §3.3 第三梯队的形态 A |
 | `POST /session/{sid}/spec/confirm` | **保留**（人工闸门，与 LLM 无关） |
 
 ---
@@ -399,8 +399,10 @@ POST /api/doodle/ai/light/session/{sid}/iteration
 
 **两个可选形态**
 
-- **形态 A（推荐，成本低）**：前端拉 `spec` 模板 + `GET /session/{sid}/stats` 的 `aggregated` → 调网关 → 解释出 `intent` / `targets` 标量区间 / `grading_hints` → `POST /session/{sid}/spec` 提交，服务端仍覆盖 `space`/`palette`/`ownership`/`schema_version`/`reference_stats`/身份字段，并保留 `stats_only`/`prompt_only` 两级降级判定
+- **形态 A（推荐，成本低）**：前端拉 `spec` 模板 + `GET /session/{sid}/stats` 的 `aggregated` → 调网关 → 解释出 `intent` / `targets` 标量区间 / `grading_hints` → **提交给一个尚待新建的 Spec 落库接口**，服务端仍覆盖 `space`/`palette`/`ownership`/`schema_version`/`reference_stats`/身份字段，并保留 `stats_only`/`prompt_only` 两级降级判定
 - **形态 B（彻底）**：Spec 也完全由前端产出，服务端只校验形状。代价是 `reference_stats_t` 的字段语义要完整暴露给前端，且 §12.1 两级降级由前端决定
+
+> **现状（第三梯队只做了一半）**：老接口 `POST /session/{sid}/spec` 已删除（它退化成空写），但形态 A 的**替代入口还没建** —— 于是生产代码里**没有任何地方**会 insert 一行 `ai_light_spec`。目前能跑通的全靠测试直接插行，真机上 Spec 无法产生。这是本方案**唯一未闭合的缺口**，须在形态 A 落地时补上（`ai_light_spec` 表、`get_ai_light_spec(s)` 读取方法、`spec_confirm_route` 与 `ai_light_submit.cpp` 的消费端都仍然健在，缺的只是写入方）。
 
 **建议先不做第三梯队。** 第一、二梯队落地后，spec 的瓶颈是否还在服务端会变得清楚——`build_spec_*` 的改动频率远低于 candidates。
 

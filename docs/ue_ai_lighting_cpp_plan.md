@@ -71,9 +71,12 @@
 
 | 注册行 | 路径 | 处理函数 |
 |---|---|---|
-| `kitsu.cpp:326-328` | `POST /api/doodle/ai/light/session/{}/iterate` | `ai_light.cpp:660` `iterate_route` |
+| `kitsu.cpp:326-328` | `POST /api/doodle/ai/light/session/{}/iterate` | ~~`ai_light.cpp:660` `iterate_route`~~ —— **两者均已删除**（角色降级 · 第二梯队），替代入口见 `ai_light_submit.h` 的 `iteration_submit_route` |
 | `kitsu.cpp:323-325` | `POST /api/doodle/ai/light/session/{}/spec/confirm` | `ai_light.cpp:586` `spec_confirm_route` |
 | `kitsu.cpp:329-331` | `POST /api/doodle/ai/light/session/{}/judge` | `ai_light.cpp:697` `judge_route` |
+| ~~`kitsu.cpp:320-322`~~ | ~~`GET/POST /api/doodle/ai/light/session/{}/spec`~~ | ~~`ai_light.cpp:595` `spec_route`~~ —— **整条路由已删除**（第三梯队）：POST 只读不写，GET 与会话详情的 `spec_history` 重复 |
+
+> 上表这三行的行号是**当时**的（本文档为历史设计记录，不作为当前代码导览）。
 
 ### 1.5 OpenCV 现状（**用户前提已成立，无需新增依赖**）
 
