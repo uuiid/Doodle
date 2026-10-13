@@ -17,6 +17,7 @@
 
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/http_client/seedance2_client.h>
+#include <doodle_lib/http_client/seedance2_inference_request.h>
 #include <doodle_lib/http_client/url_sign.h>
 
 #include <boost/test/unit_test.hpp>
@@ -96,10 +97,22 @@ std::string url_path(std::string_view in_url) {
 // ---------------------------------------------------------------------------
 // 请求体构造
 // ---------------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(body_defaults_are_offline_safe) {
-  inference_request_t l_request{};
-  l_request.input_text_ = "hello";
-  const auto l_body     = seedance2_client::build_inference_body(l_request);
+// 这里曾经有四个用例验 `build_inference_body()`（body_defaults_are_offline_safe、
+// body_uses_flat_envelope_shape_with_images、body_attaches_flat_json_schema_format、
+// body_sends_instructions_when_given），它们与 `inference_request_t` 结构体一起删除。
+//
+// **发射路径的覆盖没有丢**：那四个用例验的是「to_json 成扁平信封 + finalize 定稿」这条
+// 两步链，而被测的 `build_inference_body` 只是为了方便单测才存在 —— 它把两步拼在一起，
+// 于是「最终发出去的 body 长什么样」只能靠调它来验证（见 seedance2_client.h 的说明）。
+// 现在两步各自的真身直接可测：`finalize_inference_body` 定义在
+// seedance2_inference_request.h 里，是 inline 的纯函数。下面这组用例替掉原来那四个。
+//
+// 仍然钉住同一条不变量：**发射路径只做减法**（定 model / 关 store），不替调用方补默认值
+// （thinking / max_output_tokens / caching 一个都不许被造出来）。
+
+BOOST_AUTO_TEST_CASE(finalize_overrides_model_and_disables_store) {
+  nlohmann::json l_body{{"input_text", "hello"}};
+  finalize_inference_body(l_body, std::string{doodle_config::g_ark_inference_model});
 
   BOOST_CHECK_EQUAL(l_body.at("model").get<std::string>(), std::string{doodle_config::g_ark_inference_model});
   // store 缺省是 true, 必须显式关掉: 提示词/素材不留在方舟侧
@@ -112,133 +125,59 @@ BOOST_AUTO_TEST_CASE(body_defaults_are_offline_safe) {
   // max_output_tokens 缺省**不发**：结构化输出长度不可预估，截断之后的半个 JSON 与
   // 「schema 不合规被拒」的失败面分不出来，所以上限交给模型/账号侧；只有显式指定才发。
   BOOST_CHECK_EQUAL(l_body.contains("max_output_tokens"), false);
-  inference_request_t l_with_limit{};
-  l_with_limit.input_text_        = "x";
-  l_with_limit.max_output_tokens_ = 1234;
-  BOOST_CHECK_EQUAL(
-      seedance2_client::build_inference_body(l_with_limit).at("max_output_tokens").get<std::int64_t>(), 1234
-  );
-
-  // 空串(会话没配模型)也要回落到缺省, 不能带着 model:"" 打过去
-  inference_request_t l_blank_model{};
-  l_blank_model.input_text_ = "x";
-  l_blank_model.model_      = std::string{};
-  BOOST_CHECK_EQUAL(
-      seedance2_client::build_inference_body(l_blank_model).at("model").get<std::string>(),
-      std::string{doodle_config::g_ark_inference_model}
-  );
 }
 
-// build_inference_body 现在**只做两件事**：to_json 成扁平信封，再交给 finalize_inference_body
-// 做减法定稿（定 model / 关 store）。它**不再**把扁平信封翻译成方舟 Responses 形状
-// （`input[].content[]`）—— 那次翻译已随「报文透传」删除（见 seedance2_client.h:46-55）：
-// 发射路径直接吃前端发来的 body 原样打出去，结构体往返只会把不认识的键静默吃掉。
-//
-// 所以这里验的是**真的会跑的那条路径**：扁平键逐个在场且原样保留，
-// 而方舟形状的键（input/text/reasoning）**一个都不该被造出来**。
-BOOST_AUTO_TEST_CASE(body_uses_flat_envelope_shape_with_images) {
-  inference_request_t l_request{};
-  l_request.input_text_   = "看这张图";
-  l_request.images_       = {"/api/seedance2/pictures/a.png", "/api/seedance2/pictures/b.png"};
-  l_request.image_detail_ = "high";
-  const auto l_body       = seedance2_client::build_inference_body(l_request);
+BOOST_AUTO_TEST_CASE(finalize_keeps_caller_supplied_values_verbatim) {
+  nlohmann::json l_body{
+      {"input_text", "看这张图"},
+      {"image_detail", "high"},
+      {"images", nlohmann::json::array({"/api/seedance2/pictures/a.png", "/api/seedance2/pictures/b.png"})},
+      {"max_output_tokens", 1234},
+      {"instructions", "你是灯光师"},
+      {"temperature", 0.2},
+      {"json_schema", nlohmann::json{{"type", "object"}}},
+      {"json_schema_name", "lighting_target"},
+      {"json_schema_strict", false},
+  };
+  finalize_inference_body(l_body, std::string{doodle_config::g_ark_inference_model});
 
-  // 扁平键原样在场：定稿只定 model / store，其余交给方舟侧自己解释。
+  // 定稿只碰 model 与 store: 其余键**原样在场**, 一个都不改、一个都不删。
   BOOST_CHECK_EQUAL(l_body.at("input_text").get<std::string>(), "看这张图");
   BOOST_CHECK_EQUAL(l_body.at("image_detail").get<std::string>(), "high");
+  BOOST_CHECK_EQUAL(l_body.at("max_output_tokens").get<std::int64_t>(), 1234);
+  BOOST_CHECK_EQUAL(l_body.at("instructions").get<std::string>(), "你是灯光师");
+  BOOST_CHECK_EQUAL(l_body.at("temperature").get<double>(), 0.2);
+  BOOST_CHECK_EQUAL(l_body.at("json_schema_name").get<std::string>(), "lighting_target");
+  BOOST_CHECK_EQUAL(l_body.at("json_schema_strict").get<bool>(), false);
+  BOOST_CHECK_EQUAL(l_body.at("json_schema").at("type").get<std::string>(), "object");
   const auto& l_images = l_body.at("images");
   BOOST_CHECK_EQUAL(l_images.size(), 2u);
   BOOST_CHECK_EQUAL(l_images.at(0).get<std::string>(), "/api/seedance2/pictures/a.png");
   BOOST_CHECK_EQUAL(l_images.at(1).get<std::string>(), "/api/seedance2/pictures/b.png");
 
-  // 方舟形状**不由这里制造**：翻译发生在网关透传之后，不在信封往返里。
+  // 方舟形状**不由这里制造**：翻译发生在网关透传之后，不在定稿里。
   BOOST_CHECK_EQUAL(l_body.contains("input"), false);
   BOOST_CHECK_EQUAL(l_body.contains("text"), false);
   BOOST_CHECK_EQUAL(l_body.contains("content"), false);
 }
 
-BOOST_AUTO_TEST_CASE(body_attaches_flat_json_schema_format) {
-  const auto l_schema = nlohmann::json{
-      {"type", "object"}, {"properties", nlohmann::json{{"a", nlohmann::json{{"type", "string"}}}}}
-  };
-  inference_request_t l_request{};
-  l_request.input_text_         = "x";
-  l_request.json_schema_        = l_schema;
-  l_request.json_schema_name_   = "lighting_target";
-  l_request.json_schema_strict_ = false;
-  const auto l_body             = seedance2_client::build_inference_body(l_request);
+BOOST_AUTO_TEST_CASE(finalize_falls_back_to_default_model_on_blank) {
+  // 空串(会话没配模型)也要回落到缺省, 不能带着 model:"" 打过去
+  nlohmann::json l_body{{"input_text", "x"}, {"model", ""}};
+  finalize_inference_body(l_body, std::string{doodle_config::g_ark_inference_model});
+  BOOST_CHECK_EQUAL(l_body.at("model").get<std::string>(), std::string{doodle_config::g_ark_inference_model});
 
-  // schema 三件套以扁平键逐个留存（旧断言找的 text.format 是发射层形状，这里不造）。
-  BOOST_CHECK_EQUAL(l_body.at("json_schema_name").get<std::string>(), "lighting_target");
-  BOOST_CHECK_EQUAL(l_body.at("json_schema_strict").get<bool>(), false);
-  BOOST_CHECK_EQUAL(l_body.at("json_schema").at("type").get<std::string>(), "object");
-  // 文档里的形状是**平铺**的(type/name/schema/strict), Python SDK 那种 chat 嵌套变体是文档冲突项。
-  BOOST_CHECK_EQUAL(l_body.contains("text"), false);
+  // 前端传了 model 就**以它为准**(服务端不覆盖非空值) —— 与「原样透传」一致
+  nlohmann::json l_named{{"input_text", "x"}, {"model", "custom-model"}};
+  finalize_inference_body(l_named, std::string{doodle_config::g_ark_inference_model});
+  BOOST_CHECK_EQUAL(l_named.at("model").get<std::string>(), "custom-model");
 }
 
-BOOST_AUTO_TEST_CASE(body_sends_instructions_when_given) {
-  inference_request_t l_request{};
-  l_request.instructions_ = "你是灯光师";
-  l_request.input_text_   = "x";
-  const auto l_body       = seedance2_client::build_inference_body(l_request);
-  BOOST_CHECK_EQUAL(l_body.at("instructions").get<std::string>(), "你是灯光师");
-  BOOST_CHECK_EQUAL(l_body.contains("caching"), false);
-}
+// 归一化信封的往返与类型校验用例（inference_request_round_trips_through_struct /
+// inference_request_rejects_wrong_typed_keys）随结构体一起删除。它们钉的是「json -> 结构体
+// -> json 不丢键、类型不符要抛」—— 现在中间那个结构体不存在了，**丢键这个失败面本身
+// 也消失了**：落库的 data_request_ 与发出去的 body 是同一份 json，不再有白名单可以吃键。
 
-// 归一化信封现在是强类型(struct inference_request_t): json -> 结构体 -> json 必须原样往返,
-// 而「键存在但类型不符」必须抛错而不是静默丢掉 —— 丢掉 images 等于发出一个没有参考图的请求,
-// 这类静默不一致正是结构体化要消灭的东西。
-BOOST_AUTO_TEST_CASE(inference_request_round_trips_through_struct) {
-  const nlohmann::json l_source{
-      {"input_text", "x"},
-      {"instructions", "你是灯光师"},
-      {"images", nlohmann::json::array({"/api/a.png"})},
-      {"image_detail", "high"},
-      {"model", "m"},
-      {"temperature", 0.2},
-      {"top_p", 0.9},
-      {"max_output_tokens", 1234},
-      {"thinking", "enabled"},
-      {"reasoning_effort", "low"},
-      {"json_schema", nlohmann::json{{"type", "object"}}},
-      {"json_schema_name", "lighting_spec"},
-      {"json_schema_strict", false},
-  };
-  const auto l_envelope      = l_source.get<inference_request_t>();
-  const nlohmann::json l_back = l_envelope;
-  // 键集与取值都不许漂: 落库的 data_request_ 就是这份 json
-  BOOST_CHECK_EQUAL(l_back == l_source, true);
-
-  // 默认值的键(空串/未设 optional/非对象 schema)不该被写出来 —— 落库形状里没有多余的键
-  const nlohmann::json l_minimal = inference_request_t{};
-  BOOST_CHECK_EQUAL(l_minimal.empty(), true);
-
-  // 反过来: 键不存在时结构体取默认值, 不抛
-  const auto l_default = nlohmann::json{{"input_text", "x"}}.get<inference_request_t>();
-  BOOST_CHECK_EQUAL(l_default.images_.empty(), true);
-  BOOST_CHECK_EQUAL(l_default.image_detail_.has_value(), false);
-  BOOST_CHECK_EQUAL(l_default.json_schema_name_.empty(), true);
-  BOOST_CHECK_EQUAL(l_default.json_schema_strict_.has_value(), false);
-
-  // 非对象信封(null): 与改动前 .value() 在非对象上的行为一致, 全部取默认值
-  const auto l_from_null = nlohmann::json{}.get<inference_request_t>();
-  BOOST_CHECK_EQUAL(l_from_null.input_text_.empty(), true);
-}
-
-BOOST_AUTO_TEST_CASE(inference_request_rejects_wrong_typed_keys) {
-  // 注意: 这里必须先落到具名 json 变量再交给 BOOST_CHECK_THROW。宏只按**括号**切分实参,
-  // 直接把 `nlohmann::json{{"images", "x"}}` 写进宏里, 花括号中的逗号会被当成实参分隔符。
-  // images 必须是字符串数组: 类型不符时抛, 而不是悄悄发一个没有参考图的请求
-  const nlohmann::json l_images_not_array{{"images", "not-an-array"}};
-  const nlohmann::json l_images_int_array{{"images", nlohmann::json::array({1, 2})}};
-  const nlohmann::json l_bad_temperature{{"temperature", "warm"}};
-  const nlohmann::json l_bad_input_text{{"input_text", 42}};
-
-  BOOST_CHECK_THROW(l_images_not_array.get<inference_request_t>(), nlohmann::json::type_error);
-  BOOST_CHECK_THROW(l_images_int_array.get<inference_request_t>(), nlohmann::json::type_error);
-  BOOST_CHECK_THROW(l_bad_temperature.get<inference_request_t>(), nlohmann::json::type_error);
-  BOOST_CHECK_THROW(l_bad_input_text.get<inference_request_t>(), nlohmann::json::type_error);
-}
 BOOST_AUTO_TEST_CASE(parse_reads_the_message_item_not_the_reasoning_item) {
   const auto l_result = seedance2_client::parse_inference_response(completed_body_with_reasoning("答案是 42"), 200);
 
@@ -394,8 +333,7 @@ BOOST_AUTO_TEST_CASE(add_ip_to_req_covers_generation_shape) {
 
 // add_ip_to_req 的签名改写只认**方舟生成形状**（`content[].image_url.url`），
 // 因为那是它实际会收到的 body —— 请求体由前端按方舟 schema 组好、服务端原样透传，
-// 信封的扁平 `images: []` 不是它的输入。这里手工造一份方舟形状的 body 来验改写与签名，
-// **不再**经 build_inference_body 绕一圈（那条路已经不产方舟形状了）。
+// 信封的扁平 `images: []` 不是它的输入。这里手工造一份方舟形状的 body 来验改写与签名。
 BOOST_AUTO_TEST_CASE(add_ip_to_req_signs_ark_generation_shape) {
   const auto l_req = nlohmann::json{
       {"model", "m"},

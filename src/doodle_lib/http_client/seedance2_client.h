@@ -21,8 +21,9 @@ namespace doodle::http::seedance2 {
  * - 生成: POST /api/v3/contents/generations/tasks  (异步, 提交后靠 query_task 轮询)
  * - 推理: POST /api/v3/responses                    (同步, 一次调用拿结果)
  *
- * 推理请求体由调用方按**归一化信封**给出(data_request_), 由 build_inference_body() 翻成
- * 方舟格式; 归一化信封的字段见 inference_request_t(seedance2_inference_request.h)。
+ * 推理请求体由调用方按**扁平信封**给出(data_request_), 由 seedance2::finalize_inference_body()
+ * 原地定稿后原样发给方舟 —— 中间不再经过任何结构体往返(那个 inference_request_t 已删除,
+ * 见 seedance2_inference_request.h)。
  */
 class DOODLELIB_API seedance2_client final : public ai_client_base {
   constexpr static std::string_view g_sd2_host_url{"https://ark.cn-beijing.volces.com"};
@@ -42,23 +43,6 @@ class DOODLELIB_API seedance2_client final : public ai_client_base {
 
   // ─── 推理(Responses API) ───────────────────────────────────────────────────
   // 下面几个都是纯函数, 便于不联网单测。
-
-  /**
-   * 把**接缝自组信封**(inference_request_t)翻成方舟 Responses 请求体。
-   *
-   * 只为单测与接缝侧的纯函数验证保留: 本类发推理请求时**不再经过它**, 而是把
-   * `task.data_request_` 原样交给 `seedance2::finalize_inference_body()` —— 结构体往返
-   * 是一份手写白名单, 会把前端透传的键静默吃掉(见 seedance2_inference_request.h)。
-   *
-   * 实现: 先 to_json 成扁平信封, 再按同一条发射规则定稿, 于是这里的输出与真正发出去的
-   * body 仍然逐字节一致; 留在 .cpp 里会让「透传到底发了什么」只能靠建客户端来验证。
-   */
-  static nlohmann::json build_inference_body(const inference_request_t& in_request) {
-    nlohmann::json l_body{};
-    to_json(l_body, in_request);
-    seedance2::finalize_inference_body(l_body, std::string{doodle_config::g_ark_inference_model});
-    return l_body;
-  }
 
   /// 解析 Responses 响应; in_status_code 是 HTTP 状态码
   static run_task_result_t parse_inference_response(const nlohmann::json& in_body, int in_status_code);

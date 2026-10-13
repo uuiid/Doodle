@@ -73,8 +73,8 @@ void collect_input_preview(const nlohmann::json& in_input, std::string& io_out) 
 
 ai_client_base::request_info_t seedance2_client::collect_request_info(const nlohmann::json& in_request) const {
   // 刻意保持宽容的字符串读键: 这个函数与**生成类**任务的 json 形状共用(前台提交路径),
-  // 那种 json 不是 inference_request_t, 不能按推理信封的严格类型去解析。推理信封的键名与类型
-  // 定义在 seedance2_inference_request.h 一处, 这里只挑提示词用的字段读。
+  // 那种 json 不是归一化推理信封, 不能按推理信封的严格类型去解析 —— 何况那个结构体已经删掉了
+  // (见 seedance2_inference_request.h), 现在只剩「直接读键」这一条路。这里只挑提示词用的字段读。
   request_info_t l_info{};
   if (in_request.contains("model")) l_info.model_ = in_request.at("model").get<std::string>();
   if (in_request.contains("resolution")) l_info.resolution_ = in_request.at("resolution").get<std::string>();
@@ -230,11 +230,11 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
     const doodle::seedance2::task& in_task
 ) {
   const auto l_uid = in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_);
-  // 落库的 data_request_ **原样**打给方舟, 不再经 inference_request_t 往返一趟。
+  // 落库的 data_request_ **原样**打给方舟, 不经任何结构体往返一趟。
   //
   // 之前是 `data_request_.get<inference_request_t>()` 再 build_inference_body: 那次转换是
-  // 一份**手写白名单**, 结构体不认识的键会被静默吃掉 —— 与「前端请求原样透传」直接冲突,
-  // 而且它多出来的失败面只是「解析失败就 500」, 对这里要做的事没有贡献。
+  // 一份**手写白名单**, 结构体不认识的键会被静默吃掉 —— 与「前端请求原样透传」直接冲突。
+  // 那个结构体与那个函数现在都已删除, 这条纪律由**类型系统**保证: 中间已经没有可丢键的类型了。
   //
   // 现在这行只有两个动作: 定稿(剥本系统字段 / 覆盖强制字段 / 隐私口径), 然后发出去。
   // 接缝路径落库的也是同一份形状的信封, 所以两条路径在这里合流, 没有第二套发射规则。
