@@ -116,7 +116,6 @@ void sqlite_storage::regs_all() {
       .add_column("ai_generate_entity_id", &seedance2::task::ai_generate_entity_id_)
       .add_column("subproject_id", &seedance2::task::subproject_id_)
       .add_column("ai_light_iteration_id", &seedance2::task::ai_light_iteration_id_)
-      .add_column("result_text", &seedance2::task::result_text_)
       .add_column("retry_count", &seedance2::task::retry_count_)
       .add_column("archived", &seedance2::task::archived_)
       .add_foreign_key(&seedance2::task::project_uuid_id_, &project::uuid_id_, foreign_key_action::set_null)

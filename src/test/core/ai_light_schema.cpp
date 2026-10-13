@@ -85,13 +85,15 @@ void drop_ai_light_tables(orm::session& in_session) {
 
 // 30 -> 31 这一步除了建六张表, 还给 seedance2_task_2 补了 ai_light_iteration_id / result_text
 // (见 sqlite_upgrade.cpp upgrade_3_t 里的两次 add_column).
-// sync_schema() 是按**最新** schema 建的, 这两列已经在了 —— 想造真正的 30 版形状就得让它们缺席.
+// sync_schema() 是按**最新** schema 建的, ai_light_iteration_id 已经在了 —— 想造真正的 30 版形状
+// 就得让它缺席. (result_text 已从 ORM 声明删除, 新库里本就不会建它, 但迁移里的 add_column 保留着,
+// 所以这里仍然一并从夹具表里去掉, 让这个夹具继续模拟真正的 v30 形状.)
 //
 // 不处理会怎样: 迁移第一步就是 add_column 补列, 撞上已有列 → duplicate column name.
 // 迁移只在 user_version < 31 时跑一次, 真实库不会出现「同一张表重复加列」, 是夹具自己造的.
 //
-// 不能用 create_table<seedance2::task>() 重建: 它按 ORM 声明建表, 声明里**有**这两列
-// (sqlite_database.cpp:118-119), 建出来还是 31 版形状, 等于没删.
+// 不能用 create_table<seedance2::task>() 重建: 它按 ORM 声明建表, 声明里**有**
+// ai_light_iteration_id (sqlite_database.cpp:118), 建出来还是 31 版形状, 等于没删.
 // 也不能 ALTER TABLE ... DROP COLUMN: ai_light_iteration_id 被外键定义引用着, SQLite 直接拒绝
 // (`unknown column "ai_light_iteration_id" in foreign key definition`).
 // 所以这里手写一份**只含 30 版列**的建表语句 —— 列清单照抄 sqlite_database.cpp:99-121,

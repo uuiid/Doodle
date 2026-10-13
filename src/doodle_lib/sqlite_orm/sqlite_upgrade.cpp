@@ -153,7 +153,6 @@ struct upgrade_3_t : sqlite_upgrade {
     // **不会加列** (见本文件 120-124 行注释).
     // 不需要先查列是否已存在: 上面的 `> 30 就跳过` 保证本步骤对一张库只跑一次.
     l_s.add_column("seedance2_task_2", "ai_light_iteration_id", orm::column_type::blob);
-    l_s.add_column("seedance2_task_2", "result_text", orm::column_type::text);
     l_s.rebuild_table<seedance2::task>();
     // 本步骤是 30 之后的**唯一**一步, 所以它写 g_current_version (= 31)。
     // 将来若在它后面再插步骤, 这一行必须改成写自己的目标版本常量, 否则下一步会被静默跳过

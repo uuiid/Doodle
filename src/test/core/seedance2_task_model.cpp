@@ -109,26 +109,36 @@ BOOST_AUTO_TEST_CASE(unknown_type_is_rejected_instead_of_becoming_picture) {
 BOOST_AUTO_TEST_CASE(task_json_round_trip_keeps_inference_fields) {
   auto l_json                     = minimal_task_json();
   l_json["ai_light_iteration_id"] = g_iteration;
-  l_json["result_text"]           = R"({"schema_version": 1})";
 
   const auto l_task               = l_json.get<doodle::seedance2::task>();
   BOOST_CHECK_EQUAL(l_task.type_ == doodle::seedance2::task_type::inference, true);
   BOOST_CHECK_EQUAL(boost::uuids::to_string(l_task.ai_light_iteration_id_), g_iteration);
-  BOOST_CHECK_EQUAL(l_task.result_text_, R"({"schema_version": 1})");
 
-  // 再写回去: 两个字段都要在(括号而不是花括号, 否则会包成单元素数组)
+  // 再写回去: 字段要在(括号而不是花括号, 否则会包成单元素数组)
   const auto l_out = nlohmann::json(l_task);
   BOOST_CHECK_EQUAL(l_out.at("ai_light_iteration_id").get<std::string>(), g_iteration);
-  BOOST_CHECK_EQUAL(l_out.at("result_text").get<std::string>(), R"({"schema_version": 1})");
   BOOST_CHECK_EQUAL(l_out.at("type").get<std::string>(), "inference");
 }
 
 BOOST_AUTO_TEST_CASE(task_from_json_accepts_old_payload_without_inference_fields) {
-  // 旧前端/旧行没有这两个字段: 必须仍然可解析(它们是选填), 而不是抛
+  // 旧前端/旧行没有这个字段: 必须仍然可解析(它是选填), 而不是抛
   const auto l_task = minimal_task_json().get<doodle::seedance2::task>();
 
   BOOST_CHECK_EQUAL(l_task.ai_light_iteration_id_.is_nil(), true);
-  BOOST_CHECK_EQUAL(l_task.result_text_, "");
+}
+
+BOOST_AUTO_TEST_CASE(task_from_json_ignores_removed_result_text) {
+  // result_text 已从 task 删除(推理结果不再单独留档)。带上这个键的旧载荷必须仍然可解析
+  // —— from_json 不再读它, 多出来的键不该让解析失败。
+  auto l_json           = minimal_task_json();
+  l_json["result_text"] = R"({"schema_version": 1})";
+
+  const auto l_task     = l_json.get<doodle::seedance2::task>();
+  BOOST_CHECK_EQUAL(l_task.type_ == doodle::seedance2::task_type::inference, true);
+
+  // 也不再写回去 —— 该键从 to_json 的输出里彻底消失
+  const auto l_out = nlohmann::json(l_task);
+  BOOST_CHECK_EQUAL(l_out.contains("result_text"), false);
 }
 
 BOOST_AUTO_TEST_CASE(inference_must_not_reuse_the_generation_token_default) {

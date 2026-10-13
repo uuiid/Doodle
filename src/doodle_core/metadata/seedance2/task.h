@@ -127,8 +127,6 @@ struct DOODLE_CORE_API task {
   /// 外键 → ai_light_iteration.uuid_id_。AI 灯光的推理任务（type_ == inference）指向它所属的轮次。
   /// 可空：spec 蒸馏发生在轮次建立之前、结构反馈是会话级的，这两类任务该字段为 nil。
   uuid ai_light_iteration_id_;
-  /// 推理任务的输出文本（type_ == inference）；生成类任务恒空，结果在 preview_file_/data_response_。
-  std::string result_text_;
 
   std::int64_t retry_count_{0};  // 重试次数
   // 归档
@@ -155,7 +153,6 @@ struct DOODLE_CORE_API task {
     j["ai_generate_entity_id"] = p.ai_generate_entity_id_;
     j["subproject_id"]         = p.subproject_id_;
     j["ai_light_iteration_id"] = p.ai_light_iteration_id_;
-    j["result_text"]           = p.result_text_;
     j["retry_count"]           = p.retry_count_;
   }
   friend void from_json(const nlohmann::json& j, task& p) {
@@ -169,7 +166,6 @@ struct DOODLE_CORE_API task {
 
     if (j.contains("archived")) j.at("archived").get_to(p.archived_);
     if (j.contains("ai_light_iteration_id")) j.at("ai_light_iteration_id").get_to(p.ai_light_iteration_id_);
-    if (j.contains("result_text")) j.at("result_text").get_to(p.result_text_);
   }
 };
 // 统计每人, 每天的 token 消耗量

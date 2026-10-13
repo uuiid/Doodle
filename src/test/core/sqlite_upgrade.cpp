@@ -84,9 +84,9 @@ std::set<std::string> list_backup_files(const FSys::path& in_dir) {
 
 // 把 seedance2_task_2 退回到**真正的 v30 形状**（即缺少 v31 才补的两列）。
 //
-// 为什么必须做这一步：`sync_schema()` 是按**最新**声明建表的，而最新声明里已经有
-// ai_light_iteration_id / result_text（sqlite_database.cpp:118-119）。所以刚 `sync_schema()`
-// 出来的库虽然写着 user_version=26，表的形状其实是 v31 —— 不是我们要模拟的那个旧库。
+// 为什么必须做这一步：`sync_schema()` 是按**最新**声明建表的，而 ai_light_iteration_id 已在
+// 最新声明里（sqlite_database.cpp:118）。所以刚 `sync_schema()` 出来的库虽然写着
+// user_version=26，表的形状其实是 v31 —— 不是我们要模拟的那个旧库。
 //
 // 不处理的后果是硬的：upgrade_3_t 第一步就是
 // `ALTER TABLE "seedance2_task_2" ADD COLUMN "ai_light_iteration_id" BLOB;`
@@ -94,11 +94,13 @@ std::set<std::string> list_backup_files(const FSys::path& in_dir) {
 // 撞上已存在的列直接报 `duplicate column name: ai_light_iteration_id`，升级整个中断。
 // 这是**夹具自己造的**假象：真实库不会在同一张表上重复加列（迁移由 user_version 门控只跑一次）。
 //
-// 注意不能用 create_table<seedance2::task>() 重建 —— 它按 ORM 声明建表，声明里有这两列，
-// 建出来还是 v31 形状等于没退。也不能 ALTER TABLE ... DROP COLUMN —— ai_light_iteration_id
-// 被外键定义引用着，SQLite 会拒绝（`unknown column ... in foreign key definition`）。
+// 注意不能用 create_table<seedance2::task>() 重建 —— 它按 ORM 声明建表，声明里有
+// ai_light_iteration_id，建出来还是 v31 形状等于没退。也不能 ALTER TABLE ... DROP COLUMN ——
+// ai_light_iteration_id 被外键定义引用着，SQLite 会拒绝（`unknown column ... in foreign key definition`）。
 // 所以手写一份**只含 v30 列**的建表语句：列清单照抄 sqlite_database.cpp:99-121，
 // 去掉 ai_light_iteration_id / result_text；外键一并去掉，免得引用尚未建出的 ai_light_iteration。
+// result_text 虽已从 ORM 声明删除（新库不再建它），但迁移里的 add_column 刻意保留着，
+// 所以这个夹具仍然把它去掉 —— 它模拟的是真实 v30 库的形状。
 // 与 ai_light_schema.cpp 里 rebuild_task_table_without_v31_columns() 是同一份口径。
 void rebuild_task_table_without_v31_columns(orm::session& in_session) {
   const auto l_fk_was_on = in_session.pragma().foreign_keys();

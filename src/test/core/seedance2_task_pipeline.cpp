@@ -266,7 +266,9 @@ DOODLE_FIXTURE_TEST_CASE_CORO(succeeded_inference_inserts_a_final_row_and_bills_
   const auto l_saved = l_fx.sql_->get_by_uuid<sd2::task>(l_task.uuid_id_);
   BOOST_CHECK_EQUAL(en(l_saved.status_), "succeeded");
   BOOST_CHECK_EQUAL(l_saved.task_id_, "resp_infer_0001");
-  BOOST_CHECK_EQUAL(l_saved.result_text_, R"({"schema_version": 1, "intent": {"mood": "warm"}})");
+  // 推理输出文本不再单独留档（task.result_text 已删除）—— 原始响应在 data_response_ 里。
+  // canned_result 里的 result_text_ 是客户端返回结构体的字段，仍然存在且仍被 seam 用于报错摘要，
+  // 但它不再落进 task 行。这里改成断言那个「唯一的留档」。
   BOOST_CHECK_EQUAL(l_saved.data_response_.at("status").get<std::string>(), "completed");
   BOOST_CHECK_EQUAL(en(l_saved.type_), "inference");
   BOOST_CHECK_EQUAL(l_saved.user_id_, l_fx.user_.uuid_id_);
@@ -301,7 +303,6 @@ DOODLE_FIXTURE_TEST_CASE_CORO(failed_inference_is_recorded_but_not_billed, fixtu
   BOOST_CHECK_EQUAL(
       l_saved.data_response_.at("error").at("code").get<std::string>(), "SensitiveContentDetected.PolicyViolation"
   );
-  BOOST_CHECK_EQUAL(l_saved.result_text_, "");
   BOOST_CHECK(l_fx.tasks_visible_to_the_manager().empty());
 }
 

@@ -182,7 +182,6 @@ class seedance2_task_run_manager {
       l_update.set(
           c(&sd2::task::status_) = sd2::task_status::succeeded,
           c(&sd2::task::task_id_) = l_result.task_id_,
-          c(&sd2::task::result_text_) = l_result.result_text_,
           c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
           c(&sd2::task::completion_tokens_) = l_actual_tokens
       );
@@ -400,7 +399,6 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> run_inference_task(
   l_task.task_id_      = l_result.task_id_;
   l_task.ended_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
   l_task.data_response_ = l_result.data_response_;
-  l_task.result_text_   = l_result.result_text_;
   // 推理按 total_tokens 计费(文本+多图的**输入**才是成本大头); 拿不到 usage 就退回调用方给的预扣值。
   // 失败不计费(completion_tokens_ 记 0), 但原始响应仍留在 data_response_ 里便于对账。
   l_task.completion_tokens_ = l_ok ? (l_result.total_tokens_ > 0 ? l_result.total_tokens_ : in_task.completion_tokens_)

@@ -32,7 +32,7 @@ namespace doodle::http::seedance2 {
 // (5 秒轮询 preparing/queued/running) 永远看不到这条任务, 不会重复提交。
 //
 // 与生成任务的差别:
-//   * 没有 result_files_/preview_file_(结果是一段文本, 落在 task.result_text_);
+//   * 没有 result_files_/preview_file_(结果是一段文本, 只留在 task.data_response_ 里);
 //   * 没有预扣/退补: 计费按响应的 total_tokens 当场结算(输入 token 占大头);
 //   * 不落方舟侧(请求固定 store=false), 因此也没有 previous_response_id 的多轮。
 
