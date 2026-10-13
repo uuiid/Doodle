@@ -80,10 +80,15 @@ struct DOODLE_CORE_API ai_light_judgement_t {
   /// 因为它指向的是 ai_light_candidate.uuid_id_（rig 的身份就是候选的身份，没必要两个名字）。
   uuid selected_candidate_id_{};
   /// 美术的自由文本反馈，如「主光再低一点，色温再冷一点」
+  ///
+  /// 只有这一个反馈字段。**曾经的 `feedback_axes_`（std::map<std::string, double>，
+  /// 由 LLM 从 feedback_text 提取的结构化轴方向）已删除**：
+  ///   * 它的另一半——把自由文本文本送去结构化——是接缝 3（structure_feedback），
+  ///     已随「推理归前端」删除；
+  ///   * 滑块本来就由前端直接持有并经推理网关自己送模型，服务端再存一份轴方向
+  ///     等于持有第二份可漂移的真源（`ai_light_orchestrator.h` 的角色降级说明）。
+  /// 现在文本**原样留存**，轴方向的解释权归前端。
   std::string feedback_text_{};
-  /// 由 LLM 从 feedback_text 提取的结构化反馈。
-  /// 前端默认给的是滑块（决策 5：滑块为默认），文本是补充通道。
-  std::map<std::string, double> feedback_axes_{};
 
   friend void to_json(nlohmann::json& j, const ai_light_judgement_t& p) {
     j["by"]                    = p.by_;
@@ -91,7 +96,6 @@ struct DOODLE_CORE_API ai_light_judgement_t {
     j["decision"]              = p.decision_;
     j["selected_candidate_id"] = p.selected_candidate_id_;
     j["feedback_text"]         = p.feedback_text_;
-    j["feedback_axes"]         = p.feedback_axes_;
   }
   friend void from_json(const nlohmann::json& j, ai_light_judgement_t& p) {
     if (j.contains("by")) j.at("by").get_to(p.by_);
@@ -99,7 +103,6 @@ struct DOODLE_CORE_API ai_light_judgement_t {
     if (j.contains("decision")) j.at("decision").get_to(p.decision_);
     if (j.contains("selected_candidate_id")) j.at("selected_candidate_id").get_to(p.selected_candidate_id_);
     if (j.contains("feedback_text")) j.at("feedback_text").get_to(p.feedback_text_);
-    if (j.contains("feedback_axes")) j.at("feedback_axes").get_to(p.feedback_axes_);
   }
 };
 

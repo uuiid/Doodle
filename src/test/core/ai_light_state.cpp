@@ -251,7 +251,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(judge_accept_marks_candidate_and_session, fixture_
 
   auto l_pf = make_probe_preview_file();
   auto l_j  = make_judgement(judgement_decision::accept, l_fx.candidates_.at(2).uuid_id_);
-  l_j.feedback_axes_ = {{"key_fill_ratio", 8.0}};
+  l_j.feedback_text_ = "主光再低一点";
 
   co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j, l_pf);
 
@@ -273,7 +273,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(judge_accept_marks_candidate_and_session, fixture_
   BOOST_TEST(en(l_iter.state_) == en(ai_light_iteration_state::judged));
   BOOST_TEST(l_iter.judged_by_ == l_j.by_);
   auto l_j_back = l_iter.get_judgement();
-  BOOST_TEST(l_j_back.feedback_axes_.at("key_fill_ratio") == 8.0);
+  BOOST_TEST(l_j_back.feedback_text_ == "主光再低一点");
 
   // 被选中的候选：定稿标记 + preview_file + **同时是下一轮基准**。
   //
@@ -736,7 +736,7 @@ BOOST_AUTO_TEST_CASE(optional_and_time_fields_serialize_as_scalars) {
   l_j.at_                    = l_now;
   l_j.decision_              = judgement_decision::continue_iteration;
   l_j.selected_candidate_id_ = core_set::get_set().get_uuid();
-  l_j.feedback_axes_         = {{"kelvin", 4300.0}};
+  l_j.feedback_text_         = "主光再低一点，色温再冷一点";
 
   nlohmann::json l_j_json = l_j;
   BOOST_TEST(l_j_json.is_object());
@@ -747,7 +747,7 @@ BOOST_AUTO_TEST_CASE(optional_and_time_fields_serialize_as_scalars) {
   auto l_j_back = l_j_json.get<ai_light_judgement_t>();
   BOOST_TEST(en(l_j_back.decision_) == en(l_j.decision_));
   BOOST_TEST(l_j_back.at_.has_value());
-  BOOST_TEST(l_j_back.feedback_axes_.at("kelvin") == 4300.0);
+  BOOST_TEST(l_j_back.feedback_text_ == "主光再低一点，色温再冷一点");
 
   // 无值的 optional 写 null（而不是空数组）
   ai_light_judgement_t l_empty{};

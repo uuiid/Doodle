@@ -16,8 +16,8 @@
 //   * generate_candidates（Spec + 基线 rig + 反馈轴 → 6 个候选）**归前端**：
 //     候选由前端算好、经 POST /session/{}/iteration 提交，服务端只做 IR 准入闸门
 //     与落库（见 ai_light_submit.{h,cpp}）。
-//   * structure_feedback（自由文本 → 轴方向）**归前端**：judgement 的 feedback_axes_
-//     直接来自请求体滑块；文本原样留存，服务端不再替它跑一次推理。
+//   * structure_feedback（自由文本 → 轴方向）**归前端**：判定的反馈轴由前端自己解释，
+//     服务端只把 feedback_text_ 原样落库（它那个 `feedback_axes_` 字段已一并删除）。
 //   三条的删除同属一次角色降级 —— 见 docs/ue_ai_lighting_role_downgrade.md。
 //   服务端不再自己演这一半模型；前端要问模型就走推理网关，网关只做凭据与本分计费。
 //

@@ -55,22 +55,22 @@
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 #include <doodle_lib/sqlite_orm/tokenizer/sqlite_jieba.h>
 
+#include <boost/scope/scope_exit.hpp>
+
 #include "sqlite_orm/orm/session.h"
 #include "sqlite_orm/orm/update.h"
+#include <algorithm>
 #include <cstddef>
+#include <map>
 #include <optional>
+#include <set>
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
+#include <string>
 #include <tuple>
 #include <variant>
 #include <vector>
 
-#include <algorithm>
-#include <map>
-#include <set>
-#include <string>
-
-#include <boost/scope/scope_exit.hpp>
 
 namespace doodle {
 
@@ -413,8 +413,7 @@ void sqlite_storage::regs_all() {
       .add_column("excluded_reason", &ai_light::ai_light_reference::excluded_reason_)
       .add_column("created_at", &ai_light::ai_light_reference::created_at_)
       .add_foreign_key(
-          &ai_light::ai_light_reference::session_id_, &ai_light::ai_light_session::uuid_id_,
-          foreign_key_action::cascade
+          &ai_light::ai_light_reference::session_id_, &ai_light::ai_light_session::uuid_id_, foreign_key_action::cascade
       );
 
   reg_table<ai_light::ai_light_iteration>("ai_light_iteration")
@@ -435,13 +434,11 @@ void sqlite_storage::regs_all() {
       .add_column("created_at", &ai_light::ai_light_iteration::created_at_)
       .add_column("updated_at", &ai_light::ai_light_iteration::updated_at_)
       .add_foreign_key(
-          &ai_light::ai_light_iteration::session_id_, &ai_light::ai_light_session::uuid_id_,
-          foreign_key_action::cascade
+          &ai_light::ai_light_iteration::session_id_, &ai_light::ai_light_session::uuid_id_, foreign_key_action::cascade
       )
       // 任务行被删时置空，轮次记录必须保留（它承载了人工判断的历史）
       .add_foreign_key(
-          &ai_light::ai_light_iteration::server_task_info_id_, &server_task_info::uuid_id_,
-          foreign_key_action::set_null
+          &ai_light::ai_light_iteration::server_task_info_id_, &server_task_info::uuid_id_, foreign_key_action::set_null
       )
       .add_foreign_key(&ai_light::ai_light_iteration::judged_by_, &person::uuid_id_, foreign_key_action::set_null)
       .add_unique_index(&ai_light::ai_light_iteration::session_id_, &ai_light::ai_light_iteration::iteration_);
@@ -475,16 +472,13 @@ void sqlite_storage::regs_all() {
       // session_id 是有意冗余：前端按会话拉候选是最热路径，少一次 join。
       // 插入后永不修改，所以没有一致性风险。
       .add_foreign_key(
-          &ai_light::ai_light_candidate::session_id_, &ai_light::ai_light_session::uuid_id_,
-          foreign_key_action::cascade
+          &ai_light::ai_light_candidate::session_id_, &ai_light::ai_light_session::uuid_id_, foreign_key_action::cascade
       )
       // 定稿候选才注册 preview_file；中间候选走专用取图接口
       .add_foreign_key(
           &ai_light::ai_light_candidate::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null
       )
-      .add_unique_index(
-          &ai_light::ai_light_candidate::iteration_id_, &ai_light::ai_light_candidate::candidate_index_
-      )
+      .add_unique_index(&ai_light::ai_light_candidate::iteration_id_, &ai_light::ai_light_candidate::candidate_index_)
       .add_index(&ai_light::ai_light_candidate::session_id_)
       // 每会话至多一个定稿候选。
       //
@@ -1335,10 +1329,7 @@ void sqlite_storage::open_(FSys::path in_path, std::int32_t in_flags) {
 void sqlite_storage::upgrade() {
   // 顺序即版本顺序, 新迁移追加在 upgrade_clear_orphan_task 之前 ——
   // 那个是启动清理, 必须排在所有 schema 迁移之后跑 (它要依赖 server_task_info_tab 已经存在).
-  auto l_list = {
-      details::upgrade_init(), details::upgrade_3(),
-      details::upgrade_clear_orphan_task()
-  };
+  auto l_list = {details::upgrade_init(), details::upgrade_3(), details::upgrade_clear_orphan_task()};
   for (auto&& i : l_list) {
     i->upgrade(*this);
   }
@@ -1419,16 +1410,14 @@ std::size_t sqlite_storage::fix_foreign_key_violations(
 
 std::size_t sqlite_storage::rebuild_all_tables(orm::session& in_session) {
   using namespace orm;
-  auto l_all_db_tables = in_session.get_all_table_names();
+  auto l_all_db_tables   = in_session.get_all_table_names();
   // 重建过程会 DROP TABLE; 开着外键会触发级联或约束错误.
   // PRAGMA foreign_keys 在事务内是 no-op, 所以必须在 rebuild_table 开启事务之前关闭.
   const auto l_fk_was_on = in_session.pragma().foreign_keys();
   in_session.pragma().foreign_keys(false);
   // 中途抛异常时必须恢复, 否则这条连接会带着关闭的外键状态回到连接池被后续 session 复用.
   // 恢复成调用前的值而不是硬编码 true: 调用方可能本就在有意关闭外键.
-  boost::scope::scope_exit l_fk_guard([&in_session, l_fk_was_on]() {
-    in_session.pragma().foreign_keys(l_fk_was_on);
-  });
+  boost::scope::scope_exit l_fk_guard([&in_session, l_fk_was_on]() { in_session.pragma().foreign_keys(l_fk_was_on); });
   std::size_t l_count{0};
   for (const auto& l_table : get_all_reg_tables()) {
     // 伪表: sqlite_master 不能 DROP; pragma_foreign_key_check 是 eponymous 虚拟表
@@ -1467,7 +1456,10 @@ std::vector<std::string> collect_first_column(orm::session& in_session, const st
 // 某索引的列名按索引内顺序连接成一个字符串, 便于比较列集合是否相同
 std::string index_columns_key(orm::session& in_session, const std::string& in_index) {
   return fmt::format(
-      "{}", fmt::join(collect_first_column(in_session, fmt::format("SELECT name FROM pragma_index_info('{}');", in_index)), ",")
+      "{}",
+      fmt::join(
+          collect_first_column(in_session, fmt::format("SELECT name FROM pragma_index_info('{}');", in_index)), ","
+      )
   );
 }
 }  // namespace
@@ -1495,8 +1487,7 @@ std::size_t sqlite_storage::drop_redundant_indexes(orm::session& in_session) {
     for (const auto& l_index : collect_first_column(
              in_session,
              fmt::format(
-                 "SELECT name FROM sqlite_master WHERE type = 'index' AND sql IS NOT NULL AND tbl_name = '{}';",
-                 l_table
+                 "SELECT name FROM sqlite_master WHERE type = 'index' AND sql IS NOT NULL AND tbl_name = '{}';", l_table
              )
          )) {
       if (l_auto_keys.contains(index_columns_key(in_session, l_index))) {
@@ -1530,35 +1521,30 @@ std::size_t sqlite_storage::null_dangling_optional_references(orm::session& in_s
   for (const auto& l_ref : g_refs) {
     // 表或列不存在时跳过: 这张列表是全局的, 而调用方的库未必建全 (例如只建了几张表的测试库),
     // 也可能来自更旧的版本. 缺表不是错误, 只是这里没有可清理的东西.
-    auto l_has_column = !collect_first_column(
-                             in_session,
-                             fmt::format(
-                                 "SELECT 1 FROM pragma_table_info('{}') WHERE name = '{}';", l_ref.table_,
-                                 l_ref.column_
-                             )
-                         )
-                             .empty();
-    auto l_has_ref_table = !collect_first_column(
-                                in_session,
-                                fmt::format(
-                                    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = '{}';",
-                                    l_ref.ref_table_
-                                )
-                            )
-                                .empty();
+    auto l_has_column =
+        !collect_first_column(
+             in_session,
+             fmt::format("SELECT 1 FROM pragma_table_info('{}') WHERE name = '{}';", l_ref.table_, l_ref.column_)
+        )
+             .empty();
+    auto l_has_ref_table =
+        !collect_first_column(
+             in_session,
+             fmt::format("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = '{}';", l_ref.ref_table_)
+        )
+             .empty();
     if (!l_has_column || !l_has_ref_table) continue;
 
     // 悬空 = 本列非空, 但目标表里找不到对应的行
     auto l_where = fmt::format(
-        R"("{0}"."{1}" IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "{2}" WHERE "{2}"."{3}" = "{0}"."{1}"))",
-        l_ref.table_, l_ref.column_, l_ref.ref_table_, l_ref.ref_column_
+        R"("{0}"."{1}" IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "{2}" WHERE "{2}"."{3}" = "{0}"."{1}"))", l_ref.table_,
+        l_ref.column_, l_ref.ref_table_, l_ref.ref_column_
     );
     // 先数再改: UPDATE 的影响行数不好从 sqlite_stmt 上取, 而这两个查询的匹配集合完全相同
     std::int64_t l_count{0};
     {
-      auto l_stmt = sqlite_stmt{
-          in_session, fmt::format(R"(SELECT count(*) FROM "{0}" WHERE {1};)", l_ref.table_, l_where)
-      };
+      auto l_stmt =
+          sqlite_stmt{in_session, fmt::format(R"(SELECT count(*) FROM "{0}" WHERE {1};)", l_ref.table_, l_where)};
       l_stmt.step();
       l_count = l_stmt.get_column_value<std::int64_t>(0);
     }
@@ -1602,7 +1588,6 @@ boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
   // impl_->storage_any_.vacuum();
   DOODLE_TO_SELF();
 }
-
 
 std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
     const uuid& in_person_id, const chrono::local_days& in_data
@@ -2035,7 +2020,6 @@ std::optional<entity_link> sqlite_database::get_entity_link(const uuid& in_entit
       .to_optional();
 }
 
-
 std::optional<entity_asset_extend_value> sqlite_database::get_entity_asset_extend(const uuid& in_entity_id) {
   using namespace orm;
 
@@ -2127,7 +2111,6 @@ bool sqlite_database::is_entity_outsourced(
              .to_single() > 0;
 }
 
-
 std::vector<server_task_info> sqlite_database::get_server_tasks_by_submitted() {
   using namespace orm;
 
@@ -2189,9 +2172,7 @@ entity_asset_extend_value sqlite_database::get_entity_shot_extend_by_task(const 
 // 只读。会话/轮次的状态推进由轮次编排负责，不往这里塞业务写操作。
 // ---------------------------------------------------------------------------
 
-std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_by_entity(
-    const uuid& in_entity_id
-) {
+std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_by_entity(const uuid& in_entity_id) {
   using namespace orm;
   return select(*this)
       .columns(object<ai_light::ai_light_session>())
@@ -2201,9 +2182,7 @@ std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_b
       .to_vector();
 }
 
-std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_by_project(
-    const uuid& in_project_id
-) {
+std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_by_project(const uuid& in_project_id) {
   using namespace orm;
   return select(*this)
       .columns(object<ai_light::ai_light_session>())
