@@ -68,7 +68,36 @@ lighting_spec_t make_spec() {
 
 /// 6 个候选：手写死，与前端提交的候选**在结构上完全同形** —— 包括每套 rig 的
 /// variant_axis_（接缝 3 的提示词正是从候选 1..5 的 variant_axis_ 读轴与档位的）。
-/// （从前这里调 build_base_rig + expand_candidates 现算，那两个函数随候选生成降级一起删除。）
+///
+/// 从前这里调 build_base_rig + expand_candidates 现算，那两个函数随候选生成降级一起删除。
+/// 现在直接手搓 rig，但**保留原来那份 rig 的实质**：一盏 key + 一盏 fill，强度同为 1000
+/// candela —— 这样 key:fill 比恰好是 1，下面 input_text 那条「当前 key:fill 比」的断言
+/// （以及它想守的「绝对量轴必须知道现状」）才有东西可测。东拼西凑一个空 rig 会让
+/// key_fill_ratio_of 返回 nullopt，断言随即变成测「算不出来」那条分支 —— 那不是这里要测的。
+lighting_rig_t make_rig(std::int32_t in_index, const variant_axis_t& in_axis) {
+  lighting_rig_t l_rig{};
+  l_rig.candidate_index_ = in_index;
+  l_rig.variant_axis_    = in_axis;
+
+  const auto l_make_light = [](std::string in_id, light_role in_role) {
+    light_t l_light{};
+    l_light.id_                 = std::move(in_id);
+    l_light.role_               = in_role;
+    l_light.type_               = light_type::spot;
+    l_light.offset_.azimuth_deg_   = 45.0;
+    l_light.offset_.elevation_deg_ = 30.0;
+    l_light.offset_.distance_m_    = 3.0;
+    l_light.intensity_.unit_       = intensity_unit::candela;
+    l_light.intensity_.value_      = 1000.0;
+    return l_light;
+  };
+
+  // key 与 fill 同强度 => key:fill 比 = 1000/1000 = 1（与降级前那份 fixture 一致）。
+  l_rig.lights_.emplace_back(l_make_light("L00", light_role::key));
+  l_rig.lights_.emplace_back(l_make_light("L01", light_role::fill));
+  return l_rig;
+}
+
 std::vector<ai_light_candidate> make_candidates() {
   // 0 号是基线（axis_ == none），其余每套只沿一条轴变化 —— 与前端提交的候选同形（§15.8 OFAT）。
   struct axis_slot_t {
@@ -88,14 +117,13 @@ std::vector<ai_light_candidate> make_candidates() {
   std::vector<ai_light_candidate> l_out{};
   for (std::size_t l_i = 0; l_i < l_slots.size(); ++l_i) {
     const auto& l_slot = l_slots.at(l_i);
-    lighting_rig_t l_rig{};
-    l_rig.candidate_index_ = static_cast<std::int32_t>(l_i);
-    l_rig.variant_axis_    = variant_axis_t{l_slot.axis_, l_slot.value_, l_slot.label_};
 
     ai_light_candidate l_cand{};
     l_cand.uuid_id_         = core_set::get_set().get_uuid();
     l_cand.candidate_index_ = static_cast<std::int32_t>(l_i);
-    l_cand.set_rig(l_rig);
+    l_cand.set_rig(make_rig(
+        static_cast<std::int32_t>(l_i), variant_axis_t{l_slot.axis_, l_slot.value_, l_slot.label_}
+    ));
     l_out.emplace_back(std::move(l_cand));
   }
   return l_out;
