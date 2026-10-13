@@ -230,17 +230,9 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
     const doodle::seedance2::task& in_task
 ) {
   const auto l_uid = in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_);
-  // 落库的 data_request_ **原样**打给方舟, 不经任何结构体往返一趟。
-  //
-  // 之前是 `data_request_.get<inference_request_t>()` 再 build_inference_body: 那次转换是
-  // 一份**手写白名单**, 结构体不认识的键会被静默吃掉 —— 与「前端请求原样透传」直接冲突。
-  // 那个结构体与那个函数现在都已删除, 这条纪律由**类型系统**保证: 中间已经没有可丢键的类型了。
-  //
-  // 现在这行只有两个动作: 定稿(剥本系统字段 / 覆盖强制字段 / 隐私口径), 然后发出去。
-  // 接缝路径落库的也是同一份形状的信封, 所以两条路径在这里合流, 没有第二套发射规则。
+
   auto l_body      = in_task.data_request_;
   if (!l_body.is_object()) {
-    // 非对象连 model 都没处放, 发出去必然被方舟拒且看不出原因, 不如当场说清楚是任务行坏了。
     throw_exception(
         http_request_error{
             boost::beast::http::status::internal_server_error,
@@ -250,38 +242,16 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
         }
     );
   }
-  // ---- 定稿: 覆盖服务端的强制字段(原地改) ----
-  //
-  // 这是 `/responses` 请求体与「本系统自己的请求」之间的边界: 过了这里的内容就只有方舟的
-  // schema 在管, 服务端不再往里加任何字段 —— 所以它**只做覆盖**, 不替前端补默认值。
-  //
-  // 这段逻辑曾经是 seedance2_inference_request.h 里的一个 inline 自由函数
-  // (finalize_inference_body), 库内只有下面这一个调用点, 其余调用者全是测试 ——
-  // 为一个调用点维持一个头文件不合算, 就地写在这里。
+
   {
-    // 传了空串（会话没配模型）时也要回落到缺省值, 否则会带着 model:"" 打过去白跑一趟;
-    // 非空则**以调用方为准**（服务端不覆盖非空值, 与「原样透传」一致）。
     const auto l_model = l_body.contains("model") && l_body.at("model").is_string()
                              ? l_body.at("model").get<std::string>()
                              : std::string{};
     l_body["model"]    = l_model.empty() ? std::string{doodle_config::g_ark_inference_model} : l_model;
-    // 不把提示词与素材留在方舟侧 —— 两条路径同一条隐私口径, 由这里统一保证。
-    // store 是**唯一**一个服务端强行写入的键; 除此之外这里不补任何默认值（包括 thinking:
-    // 以前这里发 {"type":"disabled"}, 那是服务端替前端做决定, 与「原样透传」冲突）。
-    l_body["store"] = false;
-    // max_output_tokens 同理**不补**：结构化输出要求全字段 required, 输出长度不可预估, 而截断
-    // 之后 result_json_ 只剩半个 JSON —— 那个失败面跟「schema 不合规被拒」完全分不出来。
-    // 交给模型/账号侧决定上限; 只有调用方/前端显式给了才发（它在体里, 原样留着, 这里不动）。
+    l_body["store"]    = false;
   }
 
   run_task_result_t l_result{};
-
-  // 一次尝试, 不重试。曾经这里是一个 `for (l_attempt < g_ark_inference_max_retry)` 循环,
-  // 按 should_retry(429/5xx/408) 判定是否再来一次并做指数退避。**整个重试已取消**:
-  // 重试的每一步都要重新取 IP 并重新签名, 换来的却是同一份请求体被重复计费的风险 ——
-  // 而调用方(前端 / 推理网关)自己就看得见 HTTP 状态码与 error_code, 需要重试时它自己重发
-  // 更清楚上下文(比如换个提示词), 服务端替它盲重试反而把「哪一次真的产生了输出」这件事
-  // 掩盖掉。取消后本函数的语义变得干净: **一次调用 = 一次请求 = 一次结算**。
   {
     // 每次尝试都重新取 IP 并**重新签名**
     auto l_ip       = co_await get_ip_str();
