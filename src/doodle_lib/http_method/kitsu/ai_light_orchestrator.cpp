@@ -7,11 +7,13 @@
 // 候选落库（write_submitted_iteration）与它自己的小助手。**本文件已不含任何接缝调用**；
 // rig 纯运算、共用部件与
 // JSON 架构层在同目录的独立文件里：
-//   * `ai_light_seam_feedback.{h,cpp}`    —— 接缝 3 的离线部件（提示词/schema/映射）
 //   * `ai_light_rig_ops.{h,cpp}`          —— ops diff / key:fill 比
 //   * `ai_light_seam_common.{h,cpp}`      —— 共用提示词片段 + 描述 + 推理管道
 //   * `ai_light_json_validation.{h,cpp}`  —— schema 建造器 + 严格/宽松读取器 + 架构诊断
 // 对外仍然只需包含伞形头 `ai_light_orchestrator.h`。接缝契约（历史）见该头顶部。
+//
+// 曾经还有 `ai_light_seam_feedback.{h,cpp}`（接缝 3 的离线部件：提示词 / schema / 映射）。
+// **已删除** —— 那组纯函数在生产里没有任何调用方，见 ai_light_orchestrator.h 里的说明。
 //
 // 三条接缝**已全部删除**（角色降级 · 第二梯队，见
 // docs/ue_ai_lighting_role_downgrade.md）：

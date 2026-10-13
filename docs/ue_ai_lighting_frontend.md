@@ -216,12 +216,14 @@ draft ──前端提交 Spec──▶ awaiting_spec_confirm ──POST /spec/co
 3. 可选第 2.5 步：如果想排除某张调色过度的图，调
    `PUT /api/doodle/ai/light/reference/{reference_id}`，体 `{"is_outlier": true, "excluded_reason": "调色过度"}`（见 5.3）。
    排除是**参考图自己的属性**，与提 Spec 是两件独立的事，所以各走各的接口 —— 顺序随意。
-4. **生成方案（不再是 HTTP 调用）**：前端调推理网关算出 Spec，再**提交给服务端落库**
-   → `state = awaiting_spec_confirm`，`current_spec` 有了。
+4. **生成方案（不再是 HTTP 调用）**：前端调推理网关算出 Spec，再**提交给服务端**。
    - **原本的 `POST /session/{session_id}/spec` 已删除**，不要调它。
-   - ⚠️ **落库入口目前不存在**：参考图聚合（`aggregate_reference_stats`）与 Spec 落库都还是
-     服务端内部函数，**没有 HTTP 出口**。所以本步骤在当前代码上**还走不通** ——
-     需要先按 role_downgrade §3.3 形态 A 补一个提交接口。接入前请与后端确认。
+   - ⚠️ **`state = awaiting_spec_confirm` 这条边现在没有实现者**：Spec 闸门（含落库表
+     `ai_light_spec` 与内存聚合体 `lighting_spec_t`）已整条删除 —— 那张表是**空表**，
+     全仓没有任何 insert 路径。「前端蒸好后提交上来落库」的接口**从未实现**。
+     接入前请与后端确认这一步的形态。
+   - ⚠️ **参考图聚合也不存在**：`aggregate_reference_stats` 已删除（生产里没有消费方），
+     `GET .../stats` 路由同样不存在。排除参考图仍由 `PUT /reference/{id}` 负责。
    - 这一步会真的调模型，**耗时数秒到数十秒**：按钮必须进 loading、禁用重复点击、允许失败重试。
    - **没有参考图无法蒸馏**（决策 1：参考必有多张）—— 这是前端自己的闸门。
 5. 成功后跳到 `/lighting/spec/...`（闸门 1）。

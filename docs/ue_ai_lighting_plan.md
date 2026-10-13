@@ -369,13 +369,15 @@ Kelvin 是线性光色度坐标上的物理尺度，直接在 sRGB 编码值上�
 
 **已确认参考以全局调色为主**，这提升了统计量的可信度：全局调色不改变空间结构，调色板、亮度分位、对比度这些量都能被完整迁移；相反，若参考含大量局部改图（加减光、重绘），这些量会被局部编辑污染。因此当前默认对统计量给予较高置信度，同时保留外点剔除能力以防局部编辑。
 
-**单图统计（本节的①）与多图聚合（本节的②）都已落地**。逐图统计在
+**本节只有①（单图统计）还活着；②（多图聚合）已删除**。逐图统计在
 `doodle_lib/http_method/kitsu/ai_light_stats.cpp` 的 `analyze_display_image()` /
-`analyze_reference_file()`，随上传写入 `ai_light_reference.stats_` / `stats_confidence_`；
-多图聚合在同一个文件的 `aggregate_reference_stats()`，由 `POST /session/{id}/spec` 在蒸馏
-Spec 前调用一次（§15.7）。`is_outlier_` / `excluded_reason_` 仍是**人工排除**字段，聚合器
-**不写**它们 —— 自动疑点走 `suspected_outlier_ids_`，由接缝 1 写进提示词供模型参考
-（见 §5.3 与 §15.7 的决定 D3）。
+`analyze_reference_file()`，随上传写入 `ai_light_reference.stats_` / `stats_confidence_`
+（由 `ai_light.cpp` 的 `reference_route::post` 调用）。
+**多图聚合 `aggregate_reference_stats()` 已删除** —— 它算出的 `aggregated_reference_stats_t`
+在生产里没有任何消费方：唯一的设计消费者是已删的 `generate_spec` 接缝；承载它的
+`POST /session/{id}/spec` 也已删除。参考图的排除改由人工经
+`PUT /api/doodle/ai/light/reference/{id}` 决定，服务端不再做跨图聚合。
+下面 §5.3 整章的记录因此成为**历史设计**，不再是当前行为。
 
 ### 5.3 多图聚合与冲突检测
 
@@ -388,7 +390,8 @@ Spec 前调用一次（§15.7）。`is_outlier_` / `excluded_reason_` 仍是**�
 > 供前端展示，但美术「手工定这个维度」的裁决结果**没有回传与存储路径**
 > （原 `conflict_resolution` 字段已删，见 §15.7 决定 D6）。
 
-**已落地**（`ai_light_stats.cpp` 的 `aggregate_reference_stats()`，返回 `aggregated_reference_stats_t`）：
+**曾经落地过**（`ai_light_stats.cpp` 的 `aggregate_reference_stats()`，返回 `aggregated_reference_stats_t`）
+—— **现已整段删除**，下表是历史记录：
 
 | 步 | 落法 |
 |---|---|

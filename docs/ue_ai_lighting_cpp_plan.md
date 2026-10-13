@@ -27,7 +27,13 @@
 |---|---|---|---|
 | 1 spec | `src/doodle_lib/http_method/kitsu/ai_light_seam_spec.{h,cpp}`（103/473 行） | `build_spec_instructions()` / `build_spec_json_schema()` / `build_spec_input_text()` / `build_spec_request()` / `map_spec_result()` | `generate_spec()` |
 | 2 candidates | `ai_light_seam_candidates.{h,cpp}`（134/572 行） | `build_candidates_instructions()` / `build_candidates_json_schema()` / `build_candidates_input_text()` / `map_candidate_result()` | `generate_candidates()` |
-| 3 feedback | `ai_light_seam_feedback.{h,cpp}`（105/352 行） | `build_feedback_instructions()` / `build_feedback_json_schema()` / `build_feedback_input_text()` / `build_feedback_request()` / `map_feedback_result()` | `structure_feedback()` |
+| 3 feedback | `ai_light_seam_feedback.{h,cpp}`（105/352 行）—— **整条已删除** | `build_feedback_instructions()` / `build_feedback_json_schema()` / `build_feedback_input_text()` / `build_feedback_request()` / `map_feedback_result()` | `structure_feedback()` |
+
+> ⚠️ **现状（已执行，与上表的设计意图不同）**：接缝 3 的两个文件**连纯函数一起删掉了**，
+> 不只是「搬到前端」。原因是它们在生产里没有任何调用方（judge 已改为只收结构化轴、
+> 文本原样落库），而 `build_feedback_input_text` 还是 `lighting_spec_t` 的最后一个消费者 ——
+> 该类型已随 Spec 闸门删除。因此**前端不再有读取 feedback 模板/schema 的服务端出口**，
+> 模板真源已不存在；上表第 3 行的「搬到前端」这一列描述的是原计划。
 
 **轴展开不在上面任何一处**：`apply_axis_step()` / `enumerate_variants()` 在
 `ai_light_rig_ops.cpp`（233 行，`ai_light_rig_ops.h` 只 62 行），它**没有网络依赖**，
@@ -468,10 +474,14 @@ http::seedance2::inference_request_t build_gateway_inference_request(
 | `ai_light_rig_ops.{h,cpp}` 的轴部分 | ~120 | 整体搬到前端；`diff_rigs` 留 C++ |
 | `ai_light_seam_spec.{h,cpp}` 的纯函数部分 | ~350 | 搬到前端；`generate_spec` 留 C++ |
 | `ai_light_seam_candidates.{h,cpp}` 的纯函数部分 | ~400 | 搬到前端；`generate_candidates` 留 C++ |
-| `ai_light_seam_feedback.{h,cpp}` 的纯函数部分 | ~300 | 搬到前端；`structure_feedback` 留 C++ |
+| `ai_light_seam_feedback.{h,cpp}` 的纯函数部分 | ~300 | **已删除**（不再是「搬到前端」）：生产里零调用方，详见表 1.1 后的 ⚠️ |
 
 **注意**：纯函数「搬到前端」不等于 C++ 侧删干净 —— `build_*_json_schema()` 与
 `build_*_instructions()` 要**保留**给 `/prompt_assets`（§3.3）和网关缺省值（§3.1.2）。
+
+> ⚠️ **接缝 3 是这条注意的例外，且是反例**：`/prompt_assets` **从未实现**，
+> 网关也没有它的缺省值。所以那些 `build_feedback_*` 没有任何保留理由，
+> 已连同接缝 1/2 的同类一起不存在了。
 
 ---
 

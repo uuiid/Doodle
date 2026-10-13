@@ -194,38 +194,9 @@ lighting_rig_t make_probe_rig(const uuid& in_session_id, std::int32_t in_iterati
   return l_rig;
 }
 
-/// 造一份有内容的 spec。
-/// 原本它返回表实体 ai_light_spec 并顺手验证「表实体 ↔ 内存聚合体」的转换；
-/// 那张表已删除，现在直接返回内存聚合体 lighting_spec_t（它还活着，接缝在用）。
-lighting_spec_t make_probe_spec(const uuid& in_session_id) {
-  lighting_spec_t l_spec{};
-  l_spec.session_id_ = in_session_id;
-
-  lighting_intent_t l_intent{};
-  l_intent.weather_ = "clear";
-  l_spec.intent_ = l_intent;
-
-  lighting_targets_t l_targets{};
-  l_targets.luma_percentiles_     = luma_percentiles_t{interval_t{0.02, 0.06}, interval_t{0.10, 0.18}, interval_t{0.55, 0.75}};
-  l_targets.palette_              = {palette_entry_t{vec3_t{0.2, 0.15, 0.1}, interval_t{0.20, 0.35}}};
-  l_targets.contrast_             = interval_t{0.55, 0.75};
-  l_targets.white_balance_kelvin_ = interval_t{3400.0, 4200.0};
-  l_targets.clip_rate_            = clip_rate_t{interval_t{0.0, 0.02}, interval_t{0.0, 0.05}};
-  l_targets.grading_hints_        = grading_hints_t{"strong", true, "moderate"};
-  l_targets.ownership_.lighting_  = {"luma_percentiles", "white_balance_kelvin", "clip_rate"};
-  l_targets.ownership_.grading_   = {"palette", "contrast", "grading_hints"};
-  l_spec.targets_ = l_targets;
-
-  reference_stats_t l_stats{};
-  l_stats.image_count_        = 4;
-  l_stats.conflicts_          = {"white_balance_kelvin"};
-  l_stats.retouch_detected_   = true;
-  l_stats.per_dimension_confidence_["luma_percentiles"]     = 0.85;
-  l_stats.per_dimension_confidence_["white_balance_kelvin"] = 0.5;
-  l_spec.reference_stats_ = l_stats;
-
-  return l_spec;
-}
+// 曾经这里还有 make_probe_spec（造一份有内容的 lighting_spec_t 供 JSON 往返）。
+// **已删除**：lighting_spec_t 与 lighting_intent_t 随 Spec 闸门一起删除，
+// 它们的最后一个消费者是接缝 3 的 feedback 请求（那条接缝已整条移除）。
 
 }  // namespace
 
@@ -372,18 +343,10 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     l_ref.stats_confidence_ = 0.85;
     insert(l_session).into<ai_light_reference>().values(l_ref)();
 
-    // --- Spec：不再有表实体，只用内存聚合体验一份 JSON 往返 ---
-    // （表 ai_light_spec 已删除；这里保留聚合体的往返是为了覆盖 lighting_spec_t 的
-    //   to_json/from_json —— 接缝的 feedback 请求还在用它。）
-    {
-      auto l_spec = make_probe_spec(l_session_row.uuid_id_);
-      nlohmann::json l_spec_json = l_spec;
-      auto l_spec_back           = l_spec_json.get<lighting_spec_t>();
-      BOOST_TEST(l_spec_back.intent_.weather_ == "clear");
-      BOOST_TEST(l_spec_back.targets_.ownership_.grading_.size() == 3);
-      BOOST_TEST(l_spec_back.reference_stats_.image_count_ == 4);
-      BOOST_TEST(l_spec_back.reference_stats_.conflicts_.size() == 1);
-    }
+    // --- Spec：整条链已删除，这里不再有任何断言 ---
+    // 表实体 ai_light_spec 是空表（已删），内存聚合体 lighting_spec_t 也随 Spec 闸门删除 ——
+    // 它最后的消费者是接缝 3 的 feedback 请求，而那条接缝已整条移除。
+    // 参考图统计的形状仍由 reference_image_stats_t 的落库往返覆盖（见上面的 ai_light_reference）。
 
     // --- 轮次 ---
     ai_light_iteration l_iter{};

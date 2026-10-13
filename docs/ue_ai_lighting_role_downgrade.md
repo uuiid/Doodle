@@ -76,19 +76,21 @@
 - `key_fill_ratio_of` / `apply_axis_step` / `expand_candidates` / `diff_rigs`（`:44-58`）
 - 注释强调：**UE 执行器必须按同一份口径实现轴值语义**
 
-**接缝 3（`ai_light_seam_feedback.cpp` / `.h`）**
+**接缝 3（`ai_light_seam_feedback.cpp` / `.h`）—— 整条已删除**
 
-- `build_feedback_instructions` / `build_feedback_json_schema`（`{understanding, axes[{axis,value,reason}]}`, `maxItems:2`） / `build_feedback_input_text` / `build_feedback_request` / `map_feedback_result`
-- 调用点在 `src/doodle_lib/http_method/kitsu/ai_light.cpp:716-772`
+- 曾经有 `build_feedback_instructions` / `build_feedback_json_schema`（`{understanding, axes[{axis,value,reason}]}`, `maxItems:2`） / `build_feedback_input_text` / `build_feedback_request` / `map_feedback_result`
+- **现状（已执行）**：这组纯函数在生产里**没有任何调用方** —— 上面的「调用点在 `ai_light.cpp:716-772`」随 judge 改造消失（文本原样落库、轴来自请求体滑块）。`build_feedback_input_text` 还是 `lighting_spec_t` 的最后一个消费者，而该类型已随 Spec 闸门删除。两个文件连同单测 `ai_light_feedback.cpp` 一起移除，`build_feedback_json_schema` 曾冻结的 schema 摘要金标准也一并删除。**前端不再有服务端可读的模板/schema 出口**，模板真源已不存在。
 
 **共享件（`ai_light_seam_common.cpp`，310 行）**
 
 - `g_axis_value_semantics_text`（`:73-81`）—— 六轴增量语义的权威定义
 - `build_common_lighting_section()`（`:202-229`）—— 职责边界 / 性格→灯光语言映射表 / 单位与格式口径**三段原文**
-- `describe_targets` / `describe_rig_brief` / `describe_spec_brief` / `describe_preset_brief`（`:179-308`）
+  - ⚠️ **现状**：本函数**无任何生产调用方**，且「性格 → 灯光语言映射表」那一节已随 `character_personality_t` / `lighting_language_t` 删除。
+- `describe_targets` / `describe_rig_brief` / `describe_preset_brief`（`:179-308`）
+  - ⚠️ **现状**：`describe_spec_brief` **已删除**（唯一调用方是接缝 3，入参 `lighting_spec_t` 已删）；剩下三个仍只被历史接缝调用，无生产调用方。
 - `make_seam_client`（`:51-83`）—— operator→`ai_studio_id_`→`ai_studio` 的凭据解析（**保留**）
 - `chick_inference_ok`（`:88-112`）—— 内容违规 400 / 其它 502 / 非 object 502
-- `run_seam_inference`（`:116-154`）—— 落任务行 + 扣费（**保留**）
+- `run_seam_inference`（`:116-154`）—— 落任务行 + 扣费（**保留**，推理网关在用）
 
 **校验层（`ai_light_json_validation.h`，211 行）**
 
@@ -209,6 +211,12 @@ GET /api/doodle/ai/light/prompt_assets/{name}
 GET /api/doodle/ai/light/session/{sid}/stats
 ```
 
+> ⚠️ **现状：这个路由与它下面的 `aggregated` 段都不存在。** `kitsu.cpp` 的路由注册表里
+> 没有任何 `ai_light_stats` 路由；`aggregate_reference_stats()` 也已删除（它在生产里
+> 没有任何消费方）。逐图统计仍由参考图上传路径（`reference_route::post`）调
+> `analyze_reference_file` 算出并落库，**没有 HTTP 出口**。下面这份 JSON 是设计意图，
+> 落库入口待建。
+
 ```jsonc
 {
   "references": [
@@ -217,7 +225,7 @@ GET /api/doodle/ai/light/session/{sid}/stats
                  "contrast": 0.61, "white_balance_kelvin": 5200, "clip_rate": {…},
                  "retouch_score": 0.3 } }
   ],
-  "aggregated": {              // aggregate_reference_stats() 的输出，服务端算
+  "aggregated": {              // 曾经是 aggregate_reference_stats() 的输出（已删除）
     "stats": { …, "conflicts": […], "per_dimension_confidence": {…} },
     "targets": { … },          // lighting_targets_t，服务端按中位数推导
     "dimension_spread": { … },
@@ -362,19 +370,19 @@ POST /api/doodle/ai/light/session/{sid}/iteration
 
 原则：**按"搬错的代价"从小到大排，每一梯队都必须能独立跑通并验证。**
 
-### 第一梯队：网关 + feedback（低风险，验证方向）
+### 第一梯队：网关 + feedback（低风险，验证方向）—— **网关已落地；feedback 整条已删除**
 
-**为什么先做这个**：feedback 的文本→轴是纯函数、无数据库依赖、现状本就"任何失败都静默降级"（`ai_light.cpp:765-771`），搬错的代价最小。同时它能在最小成本下证明"前端解释模型输出"这条路跑得通。
+**为什么先做这个**：feedback 的文本→轴是纯函数、无数据库依赖、现状本就"任何失败都静默降级"（`ai_light.cpp:765-771`），搬错的代价最小。同时它能在最小成本下证明"前端解释模型输出"这条路行得通。
 
 **改动**
 
-1. 新增 `POST /api/doodle/ai/light/inference`（§3.3.1）
-2. 新增 `GET /api/doodle/ai/light/prompt_assets[/{name}]`（§3.3.2）
-3. 删除 `ai_light.cpp:716-772` 的文本→轴通道；`judge` 只接受结构化 `feedback_axes`
-4. 删除 `ai_light_seam_feedback.{h,cpp}` 的调用；`structure_feedback` 可整体删除（无兼容性负担）
-5. 前端实现：拉 `feedback` 模板 → 拼 `input_text` → 调网关 → 解释 `{understanding, axes[{axis,value,reason}]}` → 塞进 `feedback_axes` 提交 `/judge`
+1. ✅ 新增推理网关（§3.3.1）—— 实现在 `ai_light.cpp` 的 `inference_route`，路径为 `POST /api/doodle/ai/light/session/{}/inference`
+2. ❌ 新增 `GET /api/doodle/ai/light/prompt_assets[/{name}]`（§3.3.2）—— **未实现，且现已无意义**：模板真源（`build_feedback_*`）已随接缝 3 删除
+3. ✅ 删除 `ai_light.cpp:716-772` 的文本→轴通道；`judge` 只接受结构化轴，文本原样落库
+4. ✅ 删除 `ai_light_seam_feedback.{h,cpp}` —— **连纯函数部件一起删**（不只是「调用」）：它们在生产里零调用方，且 `build_feedback_input_text` 是 `lighting_spec_t` 的最后一个消费者。单测 `ai_light_feedback.cpp` 与 schema 摘要金标准同时移除
+5. 前端实现：自己持有模板 → 拼 `input_text` → 调网关 → 解释 `{understanding, axes[{axis,value,reason}]}` → 直接提交（**前端模板不再有服务端出口**）
 
-**验收**：同一段反馈文本，前端解释出的轴与服务端旧实现一致（可用现有单测的用例做对照）；轴名非法/值 0/超过 2 条仍被服务端丢弃。
+**验收（已失守，如实记录）**：原定「同一段反馈文本，前端解释出的轴与服务端旧实现一致，可用现有单测对照」——服务端旧实现（`map_feedback_result`）与其单测已一并删除，**这条对照不再可能**。服务端如今不解释、也不校验轴，只收请求体里的结构化轴。
 
 ### 第二梯队：candidates（高风险高收益，主体工作）—— **已落地**
 

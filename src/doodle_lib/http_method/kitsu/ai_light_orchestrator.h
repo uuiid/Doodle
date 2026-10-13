@@ -52,11 +52,15 @@
 // 所以不会破坏本文件顶部「这一层刻意不包含任何 HTTP 依赖」的约定。
 #include <doodle_lib/http_client/seedance2_inference_request.h>
 
-// 本头是**伞形头**：剩下的那条接缝、rig 纯运算、共用部件各自成文件，本头把它们与状态机
-// 一起收在同一个命名空间下 —— 对外仍然只需包含 ai_light_orchestrator.h 一个头。
+// 本头是**伞形头**：rig 纯运算与共用部件各自成文件，本头把它们与状态机一起收在同一个
+// 命名空间下 —— 对外仍然只需包含 ai_light_orchestrator.h 一个头。
+//
+// 曾经还 include 过 ai_light_seam_feedback.h（接缝 3 的离线部件）。**已删除** ——
+// 那条接缝的全部函数在生产里没有任何调用方：judge 路由已不再把美术的自由文本
+// 送去结构化（文本原样落库），它的输入正文组装又是唯一消费者
+// lighting_spec_t（该类型已随 Spec 闸门删除）。整条链连同它的单测一起移除。
 #include "ai_light_rig_ops.h"
 #include "ai_light_seam_common.h"
-#include "ai_light_seam_feedback.h"
 
 #include <boost/asio/awaitable.hpp>
 #include <nlohmann/json.hpp>

@@ -6,7 +6,7 @@
 // 把「模型输出怎么读」集中到一层，收益就是它不必等真机才能验。
 //
 // 刻意不 include 路由头 `http_method/kitsu/ai_light.h`（它会拉进 <core/http/http_function.h>，
-// 而测试目标的 include 路径没有 doodle_lib 根）—— 与 ai_light_feedback.cpp 同一约定。
+// 而测试目标的 include 路径没有 doodle_lib 根）—— 与其他 ai_light 单测同一约定。
 //
 #include <doodle_lib/http_method/kitsu/ai_light_json_validation.h>
 #include <doodle_lib/http_method/kitsu/ai_light_orchestrator.h>
@@ -55,13 +55,13 @@ std::string en(E in_value) {
 // `--run_test=ai_light_json_validation --log_level=message`，从「feedback digest = …」那行里抄回来。
 // 真要改 schema 形状时**必须**同步改这个常量，并在设计文档里说明为什么。
 //
-// 曾经还有两个金标准，都随各自的接缝一起删除（都归了前端）：
-//   * g_golden_spec_digest（值 9e666da14cfb8ad3，2026-10-12 由 c4b1d8ee3aa3ef47 改来）：
-//     当时删掉了顶层 "conflicts" 字符串数组（docs/ue_ai_lighting_plan.md §15.7 决定 D7）。
-//   * g_golden_candidates_digest（值 227cb12da4693db1）：随候选生成降级删除（角色降级 ·
-//     第二梯队），那条路的校验改由 ai_light_submit.cpp 的 IR 准入闸门承担。
-// feedback 的 schema 未动，摘要一字未改。
-constexpr std::string_view g_golden_feedback_digest = "0e13ecb11cd3f474";
+// 曾经这里还有一个金标准：
+//   * g_golden_feedback_digest（值 0e13ecb11cd3f474）：接缝 3 的 schema 摘要。
+//     接缝 3（build_feedback_json_schema）已整条删除 —— 它在生产里没有调用方，
+//     服务端不再替前端跑这次推理。**注意**：上面两个金标准也是同样原因删的。
+// 如今这一层不再有生产 schema 可供冻结，护栏改由下面 make_probe_schema() 造出的
+// 样本 schema 承担：它覆盖同一批建造器（schema_object / schema_array / schema_enum /
+// additionalProperties / require_*），所以「建造器改动必须被看见」这条验收条件不变。
 
 /// 规范化：递归下降，把 `required` / `enum` 数组排序（其余原样）。nlohmann::json 的对象键
 /// 本来就按 key 有序，所以「对象键排序」不需要额外动作。
@@ -94,6 +94,28 @@ std::string shape_digest(const nlohmann::json& in_schema) {
 
 /// 自由文本枚举白名单（grading_hints 那一类在 spec.h 里是 std::string 的字段）。
 constexpr std::array<std::string_view, 3> g_test_text_enum{"hard", "soft", "very_soft"};
+
+/// 样本 schema：接缝 3 的 build_feedback_json_schema() 删除后，这一层的三个用例仍需要
+/// 一份「由生产建造器拼出来的、有嵌套与枚举的」schema 来验自检 / 诊断 / 摘要。
+///
+/// 它刻意用**同一批**建造器（schema_object / schema_array / schema_enum / additionalProperties）
+/// 拼出与那条接缝同构的形状 —— 护栏的目的（建造器一改，摘要与自检的结论就变）因此不变，
+/// 只是不再把某一条具体接缝的 schema 冻结成金标准。
+nlohmann::json make_probe_schema() {
+  const auto l_axis_item = json_val::schema_object({
+      {"axis", json_val::schema_enum<variant_axis_kind>(variant_axis_kind::none)},
+      {"value", json_val::schema_number()},
+      {"reason", json_val::schema_string()},
+  });
+  const auto l_axes = json_val::schema_array(l_axis_item, std::nullopt, 2);
+
+  auto l_understanding = json_val::schema_string();
+
+  return json_val::schema_object({
+      {"understanding", l_understanding},
+      {"axes", l_axes},
+  });
+}
 
 }  // namespace
 
@@ -384,7 +406,7 @@ BOOST_AUTO_TEST_CASE(consistency_check_catches_the_three_conventions) {
 BOOST_AUTO_TEST_CASE(wellformed_check_accepts_production_schemas_and_flags_broken_ones) {
   for (const auto& [l_name, l_schema] :
        std::initializer_list<std::pair<std::string_view, nlohmann::json>>{
-           {"structure_feedback", build_feedback_json_schema()}
+           {"probe", make_probe_schema()}
        }) {
     // 库校验：schema 本身是不是合法 draft-7。失败 = 我们的 bug，不是模型的错。
     BOOST_TEST(json_val::validate_schema_is_wellformed(l_schema, l_name).empty());
@@ -411,7 +433,7 @@ BOOST_AUTO_TEST_CASE(wellformed_check_accepts_production_schemas_and_flags_broke
 }
 
 BOOST_AUTO_TEST_CASE(model_output_violations_carry_json_pointer) {
-  const auto l_schema = build_feedback_json_schema();
+  const auto l_schema = make_probe_schema();
 
   const nlohmann::json l_ok{
       {"understanding", "美术想让主光再低一点"},
@@ -462,12 +484,17 @@ BOOST_AUTO_TEST_CASE(schema_shape_digest_matches_frozen_golden) {
   BOOST_TEST(shape_digest(l_order_a) == shape_digest(l_order_b));
   BOOST_TEST(shape_digest(l_order_a) != shape_digest(json_val::schema_object({{"x", json_val::schema_number()}})));
 
-  // 接缝的 schema 摘要。曾经这里还有 spec 与 candidates 两条 —— 它们随各自的接缝
-  // 一起删除（都归了前端），连同两条 g_golden_*_digest 金标准。
-  const auto l_fb = shape_digest(build_feedback_json_schema());
-  BOOST_TEST_MESSAGE("feedback digest = " << l_fb);
+  // 样本 schema 的摘要。曾经这里冻结的是三条接缝各自的 schema 摘要；三条接缝全部删除后
+  // 不再有生产 schema 可冻结，所以这里只验「摘要器对同一份输入稳定」。
+  const auto l_probe = shape_digest(make_probe_schema());
+  BOOST_TEST_MESSAGE("probe digest = " << l_probe);
+  BOOST_TEST(l_probe == shape_digest(make_probe_schema()));
 
-  BOOST_TEST(l_fb == g_golden_feedback_digest);
+  // 建造器一改，摘要必须变 —— 否则这条护栏是假的。这里用「多一个属性」代替建造器改动：
+  // 形状确实不同，摘要就必须不同。
+  nlohmann::json l_perturbed = make_probe_schema();
+  l_perturbed["properties"]["extra"] = json_val::schema_number();
+  BOOST_TEST(l_probe != shape_digest(l_perturbed));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

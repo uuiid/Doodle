@@ -83,11 +83,12 @@ std::string describe_targets(const lighting_targets_t& in_targets);
 /// 一版 rig 的紧凑投影（globals 概览 + 每盏灯的关键参数）。
 std::string describe_rig_brief(const lighting_rig_t& in_rig);
 
-/// 一版 Spec 的紧凑投影（intent + targets + palette），接缝 2 与接缝 3 都用。
-std::string describe_spec_brief(const lighting_spec_t& in_spec);
-
 /// 一条预设的紧凑投影，接缝 2 列候选预设时用。
 std::string describe_preset_brief(const ai_light_preset& in_preset);
+
+/// 曾经这里还有 describe_spec_brief(const lighting_spec_t&)。**已删除** ——
+/// 唯一调用方是接缝 3 的 build_feedback_input_text（整条接缝已移除），
+/// 而入参 lighting_spec_t 也随 Spec 闸门删除。见 .cpp 里的说明。
 
 // ---------------------------------------------------------------------------
 // 推理信封与推理管道（曾经由「两条接缝」共用；三条接缝现已全部删除，

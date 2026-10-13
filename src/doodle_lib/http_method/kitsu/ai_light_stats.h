@@ -14,8 +14,10 @@
 // 本文件分两层：
 //   1) 单图统计（§5.1 的 ①）：analyze_display_image / analyze_reference_file。逐图提取，
 //      不做跨图比较 —— 所以 is_outlier_ / excluded_reason_ 不在这里决定。
-//   2) 多图聚合与冲突检测（§5.1 的 ②，即 §5.3）：aggregate_reference_stats。
-//      把逐图标量聚成**区间目标**，并显式标出冲突维度（**不自动平均掉**）。
+//   2) 多图聚合与冲突检测（§5.1 的 ②，即 §5.3）：**已删除**（aggregate_reference_stats）。
+//      它算出的 aggregated_reference_stats_t 在生产里没有任何消费方 —— 唯一的设计消费者
+//      是已删的 generate_spec 接缝。参考图排除改由人工经 PUT /reference/{id} 决定，
+//      服务端不再自动做跨图聚合。
 //
 // analyze_display_image 刻意做成可复用的纯函数：§8.1 的「A 目标区间满足」要拿
 // 渲染图算同一组指标，那时直接调它，不要再写第二份实现。
@@ -64,33 +66,5 @@ DOODLELIB_API reference_analysis_t analyze_display_image(const cv::Mat& in_displ
 /// 用 IMREAD_COLOR（与 preview::convert_to_png 同一个标志）保证「落盘的文件」与
 /// 「统计读的文件」是同一套解释：灰度、16bit、带 alpha 都在这里被统一成 8bit BGR。
 DOODLELIB_API std::optional<reference_analysis_t> analyze_reference_file(const FSys::path& in_png);
-
-/// 多图聚合（§5.3）的产出：统计质量 + 由统计推出的目标区间。
-struct DOODLELIB_API aggregated_reference_stats_t {
-  /// image_count_ / aggregation_ / per_dimension_confidence_ / conflicts_ / retouch_detected_
-  reference_stats_t stats_{};
-  /// §5.3 第 2~3 步的产物：逐维度中位数 → 区间。冲突维度**仍取极值区间**，
-  /// 只是同时被记进 stats_.conflicts_ 并压低置信度 —— 不自动平均掉。
-  lighting_targets_t targets_{};
-  /// 维度名 → 实际用到的离散度（相对或绝对，见 .cpp 的阈值表）。
-  /// 落库不必要，但日志与前端可视化要靠它回答「为什么这一维被判成冲突」。
-  std::map<std::string, double> dimension_spread_{};
-  /// 疑似外点（只报不写，见 .cpp 的说明）。**不排除**出聚合。
-  std::vector<uuid> suspected_outlier_ids_{};
-};
-
-/// 把多张参考图的**单图统计**聚合成目标区间，并检测冲突（§5.3）。
-///
-/// 无可用统计（全部 is_outlier_ / stats_confidence_ == 0 / stats_ 为 null）时不抛错：
-/// 返回 image_count_ = 入参张数、conflicts_ 含 "no_usable_stats"、targets_ 为
-/// lighting_targets_t 的默认值。**降级判定不在这里** —— 由调用方看
-/// stats_.per_dimension_confidence_ 是否为空来决定 degrade_level。
-///
-/// 只读入参，绝不写回：is_outlier_ / excluded_reason_ 是**人工排除**字段
-/// （reference_instance_route::put 写的，见 ai_light.h），自动判定写进去会让
-/// 两者在同一列里不可区分。自动疑点走 suspected_outlier_ids_，由调用方持久化。
-DOODLELIB_API aggregated_reference_stats_t aggregate_reference_stats(
-    const std::vector<ai_light_reference>& in_references
-);
 
 }  // namespace doodle::ai_light

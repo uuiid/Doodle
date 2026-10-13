@@ -250,31 +250,10 @@ std::string describe_rig_brief(const lighting_rig_t& in_rig) {
   return l_out;
 }
 
-/// Spec 的紧凑投影。这里是给模型读的 —— 它的入参是**内存聚合体** lighting_spec_t，
-/// 由调用方现填（原先还有一个落库形状 ai_light_spec，那张表已删除）。
-///
-/// 意图段只剩天气：atmosphere / time_of_day / setting / source_motivation / story_context /
-/// character_personality 那一整套「把提示词翻译成结构化意图」的字段已随 generate_spec 接缝
-/// 一起删除，后端不再产生它们。提示词原文由前端直接交给模型，比这份经过一转手的投影更准。
-std::string describe_spec_brief(const lighting_spec_t& in_spec) {
-  std::string l_out{};
-  if (!in_spec.intent_.weather_.empty()) l_out += fmt::format("  天气: {}\n", in_spec.intent_.weather_);
-  l_out += "  目标：\n";
-  l_out += describe_targets(in_spec.targets_);
-  if (!in_spec.targets_.palette_.empty()) {
-    l_out += fmt::format("  palette {} 色（颜色只能来自参考图统计）：", in_spec.targets_.palette_.size());
-    for (const auto& l_entry : in_spec.targets_.palette_)
-      l_out += fmt::format(
-          "{}[{:.2f},{:.2f}] ", rgb_to_hex(l_entry.color_), l_entry.share_.low_, l_entry.share_.high_
-      );
-    l_out += "\n";
-  }
-  if (!in_spec.reference_stats_.conflicts_.empty())
-    l_out += fmt::format(
-        "  参考图冲突维度（不要把它们当硬目标）：{}\n", join_strings(in_spec.reference_stats_.conflicts_, ", ")
-    );
-  return l_out;
-}
+// 曾经这里还有 describe_spec_brief(const lighting_spec_t&) —— Spec 的紧凑投影。
+// **已删除**：它的唯一调用方是接缝 3 的 build_feedback_input_text，而那条接缝已整条移除；
+// 它的入参类型 lighting_spec_t 本身也随 Spec 闸门删除。参考图目标若还要投影给人看，
+// 直接用下面的 describe_targets（它收的是 lighting_targets_t，仍然活着）。
 
 std::string describe_preset_brief(const ai_light_preset& in_preset) {
   const auto l_target = in_preset.get_stats_target();
