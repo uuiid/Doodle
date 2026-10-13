@@ -84,8 +84,26 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid session_id_{};
 DOODLE_HTTP_FUN_END()
 
+// GET    /api/doodle/ai/light/reference/{id}   单张参考图详情
+// PUT    /api/doodle/ai/light/reference/{id}   改参考图（目前只有排除标记）
 // DELETE /api/doodle/ai/light/reference/{id}   删单张参考图（含文件）
+//
+// 为什么「排除」在这里而不是 /spec POST 的请求体里：
+//   `is_outlier_` / `excluded_reason_` 是**参考图自己的属性**，不是「生成 Spec」这个动作的
+//   参数。原先 /spec POST 收 `excluded_reference_ids` 顺带改别的资源，代价是：
+//     * 改一张图的排除状态必须借道一个语义无关的接口，还要先把它所在会话 id 找出来；
+//     * 提 Spec 与排除图两个操作被绑成一次请求，前端没法只做其中一件；
+//     * /spec POST 里那段「查图 → 校验归属 → 批量 update」是第二个写 is_outlier_ 的地方，
+//       与这里的 PUT 形成两条会分叉的路径（先例：计费口径复制必然慢慢分叉）。
+//   归到本路由后，「谁改参考图」只有一个答案。
+//
+// PUT 请求体（全部字段可选，给了才改）：
+//   {"is_outlier": true}                是否排除
+//   {"excluded_reason": "构图没主体"}    排除原因；is_outlier=false 时服务端清空它
+// 响应体：改完的参考图整行（与 GET 一致）。
 DOODLE_HTTP_JWT_FUN(reference_instance_route)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
@@ -126,6 +144,10 @@ DOODLE_HTTP_FUN_END()
 //                                                        awaiting_spec_confirm 重出（要求已有参考图，否则 400）
 //                                                        已实现（§15.7）：统计聚合 + 一次方舟推理。
 //                                                        失败时会话状态回滚，Spec 版本不变（可重试）。
+//
+// 请求体只认一个键 `prompt_text`（可选）：给了就覆盖会话提示词并落库，不给就沿用。
+// **不再接受 `excluded_reference_ids`** —— 排除参考图是参考图自己的属性，
+// 改它请走 PUT /reference/{id}（见上面 reference_instance_route 的说明）。
 DOODLE_HTTP_JWT_FUN(spec_route)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)

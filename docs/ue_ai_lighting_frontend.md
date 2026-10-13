@@ -204,7 +204,9 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
    - 服务端会统一转成 PNG、铸造 uuid、落盘、算统计（亮度分位/对比/色温/调色板/削波率/痕迹）。
    - **为什么不能把图塞进第 1 步**：参考图必须挂在已存在的会话上（产物目录按会话 uuid 组织），
      所以「先建会话、再传图」不是交互习惯问题，是硬顺序。
-3. 可选第 2.5 步：如果想排除某张调色过度的图，在 `POST .../spec` 时用 `excluded_reference_ids` 排除（见 5.3）。
+3. 可选第 2.5 步：如果想排除某张调色过度的图，调
+   `PUT /api/doodle/ai/light/reference/{reference_id}`，体 `{"is_outlier": true, "excluded_reason": "调色过度"}`（见 5.3）。
+   排除是**参考图自己的属性**，与提 Spec 是两件独立的事，所以各走各的接口 —— 顺序随意。
 4. `POST /api/doodle/ai/light/session/{session_id}/spec`，体 `{}` → **201** + 会话详情（`state = awaiting_spec_confirm`，`current_spec` 有了）。
    - 这一步会真的调 LLM 蒸馏，**耗时数秒到数十秒**：按钮必须进 loading、禁用重复点击、允许失败重试。
    - **没有参考图必然 400**：`会话 {} 还没有参考图，无法蒸馏 Spec（决策 1：参考必有多张）`。
@@ -237,11 +239,18 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
 - **确认方案** → `POST /api/doodle/ai/light/session/{session_id}/spec/confirm`，请求体**不带任何裁决内容**（该接口只做确认）。
   成功 → `state = generating`，服务端**随即触发首轮候选生成**（不用前端再调 `/iterate`）。
   该接口**幂等**：已确认过会直接返回 `{spec, session_state, already_confirmed: true}`，前端据此提示「已确认过」而不是报错。
-- **重新生成** → `POST .../spec`，体可带 `{prompt_text, excluded_reference_ids}`：
-  - `prompt_text` 会**覆盖**会话提示词并落库；`excluded_reference_ids` 把那些图标为人工排除
-    （写 `is_outlier=true`、`excluded_reason="人工排除"`）。
+- **重新生成** → `POST .../spec`，体可带 `{prompt_text}`：
+  - `prompt_text` 会**覆盖**会话提示词并落库。不带就沿用会话里已有的提示词 ——
+    接口已不再接受 `excluded_reference_ids`（排除改用下面的 PUT，见「**排除参考图**」）。
   - 重出即 revision+1，**旧版留在 `spec_history` 里**（前端要提供「查看上一版」的入口，否则美术无法回头）。
   - 该接口**只在 `draft` 或 `awaiting_spec_confirm` 状态可用**。
+- **排除参考图** → `PUT /api/doodle/ai/light/reference/{reference_id}`，体 `{"is_outlier": true, "excluded_reason": "…"}`：
+  - 两个字段都可选，**给了才改**；`excluded_reason` 留空也允许。
+  - **取消排除** → 传 `{"is_outlier": false}` 即可，服务端会**一并清空** `excluded_reason`
+    （不会留下「未排除但带原因」的行）。想只改原因、不动排除状态，就只传 `excluded_reason`。
+  - 响应体是改完的参考图整行（与 `GET /reference/{id}` 一致），前端可直接用它刷新那张卡片。
+  - 排除只影响**后续**的 Spec 蒸馏（`is_outlier == true` 的图不参与聚合、也不发给模型）；
+    已生成的 Spec 不会因此变化 —— 想让它生效要在改完后重新 `POST .../spec`。
 - **冲突维度的展示**：`reference_stats.conflicts` 里列出的维度现在**只展示、不接收裁决**。
   原计划是让前端给一个「按提示词 / 按参考图 / 手工填一个区间」的三选一并写回 `conflict_resolution.resolved`，
   该字段已从 Spec 与 `spec/confirm` 请求体中删除（前端未实现，且它的 `conflicts`/`per_dimension_confidence`

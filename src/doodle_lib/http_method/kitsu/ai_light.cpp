@@ -401,6 +401,59 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
   co_return in_handle->make_msg(nlohmann::json{{"data", l_added}});
 }
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, get) {
+  person_.check_not_outsourcer();
+  auto l_sql = get_sqlite_database();
+
+  // 参考图不存在时 get_by_uuid 抛 sqlite_orm_exception{404}，由 http_session_data 统一翻成 404
+  auto l_ref = l_sql.get_by_uuid<ai_light_reference>(id_);
+  // 归属校验走会话：参考图自己没有项目字段，它的项目就是它所属会话的项目。
+  load_session_checked(person_, l_sql, l_ref.session_id_);
+
+  co_return in_handle->make_msg(nlohmann::json{{"data", l_ref}});
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, put) {
+  person_.check_not_outsourcer();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+
+  // 参考图不存在时 get_by_uuid 抛 sqlite_orm_exception{404}
+  auto l_ref = l_sql.get_by_uuid<ai_light_reference>(id_);
+  // 权限校验的对象是会话（与 GET/DELETE 同一口径）：参考图行是唯一权威的归属来源，
+  // 不让前端传 session_id 来「帮忙」—— 那会引入一处可伪造的输入。
+  load_session_checked(person_, l_sql, l_ref.session_id_);
+
+  // 逐字段可选：「给了才改」而不是整行覆盖。整行 PUT 会让前端必须先把当前值读回来
+  // 再原样发一遍，中间任何一次并发改动都会被静默回滚 —— 而这里要改的只是一个标记。
+  if (l_json.contains("is_outlier")) l_json.at("is_outlier").get_to(l_ref.is_outlier_);
+  if (l_json.contains("excluded_reason")) l_json.at("excluded_reason").get_to(l_ref.excluded_reason_);
+
+  // 排除原因只在「已排除」时有意义。取消排除时必须一并清掉，否则会留下
+  // 「不在排除集里、却带着一条排除原因」的行 —— 重建 Spec 时读到这条记录的人
+  // 无法判断它到底算不算被排除。
+  if (!l_ref.is_outlier_) l_ref.excluded_reason_.clear();
+
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      update(l_sql)
+          .from<ai_light_reference>()
+          .set(
+              c(&ai_light_reference::is_outlier_) = l_ref.is_outlier_,
+              c(&ai_light_reference::excluded_reason_) = l_ref.excluded_reason_
+          )
+          .where(c(&ai_light_reference::uuid_id_) == id_)
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
+
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_http(), "用户 {}({}) 把 AI 灯光参考图 {} 的排除标记改为 {}（原因：{}）",
+      person_.person_.email_, person_.person_.get_full_name(), id_, l_ref.is_outlier_,
+      l_ref.excluded_reason_.empty() ? "无" : l_ref.excluded_reason_
+  );
+  co_return in_handle->make_msg(nlohmann::json{{"data", l_ref}});
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, delete_) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
@@ -533,30 +586,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_route, post) {
   DOODLE_CHICK_HTTP(
       !l_session.prompt_text_.empty(), bad_request, "提示词不能为空"
   );
-  // 允许带参考图序号做排除（美术看出某张图跑偏了）
-  if (l_json.contains("excluded_reference_ids")) {
-    // 排除标记写回参考图行，接缝下次取 references 时能看到 is_outlier_
-    auto l_excluded = l_json.at("excluded_reference_ids").get<std::vector<uuid>>();
-    sql_modify_statement_vector_t l_sqls{};
-    for (const auto& l_ref_id : l_excluded) {
-      auto l_ref = l_sql.get_by_uuid<ai_light_reference>(l_ref_id);
-      DOODLE_CHICK_HTTP(
-          l_ref.session_id_ == l_session.uuid_id_, bad_request,
-          "参考图 {} 不属于会话 {}", l_ref_id, l_session.uuid_id_
-      );
-      l_sqls.emplace_back(
-          update(l_sql)
-              .from<ai_light_reference>()
-              .set(
-                  c(&ai_light_reference::is_outlier_) = true,
-                  c(&ai_light_reference::excluded_reason_) = std::string{"人工排除"}
-              )
-              .where(c(&ai_light_reference::uuid_id_) == l_ref_id)
-      );
-    }
-    if (!l_sqls.empty()) co_await l_sql.run_sql(std::move(l_sqls));
-  }
-
   // 提示词改了要落库，否则接缝读到的是旧值
   {
     sql_modify_statement_vector_t l_sqls{};

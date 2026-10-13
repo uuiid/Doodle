@@ -2031,8 +2031,8 @@ POST /session/{id}/spec
   （既解析不出工作室、也无法计费）。操作人**不加会话列**：它是「每次调用」的属性，加列会逼出一次迁移且语义错。
 - **D2 聚合放在统计层。** `aggregate_reference_stats` 在 `ai_light_stats.{h,cpp}`，不在编排层：§5.1–§5.3
   整章是感知层，显示空间度量学口径（含「色温要先线性化」这唯一的例外）**只能有一处定义**。
-- **D3 外点只算不写。** `is_outlier_` / `excluded_reason_` 是**人工排除**字段（`spec_route::post` 写的是
-  `excluded_reason_ = "人工排除"`）。自动判定写进去会让两种语义在同一列里不可区分。自动疑点走
+- **D3 外点只算不写。** `is_outlier_` / `excluded_reason_` 是**人工排除**字段（由
+  `PUT /api/doodle/ai/light/reference/{id}` 写，见 `reference_instance_route::put`）。自动判定写进去会让两种语义在同一列里不可区分。自动疑点走
   `suspected_outlier_ids_`，由接缝 1 写进提示词（`ai_light_seam_spec.cpp` 的「疑似外点」一行）供模型参考，
   **不落库**（原先把 uuid 列表持久化到 `conflict_resolution_.resolved_["suspected_outliers"]`，
   该字段已删，见 D6）。
