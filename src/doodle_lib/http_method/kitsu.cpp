@@ -324,9 +324,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<ai_light::spec_confirm_route>("/api/doodle/ai/light/session/{}/spec/confirm"_url(
         &ai_light::spec_confirm_route::session_id_
       ))
-      .reg_t<ai_light::iterate_route>("/api/doodle/ai/light/session/{}/iterate"_url(
-        &ai_light::iterate_route::session_id_
-      ))
       .reg_t<ai_light::judge_route>("/api/doodle/ai/light/session/{}/judge"_url(
         &ai_light::judge_route::session_id_
       ))

@@ -133,15 +133,6 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid session_id_{};
 DOODLE_HTTP_FUN_END()
 
-// POST /api/doodle/ai/light/session/{session_id}/iterate   生成一轮候选并派发
-//                                                          接缝已落地（§15.8）：排轴 + 一次推理 +
-//                                                          落 6 个候选 + 派任务；失败回滚可重试
-//                                                          无需请求体：会话在路径上
-DOODLE_HTTP_JWT_FUN(iterate_route)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid session_id_{};
-DOODLE_HTTP_FUN_END()
-
 // POST /api/doodle/ai/light/session/{session_id}/judge   人工闸门 2：定稿 / 继续迭代 / 全否
 DOODLE_HTTP_JWT_FUN(judge_route)
 DOODLE_HTTP_FUN_OVERRIDE(post)

@@ -27,7 +27,7 @@
 // 进到 l_base.operator_id_ 里。请求体里塞 operator_id 会被静默忽略。
 //
 // 会话归属走 load_session_checked 的同一口径（person_.check_project_access），
-// 与 judge_route / iterate_route 一致。
+// 与 judge_route 一致。
 //
 
 #pragma once

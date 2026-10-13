@@ -634,50 +634,16 @@ BOOST_AUTO_TEST_CASE(session_detail_reports_overdue_flag) {
 // 同样删除的三条 advance_session 用例：advance_session_leaves_nothing_on_seam_failure、
 // advance_session_from_draft_without_references_is_rejected、
 // advance_session_redistills_from_awaiting_spec_confirm。它们的共同前提是
-// 「draft / awaiting_spec_confirm 会走进 spec 分支」，而那个分支已删：
-//   * 前两条盯的是「spec 失败不落半成品 / 参考图必须还在」——现在 draft 状态下
-//     advance_session 根本不会走到推理（服务端已经完全没有推理），所以「失败」
-//     不再是这两条用例描述的那种失败。
-//     但「没有可推进的步骤时报 400 且不写库」这条契约仍然成立，由下面
-//     advance_session_without_references_reports_no_step 覆盖。
-//   * 第三条盯的是「awaiting_spec_confirm 被 spec 分支接住而不是落到兜底分支」。
-//     分支删掉后这个区分消失了 —— 两个状态现在都走兜底，而兜底本身的行为由
-//     advance_session_unknown_state_is_rejected 一类用例覆盖。
+// 「draft / awaiting_spec_confirm 会走进 spec 分支」，而那个分支已删。
 //
-// 保留 net 结论：**任何** advance_session 失败都不得留下半成品行、不得丢参考图、
-// 不得写 failure_reason_ —— 这条在下面仍然有断言。
-
-DOODLE_FIXTURE_TEST_CASE_CORO(advance_session_without_references_reports_no_step, fixture_t) {
-  // draft 没有参考图。曾经这是「spec 分支的前置条件不满足 → 400」，现在 spec 分支已删，
-  // 所以 draft 直接落到「当前没有可推进的步骤」的兜底分支 —— 同样是 400，
-  // 但**原因变了**，这条用例盯的就是这个原因。
-  l_fx.build(ai_light_session_state::draft, ai_light_iteration_state::generated, 0, false);
-
-  auto l_session = l_fx.reload_session();
-  bool l_threw   = false;
-  std::string l_what{};
-  try {
-    co_await advance_session(*l_fx.sql_, l_session, uuid{});
-  } catch (const doodle_error& in_err) {
-    l_threw = true;
-    l_what  = in_err.what();
-    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
-  }
-  BOOST_TEST(l_threw);
-
-  // 校验刻意在 try 之外：不走回滚，所以 failure_reason_ 必须仍然是空的。
-  // 否则美术会在会话页上看到一条看起来像「AI 失败」的提示，而其实只是没传图 /
-  // 或者根本不该调这一步。
-  auto l_after = l_fx.reload_session();
-  BOOST_TEST(en(l_after.state_) == en(ai_light_session_state::draft));
-  BOOST_TEST(l_after.failure_reason_.empty());
-  BOOST_TEST(l_fx.sql_->get_ai_light_specs(l_after.uuid_id_).empty());
-  BOOST_TEST(l_fx.sql_->get_ai_light_iterations(l_after.uuid_id_).empty());
-
-  // 原因必须来自**状态机**（没有可推进的步骤），而不是别的地方 ——
-  // 上一版本这里断言的是「参考图」缺失，那是 spec 分支还在时的事。
-  BOOST_TEST(l_what.find("没有可推进的步骤") != std::string::npos);
-}
+// 最后一条 advance_session 用例（advance_session_without_references_reports_no_step）
+// 也随函数本身一起删除：它验的是「没有可推进的步骤时报 400」，而**整条链**已不存在 ——
+// 状态推进现在只发生在 /spec/confirm 与 POST /session/{}/iteration，
+// 前者的失败策略由 ai_light.cpp 的闸门用例覆盖，后者的准入闸门由
+// ai_light_json_validation.cpp 覆盖。一个恒抛 400 的空壳没有可测行为。
+//
+// 保留 net 结论：**任何**失败的推进都不得留下半成品行、不得丢参考图、
+// 不得写 failure_reason_ —— 这条在提交与判断的用例里仍然有断言。
 
 // ===========================================================================
 // 预设库

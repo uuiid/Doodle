@@ -3,9 +3,9 @@
 //
 // 对应 docs/ue_ai_lighting_plan.md §10.3（状态流转）与 §10.4（派发契约）。
 //
-// 本文件只装**状态机**：advance_session / advance_session_local / apply_judgement /
-// mark_iteration_rendered / build_session_detail，候选落库（write_submitted_iteration）
-// 与它自己的小助手。**本文件已不含任何接缝调用**；rig 纯运算、共用部件与
+// 本文件只装**状态机**：apply_judgement / mark_iteration_rendered / build_session_detail，
+// 候选落库（write_submitted_iteration）与它自己的小助手。**本文件已不含任何接缝调用**；
+// rig 纯运算、共用部件与
 // JSON 架构层在同目录的独立文件里：
 //   * `ai_light_seam_feedback.{h,cpp}`    —— 接缝 3 的离线部件（提示词/schema/映射）
 //   * `ai_light_rig_ops.{h,cpp}`          —— ops diff / key:fill 比
@@ -115,62 +115,15 @@ orm::sql_modify_statement_t make_session_update(sqlite_database& in_sql, const a
 // （见 ai_light_submit.{h,cpp} 与 docs/ue_ai_lighting_role_downgrade.md）。
 //
 // 于是 generating 的语义变了：它不再是「服务端正在生成」，而是
-// **「等待前端提交本轮候选」**。推进动作是那次提交，不是 advance_session；
-// 所以 advance_session(generating) 与其它状态一样，都是「没有可推进的步骤」（400）。
+// **「等待前端提交本轮候选」**；推进动作是那次提交（POST /session/{}/iteration）。
 //
-// 保留 advance_session / advance_session_local 两个入口而不是顺手删掉：路由层与
-// 前端仍然按原契约调它们，「该推的状态推不动」比「接口消失」更容易诊断 ——
-// 报错信息里直接写明候选该走哪个接口。
+// 曾经有两个推进入口 advance_session（队列路线）与 advance_session_local（引擎内路线），
+// 在三条接缝与候选生成一起降级给前端之后，两者的函数体都只剩下恒抛 400 的兜底分支 ——
+// 没有任何状态能由它们推进。现已连同 POST /session/{}/iterate 与 /spec、/spec/confirm
+// 末尾的调用一起删除（曾经保留它们的理由是「接口还在、报错指路」，
+// 但一个恒定失败的接口只是垃圾端点，指路信息已由路由表与文档承担）。
 //
 // 引擎内路线的渲染计划（ai_light_launch_plan_t）现在只由 write_submitted_iteration 产出。
-
-boost::asio::awaitable<void> advance_session(
-    sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
-) {
-  (void)in_sql;
-  (void)in_operator_id;
-  const auto l_entry_state = in_session.state_;
-
-  // ---------------------------------------------------------------
-  // 推进失败时**不落库、不记录 failure_reason_**：同步请求的失败原因由 HTTP 响应体描述
-  // （http_session_data.cpp:313 把 doodle_error::what() 放进 body），前端无论状态码是多少
-  // 都读 body 显示。这里再写一列只是重复，而且会与「异步失败」抢同一个字段。
-  // 异步失败（工作机回传渲染结果）没有人可对话，仍走 mark_iteration_failed() 落库。
-  // 异常自然向上抛，由 HTTP 层转成状态码 + body。
-  //
-  // 曾经这里的分派是：
-  //   draft / awaiting_spec_confirm → generate_spec 蒸馏 Spec（已删除，归前端）
-  //   generating                   → generate_candidates 接缝生成候选（已删除，归前端）
-  // 两个后继都归了前端，所以现在**没有任何状态**由本函数推进 —— 函数体只剩兜底报错。
-  // 「同一个状态只能有一个后继步骤」仍然成立：后继是前端的提交接口，不是这个函数。
-  // ---------------------------------------------------------------
-  DOODLE_CHICK_HTTP(
-      false, bad_request,
-      "会话 {} 处于状态 {}，当前没有可推进的步骤（候选生成已归前端：请用 POST "
-      "/ai_light/session/{{}}/iteration 提交本轮候选）",
-      in_session.uuid_id_, magic_enum::enum_name(l_entry_state)
-  );
-}
-
-boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_local(
-    sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
-) {
-  (void)in_sql;
-  (void)in_operator_id;
-  const auto l_entry_state = in_session.state_;
-
-  // 与 advance_session 逐字一致的失败策略：失败原因交给 HTTP 响应体描述，
-  // 不写 failure_reason_（详见 advance_session 顶部的说明）。
-  //
-  // 引擎内路线同样不再在这里推进：候选由前端算好，渲染计划由那次提交
-  // （write_submitted_iteration）当场返回给发起方本机。见 ai_light_submit.h。
-  DOODLE_CHICK_HTTP(
-      false, bad_request,
-      "会话 {} 处于状态 {}，当前没有可推进的步骤（引擎内路线请用 POST "
-      "/ai_light/session/{}/iteration 提交候选并取回渲染计划）",
-      in_session.uuid_id_, magic_enum::enum_name(l_entry_state), in_session.uuid_id_
-  );
-}
 
 // ===========================================================================
 // 候选落库（角色降级 · 第二梯队）

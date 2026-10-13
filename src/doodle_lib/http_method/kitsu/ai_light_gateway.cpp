@@ -144,7 +144,7 @@ std::pair<nlohmann::json, std::string> build_gateway_inference_request(const nlo
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
-  // 外包人员不能触发推理 —— 与 judge_route / iterate_route 同一口径。
+  // 外包人员不能触发推理 —— 与 judge_route 同一口径。
   // 它花的是工作室的钱，不是「只看一眼」的只读操作。
   person_.check_not_outsourcer();
 

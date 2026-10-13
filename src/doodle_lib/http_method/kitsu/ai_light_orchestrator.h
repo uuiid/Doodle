@@ -73,53 +73,27 @@ namespace doodle::ai_light {
 // ===========================================================================
 // 状态机
 // ===========================================================================
-
-/// 会话状态推进的唯一入口。**角色降级后它已经没有可推进的步骤** —— 见下面的说明。
-///
-/// 按 in_session.state_ 分派，而两条老分支都已归前端：
-///   draft / awaiting_spec_confirm
-///       → 曾经是 generate_spec 接缝蒸馏方案（已删除）。后继是 /session/{}/spec 提交
-///         与 /spec/confirm，都不是 advance_session。
-///   generating 且已有已确认的 Spec
-///       → 曾经是 generate_candidates 接缝 → iteration + g_candidate_count 个 candidate
-///         → 建 server_task_info{type = ai_light} → run_next_task() + broadcast
-///         （已删除，角色降级 · 第二梯队）。后继是 POST /session/{}/iteration
-///         （ai_light_submit.h）：候选由前端算好交上来，服务端只做 IR 闸门 + 落库。
-///
-/// 于是每个状态都落到兜底分支（400）。这个函数**保留**是刻意的：路由层与前端仍按原
-/// 契约调它，「该推的状态推不动」比「接口消失」更容易诊断 —— 报错信息里直接写明候选
-/// 该走哪个接口。也正因为如此，它现在既不落库、也不碰 in_sql / in_operator_id。
-///
-/// generating 的语义也随之变了：它不再是「服务端正在生成」，而是
-/// **「等待前端提交本轮候选」**（等待期由前端自己的推理耗时决定）。
-///
-/// 参考图为空时**拒绝**（400，且不写 failure_reason_）：候选生成的前提是会话有提示词与
-/// 参考图（见 ai_light.cpp 的闸门，现在由提交接口把关）。因此建会话接口**不**调本函数 ——
-/// 建会话时参考图还不可能存在（见 shot_session_route::post）。
-///
-/// 失败时不改会话状态、**也没有回滚动作**：分派到的分支只算 SQL 不落库，
-/// 抛错时库里一行没动，所以退回原状态是恒等操作 —— 唯一要做的是记 failure_reason_，
-/// 然后重新抛出。这样不会留下卡在 generating 的会话，也不会丢已上传的参考图
-/// （参考图的外键 cascade 挂在会话上，删会话才会连带删图）。
-///
-/// in_operator_id 是本次推进的触发人（person uuid），曾经转手给 generate_candidates 做
-/// 计费主体与签名 URL 的 uid。现在没有接缝可转手，参数只为守住 ABI 与调用契约而保留。
-DOODLELIB_API boost::asio::awaitable<void> advance_session(
-    sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
-);
-
-/// 引擎内路线的推进（D52/D53）。**与 advance_session 一样，已经没有可推进的步骤**。
-///
-/// 它曾经是「走完候选生成那一步后**不建任务行**，而是把『本轮该怎么渲』作为
-/// ai_light_launch_plan_t 返回给调用方，由发起方本机自己渲染」。候选生成降级给前端之后，
-/// 渲染计划改由**提交那一刻**产出：POST /session/{}/iteration（引擎内路线）走
-/// write_submitted_iteration(..., in_local_only = true)，当场把 launch plan 返回。
-///
-/// 所以本函数如今恒抛 400，保留它同样是为了「接口还在、报错指路」而不是静默 404。
-/// 参数与返回值形状不动 —— 调用方（本地客户端）的兼容性优先。
-DOODLELIB_API boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> advance_session_local(
-    sqlite_database& in_sql, ai_light_session in_session, uuid in_operator_id
-);
+// 曾经这里有两个推进入口 advance_session（队列路线）与 advance_session_local（引擎内
+// 路线）。三条接缝（generate_spec / generate_candidates / structure_feedback）与候选生成
+// 在「角色降级」中全部归了前端之后，两个入口的函数体都只剩恒抛 400 的兜底分支：
+//   draft / awaiting_spec_confirm
+//       → 曾经是 generate_spec 接缝蒸馏方案。后继是 /session/{}/spec 提交与 /spec/confirm。
+//   generating 且已有已确认的 Spec
+//       → 曾经是 generate_candidates 接缝 → iteration + g_candidate_count 个 candidate
+//         → 建 server_task_info{type = ai_light} → run_next_task() + broadcast。
+//         后继是 POST /session/{}/iteration（ai_light_submit.h）：候选由前端算好交上来，
+//         服务端只做 IR 闸门 + 落库。
+// 两者、连同 POST /session/{}/iterate 路由与 /spec、/spec/confirm 末尾的调用，
+// 已一并删除。生成会话状态由此由这些提交接口自己推进，不再有「推进」这个空动作。
+//
+// 参考图为空时**拒绝**候选提交（400，且不写 failure_reason_）：候选生成的前提是会话有
+// 提示词与参考图。因此建会话接口不推进状态 —— 建会话时参考图还不可能存在
+// （见 shot_session_route::post）。
+//
+// 失败时**不落库、不记录 failure_reason_**：同步请求的失败原因由 HTTP 响应体描述
+// （http_session_data.cpp:313 把 doodle_error::what() 放进 body），前端无论状态码是多少
+// 都读 body 显示。异步失败（工作机回传渲染结果）没有人可对话，仍走
+// mark_iteration_failed() 落库。
 
 /// 回传定位（D54）：队列路线用任务 uuid 找轮次，引擎内路线没有任务行，改用「会话 + 轮次号」。
 ///

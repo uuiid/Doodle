@@ -257,18 +257,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   // ---------------------------------------------------------------
   // Spec 的输入是「提示词 + 参考图」，而参考图只能在会话存在**之后**上传
   // （reference_route 要 session_id，而 session_id 是本接口的返回值）。
-  // 所以在这里调 advance_session，get_ai_light_references() 必然为空 ——
-  // 蒸出来的是一份「只用提示词」的方案，参考图这个主输入被静默丢掉。
   //
-  // 如果在这里跑第一步，蒸出来的必然是一份「只用提示词」的方案 —— 参考图这个主输入
-  // 会被静默丢掉，而那时 /spec 又进不去（会话已经停在 awaiting_spec_confirm），
-  // 参考图从此永远无法影响方案。这个 bug 只在「接缝真的开始工作」那一刻才暴露。
+  // 曾经这里调 advance_session 立刻蒸馏 Spec —— 那样 get_ai_light_references()
+  // 必然为空，蒸出来的是一份「只用提示词」的方案，参考图这个主输入被静默丢掉。
+  // 那个入口连同函数已删除，本注释保留为「为什么建会话不推进状态」的理由。
   //
-  // 正确顺序：建会话（draft）→ 传参考图 → POST /spec 蒸馏 → /spec/confirm → 派发。
-  // 蒸馏由 /spec 触发，且它会校验参考图非空（见 advance_session）。
+  // 正确顺序：建会话（draft）→ 传参考图 → POST /spec 提交方案 → /spec/confirm → 提交候选。
 
-  // 返回**六表聚合详情**而不是会话本体：形状与 GET /session/{id}、/spec、/iterate、/judge
-  // 一致，前端只需要一套解析。新建会话时 references 为空、current_spec 为 null。
+  // 返回**六表聚合详情**而不是会话本体：形状与 GET /session/{id}、/spec、/judge 一致，
+  // 前端只需要一套解析。新建会话时 references 为空、current_spec 为 null。
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
 }
@@ -572,14 +569,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_route, post) {
     co_await l_sql.run_sql(std::move(l_sqls));
   }
 
-  // 注意：**不**在这里把状态改成 draft。advance_session 的分派本来就只看 draft，
-  // 提前改会让「接缝失败回滚到入口状态」这条契约变成回滚到 draft ——
-  // 而状态机最难查的正是这种「回滚落到哪」的偏差。
+  // 注意：**不**在这里把状态改成 draft。状态只由 /spec/confirm 与提交接口推进。
 
-  // 走到这里参数都合法。接缝失败时 advance_session 会抛错并把状态回滚到入口状态。
-  // 触发人显式传下去：它是**本次调用**的属性（计费主体 + 签名 URL 的 uid），
-  // 不是会话的属性 —— 同一次灯光工作完全可能换个人来重出方案。
-  co_await advance_session(l_sql, l_session, person_.person_.uuid_id_);
+  // 走到这里参数都合法。这里曾经调 advance_session 触发服务端蒸馏 Spec，
+  // 该接缝已归前端，函数连同整条调用链已删除。
 
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
@@ -618,9 +611,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_confirm_route, post) {
   l_spec->confirmed_by_    = person_.person_.uuid_id_;
   l_spec->confirmed_at_    = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
-  // 确认后立即进入候选生成（§10.3）。接缝未实现时会抛 501，
-  // advance_session 会把会话状态回滚到 awaiting_spec_confirm，Spec 的确认**保留**
-  // （确认是人工动作，不该因为下游能力缺失而被撤销）。
+  // 确认后立即进入候选生成（§10.3）—— 候选由前端算好后经
+  // POST /session/{}/iteration 提交（ai_light_submit.h）。这里只把状态推到 generating，
+  // 生成动作本身不属于本路由。
   l_session.state_ = ai_light_session_state::generating;
 
   {
@@ -649,47 +642,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_confirm_route, post) {
       person_.person_.get_full_name(), l_session.uuid_id_, l_spec->revision_
   );
 
-  co_await advance_session(l_sql, l_session, person_.person_.uuid_id_);
+  // 曾经在这里调 advance_session 立刻跑一轮候选生成。候选生成归前端后这个入口
+  // 没有可推进的步骤，已随函数一起删除：状态停在 generating，等前端提交。
+  // Spec 的确认**保留**（确认是人工动作，不该因为下游能力改变而被撤销）。
 
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
-}
-
-// ===========================================================================
-// 迭代（生成一轮候选）
-// ===========================================================================
-
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iterate_route, post) {
-  person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
-
-  // 刻意**不**调用 in_handle->get_json()：会话在路径上，这个动作端点不需要请求体。
-  // 而 get_json() 在 content-type 不是 application/json、或体里不是 json 时会直接抛
-  // 400「body 不是 json」（http_session_data.cpp:443-450）—— 留着这一行会让
-  // 「空体调用 /iterate」莫名其妙地失败。这也正是 session_id 不该放请求体的一个具体后果。
-  auto l_session = load_session_checked(person_, l_sql, session_id_);
-
-  DOODLE_CHICK_HTTP(
-      l_session.state_ == ai_light_session_state::generating, bad_request,
-      "会话 {} 处于状态 {}，不能生成候选（需要 generating）", l_session.uuid_id_,
-      magic_enum::enum_name(l_session.state_)
-  );
-
-  // generate_candidates 已落地（§15.8）：正常路径在这里真的排轴 + 跑一次推理 + 落 6 个候选，
-  // 接缝抛错时 advance_session 已把状态回滚 —— 会话保持可重试。
-  //
-  // 走的是**引擎内路线**（D52/D53）：不建 server_task_info、不派发，而是把「本轮该怎么渲」
-  // 一并放进响应（launch_plan）。发起方本机拿着它自己起 UE、收产物、上传、回传。
-  // 队列路线（工作机）仍在 advance_session 里保留着，两条路线的候选生成完全一致。
-  auto l_plan = co_await advance_session_local(l_sql, l_session, person_.person_.uuid_id_);
-
-  auto l_detail       = build_session_detail(l_sql, l_session.uuid_id_);
-  nlohmann::json l_ret{};
-  l_ret               = *l_detail;  // 赋值而非 {} 构造：见 nlohmann::json{x} 的花括号陷阱
-  // 只在真的出了候选时才有计划：draft → Spec 那一步推进完是 nullopt，
-  // 这时**不要**放一个 null 进响应 —— 前端只需按「还没有 plan」处理。
-  if (l_plan.has_value()) l_ret["launch_plan"] = *l_plan;
-  co_return in_handle->make_msg(l_ret);
 }
 
 // ===========================================================================
