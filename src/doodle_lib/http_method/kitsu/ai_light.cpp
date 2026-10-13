@@ -37,12 +37,13 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/beast/http/status.hpp>
-#include <magic_enum/magic_enum.hpp>
-#include <opencv2/opencv.hpp>
 
 #include <algorithm>
+#include <magic_enum/magic_enum.hpp>
+#include <opencv2/opencv.hpp>
 #include <string>
 #include <vector>
+
 
 namespace doodle::http::ai_light {
 
@@ -60,7 +61,9 @@ using namespace doodle::ai_light;
 ///
 /// 会话不存在时 get_by_uuid → to_single 会抛 sqlite_orm_exception{404}，
 /// 由 http_session_data 统一翻成 404，这里不再自己 try/catch。
-ai_light_session load_session_checked(const http_jwt_fun::http_jwt_t& in_person, sqlite_database& in_sql, const uuid& in_session_id) {
+ai_light_session load_session_checked(
+    const http_jwt_fun::http_jwt_t& in_person, sqlite_database& in_sql, const uuid& in_session_id
+) {
   auto l_session = in_sql.get_by_uuid<ai_light_session>(in_session_id);
   in_person.check_project_access(l_session.project_id_);
   return l_session;
@@ -148,15 +151,12 @@ preview_file build_accepted_preview_file(
   // 落点是现算的（D44），所以这里只有一条判定：算出来的那张图在不在。
   const FSys::path l_png_path = candidate_render_path(g_ctx().get<kitsu_ctx_t>(), in_candidate, false);
   DOODLE_CHICK_HTTP(
-      FSys::exists(l_png_path), bad_request,
-      "候选 {} 的渲染图不存在（{}），无法定稿", in_candidate.uuid_id_, l_png_path.generic_string()
+      FSys::exists(l_png_path), bad_request, "候选 {} 的渲染图不存在（{}），无法定稿", in_candidate.uuid_id_,
+      l_png_path.generic_string()
   );
 
   auto l_image = cv::imread(l_png_path.generic_string());
-  DOODLE_CHICK_HTTP(
-      !l_image.empty(), internal_server_error, "候选 {} 的渲染图无法读取",
-      in_candidate.uuid_id_
-  );
+  DOODLE_CHICK_HTTP(!l_image.empty(), internal_server_error, "候选 {} 的渲染图无法读取", in_candidate.uuid_id_);
 
   preview_file l_pf{};
   // uuid 必须在这里就定下来，不能等 ORM 在 insert 时回填：
@@ -174,14 +174,14 @@ preview_file build_accepted_preview_file(
 
   // 变体落盘必须走 preview::save_variants —— 预览列表页读的就是它生成的那套尺寸，
   // 另写一套必然与既有预览文件不一致。
-  auto l_size = preview::save_variants(l_image, l_pf.uuid_id_);
-  l_pf.width_  = l_size.width;
-  l_pf.height_ = l_size.height;
-  l_pf.path_   = g_ctx().get<kitsu_ctx_t>().get_pictures_preview_file(l_pf.uuid_id_);
+  auto l_size         = preview::save_variants(l_image, l_pf.uuid_id_);
+  l_pf.width_         = l_size.width;
+  l_pf.height_        = l_size.height;
+  l_pf.path_          = g_ctx().get<kitsu_ctx_t>().get_pictures_preview_file(l_pf.uuid_id_);
   // path_ 不承载取图（前端按 uuid 走 /api/pictures/preview-files/{id}.png），
   // 这里只把大小记准，省得预览列表页显示 0 字节。
-  l_pf.file_size_ = FSys::exists(l_pf.path_) ? FSys::file_size(l_pf.path_) : 0;
-  l_pf.status_    = preview_file_statuses::ready;
+  l_pf.file_size_     = FSys::exists(l_pf.path_) ? FSys::file_size(l_pf.path_) : 0;
+  l_pf.status_        = preview_file_statuses::ready;
   return l_pf;
 }
 
@@ -206,8 +206,8 @@ ai_light_session_detail_t load_detail_checked(
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   person_.check_not_outsourcer();
-  auto l_sql  = get_sqlite_database();
-  auto l_json = in_handle->get_json();
+  auto l_sql    = get_sqlite_database();
+  auto l_json   = in_handle->get_json();
 
   // 镜头是唯一的归属锚点：先查实体，**项目从实体上取**，不接受请求体传。
   //
@@ -231,8 +231,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   person_.check_project_access(l_session.project_id_);
 
   DOODLE_CHICK_HTTP(
-      !l_session.prompt_text_.empty(), bad_request,
-      "缺少 prompt_text —— 提示词是权威意图，不允许空着建会话"
+      !l_session.prompt_text_.empty(), bad_request, "缺少 prompt_text —— 提示词是权威意图，不允许空着建会话"
   );
 
   // 状态与轮次由服务端定，不接受客户端传（否则能伪造出 awaiting_judgement 的会话）
@@ -274,7 +273,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, get) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto l_sql      = get_sqlite_database();
 
   // 镜头 id 来自路径，必填：本接口的定位是镜头页，归属明确，不提供
   // 「按 project_id 列出该项目全部会话」那种项目管理视角的查询 ——
@@ -297,8 +296,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, get) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, put) {
   person_.check_not_outsourcer();
-  auto l_sql  = get_sqlite_database();
-  auto l_json = in_handle->get_json();
+  auto l_sql     = get_sqlite_database();
+  auto l_json    = in_handle->get_json();
 
   // id 来自路径；请求体里带了也忽略（路径为准，见 ai_light.h 顶部的约定）
   auto l_session = load_session_checked(person_, l_sql, id_);
@@ -313,18 +312,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, put) {
 
   {
     sql_modify_statement_vector_t l_sqls{};
-    l_sqls.emplace_back(
-        update(l_sql)
-            .from<ai_light_session>()
-            .set(c(&ai_light_session::prompt_text_) = l_session.prompt_text_)
-            .where(c(&ai_light_session::uuid_id_) == id_)
-    );
+    l_sqls.emplace_back(update(l_sql)
+                            .from<ai_light_session>()
+                            .set(c(&ai_light_session::prompt_text_) = l_session.prompt_text_)
+                            .where(c(&ai_light_session::uuid_id_) == id_));
     co_await l_sql.run_sql(std::move(l_sqls));
   }
 
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "用户 {}({}) 修改了 AI 灯光会话 {} 的提示词（{} 字符）",
-      person_.person_.email_, person_.person_.get_full_name(), id_, l_session.prompt_text_.size()
+      g_logger_ctrl().get_http(), "用户 {}({}) 修改了 AI 灯光会话 {} 的提示词（{} 字符）", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_session.prompt_text_.size()
   );
 
   // 返回整份会话详情，与 GET 同形：前端改完提示词往往要顺手刷新闸门 1 的显示。
@@ -373,7 +370,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
   auto l_sql     = get_sqlite_database();
   auto l_session = load_session_checked(person_, l_sql, session_id_);
 
-  auto l_files = in_handle->get_files();
+  auto l_files   = in_handle->get_files();
   DOODLE_CHICK_HTTP(!l_files.empty(), bad_request, "请上传至少一张参考图");
 
   // 参考图目录在**会话目录之内**：<root>/ai_light/<分桶>/<会话 uuid>/ref/。
@@ -393,8 +390,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
     // 而下游统计与前端展示都只认 PNG。
     auto l_info = preview::convert_to_png(l_file);
     DOODLE_CHICK_HTTP(
-        !l_info.path_.empty(), bad_request, "参考图 {} 无法解析为图片",
-        l_file.filename().generic_string()
+        !l_info.path_.empty(), bad_request, "参考图 {} 无法解析为图片", l_file.filename().generic_string()
     );
 
     ai_light_reference l_ref{};
@@ -404,8 +400,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
     l_ref.uuid_id_    = core_set::get_set().get_uuid();
     l_ref.file_path_  = l_ctx.get_ai_light_reference_file(l_session.uuid_id_, l_ref.uuid_id_);
     FSys::rename(l_info.path_, l_ref.file_path_);
-    l_ref.width_  = l_info.size_.width;
-    l_ref.height_ = l_info.size_.height;
+    l_ref.width_    = l_info.size_.width;
+    l_ref.height_   = l_info.size_.height;
 
     // 统计在**已落盘**的 PNG 上算：统计描述的是最终存下来的那个工件，
     // 不是转换过程中的中间产物（也就不会出现「库里的统计和文件里的像素不是同一张图」）。
@@ -422,14 +418,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
     l_ref.set_stats(l_analysis->stats_);
     l_ref.stats_confidence_ = l_analysis->confidence_;
     // 外点判定需要跨图比较（§5.3），属于多图聚合，这里一律先标 false。
-    l_ref.is_outlier_ = false;
+    l_ref.is_outlier_       = false;
     l_added.push_back(l_ref);
   }
 
   sql_modify_statement_vector_t l_sqls{};
   // 非 const：ORM 的 values() 会回填 uuid_id_ / created_at_（服务端生成字段）
-  for (auto& l_ref : l_added)
-    l_sqls.emplace_back(insert(l_sql).into<ai_light_reference>().values(l_ref));
+  for (auto& l_ref : l_added) l_sqls.emplace_back(insert(l_sql).into<ai_light_reference>().values(l_ref));
 
   // ---- 参考图落库与「开始干活」同事务：draft → generating ----
   //
@@ -442,12 +437,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
   // 只推 draft：awaiting_judgement 时上传参考图**不得**改状态（那一轮的候选还在等判断），
   // generating 时也不必重复写（补图不改变「可以再出一轮」的语义）。
   if (l_session.state_ == ai_light_session_state::draft) {
-    l_sqls.emplace_back(
-        update(l_sql)
-            .from<ai_light_session>()
-            .set(c(&ai_light_session::state_) = ai_light_session_state::generating)
-            .where(c(&ai_light_session::uuid_id_) == l_session.uuid_id_)
-    );
+    l_sqls.emplace_back(update(l_sql)
+                            .from<ai_light_session>()
+                            .set(c(&ai_light_session::state_) = ai_light_session_state::generating)
+                            .where(c(&ai_light_session::uuid_id_) == l_session.uuid_id_));
   }
   co_await l_sql.run_sql(std::move(l_sqls));
 
@@ -476,7 +469,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, put) {
   auto l_json = in_handle->get_json();
 
   // 参考图不存在时 get_by_uuid 抛 sqlite_orm_exception{404}
-  auto l_ref = l_sql.get_by_uuid<ai_light_reference>(id_);
+  auto l_ref  = l_sql.get_by_uuid<ai_light_reference>(id_);
   // 权限校验的对象是会话（与 GET/DELETE 同一口径）：参考图行是唯一权威的归属来源，
   // 不让前端传 session_id 来「帮忙」—— 那会引入一处可伪造的输入。
   load_session_checked(person_, l_sql, l_ref.session_id_);
@@ -492,15 +485,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, put) {
   if (!l_ref.is_outlier_) l_ref.excluded_reason_.clear();
 
   sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(
-      update(l_sql)
-          .from<ai_light_reference>()
-          .set(
-              c(&ai_light_reference::is_outlier_) = l_ref.is_outlier_,
-              c(&ai_light_reference::excluded_reason_) = l_ref.excluded_reason_
-          )
-          .where(c(&ai_light_reference::uuid_id_) == id_)
-  );
+  l_sqls.emplace_back(update(l_sql)
+                          .from<ai_light_reference>()
+                          .set(
+                              c(&ai_light_reference::is_outlier_)      = l_ref.is_outlier_,
+                              c(&ai_light_reference::excluded_reason_) = l_ref.excluded_reason_
+                          )
+                          .where(c(&ai_light_reference::uuid_id_) == id_));
   co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_INFO(
@@ -513,7 +504,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, put) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, delete_) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto l_sql     = get_sqlite_database();
 
   // 参考图不存在时 get_by_uuid 抛 sqlite_orm_exception{404}，由 http_session_data 统一翻成 404
   auto l_ref     = l_sql.get_by_uuid<ai_light_reference>(id_);
@@ -560,7 +551,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_image_route, get) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_image_route, get) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
 
   // 候选不存在时 get_by_uuid 抛 sqlite_orm_exception{404}，由 http_session_data 统一翻成 404
   auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(id_);
@@ -568,18 +559,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_image_route, get) {
 
   // 未渲染与「文件丢了」是两件事，给不同的话术，省得美术以为是自己的操作错了。
   DOODLE_CHICK_HTTP(
-      l_cand.render_status_ != candidate_render_status::pending, not_found,
-      "候选 {} 尚未渲染完成", l_cand.uuid_id_
+      l_cand.render_status_ != candidate_render_status::pending, not_found, "候选 {} 尚未渲染完成", l_cand.uuid_id_
   );
   DOODLE_CHICK_HTTP(
-      l_cand.render_status_ != candidate_render_status::failed, not_found,
-      "候选 {} 渲染失败", l_cand.uuid_id_
+      l_cand.render_status_ != candidate_render_status::failed, not_found, "候选 {} 渲染失败", l_cand.uuid_id_
   );
   // 落点现算（D44）：候选行自带三个 uuid，不需要任何回查。
   const FSys::path l_png_path = candidate_render_path(g_ctx().get<kitsu_ctx_t>(), l_cand, false);
-  DOODLE_CHICK(
-      FSys::exists(l_png_path), "候选渲染图不存在 文件 {}", l_png_path.generic_string()
-  );
+  DOODLE_CHICK(FSys::exists(l_png_path), "候选渲染图不存在 文件 {}", l_png_path.generic_string());
 
   // 只发 PNG（显示空间）。EXR 是线性数据、体积大且浏览器渲染不了，绝不下发。
   co_return in_handle->make_msg(l_png_path, kitsu::mime_type(l_png_path.extension()));
@@ -587,19 +574,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_image_route, get) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
 
   // 与取海报同一条路径：鉴权、存在性、状态判定都一样，只是产物换成视频。
   auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(id_);
   person_.check_project_access(l_sql.get_by_uuid<ai_light_session>(l_cand.session_id_).project_id_);
 
   DOODLE_CHICK_HTTP(
-      l_cand.render_status_ != candidate_render_status::pending, not_found,
-      "候选 {} 尚未渲染完成", l_cand.uuid_id_
+      l_cand.render_status_ != candidate_render_status::pending, not_found, "候选 {} 尚未渲染完成", l_cand.uuid_id_
   );
   DOODLE_CHICK_HTTP(
-      l_cand.render_status_ != candidate_render_status::failed, not_found,
-      "候选 {} 渲染失败", l_cand.uuid_id_
+      l_cand.render_status_ != candidate_render_status::failed, not_found, "候选 {} 渲染失败", l_cand.uuid_id_
   );
   // 落点现算（D44）：候选行自带三个 uuid，不需要任何回查。
   const FSys::path l_movie_path = candidate_movie_path(g_ctx().get<kitsu_ctx_t>(), l_cand);
@@ -649,17 +634,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   person_.check_not_outsourcer();
-  auto l_sql  = get_sqlite_database();
-  auto l_json = in_handle->get_json();
+  auto l_sql       = get_sqlite_database();
+  auto l_json      = in_handle->get_json();
 
   // session_id 来自路径；请求体里带了也忽略（路径为准）
-  auto l_session = load_session_checked(person_, l_sql, session_id_);
+  auto l_session   = load_session_checked(person_, l_sql, session_id_);
 
   auto l_iteration = l_sql.get_ai_light_iteration(l_session.uuid_id_, l_session.current_iteration_);
-  DOODLE_CHICK_HTTP(
-      l_iteration.has_value(), bad_request, "会话 {} 还没有可判断的轮次",
-      l_session.uuid_id_
-  );
+  DOODLE_CHICK_HTTP(l_iteration.has_value(), bad_request, "会话 {} 还没有可判断的轮次", l_session.uuid_id_);
 
   ai_light_judgement_t l_judgement{};
   l_json.get_to(l_judgement);
@@ -678,13 +660,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   // ---- 定稿要先把图落成 preview_file 对象（文件动作），再交给 apply_judgement 同事务落库 ----
   std::optional<preview_file> l_preview_file{};
   if (l_judgement.decision_ == judgement_decision::accept) {
-    DOODLE_CHICK_HTTP(
-        !l_judgement.selected_candidate_id_.is_nil(), bad_request, "定稿必须指定候选"
-    );
+    DOODLE_CHICK_HTTP(!l_judgement.selected_candidate_id_.is_nil(), bad_request, "定稿必须指定候选");
     auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(l_judgement.selected_candidate_id_);
     DOODLE_CHICK_HTTP(
-        l_cand.iteration_id_ == l_iteration->uuid_id_, bad_request,
-        "候选 {} 不属于第 {} 轮", l_cand.uuid_id_, l_iteration->iteration_
+        l_cand.iteration_id_ == l_iteration->uuid_id_, bad_request, "候选 {} 不属于第 {} 轮", l_cand.uuid_id_,
+        l_iteration->iteration_
     );
     l_preview_file = build_accepted_preview_file(l_sql, l_session, l_cand, person_.person_.uuid_id_);
   }
@@ -727,8 +707,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
   // （get_ai_light_iteration_by_task），这是两边唯一认的关联方式。
   auto l_task = l_sql.get_by_uuid<server_task_info>(task_id_);
   DOODLE_CHICK_HTTP(
-      l_task.type_ == server_task_info_type::ai_light, bad_request, "任务 {} 的类型是 {}，不是 AI 灯光任务",
-      task_id_, magic_enum::enum_name(l_task.type_)
+      l_task.type_ == server_task_info_type::ai_light, bad_request, "任务 {} 的类型是 {}，不是 AI 灯光任务", task_id_,
+      magic_enum::enum_name(l_task.type_)
   );
 
   // 形状错误在这里抛 502；语义问题交给 apply_render_report 裁决：
@@ -741,7 +721,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
   // 回执带上轮次与两条状态，工作机据此写日志。人工判断闸门不在这里。
   nlohmann::json l_out{{"task_id", task_id_}};
   if (auto l_it = l_sql.get_ai_light_iteration_by_task(task_id_); l_it.has_value()) {
-    auto l_session = l_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
+    auto l_session           = l_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
     l_out["session_id"]      = l_it->session_id_;
     l_out["iteration"]       = l_it->iteration_;
     l_out["iteration_state"] = l_it->state_;
@@ -763,8 +743,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
 //      工作机那条相反（它不是项目成员，只认任务 uuid）；这里不放开。
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_local_route, post) {
   person_.check_not_outsourcer();
-  auto l_sql  = get_sqlite_database();
-  auto l_json = in_handle->get_json();
+  auto l_sql     = get_sqlite_database();
+  auto l_json    = in_handle->get_json();
 
   // 会话必须存在且调用者有权限 —— 顺带把 project 归属查出来，省一次往返。
   auto l_session = load_session_checked(person_, l_sql, session_id_);
@@ -773,8 +753,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_local_route, post) {
   // （那是队列路线「任务还在排队」的正常状态），但在这条路线上找不到轮次一定是调用方搞错了，
   // 静默吞掉会变成「回传成功、状态没动」这种最难查的失败。
   DOODLE_CHICK_HTTP(
-      l_sql.get_ai_light_iteration(l_session.uuid_id_, iteration_).has_value(), not_found,
-      "会话 {} 没有第 {} 轮", l_session.uuid_id_, iteration_
+      l_sql.get_ai_light_iteration(l_session.uuid_id_, iteration_).has_value(), not_found, "会话 {} 没有第 {} 轮",
+      l_session.uuid_id_, iteration_
   );
 
   // 形状错误抛 502；语义问题（D41 产物缺失降级、D42 EXR 清理、全灭写 failure_reason_）
@@ -782,8 +762,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_local_route, post) {
   auto l_report = parse_round_render_report(l_json);
   // 任务号给 nil：引擎内路线没有 server_task_info 行，定位完全靠 locator（D54）。
   co_await apply_render_report(
-      l_sql, g_ctx().get<kitsu_ctx_t>(), uuid{},
-      ai_light_iteration_locator_t{l_session.uuid_id_, iteration_}, l_report
+      l_sql, g_ctx().get<kitsu_ctx_t>(), uuid{}, ai_light_iteration_locator_t{l_session.uuid_id_, iteration_}, l_report
   );
 
   // 回执与工作机那条保持同形（task_id 除外 —— 这条路线没有任务），
@@ -805,8 +784,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_local_route, post) {
   }
 
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "AI 灯光（引擎内路线）：会话 {} 第 {} 轮回传已受理，状态 {} / {}",
-      l_session.uuid_id_, iteration_, l_it_state, l_session_state
+      g_logger_ctrl().get_http(), "AI 灯光（引擎内路线）：会话 {} 第 {} 轮回传已受理，状态 {} / {}", l_session.uuid_id_,
+      iteration_, l_it_state, l_session_state
   );
   co_return in_handle->make_msg(l_out);
 }
@@ -825,8 +804,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
   // 而不是落到下面 get_file() 返回空路径再报「上传体为空」。
   DOODLE_CHICK_HTTP(
       in_handle->content_type_ == detail::content_type::application_nuknown, bad_request,
-      "候选产物的上传体必须是 application/octet-stream，收到的是 {}",
-      magic_enum::enum_name(in_handle->content_type_)
+      "候选产物的上传体必须是 application/octet-stream，收到的是 {}", magic_enum::enum_name(in_handle->content_type_)
   );
 
   // 这里刻意**不**复用 up_file_base 那套（root_path_ / gen_file_path / move_file）：
@@ -834,13 +812,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
   // （candidate_render_path）。硬套过来要么多一层无意义的目录推导，要么得把
   // move_file 的 rename 换成跨卷安全的复制（http 缓存根与服务端数据根常常不同盘），
   // 两件都是在给一条直路加弯。
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   // 候选不存在时 get_by_uuid 抛 sqlite_orm_exception{404}，由 http_session_data 统一翻成 404。
   auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(id_);
 
   // 只挡 judged：轮次判定之后就不该再有字节进来（迟到的 worker 会改掉美术已经看过的图）。
   // awaiting_judgement 期间**允许**重传 —— 「上传失败后重试」是正常路径，不该被状态机挡住。
-  auto l_it = l_sql.get_by_uuid<ai_light_iteration>(l_cand.iteration_id_);
+  auto l_it   = l_sql.get_by_uuid<ai_light_iteration>(l_cand.iteration_id_);
   DOODLE_CHICK_HTTP(
       l_it.state_ != ai_light_iteration_state::judged, bad_request, "AI 灯光轮次 {} 已判定，不再接受候选产物上传",
       l_it.iteration_
@@ -849,10 +827,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
   // 落点现算（D27/D40）：请求里根本没有路径信息，工作机伪造不了落点，
   // 最多只能往「服务端按命名规则算出来的那个文件名」里灌字节。
   // 与取海报/取视频路由、定稿路由、D41 的存在性判定用的是同一套函数。
-  auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
-  const bool l_linear    = role_ == doodle::ai_light::ai_light_candidate_file_role::render_linear;
-  const bool l_movie     = role_ == doodle::ai_light::ai_light_candidate_file_role::render_movie;
-  const FSys::path l_dst = l_movie ? candidate_movie_path(l_ctx, l_cand) : candidate_render_path(l_ctx, l_cand, l_linear);
+  auto& l_ctx         = g_ctx().get<kitsu_ctx_t>();
+  const bool l_linear = role_ == doodle::ai_light::ai_light_candidate_file_role::render_linear;
+  const bool l_movie  = role_ == doodle::ai_light::ai_light_candidate_file_role::render_movie;
+  const FSys::path l_dst =
+      l_movie ? candidate_movie_path(l_ctx, l_cand) : candidate_render_path(l_ctx, l_cand, l_linear);
 
   // 请求体已经被框架流到临时文件（save_bode_file → cache_root("http")/<uuid><ext>），
   // 这里只是把它搬到落点。用 copy + remove 而不是 up_file_base 那套 rename：
@@ -957,21 +936,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, put) {
   // source_ / created_by_ 不可改：那是「谁贡献的、是不是内置」的事实
 
   sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(
-      update(l_sql)
-          .from<ai_light_preset>()
-          .set(
-              c(&ai_light_preset::name_) = l_preset->name_,
-              c(&ai_light_preset::tags_) = l_preset->tags_,
-              c(&ai_light_preset::embedding_) = l_preset->embedding_,
-              c(&ai_light_preset::embedding_dim_) = l_preset->embedding_dim_,
-              c(&ai_light_preset::rig_fragment_) = l_preset->rig_fragment_,
-              c(&ai_light_preset::applicable_) = l_preset->applicable_,
-              c(&ai_light_preset::stats_target_) = l_preset->stats_target_,
-              c(&ai_light_preset::enabled_) = l_preset->enabled_
-          )
-          .where(c(&ai_light_preset::uuid_id_) == id_)
-  );
+  l_sqls.emplace_back(update(l_sql)
+                          .from<ai_light_preset>()
+                          .set(
+                              c(&ai_light_preset::name_)          = l_preset->name_,
+                              c(&ai_light_preset::tags_)          = l_preset->tags_,
+                              c(&ai_light_preset::embedding_)     = l_preset->embedding_,
+                              c(&ai_light_preset::embedding_dim_) = l_preset->embedding_dim_,
+                              c(&ai_light_preset::rig_fragment_)  = l_preset->rig_fragment_,
+                              c(&ai_light_preset::applicable_)    = l_preset->applicable_,
+                              c(&ai_light_preset::stats_target_)  = l_preset->stats_target_,
+                              c(&ai_light_preset::enabled_)       = l_preset->enabled_
+                          )
+                          .where(c(&ai_light_preset::uuid_id_) == id_));
   co_await l_sql.run_sql(std::move(l_sqls));
   co_return in_handle->make_msg(nlohmann::json{} = *l_preset);
 }
@@ -1003,117 +980,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, delete_) {
 // （input / instructions / text.format ...），不再是本系统自己那套扁平键
 // （input_text / json_schema）：旧扁平键按契约**静默忽略**。
 
-namespace {
-
-/// 台账上「这次推理问了什么」的摘要上限。
-///
-/// `sd2::task.text_prompt_` 是给人看的（会话列表 + 计费台账），不是解析契约，而透传模式下
-/// 前端给的 `input` 可以任意大（几十张参考图 + 长提示词）。不截断就等于把整份提示词复制进
-/// 任务行 —— 那是**第二份真相**，会随会话规模线性膨胀，且与 data_request_ 里的原文可能不一致。
-/// 512 字符足够认出「这是哪一次」，超出部分用显式标记表示被截断。
-constexpr std::size_t g_input_preview_max{512};
-
-/// 从 Responses 的 `input` 抽一段可读摘要, 写进任务行的 `text_prompt_`。
-///
-/// 两种形状都认: 字符串(= 一条 user 文本), 或元素列表(取 message.content 里
-/// type=="input_text" 的 text)。图片/文件/音频类元素**跳过但计数** —— 它们是素材不是
-/// 提示词, 混进摘要只会变成一串路径; 计数写进摘要尾部, 好让人知道「这次还带了 3 张图」。
-///
-/// 抽不出文本时返回空串(调用方据此记 WARN), **不拒绝请求**: 一个只有图片的请求是合法的,
-/// 而「摘要抽不出来」是服务端自己的展示问题, 不该让这次推理失败。
-std::string extract_input_preview(const nlohmann::json& in_input) {
-  std::string l_text{};
-  std::size_t l_skipped{0};
-  const auto l_append = [&](const std::string& in_piece) {
-    if (in_piece.empty()) return;
-    if (!l_text.empty()) l_text += "\n";
-    l_text += in_piece;
-  };
-
-  if (in_input.is_string()) {
-    l_append(in_input.get_ref<const std::string&>());
-  } else if (in_input.is_array()) {
-    for (const auto& l_item : in_input) {
-      if (!l_item.is_object() || !l_item.contains("content")) {
-        ++l_skipped;
-        continue;
-      }
-      const auto& l_content = l_item.at("content");
-      if (l_content.is_string()) {
-        l_append(l_content.get_ref<const std::string&>());
-        continue;
-      }
-      if (!l_content.is_array()) {
-        ++l_skipped;
-        continue;
-      }
-      for (const auto& l_part : l_content) {
-        if (!l_part.is_object() || !l_part.contains("type") || !l_part.at("type").is_string()) {
-          ++l_skipped;
-          continue;
-        }
-        if (l_part.at("type").get<std::string>() == "input_text" && l_part.contains("text") &&
-            l_part.at("text").is_string())
-          l_append(l_part.at("text").get_ref<const std::string&>());
-        else
-          ++l_skipped;  // input_image / input_file / ... : 素材, 不进摘要
-      }
-    }
-  }
-
-  // 截断必须在**拼接完成后**做: 按元素截会留下一个看起来完整、实则半句话的提示词。
-  if (l_text.size() > g_input_preview_max) {
-    const auto l_original = l_text.size();
-    l_text.resize(g_input_preview_max);
-    l_text += fmt::format("…(已截断, 原文 {} 字符)", l_original);
-  }
-  if (l_skipped != 0) l_text += fmt::format(" [+{} 个非文本输入]", l_skipped);
-  return l_text;
-}
-
-/// 网关 body → 落库的推理请求 json。
-///
-/// 这里**不逐字段理解**前端的请求: 全部键一律原样带走, 所以方舟新增字段、前端用上
-/// `tools` / `text.format` / 多模态输入时, 服务端一行都不用改 —— 这正是「原样透传」要
-/// 实现的东西。
-///
-/// 返回值**直接就是**要落进 `task.data_request_` 的那份 json: 不再先装进 inference_request_t
-/// 再序列化回来。结构体往返是一份手写白名单, 会把不认识的键静默吃掉(它连 `input` 都不认识),
-/// 那正是要消灭的失败模式。
-///
-/// `model` 也不在这里塞: 服务端强制字段由 `finalize_inference_body()` 在出网那一刻统一覆盖,
-/// 于是「前端传了什么」与「服务端改成了什么」在台账与请求体上仍然分得开。
-///
-/// 返回 (请求 json, 台账摘要)。摘要只用于任务行的 `text_prompt_`, 与真的发出去的 body 无关。
-///
-/// 注意 **不再有** `input_text`/`json_schema` 这类旧扁平键的处理: 按契约它们被**静默忽略**
-/// (它们对 /responses 是未知键), 前端改用 `input` / `text.format`。给一个旧键报 400 会让
-/// 「只想改前端」的人被迫先动服务端, 而静默忽略的代价只是这次推理不带那个字段。
-std::pair<nlohmann::json, std::string> build_gateway_inference_request(const nlohmann::json& in_json) {
-  // 前端不给 input 时**不替它组装**提示词: 契约是「模板设计归前端」, 服务端只剩一个不至于
-  // 必然失败的空输入(剥掉 input/instructions, 交给客户端拼一份最小合法 body)。
-  const bool l_has_input = in_json.contains("input") && !in_json.at("input").is_null();
-
-  // 复制一份再改: in_json 来自 body_, 不是本函数的所有物; 任务行要留的是"当时发出去的那份"。
-  nlohmann::json l_req = in_json;
-  if (!l_has_input) {
-    l_req.erase("input");
-    l_req.erase("instructions");
-  }
-
-  const auto l_input = l_has_input ? in_json.at("input") : nlohmann::json{};
-  return {std::move(l_req), extract_input_preview(l_input)};
-}
-
-}  // namespace
-
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   // 外包人员不能触发推理 —— 与 judge_route 同一口径。
   // 它花的是工作室的钱，不是「只看一眼」的只读操作。
   person_.check_not_outsourcer();
 
-  auto l_sql  = get_sqlite_database();
-  auto l_json = in_handle->get_json();
+  auto l_sql     = get_sqlite_database();
+  auto l_json    = in_handle->get_json();
 
   // ---- 1) 权限：会话归属（路径里的 {session_id} → check_project_access）----
   //
@@ -1126,22 +999,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   // 由 http_session_data 统一翻成 404（与 load_session_checked 同一口径）。
   auto l_session = l_sql.get_by_uuid<ai_light_session>(session_id_);
   person_.check_project_access(l_session.project_id_);
-
-  // ---- 2) 组装请求体（不做入参校验：形状归方舟管）----
-  //
-  // 这里**没有**「必需字段」这一关了: 请求体按契约以方舟 Responses API 为准, 什么字段必需、
-  // 什么值合法全由方舟判定, 服务端替它把关只会让方舟改契约时这里成为第二份真相。
-  // 唯一本系统自己消费的键是 `input`, 且它只用于抽台账摘要 —— 抽不出来也不拒绝请求。
-  auto [l_request, l_input_brief] = build_gateway_inference_request(l_json);
-  // 摘要抽不出来时**不拒绝**请求(只有图片的请求是合法的), 但必须可发现: 台账上一条空的
-  // text_prompt_ 会让「这次推理问了什么」彻底断线, 而这正是排查内容违规时唯一要看的东西。
-  if (l_input_brief.empty()) {
-    SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(),
-      "AI 灯光推理网关：会话 {} 的请求体里没抽出文本摘要（input 形状为 {}），任务行提示词将为空",
-      l_session.uuid_id_, l_json.contains("input") ? l_json.at("input").type_name() : "缺失"
-    );
-  }
 
   // ---- 3) 计费元数据 ----
   //
@@ -1160,11 +1017,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   //
   // iteration_id 留 nil：网关不铸造轮次。降级后轮次由前端在 /session/{}/iteration 提交时
   // 建立，所以这次推理「属于哪一轮」在网关这里还不存在（与蒸馏阶段同形）。
-  auto l_result = co_await run_seam_inference(l_sql, l_base, l_request);
+  auto l_result       = co_await run_seam_inference(l_sql, l_base, l_json);
 
   SPDLOG_LOGGER_INFO(
-    g_logger_ctrl().get_http(), "AI 灯光推理网关：会话 {} 完成一次推理（{} → {} token）", l_session.uuid_id_,
-    l_result.input_tokens_, l_result.output_tokens_
+      g_logger_ctrl().get_http(), "AI 灯光推理网关：会话 {} 完成一次推理（{} → {} token）", l_session.uuid_id_,
+      l_result.input_tokens_, l_result.output_tokens_
   );
 
   // ---- 5) 组响应。原始结果回传，服务端不做任何解释 ----
