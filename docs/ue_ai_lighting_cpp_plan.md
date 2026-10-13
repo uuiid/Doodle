@@ -124,7 +124,7 @@
 
 1. **凭据代持** —— `ai_studio.seedance2_key_` 永不出后端（`ai_light_seam_common.cpp:51` 的 `make_seam_client`）。
 2. **计费** —— `run_inference_task` 落任务行 + 扣费（契约 2 的受控例外）。
-3. **IR 准入闸门** —— 候选数 / `role=key` 主光 / 候选间 substance 差异（详见 §3.2）。
+3. **IR 准入闸门** —— 候选非空（个数由前端决定）/ `role=key` 主光 / 候选间 substance 差异（详见 §3.2）。
 4. **落库与状态机** —— 现状不动。
 5. **参考图统计** —— OpenCV 侧（`ai_light_stats`），现状不动。
 
@@ -326,7 +326,7 @@ http::seedance2::inference_request_t build_gateway_inference_request(
 **这是降级后服务端唯一还有「判断力」的地方，必须比现在更严。**
 
 现有判据（`docs/ue_ai_lighting_role_downgrade.md` §3.5）三条：
-候选数 == `g_candidate_count` / 每候选至少一个 `role=key` 主光 / 相邻候选 substance 不同。
+候选数组**非空**（个数由前端决定，服务端不数；原先的 `== g_candidate_count` 判据已删）/ 每候选至少一个 `role=key` 主光 / 相邻候选 substance 不同。
 
 对应实现已存在于 `ai_light_seam_common.h`：
 - `rig_is_valid_candidate(const lighting_rig_t&)`（`:56`）—— 判 `role=key`

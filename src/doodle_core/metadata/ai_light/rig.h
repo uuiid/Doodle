@@ -388,7 +388,7 @@ struct DOODLE_CORE_API light_t {
   }
 };
 
-/// 本候选沿哪条语义轴变化。§6.6 护栏要求同轮 6 个候选的灯集合与角色完全一致，
+/// 本候选沿哪条语义轴变化。§6.6 护栏要求同轮候选的灯集合与角色完全一致，
 /// 只有轴参数不同 —— 否则指标差异会被灯数差异淹没，美术的选择无法归因到轴。
 struct DOODLE_CORE_API variant_axis_t {
   variant_axis_kind axis_{variant_axis_kind::none};

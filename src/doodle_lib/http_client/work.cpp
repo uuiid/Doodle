@@ -235,7 +235,7 @@ bool http_work::run_task(const server_task_info& in_task_info) {
     return true;
   }
   if (in_task_info.type_ == server_task_info_type::ai_light) {
-    // AI 灯光一轮（6 个候选）的渲染。载荷在 command_ 里（ai_light_task_payload_t），
+    // AI 灯光一轮的渲染（本轮几个候选由前端决定）。载荷在 command_ 里（ai_light_task_payload_t），
     // 渲染报告由任务自己回传到 /api/doodle/ai/light/render_report/{task_id}。
     auto l_run = std::make_shared<ai_light_round_distributed>(in_task_info, shared_from_this());
     task_started();

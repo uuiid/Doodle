@@ -18,6 +18,8 @@
 #include <doodle_core/metadata/ai_light/session.h>
 #include <doodle_core/metadata/ai_light/spec.h>
 
+#include <algorithm>
+#include <cstdint>
 #include <optional>
 #include <vector>
 
@@ -25,7 +27,7 @@ namespace doodle::ai_light {
 
 /// 会话详情：一个镜头的一次灯光工作的全貌。
 ///
-/// 前端只调这一个接口就能渲染整个工作台（参考图、当前目标、每轮 6 个候选、
+/// 前端只调这一个接口就能渲染整个工作台（参考图、当前目标、每轮候选、
 /// 上一轮判断、当前该谁动）。刻意不做分页与懒加载 —— 一次会话的候选量级是
 /// 6 × 轮数（实际收敛在 3 轮内），总共几十行，一次取完比多次往返简单得多。
 struct DOODLE_CORE_API ai_light_session_detail_t {
@@ -36,7 +38,7 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
 
   /// 轮次，iteration 升序
   std::vector<ai_light_iteration> iterations_{};
-  /// 候选，跨轮，按（轮次, 候选序号）升序。每轮 g_candidate_count 个。
+  /// 候选，跨轮，按（轮次, 候选序号）升序。每轮的个数由前端决定，不固定。
   std::vector<ai_light_candidate> candidates_{};
   /// 定稿候选（每会话至多一个，由 accepted_session_id 上的唯一索引保证）
   std::optional<ai_light_candidate> accepted_candidate_{};
@@ -49,6 +51,21 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
   /// 所以前端显示「已超时」时扫描器一定也认为该挂起，不会出现两边不一致。
   bool is_judgement_overdue_{false};
 
+  /// 前端渲染进度条要的「每轮几个候选」。
+  /// 候选数由前端决定，所以取**最近一轮实际落了几个候选**作为当前这一轮的数字；
+  /// 一轮都还没有时退回建议默认值 g_candidate_count。
+  std::int32_t candidate_count_per_iteration() const {
+    if (candidates_.empty()) return g_candidate_count;
+    // candidates_ 按（轮次, 候选序号）升序，所以最后一个就是最近一轮的最后一个候选。
+    const auto& l_latest_id = candidates_.back().iteration_id_;
+    return static_cast<std::int32_t>(
+        std::count_if(
+            candidates_.begin(), candidates_.end(),
+            [&l_latest_id](const ai_light_candidate& in_c) { return in_c.iteration_id_ == l_latest_id; }
+        )
+    );
+  }
+
   friend void to_json(nlohmann::json& j, const ai_light_session_detail_t& p) {
     j["session"]            = p.session_;
     j["references"]         = p.references_;
@@ -57,8 +74,10 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
     j["accepted_candidate"] = p.accepted_candidate_;
     j["is_waiting_human"]   = p.is_waiting_human_;
     j["is_judgement_overdue"] = p.is_judgement_overdue_;
-    // 前端渲染进度条要用，省得自己数
-    j["candidate_count_per_iteration"] = g_candidate_count;
+    // 前端渲染进度条要用，省得自己数。
+    // 候选数由前端决定，所以这里报**当前会话的实际情况**而不是常量 6：
+    // 优先用最近一轮实际落了几个候选；还没有轮次时退回默认建议值。
+    j["candidate_count_per_iteration"] = p.candidate_count_per_iteration();
   }
   friend void from_json(const nlohmann::json& j, ai_light_session_detail_t& p) {
     if (j.contains("session")) j.at("session").get_to(p.session_);

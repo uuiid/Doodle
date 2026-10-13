@@ -39,7 +39,7 @@ namespace doodle::ai_light {
 ///
 /// 这一点必须守住：`apply_judgement` 只接受 `awaiting_judgement`，若把过器物化成一个
 /// 新状态，就没有任何路径能回到 `awaiting_judgement`（`mark_awaiting_judgement()` 只在
-/// 渲染回填里调用，而渲染早已完成）—— 美术超时回来时，**已经渲染好的 6 个候选再也判断不了**，
+/// 渲染回填里调用，而渲染早已完成）—— 美术超时回来时，**已经渲染好的候选再也判断不了**，
 /// 只能走 `/spec` 重出方案，白扔一整轮渲染。同理，`is_judgement_overdue()` 也不能要求
 /// 状态是 awaiting_judgement，否则恰恰在「真的过期了」那一刻过期信号会消失。
 ///
@@ -71,7 +71,7 @@ enum class ai_light_session_state {
   /// 正在生成候选（LLM + 优化器）。**判断之后也回到这里**，所以它同时表示
   /// 「可以再出一轮」——`POST /iterate` 只在这个状态下可用。
   generating,
-  /// 人工闸门 2：6 个候选已渲染完，等美术挑。
+  /// 人工闸门 2：本轮候选已渲染完，等美术挑。
   /// 美术迟迟不来**不会**改变这个状态，只会让 is_judgement_overdue() 变成 true。
   awaiting_judgement,
 };
@@ -112,7 +112,7 @@ inline bool is_waiting_human(ai_light_session_state in_state) {
 ///     由 /iteration 提交自己校验（参考图是候选生成的前提）。
 ///   * `generating` —— 正常路径（上传参考图后即为此状态），以及判断之后回到的「再出一轮」。
 ///
-/// `awaiting_judgement` 明确**不**放行：上一轮 6 个候选还没被判断，此时提交会让它们
+/// `awaiting_judgement` 明确**不**放行：上一轮候选还没被判断，此时提交会让它们
 /// 变成孤儿（见 ai_light_submit.cpp 的同名闸门）。
 ///
 /// 与 is_waiting_human 一样放在枚举旁边：判定条件与状态枚举同处一文件，

@@ -29,7 +29,7 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
 参考的目标里有一部分（暗角、局部对比、色调曲线、光晕）**只能靠调色实现，靠灯永远够不到**。执行器必须能同时写灯光、环境光、雾、后处理与调色参数。
 
 **判断六：人工判断要变成可用的搜索信号，靠「候选沿语义轴变化」。**
-如果每轮只给美术一个结果、只问「行不行」，人工判断只是 yes/no，收敛会慢到不可用。做法是每轮沿**语义可解释的轴**（主光方向 / 光比 / 色温 / 硬软 / 环境光水平 / 调色强度）生成 **6 个**候选，让美术**挑**而不是**调**。美术的选择直接翻译成下一轮的搜索方向——这才是把人工判断变成梯度的关键。
+如果每轮只给美术一个结果、只问「行不行」，人工判断只是 yes/no，收敛会慢到不可用。做法是每轮沿**语义可解释的轴**（主光方向 / 光比 / 色温 / 硬软 / 环境光水平 / 调色强度）生成 **一批候选（当前默认 6 个）**，让美术**挑**而不是**调**。美术的选择直接翻译成下一轮的搜索方向——这才是把人工判断变成梯度的关键。
 
 ---
 
@@ -55,7 +55,7 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
 | 6 | **允许修改环境中所有灯光** | 去掉「只动自己管理的灯」护栏；环境光/雾/天空全在可改范围内 |
 | 7 | **后处理/调色允许 AI 修改**（已确认） | 执行器需有 grade 写入原语；Spec 要区分"灯光负责"与"调色负责" |
 | 8 | **主判据在显示空间**（色调映射后） | 修正 v2 的「线性 EXR 用于指标」规则；EXR 降为工程检查用途 |
-| 9 | **每轮固定 6 个候选** | 一次 UE 启动渲染 6 个；渲染时间与美术浏览负担的平衡点 |
+| 9 | **每轮候选数默认 6，由前端决定**（服务端不强制） | 一次 UE 启动渲染这一批；6 是「渲染时间与美术浏览负担」当前的平衡点，不是服务端固定规则 |
 | 10 | **只做候选级挑选**，不做逐 op 接受/拒绝 | 判断粒度 = 候选；省掉 N 倍预览渲染 |
 | 11 | **反馈滑块与自然语言都支持，滑块为默认** | 滑块给精确轴增量；自然语言给自由表达（由 LLM 结构化） |
 | 12 | **美术 4 小时以上不判断算过期** | **不改状态**，只让读模型带出 `is_judgement_overdue`；判断入口永远可用 |
@@ -471,7 +471,7 @@ Kelvin 是线性光色度坐标上的物理尺度，直接在 sRGB 编码值上�
 
 ### 6.2 候选生成：沿语义轴变化（判断六的核心）
 
-每轮固定 **6 个候选**，沿**语义可解释的轴**变化（每轴 2–3 档）：
+每轮**一批候选（当前默认 6 个，个数由前端决定）**，沿**语义可解释的轴**变化（每轴 2–3 档）：
 
 | 轴 | 档位示例 | 影响的目标 |
 |---|---|---|
@@ -491,6 +491,11 @@ Kelvin 是线性光色度坐标上的物理尺度，直接在 sRGB 编码值上�
 落法是**两种自由度的组合**：模型选 1–2 条轴（`g_axis_max_count`），**档位总数**固定为
 `g_axis_step_budget = g_candidate_count - 1 = 5`，由 `parse_axis_plan()` 硬校验；校验不过则退回
 `default_axis_plan(spec)` 的固定轴表。
+
+> ⚠️ **已被降级取代**：`parse_axis_plan()` / `expand_candidates()` / `default_axis_plan()` 与整条候选生成接缝
+> **已删除**（角色降级 · 第二梯队），候选由前端展开提交。上面这段是当时的历史记录。**候选个数同样不再由
+> 服务端决定**：`g_candidate_count` 那个相等护栏已删，服务端只要求 `candidates` 非空 —— 6 是前端当前的默认值，
+> 不是服务端强制的固定规则。
 
 ### 6.3 提示词与参考的冲突规则
 
@@ -550,7 +555,7 @@ Kelvin 是线性光色度坐标上的物理尺度，直接在 sRGB 编码值上�
 ### 6.6 护栏（硬约束，schema 层面强制）
 
 - 灯数量与动态阴影灯数量：**暂不设硬上限**（已确认），但护栏保留为可配置项；同时**记录每轮实际灯数与渲染耗时**，超阈值告警
-- **候选之间结构必须一致**：6 个候选的灯的集合与角色必须相同，只有轴上的参数不同 —— 否则指标差异会被灯数变化淹没，美术的选择无法归因到轴上，梯度失效
+- **候选之间结构必须一致**：同轮候选的灯的集合与角色必须相同，只有轴上的参数不同 —— 否则指标差异会被灯数变化淹没，美术的选择无法归因到轴上，梯度失效
 - 强度/色温/角度/距离的取值边界
 - 光照通道约定（沿用现有 `OnCreateDirectionalLight` 的 `SetLightingChannels(false, true, false)` = Channel1 给主光）
 - 禁止破坏已有子序列绑定（`AddSequenceWorldToRenderWorld` 建立的层级）
@@ -599,11 +604,11 @@ UnrealEditor-Cmd.exe <uproject> <render_map> -windowed -log -Unattended \
 - 快照/回滚在迭代阶段**退化为「丢弃该轮输出」**
 - `snapshot/restore` 原语**只在定稿步骤（§3 的 ⑤）需要**，那是唯一有副作用的步骤
 
-### 7.3 一次启动，渲染 6 个候选（性能关键）
+### 7.3 一次启动，渲染整轮候选（性能关键）
 
 UE 进程启动成本高（数十秒到数分钟）。所以：
 
-- **一个任务内含 6 个候选**，一次启动 UE 循环处理
+- **一个任务内含整轮候选（默认 6 个）**，一次启动 UE 循环处理
 - 每个候选：`apply_ops` → `render_preview` → 写输出目录 → 清理到基线
 - 输出目录按 `session/iteration/candidate` 分层
 - 灯数与总耗时**暂不设硬上限**（决策 17），但每轮记录实际值，超阈值告警
@@ -757,7 +762,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 ### 9.4 其余要点
 
 - **warm start**：上一轮美术选中的 rig 直接作下一轮基准
-- **并行候选**：一个任务内渲染 6 个候选（见 §7.3）
+- **并行候选**：一个任务内渲染整轮候选（默认 6 个，见 §7.3）
 - **不要用黑箱搜索当主算法**：区间目标 + 灵敏度标定比 CMA-ES 快一个量级；黑箱只用于残余
 
 ---
@@ -797,7 +802,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 
   **文件名一律是各自的 uuid**（不是序号）：序号落盘会撞车（同一目录两张图都叫 `ref_00.png`），
   而 uuid 天然唯一，序号退回为纯展示顺序。**只有会话目录分桶**（`split_uuid_path`，与 `sd2`/`jobs` 一致）；
-  一个会话的参考图是几十张、单轮候选固定 6 张，内层再分桶只有噪声。
+  一个会话的参考图是几十张、单轮候选数有限（默认 6 张），内层再分桶只有噪声。
   代价：产物不再跟着项目目录归档，改跟资产根的生命周期走；收益：路径不再依赖
   episode/shot 元数据，`session_dir` 与编排层算候选路径都**不用查库**，「镜头没建资产扩展就传不了参考图」
   这一整类失败随之消失。
@@ -810,7 +815,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | `ai_light_reference` | 多张参考图，**每张单独留显示空间统计**（多图冲突要能回溯到具体哪张图） |
 | `ai_light_spec` | 灯光目标，会话内按 `revision` 版本化；含 `degrade_level` / `human_confirmed` |
 | `ai_light_iteration` | 一轮：轴安排、派发任务、渲染耗时、人工判断记录 |
-| `ai_light_candidate` | 每轮 6 个候选：rig 全量、显示空间指标、VLM 判分、是否被选中/定稿 |
+| `ai_light_candidate` | 每轮候选（默认 6 个，个数由前端决定）：rig 全量、显示空间指标、VLM 判分、是否被选中/定稿 |
 | `ai_light_preset` | 预设库 + embedding |
 
 **相对早期方案的三处调整**（理由见下）：
@@ -873,7 +878,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
   `state == awaiting_judgement && now > judgement_due_at_` 的纯派生事实，实时算得出来。
   物化成状态的代价是实的：`apply_judgement` 只接受 `awaiting_judgement`，而没有任何路径
   从 `suspended` 回到 `awaiting_judgement`（`mark_awaiting_judgement()` 只在渲染回填里调用，
-  而渲染早就完成了）—— 于是美术超时回来后，**已经渲染好的 6 个候选再也判断不了**，
+  而渲染早就完成了）—— 于是美术超时回来后，**已经渲染好的那一轮候选再也判断不了**，
   只能走 `/spec` 重出方案，白扔一整轮渲染。更刺眼的是 `is_judgement_overdue()` 当时也要求
   状态是 `awaiting_judgement`，所以挂起后这个标志会从 true 翻成 false：
   恰恰在「真的过期了」那一刻，过期信号消失了。
@@ -902,7 +907,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | 阶段 | 内容 | 完成判据 |
 |---|---|---|
 | **M0 地基** | IR + Spec schema、双端序列化、commandlet 骨架 + `inventory`/`apply_ops`（含 `set_grading`）/`render_preview` | 手工写一份 Spec + 一个候选 → 跑 commandlet → 出图；幂等性单测通过 |
-| **M1 单轮管线** | 提交（提示词+多图）→ Spec → 候选生成 → 派发 → 渲染 → 前端展示 → 人工判断 | 完整跑通一轮：美术在浏览器上看到 6 个候选并能给出判断 |
+| **M1 单轮管线** | 提交（提示词+多图）→ Spec → 候选生成 → 派发 → 渲染 → 前端展示 → 人工判断 | 完整跑通一轮：美术在浏览器上看到候选（默认 6 个）并能给出判断 |
 | **M2 多轮迭代** | 反馈结构化 + 轴收缩 + 轮次持久化 + 跨会话恢复 | 3 轮内收敛到美术接受；中途关掉浏览器再回来能继续 |
 | **M3 参考驱动** | 多图统计聚合 + 冲突检测 + 人工裁决 + `degrade_level` 判定（**①单图统计已落地**，见 §15.5；②聚合与冲突检测待做；③人工裁决的**结果存储路径缺失**，见 §15.7 决定 D6） | 目标区间稳定、冲突能被人正确裁决 |
 | **M4 决策辅助** | 区间满足率 + VLM 判分呈现在候选旁 | 美术盲测认可辅助信息有用 |
@@ -923,7 +928,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | 风险 | 对策 |
 |---|---|
 | LLM 数值不可靠 | 多轮迭代 + 候选生成；LLM 只给结构与初值；schema 硬边界 |
-| **人工判断往返慢、轮次少** | 每轮固定 6 个沿轴变化的候选（一次往返换更多信息）；一次 UE 启动渲染全部 6 个；warm start |
+| **人工判断往返慢、轮次少** | 每轮一批沿轴变化的候选（默认 6 个，由前端决定；一次往返换更多信息）；一次 UE 启动渲染全部候选；warm start |
 | **人工判断只是 yes/no → 收敛慢** | 候选沿语义轴变化（判断六），把选择变成梯度 |
 | **美术长期不判断** | `awaiting_judgement` 状态 + 读模型的 `is_judgement_overdue` 标志（纯派生，不改状态） |
 | **参考被 AI 改到物理不可解** | **不尝试物理反解**，用显示空间统计（原先还显式记录 `usable_for_physical_solve=false`，该恒假字段已删，见 §15.7 决定 D8） |
@@ -1353,7 +1358,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 
 ### 15.2 实施中需实测确认（不阻塞开工）
 
-1. **性能基线**：灯数与单轮渲染时间已确认暂不设限，但需要在 M1 实测记录——6 个候选 × 实际灯数的单轮耗时，作为 M6 是否拆分多机并行的依据，也是后续要不要加回硬上限的依据。
+1. **性能基线**：灯数与单轮渲染时间已确认暂不设限，但需要在 M1 实测记录——整轮候选（默认 6 个）× 实际灯数的单轮耗时，作为 M6 是否拆分多机并行的依据，也是后续要不要加回硬上限的依据。
 2. **全局调色反解的实际精度**（§9.2）：需在真实参考上验证「分布匹配求得的全局变换」能否干净地落到 UE 的 Color Grading 参数上。若映射误差大，退化为 §9.3 的灵敏度标定搜索——流程不受影响，只是少了一个热启动。
 3. **统计量的实际可信度**：虽然已确认以全局调色为主，仍应在首批真实参考上抽查是否存在局部改图污染，据此决定是否需要启用外点剔除。
 4. **方舟 Responses 的四条实测项**（§15.6 的推理通道已按文档实现并离线单测，但以下四条只能拿真 key 打一次才知道）：
@@ -1447,7 +1452,7 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 | 编排 / 状态机 | `src/doodle_lib/http_method/kitsu/ai_light_orchestrator.{h,cpp}` |
 | 路由注册 | `http_method/kitsu.cpp` 的 `create_kitsu_route_2`（**只注册主服务器**，客户端不跑 LLM） |
 | 图片变体导出 | `http_method/kitsu/preview.{h,cpp}` 的 `preview::save_variants`（从匿名命名空间提到 `preview` 命名空间，供定稿复用；不另写一套尺寸，否则预览列表页读到的图与既有预览文件不一致） |
-| 读模型 | `ai_light_session_detail_t`（`doodle_core/metadata/ai_light/view.h`），六表一次聚合，并带出 `candidate_count_per_iteration`（前端不自己写死 6） |
+| 读模型 | `ai_light_session_detail_t`（`doodle_core/metadata/ai_light/view.h`），六表一次聚合，并带出 `candidate_count_per_iteration`（前端不自己写死 6）—— 该值目前仍是 `g_candidate_count`（6），但**服务端不再校验提交的候选个数**，它只是前端默认值 |
 | 测试 | `src/test/core/ai_light_state.cpp`（17 用例 / 167 断言，含 JSON 形状回归、「超时会话仍可判断」回归、「无参考图不蒸馏」、「`awaiting_spec_confirm` 可重出」，以及钉住「预分配 uuid 不被 ORM 改写」的延迟插入回归 —— 见坑 6）+ `src/test/core/sqlite_not_found.cpp`（5 用例 / 11 断言，钉 ORM 的 404 语义）+ `src/test/core/ai_light_paths.cpp`（8 用例 / 23 断言，钉产物落盘布局，见坑 6）+ §15.5 的统计层套件；全量回归 109 用例 / 926 断言通过 |
 
 **状态机**（`advance_session` 是唯一的推进入口，`/spec`、`/spec/confirm`、`/iterate`、
@@ -2250,6 +2255,11 @@ exit 0**（较基线 168 / 1317 为 +3 用例 / +45 断言，新增 `ai_light_sp
 
 ### 15.8 已落地（接缝 2：`generate_candidates` —— 排轴 + 一次推理 + 确定性展开）
 
+> ⚠️ **本节整体是历史记录**：角色降级（第二梯队）已把接缝 2、`expand_candidates()` / `diff_rigs()` /
+> `parse_axis_plan()` 与「候选数 == `g_candidate_count`」护栏**一并删除**，候选改由前端展开提交，
+> 服务端只做 IR 准入（非空 + `role=key` + substance 差异）。见
+> [ue_ai_lighting_role_downgrade.md](ue_ai_lighting_role_downgrade.md) §3.5 / §5。
+
 `POST /api/doodle/ai/light/session/{session_id}/iterate` 已可用（§13.1 第 ④ 项）。接缝 2 的形态与 §15.7 的接缝 1
 刻意**同形**：同一条推理通道、同一套严格取值器、同一套失败映射；区别只在「模型的产出被我们拿去做多少事」。
 
@@ -2325,7 +2335,7 @@ top-`g_preset_prompt_top_k`(12) 只送进 `input_text` 当知识注入，不参�
 | 项 | 原文 | 实现 | 为什么 |
 |---|---|---|---|
 | 候选展开方式 | §6.2「每轴 2–3 档」× 6 个候选，读起来像全因子组合 | **OFAT**：候选 0 = 基线，其余 5 个各沿一档 | `variant_axis_t` 只有一条轴（`rig.h`），本来也表达不出组合 |
-| 档位预算 | §6.2 只说「每轴 2–3 档」 | 档位**总数**必须恰好 `g_axis_step_budget = 5` | 6 = 1 基线 + 5 变异，只能这么分；`parse_axis_plan()` 硬校验 |
+| 档位预算 | §6.2 只说「每轴 2–3 档」 | 档位**总数**必须恰好 `g_axis_step_budget = 5` | 当时按 6 = 1 基线 + 5 变异固定分配；`parse_axis_plan()` 硬校验（**该机制已随降级删除；候选数现由前端决定**） |
 | 轴数 | 未明确 | 1..`g_axis_max_count = 2` | 全压在一条轴上会让 6 张图在同一维度单调铺开，美术看不出「换维度」；两条轴可以交叉 |
 | 预设检索 | §6.4 写 embedding → top-k | **词法子串打分** | 没有查询向量生成器（§6.4 注） |
 | `feedback_axes` 的键 | §4.4 样例 `{"key_elevation_delta": -15, "kelvin_delta": -600}` | 键必须是 `variant_axis_kind` 的**枚举名**（**没有 `key_elevation`**），value 是**增量**不是绝对值 | `advance_session` 用 `magic_enum::enum_cast` 解析键名；§4.4 的样例本轮已按此修正（§15.9） |
@@ -2398,6 +2408,8 @@ top-`g_preset_prompt_top_k`(12) 只送进 `input_text` 当知识注入，不参�
 M2 之后）；**不校验灯集合一致性** —— §6.6 的另一半留在 worker 侧，本轮没有 worker，能锁的只有
 「数量恰好 6」（`advance_session` 校验，失败 500）与「展开时灯集合相同」（`expand_candidates` 结构性保证）
 这两条（`structure_feedback` 见 §15.9）。
+> ⚠️ 本条记录的是**当时**的边界。其中「数量恰好 6」那条护栏**已随角色降级删除** —— 服务端如今只要求
+> `candidates` 非空，个数由前端决定（见 [ue_ai_lighting_role_downgrade.md](ue_ai_lighting_role_downgrade.md) §3.5）。
 
 **回归**：全量 `test_main` **186 用例 / 1574 断言全通过、exit 0**（§15.7 末尾的基线是 171 / 1362，本轮
 +15 用例 / +212 断言，全部来自新增的 `ai_light_candidates` 套件）。本轮五个 AI 灯光套件：
@@ -2520,7 +2532,7 @@ judge_route::post
 |---|---|
 | `axis_enum_excludes_none_and_schema_is_strict` | schema 的轴枚举**不含 `none`**；每层 `required == properties` + `additionalProperties:false`；`axes` 有 `maxItems: 2` 但**没有 `minItems`**（D12/D13） |
 | `instructions_split_the_shared_semantics_from_seam2_constraints` | 轴语义段与接缝 2 **逐字同源**（`g_axis_value_semantics_text` 是唯一出处）；接缝 2 的「恰好 5 个档位 / 档位不要取 0」**不出现在**接缝 3 的指令里 |
-| `input_text_carries_verbatim_feedback_and_candidates` | 美术原话**逐字**出现；Spec / 决定 / 6 个候选各自的轴与值 / 选中候选的完整 rig / 当前 key:fill 比都在 |
+| `input_text_carries_verbatim_feedback_and_candidates` | 美术原话**逐字**出现；Spec / 决定 / 每个候选各自的轴与值 / 选中候选的完整 rig / 当前 key:fill 比都在 |
 | `input_text_marks_slider_axes` | 滑块已给的轴在提示里被明确标成「不要再给」 |
 | `input_text_survives_empty_candidates_and_no_selection` | 候选还没落库、美术也没指定候选时提示词照样成型（不拼出空段、不崩） |
 | `key_fill_ratio_of_is_unit_aware` | 主光与补光**单位不同**（candela vs lumen）时返回 `nullopt`；两盏补光求和后再比 |
@@ -2865,7 +2877,7 @@ judge_route::post
 
 **需求（用户原话，m04090）**：「安排 ai_light 工作的派发功能」。
 
-一句话：「一轮 6 个候选」不再只是库里的一张表，而是**真的被派到一台工作机上去渲染、并把结果写回库**，
+一句话：「一轮候选（默认 6 个）」不再只是库里的一张表，而是**真的被派到一台工作机上去渲染、并把结果写回库**，
 让会话沿既有的 `generating → awaiting_judgement` 走完闭环（§10.4 的实现）。本轮落地的是**服务端 + 工作机**
 两段；UE 侧的 `DoodleLighting` commandlet 是同一批计划的下一段（见本节末尾「未落地」）。
 
@@ -3001,7 +3013,7 @@ render_report_route → parse_round_render_report → apply_render_report
 ### 15.13 已落地（UE 侧：`DoodleLighting` + `DoodleLightingEditor` 两个插件模块 —— 一次进程渲染一整轮）
 
 **需求**：填掉 §15.12 末尾「未落地」的第一条 —— 让工作机命令行里的 `-run=DoodleLighting` 真的存在：
-一次进程内把整轮 6 个候选各渲染一张 PNG + 一张 EXR，写到载荷给定的路径上（工作机在起 UE 之前
+一次进程内把整轮候选（当时默认 6 个）各渲染一张 PNG + 一张 EXR，写到载荷给定的路径上（工作机在起 UE 之前
 已把相对路径拼成本地绝对路径），再写一份 `<out_dir>/render_report.json` 给工作机回传。
 
 > **候选产物改成视频后（§15.16），本节有两处不再成立**：① `-run=DoodleLighting` 不再是派发流程的入口
@@ -3053,7 +3065,7 @@ UnrealEditor-Cmd.exe <uproject> -windowed -log -AllowStdOutLogVerbosity -ForceLo
 | D33 | 灯型细节默认值：spot 外 45°/内 25°（载荷给了用载荷）；rect 宽高 = `source_radius_cm`×2；`softness` → point/spot/rect 的 `SourceRadius`、directional 的 `LightSourceAngle`；单位 candela/lumen/lux/unitless → `ELightUnits`；mobility static_light/stationary/movable → Static/Stationary/Movable | 载荷没有的字段只能由执行器补，且必须写下来（否则「同一个 rig 两台机器出两张不同的图」） |
 | D34 | 全局量落点：曝光 → PP `AutoExposureMinBrightness=MaxBrightness=1.0` + `AutoExposureBias`；白平衡 → PP `WhiteTemp`/`WhiteTint`；环境 → `ASkyLight` 强度 + `AExponentialHeightFog` 密度；调色 → PP `ColorContrast`/`ColorSaturation`/`ColorGain=(1+lift)`/`VignetteIntensity`/`BloomIntensity` | §7.5 的曝光锁与冻结后处理基线（`PostProcessVolumeConfig` 那组值）是美术验收基准，必须照抄 |
 | D35 | 预览分辨率 1920×1080 常量 | 见上表（用户拍板） |
-| D36 | **不用 MRQ，用 `USceneCaptureComponent2D`**：LDR 通道 `RTF_RGBA8_SRGB` + `SCS_FinalColorLDR` → PNG；HDR 通道 `RTF_RGBA16f` + `SCS_FinalColorHDR` → EXR（线性工作色彩空间、无色调曲线） | MRQ 要 level sequence + `UMoviePipelinePrimaryConfig` 资产，现网那条链路还要**第二个进程**驱动；队列没有单帧/同步 API，6 个候选之间换灯也没有可靠的 per-job 生效点。SceneCapture 在一次启动内确定性地出一帧。保真代价：Lumen GI 没有成片前的预热帧，靠 8 次丢弃式预热抓帧收敛（`g_warmup_iterations`） |
+| D36 | **不用 MRQ，用 `USceneCaptureComponent2D`**：LDR 通道 `RTF_RGBA8_SRGB` + `SCS_FinalColorLDR` → PNG；HDR 通道 `RTF_RGBA16f` + `SCS_FinalColorHDR` → EXR（线性工作色彩空间、无色调曲线） | MRQ 要 level sequence + `UMoviePipelinePrimaryConfig` 资产，现网那条链路还要**第二个进程**驱动；队列没有单帧/同步 API，候选之间换灯也没有可靠的 per-job 生效点。SceneCapture 在一次启动内确定性地出一帧。保真代价：Lumen GI 没有成片前的预热帧，靠 8 次丢弃式预热抓帧收敛（`g_warmup_iterations`） |
 | D37 | **不复制关卡**：`LoadObject<UWorld>(nullptr, 包路径)` 后换 `GWorld` 用，全程不 `DuplicateAsset`/不 `SaveLoadedAssets`/不 `MarkPackageDirty` | 现有链路复制工作副本是因为它要把改动落盘、再由第二个进程的 MRQ 从磁盘资产渲染；我们单进程内渲染、退出即丢弃 ——「源资产永不修改」成立得更彻底，也不往 `/Game/` 写临时关卡。美术手工灯不删（§7.5 的 `ClearAllLight` 会连美术灯一起清掉，只清我们自己建的 actor） |
 
 **文件清单**（批 4 时 20 个新文件；**批 9 后为 18 个** —— 下面表里 `DoodleLightingCommandlet.{h,cpp}` 与
@@ -3358,7 +3370,7 @@ Main(-Params=<json>)
 | 每候选产物 | **mp4 + 首帧海报 PNG**，本轮**不出** EXR | 前端网格仍用海报，点开才播视频；EXR 的角色留在契约里但一轮不产 |
 | 渲染走哪条路 | **照 `auto_light` 渲染进程的形状**：无 `-run=` 启动 + PIE 执行器 + 每候选把 rig 建进 PIE 世界（MRQ 画质） | 工作机的命令行、UE 侧入口、命令集全部改；服务端契约加字段 |
 
-**一句话**：一轮 6 个候选各自变成「一段 mp4 + 一张首帧海报」；渲染交给 `auto_light` 已经生成好的那套资产
+**一句话**：一轮候选（默认 6 个）各自变成「一段 mp4 + 一张首帧海报」；渲染交给 `auto_light` 已经生成好的那套资产
 （`render_map_` / `level_sequence_import_` / `movie_pipeline_config_`）+ 电影渲染管线（MRQ），
 rig 由我们在**每个 job 开始前**建进 PIE 世界。
 

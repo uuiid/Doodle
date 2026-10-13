@@ -360,7 +360,7 @@ void sqlite_storage::regs_all() {
   //
   // 六张表的关系：
   //   session 1─n reference（多张参考图，每张单独留统计）
-  //   session 1─n iteration 1─n candidate（每轮 6 个候选）
+  //   session 1─n iteration 1─n candidate（每轮若干个候选，个数由前端决定）
   //   preset 独立
   //
   // 有意不做的事（理由见 doodle_core/metadata/ai_light/session.h 顶部注释）：

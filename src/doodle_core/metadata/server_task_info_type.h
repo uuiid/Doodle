@@ -34,7 +34,7 @@ enum class server_task_info_type : std::int32_t {
   project_sync,
   // 深度估计
   depth_estimation,
-  // AI 灯光：一次派发渲染一轮 6 个候选
+  // AI 灯光：一次派发渲染一轮候选
   ai_light,
 };
 

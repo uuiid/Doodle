@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(candidate_movie_and_frames_dir_are_named_by_their_own_uuid)
   // 一段视频一个文件：`<候选 uuid>.mp4`，与首帧海报同级、同 uuid
   BOOST_CHECK_EQUAL(l_movie.parent_path(), l_iter);
   BOOST_CHECK_EQUAL(l_movie.filename().generic_string(), "abcdefab-1234-4567-89ab-cdefabcdefab.mp4");
-  // MRQ 的逐帧 PNG 落在候选自己的子目录里：一轮 6 个候选各上百张帧，平铺在轮次目录下
+  // MRQ 的逐帧 PNG 落在候选自己的子目录里：一轮里每个候选各上百张帧，平铺在轮次目录下
   // 会和 `.mp4`/`.png` 混成一团，人也没法看
   BOOST_CHECK_EQUAL(l_frames.parent_path(), l_iter);
   BOOST_CHECK_EQUAL(l_frames.filename().generic_string(), "abcdefab-1234-4567-89ab-cdefabcdefab");

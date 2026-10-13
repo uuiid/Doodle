@@ -15,7 +15,7 @@ namespace doodle::http::ai_light {
 // `POST /api/doodle/ai/light/session/{session_id}/iteration`
 //
 // 排轴与展开都归前端（那 ~800 行本来就是纯函数），服务端只做四件事：
-//   1. 收下前端算好的轴计划与 6 个候选；
+//   1. 收下前端算好的轴计划与候选（每轮几个由前端决定）；
 //   2. 过 IR 准入闸门（候选数、主光、相邻差异 —— 见 ai_light.cpp 的 validate_candidates_ir）；
 //   3. 落 iteration + candidate（`ops_` 由前端算好随候选提交，服务端不再自己算 diff）；
 //   4. 回 `launch_plan`。
@@ -30,28 +30,31 @@ namespace doodle::http::ai_light {
 // ---------------------------------------------------------------------------
 // 请求体
 // ---------------------------------------------------------------------------
+// 它就是 `submit_iteration_request_t` 的 JSON 形状（ai_light_orchestrator.h），
+// 服务端直接 `get_to()` 反序列化 —— 没有第二份手工逐字段解析可以漂移。
 // {
 //   "iteration": 3,                          // 必填，正整数；前端从会话详情里取
-//   "strategy": "refine",                    // 可选，映射到 ai_light_iteration_strategy
-//   "parent_iteration_id": "…",              // 可选 uuid；缺省 = 上一轮
-//   "axes": [                                // 可选（缺省 = 空轴计划 = 基线轮）
-//     {"axis": "key_light_position", "steps": 1, "label": "主光左移一档"}
-//   ],
-//   "candidates": [                          // 必填，长度必须 == g_candidate_count
-//     {
+//   "axes": {                                // 可选（缺省 = 空轴计划 = 基线轮）
+//     "axes": [{"axis": "key_light_position", "steps": [1], "label": "主光左移一档"}],
+//     "strategy": "refine"                   // iteration_axes_t 的形状
+//   },
+//   "candidates": [                          // 必填且非空，数量不限
+//     {                                      // lighting_rig_t 的形状（rig.h:579-592）
 //       "candidate_index": 0,
-//       "variant_axis": "key_light_position",  // 可选；基线轮为空
-//       "variant_value": -1,                   // 可选
-//       "variant_label": "主光左移一档",        // 可选
-//       "globals": { … },                      // 必填，lighting_rig_t::globals_ 的形状
-//       "lights": [ … ],                       // 必填，lighting_rig_t::lights_ 的形状
-//       "ops": [ … ]                           // 可选，审计影子（决定 D-58 路线 A）
+//       "variant_axis": {                    // 可选；基线轮为空
+//         "axis": "key_light_position", "value": -1, "label": "主光左移一档"
+//       },
+//       "globals": { … },                    // 必填，lighting_rig_t::globals_ 的形状
+//       "lights": [ … ],                     // 必填，lighting_rig_t::lights_ 的形状
+//       "ops": [ … ]                         // 可选，审计影子（决定 D-58 路线 A）
 //     }
 //   ]
 // }
 //
-// **不接受** `session_id` / `operator_id`：session 在路径上，operator 只从 JWT 取。
-// 这与网关同一条纪律 —— 结构上不可伪造，比"校验后拒绝"彻底。
+// 身份字段（`session_id` / `operator_id` / `project_id` / `task_id`、以及候选里的
+// `session_id` / `iteration` / `candidate_index` / `rig_id` / `baseline_level`）
+// **一律由服务端钉死**：session 在路径上、operator 只从 JWT 取、其余从会话行与装配推导取。
+// 请求体里给了也会被无条件覆盖 —— 这与网关同一条纪律（结构上不可伪造，比"校验后拒绝"彻底）。
 //
 // ---------------------------------------------------------------------------
 // 响应体
@@ -61,8 +64,8 @@ namespace doodle::http::ai_light {
 // ---------------------------------------------------------------------------
 // 错误码
 // ---------------------------------------------------------------------------
-// 400 —— body 不是合法 JSON、iteration 非正整数、candidates 长度 != g_candidate_count、
-//        闸门任一条不过（缺主光 / 相邻候选 substance 相同）、rig 形状校验不过。
+// 400 —— body 不是合法 JSON 或形状与 submit_iteration_request_t 不符、iteration 非正整数、
+//        candidates 缺失或为空、闸门任一条不过（空 lights / 缺主光 / 相邻候选 substance 相同）。
 // 404 —— 会话不存在。
 // 403 —— 非本项目成员（load_session_checked 内部的 check_project_access）。
 // 409 —— 会话状态不可提交候选（既不是 draft 也不是 generating，即 awaiting_judgement）。

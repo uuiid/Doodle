@@ -116,11 +116,11 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
   out_broadcast_task_id = uuid{};
   const auto l_iteration = in_request.iteration_;
 
-  // §6.6 护栏：候选数量是硬约束。调用方本应先过这一条，走到这里仍不成立
-  // 说明闸门被绕过了 —— 按 500 报，不静默截断。
+  // §6.6 护栏：候选不能为空。数量由前端决定，服务端不设上下限；
+  // 空数组一定是调用方漏填 —— 走到这里说明闸门被绕过了，按 500 报，不静默放过。
   DOODLE_CHICK_HTTP(
-      in_request.rigs_.size() == static_cast<std::size_t>(g_candidate_count), internal_server_error,
-      "本轮候选数为 {}，方案 §6.6 要求恰好 {}", in_request.rigs_.size(), g_candidate_count
+      !in_request.rigs_.empty(), internal_server_error,
+      "本轮候选数为 0，方案 §6.6 要求至少一个候选"
   );
 
   // 装配推导（D50）：失败 / 序列为空 = 本轮不可渲染，抛在这里不落库（调用方记 failure_reason_）。
@@ -173,21 +173,21 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
   // 库里一行没动，调用方不可能拿到半截批次。
   orm::sql_modify_statement_vector_t l_sqls{};
   std::vector<ai_light_task_candidate_t> l_payload_candidates{};
-  l_payload_candidates.reserve(static_cast<std::size_t>(g_candidate_count));
-  for (std::int32_t l_i = 0; l_i < g_candidate_count; ++l_i) {
-    auto l_rig = in_request.rigs_.at(static_cast<std::size_t>(l_i));
+  l_payload_candidates.reserve(in_request.rigs_.size());
+  for (std::size_t l_i = 0; l_i < in_request.rigs_.size(); ++l_i) {
+    auto l_rig = in_request.rigs_.at(l_i);
     // 身份字段由服务端补齐：候选的来源只负责「灯怎么打」，不负责「这是第几个」。
     // 降级后这一点更要紧 —— 前端给的 session_id/iteration 一律不采信。
     l_rig.session_id_      = in_request.session_id_;
     l_rig.iteration_       = l_iteration;
-    l_rig.candidate_index_ = l_i;
+    l_rig.candidate_index_ = static_cast<std::int32_t>(l_i);
     l_rig.rig_id_          = uuid{};
     // baseline_level_ 是只读字段：由上面的装配推导填，前端给什么都不采信。
     l_rig.baseline_level_  = l_assembly.original_map_.generic_string();
 
     ai_light_candidate l_cand{};
     // uuid 必须在这里就定下来，不能等 ORM 在 insert 时回填：渲染图文件名就是它，
-    // nil uuid 会让 6 个候选全部指向同一个路径（先例：build_accepted_preview_file）。
+    // nil uuid 会让本轮所有候选全部指向同一个路径（先例：build_accepted_preview_file）。
     l_cand.uuid_id_         = core_set::get_set().get_uuid();
     l_cand.iteration_id_    = l_it.uuid_id_;
     l_cand.session_id_      = in_request.session_id_;
@@ -203,7 +203,7 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
     // exr_path_ 本轮不产，保留在载荷里是为了线性交付那条线（D42）。
     l_payload_candidates.push_back(
         ai_light_task_candidate_t{
-            l_i, l_cand.uuid_id_, make_candidate_frames_dir(l_cand.uuid_id_),
+            static_cast<std::int32_t>(l_i), l_cand.uuid_id_, make_candidate_frames_dir(l_cand.uuid_id_),
             make_candidate_file_name(l_cand.uuid_id_, false), make_candidate_file_name(l_cand.uuid_id_, true),
             make_candidate_movie_file(l_cand.uuid_id_), l_rig
         }
@@ -252,7 +252,7 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
     SPDLOG_LOGGER_INFO(
         g_logger_ctrl().get_http(),
         "AI 灯光会话 {} 第 {} 轮 {} 个候选已落库（引擎内路线，渲染计划已返回，等待发起方本机渲染）",
-        in_request.session_id_, l_iteration, g_candidate_count
+        in_request.session_id_, l_iteration, in_request.rigs_.size()
     );
     co_return l_plan;
   }
@@ -305,7 +305,7 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
 
   SPDLOG_LOGGER_INFO(
       g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮 {} 个候选已派发（任务 {}）", in_request.session_id_,
-      l_iteration, g_candidate_count, l_task.uuid_id_
+      l_iteration, in_request.rigs_.size(), l_task.uuid_id_
   );
   // 队列路线没有本机渲染计划：调用方看到 nullopt 应当按「已派发」处理（不是错误）。
   // 反过来，任务行 uuid 只有这条路线有 —— 把它交给调用方去广播（本函数不做网络副作用）。

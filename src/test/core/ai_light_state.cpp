@@ -523,7 +523,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(overdue_session_stays_awaiting_judgement_and_stays
   // ---- 关键回归 ----
   // 超时**不**能剥夺判断能力。删掉 suspended 之前，这里会撞上
   // apply_judgement 的「不在等人工判断」400，而没有任何路径能从 suspended 回到
-  // awaiting_judgement —— 于是已经渲染好的 6 个候选再也挑不了，
+  // awaiting_judgement —— 于是已经渲染好的候选再也挑不了，
   // 只能走 /spec 重出方案，白扔一整轮渲染。这才是删掉那个状态的理由。
   auto l_args  = load_for_judge(l_fx);
   auto l_j     = make_judgement(judgement_decision::accept, l_fx.candidates_.at(2).uuid_id_);
@@ -776,7 +776,8 @@ BOOST_AUTO_TEST_CASE(optional_and_time_fields_serialize_as_scalars) {
   l_detail.session_ = l_session;
   nlohmann::json l_detail_json = l_detail;
   BOOST_TEST(l_detail_json.at("accepted_candidate").is_null());
-  // 每轮候选数是唯一数字来源，读模型要把它带出去（前端不自己写死 6）
+  // 读模型要带出候选数（前端不自己写死 6）。个数由前端决定，所以它是**最近一轮的实际值**；
+  // 这里没有候选，退回建议默认值。
   BOOST_TEST(l_detail_json.at("candidate_count_per_iteration").get<std::int32_t>() == g_candidate_count);
 }
 

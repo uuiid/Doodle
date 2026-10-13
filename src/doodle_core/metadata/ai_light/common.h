@@ -22,10 +22,11 @@ constexpr std::string_view g_rig_schema_version{"1.1"};
 ///             以及 character_personality 与 lighting_language），intent 只剩 weather。
 constexpr std::string_view g_spec_schema_version{"1.4"};
 
-/// 每轮候选数量（决策 1：固定 6）。
+/// 候选数量的**建议默认值**：前端每轮展开几个候选由前端自己决定，服务端不再校验数量。
+/// 这里保留这个数字只作为「前端没特别指定时用几档」的参考值，以及读模型上报用的默认值。
 /// §6.6 护栏要求同轮候选的**灯集合与角色完全一致**，只有轴参数不同 ——
 /// 否则指标差异会被灯数差异淹没，美术的选择无法归因到轴，搜索梯度就失效了。
-/// 护栏校验由候选生成接缝负责，这里只提供唯一的数字来源，免得 6 散落在路由与编排里。
+/// 这条护栏与数量无关，仍由服务端的准入闸门与候选生成接缝负责。
 constexpr std::int32_t g_candidate_count{6};
 
 /// 闭区间 [low, high]。Spec 的目标全部是区间而不是点值 —— 这是「参考是近似而非精确」

@@ -47,7 +47,7 @@
 | 接缝 | 入口 | 承接纯计算 | **契约强制**（本方案要迁出的部分） |
 |---|---|---|---|
 | 1 Spec | `POST /session/{sid}/spec` | 参考图聚合（openCV，**保留**） | 钉死 `space/palette/ownership/schema_version/reference_stats`/身份字段；LLM 只能给 `intent`/`targets` 标量区间/`grading_hints`/`conflicts`（`ai_light_seam_spec.h:95-98`） |
-| 2 Candidates | `POST /session/{sid}/iterate` | 无（输入只有会话上下文） | `parse_axis_plan` 档位硬校验；`map_candidate_result` 的 `role=key` 判据、substance 差异判据、`rigs_.size() == g_candidate_count` 护栏；`expand_candidates`+`diff_rigs` 确定性展开 |
+| 2 Candidates | `POST /session/{sid}/iterate` | 无（输入只有会话上下文） | `parse_axis_plan` 档位硬校验；`map_candidate_result` 的 `role=key` 判据、substance 差异判据、`rigs_.size() == g_candidate_count` 护栏（**此护栏已随第二梯队落地删除**，个数改由前端决定，服务端只要求非空）；`expand_candidates`+`diff_rigs` 确定性展开 |
 | 3 Feedback | `POST /session/{sid}/judge` | 无 | 轴名白名单、值非 0、最多 2 条；滑块优先 |
 
 ### 2.2 关键代码位置（搬迁清单的坐标）
@@ -247,7 +247,7 @@ POST /api/doodle/ai/light/session/{sid}/iteration
   "iteration": 3,                       // 前端自增；服务端校验 == current_iteration + 1
   "strategy": "…",                      // 轴计划策略文字，仅供展示
   "axes": [ {"axis":"key_direction","steps":[ -20, 20 ], "label":"…"} ],
-  "candidates": [                       // 长度必须 == g_candidate_count
+  "candidates": [                       // 非空即可；个数由前端决定（不再要求 == g_candidate_count）
     {
       "candidate_index": 0,
       "variant_axis": "none", "variant_value": 0.0, "variant_label": "基线",
@@ -321,7 +321,7 @@ POST /api/doodle/ai/light/session/{sid}/iteration
 
 所以在 `POST /iteration` 里加**一次**服务端校验，复用现有的 `ai_light_json_validation.h` 严格族（`require_*` / `require_enum<E>`），判据取现状 `map_candidate_result` 已有的三条：
 
-1. 候选数 `== g_candidate_count`（`ai_light_rig_ops.h` 的常量）
+1. 候选数组**非空**（个数由前端决定，服务端不再数，也不再对 `g_candidate_count`）
 2. 每个候选**至少有一个 `role=key` 的主光** —— 现状的 502 文案：「候选基线 rig 里没有 role=key 的主光：key_direction / key_fill_ratio 两个轴都会变成空操作，§9.1 要求的「候选之间真的在目标上有差异」无法成立」
 3. 相邻候选 **substance 必须不同** —— 现状的 502 文案：「候选 {} 沿轴 {} = {} 展开后与基线完全相同（这条轴在当前 rig 上不生效）」
 
@@ -396,7 +396,7 @@ POST /api/doodle/ai/light/session/{sid}/iteration
 4. ✅ `advance_session_generating_branch` 里 `co_await generate_candidates` 调用点删除（连"跑接缝 + 护栏"整段与 `g_candidate_count` 个数护栏一起去掉：候选数由前端决定，服务端不再数）
 5. ✅ `ai_light_rig_ops.{h,cpp}` 的 `expand_candidates` / `diff_rigs` / `apply_axis_step`：服务端已整体删除，保留常量 `g_axis_step_budget` / `g_axis_max_count` / `g_candidate_count`（前端通过 `session_detail` 读，`docs/ue_ai_lighting_frontend.md:39-54` 第 5 条已要求"不要写死 6"）。
    注：`diff_rigs` 的**生产**调用方随接缝一起没了，但 `ai_light_submit.cpp:45-83` 为 IR 准入闸门重写了一份等价的「只比灯怎么打」的子集比较，测试里仍需要它们做候选自检，故保留实现。
-6. ⏳ 前端实现：§4.2 全部类型级搬迁 + `build_candidates_input_text` + `map_candidate_result` 的三条判据（**不在本仓库**）
+6. ⏳ 前端实现：§4.2 全部类型级搬迁 + `build_candidates_input_text` + `map_candidate_result` 的判据（`role=key` 主光、substance 差异；**个数判据已取消** —— 候选数由前端自定，服务端只要非空）
 7. ✅ ~~同步处理 §6.1 的 `ops` 阻塞点~~ —— **已定：路线 A**（决定 D-58，§3.3.4.1）。UE 侧零改动，前端提交前折叠 `ops → lights`+`globals`；服务端闸门拒绝只有 `ops` 的候选
 
 **落地后服务端剩下的**：`advance_session_generating_branch` 只做闸门校验（Spec 存在 / `human_confirmed_` / iteration 递增 / operator 非 nil）→ 推装配给 UE（`shot_render_light_sync_only`）→ 写 submitted iteration；候选与基线 rig 全由前端提交，服务端既不排轴也不展开。
