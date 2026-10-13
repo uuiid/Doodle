@@ -58,7 +58,16 @@ if ($args.Length -eq 0) {
 Write-Host "Running: $($args[0]) $($args[1..($args.Count - 1)] -join ' ')" -ForegroundColor Cyan
 # 用调用运算符而非 Start-Process：Start-Process -PassThru 的 .ExitCode 在受限环境下
 # 会返回 $null（进程句柄受限），无法可靠透传退出码。调用运算符的 $LASTEXITCODE 一致可靠。
-& $args[0] @($args[1..($args.Count - 1)])
+#
+# 调用运算符让子进程继承本 PowerShell 进程的 cwd，所以必须显式固定工作目录：
+# cmake --preset 要在源码根目录解析 CMakePresets.json 与 vcpkg 工具链，
+# 依赖这个 cwd 的调用方（编辑器任务、dsh-cmake 插件）都可能从别处启动本脚本。
+Push-Location $DoodleRoot
+try {
+  & $args[0] @($args[1..($args.Count - 1)])
+} finally {
+  Pop-Location
+}
 # $LASTEXITCODE 只在「被调用的是原生可执行文件」时才会被赋值；若目标不存在，调用运算符
 # 抛错、该变量保持上一次的值（可能是 $null）。先判空再取整，避免把失败静默成退出码 0。
 if ($null -eq $LASTEXITCODE) {

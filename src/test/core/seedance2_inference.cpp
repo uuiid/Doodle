@@ -129,28 +129,32 @@ BOOST_AUTO_TEST_CASE(body_defaults_are_offline_safe) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(body_uses_responses_shape_with_string_image_url) {
+// build_inference_body 现在**只做两件事**：to_json 成扁平信封，再交给 finalize_inference_body
+// 做减法定稿（定 model / 关 store）。它**不再**把扁平信封翻译成方舟 Responses 形状
+// （`input[].content[]`）—— 那次翻译已随「报文透传」删除（见 seedance2_client.h:46-55）：
+// 发射路径直接吃前端发来的 body 原样打出去，结构体往返只会把不认识的键静默吃掉。
+//
+// 所以这里验的是**真的会跑的那条路径**：扁平键逐个在场且原样保留，
+// 而方舟形状的键（input/text/reasoning）**一个都不该被造出来**。
+BOOST_AUTO_TEST_CASE(body_uses_flat_envelope_shape_with_images) {
   inference_request_t l_request{};
   l_request.input_text_   = "看这张图";
   l_request.images_       = {"/api/seedance2/pictures/a.png", "/api/seedance2/pictures/b.png"};
   l_request.image_detail_ = "high";
   const auto l_body       = seedance2_client::build_inference_body(l_request);
 
-  const auto& l_input = l_body.at("input").at(0);
-  // InputItem 的 type 固定 "message"（文档原话），只发 role 是不够的。
-  BOOST_CHECK_EQUAL(l_input.at("type").get<std::string>(), "message");
-  BOOST_CHECK_EQUAL(l_input.at("role").get<std::string>(), "user");
+  // 扁平键原样在场：定稿只定 model / store，其余交给方舟侧自己解释。
+  BOOST_CHECK_EQUAL(l_body.at("input_text").get<std::string>(), "看这张图");
+  BOOST_CHECK_EQUAL(l_body.at("image_detail").get<std::string>(), "high");
+  const auto& l_images = l_body.at("images");
+  BOOST_CHECK_EQUAL(l_images.size(), 2u);
+  BOOST_CHECK_EQUAL(l_images.at(0).get<std::string>(), "/api/seedance2/pictures/a.png");
+  BOOST_CHECK_EQUAL(l_images.at(1).get<std::string>(), "/api/seedance2/pictures/b.png");
 
-  const auto& l_content = l_input.at("content");
-  BOOST_CHECK_EQUAL(l_content.size(), 3u);
-  BOOST_CHECK_EQUAL(l_content.at(0).at("type").get<std::string>(), "input_text");
-  BOOST_CHECK_EQUAL(l_content.at(0).at("text").get<std::string>(), "看这张图");
-  BOOST_CHECK_EQUAL(l_content.at(1).at("type").get<std::string>(), "input_image");
-  // 关键: image_url 是字符串(生成 API 才是 {"url": ...} 对象)
-  BOOST_CHECK_EQUAL(l_content.at(1).at("image_url").is_string(), true);
-  BOOST_CHECK_EQUAL(l_content.at(1).at("image_url").get<std::string>(), "/api/seedance2/pictures/a.png");
-  BOOST_CHECK_EQUAL(l_content.at(1).at("detail").get<std::string>(), "high");
-  BOOST_CHECK_EQUAL(l_content.at(2).at("image_url").get<std::string>(), "/api/seedance2/pictures/b.png");
+  // 方舟形状**不由这里制造**：翻译发生在网关透传之后，不在信封往返里。
+  BOOST_CHECK_EQUAL(l_body.contains("input"), false);
+  BOOST_CHECK_EQUAL(l_body.contains("text"), false);
+  BOOST_CHECK_EQUAL(l_body.contains("content"), false);
 }
 
 BOOST_AUTO_TEST_CASE(body_omits_thinking_when_auto_and_keeps_reasoning_effort) {
@@ -161,7 +165,9 @@ BOOST_AUTO_TEST_CASE(body_omits_thinking_when_auto_and_keeps_reasoning_effort) {
   const auto l_body           = seedance2_client::build_inference_body(l_request);
   // auto = 不显式指定, 由模型自己决定
   BOOST_CHECK_EQUAL(l_body.contains("thinking"), false);
-  BOOST_CHECK_EQUAL(l_body.at("reasoning").at("effort").get<std::string>(), "low");
+  // reasoning_effort 是**扁平键原样留存**：它不再被折叠成 {"reasoning":{"effort":...}}。
+  BOOST_CHECK_EQUAL(l_body.at("reasoning_effort").get<std::string>(), "low");
+  BOOST_CHECK_EQUAL(l_body.contains("reasoning"), false);
 }
 
 BOOST_AUTO_TEST_CASE(body_attaches_flat_json_schema_format) {
@@ -175,12 +181,12 @@ BOOST_AUTO_TEST_CASE(body_attaches_flat_json_schema_format) {
   l_request.json_schema_strict_ = false;
   const auto l_body             = seedance2_client::build_inference_body(l_request);
 
-  const auto& l_format = l_body.at("text").at("format");
-  BOOST_CHECK_EQUAL(l_format.at("type").get<std::string>(), "json_schema");
-  BOOST_CHECK_EQUAL(l_format.at("name").get<std::string>(), "lighting_target");
-  // 文档里的形状是**平铺**的(type/name/schema/strict), Python SDK 那种 chat 嵌套变体是文档冲突项
-  BOOST_CHECK_EQUAL(l_format.at("schema").at("type").get<std::string>(), "object");
-  BOOST_CHECK_EQUAL(l_format.at("strict").get<bool>(), false);
+  // schema 三件套以扁平键逐个留存（旧断言找的 text.format 是发射层形状，这里不造）。
+  BOOST_CHECK_EQUAL(l_body.at("json_schema_name").get<std::string>(), "lighting_target");
+  BOOST_CHECK_EQUAL(l_body.at("json_schema_strict").get<bool>(), false);
+  BOOST_CHECK_EQUAL(l_body.at("json_schema").at("type").get<std::string>(), "object");
+  // 文档里的形状是**平铺**的(type/name/schema/strict), Python SDK 那种 chat 嵌套变体是文档冲突项。
+  BOOST_CHECK_EQUAL(l_body.contains("text"), false);
 }
 
 BOOST_AUTO_TEST_CASE(body_sends_instructions_when_given) {
@@ -409,15 +415,23 @@ BOOST_AUTO_TEST_CASE(add_ip_to_req_covers_generation_shape) {
   BOOST_CHECK_EQUAL(l_req.at("content").at(1).at("image_url").at("url").get<std::string>(), "/api/a.png");
 }
 
-BOOST_AUTO_TEST_CASE(add_ip_to_req_covers_responses_shape) {
-  inference_request_t l_request{};
-  l_request.input_text_ = "看这个";
-  l_request.images_     = {"/api/a.png"};
-  const auto l_req      = seedance2_client::build_inference_body(l_request);
+// add_ip_to_req 的签名改写只认**方舟生成形状**（`content[].image_url.url`），
+// 因为那是它实际会收到的 body —— 请求体由前端按方舟 schema 组好、服务端原样透传，
+// 信封的扁平 `images: []` 不是它的输入。这里手工造一份方舟形状的 body 来验改写与签名，
+// **不再**经 build_inference_body 绕一圈（那条路已经不产方舟形状了）。
+BOOST_AUTO_TEST_CASE(add_ip_to_req_signs_ark_generation_shape) {
+  const auto l_req = nlohmann::json{
+      {"model", "m"},
+      {"content",
+       nlohmann::json::array(
+           {nlohmann::json{{"type", "text"}, {"text", "看这个"}},
+            nlohmann::json{{"type", "image_url"}, {"image_url", nlohmann::json{{"url", "/api/a.png"}}}}}
+       )}
+  };
   const auto l_out = ai_client_base::add_ip_to_req(l_req, g_ip, g_secret, g_uid);
-  const auto l_url = l_out.at("input").at(0).at("content").at(1).at("image_url").get<std::string>();
+  const auto l_url = l_out.at("content").at(1).at("image_url").at("url").get<std::string>();
 
-  // Responses 形状(字符串 image_url)也要被改写并签名
+  // 生成形状(object image_url)被改写并签名
   BOOST_CHECK_EQUAL(l_url.starts_with(g_public_prefix() + "/api/a.png?"), true);
   const auto l_query = parse_query(l_url);
   BOOST_CHECK_EQUAL(
@@ -427,6 +441,8 @@ BOOST_AUTO_TEST_CASE(add_ip_to_req_covers_responses_shape) {
       ),
       true
   );
+  // 非 URL 字段原样不动
+  BOOST_CHECK_EQUAL(l_out.at("content").at(0).at("text").get<std::string>(), "看这个");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
