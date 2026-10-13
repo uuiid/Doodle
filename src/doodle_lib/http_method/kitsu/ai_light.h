@@ -23,6 +23,7 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
+#include <doodle_core/metadata/ai_light/task_payload.h>
 
 #include <core/http/http_function.h>
 
