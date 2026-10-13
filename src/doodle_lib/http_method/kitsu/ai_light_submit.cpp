@@ -225,16 +225,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
       l_session.current_iteration_ + 1
   );
 
-  // ---- 会话必须有已确认的 Spec ----
-  // get_current_ai_light_spec 吃的是**会话 uuid**，不是会话对象（sqlite_database.h:301）。
-  auto l_spec = l_sql.get_current_ai_light_spec(l_session.uuid_id_);
-  DOODLE_CHICK_HTTP(
-      l_spec.has_value(), bad_request, "会话 {} 没有当前 Spec，不能提交候选", l_session.uuid_id_
-  );
-  DOODLE_CHICK_HTTP(
-      l_spec->human_confirmed_, bad_request, "会话 {} 的 Spec 尚未人工确认，不能提交候选", l_session.uuid_id_
-  );
-
   // ---- 调用共用落库件 ----
   // 说明：候选的落库、iteration 行、session 推进、launch_plan 装配全部复用
   // write_submitted_iteration()（ai_light_orchestrator.h）。那一段原本在
@@ -245,7 +235,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   l_req.project_id_    = l_session.project_id_;
   l_req.operator_id_   = person_.person_.uuid_id_;
   l_req.iteration_     = l_iteration;
-  l_req.spec_id_       = l_spec->uuid_id_;
   l_req.axes_          = parse_submitted_axes(l_body);
   l_req.rigs_          = std::move(l_rigs);
   l_req.task_id_       = l_session.task_id_;  // 装配推导要它定位镜头

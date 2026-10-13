@@ -250,7 +250,8 @@ std::string describe_rig_brief(const lighting_rig_t& in_rig) {
   return l_out;
 }
 
-/// Spec 的紧凑投影。这里是给模型读的，不是给落库用的 —— 落库的完整形状在 ai_light_spec。
+/// Spec 的紧凑投影。这里是给模型读的 —— 它的入参是**内存聚合体** lighting_spec_t，
+/// 由调用方现填（原先还有一个落库形状 ai_light_spec，那张表已删除）。
 ///
 /// 意图段只剩天气：atmosphere / time_of_day / setting / source_motivation / story_context /
 /// character_personality 那一整套「把提示词翻译成结构化意图」的字段已随 generate_spec 接缝

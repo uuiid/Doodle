@@ -8,10 +8,10 @@
 // 输入 + 状态」），拆成两张表只会带来同步负担，所以合并。
 //
 // 有意不做的事：
-//   * 不放 current_spec_id / accepted_candidate_id 这类冗余指针 —— 分别由
-//     「会话内 revision 最大的 spec」和「is_accepted = true 的候选」查出。
+//   * 不放 accepted_candidate_id 这类冗余指针 —— 由「is_accepted = true 的候选」查出。
 //     本库有 fix_foreign_key_violations / null_dangling_optional_references 两套外键修复
 //     机制，循环外键会让「删父行 → 造出新的悬空引用」的分析变复杂，宁可多一次带索引查询。
+//     （同段的 current_spec_id 已随 ai_light_spec 表一起消失。）
 //   * 不用 updated_at 当业务时钟 —— 任何更新都会刷新它（ORM 的 update 路径会自动刷），
 //     所以 4 小时过期判定单开 judgement_due_at 列。
 //   * 不把「过期」做成一个状态 —— 它是 judgement_due_at 的纯派生事实，

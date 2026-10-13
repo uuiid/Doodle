@@ -417,33 +417,11 @@ void sqlite_storage::regs_all() {
           foreign_key_action::cascade
       );
 
-  reg_table<ai_light::ai_light_spec>("ai_light_spec")
-      .add_column("id", &ai_light::ai_light_spec::id_, primary_key(), autoincrement())
-      .add_column("uuid_id", &ai_light::ai_light_spec::uuid_id_, unique(), not_null())
-      .add_column("session_id", &ai_light::ai_light_spec::session_id_, not_null())
-      .add_column("revision", &ai_light::ai_light_spec::revision_, not_null())
-      .add_column("schema_version", &ai_light::ai_light_spec::schema_version_)
-      .add_column("intent", &ai_light::ai_light_spec::intent_)
-      .add_column("targets", &ai_light::ai_light_spec::targets_)
-      .add_column("reference_stats", &ai_light::ai_light_spec::reference_stats_)
-      .add_column("degrade_level", &ai_light::ai_light_spec::degrade_level_)
-      .add_column("human_confirmed", &ai_light::ai_light_spec::human_confirmed_)
-      .add_column("confirmed_by", &ai_light::ai_light_spec::confirmed_by_)
-      .add_column("confirmed_at", &ai_light::ai_light_spec::confirmed_at_)
-      .add_column("created_at", &ai_light::ai_light_spec::created_at_)
-      .add_column("updated_at", &ai_light::ai_light_spec::updated_at_)
-      .add_foreign_key(
-          &ai_light::ai_light_spec::session_id_, &ai_light::ai_light_session::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(&ai_light::ai_light_spec::confirmed_by_, &person::uuid_id_, foreign_key_action::set_null)
-      .add_unique_index(&ai_light::ai_light_spec::session_id_, &ai_light::ai_light_spec::revision_);
-
   reg_table<ai_light::ai_light_iteration>("ai_light_iteration")
       .add_column("id", &ai_light::ai_light_iteration::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &ai_light::ai_light_iteration::uuid_id_, unique(), not_null())
       .add_column("session_id", &ai_light::ai_light_iteration::session_id_, not_null())
       .add_column("iteration", &ai_light::ai_light_iteration::iteration_, not_null())
-      .add_column("spec_id", &ai_light::ai_light_iteration::spec_id_, not_null())
       .add_column("state", &ai_light::ai_light_iteration::state_)
       .add_column("axes", &ai_light::ai_light_iteration::axes_)
       .add_column("server_task_info_id", &ai_light::ai_light_iteration::server_task_info_id_)
@@ -459,10 +437,6 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(
           &ai_light::ai_light_iteration::session_id_, &ai_light::ai_light_session::uuid_id_,
           foreign_key_action::cascade
-      )
-      // Spec 是业务父行：Spec 被删（会话重读参考导致版本回退）时本轮目标已不成立
-      .add_foreign_key(
-          &ai_light::ai_light_iteration::spec_id_, &ai_light::ai_light_spec::uuid_id_, foreign_key_action::cascade
       )
       // 任务行被删时置空，轮次记录必须保留（它承载了人工判断的历史）
       .add_foreign_key(
@@ -2264,44 +2238,6 @@ std::vector<ai_light::ai_light_reference> sqlite_database::get_ai_light_referenc
       .order_by(&ai_light::ai_light_reference::created_at_)
       .order_by(&ai_light::ai_light_reference::uuid_id_)()
       .to_vector();
-}
-
-std::vector<ai_light::ai_light_spec> sqlite_database::get_ai_light_specs(const uuid& in_session_id) {
-  using namespace orm;
-  return select(*this)
-      .columns(object<ai_light::ai_light_spec>())
-      .from<ai_light::ai_light_spec>()
-      .where(c(&ai_light::ai_light_spec::session_id_) == in_session_id)
-      .order_by(&ai_light::ai_light_spec::revision_)()
-      .to_vector();
-}
-
-std::optional<ai_light::ai_light_spec> sqlite_database::get_current_ai_light_spec(const uuid& in_session_id) {
-  using namespace orm;
-  // 「当前 Spec」= 会话内 revision 最大的一行。刻意不存 current_spec_id 冗余指针，
-  // 那会和 ai_light_spec.session_id 形成循环外键，把外键孤儿清理的轮次分析复杂化。
-  return select(*this)
-      .columns(object<ai_light::ai_light_spec>())
-      .from<ai_light::ai_light_spec>()
-      .where(c(&ai_light::ai_light_spec::session_id_) == in_session_id)
-      .order_by(&ai_light::ai_light_spec::revision_, false)
-      .limit(1)()
-      .to_optional();
-}
-
-std::optional<ai_light::ai_light_spec> sqlite_database::get_ai_light_spec(
-    const uuid& in_session_id, std::int32_t in_revision
-) {
-  using namespace orm;
-  return select(*this)
-      .columns(object<ai_light::ai_light_spec>())
-      .from<ai_light::ai_light_spec>()
-      .where(
-          c(&ai_light::ai_light_spec::session_id_) == in_session_id &&
-          c(&ai_light::ai_light_spec::revision_) == in_revision
-      )
-      .limit(1)()
-      .to_optional();
 }
 
 std::vector<ai_light::ai_light_iteration> sqlite_database::get_ai_light_iterations(const uuid& in_session_id) {

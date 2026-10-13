@@ -42,9 +42,11 @@ std::string en(E in_e) {
   return std::string{magic_enum::enum_name(in_e)};
 }
 
-// 迁移 30 -> 31 建出来的六张表
+// 迁移 30 -> 31 建出来的六张表。
+// ai_light_spec 已从库中删除 —— 它是空表（全仓没有 insert 路径），
+// 属于早期「后端用大模型做灯光推理」方案的遗留，详见 spec.h 顶部说明。
 constexpr std::string_view g_ai_light_tables[] = {
-    "ai_light_session", "ai_light_reference", "ai_light_spec",
+    "ai_light_session", "ai_light_reference",
     "ai_light_iteration", "ai_light_candidate", "ai_light_preset",
 };
 
@@ -192,15 +194,16 @@ lighting_rig_t make_probe_rig(const uuid& in_session_id, std::int32_t in_iterati
   return l_rig;
 }
 
-/// 造一份有内容的 spec（走内存聚合体，顺便验证表实体 ↔ 聚合体的转换）
-ai_light_spec make_probe_spec(const uuid& in_session_id, std::int32_t in_revision) {
-  ai_light_spec l_spec{};
+/// 造一份有内容的 spec。
+/// 原本它返回表实体 ai_light_spec 并顺手验证「表实体 ↔ 内存聚合体」的转换；
+/// 那张表已删除，现在直接返回内存聚合体 lighting_spec_t（它还活着，接缝在用）。
+lighting_spec_t make_probe_spec(const uuid& in_session_id) {
+  lighting_spec_t l_spec{};
   l_spec.session_id_ = in_session_id;
-  l_spec.revision_   = in_revision;
 
   lighting_intent_t l_intent{};
   l_intent.weather_ = "clear";
-  l_spec.set_intent(l_intent);
+  l_spec.intent_ = l_intent;
 
   lighting_targets_t l_targets{};
   l_targets.luma_percentiles_     = luma_percentiles_t{interval_t{0.02, 0.06}, interval_t{0.10, 0.18}, interval_t{0.55, 0.75}};
@@ -211,7 +214,7 @@ ai_light_spec make_probe_spec(const uuid& in_session_id, std::int32_t in_revisio
   l_targets.grading_hints_        = grading_hints_t{"strong", true, "moderate"};
   l_targets.ownership_.lighting_  = {"luma_percentiles", "white_balance_kelvin", "clip_rate"};
   l_targets.ownership_.grading_   = {"palette", "contrast", "grading_hints"};
-  l_spec.set_targets(l_targets);
+  l_spec.targets_ = l_targets;
 
   reference_stats_t l_stats{};
   l_stats.image_count_        = 4;
@@ -219,7 +222,7 @@ ai_light_spec make_probe_spec(const uuid& in_session_id, std::int32_t in_revisio
   l_stats.retouch_detected_   = true;
   l_stats.per_dimension_confidence_["luma_percentiles"]     = 0.85;
   l_stats.per_dimension_confidence_["white_balance_kelvin"] = 0.5;
-  l_spec.set_reference_stats(l_stats);
+  l_spec.reference_stats_ = l_stats;
 
   return l_spec;
 }
@@ -369,16 +372,23 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     l_ref.stats_confidence_ = 0.85;
     insert(l_session).into<ai_light_reference>().values(l_ref)();
 
-    // --- Spec ---
-    auto l_spec = make_probe_spec(l_session_row.uuid_id_, 1);
-    insert(l_session).into<ai_light_spec>().values(l_spec)();
-    BOOST_TEST(!l_spec.uuid_id_.is_nil());
+    // --- Spec：不再有表实体，只用内存聚合体验一份 JSON 往返 ---
+    // （表 ai_light_spec 已删除；这里保留聚合体的往返是为了覆盖 lighting_spec_t 的
+    //   to_json/from_json —— 接缝的 feedback 请求还在用它。）
+    {
+      auto l_spec = make_probe_spec(l_session_row.uuid_id_);
+      nlohmann::json l_spec_json = l_spec;
+      auto l_spec_back           = l_spec_json.get<lighting_spec_t>();
+      BOOST_TEST(l_spec_back.intent_.weather_ == "clear");
+      BOOST_TEST(l_spec_back.targets_.ownership_.grading_.size() == 3);
+      BOOST_TEST(l_spec_back.reference_stats_.image_count_ == 4);
+      BOOST_TEST(l_spec_back.reference_stats_.conflicts_.size() == 1);
+    }
 
     // --- 轮次 ---
     ai_light_iteration l_iter{};
     l_iter.session_id_ = l_session_row.uuid_id_;
     l_iter.iteration_  = 1;
-    l_iter.spec_id_    = l_spec.uuid_id_;
     l_iter.set_axes(iteration_axes_t{
         {axis_step_t{variant_axis_kind::key_fill_ratio, {4.0, 6.0, 8.0}, "光比"}}, "沿光比展开三档"
     });

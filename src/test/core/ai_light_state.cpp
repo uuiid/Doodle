@@ -118,7 +118,6 @@ struct fixture_t : doodle_test::coro_fixture_t {
   bool opened_{false};
 
   ai_light_session session_{};
-  ai_light_spec spec_{};
   ai_light_iteration iteration_{};
   std::vector<ai_light_candidate> candidates_{};
 
@@ -171,13 +170,8 @@ struct fixture_t : doodle_test::coro_fixture_t {
 
     if (!in_with_children) return;
 
-    spec_.session_id_ = session_.uuid_id_;
-    spec_.revision_   = 1;
-    insert(orm_).into<ai_light_spec>().values(spec_)();
-
     iteration_.session_id_ = session_.uuid_id_;
     iteration_.iteration_  = 1;
-    iteration_.spec_id_    = spec_.uuid_id_;
     iteration_.state_      = in_iter_state;
     // mark_iteration_rendered 是按 server_task_info_id 反查轮次的，所以要有个非 nil 值
     iteration_.server_task_info_id_ = core_set::get_set().get_uuid();
@@ -577,9 +571,6 @@ BOOST_AUTO_TEST_CASE(session_detail_aggregates_all_tables) {
 
   BOOST_TEST(l_detail->session_.uuid_id_ == l_fx.session_.uuid_id_);
   BOOST_TEST(l_detail->references_.size() == 1);
-  BOOST_TEST(l_detail->spec_history_.size() == 1);
-  BOOST_TEST(l_detail->current_spec_.has_value());
-  BOOST_TEST(l_detail->current_spec_->revision_ == 1);
   BOOST_TEST(l_detail->iterations_.size() == 1);
   BOOST_TEST(l_detail->candidates_.size() == static_cast<std::size_t>(g_candidate_count));
   BOOST_TEST(!l_detail->accepted_candidate_.has_value());
@@ -806,7 +797,6 @@ DOODLE_FIXTURE_TEST_CASE_CORO(pre_assigned_uuid_survives_the_deferred_insert, fi
   l_it.uuid_id_             = l_it_uuid;
   l_it.session_id_          = l_fx.session_.uuid_id_;
   l_it.iteration_           = 2;  // 夹具已用第 1 轮
-  l_it.spec_id_             = l_fx.spec_.uuid_id_;
   l_it.server_task_info_id_ = l_task.uuid_id_;  // 必须在任务 uuid 定下来之后
 
   // --- 候选：iteration_id_ 指向轮次；渲染路径**不是列**（D44），由三个 uuid 现算 ---

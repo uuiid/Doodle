@@ -58,7 +58,6 @@ struct database_t;
 namespace ai_light {
 struct ai_light_session;
 struct ai_light_reference;
-struct ai_light_spec;
 struct ai_light_iteration;
 struct ai_light_candidate;
 struct ai_light_preset;
@@ -276,9 +275,11 @@ class DOODLELIB_API sqlite_database {
   // 不往 sqlite_database 里塞业务写操作。
   //
   // 几个「当前」是靠查询得出而不是靠冗余指针列的，对应关系：
-  //   当前 Spec     = 会话内 revision 最大的一行   → get_current_ai_light_spec
   //   本轮起点      = 上一轮 is_selected 的候选     → get_ai_light_selected_candidate
   //   定稿候选      = is_accepted 的候选            → get_ai_light_accepted_candidate
+  //
+  // 曾经还有「当前 Spec = 会话内 revision 最大的一行 → get_current_ai_light_spec」，
+  // 已随 ai_light_spec 表一起删除。
   // ---------------------------------------------------------------------------
 
   /// 镜头下的全部会话，新的在前。Shot 页入口。
@@ -294,13 +295,6 @@ class DOODLELIB_API sqlite_database {
 
   /// 会话的参考图，按 created_at 升序（= 上传先后顺序）
   std::vector<ai_light::ai_light_reference> get_ai_light_references(const uuid& in_session_id);
-
-  /// 会话的全部 Spec 版本，revision 升序
-  std::vector<ai_light::ai_light_spec> get_ai_light_specs(const uuid& in_session_id);
-  /// 当前生效的 Spec（revision 最大的一行）
-  std::optional<ai_light::ai_light_spec> get_current_ai_light_spec(const uuid& in_session_id);
-  /// 指定版本的 Spec
-  std::optional<ai_light::ai_light_spec> get_ai_light_spec(const uuid& in_session_id, std::int32_t in_revision);
 
   /// 会话的全部轮次，iteration 升序
   std::vector<ai_light::ai_light_iteration> get_ai_light_iterations(const uuid& in_session_id);

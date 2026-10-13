@@ -243,8 +243,6 @@ struct DOODLELIB_API submit_iteration_request_t {
   uuid operator_id_{};
   /// 本轮轮次号（1、2、3…）。调用方已校验 == current_iteration_ + 1。
   std::int32_t iteration_{0};
-  /// 本轮沿用的 Spec。调用方已校验存在且已人工确认。
-  uuid spec_id_{};
   /// 本轮轴计划（从前端提交的 `axes` 解析；缺省为空轴计划 = 基线轮）。
   iteration_axes_t axes_{};
   /// **权威状态**：恰好 g_candidate_count 个已展开的 rig。身份字段由本函数补齐。

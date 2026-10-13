@@ -182,7 +182,6 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
   l_it.uuid_id_    = core_set::get_set().get_uuid();
   l_it.session_id_ = in_request.session_id_;
   l_it.iteration_  = l_iteration;
-  l_it.spec_id_    = in_request.spec_id_;
   l_it.state_      = ai_light_iteration_state::generated;
   l_it.set_axes(in_request.axes_);
 
@@ -200,9 +199,8 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
   for (std::int32_t l_i = 0; l_i < g_candidate_count; ++l_i) {
     auto l_rig = in_request.rigs_.at(static_cast<std::size_t>(l_i));
     // 身份字段由服务端补齐：候选的来源只负责「灯怎么打」，不负责「这是第几个」。
-    // 降级后这一点更要紧 —— 前端给的 session_id/spec_id/iteration 一律不采信。
+    // 降级后这一点更要紧 —— 前端给的 session_id/iteration 一律不采信。
     l_rig.session_id_      = in_request.session_id_;
-    l_rig.spec_id_         = in_request.spec_id_;
     l_rig.iteration_       = l_iteration;
     l_rig.candidate_index_ = l_i;
     l_rig.rig_id_          = uuid{};
@@ -287,7 +285,6 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
   ai_light_task_payload_t l_payload{};
   l_payload.session_id_            = in_request.session_id_;
   l_payload.iteration_             = l_iteration;
-  l_payload.spec_id_               = in_request.spec_id_;
   // 轮次目录名用**轮次 uuid**：候选行靠 iteration_id_ 就能算出落点，不必回查序号。
   l_payload.out_dir_               = l_out_dir;
   l_payload.baseline_level_        = l_assembly.original_map_.generic_string();
@@ -804,8 +801,6 @@ std::optional<ai_light_session_detail_t> build_session_detail(sqlite_database& i
 
   auto& l_detail                 = *l_ret;
   l_detail.references_           = in_sql.get_ai_light_references(in_session_id);
-  l_detail.spec_history_         = in_sql.get_ai_light_specs(in_session_id);
-  l_detail.current_spec_         = in_sql.get_current_ai_light_spec(in_session_id);
   l_detail.iterations_           = in_sql.get_ai_light_iterations(in_session_id);
   l_detail.candidates_           = in_sql.get_ai_light_candidates_by_session(in_session_id);
   l_detail.accepted_candidate_   = in_sql.get_ai_light_accepted_candidate(in_session_id);

@@ -34,12 +34,6 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
   /// 参考图，按 created_at 升序（= 上传先后顺序）
   std::vector<ai_light_reference> references_{};
 
-  /// Spec 全部版本，revision 升序
-  std::vector<ai_light_spec> spec_history_{};
-  /// 当前生效的 Spec（revision 最大的一行）。
-  /// 不用冗余指针列换取的代价就是这里要挑一次，见 session.h 顶部的说明。
-  std::optional<ai_light_spec> current_spec_{};
-
   /// 轮次，iteration 升序
   std::vector<ai_light_iteration> iterations_{};
   /// 候选，跨轮，按（轮次, 候选序号）升序。每轮 g_candidate_count 个。
@@ -58,8 +52,6 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
   friend void to_json(nlohmann::json& j, const ai_light_session_detail_t& p) {
     j["session"]            = p.session_;
     j["references"]         = p.references_;
-    j["spec_history"]       = p.spec_history_;
-    j["current_spec"]       = p.current_spec_;
     j["iterations"]         = p.iterations_;
     j["candidates"]         = p.candidates_;
     j["accepted_candidate"] = p.accepted_candidate_;
@@ -71,8 +63,6 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
   friend void from_json(const nlohmann::json& j, ai_light_session_detail_t& p) {
     if (j.contains("session")) j.at("session").get_to(p.session_);
     if (j.contains("references")) j.at("references").get_to(p.references_);
-    if (j.contains("spec_history")) j.at("spec_history").get_to(p.spec_history_);
-    if (j.contains("current_spec")) j.at("current_spec").get_to(p.current_spec_);
     if (j.contains("iterations")) j.at("iterations").get_to(p.iterations_);
     if (j.contains("candidates")) j.at("candidates").get_to(p.candidates_);
     if (j.contains("accepted_candidate")) j.at("accepted_candidate").get_to(p.accepted_candidate_);

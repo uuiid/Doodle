@@ -551,7 +551,6 @@ struct DOODLE_CORE_API lighting_rig_t {
   uuid rig_id_{};
   uuid session_id_{};
   uuid shot_task_id_{};
-  uuid spec_id_{};
   std::int32_t iteration_{0};
   std::int32_t candidate_index_{0};
   variant_axis_t variant_axis_{};
@@ -567,7 +566,6 @@ struct DOODLE_CORE_API lighting_rig_t {
     j["rig_id"]          = p.rig_id_;
     j["session_id"]      = p.session_id_;
     j["shot_task_id"]    = p.shot_task_id_;
-    j["spec_id"]         = p.spec_id_;
     j["iteration"]       = p.iteration_;
     j["candidate_index"] = p.candidate_index_;
     j["variant_axis"]    = p.variant_axis_;
@@ -582,7 +580,6 @@ struct DOODLE_CORE_API lighting_rig_t {
     if (j.contains("rig_id")) j.at("rig_id").get_to(p.rig_id_);
     if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
     if (j.contains("shot_task_id")) j.at("shot_task_id").get_to(p.shot_task_id_);
-    if (j.contains("spec_id")) j.at("spec_id").get_to(p.spec_id_);
     if (j.contains("iteration")) j.at("iteration").get_to(p.iteration_);
     if (j.contains("candidate_index")) j.at("candidate_index").get_to(p.candidate_index_);
     if (j.contains("variant_axis")) j.at("variant_axis").get_to(p.variant_axis_);

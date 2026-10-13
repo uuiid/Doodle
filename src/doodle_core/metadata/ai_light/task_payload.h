@@ -292,7 +292,6 @@ struct DOODLE_CORE_API ai_light_launch_plan_t {
 struct DOODLE_CORE_API ai_light_task_payload_t {
   uuid session_id_{};
   std::int32_t iteration_{0};
-  uuid spec_id_{};
   /// 本轮目录，**相对工作机本地缓存根**（D39）。commandlet 在这里写
   /// g_ai_light_render_report_file_name，工作机在这里读 —— 两边拿到的都是绝对路径，
   /// 因为工作机起 UE 之前已经把它拼成了绝对路径（载荷本身只带相对路径）。
@@ -329,7 +328,6 @@ struct DOODLE_CORE_API ai_light_task_payload_t {
   friend void to_json(nlohmann::json& j, const ai_light_task_payload_t& p) {
     j["session_id"]            = p.session_id_;
     j["iteration"]             = p.iteration_;
-    j["spec_id"]               = p.spec_id_;
     j["out_dir"]               = p.out_dir_;
     j["baseline_level"]        = p.baseline_level_;
     j["render_map"]            = p.render_map_;
@@ -346,7 +344,6 @@ struct DOODLE_CORE_API ai_light_task_payload_t {
   friend void from_json(const nlohmann::json& j, ai_light_task_payload_t& p) {
     if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
     if (j.contains("iteration")) j.at("iteration").get_to(p.iteration_);
-    if (j.contains("spec_id")) j.at("spec_id").get_to(p.spec_id_);
     if (j.contains("out_dir")) j.at("out_dir").get_to(p.out_dir_);
     if (j.contains("baseline_level")) j.at("baseline_level").get_to(p.baseline_level_);
     if (j.contains("render_map")) j.at("render_map").get_to(p.render_map_);

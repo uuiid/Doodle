@@ -147,8 +147,6 @@ struct DOODLE_CORE_API ai_light_iteration {
   uuid session_id_{};
   /// 从 1 开始。与 session_id 组成唯一键。
   std::int32_t iteration_{1};
-  /// 本轮使用的 Spec 版本
-  uuid spec_id_{};
 
   ai_light_iteration_state state_{ai_light_iteration_state::generated};
   /// iteration_axes_t 的 JSON 形态（嵌套结构不是 ORM 的列类型）
@@ -195,7 +193,6 @@ struct DOODLE_CORE_API ai_light_iteration {
     j["id"]                  = p.uuid_id_;
     j["session_id"]          = p.session_id_;
     j["iteration"]           = p.iteration_;
-    j["spec_id"]             = p.spec_id_;
     j["state"]               = p.state_;
     j["axes"]                = p.axes_;
     j["server_task_info_id"] = p.server_task_info_id_;
@@ -213,7 +210,6 @@ struct DOODLE_CORE_API ai_light_iteration {
     if (j.contains("id")) j.at("id").get_to(p.uuid_id_);
     if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
     if (j.contains("iteration")) j.at("iteration").get_to(p.iteration_);
-    if (j.contains("spec_id")) j.at("spec_id").get_to(p.spec_id_);
     if (j.contains("state")) j.at("state").get_to(p.state_);
     if (j.contains("axes")) j.at("axes").get_to(p.axes_);
     if (j.contains("server_task_info_id")) j.at("server_task_info_id").get_to(p.server_task_info_id_);

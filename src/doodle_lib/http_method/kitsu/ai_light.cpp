@@ -591,81 +591,51 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
 }
 
 // ===========================================================================
-// Spec（闸门 1）
+// 输出版本确认
 // ===========================================================================
 //
 // 这里曾经有 spec_route 的 get/post（GET/POST /session/{}/spec）。整条路由已删除：
-// POST 最后只剩「读会话 + 校验提示词非空 + 返回会话详情」，不写任何东西，而生产代码里
-// 也没有任何地方会 insert 一行 ai_light_spec；GET 的 Spec 版本列表与会话详情里的
-// spec_history_ 是同一份数据的第二个出口。详见 ai_light.h 里那段说明。
+// POST 最后只剩「读会话 + 校验提示词非空 + 返回会话详情」，不写任何东西；GET 的 Spec
+// 版本列表是同一份数据的第二个出口。详见 ai_light.h 里那段说明。
+//
+// **ai_light_spec 这张表也已删除** —— 调查发现它是空表：全仓没有任何 insert 路径
+// （状态机在 awaiting_spec_confirm 就断了），spec.h 里那些 intent/targets/reference_stats
+// 是早期「后端用大模型做灯光推理」方案的遗留。现在没有再写它，本路由也就没有
+// 「已确认的 Spec 行」可更新，于是这条路由退化成一次纯粹的状态推进。
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_confirm_route, post) {
   person_.check_not_outsourcer();
-  auto l_sql  = get_sqlite_database();
-  auto l_json = in_handle->get_json();
+  auto l_sql = get_sqlite_database();
 
-  // session_id 来自路径；请求体里带了也忽略（路径为准）
+  // session_id 来自路径；请求体不读（本路由不需要任何入参）
   auto l_session = load_session_checked(person_, l_sql, session_id_);
-
-  auto l_spec = l_sql.get_current_ai_light_spec(l_session.uuid_id_);
-  DOODLE_CHICK_HTTP(
-      l_spec.has_value(), bad_request, "会话 {} 还没有 Spec 可供确认",
-      l_session.uuid_id_
-  );
-
-  // 幂等：重复确认不报错、不刷新 confirmed_at_（时间戳是「谁在什么时候认的」的证据）
-  if (l_spec->human_confirmed_) {
-    co_return in_handle->make_msg(
-        nlohmann::json{{"spec", *l_spec}, {"session_state", l_session.state_}, {"already_confirmed", true}}
-    );
-  }
 
   DOODLE_CHICK_HTTP(
       l_session.state_ == ai_light_session_state::awaiting_spec_confirm, bad_request,
-      "会话 {} 处于状态 {}，不在等 Spec 确认", l_session.uuid_id_, magic_enum::enum_name(l_session.state_)
+      "会话 {} 处于状态 {}，不在等确认", l_session.uuid_id_, magic_enum::enum_name(l_session.state_)
   );
-
-  // 冲突裁决：方案 §6.3 说冲突维度不自动平均，交人工。裁决所需的冲突清单与逐维置信度
-  // 都已经在 Spec 的 reference_stats_ 里（conflicts_ / per_dimension_confidence_），
-  // 原先那个从请求体回填的 conflict_resolution_ 列已删除（前端从未实现）。
-  l_spec->human_confirmed_ = true;
-  l_spec->confirmed_by_    = person_.person_.uuid_id_;
-  l_spec->confirmed_at_    = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
   // 确认后立即进入候选生成（§10.3）—— 候选由前端算好后经
   // POST /session/{}/iteration 提交（ai_light_submit.h）。这里只把状态推到 generating，
   // 生成动作本身不属于本路由。
   l_session.state_ = ai_light_session_state::generating;
 
-  {
-    sql_modify_statement_vector_t l_sqls{};
-    l_sqls.emplace_back(
-        update(l_sql)
-            .from<ai_light_spec>()
-            .set(
-                c(&ai_light_spec::human_confirmed_) = l_spec->human_confirmed_,
-                c(&ai_light_spec::confirmed_by_) = l_spec->confirmed_by_,
-                c(&ai_light_spec::confirmed_at_) = l_spec->confirmed_at_
-            )
-            .where(c(&ai_light_spec::uuid_id_) == l_spec->uuid_id_)
-    );
-    l_sqls.emplace_back(
-        update(l_sql)
-            .from<ai_light_session>()
-            .set(c(&ai_light_session::state_) = l_session.state_)
-            .where(c(&ai_light_session::uuid_id_) == l_session.uuid_id_)
-    );
-    co_await l_sql.run_sql(std::move(l_sqls));
-  }
+  co_await l_sql.run_sql(
+      sql_modify_statement_vector_t{
+          update(l_sql)
+              .from<ai_light_session>()
+              .set(c(&ai_light_session::state_) = l_session.state_)
+              .where(c(&ai_light_session::uuid_id_) == l_session.uuid_id_)
+      }
+  );
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 确认 AI 灯光会话 {} 的 Spec revision {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_session.uuid_id_, l_spec->revision_
+      g_logger_ctrl().get_http(), "用户 {}({}) 确认了 AI 灯光会话 {} 的输出版本，会话转入 generating",
+      person_.person_.email_, person_.person_.get_full_name(), l_session.uuid_id_
   );
 
   // 曾经在这里调 advance_session 立刻跑一轮候选生成。候选生成归前端后这个入口
   // 没有可推进的步骤，已随函数一起删除：状态停在 generating，等前端提交。
-  // Spec 的确认**保留**（确认是人工动作，不该因为下游能力改变而被撤销）。
 
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
