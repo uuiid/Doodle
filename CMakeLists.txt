@@ -89,7 +89,6 @@ find_package(OpenSSL REQUIRED)
 # 仅头库
 find_package(magic_enum CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
-find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)

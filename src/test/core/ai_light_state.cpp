@@ -630,7 +630,7 @@ BOOST_AUTO_TEST_CASE(session_detail_reports_overdue_flag) {
 // 最后一条 advance_session 用例（advance_session_without_references_reports_no_step）
 // 也随函数本身一起删除：它验的是「没有可推进的步骤时报 400」，而**整条链**已不存在 ——
 // 状态推进现在只发生在参考图上传与 POST /session/{}/iteration，
-// 后者的准入闸门由 ai_light_json_validation.cpp 覆盖。一个恒抛 400 的空壳没有可测行为。
+// 后者的准入闸门由 ai_light_submit 的 IR 校验覆盖。一个恒抛 400 的空壳没有可测行为。
 //
 // 保留 net 结论：**任何**失败的推进都不得留下半成品行、不得丢参考图、
 // 不得写 failure_reason_ —— 这条在提交与判断的用例里仍然有断言。

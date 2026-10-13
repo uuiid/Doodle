@@ -127,8 +127,9 @@ lighting_rig_t parse_submitted_rig(const nlohmann::json& in_json, std::int32_t i
 
   lighting_rig_t l_rig{};
   // globals / lights 走 NLohmann 的 from_json（rig.h:565-597 已定义）。
-  // 这里**不**用 json_val 的严格读取器：那是给模型输出用的（抛 bad_gateway 记在接缝上），
-  // 前端提交的形状错误是 400。两者的错误归属不同，措辞也不同。
+  // 这里直接 get_to 硬解析，不走「接缝读取器」那套（曾经有过 ai_light_json_validation.h）：
+  // 那套是给模型输出用的（抛 bad_gateway 记在接缝上），前端提交的形状错误是 400。
+  // 两者的错误归属不同，措辞也不同。
   in_json.at("globals").get_to(l_rig.globals_);
   in_json.at("lights").get_to(l_rig.lights_);
   // ops 是审计影子（决定 D-58 路线 A）：收下但不参与任何判定，也不用于建灯。

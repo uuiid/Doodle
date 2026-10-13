@@ -91,7 +91,6 @@
         "diagnostics"
       ]
     },
-    "json-schema-validator",
     "spdlog",
     "entt",
     "eigen3",

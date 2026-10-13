@@ -5,12 +5,14 @@
 //
 // 本文件只装**状态机**：apply_judgement / mark_iteration_rendered / build_session_detail，
 // 候选落库（write_submitted_iteration）与它自己的小助手。**本文件已不含任何接缝调用**；
-// rig 纯运算、共用部件与
-// JSON 架构层在同目录的独立文件里：
+// rig 纯运算、共用部件在同目录的独立文件里：
 //   * `ai_light_rig_ops.{h,cpp}`          —— ops diff / key:fill 比
 //   * `ai_light_seam_common.{h,cpp}`      —— 共用提示词片段 + 描述 + 推理管道
-//   * `ai_light_json_validation.{h,cpp}`  —— schema 建造器 + 严格/宽松读取器 + 架构诊断
 // 对外仍然只需包含伞形头 `ai_light_orchestrator.h`。接缝契约（历史）见该头顶部。
+//
+// 曾经还有 `ai_light_json_validation.{h,cpp}`（schema 建造器 + 严格/宽松读取器 + 架构诊断）。
+// **已删除** —— schema 随「schema 归前端」失去全部调用者，读取器也只剩本文件的渲染报告
+// 解析在用；那处现在是就地 get<>() 硬解析（见 parse_round_render_report）。
 //
 // 曾经还有 `ai_light_seam_feedback.{h,cpp}`（接缝 3 的离线部件：提示词 / schema / 映射）。
 // **已删除** —— 那组纯函数在生产里没有任何调用方，见 ai_light_orchestrator.h 里的说明。
@@ -50,7 +52,6 @@
 
 #include <boost/exception/diagnostic_information.hpp>
 
-#include "ai_light_json_validation.h"
 #include "ai_light_rig_ops.h"
 #include "ai_light_seam_common.h"
 #include <algorithm>
@@ -580,18 +581,41 @@ constexpr std::string_view g_render_report_seam{"round_render_report"};
 
 round_render_report_t parse_round_render_report(const nlohmann::json& in_json) {
   round_render_report_t l_ret{};
-  l_ret.error_            = json_val::opt_string(in_json, "error").value_or("");
+  // 以下是一份**手写的直接解析**。原先走 ai_light_json_validation.h 那层读取器，那层已删除
+  // （schema 建造器随「schema 归前端」失去调用者，读取器只剩这里 5 个符号在用），
+  // 现在就地用 nlohmann 的 contains/at/get<> 硬解析。
+  //
+  // 成败口径与原先逐条一致：
+  //   * 形状不符（缺键 / 类型不对）→ 502 bad_gateway，措辞保持「<接缝>：字段 <路径> …」；
+  //   * 语义无效（枚举认不出、可选字段类型不对）→ 静默取默认值，不作废整轮回传。
 
-  const auto l_candidates = json_val::require_array(in_json, g_render_report_seam, "candidates");
+  auto l_opt_string = [](const nlohmann::json& in_parent, std::string_view in_key) -> std::string {
+    if (!in_parent.is_object() || !in_parent.contains(in_key)) return {};
+    const auto& l_v = in_parent.at(in_key);
+    return l_v.is_string() ? l_v.get<std::string>() : std::string{};
+  };
+  auto l_opt_number = [](const nlohmann::json& in_parent, std::string_view in_key) -> std::optional<double> {
+    if (!in_parent.is_object() || !in_parent.contains(in_key)) return std::nullopt;
+    const auto& l_v = in_parent.at(in_key);
+    return l_v.is_number() ? std::optional<double>{l_v.get<double>()} : std::nullopt;
+  };
+
+  l_ret.error_            = l_opt_string(in_json, "error");
+
+  DOODLE_CHICK_HTTP(
+      in_json.is_object() && in_json.contains("candidates") && in_json.at("candidates").is_array(), bad_gateway,
+      "{}：字段 candidates 缺失或类型不符合（期望数组）", g_render_report_seam
+  );
+  const auto& l_candidates = in_json.at("candidates");
   l_ret.candidates_.reserve(l_candidates.size());
 
   for (std::size_t i = 0; i < l_candidates.size(); ++i) {
     const auto l_base  = fmt::format("candidates[{}]", i);
 
     // 数组元素必须是对象。带上下标路径再报错，比「解析失败」四个字有用得多。
-    const auto* l_item = json_val::json_at_path(in_json, l_base);
+    const auto& l_item = l_candidates.at(i);
     DOODLE_CHICK_HTTP(
-        l_item != nullptr && l_item->is_object(), bad_gateway, "{}：字段 {} 缺失或类型不符合（期望对象）",
+        l_item.is_object(), bad_gateway, "{}：字段 {} 缺失或类型不符合（期望对象）",
         g_render_report_seam, l_base
     );
 
@@ -599,24 +623,38 @@ round_render_report_t parse_round_render_report(const nlohmann::json& in_json) {
 
     // candidate_id 是严格字段：它对不上任何既存候选时整轮回传都没意义（apply_render_report 会拒）。
     //
-    // 手写「取 + 转」的理由：校验层**没有** uuid 读取器 —— 模型输出里从不出现 uuid
-    // （候选身份一律由服务端钉），所以当初没有造。这里把 nlohmann 的解析异常翻成
-    // 同一套 bad_gateway 措辞，好让「回传坏了」在美术那边只有一种说法。
+    // 手写「取 + 转」的理由：模型输出里从不出现 uuid（候选身份一律由服务端钉），所以没有
+    // 专门的读取器。这里把 nlohmann 的解析异常翻成同一套 bad_gateway 措辞，
+    // 好让「回传坏了」在美术那边只有一种说法。
     const auto l_id_path = l_base + ".candidate_id";
-    const auto* l_id     = json_val::json_at_path(in_json, l_id_path);
     DOODLE_CHICK_HTTP(
-        l_id != nullptr && l_id->is_string(), bad_gateway, "{}：字段 {} 缺失或类型不符合（期望 uuid 字符串）",
-        g_render_report_seam, l_id_path
+        l_item.contains("candidate_id") && l_item.at("candidate_id").is_string(), bad_gateway,
+        "{}：字段 {} 缺失或类型不符合（期望 uuid 字符串）", g_render_report_seam, l_id_path
     );
     try {
-      l_cand.candidate_id_ = l_id->get<uuid>();
+      l_cand.candidate_id_ = l_item.at("candidate_id").get<uuid>();
     } catch (const std::exception& in_err) {
       DOODLE_CHICK_HTTP(
           false, bad_gateway, "{}：字段 {} 不是合法的 uuid（{}）", g_render_report_seam, l_id_path, in_err.what()
       );
     }
 
-    l_cand.status_ = json_val::require_enum<candidate_render_status>(in_json, g_render_report_seam, l_base + ".status");
+    // status 是严格字段：认不出的取值抛 bad_gateway。**刻意不用 NLOHMANN_JSON_SERIALIZE_ENUM
+    // 的裸 get<>**：它遇到认不出的字符串不抛，而是静默落到第一个枚举值 —— 那等于把「工作机
+    // 回了一个非法状态」变成「这轮渲成功了」，整轮候选都建立在一个错值上。
+    DOODLE_CHICK_HTTP(
+        l_item.contains("status") && l_item.at("status").is_string(), bad_gateway,
+        "{}：字段 {}.status 缺失或类型不符合（期望字符串）", g_render_report_seam, l_base
+    );
+    {
+      const auto l_status_name = l_item.at("status").get<std::string>();
+      const auto l_status_v    = magic_enum::enum_cast<candidate_render_status>(l_status_name);
+      DOODLE_CHICK_HTTP(
+          l_status_v.has_value(), bad_gateway, "{}：字段 {}.status 的值 \"{}\" 不是合法的 {}", g_render_report_seam,
+          l_base, l_status_name, magic_enum::enum_type_name<candidate_render_status>()
+      );
+      l_cand.status_ = *l_status_v;
+    }
 
     // 以下四个是宽松字段（D26：缺失取默认、形状不符丢弃）：
     //   * candidate_index 缺失时按下标推 —— 工作机的回传顺序就是派发顺序；
@@ -624,13 +662,13 @@ round_render_report_t parse_round_render_report(const nlohmann::json& in_json) {
     //   * metrics 是诊断数据（给美术看落点、给 VLM 评分用），形状错就丢，不让它把
     //     6 张已经渲出来的图作废。
     l_cand.candidate_index_ =
-        static_cast<std::int32_t>(json_val::opt_number(*l_item, "candidate_index").value_or(static_cast<double>(i)));
-    l_cand.render_ms_   = static_cast<std::int64_t>(json_val::opt_number(*l_item, "render_ms").value_or(0.0));
-    l_cand.light_count_ = static_cast<std::int32_t>(json_val::opt_number(*l_item, "light_count").value_or(0.0));
+        static_cast<std::int32_t>(l_opt_number(l_item, "candidate_index").value_or(static_cast<double>(i)));
+    l_cand.render_ms_   = static_cast<std::int64_t>(l_opt_number(l_item, "render_ms").value_or(0.0));
+    l_cand.light_count_ = static_cast<std::int32_t>(l_opt_number(l_item, "light_count").value_or(0.0));
 
-    if (l_item->contains("metrics")) {
+    if (l_item.contains("metrics")) {
       try {
-        l_item->at("metrics").get_to(l_cand.metrics_);
+        l_item.at("metrics").get_to(l_cand.metrics_);
       } catch (const std::exception& in_err) {
         SPDLOG_LOGGER_WARN(
             g_logger_ctrl().get_http(), "AI 灯光回传：候选 {} 的 metrics 不合规，已丢弃（{}）", l_cand.candidate_id_,
