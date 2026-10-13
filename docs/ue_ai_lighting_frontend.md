@@ -239,8 +239,7 @@ draft ──前端提交 Spec──▶ awaiting_spec_confirm ──POST /spec/co
 
 | 区块 | 字段 | 怎么显示 |
 |---|---|---|
-| 意图 | `intent.atmosphere[]`、`time_of_day`、`weather`、`source_motivation[]`、`setting`、`story_context` | 标签组 + 文本 |
-| 角色 | `intent.character_personality[]` → `{subject, trait, lighting_language}` | 表格：角色 / 性格 / 对应的灯光语言（`hardness`、`position_bias`、`kelvin_bias`、`key_fill_ratio`） |
+| 意图 | `intent.weather` | 文本 |
 | 目标区间 | `targets.luma_percentiles.{p10,p50,p90}`、`contrast`、`white_balance_kelvin`、`clip_rate.{high,low}`、`palette[].share` | **每个都是一对 `[low, high]`**，显示成区间条；`palette[].color` 用色块 |
 | 调色提示 | `targets.grading_hints.{vignette, lifted_blacks, bloom}` | 枚举徽标（`none/subtle/moderate/strong`、是/否） |
 | 责任划分 | `targets.ownership.{lighting, grading, shared}` | 三列维度名，说明「哪些指标归灯光、哪些归调色」（用于解释「为什么这张图的差异主要来自调色」） |

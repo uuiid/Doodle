@@ -17,7 +17,10 @@ namespace doodle::ai_light {
 constexpr std::string_view g_rig_schema_version{"1.1"};
 /// LightingSpec 版本（docs/ue_ai_lighting_plan.md §4.2）
 /// 1.2 → 1.3：Tier B 取消后 tier 与 degrade_level 信息等价，删掉 tier，只留 degrade_level。
-constexpr std::string_view g_spec_schema_version{"1.3"};
+/// 1.3 → 1.4：后端不再用大模型做推理与判断，删掉 intent 里由模型产出的那批字段
+///            （atmosphere / time_of_day / source_motivation / story_context / setting、
+///             以及 character_personality 与 lighting_language），intent 只剩 weather。
+constexpr std::string_view g_spec_schema_version{"1.4"};
 
 /// 每轮候选数量（决策 1：固定 6）。
 /// §6.6 护栏要求同轮候选的**灯集合与角色完全一致**，只有轴参数不同 ——

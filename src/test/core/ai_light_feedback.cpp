@@ -48,20 +48,7 @@ lighting_spec_t make_spec() {
   l_spec.spec_id_    = core_set::get_set().get_uuid();
   l_spec.session_id_ = core_set::get_set().get_uuid();
 
-  l_spec.intent_.atmosphere_    = std::vector<std::string>{"霓虹", "潮湿"};
-  l_spec.intent_.time_of_day_   = "夜";
   l_spec.intent_.weather_       = "小雨";
-  l_spec.intent_.setting_       = "雨夜街道";
-  l_spec.intent_.story_context_ = "主角独行";
-
-  character_personality_t l_person{};
-  l_person.subject_                           = "主角";
-  l_person.trait_                             = "阴郁内向";
-  l_person.lighting_language_.hardness_       = "hard";
-  l_person.lighting_language_.position_bias_  = "side_high";
-  l_person.lighting_language_.kelvin_bias_    = "cool";
-  l_person.lighting_language_.key_fill_ratio_ = interval_t{6.0, 10.0};
-  l_spec.intent_.character_personality_       = std::vector<character_personality_t>{l_person};
 
   l_spec.targets_.contrast_                                    = interval_t{0.62, 0.72};
   l_spec.targets_.white_balance_kelvin_                        = interval_t{4000.0, 4200.0};

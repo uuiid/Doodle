@@ -179,20 +179,11 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
 
 ```jsonc
 {
-  "schema_version": "1.3",
+  "schema_version": "1.4",
   "spec_id": "uuid", "session_id": "uuid",
 
   "intent": {                        // 来自人工提示词，权威
-    "atmosphere": ["压抑", "暖", "高对比"],
-    "time_of_day": "night", "weather": "clear",
-    "source_motivation": ["practical_lamp", "window"],
-    "character_personality": [
-      {"subject": "char_Ch220B", "trait": "阴郁内向",
-       "lighting_language": {"key_fill_ratio": [6,10], "hardness": "hard",
-                             "position_bias": "side_high", "kelvin_bias": "cool"}}
-    ],
-    "story_context": "角色在雨夜独自等待，情绪低落",
-    "setting": "老式公寓室内，木质家具，窗外霓虹"
+    "weather": "clear"
   },
 
   "targets": {                       // 来自多张参考图的显示空间统计，聚合后
@@ -226,6 +217,10 @@ LLM 能可靠决定「要有主光、来自左前方 45°、冷色、硬光、�
 > **1.2 → 1.3 的变更**：删掉 `tier`，只保留 `degrade_level`。
 > Tier B 取消后两者信息等价 —— `degrade_level` 原本的 `full` 值依赖 Tier B 的位姿反解，已不可达，
 > 所以它的取值集合塌缩成与 `tier` 相同的 `stats_only | prompt_only`。留两个字段只会让人误以为有区别。
+>
+> **1.3 → 1.4 的变更**：`intent` 只剩 `weather`。atmosphere / time_of_day / source_motivation /
+> story_context / setting 与 character_personality（含 lighting_language）全部删除 ——
+> 它们的生产者是已删除的 `generate_spec` 接缝，后端不再用大模型做推理与判断。详见 §5.5。
 
 ### 4.3 灯光方案 LightingRig（候选 / 定稿 / 会话记录 / 数据库存储）
 
@@ -416,9 +411,9 @@ Spec 前调用一次（§15.7）。`is_outlier_` / `excluded_reason_` 仍是**�
 
 视频不设独立路径，**作为多图来源**统一处理。
 
-### 5.5 人物角色性格 → 灯光语言映射表
+### 5.5 人物角色性格 → 灯光语言映射表 —— 已取消
 
-提示词里最有价值、也最容易落不到灯上的字段。必须结构化。
+原设计：提示词里最有价值、也最容易落不到灯上的字段，必须结构化。设计的那张表如下（留档）：
 
 | 性格维度 | key:fill 比 | 硬软 | 光位倾向 | 色温倾向 |
 |---|---|---|---|---|
@@ -428,6 +423,19 @@ Spec 前调用一次（§15.7）。`is_outlier_` / `excluded_reason_` 仍是**�
 | 温柔 / 脆弱 | 很低（1.5:1–2:1） | 很软 | 正面、包覆 | 暖 |
 | 危险 / 不稳定 | 高且不稳定 | 硬 | 侧后、明暗交界 | 冷暖冲突 |
 | 神圣 / 超然 | 中 | 很软 | 顶光 | 冷白 |
+
+**取消原因**：这张表的落点 `character_personality[].lighting_language` 是「把自然语言提示词翻译成结构化字段」的产物，而做这件事的 `generate_spec` 接缝已删除（后端不再用大模型做推理与判断）。没有生产者，字段就是死的 —— 留着只会让「空数组」看起来像「模型认为没有性格」。
+
+**替代**：性格这类意图改由**提示词原文**直接承载（`ai_light_session.prompt_text_`），前端把它原样交给模型。让模型读「阴郁内向，雨夜独自等待」比读一份经过服务端一转手的 `{hardness: "hard", kelvin_bias: "cool"}` 更有信息量，也少一层走样。
+
+**连带影响**（已同步清理）：
+
+| 项 | 变化 |
+|---|---|
+| `lighting_language_t` / `character_personality_t` | **结构删除**（`spec.h`） |
+| `lighting_intent_t` | 只剩 `weather_`；atmosphere / time_of_day / source_motivation / story_context / setting **字段删除** |
+| `build_common_lighting_section()` | 去掉性格映射表一节（该函数本身也已无生产调用方） |
+| 前端 `intent` 展示 | 只剩 `weather`（`ue_ai_lighting_frontend.md` §5.3） |
 
 ### 5.6 Tier B 多视角联合反解 —— 已取消
 

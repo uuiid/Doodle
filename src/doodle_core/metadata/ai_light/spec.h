@@ -30,7 +30,7 @@ namespace doodle::ai_light {
 /// 降级等级（docs/ue_ai_lighting_plan.md §12.1）。
 /// 原 §4.2 里同时有 tier 与 degrade_level；Tier B 取消后两者的取值集合等价
 /// （原 degrade_level 的 full 值依赖 Tier B 的位姿反解，已不可达），
-/// 所以本实现只保留 degrade_level 这一个字段，Spec schema 记为 1.3。
+/// 所以本实现只保留 degrade_level 这一个字段，Spec schema 记为 1.4。
 enum class spec_degrade_level {
   /// 多图统计聚合可用（默认，唯一主路径）
   stats_only,
@@ -44,74 +44,23 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
                         }
 )
 
-/// 角色性格 → 灯光语言（docs/ue_ai_lighting_plan.md §5.5）。
-/// 这是「人物角色性格」这类人工提示词进入灯光参数的唯一通道：先落成可读的灯光语言，
-/// 再由规划层翻译成具体灯位与参数。
-struct DOODLE_CORE_API lighting_language_t {
-  std::optional<interval_t> key_fill_ratio_{};
-  std::string hardness_{};       ///< hard | soft | very_soft
-  std::string position_bias_{};  ///< side_high | front_low | back_high ...
-  std::string kelvin_bias_{};    ///< cool | warm | neutral
-
-  friend void to_json(nlohmann::json& j, const lighting_language_t& p) {
-    if (p.key_fill_ratio_) j["key_fill_ratio"] = *p.key_fill_ratio_;
-    if (!p.hardness_.empty()) j["hardness"] = p.hardness_;
-    if (!p.position_bias_.empty()) j["position_bias"] = p.position_bias_;
-    if (!p.kelvin_bias_.empty()) j["kelvin_bias"] = p.kelvin_bias_;
-  }
-  friend void from_json(const nlohmann::json& j, lighting_language_t& p) {
-    if (j.contains("key_fill_ratio") && !j.at("key_fill_ratio").is_null())
-      j.at("key_fill_ratio").get_to(p.key_fill_ratio_.emplace());
-    if (j.contains("hardness")) j.at("hardness").get_to(p.hardness_);
-    if (j.contains("position_bias")) j.at("position_bias").get_to(p.position_bias_);
-    if (j.contains("kelvin_bias")) j.at("kelvin_bias").get_to(p.kelvin_bias_);
-  }
-};
-
-struct DOODLE_CORE_API character_personality_t {
-  std::string subject_{};  ///< 主体语义 id
-  std::string trait_{};    ///< 性格描述，如「阴郁内向」
-  lighting_language_t lighting_language_{};
-
-  friend void to_json(nlohmann::json& j, const character_personality_t& p) {
-    j["subject"]           = p.subject_;
-    j["trait"]             = p.trait_;
-    j["lighting_language"] = p.lighting_language_;
-  }
-  friend void from_json(const nlohmann::json& j, character_personality_t& p) {
-    if (j.contains("subject")) j.at("subject").get_to(p.subject_);
-    if (j.contains("trait")) j.at("trait").get_to(p.trait_);
-    if (j.contains("lighting_language")) j.at("lighting_language").get_to(p.lighting_language_);
-  }
-};
-
 /// 意图：来自人工提示词，**权威**。与参考统计冲突时以本块为准（§6.3）。
+///
+/// ⚠️ 本块只剩 `weather_` 一个字段。原设计里它是一份「自然语言意图的结构化解释」——
+/// atmosphere / time_of_day / source_motivation / story_context / setting，以及
+/// character_personality（性格 → lighting_language 灯光语言）。那些字段**全部删除**了：
+/// 它们的唯一生产者是已删的 generate_spec 接缝（让模型把提示词翻译成结构化字段），
+/// 后端不再用大模型推理，就没有任何东西会产生它们 —— 留在结构里只会让
+/// 「空数组 / 空字符串」看起来像「模型认为没有氛围」。
+///
+/// 提示词本身（`ai_light_session.prompt_text_`）才是权威意图的载体，前端把它直接交给模型；
+/// 服务端不需要、也不该再持有这份中间解释。
 struct DOODLE_CORE_API lighting_intent_t {
-  std::vector<std::string> atmosphere_{};
-  std::string time_of_day_{};
   std::string weather_{};
-  std::vector<std::string> source_motivation_{};
-  std::vector<character_personality_t> character_personality_{};
-  std::string story_context_{};
-  std::string setting_{};
 
-  friend void to_json(nlohmann::json& j, const lighting_intent_t& p) {
-    j["atmosphere"]             = p.atmosphere_;
-    j["time_of_day"]            = p.time_of_day_;
-    j["weather"]                = p.weather_;
-    j["source_motivation"]      = p.source_motivation_;
-    j["character_personality"]  = p.character_personality_;
-    j["story_context"]          = p.story_context_;
-    j["setting"]                = p.setting_;
-  }
+  friend void to_json(nlohmann::json& j, const lighting_intent_t& p) { j["weather"] = p.weather_; }
   friend void from_json(const nlohmann::json& j, lighting_intent_t& p) {
-    if (j.contains("atmosphere")) j.at("atmosphere").get_to(p.atmosphere_);
-    if (j.contains("time_of_day")) j.at("time_of_day").get_to(p.time_of_day_);
     if (j.contains("weather")) j.at("weather").get_to(p.weather_);
-    if (j.contains("source_motivation")) j.at("source_motivation").get_to(p.source_motivation_);
-    if (j.contains("character_personality")) j.at("character_personality").get_to(p.character_personality_);
-    if (j.contains("story_context")) j.at("story_context").get_to(p.story_context_);
-    if (j.contains("setting")) j.at("setting").get_to(p.setting_);
   }
 };
 

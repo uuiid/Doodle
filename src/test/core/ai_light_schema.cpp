@@ -199,16 +199,7 @@ ai_light_spec make_probe_spec(const uuid& in_session_id, std::int32_t in_revisio
   l_spec.revision_   = in_revision;
 
   lighting_intent_t l_intent{};
-  l_intent.atmosphere_    = {"压抑", "暖", "高对比"};
-  l_intent.time_of_day_   = "night";
-  l_intent.weather_       = "clear";
-  l_intent.source_motivation_ = {"practical_lamp", "window"};
-  l_intent.story_context_ = "角色在雨夜独自等待，情绪低落";
-  l_intent.setting_       = "老式公寓室内，木质家具，窗外霓虹";
-  l_intent.character_personality_.push_back(character_personality_t{
-      "char_Ch220B", "阴郁内向",
-      lighting_language_t{interval_t{6.0, 10.0}, "hard", "side_high", "cool"}
-  });
+  l_intent.weather_ = "clear";
   l_spec.set_intent(l_intent);
 
   lighting_targets_t l_targets{};
@@ -444,9 +435,7 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     auto l_cur = l_sql.get_current_ai_light_spec(l_session_row.uuid_id_);
     BOOST_TEST(l_cur.has_value());
     BOOST_TEST(l_cur->revision_ == 1);
-    BOOST_TEST(l_cur->get_intent().atmosphere_.size() == 3);
-    BOOST_TEST(l_cur->get_intent().character_personality_.size() == 1);
-    BOOST_TEST(l_cur->get_intent().character_personality_.front().lighting_language_.key_fill_ratio_->low_ == 6.0);
+    BOOST_TEST(l_cur->get_intent().weather_ == "clear");
     BOOST_TEST(l_cur->get_targets().ownership_.grading_.size() == 3);
     BOOST_TEST(l_cur->get_reference_stats().image_count_ == 4);
     BOOST_TEST(l_cur->get_reference_stats().conflicts_.size() == 1);

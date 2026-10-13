@@ -208,19 +208,6 @@ std::string build_common_lighting_section() {
 你不决定：最终精确强度 / 色温 / 距离的数值；直接写 UE API 调用或代码；逐帧关键帧的精确数值；预测渲染结果。
 绝对禁止：改变场景几何或材质。你的可改范围只有「灯光 + 环境光/雾/天空 + 后处理/调色」。
 
-【人物角色性格 → 灯光语言映射（提示词里最有价值、也最容易落不到灯上的字段）】
-| 性格维度 | key:fill 比 | 硬软 | 光位倾向 | 色温倾向 |
-| 阴郁 / 内向 | 高（6:1–10:1） | 硬 | 侧高、少正面 | 偏冷 |
-| 开朗 / 外向 | 低（2:1–3:1） | 软 | 正面偏上 | 偏暖 |
-| 威严 / 压迫 | 很高（10:1+） | 硬 | 顶光 / 底光 | 中性偏冷 |
-| 温柔 / 脆弱 | 很低（1.5:1–2:1） | 很软 | 正面、包覆 | 暖 |
-| 危险 / 不稳定 | 高且不稳定 | 硬 | 侧后、明暗交界 | 冷暖冲突 |
-| 神圣 / 超然 | 中 | 很软 | 顶光 | 冷白 |
-提示词里出现角色性格时，必须按这张表落成 character_personality[].lighting_language 的四个字段，不要停留在形容词。
-key_fill_ratio 写成 [low, high]（如阴郁内向写 [6, 10]）。
-hardness 只能是 hard / soft / very_soft；position_bias 只能是 side_high / front_low / back_high；
-kelvin_bias 只能是 cool / warm / neutral。
-
 【单位与格式口径】
 - 对比度 = 显示空间（sRGB）亮度分位差 p90 − p10，不是标准差。
 - 色温用 Kelvin。
@@ -264,26 +251,13 @@ std::string describe_rig_brief(const lighting_rig_t& in_rig) {
 }
 
 /// Spec 的紧凑投影。这里是给模型读的，不是给落库用的 —— 落库的完整形状在 ai_light_spec。
+///
+/// 意图段只剩天气：atmosphere / time_of_day / setting / source_motivation / story_context /
+/// character_personality 那一整套「把提示词翻译成结构化意图」的字段已随 generate_spec 接缝
+/// 一起删除，后端不再产生它们。提示词原文由前端直接交给模型，比这份经过一转手的投影更准。
 std::string describe_spec_brief(const lighting_spec_t& in_spec) {
   std::string l_out{};
-  l_out += fmt::format("  氛围: {}\n", join_strings(in_spec.intent_.atmosphere_, "、"));
-  l_out += fmt::format("  时间/天气: {} / {}\n", in_spec.intent_.time_of_day_, in_spec.intent_.weather_);
-  l_out += fmt::format("  场景设定: {}\n", in_spec.intent_.setting_);
-  if (!in_spec.intent_.source_motivation_.empty())
-    l_out += fmt::format("  光源动机: {}\n", join_strings(in_spec.intent_.source_motivation_, "、"));
-  if (!in_spec.intent_.story_context_.empty())
-    l_out += fmt::format("  故事上下文: {}\n", in_spec.intent_.story_context_);
-  for (const auto& l_person : in_spec.intent_.character_personality_) {
-    const auto& l_lang = l_person.lighting_language_;
-    const std::string l_ratio =
-        l_lang.key_fill_ratio_.has_value()
-            ? fmt::format("[{}, {}]", l_lang.key_fill_ratio_->low_, l_lang.key_fill_ratio_->high_)
-            : std::string{"未指定"};
-    l_out += fmt::format(
-        "  角色「{}」({}): key_fill_ratio={} hardness={} position_bias={} kelvin_bias={}\n", l_person.subject_,
-        l_person.trait_, l_ratio, l_lang.hardness_, l_lang.position_bias_, l_lang.kelvin_bias_
-    );
-  }
+  if (!in_spec.intent_.weather_.empty()) l_out += fmt::format("  天气: {}\n", in_spec.intent_.weather_);
   l_out += "  目标：\n";
   l_out += describe_targets(in_spec.targets_);
   if (!in_spec.targets_.palette_.empty()) {
