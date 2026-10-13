@@ -134,19 +134,25 @@ struct seam_inference_result_t {
   std::int64_t total_tokens_{0};
 };
 
-/// 三条接缝共用的推理管道：解析触发人 → 建客户端 → 组装任务信封 → 跑推理 → 判定成败。
+/// 三条接缝共用的推理管道：解析触发人 → 建客户端 → 组装任务行 → 跑推理 → 判定成败。
 ///
-/// `in_seam` 只用于措辞（出错信息指明是哪条接缝）；`in_text_prompt` 是任务行的
-/// `text_prompt_`（会话列表上显示的那句话）；`in_data_request` 是已建造好的请求体；
-/// `in_iteration_id` 为 nil 表示这次推理不属于任何轮次（蒸馏阶段）。
+/// `in_text_prompt` 是任务行的 `text_prompt_`（会话列表上显示的那句话）；`in_data_request`
+/// 是已建造好的请求体 json（接缝侧传 `inference_request_t` 的 to_json 结果，网关侧传前端 body
+/// 原样）；`in_iteration_id` 为 nil 表示这次推理不属于任何轮次（蒸馏阶段）。
+///
+/// 参数是 json 而不是 `inference_request_t`：落库的与发出去的必须是**同一份**东西，中间再
+/// 夹一次结构体往返就等于给前端透传的键加了一道静默白名单（不认识的键无声消失）。
+///
+/// 不再有 `in_seam` 参数：接缝名曾是记账与措辞的键，现在「这条推理跑的是哪条接缝」既不进
+/// 任务行、也不影响任何判定 —— 它只存在于调用方的函数名里，让管道去收一个只有措辞用途的
+/// 参数是把两者假耦合起来。
 ///
 /// 副作用**只有** `run_inference_task` 自己的那个事务（任务行 + 扣费）。抛 `doodle_error`
 /// 表示这次推理不成立（400 内容违规/参数不全，502 推理失败或输出不是合法 JSON 对象），
 /// 调用方按契约 1 回滚会话状态。
 boost::asio::awaitable<seam_inference_result_t> run_seam_inference(
-    sqlite_database& in_sql, const seam_request_base_t& in_request, std::string_view in_seam,
-    std::string_view in_text_prompt, const http::seedance2::inference_request_t& in_data_request,
-    const uuid& in_iteration_id = {}
+    sqlite_database& in_sql, const seam_request_base_t& in_request, std::string_view in_text_prompt,
+    const nlohmann::json& in_data_request, const uuid& in_iteration_id = {}
 );
 
 }  // namespace doodle::ai_light

@@ -439,15 +439,17 @@ boost::asio::awaitable<spec_generation_result_t> generate_spec(
   // ---- 2) 一次推理：触发人 → 工作室 → 客户端 → 任务信封 → 成败判定，全在 seam_common ----
   // 蒸馏阶段还没有轮次，任务行的 ai_light_iteration_id 留 nil。
   // 请求体先落地成局部变量：下面的诊断要把**同一份** schema 交给校验库（§3.4 明说不额外重建）。
-  const auto l_request = build_spec_request(in_request, l_agg);
+  // 已经转成 json：run_seam_inference 收 json，且落库与出网是同一份（见 seam_common.h）。
+  nlohmann::json l_request{};
+  to_json(l_request, build_spec_request(in_request, l_agg));
   const auto l_result =
-      co_await run_seam_inference(in_sql, in_request, "generate_spec", in_request.prompt_text_, l_request);
+      co_await run_seam_inference(in_sql, in_request, in_request.prompt_text_, l_request);
 
   // ---- 3) 架构诊断（§3.4，决策 D-1：只写日志，不作准入闸门）----
   // spec 接缝**有意**容忍截断/不完整输出（靠统计默认值兜底），
   // 一道 schema 闸门会直接破坏这个设计。所以这里报出违规也照常往下走：收益是日志里能看到
   // **全部**违规（宽松读取器读到坏字段只是跳过），而不是毫无信号。
-  if (const auto l_bad = json_val::validate_model_output(l_result.json_, l_request.json_schema_, "generate_spec");
+  if (const auto l_bad = json_val::validate_model_output(l_result.json_, l_request.at("json_schema"), "generate_spec");
       !l_bad.empty()) {
     SPDLOG_LOGGER_WARN(
         g_logger_ctrl().get_http(), "AI 灯光会话 {} 蒸馏 Spec：模型输出有 {} 处不符合 schema（只诊断、不拒绝）：{}",

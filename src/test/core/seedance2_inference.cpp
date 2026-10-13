@@ -106,7 +106,9 @@ BOOST_AUTO_TEST_CASE(body_defaults_are_offline_safe) {
   BOOST_CHECK_EQUAL(l_body.at("store").get<bool>(), false);
   // caching 与 instructions 互斥(方舟会 400), 我们从不发 caching
   BOOST_CHECK_EQUAL(l_body.contains("caching"), false);
-  BOOST_CHECK_EQUAL(l_body.at("thinking").at("type").get<std::string>(), "disabled");
+  // thinking 缺省**不发**: 发射路径只做减法(定 model / 关 store), 不替调用方补默认值。
+  // 以前这里发 {"thinking":{"type":"disabled"}}, 那是服务端替前端做决定 —— 与「原样透传」冲突。
+  BOOST_CHECK_EQUAL(l_body.contains("thinking"), false);
   // max_output_tokens 缺省**不发**：结构化输出长度不可预估，截断之后的半个 JSON 与
   // 「schema 不合规被拒」的失败面分不出来，所以上限交给模型/账号侧；只有显式指定才发。
   BOOST_CHECK_EQUAL(l_body.contains("max_output_tokens"), false);

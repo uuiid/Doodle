@@ -13,17 +13,18 @@
 // 所以真源留在 C++ 的编译期常量里，前端从这里**读取后原样使用**。于是：
 //   * 前端不需要在 TypeScript 里重新维护一套（也就不会漂移）；
 //   * C++ 侧 `build_*_instructions()` / `build_*_json_schema()` 因此**不能删**
-//     （它们同时还是网关缺省值，见 ai_light_gateway.cpp 的 builtin_*）；
+//     —— 它们就是这里回给前端的唯一内容；
 //   * 模板改动走构建，与「改一次模板要走构建」这个降级前的瓶颈相比没有恶化 ——
 //     因为降级解决的瓶颈是**组装逻辑**（谁跟谁拼、拼哪些字段），不是模板文本本身。
 //
 // ---------------------------------------------------------------------------
 // 命名
 // ---------------------------------------------------------------------------
-// `name` 用的是**接缝名**（generate_spec / generate_candidates / structure_feedback），
-// 与网关的 `seam` 字段是同一套值、同一个白名单（ai_light_gateway.h 的 g_seam_*）。
+// `name` 用的是流水线三阶段的名字（generate_spec / generate_candidates /
+// structure_feedback）。它们只在本路由里被校验，与别处没有耦合 —— 网关那条路径已经不认
+// `seam` 这个词了（请求按方舟 Responses 形状原样透传）。
 // 不用 `spec` / `candidates` 这种短名：那样同一个概念会在两处路由上长出两套名字，
-// 而前端要拿 `seam` 的值去查 `name`，两套名字之间的映射表就是下一个漂移点。
+// 而前端要把两套名字对应起来 —— 那张映射表就是下一个漂移点。
 //
 // 额外提供 `common` —— build_common_lighting_section() 那三段（职责边界 / 性格→灯光语言
 // 映射表 / 单位口径）。它被 spec 与 candidates 的 instructions **包含**，单独暴露是为了：
@@ -63,9 +64,9 @@ DOODLE_HTTP_FUN_END()
 //
 // 响应：{name, instructions, json_schema, json_schema_name, json_schema_strict}
 //
-// `json_schema_name` / `json_schema_strict` 一并回传：它们是「往网关发这次推理时
+// `json_schema_name` / `json_schema_strict` 一并回传：它们是「组装这次推理的请求体时
 // 该带什么」的一部分。前端若只拿 schema 不带这两个，就得自己在 TS 里写死
-// （`ai_light_<seam>` 与 true），那又是一处会与 C++ 漂移的常量。
+// （`ai_light_<阶段名>` 与 true），那又是一处会与 C++ 漂移的常量。
 //
 // `common` 只有 instructions，没有 schema —— 它的 json_schema 为 null。
 //

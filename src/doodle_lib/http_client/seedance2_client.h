@@ -44,11 +44,21 @@ class DOODLELIB_API seedance2_client final : public ai_client_base {
   // 下面几个都是纯函数, 便于不联网单测。
 
   /**
-   * 把归一化请求信封(inference_request_t)翻成方舟 Responses 请求体。
-   * 字段语义与缺省值见 inference_request_t 的注释; 固定 store=false: 不把提示词/素材留在方舟侧。
-   * 传进来的信封已是强类型, 这里不再做任何字符串读键/类型猜测。
+   * 把**接缝自组信封**(inference_request_t)翻成方舟 Responses 请求体。
+   *
+   * 只为单测与接缝侧的纯函数验证保留: 本类发推理请求时**不再经过它**, 而是把
+   * `task.data_request_` 原样交给 `seedance2::finalize_inference_body()` —— 结构体往返
+   * 是一份手写白名单, 会把前端透传的键静默吃掉(见 seedance2_inference_request.h)。
+   *
+   * 实现: 先 to_json 成扁平信封, 再按同一条发射规则定稿, 于是这里的输出与真正发出去的
+   * body 仍然逐字节一致; 留在 .cpp 里会让「透传到底发了什么」只能靠建客户端来验证。
    */
-  static nlohmann::json build_inference_body(const inference_request_t& in_request);
+  static nlohmann::json build_inference_body(const inference_request_t& in_request) {
+    nlohmann::json l_body{};
+    to_json(l_body, in_request);
+    seedance2::finalize_inference_body(l_body, std::string{doodle_config::g_ark_inference_model});
+    return l_body;
+  }
 
   /// 解析 Responses 响应; in_status_code 是 HTTP 状态码
   static run_task_result_t parse_inference_response(const nlohmann::json& in_body, int in_status_code);

@@ -47,7 +47,7 @@ struct resolved_inference_t {
 /// 用 select + to_optional 而不是 get_by_uuid<T>：后者内部是 to_single()，「查不到」会变成
 /// 一条 sqlite 异常（HTTP 500），而这里应当是 400 语义。
 /// 每次推理都**新建**客户端：http_client_ssl 内部只有一个 socket 且无锁（§15.6 第 6 条）。
-/// in_what 只用于措辞（出错信息要指明哪条接缝），不参与任何判定。
+/// `in_what` 只用于措辞（出错信息要指明哪次推理），不参与任何判定。
 resolved_inference_t make_seam_client(
     sqlite_database& in_sql, const uuid& in_operator_id, std::string_view in_what
 ) {
@@ -114,14 +114,13 @@ void chick_inference_ok(const http::seedance2::ai_client_base::run_task_result_t
 }  // namespace
 
 boost::asio::awaitable<seam_inference_result_t> run_seam_inference(
-    sqlite_database& in_sql, const seam_request_base_t& in_request, std::string_view in_seam,
-    std::string_view in_text_prompt, const http::seedance2::inference_request_t& in_data_request,
-    const uuid& in_iteration_id
+    sqlite_database& in_sql, const seam_request_base_t& in_request, std::string_view in_text_prompt,
+    const nlohmann::json& in_data_request, const uuid& in_iteration_id
 ) {
   // ---- 1) 触发人 → AI 工作室 → 客户端 ----
-  auto l_resolved = make_seam_client(in_sql, in_request.operator_id_, in_seam);
+  auto l_resolved = make_seam_client(in_sql, in_request.operator_id_, "推理");
 
-  // ---- 2) 组装任务与归一化信封 ----
+  // ---- 2) 组装任务与请求体 ----
   seedance2::task l_task{};
   l_task.type_                  = seedance2::task_type::inference;  // not_null，必须显式赋值
   l_task.backend_               = seedance2::task_backend::seedance2;  // 同上
@@ -134,7 +133,9 @@ boost::asio::awaitable<seam_inference_result_t> run_seam_inference(
   l_task.ai_light_iteration_id_ = in_iteration_id;
   l_task.text_prompt_           = std::string{in_text_prompt};  // 去重与前台展示都读它
   l_task.completion_tokens_     = doodle_config::g_ark_inference_default_consumed_tokens;
-  // 结构体 -> json 走 inference_request_t 的 to_json, 落库键集与手写 json 时完全一致
+  // 落库的就是**要发出去的那份** json, 不再经 inference_request_t 往返一趟: 那次往返是一份
+  // 手写白名单, 网关透传进来的键(方舟的 input / tools / text.format…)会被静默吃掉。
+  // 接缝三条路径本来就自组扁平信封(调用方传 to_json 的结果进来), 形状不变。
   l_task.data_request_          = in_data_request;
 
   // run_inference_task 自己一个事务里落终态任务行 + 扣费（§15.6 的方案 A）。
@@ -143,7 +144,7 @@ boost::asio::awaitable<seam_inference_result_t> run_seam_inference(
   auto l_result = co_await http::seedance2::run_inference_task(l_task, in_sql, l_resolved.client_);
 
   // ---- 3) 成败判定（内容违规 400 / 其它失败 502 / 输出非 object 502）----
-  chick_inference_ok(l_result, in_seam);
+  chick_inference_ok(l_result, "推理");
 
   seam_inference_result_t l_out{};
   l_out.json_          = l_result.result_json_;

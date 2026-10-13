@@ -313,9 +313,11 @@ boost::asio::awaitable<std::vector<axis_step_t>> structure_feedback(
   // ---- 1) 一次推理：触发人 → 工作室 → 客户端 → 任务信封 → 成败判定，全在 seam_common ----
   // `text_prompt_` 记的是「哪一轮的反馈被结构化了」，用于把一次计费对回一次人工判断。
   // 请求体先落地成局部变量：下面的诊断要把**同一份** schema 交给校验库（§3.4 明说不额外重建）。
-  const auto l_request = build_feedback_request(in_request);
-  const auto l_result  = co_await run_seam_inference(
-      in_sql, in_request, "structure_feedback",
+  // 已经转成 json：run_seam_inference 收 json，且落库与出网是同一份（见 seam_common.h）。
+  nlohmann::json l_request{};
+  to_json(l_request, build_feedback_request(in_request));
+  const auto l_result = co_await run_seam_inference(
+      in_sql, in_request,
       fmt::format("AI 灯光会话 {} 第 {} 轮的文本反馈", in_request.session_id_, in_request.iteration_),
       l_request, in_request.iteration_id_
   );
@@ -324,7 +326,8 @@ boost::asio::awaitable<std::vector<axis_step_t>> structure_feedback(
   // 本条接缝是**混合**策略：形状违规（如 axes 超过 maxItems）在 map_feedback_result 里抛 502，
   // 语义无效的轴静默丢弃。日志里的全部违规能区分「模型多回了东西（无害）」与「模型回的结构
   // 真的不对（下一步就该收紧成闸门）」—— 后者才是决策 D-1 里那条一行改动的升级路径。
-  if (const auto l_bad = json_val::validate_model_output(l_result.json_, l_request.json_schema_, "structure_feedback");
+  if (const auto l_bad =
+          json_val::validate_model_output(l_result.json_, l_request.at("json_schema"), "structure_feedback");
       !l_bad.empty()) {
     SPDLOG_LOGGER_WARN(
         g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮文本反馈：模型输出有 {} 处不符合 schema（只诊断、不拒绝）：{}",

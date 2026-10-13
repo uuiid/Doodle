@@ -255,8 +255,7 @@ DOODLELIB_API std::optional<ai_light_session_detail_t> build_session_detail(
 /// 所以那一段抽成一个函数、两条路线共用 —— 各写一份必然漂移，
 /// 而漂移的表现是「本地路线算不出视频路径」这类只在真机上才发现的故障。
 ///
-/// 请求里**没有** `seam` / `operator_id_`：前者不适用（这一轮不调模型），
-/// 后者只从 JWT 取（结构上不可伪造，比"校验后拒绝"彻底）。
+/// 请求里**没有** `operator_id_`：它只从 JWT 取（结构上不可伪造，比"校验后拒绝"彻底）。
 struct DOODLELIB_API submit_iteration_request_t {
   uuid session_id_{};
   uuid project_id_{};

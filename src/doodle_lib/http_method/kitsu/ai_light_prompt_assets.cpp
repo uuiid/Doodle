@@ -31,12 +31,15 @@ namespace {
 // 都住在后者里。与 ai_light.cpp:50 同一写法。
 using namespace doodle::ai_light;
 
-// 素材名。与网关的 seam 值是同一套（ai_light_gateway.cpp 的 g_seam_*），
-// 前三个必须逐字一致 —— 前端拿 name 去当 seam 用，不一致会 400。
+// 素材名。这四个名字就是三条接缝各自**自组信封**时用的那套 —— 前端从这里取到
+// instructions/schema 后自己拼 body, 所以名字要能跟流水线的三个阶段对上。
 //
-// `common` 是第四个，它在网关那里**不是**合法 seam（没有「只跑公共段」这种推理）。
-// 所以这两个白名单是「前三个重叠、第四个不重叠」的关系，不能合并成一个常量 ——
-// 合并会让网关接受 seam=common（一次注定失败的推理），或让 /prompt_assets 取不到公共段。
+// 它们**不再**与任何服务端白名单耦合: 网关那边已经没有 `seam` 字段了(请求按方舟 Responses
+// 形状原样透传), 于是这四个名字只属于本路由, 加第五个素材、或改这里的名字, 都不会让
+// 别处开始 400。
+//
+// `common` 不是一次推理, 它只是一段可被三条接缝复用的公共提示词, 因此它**没有** schema
+// （asset_json_schema 返回 null 而不是 {}）。
 constexpr std::string_view g_asset_spec{"generate_spec"};
 constexpr std::string_view g_asset_candidates{"generate_candidates"};
 constexpr std::string_view g_asset_feedback{"structure_feedback"};
@@ -45,8 +48,7 @@ constexpr std::string_view g_asset_common{"common"};
 /// 素材名 → 该素材的名字。**名字即值**（不做短名映射），所以这个函数只是白名单校验。
 ///
 /// 为什么不做 `spec` → `generate_spec` 的短名映射：映射表本身是第五个需要维护的东西，
-/// 而它唯一的好处是 URL 短一点。短名还会让「网关的 seam」与「素材的 name」看起来是
-/// 两个不同的域，于是前端要写一层转换 —— 那层转换就是漂移发生的地方。
+/// 而它唯一的好处是 URL 短一点。
 std::string_view resolve_asset_name(std::string_view in_name) {
   constexpr std::array<std::string_view, 4> l_allowed{
       g_asset_spec, g_asset_candidates, g_asset_feedback, g_asset_common
@@ -80,7 +82,7 @@ nlohmann::json asset_json_schema(std::string_view in_name) {
   return nlohmann::json{};  // common：无 schema，序列化为 null
 }
 
-/// 该素材的 schema 名与 strict 标志。与三条接缝调 run_seam_inference 时传的**逐字一致**。
+/// 该素材的 schema 名与 strict 标志。
 ///
 /// 从这三对常量能看出一个约定：schema 名就是 `ai_light_<接缝名去掉动词>`。
 /// 不在这里用字符串拼（`"ai_light_" + substr(...)`）—— 拼出来的名字与接缝实际传的

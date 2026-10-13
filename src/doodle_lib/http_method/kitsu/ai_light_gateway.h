@@ -14,7 +14,7 @@
 // ai_studio 的密钥）→ 建任务行 → 跑推理 → 判成败。它们的差别只有：
 //   * 系统指令与 output schema（降级后由前端给，见 §3.1.2）
 //   * `text_prompt_`（计费留痕用的展示句）
-// 所以按 seam 分三条路由等于把同一段管道抄三遍 —— 而计费口径复制必然慢慢分叉。
+// 所以分成三条路由等于把同一段管道抄三遍 —— 而计费口径复制必然慢慢分叉。
 //
 // ---------------------------------------------------------------------------
 // 权限：operator_id **只从 JWT 取，绝不读请求体**
@@ -51,23 +51,27 @@ namespace doodle::http::ai_light {
 //   * 走 DOODLE_HTTP_JWT_FUN（浏览器会话 JWT），与 judge_route 同类；
 //   * 必须做项目权限检查 —— 与 render_report_route（工作机，不是项目成员）正好相反。
 //
-// 请求体（全部键见 .cpp 的 build_gateway_inference_request）：
-//   seam         "generate_spec" | "generate_candidates" | "structure_feedback"（必填）
-//   input_text   前端组装好的完整用户消息（必填）—— **逐字**进任务行的 text_prompt_
-//   instructions 可选；缺省落到内置的那一份（/prompt_assets 提供的就是它）
-//   json_schema  可选；缺省落到内置的那一份
-//   images       可选；base64 参考图
-//   其余 inference_request_t 字段（model / temperature / top_p / max_output_tokens /
-//   thinking / reasoning_effort / image_detail / json_schema_name / json_schema_strict）
-//   可选透传 —— 它们是「这次推理怎么跑」的参数，不构成规划逻辑。
+// 请求体（**原样透传**，见 .cpp 的 build_gateway_inference_request）：
+//   全部键一律逐字打给火山方舟的 /responses，服务端不解释、不重写、不补默认值。
+//   形状以方舟 Responses API 为准（input / instructions / tools / text.format / thinking …），
+//   于是方舟新增字段、前端用上新能力时，本服务端一行都不用改。
+//   服务端在出网前**只**做两件事（finalize_inference_body）：把 model 换成服务端的缺省、
+//   强制 store=false（不把提示词与素材留在方舟侧）。除此之外不增删任何键。
 //
-// 响应体：{result, seam, input_tokens, output_tokens, total_tokens}
+//   **没有**必需字段校验：什么字段必需、什么值合法全由方舟判定。服务端唯一自己消费的键是
+//   `input`，且只用于抽台账摘要 —— 抽不出来也不拒绝请求（只有图片的请求是合法的）。
+//
+//   注意 `instructions` / `json_schema` **不再有**内置回落：模板归前端设计，服务端不替它决定
+//   提示词。旧扁平键（input_text / images / json_schema…）对 /responses 是未知键，被静默忽略
+//   —— 给它们报 400 会让「只想改前端」的人被迫先动服务端。
+//
+// 响应体：{result, input_tokens, output_tokens, total_tokens}
 //   **不带 task_id**：seam_inference_result_t 没有这个字段（ai_light_seam_common.h:130-135），
 //   要带得改它 + run_inference_task 的返回，不列入第一梯队（见 C++ 计划 §7 第 1 条）。
 //   计费留痕在 seedance2::task 行里，可按 text_prompt_ 反查。
 //
 // 错误码：
-//   400  请求体形状违规（缺 seam/input_text、未知接缝名、非法枚举值）
+//   400  body 不是 JSON 对象
 //   404  会话不存在
 //   403  非本项目成员（check_project_access）
 //   400  内容违规 / 502 推理失败或输出非合法 JSON 对象（由 chick_inference_ok 判定）

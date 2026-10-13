@@ -540,15 +540,18 @@ boost::asio::awaitable<candidate_generation_result_t> generate_candidates(
   // `iteration_id_` 由调用方在调用**之前**铸造好，所以这条推理任务能反查到
   // 「哪一次推理生成了第 N 轮候选」。
   // 请求体先落地成局部变量：下面的诊断要把**同一份** schema 交给校验库（§3.4 明说不额外重建）。
-  const auto l_request = build_candidates_request(in_request);
-  const auto l_result  = co_await run_seam_inference(
-      in_sql, in_request, "generate_candidates", in_request.prompt_text_, l_request, in_request.iteration_id_
+  // 已经转成 json：run_seam_inference 收 json，且落库与出网是同一份（见 seam_common.h）。
+  nlohmann::json l_request{};
+  to_json(l_request, build_candidates_request(in_request));
+  const auto l_result = co_await run_seam_inference(
+      in_sql, in_request, in_request.prompt_text_, l_request, in_request.iteration_id_
   );
 
   // ---- 2) 架构诊断（§3.4，决策 D-1：只写日志，不作准入闸门）----
   // 本条接缝是**严格**策略：`build_base_rig` 读到第一个缺字段/类型不符就抛 502。日志里的
   // 全部违规是排障时唯一能看到「模型到底哪里没按契约输出」的地方（抛出的消息只说第一个）。
-  if (const auto l_bad = json_val::validate_model_output(l_result.json_, l_request.json_schema_, "generate_candidates");
+  if (const auto l_bad =
+          json_val::validate_model_output(l_result.json_, l_request.at("json_schema"), "generate_candidates");
       !l_bad.empty()) {
     SPDLOG_LOGGER_WARN(
         g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮候选：模型输出有 {} 处不符合 schema（只诊断、不拒绝）：{}",

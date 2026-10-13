@@ -36,6 +36,40 @@ bool seedance2_client::is_timeout_error(const nlohmann::json& in_body) {
 
 // ─── 子类方法 ─────────────────────────────────────────────────────────────────
 
+namespace {
+/// 把 Responses 的 `input` 摘要成一行可读文本, 追加到 `io_out`。
+///
+/// 两种形状都认: 字符串(= 一条 user 文本), 或元素列表(取 message.content 里
+/// type=="input_text" 的 text; 图片/文件/音频类元素**跳过**——它们是素材不是提示词,
+/// 混进来会让摘要变成一串路径, 反而看不出「这次问了什么」)。
+///
+/// 刻意不抛: 这是给人看的摘要, 形状不认识就少写一行, 不能让一次日志/列表渲染失败。
+void collect_input_preview(const nlohmann::json& in_input, std::string& io_out) {
+  if (in_input.is_string()) {
+    io_out += in_input.get<std::string>() + "\n";
+    return;
+  }
+  if (!in_input.is_array()) return;
+  for (const auto& l_item : in_input) {
+    if (!l_item.is_object()) continue;
+    if (!l_item.contains("content")) continue;
+    const auto& l_content = l_item.at("content");
+    if (l_content.is_string()) {
+      io_out += l_content.get<std::string>() + "\n";
+      continue;
+    }
+    if (!l_content.is_array()) continue;
+    for (const auto& l_part : l_content) {
+      if (!l_part.is_object()) continue;
+      if (!l_part.contains("type") || !l_part.at("type").is_string()) continue;
+      if (l_part.at("type").get<std::string>() != "input_text") continue;
+      if (l_part.contains("text") && l_part.at("text").is_string())
+        io_out += l_part.at("text").get<std::string>() + "\n";
+    }
+  }
+}
+}  // namespace
+
 ai_client_base::request_info_t seedance2_client::collect_request_info(const nlohmann::json& in_request) const {
   // 刻意保持宽容的字符串读键: 这个函数与**生成类**任务的 json 形状共用(前台提交路径),
   // 那种 json 不是 inference_request_t, 不能按推理信封的严格类型去解析。推理信封的键名与类型
@@ -47,6 +81,13 @@ ai_client_base::request_info_t seedance2_client::collect_request_info(const nloh
   if (in_request.contains("instructions"))
     l_info.text_prompt_ += in_request.at("instructions").get<std::string>() + "\n";
   if (in_request.contains("input_text")) l_info.text_prompt_ += in_request.at("input_text").get<std::string>() + "\n";
+  // 透传信封(**网关路径**)的提示词在 Responses 的 input 里, 不再是上面的扁平 input_text。
+  // 不接这一支的话, 前台任务列表与日志上所有网关推理的提示词都是空的 —— 而「这次问了什么」
+  // 恰恰是排查内容违规、比对计费时唯一要看的东西。
+  //
+  // 与上面两行同样是宽容读键: input 可以是字符串, 也可以是元素列表, 取不出来就跳过,
+  // 绝不因为形状不是预期的而抛 —— 这只是给人看的摘要, 不是解析契约。
+  if (in_request.contains("input")) collect_input_preview(in_request.at("input"), l_info.text_prompt_);
   // content 中 type 为 text 的项按顺序累加为提示词
   if (in_request.contains("content") && in_request.at("content").is_array())
     for (const auto& l_value : in_request.at("content"))
@@ -105,58 +146,9 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
 
 // ─── 推理 (Responses API) ────────────────────────────────────────────────────
 
-nlohmann::json seedance2_client::build_inference_body(const inference_request_t& in_request) {
-  nlohmann::json l_body{};
-  // 传了空串(会话没配模型)时也要回落到缺省值, 否则会带着 model:"" 打过去白跑一趟
-  const auto l_model = in_request.model_.value_or(std::string{});
-  l_body["model"]    = l_model.empty() ? std::string{doodle_config::g_ark_inference_model} : l_model;
+// 发射规则本身在 seedance2_inference_request.h 的 finalize_inference_body(): 网关的透传路径
+// 要能在不起 HTTP 依赖的地方单独测它(同该头文件顶部对依赖的说明)。
 
-  // instructions 与 caching 互斥(方舟会报 400 InvalidParameter), 这里从不发 caching
-  if (in_request.instructions_ && !in_request.instructions_->empty()) l_body["instructions"] = *in_request.instructions_;
-
-  nlohmann::json l_content = nlohmann::json::array();
-  if (!in_request.input_text_.empty())
-    l_content.push_back(nlohmann::json{{"type", "input_text"}, {"text", in_request.input_text_}});
-  if (!in_request.images_.empty()) {
-    const auto l_detail = in_request.image_detail_.value_or(std::string{});
-    for (const auto& l_image : in_request.images_) {
-      // 注意: Responses 的 input_image.image_url 是**字符串**(生成 API 才是 {"url": ...} 对象)
-      nlohmann::json l_item{{"type", "input_image"}, {"image_url", l_image}};
-      if (!l_detail.empty()) l_item["detail"] = l_detail;
-      l_content.push_back(std::move(l_item));
-    }
-  }
-  // input 项是 InputItem: type 固定 "message"(文档原话「取值固定为 message」), 不能只发 role。
-  l_body["input"] = nlohmann::json::array(
-      {nlohmann::json{{"type", "message"}, {"role", "user"}, {"content", std::move(l_content)}}}
-  );
-
-  // 不把提示词与素材留在方舟侧
-  l_body["store"] = false;
-  // max_output_tokens **缺省不发**: 结构化输出要求全字段 required, 输出长度不可预估, 而截断
-  // 之后 result_json_ 只剩半个 JSON —— 那个失败面跟"schema 不合规被拒"完全分不出来。
-  // 交给模型/账号侧决定上限; 只有调用方显式指定了才发。
-  if (in_request.max_output_tokens_) l_body["max_output_tokens"] = *in_request.max_output_tokens_;
-  if (in_request.temperature_) l_body["temperature"] = *in_request.temperature_;
-  if (in_request.top_p_) l_body["top_p"] = *in_request.top_p_;
-
-  // 缺省关闭思考: 蒸馏/结构化输出不需要思维链, 还能省输出 token
-  const auto l_thinking = in_request.thinking_.value_or(std::string{"disabled"});
-  if (!l_thinking.empty() && l_thinking != "auto") l_body["thinking"] = nlohmann::json{{"type", l_thinking}};
-  if (in_request.reasoning_effort_ && !in_request.reasoning_effort_->empty())
-    l_body["reasoning"] = nlohmann::json{{"effort", *in_request.reasoning_effort_}};
-
-  if (in_request.json_schema_.is_object()) {
-    nlohmann::json l_format{
-        {"type", "json_schema"},
-        {"name", in_request.json_schema_name_.empty() ? std::string{"result"} : in_request.json_schema_name_},
-        {"schema", in_request.json_schema_},
-        {"strict", in_request.json_schema_strict_.value_or(true)},
-    };
-    l_body["text"] = nlohmann::json{{"format", std::move(l_format)}};
-  }
-  return l_body;
-}
 
 std::string seedance2_client::get_error_code(const nlohmann::json& in_body) {
   if (!in_body.contains("error") || !in_body.at("error").is_object()) return {};
@@ -256,18 +248,23 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
     const doodle::seedance2::task& in_task
 ) {
   const auto l_uid = in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_);
-  // 落库的 data_request_ 是归一化信封 json; 解析成强类型后交给 build_inference_body。
-  // 这里**只读不写回**: 任务行落库路径原样拷贝 json, 不能拿结构体重序列化(会丢未知键)。
-  inference_request_t l_envelope{};
-  try {
-    l_envelope = in_task.data_request_.get<inference_request_t>();
-  } catch (const nlohmann::json::exception& e) {
+  // 落库的 data_request_ **原样**打给方舟, 不再经 inference_request_t 往返一趟。
+  //
+  // 之前是 `data_request_.get<inference_request_t>()` 再 build_inference_body: 那次转换是
+  // 一份**手写白名单**, 结构体不认识的键会被静默吃掉 —— 与「前端请求原样透传」直接冲突,
+  // 而且它多出来的失败面只是「解析失败就 500」, 对这里要做的事没有贡献。
+  //
+  // 现在这行只有两个动作: 定稿(剥本系统字段 / 覆盖强制字段 / 隐私口径), 然后发出去。
+  // 接缝路径落库的也是同一份形状的信封, 所以两条路径在这里合流, 没有第二套发射规则。
+  auto l_body = in_task.data_request_;
+  if (!l_body.is_object()) {
+    // 非对象连 model 都没处放, 发出去必然被方舟拒且看不出原因, 不如当场说清楚是任务行坏了。
     throw_exception(http_request_error{
         boost::beast::http::status::internal_server_error,
-        fmt::format("推理信封无法解析(任务 {}): {}", boost::uuids::to_string(in_task.uuid_id_), e.what())
+        fmt::format("推理请求体不是 JSON 对象(任务 {}): {}", boost::uuids::to_string(in_task.uuid_id_), l_body.type_name())
     });
   }
-  const auto l_body = build_inference_body(l_envelope);
+  finalize_inference_body(l_body, std::string{doodle_config::g_ark_inference_model});
 
   run_task_result_t l_result{};
   for (std::size_t l_attempt = 0; l_attempt < doodle_config::g_ark_inference_max_retry; ++l_attempt) {

@@ -54,7 +54,7 @@ namespace doodle::http::ai_light {
 //   ]
 // }
 //
-// **不接受** `seam` / `session_id` / `operator_id`：session 在路径上，operator 只从 JWT 取。
+// **不接受** `session_id` / `operator_id`：session 在路径上，operator 只从 JWT 取。
 // 这与网关同一条纪律 —— 结构上不可伪造，比"校验后拒绝"彻底。
 //
 // ---------------------------------------------------------------------------
