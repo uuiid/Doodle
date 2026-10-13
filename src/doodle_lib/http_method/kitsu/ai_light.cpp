@@ -430,6 +430,25 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
   // 非 const：ORM 的 values() 会回填 uuid_id_ / created_at_（服务端生成字段）
   for (auto& l_ref : l_added)
     l_sqls.emplace_back(insert(l_sql).into<ai_light_reference>().values(l_ref));
+
+  // ---- 参考图落库与「开始干活」同事务：draft → generating ----
+  //
+  // 曾经这一步由人工闸门 1（POST /session/{}/spec/confirm）负责。闸门删除后
+  // `draft → generating` 需要一个新的触发点，而**上传参考图是唯一能观测到
+  // 「输入齐了」的地方**：建会话时参考图还不可能存在（reference_route 要 session_id，
+  // 而 session_id 是建会话的返回值，见 shot_session_route::post 的说明），
+  // 所以「会话存在 + 有参考图」这个组合第一次成立就在本函数返回之前的这一刻。
+  //
+  // 只推 draft：awaiting_judgement 时上传参考图**不得**改状态（那一轮的候选还在等判断），
+  // generating 时也不必重复写（补图不改变「可以再出一轮」的语义）。
+  if (l_session.state_ == ai_light_session_state::draft) {
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<ai_light_session>()
+            .set(c(&ai_light_session::state_) = ai_light_session_state::generating)
+            .where(c(&ai_light_session::uuid_id_) == l_session.uuid_id_)
+    );
+  }
   co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
@@ -591,55 +610,38 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
 }
 
 // ===========================================================================
-// 输出版本确认
+// 输出版本确认（人工闸门 1）—— **已取消**
 // ===========================================================================
 //
-// 这里曾经有 spec_route 的 get/post（GET/POST /session/{}/spec）。整条路由已删除：
-// POST 最后只剩「读会话 + 校验提示词非空 + 返回会话详情」，不写任何东西；GET 的 Spec
-// 版本列表是同一份数据的第二个出口。详见 ai_light.h 里那段说明。
+// 这里曾经有三样东西，现在全没了：
+//   1. `spec_route` 的 get/post（GET/POST /session/{}/spec）。整条路由已删除：
+//      POST 只剩「读会话 + 校验提示词非空 + 返回会话详情」，不写任何东西；GET 的
+//      Spec 版本列表是同一份数据的第二个出口。
+//   2. `spec_confirm_route`（POST /session/{}/spec/confirm）—— **人工闸门 1 本身**。
+//      它做的唯一一件事是把会话状态推到 generating，其余全是注释。
+//   3. `ai_light_spec` 这张表 —— 空表，全仓没有任何 insert 路径，spec.h 里那些
+//      intent/targets/reference_stats 是早期「后端用大模型做灯光推理」方案的遗留。
 //
-// **ai_light_spec 这张表也已删除** —— 调查发现它是空表：全仓没有任何 insert 路径
-// （状态机在 awaiting_spec_confirm 就断了），spec.h 里那些 intent/targets/reference_stats
-// 是早期「后端用大模型做灯光推理」方案的遗留。现在没有再写它，本路由也就没有
-// 「已确认的 Spec 行」可更新，于是这条路由退化成一次纯粹的状态推进。
-
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_confirm_route, post) {
-  person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
-
-  // session_id 来自路径；请求体不读（本路由不需要任何入参）
-  auto l_session = load_session_checked(person_, l_sql, session_id_);
-
-  DOODLE_CHICK_HTTP(
-      l_session.state_ == ai_light_session_state::awaiting_spec_confirm, bad_request,
-      "会话 {} 处于状态 {}，不在等确认", l_session.uuid_id_, magic_enum::enum_name(l_session.state_)
-  );
-
-  // 确认后立即进入候选生成（§10.3）—— 候选由前端算好后经
-  // POST /session/{}/iteration 提交（ai_light_submit.h）。这里只把状态推到 generating，
-  // 生成动作本身不属于本路由。
-  l_session.state_ = ai_light_session_state::generating;
-
-  co_await l_sql.run_sql(
-      sql_modify_statement_vector_t{
-          update(l_sql)
-              .from<ai_light_session>()
-              .set(c(&ai_light_session::state_) = l_session.state_)
-              .where(c(&ai_light_session::uuid_id_) == l_session.uuid_id_)
-      }
-  );
-
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 确认了 AI 灯光会话 {} 的输出版本，会话转入 generating",
-      person_.person_.email_, person_.person_.get_full_name(), l_session.uuid_id_
-  );
-
-  // 曾经在这里调 advance_session 立刻跑一轮候选生成。候选生成归前端后这个入口
-  // 没有可推进的步骤，已随函数一起删除：状态停在 generating，等前端提交。
-
-  auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
-}
+// 为什么闸门 1 整个取消（而不只是删掉这条路由）：
+//   * 它挡住的东西在服务端**已经不存在**。闸门 1 的语义是「人工确认服务端蒸馏出的
+//     输出版本」—— 而 Spec 蒸馏早已归前端（见 ai_light_orchestrator.h 的角色降级说明），
+//     服务端手上没有可确认的版本，这个闸门就没有确认对象。
+//   * 唯一入口状态 `awaiting_spec_confirm` 是**没有任何写侧**的：全仓没有一处把会话
+//     置为该状态。而它自己写出的 generating 又只被 `/iteration` 提交接受
+//     （ai_light_submit.h），于是这条路由实际取值恒为「建会话后的 draft」。
+//   * 它是**一次性**的：第二次调用必报 400（状态已不是 awaiting_spec_confirm）。
+//     前端在候选提交被 IR 闸门拒绝后重试时补发一次 confirm，拿到的是一句
+//     「不在等确认」—— 与真实原因毫不相干的误导性报错。
+//
+// 取消后的状态机只剩**一个**闸门（人工闸门 2 = /judge），状态由提交接口自己推进：
+//   建会话 → draft
+//   上传参考图（reference_route，POST 里推进到 generating —— 见该处注释）
+//   前两轮提交候选 → POST /session/{}/iteration（要求 generating）
+//   渲染回传 → awaiting_judgement（mark_iteration_rendered）
+//   判断 → generating（apply_judgement）
+// 会话的 `draft → generating` 不再是一个独立的人工作业，它是「存在参考图、可以开始
+// 干活了」的同义语，所以推进由参考图上传这条路径负责 —— 那是唯一能观测到
+// 「输入齐了」的地方（建会话时参考图还不可能存在，见 shot_session_route::post）。
 
 // ===========================================================================
 // 人工闸门 2：判断

@@ -165,11 +165,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   // 会话在路径上，操作者只从 JWT 取 —— 与网关同一条纪律（结构上不可伪造）。
   auto l_session = submit_load_session_checked(person_, l_sql, session_id_);
 
-  // 会话必须处于 generating：只有这个状态才有"正在等一批候选"的语义。
-  // awaiting_judgement 时提交候选会让上一轮未被判断的候选变成孤儿。
+  // 会话必须可以干活：draft（刚建会话就提交）或 generating（正常路径 / 再出一轮）。
+  // 取消人工闸门 1 之后这里放行 draft —— 服务端不再要求「先确认输出版本」。
+  // awaiting_judgement 明确不放行：上一轮候选还没被判断，此时提交会让它们变成孤儿。
   DOODLE_CHICK_HTTP(
-      l_session.state_ == ai_light_session_state::generating, bad_request,
-      "会话 {} 处于状态 {}，不能提交候选（需要 generating）", l_session.uuid_id_,
+      can_submit_candidates(l_session.state_), bad_request,
+      "会话 {} 处于状态 {}，不能提交候选（需要 draft 或 generating）", l_session.uuid_id_,
       magic_enum::enum_name(l_session.state_)
   );
 

@@ -63,9 +63,11 @@ constexpr auto g_judgement_timeout = std::chrono::hours{4};
 /// 所以「再来一轮」必须经 `POST /iterate` —— 这是有意的，见 §15.10。
 enum class ai_light_session_state {
   /// 已创建，提示词已录入，尚未产出 Spec
+  ///
+  /// **可提交候选**（与 generating 并列，见 can_submit_candidates）。这一条是为
+  /// 「取消人工闸门 1」补上的：闸门 1 删除后，只要有参考图就能直接干活，
+  /// 而建会话时就已有提示词、上传首张参考图的返回里也已经是 generating。
   draft,
-  /// 人工闸门 1：Spec 待美术确认
-  awaiting_spec_confirm,
   /// 正在生成候选（LLM + 优化器）。**判断之后也回到这里**，所以它同时表示
   /// 「可以再出一轮」——`POST /iterate` 只在这个状态下可用。
   generating,
@@ -76,20 +78,47 @@ enum class ai_light_session_state {
 DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     ai_light_session_state, {
                                 {ai_light_session_state::draft, "draft"},
-                                {ai_light_session_state::awaiting_spec_confirm, "awaiting_spec_confirm"},
                                 {ai_light_session_state::generating, "generating"},
                                 {ai_light_session_state::awaiting_judgement, "awaiting_judgement"},
                             }
 )
+
+/// 曾经的 `awaiting_spec_confirm`（人工闸门 1：Spec 待美术确认）已删除。
+///
+/// 删除理由：闸门 1 的语义是「人工确认**服务端**蒸馏出的输出版本」，而 Spec 蒸馏早已
+/// 归前端（见 ai_light_orchestrator.h 的角色降级说明）—— 服务端手上没有可确认的对象。
+/// 该状态在全仓**没有任何写侧**（没有一处把会话置为它），它自己写出的 generating
+/// 又只被 `/iteration` 提交接受，于是承载它的 `/spec/confirm` 路由只能成功一次。
+/// 现在只剩**一个**人工闸门：awaiting_judgement（/judge）。
 
 /// 是否处于「等人工动作」状态。前端「待办」列表用它。
 ///
 /// 注意 overdue 的会话仍然算「等人工动作」：过期不代表可以不管了，
 /// 只是提醒前端该催了。要区分「刚进入等判断」和「已经拖太久了」，
 /// 用读模型里的 is_judgement_overdue_。
+///
+/// 人工闸门 1 取消后，`awaiting_spec_confirm` 分支随之删除 —— 现在唯一等人工的
+/// 状态就是 awaiting_judgement，但本函数保留成谓词形状：前端读的是
+/// `is_waiting_human_` 这个**标志**而不是状态枚举，将来再加闸门时不必改读模型。
 inline bool is_waiting_human(ai_light_session_state in_state) {
-  return in_state == ai_light_session_state::awaiting_spec_confirm ||
-         in_state == ai_light_session_state::awaiting_judgement;
+  return in_state == ai_light_session_state::awaiting_judgement;
+}
+
+/// 是否可以向会话提交一轮候选。
+///
+/// 两个状态都放行，理由不同：
+///   * `draft` —— 建会话后即可提交。取消人工闸门 1 之后，服务端不再要求「先确认
+///     输出版本」；只要提示词与参考图齐了就能干活。仍要求**存在参考图**这一点
+///     由 /iteration 提交自己校验（参考图是候选生成的前提）。
+///   * `generating` —— 正常路径（上传参考图后即为此状态），以及判断之后回到的「再出一轮」。
+///
+/// `awaiting_judgement` 明确**不**放行：上一轮 6 个候选还没被判断，此时提交会让它们
+/// 变成孤儿（见 ai_light_submit.cpp 的同名闸门）。
+///
+/// 与 is_waiting_human 一样放在枚举旁边：判定条件与状态枚举同处一文件，
+/// 将来增删状态时改枚举的人就在隔壁看得到这个谓词。
+inline bool can_submit_candidates(ai_light_session_state in_state) {
+  return in_state == ai_light_session_state::draft || in_state == ai_light_session_state::generating;
 }
 
 struct DOODLE_CORE_API ai_light_session {

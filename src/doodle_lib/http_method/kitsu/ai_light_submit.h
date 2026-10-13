@@ -70,7 +70,7 @@ namespace doodle::http::ai_light {
 //        闸门任一条不过（缺主光 / 相邻候选 substance 相同）、rig 形状校验不过。
 // 404 —— 会话不存在。
 // 403 —— 非本项目成员（load_session_checked 内部的 check_project_access）。
-// 409 —— 会话状态不是 generating（此时不该提交候选）。
+// 409 —— 会话状态不可提交候选（既不是 draft 也不是 generating，即 awaiting_judgement）。
 DOODLE_HTTP_JWT_FUN(iteration_submit_route)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 

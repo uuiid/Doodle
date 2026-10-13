@@ -9,10 +9,10 @@
 // 并序列化成 §4.2 的 JSON 形态。
 //
 // 这里曾经还有第二类：表实体 ai_light_spec（落库用，把上面那份 JSON 拆成若干列）。
-// **已删除** —— 它是一张空表，全仓没有任何 insert 路径，状态机在 awaiting_spec_confirm
-// 就断了。那些 revision / human_confirmed / degrade_level 字段是早期「后端用大模型做
-// 灯光推理」方案的遗留；后端不再做推理之后，这份「已确认的 Spec 版本」不再落库，
-// 由前端自己持有并经推理网关直接交给模型。
+// **已删除** —— 它是一张空表，全仓没有任何 insert 路径。那些 revision / human_confirmed /
+// degrade_level 字段是早期「后端用大模型做灯光推理」方案的遗留；后端不再做推理之后，
+// 这份「已确认的 Spec 版本」不再落库，由前端自己持有并经推理网关直接交给模型。
+// （承载它的会话状态 awaiting_spec_confirm 与 POST /spec/confirm 闸门后来也一并取消。）
 //
 
 #pragma once

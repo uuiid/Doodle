@@ -87,8 +87,11 @@ namespace doodle::ai_light {
 //         → 建 server_task_info{type = ai_light} → run_next_task() + broadcast。
 //         后继是 POST /session/{}/iteration（ai_light_submit.h）：候选由前端算好交上来，
 //         服务端只做 IR 闸门 + 落库。
-// 两者、连同 POST /session/{}/iterate 路由与 /spec、/spec/confirm 末尾的调用，
-// 已一并删除。生成会话状态由此由这些提交接口自己推进，不再有「推进」这个空动作。
+// 两者已一并删除。**人工闸门 1（/spec/confirm）也已取消**，`awaiting_spec_confirm`
+// 这个状态随之从枚举里删除 —— 它的语义是「人工确认服务端蒸馏出的输出版本」，
+// 而服务端早已不蒸馏，没有可确认的对象。会话的 `draft → generating` 改由
+// **参考图上传**推进（reference_route::post）：「存在参考图」就是「可以开始干活」的判据。
+// 生成会话状态由此由这些提交接口自己推进，不再有「推进」这个空动作。
 //
 // 参考图为空时**拒绝**候选提交（400，且不写 failure_reason_）：候选生成的前提是会话有
 // 提示词与参考图。因此建会话接口不推进状态 —— 建会话时参考图还不可能存在

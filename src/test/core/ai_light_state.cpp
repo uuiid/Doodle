@@ -629,12 +629,44 @@ BOOST_AUTO_TEST_CASE(session_detail_reports_overdue_flag) {
 //
 // 最后一条 advance_session 用例（advance_session_without_references_reports_no_step）
 // 也随函数本身一起删除：它验的是「没有可推进的步骤时报 400」，而**整条链**已不存在 ——
-// 状态推进现在只发生在 /spec/confirm 与 POST /session/{}/iteration，
-// 前者的失败策略由 ai_light.cpp 的闸门用例覆盖，后者的准入闸门由
-// ai_light_json_validation.cpp 覆盖。一个恒抛 400 的空壳没有可测行为。
+// 状态推进现在只发生在参考图上传与 POST /session/{}/iteration，
+// 后者的准入闸门由 ai_light_json_validation.cpp 覆盖。一个恒抛 400 的空壳没有可测行为。
 //
 // 保留 net 结论：**任何**失败的推进都不得留下半成品行、不得丢参考图、
 // 不得写 failure_reason_ —— 这条在提交与判断的用例里仍然有断言。
+
+// ===========================================================================
+// 人工闸门 1 已取消：状态准入谓词
+// ===========================================================================
+//
+// 闸门 1（POST /session/{}/spec/confirm）连同 `awaiting_spec_confirm` 状态一起删除，
+// 会话的 `draft → generating` 改由**参考图上传**推进。于是「哪些状态能提交候选」
+// 从「只认 generating」放宽为「draft 或 generating」，这个真值表就是本节的用例。
+//
+// 为什么值得单独钉：放宽准入的**方向**必须是「多收一个 draft」，
+// 绝不能顺手把 awaiting_judgement 也放进来 —— 那会让上一轮 6 个还没被判断的候选
+// 变成孤儿（图已经渲染完、钱已经花掉，却再也不会有 /judge 能处理它们）。
+// 一条 `if` 里两个 || 的表现差异没有别的用例能兜住。
+
+BOOST_AUTO_TEST_CASE(can_submit_candidates_admits_draft_and_generating_only) {
+  // 放行：两条合法入口
+  BOOST_TEST(can_submit_candidates(ai_light_session_state::draft));
+  BOOST_TEST(can_submit_candidates(ai_light_session_state::generating));
+
+  // 拒绝：上一轮候选还挂着
+  BOOST_TEST(!can_submit_candidates(ai_light_session_state::awaiting_judgement));
+}
+
+BOOST_AUTO_TEST_CASE(is_waiting_human_only_counts_the_judgement_gate) {
+  // 人工闸门 1 取消后，唯一「等人工动作」的状态是 awaiting_judgement。
+  // 前端待办列表读的是 is_waiting_human_ 这个标志，它由本谓词算出
+  // （ai_light_orchestrator.cpp:810），所以这里同时钉住「读模型不会给出
+  // 一个已经不存在的人工闸门」。
+  BOOST_TEST(is_waiting_human(ai_light_session_state::awaiting_judgement));
+
+  BOOST_TEST(!is_waiting_human(ai_light_session_state::draft));
+  BOOST_TEST(!is_waiting_human(ai_light_session_state::generating));
+}
 
 // ===========================================================================
 // 预设库
