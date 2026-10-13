@@ -69,9 +69,30 @@ uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
 
 // GET    /api/doodle/ai/light/session/{id}   会话详情（六表聚合读模型）
+// PUT    /api/doodle/ai/light/session/{id}   改会话（目前只有提示词）
 // DELETE /api/doodle/ai/light/session/{id}   删会话（含参考图与候选，目录先进备份）
+//
+// 为什么「改提示词」在这里而不是 /spec POST 的请求体里：
+//   `prompt_text_` 是**会话自己的属性**，不是「生成 Spec」这个动作的参数。原先 /spec POST
+//   收 `prompt_text` 顺带写会话行，代价与参考图的排除完全同形（见 reference_instance_route）：
+//     * 美术改一句提示词必须调一次「生成 Spec」—— 而改提示词**不该**顺带蒸馏一版方案，
+//       原先的写法让「只想改字」的人被迫接受一次 revision+1 与一次方舟推理；
+//     * 写 prompt_text_ 的地方于是有两处（这里与 /spec POST），是会分叉的第二条路径。
+//   归到本路由后，「谁改会话」只有一个答案。
+//
+// 那个「改完提示词顺手重出一版」的常见组合动作，改由前端连调两次：先 PUT，再 POST /spec。
+// 两次请求换来的是两个语义各自独立 —— 改字失败不会带崩提 Spec，反之亦然。
+//
+// 请求体（目前只认一个键，给了才改）：
+//   {"prompt_text": "…"}   人工提示词原文；**不允许为空串**（空提示词会让蒸馏失去权威意图）
+// 响应体：改完的会话详情（与 GET 一致）。
+//
+// 只收 prompt_text 一项是刻意的：`title_` 也属于「会话自己的属性」，但它目前没有改名入口
+// （建会话时缺省用镜头名，见 shot_session_route::post），加进来要连着定「改名算不算一次
+// 编辑」这类问题。等真有人要改标题时再往这个 PUT 里加键即可，形状已经留好。
 DOODLE_HTTP_JWT_FUN(session_instance_route)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
@@ -145,9 +166,12 @@ DOODLE_HTTP_FUN_END()
 //                                                        已实现（§15.7）：统计聚合 + 一次方舟推理。
 //                                                        失败时会话状态回滚，Spec 版本不变（可重试）。
 //
-// 请求体只认一个键 `prompt_text`（可选）：给了就覆盖会话提示词并落库，不给就沿用。
-// **不再接受 `excluded_reference_ids`** —— 排除参考图是参考图自己的属性，
-// 改它请走 PUT /reference/{id}（见上面 reference_instance_route 的说明）。
+// 请求体**不认任何键**。改了提示词想重出，先调 PUT /session/{id}（见 session_instance_route），
+// 再调本接口：
+//   **不再接受 `prompt_text`** —— 提示词是会话自己的属性，改它走会话的 PUT。
+//   **不再接受 `excluded_reference_ids`** —— 排除参考图是参考图自己的属性，
+//   改它走 PUT /reference/{id}（见 reference_instance_route 的说明）。
+// 本接口只做一件与它同名的事：按**当前**的提示词与参考图蒸馏一版 Spec。
 DOODLE_HTTP_JWT_FUN(spec_route)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)

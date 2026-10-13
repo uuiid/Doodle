@@ -293,6 +293,42 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, get) {
   co_return in_handle->make_msg(nlohmann::json{} = load_detail_checked(person_, l_sql, id_));
 }
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, put) {
+  person_.check_not_outsourcer();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+
+  // id 来自路径；请求体里带了也忽略（路径为准，见 ai_light.h 顶部的约定）
+  auto l_session = load_session_checked(person_, l_sql, id_);
+
+  // 逐字段可选：给了才改。整行 PUT 会要求前端先把会话详情读回来再原样发一遍，
+  // 而并发场景下（会话里最多只有一个人在改）那一次往返只会多出一次被静默回滚的机会。
+  if (l_json.contains("prompt_text")) l_json.at("prompt_text").get_to(l_session.prompt_text_);
+
+  // 提示词是**权威意图**（§6.3：提示词优先于参考图），空提示词会让 Spec 蒸馏失去依据 ——
+  // 所以这里挡在写库之前，而不是留给 /spec POST 去报「没有参考图/无法蒸馏」。
+  DOODLE_CHICK_HTTP(!l_session.prompt_text_.empty(), bad_request, "提示词不能为空");
+
+  {
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<ai_light_session>()
+            .set(c(&ai_light_session::prompt_text_) = l_session.prompt_text_)
+            .where(c(&ai_light_session::uuid_id_) == id_)
+    );
+    co_await l_sql.run_sql(std::move(l_sqls));
+  }
+
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_http(), "用户 {}({}) 修改了 AI 灯光会话 {} 的提示词（{} 字符）",
+      person_.person_.email_, person_.person_.get_full_name(), id_, l_session.prompt_text_.size()
+  );
+
+  // 返回整份会话详情，与 GET 同形：前端改完提示词往往要顺手刷新闸门 1 的显示。
+  co_return in_handle->make_msg(nlohmann::json{} = load_detail_checked(person_, l_sql, id_));
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, delete_) {
   person_.check_not_outsourcer();
   auto l_sql     = get_sqlite_database();
@@ -575,28 +611,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_route, get) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(spec_route, post) {
   person_.check_not_outsourcer();
-  auto l_sql  = get_sqlite_database();
-  auto l_json = in_handle->get_json();
+  auto l_sql = get_sqlite_database();
 
   // session_id 来自路径；请求体里带了也忽略（路径为准，见 ai_light.h 顶部的约定）
   auto l_session = load_session_checked(person_, l_sql, session_id_);
 
-  // 重出方案时允许顺手改提示词（美术看完第一版目标才发现自己没说清是常事）
-  if (l_json.contains("prompt_text")) l_json.at("prompt_text").get_to(l_session.prompt_text_);
-  DOODLE_CHICK_HTTP(
-      !l_session.prompt_text_.empty(), bad_request, "提示词不能为空"
-  );
-  // 提示词改了要落库，否则接缝读到的是旧值
-  {
-    sql_modify_statement_vector_t l_sqls{};
-    l_sqls.emplace_back(
-        update(l_sql)
-            .from<ai_light_session>()
-            .set(c(&ai_light_session::prompt_text_) = l_session.prompt_text_)
-            .where(c(&ai_light_session::uuid_id_) == l_session.uuid_id_)
-    );
-    co_await l_sql.run_sql(std::move(l_sqls));
-  }
+  // 提示词**不在这里改**：`prompt_text_` 是会话自己的属性，改它走
+  // PUT /api/doodle/ai/light/session/{id}（见 ai_light.h）。原先这里收 `prompt_text`
+  // 顺带写会话行 —— 那等于「改一句提示词」必须调一次「生成 Spec」，而改字本不该
+  // 顺带蒸馏一版（多一次 revision+1 与一次方舟推理），且让 prompt_text_ 有了第二个写入方。
+  //
+  // 这里只读会话现有的提示词做校验：蒸馏要它当权威意图（§6.3），空了就没法生成。
+  DOODLE_CHICK_HTTP(!l_session.prompt_text_.empty(), bad_request, "提示词不能为空");
 
   // 注意：**不**在这里把状态改成 draft。状态只由 /spec/confirm 与提交接口推进。
 

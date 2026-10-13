@@ -239,11 +239,20 @@ draft ──POST /spec──▶ awaiting_spec_confirm ──POST /spec/confirm�
 - **确认方案** → `POST /api/doodle/ai/light/session/{session_id}/spec/confirm`，请求体**不带任何裁决内容**（该接口只做确认）。
   成功 → `state = generating`，服务端**随即触发首轮候选生成**（不用前端再调 `/iterate`）。
   该接口**幂等**：已确认过会直接返回 `{spec, session_state, already_confirmed: true}`，前端据此提示「已确认过」而不是报错。
-- **重新生成** → `POST .../spec`，体可带 `{prompt_text}`：
-  - `prompt_text` 会**覆盖**会话提示词并落库。不带就沿用会话里已有的提示词 ——
-    接口已不再接受 `excluded_reference_ids`（排除改用下面的 PUT，见「**排除参考图**」）。
+- **重新生成** → `POST .../spec`，体**不带任何键**（`{}`）：
+  - 服务端按**当前**的提示词与参考图蒸馏一版。想改提示词先调下面的「**改提示词**」，
+    再调本接口 —— 接口已不再接受 `prompt_text`，也不再接受 `excluded_reference_ids`
+    （排除改用「**排除参考图**」）。
+  - 「改字 + 重出」这个常见组合现在要连调两次（先 PUT 再 POST）。这是有意的：
+    改字不该顺带蒸馏一版，反过来蒸馏失败也不该让改字一起回滚。
   - 重出即 revision+1，**旧版留在 `spec_history` 里**（前端要提供「查看上一版」的入口，否则美术无法回头）。
-  - 该接口**只在 `draft` 或 `awaiting_spec_confirm` 状态可用**。
+  - 该接口**只在 `draft` 或 `awaiting_spec_confirm` 状态可用**；提示词为空会是 400（见 5.1 的建会话约束）。
+- **改提示词** → `PUT /api/doodle/ai/light/session/{session_id}`，体 `{"prompt_text": "…"}`：
+  - 只认这一个键，**给了才改**；**不允许空串**（400 `提示词不能为空`）—— 提示词是权威意图，
+    Spec 蒸馏要拿它当依据（§6.3：提示词优先于参考图）。
+  - 响应体是**整份会话详情**（与 `GET /session/{id}` 一致），前端可直接用它刷新闸门 1 的显示。
+  - 与 `/spec` 相互独立：改完不会自动重出，重出不会顺带改字。界面上「改完提示词顺手重出一版」
+    的按钮请显式连调两次，并在第二次失败时**不要**把提示词回滚（它已经落库了）。
 - **排除参考图** → `PUT /api/doodle/ai/light/reference/{reference_id}`，体 `{"is_outlier": true, "excluded_reason": "…"}`：
   - 两个字段都可选，**给了才改**；`excluded_reason` 留空也允许。
   - **取消排除** → 传 `{"is_outlier": false}` 即可，服务端会**一并清空** `excluded_reason`

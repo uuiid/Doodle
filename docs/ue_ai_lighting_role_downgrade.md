@@ -285,7 +285,7 @@ POST /api/doodle/ai/light/session/{sid}/iteration
 |---|---|
 | `POST /session/{sid}/iterate` | **删除**。它现在"刻意不读请求体"、由服务端跑完整接缝；降级后这个语义不存在 |
 | `POST /session/{sid}/judge` 的文本→轴通道 | **删除**（`ai_light.cpp:716-772` 整段）。前端提交结构化 `feedback_axes`，不再需要服务端调 LLM 做结构化 |
-| `POST /session/{sid}/spec` | **改造**：不再内部调 LLM，只落 `prompt_text_` 并置 `awaiting_spec_confirm` 之前的 draft 态；Spec 本体改由前端解释模型回复后提交（见 §5 第三梯队） |
+| `POST /session/{sid}/spec` | **改造**：不再内部调 LLM，只读**当前**的 `prompt_text_` 与参考图并落一版 Spec（提示词本身的修改已移到 `PUT /session/{sid}`，见 §3.3 的说明） |
 | `POST /session/{sid}/spec/confirm` | **保留**（人工闸门，与 LLM 无关） |
 
 ---
