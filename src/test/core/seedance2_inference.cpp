@@ -17,7 +17,6 @@
 
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/http_client/seedance2_client.h>
-#include <doodle_lib/http_client/seedance2_inference_request.h>
 #include <doodle_lib/http_client/url_sign.h>
 
 #include <boost/test/unit_test.hpp>
@@ -97,81 +96,26 @@ std::string url_path(std::string_view in_url) {
 // ---------------------------------------------------------------------------
 // 请求体构造
 // ---------------------------------------------------------------------------
-// 这里曾经有四个用例验 `build_inference_body()`（body_defaults_are_offline_safe、
-// body_uses_flat_envelope_shape_with_images、body_attaches_flat_json_schema_format、
-// body_sends_instructions_when_given），它们与 `inference_request_t` 结构体一起删除。
+// 这一节现在是空的, 前后两批用例都随着被测物的消失而删除:
 //
-// **发射路径的覆盖没有丢**：那四个用例验的是「to_json 成扁平信封 + finalize 定稿」这条
-// 两步链，而被测的 `build_inference_body` 只是为了方便单测才存在 —— 它把两步拼在一起，
-// 于是「最终发出去的 body 长什么样」只能靠调它来验证（见 seedance2_client.h 的说明）。
-// 现在两步各自的真身直接可测：`finalize_inference_body` 定义在
-// seedance2_inference_request.h 里，是 inline 的纯函数。下面这组用例替掉原来那四个。
+//   1) 最早四个用例验 `build_inference_body()`（body_defaults_are_offline_safe、
+//      body_uses_flat_envelope_shape_with_images、body_attaches_flat_json_schema_format、
+//      body_sends_instructions_when_given），随 `inference_request_t` 结构体一起删除；
+//   2) 接替它们的三个用例验 `finalize_inference_body()`
+//      （finalize_overrides_model_and_disables_store /
+//      finalize_keeps_caller_supplied_values_verbatim /
+//      finalize_falls_back_to_default_model_on_blank），随该函数**内联进唯一调用处**一起删除 ——
+//      它现在写在 seedance2_client.cpp 的 run_inference_task() 里, 而那是个需要网络与
+//      app_base 的私有协程, 单测够不着。
 //
-// 仍然钉住同一条不变量：**发射路径只做减法**（定 model / 关 store），不替调用方补默认值
-// （thinking / max_output_tokens / caching 一个都不许被造出来）。
-
-BOOST_AUTO_TEST_CASE(finalize_overrides_model_and_disables_store) {
-  nlohmann::json l_body{{"input_text", "hello"}};
-  finalize_inference_body(l_body, std::string{doodle_config::g_ark_inference_model});
-
-  BOOST_CHECK_EQUAL(l_body.at("model").get<std::string>(), std::string{doodle_config::g_ark_inference_model});
-  // store 缺省是 true, 必须显式关掉: 提示词/素材不留在方舟侧
-  BOOST_CHECK_EQUAL(l_body.at("store").get<bool>(), false);
-  // caching 与 instructions 互斥(方舟会 400), 我们从不发 caching
-  BOOST_CHECK_EQUAL(l_body.contains("caching"), false);
-  // thinking 缺省**不发**: 发射路径只做减法(定 model / 关 store), 不替调用方补默认值。
-  // 以前这里发 {"thinking":{"type":"disabled"}}, 那是服务端替前端做决定 —— 与「原样透传」冲突。
-  BOOST_CHECK_EQUAL(l_body.contains("thinking"), false);
-  // max_output_tokens 缺省**不发**：结构化输出长度不可预估，截断之后的半个 JSON 与
-  // 「schema 不合规被拒」的失败面分不出来，所以上限交给模型/账号侧；只有显式指定才发。
-  BOOST_CHECK_EQUAL(l_body.contains("max_output_tokens"), false);
-}
-
-BOOST_AUTO_TEST_CASE(finalize_keeps_caller_supplied_values_verbatim) {
-  nlohmann::json l_body{
-      {"input_text", "看这张图"},
-      {"image_detail", "high"},
-      {"images", nlohmann::json::array({"/api/seedance2/pictures/a.png", "/api/seedance2/pictures/b.png"})},
-      {"max_output_tokens", 1234},
-      {"instructions", "你是灯光师"},
-      {"temperature", 0.2},
-      {"json_schema", nlohmann::json{{"type", "object"}}},
-      {"json_schema_name", "lighting_target"},
-      {"json_schema_strict", false},
-  };
-  finalize_inference_body(l_body, std::string{doodle_config::g_ark_inference_model});
-
-  // 定稿只碰 model 与 store: 其余键**原样在场**, 一个都不改、一个都不删。
-  BOOST_CHECK_EQUAL(l_body.at("input_text").get<std::string>(), "看这张图");
-  BOOST_CHECK_EQUAL(l_body.at("image_detail").get<std::string>(), "high");
-  BOOST_CHECK_EQUAL(l_body.at("max_output_tokens").get<std::int64_t>(), 1234);
-  BOOST_CHECK_EQUAL(l_body.at("instructions").get<std::string>(), "你是灯光师");
-  BOOST_CHECK_EQUAL(l_body.at("temperature").get<double>(), 0.2);
-  BOOST_CHECK_EQUAL(l_body.at("json_schema_name").get<std::string>(), "lighting_target");
-  BOOST_CHECK_EQUAL(l_body.at("json_schema_strict").get<bool>(), false);
-  BOOST_CHECK_EQUAL(l_body.at("json_schema").at("type").get<std::string>(), "object");
-  const auto& l_images = l_body.at("images");
-  BOOST_CHECK_EQUAL(l_images.size(), 2u);
-  BOOST_CHECK_EQUAL(l_images.at(0).get<std::string>(), "/api/seedance2/pictures/a.png");
-  BOOST_CHECK_EQUAL(l_images.at(1).get<std::string>(), "/api/seedance2/pictures/b.png");
-
-  // 方舟形状**不由这里制造**：翻译发生在网关透传之后，不在定稿里。
-  BOOST_CHECK_EQUAL(l_body.contains("input"), false);
-  BOOST_CHECK_EQUAL(l_body.contains("text"), false);
-  BOOST_CHECK_EQUAL(l_body.contains("content"), false);
-}
-
-BOOST_AUTO_TEST_CASE(finalize_falls_back_to_default_model_on_blank) {
-  // 空串(会话没配模型)也要回落到缺省, 不能带着 model:"" 打过去
-  nlohmann::json l_body{{"input_text", "x"}, {"model", ""}};
-  finalize_inference_body(l_body, std::string{doodle_config::g_ark_inference_model});
-  BOOST_CHECK_EQUAL(l_body.at("model").get<std::string>(), std::string{doodle_config::g_ark_inference_model});
-
-  // 前端传了 model 就**以它为准**(服务端不覆盖非空值) —— 与「原样透传」一致
-  nlohmann::json l_named{{"input_text", "x"}, {"model", "custom-model"}};
-  finalize_inference_body(l_named, std::string{doodle_config::g_ark_inference_model});
-  BOOST_CHECK_EQUAL(l_named.at("model").get<std::string>(), "custom-model");
-}
+// **那三个用例钉的不变量仍要记住**（改动 run_inference_task 的定稿段时按它自查）:
+//   * 定稿**只做减法**: 覆盖 model（空串才回落缺省, 非空以调用方为准）与 store=false;
+//   * 不替调用方补任何默认值 —— thinking / max_output_tokens / caching 一个都不许被造出来,
+//     它们只在前端显式给了的时候原样留存;
+//   * 定稿不制造方舟形状: 翻译发生在网关透传之后, 不在这里（所以 input_text / images
+//     这些扁平信封键进去出来都还是原样）。
+//
+// 这些无法再用单元测试钉住, 是内联的代价; 换来的是删掉一个只有一个调用点的头文件。
 
 // 归一化信封的往返与类型校验用例（inference_request_round_trips_through_struct /
 // inference_request_rejects_wrong_typed_keys）随结构体一起删除。它们钉的是「json -> 结构体

@@ -18,7 +18,6 @@
 #include <doodle_core/metadata/ai_light/rig.h>
 #include <doodle_core/metadata/ai_light/spec.h>
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/http_client/seedance2_inference_request.h>
 
 #include <boost/asio/awaitable.hpp>
 #include <nlohmann/json.hpp>

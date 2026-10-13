@@ -7,7 +7,6 @@
 #include <doodle_core/metadata/seedance2/task.h>
 
 #include "ai_client_base.h"
-#include "seedance2_inference_request.h"
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 #include <string_view>
@@ -21,9 +20,9 @@ namespace doodle::http::seedance2 {
  * - 生成: POST /api/v3/contents/generations/tasks  (异步, 提交后靠 query_task 轮询)
  * - 推理: POST /api/v3/responses                    (同步, 一次调用拿结果)
  *
- * 推理请求体由调用方按**扁平信封**给出(data_request_), 由 seedance2::finalize_inference_body()
- * 原地定稿后原样发给方舟 —— 中间不再经过任何结构体往返(那个 inference_request_t 已删除,
- * 见 seedance2_inference_request.h)。
+ * 推理请求体由调用方按**扁平信封**给出(data_request_), 在 run_inference_task 里就地把
+ * model/store 定稿后原样发给方舟 —— 中间不经过任何结构体往返(那个 inference_request_t
+ * 已删除), 定稿逻辑也只有那一个调用点, 因此直接写在调用处, 不再单开一个头文件。
  */
 class DOODLELIB_API seedance2_client final : public ai_client_base {
   constexpr static std::string_view g_sd2_host_url{"https://ark.cn-beijing.volces.com"};

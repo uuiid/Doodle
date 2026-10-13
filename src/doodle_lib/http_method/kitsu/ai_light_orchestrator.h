@@ -50,7 +50,6 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 // 归一化推理信封(强类型)。这个头只依赖 nlohmann/json + STL, 不带任何 HTTP 依赖,
 // 所以不会破坏本文件顶部「这一层刻意不包含任何 HTTP 依赖」的约定。
-#include <doodle_lib/http_client/seedance2_inference_request.h>
 
 // 本头是**伞形头**：rig 纯运算与共用部件各自成文件，本头把它们与状态机一起收在同一个
 // 命名空间下 —— 对外仍然只需包含 ai_light_orchestrator.h 一个头。

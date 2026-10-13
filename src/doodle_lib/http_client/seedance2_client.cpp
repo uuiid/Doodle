@@ -73,8 +73,8 @@ void collect_input_preview(const nlohmann::json& in_input, std::string& io_out) 
 
 ai_client_base::request_info_t seedance2_client::collect_request_info(const nlohmann::json& in_request) const {
   // 刻意保持宽容的字符串读键: 这个函数与**生成类**任务的 json 形状共用(前台提交路径),
-  // 那种 json 不是归一化推理信封, 不能按推理信封的严格类型去解析 —— 何况那个结构体已经删掉了
-  // (见 seedance2_inference_request.h), 现在只剩「直接读键」这一条路。这里只挑提示词用的字段读。
+  // 那种 json 不是归一化推理信封, 不能按推理信封的严格类型去解析 —— 何况那个结构体已经删掉了,
+  // 现在只剩「直接读键」这一条路。这里只挑提示词用的字段读。
   request_info_t l_info{};
   if (in_request.contains("model")) l_info.model_ = in_request.at("model").get<std::string>();
   if (in_request.contains("resolution")) l_info.resolution_ = in_request.at("resolution").get<std::string>();
@@ -147,8 +147,8 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
 
 // ─── 推理 (Responses API) ────────────────────────────────────────────────────
 
-// 发射规则本身在 seedance2_inference_request.h 的 finalize_inference_body(): 网关的透传路径
-// 要能在不起 HTTP 依赖的地方单独测它(同该头文件顶部对依赖的说明)。
+// 请求体的定稿规则(model/store 覆盖)就地写在下面 run_inference_task() 里: 它是唯一的调用点,
+// 于是不再单开一个头文件承载那个 inline 纯函数。
 
 std::string seedance2_client::get_error_code(const nlohmann::json& in_body) {
   if (!in_body.contains("error") || !in_body.at("error").is_object()) return {};
@@ -250,7 +250,29 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
         }
     );
   }
-  finalize_inference_body(l_body, std::string{doodle_config::g_ark_inference_model});
+  // ---- 定稿: 覆盖服务端的强制字段(原地改) ----
+  //
+  // 这是 `/responses` 请求体与「本系统自己的请求」之间的边界: 过了这里的内容就只有方舟的
+  // schema 在管, 服务端不再往里加任何字段 —— 所以它**只做覆盖**, 不替前端补默认值。
+  //
+  // 这段逻辑曾经是 seedance2_inference_request.h 里的一个 inline 自由函数
+  // (finalize_inference_body), 库内只有下面这一个调用点, 其余调用者全是测试 ——
+  // 为一个调用点维持一个头文件不合算, 就地写在这里。
+  {
+    // 传了空串（会话没配模型）时也要回落到缺省值, 否则会带着 model:"" 打过去白跑一趟;
+    // 非空则**以调用方为准**（服务端不覆盖非空值, 与「原样透传」一致）。
+    const auto l_model = l_body.contains("model") && l_body.at("model").is_string()
+                             ? l_body.at("model").get<std::string>()
+                             : std::string{};
+    l_body["model"]    = l_model.empty() ? std::string{doodle_config::g_ark_inference_model} : l_model;
+    // 不把提示词与素材留在方舟侧 —— 两条路径同一条隐私口径, 由这里统一保证。
+    // store 是**唯一**一个服务端强行写入的键; 除此之外这里不补任何默认值（包括 thinking:
+    // 以前这里发 {"type":"disabled"}, 那是服务端替前端做决定, 与「原样透传」冲突）。
+    l_body["store"] = false;
+    // max_output_tokens 同理**不补**：结构化输出要求全字段 required, 输出长度不可预估, 而截断
+    // 之后 result_json_ 只剩半个 JSON —— 那个失败面跟「schema 不合规被拒」完全分不出来。
+    // 交给模型/账号侧决定上限; 只有调用方/前端显式给了才发（它在体里, 原样留着, 这里不动）。
+  }
 
   run_task_result_t l_result{};
 
