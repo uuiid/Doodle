@@ -292,7 +292,6 @@ BOOST_AUTO_TEST_CASE(parse_reports_error_code_on_http_error) {
   BOOST_CHECK_EQUAL(l_result.status_ == doodle::seedance2::task_status::failed, true);
   BOOST_CHECK_EQUAL(l_result.error_code_, "SensitiveContentDetected.PolicyViolation");
   BOOST_CHECK_EQUAL(seedance2_client::is_sensitive_content_error(l_body), true);
-  BOOST_CHECK_EQUAL(seedance2_client::should_retry(400, l_result.error_code_), false);
   BOOST_CHECK_EQUAL(l_result.result_text_, "");
 }
 
@@ -324,21 +323,12 @@ BOOST_AUTO_TEST_CASE(strip_code_fence_handles_the_common_shapes) {
 // ---------------------------------------------------------------------------
 // 重试判定
 // ---------------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(should_retry_matrix) {
-  // 瞬时错误重试
-  BOOST_CHECK_EQUAL(seedance2_client::should_retry(408, ""), true);
-  BOOST_CHECK_EQUAL(seedance2_client::should_retry(429, "RateLimitExceeded"), true);
-  BOOST_CHECK_EQUAL(seedance2_client::should_retry(500, "InternalServiceError"), true);
-  BOOST_CHECK_EQUAL(seedance2_client::should_retry(503, ""), true);
-  BOOST_CHECK_EQUAL(seedance2_client::should_retry(400, "InflightBatchsizeExceeded"), true);
-
-  // 不可重试: 内容违规/鉴权/参数错误重试多少次都一样, 只会白烧配额
-  BOOST_CHECK_EQUAL(seedance2_client::should_retry(400, "InvalidParameter"), false);
-  BOOST_CHECK_EQUAL(seedance2_client::should_retry(401, "AuthenticationError"), false);
-  BOOST_CHECK_EQUAL(seedance2_client::should_retry(403, ""), false);
-  BOOST_CHECK_EQUAL(seedance2_client::should_retry(404, "ModelNotFound"), false);
-  BOOST_CHECK_EQUAL(seedance2_client::should_retry(200, ""), false);
-}
+// should_retry 与它的真值表用例已删除: 推理请求的自动重试整个取消
+// (见 seedance2_client.cpp 的 run_inference_task), 判定「这个错值不值得再试一次」
+// 现在归调用方 —— 它看得见状态码与 error_code, 比服务端盲重试更清楚上下文。
+// 下面这些错误分类仍然存在且各有用例: is_sensitive_content_error(内容违规)、
+// parse_inference_response(状态码 -> status_/error_code_)。取消的只是**重试**,
+// 不是错误分类。
 
 // ---------------------------------------------------------------------------
 // 公网素材 URL 改写

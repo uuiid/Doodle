@@ -68,7 +68,8 @@ constexpr std::int64_t g_max_completion_tokens{g_max_task_completion_tokens * 10
 // 见 src/doodle_lib/http_client/seedance2_client.h 的 build_inference_body()
 constexpr std::string_view g_ark_inference_model{"deepseek-v4-1-flash-260910"};  // 请求未指定 model 时的缺省
 constexpr auto g_ark_inference_timeout{std::chrono::seconds(180)};               // 单次推理的读取超时
-constexpr std::size_t g_ark_inference_max_retry{3};                              // 429/5xx 的最大尝试次数
+// g_ark_inference_max_retry 已删除: 推理请求的自动重试整个取消, 现在一次调用只发一个请求,
+// 失败原因(状态码 / error_code)原样交回调用方, 由它决定要不要自己重发。
 // max_output_tokens **没有缺省值**: build_inference_body() 只在调用方显式给了才发这个键。
 // 结构化输出要求全字段 required, 长度不可预估, 一旦截断 result_json_ 就只剩半个 JSON,
 // 那个失败面跟「schema 不合规被拒」分不出来。这个常量留给想自己设上限的调用方。

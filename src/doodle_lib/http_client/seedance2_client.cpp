@@ -12,6 +12,7 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/uuid/uuid_io.hpp>
+
 #include <fmt/format.h>
 
 namespace doodle::http::seedance2 {
@@ -149,7 +150,6 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
 // 发射规则本身在 seedance2_inference_request.h 的 finalize_inference_body(): 网关的透传路径
 // 要能在不起 HTTP 依赖的地方单独测它(同该头文件顶部对依赖的说明)。
 
-
 std::string seedance2_client::get_error_code(const nlohmann::json& in_body) {
   if (!in_body.contains("error") || !in_body.at("error").is_object()) return {};
   return in_body.at("error").value("code", std::string{});
@@ -158,12 +158,6 @@ std::string seedance2_client::get_error_code(const nlohmann::json& in_body) {
 bool seedance2_client::is_sensitive_content_error(const nlohmann::json& in_body) {
   const auto l_code = get_error_code(in_body);
   return l_code.find("SensitiveContent") != std::string::npos || l_code.find("PolicyViolation") != std::string::npos;
-}
-
-bool seedance2_client::should_retry(int in_status_code, std::string_view in_error_code) {
-  if (in_status_code == 408 || in_status_code == 429 || in_status_code >= 500) return true;
-  // 少数并发/配额类错误会带着别的 4xx 回来, 这类是瞬时的, 值得再试一次
-  return in_error_code == "InflightBatchsizeExceeded" || in_error_code == "AccountRateLimitExceeded";
 }
 
 std::string seedance2_client::extract_output_text(const nlohmann::json& in_body) {
@@ -223,23 +217,11 @@ ai_client_base::run_task_result_t seedance2_client::parse_inference_response(
   } else {
     l_result.status_ = doodle::seedance2::task_status::failed;
   }
-
-  if (l_result.status_ == doodle::seedance2::task_status::succeeded) {
-    l_result.result_text_ = extract_output_text(in_body);
-    if (!l_result.result_text_.empty()) {
-      try {
-        l_result.result_json_ = nlohmann::json::parse(strip_code_fence(l_result.result_text_));
-      } catch (const nlohmann::json::exception&) {
-        l_result.result_json_ = nullptr;  // 没要求结构化输出时这里是正常的
-      }
-    }
-  }
-
   if (in_body.contains("usage") && in_body.at("usage").is_object()) {
-    const auto& l_usage       = in_body.at("usage");
-    l_result.input_tokens_    = l_usage.value("input_tokens", std::int64_t{0});
-    l_result.output_tokens_   = l_usage.value("output_tokens", std::int64_t{0});
-    l_result.total_tokens_    = l_usage.value("total_tokens", std::int64_t{0});
+    const auto& l_usage     = in_body.at("usage");
+    l_result.input_tokens_  = l_usage.value("input_tokens", std::int64_t{0});
+    l_result.output_tokens_ = l_usage.value("output_tokens", std::int64_t{0});
+    l_result.total_tokens_  = l_usage.value("total_tokens", std::int64_t{0});
   }
   return l_result;
 }
@@ -256,19 +238,30 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
   //
   // 现在这行只有两个动作: 定稿(剥本系统字段 / 覆盖强制字段 / 隐私口径), 然后发出去。
   // 接缝路径落库的也是同一份形状的信封, 所以两条路径在这里合流, 没有第二套发射规则。
-  auto l_body = in_task.data_request_;
+  auto l_body      = in_task.data_request_;
   if (!l_body.is_object()) {
     // 非对象连 model 都没处放, 发出去必然被方舟拒且看不出原因, 不如当场说清楚是任务行坏了。
-    throw_exception(http_request_error{
-        boost::beast::http::status::internal_server_error,
-        fmt::format("推理请求体不是 JSON 对象(任务 {}): {}", boost::uuids::to_string(in_task.uuid_id_), l_body.type_name())
-    });
+    throw_exception(
+        http_request_error{
+            boost::beast::http::status::internal_server_error,
+            fmt::format(
+                "推理请求体不是 JSON 对象(任务 {}): {}", boost::uuids::to_string(in_task.uuid_id_), l_body.type_name()
+            )
+        }
+    );
   }
   finalize_inference_body(l_body, std::string{doodle_config::g_ark_inference_model});
 
   run_task_result_t l_result{};
-  for (std::size_t l_attempt = 0; l_attempt < doodle_config::g_ark_inference_max_retry; ++l_attempt) {
-    // 每次尝试都重新取 IP 并**重新签名**: 重试时旧签名可能已经过期
+
+  // 一次尝试, 不重试。曾经这里是一个 `for (l_attempt < g_ark_inference_max_retry)` 循环,
+  // 按 should_retry(429/5xx/408) 判定是否再来一次并做指数退避。**整个重试已取消**:
+  // 重试的每一步都要重新取 IP 并重新签名, 换来的却是同一份请求体被重复计费的风险 ——
+  // 而调用方(前端 / 推理网关)自己就看得见 HTTP 状态码与 error_code, 需要重试时它自己重发
+  // 更清楚上下文(比如换个提示词), 服务端替它盲重试反而把「哪一次真的产生了输出」这件事
+  // 掩盖掉。取消后本函数的语义变得干净: **一次调用 = 一次请求 = 一次结算**。
+  {
+    // 每次尝试都重新取 IP 并**重新签名**
     auto l_ip       = co_await get_ip_str();
     auto l_req_json = add_ip_to_req(l_body, l_ip, url_sign_secret_, l_uid);
 
@@ -284,43 +277,11 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
     http_client_ptr_->set_timeout(doodle_config::g_ark_inference_timeout);
 
     boost::beast::http::response<http::basic_json_body> l_res{};
-    bool l_network_error = false;
-    try {
-      co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
-    } catch (const boost::system::system_error& e) {
-      if (e.code() == boost::asio::error::operation_aborted) throw;  // 会话被取消, 不重试
-      SPDLOG_LOGGER_ERROR(logger_, "推断请求失败(第 {} 次尝试): {}", l_attempt + 1, e.what());
-      l_network_error = true;
-    } catch (...) {
-      SPDLOG_LOGGER_ERROR(
-          logger_, "推断请求失败(第 {} 次尝试): {}", l_attempt + 1,
-          boost::current_exception_diagnostic_information()
-      );
-      l_network_error = true;
-    }
-
-    if (!l_network_error) {
-      const auto l_status_code = static_cast<int>(l_res.result_int());
-      l_result                 = parse_inference_response(l_res.body(), l_status_code);
-      if (!should_retry(l_status_code, l_result.error_code_)) co_return l_result;
-      SPDLOG_LOGGER_WARN(
-          logger_, "推断返回 {} ({}), 第 {} 次尝试", l_res.result(), l_result.error_code_, l_attempt + 1
-      );
-    }
-
-    if (l_attempt + 1 < doodle_config::g_ark_inference_max_retry) {
-      boost::asio::steady_timer l_timer{
-          co_await boost::asio::this_coro::executor, std::chrono::seconds{1 << l_attempt}
-      };
-      co_await l_timer.async_wait(boost::asio::use_awaitable);
-    }
+    co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
+    const auto l_status_code = static_cast<int>(l_res.result_int());
+    l_result                 = parse_inference_response(l_res.body(), l_status_code);
   }
 
-  // 全是网络错误: data_response_ 还是 null
-  if (l_result.data_response_.is_null()) {
-    l_result.status_     = doodle::seedance2::task_status::failed;
-    l_result.is_timeout_ = true;
-  }
   co_return l_result;
 }
 

@@ -73,16 +73,13 @@ class DOODLELIB_API seedance2_client final : public ai_client_base {
   /// 是否是内容违规类错误(400 SensitiveContentDetected* / *PolicyViolation)
   static bool is_sensitive_content_error(const nlohmann::json& in_body);
 
-  /// 是否值得重试: 429 / 5xx / 408
-  static bool should_retry(int in_status_code, std::string_view in_error_code);
-
   /// 去掉 ```json ... ``` 代码围栏(只用于解析 JSON, 落库的文本保留原文)
   static std::string strip_code_fence(std::string_view in_text);
 
  private:
   static doodle::seedance2::task_status parse_status(const nlohmann::json& in_body);
 
-  /// 推理任务: 一次调用(内部按需重试)拿到结果
+  /// 推理任务: 一次调用**只发一次请求**(自动重试已取消, 见 .cpp 里的说明)
   boost::asio::awaitable<run_task_result_t> run_inference_task(const doodle::seedance2::task& in_task);
 };
 
