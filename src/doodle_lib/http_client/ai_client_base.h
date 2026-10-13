@@ -50,6 +50,11 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
     std::string result_text_{};
     /// 推理任务按 text.format 的 json_schema 解析出来的结果；未要求结构化输出时为 null
     nlohmann::json result_json_{};
+    /// 由 run_task **一次调用**就产出文件的后端（同步生成类，如 API易 图片 API）用这两个字段：
+    /// 提交即出结果，没有 query_task 可以承载它们，所以结果文件只能挂在这里。
+    /// 异步生成类任务（seedance2 / 中转站）留空 —— 它们的文件在 query_task_result_t 里回来。
+    std::vector<std::string> result_files_;
+    std::vector<FSys::path> result_file_paths_;
     /// 推理任务的 token 用量；生成类任务为 0（它们的用量在 query_task 里回来）
     std::int64_t input_tokens_{0};
     std::int64_t output_tokens_{0};
@@ -85,6 +90,10 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
    * - 推理类(inference): 走火山方舟 Responses API, **一次调用就拿到结果**(status_ 直接是
    *   succeeded/failed), result_text_/result_json_/token 用量都在返回值里。
    * 另外 in_task.user_id_ 会作为签名 URL 里的人员(uid), 让第三方取图时仍带上授权身份。
+   *
+   * 还有第三类后端: 同步生成类(API易 图片 API)。它既不是「提交后轮询」, 也不是「推理」,
+   * 而是**一次调用直接产出图片文件**, 所以 status_ 同样是终态, 结果文件填 result_files_ /
+   * result_file_paths_。这类后端的 query_task / cancel_task 没有对应接口(见各实现里的说明)。
    */
   virtual boost::asio::awaitable<run_task_result_t> run_task(const doodle::seedance2::task& in_task)         = 0;
   virtual boost::asio::awaitable<void> cancel_task(const std::string& in_task_id)                        = 0;
