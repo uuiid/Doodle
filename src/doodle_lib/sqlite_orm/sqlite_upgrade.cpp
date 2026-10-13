@@ -114,8 +114,12 @@ void backup(orm::session& in_data) {
 // 30 -> 31: 建 AI 灯光六张表 (docs/ue_ai_lighting_plan.md §10.2).
 //
 // 这一步没有 ALTER, 因为全部改动都是**新表**:
-//   ai_light_session / ai_light_reference / ai_light_spec /
+//   ai_light_session / ai_light_reference /
 //   ai_light_iteration / ai_light_candidate / ai_light_preset
+//
+// 注: 迁移当时还建了第六张表 ai_light_spec, 后来证实它是空表 (全仓没有 insert 路径)
+// 并已从 ORM 注册中删除。**这个历史迁移步骤刻意原样保留、不回改** —— 改已发布的迁移
+// 会让已升级的库与新库 schema 分叉。
 //
 // sync_schema() 的语义正好够用 (见 orm/session.cpp:168-217):
 //   * 表已存在 → 直接 continue, **不会给已有表加列、改列**, 所以对存量 schema 零风险;

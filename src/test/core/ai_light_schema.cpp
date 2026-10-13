@@ -441,19 +441,9 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     BOOST_TEST(l_refs.front().get_stats().white_balance_kelvin_ == 3900.0);
     BOOST_TEST(l_refs.front().stats_confidence_ == 0.85);
 
-    // 4. 当前 Spec = revision 最大的一行
-    auto l_cur = l_sql.get_current_ai_light_spec(l_session_row.uuid_id_);
-    BOOST_TEST(l_cur.has_value());
-    BOOST_TEST(l_cur->revision_ == 1);
-    BOOST_TEST(l_cur->get_intent().weather_ == "clear");
-    BOOST_TEST(l_cur->get_targets().ownership_.grading_.size() == 3);
-    BOOST_TEST(l_cur->get_reference_stats().image_count_ == 4);
-    BOOST_TEST(l_cur->get_reference_stats().conflicts_.size() == 1);
-
-    // 5. 轮次
+    // 4. 轮次
     auto l_iter_back = l_sql.get_ai_light_iteration(l_session_row.uuid_id_, 1);
     BOOST_TEST(l_iter_back.has_value());
-    BOOST_TEST(l_iter_back->spec_id_ == l_spec.uuid_id_);
     BOOST_TEST(l_iter_back->get_axes().axes_.size() == 1);
     BOOST_TEST(l_iter_back->get_axes().axes_.front().steps_.size() == 3);
 
@@ -522,18 +512,13 @@ BOOST_AUTO_TEST_CASE(single_accepted_candidate_is_enforced_by_db) {
     l_session_row.entity_id_  = core_set::get_set().get_uuid();
     with_fk_off(l_session, [&]() { insert(l_session).into<ai_light_session>().values(l_session_row)(); });
 
-    // 建真的 Spec 与轮次行：这样 iteration -> spec / iteration -> session 与
-    // candidate -> iteration / candidate -> session 四条外键都能在**开着外键**的前提下满足，
+    // 建真的轮次行：这样 iteration -> session 与 candidate -> iteration /
+    // candidate -> session 三条外键都能在**开着外键**的前提下满足，
     // 于是这个用例测的就是生产形态（外键全开），而不是"关掉外键随便插"。
-    ai_light_spec l_spec{};
-    l_spec.session_id_ = l_session_row.uuid_id_;
-    l_spec.revision_   = 1;
-    insert(l_session).into<ai_light_spec>().values(l_spec)();
-
+    // （曾经还有 iteration -> spec，那条外键已随 ai_light_spec 表一起删除。）
     ai_light_iteration l_iter{};
     l_iter.session_id_ = l_session_row.uuid_id_;
     l_iter.iteration_  = 1;
-    l_iter.spec_id_    = l_spec.uuid_id_;
     insert(l_session).into<ai_light_iteration>().values(l_iter)();
 
     auto l_make = [&](std::int32_t in_index, bool in_accepted) {

@@ -542,10 +542,11 @@ struct DOODLE_CORE_API light_op_t {
 
 /// 灯光方案。存进 ai_light_candidate.rig 这一列，也直接作为下发 UE 的载荷。
 ///
-/// 关于 session_id / spec_id / iteration / candidate_index 的重复：
+/// 关于 session_id / iteration / candidate_index 的重复：
 /// DB 里另有同名真实列（供查询与索引），JSON 里这一份是给工件自描述用的
 /// （下发 UE、落盘回归、脱离数据库也能读懂）。写入时必须两者同源，
 /// **DB 列是查询权威**，JSON 副本不参与任何查询。
+/// （原先这里还有 spec_id —— Spec 表已删除，它不是 DB 列了，也不再进 JSON。）
 struct DOODLE_CORE_API lighting_rig_t {
   std::string schema_version_{std::string{g_rig_schema_version}};
   uuid rig_id_{};

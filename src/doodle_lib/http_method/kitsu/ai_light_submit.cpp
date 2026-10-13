@@ -51,7 +51,7 @@ using namespace doodle::ai_light;
 
 /// 只比较「灯怎么打」的部分。与已删除的 ai_light_seam_candidates.cpp:95-97 的 rig_substance
 /// 同义（那份随接缝一起删了，这里是唯一的一份）。
-/// 身份字段（rig_id/spec_id/iteration/candidate_index）、variant_axis_、provenance_、ops_
+/// 身份字段（rig_id/iteration/candidate_index）、variant_axis_、provenance_、ops_
 /// 都由服务端另填，拿它们判「候选是否与基线相同」会误判。
 nlohmann::json rig_substance(const lighting_rig_t& in_rig) {
   return nlohmann::json{{"globals", in_rig.globals_}, {"lights", in_rig.lights_}};

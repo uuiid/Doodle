@@ -168,14 +168,14 @@ DOODLE_HTTP_FUN_END()
 //   * 「生成 Spec」这个动作已经不在服务端：它归前端经推理网关自己完成
 //     （见 ai_light_orchestrator.h 的接缝说明）。
 //   * GET 的 Spec 版本列表是**冗余读**：会话详情（GET /session/{id}，即 build_session_detail
-//     的读模型）里已经带了 spec_history_ 与 current_spec_，前端「查看上一版」用那份数据即可。
-//     为同一份数据维护第二个出口，只会多一个需要同步的形状。
-// 于是 spec_confirm_route 与 judge_route 都以**当前 Spec**（会话内 revision 最大的一行）为准 ——
-// 见 sqlite_database.h 的 get_current_ai_light_spec。ai_light_spec 表与它的读取方法都保留：
-// judge/confirm 要读，会话详情的 spec_history 也要读。
+//     的读模型）里已经带了 —— 现在那份数据本身也没了，见下。
+//   * 事实核查发现 ai_light_spec 是**一张空表**：全仓没有 insert 路径，状态机在
+//     awaiting_spec_confirm 就断了。于是「已确认的 Spec 版本」这个落库概念整条删除
+//     （表、ORM 注册、三个读取方法、iteration/rig/载荷里的 spec_id 都一并去掉）。
+//     后端不再做推理，这份输出版本由前端自己持有。
 //
 // POST /api/doodle/ai/light/session/{session_id}/spec/confirm   人工闸门 1：
-//                                   确认 Spec（+ 冲突裁决），随后触发首轮候选
+//                                   确认输出版本，随后进入 generating
 DOODLE_HTTP_JWT_FUN(spec_confirm_route)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid session_id_{};

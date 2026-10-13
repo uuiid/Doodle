@@ -131,7 +131,6 @@ struct fixture_t : doodle_test::coro_fixture_t {
   bool opened_{false};
 
   ai_light_session session_{};
-  ai_light_spec spec_{};
   ai_light_iteration iteration_{};
   std::vector<ai_light_candidate> candidates_{};
 
@@ -181,13 +180,8 @@ struct fixture_t : doodle_test::coro_fixture_t {
     session_.current_iteration_ = 1;
     insert(orm_).into<ai_light_session>().values(session_)();
 
-    spec_.session_id_ = session_.uuid_id_;
-    spec_.revision_   = 1;
-    insert(orm_).into<ai_light_spec>().values(spec_)();
-
     iteration_.session_id_ = session_.uuid_id_;
     iteration_.iteration_  = 1;
-    iteration_.spec_id_    = spec_.uuid_id_;
     iteration_.state_      = in_iter_state;
     // 回传是按 server_task_info_id 反查轮次的，所以要有个非 nil 值
     iteration_.server_task_info_id_ = core_set::get_set().get_uuid();
@@ -836,7 +830,7 @@ BOOST_FIXTURE_TEST_CASE(task_payload_json_keys_are_frozen, fixture_t) {
   // 拷贝初始化，**不要**写 nlohmann::json{l_payload}：花括号会走 initializer_list 构造，
   // 结果是一个单元素数组（`[payload]`），下面所有 contains 都会失败。
   const nlohmann::json l_j = l_payload;
-  for (const auto* l_key : {"session_id", "iteration", "spec_id", "out_dir", "baseline_level", "render_map",
+  for (const auto* l_key : {"session_id", "iteration", "out_dir", "baseline_level", "render_map",
                             "level_sequence", "movie_pipeline_config", "frame_begin", "frame_end",
                             "ue_project_path", "camera_file_path", "project_dir", "assembly_files", "candidates"}) {
     BOOST_TEST(l_j.contains(l_key));
@@ -879,7 +873,7 @@ BOOST_FIXTURE_TEST_CASE(task_payload_json_keys_are_frozen, fixture_t) {
 // 它与工作机载荷的差别正是最容易改坏的地方：
 //   1. 顶层多 `iteration_id` —— 引擎内路线没有任务行，回传只能靠「会话 + 轮次号」定位（D54），
 //      轮次 uuid 与轮次号缺一个都回不去；
-//   2. 顶层**没有** `spec_id` / `baseline_level` —— 那两个是工作机载荷专有的。
+//   2. 顶层**没有** `baseline_level` —— 那是工作机载荷专有的。
 // 候选那一层必须与工作机载荷**逐键相同**（UE 侧共用一份候选解析）。
 BOOST_FIXTURE_TEST_CASE(launch_plan_json_keys_are_frozen, fixture_t) {
   auto& l_fx = *this;

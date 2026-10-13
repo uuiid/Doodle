@@ -4,12 +4,14 @@
 // 对应 docs/ue_ai_lighting_plan.md §4.2。参考不直接流向评判，而是先被蒸馏成一份
 // 显式、可核对、可版本化、可回归测试的目标。
 //
-// 本文件里有两类东西，别混淆：
-//   1) 纯数据结构（lighting_intent_t / lighting_targets_t / reference_stats_t / lighting_spec_t）
-//      —— 供感知层、规划层、评判层在内存里传递，并序列化成 §4.2 的 JSON 形态。
-//   2) 表实体 ai_light_spec —— 落库用。它把上面那份 JSON 拆成若干列：
-//      可查询/可裁决的字段（revision / degrade_level / human_confirmed / confirmed_*）是真实列，
-//      嵌套结构（intent / targets / reference_stats）是 JSON 列。
+// 本文件里只有一类东西：纯数据结构（lighting_intent_t / lighting_targets_t /
+// reference_stats_t / lighting_spec_t）—— 供接缝在内存里传递，并序列化成 §4.2 的 JSON 形态。
+//
+// 这里曾经还有第二类：表实体 ai_light_spec（落库用，把上面那份 JSON 拆成若干列）。
+// **已删除** —— 它是一张空表，全仓没有任何 insert 路径，状态机在 awaiting_spec_confirm
+// 就断了。那些 revision / human_confirmed / degrade_level 字段是早期「后端用大模型做
+// 灯光推理」方案的遗留；后端不再做推理之后，这份「已确认的 Spec 版本」不再落库，
+// 由前端自己持有并经推理网关直接交给模型。
 //
 
 #pragma once

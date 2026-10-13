@@ -739,11 +739,10 @@ BOOST_AUTO_TEST_CASE(optional_and_time_fields_serialize_as_scalars) {
   BOOST_TEST(l_shape_json.at("ies").is_string());
   BOOST_TEST(l_shape_json.get<shape_t>().ies_ == "IES/spot_soft.ies");
 
-  // 详情读模型里的两个 optional 结构也必须是对象/null，不能是数组
+  // 详情读模型里的 optional 结构必须是对象/null，不能是数组
   ai_light_session_detail_t l_detail{};
   l_detail.session_ = l_session;
   nlohmann::json l_detail_json = l_detail;
-  BOOST_TEST(l_detail_json.at("current_spec").is_null());
   BOOST_TEST(l_detail_json.at("accepted_candidate").is_null());
   // 每轮候选数是唯一数字来源，读模型要把它带出去（前端不自己写死 6）
   BOOST_TEST(l_detail_json.at("candidate_count_per_iteration").get<std::int32_t>() == g_candidate_count);

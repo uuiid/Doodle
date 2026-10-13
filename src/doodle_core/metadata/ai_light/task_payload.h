@@ -214,7 +214,7 @@ struct DOODLE_CORE_API ai_light_task_candidate_t {
 /// 不再经过 server_task_info 队列与工作机 WS。
 ///
 /// 为什么单独一个类型而不是复用 ai_light_task_payload_t：
-///   * 队列载荷是「服务端 → 工作机」的单向投递，里面有 spec_id_/baseline_level_ 之类
+///   * 队列载荷是「服务端 → 工作机」的单向投递，里面有 baseline_level_ 之类
 ///     只有工作机才需要的字段，且**落地时必然伴随一列 server_task_info**；
 ///   * 本地计划是**请求的应答的一部分**，不含任何任务行，也不该让客户端看到任务概念。
 /// 形状与 ai_light_task_payload_t 的渲染段逐字一致（out_dir_ + 候选四路径 + rig），

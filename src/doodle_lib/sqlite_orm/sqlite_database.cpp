@@ -360,13 +360,13 @@ void sqlite_storage::regs_all() {
   //
   // 六张表的关系：
   //   session 1─n reference（多张参考图，每张单独留统计）
-  //   session 1─n spec     （会话内版本化的目标，revision 递增）
   //   session 1─n iteration 1─n candidate（每轮 6 个候选）
   //   preset 独立
   //
   // 有意不做的事（理由见 doodle_core/metadata/ai_light/session.h 顶部注释）：
-  //   * 不放 current_spec_id / accepted_candidate_id 这类冗余指针，一律靠查询得出，
+  //   * 不放 accepted_candidate_id 这类冗余指针，一律靠查询得出，
   //     避免循环外键把 fix_foreign_key_violations 的轮次分析复杂化；
+  //     （同段的 current_spec_id 已随 ai_light_spec 表一起消失。）
   //   * 不放 base_candidate_id（那会造成 iteration → candidate → iteration 的跨表循环）；
   //   * 嵌套结构（rig / metrics / intent / targets / judgement …）一律以 nlohmann::json
   //     落库 —— ORM 的列类型不覆盖嵌套结构体与 std::map，只有 nlohmann::json 可以。

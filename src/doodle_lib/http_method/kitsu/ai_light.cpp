@@ -266,8 +266,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   //
   // 正确顺序：建会话（draft）→ 传参考图 → POST /spec 提交方案 → /spec/confirm → 提交候选。
 
-  // 返回**六表聚合详情**而不是会话本体：形状与 GET /session/{id}、/spec、/judge 一致，
-  // 前端只需要一套解析。新建会话时 references 为空、current_spec 为 null。
+  // 返回**多表聚合详情**而不是会话本体：形状与 GET /session/{id}、/judge 一致，
+  // 前端只需要一套解析。新建会话时 references 与 candidates 都是空的。
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
 }

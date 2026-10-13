@@ -102,7 +102,7 @@ struct DOODLE_CORE_API ai_light_session {
   uuid submitter_{};
 
   std::string title_{};
-  /// 人工提示词原文。权威意图，永久留存；LLM 归一化的结果进 ai_light_spec.intent。
+  /// 人工提示词原文。权威意图，永久留存。后端不再做 LLM 归一化（曾进 ai_light_spec.intent）。
   std::string prompt_text_{};
 
   ai_light_session_state state_{ai_light_session_state::draft};
