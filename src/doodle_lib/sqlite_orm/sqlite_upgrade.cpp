@@ -156,6 +156,7 @@ struct upgrade_3_t : sqlite_upgrade {
     // 所以这里刻意用 add_column 显式补列, 不能依赖 sync_schema —— 它对已存在的表直接 continue,
     // **不会加列** (见本文件 120-124 行注释).
     // 不需要先查列是否已存在: 上面的 `> 30 就跳过` 保证本步骤对一张库只跑一次.
+    l_s.add_column("ai_studio", "transfer_station_key", orm::column_type::text);
     l_s.add_column("seedance2_task_2", "ai_light_iteration_id", orm::column_type::blob);
     l_s.rebuild_table<seedance2::task>();
     // 本步骤是 30 之后的**唯一**一步, 所以它写 g_current_version (= 31)。
