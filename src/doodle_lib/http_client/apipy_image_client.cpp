@@ -20,6 +20,7 @@
 #include <iterator>
 #include <ranges>
 #include <string>
+#include <utility>
 
 namespace doodle::http::seedance2 {
 
@@ -115,15 +116,20 @@ apipy_image_client::edits_form_t apipy_image_client::request_t::to_multipart() c
   edits_form_t l_form{};
   l_form.boundary_ = "----doodle" + boost::uuids::to_string(core_set::get_set().get_uuid());
 
-  const auto l_text_fields =
-      nlohmann::json{{"model", model_}, {"prompt", prompt_}, {"size", size_}, {"response_format", "url"}};
-  for (const auto& [l_key, l_value] : l_text_fields.items()) {
+  const std::array<std::pair<std::string_view, std::string_view>, 4> l_text_fields{{
+      {"model", model_},
+      {"prompt", prompt_},
+      {"size", size_},
+      {"response_format", "url"},
+  }};
+
+  for (const auto& [l_key, l_value] : l_text_fields) {
     l_form.body_ += "--";
     l_form.body_ += l_form.boundary_;
     l_form.body_ += "\r\nContent-Disposition: form-data; name=\"";
     l_form.body_ += l_key;
     l_form.body_ += "\"\r\n\r\n";
-    l_form.body_ += l_value.is_string() ? l_value.get<std::string>() : l_value.dump();
+    l_form.body_ += l_value;
     l_form.body_ += "\r\n";
   }
 
