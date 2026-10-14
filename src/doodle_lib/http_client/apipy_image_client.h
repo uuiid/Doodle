@@ -69,6 +69,7 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
 
   friend void to_json(nlohmann::json& j, const request_t& req);
 
+  boost::asio::awaitable<run_task_result_t> submit_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<run_task_result_t> run_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<run_task_result_t> query_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<void> cancel_task(const std::string& in_task_id) override;
@@ -87,6 +88,11 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
   FSys::path write_b64_to_cache(std::string_view in_b64, std::string_view in_ext) const;
 
   apipy_image_client::edit_reference_t load_reference_image(std::string_view in_url);
+
+  /**
+   * 每次请求独占一个 http_client_ssl, 而不是复用基类的 http_client_ptr_。
+   */
+  [[nodiscard]] std::shared_ptr<doodle::http::http_client_ssl> make_own_client() const;
 };
 
 }  // namespace doodle::http::seedance2

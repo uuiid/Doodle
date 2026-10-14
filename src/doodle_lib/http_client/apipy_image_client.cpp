@@ -257,7 +257,19 @@ std::size_t apipy_image_client::default_consumed_tokens(const doodle::seedance2:
   }
 }
 
+std::shared_ptr<doodle::http::http_client_ssl> apipy_image_client::make_own_client() const {
+  auto l_ctx = core_set::get_set().ctx_ptr;
+  DOODLE_CHICK(l_ctx != nullptr, "ssl context 未初始化(见 core_set::ctx_ptr), 无法创建 API易 客户端");
+  return std::make_shared<doodle::http::http_client_ssl>(std::string{g_default_host}, *l_ctx);
+}
+
 boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::run_task(
+    const doodle::seedance2::task& in_task
+) {
+  co_return co_await submit_task(in_task);
+}
+
+boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::submit_task(
     const doodle::seedance2::task& in_task
 ) {
   run_task_result_t l_result{};
@@ -297,15 +309,17 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::ru
     );
   }
 
+  auto l_client = make_own_client();
+
   l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
   l_req.set(boost::beast::http::field::accept, "application/json");
-  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
+  l_req.set(boost::beast::http::field::host, l_client->server_ip_);
   l_req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
-  http_client_ptr_->set_timeout(g_request_timeout);
+  l_client->set_timeout(g_request_timeout);
 
   boost::beast::http::response<http::basic_json_body> l_res{};
   try {
-    co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+    co_await l_client->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   } catch (...) {
     throw_exception(
         http_request_error{
@@ -349,7 +363,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::ru
 boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::query_task(
     const doodle::seedance2::task& in_task
 ) {
-  throw_exception(doodle_error{"apipy_image_client 是同步后端, 任务在 submit_task 里直接结束, 不支持 query_task"});
+  throw_exception(doodle_error{"apipy_image_client 是同步后端, 结果只在 run_task 的返回值里, 没有 query_task"});
   co_return run_task_result_t{};
 }
 
@@ -359,7 +373,7 @@ boost::asio::awaitable<void> apipy_image_client::cancel_task(const std::string& 
 }
 
 boost::asio::awaitable<void> apipy_image_client::download_result(run_task_result_t& in_data) {
-  throw_exception(doodle_error{"apipy_image_client 的结果文件在 submit_task 里已落盘, 不支持 download_result"});
+  throw_exception(doodle_error{"apipy_image_client 的结果文件在 run_task 里已落盘, 不支持 download_result"});
   co_return;
 }
 
