@@ -54,38 +54,6 @@ std::optional<std::string> image_url_of_content_item(const nlohmann::json& in_it
 
 }  // namespace
 
-std::vector<std::string> apipy_image_client::extract_image_urls(const nlohmann::json& in_body) {
-  std::vector<std::string> l_urls{};
-  const auto& l_item = first_data_item(in_body);
-  if (l_item.contains("url") && l_item.at("url").is_string()) {
-    auto l_url = l_item.at("url").get<std::string>();
-    if (!l_url.empty()) l_urls.push_back(std::move(l_url));
-  }
-  return l_urls;
-}
-
-std::string apipy_image_client::extract_b64_payload(const nlohmann::json& in_body) {
-  const auto& l_item = first_data_item(in_body);
-  if (!l_item.contains("b64_json") || !l_item.at("b64_json").is_string()) return {};
-
-  auto l_b64 = l_item.at("b64_json").get<std::string>();
-  if (l_b64.starts_with("data:"))
-    if (const auto l_comma = l_b64.find(','); l_comma != std::string::npos) l_b64.erase(0, l_comma + 1);
-  return l_b64;
-}
-
-std::string apipy_image_client::get_error_code(const nlohmann::json& in_body) {
-  if (!in_body.is_object() || !in_body.contains("error")) return {};
-  const auto& l_err = in_body.at("error");
-  if (l_err.is_string()) return l_err.get<std::string>();
-  if (!l_err.is_object()) return {};
-  for (const auto* l_key : {"code", "type"}) {
-    if (l_err.contains(l_key) && l_err.at(l_key).is_string()) return l_err.at(l_key).get<std::string>();
-  }
-  if (l_err.contains("message") && l_err.at("message").is_string()) return l_err.at("message").get<std::string>();
-  return {};
-}
-
 std::string apipy_image_client::mime_of_image(const std::string& in_ext) {
   auto l_ext = in_ext;
   std::ranges::transform(l_ext, l_ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
@@ -166,12 +134,50 @@ apipy_image_client::edits_form_t apipy_image_client::request_t::to_multipart() c
   return l_form;
 }
 
-doodle::seedance2::task_status apipy_image_client::parse_status(const nlohmann::json& in_body, int in_status_code) {
+apipy_image_client::response_t apipy_image_client::parse_response(const nlohmann::json& in_body) {
+  response_t l_res{};
+  if (!in_body.is_object()) return l_res;
+
+  if (in_body.contains("error")) {
+    l_res.has_error_ = true;
+    const auto& l_err = in_body.at("error");
+    if (l_err.is_string()) {
+      l_res.error_message_ = l_err.get<std::string>();
+    } else if (l_err.is_object()) {
+      for (const auto* l_key : {"code", "type"}) {
+        if (l_err.contains(l_key) && l_err.at(l_key).is_string()) {
+          l_res.error_code_ = l_err.at(l_key).get<std::string>();
+          break;
+        }
+      }
+      if (l_err.contains("message") && l_err.at("message").is_string())
+        l_res.error_message_ = l_err.at("message").get<std::string>();
+      if (l_res.error_code_.empty()) l_res.error_code_ = l_res.error_message_;
+    }
+  }
+
+  const auto& l_item = first_data_item(in_body);
+  if (l_item.contains("url") && l_item.at("url").is_string()) l_res.url_ = l_item.at("url").get<std::string>();
+  if (l_item.contains("b64_json") && l_item.at("b64_json").is_string())
+    l_res.b64_json_ = l_item.at("b64_json").get<std::string>();
+  if (l_res.b64_json_.starts_with("data:"))
+    if (const auto l_comma = l_res.b64_json_.find(','); l_comma != std::string::npos)
+      l_res.b64_json_.erase(0, l_comma + 1);
+
+  if (in_body.contains("usage") && in_body.at("usage").is_object()) {
+    const auto& l_usage     = in_body.at("usage");
+    l_res.input_tokens_     = l_usage.value("input_tokens", std::int64_t{0});
+    l_res.output_tokens_    = l_usage.value("output_tokens", std::int64_t{0});
+    l_res.total_tokens_     = l_usage.value("total_tokens", std::int64_t{0});
+  }
+  return l_res;
+}
+
+doodle::seedance2::task_status apipy_image_client::response_t::get_status(int in_status_code) const {
   const bool l_http_ok = in_status_code >= 200 && in_status_code < 300;
   if (!l_http_ok) return doodle::seedance2::task_status::failed;
-  if (in_body.contains("error")) return doodle::seedance2::task_status::failed;
-  if (!extract_image_urls(in_body).empty()) return doodle::seedance2::task_status::succeeded;
-  if (!extract_b64_payload(in_body).empty()) return doodle::seedance2::task_status::succeeded;
+  if (has_error_) return doodle::seedance2::task_status::failed;
+  if (has_url() || has_b64_json()) return doodle::seedance2::task_status::succeeded;
   return doodle::seedance2::task_status::failed;
 }
 
@@ -316,15 +322,12 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
   }
 
   l_result.data_response_ = l_res.body();
-  l_result.status_        = parse_status(l_result.data_response_, static_cast<int>(l_res.result()));
-  l_result.error_code_    = get_error_code(l_result.data_response_);
-
-  if (l_result.data_response_.contains("usage") && l_result.data_response_.at("usage").is_object()) {
-    const auto& l_usage     = l_result.data_response_.at("usage");
-    l_result.input_tokens_  = l_usage.value("input_tokens", std::int64_t{0});
-    l_result.output_tokens_ = l_usage.value("output_tokens", std::int64_t{0});
-    l_result.total_tokens_  = l_usage.value("total_tokens", std::int64_t{0});
-  }
+  const auto l_response   = parse_response(l_result.data_response_);
+  l_result.status_        = l_response.get_status(static_cast<int>(l_res.result()));
+  l_result.error_code_    = l_response.error_code_;
+  l_result.input_tokens_  = l_response.input_tokens_;
+  l_result.output_tokens_ = l_response.output_tokens_;
+  l_result.total_tokens_  = l_response.total_tokens_;
 
   if (l_result.status_ != doodle::seedance2::task_status::succeeded) {
     SPDLOG_LOGGER_ERROR(
@@ -334,14 +337,13 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
     co_return l_result;
   }
 
-  for (const auto& l_url : extract_image_urls(l_result.data_response_)) {
-    l_result.result_files_.push_back(l_url);
-    l_result.result_file_paths_.push_back(co_await download_raw_file(l_url));
-  }
-  if (l_result.result_file_paths_.empty()) {
-    const auto l_b64 = extract_b64_payload(l_result.data_response_);
-    DOODLE_CHICK(!l_b64.empty(), "API易 图片响应里既没有 url 也没有 b64_json");
-    l_result.result_file_paths_.push_back(write_b64_to_cache(l_b64, g_default_ext));
+  if (l_response.has_url()) {
+    l_result.result_files_.push_back(l_response.url_);
+    l_result.result_file_paths_.push_back(co_await download_raw_file(l_response.url_));
+  } else if (l_response.has_b64_json()) {
+    l_result.result_file_paths_.push_back(write_b64_to_cache(l_response.b64_json_, g_default_ext));
+  } else {
+    DOODLE_CHICK(false, "API易 图片响应里既没有 url 也没有 b64_json");
   }
 
   SPDLOG_LOGGER_INFO(

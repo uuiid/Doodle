@@ -6,6 +6,7 @@
 #include "ai_client_base.h"
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -40,6 +41,22 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
     std::string bytes_;
   };
 
+  struct response_t {
+    std::string url_;
+    std::string b64_json_;
+    std::string error_code_;
+    std::string error_message_;
+    std::int64_t input_tokens_{0};
+    std::int64_t output_tokens_{0};
+    std::int64_t total_tokens_{0};
+    bool has_error_{false};
+
+    [[nodiscard]] bool has_url() const { return !url_.empty(); }
+    [[nodiscard]] bool has_b64_json() const { return !b64_json_.empty(); }
+
+    [[nodiscard]] doodle::seedance2::task_status get_status(int in_status_code) const;
+  };
+
   explicit apipy_image_client(boost::asio::ssl::context& in_ctx)
       : ai_client_base(std::string{g_default_host}, in_ctx) {}
 
@@ -69,13 +86,7 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
   request_info_t collect_request_info(const nlohmann::json& in_request) const override;
   std::size_t default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const override;
 
-  static std::vector<std::string> extract_image_urls(const nlohmann::json& in_body);
-
-  static std::string extract_b64_payload(const nlohmann::json& in_body);
-
-  static doodle::seedance2::task_status parse_status(const nlohmann::json& in_body, int in_status_code);
-
-  static std::string get_error_code(const nlohmann::json& in_body);
+  [[nodiscard]] static response_t parse_response(const nlohmann::json& in_body);
 
   static FSys::path parse_site_image_id(std::string_view in_url);
 
