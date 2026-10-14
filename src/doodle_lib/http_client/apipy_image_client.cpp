@@ -27,11 +27,13 @@ namespace doodle::http::seedance2 {
 namespace {
 
 constexpr std::string_view g_generations_path{"/v1/images/generations"};
-constexpr std::string_view g_edits_path{apipy_image_client::g_edits_path};
-
+constexpr std::string_view g_edits_path{"/v1/images/edits"};
 constexpr std::string_view g_default_ext{".png"};
-
 constexpr std::string_view g_pictures_prefix{"/api/seedance2/pictures/"};
+constexpr std::chrono::seconds g_request_timeout{360};
+constexpr std::string_view g_default_model{"gpt-image-2.5-vip"};
+constexpr std::string_view g_edit_image_field{"image"};
+constexpr std::size_t g_max_reference_images{8};
 
 const nlohmann::json& first_data_item(const nlohmann::json& in_body) {
   static const nlohmann::json l_empty = nlohmann::json::object();
@@ -41,15 +43,6 @@ const nlohmann::json& first_data_item(const nlohmann::json& in_body) {
   if (!l_data.is_array() || l_data.empty()) return l_empty;
   const auto& l_item = l_data.front();
   return l_item.is_object() ? l_item : l_empty;
-}
-
-std::optional<std::string> image_url_of_content_item(const nlohmann::json& in_item) {
-  if (!in_item.is_object() || !in_item.contains("image_url")) return std::nullopt;
-  const auto& l_holder = in_item.at("image_url");
-  if (l_holder.is_object() && l_holder.contains("url") && l_holder.at("url").is_string())
-    return l_holder.at("url").get<std::string>();
-  if (l_holder.is_string()) return l_holder.get<std::string>();
-  return std::nullopt;
 }
 
 }  // namespace
@@ -139,7 +132,7 @@ apipy_image_client::response_t apipy_image_client::parse_response(const nlohmann
   if (!in_body.is_object()) return l_res;
 
   if (in_body.contains("error")) {
-    l_res.has_error_ = true;
+    l_res.has_error_  = true;
     const auto& l_err = in_body.at("error");
     if (l_err.is_string()) {
       l_res.error_message_ = l_err.get<std::string>();
@@ -165,10 +158,10 @@ apipy_image_client::response_t apipy_image_client::parse_response(const nlohmann
       l_res.b64_json_.erase(0, l_comma + 1);
 
   if (in_body.contains("usage") && in_body.at("usage").is_object()) {
-    const auto& l_usage     = in_body.at("usage");
-    l_res.input_tokens_     = l_usage.value("input_tokens", std::int64_t{0});
-    l_res.output_tokens_    = l_usage.value("output_tokens", std::int64_t{0});
-    l_res.total_tokens_     = l_usage.value("total_tokens", std::int64_t{0});
+    const auto& l_usage  = in_body.at("usage");
+    l_res.input_tokens_  = l_usage.value("input_tokens", std::int64_t{0});
+    l_res.output_tokens_ = l_usage.value("output_tokens", std::int64_t{0});
+    l_res.total_tokens_  = l_usage.value("total_tokens", std::int64_t{0});
   }
   return l_res;
 }

@@ -18,14 +18,6 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
   constexpr static std::string_view g_default_host{"https://api.apiyi.com"};
 
  public:
-  constexpr static std::chrono::seconds g_request_timeout{360};
-  constexpr static std::string_view g_default_model{"gpt-image-2.5-vip"};
-
-  constexpr static std::string_view g_edits_path{"/v1/images/edits"};
-
-  constexpr static std::string_view g_edit_image_field{"image"};
-
-  constexpr static std::size_t g_max_reference_images{8};
 
   struct edits_form_t {
     std::string boundary_;
