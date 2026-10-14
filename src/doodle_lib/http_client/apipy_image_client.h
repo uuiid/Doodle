@@ -36,28 +36,27 @@ namespace doodle::http::seedance2 {
  * (见 doodle_core/metadata/seedance2/image_request.h)。不再原地裸读 JSON 键 —— 键名与
  * 取值域由那个结构体的 to_json/from_json 保证, 本类只在该结构体上做属己的定稿:
  *   1) 把出图的标量从在中转站叫法(model/prompt/quality/aspectRatio)落成 API易 叫法
- *      (同值改键: aspectRatio -> size) —— 见 to_apipy_json;
- *   2) 取出参考图 URL 列表(那条路由本类自己定形状, 见 extract_reference_image_urls);
- *   3) 校验参考图 URL 是本站图片路由(checked_reference_url), 再读成本地字节。
+ *      (同值改键: aspectRatio -> size) —— 见 apipy_image_client_req 的 to_json;
+ *   2) 取出参考图 URL 列表(reference_images_), 并校验它是本站图片路由;
+ *   3) 把参考图读成本地字节, 作为文件负担编进 multipart(见 to_multipart)。
  *
  * 为什么能共用: 两家的键集本质一样(都是 OpenAI 兼容的 model/prompt/参考图), 差别只在
  * 一处**键名同义**: 中转站把它叫 aspectRatio, API易 的 generations 叫 size。数据模型
  * 多一份就要多维护一份键名映射, 且必然与真实契约一起漂移; 于是这里选择复用, 只把这一个
- * 差异写在本文件的 to_apipy_json 里。
+ * 差异写在 apipy_image_client_req 里。
  *
  * ─── 参考图 URL 的契约: 只有本站图片路由 ─────────────────────────────────────
  * 与另两个后端**相反**, 本后端**不**把参考图 URL 改写成公网签名 URL(不调 to_public_url,
  * 也不再取公网 IP): 参考图是**我们自己去读的**, 而不是交给第三方去取的 —— 上游拿到的是
  * 图片字节(文件负担), 从头到尾看不到 URL。所以那条 URL 只需要「本进程读得到」。
  * 于是它被收窄成一条可枚举的形状: /api/seedance2/pictures/{uuid}{ext}
- * (reg.h 的 seedance2_pictures), 由 checked_reference_url 强制; 其余一律 400。
+ * (reg.h 的 seedance2_pictures), 由 collect_request_info 强制; 其余一律 400。
  *
  * ─── 文生图 / 改图两条路 ─────────────────────────────────────────────────────
- * 按结构体里**有没有参考图**(reference_images_: 由 content[].image_url 或
- * input[].content[].image_url 抽出)分流:
- *   * 没有参考图 -> POST /v1/images/generations, JSON 体(原来的那条路);
- *   * 有参考图   -> POST /v1/images/edits,       multipart/form-data。
- * 两条路都显式要 response_format=url, 结果处理完全一致(见 submit_task)。
+ * 按结构体里**有没有参考图**(reference_images_)分流:
+ *   * 没有参考图 -> POST /v1/images/generations, JSON 体(apipy_image_client_req::to_json);
+ *   * 有参考图   -> POST /v1/images/edits,       multipart/form-data(to_multipart)。
+ * 两条路的结果处理完全一致(见 submit_task)。
  */
 class DOODLELIB_API apipy_image_client final : public ai_client_base {
   constexpr static std::string_view g_default_host{"https://api.apiyi.com"};
@@ -115,6 +114,31 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
   explicit apipy_image_client(boost::asio::ssl::context& in_ctx)
       : ai_client_base(std::string{g_default_host}, in_ctx) {}
 
+  /// 本后端提交时的请求模型: 与中转站共用 transfer_station_request_t, 只把键名落成
+  /// API易 叫法(aspectRatio -> size), 参考图则由 URL 变成字节负担。
+  /// 两条路都从它派生: 文生图走 to_json, 改图走 to_multipart。
+  struct request_t {
+    std::string model_;
+    std::string prompt_;
+    std::string size_;
+    std::string quality_;
+    std::vector<edit_reference_t> image_bytes_;
+
+    explicit request_t(const doodle::seedance2::transfer_station_request_t& in_req)
+        : model_(in_req.model_),
+          prompt_(in_req.prompt_),
+          size_(in_req.image_size_.empty() ? in_req.aspect_ratio_ : in_req.image_size_),
+          quality_(in_req.quality_) {}
+
+    /// 编成本后端 edits 端点的 multipart/form-data 请求体。
+    /// 文本字段走 to_json(键名即 API易 叫法), 参考图走 image_bytes_ 的字节负担;
+    /// 两者共用一份 boundary, 因此返回 edits_form_t 而不是分开的两个值。
+    [[nodiscard]] edits_form_t to_multipart() const;
+  };
+
+  /// request_t -> 生成接口的 JSON 体(键名即 API易 叫法)。定义在 .cpp。
+  friend void to_json(nlohmann::json& j, const request_t& req);
+
   /// 一次调用即终态: 发请求 → 解析 → **当场把图片下载落盘** → 填 result_files_ /
   /// result_file_paths_ 返回。本后端没有 query_task 可以之后再取, 也没必要重写 run_task
   /// (基类默认就是转发到这里)。
@@ -146,32 +170,24 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
 
   /// 把 API易 的原生请求体(前端 PUT 进来的形状)翻译成结构体读得懂的样子:
   /// size -> aspectRatio, content[] -> images。纯变换, 不校验取值。
-  /// parse_request 用它, 单测也直接钉它。
   [[nodiscard]] static nlohmann::json normalize_apipy_request(const nlohmann::json& in_request);
 
   // ─── 纯函数, 便于不联网单测(改图这条路) ────────────────────────────────────
 
   /// 把参考图 URL 列表编成一份 multipart/form-data 请求体。
   ///
-  /// 文本字段由调用方按 API易 叫法给全(见 to_apipy_json), 本函数**只做编码**:
-  /// 每个 reference 编成一个同名 g_edit_image_field 的部分(重复字段名 = 数组语义),
-  /// 顺序原样保持 —— 顺序即 prompt 里「图1/图2/图3」的指代顺序。
+  /// 文本字段由调用方按 API易 叫法给全(见 apipy_image_client_req 的 to_multipart),
+  /// 本函数**只做编码**: 每个 reference 编成一个同名 g_edit_image_field 的部分
+  /// (重复字段名 = 数组语义), 顺序原样保持 —— 顺序即 prompt 里「图1/图2/图3」的指代顺序。
   ///
   /// 纯函数: 不读盘、不联网, 输入什么就编什么。
   static edits_form_t build_edit_multipart(
       const nlohmann::json& in_apipy_body, const std::vector<edit_reference_t>& in_references
   );
 
-  /// 站点内图片 URL 拆出来的两个标识: 素材 uuid 与扩展名
-  struct site_image_id_t {
-    uuid id_{};
-    std::string extension_{};
-  };
-
-  /// 把站点内图片 URL 拆成 {uuid, 扩展名}; 不是本站图片(绝对 URL、data: 等)时返回 nullopt。
-  /// 只认 /api/seedance2/pictures/{uuid}{ext} 这一条形状 —— 它是本项目唯一把图片交给第三方
-  /// 的出口(见 http_method/seedance2/reg.h 的 seedance2_pictures)。带查询串(签名参数)也能认。
-  /// 纯函数(不碰 g_ctx), 因此可以在没有 app_base 的单测里直接钉。
+  /// 把站点内图片 URL 映射成本地素材路径; 形状不合法时返回空路径。
+  /// 只认 /api/seedance2/pictures/{uuid}{ext} 这一条形状(见 http_method/seedance2/reg.h
+  /// 的 seedance2_pictures)。
   static FSys::path parse_site_image_id(std::string_view in_url);
 
   /// 由扩展名推断 MIME; 未知按 image/png(官方只接受 png/jpg/webp)

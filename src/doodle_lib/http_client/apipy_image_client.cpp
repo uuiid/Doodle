@@ -229,26 +229,16 @@ apipy_image_client::edits_form_t apipy_image_client::build_edit_multipart(
   return l_form;
 }
 
-struct apipy_image_client_req {
-  std::string model_;
-  std::string prompt_;
-  std::string size_;
-  std::string quality_;
-  std::vector<apipy_image_client::edit_reference_t> image_bytes_;
+void to_json(nlohmann::json& j, const apipy_image_client::request_t& req) {
+  j["model"]  = req.model_;
+  j["prompt"] = req.prompt_;
+  j["size"]   = req.size_;
+  if (!req.quality_.empty()) j["quality"] = req.quality_;
+}
 
-  explicit apipy_image_client_req(const doodle::seedance2::transfer_station_request_t& in_req)
-      : model_(in_req.model_),
-        prompt_(in_req.prompt_),
-        size_(in_req.image_size_.empty() ? in_req.aspect_ratio_ : in_req.image_size_),
-        quality_(in_req.quality_) {}
-
-  friend void to_json(nlohmann::json& j, const apipy_image_client_req& req) {
-    j["model"]  = req.model_;
-    j["prompt"] = req.prompt_;
-    j["size"]   = req.size_;
-    if (!req.quality_.empty()) j["quality"] = req.quality_;
-  }
-};
+apipy_image_client::edits_form_t apipy_image_client::request_t::to_multipart() const {
+  return apipy_image_client::build_edit_multipart(nlohmann::json{*this}, image_bytes_);
+}
 
 doodle::seedance2::task_status apipy_image_client::parse_status(const nlohmann::json& in_body, int in_status_code) {
   // 同步接口没有中间态: 要么这次调用带着图回来了, 要么就是失败。
@@ -314,16 +304,21 @@ ai_client_base::request_info_t apipy_image_client::collect_request_info(const nl
       fmt::format("参考图最多 {} 张, 收到 {} 张", g_max_reference_images, l_req.reference_images_.size())
   );
 
-  for (const auto& url : l_req.reference_images_)
-    if (auto l_path = parse_site_image_id(url); !l_path.empty() && !FSys::exists(l_path) && FSys::file_size(l_path) > 0)
+  for (const auto& url : l_req.reference_images_) {
+    // 只有本站图片路由(reg.h 的 seedance2_pictures)能读成本地字节; 绝对 URL / data: 一律拒,
+    // 否则本后端会替调用方去取任意网址(SSRF)。
+    const auto l_path = parse_site_image_id(url);
+    if (l_path.empty() || !FSys::exists(l_path) || FSys::file_size(l_path) == 0)
       throw_exception(
           http_request_error{
               boost::beast::http::status::bad_request,
               fmt::format(
-                  "参考图 URL 必须指向本站图片路由 {}<uuid><扩展名>, 收到: {}", g_pictures_prefix, std::string{url}
+                  "参考图 URL 必须指向本站图片路由 {}<uuid><扩展名> 且文件存在, 收到: {}", g_pictures_prefix,
+                  std::string{url}
               )
           }
       );
+  }
 
   request_info_t l_info{};
   l_info.model_       = l_req.model_;
@@ -378,7 +373,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
   // response_format/参考图不可能出现"只改了其中一条"的漂移。
   const auto l_req_body   = in_task.data_request_.get<doodle::seedance2::transfer_station_request_t>();
   const auto l_references = l_req_body.reference_images_;  // 拷贝: 后面要逐张读字节
-  apipy_image_client_req l_apipy_req{l_req_body};
+  apipy_image_client::request_t l_apipy_req{l_req_body};
 
   boost::beast::http::request<boost::beast::http::string_body> l_req{boost::beast::http::verb::post, {}, 11};
   if (l_references.empty()) {
@@ -387,12 +382,11 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
     l_req.body() = l_body.dump();
     l_req.set(boost::beast::http::field::content_type, "application/json");
   } else {
-    // 逐张先过 URI 检查再读字节(checked_reference_url 不合法就抛 bad_request)。
+    // 逐张读成本地字节; 形状不合法/文件缺失由 collect_request_info 在提交前拦下。
     for (const auto& l_url : l_references) l_apipy_req.image_bytes_.push_back(load_reference_image(l_url));
 
-    // edits 只认平铺标量; 素材 URL 改写在这里**不需要** —— 请求体里已经不含素材 URL 了
-    // (它们被抽成了文件负担), 剩下的 prompt/model/size 都得原样传, 不能被改写。
-    auto l_form = build_edit_multipart(to_apipy_json(l_req_body), l_apipy_req.image_bytes_);
+    // edits 只认平铺标量; 素材 URL 不改写 —— 它们已被抽成文件负担, 上游看不到 URL。
+    auto l_form = l_apipy_req.to_multipart();
     l_req.target(std::string{g_edits_path});
     l_req.body() = std::move(l_form.body_);
     l_req.set(boost::beast::http::field::content_type, l_form.content_type());
