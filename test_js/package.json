@@ -4,19 +4,22 @@
   "type": "module",
   "description": "doodle 测试",
   "scripts": {
-    "test": "mocha config.js",
-    "test:grep": "mocha --grep"
+    "test": "playwright test",
+    "test:list": "playwright test --list",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "test:grep": "playwright test --grep",
+    "test:seedance2": "playwright test seedance2.js",
+    "test:ai_light": "playwright test ai_light.js"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "chai": "^5.2.0",
     "jwt-encode": "^1.0.1",
-    "mocha": "^11.1.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
-    "superagent": "^10.1.1",
-    "uuid": "^11.0.5",
-    "mocha-logger": "^1.0.8"
+    "uuid": "^11.0.5"
   }
 }

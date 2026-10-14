@@ -1,40 +1,38 @@
-// const superagent = require('superagent');
-import request from 'superagent';
+import { test } from '@playwright/test';
 import { expect } from 'chai';
 
-// const fs = require('node:fs');
-import { URL } from './config.js';
+import { URL, authHeader } from './config.js';
+import { readJson } from './helpers.js';
 
-describe('doodle user测试', function () {
-
+test.describe('doodle user测试', () => {
   const l_project_id = 'eb2b5cde-c1cf-47a0-aba4-e196b6f774dd';
-  it('配置', async function () {
-    const req = await request.get(`${URL}/api/config`);
+
+  test('配置', async ({ request }) => {
+    const res = await request.get(`${URL}/api/config`);
+    const req = await readJson(res);
     expect(req.status).to.equal(200);
   });
 
-  it('登录', async function () {
-    const req = await request.post(`${URL}/api/auth/login`).send({
-      email: 'test_mod@qq.com',
-      password: 'test_mod',
+  test('登录', async ({ request }) => {
+    const res = await request.post(`${URL}/api/auth/login`, {
+      data: {
+        email: 'test_mod@qq.com',
+        password: 'test_mod',
+      },
     });
+    const req = await readJson(res);
     expect(req.status).to.equal(200);
   });
 
-
-  it('测试鉴权', async function () {
-    try {
-      const req = await request.get(`${URL}/api/data/user/context`);
-    } catch (e) {
-      expect(e.status).to.equal(401);
-    }
+  test('测试鉴权', async ({ request }) => {
+    const res = await request.get(`${URL}/api/data/user/context`);
+    expect(res.status()).to.equal(401);
   });
-  it('测试授权', async function () {
-    const req = await request.get(`${URL}/api/auth/authenticated`).set(
-      'Cookie', `access_token_cookie=${JWT}`,
-    );
-    expect(req.status).to.equal(200);
 
+  test('测试授权', async ({ request }) => {
+    const res = await request.get(`${URL}/api/auth/authenticated`, { headers: authHeader });
+    const req = await readJson(res);
+    expect(req.status).to.equal(200);
 
     expect(req.body.authenticated).to.equal(true);
     expect(req.body.user).to.have.keys(
@@ -75,7 +73,7 @@ describe('doodle user测试', function () {
       'shotgun_id',
       'studio_id',
       'timezone',
-      'totp_enabled',
+      'totp_enabled'
     );
     expect(req.body.organisation).to.have.keys(
       'chat_token_discord',
@@ -89,16 +87,14 @@ describe('doodle user测试', function () {
       'id',
       'name',
       'timesheets_locked',
-      'use_original_file_name',
+      'use_original_file_name'
     );
-
   });
-  it('测试登录用户的上下文', async function () {
-    const req = await request.get(`${URL}/api/data/user/context`).set(
-      'Cookie', `access_token_cookie=${JWT}`,
-    );
+
+  test('测试登录用户的上下文', async ({ request }) => {
+    const res = await request.get(`${URL}/api/data/user/context`, { headers: authHeader });
+    const req = await readJson(res);
     expect(req.status).to.equal(200);
-    // console.log(req.body);
     expect(req.body).to.have.keys(
       'asset_types',
       'custom_actions',
@@ -115,27 +111,28 @@ describe('doodle user测试', function () {
       'studios',
       'task_status',
       'task_types',
-      'user_limit',
+      'user_limit'
     );
   });
-  it('组织', async function () {
-    const req = await request.get(`${URL}/api/data/organisations`).set(
-      'Cookie', `access_token_cookie=${JWT}`,
-    );
+
+  test('组织', async ({ request }) => {
+    const res = await request.get(`${URL}/api/data/organisations`, { headers: authHeader });
+    const req = await readJson(res);
     expect(req.status).to.equal(200);
   });
 
-  it('获取资产上下文', async function () {
-    const req = await request.get(`${URL}/api/data/assets/with-tasks?project_id=${l_project_id}`).set(
-      'Cookie', `access_token_cookie=${JWT}`,
-    );
+  test('获取资产上下文', async ({ request }) => {
+    const res = await request.get(`${URL}/api/data/assets/with-tasks?project_id=${l_project_id}`, {
+      headers: authHeader,
+    });
+    const req = await readJson(res);
     expect(req.status).to.equal(200);
     console.log(req.body);
   });
-  it('查询 todo', async function () {
-    const req = await request.get(`${URL}/api/data/user/tasks`).set(
-      'Cookie', `access_token_cookie=${JWT}`,
-    );
+
+  test('查询 todo', async ({ request }) => {
+    const res = await request.get(`${URL}/api/data/user/tasks`, { headers: authHeader });
+    const req = await readJson(res);
     expect(req.status).to.equal(200);
     expect(req.body).to.be.an('array');
     expect(req.body[0]).to.have.keys(
@@ -189,20 +186,22 @@ describe('doodle user测试', function () {
       'task_type_color',
       'task_status_color',
       'task_status_short_name',
-      'last_comment',
+      'last_comment'
     );
     expect(req.body[1].last_comment).to.have.keys('text', 'date', 'person_id');
   });
-  it('查询 done todo', async function () {
-    const req = await request.get(`${URL}/api/data/user/done-tasks`).set(
-      'Cookie', `access_token_cookie=${JWT}`,
-    );
+
+  test('查询 done todo', async ({ request }) => {
+    const res = await request.get(`${URL}/api/data/user/done-tasks`, { headers: authHeader });
+    const req = await readJson(res);
     expect(req.status).to.equal(200);
   });
-  it('查询 时间', async function () {
-    const req = await request.get(`${URL}/api/data/persons/69a8d093-dcab-4890-8f9d-c51ef065d03b/day-offs/`);
+
+  test('查询 时间', async ({ request }) => {
+    const res = await request.get(`${URL}/api/data/persons/69a8d093-dcab-4890-8f9d-c51ef065d03b/day-offs/`);
+    const req = await readJson(res);
     expect(req.status).to.equal(200);
     expect(req.body).to.be.an('array');
-    expect(req.body).to.have.lengthOf(0); 
+    expect(req.body).to.have.lengthOf(0);
   });
 });

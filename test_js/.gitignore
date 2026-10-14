@@ -2,3 +2,9 @@ package-lock.json
 .eslintcache
 node_modules
 Untitled*.json
+
+# Playwright 产物
+test-results
+playwright-report
+blob-report
+playwright/.cache

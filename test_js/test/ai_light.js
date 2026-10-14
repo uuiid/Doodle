@@ -31,27 +31,25 @@
 // 需要显式打开：$env:AI_LIGHT_FULL_FLOW = "1"
 //
 
-import request from 'superagent';
+import { test } from '@playwright/test';
 import { expect } from 'chai';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { URL, JWT } from './config.js';
-
-const authHeader = { 'Cookie': `access_token_cookie=${JWT}` };
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// 参考图目录：E:\Doodle\build\image
-const IMAGE_DIR = process.env.AI_LIGHT_IMAGE_DIR || path.resolve(__dirname, '..', '..', 'build', 'image');
+import {
+  URL,
+  authHeader,
+  NON_EXISTENT_ID,
+  IMAGE_DIR,
+  listReferenceImages,
+  mimeTypeOf,
+} from './config.js';
+import { readJson, readBuffer, expectError, pngSignatureHex } from './helpers.js';
 
 // 有灯光任务的镜头 id（建会话的唯一入口需要它）
 const ENTITY_ID = process.env.AI_LIGHT_ENTITY_ID || '019e8267-2505-70d6-8050-430e4565ad8e';
 
 // 是否跑完整链路（会真的调 LLM 推理、产生计费）
 const FULL_FLOW = process.env.AI_LIGHT_FULL_FLOW === '1';
-
-const NON_EXISTENT_ID = '00000000-0000-0000-0000-000000000000';
 
 // ---------------------------------------------------------------------------
 // 提示词：场景总关卡为「路径」，含灯光子关卡；复制一份出来改，删除除 post 框以外的
@@ -66,52 +64,32 @@ const PROMPT_TEXT = [
   '要求是：白天氛围',
 ].join('');
 
-// 列出 build/image 下的参考图（PNG/JPG）
-function listReferenceImages() {
-  if (!fs.existsSync(IMAGE_DIR)) return [];
-  return fs
-    .readdirSync(IMAGE_DIR)
-    .filter((n) => /\.(png|jpg|jpeg|webp|tif|tiff|exr|bmp)$/i.test(n))
-    .map((n) => path.join(IMAGE_DIR, n))
-    .sort();
-}
-
-// superagent 默认把非 2xx 抛异常。契约测试要看状态码与错误体，所以统一转成返回响应。
-async function send(build) {
-  try {
-    return await build();
-  } catch (err) {
-    if (err && typeof err.status === 'number') return err.response || err;
-    throw err;
+// 同名多文件沿用原 superagent 的 .attach('file', img) 循环语义，用 FormData 重复 append
+function multiFileForm(filePaths) {
+  const form = new FormData();
+  for (const p of filePaths) {
+    form.append('file', new File([fs.readFileSync(p)], path.basename(p), { type: mimeTypeOf(p) }));
   }
-}
-
-// 断言一个「失败响应」的状态码与错误消息片段
-function expectError(res, status, fragment) {
-  expect(res.status, `期望 ${status}，实际 ${res.status}：${JSON.stringify(res.body)}`).to.equal(status);
-  if (fragment) {
-    const text = JSON.stringify(res.body ?? '');
-    expect(text, `错误消息应包含「${fragment}」，实际：${text}`).to.include(fragment);
-  }
+  return form;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 0. 连通性与前置条件
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe('AI 灯光 —— 前置条件检查', function () {
-  this.timeout(30000);
+test.describe('AI 灯光 —— 前置条件检查', () => {
+  test.describe.configure({ timeout: 30000 });
 
-  it('build/image 参考图目录存在且至少有一张图', function () {
+  test('build/image 参考图目录存在且至少有一张图', async () => {
     expect(fs.existsSync(IMAGE_DIR), `参考图目录不存在: ${IMAGE_DIR}`).to.be.true;
     const images = listReferenceImages();
     expect(images.length, `参考图目录里没有图片: ${IMAGE_DIR}`).to.be.above(0);
     console.log(`参考图目录 ${IMAGE_DIR} 下共 ${images.length} 张图`);
   });
 
-  it('配置了 AI_LIGHT_ENTITY_ID（有灯光任务的镜头）', function () {
+  test('配置了 AI_LIGHT_ENTITY_ID（有灯光任务的镜头）', async () => {
     if (!ENTITY_ID) {
-      this.skip();
+      test.skip();
     }
     expect(ENTITY_ID).to.match(/^[0-9a-fA-F-]{36}$/, 'AI_LIGHT_ENTITY_ID 必须是 uuid');
   });
@@ -121,26 +99,25 @@ describe('AI 灯光 —— 前置条件检查', function () {
 // 1. 会话：/shot/{entity_id}/session 与 /session/{id}
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe('AI 灯光 —— 会话（shot_session / session_instance）', function () {
-  this.timeout(60000);
+test.describe('AI 灯光 —— 会话（shot_session / session_instance）', () => {
+  test.describe.configure({ timeout: 60000 });
 
   let sessionId = null;
 
-  after(async function () {
+  test.afterAll(async ({ request }) => {
     if (sessionId) {
-      await send(() => request.delete(`${URL}/api/doodle/ai/light/session/${sessionId}`).set(authHeader));
+      await request.delete(`${URL}/api/doodle/ai/light/session/${sessionId}`, { headers: authHeader });
       sessionId = null;
     }
   });
 
-  it('POST /shot/{entity_id}/session — 建会话返回六表聚合详情', async function () {
-    if (!ENTITY_ID) this.skip();
+  test('POST /shot/{entity_id}/session — 建会话返回六表聚合详情', async ({ request }) => {
+    if (!ENTITY_ID) test.skip();
 
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`)
-        .set(authHeader)
-        .send({
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`, {
+        headers: authHeader,
+        data: {
           prompt_text: PROMPT_TEXT,
           title: 'AI 灯光测试会话',
           // 下面三个由服务端从镜头覆盖，客户端传什么都改不了归属
@@ -150,7 +127,8 @@ describe('AI 灯光 —— 会话（shot_session / session_instance）', functio
           // 状态与轮次由服务端强制，传进来也应被忽略
           state: 'awaiting_judgement',
           current_iteration: 99,
-        })
+        },
+      })
     );
 
     expect(req.status).to.equal(201);
@@ -201,33 +179,36 @@ describe('AI 灯光 —— 会话（shot_session / session_instance）', functio
     sessionId = body.session.id;
   });
 
-  it('POST /shot/{entity_id}/session — 缺少 prompt_text 返回 400', async function () {
-    if (!ENTITY_ID) this.skip();
+  test('POST /shot/{entity_id}/session — 缺少 prompt_text 返回 400', async ({ request }) => {
+    if (!ENTITY_ID) test.skip();
 
-    const req = await send(() =>
-      request.post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`).set(authHeader).send({})
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`, {
+        headers: authHeader,
+        data: {},
+      })
     );
 
     expectError(req, 400, 'prompt_text');
   });
 
-  it('POST /shot/{entity_id}/session — 镜头不存在返回 404', async function () {
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/shot/${NON_EXISTENT_ID}/session`)
-        .set(authHeader)
-        .send({ prompt_text: PROMPT_TEXT })
+  test('POST /shot/{entity_id}/session — 镜头不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/shot/${NON_EXISTENT_ID}/session`, {
+        headers: authHeader,
+        data: { prompt_text: PROMPT_TEXT },
+      })
     );
 
     expect(req.status).to.equal(404);
   });
 
-  it('GET /shot/{entity_id}/session — 返回该镜头的会话列表', async function () {
-    if (!ENTITY_ID) this.skip();
+  test('GET /shot/{entity_id}/session — 返回该镜头的会话列表', async ({ request }) => {
+    if (!ENTITY_ID) test.skip();
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const req = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`).set(authHeader)
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(200);
@@ -240,11 +221,13 @@ describe('AI 灯光 —— 会话（shot_session / session_instance）', functio
     expect(found.state).to.equal('draft');
   });
 
-  it('GET /session/{id} — 会话详情', async function () {
-    if (!ENTITY_ID) this.skip();
+  test('GET /session/{id} — 会话详情', async ({ request }) => {
+    if (!ENTITY_ID) test.skip();
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const req = await send(() => request.get(`${URL}/api/doodle/ai/light/session/${sessionId}`).set(authHeader));
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}`, { headers: authHeader })
+    );
 
     expect(req.status).to.equal(200);
     expect(req.body.session.id).to.equal(sessionId);
@@ -256,9 +239,9 @@ describe('AI 灯光 —— 会话（shot_session / session_instance）', functio
     ]);
   });
 
-  it('GET /session/{id} — 会话不存在返回 404', async function () {
-    const req = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/session/${NON_EXISTENT_ID}`).set(authHeader)
+  test('GET /session/{id} — 会话不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/session/${NON_EXISTENT_ID}`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(404);
@@ -269,41 +252,44 @@ describe('AI 灯光 —— 会话（shot_session / session_instance）', functio
 // 2. 参考图：上传 / 列表 / 取图 / 删除
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe('AI 灯光 —— 参考图（reference）', function () {
-  this.timeout(180000);
+test.describe('AI 灯光 —— 参考图（reference）', () => {
+  test.describe.configure({ timeout: 180000 });
 
   let sessionId = null;
 
-  before(async function () {
-    if (!ENTITY_ID) this.skip();
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`)
-        .set(authHeader)
-        .send({ prompt_text: PROMPT_TEXT, title: 'AI 灯光参考图测试' })
+  test.beforeAll(async ({ request }) => {
+    if (!ENTITY_ID) test.skip();
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`, {
+        headers: authHeader,
+        data: { prompt_text: PROMPT_TEXT, title: 'AI 灯光参考图测试' },
+      })
     );
     expect(req.status).to.equal(201);
     sessionId = req.body.session.id;
   });
 
-  after(async function () {
+  test.afterAll(async ({ request }) => {
     if (sessionId) {
-      await send(() => request.delete(`${URL}/api/doodle/ai/light/session/${sessionId}`).set(authHeader));
+      await request.delete(`${URL}/api/doodle/ai/light/session/${sessionId}`, { headers: authHeader });
       sessionId = null;
     }
   });
 
-  it('POST /session/{id}/reference — 无文件返回 400', async function () {
+  test('POST /session/{id}/reference — 无文件返回 400', async ({ request }) => {
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const req = await send(() =>
-      request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`).set(authHeader).send({})
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`, {
+        headers: authHeader,
+        data: {},
+      })
     );
 
     expectError(req, 400, '参考图');
   });
 
-  it('POST /session/{id}/reference — 多图上传返回参考图列表', async function () {
+  test('POST /session/{id}/reference — 多图上传返回参考图列表', async ({ request }) => {
     expect(sessionId, '需要先建会话').to.not.be.null;
 
     const images = listReferenceImages();
@@ -311,10 +297,12 @@ describe('AI 灯光 —— 参考图（reference）', function () {
     // 取前两张，验证多图一次上传
     const picked = images.slice(0, 2);
 
-    let builder = request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`).set(authHeader);
-    for (const img of picked) builder = builder.attach('file', img);
-
-    const req = await send(() => builder);
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`, {
+        headers: authHeader,
+        multipart: multiFileForm(picked),
+      })
+    );
 
     expect(req.status).to.equal(201);
     expect(req.body).to.have.property('data');
@@ -336,11 +324,11 @@ describe('AI 灯光 —— 参考图（reference）', function () {
     });
   });
 
-  it('GET /session/{id}/reference — 列表与上传结果一致', async function () {
+  test('GET /session/{id}/reference — 列表与上传结果一致', async ({ request }) => {
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const req = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`).set(authHeader)
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(200);
@@ -350,78 +338,70 @@ describe('AI 灯光 —— 参考图（reference）', function () {
       .to.be.at.most(new Date(req.body.data[1].created_at).getTime());
   });
 
-  it('GET /reference/{id}/image — 取参考图（PNG 流）', async function () {
+  test('GET /reference/{id}/image — 取参考图（PNG 流）', async ({ request }) => {
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const listReq = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`).set(authHeader)
+    const listReq = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`, { headers: authHeader })
     );
     const refId = listReq.body.data[0].id;
 
-    // 取图是二进制流：开 buffer + 自带解析器收成 Buffer，而不是默认的 JSON/text 解析
-    const req = await send(() =>
-      request
-        .get(`${URL}/api/doodle/ai/light/reference/${refId}/image`)
-        .set(authHeader)
-        .buffer(true)
-        .parse((res, callback) => {
-          const chunks = [];
-          res.on('data', (chunk) => chunks.push(chunk));
-          res.on('end', () => callback(null, Buffer.concat(chunks)));
-        })
+    // 取图是二进制流，按 Buffer 收
+    const req = await readBuffer(
+      await request.get(`${URL}/api/doodle/ai/light/reference/${refId}/image`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(200);
     expect(req.headers['content-type']).to.include('image/png');
     expect(req.body.length, '返回的图片字节不应为空').to.be.above(0);
     // PNG magic
-    expect(req.body.slice(0, 8).toString('hex')).to.equal('89504e470d0a1a0a');
+    expect(pngSignatureHex(req.body)).to.equal('89504e470d0a1a0a');
   });
 
-  it('GET /reference/{id}/image — 参考图不存在返回 404', async function () {
-    const req = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/reference/${NON_EXISTENT_ID}/image`).set(authHeader)
+  test('GET /reference/{id}/image — 参考图不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/reference/${NON_EXISTENT_ID}/image`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(404);
   });
 
-  it('DELETE /reference/{id} — 删除单张参考图返回 204', async function () {
+  test('DELETE /reference/{id} — 删除单张参考图返回 204', async ({ request }) => {
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const listReq = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`).set(authHeader)
+    const listReq = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`, { headers: authHeader })
     );
     expect(listReq.body.data).to.have.lengthOf(2);
     const refId = listReq.body.data[1].id;
 
-    const delReq = await send(() =>
-      request.delete(`${URL}/api/doodle/ai/light/reference/${refId}`).set(authHeader)
+    const delReq = await readJson(
+      await request.delete(`${URL}/api/doodle/ai/light/reference/${refId}`, { headers: authHeader })
     );
     expect(delReq.status).to.equal(204);
 
     // 删完只剩一张
-    const afterReq = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`).set(authHeader)
+    const afterReq = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`, { headers: authHeader })
     );
     expect(afterReq.body.data).to.have.lengthOf(1);
     expect(afterReq.body.data.map((r) => r.id)).to.not.include(refId);
   });
 
-  it('DELETE /reference/{id} — 参考图不存在返回 404', async function () {
-    const req = await send(() =>
-      request.delete(`${URL}/api/doodle/ai/light/reference/${NON_EXISTENT_ID}`).set(authHeader)
+  test('DELETE /reference/{id} — 参考图不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.delete(`${URL}/api/doodle/ai/light/reference/${NON_EXISTENT_ID}`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(404);
   });
 
-  it('POST /session/{id}/reference — 会话不存在返回 404', async function () {
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/session/${NON_EXISTENT_ID}/reference`)
-        .set(authHeader)
-        .send({})
+  test('POST /session/{id}/reference — 会话不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${NON_EXISTENT_ID}/reference`, {
+        headers: authHeader,
+        data: {},
+      })
     );
 
     expect(req.status).to.equal(404);
@@ -432,8 +412,8 @@ describe('AI 灯光 —— 参考图（reference）', function () {
 // 3. Spec：版本列表 / 生成 / 人工闸门 1
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
-  this.timeout(300000);
+test.describe('AI 灯光 —— Spec（spec / spec_confirm）', () => {
+  test.describe.configure({ timeout: 300000 });
 
   let sessionId = null;
   // 「别的会话」——只为给「参考图不属于本会话」那条用例提供一个**真实存在**的
@@ -442,34 +422,34 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
   let otherSessionId = null;
   let foreignRefId = null;
 
-  before(async function () {
-    if (!ENTITY_ID) this.skip();
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`)
-        .set(authHeader)
-        .send({ prompt_text: PROMPT_TEXT, title: 'AI 灯光 Spec 测试' })
+  test.beforeAll(async ({ request }) => {
+    if (!ENTITY_ID) test.skip();
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`, {
+        headers: authHeader,
+        data: { prompt_text: PROMPT_TEXT, title: 'AI 灯光 Spec 测试' },
+      })
     );
     expect(req.status).to.equal(201);
     sessionId = req.body.session.id;
   });
 
-  after(async function () {
+  test.afterAll(async ({ request }) => {
     if (sessionId) {
-      await send(() => request.delete(`${URL}/api/doodle/ai/light/session/${sessionId}`).set(authHeader));
+      await request.delete(`${URL}/api/doodle/ai/light/session/${sessionId}`, { headers: authHeader });
       sessionId = null;
     }
     if (otherSessionId) {
-      await send(() => request.delete(`${URL}/api/doodle/ai/light/session/${otherSessionId}`).set(authHeader));
+      await request.delete(`${URL}/api/doodle/ai/light/session/${otherSessionId}`, { headers: authHeader });
       otherSessionId = null;
     }
   });
 
-  it('GET /session/{id}/spec — 尚无 Spec 时 data 为空、current_revision 为 0', async function () {
+  test('GET /session/{id}/spec — 尚无 Spec 时 data 为空、current_revision 为 0', async ({ request }) => {
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const req = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/spec`).set(authHeader)
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/spec`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(200);
@@ -477,33 +457,36 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
     expect(req.body.current_revision).to.equal(0);
   });
 
-  it('POST /session/{id}/spec/confirm — 还没有 Spec 就确认返回 400', async function () {
+  test('POST /session/{id}/spec/confirm — 还没有 Spec 就确认返回 400', async ({ request }) => {
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const req = await send(() =>
-      request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec/confirm`).set(authHeader).send({})
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec/confirm`, {
+        headers: authHeader,
+        data: {},
+      })
     );
 
     expectError(req, 400, 'Spec');
   });
 
-  it('POST /session/{id}/spec — 没有参考图时拒绝生成（400）', async function () {
+  test('POST /session/{id}/spec — 没有参考图时拒绝生成（400）', async ({ request }) => {
     expect(sessionId, '需要先建会话').to.not.be.null;
 
     // Spec 的输入是「提示词 + 参考图」，参考图为空时拒绝，
     // 避免蒸出一份 prompt-only 的方案把主输入静默丢掉。
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec`)
-        .set(authHeader)
-        .send({})
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec`, {
+        headers: authHeader,
+        data: {},
+      })
     );
 
     expect(req.status).to.equal(400);
   });
 
-  it.skip('POST /session/{id}/spec — 排除不属于本会话的参考图返回 400', async function () {
-    if (!FULL_FLOW) this.skip();
+  test.skip('POST /session/{id}/spec — 排除不属于本会话的参考图返回 400', async ({ request }) => {
+    if (!FULL_FLOW) test.skip();
     expect(sessionId, '需要先建会话').to.not.be.null;
 
     // 必须用**真实存在**的参考图 id：服务端在写排除标记前先查库
@@ -511,29 +494,32 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
     // 传空 uuid 会被 404 挡在归属校验之前，「不属于本会话」这个分支根本没被执行到。
     // 所以另建一个会话并往它上传一张参考图，拿那张图的 id 来撞本会话的 /spec。
     if (!otherSessionId) {
-      const mk = await send(() =>
-        request
-          .post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`)
-          .set(authHeader)
-          .send({ prompt_text: PROMPT_TEXT, title: 'AI 灯光 Spec 测试_另一个会话' })
+      const mk = await readJson(
+        await request.post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`, {
+          headers: authHeader,
+          data: { prompt_text: PROMPT_TEXT, title: 'AI 灯光 Spec 测试_另一个会话' },
+        })
       );
       expect(mk.status, '需要能建出第二个会话来提供外部参考图').to.equal(201);
       otherSessionId = mk.body.session.id;
 
       const images = listReferenceImages().slice(0, 1);
       expect(images.length, '参考图目录为空').to.be.above(0);
-      let up = request.post(`${URL}/api/doodle/ai/light/session/${otherSessionId}/reference`).set(authHeader);
-      for (const img of images) up = up.attach('file', img);
-      const upReq = await send(() => up);
+      const upReq = await readJson(
+        await request.post(`${URL}/api/doodle/ai/light/session/${otherSessionId}/reference`, {
+          headers: authHeader,
+          multipart: multiFileForm(images),
+        })
+      );
       expect(upReq.status, '需要能往第二个会话传参考图').to.equal(201);
       foreignRefId = upReq.body.data[0].id;
     }
 
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec`)
-        .set(authHeader)
-        .send({ excluded_reference_ids: [foreignRefId] })
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec`, {
+        headers: authHeader,
+        data: { excluded_reference_ids: [foreignRefId] },
+      })
     );
 
     // 走到 548 行的归属校验：参考图存在、但不属于本会话 → 400
@@ -545,23 +531,26 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
   // 打开方式：$env:AI_LIGHT_FULL_FLOW = "1"
   // -------------------------------------------------------------------------
 
-  it('POST /session/{id}/spec — 生成第一版 Spec（draft → awaiting_spec_confirm）', async function () {
-    if (!ENTITY_ID) this.skip();
-    if (!FULL_FLOW) this.skip();
+  test('POST /session/{id}/spec — 生成第一版 Spec（draft → awaiting_spec_confirm）', async ({ request }) => {
+    if (!ENTITY_ID) test.skip();
+    if (!FULL_FLOW) test.skip();
     expect(sessionId, '需要先建会话').to.not.be.null;
 
     // 先传参考图，否则 /spec 会被 400 挡下
     const images = listReferenceImages().slice(0, 2);
-    let up = request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`).set(authHeader);
-    for (const img of images) up = up.attach('file', img);
-    const upReq = await send(() => up);
+    const upReq = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`, {
+        headers: authHeader,
+        multipart: multiFileForm(images),
+      })
+    );
     expect(upReq.status).to.equal(201);
 
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec`)
-        .set(authHeader)
-        .send({ prompt_text: PROMPT_TEXT })
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec`, {
+        headers: authHeader,
+        data: { prompt_text: PROMPT_TEXT },
+      })
     );
 
     expect(req.status).to.equal(201);
@@ -582,12 +571,12 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
     expect(req.body.is_waiting_human).to.equal(true);
   });
 
-  it('GET /session/{id}/spec — 版本列表含刚生成的 Spec', async function () {
-    if (!FULL_FLOW) this.skip();
+  test('GET /session/{id}/spec — 版本列表含刚生成的 Spec', async ({ request }) => {
+    if (!FULL_FLOW) test.skip();
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const req = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/spec`).set(authHeader)
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/spec`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(200);
@@ -595,15 +584,15 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
     expect(req.body.current_revision).to.equal(1);
   });
 
-  it('POST /session/{id}/spec/confirm — 人工闸门 1 确认', async function () {
-    if (!FULL_FLOW) this.skip();
+  test('POST /session/{id}/spec/confirm — 人工闸门 1 确认', async ({ request }) => {
+    if (!FULL_FLOW) test.skip();
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec/confirm`)
-        .set(authHeader)
-        .send({})
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec/confirm`, {
+        headers: authHeader,
+        data: {},
+      })
     );
 
     expect(req.status).to.equal(201);
@@ -614,20 +603,20 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
     expect(req.body.current_spec.confirmed_at).to.not.be.null;
   });
 
-  it('POST /session/{id}/spec/confirm — 重复确认是幂等的', async function () {
-    if (!FULL_FLOW) this.skip();
+  test('POST /session/{id}/spec/confirm — 重复确认是幂等的', async ({ request }) => {
+    if (!FULL_FLOW) test.skip();
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const first = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/session/${sessionId}`).set(authHeader)
+    const first = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}`, { headers: authHeader })
     );
     const confirmedAt = first.body.current_spec.confirmed_at;
 
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec/confirm`)
-        .set(authHeader)
-        .send({})
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec/confirm`, {
+        headers: authHeader,
+        data: {},
+      })
     );
 
     expect(req.status).to.equal(201);
@@ -636,9 +625,12 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
     expect(req.body.spec.confirmed_at).to.equal(confirmedAt);
   });
 
-  it('POST /session/{id}/spec/confirm — 会话不存在返回 404', async function () {
-    const req = await send(() =>
-      request.post(`${URL}/api/doodle/ai/light/session/${NON_EXISTENT_ID}/spec/confirm`).set(authHeader).send({})
+  test('POST /session/{id}/spec/confirm — 会话不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${NON_EXISTENT_ID}/spec/confirm`, {
+        headers: authHeader,
+        data: {},
+      })
     );
 
     expect(req.status).to.equal(404);
@@ -649,36 +641,39 @@ describe('AI 灯光 —— Spec（spec / spec_confirm）', function () {
 // 4. 迭代与判断：/iterate、/judge
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe('AI 灯光 —— 迭代与判断（iterate / judge）', function () {
-  this.timeout(300000);
+test.describe('AI 灯光 —— 迭代与判断（iterate / judge）', () => {
+  test.describe.configure({ timeout: 300000 });
 
   let sessionId = null;
 
-  before(async function () {
-    if (!ENTITY_ID) this.skip();
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`)
-        .set(authHeader)
-        .send({ prompt_text: PROMPT_TEXT, title: 'AI 灯光迭代测试' })
+  test.beforeAll(async ({ request }) => {
+    if (!ENTITY_ID) test.skip();
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`, {
+        headers: authHeader,
+        data: { prompt_text: PROMPT_TEXT, title: 'AI 灯光迭代测试' },
+      })
     );
     expect(req.status).to.equal(201);
     sessionId = req.body.session.id;
   });
 
-  after(async function () {
+  test.afterAll(async ({ request }) => {
     if (sessionId) {
-      await send(() => request.delete(`${URL}/api/doodle/ai/light/session/${sessionId}`).set(authHeader));
+      await request.delete(`${URL}/api/doodle/ai/light/session/${sessionId}`, { headers: authHeader });
       sessionId = null;
     }
   });
 
-  it('POST /session/{id}/iterate — 非 generating 状态返回 400', async function () {
+  test('POST /session/{id}/iterate — 非 generating 状态返回 400', async ({ request }) => {
     expect(sessionId, '需要先建会话').to.not.be.null;
 
     // 会话是 draft，不是 generating
-    const req = await send(() =>
-      request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/iterate`).set(authHeader).send({})
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/iterate`, {
+        headers: authHeader,
+        data: {},
+      })
     );
 
     expect(req.status).to.equal(400);
@@ -686,12 +681,12 @@ describe('AI 灯光 —— 迭代与判断（iterate / judge）', function () {
     expect(text).to.include('generating');
   });
 
-  it('POST /session/{id}/iterate — 无请求体也能调用（空体不应因 body 解析失败）', async function () {
+  test('POST /session/{id}/iterate — 无请求体也能调用（空体不应因 body 解析失败）', async ({ request }) => {
     expect(sessionId, '需要先建会话').to.not.be.null;
 
     // /iterate 刻意不读请求体；空体调用应当走到状态校验，而不是「body 不是 json」
-    const req = await send(() =>
-      request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/iterate`).set(authHeader)
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/iterate`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(400);
@@ -700,14 +695,14 @@ describe('AI 灯光 —— 迭代与判断（iterate / judge）', function () {
     expect(text).to.include('generating');
   });
 
-  it('POST /session/{id}/judge — 没有轮次时返回 400', async function () {
+  test('POST /session/{id}/judge — 没有轮次时返回 400', async ({ request }) => {
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/session/${sessionId}/judge`)
-        .set(authHeader)
-        .send({ decision: 'reject_all' })
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/judge`, {
+        headers: authHeader,
+        data: { decision: 'reject_all' },
+      })
     );
 
     expect(req.status).to.equal(400);
@@ -715,44 +710,61 @@ describe('AI 灯光 —— 迭代与判断（iterate / judge）', function () {
     expect(text).to.include('轮次');
   });
 
-  it('POST /session/{id}/judge — 会话不存在返回 404', async function () {
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/session/${NON_EXISTENT_ID}/judge`)
-        .set(authHeader)
-        .send({ decision: 'reject_all' })
+  test('POST /session/{id}/judge — 会话不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${NON_EXISTENT_ID}/judge`, {
+        headers: authHeader,
+        data: { decision: 'reject_all' },
+      })
     );
 
     expect(req.status).to.equal(404);
   });
 
-  it('POST /session/{id}/iterate — 生成一轮候选并返回 launch_plan', async function () {
-    if (!FULL_FLOW) this.skip();
+  test('POST /session/{id}/iterate — 生成一轮候选并返回 launch_plan', async ({ request }) => {
+    if (!FULL_FLOW) test.skip();
     expect(sessionId, '需要先建会话').to.not.be.null;
 
     // 前置：参考图 → Spec → 确认（确认后状态为 generating）
     const images = listReferenceImages().slice(0, 2);
-    let up = request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`).set(authHeader);
-    for (const img of images) up = up.attach('file', img);
-    expect((await send(() => up)).status).to.equal(201);
-
     expect(
-      (await send(() =>
-        request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec`).set(authHeader).send({})
-      )).status
+      (
+        await readJson(
+          await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`, {
+            headers: authHeader,
+            multipart: multiFileForm(images),
+          })
+        )
+      ).status
     ).to.equal(201);
 
     expect(
-      (await send(() =>
-        request
-          .post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec/confirm`)
-          .set(authHeader)
-          .send({})
-      )).status
+      (
+        await readJson(
+          await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec`, {
+            headers: authHeader,
+            data: {},
+          })
+        )
+      ).status
     ).to.equal(201);
 
-    const req = await send(() =>
-      request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/iterate`).set(authHeader).send({})
+    expect(
+      (
+        await readJson(
+          await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/spec/confirm`, {
+            headers: authHeader,
+            data: {},
+          })
+        )
+      ).status
+    ).to.equal(201);
+
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/iterate`, {
+        headers: authHeader,
+        data: {},
+      })
     );
 
     expect(req.status).to.equal(201);
@@ -787,53 +799,53 @@ describe('AI 灯光 —— 迭代与判断（iterate / judge）', function () {
     });
   });
 
-  it('POST /session/{id}/judge — 定稿必须指定候选（400）', async function () {
-    if (!FULL_FLOW) this.skip();
+  test('POST /session/{id}/judge — 定稿必须指定候选（400）', async ({ request }) => {
+    if (!FULL_FLOW) test.skip();
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/session/${sessionId}/judge`)
-        .set(authHeader)
-        .send({ decision: 'accept' })
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/judge`, {
+        headers: authHeader,
+        data: { decision: 'accept' },
+      })
     );
 
     expectError(req, 400, '候选');
   });
 
-  it('POST /session/{id}/judge — 候选不属于本轮返回 400', async function () {
-    if (!FULL_FLOW) this.skip();
+  test('POST /session/{id}/judge — 候选不属于本轮返回 400', async ({ request }) => {
+    if (!FULL_FLOW) test.skip();
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/session/${sessionId}/judge`)
-        .set(authHeader)
-        .send({ decision: 'accept', selected_candidate_id: NON_EXISTENT_ID })
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/judge`, {
+        headers: authHeader,
+        data: { decision: 'accept', selected_candidate_id: NON_EXISTENT_ID },
+      })
     );
 
     expect(req.status).to.equal(400);
   });
 
-  it('POST /session/{id}/judge — continue_iteration 记录反馈轴并回到 generating', async function () {
-    if (!FULL_FLOW) this.skip();
+  test('POST /session/{id}/judge — continue_iteration 记录反馈轴并回到 generating', async ({ request }) => {
+    if (!FULL_FLOW) test.skip();
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const detail = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/session/${sessionId}`).set(authHeader)
+    const detail = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}`, { headers: authHeader })
     );
     const iteration = detail.body.iterations[0];
 
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/session/${sessionId}/judge`)
-        .set(authHeader)
-        .send({
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/session/${sessionId}/judge`, {
+        headers: authHeader,
+        data: {
           decision: 'continue_iteration',
           feedback_text: '白天氛围不够，整体再亮一点',
           // 滑块通道：直接给轴，不经 LLM
           feedback_axes: { kelvin: -200, ambient_level: 0.2 },
-        })
+        },
+      })
     );
 
     expect(req.status).to.equal(201);
@@ -851,116 +863,116 @@ describe('AI 灯光 —— 迭代与判断（iterate / judge）', function () {
 // 5. 工作机回传：/render_report/{task_id} 与 /render_report_local/{session_id}/{iteration}
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe.skip('AI 灯光 —— 回传（render_report / render_report_local）', function () {
-  this.timeout(60000);
+test.describe.skip('AI 灯光 —— 回传（render_report / render_report_local）', () => {
+  test.describe.configure({ timeout: 60000 });
 
   let sessionId = null;
 
-  before(async function () {
-    if (!ENTITY_ID) this.skip();
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`)
-        .set(authHeader)
-        .send({ prompt_text: PROMPT_TEXT, title: 'AI 灯光回传测试' })
+  test.beforeAll(async ({ request }) => {
+    if (!ENTITY_ID) test.skip();
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/shot/${ENTITY_ID}/session`, {
+        headers: authHeader,
+        data: { prompt_text: PROMPT_TEXT, title: 'AI 灯光回传测试' },
+      })
     );
     expect(req.status).to.equal(201);
     sessionId = req.body.session.id;
   });
 
-  after(async function () {
+  test.afterAll(async ({ request }) => {
     if (sessionId) {
-      await send(() => request.delete(`${URL}/api/doodle/ai/light/session/${sessionId}`).set(authHeader));
+      await request.delete(`${URL}/api/doodle/ai/light/session/${sessionId}`, { headers: authHeader });
       sessionId = null;
     }
   });
 
-  it('POST /render_report/{task_id} — 任务不存在返回 404', async function () {
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/render_report/${NON_EXISTENT_ID}`)
-        .set(authHeader)
-        .send({ candidates: [], frame_rate: 24, error: '' })
+  test('POST /render_report/{task_id} — 任务不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/render_report/${NON_EXISTENT_ID}`, {
+        headers: authHeader,
+        data: { candidates: [], frame_rate: 24, error: '' },
+      })
     );
 
     expect(req.status).to.equal(404);
   });
 
-  it('POST /render_report/{task_id} — 任务不是 AI 灯光类型返回 400', async function () {
-    if (!ENTITY_ID) this.skip();
+  test('POST /render_report/{task_id} — 任务不是 AI 灯光类型返回 400', async ({ request }) => {
+    if (!ENTITY_ID) test.skip();
 
     // 会话上的 task_id 是 Kitsu 灯光任务（不是 server_task_info 的 ai_light 任务）
-    const detail = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/session/${sessionId}`).set(authHeader)
+    const detail = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}`, { headers: authHeader })
     );
     const taskId = detail.body.session.task_id;
 
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/render_report/${taskId}`)
-        .set(authHeader)
-        .send({ candidates: [], frame_rate: 24, error: '' })
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/render_report/${taskId}`, {
+        headers: authHeader,
+        data: { candidates: [], frame_rate: 24, error: '' },
+      })
     );
 
     // 任务行不存在 → 404；存在但不是 ai_light 类型 → 400。两者都是「拒绝」。
     expect([400, 404]).to.include(req.status);
   });
 
-  it('POST /render_report/{task_id} — 回传体缺少严格字段返回 502', async function () {
-    if (!ENTITY_ID) this.skip();
+  test('POST /render_report/{task_id} — 回传体缺少严格字段返回 502', async ({ request }) => {
+    if (!ENTITY_ID) test.skip();
 
     // 先建一个真正的 ai_light 任务行不可行（本文件不派发），所以这里只验证
     // 「形状错误 → 502」这条在解析层的契约：用不存在任务时先被 404 挡下。
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/render_report/${NON_EXISTENT_ID}`)
-        .set(authHeader)
-        .send({ frame_rate: 24 })
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/render_report/${NON_EXISTENT_ID}`, {
+        headers: authHeader,
+        data: { frame_rate: 24 },
+      })
     );
 
     expect([404, 502]).to.include(req.status);
   });
 
-  it('POST /render_report_local/{session_id}/{iteration} — 轮次不存在返回 404', async function () {
+  test('POST /render_report_local/{session_id}/{iteration} — 轮次不存在返回 404', async ({ request }) => {
     expect(sessionId, '需要先建会话').to.not.be.null;
 
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/render_report_local/${sessionId}/1`)
-        .set(authHeader)
-        .send({ candidates: [], frame_rate: 24, error: '' })
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/render_report_local/${sessionId}/1`, {
+        headers: authHeader,
+        data: { candidates: [], frame_rate: 24, error: '' },
+      })
     );
 
     expectError(req, 404, '轮');
   });
 
-  it('POST /render_report_local/{session_id}/{iteration} — 会话不存在返回 404', async function () {
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/render_report_local/${NON_EXISTENT_ID}/1`)
-        .set(authHeader)
-        .send({ candidates: [], frame_rate: 24, error: '' })
+  test('POST /render_report_local/{session_id}/{iteration} — 会话不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/render_report_local/${NON_EXISTENT_ID}/1`, {
+        headers: authHeader,
+        data: { candidates: [], frame_rate: 24, error: '' },
+      })
     );
 
     expect(req.status).to.equal(404);
   });
 
-  it('POST /render_report_local/{session_id}/{iteration} — 无候选的整轮失败回执', async function () {
-    if (!FULL_FLOW) this.skip();
+  test('POST /render_report_local/{session_id}/{iteration} — 无候选的整轮失败回执', async ({ request }) => {
+    if (!FULL_FLOW) test.skip();
     expect(sessionId, '需要先建会话').to.not.be.null;
 
     // 轮次必须先存在（由 /iterate 生成），本用例依赖 full flow 的前序步骤
-    const detail = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/session/${sessionId}`).set(authHeader)
+    const detail = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}`, { headers: authHeader })
     );
-    if (detail.body.iterations.length === 0) this.skip();
+    if (detail.body.iterations.length === 0) test.skip();
     const iteration = detail.body.iterations[0].iteration;
 
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/render_report_local/${sessionId}/${iteration}`)
-        .set(authHeader)
-        .send({ candidates: [], frame_rate: 24, error: 'UE 启动失败' })
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/render_report_local/${sessionId}/${iteration}`, {
+        headers: authHeader,
+        data: { candidates: [], frame_rate: 24, error: 'UE 启动失败' },
+      })
     );
 
     expect(req.status).to.equal(201);
@@ -976,47 +988,45 @@ describe.skip('AI 灯光 —— 回传（render_report / render_report_local）'
 // 6. 候选产物：/candidate/{id}/file/{role} 与 /candidate/{id}/movie
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe.skip('AI 灯光 —— 候选产物（candidate file / movie / image）', function () {
-  this.timeout(120000);
+test.describe.skip('AI 灯光 —— 候选产物（candidate file / movie / image）', () => {
+  test.describe.configure({ timeout: 120000 });
 
   const OCTET = 'application/octet-stream';
 
-  it('POST /candidate/{id}/file/{role} — 候选不存在返回 404', async function () {
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/candidate/${NON_EXISTENT_ID}/file/render`)
-        .set(authHeader)
-        .set('Content-Type', OCTET)
-        .send(Buffer.from('not-an-image'))
+  test('POST /candidate/{id}/file/{role} — 候选不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/candidate/${NON_EXISTENT_ID}/file/render`, {
+        headers: { ...authHeader, 'Content-Type': OCTET },
+        data: Buffer.from('not-an-image'),
+      })
     );
 
     expect(req.status).to.equal(404);
   });
 
-  it('POST /candidate/{id}/file/{role} — 请求体不是 octet-stream 返回 400', async function () {
+  test('POST /candidate/{id}/file/{role} — 请求体不是 octet-stream 返回 400', async ({ request }) => {
     // 内容类型检查在候选存在性之前
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/candidate/${NON_EXISTENT_ID}/file/render`)
-        .set(authHeader)
-        .set('Content-Type', 'application/json')
-        .send({ hello: 'world' })
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/candidate/${NON_EXISTENT_ID}/file/render`, {
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        data: { hello: 'world' },
+      })
     );
 
     expectError(req, 400, 'application/octet-stream');
   });
 
-  it('GET /candidate/{id}/image — 候选不存在返回 404', async function () {
-    const req = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/candidate/${NON_EXISTENT_ID}/image`).set(authHeader)
+  test('GET /candidate/{id}/image — 候选不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/candidate/${NON_EXISTENT_ID}/image`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(404);
   });
 
-  it('GET /candidate/{id}/movie — 候选不存在返回 404', async function () {
-    const req = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/candidate/${NON_EXISTENT_ID}/movie`).set(authHeader)
+  test('GET /candidate/{id}/movie — 候选不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/candidate/${NON_EXISTENT_ID}/movie`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(404);
@@ -1025,10 +1035,8 @@ describe.skip('AI 灯光 —— 候选产物（candidate file / movie / image）
   // 这条是「上传 → 取图」的闭环。上传体就是文件本身，服务端按候选行的三个 uuid
   // 现算落点（D27/D40），成功回 204；随后 GET /candidate/{id}/image 才可能有内容。
   // 但候选必须来自真实一轮（pending 会 404「尚未渲染完成」），所以默认跳过。
-  it('POST /candidate/{id}/file/{role} — 上传海报后取图返回 PNG（完整一轮）', async function () {
-    if (!FULL_FLOW) this.skip();
-    // 需要真实一轮渲染产出的候选：先跑 /iterate 拿到候选 id，再上传 PNG 字节
-    this.skip();
+  test('POST /candidate/{id}/file/{role} — 上传海报后取图返回 PNG（完整一轮）', async () => {
+    test.skip();
   });
 });
 
@@ -1036,39 +1044,42 @@ describe.skip('AI 灯光 —— 候选产物（candidate file / movie / image）
 // 7. 预设库：/preset 与 /preset/{id}
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe('AI 灯光 —— 预设库（preset）', function () {
-  this.timeout(60000);
+test.describe('AI 灯光 —— 预设库（preset）', () => {
+  test.describe.configure({ timeout: 60000 });
 
   let presetId = null;
 
-  after(async function () {
+  test.afterAll(async ({ request }) => {
     if (presetId) {
-      await send(() => request.delete(`${URL}/api/doodle/ai/light/preset/${presetId}`).set(authHeader));
+      await request.delete(`${URL}/api/doodle/ai/light/preset/${presetId}`, { headers: authHeader });
       presetId = null;
     }
   });
 
-  it('POST /preset — 缺少名称返回 400', async function () {
-    const req = await send(() =>
-      request.post(`${URL}/api/doodle/ai/light/preset`).set(authHeader).send({ tags: ['测试'] })
+  test('POST /preset — 缺少名称返回 400', async ({ request }) => {
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/preset`, {
+        headers: authHeader,
+        data: { tags: ['测试'] },
+      })
     );
 
     expectError(req, 400, '预设名称');
   });
 
-  it('POST /preset — 新建预设（source 由服务端强制为 artist）', async function () {
-    const req = await send(() =>
-      request
-        .post(`${URL}/api/doodle/ai/light/preset`)
-        .set(authHeader)
-        .send({
+  test('POST /preset — 新建预设（source 由服务端强制为 artist）', async ({ request }) => {
+    const req = await readJson(
+      await request.post(`${URL}/api/doodle/ai/light/preset`, {
+        headers: authHeader,
+        data: {
           name: 'ai_light_测试预设_白天',
           tags: ['白天', 'interior'],
           // 客户端传 builtin 不应生效
           source: 'builtin',
           applicable: { scene_type: ['interior', 'day'], interior: true },
           stats_target: { contrast: 0.4 },
-        })
+        },
+      })
     );
 
     expect(req.status).to.equal(201);
@@ -1087,45 +1098,49 @@ describe('AI 灯光 —— 预设库（preset）', function () {
     presetId = req.body.id;
   });
 
-  it('GET /preset — 列表包含刚建的预设', async function () {
+  test('GET /preset — 列表包含刚建的预设', async ({ request }) => {
     expect(presetId, '需要先建预设').to.not.be.null;
 
-    const req = await send(() => request.get(`${URL}/api/doodle/ai/light/preset`).set(authHeader));
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/preset`, { headers: authHeader })
+    );
 
     expect(req.status).to.equal(200);
     expect(req.body.data).to.be.an('array');
     expect(req.body.data.map((p) => p.id)).to.include(presetId);
   });
 
-  it('GET /preset?enabled_only=false — 也返回全部预设', async function () {
+  test('GET /preset?enabled_only=false — 也返回全部预设', async ({ request }) => {
     expect(presetId, '需要先建预设').to.not.be.null;
 
-    const req = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/preset?enabled_only=false`).set(authHeader)
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/preset?enabled_only=false`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(200);
     expect(req.body.data.map((p) => p.id)).to.include(presetId);
   });
 
-  it('GET /preset/{id} — 预设详情', async function () {
+  test('GET /preset/{id} — 预设详情', async ({ request }) => {
     expect(presetId, '需要先建预设').to.not.be.null;
 
-    const req = await send(() => request.get(`${URL}/api/doodle/ai/light/preset/${presetId}`).set(authHeader));
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/preset/${presetId}`, { headers: authHeader })
+    );
 
     expect(req.status).to.equal(200);
     expect(req.body.id).to.equal(presetId);
     expect(req.body.name).to.equal('ai_light_测试预设_白天');
   });
 
-  it('PUT /preset/{id} — 局部更新只覆盖请求体里出现的字段', async function () {
+  test('PUT /preset/{id} — 局部更新只覆盖请求体里出现的字段', async ({ request }) => {
     expect(presetId, '需要先建预设').to.not.be.null;
 
-    const req = await send(() =>
-      request
-        .put(`${URL}/api/doodle/ai/light/preset/${presetId}`)
-        .set(authHeader)
-        .send({ name: 'ai_light_测试预设_白天_改', enabled: false, source: 'builtin' })
+    const req = await readJson(
+      await request.put(`${URL}/api/doodle/ai/light/preset/${presetId}`, {
+        headers: authHeader,
+        data: { name: 'ai_light_测试预设_白天_改', enabled: false, source: 'builtin' },
+      })
     );
 
     expect(req.status).to.equal(200);
@@ -1137,56 +1152,61 @@ describe('AI 灯光 —— 预设库（preset）', function () {
     expect(req.body.source).to.equal('artist');
   });
 
-  it('GET /preset — enabled_only 默认 true，停用的预设不在列表里', async function () {
+  test('GET /preset — enabled_only 默认 true，停用的预设不在列表里', async ({ request }) => {
     expect(presetId, '需要先建预设').to.not.be.null;
 
-    const req = await send(() => request.get(`${URL}/api/doodle/ai/light/preset`).set(authHeader));
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/preset`, { headers: authHeader })
+    );
 
     expect(req.status).to.equal(200);
     expect(req.body.data.map((p) => p.id)).to.not.include(presetId);
 
-    const all = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/preset?enabled_only=false`).set(authHeader)
+    const all = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/preset?enabled_only=false`, { headers: authHeader })
     );
     expect(all.body.data.map((p) => p.id)).to.include(presetId);
   });
 
-  it('GET /preset/{id} — 预设不存在返回 404', async function () {
-    const req = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/preset/${NON_EXISTENT_ID}`).set(authHeader)
+  test('GET /preset/{id} — 预设不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/preset/${NON_EXISTENT_ID}`, { headers: authHeader })
     );
 
     expectError(req, 404, '预设');
   });
 
-  it('PUT /preset/{id} — 预设不存在返回 404', async function () {
-    const req = await send(() =>
-      request.put(`${URL}/api/doodle/ai/light/preset/${NON_EXISTENT_ID}`).set(authHeader).send({ name: 'x' })
+  test('PUT /preset/{id} — 预设不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.put(`${URL}/api/doodle/ai/light/preset/${NON_EXISTENT_ID}`, {
+        headers: authHeader,
+        data: { name: 'x' },
+      })
     );
 
     expect(req.status).to.equal(404);
   });
 
-  it('DELETE /preset/{id} — 删除预设返回 204', async function () {
+  test('DELETE /preset/{id} — 删除预设返回 204', async ({ request }) => {
     expect(presetId, '需要先建预设').to.not.be.null;
 
-    const req = await send(() =>
-      request.delete(`${URL}/api/doodle/ai/light/preset/${presetId}`).set(authHeader)
+    const req = await readJson(
+      await request.delete(`${URL}/api/doodle/ai/light/preset/${presetId}`, { headers: authHeader })
     );
     expect(req.status).to.equal(204);
 
     // 删完再取应 404
-    const gone = await send(() =>
-      request.get(`${URL}/api/doodle/ai/light/preset/${presetId}`).set(authHeader)
+    const gone = await readJson(
+      await request.get(`${URL}/api/doodle/ai/light/preset/${presetId}`, { headers: authHeader })
     );
     expect(gone.status).to.equal(404);
 
     presetId = null;
   });
 
-  it('DELETE /preset/{id} — 预设不存在返回 404', async function () {
-    const req = await send(() =>
-      request.delete(`${URL}/api/doodle/ai/light/preset/${NON_EXISTENT_ID}`).set(authHeader)
+  test('DELETE /preset/{id} — 预设不存在返回 404', async ({ request }) => {
+    const req = await readJson(
+      await request.delete(`${URL}/api/doodle/ai/light/preset/${NON_EXISTENT_ID}`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(404);
@@ -1197,21 +1217,21 @@ describe('AI 灯光 —— 预设库（preset）', function () {
 // 8. 鉴权：无 Cookie / 坏 token
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe('AI 灯光 —— 鉴权', function () {
-  this.timeout(30000);
+test.describe('AI 灯光 —— 鉴权', () => {
+  test.describe.configure({ timeout: 30000 });
 
-  it('GET /preset 无 Cookie 返回 401', async function () {
-    const req = await send(() => request.get(`${URL}/api/doodle/ai/light/preset`));
+  test('GET /preset 无 Cookie 返回 401', async ({ request }) => {
+    const req = await readJson(await request.get(`${URL}/api/doodle/ai/light/preset`));
     expect(req.status).to.equal(401);
   });
 
-  it('GET /session/{id} 无 Cookie 返回 401', async function () {
-    const req = await send(() => request.get(`${URL}/api/doodle/ai/light/session/${NON_EXISTENT_ID}`));
+  test('GET /session/{id} 无 Cookie 返回 401', async ({ request }) => {
+    const req = await readJson(await request.get(`${URL}/api/doodle/ai/light/session/${NON_EXISTENT_ID}`));
     expect(req.status).to.equal(401);
   });
 
-  it('DELETE /session/{id} 无 Cookie 返回 401', async function () {
-    const req = await send(() => request.delete(`${URL}/api/doodle/ai/light/session/${NON_EXISTENT_ID}`));
+  test('DELETE /session/{id} 无 Cookie 返回 401', async ({ request }) => {
+    const req = await readJson(await request.delete(`${URL}/api/doodle/ai/light/session/${NON_EXISTENT_ID}`));
     expect(req.status).to.equal(401);
   });
 });
