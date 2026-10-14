@@ -70,10 +70,13 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
 enum class task_backend {
   seedance2,          // 豆包/火山方舟 Seedance2
   transfer_station,   // 中转站
+  apipy_image,        // API易(apiyi.com) 图片后端 —— 同步单次调用, 无 task_id
 };
 DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     task_backend,
-    {{task_backend::seedance2, "seedance2"}, {task_backend::transfer_station, "transfer_station"}}
+    {{task_backend::seedance2, "seedance2"},
+     {task_backend::transfer_station, "transfer_station"},
+     {task_backend::apipy_image, "apipy_image"}}
 );
 
 struct DOODLE_CORE_API task {

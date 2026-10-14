@@ -25,6 +25,8 @@ target_sources(test_main
         shot_render_light_paths.cpp
         url_sign.cpp
         seedance2_inference.cpp
+        seedance2_image_request.cpp
+        apipy_image_edit.cpp
         seedance2_task_model.cpp
         seedance2_task_pipeline.cpp
 )

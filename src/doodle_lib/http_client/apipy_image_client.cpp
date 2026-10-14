@@ -1,14 +1,25 @@
 #include "apipy_image_client.h"
 
+#include "doodle_core/exception/exception.h"
+#include <doodle_core/metadata/kitsu_ctx_t.h>
+
 #include <doodle_lib/core/base64.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/lib_warp/boost_fmt_beast.h>
 
+#include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <fmt/format.h>
 
+#include "core/global_function.h"
+#include <array>
+#include <cctype>
+#include <filesystem>
+#include <fmt/format.h>
 #include <fstream>
+#include <iterator>
+#include <ranges>
+#include <string>
 
 namespace doodle::http::seedance2 {
 
@@ -16,13 +27,64 @@ namespace {
 
 /// 生成接口路径(文生图)
 constexpr std::string_view g_generations_path{"/v1/images/generations"};
-/// 图片编辑接口路径(上传参考图改图 / 多图融合)。
-/// 本客户端目前只走生成接口: edits 是 multipart/form-data, 需要换一种请求体类型,
-/// 留到真正接入那个场景时再加, 不预先写一条没有调用者的分支。
-constexpr std::string_view g_edits_path{"/v1/images/edits"};
+/// 图片编辑接口路径(参考图改图 / 多图融合)。
+/// 与生成接口的差别不只是路径: edits 是 multipart/form-data, 参考图必须作为**文件负担**
+/// 上传, 不接受 URL —— 所以本客户端要把站点内图片先读成本地字节再编进去。
+/// 官方文档: https://docs.apiyi.com/api-capabilities/gpt-image-2-vip/image-edit
+constexpr std::string_view g_edits_path{apipy_image_client::g_edits_path};
 
 /// b64_json 落盘时用的扩展名。模型固定输出 PNG。
 constexpr std::string_view g_default_ext{".png"};
+
+/// 站点内图片路由的前缀(见 http_method/seedance2/reg.h 的 seedance2_pictures)
+constexpr std::string_view g_pictures_prefix{"/api/seedance2/pictures/"};
+
+/// 生成一个 multipart boundary。必须**不出现在任何负担的内容里**, 所以用随机 uuid:
+/// 图片字节里恰好含有这个 36 字符十六进制串的概率可以忽略。
+std::string make_boundary() { return "----doodle" + boost::uuids::to_string(core_set::get_set().get_uuid()); }
+
+/// 把一段文本里的换行去掉。multipart 的头部是逐行 CRLF 分隔的, 值里混进 \n 会把头部截断
+/// (mime 冲突); filename 也可能来自 URL, 同理。
+std::string strip_crlf(std::string_view in_text) {
+  std::string l_out{};
+  l_out.reserve(in_text.size());
+  for (const auto l_c : in_text)
+    if (l_c != '\r' && l_c != '\n') l_out.push_back(l_c);
+  return l_out;
+}
+
+/// 顶层标量字段(除素材字段外)编成一个文本负担。
+/// 只收标量: 嵌套对象/数组在 multipart 里没有公认的编码方式, 前端给它们也没用
+/// (edits 只认 model/prompt/size/quality/response_format 这几个平铺字段)。
+void append_text_part(
+    std::string& out, std::string_view in_boundary, std::string_view in_name, std::string_view in_value
+) {
+  out += "--";
+  out += in_boundary;
+  out += "\r\nContent-Disposition: form-data; name=\"";
+  out += in_name;
+  out += "\"\r\n\r\n";
+  out += in_value;
+  out += "\r\n";
+}
+
+/// 一个文件负担
+void append_file_part(
+    std::string& out, std::string_view in_boundary, std::string_view in_name, std::string_view in_filename,
+    std::string_view in_mime, std::string_view in_bytes
+) {
+  out += "--";
+  out += in_boundary;
+  out += "\r\nContent-Disposition: form-data; name=\"";
+  out += in_name;
+  out += "\"; filename=\"";
+  out += in_filename;
+  out += "\"\r\nContent-Type: ";
+  out += in_mime;
+  out += "\r\n\r\n";
+  out += in_bytes;
+  out += "\r\n";
+}
 
 /// 响应里 data 数组的第一项; 没有则返回空对象
 const nlohmann::json& first_data_item(const nlohmann::json& in_body) {
@@ -33,6 +95,19 @@ const nlohmann::json& first_data_item(const nlohmann::json& in_body) {
   if (!l_data.is_array() || l_data.empty()) return l_empty;
   const auto& l_item = l_data.front();
   return l_item.is_object() ? l_item : l_empty;
+}
+
+/// 从 content[] 这一项里取图片 URL; 不是图片(缺 image_url / 空串)时返回 nullopt。
+/// **只认 image_url**: 生成 API 是 {"image_url": {"url": "..."}}, Responses 是
+/// {"image_url": "..."}; video_url / audio_url 一律跳过 —— edits 只吃参考图,
+/// 把视频字节当图传过去上游只会给一个看不懂的报错。
+std::optional<std::string> image_url_of_content_item(const nlohmann::json& in_item) {
+  if (!in_item.is_object() || !in_item.contains("image_url")) return std::nullopt;
+  const auto& l_holder = in_item.at("image_url");
+  if (l_holder.is_object() && l_holder.contains("url") && l_holder.at("url").is_string())
+    return l_holder.at("url").get<std::string>();
+  if (l_holder.is_string()) return l_holder.get<std::string>();
+  return std::nullopt;
 }
 
 }  // namespace
@@ -74,6 +149,107 @@ std::string apipy_image_client::get_error_code(const nlohmann::json& in_body) {
   return {};
 }
 
+std::string apipy_image_client::mime_of_image(const std::string& in_ext) {
+  auto l_ext = in_ext;
+  std::ranges::transform(l_ext, l_ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+  if (l_ext == ".jpg" || l_ext == ".jpeg") return "image/jpeg";
+  if (l_ext == ".webp") return "image/webp";
+  // 官方只接受 png/jpg/webp; 其余(含 .png 本身)都按 png —— 认不出的扩展名硬报一个
+  // 别的 MIME 只会让上游拒得更莫名其妙。
+  return "image/png";
+}
+
+FSys::path apipy_image_client::parse_site_image_id(std::string_view in_url) {
+  if (!in_url.starts_with(g_pictures_prefix)) return {};
+
+  FSys::path l_name{in_url};
+  auto l_ext    = l_name.extension().generic_string();
+  auto l_id_str = l_name.stem().generic_string();
+
+  uuid l_id     = from_uuid_str(l_id_str);
+  return g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_file(l_id, l_ext);
+}
+
+nlohmann::json apipy_image_client::normalize_apipy_request(const nlohmann::json& in_request) {
+  if (!in_request.is_object()) return in_request;
+
+  auto l_out = in_request;
+  // size -> aspectRatio: 结构体把它俩表达成同一个键的两种取值(比例或像素值),
+  // 而 API易 的 generations/edits 用 size 表后者。同值改键, 不改取值。
+  if (l_out.contains("size") && !l_out.contains("aspectRatio")) l_out["aspectRatio"] = l_out.at("size");
+  l_out.erase("size");
+
+  // content[] -> images[]: 结构体的 reference_images_ 是**字符串数组**, 而 API易 的参考图
+  // 是 content[].image_url(.url)。这里只抽 URL, 顺序即图1/图2/图3 的指代顺序, 不排序不去重。
+  if (l_out.contains("content") && !l_out.contains("images")) {
+    if (const auto& l_content = l_out.at("content"); l_content.is_array()) {
+      nlohmann::json l_images = nlohmann::json::array();
+      for (const auto& l_item : l_content)
+        if (auto l_url = image_url_of_content_item(l_item); l_url && !l_url->empty())
+          l_images.push_back(std::move(*l_url));
+      if (!l_images.empty()) l_out["images"] = std::move(l_images);
+    }
+  }
+  // 信封字段不再进结构体: Responses 形状的 input[] 本后端不认, 留着只会让它被当成
+  // "未知键"漂下去(结构体的 from_json 对未知键宽容跳过, 于是就成了一个字段为空的结构体)。
+  l_out.erase("content");
+  l_out.erase("input");
+  return l_out;
+}
+
+apipy_image_client::edits_form_t apipy_image_client::build_edit_multipart(
+    const nlohmann::json& in_apipy_body, const std::vector<edit_reference_t>& in_references
+) {
+  edits_form_t l_form{};
+  l_form.boundary_ = make_boundary();
+
+  // 哪些字段不进表单: 素材字段本身(它们已经变成文件负担了)。edits 只认平铺标量,
+  // 把 content 塞进去只会被上游当未知字段。
+  constexpr std::array g_skipped{"content", "input", "images", "image_url", "video_url", "audio_url"};
+
+  if (in_apipy_body.is_object()) {
+    for (const auto& [l_key, l_value] : in_apipy_body.items()) {
+      if (!l_value.is_string() && !l_value.is_number() && !l_value.is_boolean()) continue;
+      if (std::ranges::find(g_skipped, l_key) != std::ranges::end(g_skipped)) continue;
+      append_text_part(
+          l_form.body_, l_form.boundary_, l_key, l_value.is_string() ? l_value.get<std::string>() : l_value.dump()
+      );
+    }
+  }
+
+  for (const auto& l_ref : in_references)
+    append_file_part(
+        l_form.body_, l_form.boundary_, g_edit_image_field, strip_crlf(l_ref.filename_), l_ref.mime_, l_ref.bytes_
+    );
+
+  // 收尾 boundary(长度写死: 前导 "--" + boundary + 尾部 "--" + CRLF)
+  l_form.body_ += "--";
+  l_form.body_ += l_form.boundary_;
+  l_form.body_ += "--\r\n";
+  return l_form;
+}
+
+struct apipy_image_client_req {
+  std::string model_;
+  std::string prompt_;
+  std::string size_;
+  std::string quality_;
+  std::vector<apipy_image_client::edit_reference_t> image_bytes_;
+
+  explicit apipy_image_client_req(const doodle::seedance2::transfer_station_request_t& in_req)
+      : model_(in_req.model_),
+        prompt_(in_req.prompt_),
+        size_(in_req.image_size_.empty() ? in_req.aspect_ratio_ : in_req.image_size_),
+        quality_(in_req.quality_) {}
+
+  friend void to_json(nlohmann::json& j, const apipy_image_client_req& req) {
+    j["model"]  = req.model_;
+    j["prompt"] = req.prompt_;
+    j["size"]   = req.size_;
+    if (!req.quality_.empty()) j["quality"] = req.quality_;
+  }
+};
+
 doodle::seedance2::task_status apipy_image_client::parse_status(const nlohmann::json& in_body, int in_status_code) {
   // 同步接口没有中间态: 要么这次调用带着图回来了, 要么就是失败。
   const bool l_http_ok = in_status_code >= 200 && in_status_code < 300;
@@ -93,8 +269,8 @@ FSys::path apipy_image_client::write_b64_to_cache(std::string_view in_b64, std::
   if (in_b64.starts_with("data:"))
     if (const auto l_comma = in_b64.find(','); l_comma != std::string_view::npos) in_b64.remove_prefix(l_comma + 1);
 
-  auto l_path = core_set::get_set().get_cache_root("http") /
-                (core_set::get_set().get_uuid_str() + std::string{in_ext.empty() ? g_default_ext : in_ext});
+  auto l_path  = core_set::get_set().get_cache_root("http") /
+                 (core_set::get_set().get_uuid_str() + std::string{in_ext.empty() ? g_default_ext : in_ext});
 
   // 用工程里既有的 cpp-base64(见 core/base64.h, socket_io 已用它解二进制帧), 不引新依赖。
   // 解码结果直接落盘, 不再多留一份 —— 4K 图 base64 数 MB, 没必要为它多复制一次。
@@ -111,18 +287,51 @@ FSys::path apipy_image_client::write_b64_to_cache(std::string_view in_b64, std::
   return l_path;
 }
 
+apipy_image_client::edit_reference_t apipy_image_client::load_reference_image(std::string_view in_url) {
+  edit_reference_t l_ref{};
+  l_ref.url_        = std::string{in_url};
+  auto l_local_path = parse_site_image_id(in_url);
+
+  std::ifstream l_ifs{l_local_path, std::ios::binary};
+  DOODLE_CHICK(l_ifs.is_open(), "参考图无法读取: {} (URL {})", l_local_path.generic_string(), std::string{in_url});
+  l_ref.bytes_    = std::string{std::istreambuf_iterator<char>{l_ifs}, std::istreambuf_iterator<char>{}};
+  l_ref.filename_ = l_local_path.filename().generic_string();
+
+  // 扩展名兜底: 文件名可能没有扩展名(比如是 uuid), 那就按 png 报 MIME
+  l_ref.mime_     = mime_of_image(l_local_path.extension().generic_string());
+  return l_ref;
+}
+
 // ─── 子类方法 ────────────────────────────────────────────────────────────────
 
 ai_client_base::request_info_t apipy_image_client::collect_request_info(const nlohmann::json& in_request) const {
+  // 与 transfer_station_client 同一条读法: 键名/取值域的判据全部落在
+  // transfer_station_request_t 上, 本函数里不出现裸键名。
+  const auto l_req = in_request.get<doodle::seedance2::transfer_station_request_t>();
+
+  DOODLE_CHICK_HTTP(
+      l_req.reference_images_.size() <= g_max_reference_images, bad_request,
+      fmt::format("参考图最多 {} 张, 收到 {} 张", g_max_reference_images, l_req.reference_images_.size())
+  );
+
+  for (const auto& url : l_req.reference_images_)
+    if (auto l_path = parse_site_image_id(url); !l_path.empty() && !FSys::exists(l_path) && FSys::file_size(l_path) > 0)
+      throw_exception(
+          http_request_error{
+              boost::beast::http::status::bad_request,
+              fmt::format(
+                  "参考图 URL 必须指向本站图片路由 {}<uuid><扩展名>, 收到: {}", g_pictures_prefix, std::string{url}
+              )
+          }
+      );
+
   request_info_t l_info{};
-  if (in_request.contains("model") && in_request.at("model").is_string())
-    l_info.model_ = in_request.at("model").get<std::string>();
-  if (l_info.model_.empty()) l_info.model_ = std::string{g_default_model};
-  // 本后端用 size(宽x高, 如 "2048x1152") 表示分辨率; 不传等同 auto
-  if (in_request.contains("size") && in_request.at("size").is_string())
-    l_info.resolution_ = in_request.at("size").get<std::string>();
-  if (in_request.contains("prompt") && in_request.at("prompt").is_string())
-    l_info.text_prompt_ = in_request.at("prompt").get<std::string>();
+  l_info.model_       = l_req.model_;
+  // 本后端用 size(宽x高, 如 "2048x1152") 表示分辨率, 在结构体里落在 aspect_ratio_
+  // (与 gpt-image 在**中转站**那边一样是"像素值放在这个键里"); imageSize 只在前端按
+  // nano-banana 叫法提交时才会出现, 作为退路一并认下。
+  l_info.resolution_  = l_req.aspect_ratio_.empty() ? l_req.image_size_ : l_req.aspect_ratio_;
+  l_info.text_prompt_ = l_req.prompt_;
   return l_info;
 }
 
@@ -160,33 +369,39 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
     co_return l_result;
   }
 
-  // 请求体定稿。前端把该模型的请求体直接塞在 data_request_ 里(扁平信封), 这里只做两件事:
-  //   1) 补默认 model; 2) 显式要求 URL 输出。
-  nlohmann::json l_body = in_task.data_request_;
-  if (!l_body.is_object()) l_body = nlohmann::json::object();
-  if (!l_body.contains("model") || l_body.value("model", std::string{}).empty())
-    l_body["model"] = std::string{g_default_model};
+  // ─── 请求体定稿: 类型化读入 -> 本后端改写 -> 再序列化 ───────────────────────
+  // 前端把该模型的请求体塞在 data_request_ 里(与中转站共用一份类型), 这里只做三件事:
+  //   1) size -> aspectRatio 的语法归一(前端按 API易 原生形状提交, 落库的就是那个形状);
+  //   2) 补默认 model;
+  //   3) 抽出参考图列表 —— 顺序即 prompt 里「图1/图2/图3」的指代顺序, 不排序不去重。
+  // 之后 l_req_body 是**唯一**事实来源: JSON 体与 multipart 都从它派生, 所以两条路上
+  // response_format/参考图不可能出现"只改了其中一条"的漂移。
+  const auto l_req_body   = in_task.data_request_.get<doodle::seedance2::transfer_station_request_t>();
+  const auto l_references = l_req_body.reference_images_;  // 拷贝: 后面要逐张读字节
+  apipy_image_client_req l_apipy_req{l_req_body};
 
-  // 为什么显式要 url 而不是吃默认的 base64: 默认返回的 b64_json 是数 MB 的字符串,
-  // 它会一路经 run_task_result_t::data_response_ 落进 sd2::task::data_response_ 存库,
-  // 把 sqlite 行撑到几 MB; 而且这段 base64 对调用方毫无用处(它要的是文件)。
-  // 要 URL 则复用基类现成的 download_raw_file(带 3 次重试 + 落缓存目录)。
-  // 官方说明: response_format 只有 -All / -VIP 支持, 官转传了直接 400 —— 本后端接的
-  // 正是 -VIP 系列, 所以这里可以放心传。
-  // 注意 data[0] 里 url 与 b64_json 只会出现其一; 若令牌分组不是 image2_OSS 而退回了
-  // base64, 下面的分支会照样把它解出来落盘, 不会失败。
-  l_body["response_format"] = "url";
+  boost::beast::http::request<boost::beast::http::string_body> l_req{boost::beast::http::verb::post, {}, 11};
+  if (l_references.empty()) {
+    auto l_body = (nlohmann::json{} = l_apipy_req);
+    l_req.target(std::string{g_generations_path});
+    l_req.body() = l_body.dump();
+    l_req.set(boost::beast::http::field::content_type, "application/json");
+  } else {
+    // 逐张先过 URI 检查再读字节(checked_reference_url 不合法就抛 bad_request)。
+    for (const auto& l_url : l_references) l_apipy_req.image_bytes_.push_back(load_reference_image(l_url));
 
-  auto l_ip = co_await get_ip_str();
-  l_body    = add_ip_to_req(
-      l_body, l_ip, url_sign_secret_, in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_)
-  );
+    // edits 只认平铺标量; 素材 URL 改写在这里**不需要** —— 请求体里已经不含素材 URL 了
+    // (它们被抽成了文件负担), 剩下的 prompt/model/size 都得原样传, 不能被改写。
+    auto l_form = build_edit_multipart(to_apipy_json(l_req_body), l_apipy_req.image_bytes_);
+    l_req.target(std::string{g_edits_path});
+    l_req.body() = std::move(l_form.body_);
+    l_req.set(boost::beast::http::field::content_type, l_form.content_type());
 
-  boost::beast::http::request<boost::beast::http::string_body> l_req{
-      boost::beast::http::verb::post, std::string{g_generations_path}, 11
-  };
-  l_req.body() = l_body.dump();
-  l_req.set(boost::beast::http::field::content_type, "application/json");
+    SPDLOG_LOGGER_INFO(
+        logger_, "API易 图片编辑: {} 张参考图, 请求体 {} 字节", l_apipy_req.image_bytes_.size(), l_req.body().size()
+    );
+  }
+
   l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
   l_req.set(boost::beast::http::field::accept, "application/json");
   l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
@@ -212,7 +427,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
   // token 用量: 同步接口在响应里直接给 usage, 与推理任务同口径, 所以填 run_task_result_t
   // 的 token 字段(而不是等 query_task —— 这个后端没有 query_task)。
   if (l_result.data_response_.contains("usage") && l_result.data_response_.at("usage").is_object()) {
-    const auto& l_usage  = l_result.data_response_.at("usage");
+    const auto& l_usage     = l_result.data_response_.at("usage");
     l_result.input_tokens_  = l_usage.value("input_tokens", std::int64_t{0});
     l_result.output_tokens_ = l_usage.value("output_tokens", std::int64_t{0});
     l_result.total_tokens_  = l_usage.value("total_tokens", std::int64_t{0});

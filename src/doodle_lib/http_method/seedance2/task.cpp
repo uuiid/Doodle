@@ -20,6 +20,7 @@
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_client/ai_client_base.h>
+#include <doodle_lib/http_client/apipy_image_client.h>
 #include <doodle_lib/http_client/seedance2_client.h>
 #include <doodle_lib/http_client/transfer_station_client.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
@@ -104,6 +105,7 @@ class client_factory {
   struct client_pair {
     std::shared_ptr<seedance2_client> seedance2_{};
     std::shared_ptr<transfer_station_client> transfer_station_{};
+    std::shared_ptr<apipy_image_client> apipy_image_{};
   };
   std::map<uuid, client_pair> clients_;
 
@@ -119,6 +121,18 @@ class client_factory {
         l_pair.transfer_station_->set_url_sign_secret(get_url_sign_secret());
       }
       return l_pair.transfer_station_;
+    }
+
+    if (in_task.backend_ == sd2::task_backend::apipy_image) {
+      if (!l_pair.apipy_image_) {
+        l_pair.apipy_image_ = std::make_shared<apipy_image_client>(*core_set::get_set().ctx_ptr);
+        l_pair.apipy_image_->set_token(in_studio.apipy_key_);
+        l_pair.apipy_image_->set_logger(g_logger_ctrl().get_http());
+        // 参考图不走公网签名 URL: 本后端把参考图读成本地字节后作为文件负担上传, 上游看不到 URL。
+        // 所以这里**不**调 set_url_sign_secret —— 与另外两个后端相反, 见 apipy_image_client.h 的
+        // 「参考图 URL 的契约」。
+      }
+      return l_pair.apipy_image_;
     }
 
     // 默认 seedance2

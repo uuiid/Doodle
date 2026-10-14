@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(task_type_json_name_matches_magic_enum_name) {
 BOOST_AUTO_TEST_CASE(unknown_type_is_rejected_instead_of_becoming_picture) {
   // nlohmann 的 SERIALIZE_ENUM 对认不出的字符串**不抛**, 而是静默落到第一个枚举值
   // (nlohmann/detail/macro_scope.hpp:247)。若不显式校验, 一个拼错的 type 会变成
-  // 图片生成任务 —— 这是本轮加 checked_enum_from_json() 的直接原因。
+  // 图片生成任务 —— 这是本轮加 DOODLE_JSON_SERIALIZE_ENUM_STRICT 的直接原因。
   for (const auto* l_bad : {"infer", "Inference", "image", ""}) {
     auto l_json    = minimal_task_json();
     l_json["type"] = l_bad;

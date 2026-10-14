@@ -284,6 +284,7 @@ void sqlite_storage::regs_all() {
       .add_column("color", &ai_studio::color_)
       .add_column("seedance2_key", &ai_studio::seedance2_key_)
       .add_column("transfer_station_key", &ai_studio::transfer_station_key_)
+      .add_column("apipy_key", &ai_studio::apipy_key_)
       .add_column("archived", &ai_studio::archived_);
 
   reg_table<outsource_studio_authorization>("outsource_studio_authorization")
