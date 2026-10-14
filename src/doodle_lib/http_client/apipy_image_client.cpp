@@ -27,7 +27,6 @@
 #include <tbb/concurrent_hash_map.h>
 #include <utility>
 
-
 namespace doodle::http::seedance2 {
 
 namespace {
@@ -59,31 +58,25 @@ class apipy_queue_t {
     static apipy_queue_t l_instance{};
     return l_instance;
   }
-
+  // 传入状态只有 preparing 和 running
   boost::asio::awaitable<ai_client_base::run_task_result_t> acquire(
       std::shared_ptr<ai_client_base> in_client, const doodle::seedance2::task& in_task
   ) {
-    ai_client_base::run_task_result_t l_result{};
+    ai_client_base::run_task_result_t l_result{.status_ = doodle::seedance2::task_status::failed};
     if (in_task.status_ == doodle::seedance2::task_status::running) {
       if (auto l_done = take(in_task.uuid_id_)) co_return *std::move(l_done);
       l_result.status_ = doodle::seedance2::task_status::running;
       co_return l_result;
     }
 
-    {
-      hash_map_t::accessor l_accessor;
-      if (!map_.insert(l_accessor, in_task.uuid_id_)) {
-        l_result.status_ = doodle::seedance2::task_status::running;
-        co_return l_result;
-      }
-      l_accessor->second.status_ = doodle::seedance2::task_status::running;
-    }
-
     if (!semaphore_.try_acquire()) {
-      hash_map_t::accessor l_accessor;
-      if (map_.find(l_accessor, in_task.uuid_id_)) map_.erase(l_accessor);
       l_result.status_ = doodle::seedance2::task_status::preparing;
       co_return l_result;
+    }
+    {
+      hash_map_t::accessor l_accessor;
+      map_.insert(l_accessor, in_task.uuid_id_);
+      l_accessor->second.status_ = doodle::seedance2::task_status::running;
     }
 
     boost::asio::co_spawn(
