@@ -304,8 +304,8 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
     co_return l_result;
   }
 
-  const auto l_req_body   = in_task.data_request_.get<doodle::seedance2::transfer_station_request_t>();
-  const auto l_references = l_req_body.reference_images_;
+  const auto l_req_body    = in_task.data_request_.get<doodle::seedance2::transfer_station_request_t>();
+  const auto& l_references = l_req_body.reference_images_;
   apipy_image_client::request_t l_apipy_req{l_req_body};
 
   boost::beast::http::request<boost::beast::http::string_body> l_req{boost::beast::http::verb::post, {}, 11};
