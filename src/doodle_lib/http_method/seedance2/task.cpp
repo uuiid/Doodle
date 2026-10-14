@@ -161,10 +161,19 @@ class seedance2_task_run_manager {
         .to_vector<task_info>();
   }
 
-  boost::asio::awaitable<void> submit_task(
-      const sd2::task& in_task, const std::shared_ptr<ai_client_base>& in_client
-  ) try {
-    sd2::task_status l_status{};
+  /**
+   * 跑一次任务周期并把结果落库。
+   *
+   * 流程本身(提交 / 查询 / 成功后下载)在 ai_client_base::run_task 里 —— 那是与后端无关的部分。
+   * 这里只做三件调用方才有资格做的事:
+   *   1. 选后端、建/取客户端(需要 ai_studio 里的 key, 基类拿不到);
+   *   2. 按返回的状态落库(状态机、退补 token、回滚生成次数);
+   *   3. 广播。
+   *
+   * 于是「提交」与「查询」不再各写一份落库逻辑(它们要写的字段本来也几乎一样),
+   * 只有需要区别对待的分支才分叉。
+   */
+  boost::asio::awaitable<void> run_once(const sd2::task& in_task, const std::shared_ptr<ai_client_base>& in_client) try {
     auto l_result = co_await in_client->run_task(in_task);
     auto l_sql    = get_sqlite_database();
     using namespace orm;
@@ -174,47 +183,79 @@ class seedance2_task_run_manager {
                         .set(c(&sd2::task::data_response_) = l_result.data_response_)
                         .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_);
     l_sql_modify_statements.push_back(l_update);
-    if (l_result.status_ == sd2::task_status::succeeded) {
-      // 同步推理任务(task_type::inference): run_task 一次调用就有结果。
-      // 方案 A 的接缝走 run_inference_task(), 不会经这里; 但公共提交路径若建了推理任务,
-      // 也必须在这一步结算, 否则会被下面那条 else 误判成失败。
-      const auto l_actual_tokens = l_result.total_tokens_ > 0 ? l_result.total_tokens_ : in_task.completion_tokens_;
-      l_update.set(
-          c(&sd2::task::status_) = sd2::task_status::succeeded,
-          c(&sd2::task::task_id_) = l_result.task_id_,
-          c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
-          c(&sd2::task::completion_tokens_) = l_actual_tokens
-      );
-      l_status = sd2::task_status::succeeded;
-      // 预扣的是 default_consumed_tokens, 按实际的 total_tokens 退补
-      l_sql_modify_statements.emplace_back(
-          add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_ - l_actual_tokens)
-      );
-    } else if (l_result.status_ == sd2::task_status::queued) {
-      l_update.set(c(&sd2::task::task_id_) = l_result.task_id_);
-      l_update.set(c(&sd2::task::status_) = sd2::task_status::queued);
-      l_status = sd2::task_status::queued;
-    } else if (l_result.status_ == sd2::task_status::failed && l_result.is_timeout_ && in_task.retry_count_ < 100) {
-      l_update.set(c(&sd2::task::retry_count_) = c(&sd2::task::retry_count_) + 1);
-      l_status = sd2::task_status::preparing;
-    } else {
-      l_update.set(c(&sd2::task::status_) = sd2::task_status::failed);
-      l_status = sd2::task_status::failed;
-      l_update.set(
-          c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
-          c(&sd2::task::completion_tokens_) = 0
-      );
-      // 任务失败或者其他状态，返还 token
-      l_sql_modify_statements.emplace_back(
-          add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_)
-      );
-      // 失败时回滚生成次数
-      l_sql_modify_statements.emplace_back(
-          update(l_sql)
-              .from<sd2::ai_generate_entity>()
-              .set(c(&sd2::ai_generate_entity::generate_count_) = c(&sd2::ai_generate_entity::generate_count_) - 1)
-              .where(c(&sd2::ai_generate_entity::uuid_id_) == in_task.ai_generate_entity_id_)
-      );
+    sd2::task_status l_status = l_result.status_;
+
+    switch (l_result.status_) {
+      case sd2::task_status::succeeded: {
+        // 两条路径都会到这里:
+        //   * 同步任务(推理 / API易 图片): 提交那一次就直接成功;
+        //   * 异步任务: 查询到 succeeded, 文件已由 run_task 下载落盘。
+        const auto l_actual_tokens = l_result.total_tokens_ > 0 ? l_result.total_tokens_ : in_task.completion_tokens_;
+        // 异步生成类的计费口径是 completion_tokens_(本站点数); 推理类是 total_tokens_(模型用量)。
+        const auto l_charge = l_result.completion_tokens_ > 0 ? l_result.completion_tokens_ : l_actual_tokens;
+        l_update.set(
+            c(&sd2::task::status_) = sd2::task_status::succeeded,
+            c(&sd2::task::task_id_) = l_result.task_id_,
+            c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
+            c(&sd2::task::completion_tokens_) = l_charge
+        );
+        // 结果文件(异步任务在这里才拿到, 同步任务在返回值里已经填好)
+        if (!l_result.result_file_paths_.empty()) {
+          auto l_adjusted_file = l_result.result_file_paths_[0];
+          // 结果文件生成后, 从真实文件名取后缀
+          sd2::ai_preview_file l_preview_file{};
+          l_preview_file.extension_ = l_adjusted_file.extension().generic_string();
+          l_sql_modify_statements.emplace_back(insert(l_sql).into<sd2::ai_preview_file>().values(l_preview_file));
+          l_update.set(
+              c(&sd2::task::file_extension_) = l_preview_file.extension_,
+              c(&sd2::task::preview_file_)   = l_preview_file.uuid_id_
+          );
+          // 缩略图与落库顺序无关: 它读的是磁盘上的文件, 而文件已由 run_task 下载好。
+          create_preview_picture(l_adjusted_file, l_preview_file.uuid_id_);
+        }
+        l_status = sd2::task_status::succeeded;
+        // 预扣的是 default_consumed_tokens, 按实际的 l_charge 退补
+        l_sql_modify_statements.emplace_back(
+            add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_ - l_charge)
+        );
+        break;
+      }
+      case sd2::task_status::preparing:
+      case sd2::task_status::queued:
+      case sd2::task_status::running: {
+        // 中间态: 记下 task_id 与状态(首次提交会带回来 task_id), 等下一次轮询。
+        // 状态没变时不写状态字段, 省掉一次无谓的 update。
+        if (!l_result.task_id_.empty()) l_update.set(c(&sd2::task::task_id_) = l_result.task_id_);
+        if (in_task.status_ != l_result.status_) l_update.set(c(&sd2::task::status_) = l_result.status_);
+        l_status = l_result.status_;
+        break;
+      }
+      default: {
+        // failed / cancelled / violation / expired —— 终态失败
+        // 超时的失败可以重试: 退回 preparing, 由下一轮重新提交
+        if (l_result.is_timeout_ && in_task.retry_count_ < 100) {
+          l_update.set(c(&sd2::task::retry_count_) = c(&sd2::task::retry_count_) + 1);
+          l_update.set(c(&sd2::task::status_) = sd2::task_status::preparing);
+          l_status = sd2::task_status::preparing;
+          break;
+        }
+        l_update.set(
+            c(&sd2::task::status_) = l_result.status_,
+            c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
+            c(&sd2::task::completion_tokens_) = l_result.completion_tokens_
+        );
+        l_status = l_result.status_;
+        // 失败或者其他状态，返还 token
+        l_sql_modify_statements.emplace_back(add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_ - l_result.completion_tokens_));
+        // 失败时回滚生成次数
+        l_sql_modify_statements.emplace_back(
+            update(l_sql)
+                .from<sd2::ai_generate_entity>()
+                .set(c(&sd2::ai_generate_entity::generate_count_) = c(&sd2::ai_generate_entity::generate_count_) - 1)
+                .where(c(&sd2::ai_generate_entity::uuid_id_) == in_task.ai_generate_entity_id_)
+        );
+        break;
+      }
     }
     co_await l_sql.run_sql(std::move(l_sql_modify_statements));
     socket_io::broadcast(
@@ -222,7 +263,7 @@ class seedance2_task_run_manager {
     );
   } catch (...) {
     auto l_err_str = boost::current_exception_diagnostic_information();
-    SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "提交任务 {} 失败: {}", in_task.uuid_id_, l_err_str);
+    SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "任务 {} 执行失败: {}", in_task.uuid_id_, l_err_str);
   }
 
   boost::asio::awaitable<void> async_run() {
@@ -233,114 +274,15 @@ class seedance2_task_run_manager {
       if (l_tasks.empty()) co_return;
       client_factory l_client_factory{};
       for (auto&& l_task_info : l_tasks) {
+        // 选后端、建客户端只能在这里做: 它需要 ai_studio 里的 key, 而基类只拿得到 task。
+        // 之后的一切(提交还是查询、要不要下载)由 run_task 自己按 task.status_ 判断。
         auto l_client = l_client_factory.get_client(l_task_info.task_, l_task_info.ai_studio_);
-        if (l_task_info.task_.status_ == sd2::task_status::preparing) {
-          co_await submit_task(l_task_info.task_, l_client);
-        } else {
-          co_await query_task_and_down(l_task_info.task_, l_client);
-        }
+        co_await run_once(l_task_info.task_, l_client);
       }
 
       l_timer.expires_after(5s);
       co_await l_timer.async_wait(boost::asio::use_awaitable);
     }
-  }
-
-  boost::asio::awaitable<void> query_task_and_down(
-      const sd2::task& in_task, const std::shared_ptr<ai_client_base>& in_client
-  ) try {
-    ai_client_base::query_task_result_t l_result;
-    try {
-      l_result = co_await in_client->query_task(in_task);
-    } catch (const doodle_error& in_err) {
-      SPDLOG_LOGGER_ERROR(
-          g_logger_ctrl().get_main_error(), "查询任务 {} 失败, 错误: {}", in_task.uuid_id_, in_err.what()
-      );
-      l_result.status_        = sd2::task_status::failed;
-      l_result.data_response_ = in_err.what();
-    }
-    auto l_sql = get_sqlite_database();
-    using namespace orm;
-    sql_modify_statement_vector_t l_sqls;
-    uuid l_preview_file_id{};
-    // 非成功路径保持原值
-    std::string l_file_extension = in_task.file_extension_;
-
-    switch (l_result.status_) {
-      case sd2::task_status::preparing:
-      case sd2::task_status::queued:
-        co_return;
-      case sd2::task_status::running: {
-        if (in_task.status_ != l_result.status_) {
-          l_sqls.emplace_back(update(l_sql)
-                                  .from<sd2::task>()
-                                  .set(c(&sd2::task::status_) = l_result.status_)
-                                  .set(c(&sd2::task::data_response_) = l_result.data_response_)
-                                  .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_));
-          co_await l_sql.run_sql(std::move(l_sqls));
-        }
-        socket_io::broadcast(
-            socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_result.status_}
-        );
-        co_return;
-      }
-      case sd2::task_status::succeeded: {
-        // 重新查询一次以获取 result_files_, 并下载
-        if (!l_result.result_files_.empty()) {
-          co_await l_result.download();
-        }
-        if (!l_result.result_file_paths_.empty()) {
-          auto l_adjusted_file = l_result.result_file_paths_[0];
-          // 结果文件生成后, 从真实文件名取后缀
-          l_file_extension     = l_adjusted_file.extension().generic_string();
-          sd2::ai_preview_file l_preview_file{};
-          l_preview_file.extension_ = l_file_extension;
-          l_sqls.emplace_back(insert(l_sql).into<sd2::ai_preview_file>().values(l_preview_file));
-          l_preview_file_id = l_preview_file.uuid_id_;
-          create_preview_picture(l_adjusted_file, l_preview_file.uuid_id_);
-        }
-        break;
-      }
-      case sd2::task_status::cancelled:
-      case sd2::task_status::failed:
-      case sd2::task_status::violation:
-      case sd2::task_status::expired:
-        // 以上状态要按照 l_result.completion_tokens_ 是否是 0 来判断是否返还 token, 如果是 0, 返还 token, 不是的话,
-        // 正常扣费
-        break;
-    }
-
-    l_sqls.emplace_back(update(l_sql)
-                            .from<sd2::task>()
-                            .set(c(&sd2::task::status_) = l_result.status_)
-                            .set(
-                                c(&sd2::task::ended_at_) =
-                                    chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}
-                            )
-                            .set(c(&sd2::task::data_response_) = l_result.data_response_)
-                            .set(c(&sd2::task::completion_tokens_) = l_result.completion_tokens_)
-                            .set(c(&sd2::task::file_extension_) = l_file_extension)  // 成功后按真实结果文件设置
-                            .set(c(&sd2::task::preview_file_) = l_preview_file_id)   // 非成功清零
-                            .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_));
-    l_sqls.emplace_back(add_remaining_tokens_for_person(
-        l_sql, in_task.user_id_, in_task.completion_tokens_ - l_result.completion_tokens_
-    ));
-    if (l_result.status_ != sd2::task_status::succeeded) {
-      // 失败时回滚生成次数
-      l_sqls.emplace_back(
-          update(l_sql)
-              .from<sd2::ai_generate_entity>()
-              .set(c(&sd2::ai_generate_entity::generate_count_) = c(&sd2::ai_generate_entity::generate_count_) - 1)
-              .where(c(&sd2::ai_generate_entity::uuid_id_) == in_task.ai_generate_entity_id_)
-      );
-    }
-    co_await l_sql.run_sql(std::move(l_sqls));
-    socket_io::broadcast(
-        socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_result.status_}
-    );
-  } catch (...) {
-    auto l_err_str = boost::current_exception_diagnostic_information();
-    SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), l_err_str);
   }
 
  public:

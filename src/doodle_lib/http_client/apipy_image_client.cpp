@@ -253,15 +253,15 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
 // (官方最佳实践页明确写了「没有异步任务 ID、没有轮询接口」)。
 // 这三个函数只是为了让子类满足基类的纯虚签名而存在, 在正确接入下**永远不该被调用**:
 //   * query_task / cancel_task —— 没有对应接口;
-//   * download_result —— 下载发生在本类的 submit_task 内部(见上), 没有 query_task_result_t 可传。
+//   * download_result —— 下载发生在本类的 submit_task 内部(见上), 没有别的东西可传。
 // 因此它们一律抛错而不是静默返回空结果: 静默返回会让调用方以为"查到了但没结果"。
 // 与 transfer_station_client::cancel_task 的处理方式一致。
 
-boost::asio::awaitable<ai_client_base::query_task_result_t> apipy_image_client::query_task(
+boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::query_task(
     const doodle::seedance2::task& in_task
 ) {
   throw_exception(doodle_error{"apipy_image_client 是同步后端, 任务在 submit_task 里直接结束, 不支持 query_task"});
-  co_return query_task_result_t{};
+  co_return run_task_result_t{};
 }
 
 boost::asio::awaitable<void> apipy_image_client::cancel_task(const std::string& in_task_id) {
@@ -269,7 +269,7 @@ boost::asio::awaitable<void> apipy_image_client::cancel_task(const std::string& 
   co_return;
 }
 
-boost::asio::awaitable<void> apipy_image_client::download_result(query_task_result_t* in_data) {
+boost::asio::awaitable<void> apipy_image_client::download_result(run_task_result_t& in_data) {
   throw_exception(doodle_error{"apipy_image_client 的结果文件在 submit_task 里已落盘, 不支持 download_result"});
   co_return;
 }

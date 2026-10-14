@@ -166,7 +166,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_clien
   co_return l_result;
 }
 
-boost::asio::awaitable<ai_client_base::query_task_result_t> transfer_station_client::query_task(
+boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_client::query_task(
     const doodle::seedance2::task& in_task
 ) {
   boost::beast::http::request<boost::beast::http::string_body> req{
@@ -184,8 +184,7 @@ boost::asio::awaitable<ai_client_base::query_task_result_t> transfer_station_cli
       l_res.result() == boost::beast::http::status::ok, "query_task error: {} {}", l_res.result(), l_res.body().dump()
   );
 
-  query_task_result_t l_result;
-  l_result.client_ptr_    = shared_from_this();
+  run_task_result_t l_result;
   l_result.data_response_ = l_res.body();
 
   // 按模型定价扣除积分
@@ -221,10 +220,10 @@ boost::asio::awaitable<void> transfer_station_client::cancel_task(const std::str
   co_return;
 }
 
-boost::asio::awaitable<void> transfer_station_client::download_result(query_task_result_t* in_data) {
-  for (auto& l_url : in_data->result_files_) {
+boost::asio::awaitable<void> transfer_station_client::download_result(run_task_result_t& in_data) {
+  for (auto& l_url : in_data.result_files_) {
     auto l_file = co_await download_raw_file(l_url);
-    in_data->result_file_paths_.push_back(l_file);
+    in_data.result_file_paths_.push_back(l_file);
   }
 }
 std::size_t transfer_station_client::default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const {

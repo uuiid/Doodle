@@ -24,7 +24,7 @@ namespace doodle::http::seedance2 {
  * 所以 timeout 是本后端的第一原则, 见 g_request_timeout。
  *
  * 于是基类的流程纯虚在这里只能是:
- *   * submit_task  —— 真正干活的那个: 一次调用直接拿终态 + 图片文件(run_task 由基类默认转发过来);
+ *   * submit_task  —— 真正干活的那个: 一次调用直接拿终态 + 图片文件;
  *   * query_task   —— 没有对应接口, 永远不该被调用(见 .cpp 的说明);
  *   * cancel_task  —— 同上;
  *   * download_result —— 下载动作发生在 submit_task 内部, 所以也没有调用者。
@@ -58,9 +58,9 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
   /// result_file_paths_ 返回。本后端没有 query_task 可以之后再取, 也没必要重写 run_task
   /// (基类默认就是转发到这里)。
   boost::asio::awaitable<run_task_result_t> submit_task(const doodle::seedance2::task& in_task) override;
-  boost::asio::awaitable<query_task_result_t> query_task(const doodle::seedance2::task& in_task) override;
+  boost::asio::awaitable<run_task_result_t> query_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<void> cancel_task(const std::string& in_task_id) override;
-  boost::asio::awaitable<void> download_result(query_task_result_t* in_data) override;
+  boost::asio::awaitable<void> download_result(run_task_result_t& in_data) override;
 
   request_info_t collect_request_info(const nlohmann::json& in_request) const override;
   std::size_t default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const override;

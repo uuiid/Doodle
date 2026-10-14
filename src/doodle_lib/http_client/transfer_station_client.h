@@ -21,9 +21,9 @@ class DOODLELIB_API transfer_station_client final : public ai_client_base {
 
   /// 提交任务: 走中转站的异步生成接口, 返回 queued, 之后靠 query_task 轮询。
   boost::asio::awaitable<run_task_result_t> submit_task(const doodle::seedance2::task& in_task) override;
-  boost::asio::awaitable<query_task_result_t> query_task(const doodle::seedance2::task& in_task) override;
+  boost::asio::awaitable<run_task_result_t> query_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<void> cancel_task(const std::string& in_task_id) override;
-  boost::asio::awaitable<void> download_result(query_task_result_t* in_data) override;
+  boost::asio::awaitable<void> download_result(run_task_result_t& in_data) override;
 
   request_info_t collect_request_info(const nlohmann::json& in_request) const override;
   std::size_t default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const override;

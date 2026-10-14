@@ -40,7 +40,15 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
   void set_url_sign_secret(const std::string& in_secret) { url_sign_secret_ = in_secret; }
   const std::string& get_url_sign_secret() const { return url_sign_secret_; }
 
+  /**
+   * 一次任务周期(提交 / 查询 / 下载)的统一结果。
+   *
+   * 提交与查询原本各有一个结构体, 但调用方(seedance2_task_run_manager)对两者做的是**同一件事**:
+   * 拿状态 → 落库 → 广播。合并成一个结构体后, run_task 的返回值不再分裂, 落库代码只有一份。
+   * 各字段的"哪条路径会填"见下方注释 —— 空值不代表出错, 只代表这次走的是另一条路径。
+   */
   struct run_task_result_t {
+    /// 提交路径: 外部服务的任务 id; 查询路径: 原样带回 in_task.task_id_
     std::string task_id_;
     doodle::seedance2::task_status status_;
     bool is_timeout_{false};
@@ -50,29 +58,22 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
     std::string result_text_{};
     /// 推理任务按 text.format 的 json_schema 解析出来的结果；未要求结构化输出时为 null
     nlohmann::json result_json_{};
-    /// 由「一次调用即产出文件」的后端（同步生成类，如 API易 图片 API）填这两个字段：
-    /// 提交即出结果，没有 query_task 可以承载它们，所以结果文件只能挂在这里。
-    /// 异步生成类任务（seedance2 / 中转站）留空 —— 它们的文件在 query_task_result_t 里回来。
+    /// 结果文件。三条路径都可能填:
+    ///   * 同步单次调用后端(API易 图片): submit_task 内当场下载落盘;
+    ///   * 异步后端(seedance2 / 中转站): 下载后填(由 run_task 驱动器在查询成功后调用 download_result);
+    ///   * 推理任务: 结果是一段文本, 两个字段都为空。
     std::vector<std::string> result_files_;
     std::vector<FSys::path> result_file_paths_;
-    /// 推理任务的 token 用量；生成类任务为 0（它们的用量在 query_task 里回来）
+    /// token 用量。推理任务 = 方舟响应的 usage; 生成类任务 = 本次实际结算的消耗(查询路径给出,
+    /// 提交路径为 0 —— 提交时还不知道花了多少)。
     std::int64_t input_tokens_{0};
     std::int64_t output_tokens_{0};
     std::int64_t total_tokens_{0};
+    /// 生成类任务在**查询路径**结算出的实际消耗(点数/代币), 提交路径为 0。
+    /// 与 total_tokens_ 的区别: total_tokens_ 是大模型自报的用量(推理口径), 这个是本站的计费口径。
+    std::int64_t completion_tokens_{0};
     /// 外部服务返回的错误码（方舟的 error.code），用来区分内容违规 / 限流 / 配置错误
     std::string error_code_{};
-  };
-
-  struct query_task_result_t {
-    std::shared_ptr<ai_client_base> client_ptr_;
-
-    doodle::seedance2::task_status status_;
-    bool is_timeout_{false};
-    std::int64_t completion_tokens_{0};
-    nlohmann::json data_response_;
-    std::vector<std::string> result_files_;
-    std::vector<FSys::path> result_file_paths_;
-    boost::asio::awaitable<void> download();
   };
 
   // 从请求体中提取的公共字段, 各后端请求格式不同, 由子类按自己的格式解析
@@ -96,25 +97,38 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
   virtual boost::asio::awaitable<run_task_result_t> submit_task(const doodle::seedance2::task& in_task) = 0;
 
   /**
-   * 执行任务。默认实现就是 submit_task —— 对「提交即结果」的后端, 两者是同一件事。
+   * 执行一次任务周期 —— **调用方唯一需要认的名字**。
    *
-   * 这样分层是为了让调用方只需要认 run_task 一个名字, 而各后端只实现自己真正会做的事:
-   * - 异步后端(seedance2_client / transfer_station_client)只实现 submit_task: 提交完返回
-   *   queued, 后续由 query_task 轮询, 结果文件在 query_task_result_t 里回来;
-   * - 同步后端(apipy_image_client)同样只实现 submit_task, 但它一次调用就落终态并把图片
-   *   下载落盘(填 result_files_ / result_file_paths_), 因为没有 query_task 可以之后再取。
+   * 按 in_task.status_ 分派, 每次调用只做一件事(不做等待/轮询; 轮询由调用方的定时器负责):
+   * - `preparing`: 提交。co_await submit_task() 后**直接返回**, 无论它是 queued 还是终态;
+   * - 其它(queued/running): 查询。co_await query_task(); 若查得 succeeded, **顺手把结果下载落盘**
+   *   (download_result), 于是返回给调用方的 result_file_paths_ 已经是本地文件; running/queued
+   *   等中间态原样返回, 调用方等下一次轮询。
    *
-   * 换句话说: submit_task 是「后端实际与外部服务的那一次交互」, run_task 是「调用方看到的事」。
-   * 本函数保留为**可重写**的虚函数, 是为了给「调用方语义与提交语义确实不同」的后端留出口 ——
-   * 目前三个子类都走默认实现, 但这层间接不该由调用方各自去猜。
+   * 为什么把这段放在基类: 「先提交、再查询、成功后下载」是与**后端无关**的流程, 三个子类的
+   * 差别只在那三个原语里。放在这里, 调用方(seedance2_task_run_manager)就只剩落库与广播。
+   *
+   * 这是虚函数(不是纯虚): 子类默认不需要重写, 因为流程是统一的。
    */
   virtual boost::asio::awaitable<run_task_result_t> run_task(const doodle::seedance2::task& in_task) {
-    return submit_task(in_task);
+    if (in_task.status_ == doodle::seedance2::task_status::preparing) co_return co_await submit_task(in_task);
+
+    auto l_result = co_await query_task(in_task);
+    l_result.task_id_ = in_task.task_id_;
+    if (l_result.status_ == doodle::seedance2::task_status::succeeded) co_await download_result(l_result);
+    co_return l_result;
   }
 
   virtual boost::asio::awaitable<void> cancel_task(const std::string& in_task_id)                        = 0;
-  virtual boost::asio::awaitable<query_task_result_t> query_task(const doodle::seedance2::task& in_task) = 0;
-  virtual boost::asio::awaitable<void> download_result(query_task_result_t* in_data)                     = 0;
+
+  /// 查询一次任务状态。只在 run_task 的查询路径被调用, 见上面的说明。
+  virtual boost::asio::awaitable<run_task_result_t> query_task(const doodle::seedance2::task& in_task)   = 0;
+
+  /// 下载结果文件并填进 in_data.result_file_paths_。
+  ///
+  /// 按值传入、就地修改后由 run_task 把同一个对象交给调用方 —— 这样既不用 out 参数
+  /// (本库禁止用非常量引用/指针出参返回结果), 也不用为了一个下载动作复制两份结果。
+  virtual boost::asio::awaitable<void> download_result(run_task_result_t& in_data)                       = 0;
 
   // 解析请求体, 提取模型 / 分辨率 / 提示词
   virtual request_info_t collect_request_info(const nlohmann::json& in_request) const                    = 0;

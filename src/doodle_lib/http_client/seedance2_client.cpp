@@ -277,7 +277,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_
   co_return l_result;
 }
 
-boost::asio::awaitable<ai_client_base::query_task_result_t> seedance2_client::query_task(
+boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::query_task(
     const doodle::seedance2::task& in_task
 ) {
   boost::beast::http::request<boost::beast::http::string_body> req{
@@ -295,8 +295,7 @@ boost::asio::awaitable<ai_client_base::query_task_result_t> seedance2_client::qu
       l_res.result() == boost::beast::http::status::ok, "query_task error: {} {}", l_res.result(), l_res.body().dump()
   );
 
-  query_task_result_t l_result;
-  l_result.client_ptr_    = shared_from_this();
+  run_task_result_t l_result;
   l_result.data_response_ = l_res.body();
   l_result.status_        = parse_status(l_result.data_response_);
   l_result.is_timeout_    = is_timeout_error(l_result.data_response_);
@@ -322,14 +321,14 @@ boost::asio::awaitable<void> seedance2_client::cancel_task(const std::string& in
   DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "cancel_task error: {}", l_res.result());
 }
 
-boost::asio::awaitable<void> seedance2_client::download_result(query_task_result_t* in_data) {
-  for (auto& l_url : in_data->result_files_) {
+boost::asio::awaitable<void> seedance2_client::download_result(run_task_result_t& in_data) {
+  for (auto& l_url : in_data.result_files_) {
     auto l_raw_file = co_await download_raw_file(l_url);
     auto l_adj_file =
         l_raw_file.parent_path() / (l_raw_file.stem().string() + "_adj" + l_raw_file.extension().string());
     ffmpeg_video_resize{l_raw_file, l_adj_file, core_set::get_set().get_uuid()}.process();
     FSys::remove(l_raw_file);
-    in_data->result_file_paths_.push_back(l_adj_file);
+    in_data.result_file_paths_.push_back(l_adj_file);
   }
 }
 

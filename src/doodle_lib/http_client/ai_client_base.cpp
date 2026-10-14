@@ -109,9 +109,4 @@ boost::asio::awaitable<FSys::path> ai_client_base::download_raw_file(std::string
   co_return l_path;
 }
 
-boost::asio::awaitable<void> ai_client_base::query_task_result_t::download() {
-  DOODLE_CHICK(client_ptr_, "client_ptr_ is null");
-  return client_ptr_->download_result(this);
-}
-
 }  // namespace doodle::http::seedance2

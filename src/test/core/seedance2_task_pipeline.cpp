@@ -97,7 +97,7 @@ std::string current_case_tag() { return boost::unit_test::framework::current_tes
 /// (submit_task / cancel_task / query_task / download_result / collect_request_info /
 /// default_consumed_tokens 中的纯虚部分)，除 submit_task 外都空实现 —— 这个代价换来了
 /// 「不需要网络、不需要真 key 就能验结算逻辑」。
-/// 只实现 submit_task 即可: run_task 在基类里有默认实现, 就是转发到 submit_task。
+/// 只实现 submit_task 即可: task 的 status_ 是 preparing, run_task 会把调用转给 submit_task。
 class fake_client_t final : public ai_client_base {
  public:
   explicit fake_client_t(run_task_result_t in_result, std::size_t in_default_tokens = 0)
@@ -111,8 +111,8 @@ class fake_client_t final : public ai_client_base {
     co_return result_;
   }
   boost::asio::awaitable<void> cancel_task(const std::string&) override { co_return; }
-  boost::asio::awaitable<query_task_result_t> query_task(const sd2::task&) override { co_return query_task_result_t{}; }
-  boost::asio::awaitable<void> download_result(query_task_result_t*) override { co_return; }
+  boost::asio::awaitable<run_task_result_t> query_task(const sd2::task&) override { co_return run_task_result_t{}; }
+  boost::asio::awaitable<void> download_result(run_task_result_t&) override { co_return; }
   request_info_t collect_request_info(const nlohmann::json&) const override { return request_info_t{}; }
   std::size_t default_consumed_tokens(const sd2::task_type&) const override { return default_tokens_; }
 
@@ -332,7 +332,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(missing_usage_falls_back_to_the_precharge_not_the_
 DOODLE_FIXTURE_TEST_CASE_CORO(transfer_station_backend_fails_before_touching_the_network, fixture_t) {
   // 用**真**客户端：transfer_station_client::submit_task 的推理分支在取 IP / 发请求之前就返回失败，
   // 所以这一条不需要网络，也正好覆盖了那条同样没跑过的分支。
-  // （run_inference_task 调的是基类的 run_task，默认转发到 submit_task。）
+  // （run_inference_task 调 run_task，而任务 status_ 是 preparing，于是转发到 submit_task。）
   ai_studio l_studio{};
   l_studio.transfer_station_key_ = "ts-key";
   auto l_client                  = make_inference_client(l_studio, sd2::task_backend::transfer_station);
