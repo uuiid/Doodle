@@ -670,4 +670,236 @@ describe('seedance2 task — transfer_station 后端', function () {
 
 });
 
+describe('seedance2 task — apipy_image 后端', function () {
+
+  const authHeader = { 'Cookie': `access_token_cookie=${JWT}` };
+  const projectId = 'c340051a-45a6-4af1-a750-efefe639c75b';
+  // API易 (apiyi.com) 图片模型, gpt-image-2.5-vip 是 apipy_image_client 的默认模型
+  const model = 'gpt-image-2.5-vip';
+  // 授权用的分辨率键: collect_request_info 取 aspectRatio 优先, 缺省才回落到 imageSize
+  const resolution = '1024x1024';
+  // 未授权给剧集的模型, 用于验证授权校验
+  const unauthorizedModel = 'gpt-image-9-not-exist';
+  // 参考图上传的源文件, 必须落在服务端本机能读到的绝对路径上
+  const referenceSourcePath = 'D:\\tets.png';
+  const referenceSourceName = 'tets.png';
+
+  let subprojectId = null;
+  let episodeId = null;
+  let entityId = null;
+  let categoryId = null;
+  let taskId = null;
+  // 本站图片路由上的参考图 URL, 形如 /api/seedance2/pictures/<uuid>.png
+  let referenceUrl = null;
+
+  // 轮询任务状态, 直到命中期望状态或超时
+  async function waitForTaskStatus(id, statuses, timeoutMs = 40000) {
+    const deadline = Date.now() + timeoutMs;
+    let last = null;
+    while (Date.now() < deadline) {
+      const res = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/task/${id}`)
+        .set(authHeader);
+      last = res.body;
+      if (statuses.includes(last.status)) return last;
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+    return last;
+  }
+
+  // 构造 apipy_image 后端的任务请求体
+  // images 非空时 apipy_image_client 走 /v1/images/edits 多段表单, 为空才走 /v1/images/generations
+  function apipyBody(overrides = {}) {
+    return {
+      backend: 'apipy_image',
+      data_request: {
+        model,
+        prompt: '把参考图里的边牧换成古牧, 保持构图与直播间背景不变',
+        imageSize: resolution,
+        aspectRatio: resolution,
+        images: referenceUrl ? [referenceUrl] : [],
+      },
+      ai_studio_id: '019e2075-6e42-718e-809e-33a92410c682',
+      project_uuid_id: projectId,
+      type: 'picture',
+      ai_generate_entity_id: entityId,
+      ...overrides,
+    };
+  }
+
+  // 提交任务, 允许非 2xx 以便断言状态码
+  function postTask(body) {
+    return request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity/${entityId}/task`)
+      .set(authHeader)
+      .ok(() => true)
+      .send(body);
+  }
+
+  before(async function () {
+    this.timeout(360000);
+    const subReq = await request.post(`${URL}/api/seedance2/subproject`)
+      .set(authHeader)
+      .send({
+        name: 'test_subproject_apipy_image',
+        project_id: projectId,
+      });
+    subprojectId = subReq.body.id;
+
+    const clsReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/episodes`)
+      .set(authHeader)
+      .send({
+        name: 'sc001',
+        subproject_id: subprojectId,
+      });
+    episodeId = clsReq.body.id;
+
+    // 授权「模型 + 分辨率」组合, 否则提交任务会被 401 拒绝
+    await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/episodes/${episodeId}/model-resolution-limit`)
+      .set(authHeader)
+      .send({ model_name: model, resolution });
+
+    // 实体必须同时带 ai_category_id 与 ai_episode_id:
+    // ai_category_id 是 ai_generate_entity 反序列化的必填项, ai_episode_id 用于提交任务时的模型授权校验
+    const catReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/category`)
+      .set(authHeader)
+      .send({ name: 'cat_apipy_image', type: 'shot', description: 'API易测试类别' });
+    categoryId = catReq.body.id;
+
+    const entReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity`)
+      .set(authHeader)
+      .send({
+        name: 'test_entity_apipy_image',
+        project_uuid_id: projectId,
+        ai_episode_id: episodeId,
+        ai_category_id: categoryId,
+      });
+    entityId = entReq.body.id;
+
+    // 参考图必须先落进本站图片目录, 之后才能用 /api/seedance2/pictures/<uuid><ext> 引用它:
+    // apipy_image_client::collect_request_info 会拒绝任何不指向本站图片路由的 URL
+    const refReq = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity/${entityId}/reference`)
+      .set(authHeader)
+      .attach('file', fs.createReadStream(referenceSourcePath), referenceSourceName)
+      .timeout(300000);
+    expect(refReq.status).to.equal(201);
+    const preview = refReq.body.preview;
+    referenceUrl = `/api/seedance2/pictures/${preview.id}${preview.extension}`;
+    console.log('参考图 URL:', referenceUrl);
+  });
+
+  after(async function () {
+    if (subprojectId) {
+      await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}`).set(authHeader);
+    }
+  });
+
+  it('POST .../entity/{entity_id}/task — 使用 apipy_image 后端提交图片任务', async function () {
+    expect(entityId).to.not.be.null;
+    const req = await postTask(apipyBody());
+    expect(req.status).to.equal(201);
+    taskId = req.body.id;
+    expect(taskId).to.be.a('string');
+    console.log('POST apipy_image task 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('GET .../task/{id} — backend 与提示词应按 apipy_image 规则落库', async function () {
+    expect(taskId).to.not.be.null;
+    const req = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/task/${taskId}`)
+      .set(authHeader);
+    expect(req.status).to.equal(200);
+    expect(req.body.backend).to.equal('apipy_image');
+    expect(req.body.type).to.equal('picture');
+    // 提示词取自 transfer_station_request_t 的 prompt 字段, 与 transfer_station 后端同源
+    expect(req.body.text_prompt).to.equal('把参考图里的边牧换成古牧, 保持构图与直播间背景不变');
+    // 参考图随 data_request 原样落库
+    expect(req.body.data_request.images).to.deep.equal([referenceUrl]);
+    console.log('GET apipy_image task 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  it('使用参考图片生成图片 — apipy_image 后端应带着参考图跑到终态', async function () {
+    // API易 是同步后端, 一次 /v1/images/edits 调用要占住连接等 2-4 分钟,
+    // 所以这里既不轮询中间态, 也不调用 query_task/cancel_task
+    this.timeout(600000);
+    expect(referenceUrl).to.not.be.null;
+
+    const createReq = await postTask(apipyBody({
+      data_request: {
+        model,
+        prompt: '以参考图中的边牧为原型, 生成一张古牧在抖音直播间直播带货的截图',
+        imageSize: resolution,
+        aspectRatio: resolution,
+        images: [referenceUrl],
+      },
+    }));
+    expect(createReq.status).to.equal(201);
+
+    const task = await waitForTaskStatus(createReq.body.id, ['succeeded', 'failed'], 540000);
+    console.log('使用参考图生成图片的任务返回值:', JSON.stringify(task, null, 2));
+
+    // 任务必须离开 preparing/queued/running —— 同步后端只有终态, 不该停在中间态
+    expect(['succeeded', 'failed']).to.include(task.status);
+    if (task.status === 'failed') {
+      // 失败也必须是「带着参考图打到上游之后」的失败, 而不是本地校验把它挡下来
+      const detail = JSON.stringify(task.data_response);
+      expect(detail).to.not.include('参考图 URL 必须指向本站图片路由');
+      expect(detail).to.not.include('参考图扩展名必须是');
+      expect(detail).to.not.include('参考图最多');
+      console.log('使用参考图生成图片失败原因:', detail);
+    } else {
+      expect(task.status).to.equal('succeeded');
+      // 成功必须落出预览图, 说明结果文件已经下载并登记
+      expect(task.preview_file).to.not.equal('00000000-0000-0000-0000-000000000000');
+    }
+  });
+
+  it('POST .../task — 缺少模型名称应返回 400', async function () {
+    const req = await postTask(apipyBody({ data_request: { prompt: '没有模型名称的请求' } }));
+    expect(req.status).to.equal(400);
+  });
+
+  it('POST .../task — 缺少分辨率应返回 400', async function () {
+    const req = await postTask(apipyBody({ data_request: { model, prompt: '没有分辨率的请求' } }));
+    expect(req.status).to.equal(400);
+  });
+
+  it('POST .../task — 未授权的模型或分辨率应返回 401', async function () {
+    const req = await postTask(
+      apipyBody({
+        data_request: { model: unauthorizedModel, prompt: '未授权模型', aspectRatio: '2048x2048' },
+      })
+    );
+    expect(req.status).to.equal(401);
+  });
+
+  it('POST .../task — 参考图 URL 不指向本站图片路由应返回 400', async function () {
+    const req = await postTask(
+      apipyBody({
+        data_request: {
+          model,
+          prompt: '外部参考图',
+          imageSize: resolution,
+          aspectRatio: resolution,
+          images: ['https://example.com/somewhere/else.png'],
+        },
+      })
+    );
+    expect(req.status).to.equal(400);
+  });
+
+  it('POST .../task — 参考图超过 8 张应返回 400', async function () {
+    const req = await postTask(
+      apipyBody({
+        data_request: {
+          model,
+          prompt: '参考图过多',
+          imageSize: resolution,
+          aspectRatio: resolution,
+          images: Array.from({ length: 9 }, () => referenceUrl),
+        },
+      })
+    );
+    expect(req.status).to.equal(400);
+  });
+
+});
+
 
