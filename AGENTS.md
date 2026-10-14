@@ -22,6 +22,8 @@
 
 ## 2. 构建与测试
 
+**搜索入口唯一：Everything（`esearch` 工具）。** 文件名与内容搜索一律走 `esearch`（必须限定 `path` 范围），不要用 `pwsh` 拼 `Get-ChildItem -Recurse` / `Select-String` 遍历仓库——全量递归会让 shell 卡住甚至被用户强杀。`glob` / `grep` 只在 `esearch` 无结果或 Everything 不可用时兜底。
+
 **构建入口唯一：dsh-cmake 插件的工具。** 不要自己拼 `cmake` 命令行，不要手工激活 VS 环境，不要用 `--fresh`。
 
 | 工具 | 作用 |
@@ -44,6 +46,9 @@
 
 - 测试产物：`build/Ninja_debug/bin/test_main.exe`，测试实现位于 [src/test/core/](src/test/core/)。
 - 新增测试**必须**在 [src/test/core/CMakeLists.txt](src/test/core/CMakeLists.txt) 的显式源文件清单里登记——那里没有 `GLOB`，漏登记的文件会被静默忽略。
+- **测试范围收窄**：现有测试只针对**数据库**（`sqlite_*` 系列、schema/迁移/外键）、**视频图片文件解码**，以及少量请求体建模。
+  网络客户端（`src/doodle_lib/http_client/**`）、HTTP 处理器、Maya 插件**没有**单元测试，改动这些路径不要期待 `test_main` 会替你验证；
+  验证手段是编译通过 + 手工/集成确认。`src/test/**` 的既有内容不要改动，也不要为了新功能往那里加测试。
 - Maya 版本由 CMake 变量 `Maya_Version` 驱动，条件分支见 `src/CMakeLists.txt`；扩展新版本优先改 `CMake/FindMaya.cmake`。
 
 ### vcpkg 全量重编的三个诱因
