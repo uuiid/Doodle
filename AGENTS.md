@@ -17,6 +17,7 @@
   协程下应返回 `awaitable<结果结构体>`（如 `awaitable<spec_branch_result>`），而不是 `awaitable<void>` + 非常量引用。
 - **依赖只经 `vcpkg.json` 管理。** 自定义 port 放 `vcpkg_ports/`，triplet 放 `vcpkg_triplets/`。不要在 `CMakeLists.txt` 里硬编码外部依赖路径。
 - **HTTP 处理器的声明与实现必须用宏**，见 §4。手写完整签名是禁止的。
+- **没有明确说明，不写注释。** 代码里默认不出现任何注释；只有任务中明确要求写注释时才写。
 
 以 [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines) 作为本库编程的基本指导。
 
@@ -68,7 +69,6 @@
 - 格式化用 [.clang-format](.clang-format)：Google 基线，`ColumnLimit: 120`，`IncludeBlocks: Regroup`。include 顺序**由该文件的分组规则决定**（mimalloc → doodle_core → doodle_app → doodle_lib → boost → maya_plug），不要凭习惯排。
 - 静态检查用 [.clang-tidy](.clang-tidy)：`abseil-* / bugprone-* / google-* / misc-* / modernize-* / performance-* / portability-* / readability-*`，且 `WarningsAsErrors: " "`——命中即为错误。豁免项及其理由写在该文件头部注释里，要加新的豁免请连理由一起补。
 - C++ 标准为 C++20（`CMakeLists.txt` 的 `CMAKE_CXX_STANDARD`）。协程已是本仓库一等公民，异步逻辑优先用协程而非回调。
-- 中文注释在本仓库是常态；注释写**为什么**（约束、不变量、取舍），不写代码在做什么。
 
 ## 4. 分区域规则
 
