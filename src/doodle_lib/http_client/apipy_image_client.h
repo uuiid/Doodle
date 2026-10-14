@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -89,9 +90,6 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
 
   apipy_image_client::edit_reference_t load_reference_image(std::string_view in_url);
 
-  /**
-   * 每次请求独占一个 http_client_ssl, 而不是复用基类的 http_client_ptr_。
-   */
   [[nodiscard]] std::shared_ptr<doodle::http::http_client_ssl> make_own_client() const;
 };
 

@@ -8,6 +8,8 @@
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/lib_warp/boost_fmt_beast.h>
 
+#include <boost/asio/co_spawn.hpp>
+#include <boost/scope/scope_exit.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
@@ -18,9 +20,13 @@
 #include <fmt/format.h>
 #include <fstream>
 #include <iterator>
+#include <optional>
 #include <ranges>
+#include <semaphore>
 #include <string>
+#include <tbb/concurrent_hash_map.h>
 #include <utility>
+
 
 namespace doodle::http::seedance2 {
 
@@ -44,6 +50,83 @@ const nlohmann::json& first_data_item(const nlohmann::json& in_body) {
   const auto& l_item = l_data.front();
   return l_item.is_object() ? l_item : l_empty;
 }
+
+class apipy_queue_t {
+ public:
+  static constexpr std::ptrdiff_t g_max_inflight{10};
+
+  static apipy_queue_t& get() {
+    static apipy_queue_t l_instance{};
+    return l_instance;
+  }
+
+  boost::asio::awaitable<ai_client_base::run_task_result_t> acquire(
+      std::shared_ptr<ai_client_base> in_client, const doodle::seedance2::task& in_task
+  ) {
+    ai_client_base::run_task_result_t l_result{};
+    if (in_task.status_ == doodle::seedance2::task_status::running) {
+      if (auto l_done = take(in_task.uuid_id_)) co_return *std::move(l_done);
+      l_result.status_ = doodle::seedance2::task_status::running;
+      co_return l_result;
+    }
+
+    {
+      hash_map_t::accessor l_accessor;
+      if (!map_.insert(l_accessor, in_task.uuid_id_)) {
+        l_result.status_ = doodle::seedance2::task_status::running;
+        co_return l_result;
+      }
+      l_accessor->second.status_ = doodle::seedance2::task_status::running;
+    }
+
+    if (!semaphore_.try_acquire()) {
+      hash_map_t::accessor l_accessor;
+      if (map_.find(l_accessor, in_task.uuid_id_)) map_.erase(l_accessor);
+      l_result.status_ = doodle::seedance2::task_status::preparing;
+      co_return l_result;
+    }
+
+    boost::asio::co_spawn(
+        g_io_context(),
+        [in_client = std::move(in_client), in_task]() -> boost::asio::awaitable<void> {
+          boost::scope::scope_exit l_release{[]() { get().semaphore_.release(); }};
+          ai_client_base::run_task_result_t l_result{};
+          l_result.status_ = doodle::seedance2::task_status::failed;
+          try {
+            l_result = co_await in_client->submit_task(in_task);
+          } catch (...) {
+            l_result.data_response_ = nlohmann::json{{"error", boost::current_exception_diagnostic_information()}};
+          }
+          hash_map_t::accessor l_accessor;
+          if (get().map_.find(l_accessor, in_task.uuid_id_)) l_accessor->second = std::move(l_result);
+          co_return;
+        },
+        boost::asio::detached
+    );
+
+    l_result.status_ = doodle::seedance2::task_status::running;
+    co_return l_result;
+  }
+
+  std::optional<ai_client_base::run_task_result_t> take(const uuid& in_id) {
+    hash_map_t::accessor l_accessor;
+    if (!map_.find(l_accessor, in_id)) return std::nullopt;
+    const auto l_status = l_accessor->second.status_;
+    if (l_status == doodle::seedance2::task_status::running || l_status == doodle::seedance2::task_status::queued ||
+        l_status == doodle::seedance2::task_status::preparing)
+      return std::nullopt;
+    auto l_result = std::move(l_accessor->second);
+    map_.erase(l_accessor);
+    return l_result;
+  }
+
+ private:
+  using hash_map_t  = tbb::concurrent_hash_map<uuid, ai_client_base::run_task_result_t>;
+  using semaphore_t = std::counting_semaphore<g_max_inflight>;
+
+  hash_map_t map_{};
+  semaphore_t semaphore_{g_max_inflight};
+};
 
 }  // namespace
 
@@ -266,7 +349,8 @@ std::shared_ptr<doodle::http::http_client_ssl> apipy_image_client::make_own_clie
 boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::run_task(
     const doodle::seedance2::task& in_task
 ) {
-  co_return co_await submit_task(in_task);
+  auto& l_queue = apipy_queue_t::get();
+  return l_queue.acquire(shared_from_this(), in_task);
 }
 
 boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::submit_task(
