@@ -18,7 +18,6 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
   constexpr static std::string_view g_default_host{"https://api.apiyi.com"};
 
  public:
-
   struct edits_form_t {
     std::string boundary_;
     std::string body_;
@@ -70,7 +69,7 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
 
   friend void to_json(nlohmann::json& j, const request_t& req);
 
-  boost::asio::awaitable<run_task_result_t> submit_task(const doodle::seedance2::task& in_task) override;
+  boost::asio::awaitable<run_task_result_t> run_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<run_task_result_t> query_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<void> cancel_task(const std::string& in_task_id) override;
   boost::asio::awaitable<void> download_result(run_task_result_t& in_data) override;

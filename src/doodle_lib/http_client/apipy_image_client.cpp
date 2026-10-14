@@ -257,7 +257,7 @@ std::size_t apipy_image_client::default_consumed_tokens(const doodle::seedance2:
   }
 }
 
-boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::submit_task(
+boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::run_task(
     const doodle::seedance2::task& in_task
 ) {
   run_task_result_t l_result{};
