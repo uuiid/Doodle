@@ -52,24 +52,19 @@ const model_pricing* find_pricing(std::string_view in_name) {
 
 // ─── 工具方法 ────────────────────────────────────────────────────────────────
 
-nlohmann::json transfer_station_client::add_ip_to_req(
-    const nlohmann::json& in_req, std::string_view in_ip, std::string_view in_secret, std::string_view in_uid
+doodle::seedance2::transfer_station_request_t transfer_station_client::add_ip_to_req(
+    const doodle::seedance2::transfer_station_request_t& in_req, std::string_view in_ip, std::string_view in_secret,
+    std::string_view in_uid
 ) {
-  nlohmann::json l_req = in_req;
+  doodle::seedance2::transfer_station_request_t l_req = in_req;
 
-  // images: 可选数组, 元素可能是 base64(data:) 或 url
-  if (l_req.contains("images") && l_req.at("images").is_array()) {
-    for (auto& l_value : l_req.at("images")) {
-      if (!l_value.is_string()) continue;
-      // 这里过去对元素**无条件**加前缀, 会把已经是绝对 URL 的元素(对象存储签名 URL 等)拼坏,
-      // 现在统一走 to_public_url: 绝对 URL 原样保留, 站点内路径补前缀并签名。
-      l_value = to_public_url(l_value.get<std::string>(), in_ip, in_secret, in_uid);
-    }
-  }
+  // images: 每项都可能是 base64(data:) 或 url, 也可能是本站路径。
+  // 这里过去对元素**无条件**加前缀, 会把已经是绝对 URL 的元素(对象存储签名 URL 等)拼坏,
+  // 现在统一走 to_public_url: 绝对 URL 原样保留, 站点内路径补前缀并签名。
+  for (auto& l_value : l_req.reference_images_) l_value = to_public_url(l_value, in_ip, in_secret, in_uid);
 
-  // mask: 可选字段, url 字符串
-  if (l_req.contains("mask") && l_req.at("mask").is_string())
-    l_req["mask"] = to_public_url(l_req.at("mask").get<std::string>(), in_ip, in_secret, in_uid);
+  // mask: 同一个改写规则
+  if (!l_req.mask_.empty()) l_req.mask_ = to_public_url(l_req.mask_, in_ip, in_secret, in_uid);
 
   return l_req;
 }
@@ -89,15 +84,17 @@ doodle::seedance2::task_status transfer_station_client::parse_status(const nlohm
 // ─── 子类方法 ─────────────────────────────────────────────────────────────────
 
 ai_client_base::request_info_t transfer_station_client::collect_request_info(const nlohmann::json& in_request) const {
+  // 基类签名收的是裸 json(它同时服务方舟/推理等其它形状的后端), 所以这里显式走一次
+  // 类型化读法: 键名/取值域的判据全部落在 transfer_station_request_t 上, 不再在本函数里
+  // 裸读字符串。from_json 是宽容的(见 image_request.h), 形状不对时得到的是空结构体。
+  const auto l_req = in_request.get<doodle::seedance2::transfer_station_request_t>();
+
   request_info_t l_info{};
-  if (in_request.contains("model")) l_info.model_ = in_request.at("model").get<std::string>();
+  l_info.model_ = l_req.model_;
   // nano-banana 系列用 imageSize(1K/2K/4K) 表示分辨率;
   // gpt-image 系列没有 imageSize, 用 aspectRatio(比例或像素值, 如 "16:9" / "1024x1024")
-  if (in_request.contains("imageSize"))
-    l_info.resolution_ = in_request.at("imageSize").get<std::string>();
-  else if (in_request.contains("aspectRatio"))
-    l_info.resolution_ = in_request.at("aspectRatio").get<std::string>();
-  if (in_request.contains("prompt")) l_info.text_prompt_ = in_request.at("prompt").get<std::string>();
+  l_info.resolution_  = l_req.image_size_.empty() ? l_req.aspect_ratio_ : l_req.image_size_;
+  l_info.text_prompt_ = l_req.prompt_;
   return l_info;
 }
 
@@ -113,28 +110,31 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_clien
     co_return l_result;
   }
 
+  // 数据请求按中转站的请求形状解析后使用: 定价校验、素材 URL 改写、replyType 覆盖
+  // 都作用在这个有类型的结构体上, 最后一次性 dump 成请求体。
+  auto l_req_body = in_task.data_request_.get<doodle::seedance2::transfer_station_request_t>();
+
   // 未登记定价的模型不允许提交, 否则会按 0 积分计费
-  auto l_model = in_task.data_request_.value("model", std::string{});
-  if (find_pricing(l_model) == nullptr) {
-    logger_->error("模型 {} 未登记定价, 拒绝提交", l_model);
+  if (find_pricing(l_req_body.model_) == nullptr) {
+    logger_->error("模型 {} 未登记定价, 拒绝提交", l_req_body.model_);
     run_task_result_t l_result{};
     l_result.status_        = doodle::seedance2::task_status::failed;
-    l_result.data_response_ = nlohmann::json{{"error", fmt::format("模型 {} 未登记定价, 不允许提交", l_model)}};
+    l_result.data_response_ = nlohmann::json{{"error", fmt::format("模型 {} 未登记定价, 不允许提交", l_req_body.model_)}};
     co_return l_result;
   }
 
   auto l_ip = co_await get_ip_str();
-  auto l_req_body =
-      add_ip_to_req(
-          in_task.data_request_, l_ip, url_sign_secret_,
-          in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_)
-      );
-  l_req_body["replyType"] = "async";
+  l_req_body = add_ip_to_req(
+      l_req_body, l_ip, url_sign_secret_,
+      in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_)
+  );
+  // 只有异步形态才拿得到 id 去轮询 /v1/api/result
+  l_req_body.reply_type_ = "async";
 
   boost::beast::http::request<boost::beast::http::string_body> req{
       boost::beast::http::verb::post, "/v1/api/generate", 11
   };
-  req.body() = l_req_body.dump();
+  req.body() = nlohmann::json{l_req_body}.dump();
   req.set(boost::beast::http::field::content_type, "application/json");
   req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
   req.set(boost::beast::http::field::accept, "application/json");

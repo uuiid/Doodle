@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <doodle_core/metadata/seedance2/image_request.h>
 #include <doodle_core/metadata/seedance2/task.h>
 
 #include "ai_client_base.h"
@@ -32,9 +33,10 @@ class DOODLELIB_API transfer_station_client final : public ai_client_base {
   /// 中转站自己的请求形状: images[] 是「字符串数组」, mask 是「字符串」,
   /// 与生成 API 的 content[].image_url.url 不同, 所以单独遍历;
   /// 但单个 URL 的改写规则与其它后端一致(见 ai_client_base::to_public_url)。
-  static nlohmann::json add_ip_to_req(
-      const nlohmann::json& in_req, std::string_view in_ip, std::string_view in_secret = {},
-      std::string_view in_uid = {}
+  /// 进出都是类型化的 transfer_station_request_t —— 键名由 to_json 保证, 这里只改 URL。
+  static doodle::seedance2::transfer_station_request_t add_ip_to_req(
+      const doodle::seedance2::transfer_station_request_t& in_req, std::string_view in_ip,
+      std::string_view in_secret = {}, std::string_view in_uid = {}
   );
   static doodle::seedance2::task_status parse_status(const nlohmann::json& in_body);
 };

@@ -7,11 +7,12 @@
 // 与 docs/api/components/schemas/TransferStationTaskDataRequest.yaml 同构, 三者互为佐证。
 //
 // ─── 这个头文件是什么, 不是什么 ────────────────────────────────────────────────
-// 它是**纯数据模型 + JSON 转换**: 只有结构体、枚举和 to_json/from_json, 没有任何网络、
-// 落库、路径改写或校验逻辑。现有行为一律不因此改变 ——
-//   * `transfer_station_client` 仍然把 `task::data_request_` 当扁平信封原样透传 + 改写素材 URL;
-//   * `collect_request_info` 仍然裸读键;
-//   * DB 列 `data_request` 仍然是 nlohmann::json, 本文件不提供任何新的落库列。
+// 它是**纯数据模型 + JSON 转换**: 只有结构体和 to_json/from_json, 没有任何网络、
+// 落库、路径改写或校验逻辑。DB 列 `data_request` 仍然是 nlohmann::json, 本文件不提供
+// 任何新的落库列; 判别这行属于哪种后端也仍然是调用方的事。
+// 类型化访问的边界在客户端: transfer_station_client 提交/核算时把 data_request_ 经
+// `get<transfer_station_request_t>()` 转成结构体, 改素材 URL、覆盖 replyType, 最后
+// 由 to_json 重新 dump 成请求体 —— 键名从此由 to_json 保证, 不再散落在裸读键的代码里。
 // 之所以要单独建模: 这份请求体是**跨进程的对外契约**(第三方服务解析它), 键名/取值拼错
 // 在上游只会得到一句 "generate failed", 现场完全看不出是哪个键。把契约写成类型,
 // 并由 to_json 保证「只发不带值的选填键」, 才能让错误停在编译期与单测里。
@@ -19,8 +20,9 @@
 // ─── 为什么是结构体 + 转换函数, 而不是换掉 data_request_ 的类型 ────────────────
 // 同一列 `data_request` 同时承载三种互不相干的形状: 方舟生成(model/resolution/content)、
 // 中转站图片(本文件)、方舟推理 Responses(input/instructions/text.format)。历史行**没有
-// 版本位**可供判别, 所以列的类型不动, 本结构体只在需要类型化访问时按 backend 显式转换
-// (见底部的 to_json / from_json 与 transfer_station_request_from_json 的宽容读法)。
+// 版本位**可供判别, 所以列的类型不动, 本结构体只在需要类型化访问时按 backend 显式转换:
+// `data_request_.get<transfer_station_request_t>()`。后端判别由调用方按 task::backend_ 负责,
+// from_json 只认它认识的键, 认不得的形状会退化成字段为空的结构体。
 //
 // ─── 安全性 ───────────────────────────────────────────────────────────────────
 // 请求体内**没有 API key**: 密钥走 Authorization 头(Bearer sk-...), 由 ai_client_base::token_
@@ -146,43 +148,51 @@ struct DOODLE_CORE_API transfer_station_request_t {
   }
 
   /**
-   * **宽容**读法: 只认它认识的键, 缺键/类型不符一律跳过并保留默认值, 从不抛。
+   * **严格**读法: model / prompt 必填, imageSize 与 aspectRatio 必居其一, 缺一个就抛。
    *
-   * 为什么必须宽容而不是像其它 metadata 那样用 j.at(): 这一列 `data_request` 是三种
-   * 后端共用的, 一行历史数据究竟是不是中转站形态,**光看 JSON 本身判不出来**(没有版本位)。
-   * 直接 j.at("prompt") 遇到方舟形态的行(它只有 model/resolution/content)就会抛,
-   * 把「这条不是给中转站的」变成一次崩溃。判别后端是调用方的事(按 task::backend_),
-   * 这里只负责「像中转站就用, 不像就当没有」。
+   * 只有这几个键是「结构完整性」, 缺了它请求发出去必然失败, 所以错要当场暴露而不是
+   * 变成一个字段为空的结构体漂到上游: 上游的报错信息是一句 "generate failed",
+   * 看不出是哪个键; 抛异常则带着键名和出错的 json 一起上来。
    *
-   * 注意这不影响发出去的请求体: 无论从哪种形状构造出来, to_json 产出的都是中转站的标准形态。
+   * 为什么这一列可以严格要求(它同时承载三种后端形状): 判后端是调用方的事(按
+   * task::backend_), **调用点只在确认这行属于中转站之后才 get<>()**。方舟生成形态
+   * (model/resolution/content)与推理形态(input/instructions)根本不该走到这里 ——
+   * 它们走序列化, 不走本读法。所以「不是中转站形态」不是本函数要容忍的情形, 而是
+   * 调用方误用, 应当立刻失败。
+   *
+   * 其余键仍是宽容的: 类型不符/缺席一律跳过并保留空串(to_json 据此不发该键),
+   * 取值本身也不校验 —— 取值域在上游, 见上方「为什么这里没有枚举」。
    */
   friend void from_json(const nlohmann::json& j, transfer_station_request_t& p) {
-    if (!j.is_object()) return;
-    if (j.contains("model") && j.at("model").is_string()) j.at("model").get_to(p.model_);
-    if (j.contains("prompt") && j.at("prompt").is_string()) j.at("prompt").get_to(p.prompt_);
-    if (j.contains("aspectRatio") && j.at("aspectRatio").is_string()) j.at("aspectRatio").get_to(p.aspect_ratio_);
+    if (!j.is_object()) throw nlohmann::json::type_error::create(302, "中转站请求体必须是 JSON 对象", &j);
+
+    // 必填: 两个字符串键缺一不可, 且必须是字符串
+    if (!j.contains("model") || !j.at("model").is_string())
+      throw nlohmann::json::type_error::create(302, "中转站请求体缺少必填的字符串键 model", &j);
+    if (!j.contains("prompt") || !j.at("prompt").is_string())
+      throw nlohmann::json::type_error::create(302, "中转站请求体缺少必填的字符串键 prompt", &j);
+    j.at("model").get_to(p.model_);
+    j.at("prompt").get_to(p.prompt_);
+
+    // imageSize 与 aspectRatio 至少有一个: 前者是 nano-banana 的分辨率, 后者是 gpt-image 的
+    // (比例或像素值)。两个都没有的话上游拿不到尺寸, 必然失败。
+    const auto l_has_size   = j.contains("imageSize") && j.at("imageSize").is_string();
+    const auto l_has_aspect = j.contains("aspectRatio") && j.at("aspectRatio").is_string();
+    if (!l_has_size && !l_has_aspect)
+      throw nlohmann::json::type_error::create(
+          302, "中转站请求体必须给出 imageSize 与 aspectRatio 之一(均为字符串)", &j
+      );
+
+    if (l_has_aspect) j.at("aspectRatio").get_to(p.aspect_ratio_);
+    if (l_has_size) j.at("imageSize").get_to(p.image_size_);
+
+    // 以下仍是宽容的选填键: 类型不符/缺席一律跳过。这里**不校验取值** —— 取值域在上游。
     if (j.contains("mask") && j.at("mask").is_string()) j.at("mask").get_to(p.mask_);
     if (j.contains("images") && j.at("images").is_array()) j.at("images").get_to(p.reference_images_);
-    // 四个字符串字段与 model/prompt 同一条宽容路径: 只认字符串, 其余(数字/对象/null)跳过。
-    // 这里**不校验取值** —— 取值域在上游, 见上方「为什么这里没有枚举」。
-    if (j.contains("imageSize") && j.at("imageSize").is_string()) j.at("imageSize").get_to(p.image_size_);
     if (j.contains("quality") && j.at("quality").is_string()) j.at("quality").get_to(p.quality_);
     if (j.contains("background") && j.at("background").is_string()) j.at("background").get_to(p.background_);
     if (j.contains("replyType") && j.at("replyType").is_string()) j.at("replyType").get_to(p.reply_type_);
   }
 };
-
-/**
- * 从 task::data_request_ 取出中转站形态的请求体。
- *
- * 这是**给将来迁移用的显式入口**(本轮不动任何读取点), 名字取得长, 是为了在调用处一眼
- * 看出「我在假设这行任务属于中转站」—— 后端判别由调用方按 task::backend_ 负责,
- * 本函数不猜。传进来的若不是对象或不是中转站形态, 只会得到一个字段近乎为空的结构体,
- * 不抛异常(见 from_json 的说明)。
- */
-inline transfer_station_request_t transfer_station_request_from_json(const nlohmann::json& in_json) {
-  if (!in_json.is_object()) return transfer_station_request_t{};
-  return in_json.get<transfer_station_request_t>();
-}
 
 }  // namespace doodle::seedance2
