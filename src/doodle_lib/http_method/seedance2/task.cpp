@@ -187,16 +187,17 @@ class seedance2_task_run_manager {
    * 于是「提交」与「查询」不再各写一份落库逻辑(它们要写的字段本来也几乎一样),
    * 只有需要区别对待的分支才分叉。
    */
-  boost::asio::awaitable<void> run_once(const sd2::task& in_task, const std::shared_ptr<ai_client_base>& in_client) try {
+  boost::asio::awaitable<void> run_once(
+      const sd2::task& in_task, const std::shared_ptr<ai_client_base>& in_client
+  ) try {
     auto l_result = co_await in_client->run_task(in_task);
     auto l_sql    = get_sqlite_database();
     using namespace orm;
     sql_modify_statement_vector_t l_sql_modify_statements;
-    auto l_update = update(l_sql)
-                        .from<sd2::task>()
-                        .set(c(&sd2::task::data_response_) = l_result.data_response_)
-                        .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_);
-    l_sql_modify_statements.push_back(l_update);
+    auto l_update             = update(l_sql)
+                                    .from<sd2::task>()
+                                    .set(c(&sd2::task::data_response_) = l_result.data_response_)
+                                    .where(c(&sd2::task::uuid_id_) == in_task.uuid_id_);
     sd2::task_status l_status = l_result.status_;
 
     switch (l_result.status_) {
@@ -206,10 +207,9 @@ class seedance2_task_run_manager {
         //   * 异步任务: 查询到 succeeded, 文件已由 run_task 下载落盘。
         const auto l_actual_tokens = l_result.total_tokens_ > 0 ? l_result.total_tokens_ : in_task.completion_tokens_;
         // 异步生成类的计费口径是 completion_tokens_(本站点数); 推理类是 total_tokens_(模型用量)。
-        const auto l_charge = l_result.completion_tokens_ > 0 ? l_result.completion_tokens_ : l_actual_tokens;
+        const auto l_charge        = l_result.completion_tokens_ > 0 ? l_result.completion_tokens_ : l_actual_tokens;
         l_update.set(
-            c(&sd2::task::status_) = sd2::task_status::succeeded,
-            c(&sd2::task::task_id_) = l_result.task_id_,
+            c(&sd2::task::status_) = sd2::task_status::succeeded, c(&sd2::task::task_id_) = l_result.task_id_,
             c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
             c(&sd2::task::completion_tokens_) = l_charge
         );
@@ -254,13 +254,15 @@ class seedance2_task_run_manager {
           break;
         }
         l_update.set(
-            c(&sd2::task::status_) = l_result.status_,
+            c(&sd2::task::status_)   = l_result.status_,
             c(&sd2::task::ended_at_) = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
             c(&sd2::task::completion_tokens_) = l_result.completion_tokens_
         );
         l_status = l_result.status_;
         // 失败或者其他状态，返还 token
-        l_sql_modify_statements.emplace_back(add_remaining_tokens_for_person(l_sql, in_task.user_id_, in_task.completion_tokens_ - l_result.completion_tokens_));
+        l_sql_modify_statements.emplace_back(add_remaining_tokens_for_person(
+            l_sql, in_task.user_id_, in_task.completion_tokens_ - l_result.completion_tokens_
+        ));
         // 失败时回滚生成次数
         l_sql_modify_statements.emplace_back(
             update(l_sql)
@@ -271,6 +273,7 @@ class seedance2_task_run_manager {
         break;
       }
     }
+    l_sql_modify_statements.push_back(l_update);
     co_await l_sql.run_sql(std::move(l_sql_modify_statements));
     socket_io::broadcast(
         socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task.uuid_id_, .status_ = l_status}
@@ -347,18 +350,18 @@ std::shared_ptr<ai_client_base> make_inference_client(const ai_studio& in_studio
 boost::asio::awaitable<ai_client_base::run_task_result_t> run_inference_task(
     const sd2::task& in_task, sqlite_database& in_sql, const std::shared_ptr<ai_client_base>& in_client
 ) {
-  auto l_result = co_await in_client->run_task(in_task);
+  auto l_result         = co_await in_client->run_task(in_task);
 
-  const bool l_ok = l_result.status_ == sd2::task_status::succeeded;
-  auto l_task     = in_task;
-  l_task.status_       = l_ok ? sd2::task_status::succeeded : sd2::task_status::failed;
-  l_task.task_id_      = l_result.task_id_;
-  l_task.ended_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+  const bool l_ok       = l_result.status_ == sd2::task_status::succeeded;
+  auto l_task           = in_task;
+  l_task.status_        = l_ok ? sd2::task_status::succeeded : sd2::task_status::failed;
+  l_task.task_id_       = l_result.task_id_;
+  l_task.ended_at_      = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
   l_task.data_response_ = l_result.data_response_;
   // 推理按 total_tokens 计费(文本+多图的**输入**才是成本大头); 拿不到 usage 就退回调用方给的预扣值。
   // 失败不计费(completion_tokens_ 记 0), 但原始响应仍留在 data_response_ 里便于对账。
-  l_task.completion_tokens_ = l_ok ? (l_result.total_tokens_ > 0 ? l_result.total_tokens_ : in_task.completion_tokens_)
-                                   : std::int64_t{0};
+  l_task.completion_tokens_ =
+      l_ok ? (l_result.total_tokens_ > 0 ? l_result.total_tokens_ : in_task.completion_tokens_) : std::int64_t{0};
 
   {
     // 一个事务: 插入(终态) + 扣费。因为插入就是终态, 后台管理器(只捞
