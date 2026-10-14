@@ -77,12 +77,6 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
 
   static std::string get_error_code(const nlohmann::json& in_body);
 
-  [[nodiscard]] static nlohmann::json normalize_apipy_request(const nlohmann::json& in_request);
-
-  static edits_form_t build_edit_multipart(
-      const nlohmann::json& in_apipy_body, const std::vector<edit_reference_t>& in_references
-  );
-
   static FSys::path parse_site_image_id(std::string_view in_url);
 
   static std::string mime_of_image(const std::string& in_ext);

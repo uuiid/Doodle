@@ -32,45 +32,6 @@ constexpr std::string_view g_default_ext{".png"};
 
 constexpr std::string_view g_pictures_prefix{"/api/seedance2/pictures/"};
 
-std::string make_boundary() { return "----doodle" + boost::uuids::to_string(core_set::get_set().get_uuid()); }
-
-std::string strip_crlf(std::string_view in_text) {
-  std::string l_out{};
-  l_out.reserve(in_text.size());
-  for (const auto l_c : in_text)
-    if (l_c != '\r' && l_c != '\n') l_out.push_back(l_c);
-  return l_out;
-}
-
-void append_text_part(
-    std::string& out, std::string_view in_boundary, std::string_view in_name, std::string_view in_value
-) {
-  out += "--";
-  out += in_boundary;
-  out += "\r\nContent-Disposition: form-data; name=\"";
-  out += in_name;
-  out += "\"\r\n\r\n";
-  out += in_value;
-  out += "\r\n";
-}
-
-void append_file_part(
-    std::string& out, std::string_view in_boundary, std::string_view in_name, std::string_view in_filename,
-    std::string_view in_mime, std::string_view in_bytes
-) {
-  out += "--";
-  out += in_boundary;
-  out += "\r\nContent-Disposition: form-data; name=\"";
-  out += in_name;
-  out += "\"; filename=\"";
-  out += in_filename;
-  out += "\"\r\nContent-Type: ";
-  out += in_mime;
-  out += "\r\n\r\n";
-  out += in_bytes;
-  out += "\r\n";
-}
-
 const nlohmann::json& first_data_item(const nlohmann::json& in_body) {
   static const nlohmann::json l_empty = nlohmann::json::object();
   if (!in_body.is_object()) return l_empty;
@@ -143,56 +104,6 @@ FSys::path apipy_image_client::parse_site_image_id(std::string_view in_url) {
   return g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_file(l_id, l_ext);
 }
 
-nlohmann::json apipy_image_client::normalize_apipy_request(const nlohmann::json& in_request) {
-  if (!in_request.is_object()) return in_request;
-
-  auto l_out = in_request;
-  if (l_out.contains("size") && !l_out.contains("aspectRatio")) l_out["aspectRatio"] = l_out.at("size");
-  l_out.erase("size");
-
-  if (l_out.contains("content") && !l_out.contains("images")) {
-    if (const auto& l_content = l_out.at("content"); l_content.is_array()) {
-      nlohmann::json l_images = nlohmann::json::array();
-      for (const auto& l_item : l_content)
-        if (auto l_url = image_url_of_content_item(l_item); l_url && !l_url->empty())
-          l_images.push_back(std::move(*l_url));
-      if (!l_images.empty()) l_out["images"] = std::move(l_images);
-    }
-  }
-  l_out.erase("content");
-  l_out.erase("input");
-  return l_out;
-}
-
-apipy_image_client::edits_form_t apipy_image_client::build_edit_multipart(
-    const nlohmann::json& in_apipy_body, const std::vector<edit_reference_t>& in_references
-) {
-  edits_form_t l_form{};
-  l_form.boundary_ = make_boundary();
-
-  constexpr std::array g_skipped{"content", "input", "images", "image_url", "video_url", "audio_url"};
-
-  if (in_apipy_body.is_object()) {
-    for (const auto& [l_key, l_value] : in_apipy_body.items()) {
-      if (!l_value.is_string() && !l_value.is_number() && !l_value.is_boolean()) continue;
-      if (std::ranges::find(g_skipped, l_key) != std::ranges::end(g_skipped)) continue;
-      append_text_part(
-          l_form.body_, l_form.boundary_, l_key, l_value.is_string() ? l_value.get<std::string>() : l_value.dump()
-      );
-    }
-  }
-
-  for (const auto& l_ref : in_references)
-    append_file_part(
-        l_form.body_, l_form.boundary_, g_edit_image_field, strip_crlf(l_ref.filename_), l_ref.mime_, l_ref.bytes_
-    );
-
-  l_form.body_ += "--";
-  l_form.body_ += l_form.boundary_;
-  l_form.body_ += "--\r\n";
-  return l_form;
-}
-
 void to_json(nlohmann::json& j, const apipy_image_client::request_t& req) {
   j["model"]  = req.model_;
   j["prompt"] = req.prompt_;
@@ -201,7 +112,52 @@ void to_json(nlohmann::json& j, const apipy_image_client::request_t& req) {
 }
 
 apipy_image_client::edits_form_t apipy_image_client::request_t::to_multipart() const {
-  return apipy_image_client::build_edit_multipart(nlohmann::json{*this}, image_bytes_);
+  edits_form_t l_form{};
+  l_form.boundary_ = "----doodle" + boost::uuids::to_string(core_set::get_set().get_uuid());
+
+  const auto l_text_fields =
+      nlohmann::json{{"model", model_}, {"prompt", prompt_}, {"size", size_}, {"response_format", "url"}};
+  for (const auto& [l_key, l_value] : l_text_fields.items()) {
+    l_form.body_ += "--";
+    l_form.body_ += l_form.boundary_;
+    l_form.body_ += "\r\nContent-Disposition: form-data; name=\"";
+    l_form.body_ += l_key;
+    l_form.body_ += "\"\r\n\r\n";
+    l_form.body_ += l_value.is_string() ? l_value.get<std::string>() : l_value.dump();
+    l_form.body_ += "\r\n";
+  }
+
+  if (!quality_.empty()) {
+    l_form.body_ += "--";
+    l_form.body_ += l_form.boundary_;
+    l_form.body_ += "\r\nContent-Disposition: form-data; name=\"quality\"\r\n\r\n";
+    l_form.body_ += quality_;
+    l_form.body_ += "\r\n";
+  }
+
+  for (const auto& l_ref : image_bytes_) {
+    std::string l_filename{};
+    l_filename.reserve(l_ref.filename_.size());
+    for (const auto l_c : l_ref.filename_)
+      if (l_c != '\r' && l_c != '\n') l_filename.push_back(l_c);
+
+    l_form.body_ += "--";
+    l_form.body_ += l_form.boundary_;
+    l_form.body_ += "\r\nContent-Disposition: form-data; name=\"";
+    l_form.body_ += g_edit_image_field;
+    l_form.body_ += "\"; filename=\"";
+    l_form.body_ += l_filename;
+    l_form.body_ += "\"\r\nContent-Type: ";
+    l_form.body_ += l_ref.mime_;
+    l_form.body_ += "\r\n\r\n";
+    l_form.body_ += l_ref.bytes_;
+    l_form.body_ += "\r\n";
+  }
+
+  l_form.body_ += "--";
+  l_form.body_ += l_form.boundary_;
+  l_form.body_ += "--\r\n";
+  return l_form;
 }
 
 doodle::seedance2::task_status apipy_image_client::parse_status(const nlohmann::json& in_body, int in_status_code) {
@@ -265,6 +221,15 @@ ai_client_base::request_info_t apipy_image_client::collect_request_info(const nl
                   "参考图 URL 必须指向本站图片路由 {}<uuid><扩展名> 且文件存在, 收到: {}", g_pictures_prefix,
                   std::string{url}
               )
+          }
+      );
+    auto l_ext = l_path.extension().generic_string();
+    std::ranges::transform(l_ext, l_ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    if (l_ext != ".png" && l_ext != ".jpg" && l_ext != ".jpeg" && l_ext != ".webp")
+      throw_exception(
+          http_request_error{
+              boost::beast::http::status::bad_request,
+              fmt::format("参考图扩展名必须是 .png/.jpg/.jpeg/.webp 之一, 收到: {}", std::string{url})
           }
       );
   }
