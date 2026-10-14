@@ -12,6 +12,21 @@
 
 namespace doodle::http::seedance2 {
 
+boost::asio::awaitable<ai_client_base::run_task_result_t> ai_client_base::run_task(
+    const doodle::seedance2::task& in_task
+) {
+  // 提交阶段: 交给外部服务就返回, 不看结果 —— 异步后端此时只拿到 queued + task_id_,
+  // 同步后端(推理 / API易 图片)则一次调用就是终态, 两种情况都由调用方按 status_ 处理。
+  if (in_task.status_ == doodle::seedance2::task_status::preparing) co_return co_await submit_task(in_task);
+
+  // 查询阶段: 已经提交过了, 只问一次进度。中间态(running/queued)原样返回, 由调用方的
+  // 定时器下一轮再问; 查得成功才下载 —— 失败/取消等终态没有文件可取。
+  auto l_result     = co_await query_task(in_task);
+  l_result.task_id_ = in_task.task_id_;
+  if (l_result.status_ == doodle::seedance2::task_status::succeeded) co_await download_result(l_result);
+  co_return l_result;
+}
+
 std::string ai_client_base::to_public_url(
     std::string_view in_url, std::string_view in_ip, std::string_view in_secret, std::string_view in_uid
 ) {

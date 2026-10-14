@@ -109,15 +109,9 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
    * 差别只在那三个原语里。放在这里, 调用方(seedance2_task_run_manager)就只剩落库与广播。
    *
    * 这是虚函数(不是纯虚): 子类默认不需要重写, 因为流程是统一的。
+   * 实现在 ai_client_base.cpp —— 它是协程, 留在头里会让每个包含者都生成一份协程帧代码。
    */
-  virtual boost::asio::awaitable<run_task_result_t> run_task(const doodle::seedance2::task& in_task) {
-    if (in_task.status_ == doodle::seedance2::task_status::preparing) co_return co_await submit_task(in_task);
-
-    auto l_result = co_await query_task(in_task);
-    l_result.task_id_ = in_task.task_id_;
-    if (l_result.status_ == doodle::seedance2::task_status::succeeded) co_await download_result(l_result);
-    co_return l_result;
-  }
+  virtual boost::asio::awaitable<run_task_result_t> run_task(const doodle::seedance2::task& in_task);
 
   virtual boost::asio::awaitable<void> cancel_task(const std::string& in_task_id)                        = 0;
 
