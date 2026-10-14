@@ -39,10 +39,10 @@ enum class DOODLE_CORE_API task_status {
 //     - 库这条路径(老服务端)读到认不出的名字串会抛(至少不是静默错)；
 //     - JSON 这条路径(老服务端收到新前端的 `"type":"inference"`)会**静默变成 picture**
 //       —— nlohmann 的 SERIALIZE_ENUM 认不出就落到第一个枚举值
-//       (nlohmann/detail/macro_scope.hpp:247)。本文件已用 checked_enum_from_json() 把这个
-//       静默回落堵住, 但**老二进制里没有这道闸**, 所以顺序仍然必须是「先升服务端」。
-//   * JSON 名必须与 magic_enum 推出来的名字一致（都是 inference）：checked_enum_from_json()
-//     用 magic_enum 校验, 不一致会直接抛。
+//       (nlohmann/detail/macro_scope.hpp:247)。本文件已用 DOODLE_JSON_SERIALIZE_ENUM_STRICT
+//       把这个静默回落堵住, 但**老二进制里没有这道闸**, 所以顺序仍然必须是「先升服务端」。
+//   * JSON 名必须与 magic_enum 推出来的名字一致（都是 inference）：同一个宏把映射显式
+//     列了出来, 两边不一致会在运行期被挡住。
 enum class DOODLE_CORE_API task_type {
   picture,
   video,
@@ -75,28 +75,6 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     task_backend,
     {{task_backend::seedance2, "seedance2"}, {task_backend::transfer_station, "transfer_station"}}
 );
-
-/**
- * 从 JSON 里取枚举, 认不出就抛。
- *
- * 为什么不能直接用 NLOHMANN_JSON_SERIALIZE_ENUM 生成的 from_json: 它对**认不出的**输入
- * 不抛异常, 而是静默落到第一个枚举值
- * (nlohmann/detail/macro_scope.hpp:247 —— `(it != end ? it : begin)->first`)。
- * 于是 `"type": "infer"`(拼错) 或旧客户端发来的 `"inference"`(服务端还没升)
- * 会**静默变成一个图片生成任务**, 而不是报错。
- *
- * 而库里走的是另一条路(sqlite_statement.h 的 magic_enum 反查), 认不出就抛 —— 两条路径
- * 必须一致, 否则「库里读不出来」和「JSON 里悄悄变样」会同时存在。顺带这也让
- * 「JSON 名必须等于 magic_enum 名」这条约定在运行期被强制住。
- */
-template <typename Enum>
-Enum checked_enum_from_json(const nlohmann::json& in_json, std::string_view in_field) {
-  const auto l_name = in_json.get<std::string>();
-  if (const auto l_value = magic_enum::enum_cast<Enum>(l_name); l_value.has_value()) return *l_value;
-  throw nlohmann::json::type_error::create(
-      302, std::string{"未知的 "} + std::string{in_field} + " 取值: " + l_name, &in_json
-  );
-}
 
 struct DOODLE_CORE_API task {
   DOODLE_BASE_FIELDS();
@@ -159,9 +137,10 @@ struct DOODLE_CORE_API task {
     j.at("data_request").get_to(p.data_request_);
     j.at("ai_studio_id").get_to(p.ai_studio_id_);
     j.at("project_uuid_id").get_to(p.project_uuid_id_);
-    // type / backend 必须显式校验: 见 checked_enum_from_json() 的注释
-    p.type_    = checked_enum_from_json<task_type>(j.at("type"), "type");
-    p.backend_ = checked_enum_from_json<task_backend>(j.at("backend"), "backend");
+    // type / backend 走 DOODLE_JSON_SERIALIZE_ENUM_STRICT 生成的 from_json:
+    // 认不出的取值当场抛 out_of_range.410, 不会静默变成一个图片生成任务
+    j.at("type").get_to(p.type_);
+    j.at("backend").get_to(p.backend_);
     j.at("ai_generate_entity_id").get_to(p.ai_generate_entity_id_);
 
     if (j.contains("archived")) j.at("archived").get_to(p.archived_);
