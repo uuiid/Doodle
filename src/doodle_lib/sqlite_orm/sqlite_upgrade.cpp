@@ -193,13 +193,32 @@ struct upgrade_clear_orphan_task_t : sqlite_upgrade {
     using namespace orm;
     if (!l_s.has_reg_table<server_task_info>()) {
       SPDLOG_INFO("upgrade: 启动清理: 库里没有 server_task_info_tab, 跳过 running 任务解绑");
+    } else {
+      update(l_s)
+          .from<server_task_info>()
+          .set(c(&server_task_info::run_computer_id_) = uuid{})
+          .where(c(&server_task_info::status_) == server_task_info_status::running)();
+      SPDLOG_INFO("upgrade: 启动清理: 已解绑所有 running 任务的 run_computer_id");
+    }
+
+    if (!l_s.has_reg_table<seedance2::task>()) {
+      SPDLOG_INFO("upgrade: 启动清理: 库里没有 seedance2_task_tab, 跳过 API易 残留任务清理");
       return;
     }
     update(l_s)
-        .from<server_task_info>()
-        .set(c(&server_task_info::run_computer_id_) = uuid{})
-        .where(c(&server_task_info::status_) == server_task_info_status::running)();
-    SPDLOG_INFO("upgrade: 启动清理: 已解绑所有 running 任务的 run_computer_id");
+        .from<seedance2::task>()
+        .set(
+            c(&seedance2::task::status_) = seedance2::task_status::failed,
+            c(&seedance2::task::data_response_) =
+                nlohmann::json{{"error", "服务端重启, API易 同步请求的结果已丢失"}},
+            c(&seedance2::task::ended_at_) =
+                chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}
+        )
+        .where(
+            c(&seedance2::task::backend_) == seedance2::task_backend::apipy_image &&
+            c(&seedance2::task::status_) == seedance2::task_status::running
+        )();
+    SPDLOG_INFO("upgrade: 启动清理: 已将残留的 API易 running 任务置为失败");
   }
   ~upgrade_clear_orphan_task_t() override = default;
 };
