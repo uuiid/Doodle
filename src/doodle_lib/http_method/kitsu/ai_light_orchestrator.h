@@ -199,21 +199,18 @@ struct DOODLELIB_API submit_iteration_request_t {
   uuid operator_id_{};
   /// 本轮轮次号（1、2、3…）。调用方已校验 == current_iteration_ + 1。
   std::int32_t iteration_{0};
-  /// 本轮轴计划（从前端提交的 `axes` 解析；缺省为空轴计划 = 基线轮）。
-  iteration_axes_t axes_{};
   /// **权威状态**：本轮要落库的 rig，数量不限（至少一个）。身份字段由本函数补齐。
   std::vector<lighting_rig_t> rigs_{};
   /// 装配推导要它定位镜头（会话的 task_id_）。
   uuid task_id_{};
 
-  /// 前端提交体的形状：rig 就是 `lighting_rig_t` 本身（**嵌套** variant_axis 对象）。
+  /// 前端提交体的形状：rig 就是 `lighting_rig_t` 本身。
   /// 身份字段（session_id/iteration/candidate_index/rig_id/baseline_level）前端给了也不采信 ——
   /// `write_submitted_iteration` 会无条件覆盖它们，这里同样解码后交给下游钉死。
   friend void to_json(nlohmann::json& j, const submit_iteration_request_t& p) {
     j["session_id"] = p.session_id_;
     j["project_id"] = p.project_id_;
     j["iteration"]  = p.iteration_;
-    j["axes"]       = p.axes_;
     j["candidates"] = p.rigs_;
     j["task_id"]    = p.task_id_;
   }
@@ -221,7 +218,6 @@ struct DOODLELIB_API submit_iteration_request_t {
     if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
     if (j.contains("project_id")) j.at("project_id").get_to(p.project_id_);
     if (j.contains("iteration")) j.at("iteration").get_to(p.iteration_);
-    if (j.contains("axes")) j.at("axes").get_to(p.axes_);
     if (j.contains("candidates")) j.at("candidates").get_to(p.rigs_);
     if (j.contains("task_id")) j.at("task_id").get_to(p.task_id_);
   }

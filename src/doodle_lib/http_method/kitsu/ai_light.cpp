@@ -627,9 +627,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   //
   // 请求体里的 `feedback_axes` 只是**读一下就被丢掉的信息载体**：决策 5 把滑块定为
   // 默认通道，滑块由前端直接持有并经推理网关自己送模型，服务端不再存一份轴方向。
-  // （曾有的结构化通道：把 feedback_text_ 交给接缝 3 做一次真实推理，把自由文本转成
-  // 轴方向再并进 judgement 的 `feedback_axes_` 字段。那条通道与服务端那个字段都已随
-  // 「推理归前端」删除 —— 服务端不再持有可漂移的提示词模板与 schema 真源。）
   // 现在文本**原样留存**在 l_judgement.feedback_text_ 里随判定落库。
 
   // ---- 定稿要先把图落成 preview_file 对象（文件动作），再交给 apply_judgement 同事务落库 ----
@@ -947,7 +944,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, delete_) {
 // ---------------------------------------------------------------------------
 //
 // 只做三件事：权限 → 跑推理 → 组响应。
-// **不组装提示词、不解释模型输出、不碰轴** —— 那三件事降级后都在前端。
+// **不组装提示词、不解释模型输出** —— 那两件事降级后都在前端。
 //
 // 请求体**原样透传**（见 build_gateway_inference_request）：除 `model`（服务端强制）外，
 // 前端给的键一律原样发往方舟 `/responses`。所以新增字段、用上 tools / text.format /

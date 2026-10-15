@@ -160,7 +160,6 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
   l_it.session_id_ = in_request.session_id_;
   l_it.iteration_  = l_iteration;
   l_it.state_      = ai_light_iteration_state::generated;
-  l_it.set_axes(in_request.axes_);
 
   // 两条出口共用的装配（队列载荷 / 本地渲染计划）：形状逐字一致的渲染段。
   // 用 helper 生成「带相对路径的候选」而不是写两遍，是因为这段正是一轮渲染的
@@ -192,7 +191,7 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
     l_cand.session_id_      = in_request.session_id_;
     l_cand.candidate_index_ = l_i;
     l_cand.set_rig(l_rig);
-    l_cand.sync_from_rig();  // 轴三列从 rig 同步过来（DB 列是查询权威）
+    l_cand.sync_from_rig();  // 索引列从 rig 同步过来（DB 列是查询权威）
     l_cand.render_status_ = candidate_render_status::pending;
 
     l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_candidate>().values(l_cand));

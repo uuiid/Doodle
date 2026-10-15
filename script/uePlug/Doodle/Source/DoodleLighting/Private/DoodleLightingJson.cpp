@@ -361,14 +361,6 @@ bool DoodleLightingJson::ParseLightingRig(const TSharedPtr<FJsonObject>& InRoot,
 		return false;
 	}
 
-	TSharedPtr<FJsonObject> LObject;
-	if (TryGetObjectFieldPtr(InRoot, TEXT("variant_axis"), LObject) && LObject.IsValid())
-	{
-		if (!GetEnum(LObject, TEXT("axis"), TEXT("rig.variant_axis.axis"), OutRig.VariantAxis.Axis, OutError, &DoodleVariantAxisFromString)) return false;
-		if (!GetNumber(LObject, TEXT("value"), TEXT("rig.variant_axis.value"), OutRig.VariantAxis.Value, OutError)) return false;
-		if (!GetString(LObject, TEXT("label"), TEXT("rig.variant_axis.label"), OutRig.VariantAxis.Label, OutError, false)) return false;
-	}
-
 	if (TryGetObjectFieldPtr(InRoot, TEXT("provenance"), LObject) && LObject.IsValid())
 	{
 		GetString(LObject, TEXT("model"), TEXT("rig.provenance.model"), OutRig.Provenance.Model, OutError, false);

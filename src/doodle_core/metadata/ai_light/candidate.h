@@ -5,9 +5,9 @@
 // 这一张表同时承担了方案 §10.2 里 ai_light_rig 的职责 ——
 // rig 是候选的属性而不是独立实体，拆开后「rig 属于哪一轮哪个候选」还要靠关联表，纯属多余。
 //
-// §6.6 护栏在 schema 层面的落点：同轮候选的**灯集合与角色必须完全一致**，
-// 只有 variant_axis 指定的参数不同。否则指标差异会被灯数差异淹没，
-// 美术的选择无法归因到轴，搜索梯度就失效了。校验由规划层负责，本表只负责存。
+// §6.6 护栏在 schema 层面的落点：同轮候选的**灯集合与角色必须完全一致**。
+// 否则指标差异会被灯数差异淹没，美术的选择无法归因，搜索梯度就失效了。
+// 校验由规划层负责，本表只负责存。
 //
 // 「每会话至多一个定稿候选」由 accepted_session_id 上的普通唯一索引在库层强制
 // （为什么不用 partial index，见该字段的注释）。
@@ -149,16 +149,9 @@ struct DOODLE_CORE_API ai_light_candidate {
   /// 本轮第几个，从 0 起。上界由前端每轮决定。§6.6 护栏要求同轮候选的灯集合一致。
   std::int32_t candidate_index_{0};
 
-  // --- 变体轴：真实列而不是只躺在 rig JSON 里 ---
-  // 目的是能直接统计「哪条轴最常被美术选中」，反哺候选生成策略。
-  // 写入时由 sync_from_rig() 从 rig_.variant_axis_ 同步过来；DB 列是查询权威。
-  variant_axis_kind variant_axis_{variant_axis_kind::none};
-  double variant_value_{0.0};
-  std::string variant_label_{};
-
   /// LightingRig IR 全量（§4.3）的 JSON 形态。
   /// 嵌套结构不是 ORM 的列类型，所以以 nlohmann::json 落库，用 get_rig() 类型化取用。
-  /// 里面的 session_id / spec_id / iteration / candidate_index / variant_axis 是给工件
+  /// 里面的 session_id / iteration / candidate_index 是给工件
   /// 自描述用的副本（下发 UE、落盘回归），不参与任何查询。
   nlohmann::json rig_{};
 
@@ -215,21 +208,17 @@ struct DOODLE_CORE_API ai_light_candidate {
   vlm_delta_t get_vlm_delta() const { return json_get_or_default<vlm_delta_t>(vlm_delta_); }
   void set_vlm_delta(const vlm_delta_t& in_delta) { vlm_delta_ = in_delta; }
 
-  /// 把 rig JSON 里的变体轴与索引同步到真实列，避免两处漂移。
-  /// 调用点：候选落库前。DB 列是查询权威（用来统计「哪条轴最常被选中」）。
+  /// 把 rig JSON 里的索引同步到真实列，避免两处漂移。
+  /// 调用点：候选落库前。DB 列是查询权威。
   void sync_from_rig() {
     if (rig_.is_null()) return;
     const auto l_rig = get_rig();
-    variant_axis_    = l_rig.variant_axis_.axis_;
-    variant_value_   = l_rig.variant_axis_.value_;
-    variant_label_   = l_rig.variant_axis_.label_;
     candidate_index_ = l_rig.candidate_index_;
     session_id_      = l_rig.session_id_;
   }
   /// 反向：把真实列写回 rig 副本（构造 rig 时调用）
   void sync_to_rig() {
     auto l_rig             = get_rig();
-    l_rig.variant_axis_    = variant_axis_t{variant_axis_, variant_value_, variant_label_};
     l_rig.candidate_index_ = candidate_index_;
     l_rig.session_id_      = session_id_;
     set_rig(l_rig);
@@ -255,9 +244,6 @@ struct DOODLE_CORE_API ai_light_candidate {
     j["iteration_id"]        = p.iteration_id_;
     j["session_id"]          = p.session_id_;
     j["candidate_index"]     = p.candidate_index_;
-    j["variant_axis"]        = p.variant_axis_;
-    j["variant_value"]       = p.variant_value_;
-    j["variant_label"]       = p.variant_label_;
     j["rig"]                 = p.rig_;
     j["render_status"]       = p.render_status_;
     j["render_ms"]           = p.render_ms_;
@@ -276,9 +262,6 @@ struct DOODLE_CORE_API ai_light_candidate {
     if (j.contains("iteration_id")) j.at("iteration_id").get_to(p.iteration_id_);
     if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
     if (j.contains("candidate_index")) j.at("candidate_index").get_to(p.candidate_index_);
-    if (j.contains("variant_axis")) j.at("variant_axis").get_to(p.variant_axis_);
-    if (j.contains("variant_value")) j.at("variant_value").get_to(p.variant_value_);
-    if (j.contains("variant_label")) j.at("variant_label").get_to(p.variant_label_);
     if (j.contains("rig")) j.at("rig").get_to(p.rig_);
     if (j.contains("render_status")) j.at("render_status").get_to(p.render_status_);
     if (j.contains("render_ms")) j.at("render_ms").get_to(p.render_ms_);

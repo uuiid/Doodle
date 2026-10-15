@@ -185,9 +185,6 @@ struct fixture_t : doodle_test::coro_fixture_t {
     iteration_.state_      = in_iter_state;
     // 回传是按 server_task_info_id 反查轮次的，所以要有个非 nil 值
     iteration_.server_task_info_id_ = core_set::get_set().get_uuid();
-    iteration_.set_axes(iteration_axes_t{
-        {axis_step_t{variant_axis_kind::key_fill_ratio, {4.0, 6.0, 8.0}, "光比"}}, "沿光比展开三档"
-    });
     insert(orm_).into<ai_light_iteration>().values(iteration_)();
 
     for (std::int32_t l_i = 0; l_i != in_count; ++l_i) {
@@ -196,9 +193,6 @@ struct fixture_t : doodle_test::coro_fixture_t {
       l_cand.iteration_id_    = iteration_.uuid_id_;
       l_cand.session_id_      = session_.uuid_id_;
       l_cand.candidate_index_ = l_i;
-      l_cand.variant_axis_    = variant_axis_kind::key_fill_ratio;
-      l_cand.variant_value_   = 4.0 + 2.0 * l_i;
-      l_cand.variant_label_   = fmt::format("光比 {:.1f}", l_cand.variant_value_);
       // 派发时是 pending，渲染完成后服务端回填成 rendered
       l_cand.render_status_   = candidate_render_status::pending;
       l_cand.light_count_     = 0;

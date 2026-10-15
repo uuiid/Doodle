@@ -81,13 +81,8 @@ struct DOODLE_CORE_API ai_light_judgement_t {
   uuid selected_candidate_id_{};
   /// 美术的自由文本反馈，如「主光再低一点，色温再冷一点」
   ///
-  /// 只有这一个反馈字段。**曾经的 `feedback_axes_`（std::map<std::string, double>，
-  /// 由 LLM 从 feedback_text 提取的结构化轴方向）已删除**：
-  ///   * 它的另一半——把自由文本文本送去结构化——是接缝 3（structure_feedback），
-  ///     已随「推理归前端」删除；
-  ///   * 滑块本来就由前端直接持有并经推理网关自己送模型，服务端再存一份轴方向
-  ///     等于持有第二份可漂移的真源（`ai_light_orchestrator.h` 的角色降级说明）。
-  /// 现在文本**原样留存**，轴方向的解释权归前端。
+  /// 只有这一个反馈字段，**原样留存**：滑块与文本的解释权都归前端，
+  /// 服务端不再持有第二份可漂移的真源（`ai_light_orchestrator.h` 的角色降级说明）。
   std::string feedback_text_{};
 
   friend void to_json(nlohmann::json& j, const ai_light_judgement_t& p) {
@@ -106,40 +101,6 @@ struct DOODLE_CORE_API ai_light_judgement_t {
   }
 };
 
-/// 一条轴上的档位安排（本轮计划）
-struct DOODLE_CORE_API axis_step_t {
-  variant_axis_kind axis_{variant_axis_kind::none};
-  std::vector<double> steps_{};
-  std::string label_{};
-
-  friend void to_json(nlohmann::json& j, const axis_step_t& p) {
-    j["axis"]  = p.axis_;
-    j["steps"] = p.steps_;
-    j["label"] = p.label_;
-  }
-  friend void from_json(const nlohmann::json& j, axis_step_t& p) {
-    if (j.contains("axis")) j.at("axis").get_to(p.axis_);
-    if (j.contains("steps")) j.at("steps").get_to(p.steps_);
-    if (j.contains("label")) j.at("label").get_to(p.label_);
-  }
-};
-
-/// 本轮的轴安排与策略说明
-struct DOODLE_CORE_API iteration_axes_t {
-  std::vector<axis_step_t> axes_{};
-  /// 本轮候选生成策略（含上一轮反馈如何被采纳）
-  std::string strategy_{};
-
-  friend void to_json(nlohmann::json& j, const iteration_axes_t& p) {
-    j["axes"]     = p.axes_;
-    j["strategy"] = p.strategy_;
-  }
-  friend void from_json(const nlohmann::json& j, iteration_axes_t& p) {
-    if (j.contains("axes")) j.at("axes").get_to(p.axes_);
-    if (j.contains("strategy")) j.at("strategy").get_to(p.strategy_);
-  }
-};
-
 // ---------------------------------------------------------------------------
 // 表实体：ai_light_iteration
 // ---------------------------------------------------------------------------
@@ -152,8 +113,6 @@ struct DOODLE_CORE_API ai_light_iteration {
   std::int32_t iteration_{1};
 
   ai_light_iteration_state state_{ai_light_iteration_state::generated};
-  /// iteration_axes_t 的 JSON 形态（嵌套结构不是 ORM 的列类型）
-  nlohmann::json axes_{};
 
   /// 派发出去的分布式任务。任务行被删时置空，轮次记录保留。
   uuid server_task_info_id_{};
@@ -174,8 +133,6 @@ struct DOODLE_CORE_API ai_light_iteration {
   chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   // --- 类型化访问器 ---
-  iteration_axes_t get_axes() const { return json_get_or_default<iteration_axes_t>(axes_); }
-  void set_axes(const iteration_axes_t& in_axes) { axes_ = in_axes; }
   ai_light_judgement_t get_judgement() const { return json_get_or_default<ai_light_judgement_t>(judgement_); }
   void set_judgement(const ai_light_judgement_t& in_judgement) { judgement_ = in_judgement; }
 
@@ -197,7 +154,6 @@ struct DOODLE_CORE_API ai_light_iteration {
     j["session_id"]          = p.session_id_;
     j["iteration"]           = p.iteration_;
     j["state"]               = p.state_;
-    j["axes"]                = p.axes_;
     j["server_task_info_id"] = p.server_task_info_id_;
     j["dispatch_at"]         = p.dispatch_at_;
     j["render_at"]           = p.render_at_;
@@ -214,7 +170,6 @@ struct DOODLE_CORE_API ai_light_iteration {
     if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
     if (j.contains("iteration")) j.at("iteration").get_to(p.iteration_);
     if (j.contains("state")) j.at("state").get_to(p.state_);
-    if (j.contains("axes")) j.at("axes").get_to(p.axes_);
     if (j.contains("server_task_info_id")) j.at("server_task_info_id").get_to(p.server_task_info_id_);
     if (j.contains("dispatch_at")) j.at("dispatch_at").get_to(p.dispatch_at_);
     if (j.contains("render_at")) j.at("render_at").get_to(p.render_at_);

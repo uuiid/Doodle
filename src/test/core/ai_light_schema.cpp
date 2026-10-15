@@ -150,7 +150,6 @@ lighting_rig_t make_probe_rig(const uuid& in_session_id, std::int32_t in_iterati
   l_rig.iteration_       = in_iteration;
   l_rig.candidate_index_ = in_index;
   l_rig.baseline_level_  = "/Game/Test/RenderMap";
-  l_rig.variant_axis_    = variant_axis_t{variant_axis_kind::key_fill_ratio, 4.0 + in_index, "光比档"};
   l_rig.provenance_      = provenance_t{"deepseek-flash", "hash_abc", {"ref_00.png", "ref_01.png"}, 12345, "stats_only"};
   l_rig.globals_.exposure_               = exposure_t{"manual", -0.3};
   l_rig.globals_.white_balance_          = white_balance_t{5600.0, 0.0};
@@ -352,9 +351,6 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     ai_light_iteration l_iter{};
     l_iter.session_id_ = l_session_row.uuid_id_;
     l_iter.iteration_  = 1;
-    l_iter.set_axes(iteration_axes_t{
-        {axis_step_t{variant_axis_kind::key_fill_ratio, {4.0, 6.0, 8.0}, "光比"}}, "沿光比展开三档"
-    });
     insert(l_session).into<ai_light_iteration>().values(l_iter)();
     BOOST_TEST(!l_iter.uuid_id_.is_nil());
 
@@ -407,8 +403,7 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     // 4. 轮次
     auto l_iter_back = l_sql.get_ai_light_iteration(l_session_row.uuid_id_, 1);
     BOOST_TEST(l_iter_back.has_value());
-    BOOST_TEST(l_iter_back->get_axes().axes_.size() == 1);
-    BOOST_TEST(l_iter_back->get_axes().axes_.front().steps_.size() == 3);
+    BOOST_TEST(l_iter_back->iteration_ == 1);
 
     // 6. 候选: 6 个, 按 candidate_index 升序, rig 逐字节一致
     auto l_cands = l_sql.get_ai_light_candidates(l_iter.uuid_id_);
@@ -420,7 +415,6 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
       // 会变成单元素数组 [rig]，两边都包一层数组就掩盖了真实的字段差异。
       BOOST_TEST(nlohmann::json(l_cands[l_i].get_rig()) == nlohmann::json(l_rigs[l_i]));
       // 真实列与 rig 副本一致
-      BOOST_TEST(en(l_cands[l_i].variant_axis_) == en(variant_axis_kind::key_fill_ratio));
       BOOST_TEST(l_cands[l_i].session_id_ == l_session_row.uuid_id_);
       BOOST_TEST(en(l_cands[l_i].render_status_) == en(candidate_render_status::rendered));
       BOOST_TEST(l_cands[l_i].light_count_ == 2);

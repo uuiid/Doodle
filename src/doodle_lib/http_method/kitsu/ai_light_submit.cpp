@@ -56,8 +56,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
           [](const light_t& in_light) { return in_light.role_ == light_role::key; }
       ),
       bad_request,
-      "候选基线 rig 里没有 role=key 的主光：key_direction / key_fill_ratio 两个轴都会变成空操作，"
-      "§9.1 要求的「候选之间真的在目标上有差异」无法成立"
+      "候选基线 rig 里没有 role=key 的主光，§9.1 要求的「候选之间真的在目标上有差异」无法成立"
   );
 
   {
@@ -69,8 +68,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
       const auto& l_rig = l_req.rigs_.at(l_i);
       DOODLE_CHICK_HTTP(
           !(l_to_substance(l_rig) == l_base_substance), bad_request,
-          "候选 {} 沿轴 {} = {} 展开后与基线完全相同（这条轴在当前 rig 上不生效）", l_i,
-          magic_enum::enum_name(l_rig.variant_axis_.axis_), l_rig.variant_axis_.value_
+          "候选 {} 与基线完全相同（§9.1 要求候选之间真的在目标上有差异）", l_i
       );
     }
   }

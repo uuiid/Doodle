@@ -140,28 +140,6 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
                   }
 )
 
-/// 候选沿哪条语义轴变化（判断六：把人工判断变成可用的搜索梯度）
-enum class variant_axis_kind {
-  none,
-  key_direction,
-  key_fill_ratio,
-  kelvin,
-  hardness,
-  ambient_level,
-  grading_strength,
-};
-DOODLE_JSON_SERIALIZE_ENUM_STRICT(
-    variant_axis_kind, {
-                           {variant_axis_kind::none, "none"},
-                           {variant_axis_kind::key_direction, "key_direction"},
-                           {variant_axis_kind::key_fill_ratio, "key_fill_ratio"},
-                           {variant_axis_kind::kelvin, "kelvin"},
-                           {variant_axis_kind::hardness, "hardness"},
-                           {variant_axis_kind::ambient_level, "ambient_level"},
-                           {variant_axis_kind::grading_strength, "grading_strength"},
-                       }
-)
-
 /// ops 的操作种类。add/modify/remove 针对单灯，其余针对全局。
 enum class light_op_kind {
   add,
@@ -388,25 +366,6 @@ struct DOODLE_CORE_API light_t {
   }
 };
 
-/// 本候选沿哪条语义轴变化。§6.6 护栏要求同轮候选的灯集合与角色完全一致，
-/// 只有轴参数不同 —— 否则指标差异会被灯数差异淹没，美术的选择无法归因到轴。
-struct DOODLE_CORE_API variant_axis_t {
-  variant_axis_kind axis_{variant_axis_kind::none};
-  double value_{0.0};
-  std::string label_{};
-
-  friend void to_json(nlohmann::json& j, const variant_axis_t& p) {
-    j["axis"]  = p.axis_;
-    j["value"] = p.value_;
-    j["label"] = p.label_;
-  }
-  friend void from_json(const nlohmann::json& j, variant_axis_t& p) {
-    if (j.contains("axis")) j.at("axis").get_to(p.axis_);
-    if (j.contains("value")) j.at("value").get_to(p.value_);
-    if (j.contains("label")) j.at("label").get_to(p.label_);
-  }
-};
-
 struct DOODLE_CORE_API provenance_t {
   std::string model_{};
   std::string prompt_hash_{};
@@ -554,7 +513,6 @@ struct DOODLE_CORE_API lighting_rig_t {
   uuid shot_task_id_{};
   std::int32_t iteration_{0};
   std::int32_t candidate_index_{0};
-  variant_axis_t variant_axis_{};
   provenance_t provenance_{};
   /// 本轮起点关卡（只读，永不修改）
   std::string baseline_level_{};
@@ -569,7 +527,6 @@ struct DOODLE_CORE_API lighting_rig_t {
     j["shot_task_id"]    = p.shot_task_id_;
     j["iteration"]       = p.iteration_;
     j["candidate_index"] = p.candidate_index_;
-    j["variant_axis"]    = p.variant_axis_;
     j["provenance"]      = p.provenance_;
     j["baseline_level"]  = p.baseline_level_;
     j["globals"]         = p.globals_;
@@ -583,7 +540,6 @@ struct DOODLE_CORE_API lighting_rig_t {
     if (j.contains("shot_task_id")) j.at("shot_task_id").get_to(p.shot_task_id_);
     if (j.contains("iteration")) j.at("iteration").get_to(p.iteration_);
     if (j.contains("candidate_index")) j.at("candidate_index").get_to(p.candidate_index_);
-    if (j.contains("variant_axis")) j.at("variant_axis").get_to(p.variant_axis_);
     if (j.contains("provenance")) j.at("provenance").get_to(p.provenance_);
     if (j.contains("baseline_level")) j.at("baseline_level").get_to(p.baseline_level_);
     if (j.contains("globals")) j.at("globals").get_to(p.globals_);

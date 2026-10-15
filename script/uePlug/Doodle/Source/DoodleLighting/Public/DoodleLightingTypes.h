@@ -80,18 +80,6 @@ enum class EDoodleLightOrigin : uint8
 	Inherited,
 };
 
-/// 候选沿哪条语义轴变化
-enum class EDoodleVariantAxis : uint8
-{
-	None,
-	KeyDirection,
-	KeyFillRatio,
-	Kelvin,
-	Hardness,
-	AmbientLevel,
-	GradingStrength,
-};
-
 /// ops 的操作种类
 enum class EDoodleLightOpKind : uint8
 {
@@ -126,8 +114,6 @@ DOODLELIGHTING_API FString DoodleLightMobilityToString(EDoodleLightMobility InVa
 DOODLELIGHTING_API bool DoodleLightMobilityFromString(const FString& InText, EDoodleLightMobility& OutValue);
 DOODLELIGHTING_API FString DoodleLightOriginToString(EDoodleLightOrigin InValue);
 DOODLELIGHTING_API bool DoodleLightOriginFromString(const FString& InText, EDoodleLightOrigin& OutValue);
-DOODLELIGHTING_API FString DoodleVariantAxisToString(EDoodleVariantAxis InValue);
-DOODLELIGHTING_API bool DoodleVariantAxisFromString(const FString& InText, EDoodleVariantAxis& OutValue);
 DOODLELIGHTING_API FString DoodleLightOpKindToString(EDoodleLightOpKind InValue);
 DOODLELIGHTING_API bool DoodleLightOpKindFromString(const FString& InText, EDoodleLightOpKind& OutValue);
 DOODLELIGHTING_API FString DoodleRenderStatusToString(EDoodleRenderStatus InValue);
@@ -242,14 +228,6 @@ struct DOODLELIGHTING_API FDoodleLight
 	EDoodleLightOrigin Origin = EDoodleLightOrigin::AI;
 };
 
-/// 本候选沿哪条语义轴变化
-struct DOODLELIGHTING_API FDoodleVariantAxis
-{
-	EDoodleVariantAxis Axis = EDoodleVariantAxis::None;
-	double Value = 0.0;
-	FString Label;
-};
-
 /// 出处
 struct DOODLELIGHTING_API FDoodleProvenance
 {
@@ -320,7 +298,6 @@ struct DOODLELIGHTING_API FDoodleLightingRig
 	FString SpecId;
 	int32 Iteration = 1;
 	int32 CandidateIndex = 0;
-	FDoodleVariantAxis VariantAxis;
 	FDoodleProvenance Provenance;
 	FString BaselineLevel;
 	FDoodleGlobals Globals;

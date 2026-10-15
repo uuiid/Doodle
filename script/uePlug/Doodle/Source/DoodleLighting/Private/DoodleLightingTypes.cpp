@@ -111,19 +111,6 @@ DOODLE_LIGHTING_ENUM_IMPL(
 )
 
 DOODLE_LIGHTING_ENUM_IMPL(
-	DoodleVariantAxis, EDoodleVariantAxis,
-	{
-		{EDoodleVariantAxis::None, TEXT("none")},
-		{EDoodleVariantAxis::KeyDirection, TEXT("key_direction")},
-		{EDoodleVariantAxis::KeyFillRatio, TEXT("key_fill_ratio")},
-		{EDoodleVariantAxis::Kelvin, TEXT("kelvin")},
-		{EDoodleVariantAxis::Hardness, TEXT("hardness")},
-		{EDoodleVariantAxis::AmbientLevel, TEXT("ambient_level")},
-		{EDoodleVariantAxis::GradingStrength, TEXT("grading_strength")},
-	}
-)
-
-DOODLE_LIGHTING_ENUM_IMPL(
 	DoodleLightOpKind, EDoodleLightOpKind,
 	{
 		{EDoodleLightOpKind::Add, TEXT("add")},

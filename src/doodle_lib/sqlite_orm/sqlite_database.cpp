@@ -419,7 +419,6 @@ void sqlite_storage::regs_all() {
       .add_column("session_id", &ai_light::ai_light_iteration::session_id_, not_null())
       .add_column("iteration", &ai_light::ai_light_iteration::iteration_, not_null())
       .add_column("state", &ai_light::ai_light_iteration::state_)
-      .add_column("axes", &ai_light::ai_light_iteration::axes_)
       .add_column("server_task_info_id", &ai_light::ai_light_iteration::server_task_info_id_)
       .add_column("dispatch_at", &ai_light::ai_light_iteration::dispatch_at_)
       .add_column("render_at", &ai_light::ai_light_iteration::render_at_)
@@ -446,9 +445,6 @@ void sqlite_storage::regs_all() {
       .add_column("iteration_id", &ai_light::ai_light_candidate::iteration_id_, not_null())
       .add_column("session_id", &ai_light::ai_light_candidate::session_id_, not_null())
       .add_column("candidate_index", &ai_light::ai_light_candidate::candidate_index_, not_null())
-      .add_column("variant_axis", &ai_light::ai_light_candidate::variant_axis_)
-      .add_column("variant_value", &ai_light::ai_light_candidate::variant_value_)
-      .add_column("variant_label", &ai_light::ai_light_candidate::variant_label_)
       .add_column("rig", &ai_light::ai_light_candidate::rig_)
       // 产物路径**没有列**：由 session_id_ / iteration_id_ / uuid_id_ 现算（D44）。
       .add_column("render_status", &ai_light::ai_light_candidate::render_status_)
