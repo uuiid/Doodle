@@ -80,21 +80,6 @@ void remove_db(const FSys::path& in_path) {
 /// 拿不到外面手写的 tag，用框架的当前用例名反而更准。
 std::string current_case_tag() { return boost::unit_test::framework::current_test_case().p_name; }
 
-/// 定稿用的 preview_file。刻意不走 build_accepted_preview_file()：
-/// 那条路要真读 PNG + 落 OpenCV 变体 + 依赖 kitsu_ctx_t 的图片目录，
-/// 属于 HTTP 层的职责。这里要验的是「定稿标记与预览文件同事务」这条状态机规则，
-/// 所以直接造一个形状正确的行即可。
-preview_file make_probe_preview_file() {
-  preview_file l_pf{};
-  l_pf.uuid_id_   = core_set::get_set().get_uuid();
-  l_pf.task_id_   = core_set::get_set().get_uuid();
-  l_pf.name_      = "probe";
-  l_pf.extension_ = "png";
-  l_pf.source_    = preview_file_source_enum::auto_light_generate;
-  l_pf.status_    = preview_file_statuses::ready;
-  return l_pf;
-}
-
 /// 一份最小可测的 AI 灯光会话数据：会话 + Spec + 一轮 + N 个候选。
 ///
 /// 归属 id 指向并不存在的 project/task/entity，而这几列都是 NOT NULL，
@@ -285,10 +270,9 @@ DOODLE_FIXTURE_TEST_CASE_CORO(overdue_session_stays_awaiting_judgement_and_stays
   l_j.by_                    = core_set::get_set().get_uuid();
   l_j.at_                    = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
   l_j.selected_candidate_id_ = l_fx.candidates_.at(2).uuid_id_;
-  auto l_pf                  = make_probe_preview_file();
   bool l_threw               = false;
   try {
-    co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j, l_pf);
+    co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j);
   } catch (const std::exception& in_err) {
     l_threw = true;
     BOOST_TEST_MESSAGE(fmt::format("超时会话判断失败: {}", in_err.what()));

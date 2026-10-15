@@ -143,52 +143,6 @@ void backup_session_dir(const ai_light_session& in_session) {
   }
 }
 
-/// 定稿：把候选的 PNG 落成 preview_file 的**对象**（不落库，由 apply_judgement 同事务插入）。
-///
-/// 只有**定稿**才进 preview_file（中间候选走 /candidate/{id}/image 专用接口）——
-/// 这是既定决策：中间候选是搜索过程的中间态，每轮 6 张全注册会把任务的预览列表冲垮，
-/// 也会把「交付物」这个概念稀释掉。EXR 一律不注册、不下发浏览器。
-preview_file build_accepted_preview_file(
-    sqlite_database& in_sql, const ai_light_session& in_session, const ai_light_candidate& in_candidate,
-    const uuid& in_person_id
-) {
-  // 落点是现算的（D44），所以这里只有一条判定：算出来的那张图在不在。
-  const FSys::path l_png_path = candidate_render_path(g_ctx().get<kitsu_ctx_t>(), in_candidate, false);
-  DOODLE_CHICK_HTTP(
-      FSys::exists(l_png_path), bad_request, "候选 {} 的渲染图不存在（{}），无法定稿", in_candidate.uuid_id_,
-      l_png_path.generic_string()
-  );
-
-  auto l_image = cv::imread(l_png_path.generic_string());
-  DOODLE_CHICK_HTTP(!l_image.empty(), internal_server_error, "候选 {} 的渲染图无法读取", in_candidate.uuid_id_);
-
-  preview_file l_pf{};
-  // uuid 必须在这里就定下来，不能等 ORM 在 insert 时回填：
-  // save_variants() 用 uuid 当文件名，nil uuid 会让所有定稿图写进同一个路径。
-  l_pf.uuid_id_       = core_set::get_set().get_uuid();
-  l_pf.task_id_       = in_session.task_id_;
-  l_pf.person_id_     = in_person_id;
-  l_pf.name_          = core_set::get_set().get_uuid_str();
-  l_pf.original_name_ = fmt::format("ai_light_{}_cand{:02}", in_session.uuid_id_, in_candidate.candidate_index_);
-  l_pf.extension_     = "png";
-  l_pf.source_        = preview_file_source_enum::auto_light_generate;
-  l_pf.status_        = preview_file_statuses::processing;
-  l_pf.revision_      = in_sql.get_next_preview_revision(l_pf.task_id_);
-  l_pf.position_      = in_sql.get_next_position(l_pf.task_id_, l_pf.revision_);
-
-  // 变体落盘必须走 preview::save_variants —— 预览列表页读的就是它生成的那套尺寸，
-  // 另写一套必然与既有预览文件不一致。
-  auto l_size         = preview::save_variants(l_image, l_pf.uuid_id_);
-  l_pf.width_         = l_size.width;
-  l_pf.height_        = l_size.height;
-  l_pf.path_          = g_ctx().get<kitsu_ctx_t>().get_pictures_preview_file(l_pf.uuid_id_);
-  // path_ 不承载取图（前端按 uuid 走 /api/pictures/preview-files/{id}.png），
-  // 这里只把大小记准，省得预览列表页显示 0 字节。
-  l_pf.file_size_     = FSys::exists(l_pf.path_) ? FSys::file_size(l_pf.path_) : 0;
-  l_pf.status_        = preview_file_statuses::ready;
-  return l_pf;
-}
-
 /// 读会话详情并做权限校验。多处复用。
 ai_light_session_detail_t load_detail_checked(
     const http_jwt_fun::http_jwt_t& in_person, sqlite_database& in_sql, const uuid& in_session_id
@@ -398,7 +352,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
     ai_light_reference l_ref{};
     l_ref.session_id_ = l_session.uuid_id_;
     // uuid 必须在这里就定下来，不能等 ORM 在 insert 时回填：文件名要用它，
-    // nil uuid 会让所有参考图写进同一个路径（先例：build_accepted_preview_file）。
+    // nil uuid 会让所有参考图写进同一个路径。
     l_ref.uuid_id_    = core_set::get_set().get_uuid();
     l_ref.file_path_  = l_ctx.get_ai_light_reference_file(l_session.uuid_id_, l_ref.uuid_id_);
     FSys::rename(l_info.path_, l_ref.file_path_);
@@ -622,33 +576,20 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   l_judgement.by_ = person_.person_.uuid_id_;
   l_judgement.at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
-  std::optional<preview_file> l_preview_file{};
   if (!l_judgement.selected_candidate_id_.is_nil()) {
     auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(l_judgement.selected_candidate_id_);
     DOODLE_CHICK_HTTP(
         l_cand.iteration_id_ == l_iteration->uuid_id_, bad_request, "候选 {} 不属于第 {} 轮", l_cand.uuid_id_,
         l_iteration->iteration_
     );
-    l_preview_file = build_accepted_preview_file(l_sql, l_session, l_cand, person_.person_.uuid_id_);
   }
 
-  co_await apply_judgement(l_sql, l_session, *l_iteration, l_judgement, l_preview_file);
-
-  if (l_preview_file.has_value()) {
-    socket_io::broadcast(
-        socket_io::preview_file_new_broadcast_t{
-            .preview_file_id_ = l_preview_file->uuid_id_,
-            .comment_id_      = uuid{},
-            .project_id_      = l_session.project_id_,
-        }
-    );
-  }
+  co_await apply_judgement(l_sql, l_session, *l_iteration, l_judgement);
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 判断 AI 灯光会话 {} 第 {} 轮: {}{}", person_.person_.email_,
+      g_logger_ctrl().get_http(), "用户 {}({}) 判断 AI 灯光会话 {} 第 {} 轮: {}", person_.person_.email_,
       person_.person_.get_full_name(), l_session.uuid_id_, l_iteration->iteration_,
-      l_preview_file.has_value() ? "定稿" : (l_judgement.selected_candidate_id_.is_nil() ? "全否" : "续轮"),
-      l_preview_file.has_value() ? "（已定稿并注册预览文件）" : ""
+      l_judgement.selected_candidate_id_.is_nil() ? "全否" : "选定候选"
   );
 
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);

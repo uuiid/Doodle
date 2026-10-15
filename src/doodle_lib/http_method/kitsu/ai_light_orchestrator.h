@@ -68,24 +68,13 @@ struct DOODLELIB_API ai_light_iteration_locator_t {
 ///
 /// 前置条件（由调用方校验）：
 ///   * in_iteration 就是 in_judgement 所判断的那一轮；
-///   * in_judgement.selected_candidate_id_ 属于 in_iteration（防跨轮误选）；
-///   * in_accepted_preview_file 有值时即为定稿（id / 尺寸 / 路径必须已填好），
-///     无值时为续轮或全否。
+///   * in_judgement.selected_candidate_id_ 属于 in_iteration（防跨轮误选）。
 ///
-/// 为什么 preview_file 由调用方构造、却由本函数插入：定稿要同时写三处
-/// （preview_file 行、candidate 的定稿标记与 preview_file_id_、会话状态），
-/// 分两个事务提交就会出现「预览文件已建但候选没标定稿」这种半成品状态。
-/// 调用方负责碰文件（OpenCV 读图 + save_variants 落变体），本函数负责一次事务落库。
-///
-/// preview_file 按值传入而非 const 引用：ORM 的 values() 会回填 uuid_id_ / created_at_
-/// 这类服务端生成的字段，必须拿到可写对象。
-///
-/// 本函数负责：插入 preview_file、标记候选（选了候选 → is_selected_ = true）、
-/// 回填 candidate.preview_file_id_、
+/// 本函数负责：标记候选（选了候选 → is_selected_ = true）、
 /// 写 iteration 的判断记录、推进 session 状态。
 DOODLELIB_API boost::asio::awaitable<void> apply_judgement(
     sqlite_database& in_sql, ai_light_session& in_session, ai_light_iteration& in_iteration,
-    const ai_light_judgement_t& in_judgement, std::optional<preview_file> in_accepted_preview_file = {}
+    const ai_light_judgement_t& in_judgement
 );
 
 /// 候选渲染产物的落点（D44）：**唯一**的计算处。

@@ -71,7 +71,7 @@ orm::sql_modify_statement_t make_session_update(sqlite_database& in_sql, const a
 
 boost::asio::awaitable<void> apply_judgement(
     sqlite_database& in_sql, ai_light_session& in_session, ai_light_iteration& in_iteration,
-    const ai_light_judgement_t& in_judgement, std::optional<preview_file> in_accepted_preview_file
+    const ai_light_judgement_t& in_judgement
 ) {
   DOODLE_CHICK_HTTP(
       in_iteration.session_id_ == in_session.uuid_id_, bad_request, "轮次 {} 不属于会话 {}", in_iteration.uuid_id_,
@@ -90,9 +90,6 @@ boost::asio::awaitable<void> apply_judgement(
 
   orm::sql_modify_statement_vector_t l_sqls{};
 
-  if (in_accepted_preview_file.has_value())
-    l_sqls.emplace_back(orm::insert(in_sql).into<preview_file>().values(*in_accepted_preview_file));
-
   if (!in_judgement.selected_candidate_id_.is_nil()) {
     auto l_cand = in_sql.get_by_uuid<ai_light_candidate>(in_judgement.selected_candidate_id_);
     DOODLE_CHICK_HTTP(
@@ -100,18 +97,12 @@ boost::asio::awaitable<void> apply_judgement(
         in_iteration.iteration_
     );
 
-    if (in_accepted_preview_file.has_value()) {
-      l_cand.preview_file_id_ = in_accepted_preview_file->uuid_id_;
-    }
     l_cand.is_selected_ = true;
 
     l_sqls.emplace_back(
         orm::update(in_sql)
             .from<ai_light_candidate>()
-            .set(
-                c(&ai_light_candidate::is_selected_)     = l_cand.is_selected_,
-                c(&ai_light_candidate::preview_file_id_) = l_cand.preview_file_id_
-            )
+            .set(c(&ai_light_candidate::is_selected_) = l_cand.is_selected_)
             .where(c(&ai_light_candidate::uuid_id_) == l_cand.uuid_id_)
     );
   }
@@ -137,10 +128,7 @@ boost::asio::awaitable<void> apply_judgement(
 
   SPDLOG_LOGGER_INFO(
       g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮判断 {}（操作人 {}）", in_session.uuid_id_,
-      in_iteration.iteration_,
-      in_accepted_preview_file.has_value() ? "定稿"
-                                           : (in_judgement.selected_candidate_id_.is_nil() ? "全否" : "续轮"),
-      in_judgement.by_
+      in_iteration.iteration_, in_judgement.selected_candidate_id_.is_nil() ? "全否" : "选定候选", in_judgement.by_
   );
   co_return;
 }
