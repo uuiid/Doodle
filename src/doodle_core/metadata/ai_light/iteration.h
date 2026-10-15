@@ -119,8 +119,6 @@ struct DOODLE_CORE_API ai_light_iteration {
 
   std::optional<chrono::system_zoned_time> dispatch_at_{};
   std::optional<chrono::system_zoned_time> render_at_{};
-  /// 整轮实测耗时（决策 17：先不设硬上限，但要记录并告警）
-  std::int64_t render_ms_total_{0};
 
   uuid judged_by_{};
   std::optional<chrono::system_zoned_time> judged_at_{};
@@ -157,7 +155,6 @@ struct DOODLE_CORE_API ai_light_iteration {
     j["server_task_info_id"] = p.server_task_info_id_;
     j["dispatch_at"]         = p.dispatch_at_;
     j["render_at"]           = p.render_at_;
-    j["render_ms_total"]     = p.render_ms_total_;
     j["judged_by"]           = p.judged_by_;
     j["judged_at"]           = p.judged_at_;
     j["judgement"]           = p.judgement_;
@@ -173,7 +170,6 @@ struct DOODLE_CORE_API ai_light_iteration {
     if (j.contains("server_task_info_id")) j.at("server_task_info_id").get_to(p.server_task_info_id_);
     if (j.contains("dispatch_at")) j.at("dispatch_at").get_to(p.dispatch_at_);
     if (j.contains("render_at")) j.at("render_at").get_to(p.render_at_);
-    if (j.contains("render_ms_total")) j.at("render_ms_total").get_to(p.render_ms_total_);
     if (j.contains("judged_by")) j.at("judged_by").get_to(p.judged_by_);
     if (j.contains("judged_at")) j.at("judged_at").get_to(p.judged_at_);
     if (j.contains("judgement")) j.at("judgement").get_to(p.judgement_);

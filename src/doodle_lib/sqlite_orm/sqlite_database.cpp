@@ -422,7 +422,6 @@ void sqlite_storage::regs_all() {
       .add_column("server_task_info_id", &ai_light::ai_light_iteration::server_task_info_id_)
       .add_column("dispatch_at", &ai_light::ai_light_iteration::dispatch_at_)
       .add_column("render_at", &ai_light::ai_light_iteration::render_at_)
-      .add_column("render_ms_total", &ai_light::ai_light_iteration::render_ms_total_)
       .add_column("judged_by", &ai_light::ai_light_iteration::judged_by_)
       .add_column("judged_at", &ai_light::ai_light_iteration::judged_at_)
       .add_column("judgement", &ai_light::ai_light_iteration::judgement_)
@@ -448,8 +447,6 @@ void sqlite_storage::regs_all() {
       .add_column("rig", &ai_light::ai_light_candidate::rig_)
       // 产物路径**没有列**：由 session_id_ / iteration_id_ / uuid_id_ 现算（D44）。
       .add_column("render_status", &ai_light::ai_light_candidate::render_status_)
-      .add_column("render_ms", &ai_light::ai_light_candidate::render_ms_)
-      .add_column("light_count", &ai_light::ai_light_candidate::light_count_)
       .add_column("metrics", &ai_light::ai_light_candidate::metrics_)
       .add_column("vlm_score", &ai_light::ai_light_candidate::vlm_score_)
       .add_column("vlm_delta", &ai_light::ai_light_candidate::vlm_delta_)

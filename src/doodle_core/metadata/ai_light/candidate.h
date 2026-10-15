@@ -118,8 +118,6 @@ struct DOODLE_CORE_API ai_light_candidate {
   nlohmann::json rig_{};
 
   candidate_render_status render_status_{candidate_render_status::pending};
-  std::int64_t render_ms_{0};
-  std::int32_t light_count_{0};
 
   nlohmann::json metrics_{};
 
@@ -171,8 +169,6 @@ struct DOODLE_CORE_API ai_light_candidate {
     j["candidate_index"]     = p.candidate_index_;
     j["rig"]                 = p.rig_;
     j["render_status"]       = p.render_status_;
-    j["render_ms"]           = p.render_ms_;
-    j["light_count"]         = p.light_count_;
     j["metrics"]             = p.metrics_;
     j["vlm_score"]           = p.vlm_score_;
     j["vlm_delta"]           = p.vlm_delta_;
@@ -189,8 +185,6 @@ struct DOODLE_CORE_API ai_light_candidate {
     if (j.contains("candidate_index")) j.at("candidate_index").get_to(p.candidate_index_);
     if (j.contains("rig")) j.at("rig").get_to(p.rig_);
     if (j.contains("render_status")) j.at("render_status").get_to(p.render_status_);
-    if (j.contains("render_ms")) j.at("render_ms").get_to(p.render_ms_);
-    if (j.contains("light_count")) j.at("light_count").get_to(p.light_count_);
     if (j.contains("metrics")) j.at("metrics").get_to(p.metrics_);
     if (j.contains("vlm_score")) j.at("vlm_score").get_to(p.vlm_score_);
     if (j.contains("vlm_delta")) j.at("vlm_delta").get_to(p.vlm_delta_);

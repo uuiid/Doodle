@@ -365,8 +365,6 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
       l_cand.sync_from_rig();
       // 路径不是列（D44）：候选行只留状态与数值，路径由 candidate_render_path 现算。
       l_cand.render_status_   = candidate_render_status::rendered;
-      l_cand.render_ms_       = 18000 + l_i * 100;
-      l_cand.light_count_     = 2;
       l_cand.set_metrics(candidate_metrics_t{
           "display_srgb", luma_percentiles_value_t{0.02, 0.09 + 0.01 * l_i, 0.60}, {},
           0.61, 3900.0, clip_rate_value_t{0.0, 0.02},
@@ -417,7 +415,6 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
       // 真实列与 rig 副本一致
       BOOST_TEST(l_cands[l_i].session_id_ == l_session_row.uuid_id_);
       BOOST_TEST(en(l_cands[l_i].render_status_) == en(candidate_render_status::rendered));
-      BOOST_TEST(l_cands[l_i].light_count_ == 2);
       BOOST_TEST(l_cands[l_i].get_metrics().landings_.size() == 1);
       BOOST_TEST(l_cands[l_i].get_vlm_delta().differences_.size() == 1);
     }

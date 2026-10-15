@@ -6,12 +6,12 @@
 //
 //   1. parse_round_render_report —— 回传报文解析。分界是**严格 vs 宽松**（D26）：
 //      严格字段（`candidates` 数组本身、每条的 `candidate_id` / `status`）坏了整份拒掉，
-//      抛 bad_gateway；宽松字段（`candidate_index` / `render_ms` / `light_count` / `metrics`）
+//      抛 bad_gateway；宽松字段（`candidate_index` / `metrics`）
 //      坏了只丢那一个字段，已经渲出来的 6 张图不能因为一个诊断数字不合规就作废。
 //
 //   2. apply_render_report —— 两条出口（D28）：
 //      至少一张 rendered → mark_iteration_rendered（轮次进 awaiting_judgement、会话
-//      mark_awaiting_judgement、耗时/灯数/指标落候选行）；
+//      mark_awaiting_judgement、状态与指标落候选行）；
 //      否则，或者报文带了 error → mark_iteration_failed（**只**写会话 failure_reason_，
 //      轮次状态与候选行都不动 —— 失败不是终态，美术再点一次 /iterate 就重派一轮）。
 //
@@ -195,7 +195,6 @@ struct fixture_t : doodle_test::coro_fixture_t {
       l_cand.candidate_index_ = l_i;
       // 派发时是 pending，渲染完成后服务端回填成 rendered
       l_cand.render_status_   = candidate_render_status::pending;
-      l_cand.light_count_     = 0;
       insert(orm_).into<ai_light_candidate>().values(l_cand)();
       candidates_.push_back(l_cand);
       // 库里没有路径可写（D44）：路径由候选行现算，所以夹具按**同一个函数**把真文件造在
@@ -261,8 +260,6 @@ nlohmann::json candidate_json(const ai_light_candidate& in_cand, const char* in_
   l_j["candidate_index"] = in_cand.candidate_index_;
   l_j["candidate_id"]    = in_cand.uuid_id_;
   l_j["status"]          = in_status;
-  l_j["render_ms"]       = 12345;
-  l_j["light_count"]     = 3;
   l_j["metrics"]         = nlohmann::json{{"space", "display_srgb"}, {"contrast", 0.42}};
   return l_j;
 }
@@ -305,8 +302,6 @@ BOOST_FIXTURE_TEST_CASE(parse_full_round_keeps_every_field, fixture_t) {
   BOOST_TEST(l_report.candidates_.at(0).candidate_index_ == 0);
   BOOST_TEST(l_report.candidates_.at(0).candidate_id_ == l_fx.candidates_.at(0).uuid_id_);
   BOOST_TEST(en(l_report.candidates_.at(0).status_) == en(candidate_render_status::rendered));
-  BOOST_TEST(l_report.candidates_.at(0).render_ms_ == 12345);
-  BOOST_TEST(l_report.candidates_.at(0).light_count_ == 3);
   BOOST_TEST(l_report.candidates_.at(0).metrics_.contrast_ == 0.42);
 }
 
@@ -328,8 +323,6 @@ BOOST_FIXTURE_TEST_CASE(parse_defaults_missing_loose_fields, fixture_t) {
   BOOST_TEST(l_report.candidates_.size() == 1u);
   // candidate_index 缺失时按下标推：工作机的回传顺序就是派发顺序
   BOOST_TEST(l_report.candidates_.at(0).candidate_index_ == 0);
-  BOOST_TEST(l_report.candidates_.at(0).render_ms_ == 0);
-  BOOST_TEST(l_report.candidates_.at(0).light_count_ == 0);
   // metrics 缺失 → 默认值（space 有默认 "display_srgb"），不是空对象
   BOOST_TEST(l_report.candidates_.at(0).metrics_.space_ == std::string{"display_srgb"});
   BOOST_TEST(en(l_report.candidates_.at(0).status_) == en(candidate_render_status::rendered));
@@ -405,7 +398,6 @@ BOOST_FIXTURE_TEST_CASE(parse_drops_broken_metrics_only, fixture_t) {
   BOOST_TEST(l_report.candidates_.size() == 1u);
   BOOST_TEST(en(l_report.candidates_.at(0).status_) == en(candidate_render_status::rendered));
   BOOST_TEST(l_report.candidates_.at(0).metrics_.contrast_ == 0.0);
-  BOOST_TEST(l_report.candidates_.at(0).render_ms_ == 12345);
 }
 
 // ===========================================================================
@@ -423,15 +415,12 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_advances_iteration_and_session, fixtu
 
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::awaiting_judgement));
   BOOST_TEST(l_it.render_at_.has_value());
-  BOOST_TEST(l_it.render_ms_total_ == 24690);
   BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::awaiting_judgement));
   BOOST_TEST(l_session.failure_reason_.empty());
 
   for (std::size_t l_i = 0; l_i != 2; ++l_i) {
     const auto l_cand = l_fx.reload_candidate(l_i);
     BOOST_TEST(en(l_cand.render_status_) == en(candidate_render_status::rendered));
-    BOOST_TEST(l_cand.render_ms_ == 12345);
-    BOOST_TEST(l_cand.light_count_ == 3);
     // 行上的 metrics_ 是 JSON 列（ORM 不支持嵌套结构体），读的时候走类型化访问器
     BOOST_TEST(l_cand.get_metrics().contrast_ == 0.42);
   }
@@ -496,7 +485,6 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_error_without_rendered_writes_failure
   BOOST_TEST(!l_it.render_at_.has_value());
   BOOST_TEST(l_session.failure_reason_ == std::string{"UE 启动失败：DoodleLighting commandlet 未找到"});
   BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
-  BOOST_TEST(l_fx.reload_candidate(0).render_ms_ == 0);
   BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::pending));
 }
 
@@ -847,7 +835,7 @@ BOOST_FIXTURE_TEST_CASE(task_payload_json_keys_are_frozen, fixture_t) {
   for (const auto* l_key : {"candidates", "frame_rate", "error"}) BOOST_TEST(l_jr.contains(l_key));
   const auto& l_jrc = l_jr.at("candidates").at(0);
   for (const auto* l_key :
-       {"candidate_index", "candidate_id", "status", "render_ms", "light_count", "frame_count", "metrics"}) {
+       {"candidate_index", "candidate_id", "status", "frame_count", "metrics"}) {
     BOOST_TEST(l_jrc.contains(l_key));
   }
   BOOST_TEST(!l_jrc.contains("png_path"));

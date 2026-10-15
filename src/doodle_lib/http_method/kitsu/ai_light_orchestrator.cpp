@@ -202,34 +202,28 @@ boost::asio::awaitable<void> mark_iteration_rendered(
   auto l_session = in_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
 
   orm::sql_modify_statement_vector_t l_sqls{};
-  std::int64_t l_total_ms{0};
   for (const auto& l_cand : in_candidates) {
     DOODLE_CHICK_HTTP(
         l_cand.iteration_id_ == l_it->uuid_id_, bad_request, "候选 {} 不属于轮次 {}", l_cand.uuid_id_, l_it->iteration_
     );
-    l_total_ms += l_cand.render_ms_;
     l_sqls.emplace_back(
         orm::update(in_sql)
             .from<ai_light_candidate>()
             .set(
                 c(&ai_light_candidate::render_status_) = l_cand.render_status_,
-                c(&ai_light_candidate::render_ms_)     = l_cand.render_ms_,
-                c(&ai_light_candidate::light_count_)   = l_cand.light_count_,
                 c(&ai_light_candidate::metrics_)       = l_cand.metrics_
             )
             .where(c(&ai_light_candidate::uuid_id_) == l_cand.uuid_id_)
     );
   }
 
-  l_it->state_           = ai_light_iteration_state::awaiting_judgement;
-  l_it->render_at_       = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  l_it->render_ms_total_ = l_total_ms;
+  l_it->state_     = ai_light_iteration_state::awaiting_judgement;
+  l_it->render_at_ = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_sqls.emplace_back(
       orm::update(in_sql)
           .from<ai_light_iteration>()
           .set(
-              c(&ai_light_iteration::state_) = l_it->state_, c(&ai_light_iteration::render_at_) = l_it->render_at_,
-              c(&ai_light_iteration::render_ms_total_) = l_it->render_ms_total_
+              c(&ai_light_iteration::state_) = l_it->state_, c(&ai_light_iteration::render_at_) = l_it->render_at_
           )
           .where(c(&ai_light_iteration::uuid_id_) == l_it->uuid_id_)
   );
@@ -241,8 +235,8 @@ boost::asio::awaitable<void> mark_iteration_rendered(
   co_await in_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮渲染完成，{} 个候选待判断（整轮 {} ms）", l_session.uuid_id_,
-      l_it->iteration_, in_candidates.size(), l_total_ms
+      g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮渲染完成，{} 个候选待判断", l_session.uuid_id_,
+      l_it->iteration_, in_candidates.size()
   );
   co_return;
 }
@@ -315,8 +309,6 @@ round_render_report_t parse_round_render_report(const nlohmann::json& in_json) {
 
     l_cand.candidate_index_ =
         static_cast<std::int32_t>(l_opt_number(l_item, "candidate_index").value_or(static_cast<double>(i)));
-    l_cand.render_ms_   = static_cast<std::int64_t>(l_opt_number(l_item, "render_ms").value_or(0.0));
-    l_cand.light_count_ = static_cast<std::int32_t>(l_opt_number(l_item, "light_count").value_or(0.0));
 
     if (l_item.contains("metrics")) {
       try {
@@ -393,8 +385,6 @@ boost::asio::awaitable<void> apply_render_report(
 
     ai_light_candidate l_cand = *l_found;
     l_cand.render_status_     = l_rep.status_;
-    l_cand.render_ms_         = l_rep.render_ms_;
-    l_cand.light_count_       = l_rep.light_count_;
     l_cand.metrics_           = l_rep.metrics_;
 
     if (l_cand.render_status_ == candidate_render_status::rendered) {

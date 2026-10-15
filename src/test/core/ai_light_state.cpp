@@ -184,8 +184,6 @@ struct fixture_t : doodle_test::coro_fixture_t {
       l_cand.session_id_      = session_.uuid_id_;
       l_cand.candidate_index_ = l_i;
       l_cand.render_status_   = candidate_render_status::rendered;
-      l_cand.render_ms_       = 18000 + l_i * 100;
-      l_cand.light_count_     = 2;
       insert(orm_).into<ai_light_candidate>().values(l_cand)();
       candidates_.push_back(l_cand);
     }
@@ -485,11 +483,10 @@ DOODLE_FIXTURE_TEST_CASE_CORO(awaiting_judgement_sets_due_at_four_hours_ahead, f
   BOOST_TEST(l_delta > g_judgement_timeout - std::chrono::minutes{1});
   BOOST_TEST(l_delta < g_judgement_timeout + std::chrono::minutes{1});
 
-  // 轮次被推到等判断，并记下了整轮耗时
+  // 轮次被推到等判断
   auto l_iter = l_fx.reload_iteration();
   BOOST_TEST(en(l_iter.state_) == en(ai_light_iteration_state::awaiting_judgement));
   BOOST_TEST(l_iter.render_at_.has_value());
-  BOOST_TEST(l_iter.render_ms_total_ > 0);
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(overdue_session_stays_awaiting_judgement_and_stays_judgeable, fixture_t) {

@@ -125,7 +125,7 @@ inline FSys::path candidate_frames_dir(const http::kitsu_ctx_t& in_ctx, const ai
 ///
 /// 本轮没有 worker（§13.3 未做），所以这个函数只提供入口并纳入单测；
 /// worker 里程碑把回传处理接上即可，状态机本身不用改。
-/// in_candidates 是回传的候选，只填 render_ms_ / light_count_ / metrics_ ——
+/// in_candidates 是回传的候选，只填 render_status_ / metrics_ ——
 /// 路径不在回传里，落库时按 candidate_render_path 现算（D44）；frame_count_ 是回传里的
 /// **诊断**字段（工作机与 UE 用它判断帧序列是否完整），候选行没有对应的列，不落库。
 ///
@@ -141,7 +141,7 @@ DOODLELIB_API boost::asio::awaitable<void> mark_iteration_rendered(
 ///   * `candidates`、每个元素的 `candidate_id` / `status` 是**严格**字段 —— 缺了或值不认识
 ///     就抛 `bad_gateway`。理由：状态不认识时无法判断「这张图能不能给美术看」，
 ///     猜一个默认值等于把回传错误变成看不出来的偏移。
-///   * `candidate_index` / `render_ms` / `light_count` / `metrics` 是**宽松**字段 ——
+///   * `candidate_index` / `metrics` 是**宽松**字段 ——
 ///     缺失取默认、形状不符丢弃（+ WARN）。它们是数值与诊断数据，丢一个不该让整轮的
 ///     图白渲染。
 ///
