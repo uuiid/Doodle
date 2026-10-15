@@ -606,7 +606,6 @@ BOOST_AUTO_TEST_CASE(preset_crud_roundtrip) {
   ai_light_preset l_preset{};
   l_preset.name_          = "伦勃朗";
   l_preset.tags_          = {"单灯", "侧逆", "古典"};
-  l_preset.source_        = preset_source::artist;
   l_preset.enabled_       = true;
   l_preset.embedding_dim_ = 3;
   l_preset.embedding_     = {0.1, 0.2, 0.3};
@@ -619,7 +618,6 @@ BOOST_AUTO_TEST_CASE(preset_crud_roundtrip) {
   BOOST_TEST(l_all.front().name_ == "伦勃朗");
   BOOST_TEST(l_all.front().tags_.size() == 3);
   BOOST_TEST(l_all.front().embedding_.size() == 3);
-  BOOST_TEST(en(l_all.front().source_) == en(preset_source::artist));
   BOOST_TEST(l_all.front().get_applicable().scene_type_.size() == 1);
   BOOST_TEST(l_all.front().get_applicable().scene_type_.front() == "interior");
   BOOST_TEST(l_all.front().get_applicable().subject_count_.has_value());

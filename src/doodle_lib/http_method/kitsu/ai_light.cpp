@@ -866,8 +866,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_route, post) {
   ai_light_preset l_preset{};
   l_json.get_to(l_preset);
   DOODLE_CHICK_HTTP(!l_preset.name_.empty(), bad_request, "缺少预设名称");
-  // 预设的来源由服务端定：客户端传 artist/builtin 会污染「哪些是内置」这个事实
-  l_preset.source_     = preset_source::artist;
   l_preset.created_by_ = person_.person_.uuid_id_;
 
   sql_modify_statement_vector_t l_sqls{};
@@ -905,7 +903,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, put) {
   if (l_json.contains("applicable")) l_json.at("applicable").get_to(l_preset->applicable_);
   if (l_json.contains("stats_target")) l_json.at("stats_target").get_to(l_preset->stats_target_);
   if (l_json.contains("enabled")) l_json.at("enabled").get_to(l_preset->enabled_);
-  // source_ / created_by_ 不可改：那是「谁贡献的、是不是内置」的事实
 
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(update(l_sql)

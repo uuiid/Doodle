@@ -478,7 +478,6 @@ void sqlite_storage::regs_all() {
       .add_column("applicable", &ai_light::ai_light_preset::applicable_)
       .add_column("stats_target", &ai_light::ai_light_preset::stats_target_)
       .add_column("enabled", &ai_light::ai_light_preset::enabled_)
-      .add_column("source", &ai_light::ai_light_preset::source_)
       .add_column("created_by", &ai_light::ai_light_preset::created_by_)
       .add_column("created_at", &ai_light::ai_light_preset::created_at_)
       .add_column("updated_at", &ai_light::ai_light_preset::updated_at_)

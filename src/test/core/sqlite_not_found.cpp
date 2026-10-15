@@ -68,7 +68,6 @@ struct fixture_t {
     orm_.pragma().foreign_keys(false);
 
     preset_.name_    = "三点布光";
-    preset_.source_  = preset_source::artist;
     preset_.enabled_ = true;
     insert(orm_).into<ai_light_preset>().values(preset_)();
   }

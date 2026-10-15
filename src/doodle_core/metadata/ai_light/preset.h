@@ -23,22 +23,6 @@
 
 namespace doodle::ai_light {
 
-enum class preset_source {
-  /// 美术整理
-  artist,
-  /// 内置
-  builtin,
-  /// 从被接受的会话里回捞
-  learned,
-};
-DOODLE_JSON_SERIALIZE_ENUM_STRICT(
-    preset_source, {
-                       {preset_source::artist, "artist"},
-                       {preset_source::builtin, "builtin"},
-                       {preset_source::learned, "learned"},
-                   }
-)
-
 /// 适用范围：决定这条预设在什么场景下可以被检索出来
 struct DOODLE_CORE_API preset_applicable_t {
   std::vector<std::string> scene_type_{};  ///< interior | exterior | night | day ...
@@ -85,7 +69,6 @@ struct DOODLE_CORE_API ai_light_preset {
   nlohmann::json stats_target_{};
 
   bool enabled_{true};
-  preset_source source_{preset_source::artist};
   uuid created_by_{};
 
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
@@ -109,7 +92,6 @@ struct DOODLE_CORE_API ai_light_preset {
     j["applicable"]    = p.applicable_;
     j["stats_target"]  = p.stats_target_;
     j["enabled"]       = p.enabled_;
-    j["source"]        = p.source_;
     j["created_by"]    = p.created_by_;
     j["created_at"]    = p.created_at_;
     j["updated_at"]    = p.updated_at_;
@@ -124,7 +106,6 @@ struct DOODLE_CORE_API ai_light_preset {
     if (j.contains("applicable")) j.at("applicable").get_to(p.applicable_);
     if (j.contains("stats_target")) j.at("stats_target").get_to(p.stats_target_);
     if (j.contains("enabled")) j.at("enabled").get_to(p.enabled_);
-    if (j.contains("source")) j.at("source").get_to(p.source_);
     if (j.contains("created_by")) j.at("created_by").get_to(p.created_by_);
   }
 };
