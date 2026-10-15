@@ -111,19 +111,6 @@ DOODLELIB_API boost::asio::awaitable<void> mark_iteration_rendered(
     const std::vector<ai_light_candidate>& in_candidates
 );
 
-/// 解析工作机回传的整轮结果（§15.12 的 wire 契约，见 ai_light/task_payload.h）。
-///
-/// 严格/宽松的分界（决策 D26）：
-///   * `candidates`、每个元素的 `candidate_id` / `status` 是**严格**字段 —— 缺了或值不认识
-///     就抛 `bad_gateway`。理由：状态不认识时无法判断「这张图能不能给美术看」，
-///     猜一个默认值等于把回传错误变成看不出来的偏移。
-///   * `candidate_index` / `metrics` 是**宽松**字段 ——
-///     缺失取默认、形状不符丢弃（+ WARN）。它们是数值与诊断数据，丢一个不该让整轮的
-///     图白渲染。
-///
-/// 纯函数（不落库、不读服务端状态），单测直接喂 JSON 即可。
-DOODLELIB_API round_render_report_t parse_round_render_report(const nlohmann::json& in_json);
-
 /// 处理一次工作机回传：解析结果 → 落候选行 → 推进轮次/会话状态。
 ///
 /// 两条出口：

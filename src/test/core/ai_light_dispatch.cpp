@@ -4,9 +4,9 @@
 // 派发链路是「服务端下发 → 工作机跑 UE → 工作机回传」三段，这份盯的是第三段落地后
 // 服务端怎么把结果写回库，也就是这两件事：
 //
-//   1. parse_round_render_report —— 回传报文解析。分界是**严格 vs 宽松**（D26）：
+//   1. round_render_report_t 的 from_json —— 回传报文解析。分界是**严格 vs 宽松**（D26）：
 //      严格字段（`candidates` 数组本身、每条的 `candidate_id` / `status`）坏了整份拒掉，
-//      抛 bad_gateway；宽松字段（`candidate_index` / `metrics`）
+//      抛异常；宽松字段（`candidate_index` / `metrics`）
 //      坏了只丢那一个字段，已经渲出来的 6 张图不能因为一个诊断数字不合规就作废。
 //
 //   2. apply_render_report —— 两条出口（D28）：
@@ -295,7 +295,7 @@ BOOST_FIXTURE_TEST_CASE(parse_full_round_keeps_every_field, fixture_t) {
   auto& l_fx = *this;
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
 
-  const auto l_report = parse_round_render_report(ok_report(l_fx, 2));
+  const auto l_report = ok_report(l_fx, 2).get<round_render_report_t>();
 
   BOOST_TEST(l_report.error_.empty());
   BOOST_TEST(l_report.candidates_.size() == 2u);
@@ -318,7 +318,7 @@ BOOST_FIXTURE_TEST_CASE(parse_defaults_missing_loose_fields, fixture_t) {
       },
   });
 
-  const auto l_report = parse_round_render_report(l_json);
+  const auto l_report = l_json.get<round_render_report_t>();
 
   BOOST_TEST(l_report.candidates_.size() == 1u);
   // candidate_index 缺失时按下标推：工作机的回传顺序就是派发顺序
@@ -333,7 +333,8 @@ BOOST_FIXTURE_TEST_CASE(parse_requires_candidates_array, fixture_t) {
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
 
   // candidates 本身是严格字段：没有它整份回传没有意义（有 error 才是合法的「整轮失败」报文）
-  const auto l_status = catch_status([] { (void)parse_round_render_report(nlohmann::json{{"error", "UE 起不来"}}); });
+  const auto l_status =
+      catch_status([] { (void)nlohmann::json{{"error", "UE 起不来"}}.get<round_render_report_t>(); });
   BOOST_TEST(l_status == boost::beast::http::status::bad_gateway);
 }
 
@@ -346,7 +347,7 @@ BOOST_FIXTURE_TEST_CASE(parse_rejects_unknown_status, fixture_t) {
   // 而不是 nlohmann 那套「悄悄退化成第一个枚举量」（见候选状态机的血泪项 29）。
   auto l_json = ok_report(l_fx, 1);
   l_json["candidates"].at(0)["status"] = "succeeded";
-  const auto l_status = catch_status([&] { (void)parse_round_render_report(l_json); });
+  const auto l_status = catch_status([&] { (void)l_json.get<round_render_report_t>(); });
   BOOST_TEST(l_status == boost::beast::http::status::bad_gateway);
 }
 
@@ -356,7 +357,7 @@ BOOST_FIXTURE_TEST_CASE(parse_rejects_bad_candidate_uuid, fixture_t) {
 
   auto l_json = ok_report(l_fx, 1);
   l_json["candidates"].at(0)["candidate_id"] = "not-a-uuid";
-  const auto l_status = catch_status([&] { (void)parse_round_render_report(l_json); });
+  const auto l_status = catch_status([&] { (void)l_json.get<round_render_report_t>(); });
   BOOST_TEST(l_status == boost::beast::http::status::bad_gateway);
 }
 
@@ -366,7 +367,7 @@ BOOST_FIXTURE_TEST_CASE(parse_rejects_non_object_candidate, fixture_t) {
 
   nlohmann::json l_json{};
   l_json["candidates"] = nlohmann::json::array({42});
-  const auto l_status = catch_status([&] { (void)parse_round_render_report(l_json); });
+  const auto l_status = catch_status([&] { (void)l_json.get<round_render_report_t>(); });
   BOOST_TEST(l_status == boost::beast::http::status::bad_gateway);
 }
 
@@ -380,7 +381,7 @@ BOOST_FIXTURE_TEST_CASE(parse_keeps_round_error_text, fixture_t) {
   l_json["error"]      = "UE 启动失败：uproject 不存在";
   l_json["candidates"] = nlohmann::json::array();
 
-  const auto l_report = parse_round_render_report(l_json);
+  const auto l_report = l_json.get<round_render_report_t>();
   BOOST_TEST(l_report.error_ == std::string{"UE 启动失败：uproject 不存在"});
   BOOST_TEST(l_report.candidates_.empty());
 }
@@ -394,7 +395,7 @@ BOOST_FIXTURE_TEST_CASE(parse_drops_broken_metrics_only, fixture_t) {
   auto l_json = ok_report(l_fx, 1);
   l_json["candidates"].at(0)["metrics"] = "oops";
 
-  const auto l_report = parse_round_render_report(l_json);
+  const auto l_report = l_json.get<round_render_report_t>();
   BOOST_TEST(l_report.candidates_.size() == 1u);
   BOOST_TEST(en(l_report.candidates_.at(0).status_) == en(candidate_render_status::rendered));
   BOOST_TEST(l_report.candidates_.at(0).metrics_.contrast_ == 0.0);
@@ -408,7 +409,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_advances_iteration_and_session, fixtu
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
 
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 2)));
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, ok_report(l_fx, 2).get<round_render_report_t>());
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
@@ -430,7 +431,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_keeps_paths_derivable_from_the_row, f
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
 
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 1)));
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, ok_report(l_fx, 1).get<round_render_report_t>());
 
   // 回传报文里不带路径（D27），候选行上也没有路径列（D44）：路径是候选行三个 uuid 的纯函数。
   // 所以这里的钉子分两半 —— 行本身（uuid 三件套）没被回传改写，且算出来的仍是夹具造真文件
@@ -455,7 +456,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_partial_failure_still_advances, fixtu
   l_json["candidates"].at(1)["status"] = "failed";
 
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(l_json));
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, l_json.get<round_render_report_t>());
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
@@ -475,7 +476,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_error_without_rendered_writes_failure
   l_json["error"]                      = "UE 启动失败：DoodleLighting commandlet 未找到";
 
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(l_json));
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, l_json.get<round_render_report_t>());
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
@@ -496,7 +497,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_failed_writes_failure_reason, fix
   for (auto& l_c : l_json["candidates"]) l_c["status"] = "failed";
 
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(l_json));
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, l_json.get<round_render_report_t>());
 
   const auto l_session = l_fx.reload_session();
   BOOST_TEST(l_session.failure_reason_ == std::string{"轮次 1 的 3 个候选全部渲染失败"});
@@ -512,7 +513,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_unknown_task, fixture_t) {
 
   const auto l_status = catch_status([&] {
     // 直接调同步那一半：能在 co_await 之前抛的都在这里抛（回传路由的 404 就是它）
-    (void)parse_round_render_report(ok_report(l_fx, 1));
+    (void)ok_report(l_fx, 1).get<round_render_report_t>();
     throw doodle_error{boost::beast::http::status::not_found, "probe"};
   });
   BOOST_TEST(l_status == boost::beast::http::status::not_found);
@@ -521,7 +522,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_unknown_task, fixture_t) {
   bool l_threw = false;
   try {
     co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, core_set::get_set().get_uuid(), ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 1)));
+      *l_fx.sql_, l_fx.server_ctx_, core_set::get_set().get_uuid(), ai_light_iteration_locator_t{}, ok_report(l_fx, 1).get<round_render_report_t>());
   } catch (const doodle_error& in_err) {
     l_threw = true;
     BOOST_TEST(in_err.code_status_() == boost::beast::http::status::not_found);
@@ -539,7 +540,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_candidate_from_another_round,
   bool l_threw = false;
   try {
     co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(l_json));
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, l_json.get<round_render_report_t>());
   } catch (const doodle_error& in_err) {
     l_threw = true;
     BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
@@ -558,7 +559,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_judged_iteration, fixture_t) 
   bool l_threw = false;
   try {
     co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 1)));
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, ok_report(l_fx, 1).get<round_render_report_t>());
   } catch (const doodle_error& in_err) {
     l_threw = true;
     BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
@@ -616,7 +617,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_missing_artifacts_only_for
 
   // 三条都报 rendered，但第 2 条的产物文件不在
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 3))
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, ok_report(l_fx, 3).get<round_render_report_t>()
   );
 
   // 其余候选照常推进：一个候选的产物传丢了不该让整轮作废（§7.5 第 9 条的候选级隔离）
@@ -640,7 +641,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_when_only_the_movie_is_mis
   l_fx.delete_candidate_movie(0);
 
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 2))
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, ok_report(l_fx, 2).get<round_render_report_t>()
   );
 
   // 海报在、视频缺：这个候选判不了 —— 美术点开发现播不出来，等于没渲
@@ -658,7 +659,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_artifacts_missing_writes_failure_
   // 全部「渲染成功」但产物一件都不在：这批回传在语义上等于什么都没渲出来，
   // 必须走失败出口 —— 推到 awaiting_judgement 就是让美术看 6 个 404。
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 2))
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, ok_report(l_fx, 2).get<round_render_report_t>()
   );
 
   const auto l_it      = l_fx.reload_iteration();
@@ -675,7 +676,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_missing_exr_does_not_block, fixture_t
   l_fx.delete_candidate_exr(0);
 
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(ok_report(l_fx, 2))
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, ok_report(l_fx, 2).get<round_render_report_t>()
   );
 
   // EXR 是可选产物（D42）：缺了不降级、不阻断本轮
@@ -710,7 +711,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_reported_failure_plus_downgrade_leave
   l_json["candidates"].at(1)["status"] = "failed";
 
   co_await apply_render_report(
-      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, parse_round_render_report(l_json));
+      *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, l_json.get<round_render_report_t>());
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();

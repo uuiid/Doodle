@@ -387,8 +387,8 @@ struct DOODLE_CORE_API candidate_render_report_t {
   }
   friend void from_json(const nlohmann::json& j, candidate_render_report_t& p) {
     if (j.contains("candidate_index")) j.at("candidate_index").get_to(p.candidate_index_);
-    if (j.contains("candidate_id")) j.at("candidate_id").get_to(p.candidate_id_);
-    if (j.contains("status")) j.at("status").get_to(p.status_);
+    j.at("candidate_id").get_to(p.candidate_id_);
+    j.at("status").get_to(p.status_);
     if (j.contains("render_ms")) j.at("render_ms").get_to(p.render_ms_);
     if (j.contains("light_count")) j.at("light_count").get_to(p.light_count_);
     if (j.contains("frame_count")) j.at("frame_count").get_to(p.frame_count_);
@@ -411,7 +411,7 @@ struct DOODLE_CORE_API round_render_report_t {
     j["error"]      = p.error_;
   }
   friend void from_json(const nlohmann::json& j, round_render_report_t& p) {
-    if (j.contains("candidates")) j.at("candidates").get_to(p.candidates_);
+    j.at("candidates").get_to(p.candidates_);
     if (j.contains("frame_rate")) j.at("frame_rate").get_to(p.frame_rate_);
     if (j.contains("error")) j.at("error").get_to(p.error_);
   }

@@ -504,7 +504,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
       magic_enum::enum_name(l_task.type_)
   );
 
-  auto l_report = parse_round_render_report(l_json);
+  auto l_report = l_json.get<round_render_report_t>();
   co_await apply_render_report(l_sql, g_ctx().get<kitsu_ctx_t>(), task_id_, ai_light_iteration_locator_t{}, l_report);
 
   nlohmann::json l_out{{"task_id", task_id_}};
@@ -541,7 +541,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_local_route, post) {
       l_session.uuid_id_, iteration_
   );
 
-  auto l_report = parse_round_render_report(l_json);
+  auto l_report = l_json.get<round_render_report_t>();
   co_await apply_render_report(
       l_sql, g_ctx().get<kitsu_ctx_t>(), uuid{}, ai_light_iteration_locator_t{l_session.uuid_id_, iteration_}, l_report
   );
