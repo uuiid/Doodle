@@ -101,6 +101,7 @@ struct upgrade_3_t : sqlite_upgrade {
 #ifndef NDEBUG
     l_s.sync_schema();
     l_s.add_column("seedance2_task_2", "ai_light_session_id", orm::column_type::blob);
+    l_s.add_column("seedance2_person_token", "inference_count", orm::column_type::integer);
     l_s.rebuild_table<seedance2::task>();
 #endif
     l_s.pragma().user_version(g_current_version);
