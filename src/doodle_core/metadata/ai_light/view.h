@@ -40,8 +40,6 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
   std::vector<ai_light_iteration> iterations_{};
   /// 候选，跨轮，按（轮次, 候选序号）升序。每轮的个数由前端决定，不固定。
   std::vector<ai_light_candidate> candidates_{};
-  /// 定稿候选（每会话至多一个，由 accepted_session_id 上的唯一索引保证）
-  std::optional<ai_light_candidate> accepted_candidate_{};
 
   // --- 两个派生提示位，省得前端自己算状态机 ---
   /// 是否在等人工动作（= ai_light::is_waiting_human(session_.state_)）
@@ -71,7 +69,6 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
     j["references"]         = p.references_;
     j["iterations"]         = p.iterations_;
     j["candidates"]         = p.candidates_;
-    j["accepted_candidate"] = p.accepted_candidate_;
     j["is_waiting_human"]   = p.is_waiting_human_;
     j["is_judgement_overdue"] = p.is_judgement_overdue_;
     // 前端渲染进度条要用，省得自己数。
@@ -84,7 +81,6 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
     if (j.contains("references")) j.at("references").get_to(p.references_);
     if (j.contains("iterations")) j.at("iterations").get_to(p.iterations_);
     if (j.contains("candidates")) j.at("candidates").get_to(p.candidates_);
-    if (j.contains("accepted_candidate")) j.at("accepted_candidate").get_to(p.accepted_candidate_);
     if (j.contains("is_waiting_human")) j.at("is_waiting_human").get_to(p.is_waiting_human_);
     if (j.contains("is_judgement_overdue")) j.at("is_judgement_overdue").get_to(p.is_judgement_overdue_);
   }

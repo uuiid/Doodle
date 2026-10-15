@@ -361,9 +361,6 @@ void sqlite_storage::regs_all() {
   //   preset 独立
   //
   // 有意不做的事（理由见 doodle_core/metadata/ai_light/session.h 顶部注释）：
-  //   * 不放 accepted_candidate_id 这类冗余指针，一律靠查询得出，
-  //     避免循环外键把 fix_foreign_key_violations 的轮次分析复杂化；
-  //     （同段的 current_spec_id 已随 ai_light_spec 表一起消失。）
   //   * 不放 base_candidate_id（那会造成 iteration → candidate → iteration 的跨表循环）；
   //   * 嵌套结构（rig / metrics / intent / targets / judgement …）一律以 nlohmann::json
   //     落库 —— ORM 的列类型不覆盖嵌套结构体与 std::map，只有 nlohmann::json 可以。
@@ -448,11 +445,7 @@ void sqlite_storage::regs_all() {
       // 产物路径**没有列**：由 session_id_ / iteration_id_ / uuid_id_ 现算（D44）。
       .add_column("render_status", &ai_light::ai_light_candidate::render_status_)
       .add_column("metrics", &ai_light::ai_light_candidate::metrics_)
-      .add_column("vlm_score", &ai_light::ai_light_candidate::vlm_score_)
-      .add_column("vlm_delta", &ai_light::ai_light_candidate::vlm_delta_)
       .add_column("is_selected", &ai_light::ai_light_candidate::is_selected_)
-      .add_column("is_accepted", &ai_light::ai_light_candidate::is_accepted_)
-      .add_column("accepted_session_id", &ai_light::ai_light_candidate::accepted_session_id_)
       .add_column("preview_file_id", &ai_light::ai_light_candidate::preview_file_id_)
       .add_column("created_at", &ai_light::ai_light_candidate::created_at_)
       .add_foreign_key(
@@ -469,19 +462,7 @@ void sqlite_storage::regs_all() {
           &ai_light::ai_light_candidate::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null
       )
       .add_unique_index(&ai_light::ai_light_candidate::iteration_id_, &ai_light::ai_light_candidate::candidate_index_)
-      .add_index(&ai_light::ai_light_candidate::session_id_)
-      // 每会话至多一个定稿候选。
-      //
-      // 这里用的是**普通**唯一索引 + 可空列，不是 `WHERE is_accepted = 1` 的 partial index ——
-      // SQLite 禁止 partial index 的 WHERE 里出现绑定参数
-      // ("parameters prohibited in partial index WHERE clauses")，
-      // 而本库的 create_unique_index().where(c(&T::col) == true) 生成的正是带 `?` 的比较式
-      // （只有 `== nullptr` 会生成无参数的 IS NULL，entity 表 parent_id 的先例靠的就是这一点）。
-      //
-      // SQLite 的 UNIQUE 索引把 NULL 视为互不相等，所以「定稿才填 session_id、否则 NULL」
-      // 这一列上的普通唯一索引与 partial index 等价：非定稿行全 NULL 互不冲突，
-      // 定稿行每会话只能有一行。写入必须走 ai_light_candidate::mark_accepted()。
-      .add_unique_index(&ai_light::ai_light_candidate::accepted_session_id_);
+      .add_index(&ai_light::ai_light_candidate::session_id_);
 
   reg_table<ai_light::ai_light_preset>("ai_light_preset")
       .add_column("id", &ai_light::ai_light_preset::id_, primary_key(), autoincrement())
@@ -2287,23 +2268,6 @@ std::optional<ai_light::ai_light_candidate> sqlite_database::get_ai_light_select
           (c(&ai_light::ai_light_iteration::session_id_) == in_session_id) &&
           (c(&ai_light::ai_light_iteration::iteration_) == in_iteration) &&
           (c(&ai_light::ai_light_candidate::is_selected_) == true)
-      )
-      .limit(1)()
-      .to_optional();
-}
-
-std::optional<ai_light::ai_light_candidate> sqlite_database::get_ai_light_accepted_candidate(
-    const uuid& in_session_id
-) {
-  using namespace orm;
-  // 每会话至多一个定稿候选：由 accepted_session_id 上的可空唯一索引在库层强制
-  // （非定稿行为 NULL，唯一索引不约束 NULL；写入必须走 mark_accepted()）。
-  return select(*this)
-      .columns(object<ai_light::ai_light_candidate>())
-      .from<ai_light::ai_light_candidate>()
-      .where(
-          (c(&ai_light::ai_light_candidate::session_id_) == in_session_id) &&
-          (c(&ai_light::ai_light_candidate::is_accepted_) == true)
       )
       .limit(1)()
       .to_optional();

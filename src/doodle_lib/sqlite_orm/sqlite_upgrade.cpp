@@ -129,8 +129,6 @@ void backup(orm::session& in_data) {
 //
 // 之所以不用 create_table(单个 type_index): 它只建表、不建索引
 // (session.cpp:326-337), 那六张表的唯一索引就得手写 SQL。
-// （定稿唯一性用的是 accepted_session_id 上的可空唯一索引，不是 partial index ——
-//  本库生成 partial index 时会把条件写成绑定参数，SQLite 拒绝，见 sqlite_database.h。）
 //
 // 这是 30 之后的唯一一步, 所以没有、也不需要任何数据改写: 六张表在这里出生即空,
 // 本轮取消会话终态 (accepted / rejected / failed) 只是删枚举量、不涉及 schema 变更。

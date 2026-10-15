@@ -80,8 +80,8 @@ struct DOODLELIB_API ai_light_iteration_locator_t {
 /// preview_file 按值传入而非 const 引用：ORM 的 values() 会回填 uuid_id_ / created_at_
 /// 这类服务端生成的字段，必须拿到可写对象。
 ///
-/// 本函数负责：插入 preview_file、标记候选（accept → mark_accepted()；
-/// continue → is_selected_ = true）、回填 candidate.preview_file_id_、
+/// 本函数负责：插入 preview_file、标记候选（accept / continue → is_selected_ = true）、
+/// 回填 candidate.preview_file_id_、
 /// 写 iteration 的判断记录、推进 session 状态。
 DOODLELIB_API boost::asio::awaitable<void> apply_judgement(
     sqlite_database& in_sql, ai_light_session& in_session, ai_light_iteration& in_iteration,

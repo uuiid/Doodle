@@ -8,10 +8,6 @@
 // 输入 + 状态」），拆成两张表只会带来同步负担，所以合并。
 //
 // 有意不做的事：
-//   * 不放 accepted_candidate_id 这类冗余指针 —— 由「is_accepted = true 的候选」查出。
-//     本库有 fix_foreign_key_violations / null_dangling_optional_references 两套外键修复
-//     机制，循环外键会让「删父行 → 造出新的悬空引用」的分析变复杂，宁可多一次带索引查询。
-//     （同段的 current_spec_id 已随 ai_light_spec 表一起消失。）
 //   * 不用 updated_at 当业务时钟 —— 任何更新都会刷新它（ORM 的 update 路径会自动刷），
 //     所以 4 小时过期判定单开 judgement_due_at 列。
 //   * 不把「过期」做成一个状态 —— 它是 judgement_due_at 的纯派生事实，
@@ -54,8 +50,6 @@ constexpr auto g_judgement_timeout = std::chrono::hours{4};
 /// 全部挡成 400，那段工作就只能新建一个会话重来 —— 输入、Spec、历史轮次全部作废。
 ///
 /// 于是模型是「会话是一个长期工作台」：
-///   * 定稿**不是终点**，而是**可移动的单指针**（`ai_light_candidate.accepted_session_id`
-///     上的唯一索引仍然保证「当前定稿」只有一个，再次定稿会顶掉上一次）；
 ///   * `reject_all` **不终止会话**，它只表示「这一轮全部不要」，会话照常可以再出一轮；
 ///   * 失败没有独立状态，`failure_reason_` 是唯一记录（`advance_session` 的接缝失败走回滚）。
 ///

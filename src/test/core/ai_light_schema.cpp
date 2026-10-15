@@ -6,8 +6,7 @@
 //   2. 嵌套结构 (rig / metrics / intent / targets) 经 JSON 列往返后逐字节一致 ——
 //      这是「DB 列是查询权威, JSON 副本只用于工件自描述」这条约定的前提,
 //      一旦往返有损, 下发 UE 的载荷就和库里存的对不上了;
-//   3. 「每会话至多一个定稿候选」由 accepted_session_id 上的唯一索引在库层强制, 不靠应用层自觉;
-//   4. 4 小时挂起判定依赖 zoned_time 的 TEXT 字典序比较, 这个假设必须被验证.
+//   3. 4 小时挂起判定依赖 zoned_time 的 TEXT 字典序比较, 这个假设必须被验证.
 //
 
 #include <doodle_core/metadata/ai_light/ai_light.h>
@@ -199,7 +198,7 @@ lighting_rig_t make_probe_rig(const uuid& in_session_id, std::int32_t in_iterati
 
 }  // namespace
 
-// 全新库: 六张表与 accepted_session_id 上的唯一索引都必须由 sync_schema 建出来.
+// 全新库: 六张表都必须由 sync_schema 建出来.
 BOOST_AUTO_TEST_CASE(fresh_db_creates_ai_light_tables) {
   app_base l_app{};
   auto l_db = temp_db("fresh");
@@ -215,19 +214,6 @@ BOOST_AUTO_TEST_CASE(fresh_db_creates_ai_light_tables) {
       BOOST_TEST_MESSAGE(fmt::format("检查表 {} 存在", l_table));
       BOOST_TEST(has_table(l_session, l_table));
     }
-
-    // 定稿唯一性靠 accepted_session_id 上的普通唯一索引强制.
-    // 断言它确实是 UNIQUE 且**不带 WHERE 子句** ——
-    // 带 WHERE 的 partial index 在这里是行不通的（SQLite 禁止其 WHERE 里出现绑定参数），
-    // 而本库的 create_unique_index().where(...) 只会生成带 `?` 的比较式.
-    // 这条断言同时锁住"约束真的在库里"和"它不是 partial index"两件事.
-    const auto l_unique = scalar_int(
-        l_session,
-        "SELECT count(*) FROM sqlite_master WHERE type='index' AND tbl_name='ai_light_candidate' "
-        "AND upper(sql) LIKE 'CREATE UNIQUE INDEX%' AND upper(sql) LIKE '%ACCEPTED_SESSION_ID%';"
-    );
-    BOOST_TEST_MESSAGE(fmt::format("accepted_session_id 上的唯一索引数量 = {}", l_unique));
-    BOOST_TEST(l_unique >= 1);
 
     const auto l_partial = scalar_int(
         l_session,
@@ -371,8 +357,6 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
           {metric_landing_t{"luma_percentiles.p50", 0.09, interval_t{0.10, 0.18}, false, 0.05}},
           0.72, {{"luma_percentiles.p50", 0.05}}
       });
-      l_cand.vlm_score_ = 0.5 + 0.05 * l_i;
-      l_cand.set_vlm_delta(vlm_delta_t{"deepseek-flash", "closer", {"色温偏冷"}, "raw"});
       l_cand.is_selected_ = (l_i == 2);
       insert(l_session).into<ai_light_candidate>().values(l_cand)();
       l_rigs.push_back(l_cand.get_rig());
@@ -416,7 +400,6 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
       BOOST_TEST(l_cands[l_i].session_id_ == l_session_row.uuid_id_);
       BOOST_TEST(en(l_cands[l_i].render_status_) == en(candidate_render_status::rendered));
       BOOST_TEST(l_cands[l_i].get_metrics().landings_.size() == 1);
-      BOOST_TEST(l_cands[l_i].get_vlm_delta().differences_.size() == 1);
     }
 
     // 7. warm start 起点 = is_selected 的候选
@@ -426,9 +409,6 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
 
     // 8. 跨轮查询（session_id 冗余列存在的理由）
     BOOST_TEST(l_sql.get_ai_light_candidates_by_session(l_session_row.uuid_id_).size() == 6);
-
-    // 9. 还没有定稿候选
-    BOOST_TEST(!l_sql.get_ai_light_accepted_candidate(l_session_row.uuid_id_).has_value());
 
     // 这个用例刻意让 session 的 project/task/entity 指向不存在的行（关外键插入），
     // 所以 foreign_key_check 必然报这 3 条。要紧的是**除了这 3 条再没有别的** ——
@@ -442,66 +422,6 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     BOOST_TEST(l_bad.contains("ai_light_session->project"));
     BOOST_TEST(l_bad.contains("ai_light_session->task"));
     BOOST_TEST(l_bad.contains("ai_light_session->entity"));
-  }
-
-  remove_db(l_db);
-}
-
-// 「每会话至多一个定稿候选」必须由库层强制, 而不是靠应用层自觉.
-BOOST_AUTO_TEST_CASE(single_accepted_candidate_is_enforced_by_db) {
-  app_base l_app{};
-  auto l_db = temp_db("accepted");
-  remove_db(l_db);
-
-  {
-    sqlite_storage l_storage{};
-    l_storage.open(l_db);
-    l_storage.upgrade();
-    auto l_session = l_storage.create_session();
-    auto l_sql     = sqlite_database{l_storage.get_strand(), l_session};
-
-    ai_light_session l_session_row{};
-    l_session_row.project_id_ = core_set::get_set().get_uuid();
-    l_session_row.task_id_    = core_set::get_set().get_uuid();
-    l_session_row.entity_id_  = core_set::get_set().get_uuid();
-    with_fk_off(l_session, [&]() { insert(l_session).into<ai_light_session>().values(l_session_row)(); });
-
-    // 建真的轮次行：这样 iteration -> session 与 candidate -> iteration /
-    // candidate -> session 三条外键都能在**开着外键**的前提下满足，
-    // 于是这个用例测的就是生产形态（外键全开），而不是"关掉外键随便插"。
-    // （曾经还有 iteration -> spec，那条外键已随 ai_light_spec 表一起删除。）
-    ai_light_iteration l_iter{};
-    l_iter.session_id_ = l_session_row.uuid_id_;
-    l_iter.iteration_  = 1;
-    insert(l_session).into<ai_light_iteration>().values(l_iter)();
-
-    auto l_make = [&](std::int32_t in_index, bool in_accepted) {
-      ai_light_candidate l_cand{};
-      l_cand.iteration_id_    = l_iter.uuid_id_;
-      l_cand.session_id_      = l_session_row.uuid_id_;
-      l_cand.candidate_index_ = in_index;
-      // 定稿状态只走 mark_accepted()，它会一并维护 accepted_session_id_
-      if (in_accepted) l_cand.mark_accepted();
-      return l_cand;
-    };
-
-    // 两个非定稿候选: 允许（唯一索引把 NULL 视为互不相等）
-    insert(l_session).into<ai_light_candidate>().values(l_make(0, false))();
-    insert(l_session).into<ai_light_candidate>().values(l_make(1, false))();
-
-    // 第一个定稿: 允许
-    insert(l_session).into<ai_light_candidate>().values(l_make(2, true))();
-
-    // 第二个定稿: 必须被库层拒绝
-    BOOST_CHECK_THROW(insert(l_session).into<ai_light_candidate>().values(l_make(3, true))(), sqlite_orm_exception);
-
-    // 定稿候选仍然只有一个
-    auto l_accepted = l_sql.get_ai_light_accepted_candidate(l_session_row.uuid_id_);
-    BOOST_TEST(l_accepted.has_value());
-    BOOST_TEST(l_accepted->candidate_index_ == 2);
-    BOOST_TEST(l_accepted->is_accepted_candidate());
-    // 非定稿行不该被认成定稿
-    BOOST_TEST(!l_make(9, false).is_accepted_candidate());
   }
 
   remove_db(l_db);

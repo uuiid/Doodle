@@ -104,24 +104,6 @@ boost::asio::awaitable<void> apply_judgement(
   if (in_accepted_preview_file.has_value())
     l_sqls.emplace_back(orm::insert(in_sql).into<preview_file>().values(*in_accepted_preview_file));
 
-  if (in_judgement.decision_ == judgement_decision::accept) {
-    if (auto l_prev = in_sql.get_ai_light_accepted_candidate(in_session.uuid_id_);
-        l_prev.has_value() && l_prev->uuid_id_ != in_judgement.selected_candidate_id_) {
-      l_prev->clear_accepted();
-      l_prev->preview_file_id_ = uuid{};
-      l_sqls.emplace_back(
-          orm::update(in_sql)
-              .from<ai_light_candidate>()
-              .set(
-                  c(&ai_light_candidate::is_accepted_)         = l_prev->is_accepted_,
-                  c(&ai_light_candidate::accepted_session_id_) = l_prev->accepted_session_id_,
-                  c(&ai_light_candidate::preview_file_id_)     = l_prev->preview_file_id_
-              )
-              .where(c(&ai_light_candidate::uuid_id_) == l_prev->uuid_id_)
-      );
-    }
-  }
-
   if (!in_judgement.selected_candidate_id_.is_nil()) {
     auto l_cand = in_sql.get_by_uuid<ai_light_candidate>(in_judgement.selected_candidate_id_);
     DOODLE_CHICK_HTTP(
@@ -130,7 +112,6 @@ boost::asio::awaitable<void> apply_judgement(
     );
 
     if (in_judgement.decision_ == judgement_decision::accept) {
-      l_cand.mark_accepted();
       l_cand.preview_file_id_ = in_accepted_preview_file->uuid_id_;
     }
     l_cand.is_selected_ = true;
@@ -139,10 +120,8 @@ boost::asio::awaitable<void> apply_judgement(
         orm::update(in_sql)
             .from<ai_light_candidate>()
             .set(
-                c(&ai_light_candidate::is_selected_)         = l_cand.is_selected_,
-                c(&ai_light_candidate::is_accepted_)         = l_cand.is_accepted_,
-                c(&ai_light_candidate::accepted_session_id_) = l_cand.accepted_session_id_,
-                c(&ai_light_candidate::preview_file_id_)     = l_cand.preview_file_id_
+                c(&ai_light_candidate::is_selected_)     = l_cand.is_selected_,
+                c(&ai_light_candidate::preview_file_id_) = l_cand.preview_file_id_
             )
             .where(c(&ai_light_candidate::uuid_id_) == l_cand.uuid_id_)
     );
@@ -449,7 +428,6 @@ std::optional<ai_light_session_detail_t> build_session_detail(sqlite_database& i
   l_detail.references_           = in_sql.get_ai_light_references(in_session_id);
   l_detail.iterations_           = in_sql.get_ai_light_iterations(in_session_id);
   l_detail.candidates_           = in_sql.get_ai_light_candidates_by_session(in_session_id);
-  l_detail.accepted_candidate_   = in_sql.get_ai_light_accepted_candidate(in_session_id);
 
   l_detail.is_waiting_human_     = is_waiting_human(l_detail.session_.state_);
   l_detail.is_judgement_overdue_ = l_detail.session_.is_judgement_overdue(
