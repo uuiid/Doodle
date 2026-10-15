@@ -507,7 +507,6 @@ struct DOODLE_CORE_API light_op_t {
 /// **DB 列是查询权威**，JSON 副本不参与任何查询。
 /// （原先这里还有 spec_id —— Spec 表已删除，它不是 DB 列了，也不再进 JSON。）
 struct DOODLE_CORE_API lighting_rig_t {
-  std::string schema_version_{std::string{g_rig_schema_version}};
   uuid rig_id_{};
   uuid session_id_{};
   uuid shot_task_id_{};
@@ -521,7 +520,6 @@ struct DOODLE_CORE_API lighting_rig_t {
   std::vector<light_op_t> ops_{};
 
   friend void to_json(nlohmann::json& j, const lighting_rig_t& p) {
-    j["schema_version"]  = p.schema_version_;
     j["rig_id"]          = p.rig_id_;
     j["session_id"]      = p.session_id_;
     j["shot_task_id"]    = p.shot_task_id_;
@@ -534,7 +532,6 @@ struct DOODLE_CORE_API lighting_rig_t {
     j["ops"]             = p.ops_;
   }
   friend void from_json(const nlohmann::json& j, lighting_rig_t& p) {
-    if (j.contains("schema_version")) j.at("schema_version").get_to(p.schema_version_);
     if (j.contains("rig_id")) j.at("rig_id").get_to(p.rig_id_);
     if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
     if (j.contains("shot_task_id")) j.at("shot_task_id").get_to(p.shot_task_id_);

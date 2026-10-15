@@ -13,8 +13,6 @@
 
 namespace doodle::ai_light {
 
-/// LightingRig IR 版本（docs/ue_ai_lighting_plan.md §4.3）
-constexpr std::string_view g_rig_schema_version{"1.1"};
 /// LightingSpec 版本（docs/ue_ai_lighting_plan.md §4.2）
 /// 1.2 → 1.3：Tier B 取消后 tier 与 degrade_level 信息等价，删掉 tier，只留 degrade_level。
 /// 1.3 → 1.4：后端不再用大模型做推理与判断，删掉 intent 里由模型产出的那批字段
