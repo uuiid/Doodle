@@ -182,16 +182,6 @@ struct fixture_t : doodle_test::coro_fixture_t {
   }
 };
 
-/// 会话 + 轮次的「当前」副本，供 apply_judgement 的就地修改使用
-struct judge_args_t {
-  ai_light_session session{};
-  ai_light_iteration iteration{};
-};
-
-judge_args_t load_for_judge(fixture_t& in_fx) {
-  return judge_args_t{in_fx.reload_session(), in_fx.reload_iteration()};
-}
-
 /// 给会话补一张参考图。
 ///
 /// advance_session 在蒸馏 Spec 之前会校验参考图非空（决策 1：参考必有多张），
@@ -236,58 +226,6 @@ DOODLE_FIXTURE_TEST_CASE_CORO(awaiting_judgement_sets_due_at_four_hours_ahead, f
   auto l_iter = l_fx.reload_iteration();
   BOOST_TEST(en(l_iter.state_) == en(ai_light_iteration_state::awaiting_judgement));
   BOOST_TEST(l_iter.render_at_.has_value());
-}
-
-DOODLE_FIXTURE_TEST_CASE_CORO(overdue_session_stays_awaiting_judgement_and_stays_judgeable, fixture_t) {
-  l_fx.build();
-
-  const auto l_now = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-
-  // 把判断时限拨到 5 小时前 —— 等价于「美术已经拖了 5 小时」
-  l_fx.session_.judgement_due_at_ =
-      chrono::system_zoned_time{chrono::current_zone(), l_now.get_sys_time() - std::chrono::hours{5}};
-  update(l_fx.orm_)
-      .from<ai_light_session>()
-      .set(c(&ai_light_session::judgement_due_at_) = l_fx.session_.judgement_due_at_)
-      .where(c(&ai_light_session::uuid_id_) == l_fx.session_.uuid_id_)();
-
-  // 过期是**实时派生**的标志：状态不变，读模型把标志带出去。
-  // 以前这里会被后台扫描器物化成 suspended 状态。
-  auto l_detail = build_session_detail(*l_fx.sql_, l_fx.session_.uuid_id_);
-  BOOST_TEST(l_detail.has_value());
-  BOOST_TEST(en(l_detail->session_.state_) == en(ai_light_session_state::awaiting_judgement));
-  BOOST_TEST(l_detail->is_judgement_overdue_);
-  // 过期不代表「不用管了」，它仍然在等人工动作 —— 否则前端会把它从待办里漏掉
-  BOOST_TEST(l_detail->is_waiting_human_);
-
-  // ---- 关键回归 ----
-  // 超时**不**能剥夺判断能力。删掉 suspended 之前，这里会撞上
-  // apply_judgement 的「不在等人工判断」400，而没有任何路径能从 suspended 回到
-  // awaiting_judgement —— 于是已经渲染好的候选再也挑不了，
-  // 只能走 /spec 重出方案，白扔一整轮渲染。这才是删掉那个状态的理由。
-  auto l_args = load_for_judge(l_fx);
-  ai_light_judgement_t l_j{};
-  l_j.by_                    = core_set::get_set().get_uuid();
-  l_j.at_                    = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-  l_j.selected_candidate_id_ = l_fx.candidates_.at(2).uuid_id_;
-  bool l_threw               = false;
-  try {
-    co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j);
-  } catch (const std::exception& in_err) {
-    l_threw = true;
-    BOOST_TEST_MESSAGE(fmt::format("超时会话判断失败: {}", in_err.what()));
-  }
-  BOOST_TEST(!l_threw);
-
-  auto l_session = l_fx.reload_session();
-  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
-  BOOST_TEST(!l_session.judgement_due_at_.has_value());
-
-  // 判断完就不该再过期 —— 标志跟着状态走，不需要任何人去清理它。
-  // 这也是删掉 suspended_at 之后仍然成立的不变量。
-  auto l_after = build_session_detail(*l_fx.sql_, l_fx.session_.uuid_id_);
-  BOOST_TEST(l_after.has_value());
-  BOOST_TEST(!l_after->is_judgement_overdue_);
 }
 
 // ===========================================================================

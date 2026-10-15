@@ -408,7 +408,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
 //   上传参考图（reference_route，POST 里推进到 generating —— 见该处注释）
 //   前两轮提交候选 → POST /session/{}/iteration（要求 generating）
 //   渲染回传 → awaiting_judgement（mark_iteration_rendered）
-//   判断 → generating（apply_judgement）
+//   判断 → generating（本路由内联推进）
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   person_.check_not_outsourcer();
@@ -425,15 +425,52 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   l_judgement.by_ = person_.person_.uuid_id_;
   l_judgement.at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
+  DOODLE_CHICK_HTTP(
+      l_iteration->state_ != ai_light_iteration_state::judged, bad_request, "轮次 {} 已经判断过了",
+      l_iteration->iteration_
+  );
+
+  sql_modify_statement_vector_t l_sqls{};
+
   if (!l_judgement.selected_candidate_id_.is_nil()) {
     auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(l_judgement.selected_candidate_id_);
     DOODLE_CHICK_HTTP(
         l_cand.iteration_id_ == l_iteration->uuid_id_, bad_request, "候选 {} 不属于第 {} 轮", l_cand.uuid_id_,
         l_iteration->iteration_
     );
+
+    l_cand.is_selected_ = true;
+
+    l_sqls.emplace_back(update(l_sql)
+                            .from<ai_light_candidate>()
+                            .set(c(&ai_light_candidate::is_selected_) = l_cand.is_selected_)
+                            .where(c(&ai_light_candidate::uuid_id_) == l_cand.uuid_id_));
   }
 
-  co_await apply_judgement(l_sql, l_session, *l_iteration, l_judgement);
+  l_iteration->apply_judgement(l_judgement);
+  l_sqls.emplace_back(update(l_sql)
+                          .from<ai_light_iteration>()
+                          .set(
+                              c(&ai_light_iteration::state_)     = l_iteration->state_,
+                              c(&ai_light_iteration::judgement_) = l_iteration->judgement_,
+                              c(&ai_light_iteration::judged_by_) = l_iteration->judged_by_,
+                              c(&ai_light_iteration::judged_at_) = l_iteration->judged_at_
+                          )
+                          .where(c(&ai_light_iteration::uuid_id_) == l_iteration->uuid_id_));
+
+  l_session.mark_judged(ai_light_session_state::generating);
+  l_session.failure_reason_ = "";
+  l_sqls.emplace_back(update(l_sql)
+                          .from<ai_light_session>()
+                          .set(
+                              c(&ai_light_session::state_)             = l_session.state_,
+                              c(&ai_light_session::current_iteration_) = l_session.current_iteration_,
+                              c(&ai_light_session::judgement_due_at_)  = l_session.judgement_due_at_,
+                              c(&ai_light_session::failure_reason_)    = l_session.failure_reason_
+                          )
+                          .where(c(&ai_light_session::uuid_id_) == l_session.uuid_id_));
+
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 判断 AI 灯光会话 {} 第 {} 轮: {}", person_.person_.email_,

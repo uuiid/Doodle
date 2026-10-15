@@ -64,19 +64,6 @@ struct DOODLELIB_API ai_light_iteration_locator_t {
   std::int32_t iteration_{0};
 };
 
-/// 人工闸门 2 的状态推进。**纯 DB，不碰文件与 LLM** —— 单测直接调它。
-///
-/// 前置条件（由调用方校验）：
-///   * in_iteration 就是 in_judgement 所判断的那一轮；
-///   * in_judgement.selected_candidate_id_ 属于 in_iteration（防跨轮误选）。
-///
-/// 本函数负责：标记候选（选了候选 → is_selected_ = true）、
-/// 写 iteration 的判断记录、推进 session 状态。
-DOODLELIB_API boost::asio::awaitable<void> apply_judgement(
-    sqlite_database& in_sql, ai_light_session& in_session, ai_light_iteration& in_iteration,
-    const ai_light_judgement_t& in_judgement
-);
-
 /// 候选渲染产物的落点（D44）：**唯一**的计算处。
 ///
 /// 会话 / 轮次 / 候选三个 uuid 都在候选行上（`session_id_` / `iteration_id_` / `uuid_id_`），

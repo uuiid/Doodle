@@ -33,7 +33,7 @@ namespace doodle::ai_light {
 /// 它是 `state == awaiting_judgement && now > judgement_due_at_` 的纯函数，
 /// `is_judgement_overdue()` 随时算得出来，读模型也把它带出去了（`is_judgement_overdue_`）。
 ///
-/// 这一点必须守住：`apply_judgement` 只接受 `awaiting_judgement`，若把过器物化成一个
+/// 这一点必须守住：`judge_route::post` 的判断闸门只接受 `awaiting_judgement`，若把过器物化成一个
 /// 新状态，就没有任何路径能回到 `awaiting_judgement`（`mark_awaiting_judgement()` 只在
 /// 渲染回填里调用，而渲染早已完成）—— 美术超时回来时，**已经渲染好的候选再也判断不了**，
 /// 只能走 `/spec` 重出方案，白扔一整轮渲染。同理，`is_judgement_overdue()` 也不能要求
@@ -53,7 +53,7 @@ constexpr auto g_judgement_timeout = std::chrono::hours{4};
 ///   * `reject_all` **不终止会话**，它只表示「这一轮全部不要」，会话照常可以再出一轮；
 ///   * 失败没有独立状态，`failure_reason_` 是唯一记录（`advance_session` 的接缝失败走回滚）。
 ///
-/// 一轮只能判断一次（`apply_judgement` 的 `iteration.state_ != judged` 闸门），
+/// 一轮只能判断一次（`judge_route::post` 的 `iteration.state_ != judged` 闸门），
 /// 所以「再来一轮」必须经 `POST /iterate` —— 这是有意的，见 §15.10。
 enum class ai_light_session_state {
   /// 已创建，提示词已录入，尚未产出 Spec
