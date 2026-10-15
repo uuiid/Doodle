@@ -221,14 +221,14 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
   l_payload.iteration_             = l_iteration;
   // 轮次目录名用**轮次 uuid**：候选行靠 iteration_id_ 就能算出落点，不必回查序号。
   l_payload.out_dir_               = l_out_dir;
-  l_payload.baseline_level_        = l_assembly.original_map_.generic_string();
-  l_payload.render_map_            = l_assembly.render_map_.generic_string();
-  l_payload.level_sequence_        = l_assembly.level_sequence_import_.generic_string();
-  l_payload.movie_pipeline_config_ = l_assembly.movie_pipeline_config_.generic_string();
-  l_payload.frame_begin_           = l_assembly.begin_time_;
-  l_payload.frame_end_             = l_assembly.end_time_;
+  l_payload.baseline_level_        = l_assembly_res.original_map_.generic_string();
+  l_payload.render_map_            = l_assembly_res.render_map_.generic_string();
+  l_payload.level_sequence_        = l_assembly_res.level_sequence_import_.generic_string();
+  l_payload.movie_pipeline_config_ = l_assembly_res.movie_pipeline_config_.generic_string();
+  l_payload.frame_begin_           = l_assembly_res.begin_time_;
+  l_payload.frame_end_             = l_assembly_res.end_time_;
   l_payload.ue_project_path_       = l_assembly_res.uproject_file_name_.generic_string();
-  l_payload.camera_file_path_      = l_assembly.camera_file_path_.generic_string();
+  l_payload.camera_file_path_      = l_assembly_res.camera_file_path_.generic_string();
   // D57：工作机上没有这份 UE 工程缓存，装配素材必须下发同步清单。
   // ue_project_path_ 这里放的是**工程文件名**（不是服务端绝对路径）。
   l_payload.project_dir_           = l_assembly_res.project_dir_;
