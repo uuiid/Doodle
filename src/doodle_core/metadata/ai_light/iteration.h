@@ -132,7 +132,7 @@ struct DOODLE_CORE_API ai_light_iteration {
   chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   // --- 类型化访问器 ---
-  ai_light_judgement_t get_judgement() const { return json_get_or_default<ai_light_judgement_t>(judgement_); }
+  ai_light_judgement_t get_judgement() const { return judgement_.get<ai_light_judgement_t>(); }
   void set_judgement(const ai_light_judgement_t& in_judgement) { judgement_ = in_judgement; }
 
   /// 记录一次人工判断，并把整轮推进到 judged。

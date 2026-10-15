@@ -92,11 +92,11 @@ struct DOODLE_CORE_API ai_light_preset {
   chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   // --- 类型化访问器 ---
-  lighting_rig_t get_rig_fragment() const { return json_get_or_default<lighting_rig_t>(rig_fragment_); }
+  lighting_rig_t get_rig_fragment() const { return rig_fragment_.get<lighting_rig_t>(); }
   void set_rig_fragment(const lighting_rig_t& in_rig) { rig_fragment_ = in_rig; }
-  preset_applicable_t get_applicable() const { return json_get_or_default<preset_applicable_t>(applicable_); }
+  preset_applicable_t get_applicable() const { return applicable_.get<preset_applicable_t>(); }
   void set_applicable(const preset_applicable_t& in_applicable) { applicable_ = in_applicable; }
-  lighting_targets_t get_stats_target() const { return json_get_or_default<lighting_targets_t>(stats_target_); }
+  lighting_targets_t get_stats_target() const { return stats_target_.get<lighting_targets_t>(); }
   void set_stats_target(const lighting_targets_t& in_targets) { stats_target_ = in_targets; }
 
   friend void to_json(nlohmann::json& j, const ai_light_preset& p) {

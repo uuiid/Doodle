@@ -109,9 +109,9 @@ struct DOODLE_CORE_API ai_light_candidate {
 
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
 
-  lighting_rig_t get_rig() const { return json_get_or_default<lighting_rig_t>(rig_); }
+  lighting_rig_t get_rig() const { return rig_.get<lighting_rig_t>(); }
   void set_rig(const lighting_rig_t& in_rig) { rig_ = in_rig; }
-  candidate_metrics_t get_metrics() const { return json_get_or_default<candidate_metrics_t>(metrics_); }
+  candidate_metrics_t get_metrics() const { return metrics_.get<candidate_metrics_t>(); }
   void set_metrics(const candidate_metrics_t& in_metrics) { metrics_ = in_metrics; }
 
   void sync_from_rig() {

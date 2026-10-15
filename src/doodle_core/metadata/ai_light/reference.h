@@ -137,7 +137,7 @@ struct DOODLE_CORE_API ai_light_reference {
 
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
 
-  reference_image_stats_t get_stats() const { return json_get_or_default<reference_image_stats_t>(stats_); }
+  reference_image_stats_t get_stats() const { return stats_.get<reference_image_stats_t>(); }
   void set_stats(const reference_image_stats_t& in_stats) { stats_ = in_stats; }
 
   friend void to_json(nlohmann::json& j, const ai_light_reference& p) {

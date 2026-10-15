@@ -30,20 +30,6 @@ struct DOODLE_CORE_API interval_t {
   }
 };
 
-/// 嵌套结构落库的取用助手。
-///
-/// 为什么需要它：本库的 ORM 只为有限的一组类型提供了列绑定
-/// （标量 / std::string / uuid / time_point / zoned_time / FSys::path / 枚举 /
-/// std::vector<std::string> / std::vector<枚举> / nlohmann::json / std::optional<T>，
-/// 见 sqlite_orm/orm/sqlite_statement.h）。**嵌套结构体与其它容器都不是列类型**。
-/// 所以凡是嵌套结构（intent / targets / rig / metrics / judgement …）一律以
-/// nlohmann::json 成员落库，再靠各自的 to_json / from_json 做类型化访问。
-template <typename T>
-T json_get_or_default(const nlohmann::json& in_json) {
-  if (in_json.is_null()) return T{};
-  return in_json.get<T>();
-}
-
 // ---------------------------------------------------------------------------
 // std::optional ↔ JSON：**用库自带的，不要自己写**
 // ---------------------------------------------------------------------------
