@@ -12,7 +12,8 @@
 这些是硬约束，违反即为错误改动：
 
 - **Git 提交一律由用户执行。** 完成改动后只报告：改了什么、验证结果、当前处于未提交状态。不要 `git commit` / `git push`，也不要主动提议代提交。
-- **不要跑发布构建**：`Ninja_release` / `Release_*` / `package_release` 耗时过长，用户已明确要求停用。验证走 `Ninja_debug` 的 `test_main`。
+- **绝不测试。** 不要运行任何测试、不要构建测试目标、不要跑测试验证改动；验证手段只有编译通过。
+- **不要跑发布构建**：`Ninja_release` / `Release_*` / `package_release` 耗时过长，用户已明确要求停用。
 - **不要用非常量引用入参返回结果（out-parameter）**，即使麻烦也要用返回值。
   协程下应返回 `awaitable<结果结构体>`（如 `awaitable<spec_branch_result>`），而不是 `awaitable<void>` + 非常量引用。
 - **依赖只经 `vcpkg.json` 管理。** 自定义 port 放 `vcpkg_ports/`，triplet 放 `vcpkg_triplets/`。不要在 `CMakeLists.txt` 里硬编码外部依赖路径。
@@ -45,11 +46,9 @@
 
 其余 preset 的权威定义在 [CMakePresets.json](CMakePresets.json)；改构建步骤优先改该文件与 `CMake/` 下的 Find 模块，不要在 `CMakeLists.txt` 里写死平台路径。
 
-- 测试产物：`build/Ninja_debug/bin/test_main.exe`，测试实现位于 [src/test/core/](src/test/core/)。
-- 新增测试**必须**在 [src/test/core/CMakeLists.txt](src/test/core/CMakeLists.txt) 的显式源文件清单里登记——那里没有 `GLOB`，漏登记的文件会被静默忽略。
-- **测试范围收窄**：现有测试只针对**数据库**（`sqlite_*` 系列、schema/迁移/外键）、**视频图片文件解码**，以及少量请求体建模。
-  网络客户端（`src/doodle_lib/http_client/**`）、HTTP 处理器、Maya 插件**没有**单元测试，改动这些路径不要期待 `test_main` 会替你验证；
-  验证手段是编译通过 + 手工/集成确认。`src/test/**` 的既有内容不要改动，也不要为了新功能往那里加测试。
+- **测试范围收窄**：现有测试只有两部分——**数据库 ORM 与升级**（`sqlite_*` 系列、schema/迁移/外键），以及**视频图片文件解码**。
+  其余路径（网络客户端 `src/doodle_lib/http_client/**`、HTTP 处理器、Maya 插件等）**没有**单元测试，改动这些路径不要期待 `test_main` 会替你验证。
+  `src/test/**` 的既有内容不要改动，也不要为了新功能往那里加测试。
 - Maya 版本由 CMake 变量 `Maya_Version` 驱动，条件分支见 `src/CMakeLists.txt`；扩展新版本优先改 `CMake/FindMaya.cmake`。
 
 ### vcpkg 全量重编的三个诱因
