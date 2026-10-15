@@ -1,0 +1,40 @@
+{
+  "name": "dsh-sampling-params",
+  "version": "0.1.0",
+  "description": "Per-route and per-model sampling parameters (temperature, top_p, ...) for DeepSeek Harness LLM calls, injected through the official agent/request waterfall.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "MIT",
+  "files": [
+    "lib/**/*.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.4",
+    "@deepseek-ai/dsh-llm": "^0.2.0-rc.2",
+    "@deepseek-ai/dsh-agent": "^0.2.0-rc.2",
+    "@deepseek-ai/schemastery": "~3.18.4"
+  },
+  "scripts": {
+    "check": "node --check lib/index.js",
+    "test": "node test/pure.mjs"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "temperature",
+    "sampling",
+    "cordis"
+  ]
+}

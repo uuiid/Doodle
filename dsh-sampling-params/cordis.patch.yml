@@ -1,0 +1,17 @@
+# dsh-sampling-params bundle patch
+#
+# 把采样参数注入器挂进 DSH。config 全部可选：
+#   routes  路由级默认值，键为 provider 名；"*" 为所有路由兜底
+#   models  模型级覆盖，键为 "provider/model"，支持 "*/model" 与 "provider/*"
+#   log     是否把每次请求生效的采样参数写进日志（默认 false）
+#
+# 合并顺序（后者覆盖前者）：
+#   routes["*"] → routes[provider] → models["*/*"] → models["provider/*"]
+#   → models["*/model"] → models["provider/model"]
+- insert:
+    - id: sampling-params
+      name: dsh-sampling-params
+      config:
+        routes:
+          volcengine:
+            temperature: 0.6
