@@ -39,8 +39,9 @@
 1. **只有海报与成片下发浏览器（EXR 不下发）。** 每个候选的产物是**一段 mp4**（含相机运动的成片）加**一张首帧海报 PNG**；
    线性 EXR 是可选项（当前一轮不产），留服务端做工程检查。前端**只**拿海报 + 成片 + 数值指标。
    **候选对象里根本没有路径字段**（D44）：产物路径由服务端按
-   「会话 uuid / 轮次 uuid / 候选 uuid」现算、不落库、不进 JSON —— 取海报一律用
-   `GET /api/doodle/ai/light/candidate/{uuid}/image`，取成片用 `GET /api/doodle/ai/light/candidate/{uuid}/movie`，
+   「会话 uuid / 轮次 uuid / 候选 uuid」现算、不落库、不进 JSON —— 取成片一律用
+   `GET /api/doodle/ai/light/candidate/{uuid}/movie`
+   （取海报的 `GET /api/doodle/ai/light/candidate/{uuid}/image` **已删除**，取图方案待定），
    不要自己拼路径，也不要假设响应里有 `render_png_path` / `render_exr_path`。
 2. **~~规划逻辑不要放到前端。~~（本条第前半段已被 [ue_ai_lighting_role_downgrade.md](ue_ai_lighting_role_downgrade.md) 推翻，m00602）**
    后端角色降级后，**提示词组装、模型回复解释、轴展开、rig 构造都属于前端**；服务端只保留凭据代理、openCV 参考图统计、IR 准入闸门。
@@ -231,7 +232,8 @@ draft ──前端提交 Spec──▶ awaiting_spec_confirm ──POST /spec/co
 5. 成功后跳到 `/lighting/spec/...`（闸门 1）。
 
 **交互细节**：
-- 参考图上传要显示：缩略图（用 `GET /api/doodle/ai/light/reference/{id}/image`）、尺寸、`stats_confidence`（置信度低要提示「这张图参考价值低」）、
+- 参考图上传要显示：缩略图（上传时用本地已持有的文件自行展示 —— 原先的
+  `GET /api/doodle/ai/light/reference/{id}/image` **已删除**，取图方案待定，跨会话回显暂无来源）、尺寸、`stats_confidence`（置信度低要提示「这张图参考价值低」）、
   `is_outlier`/`excluded_reason`（人工排除过的）。
 - 提示词是**权威意图**（方案 §6.3：提示词优先于参考图）。placeholder 应给出可用的中文示例，
   并说明「参考图提供场景的数值结构，提示词提供意图；两者冲突时以提示词为准」。
@@ -308,7 +310,7 @@ draft ──前端提交 Spec──▶ awaiting_spec_confirm ──POST /spec/co
 ```
 
 **候选卡片（每张）显示**：
-- 海报：`GET /api/doodle/ai/light/candidate/{id}/image`（**只发 PNG**；`pending` → 404「尚未渲染完成」，`failed` → 404「渲染失败」）。
+- 海报：`GET /api/doodle/ai/light/candidate/{id}/image` **已删除**（取图方案待定），当前只能靠成片展示。
 - 成片：`GET /api/doodle/ai/light/candidate/{id}/movie`（`video/mp4`，**支持 Range** —— 用原生 `<video>` 播、让它自己分段拉，
   不要一次请求整段）。同一个候选的海报与成片**要么都在、要么都不在**：服务端只在两者都取得到时才算这个候选 `rendered`。
 - `candidate_index`（0 = 基线）、`variant_axis` + `variant_value` + `variant_label`
@@ -503,17 +505,11 @@ AI 灯光派发的任务类型是 `ai_light`（`server_task_info.type`），任�
 
 | 用途 | 接口 | 说明 |
 |---|---|---|
-| 参考图 | `GET /api/doodle/ai/light/reference/{id}/image` | 上传时已转 PNG；不要用 `file_path`（服务端磁盘路径） |
-| 中间候选海报 | `GET /api/doodle/ai/light/candidate/{id}/image` | `pending`/`failed` → 404（含中文原因）；磁盘缺文件 → 500 |
+| 参考图 | ~~`GET /api/doodle/ai/light/reference/{id}/image`~~ | **已删除**：取图方案待定（图片后续放到别处），上传时前端用本地文件自行展示 |
+| 中间候选海报 | ~~`GET /api/doodle/ai/light/candidate/{id}/image`~~ | **已删除**：取图方案待定 |
 | 中间候选成片 | `GET /api/doodle/ai/light/candidate/{id}/movie` | `video/mp4`，带 Range（原生播放器可直接拖进度）；缺失同样 404/500 |
 | 定稿图 | 走 preview file 的既有图片接口（按 `preview_file_id`） | 定稿候选的 `preview_file_id` 非 nil；也可从 `/api/data/entities/{entity_id}/preview-files` 拿到 |
 
-- **签名 URL**：取图的两条路由同时接受「会话 JWT」**或**「短时效签名 URL」
-  （`?exp=<unix秒>&uid=<人员uuid>&sig=<hex(hmac-sha256)>`，默认有效期 **10 分钟**，**只对 GET 生效**）。
-  **站点内正常带 cookie 请求即可，前端一般不需要签名** —— 签名主要是给外部 VLM 取图用的，
-  且签名路径下项目权限校验**照常生效**（换的是凭据，不是绕过授权）。
-- 服务端这两个取图接口**没有设置** `Cache-Control`/`ETag`。前端对同一张已渲染的候选图可以自己加缓存
-  （候选图内容不会变：`candidate.id` 不变则图不变）。
 - 删会话时产物目录**先备份再删**（进 `…/ai_light/backup/<日期>/<会话uuid>/`），但记录随 cascade 删除、**不再有任何 HTTP 入口**。
   所以「删了还能从备份捞图」是运维行为，不是前端能力。
 

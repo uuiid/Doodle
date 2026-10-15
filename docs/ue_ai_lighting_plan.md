@@ -847,8 +847,8 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
 
 | 产物 | 进 `preview_file`？ | 取图方式 |
 |---|---|---|
-| 参考图（多张） | 否 | `/api/doodle/ai/light/reference/{uuid}/image` |
-| 中间候选渲染（6 × N 轮） | 否 | 首帧海报 `/api/doodle/ai/light/candidate/{uuid}/image` + 成片 `/api/doodle/ai/light/candidate/{uuid}/movie` |
+| 参考图（多张） | 否 | ~~`/api/doodle/ai/light/reference/{uuid}/image`~~ —— **已删除**：取图方案待定，图片后续放到别处 |
+| 中间候选渲染（6 × N 轮） | 否 | 成片 `/api/doodle/ai/light/candidate/{uuid}/movie`（首帧海报 `/api/doodle/ai/light/candidate/{uuid}/image` **已删除**：取图方案待定） |
 | **定稿候选渲染** | **是** | 复用现有预览接口，`source = auto_light_generate` |
 
 这样镜头的预览列表只呈现交付结果，不会被 6×N 张中间候选淹没，
@@ -1042,8 +1042,8 @@ UE 进程启动成本高（数十秒到数分钟）。所以：
    | `GET  /api/doodle/ai/light/session/{session_id}/reference` | 参考图列表 |
    | `POST /api/doodle/ai/light/session/{session_id}/reference` | 多图上传（multipart，统一转 PNG） |
    | `DELETE /api/doodle/ai/light/reference/{id}` | 删单张参考图（含文件） |
-   | `GET  /api/doodle/ai/light/reference/{id}/image` | 参考图取图 |
-   | `GET  /api/doodle/ai/light/candidate/{id}/image` | 中间候选取图（只有定稿才进 `preview_file`） |
+   | ~~`GET  /api/doodle/ai/light/reference/{id}/image`~~ | ~~参考图取图~~ —— **已删除**：取图方案待定，图片后续放到别处 |
+   | ~~`GET  /api/doodle/ai/light/candidate/{id}/image`~~ | ~~中间候选取图~~ —— **已删除**：取图方案待定 |
    | ~~`GET  /api/doodle/ai/light/session/{session_id}/spec`~~ | ~~Spec 版本列表~~ —— **已删除**：与会话详情里的 `spec_history` 是同一份数据的第二个出口 |
    | ~~`POST /api/doodle/ai/light/session/{session_id}/spec`~~ | ~~生成 Spec~~ —— **已删除**（角色降级 · 第三梯队）：蒸馏归前端经推理网关完成，而该接口最后只剩「读会话 + 校验提示词非空 + 返回会话详情」，不写任何东西。**Spec 由谁落库尚未定**（见 role_downgrade §3.3 第三梯队的形态 A） |
    | `POST /api/doodle/ai/light/session/{session_id}/spec/confirm` | 人工闸门 1：确认 Spec（**不带裁决内容**，见 §15.7 D6），随后触发首轮 |
@@ -1556,8 +1556,8 @@ structure_feedback(in_sql, req)      -> std::vector<axis_step_t>      // 已落�
    `is_selected_`：定稿后接着调时，下一轮的 warm start 应该从定稿那套 rig 出发（那是目前最好的一张），
    而不是回到 LLM 的原始基线。两个字段因此可以在同一行上同时为真，但各自的含义没有变。
 4. **中间候选与参考图都不进 `preview_file`**（决策 1）。每轮 6 张全注册会把任务的预览列表
-   冲垮，也会把「交付物」这个概念稀释掉。中间图走 `/candidate/{id}/image`，
-   EXR 一律不下发浏览器（线性数据、体积大、浏览器渲染不了）。
+   冲垮，也会把「交付物」这个概念稀释掉。中间图原先走 `/candidate/{id}/image`，
+   该路由**已删除**（取图方案待定）；EXR 一律不下发浏览器（线性数据、体积大、浏览器渲染不了）。
 5. **建会话接口不吞任何接缝错误 —— 因为它不调接缝。** 早先建会话会立刻跑第一步，
    所以需要「吞掉 501 以免前端拿不到 session id 而重试建重复会话」这套说法；
    现在建会话只 insert，`POST /spec` / `/iterate` 的接缝错误一律原样返回 ——
@@ -2032,7 +2032,7 @@ POST /session/{id}/spec
 | 离线可测的 5 个纯函数 | 同文件 `build_spec_instructions()` `:120` / `build_spec_json_schema()` `:142` / `build_spec_input_text()` `:227` / `build_spec_request()` `:331`（返回强类型信封 `http::seedance2::inference_request_t`，定义在 `http_client/seedance2_inference_request.h`）/ `map_spec_result()` `:361`（声明在 `ai_light_seam_spec.h`，**必须留在 `doodle::ai_light` 命名空间内**，见坑 9） |
 | 请求 / 结果结构 | `spec_generation_request_t{ session_id_, project_id_, operator_id_, prompt_text_, references_, degrade_level_, previous_spec_ }`；`spec_generation_result_t{ spec_, reference_stats_ }`（原 `conflict_resolution_` 成员已删，理由见 §15.7 决定 D6） |
 | 状态机 | `advance_session(in_sql, in_session, in_operator_id)` `:124`（新签名，见 D1） |
-| 参考图 URL | `http_method/kitsu/ai_light.h` 的 `g_reference_image_path_template` + `reference_image_url(uuid)`。放在路由头是因为 `/api/doodle/ai/light/reference/{}/image` 的注册要用**字面量**喂 `_url` 这个 UDL，`constexpr std::string_view` 递不进去 |
+| 参考图 URL | ~~`http_method/kitsu/ai_light.h` 的 `g_reference_image_path_template` + `reference_image_url(uuid)`~~ —— **已删除**：`/api/doodle/ai/light/reference/{}/image` 路由已移除，取图方案待定 |
 | 指令串 | `build_spec_instructions()`：§6.1 职责边界两侧 + §6.3 冲突四条 + **§5.5 六行映射表原文** + 单位口径（对比度 = 显示空间 `p90 − p10`；色温 Kelvin；区间是定长 `[low, high]`）+ 「不许改几何 / 材质」 |
 | 输出 schema | `build_spec_json_schema()`：平铺 `{intent, targets}`，逐层 `additionalProperties:false` 且**全字段 required**；`palette` / `ownership` / `space` 刻意**不在** schema 里（见下表）。`evidence` 整条链路已在 §15.7 决定 D-3 中删除；顶层 `conflicts` 已在决定 D7 中删除 |
 | 测试 | **新建** `src/test/core/ai_light_spec_prompt.cpp`（套件 `ai_light_spec_prompt`，10 用例，全离线）；`ai_light_stats.cpp` 补 7 个聚合用例；`ai_light_state.cpp` 改 3 处调用点并新增/改写 3 个用例 |
@@ -2181,11 +2181,13 @@ POST /session/{id}/spec
     `-IE:\Doodle\src\test -IE:\Doodle\src -IE:\Doodle\src\doodle_core\..`，**没有** `E:\Doodle\src\doodle_lib`
     → `fatal error C1083: Cannot open include file: 'core/http/http_function.h'`。
     这正是 `inference_task.h` 当初被单独拆出来的同一个原因。于是测试里没法调 `reference_image_url()`，
-    断言改为**测试自己拼**期望 URL：`fmt::format("/api/doodle/ai/light/reference/{}/image", boost::uuids::to_string(l_id))`。
+    （该函数已随取图路由删除，此条只作历史记录）断言当时改为**测试自己拼**期望 URL：
+    `fmt::format("/api/doodle/ai/light/reference/{}/image", boost::uuids::to_string(l_id))`。
     这反而更对：测试要钉的是**线格式**，跟着实现走就测不出格式漂移。
-15. **`reference_image_url` 不在 `doodle::ai_light`。** 它和 `g_reference_image_path_template` 声明在路由头里，
-    命名空间是 `doodle::http::ai_light`。接缝里必须写全名 `http::ai_light::reference_image_url(...)`，
-    否则 `error C3861: 'reference_image_url': identifier not found`。
+15. **~~`reference_image_url` 不在 `doodle::ai_light`~~ —— 该函数与 `g_reference_image_path_template` 已随取图路由一并删除。**
+    原先它声明在路由头里，命名空间是 `doodle::http::ai_light`，接缝里必须写全名
+    `http::ai_light::reference_image_url(...)`，否则 `error C3861: 'reference_image_url': identifier not found`。
+    取图方案待定，重新实现时再定这一条。
 16. **沙箱不允许被启动的子进程写真实 `%TEMP%`。** 症状极具误导性：24 个用例同时报
     `doodle::orm::sqlite_orm_exception: 14: unable to open database file`（每个建临时库的用例）与
     `critical check cv::imwrite(...) has failed`（写临时 PNG 的用例），看起来像 ORM / OpenCV 坏了，
@@ -3312,7 +3314,7 @@ Main(-Params=<json>)
 | 上传路由 | `ai_light.cpp::candidate_file_route::post`：`l_dst = candidate_render_path(ctx, l_cand, l_linear)` |
 | 取图 / 定稿 | `candidate_image_route::get`、`build_accepted_preview_file` 同样现算 |
 | 工作机 | `task_payload.h` 的 `make_iteration_relative_dir(session, iteration_id)` 末级是轮次 uuid；`exe_warp/ai_light_render.cpp` **零改动**（它只用 `make_candidate_file_name` 与 `out_dir_`） |
-| 前端契约 | `docs/ue_ai_lighting_frontend.md:39-42`：候选对象里没有路径字段，取图只走 `/candidate/{uuid}/image` |
+| 前端契约 | `docs/ue_ai_lighting_frontend.md:39-42`：候选对象里没有路径字段，取海报走 `/candidate/{uuid}/image`（**已删除**，取图方案待定） |
 
 **迁移：不用加版本号**
 
@@ -3446,7 +3448,7 @@ iterate → 派发（装配硬前置：无 task_id / 装配抛错 / level_sequen
 - 回传：`candidates[] / frame_rate / error`；候选：`candidate_index / candidate_id / status / render_ms /
   light_count / frame_count / metrics` —— **回传里永远没有路径**（D27）。
 - 上传：`POST /api/doodle/ai/light/candidate/{候选 uuid}/file/{render|render_linear|render_movie}`（`application/octet-stream`，成功 204）。
-- 取用：海报 `GET …/candidate/{uuid}/image`；成片 `GET …/candidate/{uuid}/movie`（`video/mp4`，`make_msg` 自带 Range 支持）。
+- 取用：成片 `GET …/candidate/{uuid}/movie`（`video/mp4`，`make_msg` 自带 Range 支持）；海报 `GET …/candidate/{uuid}/image` **已删除**（取图方案待定）。
 
 **测试与回归**
 

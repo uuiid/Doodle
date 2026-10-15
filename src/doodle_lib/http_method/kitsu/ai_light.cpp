@@ -356,39 +356,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, delete_) {
   co_return in_handle->make_msg_204();
 }
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_image_route, get) {
-  person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
-
-  auto l_ref = l_sql.get_by_uuid<ai_light_reference>(id_);
-  person_.check_project_access(l_sql.get_by_uuid<ai_light_session>(l_ref.session_id_).project_id_);
-
-  DOODLE_CHICK(FSys::exists(l_ref.file_path_), "参考图文件不存在 文件 {}", l_ref.file_path_.generic_string());
-  co_return in_handle->make_msg(l_ref.file_path_, kitsu::mime_type(l_ref.file_path_.extension()));
-}
-
 // ===========================================================================
 // 候选渲染图（中间候选专用接口；只有定稿才进 preview_file）
 // ===========================================================================
-
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_image_route, get) {
-  person_.check_not_outsourcer();
-  auto l_sql  = get_sqlite_database();
-
-  auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(id_);
-  person_.check_project_access(l_sql.get_by_uuid<ai_light_session>(l_cand.session_id_).project_id_);
-
-  DOODLE_CHICK_HTTP(
-      l_cand.render_status_ != candidate_render_status::pending, not_found, "候选 {} 尚未渲染完成", l_cand.uuid_id_
-  );
-  DOODLE_CHICK_HTTP(
-      l_cand.render_status_ != candidate_render_status::failed, not_found, "候选 {} 渲染失败", l_cand.uuid_id_
-  );
-  const FSys::path l_png_path = candidate_render_path(g_ctx().get<kitsu_ctx_t>(), l_cand, false);
-  DOODLE_CHICK(FSys::exists(l_png_path), "候选渲染图不存在 文件 {}", l_png_path.generic_string());
-
-  co_return in_handle->make_msg(l_png_path, kitsu::mime_type(l_png_path.extension()));
-}
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
   person_.check_not_outsourcer();

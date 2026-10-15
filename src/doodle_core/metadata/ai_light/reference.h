@@ -9,8 +9,10 @@
 //   否则美术无法看到「到底是哪张图把色温拉偏了」，裁决就无从下手。
 //   （原先还说聚合结果进 ai_light_spec；那张表已删除，聚合体只存在于内存里。）
 //
-// 这些图**不注册进 preview_file**：镜头预览列表只呈现交付结果（定稿候选），
-// 参考图由 /api/doodle/ai/light/reference/{uuid}/image 直接从 file_path 提供。
+// 这些图**不注册进 preview_file**。
+// TODO: 取图方案待定 —— 图片后续会放到别处，原先由
+// `/api/doodle/ai/light/reference/{uuid}/image` 直接从 file_path 提供，该路由已删除；
+// 后面实现新的取图方式。
 //
 
 #pragma once

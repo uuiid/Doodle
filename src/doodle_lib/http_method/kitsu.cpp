@@ -311,12 +311,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<ai_light::reference_instance_route>("/api/doodle/ai/light/reference/{}"_url(
         &ai_light::reference_instance_route::id_
       ))
-      .reg_t<ai_light::reference_image_route>("/api/doodle/ai/light/reference/{}/image"_url(
-        &ai_light::reference_image_route::id_
-      ))
-      .reg_t<ai_light::candidate_image_route>("/api/doodle/ai/light/candidate/{}/image"_url(
-        &ai_light::candidate_image_route::id_
-      ))
       .reg_t<ai_light::judge_route>("/api/doodle/ai/light/session/{}/iteration/{}"_url(
         &ai_light::judge_route::session_id_, &ai_light::judge_route::iteration_id_
       ))

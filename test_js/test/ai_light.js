@@ -6,18 +6,16 @@
 //   2. GET/DELETE /api/doodle/ai/light/session/{id}
 //   3. GET/POST /api/doodle/ai/light/session/{session_id}/reference
 //   4. DELETE /api/doodle/ai/light/reference/{id}
-//   5. GET /api/doodle/ai/light/reference/{id}/image
-//   6. GET /api/doodle/ai/light/candidate/{id}/image
-//   7. GET/POST /api/doodle/ai/light/session/{session_id}/spec
-//   8. POST /api/doodle/ai/light/session/{session_id}/spec/confirm
-//   9. POST /api/doodle/ai/light/session/{session_id}/iterate
-//  10. POST /api/doodle/ai/light/session/{session_id}/judge
-//  11. POST /api/doodle/ai/light/render_report/{task_id}
-//  12. POST /api/doodle/ai/light/render_report_local/{session_id}/{iteration}
-//  13. POST /api/doodle/ai/light/candidate/{id}/file/{role}
-//  14. GET /api/doodle/ai/light/candidate/{id}/movie
-//  15. GET/POST /api/doodle/ai/light/preset
-//  16. GET/PUT/DELETE /api/doodle/ai/light/preset/{id}
+//   5. GET/POST /api/doodle/ai/light/session/{session_id}/spec
+//   6. POST /api/doodle/ai/light/session/{session_id}/spec/confirm
+//   7. POST /api/doodle/ai/light/session/{session_id}/iterate
+//   8. POST /api/doodle/ai/light/session/{session_id}/judge
+//   9. POST /api/doodle/ai/light/render_report/{task_id}
+//  10. POST /api/doodle/ai/light/render_report_local/{session_id}/{iteration}
+//  11. POST /api/doodle/ai/light/candidate/{id}/file/{role}
+//  12. GET /api/doodle/ai/light/candidate/{id}/movie
+//  13. GET/POST /api/doodle/ai/light/preset
+//  14. GET/PUT/DELETE /api/doodle/ai/light/preset/{id}
 //
 // 前置条件（本文件不负责创建）：需要一个**已有灯光任务**的镜头 entity_id。
 // 建会话时服务端用 resolve_lighting_task_id() 从镜头解析灯光任务，
@@ -43,7 +41,7 @@ import {
   listReferenceImages,
   mimeTypeOf,
 } from './config.js';
-import { readJson, readBuffer, expectError, pngSignatureHex } from './helpers.js';
+import { readJson, expectError } from './helpers.js';
 
 // 有灯光任务的镜头 id（建会话的唯一入口需要它）
 const ENTITY_ID = process.env.AI_LIGHT_ENTITY_ID || '019e8267-2505-70d6-8050-430e4565ad8e';
@@ -336,34 +334,6 @@ test.describe('AI 灯光 —— 参考图（reference）', () => {
     // 按 created_at 升序（= 上传先后顺序）；ordinal 列已删除
     expect(new Date(req.body.data[0].created_at).getTime())
       .to.be.at.most(new Date(req.body.data[1].created_at).getTime());
-  });
-
-  test('GET /reference/{id}/image — 取参考图（PNG 流）', async ({ request }) => {
-    expect(sessionId, '需要先建会话').to.not.be.null;
-
-    const listReq = await readJson(
-      await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`, { headers: authHeader })
-    );
-    const refId = listReq.body.data[0].id;
-
-    // 取图是二进制流，按 Buffer 收
-    const req = await readBuffer(
-      await request.get(`${URL}/api/doodle/ai/light/reference/${refId}/image`, { headers: authHeader })
-    );
-
-    expect(req.status).to.equal(200);
-    expect(req.headers['content-type']).to.include('image/png');
-    expect(req.body.length, '返回的图片字节不应为空').to.be.above(0);
-    // PNG magic
-    expect(pngSignatureHex(req.body)).to.equal('89504e470d0a1a0a');
-  });
-
-  test('GET /reference/{id}/image — 参考图不存在返回 404', async ({ request }) => {
-    const req = await readJson(
-      await request.get(`${URL}/api/doodle/ai/light/reference/${NON_EXISTENT_ID}/image`, { headers: authHeader })
-    );
-
-    expect(req.status).to.equal(404);
   });
 
   test('DELETE /reference/{id} — 删除单张参考图返回 204', async ({ request }) => {
@@ -1016,27 +986,12 @@ test.describe.skip('AI 灯光 —— 候选产物（candidate file / movie / ima
     expectError(req, 400, 'application/octet-stream');
   });
 
-  test('GET /candidate/{id}/image — 候选不存在返回 404', async ({ request }) => {
-    const req = await readJson(
-      await request.get(`${URL}/api/doodle/ai/light/candidate/${NON_EXISTENT_ID}/image`, { headers: authHeader })
-    );
-
-    expect(req.status).to.equal(404);
-  });
-
   test('GET /candidate/{id}/movie — 候选不存在返回 404', async ({ request }) => {
     const req = await readJson(
       await request.get(`${URL}/api/doodle/ai/light/candidate/${NON_EXISTENT_ID}/movie`, { headers: authHeader })
     );
 
     expect(req.status).to.equal(404);
-  });
-
-  // 这条是「上传 → 取图」的闭环。上传体就是文件本身，服务端按候选行的三个 uuid
-  // 现算落点（D27/D40），成功回 204；随后 GET /candidate/{id}/image 才可能有内容。
-  // 但候选必须来自真实一轮（pending 会 404「尚未渲染完成」），所以默认跳过。
-  test('POST /candidate/{id}/file/{role} — 上传海报后取图返回 PNG（完整一轮）', async () => {
-    test.skip();
   });
 });
 

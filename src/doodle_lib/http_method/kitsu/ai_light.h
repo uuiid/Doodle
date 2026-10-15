@@ -41,18 +41,6 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-// /api/doodle/ai/light/reference/{}/image
-DOODLE_HTTP_SIGNED_FUN(reference_image_route)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
-
-// /api/doodle/ai/light/candidate/{}/image
-DOODLE_HTTP_SIGNED_FUN(candidate_image_route)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
-
 // /api/doodle/ai/light/session/{}/iteration/{}
 DOODLE_HTTP_JWT_FUN(judge_route)
 DOODLE_HTTP_FUN_OVERRIDE(post)
