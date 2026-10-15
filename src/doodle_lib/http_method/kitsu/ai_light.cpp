@@ -49,7 +49,6 @@
 #include <string>
 #include <vector>
 
-
 namespace doodle::http::ai_light {
 
 namespace {
@@ -623,14 +622,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   l_judgement.by_ = person_.person_.uuid_id_;
   l_judgement.at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
-  // ---- 文本反馈不再结构化（推理归前端）----
-  //
-  // 请求体里的 `feedback_axes` 只是**读一下就被丢掉的信息载体**：决策 5 把滑块定为
-  // 默认通道，滑块由前端直接持有并经推理网关自己送模型，服务端不再存一份轴方向。
-  // 现在文本**原样留存**在 l_judgement.feedback_text_ 里随判定落库。
-
-  // ---- 定稿要先把图落成 preview_file 对象（文件动作），再交给 apply_judgement 同事务落库 ----
-  // 定稿由「选中了候选」表达：全否不选候选，也就不进 preview_file。
   std::optional<preview_file> l_preview_file{};
   if (!l_judgement.selected_candidate_id_.is_nil()) {
     auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(l_judgement.selected_candidate_id_);
@@ -1025,7 +1016,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   l_task.backend_             = doodle::seedance2::task_backend::seedance2;  // 同上
   l_task.user_id_             = l_operator_id;                               // 计费主体 + 签名 URL 的 uid
   l_task.ai_studio_id_        = l_studio->uuid_id_;
-  l_task.project_uuid_id_     = l_session.project_id_;                       // 只为归属可查，内部不依赖
+  l_task.project_uuid_id_     = l_session.project_id_;  // 只为归属可查，内部不依赖
   // 归属会话：会话就在路径上（/session/{session_id}/inference），所以这次推理属于哪个会话
   // 在网关这里是**已知的**。轮次则不然 —— 降级后轮次由前端在 /session/{}/iteration 提交时
   // 建立，网关跑推理时它还不存在，所以任务行只指会话、不指轮次。
@@ -1037,9 +1028,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   //
   // run_inference_task 自己一个事务里落终态任务行 + 扣费。这是唯一的副作用，且**有意保留**：
   // 推理确实发生了，必须留痕计费 —— 否则调用方回滚会话状态时会连带把 person_token 的扣费抹掉。
-  auto l_result = co_await http::seedance2::run_inference_task(
-      l_task, l_sql, http::seedance2::make_inference_client(*l_studio)
-  );
+  auto l_result =
+      co_await http::seedance2::run_inference_task(l_task, l_sql, http::seedance2::make_inference_client(*l_studio));
 
   SPDLOG_LOGGER_INFO(
       g_logger_ctrl().get_http(), "AI 灯光推理网关：会话 {} 完成一次推理（{} → {} token）", l_session.uuid_id_,
