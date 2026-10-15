@@ -120,6 +120,7 @@ struct DOODLE_CORE_API ai_light_iteration {
   std::optional<chrono::system_zoned_time> dispatch_at_{};
   std::optional<chrono::system_zoned_time> render_at_{};
 
+  // 判断人, 判断时间, 判断内容
   uuid judged_by_{};
   std::optional<chrono::system_zoned_time> judged_at_{};
   /// ai_light_judgement_t 的 JSON 形态
