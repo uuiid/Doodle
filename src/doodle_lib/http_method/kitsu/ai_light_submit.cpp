@@ -164,7 +164,6 @@ orm::sql_modify_statement_vector_t write_dispatched_iteration(
     l_cand.session_id_      = in_request.session_id_;
     l_cand.candidate_index_ = l_i;
     l_cand.set_rig(l_rig);
-    l_cand.sync_from_rig();
     l_cand.render_status_ = candidate_render_status::pending;
 
     l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_candidate>().values(l_cand));
