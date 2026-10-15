@@ -39,6 +39,26 @@ namespace {
 using namespace orm;
 using namespace doodle::ai_light;
 
+struct ai_light_judgement_t {
+  uuid by_{};
+  std::optional<chrono::system_zoned_time> at_{};
+  uuid selected_candidate_id_{};
+  std::string feedback_text_{};
+
+  friend void to_json(nlohmann::json& j, const ai_light_judgement_t& p) {
+    j["by"]                    = p.by_;
+    j["at"]                    = p.at_;
+    j["selected_candidate_id"] = p.selected_candidate_id_;
+    j["feedback_text"]         = p.feedback_text_;
+  }
+  friend void from_json(const nlohmann::json& j, ai_light_judgement_t& p) {
+    if (j.contains("by")) j.at("by").get_to(p.by_);
+    if (j.contains("at")) j.at("at").get_to(p.at_);
+    if (j.contains("selected_candidate_id")) j.at("selected_candidate_id").get_to(p.selected_candidate_id_);
+    if (j.contains("feedback_text")) j.at("feedback_text").get_to(p.feedback_text_);
+  }
+};
+
 ai_light_session load_session_checked(
     const http_jwt_fun::http_jwt_t& in_person, sqlite_database& in_sql, const uuid& in_session_id
 ) {

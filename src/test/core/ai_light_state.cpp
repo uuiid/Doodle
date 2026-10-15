@@ -408,27 +408,6 @@ BOOST_AUTO_TEST_CASE(optional_and_time_fields_serialize_as_scalars) {
   // 所以这里直接钉住**形状**，而不是只钉住值 —— 值相等是掩盖不了多包一层的。
   const auto l_now = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
 
-  ai_light_judgement_t l_j{};
-  l_j.by_                    = core_set::get_set().get_uuid();
-  l_j.at_                    = l_now;
-  l_j.selected_candidate_id_ = core_set::get_set().get_uuid();
-  l_j.feedback_text_         = "主光再低一点，色温再冷一点";
-
-  nlohmann::json l_j_json = l_j;
-  BOOST_TEST(l_j_json.is_object());
-  BOOST_TEST(l_j_json.at("at").is_string());
-  // 有值的时间字段必须是字符串，不是数组
-  BOOST_TEST(!l_j_json.at("at").is_array());
-  // 往返回来仍相等
-  auto l_j_back = l_j_json.get<ai_light_judgement_t>();
-  BOOST_TEST(l_j_back.at_.has_value());
-  BOOST_TEST(l_j_back.feedback_text_ == "主光再低一点，色温再冷一点");
-
-  // 无值的 optional 写 null（而不是空数组）
-  ai_light_judgement_t l_empty{};
-  nlohmann::json l_empty_json = l_empty;
-  BOOST_TEST(l_empty_json.at("at").is_null());
-
   // 会话的时间 optional 同理
   ai_light_session l_session{};
   l_session.mark_awaiting_judgement();

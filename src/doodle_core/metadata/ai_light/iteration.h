@@ -50,34 +50,6 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
                               }
 )
 
-/// 人工闸门 2 的记录
-struct DOODLE_CORE_API ai_light_judgement_t {
-  uuid by_{};
-  std::optional<chrono::system_zoned_time> at_{};
-  /// 被选为下一轮基准（或定稿）的候选。
-  /// 方案 §4.4 里这个字段叫 selected_rig_id；本实现统一叫 selected_candidate_id，
-  /// 因为它指向的是 ai_light_candidate.uuid_id_（rig 的身份就是候选的身份，没必要两个名字）。
-  uuid selected_candidate_id_{};
-  /// 美术的自由文本反馈，如「主光再低一点，色温再冷一点」
-  ///
-  /// 只有这一个反馈字段，**原样留存**：滑块与文本的解释权都归前端，
-  /// 服务端不再持有第二份可漂移的真源（`ai_light_orchestrator.h` 的角色降级说明）。
-  std::string feedback_text_{};
-
-  friend void to_json(nlohmann::json& j, const ai_light_judgement_t& p) {
-    j["by"]                    = p.by_;
-    j["at"]                    = p.at_;
-    j["selected_candidate_id"] = p.selected_candidate_id_;
-    j["feedback_text"]         = p.feedback_text_;
-  }
-  friend void from_json(const nlohmann::json& j, ai_light_judgement_t& p) {
-    if (j.contains("by")) j.at("by").get_to(p.by_);
-    if (j.contains("at")) j.at("at").get_to(p.at_);
-    if (j.contains("selected_candidate_id")) j.at("selected_candidate_id").get_to(p.selected_candidate_id_);
-    if (j.contains("feedback_text")) j.at("feedback_text").get_to(p.feedback_text_);
-  }
-};
-
 // ---------------------------------------------------------------------------
 // 表实体：ai_light_iteration
 // ---------------------------------------------------------------------------
