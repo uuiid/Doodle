@@ -106,7 +106,8 @@ struct DOODLE_CORE_API vlm_delta_t {
     if (j.contains("raw_text")) j.at("raw_text").get_to(p.raw_text_);
   }
 };
-
+// 表实体：ai_light_candidate
+// 灯光候选
 struct DOODLE_CORE_API ai_light_candidate {
   DOODLE_BASE_FIELDS()
 
