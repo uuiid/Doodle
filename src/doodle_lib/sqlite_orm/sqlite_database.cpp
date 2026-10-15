@@ -134,8 +134,9 @@ void sqlite_storage::regs_all() {
 #ifndef NDEBUG
       .add_foreign_key(
           &seedance2::task::ai_light_session_id_, &ai_light::ai_light_session::uuid_id_, foreign_key_action::set_null
-      );
+      )
 #endif
+      ;
 
   reg_table<seedance2::task_similarity>("seedance2_task_similarity")
       .add_column("id", &seedance2::task_similarity::id_, primary_key(), autoincrement())
