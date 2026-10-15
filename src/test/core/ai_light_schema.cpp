@@ -347,8 +347,6 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
       l_cand.iteration_id_ = l_iter.uuid_id_;
       // 候选由前端算好提交（服务端的展开器已删除），测试这里直接造 rig。
       l_cand.set_rig(make_probe_rig(l_session_row.uuid_id_, 1, l_i));
-      // 真实列从 rig 副本同步过来（生产路径也是这样）
-      l_cand.sync_from_rig();
       // 路径不是列（D44）：候选行只留状态与数值，路径由 candidate_render_path 现算。
       l_cand.render_status_   = candidate_render_status::rendered;
       l_cand.set_metrics(candidate_metrics_t{
