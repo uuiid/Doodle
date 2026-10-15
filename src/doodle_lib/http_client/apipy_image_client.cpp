@@ -39,6 +39,7 @@ constexpr std::chrono::seconds g_request_timeout{360};
 constexpr std::string_view g_default_model{"gpt-image-2.5-vip"};
 constexpr std::string_view g_edit_image_field{"image"};
 constexpr std::size_t g_max_reference_images{8};
+constexpr std::uintmax_t g_max_reference_image_bytes{1024 * 1024};
 
 const nlohmann::json& first_data_item(const nlohmann::json& in_body) {
   static const nlohmann::json l_empty = nlohmann::json::object();
@@ -294,7 +295,7 @@ ai_client_base::request_info_t apipy_image_client::collect_request_info(const nl
 
   for (const auto& url : l_req.reference_images_) {
     const auto l_path = parse_site_image_id(url);
-    if (l_path.empty() || !FSys::exists(l_path) || FSys::file_size(l_path) == 0)
+    if (l_path.empty() || !FSys::exists(l_path))
       throw_exception(
           http_request_error{
               boost::beast::http::status::bad_request,
@@ -304,6 +305,14 @@ ai_client_base::request_info_t apipy_image_client::collect_request_info(const nl
               )
           }
       );
+    const auto l_size = FSys::file_size(l_path);
+    DOODLE_CHICK_HTTP(
+        l_size > 0 && l_size <= g_max_reference_image_bytes, bad_request,
+        fmt::format(
+            "参考图大小必须在 1 字节到 {} 字节(1M) 之间, 收到 {} 字节: {}", g_max_reference_image_bytes, l_size,
+            std::string{url}
+        )
+    );
     auto l_ext = l_path.extension().generic_string();
     std::ranges::transform(l_ext, l_ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     if (l_ext != ".png" && l_ext != ".jpg" && l_ext != ".jpeg" && l_ext != ".webp")
