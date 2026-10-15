@@ -206,7 +206,7 @@ struct DOODLELIB_API submit_iteration_request_t {
 
   /// 前端提交体的形状：rig 就是 `lighting_rig_t` 本身。
   /// 身份字段（session_id/iteration/candidate_index/rig_id/baseline_level）前端给了也不采信 ——
-  /// `write_submitted_iteration` 会无条件覆盖它们，这里同样解码后交给下游钉死。
+  /// 落库时会无条件覆盖它们，这里同样解码后交给下游钉死。
   friend void to_json(nlohmann::json& j, const submit_iteration_request_t& p) {
     j["session_id"] = p.session_id_;
     j["project_id"] = p.project_id_;
@@ -222,22 +222,5 @@ struct DOODLELIB_API submit_iteration_request_t {
     if (j.contains("task_id")) j.at("task_id").get_to(p.task_id_);
   }
 };
-
-/// 把一轮候选落库，并返回渲染计划。**两条路线共用**。
-///
-/// in_local_only = true 走引擎内路线（D52/D53）：不建任务行、不派发、不广播，
-/// 返回 launch plan 由发起方本机渲染。false 走队列路线（下放工作机）。
-///
-/// 为什么返回 `std::optional<ai_light_launch_plan_t>` 而不是 out 参数（编码规范）：
-/// 队列路线**没有**本机渲染计划可给 —— 调用方看到 nullopt 应当按「已派发」处理。
-///
-/// 抛出的错误：装配推不出来 → internal_server_error；候选为空
-/// → internal_server_error（调用方本应先过闸门，走到这里说明闸门被绕过了）。
-///
-/// 队列路线新建的任务行 uuid 由本函数自己广播 `server_task_info_new_broadcast_t`；
-/// 引擎内路线不建任务行，因此没有广播。
-DOODLELIB_API boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_iteration(
-    sqlite_database& in_sql, const submit_iteration_request_t& in_request, bool in_local_only
-);
 
 }  // namespace doodle::ai_light

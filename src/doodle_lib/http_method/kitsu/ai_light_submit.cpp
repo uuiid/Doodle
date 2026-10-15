@@ -8,6 +8,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/kitsu/ai_light.h>
 #include <doodle_lib/http_method/kitsu/ai_light_orchestrator.h>
+#include <doodle_lib/http_method/kitsu/auto_task.h>
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
@@ -16,6 +17,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <exception>
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -26,6 +28,90 @@
 namespace doodle::http::ai_light {
 
 using namespace doodle::ai_light;
+using namespace doodle::orm;
+
+namespace {
+
+orm::sql_modify_statement_vector_t write_submitted_iteration(
+    sqlite_database& in_sql, const submit_iteration_request_t& in_request
+) {
+  const auto l_iteration = in_request.iteration_;
+
+  DOODLE_CHICK_HTTP(
+      !in_request.rigs_.empty(), internal_server_error, "本轮候选数为 0，方案 §6.6 要求至少一个候选"
+  );
+
+  http::auto_task::shot_render_light_sync_result l_assembly_res{};
+  std::string l_assembly_err{};
+  if (in_request.task_id_.is_nil()) {
+    l_assembly_err = "会话没有关联镜头任务（task_id 为空）";
+  } else {
+    try {
+      l_assembly_res = http::auto_task::shot_render_light_sync_only(in_request.project_id_, in_request.task_id_);
+    } catch (const std::exception& in_err) {
+      l_assembly_err = in_err.what();
+    }
+  }
+  DOODLE_CHICK_HTTP(
+      l_assembly_err.empty(), internal_server_error,
+      "AI 灯光会话 {} 第 {} 轮：无法推导本镜头的渲染装配，本轮无法渲染（{}）", in_request.session_id_, l_iteration,
+      l_assembly_err
+  );
+
+  ai_light_iteration l_it{};
+  l_it.uuid_id_    = core_set::get_set().get_uuid();
+  l_it.session_id_ = in_request.session_id_;
+  l_it.iteration_  = l_iteration;
+  l_it.state_      = ai_light_iteration_state::generated;
+  l_it.server_task_info_id_ = uuid{};
+
+  orm::sql_modify_statement_vector_t l_sqls{};
+  for (std::size_t l_i = 0; l_i < in_request.rigs_.size(); ++l_i) {
+    auto l_rig             = in_request.rigs_.at(l_i);
+    l_rig.session_id_      = in_request.session_id_;
+    l_rig.iteration_       = l_iteration;
+    l_rig.candidate_index_ = static_cast<std::int32_t>(l_i);
+    l_rig.rig_id_          = uuid{};
+    l_rig.baseline_level_  = l_assembly_res.original_map_.generic_string();
+
+    ai_light_candidate l_cand{};
+    l_cand.uuid_id_         = core_set::get_set().get_uuid();
+    l_cand.iteration_id_    = l_it.uuid_id_;
+    l_cand.session_id_      = in_request.session_id_;
+    l_cand.candidate_index_ = l_i;
+    l_cand.set_rig(l_rig);
+    l_cand.sync_from_rig();
+    l_cand.render_status_ = candidate_render_status::pending;
+
+    l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_candidate>().values(l_cand));
+  }
+
+  auto l_session_next               = in_sql.get_by_uuid<ai_light_session>(in_request.session_id_);
+  l_session_next.current_iteration_ = l_iteration;
+  l_session_next.failure_reason_    = "";
+
+  l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_iteration>().values(l_it));
+  l_sqls.emplace_back(
+      orm::update(in_sql)
+          .from<ai_light_session>()
+          .set(
+              c(&ai_light_session::state_)             = l_session_next.state_,
+              c(&ai_light_session::current_iteration_) = l_session_next.current_iteration_,
+              c(&ai_light_session::judgement_due_at_)  = l_session_next.judgement_due_at_,
+              c(&ai_light_session::failure_reason_)    = l_session_next.failure_reason_
+          )
+          .where(c(&ai_light_session::uuid_id_) == l_session_next.uuid_id_)
+  );
+
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_http(),
+      "AI 灯光会话 {} 第 {} 轮 {} 个候选已落库（引擎内路线，等待发起方本机渲染）", in_request.session_id_, l_iteration,
+      in_request.rigs_.size()
+  );
+  return l_sqls;
+}
+
+}  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   person_.check_not_outsourcer();
@@ -59,7 +145,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   l_req.task_id_     = l_session.task_id_;
   DOODLE_CHICK_HTTP(!l_req.task_id_.is_nil(), bad_request, "会话 {} 的任务 ID 为空", l_session.uuid_id_);
 
-  auto l_plan = co_await write_submitted_iteration(l_sql, l_req, true);
+  auto l_sqls = write_submitted_iteration(l_sql, l_req);
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 向 AI 灯光会话 {} 提交了第 {} 轮 {} 个候选（前端展开）",
@@ -69,7 +156,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
   nlohmann::json l_ret{};
   l_ret = *l_detail;
-  if (l_plan.has_value()) l_ret["launch_plan"] = *l_plan;
   co_return in_handle->make_msg(l_ret);
 }
 
