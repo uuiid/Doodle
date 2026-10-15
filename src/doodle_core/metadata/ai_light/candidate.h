@@ -87,25 +87,6 @@ struct DOODLE_CORE_API candidate_metrics_t {
   }
 };
 
-struct DOODLE_CORE_API vlm_delta_t {
-  std::string model_{};
-  std::string verdict_{};
-  std::vector<std::string> differences_{};
-  std::string raw_text_{};
-
-  friend void to_json(nlohmann::json& j, const vlm_delta_t& p) {
-    j["model"]       = p.model_;
-    j["verdict"]     = p.verdict_;
-    j["differences"] = p.differences_;
-    j["raw_text"]    = p.raw_text_;
-  }
-  friend void from_json(const nlohmann::json& j, vlm_delta_t& p) {
-    if (j.contains("model")) j.at("model").get_to(p.model_);
-    if (j.contains("verdict")) j.at("verdict").get_to(p.verdict_);
-    if (j.contains("differences")) j.at("differences").get_to(p.differences_);
-    if (j.contains("raw_text")) j.at("raw_text").get_to(p.raw_text_);
-  }
-};
 // 表实体：ai_light_candidate
 // 灯光候选
 struct DOODLE_CORE_API ai_light_candidate {
@@ -122,12 +103,7 @@ struct DOODLE_CORE_API ai_light_candidate {
 
   nlohmann::json metrics_{};
 
-  std::optional<double> vlm_score_{};
-  nlohmann::json vlm_delta_{};
-
   bool is_selected_{false};
-  bool is_accepted_{false};
-  uuid accepted_session_id_{};
 
   uuid preview_file_id_{};
 
@@ -137,8 +113,6 @@ struct DOODLE_CORE_API ai_light_candidate {
   void set_rig(const lighting_rig_t& in_rig) { rig_ = in_rig; }
   candidate_metrics_t get_metrics() const { return json_get_or_default<candidate_metrics_t>(metrics_); }
   void set_metrics(const candidate_metrics_t& in_metrics) { metrics_ = in_metrics; }
-  vlm_delta_t get_vlm_delta() const { return json_get_or_default<vlm_delta_t>(vlm_delta_); }
-  void set_vlm_delta(const vlm_delta_t& in_delta) { vlm_delta_ = in_delta; }
 
   void sync_from_rig() {
     if (rig_.is_null()) return;
@@ -153,16 +127,6 @@ struct DOODLE_CORE_API ai_light_candidate {
     set_rig(l_rig);
   }
 
-  void mark_accepted() {
-    is_accepted_         = true;
-    accepted_session_id_ = session_id_;
-  }
-  void clear_accepted() {
-    is_accepted_         = false;
-    accepted_session_id_ = uuid{};
-  }
-  bool is_accepted_candidate() const { return !accepted_session_id_.is_nil() && accepted_session_id_ == session_id_; }
-
   friend void to_json(nlohmann::json& j, const ai_light_candidate& p) {
     j["id"]                  = p.uuid_id_;
     j["iteration_id"]        = p.iteration_id_;
@@ -171,11 +135,7 @@ struct DOODLE_CORE_API ai_light_candidate {
     j["rig"]                 = p.rig_;
     j["render_status"]       = p.render_status_;
     j["metrics"]             = p.metrics_;
-    j["vlm_score"]           = p.vlm_score_;
-    j["vlm_delta"]           = p.vlm_delta_;
     j["is_selected"]         = p.is_selected_;
-    j["is_accepted"]         = p.is_accepted_;
-    j["accepted_session_id"] = p.accepted_session_id_;
     j["preview_file_id"]     = p.preview_file_id_;
     j["created_at"]          = p.created_at_;
   }
@@ -187,11 +147,7 @@ struct DOODLE_CORE_API ai_light_candidate {
     if (j.contains("rig")) j.at("rig").get_to(p.rig_);
     if (j.contains("render_status")) j.at("render_status").get_to(p.render_status_);
     if (j.contains("metrics")) j.at("metrics").get_to(p.metrics_);
-    if (j.contains("vlm_score")) j.at("vlm_score").get_to(p.vlm_score_);
-    if (j.contains("vlm_delta")) j.at("vlm_delta").get_to(p.vlm_delta_);
     if (j.contains("is_selected")) j.at("is_selected").get_to(p.is_selected_);
-    if (j.contains("is_accepted")) j.at("is_accepted").get_to(p.is_accepted_);
-    if (j.contains("accepted_session_id")) j.at("accepted_session_id").get_to(p.accepted_session_id_);
     if (j.contains("preview_file_id")) j.at("preview_file_id").get_to(p.preview_file_id_);
   }
 };
