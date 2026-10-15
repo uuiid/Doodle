@@ -12,8 +12,15 @@
 // 本插件只做这一件事，因此不碰任何官方包，dsh 升级不会失效。
 //
 // 硬约束（与 dsh-cmake / dsh-tool-everything 同惯例）：
-//   * 顶层不 import node: 内置模块。
+//   * 顶层不 import node: 内置模块（`@deepseek-ai/*` 这类包不受限）。
 //   * 所有注册走 ctx.effect。
+//   * `Config` 必须**直接**是 schemastery 的 schema 对象：cordis 的
+//     `resolveConfig` 取 `Config["~standard"].validate` 校验行配置，
+//     写成 `(z) => z.object({ ... })` 工厂函数会让它读到 undefined，
+//     激活时抛 `Cannot read properties of undefined (reading 'validate')`。
+//     schemastery 从模块顶层 import，不要等下放。
+
+import z from '@deepseek-ai/schemastery';
 
 export const name = 'sampling-params';
 
@@ -28,19 +35,19 @@ export const inject = [];
  * 采样参数值：JSON 标量。与 dsh-llm-pi-ai 的 samplingParams 域一致，
  * 只接受能安全往返文档与请求体的类型。
  */
-const scalar = (z) => z.union([z.string(), z.number(), z.boolean(), z.const(null)]);
+const scalar = z.union([z.string(), z.number(), z.boolean(), z.const(null)]);
 
-export const Config = (z) => z.object({
+export const Config = z.object({
   /**
    * 路由级默认值，键为 provider 名。`"*"` 是所有路由的兜底。
    * 例：`{ volcengine: { temperature: 0.6 } }`
    */
-  routes: z.dict(z.dict(scalar(z))).default({}),
+  routes: z.dict(z.dict(scalar)).default({}),
   /**
    * 模型级覆盖，键为 `provider/model`，也支持通配的 `*` 形式（星号在前或在后）。
    * 例：`{ "volcengine/deepseek-v4-1-flash-260910": { temperature: 0.3 } }`
    */
-  models: z.dict(z.dict(scalar(z))).default({}),
+  models: z.dict(z.dict(scalar)).default({}),
   /**
    * 是否把生效的采样参数写进日志（每次请求一行）。默认关闭：
    * 正常使用下它只是噪音，排查"到底发出去没有"时才打开。

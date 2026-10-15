@@ -5,7 +5,10 @@
 // 运行：node test/apply.mjs
 
 import assert from 'node:assert/strict';
-import { apply } from '../lib/index.js';
+
+import { loadPlugin } from './load.mjs';
+
+const { apply } = await loadPlugin();
 
 let passed = 0;
 const check = (label, fn) => {

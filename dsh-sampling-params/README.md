@@ -107,11 +107,15 @@ cd E:\Doodle\dsh-sampling-params
 node --check lib/index.js
 node test/pure.mjs     # 合并语义
 node test/apply.mjs    # apply() 接线
-node test/config.mjs   # Config schema（需从 profile 目录解析 schemastery）
+node test/config.mjs   # Config schema
 ```
 
-`test/config.mjs` 从 `C:/Users/TD/.dsh/profiles/web/package.json` 解析
-`@deepseek-ai/schemastery`，因为本地插件自身没有 `node_modules`。
+三个 `.mjs` 测试都经 `test/load.mjs` 加载插件：它从
+`C:/Users/TD/.dsh/profiles/web/package.json` 解析 `@deepseek-ai/schemastery`
+（本地插件自身没有 `node_modules`），再把 `lib/index.js` 的源码放进 `vm` 求值
+并注入 `z`。不能直接 `import '../lib/index.js'`——入口的裸模块说明符无法从
+`E:\Doodle\dsh-sampling-params` 解析，模块解析只看导入方所在目录，与 cwd 无关
+（与 `dsh-tool-everything/test/pure.mjs` 同惯例）。
 
 ## 注意
 

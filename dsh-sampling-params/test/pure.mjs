@@ -4,7 +4,10 @@
 // 运行：node test/pure.mjs
 
 import assert from 'node:assert/strict';
-import { resolveSamplingParams } from '../lib/index.js';
+
+import { loadPlugin } from './load.mjs';
+
+const { resolveSamplingParams } = await loadPlugin();
 
 let passed = 0;
 const check = (label, actual, expected) => {
