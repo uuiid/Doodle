@@ -234,17 +234,10 @@ struct DOODLELIB_API submit_iteration_request_t {
 /// 抛出的错误：装配推不出来 → internal_server_error；候选为空
 /// → internal_server_error（调用方本应先过闸门，走到这里说明闸门被绕过了）。
 ///
-/// out_broadcast_task_id 是**出参**（不是返回值的一部分，因为返回值已经是「本机渲染计划
-/// 或没有」这个二选一）：队列路线上它被写成新建的任务行 uuid，供调用方广播
-/// `server_task_info_new_broadcast_t`；引擎内路线不建任务行，所以保持 nil。
-///
-/// 为什么用出参而不把它塞进返回值：**任务行 uuid 不只是队列路线的产物** —— 它是
-/// `ai_light_iteration.server_task_info_id_` 的来源（渲染回传按它反查轮次），而引擎内路线
-/// 根本不发生广播。做成返回值的一部分，就必须先造一个「带任务号的空渲染计划」这种
-/// 只在一条路线上有意义的形状；出参让「哪条路线关心它」在调用点上直接可见。
+/// 队列路线新建的任务行 uuid 由本函数自己广播 `server_task_info_new_broadcast_t`；
+/// 引擎内路线不建任务行，因此没有广播。
 DOODLELIB_API boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_iteration(
-    sqlite_database& in_sql, const submit_iteration_request_t& in_request, bool in_local_only,
-    uuid& out_broadcast_task_id
+    sqlite_database& in_sql, const submit_iteration_request_t& in_request, bool in_local_only
 );
 
 }  // namespace doodle::ai_light
