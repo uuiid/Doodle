@@ -71,7 +71,6 @@
 #include <variant>
 #include <vector>
 
-
 namespace doodle {
 
 void sqlite_storage::regs_all() {
@@ -115,7 +114,10 @@ void sqlite_storage::regs_all() {
       .add_column("completion_tokens", &seedance2::task::completion_tokens_)
       .add_column("ai_generate_entity_id", &seedance2::task::ai_generate_entity_id_)
       .add_column("subproject_id", &seedance2::task::subproject_id_)
+#ifndef NDEBUG
       .add_column("ai_light_session_id", &seedance2::task::ai_light_session_id_)
+#endif
+
       .add_column("retry_count", &seedance2::task::retry_count_)
       .add_column("archived", &seedance2::task::archived_)
       .add_foreign_key(&seedance2::task::project_uuid_id_, &project::uuid_id_, foreign_key_action::set_null)
@@ -129,10 +131,11 @@ void sqlite_storage::regs_all() {
           &seedance2::task::ai_generate_entity_id_, &seedance2::ai_generate_entity::uuid_id_,
           foreign_key_action::set_null
       )
+#ifndef NDEBUG
       .add_foreign_key(
-          &seedance2::task::ai_light_session_id_, &ai_light::ai_light_session::uuid_id_,
-          foreign_key_action::set_null
+          &seedance2::task::ai_light_session_id_, &ai_light::ai_light_session::uuid_id_, foreign_key_action::set_null
       );
+#endif
 
   reg_table<seedance2::task_similarity>("seedance2_task_similarity")
       .add_column("id", &seedance2::task_similarity::id_, primary_key(), autoincrement())
