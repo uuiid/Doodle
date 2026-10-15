@@ -11,6 +11,8 @@
 #include <boost/beast.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
+#include <boost/preprocessor/stringize.hpp>
+#include <boost/preprocessor/variadic/to_seq.hpp>
 #include <boost/url.hpp>
 
 #include "http_route.h"
@@ -271,7 +273,8 @@ class http_function_template : public Base {
     using base_type = base_fun;                                                                         \
     std::shared_ptr<http_function> clone() const override { return std::make_shared<fun_name>(*this); } \
                                                                                                         \
-   public:
+   public:                                                                                              \
+    using self_type = fun_name;
 // fun_name() = default;
 
 #define DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(class_name, method) \
@@ -281,5 +284,14 @@ class http_function_template : public Base {
 #define DOODLE_HTTP_FUN_END() \
   }                           \
   ;
+
+#define DOODLE_HTTP_ROUTE_FIELD_PTR_(r, data, elem) &data::elem,
+
+#define DOODLE_HTTP_ROUTE(url_literal, ...)                                                  \
+  static auto route_info() {                                                                  \
+    return url_literal _url(BOOST_PP_SEQ_FOR_EACH(                                            \
+        DOODLE_HTTP_ROUTE_FIELD_PTR_, self_type, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)         \
+    ));                                                                                       \
+  }
 using http_function_ptr = std::shared_ptr<http_function>;
 }  // namespace doodle::http
