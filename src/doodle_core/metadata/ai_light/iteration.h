@@ -97,30 +97,14 @@ struct DOODLE_CORE_API ai_light_iteration {
   std::optional<chrono::system_zoned_time> dispatch_at_{};
   std::optional<chrono::system_zoned_time> render_at_{};
 
-  // 判断人, 判断时间, 判断内容
+  // 判断人, 判断时间
   uuid judged_by_{};
   std::optional<chrono::system_zoned_time> judged_at_{};
-  /// ai_light_judgement_t 的 JSON 形态
-  nlohmann::json judgement_{};
 
   std::string failure_reason_{};
 
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
-
-  // --- 类型化访问器 ---
-  ai_light_judgement_t get_judgement() const { return judgement_.get<ai_light_judgement_t>(); }
-  void set_judgement(const ai_light_judgement_t& in_judgement) { judgement_ = in_judgement; }
-
-  /// 记录一次人工判断，并把整轮推进到 judged。
-  /// 注意：会话状态（含 4 小时挂起时限）由轮次编排在 ai_light_session 上同步更新，
-  /// 本方法只管轮次自己这一行。
-  void apply_judgement(const ai_light_judgement_t& in_judgement) {
-    set_judgement(in_judgement);
-    state_     = ai_light_iteration_state::judged;
-    judged_by_ = in_judgement.by_;
-    judged_at_ = in_judgement.at_;
-  }
 
   /// 本轮起点 = 上一轮 is_selected 的候选。
   /// 有意不存 base_candidate_id 列 —— 那会造成
@@ -135,7 +119,6 @@ struct DOODLE_CORE_API ai_light_iteration {
     j["render_at"]           = p.render_at_;
     j["judged_by"]           = p.judged_by_;
     j["judged_at"]           = p.judged_at_;
-    j["judgement"]           = p.judgement_;
     j["failure_reason"]      = p.failure_reason_;
     j["created_at"]          = p.created_at_;
     j["updated_at"]          = p.updated_at_;
@@ -150,7 +133,6 @@ struct DOODLE_CORE_API ai_light_iteration {
     if (j.contains("render_at")) j.at("render_at").get_to(p.render_at_);
     if (j.contains("judged_by")) j.at("judged_by").get_to(p.judged_by_);
     if (j.contains("judged_at")) j.at("judged_at").get_to(p.judged_at_);
-    if (j.contains("judgement")) j.at("judgement").get_to(p.judgement_);
     if (j.contains("failure_reason")) j.at("failure_reason").get_to(p.failure_reason_);
   }
 };
