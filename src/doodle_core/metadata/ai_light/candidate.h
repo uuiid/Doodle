@@ -114,30 +114,17 @@ struct DOODLE_CORE_API ai_light_candidate {
   candidate_metrics_t get_metrics() const { return metrics_.get<candidate_metrics_t>(); }
   void set_metrics(const candidate_metrics_t& in_metrics) { metrics_ = in_metrics; }
 
-  void sync_from_rig() {
-    if (rig_.is_null()) return;
-    const auto l_rig = get_rig();
-    candidate_index_ = l_rig.candidate_index_;
-    session_id_      = l_rig.session_id_;
-  }
-  void sync_to_rig() {
-    auto l_rig             = get_rig();
-    l_rig.candidate_index_ = candidate_index_;
-    l_rig.session_id_      = session_id_;
-    set_rig(l_rig);
-  }
-
   friend void to_json(nlohmann::json& j, const ai_light_candidate& p) {
-    j["id"]                  = p.uuid_id_;
-    j["iteration_id"]        = p.iteration_id_;
-    j["session_id"]          = p.session_id_;
-    j["candidate_index"]     = p.candidate_index_;
-    j["rig"]                 = p.rig_;
-    j["render_status"]       = p.render_status_;
-    j["metrics"]             = p.metrics_;
-    j["is_selected"]         = p.is_selected_;
-    j["preview_file_id"]     = p.preview_file_id_;
-    j["created_at"]          = p.created_at_;
+    j["id"]              = p.uuid_id_;
+    j["iteration_id"]    = p.iteration_id_;
+    j["session_id"]      = p.session_id_;
+    j["candidate_index"] = p.candidate_index_;
+    j["rig"]             = p.rig_;
+    j["render_status"]   = p.render_status_;
+    j["metrics"]         = p.metrics_;
+    j["is_selected"]     = p.is_selected_;
+    j["preview_file_id"] = p.preview_file_id_;
+    j["created_at"]      = p.created_at_;
   }
   friend void from_json(const nlohmann::json& j, ai_light_candidate& p) {
     if (j.contains("id")) j.at("id").get_to(p.uuid_id_);
