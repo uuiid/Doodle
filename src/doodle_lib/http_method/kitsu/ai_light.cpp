@@ -437,8 +437,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
 
   auto l_session   = load_session_checked(person_, l_sql, session_id_);
 
-  auto l_iteration = l_sql.get_ai_light_iteration(l_session.uuid_id_, l_session.current_iteration_);
-  DOODLE_CHICK_HTTP(l_iteration.has_value(), bad_request, "会话 {} 还没有可判断的轮次", l_session.uuid_id_);
+  auto l_iteration = l_sql.get_by_uuid<ai_light_iteration>(iteration_id_);
+  DOODLE_CHICK_HTTP(
+      l_iteration.session_id_ == l_session.uuid_id_, bad_request, "轮次 {} 不属于会话 {}", iteration_id_,
+      l_session.uuid_id_
+  );
 
   ai_light_judgement_t l_judgement{};
   l_json.get_to(l_judgement);
@@ -446,8 +449,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   l_judgement.at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
   DOODLE_CHICK_HTTP(
-      l_iteration->state_ != ai_light_iteration_state::judged, bad_request, "轮次 {} 已经判断过了",
-      l_iteration->iteration_
+      l_iteration.state_ != ai_light_iteration_state::judged, bad_request, "轮次 {} 已经判断过了",
+      l_iteration.iteration_
   );
 
   sql_modify_statement_vector_t l_sqls{};
@@ -455,8 +458,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   if (!l_judgement.selected_candidate_id_.is_nil()) {
     auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(l_judgement.selected_candidate_id_);
     DOODLE_CHICK_HTTP(
-        l_cand.iteration_id_ == l_iteration->uuid_id_, bad_request, "候选 {} 不属于第 {} 轮", l_cand.uuid_id_,
-        l_iteration->iteration_
+        l_cand.iteration_id_ == l_iteration.uuid_id_, bad_request, "候选 {} 不属于第 {} 轮", l_cand.uuid_id_,
+        l_iteration.iteration_
     );
 
     l_cand.is_selected_ = true;
@@ -467,19 +470,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
                             .where(c(&ai_light_candidate::uuid_id_) == l_cand.uuid_id_));
   }
 
-  l_iteration->state_         = ai_light_iteration_state::judged;
-  l_iteration->judged_by_     = l_judgement.by_;
-  l_iteration->judged_at_     = l_judgement.at_;
-  l_iteration->feedback_text_ = l_judgement.feedback_text_;
+  l_iteration.state_         = ai_light_iteration_state::judged;
+  l_iteration.judged_by_     = l_judgement.by_;
+  l_iteration.judged_at_     = l_judgement.at_;
+  l_iteration.feedback_text_ = l_judgement.feedback_text_;
   l_sqls.emplace_back(update(l_sql)
                           .from<ai_light_iteration>()
                           .set(
-                              c(&ai_light_iteration::state_)         = l_iteration->state_,
-                              c(&ai_light_iteration::judged_by_)     = l_iteration->judged_by_,
-                              c(&ai_light_iteration::judged_at_)     = l_iteration->judged_at_,
-                              c(&ai_light_iteration::feedback_text_) = l_iteration->feedback_text_
+                              c(&ai_light_iteration::state_)         = l_iteration.state_,
+                              c(&ai_light_iteration::judged_by_)     = l_iteration.judged_by_,
+                              c(&ai_light_iteration::judged_at_)     = l_iteration.judged_at_,
+                              c(&ai_light_iteration::feedback_text_) = l_iteration.feedback_text_
                           )
-                          .where(c(&ai_light_iteration::uuid_id_) == l_iteration->uuid_id_));
+                          .where(c(&ai_light_iteration::uuid_id_) == l_iteration.uuid_id_));
 
   l_session.mark_judged(ai_light_session_state::generating);
   l_session.failure_reason_ = "";
@@ -497,7 +500,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 判断 AI 灯光会话 {} 第 {} 轮: {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_session.uuid_id_, l_iteration->iteration_,
+      person_.person_.get_full_name(), l_session.uuid_id_, l_iteration.iteration_,
       l_judgement.selected_candidate_id_.is_nil() ? "全否" : "选定候选"
   );
 

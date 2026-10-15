@@ -53,10 +53,11 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-// /api/doodle/ai/light/session/{}/judge
+// /api/doodle/ai/light/session/{}/iteration/{}
 DOODLE_HTTP_JWT_FUN(judge_route)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid session_id_{};
+uuid iteration_id_{};
 DOODLE_HTTP_FUN_END()
 
 // /api/doodle/ai/light/render_report/{}

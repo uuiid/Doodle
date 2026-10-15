@@ -317,8 +317,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<ai_light::candidate_image_route>("/api/doodle/ai/light/candidate/{}/image"_url(
         &ai_light::candidate_image_route::id_
       ))
-      .reg_t<ai_light::judge_route>("/api/doodle/ai/light/session/{}/judge"_url(
-        &ai_light::judge_route::session_id_
+      .reg_t<ai_light::judge_route>("/api/doodle/ai/light/session/{}/iteration/{}"_url(
+        &ai_light::judge_route::session_id_, &ai_light::judge_route::iteration_id_
       ))
       // 推理网关（角色降级 §3.1）。降级后前端自己组装提示词、解释模型输出，
       // 服务端只剩「代持凭据 + 计费 + 原始结果回传」这一件事，三条接缝共用一个入口。
