@@ -272,7 +272,9 @@ void sqlite_storage::regs_all() {
       .add_column("project_count", &seedance2::person_token::project_count_)
       .add_column("video_count", &seedance2::person_token::video_count_)
       .add_column("picture_count", &seedance2::person_token::picture_count_)
+#ifndef NDEBUG
       .add_column("inference_count", &seedance2::person_token::inference_count_)
+#endif
       .add_foreign_key(&seedance2::person_token::person_id_, &person::uuid_id_, foreign_key_action::cascade)
       .add_index(&seedance2::person_token::date_)
       .add_unique_index(&seedance2::person_token::date_, &seedance2::person_token::person_id_);
