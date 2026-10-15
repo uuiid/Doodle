@@ -447,15 +447,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
                             .where(c(&ai_light_candidate::uuid_id_) == l_cand.uuid_id_));
   }
 
-  l_iteration->state_     = ai_light_iteration_state::judged;
-  l_iteration->judged_by_ = l_judgement.by_;
-  l_iteration->judged_at_ = l_judgement.at_;
+  l_iteration->state_         = ai_light_iteration_state::judged;
+  l_iteration->judged_by_     = l_judgement.by_;
+  l_iteration->judged_at_     = l_judgement.at_;
+  l_iteration->feedback_text_ = l_judgement.feedback_text_;
   l_sqls.emplace_back(update(l_sql)
                           .from<ai_light_iteration>()
                           .set(
-                              c(&ai_light_iteration::state_)     = l_iteration->state_,
-                              c(&ai_light_iteration::judged_by_) = l_iteration->judged_by_,
-                              c(&ai_light_iteration::judged_at_) = l_iteration->judged_at_
+                              c(&ai_light_iteration::state_)         = l_iteration->state_,
+                              c(&ai_light_iteration::judged_by_)     = l_iteration->judged_by_,
+                              c(&ai_light_iteration::judged_at_)     = l_iteration->judged_at_,
+                              c(&ai_light_iteration::feedback_text_) = l_iteration->feedback_text_
                           )
                           .where(c(&ai_light_iteration::uuid_id_) == l_iteration->uuid_id_));
 

@@ -100,6 +100,8 @@ struct DOODLE_CORE_API ai_light_iteration {
   // 判断人, 判断时间
   uuid judged_by_{};
   std::optional<chrono::system_zoned_time> judged_at_{};
+  /// 美术的自由文本反馈，如「主光再低一点，色温再冷一点」
+  std::string feedback_text_{};
 
   std::string failure_reason_{};
 
@@ -119,6 +121,7 @@ struct DOODLE_CORE_API ai_light_iteration {
     j["render_at"]           = p.render_at_;
     j["judged_by"]           = p.judged_by_;
     j["judged_at"]           = p.judged_at_;
+    j["feedback_text"]       = p.feedback_text_;
     j["failure_reason"]      = p.failure_reason_;
     j["created_at"]          = p.created_at_;
     j["updated_at"]          = p.updated_at_;
@@ -133,6 +136,7 @@ struct DOODLE_CORE_API ai_light_iteration {
     if (j.contains("render_at")) j.at("render_at").get_to(p.render_at_);
     if (j.contains("judged_by")) j.at("judged_by").get_to(p.judged_by_);
     if (j.contains("judged_at")) j.at("judged_at").get_to(p.judged_at_);
+    if (j.contains("feedback_text")) j.at("feedback_text").get_to(p.feedback_text_);
     if (j.contains("failure_reason")) j.at("failure_reason").get_to(p.failure_reason_);
   }
 };
