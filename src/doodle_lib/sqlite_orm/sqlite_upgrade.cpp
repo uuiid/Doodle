@@ -118,20 +118,12 @@ struct upgrade_clear_orphan_task_t : sqlite_upgrade {
   void upgrade(sqlite_storage& in_data) override {
     auto l_s = in_data.create_session();
     using namespace orm;
-    if (!l_s.has_reg_table<server_task_info>()) {
-      SPDLOG_INFO("upgrade: 启动清理: 库里没有 server_task_info_tab, 跳过 running 任务解绑");
-    } else {
-      update(l_s)
-          .from<server_task_info>()
-          .set(c(&server_task_info::run_computer_id_) = uuid{})
-          .where(c(&server_task_info::status_) == server_task_info_status::running)();
-      SPDLOG_INFO("upgrade: 启动清理: 已解绑所有 running 任务的 run_computer_id");
-    }
+    update(l_s)
+        .from<server_task_info>()
+        .set(c(&server_task_info::run_computer_id_) = uuid{})
+        .where(c(&server_task_info::status_) == server_task_info_status::running)();
+    SPDLOG_INFO("upgrade: 启动清理: 已解绑所有 running 任务的 run_computer_id");
 
-    if (!l_s.has_reg_table<seedance2::task>()) {
-      SPDLOG_INFO("upgrade: 启动清理: 库里没有 seedance2_task_tab, 跳过 API易 残留任务清理");
-      return;
-    }
     update(l_s)
         .from<seedance2::task>()
         .set(
