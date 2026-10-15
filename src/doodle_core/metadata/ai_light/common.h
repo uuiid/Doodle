@@ -1,5 +1,5 @@
 //
-// AI 灯光：共享数值原语与 schema 版本常量
+// AI 灯光：共享数值原语
 //
 // 从 rig.h / spec.h / candidate.h 都要用到 interval_t，放在这里避免它们互相包含。
 //
@@ -8,24 +8,7 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
-#include <cstdint>
-#include <string_view>
-
 namespace doodle::ai_light {
-
-/// LightingSpec 版本（docs/ue_ai_lighting_plan.md §4.2）
-/// 1.2 → 1.3：Tier B 取消后 tier 与 degrade_level 信息等价，删掉 tier，只留 degrade_level。
-/// 1.3 → 1.4：后端不再用大模型做推理与判断，删掉 intent 里由模型产出的那批字段
-///            （atmosphere / time_of_day / source_motivation / story_context / setting、
-///             以及 character_personality 与 lighting_language），intent 只剩 weather。
-constexpr std::string_view g_spec_schema_version{"1.4"};
-
-/// 候选数量的**建议默认值**：前端每轮展开几个候选由前端自己决定，服务端不再校验数量。
-/// 这里保留这个数字只作为「前端没特别指定时用几档」的参考值，以及读模型上报用的默认值。
-/// §6.6 护栏要求同轮候选的**灯集合与角色完全一致** ——
-/// 否则指标差异会被灯数差异淹没，美术的选择无法归因，搜索梯度就失效了。
-/// 这条护栏与数量无关，仍由服务端的准入闸门负责。
-constexpr std::int32_t g_candidate_count{6};
 
 /// 闭区间 [low, high]。Spec 的目标全部是区间而不是点值 —— 这是「参考是近似而非精确」
 /// 这一前提在数据契约上的体现，也是评判层「落点是否在区间内」的判据。

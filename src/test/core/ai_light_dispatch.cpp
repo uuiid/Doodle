@@ -168,7 +168,7 @@ struct fixture_t : doodle_test::coro_fixture_t {
   void build(
       ai_light_session_state in_state            = ai_light_session_state::generating,
       ai_light_iteration_state in_iter_state     = ai_light_iteration_state::rendering,
-      std::int32_t in_count                      = g_candidate_count
+      std::int32_t in_count                      = 6
   ) {
     session_.project_id_  = core_set::get_set().get_uuid();
     session_.task_id_     = core_set::get_set().get_uuid();

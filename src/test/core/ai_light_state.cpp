@@ -153,7 +153,7 @@ struct fixture_t : doodle_test::coro_fixture_t {
   void build(
       ai_light_session_state in_state = ai_light_session_state::awaiting_judgement,
       ai_light_iteration_state in_iter_state = ai_light_iteration_state::awaiting_judgement,
-      std::int32_t in_count = g_candidate_count, bool in_with_children = true
+      std::int32_t in_count = 6, bool in_with_children = true
   ) {
     session_.project_id_  = core_set::get_set().get_uuid();
     session_.task_id_     = core_set::get_set().get_uuid();
@@ -499,7 +499,7 @@ BOOST_AUTO_TEST_CASE(session_detail_aggregates_all_tables) {
   BOOST_TEST(l_detail->session_.uuid_id_ == l_fx.session_.uuid_id_);
   BOOST_TEST(l_detail->references_.size() == 1);
   BOOST_TEST(l_detail->iterations_.size() == 1);
-  BOOST_TEST(l_detail->candidates_.size() == static_cast<std::size_t>(g_candidate_count));
+  BOOST_TEST(l_detail->candidates_.size() == static_cast<std::size_t>(6));
 
   // awaiting_judgement 是「在等人」，不是「已超时」—— 两者不能混为一谈
   BOOST_TEST(l_detail->is_waiting_human_);
@@ -702,8 +702,8 @@ BOOST_AUTO_TEST_CASE(optional_and_time_fields_serialize_as_scalars) {
   l_detail.session_ = l_session;
   nlohmann::json l_detail_json = l_detail;
   // 读模型要带出候选数（前端不自己写死 6）。个数由前端决定，所以它是**最近一轮的实际值**；
-  // 这里没有候选，退回建议默认值。
-  BOOST_TEST(l_detail_json.at("candidate_count_per_iteration").get<std::int32_t>() == g_candidate_count);
+  // 这里没有候选，所以是 0。
+  BOOST_TEST(l_detail_json.at("candidate_count_per_iteration").get<std::int32_t>() == 0);
 }
 
 // 预分配的 uuid 不会被 ORM 改写 —— 这是「文件名用 uuid」与「库里存的 uuid」同源的唯一保证。

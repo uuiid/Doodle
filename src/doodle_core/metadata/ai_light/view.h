@@ -50,10 +50,9 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
   bool is_judgement_overdue_{false};
 
   /// 前端渲染进度条要的「每轮几个候选」。
-  /// 候选数由前端决定，所以取**最近一轮实际落了几个候选**作为当前这一轮的数字；
-  /// 一轮都还没有时退回建议默认值 g_candidate_count。
+  /// 候选数由前端决定，所以取**最近一轮实际落了几个候选**作为当前这一轮的数字。
   std::int32_t candidate_count_per_iteration() const {
-    if (candidates_.empty()) return g_candidate_count;
+    if (candidates_.empty()) return 0;
     // candidates_ 按（轮次, 候选序号）升序，所以最后一个就是最近一轮的最后一个候选。
     const auto& l_latest_id = candidates_.back().iteration_id_;
     return static_cast<std::int32_t>(
@@ -72,8 +71,8 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
     j["is_waiting_human"]   = p.is_waiting_human_;
     j["is_judgement_overdue"] = p.is_judgement_overdue_;
     // 前端渲染进度条要用，省得自己数。
-    // 候选数由前端决定，所以这里报**当前会话的实际情况**而不是常量 6：
-    // 优先用最近一轮实际落了几个候选；还没有轮次时退回默认建议值。
+    // 候选数由前端决定，所以这里报**当前会话的实际情况**：
+    // 用最近一轮实际落了几个候选；还没有轮次时为 0。
     j["candidate_count_per_iteration"] = p.candidate_count_per_iteration();
   }
   friend void from_json(const nlohmann::json& j, ai_light_session_detail_t& p) {
