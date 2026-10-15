@@ -115,7 +115,7 @@ void sqlite_storage::regs_all() {
       .add_column("completion_tokens", &seedance2::task::completion_tokens_)
       .add_column("ai_generate_entity_id", &seedance2::task::ai_generate_entity_id_)
       .add_column("subproject_id", &seedance2::task::subproject_id_)
-      .add_column("ai_light_iteration_id", &seedance2::task::ai_light_iteration_id_)
+      .add_column("ai_light_session_id", &seedance2::task::ai_light_session_id_)
       .add_column("retry_count", &seedance2::task::retry_count_)
       .add_column("archived", &seedance2::task::archived_)
       .add_foreign_key(&seedance2::task::project_uuid_id_, &project::uuid_id_, foreign_key_action::set_null)
@@ -129,12 +129,8 @@ void sqlite_storage::regs_all() {
           &seedance2::task::ai_generate_entity_id_, &seedance2::ai_generate_entity::uuid_id_,
           foreign_key_action::set_null
       )
-      // AI 灯光轮次。ai_light_iteration 的表注册在本文件更靠后的位置(见 reg_table<ai_light::ai_light_iteration>),
-      // 即这里是**前向引用**: SQLite 允许 CREATE TABLE 引用尚不存在的表(只在 DML 时才报错),
-      // 由 sqlite_schema/sqlite_rebuild/sqlite_fk_* 用例兜底。若将来某次重建报错, 把这张表的注册
-      // 挪到 ai_light_iteration 之后即可。
       .add_foreign_key(
-          &seedance2::task::ai_light_iteration_id_, &ai_light::ai_light_iteration::uuid_id_,
+          &seedance2::task::ai_light_session_id_, &ai_light::ai_light_session::uuid_id_,
           foreign_key_action::set_null
       );
 

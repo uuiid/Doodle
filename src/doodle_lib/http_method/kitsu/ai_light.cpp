@@ -1026,16 +1026,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   // 与 `using namespace orm`，而 `doodle::task` 这个名字也被占据 —— 写短名 `seedance2::task`
   // 会被解析成 `doodle::task`。
   doodle::seedance2::task l_task{};
-  l_task.type_              = doodle::seedance2::task_type::inference;     // not_null，必须显式赋值
-  l_task.backend_           = doodle::seedance2::task_backend::seedance2;  // 同上
-  l_task.user_id_           = l_operator_id;                               // 计费主体 + 签名 URL 的 uid
-  l_task.ai_studio_id_      = l_studio->uuid_id_;
-  l_task.project_uuid_id_   = l_session.project_id_;                       // 只为归属可查，内部不依赖
-  // 网关不铸造轮次：降级后轮次由前端在 /session/{}/iteration 提交时建立，
-  // 所以这次推理「属于哪一轮」在网关这里还不存在（与蒸馏阶段同形，留 nil）。
-  l_task.ai_light_iteration_id_ = {};
-  l_task.completion_tokens_     = doodle_config::g_ark_inference_default_consumed_tokens;
-  l_task.data_request_          = l_json;
+  l_task.type_                = doodle::seedance2::task_type::inference;     // not_null，必须显式赋值
+  l_task.backend_             = doodle::seedance2::task_backend::seedance2;  // 同上
+  l_task.user_id_             = l_operator_id;                               // 计费主体 + 签名 URL 的 uid
+  l_task.ai_studio_id_        = l_studio->uuid_id_;
+  l_task.project_uuid_id_     = l_session.project_id_;                       // 只为归属可查，内部不依赖
+  // 归属会话：会话就在路径上（/session/{session_id}/inference），所以这次推理属于哪个会话
+  // 在网关这里是**已知的**。轮次则不然 —— 降级后轮次由前端在 /session/{}/iteration 提交时
+  // 建立，网关跑推理时它还不存在，所以任务行只指会话、不指轮次。
+  l_task.ai_light_session_id_ = l_session.uuid_id_;
+  l_task.completion_tokens_   = doodle_config::g_ark_inference_default_consumed_tokens;
+  l_task.data_request_        = l_json;
 
   // ---- 5) 跑推理（凭据 + 计费 + 成败判定全在这一句里，不复制）----
   //

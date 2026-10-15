@@ -146,7 +146,7 @@ struct upgrade_3_t : sqlite_upgrade {
     backup(l_s);
     l_s.pragma().foreign_keys(false);
     l_s.sync_schema();
-    // 这两列都必须存在于旧表里, 且必须都在 rebuild_table **之前**补上. 原因是 rebuild_table 的
+    // 这一列必须存在于旧表里, 且必须在 rebuild_table **之前**补上. 原因是 rebuild_table 的
     // 列拷贝清单来自 **ORM 声明**而不是库里的实际列 (见 orm/session.cpp:236-242 与
     // docs/3-sqlite_schema_cleanup_changelog.md 7.3), 它会生成
     // `INSERT INTO ..._backup ("...", "result_text", ...) SELECT ... "result_text" FROM ...`.
@@ -157,7 +157,7 @@ struct upgrade_3_t : sqlite_upgrade {
     // **不会加列** (见本文件 120-124 行注释).
     // 不需要先查列是否已存在: 上面的 `> 30 就跳过` 保证本步骤对一张库只跑一次.
     l_s.add_column("ai_studio", "apipy_key", orm::column_type::text);
-    l_s.add_column("seedance2_task_2", "ai_light_iteration_id", orm::column_type::blob);
+    l_s.add_column("seedance2_task_2", "ai_light_session_id", orm::column_type::blob);
     l_s.rebuild_table<seedance2::task>();
     // 本步骤是 30 之后的**唯一**一步, 所以它写 g_current_version (= 31)。
     // 将来若在它后面再插步骤, 这一行必须改成写自己的目标版本常量, 否则下一步会被静默跳过

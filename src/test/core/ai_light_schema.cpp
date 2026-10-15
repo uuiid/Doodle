@@ -85,9 +85,9 @@ void drop_ai_light_tables(orm::session& in_session) {
     exec_sql(in_session, fmt::format("DROP TABLE IF EXISTS {};", *l_it));
 }
 
-// 30 -> 31 这一步除了建六张表, 还给 seedance2_task_2 补了 ai_light_iteration_id / result_text
-// (见 sqlite_upgrade.cpp upgrade_3_t 里的两次 add_column).
-// sync_schema() 是按**最新** schema 建的, ai_light_iteration_id 已经在了 —— 想造真正的 30 版形状
+// 30 -> 31 这一步除了建六张表, 还给 seedance2_task_2 补了 apipy_key / result_text
+// (见 sqlite_upgrade.cpp upgrade_3_t 里的 add_column).
+// sync_schema() 是按**最新** schema 建的, ai_light_session_id 已经在了 —— 想造真正的 30 版形状
 // 就得让它缺席. (result_text 已从 ORM 声明删除, 新库里本就不会建它, 但迁移里的 add_column 保留着,
 // 所以这里仍然一并从夹具表里去掉, 让这个夹具继续模拟真正的 v30 形状.)
 //
@@ -95,11 +95,11 @@ void drop_ai_light_tables(orm::session& in_session) {
 // 迁移只在 user_version < 31 时跑一次, 真实库不会出现「同一张表重复加列」, 是夹具自己造的.
 //
 // 不能用 create_table<seedance2::task>() 重建: 它按 ORM 声明建表, 声明里**有**
-// ai_light_iteration_id (sqlite_database.cpp:118), 建出来还是 31 版形状, 等于没删.
-// 也不能 ALTER TABLE ... DROP COLUMN: ai_light_iteration_id 被外键定义引用着, SQLite 直接拒绝
-// (`unknown column "ai_light_iteration_id" in foreign key definition`).
+// ai_light_session_id (sqlite_database.cpp:118), 建出来还是 31 版形状, 等于没删.
+// 也不能 ALTER TABLE ... DROP COLUMN: ai_light_session_id 被外键定义引用着, SQLite 直接拒绝
+// (`unknown column "ai_light_session_id" in foreign key definition`).
 // 所以这里手写一份**只含 30 版列**的建表语句 —— 列清单照抄 sqlite_database.cpp:99-121,
-// 去掉 ai_light_iteration_id / result_text 两列; 外键也一并去掉, 免得引用尚未建出的 ai_light_iteration.
+// 去掉 ai_light_session_id / result_text 两列; 外键也一并去掉, 免得引用尚未建出的 ai_light_session.
 void rebuild_task_table_without_v31_columns(orm::session& in_session) {
   in_session.pragma().foreign_keys(false);
   exec_sql(in_session, "DROP TABLE IF EXISTS seedance2_task_2;");

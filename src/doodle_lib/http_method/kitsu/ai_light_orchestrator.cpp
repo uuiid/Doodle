@@ -155,8 +155,7 @@ boost::asio::awaitable<std::optional<ai_light_launch_plan_t>> write_submitted_it
 
   ai_light_iteration l_it{};
   // 本轮的 iteration 行 uuid 在这里铸造。降级前它由 advance_session_generating_branch 铸造后
-  // 随请求交给接缝（推理任务行用 ai_light_iteration_id_ 指回来）；前端提交的路线不调模型，
-  // 没有那条反查链路，所以就在这里取。
+  // 随请求交给接缝；前端提交的路线不调模型，没有那条链路，所以就在这里取。
   l_it.uuid_id_    = core_set::get_set().get_uuid();
   l_it.session_id_ = in_request.session_id_;
   l_it.iteration_  = l_iteration;
