@@ -69,8 +69,8 @@ struct DOODLELIB_API ai_light_iteration_locator_t {
 /// 前置条件（由调用方校验）：
 ///   * in_iteration 就是 in_judgement 所判断的那一轮；
 ///   * in_judgement.selected_candidate_id_ 属于 in_iteration（防跨轮误选）；
-///   * decision == accept 时 in_accepted_preview_file 必须已填好（id / 尺寸 / 路径），
-///     其余 decision 必须为空。
+///   * in_accepted_preview_file 有值时即为定稿（id / 尺寸 / 路径必须已填好），
+///     无值时为续轮或全否。
 ///
 /// 为什么 preview_file 由调用方构造、却由本函数插入：定稿要同时写三处
 /// （preview_file 行、candidate 的定稿标记与 preview_file_id_、会话状态），
@@ -80,7 +80,7 @@ struct DOODLELIB_API ai_light_iteration_locator_t {
 /// preview_file 按值传入而非 const 引用：ORM 的 values() 会回填 uuid_id_ / created_at_
 /// 这类服务端生成的字段，必须拿到可写对象。
 ///
-/// 本函数负责：插入 preview_file、标记候选（accept / continue → is_selected_ = true）、
+/// 本函数负责：插入 preview_file、标记候选（选了候选 → is_selected_ = true）、
 /// 回填 candidate.preview_file_id_、
 /// 写 iteration 的判断记录、推进 session 状态。
 DOODLELIB_API boost::asio::awaitable<void> apply_judgement(

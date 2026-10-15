@@ -630,9 +630,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   // 现在文本**原样留存**在 l_judgement.feedback_text_ 里随判定落库。
 
   // ---- 定稿要先把图落成 preview_file 对象（文件动作），再交给 apply_judgement 同事务落库 ----
+  // 定稿由「选中了候选」表达：全否不选候选，也就不进 preview_file。
   std::optional<preview_file> l_preview_file{};
-  if (l_judgement.decision_ == judgement_decision::accept) {
-    DOODLE_CHICK_HTTP(!l_judgement.selected_candidate_id_.is_nil(), bad_request, "定稿必须指定候选");
+  if (!l_judgement.selected_candidate_id_.is_nil()) {
     auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(l_judgement.selected_candidate_id_);
     DOODLE_CHICK_HTTP(
         l_cand.iteration_id_ == l_iteration->uuid_id_, bad_request, "候选 {} 不属于第 {} 轮", l_cand.uuid_id_,
@@ -656,7 +656,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 判断 AI 灯光会话 {} 第 {} 轮: {}{}", person_.person_.email_,
       person_.person_.get_full_name(), l_session.uuid_id_, l_iteration->iteration_,
-      magic_enum::enum_name(l_judgement.decision_), l_preview_file.has_value() ? "（已定稿并注册预览文件）" : ""
+      l_preview_file.has_value() ? "定稿" : (l_judgement.selected_candidate_id_.is_nil() ? "全否" : "续轮"),
+      l_preview_file.has_value() ? "（已定稿并注册预览文件）" : ""
   );
 
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);

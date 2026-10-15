@@ -50,31 +50,10 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
                               }
 )
 
-/// 美术的判断结论。
-/// 注意枚举项名：`continue` 是 C++ 关键字，所以只能叫 continue_iteration。
-/// 按本库约定（枚举按 magic_enum 名存 TEXT），JSON 字符串也必须是 "continue_iteration"，
-/// 不能是方案 §4.4 里写的 "continue" —— 否则 DB 与 JSON 两处的取值不一致。
-enum class judgement_decision {
-  /// 定稿，会话结束
-  accept,
-  /// 选一个候选作为下一轮基准，继续迭代
-  continue_iteration,
-  /// 全部拒绝，终止会话
-  reject_all,
-};
-DOODLE_JSON_SERIALIZE_ENUM_STRICT(
-    judgement_decision, {
-                            {judgement_decision::accept, "accept"},
-                            {judgement_decision::continue_iteration, "continue_iteration"},
-                            {judgement_decision::reject_all, "reject_all"},
-                        }
-)
-
 /// 人工闸门 2 的记录
 struct DOODLE_CORE_API ai_light_judgement_t {
   uuid by_{};
   std::optional<chrono::system_zoned_time> at_{};
-  judgement_decision decision_{judgement_decision::continue_iteration};
   /// 被选为下一轮基准（或定稿）的候选。
   /// 方案 §4.4 里这个字段叫 selected_rig_id；本实现统一叫 selected_candidate_id，
   /// 因为它指向的是 ai_light_candidate.uuid_id_（rig 的身份就是候选的身份，没必要两个名字）。
@@ -88,14 +67,12 @@ struct DOODLE_CORE_API ai_light_judgement_t {
   friend void to_json(nlohmann::json& j, const ai_light_judgement_t& p) {
     j["by"]                    = p.by_;
     j["at"]                    = p.at_;
-    j["decision"]              = p.decision_;
     j["selected_candidate_id"] = p.selected_candidate_id_;
     j["feedback_text"]         = p.feedback_text_;
   }
   friend void from_json(const nlohmann::json& j, ai_light_judgement_t& p) {
     if (j.contains("by")) j.at("by").get_to(p.by_);
     if (j.contains("at")) j.at("at").get_to(p.at_);
-    if (j.contains("decision")) j.at("decision").get_to(p.decision_);
     if (j.contains("selected_candidate_id")) j.at("selected_candidate_id").get_to(p.selected_candidate_id_);
     if (j.contains("feedback_text")) j.at("feedback_text").get_to(p.feedback_text_);
   }

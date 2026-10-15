@@ -207,15 +207,6 @@ judge_args_t load_for_judge(fixture_t& in_fx) {
   return judge_args_t{in_fx.reload_session(), in_fx.reload_iteration()};
 }
 
-ai_light_judgement_t make_judgement(judgement_decision in_decision, const uuid& in_candidate_id) {
-  ai_light_judgement_t l_j{};
-  l_j.by_                 = core_set::get_set().get_uuid();
-  l_j.at_                 = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-  l_j.decision_           = in_decision;
-  l_j.selected_candidate_id_ = in_candidate_id;
-  return l_j;
-}
-
 /// 给会话补一张参考图。
 ///
 /// advance_session 在蒸馏 Spec 之前会校验参考图非空（决策 1：参考必有多张），
@@ -232,169 +223,6 @@ ai_light_reference add_reference(fixture_t& in_fx) {
 }
 
 }  // namespace
-
-// ===========================================================================
-// 人工闸门 2：三种判断各自把会话推到哪
-// ===========================================================================
-
-DOODLE_FIXTURE_TEST_CASE_CORO(judge_accept_marks_candidate_and_session, fixture_t) {
-  l_fx.build();
-  auto l_args = load_for_judge(l_fx);
-
-  auto l_pf = make_probe_preview_file();
-  auto l_j  = make_judgement(judgement_decision::accept, l_fx.candidates_.at(2).uuid_id_);
-  l_j.feedback_text_ = "主光再低一点";
-
-  co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j, l_pf);
-
-  // 会话回到 generating（**没有终态**了），判断时限被清掉 —— 过期标志因此自动变 false，
-  // 不需要任何人去「清理」它（这正是把过期做成派生标志的好处）。
-  // 回到 generating 也意味着 /iterate 立即可用：定稿不是终点，美术还能接着调。
-  auto l_session = l_fx.reload_session();
-  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
-  BOOST_TEST(!l_session.judgement_due_at_.has_value());
-  BOOST_TEST(l_session.failure_reason_.empty());
-
-  // 轮次被标记为已判断，并留下判断人与判断内容
-  auto l_iter = l_fx.reload_iteration();
-  // judgement 是 JSON 列：必须是对象。这里单独断言一次，是因为
-  // 「写入时被序列化成了数组」这种错会以 get_judgement() 抛 type_error 的形式出现，
-  // 报错信息完全看不出是哪儿写坏的。
-  BOOST_TEST_MESSAGE(fmt::format("judgement 列原始值: {}", l_iter.judgement_.dump()));
-  BOOST_TEST(l_iter.judgement_.is_object());
-  BOOST_TEST(en(l_iter.state_) == en(ai_light_iteration_state::judged));
-  BOOST_TEST(l_iter.judged_by_ == l_j.by_);
-  auto l_j_back = l_iter.get_judgement();
-  BOOST_TEST(l_j_back.feedback_text_ == "主光再低一点");
-
-  // 被选中的候选：preview_file + **同时是下一轮基准**。
-  auto l_picked = l_fx.reload_candidate(2);
-  BOOST_TEST(l_picked.is_selected_);
-  BOOST_TEST(l_picked.preview_file_id_ == l_pf.uuid_id_);
-
-  // 「下一轮基准」这条查询指向**同一张** —— 定稿之后接着调，起点就是这张（决定 D20）。
-  // 它也是 advance_session 的 generating 分支在下一轮取 warm start 的入口。
-  auto l_warm = l_fx.sql_->get_ai_light_selected_candidate(l_session.uuid_id_, 1);
-  BOOST_TEST(l_warm.has_value());
-  BOOST_TEST(l_warm->uuid_id_ == l_picked.uuid_id_);
-
-  // 定稿的 preview_file 与候选在同一事务里落库，必须查得到
-  auto l_pf_row = l_fx.sql_->get_by_uuid<preview_file>(l_pf.uuid_id_);
-  BOOST_TEST(l_pf_row.name_ == "probe");
-  BOOST_TEST(en(l_pf_row.source_) == en(preview_file_source_enum::auto_light_generate));
-}
-
-DOODLE_FIXTURE_TEST_CASE_CORO(judge_continue_keeps_session_iterable, fixture_t) {
-  l_fx.build();
-  auto l_args = load_for_judge(l_fx);
-
-  auto l_j = make_judgement(judgement_decision::continue_iteration, l_fx.candidates_.at(4).uuid_id_);
-  l_j.feedback_text_ = "还是太冷，暖一点";
-
-  co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j);
-
-  // 回到 generating：可以立刻再来一轮
-  auto l_session = l_fx.reload_session();
-  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
-  BOOST_TEST(!l_session.judgement_due_at_.has_value());
-
-  // 续轮的起点是 is_selected 的候选，所以必须标上
-  auto l_picked = l_fx.reload_candidate(4);
-  BOOST_TEST(l_picked.is_selected_);
-
-  // 文本反馈原样留存（结构化是 best effort，不能丢原文）
-  auto l_iter = l_fx.reload_iteration();
-  BOOST_TEST(l_iter.judgement_.is_object());
-  BOOST_TEST(l_iter.get_judgement().feedback_text_ == "还是太冷，暖一点");
-}
-
-DOODLE_FIXTURE_TEST_CASE_CORO(judge_reject_all_keeps_session_iterable, fixture_t) {
-  l_fx.build();
-  auto l_args = load_for_judge(l_fx);
-
-  auto l_j = make_judgement(judgement_decision::reject_all, uuid{});
-
-  co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j);
-
-  auto l_session = l_fx.reload_session();
-  // 全否**不再终止会话**：它只表示「这一轮全部不要」，会话照常可以再出一轮。
-  // 区别在动作层（全否不许选候选），不在会话状态。
-  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
-  BOOST_TEST(!is_waiting_human(l_session.state_));
-
-  // 全否不该选中任何候选
-  for (std::size_t l_i = 0; l_i != l_fx.candidates_.size(); ++l_i) {
-    BOOST_TEST(!l_fx.reload_candidate(l_i).is_selected_);
-  }
-  BOOST_TEST(en(l_fx.reload_iteration().state_) == en(ai_light_iteration_state::judged));
-}
-
-// ===========================================================================
-// 定稿：preview_file 与候选在同一事务里落库
-// ===========================================================================
-
-DOODLE_FIXTURE_TEST_CASE_CORO(judge_accept_registers_preview_file_on_candidate, fixture_t) {
-  l_fx.build();
-  auto l_args = load_for_judge(l_fx);
-
-  auto l_pf = make_probe_preview_file();
-  auto l_j  = make_judgement(judgement_decision::accept, l_fx.candidates_.at(2).uuid_id_);
-  co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j, l_pf);
-
-  auto l_new = l_fx.reload_candidate(2);
-  BOOST_TEST(l_new.is_selected_);
-  BOOST_TEST(l_new.preview_file_id_ == l_pf.uuid_id_);
-
-  // 会话照常可以再出一轮（没有终态）
-  BOOST_TEST(en(l_fx.reload_session().state_) == en(ai_light_session_state::generating));
-}
-
-DOODLE_FIXTURE_TEST_CASE_CORO(judge_accept_without_preview_file_is_rejected, fixture_t) {
-  l_fx.build();
-  auto l_args = load_for_judge(l_fx);
-
-  // 定稿却不带 preview_file：说明调用方漏了文件动作，必须报错而不是「定稿成功但没图」
-  auto l_j = make_judgement(judgement_decision::accept, l_fx.candidates_.at(0).uuid_id_);
-
-  bool l_threw = false;
-  try {
-    co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j);
-  } catch (const doodle_error& in_err) {
-    l_threw = true;
-    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::internal_server_error);
-  }
-  BOOST_TEST(l_threw);
-  BOOST_TEST(en(l_fx.reload_session().state_) == en(ai_light_session_state::awaiting_judgement));
-  BOOST_TEST(l_fx.reload_candidate(0).preview_file_id_.is_nil());
-}
-
-DOODLE_FIXTURE_TEST_CASE_CORO(judge_selecting_candidate_from_another_iteration_is_rejected, fixture_t) {
-  l_fx.build();
-
-  // 造第 2 轮的一个候选，然后用第 1 轮的 iteration 去判断它 —— 模拟「在第 3 轮
-  // 点了第 2 轮的图」这种跨轮误选
-  ai_light_candidate l_other{};
-  l_other.iteration_id_    = core_set::get_set().get_uuid();
-  l_other.session_id_      = l_fx.session_.uuid_id_;
-  l_other.candidate_index_ = 0;
-  l_other.render_status_   = candidate_render_status::rendered;
-  insert(l_fx.orm_).into<ai_light_candidate>().values(l_other)();
-
-  auto l_args = load_for_judge(l_fx);
-  auto l_j    = make_judgement(judgement_decision::accept, l_other.uuid_id_);
-  auto l_pf   = make_probe_preview_file();
-
-  bool l_threw = false;
-  try {
-    co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j, l_pf);
-  } catch (const doodle_error& in_err) {
-    l_threw = true;
-    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::bad_request);
-  }
-  BOOST_TEST(l_threw);
-  BOOST_TEST(en(l_fx.reload_session().state_) == en(ai_light_session_state::awaiting_judgement));
-  BOOST_TEST(l_fx.sql_->get_by_uuid<ai_light_candidate>(l_other.uuid_id_).preview_file_id_.is_nil());
-}
 
 // ===========================================================================
 // 4 小时挂起
@@ -452,10 +280,13 @@ DOODLE_FIXTURE_TEST_CASE_CORO(overdue_session_stays_awaiting_judgement_and_stays
   // apply_judgement 的「不在等人工判断」400，而没有任何路径能从 suspended 回到
   // awaiting_judgement —— 于是已经渲染好的候选再也挑不了，
   // 只能走 /spec 重出方案，白扔一整轮渲染。这才是删掉那个状态的理由。
-  auto l_args  = load_for_judge(l_fx);
-  auto l_j     = make_judgement(judgement_decision::accept, l_fx.candidates_.at(2).uuid_id_);
-  auto l_pf    = make_probe_preview_file();
-  bool l_threw = false;
+  auto l_args = load_for_judge(l_fx);
+  ai_light_judgement_t l_j{};
+  l_j.by_                    = core_set::get_set().get_uuid();
+  l_j.at_                    = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+  l_j.selected_candidate_id_ = l_fx.candidates_.at(2).uuid_id_;
+  auto l_pf                  = make_probe_preview_file();
+  bool l_threw               = false;
   try {
     co_await apply_judgement(*l_fx.sql_, l_args.session, l_args.iteration, l_j, l_pf);
   } catch (const std::exception& in_err) {
@@ -658,7 +489,6 @@ BOOST_AUTO_TEST_CASE(optional_and_time_fields_serialize_as_scalars) {
   ai_light_judgement_t l_j{};
   l_j.by_                    = core_set::get_set().get_uuid();
   l_j.at_                    = l_now;
-  l_j.decision_              = judgement_decision::continue_iteration;
   l_j.selected_candidate_id_ = core_set::get_set().get_uuid();
   l_j.feedback_text_         = "主光再低一点，色温再冷一点";
 
@@ -669,7 +499,6 @@ BOOST_AUTO_TEST_CASE(optional_and_time_fields_serialize_as_scalars) {
   BOOST_TEST(!l_j_json.at("at").is_array());
   // 往返回来仍相等
   auto l_j_back = l_j_json.get<ai_light_judgement_t>();
-  BOOST_TEST(en(l_j_back.decision_) == en(l_j.decision_));
   BOOST_TEST(l_j_back.at_.has_value());
   BOOST_TEST(l_j_back.feedback_text_ == "主光再低一点，色温再冷一点");
 

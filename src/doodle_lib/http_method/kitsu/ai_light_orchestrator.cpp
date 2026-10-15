@@ -86,17 +86,6 @@ boost::asio::awaitable<void> apply_judgement(
       in_iteration.iteration_
   );
 
-  const bool l_needs_candidate = in_judgement.decision_ == judgement_decision::accept ||
-                                 in_judgement.decision_ == judgement_decision::continue_iteration;
-  DOODLE_CHICK_HTTP(
-      l_needs_candidate == !in_judgement.selected_candidate_id_.is_nil(), bad_request, "判断 {} 与选中的候选 {} 不匹配",
-      magic_enum::enum_name(in_judgement.decision_), in_judgement.selected_candidate_id_
-  );
-  DOODLE_CHICK_HTTP(
-      (in_judgement.decision_ == judgement_decision::accept) == in_accepted_preview_file.has_value(),
-      internal_server_error, "定稿必须携带已构造好的 preview_file，其余判断不得携带"
-  );
-
   const ai_light_session_state l_next_state = ai_light_session_state::generating;
 
   orm::sql_modify_statement_vector_t l_sqls{};
@@ -111,7 +100,7 @@ boost::asio::awaitable<void> apply_judgement(
         in_iteration.iteration_
     );
 
-    if (in_judgement.decision_ == judgement_decision::accept) {
+    if (in_accepted_preview_file.has_value()) {
       l_cand.preview_file_id_ = in_accepted_preview_file->uuid_id_;
     }
     l_cand.is_selected_ = true;
@@ -148,7 +137,10 @@ boost::asio::awaitable<void> apply_judgement(
 
   SPDLOG_LOGGER_INFO(
       g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮判断 {}（操作人 {}）", in_session.uuid_id_,
-      in_iteration.iteration_, magic_enum::enum_name(in_judgement.decision_), in_judgement.by_
+      in_iteration.iteration_,
+      in_accepted_preview_file.has_value() ? "定稿"
+                                           : (in_judgement.selected_candidate_id_.is_nil() ? "全否" : "续轮"),
+      in_judgement.by_
   );
   co_return;
 }
