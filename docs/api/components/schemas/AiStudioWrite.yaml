@@ -20,3 +20,10 @@ properties:
   transfer_station_key:
     type: string
     description: 中转站后端的 API Key，只写不读
+  apipy_key:
+    type: string
+    description: |
+      API易（apiyi.com）图片后端的 API Key，只写不读。
+
+      与上两把是**不同主机**的凭据，不能互相顶替：拿 `transfer_station_key` 去发 API易
+      的请求等于把 A 家的密钥交给 B 家。

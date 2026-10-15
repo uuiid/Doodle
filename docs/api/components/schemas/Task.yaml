@@ -57,6 +57,13 @@ properties:
     type: string
     format: uuid
     description: 所属子项目ID
+  ai_light_session_id:
+    type: string
+    format: uuid
+    nullable: true
+    description: |
+      外键 → `ai_light_session.uuid_id_`。AI 灯光的推理任务（`type=inference`）指向它所属的会话；
+      非 AI 灯光来源的推理任务该字段为 nil。
   retry_count:
     type: integer
     format: int64

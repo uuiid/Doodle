@@ -29,3 +29,7 @@ properties:
     type: integer
     format: int64
     description: 图片类任务数量
+  inference_count:
+    type: integer
+    format: int64
+    description: 推理类任务数量（AI 灯光等同步推理任务）

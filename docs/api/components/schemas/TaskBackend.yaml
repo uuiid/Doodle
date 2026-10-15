@@ -2,6 +2,23 @@ type: string
 enum:
   - seedance2
   - transfer_station
+  - apipy_image
 description: |
   seedance2 - 豆包/火山方舟 Seedance2 后端（异步任务轮询，按 completion_tokens 计费）,
-  transfer_station - 中转站后端（Grsai，按模型积分计费，失败/违规按模型策略返还）
+  transfer_station - 中转站后端（Grsai，按模型积分计费，失败/违规按模型策略返还）,
+  apipy_image - API易（apiyi.com）图片后端（同步单次调用，无 task_id，按响应 usage 计费）
+
+  `apipy_image` 是**同步后端**：上游不返回异步 task id、也没有查询接口，一次
+  `/v1/images/generations`（无参考图）或 `/v1/images/edits`（有参考图）调用会占用连接
+  2-4 分钟直到出结果。因此：
+
+  - 只支持 `type=picture`；提交 `video` / `inference` 会直接置为 `failed`，不发出下游请求；
+  - 服务端内部有并发闸（同时在途上限 10），超出时任务保持 `preparing` 等下一轮，不会排队到上游；
+  - 任务行在提交那一刻就落终态，没有可轮询的中间态；服务端重启会让在途任务永久丢失，
+    启动清理会把残留的 `running` 行置为 `failed`（`data_response.error` 说明原因）；
+  - 不支持取消（`cancel_task` 直接抛错）。
+
+  `data_request` 复用 `TransferStationTaskDataRequest.yaml` 的形状，但参考图的处理方式相反：
+  本后端把参考图读成本地字节后作为 multipart 文件上传，**上游看不到 URL**，所以服务端
+  不为其生成公网签名 URL。参考图必须是本站图片路由 `/api/seedance2/pictures/<uuid><扩展名>`
+  且文件存在，最多 8 张、单张不超过 1MB、扩展名限 `.png` / `.jpg` / `.jpeg` / `.webp`。

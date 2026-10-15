@@ -2,4 +2,14 @@ type: string
 enum:
   - picture
   - video
-description: picture - 图片生成, video - 视频生成
+  - inference
+description: |
+  picture - 图片生成,
+  video - 视频生成,
+  inference - 同步推理（火山方舟 Responses API）
+
+  `inference` 不是异步生成任务：一次调用就拿到结果，任务行直接落终态。它由服务端接缝
+  （AI 灯光推理网关 `POST /api/doodle/ai/light/session/{session_id}/inference`）执行，
+  **不能**通过 `POST /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/task`
+  提交 —— 该接口会以 400 拒绝。计费口径也不同：按方舟响应的 `total_tokens`（输入 token
+  才是成本大头）当场结算，而不是生成类的 `completion_tokens`。

@@ -40,11 +40,21 @@ post:
     | --- | --- | --- | --- |
     | `seedance2` | 火山方舟 `/api/v3/contents/generations/tasks` | `model` + `resolution` + `content[]` | 按 `completion_tokens`（默认 20 万） |
     | `transfer_station` | 中转站（Grsai）`/v1/api/generate` | `model` + `prompt` + `images[]` 等 | 按模型积分单价 |
+    | `apipy_image` | API易（apiyi.com）`/v1/images/generations` 或 `/v1/images/edits` | 同 `transfer_station` | 按响应 `usage` 的 token 数 |
 
     `seedance2` 会校验 `model` 与 `resolution` 是否在所属剧集的授权列表内，并统计生成次数上限。
     `transfer_station` 的 `replyType` 由服务端固定注入为 `async`，调用方无需传递。
-    两种后端都会用 `model` + 分辨率做剧集授权校验（`transfer_station` 取 `imageSize`，没有则取 `aspectRatio`），
-    缺少模型或分辨率返回 400，未授权返回 401。
+    三种后端都会用 `model` + 分辨率做剧集授权校验（`transfer_station` / `apipy_image` 取
+    `imageSize`，没有则取 `aspectRatio`），缺少模型或分辨率返回 400，未授权返回 401。
+
+    `apipy_image` 是**同步后端**，只支持 `type=picture`：上游不返回异步 task id、也没有查询
+    接口，一次调用会占住连接 2-4 分钟直到出结果。它把参考图读成本地字节后作为 multipart
+    文件上传，因此参考图必须是本站图片路由 `/api/seedance2/pictures/<uuid><扩展名>` 且文件
+    存在，最多 8 张、单张不超过 1MB、扩展名限 `.png` / `.jpg` / `.jpeg` / `.webp`。
+    详见 `TaskBackend.yaml`。
+
+    `type=inference` 会被本接口以 400 拒绝：推理任务由服务端接缝同步执行并直接落终态
+    （见 `TaskType.yaml`），不走这条前端提交路径。
 
     `user_id`、`ai_studio_id`、`subproject_id` 由服务端根据当前登录用户与路径参数覆盖，请求体中传值无效。
     `file_extension` 不在创建时确定，而是在任务成功、结果文件落盘后按真实文件后缀回填。
@@ -76,7 +86,10 @@ post:
             - ai_generate_entity_id
           properties:
             data_request:
-              description: AI 请求数据，结构由 `backend` 决定
+              description: |
+                AI 请求数据，结构由 `backend` 决定。
+                `transfer_station` 与 `apipy_image` 共用同一种形状（见 `TaskBackend.yaml` 中
+                `apipy_image` 对参考图处理的差异说明）。
               oneOf:
                 - $ref: ../components/schemas/Seedance2TaskDataRequest.yaml
                 - $ref: ../components/schemas/TransferStationTaskDataRequest.yaml

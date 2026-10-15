@@ -28,7 +28,13 @@ put:
   tags:
     - 任务
   summary: 取消任务
-  description: 向外部服务发送取消请求，并将状态设为 cancelled
+  description: |
+    向外部服务发送取消请求，并将状态设为 cancelled。
+
+    只有 `preparing` / `queued` 状态的任务可取消；`running` 状态仅 `backend=seedance2`
+    的任务可取消（`transfer_station` 与 `apipy_image` 不支持取消在途任务）。
+    `preparing` 的任务尚未提交到外部，直接置为 cancelled 并归还 token，不会发出下游请求。
+    取消成功后会归还预扣的 token 并回滚生成次数。
   parameters:
     - name: subproject_id
       in: path
