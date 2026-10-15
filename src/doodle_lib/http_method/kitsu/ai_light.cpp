@@ -637,36 +637,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, get) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, put) {
   person_.check_not_outsourcer();
-  auto l_sql    = get_sqlite_database();
-  auto l_preset = l_sql.get_ai_light_preset(id_);
-  DOODLE_CHICK_HTTP(l_preset.has_value(), not_found, "预设 {} 不存在", id_);
+  auto l_sql = get_sqlite_database();
+  DOODLE_CHICK_HTTP(l_sql.get_ai_light_preset(id_).has_value(), not_found, "预设 {} 不存在", id_);
 
   auto l_json = in_handle->get_json();
-  if (l_json.contains("name")) l_json.at("name").get_to(l_preset->name_);
-  if (l_json.contains("tags")) l_json.at("tags").get_to(l_preset->tags_);
-  if (l_json.contains("embedding")) l_json.at("embedding").get_to(l_preset->embedding_);
-  if (l_json.contains("embedding_dim")) l_json.at("embedding_dim").get_to(l_preset->embedding_dim_);
-  if (l_json.contains("rig_fragment")) l_json.at("rig_fragment").get_to(l_preset->rig_fragment_);
-  if (l_json.contains("applicable")) l_json.at("applicable").get_to(l_preset->applicable_);
-  if (l_json.contains("stats_target")) l_json.at("stats_target").get_to(l_preset->stats_target_);
-  if (l_json.contains("enabled")) l_json.at("enabled").get_to(l_preset->enabled_);
 
   sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(update(l_sql)
-                          .from<ai_light_preset>()
-                          .set(
-                              c(&ai_light_preset::name_)          = l_preset->name_,
-                              c(&ai_light_preset::tags_)          = l_preset->tags_,
-                              c(&ai_light_preset::embedding_)     = l_preset->embedding_,
-                              c(&ai_light_preset::embedding_dim_) = l_preset->embedding_dim_,
-                              c(&ai_light_preset::rig_fragment_)  = l_preset->rig_fragment_,
-                              c(&ai_light_preset::applicable_)    = l_preset->applicable_,
-                              c(&ai_light_preset::stats_target_)  = l_preset->stats_target_,
-                              c(&ai_light_preset::enabled_)       = l_preset->enabled_
-                          )
-                          .where(c(&ai_light_preset::uuid_id_) == id_));
+  auto l_update = update(l_sql).from<ai_light_preset>().set_from_ref<ai_light_preset>(l_json).where(
+      c(&ai_light_preset::uuid_id_) == id_
+  );
+  l_sqls.emplace_back(std::move(l_update));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg(nlohmann::json{} = *l_preset);
+
+  co_return in_handle->make_msg(nlohmann::json{} = *l_sql.get_ai_light_preset(id_));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, delete_) {

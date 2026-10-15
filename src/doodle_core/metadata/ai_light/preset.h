@@ -19,6 +19,8 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 namespace doodle::ai_light {
@@ -70,6 +72,19 @@ struct DOODLE_CORE_API ai_light_preset {
 
   bool enabled_{true};
   uuid created_by_{};
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"name", &ai_light_preset::name_},                    //
+        std::pair{"tags", &ai_light_preset::tags_},                    //
+        std::pair{"embedding", &ai_light_preset::embedding_},          //
+        std::pair{"embedding_dim", &ai_light_preset::embedding_dim_},  //
+        std::pair{"rig_fragment", &ai_light_preset::rig_fragment_},    //
+        std::pair{"applicable", &ai_light_preset::applicable_},        //
+        std::pair{"stats_target", &ai_light_preset::stats_target_},    //
+        std::pair{"enabled", &ai_light_preset::enabled_}               //
+    };
+  }
 
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
