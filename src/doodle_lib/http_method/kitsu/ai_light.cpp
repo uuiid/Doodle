@@ -40,20 +40,10 @@ using namespace orm;
 using namespace doodle::ai_light;
 
 struct ai_light_judgement_t {
-  uuid by_{};
-  std::optional<chrono::system_zoned_time> at_{};
   uuid selected_candidate_id_{};
   std::string feedback_text_{};
 
-  friend void to_json(nlohmann::json& j, const ai_light_judgement_t& p) {
-    j["by"]                    = p.by_;
-    j["at"]                    = p.at_;
-    j["selected_candidate_id"] = p.selected_candidate_id_;
-    j["feedback_text"]         = p.feedback_text_;
-  }
   friend void from_json(const nlohmann::json& j, ai_light_judgement_t& p) {
-    if (j.contains("by")) j.at("by").get_to(p.by_);
-    if (j.contains("at")) j.at("at").get_to(p.at_);
     if (j.contains("selected_candidate_id")) j.at("selected_candidate_id").get_to(p.selected_candidate_id_);
     if (j.contains("feedback_text")) j.at("feedback_text").get_to(p.feedback_text_);
   }
@@ -422,13 +412,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
 // ===========================================================================
 // 人工闸门 2：判断
 // ===========================================================================
-//
-// 状态机只有这一个闸门。状态由提交接口自己推进：
-//   建会话 → draft
-//   上传参考图（reference_route，POST 里推进到 generating —— 见该处注释）
-//   前两轮提交候选 → POST /session/{}/iteration（要求 generating）
-//   渲染回传 → awaiting_judgement（mark_iteration_rendered）
-//   判断 → generating（本路由内联推进）
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   person_.check_not_outsourcer();
@@ -445,8 +428,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
 
   ai_light_judgement_t l_judgement{};
   l_json.get_to(l_judgement);
-  l_judgement.by_ = person_.person_.uuid_id_;
-  l_judgement.at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
   DOODLE_CHICK_HTTP(
       l_iteration.state_ != ai_light_iteration_state::judged, bad_request, "轮次 {} 已经判断过了",
@@ -471,8 +452,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   }
 
   l_iteration.state_         = ai_light_iteration_state::judged;
-  l_iteration.judged_by_     = l_judgement.by_;
-  l_iteration.judged_at_     = l_judgement.at_;
+  l_iteration.judged_by_     = person_.person_.uuid_id_;
+  l_iteration.judged_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
   l_iteration.feedback_text_ = l_judgement.feedback_text_;
   l_sqls.emplace_back(update(l_sql)
                           .from<ai_light_iteration>()
