@@ -1,4 +1,3 @@
-#include "ai_light_submit.h"
 
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/ai_light/ai_light.h>
@@ -15,7 +14,6 @@
 
 #include <boost/asio/awaitable.hpp>
 
-#include "ai_light_submit.h"
 #include <algorithm>
 #include <cstdint>
 #include <magic_enum/magic_enum.hpp>
@@ -66,9 +64,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
 
   // 候选数由前端决定，服务端只要求非空 —— 后面两道闸门都要读 front()，
   // 而且「一个候选都没提交」不可能是一轮有效的渲染请求。
-  DOODLE_CHICK_HTTP(
-      !l_req.rigs_.empty(), bad_request, "请求体缺少 candidates 数组（或为空）"
-  );
+  DOODLE_CHICK_HTTP(!l_req.rigs_.empty(), bad_request, "请求体缺少 candidates 数组（或为空）");
 
   // ===========================================================================
   // IR 准入闸门
@@ -84,9 +80,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   // from_json 是宽松的（缺键不抛），所以形状校验在这里补上。
   // 按**实际提交的数量**遍历，数量由前端决定。
   for (std::size_t l_i = 0; l_i < l_req.rigs_.size(); ++l_i) {
-    DOODLE_CHICK_HTTP(
-        !l_req.rigs_.at(l_i).lights_.empty(), bad_request, "候选 {} 缺少非空的 lights 数组", l_i
-    );
+    DOODLE_CHICK_HTTP(!l_req.rigs_.at(l_i).lights_.empty(), bad_request, "候选 {} 缺少非空的 lights 数组", l_i);
   }
 
   // ---- 闸门 2：至少一个 role=key 主光 ----
@@ -146,8 +140,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 向 AI 灯光会话 {} 提交了第 {} 轮 {} 个候选（前端展开）",
-      person_.person_.email_, person_.person_.get_full_name(), l_session.uuid_id_, l_req.iteration_,
-      l_req.rigs_.size()
+      person_.person_.email_, person_.person_.get_full_name(), l_session.uuid_id_, l_req.iteration_, l_req.rigs_.size()
   );
 
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
