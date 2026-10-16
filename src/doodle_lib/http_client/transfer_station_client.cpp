@@ -134,7 +134,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_clien
   boost::beast::http::request<boost::beast::http::string_body> req{
       boost::beast::http::verb::post, "/v1/api/generate", 11
   };
-  req.body() = nlohmann::json{l_req_body}.dump();
+  req.body() = in_task.data_request_.dump();
   req.set(boost::beast::http::field::content_type, "application/json");
   req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
   req.set(boost::beast::http::field::accept, "application/json");
