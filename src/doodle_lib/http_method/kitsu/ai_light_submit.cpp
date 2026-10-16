@@ -39,9 +39,7 @@ orm::sql_modify_statement_vector_t write_submitted_iteration(
 ) {
   const auto l_iteration = in_request.iteration_;
 
-  DOODLE_CHICK_HTTP(
-      !in_request.rigs_.empty(), internal_server_error, "本轮候选数为 0，方案 §6.6 要求至少一个候选"
-  );
+  DOODLE_CHICK_HTTP(!in_request.rigs_.empty(), internal_server_error, "本轮候选数为 0，方案 §6.6 要求至少一个候选");
 
   http::auto_task::shot_render_light_sync_result l_assembly_res{};
   std::string l_assembly_err{};
@@ -61,10 +59,10 @@ orm::sql_modify_statement_vector_t write_submitted_iteration(
   );
 
   ai_light_iteration l_it{};
-  l_it.uuid_id_    = core_set::get_set().get_uuid();
-  l_it.session_id_ = in_request.session_id_;
-  l_it.iteration_  = l_iteration;
-  l_it.state_      = ai_light_iteration_state::generated;
+  l_it.uuid_id_             = core_set::get_set().get_uuid();
+  l_it.session_id_          = in_request.session_id_;
+  l_it.iteration_           = l_iteration;
+  l_it.state_               = ai_light_iteration_state::generated;
   l_it.server_task_info_id_ = uuid{};
 
   orm::sql_modify_statement_vector_t l_sqls{};
@@ -74,13 +72,7 @@ orm::sql_modify_statement_vector_t write_submitted_iteration(
   l_rig_set.iteration_      = l_iteration;
   l_rig_set.shot_task_id_   = in_request.task_id_;
   l_rig_set.baseline_level_ = l_assembly_res.original_map_.generic_string();
-
-  for (std::size_t l_i = 0; l_i < in_request.rigs_.size(); ++l_i) {
-    auto l_rig             = in_request.rigs_.at(l_i);
-    l_rig.candidate_index_ = static_cast<std::int32_t>(l_i);
-    l_rig.rig_id_          = core_set::get_set().get_uuid();
-    l_rig_set.rigs_.emplace_back(std::move(l_rig));
-  }
+  l_rig_set.rigs_           = in_request.rigs_;
   l_it.set_rigs(l_rig_set);
 
   auto l_session_next               = in_sql.get_by_uuid<ai_light_session>(in_request.session_id_);
@@ -101,9 +93,8 @@ orm::sql_modify_statement_vector_t write_submitted_iteration(
   );
 
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(),
-      "AI 灯光会话 {} 第 {} 轮 {} 个候选的方案已落库（引擎内路线，等待发起方本机渲染）", in_request.session_id_,
-      l_iteration, in_request.rigs_.size()
+      g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮 {} 个候选的方案已落库（引擎内路线，等待发起方本机渲染）",
+      in_request.session_id_, l_iteration, in_request.rigs_.size()
   );
   return l_sqls;
 }
@@ -113,9 +104,7 @@ orm::sql_modify_statement_vector_t write_dispatched_iteration(
 ) {
   const auto l_iteration = in_request.iteration_;
 
-  DOODLE_CHICK_HTTP(
-      !in_request.rigs_.empty(), internal_server_error, "本轮候选数为 0，方案 §6.6 要求至少一个候选"
-  );
+  DOODLE_CHICK_HTTP(!in_request.rigs_.empty(), internal_server_error, "本轮候选数为 0，方案 §6.6 要求至少一个候选");
 
   http::auto_task::shot_render_light_sync_result l_assembly_res{};
   std::string l_assembly_err{};
@@ -135,10 +124,10 @@ orm::sql_modify_statement_vector_t write_dispatched_iteration(
   );
 
   ai_light_iteration l_it{};
-  l_it.uuid_id_    = core_set::get_set().get_uuid();
-  l_it.session_id_ = in_request.session_id_;
-  l_it.iteration_  = l_iteration;
-  l_it.state_      = ai_light_iteration_state::generated;
+  l_it.uuid_id_        = core_set::get_set().get_uuid();
+  l_it.session_id_     = in_request.session_id_;
+  l_it.iteration_      = l_iteration;
+  l_it.state_          = ai_light_iteration_state::generated;
 
   const auto l_out_dir = make_iteration_relative_dir(in_request.session_id_, l_it.uuid_id_);
 
@@ -153,12 +142,10 @@ orm::sql_modify_statement_vector_t write_dispatched_iteration(
   l_rig_set.baseline_level_ = l_assembly_res.original_map_.generic_string();
 
   for (std::size_t l_i = 0; l_i < in_request.rigs_.size(); ++l_i) {
-    auto l_rig             = in_request.rigs_.at(l_i);
-    l_rig.candidate_index_ = static_cast<std::int32_t>(l_i);
-    l_rig.rig_id_          = core_set::get_set().get_uuid();
+    auto l_rig = in_request.rigs_.at(l_i);
 
     ai_light_candidate l_cand{};
-    l_cand.uuid_id_ = l_rig.rig_id_;
+    l_cand.uuid_id_ = core_set::get_set().get_uuid();
 
     l_rig_set.rigs_.emplace_back(l_rig);
 

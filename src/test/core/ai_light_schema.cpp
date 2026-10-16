@@ -143,10 +143,9 @@ void with_fk_off(orm::session& in_session, Fun&& in_fun) {
 }
 
 /// 造一份有内容的 rig，用来验证 JSON 列往返
-lighting_rig_t make_probe_rig(const uuid& in_session_id, std::int32_t in_iteration, std::int32_t in_index) {
+lighting_rig_t make_probe_rig() {
   lighting_rig_t l_rig{};
-  l_rig.candidate_index_ = in_index;
-  l_rig.provenance_      = provenance_t{"deepseek-flash", "hash_abc", {"ref_00.png", "ref_01.png"}, 12345, "stats_only"};
+  l_rig.provenance_ = provenance_t{"deepseek-flash", "hash_abc", {"ref_00.png", "ref_01.png"}, 12345, "stats_only"};
   l_rig.globals_.exposure_               = exposure_t{"manual", -0.3};
   l_rig.globals_.white_balance_          = white_balance_t{5600.0, 0.0};
   l_rig.globals_.environment_            = environment_t{0.6, 0.02};
@@ -343,7 +342,7 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
       ai_light_candidate l_cand{};
       l_cand.iteration_id_ = l_iter.uuid_id_;
       // 候选由前端算好提交（服务端的展开器已删除），测试这里直接造 rig。
-      l_cand.set_rig(make_probe_rig(l_session_row.uuid_id_, 1, l_i));
+      l_cand.set_rig(make_probe_rig());
       // 路径不是列（D44）：候选行只留状态与数值，路径由 candidate_render_path 现算。
       l_cand.render_status_   = candidate_render_status::rendered;
       l_cand.set_metrics(candidate_metrics_t{
