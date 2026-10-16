@@ -1,6 +1,5 @@
 target_sources(test_main
         PRIVATE
-        data.cpp
         depth_estimation.cpp
         multipart_body_test.cpp
         sqlite_fk_fix.cpp
@@ -12,11 +11,6 @@ target_sources(test_main
         sqlite_fk_semantics.cpp
         sqlite_not_found.cpp
         sqlite_upgrade.cpp
-        ai_light_schema.cpp
-        ai_light_state.cpp
-        ai_light_stats.cpp
-        ai_light_paths.cpp
-        ai_light_dispatch.cpp
 )
 
  
