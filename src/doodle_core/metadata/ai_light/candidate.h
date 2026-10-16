@@ -87,7 +87,7 @@ struct DOODLE_CORE_API candidate_metrics_t {
   }
 };
 
-// 表实体：ai_light_candidate
+// 表实体 ai_light_candidate
 // 灯光候选
 struct DOODLE_CORE_API ai_light_candidate {
   DOODLE_BASE_FIELDS()
