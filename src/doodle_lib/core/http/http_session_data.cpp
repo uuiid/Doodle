@@ -307,6 +307,7 @@ boost::asio::awaitable<bool> session_data::parse_body() {
 }
 
 void session_data::async_run_detached() {
+  // 特意不连接取消槽, 会在连接结束时关闭, 由于有些大文件传输,这是必须的, 环节要求
   boost::asio::co_spawn(g_io_context(), run(), boost::asio::consign(boost::asio::detached, shared_from_this()));
 }
 
