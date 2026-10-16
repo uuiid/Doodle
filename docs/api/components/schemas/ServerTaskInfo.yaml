@@ -58,15 +58,47 @@ properties:
   type:
     type: string
     description: |
-      任务类型。部分提交接口会在服务端强制改写该字段（例如 UE 装配接口强制为
-      `auto_light`、`/api/doodle/task/{id}/inspect` 强制为 `check_maya`）。
+      任务类型，取值**必须**是下列枚举之一（C++ 侧 `doodle::server_task_info_type`）。
 
-      ⚠️ JSON 序列化表（`server_task_info_type.h`）只登记了下列取值，
-      **不含** `create_rig_sk` 与 `project_sync`；按 nlohmann 的缺省规则，
-      这两个取值在 JSON 中会落回第一项 `export_fbx`（服务端内部仍按正确类型执行），
-      因此调用 `/api/doodle/task/{id}/generate_uesk_file`、
-      `/api/actions/project/{project_id}/sync` 等接口时，
-      返回体里的 `type` 会显示为 `export_fbx`。
+      ⚠️ **传入枚举以外的字符串会导致请求失败。** 该枚举用
+      `DOODLE_JSON_SERIALIZE_ENUM_STRICT`（`server_task_info_type.h`）序列化：
+      反序列化遇到未登记的值会抛 `out_of_range.410`，异常一路冒到
+      `http_session_data.cpp` 的兜底 `catch (...)`，最终以 **500** 返回，
+      且响应体是 `current_exception_diagnostic_information()` 的完整诊断串
+      （带内部文件路径与调用栈），**不是**可读的字段错误提示。
+      （切勿按 nlohmann `NLOHMANN_JSON_SERIALIZE_ENUM` 的旧行为理解 —— 那时会静默
+      落到首项 `export_fbx`；本仓库所有枚举已在 d658c4a40 迁移到 strict 版本。）
+
+      部分提交接口会在服务端**强制改写**该字段（例如 UE 装配接口强制为
+      `auto_light`、`/api/doodle/task/{id}/inspect` 强制为 `check_maya`）；
+      被强制改写的接口不再读取请求体里的 `type`。
+
+      **枚举值与 JSON 字符串的映射不完整**：C++ 枚举共有 12 项，但上表只登记了
+      9 项字符串映射。`unknown`（`-1`）、`create_rig_sk`、`project_sync`
+      **没有任何 JSON 字符串形式** —— 它们在 `to_json` 与 `from_json` 两个方向
+      都会抛 `out_of_range.410`：
+
+      | C++ 枚举值 | JSON 字符串 | 说明 |
+      | --- | --- | --- |
+      | `unknown`（`-1`） | ❌ 无 | 仅用于查询过滤，不可作为字段值传递 |
+      | `export_fbx`（`0`） | `export_fbx` | |
+      | `export_sim` | `export_sim` | |
+      | `auto_light` | `auto_light` | |
+      | `merge_video` | `merge_video` | |
+      | `connect_video` | `connect_video` | |
+      | `check_maya` | `check_maya` | |
+      | `replace_maya_ref` | `replace_maya_ref` | |
+      | `create_rig_sk` | ❌ 无 | 服务端内部使用；提交接口丢弃请求体的 `type` |
+      | `project_sync` | ❌ 无 | 服务端内部使用；提交接口丢弃请求体的 `type` |
+      | `depth_estimation` | `depth_estimation` | |
+      | `ai_light` | `ai_light` | |
+
+      因此：**响应体里的 `type` 只会出现上表 9 个已登记取值**。
+      涉及 `create_rig_sk` / `project_sync` 的接口
+      （`/api/doodle/task/{id}/generate_uesk_file`、
+      `/api/actions/project/{project_id}/sync`、
+      `/api/actions/local/task/{id}/update/movie*`、`.../update/ue`）
+      在**序列化响应时同样会抛异常**，无法返回 `server_task_info` 的 JSON。
     enum:
       - export_fbx
       - export_sim

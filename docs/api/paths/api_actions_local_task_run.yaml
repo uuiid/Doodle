@@ -42,11 +42,16 @@ post:
           properties:
             allowed_task_types:
               type: array
-              description: 允许领取的任务类型；缺省为 `["export_fbx", "auto_light"]`
+              description: |
+                允许领取的任务类型；缺省为 `["export_fbx", "auto_light"]`。
+
+                ⚠️ 该字段经 `get<std::set<server_task_info_type>>()` 走枚举的 JSON
+                反序列化，取值**必须**是 `ServerTaskInfo` 里 `type` 已登记的字符串。
+                未登记的值（`unknown`、`create_rig_sk`、`project_sync`，以及任何拼错的名字）
+                会抛 `out_of_range.410` → 整个请求以 **500** 失败。
               items:
                 type: string
                 enum:
-                  - unknown
                   - export_fbx
                   - export_sim
                   - auto_light
@@ -54,8 +59,6 @@ post:
                   - connect_video
                   - check_maya
                   - replace_maya_ref
-                  - create_rig_sk
-                  - project_sync
                   - depth_estimation
                   - ai_light
   responses:

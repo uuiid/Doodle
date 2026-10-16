@@ -11,9 +11,10 @@ post:
 
     1. 用请求体构造 `server_task_info`（`name`、`source_computer` 必填），
        `submit_time` 由服务端填写，`submitter` / `task_id` / `run_computer_id` 置为 nil uuid；
-    2. `type` **强制**为 `create_rig_sk`
-       （⚠️ 该取值不在 `server_task_info_type` 的 JSON 序列化表中，按 nlohmann 的缺省规则，
-       返回体里的 `type` 会显示为 `export_fbx`，服务端内部仍是 `create_rig_sk`）；
+    2. `type` **强制**为 `create_rig_sk`（请求体里的 `type` 被忽略，无需也无法传对）；
+       ⚠️ `create_rig_sk` **没有** JSON 字符串映射（见 `ServerTaskInfo` 的 `type`），
+       因此第 8 步序列化响应时会抛 `out_of_range.410` → 返回 **500**，
+       拿不到预期的 200/201 任务对象；
     3. URL 中的 `{id}` 作为 Kitsu 任务 id 写入参数（`export_rig_sk_arg::task_id_`），
        请求头中的令牌被透传给 Kitsu 客户端；
     4. 请求体中的 `path` 被读作待处理的 Maya 文件路径（**必填**，实现为无保护取值）；

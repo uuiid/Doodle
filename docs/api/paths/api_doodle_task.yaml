@@ -23,7 +23,9 @@ get:
       required: false
       schema:
         type: string
-        description: 任务类型
+        description: |
+          任务类型，取值必须是 `server_task_info_type` 的**枚举名**
+          （由 `magic_enum::enum_cast` 解析，故这里是 C++ 枚举名而非 JSON 字符串表）。
         enum:
           - unknown
           - export_fbx
@@ -37,7 +39,14 @@ get:
           - project_sync
           - depth_estimation
           - ai_light
-      description: 按任务类型过滤；缺省或无法识别时不进行过滤
+      description: |
+        按任务类型过滤。取值必须是 `server_task_info_type` 的枚举名
+        （`http_method/local/task_info.cpp:275` 用 `magic_enum::enum_cast` 转成枚举，
+        未知取值 `value_or(unknown)`）。
+        **缺省（不传）或取值无法识别时都不过滤** —— 两者同样落到 `unknown`，
+        而 `unknown` 被当作「匹配全部」；因此传一个拼错的类型名会**静默返回全部任务**，
+        不会报错。注意与请求体字段的差别：此处是查询过滤，不经 JSON 枚举序列化，
+        所以 `create_rig_sk` / `project_sync` 在这里是合法的过滤值。
   responses:
     '200':
       description: 任务列表
@@ -59,6 +68,10 @@ post:
 
     1. 用请求体构造 `server_task_info` —— 其中 `name`、`source_computer` 是必填
        （见 `server_task_info` 的 `from_json`）；
+       ⚠️ 请求体的 `type` 若给了枚举以外的字符串（或未做 JSON 映射的
+       `create_rig_sk` / `project_sync` / `unknown`），`from_json` 会抛
+       `out_of_range.410` → 整个请求以 **500** 失败（见 `ServerTaskInfo` 的 `type`）。
+       本接口的缺省分支已按 `task_data` 的判别键选择执行参数，通常**不必传 `type`**；
     2. 服务端覆盖 `submit_time`（当前时间），并把 `submitter`、`task_id`、
        `run_computer_id` 置为 nil uuid；`status` 保持请求体给的取值（缺省 `submitted`）；
        `name` 为空串时用任务 uuid 填充；

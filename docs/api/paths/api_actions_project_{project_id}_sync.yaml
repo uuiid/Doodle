@@ -11,9 +11,10 @@ post:
 
     1. 用请求体构造 `server_task_info`（`name`、`source_computer` 必填），
        `submit_time` 由服务端填写，`submitter` / `task_id` / `run_computer_id` 置为 nil uuid；
-    2. `type` **强制**为 `project_sync`
-       （⚠️ 该取值不在 `server_task_info_type` 的 JSON 序列化表中，按 nlohmann 的缺省规则，
-       返回体里的 `type` 会显示为 `export_fbx`，服务端内部仍是 `project_sync`）；
+    2. `type` **强制**为 `project_sync`（请求体里的 `type` 被忽略，无需也无法传对）；
+       ⚠️ `project_sync` **没有** JSON 字符串映射（见 `ServerTaskInfo` 的 `type`），
+       因此序列化响应时会抛 `out_of_range.410` → 返回 **500**，
+       拿不到预期的 200/201 任务对象；
     3. 请求体的 `task_ids` / `upload` / `download` 三个字段**均必填**
        （`task_sync::from_json` 用无保护取值读取）；
     4. `download` 为真时把各任务的下载清单同步到本机工作根目录（`user_work_root`）；

@@ -12,8 +12,8 @@ post:
     1. 用请求体构造 `server_task_info`（`name`、`source_computer` 必填），
        `submit_time` 由服务端填写，`submitter` / `task_id` / `run_computer_id` 置为 nil uuid；
     2. `type` 被写作 `project_sync`（实现如此，未随接口语义单独取值）
-       （⚠️ 该取值不在 `server_task_info_type` 的 JSON 序列化表中，按 nlohmann 的缺省规则，
-       返回体里的 `type` 会显示为 `export_fbx`，服务端内部仍是 `project_sync`）；
+       （⚠️ `project_sync` **没有** JSON 字符串映射，见 `ServerTaskInfo` 的 `type`，
+       序列化响应时会抛 `out_of_range.410` → 返回 **500**）；
     3. URL 中的 `{id}` 作为 Kitsu 任务 id 写入参数；
     4. `path` 指向 UE 工程文件，服务端会在其所在目录下查找需要更新的文件并上传；
        公共资源文件 `a_PropPublicFiles` 不存在时跳过（记警告，不报错）。
