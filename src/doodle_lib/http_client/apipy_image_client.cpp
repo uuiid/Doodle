@@ -346,7 +346,7 @@ ai_client_base::request_info_t apipy_image_client::collect_request_info(const nl
 
   request_info_t l_info{};
   l_info.model_       = l_req.model_;
-  l_info.resolution_  = l_req.aspect_ratio_.empty() ? l_req.image_size_ : l_req.aspect_ratio_;
+  l_info.resolution_  = l_req.image_size_.empty() ? l_req.aspect_ratio_ : l_req.image_size_;
   l_info.text_prompt_ = l_req.prompt_;
 
   DOODLE_CHICK_HTTP(!l_info.model_.empty(), bad_request, "缺少模型名称");
