@@ -140,7 +140,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   l_session.state_             = ai_light_session_state::draft;
   l_session.current_iteration_ = 0;
   l_session.judgement_due_at_  = std::nullopt;
-  l_session.failure_reason_    = "";
   if (l_session.title_.empty()) l_session.title_ = l_entity.name_;
 
   {
@@ -430,14 +429,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
                           .where(c(&ai_light_iteration::uuid_id_) == l_iteration.uuid_id_));
 
   l_session.mark_judged(ai_light_session_state::generating);
-  l_session.failure_reason_ = "";
   l_sqls.emplace_back(update(l_sql)
                           .from<ai_light_session>()
                           .set(
                               c(&ai_light_session::state_)             = l_session.state_,
                               c(&ai_light_session::current_iteration_) = l_session.current_iteration_,
-                              c(&ai_light_session::judgement_due_at_)  = l_session.judgement_due_at_,
-                              c(&ai_light_session::failure_reason_)    = l_session.failure_reason_
+                              c(&ai_light_session::judgement_due_at_)  = l_session.judgement_due_at_
                           )
                           .where(c(&ai_light_session::uuid_id_) == l_session.uuid_id_));
 
@@ -478,7 +475,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
     l_out["iteration"]       = l_it->iteration_;
     l_out["iteration_state"] = l_it->state_;
     l_out["session_state"]   = l_session.state_;
-    l_out["failure_reason"]  = l_session.failure_reason_;
   }
   co_return in_handle->make_msg(l_out);
 }
@@ -519,7 +515,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_local_route, post) {
     auto l_session_after     = l_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
     l_out["iteration_state"] = l_it->state_;
     l_out["session_state"]   = l_session_after.state_;
-    l_out["failure_reason"]  = l_session_after.failure_reason_;
     l_it_state               = std::string{magic_enum::enum_name(l_it->state_)};
     l_session_state          = std::string{magic_enum::enum_name(l_session_after.state_)};
   }

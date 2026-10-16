@@ -61,8 +61,7 @@ orm::sql_modify_statement_t make_session_update(sqlite_database& in_sql, const a
       .set(
           c(&ai_light_session::state_)             = in_session.state_,
           c(&ai_light_session::current_iteration_) = in_session.current_iteration_,
-          c(&ai_light_session::judgement_due_at_)  = in_session.judgement_due_at_,
-          c(&ai_light_session::failure_reason_)    = in_session.failure_reason_
+          c(&ai_light_session::judgement_due_at_)  = in_session.judgement_due_at_
       )
       .where(c(&ai_light_session::uuid_id_) == in_session.uuid_id_);
 }
@@ -124,7 +123,6 @@ boost::asio::awaitable<void> mark_iteration_rendered(
   );
 
   l_session.mark_awaiting_judgement();
-  l_session.failure_reason_ = "";
   l_sqls.emplace_back(make_session_update(in_sql, l_session));
 
   co_await in_sql.run_sql(std::move(l_sqls));
@@ -140,27 +138,6 @@ namespace {
 
 }  // namespace
 
-boost::asio::awaitable<void> mark_iteration_failed(
-    sqlite_database& in_sql, const uuid& in_server_task_info_id, const ai_light_iteration_locator_t& in_locator,
-    const std::string& in_reason
-) {
-  auto l_it = locate_iteration(in_sql, in_server_task_info_id, in_locator);
-  DOODLE_CHICK_HTTP(l_it.has_value(), not_found, "没有任务 {} 对应的 AI 灯光轮次", in_server_task_info_id);
-
-  auto l_session            = in_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
-  l_session.failure_reason_ = in_reason;
-
-  orm::sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(make_session_update(in_sql, l_session));
-  co_await in_sql.run_sql(std::move(l_sqls));
-
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮渲染失败（会话停留在 {}）：{}", l_session.uuid_id_,
-      l_it->iteration_, magic_enum::enum_name(l_session.state_), l_session.failure_reason_
-  );
-  co_return;
-}
-
 boost::asio::awaitable<void> apply_render_report(
     sqlite_database& in_sql, const http::kitsu_ctx_t& in_ctx, const uuid& in_server_task_info_id,
     const ai_light_iteration_locator_t& in_locator, const round_render_report_t& in_report
@@ -173,8 +150,8 @@ boost::asio::awaitable<void> apply_render_report(
           in_report.candidates_.begin(), in_report.candidates_.end(),
           [](const candidate_render_report_t& in_cand) { return in_cand.status_ == candidate_render_status::rendered; }
       )) {
-    co_await mark_iteration_failed(
-        in_sql, in_server_task_info_id, in_locator,
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮渲染失败：{}", l_it->session_id_, l_it->iteration_,
         !in_report.error_.empty()
             ? in_report.error_
             : fmt::format("轮次 {} 的 {} 个候选全部渲染失败", l_it->iteration_, in_report.candidates_.size())
@@ -233,8 +210,8 @@ boost::asio::awaitable<void> apply_render_report(
         return in_cand.render_status_ == candidate_render_status::rendered;
       });
   if (!l_any_rendered_after) {
-    co_await mark_iteration_failed(
-        in_sql, in_server_task_info_id, in_locator,
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮渲染失败：{}", l_it->session_id_, l_it->iteration_,
         fmt::format(
             "轮次 {} 的 {} 个候选渲染成功但产物文件缺失（海报或视频），本轮无可判断结果", l_it->iteration_,
             l_missing_artifact

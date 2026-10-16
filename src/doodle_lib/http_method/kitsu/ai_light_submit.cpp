@@ -77,7 +77,6 @@ orm::sql_modify_statement_vector_t write_submitted_iteration(
 
   auto l_session_next               = in_sql.get_by_uuid<ai_light_session>(in_request.session_id_);
   l_session_next.current_iteration_ = l_iteration;
-  l_session_next.failure_reason_    = "";
 
   l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_iteration>().values(l_it));
   l_sqls.emplace_back(
@@ -86,8 +85,7 @@ orm::sql_modify_statement_vector_t write_submitted_iteration(
           .set(
               c(&ai_light_session::state_)             = l_session_next.state_,
               c(&ai_light_session::current_iteration_) = l_session_next.current_iteration_,
-              c(&ai_light_session::judgement_due_at_)  = l_session_next.judgement_due_at_,
-              c(&ai_light_session::failure_reason_)    = l_session_next.failure_reason_
+              c(&ai_light_session::judgement_due_at_)  = l_session_next.judgement_due_at_
           )
           .where(c(&ai_light_session::uuid_id_) == l_session_next.uuid_id_)
   );
@@ -161,7 +159,6 @@ orm::sql_modify_statement_vector_t write_dispatched_iteration(
 
   auto l_session_next               = in_sql.get_by_uuid<ai_light_session>(in_request.session_id_);
   l_session_next.current_iteration_ = l_iteration;
-  l_session_next.failure_reason_    = "";
 
   ai_light_task_payload_t l_payload{};
   l_payload.session_id_            = in_request.session_id_;
@@ -200,8 +197,7 @@ orm::sql_modify_statement_vector_t write_dispatched_iteration(
           .set(
               c(&ai_light_session::state_)             = l_session_next.state_,
               c(&ai_light_session::current_iteration_) = l_session_next.current_iteration_,
-              c(&ai_light_session::judgement_due_at_)  = l_session_next.judgement_due_at_,
-              c(&ai_light_session::failure_reason_)    = l_session_next.failure_reason_
+              c(&ai_light_session::judgement_due_at_)  = l_session_next.judgement_due_at_
           )
           .where(c(&ai_light_session::uuid_id_) == l_session_next.uuid_id_)
   );

@@ -46,15 +46,14 @@ namespace doodle::ai_light {
 // 提示词与参考图。因此建会话接口不推进状态 —— 建会话时参考图还不可能存在
 // （见 shot_session_route::post）。
 //
-// 失败时**不落库、不记录 failure_reason_**：同步请求的失败原因由 HTTP 响应体描述
+// 失败时**不落库**：同步请求的失败原因由 HTTP 响应体描述
 // （http_session_data.cpp:313 把 doodle_error::what() 放进 body），前端无论状态码是多少
-// 都读 body 显示。异步失败（工作机回传渲染结果）没有人可对话，仍走
-// mark_iteration_failed() 落库。
+// 都读 body 显示。异步失败（工作机回传渲染结果）没有人可对话，只记 WARN 日志。
 
 /// 回传定位（D54）：队列路线用任务 uuid 找轮次，引擎内路线没有任务行，改用「会话 + 轮次号」。
 ///
-/// 存在的理由：`mark_iteration_rendered` / `mark_iteration_failed` / `apply_render_report`
-/// 三段都要先定位轮次，而两条入口（worker 回传、本地客户端回传）只差这一步。
+/// 存在的理由：`mark_iteration_rendered` / `apply_render_report`
+/// 两段都要先定位轮次，而两条入口（worker 回传、本地客户端回传）只差这一步。
 /// 用可空任务号 + 可空会话号表达，而不是重载两个函数：重载会让每个调用点各挑一个，
 /// 而「任务号为空时回落到会话号」这条回退逻辑就没人负责了。
 struct DOODLELIB_API ai_light_iteration_locator_t {
@@ -118,8 +117,8 @@ DOODLELIB_API boost::asio::awaitable<void> mark_iteration_rendered(
 ///     `candidate_movie_path()` 现算，D27：回传里没有路径，也没有可信任的入参）→
 ///     组装候选后交给 `mark_iteration_rendered()`，轮次转 `awaiting_judgement`、起算 4 小时；
 ///   * 整轮失败（`error_` 非空，或没有任何 `rendered`，或所有 `rendered` 的产物都不在
-///     算出来的落点上 —— D41）→ 转 `mark_iteration_failed()`，
-///     **不动状态机状态、不动候选行**，只把原因写进 `session.failure_reason_`（D28）。
+///     算出来的落点上 —— D41）→ 只记 WARN 日志，
+///     **不动状态机状态、不动候选行**（D28）。
 ///     失败不是终态：美术随时可以再点一次 `/iterate`。
 ///
 /// in_ctx 只用于算产物落点，所以是 const 引用。
@@ -129,13 +128,6 @@ DOODLELIB_API boost::asio::awaitable<void> mark_iteration_rendered(
 DOODLELIB_API boost::asio::awaitable<void> apply_render_report(
     sqlite_database& in_sql, const http::kitsu_ctx_t& in_ctx, const uuid& in_server_task_info_id,
     const ai_light_iteration_locator_t& in_locator, const round_render_report_t& in_report
-);
-
-/// 整轮失败收尾：只写 `session.failure_reason_`（不截断），状态与候选行一概不动（D28）。
-/// 定位不到轮次抛 404（任务号为空时按 in_locator 的会话 + 轮次号定位，D54）。
-DOODLELIB_API boost::asio::awaitable<void> mark_iteration_failed(
-    sqlite_database& in_sql, const uuid& in_server_task_info_id, const ai_light_iteration_locator_t& in_locator,
-    const std::string& in_reason
 );
 
 /// 组装会话详情读模型。会话不存在时返回 nullopt。

@@ -12,8 +12,8 @@
 //   2. apply_render_report —— 两条出口（D28）：
 //      至少一张 rendered → mark_iteration_rendered（轮次进 awaiting_judgement、会话
 //      mark_awaiting_judgement、状态与指标落候选行）；
-//      否则，或者报文带了 error → mark_iteration_failed（**只**写会话 failure_reason_，
-//      轮次状态与候选行都不动 —— 失败不是终态，美术再点一次 /iterate 就重派一轮）。
+//      否则，或者报文带了 error → 只记 WARN 日志，轮次状态与候选行都不动 ——
+//      失败不是终态，美术再点一次 /iterate 就重派一轮）。
 //
 //   3. 归属校验 —— 任务号查不到轮次 404；候选不属本轮 400。后者是安全边界：一个坏回传
 //      不能改到别的会话的行上。
@@ -376,7 +376,7 @@ BOOST_FIXTURE_TEST_CASE(parse_keeps_round_error_text, fixture_t) {
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
 
   // 工作机在 UE 起不来时回传的就是这种：error 有内容、candidates 可能为空数组。
-  // 这是**合法**报文（不是坏报文），所以不能抛；error_ 原样留着给会话 failure_reason_ 用。
+  // 这是**合法**报文（不是坏报文），所以不能抛；error_ 原样留着给失败日志用。
   nlohmann::json l_json{};
   l_json["error"]      = "UE 启动失败：uproject 不存在";
   l_json["candidates"] = nlohmann::json::array();
@@ -417,7 +417,6 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_advances_iteration_and_session, fixtu
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::awaiting_judgement));
   BOOST_TEST(l_it.render_at_.has_value());
   BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::awaiting_judgement));
-  BOOST_TEST(l_session.failure_reason_.empty());
 
   for (std::size_t l_i = 0; l_i != 2; ++l_i) {
     const auto l_cand = l_fx.reload_candidate(l_i);
@@ -461,13 +460,12 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_partial_failure_still_advances, fixtu
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::awaiting_judgement));
-  BOOST_TEST(l_session.failure_reason_.empty());
   BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::rendered));
   // 失败的那张仍然是 failed：部分结果照原样落库，不把失败项伪造成出图。
   BOOST_TEST(en(l_fx.reload_candidate(1).render_status_) == en(candidate_render_status::failed));
 }
 
-DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_error_without_rendered_writes_failure_reason, fixture_t) {
+DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_error_without_rendered_leaves_state_untouched, fixture_t) {
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
 
   auto l_json = ok_report(l_fx, 2);
@@ -481,26 +479,23 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_error_without_rendered_writes_failure
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
 
-  // D28：失败不是终态 —— 轮次状态原地不动、候选行不改，会话上留一行给人看的说明。
+  // D28：失败不是终态 —— 轮次状态原地不动、候选行不改。
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::rendering));
   BOOST_TEST(!l_it.render_at_.has_value());
-  BOOST_TEST(l_session.failure_reason_ == std::string{"UE 启动失败：DoodleLighting commandlet 未找到"});
   BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
   BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::pending));
 }
 
-DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_failed_writes_failure_reason, fixture_t) {
+DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_failed_leaves_state_untouched, fixture_t) {
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 3);
 
-  // 没有 error、也没有一张 rendered：这种回传是「跑了但全灭了」，服务端自己造说明
+  // 没有 error、也没有一张 rendered：这种回传是「跑了但全灭了」
   auto l_json = ok_report(l_fx, 3);
   for (auto& l_c : l_json["candidates"]) l_c["status"] = "failed";
 
   co_await apply_render_report(
       *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, l_json.get<round_render_report_t>());
 
-  const auto l_session = l_fx.reload_session();
-  BOOST_TEST(l_session.failure_reason_ == std::string{"轮次 1 的 3 个候选全部渲染失败"});
   BOOST_TEST(en(l_fx.reload_iteration().state_) == en(ai_light_iteration_state::rendering));
 }
 
@@ -549,7 +544,6 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_candidate_from_another_round,
 
   // 拒掉之后本轮不能被推着往前走
   BOOST_TEST(en(l_fx.reload_iteration().state_) == en(ai_light_iteration_state::rendering));
-  BOOST_TEST(l_fx.reload_session().failure_reason_.empty());
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_judged_iteration, fixture_t) {
@@ -566,40 +560,6 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_judged_iteration, fixture_t) 
   }
   BOOST_TEST(l_threw);
   BOOST_TEST(en(l_fx.reload_iteration().state_) == en(ai_light_iteration_state::judged));
-}
-
-// ===========================================================================
-// 失败说明：不截断 与未知任务
-// ===========================================================================
-
-DOODLE_FIXTURE_TEST_CASE_CORO(mark_iteration_failed_keeps_reason_verbatim, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
-
-  // 回传里塞一段 UE 的完整 stderr 是很常见的，boost 的诊断信息还会带整条调用栈。
-  // 决定：**不截断**（失败记录与返回值的整体调整放到后期做）—— 截断会把真正的原因
-  // （往往在末尾的 cause 那一段）先砍掉，反而更难查。所以原样落库。
-  const std::string l_long(600, 'x');
-  co_await mark_iteration_failed(
-      *l_fx.sql_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, l_long);
-
-  const auto l_reason = l_fx.reload_session().failure_reason_;
-  BOOST_TEST(l_reason == l_long);
-  BOOST_TEST(l_reason.size() == 600u);
-}
-
-DOODLE_FIXTURE_TEST_CASE_CORO(mark_iteration_failed_unknown_task_is_404, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
-
-  bool l_threw = false;
-  try {
-    co_await mark_iteration_failed(
-      *l_fx.sql_, core_set::get_set().get_uuid(), ai_light_iteration_locator_t{}, "谁也说不清为什么");
-  } catch (const doodle_error& in_err) {
-    l_threw = true;
-    BOOST_TEST(in_err.code_status_() == boost::beast::http::status::not_found);
-  }
-  BOOST_TEST(l_threw);
-  BOOST_TEST(l_fx.reload_session().failure_reason_.empty());
 }
 
 // ===========================================================================
@@ -621,11 +581,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_missing_artifacts_only_for
   );
 
   // 其余候选照常推进：一个候选的产物传丢了不该让整轮作废（§7.5 第 9 条的候选级隔离）
-  const auto l_it      = l_fx.reload_iteration();
-  const auto l_session = l_fx.reload_session();
-  BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::awaiting_judgement));
-  BOOST_TEST(l_session.failure_reason_.empty());
-
+  BOOST_TEST(en(l_fx.reload_iteration().state_) == en(ai_light_iteration_state::awaiting_judgement));
   BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::rendered));
   // 声称 rendered 但产物不在 → 降级 failed（留在库里的是「这个不可选」，不是一个 404 链接）
   BOOST_TEST(en(l_fx.reload_candidate(1).render_status_) == en(candidate_render_status::failed));
@@ -648,10 +604,9 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_when_only_the_movie_is_mis
   BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::failed));
   BOOST_TEST(en(l_fx.reload_candidate(1).render_status_) == en(candidate_render_status::rendered));
   BOOST_TEST(en(l_fx.reload_iteration().state_) == en(ai_light_iteration_state::awaiting_judgement));
-  BOOST_TEST(l_fx.reload_session().failure_reason_.empty());
 }
 
-DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_artifacts_missing_writes_failure_reason, fixture_t) {
+DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_artifacts_missing_leaves_state_untouched, fixture_t) {
   l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
   l_fx.delete_candidate_files(0);
   l_fx.delete_candidate_files(1);
@@ -664,7 +619,6 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_artifacts_missing_writes_failure_
 
   const auto l_it      = l_fx.reload_iteration();
   const auto l_session = l_fx.reload_session();
-  BOOST_TEST(l_session.failure_reason_ == std::string{"轮次 1 的 2 个候选渲染成功但产物文件缺失（海报或视频），本轮无可判断结果"});
   // D28：失败不是终态 —— 轮次状态原地不动，美术再点一次 /iterate 就重派
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::rendering));
   BOOST_TEST(!l_it.render_at_.has_value());
@@ -682,7 +636,6 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_missing_exr_does_not_block, fixture_t
   // EXR 是可选产物（D42）：缺了不降级、不阻断本轮
   const auto l_it = l_fx.reload_iteration();
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::awaiting_judgement));
-  BOOST_TEST(l_fx.reload_session().failure_reason_.empty());
 
   BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::rendered));
   BOOST_TEST(candidate_render_path(l_fx.server_ctx_, l_fx.reload_candidate(0), false) == l_fx.candidate_png(0));
@@ -714,10 +667,8 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_reported_failure_plus_downgrade_leave
       *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, l_json.get<round_render_report_t>());
 
   const auto l_it      = l_fx.reload_iteration();
-  const auto l_session = l_fx.reload_session();
   // 注意计数是**2**（被降级的那两个），报告里本来就 failed 的那个不算「声称成功而缺产物」——
   // 说明写给人看的原因串时数的是「这次是哪儿出的问题」，不是候选总数。
-  BOOST_TEST(l_session.failure_reason_ == std::string{"轮次 1 的 2 个候选渲染成功但产物文件缺失（海报或视频），本轮无可判断结果"});
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::rendering));
   // 降级只发生在内存里的候选副本上，失败出口不写候选行（D28）——库里仍是 pending
   BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::pending));

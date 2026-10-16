@@ -51,7 +51,7 @@ constexpr auto g_judgement_timeout = std::chrono::hours{4};
 ///
 /// 于是模型是「会话是一个长期工作台」：
 ///   * `reject_all` **不终止会话**，它只表示「这一轮全部不要」，会话照常可以再出一轮；
-///   * 失败没有独立状态，`failure_reason_` 是唯一记录（`advance_session` 的接缝失败走回滚）。
+///   * 失败没有独立状态，失败只留日志（状态与候选行原地不动）。
 ///
 /// 一轮只能判断一次（`judge_route::post` 的 `iteration.state_ != judged` 闸门），
 /// 所以「再来一轮」必须经 `POST /iterate` —— 这是有意的，见 §15.10。
@@ -137,8 +137,6 @@ struct DOODLE_CORE_API ai_light_session {
   /// 这是「过期」的唯一依据 —— 过期不落成状态，由 is_judgement_overdue() 实时算。
   std::optional<chrono::system_zoned_time> judgement_due_at_{};
 
-  std::string failure_reason_{};
-
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
 
@@ -171,7 +169,6 @@ struct DOODLE_CORE_API ai_light_session {
     j["state"]            = p.state_;
     j["current_iteration"] = p.current_iteration_;
     j["judgement_due_at"] = p.judgement_due_at_;
-    j["failure_reason"]   = p.failure_reason_;
     j["created_at"]       = p.created_at_;
     j["updated_at"]       = p.updated_at_;
   }
@@ -186,7 +183,6 @@ struct DOODLE_CORE_API ai_light_session {
     if (j.contains("state")) j.at("state").get_to(p.state_);
     if (j.contains("current_iteration")) j.at("current_iteration").get_to(p.current_iteration_);
     if (j.contains("judgement_due_at")) j.at("judgement_due_at").get_to(p.judgement_due_at_);
-    if (j.contains("failure_reason")) j.at("failure_reason").get_to(p.failure_reason_);
   }
 };
 

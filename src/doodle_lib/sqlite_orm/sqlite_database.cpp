@@ -387,7 +387,6 @@ void sqlite_storage::regs_all() {
       // 这里就是会话表的完整列清单：ORM 的 select/insert 只看声明，所以清单之外的列
       // （老库里可能因为历史原因多出来的那几列）是惰性的、不会被读写，
       // user_version 也无需为「少了一列」而增加。
-      .add_column("failure_reason", &ai_light::ai_light_session::failure_reason_)
       .add_column("created_at", &ai_light::ai_light_session::created_at_)
       .add_column("updated_at", &ai_light::ai_light_session::updated_at_)
       .add_foreign_key(&ai_light::ai_light_session::project_id_, &project::uuid_id_, foreign_key_action::cascade)
