@@ -429,15 +429,8 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
   l_client->set_timeout(g_request_timeout);
 
   boost::beast::http::response<http::basic_json_body> l_res{};
-  try {
-    co_await l_client->read_and_write(l_req, l_res, boost::asio::use_awaitable);
-  } catch (...) {
-    throw_exception(
-        http_request_error{
-            boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
-        }
-    );
-  }
+  // 在队列中抓取
+  co_await l_client->read_and_write(l_req, l_res, boost::asio::use_awaitable);
 
   l_result.data_response_ = l_res.body();
   const auto l_response   = parse_response(l_result.data_response_);
