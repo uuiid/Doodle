@@ -155,12 +155,10 @@ apipy_image_client::edits_form_t apipy_image_client::request_t::to_multipart() c
   edits_form_t l_form{};
   l_form.boundary_ = "----doodle" + boost::uuids::to_string(core_set::get_set().get_uuid());
 
-  const std::array<std::pair<std::string_view, std::string_view>, 4> l_text_fields{{
-      {"model", model_},
-      {"prompt", prompt_},
-      {"size", size_},
-      {"response_format", "url"},
-  }};
+  std::vector<std::pair<std::string_view, std::string_view>> l_text_fields{
+      {{"model", model_}, {"prompt", prompt_}, {"size", size_}}
+  };
+  if (model_.ends_with("vip")) l_text_fields.push_back({"response_format", "url"});
 
   for (const auto& [l_key, l_value] : l_text_fields) {
     l_form.body_ += "--";
@@ -330,8 +328,8 @@ ai_client_base::request_info_t apipy_image_client::collect_request_info(const nl
     DOODLE_CHICK_HTTP(
         l_total_bytes <= g_max_reference_images_total_bytes, bad_request,
         fmt::format(
-            "参考图总大小必须在 {} 字节(9.5M) 以内, 收到 {} 字节: {}", g_max_reference_images_total_bytes, l_total_bytes,
-            std::string{url}
+            "参考图总大小必须在 {} 字节(9.5M) 以内, 收到 {} 字节: {}", g_max_reference_images_total_bytes,
+            l_total_bytes, std::string{url}
         )
     );
     auto l_ext = l_path.extension().generic_string();
