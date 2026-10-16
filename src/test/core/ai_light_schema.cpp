@@ -145,10 +145,7 @@ void with_fk_off(orm::session& in_session, Fun&& in_fun) {
 /// 造一份有内容的 rig，用来验证 JSON 列往返
 lighting_rig_t make_probe_rig(const uuid& in_session_id, std::int32_t in_iteration, std::int32_t in_index) {
   lighting_rig_t l_rig{};
-  l_rig.session_id_      = in_session_id;
-  l_rig.iteration_       = in_iteration;
   l_rig.candidate_index_ = in_index;
-  l_rig.baseline_level_  = "/Game/Test/RenderMap";
   l_rig.provenance_      = provenance_t{"deepseek-flash", "hash_abc", {"ref_00.png", "ref_01.png"}, 12345, "stats_only"};
   l_rig.globals_.exposure_               = exposure_t{"manual", -0.3};
   l_rig.globals_.white_balance_          = white_balance_t{5600.0, 0.0};

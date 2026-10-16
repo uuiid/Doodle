@@ -429,6 +429,7 @@ void sqlite_storage::regs_all() {
       .add_column("judged_at", &ai_light::ai_light_iteration::judged_at_)
       .add_column("feedback_text", &ai_light::ai_light_iteration::feedback_text_)
       .add_column("failure_reason", &ai_light::ai_light_iteration::failure_reason_)
+      .add_column("rigs", &ai_light::ai_light_iteration::rigs_)
       .add_column("created_at", &ai_light::ai_light_iteration::created_at_)
       .add_column("updated_at", &ai_light::ai_light_iteration::updated_at_)
       .add_foreign_key(

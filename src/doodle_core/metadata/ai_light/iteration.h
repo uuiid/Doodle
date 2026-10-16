@@ -76,9 +76,14 @@ struct DOODLE_CORE_API ai_light_iteration {
   std::string feedback_text_{};
 
   std::string failure_reason_{};
+  // 当前轮的灯光方案
+  nlohmann::json rigs_{};
 
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
+
+  lighting_rig_set_t get_rigs() const { return rigs_.get<lighting_rig_set_t>(); }
+  void set_rigs(const lighting_rig_set_t& in_rigs) { rigs_ = in_rigs; }
 
   /// 本轮起点 = 上一轮 is_selected 的候选。
   /// 有意不存 base_candidate_id 列 —— 那会造成
@@ -95,6 +100,7 @@ struct DOODLE_CORE_API ai_light_iteration {
     j["judged_at"]           = p.judged_at_;
     j["feedback_text"]       = p.feedback_text_;
     j["failure_reason"]      = p.failure_reason_;
+    j["rigs"]                = p.rigs_;
     j["created_at"]          = p.created_at_;
     j["updated_at"]          = p.updated_at_;
   }
@@ -110,6 +116,7 @@ struct DOODLE_CORE_API ai_light_iteration {
     if (j.contains("judged_at")) j.at("judged_at").get_to(p.judged_at_);
     if (j.contains("feedback_text")) j.at("feedback_text").get_to(p.feedback_text_);
     if (j.contains("failure_reason")) j.at("failure_reason").get_to(p.failure_reason_);
+    if (j.contains("rigs")) j.at("rigs").get_to(p.rigs_);
   }
 };
 

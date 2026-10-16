@@ -500,48 +500,53 @@ struct DOODLE_CORE_API light_op_t {
 };
 
 /// 灯光方案。存进 ai_light_candidate.rig 这一列，也直接作为下发 UE 的载荷。
-///
-/// 关于 session_id / iteration / candidate_index 的重复：
-/// DB 里另有同名真实列（供查询与索引），JSON 里这一份是给工件自描述用的
-/// （下发 UE、落盘回归、脱离数据库也能读懂）。写入时必须两者同源，
-/// **DB 列是查询权威**，JSON 副本不参与任何查询。
-/// （原先这里还有 spec_id —— Spec 表已删除，它不是 DB 列了，也不再进 JSON。）
 struct DOODLE_CORE_API lighting_rig_t {
   uuid rig_id_{};
-  uuid session_id_{};
-  uuid shot_task_id_{};
-  std::int32_t iteration_{0};
   std::int32_t candidate_index_{0};
   provenance_t provenance_{};
-  /// 本轮起点关卡（只读，永不修改）
-  std::string baseline_level_{};
   globals_t globals_{};
   std::vector<light_t> lights_{};
   std::vector<light_op_t> ops_{};
 
   friend void to_json(nlohmann::json& j, const lighting_rig_t& p) {
     j["rig_id"]          = p.rig_id_;
-    j["session_id"]      = p.session_id_;
-    j["shot_task_id"]    = p.shot_task_id_;
-    j["iteration"]       = p.iteration_;
     j["candidate_index"] = p.candidate_index_;
     j["provenance"]      = p.provenance_;
-    j["baseline_level"]  = p.baseline_level_;
     j["globals"]         = p.globals_;
     j["lights"]          = p.lights_;
     j["ops"]             = p.ops_;
   }
   friend void from_json(const nlohmann::json& j, lighting_rig_t& p) {
     if (j.contains("rig_id")) j.at("rig_id").get_to(p.rig_id_);
-    if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
-    if (j.contains("shot_task_id")) j.at("shot_task_id").get_to(p.shot_task_id_);
-    if (j.contains("iteration")) j.at("iteration").get_to(p.iteration_);
     if (j.contains("candidate_index")) j.at("candidate_index").get_to(p.candidate_index_);
     if (j.contains("provenance")) j.at("provenance").get_to(p.provenance_);
-    if (j.contains("baseline_level")) j.at("baseline_level").get_to(p.baseline_level_);
     if (j.contains("globals")) j.at("globals").get_to(p.globals_);
     if (j.contains("lights")) j.at("lights").get_to(p.lights_);
     if (j.contains("ops")) j.at("ops").get_to(p.ops_);
+  }
+};
+
+/// 一轮的全部灯光方案。整轮共享的身份与关卡路径放在外层，rig 数组只留各自独有的部分。
+struct DOODLE_CORE_API lighting_rig_set_t {
+  uuid session_id_{};
+  uuid shot_task_id_{};
+  std::int32_t iteration_{0};
+  std::string baseline_level_{};
+  std::vector<lighting_rig_t> rigs_{};
+
+  friend void to_json(nlohmann::json& j, const lighting_rig_set_t& p) {
+    j["session_id"]     = p.session_id_;
+    j["shot_task_id"]   = p.shot_task_id_;
+    j["iteration"]      = p.iteration_;
+    j["baseline_level"] = p.baseline_level_;
+    j["rigs"]           = p.rigs_;
+  }
+  friend void from_json(const nlohmann::json& j, lighting_rig_set_t& p) {
+    if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
+    if (j.contains("shot_task_id")) j.at("shot_task_id").get_to(p.shot_task_id_);
+    if (j.contains("iteration")) j.at("iteration").get_to(p.iteration_);
+    if (j.contains("baseline_level")) j.at("baseline_level").get_to(p.baseline_level_);
+    if (j.contains("rigs")) j.at("rigs").get_to(p.rigs_);
   }
 };
 
