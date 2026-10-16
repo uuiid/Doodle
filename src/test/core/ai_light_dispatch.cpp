@@ -10,8 +10,8 @@
 //      坏了只丢那一个字段，已经渲出来的 6 张图不能因为一个诊断数字不合规就作废。
 //
 //   2. apply_render_report —— 两条出口（D28）：
-//      至少一张 rendered → mark_iteration_rendered（轮次进 awaiting_judgement、会话
-//      mark_awaiting_judgement、状态与指标落候选行）；
+//      至少一张 rendered → mark_iteration_rendered（轮次进 awaiting_judgement、
+//      写下过期基准 render_at_、状态与指标落候选行）；
 //      否则，或者报文带了 error → 只记 WARN 日志，轮次状态与候选行都不动 ——
 //      失败不是终态，美术再点一次 /iterate 就重派一轮）。
 //
@@ -166,7 +166,6 @@ struct fixture_t : doodle_test::coro_fixture_t {
   /// 默认形状 = 正在渲染的一轮，N 个候选。回传用例几乎都要「轮次还没判断」这个前提，
   /// 所以默认给 rendering；要测「判断过的轮次拒绝回填」的用例显式传 judged。
   void build(
-      ai_light_session_state in_state            = ai_light_session_state::generating,
       ai_light_iteration_state in_iter_state     = ai_light_iteration_state::rendering,
       std::int32_t in_count                      = 6
   ) {
@@ -176,8 +175,6 @@ struct fixture_t : doodle_test::coro_fixture_t {
     session_.submitter_   = core_set::get_set().get_uuid();
     session_.title_       = "雨夜等待";
     session_.prompt_text_ = "压抑、暖、高对比；角色阴郁内向；雨夜独自等待";
-    session_.state_       = in_state;
-    session_.current_iteration_ = 1;
     insert(orm_).into<ai_light_session>().values(session_)();
 
     iteration_.session_id_ = session_.uuid_id_;
@@ -293,7 +290,7 @@ boost::beast::http::status catch_status(Fn&& in_fn) {
 
 BOOST_FIXTURE_TEST_CASE(parse_full_round_keeps_every_field, fixture_t) {
   auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
+  l_fx.build(ai_light_iteration_state::rendering, 2);
 
   const auto l_report = ok_report(l_fx, 2).get<round_render_report_t>();
 
@@ -307,7 +304,7 @@ BOOST_FIXTURE_TEST_CASE(parse_full_round_keeps_every_field, fixture_t) {
 
 BOOST_FIXTURE_TEST_CASE(parse_defaults_missing_loose_fields, fixture_t) {
   auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+  l_fx.build(ai_light_iteration_state::rendering, 1);
 
   // 只给两个严格字段：其余全部缺失。缺失 = 取默认，不是拒。
   nlohmann::json l_json{};
@@ -330,7 +327,7 @@ BOOST_FIXTURE_TEST_CASE(parse_defaults_missing_loose_fields, fixture_t) {
 
 BOOST_FIXTURE_TEST_CASE(parse_requires_candidates_array, fixture_t) {
   auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+  l_fx.build(ai_light_iteration_state::rendering, 1);
 
   // candidates 本身是严格字段：没有它整份回传没有意义（有 error 才是合法的「整轮失败」报文）
   const auto l_status =
@@ -340,7 +337,7 @@ BOOST_FIXTURE_TEST_CASE(parse_requires_candidates_array, fixture_t) {
 
 BOOST_FIXTURE_TEST_CASE(parse_rejects_unknown_status, fixture_t) {
   auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+  l_fx.build(ai_light_iteration_state::rendering, 1);
 
   // "succeeded" 不是本工程的取值（candidate_render_status = pending/rendered/failed）。
   // 这条同时钉住「enum 读取走 magic_enum::enum_cast，不认识就抛」——
@@ -353,7 +350,7 @@ BOOST_FIXTURE_TEST_CASE(parse_rejects_unknown_status, fixture_t) {
 
 BOOST_FIXTURE_TEST_CASE(parse_rejects_bad_candidate_uuid, fixture_t) {
   auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+  l_fx.build(ai_light_iteration_state::rendering, 1);
 
   auto l_json = ok_report(l_fx, 1);
   l_json["candidates"].at(0)["candidate_id"] = "not-a-uuid";
@@ -363,7 +360,7 @@ BOOST_FIXTURE_TEST_CASE(parse_rejects_bad_candidate_uuid, fixture_t) {
 
 BOOST_FIXTURE_TEST_CASE(parse_rejects_non_object_candidate, fixture_t) {
   auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+  l_fx.build(ai_light_iteration_state::rendering, 1);
 
   nlohmann::json l_json{};
   l_json["candidates"] = nlohmann::json::array({42});
@@ -373,7 +370,7 @@ BOOST_FIXTURE_TEST_CASE(parse_rejects_non_object_candidate, fixture_t) {
 
 BOOST_FIXTURE_TEST_CASE(parse_keeps_round_error_text, fixture_t) {
   auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+  l_fx.build(ai_light_iteration_state::rendering, 1);
 
   // 工作机在 UE 起不来时回传的就是这种：error 有内容、candidates 可能为空数组。
   // 这是**合法**报文（不是坏报文），所以不能抛；error_ 原样留着给失败日志用。
@@ -388,7 +385,7 @@ BOOST_FIXTURE_TEST_CASE(parse_keeps_round_error_text, fixture_t) {
 
 BOOST_FIXTURE_TEST_CASE(parse_drops_broken_metrics_only, fixture_t) {
   auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+  l_fx.build(ai_light_iteration_state::rendering, 1);
 
   // metrics 是诊断数据（给美术看落点、给 VLM 评分用）。形状错就丢这一个字段，
   // 不能让 6 张已经渲出来的图因为一个诊断对象作废 —— 这就是宽松字段存在的理由。
@@ -406,17 +403,16 @@ BOOST_FIXTURE_TEST_CASE(parse_drops_broken_metrics_only, fixture_t) {
 // ===========================================================================
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_advances_iteration_and_session, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
+  l_fx.build(ai_light_iteration_state::rendering, 2);
 
   co_await apply_render_report(
       *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, ok_report(l_fx, 2).get<round_render_report_t>());
 
   const auto l_it      = l_fx.reload_iteration();
-  const auto l_session = l_fx.reload_session();
 
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::awaiting_judgement));
   BOOST_TEST(l_it.render_at_.has_value());
-  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::awaiting_judgement));
+  BOOST_TEST(is_waiting_human(l_it));
 
   for (std::size_t l_i = 0; l_i != 2; ++l_i) {
     const auto l_cand = l_fx.reload_candidate(l_i);
@@ -427,7 +423,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_advances_iteration_and_session, fixtu
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_keeps_paths_derivable_from_the_row, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+  l_fx.build(ai_light_iteration_state::rendering, 1);
 
   co_await apply_render_report(
       *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, ok_report(l_fx, 1).get<round_render_report_t>());
@@ -447,7 +443,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_keeps_paths_derivable_from_the_row, f
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_partial_failure_still_advances, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
+  l_fx.build(ai_light_iteration_state::rendering, 2);
 
   // §7.5 第 9 条失败隔离：**候选级**失败（status=failed）不能让整轮失败 ——
   // 整轮失败只由轮次级 error_ 表达（UE 起不来 / 超时 / 载荷非法，见下一个用例）。
@@ -466,7 +462,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_partial_failure_still_advances, fixtu
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_error_without_rendered_leaves_state_untouched, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
+  l_fx.build(ai_light_iteration_state::rendering, 2);
 
   auto l_json = ok_report(l_fx, 2);
   l_json["candidates"].at(0)["status"] = "failed";
@@ -477,17 +473,16 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_error_without_rendered_leaves_state_u
       *l_fx.sql_, l_fx.server_ctx_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, l_json.get<round_render_report_t>());
 
   const auto l_it      = l_fx.reload_iteration();
-  const auto l_session = l_fx.reload_session();
 
   // D28：失败不是终态 —— 轮次状态原地不动、候选行不改。
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::rendering));
   BOOST_TEST(!l_it.render_at_.has_value());
-  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
+  BOOST_TEST(!is_waiting_human(l_it));
   BOOST_TEST(en(l_fx.reload_candidate(0).render_status_) == en(candidate_render_status::pending));
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_failed_leaves_state_untouched, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 3);
+  l_fx.build(ai_light_iteration_state::rendering, 3);
 
   // 没有 error、也没有一张 rendered：这种回传是「跑了但全灭了」
   auto l_json = ok_report(l_fx, 3);
@@ -504,7 +499,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_failed_leaves_state_untouched, fi
 // ===========================================================================
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_unknown_task, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+  l_fx.build(ai_light_iteration_state::rendering, 1);
 
   const auto l_status = catch_status([&] {
     // 直接调同步那一半：能在 co_await 之前抛的都在这里抛（回传路由的 404 就是它）
@@ -526,7 +521,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_unknown_task, fixture_t) {
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_candidate_from_another_round, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
+  l_fx.build(ai_light_iteration_state::rendering, 2);
 
   // 拿一个**别人的**候选 uuid 混进来：必须 400，而不是「查全库找到就改」
   auto l_json = ok_report(l_fx, 1);
@@ -548,7 +543,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_candidate_from_another_round,
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_judged_iteration, fixture_t) {
   // 已经判断过的轮次不接受回填（迟到的回传不能把美术的判断推翻）
-  l_fx.build(ai_light_session_state::awaiting_judgement, ai_light_iteration_state::judged, 1);
+  l_fx.build(ai_light_iteration_state::judged, 1);
 
   bool l_threw = false;
   try {
@@ -572,7 +567,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_rejects_judged_iteration, fixture_t) 
 // ===========================================================================
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_missing_artifacts_only_for_that_candidate, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 3);
+  l_fx.build(ai_light_iteration_state::rendering, 3);
   l_fx.delete_candidate_files(1);
 
   // 三条都报 rendered，但第 2 条的产物文件不在
@@ -593,7 +588,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_missing_artifacts_only_for
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_when_only_the_movie_is_missing, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
+  l_fx.build(ai_light_iteration_state::rendering, 2);
   l_fx.delete_candidate_movie(0);
 
   co_await apply_render_report(
@@ -607,7 +602,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_downgrades_when_only_the_movie_is_mis
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_artifacts_missing_leaves_state_untouched, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
+  l_fx.build(ai_light_iteration_state::rendering, 2);
   l_fx.delete_candidate_files(0);
   l_fx.delete_candidate_files(1);
 
@@ -618,15 +613,14 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_all_artifacts_missing_leaves_state_un
   );
 
   const auto l_it      = l_fx.reload_iteration();
-  const auto l_session = l_fx.reload_session();
   // D28：失败不是终态 —— 轮次状态原地不动，美术再点一次 /iterate 就重派
   BOOST_TEST(en(l_it.state_) == en(ai_light_iteration_state::rendering));
   BOOST_TEST(!l_it.render_at_.has_value());
-  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::generating));
+  BOOST_TEST(!is_waiting_human(l_it));
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_missing_exr_does_not_block, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 2);
+  l_fx.build(ai_light_iteration_state::rendering, 2);
   l_fx.delete_candidate_exr(0);
 
   co_await apply_render_report(
@@ -654,7 +648,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_missing_exr_does_not_block, fixture_t
 }
 
 DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_reported_failure_plus_downgrade_leaves_nothing, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 3);
+  l_fx.build(ai_light_iteration_state::rendering, 3);
   l_fx.delete_candidate_files(0);
   l_fx.delete_candidate_files(2);
 
@@ -686,7 +680,7 @@ DOODLE_FIXTURE_TEST_CASE_CORO(apply_report_reported_failure_plus_downgrade_leave
 // 纯同步用例：体里一个 co_await 都没有，用 CORO 宏展开出的函数不是协程 → C4716
 BOOST_FIXTURE_TEST_CASE(candidate_render_path_is_a_pure_function_of_the_row, fixture_t) {
   auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 3);
+  l_fx.build(ai_light_iteration_state::rendering, 3);
 
   const auto l_c0 = l_fx.reload_candidate(0);
   const auto l_c1 = l_fx.reload_candidate(1);
@@ -747,7 +741,7 @@ BOOST_FIXTURE_TEST_CASE(candidate_render_path_is_a_pure_function_of_the_row, fix
 
 BOOST_FIXTURE_TEST_CASE(task_payload_json_keys_are_frozen, fixture_t) {
   auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+  l_fx.build(ai_light_iteration_state::rendering, 1);
 
   ai_light_task_candidate_t l_cand{};
   l_cand.candidate_index_ = 0;
@@ -811,7 +805,7 @@ BOOST_FIXTURE_TEST_CASE(task_payload_json_keys_are_frozen, fixture_t) {
 // 候选那一层必须与工作机载荷**逐键相同**（UE 侧共用一份候选解析）。
 BOOST_FIXTURE_TEST_CASE(launch_plan_json_keys_are_frozen, fixture_t) {
   auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+  l_fx.build(ai_light_iteration_state::rendering, 1);
 
   ai_light_task_candidate_t l_cand{};
   l_cand.candidate_index_ = 0;
@@ -867,7 +861,7 @@ BOOST_FIXTURE_TEST_CASE(launch_plan_json_keys_are_frozen, fixture_t) {
 //   * to_ 是**相对工程根**的相对路径，绝不能带盘符（带盘符就等于把工作机的根写死了）。
 BOOST_FIXTURE_TEST_CASE(assembly_files_round_trip, fixture_t) {
   auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+  l_fx.build(ai_light_iteration_state::rendering, 1);
 
   const FSys::path l_prj_dir = FSys::path{"LQ"} / "BG001" / "MyProject";
   const std::vector<ai_light_assembly_file_t> l_files{
@@ -923,7 +917,7 @@ BOOST_FIXTURE_TEST_CASE(assembly_files_round_trip, fixture_t) {
 // 引擎内路线（D52）同样要能带走同步清单：发起方本机就是渲染机，装配文件也要下到本机。
 BOOST_FIXTURE_TEST_CASE(launch_plan_carries_assembly_files, fixture_t) {
   auto& l_fx = *this;
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering, 1);
+  l_fx.build(ai_light_iteration_state::rendering, 1);
 
   ai_light_launch_plan_t l_plan{};
   l_plan.session_id_   = l_fx.session_.uuid_id_;

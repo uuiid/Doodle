@@ -381,9 +381,6 @@ void sqlite_storage::regs_all() {
       .add_column("submitter", &ai_light::ai_light_session::submitter_)
       .add_column("title", &ai_light::ai_light_session::title_)
       .add_column("prompt_text", &ai_light::ai_light_session::prompt_text_)
-      .add_column("state", &ai_light::ai_light_session::state_)
-      .add_column("current_iteration", &ai_light::ai_light_session::current_iteration_)
-      .add_column("judgement_due_at", &ai_light::ai_light_session::judgement_due_at_)
       // 这里就是会话表的完整列清单：ORM 的 select/insert 只看声明，所以清单之外的列
       // （老库里可能因为历史原因多出来的那几列）是惰性的、不会被读写，
       // user_version 也无需为「少了一列」而增加。
@@ -393,9 +390,6 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(&ai_light::ai_light_session::task_id_, &task::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&ai_light::ai_light_session::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&ai_light::ai_light_session::submitter_, &person::uuid_id_, foreign_key_action::set_null)
-      // 按 state 过滤（前端「待办」列表）。过期不是一个状态、不在库里改任何东西
-      // （过期改由 C++ 侧按 judgement_due_at 实时算），所以这里不需要它的索引。
-      .add_index(&ai_light::ai_light_session::state_)
       .add_index(&ai_light::ai_light_session::entity_id_);
 
   reg_table<ai_light::ai_light_reference>("ai_light_reference")
@@ -439,6 +433,9 @@ void sqlite_storage::regs_all() {
           &ai_light::ai_light_iteration::server_task_info_id_, &server_task_info::uuid_id_, foreign_key_action::set_null
       )
       .add_foreign_key(&ai_light::ai_light_iteration::judged_by_, &person::uuid_id_, foreign_key_action::set_null)
+      // 按 state 过滤（前端「待办」列表捞 awaiting_judgement 的轮次）。
+      // 过期不是一个状态、不在库里改任何东西（过期改由 C++ 侧按 render_at 实时算）。
+      .add_index(&ai_light::ai_light_iteration::state_)
       .add_unique_index(&ai_light::ai_light_iteration::session_id_, &ai_light::ai_light_iteration::iteration_);
 
   reg_table<ai_light::ai_light_candidate>("ai_light_candidate")
@@ -2165,18 +2162,6 @@ std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_b
       .from<ai_light::ai_light_session>()
       .where(c(&ai_light::ai_light_session::project_id_) == in_project_id)
       .order_by(&ai_light::ai_light_session::created_at_, false)()
-      .to_vector();
-}
-
-std::vector<ai_light::ai_light_session> sqlite_database::get_ai_light_sessions_by_state(
-    ai_light::ai_light_session_state in_state
-) {
-  using namespace orm;
-  return select(*this)
-      .columns(object<ai_light::ai_light_session>())
-      .from<ai_light::ai_light_session>()
-      .where(c(&ai_light::ai_light_session::state_) == in_state)
-      .order_by(&ai_light::ai_light_session::judgement_due_at_)()
       .to_vector();
 }
 

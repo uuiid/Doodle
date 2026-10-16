@@ -61,7 +61,6 @@ struct ai_light_reference;
 struct ai_light_iteration;
 struct ai_light_candidate;
 struct ai_light_preset;
-enum class ai_light_session_state;
 }  // namespace ai_light
 }  // namespace doodle
 namespace doodle {
@@ -285,12 +284,6 @@ class DOODLELIB_API sqlite_database {
   std::vector<ai_light::ai_light_session> get_ai_light_sessions_by_entity(const uuid& in_entity_id);
   /// 项目下的全部会话，新的在前
   std::vector<ai_light::ai_light_session> get_ai_light_sessions_by_project(const uuid& in_project_id);
-  /// 按状态查会话（前端「待办」列表用它捞 awaiting_judgement）。
-  /// 「已过期」不是一个状态、查不到它 —— 过期由 `ai_light_session::is_judgement_overdue()`
-  /// 在 C++ 侧实时算，读模型带出 is_judgement_overdue_。
-  std::vector<ai_light::ai_light_session> get_ai_light_sessions_by_state(
-      ai_light::ai_light_session_state in_state
-  );
 
   /// 会话的参考图，按 created_at 升序（= 上传先后顺序）
   std::vector<ai_light::ai_light_reference> get_ai_light_references(const uuid& in_session_id);

@@ -137,9 +137,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
       !l_session.prompt_text_.empty(), bad_request, "缺少 prompt_text —— 提示词是权威意图，不允许空着建会话"
   );
 
-  l_session.state_             = ai_light_session_state::draft;
-  l_session.current_iteration_ = 0;
-  l_session.judgement_due_at_  = std::nullopt;
   if (l_session.title_.empty()) l_session.title_ = l_entity.name_;
 
   {
@@ -271,12 +268,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
   sql_modify_statement_vector_t l_sqls{};
   for (auto& l_ref : l_added) l_sqls.emplace_back(insert(l_sql).into<ai_light_reference>().values(l_ref));
 
-  if (l_session.state_ == ai_light_session_state::draft) {
-    l_sqls.emplace_back(update(l_sql)
-                            .from<ai_light_session>()
-                            .set(c(&ai_light_session::state_) = ai_light_session_state::generating)
-                            .where(c(&ai_light_session::uuid_id_) == l_session.uuid_id_));
-  }
   co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
@@ -428,16 +419,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
                           )
                           .where(c(&ai_light_iteration::uuid_id_) == l_iteration.uuid_id_));
 
-  l_session.mark_judged(ai_light_session_state::generating);
-  l_sqls.emplace_back(update(l_sql)
-                          .from<ai_light_session>()
-                          .set(
-                              c(&ai_light_session::state_)             = l_session.state_,
-                              c(&ai_light_session::current_iteration_) = l_session.current_iteration_,
-                              c(&ai_light_session::judgement_due_at_)  = l_session.judgement_due_at_
-                          )
-                          .where(c(&ai_light_session::uuid_id_) == l_session.uuid_id_));
-
   co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_WARN(
@@ -470,11 +451,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
 
   nlohmann::json l_out{{"task_id", task_id_}};
   if (auto l_it = l_sql.get_ai_light_iteration_by_task(task_id_); l_it.has_value()) {
-    auto l_session           = l_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
     l_out["session_id"]      = l_it->session_id_;
     l_out["iteration"]       = l_it->iteration_;
     l_out["iteration_state"] = l_it->state_;
-    l_out["session_state"]   = l_session.state_;
   }
   co_return in_handle->make_msg(l_out);
 }
@@ -510,18 +489,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_local_route, post) {
   l_out["session_id"] = l_session.uuid_id_;
   l_out["iteration"]  = iteration_;
   std::string l_it_state{};
-  std::string l_session_state{};
   if (auto l_it = l_sql.get_ai_light_iteration(l_session.uuid_id_, iteration_); l_it.has_value()) {
-    auto l_session_after     = l_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
     l_out["iteration_state"] = l_it->state_;
-    l_out["session_state"]   = l_session_after.state_;
     l_it_state               = std::string{magic_enum::enum_name(l_it->state_)};
-    l_session_state          = std::string{magic_enum::enum_name(l_session_after.state_)};
   }
 
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "AI 灯光（引擎内路线）：会话 {} 第 {} 轮回传已受理，状态 {} / {}", l_session.uuid_id_,
-      iteration_, l_it_state, l_session_state
+      g_logger_ctrl().get_http(), "AI 灯光（引擎内路线）：会话 {} 第 {} 轮回传已受理，状态 {}", l_session.uuid_id_,
+      iteration_, l_it_state
   );
   co_return in_handle->make_msg(l_out);
 }

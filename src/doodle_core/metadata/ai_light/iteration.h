@@ -19,6 +19,7 @@
 #include <doodle_core/metadata/ai_light/rig.h>
 #include <doodle_core/metadata/base.h>
 
+#include <chrono>
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -49,6 +50,20 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
                                   {ai_light_iteration_state::judged, "judged"},
                               }
 )
+
+/// 美术超过这个时长不做判断 → 轮次**只是被标记为「已过期」，状态不变**（决策 12）。
+///
+/// 为什么过期不是一个独立状态，而是一个实时派生的标志：
+/// 它是 `state == awaiting_judgement && now > render_at_ + g_judgement_timeout` 的纯函数，
+/// `is_judgement_overdue()` 随时算得出来，读模型也把它带出去了（`is_judgement_overdue_`）。
+///
+/// 这一点必须守住：`judge_route::post` 的判断闸门只接受 `awaiting_judgement`，若把过器物化成一个
+/// 新状态，就没有任何路径能回到 `awaiting_judgement`（渲染回填是唯一的写侧，而渲染早已完成）
+/// —— 美术超时回来时，**已经渲染好的候选再也判断不了**。
+///
+/// 另外「挂起能省资源」在这里是空头支票：轮次进入 `awaiting_judgement` 的前提就是渲染已完成、
+/// worker 已归还，此时没有农场槽位、没有 UE 授权、没有 GPU 被占，6 张 PNG 只是躺在磁盘上。
+constexpr auto g_judgement_timeout = std::chrono::hours{4};
 
 // ---------------------------------------------------------------------------
 // 表实体：ai_light_iteration
@@ -119,5 +134,26 @@ struct DOODLE_CORE_API ai_light_iteration {
     if (j.contains("rigs")) j.at("rigs").get_to(p.rigs_);
   }
 };
+
+/// 这一轮是否在等美术判断。前端「待办」列表用它 —— 会话层面取**最新一轮**再问本谓词。
+///
+/// 注意 overdue 的轮次仍然算「等人工动作」：过期不代表可以不管了，
+/// 只是提醒前端该催了。要区分「刚进入等判断」和「已经拖太久了」，
+/// 用读模型里的 is_judgement_overdue_。
+///
+/// 保留成谓词形状：前端读的是 `is_waiting_human_` 这个**标志**而不是状态枚举，
+/// 将来再加闸门时不必改读模型。
+inline bool is_waiting_human(const ai_light_iteration& in_iteration) {
+  return in_iteration.state_ == ai_light_iteration_state::awaiting_judgement;
+}
+
+/// 是否已过判断时限。**纯派生**，不改状态 —— 见 g_judgement_timeout 的说明。
+///
+/// 基准时刻是 `render_at_`（转入 awaiting_judgement 的同一事务里写入），不是会话的
+/// 任何时钟：判断之后 state_ 不再是 awaiting_judgement，过期信号自然消失。
+inline bool is_judgement_overdue(const ai_light_iteration& in_iteration, const chrono::system_zoned_time& in_now) {
+  return is_waiting_human(in_iteration) && in_iteration.render_at_.has_value() &&
+         in_now.get_sys_time() > in_iteration.render_at_->get_sys_time() + g_judgement_timeout;
+}
 
 }  // namespace doodle::ai_light

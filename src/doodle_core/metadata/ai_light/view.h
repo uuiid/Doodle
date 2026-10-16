@@ -42,10 +42,10 @@ struct DOODLE_CORE_API ai_light_session_detail_t {
   std::vector<ai_light_candidate> candidates_{};
 
   // --- 两个派生提示位，省得前端自己算状态机 ---
-  /// 是否在等人工动作（= ai_light::is_waiting_human(session_.state_)）
+  /// 是否在等人工动作（= ai_light::is_waiting_human(**最新一轮**)，无轮次则 false）
   bool is_waiting_human_{false};
   /// 是否已过 4 小时判断时限。前端据此把待办高亮成「快挂起了」。
-  /// 与挂起扫描器用同一个判据（session_.is_judgement_overdue），
+  /// 与挂起扫描器用同一个判据（ai_light::is_judgement_overdue(最新一轮, now)），
   /// 所以前端显示「已超时」时扫描器一定也认为该挂起，不会出现两边不一致。
   bool is_judgement_overdue_{false};
 

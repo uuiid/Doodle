@@ -54,18 +54,6 @@ bool references_have_stats(const std::vector<ai_light_reference>& in_references)
   });
 }
 
-orm::sql_modify_statement_t make_session_update(sqlite_database& in_sql, const ai_light_session& in_session) {
-  using namespace orm;
-  return update(in_sql)
-      .from<ai_light_session>()
-      .set(
-          c(&ai_light_session::state_)             = in_session.state_,
-          c(&ai_light_session::current_iteration_) = in_session.current_iteration_,
-          c(&ai_light_session::judgement_due_at_)  = in_session.judgement_due_at_
-      )
-      .where(c(&ai_light_session::uuid_id_) == in_session.uuid_id_);
-}
-
 }  // namespace
 
 namespace {
@@ -92,8 +80,6 @@ boost::asio::awaitable<void> mark_iteration_rendered(
       l_it->state_ != ai_light_iteration_state::judged, bad_request, "轮次 {} 已经判断过了，不接受渲染回填",
       l_it->iteration_
   );
-
-  auto l_session = in_sql.get_by_uuid<ai_light_session>(l_it->session_id_);
 
   orm::sql_modify_statement_vector_t l_sqls{};
   for (const auto& l_cand : in_candidates) {
@@ -122,21 +108,14 @@ boost::asio::awaitable<void> mark_iteration_rendered(
           .where(c(&ai_light_iteration::uuid_id_) == l_it->uuid_id_)
   );
 
-  l_session.mark_awaiting_judgement();
-  l_sqls.emplace_back(make_session_update(in_sql, l_session));
-
   co_await in_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮渲染完成，{} 个候选待判断", l_session.uuid_id_,
+      g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮渲染完成，{} 个候选待判断", l_it->session_id_,
       l_it->iteration_, in_candidates.size()
   );
   co_return;
 }
-
-namespace {
-
-}  // namespace
 
 boost::asio::awaitable<void> apply_render_report(
     sqlite_database& in_sql, const http::kitsu_ctx_t& in_ctx, const uuid& in_server_task_info_id,
@@ -240,10 +219,15 @@ std::optional<ai_light_session_detail_t> build_session_detail(sqlite_database& i
   l_detail.iterations_           = in_sql.get_ai_light_iterations(in_session_id);
   l_detail.candidates_           = in_sql.get_ai_light_candidates_by_session(in_session_id);
 
-  l_detail.is_waiting_human_     = is_waiting_human(l_detail.session_.state_);
-  l_detail.is_judgement_overdue_ = l_detail.session_.is_judgement_overdue(
-      chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()}
-  );
+  // 判据落在**最新一轮**上（iterations_ 按 iteration 升序）。没有轮次 = 会话刚建好，
+  // 两位都是 false，前端看到的就是「还没有任何一轮可看」。
+  if (!l_detail.iterations_.empty()) {
+    const auto& l_latest             = l_detail.iterations_.back();
+    l_detail.is_waiting_human_       = is_waiting_human(l_latest);
+    l_detail.is_judgement_overdue_   = is_judgement_overdue(
+        l_latest, chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()}
+    );
+  }
   return l_ret;
 }
 

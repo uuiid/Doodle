@@ -75,20 +75,7 @@ orm::sql_modify_statement_vector_t write_submitted_iteration(
   l_rig_set.rigs_           = in_request.rigs_;
   l_it.set_rigs(l_rig_set);
 
-  auto l_session_next               = in_sql.get_by_uuid<ai_light_session>(in_request.session_id_);
-  l_session_next.current_iteration_ = l_iteration;
-
   l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_iteration>().values(l_it));
-  l_sqls.emplace_back(
-      orm::update(in_sql)
-          .from<ai_light_session>()
-          .set(
-              c(&ai_light_session::state_)             = l_session_next.state_,
-              c(&ai_light_session::current_iteration_) = l_session_next.current_iteration_,
-              c(&ai_light_session::judgement_due_at_)  = l_session_next.judgement_due_at_
-          )
-          .where(c(&ai_light_session::uuid_id_) == l_session_next.uuid_id_)
-  );
 
   SPDLOG_LOGGER_INFO(
       g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮 {} 个候选的方案已落库（引擎内路线，等待发起方本机渲染）",
@@ -157,8 +144,7 @@ orm::sql_modify_statement_vector_t write_dispatched_iteration(
   }
   l_it.set_rigs(l_rig_set);
 
-  auto l_session_next               = in_sql.get_by_uuid<ai_light_session>(in_request.session_id_);
-  l_session_next.current_iteration_ = l_iteration;
+  auto l_session_next = in_sql.get_by_uuid<ai_light_session>(in_request.session_id_);
 
   ai_light_task_payload_t l_payload{};
   l_payload.session_id_            = in_request.session_id_;
@@ -191,16 +177,6 @@ orm::sql_modify_statement_vector_t write_dispatched_iteration(
 
   l_sqls.emplace_back(orm::insert(in_sql).into<server_task_info>().values(l_task));
   l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_iteration>().values(l_it));
-  l_sqls.emplace_back(
-      orm::update(in_sql)
-          .from<ai_light_session>()
-          .set(
-              c(&ai_light_session::state_)             = l_session_next.state_,
-              c(&ai_light_session::current_iteration_) = l_session_next.current_iteration_,
-              c(&ai_light_session::judgement_due_at_)  = l_session_next.judgement_due_at_
-          )
-          .where(c(&ai_light_session::uuid_id_) == l_session_next.uuid_id_)
-  );
 
   SPDLOG_LOGGER_INFO(
       g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮 {} 个候选已派发（任务 {}）", in_request.session_id_,
@@ -220,10 +196,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   auto l_session = l_sql.get_by_uuid<ai_light_session>(session_id_);
   person_.check_project_access(l_session.project_id_);
 
+  // 上一轮还没被判断时不许提交 —— 否则那批候选会变成孤儿（没有人再能判断它们）。
+  // 判据落在**最新一轮**上：没有轮次即放行（等价于原先的 draft）。
+  const auto l_prev = l_sql.get_ai_light_iterations(l_session.uuid_id_);
   DOODLE_CHICK_HTTP(
-      can_submit_candidates(l_session.state_), bad_request,
-      "会话 {} 处于状态 {}，不能提交候选（需要 draft 或 generating）", l_session.uuid_id_,
-      magic_enum::enum_name(l_session.state_)
+      l_prev.empty() || !is_waiting_human(l_prev.back()), bad_request,
+      "会话 {} 第 {} 轮尚未判断，不能提交新候选", l_session.uuid_id_, l_prev.empty() ? 0 : l_prev.back().iteration_
   );
 
   submit_iteration_request_t l_req{};
@@ -232,10 +210,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   DOODLE_CHICK_HTTP(!l_req.rigs_.empty(), bad_request, "请求体缺少 candidates 数组（或为空）");
 
   DOODLE_CHICK_HTTP(l_req.iteration_ > 0, bad_request, "iteration 必须是正整数，收到 {}", l_req.iteration_);
+  const std::int32_t l_expected = l_prev.empty() ? 1 : l_prev.back().iteration_ + 1;
   DOODLE_CHICK_HTTP(
-      l_req.iteration_ == l_session.current_iteration_ + 1, bad_request,
-      "提交的轮次号 {} 与会话期望的不一致（当前 {}，期望 {}）", l_req.iteration_, l_session.current_iteration_,
-      l_session.current_iteration_ + 1
+      l_req.iteration_ == l_expected, bad_request, "提交的轮次号 {} 与会话期望的不一致（当前 {}，期望 {}）",
+      l_req.iteration_, l_prev.empty() ? 0 : l_prev.back().iteration_, l_expected
   );
 
   l_req.session_id_  = l_session.uuid_id_;

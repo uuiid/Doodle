@@ -133,10 +133,9 @@ struct fixture_t : doodle_test::coro_fixture_t {
   fixture_t(const fixture_t&)            = delete;
   fixture_t& operator=(const fixture_t&) = delete;
 
-  /// 造数据。默认形状 = 在等人工判断的会话 + 一轮 6 个已渲染候选（多数用例要的就是它，
+  /// 造数据。默认形状 = 一轮在等人工判断的候选（多数用例要的就是它，
   /// 所以给默认值，用例体里直接写 `l_fx.build();`）。
   void build(
-      ai_light_session_state in_state = ai_light_session_state::awaiting_judgement,
       ai_light_iteration_state in_iter_state = ai_light_iteration_state::awaiting_judgement,
       std::int32_t in_count = 6, bool in_with_children = true
   ) {
@@ -146,11 +145,6 @@ struct fixture_t : doodle_test::coro_fixture_t {
     session_.submitter_   = core_set::get_set().get_uuid();
     session_.title_       = "雨夜等待";
     session_.prompt_text_ = "压抑、暖、高对比；角色阴郁内向；雨夜独自等待";
-    if (in_state == ai_light_session_state::awaiting_judgement)
-      session_.mark_awaiting_judgement();
-    else
-      session_.state_ = in_state;
-    session_.current_iteration_ = in_with_children ? 1 : 0;
     insert(orm_).into<ai_light_session>().values(session_)();
 
     if (!in_with_children) return;
@@ -158,6 +152,9 @@ struct fixture_t : doodle_test::coro_fixture_t {
     iteration_.session_id_ = session_.uuid_id_;
     iteration_.iteration_  = 1;
     iteration_.state_      = in_iter_state;
+    // 过期判据的基准时刻。render_at_ 是转入 awaiting_judgement 的同一事务里写的，
+    // 这里显式给上，好让「刚渲染完还没过期」这个默认前提成立。
+    iteration_.render_at_ = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     // mark_iteration_rendered 是按 server_task_info_id 反查轮次的，所以要有个非 nil 值
     iteration_.server_task_info_id_ = core_set::get_set().get_uuid();
     insert(orm_).into<ai_light_iteration>().values(iteration_)();
@@ -203,29 +200,36 @@ ai_light_reference add_reference(fixture_t& in_fx) {
 // 4 小时挂起
 // ===========================================================================
 
-DOODLE_FIXTURE_TEST_CASE_CORO(awaiting_judgement_sets_due_at_four_hours_ahead, fixture_t) {
-  l_fx.build(ai_light_session_state::generating, ai_light_iteration_state::rendering);
+DOODLE_FIXTURE_TEST_CASE_CORO(awaiting_judgement_stamps_render_at, fixture_t) {
+  l_fx.build(ai_light_iteration_state::rendering);
 
-  // 走真实的「渲染完成 → 等判断」路径，验证时限是在**这里**起算的
-  // （而不是派发时起算：渲染期间美术本来就没法判断）
+  // 走真实的「渲染完成 → 等判断」路径，验证时限的基准时刻是在**这里**落下的
+  // （而不是派发时落下：渲染期间美术本来就没法判断）
   const auto l_before = std::chrono::system_clock::now();
   co_await mark_iteration_rendered(
       *l_fx.sql_, l_fx.iteration_.server_task_info_id_, ai_light_iteration_locator_t{}, l_fx.candidates_
   );
 
-  auto l_session = l_fx.reload_session();
-  BOOST_TEST(en(l_session.state_) == en(ai_light_session_state::awaiting_judgement));
-  BOOST_TEST(l_session.judgement_due_at_.has_value());
-
-  const auto l_delta = l_session.judgement_due_at_->get_sys_time() - l_before;
-  // 时限 = 4 小时。允许几十毫秒的执行误差，但绝不允许「没设」或「设成别的值」
-  BOOST_TEST(l_delta > g_judgement_timeout - std::chrono::minutes{1});
-  BOOST_TEST(l_delta < g_judgement_timeout + std::chrono::minutes{1});
-
   // 轮次被推到等判断
   auto l_iter = l_fx.reload_iteration();
   BOOST_TEST(en(l_iter.state_) == en(ai_light_iteration_state::awaiting_judgement));
   BOOST_TEST(l_iter.render_at_.has_value());
+
+  // 刚渲染完 → 在等人工，但还没过期
+  BOOST_TEST(is_waiting_human(l_iter));
+  const auto l_now = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  BOOST_TEST(!is_judgement_overdue(l_iter, l_now));
+
+  // 过期是纯派生的：把现在的时刻推到 4 小时之后，同一条轮次就变成过期，
+  // 而它的状态一个字节都没动。
+  const auto l_later = chrono::system_zoned_time{l_now.get_sys_time() + g_judgement_timeout + std::chrono::hours{1}};
+  BOOST_TEST(is_judgement_overdue(l_iter, l_later));
+  BOOST_TEST(en(l_iter.state_) == en(ai_light_iteration_state::awaiting_judgement));
+
+  const auto l_delta = l_iter.render_at_->get_sys_time() - l_before;
+  // 时限基准就是渲染完成的那一刻。允许几十毫秒的执行误差，但绝不允许「没设」或「设成别的值」
+  BOOST_TEST(l_delta > -std::chrono::minutes{1});
+  BOOST_TEST(l_delta < std::chrono::minutes{1});
 }
 
 // ===========================================================================
@@ -266,12 +270,15 @@ BOOST_AUTO_TEST_CASE(session_detail_reports_overdue_flag) {
   fixture_t l_fx{};
   l_fx.build();
 
-  const auto l_past = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now() - std::chrono::hours{5}};
-  l_fx.session_.judgement_due_at_ = l_past;
+  // 过期判据的基准是轮次的 render_at_：把它挪到 5 小时前，这一轮就是过期的
+  const auto l_past = chrono::system_zoned_time{
+      chrono::current_zone(), std::chrono::system_clock::now() - std::chrono::hours{5}
+  };
+  l_fx.iteration_.render_at_ = l_past;
   update(l_fx.orm_)
-      .from<ai_light_session>()
-      .set(c(&ai_light_session::judgement_due_at_) = l_past)
-      .where(c(&ai_light_session::uuid_id_) == l_fx.session_.uuid_id_)();
+      .from<ai_light_iteration>()
+      .set(c(&ai_light_iteration::render_at_) = l_past)
+      .where(c(&ai_light_iteration::uuid_id_) == l_fx.iteration_.uuid_id_)();
 
   auto l_detail = build_session_detail(*l_fx.sql_, l_fx.session_.uuid_id_);
   BOOST_TEST(l_detail.has_value());
@@ -315,36 +322,60 @@ BOOST_AUTO_TEST_CASE(session_detail_reports_overdue_flag) {
 // —— 这条在提交与判断的用例里仍然有断言。
 
 // ===========================================================================
-// 人工闸门 1 已取消：状态准入谓词
+// 人工闸门 2：判断闸门的判据落在轮次上
 // ===========================================================================
 //
-// 闸门 1（POST /session/{}/spec/confirm）连同 `awaiting_spec_confirm` 状态一起删除，
-// 会话的 `draft → generating` 改由**参考图上传**推进。于是「哪些状态能提交候选」
-// 从「只认 generating」放宽为「draft 或 generating」，这个真值表就是本节的用例。
+// 会话不再自持状态机（`ai_light_session_state` 已删除），「能不能提交新一轮」与
+// 「在不等人工」两个判定都改成问**最新一轮**。这里钉的是这两个判据本身。
 //
-// 为什么值得单独钉：放宽准入的**方向**必须是「多收一个 draft」，
-// 绝不能顺手把 awaiting_judgement 也放进来 —— 那会让上一轮 6 个还没被判断的候选
-// 变成孤儿（图已经渲染完、钱已经花掉，却再也不会有 /judge 能处理它们）。
-// 一条 `if` 里两个 || 的表现差异没有别的用例能兜住。
+// 为什么值得单独钉：`awaiting_judgement` 的轮次绝不能被当成「可以提交」——
+// 那会让上一轮 6 个还没被判断的候选变成孤儿（图已经渲染完、钱已经花掉，
+// 却再也不会有 /judge 能处理它们）。
 
-BOOST_AUTO_TEST_CASE(can_submit_candidates_admits_draft_and_generating_only) {
-  // 放行：两条合法入口
-  BOOST_TEST(can_submit_candidates(ai_light_session_state::draft));
-  BOOST_TEST(can_submit_candidates(ai_light_session_state::generating));
+BOOST_AUTO_TEST_CASE(is_waiting_human_only_counts_awaiting_judgement_iterations) {
+  auto l_make = [](ai_light_iteration_state in_state) {
+    ai_light_iteration l_it{};
+    l_it.state_ = in_state;
+    return l_it;
+  };
 
-  // 拒绝：上一轮候选还挂着
-  BOOST_TEST(!can_submit_candidates(ai_light_session_state::awaiting_judgement));
+  // 唯一「等人工动作」的轮次状态就是 awaiting_judgement。
+  // 前端待办列表读的是 is_waiting_human_ 这个标志，它由本谓词算出，
+  // 所以这里同时钉住「读模型不会给出一个已经不存在的人工闸门」。
+  BOOST_TEST(is_waiting_human(l_make(ai_light_iteration_state::awaiting_judgement)));
+
+  BOOST_TEST(!is_waiting_human(l_make(ai_light_iteration_state::generated)));
+  BOOST_TEST(!is_waiting_human(l_make(ai_light_iteration_state::dispatched)));
+  BOOST_TEST(!is_waiting_human(l_make(ai_light_iteration_state::rendering)));
+  BOOST_TEST(!is_waiting_human(l_make(ai_light_iteration_state::judged)));
 }
 
-BOOST_AUTO_TEST_CASE(is_waiting_human_only_counts_the_judgement_gate) {
-  // 人工闸门 1 取消后，唯一「等人工动作」的状态是 awaiting_judgement。
-  // 前端待办列表读的是 is_waiting_human_ 这个标志，它由本谓词算出
-  // （ai_light_orchestrator.cpp:810），所以这里同时钉住「读模型不会给出
-  // 一个已经不存在的人工闸门」。
-  BOOST_TEST(is_waiting_human(ai_light_session_state::awaiting_judgement));
+BOOST_AUTO_TEST_CASE(is_judgement_overdue_needs_both_state_and_render_at) {
+  const auto l_now = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  const auto l_stale = chrono::system_zoned_time{l_now.get_sys_time() - g_judgement_timeout - std::chrono::hours{1}};
+  const auto l_fresh = chrono::system_zoned_time{l_now.get_sys_time() + std::chrono::hours{1}};
 
-  BOOST_TEST(!is_waiting_human(ai_light_session_state::draft));
-  BOOST_TEST(!is_waiting_human(ai_light_session_state::generating));
+  ai_light_iteration l_it{};
+  l_it.state_     = ai_light_iteration_state::awaiting_judgement;
+  l_it.render_at_ = l_stale;
+
+  // 状态对 + 基准时刻已过 → 过期
+  BOOST_TEST(is_judgement_overdue(l_it, l_now));
+
+  // 状态对但还没到点 → 不过期
+  l_it.render_at_ = l_fresh;
+  BOOST_TEST(!is_judgement_overdue(l_it, l_now));
+
+  // 状态不对 → 即使基准时刻已过也不算过期（判定必须带上状态这一项）。
+  // 判断之后 state_ 变成 judged，过期信号就该消失。
+  l_it.render_at_ = l_stale;
+  l_it.state_     = ai_light_iteration_state::judged;
+  BOOST_TEST(!is_judgement_overdue(l_it, l_now));
+
+  // 没有基准时刻（历史数据 / 未走渲染回填）→ 一律不算过期，不能凭空判它超时
+  l_it.state_     = ai_light_iteration_state::awaiting_judgement;
+  l_it.render_at_ = std::nullopt;
+  BOOST_TEST(!is_judgement_overdue(l_it, l_now));
 }
 
 // ===========================================================================
@@ -408,16 +439,18 @@ BOOST_AUTO_TEST_CASE(optional_and_time_fields_serialize_as_scalars) {
   // 所以这里直接钉住**形状**，而不是只钉住值 —— 值相等是掩盖不了多包一层的。
   const auto l_now = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
 
-  // 会话的时间 optional 同理
-  ai_light_session l_session{};
-  l_session.mark_awaiting_judgement();
-  nlohmann::json l_s_json = l_session;
-  BOOST_TEST(l_s_json.at("judgement_due_at").is_string());
-  auto l_s_back = l_s_json.get<ai_light_session>();
-  BOOST_TEST(l_s_back.judgement_due_at_.has_value());
-  BOOST_TEST(l_s_back.is_judgement_overdue(chrono::system_zoned_time{
-      chrono::current_zone(), l_now.get_sys_time() + std::chrono::hours{5}
-  }));
+  // 轮次的时间 optional（过期基准 render_at_）同理
+  ai_light_iteration l_iter{};
+  l_iter.state_     = ai_light_iteration_state::awaiting_judgement;
+  l_iter.render_at_ = l_now;
+  nlohmann::json l_i_json = l_iter;
+  BOOST_TEST(l_i_json.at("render_at").is_string());
+  auto l_i_back = l_i_json.get<ai_light_iteration>();
+  BOOST_TEST(l_i_back.render_at_.has_value());
+  BOOST_TEST(is_judgement_overdue(l_i_back, chrono::system_zoned_time{
+                                                 chrono::current_zone(),
+                                                 l_now.get_sys_time() + g_judgement_timeout + std::chrono::hours{1}
+                                             }));
 
   // std::string 字段（rig 的 ies_）也踩同一个坑，一并钉住
   shape_t l_shape{25.0, "IES/spot_soft.ies", 25.0, 45.0};
@@ -427,7 +460,6 @@ BOOST_AUTO_TEST_CASE(optional_and_time_fields_serialize_as_scalars) {
 
   // 详情读模型里的 optional 结构必须是对象/null，不能是数组
   ai_light_session_detail_t l_detail{};
-  l_detail.session_ = l_session;
   nlohmann::json l_detail_json = l_detail;
   // 读模型要带出候选数（前端不自己写死 6）。个数由前端决定，所以它是**最近一轮的实际值**；
   // 这里没有候选，所以是 0。

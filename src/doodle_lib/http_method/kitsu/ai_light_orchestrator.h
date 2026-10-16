@@ -152,7 +152,7 @@ struct DOODLELIB_API submit_iteration_request_t {
   uuid session_id_{};
   uuid project_id_{};
   uuid operator_id_{};
-  /// 本轮轮次号（1、2、3…）。调用方已校验 == current_iteration_ + 1。
+  /// 本轮轮次号（1、2、3…）。调用方已校验 == 上一轮 + 1（首次为 1）。
   std::int32_t iteration_{0};
   /// **权威状态**：本轮要落库的 rig，数量不限（至少一个）。身份字段由本函数补齐。
   std::vector<lighting_rig_t> rigs_{};

@@ -307,7 +307,6 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     l_session_row.entity_id_  = core_set::get_set().get_uuid();
     l_session_row.title_      = "雨夜等待";
     l_session_row.prompt_text_ = "压抑、暖、高对比；角色阴郁内向；雨夜独自等待";
-    l_session_row.mark_awaiting_judgement();
     with_fk_off(l_session, [&]() { insert(l_session).into<ai_light_session>().values(l_session_row)(); });
     BOOST_TEST(!l_session_row.uuid_id_.is_nil());
 
@@ -333,6 +332,8 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     ai_light_iteration l_iter{};
     l_iter.session_id_ = l_session_row.uuid_id_;
     l_iter.iteration_  = 1;
+    l_iter.state_      = ai_light_iteration_state::awaiting_judgement;
+    l_iter.render_at_  = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     insert(l_session).into<ai_light_iteration>().values(l_iter)();
     BOOST_TEST(!l_iter.uuid_id_.is_nil());
 
@@ -363,12 +364,17 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     BOOST_TEST(l_sessions.size() == 1);
     BOOST_TEST(l_sessions.front().uuid_id_ == l_session_row.uuid_id_);
     BOOST_TEST(l_sessions.front().prompt_text_ == l_session_row.prompt_text_);
-    BOOST_TEST(en(l_sessions.front().state_) == en(ai_light_session_state::awaiting_judgement));
-    BOOST_TEST(l_sessions.front().judgement_due_at_.has_value());
 
-    // 2. 按状态查。会话没有终态之后，这里只能拿还存在的状态来验「查不到别的东西」
-    BOOST_TEST(l_sql.get_ai_light_sessions_by_state(ai_light_session_state::awaiting_judgement).size() == 1);
-    BOOST_TEST(l_sql.get_ai_light_sessions_by_state(ai_light_session_state::generating).empty());
+    // 2. 轮次的「在等人工」判据往返 —— 会话不再有任何状态列可查
+    auto l_iters = l_sql.get_ai_light_iterations(l_session_row.uuid_id_);
+    BOOST_TEST(l_iters.size() == 1);
+    BOOST_TEST(is_waiting_human(l_iters.front()));
+    BOOST_TEST(l_iters.front().render_at_.has_value());
+    const auto l_now = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+    BOOST_TEST(!is_judgement_overdue(l_iters.front(), l_now));
+    BOOST_TEST(is_judgement_overdue(
+        l_iters.front(), chrono::system_zoned_time{l_now.get_sys_time() + g_judgement_timeout + std::chrono::hours{1}}
+    ));
 
     // 3. 参考图统计往返
     auto l_refs = l_sql.get_ai_light_references(l_session_row.uuid_id_);
@@ -381,7 +387,7 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
     BOOST_TEST(l_iter_back.has_value());
     BOOST_TEST(l_iter_back->iteration_ == 1);
 
-    // 6. 候选: 6 个, 按 candidate_index 升序, rig 逐字节一致
+    // 5. 候选: 6 个, 按 candidate_index 升序, rig 逐字节一致
     auto l_cands = l_sql.get_ai_light_candidates(l_iter.uuid_id_);
     BOOST_TEST(l_cands.size() == 6);
     for (std::size_t l_i = 0; l_i != l_cands.size(); ++l_i) {
@@ -396,12 +402,12 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
       BOOST_TEST(l_cands[l_i].get_metrics().landings_.size() == 1);
     }
 
-    // 7. warm start 起点 = is_selected 的候选
+    // 6. warm start 起点 = is_selected 的候选
     auto l_selected = l_sql.get_ai_light_selected_candidate(l_session_row.uuid_id_, 1);
     BOOST_TEST(l_selected.has_value());
     BOOST_TEST(l_selected->candidate_index_ == 2);
 
-    // 8. 跨轮查询（session_id 冗余列存在的理由）
+    // 7. 跨轮查询（session_id 冗余列存在的理由）
     BOOST_TEST(l_sql.get_ai_light_candidates_by_session(l_session_row.uuid_id_).size() == 6);
 
     // 这个用例刻意让 session 的 project/task/entity 指向不存在的行（关外键插入），
@@ -421,12 +427,12 @@ BOOST_AUTO_TEST_CASE(ai_light_roundtrip_through_db) {
   remove_db(l_db);
 }
 
-// 4 小时过期判定依赖 judgement_due_at 经 TEXT 列往返后仍然算得对.
+// 4 小时过期判定依赖 render_at 经 TEXT 列往返后仍然算得对.
 // 这个假设必须被验证: 一旦格式变化（例如补零宽度不一致）或读回时解析偏了,
 // 判定就会静默错掉, 表现是「会话该催了却不催」或「刚进入等判断就被判过期」.
 //
-// 删掉挂起扫描器之后这条判据更关键了: 过期不再有任何后台任务去物化它,
-// is_judgement_overdue() 是**唯一**的过期来源, 它算错就没有第二个地方能发现.
+// 这条判据没有第二个地方能发现: 过期不再有任何后台任务去物化它，
+// is_judgement_overdue() 是**唯一**的过期来源.
 BOOST_AUTO_TEST_CASE(overdue_judgement_survives_text_roundtrip) {
   app_base l_app{};
   auto l_db = temp_db("overdue");
@@ -441,42 +447,57 @@ BOOST_AUTO_TEST_CASE(overdue_judgement_survives_text_roundtrip) {
 
     const auto l_now = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
-    // 过期: 1 小时前就该判断了
-    ai_light_session l_overdue{};
-    l_overdue.project_id_ = core_set::get_set().get_uuid();
-    l_overdue.task_id_    = core_set::get_set().get_uuid();
-    l_overdue.entity_id_  = core_set::get_set().get_uuid();
-    l_overdue.state_      = ai_light_session_state::awaiting_judgement;
-    l_overdue.judgement_due_at_ = chrono::system_zoned_time{l_now.get_sys_time() - std::chrono::hours{1}};
-
-    // 未过期: 还有 1 小时
-    ai_light_session l_pending = l_overdue;
-    l_pending.entity_id_        = core_set::get_set().get_uuid();
-    l_pending.judgement_due_at_ = chrono::system_zoned_time{l_now.get_sys_time() + std::chrono::hours{1}};
-
-    // 状态不对: 即使时限已过也不算过期（判定必须带上状态这一项）
-    ai_light_session l_other_state = l_overdue;
-    l_other_state.entity_id_        = core_set::get_set().get_uuid();
-    l_other_state.state_            = ai_light_session_state::draft;
-
+    // 造一个会话 + 一条轮次。轮次是过期判据的唯一载体。
+    ai_light_session l_session_row{};
+    l_session_row.project_id_  = core_set::get_set().get_uuid();
+    l_session_row.task_id_     = core_set::get_set().get_uuid();
+    l_session_row.entity_id_   = core_set::get_set().get_uuid();
+    l_session_row.prompt_text_ = "压抑、暖、高对比";
     with_fk_off(l_session, [&]() {
-      insert(l_session).into<ai_light_session>().values(l_overdue)();
-      insert(l_session).into<ai_light_session>().values(l_pending)();
-      insert(l_session).into<ai_light_session>().values(l_other_state)();
+      insert(l_session).into<ai_light_session>().values(l_session_row)();
     });
 
+    // 过期: 5 小时前渲染完，早该判断了
+    ai_light_iteration l_overdue{};
+    l_overdue.session_id_ = l_session_row.uuid_id_;
+    l_overdue.iteration_  = 1;
+    l_overdue.state_      = ai_light_iteration_state::awaiting_judgement;
+    l_overdue.render_at_  = chrono::system_zoned_time{l_now.get_sys_time() - std::chrono::hours{5}};
+
+    // 未过期: 1 小时前渲染完，还在 4 小时窗口内
+    ai_light_iteration l_pending = l_overdue;
+    l_pending.iteration_         = 2;
+    l_pending.render_at_         = chrono::system_zoned_time{l_now.get_sys_time() - std::chrono::hours{1}};
+
+    // 状态不对: 即使基准时刻已过也不算过期（判定必须带上状态这一项）
+    ai_light_iteration l_other_state = l_overdue;
+    l_other_state.iteration_         = 3;
+    l_other_state.state_             = ai_light_iteration_state::judged;
+
+    // 没有基准时刻: 历史数据 / 未走渲染回填，一律不算过期，不能凭空判它超时
+    ai_light_iteration l_no_stamp = l_overdue;
+    l_no_stamp.iteration_         = 4;
+    l_no_stamp.render_at_         = std::nullopt;
+
+    insert(l_session).into<ai_light_iteration>().values(l_overdue)();
+    insert(l_session).into<ai_light_iteration>().values(l_pending)();
+    insert(l_session).into<ai_light_iteration>().values(l_other_state)();
+    insert(l_session).into<ai_light_iteration>().values(l_no_stamp)();
+
     // 全部从库里读回来再判 —— 判的是落库格式，不是内存里的对象
-    auto l_back = l_sql.get_by_uuid<ai_light_session>(l_overdue.uuid_id_);
-    BOOST_TEST(l_back.judgement_due_at_.has_value());
-    BOOST_TEST(l_back.is_judgement_overdue(l_now));
+    auto l_back = l_sql.get_ai_light_iteration(l_session_row.uuid_id_, 1);
+    BOOST_TEST(l_back.has_value());
+    BOOST_TEST(l_back->render_at_.has_value());
+    BOOST_TEST(is_judgement_overdue(*l_back, l_now));
 
-    BOOST_TEST(!l_sql.get_by_uuid<ai_light_session>(l_pending.uuid_id_).is_judgement_overdue(l_now));
-    BOOST_TEST(!l_sql.get_by_uuid<ai_light_session>(l_other_state.uuid_id_).is_judgement_overdue(l_now));
+    BOOST_TEST(!is_judgement_overdue(*l_sql.get_ai_light_iteration(l_session_row.uuid_id_, 2), l_now));
+    BOOST_TEST(!is_judgement_overdue(*l_sql.get_ai_light_iteration(l_session_row.uuid_id_, 3), l_now));
+    BOOST_TEST(!is_judgement_overdue(*l_sql.get_ai_light_iteration(l_session_row.uuid_id_, 4), l_now));
 
-    // 过期的会话状态仍然是 awaiting_judgement —— 过期不改变状态，
+    // 过期的轮次状态仍然是 awaiting_judgement —— 过期不改变状态，
     // 所以它照样能被 /judge 判断（见 ai_light_state.cpp 的回归用例）
-    BOOST_TEST(en(l_back.state_) == en(ai_light_session_state::awaiting_judgement));
-    BOOST_TEST(is_waiting_human(l_back.state_));
+    BOOST_TEST(en(l_back->state_) == en(ai_light_iteration_state::awaiting_judgement));
+    BOOST_TEST(is_waiting_human(*l_back));
   }
 
   remove_db(l_db);
