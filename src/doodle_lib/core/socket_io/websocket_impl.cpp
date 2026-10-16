@@ -99,6 +99,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none &&
          sid_data_ && !sid_data_->is_timeout()) {
     // boost::beast::flat_buffer l_buffer{};
+    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_socket_io(), "开始一次读取");
     std::string l_body{};
     auto l_buffer = boost::asio::dynamic_buffer(l_body);
     if (!web_stream_) co_return;
