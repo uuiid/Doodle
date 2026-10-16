@@ -40,6 +40,7 @@ enum class server_task_info_type : std::int32_t {
 
 DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     server_task_info_type, {
+                               {server_task_info_type::unknown, "unknown"},
                                {server_task_info_type::export_fbx, "export_fbx"},
                                {server_task_info_type::export_sim, "export_sim"},
                                {server_task_info_type::auto_light, "auto_light"},
@@ -47,6 +48,8 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
                                {server_task_info_type::connect_video, "connect_video"},
                                {server_task_info_type::check_maya, "check_maya"},
                                {server_task_info_type::replace_maya_ref, "replace_maya_ref"},
+                               {server_task_info_type::create_rig_sk, "create_rig_sk"},
+                               {server_task_info_type::project_sync, "project_sync"},
                                {server_task_info_type::depth_estimation, "depth_estimation"},
                                {server_task_info_type::ai_light, "ai_light"},
                            }
