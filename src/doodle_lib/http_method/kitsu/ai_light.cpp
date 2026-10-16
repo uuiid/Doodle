@@ -302,30 +302,24 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, put) {
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
-  auto l_ref  = l_sql.get_by_uuid<ai_light_reference>(id_);
+  auto l_ref = l_sql.get_by_uuid<ai_light_reference>(id_);
   load_session_checked(person_, l_sql, l_ref.session_id_);
 
-  if (l_json.contains("is_outlier")) l_json.at("is_outlier").get_to(l_ref.is_outlier_);
-  if (l_json.contains("excluded_reason")) l_json.at("excluded_reason").get_to(l_ref.excluded_reason_);
-
-  if (!l_ref.is_outlier_) l_ref.excluded_reason_.clear();
-
   sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(update(l_sql)
-                          .from<ai_light_reference>()
-                          .set(
-                              c(&ai_light_reference::is_outlier_)      = l_ref.is_outlier_,
-                              c(&ai_light_reference::excluded_reason_) = l_ref.excluded_reason_
-                          )
-                          .where(c(&ai_light_reference::uuid_id_) == id_));
+  l_sqls.emplace_back(
+      update(l_sql).from<ai_light_reference>().set_from_ref(l_json, ai_light_reference::put_property_list()).where(
+          c(&ai_light_reference::uuid_id_) == id_
+      )
+  );
   co_await l_sql.run_sql(std::move(l_sqls));
 
+  auto l_after = l_sql.get_by_uuid<ai_light_reference>(id_);
   SPDLOG_LOGGER_INFO(
       g_logger_ctrl().get_http(), "用户 {}({}) 把 AI 灯光参考图 {} 的排除标记改为 {}（原因：{}）",
-      person_.person_.email_, person_.person_.get_full_name(), id_, l_ref.is_outlier_,
-      l_ref.excluded_reason_.empty() ? "无" : l_ref.excluded_reason_
+      person_.person_.email_, person_.person_.get_full_name(), id_, l_after.is_outlier_,
+      l_after.excluded_reason_.empty() ? "无" : l_after.excluded_reason_
   );
-  co_return in_handle->make_msg(nlohmann::json{{"data", l_ref}});
+  co_return in_handle->make_msg(nlohmann::json{{"data", l_after}});
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, delete_) {

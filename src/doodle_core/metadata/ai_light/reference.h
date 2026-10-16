@@ -25,6 +25,8 @@
 #include <cstdint>
 #include <filesystem>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 namespace doodle::ai_light {
@@ -136,6 +138,13 @@ struct DOODLE_CORE_API ai_light_reference {
   /// 被外点剔除（例如构图里根本没有主体、或与其余图冲突过大）
   bool is_outlier_{false};
   std::string excluded_reason_{};
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"is_outlier", &ai_light_reference::is_outlier_},          //
+        std::pair{"excluded_reason", &ai_light_reference::excluded_reason_}  //
+    };
+  }
 
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
 
