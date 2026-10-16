@@ -9,7 +9,7 @@
 #include <chrono>
 #include <utility>
 
-namespace doodle::business {
+namespace doodle {
 
 /**
  * @brief 这个时间规则是一个本地时间(并非 utc 时间)
@@ -45,4 +45,4 @@ class DOODLE_CORE_API rules {
   [[nodiscard("")]] static const rules& get_default();
 };
 
-}  // namespace doodle::business
+}  // namespace doodle

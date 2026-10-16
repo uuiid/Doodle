@@ -33,7 +33,7 @@ class holidaycn_time2 {
   explicit holidaycn_time2(time_duration_vector in_work_time, const FSys::path &in_path);
   virtual ~holidaycn_time2();
 
-  void set_clock(business::work_clock2 &in_work_clock) const;
+  void set_clock(work_clock2 &in_work_clock) const;
   bool is_working_day(const chrono::year_month_day &in_day) const { return is_working_day(chrono::local_days{in_day}); }
   bool is_working_day(const chrono::local_days &in_day) const;
 };

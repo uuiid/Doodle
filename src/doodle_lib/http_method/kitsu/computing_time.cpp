@@ -273,12 +273,12 @@ std::vector<chrono::local_days> get_time_clock_attendance_days(const chrono::yea
   return l_days;
 }
 
-business::work_clock2 create_time_clock(
+work_clock2 create_time_clock(
     const chrono::year_month& in_year_month, const uuid& in_user_id,
     const std::vector<attendance_helper::database_t>& in_attendance
 ) {
-  business::work_clock2 l_time_clock_{};
-  auto l_rules_ = business::rules::get_default();
+  work_clock2 l_time_clock_{};
+  auto l_rules_ = rules::get_default();
   chrono::local_days l_begin_time{chrono::local_days{in_year_month / chrono::day{1}}},
       l_end_time{chrono::local_days{in_year_month / chrono::last} + chrono::days{3}};
   holidaycn_time2 l_holidaycn_time{l_rules_.work_pair_p, g_ctx().get<kitsu_ctx_t>().get_time()};
@@ -318,7 +318,7 @@ business::work_clock2 create_time_clock(
   return l_time_clock_;
 }
 
-business::work_clock2 create_time_clock(const chrono::year_month& in_year_month, const uuid& in_user_id) {
+work_clock2 create_time_clock(const chrono::year_month& in_year_month, const uuid& in_user_id) {
   auto l_sql = get_sqlite_database();
   return create_time_clock(
       in_year_month, in_user_id, l_sql.get_attendance(in_user_id, get_time_clock_attendance_days(in_year_month))
@@ -327,7 +327,7 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
 
 // 计算时间
 void computing_time_run(
-    const chrono::year_month& in_year_month, const business::work_clock2& in_time_clock, const uuid& in_person_id,
+    const chrono::year_month& in_year_month, const work_clock2& in_time_clock, const uuid& in_person_id,
     std::vector<computing_time_post_req_data>& in_data, std::vector<work_xlsx_task_info_helper::database_t>& in_out_data
 ) {
   DOODLE_CHICK(in_data.size() == in_out_data.size(), "in_data.size() != in_out_data.size()");
@@ -378,7 +378,7 @@ void computing_time_run(
 
 // 重新计算时间
 void recomputing_time_run(
-    const chrono::year_month& in_year_month, const business::work_clock2& in_time_clock,
+    const chrono::year_month& in_year_month, const work_clock2& in_time_clock,
     std::vector<work_xlsx_task_info_helper::database_t>& in_out_data
 ) {
   auto l_end_time  = chrono::local_days{(in_year_month + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
@@ -424,7 +424,7 @@ void recomputing_time_run(
 }
 // 平均时间
 void average_time_run(
-    const chrono::year_month& in_year_month, const business::work_clock2& in_time_clock,
+    const chrono::year_month& in_year_month, const work_clock2& in_time_clock,
     std::vector<work_xlsx_task_info_helper::database_t>& in_out_data
 ) {
   auto l_end_time  = chrono::local_days{(in_year_month + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
@@ -463,7 +463,7 @@ void average_time_run(
 }
 
 std::string patch_time(
-    const business::work_clock2& in_time_clock, std::vector<work_xlsx_task_info_helper::database_t>& in_block,
+    const work_clock2& in_time_clock, std::vector<work_xlsx_task_info_helper::database_t>& in_block,
     const boost::uuids::uuid& in_task_id_, const chrono::microseconds& in_duration, const logger_ptr& in_logger_ptr
 ) {
   auto l_task_it =

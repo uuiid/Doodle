@@ -16,7 +16,7 @@
 #include <utility>
 
 
-namespace doodle::business {
+namespace doodle {
 
 class DOODLELIB_API work_clock2 {
  public:
@@ -182,4 +182,4 @@ class DOODLELIB_API work_clock2 {
   std::string debug_print() const;
 };
 
-}  // namespace doodle::business
+}  // namespace doodle

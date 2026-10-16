@@ -24,8 +24,8 @@ namespace {
  * @return 加班时钟
  */
 auto create_clock_overtime(const chrono::year_month_day& in_date) {
-  business::work_clock2 l_work_clock{};
-  auto l_r = business::rules::get_default();
+  work_clock2 l_work_clock{};
+  auto l_r = rules::get_default();
   holidaycn_time2 l_holidaycn_time{l_r.work_pair_p, g_ctx().get<kitsu_ctx_t>().get_time()};
   // for (auto&& l_work_time : l_r.work_pair_p) {
   l_work_clock += std::make_tuple(chrono::local_days{in_date}, chrono::local_days{in_date} + chrono::days{1});
@@ -44,8 +44,8 @@ auto create_clock_overtime(const chrono::year_month_day& in_date) {
  * @return 调休时钟
  */
 auto create_clock_leave(const chrono::year_month_day& in_date) {
-  business::work_clock2 l_work_clock{};
-  auto l_r = business::rules::get_default();
+  work_clock2 l_work_clock{};
+  auto l_r = rules::get_default();
   // holidaycn_time2 l_holidaycn_time{l_r.work_pair_p, g_ctx().get<kitsu_ctx_t>().get_time()};
   for (auto&& [ben, end] : l_r.work_pair_p) {
     l_work_clock += std::make_tuple(chrono::local_days{in_date} + ben, chrono::local_days{in_date} + end);
@@ -107,13 +107,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
       case attendance_helper::att_enum::overtime:  // 加班按照不满1小时直接舍弃
         l_duration      = chrono::floor<chrono::hours>(l_clock_overtime(l_obj.begin_time_, l_obj.end_time_));
         l_obj.end_time_ = l_clock_overtime.next_time(
-            l_obj.begin_time_, chrono::duration_cast<business::work_clock2::duration_type>(l_duration)
+            l_obj.begin_time_, chrono::duration_cast<work_clock2::duration_type>(l_duration)
         );
         break;
       case attendance_helper::att_enum::leave:  // 请假按照不满1小时按照1小时计算
         l_duration      = chrono::ceil<chrono::hours>(l_clock_leave(l_obj.begin_time_, l_obj.end_time_));
         l_obj.end_time_ = l_clock_leave.next_time(
-            l_obj.begin_time_, chrono::duration_cast<business::work_clock2::duration_type>(l_duration)
+            l_obj.begin_time_, chrono::duration_cast<work_clock2::duration_type>(l_duration)
         );
         break;
       case attendance_helper::att_enum::max:

@@ -42,7 +42,7 @@ holidaycn_time2::holidaycn_time2(time_duration_vector in_work_time, const FSys::
 }
 
 holidaycn_time2::~holidaycn_time2() = default;
-void holidaycn_time2::set_clock(business::work_clock2 &in_work_clock) const {
+void holidaycn_time2::set_clock(work_clock2 &in_work_clock) const {
   for (auto &&[key, value] : work_day_map)
     if (value.is_odd_day)
       in_work_clock -= std::make_tuple(value.date, value.date + chrono::days{1});

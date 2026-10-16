@@ -20,7 +20,7 @@
 #include <range/v3/range.hpp>
 
 
-namespace doodle::business {
+namespace doodle {
 
 work_clock2::work_clock2() = default;
 
@@ -150,4 +150,4 @@ work_clock2::time_type work_clock2::next_point(const work_clock2::time_type& in_
   return {};
 }
 
-}  // namespace doodle::business
+}  // namespace doodle

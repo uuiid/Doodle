@@ -8,7 +8,7 @@
 #include <mutex>
 #include <vector>
 
-namespace doodle::business {
+namespace doodle {
 
 rules::rules() = default;
 
@@ -32,4 +32,4 @@ const rules& rules::get_default() {
 
 rules::~rules() = default;
 
-}  // namespace doodle::business
+}  // namespace doodle

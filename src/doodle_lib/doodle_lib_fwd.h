@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/doodle_core_fwd.h>
@@ -69,9 +69,8 @@ class image_attr;
 class image_watermark;
 }  // namespace movie
 
-namespace business {
 class work_clock2;
-}  // namespace business
+
 namespace FSys {
 DOODLELIB_API std::string file_hash_sha224(const path& in_file);
 }
