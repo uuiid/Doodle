@@ -85,7 +85,8 @@ bool query_bool(const boost::url& in_url, std::string_view in_key, bool in_defau
 }
 
 FSys::path session_dir(const ai_light_session& in_session) {
-  return g_ctx().get<kitsu_ctx_t>().get_ai_light_session_dir(in_session.uuid_id_);
+  auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
+  return l_ctx.root_ / "ai_light" / FSys::split_uuid_path(fmt::to_string(in_session.uuid_id_));
 }
 
 void backup_session_dir(const ai_light_session& in_session) {

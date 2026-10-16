@@ -152,25 +152,9 @@ struct kitsu_ctx_t {
   // 只有定稿候选才注册（source = auto_light_generate），免得镜头预览列表被 6×N 张候选淹没。
   // ---------------------------------------------------------------------------
 
-  /// AI 灯光会话目录
-  ///
-  /// 这一组 AI 灯光 getter 都是 `const` 的：它们只按 uuid 拼路径，不改任何状态。
-  /// 于是「候选 → 产物路径」可以做成吃 `const kitsu_ctx_t&` 的纯函数
-  /// （`doodle::ai_light::candidate_render_path`，D44）。
-  FSys::path get_ai_light_session_dir(const uuid& in_session_id) const {
-    return root_ / "ai_light" / FSys::split_uuid_path(fmt::to_string(in_session_id));
-  }
-  /// 会话的参考图目录（在会话目录**之内** —— 不是兄弟目录，否则同镜头的多个会话会共用一处）
-  FSys::path get_ai_light_reference_dir(const uuid& in_session_id) const {
-    return get_ai_light_session_dir(in_session_id) / "ref";
-  }
-  /// 单张参考图：文件名就是**它自己的** uuid
-  FSys::path get_ai_light_reference_file(const uuid& in_session_id, const uuid& in_reference_id) const {
-    return get_ai_light_reference_dir(in_session_id) / fmt::format("{}.png", in_reference_id);
-  }
   /// 某一轮的候选渲染目录。目录名就是**轮次自己的 uuid**（见上面第二个要点）。
   FSys::path get_ai_light_iteration_dir(const uuid& in_session_id, const uuid& in_iteration_id) const {
-    return get_ai_light_session_dir(in_session_id) / fmt::to_string(in_iteration_id);
+    return root_ / "ai_light" / FSys::split_uuid_path(fmt::to_string(in_session_id)) / fmt::to_string(in_iteration_id);
   }
   /// 单个候选的渲染图：文件名就是候选自己的 uuid。
   /// in_linear = true 取线性 EXR（不下发浏览器），false 取显示空间 PNG。
