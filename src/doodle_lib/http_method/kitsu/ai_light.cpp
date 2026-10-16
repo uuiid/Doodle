@@ -14,12 +14,13 @@
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_client/seedance2_client.h>
+#include <doodle_lib/http_method/kitsu/auto_task.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/ai_light.h>
 #include <doodle_lib/http_method/kitsu/ai_light_orchestrator.h>
 #include <doodle_lib/http_method/kitsu/ai_light_stats.h>
-#include <doodle_lib/http_method/kitsu/auto_task.h>
 #include <doodle_lib/http_method/kitsu/preview.h>
 #include <doodle_lib/http_method/seedance2/inference_task.h>
 #include <doodle_lib/logger/logger.h>
