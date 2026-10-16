@@ -149,6 +149,7 @@ void to_json(nlohmann::json& j, const apipy_image_client::request_t& req) {
   j["prompt"] = req.prompt_;
   j["size"]   = req.size_;
   if (!req.quality_.empty()) j["quality"] = req.quality_;
+  if (req.model_.ends_with("vip")) j["response_format"] = "url";
 }
 
 apipy_image_client::edits_form_t apipy_image_client::request_t::to_multipart() const {
