@@ -408,10 +408,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
     ai_light_reference l_ref{};
     l_ref.session_id_ = l_session.uuid_id_;
     l_ref.uuid_id_    = core_set::get_set().get_uuid();
-    l_ref.file_path_  = l_ctx.get_sd2_pictures_file(l_ref.uuid_id_, "png");
+    auto l_file_path  = l_ctx.get_sd2_pictures_file(l_ref.uuid_id_, "png");
     auto l_thumbnail  = l_ctx.get_sd2_thumbnail_file(l_ref.uuid_id_);
 
-    if (auto l_p = l_ref.file_path_.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+    if (auto l_p = l_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
     if (auto l_p = l_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
 
     {
@@ -421,15 +421,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
       cv::resize(l_image, l_image, cv::Size(l_image.cols * l_resize, l_image.rows * l_resize));
       cv::imwrite(l_thumbnail.generic_string(), l_image);
     }
-    FSys::rename(l_info.path_, l_ref.file_path_);
+    FSys::rename(l_info.path_, l_file_path);
 
-    l_ref.width_  = l_info.size_.width;
-    l_ref.height_ = l_info.size_.height;
-
-    auto l_analysis = ai_light::analyze_reference_file(l_ref.file_path_);
+    auto l_analysis = ai_light::analyze_reference_file(l_file_path);
     DOODLE_CHICK_HTTP(
-        l_analysis.has_value(), bad_request, "参考图 {} 落盘后无法解码，无法统计",
-        l_ref.file_path_.filename().generic_string()
+        l_analysis.has_value(), bad_request, "参考图 {} 落盘后无法解码，无法统计", l_file_path.filename().generic_string()
     );
     l_ref.set_stats(l_analysis->stats_);
     l_ref.stats_confidence_ = l_analysis->confidence_;
@@ -495,12 +491,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, delete_) {
   l_sqls.emplace_back(delete_from(l_sql).from<ai_light_reference>().where(c(&ai_light_reference::uuid_id_) == id_));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  if (!l_ref.file_path_.empty()) {
+  if (auto l_file_path = g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_file(id_, "png"); !l_file_path.empty()) {
     std::error_code l_ec{};
-    FSys::remove(l_ref.file_path_, l_ec);
+    FSys::remove(l_file_path, l_ec);
     if (l_ec)
       SPDLOG_LOGGER_WARN(
-          g_logger_ctrl().get_http(), "参考图 {} 的文件 {} 删除失败: {}", id_, l_ref.file_path_.generic_string(),
+          g_logger_ctrl().get_http(), "参考图 {} 的文件 {} 删除失败: {}", id_, l_file_path.generic_string(),
           l_ec.message()
       );
   }

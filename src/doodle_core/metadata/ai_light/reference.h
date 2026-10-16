@@ -123,13 +123,6 @@ struct DOODLE_CORE_API ai_light_reference {
 
   uuid session_id_{};
 
-  /// 图片落盘路径。不注册 preview_file，由专用接口提供。
-  FSys::path file_path_{};
-  FSys::path thumbnail_path_{};
-
-  std::int32_t width_{0};
-  std::int32_t height_{0};
-
   /// reference_image_stats_t 的 JSON 形态。
   /// 嵌套结构不是 ORM 的列类型，所以以 nlohmann::json 落库，用 get_stats() 类型化取用。
   nlohmann::json stats_{};
@@ -154,10 +147,6 @@ struct DOODLE_CORE_API ai_light_reference {
   friend void to_json(nlohmann::json& j, const ai_light_reference& p) {
     j["id"]                = p.uuid_id_;
     j["session_id"]        = p.session_id_;
-    j["file_path"]         = p.file_path_;
-    j["thumbnail_path"]    = p.thumbnail_path_;
-    j["width"]             = p.width_;
-    j["height"]            = p.height_;
     j["stats"]             = p.stats_;
     j["stats_confidence"]  = p.stats_confidence_;
     j["is_outlier"]        = p.is_outlier_;
@@ -167,10 +156,6 @@ struct DOODLE_CORE_API ai_light_reference {
   friend void from_json(const nlohmann::json& j, ai_light_reference& p) {
     if (j.contains("id")) j.at("id").get_to(p.uuid_id_);
     if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
-    if (j.contains("file_path")) j.at("file_path").get_to(p.file_path_);
-    if (j.contains("thumbnail_path")) j.at("thumbnail_path").get_to(p.thumbnail_path_);
-    if (j.contains("width")) j.at("width").get_to(p.width_);
-    if (j.contains("height")) j.at("height").get_to(p.height_);
     if (j.contains("stats")) j.at("stats").get_to(p.stats_);
     if (j.contains("stats_confidence")) j.at("stats_confidence").get_to(p.stats_confidence_);
     if (j.contains("is_outlier")) j.at("is_outlier").get_to(p.is_outlier_);
