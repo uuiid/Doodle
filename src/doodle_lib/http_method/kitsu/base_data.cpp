@@ -336,6 +336,9 @@ boost::asio::awaitable<void> check_http_connection_count_and_stop_server() {
   while (true) {
     l_timer->expires_after(3s);
     co_await l_timer->async_wait(boost::asio::use_awaitable);
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_http(), "当前 http 连接数 {}", core_set::get_set().http_connection_count_
+    );
     if (core_set::get_set().http_connection_count_ == 0) {
       app_base::Get().stop_app();
       co_return;
