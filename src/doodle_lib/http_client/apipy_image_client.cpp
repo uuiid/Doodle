@@ -39,7 +39,8 @@ constexpr std::chrono::seconds g_request_timeout{360};
 constexpr std::string_view g_default_model{"gpt-image-2.5-vip"};
 constexpr std::string_view g_edit_image_field{"image"};
 constexpr std::size_t g_max_reference_images{8};
-constexpr std::uintmax_t g_max_reference_image_bytes{1024 * 1024};
+constexpr std::uintmax_t g_max_reference_image_bytes{1536 * 1024};
+constexpr std::uintmax_t g_max_reference_images_total_bytes{9728 * 1024};
 
 const nlohmann::json& first_data_item(const nlohmann::json& in_body) {
   static const nlohmann::json l_empty = nlohmann::json::object();
@@ -304,6 +305,7 @@ ai_client_base::request_info_t apipy_image_client::collect_request_info(const nl
       fmt::format("参考图最多 {} 张, 收到 {} 张", g_max_reference_images, l_req.reference_images_.size())
   );
 
+  std::uintmax_t l_total_bytes{};
   for (const auto& url : l_req.reference_images_) {
     const auto l_path = parse_site_image_id(url);
     if (l_path.empty() || !FSys::exists(l_path))
@@ -320,7 +322,15 @@ ai_client_base::request_info_t apipy_image_client::collect_request_info(const nl
     DOODLE_CHICK_HTTP(
         l_size > 0 && l_size <= g_max_reference_image_bytes, bad_request,
         fmt::format(
-            "参考图大小必须在 1 字节到 {} 字节(1M) 之间, 收到 {} 字节: {}", g_max_reference_image_bytes, l_size,
+            "参考图大小必须在 1 字节到 {} 字节(1.5M) 之间, 收到 {} 字节: {}", g_max_reference_image_bytes, l_size,
+            std::string{url}
+        )
+    );
+    l_total_bytes += l_size;
+    DOODLE_CHICK_HTTP(
+        l_total_bytes <= g_max_reference_images_total_bytes, bad_request,
+        fmt::format(
+            "参考图总大小必须在 {} 字节(9.5M) 以内, 收到 {} 字节: {}", g_max_reference_images_total_bytes, l_total_bytes,
             std::string{url}
         )
     );
