@@ -243,6 +243,17 @@ apipy_image_client::response_t apipy_image_client::parse_response(const nlohmann
   return l_res;
 }
 
+nlohmann::json apipy_image_client::strip_b64_payload(nlohmann::json in_body) {
+  if (!in_body.is_object() || !in_body.contains("data")) return in_body;
+
+  auto& l_data = in_body.at("data");
+  if (!l_data.is_array()) return in_body;
+
+  for (auto& l_item : l_data)
+    if (l_item.is_object()) l_item.erase("b64_json");
+  return in_body;
+}
+
 doodle::seedance2::task_status apipy_image_client::response_t::get_status(int in_status_code) const {
   const bool l_http_ok = in_status_code >= 200 && in_status_code < 300;
   if (!l_http_ok) return doodle::seedance2::task_status::failed;
@@ -421,6 +432,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
 
   l_result.data_response_ = l_res.body();
   const auto l_response   = parse_response(l_result.data_response_);
+  l_result.data_response_ = strip_b64_payload(std::move(l_result.data_response_));
   l_result.status_        = l_response.get_status(static_cast<int>(l_res.result()));
   l_result.error_code_    = l_response.error_code_;
   l_result.input_tokens_  = l_response.input_tokens_;

@@ -81,6 +81,8 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
 
   [[nodiscard]] static response_t parse_response(const nlohmann::json& in_body);
 
+  [[nodiscard]] static nlohmann::json strip_b64_payload(nlohmann::json in_body);
+
   static FSys::path parse_site_image_id(std::string_view in_url);
 
   static std::string mime_of_image(const std::string& in_ext);
