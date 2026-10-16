@@ -68,6 +68,7 @@ class DOODLELIB_API app_base {
   inline const argh::parser& arg() const { return arg_; }
 
   cancellation_signals on_cancel;
+  cancellation_signals on_stop_listener;
 
   virtual void stop_app(std::int32_t in_exit_code = 0);
 

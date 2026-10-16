@@ -57,7 +57,7 @@ void run_http_listener(boost::asio::io_context& in_io_context, http_route_ptr in
   g_ctx().emplace<detail::http_listener_cancellation_slot>();
   boost::asio::co_spawn(
       g_io_context(), detail::run_http_listener(in_io_context, in_route_ptr, in_port),
-      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+      boost::asio::bind_cancellation_slot(app_base::Get().on_stop_listener.slot(), boost::asio::detached)
   );
 }
 }  // namespace doodle::http

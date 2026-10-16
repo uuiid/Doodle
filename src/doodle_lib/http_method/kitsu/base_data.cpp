@@ -339,6 +339,7 @@ boost::asio::awaitable<void> check_http_connection_count_and_stop_server() {
     SPDLOG_LOGGER_WARN(
         g_logger_ctrl().get_http(), "当前 http 连接数 {}", core_set::get_set().http_connection_count_
     );
+    app_base::Get().on_cancel.emit();
     if (core_set::get_set().http_connection_count_ == 0) {
       app_base::Get().stop_app();
       co_return;
@@ -353,6 +354,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_stop_server, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 开始停止服务器", person_.person_.email_, person_.person_.get_full_name()
   );
   core_set::get_set().read_only_mode_ = true;
+  app_base::Get().on_stop_listener.emit();
   app_base::Get().on_cancel.emit();
 
   boost::asio::co_spawn(g_io_context(), check_http_connection_count_and_stop_server(), boost::asio::detached);
