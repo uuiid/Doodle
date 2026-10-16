@@ -5,7 +5,9 @@
 #include <doodle_lib/lib_warp/boost_fmt_beast.h>
 
 #include <boost/uuid/uuid_io.hpp>
+
 #include <fmt/format.h>
+
 
 namespace doodle::http::seedance2 {
 
@@ -90,7 +92,7 @@ ai_client_base::request_info_t transfer_station_client::collect_request_info(con
   const auto l_req = in_request.get<doodle::seedance2::transfer_station_request_t>();
 
   request_info_t l_info{};
-  l_info.model_ = l_req.model_;
+  l_info.model_       = l_req.model_;
   // nano-banana 系列用 imageSize(1K/2K/4K) 表示分辨率;
   // gpt-image 系列没有 imageSize, 用 aspectRatio(比例或像素值, 如 "16:9" / "1024x1024")
   l_info.resolution_  = l_req.image_size_.empty() ? l_req.aspect_ratio_ : l_req.image_size_;
@@ -118,12 +120,13 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_clien
   if (find_pricing(l_req_body.model_) == nullptr) {
     logger_->error("模型 {} 未登记定价, 拒绝提交", l_req_body.model_);
     run_task_result_t l_result{};
-    l_result.status_        = doodle::seedance2::task_status::failed;
-    l_result.data_response_ = nlohmann::json{{"error", fmt::format("模型 {} 未登记定价, 不允许提交", l_req_body.model_)}};
+    l_result.status_ = doodle::seedance2::task_status::failed;
+    l_result.data_response_ =
+        nlohmann::json{{"error", fmt::format("模型 {} 未登记定价, 不允许提交", l_req_body.model_)}};
     co_return l_result;
   }
 
-  auto l_ip = co_await get_ip_str();
+  auto l_ip  = co_await get_ip_str();
   l_req_body = add_ip_to_req(
       l_req_body, l_ip, url_sign_secret_,
       in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_)
@@ -134,7 +137,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_clien
   boost::beast::http::request<boost::beast::http::string_body> req{
       boost::beast::http::verb::post, "/v1/api/generate", 11
   };
-  req.body() = in_task.data_request_.dump();
+  req.body() = (nlohmann::json{} = l_req_body).dump();
   req.set(boost::beast::http::field::content_type, "application/json");
   req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
   req.set(boost::beast::http::field::accept, "application/json");
