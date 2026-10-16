@@ -55,6 +55,5 @@ target_sources(
         ai_light.cpp
         ai_light_orchestrator.cpp
         ai_light_stats.cpp
-        ai_light_submit.cpp
 )
  
