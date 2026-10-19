@@ -93,15 +93,10 @@ struct DOODLE_CORE_API ai_light_candidate {
 
   uuid iteration_id_{};
   uuid session_id_{};
-
   candidate_render_status render_status_{candidate_render_status::pending};
-
   nlohmann::json metrics_{};
-
   bool is_selected_{false};
-
   uuid preview_file_id_{};
-
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   candidate_metrics_t get_metrics() const { return metrics_.get<candidate_metrics_t>(); }
