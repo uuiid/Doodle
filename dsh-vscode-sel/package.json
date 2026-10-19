@@ -1,5 +1,6 @@
 {
   "name": "dsh-vscode-sel",
+  "displayName": "DSH VS Code Selection (DSH 插件，非 VS Code 扩展)",
   "version": "0.1.0",
   "description": "DeepSeek Harness 插件：接收 VS Code 扩展推送的选中代码位置，并在浏览器端 DSH 页面聚焦时把 @路径:行号 插入输入框光标处。",
   "keywords": [

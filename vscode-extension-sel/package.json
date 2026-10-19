@@ -4,6 +4,7 @@
   "description": "把 VS Code 中选中的代码位置推送到浏览器里运行的 DSH，聚焦 DSH 窗口时插入到输入框光标处。",
   "version": "0.1.0",
   "publisher": "doodle",
+  "author": "doodle",
   "license": "MIT",
   "engines": {
     "vscode": "^1.85.0"
@@ -17,6 +18,7 @@
     "dsh",
     "selection"
   ],
+  "icon": "./icon.png",
   "main": "./extension.js",
   "activationEvents": [
     "onCommand:dshSel.sendSelection"
@@ -82,6 +84,6 @@
     }
   },
   "scripts": {
-    "package": "npx @vscode/vsce package"
+    "package": "npx @vscode/vsce@2.32.0 package"
   }
 }

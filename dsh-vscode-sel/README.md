@@ -42,6 +42,10 @@ VS Code 扩展 ──POST /api/dsh-vscode-sel/push──▶ DSH host 信箱（�
 
 ## 安装
 
+> ⚠️ **不要**把这个目录交给 VS Code 的 `Developer: Install Extension from Location...`。
+> 本目录是 **DSH 插件**（`dsh-vscode-sel`），不是 VS Code 扩展，安装进 VS Code 会被报
+> `属性"engines"是必要属性，其类型必须是 object`。配套的 VS Code 扩展在 `E:\Doodle\vscode-extension-sel`。
+
 ```powershell
 cd C:\Users\TD\.dsh\profiles\web
 pnpm remove dsh-vscode-sel

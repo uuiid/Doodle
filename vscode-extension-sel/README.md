@@ -38,15 +38,65 @@ DSH 输入框光标处出现：
 
 ## 安装
 
+### 方式一：手工放进扩展目录（推荐）
+
+本扩展无编译步骤，`extension.js` 就是全部运行时。把整个目录拷进 VS Code 扩展目录即可跳过任何安装工具：
+
+```powershell
+$dest = "$env:USERPROFILE\.vscode\extensions\doodle.dsh-sel-bridge-0.1.0"
+New-Item -ItemType Directory -Force -Path $dest | Out-Null
+Copy-Item 'E:\Doodle\vscode-extension-sel\*' $dest -Recurse -Force
+```
+
+目录名必须是 `<publisher>.<name>-<version>`，与 `package.json` 一致。改完 `Ctrl+Shift+P` → `Reload Window`，扩展视图里搜 `DSH Selection Bridge`。
+
+### 方式二：vsix
+
 ```powershell
 cd E:\Doodle\vscode-extension-sel
-npx @vscode/vsce package
+npx @vscode/vsce@2.32.0 package
 code --install-extension .\dsh-sel-bridge-0.1.0.vsix
 ```
 
-开发调试时也可以直接按 `F5` 启动扩展开发宿主。
+### 方式三：F5 开发宿主
+
+用 VS Code 打开 `E:\Doodle\vscode-extension-sel` 目录，按 `F5` 启动扩展开发宿主，在那里验证命令。
 
 > 需要 VS Code ≥ 1.85（依赖内置 Node 18+ 的全局 `fetch`）。
+
+### ⚠️ 不要对 `E:\Doodle\dsh-vscode-sel` 使用 Install Extension from Location
+
+`E:\Doodle` 下有**两个都叫 `*-vscode-sel` 的目录**，极易选错：
+
+| 目录 | 是什么 | 该不该给 VS Code 安装 |
+| --- | --- | --- |
+| `E:\Doodle\vscode-extension-sel` | **VS Code 扩展**（`dsh-sel-bridge`，有 `engines`）| 要 |
+| `E:\Doodle\dsh-vscode-sel` | **DSH 插件**（`dsh-vscode-sel`，服务端 + 浏览器端，**没有 `engines`**）| **不要** |
+
+把 DSH 插件目录交给 `Developer: Install Extension from Location...`，会安装出一个 `undefined_publisher.dsh-vscode-sel`，并在 Extensions 输出通道里持续刷：
+
+```
+[/E:/Doodle/dsh-vscode-sel]: 属性"engines"是必要属性，其类型必须是 `object`
+```
+
+这不是 VS Code 扩展的代码问题，是**选错了目录**。先卸载那个无效条目，再按上面的方式一安装正确的目录：
+
+```powershell
+$dest = "$env:USERPROFILE\.vscode\extensions\doodle.dsh-sel-bridge-0.1.0"
+New-Item -ItemType Directory -Force -Path $dest | Out-Null
+Copy-Item 'E:\Doodle\vscode-extension-sel\*' $dest -Recurse -Force
+```
+
+`dsh-vscode-sel` 这个 DSH 插件走它自己的 `README.md` 里的 `pnpm add` 安装流程。
+
+### 安装时可能遇到的报错
+
+| 报错 | 原因与处理 |
+| --- | --- |
+| `属性 engines 是必要属性，其类型必须是 object` | **选错目录**了：选到了 `E:\Doodle\dsh-vscode-sel`（DSH 插件，确实没有 `engines`）。见上一节 |
+| `Missing publisher name` | `package.json` 缺 `publisher` 字段 |
+| 装上了但命令面板搜不到命令 | 没执行 `Reload Window`；或扩展目录名不是 `<publisher>.<name>-<version>` 形式 |
+| `@vscode/vsce` 安装失败 / Node 版本不符 | `vsce@4` 要求 Node ≥ 22、`vsce@3` 要求 ≥ 20；锁定 `@vscode/vsce@2.32.0` 可兼容 Node 16+ |
 
 ## 与旧扩展的区别
 
