@@ -39,7 +39,6 @@
     }
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "*",
-    "react": "^18.2.0"
+    "@deepseek-ai/cordis": "*"
   }
 }

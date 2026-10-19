@@ -1,99 +1,165 @@
-// dsh-drop-caret client bundle (ModuleLoader format)
-// dsh-drop-caret client bundle (ModuleLoader format)
-// dsh-drop-caret client half: document-level file drop handler that maps the
-// drop point to a caret offset in the composer and inserts each file reference
-// exactly there (instead of appending to the end).
+// dsh-drop-caret client half: a document-level file drop handler that inserts
+// each dropped file reference into the composer instead of appending to it.
 //
 // Two drop sources (URI 来源优先——拖入即引用源文件本身，不产生副本):
 //   1. VS Code Explorer — `text/uri-list` / `application/vnd.code.tree` →
 //      parse the local file:// URI to a path, insert it directly (源文件路径).
-//   2. OS file manager — only `Files` in dataTransfer；浏览器（现代 Electron 已
-//      移除 File.path）无法取得真实路径，此时才退化为上传落盘到
-//      `.dsh-drop/<sessionId>/` 并插入该副本路径；若运行环境仍提供 file.path
-//      则直接使用真实路径。
+//   2. OS file manager — only `Files` in dataTransfer；浏览器拿不到真实路径时
+//      退化为上传落盘到 `.dsh-drop/<sessionId>/` 并插入该副本路径。
 // NOTE: VS Code Explorer 拖拽同时携带 Files 与 text/uri-list，故类型判定必须
 // 先判 URI 类型，否则会被误判为 OS 拖入而去落盘副本。
 //
-// IMPORTANT: listeners run in the CAPTURE phase and stop propagation, so the
-// DSH built-in image-drop handler never sees a non-image file (which is what
-// produced the "仅支持PNG/JPG/WebP/GIF" error + blue box).
+// The composer is a Lexical contenteditable div (`[data-composer-input]`), not a
+// textarea: it has no selectionStart (so the old caret read was always -1) and
+// firing `slash/input-insert-reference` with `emit` never reached the shell's
+// bail listener. The drop point is now translated into the editor's detect
+// coordinates and applied through `bail`, re-reading draftRev right before each
+// insert so an upload round-trip cannot invalidate the span.
+//
+// There is no UI half: the plugin registers no slot component at all.
 
-window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: (require) => {
+window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: () => {
   var module = { exports: {} }
   var exports = module.exports
-  var React = require('react')
 
   var SOURCE_NAME = 'dsh-drop-caret'
 
-  /** basename，兼容 Windows \ 与 POSIX / 分隔符。 */
+  /** composer 的根选择器（Lexical 渲染出的 contenteditable div）。 */
+  var COMPOSER = '[data-composer-input]'
+
   function basenameOf(path) {
     var i = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'))
     return i === -1 ? path : path.slice(i + 1)
   }
 
-  /** 把 drop 视口坐标映射成 composer textarea 的字符偏移（镜像 div + caretRangeFromPoint）。 */
-  function caretOffsetFromPoint(x, y) {
-    var ta = document.querySelector('textarea')
-    if (ta === null) return -1
-    var cs = getComputedStyle(ta)
-    var r = ta.getBoundingClientRect()
-    var m = document.createElement('div')
-    var props = [
-      'boxSizing', 'width', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
-      'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
-      'fontStyle', 'fontVariant', 'fontWeight', 'fontSize', 'fontFamily',
-      'lineHeight', 'letterSpacing', 'tabSize', 'whiteSpace', 'wordBreak', 'textAlign'
-    ]
-    for (var i = 0; i < props.length; i++) {
-      try { m.style[props[i]] = cs[props[i]] } catch (e) { /* ignore */ }
-    }
-    m.style.position = 'fixed'
-    m.style.left = r.left + 'px'
-    m.style.top = r.top + 'px'
-    m.style.width = r.width + 'px'
-    m.style.minHeight = r.height + 'px'
-    m.style.whiteSpace = 'pre-wrap'
-    m.style.wordBreak = 'break-word'
-    m.style.color = 'transparent'
-    m.style.background = 'transparent'
-    m.style.zIndex = '2147483647'
-    m.style.pointerEvents = 'none'
-    m.contentEditable = 'true'
-    m.textContent = ta.value || ''
-    document.body.appendChild(m)
-
-    var value = ta.value || ''
-    var offset = value.length
-    try {
-      var rg = document.caretRangeFromPoint(x, y)
-      if (rg && rg.startContainer && m.contains(rg.startContainer)) {
-        offset = rg.startOffset
-      }
-    } catch (e) { /* fall back to append */ }
-    m.remove()
-    return offset
+  function composerRoot() {
+    return document.querySelector(COMPOSER)
   }
 
-  /** 在指定字符偏移处插入文件引用（label 显示文件名，clipboardText 为路径）。 */
-  function insertReferenceAt(actx, ref, label, offset) {
+  function toArray(list) {
+    return Array.prototype.slice.call(list || [])
+  }
+
+  /** 在 detect 投影里占一个 U+FFFC 的节点：引用/命令 chip、换行前缀、`<br>`。 */
+  function isAtomic(node) {
+    return node.nodeType === 1 && (node.hasAttribute('data-lexical-decorator') || node.tagName === 'BR')
+  }
+
+  /** 根之下每个 block（paragraph）之间都贡献一个换行断点。 */
+  function isBlock(node) {
+    return node.nodeType === 1 && node.parentNode !== null && node.parentNode.hasAttribute('data-composer-input')
+  }
+
+  /** 根内文档的 detect 长度（与 composer 的 clipboard 投影一一对齐）。 */
+  function detectLength(root) {
+    var length = 0
+    var blocks = 0
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT)
+    for (var current = walker.nextNode(); current !== null; current = walker.nextNode()) {
+      if (current.nodeType === 3) {
+        length += current.length
+        continue
+      }
+      if (isAtomic(current)) {
+        length += 1
+        continue
+      }
+      if (isBlock(current)) blocks += 1
+    }
+    return length + Math.max(0, blocks - 1)
+  }
+
+  /** 把浏览器选区折叠到 (node, offset)，chip 之类元素节点也要落到元素边界上。 */
+  function placeCaret(node, offset) {
+    var selection = window.getSelection()
+    if (selection === null) return
+    var range = document.createRange()
+    if (node.nodeType === 3) range.setStart(node, offset)
+    else if (offset < node.childNodes.length) range.setStart(node, offset)
+    else range.setStartAfter(node)
+    range.collapse(true)
+    selection.removeAllRanges()
+    selection.addRange(range)
+  }
+
+  /** 拖放点 → 把 composer 的插入点移动到拖放处；坐标不在 composer 内则不动。 */
+  function moveCaretToPoint(root, x, y) {
+    var caret = document.caretRangeFromPoint(x, y)
+    if (!caret || caret.startContainer === null || caret.startContainer === undefined) return
+    if (!root.contains(caret.startContainer)) return
+    placeCaret(caret.startContainer, caret.startOffset)
+  }
+
+  /**
+   * 拖放点对应的 detect 偏移：从根遍历到落点所在位置为止，文本算码元、
+   * chip/换行算一个 U+FFFC、block 之间算一个换行——与 composer 的 clipboard
+   * 投影一一对齐。落点不在根内时返回 null。
+   */
+  function detectOffsetOf(root, caret) {
+    var container = caret.startContainer
+    if (!root.contains(container)) return null
+    var offset = caret.startOffset
+    var probe = document.createRange()
+    probe.setStart(root, 0)
+    if (container.nodeType === 3 || offset < container.childNodes.length) probe.setEnd(container, offset)
+    else probe.setEndAfter(container)
+    var total = 0
+    var blocks = 0
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT)
+    for (var current = walker.nextNode(); current !== null; current = walker.nextNode()) {
+      if (current.nodeType === 3) {
+        if (current === container) {
+          total += Math.min(probe.endOffset, current.length)
+          return total + Math.max(0, blocks - 1)
+        }
+        total += current.length
+        continue
+      }
+      if (isAtomic(current)) {
+        if (current === container) return total + Math.min(probe.endOffset, 1) + Math.max(0, blocks - 1)
+        total += 1
+        continue
+      }
+      if (isBlock(current)) blocks += 1
+    }
+    return total + Math.max(0, blocks - 1)
+  }
+
+  /**
+   * 一次插入的地址：draftRev 与位置在同一次读取里拿到，插入前现取，
+   * 因此上传/列目录往返期间用户继续输入也不会让 span 的 revision 校验失败。
+   * @param ctx - 插件上下文。
+   * @param sessionId - 目标会话。
+   * @param anchor - 拖放点的 detect 偏移；null 表示落在文档末尾。
+   */
+  function insertionSpan(ctx, sessionId, anchor) {
+    var root = composerRoot()
+    if (root === null) return null
+    var actx = ctx.sessions.scope(sessionId)
+    if (actx === undefined) return null
     var conversation = actx.get('conversation')
-    if (conversation === undefined) throw new Error('conversation service unavailable')
-    var input = conversation.input.for(actx)
-    var state = input.state.getSnapshot()
-    var draftLen = state.draft.length
-    var pos = offset < 0 || offset > draftLen ? draftLen : offset
-    actx.emit('slash/input-insert-reference', {
+    if (conversation === undefined) return null
+    var state = conversation.input.for(actx).state.getSnapshot()
+    if (state.phase === 'adjudicating' || state.phase === 'submitting') return null
+    var at = anchor === null ? detectLength(root) : Math.min(anchor, detectLength(root))
+    return { actx: actx, span: { start: at, end: at, draftRev: state.draftRev } }
+  }
+
+  /** 在 anchor 处插入一条文件引用（label 显示文件名，clipboardText 为路径）。 */
+  function insertReference(ctx, sessionId, anchor, ref, label) {
+    var current = insertionSpan(ctx, sessionId, anchor)
+    if (current === null) return false
+    return current.actx.bail(current.actx, 'slash/input-insert-reference', {
       reference: {
         source: SOURCE_NAME,
         ref: ref,
         label: label,
         clipboardText: ref
       },
-      span: { start: pos, end: pos, draftRev: state.draftRev }
-    })
+      span: current.span
+    }) === true
   }
 
-  /** Windows 盘符路径统一为 `V:\a\b` 风格（盘符大写、反斜杠），与拖拽前路径一致。 */
   function normalizeWinPath(p) {
     if (/^[A-Za-z]:[\\/]/.test(p)) {
       return p.charAt(0).toUpperCase() + ':' + p.slice(2).replace(/\//g, '\\')
@@ -101,7 +167,6 @@ window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: (require) => {
     return p
   }
 
-  /** file:// URI / Windows 盘符路径 / POSIX 绝对路径 → 本地路径；否则 null。 */
   function fileUriToPath(uri) {
     if (typeof uri !== 'string') return null
     var u = uri.trim()
@@ -141,7 +206,6 @@ window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: (require) => {
     return out
   }
 
-  /** 递归遍历 FileSystemEntry（目录/文件），收集所有文件（扁平化）。 */
   async function collectFilesFromEntry(entry) {
     if (entry.isFile) {
       return new Promise(function (resolve) {
@@ -164,8 +228,7 @@ window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: (require) => {
         var batch = await readBatch()
         if (batch.length === 0) break
         for (var k = 0; k < batch.length; k++) {
-          var sub = await collectFilesFromEntry(batch[k])
-          all = all.concat(sub)
+          all = all.concat(await collectFilesFromEntry(batch[k]))
         }
       }
       return all
@@ -179,36 +242,17 @@ window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: (require) => {
     if (!items) return []
     var entries = []
     for (var i = 0; i < items.length; i++) {
-      var item = items[i]
-      if (item.kind !== 'file') continue
-      var entry = typeof item.webkitGetAsEntry === 'function' ? item.webkitGetAsEntry() : null
+      if (items[i].kind !== 'file') continue
+      var entry = typeof items[i].webkitGetAsEntry === 'function' ? items[i].webkitGetAsEntry() : null
       if (entry) entries.push(entry)
     }
     return entries
   }
 
-  /** 从已 snapshot 的 FileSystemEntry 列表收集文件（含目录递归），用于文件夹拖拽。 */
   async function collectFilesFromEntries(entries) {
-    if (!entries) return []
     var out = []
     for (var i = 0; i < entries.length; i++) {
-      var collected = await collectFilesFromEntry(entries[i])
-      out = out.concat(collected)
-    }
-    return out
-  }
-
-  /** 从 DataTransferItemList 收集文件（含目录递归），用于文件夹拖拽（files 为空时）。 */
-  async function collectFilesFromItems(items) {
-    if (!items) return []
-    var out = []
-    for (var i = 0; i < items.length; i++) {
-      var item = items[i]
-      if (item.kind !== 'file') continue
-      var entry = typeof item.webkitGetAsEntry === 'function' ? item.webkitGetAsEntry() : null
-      if (!entry) continue
-      var collected = await collectFilesFromEntry(entry)
-      out = out.concat(collected)
+      out = out.concat(await collectFilesFromEntry(entries[i]))
     }
     return out
   }
@@ -228,7 +272,6 @@ window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: (require) => {
     return payload.path
   }
 
-  /** 调用 Host 端 API 判断路径是文件还是文件夹（不再递归展开文件夹）。 */
   async function listDirectory(path) {
     var res = await fetch('/api/dsh-drop-list-dir', {
       method: 'POST',
@@ -241,29 +284,43 @@ window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: (require) => {
     return payload
   }
 
-  async function handleDrop(ctx, sessionId, payload, caret) {
-    var actx = ctx.sessions.scope(sessionId)
-    var pos = caret
+  /**
+   * 一条引用插完后的新锚点：chip 占一个 U+FFFC，后面跟着一个分隔空格
+   * （composer 在下一个字符不是空格时会补一个），所以推进两位。
+   */
+  function advance(anchor, root) {
+    var tail = root === null ? 0 : detectLength(root)
+    var next = anchor + 2
+    return next > tail ? tail : next
+  }
+
+  /**
+   * 把一次拖拽落成引用。每个引用轮到自己时才取 span（revision 现读现用），
+   * 并且每插一条就把锚点推到新 chip 之后，多条拖入保持拖拽顺序。
+   * @param anchor - 拖放点对应的 detect 偏移。
+   */
+  async function handleDrop(ctx, sessionId, payload, anchor) {
+    var at = anchor
     if (payload.kind === 'files') {
       // files 为空说明是「文件夹」拖拽：走 webkitGetAsEntry 递归收集目录里的文件。
       var files = payload.files
-      if (files.length === 0 && payload.entries && payload.entries.length > 0) {
+      if (files.length === 0 && payload.entries.length > 0) {
         files = await collectFilesFromEntries(payload.entries)
       }
       for (var i = 0; i < files.length; i++) {
         var file = files[i]
         try {
           // 优先使用真实路径（部分运行环境仍暴露 File.path）；拿不到时才上传落盘。
-          // 现代 Electron 已移除 File.path，OS 拖入无路径可用，故保留该兜底。
           var realPath = (typeof file.path === 'string' && file.path !== '') ? file.path : null
           var path = realPath || await uploadOne(sessionId, file)
-          insertReferenceAt(actx, path, file.name, pos)
-          pos += path.length + 1
+          if (insertReference(ctx, sessionId, at, path, file.name)) at = advance(at, composerRoot())
         } catch (e) {
-          console.error('[dsh-drop-caret] upload failed:', e)
+          console.error('[dsh-drop-caret] reference insert failed:', e)
         }
       }
-    } else if (payload.kind === 'uris') {
+      return
+    }
+    if (payload.kind === 'uris') {
       // VS Code Explorer 拖拽：可能是文件或文件夹。
       for (var j = 0; j < payload.uris.length; j++) {
         var p = fileUriToPath(payload.uris[j])
@@ -272,145 +329,113 @@ window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: (require) => {
           var info = await listDirectory(p)
           if (info.isDirectory) {
             // 文件夹：只插入文件夹路径本身（显示为「@文件夹名」），不展开子文件。
-            insertReferenceAt(actx, p, basenameOf(p), pos)
-            pos += p.length + 1
-          } else {
-            var paths = info.files || []
-            for (var k = 0; k < paths.length; k++) {
-              insertReferenceAt(actx, paths[k], basenameOf(paths[k]), pos)
-              pos += paths[k].length + 1
-            }
+            if (insertReference(ctx, sessionId, at, p, basenameOf(p))) at = advance(at, composerRoot())
+            continue
+          }
+          var paths = info.files || []
+          for (var k = 0; k < paths.length; k++) {
+            if (insertReference(ctx, sessionId, at, paths[k], basenameOf(paths[k]))) at = advance(at, composerRoot())
           }
         } catch (e) {
-          console.error('[dsh-drop-caret] list/insert failed:', e)
+          console.error('[dsh-drop-caret] reference insert failed:', e)
         }
       }
-    } else if (payload.kind === 'code') {
+      return
+    }
+    if (payload.kind === 'code') {
       // VS Code 扩展发来的选中代码段：插入「路径:起始行-结束行」引用，让模型能定位。
-      var ref = payload.path + ':' + payload.startLine + (payload.endLine > payload.startLine ? '-' + payload.endLine : '')
-      var label = basenameOf(payload.path) + ':' + payload.startLine + (payload.endLine > payload.startLine ? '-' + payload.endLine : '')
+      var range = payload.endLine > payload.startLine ? '-' + payload.endLine : ''
       try {
-        insertReferenceAt(actx, ref, label, caret)
+        insertReference(ctx, sessionId, at, payload.path + ':' + payload.startLine + range,
+          basenameOf(payload.path) + ':' + payload.startLine + range)
       } catch (e) {
-        console.error('[dsh-drop-caret] code insert failed:', e)
+        console.error('[dsh-drop-caret] reference insert failed:', e)
       }
     }
   }
 
-  /** 当前 composer textarea 光标位置；未聚焦返回 -1（追加到末尾）。 */
-  function getCurrentCaret() {
-    var ta = document.querySelector('textarea')
-    if (ta && typeof ta.selectionStart === 'number') return ta.selectionStart
-    return -1
+  /** 拖拽携带的引用来源；null 表示这次拖拽不归本插件管。 */
+  function dropKind(dataTransfer) {
+    if (!dataTransfer) return null
+    var types = toArray(dataTransfer.types)
+    // URI 来源优先：VS Code Explorer 拖拽会同时带 text/uri-list 与 Files，
+    // 先判 URI 才能拿到源文件真实路径（否则会走 Files 分支落盘副本）。
+    if (types.indexOf('text/uri-list') >= 0 || types.indexOf('application/vnd.code.tree') >= 0) return 'uris'
+    if (types.indexOf('Files') >= 0) return 'files'
+    return null
   }
 
-  function DropCaret(props) {
-    var handlerRef = React.useRef(props.onDrop)
-    handlerRef.current = props.onDrop
-
-    React.useEffect(function () {
-      var depth = 0
-      function kindOf(e) {
-        var dt = e.dataTransfer
-        if (!dt) return 'none'
-        var types = dt.types || []
-        // URI 来源优先：VS Code Explorer 拖拽会同时带 text/uri-list 与 Files，
-        // 先判 URI 才能拿到源文件真实路径（否则会走 Files 分支落盘副本）。
-        if (Array.prototype.indexOf.call(types, 'text/uri-list') >= 0 ||
-            Array.prototype.indexOf.call(types, 'application/vnd.code.tree') >= 0) return 'uris'
-        if (Array.prototype.indexOf.call(types, 'Files') >= 0) return 'files'
-        return 'none'
-      }
-      function isOurs(k) {
-        return k === 'files' || k === 'uris'
-      }
-      function onDragEnter(e) {
-        var k = kindOf(e)
-        if (!isOurs(k)) return
-        e.preventDefault()
-        e.stopPropagation()
-        depth += 1
-      }
-      function onDragOver(e) {
-        var k = kindOf(e)
-        if (!isOurs(k)) return
-        e.preventDefault()
-        e.stopPropagation()
-      }
-      function onDragLeave(e) {
-        var k = kindOf(e)
-        if (!isOurs(k)) return
-        e.stopPropagation()
-        if (e.relatedTarget === null) depth = Math.max(0, depth - 1)
-      }
-      function onDrop(e) {
-        var k = kindOf(e)
-        if (!isOurs(k)) return
-        // 抢在 DSH 内置图片 drop 处理器之前：preventDefault + 停止传播，
-        // 避免「仅支持PNG…」报错与其全屏遮罩弹出/卡住。
-        e.preventDefault()
-        e.stopPropagation()
-        if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation()
-        depth = 0
-        var caret = caretOffsetFromPoint(e.clientX, e.clientY)
-        var dt = e.dataTransfer
-
-        if (k === 'files') {
-          // 无 URI 来源（真正的 OS 拖入）：浏览器拿不到真实路径，只能回退上传暂存。
-          console.warn('[dsh-drop-caret] 拖入无 text/uri-list，回退上传暂存；types=', dt.types)
-          handlerRef.current({ kind: 'files', files: Array.prototype.slice.call(dt.files || []), entries: snapshotEntries(dt) }, caret)
-          return
-        }
-        var uriList = dt.getData('text/uri-list')
-        if (uriList) {
-          var uris = parseUriList(uriList)
-          if (uris.length > 0) {
-            handlerRef.current({ kind: 'uris', uris: uris }, caret)
-            return
-          }
-        }
-        var treeData = dt.getData('application/vnd.code.tree')
-        if (treeData) {
-          var treeUris = extractUrisFromTree(treeData)
-          if (treeUris.length > 0) {
-            handlerRef.current({ kind: 'uris', uris: treeUris }, caret)
-            return
-          }
-        }
-      }
-      function onDragEnd() {
-        depth = 0
-      }
-      // 接收 VS Code 扩展（经 webview 转发）发来的「选中代码段」消息。
-      function onMessage(event) {
-        var data = event.data
-        if (!data || data.type !== 'insert-selection') return
-        if (typeof data.filePath !== 'string' || data.filePath === '') return
-        var s = Number(data.startLine) || 1
-        var e = Number(data.endLine) || s
-        handlerRef.current({ kind: 'code', path: data.filePath, startLine: s, endLine: e }, getCurrentCaret())
-      }
-
-      // window 捕获阶段 + 全生命周期拦截：抢在 DSH 内置拖拽/图片处理器之前，
-      // 且不让它的全屏遮罩弹出或卡住。
-      window.addEventListener('message', onMessage)
-      var W = window
-      W.addEventListener('dragenter', onDragEnter, true)
-      W.addEventListener('dragover', onDragOver, true)
-      W.addEventListener('dragleave', onDragLeave, true)
-      W.addEventListener('drop', onDrop, true)
-      W.addEventListener('dragend', onDragEnd, true)
-      return function () {
-        window.removeEventListener('message', onMessage)
-        W.removeEventListener('dragenter', onDragEnter, true)
-        W.removeEventListener('dragover', onDragOver, true)
-        W.removeEventListener('dragleave', onDragLeave, true)
-        W.removeEventListener('drop', onDrop, true)
-        W.removeEventListener('dragend', onDragEnd, true)
-      }
-    }, [])
-
+  /** 从一次 drop 事件取出 payload；拖拽数据只能在事件同步阶段读。 */
+  function payloadOf(kind, dataTransfer) {
+    if (kind === 'files') {
+      // 无 URI 来源（真正的 OS 拖入）：浏览器拿不到真实路径，只能回退上传暂存。
+      return { kind: 'files', files: toArray(dataTransfer.files), entries: snapshotEntries(dataTransfer) }
+    }
+    var uriList = dataTransfer.getData('text/uri-list')
+    if (uriList) {
+      var uris = parseUriList(uriList)
+      if (uris.length > 0) return { kind: 'uris', uris: uris }
+    }
+    var treeData = dataTransfer.getData('application/vnd.code.tree')
+    if (treeData) {
+      var treeUris = extractUrisFromTree(treeData)
+      if (treeUris.length > 0) return { kind: 'uris', uris: treeUris }
+    }
     return null
+  }
+
+  /**
+   * 在 window 捕获阶段接管拖拽（抢在 DSH 内置图片 drop 处理器之前），
+   * 返回卸载函数。
+   */
+  function installDropCapture(ctx) {
+    function sessionIdOf() {
+      return ctx.sessions.current.getSnapshot()
+    }
+    function onDragOver(event) {
+      var kind = dropKind(event.dataTransfer)
+      if (kind === null) return
+      var root = composerRoot()
+      var over = event.target
+      if (root === null || !(over instanceof Node) || !root.contains(over)) return
+      event.preventDefault()
+      event.dataTransfer.dropEffect = 'copy'
+      event.stopPropagation()
+    }
+    function onDrop(event) {
+      var kind = dropKind(event.dataTransfer)
+      if (kind === null) return
+      var root = composerRoot()
+      var target = event.target
+      if (root === null || !(target instanceof Node) || !root.contains(target)) return
+      // DSH 内置处理器收到非图片文件会报「仅支持 PNG/JPG/WebP/GIF」并弹全屏遮罩。
+      event.preventDefault()
+      event.stopPropagation()
+      if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation()
+      var payload = payloadOf(kind, event.dataTransfer)
+      if (payload === null) return
+      var caret = document.caretRangeFromPoint(event.clientX, event.clientY)
+      var anchor = caret === null ? null : detectOffsetOf(root, caret)
+      moveCaretToPoint(root, event.clientX, event.clientY)
+      handleDrop(ctx, sessionIdOf(), payload, anchor)
+    }
+    // VS Code 扩展（经 webview 转发）发来的「选中代码段」。
+    function onMessage(event) {
+      var data = event.data
+      if (!data || data.type !== 'insert-selection') return
+      if (typeof data.filePath !== 'string' || data.filePath === '') return
+      var start = Number(data.startLine) || 1
+      var end = Number(data.endLine) || start
+      handleDrop(ctx, sessionIdOf(), { kind: 'code', path: data.filePath, startLine: start, endLine: end }, null)
+    }
+    window.addEventListener('dragover', onDragOver, true)
+    window.addEventListener('drop', onDrop, true)
+    window.addEventListener('message', onMessage)
+    return function () {
+      window.removeEventListener('dragover', onDragOver, true)
+      window.removeEventListener('drop', onDrop, true)
+      window.removeEventListener('message', onMessage)
+    }
   }
 
   function apply(ctx) {
@@ -428,29 +453,12 @@ window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: (require) => {
         }
       })
     })
-    ctx.slots.inject('conversation.input.left', function () {
-      return ctx.slots.register(
-        {
-          name: 'conversation.input.left',
-          id: 'dsh-drop-caret',
-          order: 0,
-          inject: function (sessionId) {
-            return {
-              onDrop: function (payload, caret) {
-                return handleDrop(ctx, sessionId, payload, caret)
-              }
-            }
-          }
-        },
-        DropCaret
-      )
+    ctx.effect(function () {
+      return installDropCapture(ctx)
     })
   }
 
   exports.apply = apply
-  exports.inject = ['slots', 'inputTriggers', 'sessions']
+  exports.inject = ['inputTriggers', 'sessions']
   return module.exports
 } })
-
-// [end of dsh-drop-caret client bundle]
-// [end of dsh-drop-caret client bundle]
