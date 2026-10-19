@@ -3,7 +3,6 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/ai_light/common.h>
 #include <doodle_core/metadata/ai_light/reference.h>
-#include <doodle_core/metadata/ai_light/rig.h>
 #include <doodle_core/metadata/base.h>
 
 #include <cstdint>
@@ -95,8 +94,6 @@ struct DOODLE_CORE_API ai_light_candidate {
   uuid iteration_id_{};
   uuid session_id_{};
 
-  nlohmann::json rig_{};
-
   candidate_render_status render_status_{candidate_render_status::pending};
 
   nlohmann::json metrics_{};
@@ -107,8 +104,6 @@ struct DOODLE_CORE_API ai_light_candidate {
 
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
 
-  lighting_rig_t get_rig() const { return rig_.get<lighting_rig_t>(); }
-  void set_rig(const lighting_rig_t& in_rig) { rig_ = in_rig; }
   candidate_metrics_t get_metrics() const { return metrics_.get<candidate_metrics_t>(); }
   void set_metrics(const candidate_metrics_t& in_metrics) { metrics_ = in_metrics; }
 
@@ -116,7 +111,6 @@ struct DOODLE_CORE_API ai_light_candidate {
     j["id"]              = p.uuid_id_;
     j["iteration_id"]    = p.iteration_id_;
     j["session_id"]      = p.session_id_;
-    j["rig"]             = p.rig_;
     j["render_status"]   = p.render_status_;
     j["metrics"]         = p.metrics_;
     j["is_selected"]     = p.is_selected_;
@@ -127,7 +121,6 @@ struct DOODLE_CORE_API ai_light_candidate {
     if (j.contains("id")) j.at("id").get_to(p.uuid_id_);
     if (j.contains("iteration_id")) j.at("iteration_id").get_to(p.iteration_id_);
     if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
-    if (j.contains("rig")) j.at("rig").get_to(p.rig_);
     if (j.contains("render_status")) j.at("render_status").get_to(p.render_status_);
     if (j.contains("metrics")) j.at("metrics").get_to(p.metrics_);
     if (j.contains("is_selected")) j.at("is_selected").get_to(p.is_selected_);

@@ -172,7 +172,6 @@ orm::sql_modify_statement_vector_t write_submitted_iteration(
 
     auto l_rig          = in_request.rigs_.at(l_i);
     l_rig.candidate_id_ = l_cand.uuid_id_;
-    l_cand.set_rig(l_rig);
     l_rig_set.rigs_.emplace_back(std::move(l_rig));
 
     l_candidates.emplace_back(std::move(l_cand));

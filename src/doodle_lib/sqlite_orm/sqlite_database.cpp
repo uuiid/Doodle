@@ -439,7 +439,6 @@ void sqlite_storage::regs_all() {
       .add_column("uuid_id", &ai_light::ai_light_candidate::uuid_id_, unique(), not_null())
       .add_column("iteration_id", &ai_light::ai_light_candidate::iteration_id_, not_null())
       .add_column("session_id", &ai_light::ai_light_candidate::session_id_, not_null())
-      .add_column("rig", &ai_light::ai_light_candidate::rig_)
       // 产物路径**没有列**：由 session_id_ / iteration_id_ / uuid_id_ 现算（D44）。
       .add_column("render_status", &ai_light::ai_light_candidate::render_status_)
       .add_column("metrics", &ai_light::ai_light_candidate::metrics_)
