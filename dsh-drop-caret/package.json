@@ -1,0 +1,45 @@
+{
+  "name": "dsh-drop-caret",
+  "version": "0.2.3",
+  "description": "DeepSeek Harness 插件：把文件/文件夹从系统文件管理器或 VS Code 资源管理器拖进对话输入框，并在拖放点对应的精确光标位置插入文件引用（文件插入 @文件名，文件夹只插入 @文件夹名、不展开子文件）。",
+  "keywords": [
+    "deepseek",
+    "harness",
+    "dsh",
+    "cordis",
+    "plugin",
+    "drag",
+    "drop",
+    "upload",
+    "caret"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime"
+      ],
+      "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "react": "^18.2.0"
+  }
+}
