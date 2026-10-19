@@ -21,11 +21,11 @@ inline std::string make_iteration_relative_dir(const uuid& in_session_id, const 
   return fmt::format("{}/{}", in_session_id, in_iteration_id);
 }
 
-inline std::string make_candidate_file_name(const uuid& in_candidate_id, bool in_linear) {
-  return fmt::format("{}{}", in_candidate_id, in_linear ? ".exr" : ".png");
-}
+inline std::string make_candidate_file_name(const uuid& in_candidate_id) { return fmt::format("{}.png", in_candidate_id); }
 
-inline std::string make_candidate_frames_dir(const uuid& in_candidate_id) { return fmt::format("{}/", in_candidate_id); }
+inline std::string make_candidate_frames_dir(const uuid& in_candidate_id) {
+  return fmt::format("{}/MRQ/", in_candidate_id);
+}
 
 inline std::string make_candidate_movie_file(const uuid& in_candidate_id) {
   return fmt::format("{}.mp4", in_candidate_id);

@@ -157,7 +157,7 @@ boost::asio::awaitable<void> apply_render_report(
     l_cand.metrics_           = l_rep.metrics_;
 
     if (l_cand.render_status_ == candidate_render_status::rendered) {
-      const FSys::path l_png    = candidate_render_path(in_ctx, l_cand, false);
+      const FSys::path l_png    = candidate_render_path(in_ctx, l_cand);
       const FSys::path l_movie  = candidate_movie_path(in_ctx, l_cand);
       const bool l_png_exists   = FSys::exists(l_png);
       const bool l_movie_exists = FSys::exists(l_movie);
@@ -171,14 +171,6 @@ boost::asio::awaitable<void> apply_render_report(
             l_movie.generic_string(), l_movie_exists ? "在" : "不在"
         );
       }
-    }
-
-    const FSys::path l_exr = candidate_render_path(in_ctx, l_cand, true);
-    if (!FSys::exists(l_exr)) {
-      SPDLOG_LOGGER_WARN(
-          g_logger_ctrl().get_http(), "AI 灯光回传：候选 {}（轮次 {}）的线性 EXR 不在 {}（可选产物，不影响本轮判断）",
-          l_cand.uuid_id_, l_it->iteration_, l_exr.generic_string()
-      );
     }
 
     l_candidates.emplace_back(std::move(l_cand));

@@ -63,7 +63,7 @@ struct DOODLELIB_API ai_light_iteration_locator_t {
   std::int32_t iteration_{0};
 };
 
-/// 候选渲染产物的落点（D44）：**唯一**的计算处。
+/// 候选首帧海报的落点（D44）：**唯一**的计算处。
 ///
 /// 会话 / 轮次 / 候选三个 uuid 都在候选行上（`session_id_` / `iteration_id_` / `uuid_id_`），
 /// 所以「候选 → 产物路径」是一次纯计算：候选没有路径列，候选 JSON 里也没有路径键。
@@ -73,19 +73,13 @@ struct DOODLELIB_API ai_light_iteration_locator_t {
 ///   * 布局基准是 `kitsu_ctx_t::root_`，那是运行期配置，不属于候选行；
 ///   * 单测（test_main）里 `g_ctx()` 不可用，而 `kitsu_ctx_t` 可以在栈上构造
 ///     （见 src/test/core/ai_light_paths.cpp 的 make_ctx）。
-inline FSys::path candidate_render_path(
-    const http::kitsu_ctx_t& in_ctx, const ai_light_candidate& in_candidate, bool in_linear = false
-) {
-  return in_ctx.get_ai_light_candidate_file(
-      in_candidate.session_id_, in_candidate.iteration_id_, in_candidate.uuid_id_, in_linear
-  );
+inline FSys::path candidate_render_path(const http::kitsu_ctx_t& in_ctx, const ai_light_candidate& in_candidate) {
+  return in_ctx.get_ai_light_candidate_thumbnail_file(in_candidate.uuid_id_);
 }
 
-/// 候选视频的落点（D44/D47）：与 candidate_render_path 同一套推导，只是产物换成 `.mp4`。
+/// 候选视频的落点（D44/D47）：取自 sd2 的媒体目录，只是文件名是候选 uuid、后缀 `.mp4`。
 inline FSys::path candidate_movie_path(const http::kitsu_ctx_t& in_ctx, const ai_light_candidate& in_candidate) {
-  return in_ctx.get_ai_light_candidate_movie_file(
-      in_candidate.session_id_, in_candidate.iteration_id_, in_candidate.uuid_id_
-  );
+  return in_ctx.get_ai_light_candidate_movie_file(in_candidate.uuid_id_);
 }
 
 /// worker 回传渲染完成后调用（§10.3 的「落 iteration → 置 awaiting_judgement」）。

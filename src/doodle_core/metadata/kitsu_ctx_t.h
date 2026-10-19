@@ -46,18 +46,12 @@ struct kitsu_ctx_t {
     return root_ / "ue_plugins" / fmt::format("UE_{}.{}.{}.zip", in_major, in_minor, in_patch);
   }
 
-  // seedance2_thumbnail
   FSys::path get_sd2_thumbnail_file(const uuid& in_uuid) {
     return root_ / "sd2" / "thumbnails" / FSys::split_uuid_path(fmt::format("{}.png", in_uuid));
   }
-  // seedance2_pictures
   FSys::path get_sd2_pictures_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / "sd2" / "pictures" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
   }
-  // seedance2_canvas_media — 按 media_role 路由到不同子目录，缩略图固定 .png
-  // 注意: 这里的 media_role 必须写全 `doodle::seedance2::`。本结构体位于 namespace doodle::http 内,
-  // 一旦 `doodle::http::seedance2` 这个名字空间先被声明(例如先 include 了 http_client 下的头),
-  // 裸写 `seedance2::media_role` 就会优先绑定到 doodle::http::seedance2 而编译失败。
   FSys::path get_sd2_canvas_media_file(
       const uuid& in_uuid, doodle::seedance2::media_role in_role, const std::string& in_ext = {}
   ) {
@@ -106,8 +100,6 @@ struct kitsu_ctx_t {
   }
   FSys::path get_attachment_file(const uuid& in_uuid) { return root_ / get_attachment_file_(in_uuid); }
 
-  // 外包获取
-
   FSys::path get_outsource_pictures_original_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / "outsource" / get_source_file(in_uuid, true, in_ext);
   }
@@ -115,73 +107,19 @@ struct kitsu_ctx_t {
     return root_ / "outsource" / get_preview_file_path(in_uuid, true, in_ext);
   }
 
-  // 获取时间
   FSys::path get_time() { return root_ / "time"; }
-  // 获取版本
   FSys::path get_version() { return root_ / "version.txt"; }
-  // seedance2 waiting
   FSys::path get_seedance2_waiting() { return root_ / "seedance2" / "animation" / "waiting.mp4"; }
 
-  // ---------------------------------------------------------------------------
-  // AI 灯光（docs/ue_ai_lighting_plan.md）
-  //
-  // 会话产物是**由 uuid 标识的生成物**，与 sd2 / pictures / jobs 同性质，所以挂在资产根
-  // root_ 下、和它们同一套约定，而不是挂在项目目录下：
-  //
-  //   <root>/ai_light/<s[0:3]>/<s[3:6]>/<会话 uuid>/ref/<参考图 uuid>.png
-  //   <root>/ai_light/<s[0:3]>/<s[3:6]>/<会话 uuid>/<轮次 uuid>/<候选 uuid>.png      ← 首帧海报
-  //   <root>/ai_light/<s[0:3]>/<s[3:6]>/<会话 uuid>/<轮次 uuid>/<候选 uuid>.mp4      ← 视频
-  //   <root>/ai_light/<s[0:3]>/<s[3:6]>/<会话 uuid>/<轮次 uuid>/<候选 uuid>/frame_*.png ← MRQ 逐帧
-  //   <root>/ai_light/<s[0:3]>/<s[3:6]>/<会话 uuid>/<轮次 uuid>/<候选 uuid>.exr      ← 可选，本轮不产
-  //
-  // 四个要点：
-  //   * **文件名就是各自的 uuid**，不用序号（序号落盘会撞车：同一目录下两张图都叫 ref_00）。
-  //     uuid 必须提前分配好，不能等 ORM 在 insert 时回填 —— 路径就是它的函数。
-  //   * **轮次目录也用轮次 uuid，不用序号**：候选行自带 session_id_ 与 iteration_id_，
-  //     于是「候选 → 产物路径」是一次纯计算，不必回查轮次行；序号会让路径依赖
-  //     「另一张表里那个可变字段」（也就没法只凭候选行算出落点）。
-  //   * **只有会话目录分桶**（split_uuid_path，与 sd2/jobs 一致）。分桶是为了不让单个目录
-  //     随会话数线性膨胀；而一个会话的参考图是几十张、单轮候选固定 6 张，内层再分桶只有噪声。
-  ///   * 因为只依赖 root_ 与会话 uuid，**不依赖 episode / shot / 项目路径** ——
-  //     少掉「算不出产物目录就没法上传参考图」这一整类失败。
-  //
-  // 帧序列放在候选自己的子目录里（<候选 uuid>/，D45/D47）：一轮 MRQ 会写出上百个 frame_*.png，
-  // 与同级的 .mp4/.png 混在一个目录里没法看；合成成 mp4 之后这些帧就只是工作机的现场。
-  //
-  // 参考图与中间候选渲染都**不注册 preview_file**，由专用接口从这些路径直接提供；
-  // 只有定稿候选才注册（source = auto_light_generate），免得镜头预览列表被 6×N 张候选淹没。
-  // ---------------------------------------------------------------------------
-
-  /// 某一轮的候选渲染目录。目录名就是**轮次自己的 uuid**（见上面第二个要点）。
-  FSys::path get_ai_light_iteration_dir(const uuid& in_session_id, const uuid& in_iteration_id) const {
-    return root_ / "ai_light" / FSys::split_uuid_path(fmt::to_string(in_session_id)) / fmt::to_string(in_iteration_id);
+  FSys::path get_ai_light_candidate_thumbnail_file(const uuid& in_candidate_id) const {
+    return root_ / "sd2" / "thumbnails" / FSys::split_uuid_path(fmt::format("{}.png", in_candidate_id));
   }
-  /// 单个候选的渲染图：文件名就是候选自己的 uuid。
-  /// in_linear = true 取线性 EXR（不下发浏览器），false 取显示空间 PNG。
-  FSys::path get_ai_light_candidate_file(
-      const uuid& in_session_id, const uuid& in_iteration_id, const uuid& in_candidate_id, bool in_linear = false
-  ) const {
-    return get_ai_light_iteration_dir(in_session_id, in_iteration_id) /
-           fmt::format("{}{}", in_candidate_id, in_linear ? ".exr" : ".png");
+  FSys::path get_ai_light_candidate_frames_dir(const uuid& in_candidate_id) const {
+    return root_ / "ai_light" / FSys::split_uuid_path(fmt::to_string(in_candidate_id)) / "MRQ";
   }
-  /// 单个候选的 MRQ 帧序列目录（D47）：文件名是 MRQ 自己定的 `frame_<帧号>.png`，
-  /// 目录名是候选 uuid（不然后一轮的帧会盖住前一轮）。
-  FSys::path get_ai_light_candidate_frames_dir(
-      const uuid& in_session_id, const uuid& in_iteration_id, const uuid& in_candidate_id
-  ) const {
-    return get_ai_light_iteration_dir(in_session_id, in_iteration_id) / fmt::to_string(in_candidate_id);
+  FSys::path get_ai_light_candidate_movie_file(const uuid& in_candidate_id) const {
+    return root_ / "sd2" / "pictures" / FSys::split_uuid_path(fmt::format("{}.mp4", in_candidate_id));
   }
-  /// 单个候选的视频（D47）：工作机把帧序列合成成它。
-  FSys::path get_ai_light_candidate_movie_file(
-      const uuid& in_session_id, const uuid& in_iteration_id, const uuid& in_candidate_id
-  ) const {
-    return get_ai_light_iteration_dir(in_session_id, in_iteration_id) / fmt::format("{}.mp4", in_candidate_id);
-  }
-  /// 删会话时的备份目标。
-  ///
-  /// 与 up_file_base（`root_path_ / "backup" / <小时> / …`）同构：备份挂在**自己这一片**根下，
-  /// 于是源与目标必然同卷、FSys::rename 不会因为「root_ 在本地盘而项目在 NAS」失败。
-  /// 时间戳由调用方给，本方法不读当前时间 —— 路径 getter 里藏一个时间依赖会让它没法测。
   FSys::path get_ai_light_backup_dir(const uuid& in_session_id, const std::string& in_time_str) const {
     return root_ / "ai_light" / "backup" / in_time_str / fmt::to_string(in_session_id);
   }

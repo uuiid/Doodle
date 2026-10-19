@@ -269,9 +269,8 @@ orm::sql_modify_statement_vector_t write_dispatched_iteration(
 
     l_payload_candidates.push_back(
         ai_light_task_candidate_t{
-            l_cand.uuid_id_, make_candidate_frames_dir(l_cand.uuid_id_),
-            make_candidate_file_name(l_cand.uuid_id_, false), make_candidate_file_name(l_cand.uuid_id_, true),
-            make_candidate_movie_file(l_cand.uuid_id_), l_rig
+            l_cand.uuid_id_, make_candidate_frames_dir(l_cand.uuid_id_), make_candidate_file_name(l_cand.uuid_id_),
+            FSys::path{}, make_candidate_movie_file(l_cand.uuid_id_), l_rig
         }
     );
   }
@@ -663,9 +662,7 @@ candidate_upload_target_t locate_upload_target(
   candidate_upload_target_t l_ret{};
   l_ret.candidate_  = in_sql.get_by_uuid<ai_light_candidate>(in_candidate_id);
   l_ret.iteration_  = in_sql.get_by_uuid<ai_light_iteration>(l_ret.candidate_.iteration_id_);
-  l_ret.frames_dir_ = in_ctx.get_ai_light_candidate_frames_dir(
-      l_ret.candidate_.session_id_, l_ret.candidate_.iteration_id_, l_ret.candidate_.uuid_id_
-  );
+  l_ret.frames_dir_ = in_ctx.get_ai_light_candidate_frames_dir(l_ret.candidate_.uuid_id_);
   return l_ret;
 }
 
