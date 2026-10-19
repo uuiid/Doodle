@@ -157,47 +157,60 @@ window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: () => {
    * `{ type: 'insert-selection', filePath, startLine, endLine, content, language }`
    * postMessage 进 iframe，需要落进对话框。
    *
-   * `ctx.sessions` 没有「当前会话」取值，会话身份只在 DOM 上：
-   * `[data-conversation-session]` 的 `dataset.conversationSession`（官方
-   * `installStopShortcut` 也是这样定位会话的）。拿到 id 后按公开用法
-   * `ctx.sessions.scope(id)` 取作用域，再用 `slash/input-insert-reference`
-   * 插入引用。`draftRev` 必须插入前一刻现读，否则编辑器以 revision 过期
-   * 拒绝；行号无法用引用表达，路径带 `:起始行[-结束行]`。
+   * 走浏览器原生插入：`ctx.conversation` 的 `slash/input-insert-reference`
+   * 要求 span 是编辑器 detect 投影坐标，而 detect 投影（chip 只占 1 字符）
+   * 与服务端可读的 clipboard 投影（chip 展开成路径）不同，外部算不出来，
+   * 空 span 会被 `selectSpan` 判越界而静默拒绝。因此这里不改编辑器模型，
+   * 直接在 composer 的 contenteditable 上按光标插入纯文本 `@路径:行号`。
    */
-  function installSelectionIntake(ctx) {
-    var SESSION_ATTR = 'data-conversation-session'
-
-    function liveSessionId() {
-      var nodes = document.querySelectorAll('[' + SESSION_ATTR + ']')
-      var seen = null
-      for (var i = 0; i < nodes.length; i++) {
-        var id = nodes[i].dataset ? nodes[i].dataset.conversationSession : null
-        if (typeof id !== 'string' || id === '') continue
-        if (seen !== null && seen !== id) return null
-        seen = id
-      }
-      return seen
+  function installSelectionIntake() {
+    function editorRoot() {
+      var host = document.querySelector('[data-composer-input]')
+      var scope = host === null ? document : host
+      var editable = scope.querySelector('[contenteditable="true"]')
+      if (editable !== null) return editable
+      return document.querySelector('[data-lexical-editor="true"]')
     }
 
-    function insert(ref, label) {
-      var sessionId = liveSessionId()
-      if (sessionId === null) return
-      var actx = ctx.sessions.scope(sessionId)
-      if (actx === undefined) return
-      var conversation = actx.get('conversation')
-      if (conversation === undefined) return
-      var state = conversation.input.for(actx).state.getSnapshot()
-      if (state.phase === 'adjudicating' || state.phase === 'submitting') return
-      actx.bail(actx, 'slash/input-insert-reference', {
-        reference: {
-          source: VSCode_SOURCE,
-          ref: ref,
-          label: label,
-          appearance: 'file',
-          clipboardText: ref
-        },
-        span: { start: state.draft.length, end: state.draft.length, draftRev: state.draftRev }
-      })
+    function caretRange(root) {
+      var selection = window.getSelection()
+      if (selection !== null && selection.rangeCount > 0) {
+        var live = selection.getRangeAt(0)
+        if (root.contains(live.startContainer)) {
+          var range = live.cloneRange()
+          range.collapse(false)
+          return range
+        }
+      }
+      var tail = document.createRange()
+      tail.selectNodeContents(root)
+      tail.collapse(false)
+      return tail
+    }
+
+    function insertText(text) {
+      var root = editorRoot()
+      if (root === null) return false
+      root.focus()
+      var range = caretRange(root)
+      var selection = window.getSelection()
+      if (selection === null) return false
+      selection.removeAllRanges()
+      selection.addRange(range)
+      var inserted = false
+      try {
+        inserted = document.execCommand('insertText', false, text)
+      } catch (e) {
+        inserted = false
+      }
+      if (inserted) return true
+      range.deleteContents()
+      range.insertNode(document.createTextNode(text))
+      range.collapse(false)
+      selection.removeAllRanges()
+      selection.addRange(range)
+      root.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }))
+      return true
     }
 
     function onMessage(event) {
@@ -207,7 +220,7 @@ window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: () => {
       var start = Number(data.startLine) || 1
       var end = Number(data.endLine) || start
       var range = end > start ? ':' + start + '-' + end : ':' + start
-      insert(data.filePath + range, basenameOf(data.filePath) + range)
+      insertText('@' + data.filePath + range + ' ')
     }
 
     window.addEventListener('message', onMessage)
@@ -221,10 +234,8 @@ window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: () => {
       return installHostPathBridge()
     })
     ctx.effect(function () {
-      return installSelectionIntake(ctx)
+      return installSelectionIntake()
     })
-    // 注册引用源：让 composer 认识 source=dsh-drop-caret 的引用，
-    // 并在发送时把引用还原成路径文本交给模型。
     ctx.effect(function () {
       return ctx.inputTriggers.registerSource({
         trigger: '@',
@@ -240,6 +251,6 @@ window.__ModuleLoader__.load({ id: 'dsh-drop-caret', factory: () => {
   }
 
   exports.apply = apply
-  exports.inject = ['inputTriggers', 'sessions']
+  exports.inject = ['inputTriggers']
   return module.exports
 } })
