@@ -639,11 +639,6 @@ candidate_upload_target_t locate_upload_target(
   l_ret.candidate_ = in_sql.get_by_uuid<ai_light_candidate>(in_candidate_id);
   l_ret.iteration_ = in_sql.get_by_uuid<ai_light_iteration>(l_ret.candidate_.iteration_id_);
   l_ret.frames_dir_ = candidate_frames_dir(in_ctx, l_ret.candidate_);
-
-  DOODLE_CHICK_HTTP(
-      l_ret.iteration_.state_ != ai_light_iteration_state::judged, bad_request,
-      "AI 灯光轮次 {} 已判定，不再接受候选产物上传", l_ret.iteration_.iteration_
-  );
   return l_ret;
 }
 
