@@ -48,11 +48,13 @@ uuid session_id_{};
 uuid iteration_id_{};
 DOODLE_HTTP_FUN_END()
 
-// /api/doodle/ai/light/candidate/{}/file/{}
+// /api/doodle/ai/light/candidate/{}/{}
 DOODLE_HTTP_JWT_FUN(candidate_file_route)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid id_{};
-doodle::ai_light::ai_light_candidate_file_role role_{doodle::ai_light::ai_light_candidate_file_role::render};
+uuid candidate_id_{};
+doodle::ai_light::ai_light_candidate_upload_stage stage_{
+    doodle::ai_light::ai_light_candidate_upload_stage::begin_sequence
+};
 DOODLE_HTTP_FUN_END()
 
 // /api/doodle/ai/light/candidate/{}/movie

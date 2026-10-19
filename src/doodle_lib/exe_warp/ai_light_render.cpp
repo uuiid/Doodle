@@ -291,12 +291,10 @@ boost::asio::awaitable<void> ai_light_round_distributed::run() {
       }
 
       try {
-        co_await l_kitsu_client->upload_ai_light_candidate_file(
-            l_id, l_png, ai_light::ai_light_candidate_file_role::render
-        );
-        co_await l_kitsu_client->upload_ai_light_candidate_file(
-            l_id, l_movie, ai_light::ai_light_candidate_file_role::render_movie
-        );
+        co_await l_kitsu_client->begin_ai_light_candidate_sequence(l_id);
+        for (const auto& l_frame : l_frames)
+          co_await l_kitsu_client->upload_ai_light_candidate_frame(l_id, l_frame);
+        co_await l_kitsu_client->finish_ai_light_candidate_sequence(l_id);
       } catch (const std::exception& l_ex) {
         SPDLOG_LOGGER_ERROR(
             l_logger, "AI 灯光第 {} 轮：候选 {} 的产物上传失败，按失败处理：{}", payload_.iteration_, l_id, l_ex.what()

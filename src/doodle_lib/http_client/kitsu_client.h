@@ -185,14 +185,12 @@ class DOODLELIB_API kitsu_client {
   boost::asio::awaitable<nlohmann::json> post_ai_light_session_iterate(uuid in_session_id) const;
   // post /api/auth/login —— 本机客户端用发起人身份登录，拿到 access_token 后由 set_req_headers 带上。
   boost::asio::awaitable<std::string> login(const std::string& in_email, const std::string& in_password);
-  // post /api/doodle/ai/light/candidate/{candidate_id}/file/{render|render_linear|render_movie}
-  // —— 工作机上传单个候选产物（D40）。role 决定 URL 段，也决定服务端把它落到哪里：
-  // render = 首帧海报 PNG（必传）、render_movie = 候选视频 mp4（必传）、render_linear = 线性 EXR（可选）。
-  // 成功判据是 204；失败抛 doodle_error，由调用方决定是否阻断本轮。
-  boost::asio::awaitable<void> upload_ai_light_candidate_file(
-      uuid in_candidate_id, FSys::path in_file_path,
-      ai_light::ai_light_candidate_file_role in_role = ai_light::ai_light_candidate_file_role::render
-  ) const;
+  // post /api/doodle/ai/light/candidate/{candidate_id}/begin_sequence —— 开始上传候选的帧序列。
+  boost::asio::awaitable<void> begin_ai_light_candidate_sequence(uuid in_candidate_id) const;
+  // post /api/doodle/ai/light/candidate/{candidate_id}/upload_frame —— 上传候选的一帧。
+  boost::asio::awaitable<void> upload_ai_light_candidate_frame(uuid in_candidate_id, FSys::path in_frame_path) const;
+  // post /api/doodle/ai/light/candidate/{candidate_id}/finish_sequence —— 结束候选的帧序列上传。
+  boost::asio::awaitable<void> finish_ai_light_candidate_sequence(uuid in_candidate_id) const;
   // post /api/doodle/stop-server
   void stop_server() const;
   // 获取下一个任务

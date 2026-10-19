@@ -312,18 +312,41 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_maya(uuid in_task_i
   );
 }
 
-boost::asio::awaitable<void> kitsu_client::upload_ai_light_candidate_file(
-    uuid in_candidate_id, FSys::path in_file_path, ai_light::ai_light_candidate_file_role in_role
+boost::asio::awaitable<void> kitsu_client::begin_ai_light_candidate_sequence(uuid in_candidate_id) const {
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::post,
+      fmt::format("/api/doodle/ai/light/candidate/{}/begin_sequence", in_candidate_id), 11
+  };
+  set_req_headers(l_req, {});
+
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::no_content)
+    throw_exception(doodle_error{"kitsu begin ai light candidate sequence error {} {}", l_res.result(), l_res.body()});
+  co_return;
+}
+
+boost::asio::awaitable<void> kitsu_client::upload_ai_light_candidate_frame(
+    uuid in_candidate_id, FSys::path in_frame_path
 ) const {
-  // URL 段直接用枚举名（magic_enum），与服务端路由的正则白名单同源；
-  // 这段 URL 的字面量与 ai_light.h 的 g_candidate_file_path_template 是同一份契约
-  // （服务端路由注册那边也只能写字面量，UDL 接不了常量）。改一处必须改两处。
   return upload_asset_file(
-      fmt::format(
-          "/api/doodle/ai/light/candidate/{}/file/{}", in_candidate_id, magic_enum::enum_name(in_role)
-      ),
-      in_file_path, base64_encode(in_file_path.filename().generic_string())
+      fmt::format("/api/doodle/ai/light/candidate/{}/upload_frame", in_candidate_id), in_frame_path,
+      base64_encode(in_frame_path.filename().generic_string())
   );
+}
+
+boost::asio::awaitable<void> kitsu_client::finish_ai_light_candidate_sequence(uuid in_candidate_id) const {
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::post,
+      fmt::format("/api/doodle/ai/light/candidate/{}/finish_sequence", in_candidate_id), 11
+  };
+  set_req_headers(l_req, {});
+
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::no_content)
+    throw_exception(doodle_error{"kitsu finish ai light candidate sequence error {} {}", l_res.result(), l_res.body()});
+  co_return;
 }
 
 std::vector<kitsu_client::update_file_arg> kitsu_client::update_file_arg::list_all_project_files(

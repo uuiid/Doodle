@@ -29,6 +29,7 @@
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/beast/http/status.hpp>
+#include <cpp-base64/base64.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -36,6 +37,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <opencv2/opencv.hpp>
 #include <optional>
+#include <regex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -619,59 +621,164 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
 }
 
 // ===========================================================================
-// 工作机上传候选产物（首帧海报 / 候选视频 / 线性 EXR）
+// 工作机上传候选的渲染帧序列（begin → 逐帧 → finish）
 // ===========================================================================
+
+namespace {
+
+struct candidate_upload_target_t {
+  ai_light_candidate candidate_;
+  ai_light_iteration iteration_;
+  FSys::path frames_dir_;
+};
+
+candidate_upload_target_t locate_upload_target(
+    sqlite_database& in_sql, const http::kitsu_ctx_t& in_ctx, const uuid& in_candidate_id
+) {
+  candidate_upload_target_t l_ret{};
+  l_ret.candidate_ = in_sql.get_by_uuid<ai_light_candidate>(in_candidate_id);
+  l_ret.iteration_ = in_sql.get_by_uuid<ai_light_iteration>(l_ret.candidate_.iteration_id_);
+  l_ret.frames_dir_ = candidate_frames_dir(in_ctx, l_ret.candidate_);
+
+  DOODLE_CHICK_HTTP(
+      l_ret.iteration_.state_ != ai_light_iteration_state::judged, bad_request,
+      "AI 灯光轮次 {} 已判定，不再接受候选产物上传", l_ret.iteration_.iteration_
+  );
+  return l_ret;
+}
+
+std::int32_t count_sequence_frames(const FSys::path& in_frames_dir) {
+  std::error_code l_ec{};
+  if (!FSys::is_directory(in_frames_dir, l_ec)) return 0;
+
+  std::int32_t l_count{};
+  for (const auto& l_entry : FSys::directory_iterator{in_frames_dir, l_ec}) {
+    if (l_ec) return l_count;
+    if (!l_entry.is_regular_file(l_ec)) continue;
+    if (l_entry.path().extension() != ".png") continue;
+    ++l_count;
+  }
+  return l_count;
+}
+
+FSys::path frame_file_name_from_header(const session_data_ptr& in_handle) {
+  const auto& l_header = in_handle->req_header_;
+  DOODLE_CHICK_HTTP(
+      l_header.count(boost::beast::http::field::content_disposition) != 0, bad_request, "缺失必要的请求头信息"
+  );
+
+  std::string l_raw{l_header[boost::beast::http::field::content_disposition]};
+  static const std::regex g_regex_base64{R"(^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$)"};
+  std::string l_name = std::regex_match(l_raw, g_regex_base64) ? base64_decode(std::string_view{l_raw}) : l_raw;
+
+  DOODLE_CHICK_HTTP(!l_name.empty(), bad_request, "缺少帧文件名");
+  const FSys::path l_path{l_name};
+  DOODLE_CHICK_HTTP(
+      l_path.filename() == l_path && l_name != "." && l_name != "..", bad_request, "帧文件名非法：{}", l_name
+  );
+  return l_path;
+}
+
+}  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
   person_.check_not_outsourcer();
 
-  DOODLE_CHICK_HTTP(
-      in_handle->content_type_ == detail::content_type::application_nuknown, bad_request,
-      "候选产物的上传体必须是 application/octet-stream，收到的是 {}", magic_enum::enum_name(in_handle->content_type_)
-  );
+  auto l_sql   = get_sqlite_database();
+  auto& l_ctx  = g_ctx().get<kitsu_ctx_t>();
+  auto l_target = locate_upload_target(l_sql, l_ctx, candidate_id_);
 
-  auto l_sql  = get_sqlite_database();
-  auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(id_);
-  auto l_it   = l_sql.get_by_uuid<ai_light_iteration>(l_cand.iteration_id_);
-  
-  DOODLE_CHICK_HTTP(
-      l_it.state_ != ai_light_iteration_state::judged, bad_request, "AI 灯光轮次 {} 已判定，不再接受候选产物上传",
-      l_it.iteration_
-  );
+  if (stage_ == doodle::ai_light::ai_light_candidate_upload_stage::begin_sequence) {
+    std::error_code l_ec{};
+    FSys::remove_all(l_target.frames_dir_, l_ec);
+    DOODLE_CHICK_HTTP(
+        !l_ec, internal_server_error, "候选 {} 旧帧目录清理失败 {}：{}", candidate_id_,
+        l_target.frames_dir_.generic_string(), l_ec.message()
+    );
+    FSys::create_directories(l_target.frames_dir_, l_ec);
+    DOODLE_CHICK_HTTP(
+        !l_ec, internal_server_error, "候选 {} 帧目录创建失败 {}：{}", candidate_id_,
+        l_target.frames_dir_.generic_string(), l_ec.message()
+    );
 
-  auto& l_ctx         = g_ctx().get<kitsu_ctx_t>();
-  const bool l_linear = role_ == doodle::ai_light::ai_light_candidate_file_role::render_linear;
-  const bool l_movie  = role_ == doodle::ai_light::ai_light_candidate_file_role::render_movie;
-  const FSys::path l_dst =
-      l_movie ? candidate_movie_path(l_ctx, l_cand) : candidate_render_path(l_ctx, l_cand, l_linear);
+    sql_modify_statement_vector_t l_sqls{};
+    l_sqls.emplace_back(
+        update(l_sql)
+            .from<ai_light_candidate>()
+            .set(
+                c(&ai_light_candidate::render_status_) = ai_light::candidate_render_status::pending,
+                c(&ai_light_candidate::metrics_)       = nlohmann::json{}
+            )
+            .where(c(&ai_light_candidate::uuid_id_) == candidate_id_)
+    );
+    co_await l_sql.run_sql(std::move(l_sqls));
 
-  const FSys::path l_tmp = in_handle->get_file();
-  DOODLE_CHICK_HTTP(FSys::exists(l_tmp), bad_request, "候选 {} 的上传体为空", id_);
+    SPDLOG_LOGGER_INFO(
+        g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）开始上传帧序列，帧目录 {}", candidate_id_,
+        l_target.iteration_.iteration_, l_target.frames_dir_.generic_string()
+    );
+    co_return in_handle->make_msg_204();
+  }
 
-  std::error_code l_ec{};
-  if (l_dst.has_parent_path()) {
+  if (stage_ == doodle::ai_light::ai_light_candidate_upload_stage::upload_frame) {
+    DOODLE_CHICK_HTTP(
+        in_handle->content_type_ == detail::content_type::application_nuknown, bad_request,
+        "候选帧的上传体必须是 application/octet-stream，收到的是 {}",
+        magic_enum::enum_name(in_handle->content_type_)
+    );
+
+    const FSys::path l_dst = l_target.frames_dir_ / frame_file_name_from_header(in_handle);
+    const FSys::path l_tmp = in_handle->get_file();
+    DOODLE_CHICK_HTTP(FSys::exists(l_tmp), bad_request, "候选 {} 的上传体为空", candidate_id_);
+
+    std::error_code l_ec{};
     FSys::create_directories(l_dst.parent_path(), l_ec);
     DOODLE_CHICK_HTTP(
-        !l_ec, internal_server_error, "候选 {} 产物目录创建失败 {}：{}", id_, l_dst.parent_path().generic_string(),
+        !l_ec, internal_server_error, "候选 {} 帧目录创建失败 {}：{}", candidate_id_,
+        l_dst.parent_path().generic_string(), l_ec.message()
+    );
+
+    const FSys::path l_tmp_dst = l_dst.string() + ".uploading";
+    FSys::copy_file(l_tmp, l_tmp_dst, FSys::copy_options::overwrite_existing, l_ec);
+    DOODLE_CHICK_HTTP(
+        !l_ec, internal_server_error, "候选 {} 帧写入失败 {}：{}", candidate_id_, l_tmp_dst.generic_string(),
         l_ec.message()
     );
+    FSys::rename(l_tmp_dst, l_dst, l_ec);
+    DOODLE_CHICK_HTTP(
+        !l_ec, internal_server_error, "候选 {} 帧落位失败 {}：{}", candidate_id_, l_dst.generic_string(),
+        l_ec.message()
+    );
+    std::error_code l_ignored{};
+    FSys::remove(l_tmp, l_ignored);
+
+    SPDLOG_LOGGER_INFO(
+        g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）上传帧 {}，{} 字节", candidate_id_,
+        l_target.iteration_.iteration_, l_dst.filename().generic_string(), FSys::file_size(l_dst, l_ignored)
+    );
+    co_return in_handle->make_msg_204();
   }
-  const FSys::path l_tmp_dst = l_dst.string() + ".uploading";
-  FSys::copy_file(l_tmp, l_tmp_dst, FSys::copy_options::overwrite_existing, l_ec);
+
+  const std::int32_t l_frame_count = count_sequence_frames(l_target.frames_dir_);
   DOODLE_CHICK_HTTP(
-      !l_ec, internal_server_error, "候选 {} 产物写入失败 {}：{}", id_, l_tmp_dst.generic_string(), l_ec.message()
+      l_frame_count > 0, bad_request, "候选 {} 没有收到任何帧", candidate_id_
   );
-  FSys::rename(l_tmp_dst, l_dst, l_ec);
   DOODLE_CHICK_HTTP(
-      !l_ec, internal_server_error, "候选 {} 产物落位失败 {}：{}", id_, l_dst.generic_string(), l_ec.message()
+      l_frame_count >= 2, bad_request, "候选 {} 只收到 {} 帧，合成不出视频", candidate_id_, l_frame_count
   );
-  std::error_code l_ignored{};
-  FSys::remove(l_tmp, l_ignored);
+
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      update(l_sql)
+          .from<ai_light_candidate>()
+          .set(c(&ai_light_candidate::render_status_) = ai_light::candidate_render_status::rendered)
+          .where(c(&ai_light_candidate::uuid_id_) == candidate_id_)
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）上传{}到位 {} {} 字节", id_, l_it.iteration_,
-      l_movie ? "候选视频" : (l_linear ? "线性 EXR" : "首帧海报"), l_dst.generic_string(),
-      FSys::file_size(l_dst, l_ignored)
+      g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）帧序列上传完成，共 {} 帧", candidate_id_,
+      l_target.iteration_.iteration_, l_frame_count
   );
   co_return in_handle->make_msg_204();
 }

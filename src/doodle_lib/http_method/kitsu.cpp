@@ -292,13 +292,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &actions_projects_sequences_casting_ue_assembly_harvest::project_id_,
         &actions_projects_sequences_casting_ue_assembly_harvest::id_
       ))
-
-      // ---------------------------------------------------------------------
-      // AI 灯光（docs/ue_ai_lighting_plan.md §13.1 第 5 项）
-      //
-      // 只注册在主服务器：LLM/VLM 调用只在主服务器做（只有它持有 deepseek_keys_），
-      // 客户端只跑 worker 侧。所以这里**不**放进 create_kitsu_local_route。
-      // ---------------------------------------------------------------------
       .reg_t<ai_light::shot_session_route>("/api/doodle/ai/light/shot/{}/session"_url(
         &ai_light::shot_session_route::entity_id_
       ))
@@ -317,21 +310,12 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<ai_light::iteration_submit_route>("/api/doodle/ai/light/session/{}/iteration"_url(
         &ai_light::iteration_submit_route::session_id_
       ))
-      // 推理网关（角色降级 §3.1）。降级后前端自己组装提示词、解释模型输出，
-      // 服务端只剩「代持凭据 + 计费 + 原始结果回传」这一件事，三条接缝共用一个入口。
-      // 挂在会话下是为了让权限校验的对象（会话行）就是 URL 上操作的对象。
       .reg_t<ai_light::inference_route>("/api/doodle/ai/light/session/{}/inference"_url(
         &ai_light::inference_route::session_id_
       ))
-      // 工作机上传候选产物（D40）。role 那个 URL 段是 scoped enum，
-      // 路由宏会把它展开成 (render|render_linear|render_movie) 的白名单正则，
-      // 所以拼错的 role 进不来。
-      // 这条 URL 的字面量必须和 ai_light.h 的 g_candidate_file_path_template 一致
-      // （UDL 接不了常量，只能两处对齐）。
-      .reg_t<ai_light::candidate_file_route>("/api/doodle/ai/light/candidate/{}/file/{}"_url(
-        &ai_light::candidate_file_route::id_, &ai_light::candidate_file_route::role_
+      .reg_t<ai_light::candidate_file_route>("/api/doodle/ai/light/candidate/{}/{}"_url(
+        &ai_light::candidate_file_route::candidate_id_, &ai_light::candidate_file_route::stage_
       ))
-      // 取候选视频。与取海报的 .../image 是一对：网格用海报、播放用视频。
       .reg_t<ai_light::candidate_movie_route>("/api/doodle/ai/light/candidate/{}/movie"_url(
         &ai_light::candidate_movie_route::id_
       ))
