@@ -21,7 +21,6 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <fstream>
-#include <iterator>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -135,12 +134,9 @@ struct compressed_image_t {
   std::int32_t rows_{};
 };
 
-std::optional<compressed_image_t> compress_reference_image(const std::string& in_bytes) {
-  if (in_bytes.empty()) return std::nullopt;
-
-  std::vector<uchar> l_input{in_bytes.begin(), in_bytes.end()};
-  cv::Mat l_image = cv::imdecode(l_input, cv::IMREAD_UNCHANGED);
-  if (l_image.empty()) return std::nullopt;
+compressed_image_t compress_reference_image(const FSys::path& in_path) {
+  cv::Mat l_image = cv::imread(in_path.generic_string(), cv::IMREAD_UNCHANGED);
+  DOODLE_CHICK(!l_image.empty(), "参考图解码失败: {}", in_path.generic_string());
 
   if (const auto l_long_side = std::max(l_image.cols, l_image.rows); l_long_side > g_max_reference_image_side) {
     const auto l_scale  = static_cast<double>(g_max_reference_image_side) / static_cast<double>(l_long_side);
@@ -150,9 +146,11 @@ std::optional<compressed_image_t> compress_reference_image(const std::string& in
   }
 
   std::vector<uchar> l_buffer{};
-  if (!cv::imencode(std::string{g_compressed_ext}, l_image, l_buffer, {cv::IMWRITE_PNG_COMPRESSION, 9}))
-    return std::nullopt;
-  if (l_buffer.empty()) return std::nullopt;
+  DOODLE_CHICK(
+      cv::imencode(std::string{g_compressed_ext}, l_image, l_buffer, {cv::IMWRITE_PNG_COMPRESSION, 9}) &&
+          !l_buffer.empty(),
+      "参考图编码失败: {}", in_path.generic_string()
+  );
 
   return compressed_image_t{
       .bytes_ = std::string{l_buffer.begin(), l_buffer.end()}, .cols_ = l_image.cols, .rows_ = l_image.rows
@@ -320,30 +318,18 @@ FSys::path apipy_image_client::write_b64_to_cache(std::string_view in_b64, std::
 
 apipy_image_client::edit_reference_t apipy_image_client::load_reference_image(std::string_view in_url) {
   edit_reference_t l_ref{};
-  l_ref.url_        = std::string{in_url};
-  auto l_local_path = parse_site_image_id(in_url);
+  l_ref.url_              = std::string{in_url};
+  const auto l_local_path = parse_site_image_id(in_url);
 
-  std::ifstream l_ifs{l_local_path, std::ios::binary};
-  DOODLE_CHICK(l_ifs.is_open(), "参考图无法读取: {} (URL {})", l_local_path.generic_string(), std::string{in_url});
-  l_ref.bytes_    = std::string{std::istreambuf_iterator<char>{l_ifs}, std::istreambuf_iterator<char>{}};
-  l_ref.filename_ = l_local_path.filename().generic_string();
+  const auto l_compressed = compress_reference_image(l_local_path);
+  l_ref.bytes_            = l_compressed.bytes_;
+  l_ref.filename_         = l_local_path.stem().generic_string() + std::string{g_compressed_ext};
+  l_ref.mime_             = std::string{g_compressed_mime};
 
-  l_ref.mime_     = mime_of_image(l_local_path.extension().generic_string());
-
-  const auto l_raw_ext  = l_local_path.extension().generic_string();
-  const auto l_raw_size = l_ref.bytes_.size();
-  if (const auto l_compressed = compress_reference_image(l_ref.bytes_); l_compressed.has_value()) {
-    l_ref.bytes_    = l_compressed->bytes_;
-    l_ref.filename_ = l_local_path.stem().generic_string() + std::string{g_compressed_ext};
-    l_ref.mime_     = std::string{g_compressed_mime};
-    SPDLOG_LOGGER_INFO(
-        logger_, "参考图已压缩: {} -> {} ({}x{}), {} 字节 -> {} 字节", l_ref.url_, l_ref.filename_, l_compressed->cols_,
-        l_compressed->rows_, l_raw_size, l_ref.bytes_.size()
-    );
-  } else {
-    SPDLOG_LOGGER_WARN(logger_, "参考图压缩失败, 按原字节发送: {} ({} 字节, 扩展名 {})", l_ref.url_, l_raw_size, l_raw_ext);
-  }
-
+  SPDLOG_LOGGER_INFO(
+      logger_, "参考图已压缩: {} -> {} ({}x{}), {} 字节", l_ref.url_, l_ref.filename_, l_compressed.cols_,
+      l_compressed.rows_, l_ref.bytes_.size()
+  );
   return l_ref;
 }
 
