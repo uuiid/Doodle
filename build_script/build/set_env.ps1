@@ -38,6 +38,26 @@ try {
 write-host "`nVisual Studio Command Prompt variables set." -ForegroundColor Yellow
 $env:chcp = 65001
 $env:VSLANG = 1033
+
+# 固定 vcpkg 看到的 PowerShell。vcpkg 把 pwsh 版本写进 vcpkg_abi_info.txt 的
+# `powershell` 字段，经 vcpkg-cmake helper port 级联进全部包的 ABI 哈希；
+# 系统 pwsh 一升级，所有已装依赖就整体失效、全量重编。
+# vcpkg.cmake 用 find_program(Z_VCPKG_PWSH_PATH pwsh) 按 PATH 查找，
+# 因此这里把仓库内的固定版本排到 PATH 最前、并摘掉系统安装目录，让探测结果稳定。
+$PinnedPwsh = Join-Path $PSScriptRoot '../../build/PowerShell-7.6.6'
+if (Test-Path (Join-Path $PinnedPwsh 'pwsh.exe')) {
+  $PinnedPwsh = (Resolve-Path $PinnedPwsh).Path
+  $SystemPwshDir = 'C:\Program Files\PowerShell\7'
+  $env:PATH = @(
+    $PinnedPwsh
+    $env:PATH -split ';' | Where-Object {
+      $_.Trim() -and (-not [string]::Equals($_.Trim().TrimEnd('\'), $SystemPwshDir, [StringComparison]::OrdinalIgnoreCase))
+    }
+  ) -join ';'
+} else {
+  Write-Warning "固定版本的 PowerShell 不存在：$PinnedPwsh，vcpkg 将回落到系统 pwsh"
+}
+
 $DoodleRoot = Convert-Path "$PSScriptRoot/../..";
 function Get-ChildProcesses ($ParentProcessId) {
   $filter = "parentprocessid = '$($ParentProcessId)'"
