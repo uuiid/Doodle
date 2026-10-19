@@ -1,0 +1,1 @@
+dsh plugin --profile web add @deepseek-ai/dsh-lsp@next @deepseek-ai/dsh-lsp-stdio@next @deepseek-ai/dsh-tool-lsp@next
