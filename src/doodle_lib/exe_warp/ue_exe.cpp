@@ -193,7 +193,7 @@ boost::asio::awaitable<void> async_run_ue(
       boost::process::v2::process_stdio{nullptr, l_out_pipe, l_err_pipe}, boost::process::v2::process_environment{l_env}
   };
 
-  l_timer->expires_after(chrono::seconds{core_set::get_set().timeout * 5});
+  l_timer->expires_after(chrono::seconds{core_set::get_set().timeout});
   auto [l_array_completion_order, l_ec, l_exit_code, l_ec_t, l_ec1, l_ec2] =
       co_await boost::asio::experimental::make_parallel_group(
           boost::process::v2::async_execute(std::move(l_process_ue), boost::asio::deferred),
