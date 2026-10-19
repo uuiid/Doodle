@@ -152,21 +152,42 @@ orm::sql_modify_statement_vector_t write_submitted_iteration(
   l_it.state_               = ai_light_iteration_state::generated;
   l_it.server_task_info_id_ = uuid{};
 
-  orm::sql_modify_statement_vector_t l_sqls{};
-
   lighting_rig_set_t l_rig_set{};
   l_rig_set.session_id_     = in_request.session_id_;
   l_rig_set.iteration_      = l_iteration;
   l_rig_set.shot_task_id_   = in_request.task_id_;
   l_rig_set.baseline_level_ = l_assembly_res.original_map_.generic_string();
-  l_rig_set.rigs_           = in_request.rigs_;
+
+  std::vector<ai_light_candidate> l_candidates{};
+  l_candidates.reserve(in_request.rigs_.size());
+
+  for (std::size_t l_i = 0; l_i < in_request.rigs_.size(); ++l_i) {
+    ai_light_candidate l_cand{};
+    l_cand.uuid_id_         = core_set::get_set().get_uuid();
+    l_cand.iteration_id_    = l_it.uuid_id_;
+    l_cand.session_id_      = in_request.session_id_;
+    l_cand.candidate_index_ = static_cast<std::int32_t>(l_i);
+    l_cand.render_status_   = candidate_render_status::pending;
+    l_cand.is_selected_     = false;
+    l_cand.preview_file_id_ = uuid{};
+
+    auto l_rig          = in_request.rigs_.at(l_i);
+    l_rig.candidate_id_ = l_cand.uuid_id_;
+    l_cand.set_rig(l_rig);
+    l_rig_set.rigs_.emplace_back(std::move(l_rig));
+
+    l_candidates.emplace_back(std::move(l_cand));
+  }
   l_it.set_rigs(l_rig_set);
 
+  orm::sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_iteration>().values(l_it));
+  for (auto& l_cand : l_candidates) l_sqls.emplace_back(orm::insert(in_sql).into<ai_light_candidate>().values(l_cand));
 
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "AI 灯光会话 {} 第 {} 轮 {} 个候选的方案已落库（引擎内路线，等待发起方本机渲染）",
-      in_request.session_id_, l_iteration, in_request.rigs_.size()
+      g_logger_ctrl().get_http(),
+      "AI 灯光会话 {} 第 {} 轮 {} 个候选的方案与候选行已落库（引擎内路线，等待发起方本机渲染）", in_request.session_id_,
+      l_iteration, in_request.rigs_.size()
   );
   return l_sqls;
 }

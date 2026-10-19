@@ -501,18 +501,23 @@ struct DOODLE_CORE_API light_op_t {
 
 /// 灯光方案。存进 ai_light_candidate.rig 这一列，也直接作为下发 UE 的载荷。
 struct DOODLE_CORE_API lighting_rig_t {
+  /// 该方案对应的 ai_light_candidate 行 uuid。由服务端在落库时生成并回填；
+  /// 前端提交时给了也不采信（与 session_id / iteration 等其他身份字段同口径）。
+  uuid candidate_id_{};
   provenance_t provenance_{};
   globals_t globals_{};
   std::vector<light_t> lights_{};
   std::vector<light_op_t> ops_{};
 
   friend void to_json(nlohmann::json& j, const lighting_rig_t& p) {
-    j["provenance"] = p.provenance_;
-    j["globals"]    = p.globals_;
-    j["lights"]     = p.lights_;
-    j["ops"]        = p.ops_;
+    j["candidate_id"] = p.candidate_id_;
+    j["provenance"]   = p.provenance_;
+    j["globals"]      = p.globals_;
+    j["lights"]       = p.lights_;
+    j["ops"]          = p.ops_;
   }
   friend void from_json(const nlohmann::json& j, lighting_rig_t& p) {
+    if (j.contains("candidate_id")) j.at("candidate_id").get_to(p.candidate_id_);
     if (j.contains("provenance")) j.at("provenance").get_to(p.provenance_);
     if (j.contains("globals")) j.at("globals").get_to(p.globals_);
     if (j.contains("lights")) j.at("lights").get_to(p.lights_);
