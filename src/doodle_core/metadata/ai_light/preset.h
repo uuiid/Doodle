@@ -62,7 +62,7 @@ struct DOODLE_CORE_API ai_light_preset {
   std::int32_t embedding_dim_{0};
 
   /// 一段 LightingRig（JSON 形态）。identity 字段（rig_id / session_id / shot_task_id /
-  /// spec_id / iteration / candidate_index）在片段里留空，只有 globals 与 lights 有意义。
+  /// spec_id / iteration）在片段里留空，只有 globals 与 lights 有意义。
   nlohmann::json rig_fragment_{};
 
   /// preset_applicable_t 的 JSON 形态

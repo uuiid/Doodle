@@ -439,7 +439,6 @@ void sqlite_storage::regs_all() {
       .add_column("uuid_id", &ai_light::ai_light_candidate::uuid_id_, unique(), not_null())
       .add_column("iteration_id", &ai_light::ai_light_candidate::iteration_id_, not_null())
       .add_column("session_id", &ai_light::ai_light_candidate::session_id_, not_null())
-      .add_column("candidate_index", &ai_light::ai_light_candidate::candidate_index_, not_null())
       .add_column("rig", &ai_light::ai_light_candidate::rig_)
       // 产物路径**没有列**：由 session_id_ / iteration_id_ / uuid_id_ 现算（D44）。
       .add_column("render_status", &ai_light::ai_light_candidate::render_status_)
@@ -460,7 +459,6 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(
           &ai_light::ai_light_candidate::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null
       )
-      .add_unique_index(&ai_light::ai_light_candidate::iteration_id_, &ai_light::ai_light_candidate::candidate_index_)
       .add_index(&ai_light::ai_light_candidate::session_id_);
 
   reg_table<ai_light::ai_light_preset>("ai_light_preset")
@@ -2220,7 +2218,7 @@ std::vector<ai_light::ai_light_candidate> sqlite_database::get_ai_light_candidat
       .columns(object<ai_light::ai_light_candidate>())
       .from<ai_light::ai_light_candidate>()
       .where(c(&ai_light::ai_light_candidate::iteration_id_) == in_iteration_id)
-      .order_by(&ai_light::ai_light_candidate::candidate_index_)()
+      .order_by(&ai_light::ai_light_candidate::created_at_)()
       .to_vector();
 }
 
@@ -2234,7 +2232,7 @@ std::vector<ai_light::ai_light_candidate> sqlite_database::get_ai_light_candidat
       .from<ai_light::ai_light_candidate>()
       .where(c(&ai_light::ai_light_candidate::session_id_) == in_session_id)
       .order_by(&ai_light::ai_light_candidate::created_at_)
-      .order_by(&ai_light::ai_light_candidate::candidate_index_)()
+      .order_by(&ai_light::ai_light_candidate::uuid_id_)()
       .to_vector();
 }
 

@@ -166,7 +166,6 @@ orm::sql_modify_statement_vector_t write_submitted_iteration(
     l_cand.uuid_id_         = core_set::get_set().get_uuid();
     l_cand.iteration_id_    = l_it.uuid_id_;
     l_cand.session_id_      = in_request.session_id_;
-    l_cand.candidate_index_ = static_cast<std::int32_t>(l_i);
     l_cand.render_status_   = candidate_render_status::pending;
     l_cand.is_selected_     = false;
     l_cand.preview_file_id_ = uuid{};
@@ -244,7 +243,7 @@ orm::sql_modify_statement_vector_t write_dispatched_iteration(
 
     l_payload_candidates.push_back(
         ai_light_task_candidate_t{
-            static_cast<std::int32_t>(l_i), l_cand.uuid_id_, make_candidate_frames_dir(l_cand.uuid_id_),
+            l_cand.uuid_id_, make_candidate_frames_dir(l_cand.uuid_id_),
             make_candidate_file_name(l_cand.uuid_id_, false), make_candidate_file_name(l_cand.uuid_id_, true),
             make_candidate_movie_file(l_cand.uuid_id_), l_rig
         }

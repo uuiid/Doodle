@@ -173,9 +173,6 @@ struct DOODLE_CORE_API ai_light_assembly_file_t {
 
 /// 派发载荷里的一个候选。
 struct DOODLE_CORE_API ai_light_task_candidate_t {
-  /// 第几个候选（0 = 基线）。**只用于排序与显示**：产物文件名用的是 candidate_id_，
-  /// 不是这个序号（文件名契约见 make_candidate_file_name）。
-  std::int32_t candidate_index_{0};
   uuid candidate_id_{};
   /// **相对路径**（相对 out_dir_，D39）：MRQ 把这一轮渲出来的帧写进 frames_dir_（D47），
   /// 工作机把它合成成 movie_path_，再把首帧复制成 png_path_ 当海报。
@@ -191,7 +188,6 @@ struct DOODLE_CORE_API ai_light_task_candidate_t {
   lighting_rig_t rig_{};
 
   friend void to_json(nlohmann::json& j, const ai_light_task_candidate_t& p) {
-    j["candidate_index"] = p.candidate_index_;
     j["candidate_id"]    = p.candidate_id_;
     j["frames_dir"]      = p.frames_dir_;
     j["png_path"]        = p.png_path_;
@@ -200,7 +196,6 @@ struct DOODLE_CORE_API ai_light_task_candidate_t {
     j["rig"]             = p.rig_;
   }
   friend void from_json(const nlohmann::json& j, ai_light_task_candidate_t& p) {
-    if (j.contains("candidate_index")) j.at("candidate_index").get_to(p.candidate_index_);
     if (j.contains("candidate_id")) j.at("candidate_id").get_to(p.candidate_id_);
     if (j.contains("frames_dir")) j.at("frames_dir").get_to(p.frames_dir_);
     if (j.contains("png_path")) j.at("png_path").get_to(p.png_path_);
@@ -366,7 +361,6 @@ struct DOODLE_CORE_API ai_light_task_payload_t {
 /// 单个候选的渲染结果。**不带路径**（D27：服务端按命名规则现算/D41：再查文件在不在），
 /// 只带状态与数值。
 struct DOODLE_CORE_API candidate_render_report_t {
-  std::int32_t candidate_index_{0};
   uuid candidate_id_{};
   candidate_render_status status_{candidate_render_status::rendered};
   std::int64_t render_ms_{0};
@@ -377,7 +371,6 @@ struct DOODLE_CORE_API candidate_render_report_t {
   candidate_metrics_t metrics_{};
 
   friend void to_json(nlohmann::json& j, const candidate_render_report_t& p) {
-    j["candidate_index"] = p.candidate_index_;
     j["candidate_id"]    = p.candidate_id_;
     j["status"]          = p.status_;
     j["render_ms"]       = p.render_ms_;
@@ -386,7 +379,6 @@ struct DOODLE_CORE_API candidate_render_report_t {
     j["metrics"]         = p.metrics_;
   }
   friend void from_json(const nlohmann::json& j, candidate_render_report_t& p) {
-    if (j.contains("candidate_index")) j.at("candidate_index").get_to(p.candidate_index_);
     j.at("candidate_id").get_to(p.candidate_id_);
     j.at("status").get_to(p.status_);
     if (j.contains("render_ms")) j.at("render_ms").get_to(p.render_ms_);

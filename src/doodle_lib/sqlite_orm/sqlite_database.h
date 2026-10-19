@@ -297,9 +297,9 @@ class DOODLELIB_API sqlite_database {
   /// 按分布式任务反查轮次（工作机报完结果后回填用）
   std::optional<ai_light::ai_light_iteration> get_ai_light_iteration_by_task(const uuid& in_server_task_info_id);
 
-  /// 一轮的全部候选，candidate_index 升序
+  /// 一轮的全部候选，按创建顺序
   std::vector<ai_light::ai_light_candidate> get_ai_light_candidates(const uuid& in_iteration_id);
-  /// 会话的全部候选（跨轮），按轮次与候选序号升序
+  /// 会话的全部候选（跨轮），按创建顺序
   std::vector<ai_light::ai_light_candidate> get_ai_light_candidates_by_session(const uuid& in_session_id);
   /// 被选中作为下一轮基准的候选（warm start 起点）
   std::optional<ai_light::ai_light_candidate> get_ai_light_selected_candidate(

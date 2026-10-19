@@ -160,7 +160,7 @@ struct DOODLELIB_API submit_iteration_request_t {
   uuid task_id_{};
 
   /// 前端提交体的形状：rig 就是 `lighting_rig_t` 本身。
-  /// 身份字段（session_id/iteration/candidate_index/rig_id/baseline_level）前端给了也不采信 ——
+  /// 身份字段（session_id/iteration/rig_id/baseline_level）前端给了也不采信 ——
   /// 落库时会无条件覆盖它们，这里同样解码后交给下游钉死。
   friend void to_json(nlohmann::json& j, const submit_iteration_request_t& p) {
     j["session_id"] = p.session_id_;

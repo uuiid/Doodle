@@ -237,9 +237,9 @@ boost::asio::awaitable<void> ai_light_round_distributed::run() {
 
       // 产物位置取自**载荷**（D39）：UE 就是按载荷里那几条绝对路径写盘的
       // （DoodleLightingRoundRunner.cpp:169 把 MRQ 的 OutputDirectory.Path 设成 InCandidate.FramesDir），
-      // 而回传报告里只有 candidate_index_ 与 candidate_id_，没有路径（D27）。
+      // 而回传报告里只有 candidate_id_，没有路径（D27）。
       //
-      // 所以按 **uuid** 反查载荷，**不按 candidate_index_**：下标是弱键，编号一旦有偏差就会把 A 的
+      // 所以按 **uuid** 反查载荷：下标是弱键，编号一旦有偏差就会把 A 的
       // 成片挂到 B 的 uuid 上，美术对着别人的灯评判 —— 这条链路上最糟的失败形态。
       // 也刻意不按命名规则再算一遍：那等于工作机再实现一次服务端的命名，版本偏斜（键名没变、
       // 命名值变了）时算出来的目录会对不上 UE 实际写的位置，白白把一整轮判失败。

@@ -95,8 +95,6 @@ struct DOODLE_CORE_API ai_light_candidate {
   uuid iteration_id_{};
   uuid session_id_{};
 
-  std::int32_t candidate_index_{0};
-
   nlohmann::json rig_{};
 
   candidate_render_status render_status_{candidate_render_status::pending};
@@ -118,7 +116,6 @@ struct DOODLE_CORE_API ai_light_candidate {
     j["id"]              = p.uuid_id_;
     j["iteration_id"]    = p.iteration_id_;
     j["session_id"]      = p.session_id_;
-    j["candidate_index"] = p.candidate_index_;
     j["rig"]             = p.rig_;
     j["render_status"]   = p.render_status_;
     j["metrics"]         = p.metrics_;
@@ -130,7 +127,6 @@ struct DOODLE_CORE_API ai_light_candidate {
     if (j.contains("id")) j.at("id").get_to(p.uuid_id_);
     if (j.contains("iteration_id")) j.at("iteration_id").get_to(p.iteration_id_);
     if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
-    if (j.contains("candidate_index")) j.at("candidate_index").get_to(p.candidate_index_);
     if (j.contains("rig")) j.at("rig").get_to(p.rig_);
     if (j.contains("render_status")) j.at("render_status").get_to(p.render_status_);
     if (j.contains("metrics")) j.at("metrics").get_to(p.metrics_);
