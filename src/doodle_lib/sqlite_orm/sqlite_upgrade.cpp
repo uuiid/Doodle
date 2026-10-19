@@ -97,7 +97,6 @@ struct upgrade_3_t : sqlite_upgrade {
     if (l_s.pragma().user_version() > g_version_30) return;
     backup(l_s);
     l_s.pragma().foreign_keys(false);
-    l_s.add_column("ai_studio", "apipy_key", orm::column_type::text);
 #ifndef NDEBUG
     l_s.sync_schema();
     l_s.add_column("seedance2_task_2", "ai_light_session_id", orm::column_type::blob);
