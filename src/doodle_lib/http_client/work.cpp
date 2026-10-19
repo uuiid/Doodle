@@ -218,19 +218,16 @@ bool http_work::run_task(const server_task_info& in_task_info) {
   // 计数必须在 co_spawn 之前加: 否则任务可能在计数之前就跑完并上报 online
   if (in_task_info.type_ == server_task_info_type::auto_light) {
     auto l_run = std::make_shared<run_ue_assembly_distributed>(in_task_info, shared_from_this());
-    task_started();
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
   if (in_task_info.type_ == server_task_info_type::export_fbx) {
     auto l_run = std::make_shared<export_fbx_arg_distributed>(in_task_info, shared_from_this());
-    task_started();
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
   if (in_task_info.type_ == server_task_info_type::depth_estimation) {
     auto l_run = std::make_shared<depth_estimation_distributed>(in_task_info, shared_from_this());
-    task_started();
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
@@ -238,7 +235,6 @@ bool http_work::run_task(const server_task_info& in_task_info) {
     // AI 灯光一轮的渲染（本轮几个候选由前端决定）。载荷在 command_ 里（ai_light_task_payload_t），
     // 渲染报告由任务自己回传到 /api/doodle/ai/light/render_report/{task_id}。
     auto l_run = std::make_shared<ai_light_round_distributed>(in_task_info, shared_from_this());
-    task_started();
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
@@ -249,8 +245,7 @@ void http_work::task_started() { running_task_count_.fetch_add(1, std::memory_or
 
 void http_work::task_finished() {
   // 只有全部任务都结束了才上报 online: 只要还有一个任务在跑, 服务端就不该再派新任务过来
-  if (running_task_count_.fetch_sub(1, std::memory_order_acq_rel) <= 1)
-    set_computer_status(computer_status::online);
+  if (running_task_count_.fetch_sub(1, std::memory_order_acq_rel) <= 1) set_computer_status(computer_status::online);
 }
 
 boost::asio::awaitable<void> http_work::report_task_unsupported(const server_task_info& in_task_info) {
@@ -263,7 +258,8 @@ boost::asio::awaitable<void> http_work::report_task_unsupported(const server_tas
     co_await l_client->put_job_info(l_task.uuid_id_, nlohmann::json{} = l_task);
   } catch (...) {
     SPDLOG_LOGGER_ERROR(
-        logger_, "上报无法运行的任务 {} 失败: {}", in_task_info.uuid_id_, boost::current_exception_diagnostic_information()
+        logger_, "上报无法运行的任务 {} 失败: {}", in_task_info.uuid_id_,
+        boost::current_exception_diagnostic_information()
     );
   }
   co_return;
@@ -366,6 +362,12 @@ boost::asio::awaitable<void> http_work::async_ping_loop() {
     SPDLOG_LOGGER_ERROR(logger_, "处理 WebSocket 消息发生错误: {}", e.what());
   }
 }
+
+base_distributed_task::base_distributed_task(server_task_info in_task_info, std::shared_ptr<http_work> in_http_work_ptr)
+    : task_info_(std::move(in_task_info)), http_work_ptr_(std::move(in_http_work_ptr)) {
+  in_http_work_ptr->task_started();
+}
+
 base_distributed_task::~base_distributed_task() {
   if (http_work_ptr_) http_work_ptr_->task_finished();
 }
