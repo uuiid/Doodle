@@ -386,8 +386,8 @@ logger_ptr base_distributed_task::create_logger() const {
   return l_logger;
 }
 
-std::shared_ptr<kitsu::kitsu_client> base_distributed_task::create_kitsu_client() const {
-  auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+std::shared_ptr<doodle::kitsu::kitsu_client> base_distributed_task::create_kitsu_client() const {
+  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(task_info_.submitter_cookies_);
   return l_client;
 }

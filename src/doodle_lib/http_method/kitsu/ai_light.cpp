@@ -663,7 +663,9 @@ candidate_upload_target_t locate_upload_target(
   candidate_upload_target_t l_ret{};
   l_ret.candidate_  = in_sql.get_by_uuid<ai_light_candidate>(in_candidate_id);
   l_ret.iteration_  = in_sql.get_by_uuid<ai_light_iteration>(l_ret.candidate_.iteration_id_);
-  l_ret.frames_dir_ = candidate_frames_dir(in_ctx, l_ret.candidate_);
+  l_ret.frames_dir_ = in_ctx.get_ai_light_candidate_frames_dir(
+      l_ret.candidate_.session_id_, l_ret.candidate_.iteration_id_, l_ret.candidate_.uuid_id_
+  );
   return l_ret;
 }
 

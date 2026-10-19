@@ -91,7 +91,7 @@ class base_distributed_task {
 
   logger_ptr create_logger() const;
 
-  std::shared_ptr<kitsu::kitsu_client> create_kitsu_client() const;
+  std::shared_ptr<doodle::kitsu::kitsu_client> create_kitsu_client() const;
 };
 
 }  // namespace doodle::http

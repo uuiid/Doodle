@@ -88,14 +88,6 @@ inline FSys::path candidate_movie_path(const http::kitsu_ctx_t& in_ctx, const ai
   );
 }
 
-/// 候选 MRQ 帧序列的目录（D44/D47）：只有工作机与诊断用得上，服务端不判它的存在
-/// （帧是工作机的中间产物，合成完就没有意义了）。
-inline FSys::path candidate_frames_dir(const http::kitsu_ctx_t& in_ctx, const ai_light_candidate& in_candidate) {
-  return in_ctx.get_ai_light_candidate_frames_dir(
-      in_candidate.session_id_, in_candidate.iteration_id_, in_candidate.uuid_id_
-  );
-}
-
 /// worker 回传渲染完成后调用（§10.3 的「落 iteration → 置 awaiting_judgement」）。
 ///
 /// 本轮没有 worker（§13.3 未做），所以这个函数只提供入口并纳入单测；
