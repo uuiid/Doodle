@@ -1,6 +1,6 @@
 {
   "name": "dsh-drop-caret",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "DeepSeek Harness 插件：把文件/文件夹从系统文件管理器或 VS Code 资源管理器拖进对话输入框，并在拖放点对应的精确光标位置插入文件引用（文件插入 @文件名，文件夹只插入 @文件夹名、不展开子文件）。",
   "keywords": [
     "deepseek",
