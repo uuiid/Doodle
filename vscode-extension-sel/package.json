@@ -39,7 +39,7 @@
     "keybindings": [
       {
         "command": "dshSel.sendSelection",
-        "key": "ctrl+alt+d",
+        "key": "alt+l",
         "when": "editorTextFocus && editorHasSelection"
       }
     ],
