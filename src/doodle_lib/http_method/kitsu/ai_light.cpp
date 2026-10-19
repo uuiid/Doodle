@@ -322,7 +322,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, get) {
 
   for (const auto& l_s : l_sessions) person_.check_project_access(l_s.project_id_);
 
-  co_return in_handle->make_msg(nlohmann::json{{"data", l_sessions}});
+  co_return in_handle->make_msg(nlohmann::json{} = l_sessions);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, get) {
@@ -385,7 +385,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, get) {
   person_.check_not_outsourcer();
   auto l_sql     = get_sqlite_database();
   auto l_session = load_session_checked(person_, l_sql, session_id_);
-  co_return in_handle->make_msg(nlohmann::json{{"data", l_sql.get_ai_light_references(l_session.uuid_id_)}});
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_ai_light_references(l_session.uuid_id_));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
@@ -442,7 +442,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 为 AI 灯光会话 {} 上传了 {} 张参考图", person_.person_.email_,
       person_.person_.get_full_name(), l_session.uuid_id_, l_added.size()
   );
-  co_return in_handle->make_msg(nlohmann::json{{"data", l_added}});
+  co_return in_handle->make_msg(nlohmann::json{} = l_added);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, get) {
@@ -452,7 +452,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, get) {
   auto l_ref = l_sql.get_by_uuid<ai_light_reference>(id_);
   load_session_checked(person_, l_sql, l_ref.session_id_);
 
-  co_return in_handle->make_msg(nlohmann::json{{"data", l_ref}});
+  co_return in_handle->make_msg(nlohmann::json{} = l_ref);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, put) {
@@ -477,7 +477,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, put) {
       person_.person_.email_, person_.person_.get_full_name(), id_, l_after.is_outlier_,
       l_after.excluded_reason_.empty() ? "无" : l_after.excluded_reason_
   );
-  co_return in_handle->make_msg(nlohmann::json{{"data", l_after}});
+  co_return in_handle->make_msg(nlohmann::json{} = l_after);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, delete_) {
@@ -735,7 +735,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_route, get) {
   person_.check_not_outsourcer();
   auto l_sql  = get_sqlite_database();
   auto l_only = query_bool(in_handle->url_, "enabled_only", true);
-  co_return in_handle->make_msg(nlohmann::json{{"data", l_sql.get_ai_light_presets(l_only)}});
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_ai_light_presets(l_only));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_route, post) {

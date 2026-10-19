@@ -210,10 +210,9 @@ test.describe('AI 灯光 —— 会话（shot_session / session_instance）', ()
     );
 
     expect(req.status).to.equal(200);
-    expect(req.body).to.have.property('data');
-    expect(req.body.data).to.be.an('array');
+    expect(req.body).to.be.an('array');
 
-    const found = req.body.data.find((s) => s.id === sessionId);
+    const found = req.body.find((s) => s.id === sessionId);
     expect(found, '列表中应包含刚建的会话').to.exist;
     expect(found.entity_id).to.equal(ENTITY_ID);
     expect(found.state).to.equal('draft');
@@ -303,10 +302,9 @@ test.describe('AI 灯光 —— 参考图（reference）', () => {
     );
 
     expect(req.status).to.equal(201);
-    expect(req.body).to.have.property('data');
-    expect(req.body.data).to.have.lengthOf(picked.length);
+    expect(req.body).to.have.lengthOf(picked.length);
 
-    req.body.data.forEach((ref, i) => {
+    req.body.forEach((ref, i) => {
       expect(ref).to.have.keys([
         'id', 'session_id', 'file_path', 'thumbnail_path', 'width',
         'height', 'stats', 'stats_confidence', 'is_outlier', 'excluded_reason',
@@ -330,10 +328,10 @@ test.describe('AI 灯光 —— 参考图（reference）', () => {
     );
 
     expect(req.status).to.equal(200);
-    expect(req.body.data).to.be.an('array').with.lengthOf(2);
+    expect(req.body).to.be.an('array').with.lengthOf(2);
     // 按 created_at 升序（= 上传先后顺序）；ordinal 列已删除
-    expect(new Date(req.body.data[0].created_at).getTime())
-      .to.be.at.most(new Date(req.body.data[1].created_at).getTime());
+    expect(new Date(req.body[0].created_at).getTime())
+      .to.be.at.most(new Date(req.body[1].created_at).getTime());
   });
 
   test('DELETE /reference/{id} — 删除单张参考图返回 204', async ({ request }) => {
@@ -342,8 +340,8 @@ test.describe('AI 灯光 —— 参考图（reference）', () => {
     const listReq = await readJson(
       await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`, { headers: authHeader })
     );
-    expect(listReq.body.data).to.have.lengthOf(2);
-    const refId = listReq.body.data[1].id;
+    expect(listReq.body).to.have.lengthOf(2);
+    const refId = listReq.body[1].id;
 
     const delReq = await readJson(
       await request.delete(`${URL}/api/doodle/ai/light/reference/${refId}`, { headers: authHeader })
@@ -354,8 +352,8 @@ test.describe('AI 灯光 —— 参考图（reference）', () => {
     const afterReq = await readJson(
       await request.get(`${URL}/api/doodle/ai/light/session/${sessionId}/reference`, { headers: authHeader })
     );
-    expect(afterReq.body.data).to.have.lengthOf(1);
-    expect(afterReq.body.data.map((r) => r.id)).to.not.include(refId);
+    expect(afterReq.body).to.have.lengthOf(1);
+    expect(afterReq.body.map((r) => r.id)).to.not.include(refId);
   });
 
   test('DELETE /reference/{id} — 参考图不存在返回 404', async ({ request }) => {
@@ -482,7 +480,7 @@ test.describe('AI 灯光 —— Spec（spec / spec_confirm）', () => {
         })
       );
       expect(upReq.status, '需要能往第二个会话传参考图').to.equal(201);
-      foreignRefId = upReq.body.data[0].id;
+      foreignRefId = upReq.body[0].id;
     }
 
     const req = await readJson(
@@ -550,7 +548,7 @@ test.describe('AI 灯光 —— Spec（spec / spec_confirm）', () => {
     );
 
     expect(req.status).to.equal(200);
-    expect(req.body.data).to.have.lengthOf(1);
+    expect(req.body).to.have.lengthOf(1);
     expect(req.body.current_revision).to.equal(1);
   });
 
@@ -1061,8 +1059,8 @@ test.describe('AI 灯光 —— 预设库（preset）', () => {
     );
 
     expect(req.status).to.equal(200);
-    expect(req.body.data).to.be.an('array');
-    expect(req.body.data.map((p) => p.id)).to.include(presetId);
+    expect(req.body).to.be.an('array');
+    expect(req.body.map((p) => p.id)).to.include(presetId);
   });
 
   test('GET /preset?enabled_only=false — 也返回全部预设', async ({ request }) => {
@@ -1073,7 +1071,7 @@ test.describe('AI 灯光 —— 预设库（preset）', () => {
     );
 
     expect(req.status).to.equal(200);
-    expect(req.body.data.map((p) => p.id)).to.include(presetId);
+    expect(req.body.map((p) => p.id)).to.include(presetId);
   });
 
   test('GET /preset/{id} — 预设详情', async ({ request }) => {
@@ -1115,12 +1113,12 @@ test.describe('AI 灯光 —— 预设库（preset）', () => {
     );
 
     expect(req.status).to.equal(200);
-    expect(req.body.data.map((p) => p.id)).to.not.include(presetId);
+    expect(req.body.map((p) => p.id)).to.not.include(presetId);
 
     const all = await readJson(
       await request.get(`${URL}/api/doodle/ai/light/preset?enabled_only=false`, { headers: authHeader })
     );
-    expect(all.body.data.map((p) => p.id)).to.include(presetId);
+    expect(all.body.map((p) => p.id)).to.include(presetId);
   });
 
   test('GET /preset/{id} — 预设不存在返回 404', async ({ request }) => {
