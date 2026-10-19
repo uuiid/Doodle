@@ -619,76 +619,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
 }
 
 // ===========================================================================
-// 工作机回传：一轮候选的渲染结果（方案 §15.12）
-// ===========================================================================
-
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_route, post) {
-  person_.check_not_outsourcer();
-  auto l_sql  = get_sqlite_database();
-  auto l_json = in_handle->get_json();
-
-  auto l_task = l_sql.get_by_uuid<server_task_info>(task_id_);
-  DOODLE_CHICK_HTTP(
-      l_task.type_ == server_task_info_type::ai_light, bad_request, "任务 {} 的类型是 {}，不是 AI 灯光任务", task_id_,
-      magic_enum::enum_name(l_task.type_)
-  );
-
-  auto l_report = l_json.get<round_render_report_t>();
-  co_await apply_render_report(l_sql, g_ctx().get<kitsu_ctx_t>(), task_id_, ai_light_iteration_locator_t{}, l_report);
-
-  nlohmann::json l_out{{"task_id", task_id_}};
-  if (auto l_it = l_sql.get_ai_light_iteration_by_task(task_id_); l_it.has_value()) {
-    l_out["session_id"]      = l_it->session_id_;
-    l_out["iteration"]       = l_it->iteration_;
-    l_out["iteration_state"] = l_it->state_;
-  }
-  co_return in_handle->make_msg(l_out);
-}
-
-// ===========================================================================
-// 引擎内路线回传：一轮候选的渲染结果（D54）
-// ===========================================================================
-//
-// 与上面那条工作机回传的差别只有两处，其余全部复用：
-//   1) 定位方式：轮次在路径上（session_id + iteration），由 ai_light_iteration_locator_t
-//      交给 apply_render_report。引擎内路线**没有 server_task_info 行**（D53：面板不派发），
-//      所以拿不出任务 uuid，这也是 locator 存在的唯一理由。
-//   2) 权限：调用方是本机 Doodle 客户端，用发起人自己的 JWT，所以做 check_project_access。
-//      工作机那条相反（它不是项目成员，只认任务 uuid）；这里不放开。
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(render_report_local_route, post) {
-  person_.check_not_outsourcer();
-  auto l_sql     = get_sqlite_database();
-  auto l_json    = in_handle->get_json();
-
-  auto l_session = load_session_checked(person_, l_sql, session_id_);
-
-  DOODLE_CHICK_HTTP(
-      l_sql.get_ai_light_iteration(l_session.uuid_id_, iteration_).has_value(), not_found, "会话 {} 没有第 {} 轮",
-      l_session.uuid_id_, iteration_
-  );
-
-  auto l_report = l_json.get<round_render_report_t>();
-  co_await apply_render_report(
-      l_sql, g_ctx().get<kitsu_ctx_t>(), uuid{}, ai_light_iteration_locator_t{l_session.uuid_id_, iteration_}, l_report
-  );
-
-  nlohmann::json l_out{};
-  l_out["session_id"] = l_session.uuid_id_;
-  l_out["iteration"]  = iteration_;
-  std::string l_it_state{};
-  if (auto l_it = l_sql.get_ai_light_iteration(l_session.uuid_id_, iteration_); l_it.has_value()) {
-    l_out["iteration_state"] = l_it->state_;
-    l_it_state               = std::string{magic_enum::enum_name(l_it->state_)};
-  }
-
-  SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "AI 灯光（引擎内路线）：会话 {} 第 {} 轮回传已受理，状态 {}", l_session.uuid_id_,
-      iteration_, l_it_state
-  );
-  co_return in_handle->make_msg(l_out);
-}
-
-// ===========================================================================
 // 工作机上传候选产物（首帧海报 / 候选视频 / 线性 EXR）
 // ===========================================================================
 
@@ -702,8 +632,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
 
   auto l_sql  = get_sqlite_database();
   auto l_cand = l_sql.get_by_uuid<ai_light_candidate>(id_);
-
   auto l_it   = l_sql.get_by_uuid<ai_light_iteration>(l_cand.iteration_id_);
+  
   DOODLE_CHICK_HTTP(
       l_it.state_ != ai_light_iteration_state::judged, bad_request, "AI 灯光轮次 {} 已判定，不再接受候选产物上传",
       l_it.iteration_

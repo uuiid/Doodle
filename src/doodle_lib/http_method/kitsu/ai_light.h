@@ -48,20 +48,6 @@ uuid session_id_{};
 uuid iteration_id_{};
 DOODLE_HTTP_FUN_END()
 
-// /api/doodle/ai/light/render_report/{}
-DOODLE_HTTP_JWT_FUN(render_report_route)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid task_id_{};
-DOODLE_HTTP_FUN_END()
-
-// /api/doodle/ai/light/render_report_local/{}/{}
-DOODLE_HTTP_JWT_FUN(render_report_local_route)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-// DOODLE_HTTP_ROUTE("/api/doodle/ai/light/render_report_local/{}/{}", session_id_, iteration_)
-uuid session_id_{};
-std::int32_t iteration_{0};
-DOODLE_HTTP_FUN_END()
-
 // /api/doodle/ai/light/candidate/{}/file/{}
 DOODLE_HTTP_JWT_FUN(candidate_file_route)
 DOODLE_HTTP_FUN_OVERRIDE(post)

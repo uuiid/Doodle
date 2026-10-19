@@ -323,15 +323,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<ai_light::inference_route>("/api/doodle/ai/light/session/{}/inference"_url(
         &ai_light::inference_route::session_id_
       ))
-      // 工作机回传渲染结果（§15.12）。与上面几条不同：调用方是 worker 而不是浏览器。
-      .reg_t<ai_light::render_report_route>("/api/doodle/ai/light/render_report/{}"_url(
-        &ai_light::render_report_route::task_id_
-      ))
-      // 引擎内路线回传（D54）。同一段回传逻辑的另一个入口：引擎内模式没有任务行，
-      // 所以轮次直接在路径上（会话 + 轮次号），业务代码与工作机那条完全共用。
-      .reg_t<ai_light::render_report_local_route>("/api/doodle/ai/light/render_report_local/{}/{}"_url(
-        &ai_light::render_report_local_route::session_id_, &ai_light::render_report_local_route::iteration_
-      ))
       // 工作机上传候选产物（D40）。role 那个 URL 段是 scoped enum，
       // 路由宏会把它展开成 (render|render_linear|render_movie) 的白名单正则，
       // 所以拼错的 role 进不来。
