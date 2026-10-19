@@ -135,47 +135,4 @@ DOODLELIB_API std::optional<ai_light_session_detail_t> build_session_detail(
     sqlite_database& in_sql, const uuid& in_session_id
 );
 
-// ===========================================================================
-// 候选落库（角色降级 · 第二梯队）
-// ===========================================================================
-
-/// 前端提交一轮候选的请求。
-///
-/// 存在的理由：候选现在是前端算好交上来的（角色降级 · 第二梯队），服务端只做
-/// IR 准入闸门与落库。两条提交路线（队列 / 引擎内）的**后半段完全相同**
-/// （钉身份、落 iteration/candidate、算基线差分、装 launch plan），
-/// 所以那一段抽成一个函数、两条路线共用 —— 各写一份必然漂移，
-/// 而漂移的表现是「本地路线算不出视频路径」这类只在真机上才发现的故障。
-///
-/// 请求里**没有** `operator_id_`：它只从 JWT 取（结构上不可伪造，比"校验后拒绝"彻底）。
-struct DOODLELIB_API submit_iteration_request_t {
-  uuid session_id_{};
-  uuid project_id_{};
-  uuid operator_id_{};
-  /// 本轮轮次号（1、2、3…）。调用方已校验 == 上一轮 + 1（首次为 1）。
-  std::int32_t iteration_{0};
-  /// **权威状态**：本轮要落库的 rig，数量不限（至少一个）。身份字段由本函数补齐。
-  std::vector<lighting_rig_t> rigs_{};
-  /// 装配推导要它定位镜头（会话的 task_id_）。
-  uuid task_id_{};
-
-  /// 前端提交体的形状：rig 就是 `lighting_rig_t` 本身。
-  /// 身份字段（session_id/iteration/rig_id/baseline_level）前端给了也不采信 ——
-  /// 落库时会无条件覆盖它们，这里同样解码后交给下游钉死。
-  friend void to_json(nlohmann::json& j, const submit_iteration_request_t& p) {
-    j["session_id"] = p.session_id_;
-    j["project_id"] = p.project_id_;
-    j["iteration"]  = p.iteration_;
-    j["candidates"] = p.rigs_;
-    j["task_id"]    = p.task_id_;
-  }
-  friend void from_json(const nlohmann::json& j, submit_iteration_request_t& p) {
-    if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
-    if (j.contains("project_id")) j.at("project_id").get_to(p.project_id_);
-    if (j.contains("iteration")) j.at("iteration").get_to(p.iteration_);
-    if (j.contains("candidates")) j.at("candidates").get_to(p.rigs_);
-    if (j.contains("task_id")) j.at("task_id").get_to(p.task_id_);
-  }
-};
-
 }  // namespace doodle::ai_light

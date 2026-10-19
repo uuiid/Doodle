@@ -59,6 +59,30 @@ struct ai_light_judgement_t {
   }
 };
 
+struct submit_iteration_request_t {
+  uuid session_id_{};
+  uuid project_id_{};
+  uuid operator_id_{};
+  std::int32_t iteration_{0};
+  std::vector<lighting_rig_t> rigs_{};
+  uuid task_id_{};
+
+  friend void to_json(nlohmann::json& j, const submit_iteration_request_t& p) {
+    j["session_id"] = p.session_id_;
+    j["project_id"] = p.project_id_;
+    j["iteration"]  = p.iteration_;
+    j["candidates"] = p.rigs_;
+    j["task_id"]    = p.task_id_;
+  }
+  friend void from_json(const nlohmann::json& j, submit_iteration_request_t& p) {
+    if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
+    if (j.contains("project_id")) j.at("project_id").get_to(p.project_id_);
+    if (j.contains("iteration")) j.at("iteration").get_to(p.iteration_);
+    if (j.contains("candidates")) j.at("candidates").get_to(p.rigs_);
+    if (j.contains("task_id")) j.at("task_id").get_to(p.task_id_);
+  }
+};
+
 ai_light_session load_session_checked(
     const http_jwt_fun::http_jwt_t& in_person, sqlite_database& in_sql, const uuid& in_session_id
 ) {
