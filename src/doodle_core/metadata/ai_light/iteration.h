@@ -51,18 +51,6 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
                               }
 )
 
-/// 美术超过这个时长不做判断 → 轮次**只是被标记为「已过期」，状态不变**（决策 12）。
-///
-/// 为什么过期不是一个独立状态，而是一个实时派生的标志：
-/// 它是 `state == awaiting_judgement && now > render_at_ + g_judgement_timeout` 的纯函数，
-/// `is_judgement_overdue()` 随时算得出来，读模型也把它带出去了（`is_judgement_overdue_`）。
-///
-/// 这一点必须守住：`judge_route::post` 的判断闸门只接受 `awaiting_judgement`，若把过器物化成一个
-/// 新状态，就没有任何路径能回到 `awaiting_judgement`（渲染回填是唯一的写侧，而渲染早已完成）
-/// —— 美术超时回来时，**已经渲染好的候选再也判断不了**。
-///
-/// 另外「挂起能省资源」在这里是空头支票：轮次进入 `awaiting_judgement` 的前提就是渲染已完成、
-/// worker 已归还，此时没有农场槽位、没有 UE 授权、没有 GPU 被占，6 张 PNG 只是躺在磁盘上。
 constexpr auto g_judgement_timeout = std::chrono::hours{4};
 
 // ---------------------------------------------------------------------------
