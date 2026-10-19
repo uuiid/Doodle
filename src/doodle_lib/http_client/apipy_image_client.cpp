@@ -14,12 +14,17 @@
 #include <boost/uuid/uuid_io.hpp>
 
 #include "core/global_function.h"
+#include <algorithm>
 #include <array>
 #include <cctype>
+#include <cmath>
 #include <filesystem>
 #include <fmt/format.h>
 #include <fstream>
 #include <iterator>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 #include <optional>
 #include <ranges>
 #include <semaphore>
@@ -39,8 +44,9 @@ constexpr std::chrono::seconds g_request_timeout{360};
 constexpr std::string_view g_default_model{"gpt-image-2.5-vip"};
 constexpr std::string_view g_edit_image_field{"image"};
 constexpr std::size_t g_max_reference_images{8};
-constexpr std::uintmax_t g_max_reference_image_bytes{1536 * 1024};
-constexpr std::uintmax_t g_max_reference_images_total_bytes{9728 * 1024};
+constexpr std::int32_t g_max_reference_image_side{2048};
+constexpr std::string_view g_compressed_ext{".png"};
+constexpr std::string_view g_compressed_mime{"image/png"};
 
 const nlohmann::json& first_data_item(const nlohmann::json& in_body) {
   static const nlohmann::json l_empty = nlohmann::json::object();
@@ -122,6 +128,36 @@ class apipy_queue_t {
   hash_map_t map_{};
   semaphore_t semaphore_{g_max_inflight};
 };
+
+struct compressed_image_t {
+  std::string bytes_{};
+  std::int32_t cols_{};
+  std::int32_t rows_{};
+};
+
+std::optional<compressed_image_t> compress_reference_image(const std::string& in_bytes) {
+  if (in_bytes.empty()) return std::nullopt;
+
+  std::vector<uchar> l_input{in_bytes.begin(), in_bytes.end()};
+  cv::Mat l_image = cv::imdecode(l_input, cv::IMREAD_UNCHANGED);
+  if (l_image.empty()) return std::nullopt;
+
+  if (const auto l_long_side = std::max(l_image.cols, l_image.rows); l_long_side > g_max_reference_image_side) {
+    const auto l_scale  = static_cast<double>(g_max_reference_image_side) / static_cast<double>(l_long_side);
+    const auto l_width  = std::max(1, static_cast<int>(std::lround(static_cast<double>(l_image.cols) * l_scale)));
+    const auto l_height = std::max(1, static_cast<int>(std::lround(static_cast<double>(l_image.rows) * l_scale)));
+    cv::resize(l_image, l_image, cv::Size{l_width, l_height}, 0.0, 0.0, cv::INTER_AREA);
+  }
+
+  std::vector<uchar> l_buffer{};
+  if (!cv::imencode(std::string{g_compressed_ext}, l_image, l_buffer, {cv::IMWRITE_PNG_COMPRESSION, 9}))
+    return std::nullopt;
+  if (l_buffer.empty()) return std::nullopt;
+
+  return compressed_image_t{
+      .bytes_ = std::string{l_buffer.begin(), l_buffer.end()}, .cols_ = l_image.cols, .rows_ = l_image.rows
+  };
+}
 
 }  // namespace
 
@@ -293,6 +329,21 @@ apipy_image_client::edit_reference_t apipy_image_client::load_reference_image(st
   l_ref.filename_ = l_local_path.filename().generic_string();
 
   l_ref.mime_     = mime_of_image(l_local_path.extension().generic_string());
+
+  const auto l_raw_ext  = l_local_path.extension().generic_string();
+  const auto l_raw_size = l_ref.bytes_.size();
+  if (const auto l_compressed = compress_reference_image(l_ref.bytes_); l_compressed.has_value()) {
+    l_ref.bytes_    = l_compressed->bytes_;
+    l_ref.filename_ = l_local_path.stem().generic_string() + std::string{g_compressed_ext};
+    l_ref.mime_     = std::string{g_compressed_mime};
+    SPDLOG_LOGGER_INFO(
+        logger_, "参考图已压缩: {} -> {} ({}x{}), {} 字节 -> {} 字节", l_ref.url_, l_ref.filename_, l_compressed->cols_,
+        l_compressed->rows_, l_raw_size, l_ref.bytes_.size()
+    );
+  } else {
+    SPDLOG_LOGGER_WARN(logger_, "参考图压缩失败, 按原字节发送: {} ({} 字节, 扩展名 {})", l_ref.url_, l_raw_size, l_raw_ext);
+  }
+
   return l_ref;
 }
 
@@ -304,7 +355,6 @@ ai_client_base::request_info_t apipy_image_client::collect_request_info(const nl
       fmt::format("参考图最多 {} 张, 收到 {} 张", g_max_reference_images, l_req.reference_images_.size())
   );
 
-  std::uintmax_t l_total_bytes{};
   for (const auto& url : l_req.reference_images_) {
     const auto l_path = parse_site_image_id(url);
     if (l_path.empty() || !FSys::exists(l_path))
@@ -319,19 +369,8 @@ ai_client_base::request_info_t apipy_image_client::collect_request_info(const nl
       );
     const auto l_size = FSys::file_size(l_path);
     DOODLE_CHICK_HTTP(
-        l_size > 0 && l_size <= g_max_reference_image_bytes, bad_request,
-        fmt::format(
-            "参考图大小必须在 1 字节到 {} 字节(1.5M) 之间, 收到 {} 字节: {}", g_max_reference_image_bytes, l_size,
-            std::string{url}
-        )
-    );
-    l_total_bytes += l_size;
-    DOODLE_CHICK_HTTP(
-        l_total_bytes <= g_max_reference_images_total_bytes, bad_request,
-        fmt::format(
-            "参考图总大小必须在 {} 字节(9.5M) 以内, 收到 {} 字节: {}", g_max_reference_images_total_bytes,
-            l_total_bytes, std::string{url}
-        )
+        l_size > 0, bad_request,
+        fmt::format("参考图大小必须大于 0 字节, 收到 {} 字节: {}", l_size, std::string{url})
     );
     auto l_ext = l_path.extension().generic_string();
     std::ranges::transform(l_ext, l_ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
