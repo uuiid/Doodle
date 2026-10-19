@@ -100,7 +100,8 @@ window.__ModuleLoader__.load({ id: 'dsh-vscode-sel', factory: () => {
     }
 
     function pull() {
-      if (pulling || document.visibilityState === 'hidden') return
+      if (pulling || globalThis.__DSH_VSCODE_SEL_DISABLED__ === true) return
+      if (document.visibilityState === 'hidden') return
       pulling = true
       fetch(endpoint() + PENDING_PATH, { method: 'GET', cache: 'no-store' })
         .then(function (response) {
@@ -131,10 +132,24 @@ window.__ModuleLoader__.load({ id: 'dsh-vscode-sel', factory: () => {
 
     var timer = window.setInterval(pull, 5000)
 
+    globalThis.__dshVscodeSel__ = {
+      /** Pull now instead of waiting for the next focus or timer tick. */
+      pull: pull,
+      /** Turn the background timer off when something else drives insertion. */
+      disable: function () {
+        globalThis.__DSH_VSCODE_SEL_DISABLED__ = true
+      },
+      /** Re-enable the timer after a disable. */
+      enable: function () {
+        globalThis.__DSH_VSCODE_SEL_DISABLED__ = false
+      }
+    }
+
     return function () {
       window.removeEventListener('focus', onFocus)
       document.removeEventListener('visibilitychange', onVisibility)
       window.clearInterval(timer)
+      delete globalThis.__dshVscodeSel__
     }
   }
 

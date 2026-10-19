@@ -93,6 +93,24 @@ Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:3080/api/dsh-vscode-sel/pu
 
 页面不可见时不做任何请求；`focus` 与 `visibilitychange` 各触发一次拉取。同时保留 5 秒兜底轮询，覆盖焦点事件被面板内交互吞掉的场景。
 
+## 配置页显示「启动失败」
+
+DSH 的插件弹窗对所有不含 `engines.dsh` 的插件都报「启动失败」：
+
+- `dsh-app-boot` 的 `unmetRequirements()` 只检查 `engines.dsh`；若没有该字段，就逐个检查 `peerDependencies` 中所有 `@deepseek-ai/dsh*` 条目
+- 本插件声明了 `"@deepseek-ai/cordis": "*"`，它不是 `@deepseek-ai/dsh*`，因此不计入
+- 于是 `requirements` 为空 → 兼容性判定返回 `undefined`（没问题）
+
+弹窗需要的 `compatibility` 结果并没有生成，界面就按「未能证明兼容」显示为失败。**这是 DSH 0.2.1-rc.2 的普遍行为，所有已在用的插件（`dsh-cmake`、`dsh-tool-everything`、`dsh-sampling-params` 等）都一样**，与本插件无关，也不影响加载：插件的路由与浏览器端功能均已实测可用。
+
+**确认插件确实在跑**（浏览器 DevTools Console）：
+
+```js
+Object.keys(globalThis.__dshVscodeSel__)   // ["pull", "disable", "enable"]
+```
+
+页面里迟于启动的额外脚本可以用 `__dshVscodeSel__.disable()` 关掉本插件的 5 秒兜底轮询，改由脚本自己决定何时 `pull()`；`enable()` 恢复。
+
 ## 已知限制
 
 - `/pending` 是**消费式**语义。同时打开多个 DSH 标签页时，先拉取的那个页面拿到内容。
