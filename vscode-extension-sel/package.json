@@ -1,0 +1,87 @@
+{
+  "name": "dsh-sel-bridge",
+  "displayName": "DSH Selection Bridge",
+  "description": "把 VS Code 中选中的代码位置推送到浏览器里运行的 DSH，聚焦 DSH 窗口时插入到输入框光标处。",
+  "version": "0.1.0",
+  "publisher": "doodle",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "deepseek",
+    "harness",
+    "dsh",
+    "selection"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onCommand:dshSel.sendSelection"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "dshSel.sendSelection",
+        "title": "发送选中到 DSH 浏览器",
+        "category": "DSH"
+      },
+      {
+        "command": "dshSel.checkEndpoint",
+        "title": "检查 DSH 端点连通性",
+        "category": "DSH"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "dshSel.sendSelection",
+        "key": "ctrl+alt+d",
+        "when": "editorTextFocus && editorHasSelection"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "dshSel.sendSelection",
+          "when": "editorHasSelection",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "DSH Selection Bridge",
+      "properties": {
+        "dshSel.endpoint": {
+          "type": "string",
+          "default": "http://127.0.0.1:3080",
+          "description": "DSH 本地服务地址（协议 + 主机 + 端口），不含末尾路径。"
+        },
+        "dshSel.format": {
+          "type": "string",
+          "enum": [
+            "relative",
+            "full",
+            "basename"
+          ],
+          "enumDescriptions": [
+            "相对工作区根目录的路径，如 src/doodle_lib/http_method/kitsu/ai_light.cpp",
+            "编辑器文件的绝对路径",
+            "仅文件名"
+          ],
+          "default": "relative",
+          "description": "插入到 DSH 的路径形式。relative 取工作区根目录；文件不属于任何工作区目录时回退为绝对路径。行号始终附带。"
+        },
+        "dshSel.includeLineNumbers": {
+          "type": "boolean",
+          "default": true,
+          "description": "是否在路径后附加起始行/结束行。"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "package": "npx @vscode/vsce package"
+  }
+}

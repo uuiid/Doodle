@@ -1,0 +1,42 @@
+{
+  "name": "dsh-vscode-sel",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness 插件：接收 VS Code 扩展推送的选中代码位置，并在浏览器端 DSH 页面聚焦时把 @路径:行号 插入输入框光标处。",
+  "keywords": [
+    "deepseek",
+    "harness",
+    "dsh",
+    "cordis",
+    "plugin",
+    "vscode",
+    "selection",
+    "caret"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime"
+      ],
+      "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*"
+  }
+}
