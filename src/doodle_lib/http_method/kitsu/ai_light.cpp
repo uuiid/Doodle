@@ -16,11 +16,11 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_client/seedance2_client.h>
-#include <doodle_lib/http_method/kitsu/auto_task.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/ai_light.h>
 #include <doodle_lib/http_method/kitsu/ai_light_orchestrator.h>
 #include <doodle_lib/http_method/kitsu/ai_light_stats.h>
+#include <doodle_lib/http_method/kitsu/auto_task.h>
 #include <doodle_lib/http_method/kitsu/preview.h>
 #include <doodle_lib/http_method/seedance2/inference_task.h>
 #include <doodle_lib/logger/logger.h>
@@ -29,9 +29,9 @@
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/beast/http/status.hpp>
-#include <cpp-base64/base64.h>
 
 #include <algorithm>
+#include <cpp-base64/base64.h>
 #include <cstdint>
 #include <exception>
 #include <magic_enum/magic_enum.hpp>
@@ -41,6 +41,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 
 namespace doodle::http::ai_light {
 
@@ -196,8 +197,8 @@ orm::sql_modify_statement_vector_t write_submitted_iteration(
     l_cand.is_selected_     = false;
     l_cand.preview_file_id_ = uuid{};
 
-    auto l_rig          = in_request.rigs_.at(l_i);
-    l_rig.candidate_id_ = l_cand.uuid_id_;
+    auto l_rig              = in_request.rigs_.at(l_i);
+    l_rig.candidate_id_     = l_cand.uuid_id_;
     l_rig_set.rigs_.emplace_back(std::move(l_rig));
 
     l_candidates.emplace_back(std::move(l_cand));
@@ -470,7 +471,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
 
     auto l_analysis = ai_light::analyze_reference_file(l_file_path);
     DOODLE_CHICK_HTTP(
-        l_analysis.has_value(), bad_request, "参考图 {} 落盘后无法解码，无法统计", l_file_path.filename().generic_string()
+        l_analysis.has_value(), bad_request, "参考图 {} 落盘后无法解码，无法统计",
+        l_file_path.filename().generic_string()
     );
     l_ref.set_stats(l_analysis->stats_);
     l_ref.stats_confidence_ = l_analysis->confidence_;
@@ -505,15 +507,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, put) {
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
-  auto l_ref = l_sql.get_by_uuid<ai_light_reference>(id_);
+  auto l_ref  = l_sql.get_by_uuid<ai_light_reference>(id_);
   load_session_checked(person_, l_sql, l_ref.session_id_);
 
   sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(
-      update(l_sql).from<ai_light_reference>().set_from_ref(l_json, ai_light_reference::put_property_list()).where(
-          c(&ai_light_reference::uuid_id_) == id_
-      )
-  );
+  l_sqls.emplace_back(update(l_sql)
+                          .from<ai_light_reference>()
+                          .set_from_ref(l_json, ai_light_reference::put_property_list())
+                          .where(c(&ai_light_reference::uuid_id_) == id_));
   co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_after = l_sql.get_by_uuid<ai_light_reference>(id_);
@@ -660,8 +661,8 @@ candidate_upload_target_t locate_upload_target(
     sqlite_database& in_sql, const http::kitsu_ctx_t& in_ctx, const uuid& in_candidate_id
 ) {
   candidate_upload_target_t l_ret{};
-  l_ret.candidate_ = in_sql.get_by_uuid<ai_light_candidate>(in_candidate_id);
-  l_ret.iteration_ = in_sql.get_by_uuid<ai_light_iteration>(l_ret.candidate_.iteration_id_);
+  l_ret.candidate_  = in_sql.get_by_uuid<ai_light_candidate>(in_candidate_id);
+  l_ret.iteration_  = in_sql.get_by_uuid<ai_light_iteration>(l_ret.candidate_.iteration_id_);
   l_ret.frames_dir_ = candidate_frames_dir(in_ctx, l_ret.candidate_);
   return l_ret;
 }
@@ -703,8 +704,8 @@ FSys::path frame_file_name_from_header(const session_data_ptr& in_handle) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
   person_.check_not_outsourcer();
 
-  auto l_sql   = get_sqlite_database();
-  auto& l_ctx  = g_ctx().get<kitsu_ctx_t>();
+  auto l_sql    = get_sqlite_database();
+  auto& l_ctx   = g_ctx().get<kitsu_ctx_t>();
   auto l_target = locate_upload_target(l_sql, l_ctx, candidate_id_);
 
   if (stage_ == doodle::ai_light::ai_light_candidate_upload_stage::begin_sequence) {
@@ -721,15 +722,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
     );
 
     sql_modify_statement_vector_t l_sqls{};
-    l_sqls.emplace_back(
-        update(l_sql)
-            .from<ai_light_candidate>()
-            .set(
-                c(&ai_light_candidate::render_status_) = ai_light::candidate_render_status::pending,
-                c(&ai_light_candidate::metrics_)       = nlohmann::json{}
-            )
-            .where(c(&ai_light_candidate::uuid_id_) == candidate_id_)
-    );
+    l_sqls.emplace_back(update(l_sql)
+                            .from<ai_light_candidate>()
+                            .set(
+                                c(&ai_light_candidate::render_status_) = ai_light::candidate_render_status::pending,
+                                c(&ai_light_candidate::metrics_)       = nlohmann::json{}
+                            )
+                            .where(c(&ai_light_candidate::uuid_id_) == candidate_id_));
     co_await l_sql.run_sql(std::move(l_sqls));
 
     SPDLOG_LOGGER_INFO(
@@ -742,8 +741,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
   if (stage_ == doodle::ai_light::ai_light_candidate_upload_stage::upload_frame) {
     DOODLE_CHICK_HTTP(
         in_handle->content_type_ == detail::content_type::application_nuknown, bad_request,
-        "候选帧的上传体必须是 application/octet-stream，收到的是 {}",
-        magic_enum::enum_name(in_handle->content_type_)
+        "候选帧的上传体必须是 application/octet-stream，收到的是 {}", magic_enum::enum_name(in_handle->content_type_)
     );
 
     const FSys::path l_dst = l_target.frames_dir_ / frame_file_name_from_header(in_handle);
@@ -765,8 +763,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
     );
     FSys::rename(l_tmp_dst, l_dst, l_ec);
     DOODLE_CHICK_HTTP(
-        !l_ec, internal_server_error, "候选 {} 帧落位失败 {}：{}", candidate_id_, l_dst.generic_string(),
-        l_ec.message()
+        !l_ec, internal_server_error, "候选 {} 帧落位失败 {}：{}", candidate_id_, l_dst.generic_string(), l_ec.message()
     );
     std::error_code l_ignored{};
     FSys::remove(l_tmp, l_ignored);
@@ -779,20 +776,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
   }
 
   const std::int32_t l_frame_count = count_sequence_frames(l_target.frames_dir_);
-  DOODLE_CHICK_HTTP(
-      l_frame_count > 0, bad_request, "候选 {} 没有收到任何帧", candidate_id_
-  );
+  DOODLE_CHICK_HTTP(l_frame_count > 0, bad_request, "候选 {} 没有收到任何帧", candidate_id_);
   DOODLE_CHICK_HTTP(
       l_frame_count >= 2, bad_request, "候选 {} 只收到 {} 帧，合成不出视频", candidate_id_, l_frame_count
   );
 
   sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(
-      update(l_sql)
-          .from<ai_light_candidate>()
-          .set(c(&ai_light_candidate::render_status_) = ai_light::candidate_render_status::rendered)
-          .where(c(&ai_light_candidate::uuid_id_) == candidate_id_)
-  );
+  l_sqls.emplace_back(update(l_sql)
+                          .from<ai_light_candidate>()
+                          .set(c(&ai_light_candidate::render_status_) = ai_light::candidate_render_status::rendered)
+                          .where(c(&ai_light_candidate::uuid_id_) == candidate_id_));
   co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_INFO(
@@ -924,14 +917,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
       l_result.input_tokens_, l_result.output_tokens_
   );
 
-  co_return in_handle->make_msg(
-      nlohmann::json{
-          {"result", l_result.result_json_},
-          {"input_tokens", l_result.input_tokens_},
-          {"output_tokens", l_result.output_tokens_},
-          {"total_tokens", l_result.total_tokens_},
-      }
-  );
+  co_return in_handle->make_msg(l_task.data_request_);
 }
 
 // ===========================================================================
@@ -950,8 +936,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   // 判据落在**最新一轮**上：没有轮次即放行（等价于原先的 draft）。
   const auto l_prev = l_sql.get_ai_light_iterations(l_session.uuid_id_);
   DOODLE_CHICK_HTTP(
-      l_prev.empty() || !is_waiting_human(l_prev.back()), bad_request,
-      "会话 {} 第 {} 轮尚未判断，不能提交新候选", l_session.uuid_id_, l_prev.empty() ? 0 : l_prev.back().iteration_
+      l_prev.empty() || !is_waiting_human(l_prev.back()), bad_request, "会话 {} 第 {} 轮尚未判断，不能提交新候选",
+      l_session.uuid_id_, l_prev.empty() ? 0 : l_prev.back().iteration_
   );
 
   submit_iteration_request_t l_req{};
