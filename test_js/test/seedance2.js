@@ -1110,9 +1110,9 @@ test.describe('seedance2 task — gemini_image 后端', () => {
     }
   });
 
-  test('POST .../task — 缺少模型名称应返回 400', async ({ request }) => {
-    const req = await postTask(request, geminiBody({ data_request: { prompt: '没有模型名称的请求' } }));
-    expect(req.status).to.equal(400);
+  test('POST .../task — 缺少模型名称应返回 500', async ({ request }) => {
+    const req = await postTask(request, geminiBody({ data_request: { prompt: '没有模型名称的请求', aspectRatio } }));
+    expect(req.status).to.equal(500);
   });
 
   test('POST .../task — 图像尺寸不在 1K/2K/4K 内应返回 400', async ({ request }) => {

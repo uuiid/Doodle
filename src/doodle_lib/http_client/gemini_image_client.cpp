@@ -332,10 +332,11 @@ FSys::path gemini_image_client::parse_site_image_id(std::string_view in_url) {
   if (!in_url.starts_with(g_pictures_prefix)) return {};
 
   FSys::path l_name{in_url};
-  auto l_ext    = l_name.extension().generic_string();
+  auto l_ext    = to_lower_copy(l_name.extension().generic_string());
   auto l_id_str = l_name.stem().generic_string();
 
-  uuid l_id     = from_uuid_str(l_id_str);
+  auto l_id     = from_uuid_str(l_id_str);
+
   return g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_file(l_id, l_ext);
 }
 
@@ -469,6 +470,16 @@ ai_client_base::request_info_t gemini_image_client::collect_request_info(const n
 
   for (const auto& url : l_req.reference_images_) {
     const auto l_path = parse_site_image_id(url);
+    // 扩展名先查: 路由对不上与扩展名不支持都要报 400, 但后端两者都返回空路径,
+    // 先判扩展名才能让调用方知道到底哪条规则没过。
+    auto l_ext = l_path.extension();
+    if (l_ext != ".png" && l_ext != ".jpg" && l_ext != ".jpeg")
+      throw_exception(
+          http_request_error{
+              boost::beast::http::status::bad_request,
+              fmt::format("参考图扩展名必须是 .png/.jpg/.jpeg 之一, 收到: {}", std::string{url})
+          }
+      );
     if (l_path.empty() || !FSys::exists(l_path))
       throw_exception(
           http_request_error{
@@ -484,14 +495,6 @@ ai_client_base::request_info_t gemini_image_client::collect_request_info(const n
         l_size > 0, bad_request,
         fmt::format("参考图大小必须大于 0 字节, 收到 {} 字节: {}", l_size, std::string{url})
     );
-    auto l_ext = to_lower_copy(l_path.extension().generic_string());
-    if (l_ext != ".png" && l_ext != ".jpg" && l_ext != ".jpeg")
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::bad_request,
-              fmt::format("参考图扩展名必须是 .png/.jpg/.jpeg 之一, 收到: {}", std::string{url})
-          }
-      );
   }
 
   const request_t l_gemini_req{l_req};
