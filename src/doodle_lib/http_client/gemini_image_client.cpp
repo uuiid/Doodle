@@ -224,9 +224,6 @@ nlohmann::json gemini_image_client::request_t::to_body() const {
 
 std::string gemini_image_client::normalize_aspect_ratio(std::string_view in_ratio) {
   auto l_ratio = to_lower_copy(in_ratio);
-  std::erase(l_ratio, ' ');
-  std::ranges::replace(l_ratio, 'x', ':');
-  if (l_ratio.empty()) return {};
   if (std::ranges::find(g_aspect_ratios, std::string_view{l_ratio}) == g_aspect_ratios.end())
     throw_exception(
         http_request_error{
