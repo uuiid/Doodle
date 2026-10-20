@@ -59,6 +59,15 @@ constexpr std::array g_image_sizes{
     std::string_view{"4K"},
 };
 
+/// generation_config.thinking_level 的合法取值。某一层模型不支持某个级别时由上游自行兜底。
+constexpr std::array g_thinking_levels{
+    std::string_view{"minimal"},
+    std::string_view{"medium"},
+    std::string_view{"high"},
+};
+
+constexpr std::string_view g_default_thinking_level{"medium"};
+
 /// 与 apipy_image_client 同构的并发闸门: 同一个进程里同时最多跑 g_max_inflight 个同步请求,
 /// 多出来的任务停在 preparing 等下一轮。map_ 里存已经跑完、等调用方来取的结果。
 ///
@@ -182,7 +191,8 @@ gemini_image_client::request_t::request_t(const doodle::seedance2::transfer_stat
       )),
       image_size_(normalize_image_size(
           in_req.image_size_.empty() ? std::string_view{g_default_image_size} : in_req.image_size_
-      )) {}
+      )),
+      thinking_level_(normalize_thinking_level(in_req.quality_)) {}
 
 nlohmann::json gemini_image_client::request_t::to_body() const {
   return nlohmann::json{} = *this;
@@ -192,7 +202,6 @@ std::string gemini_image_client::normalize_aspect_ratio(std::string_view in_rati
   auto l_ratio = to_lower_copy(in_ratio);
   std::erase(l_ratio, ' ');
   std::ranges::replace(l_ratio, 'x', ':');
-  std::ranges::replace(l_ratio, '×', ':');
   if (l_ratio.empty()) return std::string{g_default_aspect_ratio};
   if (std::ranges::find(g_aspect_ratios, std::string_view{l_ratio}) != g_aspect_ratios.end()) return l_ratio;
   return std::string{g_default_aspect_ratio};
@@ -213,6 +222,24 @@ std::string gemini_image_client::normalize_image_size(std::string_view in_size) 
   }
   if (l_size.front() == '5') return std::string{"1K"};  // 512px 不是所有模型都支持, 退回 1K
   return std::string{g_default_image_size};
+}
+
+std::string gemini_image_client::normalize_thinking_level(std::string_view in_quality) {
+  // quality 是公共请求里的通用字段(API易 那边原样透传), Gemini 这边把它当「思考深度」用。
+  auto l_quality = to_lower_copy(in_quality);
+  std::erase(l_quality, ' ');
+  // 留空表示不下发, 沿用模型默认级别 —— 显式写死 medium 会把上游以后改默认值的余地钉死。
+  if (l_quality.empty()) return {};
+
+  // 已是合法级别就原样返回
+  if (std::ranges::find(g_thinking_levels, std::string_view{l_quality}) != g_thinking_levels.end()) return l_quality;
+
+  if (l_quality == "low" || l_quality == "fast" || l_quality == "draft") return std::string{"minimal"};
+  if (l_quality == "high" || l_quality == "hd" || l_quality == "vip" || l_quality == "best")
+    return std::string{"high"};
+  // medium / standard / normal 以及认不出的取值都落到 medium: 上游对认不出的级别直接 400,
+  // 宁可降级出图也不要因为一个质量枚举把整个任务判死。
+  return std::string{g_default_thinking_level};
 }
 
 std::string gemini_image_client::mime_of_image(const std::string& in_ext) {
@@ -258,6 +285,9 @@ void to_json(nlohmann::json& j, const gemini_image_client::request_t& req) {
            {"image_size", req.image_size_},
        }},
   };
+  // quality 留空时不下发 generation_config, 请求体与不传 quality 完全一致。
+  if (!req.thinking_level_.empty())
+    j["generation_config"] = nlohmann::json{{"thinking_level", req.thinking_level_}};
 }
 
 FSys::path gemini_image_client::parse_site_image_id(std::string_view in_url) {
@@ -418,12 +448,11 @@ ai_client_base::request_info_t gemini_image_client::collect_request_info(const n
         fmt::format("参考图大小必须大于 0 字节, 收到 {} 字节: {}", l_size, std::string{url})
     );
     auto l_ext = to_lower_copy(l_path.extension().generic_string());
-    if (l_ext != ".png" && l_ext != ".jpg" && l_ext != ".jpeg" && l_ext != ".webp" && l_ext != ".heic" &&
-        l_ext != ".heif")
+    if (l_ext != ".png" && l_ext != ".jpg" && l_ext != ".jpeg")
       throw_exception(
           http_request_error{
               boost::beast::http::status::bad_request,
-              fmt::format("参考图扩展名必须是 .png/.jpg/.jpeg/.webp/.heic/.heif 之一, 收到: {}", std::string{url})
+              fmt::format("参考图扩展名必须是 .png/.jpg/.jpeg 之一, 收到: {}", std::string{url})
           }
       );
   }

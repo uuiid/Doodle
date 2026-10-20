@@ -64,6 +64,7 @@ class DOODLELIB_API gemini_image_client final : public ai_client_base {
     std::string prompt_;
     std::string aspect_ratio_;
     std::string image_size_;
+    std::string thinking_level_;
     std::vector<reference_image_t> references_;
 
     explicit request_t(const doodle::seedance2::transfer_station_request_t& in_req);
@@ -91,6 +92,11 @@ class DOODLELIB_API gemini_image_client final : public ai_client_base {
   /// aspectRatio 只认 "16:9" 这种; imageSize 只认 1K / 2K / 4K (大写 K, 小写会被上游拒绝)。
   [[nodiscard]] static std::string normalize_aspect_ratio(std::string_view in_ratio);
   [[nodiscard]] static std::string normalize_image_size(std::string_view in_size);
+
+  /// 把中转站的 quality 映射成 generation_config.thinking_level:
+  /// low/minimal -> minimal, standard/medium -> medium, high/hd/vip -> high。
+  /// 空串返回空串, 表示**不下发**该字段, 沿用模型自己的默认级别。
+  [[nodiscard]] static std::string normalize_thinking_level(std::string_view in_quality);
 
   static FSys::path parse_site_image_id(std::string_view in_url);
   static std::string mime_of_image(const std::string& in_ext);
