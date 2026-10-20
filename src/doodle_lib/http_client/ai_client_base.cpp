@@ -10,6 +10,8 @@
 #include <boost/url.hpp>
 #include <fmt/format.h>
 
+#include <chrono>
+
 namespace doodle::http::seedance2 {
 
 boost::asio::awaitable<ai_client_base::run_task_result_t> ai_client_base::run_task(
@@ -58,7 +60,12 @@ nlohmann::json ai_client_base::add_ip_to_req(
 
 boost::asio::awaitable<std::string> ai_client_base::get_ip_str() {
   using http_client_ssl = doodle::http::http_client_ssl;
-  auto l_client         = std::make_shared<http_client_ssl>("https://api.ip.sb", *core_set::get_set().ctx_ptr);
+
+  constexpr auto g_ip_cache_ttl = std::chrono::seconds{1};
+
+  if (!cached_ip_.empty() && std::chrono::steady_clock::now() < cached_ip_expire_) co_return cached_ip_;
+
+  auto l_client = std::make_shared<http_client_ssl>("https://api.ip.sb", *core_set::get_set().ctx_ptr);
   boost::beast::http::request<boost::beast::http::empty_body> l_req{boost::beast::http::verb::get, "/ip", 11};
   l_req.set(boost::beast::http::field::host, l_client->server_ip_and_port_);
   l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
@@ -71,6 +78,8 @@ boost::asio::awaitable<std::string> ai_client_base::get_ip_str() {
         throw_exception(doodle_error{"get_ip_str error {} {}", l_res.result(), l_res.body()});
       auto l_ip = l_res.body();
       if (l_ip.ends_with('\n')) l_ip.pop_back();
+      cached_ip_        = l_ip;
+      cached_ip_expire_ = std::chrono::steady_clock::now() + g_ip_cache_ttl;
       co_return l_ip;
     } catch (const boost::system::system_error& e) {
       if (e.code() == boost::asio::error::operation_aborted) throw;

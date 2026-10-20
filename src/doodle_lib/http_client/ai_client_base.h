@@ -9,6 +9,7 @@
 #include <doodle_lib/core/http_client_core.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <chrono>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
@@ -184,5 +185,9 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
   boost::asio::awaitable<FSys::path> download_raw_file(std::string_view in_file_url);
 
   std::string url_sign_secret_{};
+
+  /// get_ip_str 的 1 秒缓存: 同一个客户端在 1 秒内的多次取 IP 只发一次请求。
+  std::string cached_ip_{};
+  std::chrono::steady_clock::time_point cached_ip_expire_{};
 };
 }  // namespace doodle::http::seedance2
