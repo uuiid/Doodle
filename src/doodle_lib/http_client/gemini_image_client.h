@@ -69,10 +69,6 @@ class DOODLELIB_API gemini_image_client final : public ai_client_base {
 
     explicit request_t(const doodle::seedance2::transfer_station_request_t& in_req);
 
-    [[nodiscard]] static request_t from_json_request(const nlohmann::json& in_request);
-
-    [[nodiscard]] nlohmann::json to_request_json() const;
-
     [[nodiscard]] nlohmann::json to_body() const;
   };
 
