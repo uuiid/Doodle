@@ -1,0 +1,7 @@
+type: array
+description: 三维向量，JSON 里是定长数组 `[x, y, z]`。
+minItems: 3
+maxItems: 3
+items:
+  type: number
+  format: double

@@ -1,0 +1,56 @@
+get:
+  tags:
+    - AI灯光
+  summary: 获取预设列表
+  description: |
+    处理器为 `ai_light::preset_route::get`，实现见 `http_method/kitsu/ai_light.cpp`。
+    按 `name` 升序返回全部预设。
+  operationId: ai_light_preset_get
+  parameters:
+    - name: enabled_only
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: true
+      description: 只返回 `enabled = true` 的预设；取值为 `true`/`1` 时为真
+  responses:
+    '200':
+      description: 预设列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/AiLightPreset.yaml
+    '401':
+      description: 未认证或外包人员不可调用
+post:
+  tags:
+    - AI灯光
+  summary: 新建预设
+  description: |
+    处理器为 `ai_light::preset_route::post`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    `name` 必填，`created_by` 由服务端填当前登录人。
+    `rig_fragment` / `applicable` / `stats_target` 以自由 JSON 落库，按结构体类型化读取。
+  operationId: ai_light_preset_post
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/AiLightPresetWrite.yaml
+  responses:
+    '201':
+      description: 创建成功，返回预设
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiLightPreset.yaml
+    '400':
+      description: 缺少预设名称
+    '401':
+      description: 未认证或外包人员不可调用
+  security:
+    - bearerAuth: []

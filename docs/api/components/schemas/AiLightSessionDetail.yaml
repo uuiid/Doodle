@@ -1,0 +1,31 @@
+type: object
+description: |
+  会话详情，前端工作台的唯一聚合读模型（`ai_light_session_detail_t`）。
+  刻意不做分页与懒加载：一次会话的候选量级是「每轮候选数 × 轮数」，实际收敛在 3 轮内。
+properties:
+  session:
+    $ref: AiLightSession.yaml
+  references:
+    type: array
+    description: 参考图，按上传先后升序
+    items:
+      $ref: AiLightReference.yaml
+  iterations:
+    type: array
+    description: 轮次，按 `iteration` 升序
+    items:
+      $ref: AiLightIteration.yaml
+  candidates:
+    type: array
+    description: 候选，跨轮，按（轮次, 创建时间, id）升序
+    items:
+      $ref: AiLightCandidate.yaml
+  is_waiting_human:
+    type: boolean
+    description: 最新一轮是否在等人工判断（`state == awaiting_judgement`）；无轮次时为 false
+  is_judgement_overdue:
+    type: boolean
+    description: 最新一轮是否已过判断时限（`render_at` + 4 小时）
+  candidate_count_per_iteration:
+    type: integer
+    description: 最近一轮实际落库的候选数，供前端渲染进度条；还没有轮次时为 0

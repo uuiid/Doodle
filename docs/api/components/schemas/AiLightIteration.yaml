@@ -1,0 +1,66 @@
+type: object
+description: 轮次（`ai_light_iteration`）。一轮 = 生成一批候选 → 派发 → 渲染 → 等美术挑。
+properties:
+  id:
+    type: string
+    format: uuid
+    description: 轮次 id
+  session_id:
+    type: string
+    format: uuid
+    description: 所属会话
+  iteration:
+    type: integer
+    minimum: 1
+    description: 轮次序号，从 1 开始，与 session_id 组成唯一键
+  state:
+    type: string
+    enum:
+      - generated
+      - dispatched
+      - rendering
+      - awaiting_judgement
+      - judged
+    description: |
+      轮次推进状态：
+      - `generated`：候选已生成，尚未派发
+      - `dispatched`：已派发给工作机
+      - `rendering`：工作机渲染中
+      - `awaiting_judgement`：渲染完，等美术判断（人工闸门 2）
+      - `judged`：已判断
+  server_task_info_id:
+    type: string
+    format: uuid
+    description: 派发出去的分布式任务；任务被删时置空
+  dispatch_at:
+    type: string
+    format: date-time
+    nullable: true
+    description: 派发时间
+  render_at:
+    type: string
+    format: date-time
+    nullable: true
+    description: 转入 `awaiting_judgement` 的时间，也是判断时限的基准时钟
+  judged_by:
+    type: string
+    format: uuid
+    description: 判断人（person）
+  judged_at:
+    type: string
+    format: date-time
+    nullable: true
+  feedback_text:
+    type: string
+    description: 美术的自由文本反馈
+  failure_reason:
+    type: string
+    description: 失败原因
+  rigs:
+    $ref: AiLightRigSet.yaml
+  created_at:
+    type: string
+    format: date-time
+  updated_at:
+    type: string
+    format: date-time

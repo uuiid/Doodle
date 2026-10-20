@@ -1,0 +1,39 @@
+type: object
+description: |
+  灯光方案（`lighting_rig_t`，对应 docs/ue_ai_lighting_plan.md §4.3）。
+  既是 `ai_light_iteration.rigs` 的元素，也是下发给 UE 工作机的载荷；UE 插件侧有镜像实现，
+  两端只靠 JSON 对齐，不共享 C++ 代码。
+properties:
+  candidate_id:
+    type: string
+    format: uuid
+    description: 该方案对应的候选 id。由服务端在落库时生成并回填，前端提交时给了也不采信
+  provenance:
+    type: object
+    description: 方案来源
+    properties:
+      model:
+        type: string
+      prompt_hash:
+        type: string
+      reference:
+        type: array
+        items:
+          type: string
+      seed:
+        type: integer
+        format: int64
+      tier:
+        type: string
+  globals:
+    $ref: AiLightGlobals.yaml
+  lights:
+    type: array
+    description: 单灯列表
+    items:
+      $ref: AiLightLight.yaml
+  ops:
+    type: array
+    description: 相对基线关卡的操作序列
+    items:
+      $ref: AiLightLightOp.yaml

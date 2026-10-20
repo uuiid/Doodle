@@ -1,0 +1,36 @@
+type: object
+description: 候选（`ai_light_candidate`）。中间候选只走本服务，只有定稿才进 `preview_file`。
+properties:
+  id:
+    type: string
+    format: uuid
+    description: 候选 id
+  iteration_id:
+    type: string
+    format: uuid
+    description: 所属轮次
+  session_id:
+    type: string
+    format: uuid
+    description: 所属会话（冗余列，免 join）
+  render_status:
+    type: string
+    enum:
+      - pending
+      - rendered
+      - failed
+    description: 渲染状态
+  metrics:
+    type: object
+    additionalProperties: true
+    description: 工作机回传的候选画面指标（自由 JSON，按 `candidate_metrics_t` 类型化读取）
+  is_selected:
+    type: boolean
+    description: 是否被美术选中作为下一轮基准
+  preview_file_id:
+    type: string
+    format: uuid
+    description: 定稿后关联的预览文件
+  created_at:
+    type: string
+    format: date-time

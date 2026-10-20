@@ -1,0 +1,35 @@
+type: object
+description: AI 灯光会话。一次灯光工作 = 一个会话，同一镜头可以有多个会话（重做灯光）。
+properties:
+  id:
+    type: string
+    format: uuid
+    description: 会话 id
+  project_id:
+    type: string
+    format: uuid
+    description: 所属项目
+  task_id:
+    type: string
+    format: uuid
+    description: Kitsu 灯光任务 id，会话锚点
+  entity_id:
+    type: string
+    format: uuid
+    description: 镜头（entity）id
+  submitter:
+    type: string
+    format: uuid
+    description: 创建人（person）
+  title:
+    type: string
+    description: 标题，创建时为空则取镜头名称
+  prompt_text:
+    type: string
+    description: 人工提示词原文，权威意图
+  created_at:
+    type: string
+    format: date-time
+  updated_at:
+    type: string
+    format: date-time

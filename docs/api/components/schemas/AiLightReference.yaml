@@ -1,0 +1,31 @@
+type: object
+description: |
+  参考图（`ai_light_reference`）。一张图一行，每张图单独存统计 ——
+  多图聚合时冲突维度不自动平均掉，需要保留原图统计供人工裁决。
+  参考图不注册进 `preview_file`，目前也没有取图接口。
+properties:
+  id:
+    type: string
+    format: uuid
+    description: 参考图 id
+  session_id:
+    type: string
+    format: uuid
+    description: 所属会话
+  stats:
+    $ref: AiLightReferenceStats.yaml
+  stats_confidence:
+    type: number
+    format: double
+    minimum: 0
+    maximum: 1
+    description: 该图统计的可信度，受修图痕迹、分辨率、构图影响
+  is_outlier:
+    type: boolean
+    description: 是否作为外点剔除
+  excluded_reason:
+    type: string
+    description: 剔除原因
+  created_at:
+    type: string
+    format: date-time

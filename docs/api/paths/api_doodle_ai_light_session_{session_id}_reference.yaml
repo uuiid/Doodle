@@ -1,0 +1,80 @@
+get:
+  tags:
+    - AI灯光
+  summary: 获取会话的参考图列表
+  description: |
+    处理器为 `ai_light::reference_route::get`，实现见 `http_method/kitsu/ai_light.cpp`。
+    按 `(created_at, id)` 升序返回，即上传先后顺序。
+  operationId: ai_light_session_reference_get
+  parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 会话 id
+  responses:
+    '200':
+      description: 参考图列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/AiLightReference.yaml
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+post:
+  tags:
+    - AI灯光
+  summary: 上传参考图
+  description: |
+    处理器为 `ai_light::reference_route::post`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    请求体为 `multipart/form-data`，可一次上传多张图。每张图都会：
+    1. 转成 PNG 落盘到 `<root>/seedance2/pictures/<uuid>.png`；
+    2. 生成 500px 等比缩略图（`<root>/seedance2/thumbnails/<uuid>.png`）；
+    3. 统计显示空间指标（亮度分位、调色板、对比度、色温、裁剪率、修图痕迹）
+       并写入 `stats`，同时给出 `stats_confidence`。
+
+    参考图不注册进 `preview_file`，也没有取图接口。
+    全部图片要么都成功，要么整批 400，不会落库半批。
+  operationId: ai_light_session_reference_post
+  parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 会话 id
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            files:
+              type: array
+              minItems: 1
+              items:
+                type: string
+                format: binary
+              description: 参考图，至少一张
+  responses:
+    '201':
+      description: 上传成功，返回新增的参考图（含统计结果）
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/AiLightReference.yaml
+    '400':
+      description: 未上传文件、文件无法解析为图片、无法解码或落盘后统计失败
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+  security:
+    - bearerAuth: []

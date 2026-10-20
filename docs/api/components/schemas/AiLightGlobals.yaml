@@ -1,0 +1,53 @@
+type: object
+description: 全局参数（与单灯无关的部分）
+properties:
+  exposure:
+    type: object
+    properties:
+      method:
+        type: string
+        default: manual
+      ev100_bias:
+        type: number
+        format: double
+  white_balance:
+    type: object
+    properties:
+      kelvin:
+        type: number
+        format: double
+        default: 5600
+      tint:
+        type: number
+        format: double
+  environment:
+    type: object
+    properties:
+      sky_light_intensity:
+        type: number
+        format: double
+        default: 1
+      fog_density:
+        type: number
+        format: double
+  grading:
+    type: object
+    description: 后处理/调色，是达成目标的主力手段之一
+    properties:
+      contrast:
+        type: number
+        format: double
+        default: 1
+      saturation:
+        type: number
+        format: double
+        default: 1
+      lift:
+        type: number
+        format: double
+      vignette:
+        type: number
+        format: double
+      bloom:
+        type: number
+        format: double

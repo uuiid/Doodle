@@ -1,0 +1,22 @@
+type: object
+description: |
+  一轮的全部灯光方案（`lighting_rig_set_t`）。整轮共享的身份与关卡路径放在外层，
+  `rigs` 数组只留各自独有的部分。落库在 `ai_light_iteration.rigs`。
+properties:
+  session_id:
+    type: string
+    format: uuid
+  shot_task_id:
+    type: string
+    format: uuid
+    description: 镜头灯光任务 id
+  iteration:
+    type: integer
+    minimum: 1
+  baseline_level:
+    type: string
+    description: 基线关卡（渲染装配的原始关卡）
+  rigs:
+    type: array
+    items:
+      $ref: AiLightRig.yaml

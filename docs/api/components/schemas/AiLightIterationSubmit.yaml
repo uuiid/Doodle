@@ -1,0 +1,31 @@
+type: object
+description: |
+  提交一轮候选的请求体（`submit_iteration_request_t`）。
+  `session_id`、`project_id`、`task_id` 由服务端从会话填充，提交了也不采信；
+  `operator_id` 不读请求体，一律取当前登录人。
+required:
+  - iteration
+  - candidates
+properties:
+  iteration:
+    type: integer
+    minimum: 1
+    description: 轮次序号，首轮为 1，之后必须等于上一轮 + 1
+  candidates:
+    type: array
+    minItems: 1
+    description: 本轮候选的灯光方案，每项是一套完整的 `LightingRig`
+    items:
+      $ref: AiLightRig.yaml
+  session_id:
+    type: string
+    format: uuid
+    description: 会被服务端覆盖
+  project_id:
+    type: string
+    format: uuid
+    description: 会被服务端覆盖
+  task_id:
+    type: string
+    format: uuid
+    description: 会被服务端覆盖

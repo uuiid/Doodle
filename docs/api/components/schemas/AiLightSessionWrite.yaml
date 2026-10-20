@@ -1,0 +1,12 @@
+type: object
+description: |
+  会话的创建/修改请求体，直接按 `ai_light_session` 的 `from_json` 解析。
+  `id`、`project_id`、`entity_id`、`task_id`、`submitter` 由服务端填充，提交了也不采信。
+  创建时 `prompt_text` 必填；修改只写 `prompt_text`。
+properties:
+  title:
+    type: string
+    description: 标题，为空时取镜头名称
+  prompt_text:
+    type: string
+    description: 提示词原文，不能为空

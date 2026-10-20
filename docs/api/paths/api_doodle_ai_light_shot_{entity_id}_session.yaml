@@ -1,0 +1,73 @@
+get:
+  tags:
+    - AI灯光
+  summary: 获取镜头的 AI 灯光会话列表
+  description: |
+    列出该镜头（`entity_id`）下的全部 AI 灯光会话，按 `created_at` 倒序。
+
+    处理器为 `ai_light::shot_session_route::get`，实现见 `http_method/kitsu/ai_light.cpp`。
+    所有会话的 `project_id` 都必须通过 `check_project_access`，否则整体返回 401「权限不足」。
+    响应是 `ai_light_session` 数组，不是会话详情。
+  operationId: ai_light_shot_session_get
+  parameters:
+    - name: entity_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 镜头（entity）id
+  responses:
+    '200':
+      description: 会话列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/AiLightSession.yaml
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+post:
+  tags:
+    - AI灯光
+  summary: 为镜头创建 AI 灯光会话
+  description: |
+    处理器为 `ai_light::shot_session_route::post`，实现见 `http_method/kitsu/ai_light.cpp`。
+    外包人员不可调用（`check_not_outsourcer`）。
+
+    服务端自动填充的字段（请求体里给了也不采信）：
+    - `submitter`：当前登录人；
+    - `entity_id`：路径参数；
+    - `project_id`：镜头的项目；
+    - `task_id`：镜头上的灯光任务（`task_type::get_lighting_id()`），找不到时返回 400。
+
+    `title` 为空时取镜头名称。`prompt_text` 必填 —— 提示词是权威意图。
+  operationId: ai_light_shot_session_post
+  parameters:
+    - name: entity_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 镜头（entity）id
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/AiLightSessionWrite.yaml
+  responses:
+    '201':
+      description: 创建成功，返回新建会话的详情
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiLightSessionDetail.yaml
+    '400':
+      description: 缺少 `prompt_text`，或镜头没有灯光任务
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+  security:
+    - bearerAuth: []

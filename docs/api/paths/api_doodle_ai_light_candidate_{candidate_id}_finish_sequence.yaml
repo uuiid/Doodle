@@ -1,0 +1,45 @@
+post:
+  tags:
+    - AI灯光
+  summary: 结束上传并合成候选视频（3/3）
+  description: |
+    处理器为 `ai_light::candidate_finish_sequence_route::post`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    把候选帧目录里的全部 `.png` 按文件名排序后：
+    1. 首帧复制为海报图；
+    2. 用 `movie::image_attr` + `create_move` 合成 mp4；
+    3. 候选 `render_status` 置 `rendered`。
+
+    合成失败时先把 `render_status` 置 `failed`，再返回 500。
+    请求体可选 `frame_rate`，缺省 `g_ai_light_default_frame_rate`（25），非正数返回 400。
+    帧数少于 2 张时返回 400（合成不出视频）。
+  operationId: ai_light_candidate_finish_sequence_post
+  parameters:
+    - name: candidate_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 候选 id
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            frame_rate:
+              type: integer
+              minimum: 1
+              default: 25
+              description: 合成视频的帧率
+  responses:
+    '204':
+      description: 合成完成，无响应体
+    '400':
+      description: 没有收到任何帧、帧数少于 2，或 `frame_rate` 非法
+    '401':
+      description: 未认证或外包人员不可调用
+    '500':
+      description: 海报/视频目录创建失败、海报写出失败、视频合成或落盘失败

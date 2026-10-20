@@ -1,0 +1,48 @@
+post:
+  tags:
+    - AI灯光
+  summary: 提交一轮灯光候选
+  description: |
+    处理器为 `ai_light::iteration_submit_route::post`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    前端（或推理侧）把本轮生成的若干套 `LightingRig` 提交上来，服务端为每个候选建行并发起渲染装配：
+
+    1. 校验上一轮已判断（`awaiting_judgement` 的轮次不允许提交新一轮）；
+    2. 校验 `iteration` 与会话期望的轮次号一致（首轮为 1，之后为上一轮 + 1）；
+    3. 调 `auto_task::shot_render_light_sync_only` 推导本镜头的渲染装配；
+    4. 落 `ai_light_iteration`（`state = generated`）与每个 `ai_light_candidate`（`render_status = pending`），
+       候选 id 由服务端生成并回填到对应 rig 的 `candidate_id`。
+
+    `session_id`、`project_id`、`task_id` 由服务端从会话填充，请求体里给了也不采信。
+    本接口不派发分布式任务；渲染由发起方（工作机/引擎侧）就绪后经 `candidate/{id}/begin_sequence`
+    系列接口回传帧序列，或由派发方另行下发 `ai_light` 类型任务。
+  operationId: ai_light_session_iteration_submit_post
+  parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 会话 id
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/AiLightIterationSubmit.yaml
+  responses:
+    '201':
+      description: 提交成功，返回会话详情
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiLightSessionDetail.yaml
+    '400':
+      description: 上一轮未判断、轮次号不一致、`candidates` 为空，或会话没有关联镜头任务
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+    '500':
+      description: 本轮候选数为 0，或无法推导本镜头的渲染装配
+  security:
+    - bearerAuth: []

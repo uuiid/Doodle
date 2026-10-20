@@ -1,0 +1,89 @@
+get:
+  tags:
+    - AI灯光
+  summary: 获取参考图详情
+  description: |
+    处理器为 `ai_light::reference_instance_route::get`，实现见 `http_method/kitsu/ai_light.cpp`。
+  operationId: ai_light_reference_get
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 参考图 id
+  responses:
+    '200':
+      description: 参考图详情
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiLightReference.yaml
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+put:
+  tags:
+    - AI灯光
+  summary: 标记/取消参考图外点
+  description: |
+    处理器为 `ai_light::reference_instance_route::put`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    局部更新，只写 `ai_light_reference::put_property_list()` 里的字段：
+    `is_outlier`、`excluded_reason`。`stats` 与 `stats_confidence` 由上传时的统计结果决定，不可改。
+  operationId: ai_light_reference_put
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 参考图 id
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            is_outlier:
+              type: boolean
+              description: 是否作为外点剔除
+            excluded_reason:
+              type: string
+              description: 剔除原因
+  responses:
+    '200':
+      description: 修改成功，返回修改后的参考图
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiLightReference.yaml
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+  security:
+    - bearerAuth: []
+delete:
+  tags:
+    - AI灯光
+  summary: 删除参考图
+  description: |
+    处理器为 `ai_light::reference_instance_route::delete_`，实现见 `http_method/kitsu/ai_light.cpp`。
+    删除数据库行并尽力删除落盘 PNG（删除失败只记警告）。缩略图不会被删除。
+  operationId: ai_light_reference_delete
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 参考图 id
+  responses:
+    '204':
+      description: 删除成功，无响应体
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+  security:
+    - bearerAuth: []

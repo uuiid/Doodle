@@ -1,0 +1,47 @@
+post:
+  tags:
+    - AI灯光
+  summary: 推理网关
+  description: |
+    处理器为 `ai_light::inference_route::post`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    服务端不自己做灯光推理，只把前端组好的请求体原样转发给推理后端：
+
+    1. 以当前登录人解析其 `ai_studio_id`，再取 AI 工作室配置构造推理客户端；
+    2. 建一条 `seedance2::task`（`type = inference`、`backend = seedance2`、`ai_light_session_id = 会话`），
+       `data_request` 即请求体，`completion_tokens` 取 `doodle_config::g_ark_inference_default_consumed_tokens`；
+    3. 同步等待推理完成（`seedance2::run_inference_task`），然后把**回填后的 `data_request`** 作为响应返回。
+
+    请求体与响应体的结构由推理后端决定，本仓库不做 schema 约束。
+    当前登录人未关联 AI 工作室、或工作室配置已删除时返回 400。
+  operationId: ai_light_session_inference_post
+  parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 会话 id
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: true
+          description: 透传给推理后端的请求体
+  responses:
+    '201':
+      description: 推理完成，返回回填后的推理请求体
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+    '400':
+      description: 找不到触发人、触发人未关联 AI 工作室，或工作室配置已删除
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+  security:
+    - bearerAuth: []

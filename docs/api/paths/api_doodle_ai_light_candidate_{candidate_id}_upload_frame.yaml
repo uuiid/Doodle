@@ -1,0 +1,46 @@
+post:
+  tags:
+    - AI灯光
+  summary: 上传候选单帧（2/3）
+  description: |
+    处理器为 `ai_light::candidate_upload_frame_route::post`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    请求体是单帧 PNG 的原始字节，`Content-Type` **必须**是 `application/octet-stream`。
+
+    帧文件名放在 `Content-Disposition` 请求头里：值为纯 Base64 时先解码，
+    否则按原文当文件名；解码结果必须是纯文件名（不含路径分隔符，且不是 `.`/`..`）。
+
+    服务端先写到 `<文件名>.uploading` 再重命名落位，保证 `finish_sequence` 不会读到半截文件。
+  operationId: ai_light_candidate_upload_frame_post
+  parameters:
+    - name: candidate_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 候选 id
+    - name: Content-Disposition
+      in: header
+      required: true
+      schema:
+        type: string
+      description: 帧文件名（原文或 Base64）
+  requestBody:
+    required: true
+    content:
+      application/octet-stream:
+        schema:
+          type: string
+          format: binary
+  responses:
+    '204':
+      description: 本帧已落位，无响应体
+    '400':
+      description: Content-Type 不是 application/octet-stream、缺少 Content-Disposition、文件名为空或非法、上传体为空
+    '401':
+      description: 未认证或外包人员不可调用
+    '500':
+      description: 帧目录创建失败、帧写入失败或帧落位失败
+  security:
+    - bearerAuth: []

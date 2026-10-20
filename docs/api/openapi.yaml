@@ -74,6 +74,12 @@ tags:
   - name: 任务队列
     description: Kitsu 任务队列 API
     x-displayName: 任务队列
+  - name: AI灯光
+    description: |
+      Kitsu AI 灯光：会话、参考图、轮次与候选、预设库、推理网关。
+      全部接口需要 JWT，且外包人员（`person_role_type::outsource`）不可调用；
+      会话相关接口还要求对会话所属项目有访问权限。
+    x-displayName: AI灯光
   - name: 动作-人员
     description: Kitsu 动作 API：人员 相关接口
     x-displayName: 动作-人员
@@ -210,6 +216,32 @@ paths:
     $ref: paths/api_doodle_ai_animation_train_settings.yaml
   /api/doodle/ai/animation/train:
     $ref: paths/api_doodle_ai_animation_train.yaml
+  /api/doodle/ai/light/shot/{entity_id}/session:
+    $ref: paths/api_doodle_ai_light_shot_{entity_id}_session.yaml
+  /api/doodle/ai/light/session/{id}:
+    $ref: paths/api_doodle_ai_light_session_{id}.yaml
+  /api/doodle/ai/light/session/{session_id}/reference:
+    $ref: paths/api_doodle_ai_light_session_{session_id}_reference.yaml
+  /api/doodle/ai/light/reference/{id}:
+    $ref: paths/api_doodle_ai_light_reference_{id}.yaml
+  /api/doodle/ai/light/session/{session_id}/iteration:
+    $ref: paths/api_doodle_ai_light_session_{session_id}_iteration.yaml
+  /api/doodle/ai/light/session/{session_id}/iteration/{iteration_id}:
+    $ref: paths/api_doodle_ai_light_session_{session_id}_iteration_{iteration_id}.yaml
+  /api/doodle/ai/light/session/{session_id}/inference:
+    $ref: paths/api_doodle_ai_light_session_{session_id}_inference.yaml
+  /api/doodle/ai/light/candidate/{candidate_id}/begin_sequence:
+    $ref: paths/api_doodle_ai_light_candidate_{candidate_id}_begin_sequence.yaml
+  /api/doodle/ai/light/candidate/{candidate_id}/upload_frame:
+    $ref: paths/api_doodle_ai_light_candidate_{candidate_id}_upload_frame.yaml
+  /api/doodle/ai/light/candidate/{candidate_id}/finish_sequence:
+    $ref: paths/api_doodle_ai_light_candidate_{candidate_id}_finish_sequence.yaml
+  /api/doodle/ai/light/candidate/{id}/movie:
+    $ref: paths/api_doodle_ai_light_candidate_{id}_movie.yaml
+  /api/doodle/ai/light/preset:
+    $ref: paths/api_doodle_ai_light_preset.yaml
+  /api/doodle/ai/light/preset/{id}:
+    $ref: paths/api_doodle_ai_light_preset_{id}.yaml
   /api/canvas:
     $ref: paths/api_canvas.yaml
   /api/canvas/{canvas_id}:
@@ -676,6 +708,7 @@ x-tagGroups:
       - 限额管理
       - AI生成剧集
       - AI工作室
+      - AI灯光
   - name: Kitsu 动作 API
     tags:
       - 动作-人员

@@ -1,0 +1,26 @@
+type: object
+description: 相对基线关卡的一步操作（`light_op_t`）。`patch` 保持自由 JSON：不同 op 的 patch 结构不同。
+required:
+  - op
+properties:
+  op:
+    type: string
+    enum:
+      - add
+      - modify
+      - remove
+      - set_grading
+      - set_environment
+      - set_exposure
+      - set_white_balance
+    description: '`add` / `modify` / `remove` 针对单灯，其余针对全局'
+  light:
+    type: string
+    description: 目标灯的语义 id（全局 op 为空）
+  patch:
+    type: object
+    additionalProperties: true
+    description: 该 op 的参数
+  rationale:
+    type: string
+    description: 为什么这么做，进日志与前端展示

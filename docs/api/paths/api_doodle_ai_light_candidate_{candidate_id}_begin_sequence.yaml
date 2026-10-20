@@ -1,0 +1,30 @@
+post:
+  tags:
+    - AI灯光
+  summary: 开始上传候选帧序列（1/3）
+  description: |
+    处理器为 `ai_light::candidate_begin_sequence_route::post`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    工作机渲染一组候选图后调用本接口开一个上传会话：
+    1. 清空并重建候选的帧目录 `<root>/ai_light_candidate/<uuid>/`；
+    2. 把候选 `render_status` 复位为 `pending`，并清空 `metrics`。
+
+    之后逐帧调 `upload_frame`，最后调 `finish_sequence` 合成视频并置为 `rendered`。
+  operationId: ai_light_candidate_begin_sequence_post
+  parameters:
+    - name: candidate_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 候选 id
+  responses:
+    '204':
+      description: 已开始，无响应体
+    '401':
+      description: 未认证或外包人员不可调用
+    '500':
+      description: 旧帧目录清理失败或帧目录创建失败
+  security:
+    - bearerAuth: []

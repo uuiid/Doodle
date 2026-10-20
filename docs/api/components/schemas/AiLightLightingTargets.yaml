@@ -1,0 +1,74 @@
+type: object
+description: |
+  灯光目标（`lighting_targets_t`，对应 docs/ue_ai_lighting_plan.md §4.2）。
+  由多张参考图的显示空间统计聚合而来，是一份显式、可核对、可版本化的目标。
+properties:
+  space:
+    type: string
+    default: display_srgb
+    description: 指标空间，恒为 display_srgb（已 tonemap，不是线性 EXR 空间）
+  luma_percentiles:
+    type: object
+    properties:
+      p10:
+        $ref: AiLightInterval.yaml
+      p50:
+        $ref: AiLightInterval.yaml
+      p90:
+        $ref: AiLightInterval.yaml
+  palette:
+    type: array
+    items:
+      type: object
+      properties:
+        color:
+          $ref: AiLightVec3.yaml
+        share:
+          $ref: AiLightInterval.yaml
+  contrast:
+    $ref: AiLightInterval.yaml
+  white_balance_kelvin:
+    $ref: AiLightInterval.yaml
+  clip_rate:
+    type: object
+    properties:
+      high:
+        $ref: AiLightInterval.yaml
+      low:
+        $ref: AiLightInterval.yaml
+  grading_hints:
+    type: object
+    description: 调色倾向，用可读标签而不是数值
+    properties:
+      vignette:
+        type: string
+        enum:
+          - none
+          - subtle
+          - moderate
+          - strong
+      lifted_blacks:
+        type: boolean
+      bloom:
+        type: string
+        enum:
+          - none
+          - subtle
+          - moderate
+          - strong
+  ownership:
+    type: object
+    description: 每个目标由谁负责达成
+    properties:
+      lighting:
+        type: array
+        items:
+          type: string
+      grading:
+        type: array
+        items:
+          type: string
+      shared:
+        type: array
+        items:
+          type: string

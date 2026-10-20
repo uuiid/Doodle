@@ -1,0 +1,154 @@
+type: object
+description: 单盏灯的完整描述（`light_t`）。
+required:
+  - id
+properties:
+  id:
+    type: string
+    description: 稳定语义 id，绝不用 UE actor 名（美术会重命名/复制/删除 actor）
+  role:
+    type: string
+    enum:
+      - key
+      - fill
+      - rim
+      - ambient
+      - practical
+      - bounce
+      - fx
+    description: 灯光在布光中的角色
+  type:
+    type: string
+    enum:
+      - point
+      - spot
+      - rect
+      - directional
+      - sky
+    description: UE 灯类型
+  anchor:
+    type: object
+    description: 灯「挂」在谁身上
+    properties:
+      space:
+        type: string
+        enum:
+          - camera
+          - world
+          - subject
+        description: 锚点所在空间，`camera` 是默认也是唯一推荐值
+      target:
+        type: string
+        description: 主体语义 id（如 `char_Ch220B`），空 = 整个场景
+      look_at:
+        type: string
+        description: 瞄准点，如 `subject_head`
+  offset:
+    type: object
+    description: 相对锚点的球坐标偏移
+    properties:
+      azimuth_deg:
+        type: number
+        format: double
+      elevation_deg:
+        type: number
+        format: double
+      distance_m:
+        type: number
+        format: double
+        default: 3
+  intensity:
+    type: object
+    properties:
+      unit:
+        type: string
+        enum:
+          - candela
+          - lumen
+          - lux
+          - unitless
+      value:
+        type: number
+        format: double
+  color:
+    type: object
+    description: |
+      颜色给定方式。`mode` 决定后续哪个字段有意义：
+      `temperature` → `kelvin`，`rgb` → `rgb`，`filter` → `filter`。
+    properties:
+      mode:
+        type: string
+        enum:
+          - temperature
+          - rgb
+          - filter
+      kelvin:
+        type: number
+        format: double
+        default: 5600
+      rgb:
+        $ref: AiLightVec3.yaml
+      filter:
+        type: string
+  shape:
+    type: object
+    properties:
+      source_radius_cm:
+        type: number
+        format: double
+      ies:
+        type: string
+      inner_cone_deg:
+        type: number
+        format: double
+        nullable: true
+      outer_cone_deg:
+        type: number
+        format: double
+        nullable: true
+  shadows:
+    type: object
+    properties:
+      cast:
+        type: boolean
+        default: true
+      softness:
+        type: number
+        format: double
+        default: 0.5
+  channels:
+    type: array
+    description: 通道 `[r, g, b]`，1/0 表示启用。项目约定主光走 Channel1 → `[0, 1, 0]`
+    minItems: 3
+    maxItems: 3
+    items:
+      type: integer
+    default:
+      - 0
+      - 1
+      - 0
+  mobility:
+    type: string
+    enum:
+      - static_light
+      - stationary
+      - movable
+    description: UE Mobility。`static_light` 不能出现在每帧变化的动画里，执行器会校验
+  anim:
+    type: array
+    description: 强度动画关键帧，只有 movable 灯能带动画
+    items:
+      type: object
+      properties:
+        frame:
+          type: integer
+        intensity:
+          type: number
+          format: double
+  origin:
+    type: string
+    enum:
+      - ai
+      - artist
+      - inherited
+    description: 灯光来源。`inherited` = 基线关卡里美术已布好的灯，AI 只做 modify/remove

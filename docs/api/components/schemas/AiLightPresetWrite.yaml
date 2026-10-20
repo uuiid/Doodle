@@ -1,0 +1,27 @@
+type: object
+description: |
+  预设的创建/更新请求体。可写字段与 `ai_light_preset::put_property_list()` 一致。
+  `created_by` 由服务端填当前登录人，提交了也不采信。
+properties:
+  name:
+    type: string
+    description: 预设名称，创建时必填
+  tags:
+    type: array
+    items:
+      type: string
+  embedding:
+    type: array
+    items:
+      type: number
+      format: float
+  embedding_dim:
+    type: integer
+  rig_fragment:
+    $ref: AiLightRig.yaml
+  applicable:
+    $ref: AiLightPresetApplicable.yaml
+  stats_target:
+    $ref: AiLightLightingTargets.yaml
+  enabled:
+    type: boolean

@@ -1,0 +1,34 @@
+get:
+  tags:
+    - AI灯光
+  summary: 获取候选视频
+  description: |
+    处理器为 `ai_light::candidate_movie_route::get`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    以 mp4 文件返回候选的合成视频（`finish_sequence` 的产物），`Content-Type` 按扩展名取 MIME。
+
+    候选尚未渲染完成（`pending`）或渲染失败（`failed`）时返回 404，视频文件不存在时返回 500。
+    候选渲染图（海报 PNG）不在本服务暴露，只有定稿才进 `preview_file`。
+  operationId: ai_light_candidate_movie_get
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 候选 id
+  responses:
+    '200':
+      description: 候选视频
+      content:
+        video/mp4:
+          schema:
+            type: string
+            format: binary
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+    '404':
+      description: 候选尚未渲染完成，或渲染失败
+    '500':
+      description: 候选视频文件不存在

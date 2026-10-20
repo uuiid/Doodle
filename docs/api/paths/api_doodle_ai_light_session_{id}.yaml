@@ -1,0 +1,91 @@
+get:
+  tags:
+    - AI灯光
+  summary: 获取 AI 灯光会话详情
+  description: |
+    前端工作台的唯一聚合入口：一次返回会话、参考图、全部轮次与候选，以及
+    `is_waiting_human` / `is_judgement_overdue` / `candidate_count_per_iteration` 三个派生提示位。
+
+    处理器为 `ai_light::session_instance_route::get`，实现见 `http_method/kitsu/ai_light.cpp`；
+    聚合体定义见 `metadata/ai_light/view.h`。
+  operationId: ai_light_session_get
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 会话 id
+  responses:
+    '200':
+      description: 会话详情
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiLightSessionDetail.yaml
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+    '404':
+      description: 会话不存在
+put:
+  tags:
+    - AI灯光
+  summary: 修改会话提示词
+  description: |
+    处理器为 `ai_light::session_instance_route::put`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    只写 `prompt_text` 一个字段，其余字段即使出现在请求体里也会被忽略。
+    提示词为空返回 400。成功返回修改后的会话详情。
+  operationId: ai_light_session_put
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 会话 id
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/AiLightSessionWrite.yaml
+  responses:
+    '200':
+      description: 修改成功，返回会话详情
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiLightSessionDetail.yaml
+    '400':
+      description: 提示词为空
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+delete:
+  tags:
+    - AI灯光
+  summary: 删除会话
+  description: |
+    处理器为 `ai_light::session_instance_route::delete_`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    删除前会把会话产物目录（`<root>/ai_light/<uuid 分段路径>`）改名备份到
+    `<ai_light 备份目录>/<uuid>/<YYYY_MM_DD_HH>`；备份失败只记日志，会话仍会被删除。
+    只删会话行，参考图/轮次/候选的清理由数据库外键级联负责。
+  operationId: ai_light_session_delete
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 会话 id
+  responses:
+    '204':
+      description: 删除成功，无响应体
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+  security:
+    - bearerAuth: []

@@ -1,0 +1,56 @@
+type: object
+description: 单张参考图在显示空间（已 tonemap）的统计。
+properties:
+  space:
+    type: string
+    default: display_srgb
+    description: 指标空间，恒为 display_srgb
+  luma_percentiles:
+    type: object
+    description: 亮度分位（标量，不是区间）
+    properties:
+      p10:
+        type: number
+        format: double
+      p50:
+        type: number
+        format: double
+      p90:
+        type: number
+        format: double
+  palette:
+    type: array
+    description: 调色板
+    items:
+      type: object
+      properties:
+        color:
+          $ref: AiLightVec3.yaml
+        share:
+          type: number
+          format: double
+  contrast:
+    type: number
+    format: double
+  white_balance_kelvin:
+    type: number
+    format: double
+    description: 白平衡色温（K）
+  clip_rate:
+    type: object
+    description: 高光/暗部裁剪率
+    properties:
+      high:
+        type: number
+        format: double
+      low:
+        type: number
+        format: double
+  retouch_score:
+    type: number
+    format: double
+    minimum: 0
+    maximum: 1
+    description: |
+      修图痕迹强度 0..1。当前实现只覆盖暗角一类签名，因此它是下界；
+      只用来压低 `stats_confidence`，不做门控。

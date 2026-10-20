@@ -1,0 +1,44 @@
+type: object
+description: 预设（`ai_light_preset`）。灯光知识注入，首批由美术整理，之后可从被接受的会话回捞。
+properties:
+  id:
+    type: string
+    format: uuid
+    description: 预设 id
+  name:
+    type: string
+    description: 预设名称，必填
+  tags:
+    type: array
+    description: 标签
+    items:
+      type: string
+  embedding:
+    type: array
+    description: 检索向量，落库为 JSON 数组
+    items:
+      type: number
+      format: float
+  embedding_dim:
+    type: integer
+    description: 检索向量维度
+  rig_fragment:
+    $ref: AiLightRig.yaml
+  applicable:
+    $ref: AiLightPresetApplicable.yaml
+  stats_target:
+    $ref: AiLightLightingTargets.yaml
+  enabled:
+    type: boolean
+    default: true
+    description: 是否参与检索
+  created_by:
+    type: string
+    format: uuid
+    description: 创建人（person）
+  created_at:
+    type: string
+    format: date-time
+  updated_at:
+    type: string
+    format: date-time

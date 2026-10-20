@@ -1,0 +1,13 @@
+type: object
+description: 预设的适用范围，决定这条预设在什么场景下可以被检索出来。
+properties:
+  scene_type:
+    type: array
+    description: 场景类型，如 `interior` / `exterior` / `night` / `day`
+    items:
+      type: string
+  subject_count:
+    $ref: AiLightInterval.yaml
+  interior:
+    type: boolean
+    default: true

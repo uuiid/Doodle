@@ -1,0 +1,88 @@
+get:
+  tags:
+    - AI灯光
+  summary: 获取预设详情
+  operationId: ai_light_preset_instance_get
+  description: |
+    处理器为 `ai_light::preset_instance_route::get`，实现见 `http_method/kitsu/ai_light.cpp`。
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 预设 id
+  responses:
+    '200':
+      description: 预设详情
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiLightPreset.yaml
+    '401':
+      description: 未认证或外包人员不可调用
+    '404':
+      description: 预设不存在
+put:
+  tags:
+    - AI灯光
+  summary: 更新预设
+  description: |
+    处理器为 `ai_light::preset_instance_route::put`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    局部更新，只写请求体里出现且属于 `ai_light_preset::put_property_list()` 的字段：
+    `name`、`tags`、`embedding`、`embedding_dim`、`rig_fragment`、`applicable`、`stats_target`、`enabled`。
+  operationId: ai_light_preset_instance_put
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 预设 id
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/AiLightPresetWrite.yaml
+  responses:
+    '200':
+      description: 更新成功，返回更新后的预设
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiLightPreset.yaml
+    '401':
+      description: 未认证或外包人员不可调用
+    '404':
+      description: 预设不存在
+  security:
+    - bearerAuth: []
+delete:
+  tags:
+    - AI灯光
+  summary: 删除预设
+  description: |
+    处理器为 `ai_light::preset_instance_route::delete_`，实现见 `http_method/kitsu/ai_light.cpp`。
+    物理删除预设行。只是不想再被检索到时应当改 `enabled = false`。
+  operationId: ai_light_preset_instance_delete
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 预设 id
+  responses:
+    '204':
+      description: 删除成功，无响应体
+    '401':
+      description: 未认证或外包人员不可调用
+    '404':
+      description: 预设不存在
+  security:
+    - bearerAuth: []

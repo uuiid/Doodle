@@ -1,0 +1,55 @@
+post:
+  tags:
+    - AI灯光
+  summary: 判断某一轮候选（人工闸门 2）
+  description: |
+    处理器为 `ai_light::judge_route::post`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    请求体可选 `selected_candidate_id` 与 `feedback_text`：
+    - `selected_candidate_id` 非空且属于该轮次时，该候选置 `is_selected = true`；为空表示「全否」；
+    - 无论是否选中，都把轮次置为 `judged`，并记录 `judged_by`、`judged_at` 与 `feedback_text`。
+
+    已判断过（`state == judged`）的轮次再判断返回 400。成功返回会话详情。
+  operationId: ai_light_session_iteration_judge_post
+  parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 会话 id
+    - name: iteration_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 轮次 id（`ai_light_iteration.id`，不是轮次序号）
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            selected_candidate_id:
+              type: string
+              format: uuid
+              description: 选中的候选 id；不填或为 nil UUID 表示全否
+            feedback_text:
+              type: string
+              description: 美术的自由文本反馈
+  responses:
+    '201':
+      description: 判断成功，返回会话详情
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiLightSessionDetail.yaml
+    '400':
+      description: 轮次不属于该会话、轮次已判断过，或候选不属于该轮次
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+  security:
+    - bearerAuth: []
