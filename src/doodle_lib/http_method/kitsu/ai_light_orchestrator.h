@@ -52,7 +52,7 @@ namespace doodle::ai_light {
 
 /// 回传定位（D54）：队列路线用任务 uuid 找轮次，引擎内路线没有任务行，改用「会话 + 轮次号」。
 ///
-/// 存在的理由：`mark_iteration_rendered` / `apply_render_report`
+/// 存在的理由：`mark_iteration_rendered` 与 `locate_iteration`
 /// 两段都要先定位轮次，而两条入口（worker 回传、本地客户端回传）只差这一步。
 /// 用可空任务号 + 可空会话号表达，而不是重载两个函数：重载会让每个调用点各挑一个，
 /// 而「任务号为空时回落到会话号」这条回退逻辑就没人负责了。
@@ -94,26 +94,6 @@ inline FSys::path candidate_movie_path(const http::kitsu_ctx_t& in_ctx, const ai
 DOODLELIB_API boost::asio::awaitable<void> mark_iteration_rendered(
     sqlite_database& in_sql, const uuid& in_server_task_info_id, const ai_light_iteration_locator_t& in_locator,
     const std::vector<ai_light_candidate>& in_candidates
-);
-
-/// 处理一次工作机回传：解析结果 → 落候选行 → 推进轮次/会话状态。
-///
-/// 两条出口：
-///   * 至少一个候选「海报 + 视频」都在（产物落点按 `candidate_render_path()` /
-///     `candidate_movie_path()` 现算，D27：回传里没有路径，也没有可信任的入参）→
-///     组装候选后交给 `mark_iteration_rendered()`，轮次转 `awaiting_judgement`、起算 4 小时；
-///   * 整轮失败（`error_` 非空，或没有任何 `rendered`，或所有 `rendered` 的产物都不在
-///     算出来的落点上 —— D41）→ 只记 WARN 日志，
-///     **不动状态机状态、不动候选行**（D28）。
-///     失败不是终态：美术随时可以再点一次 `/iterate`。
-///
-/// in_ctx 只用于算产物落点，所以是 const 引用。
-/// in_server_task_info_id 为 nil 时按 in_locator 定位（D54，引擎内路线没有任务行）。
-/// 抛出的错误（都来自解析或归属校验，属「回传不可用」）：定位不到轮次 → 404；
-/// 候选不属于该轮次 → 400。
-DOODLELIB_API boost::asio::awaitable<void> apply_render_report(
-    sqlite_database& in_sql, const http::kitsu_ctx_t& in_ctx, const uuid& in_server_task_info_id,
-    const ai_light_iteration_locator_t& in_locator, const round_render_report_t& in_report
 );
 
 /// 组装会话详情读模型。会话不存在时返回 nullopt。

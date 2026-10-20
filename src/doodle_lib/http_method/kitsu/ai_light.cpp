@@ -835,11 +835,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
       l_frames.size() >= 2, bad_request, "候选 {} 只收到 {} 帧，合成不出视频", candidate_id_, l_frames.size()
   );
 
-  const auto l_json               = in_handle->get_json();
-  const std::int32_t l_frame_rate = (!l_json.contains("frame_rate") || l_json.at("frame_rate").is_null())
-                                        ? g_ai_light_default_frame_rate
-                                        : l_json.get<std::int32_t>();
-  DOODLE_CHICK_HTTP(l_frame_rate > 0, bad_request, "帧率字段 frame_rate 的取值 {} 非法，必须是正整数", l_fps);
+  const auto l_body               = in_handle->get_json();
+  const std::int32_t l_frame_rate = (l_body.contains("frame_rate") && l_body.at("frame_rate").is_number())
+                                        ? l_body.at("frame_rate").get<std::int32_t>()
+                                        : g_ai_light_default_frame_rate;
+
+  DOODLE_CHICK_HTTP(l_frame_rate > 0, bad_request, "帧率字段 frame_rate 的取值 {} 非法，必须是正整数", l_frame_rate);
 
   candidate_media_result_t l_media{};
   std::string l_compose_error{};
@@ -1020,8 +1021,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   auto l_session = l_sql.get_by_uuid<ai_light_session>(session_id_);
   person_.check_project_access(l_session.project_id_);
 
-  // 上一轮还没被判断时不许提交 —— 否则那批候选会变成孤儿（没有人再能判断它们）。
-  // 判据落在**最新一轮**上：没有轮次即放行（等价于原先的 draft）。
   const auto l_prev = l_sql.get_ai_light_iterations(l_session.uuid_id_);
   DOODLE_CHICK_HTTP(
       l_prev.empty() || !is_waiting_human(l_prev.back()), bad_request, "会话 {} 第 {} 轮尚未判断，不能提交新候选",
