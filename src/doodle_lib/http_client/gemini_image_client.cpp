@@ -20,6 +20,8 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <fstream>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <optional>
 #include <ranges>
 #include <semaphore>
@@ -67,6 +69,9 @@ constexpr std::array g_thinking_levels{
 };
 
 constexpr std::string_view g_default_thinking_level{"medium"};
+
+/// 参考图统一重新编码成 PNG 再发送, 不改尺寸。
+constexpr std::string_view g_compressed_ext{".png"};
 
 /// 与 apipy_image_client 同构的并发闸门: 同一个进程里同时最多跑 g_max_inflight 个同步请求,
 /// 多出来的任务停在 preparing 等下一轮。map_ 里存已经跑完、等调用方来取的结果。
@@ -143,6 +148,28 @@ class gemini_queue_t {
   hash_map_t map_{};
   semaphore_t semaphore_{g_max_inflight};
 };
+
+struct compressed_image_t {
+  std::string bytes_{};
+  std::int32_t cols_{};
+  std::int32_t rows_{};
+};
+
+compressed_image_t compress_reference_image(const FSys::path& in_path) {
+  cv::Mat l_image = cv::imread(in_path.generic_string(), cv::IMREAD_UNCHANGED);
+  DOODLE_CHICK(!l_image.empty(), "参考图解码失败: {}", in_path.generic_string());
+
+  std::vector<uchar> l_buffer{};
+  DOODLE_CHICK(
+      cv::imencode(std::string{g_compressed_ext}, l_image, l_buffer, {cv::IMWRITE_PNG_COMPRESSION, 9}) &&
+          !l_buffer.empty(),
+      "参考图编码失败: {}", in_path.generic_string()
+  );
+
+  return compressed_image_t{
+      .bytes_ = std::string{l_buffer.begin(), l_buffer.end()}, .cols_ = l_image.cols, .rows_ = l_image.rows
+  };
+}
 
 std::string to_lower_copy(std::string_view in_str) {
   std::string l_str{in_str};
@@ -415,14 +442,13 @@ gemini_image_client::reference_image_t gemini_image_client::load_reference_image
   l_ref.url_              = std::string{in_url};
   const auto l_local_path = parse_site_image_id(in_url);
 
-  std::ifstream l_ifs{l_local_path, std::ios::binary};
-  DOODLE_CHICK(l_ifs.is_open(), "无法读取参考图: {}", l_local_path.generic_string());
-  l_ref.bytes_ = std::string{std::istreambuf_iterator<char>{l_ifs}, std::istreambuf_iterator<char>{}};
-  DOODLE_CHICK(!l_ref.bytes_.empty(), "参考图字节为空: {}", l_local_path.generic_string());
-  l_ref.mime_ = mime_of_image(l_local_path.extension().generic_string());
+  const auto l_compressed = compress_reference_image(l_local_path);
+  l_ref.bytes_            = l_compressed.bytes_;
+  l_ref.mime_             = std::string{g_default_mime};
 
   SPDLOG_LOGGER_INFO(
-      logger_, "Gemini 参考图已载入: {} ({}), {} 字节", l_ref.url_, l_ref.mime_, l_ref.bytes_.size()
+      logger_, "Gemini 参考图已压缩: {} ({}x{}), {} 字节", l_ref.url_, l_compressed.cols_, l_compressed.rows_,
+      l_ref.bytes_.size()
   );
   return l_ref;
 }
