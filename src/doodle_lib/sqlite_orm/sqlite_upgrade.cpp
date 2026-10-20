@@ -97,12 +97,10 @@ struct upgrade_3_t : sqlite_upgrade {
     if (l_s.pragma().user_version() > g_version_30) return;
     backup(l_s);
     l_s.pragma().foreign_keys(false);
-#ifndef NDEBUG
     l_s.sync_schema();
     l_s.add_column("seedance2_task_2", "ai_light_session_id", orm::column_type::blob);
     l_s.add_column("seedance2_person_token", "inference_count", orm::column_type::integer);
     l_s.rebuild_table<seedance2::task>();
-#endif
     l_s.pragma().user_version(g_current_version);
     l_s.pragma().foreign_keys(true);
     SPDLOG_INFO("upgrade 30->31: 已给 ai_studio 补上 apipy_key 列");
