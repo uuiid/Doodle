@@ -12,21 +12,13 @@ namespace doodle::seedance2 {
 
 struct DOODLE_CORE_API transfer_station_request_t {
   std::string model_;
-
   std::string prompt_;
-
   std::vector<std::string> reference_images_;
-
   std::string aspect_ratio_;
-
   std::string image_size_;
-
   std::string quality_;
-
   std::string background_;
-
   std::string mask_;
-
   std::string reply_type_;
 
   [[nodiscard]] bool has_reference_images() const { return !reference_images_.empty(); }

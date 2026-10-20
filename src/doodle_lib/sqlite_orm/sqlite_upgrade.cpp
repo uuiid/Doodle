@@ -1,7 +1,6 @@
 //
 // Created by TD on 25-5-15.
 //
-//
 
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/seedance2/subproject.h"
@@ -37,7 +36,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_old_version     = 31;
+constexpr std::size_t g_old_version     = 32;
 constexpr std::size_t g_current_version = g_old_version + 1;
 
 }  // namespace
@@ -104,13 +103,10 @@ struct upgrade_3_t : sqlite_upgrade {
     l_s.rebuild_table<seedance2::task>();
     l_s.pragma().user_version(g_current_version);
     l_s.pragma().foreign_keys(true);
-    SPDLOG_INFO("upgrade {}->{}: 已给 ai_studio 补上 apipy_key 列", g_old_version, g_current_version);
+    SPDLOG_INFO("upgrade {}->{}: 已重建 seedance2_task_2 并补上推理计数列", g_old_version, g_current_version);
   }
   ~upgrade_3_t() override = default;
 };
-
-std::shared_ptr<sqlite_upgrade> upgrade_init() { return std::make_shared<upgrade_init_t>(); }
-std::shared_ptr<sqlite_upgrade> upgrade_3() { return std::make_shared<upgrade_3_t>(); }
 
 struct upgrade_clear_orphan_task_t : sqlite_upgrade {
   explicit upgrade_clear_orphan_task_t() {}
@@ -127,15 +123,22 @@ struct upgrade_clear_orphan_task_t : sqlite_upgrade {
         .from<seedance2::task>()
         .set(
             c(&seedance2::task::status_)        = seedance2::task_status::failed,
-            c(&seedance2::task::data_response_) = nlohmann::json{{"error", "服务端重启, API易 同步请求的结果已丢失"}},
+            c(&seedance2::task::data_response_) = nlohmann::json{{"error", "服务端重启, 同步请求(API易/Gemini)的结果已丢失"}},
             c(&seedance2::task::ended_at_) =
                 chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}
         )
-        .where(c(&seedance2::task::backend_) == seedance2::task_backend::apipy_image && c(&seedance2::task::status_) == seedance2::task_status::running)();
-    SPDLOG_INFO("upgrade: 启动清理: 已将残留的 API易 running 任务置为失败");
+        .where(
+            (c(&seedance2::task::backend_) == seedance2::task_backend::apipy_image ||
+             c(&seedance2::task::backend_) == seedance2::task_backend::gemini_image) &&
+            c(&seedance2::task::status_) == seedance2::task_status::running
+        )();
+    SPDLOG_INFO("upgrade: 启动清理: 已将残留的 API易/Gemini running 任务置为失败");
   }
   ~upgrade_clear_orphan_task_t() override = default;
 };
+
+std::shared_ptr<sqlite_upgrade> upgrade_init() { return std::make_shared<upgrade_init_t>(); }
+std::shared_ptr<sqlite_upgrade> upgrade_3() { return std::make_shared<upgrade_3_t>(); }
 
 std::shared_ptr<sqlite_upgrade> upgrade_clear_orphan_task() { return std::make_shared<upgrade_clear_orphan_task_t>(); }
 
