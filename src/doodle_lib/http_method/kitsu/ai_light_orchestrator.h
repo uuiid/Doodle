@@ -48,20 +48,7 @@ namespace doodle::ai_light {
 //
 // 失败时**不落库**：同步请求的失败原因由 HTTP 响应体描述
 // （http_session_data.cpp:313 把 doodle_error::what() 放进 body），前端无论状态码是多少
-// 都读 body 显示。异步失败（工作机回传渲染结果）没有人可对话，只记 WARN 日志。
-
-/// 回传定位（D54）：队列路线用任务 uuid 找轮次，引擎内路线没有任务行，改用「会话 + 轮次号」。
-///
-/// 存在的理由：`mark_iteration_rendered` 与 `locate_iteration`
-/// 两段都要先定位轮次，而两条入口（worker 回传、本地客户端回传）只差这一步。
-/// 用可空任务号 + 可空会话号表达，而不是重载两个函数：重载会让每个调用点各挑一个，
-/// 而「任务号为空时回落到会话号」这条回退逻辑就没人负责了。
-struct DOODLELIB_API ai_light_iteration_locator_t {
-  /// 会话 uuid。任务号为空时必填。
-  uuid session_id_{};
-  /// 轮次号（会话内的 1、2、3…，不是轮次 uuid）。任务号为空时必填。
-  std::int32_t iteration_{0};
-};
+// 都读 body 显示。
 
 /// 候选首帧海报的落点（D44）：**唯一**的计算处。
 ///
@@ -81,20 +68,6 @@ inline FSys::path candidate_render_path(const http::kitsu_ctx_t& in_ctx, const a
 inline FSys::path candidate_movie_path(const http::kitsu_ctx_t& in_ctx, const ai_light_candidate& in_candidate) {
   return in_ctx.get_ai_light_candidate_movie_file(in_candidate.uuid_id_);
 }
-
-/// worker 回传渲染完成后调用（§10.3 的「落 iteration → 置 awaiting_judgement」）。
-///
-/// 本轮没有 worker（§13.3 未做），所以这个函数只提供入口并纳入单测；
-/// worker 里程碑把回传处理接上即可，状态机本身不用改。
-/// in_candidates 是回传的候选，只填 render_status_ / metrics_ ——
-/// 路径不在回传里，落库时按 candidate_render_path 现算（D44）；frame_count_ 是回传里的
-/// **诊断**字段（工作机与 UE 用它判断帧序列是否完整），候选行没有对应的列，不落库。
-///
-/// in_server_task_info_id 为 nil 时按 in_locator（会话 + 轮次号）定位（D54）。
-DOODLELIB_API boost::asio::awaitable<void> mark_iteration_rendered(
-    sqlite_database& in_sql, const uuid& in_server_task_info_id, const ai_light_iteration_locator_t& in_locator,
-    const std::vector<ai_light_candidate>& in_candidates
-);
 
 /// 组装会话详情读模型。会话不存在时返回 nullopt。
 DOODLELIB_API std::optional<ai_light_session_detail_t> build_session_detail(
