@@ -69,6 +69,10 @@ class DOODLELIB_API gemini_image_client final : public ai_client_base {
 
     explicit request_t(const doodle::seedance2::transfer_station_request_t& in_req);
 
+    [[nodiscard]] static request_t from_json_request(const nlohmann::json& in_request);
+
+    [[nodiscard]] nlohmann::json to_request_json() const;
+
     [[nodiscard]] nlohmann::json to_body() const;
   };
 
@@ -90,6 +94,7 @@ class DOODLELIB_API gemini_image_client final : public ai_client_base {
 
   /// 把中转站的 aspectRatio / imageSize 对齐到 Gemini 的取值:
   /// aspectRatio 只认 "16:9" 这种; imageSize 只认 1K / 2K / 4K (大写 K, 小写会被上游拒绝)。
+  /// 三者的共同约定: 空值返回空串表示**不下发**, 认不出的取值直接抛 bad_request 而不是兜底成默认值。
   [[nodiscard]] static std::string normalize_aspect_ratio(std::string_view in_ratio);
   [[nodiscard]] static std::string normalize_image_size(std::string_view in_size);
 

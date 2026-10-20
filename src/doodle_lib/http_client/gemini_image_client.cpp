@@ -38,8 +38,6 @@ constexpr std::string_view g_default_ext{".png"};
 constexpr std::string_view g_pictures_prefix{"/api/seedance2/pictures/"};
 constexpr std::chrono::seconds g_request_timeout{360};
 constexpr std::string_view g_default_model{"gemini-nano-banana-2.1"};
-constexpr std::string_view g_default_aspect_ratio{"1:1"};
-constexpr std::string_view g_default_image_size{"1K"};
 constexpr std::string_view g_default_mime{"image/png"};
 constexpr std::string_view g_image_response_type{"image"};
 constexpr std::string_view g_step_model_output{"model_output"};
@@ -67,8 +65,6 @@ constexpr std::array g_thinking_levels{
     std::string_view{"medium"},
     std::string_view{"high"},
 };
-
-constexpr std::string_view g_default_thinking_level{"medium"};
 
 /// 参考图统一重新编码成 PNG 再发送, 不改尺寸。
 constexpr std::string_view g_compressed_ext{".png"};
@@ -213,12 +209,8 @@ gemini_image_client::request_t::request_t(const doodle::seedance2::transfer_stat
       prompt_(in_req.prompt_),
       // 宽高比与分辨率都只作用在 response_format 上: 提示词里再写一遍 "aspect ratio 16:9" 就重复了,
       // 容易被模型当成两句不同要求。
-      aspect_ratio_(normalize_aspect_ratio(
-          in_req.aspect_ratio_.empty() ? std::string_view{g_default_aspect_ratio} : in_req.aspect_ratio_
-      )),
-      image_size_(normalize_image_size(
-          in_req.image_size_.empty() ? std::string_view{g_default_image_size} : in_req.image_size_
-      )),
+      aspect_ratio_(normalize_aspect_ratio(in_req.aspect_ratio_)),
+      image_size_(normalize_image_size(in_req.image_size_)),
       thinking_level_(normalize_thinking_level(in_req.quality_)) {}
 
 nlohmann::json gemini_image_client::request_t::to_body() const {
@@ -229,16 +221,22 @@ std::string gemini_image_client::normalize_aspect_ratio(std::string_view in_rati
   auto l_ratio = to_lower_copy(in_ratio);
   std::erase(l_ratio, ' ');
   std::ranges::replace(l_ratio, 'x', ':');
-  if (l_ratio.empty()) return std::string{g_default_aspect_ratio};
-  if (std::ranges::find(g_aspect_ratios, std::string_view{l_ratio}) != g_aspect_ratios.end()) return l_ratio;
-  return std::string{g_default_aspect_ratio};
+  if (l_ratio.empty()) return {};
+  if (std::ranges::find(g_aspect_ratios, std::string_view{l_ratio}) == g_aspect_ratios.end())
+    throw_exception(
+        http_request_error{
+            boost::beast::http::status::bad_request,
+            fmt::format("Gemini 不支持的宽高比 {}, 可选: {}", in_ratio, fmt::join(g_aspect_ratios, " / "))
+        }
+    );
+  return l_ratio;
 }
 
 std::string gemini_image_client::normalize_image_size(std::string_view in_size) {
   // "2k" / " 2K " / "2048" 都收敛到 "2K": 上游对 1k 这种小写直接拒绝。
   auto l_size = to_lower_copy(in_size);
   std::erase(l_size, ' ');
-  if (l_size.empty()) return std::string{g_default_image_size};
+  if (l_size.empty()) return {};
 
   for (auto&& l_candidate : g_image_sizes) {
     auto l_lower = to_lower_copy(l_candidate);
@@ -247,8 +245,12 @@ std::string gemini_image_client::normalize_image_size(std::string_view in_size) 
     if (l_size.front() == l_lower.front() && l_size.find_first_not_of("0123456789") != 0)
       return std::string{l_candidate};
   }
-  if (l_size.front() == '5') return std::string{"1K"};  // 512px 不是所有模型都支持, 退回 1K
-  return std::string{g_default_image_size};
+  throw_exception(
+      http_request_error{
+          boost::beast::http::status::bad_request,
+          fmt::format("Gemini 不支持的分辨率 {}, 可选: {}", in_size, fmt::join(g_image_sizes, " / "))
+      }
+  );
 }
 
 std::string gemini_image_client::normalize_thinking_level(std::string_view in_quality) {
@@ -262,11 +264,16 @@ std::string gemini_image_client::normalize_thinking_level(std::string_view in_qu
   if (std::ranges::find(g_thinking_levels, std::string_view{l_quality}) != g_thinking_levels.end()) return l_quality;
 
   if (l_quality == "low" || l_quality == "fast" || l_quality == "draft") return std::string{"minimal"};
+  if (l_quality == "medium" || l_quality == "standard" || l_quality == "normal") return std::string{"medium"};
   if (l_quality == "high" || l_quality == "hd" || l_quality == "vip" || l_quality == "best")
     return std::string{"high"};
-  // medium / standard / normal 以及认不出的取值都落到 medium: 上游对认不出的级别直接 400,
-  // 宁可降级出图也不要因为一个质量枚举把整个任务判死。
-  return std::string{g_default_thinking_level};
+
+  throw_exception(
+      http_request_error{
+          boost::beast::http::status::bad_request,
+          fmt::format("Gemini 不支持的 quality {}, 可选: {}", in_quality, fmt::join(g_thinking_levels, " / "))
+      }
+  );
 }
 
 std::string gemini_image_client::mime_of_image(const std::string& in_ext) {
@@ -301,16 +308,17 @@ void to_json(nlohmann::json& j, const gemini_image_client::request_t& req) {
     );
   }
 
+  nlohmann::json l_response_format{
+      {"type", std::string{g_image_response_type}},
+      {"mime_type", std::string{g_default_mime}},
+  };
+  if (!req.aspect_ratio_.empty()) l_response_format["aspect_ratio"] = req.aspect_ratio_;
+  if (!req.image_size_.empty()) l_response_format["image_size"] = req.image_size_;
+
   j = nlohmann::json{
       {"model", req.model_},
       {"input", std::move(l_content)},
-      {"response_format",
-       nlohmann::json{
-           {"type", std::string{g_image_response_type}},
-           {"mime_type", std::string{g_default_mime}},
-           {"aspect_ratio", req.aspect_ratio_},
-           {"image_size", req.image_size_},
-       }},
+      {"response_format", std::move(l_response_format)},
   };
   // quality 留空时不下发 generation_config, 请求体与不传 quality 完全一致。
   if (!req.thinking_level_.empty())
@@ -483,15 +491,12 @@ ai_client_base::request_info_t gemini_image_client::collect_request_info(const n
       );
   }
 
+  const request_t l_gemini_req{l_req};
+
   request_info_t l_info{};
-  l_info.model_       = l_req.model_.empty() ? std::string{g_default_model} : l_req.model_;
-  l_info.resolution_  = normalize_image_size(l_req.image_size_);
-  l_info.text_prompt_ = l_req.prompt_;
-
-  DOODLE_CHICK_HTTP(!l_info.model_.empty(), bad_request, "缺少模型名称");
-  DOODLE_CHICK_HTTP(!l_info.resolution_.empty(), bad_request, "缺少分辨率");
-  DOODLE_CHICK_HTTP(!l_info.text_prompt_.empty(), bad_request, "缺少提示词");
-
+  l_info.model_       = l_gemini_req.model_;
+  l_info.resolution_  = l_gemini_req.image_size_.empty() ? l_gemini_req.aspect_ratio_ : l_gemini_req.image_size_;
+  l_info.text_prompt_ = l_gemini_req.prompt_;
   return l_info;
 }
 
