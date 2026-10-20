@@ -26,11 +26,11 @@ class DOODLELIB_API gemini_image_client final : public ai_client_base {
   constexpr static std::string_view g_default_host{"https://generativelanguage.googleapis.com"};
 
  public:
-  /// 一帧参考图: 本站图片路由映射到本地文件后读出来的字节。
+  /// 一帧参考图: 本站图片路由映射到本地文件, 重编码成 PNG 后再做 base64。
   struct reference_image_t {
     std::string url_;
     std::string mime_;
-    std::string bytes_;
+    std::string b64_;
   };
 
   /// interactions 响应里的一帧结果图。

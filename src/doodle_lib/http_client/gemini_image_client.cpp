@@ -146,7 +146,7 @@ class gemini_queue_t {
 };
 
 struct compressed_image_t {
-  std::string bytes_{};
+  std::string b64_{};
   std::int32_t cols_{};
   std::int32_t rows_{};
 };
@@ -162,9 +162,12 @@ compressed_image_t compress_reference_image(const FSys::path& in_path) {
       "参考图编码失败: {}", in_path.generic_string()
   );
 
-  return compressed_image_t{
-      .bytes_ = std::string{l_buffer.begin(), l_buffer.end()}, .cols_ = l_image.cols, .rows_ = l_image.rows
-  };
+  // interactions 的 image block 要的是 base64 文本, 不是原始字节 —— 直接把 PNG 字节塞进 JSON 会被
+  // nlohmann 按 UTF-8 序列化, 非法序列会被替换, 上游拿到的是损坏数据。
+  auto l_b64 = base64_encode(std::string_view{reinterpret_cast<const char*>(l_buffer.data()), l_buffer.size()});
+  DOODLE_CHICK(!l_b64.empty(), "参考图 base64 编码失败: {}", in_path.generic_string());
+
+  return compressed_image_t{.b64_ = std::move(l_b64), .cols_ = l_image.cols, .rows_ = l_image.rows};
 }
 
 std::string to_lower_copy(std::string_view in_str) {
@@ -302,7 +305,7 @@ void to_json(nlohmann::json& j, const gemini_image_client::request_t& req) {
     l_content.push_back(
         nlohmann::json{
             {"type", std::string{g_content_image}},
-            {"data", l_ref.bytes_},
+            {"data", l_ref.b64_},
             {"mime_type", l_ref.mime_},
         }
     );
@@ -451,12 +454,12 @@ gemini_image_client::reference_image_t gemini_image_client::load_reference_image
   const auto l_local_path = parse_site_image_id(in_url);
 
   const auto l_compressed = compress_reference_image(l_local_path);
-  l_ref.bytes_            = l_compressed.bytes_;
+  l_ref.b64_              = std::move(l_compressed.b64_);
   l_ref.mime_             = std::string{g_default_mime};
 
   SPDLOG_LOGGER_INFO(
-      logger_, "Gemini 参考图已压缩: {} ({}x{}), {} 字节", l_ref.url_, l_compressed.cols_, l_compressed.rows_,
-      l_ref.bytes_.size()
+      logger_, "Gemini 参考图已压缩: {} ({}x{}), base64 {} 字节", l_ref.url_, l_compressed.cols_,
+      l_compressed.rows_, l_ref.b64_.size()
   );
   return l_ref;
 }
