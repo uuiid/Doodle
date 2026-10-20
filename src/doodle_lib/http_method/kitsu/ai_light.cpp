@@ -755,79 +755,110 @@ FSys::path frame_file_name_from_header(const session_data_ptr& in_handle) {
 
 }  // namespace
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
+sql_modify_statement_vector_t write_candidate_render_status(
+    sqlite_database& in_sql, const uuid& in_candidate_id, doodle::ai_light::candidate_render_status in_status
+) {
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(update(in_sql)
+                          .from<ai_light_candidate>()
+                          .set(c(&ai_light_candidate::render_status_) = in_status)
+                          .where(c(&ai_light_candidate::uuid_id_) == in_candidate_id));
+  return l_sqls;
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_begin_sequence_route, post) {
   person_.check_not_outsourcer();
 
   auto l_sql    = get_sqlite_database();
   auto& l_ctx   = g_ctx().get<kitsu_ctx_t>();
   auto l_target = locate_upload_target(l_sql, l_ctx, candidate_id_);
 
-  if (stage_ == doodle::ai_light::ai_light_candidate_upload_stage::begin_sequence) {
-    std::error_code l_ec{};
-    FSys::remove_all(l_target.frames_dir_, l_ec);
-    DOODLE_CHICK_HTTP(
-        !l_ec, internal_server_error, "候选 {} 旧帧目录清理失败 {}：{}", candidate_id_,
-        l_target.frames_dir_.generic_string(), l_ec.message()
-    );
-    FSys::create_directories(l_target.frames_dir_, l_ec);
-    DOODLE_CHICK_HTTP(
-        !l_ec, internal_server_error, "候选 {} 帧目录创建失败 {}：{}", candidate_id_,
-        l_target.frames_dir_.generic_string(), l_ec.message()
-    );
+  std::error_code l_ec{};
+  FSys::remove_all(l_target.frames_dir_, l_ec);
+  DOODLE_CHICK_HTTP(
+      !l_ec, internal_server_error, "候选 {} 旧帧目录清理失败 {}：{}", candidate_id_,
+      l_target.frames_dir_.generic_string(), l_ec.message()
+  );
+  FSys::create_directories(l_target.frames_dir_, l_ec);
+  DOODLE_CHICK_HTTP(
+      !l_ec, internal_server_error, "候选 {} 帧目录创建失败 {}：{}", candidate_id_,
+      l_target.frames_dir_.generic_string(), l_ec.message()
+  );
 
-    sql_modify_statement_vector_t l_sqls{};
-    l_sqls.emplace_back(update(l_sql)
-                            .from<ai_light_candidate>()
-                            .set(
-                                c(&ai_light_candidate::render_status_) = ai_light::candidate_render_status::pending,
-                                c(&ai_light_candidate::metrics_)       = nlohmann::json{}
-                            )
-                            .where(c(&ai_light_candidate::uuid_id_) == candidate_id_));
-    co_await l_sql.run_sql(std::move(l_sqls));
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(update(l_sql)
+                          .from<ai_light_candidate>()
+                          .set(
+                              c(&ai_light_candidate::render_status_) = ai_light::candidate_render_status::pending,
+                              c(&ai_light_candidate::metrics_)       = nlohmann::json{}
+                          )
+                          .where(c(&ai_light_candidate::uuid_id_) == candidate_id_));
+  co_await l_sql.run_sql(std::move(l_sqls));
 
-    SPDLOG_LOGGER_INFO(
-        g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）开始上传帧序列，帧目录 {}", candidate_id_,
-        l_target.iteration_.iteration_, l_target.frames_dir_.generic_string()
-    );
-    co_return in_handle->make_msg_204();
-  }
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）开始上传帧序列，帧目录 {}", candidate_id_,
+      l_target.iteration_.iteration_, l_target.frames_dir_.generic_string()
+  );
+  co_return in_handle->make_msg_204();
+}
 
-  if (stage_ == doodle::ai_light::ai_light_candidate_upload_stage::upload_frame) {
-    DOODLE_CHICK_HTTP(
-        in_handle->content_type_ == detail::content_type::application_nuknown, bad_request,
-        "候选帧的上传体必须是 application/octet-stream，收到的是 {}", magic_enum::enum_name(in_handle->content_type_)
-    );
+// ===========================================================================
+// 工作机上传候选的帧序列：逐帧上传
+// ===========================================================================
 
-    const FSys::path l_dst = l_target.frames_dir_ / frame_file_name_from_header(in_handle);
-    const FSys::path l_tmp = in_handle->get_file();
-    DOODLE_CHICK_HTTP(FSys::exists(l_tmp), bad_request, "候选 {} 的上传体为空", candidate_id_);
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_upload_frame_route, post) {
+  person_.check_not_outsourcer();
 
-    std::error_code l_ec{};
-    FSys::create_directories(l_dst.parent_path(), l_ec);
-    DOODLE_CHICK_HTTP(
-        !l_ec, internal_server_error, "候选 {} 帧目录创建失败 {}：{}", candidate_id_,
-        l_dst.parent_path().generic_string(), l_ec.message()
-    );
+  auto l_sql    = get_sqlite_database();
+  auto& l_ctx   = g_ctx().get<kitsu_ctx_t>();
+  auto l_target = locate_upload_target(l_sql, l_ctx, candidate_id_);
 
-    const FSys::path l_tmp_dst = l_dst.string() + ".uploading";
-    FSys::copy_file(l_tmp, l_tmp_dst, FSys::copy_options::overwrite_existing, l_ec);
-    DOODLE_CHICK_HTTP(
-        !l_ec, internal_server_error, "候选 {} 帧写入失败 {}：{}", candidate_id_, l_tmp_dst.generic_string(),
-        l_ec.message()
-    );
-    FSys::rename(l_tmp_dst, l_dst, l_ec);
-    DOODLE_CHICK_HTTP(
-        !l_ec, internal_server_error, "候选 {} 帧落位失败 {}：{}", candidate_id_, l_dst.generic_string(), l_ec.message()
-    );
-    std::error_code l_ignored{};
-    FSys::remove(l_tmp, l_ignored);
+  DOODLE_CHICK_HTTP(
+      in_handle->content_type_ == detail::content_type::application_nuknown, bad_request,
+      "候选帧的上传体必须是 application/octet-stream，收到的是 {}", magic_enum::enum_name(in_handle->content_type_)
+  );
 
-    SPDLOG_LOGGER_INFO(
-        g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）上传帧 {}，{} 字节", candidate_id_,
-        l_target.iteration_.iteration_, l_dst.filename().generic_string(), FSys::file_size(l_dst, l_ignored)
-    );
-    co_return in_handle->make_msg_204();
-  }
+  const FSys::path l_dst = l_target.frames_dir_ / frame_file_name_from_header(in_handle);
+  const FSys::path l_tmp = in_handle->get_file();
+  DOODLE_CHICK_HTTP(FSys::exists(l_tmp), bad_request, "候选 {} 的上传体为空", candidate_id_);
+
+  std::error_code l_ec{};
+  FSys::create_directories(l_dst.parent_path(), l_ec);
+  DOODLE_CHICK_HTTP(
+      !l_ec, internal_server_error, "候选 {} 帧目录创建失败 {}：{}", candidate_id_,
+      l_dst.parent_path().generic_string(), l_ec.message()
+  );
+
+  const FSys::path l_tmp_dst = l_dst.string() + ".uploading";
+  FSys::copy_file(l_tmp, l_tmp_dst, FSys::copy_options::overwrite_existing, l_ec);
+  DOODLE_CHICK_HTTP(
+      !l_ec, internal_server_error, "候选 {} 帧写入失败 {}：{}", candidate_id_, l_tmp_dst.generic_string(),
+      l_ec.message()
+  );
+  FSys::rename(l_tmp_dst, l_dst, l_ec);
+  DOODLE_CHICK_HTTP(
+      !l_ec, internal_server_error, "候选 {} 帧落位失败 {}：{}", candidate_id_, l_dst.generic_string(), l_ec.message()
+  );
+  std::error_code l_ignored{};
+  FSys::remove(l_tmp, l_ignored);
+
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）上传帧 {}，{} 字节", candidate_id_,
+      l_target.iteration_.iteration_, l_dst.filename().generic_string(), FSys::file_size(l_dst, l_ignored)
+  );
+  co_return in_handle->make_msg_204();
+}
+
+// ===========================================================================
+// 工作机上传候选的帧序列：合成视频并收尾
+// ===========================================================================
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_finish_sequence_route, post) {
+  person_.check_not_outsourcer();
+
+  auto l_sql    = get_sqlite_database();
+  auto& l_ctx   = g_ctx().get<kitsu_ctx_t>();
+  auto l_target = locate_upload_target(l_sql, l_ctx, candidate_id_);
 
   const auto l_frames = list_sequence_frames(l_target.frames_dir_);
   DOODLE_CHICK_HTTP(!l_frames.empty(), bad_request, "候选 {} 没有收到任何帧", candidate_id_);
@@ -851,13 +882,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
   }
 
   if (!l_compose_error.empty()) {
-    sql_modify_statement_vector_t l_fail_sqls{};
-    l_fail_sqls.emplace_back(
-        update(l_sql)
-            .from<ai_light_candidate>()
-            .set(c(&ai_light_candidate::render_status_) = ai_light::candidate_render_status::failed)
-            .where(c(&ai_light_candidate::uuid_id_) == candidate_id_)
-    );
+    sql_modify_statement_vector_t l_fail_sqls =
+        write_candidate_render_status(l_sql, candidate_id_, ai_light::candidate_render_status::failed);
     co_await l_sql.run_sql(std::move(l_fail_sqls));
 
     SPDLOG_LOGGER_ERROR(
@@ -869,11 +895,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
     );
   }
 
-  sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(update(l_sql)
-                          .from<ai_light_candidate>()
-                          .set(c(&ai_light_candidate::render_status_) = ai_light::candidate_render_status::rendered)
-                          .where(c(&ai_light_candidate::uuid_id_) == candidate_id_));
+  sql_modify_statement_vector_t l_sqls =
+      write_candidate_render_status(l_sql, candidate_id_, ai_light::candidate_render_status::rendered);
   co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_INFO(

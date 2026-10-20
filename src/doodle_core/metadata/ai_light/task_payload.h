@@ -33,12 +33,6 @@ inline std::string make_candidate_movie_file(const uuid& in_candidate_id) {
   return fmt::format("{}.mp4", in_candidate_id);
 }
 
-enum class ai_light_candidate_upload_stage {
-  begin_sequence,
-  upload_frame,
-  finish_sequence,
-};
-
 struct DOODLE_CORE_API ai_light_assembly_file_t {
   FSys::path from_{};
   FSys::path to_{};

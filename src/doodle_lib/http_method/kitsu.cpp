@@ -313,8 +313,14 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<ai_light::inference_route>("/api/doodle/ai/light/session/{}/inference"_url(
         &ai_light::inference_route::session_id_
       ))
-      .reg_t<ai_light::candidate_file_route>("/api/doodle/ai/light/candidate/{}/{}"_url(
-        &ai_light::candidate_file_route::candidate_id_, &ai_light::candidate_file_route::stage_
+      .reg_t<ai_light::candidate_begin_sequence_route>("/api/doodle/ai/light/candidate/{}/begin_sequence"_url(
+        &ai_light::candidate_begin_sequence_route::candidate_id_
+      ))
+      .reg_t<ai_light::candidate_upload_frame_route>("/api/doodle/ai/light/candidate/{}/upload_frame"_url(
+        &ai_light::candidate_upload_frame_route::candidate_id_
+      ))
+      .reg_t<ai_light::candidate_finish_sequence_route>("/api/doodle/ai/light/candidate/{}/finish_sequence"_url(
+        &ai_light::candidate_finish_sequence_route::candidate_id_
       ))
       .reg_t<ai_light::candidate_movie_route>("/api/doodle/ai/light/candidate/{}/movie"_url(
         &ai_light::candidate_movie_route::id_
