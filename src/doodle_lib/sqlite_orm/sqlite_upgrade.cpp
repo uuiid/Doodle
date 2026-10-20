@@ -37,8 +37,9 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_version_30      = 30;
-constexpr std::size_t g_current_version = 31;
+constexpr std::size_t g_old_version     = 31;
+constexpr std::size_t g_current_version = g_old_version + 1;
+
 }  // namespace
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -94,7 +95,7 @@ struct upgrade_3_t : sqlite_upgrade {
   explicit upgrade_3_t() {}
   void upgrade(sqlite_storage& in_data) override {
     auto l_s = in_data.create_session();
-    if (l_s.pragma().user_version() > g_version_30) return;
+    if (l_s.pragma().user_version() > g_old_version) return;
     backup(l_s);
     l_s.pragma().foreign_keys(false);
     l_s.sync_schema();
@@ -103,7 +104,7 @@ struct upgrade_3_t : sqlite_upgrade {
     l_s.rebuild_table<seedance2::task>();
     l_s.pragma().user_version(g_current_version);
     l_s.pragma().foreign_keys(true);
-    SPDLOG_INFO("upgrade 30->31: 已给 ai_studio 补上 apipy_key 列");
+    SPDLOG_INFO("upgrade {}->{}: 已给 ai_studio 补上 apipy_key 列", g_old_version, g_current_version);
   }
   ~upgrade_3_t() override = default;
 };
