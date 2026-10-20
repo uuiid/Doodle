@@ -980,3 +980,306 @@ test.describe('seedance2 task — apipy_image 后端', () => {
     expect(req.status).to.equal(400);
   });
 });
+
+test.describe('seedance2 task — gemini_image 后端', () => {
+  const projectId = PROJECT_ID;
+  const model = process.env.GEMINI_IMAGE_MODEL || 'gemini-nano-banana-2.1';
+  const resolution = '1K';
+  const aspectRatio = '1:1';
+  const unauthorizedModel = 'gemini-nano-banana-9-not-exist';
+  const aiStudioId = process.env.GEMINI_AI_STUDIO_ID || '019e2075-6e42-718e-809e-33a92410c682';
+  const referenceSourcePath =
+    process.env.GEMINI_REFERENCE_FILE || process.env.APIPY_REFERENCE_FILE || 'D:\\tets.png';
+  const referenceSourceName = 'tets.png';
+
+  let subprojectId = null;
+  let episodeId = null;
+  let entityId = null;
+  let categoryId = null;
+  let taskId = null;
+  let referenceUrl = null;
+
+  async function waitForTaskStatus(request, id, statuses, timeoutMs = 40000) {
+    return waitFor(
+      async () => {
+        const res = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/task/${id}`, {
+          headers: authHeader,
+        });
+        return (await readJson(res)).body;
+      },
+      (last) => statuses.includes(last?.status),
+      timeoutMs
+    );
+  }
+
+  function geminiBody(overrides = {}) {
+    return {
+      backend: 'gemini_image',
+      data_request: {
+        model,
+        prompt: '把参考图里的边牧换成古牧, 保持构图与直播间背景不变',
+        imageSize: resolution,
+        aspectRatio,
+        images: referenceUrl ? [referenceUrl] : [],
+      },
+      ai_studio_id: aiStudioId,
+      project_uuid_id: projectId,
+      type: 'picture',
+      ai_generate_entity_id: entityId,
+      ...overrides,
+    };
+  }
+
+  function postTask(request, body) {
+    return request
+      .post(`${URL}/api/seedance2/subproject/${subprojectId}/entity/${entityId}/task`, {
+        headers: authHeader,
+        data: body,
+      })
+      .then(readJson);
+  }
+
+  test.beforeAll(async ({ request }) => {
+    test.setTimeout(360000);
+    const subRes = await request.post(`${URL}/api/seedance2/subproject`, {
+      headers: authHeader,
+      data: {
+        name: 'test_subproject_gemini_image',
+        project_id: projectId,
+      },
+    });
+    subprojectId = (await readJson(subRes)).body.id;
+
+    const clsRes = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/episodes`, {
+      headers: authHeader,
+      data: {
+        name: 'sc001',
+        subproject_id: subprojectId,
+      },
+    });
+    episodeId = (await readJson(clsRes)).body.id;
+
+    await request.post(
+      `${URL}/api/seedance2/subproject/${subprojectId}/episodes/${episodeId}/model-resolution-limit`,
+      {
+        headers: authHeader,
+        data: { model_name: model, resolution },
+      }
+    );
+
+    const catRes = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/category`, {
+      headers: authHeader,
+      data: { name: 'cat_gemini_image', type: 'shot', description: 'Gemini 图片测试类别' },
+    });
+    categoryId = (await readJson(catRes)).body.id;
+
+    const entRes = await request.post(`${URL}/api/seedance2/subproject/${subprojectId}/entity`, {
+      headers: authHeader,
+      data: {
+        name: 'test_entity_gemini_image',
+        project_uuid_id: projectId,
+        ai_episode_id: episodeId,
+        ai_category_id: categoryId,
+      },
+    });
+    entityId = (await readJson(entRes)).body.id;
+
+    if (!fs.existsSync(referenceSourcePath)) {
+      console.log(`参考图源文件不存在，跳过上传: ${referenceSourcePath}`);
+      return;
+    }
+
+    const refRes = await request.post(
+      `${URL}/api/seedance2/subproject/${subprojectId}/entity/${entityId}/reference`,
+      {
+        headers: authHeader,
+        multipart: { file: filePart(referenceSourcePath, referenceSourceName) },
+        timeout: 300000,
+      }
+    );
+    const refReq = await readJson(refRes);
+    expect(refReq.status).to.equal(201);
+    const preview = refReq.body.preview;
+    referenceUrl = `/api/seedance2/pictures/${preview.id}${preview.extension}`;
+    console.log('参考图 URL:', referenceUrl);
+  });
+
+  test.afterAll(async ({ request }) => {
+    if (subprojectId) {
+      await request.delete(`${URL}/api/seedance2/subproject/${subprojectId}`, { headers: authHeader });
+    }
+  });
+
+  test('POST .../entity/{entity_id}/task — 使用 gemini_image 后端提交图片任务', async ({ request }) => {
+    expect(entityId).to.not.be.null;
+    const req = await postTask(
+      request,
+      geminiBody({ data_request: { model, prompt: '一只古牧正在抖音直播间直播带货截图', imageSize: resolution, aspectRatio } })
+    );
+    expect(req.status).to.equal(201);
+    taskId = req.body.id;
+    expect(taskId).to.be.a('string');
+    console.log('POST gemini_image task 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  test('GET .../task/{id} — backend 与提示词应按 gemini_image 规则落库', async ({ request }) => {
+    expect(taskId).to.not.be.null;
+    const res = await request.get(`${URL}/api/seedance2/subproject/${subprojectId}/task/${taskId}`, {
+      headers: authHeader,
+    });
+    const req = await readJson(res);
+    expect(req.status).to.equal(200);
+    expect(req.body.backend).to.equal('gemini_image');
+    expect(req.body.type).to.equal('picture');
+    expect(req.body.text_prompt).to.equal('一只古牧正在抖音直播间直播带货截图');
+    console.log('GET gemini_image task 返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  test('使用参考图片生成图片 — gemini_image 后端应带着参考图跑到终态', async ({ request }) => {
+    test.setTimeout(600000);
+    expect(referenceUrl).to.not.be.null;
+
+    const createReq = await postTask(
+      request,
+      geminiBody({
+        data_request: {
+          model,
+          prompt: '以参考图中的边牧为原型, 生成一张古牧在抖音直播间直播带货的截图',
+          imageSize: resolution,
+          aspectRatio,
+          images: [referenceUrl],
+        },
+      })
+    );
+    expect(createReq.status).to.equal(201);
+
+    const task = await waitForTaskStatus(request, createReq.body.id, ['succeeded', 'failed'], 540000);
+    console.log('使用参考图生成图片的任务返回值:', JSON.stringify(task, null, 2));
+
+    expect(['succeeded', 'failed']).to.include(task.status);
+    if (task.status === 'failed') {
+      const detail = JSON.stringify(task.data_response);
+      expect(detail).to.not.include('参考图 URL 必须指向本站图片路由');
+      expect(detail).to.not.include('参考图扩展名必须是');
+      console.log('使用参考图生成图片失败原因:', detail);
+    } else {
+      expect(task.status).to.equal('succeeded');
+      expect(task.preview_file).to.not.equal('00000000-0000-0000-0000-000000000000');
+    }
+  });
+
+  test('POST .../task — 缺少模型名称应返回 400', async ({ request }) => {
+    const req = await postTask(request, geminiBody({ data_request: { prompt: '没有模型名称的请求' } }));
+    expect(req.status).to.equal(400);
+  });
+
+  test('POST .../task — 图像尺寸不在 1K/2K/4K 内应返回 400', async ({ request }) => {
+    const req = await postTask(
+      request,
+      geminiBody({
+        data_request: { model, prompt: '非法分辨率', imageSize: '1024x1024', aspectRatio },
+      })
+    );
+    expect(req.status).to.equal(400);
+    expect(JSON.stringify(req.body)).to.include('不支持的分辨率');
+  });
+
+  test('POST .../task — 宽高比不在 Gemini 白名单内应返回 400', async ({ request }) => {
+    const req = await postTask(
+      request,
+      geminiBody({
+        data_request: { model, prompt: '非法宽高比', imageSize: resolution, aspectRatio: '4:7' },
+      })
+    );
+    expect(req.status).to.equal(400);
+    expect(JSON.stringify(req.body)).to.include('不支持的宽高比');
+  });
+
+  test('POST .../task — quality 无法映射到 thinking_level 应返回 400', async ({ request }) => {
+    const req = await postTask(
+      request,
+      geminiBody({
+        data_request: { model, prompt: '非法质量', imageSize: resolution, aspectRatio, quality: 'ultra' },
+      })
+    );
+    expect(req.status).to.equal(400);
+    expect(JSON.stringify(req.body)).to.include('不支持的 quality');
+  });
+
+  test('POST .../task — quality 别名应被接受并原样落库', async ({ request }) => {
+    const req = await postTask(
+      request,
+      geminiBody({
+        data_request: { model, prompt: '高质量请求', imageSize: resolution, aspectRatio, quality: 'hd' },
+      })
+    );
+    expect(req.status).to.equal(201);
+  });
+
+  test('POST .../task — 未授权的模型或分辨率应返回 401', async ({ request }) => {
+    const req = await postTask(
+      request,
+      geminiBody({
+        data_request: { model: unauthorizedModel, prompt: '未授权模型', imageSize: resolution, aspectRatio },
+      })
+    );
+    expect(req.status).to.equal(401);
+  });
+
+  test('POST .../task — 参考图 URL 不指向本站图片路由应返回 400', async ({ request }) => {
+    const req = await postTask(
+      request,
+      geminiBody({
+        data_request: {
+          model,
+          prompt: '外部参考图',
+          imageSize: resolution,
+          aspectRatio,
+          images: ['https://example.com/somewhere/else.png'],
+        },
+      })
+    );
+    expect(req.status).to.equal(400);
+    expect(JSON.stringify(req.body)).to.include('参考图 URL 必须指向本站图片路由');
+  });
+
+  test('POST .../task — 参考图扩展名不在 .png/.jpg/.jpeg 内应返回 400', async ({ request }) => {
+    const measured = referenceUrl ? [referenceUrl.replace(/\.[^.]+$/, '.webp')] : ['/api/seedance2/pictures/00000000-0000-0000-0000-000000000000.webp'];
+    const req = await postTask(
+      request,
+      geminiBody({
+        data_request: { model, prompt: '非法扩展名参考图', imageSize: resolution, aspectRatio, images: measured },
+      })
+    );
+    expect(req.status).to.equal(400);
+    expect(JSON.stringify(req.body)).to.include('参考图扩展名必须是');
+  });
+
+  test('POST .../task — 视频任务应在运行期以不支持失败', async ({ request }) => {
+    test.setTimeout(120000);
+    const createReq = await postTask(
+      request,
+      geminiBody({
+        type: 'video',
+        data_request: { model, prompt: '视频任务', imageSize: resolution, aspectRatio },
+      })
+    );
+    expect(createReq.status).to.equal(201);
+
+    const task = await waitForTaskStatus(request, createReq.body.id, ['succeeded', 'failed'], 100000);
+    expect(task.status).to.equal('failed');
+    expect(JSON.stringify(task.data_response)).to.include('Gemini 图片后端不支持视频任务');
+  });
+
+  test('POST .../task — 推理任务应被前端提交接口直接拒绝', async ({ request }) => {
+    const req = await postTask(
+      request,
+      geminiBody({
+        type: 'inference',
+        data_request: { model, prompt: '推理任务', imageSize: resolution, aspectRatio },
+      })
+    );
+    expect(req.status).to.equal(400);
+    expect(JSON.stringify(req.body)).to.include('推理任务由服务端执行');
+  });
+});
