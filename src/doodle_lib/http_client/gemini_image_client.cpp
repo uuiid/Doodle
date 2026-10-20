@@ -339,6 +339,8 @@ nlohmann::json gemini_image_client::strip_image_payload(nlohmann::json in_body) 
     if (!l_steps.is_array()) continue;
     for (auto& l_step : l_steps) {
       if (!l_step.is_object()) continue;
+      // thought 步骤的签名也是几十万字符的 base64 形态 blob, 同样不该落库。
+      if (l_step.contains("signature")) l_step["signature"] = g_payload_placeholder;
       for (const auto* l_content_key : {"content", "summary"}) {
         if (!l_step.contains(l_content_key)) continue;
         auto& l_content = l_step.at(l_content_key);
