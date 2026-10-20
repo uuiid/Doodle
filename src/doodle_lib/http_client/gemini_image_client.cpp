@@ -235,18 +235,9 @@ std::string gemini_image_client::normalize_aspect_ratio(std::string_view in_rati
 }
 
 std::string gemini_image_client::normalize_image_size(std::string_view in_size) {
-  // "2k" / " 2K " / "2048" 都收敛到 "2K": 上游对 1k 这种小写直接拒绝。
-  auto l_size = to_lower_copy(in_size);
-  std::erase(l_size, ' ');
-  if (l_size.empty()) return {};
+  if (in_size.empty()) return {};
+  if (std::ranges::find(g_image_sizes, in_size) != g_image_sizes.end()) return std::string{in_size};
 
-  for (auto&& l_candidate : g_image_sizes) {
-    auto l_lower = to_lower_copy(l_candidate);
-    if (l_size == l_lower) return std::string{l_candidate};
-    // "2048" 这类像素值: 取第一个数字 + K
-    if (l_size.front() == l_lower.front() && l_size.find_first_not_of("0123456789") != 0)
-      return std::string{l_candidate};
-  }
   throw_exception(
       http_request_error{
           boost::beast::http::status::bad_request,
