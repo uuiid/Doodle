@@ -319,7 +319,10 @@ void to_json(nlohmann::json& j, const gemini_image_client::request_t& req) {
 }
 
 FSys::path gemini_image_client::parse_site_image_id(std::string_view in_url) {
-  if (!in_url.starts_with(g_pictures_prefix)) return {};
+  DOODLE_CHICK_HTTP(
+      in_url.starts_with(g_pictures_prefix), bad_request, "参考图 URL 必须指向本站图片路由 {}<uuid><扩展名>, 收到: {}",
+      g_pictures_prefix, in_url
+  );
 
   FSys::path l_name{in_url};
   auto l_ext    = to_lower_copy(l_name.extension().generic_string());
@@ -462,30 +465,15 @@ ai_client_base::request_info_t gemini_image_client::collect_request_info(const n
 
   for (const auto& url : l_req.reference_images_) {
     const auto l_path = parse_site_image_id(url);
-    // 扩展名先查: 路由对不上与扩展名不支持都要报 400, 但后端两者都返回空路径,
-    // 先判扩展名才能让调用方知道到底哪条规则没过。
-    auto l_ext = l_path.extension();
-    if (l_ext != ".png" && l_ext != ".jpg" && l_ext != ".jpeg")
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::bad_request,
-              fmt::format("参考图扩展名必须是 .png/.jpg/.jpeg 之一, 收到: {}", std::string{url})
-          }
-      );
-    if (l_path.empty() || !FSys::exists(l_path))
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::bad_request,
-              fmt::format(
-                  "参考图 URL 必须指向本站图片路由 {}<uuid><扩展名> 且文件存在, 收到: {}", g_pictures_prefix,
-                  std::string{url}
-              )
-          }
-      );
+    auto l_ext        = l_path.extension();
+    DOODLE_CHICK_HTTP(
+        l_ext == ".png" || l_ext == ".jpg" || l_ext == ".jpeg", bad_request,
+        "参考图扩展名必须是 .png/.jpg/.jpeg 之一, 收到: {}", url
+    );
+    DOODLE_CHICK_HTTP(FSys::exists(l_path), bad_request, "参考图文件不存在: {}", l_path.generic_string());
     const auto l_size = FSys::file_size(l_path);
     DOODLE_CHICK_HTTP(
-        l_size > 0, bad_request,
-        fmt::format("参考图大小必须大于 0 字节, 收到 {} 字节: {}", l_size, std::string{url})
+        l_size > 0, bad_request, "参考图大小必须大于 0 字节, 收到 {} 字节: {}", l_size, url
     );
   }
 
