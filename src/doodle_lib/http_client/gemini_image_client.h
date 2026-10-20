@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <doodle_lib/core/http_client_proxy.h>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -108,7 +109,7 @@ class DOODLELIB_API gemini_image_client final : public ai_client_base {
 
   reference_image_t load_reference_image(std::string_view in_url);
 
-  [[nodiscard]] std::shared_ptr<doodle::http::http_client_ssl> make_own_client() const;
+  [[nodiscard]] std::shared_ptr<doodle::http::http_client_ssl_via_proxy> make_own_client() const;
 };
 
 }  // namespace doodle::http::seedance2

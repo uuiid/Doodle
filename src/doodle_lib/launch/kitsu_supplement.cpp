@@ -48,6 +48,9 @@ struct kitsu_supplement_args_t {
   /// 对外公开素材 URL 的端口(写入 core_set::public_url_port_)
   std::uint16_t public_url_port_ = 38192;
 
+  /// HTTP 代理地址(写入 core_set::http_proxy_url_)。空串表示直连
+  std::string http_proxy_url_ = "http://127.0.0.1:20122";
+
   struct mail_config_t {
     std::string address_;
     std::uint32_t port_;
@@ -81,6 +84,7 @@ struct kitsu_supplement_args_t {
     if (in_json.contains("domain_name")) in_json.at("domain_name").get_to(out_obj.domain_name_);
     if (in_json.contains("secret")) in_json.at("secret").get_to(out_obj.secret_);
     if (in_json.contains("public_url_port")) in_json.at("public_url_port").get_to(out_obj.public_url_port_);
+    if (in_json.contains("http_proxy_url")) in_json.at("http_proxy_url").get_to(out_obj.http_proxy_url_);
   }
 };
 
@@ -145,6 +149,7 @@ bool kitsu_supplement_main::init() {
 #else
       .public_url_port_ = 38193,
 #endif
+      .http_proxy_url_ = "http://127.0.0.1:20122",
   };
 
   if (auto l_file_path = arg_({"config"}); l_file_path) {
@@ -200,6 +205,7 @@ bool kitsu_supplement_main::init() {
   get_register_info(l_args);
   // 对外公开素材 URL 的端口: 配置了就用配置值, 否则保留 core_set 的 debug/release 默认值
   if (l_args.public_url_port_ != 0) l_set.public_url_port_ = l_args.public_url_port_;
+  l_set.http_proxy_url_ = l_args.http_proxy_url_;
   // 初始化cv线程
   cv::setNumThreads(::GetActiveProcessorCount(0));
 

@@ -497,10 +497,12 @@ std::size_t gemini_image_client::default_consumed_tokens(const doodle::seedance2
   }
 }
 
-std::shared_ptr<doodle::http::http_client_ssl> gemini_image_client::make_own_client() const {
+std::shared_ptr<doodle::http::http_client_ssl_via_proxy> gemini_image_client::make_own_client() const {
   auto l_ctx = core_set::get_set().ctx_ptr;
   DOODLE_CHICK(l_ctx != nullptr, "ssl context 未初始化(见 core_set::ctx_ptr), 无法创建 Gemini 客户端");
-  return std::make_shared<doodle::http::http_client_ssl>(std::string{g_default_host}, *l_ctx);
+  return std::make_shared<doodle::http::http_client_ssl_via_proxy>(
+      std::string{g_default_host}, *l_ctx, core_set::get_set().http_proxy_url_
+  );
 }
 
 boost::asio::awaitable<ai_client_base::run_task_result_t> gemini_image_client::run_task(

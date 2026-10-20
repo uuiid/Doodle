@@ -24,6 +24,7 @@ target_sources(
         global_function.h
         app_service.h
         http_client_core.h
+        http_client_proxy.h
         co_queue.h
         authorization.h
         cancellation_signals.h
@@ -45,6 +46,7 @@ target_sources(
         app_base.cpp
         app_service.cpp
         http_client_core.cpp
+        http_client_proxy.cpp
         co_queue.cpp
         authorization.cpp
         global_function.cpp

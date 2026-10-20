@@ -103,6 +103,7 @@ void to_json(nlohmann::json& j, const core_set& p) {
   j["user_work_root"] = p.user_work_root_;
 
   j["public_url_port"] = p.public_url_port_;
+  j["http_proxy_url"]  = p.http_proxy_url_;
 }
 
 void from_json(const nlohmann::json& j, core_set& p) {
@@ -122,6 +123,7 @@ void from_json(const nlohmann::json& j, core_set& p) {
   if (j.contains("authorize")) j.at("authorize").get_to(p.authorize_);
   if (j.contains("user_work_root")) j.at("user_work_root").get_to(p.user_work_root_);
   if (j.contains("public_url_port")) j.at("public_url_port").get_to(p.public_url_port_);
+  if (j.contains("http_proxy_url")) j.at("http_proxy_url").get_to(p.http_proxy_url_);
 }
 
 }  // namespace doodle
