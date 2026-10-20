@@ -100,6 +100,7 @@ struct upgrade_3_t : sqlite_upgrade {
     l_s.sync_schema();
     l_s.add_column("seedance2_task_2", "ai_light_session_id", orm::column_type::blob);
     l_s.add_column("seedance2_person_token", "inference_count", orm::column_type::integer);
+    l_s.add_column("ai_studio", "gemini_key", orm::column_type::text);
     l_s.rebuild_table<seedance2::task>();
     l_s.pragma().user_version(g_current_version);
     l_s.pragma().foreign_keys(true);
@@ -122,16 +123,13 @@ struct upgrade_clear_orphan_task_t : sqlite_upgrade {
     update(l_s)
         .from<seedance2::task>()
         .set(
-            c(&seedance2::task::status_)        = seedance2::task_status::failed,
-            c(&seedance2::task::data_response_) = nlohmann::json{{"error", "服务端重启, 同步请求(API易/Gemini)的结果已丢失"}},
+            c(&seedance2::task::status_) = seedance2::task_status::failed,
+            c(&seedance2::task::data_response_) =
+                nlohmann::json{{"error", "服务端重启, 同步请求(API易/Gemini)的结果已丢失"}},
             c(&seedance2::task::ended_at_) =
                 chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}
         )
-        .where(
-            (c(&seedance2::task::backend_) == seedance2::task_backend::apipy_image ||
-             c(&seedance2::task::backend_) == seedance2::task_backend::gemini_image) &&
-            c(&seedance2::task::status_) == seedance2::task_status::running
-        )();
+        .where((c(&seedance2::task::backend_) == seedance2::task_backend::apipy_image || c(&seedance2::task::backend_) == seedance2::task_backend::gemini_image) && c(&seedance2::task::status_) == seedance2::task_status::running)();
     SPDLOG_INFO("upgrade: 启动清理: 已将残留的 API易/Gemini running 任务置为失败");
   }
   ~upgrade_clear_orphan_task_t() override = default;
