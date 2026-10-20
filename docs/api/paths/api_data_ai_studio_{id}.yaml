@@ -33,7 +33,7 @@ put:
 
     仅更新请求体中出现的字段，未出现的字段保持原值。
     可写字段与 `ai_studio::put_property_list()` 一致：`name`、`color`、`archived`、
-    `seedance2_key`、`transfer_station_key`、`apipy_key`。
+    `seedance2_key`、`transfer_station_key`、`apipy_key`、`gemini_key`。
   parameters:
     - name: id
       in: path

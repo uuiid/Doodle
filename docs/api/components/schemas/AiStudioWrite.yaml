@@ -27,3 +27,12 @@ properties:
 
       与上两把是**不同主机**的凭据，不能互相顶替：拿 `transfer_station_key` 去发 API易
       的请求等于把 A 家的密钥交给 B 家。
+  gemini_key:
+    type: string
+    description: |
+      Google 官方 Gemini 图片后端（`generativelanguage.googleapis.com`）的 API Key，只写不读。
+
+      这是**第三台主机**的凭据：上面三把任何一把拿到这里都不能用。上游用 `x-goog-api-key`
+      请求头鉴权，不是 `Authorization: Bearer`，服务端会自行换头，调用方不需要关心。
+
+      该后端选用的后端类型为 `backend=gemini_image`（见 `TaskBackend.yaml`）。
