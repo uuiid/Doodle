@@ -39,6 +39,8 @@ constexpr std::string_view g_pictures_prefix{"/api/seedance2/pictures/"};
 constexpr std::chrono::seconds g_request_timeout{360};
 constexpr std::string_view g_default_model{"gemini-nano-banana-2.1"};
 constexpr std::string_view g_default_mime{"image/png"};
+constexpr std::string_view g_response_mime{"image/jpeg"};
+constexpr std::string_view g_response_ext{".jpg"};
 constexpr std::string_view g_image_response_type{"image"};
 constexpr std::string_view g_step_model_output{"model_output"};
 constexpr std::string_view g_content_text{"text"};
@@ -188,7 +190,7 @@ void collect_images_from_content(const nlohmann::json& in_content, std::vector<g
     l_image.data_      = l_block.at("data").get<std::string>();
     l_image.mime_type_ = l_block.contains("mime_type") && l_block.at("mime_type").is_string()
                              ? l_block.at("mime_type").get<std::string>()
-                             : std::string{g_default_mime};
+                             : std::string{g_response_mime};
     out.push_back(std::move(l_image));
   }
 }
@@ -294,7 +296,7 @@ std::string gemini_image_client::ext_of_mime(std::string_view in_mime) {
   if (l_mime == "image/webp") return ".webp";
   if (l_mime == "image/heic") return ".heic";
   if (l_mime == "image/heif") return ".heif";
-  return std::string{g_default_ext};
+  return std::string{g_response_ext};
 }
 
 void to_json(nlohmann::json& j, const gemini_image_client::request_t& req) {
@@ -313,7 +315,7 @@ void to_json(nlohmann::json& j, const gemini_image_client::request_t& req) {
 
   nlohmann::json l_response_format{
       {"type", std::string{g_image_response_type}},
-      {"mime_type", std::string{g_default_mime}},
+      {"mime_type", std::string{g_response_mime}},
   };
   if (!req.aspect_ratio_.empty()) l_response_format["aspect_ratio"] = req.aspect_ratio_;
   if (!req.image_size_.empty()) l_response_format["image_size"] = req.image_size_;
