@@ -55,6 +55,7 @@ class DOODLELIB_API http_client_ssl_via_proxy : public http_client_ssl {
     resolver_t resolver_;
     boost::beast::http::request<boost::beast::http::empty_body> connect_request_{};
     std::shared_ptr<boost::beast::http::response_parser<boost::beast::http::empty_body>> connect_parser_;
+    bool connect_request_sent_{false};
 
     template <typename Self>
     void operator()(Self&& self) {
@@ -98,7 +99,8 @@ class DOODLELIB_API http_client_ssl_via_proxy : public http_client_ssl {
         self.complete(in_ec);
         return;
       }
-      if (in_bytes_transferred == 0) {
+      if (!connect_request_sent_) {
+        connect_request_sent_ = true;
         boost::beast::http::async_read_header(
             boost::beast::get_lowest_layer(*self_->socket_), self_->buffer_, *connect_parser_, std::move(self)
         );
