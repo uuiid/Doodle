@@ -335,12 +335,15 @@ boost::asio::awaitable<void> kitsu_client::upload_ai_light_candidate_frame(
   );
 }
 
-boost::asio::awaitable<void> kitsu_client::finish_ai_light_candidate_sequence(uuid in_candidate_id) const {
-  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+boost::asio::awaitable<void> kitsu_client::finish_ai_light_candidate_sequence(
+    uuid in_candidate_id, std::int32_t in_frame_rate
+) const {
+  boost::beast::http::request<boost::beast::http::string_body> l_req{
       boost::beast::http::verb::post,
       fmt::format("/api/doodle/ai/light/candidate/{}/finish_sequence", in_candidate_id), 11
   };
-  set_req_headers(l_req, {});
+  l_req.body() = nlohmann::json{{"frame_rate", in_frame_rate}}.dump();
+  set_req_headers(l_req, "application/json");
 
   boost::beast::http::response<boost::beast::http::string_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);

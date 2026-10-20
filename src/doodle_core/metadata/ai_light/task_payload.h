@@ -17,6 +17,8 @@ constexpr std::string_view g_ai_light_render_report_file_name{"render_report.jso
 
 constexpr std::string_view g_ai_light_local_cache_flag{"ai_light"};
 
+constexpr std::int32_t g_ai_light_default_frame_rate{25};
+
 inline std::string make_iteration_relative_dir(const uuid& in_session_id, const uuid& in_iteration_id) {
   return fmt::format("{}/{}", in_session_id, in_iteration_id);
 }

@@ -190,7 +190,7 @@ class DOODLELIB_API kitsu_client {
   // post /api/doodle/ai/light/candidate/{candidate_id}/upload_frame —— 上传候选的一帧。
   boost::asio::awaitable<void> upload_ai_light_candidate_frame(uuid in_candidate_id, FSys::path in_frame_path) const;
   // post /api/doodle/ai/light/candidate/{candidate_id}/finish_sequence —— 结束候选的帧序列上传。
-  boost::asio::awaitable<void> finish_ai_light_candidate_sequence(uuid in_candidate_id) const;
+  boost::asio::awaitable<void> finish_ai_light_candidate_sequence(uuid in_candidate_id, std::int32_t in_frame_rate) const;
   // post /api/doodle/stop-server
   void stop_server() const;
   // 获取下一个任务

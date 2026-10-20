@@ -3,6 +3,7 @@
 #include <doodle_core/metadata/ai_light/ai_light.h>
 #include <doodle_core/metadata/ai_studio.h>
 #include <doodle_core/metadata/entity.h>
+#include <doodle_core/metadata/move_create.h>
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/seedance2/task.h>
@@ -24,6 +25,7 @@
 #include <doodle_lib/http_method/kitsu/preview.h>
 #include <doodle_lib/http_method/seedance2/inference_task.h>
 #include <doodle_lib/logger/logger.h>
+#include <doodle_lib/long_task/image_to_move.h>
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
@@ -31,6 +33,7 @@
 #include <boost/beast/http/status.hpp>
 
 #include <algorithm>
+#include <charconv>
 #include <cpp-base64/base64.h>
 #include <cstdint>
 #include <exception>
@@ -41,7 +44,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
 
 namespace doodle::http::ai_light {
 
@@ -666,18 +668,71 @@ candidate_upload_target_t locate_upload_target(
   return l_ret;
 }
 
-std::int32_t count_sequence_frames(const FSys::path& in_frames_dir) {
+std::vector<FSys::path> list_sequence_frames(const FSys::path& in_frames_dir) {
+  std::vector<FSys::path> l_frames{};
   std::error_code l_ec{};
-  if (!FSys::is_directory(in_frames_dir, l_ec)) return 0;
+  if (!FSys::is_directory(in_frames_dir, l_ec)) return l_frames;
 
-  std::int32_t l_count{};
   for (const auto& l_entry : FSys::directory_iterator{in_frames_dir, l_ec}) {
-    if (l_ec) return l_count;
+    if (l_ec) break;
     if (!l_entry.is_regular_file(l_ec)) continue;
     if (l_entry.path().extension() != ".png") continue;
-    ++l_count;
+    l_frames.emplace_back(l_entry.path());
   }
-  return l_count;
+  std::sort(l_frames.begin(), l_frames.end());
+  return l_frames;
+}
+
+struct candidate_media_result_t {
+  FSys::path poster_path_{};
+  FSys::path movie_path_{};
+  std::int32_t frame_count_{0};
+  std::int32_t frame_rate_{0};
+};
+
+candidate_media_result_t compose_candidate_media(
+    const http::kitsu_ctx_t& in_ctx, const ai_light_candidate& in_candidate, const std::vector<FSys::path>& in_frames,
+    std::int32_t in_frame_rate
+) {
+  DOODLE_CHICK_HTTP(!in_frames.empty(), bad_request, "候选 {} 没有可合成的帧", in_candidate.uuid_id_);
+
+  candidate_media_result_t l_ret{};
+  l_ret.poster_path_ = candidate_render_path(in_ctx, in_candidate);
+  l_ret.movie_path_  = candidate_movie_path(in_ctx, in_candidate);
+  l_ret.frame_count_ = boost::numeric_cast<std::int32_t>(in_frames.size());
+  l_ret.frame_rate_  = in_frame_rate > 0 ? in_frame_rate : ai_light::g_ai_light_default_frame_rate;
+
+  std::error_code l_ec{};
+  FSys::create_directories(l_ret.poster_path_.parent_path(), l_ec);
+  DOODLE_CHICK_HTTP(
+      !l_ec, internal_server_error, "候选 {} 海报目录创建失败 {}：{}", in_candidate.uuid_id_,
+      l_ret.poster_path_.parent_path().generic_string(), l_ec.message()
+  );
+  FSys::create_directories(l_ret.movie_path_.parent_path(), l_ec);
+  DOODLE_CHICK_HTTP(
+      !l_ec, internal_server_error, "候选 {} 视频目录创建失败 {}：{}", in_candidate.uuid_id_,
+      l_ret.movie_path_.parent_path().generic_string(), l_ec.message()
+  );
+
+  FSys::remove(l_ret.poster_path_, l_ec);
+  FSys::remove(l_ret.movie_path_, l_ec);
+
+  const bool l_copied =
+      FSys::copy_file(in_frames.front(), l_ret.poster_path_, FSys::copy_options::overwrite_existing, l_ec);
+  DOODLE_CHICK_HTTP(
+      l_copied && !l_ec, internal_server_error, "候选 {} 首帧海报写出失败 {}：{}", in_candidate.uuid_id_,
+      l_ret.poster_path_.generic_string(), l_ec.message()
+  );
+
+  ::doodle::detail::create_move(
+      l_ret.movie_path_, g_logger_ctrl().get_long_task(), movie::image_attr::make_default_attr(in_frames), image_size{},
+      l_ret.frame_rate_
+  );
+  DOODLE_CHICK_HTTP(
+      FSys::exists(l_ret.movie_path_), internal_server_error, "候选 {} 的视频没有落盘 {}", in_candidate.uuid_id_,
+      l_ret.movie_path_.generic_string()
+  );
+  return l_ret;
 }
 
 FSys::path frame_file_name_from_header(const session_data_ptr& in_handle) {
@@ -774,11 +829,44 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
     co_return in_handle->make_msg_204();
   }
 
-  const std::int32_t l_frame_count = count_sequence_frames(l_target.frames_dir_);
-  DOODLE_CHICK_HTTP(l_frame_count > 0, bad_request, "候选 {} 没有收到任何帧", candidate_id_);
+  const auto l_frames = list_sequence_frames(l_target.frames_dir_);
+  DOODLE_CHICK_HTTP(!l_frames.empty(), bad_request, "候选 {} 没有收到任何帧", candidate_id_);
   DOODLE_CHICK_HTTP(
-      l_frame_count >= 2, bad_request, "候选 {} 只收到 {} 帧，合成不出视频", candidate_id_, l_frame_count
+      l_frames.size() >= 2, bad_request, "候选 {} 只收到 {} 帧，合成不出视频", candidate_id_, l_frames.size()
   );
+
+  const auto l_json               = in_handle->get_json();
+  const std::int32_t l_frame_rate = (!l_json.contains("frame_rate") || l_json.at("frame_rate").is_null())
+                                        ? g_ai_light_default_frame_rate
+                                        : l_json.get<std::int32_t>();
+  DOODLE_CHICK_HTTP(l_frame_rate > 0, bad_request, "帧率字段 frame_rate 的取值 {} 非法，必须是正整数", l_fps);
+
+  candidate_media_result_t l_media{};
+  std::string l_compose_error{};
+  try {
+    l_media = compose_candidate_media(l_ctx, l_target.candidate_, l_frames, l_frame_rate);
+  } catch (const std::exception& in_err) {
+    l_compose_error = in_err.what();
+  }
+
+  if (!l_compose_error.empty()) {
+    sql_modify_statement_vector_t l_fail_sqls{};
+    l_fail_sqls.emplace_back(
+        update(l_sql)
+            .from<ai_light_candidate>()
+            .set(c(&ai_light_candidate::render_status_) = ai_light::candidate_render_status::failed)
+            .where(c(&ai_light_candidate::uuid_id_) == candidate_id_)
+    );
+    co_await l_sql.run_sql(std::move(l_fail_sqls));
+
+    SPDLOG_LOGGER_ERROR(
+        g_logger_ctrl().get_main_error(), "AI 灯光：候选 {}（轮次 {}）帧序列合成失败：{}", candidate_id_,
+        l_target.iteration_.iteration_, l_compose_error
+    );
+    DOODLE_CHICK_HTTP(
+        l_compose_error.empty(), internal_server_error, "候选 {} 帧序列合成失败：{}", candidate_id_, l_compose_error
+    );
+  }
 
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(update(l_sql)
@@ -788,8 +876,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_file_route, post) {
   co_await l_sql.run_sql(std::move(l_sqls));
 
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）帧序列上传完成，共 {} 帧", candidate_id_,
-      l_target.iteration_.iteration_, l_frame_count
+      g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）帧序列上传完成，共 {} 帧，{} fps，视频 {}，开始帧 {}",
+      candidate_id_, l_target.iteration_.iteration_, l_media.frame_count_, l_media.frame_rate_,
+      l_media.movie_path_.generic_string(), l_media.poster_path_.generic_string()
   );
   co_return in_handle->make_msg_204();
 }
