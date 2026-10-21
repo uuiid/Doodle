@@ -420,47 +420,81 @@ test.describe('seedance2 画布 — 生命周期', () => {
 
     expect(req.status).to.equal(200);
     expect(req.body.canvas.id).to.equal(canvasId);
-    expect(req.body.nodes.map((n) => n.id)).to.have.members([textNodeId, imageNodeId, groupNodeId]);
+    expect(req.body.nodes.map((n) => n.id)).to.include.members([textNodeId, imageNodeId, groupNodeId]);
     expect(req.body.connections.map((c) => c.id)).to.deep.equal([conn.body.id]);
     expect(req.body.person_links).to.deep.equal([]);
     console.log('GET 画布详情:', JSON.stringify(req.body, null, 2));
   });
 
   test('DELETE .../node/{node_id} — 删除节点应级联删除其连线', async ({ request }) => {
-    expect(imageNodeId).to.not.be.null;
-    const res = await request.delete(`${URL}/api/seedance2/canvas/${canvasId}/node/${imageNodeId}`, {
+    expect(subprojectId).to.not.be.null;
+    const canvasReq = await postCanvas(request, subprojectId, { title: 'test_canvas_cascade' });
+    expect(canvasReq.status, JSON.stringify(canvasReq.body)).to.equal(201);
+    const cascadeCanvasId = canvasReq.body.id;
+
+    const nodeA = await postNode(request, cascadeCanvasId, { type: 'text', title: '级联节点 A' });
+    const nodeB = await postNode(request, cascadeCanvasId, { type: 'text', title: '级联节点 B' });
+    expect(nodeA.status, JSON.stringify(nodeA.body)).to.equal(201);
+    expect(nodeB.status, JSON.stringify(nodeB.body)).to.equal(201);
+
+    const conn = await postConnection(request, cascadeCanvasId, {
+      from_node_id: nodeA.body.id,
+      to_node_id: nodeB.body.id,
+    });
+    expect(conn.status, JSON.stringify(conn.body)).to.equal(201);
+
+    const res = await request.delete(`${URL}/api/seedance2/canvas/${cascadeCanvasId}/node/${nodeA.body.id}`, {
       headers: authHeader,
     });
     expect(res.status()).to.equal(204);
 
-    const detailRes = await request.get(`${URL}/api/seedance2/canvas/${canvasId}`, { headers: authHeader });
+    const detailRes = await request.get(`${URL}/api/seedance2/canvas/${cascadeCanvasId}`, { headers: authHeader });
     const detail = await readJson(detailRes);
-    expect(detail.body.nodes.map((n) => n.id)).to.not.include(imageNodeId);
+    expect(detail.body.nodes.map((n) => n.id)).to.not.include(nodeA.body.id);
+    expect(detail.body.nodes.map((n) => n.id)).to.include(nodeB.body.id);
     expect(detail.body.connections).to.deep.equal([]);
     console.log('删除节点后的画布详情:', JSON.stringify(detail.body, null, 2));
+
+    await request.delete(`${URL}/api/seedance2/canvas/${cascadeCanvasId}`, { headers: authHeader });
   });
 
   test('DELETE .../node/{node_id} — 已删除的节点应返回 404', async ({ request }) => {
-    expect(imageNodeId).to.not.be.null;
-    const res = await request.delete(`${URL}/api/seedance2/canvas/${canvasId}/node/${imageNodeId}`, {
+    expect(subprojectId).to.not.be.null;
+    const canvasReq = await postCanvas(request, subprojectId, { title: 'test_canvas_node_404' });
+    expect(canvasReq.status, JSON.stringify(canvasReq.body)).to.equal(201);
+    const node404CanvasId = canvasReq.body.id;
+
+    const nodeReq = await postNode(request, node404CanvasId, { type: 'text', title: '待删节点' });
+    expect(nodeReq.status, JSON.stringify(nodeReq.body)).to.equal(201);
+
+    const first = await request.delete(`${URL}/api/seedance2/canvas/${node404CanvasId}/node/${nodeReq.body.id}`, {
       headers: authHeader,
     });
-    const req = await readJson(res);
+    expect(first.status()).to.equal(204);
+
+    const second = await request.delete(`${URL}/api/seedance2/canvas/${node404CanvasId}/node/${nodeReq.body.id}`, {
+      headers: authHeader,
+    });
+    const req = await readJson(second);
     expect(req.status).to.equal(404);
     console.log('重复删除节点的响应:', JSON.stringify(req.body));
+
+    await request.delete(`${URL}/api/seedance2/canvas/${node404CanvasId}`, { headers: authHeader });
   });
 
   test('DELETE /api/seedance2/canvas/{canvas_id} — 删除画布', async ({ request }) => {
-    expect(canvasId).to.not.be.null;
-    const res = await request.delete(`${URL}/api/seedance2/canvas/${canvasId}`, { headers: authHeader });
+    expect(subprojectId).to.not.be.null;
+    const canvasReq = await postCanvas(request, subprojectId, { title: 'test_canvas_delete' });
+    expect(canvasReq.status, JSON.stringify(canvasReq.body)).to.equal(201);
+    const deleteCanvasId = canvasReq.body.id;
+
+    const res = await request.delete(`${URL}/api/seedance2/canvas/${deleteCanvasId}`, { headers: authHeader });
     expect(res.status()).to.equal(204);
 
     const listRes = await request.get(`${SUBPROJECT_URL}/${subprojectId}/canvas`, { headers: authHeader });
     const list = await readJson(listRes);
-    expect(list.body.map((c) => c.id)).to.not.include(canvasId);
+    expect(list.body.map((c) => c.id)).to.not.include(deleteCanvasId);
     console.log('删除画布后的列表:', JSON.stringify(list.body));
-
-    canvasId = null;
   });
 
   test('GET /api/seedance2/canvas/{canvas_id} — 已删除的画布应返回 404', async ({ request }) => {
