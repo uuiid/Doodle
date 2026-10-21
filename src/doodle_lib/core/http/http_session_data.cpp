@@ -150,18 +150,6 @@ boost::asio::awaitable<void> session_data::run() {
       logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
       l_gen = std::make_unique<boost::beast::http::message_generator>(make_error_code_msg(e.code_status_(), e.what()));
     } catch (const orm::sqlite_orm_exception& e) {
-      // 数据库异常自带 HTTP 语义，直接用**抛出点声明的状态码**，不在这里硬编码：
-      //   * 约束冲突（默认 bad_request → 400）是**调用方的输入问题**，不是服务端故障。
-      //     最典型的是删除仍被引用的字典项（project_status / task_type / task_status /
-      //     asset_type ...）：这些外键现在都是 NO ACTION，删除会撞
-      //     FOREIGN KEY constraint failed。
-      //   * 「查不到行」由 to_single() 声明成 not_found → 404。它属于**目标资源不存在**，
-      //     不是参数写错了。
-      // 以前这里写死 400，于是「取一个不存在的 id」在 ORM 层就被当成参数错误，
-      // 只能靠每个调用点自己 try/catch 再翻成 404 —— 那正是 try_get_by_uuid 存在的原因，
-      // 也是它顺手把「库真的坏了」一并吞成 404 的原因。
-      // 必须在这里拦下并映射：一旦落到下面的 catch(...)，响应体里会带上
-      // current_exception_diagnostic_information() 的完整堆栈和内部文件路径。
       logger_->log(log_loc(), level::err, "数据库错误 {} {}", e.code_status_(), e.what());
       l_gen = std::make_unique<boost::beast::http::message_generator>(make_error_code_msg(e.code_status_(), e.what()));
     } catch (...) {
