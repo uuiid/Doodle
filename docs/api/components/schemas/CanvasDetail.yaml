@@ -1,0 +1,13 @@
+type: object
+description: 画布详情，含画布元数据与全部节点、连线
+properties:
+  canvas:
+    $ref: ./InfiniteCanvas.yaml
+  nodes:
+    type: array
+    items:
+      $ref: ./CanvasNode.yaml
+  connections:
+    type: array
+    items:
+      $ref: ./CanvasConnection.yaml

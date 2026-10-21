@@ -18,11 +18,11 @@ get:
         format: uuid
   responses:
     '200':
-      description: 画布详情
+      description: 画布详情，含全部节点与连线
       content:
         application/json:
           schema:
-            $ref: ../components/schemas/InfiniteCanvas.yaml
+            $ref: ../components/schemas/CanvasDetail.yaml
   security:
     - bearerAuth: []
 put:

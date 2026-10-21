@@ -1,4 +1,6 @@
 #include "doodle_core/doodle_core_fwd.h"
+#include <doodle_core/metadata/seedance2/canvas_element.h>
+#include <doodle_core/metadata/seedance2/canvas_link.h>
 #include <doodle_core/metadata/seedance2/infinite_canvas.h>
 #include <doodle_core/metadata/seedance2/subproject.h>
 
@@ -60,7 +62,34 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, get) {
   if (l_canvas.subproject_id_ != subproject_id_)
     throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_canvas);
+  using namespace orm;
+  auto l_result = select(l_sql)
+                      .columns(object<sd2::canvas_element>(), object<sd2::canvas_link>())
+                      .from<sd2::canvas_element>()
+                      .left_outer_join<sd2::canvas_link>(
+                          &sd2::canvas_link::canvas_id_, &sd2::canvas_element::canvas_id_
+                      )
+                      .where(c(&sd2::canvas_element::canvas_id_) == canvas_id_)();
+
+  std::map<uuid, sd2::canvas_element> l_nodes{};
+  std::map<uuid, sd2::canvas_link> l_connections{};
+  for (auto&& [l_element, l_link] : l_result) {
+    l_nodes.try_emplace(l_element.uuid_id_, l_element);
+    if (!l_link.uuid_id_.is_nil()) l_connections.try_emplace(l_link.uuid_id_, l_link);
+  }
+
+  auto l_node_values = l_nodes | std::views::values | std::ranges::to<std::vector>();
+  auto l_link_values = l_connections | std::views::values | std::ranges::to<std::vector>();
+  std::ranges::sort(l_node_values, [](const auto& l_lhs, const auto& l_rhs) {
+    return l_lhs.created_at_.get_sys_time() < l_rhs.created_at_.get_sys_time();
+  });
+  std::ranges::sort(l_link_values, [](const auto& l_lhs, const auto& l_rhs) {
+    return l_lhs.created_at_.get_sys_time() < l_rhs.created_at_.get_sys_time();
+  });
+
+  co_return in_handle->make_msg(
+      nlohmann::json{{"canvas", l_canvas}, {"nodes", l_node_values}, {"connections", l_link_values}}
+  );
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, put) {
