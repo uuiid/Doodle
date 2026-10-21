@@ -14,6 +14,14 @@ properties:
     type: string
     format: uuid
     description: 所属项目ID
+  subproject_id:
+    type: string
+    format: uuid
+    description: 所属子项目ID
+  ai_episode_id:
+    type: string
+    format: uuid
+    description: 所属剧集ID
   user_id:
     type: string
     format: uuid

@@ -10,12 +10,14 @@ namespace doodle::seedance2 {
 
 /// 画布元素类型 — 对齐 infinite-canvas 前端库的 CanvasNodeType
 enum class DOODLE_CORE_API canvas_element_type {
-  text,    // 文本
-  image,   // 图片
-  video,   // 视频
-  audio,   // 音频
-  config,  // 生成配置节点（模型/参数/提示词）
-  group,   // 组合/分组
+  text,      // 文本
+  image,     // 图片
+  panorama,  // 全景图（等距柱状投影）
+  video,     // 视频
+  audio,     // 音频
+  config,    // 生成配置节点（模型/参数/提示词）
+  director,  // 导演台
+  group,     // 组合/分组
 };
 
 DOODLE_JSON_SERIALIZE_ENUM_STRICT(
@@ -23,9 +25,11 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     {
         {canvas_element_type::text, "text"},
         {canvas_element_type::image, "image"},
+        {canvas_element_type::panorama, "panorama"},
         {canvas_element_type::video, "video"},
         {canvas_element_type::audio, "audio"},
         {canvas_element_type::config, "config"},
+        {canvas_element_type::director, "director"},
         {canvas_element_type::group, "group"},
     }
 );
@@ -46,29 +50,25 @@ struct DOODLE_CORE_API canvas_element {
   double width_{340.0};
   double height_{240.0};
 
-  // 核心内容 — 对齐前端 metadata.content
-  std::string content_;                          // 文本内容 或 媒体 URL
+  // 扩展元数据 — 对齐前端 metadata 自由字段袋，原样存取（含 content）
+  nlohmann::json metadata_;                      // content, prompt, status, model, size, generationMode, 等
 
-  // 扩展元数据 — 对齐前端 metadata 扁平可选字段袋
-  nlohmann::json metadata_;                      // prompt, status, model, size, generationMode, 等
-
-  // 分组 — 对齐前端 metadata.groupId
-  uuid parent_id_;                               // 所属 group 节点 ID
+  // 所属 group 节点 ID — 对应前端顶层 groupId，后端不从 metadata 提取
+  uuid parent_id_;
 
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   friend void to_json(nlohmann::json& j, const canvas_element& p) {
-    j["id"]       = p.uuid_id_;
-    j["canvas_id"] = p.canvas_id_;
-    j["type"]     = p.element_type_;
-    j["title"]    = p.title_;
-    j["position"] = {{"x", p.position_x_}, {"y", p.position_y_}};
-    j["width"]    = p.width_;
-    j["height"]   = p.height_;
-    if (!p.content_.empty()) j["metadata"]["content"] = p.content_;
-    if (!p.metadata_.empty()) j["metadata"].update(p.metadata_);
-    if (!p.parent_id_.is_nil()) j["metadata"]["groupId"] = p.parent_id_;
+    j["id"]         = p.uuid_id_;
+    j["canvas_id"]  = p.canvas_id_;
+    j["type"]       = p.element_type_;
+    j["title"]      = p.title_;
+    j["position"]   = {{"x", p.position_x_}, {"y", p.position_y_}};
+    j["width"]      = p.width_;
+    j["height"]     = p.height_;
+    if (!p.metadata_.empty()) j["metadata"] = p.metadata_;
+    if (!p.parent_id_.is_nil()) j["groupId"] = p.parent_id_;
     j["created_at"] = p.created_at_;
     j["updated_at"] = p.updated_at_;
   }
@@ -83,13 +83,8 @@ struct DOODLE_CORE_API canvas_element {
     }
     if (j.contains("width")) j.at("width").get_to(p.width_);
     if (j.contains("height")) j.at("height").get_to(p.height_);
-    if (j.contains("metadata")) {
-      if (j["metadata"].contains("content")) j["metadata"]["content"].get_to(p.content_);
-      if (j["metadata"].contains("groupId")) j["metadata"]["groupId"].get_to(p.parent_id_);
-      p.metadata_ = j["metadata"];
-      p.metadata_.erase("content");
-      p.metadata_.erase("groupId");
-    }
+    if (j.contains("metadata")) p.metadata_ = j["metadata"];
+    if (j.contains("groupId")) j.at("groupId").get_to(p.parent_id_);
   }
 };
 

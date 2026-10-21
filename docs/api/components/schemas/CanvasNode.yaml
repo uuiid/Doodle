@@ -23,6 +23,12 @@ properties:
     type: number
     format: double
     description: 节点高度
+  groupId:
+    type:
+      - string
+      - "null"
+    format: uuid
+    description: 所属分组节点ID；必须是同画布的 group 节点，不能自指或成环
   metadata:
     type: object
     description: |
@@ -32,7 +38,6 @@ properties:
       - status: idle | success | loading | error
       - generationMode: text | image | video | audio
       - model, size, count, quality 等生成参数
-      - groupId: 所属分组节点ID
       - storageKey, mimeType, bytes, naturalWidth, naturalHeight
       - 插件可写入任意自定义字段
   created_at:

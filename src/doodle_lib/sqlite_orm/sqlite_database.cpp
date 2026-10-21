@@ -1193,6 +1193,7 @@ void sqlite_storage::regs_all() {
       .add_column("description", &seedance2::infinite_canvas::description_)
       .add_column("project_uuid_id", &seedance2::infinite_canvas::project_uuid_id_)
       .add_column("subproject_id", &seedance2::infinite_canvas::subproject_id_)
+      .add_column("ai_episode_id", &seedance2::infinite_canvas::ai_episode_id_)
       .add_column("user_id", &seedance2::infinite_canvas::user_id_)
       .add_column("viewport_x", &seedance2::infinite_canvas::viewport_x_)
       .add_column("viewport_y", &seedance2::infinite_canvas::viewport_y_)
@@ -1203,6 +1204,9 @@ void sqlite_storage::regs_all() {
       .add_foreign_key(&seedance2::infinite_canvas::project_uuid_id_, &project::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(
           &seedance2::infinite_canvas::subproject_id_, &seedance2::subproject::uuid_id_, foreign_key_action::set_null
+      )
+      .add_foreign_key(
+          &seedance2::infinite_canvas::ai_episode_id_, &seedance2::ai_episode::uuid_id_, foreign_key_action::set_null
       )
       .add_foreign_key(&seedance2::infinite_canvas::user_id_, &person::uuid_id_, foreign_key_action::set_null);
 
@@ -1216,7 +1220,6 @@ void sqlite_storage::regs_all() {
       .add_column("position_y", &seedance2::canvas_element::position_y_)
       .add_column("width", &seedance2::canvas_element::width_)
       .add_column("height", &seedance2::canvas_element::height_)
-      .add_column("content", &seedance2::canvas_element::content_)
       .add_column("metadata", &seedance2::canvas_element::metadata_)
       .add_column("parent_id", &seedance2::canvas_element::parent_id_)
       .add_column("created_at", &seedance2::canvas_element::created_at_)
@@ -1232,10 +1235,6 @@ void sqlite_storage::regs_all() {
       .add_column("source_id", &seedance2::canvas_link::source_id_, not_null())
       .add_column("target_id", &seedance2::canvas_link::target_id_, not_null())
       .add_column("label", &seedance2::canvas_link::label_)
-      .add_column("color", &seedance2::canvas_link::color_)
-      .add_column("width", &seedance2::canvas_link::width_)
-      .add_column("dash_pattern", &seedance2::canvas_link::dash_pattern_)
-      .add_column("directed", &seedance2::canvas_link::directed_)
       .add_column("created_at", &seedance2::canvas_link::created_at_)
       .add_column("updated_at", &seedance2::canvas_link::updated_at_)
       .add_foreign_key(

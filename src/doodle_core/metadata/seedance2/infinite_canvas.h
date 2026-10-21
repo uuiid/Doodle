@@ -33,6 +33,7 @@ struct DOODLE_CORE_API infinite_canvas {
   std::string description_;                      // 画布描述
   uuid project_uuid_id_;                         // 所属项目
   uuid subproject_id_;                           // 所属子项目
+  uuid ai_episode_id_;                           // 所属剧集 (ai_episode.uuid_id_)
   uuid user_id_;                                 // 创建者
 
   // 视口状态 — 序列化为 viewport: {x, y, k}
@@ -52,6 +53,7 @@ struct DOODLE_CORE_API infinite_canvas {
     j["description"]     = p.description_;
     j["project_uuid_id"] = p.project_uuid_id_;
     j["subproject_id"]   = p.subproject_id_;
+    j["ai_episode_id"]   = p.ai_episode_id_;
     j["user_id"]         = p.user_id_;
     j["viewport"]        = {{"x", p.viewport_x_}, {"y", p.viewport_y_}, {"k", p.viewport_k_}};
     j["backgroundMode"]  = p.background_mode_;
@@ -64,6 +66,7 @@ struct DOODLE_CORE_API infinite_canvas {
     if (j.contains("description")) j.at("description").get_to(p.description_);
     if (j.contains("project_uuid_id")) j.at("project_uuid_id").get_to(p.project_uuid_id_);
     if (j.contains("subproject_id")) j.at("subproject_id").get_to(p.subproject_id_);
+    if (j.contains("ai_episode_id")) j.at("ai_episode_id").get_to(p.ai_episode_id_);
     if (j.contains("user_id")) j.at("user_id").get_to(p.user_id_);
     if (j.contains("viewport")) {
       if (j["viewport"].contains("x")) j["viewport"]["x"].get_to(p.viewport_x_);
