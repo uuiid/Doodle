@@ -195,7 +195,7 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
   }
   template <std::size_t N, typename MemberPtr>
   void apply_json_property(
-      const nlohmann::json& in_json, const std::pair<std::array<const char*, N>, MemberPtr>&& in_pair
+      const nlohmann::json& in_json, const std::pair<std::array<const char*, N>, MemberPtr>& in_pair
   ) {
     const nlohmann::json* l_json = &in_json;
     // 遍历嵌套的 JSON 键，逐级查找对应的值
