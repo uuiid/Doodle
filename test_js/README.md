@@ -57,6 +57,7 @@ npx playwright show-report             # 打开上次的 HTML 报告
 | `config.js` | 共享配置：URL / JWT / authHeader / 常量 / `filePart` 等工具 |
 | `helpers.js` | `readJson` / `readBuffer` / `expectError` / `waitFor` / `pngSignatureHex` |
 | `seedance2.js` | seedance2 子项目 / 剧集 / 实体 / 类别 / 任务（含 transfer_station、apipy_image 两个后端） |
+| `canvas.js` | seedance2 无限画布：画布 / 节点 / 连线 / 可见人员、鉴权、枚举与默认值 |
 | `ai_light.js` | AI 灯光全部 URI：会话 / 参考图 / Spec / 迭代判断 / 回传 / 候选产物 / 预设库 / 鉴权 |
 | `test_data_user.js` | 登录、鉴权、授权、用户上下文、todo 查询 |
 | `test-loc.js` | 本地作业提交（maya 检查、替换引用、自动灯光）、视频截图、socket.io 事件 |
