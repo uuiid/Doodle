@@ -204,7 +204,7 @@
             "configurations": [
                 "Doodle_debug"
             ],
-            "preLaunchTask": "cmake build",
+            // "preLaunchTask": "cmake build",
             "presentation": {
                 "hidden": false,
                 "group": "main",
