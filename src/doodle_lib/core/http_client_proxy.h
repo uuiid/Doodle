@@ -60,46 +60,60 @@ class DOODLELIB_API http_client_ssl_via_proxy : public http_client_ssl {
     handshaking
   };
 
-  class resolve_and_connect_compose {
-   public:
-    resolve_and_connect_compose(http_client_ssl_via_proxy* in_self, resolver_t in_resolver)
-        : self_(in_self), resolver_(std::move(in_resolver)) {}
-
-    http_client_ssl_via_proxy* self_;
+  struct socks5_state_t {
+    http_client_ssl_via_proxy* self_{};
     resolver_t resolver_;
     socks5_phase_t phase_{socks5_phase_t::start};
+    std::array<std::uint8_t, 3> greeting_{};
     std::array<std::uint8_t, 2> method_reply_{};
     std::array<std::uint8_t, 4> reply_head_{};
     std::array<std::uint8_t, 1> domain_len_buf_{};
-    std::array<std::uint8_t, 3> greeting_{};
     std::vector<std::uint8_t> connect_request_{};
     std::vector<std::uint8_t> reply_addr_{};
+  };
+
+  class resolve_and_connect_compose {
+   public:
+    resolve_and_connect_compose(http_client_ssl_via_proxy* in_self, resolver_t in_resolver)
+        : state_(std::make_shared<socks5_state_t>(socks5_state_t{in_self, std::move(in_resolver)})) {}
+
+    std::shared_ptr<socks5_state_t> state_;
 
     template <typename Self>
     void operator()(Self&& self) {
-      if (self_->proxy_host_.empty()) {
-        log_info(fmt::format("代理直连: 不经过代理, 直接 TLS 握手 {}:{}", self_->server_ip_, self_->server_port_));
-        phase_ = socks5_phase_t::handshaking;
-        self_->socket_->async_handshake(boost::asio::ssl::stream_base::client, std::move(self));
+      if (state_->self_->proxy_host_.empty()) {
+        log_info(
+            fmt::format(
+                "代理直连: 不经过代理, 直接 TLS 握手 {}:{}", state_->self_->server_ip_, state_->self_->server_port_
+            )
+        );
+        state_->phase_ = socks5_phase_t::handshaking;
+        state_->self_->socket_->async_handshake(boost::asio::ssl::stream_base::client, std::move(self));
         return;
       }
       log_info(
           fmt::format(
-              "SOCKS5: 解析代理地址 {}:{} (目标 {}:{})", self_->proxy_host_, self_->proxy_port_, self_->server_ip_,
-              self_->server_port_
+              "SOCKS5: 解析代理地址 {}:{} (目标 {}:{})", state_->self_->proxy_host_, state_->self_->proxy_port_,
+              state_->self_->server_ip_, state_->self_->server_port_
           )
       );
-      resolver_.async_resolve(self_->proxy_host_, self_->proxy_port_, std::move(self));
+      state_->resolver_.async_resolve(state_->self_->proxy_host_, state_->self_->proxy_port_, std::move(self));
     }
 
     template <typename Self>
     void operator()(Self&& self, boost::system::error_code in_ec) {
       if (in_ec) {
         log_error(
-            fmt::format("代理链路 TLS 握手失败: {}:{} -> {}", self_->server_ip_, self_->server_port_, in_ec)
+            fmt::format(
+                "代理链路 TLS 握手失败: {}:{} -> {}", state_->self_->server_ip_, state_->self_->server_port_, in_ec
+            )
         );
       } else {
-        log_info(fmt::format("代理链路 TLS 握手完成: 目标 {}:{}", self_->server_ip_, self_->server_port_));
+        log_info(
+            fmt::format(
+                "代理链路 TLS 握手完成: 目标 {}:{}", state_->self_->server_ip_, state_->self_->server_port_
+            )
+        );
       }
       self.complete(in_ec);
     }
@@ -110,11 +124,12 @@ class DOODLELIB_API http_client_ssl_via_proxy : public http_client_ssl {
         finish_error(self, in_ec, "代理地址解析");
         return;
       }
-      self_->resolver_results_ = in_results;
-      const auto& l_ep         = self_->resolver_results_.begin()->endpoint();
+      state_->self_->resolver_results_ = in_results;
+      const auto& l_ep                 = state_->self_->resolver_results_.begin()->endpoint();
       log_info(fmt::format("SOCKS5: 已解析到 {}:{}, 开始 TCP 连接", l_ep.address().to_string(), l_ep.port()));
-      phase_ = socks5_phase_t::tcp_connecting;
-      boost::beast::get_lowest_layer(*self_->socket_).async_connect(self_->resolver_results_, std::move(self));
+      state_->phase_ = socks5_phase_t::tcp_connecting;
+      boost::beast::get_lowest_layer(*state_->self_->socket_)
+          .async_connect(state_->self_->resolver_results_, std::move(self));
     }
 
     template <typename Self>
@@ -123,15 +138,15 @@ class DOODLELIB_API http_client_ssl_via_proxy : public http_client_ssl {
         finish_error(self, in_ec, "代理 TCP 连接");
         return;
       }
-      self_->proxy_endpoint_ = in_endpoint;
+      state_->self_->proxy_endpoint_ = in_endpoint;
       log_info(
           fmt::format("SOCKS5: 已连接代理 {}:{}, 发送握手", in_endpoint.address().to_string(), in_endpoint.port())
       );
-      const auto l_greeting = make_socks5_greeting();
-      greeting_             = l_greeting;
-      phase_                = socks5_phase_t::greeting_writing;
+      state_->greeting_ = make_socks5_greeting();
+      state_->phase_    = socks5_phase_t::greeting_writing;
       boost::asio::async_write(
-          boost::beast::get_lowest_layer(*self_->socket_), boost::asio::buffer(greeting_), std::move(self)
+          boost::beast::get_lowest_layer(*state_->self_->socket_), boost::asio::buffer(state_->greeting_),
+          std::move(self)
       );
     }
 
@@ -141,20 +156,22 @@ class DOODLELIB_API http_client_ssl_via_proxy : public http_client_ssl {
         finish_error(self, in_ec, phase_name());
         return;
       }
-      switch (phase_) {
+      switch (state_->phase_) {
         case socks5_phase_t::greeting_writing:
-          phase_ = socks5_phase_t::method_reading;
+          state_->phase_ = socks5_phase_t::method_reading;
           boost::asio::async_read(
-              boost::beast::get_lowest_layer(*self_->socket_), boost::asio::buffer(method_reply_), std::move(self)
+              boost::beast::get_lowest_layer(*state_->self_->socket_), boost::asio::buffer(state_->method_reply_),
+              std::move(self)
           );
           return;
         case socks5_phase_t::method_reading:
           on_method_reply(self);
           return;
         case socks5_phase_t::connect_writing:
-          phase_ = socks5_phase_t::reply_head_reading;
+          state_->phase_ = socks5_phase_t::reply_head_reading;
           boost::asio::async_read(
-              boost::beast::get_lowest_layer(*self_->socket_), boost::asio::buffer(reply_head_), std::move(self)
+              boost::beast::get_lowest_layer(*state_->self_->socket_), boost::asio::buffer(state_->reply_head_),
+              std::move(self)
           );
           return;
         case socks5_phase_t::reply_head_reading:
@@ -205,7 +222,7 @@ class DOODLELIB_API http_client_ssl_via_proxy : public http_client_ssl {
     }
 
     [[nodiscard]] std::string phase_name() const {
-      switch (phase_) {
+      switch (state_->phase_) {
         case socks5_phase_t::tcp_connecting:
           return "代理 TCP 连接";
         case socks5_phase_t::greeting_writing:
@@ -243,116 +260,124 @@ class DOODLELIB_API http_client_ssl_via_proxy : public http_client_ssl {
 
     template <typename Self>
     void on_method_reply(Self& self) {
-      if (method_reply_[0] != 0x05) {
+      if (state_->method_reply_[0] != 0x05) {
         finish_protocol_error(
             self, fmt::format(
                       "代理返回版本 0x{:02X} 认证方式 0x{:02X}, 不是 SOCKS5 代理",
-                      static_cast<int>(method_reply_[0]), static_cast<int>(method_reply_[1])
+                      static_cast<int>(state_->method_reply_[0]), static_cast<int>(state_->method_reply_[1])
                   )
         );
         return;
       }
-      if (method_reply_[1] != 0x00) {
+      if (state_->method_reply_[1] != 0x00) {
         std::string l_reason{};
-        if (method_reply_[1] == 0x02)
+        if (state_->method_reply_[1] == 0x02)
           l_reason = "代理要求用户名密码认证, 本实现不支持";
-        else if (method_reply_[1] == 0xFF)
+        else if (state_->method_reply_[1] == 0xFF)
           l_reason = "代理无可接受的认证方式";
         else
-          l_reason = fmt::format("代理返回不支持的认证方式 0x{:02X}", static_cast<int>(method_reply_[1]));
+          l_reason =
+              fmt::format("代理返回不支持的认证方式 0x{:02X}", static_cast<int>(state_->method_reply_[1]));
         finish_protocol_error(self, l_reason);
         return;
       }
       log_info("SOCKS5: 代理选择无认证, 发送 CONNECT");
-      connect_request_ = self_->make_socks5_connect();
-      phase_           = socks5_phase_t::connect_writing;
+      state_->connect_request_ = state_->self_->make_socks5_connect();
+      state_->phase_           = socks5_phase_t::connect_writing;
       boost::asio::async_write(
-          boost::beast::get_lowest_layer(*self_->socket_), boost::asio::buffer(connect_request_), std::move(self)
+          boost::beast::get_lowest_layer(*state_->self_->socket_), boost::asio::buffer(state_->connect_request_),
+          std::move(self)
       );
     }
 
     template <typename Self>
     void on_reply_head(Self& self) {
-      if (reply_head_[0] != 0x05) {
+      if (state_->reply_head_[0] != 0x05) {
         finish_protocol_error(
-            self, fmt::format("reply 版本 0x{:02X}, 不是 SOCKS5 代理", static_cast<int>(reply_head_[0]))
+            self, fmt::format("reply 版本 0x{:02X}, 不是 SOCKS5 代理", static_cast<int>(state_->reply_head_[0]))
         );
         return;
       }
-      if (reply_head_[1] != 0x00) {
+      if (state_->reply_head_[1] != 0x00) {
         finish_protocol_error(
             self, fmt::format(
-                      "CONNECT {}:{} 被拒绝, REP=0x{:02X} {}", self_->server_ip_, self_->server_port_,
-                      static_cast<int>(reply_head_[1]), socks5_rep_name(reply_head_[1])
+                      "CONNECT {}:{} 被拒绝, REP=0x{:02X} {}", state_->self_->server_ip_,
+                      state_->self_->server_port_,
+                      static_cast<int>(state_->reply_head_[1]), socks5_rep_name(state_->reply_head_[1])
                   )
         );
         return;
       }
-      switch (reply_head_[3]) {
+      switch (state_->reply_head_[3]) {
         case 0x01:
-          reply_addr_.assign(6, 0);
+          state_->reply_addr_.assign(6, 0);
           break;
         case 0x04:
-          reply_addr_.assign(18, 0);
+          state_->reply_addr_.assign(18, 0);
           break;
         case 0x03:
-          phase_ = socks5_phase_t::reply_len_reading;
+          state_->phase_ = socks5_phase_t::reply_len_reading;
           boost::asio::async_read(
-              boost::beast::get_lowest_layer(*self_->socket_), boost::asio::buffer(domain_len_buf_), std::move(self)
+              boost::beast::get_lowest_layer(*state_->self_->socket_), boost::asio::buffer(state_->domain_len_buf_),
+              std::move(self)
           );
           return;
         default:
           finish_protocol_error(
-              self, fmt::format("reply 里未知的地址类型 0x{:02X}", static_cast<int>(reply_head_[3]))
+              self, fmt::format("reply 里未知的地址类型 0x{:02X}", static_cast<int>(state_->reply_head_[3]))
           );
           return;
       }
-      phase_ = socks5_phase_t::reply_addr_reading;
+      state_->phase_ = socks5_phase_t::reply_addr_reading;
       boost::asio::async_read(
-          boost::beast::get_lowest_layer(*self_->socket_), boost::asio::buffer(reply_addr_), std::move(self)
+          boost::beast::get_lowest_layer(*state_->self_->socket_), boost::asio::buffer(state_->reply_addr_),
+          std::move(self)
       );
     }
 
     template <typename Self>
     void on_reply_len(Self& self) {
-      const std::size_t l_len = domain_len_buf_[0];
+      const std::size_t l_len = state_->domain_len_buf_[0];
       if (l_len == 0) {
         finish_protocol_error(self, "reply 里域名长度为 0");
         return;
       }
-      reply_addr_.assign(l_len + 2, 0);
-      phase_ = socks5_phase_t::reply_addr_reading;
+      state_->reply_addr_.assign(l_len + 2, 0);
+      state_->phase_ = socks5_phase_t::reply_addr_reading;
       boost::asio::async_read(
-          boost::beast::get_lowest_layer(*self_->socket_), boost::asio::buffer(reply_addr_), std::move(self)
+          boost::beast::get_lowest_layer(*state_->self_->socket_), boost::asio::buffer(state_->reply_addr_),
+          std::move(self)
       );
     }
 
     template <typename Self>
     void on_reply_addr(Self& self) {
       std::string l_bind{};
-      if (reply_head_[3] == 0x03) {
-        l_bind = std::string{reinterpret_cast<const char*>(reply_addr_.data()), reply_addr_.size() - 2};
-      } else if (reply_head_[3] == 0x01) {
+      if (state_->reply_head_[3] == 0x03) {
+        l_bind = std::string{reinterpret_cast<const char*>(state_->reply_addr_.data()), state_->reply_addr_.size() - 2};
+      } else if (state_->reply_head_[3] == 0x01) {
         l_bind = boost::asio::ip::address_v4(
                      std::array<std::uint8_t, 4>{
-                         reply_addr_[0], reply_addr_[1], reply_addr_[2], reply_addr_[3]
+                         state_->reply_addr_[0], state_->reply_addr_[1], state_->reply_addr_[2], state_->reply_addr_[3]
                      }
         )
                      .to_string();
       } else {
         std::array<std::uint8_t, 16> l_v6{};
-        std::copy_n(reply_addr_.begin(), 16, l_v6.begin());
+        std::copy_n(state_->reply_addr_.begin(), 16, l_v6.begin());
         l_bind = boost::asio::ip::address_v6(l_v6).to_string();
       }
-      const auto l_port =
-          static_cast<std::uint16_t>((reply_addr_[reply_addr_.size() - 2] << 8) | reply_addr_.back());
+      const auto l_port = static_cast<std::uint16_t>(
+          (state_->reply_addr_[state_->reply_addr_.size() - 2] << 8) | state_->reply_addr_.back()
+      );
       log_info(
           fmt::format(
-              "SOCKS5: CONNECT {}:{} 隧道已建立 (BND {}:{})", self_->server_ip_, self_->server_port_, l_bind, l_port
+              "SOCKS5: CONNECT {}:{} 隧道已建立 (BND {}:{})", state_->self_->server_ip_,
+              state_->self_->server_port_, l_bind, l_port
           )
       );
-      phase_ = socks5_phase_t::handshaking;
-      self_->socket_->async_handshake(boost::asio::ssl::stream_base::client, std::move(self));
+      state_->phase_ = socks5_phase_t::handshaking;
+      state_->self_->socket_->async_handshake(boost::asio::ssl::stream_base::client, std::move(self));
     }
   };
 
