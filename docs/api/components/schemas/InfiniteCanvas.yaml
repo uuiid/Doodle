@@ -32,7 +32,7 @@ properties:
     description: 创建者ID
   viewport:
     $ref: ./Viewport.yaml
-  backgroundMode:
+  background_mode:
     $ref: ./CanvasBackgroundMode.yaml
   created_at:
     type: string

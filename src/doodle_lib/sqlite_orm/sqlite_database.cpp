@@ -1239,7 +1239,6 @@ void sqlite_storage::regs_all() {
       .add_column("canvas_id", &seedance2::canvas_link::canvas_id_, not_null())
       .add_column("source_id", &seedance2::canvas_link::source_id_, not_null())
       .add_column("target_id", &seedance2::canvas_link::target_id_, not_null())
-      .add_column("label", &seedance2::canvas_link::label_)
       .add_column("created_at", &seedance2::canvas_link::created_at_)
       .add_column("updated_at", &seedance2::canvas_link::updated_at_)
       .add_foreign_key(

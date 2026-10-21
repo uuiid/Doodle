@@ -8,17 +8,14 @@ properties:
     type: string
     format: uuid
     description: 所属画布ID
-  fromNodeId:
+  from_node_id:
     type: string
     format: uuid
     description: 起始节点ID
-  toNodeId:
+  to_node_id:
     type: string
     format: uuid
     description: 目标节点ID
-  label:
-    type: string
-    description: 连线标签
   created_at:
     type: string
     format: date-time

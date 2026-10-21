@@ -23,7 +23,7 @@ properties:
     type: number
     format: double
     description: 节点高度
-  groupId:
+  group_id:
     type:
       - string
       - "null"

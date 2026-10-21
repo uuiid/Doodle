@@ -3,8 +3,11 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
 
+#include <array>
 #include <chrono>
 #include <string>
+#include <tuple>
+#include <utility>
 
 namespace doodle::seedance2 {
 
@@ -39,6 +42,19 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
 struct DOODLE_CORE_API canvas_element {
   DOODLE_BASE_FIELDS();
 
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"type", &canvas_element::element_type_},
+        std::pair{"title", &canvas_element::title_},
+        std::pair{std::array{"position", "x"}, &canvas_element::position_x_},
+        std::pair{std::array{"position", "y"}, &canvas_element::position_y_},
+        std::pair{"width", &canvas_element::width_},
+        std::pair{"height", &canvas_element::height_},
+        std::pair{"metadata", &canvas_element::metadata_},
+        std::pair{"group_id", &canvas_element::parent_id_},
+    };
+  }
+
   uuid canvas_id_;                               // 所属画布 (infinite_canvas.uuid_id_)
   canvas_element_type element_type_{canvas_element_type::text};
 
@@ -68,7 +84,7 @@ struct DOODLE_CORE_API canvas_element {
     j["width"]      = p.width_;
     j["height"]     = p.height_;
     if (!p.metadata_.empty()) j["metadata"] = p.metadata_;
-    if (!p.parent_id_.is_nil()) j["groupId"] = p.parent_id_;
+    if (!p.parent_id_.is_nil()) j["group_id"] = p.parent_id_;
     j["created_at"] = p.created_at_;
     j["updated_at"] = p.updated_at_;
   }
@@ -84,7 +100,7 @@ struct DOODLE_CORE_API canvas_element {
     if (j.contains("width")) j.at("width").get_to(p.width_);
     if (j.contains("height")) j.at("height").get_to(p.height_);
     if (j.contains("metadata")) p.metadata_ = j["metadata"];
-    if (j.contains("groupId")) j.at("groupId").get_to(p.parent_id_);
+    if (j.contains("group_id")) j.at("group_id").get_to(p.parent_id_);
   }
 };
 

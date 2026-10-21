@@ -3,8 +3,11 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
 
+#include <array>
 #include <chrono>
 #include <string>
+#include <tuple>
+#include <utility>
 
 namespace doodle::seedance2 {
 
@@ -28,6 +31,17 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
 /// 对齐 infinite-canvas 前端库的 CanvasProject
 struct DOODLE_CORE_API infinite_canvas {
   DOODLE_BASE_FIELDS();
+
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"title", &infinite_canvas::title_},
+        std::pair{"description", &infinite_canvas::description_},
+        std::pair{std::array{"viewport", "x"}, &infinite_canvas::viewport_x_},
+        std::pair{std::array{"viewport", "y"}, &infinite_canvas::viewport_y_},
+        std::pair{std::array{"viewport", "k"}, &infinite_canvas::viewport_k_},
+        std::pair{"background_mode", &infinite_canvas::background_mode_},
+    };
+  }
 
   std::string title_;                            // 画布名称（对齐前端 title）
   std::string description_;                      // 画布描述
@@ -58,7 +72,7 @@ struct DOODLE_CORE_API infinite_canvas {
     j["ai_generate_entity_id"] = p.ai_generate_entity_id_;
     j["user_id"]               = p.user_id_;
     j["viewport"]              = {{"x", p.viewport_x_}, {"y", p.viewport_y_}, {"k", p.viewport_k_}};
-    j["backgroundMode"]        = p.background_mode_;
+    j["background_mode"]       = p.background_mode_;
     j["created_at"]            = p.created_at_;
     j["updated_at"]            = p.updated_at_;
   }
@@ -76,7 +90,7 @@ struct DOODLE_CORE_API infinite_canvas {
       if (j["viewport"].contains("y")) j["viewport"]["y"].get_to(p.viewport_y_);
       if (j["viewport"].contains("k")) j["viewport"]["k"].get_to(p.viewport_k_);
     }
-    if (j.contains("backgroundMode")) j.at("backgroundMode").get_to(p.background_mode_);
+    if (j.contains("background_mode")) j.at("background_mode").get_to(p.background_mode_);
   }
 };
 
