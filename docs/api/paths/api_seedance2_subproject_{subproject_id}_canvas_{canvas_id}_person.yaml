@@ -1,0 +1,41 @@
+post:
+  tags:
+    - 画布可见人员
+  summary: 添加画布可见人员
+  description: 为指定画布添加一名额外可见该画布的人员；创建者本人无需添加，同一人员不可重复添加
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 子项目ID
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - person_id
+          properties:
+            person_id:
+              type: string
+              format: uuid
+              description: 人员ID
+  responses:
+    '201':
+      description: 添加成功
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/CanvasPersonLink.yaml
+  security:
+    - bearerAuth: []

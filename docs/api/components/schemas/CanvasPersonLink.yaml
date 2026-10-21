@@ -1,0 +1,14 @@
+type: object
+description: 画布可见人员关联记录，对齐 infinite_canvas_person_link。
+properties:
+  id:
+    type: string
+    format: uuid
+  infinite_canvas_id:
+    type: string
+    format: uuid
+    description: 画布ID
+  person_id:
+    type: string
+    format: uuid
+    description: 人员ID

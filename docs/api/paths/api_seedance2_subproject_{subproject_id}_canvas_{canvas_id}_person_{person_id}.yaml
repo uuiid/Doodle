@@ -1,0 +1,31 @@
+delete:
+  tags:
+    - 画布可见人员
+  summary: 移除画布可见人员
+  description: 移除指定画布的某名可见人员；记录不存在时同样返回 204
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 子项目ID
+    - name: canvas_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: person_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 人员ID
+  responses:
+    '204':
+      description: 移除成功
+  security:
+    - bearerAuth: []
