@@ -11,7 +11,9 @@ export const JWT = jwt_encode({
 
 export const authHeader = { 'Cookie': `access_token_cookie=${JWT}` };
 
-export const NON_EXISTENT_ID = '00000000-0000-0000-0000-000000000000';
+export const NIL_ID = '00000000-0000-0000-0000-000000000000';
+
+export const NON_EXISTENT_ID = '00000000-0000-0000-0000-000000000001';
 
 export const PROJECT_ID = 'c340051a-45a6-4af1-a750-efefe639c75b';
 

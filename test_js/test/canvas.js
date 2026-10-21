@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
 import { expect } from 'chai';
 
-import { URL, JWT, PROJECT_ID, PERSON_ID, NON_EXISTENT_ID, authHeader } from './config.js';
+import { URL, JWT, PROJECT_ID, PERSON_ID, NIL_ID, NON_EXISTENT_ID, authHeader } from './config.js';
 import { readJson } from './helpers.js';
 
 const SUBPROJECT_URL = `${URL}/api/seedance2/subproject`;
@@ -222,9 +222,17 @@ test.describe('seedance2 画布 — 生命周期', () => {
     console.log('group_id 指向非 group 的响应:', JSON.stringify(req.body));
   });
 
+  test('POST .../node — group_id 为空 id 表示未分组，应创建成功', async ({ request }) => {
+    const req = await postNode(request, canvasId, { type: 'text', title: '无分组节点', group_id: NIL_ID });
+
+    expect(req.status, JSON.stringify(req.body)).to.equal(201);
+    expect(req.body.group_id ?? NIL_ID).to.equal(NIL_ID);
+    console.log('group_id 为空 id 的响应:', JSON.stringify(req.body));
+  });
+
   test('POST .../node — group_id 指向不存在的节点应返回 404', async ({ request }) => {
     const req = await postNode(request, canvasId, { type: 'text', title: '分组不存在', group_id: NON_EXISTENT_ID });
-    expect(req.status).to.equal(404);
+    expect(req.status, JSON.stringify(req.body)).to.equal(404);
     console.log('group_id 不存在的响应:', JSON.stringify(req.body));
   });
 
@@ -313,6 +321,22 @@ test.describe('seedance2 画布 — 生命周期', () => {
     const req = await putNode(request, canvasId, groupNodeId, { group_id: groupNodeId });
     expect(req.status).to.equal(400);
     console.log('group_id 自指的响应:', JSON.stringify(req.body));
+  });
+
+  test('PUT .../node/{node_id} — group_id 为空 id 表示移出分组', async ({ request }) => {
+    expect(imageNodeId).to.not.be.null;
+    const req = await putNode(request, canvasId, imageNodeId, { group_id: NIL_ID });
+
+    expect(req.status, JSON.stringify(req.body)).to.equal(200);
+    expect(req.body.group_id ?? NIL_ID).to.equal(NIL_ID);
+    console.log('PUT node 移出分组返回值:', JSON.stringify(req.body, null, 2));
+  });
+
+  test('PUT .../node/{node_id} — group_id 指向不存在的节点应返回 404', async ({ request }) => {
+    expect(imageNodeId).to.not.be.null;
+    const req = await putNode(request, canvasId, imageNodeId, { group_id: NON_EXISTENT_ID });
+    expect(req.status, JSON.stringify(req.body)).to.equal(404);
+    console.log('PUT group_id 不存在的响应:', JSON.stringify(req.body));
   });
 
   test('POST /api/seedance2/canvas/{canvas_id}/connection — 创建连线', async ({ request }) => {
