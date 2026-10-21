@@ -22,6 +22,10 @@ properties:
     type: string
     format: uuid
     description: 所属剧集ID
+  ai_generate_entity_id:
+    type: string
+    format: uuid
+    description: 所属生成实体ID
   user_id:
     type: string
     format: uuid

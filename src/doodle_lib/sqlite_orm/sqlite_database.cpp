@@ -1194,6 +1194,7 @@ void sqlite_storage::regs_all() {
       .add_column("project_uuid_id", &seedance2::infinite_canvas::project_uuid_id_)
       .add_column("subproject_id", &seedance2::infinite_canvas::subproject_id_)
       .add_column("ai_episode_id", &seedance2::infinite_canvas::ai_episode_id_)
+      .add_column("ai_generate_entity_id", &seedance2::infinite_canvas::ai_generate_entity_id_)
       .add_column("user_id", &seedance2::infinite_canvas::user_id_)
       .add_column("viewport_x", &seedance2::infinite_canvas::viewport_x_)
       .add_column("viewport_y", &seedance2::infinite_canvas::viewport_y_)
@@ -1207,6 +1208,10 @@ void sqlite_storage::regs_all() {
       )
       .add_foreign_key(
           &seedance2::infinite_canvas::ai_episode_id_, &seedance2::ai_episode::uuid_id_, foreign_key_action::set_null
+      )
+      .add_foreign_key(
+          &seedance2::infinite_canvas::ai_generate_entity_id_, &seedance2::ai_generate_entity::uuid_id_,
+          foreign_key_action::set_null
       )
       .add_foreign_key(&seedance2::infinite_canvas::user_id_, &person::uuid_id_, foreign_key_action::set_null);
 
