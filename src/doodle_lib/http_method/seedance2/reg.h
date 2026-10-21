@@ -314,12 +314,11 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid subproject_id_{};
 uuid canvas_id_{};
 DOODLE_HTTP_FUN_END()
-// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/person/{person_id}
+// /api/seedance2/subproject/{subproject_id}/canvas_link/{canvas_link_id}
 DOODLE_HTTP_JWT_FUN(canvas_person_instance)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid subproject_id_{};
-uuid canvas_id_{};
-uuid person_id_{};
+uuid canvas_link_id_{};
 DOODLE_HTTP_FUN_END()
 
 /// 画布媒体 ---------------------

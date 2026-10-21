@@ -225,24 +225,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_person, post) {
   co_return in_handle->make_msg(nlohmann::json{} = l_links);
 }
 
-// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/person/{person_id}
+// /api/seedance2/subproject/{subproject_id}/canvas_link/{canvas_link_id}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_person_instance, delete_) {
   person_.check_subproject_access(subproject_id_);
   person_.check_not_outsourcer();
-  auto l_sql    = get_sqlite_database();
-  auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
-  if (l_canvas.subproject_id_ != subproject_id_)
-    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
+  auto l_sql = get_sqlite_database();
 
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(
       delete_from(l_sql)
           .from<sd2::infinite_canvas_person_link>()
-          .where(
-              c(&sd2::infinite_canvas_person_link::infinite_canvas_id_) == canvas_id_ &&
-              c(&sd2::infinite_canvas_person_link::person_id_) == person_id_
-          )
+          .where(c(&sd2::infinite_canvas_person_link::uuid_id_) == canvas_link_id_)
   );
   co_await l_sql.run_sql(std::move(l_sqls));
 

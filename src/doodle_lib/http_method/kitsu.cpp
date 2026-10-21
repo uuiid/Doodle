@@ -464,10 +464,9 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &seedance2::canvas_person::subproject_id_,
         &seedance2::canvas_person::canvas_id_
       ))
-      .reg_t<seedance2::canvas_person_instance>("/api/seedance2/subproject/{}/canvas/{}/person/{}"_url(
+      .reg_t<seedance2::canvas_person_instance>("/api/seedance2/subproject/{}/canvas_link/{}"_url(
         &seedance2::canvas_person_instance::subproject_id_,
-        &seedance2::canvas_person_instance::canvas_id_,
-        &seedance2::canvas_person_instance::person_id_
+        &seedance2::canvas_person_instance::canvas_link_id_
       ))
       .reg_t<seedance2::seedance2_task>("/api/seedance2/task"_url)
       .reg_t<seedance2::seedance2_task_run>("/api/seedance2/task/run"_url)

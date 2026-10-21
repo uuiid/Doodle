@@ -2,7 +2,7 @@ post:
   tags:
     - 画布可见人员
   summary: 批量添加画布可见人员
-  description: 一次性为指定画布添加多名额外可见该画布的人员；已存在的人员自动跳过，只返回本次新增的记录
+  description: 一次性为指定画布添加多名额外可见该画布的人员；人员不存在或已在该画布的可见列表中时返回 400
   parameters:
     - name: subproject_id
       in: path
@@ -35,7 +35,7 @@ post:
               description: 人员ID列表
   responses:
     '201':
-      description: 本次新增的可见人员关联记录列表；全部已存在时为空数组
+      description: 本次插入的可见人员关联记录列表
       content:
         application/json:
           schema:
