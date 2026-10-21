@@ -55,7 +55,8 @@ class DOODLELIB_API core_set : public boost::noncopyable {
   // publish_listener_port 知道真实端口, 本值仅作兜底。
   std::uint16_t public_url_port_{38192};
 
-  std::string http_proxy_url_{"http://127.0.0.1:20122"};
+  // 代理地址(写入 http_client_proxy 的 SOCKS5 客户端)。只支持 socks5:// 且不带用户名密码, 空串表示直连。
+  std::string http_proxy_url_{"socks5://127.0.0.1:20122"};
 
   std::string authorize_{};
   void save();

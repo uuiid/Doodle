@@ -48,8 +48,8 @@ struct kitsu_supplement_args_t {
   /// 对外公开素材 URL 的端口(写入 core_set::public_url_port_)
   std::uint16_t public_url_port_ = 38192;
 
-  /// HTTP 代理地址(写入 core_set::http_proxy_url_)。空串表示直连
-  std::string http_proxy_url_ = "http://127.0.0.1:20122";
+  /// SOCKS5 代理地址(写入 core_set::http_proxy_url_)。只支持 socks5:// 且不带用户名密码, 空串表示直连
+  std::string http_proxy_url_ = "socks5://127.0.0.1:20122";
 
   struct mail_config_t {
     std::string address_;
@@ -149,7 +149,7 @@ bool kitsu_supplement_main::init() {
 #else
       .public_url_port_ = 38193,
 #endif
-      .http_proxy_url_ = "http://127.0.0.1:20122",
+      .http_proxy_url_ = "socks5://127.0.0.1:20122",
   };
 
   if (auto l_file_path = arg_({"config"}); l_file_path) {
