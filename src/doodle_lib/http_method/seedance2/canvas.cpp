@@ -84,9 +84,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, get) {
     return l_lhs.created_at_.get_sys_time() < l_rhs.created_at_.get_sys_time();
   });
 
-  co_return in_handle->make_msg(
-      nlohmann::json{{"canvas", l_canvas}, {"nodes", l_node_values}, {"connections", l_link_values}}
-  );
+  auto l_person_links = select(l_sql)
+                            .columns(object<sd2::infinite_canvas_person_link>())
+                            .from<sd2::infinite_canvas_person_link>()
+                            .where(c(&sd2::infinite_canvas_person_link::infinite_canvas_id_) == canvas_id_)
+                            .order_by(&sd2::infinite_canvas_person_link::id_, true)()
+                            .to_vector();
+
+  co_return in_handle->make_msg(nlohmann::json{
+      {"canvas", l_canvas},
+      {"nodes", l_node_values},
+      {"connections", l_link_values},
+      {"person_links", l_person_links},
+  });
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, put) {

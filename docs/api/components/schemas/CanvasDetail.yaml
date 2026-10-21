@@ -1,5 +1,5 @@
 type: object
-description: 画布详情，含画布元数据与全部节点、连线
+description: 画布详情，含画布元数据与全部节点、连线，以及额外可见人员关联记录
 properties:
   canvas:
     $ref: ./InfiniteCanvas.yaml
@@ -11,3 +11,8 @@ properties:
     type: array
     items:
       $ref: ./CanvasConnection.yaml
+  person_links:
+    type: array
+    description: 该画布的额外可见人员关联记录
+    items:
+      $ref: ./CanvasPersonLink.yaml
