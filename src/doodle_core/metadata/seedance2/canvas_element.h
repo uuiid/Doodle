@@ -91,7 +91,7 @@ struct DOODLE_CORE_API canvas_element {
 
   friend void from_json(const nlohmann::json& j, canvas_element& p) {
     j.at("canvas_id").get_to(p.canvas_id_);
-    if (j.contains("type")) j.at("type").get_to(p.element_type_);
+    j.at("type").get_to(p.element_type_);
     if (j.contains("title")) j.at("title").get_to(p.title_);
     if (j.contains("position")) {
       if (j["position"].contains("x")) j["position"]["x"].get_to(p.position_x_);

@@ -442,6 +442,24 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &seedance2::canvas_instance::subproject_id_,
         &seedance2::canvas_instance::canvas_id_
       ))
+      .reg_t<seedance2::canvas_node>("/api/seedance2/subproject/{}/canvas/{}/node"_url(
+        &seedance2::canvas_node::subproject_id_,
+        &seedance2::canvas_node::canvas_id_
+      ))
+      .reg_t<seedance2::canvas_node_instance>("/api/seedance2/subproject/{}/canvas/{}/node/{}"_url(
+        &seedance2::canvas_node_instance::subproject_id_,
+        &seedance2::canvas_node_instance::canvas_id_,
+        &seedance2::canvas_node_instance::node_id_
+      ))
+      .reg_t<seedance2::canvas_connection>("/api/seedance2/subproject/{}/canvas/{}/connection"_url(
+        &seedance2::canvas_connection::subproject_id_,
+        &seedance2::canvas_connection::canvas_id_
+      ))
+      .reg_t<seedance2::canvas_connection_instance>("/api/seedance2/subproject/{}/canvas/{}/connection/{}"_url(
+        &seedance2::canvas_connection_instance::subproject_id_,
+        &seedance2::canvas_connection_instance::canvas_id_,
+        &seedance2::canvas_connection_instance::connection_id_
+      ))
       .reg_t<seedance2::seedance2_task>("/api/seedance2/task"_url)
       .reg_t<seedance2::seedance2_task_run>("/api/seedance2/task/run"_url)
       .reg_t<seedance2::seedance2_task_date>("/api/seedance2/task/{}-{}"_url(

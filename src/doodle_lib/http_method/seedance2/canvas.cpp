@@ -12,13 +12,6 @@
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 
-namespace {
-void check_canvas_owner(sqlite_database& in_sql, const uuid& in_subproject_id, const sd2::infinite_canvas& in_canvas) {
-  if (in_canvas.subproject_id_ != in_subproject_id)
-    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
-}
-}  // namespace
-
 /// 画布 ---------------------
 // /api/seedance2/subproject/{subproject_id}/canvas
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_, get) {
@@ -64,7 +57,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, get) {
 
   auto l_sql    = get_sqlite_database();
   auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
-  check_canvas_owner(l_sql, subproject_id_, l_canvas);
+  if (l_canvas.subproject_id_ != subproject_id_)
+    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
 
   co_return in_handle->make_msg(nlohmann::json{} = l_canvas);
 }
@@ -75,7 +69,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, put) {
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
-  check_canvas_owner(l_sql, subproject_id_, l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_));
+  auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
+  if (l_canvas.subproject_id_ != subproject_id_)
+    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
 
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
@@ -94,7 +90,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, delete_) {
   auto l_sql    = get_sqlite_database();
   auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
 
-  check_canvas_owner(l_sql, subproject_id_, l_canvas);
+  if (l_canvas.subproject_id_ != subproject_id_)
+    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
   if (!person_.is_producer() && l_canvas.user_id_ != person_.person_.uuid_id_)
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "只有本人、管理员或制片可以删除画布"});
 

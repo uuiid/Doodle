@@ -274,31 +274,35 @@ uuid canvas_id_{};
 DOODLE_HTTP_FUN_END()
 
 /// 画布节点 ---------------------
-// /api/canvas/{canvas_id}/node
+// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/node
 DOODLE_HTTP_JWT_FUN(canvas_node)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid subproject_id_{};
 uuid canvas_id_{};
 DOODLE_HTTP_FUN_END()
-// /api/canvas/{canvas_id}/node/{node_id}
+// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/node/{node_id}
 DOODLE_HTTP_JWT_FUN(canvas_node_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid subproject_id_{};
 uuid canvas_id_{};
 uuid node_id_{};
 DOODLE_HTTP_FUN_END()
 
 /// 画布连线 ---------------------
-// /api/canvas/{canvas_id}/connection
+// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/connection
 DOODLE_HTTP_JWT_FUN(canvas_connection)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid subproject_id_{};
 uuid canvas_id_{};
 DOODLE_HTTP_FUN_END()
-// /api/canvas/{canvas_id}/connection/{connection_id}
+// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/connection/{connection_id}
 DOODLE_HTTP_JWT_FUN(canvas_connection_instance)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid subproject_id_{};
 uuid canvas_id_{};
 uuid connection_id_{};
 DOODLE_HTTP_FUN_END()

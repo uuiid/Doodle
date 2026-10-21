@@ -1,22 +1,2 @@
-delete:
-  tags:
-    - 画布连线
-  summary: 删除画布连线
-  parameters:
-    - name: canvas_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-    - name: connection_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-  responses:
-    '204':
-      description: 删除成功
-  security:
-    - bearerAuth: []
+# 已迁移至 api_seedance2_subproject_{subproject_id}_canvas_{canvas_id}_connection_{connection_id}.yaml
+# 画布连线现在必须归属子项目下的画布：/api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/connection/{connection_id}
