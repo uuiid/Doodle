@@ -1,8 +1,8 @@
 post:
   tags:
     - 画布可见人员
-  summary: 添加画布可见人员
-  description: 为指定画布添加一名额外可见该画布的人员；创建者本人无需添加，同一人员不可重复添加
+  summary: 批量添加画布可见人员
+  description: 一次性为指定画布添加多名额外可见该画布的人员；已存在的人员自动跳过，只返回本次新增的记录
   parameters:
     - name: subproject_id
       in: path
@@ -24,18 +24,23 @@ post:
         schema:
           type: object
           required:
-            - person_id
+            - person_ids
           properties:
-            person_id:
-              type: string
-              format: uuid
-              description: 人员ID
+            person_ids:
+              type: array
+              minItems: 1
+              items:
+                type: string
+                format: uuid
+              description: 人员ID列表
   responses:
     '201':
-      description: 添加成功
+      description: 本次新增的可见人员关联记录列表；全部已存在时为空数组
       content:
         application/json:
           schema:
-            $ref: ../components/schemas/CanvasPersonLink.yaml
+            type: array
+            items:
+              $ref: ../components/schemas/CanvasPersonLink.yaml
   security:
     - bearerAuth: []

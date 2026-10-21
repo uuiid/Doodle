@@ -205,31 +205,24 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_person, post) {
   if (l_canvas.subproject_id_ != subproject_id_)
     throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
 
-  auto l_json         = in_handle->get_json();
-  l_json["canvas_id"] = canvas_id_;
+  auto l_person_ids = in_handle->get_json().at("person_ids").get<std::vector<uuid>>();
+  if (l_person_ids.empty())
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "person_ids 不能为空"});
 
-  auto l_link = std::make_shared<sd2::infinite_canvas_person_link>();
-  l_json.get_to(*l_link);
-
-  auto l_target = l_sql.get_by_uuid<person>(l_link->person_id_);
+  auto l_links = l_person_ids | std::views::transform([&](const uuid& l_id) {
+                   auto l_link                = sd2::infinite_canvas_person_link{};
+                   l_link.infinite_canvas_id_ = canvas_id_;
+                   l_link.person_id_          = l_id;
+                   return l_link;
+                 }) |
+                 std::ranges::to<std::vector>();
 
   using namespace orm;
-  auto l_exists = select(l_sql)
-                      .columns(object<sd2::infinite_canvas_person_link>())
-                      .from<sd2::infinite_canvas_person_link>()
-                      .where(
-                          c(&sd2::infinite_canvas_person_link::infinite_canvas_id_) == canvas_id_ &&
-                          c(&sd2::infinite_canvas_person_link::person_id_) == l_link->person_id_
-                      )()
-                      .to_vector();
-  if (!l_exists.empty())
-    throw_exception(http_request_error{boost::beast::http::status::bad_request, "该人员已在可见列表中"});
-
   sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(insert(l_sql).into<sd2::infinite_canvas_person_link>().values(*l_link));
+  l_sqls.emplace_back(insert(l_sql).into<sd2::infinite_canvas_person_link>().set_range(l_links));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_link);
+  co_return in_handle->make_msg(nlohmann::json{} = l_links);
 }
 
 // /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/person/{person_id}
