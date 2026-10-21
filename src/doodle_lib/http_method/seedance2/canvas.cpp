@@ -53,14 +53,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_canvas);
 }
 
-// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}
+// /api/seedance2/canvas/{canvas_id}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, get) {
-  person_.check_subproject_access(subproject_id_);
-
   auto l_sql    = get_sqlite_database();
   auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
-  if (l_canvas.subproject_id_ != subproject_id_)
-    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
+  person_.check_subproject_access(l_canvas.subproject_id_);
 
   using namespace orm;
   auto l_result = select(l_sql)
@@ -93,14 +90,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, put) {
-  person_.check_subproject_access(subproject_id_);
-  person_.check_not_outsourcer();
   auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
   auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
-  if (l_canvas.subproject_id_ != subproject_id_)
-    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
+  person_.check_subproject_access(l_canvas.subproject_id_);
+  person_.check_not_outsourcer();
 
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
@@ -114,13 +109,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, put) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, delete_) {
-  person_.check_subproject_access(subproject_id_);
-  person_.check_not_outsourcer();
   auto l_sql    = get_sqlite_database();
   auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
+  person_.check_subproject_access(l_canvas.subproject_id_);
+  person_.check_not_outsourcer();
 
-  if (l_canvas.subproject_id_ != subproject_id_)
-    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
   if (!person_.is_producer() && l_canvas.user_id_ != person_.person_.uuid_id_)
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "只有本人、管理员或制片可以删除画布"});
 

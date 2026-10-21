@@ -14,14 +14,11 @@ namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 
 /// 画布节点 ---------------------
-// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/node
+// /api/seedance2/canvas/{canvas_id}/node
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node, get) {
-  person_.check_subproject_access(subproject_id_);
-
   auto l_sql    = get_sqlite_database();
   auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
-  if (l_canvas.subproject_id_ != subproject_id_)
-    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
+  person_.check_subproject_access(l_canvas.subproject_id_);
 
   using namespace orm;
   auto l_result = select(l_sql)
@@ -34,15 +31,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node, post) {
-  person_.check_subproject_access(subproject_id_);
-  person_.check_not_outsourcer();
   auto l_sql    = get_sqlite_database();
   auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
-  if (l_canvas.subproject_id_ != subproject_id_)
-    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
+  person_.check_subproject_access(l_canvas.subproject_id_);
+  person_.check_not_outsourcer();
 
-  auto l_json            = in_handle->get_json();
-  l_json["canvas_id"]    = canvas_id_;
+  auto l_json         = in_handle->get_json();
+  l_json["canvas_id"] = canvas_id_;
 
   auto l_element      = std::make_shared<sd2::canvas_element>();
   l_json.get_to(*l_element);
@@ -63,11 +58,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_element);
 }
 
-// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/node/{node_id}
+// /api/seedance2/canvas/{canvas_id}/node/{node_id}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node_instance, get) {
-  person_.check_subproject_access(subproject_id_);
+  auto l_sql    = get_sqlite_database();
+  auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
+  person_.check_subproject_access(l_canvas.subproject_id_);
 
-  auto l_sql     = get_sqlite_database();
   auto l_element = l_sql.get_by_uuid<sd2::canvas_element>(node_id_);
   if (l_element.canvas_id_ != canvas_id_)
     throw_exception(http_request_error{boost::beast::http::status::not_found, "节点不存在"});
@@ -76,10 +72,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node_instance, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node_instance, put) {
-  person_.check_subproject_access(subproject_id_);
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+
+  auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
+  person_.check_subproject_access(l_canvas.subproject_id_);
   person_.check_not_outsourcer();
-  auto l_sql     = get_sqlite_database();
-  auto l_json    = in_handle->get_json();
 
   auto l_element = l_sql.get_by_uuid<sd2::canvas_element>(node_id_);
   if (l_element.canvas_id_ != canvas_id_)
@@ -110,9 +108,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node_instance, put) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node_instance, delete_) {
-  person_.check_subproject_access(subproject_id_);
+  auto l_sql    = get_sqlite_database();
+  auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
+  person_.check_subproject_access(l_canvas.subproject_id_);
   person_.check_not_outsourcer();
-  auto l_sql     = get_sqlite_database();
+
   auto l_element = l_sql.get_by_uuid<sd2::canvas_element>(node_id_);
   if (l_element.canvas_id_ != canvas_id_)
     throw_exception(http_request_error{boost::beast::http::status::not_found, "节点不存在"});
@@ -128,14 +128,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node_instance, delete_) {
 }
 
 /// 画布连线 ---------------------
-// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/connection
+// /api/seedance2/canvas/{canvas_id}/connection
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_connection, get) {
-  person_.check_subproject_access(subproject_id_);
-
   auto l_sql    = get_sqlite_database();
   auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
-  if (l_canvas.subproject_id_ != subproject_id_)
-    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
+  person_.check_subproject_access(l_canvas.subproject_id_);
 
   using namespace orm;
   auto l_result = select(l_sql)
@@ -148,12 +145,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_connection, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_connection, post) {
-  person_.check_subproject_access(subproject_id_);
-  person_.check_not_outsourcer();
   auto l_sql    = get_sqlite_database();
   auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
-  if (l_canvas.subproject_id_ != subproject_id_)
-    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
+  person_.check_subproject_access(l_canvas.subproject_id_);
+  person_.check_not_outsourcer();
 
   auto l_json         = in_handle->get_json();
   l_json["canvas_id"] = canvas_id_;
@@ -176,11 +171,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_connection, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_link);
 }
 
-// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/connection/{connection_id}
+// /api/seedance2/canvas/{canvas_id}/connection/{connection_id}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_connection_instance, delete_) {
-  person_.check_subproject_access(subproject_id_);
+  auto l_sql    = get_sqlite_database();
+  auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
+  person_.check_subproject_access(l_canvas.subproject_id_);
   person_.check_not_outsourcer();
-  auto l_sql  = get_sqlite_database();
+
   auto l_link = l_sql.get_by_uuid<sd2::canvas_link>(connection_id_);
   if (l_link.canvas_id_ != canvas_id_)
     throw_exception(http_request_error{boost::beast::http::status::not_found, "连线不存在"});
@@ -196,14 +193,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_connection_instance, delete_) {
 }
 
 /// 画布可见人员 ---------------------
-// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/person
+// /api/seedance2/canvas/{canvas_id}/person
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_person, post) {
-  person_.check_subproject_access(subproject_id_);
-  person_.check_not_outsourcer();
   auto l_sql    = get_sqlite_database();
   auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
-  if (l_canvas.subproject_id_ != subproject_id_)
-    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
+  person_.check_subproject_access(l_canvas.subproject_id_);
+  person_.check_not_outsourcer();
 
   auto l_person_ids = in_handle->get_json().at("person_ids").get<std::vector<uuid>>();
   if (l_person_ids.empty())
@@ -225,9 +220,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_person, post) {
   co_return in_handle->make_msg(nlohmann::json{} = l_links);
 }
 
-// /api/seedance2/subproject/{subproject_id}/canvas_link/{canvas_link_id}
+// /api/seedance2/canvas_link/{canvas_link_id}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_person_instance, delete_) {
-  person_.check_subproject_access(subproject_id_);
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
 

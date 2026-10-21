@@ -438,34 +438,27 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<seedance2::canvas_>("/api/seedance2/subproject/{}/canvas"_url(
         &seedance2::canvas_::subproject_id_
       ))
-      .reg_t<seedance2::canvas_instance>("/api/seedance2/subproject/{}/canvas/{}"_url(
-        &seedance2::canvas_instance::subproject_id_,
+      .reg_t<seedance2::canvas_instance>("/api/seedance2/canvas/{}"_url(
         &seedance2::canvas_instance::canvas_id_
       ))
-      .reg_t<seedance2::canvas_node>("/api/seedance2/subproject/{}/canvas/{}/node"_url(
-        &seedance2::canvas_node::subproject_id_,
+      .reg_t<seedance2::canvas_node>("/api/seedance2/canvas/{}/node"_url(
         &seedance2::canvas_node::canvas_id_
       ))
-      .reg_t<seedance2::canvas_node_instance>("/api/seedance2/subproject/{}/canvas/{}/node/{}"_url(
-        &seedance2::canvas_node_instance::subproject_id_,
+      .reg_t<seedance2::canvas_node_instance>("/api/seedance2/canvas/{}/node/{}"_url(
         &seedance2::canvas_node_instance::canvas_id_,
         &seedance2::canvas_node_instance::node_id_
       ))
-      .reg_t<seedance2::canvas_connection>("/api/seedance2/subproject/{}/canvas/{}/connection"_url(
-        &seedance2::canvas_connection::subproject_id_,
+      .reg_t<seedance2::canvas_connection>("/api/seedance2/canvas/{}/connection"_url(
         &seedance2::canvas_connection::canvas_id_
       ))
-      .reg_t<seedance2::canvas_connection_instance>("/api/seedance2/subproject/{}/canvas/{}/connection/{}"_url(
-        &seedance2::canvas_connection_instance::subproject_id_,
+      .reg_t<seedance2::canvas_connection_instance>("/api/seedance2/canvas/{}/connection/{}"_url(
         &seedance2::canvas_connection_instance::canvas_id_,
         &seedance2::canvas_connection_instance::connection_id_
       ))
-      .reg_t<seedance2::canvas_person>("/api/seedance2/subproject/{}/canvas/{}/person"_url(
-        &seedance2::canvas_person::subproject_id_,
+      .reg_t<seedance2::canvas_person>("/api/seedance2/canvas/{}/person"_url(
         &seedance2::canvas_person::canvas_id_
       ))
-      .reg_t<seedance2::canvas_person_instance>("/api/seedance2/subproject/{}/canvas_link/{}"_url(
-        &seedance2::canvas_person_instance::subproject_id_,
+      .reg_t<seedance2::canvas_person_instance>("/api/seedance2/canvas_link/{}"_url(
         &seedance2::canvas_person_instance::canvas_link_id_
       ))
       .reg_t<seedance2::seedance2_task>("/api/seedance2/task"_url)

@@ -244,23 +244,20 @@ paths:
     $ref: paths/api_doodle_ai_light_preset_{id}.yaml
   /api/seedance2/subproject/{subproject_id}/canvas:
     $ref: paths/api_seedance2_subproject_{subproject_id}_canvas.yaml
-  /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}:
-    $ref: paths/api_seedance2_subproject_{subproject_id}_canvas_{canvas_id}.yaml
-  /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/node:
-    $ref: paths/api_seedance2_subproject_{subproject_id}_canvas_{canvas_id}_node.yaml
-  /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/node/{node_id}:
-    $ref: >-
-      paths/api_seedance2_subproject_{subproject_id}_canvas_{canvas_id}_node_{node_id}.yaml
-  /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/connection:
-    $ref: paths/api_seedance2_subproject_{subproject_id}_canvas_{canvas_id}_connection.yaml
-  /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/connection/{connection_id}:
-    $ref: >-
-      paths/api_seedance2_subproject_{subproject_id}_canvas_{canvas_id}_connection_{connection_id}.yaml
-  /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}/person:
-    $ref: paths/api_seedance2_subproject_{subproject_id}_canvas_{canvas_id}_person.yaml
-  /api/seedance2/subproject/{subproject_id}/canvas_link/{canvas_link_id}:
-    $ref: >-
-      paths/api_seedance2_subproject_{subproject_id}_canvas_link_{canvas_link_id}.yaml
+  /api/seedance2/canvas/{canvas_id}:
+    $ref: paths/api_seedance2_canvas_{canvas_id}.yaml
+  /api/seedance2/canvas/{canvas_id}/node:
+    $ref: paths/api_seedance2_canvas_{canvas_id}_node.yaml
+  /api/seedance2/canvas/{canvas_id}/node/{node_id}:
+    $ref: paths/api_seedance2_canvas_{canvas_id}_node_{node_id}.yaml
+  /api/seedance2/canvas/{canvas_id}/connection:
+    $ref: paths/api_seedance2_canvas_{canvas_id}_connection.yaml
+  /api/seedance2/canvas/{canvas_id}/connection/{connection_id}:
+    $ref: paths/api_seedance2_canvas_{canvas_id}_connection_{connection_id}.yaml
+  /api/seedance2/canvas/{canvas_id}/person:
+    $ref: paths/api_seedance2_canvas_{canvas_id}_person.yaml
+  /api/seedance2/canvas_link/{canvas_link_id}:
+    $ref: paths/api_seedance2_canvas_link_{canvas_link_id}.yaml
   /api/canvas/{canvas_id}/node/{node_id}/media:
     $ref: paths/api_canvas_{canvas_id}_node_{node_id}_media.yaml
   /api/canvas/{canvas_id}/node/{node_id}/media/{media_id}:

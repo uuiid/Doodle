@@ -1,5 +1,6 @@
+# 已迁移至 api_seedance2_canvas_link_{canvas_link_id}.yaml，本文件待删除（沙箱无法删除，请手工 git rm）
 delete:
   tags:
     - 画布可见人员
   summary: 已迁移
-  description: 该路由已迁移至 /api/seedance2/subproject/{subproject_id}/canvas_link/{canvas_link_id}，见 api_seedance2_subproject_{subproject_id}_canvas_link_{canvas_link_id}.yaml
+  description: 该路由已迁移至 /api/seedance2/canvas_link/{canvas_link_id}，见 api_seedance2_canvas_link_{canvas_link_id}.yaml

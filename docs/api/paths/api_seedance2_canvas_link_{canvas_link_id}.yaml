@@ -1,0 +1,18 @@
+delete:
+  tags:
+    - 画布可见人员
+  summary: 移除画布可见人员
+  description: 按关联记录ID移除一名画布的可见人员；记录不存在时同样返回 204
+  parameters:
+    - name: canvas_link_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 可见人员关联记录ID
+  responses:
+    '204':
+      description: 移除成功
+  security:
+    - bearerAuth: []
