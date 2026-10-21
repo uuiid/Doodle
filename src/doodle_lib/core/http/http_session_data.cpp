@@ -152,6 +152,11 @@ boost::asio::awaitable<void> session_data::run() {
     } catch (const orm::sqlite_orm_exception& e) {
       logger_->log(log_loc(), level::err, "数据库错误 {} {}", e.code_status_(), e.what());
       l_gen = std::make_unique<boost::beast::http::message_generator>(make_error_code_msg(e.code_status_(), e.what()));
+    } catch (const nlohmann::json::exception& e) {
+      logger_->log(log_loc(), level::err, "请求体解析错误 {}", e.what());
+      l_gen = std::make_unique<boost::beast::http::message_generator>(
+          make_error_code_msg(boost::beast::http::status::bad_request, e.what())
+      );
     } catch (...) {
       auto l_err_str = boost::current_exception_diagnostic_information();
       logger_->log(log_loc(), level::err, "回复错误 {}", l_err_str);
