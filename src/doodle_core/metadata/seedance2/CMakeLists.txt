@@ -12,5 +12,4 @@ target_sources(
         infinite_canvas.h
         canvas_element.h
         canvas_link.h
-        canvas_media.h
 )

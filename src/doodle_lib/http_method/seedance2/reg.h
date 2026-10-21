@@ -5,7 +5,6 @@
 #pragma once
 #include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/metadata/ai_studio.h>
-#include <doodle_core/metadata/seedance2/canvas_media.h>
 #include <doodle_core/metadata/seedance2/task.h>
 
 #include <doodle_lib/core/http/http_route.h>
@@ -312,33 +311,6 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(canvas_person_instance)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid canvas_link_id_{};
-DOODLE_HTTP_FUN_END()
-
-/// 画布媒体 ---------------------
-// /api/canvas/{canvas_id}/node/{node_id}/media
-DOODLE_HTTP_JWT_FUN(canvas_media)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid canvas_id_{};
-uuid node_id_{};
-DOODLE_HTTP_FUN_END()
-// /api/canvas/{canvas_id}/node/{node_id}/media/{media_id}
-DOODLE_HTTP_JWT_FUN(canvas_media_instance)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_OVERRIDE(put)
-DOODLE_HTTP_FUN_OVERRIDE(delete_)
-uuid canvas_id_{};
-uuid node_id_{};
-uuid media_id_{};
-DOODLE_HTTP_FUN_END()
-// /api/canvas/{canvas_id}/node/{node_id}/media/{media_id}/file/{role}
-DOODLE_HTTP_JWT_FUN(canvas_media_file)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_OVERRIDE(put)
-uuid canvas_id_{};
-uuid node_id_{};
-uuid media_id_{};
-doodle::seedance2::media_role role_{};
 DOODLE_HTTP_FUN_END()
 
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/depth

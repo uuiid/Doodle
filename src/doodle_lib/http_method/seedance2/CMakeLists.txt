@@ -6,7 +6,6 @@ target_sources(
 
         PRIVATE
         canvas.cpp
-        canvas_media.cpp
         canvas_node.cpp
         task.cpp
         tokens.cpp

@@ -258,13 +258,6 @@ paths:
     $ref: paths/api_seedance2_canvas_{canvas_id}_person.yaml
   /api/seedance2/canvas_link/{canvas_link_id}:
     $ref: paths/api_seedance2_canvas_link_{canvas_link_id}.yaml
-  /api/canvas/{canvas_id}/node/{node_id}/media:
-    $ref: paths/api_canvas_{canvas_id}_node_{node_id}_media.yaml
-  /api/canvas/{canvas_id}/node/{node_id}/media/{media_id}:
-    $ref: paths/api_canvas_{canvas_id}_node_{node_id}_media_{media_id}.yaml
-  /api/canvas/{canvas_id}/node/{node_id}/media/{media_id}/file/{role}:
-    $ref: >-
-      paths/api_canvas_{canvas_id}_node_{node_id}_media_{media_id}_file_{role}.yaml
   /api/seedance2/thumbnail/{id}.png:
     $ref: paths/api_seedance2_thumbnail_{id}.png.yaml
   /api/seedance2/pictures/{id}{file_extension}:

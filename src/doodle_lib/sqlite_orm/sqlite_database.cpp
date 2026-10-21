@@ -11,7 +11,6 @@
 #include "doodle_core/metadata/seedance2/ai_preview_file.h"
 #include "doodle_core/metadata/seedance2/canvas_element.h"
 #include "doodle_core/metadata/seedance2/canvas_link.h"
-#include "doodle_core/metadata/seedance2/canvas_media.h"
 #include "doodle_core/metadata/seedance2/infinite_canvas.h"
 #include "doodle_core/metadata/seedance2/subproject.h"
 #include "doodle_core/metadata/seedance2/task.h"
@@ -1266,24 +1265,6 @@ void sqlite_storage::regs_all() {
       )
       .add_foreign_key(
           &seedance2::canvas_link::target_id_, &seedance2::canvas_element::uuid_id_, foreign_key_action::cascade
-      );
-
-  reg_table<seedance2::canvas_media>("seedance2_canvas_media")
-      .add_column("id", &seedance2::canvas_media::id_, primary_key(), autoincrement())
-      .add_column("uuid_id", &seedance2::canvas_media::uuid_id_, unique(), not_null())
-      .add_column("canvas_element_id", &seedance2::canvas_media::canvas_element_id_, not_null())
-      .add_column("file_extension", &seedance2::canvas_media::file_extension_)
-      .add_column("preview_extension", &seedance2::canvas_media::preview_extension_)
-      .add_column("width", &seedance2::canvas_media::width_)
-      .add_column("height", &seedance2::canvas_media::height_)
-      .add_column("duration", &seedance2::canvas_media::duration_)
-      .add_column("original_name", &seedance2::canvas_media::original_name_)
-      .add_column("metadata", &seedance2::canvas_media::metadata_)
-      .add_column("created_at", &seedance2::canvas_media::created_at_)
-      .add_column("updated_at", &seedance2::canvas_media::updated_at_)
-      .add_foreign_key(
-          &seedance2::canvas_media::canvas_element_id_, &seedance2::canvas_element::uuid_id_,
-          foreign_key_action::cascade
       );
 }
 void sqlite_storage::register_custom_extension(sqlite3* in_sqlite) {
