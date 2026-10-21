@@ -1,5 +1,6 @@
 #include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/metadata/seedance2/ai_episode.h>
+#include <doodle_core/metadata/seedance2/infinite_canvas.h>
 
 #include <doodle_lib/http_method/seedance2/reg.h>
 #include <doodle_lib/sqlite_orm/orm/orm.h>
@@ -56,7 +57,24 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, get
   auto l_sql     = get_sqlite_database();
   auto l_episode = l_sql.get_by_uuid<sd2::ai_episode>(episode_id_);
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_episode);
+  using namespace orm;
+  auto l_visible   = c(&sd2::infinite_canvas::user_id_) == person_.person_.uuid_id_ ||
+                     c(&sd2::infinite_canvas::uuid_id_)
+                         .in(select(l_sql)
+                                 .columns(&sd2::infinite_canvas_person_link::infinite_canvas_id_)
+                                 .from<sd2::infinite_canvas_person_link>()
+                                 .where(c(&sd2::infinite_canvas_person_link::person_id_) == person_.person_.uuid_id_));
+  auto l_canvases  = select(l_sql)
+                         .columns(object<sd2::infinite_canvas>())
+                         .from<sd2::infinite_canvas>()
+                         .where(l_visible && c(&sd2::infinite_canvas::ai_episode_id_) == episode_id_)()
+                         .to_vector();
+
+  auto l_json      = nlohmann::json{};
+  l_json           = l_episode;
+  l_json["canvas"] = l_canvases;
+
+  co_return in_handle->make_msg(std::move(l_json));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, put) {
@@ -127,11 +145,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_model_resolution_limit_i
   auto l_sql = get_sqlite_database();
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(
-      delete_from(l_sql).from<sd2::ai_episode_model_resolution_limit>().where(
-          c(&sd2::ai_episode_model_resolution_limit::uuid_id_) == limit_id_
-      )
-  );
+  l_sqls.emplace_back(delete_from(l_sql).from<sd2::ai_episode_model_resolution_limit>().where(
+      c(&sd2::ai_episode_model_resolution_limit::uuid_id_) == limit_id_
+  ));
   co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return in_handle->make_msg(nlohmann::json{{"limit_id", limit_id_}});

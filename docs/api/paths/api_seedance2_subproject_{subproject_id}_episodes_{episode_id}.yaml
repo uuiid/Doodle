@@ -17,11 +17,19 @@ get:
         format: uuid
   responses:
     '200':
-      description: 剧集详情
+      description: 剧集详情，附当前用户在本剧集下可见的画布列表
       content:
         application/json:
           schema:
-            $ref: ../components/schemas/AiEpisode.yaml
+            allOf:
+              - $ref: ../components/schemas/AiEpisode.yaml
+              - type: object
+                properties:
+                  canvas:
+                    type: array
+                    description: 当前用户在本剧集下可见的画布列表（自己创建的 + 通过可见人员关联表共享给自己的）
+                    items:
+                      $ref: ../components/schemas/InfiniteCanvas.yaml
   security:
     - bearerAuth: []
 put:
