@@ -1215,6 +1215,23 @@ void sqlite_storage::regs_all() {
       )
       .add_foreign_key(&seedance2::infinite_canvas::user_id_, &person::uuid_id_, foreign_key_action::set_null);
 
+  reg_table<seedance2::infinite_canvas_person_link>("seedance2_infinite_canvas_person_link")
+      .add_column("id", &seedance2::infinite_canvas_person_link::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::infinite_canvas_person_link::uuid_id_, unique(), not_null())
+      .add_column("infinite_canvas_id", &seedance2::infinite_canvas_person_link::infinite_canvas_id_, not_null())
+      .add_column("person_id", &seedance2::infinite_canvas_person_link::person_id_, not_null())
+      .add_foreign_key(
+          &seedance2::infinite_canvas_person_link::infinite_canvas_id_, &seedance2::infinite_canvas::uuid_id_,
+          foreign_key_action::cascade
+      )
+      .add_foreign_key(
+          &seedance2::infinite_canvas_person_link::person_id_, &person::uuid_id_, foreign_key_action::cascade
+      )
+      .add_unique_index(
+          &seedance2::infinite_canvas_person_link::infinite_canvas_id_,
+          &seedance2::infinite_canvas_person_link::person_id_
+      );
+
   reg_table<seedance2::canvas_element>("seedance2_canvas_element")
       .add_column("id", &seedance2::canvas_element::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::canvas_element::uuid_id_, unique(), not_null())

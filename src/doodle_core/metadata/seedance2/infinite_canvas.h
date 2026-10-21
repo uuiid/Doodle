@@ -94,4 +94,22 @@ struct DOODLE_CORE_API infinite_canvas {
   }
 };
 
+/// 画布可见人员 — 除创建者本人外，额外可见该画布的人员
+struct DOODLE_CORE_API infinite_canvas_person_link {
+  DOODLE_BASE_FIELDS();
+  uuid infinite_canvas_id_;
+  uuid person_id_;
+  // to json
+  friend void to_json(nlohmann::json& j, const infinite_canvas_person_link& p) {
+    j["id"]                 = p.uuid_id_;
+    j["infinite_canvas_id"] = p.infinite_canvas_id_;
+    j["person_id"]          = p.person_id_;
+  }
+  // from json
+  friend void from_json(const nlohmann::json& j, infinite_canvas_person_link& p) {
+    j.at("infinite_canvas_id").get_to(p.infinite_canvas_id_);
+    j.at("person_id").get_to(p.person_id_);
+  }
+};
+
 }  // namespace doodle::seedance2
