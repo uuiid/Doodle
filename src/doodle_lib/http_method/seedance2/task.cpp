@@ -21,7 +21,6 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_client/ai_client_base.h>
 #include <doodle_lib/http_client/apipy_image_client.h>
-#include <doodle_lib/http_client/gemini_image_client.h>
 #include <doodle_lib/http_client/seedance2_client.h>
 #include <doodle_lib/http_client/transfer_station_client.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
@@ -107,7 +106,6 @@ class client_factory {
     std::shared_ptr<seedance2_client> seedance2_{};
     std::shared_ptr<transfer_station_client> transfer_station_{};
     std::shared_ptr<apipy_image_client> apipy_image_{};
-    std::shared_ptr<gemini_image_client> gemini_image_{};
   };
   std::map<uuid, client_pair> clients_;
 
@@ -135,17 +133,6 @@ class client_factory {
         // 「参考图 URL 的契约」。
       }
       return l_pair.apipy_image_;
-    }
-
-    if (in_task.backend_ == sd2::task_backend::gemini_image) {
-      if (!l_pair.gemini_image_) {
-        l_pair.gemini_image_ = std::make_shared<gemini_image_client>(*core_set::get_set().ctx_ptr);
-        // 与 API易 同理: 参考图变成内联 base64 直接进请求体, 上游拿不到也访问不到本站 URL,
-        // 公网签名只是白算一遍, 所以同样不设 url_sign_secret。
-        l_pair.gemini_image_->set_token(in_studio.gemini_key_);
-        l_pair.gemini_image_->set_logger(g_logger_ctrl().get_http());
-      }
-      return l_pair.gemini_image_;
     }
 
     // 默认 seedance2
@@ -351,8 +338,6 @@ std::shared_ptr<ai_client_base> make_inference_client(const ai_studio& in_studio
     l_client = std::make_shared<transfer_station_client>(*l_ctx);
   else if (in_backend == sd2::task_backend::apipy_image)
     l_client = std::make_shared<apipy_image_client>(*l_ctx);
-  else if (in_backend == sd2::task_backend::gemini_image)
-    l_client = std::make_shared<gemini_image_client>(*l_ctx);
   else
     l_client = std::make_shared<seedance2_client>(*l_ctx);
 
@@ -362,8 +347,6 @@ std::shared_ptr<ai_client_base> make_inference_client(const ai_studio& in_studio
         return in_studio.transfer_station_key_;
       case sd2::task_backend::apipy_image:
         return in_studio.apipy_key_;
-      case sd2::task_backend::gemini_image:
-        return in_studio.gemini_key_;
       default:
         return in_studio.seedance2_key_;
     }

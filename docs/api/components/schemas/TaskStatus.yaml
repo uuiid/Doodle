@@ -19,8 +19,6 @@ description: |
   expired - 超时
 
   各后端对中间态的使用不同：`seedance2` 会走完 `preparing` / `queued` / `running`；
-  `transfer_station` 只回到 `queued` 与 `running`；同步后端 `apipy_image` 与 `gemini_image`
+  `transfer_station` 只回到 `queued` 与 `running`；同步后端 `apipy_image`
   退回 `preparing` 表示「在服务端并发闸里等下一轮」，退回 `running` 表示「请求已在途、
   结果还没回来」，终态在提交那一刻就确定，不存在可轮询的中间态。
-  `gemini_image` 下被安全策略拦截（上游返回 `completed` 却没有图片）记为 `failed`，
-  原因写在 `data_response.text` 里。

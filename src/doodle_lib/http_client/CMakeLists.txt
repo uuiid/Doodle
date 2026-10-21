@@ -8,7 +8,6 @@ target_sources(
         ai_client_base.h
         transfer_station_client.h
         apipy_image_client.h
-        gemini_image_client.h
         url_sign.h
         PRIVATE
         work.cpp
@@ -18,6 +17,5 @@ target_sources(
         ai_client_base.cpp
         transfer_station_client.cpp
         apipy_image_client.cpp
-        gemini_image_client.cpp
         url_sign.cpp
 )

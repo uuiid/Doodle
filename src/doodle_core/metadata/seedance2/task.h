@@ -71,7 +71,7 @@ enum class task_backend {
   seedance2,          // 豆包/火山方舟 Seedance2
   transfer_station,   // 中转站
   apipy_image,        // API易(apiyi.com) 图片后端 —— 同步单次调用, 无 task_id
-  gemini_image,       // Google Gemini(Nano Banana) 官方图片后端 —— 同步单次调用, 无 task_id
+  gemini_image,       // 已下线, 仅为存量任务兼容保留
 };
 DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     task_backend,

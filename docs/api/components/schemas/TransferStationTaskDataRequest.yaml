@@ -10,10 +10,9 @@ description: |
   未在剧集授权列表内时返回 401。
   `model` 必须在下方枚举的已登记定价列表内，否则任务提交时即失败。
 
-  `backend=apipy_image` 与 `backend=gemini_image` 也复用这个形状，但**不会原样透传**：
-  两者的 `quality` / `imageSize` / `aspectRatio` 取值集合与中转站不同，认不出的取值会直接
-  返回 400；`background`、`mask`、`replyType` 在 `gemini_image` 下不生效。各字段在每种后端
-  下的确切含义见 `TaskBackend.yaml`。
+  `backend=apipy_image` 也复用这个形状，但**不会原样透传**：它的 `quality` / `imageSize` /
+  `aspectRatio` 取值集合与中转站不同，认不出的取值会直接返回 400；`background`、`mask`、
+  `replyType` 在该后端下不生效。各字段在每种后端下的确切含义见 `TaskBackend.yaml`。
 required:
   - model
   - prompt

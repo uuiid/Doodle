@@ -18,9 +18,6 @@ struct DOODLE_CORE_API ai_studio {
   /// 注意: 本列是新加的, 而 sync_schema() 不会对已存在的表做 ALTER TABLE
   /// (见 sqlite_orm/orm/session.cpp), 所以**已部署的库需要一次显式迁移**。
   std::string apipy_key_;
-  /// Google Gemini(generativelanguage.googleapis.com) 的 key。同样是**另一台主机**的凭据。
-  /// 与 apipy_key_ 一样, 已部署的库需要显式迁移才能出现这一列。
-  std::string gemini_key_;
   bool archived_;
 
   constexpr static auto put_property_list() {
@@ -31,7 +28,6 @@ struct DOODLE_CORE_API ai_studio {
         std::pair{"seedance2_key", &ai_studio::seedance2_key_},                //
         std::pair{"transfer_station_key", &ai_studio::transfer_station_key_},  //
         std::pair{"apipy_key", &ai_studio::apipy_key_},                        //
-        std::pair{"gemini_key", &ai_studio::gemini_key_},                      //
     };
   }
 
@@ -50,7 +46,6 @@ struct DOODLE_CORE_API ai_studio {
     if (j.contains("seedance2_key")) j.at("seedance2_key").get_to(p.seedance2_key_);
     if (j.contains("transfer_station_key")) j.at("transfer_station_key").get_to(p.transfer_station_key_);
     if (j.contains("apipy_key")) j.at("apipy_key").get_to(p.apipy_key_);
-    if (j.contains("gemini_key")) j.at("gemini_key").get_to(p.gemini_key_);
   }
 };
 }  // namespace doodle

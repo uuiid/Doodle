@@ -41,12 +41,11 @@ post:
     | `seedance2` | 火山方舟 `/api/v3/contents/generations/tasks` | `model` + `resolution` + `content[]` | 按 `completion_tokens`（默认 20 万） |
     | `transfer_station` | 中转站（Grsai）`/v1/api/generate` | `model` + `prompt` + `images[]` 等 | 按模型积分单价 |
     | `apipy_image` | API易（apiyi.com）`/v1/images/generations` 或 `/v1/images/edits` | 同 `transfer_station` | 按响应 `usage` 的 token 数 |
-    | `gemini_image` | Google Gemini `interactions`（`generativelanguage.googleapis.com`） | 同 `transfer_station` | 按响应 `usage` 的 token 数 |
 
     `seedance2` 会校验 `model` 与 `resolution` 是否在所属剧集的授权列表内，并统计生成次数上限。
     `transfer_station` 的 `replyType` 由服务端固定注入为 `async`，调用方无需传递。
-    四种后端都会用 `model` + 分辨率做剧集授权校验（`transfer_station` / `apipy_image` /
-    `gemini_image` 取 `imageSize`，没有则取 `aspectRatio`），缺少模型或分辨率返回 400，
+    三种后端都会用 `model` + 分辨率做剧集授权校验（`transfer_station` / `apipy_image`
+    取 `imageSize`，没有则取 `aspectRatio`），缺少模型或分辨率返回 400，
     未授权返回 401。
 
     `apipy_image` 是**同步后端**，只支持 `type=picture`：上游不返回异步 task id、也没有查询
@@ -54,11 +53,7 @@ post:
     文件上传，因此参考图必须是本站图片路由 `/api/seedance2/pictures/<uuid><扩展名>` 且文件
     存在，最多 8 张、扩展名限 `.png` / `.jpg` / `.jpeg` / `.webp`。详见 `TaskBackend.yaml`。
 
-    `gemini_image` 同样是同步后端，也只支持 `type=picture`，请求体形状与 `transfer_station`
-    相同但字段会被转换（`quality` → `thinking_level`，`imageSize` 只认大写 `1K`/`2K`/`4K`），
-    `aspectRatio` / `imageSize` / `quality` 的取值认不出时返回 400 而不是兜底成默认值。
-    凭据取 AI 工作室的 `gemini_key`（见 `AiStudioWrite.yaml`），它与 API易 的 key 属于
-    不同主机，不能互相顶替。详见 `TaskBackend.yaml`。
+    `gemini_image` 已下线，仅为存量任务兼容保留在枚举里，新建任务请勿使用。
 
     `type=inference` 会被本接口以 400 拒绝：推理任务由服务端接缝同步执行并直接落终态
     （见 `TaskType.yaml`），不走这条前端提交路径。
@@ -95,9 +90,9 @@ post:
             data_request:
               description: |
                 AI 请求数据，结构由 `backend` 决定。
-                `transfer_station`、`apipy_image` 与 `gemini_image` 共用同一种形状（见
-                `TaskBackend.yaml` 中各后端对字段的解释与差异说明；后两者的参考图处理、
-                `imageSize` / `aspectRatio` / `quality` 的取值规则各不相同）。
+                `transfer_station` 与 `apipy_image` 共用同一种形状（见
+                `TaskBackend.yaml` 中各后端对字段的解释与差异说明；后者的参考图处理、
+                `imageSize` / `aspectRatio` / `quality` 的取值规则与中转站不同）。
               oneOf:
                 - $ref: ../components/schemas/Seedance2TaskDataRequest.yaml
                 - $ref: ../components/schemas/TransferStationTaskDataRequest.yaml

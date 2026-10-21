@@ -8,7 +8,7 @@ description: |
   seedance2 - 豆包/火山方舟 Seedance2 后端（异步任务轮询，按 completion_tokens 计费）,
   transfer_station - 中转站后端（Grsai，按模型积分计费，失败/违规按模型策略返还）,
   apipy_image - API易（apiyi.com）图片后端（同步单次调用，无 task_id，按响应 usage 计费）,
-  gemini_image - Google 官方 Gemini 图片后端（同步单次调用，无 task_id，按响应 usage 计费）
+  gemini_image - 已下线，仅为存量任务兼容保留，不再提供创建入口
 
   `apipy_image` 是**同步后端**：上游不返回异步 task id、也没有查询接口，一次
   `/v1/images/generations`（无参考图）或 `/v1/images/edits`（有参考图）调用会占用连接
@@ -26,23 +26,5 @@ description: |
   且文件存在，最多 8 张、扩展名限 `.png` / `.jpg` / `.jpeg` / `.webp`；上传前会等比缩到长边
   2048 像素以内（放大不做）。
 
-  `gemini_image` 同样是**同步后端**，与 `apipy_image` 的相同点：只支持 `type=picture`、
-  同样有 10 路在途并发闸（与 API易 各自独立计，所以有自己的队列）、同样没有可轮询的中间态、
-  同样不支持取消。它是**另一个上游**（`generativelanguage.googleapis.com`），差异如下：
-
-  - 凭据取 `ai_studio.gemini_key`，上游以 `x-goog-api-key` 头鉴权，不是 `Bearer`；
-  - `data_request` 仍复用 `TransferStationTaskDataRequest.yaml` 的形状，但字段含义做了转换：
-    `quality` 被映射成 `generation_config.thinking_level`（`low`/`fast`/`draft` → `minimal`，
-    `medium`/`standard`/`normal` → `medium`，`high`/`hd`/`vip`/`best` → `high`；已是合法级别则原样下发）；
-    `imageSize` 只认大写 `1K` / `2K` / `4K`，`aspectRatio` 只认 `1:1` `2:3` `3:2` `3:4` `4:3`
-    `4:5` `5:4` `9:16` `16:9` `21:9`；
-  - 这三个字段的取值**认不出就直接返回 400**，不会静默兜底成默认值；留空表示不下发该字段，
-    由模型自己决定（`imageSize` 留空即取模型默认分辨率）；
-  - `background`、`mask`、`replyType` 在本后端不起作用；
-  - 参考图必须命中本站图片路由且文件存在、扩展名限 `.png` / `.jpg` / `.jpeg`，没有张数上限；
-    服务端会把参考图重新编码成 PNG 后以 base64 内联进请求，所以**上游同样看不到 URL**，
-    也不为其生成签名 URL。参考图不做尺寸缩放；
-  - 上游只以 base64 内联返回图片（没有下载 URL），响应里的图片会被剥掉 `data` 后落库，
-    `data_response` 只保留 `id`、`status`、`usage` 与文字；
-  - 返回 `status=completed` 但没有任何图片（提示词被安全策略拦下）按**终态失败**处理，
-    不会重复提交；失败原因写在 `data_response.text` 或 `data_response.error` 里。
+  `gemini_image` 枚举值保留只是为了能读出历史任务行，服务端已不再提供该后端：新建任务时
+  它不会走任何图片客户端，启动清理会把它残留的 `running` 行统一置为 `failed`。

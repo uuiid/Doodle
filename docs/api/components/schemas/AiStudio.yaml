@@ -1,6 +1,6 @@
 type: object
 description: |
-  AI 工作室。响应中不包含 `seedance2_key` / `transfer_station_key` / `apipy_key` / `gemini_key`，
+  AI 工作室。响应中不包含 `seedance2_key` / `transfer_station_key` / `apipy_key`，
   密钥仅在写入时提交，不会回读。
 properties:
   id:
