@@ -186,11 +186,26 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
     // return true;
   }
 
-  template <typename Pair>
-  void apply_json_property(const nlohmann::json& in_json, const Pair& in_pair) {
+  template <typename MemberPtr>
+  void apply_json_property(const nlohmann::json& in_json, const std::pair<const char*, MemberPtr>& in_pair) {
     if (!in_json.contains(in_pair.first)) return;
     column_operations l_col{in_pair.second};
     assign_json_value<decltype(in_pair.second)>(l_col, in_json.at(in_pair.first));
+    this->set(std::move(l_col));
+  }
+  template <std::size_t N, typename MemberPtr>
+  void apply_json_property(
+      const nlohmann::json& in_json, const std::pair<std::array<const char*, N>, MemberPtr>&& in_pair
+  ) {
+    const nlohmann::json* l_json = &in_json;
+    // 遍历嵌套的 JSON 键，逐级查找对应的值
+    for (const auto& key : in_pair.first) {
+      if (!l_json->contains(key)) return;  // 如果当前 key 不存在，直接返回
+      l_json = &l_json->at(key);
+    }
+    if (l_json == &in_json) return;  // 没有找到任何匹配的 key
+    column_operations l_col{in_pair.second};
+    assign_json_value<decltype(in_pair.second)>(l_col, *l_json);
     this->set(std::move(l_col));
   }
 
