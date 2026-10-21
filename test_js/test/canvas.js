@@ -409,12 +409,11 @@ test.describe('seedance2 画布 — 生命周期', () => {
 
   test('GET /api/seedance2/canvas/{canvas_id} — 详情应同时返回节点与连线', async ({ request }) => {
     expect(canvasId).to.not.be.null;
-    const connRes = await postConnection(request, canvasId, {
+    const conn = await postConnection(request, canvasId, {
       from_node_id: textNodeId,
       to_node_id: imageNodeId,
     });
-    const conn = await readJson(connRes);
-    expect(conn.status).to.equal(201);
+    expect(conn.status, JSON.stringify(conn.body)).to.equal(201);
 
     const res = await request.get(`${URL}/api/seedance2/canvas/${canvasId}`, { headers: authHeader });
     const req = await readJson(res);
