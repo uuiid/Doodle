@@ -1,30 +1,111 @@
 #include "doodle_core/doodle_core_fwd.h"
+#include <doodle_core/metadata/seedance2/infinite_canvas.h>
+#include <doodle_core/metadata/seedance2/subproject.h>
 
 #include <doodle_lib/http_method/seedance2/reg.h>
+#include <doodle_lib/sqlite_orm/orm/orm.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
+#include "core/global_function.h"
 #include "reg.h"
-#include <memory>
 
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 
+namespace {
+void check_canvas_owner(sqlite_database& in_sql, const uuid& in_subproject_id, const sd2::infinite_canvas& in_canvas) {
+  if (in_canvas.subproject_id_ != in_subproject_id)
+    throw_exception(http_request_error{boost::beast::http::status::not_found, "画布不存在"});
+}
+}  // namespace
+
 /// 画布 ---------------------
-// /api/canvas
+// /api/seedance2/subproject/{subproject_id}/canvas
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_, get) {
-  co_return in_handle->make_msg(nlohmann::json{});
+  person_.check_subproject_access(subproject_id_);
+
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_result = select(l_sql)
+                      .columns(object<sd2::infinite_canvas>())
+                      .from<sd2::infinite_canvas>()
+                      .where(c(&sd2::infinite_canvas::subproject_id_) == subproject_id_)
+                      .order_by(&sd2::infinite_canvas::updated_at_, false)()
+                      .to_vector();
+  co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_, post) {
-  co_return in_handle->make_msg(nlohmann::json{});
+  person_.check_subproject_access(subproject_id_);
+  person_.check_not_outsourcer();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+
+  auto l_subproject          = l_sql.get_by_uuid<sd2::subproject>(subproject_id_);
+
+  auto l_canvas              = std::make_shared<sd2::infinite_canvas>();
+  l_canvas->uuid_id_         = uuid{};
+  l_json.get_to(*l_canvas);
+  l_canvas->subproject_id_   = subproject_id_;
+  l_canvas->project_uuid_id_ = l_subproject.project_id_;
+  l_canvas->user_id_         = person_.person_.uuid_id_;
+
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<sd2::infinite_canvas>().values(*l_canvas));
+  co_await l_sql.run_sql(std::move(l_sqls));
+
+  co_return in_handle->make_msg(nlohmann::json{} = *l_canvas);
 }
-// /api/canvas/{canvas_id}
+
+// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, get) {
-  co_return in_handle->make_msg(nlohmann::json{});
+  person_.check_subproject_access(subproject_id_);
+
+  auto l_sql    = get_sqlite_database();
+  auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
+  check_canvas_owner(l_sql, subproject_id_, l_canvas);
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_canvas);
 }
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, put) {
-  co_return in_handle->make_msg(nlohmann::json{});
+  person_.check_subproject_access(subproject_id_);
+  person_.check_not_outsourcer();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+
+  check_canvas_owner(l_sql, subproject_id_, l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_));
+
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  auto l_update = update(l_sql).from<sd2::infinite_canvas>().set_from_ref<sd2::infinite_canvas>(l_json).where(
+      c(&sd2::infinite_canvas::uuid_id_) == canvas_id_
+  );
+  l_sqls.emplace_back(std::move(l_update));
+  co_await l_sql.run_sql(std::move(l_sqls));
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_));
 }
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, delete_) {
-  co_return in_handle->make_msg(nlohmann::json{});
+  person_.check_subproject_access(subproject_id_);
+  person_.check_not_outsourcer();
+  auto l_sql    = get_sqlite_database();
+  auto l_canvas = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_);
+
+  check_canvas_owner(l_sql, subproject_id_, l_canvas);
+  if (!person_.is_producer() && l_canvas.user_id_ != person_.person_.uuid_id_)
+    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "只有本人、管理员或制片可以删除画布"});
+
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      delete_from(l_sql).from<sd2::infinite_canvas>().where(c(&sd2::infinite_canvas::uuid_id_) == canvas_id_)
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
+
+  co_return in_handle->make_msg_204();
 }
 
 }  // namespace doodle::http::seedance2

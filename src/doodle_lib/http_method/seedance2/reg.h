@@ -258,16 +258,18 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
 
 /// 画布相关 ---------------------
-// /api/canvas
+// /api/seedance2/subproject/{subproject_id}/canvas
 DOODLE_HTTP_JWT_FUN(canvas_)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid subproject_id_{};
 DOODLE_HTTP_FUN_END()
-// /api/canvas/{canvas_id}
+// /api/seedance2/subproject/{subproject_id}/canvas/{canvas_id}
 DOODLE_HTTP_JWT_FUN(canvas_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid subproject_id_{};
 uuid canvas_id_{};
 DOODLE_HTTP_FUN_END()
 

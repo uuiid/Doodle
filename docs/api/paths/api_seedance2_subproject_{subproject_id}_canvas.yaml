@@ -1,0 +1,72 @@
+get:
+  tags:
+    - 画布
+  summary: 获取画布列表
+  description: 获取指定子项目下的所有画布
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 子项目ID
+  responses:
+    '200':
+      description: 画布列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/InfiniteCanvas.yaml
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - 画布
+  summary: 创建画布
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 子项目ID
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - title
+          properties:
+            title:
+              type: string
+              description: 画布名称
+            description:
+              type: string
+              description: 画布描述
+            ai_episode_id:
+              type: string
+              format: uuid
+              description: 所属剧集ID
+            ai_generate_entity_id:
+              type: string
+              format: uuid
+              description: 所属生成实体ID
+            viewport:
+              $ref: ../components/schemas/Viewport.yaml
+            background_mode:
+              $ref: ../components/schemas/CanvasBackgroundMode.yaml
+  responses:
+    '201':
+      description: 创建成功
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/InfiniteCanvas.yaml
+  security:
+    - bearerAuth: []
