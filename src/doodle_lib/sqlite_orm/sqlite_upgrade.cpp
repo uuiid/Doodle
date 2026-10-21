@@ -36,7 +36,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_old_version     = 32;
+constexpr std::size_t g_old_version     = 33;
 constexpr std::size_t g_current_version = g_old_version + 1;
 
 }  // namespace
@@ -97,13 +97,16 @@ struct upgrade_3_t : sqlite_upgrade {
     if (l_s.pragma().user_version() > g_old_version) return;
     backup(l_s);
     l_s.pragma().foreign_keys(false);
+
+    l_s.drop_table("seedance2_infinite_canvas");
+    l_s.drop_table("seedance2_infinite_canvas_person_link");
+    l_s.drop_table("seedance2_canvas_element");
+    l_s.drop_table("seedance2_canvas_link");
+    l_s.drop_table("seedance2_canvas_media");
+
     l_s.sync_schema();
-    l_s.add_column("seedance2_task_2", "ai_light_session_id", orm::column_type::blob);
-    l_s.add_column("seedance2_person_token", "inference_count", orm::column_type::integer);
-    l_s.rebuild_table<seedance2::task>();
     l_s.pragma().user_version(g_current_version);
     l_s.pragma().foreign_keys(true);
-    SPDLOG_INFO("upgrade {}->{}: 已重建 seedance2_task_2 并补上推理计数列", g_old_version, g_current_version);
   }
   ~upgrade_3_t() override = default;
 };
