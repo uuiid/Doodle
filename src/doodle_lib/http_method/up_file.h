@@ -85,29 +85,36 @@ DOODLE_HTTP_FUN_END()
 // /api/doodle/data/shots/{task_id}/file/maya
 DOODLE_HTTP_FUN_C(doodle_data_shots_file_maya, up_file_shots_base)
 FSys::path gen_file_path() override;
+DOODLE_HTTP_ROUTE("/api/doodle/data/shots/{id_}/file/maya", id_)
 DOODLE_HTTP_FUN_END()
 // /api/doodle/data/shots/{task_id}/file/output
 DOODLE_HTTP_FUN_C(doodle_data_shots_file_output, up_file_shots_base)
 FSys::path gen_file_path() override;
+DOODLE_HTTP_ROUTE("/api/doodle/data/shots/{id_}/file/output", id_)
 DOODLE_HTTP_FUN_END()
 // /api/doodle/data/shots/{task_id}/file/other
 DOODLE_HTTP_FUN_C(doodle_data_shots_file_other, up_file_shots_base)
 FSys::path gen_file_path() override;
+DOODLE_HTTP_ROUTE("/api/doodle/data/shots/{id_}/file/other", id_)
 DOODLE_HTTP_FUN_END()
 // /api/doodle/data/shots/{task_id}/file/video
 DOODLE_HTTP_FUN_C(doodle_data_shots_file_video, up_file_shots_base)
 FSys::path gen_file_path() override;
+DOODLE_HTTP_ROUTE("/api/doodle/data/shots/{id_}/file/video", id_)
 DOODLE_HTTP_FUN_END()
 // /api/doodle/data/shots/{task_id}/file/ue
 DOODLE_HTTP_FUN_C(doodle_data_shots_file_ue, up_file_shots_base)
 FSys::path gen_file_path() override;
+DOODLE_HTTP_ROUTE("/api/doodle/data/shots/{id_}/file/ue", id_)
 DOODLE_HTTP_FUN_END()
 // /api/doodle/data/shots/{task_id}/file/auto-light
 DOODLE_HTTP_FUN_C(doodle_data_shots_file_auto_light, up_file_shots_base)
 FSys::path gen_file_path() override;
+DOODLE_HTTP_ROUTE("/api/doodle/data/shots/{id_}/file/auto-light", id_)
 DOODLE_HTTP_FUN_END()
 // /api/doodle/data/shots/{task_id}/file/auto-light-movie
 DOODLE_HTTP_FUN_C(doodle_data_shots_file_auto_light_movie, up_file_shots_base)
 FSys::path gen_file_path() override;
+DOODLE_HTTP_ROUTE("/api/doodle/data/shots/{id_}/file/auto-light-movie", id_)
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http
