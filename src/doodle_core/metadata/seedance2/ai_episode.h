@@ -2,6 +2,7 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
+#include <doodle_core/metadata/seedance2/task_backend.h>
 
 #include <string>
 #include <tuple>
@@ -54,17 +55,20 @@ struct DOODLE_CORE_API ai_episode_model_resolution_limit {
   uuid ai_episode_id_;      // < 以下三项有唯一约束
   std::string model_name_;  //
   std::string resolution_;  //
+  task_backend backend_{task_backend::seedance2};
   // to json
   friend void to_json(nlohmann::json& j, const ai_episode_model_resolution_limit& p) {
     j["id"]            = p.uuid_id_;
     j["ai_episode_id"] = p.ai_episode_id_;
     j["model_name"]    = p.model_name_;
     j["resolution"]    = p.resolution_;
+    j["backend"]       = p.backend_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, ai_episode_model_resolution_limit& p) {
     j.at("model_name").get_to(p.model_name_);
     j.at("resolution").get_to(p.resolution_);
+    if (j.contains("backend")) j.at("backend").get_to(p.backend_);
   }
 };
 

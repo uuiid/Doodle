@@ -195,6 +195,9 @@ void sqlite_storage::regs_all() {
       .add_column("ai_episode_id", &seedance2::ai_episode_model_resolution_limit::ai_episode_id_, not_null())
       .add_column("model_name", &seedance2::ai_episode_model_resolution_limit::model_name_, not_null())
       .add_column("resolution", &seedance2::ai_episode_model_resolution_limit::resolution_, not_null())
+      .add_column(
+          "backend", &seedance2::ai_episode_model_resolution_limit::backend_, not_null(), default_value("seedance2"s)
+      )
       .add_foreign_key(
           &seedance2::ai_episode_model_resolution_limit::ai_episode_id_, &seedance2::ai_episode::uuid_id_,
           foreign_key_action::cascade

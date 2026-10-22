@@ -3,6 +3,7 @@ target_sources(
         
         PUBLIC
         task.h
+        task_backend.h
         image_request.h
         ai_generate_entity.h
         ai_category.h

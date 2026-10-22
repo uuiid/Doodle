@@ -499,7 +499,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
                         .where(
                             c(&sd2::ai_episode_model_resolution_limit::ai_episode_id_) == l_entity.ai_episode_id_ &&
                             c(&sd2::ai_episode_model_resolution_limit::model_name_) == l_info.model_ &&
-                            c(&sd2::ai_episode_model_resolution_limit::resolution_) == l_info.resolution_
+                            c(&sd2::ai_episode_model_resolution_limit::resolution_) == l_info.resolution_ &&
+                            c(&sd2::ai_episode_model_resolution_limit::backend_) == l_task->backend_
                         )  //
                     ()
                         .to_single();
