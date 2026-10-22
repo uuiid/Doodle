@@ -216,6 +216,10 @@ ai_client_base::request_info_t kmt_image_client::collect_request_info(const nloh
       g_max_reference_images, l_req.reference_images_.size()
   );
 
+  DOODLE_CHICK_HTTP(
+      find_pricing(l_req.model_) != nullptr, bad_request, "模型 {} 未登记定价, 不允许提交", l_req.model_
+  );
+
   request_info_t l_info{};
   l_info.model_       = l_req.model_;
   l_info.resolution_  = l_req.image_size_.empty() ? l_req.aspect_ratio_ : l_req.image_size_;
@@ -246,13 +250,6 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::subm
   }
 
   auto l_req_body = in_task.data_request_.get<doodle::seedance2::transfer_station_request_t>();
-
-  if (find_pricing(l_req_body.model_) == nullptr) {
-    logger_->error("模型 {} 未登记定价, 拒绝提交", l_req_body.model_);
-    l_result.data_response_ =
-        nlohmann::json{{"error", fmt::format("模型 {} 未登记定价, 不允许提交", l_req_body.model_)}};
-    co_return l_result;
-  }
 
   const kmt_image_client::request_t l_kmt_req{l_req_body};
 
