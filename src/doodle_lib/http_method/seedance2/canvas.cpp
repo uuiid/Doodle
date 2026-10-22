@@ -39,7 +39,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_, post) {
   auto l_subproject          = l_sql.get_by_uuid<sd2::subproject>(subproject_id_);
 
   auto l_canvas              = std::make_shared<sd2::infinite_canvas>();
-  l_canvas->uuid_id_         = uuid{};
   l_json.get_to(*l_canvas);
   l_canvas->subproject_id_   = subproject_id_;
   l_canvas->project_uuid_id_ = l_subproject.project_id_;
