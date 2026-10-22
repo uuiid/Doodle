@@ -312,52 +312,32 @@ http_route_ptr create_kitsu_local_route() {
   auto l_rout_ptr = std::make_shared<http::http_route>();
   auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->register_namespace("/events");
-  (*l_rout_ptr)                                                      //
-      .reg_t<local::local_setting>("/api/doodle/local_setting"_url)  //
-      .reg_t<local::video_thumbnail>("/api/doodle/video/thumbnail"_url)
+  (*l_rout_ptr)                  //
+      .reg_c<local::local_setting>()  //
+      .reg_c<local::video_thumbnail>()
 
       ;
 
   if (g_ctx().get<authorization>().is_valid())
     (*l_rout_ptr)
-        .reg_t<local::task>("/api/doodle/task"_url)
-        .reg_t<local::task_instance>("/api/doodle/task/{}"_url(&local::task_instance::id_))
-        .reg_t<local::task_instance_log>("/api/doodle/task/{}/log"_url(&local::task_instance_log::id_))
-        .reg_t<local::local_setting_tmp_dir_server_task>("/api/doodle/local_setting/tmp_dir/server_task"_url)
-        .reg_t<local::task_inspect_instance>("/api/doodle/task/{}/inspect"_url(&local::task_inspect_instance::id_))
-        .reg_t<local::task_instance_generate_uesk_file>(
-            "/api/doodle/task/{}/generate_uesk_file"_url(&local::task_instance_generate_uesk_file::id_)
-        )
-        .reg_t<ai_train_animation>("/api/doodle/ai/animation/train"_url)
-        .reg_t<ai_train_animation_settings>("/api/doodle/ai/animation/train/settings"_url)
-        .reg_t<local::actions_projects_shots_export_anim_fbx_local>(
-            "/api/actions/projects/{}/shots/{}/export-anim-fbx"_url(
-                &local::actions_projects_shots_export_anim_fbx_local::project_id_,
-                &local::actions_projects_shots_export_anim_fbx_local::id_
-            )
-        )
-        .reg_t<local::actions_projects_shots_update_sim_abc_local>(
-            "/api/actions/projects/{}/shots/{}/update-sim-abc"_url(
-                &local::actions_projects_shots_update_sim_abc_local::project_id_,
-                &local::actions_projects_shots_update_sim_abc_local::id_
-            )
-        )
-        .reg_t<local::actions_project_sync_local>(
-            "/api/actions/project/{}/sync"_url(&local::actions_project_sync_local::project_id_)
-        )
-        .reg_t<local::actions_local_task_update_movie_files>(
-            "/api/actions/local/task/{}/update/movie"_url(&local::actions_local_task_update_movie_files::id_)
-        )
-        .reg_t<local::actions_local_task_update_ue_files>(
-            "/api/actions/local/task/{}/update/ue"_url(&local::actions_local_task_update_ue_files::id_)
-        )
-        .reg_t<local::actions_local_task_update_movie_compose>(
-            "/api/actions/local/task/{}/update/movie/compose"_url(&local::actions_local_task_update_movie_compose::id_)
-        )
-        .reg_t<local::tools_add_watermark>("/api/actions/tools/add-watermark"_url)
-        .reg_t<local::actions_local_task_run>("/api/actions/local/task/run"_url)
-        .reg_t<local::actions_local_watch_file_maya_anim>("/api/actions/local/watch_file/maya_anim"_url)
-        .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
+        .reg_c<local::task>()
+        .reg_c<local::task_instance>()
+        .reg_c<local::task_instance_log>()
+        .reg_c<local::local_setting_tmp_dir_server_task>()
+        .reg_c<local::task_inspect_instance>()
+        .reg_c<local::task_instance_generate_uesk_file>()
+        .reg_c<ai_train_animation>()
+        .reg_c<ai_train_animation_settings>()
+        .reg_c<local::actions_projects_shots_export_anim_fbx_local>()
+        .reg_c<local::actions_projects_shots_update_sim_abc_local>()
+        .reg_c<local::actions_project_sync_local>()
+        .reg_c<local::actions_local_task_update_movie_files>()
+        .reg_c<local::actions_local_task_update_ue_files>()
+        .reg_c<local::actions_local_task_update_movie_compose>()
+        .reg_c<local::tools_add_watermark>()
+        .reg_c<local::actions_local_task_run>()
+        .reg_c<local::actions_local_watch_file_maya_anim>()
+        .reg_c<socket_io::socket_io_http>(l_sid_ctx)
 
         ;
   return l_rout_ptr;
@@ -368,22 +348,20 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
   auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->register_namespace("/events");
   (*l_router)
-      .reg_t<doodle_tool_version>("/api/doodle/tool/version"_url)
-      .reg_t<local::local_setting>("/api/doodle/local_setting"_url)  //
+      .reg_c<doodle_tool_version>()
+      .reg_c<local::local_setting>()  //
       // 外包
-      .reg_t<config>("/api/config"_url)
-      .reg_t<authenticated>("/api/auth/authenticated"_url)
-      .reg_t<epiboly_user_context>("/api/data/user/context"_url)
+      .reg_c<config>()
+      .reg_c<authenticated>()
+      .reg_c<epiboly_user_context>()
 
       // 最后注册nodejs前端
-      .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
+      .reg_c<socket_io::socket_io_http>(l_sid_ctx)
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
 
       ;
   if (g_ctx().get<authorization>().is_valid())
-    (*l_router).reg_t<epiboly_actions_projects_export_anim_fbx>(
-        "/api/actions/projects/{}/export-anim-fbx"_url(&epiboly_actions_projects_export_anim_fbx::project_id_)
-    );
+    (*l_router).reg_c<epiboly_actions_projects_export_anim_fbx>();
 
   return l_router;
 }

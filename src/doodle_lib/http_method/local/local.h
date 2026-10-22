@@ -31,10 +31,12 @@ class local_http_fun : public http_function {
 DOODLE_HTTP_FUN(local_setting)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/doodle/local_setting")
 DOODLE_HTTP_FUN_END()
 // /api/doodle/local_setting/tmp_dir/server_task
 DOODLE_HTTP_FUN(local_setting_tmp_dir_server_task)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/doodle/local_setting/tmp_dir/server_task")
 DOODLE_HTTP_FUN_END()
 // /api/doodle/task
 DOODLE_HTTP_FUN(task)
@@ -42,29 +44,34 @@ void init_ctx();
 task() : base_type() { init_ctx(); }
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/doodle/task")
 DOODLE_HTTP_FUN_END()
 // /api/doodle/task/{id}
 DOODLE_HTTP_FUN(task_instance)
 DOODLE_HTTP_FUN_OVERRIDE(patch)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/doodle/task/{id_}", id_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
 // /api/doodle/task/{id}/inspect
 DOODLE_HTTP_FUN_C(task_inspect_instance, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/doodle/task/{id_}/inspect", id_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/doodle/task/{id}/generate_uesk_file
 DOODLE_HTTP_FUN_C(task_instance_generate_uesk_file, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/doodle/task/{id_}/generate_uesk_file", id_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
 // /api/doodle/task/{id}/log
 DOODLE_HTTP_FUN(task_instance_log)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/doodle/task/{id_}/log", id_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/doodle/video/thumbnail
@@ -73,28 +80,37 @@ void init_ctx();
 video_thumbnail() : base_type() { init_ctx(); }
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/doodle/video/thumbnail")
 DOODLE_HTTP_FUN_END()
 
 // /api/actions/projects/{project_id}/shots/{shot_id}/export-anim-fbx
 DOODLE_HTTP_FUN_C(actions_projects_shots_export_anim_fbx_local, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE(
+    "/api/actions/projects/{project_id_}/shots/{id_}/export-anim-fbx", project_id_, id_
+)
 uuid project_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/actions/projects/{project_id}/shots/{shot_id}/update-sim-abc
 DOODLE_HTTP_FUN_C(actions_projects_shots_update_sim_abc_local, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE(
+    "/api/actions/projects/{project_id_}/shots/{id_}/update-sim-abc", project_id_, id_
+)
 uuid project_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/actions/project/{project_id}/sync
 DOODLE_HTTP_FUN_C(actions_project_sync_local, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/actions/project/{project_id_}/sync", project_id_)
 uuid project_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/actions/local/task/{id}/update/ue
 DOODLE_HTTP_FUN_C(actions_local_task_update_ue_files, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/actions/local/task/{id_}/update/ue", id_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // // /api/actions/local/task/{id}/update/image
@@ -105,11 +121,13 @@ DOODLE_HTTP_FUN_END()
 // /api/actions/local/task/{id}/update/movie
 DOODLE_HTTP_FUN_C(actions_local_task_update_movie_files, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/actions/local/task/{id_}/update/movie", id_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/actions/local/task/{id}/update/movie/compose
 DOODLE_HTTP_FUN_C(actions_local_task_update_movie_compose, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/actions/local/task/{id_}/update/movie/compose", id_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
@@ -118,6 +136,7 @@ DOODLE_HTTP_FUN_C(tools_add_watermark, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_ROUTE("/api/actions/tools/add-watermark")
 DOODLE_HTTP_FUN_END()
 // 运行分布式任务后端
 // /api/actions/local/task/run
@@ -125,6 +144,7 @@ DOODLE_HTTP_FUN(actions_local_task_run)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE("/api/actions/local/task/run")
 DOODLE_HTTP_FUN_END()
 // 监事文件, 自动上传动画文件
 // /api/actions/local/watch_file/maya_anim
@@ -134,5 +154,6 @@ std::shared_ptr<doodle::exe_warp::folder_watcher_anim_fbx> folder_watcher_{};
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE("/api/actions/local/watch_file/maya_anim")
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http::local

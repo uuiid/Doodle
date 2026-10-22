@@ -9,6 +9,7 @@ namespace doodle::http {
 // /api/data/user/context
 DOODLE_HTTP_FUN(epiboly_user_context)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/data/user/context")
 DOODLE_HTTP_FUN_END()
 // /api/actions/projects/{project_id}/export-anim-fbx
 DOODLE_HTTP_FUN(epiboly_actions_projects_export_anim_fbx)
@@ -16,6 +17,7 @@ DOODLE_HTTP_FUN(epiboly_actions_projects_export_anim_fbx)
 void init_ctx();
 epiboly_actions_projects_export_anim_fbx() : base_type() { init_ctx(); }
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/actions/projects/{project_id_}/export-anim-fbx", project_id_)
 uuid project_id_{};
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http
