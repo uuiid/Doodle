@@ -140,7 +140,6 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::subm
   l_result.status_ =
       l_result.task_id_.empty() ? doodle::seedance2::task_status::failed : doodle::seedance2::task_status::queued;
   l_result.is_timeout_ = is_timeout_error(l_result.data_response_);
-  l_result.error_code_ = get_error_code(l_result.data_response_);
 
   co_return l_result;
 }
@@ -201,7 +200,6 @@ ai_client_base::run_task_result_t seedance2_client::parse_inference_response(
 ) {
   run_task_result_t l_result{};
   l_result.data_response_ = in_body;
-  l_result.error_code_    = get_error_code(in_body);
   l_result.is_timeout_    = is_timeout_error(in_body);
 
   if (in_body.contains("id") && in_body.at("id").is_string()) l_result.task_id_ = in_body.at("id").get<std::string>();
