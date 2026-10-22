@@ -4,6 +4,7 @@
 #include <doodle_core/metadata/seedance2/task.h>
 
 #include "ai_client_base.h"
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -14,14 +15,30 @@ class DOODLELIB_API kmt_image_client final : public ai_client_base {
   constexpr static std::string_view g_default_host{"https://api.52pay.com"};
 
  public:
+  struct reference_image_t {
+    std::string filename_;
+    std::string bytes_;
+    std::int32_t cols_{};
+    std::int32_t rows_{};
+  };
+
+  struct edits_form_t {
+    std::string boundary_;
+    std::string body_;
+
+    [[nodiscard]] std::string content_type() const { return "multipart/form-data; boundary=" + boundary_; }
+  };
+
   struct request_t {
     std::string model_;
     std::string prompt_;
     std::string size_;
     std::string quality_;
-    std::vector<std::string> image_urls_;
+    std::vector<reference_image_t> reference_images_;
 
     explicit request_t(const doodle::seedance2::transfer_station_request_t& in_req);
+
+    [[nodiscard]] edits_form_t to_multipart() const;
 
     friend void to_json(nlohmann::json& j, const request_t& in_req);
   };
@@ -37,10 +54,6 @@ class DOODLELIB_API kmt_image_client final : public ai_client_base {
   std::size_t default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const override;
 
  private:
-  static doodle::seedance2::transfer_station_request_t add_ip_to_req(
-      const doodle::seedance2::transfer_station_request_t& in_req, std::string_view in_ip,
-      std::string_view in_secret = {}, std::string_view in_uid = {}
-  );
   static doodle::seedance2::task_status parse_status(const nlohmann::json& in_body);
   static std::string parse_task_id(const nlohmann::json& in_body);
   static nlohmann::json strip_b64_payload(nlohmann::json in_body);

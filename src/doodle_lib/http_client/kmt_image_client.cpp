@@ -8,13 +8,20 @@
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/boost_fmt_beast.h>
+#include <doodle_lib/logger/logger.h>
 
 #include <boost/system/system_error.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
 #include <fmt/format.h>
 #include <fstream>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 
 namespace doodle::http::seedance2 {
 
@@ -24,8 +31,13 @@ constexpr std::string_view g_generations_path{"/v1/images/generations"};
 constexpr std::string_view g_edits_path{"/v1/images/edits"};
 constexpr std::string_view g_tasks_prefix{"/v1/images/tasks/"};
 constexpr std::string_view g_default_ext{".png"};
+constexpr std::string_view g_pictures_prefix{"/api/seedance2/pictures/"};
+constexpr std::string_view g_edit_image_field{"image"};
+constexpr std::string_view g_compressed_ext{".png"};
+constexpr std::string_view g_compressed_mime{"image/png"};
 constexpr std::chrono::seconds g_request_timeout{300};
 constexpr std::size_t g_max_reference_images{16};
+constexpr std::int32_t g_max_reference_image_side{2048};
 constexpr std::int64_t g_kmt_default_consumed_tokens{5000};
 
 struct model_pricing {
@@ -50,48 +62,40 @@ const model_pricing* find_pricing(std::string_view in_name) {
   return nullptr;
 }
 
-struct edits_form_t {
-  std::string boundary_;
-  std::string body_;
+FSys::path parse_site_image_id(std::string_view in_url) {
+  DOODLE_CHICK(in_url.starts_with(g_pictures_prefix), "URL 不以 {} 开头: {}", g_pictures_prefix, in_url);
+  FSys::path l_name{in_url};
+  auto l_ext    = l_name.extension().generic_string();
+  auto l_id_str = l_name.stem().generic_string();
 
-  [[nodiscard]] std::string content_type() const { return "multipart/form-data; boundary=" + boundary_; }
-};
+  uuid l_id     = from_uuid_str(l_id_str);
+  return g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_file(l_id, l_ext);
+}
 
-edits_form_t to_multipart(const kmt_image_client::request_t& in_req) {
-  edits_form_t l_form{};
-  l_form.boundary_ = "----doodle" + boost::uuids::to_string(core_set::get_set().get_uuid());
+kmt_image_client::reference_image_t compress_reference_image(const FSys::path& in_path) {
+  cv::Mat l_image = cv::imread(in_path.generic_string(), cv::IMREAD_UNCHANGED);
+  DOODLE_CHICK(!l_image.empty(), "参考图解码失败: {}", in_path.generic_string());
 
-  const auto l_append_text = [&l_form](std::string_view in_key, std::string_view in_value) {
-    if (in_value.empty()) return;
-    l_form.body_ += "--";
-    l_form.body_ += l_form.boundary_;
-    l_form.body_ += "\r\nContent-Disposition: form-data; name=\"";
-    l_form.body_ += in_key;
-    l_form.body_ += "\"\r\n\r\n";
-    l_form.body_ += in_value;
-    l_form.body_ += "\r\n";
-  };
-
-  l_append_text("model", in_req.model_);
-  l_append_text("prompt", in_req.prompt_);
-  l_append_text("size", in_req.size_);
-  l_append_text("quality", in_req.quality_);
-  l_append_text("async", "true");
-  l_append_text("response_format", "url");
-
-  for (const auto& l_url : in_req.image_urls_) {
-    if (l_url.empty()) continue;
-    l_form.body_ += "--";
-    l_form.body_ += l_form.boundary_;
-    l_form.body_ += "\r\nContent-Disposition: form-data; name=\"image\"\r\n\r\n";
-    l_form.body_ += l_url;
-    l_form.body_ += "\r\n";
+  if (const auto l_long_side = std::max(l_image.cols, l_image.rows); l_long_side > g_max_reference_image_side) {
+    const auto l_scale  = static_cast<double>(g_max_reference_image_side) / static_cast<double>(l_long_side);
+    const auto l_width  = std::max(1, static_cast<int>(std::lround(static_cast<double>(l_image.cols) * l_scale)));
+    const auto l_height = std::max(1, static_cast<int>(std::lround(static_cast<double>(l_image.rows) * l_scale)));
+    cv::resize(l_image, l_image, cv::Size{l_width, l_height}, 0.0, 0.0, cv::INTER_AREA);
   }
 
-  l_form.body_ += "--";
-  l_form.body_ += l_form.boundary_;
-  l_form.body_ += "--\r\n";
-  return l_form;
+  std::vector<uchar> l_buffer{};
+  DOODLE_CHICK(
+      cv::imencode(std::string{g_compressed_ext}, l_image, l_buffer, {cv::IMWRITE_PNG_COMPRESSION, 9}) &&
+          !l_buffer.empty(),
+      "参考图编码失败: {}", in_path.generic_string()
+  );
+
+  return kmt_image_client::reference_image_t{
+      .filename_ = in_path.stem().generic_string() + std::string{g_compressed_ext},
+      .bytes_    = std::string{l_buffer.begin(), l_buffer.end()},
+      .cols_     = l_image.cols,
+      .rows_     = l_image.rows
+  };
 }
 
 std::string model_of_task(const doodle::seedance2::task& in_task) {
@@ -106,8 +110,10 @@ kmt_image_client::request_t::request_t(const doodle::seedance2::transfer_station
     : model_(in_req.model_),
       prompt_(in_req.prompt_),
       size_(in_req.image_size_.empty() ? in_req.aspect_ratio_ : in_req.image_size_),
-      quality_(in_req.quality_),
-      image_urls_(in_req.reference_images_) {}
+      quality_(in_req.quality_) {
+  for (const auto& l_url : in_req.reference_images_)
+    reference_images_.push_back(compress_reference_image(parse_site_image_id(l_url)));
+}
 
 void to_json(nlohmann::json& j, const kmt_image_client::request_t& in_req) {
   j["model"]           = in_req.model_;
@@ -118,14 +124,51 @@ void to_json(nlohmann::json& j, const kmt_image_client::request_t& in_req) {
   if (!in_req.quality_.empty()) j["quality"] = in_req.quality_;
 }
 
-doodle::seedance2::transfer_station_request_t kmt_image_client::add_ip_to_req(
-    const doodle::seedance2::transfer_station_request_t& in_req, std::string_view in_ip, std::string_view in_secret,
-    std::string_view in_uid
-) {
-  doodle::seedance2::transfer_station_request_t l_req = in_req;
-  for (auto& l_value : l_req.reference_images_) l_value = to_public_url(l_value, in_ip, in_secret, in_uid);
-  if (!l_req.mask_.empty()) l_req.mask_ = to_public_url(l_req.mask_, in_ip, in_secret, in_uid);
-  return l_req;
+kmt_image_client::edits_form_t kmt_image_client::request_t::to_multipart() const {
+  edits_form_t l_form{};
+  l_form.boundary_         = "----doodle" + boost::uuids::to_string(core_set::get_set().get_uuid());
+
+  const auto l_append_text = [&l_form](std::string_view in_key, std::string_view in_value) {
+    if (in_value.empty()) return;
+    l_form.body_ += "--";
+    l_form.body_ += l_form.boundary_;
+    l_form.body_ += "\r\nContent-Disposition: form-data; name=\"";
+    l_form.body_ += in_key;
+    l_form.body_ += "\"\r\n\r\n";
+    l_form.body_ += in_value;
+    l_form.body_ += "\r\n";
+  };
+
+  l_append_text("model", model_);
+  l_append_text("prompt", prompt_);
+  l_append_text("size", size_);
+  l_append_text("quality", quality_);
+  l_append_text("async", "true");
+  l_append_text("response_format", "url");
+
+  for (const auto& l_image : reference_images_) {
+    SPDLOG_LOGGER_INFO(
+        g_logger_ctrl().get_http(), "参考图已转码为 PNG: {} ({}x{}), {} 字节", l_image.filename_, l_image.cols_,
+        l_image.rows_, l_image.bytes_.size()
+    );
+
+    l_form.body_ += "--";
+    l_form.body_ += l_form.boundary_;
+    l_form.body_ += "\r\nContent-Disposition: form-data; name=\"";
+    l_form.body_ += g_edit_image_field;
+    l_form.body_ += "\"; filename=\"";
+    l_form.body_ += l_image.filename_;
+    l_form.body_ += "\"\r\nContent-Type: ";
+    l_form.body_ += g_compressed_mime;
+    l_form.body_ += "\r\n\r\n";
+    l_form.body_ += l_image.bytes_;
+    l_form.body_ += "\r\n";
+  }
+
+  l_form.body_ += "--";
+  l_form.body_ += l_form.boundary_;
+  l_form.body_ += "--\r\n";
+  return l_form;
 }
 
 doodle::seedance2::task_status kmt_image_client::parse_status(const nlohmann::json& in_body) {
@@ -177,6 +220,7 @@ ai_client_base::request_info_t kmt_image_client::collect_request_info(const nloh
   l_info.model_       = l_req.model_;
   l_info.resolution_  = l_req.image_size_.empty() ? l_req.aspect_ratio_ : l_req.image_size_;
   l_info.text_prompt_ = l_req.prompt_;
+  for (auto&& l_url : l_req.reference_images_) parse_site_image_id(l_url);
 
   DOODLE_CHICK_HTTP(!l_info.model_.empty(), bad_request, "缺少模型名称");
   DOODLE_CHICK_HTTP(!l_info.resolution_.empty(), bad_request, "缺少分辨率");
@@ -210,21 +254,15 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::subm
     co_return l_result;
   }
 
-  auto l_ip  = co_await get_ip_str();
-  l_req_body = add_ip_to_req(
-      l_req_body, l_ip, url_sign_secret_,
-      in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_)
-  );
-
   const kmt_image_client::request_t l_kmt_req{l_req_body};
 
   boost::beast::http::request<boost::beast::http::string_body> l_req{boost::beast::http::verb::post, {}, 11};
-  if (l_kmt_req.image_urls_.empty()) {
+  if (l_kmt_req.reference_images_.empty()) {
     l_req.target(std::string{g_generations_path});
     l_req.body() = (nlohmann::json{} = l_kmt_req).dump();
     l_req.set(boost::beast::http::field::content_type, "application/json");
   } else {
-    auto l_form = to_multipart(l_kmt_req);
+    auto l_form = l_kmt_req.to_multipart();
     l_req.target(std::string{g_edits_path});
     l_req.body() = std::move(l_form.body_);
     l_req.set(boost::beast::http::field::content_type, l_form.content_type());
@@ -369,8 +407,8 @@ FSys::path kmt_image_client::write_b64_to_cache(std::string_view in_b64, std::st
   if (in_b64.starts_with("data:"))
     if (const auto l_comma = in_b64.find(','); l_comma != std::string_view::npos) in_b64.remove_prefix(l_comma + 1);
 
-  auto l_path = core_set::get_set().get_cache_root("http") /
-                (core_set::get_set().get_uuid_str() + std::string{in_ext.empty() ? g_default_ext : in_ext});
+  auto l_path  = core_set::get_set().get_cache_root("http") /
+                 (core_set::get_set().get_uuid_str() + std::string{in_ext.empty() ? g_default_ext : in_ext});
 
   auto l_bytes = base64_decode(in_b64);
   DOODLE_CHICK(!l_bytes.empty(), "图片 base64 解码结果为空(长度 {})", in_b64.size());
