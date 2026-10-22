@@ -170,10 +170,10 @@ kmt_image_client::edits_form_t kmt_image_client::request_t::to_multipart() const
 }
 
 void from_json(const nlohmann::json& j, kmt_image_client::response_t& in) {
-  in.id_     = j.value("id", std::string{});
-  in.object_ = j.value("object", std::string{});
-  in.status_ = j.value("status", std::string{});
-  in.model_  = j.value("model", std::string{});
+  in.id_      = j.value("id", std::string{});
+  in.object_  = j.value("object", std::string{});
+  in.status_  = j.value("status", std::string{});
+  in.model_   = j.value("model", std::string{});
   in.created_ = j.value("created", std::int64_t{0});
   if (!j.contains("data") || !j.at("data").is_array()) return;
   for (const auto& l_item : j.at("data"))
@@ -199,11 +199,6 @@ std::string kmt_image_client::parse_task_id(const nlohmann::json& in_body) {
           !in_body.at("data").at(l_key).get<std::string>().empty())
         return in_body.at("data").at(l_key).get<std::string>();
   return {};
-}
-
-std::optional<kmt_image_client::response_t> kmt_image_client::parse_query_response(const nlohmann::json& in_body) {
-  if (!in_body.is_object()) return std::nullopt;
-  return in_body.get<response_t>();
 }
 
 ai_client_base::request_info_t kmt_image_client::collect_request_info(const nlohmann::json& in_request) const {
@@ -328,12 +323,9 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::quer
   l_result.task_id_       = in_task.task_id_;
   auto l_req_body         = in_task.data_request_.get<doodle::seedance2::transfer_station_request_t>();
 
-  const auto l_resp = parse_query_response(l_result.data_response_);
-  if (!l_resp) {
-    logger_->error("快米兔 图片任务 {} 响应不是对象: {}", in_task.task_id_, l_result.data_response_.dump());
-    co_return l_result;
-  }
-  l_result.status_ = parse_status(l_resp->status_);
+  const auto l_resp       = l_result.data_response_.get<response_t>();
+
+  l_result.status_        = parse_status(l_resp.status_);
 
   const auto* l_pricing   = find_pricing(l_req_body.model_);
   switch (l_result.status_) {
@@ -354,7 +346,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::quer
   if (!l_pricing) logger_->warn("未找到模型定价: {}", model_of_task(in_task));
 
   if (l_result.status_ == doodle::seedance2::task_status::succeeded) {
-    for (const auto& l_item : l_resp->data_)
+    for (const auto& l_item : l_resp.data_)
       if (!l_item.url_.empty()) l_result.result_files_.push_back(l_item.url_);
 
     if (l_result.result_files_.empty()) {
