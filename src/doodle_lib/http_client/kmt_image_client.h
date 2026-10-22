@@ -15,8 +15,6 @@ class DOODLELIB_API kmt_image_client final : public ai_client_base {
  public:
   explicit kmt_image_client(boost::asio::ssl::context& in_ctx) : ai_client_base(std::string{g_default_host}, in_ctx) {}
 
-  [[nodiscard]] static std::string_view host_url() { return g_default_host; }
-
   boost::asio::awaitable<run_task_result_t> submit_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<run_task_result_t> query_task(const doodle::seedance2::task& in_task) override;
   boost::asio::awaitable<void> cancel_task(const std::string& in_task_id) override;

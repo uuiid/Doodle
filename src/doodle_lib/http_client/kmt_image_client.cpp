@@ -111,16 +111,6 @@ std::string model_of_task(const doodle::seedance2::task& in_task) {
   return l_req.at("model").get<std::string>();
 }
 
-std::shared_ptr<doodle::http::http_client_ssl> make_own_client() {
-  auto l_ctx = core_set::get_set().ctx_ptr;
-  DOODLE_CHICK(l_ctx != nullptr, "ssl context 未初始化(见 core_set::ctx_ptr), 无法创建 快米兔 客户端");
-  auto l_client = std::make_shared<doodle::http::http_client_ssl>(
-      std::string{kmt_image_client::host_url()}, *l_ctx
-  );
-  l_client->set_timeout(g_request_timeout);
-  return l_client;
-}
-
 }  // namespace
 
 doodle::seedance2::transfer_station_request_t kmt_image_client::add_ip_to_req(
@@ -221,8 +211,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::subm
       in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_)
   );
 
-  auto l_body   = to_kmt_body(l_req_body);
-  auto l_client = make_own_client();
+  auto l_body = to_kmt_body(l_req_body);
 
   boost::beast::http::request<boost::beast::http::string_body> l_req{boost::beast::http::verb::post, {}, 11};
   if (l_req_body.reference_images_.empty()) {
@@ -238,12 +227,13 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::subm
 
   l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
   l_req.set(boost::beast::http::field::accept, "application/json");
-  l_req.set(boost::beast::http::field::host, l_client->server_ip_);
+  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
   l_req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
+  http_client_ptr_->set_timeout(g_request_timeout);
 
   boost::beast::http::response<http::basic_json_body> l_res{};
   try {
-    co_await l_client->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+    co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   } catch (const boost::system::system_error& e) {
     SPDLOG_LOGGER_ERROR(logger_, "快米兔 图片提交连接失败: {}", e.what());
     l_result.status_        = doodle::seedance2::task_status::failed;
@@ -256,6 +246,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::subm
   l_result.task_id_       = parse_task_id(l_result.data_response_);
 
   if (l_res.result() == boost::beast::http::status::too_many_requests ||
+      l_res.result() == boost::beast::http::status::internal_server_error ||
       l_res.result() == boost::beast::http::status::service_unavailable ||
       l_res.result() == boost::beast::http::status::bad_gateway ||
       l_res.result() == boost::beast::http::status::gateway_timeout)
@@ -282,18 +273,16 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::quer
     co_return l_result;
   }
 
-  auto l_client = make_own_client();
-
   boost::beast::http::request<boost::beast::http::string_body> l_req{
       boost::beast::http::verb::get, fmt::format("{}{}", g_tasks_prefix, in_task.task_id_), 11
   };
   l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
   l_req.set(boost::beast::http::field::accept, "application/json");
-  l_req.set(boost::beast::http::field::host, l_client->server_ip_);
+  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
   l_req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
 
   boost::beast::http::response<http::basic_json_body> l_res{};
-  co_await l_client->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   DOODLE_CHICK(
       l_res.result() == boost::beast::http::status::ok, "kmt query_task error: {} {}", l_res.result(),
       l_res.body().dump()
