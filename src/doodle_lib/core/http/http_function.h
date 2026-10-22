@@ -18,6 +18,8 @@
 #include "http_route.h"
 #include <magic_enum/magic_enum_all.hpp>
 #include <string>
+#include <tuple>
+#include <utility>
 
 namespace doodle::http {
 
@@ -285,13 +287,19 @@ class http_function_template : public Base {
   }                           \
   ;
 
-#define DOODLE_HTTP_ROUTE_FIELD_PTR_(r, data, elem) &data::elem,
+#define DOODLE_HTTP_ROUTE_FIELD_(r, data, elem) \
+  ::std::pair{BOOST_PP_STRINGIZE(elem), &data::elem},
 
-#define DOODLE_HTTP_ROUTE(url_literal, ...)                                                  \
-  static auto route_info() {                                                                  \
-    return url_literal _url(BOOST_PP_SEQ_FOR_EACH(                                            \
-        DOODLE_HTTP_ROUTE_FIELD_PTR_, self_type, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)         \
-    ));                                                                                       \
+#define DOODLE_HTTP_ROUTE(url_literal, ...)                                         \
+  static auto route_info() {                                                        \
+    return ::std::tuple{                                                            \
+        url_literal                                                                 \
+        __VA_OPT__(                                                                 \
+            , BOOST_PP_SEQ_FOR_EACH(                                                \
+                  DOODLE_HTTP_ROUTE_FIELD_, self_type, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__) \
+              )                                                                     \
+        )                                                                           \
+    };                                                                              \
   }
 using http_function_ptr = std::shared_ptr<http_function>;
 }  // namespace doodle::http
