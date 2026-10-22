@@ -467,6 +467,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
   l_result.total_tokens_  = l_response.total_tokens_;
   l_result.is_timeout_    = l_res.result() == boost::beast::http::status::too_many_requests ||
                             l_res.result() == boost::beast::http::status::service_unavailable;
+  l_result.task_id_       = l_res["x_request_id"];
 
   if (l_result.status_ != doodle::seedance2::task_status::succeeded) {
     SPDLOG_LOGGER_ERROR(
