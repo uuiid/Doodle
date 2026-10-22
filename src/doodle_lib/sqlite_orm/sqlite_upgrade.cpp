@@ -36,7 +36,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_old_version     = 33;
+constexpr std::size_t g_old_version     = 34;
 constexpr std::size_t g_current_version = g_old_version + 1;
 
 }  // namespace
@@ -98,13 +98,8 @@ struct upgrade_3_t : sqlite_upgrade {
     backup(l_s);
     l_s.pragma().foreign_keys(false);
 
-    l_s.drop_table("seedance2_infinite_canvas");
-    l_s.drop_table("seedance2_infinite_canvas_person_link");
-    l_s.drop_table("seedance2_canvas_element");
-    l_s.drop_table("seedance2_canvas_link");
-    l_s.drop_table("seedance2_canvas_media");
+    l_s.add_column("ai_studio", "kmt_key", orm::column_type::text);
 
-    l_s.sync_schema();
     l_s.pragma().user_version(g_current_version);
     l_s.pragma().foreign_keys(true);
   }
@@ -125,9 +120,8 @@ struct upgrade_clear_orphan_task_t : sqlite_upgrade {
     update(l_s)
         .from<seedance2::task>()
         .set(
-            c(&seedance2::task::status_) = seedance2::task_status::failed,
-            c(&seedance2::task::data_response_) =
-                nlohmann::json{{"error", "服务端重启, API易 同步请求的结果已丢失"}},
+            c(&seedance2::task::status_)        = seedance2::task_status::failed,
+            c(&seedance2::task::data_response_) = nlohmann::json{{"error", "服务端重启, API易 同步请求的结果已丢失"}},
             c(&seedance2::task::ended_at_) =
                 chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}
         )

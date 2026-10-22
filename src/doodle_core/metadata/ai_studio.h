@@ -13,11 +13,9 @@ struct DOODLE_CORE_API ai_studio {
   std::string color_;
   std::string seedance2_key_;
   std::string transfer_station_key_;
-  /// API易(apiyi.com) 的 key。与上两把是**不同主机**的凭据, 不能互相顶替:
-  /// 拿 transfer_station_key_ 去发 API易 的请求等于把 A 家的密钥交给 B 家。
-  /// 注意: 本列是新加的, 而 sync_schema() 不会对已存在的表做 ALTER TABLE
-  /// (见 sqlite_orm/orm/session.cpp), 所以**已部署的库需要一次显式迁移**。
   std::string apipy_key_;
+  std::string kmt_key_;
+  
   bool archived_;
 
   constexpr static auto put_property_list() {
@@ -28,6 +26,7 @@ struct DOODLE_CORE_API ai_studio {
         std::pair{"seedance2_key", &ai_studio::seedance2_key_},                //
         std::pair{"transfer_station_key", &ai_studio::transfer_station_key_},  //
         std::pair{"apipy_key", &ai_studio::apipy_key_},                        //
+        std::pair{"kmt_key", &ai_studio::kmt_key_},                            //
     };
   }
 
@@ -46,6 +45,7 @@ struct DOODLE_CORE_API ai_studio {
     if (j.contains("seedance2_key")) j.at("seedance2_key").get_to(p.seedance2_key_);
     if (j.contains("transfer_station_key")) j.at("transfer_station_key").get_to(p.transfer_station_key_);
     if (j.contains("apipy_key")) j.at("apipy_key").get_to(p.apipy_key_);
+    if (j.contains("kmt_key")) j.at("kmt_key").get_to(p.kmt_key_);
   }
 };
 }  // namespace doodle
