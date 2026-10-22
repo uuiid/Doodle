@@ -5,6 +5,7 @@
 
 #include "ai_client_base.h"
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -43,6 +44,22 @@ class DOODLELIB_API kmt_image_client final : public ai_client_base {
     friend void to_json(nlohmann::json& j, const request_t& in_req);
   };
 
+  struct data_item_t {
+    std::string url_;
+  };
+
+  struct response_t {
+    std::string id_;
+    std::string object_;
+    std::string status_;
+    std::string model_;
+    std::int64_t created_{0};
+    std::vector<data_item_t> data_;
+  };
+
+  friend void from_json(const nlohmann::json& j, data_item_t& in) { in.url_ = j.value("url", std::string{}); }
+  friend void from_json(const nlohmann::json& j, response_t& in);
+
   explicit kmt_image_client(boost::asio::ssl::context& in_ctx) : ai_client_base(std::string{g_default_host}, in_ctx) {}
 
   boost::asio::awaitable<run_task_result_t> submit_task(const doodle::seedance2::task& in_task) override;
@@ -54,11 +71,9 @@ class DOODLELIB_API kmt_image_client final : public ai_client_base {
   std::size_t default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const override;
 
  private:
-  static doodle::seedance2::task_status parse_status(const nlohmann::json& in_body);
+  static doodle::seedance2::task_status parse_status(std::string_view in_status);
   static std::string parse_task_id(const nlohmann::json& in_body);
-  static nlohmann::json strip_b64_payload(nlohmann::json in_body);
-
-  FSys::path write_b64_to_cache(std::string_view in_b64, std::string_view in_ext) const;
+  static std::optional<response_t> parse_query_response(const nlohmann::json& in_body);
 };
 
 }  // namespace doodle::http::seedance2

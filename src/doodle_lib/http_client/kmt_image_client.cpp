@@ -3,7 +3,6 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/kitsu_ctx_t.h>
 
-#include <doodle_lib/core/base64.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/doodle_lib_fwd.h>
@@ -30,7 +29,6 @@ namespace {
 constexpr std::string_view g_generations_path{"/v1/images/generations"};
 constexpr std::string_view g_edits_path{"/v1/images/edits"};
 constexpr std::string_view g_tasks_prefix{"/v1/images/tasks/"};
-constexpr std::string_view g_default_ext{".png"};
 constexpr std::string_view g_pictures_prefix{"/api/seedance2/pictures/"};
 constexpr std::string_view g_edit_image_field{"image"};
 constexpr std::string_view g_compressed_ext{".png"};
@@ -171,19 +169,23 @@ kmt_image_client::edits_form_t kmt_image_client::request_t::to_multipart() const
   return l_form;
 }
 
-doodle::seedance2::task_status kmt_image_client::parse_status(const nlohmann::json& in_body) {
-  if (!in_body.is_object() || !in_body.contains("status") || !in_body.at("status").is_string())
-    return doodle::seedance2::task_status::failed;
+void from_json(const nlohmann::json& j, kmt_image_client::response_t& in) {
+  in.id_     = j.value("id", std::string{});
+  in.object_ = j.value("object", std::string{});
+  in.status_ = j.value("status", std::string{});
+  in.model_  = j.value("model", std::string{});
+  in.created_ = j.value("created", std::int64_t{0});
+  if (!j.contains("data") || !j.at("data").is_array()) return;
+  for (const auto& l_item : j.at("data"))
+    if (l_item.is_object()) in.data_.push_back(l_item.get<kmt_image_client::data_item_t>());
+}
 
-  const auto& l_s = in_body.at("status").get_ref<const std::string&>();
-  if (l_s == "queued" || l_s == "in_progress" || l_s == "pending" || l_s == "running")
-    return doodle::seedance2::task_status::running;
-  if (l_s == "completed" || l_s == "succeeded") return doodle::seedance2::task_status::succeeded;
-  if (l_s == "cancelled") return doodle::seedance2::task_status::cancelled;
-  // 违规单独成一个状态, 不能并进 failed: 它的计费规则与失败不同
-  if (l_s == "violation") return doodle::seedance2::task_status::violation;
-  if (l_s == "failed" || l_s == "error") return doodle::seedance2::task_status::failed;
-  return doodle::seedance2::task_status::failed;
+doodle::seedance2::task_status kmt_image_client::parse_status(std::string_view in_status) {
+  if (in_status == "queued" || in_status == "in_progress") return doodle::seedance2::task_status::running;
+  if (in_status == "completed") return doodle::seedance2::task_status::succeeded;
+  if (in_status == "failed") return doodle::seedance2::task_status::failed;
+  if (in_status == "violation") return doodle::seedance2::task_status::violation;
+  throw_exception(doodle_error{fmt::format("kmt_image_client: 未识别的任务状态 {}", in_status)});
 }
 
 std::string kmt_image_client::parse_task_id(const nlohmann::json& in_body) {
@@ -199,13 +201,9 @@ std::string kmt_image_client::parse_task_id(const nlohmann::json& in_body) {
   return {};
 }
 
-nlohmann::json kmt_image_client::strip_b64_payload(nlohmann::json in_body) {
-  if (!in_body.is_object() || !in_body.contains("data")) return in_body;
-  auto& l_data = in_body.at("data");
-  if (!l_data.is_array()) return in_body;
-  for (auto& l_item : l_data)
-    if (l_item.is_object()) l_item.erase("b64_json");
-  return in_body;
+std::optional<kmt_image_client::response_t> kmt_image_client::parse_query_response(const nlohmann::json& in_body) {
+  if (!in_body.is_object()) return std::nullopt;
+  return in_body.get<response_t>();
 }
 
 ai_client_base::request_info_t kmt_image_client::collect_request_info(const nlohmann::json& in_request) const {
@@ -216,9 +214,7 @@ ai_client_base::request_info_t kmt_image_client::collect_request_info(const nloh
       g_max_reference_images, l_req.reference_images_.size()
   );
 
-  DOODLE_CHICK_HTTP(
-      find_pricing(l_req.model_) != nullptr, bad_request, "模型 {} 未登记定价, 不允许提交", l_req.model_
-  );
+  DOODLE_CHICK_HTTP(find_pricing(l_req.model_) != nullptr, bad_request, "模型 {} 未登记定价, 不允许提交", l_req.model_);
 
   request_info_t l_info{};
   l_info.model_       = l_req.model_;
@@ -330,9 +326,16 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::quer
 
   l_result.data_response_ = l_res.body();
   l_result.task_id_       = in_task.task_id_;
-  l_result.status_        = parse_status(l_result.data_response_);
+  auto l_req_body         = in_task.data_request_.get<doodle::seedance2::transfer_station_request_t>();
 
-  const auto* l_pricing   = find_pricing(model_of_task(in_task));
+  const auto l_resp = parse_query_response(l_result.data_response_);
+  if (!l_resp) {
+    logger_->error("快米兔 图片任务 {} 响应不是对象: {}", in_task.task_id_, l_result.data_response_.dump());
+    co_return l_result;
+  }
+  l_result.status_ = parse_status(l_resp->status_);
+
+  const auto* l_pricing   = find_pricing(l_req_body.model_);
   switch (l_result.status_) {
     case doodle::seedance2::task_status::succeeded:
       l_result.completion_tokens_ = l_pricing ? l_pricing->cost_points : 0;
@@ -351,26 +354,13 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::quer
   if (!l_pricing) logger_->warn("未找到模型定价: {}", model_of_task(in_task));
 
   if (l_result.status_ == doodle::seedance2::task_status::succeeded) {
-    if (!l_result.data_response_.contains("data") || !l_result.data_response_.at("data").is_array() ||
-        l_result.data_response_.at("data").empty()) {
-      logger_->error("快米兔 图片任务 {} 完成但响应里没有图片数组", in_task.task_id_);
+    for (const auto& l_item : l_resp->data_)
+      if (!l_item.url_.empty()) l_result.result_files_.push_back(l_item.url_);
+
+    if (l_result.result_files_.empty()) {
+      logger_->error("快米兔 图片任务 {} 完成但响应里没有图片 url", in_task.task_id_);
       l_result.status_            = doodle::seedance2::task_status::failed;
       l_result.completion_tokens_ = 0;
-      co_return l_result;
-    }
-    for (const auto& l_item : l_result.data_response_.at("data")) {
-      if (!l_item.is_object()) continue;
-      if (l_item.contains("url") && l_item.at("url").is_string())
-        l_result.result_files_.push_back(l_item.at("url").get<std::string>());
-      else if (l_item.contains("b64_json") && l_item.at("b64_json").is_string())
-        l_result.result_file_paths_.push_back(
-            write_b64_to_cache(l_item.at("b64_json").get<std::string>(), g_default_ext)
-        );
-    }
-    l_result.data_response_ = strip_b64_payload(std::move(l_result.data_response_));
-    if (l_result.result_files_.empty() && l_result.result_file_paths_.empty()) {
-      logger_->error("快米兔 图片任务 {} 完成但既没有 url 也没有 b64_json", in_task.task_id_);
-      l_result.status_ = doodle::seedance2::task_status::failed;
     }
   }
 
@@ -398,26 +388,6 @@ std::size_t kmt_image_client::default_consumed_tokens(const doodle::seedance2::t
     default:
       return static_cast<std::size_t>(g_kmt_default_consumed_tokens);
   }
-}
-
-FSys::path kmt_image_client::write_b64_to_cache(std::string_view in_b64, std::string_view in_ext) const {
-  if (in_b64.starts_with("data:"))
-    if (const auto l_comma = in_b64.find(','); l_comma != std::string_view::npos) in_b64.remove_prefix(l_comma + 1);
-
-  auto l_path  = core_set::get_set().get_cache_root("http") /
-                 (core_set::get_set().get_uuid_str() + std::string{in_ext.empty() ? g_default_ext : in_ext});
-
-  auto l_bytes = base64_decode(in_b64);
-  DOODLE_CHICK(!l_bytes.empty(), "图片 base64 解码结果为空(长度 {})", in_b64.size());
-
-  std::ofstream l_ofs{l_path, std::ios::binary | std::ios::trunc};
-  DOODLE_CHICK(l_ofs.is_open(), "无法写入图片缓存文件: {}", l_path.generic_string());
-  l_ofs.write(l_bytes.data(), static_cast<std::streamsize>(l_bytes.size()));
-  DOODLE_CHICK(l_ofs.good(), "写入图片缓存失败: {}", l_path.generic_string());
-  l_ofs.close();
-
-  SPDLOG_LOGGER_INFO(logger_, "图片已落盘: {} ({} 字节)", l_path.generic_string(), l_bytes.size());
-  return l_path;
 }
 
 }  // namespace doodle::http::seedance2
