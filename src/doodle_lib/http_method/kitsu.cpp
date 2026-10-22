@@ -300,9 +300,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_c<data_production_specifications>()
       .reg_c<ue_plugins_version>()
       .reg_c<ue_plugins_version_instance>()
-      
-      // 最后注册nodejs前端
-      .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
+
       // clang-format on
       ;
   return l_router;
@@ -312,7 +310,7 @@ http_route_ptr create_kitsu_local_route() {
   auto l_rout_ptr = std::make_shared<http::http_route>();
   auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->register_namespace("/events");
-  (*l_rout_ptr)                  //
+  (*l_rout_ptr)                       //
       .reg_c<local::local_setting>()  //
       .reg_c<local::video_thumbnail>()
 
@@ -360,8 +358,7 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
 
       ;
-  if (g_ctx().get<authorization>().is_valid())
-    (*l_router).reg_c<epiboly_actions_projects_export_anim_fbx>();
+  if (g_ctx().get<authorization>().is_valid()) (*l_router).reg_c<epiboly_actions_projects_export_anim_fbx>();
 
   return l_router;
 }
