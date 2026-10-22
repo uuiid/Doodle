@@ -73,20 +73,32 @@ class DOODLELIB_API pictures_base : public http_jwt_fun {
 // "api/doodle/pictures/{id}"
 DOODLE_HTTP_FUN_C(pictures_instance, pictures_base)
 explicit pictures_instance(const FSys::path& in_root) : base_type(in_root) {}
+DOODLE_HTTP_ROUTE("/api/doodle/pictures/{id_}.png", id_)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post);
 DOODLE_HTTP_FUN_END()
 
-DOODLE_HTTP_FUN_C(pictures_instance_mp4, pictures_base)
-explicit pictures_instance_mp4(const FSys::path& in_root) : base_type(in_root) {}
-DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_C(pictures_instance_no_ext, pictures_instance)
+explicit pictures_instance_no_ext(const FSys::path& in_root) : base_type(in_root) {}
+DOODLE_HTTP_ROUTE("/api/doodle/pictures/{id_}", id_)
 DOODLE_HTTP_FUN_END()
 
+DOODLE_HTTP_FUN_C(pictures_instance_mp4, pictures_base)
+explicit pictures_instance_mp4(const FSys::path& in_root) : base_type(in_root) {}
+DOODLE_HTTP_ROUTE("/api/doodle/pictures/{id_}.mp4", id_)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
 
 // "api/doodle/pictures/thumbnails/{id}"
 DOODLE_HTTP_FUN_C(pictures_thumbnails, pictures_base)
 explicit pictures_thumbnails(const FSys::path& in_root) : base_type(in_root) {}
+DOODLE_HTTP_ROUTE("/api/doodle/pictures/thumbnails/{id_}.png", id_)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+
+DOODLE_HTTP_FUN_C(pictures_thumbnails_no_ext, pictures_thumbnails)
+explicit pictures_thumbnails_no_ext(const FSys::path& in_root) : base_type(in_root) {}
+DOODLE_HTTP_ROUTE("/api/doodle/pictures/thumbnails/{id_}", id_)
 DOODLE_HTTP_FUN_END()
 // "api/doodle/model_library/assets_tree/{id}/assets/{assets_id}"
 DOODLE_HTTP_JWT_FUN(assets_tree_link)

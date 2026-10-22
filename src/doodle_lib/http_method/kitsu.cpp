@@ -73,11 +73,11 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_c<model_library::model_library_assets_tree>()
       .reg_c<model_library::model_library_assets_tree_instance>()
       .reg_c<model_library::assets_tree_link>()
-      .reg_t<model_library::pictures_instance>("/api/doodle/pictures/{}.png"_url(&model_library::pictures_instance::id_), l_ctx.root_)
-      .reg_t<model_library::pictures_instance_mp4>("/api/doodle/pictures/{}.mp4"_url(&model_library::pictures_instance_mp4::id_), l_ctx.root_)
-      .reg_t<model_library::pictures_instance>("/api/doodle/pictures/{}"_url(&model_library::pictures_instance::id_), l_ctx.root_)
-      .reg_t<model_library::pictures_thumbnails>("/api/doodle/pictures/thumbnails/{}.png"_url(&model_library::pictures_thumbnails::id_), l_ctx.root_)
-      .reg_t<model_library::pictures_thumbnails>("/api/doodle/pictures/thumbnails/{}"_url(&model_library::pictures_thumbnails::id_), l_ctx.root_)
+      .reg_c<model_library::pictures_instance>(l_ctx.root_)
+      .reg_c<model_library::pictures_instance_mp4>(l_ctx.root_)
+      .reg_c<model_library::pictures_instance_no_ext>(l_ctx.root_)
+      .reg_c<model_library::pictures_thumbnails>(l_ctx.root_)
+      .reg_c<model_library::pictures_thumbnails_no_ext>(l_ctx.root_)
 
       /// 杂项
       .reg_t<other::deepseek_key>("/api/doodle/deepseek/key"_url)
