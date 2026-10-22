@@ -31,6 +31,7 @@ orm::update_t recomputing_time(
 DOODLE_HTTP_JWT_FUN(computing_time)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/doodle/computing_time/{user_id_}/{year_month_}", user_id_, year_month_)
 uuid user_id_{};
 chrono::year_month year_month_{};
 DOODLE_HTTP_FUN_END()
@@ -40,11 +41,13 @@ DOODLE_HTTP_JWT_FUN(computing_time_add)
 uuid user_id_{};
 chrono::year_month year_month_{};
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/doodle/computing_time/{user_id_}/{year_month_}/add", user_id_, year_month_)
 DOODLE_HTTP_FUN_END()
 
 // "/api/doodle/computing_time/{user_id}/{year_month}/custom"
 DOODLE_HTTP_JWT_FUN(computing_time_custom)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/doodle/computing_time/{user_id_}/{year_month_}/custom", user_id_, year_month_)
 uuid user_id_{};
 chrono::year_month year_month_{};
 DOODLE_HTTP_FUN_END()
@@ -52,12 +55,14 @@ DOODLE_HTTP_FUN_END()
 // "/api/doodle/computing_time/{user_id}/{year_month}/sort"
 DOODLE_HTTP_JWT_FUN(computing_time_sort)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/doodle/computing_time/{user_id_}/{year_month_}/sort", user_id_, year_month_)
 uuid user_id_{};
 chrono::year_month year_month_{};
 DOODLE_HTTP_FUN_END()
 // "/api/doodle/computing_time/{user_id}/{year_month}/average"
 DOODLE_HTTP_JWT_FUN(computing_time_average)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/doodle/computing_time/{user_id_}/{year_month_}/average", user_id_, year_month_)
 uuid user_id_{};
 chrono::year_month year_month_{};
 DOODLE_HTTP_FUN_END()
@@ -65,6 +70,9 @@ DOODLE_HTTP_FUN_END()
 // "/api/doodle/computing_time/{user_id}/{year_month}/{task_id}"
 DOODLE_HTTP_JWT_FUN(computing_time_patch)
 DOODLE_HTTP_FUN_OVERRIDE(patch)
+DOODLE_HTTP_ROUTE(
+    "/api/doodle/computing_time/{user_id_}/{year_month_}/{task_id_}", user_id_, year_month_, task_id_
+)
 uuid user_id_{};
 chrono::year_month year_month_{};
 uuid task_id_{};
@@ -72,6 +80,7 @@ DOODLE_HTTP_FUN_END()
 // "/api/doodle/computing_time/{computing_time_id}"
 DOODLE_HTTP_JWT_FUN(computing_time_delete)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE("/api/doodle/computing_time/{id_}", id_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 

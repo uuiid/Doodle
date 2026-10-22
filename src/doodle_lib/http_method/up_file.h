@@ -70,14 +70,17 @@ class up_file_shots_base : public up_file_base {
 // /api/doodle/data/assets/{task_id}/file/maya
 DOODLE_HTTP_FUN_C(doodle_data_asset_file_maya, up_file_asset_base)
 FSys::path gen_file_path() override;
+DOODLE_HTTP_ROUTE("/api/doodle/data/assets/{id_}/file/maya", id_)
 DOODLE_HTTP_FUN_END()
 // /api/doodle/data/assets/{task_id}/file/ue
 DOODLE_HTTP_FUN_C(doodle_data_asset_file_ue, up_file_asset_base)
 FSys::path gen_file_path() override;
+DOODLE_HTTP_ROUTE("/api/doodle/data/assets/{id_}/file/ue", id_)
 DOODLE_HTTP_FUN_END()
 // /api/doodle/data/assets/{task_id}/file/image
 DOODLE_HTTP_FUN_C(doodle_data_asset_file_image, up_file_asset_base)
 FSys::path gen_file_path() override;
+DOODLE_HTTP_ROUTE("/api/doodle/data/assets/{id_}/file/image", id_)
 DOODLE_HTTP_FUN_END()
 // /api/doodle/data/shots/{task_id}/file/maya
 DOODLE_HTTP_FUN_C(doodle_data_shots_file_maya, up_file_shots_base)

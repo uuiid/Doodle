@@ -21,6 +21,7 @@ void websocket_callback(
 [[nodiscard]] bool has_websocket() const override;
 std::shared_ptr<sid_ctx> sid_ctx_;
 explicit socket_io_http(std::shared_ptr<sid_ctx> sid_ctx) : sid_ctx_(std::move(sid_ctx)) {}
+DOODLE_HTTP_ROUTE(R"(/socket.io)")
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::socket_io

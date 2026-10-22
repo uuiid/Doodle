@@ -4,6 +4,7 @@
 #include <doodle_lib/ai/kimodo.h>
 #include <doodle_lib/ai/motion_rep/constraint_set.h>
 #include <doodle_lib/core/global_function.h>
+#include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/ai/ai_main.h>
 
 #include <boost/asio/post.hpp>
