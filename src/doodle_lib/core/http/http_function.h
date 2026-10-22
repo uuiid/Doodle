@@ -232,6 +232,10 @@ class DOODLELIB_API url_route_component_t : public url_route_component_base_t {
   std::tuple<bool, std::shared_ptr<http_function>> set_match_url(
       boost::urls::segments_ref in_segments_ref, const std::shared_ptr<http_function>& in_data
   ) const override;
+  template <typename... Args>
+  static url_route_component_ptr create_ptr(const char* in_str, Args&&... args) {
+
+  };
 };
 url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t);
 
@@ -290,7 +294,7 @@ class http_function_template : public Base {
 #define DOODLE_HTTP_ROUTE_FIELD_(r, data, elem) ::std::pair{BOOST_PP_STRINGIZE(elem), &data::elem},
 
 #define DOODLE_HTTP_ROUTE(url_literal, ...)                                                                 \
-  static auto route_info() {                                                                                \
+  constexpr static auto route_info() {                                                                      \
     return ::std::tuple{url_literal __VA_OPT__(                                                             \
         , BOOST_PP_SEQ_FOR_EACH(DOODLE_HTTP_ROUTE_FIELD_, self_type, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
     )};                                                                                                     \
