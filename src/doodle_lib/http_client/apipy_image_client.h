@@ -36,12 +36,9 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
   struct response_t {
     std::string url_;
     std::string b64_json_;
-    std::string error_code_;
-    std::string error_message_;
     std::int64_t input_tokens_{0};
     std::int64_t output_tokens_{0};
     std::int64_t total_tokens_{0};
-    bool has_error_{false};
 
     [[nodiscard]] bool has_url() const { return !url_.empty(); }
     [[nodiscard]] bool has_b64_json() const { return !b64_json_.empty(); }

@@ -50,7 +50,6 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
     std::int64_t output_tokens_{0};
     std::int64_t total_tokens_{0};
     std::int64_t completion_tokens_{0};
-    std::string error_code_{};
   };
 
   struct request_info_t {
@@ -63,14 +62,14 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
 
   virtual boost::asio::awaitable<run_task_result_t> run_task(const doodle::seedance2::task& in_task);
 
-  virtual boost::asio::awaitable<void> cancel_task(const std::string& in_task_id)                        = 0;
+  virtual boost::asio::awaitable<void> cancel_task(const std::string& in_task_id)                      = 0;
 
-  virtual boost::asio::awaitable<run_task_result_t> query_task(const doodle::seedance2::task& in_task)   = 0;
+  virtual boost::asio::awaitable<run_task_result_t> query_task(const doodle::seedance2::task& in_task) = 0;
 
-  virtual boost::asio::awaitable<void> download_result(run_task_result_t& in_data)                       = 0;
+  virtual boost::asio::awaitable<void> download_result(run_task_result_t& in_data)                     = 0;
 
-  virtual request_info_t collect_request_info(const nlohmann::json& in_request) const                    = 0;
-  virtual std::size_t default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const    = 0;
+  virtual request_info_t collect_request_info(const nlohmann::json& in_request) const                  = 0;
+  virtual std::size_t default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const  = 0;
 
   static std::string to_public_url(
       std::string_view in_url, std::string_view in_ip, std::string_view in_secret = {}, std::string_view in_uid = {}

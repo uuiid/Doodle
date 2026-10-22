@@ -242,24 +242,6 @@ apipy_image_client::response_t apipy_image_client::parse_response(const nlohmann
   response_t l_res{};
   if (!in_body.is_object()) return l_res;
 
-  if (in_body.contains("error")) {
-    l_res.has_error_  = true;
-    const auto& l_err = in_body.at("error");
-    if (l_err.is_string()) {
-      l_res.error_message_ = l_err.get<std::string>();
-    } else if (l_err.is_object()) {
-      for (const auto* l_key : {"code", "type"}) {
-        if (l_err.contains(l_key) && l_err.at(l_key).is_string()) {
-          l_res.error_code_ = l_err.at(l_key).get<std::string>();
-          break;
-        }
-      }
-      if (l_err.contains("message") && l_err.at("message").is_string())
-        l_res.error_message_ = l_err.at("message").get<std::string>();
-      if (l_res.error_code_.empty()) l_res.error_code_ = l_res.error_message_;
-    }
-  }
-
   const auto& l_item = first_data_item(in_body);
   if (l_item.contains("url") && l_item.at("url").is_string()) l_res.url_ = l_item.at("url").get<std::string>();
   if (l_item.contains("b64_json") && l_item.at("b64_json").is_string())
@@ -291,7 +273,6 @@ nlohmann::json apipy_image_client::strip_b64_payload(nlohmann::json in_body) {
 doodle::seedance2::task_status apipy_image_client::response_t::get_status(int in_status_code) const {
   const bool l_http_ok = in_status_code >= 200 && in_status_code < 300;
   if (!l_http_ok) return doodle::seedance2::task_status::failed;
-  if (has_error_) return doodle::seedance2::task_status::failed;
   if (has_url() || has_b64_json()) return doodle::seedance2::task_status::succeeded;
   return doodle::seedance2::task_status::failed;
 }
@@ -460,8 +441,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
   l_result.data_response_ = l_res.body();
   const auto l_response   = parse_response(l_result.data_response_);
   l_result.data_response_ = strip_b64_payload(std::move(l_result.data_response_));
-  l_result.status_        = l_response.get_status(static_cast<int>(l_res.result()));
-  l_result.error_code_    = l_response.error_code_;
+  l_result.status_        = l_response.get_status(l_res.result_int());
   l_result.input_tokens_  = l_response.input_tokens_;
   l_result.output_tokens_ = l_response.output_tokens_;
   l_result.total_tokens_  = l_response.total_tokens_;
@@ -470,10 +450,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
   l_result.task_id_       = l_res["x_request_id"];
 
   if (l_result.status_ != doodle::seedance2::task_status::succeeded) {
-    SPDLOG_LOGGER_ERROR(
-        logger_, "API易 图片生成失败: HTTP {} error_code `{}` body {}", l_res.result(), l_result.error_code_,
-        l_result.data_response_.dump()
-    );
+    SPDLOG_LOGGER_ERROR(logger_, "API易 图片生成失败: HTTP {} body {}", l_res.result(), l_result.data_response_.dump());
     co_return l_result;
   }
 
