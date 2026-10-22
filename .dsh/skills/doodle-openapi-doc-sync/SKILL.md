@@ -1,17 +1,18 @@
 ---
 name: doodle-openapi-doc-sync
-description: 在 Doodle 仓库改了后端 HTTP 路由（新增/删除/迁移 URL）或结构体字段（新增 kmt_key、canvas_ids 等）后，同步 docs/api 下的 OpenAPI 分片（openapi.yaml 的 paths $ref、paths/*.yaml、components/schemas/*.yaml 三处联动），并用 build/tmp/check_openapi.py 与 pyyaml 校验；当用户说“把 ai_studio 的字段更改同步到 docs/api/openapi.yaml”“路由改了同步文档”“openapi 引用校验”时使用。
-version: 2
+description: 在 Doodle 仓库改了后端 HTTP 路由（新增/删除/迁移 URL）、结构体或响应字段（新增 kmt_key、canvas_ids、person_links 等）、查询过滤参数（新增 in query 的 backend / task_type）、或枚举取值（如 TaskBackend 加 kmt_image）后，同步 docs/api 下的 OpenAPI 分片（openapi.yaml 的 paths $ref、paths/*.yaml 的参数与 description 清单、components/schemas/*.yaml 的属性与 enum 三处联动），并用 build/tmp/check_openapi.py 与 pyyaml 校验；当用户说“把 ai_studio 的字段更改同步到 docs/api/openapi.yaml”“路由改了同步文档”“新增 backend 查询参数同步文档”“新增后端枚举值同步文档”“openapi 引用校验”时使用。
+version: 3
 ---
 
-# Doodle OpenAPI 文档同步（路由 + 字段）
+# Doodle OpenAPI 文档同步（路由 + 字段 + 查询参数/枚举）
 
-`docs/api/` 是接口文档的唯一来源，结构是 `openapi.yaml`（`paths` 里每条只是 `$ref: paths/xxx.yaml`）+ `paths/*.yaml` 分片 + `components/schemas/*.yaml` 分片。本 skill 覆盖两类改动，二者都需要“先全量定位、再改文件、最后校验”：
+`docs/api/` 是接口文档的唯一来源，结构是 `openapi.yaml`（`paths` 里每条只是 `$ref: paths/xxx.yaml`）+ `paths/*.yaml` 分片 + `components/schemas/*.yaml` 分片。本 skill 覆盖三类改动，都要“先全量定位、再改文件、最后校验”：
 
 - **A. 路由级**：新增 / 删除 / 迁移 URL（`git mv` 改名、去掉路径层级参数）。
 - **B. 字段级**：后端结构体或响应新增/改名一个字段，需要同步可写 schema、响应 schema 描述、以及 path 分片里硬编码的字段清单。
+- **C. 查询参数级 / 枚举取值级**：给 GET 等接口新增 `in: query` 过滤参数，或给枚举 schema（如 `TaskBackend.yaml`）追加取值，需要同步分片 `parameters`、枚举 schema 的 `enum` 与各取值 `description`、分片 `description` 里硬编码的过滤字段与“非法枚举值”清单。
 
-两类都要用 `pyyaml` 校验，能跑时再跑 `build/tmp/check_openapi.py` 查 `$ref` 完整性。本工作区里 `git mv`、`Remove-Item`、`git status` 常被沙箱拒绝，迁移只能走“write 新建 + edit 旧文件 + 改 $ref”。
+三类都要用 `pyyaml` 校验，能跑时再跑 `build/tmp/check_openapi.py` 查 `$ref` 完整性。本工作区里 `git mv`、`Remove-Item`、`git status` 常被沙箱拒绝，迁移只能走“write 新建 + edit 旧文件 + 改 $ref”。
 
 ## Steps
 
@@ -38,14 +39,24 @@ version: 2
    - **可写 schema**（如 `components/schemas/AiStudioWrite.yaml`）：新增字段的 `type` 与 `description`，放在同类字段后面。POST 与 PUT 共用的 schema，新字段必须在这里可写。
    - **响应 schema 描述**（如 `components/schemas/AiStudio.yaml`）：若描述里硬编码了“响应中不包含 `a` / `b` / `c`”这类密钥清单，把新字段名补进去。
    - **path 分片里的字段清单**：分片的 `description` 常写成“可写字段与 `xxx::put_property_list()` 一致：`name`、`color`……”，硬编码清单，必须同步追加，否则文档与 schema 互相矛盾。
-5. 用户说“我自己已经改过一部分文档”时：先 `read` 读现有文档，把它当作当前事实，只补不一致的地方，**绝不把用户已做的改名回滚成旧名**。最终报告同时列出代码位置（文件 + 键名）和文档位置（文件 + 属性名）。
+5. 响应体新增 / 改结构时：在 `components/schemas/` 下新增或修改对应 schema（`properties` 用 `type: array` + `items: $ref` 指向已存在的分片；整体改形如 `{canvas, nodes, connections}` 时新建组合 schema），把 path 分片 `responses.200.content.application/json.schema.$ref` 改指新 schema，或对原 `$ref` 用 `allOf` 追加属性后保留原引用；确认新 `$ref` 的目标文件真实存在。
+6. 用户说“我自己已经改过一部分文档”时：先 `read` 读现有文档，把它当作当前事实，只补不一致的地方，**绝不把用户已做的改名回滚成旧名**。最终报告同时列出代码位置（文件 + 键名）和文档位置（文件 + 属性名）。
 
-### C. 校验（两类改动都做）
+### C. 查询参数级 / 枚举取值级同步
 
-1. 首选落到文件再执行，别用 PowerShell 内联 `python -c`（`$ref` 中的 `$` 会被吞掉）。写 `build/tmp/check_openapi.py`，遍历 `openapi.yaml` 的 `paths`，检查每个 `$ref` 指向的文件是否存在，统计 total paths 与 missing path refs；再检查各分片里的 `#/components/schemas/...` 引用，输出 missing schema refs。
+1. **先全量定位**：用 `grep` 在 `docs/api` 上搜枚举 schema 名（如 `TaskBackend`）与要新增的参数名（如 `backend`），拿到：引用该枚举的 `components/schemas/*.yaml`（响应 schema）、各 `paths/*.yaml` 里 `$ref` 到它的位置、以及分片 `description` 里硬编码列出的过滤字段 / 枚举值清单。
+2. `read` 后端源头确认语义：查询参数名、是否能空、对应响应字段名（如 `backend` / `task_type` 过滤的是响应里的 `backend` / `type` 字段）、新枚举值在代码里代表什么（同步还是异步、计费方式、是否已下线）。
+3. 改分片 `parameters`：在同类参数（如 `task_type`）后面追加 `- name: backend` / `in: query` / `required: false`，`schema` 用 `$ref: ../components/schemas/TaskBackend.yaml` 复用枚举而不是重抄一遍值，`description` 写“按任务后端过滤（seedance2 / transfer_station / ...）”。
+4. 改枚举 schema（如 `components/schemas/TaskBackend.yaml`）：在 `enum` **末尾按既有顺序追加**新值（如 `kmt_image`），不要打乱原有值顺序；同时在 `description` 里补该取值的中文语义（图片中转站、异步任务、轮询地址、计费方式；已下线的写“已下线，仅为存量任务兼容保留”）。
+5. 改分片 `description` 里硬编码的约束清单，两处都要同步：过滤语义行（“`task_type` 过滤响应中的 `type`，`backend` 过滤响应中的 `backend`”）与非法值清单（“非法枚举值（`status` / `task_type` / `backend`）、非法 UUID……会导致请求失败”）。
+6. 若该枚举还被别的 schema（如 `Task.yaml`）引用，顺着 `$ref` 检查这些 schema 的描述里是否也列了取值清单，一并核对；不要再新建一份枚举副本。
+
+### D. 校验（三类改动都做）
+
+1. 首选落到文件再执行，别用 PowerShell 内联 `python -c` 拼带 `$ref` 的完整脚本（`$` 会被吞掉）。写 `build/tmp/check_openapi.py`，遍历 `openapi.yaml` 的 `paths`，检查每个 `$ref` 指向的文件是否存在，统计 total paths 与 missing path refs；再检查各分片里的 `#/components/schemas/...` 引用，输出 missing schema refs。
 2. 对每个改动过的文件单独做 `yaml.safe_load` 解析校验（含 `openapi.yaml` 本体），例如：
    ```powershell
-   python -c "import yaml,io; [yaml.safe_load(io.open(p,encoding='utf-8')) for p in ['docs/api/openapi.yaml','docs/api/components/schemas/AiStudio.yaml','docs/api/components/schemas/AiStudioWrite.yaml']]; print('YAML OK')"
+   python -c "import yaml,io; [yaml.safe_load(io.open(p,encoding='utf-8')) for p in ['docs/api/openapi.yaml','docs/api/paths/api_seedance2_task.yaml','docs/api/components/schemas/TaskBackend.yaml']]; print('YAML OK')"
    ```
 3. 用 `glob`（如 `docs/api/paths/*canvas*`）或 `grep` 核对分片清单与 `openapi.yaml` 的 `$ref` 一一对应，并确认 `openapi.yaml` 里已无对旧分片的引用。
 
@@ -54,6 +65,9 @@ version: 2
 - **`git mv` / `Remove-Item` / `git status` 会被沙箱拒绝**（`ResourceUnavailable: ... 拒绝访问`）。别重试、别换 `cmd /c del`，按 A.3–A.5 的 write + edit 路径走。
 - **只改 `openapi.yaml` 不改分片**：`$ref` 指向不存在的文件名，文档校验必挂。新建分片、改 `$ref`、处理旧分片必须一起做。
 - **字段级只改一处**：只往 Write schema 加字段、忘了响应 schema 的“不含密钥”描述和 path 分片的“可写字段清单”，文档会自相矛盾。动手前先全量 `grep` 字段名拿到完整清单。
+- **查询参数级只加参数块**：只往分片 `parameters` 里塞 `backend`，却没在枚举 schema 里加值、没改分片 `description` 的过滤语义与“非法枚举值”清单，是最容易漏的联调点；三处一起改。
+- **枚举值追加打乱顺序 / 漏写语义**：新值要接在 `enum` 末尾保持既有顺序，且枚举 schema 的 `description` 里必须写明它的中文语义（含异步/同步、是否已下线），只在 `enum` 里加一个裸字符串不算同步。
+- **手抄枚举值而不是 `$ref`**：分片参数 `schema` 应 `$ref` 到枚举 schema，避免值与 schema 漂移。
 - **新路径多出的层级参数漏写**：`subproject_id` 之类必须同时出现在每个受影响分片的 `parameters` 里；反过来，路径缩短后要批量清掉则用脚本 + `grep` 验证，别靠肉眼。
 - **文件名花括号**：参数名要保留 `{...}`（如 `api_..._{subproject_id}_canvas.yaml`），不要转成别的占位符。
 - **用户先改过的文档不是错误**：不要把 `canvas` 回滚成 `canvas_ids` 之类，只修正真正不一致的地方。
@@ -67,6 +81,7 @@ version: 2
 - 对每个改动过的 YAML（含 `openapi.yaml`）逐个 `yaml.safe_load`，无 parse failure，报告 `parsed OK` / `YAML OK`。
 - `grep` 新路由前缀与旧路由前缀：新 path 都有 `$ref` 且格式与相邻条目一致；旧前缀（如 `paths/api_canvas.yaml`）在 `openapi.yaml` 里已无引用。
 - 字段级：`grep` 字段名，确认可写 schema 有属性、响应 schema 描述含该名、path 分片字段清单含该名，三处齐全。
+- 查询参数 / 枚举级：`read` 改过的分片，确认 `parameters` 里有 `name: backend` 且 `schema.$ref` 指向枚举 schema；`read` 枚举 schema，确认新值在 `enum` 末尾、`description` 含其语义；`grep` 分片 `description`，确认过滤字段与“非法枚举值”清单都含新参数。
 - `read` 至少一个新分片，确认 `tags` / `summary` / `parameters`（含新增层级参数）/ `responses` 结构完整、YAML 缩进正确。
 - 汇报改动范围、仍未提交的状态；若残留旧分片，明确列出“需手工 `git rm`”。
 - TODO: 若团队成员规定旧分片可以随提交一并删除，请在此补充仓库层面约定（现有证据只支持“写迁移说明”的处理方式）。
