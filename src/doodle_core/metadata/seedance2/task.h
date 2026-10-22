@@ -72,13 +72,15 @@ enum class task_backend {
   transfer_station,   // 中转站
   apipy_image,        // API易(apiyi.com) 图片后端 —— 同步单次调用, 无 task_id
   gemini_image,       // 已下线, 仅为存量任务兼容保留
+  kmt_image,          // 快米兔(52pay.com) 图片中转站 —— 异步任务, 提交拿任务号后轮询 /v1/images/tasks/{id}
 };
 DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     task_backend,
     {{task_backend::seedance2, "seedance2"},
      {task_backend::transfer_station, "transfer_station"},
      {task_backend::apipy_image, "apipy_image"},
-     {task_backend::gemini_image, "gemini_image"}}
+     {task_backend::gemini_image, "gemini_image"},
+     {task_backend::kmt_image, "kmt_image"}}
 );
 
 struct DOODLE_CORE_API task {
