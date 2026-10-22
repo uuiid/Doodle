@@ -27,3 +27,9 @@ properties:
 
       与上两把是**不同主机**的凭据，不能互相顶替：拿 `transfer_station_key` 去发 API易
       的请求等于把 A 家的密钥交给 B 家。
+  kmt_key:
+    type: string
+    description: |
+      快米兔（52pay.com）图片中转站的 API Key，只写不读。
+
+      与前几把同样是**不同主机**的凭据；`backend=kmt_image` 的任务只认这一把。

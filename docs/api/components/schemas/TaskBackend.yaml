@@ -3,11 +3,13 @@ enum:
   - seedance2
   - transfer_station
   - apipy_image
+  - kmt_image
   - gemini_image
 description: |
   seedance2 - 豆包/火山方舟 Seedance2 后端（异步任务轮询，按 completion_tokens 计费）,
   transfer_station - 中转站后端（Grsai，按模型积分计费，失败/违规按模型策略返还）,
   apipy_image - API易（apiyi.com）图片后端（同步单次调用，无 task_id，按响应 usage 计费）,
+  kmt_image - 快米兔（52pay.com）图片中转站（异步任务，提交拿任务号后轮询 /v1/images/tasks/{id}，按模型点数计费）,
   gemini_image - 已下线，仅为存量任务兼容保留，不再提供创建入口
 
   `apipy_image` 是**同步后端**：上游不返回异步 task id、也没有查询接口，一次

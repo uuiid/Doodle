@@ -8,8 +8,8 @@ get:
     - 普通用户：仅查看自己参与的子项目下的任务，且不含已归档（`archived=true`）的任务
 
     所有过滤条件之间为 AND 关系；`size` / `offset` 在过滤之后生效。
-    `task_type` 过滤的是任务响应中的 `type` 字段。
-    非法枚举值（`status` / `task_type`）、非法 UUID（`project` / `user_id`）或非法整数（`size` / `offset`）会导致请求失败。
+    `task_type` 过滤的是任务响应中的 `type` 字段，`backend` 过滤的是任务响应中的 `backend` 字段。
+    非法枚举值（`status` / `task_type` / `backend`）、非法 UUID（`project` / `user_id`）或非法整数（`size` / `offset`）会导致请求失败。
   parameters:
     - name: size
       in: query
@@ -35,6 +35,12 @@ get:
       schema:
         $ref: ../components/schemas/TaskType.yaml
       description: 按任务类型过滤（图片/视频）
+    - name: backend
+      in: query
+      required: false
+      schema:
+        $ref: ../components/schemas/TaskBackend.yaml
+      description: 按任务后端过滤（seedance2 / transfer_station / apipy_image / kmt_image）
     - name: project
       in: query
       required: false
