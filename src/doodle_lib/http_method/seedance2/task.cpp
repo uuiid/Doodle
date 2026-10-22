@@ -373,7 +373,7 @@ std::shared_ptr<ai_client_base> make_inference_client(const ai_studio& in_studio
 boost::asio::awaitable<ai_client_base::run_task_result_t> run_inference_task(
     const sd2::task& in_task, sqlite_database& in_sql, const std::shared_ptr<ai_client_base>& in_client
 ) {
-  auto l_result         = co_await in_client->run_task(in_task);
+  auto l_result         = co_await in_client->run_infer_task(in_task);
 
   const bool l_ok       = l_result.status_ == sd2::task_status::succeeded;
   auto l_task           = in_task;

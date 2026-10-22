@@ -37,59 +37,13 @@ bool seedance2_client::is_retryable_error(const nlohmann::json& in_body) {
 
 // ─── 子类方法 ─────────────────────────────────────────────────────────────────
 
-namespace {
-/// 把 Responses 的 `input` 摘要成一行可读文本, 追加到 `io_out`。
-///
-/// 两种形状都认: 字符串(= 一条 user 文本), 或元素列表(取 message.content 里
-/// type=="input_text" 的 text; 图片/文件/音频类元素**跳过**——它们是素材不是提示词,
-/// 混进来会让摘要变成一串路径, 反而看不出「这次问了什么」)。
-///
-/// 刻意不抛: 这是给人看的摘要, 形状不认识就少写一行, 不能让一次日志/列表渲染失败。
-void collect_input_preview(const nlohmann::json& in_input, std::string& io_out) {
-  if (in_input.is_string()) {
-    io_out += in_input.get<std::string>() + "\n";
-    return;
-  }
-  if (!in_input.is_array()) return;
-  for (const auto& l_item : in_input) {
-    if (!l_item.is_object()) continue;
-    if (!l_item.contains("content")) continue;
-    const auto& l_content = l_item.at("content");
-    if (l_content.is_string()) {
-      io_out += l_content.get<std::string>() + "\n";
-      continue;
-    }
-    if (!l_content.is_array()) continue;
-    for (const auto& l_part : l_content) {
-      if (!l_part.is_object()) continue;
-      if (!l_part.contains("type") || !l_part.at("type").is_string()) continue;
-      if (l_part.at("type").get<std::string>() != "input_text") continue;
-      if (l_part.contains("text") && l_part.at("text").is_string())
-        io_out += l_part.at("text").get<std::string>() + "\n";
-    }
-  }
-}
-}  // namespace
-
 ai_client_base::request_info_t seedance2_client::collect_request_info(const nlohmann::json& in_request) const {
-  // 刻意保持宽容的字符串读键: 这个函数与**生成类**任务的 json 形状共用(前台提交路径),
-  // 那种 json 不是归一化推理信封, 不能按推理信封的严格类型去解析 —— 何况那个结构体已经删掉了,
-  // 现在只剩「直接读键」这一条路。这里只挑提示词用的字段读。
   request_info_t l_info{};
   if (in_request.contains("model")) l_info.model_ = in_request.at("model").get<std::string>();
   if (in_request.contains("resolution")) l_info.resolution_ = in_request.at("resolution").get<std::string>();
-  // 推理信封(Responses)没有 resolution, 提示词在 input_text/instructions 里
   if (in_request.contains("instructions"))
     l_info.text_prompt_ += in_request.at("instructions").get<std::string>() + "\n";
   if (in_request.contains("input_text")) l_info.text_prompt_ += in_request.at("input_text").get<std::string>() + "\n";
-  // 透传信封(**网关路径**)的提示词在 Responses 的 input 里, 不再是上面的扁平 input_text。
-  // 不接这一支的话, 前台任务列表与日志上所有网关推理的提示词都是空的 —— 而「这次问了什么」
-  // 恰恰是排查内容违规、比对计费时唯一要看的东西。
-  //
-  // 与上面两行同样是宽容读键: input 可以是字符串, 也可以是元素列表, 取不出来就跳过,
-  // 绝不因为形状不是预期的而抛 —— 这只是给人看的摘要, 不是解析契约。
-  if (in_request.contains("input")) collect_input_preview(in_request.at("input"), l_info.text_prompt_);
-  // content 中 type 为 text 的项按顺序累加为提示词
   if (in_request.contains("content") && in_request.at("content").is_array())
     for (const auto& l_value : in_request.at("content"))
       if (l_value.contains("type") && l_value.at("type").get<std::string>() == "text" && l_value.contains("text"))
@@ -100,9 +54,6 @@ ai_client_base::request_info_t seedance2_client::collect_request_info(const nloh
 boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::submit_task(
     const doodle::seedance2::task& in_task
 ) {
-  // 推理任务走同步的 Responses API: 一次调用就有结果, 不做异步提交
-  if (in_task.type_ == doodle::seedance2::task_type::inference) co_return co_await run_inference_task(in_task);
-
   auto l_ip  = co_await get_ip_str();
   auto l_req = add_ip_to_req(
       in_task.data_request_, l_ip, url_sign_secret_,
@@ -146,55 +97,6 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::subm
 
 // ─── 推理 (Responses API) ────────────────────────────────────────────────────
 
-// 请求体的定稿规则(model/store 覆盖)就地写在下面 run_inference_task() 里: 它是唯一的调用点,
-// 于是不再单开一个头文件承载那个 inline 纯函数。
-
-std::string seedance2_client::get_error_code(const nlohmann::json& in_body) {
-  if (!in_body.contains("error") || !in_body.at("error").is_object()) return {};
-  return in_body.at("error").value("code", std::string{});
-}
-
-bool seedance2_client::is_sensitive_content_error(const nlohmann::json& in_body) {
-  const auto l_code = get_error_code(in_body);
-  return l_code.find("SensitiveContent") != std::string::npos || l_code.find("PolicyViolation") != std::string::npos;
-}
-
-std::string seedance2_client::extract_output_text(const nlohmann::json& in_body) {
-  if (!in_body.contains("output") || !in_body.at("output").is_array())
-    return in_body.value("output_text", std::string{});
-
-  std::string l_text{};
-  for (const auto& l_item : in_body.at("output")) {
-    if (!l_item.is_object()) continue;
-    // 思考打开时 output[0] 是 reasoning 项, 只有 message 项才是答案
-    if (l_item.value("type", std::string{}) != "message") continue;
-    if (!l_item.contains("content") || !l_item.at("content").is_array()) continue;
-    for (const auto& l_part : l_item.at("content")) {
-      if (!l_part.is_object()) continue;
-      if (l_part.value("type", std::string{}) != "output_text") continue;
-      l_text += l_part.value("text", std::string{});
-    }
-  }
-  return l_text;
-}
-
-std::string seedance2_client::strip_code_fence(std::string_view in_text) {
-  const auto l_trim = [](std::string_view in_v) {
-    const auto l_begin = in_v.find_first_not_of(" \t\r\n");
-    if (l_begin == std::string_view::npos) return std::string_view{};
-    return in_v.substr(l_begin, in_v.find_last_not_of(" \t\r\n") - l_begin + 1);
-  };
-
-  auto l_view = l_trim(in_text);
-  if (!l_view.starts_with("```")) return std::string{l_view};
-
-  const auto l_first_nl = l_view.find('\n');
-  if (l_first_nl == std::string_view::npos) return std::string{l_view};
-  l_view = l_view.substr(l_first_nl + 1);
-  if (const auto l_close = l_view.rfind("```"); l_close != std::string_view::npos) l_view = l_view.substr(0, l_close);
-  return std::string{l_trim(l_view)};
-}
-
 ai_client_base::run_task_result_t seedance2_client::parse_inference_response(
     const nlohmann::json& in_body, int in_status_code
 ) {
@@ -224,30 +126,13 @@ ai_client_base::run_task_result_t seedance2_client::parse_inference_response(
   return l_result;
 }
 
-boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_inference_task(
+boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::run_infer_task(
     const doodle::seedance2::task& in_task
 ) {
   const auto l_uid = in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_);
 
   auto l_body      = in_task.data_request_;
-  if (!l_body.is_object()) {
-    throw_exception(
-        http_request_error{
-            boost::beast::http::status::internal_server_error,
-            fmt::format(
-                "推理请求体不是 JSON 对象(任务 {}): {}", boost::uuids::to_string(in_task.uuid_id_), l_body.type_name()
-            )
-        }
-    );
-  }
-
-  {
-    const auto l_model = l_body.contains("model") && l_body.at("model").is_string()
-                             ? l_body.at("model").get<std::string>()
-                             : std::string{};
-    l_body["model"]    = l_model.empty() ? std::string{doodle_config::g_ark_inference_model} : l_model;
-    l_body["store"]    = false;
-  }
+  l_body["store"]  = false;
 
   run_task_result_t l_result{};
   {

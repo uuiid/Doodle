@@ -29,6 +29,18 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> ai_client_base::run_ta
   co_return l_result;
 }
 
+boost::asio::awaitable<ai_client_base::run_task_result_t> ai_client_base::run_infer_task(
+    const doodle::seedance2::task& in_task
+) {
+  throw_exception(
+      doodle_error{
+          boost::beast::http::status::not_implemented,
+          fmt::format("后端不支持推理任务(任务 {})", boost::uuids::to_string(in_task.uuid_id_))
+      }
+  );
+  co_return run_task_result_t{};
+}
+
 std::string ai_client_base::to_public_url(
     std::string_view in_url, std::string_view in_ip, std::string_view in_secret, std::string_view in_uid
 ) {

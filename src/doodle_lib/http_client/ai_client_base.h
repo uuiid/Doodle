@@ -62,6 +62,8 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
 
   virtual boost::asio::awaitable<run_task_result_t> run_task(const doodle::seedance2::task& in_task);
 
+  virtual boost::asio::awaitable<run_task_result_t> run_infer_task(const doodle::seedance2::task& in_task);
+
   virtual boost::asio::awaitable<void> cancel_task(const std::string& in_task_id)                      = 0;
 
   virtual boost::asio::awaitable<run_task_result_t> query_task(const doodle::seedance2::task& in_task) = 0;
