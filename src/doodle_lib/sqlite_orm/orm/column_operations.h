@@ -133,6 +133,14 @@ struct DOODLELIB_API column_operations : column_operations_base_t {
     std::string to_str(column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
+  struct DOODLELIB_API to_str_unary_t : to_str_base_t {
+    std::string fmt_str_;
+    column_operations_ptr operand_;
+    explicit to_str_unary_t(std::string fmt_str, column_operations_ptr operand)
+        : fmt_str_(std::move(fmt_str)), operand_(std::move(operand)) {}
+    std::string to_str(column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx) const override;
+    void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
+  };
 
   struct data_impl {
     column_info_ptr ptr_shared_;

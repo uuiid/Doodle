@@ -160,6 +160,17 @@ void column_operations::to_str_expr_t::collect_bind_variants(bind_value_collecto
   left_->collect_bind_variants(bind_variants);
 }
 
+std::string column_operations::to_str_unary_t::to_str(
+    column_info_ptr& /*in_ptr*/, const session& s, const to_sql_ctx& ctx
+) const {
+  auto l_operand_str = operand_->to_sql(s, ctx);
+  return fmt::vformat(fmt_str_, fmt::make_format_args(l_operand_str));
+}
+
+void column_operations::to_str_unary_t::collect_bind_variants(bind_value_collector_t& bind_variants) const {
+  operand_->collect_bind_variants(bind_variants);
+}
+
 // column_operations public methods
 column_info_ptr column_operations::get_column_info_ptr() const { return data_impl_ptr_->ptr_shared_; }
 
@@ -201,9 +212,9 @@ column_operations column_operations::operator=(const expression_t& other) const 
 }
 
 column_operations column_operations::operator!() const {
-  auto l_left                 = std::make_shared<column_operations>(*this);
-  l_left->data_impl_ptr_      = std::make_shared<data_impl>(*data_impl_ptr_);
-  auto l_ptr                  = std::make_shared<to_str_expr_t>("NOT ({})", l_left);
+  auto l_operand              = std::make_shared<column_operations>(*this);
+  l_operand->data_impl_ptr_   = std::make_shared<data_impl>(*data_impl_ptr_);
+  auto l_ptr                  = std::make_shared<to_str_unary_t>("NOT ({})", l_operand);
   data_impl_ptr_->to_str_ptr_ = l_ptr;
   return *this;
 }
