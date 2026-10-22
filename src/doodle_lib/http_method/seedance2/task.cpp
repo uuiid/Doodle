@@ -179,8 +179,11 @@ class seedance2_task_run_manager {
         .columns(object<sd2::task>(), object<ai_studio>())
         .from<sd2::task>()
         .where(
-            c(&sd2::task::status_) == sd2::task_status::preparing ||
-            c(&sd2::task::status_) == sd2::task_status::queued || c(&sd2::task::status_) == sd2::task_status::running
+            (c(&sd2::task::status_) == sd2::task_status::preparing ||
+             c(&sd2::task::status_) == sd2::task_status::queued ||
+             c(&sd2::task::status_) == sd2::task_status::running) &&
+            (c(&sd2::task::type_) == sd2::task_type::video || c(&sd2::task::type_) == sd2::task_type::picture)
+
         )
         .left_outer_join<ai_studio>(&ai_studio::uuid_id_, &sd2::task::ai_studio_id_)()
         .to_vector<task_info>();
