@@ -39,7 +39,7 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
   struct run_task_result_t {
     std::string task_id_;
     doodle::seedance2::task_status status_;
-    bool is_timeout_{false};
+    bool need_retry_{false};
     nlohmann::json data_response_;
 
     std::string result_text_{};

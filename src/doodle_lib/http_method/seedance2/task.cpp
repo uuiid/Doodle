@@ -247,7 +247,7 @@ class seedance2_task_run_manager {
       default: {
         // failed / cancelled / violation / expired —— 终态失败
         // 超时的失败可以重试: 退回 preparing, 由下一轮重新提交
-        if (l_result.is_timeout_ && in_task.retry_count_ < 100) {
+        if (l_result.need_retry_ && in_task.retry_count_ < 100) {
           l_update.set(c(&sd2::task::retry_count_) = c(&sd2::task::retry_count_) + 1);
           l_update.set(c(&sd2::task::status_) = sd2::task_status::preparing);
           l_status = sd2::task_status::preparing;

@@ -40,7 +40,7 @@ class DOODLELIB_API seedance2_client final : public ai_client_base {
 
   request_info_t collect_request_info(const nlohmann::json& in_request) const override;
 
-  static bool is_timeout_error(const nlohmann::json& in_body);
+  static bool is_retryable_error(const nlohmann::json& in_body);
   std::size_t default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const override;
 
   // ─── 推理(Responses API) ───────────────────────────────────────────────────

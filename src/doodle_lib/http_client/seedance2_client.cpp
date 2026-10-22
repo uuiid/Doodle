@@ -29,7 +29,7 @@ doodle::seedance2::task_status seedance2_client::parse_status(const nlohmann::js
                                     : doodle::seedance2::task_status::failed;
 }
 
-bool seedance2_client::is_timeout_error(const nlohmann::json& in_body) {
+bool seedance2_client::is_retryable_error(const nlohmann::json& in_body) {
   if (!in_body.contains("error")) return false;
   auto l_message = in_body.at("error").value("message", std::string{});
   return l_message.find("timeout while fetching resource") != std::string::npos;
@@ -139,7 +139,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::subm
 
   l_result.status_ =
       l_result.task_id_.empty() ? doodle::seedance2::task_status::failed : doodle::seedance2::task_status::queued;
-  l_result.is_timeout_ = is_timeout_error(l_result.data_response_);
+  l_result.need_retry_ = is_retryable_error(l_result.data_response_);
 
   co_return l_result;
 }
@@ -200,7 +200,7 @@ ai_client_base::run_task_result_t seedance2_client::parse_inference_response(
 ) {
   run_task_result_t l_result{};
   l_result.data_response_ = in_body;
-  l_result.is_timeout_    = is_timeout_error(in_body);
+  l_result.need_retry_    = is_retryable_error(in_body);
 
   if (in_body.contains("id") && in_body.at("id").is_string()) l_result.task_id_ = in_body.at("id").get<std::string>();
 
@@ -296,7 +296,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::quer
   run_task_result_t l_result;
   l_result.data_response_ = l_res.body();
   l_result.status_        = parse_status(l_result.data_response_);
-  l_result.is_timeout_    = is_timeout_error(l_result.data_response_);
+  l_result.need_retry_    = is_retryable_error(l_result.data_response_);
 
   if (l_result.data_response_.contains("content") && l_result.data_response_.at("content").contains("video_url"))
     l_result.result_files_.push_back(l_result.data_response_.at("content").at("video_url").get<std::string>());
