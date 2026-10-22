@@ -17,10 +17,12 @@ namespace doodle::http {
 DOODLE_HTTP_JWT_FUN(data_updata_logs)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/data/updata-logs")
 DOODLE_HTTP_FUN_END()
 // /api/data/production-specifications
 DOODLE_HTTP_JWT_FUN(data_production_specifications)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/data/production-specifications")
 DOODLE_HTTP_FUN_END()
 // /api/auth/login
 DOODLE_HTTP_FUN(auth_login)
@@ -40,6 +42,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/preview-files/{preview_file_id}
 DOODLE_HTTP_JWT_FUN(data_preview_files)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/data/preview-files/{preview_file_id_}", preview_file_id_)
 uuid preview_file_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/data/projects/{}/settings/task-types

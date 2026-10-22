@@ -37,12 +37,14 @@ std::int64_t get_remaining_tokens_for_person(const uuid& in_person_id);
 // /api/seedance2/thumbnail/{id}.png
 DOODLE_HTTP_JWT_FUN(seedance2_thumbnail)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/seedance2/thumbnail/{id_}.png", id_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/pictures/{id}{file_extension}
 // 这个路由要把 URL 交给第三方(方舟)取图, 所以除会话鉴权外还接受短时效签名 URL
 DOODLE_HTTP_SIGNED_FUN(seedance2_pictures)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/seedance2/pictures/{id_}{file_extension_}", id_, file_extension_)
 uuid id_{};
 file_extension_t file_extension_{};
 DOODLE_HTTP_FUN_END()
@@ -58,18 +60,21 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(seedance2_subproject)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/seedance2/subproject")
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{id}
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE("/api/seedance2/subproject/{id_}", id_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // 添加缩略图
 // /api/seedance2/subproject/{id}/preview
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_preview)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/seedance2/subproject/{id_}/preview", id_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
@@ -77,12 +82,14 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_person_link)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE("/api/seedance2/subproject/{subproject_id_}/person", subproject_id_)
 uuid subproject_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/episodes
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_episode)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/seedance2/subproject/{subproject_id_}/episodes", subproject_id_)
 uuid subproject_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}
@@ -90,6 +97,9 @@ DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_episode_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE(
+    "/api/seedance2/subproject/{subproject_id_}/episodes/{episode_id_}", subproject_id_, episode_id_
+)
 uuid subproject_id_{};
 uuid episode_id_{};
 DOODLE_HTTP_FUN_END()
@@ -97,12 +107,19 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_episode_model_resolution_limit)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE(
+    "/api/seedance2/subproject/{subproject_id_}/episodes/{episode_id_}/model-resolution-limit", subproject_id_,
+    episode_id_
+)
 uuid subproject_id_{};
 uuid episode_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/model-resolution-limit/{limit_id}
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_model_resolution_limit_instance)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE(
+    "/api/seedance2/subproject/{subproject_id_}/model-resolution-limit/{limit_id_}", subproject_id_, limit_id_
+)
 uuid subproject_id_{};
 uuid episode_id_{};
 uuid limit_id_{};
@@ -110,12 +127,16 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/entity
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_entity)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/seedance2/subproject/{subproject_id_}/entity", subproject_id_)
 uuid subproject_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}/entity
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_generate_entity)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_ROUTE(
+    "/api/seedance2/subproject/{subproject_id_}/episodes/{episode_id_}/entity", subproject_id_, episode_id_
+)
 uuid subproject_id_{};
 uuid episode_id_{};
 DOODLE_HTTP_FUN_END()
@@ -124,12 +145,18 @@ DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_generate_entity_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE(
+    "/api/seedance2/subproject/{subproject_id_}/entity/{entity_id_}", subproject_id_, entity_id_
+)
 uuid subproject_id_{};
 uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/preview
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_entity_preview)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE(
+    "/api/seedance2/subproject/{subproject_id_}/entity/{entity_id_}/preview", subproject_id_, entity_id_
+)
 uuid subproject_id_{};
 uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
@@ -139,6 +166,9 @@ DOODLE_HTTP_JWT_FUN(seedance2_subproject_task)
 seedance2_subproject_task();
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE(
+    "/api/seedance2/subproject/{subproject_id_}/entity/{entity_id_}/task", subproject_id_, entity_id_
+)
 uuid subproject_id_{};
 uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
@@ -146,17 +176,20 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/task
 DOODLE_HTTP_JWT_FUN(seedance2_task)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/seedance2/task")
 DOODLE_HTTP_FUN_END()
 // 任务运行管理器: 获取运行状态 / 启动运行循环
 // /api/seedance2/task/run
 DOODLE_HTTP_JWT_FUN(seedance2_task_run)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/seedance2/task/run")
 DOODLE_HTTP_FUN_END()
 //
 // /api/seedance2/task/{date}-{date}
 DOODLE_HTTP_JWT_FUN(seedance2_task_date)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/seedance2/task/{date_start_}-{date_end_}", date_start_, date_end_)
 chrono::year_month_day date_start_{};
 chrono::year_month_day date_end_{};
 DOODLE_HTTP_FUN_END()
@@ -165,6 +198,7 @@ DOODLE_HTTP_JWT_FUN(seedance2_subproject_task_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE("/api/seedance2/subproject/{subproject_id_}/task/{id_}", subproject_id_, id_)
 uuid subproject_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
@@ -173,6 +207,9 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_entity_reference)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE(
+    "/api/seedance2/subproject/{subproject_id_}/entity/{entity_id_}/reference", subproject_id_, entity_id_
+)
 uuid subproject_id_{};
 uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
@@ -180,6 +217,7 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/reference/{id}
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_reference_instance)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE("/api/seedance2/subproject/{subproject_id_}/reference/{id_}", subproject_id_, id_)
 uuid subproject_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
@@ -189,6 +227,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_category)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/seedance2/subproject/{subproject_id_}/category", subproject_id_)
 uuid subproject_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/category/{category_id}
@@ -196,12 +235,18 @@ DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_category_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE(
+    "/api/seedance2/subproject/{subproject_id_}/category/{category_id_}", subproject_id_, category_id_
+)
 uuid subproject_id_{};
 uuid category_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/subproject/{subproject_id}/category/{category_id}/entity
 DOODLE_HTTP_JWT_FUN(seedance2_subproject_ai_category_entity)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE(
+    "/api/seedance2/subproject/{subproject_id_}/category/{category_id_}/entity", subproject_id_, category_id_
+)
 uuid subproject_id_{};
 uuid category_id_{};
 DOODLE_HTTP_FUN_END()
@@ -211,21 +256,27 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(seedance2_tokens)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/seedance2/tokens")
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/tokens/person/{person_id}
 DOODLE_HTTP_JWT_FUN(seedance2_tokens_person_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_ROUTE("/api/seedance2/tokens/person/{person_id_}", person_id_)
 uuid person_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/tokens/person/all
 DOODLE_HTTP_JWT_FUN(seedance2_tokens_person_all)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/seedance2/tokens/person/all")
 DOODLE_HTTP_FUN_END()
 // 获取某人某段时间 token 消耗统计
 // /api/seedance2/tokens/person/{person_id}/date/{date}-{date}
 DOODLE_HTTP_JWT_FUN(seedance2_tokens_person_date_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE(
+    "/api/seedance2/tokens/person/{person_id_}/date/{date_start_}-{date_end_}", person_id_, date_start_, date_end_
+)
 uuid person_id_{};
 chrono::year_month_day date_start_{};
 chrono::year_month_day date_end_{};
@@ -233,6 +284,7 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/tokens/person/{person_id}/date/{date}
 DOODLE_HTTP_JWT_FUN(seedance2_tokens_person_date_instance_day)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/seedance2/tokens/person/{person_id_}/date/{date_}", person_id_, date_)
 uuid person_id_{};
 chrono::year_month_day date_{};
 DOODLE_HTTP_FUN_END()
@@ -241,6 +293,7 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/tokens/person/date/{date}-{date}
 DOODLE_HTTP_JWT_FUN(seedance2_tokens_person_date_all)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/seedance2/tokens/person/date/{date_start_}-{date_end_}", date_start_, date_end_)
 chrono::year_month_day date_start_{};
 chrono::year_month_day date_end_{};
 DOODLE_HTTP_FUN_END()
@@ -249,12 +302,14 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(seedance2_tokens_person_date)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/seedance2/tokens/person/date/{date_}", date_)
 chrono::year_month_day date_{};
 DOODLE_HTTP_FUN_END()
 // 获取预警信息(task重复度)
 // /api/seedance2/task-similarity
 DOODLE_HTTP_JWT_FUN(seedance2_task_similarity)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/seedance2/task-similarity")
 DOODLE_HTTP_FUN_END()
 
 /// 画布相关 ---------------------
@@ -262,6 +317,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(canvas_)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/seedance2/subproject/{subproject_id_}/canvas", subproject_id_)
 uuid subproject_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/canvas/{canvas_id}
@@ -269,6 +325,7 @@ DOODLE_HTTP_JWT_FUN(canvas_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE("/api/seedance2/canvas/{canvas_id_}", canvas_id_)
 uuid canvas_id_{};
 DOODLE_HTTP_FUN_END()
 
@@ -277,6 +334,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(canvas_node)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/seedance2/canvas/{canvas_id_}/node", canvas_id_)
 uuid canvas_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/canvas/{canvas_id}/node/{node_id}
@@ -294,11 +352,13 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(canvas_connection)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/seedance2/canvas/{canvas_id_}/connection", canvas_id_)
 uuid canvas_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/canvas/{canvas_id}/connection/{connection_id}
 DOODLE_HTTP_JWT_FUN(canvas_connection_instance)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE("/api/seedance2/canvas/{canvas_id_}/connection/{connection_id_}", canvas_id_, connection_id_)
 uuid canvas_id_{};
 uuid connection_id_{};
 DOODLE_HTTP_FUN_END()
@@ -307,17 +367,22 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/canvas/{canvas_id}/person
 DOODLE_HTTP_JWT_FUN(canvas_person)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/seedance2/canvas/{canvas_id_}/person", canvas_id_)
 uuid canvas_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/canvas_link/{canvas_link_id}
 DOODLE_HTTP_JWT_FUN(canvas_person_instance)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE("/api/seedance2/canvas_link/{canvas_link_id_}", canvas_link_id_)
 uuid canvas_link_id_{};
 DOODLE_HTTP_FUN_END()
 
 // /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/depth
 DOODLE_HTTP_JWT_FUN(doodle_ai_depth_estimation_video)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE(
+    "/api/seedance2/subproject/{subproject_id_}/entity/{entity_id_}/depth", subproject_id_, entity_id_
+)
 uuid subproject_id_{};
 uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
@@ -326,6 +391,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(doodle_ai_depth_estimation_file)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_ROUTE("/api/seedance2/depth/{depth_id_}", depth_id_)
 uuid depth_id_;
 DOODLE_HTTP_FUN_END()
 
