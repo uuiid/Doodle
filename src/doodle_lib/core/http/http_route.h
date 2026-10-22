@@ -2,6 +2,7 @@
 // Created by TD on 2024/2/21.
 //
 #pragma once
+#include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
@@ -10,6 +11,7 @@
 
 #include <map>
 #include <memory>
+#include <tuple>
 #include <typeindex>
 
 namespace doodle::http {
@@ -48,6 +50,20 @@ class DOODLELIB_API http_route {
     } else
       url_route_map_type_[l_type_index] = l_function;
     return reg(std::forward<url_route_component_ptr>(in_component), l_function);
+  }
+  template <typename T, typename... Args>
+  http_route& reg_c(Args&&... args) {
+    auto l_component = std::apply(
+        [](auto&&... args) { return url_route_component_t::create_ptr(std::forward<decltype(args)>(args)...); },
+        T::route_info()
+    );
+    auto l_type_index = std::type_index(typeid(T));
+    auto l_function   = std::make_shared<T>(std::forward<Args>(args)...);
+    if (url_route_map_type_.contains(l_type_index)) {
+      SPDLOG_WARN("http_route::reg_t: 重复注册路由类型 {}，请检查代码", l_type_index.name());
+    } else
+      url_route_map_type_[l_type_index] = l_function;
+    return reg(std::forward<url_route_component_ptr>(l_component), l_function);
   }
   // 路由分发
   virtual http_function_ptr operator()(

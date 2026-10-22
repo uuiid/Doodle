@@ -284,7 +284,7 @@ DOODLE_HTTP_JWT_FUN(canvas_node_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
-DOODLE_HTTP_ROUTE("/api/seedance2/canvas/{canvas_id}/node/{node_id}", canvas_id_, node_id_)
+DOODLE_HTTP_ROUTE("/api/seedance2/canvas/{canvas_id_}/node/{node_id_}", canvas_id_, node_id_)
 uuid canvas_id_{};
 uuid node_id_{};
 DOODLE_HTTP_FUN_END()

@@ -2,6 +2,8 @@
 // Created by TD on 2024/2/21.
 //
 #pragma once
+#include <doodle_core/exception/exception.h>
+
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/logger/logger.h>
@@ -15,11 +17,13 @@
 #include <boost/preprocessor/variadic/to_seq.hpp>
 #include <boost/url.hpp>
 
-#include "http_route.h"
+#include <array>
 #include <magic_enum/magic_enum_all.hpp>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <utility>
+
 
 namespace doodle::http {
 
@@ -212,6 +216,7 @@ class DOODLELIB_API url_route_component_t : public url_route_component_base_t {
 
    public:
     constexpr explicit initializer_t(const char* in_str, std::size_t in_len) : url_path_{in_str, in_len} {}
+    constexpr explicit initializer_t(std::string in_str) : url_path_{std::move(in_str)} {}
     template <typename... Args>
     initializer_t& operator()(Args... args) {
       fmt_url_path(create_cap_regex(args)...);
@@ -233,8 +238,23 @@ class DOODLELIB_API url_route_component_t : public url_route_component_base_t {
       boost::urls::segments_ref in_segments_ref, const std::shared_ptr<http_function>& in_data
   ) const override;
   template <typename... Args>
-  static url_route_component_ptr create_ptr(const char* in_str, Args&&... args) {
+  static url_route_component_ptr create_ptr(
+      const char* in_str, Args&&... in_args
+  ) {  // in_args -> std::pair<const char*, Member_Pointer>
+    std::array<std::string, sizeof...(in_args)> l_args_array{std::get<0>(in_args)...};
+    // 去除最后一个 _
+    for (auto& arg : l_args_array) arg = '{' + arg + '}';
 
+    std::string l_in_str{in_str};
+    for (const auto& arg : l_args_array) {
+      auto l_it = l_in_str.find(arg);
+      DOODLE_CHICK(l_it != std::string::npos, "Argument not found in URL string");
+      l_in_str.replace(l_it, arg.size(), "{}");
+    }
+
+    initializer_t l_initializer_t{l_in_str};
+    l_initializer_t(std::get<1>(in_args)...);
+    return l_initializer_t;
   };
 };
 url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t);
