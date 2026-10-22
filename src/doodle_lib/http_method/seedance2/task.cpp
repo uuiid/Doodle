@@ -140,9 +140,8 @@ class client_factory {
     if (in_task.backend_ == sd2::task_backend::kmt_image) {
       if (!l_pair.kmt_image_) {
         l_pair.kmt_image_ = std::make_shared<kmt_image_client>(*core_set::get_set().ctx_ptr);
-        l_pair.kmt_image_->set_token(in_studio.transfer_station_key_);
+        l_pair.kmt_image_->set_token(in_studio.kmt_key_);
         l_pair.kmt_image_->set_logger(g_logger_ctrl().get_http());
-        l_pair.kmt_image_->set_url_sign_secret(get_url_sign_secret());
       }
       return l_pair.kmt_image_;
     }
@@ -613,6 +612,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
   std::int32_t l_offset = 0;
   std::optional<sd2::task_status> l_status{};
   std::optional<sd2::task_type> l_task_type{};
+  std::optional<sd2::task_backend> l_backend{};
   uuid l_project{};
   uuid l_user_id{};
   for (auto&& [key, value, has_value] : in_handle->url_.params()) {
@@ -620,6 +620,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
     if (key == "offset") l_offset = std::stoi(value);
     if (key == "status") l_status = magic_enum::enum_cast<sd2::task_status>(value).value();
     if (key == "task_type") l_task_type = magic_enum::enum_cast<sd2::task_type>(value).value();
+    if (key == "backend") l_backend = magic_enum::enum_cast<sd2::task_backend>(value).value();
     if (key == "project") l_project = from_uuid_str(value);
     if (key == "user_id") l_user_id = from_uuid_str(value);
   }
@@ -640,6 +641,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
     );
   if (l_status) l_query.where(c(&sd2::task::status_) == *l_status);
   if (l_task_type) l_query.where(c(&sd2::task::type_) == *l_task_type);
+  if (l_backend) l_query.where(c(&sd2::task::backend_) == *l_backend);
   if (!l_project.is_nil()) l_query.where(c(&sd2::subproject::project_id_) == l_project);
   if (!l_user_id.is_nil()) l_query.where(c(&sd2::task::user_id_) == l_user_id);
   co_return in_handle->make_msg(nlohmann::json{} = l_query.limit(l_size).offset(l_offset)().to_vector());
