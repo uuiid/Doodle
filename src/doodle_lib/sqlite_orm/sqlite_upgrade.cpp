@@ -106,11 +106,11 @@ struct upgrade_3_t : sqlite_upgrade {
         .set(
             orm::c(&seedance2::ai_episode_model_resolution_limit::backend_) = seedance2::task_backend::transfer_station
         )
-        .where(!orm::c(&seedance2::ai_episode_model_resolution_limit::backend_).like("doubao-%"))();
+        .where(!(orm::c(&seedance2::ai_episode_model_resolution_limit::model_name_).like("doubao-%")))();
     orm::update(l_s)
         .from<seedance2::ai_episode_model_resolution_limit>()
         .set(orm::c(&seedance2::ai_episode_model_resolution_limit::backend_) = seedance2::task_backend::seedance2)
-        .where(orm::c(&seedance2::ai_episode_model_resolution_limit::backend_).like("doubao-%"))();
+        .where(orm::c(&seedance2::ai_episode_model_resolution_limit::model_name_).like("doubao-%"))();
     l_s.pragma().user_version(g_current_version);
     l_s.pragma().foreign_keys(true);
   }

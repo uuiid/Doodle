@@ -201,7 +201,8 @@ column_operations column_operations::operator=(const expression_t& other) const 
 }
 
 column_operations column_operations::operator!() const {
-  auto l_ptr                  = std::make_shared<to_str_value_t>("NOT ({})");
+  auto l_left                 = std::make_shared<column_operations>(*this);
+  auto l_ptr                  = std::make_shared<to_str_expr_t>("NOT ({})", l_left);
   data_impl_ptr_->to_str_ptr_ = l_ptr;
   return *this;
 }
