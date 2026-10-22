@@ -162,7 +162,6 @@ class DOODLELIB_API url_route_component_t : public url_route_component_base_t {
     component_vector_t component_;
     std::size_t capture_count_{};
 
-    void parse_url_path();
 
     template <typename Member_Pointer>
       requires std::is_member_pointer_v<Member_Pointer>
@@ -223,6 +222,7 @@ class DOODLELIB_API url_route_component_t : public url_route_component_base_t {
       component_ = {create_cap_ptr(args)...};
       return *this;
     }
+    void parse_url_path();
     component_vector_t get_component_vector() const;
     operator url_route_component_ptr() const;
   };
@@ -252,7 +252,8 @@ class DOODLELIB_API url_route_component_t : public url_route_component_base_t {
       l_in_str.replace(l_it, arg.size(), "{}");
     }
 
-    initializer_t l_initializer_t{l_in_str};
+    initializer_t l_initializer_t{std::move(l_in_str)};
+    l_initializer_t.parse_url_path();
     l_initializer_t(std::get<1>(in_args)...);
     return l_initializer_t;
   };
