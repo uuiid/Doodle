@@ -39,7 +39,7 @@ constexpr std::string_view g_generations_path{"/v1/images/generations"};
 constexpr std::string_view g_edits_path{"/v1/images/edits"};
 constexpr std::string_view g_default_ext{".png"};
 constexpr std::string_view g_pictures_prefix{"/api/seedance2/pictures/"};
-constexpr std::chrono::seconds g_request_timeout{360};
+constexpr std::chrono::seconds g_request_timeout{600};
 constexpr std::string_view g_default_model{"gpt-image-2.5-vip"};
 constexpr std::string_view g_edit_image_field{"image"};
 constexpr std::size_t g_max_reference_images{8};
@@ -355,8 +355,7 @@ ai_client_base::request_info_t apipy_image_client::collect_request_info(const nl
       );
     const auto l_size = FSys::file_size(l_path);
     DOODLE_CHICK_HTTP(
-        l_size > 0, bad_request,
-        fmt::format("参考图大小必须大于 0 字节, 收到 {} 字节: {}", l_size, std::string{url})
+        l_size > 0, bad_request, fmt::format("参考图大小必须大于 0 字节, 收到 {} 字节: {}", l_size, std::string{url})
     );
     auto l_ext = l_path.extension().generic_string();
     std::ranges::transform(l_ext, l_ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
@@ -451,6 +450,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
   l_req.set(boost::beast::http::field::accept, "application/json");
   l_req.set(boost::beast::http::field::host, l_client->server_ip_);
   l_req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
+  l_req.set(boost::beast::http::field::connection, "keep-alive");
   l_client->set_timeout(g_request_timeout);
 
   boost::beast::http::response<http::basic_json_body> l_res{};
@@ -465,6 +465,8 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> apipy_image_client::su
   l_result.input_tokens_  = l_response.input_tokens_;
   l_result.output_tokens_ = l_response.output_tokens_;
   l_result.total_tokens_  = l_response.total_tokens_;
+  l_result.is_timeout_    = l_res.result() == boost::beast::http::status::too_many_requests ||
+                            l_res.result() == boost::beast::http::status::service_unavailable;
 
   if (l_result.status_ != doodle::seedance2::task_status::succeeded) {
     SPDLOG_LOGGER_ERROR(
