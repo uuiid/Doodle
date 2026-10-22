@@ -72,7 +72,6 @@ class DOODLELIB_API kmt_image_client final : public ai_client_base {
 
  private:
   static doodle::seedance2::task_status parse_status(std::string_view in_status);
-  static std::string parse_task_id(const nlohmann::json& in_body);
 };
 
 }  // namespace doodle::http::seedance2

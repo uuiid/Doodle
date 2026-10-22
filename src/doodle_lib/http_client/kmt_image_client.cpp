@@ -54,10 +54,14 @@ constexpr model_pricing g_model_pricings[] = {
     {"gpt-image-2.5-sunburst", 2400, false, false},
 };
 
-const model_pricing* find_pricing(std::string_view in_name) {
+const model_pricing& find_pricing(std::string_view in_name) {
   for (const auto& l_p : g_model_pricings)
-    if (l_p.name == in_name) return &l_p;
-  return nullptr;
+    if (l_p.name == in_name) return l_p;
+  throw_exception(
+      http_request_error{
+          boost::beast::http::status::bad_request, fmt::format("模型 {} 未登记定价, 不允许提交", in_name)
+      }
+  );
 }
 
 FSys::path parse_site_image_id(std::string_view in_url) {
@@ -188,19 +192,6 @@ doodle::seedance2::task_status kmt_image_client::parse_status(std::string_view i
   throw_exception(doodle_error{fmt::format("kmt_image_client: 未识别的任务状态 {}", in_status)});
 }
 
-std::string kmt_image_client::parse_task_id(const nlohmann::json& in_body) {
-  if (!in_body.is_object()) return {};
-  for (const auto* l_key : {"id", "task_id"})
-    if (in_body.contains(l_key) && in_body.at(l_key).is_string() && !in_body.at(l_key).get<std::string>().empty())
-      return in_body.at(l_key).get<std::string>();
-  if (in_body.contains("data") && in_body.at("data").is_object())
-    for (const auto* l_key : {"id", "task_id"})
-      if (in_body.at("data").contains(l_key) && in_body.at("data").at(l_key).is_string() &&
-          !in_body.at("data").at(l_key).get<std::string>().empty())
-        return in_body.at("data").at(l_key).get<std::string>();
-  return {};
-}
-
 ai_client_base::request_info_t kmt_image_client::collect_request_info(const nlohmann::json& in_request) const {
   const auto l_req = in_request.get<doodle::seedance2::transfer_station_request_t>();
 
@@ -208,8 +199,6 @@ ai_client_base::request_info_t kmt_image_client::collect_request_info(const nloh
       l_req.reference_images_.size() <= g_max_reference_images, bad_request, "参考图最多 {} 张, 收到 {} 张",
       g_max_reference_images, l_req.reference_images_.size()
   );
-
-  DOODLE_CHICK_HTTP(find_pricing(l_req.model_) != nullptr, bad_request, "模型 {} 未登记定价, 不允许提交", l_req.model_);
 
   request_info_t l_info{};
   l_info.model_       = l_req.model_;
@@ -220,6 +209,9 @@ ai_client_base::request_info_t kmt_image_client::collect_request_info(const nloh
   DOODLE_CHICK_HTTP(!l_info.model_.empty(), bad_request, "缺少模型名称");
   DOODLE_CHICK_HTTP(!l_info.resolution_.empty(), bad_request, "缺少分辨率");
   DOODLE_CHICK_HTTP(!l_info.text_prompt_.empty(), bad_request, "缺少提示词");
+
+  find_pricing(l_info.model_);
+  for (auto&& l_url : l_req.reference_images_) parse_site_image_id(l_url);
   return l_info;
 }
 
@@ -263,18 +255,11 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::subm
   http_client_ptr_->set_timeout(g_request_timeout);
 
   boost::beast::http::response<http::basic_json_body> l_res{};
-  try {
-    co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
-  } catch (const boost::system::system_error& e) {
-    SPDLOG_LOGGER_ERROR(logger_, "快米兔 图片提交连接失败: {}", e.what());
-    l_result.status_        = doodle::seedance2::task_status::failed;
-    l_result.need_retry_    = true;
-    l_result.data_response_ = nlohmann::json{{"error", e.what()}};
-    co_return l_result;
-  }
+
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
 
   l_result.data_response_ = l_res.body();
-  l_result.task_id_       = parse_task_id(l_result.data_response_);
+  l_result.task_id_       = l_result.data_response_.get<response_t>().id_;
 
   if (l_res.result() == boost::beast::http::status::too_many_requests ||
       l_res.result() == boost::beast::http::status::internal_server_error ||
@@ -324,26 +309,23 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::quer
   auto l_req_body         = in_task.data_request_.get<doodle::seedance2::transfer_station_request_t>();
 
   const auto l_resp       = l_result.data_response_.get<response_t>();
+  const auto& l_pricing   = find_pricing(l_req_body.model_);
 
   l_result.status_        = parse_status(l_resp.status_);
-
-  const auto* l_pricing   = find_pricing(l_req_body.model_);
   switch (l_result.status_) {
     case doodle::seedance2::task_status::succeeded:
-      l_result.completion_tokens_ = l_pricing ? l_pricing->cost_points : 0;
+      l_result.completion_tokens_ = l_pricing.cost_points;
       break;
     case doodle::seedance2::task_status::failed:
-      l_result.completion_tokens_ = (l_pricing && l_pricing->charge_on_failure) ? l_pricing->cost_points : 0;
+      l_result.completion_tokens_ = l_pricing.charge_on_failure ? l_pricing.cost_points : 0;
       break;
     case doodle::seedance2::task_status::violation:
-      l_result.completion_tokens_ = (l_pricing && l_pricing->charge_on_violation) ? l_pricing->cost_points : 0;
+      l_result.completion_tokens_ = l_pricing.charge_on_violation ? l_pricing.cost_points : 0;
       break;
     default:
       l_result.completion_tokens_ = 0;
       break;
   }
-
-  if (!l_pricing) logger_->warn("未找到模型定价: {}", model_of_task(in_task));
 
   if (l_result.status_ == doodle::seedance2::task_status::succeeded) {
     for (const auto& l_item : l_resp.data_)
