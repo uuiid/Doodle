@@ -224,6 +224,16 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_clien
     }
   }
 
+  l_result.need_retry_ =
+      l_result.status_ == doodle::seedance2::task_status::failed && l_result.data_response_.contains("error") &&
+      l_result.data_response_.at("error").is_string() &&
+      (l_result.data_response_.at("error").get_ref<const std::string&>().starts_with("generate failed") ||
+       l_result.data_response_.at("error").get_ref<const std::string&>().starts_with("generate image failed") ||
+       l_result.data_response_.at("error").get_ref<const std::string&>().starts_with(
+           "The model load is too high, please try again later"
+       ) ||
+       l_result.data_response_.at("error").get_ref<const std::string&>().starts_with("image upload failed") ||
+       l_result.data_response_.at("error").get_ref<const std::string&>().starts_with("server_timeout"));
   co_return l_result;
 }
 // 不支持
