@@ -57,18 +57,7 @@ struct edits_form_t {
   [[nodiscard]] std::string content_type() const { return "multipart/form-data; boundary=" + boundary_; }
 };
 
-nlohmann::json to_kmt_body(const doodle::seedance2::transfer_station_request_t& in_req) {
-  nlohmann::json l_body{};
-  l_body["model"]           = in_req.model_;
-  l_body["prompt"]          = in_req.prompt_;
-  l_body["size"]            = in_req.image_size_.empty() ? in_req.aspect_ratio_ : in_req.image_size_;
-  l_body["async"]           = true;
-  l_body["response_format"] = "url";
-  if (!in_req.quality_.empty()) l_body["quality"] = in_req.quality_;
-  return l_body;
-}
-
-edits_form_t to_multipart(const nlohmann::json& in_body, const std::vector<std::string>& in_image_urls) {
+edits_form_t to_multipart(const kmt_image_client::request_t& in_req) {
   edits_form_t l_form{};
   l_form.boundary_ = "----doodle" + boost::uuids::to_string(core_set::get_set().get_uuid());
 
@@ -83,14 +72,14 @@ edits_form_t to_multipart(const nlohmann::json& in_body, const std::vector<std::
     l_form.body_ += "\r\n";
   };
 
-  l_append_text("model", in_body.value("model", std::string{}));
-  l_append_text("prompt", in_body.value("prompt", std::string{}));
-  l_append_text("size", in_body.value("size", std::string{}));
-  l_append_text("quality", in_body.value("quality", std::string{}));
+  l_append_text("model", in_req.model_);
+  l_append_text("prompt", in_req.prompt_);
+  l_append_text("size", in_req.size_);
+  l_append_text("quality", in_req.quality_);
   l_append_text("async", "true");
   l_append_text("response_format", "url");
 
-  for (const auto& l_url : in_image_urls) {
+  for (const auto& l_url : in_req.image_urls_) {
     if (l_url.empty()) continue;
     l_form.body_ += "--";
     l_form.body_ += l_form.boundary_;
@@ -112,6 +101,22 @@ std::string model_of_task(const doodle::seedance2::task& in_task) {
 }
 
 }  // namespace
+
+kmt_image_client::request_t::request_t(const doodle::seedance2::transfer_station_request_t& in_req)
+    : model_(in_req.model_),
+      prompt_(in_req.prompt_),
+      size_(in_req.image_size_.empty() ? in_req.aspect_ratio_ : in_req.image_size_),
+      quality_(in_req.quality_),
+      image_urls_(in_req.reference_images_) {}
+
+void to_json(nlohmann::json& j, const kmt_image_client::request_t& in_req) {
+  j["model"]           = in_req.model_;
+  j["prompt"]          = in_req.prompt_;
+  j["size"]            = in_req.size_;
+  j["async"]           = true;
+  j["response_format"] = "url";
+  if (!in_req.quality_.empty()) j["quality"] = in_req.quality_;
+}
 
 doodle::seedance2::transfer_station_request_t kmt_image_client::add_ip_to_req(
     const doodle::seedance2::transfer_station_request_t& in_req, std::string_view in_ip, std::string_view in_secret,
@@ -211,15 +216,15 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::subm
       in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_)
   );
 
-  auto l_body = to_kmt_body(l_req_body);
+  const kmt_image_client::request_t l_kmt_req{l_req_body};
 
   boost::beast::http::request<boost::beast::http::string_body> l_req{boost::beast::http::verb::post, {}, 11};
-  if (l_req_body.reference_images_.empty()) {
+  if (l_kmt_req.image_urls_.empty()) {
     l_req.target(std::string{g_generations_path});
-    l_req.body() = l_body.dump();
+    l_req.body() = (nlohmann::json{} = l_kmt_req).dump();
     l_req.set(boost::beast::http::field::content_type, "application/json");
   } else {
-    auto l_form = to_multipart(l_body, l_req_body.reference_images_);
+    auto l_form = to_multipart(l_kmt_req);
     l_req.target(std::string{g_edits_path});
     l_req.body() = std::move(l_form.body_);
     l_req.set(boost::beast::http::field::content_type, l_form.content_type());

@@ -6,6 +6,7 @@
 #include "ai_client_base.h"
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace doodle::http::seedance2 {
 
@@ -13,6 +14,18 @@ class DOODLELIB_API kmt_image_client final : public ai_client_base {
   constexpr static std::string_view g_default_host{"https://api.52pay.com"};
 
  public:
+  struct request_t {
+    std::string model_;
+    std::string prompt_;
+    std::string size_;
+    std::string quality_;
+    std::vector<std::string> image_urls_;
+
+    explicit request_t(const doodle::seedance2::transfer_station_request_t& in_req);
+
+    friend void to_json(nlohmann::json& j, const request_t& in_req);
+  };
+
   explicit kmt_image_client(boost::asio::ssl::context& in_ctx) : ai_client_base(std::string{g_default_host}, in_ctx) {}
 
   boost::asio::awaitable<run_task_result_t> submit_task(const doodle::seedance2::task& in_task) override;
