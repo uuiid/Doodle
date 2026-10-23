@@ -101,6 +101,7 @@ struct upgrade_3_t : sqlite_upgrade {
     l_s.pragma().foreign_keys(false);
     using namespace orm;
     l_s.add_column("seedance2_task_2", "model_name", column_type::text);
+    auto l_g = l_s.transaction();
     auto l_json_list = select(l_s)
                            .columns(&seedance2::task::uuid_id_, &seedance2::task::data_request_)
                            .from<seedance2::task>()()
@@ -111,6 +112,7 @@ struct upgrade_3_t : sqlite_upgrade {
       update(l_s).from<seedance2::task>().set(c(&seedance2::task::model_name_) = l_model_name).where(c(&seedance2::task::uuid_id_) == l_id)();
     }
 
+    l_g.commit();
     l_s.pragma().user_version(g_current_version);
     l_s.pragma().foreign_keys(true);
   }
