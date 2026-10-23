@@ -622,6 +622,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
   std::optional<chrono::system_zoned_time> l_time_beg{};
   std::optional<chrono::system_zoned_time> l_time_end{};
   uuid l_episode{};
+  uuid l_department{};
   for (auto&& [key, value, has_value] : in_handle->url_.params()) {
     if (key == "size") l_size = std::stoi(value);
     if (key == "offset") l_offset = std::stoi(value);
@@ -633,6 +634,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
     if (key == "time_beg") l_time_beg = from_chrono_time_zone_str(value);
     if (key == "time_end") l_time_end = from_chrono_time_zone_str(value);
     if (key == "episode") l_episode = from_uuid_str(value);
+    if (key == "department") l_department = from_uuid_str(value);
   }
 
   auto l_query =
@@ -642,24 +644,81 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
           .join<sd2::subproject>(c(&sd2::task::subproject_id_) == c(&sd2::subproject::uuid_id_))
           .join<sd2::ai_generate_entity>(c(&sd2::task::ai_generate_entity_id_) == c(&sd2::ai_generate_entity::uuid_id_))
           .order_by(&sd2::task::created_at_, false);
-  if (!person_.is_manager())
-    l_query.where(
+  auto l_query_sum   = select(l_sql)
+                           .columns(sum(&sd2::task::completion_tokens_))
+                           .from<sd2::task>()
+                           .join<sd2::subproject>(c(&sd2::task::subproject_id_) == c(&sd2::subproject::uuid_id_))
+                           .join<sd2::ai_generate_entity>(
+                               c(&sd2::task::ai_generate_entity_id_) == c(&sd2::ai_generate_entity::uuid_id_)
+                           );
+  auto l_query_count = select(l_sql)
+                           .columns(count(&sd2::task::uuid_id_))
+                           .from<sd2::task>()
+                           .join<sd2::subproject>(c(&sd2::task::subproject_id_) == c(&sd2::subproject::uuid_id_))
+                           .join<sd2::ai_generate_entity>(
+                               c(&sd2::task::ai_generate_entity_id_) == c(&sd2::ai_generate_entity::uuid_id_)
+                           );
+  if (!person_.is_manager()) {
+    auto l_link_entity = c(&sd2::task::ai_generate_entity_id_) == c(&sd2::ai_generate_entity::uuid_id_);
+    auto l_accessible_subproject =
         c(&sd2::subproject::uuid_id_)
             .in(select(l_sql)
                     .columns(&sd2::subproject_person_link::subproject_id_)
                     .from<sd2::subproject_person_link>()
                     .where(c(&sd2::subproject_person_link::person_id_) == person_.person_.uuid_id_)) &&
-        !c(&sd2::task::archived_)
-    );
-  if (l_status) l_query.where(c(&sd2::task::status_) == *l_status);
-  if (l_task_type) l_query.where(c(&sd2::task::type_) == *l_task_type);
-  if (l_backend) l_query.where(c(&sd2::task::backend_) == *l_backend);
-  if (!l_project.is_nil()) l_query.where(c(&sd2::subproject::project_id_) == l_project);
-  if (!l_user_id.is_nil()) l_query.where(c(&sd2::task::user_id_) == l_user_id);
-  if (l_time_beg) l_query.where(c(&sd2::task::created_at_) >= *l_time_beg);
-  if (l_time_end) l_query.where(c(&sd2::task::created_at_) <= *l_time_end);
-  if (!l_episode.is_nil()) l_query.where(c(&sd2::ai_generate_entity::ai_episode_id_) == l_episode);
-  co_return in_handle->make_msg(nlohmann::json{} = l_query.limit(l_size).offset(l_offset)().to_vector());
+        !c(&sd2::task::archived_);
+    l_query.where(l_accessible_subproject && l_link_entity),
+        l_query_sum.where(l_accessible_subproject && l_link_entity),
+        l_query_count.where(l_accessible_subproject && l_link_entity);
+  }
+  if (l_status)
+    l_query.where(c(&sd2::task::status_) == *l_status), l_query_sum.where(c(&sd2::task::status_) == *l_status),
+        l_query_count.where(c(&sd2::task::status_) == *l_status);
+  if (l_task_type)
+    l_query.where(c(&sd2::task::type_) == *l_task_type), l_query_sum.where(c(&sd2::task::type_) == *l_task_type),
+        l_query_count.where(c(&sd2::task::type_) == *l_task_type);
+  if (l_backend)
+    l_query.where(c(&sd2::task::backend_) == *l_backend), l_query_sum.where(c(&sd2::task::backend_) == *l_backend),
+        l_query_count.where(c(&sd2::task::backend_) == *l_backend);
+  if (!l_project.is_nil())
+    l_query.where(c(&sd2::subproject::project_id_) == l_project),
+        l_query_sum.where(c(&sd2::subproject::project_id_) == l_project),
+        l_query_count.where(c(&sd2::subproject::project_id_) == l_project);
+  if (!l_user_id.is_nil())
+    l_query.where(c(&sd2::task::user_id_) == l_user_id), l_query_sum.where(c(&sd2::task::user_id_) == l_user_id),
+        l_query_count.where(c(&sd2::task::user_id_) == l_user_id);
+  if (l_time_beg)
+    l_query.where(c(&sd2::task::created_at_) >= *l_time_beg),
+        l_query_sum.where(c(&sd2::task::created_at_) >= *l_time_beg),
+        l_query_count.where(c(&sd2::task::created_at_) >= *l_time_beg);
+  if (l_time_end)
+    l_query.where(c(&sd2::task::created_at_) <= *l_time_end),
+        l_query_sum.where(c(&sd2::task::created_at_) <= *l_time_end),
+        l_query_count.where(c(&sd2::task::created_at_) <= *l_time_end);
+  if (!l_episode.is_nil())
+    l_query.where(c(&sd2::ai_generate_entity::ai_episode_id_) == l_episode),
+        l_query_sum.where(c(&sd2::ai_generate_entity::ai_episode_id_) == l_episode),
+        l_query_count.where(c(&sd2::ai_generate_entity::ai_episode_id_) == l_episode);
+  if (!l_department.is_nil())
+    l_query.where(c(&sd2::task::uuid_id_)
+                      .in(select(l_sql)
+                              .columns(&person_department_link::person_id_)
+                              .where(c(&person_department_link::department_id_) == l_department))),
+        l_query.where(c(&sd2::task::uuid_id_)
+                          .in(select(l_sql)
+                                  .columns(&person_department_link::person_id_)
+                                  .where(c(&person_department_link::department_id_) == l_department))),
+        l_query.where(c(&sd2::task::uuid_id_)
+                          .in(select(l_sql)
+                                  .columns(&person_department_link::person_id_)
+                                  .where(c(&person_department_link::department_id_) == l_department)));
+
+  nlohmann::json l_json;
+  l_json["data"]  = l_query.limit(l_size).offset(l_offset)().to_vector();
+  l_json["count"] = l_query_count().to_vector();
+  l_json["sum"]   = l_query_sum().to_vector();
+
+  co_return in_handle->make_msg(l_json);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_run, get) {
   co_return in_handle->make_msg(nlohmann::json{{"running", seedance2_task_run_manager::Get().is_running()}});
