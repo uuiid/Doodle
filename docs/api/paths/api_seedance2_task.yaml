@@ -4,25 +4,34 @@ get:
   summary: 获取所有可访问的任务
   description: |
     获取当前用户可访问的任务列表，按 `created_at` 倒序返回，支持分页与多条件过滤。
+
+    响应体是对象而非裸数组，三个字段共用同一套过滤条件（`size` / `offset` 只作用于 `data`）：
+    - `data` - 当前页的任务列表，元素同 `Task` schema
+    - `count` - 满足过滤条件的任务总数
+    - `sum` - 满足过滤条件的任务的 `completion_tokens` 之和
+
+    可见性：
     - 制片/管理员：查看所有任务（含已归档任务）
     - 普通用户：仅查看自己参与的子项目下的任务，且不含已归档（`archived=true`）的任务
 
     所有过滤条件之间为 AND 关系；`size` / `offset` 在过滤之后生效。
-    `task_type` 过滤的是任务响应中的 `type` 字段，`backend` 过滤的是任务响应中的 `backend` 字段。
-    非法枚举值（`status` / `task_type` / `backend`）、非法 UUID（`project` / `user_id`）或非法整数（`size` / `offset`）会导致请求失败。
+    `task_type` 过滤的是任务响应中的 `type` 字段，`backend` 过滤的是任务响应中的 `backend` 字段，
+    `project` 过滤的是任务所属子项目的 `project_id`。
+    非法枚举值（`status` / `task_type` / `backend`）、非法 UUID（`project` / `user_id` / `episode` / `department`）
+    或非法整数（`size` / `offset`）会导致请求失败。
   parameters:
     - name: size
       in: query
       schema:
         type: integer
         default: 100
-      description: 每页返回条数
+      description: 每页返回条数，只影响 `data`，不影响 `count` / `sum`
     - name: offset
       in: query
       schema:
         type: integer
         default: 0
-      description: 分页偏移量
+      description: 分页偏移量，只影响 `data`，不影响 `count` / `sum`
     - name: status
       in: query
       required: false
@@ -34,7 +43,7 @@ get:
       required: false
       schema:
         $ref: ../components/schemas/TaskType.yaml
-      description: 按任务类型过滤（图片/视频）
+      description: 按任务类型过滤（图片/视频/同步推理）
     - name: backend
       in: query
       required: false
@@ -55,14 +64,33 @@ get:
         type: string
         format: uuid
       description: 按提交用户 ID 过滤
+    - name: time_beg
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+      description: 按任务创建时间下界过滤（含边界）
+    - name: time_end
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+      description: 按任务创建时间上界过滤（含边界）
+    - name: episode
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: 按剧本集 ID 过滤，匹配任务所属 AI 生成实体的 `ai_episode_id`
   responses:
     '200':
-      description: 任务列表
+      description: 任务列表与统计
       content:
         application/json:
           schema:
-            type: array
-            items:
-              $ref: ../components/schemas/Task.yaml
+            $ref: ../components/schemas/TaskListPage.yaml
   security:
     - bearerAuth: []

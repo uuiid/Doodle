@@ -1,0 +1,18 @@
+type: object
+properties:
+  data:
+    type: array
+    description: 当前页任务列表，按 `created_at` 倒序
+    items:
+      $ref: ./Task.yaml
+  count:
+    type: integer
+    format: int64
+    description: 满足过滤条件的任务总数，不受 `size` / `offset` 影响
+  sum:
+    type: integer
+    format: int64
+    nullable: true
+    description: |
+      满足过滤条件的任务的 `completion_tokens` 之和，不受 `size` / `offset` 影响。
+      过滤后没有任务行时该值为 `null`（SQL `SUM` 对空集返回 NULL）。
