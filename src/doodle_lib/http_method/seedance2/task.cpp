@@ -664,13 +664,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
           .join<sd2::subproject>(c(&sd2::task::subproject_id_) == c(&sd2::subproject::uuid_id_))
           .join<sd2::ai_generate_entity>(c(&sd2::task::ai_generate_entity_id_) == c(&sd2::ai_generate_entity::uuid_id_))
           .order_by(&sd2::task::created_at_, false);
-  auto l_query_sum   = select(l_sql)
-                           .columns(sum(&sd2::task::completion_tokens_), &sd2::task::model_name_, &sd2::task::backend_)
-                           .from<sd2::task>()
-                           .join<sd2::subproject>(c(&sd2::task::subproject_id_) == c(&sd2::subproject::uuid_id_))
-                           .join<sd2::ai_generate_entity>(
-                               c(&sd2::task::ai_generate_entity_id_) == c(&sd2::ai_generate_entity::uuid_id_)
-                           );
+  auto l_query_sum =
+      select(l_sql)
+          .columns(sum(&sd2::task::completion_tokens_), &sd2::task::model_name_, &sd2::task::backend_)
+          .from<sd2::task>()
+          .join<sd2::subproject>(c(&sd2::task::subproject_id_) == c(&sd2::subproject::uuid_id_))
+          .join<sd2::ai_generate_entity>(c(&sd2::task::ai_generate_entity_id_) == c(&sd2::ai_generate_entity::uuid_id_))
+          .group_by(&sd2::task::model_name_, &sd2::task::backend_);
   auto l_query_count = select(l_sql)
                            .columns(count(&sd2::task::uuid_id_))
                            .from<sd2::task>()
