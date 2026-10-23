@@ -23,6 +23,7 @@
 #include "orm/delete.h"
 #include "sqlite_orm/orm/alias.h"
 #include "sqlite_orm/orm/exception.h"
+#include "sqlite_orm/orm/select.h"
 #include "sqlite_orm/orm/update.h"
 #include <chrono>
 #include <filesystem>
@@ -36,7 +37,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_old_version     = 34;
+constexpr std::size_t g_old_version     = 35;
 constexpr std::size_t g_current_version = g_old_version + 1;
 
 }  // namespace
@@ -97,20 +98,17 @@ struct upgrade_3_t : sqlite_upgrade {
     if (l_s.pragma().user_version() > g_old_version) return;
     backup(l_s);
     l_s.pragma().foreign_keys(false);
+    using namespace orm;
+    auto l_json_list = select(l_s)
+                           .columns(&seedance2::task::uuid_id_, &seedance2::task::data_request_)
+                           .from<seedance2::task>()()
+                           .to_vector();
+    for (auto&& [l_id, l_json] : l_json_list) {
+      auto l_model_name = l_json.value("model", std::string{});
+      if (l_model_name.empty()) continue;
+      update(l_s).set(c(&seedance2::task::model_name_) = l_model_name).where(c(&seedance2::task::uuid_id_) == l_id)();
+    }
 
-    l_s.add_column("ai_studio", "kmt_key", orm::column_type::text);
-    l_s.add_column("seedance2_ai_episode_model_resolution_limit", "backend", orm::column_type::text);
-
-    orm::update(l_s)
-        .from<seedance2::ai_episode_model_resolution_limit>()
-        .set(
-            orm::c(&seedance2::ai_episode_model_resolution_limit::backend_) = seedance2::task_backend::transfer_station
-        )
-        .where(!(orm::c(&seedance2::ai_episode_model_resolution_limit::model_name_).like("doubao-%")))();
-    orm::update(l_s)
-        .from<seedance2::ai_episode_model_resolution_limit>()
-        .set(orm::c(&seedance2::ai_episode_model_resolution_limit::backend_) = seedance2::task_backend::seedance2)
-        .where(orm::c(&seedance2::ai_episode_model_resolution_limit::model_name_).like("doubao-%"))();
     l_s.pragma().user_version(g_current_version);
     l_s.pragma().foreign_keys(true);
   }
