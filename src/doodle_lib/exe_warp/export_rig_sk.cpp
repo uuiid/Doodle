@@ -62,13 +62,13 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
     } else
       throw_exception(doodle_error{"文件名无法找到重命名配置 {} {}", p, impl_.rename_map_});
   }
-
-  for (auto&& l_ufile : FSys::list_files(l_import_root, doodle_config::ue4_uasset_ext)) {
-    if (FSys::exists(l_ufile)) {
-      SPDLOG_LOGGER_WARN(logger_ptr_, "删除旧的资产 {}", l_ufile);
-      FSys::remove(l_ufile);
+  if (FSys::exists(l_import_root))
+    for (auto&& l_ufile : FSys::list_files(l_import_root, doodle_config::ue4_uasset_ext)) {
+      if (FSys::exists(l_ufile)) {
+        SPDLOG_LOGGER_WARN(logger_ptr_, "删除旧的资产 {}", l_ufile);
+        FSys::remove(l_ufile);
+      }
     }
-  }
 
   for (auto& p : l_maya_file.out_file_list) {
     SPDLOG_LOGGER_WARN(logger_ptr_, "导出 {}", p);
