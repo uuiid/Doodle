@@ -715,8 +715,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
 
   nlohmann::json l_json;
   l_json["data"]  = l_query.limit(l_size).offset(l_offset)().to_vector();
-  l_json["count"] = l_query_count().to_vector();
-  l_json["sum"]   = l_query_sum().to_vector();
+  l_json["count"] = l_query_count().to_single();
+  l_json["sum"]   = l_query_sum().to_single();
 
   co_return in_handle->make_msg(l_json);
 }
