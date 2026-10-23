@@ -9,6 +9,7 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
+#include <doodle_lib/sqlite_orm/orm/sum.h>
 #include <doodle_lib/sqlite_orm/orm/table_info.h>
 
 #include <memory>
@@ -391,6 +392,12 @@ void get_column_info(const session& s, T&& alias_column, std::vector<std::shared
 {
   column_infos.push_back(std::make_shared<count_column_info_t>(std::forward<T>(alias_column)));
   // return true;
+}
+template <typename T>
+void get_column_info(const session& s, T&& sum_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
+  requires is_sum_t_v<std::decay_t<T>>
+{
+  column_infos.push_back(std::make_shared<sum_column_info_t>(std::forward<T>(sum_column)));
 }
 template <typename T>
 void get_column_info(const session& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)

@@ -13,6 +13,7 @@ target_sources(
         orm.h   
         sqlite_statement.h
         count.h
+        sum.h
         create_index.h
         table_info.h
         alias_subquery.h
@@ -37,6 +38,7 @@ target_sources(
         alias.cpp
         bind_value.cpp
         count.cpp
+        sum.cpp
         create_index.cpp
         table_info.cpp
         alias_subquery.cpp
