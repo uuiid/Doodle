@@ -123,7 +123,7 @@ struct compose_video_impl_t : public std::enable_shared_from_this<compose_video_
         std::chrono::steady_clock::now() - l_now
     );
 
-    preview::handle_video_file(l_new_path, fps_, size_, preview_file_, progress_data_);
+    handle_video_file(l_new_path, fps_, size_, preview_file_, progress_data_);
   } catch (...) {
     auto l_str = boost::current_exception_diagnostic_information();
     boost::asio::co_spawn(
@@ -381,7 +381,7 @@ struct run_actions_playlists_preview_files_create_review {
     cv::Size size_{data_ptr_->size_.width, data_ptr_->size_.height};
     auto l_prj =
         l_sql.get_by_uuid<project>(l_sql.get_by_uuid<task>(data_ptr_->review_preview_file_->task_id_).project_id_);
-    preview::handle_video_file(l_out_path, l_prj.fps_, size_, data_ptr_->review_preview_file_);
+    handle_video_file(l_out_path, l_prj.fps_, size_, data_ptr_->review_preview_file_);
 
     SPDLOG_LOGGER_INFO(data_ptr_->logger_, "生成评审视频完成 {}", l_out_path);
   } catch (...) {

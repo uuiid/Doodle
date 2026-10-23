@@ -11,7 +11,7 @@
 #include "reg.h"
 #include <memory>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 namespace sd2 = doodle::seedance2;
 
 // /api/seedance2/subproject/{subproject_id}/category
@@ -114,4 +114,4 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category_entity, get)
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

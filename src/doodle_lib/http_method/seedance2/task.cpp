@@ -58,7 +58,7 @@
 
 #define DOODLE_SEED2
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 namespace sd2 = doodle::seedance2;
 
 namespace {
@@ -690,4 +690,4 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_animation_waiting, get) {
   co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
 }
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

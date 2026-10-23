@@ -131,7 +131,7 @@ boost::asio::awaitable<void> update_movie_files::run() {
     } else {
       l_movie_file = movie_file_;
     }
-    auto l_video_info = http::preview::get_video_duration(l_movie_file);
+    auto l_video_info = http::get_video_duration(l_movie_file);
     check_video_aperture(l_video_info.size_, l_prj.get_resolution());
   }
   DOODLE_CHICK(FSys::exists(l_movie_file), "视频文件 {} 不存在", l_movie_file.string());

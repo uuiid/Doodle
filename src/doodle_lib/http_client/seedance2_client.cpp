@@ -15,7 +15,7 @@
 
 #include <fmt/format.h>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 
 namespace {
 constexpr std::string_view g_generations_path{"/api/v3/contents/generations/tasks"};
@@ -226,4 +226,4 @@ std::size_t seedance2_client::default_consumed_tokens(const doodle::seedance2::t
   }
 }
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

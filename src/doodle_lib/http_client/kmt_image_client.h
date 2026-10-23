@@ -10,7 +10,7 @@
 #include <string_view>
 #include <vector>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 
 class DOODLELIB_API kmt_image_client final : public ai_client_base {
   constexpr static std::string_view g_default_host{"https://api.52pay.com"};
@@ -74,4 +74,4 @@ class DOODLELIB_API kmt_image_client final : public ai_client_base {
   static doodle::seedance2::task_status parse_status(std::string_view in_status);
 };
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

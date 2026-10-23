@@ -8,7 +8,7 @@
 
 #include <fmt/format.h>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 
 namespace {
 
@@ -259,4 +259,4 @@ std::size_t transfer_station_client::default_consumed_tokens(const doodle::seeda
       return 5000;
   }
 }
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

@@ -9,7 +9,7 @@
 
 #include <core/http/http_function.h>
 
-namespace doodle::http::ai_light {
+namespace doodle::http {
 
 // /api/doodle/ai/light/shot/{}/session
 DOODLE_HTTP_JWT_FUN(shot_session_route)
@@ -114,4 +114,4 @@ DOODLE_HTTP_ROUTE("/api/doodle/ai/light/session/{session_id_}/iteration", sessio
 uuid session_id_{};
 
 DOODLE_HTTP_FUN_END()
-}  // namespace doodle::http::ai_light
+}  // namespace doodle::http

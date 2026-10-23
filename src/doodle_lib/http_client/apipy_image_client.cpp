@@ -31,7 +31,7 @@
 #include <tbb/concurrent_hash_map.h>
 #include <utility>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 
 namespace {
 
@@ -487,4 +487,4 @@ boost::asio::awaitable<void> apipy_image_client::download_result(run_task_result
   co_return;
 }
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

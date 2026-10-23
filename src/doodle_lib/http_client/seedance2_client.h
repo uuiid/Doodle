@@ -11,7 +11,7 @@
 #include <string>
 #include <string_view>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 
 /**
  * 火山方舟(volcengine ark) 客户端。
@@ -54,4 +54,4 @@ class DOODLELIB_API seedance2_client final : public ai_client_base {
   static doodle::seedance2::task_status parse_status(const nlohmann::json& in_body);
 };
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

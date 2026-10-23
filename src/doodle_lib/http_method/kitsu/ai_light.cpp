@@ -45,7 +45,7 @@
 #include <utility>
 #include <vector>
 
-namespace doodle::http::ai_light {
+namespace doodle::http {
 
 namespace {
 
@@ -447,7 +447,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
 
   std::vector<ai_light_reference> l_added{};
   for (auto&& l_file : l_files) {
-    auto l_info = preview::convert_to_png(l_file);
+    auto l_info = convert_to_png(l_file);
     DOODLE_CHICK_HTTP(
         !l_info.path_.empty(), bad_request, "参考图 {} 无法解析为图片", l_file.filename().generic_string()
     );
@@ -1022,7 +1022,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   l_task.data_request_        = l_json;
 
   auto l_result =
-      co_await http::seedance2::run_inference_task(l_task, l_sql, http::seedance2::make_inference_client(*l_studio));
+      co_await http::run_inference_task(l_task, l_sql, http::make_inference_client(*l_studio));
 
   SPDLOG_LOGGER_INFO(
       g_logger_ctrl().get_http(), "AI 灯光推理网关：会话 {} 完成一次推理（{} → {} token）", l_session.uuid_id_,
@@ -1082,4 +1082,4 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   co_return in_handle->make_msg(l_ret);
 }
 
-}  // namespace doodle::http::ai_light
+}  // namespace doodle::http

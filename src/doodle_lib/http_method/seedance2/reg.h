@@ -14,7 +14,7 @@
 // make_inference_client / run_inference_task 的声明在同目录的 inference_task.h（那份头是
 // 自洽的轻头文件，测试与接缝都可以只依赖它）。注意**只能在命名空间外**包含它 ——
 // 在 namespace 里 `#include` 会把那份头的 namespace 嵌套成
-// doodle::http::seedance2::doodle::http::seedance2，于是内部的 task_status 之类的名字全都找不到。
+// doodle::http::doodle::http，于是内部的 task_status 之类的名字全都找不到。
 #include <doodle_lib/http_method/seedance2/inference_task.h>
 
 #include <boost/asio/awaitable.hpp>
@@ -22,7 +22,7 @@
 #include <memory>
 #include <sqlite_orm/orm/update.h>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 // 设置当周人员剩余可使用的 token 数量
 orm::update_t add_remaining_tokens_for_person(
     sqlite_database& in_sql, const uuid& in_person_id, std::int64_t in_tokens
@@ -395,4 +395,4 @@ DOODLE_HTTP_ROUTE("/api/seedance2/depth/{depth_id_}", depth_id_)
 uuid depth_id_;
 DOODLE_HTTP_FUN_END()
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

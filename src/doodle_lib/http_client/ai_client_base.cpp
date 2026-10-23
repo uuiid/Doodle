@@ -12,7 +12,7 @@
 
 #include <chrono>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 
 boost::asio::awaitable<ai_client_base::run_task_result_t> ai_client_base::run_task(
     const doodle::seedance2::task& in_task
@@ -145,4 +145,4 @@ boost::asio::awaitable<FSys::path> ai_client_base::download_raw_file(std::string
   co_return l_path;
 }
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

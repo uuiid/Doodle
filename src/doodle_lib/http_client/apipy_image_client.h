@@ -13,7 +13,7 @@
 #include <string_view>
 #include <vector>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 
 class DOODLELIB_API apipy_image_client final : public ai_client_base {
   constexpr static std::string_view g_default_host{"https://api.apiyi.com"};
@@ -92,4 +92,4 @@ class DOODLELIB_API apipy_image_client final : public ai_client_base {
   [[nodiscard]] std::shared_ptr<doodle::http::http_client_ssl> make_own_client() const;
 };
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

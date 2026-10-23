@@ -5,7 +5,7 @@
 
 #include <opencv2/opencv.hpp>
 
-namespace doodle::http::preview {
+namespace doodle::http {
 
 struct video_info_t {
   std::double_t duration_{0.0};
@@ -34,4 +34,4 @@ image_info_t convert_to_png(const FSys::path& in_path);
 /// **完全一致**的一套变体，否则它在预览列表页里会缺图或尺寸不对。
 /// 尺寸表与加水印逻辑都在这一个函数里，复制一份必然会漂移。
 cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id);
-}  // namespace doodle::http::preview
+}  // namespace doodle::http

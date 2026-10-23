@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_client_base> {
   using http_client_t     = doodle::http::http_client_ssl;
   using http_client_ptr_t = std::shared_ptr<http_client_t>;
@@ -117,4 +117,4 @@ class DOODLELIB_API ai_client_base : public std::enable_shared_from_this<ai_clie
   std::string cached_ip_{};
   std::chrono::steady_clock::time_point cached_ip_expire_{};
 };
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

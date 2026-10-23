@@ -29,7 +29,7 @@
 #include <opencv2/opencv.hpp>
 #include <utility>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 namespace sd2 = doodle::seedance2;
 
 // POST /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/depth
@@ -153,4 +153,4 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_file, put) {
   co_return in_handle->make_msg_204();
 }
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

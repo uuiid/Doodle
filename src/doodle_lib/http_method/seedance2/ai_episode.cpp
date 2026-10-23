@@ -9,7 +9,7 @@
 #include "core/global_function.h"
 #include "reg.h"
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 namespace sd2 = doodle::seedance2;
 
 // /api/seedance2/subproject/{subproject_id}/episodes
@@ -153,4 +153,4 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_model_resolution_limit_i
   co_return in_handle->make_msg(nlohmann::json{{"limit_id", limit_id_}});
 }
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

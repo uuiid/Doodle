@@ -22,7 +22,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 
 namespace {
 
@@ -364,4 +364,4 @@ std::size_t kmt_image_client::default_consumed_tokens(const doodle::seedance2::t
   }
 }
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

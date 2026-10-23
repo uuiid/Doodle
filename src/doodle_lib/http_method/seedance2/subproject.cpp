@@ -14,7 +14,7 @@
 #include <memory>
 #include <opencv2/opencv.hpp>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 namespace sd2 = doodle::seedance2;
 
 namespace {
@@ -242,4 +242,4 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_person_link, delete_) {
   co_return in_handle->make_msg(nlohmann::json{{"subproject_id", subproject_id_}, {"person_id", l_person_id}});
 }
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

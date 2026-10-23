@@ -21,7 +21,7 @@
 
 #include <memory>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 
 // ─── 推理任务(火山方舟 Responses API) ────────────────────────────────────────
 // 设计: 推理走「方案 A」—— 调用方(接缝)同步等待结果, 任务行**插入即终态**,
@@ -46,4 +46,4 @@ DOODLELIB_API boost::asio::awaitable<ai_client_base::run_task_result_t> run_infe
     const doodle::seedance2::task& in_task, sqlite_database& in_sql, const std::shared_ptr<ai_client_base>& in_client
 );
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

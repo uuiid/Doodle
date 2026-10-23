@@ -132,7 +132,6 @@ struct handle_video_file_t {
 
 }  // namespace
 
-namespace preview {
 cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
   DOODLE_CHICK(!in_image.empty(), "保存变体图片时输入图片为空");
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
@@ -166,8 +165,6 @@ cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
   );
   return l_size;
 }
-
-}  // namespace preview
 
 namespace {
 
@@ -224,7 +221,7 @@ auto create_video_tile_image(cv::VideoCapture& in_capture, const handle_video_fi
 }
 
 }  // namespace
-namespace preview {
+
 video_info_t get_video_duration(const FSys::path& in_path) {
   auto l_video = cv::VideoCapture{in_path.generic_string()};
   DOODLE_CHICK(l_video.isOpened(), "无法打开视频文件: {}", in_path.generic_string());
@@ -342,7 +339,6 @@ image_info_t convert_to_png(const FSys::path& in_path) {
   return image_info_t{l_new_path, cv::Size{l_cv.cols, l_cv.rows}};
 }
 
-}  // namespace preview
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
   auto l_sql          = get_sqlite_database();
   auto l_preview_file = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(id_));
@@ -366,7 +362,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
   );
   if (auto l_ext = l_file.extension(); is_image_extension(l_ext)) {
     auto l_file_image = cv::imread(l_file.generic_string());
-    auto l_size       = preview::save_variants(l_file_image, l_preview_file->uuid_id_);
+    auto l_size       = save_variants(l_file_image, l_preview_file->uuid_id_);
     save_watermarked_image(l_file_image, l_preview_file->uuid_id_);
     /// 将原始文件添加到相应的位置中
     auto l_new_path = g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(l_preview_file->uuid_id_);
@@ -386,7 +382,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
     auto l_prj      = l_sql.get_by_uuid<project>(l_task.project_id_);
     auto l_prj_size = l_prj.get_resolution();
 
-    auto l_duration = preview::get_video_duration(l_new_path);
+    auto l_duration = get_video_duration(l_new_path);
     DOODLE_CHICK_HTTP(
         l_duration.size_.width > 0 && l_duration.size_.height > 0, bad_request, "无法获取视频尺寸, 当前 {}x{}",
         l_duration.size_.width, l_duration.size_.height
@@ -400,7 +396,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
         g_pool_strand(),
         [l_new_path, fps = l_prj.fps_, l_preview_file, size = cv::Size{l_prj_size.first, l_prj_size.second},
          l_connection_guard = http_connection_guard{}]() {
-          preview::handle_video_file(
+          handle_video_file(
               l_new_path, fps, size, l_preview_file,
               std::make_shared<progress_data>(l_preview_file->uuid_id_, "preview-video:process")
           );

@@ -11,7 +11,7 @@
 #include <string>
 #include <string_view>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 
 class DOODLELIB_API transfer_station_client final : public ai_client_base {
   constexpr static std::string_view g_default_host{"https://grsai.dakka.com.cn"};
@@ -41,4 +41,4 @@ class DOODLELIB_API transfer_station_client final : public ai_client_base {
   static doodle::seedance2::task_status parse_status(const nlohmann::json& in_body);
 };
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

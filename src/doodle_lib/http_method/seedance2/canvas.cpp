@@ -11,7 +11,7 @@
 #include "core/global_function.h"
 #include "reg.h"
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 namespace sd2 = doodle::seedance2;
 
 /// 画布 ---------------------
@@ -136,4 +136,4 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, delete_) {
   co_return in_handle->make_msg_204();
 }
 
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http

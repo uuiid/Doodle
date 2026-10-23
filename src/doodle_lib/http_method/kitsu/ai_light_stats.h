@@ -58,7 +58,7 @@ DOODLELIB_API reference_analysis_t analyze_display_image(const cv::Mat& in_displ
 /// 读已落盘的参考图 PNG 并分析。
 ///
 /// 读不出（文件不存在 / 解码后 0 像素）返回 nullopt —— 调用方负责翻成 400。
-/// 用 IMREAD_COLOR（与 preview::convert_to_png 同一个标志）保证「落盘的文件」与
+/// 用 IMREAD_COLOR（与 convert_to_png 同一个标志）保证「落盘的文件」与
 /// 「统计读的文件」是同一套解释：灰度、16bit、带 alpha 都在这里被统一成 8bit BGR。
 DOODLELIB_API std::optional<reference_analysis_t> analyze_reference_file(const FSys::path& in_png);
 

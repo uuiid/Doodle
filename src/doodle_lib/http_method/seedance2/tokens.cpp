@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 
-namespace doodle::http::seedance2 {
+namespace doodle::http {
 namespace sd2 = doodle::seedance2;
 
 // 设置当周人员剩余可使用的 token 数量
@@ -343,4 +343,4 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_similarity, get) {
 
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
-}  // namespace doodle::http::seedance2
+}  // namespace doodle::http
