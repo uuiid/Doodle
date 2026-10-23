@@ -31,7 +31,7 @@ post:
   tags:
     - AI生成剧集
   summary: 为剧集添加模型和分辨率限制
-  description: 非外包人员可添加。限制指定剧集可使用的模型与分辨率组合
+  description: 非外包人员可添加。限制指定剧集可使用的模型与分辨率组合，并指定该组合所属的任务后端
   parameters:
     - name: subproject_id
       in: path
@@ -61,6 +61,8 @@ post:
             resolution:
               type: string
               description: 可使用的分辨率
+            backend:
+              $ref: ../components/schemas/TaskBackend.yaml
   responses:
     '200':
       description: 创建成功

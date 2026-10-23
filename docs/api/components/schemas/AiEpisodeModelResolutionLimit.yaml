@@ -17,3 +17,5 @@ properties:
   resolution:
     type: string
     description: 可使用的分辨率
+  backend:
+    $ref: ./TaskBackend.yaml
