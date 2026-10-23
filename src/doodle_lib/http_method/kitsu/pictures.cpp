@@ -21,7 +21,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_organisations_png, get) {
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "组织缩略图不存在 组织 id {}", id_);
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
+  co_return in_handle->make_msg(l_path, mime_type(l_ext));
 }
 
 /// 处理组织缩略图
@@ -67,20 +67,20 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_square_preview_files, get
   auto l_path           = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_square_file(id_);
   auto l_ext            = l_filename.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
+  co_return in_handle->make_msg(l_path, mime_type(l_ext));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_preview_files, get) {
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
+  co_return in_handle->make_msg(l_path, mime_type(l_ext));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_persons, get) {
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
+  co_return in_handle->make_msg(l_path, mime_type(l_ext));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_originals_preview_files_download, get) {
@@ -89,21 +89,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_originals_preview_files_download, ge
   FSys::path l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_original_file(id_)
                                               : g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(id_);
   DOODLE_CHICK(FSys::exists(l_path), "原始图片不存在 文件 {}", l_path.generic_string());
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_pre_file.extension_));
+  co_return in_handle->make_msg(l_path, mime_type(l_pre_file.extension_));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_previews_preview_files, get) {
   auto l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_preview_file(id_)
                                         : g_ctx().get<kitsu_ctx_t>().get_pictures_preview_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
+  co_return in_handle->make_msg(l_path, mime_type(l_ext));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_originals_preview_files, get) {
   auto l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_original_file(id_)
                                         : g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "原始图片不存在 文件 {}", l_path.generic_string());
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
+  co_return in_handle->make_msg(l_path, mime_type(l_ext));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_originals_preview_files_download, get) {
   // DOODLE_CHICK_HTTP(!person_.is_outsourcer(), unauthorized, "无权限下载");
@@ -117,7 +117,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_originals_preview_files_download, get)
   auto l_ext      = l_path.extension();
   co_return in_handle->make_msg(
       l_path, http_header_ctrl{
-                  .mine_type_     = kitsu::mime_type(l_ext),
+                  .mine_type_     = mime_type(l_ext),
                   .is_attachment_ = true,
                   .attachment_filename_ =
                       fmt::format("movie_preview_{}.{}", l_pre_file.original_name_, l_ext.string().substr(1))

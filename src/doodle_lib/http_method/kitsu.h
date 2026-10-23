@@ -17,15 +17,12 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root);
 http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root);
 http_route_ptr create_kitsu_local_route();
 
-namespace kitsu {
-
 doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_name);
 
 uuid get_url_project_id(const boost::urls::url& in_url);
 
 std::string_view mime_type(const FSys::path& in_ext);
 
-}  // namespace kitsu
 void preview_reg(http_route& in_http_route);
 
 }  // namespace doodle::http

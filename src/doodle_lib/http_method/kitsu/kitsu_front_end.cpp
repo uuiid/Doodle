@@ -58,7 +58,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(kitsu_front_end, get) {
 
   co_return in_handle->make_msg(
       l_path, http_header_ctrl{
-                  .mine_type_         = kitsu::mime_type(l_path.extension()),
+                  .mine_type_         = mime_type(l_path.extension()),
                   .has_cache_control_ = false,
                   .is_deflate_        = false,
               }
@@ -70,7 +70,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(kitsu_front_end, head) {
       boost::beast::http::status::ok, in_handle->version_
   };
   l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-  l_res.set(boost::beast::http::field::content_type, kitsu::mime_type(l_path.extension()));
+  l_res.set(boost::beast::http::field::content_type, mime_type(l_path.extension()));
   l_res.content_length(FSys::file_size(l_path));
   l_res.keep_alive(in_handle->keep_alive_);
   l_res.prepare_payload();

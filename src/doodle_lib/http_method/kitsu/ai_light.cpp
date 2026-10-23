@@ -157,13 +157,13 @@ orm::sql_modify_statement_vector_t write_submitted_iteration(
 
   DOODLE_CHICK_HTTP(!in_request.rigs_.empty(), internal_server_error, "本轮候选数为 0，方案 §6.6 要求至少一个候选");
 
-  http::auto_task::shot_render_light_sync_result l_assembly_res{};
+  shot_render_light_sync_result l_assembly_res{};
   std::string l_assembly_err{};
   if (in_request.task_id_.is_nil()) {
     l_assembly_err = "会话没有关联镜头任务（task_id 为空）";
   } else {
     try {
-      l_assembly_res = http::auto_task::shot_render_light_sync_only(in_request.project_id_, in_request.task_id_);
+      l_assembly_res = shot_render_light_sync_only(in_request.project_id_, in_request.task_id_);
     } catch (const std::exception& in_err) {
       l_assembly_err = in_err.what();
     }
@@ -226,13 +226,13 @@ orm::sql_modify_statement_vector_t write_dispatched_iteration(
 
   DOODLE_CHICK_HTTP(!in_request.rigs_.empty(), internal_server_error, "本轮候选数为 0，方案 §6.6 要求至少一个候选");
 
-  http::auto_task::shot_render_light_sync_result l_assembly_res{};
+  shot_render_light_sync_result l_assembly_res{};
   std::string l_assembly_err{};
   if (in_request.task_id_.is_nil()) {
     l_assembly_err = "会话没有关联镜头任务（task_id 为空）";
   } else {
     try {
-      l_assembly_res = http::auto_task::shot_render_light_sync_only(in_request.project_id_, in_request.task_id_);
+      l_assembly_res = shot_render_light_sync_only(in_request.project_id_, in_request.task_id_);
     } catch (const std::exception& in_err) {
       l_assembly_err = in_err.what();
     }
@@ -575,7 +575,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
   const FSys::path l_movie_path = candidate_movie_path(g_ctx().get<kitsu_ctx_t>(), l_cand);
   DOODLE_CHICK(FSys::exists(l_movie_path), "候选视频不存在 文件 {}", l_movie_path.generic_string());
 
-  co_return in_handle->make_msg(l_movie_path, kitsu::mime_type(l_movie_path.extension()));
+  co_return in_handle->make_msg(l_movie_path, mime_type(l_movie_path.extension()));
 }
 
 // ===========================================================================

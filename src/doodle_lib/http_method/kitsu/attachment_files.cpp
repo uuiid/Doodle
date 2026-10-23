@@ -20,7 +20,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_attachment_files_file, get) {
   auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "files" / "attachments" /
                 FSys::split_uuid_path(fmt::to_string(l_attachment_file.uuid_id_));
   auto l_ext = l_attachment_file.extension_;
-  co_return in_handle->make_msg(l_path, http_header_ctrl{.mine_type_ = kitsu::mime_type(l_ext)});
+  co_return in_handle->make_msg(l_path, http_header_ctrl{.mine_type_ = mime_type(l_ext)});
 }
 
 }  // namespace doodle::http

@@ -363,8 +363,6 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
   return l_router;
 }
 
-namespace kitsu {
-
 uuid get_url_project_id(const boost::urls::url& in_url) {
   auto l_q = in_url.query();
   if (auto l_it = l_q.find("project_id"); l_it != l_q.npos) {
@@ -436,7 +434,5 @@ std::string_view mime_type(const FSys::path& in_ext) {
   if (l_ext == "md") return "text/markdown";
   return "application/octet-stream";
 }
-
-}  // namespace kitsu
 
 }  // namespace doodle::http

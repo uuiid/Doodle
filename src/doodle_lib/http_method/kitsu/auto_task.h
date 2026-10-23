@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-namespace doodle::http::auto_task {
+namespace doodle::http {
 
 /// 一行资产查询结果(由调用方查询后传入)
 struct shot_render_light_asset_row {
@@ -442,4 +442,4 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(
     const uuid& in_project_id, const uuid& in_shot_id,
     simulation_abc_import in_abc_import = simulation_abc_import::with_abc
 );
-}  // namespace doodle::http::auto_task
+}  // namespace doodle::http

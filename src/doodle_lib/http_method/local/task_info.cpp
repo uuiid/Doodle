@@ -321,7 +321,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance_log, get) {
   auto l_path = core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", id_);
   if (!FSys::exists(l_path))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "日志不存在");
-  auto l_mime = std::string{kitsu::mime_type(l_path.extension())};
+  auto l_mime = std::string{mime_type(l_path.extension())};
   l_mime += "; charset=utf-8";
   co_return in_handle->make_msg(l_path, l_mime);
 }

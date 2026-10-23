@@ -108,8 +108,6 @@ auto check_multiple_scene(auto& in_vector) {
 
 }  // namespace
 
-namespace auto_task {
-
 namespace {
 /// 渲染输出目录: {scene_ue_path}/Saved/MovieRenders/{code}_EP{ep:03}_SC{shot:03}
 ///
@@ -1015,8 +1013,6 @@ shot_render_light_sync_result shot_render_light_sync_only(
   return shot_render_light_builder{make_shot_render_light_input(in_project_id, in_shot_id, in_abc_import)}
       .run_sync_only();
 }
-
-}  // namespace auto_task
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_rig_sk, get) {
   auto l_sql  = get_sqlite_database();

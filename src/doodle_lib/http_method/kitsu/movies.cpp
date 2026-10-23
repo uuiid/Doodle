@@ -20,7 +20,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_low_preview_files, get) {
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_lowdef_file(id_);
 
   co_return in_handle->make_msg(
-      l_path, http_header_ctrl{.mine_type_ = kitsu::mime_type(l_path.extension()), .has_cache_control_ = true}
+      l_path, http_header_ctrl{.mine_type_ = mime_type(l_path.extension()), .has_cache_control_ = true}
   );
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_originals_preview_files, get) {
@@ -30,7 +30,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_originals_preview_files, get) {
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(id_);
 
   co_return in_handle->make_msg(
-      l_path, http_header_ctrl{.mine_type_ = kitsu::mime_type(l_path.extension()), .has_cache_control_ = true}
+      l_path, http_header_ctrl{.mine_type_ = mime_type(l_path.extension()), .has_cache_control_ = true}
   );
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_tiles_preview_files, get) {
@@ -41,7 +41,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_tiles_preview_files, get) {
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_tiles_file_path(id_);
 
   co_return in_handle->make_msg(
-      l_path, http_header_ctrl{.mine_type_ = kitsu::mime_type(l_path.extension()), .has_cache_control_ = true}
+      l_path, http_header_ctrl{.mine_type_ = mime_type(l_path.extension()), .has_cache_control_ = true}
   );
 }
 

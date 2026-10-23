@@ -146,7 +146,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
   boost::system::error_code l_code{};
   auto l_set_handle = [&l_ext, &in_handle](auto&& in_res) {
     in_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-    in_res.set(boost::beast::http::field::content_type, kitsu::mime_type(l_ext));
+    in_res.set(boost::beast::http::field::content_type, mime_type(l_ext));
     in_res.keep_alive(in_handle->keep_alive_);
     in_res.prepare_payload();
   };

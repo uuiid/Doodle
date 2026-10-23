@@ -94,7 +94,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_file, get) {
   auto l_file_tmp     = l_file_picture;
   l_file_tmp.replace_extension(".upload_tmp.mp4");
   DOODLE_CHICK_HTTP(FSys::exists(l_file_tmp), not_found, "输入文件不存在");
-  co_return in_handle->make_msg(l_file_tmp, kitsu::mime_type(l_file_tmp.extension()));
+  co_return in_handle->make_msg(l_file_tmp, mime_type(l_file_tmp.extension()));
 }
 
 // PUT /api/seedance2/depth/{depth_id} — 工作机上传深度估计结果视频

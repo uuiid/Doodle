@@ -19,7 +19,7 @@ namespace doodle::http {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, get) {
   person_.check_not_outsourcer();
-  auto l_ret = auto_task::shot_render_light(project_id_, id_);
+  auto l_ret = shot_render_light(project_id_, id_);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
       "用户 {}({}) 完成生成 UE 装配参数 project_id {} task_id {} asset_count {} camera_file {}", person_.person_.email_,
@@ -54,8 +54,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
   l_ptr->type_    = server_task_info_type::auto_light;
 
   // #ifdef NDEBUG
-  l_ptr->command_ = auto_task::shot_render_light(
-      project_id_, id_, l_json.value("simulation_abc_import", auto_task::simulation_abc_import::with_abc)
+  l_ptr->command_ = shot_render_light(
+      project_id_, id_, l_json.value("simulation_abc_import", simulation_abc_import::with_abc)
   );
   // #endif
   auto l_sql = get_sqlite_database();

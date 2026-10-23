@@ -116,7 +116,7 @@ create_comment_result create_comment(
       auto l_ext                     = i.extension();
       l_attachment_file->extension_  = l_ext.empty() ? std::string{} : l_ext.generic_string().substr(1);
       l_attachment_file->name_       = i.filename().generic_string();
-      l_attachment_file->mimetype_   = kitsu::mime_type(i.extension());
+      l_attachment_file->mimetype_   = mime_type(i.extension());
       l_attachment_file->size_       = FSys::file_size(i);
       l_sqls.emplace_back(insert(l_sql).into<attachment_file>().values(*l_attachment_file));
 

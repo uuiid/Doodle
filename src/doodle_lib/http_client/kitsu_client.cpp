@@ -579,7 +579,7 @@ boost::asio::awaitable<void> kitsu_client::comment_task(comment_task_arg in_arg)
     boost::beast::http::request<boost::beast::http::file_body> l_req{
         boost::beast::http::verb::post, fmt::format("/api/pictures/preview-files/{}", l_preview_id), 11
     };
-    set_req_headers(l_req, std::string{::doodle::http::kitsu::mime_type(in_arg.attach_files_.extension())});
+    set_req_headers(l_req, std::string{::doodle::http::mime_type(in_arg.attach_files_.extension())});
 
     boost::system::error_code l_ec{};
     l_req.body().open(in_arg.attach_files_.string().c_str(), boost::beast::file_mode::read, l_ec);
@@ -612,7 +612,7 @@ boost::asio::awaitable<void> kitsu_client::comment_task_compose_video(comment_ta
     boost::beast::http::request<boost::beast::http::file_body> l_req{
         boost::beast::http::verb::post, fmt::format("/api/actions/preview-files/{}/compose-video", l_preview_id), 11
     };
-    set_req_headers(l_req, std::string{::doodle::http::kitsu::mime_type(in_arg.attach_files_.extension())});
+    set_req_headers(l_req, std::string{::doodle::http::mime_type(in_arg.attach_files_.extension())});
     boost::system::error_code l_ec{};
     l_req.body().open(in_arg.attach_files_.string().c_str(), boost::beast::file_mode::read, l_ec);
     DOODLE_CHICK(
