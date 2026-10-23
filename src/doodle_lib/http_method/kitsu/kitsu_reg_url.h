@@ -145,9 +145,7 @@ DOODLE_HTTP_FUN_END()
 // /api/actions/projects/{project_id}/sequences/{sequence_id}/casting/ue-assembly-harvest
 DOODLE_HTTP_JWT_FUN(actions_projects_sequences_casting_ue_assembly_harvest)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_ROUTE(
-    "/api/actions/projects/{project_id_}/sequences/{id_}/casting/ue-assembly-harvest", project_id_, id_
-)
+DOODLE_HTTP_ROUTE("/api/actions/projects/{project_id_}/sequences/{id_}/casting/ue-assembly-harvest", project_id_, id_)
 uuid project_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
@@ -640,9 +638,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/projects/{project_id}/settings/task-types/{task_type_id}
 DOODLE_HTTP_JWT_FUN(project_settings_task_types)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
-DOODLE_HTTP_ROUTE(
-    "/api/data/projects/{project_id_}/settings/task-types/{task_type_id_}", project_id_, task_type_id_
-)
+DOODLE_HTTP_ROUTE("/api/data/projects/{project_id_}/settings/task-types/{task_type_id_}", project_id_, task_type_id_)
 uuid project_id_;
 uuid task_type_id_;
 DOODLE_HTTP_FUN_END()
@@ -730,9 +726,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(data_project_entities_casting)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
-DOODLE_HTTP_ROUTE(
-    "/api/data/projects/{project_id_}/entities/{entity_id_}/casting", project_id_, entity_id_
-)
+DOODLE_HTTP_ROUTE("/api/data/projects/{project_id_}/entities/{entity_id_}/casting", project_id_, entity_id_)
 uuid project_id_{};
 uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
@@ -751,18 +745,14 @@ DOODLE_HTTP_FUN_END()
 // /api/data/projects/{project_id}/sequences/{sequence_id}/casting
 DOODLE_HTTP_JWT_FUN(data_project_sequences_casting)
 DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_ROUTE(
-    "/api/data/projects/{project_id_}/sequences/{sequence_id_}/casting", project_id_, sequence_id_
-)
+DOODLE_HTTP_ROUTE("/api/data/projects/{project_id_}/sequences/{sequence_id_}/casting", project_id_, sequence_id_)
 uuid project_id_{};
 uuid sequence_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/data/projects/{project_id}/asset-types/{asset_type_id}/casting
 DOODLE_HTTP_JWT_FUN(data_project_asset_types_casting)
 DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_ROUTE(
-    "/api/data/projects/{project_id_}/asset-types/{asset_type_id_}/casting", project_id_, asset_type_id_
-)
+DOODLE_HTTP_ROUTE("/api/data/projects/{project_id_}/asset-types/{asset_type_id_}/casting", project_id_, asset_type_id_)
 uuid project_id_{};
 uuid asset_type_id_{};
 DOODLE_HTTP_FUN_END()
@@ -780,9 +770,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/projects/{project_id}/playlists/{playlist_id}
 DOODLE_HTTP_JWT_FUN(data_project_playlists_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_ROUTE(
-    "/api/data/projects/{project_id_}/playlists/{playlist_id_}", project_id_, playlist_id_
-)
+DOODLE_HTTP_ROUTE("/api/data/projects/{project_id_}/playlists/{playlist_id_}", project_id_, playlist_id_)
 uuid project_id_{};
 uuid playlist_id_{};
 DOODLE_HTTP_FUN_END()
@@ -796,9 +784,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/playlists/{playlist_id}/entities/{entity_id}
 DOODLE_HTTP_JWT_FUN(data_playlists_instance_entity_instance)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_ROUTE(
-    "/api/data/playlists/{playlist_id_}/entities/{entity_id_}", playlist_id_, entity_id_
-)
+DOODLE_HTTP_ROUTE("/api/data/playlists/{playlist_id_}/entities/{entity_id_}", playlist_id_, entity_id_)
 uuid playlist_id_{};
 uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
@@ -903,9 +889,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(data_project_authorization_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
-DOODLE_HTTP_ROUTE(
-    "/api/data/projects/{project_id_}/authorization/{authorization_id_}", project_id_, authorization_id_
-)
+DOODLE_HTTP_ROUTE("/api/data/projects/{project_id_}/authorization/{authorization_id_}", project_id_, authorization_id_)
 uuid project_id_{};
 uuid authorization_id_{};
 DOODLE_HTTP_FUN_END()
@@ -1008,16 +992,16 @@ DOODLE_HTTP_ROUTE("/api/data/ai_studio/{ai_studio_id_}/person/{person_id_}", ai_
 uuid ai_studio_id_{};
 uuid person_id_{};
 DOODLE_HTTP_FUN_END()
-// /api/ue_plugins/version
+
 DOODLE_HTTP_JWT_FUN(ue_plugins_version)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_ROUTE("/api/ue_plugins/version")
+DOODLE_HTTP_ROUTE("/api/ue-plugins/version")
 DOODLE_HTTP_FUN_END()
-// /api/ue_plugins/version/{version_major}.{version_minor}.{version_patch}
+
 DOODLE_HTTP_JWT_FUN(ue_plugins_version_instance)
 DOODLE_HTTP_ROUTE(
-    "/api/ue_plugins/version/{version_major_}.{version_minor_}.{version_patch_}", version_major_, version_minor_,
+    "/api/ue-plugins/version/{version_major_}.{version_minor_}.{version_patch_}", version_major_, version_minor_,
     version_patch_
 )
 std::int32_t version_major_{};
