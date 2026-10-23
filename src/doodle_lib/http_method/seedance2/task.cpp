@@ -48,6 +48,7 @@
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <opencv2/opencv.hpp>
+#include <optional>
 #include <rapidfuzz/rapidfuzz_all.hpp>
 #include <regex>
 #include <spdlog/spdlog.h>
@@ -608,6 +609,24 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, get) {
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
 }
 
+struct seedance2_task_sum_result {
+  std::optional<std::int64_t> completion_tokens_sum_{0};
+  std::string model_name_;
+  sd2::task_backend backend_;
+  explicit seedance2_task_sum_result(
+      std::optional<std::int64_t> completion_tokens_sum, std::string model_name, sd2::task_backend backend
+  )
+      : completion_tokens_sum_(std::move(completion_tokens_sum)),
+        model_name_(std::move(model_name)),
+        backend_(backend) {}
+  // to_json
+  friend void to_json(nlohmann::json& j, const seedance2_task_sum_result& p) {
+    j["completion_tokens_sum"] = p.completion_tokens_sum_;
+    j["model_name"]            = p.model_name_;
+    j["backend"]               = p.backend_;
+  }
+};
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
   // todo: 在 task 中, 添加 subproject 外键, 以方便查询
   auto l_sql = get_sqlite_database();
@@ -646,7 +665,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
           .join<sd2::ai_generate_entity>(c(&sd2::task::ai_generate_entity_id_) == c(&sd2::ai_generate_entity::uuid_id_))
           .order_by(&sd2::task::created_at_, false);
   auto l_query_sum   = select(l_sql)
-                           .columns(sum(&sd2::task::completion_tokens_))
+                           .columns(sum(&sd2::task::completion_tokens_), &sd2::task::model_name_, &sd2::task::backend_)
                            .from<sd2::task>()
                            .join<sd2::subproject>(c(&sd2::task::subproject_id_) == c(&sd2::subproject::uuid_id_))
                            .join<sd2::ai_generate_entity>(
@@ -714,13 +733,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
                                   .columns(&person_department_link::person_id_)
                                   .where(c(&person_department_link::department_id_) == l_department)));
 
-
-
-  
   nlohmann::json l_json;
   l_json["data"]  = l_query.limit(l_size).offset(l_offset)().to_vector();
   l_json["count"] = l_query_count().to_single();
-  l_json["sum"]   = l_query_sum().to_single();
+  l_json["sum"]   = l_query_sum().to_vector<seedance2_task_sum_result>();
 
   co_return in_handle->make_msg(l_json);
 }
