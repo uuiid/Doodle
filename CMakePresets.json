@@ -18,10 +18,6 @@
         "value": "x64",
         "strategy": "external"
       },
-      "toolset": {
-        "value": "v142,host=x64,version=14",
-        "strategy": "external"
-      },
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl"

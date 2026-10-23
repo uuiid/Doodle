@@ -55,11 +55,11 @@
 
 以下任一变化都会让 vcpkg ABI 失效、依赖全量重编（代价可达数小时），动手前先想清楚：
 
-1. **MSVC 工具集版本**变化。`Ninja_build` preset 固定 `toolset: "v142,host=x64,version=14"`；手工配置会落到 VS2022 默认的 v143。
+1. **MSVC 工具集版本**变化。`Ninja_build` preset 不再声明 `toolset`，工具集完全由 wrapper 调用的 `vcvars64.bat` 决定（当前 `14.44.35207`，即 v143）；换机器或换 VS 安装组件都可能改变它。
 2. **PowerShell 版本**变化。它经 vcpkg-cmake helper 级联进所有包的 ABI 哈希。
 3. 二进制缓存丢失。当前 `VCPKG_DEFAULT_BINARY_CACHE` 为 `E:\vcpkg_cache\archives`。
 
-排查方法：比对构建目录下 `vcpkg_installed/x64-windows/share/vcpkg-cmake/vcpkg_abi_info.txt` 的 `powershell` 字段，以及 `vcpkg/compiler-file-hash-cache.json`。
+排查方法：`vcpkg_abi_info.txt` 只记录 `cmake` / `powershell` / `triplet`，**不含编译器**；编译器要看 `CMakeCache.txt` 的 `Z_VCPKG_CL`、`CMakeFiles/rules.ninja` 里的 cl.exe 绝对路径，以及 `vcpkg/compiler-file-hash-cache.json`。
 
 ## 3. 代码组织与风格
 
