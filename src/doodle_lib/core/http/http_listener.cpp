@@ -14,7 +14,6 @@
 
 #include <boost/asio/bind_cancellation_slot.hpp>
 
-
 namespace doodle::http {
 boost::asio::awaitable<void> detail::run_http_listener(
     boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr, std::uint16_t in_port
@@ -54,7 +53,6 @@ boost::asio::awaitable<void> detail::run_http_listener(
   }
 }
 void run_http_listener(boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr, std::uint16_t in_port) {
-  g_ctx().emplace<detail::http_listener_cancellation_slot>();
   boost::asio::co_spawn(
       g_io_context(), detail::run_http_listener(in_io_context, in_route_ptr, in_port),
       boost::asio::bind_cancellation_slot(app_base::Get().on_stop_listener.slot(), boost::asio::detached)
