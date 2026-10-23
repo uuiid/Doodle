@@ -90,13 +90,21 @@ Write-Host "扫描 $($logFiles.Count) 个日志文件: $LogDir" -ForegroundColor
 
 $rawLines = 0
 $modelLines = 0
+$skippedFiles = New-Object System.Collections.Generic.List[string]
 $requestEvents = New-Object System.Collections.Generic.List[object]
 $pendingByThread = @{}
 
 foreach ($file in $logFiles) {
-  $reader = [System.IO.File]::OpenText($file.FullName)
+  $reader = $null
   try {
-    while ($null -ne ($line = $reader.ReadLine())) {
+    $reader = [System.IO.File]::Open($file.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+  } catch {
+    $skippedFiles.Add($file.Name)
+    continue
+  }
+  $streamReader = New-Object System.IO.StreamReader($reader, [System.Text.Encoding]::UTF8)
+  try {
+    while ($null -ne ($line = $streamReader.ReadLine())) {
       $rawLines++
       if ($line.IndexOf('model_library', [System.StringComparison]::Ordinal) -lt 0) { continue }
 
@@ -141,8 +149,13 @@ foreach ($file in $logFiles) {
       $reply.DurationMs = [math]::Round(($event.Time - $reply.Time).TotalMilliseconds, 3)
     }
   } finally {
+    $streamReader.Dispose()
     $reader.Dispose()
   }
+}
+
+if ($skippedFiles.Count -gt 0) {
+  Write-Host ("跳过 {0} 个被其他进程占用的文件: {1}" -f $skippedFiles.Count, ($skippedFiles -join ', ')) -ForegroundColor Yellow
 }
 
 $summary = New-Object System.Collections.Generic.List[object]
@@ -247,6 +260,9 @@ if (-not $NoReportFile) {
 Write-Host ''
 Write-Host '================ model_library 路由访问统计 ================' -ForegroundColor Cyan
 Write-Host ("日志目录   : {0}  ({1} 个文件, 扫描 {2} 行, 匹配 {3} 行)" -f $LogDir, $logFiles.Count, $rawLines, $modelLines)
+if ($skippedFiles.Count -gt 0) {
+  Write-Host ("跳过文件   : {0} 个 (被其他进程占用)" -f $skippedFiles.Count) -ForegroundColor Yellow
+}
 Write-Host ("时间范围   : {0}" -f $timeRange)
 Write-Host ("总访问次数 : {0}  (有访问的路由: {1}/{2})" -f $grandTotal, $activeRoutes.Count, $summary.Count)
 Write-Host ''
