@@ -81,12 +81,6 @@ struct DOODLELIB_API select_t : public statement_info_base_t {
     return *this;
   }
 
-  select_t clone() const {
-    select_t l_clone;
-    l_clone.impl_ = std::make_shared<impl_t>(*impl_);
-    return l_clone;
-  }
-
   template <typename FromTable>
   select_t from();
 
