@@ -485,6 +485,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
   auto l_client              = l_client_factory.get_client(*l_task, l_studio);
   auto l_info                = l_client->collect_request_info(l_task->data_request_);
   l_task->text_prompt_       = std::move(l_info.text_prompt_);
+  l_task->model_name_        = l_info.model_;
   l_task->completion_tokens_ = l_client->default_consumed_tokens(l_task->type_);
 
   DOODLE_CHICK_HTTP(!l_info.model_.empty(), bad_request, "缺少模型名称");
@@ -713,6 +714,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
                                   .columns(&person_department_link::person_id_)
                                   .where(c(&person_department_link::department_id_) == l_department)));
 
+
+
+  
   nlohmann::json l_json;
   l_json["data"]  = l_query.limit(l_size).offset(l_offset)().to_vector();
   l_json["count"] = l_query_count().to_single();

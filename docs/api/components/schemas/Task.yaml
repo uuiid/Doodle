@@ -16,6 +16,9 @@ properties:
   text_prompt:
     type: string
     description: 文本提示词
+  model_name:
+    type: string
+    description: 任务实际使用的模型名（后端客户端从 data_request 解析后回填）；提交时可不传，传了也会被服务端解析结果覆盖
   preview_file:
     type: string
     format: uuid

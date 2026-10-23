@@ -27,8 +27,7 @@ enum class DOODLE_CORE_API task_type {
   inference,
 };
 DOODLE_JSON_SERIALIZE_ENUM_STRICT(
-    task_type,
-    {{task_type::picture, "picture"}, {task_type::video, "video"}, {task_type::inference, "inference"}}
+    task_type, {{task_type::picture, "picture"}, {task_type::video, "video"}, {task_type::inference, "inference"}}
 );
 DOODLE_JSON_SERIALIZE_ENUM_STRICT(
     task_status,
@@ -51,6 +50,7 @@ struct DOODLE_CORE_API task {
   task_backend backend_{task_backend::seedance2};
   nlohmann::json data_request_;
   std::string text_prompt_;
+  std::string model_name_;
   uuid preview_file_;
   std::string file_extension_;
   nlohmann::json data_response_;
@@ -76,6 +76,7 @@ struct DOODLE_CORE_API task {
     j["type"]                  = p.type_;
     j["backend"]               = p.backend_;
     j["text_prompt"]           = p.text_prompt_;
+    j["model_name"]            = p.model_name_;
     j["preview_file"]          = p.preview_file_;
     j["data_request"]          = p.data_request_;
     j["file_extension"]        = p.file_extension_;
@@ -101,6 +102,7 @@ struct DOODLE_CORE_API task {
     j.at("ai_generate_entity_id").get_to(p.ai_generate_entity_id_);
 
     if (j.contains("archived")) j.at("archived").get_to(p.archived_);
+    if (j.contains("model_name")) j.at("model_name").get_to(p.model_name_);
     if (j.contains("ai_light_session_id")) j.at("ai_light_session_id").get_to(p.ai_light_session_id_);
   }
 };

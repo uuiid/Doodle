@@ -102,6 +102,7 @@ void sqlite_storage::regs_all() {
       .add_column("backend", &seedance2::task::backend_, not_null())
       .add_column("data_request", &seedance2::task::data_request_)
       .add_column("text_prompt", &seedance2::task::text_prompt_)
+      .add_column("model_name", &seedance2::task::model_name_)
       .add_column("preview_file", &seedance2::task::preview_file_)
       .add_column("file_extension", &seedance2::task::file_extension_)
       .add_column("data_response", &seedance2::task::data_response_)
