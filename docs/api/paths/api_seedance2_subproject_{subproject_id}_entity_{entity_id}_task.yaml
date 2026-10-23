@@ -41,12 +41,23 @@ post:
     | `seedance2` | 火山方舟 `/api/v3/contents/generations/tasks` | `model` + `resolution` + `content[]` | 按 `completion_tokens`（默认 20 万） |
     | `transfer_station` | 中转站（Grsai）`/v1/api/generate` | `model` + `prompt` + `images[]` 等 | 按模型积分单价 |
     | `apipy_image` | API易（apiyi.com）`/v1/images/generations` 或 `/v1/images/edits` | 同 `transfer_station` | 按响应 `usage` 的 token 数 |
+    | `kmt_image` | 快米兔（52pay.com）`/v1/images/generations` 或 `/v1/images/edits` | 同 `transfer_station` | 按模型点数（默认预扣 5000） |
 
     `seedance2` 会校验 `model` 与 `resolution` 是否在所属剧集的授权列表内，并统计生成次数上限。
     `transfer_station` 的 `replyType` 由服务端固定注入为 `async`，调用方无需传递。
-    三种后端都会用 `model` + 分辨率做剧集授权校验（`transfer_station` / `apipy_image`
-    取 `imageSize`，没有则取 `aspectRatio`），缺少模型或分辨率返回 400，
+    四种后端都会用 `model` + 分辨率做剧集授权校验（`transfer_station` / `apipy_image` /
+    `kmt_image` 取 `imageSize`，没有则取 `aspectRatio`），缺少模型或分辨率返回 400，
     未授权返回 401。
+
+    `kmt_image` 是**异步后端**：提交时固定带 `async=true` / `response_format=url`，拿回上游
+    任务号后轮询 `/v1/images/tasks/{id}`，状态映射 `queued`、`in_progress` → 运行中，
+    `completed` → 成功，`failed` → 失败，`violation` → 违规。只支持 `type=picture`，提交
+    `video` / `inference` 会直接置为 `failed`，不发出下游请求；不支持取消（`cancel_task` 抛错）。
+    计费按 `model` 的已登记点数一口价（`gpt-image-2` / `gpt-image-2.5` 600、
+    `gpt-image-2.5-flare` 2000、`gpt-image-2.5-sunburst` 2400），失败与违规均不扣费；
+    未登记定价的模型提交时即返回 400。参考图必须是本站图片路由
+    `/api/seedance2/pictures/<uuid><扩展名>` 且文件存在，最多 16 张，服务端会等比缩到长边
+    2048 像素以内并统一转码为 PNG 上传。
 
     `apipy_image` 是**同步后端**，只支持 `type=picture`：上游不返回异步 task id、也没有查询
     接口，一次调用会占住连接 2-4 分钟直到出结果。它把参考图读成本地字节后作为 multipart
@@ -90,8 +101,8 @@ post:
             data_request:
               description: |
                 AI 请求数据，结构由 `backend` 决定。
-                `transfer_station` 与 `apipy_image` 共用同一种形状（见
-                `TaskBackend.yaml` 中各后端对字段的解释与差异说明；后者的参考图处理、
+                `transfer_station`、`apipy_image` 与 `kmt_image` 共用同一种形状（见
+                `TaskBackend.yaml` 中各后端对字段的解释与差异说明；后两者的参考图处理、
                 `imageSize` / `aspectRatio` / `quality` 的取值规则与中转站不同）。
               oneOf:
                 - $ref: ../components/schemas/Seedance2TaskDataRequest.yaml

@@ -13,6 +13,12 @@ description: |
   `backend=apipy_image` 也复用这个形状，但**不会原样透传**：它的 `quality` / `imageSize` /
   `aspectRatio` 取值集合与中转站不同，认不出的取值会直接返回 400；`background`、`mask`、
   `replyType` 在该后端下不生效。各字段在每种后端下的确切含义见 `TaskBackend.yaml`。
+
+  `backend=kmt_image` 同样复用这个形状：只取 `model` / `prompt` / `images` / `imageSize` /
+  `aspectRatio` / `quality` 六项，`size` 取 `imageSize`、为空时取 `aspectRatio`；
+  `background`、`mask`、`replyType` 不生效。它的 `images` 必须是本站图片路由
+  `/api/seedance2/pictures/<uuid><扩展名>`（最多 16 张），服务端会等比缩到长边 2048 像素以内
+  并统一转码为 PNG 后以 multipart 上传，不会把 URL 透传给上游。
 required:
   - model
   - prompt
