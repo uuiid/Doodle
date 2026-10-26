@@ -7,11 +7,10 @@
 
 #include <boost/beast.hpp>
 
-#include <nlohmann/json.hpp>
-
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -101,9 +100,9 @@ struct http_body_error_t : http_body_base_t {
   std::string message_{};
   std::int32_t code_{-1};
 
-  explicit http_body_error_t(
-      boost::beast::http::status in_status, std::string in_message, std::int32_t in_code = -1
-  );
+  explicit http_body_error_t(boost::beast::http::status in_status, std::string in_message, std::int32_t in_code = -1);
 };
 
+using http_body_variant = std::variant<
+    http_body_json_t, http_body_string_t, http_body_binary_t, http_body_file_t, http_body_empty_t, http_body_error_t>;
 }  // namespace doodle::http
