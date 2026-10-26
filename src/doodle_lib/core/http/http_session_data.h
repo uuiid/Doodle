@@ -16,7 +16,6 @@
 #include <boost/url.hpp>
 
 #include <string>
-#include <tl/expected.hpp>
 
 namespace doodle::http {
 struct multipart_body;
@@ -33,19 +32,9 @@ using endpoint_type         = boost::asio::ip::tcp::endpoint;
 using tcp_stream_type       = executor_type::as_default_on_t<boost::beast::tcp_stream>;
 using tcp_stream_type_ptr   = std::shared_ptr<tcp_stream_type>;
 using request_parser_ptr    = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
-struct http_header_ctrl {
-  boost::beast::http::status status_{boost::beast::http::status::ok};
-  std::string_view mine_type_{"application/json; charset=utf-8"};
-  bool has_cache_control_{false};
-  bool is_deflate_{false};
-  bool is_attachment_{false};
-  std::string attachment_filename_{};
-};
 namespace detail {
 
 class session_data : public std::enable_shared_from_this<session_data> {
-  std::string zlib_compress(const std::string& in_str);
-
   using empty_body_type               = boost::beast::http::empty_body;
   using empty_request_parser_type     = boost::beast::http::request_parser<empty_body_type>;
   using string_request_parser_type    = boost::beast::http::request_parser<boost::beast::http::string_body>;
@@ -65,21 +54,14 @@ class session_data : public std::enable_shared_from_this<session_data> {
   http_function_ptr callback_;
   boost::beast::flat_buffer buffer_;
   boost::beast::http::verb method_verb_{};
-  chrono::seconds timeout_{doodle_config::g_timeout};
   void set_session();
   boost::asio::awaitable<bool> parse_body();
   boost::asio::awaitable<void> async_websocket_session();
   boost::asio::awaitable<void> save_bode_file(const std::string& in_ext);
   boost::asio::awaitable<void> save_multipart_form_data_file();
-  std::string access_control_allow_origin_{"*"};
   std::variant<std::string, nlohmann::json, FSys::path, multipart_body_impl::value_type_impl>
       body_;  // std::variant<std::string, nlohmann::json>
 
-  template <typename T>
-  auto set_response_header(T& in_res, std::string_view in_mine_type);
-
-  template <typename T>
-  auto set_response_file_header(T& in_res, const FSys::path& in_path, const http_header_ctrl& in_http_header_ctrl);
   //  http 计数守卫
   http_connection_guard http_connection_guard_{};
 
@@ -93,6 +75,8 @@ class session_data : public std::enable_shared_from_this<session_data> {
   boost::url url_;
   std::uint32_t version_{};
   bool keep_alive_{};
+  chrono::seconds timeout_{doodle_config::g_timeout};
+  std::string access_control_allow_origin_{"*"};
 
   content_type content_type_{content_type::text_plain};
   // 请求头
@@ -115,66 +99,8 @@ class session_data : public std::enable_shared_from_this<session_data> {
   void set_access_control_allow_origin(const std::string& in_str) { access_control_allow_origin_ = in_str; }
 
   void async_run_detached();
-  boost::beast::http::message_generator make_error_code_msg(
-      boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str = ""
-  ) {
-    return make_error_code_msg(in_status, ec.what() + in_str);
-  }
 
-  boost::beast::http::message_generator make_error_code_msg(
-      boost::beast::http::status in_code, const std::string& in_str, std::int32_t in_msg_code = -1
-  );
-
-  boost::beast::http::response<boost::beast::http::string_body> make_msg(std::string&& in_body) {
-    return make_msg(
-        std::move(in_body),
-        http_header_ctrl{
-            .status_ = req_header_.method() == boost::beast::http::verb::post ? boost::beast::http::status::created
-                                                                              : boost::beast::http::status::ok
-        }
-    );
-  }
-
-  boost::beast::http::response<boost::beast::http::string_body> make_msg(const nlohmann::json& in_body) {
-    return make_msg(
-        std::move(in_body.dump()),
-        http_header_ctrl{
-            .status_ = req_header_.method() == boost::beast::http::verb::post ? boost::beast::http::status::created
-                                                                              : boost::beast::http::status::ok
-        }
-    );
-  }
-  boost::beast::http::response<boost::beast::http::string_body> make_msg_204() {
-    return make_msg(std::string{}, http_header_ctrl{.status_ = boost::beast::http::status::no_content});
-  }
-
-  boost::beast::http::response<boost::beast::http::string_body> make_msg(
-      std::string&& in_body, const http_header_ctrl& in_http_header_ctrl
-  );
-  template <typename Char>
-  boost::beast::http::response<boost::beast::http::vector_body<Char>> make_msg(
-      std::vector<Char>&& in_body, const http_header_ctrl& in_http_header_ctrl
-  );
-
-  template <typename Char>
-  boost::beast::http::response<boost::beast::http::vector_body<Char>> make_msg(
-      std::vector<Char>&& in_body, std::string_view in_http_header_ctrl
-  ) {
-    return make_msg(std::move(in_body), http_header_ctrl{.mine_type_ = in_http_header_ctrl});
-  }
-  boost::beast::http::message_generator make_msg(
-      const FSys::path& in_path, const http_header_ctrl& in_http_header_ctrl
-  );
-  boost::beast::http::message_generator make_msg(const FSys::path& in_path, std::string_view in_http_header_ctrl) {
-    return make_msg(in_path, http_header_ctrl{.mine_type_ = in_http_header_ctrl});
-  }
-
-  boost::beast::http::message_generator make_message(const http_body_ptr& in_body);
-
- private:
-  // boost::beast::http::response<zlib_deflate_file_body> make_file_deflate(
-  //     const FSys::path& in_path, const http_header_ctrl& in_http_header_ctrl
-  // );
+  boost::beast::http::message_generator make_message(const http_body_ptr& in_body) const;
 };
 
 class http_websocket_data {
