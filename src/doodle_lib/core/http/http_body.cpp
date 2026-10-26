@@ -46,22 +46,6 @@ std::string http_body_base_t::zlib_compress(const std::string& in_str) {
   return compressed.str();
 }
 
-boost::beast::http::message_generator http_body_base_t::make_error_code_msg(
-    boost::beast::http::status in_code, const std::string& in_str, std::uint32_t in_version, bool in_keep_alive,
-    std::string_view in_access_control_allow_origin, chrono::seconds in_timeout, std::int32_t in_msg_code
-) {
-  if (in_msg_code == -1) in_msg_code = enum_to_num(in_code);
-
-  boost::beast::http::response<boost::beast::http::string_body> l_response{in_code, in_version};
-  http_body_error_t{in_code, in_str}.set_response_header(
-      l_response, "application/json; charset=utf-8", in_access_control_allow_origin, in_timeout
-  );
-  l_response.keep_alive(in_keep_alive);
-  l_response.body() = nlohmann::json{{"error", in_str}, {"code", in_msg_code}}.dump();
-  l_response.prepare_payload();
-  return l_response;
-}
-
 http_body_base_t::http_body_base_t(boost::beast::http::status in_status, std::string_view in_mine_type)
     : status_(in_status), mine_type_(in_mine_type) {}
 
@@ -217,10 +201,7 @@ boost::beast::http::message_generator http_body_file_t::make_message(
     const detail::session_data& in_session_data
 ) const {
   if (!FSys::exists(path_))
-    return make_error_code_msg(
-        boost::beast::http::status::not_found, "文件不存在", in_session_data.version_, in_session_data.keep_alive_,
-        in_session_data.access_control_allow_origin_, in_session_data.timeout_
-    );
+    return http_body_error_t{boost::beast::http::status::not_found, "文件不存在"}.make_message(in_session_data);
 
   if (range_mode_ == http_file_range_mode::head_only ||
       in_session_data.method() == boost::beast::http::verb::head) {
@@ -337,10 +318,17 @@ boost::beast::http::message_generator http_body_error_t::make_message(
     const detail::session_data& in_session_data
 ) const {
   in_session_data.logger_->log(log_loc(), level::err, "发送错误码 {} {}", get_status(), message_);
-  return make_error_code_msg(
-      get_status(), message_, in_session_data.version_, in_session_data.keep_alive_,
-      in_session_data.access_control_allow_origin_, in_session_data.timeout_, code_
+
+  auto l_msg_code = code_ == -1 ? enum_to_num(get_status()) : code_;
+
+  boost::beast::http::response<boost::beast::http::string_body> l_response{get_status(), in_session_data.version_};
+  set_response_header(
+      l_response, get_mine_type(), in_session_data.access_control_allow_origin_, in_session_data.timeout_
   );
+  l_response.keep_alive(in_session_data.keep_alive_);
+  l_response.body() = nlohmann::json{{"error", message_}, {"code", l_msg_code}}.dump();
+  l_response.prepare_payload();
+  return l_response;
 }
 
 }  // namespace doodle::http

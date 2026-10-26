@@ -69,10 +69,6 @@ struct http_body_base_t {
       chrono::seconds in_timeout
   ) const;
   static std::string zlib_compress(const std::string& in_str);
-  static boost::beast::http::message_generator make_error_code_msg(
-      boost::beast::http::status in_code, const std::string& in_str, std::uint32_t in_version, bool in_keep_alive,
-      std::string_view in_access_control_allow_origin, chrono::seconds in_timeout, std::int32_t in_msg_code = -1
-  );
 
   http_body_base_t& set_status(boost::beast::http::status in_status);
   http_body_base_t& set_mine_type(std::string_view in_mine_type);
