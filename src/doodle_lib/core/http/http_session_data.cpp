@@ -230,7 +230,23 @@ void session_data::async_run_detached() {
 }
 
 boost::beast::http::message_generator session_data::make_message(const http_body_ptr& in_body) const {
-  return in_body->make_message(*this);
+  try {
+    return in_body->make_message(*this);
+  } catch (const http_request_error& e) {
+    logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
+    return http_body_error_t{e.code_status_(), e.what()}.make_message(*this);
+  } catch (const orm::sqlite_orm_exception& e) {
+    logger_->log(log_loc(), level::err, "数据库错误 {} {}", e.code_status_(), e.what());
+    return http_body_error_t{e.code_status_(), e.what()}.make_message(*this);
+  } catch (const nlohmann::json::exception& e) {
+    logger_->log(log_loc(), level::err, "请求体解析错误 {}", e.what());
+    return http_body_error_t{boost::beast::http::status::bad_request, e.what()}.make_message(*this);
+  } catch (...) {
+    auto l_err_str = boost::current_exception_diagnostic_information();
+    logger_->log(log_loc(), level::err, "回复错误 {}", l_err_str);
+    SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), l_err_str);
+    return http_body_error_t{boost::beast::http::status::internal_server_error, l_err_str}.make_message(*this);
+  }
 }
 
 nlohmann::json session_data::get_json() const {
