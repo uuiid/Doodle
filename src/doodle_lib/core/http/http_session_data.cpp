@@ -230,11 +230,6 @@ void session_data::async_run_detached() {
 }
 
 boost::beast::http::message_generator session_data::make_message(const http_body_ptr& in_body) const {
-  if (!in_body)
-    return http_body_base_t::make_error_code_msg(
-        boost::beast::http::status::internal_server_error, "回复体为空", version_, keep_alive_,
-        access_control_allow_origin_, timeout_
-    );
   return in_body->make_message(*this);
 }
 
