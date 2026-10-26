@@ -181,27 +181,6 @@ bool kitsu_supplement_main::init() {
     http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
     return true;
   }
-  if (arg_["epiboly"]) {
-    if (auto l_str = arg_({"port"}); l_str)
-      l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
-    else
-      l_args.port_ = 0;
-    // 调整一些特有的上下文
-    l_args.db_path_              = register_file_type::program_location().parent_path() / "epiboly.database";
-    l_args.kitsu_front_end_path_ = register_file_type::program_location().parent_path() / "dist";
-    l_args.root_                 = register_file_type::program_location().parent_path() / "root";
-    // 初始化上下文
-    g_ctx().emplace<http::kitsu_ctx_t>(l_args.root_, l_args.kitsu_front_end_path_);
-    l_set.database_->open(l_args.db_path_);
-    l_set.database_->upgrade();
-    // 初始化授权上下文
-    g_ctx().emplace<authorization>(l_set.authorize_);
-    // 初始化路由
-    auto l_rout_ptr = http::create_kitsu_route_2(l_args.kitsu_front_end_path_);
-    // 开始运行服务器
-    http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
-    return true;
-  }
   get_register_info(l_args);
   // 对外公开素材 URL 的端口: 配置了就用配置值, 否则保留 core_set 的 debug/release 默认值
   if (l_args.public_url_port_ != 0) l_set.public_url_port_ = l_args.public_url_port_;
