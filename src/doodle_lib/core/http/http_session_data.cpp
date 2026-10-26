@@ -70,43 +70,31 @@ boost::asio::awaitable<void> session_data::run() {
     callback_ = (*route_ptr_)(method_verb_, url_.segments(), shared_from_this());
     logger_->info("请求 url {} {}", method_verb_, url_);
 
-    std::unique_ptr<boost::beast::http::message_generator> l_gen{};
+    http_body_ptr l_gen{};
     try {
       // 解析发现是 websocket 后,会直接启动新的携程, 本次携程直接返回
       if (co_await parse_body()) co_return;
-      l_gen = std::make_unique<boost::beast::http::message_generator>(
-          make_message(co_await callback_->callback(shared_from_this()))
-      );
+      l_gen = co_await callback_->callback(shared_from_this());
     } catch (const http_request_error& e) {
       logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
-      l_gen = std::make_unique<boost::beast::http::message_generator>(http_body_base_t::make_error_code_msg(
-          e.code_status_(), e.what(), version_, keep_alive_, access_control_allow_origin_, timeout_
-      ));
+      l_gen = std::make_unique<http_body_error_t>(e.code_status_(), e.what());
     } catch (const orm::sqlite_orm_exception& e) {
       logger_->log(log_loc(), level::err, "数据库错误 {} {}", e.code_status_(), e.what());
-      l_gen = std::make_unique<boost::beast::http::message_generator>(http_body_base_t::make_error_code_msg(
-          e.code_status_(), e.what(), version_, keep_alive_, access_control_allow_origin_, timeout_
-      ));
+      l_gen = std::make_unique<http_body_error_t>(e.code_status_(), e.what());
     } catch (const nlohmann::json::exception& e) {
       logger_->log(log_loc(), level::err, "请求体解析错误 {}", e.what());
-      l_gen = std::make_unique<boost::beast::http::message_generator>(http_body_base_t::make_error_code_msg(
-          boost::beast::http::status::bad_request, e.what(), version_, keep_alive_, access_control_allow_origin_,
-          timeout_
-      ));
+      l_gen = std::make_unique<http_body_error_t>(boost::beast::http::status::bad_request, e.what());
     } catch (...) {
       auto l_err_str = boost::current_exception_diagnostic_information();
       logger_->log(log_loc(), level::err, "回复错误 {}", l_err_str);
       SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), l_err_str);
-      l_gen = std::make_unique<boost::beast::http::message_generator>(http_body_base_t::make_error_code_msg(
-          boost::beast::http::status::internal_server_error, l_err_str, version_, keep_alive_,
-          access_control_allow_origin_, timeout_
-      ));
+      l_gen = std::make_unique<http_body_error_t>(boost::beast::http::status::internal_server_error, l_err_str);
     }
     if (!l_gen) co_return logger_->error("回复生成器为空 {}", url_);
     if (!stream_) co_return logger_->error("stream_ 已失效, 无法回复 {}", url_);
 
     logger_->info("回复 url {} {}", method_verb_, url_);
-    co_await boost::beast::async_write(*stream_, std::move(*l_gen));
+    co_await boost::beast::async_write(*stream_, make_message(l_gen));
     if (!keep_alive_) co_return;
     stream_->expires_after(timeout_);
   }
