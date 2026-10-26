@@ -67,7 +67,7 @@ function Copy-LatestDatabase {
 update seedance2_task_2
 set status='failed',
     completion_tokens=0
-where status == 'preparing';
+where status == 'preparing' or status == 'queued' or status == 'running';
 "@
 
 
