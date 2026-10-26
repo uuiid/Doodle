@@ -12,7 +12,7 @@ namespace doodle::http::other {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(key_ji_meng, get) {
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
-  co_return in_handle->make_msg(
+  co_return std::make_unique<http_body_json_t>(
       nlohmann::json{
           {"access_key_id", l_ctx.ji_meng_access_key_id_}, {"secret_access_key", l_ctx.ji_meng_secret_access_key_}
       }
@@ -20,6 +20,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(key_ji_meng, get) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(deepseek_key, get) {
   auto l_list = g_ctx().get<kitsu_ctx_t>().deepseek_keys_;
-  co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
+  co_return std::make_unique<http_body_string_t>(
+      (nlohmann::json{} = l_list).dump(), "application/json; charset=utf-8"
+  );
 }
 }  // namespace doodle::http::other

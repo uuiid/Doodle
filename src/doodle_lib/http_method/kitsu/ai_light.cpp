@@ -359,7 +359,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, post) {
   );
 
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_detail));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, get) {
@@ -369,13 +369,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shot_session_route, get) {
 
   for (const auto& l_s : l_sessions) person_.check_project_access(l_s.project_id_);
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_sessions);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sessions));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, get) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
-  co_return in_handle->make_msg(nlohmann::json{} = load_detail_checked(person_, l_sql, id_));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = load_detail_checked(person_, l_sql, id_)));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, put) {
@@ -403,7 +403,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, put) {
       person_.person_.get_full_name(), id_, l_session.prompt_text_.size()
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = load_detail_checked(person_, l_sql, id_));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = load_detail_checked(person_, l_sql, id_)));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, delete_) {
@@ -421,7 +421,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(session_instance_route, delete_) {
       g_logger_ctrl().get_http(), "用户 {}({}) 删除 AI 灯光会话 {}", person_.person_.email_,
       person_.person_.get_full_name(), id_
   );
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 // ===========================================================================
@@ -432,7 +432,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, get) {
   person_.check_not_outsourcer();
   auto l_sql     = get_sqlite_database();
   auto l_session = load_session_checked(person_, l_sql, session_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_ai_light_references(l_session.uuid_id_));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sql.get_ai_light_references(l_session.uuid_id_)));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
@@ -490,7 +490,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 为 AI 灯光会话 {} 上传了 {} 张参考图", person_.person_.email_,
       person_.person_.get_full_name(), l_session.uuid_id_, l_added.size()
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_added);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_added));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, get) {
@@ -500,7 +500,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, get) {
   auto l_ref = l_sql.get_by_uuid<ai_light_reference>(id_);
   load_session_checked(person_, l_sql, l_ref.session_id_);
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_ref);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_ref));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, put) {
@@ -524,7 +524,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, put) {
       person_.person_.email_, person_.person_.get_full_name(), id_, l_after.is_outlier_,
       l_after.excluded_reason_.empty() ? "无" : l_after.excluded_reason_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_after);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_after));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, delete_) {
@@ -552,7 +552,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, delete_) {
       g_logger_ctrl().get_http(), "用户 {}({}) 删除 AI 灯光参考图 {}", person_.person_.email_,
       person_.person_.get_full_name(), id_
   );
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 // ===========================================================================
@@ -575,7 +575,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
   const FSys::path l_movie_path = candidate_movie_path(g_ctx().get<kitsu_ctx_t>(), l_cand);
   DOODLE_CHICK(FSys::exists(l_movie_path), "候选视频不存在 文件 {}", l_movie_path.generic_string());
 
-  co_return in_handle->make_msg(l_movie_path, mime_type(l_movie_path.extension()));
+  co_return std::make_unique<http_body_file_t>(l_movie_path, mime_type(l_movie_path.extension()));
 }
 
 // ===========================================================================
@@ -643,7 +643,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(judge_route, post) {
   );
 
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_detail);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_detail));
 }
 
 // ===========================================================================
@@ -799,7 +799,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_begin_sequence_route, post) {
       g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）开始上传帧序列，帧目录 {}", candidate_id_,
       l_target.iteration_.iteration_, l_target.frames_dir_.generic_string()
   );
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 // ===========================================================================
@@ -846,7 +846,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_upload_frame_route, post) {
       g_logger_ctrl().get_http(), "AI 灯光：候选 {}（轮次 {}）上传帧 {}，{} 字节", candidate_id_,
       l_target.iteration_.iteration_, l_dst.filename().generic_string(), FSys::file_size(l_dst, l_ignored)
   );
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 // ===========================================================================
@@ -904,7 +904,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_finish_sequence_route, post) {
       candidate_id_, l_target.iteration_.iteration_, l_media.frame_count_, l_media.frame_rate_,
       l_media.movie_path_.generic_string(), l_media.poster_path_.generic_string()
   );
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 // ===========================================================================
@@ -915,7 +915,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_route, get) {
   person_.check_not_outsourcer();
   auto l_sql  = get_sqlite_database();
   auto l_only = query_bool(in_handle->url_, "enabled_only", true);
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_ai_light_presets(l_only));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sql.get_ai_light_presets(l_only)));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_route, post) {
@@ -936,7 +936,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_route, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 新建 AI 灯光预设 {}（{}）", person_.person_.email_,
       person_.person_.get_full_name(), l_preset.uuid_id_, l_preset.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_preset);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_preset));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, get) {
@@ -944,7 +944,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, get) {
   auto l_sql    = get_sqlite_database();
   auto l_preset = l_sql.get_ai_light_preset(id_);
   DOODLE_CHICK_HTTP(l_preset.has_value(), not_found, "预设 {} 不存在", id_);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_preset);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_preset));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, put) {
@@ -961,7 +961,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, put) {
   l_sqls.emplace_back(std::move(l_update));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_sql.get_ai_light_preset(id_));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_sql.get_ai_light_preset(id_)));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, delete_) {
@@ -973,7 +973,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, delete_) {
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(delete_from(l_sql).from<ai_light_preset>().where(c(&ai_light_preset::uuid_id_) == id_));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
@@ -1029,7 +1029,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
       l_result.input_tokens_, l_result.output_tokens_
   );
 
-  co_return in_handle->make_msg(l_task.data_request_);
+  co_return std::make_unique<http_body_json_t>(l_task.data_request_);
 }
 
 // ===========================================================================
@@ -1079,7 +1079,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   auto l_detail = build_session_detail(l_sql, l_session.uuid_id_);
   nlohmann::json l_ret{};
   l_ret = *l_detail;
-  co_return in_handle->make_msg(l_ret);
+  co_return std::make_unique<http_body_json_t>(l_ret);
 }
 
 }  // namespace doodle::http

@@ -72,14 +72,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
     if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
       auto l_json = nlohmann::json::array();
       if (l_att.type_ != attendance_helper::att_enum::max) l_json = l_attends;
-      co_return in_handle->make_msg(l_json);
+      co_return std::make_unique<http_body_json_t>(l_json);
     }
   }
 
   bool l_modify_user{};
   if (l_user.phone_.empty())
     co_return in_handle->logger_->error("/api/dingding/attendance {} {}", l_user.id_, "没有手机号"),
-        in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有手机号");
+           std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "没有手机号");
 
   auto l_dingding_client = l_d.make_client(l_studio);
   if (l_user.dingding_id_.empty()) {
@@ -229,7 +229,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
     l_json = l_attendance_list;
   else
     l_json = nlohmann::json::array();
-  co_return in_handle->make_msg(l_json);
+  co_return std::make_unique<http_body_json_t>(l_json);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_get, get) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
@@ -248,7 +248,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_get, get) {
 
   nlohmann::json l_json{};
   l_json = l_list;
-  co_return in_handle->make_msg(l_json);
+  co_return std::make_unique<http_body_json_t>(l_json);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_id_custom, post) {
   if (id_ != person_.person_.uuid_id_) person_.check_supervisor();
@@ -274,7 +274,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_id_custom, post) {
   );
 
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg((nlohmann::json{} = *l_data));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_data));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, put) {
@@ -311,7 +311,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, put) {
   co_await l_sql.run_sql(std::move(l_sqls));
 
   auto l_data_after = l_sql.get_by_uuid<attendance_helper::database_t>(id_);
-  co_return in_handle->make_msg((nlohmann::json{} = l_data_after));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_data_after));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, delete_) {
   auto l_sql  = get_sqlite_database();
@@ -331,7 +331,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_custom, delete_) {
       )
   );
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg((nlohmann::json{} = id_));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = id_));
 }
 
 }  // namespace doodle::http

@@ -117,7 +117,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status_links, post) {
       l_task_status_link->task_status_id_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_task_status_link);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_task_status_link));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks, put) {
@@ -143,7 +143,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks, put) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新任务 task_id {} project_id {}", person_.person_.email_,
       person_.person_.get_full_name(), l_task_updated.uuid_id_, l_task_updated.project_id_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_task_updated);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_task_updated));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_assign, put) {
@@ -208,7 +208,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_assign, put) {
       person_.person_.email_, person_.person_.get_full_name(), l_person_data.uuid_id_, l_task_ids.size(),
       l_tasks->size(), l_notifications->size()
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_tasks);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_tasks));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_user_tasks, get) {
@@ -225,7 +225,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_user_tasks, get) {
           )
           .order_by(&entity::name_);
   auto l_ret = l_todo().to_vector<todo_t>();
-  co_return in_handle->make_msg(nlohmann::json{} = get_todo_post_process(l_ret));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = get_todo_post_process(l_ret)));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_user_done_tasks, get) {
@@ -243,7 +243,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_user_done_tasks, get) {
                     .order_by(&task_type::name_)
                     .order_by(&entity::name_);
   auto l_ret = l_todo().to_vector<todo_t>();
-  co_return in_handle->make_msg(nlohmann::json{} = get_todo_post_process(l_ret));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = get_todo_post_process(l_ret)));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(tasks_to_check, get) {
   switch (person_.person_.role_) {
@@ -255,7 +255,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(tasks_to_check, get) {
     case person_role_type::user:
     case person_role_type::client:
     case person_role_type::vendor:
-      co_return in_handle->make_msg("[]"s);
+      co_return std::make_unique<http_body_string_t>("[]", "application/json; charset=utf-8");
       break;
   }
   auto sql = get_sqlite_database();
@@ -272,7 +272,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(tasks_to_check, get) {
   }
   l_todo.order_by(&entity::name_);
   auto l_ret = l_todo().to_vector<todo_t>();
-  co_return in_handle->make_msg(nlohmann::json{} = get_todo_post_process(l_ret));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = get_todo_post_process(l_ret)));
 }
 namespace {
 auto get_comments(const uuid& in_task_id) {
@@ -482,7 +482,7 @@ auto get_comments(const uuid& in_task_id) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(tasks_comments, get) {
   nlohmann::json l_r{};
   l_r = get_comments(id_);
-  co_return in_handle->make_msg(l_r);
+  co_return std::make_unique<http_body_json_t>(l_r);
 }
 namespace {
 
@@ -667,7 +667,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks_open_tasks, get) {
   data_tasks_open_tasks_get_args l_args{};
   l_args.parse_args(in_handle->url_.params());
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_args.get());
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_args.get()));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks, delete_) {
   auto l_sql  = get_sqlite_database();
@@ -682,7 +682,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks, delete_) {
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(delete_from(l_sql).from<task>().where(c(&task::uuid_id_) == id_));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks_full, get) {
   auto l_sql         = get_sqlite_database();
@@ -726,7 +726,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks_full, get) {
           {"task_status", l_task_status},
       }
   );
-  co_return in_handle->make_msg(l_ret);
+  co_return std::make_unique<http_body_json_t>(l_ret);
 }
 
 }  // namespace doodle::http

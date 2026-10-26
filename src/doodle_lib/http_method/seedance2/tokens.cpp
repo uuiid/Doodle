@@ -43,7 +43,7 @@ std::int64_t get_remaining_tokens_for_person(const uuid& in_person) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens, get) {
-  co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", person_.person_.remaining_completion_tokens_}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"remaining_tokens", person_.person_.remaining_completion_tokens_}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens, post) {
   person_.check_admin();
@@ -60,13 +60,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens, post) {
           .where(c(&person::archived_) == false)
   );
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", l_remaining_tokens}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"remaining_tokens", l_remaining_tokens}});
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, get) {
   person_.check_producer();
   auto l_others_person = get_sqlite_database().get_by_uuid<person>(person_id_);
-  co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", l_others_person.remaining_completion_tokens_}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"remaining_tokens", l_others_person.remaining_completion_tokens_}});
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
@@ -115,7 +115,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
     );
     co_await l_sql.run_sql(std::move(l_sqls));
   }
-  co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", l_remaining_tokens}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"remaining_tokens", l_remaining_tokens}});
 }
 namespace {
 
@@ -142,7 +142,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_all, get) {
     l_result_map.push_back(person_token_t{person_id, max_tokens});
   }
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result_map));
 }
 
 namespace {
@@ -211,7 +211,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_instance, get) {
       l_result_map.push_back(l_today_tokens.at(person_id_));  // 添加当天的token消耗量
   }
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result_map));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_instance_day, get) {
   person_.check_producer();
@@ -234,7 +234,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_instance_day, ge
             .to_vector();
   }
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result_map));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_all, get) {
@@ -254,7 +254,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date_all, get) {
     auto l_today_tokens = get_date_person_tokens(l_sql, l_now);
     l_result_map |= ranges::actions::push_back(l_today_tokens | std::views::values);
   }
-  co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result_map));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date, get) {
   person_.check_producer();
@@ -274,7 +274,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date, get) {
                        .where(c(&sd2::person_token::date_) == date_)()
                        .to_vector();
   }
-  co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result_map));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date, post) {
   person_.check_admin();
@@ -288,13 +288,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date, post) {
                                                         .where(c(&sd2::person_token::date_) == date_)()
                                                         .to_vector();
       !l_result_map.empty())
-    co_return in_handle->make_msg(nlohmann::json{} = l_result_map);
+    co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result_map));
 
   std::map<uuid, sd2::person_token> l_token_map = get_date_person_tokens(l_sql, date_);
   // 是当天的, 不进行插入, 直接返计算结果
   if (chrono::sys_days l_now{chrono::floor<chrono::days>(chrono::system_clock::now())}; l_now == date_)
-    co_return in_handle->make_msg(
-        nlohmann::json{} = l_token_map | std::views::values | ranges::to<std::vector<sd2::person_token>>()
+    co_return std::make_unique<http_body_json_t>(
+        (nlohmann::json{} = l_token_map | std::views::values | ranges::to<std::vector<sd2::person_token>>())
     );
 
   auto l_list_vector = std::make_shared<std::vector<sd2::person_token>>();
@@ -304,7 +304,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_date, post) {
     l_sqls.emplace_back(insert(l_sql).into<sd2::person_token>().set_range(*l_list_vector));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_list_vector);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_list_vector));
 }
 
 namespace {
@@ -341,6 +341,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_similarity, get) {
     l_result.person_task_maps_[l_user_id].push_back(std::move(l_similarity));
   }
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result));
 }
 }  // namespace doodle::http

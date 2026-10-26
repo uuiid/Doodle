@@ -21,7 +21,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category, get) {
   auto l_sql = get_sqlite_database();
   using namespace orm;
   auto l_result = select(l_sql).columns(object<sd2::ai_category>()).from<sd2::ai_category>()().to_vector();
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category, post) {
@@ -38,7 +38,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category, post) {
   l_sqls.emplace_back(insert(l_sql).into<sd2::ai_category>().values(*l_category));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_category);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_category));
 }
 
 // /api/seedance2/subproject/{subproject_id}/category/{category_id}
@@ -48,7 +48,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category_instance, ge
   auto l_sql      = get_sqlite_database();
   auto l_category = l_sql.get_by_uuid<sd2::ai_category>(category_id_);
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_category);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_category));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category_instance, put) {
@@ -65,7 +65,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category_instance, pu
   l_sqls.emplace_back(std::move(l_update));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::ai_category>(category_id_));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sql.get_by_uuid<sd2::ai_category>(category_id_)));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category_instance, delete_) {
@@ -79,7 +79,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category_instance, de
   );
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{{"category_id", category_id_}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"category_id", category_id_}});
 }
 
 // /api/seedance2/subproject/{subproject_id}/category/{category_id}/entity
@@ -111,7 +111,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_category_entity, get)
                       )
                       .where(c(&sd2::ai_generate_entity::ai_category_id_) == category_id_)()
                       .to_vector<category_entity_with_preview_file>();
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result));
 }
 
 }  // namespace doodle::http

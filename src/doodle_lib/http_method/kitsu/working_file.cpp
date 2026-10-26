@@ -341,26 +341,26 @@ std::vector<working_file_and_link> get_working_files_for_entity(
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_working_file, get) {
   auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的镜头 id ");
+    co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "未知的镜头 id ");
   if (l_sql.uuid_to_id<project>(project_id_) == 0)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的项目 id ");
+    co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "未知的项目 id ");
 
-  co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity(project_id_, id_, {}));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = get_working_files_for_entity(project_id_, id_, {})));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_working_file, get) {
   auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的序列 id ");
+    co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "未知的序列 id ");
   if (l_sql.uuid_to_id<project>(project_id_) == 0)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的项目 id ");
-  co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity(project_id_, {}, id_));
+    co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "未知的项目 id ");
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = get_working_files_for_entity(project_id_, {}, id_)));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_entity_working_file, get) {
   auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
+    co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "未知的任务 id ");
   auto l_entity_ = l_sql.get_by_uuid<entity>(id_);
   auto l_prj     = l_sql.get_by_uuid<project>(l_entity_.project_id_);
   auto l_r       = get_working_files_for_entity_sql(id_);
@@ -384,7 +384,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_entity_working_file, get) {
     i.name_      = i.path_.has_extension() ? i.path_.filename().string() : std::string{};
     i.is_exists_ = FSys::exists(l_prj.path_ / i.path_);
   }
-  co_return in_handle->make_msg(nlohmann::json{} = l_working_files);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_working_files));
 }
 
 template <typename Kty, typename Ty>
@@ -402,7 +402,7 @@ struct map_to_json {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_entity_working_file_many, post) {
   auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<project>(id_) == 0)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
+    co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "未知的任务 id ");
   auto l_prj        = l_sql.get_by_uuid<project>(id_);
   auto l_entity_ids = in_handle->get_json().get<std::vector<uuid>>();
 
@@ -446,8 +446,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_entity_working_file_many, po
       person_.person_.get_full_name(), id_, l_entity_working_file_map.size()
   );
 
-  co_return in_handle->make_msg(
-      nlohmann::json{} = map_to_json<uuid, std::vector<working_file_and_link>>{l_entity_working_file_map}
+  co_return std::make_unique<http_body_json_t>(
+      (nlohmann::json{} = map_to_json<uuid, std::vector<working_file_and_link>>{l_entity_working_file_map})
   );
 }
 }  // namespace doodle::http

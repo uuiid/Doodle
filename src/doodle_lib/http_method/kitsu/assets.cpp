@@ -150,7 +150,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(projects_assets_new, post) {
       l_entity.entity_type_id_
   );
 
-  co_return in_handle->make_msg(l_json_ret);
+  co_return std::make_unique<http_body_json_t>(l_json_ret);
 }
 
 namespace {
@@ -477,7 +477,7 @@ auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_ur
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets_with_tasks, get) {
-  co_return in_handle->make_msg(nlohmann::json{} = make_with_tasks_sql_result(person_.person_, in_handle->url_, {}));
+  co_return std::make_unique<http_body_json_t>(make_with_tasks_sql_result(person_.person_, in_handle->url_, {}));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, get) {
   auto l_sql = get_sqlite_database();
@@ -494,7 +494,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, get) {
   l_json["asset_type_id"]   = l_ass_type.uuid_id_;
   l_json["asset_type_name"] = l_ass_type.name_;
   l_json.update(l_t[0]);
-  co_return in_handle->make_msg(l_json);
+  co_return std::make_unique<http_body_json_t>(l_json);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, delete_) {
   auto l_sql = get_sqlite_database();
@@ -517,7 +517,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, delete_) {
         update(l_sql).from<entity>().set(c(&entity::canceled_) = true).where(c(&entity::uuid_id_) == id_)
     );
     co_await l_sql.run_sql(std::move(l_sqls));
-    co_return in_handle->make_msg(nlohmann::json{} = l_ass);
+    co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_ass));
   }
   auto l_task     = l_sql.get_tasks_for_entity(l_ass.uuid_id_);
   auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
@@ -525,11 +525,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(asset_details, delete_) {
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(delete_from(l_sql).from<entity>().where(c(&entity::uuid_id_) == l_ass.uuid_id_));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg(nlohmann::json{} = l_ass);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_ass));
 }
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shared_used, get) { co_return in_handle->make_msg(nlohmann::json::array()); }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(shared_used, get) { co_return std::make_unique<http_body_json_t>(nlohmann::json::array()); }
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets_cast_in, get) { co_return in_handle->make_msg(nlohmann::json::array()); }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets_cast_in, get) {
+  co_return std::make_unique<http_body_json_t>(nlohmann::json::array());
+}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets, get) {
   auto l_sql = get_sqlite_database();
   bool l_is_shared{};
@@ -538,7 +540,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_assets, get) {
 
   auto l_entt =
       get_entities_by_person_id_and_is_admin_and_is_shared(person_.person_.uuid_id_, person_.is_admin(), l_is_shared);
-  co_return in_handle->make_msg(nlohmann::json{} = l_entt);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_entt));
 }
 struct actions_projects_search_arg_t {
   std::string query_;
@@ -554,8 +556,8 @@ struct actions_projects_search_arg_t {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_search, post) {
   person_.check_not_outsourcer();
   auto l_arg = in_handle->get_json().get<actions_projects_search_arg_t>();
-  co_return in_handle->make_msg(
-      nlohmann::json{} = search_entities_fts_by_keyword(l_arg.query_, project_id_, l_arg.limit_, l_arg.offset_)
+  co_return std::make_unique<http_body_json_t>(
+      (nlohmann::json{} = search_entities_fts_by_keyword(l_arg.query_, project_id_, l_arg.limit_, l_arg.offset_))
   );
 }
 }  // namespace doodle::http

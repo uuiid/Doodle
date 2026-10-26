@@ -26,14 +26,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs, get) {
     if (l_job.status_ == server_task_info_status::failed)
       l_job.get_last_line_log(g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(l_job.uuid_id_));
   }
-  co_return in_handle->make_msg(nlohmann::json{} = l_jobs);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_jobs);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, get) {
   person_.check_not_outsourcer();
   auto l_jobs_path = g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(job_id_);
-  if (!FSys::exists(l_jobs_path)) co_return in_handle->make_msg_204();
-  co_return in_handle->make_msg(l_jobs_path, "text/plain; charset=utf-8");  // utf-8编码的文本文件
+  if (!FSys::exists(l_jobs_path)) co_return std::make_unique<http_body_empty_t>();
+  co_return std::make_unique<http_body_file_t>(l_jobs_path, "text/plain; charset=utf-8");  // utf-8编码的文本文件
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, put) {
   person_.check_not_outsourcer();
@@ -41,7 +41,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, put) {
   auto l_string    = in_handle->get_string();
   if (auto l_p = l_jobs_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   FSys::ofstream{l_jobs_path, std::ios::out | std::ios::binary | std::ios::app} << l_string;
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, get) {
@@ -49,7 +49,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, get) {
   auto l_sql = get_sqlite_database();
   auto l_job = l_sql.get_by_uuid<server_task_info>(job_id_);
   l_job.get_last_line_log(g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(job_id_));
-  co_return in_handle->make_msg(nlohmann::json{} = l_job);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_job);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   person_.check_not_outsourcer();
@@ -72,7 +72,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   l_sqls.emplace_back(std::move(l_update));
   co_await l_sql.run_sql(std::move(l_sqls));
   socket_io::broadcast(socket_io::server_task_info_update_broadcast_t{.server_task_info_id_ = l_job.uuid_id_});
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<server_task_info>(job_id_));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_sql.get_by_uuid<server_task_info>(job_id_));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, delete_) {
   person_.check_not_outsourcer();
@@ -82,7 +82,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, delete_) {
   auto l_now = chrono::system_clock::now();
   if (l_job.status_ == server_task_info_status::running &&
       l_now - l_job.run_time_.value_or(chrono::system_zoned_time{chrono::current_zone(), l_now}).get_sys_time() < 24h) {
-    co_return in_handle->make_error_code_msg(
+    co_return std::make_unique<http_body_error_t>(
         boost::beast::http::status::method_not_allowed, "任务正在运行中, 无法删除"
     );
   }
@@ -95,7 +95,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, delete_) {
       person_.person_.get_full_name(), job_id_, l_job.name_, l_job.status_
   );
   socket_io::broadcast(socket_io::server_task_info_delete_broadcast_t{.server_task_info_id_ = job_id_});
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 }  // namespace doodle::http

@@ -41,7 +41,7 @@ namespace doodle::http {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments, get) {
   person_.check_admin();
   auto l_list = get_sqlite_database().get_all<department>();
-  co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
+  co_return std::make_unique<http_body_string_t>((nlohmann::json{} = l_list).dump(), "application/json; charset=utf-8");
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments, post) {
   person_.check_admin();
@@ -58,7 +58,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建部门 department_id {} name {}", person_.person_.email_,
       person_.person_.get_full_name(), l_department.uuid_id_, l_department.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_department);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_department));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments_instance, put) {
   person_.check_admin();
@@ -78,13 +78,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(departments_instance, put) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新部门 department_id {} name {}", person_.person_.email_,
       person_.person_.get_full_name(), id_, l_department.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_department);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_department));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, get) {
   person_.check_admin();
   auto l_list = get_sqlite_database().get_all<studio>();
-  co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
+  co_return std::make_unique<http_body_string_t>((nlohmann::json{} = l_list).dump(), "application/json; charset=utf-8");
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, post) {
   person_.check_admin();
@@ -101,7 +101,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建工作室 studio_id {} name {}", person_.person_.email_,
       person_.person_.get_full_name(), l_studio.uuid_id_, l_studio.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_studio);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_studio));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
   person_.check_admin();
@@ -115,7 +115,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(delete_from(l_sql).from<studio>().where(c(&studio::uuid_id_) == l_studio.uuid_id_));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, put) {
   person_.check_admin();
@@ -135,12 +135,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, put) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新工作室 studio_id {} name {}", person_.person_.email_,
       person_.person_.get_full_name(), id_, l_studio.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_studio);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_studio));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_types, get) {
   person_.check_admin();
   auto l_list = get_sqlite_database().get_all<task_type>();
-  co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
+  co_return std::make_unique<http_body_string_t>((nlohmann::json{} = l_list).dump(), "application/json; charset=utf-8");
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_types, post) {
   person_.check_admin();
@@ -150,17 +150,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_types, post) {
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(insert(l_sql).into<task_type>().values(l_args));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg(nlohmann::json{} = l_args);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_args));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(custom_actions, get) {
   person_.check_admin();
 
-  co_return in_handle->make_msg(nlohmann::json::array());
+  co_return std::make_unique<http_body_json_t>(nlohmann::json::array());
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, get) {
   person_.check_admin();
   auto l_list = get_sqlite_database().get_all<status_automation>();
-  co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
+  co_return std::make_unique<http_body_string_t>((nlohmann::json{} = l_list).dump(), "application/json; charset=utf-8");
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, post) {
   person_.check_admin();
@@ -176,7 +176,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建状态自动化 status_automation_id {}", person_.person_.email_,
       person_.person_.get_full_name(), l_status_automation.uuid_id_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_status_automation);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_status_automation));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, put) {
@@ -219,7 +219,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, put) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新资产类型 asset_type_id {} name {} task_type_count {}",
       person_.person_.email_, person_.person_.get_full_name(), id_, l_asset_type.name_, l_asset_type.task_types_.size()
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_asset_type);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_asset_type));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, delete_) {
@@ -234,7 +234,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, delete_) {
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(delete_from(l_sql).from<asset_type>().where(c(&asset_type::uuid_id_) == l_asset_type.uuid_id_));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types, post) {
@@ -259,7 +259,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types, post) {
   if (!l_task_type_asset_type_link_list.empty())
     l_sqls.emplace_back(insert(l_sql).into<task_type_asset_type_link>().set_range(l_task_type_asset_type_link_list));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg(nlohmann::json{} = l_args);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_args));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status, post) {
@@ -279,7 +279,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建任务状态 task_status_id {} name {}", person_.person_.email_,
       person_.person_.get_full_name(), l_status.uuid_id_, l_status.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_status);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_status));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status_instance, put) {
   person_.check_admin();
@@ -299,7 +299,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_status_instance, put) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新任务状态 task_status_id {} name {}", person_.person_.email_,
       person_.person_.get_full_name(), id_, l_status.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_status);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_status));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_backup, post) {
   person_.check_admin();
@@ -318,7 +318,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_backup, post) {
       person_.person_.get_full_name(), l_file.filename().generic_string(),
       FSys::exists(l_file) ? FSys::file_size(l_file) : 0
   );
-  co_return in_handle->make_msg(l_file.generic_string());
+  co_return std::make_unique<http_body_string_t>(l_file.generic_string());
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_preview_files, get) {
@@ -326,7 +326,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_preview_files, get) {
   auto l_preview_file = l_sql.get_by_uuid<preview_file>(preview_file_id_);
   person_.check_in_project(l_preview_file.task_id_);
   person_.check_not_outsourcer();
-  co_return in_handle->make_msg(nlohmann::json{} = l_preview_file);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_preview_file));
 }
 
 namespace {
@@ -362,14 +362,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_stop_server, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 已触发停止服务器流程", person_.person_.email_,
       person_.person_.get_full_name()
   );
-  co_return in_handle->make_msg(nlohmann::json{} = "server stopping");
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = "server stopping"));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_updata_logs, get) {
   person_.check_admin();
   using namespace orm;
   auto l_sql = get_sqlite_database();
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_all<updata_logs>());
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sql.get_all<updata_logs>()));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_updata_logs, post) {
   person_.check_admin();
@@ -384,13 +384,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_updata_logs, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建更新日志 updata_logs_id {} log {}", person_.person_.email_,
       person_.person_.get_full_name(), l_updata_logs.uuid_id_, l_updata_logs.log_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_updata_logs);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_updata_logs));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_production_specifications, get) {
   auto l_ctx  = g_ctx().get<kitsu_ctx_t>();
   auto l_path = l_ctx.get_production_specifications_file();
-  co_return in_handle->make_msg(
-      l_path, http_header_ctrl{.mine_type_ = std::string{mime_type(l_path.extension())} + "; charset=utf-8"}
+  co_return std::make_unique<http_body_file_t>(
+      l_path, std::string{mime_type(l_path.extension())} + "; charset=utf-8"
   );
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version, get) {
@@ -405,7 +405,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version, get) {
       l_lines.push_back(l_line);
     }
   }
-  co_return in_handle->make_msg(
+  co_return std::make_unique<http_body_json_t>(
       nlohmann::json{{"main_version", l_lines.empty() ? "" : l_lines.back()}, {"sub_versions", l_lines}}
 
   );
@@ -421,14 +421,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version, post) {
   // 在文件末尾添加版本号
   FSys::ofstream l_ofstream{l_path, FSys::ofstream::app};
   l_ofstream << l_arg << "\n";
-  co_return in_handle->make_msg(nlohmann::json{} = l_arg);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_arg));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version_instance, get) {
   auto l_ctx  = g_ctx().get<kitsu_ctx_t>();
   auto l_path = l_ctx.get_ue_plugins_file(version_major_, version_minor_, version_patch_);
   DOODLE_CHICK(FSys::exists(l_path), "UE 插件版本文件不存在");
-  co_return in_handle->make_msg(
-      l_path, http_header_ctrl{.mine_type_ = std::string{mime_type(l_path.extension())}}
+  co_return std::make_unique<http_body_file_t>(
+      l_path, std::string{mime_type(l_path.extension())}
   );
 }
 }  // namespace doodle::http

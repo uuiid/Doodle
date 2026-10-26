@@ -4,6 +4,7 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/global_function.h>
+#include <doodle_lib/core/http/http_body.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
@@ -63,7 +64,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(video_thumbnail, post) {
   std::vector<uchar> l_buffer{};
   cv::imencode(".png", l_image, l_buffer, {cv::IMWRITE_PNG_BILEVEL, 0});
   g_ctx().get<video_thumbnail_cache>().Put(video_thumbnail_cache_id, l_buffer);
-  co_return in_handle->make_msg(std::move(l_buffer), "image/png");
+  co_return std::make_unique<http_body_binary_t>(std::move(l_buffer), "image/png");
 }
 void video_thumbnail::init_ctx() {
   static std::once_flag l_flag{};
@@ -74,7 +75,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(video_thumbnail, get) {
   auto& l_cache = g_ctx().get<video_thumbnail_cache>();
   if (l_cache.Cached(video_thumbnail_cache_id)) {
     auto l_buffer = *l_cache.Get(video_thumbnail_cache_id);
-    co_return in_handle->make_msg(std::move(l_buffer), "image/png");
+    co_return std::make_unique<http_body_binary_t>(std::move(l_buffer), "image/png");
   }
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "视频文件不存在"});
 }
@@ -161,10 +162,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(tools_add_watermark, get) {
     auto l_out   = l_add_watermark(l_image, l_args.image_size_);
     std::vector<uchar> l_buffer{};
     cv::imencode(".png", l_out, l_buffer, {cv::IMWRITE_PNG_BILEVEL, 0});
-    co_return in_handle->make_msg(std::move(l_buffer), "image/png");
+    co_return std::make_unique<http_body_binary_t>(std::move(l_buffer), "image/png");
   }
 
-  co_return in_handle->make_msg(l_json);
+  co_return std::make_unique<http_body_json_t>(l_json);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(tools_add_watermark, post) {
@@ -198,7 +199,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(tools_add_watermark, post) {
       );
     }
   });
-  co_return in_handle->make_msg(nlohmann::json{{"id", l_uuid}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"id", l_uuid}});
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(tools_add_watermark, put) {
@@ -224,7 +225,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(tools_add_watermark, put) {
   auto l_out   = l_add_watermark(l_image, l_args.image_size_);
   std::vector<uchar> l_buffer{};
   cv::imencode(".png", l_out, l_buffer, {cv::IMWRITE_PNG_BILEVEL, 0});
-  co_return in_handle->make_msg(std::move(l_buffer), "image/png");
+  co_return std::make_unique<http_body_binary_t>(std::move(l_buffer), "image/png");
 }
 
 }  // namespace doodle::http::local

@@ -24,7 +24,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode, get) {
                       .where(c(&sd2::ai_episode::subproject_id_) == subproject_id_)
                       .order_by(&sd2::ai_episode::name_)()
                       .to_vector();
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode, post) {
@@ -47,7 +47,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode, post) {
   l_sqls.emplace_back(insert(l_sql).into<sd2::ai_episode_model_resolution_limit>().values(*l_limit));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_episode);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_episode));
 }
 
 // /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}
@@ -74,7 +74,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, get
   l_json           = l_episode;
   l_json["canvas"] = l_canvases;
 
-  co_return in_handle->make_msg(std::move(l_json));
+  co_return std::make_unique<http_body_json_t>(std::move(l_json));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, put) {
@@ -91,7 +91,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, put
   l_sqls.emplace_back(std::move(l_update));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::ai_episode>(episode_id_));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sql.get_by_uuid<sd2::ai_episode>(episode_id_)));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, delete_) {
@@ -103,7 +103,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_instance, del
   l_sqls.emplace_back(delete_from(l_sql).from<sd2::ai_episode>().where(c(&sd2::ai_episode::uuid_id_) == episode_id_));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{{"episode_id", episode_id_}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"episode_id", episode_id_}});
 }
 
 // /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}/model-resolution-limit
@@ -117,7 +117,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_model_resolut
                       .from<sd2::ai_episode_model_resolution_limit>()
                       .where(c(&sd2::ai_episode_model_resolution_limit::ai_episode_id_) == episode_id_)()
                       .to_vector();
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_model_resolution_limit, post) {
@@ -135,7 +135,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_episode_model_resolut
   l_sqls.emplace_back(insert(l_sql).into<sd2::ai_episode_model_resolution_limit>().values(*l_limit));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_limit);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_limit));
 }
 
 // /api/seedance2/subproject/{subproject_id}/model-resolution-limit/{limit_id}
@@ -150,7 +150,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_model_resolution_limit_i
   ));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{{"limit_id", limit_id_}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"limit_id", limit_id_}});
 }
 
 }  // namespace doodle::http

@@ -51,14 +51,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers, get) {
   person_.check_not_outsourcer();
   auto l_sql       = get_sqlite_database();
   auto l_computers = l_sql.get_all<computer>();
-  co_return in_handle->make_msg(nlohmann::json{} = l_computers);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_computers);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, get) {
   person_.check_not_outsourcer();
   auto l_sql      = get_sqlite_database();
   auto l_computer = l_sql.get_by_uuid<computer>(computer_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_computer);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_computer);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, put) {
@@ -81,7 +81,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, put) {
 
   auto l_computer = l_sql.get_by_uuid<computer>(computer_id_);
   socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_id_});
-  co_return in_handle->make_msg(nlohmann::json{} = l_computer);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_computer);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, delete_) {
@@ -93,7 +93,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, delete_) {
   l_sqls.emplace_back(delete_from(l_sql).from<computer>().where(c(&computer::uuid_id_) == computer_id_));
   co_await l_sql.run_sql(std::move(l_sqls));
   socket_io::broadcast(socket_io::computer_delete_broadcast_t{.computer_id_ = computer_id_});
-  co_return in_handle->make_msg(nlohmann::json{} = l_computer);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_computer);
 }
 
 class data_computers_socket_io_impl : public std::enable_shared_from_this<data_computers_socket_io_impl> {

@@ -417,7 +417,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, get) {
                       .from<sd2::task>()
                       .where(c(&sd2::task::ai_generate_entity_id_) == entity_id_)()
                       .to_vector();
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result));
 }
 namespace {
 // 对比传入的任务和一批任务的相似度
@@ -533,7 +533,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task, post) {
     co_await l_sql.run_sql(std::move(l_sqls));
   }
   seedance2_task_run_manager::Get().run();
-  co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"id", l_task->uuid_id_}});
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
@@ -585,7 +585,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, put) {
   );
   co_await l_sql.run_sql(std::move(l_sqls));
   l_task.status_ = sd2::task_status::cancelled;
-  co_return in_handle->make_msg(nlohmann::json{} = l_task);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_task));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, delete_) {
@@ -599,14 +599,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, delete_) 
                           .set(c(&sd2::task::archived_) = true)
                           .where(c(&sd2::task::uuid_id_) == l_task.uuid_id_));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg(nlohmann::json{{"id", id_}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"id", id_}});
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_task_instance, get) {
   person_.check_subproject_access(subproject_id_);
   auto l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_task);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_task));
 }
 
 struct seedance2_task_sum_result {
@@ -738,7 +738,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
   l_json["count"] = l_query_count().to_single();
   l_json["sum"]   = l_query_sum().to_vector<seedance2_task_sum_result>();
 
-  co_return in_handle->make_msg(l_json);
+  co_return std::make_unique<http_body_json_t>(l_json);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, get) {
   auto l_sql = get_sqlite_database();
@@ -748,15 +748,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, get) {
   l_json["entity"]     = l_sql.get_by_uuid<sd2::ai_generate_entity>(l_json["ai_episode_id_"].get<uuid>());
   l_json["episode"]    = l_sql.get_by_uuid<sd2::ai_episode>(l_json["ai_episode_id_"].get<uuid>());
   l_json["subproject"] = l_sql.get_by_uuid<sd2::subproject>(l_json["subproject_id_"].get<uuid>());
-  co_return in_handle->make_msg(l_json);
+  co_return std::make_unique<http_body_json_t>(l_json);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_run, get) {
-  co_return in_handle->make_msg(nlohmann::json{{"running", seedance2_task_run_manager::Get().is_running()}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"running", seedance2_task_run_manager::Get().is_running()}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_run, post) {
   seedance2_task_run_manager::Get().run();
-  co_return in_handle->make_msg(nlohmann::json{{"running", seedance2_task_run_manager::Get().is_running()}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"running", seedance2_task_run_manager::Get().is_running()}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_date, get) {
   auto l_sql = get_sqlite_database();
@@ -771,24 +771,24 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_date, get) {
                      .from<sd2::task>()
                      .where(c(&sd2::task::created_at_) >= l_date_start && c(&sd2::task::created_at_) <= l_date_end)
                      .order_by(&sd2::task::created_at_, false);
-  co_return in_handle->make_msg(nlohmann::json{} = l_query().to_vector());
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_query().to_vector()));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail, get) {
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
   auto l_file = l_ctx.get_sd2_thumbnail_file(id_);
   DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "缩略图不存在");
-  co_return in_handle->make_msg(l_file, mime_type(l_file.extension()));
+  co_return std::make_unique<http_body_file_t>(l_file, mime_type(l_file.extension()));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures, get) {
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
   auto l_file = l_ctx.get_sd2_pictures_file(id_, file_extension_.file_extension_.generic_string());
-  co_return in_handle->make_msg(l_file, mime_type(l_file.extension()));
+  co_return std::make_unique<http_body_file_t>(l_file, mime_type(l_file.extension()));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_animation_waiting, get) {
   auto l_file = g_ctx().get<kitsu_ctx_t>().get_seedance2_waiting();
   DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "文件不存在");
-  co_return in_handle->make_msg(l_file, mime_type(l_file.extension()));
+  co_return std::make_unique<http_body_file_t>(l_file, mime_type(l_file.extension()));
 }
 
 }  // namespace doodle::http

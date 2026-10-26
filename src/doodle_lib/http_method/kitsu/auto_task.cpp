@@ -1018,12 +1018,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_rig_sk, get) {
   auto l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<task>(task_id_);
   if (l_task.task_type_id_ != task_type::get_binding_id() && l_task.task_type_id_ != task_type::get_simulation_id())
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "只有绑定任务才支持导出 rig sk");
+    co_return std::make_unique<http_body_error_t>(
+        boost::beast::http::status::bad_request, "只有绑定任务才支持导出 rig sk"
+    );
   auto l_asset         = l_sql.get_by_uuid<entity>(l_task.entity_id_);
   auto l_asset_extends = l_sql.get_entity_asset_extend(l_asset.uuid_id_);
   auto l_prj           = l_sql.get_by_uuid<project>(l_asset.project_id_);
   if (!l_asset_extends)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "实体缺少资产扩展信息");
+    co_return std::make_unique<http_body_error_t>(
+        boost::beast::http::status::bad_request, "实体缺少资产扩展信息"
+    );
   export_rig_sk_arg::data_t l_arg{};
   auto l_ue_scene_path       = FSys::path{"D:/sy_magic/ue_projects"} / doodle_config::doodle_token_name / l_prj.code_;
   bool l_is_sim              = l_task.task_type_id_ == task_type::get_simulation_id();
@@ -1033,7 +1037,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_rig_sk, get) {
     auto l_ue_path    = get_entity_character_ue_path(l_prj, *l_asset_extends);
     auto l_ue_project = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
     if (l_ue_project.empty())
-      co_return in_handle->make_error_code_msg(
+      co_return std::make_unique<http_body_error_t>(
           boost::beast::http::status::bad_request,
           fmt::format("未找到角色 {} 对应的 ue 工程文件，无法生成 ue 资产路径", l_asset.name_)
       );
@@ -1072,7 +1076,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_rig_sk, get) {
     auto l_ue_path    = get_entity_prop_ue_path(l_prj, *l_asset_extends);
     auto l_ue_project = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
     if (l_ue_project.empty())
-      co_return in_handle->make_error_code_msg(
+      co_return std::make_unique<http_body_error_t>(
           boost::beast::http::status::bad_request,
           fmt::format("未找到道具 {} 对应的 ue 工程文件，无法生成 ue 资产路径", l_asset.name_)
       );
@@ -1123,7 +1127,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_rig_sk, get) {
 
     auto l_ue_project = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
     if (l_ue_project.empty())
-      co_return in_handle->make_error_code_msg(
+      co_return std::make_unique<http_body_error_t>(
           boost::beast::http::status::bad_request,
           fmt::format("未找到地编 {} 对应的 ue 工程文件，无法生成 ue 资产路径", l_asset.name_)
       );
@@ -1141,11 +1145,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_rig_sk, get) {
     l_arg.update_ue_path_  = l_ue_scene_path / l_ue_name.parent_path();
 
   } else {
-    co_return in_handle->make_error_code_msg(
+    co_return std::make_unique<http_body_error_t>(
         boost::beast::http::status::bad_request, "仅支持角色和道具, 地编, 特效类型资产导出 rig sk"
     );
   }
-  co_return in_handle->make_msg(nlohmann::json{} = l_arg);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_arg));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_anim_fbx, get) {
@@ -1171,7 +1175,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_export_anim_fbx, get) {
   l_arg.size_          = l_proj.get_resolution();
   l_arg.frame_in_      = *l_ext->frame_in_;
   l_arg.frame_out_     = *l_ext->frame_out_;
-  co_return in_handle->make_msg(nlohmann::json{} = l_arg);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_arg));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync, get) {
@@ -1372,7 +1376,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync, get) {
   else {
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "仅支持灯光和特效任务同步信息获取"});
   }
-  co_return in_handle->make_msg(nlohmann::json{} = l_arg);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_arg));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_assets_update_ue, get) {
@@ -1387,7 +1391,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_assets_update_ue, get) {
     l_paths.emplace_back(get_entity_prop_ue_public_files_path());
     l_paths.emplace_back(get_entity_prop_ue_files_path(*l_asset_extend));
   }
-  co_return in_handle->make_msg(nlohmann::json{} = l_paths);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_paths));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync_export_anim_fbx, get) {
   exe_warp::folder_watcher_anim_fbx::watch_arg l_arg{};
@@ -1416,7 +1420,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync_export_anim_fbx, get) {
 
   l_arg.project_id_ = l_task.project_id_;
   l_arg.task_id_    = task_id_;
-  co_return in_handle->make_msg(nlohmann::json{} = l_arg);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_arg));
 }
 
 }  // namespace doodle::http

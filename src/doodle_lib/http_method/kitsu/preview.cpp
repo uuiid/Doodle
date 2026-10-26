@@ -108,7 +108,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comments_add_preview, post) {
       person_.person_.email_, person_.person_.get_full_name(), task_id_, comment_id_, l_preview_file->uuid_id_,
       l_revision, l_position
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_preview_file);
 }
 
 namespace {
@@ -462,7 +462,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
       magic_enum::enum_name(l_preview_file->status_), l_preview_file->extension_, l_preview_file->file_size_,
       l_preview_file->width_, l_preview_file->height_, l_preview_file->duration_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_preview_file);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comments_preview_files, post) {
@@ -521,7 +521,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comments_preview_files, post) {
       person_.person_.email_, person_.person_.get_full_name(), task_id_, comment_id_, l_preview_file->uuid_id_,
       l_revision, l_position
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_preview_file);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_set_main_preview, put) {
@@ -560,7 +560,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_set_main_preview, put) 
       g_logger_ctrl().get_http(), "用户 {}({}) 完成设置主预览 entity_id {} task_id {} preview_file_id {}",
       person_.person_.email_, person_.person_.get_full_name(), l_ent->uuid_id_, l_task.uuid_id_, l_preview_file.uuid_id_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ent);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_ent);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_preview_files, get) {
@@ -569,7 +569,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_preview_files, get) {
   person_.check_in_project(l_ent.project_id_);
   person_.check_not_outsourcer();
   std::vector<preview_file> l_ret = get_preview_files_by_entity_id(entity_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_ret);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_ret);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_fix_preview_files_thumbnails, post) {
@@ -582,7 +582,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_fix_preview_files_thumbnails, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 已投递修复预览缩略图任务", person_.person_.email_,
       person_.person_.get_full_name()
   );
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 }  // namespace doodle::http

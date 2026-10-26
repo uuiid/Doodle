@@ -27,7 +27,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_, get) {
                       .where(c(&sd2::infinite_canvas::subproject_id_) == subproject_id_)
                       .order_by(&sd2::infinite_canvas::updated_at_, false)()
                       .to_vector();
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_, post) {
@@ -49,7 +49,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_, post) {
   l_sqls.emplace_back(insert(l_sql).into<sd2::infinite_canvas>().values(*l_canvas));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_canvas);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_canvas));
 }
 
 // /api/seedance2/canvas/{canvas_id}
@@ -90,7 +90,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, get) {
                             .order_by(&sd2::infinite_canvas_person_link::id_, true)()
                             .to_vector();
 
-  co_return in_handle->make_msg(nlohmann::json{
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{
       {"canvas", l_canvas},
       {"nodes", l_node_values},
       {"connections", l_link_values},
@@ -114,7 +114,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, put) {
   l_sqls.emplace_back(std::move(l_update));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sql.get_by_uuid<sd2::infinite_canvas>(canvas_id_)));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, delete_) {
@@ -133,7 +133,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_instance, delete_) {
   );
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 }  // namespace doodle::http

@@ -43,7 +43,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree, get) {
 
   nlohmann::json l_json{};
   l_json = l_list;
-  co_return in_handle->make_msg(l_json);
+  co_return std::make_unique<http_body_json_t>(l_json);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree, post) {
@@ -55,7 +55,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree, post) {
 
   if (!l_ptr->uuid_parent_.is_nil()) {
     if (auto l_list = l_sql.uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_); l_list == 0)
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
+      co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "未找到父节点");
   }
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
@@ -65,7 +65,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 创建 资产库节点 {} (父节点 {}) ", person_.person_.email_,
       person_.person_.get_full_name(), l_ptr->uuid_id_, l_ptr->uuid_parent_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_ptr));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree, patch) {
   person_.check_supervisor();
@@ -98,7 +98,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree, patch) {
     l_sqls.emplace_back(std::move(l_update));
   }
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg(nlohmann::json{} = *l_values);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_values));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree_instance, put) {
@@ -123,7 +123,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree_instance, put) {
           .where(c(&assets_helper::database_t::uuid_id_) == id_)
   );
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg(nlohmann::json{} = *l_value);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_value));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree_instance, delete_) {
@@ -131,7 +131,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree_instance, delete_) 
   auto l_uuid = boost::lexical_cast<uuid>(id_);
   auto l_sql  = get_sqlite_database();
   if (l_sql.has_assets_tree_assets_link(l_uuid) || l_sql.has_assets_tree_child(l_uuid))
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
+    co_return std::make_unique<http_body_error_t>(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 删除 资产库节点 {} ", person_.person_.email_,
       person_.person_.get_full_name(), l_uuid
@@ -151,7 +151,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_tree_instance, delete_) 
   );
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{});
 }
 
 }  // namespace doodle::http::model_library

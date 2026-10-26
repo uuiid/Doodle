@@ -68,7 +68,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
     // l_segment.skeleton_->neutral_joints_ = l_neutral_joints;
     // l_segment.root_trajectory_ += l_root_pos;
   }
-  co_return in_handle->make_msg(nlohmann::json{} = impl_ptr_->run(l_segment));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = impl_ptr_->run(l_segment)));
 }
 
 void ai_train_animation::load_model(const std::string& model_path) {
@@ -81,7 +81,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation_settings, post) {
   auto l_main_fun = in_handle->route_ptr_->get_function<ai_train_animation>();
   DOODLE_CHICK(l_main_fun != nullptr, "ai_train_animation 路由未注册，请检查代码");
   l_main_fun->load_model(l_path);
-  co_return in_handle->make_msg(
+  co_return std::make_unique<http_body_json_t>(
       nlohmann::json{{"model_path", l_path}, {"skeleton", *l_main_fun->impl_ptr_->model_->skeleton()}}
   );
 }

@@ -4,6 +4,7 @@
 #pragma once
 #include <doodle_core/exception/exception.h>
 
+#include <doodle_lib/core/http/http_body.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/logger/logger.h>
@@ -267,16 +268,16 @@ class DOODLELIB_API http_function {
  public:
   virtual ~http_function();
   [[nodiscard]] virtual bool has_websocket() const;
-  boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle);
+  boost::asio::awaitable<http_body_ptr> callback(session_data_ptr in_handle);
 
-  virtual boost::asio::awaitable<boost::beast::http::message_generator> other_callback(session_data_ptr in_handle);
-  virtual boost::asio::awaitable<boost::beast::http::message_generator> get(session_data_ptr in_handle);
-  virtual boost::asio::awaitable<boost::beast::http::message_generator> put(session_data_ptr in_handle);
-  virtual boost::asio::awaitable<boost::beast::http::message_generator> post(session_data_ptr in_handle);
-  virtual boost::asio::awaitable<boost::beast::http::message_generator> options(session_data_ptr in_handle);
-  virtual boost::asio::awaitable<boost::beast::http::message_generator> head(session_data_ptr in_handle);
-  virtual boost::asio::awaitable<boost::beast::http::message_generator> patch(session_data_ptr in_handle);
-  virtual boost::asio::awaitable<boost::beast::http::message_generator> delete_(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<http_body_ptr> other_callback(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<http_body_ptr> get(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<http_body_ptr> put(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<http_body_ptr> post(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<http_body_ptr> options(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<http_body_ptr> head(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<http_body_ptr> patch(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<http_body_ptr> delete_(session_data_ptr in_handle);
   virtual void websocket_init(session_data_ptr in_handle);
   virtual void websocket_callback(
       boost::beast::websocket::stream<tcp_stream_type> in_stream, session_data_ptr in_handle
@@ -293,7 +294,7 @@ class http_function_template : public Base {
 };
 
 #define DOODLE_HTTP_FUN_OVERRIDE(method) \
-  virtual boost::asio::awaitable<boost::beast::http::message_generator> method(session_data_ptr in_handle) override;
+  virtual boost::asio::awaitable<::doodle::http::http_body_ptr> method(session_data_ptr in_handle) override;
 
 #define DOODLE_HTTP_FUN_C(fun_name, base_fun)                                                           \
   class fun_name : public base_fun {                                                                    \
@@ -305,7 +306,7 @@ class http_function_template : public Base {
 // fun_name() = default;
 
 #define DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(class_name, method) \
-  boost::asio::awaitable<boost::beast::http::message_generator> class_name::method(session_data_ptr in_handle)
+  boost::asio::awaitable<::doodle::http::http_body_ptr> class_name::method(session_data_ptr in_handle)
 
 #define DOODLE_HTTP_FUN(fun_name) DOODLE_HTTP_FUN_C(fun_name, ::doodle::http::http_function)
 #define DOODLE_HTTP_FUN_END() \

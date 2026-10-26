@@ -24,9 +24,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_tool_version, get) {
     // getline
     for (std::string l_line; std::getline(l_version_file, l_line);) l_version.emplace_back(std::move(l_line));
     std::ranges::reverse(l_version);
-    co_return in_handle->make_msg((nlohmann::json{} = l_version).dump());
+    co_return std::make_unique<http_body_string_t>(
+        (nlohmann::json{} = l_version).dump(), "application/json; charset=utf-8"
+    );
   }
-  co_return in_handle->make_msg(nlohmann::json{}.dump());
+  co_return std::make_unique<http_body_string_t>(nlohmann::json{}.dump(), "application/json; charset=utf-8");
 }
 
 }  // namespace doodle::http

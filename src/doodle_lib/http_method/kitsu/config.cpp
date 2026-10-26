@@ -10,7 +10,7 @@
 namespace doodle::http {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(config, get) {
-  co_return in_handle->make_msg(std::string{R"({
+  co_return std::make_unique<http_body_string_t>(std::string{R"({
     "is_self_hosted": true,
     "crisp_token": "",
     "dark_theme_by_default": null,
@@ -19,7 +19,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(config, get) {
     "saml_idp_name": "",
     "default_locale": "zh",
     "default_timezone": "Asia/Shanghai"
-})"});
+})"}, "application/json; charset=utf-8");
 }
 
 }  // namespace doodle::http

@@ -56,13 +56,11 @@ class DOODLELIB_API pictures_base : public http_jwt_fun {
   std::pair<std::size_t, std::size_t> create_thumbnail_mp4(
       const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name
   );
-  boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(
-      session_data_ptr in_handle, FSys::path in_path
-  );
-  boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
+  boost::asio::awaitable<http_body_ptr> thumbnail_post(session_data_ptr in_handle, FSys::path in_path);
+  boost::asio::awaitable<http_body_ptr> thumbnail_get(
       session_data_ptr in_handle, FSys::path in_path, std::string in_extension = ".png"
   );
-  boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_404(session_data_ptr in_handle);
+  boost::asio::awaitable<http_body_ptr> thumbnail_404(session_data_ptr in_handle);
   std::shared_ptr<FSys::path> root_;
 
  public:

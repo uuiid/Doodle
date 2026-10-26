@@ -296,7 +296,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
       l_preview_file_ptr->width_, l_preview_file_ptr->height_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file_ptr);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_preview_file_ptr);
 }
 
 struct actions_playlists_preview_files_create_review_arg {
@@ -516,7 +516,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
       l_attachment_files.size(), l_paths.size()
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_playlist_shot);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_playlist_shot);
 }
 struct actions_tasks_create_review_args {
   FSys::path subtitle_path_;
@@ -711,7 +711,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
       person_.person_.email_, person_.person_.get_full_name(), task_id_, l_comment->uuid_id_,
       l_result.attachment_file_.size()
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_result);
 }
 
 }  // namespace doodle::http

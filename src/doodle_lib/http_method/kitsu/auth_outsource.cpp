@@ -95,7 +95,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization, get) {
   person_.check_producer();
   auto l_sql       = get_sqlite_database();
   auto l_auth_list = entity_outsource_studio_authorization::get(project_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_auth_list);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_auth_list));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization, post) {
   person_.check_producer();
@@ -112,14 +112,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建外包授权 project_id {} authorization_id {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, l_auth.uuid_id_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_auth);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_auth));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization_instance, get) {
   person_.check_producer();
 
   auto l_sql  = get_sqlite_database();
   auto l_auth = l_sql.get_by_uuid<outsource_studio_authorization>(authorization_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_auth);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_auth));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization_instance, delete_) {
   person_.check_producer();
@@ -134,6 +134,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization_instance, delete_)
       c(&outsource_studio_authorization::uuid_id_) == authorization_id_
   ));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 }  // namespace doodle::http

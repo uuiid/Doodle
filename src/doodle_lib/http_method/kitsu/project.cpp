@@ -83,7 +83,7 @@ auto select_project_all_get_result(const std::string& in_name) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(project_all, get) {
   person_.check_admin();
-  co_return in_handle->make_msg(nlohmann::json{} = select_project_all_get_result({}));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = select_project_all_get_result({}));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_instance, get) {
@@ -92,7 +92,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_instance, get) {
   nlohmann::json l_j{};
   l_j                        = l_list;
   l_j["project_status_name"] = l_sql.get_by_uuid<project_status>(l_list.project_status_id_).name_;
-  co_return in_handle->make_msg(l_list);
+  co_return std::make_unique<http_body_json_t>(l_list);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_instance, put) {
   auto l_sql     = get_sqlite_database();
@@ -115,7 +115,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_instance, put) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新项目 project_id {} name {}", person_.person_.email_,
       person_.person_.get_full_name(), id_, l_project_updated.name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_project_updated);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_project_updated);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_projects, post) {
@@ -141,7 +141,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_projects, post) {
       person_.person_.get_full_name(), l_prj->uuid_id_, l_prj->name_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_prj);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_prj);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_task_types, post) {
   auto l_json = in_handle->get_json();
@@ -167,7 +167,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_task_types, post) {
       person_.person_.get_full_name(), id_, l_prj_task_type_link->task_type_id_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<project>(id_));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_sql.get_by_uuid<project>(id_));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(project_settings_task_types, delete_) {
   person_.check_project_manager(project_id_);
@@ -186,7 +186,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(project_settings_task_types, delete_) {
         )
     );
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_task_status, post) {
@@ -214,7 +214,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_task_status, post) {
       person_.person_.get_full_name(), id_, l_status_id
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<project>(id_));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_sql.get_by_uuid<project>(id_));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_asset_types, post) {
   auto l_json = in_handle->get_json();
@@ -239,7 +239,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_asset_types, post) {
       person_.person_.get_full_name(), id_, l_prj_asset_type_link->asset_type_id_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<project>(id_));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_sql.get_by_uuid<project>(id_));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_create_tasks, post) {
   person_.check_project_manager(project_id_);
@@ -293,7 +293,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_create_tasks, post) {
         l_task->task_type_id_
     );
 
-    co_return in_handle->make_msg(l_json_r.dump());
+    co_return std::make_unique<http_body_string_t>(l_json_r.dump(), "application/json; charset=utf-8");
   }
   auto l_tasks = std::make_shared<std::vector<task>>();
   for (auto&& i : l_entities) {
@@ -334,7 +334,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_create_tasks, post) {
       person_.person_.email_, person_.person_.get_full_name(), project_id_, task_type_id_, l_tasks->size()
   );
 
-  co_return in_handle->make_msg(l_json_r);
+  co_return std::make_unique<http_body_json_t>(l_json_r);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_projects_team, post) {
@@ -365,7 +365,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_projects_team, post) {
       person_.person_.get_full_name(), id_, l_add_team
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_prj);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_prj);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_team_person, delete_) {
   person_.check_project_manager(project_id_);
@@ -386,7 +386,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_team_person, delete_) {
     co_await l_sql.run_sql(std::move(l_sqls));
     socket_io::broadcast(socket_io::project_update_broadcast_t{.project_id_ = project_id_});
   }
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_type_links, post) {
   auto l_args = in_handle->get_json().get<project_task_type_link>();
@@ -422,7 +422,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_task_type_links, post) {
       l_ptr->priority_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_ptr);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_status_automations, post) {
   person_.check_project_manager(id_);
@@ -450,7 +450,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_status_automations, pos
       person_.person_.email_, person_.person_.get_full_name(), id_, l_ptr->status_automation_id_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_prj);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_prj);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_status_automations_instance, delete_) {
@@ -473,7 +473,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_status_automations_inst
     co_await l_sql.run_sql(std::move(l_sqls));
   }
   auto l_prj = l_sql.get_by_uuid<project>(project_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_prj);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_prj);
 }
 
 }  // namespace doodle::http

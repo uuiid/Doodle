@@ -8,6 +8,7 @@
 
 #include <doodle_lib/core/authorization.h>
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/http/http_body.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
@@ -39,7 +40,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(local_setting, get) {
   } catch (const doodle_error& e) {
     default_logger_raw()->error(e.what());
   }
-  co_return in_handle->make_msg(
+  co_return std::make_unique<http_body_json_t>(
       nlohmann::json{
           {"maya_parallel_quantity", core_set::get_set().p_max_thread},
           {"authorize", g_ctx().get<authorization>().is_valid()},
@@ -85,7 +86,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(local_setting, post) {
   } catch (const doodle_error& e) {
     default_logger_raw()->error(e.what());
   }
-  co_return in_handle->make_msg(
+  co_return std::make_unique<http_body_json_t>(
       nlohmann::json{
           {"maya_parallel_quantity", l_set.p_max_thread},
           {"authorize", g_ctx().get<authorization>().is_valid()},
@@ -100,7 +101,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(local_setting, post) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(local_setting_tmp_dir_server_task, get) {
-  co_return in_handle->make_msg(nlohmann::json{{"tmp_dir", core_set::get_set().get_cache_root("server_task")}});
+  co_return std::make_unique<http_body_json_t>(
+      nlohmann::json{{"tmp_dir", core_set::get_set().get_cache_root("server_task")}}
+  );
 }
 
 }  // namespace doodle::http::local

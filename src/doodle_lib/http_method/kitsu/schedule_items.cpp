@@ -13,14 +13,14 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 namespace doodle::http {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_schedule_items_task_types, get) {
-  co_return in_handle->make_msg(nlohmann::json::array());
+  co_return std::make_unique<http_body_json_t>(nlohmann::json::array());
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_schedule_items, get) {
-  co_return in_handle->make_msg(nlohmann::json::array());
+  co_return std::make_unique<http_body_json_t>(nlohmann::json::array());
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_milestones, get) {
-  co_return in_handle->make_msg(nlohmann::json::array());
+  co_return std::make_unique<http_body_json_t>(nlohmann::json::array());
 }
 
 }  // namespace doodle::http

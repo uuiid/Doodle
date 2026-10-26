@@ -259,7 +259,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(sequences_with_tasks, get) {
   auto l_r = get_get_entities_and_tasks(
       person_.person_, l_project_uuid, l_type_id.uuid_id_, l_offset ? l_offset : 0, l_limit ? l_limit : 300
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_r);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_r);
 }
 
 namespace {
@@ -313,7 +313,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_sequences, post) {
       person_.person_.email_, person_.person_.get_full_name(), id_, l_entity_ptr->uuid_id_, l_entity_ptr->name_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_entity_ptr);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_entity_ptr);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_sequences, get) {
   person_.check_in_project(id_);
@@ -323,12 +323,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_sequences, get) {
       l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_, {}, id_, {}
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_row);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_row);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_sequence_instance, get) {
   auto l_sql  = get_sqlite_database();
   auto l_data = l_sql.get_by_uuid<entity>(id_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_data);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_data);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_sequence_instance, delete_) {
   auto l_sql      = get_sqlite_database();
@@ -373,7 +373,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_sequence_instance, delete_) {
         }
     );
   }
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_task_types_create_tasks, post) {
@@ -434,7 +434,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_task_types_create_tasks, pos
       person_.person_.email_, person_.person_.get_full_name(), project_id_, task_type_id_, l_tasks->size()
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_result);
 }
 
 }  // namespace doodle::http

@@ -73,7 +73,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, get) {
     if (l_person_map.contains(l_item.uuid_id_)) l_item.persons_ = std::move(l_person_map[l_item.uuid_id_]);
   }
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, post) {
@@ -90,7 +90,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject, post) {
   l_sqls.emplace_back(insert(l_sql).into<sd2::subproject>().values(*l_subproject));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_subproject);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_subproject));
 }
 
 // /api/seedance2/subproject/{id}
@@ -99,7 +99,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, get) {
   auto l_sql        = get_sqlite_database();
   auto l_subproject = l_sql.get_by_uuid<sd2::subproject>(id_);
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_subproject);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_subproject));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, put) {
@@ -115,7 +115,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, put) {
   l_sqls.emplace_back(std::move(l_update));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::subproject>(id_));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sql.get_by_uuid<sd2::subproject>(id_)));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, delete_) {
@@ -146,7 +146,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_instance, delete_) {
   }
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 // /api/seedance2/subproject/{id}/preview
@@ -183,7 +183,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_preview, post) {
   }
   FSys::rename(l_file, l_file_picture);
 
-  co_return in_handle->make_msg(nlohmann::json{{"id", l_preview->uuid_id_}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"id", l_preview->uuid_id_}});
 }
 
 namespace {
@@ -217,7 +217,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_person_link, post) {
   l_sqls.emplace_back(insert(l_sql).into<sd2::subproject_person_link>().values(*l_link));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_link);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_link));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_person_link, delete_) {
@@ -227,7 +227,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_person_link, delete_) {
 
   auto l_link      = get_subproject_person_link(subproject_id_, l_person_id);
   if (!l_link)
-    co_return in_handle->make_msg(nlohmann::json{{"subproject_id", subproject_id_}, {"person_id", l_person_id}});
+    co_return std::make_unique<http_body_json_t>(
+        nlohmann::json{{"subproject_id", subproject_id_}, {"person_id", l_person_id}}
+    );
 
   auto l_sql = get_sqlite_database();
   using namespace orm;
@@ -239,7 +241,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_person_link, delete_) {
   );
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{{"subproject_id", subproject_id_}, {"person_id", l_person_id}});
+  co_return std::make_unique<http_body_json_t>(
+      nlohmann::json{{"subproject_id", subproject_id_}, {"person_id", l_person_id}}
+  );
 }
 
 }  // namespace doodle::http

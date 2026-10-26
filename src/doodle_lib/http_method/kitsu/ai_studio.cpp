@@ -30,20 +30,20 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, post) {
       person_.person_.get_full_name(), l_ai_studio.uuid_id_, l_ai_studio.name_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_ai_studio);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_ai_studio));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, get) {
   person_.check_producer();
   auto l_sql = get_sqlite_database();
   auto l_vec = l_sql.get_all<ai_studio>();
-  co_return in_handle->make_msg(nlohmann::json{} = l_vec);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_vec));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, get) {
   person_.check_producer();
   auto l_sql       = get_sqlite_database();
   auto l_ai_studio = l_sql.get_by_uuid<ai_studio>(id_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_ai_studio);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_ai_studio));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, put) {
   person_.check_producer();
@@ -63,7 +63,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, put) {
       person_.person_.get_full_name(), id_, l_ai_studio.name_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_ai_studio);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_ai_studio));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, delete_) {
   person_.check_producer();
@@ -79,7 +79,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, delete_) {
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(delete_from(l_sql).from<ai_studio>().where(c(&ai_studio::uuid_id_) == id_));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, post) {
   person_.check_producer();
@@ -101,7 +101,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, post
       person_.person_.get_full_name(), person_id_, ai_studio_id_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<person>(person_id_));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sql.get_by_uuid<person>(person_id_)));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, delete_) {
   person_.check_producer();
@@ -119,6 +119,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, dele
     );
     co_await l_sql.run_sql(std::move(l_sqls));
   }
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<person>(person_id_));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sql.get_by_uuid<person>(person_id_)));
 }
 }  // namespace doodle::http

@@ -18,13 +18,13 @@ namespace doodle::http::local {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, get) {
   auto& l_set           = core_set::get_set();
   bool has_running_task = l_set.internal_distributed_render_client_.lock() != nullptr;
-  co_return in_handle->make_msg(nlohmann::json{} = has_running_task);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = has_running_task);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, post) {
   auto& l_set = core_set::get_set();
   if (auto l_ptr = l_set.internal_distributed_render_client_.lock()) {
     SPDLOG_WARN("已经有一个分布式任务在运行了, 无法同时运行多个分布式任务");
-    co_return in_handle->make_msg_204();
+    co_return std::make_unique<http_body_empty_t>();
   }
   SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "收到运行分布式任务的请求, 将尝试运行分布式任务");
 
@@ -46,7 +46,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, post) {
   l_set.internal_distributed_render_client_ = l_woek;
   l_woek->run(l_allowed_task_types);
   SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "分布式任务已经开始运行, 允许的任务类型: {}", l_allowed_task_types);
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, delete_) {
   auto& l_set = core_set::get_set();
@@ -56,6 +56,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, delete_) {
     l_set.internal_distributed_render_client_.reset();
     SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "分布式任务已取消");
   }
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 }  // namespace doodle::http::local

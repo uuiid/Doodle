@@ -37,7 +37,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets, get) {
 
   nlohmann::json l_json{};
   l_json = l_list;
-  co_return in_handle->make_msg(l_json);
+  co_return std::make_unique<http_body_json_t>(l_json);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets, post) {
   person_.check_supervisor();
@@ -50,7 +50,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets, post) {
 
   for (auto&& i : l_ptr->uuid_parents_)
     if (auto l_list = l_sql.uuid_to_id<assets_helper::database_t>(i); l_list == 0)
-      co_return in_handle->make_error_code_msg(
+      co_return std::make_unique<http_body_error_t>(
           boost::beast::http::status::not_found, fmt::format("未找到父节点 {}", i)
       );
 
@@ -68,7 +68,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets, post) {
       person_.person_.get_full_name(), l_ptr->uuid_id_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_ptr));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_instance, put) {
   person_.check_supervisor();
@@ -84,7 +84,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_instance, put) {
           .where(c(&assets_file_helper::database_t::uuid_id_) == id_)
   );
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<assets_file_helper::database_t>(id_));
+  co_return std::make_unique<http_body_json_t>(
+      (nlohmann::json{} = l_sql.get_by_uuid<assets_file_helper::database_t>(id_))
+  );
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_instance, delete_) {
@@ -102,7 +104,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(model_library_assets_instance, delete_) {
       )
   );
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg(nlohmann::json{});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{});
 }
 
 }  // namespace doodle::http::model_library

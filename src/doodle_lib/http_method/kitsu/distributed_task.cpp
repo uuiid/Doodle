@@ -26,7 +26,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, get) 
       person_.person_.get_full_name(), project_id_, id_, l_ret.asset_infos_.size(),
       l_ret.camera_file_path_.filename().generic_string()
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_ret);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_ret);
 }
 
 namespace {
@@ -70,7 +70,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
       l_ptr->run_computer_id_
   );
   socket_io::broadcast(socket_io::server_task_info_new_broadcast_t{.server_task_info_id_ = l_ptr->uuid_id_});
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
 
 namespace {
@@ -121,6 +121,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_export_anim_fbx, p
       l_ptr->run_computer_id_
   );
   socket_io::broadcast(socket_io::server_task_info_new_broadcast_t{.server_task_info_id_ = l_ptr->uuid_id_});
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
 }  // namespace doodle::http

@@ -102,7 +102,7 @@ void http_function::websocket_callback(
 bool http_function::has_websocket() const { return false; }
 void http_function::parse_header(const session_data_ptr& in_handle) {}
 
-boost::asio::awaitable<boost::beast::http::message_generator> http_function::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<http_body_ptr> http_function::callback(session_data_ptr in_handle) {
   parse_header(in_handle);
   switch (in_handle->method()) {
     case boost::beast::http::verb::delete_:
@@ -125,31 +125,29 @@ boost::asio::awaitable<boost::beast::http::message_generator> http_function::cal
   return other_callback(in_handle);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> http_function::other_callback(
-    session_data_ptr in_handle
-) {
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+boost::asio::awaitable<http_body_ptr> http_function::other_callback(session_data_ptr in_handle) {
+  co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "服务器端未实现 api");
 }
-boost::asio::awaitable<boost::beast::http::message_generator> http_function::get(session_data_ptr in_handle) {
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+boost::asio::awaitable<http_body_ptr> http_function::get(session_data_ptr in_handle) {
+  co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "服务器端未实现 api");
 }
-boost::asio::awaitable<boost::beast::http::message_generator> http_function::put(session_data_ptr in_handle) {
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+boost::asio::awaitable<http_body_ptr> http_function::put(session_data_ptr in_handle) {
+  co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "服务器端未实现 api");
 }
-boost::asio::awaitable<boost::beast::http::message_generator> http_function::post(session_data_ptr in_handle) {
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+boost::asio::awaitable<http_body_ptr> http_function::post(session_data_ptr in_handle) {
+  co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "服务器端未实现 api");
 }
-boost::asio::awaitable<boost::beast::http::message_generator> http_function::options(session_data_ptr in_handle) {
-  co_return in_handle->make_msg(std::string{});
+boost::asio::awaitable<http_body_ptr> http_function::options(session_data_ptr in_handle) {
+  co_return std::make_unique<http_body_string_t>(std::string{});
 }
-boost::asio::awaitable<boost::beast::http::message_generator> http_function::delete_(session_data_ptr in_handle) {
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+boost::asio::awaitable<http_body_ptr> http_function::delete_(session_data_ptr in_handle) {
+  co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "服务器端未实现 api");
 }
-boost::asio::awaitable<boost::beast::http::message_generator> http_function::head(session_data_ptr in_handle) {
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+boost::asio::awaitable<http_body_ptr> http_function::head(session_data_ptr in_handle) {
+  co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "服务器端未实现 api");
 }
-boost::asio::awaitable<boost::beast::http::message_generator> http_function::patch(session_data_ptr in_handle) {
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+boost::asio::awaitable<http_body_ptr> http_function::patch(session_data_ptr in_handle) {
+  co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "服务器端未实现 api");
 }
 http_function::~http_function() = default;
 }  // namespace doodle::http

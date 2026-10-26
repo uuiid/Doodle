@@ -145,7 +145,9 @@ boost::asio::awaitable<void> session_data::run() {
     try {
       // 解析发现是 websocket 后,会直接启动新的携程, 本次携程直接返回
       if (co_await parse_body()) co_return;
-      l_gen = std::make_unique<boost::beast::http::message_generator>(co_await callback_->callback(shared_from_this()));
+      l_gen = std::make_unique<boost::beast::http::message_generator>(
+          make_message(co_await callback_->callback(shared_from_this()))
+      );
     } catch (const http_request_error& e) {
       logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
       l_gen = std::make_unique<boost::beast::http::message_generator>(make_error_code_msg(e.code_status_(), e.what()));
@@ -326,6 +328,144 @@ std::string session_data::zlib_compress(const std::string& in_str) {
   out.push(original);
   boost::iostreams::copy(out, compressed);
   return compressed.str();
+}
+
+boost::beast::http::message_generator session_data::make_message(const http_body_ptr& in_body) {
+  if (!in_body) return make_error_code_msg(boost::beast::http::status::internal_server_error, "回复体为空");
+
+  auto l_status          = in_body->get_status();
+  const auto l_mine_type = in_body->get_mine_type();
+  auto const l_body_status =
+      l_status == boost::beast::http::status::ok && method_verb_ == boost::beast::http::verb::post
+          ? static_cast<boost::beast::http::status>(boost::beast::http::status::created)
+          : l_status;
+
+  if (auto const* l_json = dynamic_cast<const http_body_json_t*>(in_body.get())) {
+    boost::beast::http::response<boost::beast::http::string_body> l_res{l_body_status, version_};
+    set_response_header(l_res, l_mine_type);
+    l_res.keep_alive(keep_alive_);
+    l_res.body() = l_json->body_.dump();
+    if (in_body->is_deflate() && is_deflate()) {
+      l_res.set(boost::beast::http::field::content_encoding, "deflate");
+      l_res.body() = zlib_compress(l_res.body());
+    }
+    l_res.prepare_payload();
+    return l_res;
+  }
+  if (auto const* l_str = dynamic_cast<const http_body_string_t*>(in_body.get())) {
+    boost::beast::http::response<boost::beast::http::string_body> l_res{l_body_status, version_};
+    set_response_header(l_res, l_mine_type);
+    l_res.keep_alive(keep_alive_);
+    l_res.body() = l_str->body_;
+    if (in_body->is_deflate() && is_deflate()) {
+      l_res.set(boost::beast::http::field::content_encoding, "deflate");
+      l_res.body() = zlib_compress(l_res.body());
+    }
+    l_res.prepare_payload();
+    return l_res;
+  }
+  if (auto const* l_bin = dynamic_cast<const http_body_binary_t*>(in_body.get())) {
+    boost::beast::http::response<boost::beast::http::vector_body<unsigned char>> l_res{l_status, version_};
+    set_response_header(l_res, l_mine_type);
+    l_res.keep_alive(keep_alive_);
+    l_res.body().resize(l_bin->body_.size());
+    for (std::size_t l_i = 0; l_i < l_bin->body_.size(); ++l_i)
+      l_res.body()[l_i] = static_cast<unsigned char>(l_bin->body_[l_i]);
+    l_res.prepare_payload();
+    return l_res;
+  }
+  if (dynamic_cast<const http_body_empty_t*>(in_body.get())) {
+    boost::beast::http::response<boost::beast::http::empty_body> l_res{l_status, version_};
+    set_response_header(l_res, l_mine_type);
+    l_res.keep_alive(keep_alive_);
+    l_res.prepare_payload();
+    return l_res;
+  }
+  if (auto const* l_err = dynamic_cast<const http_body_error_t*>(in_body.get())) {
+    return make_error_code_msg(l_status, l_err->message_, l_err->code_);
+  }
+  if (auto const* l_file = dynamic_cast<const http_body_file_t*>(in_body.get())) {
+    const auto& l_path = l_file->path_;
+    http_header_ctrl l_ctrl{
+        .status_              = l_status,
+        .mine_type_           = l_mine_type,
+        .has_cache_control_   = in_body->has_cache_control(),
+        .is_deflate_          = in_body->is_deflate(),
+        .is_attachment_       = in_body->is_attachment(),
+        .attachment_filename_ = in_body->get_attachment_filename(),
+    };
+    if (!FSys::exists(l_path)) return make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
+
+    if (l_file->range_mode_ == http_file_range_mode::head_only || method_verb_ == boost::beast::http::verb::head) {
+      boost::beast::http::response<boost::beast::http::empty_body> l_res{boost::beast::http::status::ok, version_};
+      set_response_file_header(l_res, l_path, l_ctrl);
+      l_res.keep_alive(keep_alive_);
+      l_res.prepare_payload();
+      return l_res;
+    }
+
+    boost::system::error_code l_code{};
+    if (l_file->use_deflate_body_) {
+      boost::beast::http::response<zlib_deflate_file_body> l_res{boost::beast::http::status::ok, version_};
+      l_res.body().open(l_path, std::ios::in | std::ios::binary, l_code);
+      if (l_code)
+        throw_exception(http_request_error{
+            boost::beast::http::status::internal_server_error,
+            fmt::format("无法打开文件 {} {}", l_path.generic_string(), l_code.message())
+        });
+      l_res.set(boost::beast::http::field::content_encoding, "deflate");
+      set_response_file_header(l_res, l_path, l_ctrl);
+      l_res.keep_alive(keep_alive_);
+      l_res.prepare_payload();
+      return l_res;
+    }
+
+    boost::beast::http::response<boost::beast::http::file_body> l_res{boost::beast::http::status::ok, version_};
+    l_res.body().open(l_path.generic_string().c_str(), boost::beast::file_mode::scan, l_code);
+    if (l_code)
+      throw_exception(http_request_error{
+          boost::beast::http::status::internal_server_error,
+          fmt::format("无法打开文件 {} {}", l_path.generic_string(), l_code.message())
+      });
+
+    auto l_begin = l_file->range_begin_;
+    if (l_file->range_mode_ == http_file_range_mode::partial) {
+      l_res.body().seek(l_begin, l_code);
+      if (l_code)
+        throw_exception(http_request_error{
+            boost::beast::http::status::internal_server_error,
+            fmt::format("无法定位文件 {} {}", l_path.generic_string(), l_code.message())
+        });
+      l_res.result(boost::beast::http::status::partial_content);
+      l_res.set(
+          boost::beast::http::field::content_range,
+          fmt::format("bytes {}-{}/{}", l_begin, FSys::file_size(l_path) - 1, FSys::file_size(l_path))
+      );
+    } else if (req_header_.find(boost::beast::http::field::range) != req_header_.end()) {
+      if (auto l_range = req_header_.at(boost::beast::http::field::range);
+          !l_range.empty() && l_range.starts_with("bytes=")) {
+        l_begin = std::stoll(l_range.substr(6, l_range.find("-") - 6));
+        l_res.body().seek(l_begin, l_code);
+        if (l_code)
+          throw_exception(http_request_error{
+              boost::beast::http::status::internal_server_error,
+              fmt::format("无法定位文件 {} {}", l_path.generic_string(), l_code.message())
+          });
+        l_res.result(boost::beast::http::status::partial_content);
+        l_res.set(
+            boost::beast::http::field::content_range,
+            fmt::format("bytes {}-{}/{}", l_begin, FSys::file_size(l_path) - 1, FSys::file_size(l_path))
+        );
+      }
+    }
+
+    set_response_file_header(l_res, l_path, l_ctrl);
+    l_res.keep_alive(keep_alive_);
+    l_res.prepare_payload();
+    return l_res;
+  }
+
+  throw_exception(http_request_error{boost::beast::http::status::internal_server_error, "未实现的回复体类型"});
 }
 boost::beast::http::message_generator session_data::make_msg(
     const FSys::path& in_path, const http_header_ctrl& in_http_header_ctrl

@@ -34,7 +34,7 @@ std::optional<entity_shot_extend> get_entity_shot_extend_by_entity_id(const uuid
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, get) {
   auto l_sql  = get_sqlite_database();
   auto l_entt = l_sql.get_by_uuid<entity>(id_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_entt);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_entt);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
   auto l_sql  = get_sqlite_database();
@@ -98,10 +98,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
       person_.person_.email_, person_.person_.get_full_name(), l_entt->uuid_id_, l_entt->project_id_, l_can_update
   );
 
-  co_return in_handle->make_msg(l_res);
+  co_return std::make_unique<http_body_json_t>(l_res);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_news, get) {
-  co_return in_handle->make_msg(
+  co_return std::make_unique<http_body_json_t>(
       nlohmann::json{
           {"data", nlohmann::json::array()}, {"limit", 2000}, {"nb_pages", 0}, {"offset", 0}, {"page", 1}, {"total", 0}
       }

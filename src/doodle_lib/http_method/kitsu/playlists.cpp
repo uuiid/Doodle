@@ -109,7 +109,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(playlists_entities_preview_files, get) {
   nlohmann::json l_json{nlohmann::json::object()};
   for (auto&& [key, value] : l_sql.get_preview_files_for_entity(l_entt_id.uuid_id_))
     l_json[fmt::to_string(key)] = value;
-  co_return in_handle->make_msg(l_json);
+  co_return std::make_unique<http_body_json_t>(l_json);
 }
 namespace {
 struct actions_preview_files_update_annotations_args {
@@ -197,7 +197,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_update_annotations, put
       "用户 {}({}) 完成更新预览批注 preview_file_id {} task_id {} project_id {} updated_at {}", person_.person_.email_,
       person_.person_.get_full_name(), l_prev.uuid_id_, l_prev.task_id_, l_task.project_id_, l_prev.updated_at_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_prev);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_prev);
 }
 namespace {
 struct base_playlist_t {
@@ -507,7 +507,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_playlists_temp, post) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成生成临时播放列表 project_id {} item_count {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, l_playlist.playlist_.size()
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_playlist);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_playlist);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_playlists, get) {
   person_.check_in_project(project_id_);
@@ -528,7 +528,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_playlists, get) {
     }
   }
 
-  co_return in_handle->make_msg(
+  co_return std::make_unique<http_body_json_t>(
       nlohmann::json{} = get_playlist_by_task_type_and_project(l_order_by, project_id_, l_task_type_id, l_page)
   );
 }
@@ -552,7 +552,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists, post) {
       person_.person_.email_, person_.person_.get_full_name(), l_playlist->project_id_, l_playlist->uuid_id_,
       l_playlist->name_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_playlist);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_playlist);
 }
 
 struct playlist_shot_t : playlist {
@@ -741,7 +741,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_playlists_instance, get) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   auto l_playlist = l_sql.get_by_uuid<playlist>(playlist_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = get_playlist_shot_entity(l_playlist));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_playlist_shot_entity(l_playlist));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, put) {
   auto l_sql = get_sqlite_database();
@@ -766,7 +766,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, put) {
   nlohmann::json l_ret{};
   l_ret         = l_playlist_updated;
   l_ret["shot"] = l_sql.get_playlist_shot_entity(l_playlist_updated.uuid_id_);
-  co_return in_handle->make_msg(l_ret);
+  co_return std::make_unique<http_body_json_t>(l_ret);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, delete_) {
   auto l_sql = get_sqlite_database();
@@ -782,7 +782,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, delete_) {
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(delete_from(l_sql).from<playlist>().where(c(&playlist::id_) == l_playlist.id_));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post) {
@@ -813,7 +813,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
       person_.person_.email_, person_.person_.get_full_name(), playlist_id_, l_entity.uuid_id_,
       l_playlist_shot->uuid_id_, l_playlist_shot->order_index_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_playlist_shot);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_playlist_shot);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, put) {
   auto l_sql = get_sqlite_database();
@@ -844,7 +844,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, put) {
       person_.person_.get_full_name(), playlist_id_, shot_id_, l_playlist_shot.preview_id_,
       l_playlist_shot.order_index_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_playlist_shot);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_playlist_shot);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, delete_) {
   auto l_sql = get_sqlite_database();
@@ -859,7 +859,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, delete_) {
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(delete_from(l_sql).from<playlist_shot>().where(c(&playlist_shot::uuid_id_) == shot_id_));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 namespace {
 struct get_sequence_shots_preview_t : boost::less_than_comparable<get_sequence_shots_preview_t> {
@@ -926,6 +926,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_sequences_create_review_playlists, po
       person_.person_.email_, person_.person_.get_full_name(), sequence_id_, l_playlist->uuid_id_,
       l_playlist_shots->size()
   );
-  co_return in_handle->make_msg(nlohmann::json{} = get_playlist_shot_entity(*l_playlist));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_playlist_shot_entity(*l_playlist));
 }
 }  // namespace doodle::http

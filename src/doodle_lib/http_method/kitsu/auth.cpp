@@ -134,7 +134,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, post) {
         "doodle 重置密码", l_person.email_, generate_email_content(l_person.get_full_name(), l_rest_url)
     );
 
-  co_return in_handle->make_msg(nlohmann::json{{"success", "Reset token sent"}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"success", "Reset token sent"}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, put) {
   auto l_arg   = in_handle->get_json().get<auth_reset_password_put_arg>();
@@ -155,28 +155,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, put) {
     );
     co_await l_sql.run_sql(std::move(l_sqls));
   }
-  co_return in_handle->make_msg(nlohmann::json{{"success", "Password changed"}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"success", "Password changed"}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_logout, get) {
-  boost::beast::http::response<boost::beast::http::string_body> l_res{
-      boost::beast::http::status::ok, in_handle->version_
-  };
-  l_res.set(boost::beast::http::field::content_type, "application/json; charset=utf-8");
-  l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-  l_res.set(boost::beast::http::field::access_control_allow_origin, "*");
-  l_res.keep_alive(in_handle->keep_alive_);
-
-  l_res.set(
-      boost::beast::http::field::set_cookie, "access_token_cookie=; Max-Age=31540000; HttpOnly; Path=/; SameSite=Lax"
-  );
-  l_res.insert(
-      boost::beast::http::field::set_cookie,
-      "refresh_token_cookie=; Max-Age=31540000; HttpOnly; Path=/auth/refresh-token; SameSite=Lax"
-  );
-  l_res.body() = nlohmann::json{{"logout", true}}.dump();
-  l_res.prepare_payload();
-
-  co_return boost::beast::http::message_generator{std::move(l_res)};
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"logout", true}});
 }
-
 }  // namespace doodle::http

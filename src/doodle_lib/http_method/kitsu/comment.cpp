@@ -245,7 +245,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_comment, post) {
       person_.person_.get_full_name(), id_, l_comment->uuid_id_, l_files.size()
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_result);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_tasks_comment_many, post) {
@@ -273,7 +273,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_tasks_comment_many, post) {
       person_.person_.get_full_name(), l_result.size()
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_result);
 }
 
 struct actions_tasks_modify_date_comment_time_arg {
@@ -324,7 +324,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_modify_date_comment, post) {
       person_.person_.get_full_name(), id_, l_comment->uuid_id_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_result);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks_comments_ack, post) {
@@ -383,7 +383,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_tasks_comments_ack, post) {
       person_.person_.get_full_name(), comment_id_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_comment);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_comment);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_comment, get) {
@@ -393,7 +393,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_comment, get) {
   nlohmann::json l_json{};
   l_json                     = l_comment;
   l_json["attachment_files"] = get_attachment_files_by_comment_id(id_);
-  co_return in_handle->make_msg(l_json);
+  co_return std::make_unique<http_body_json_t>(l_json);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_comment, delete_) {
@@ -421,7 +421,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_comment, delete_) {
     l_sqls.emplace_back(std::move(l_update));
   }
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg(nlohmann::json{});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{});
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_comment, put) {
@@ -448,7 +448,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_comment, put) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新评论 comment_id {}", person_.person_.email_,
       person_.person_.get_full_name(), id_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_comment);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_comment);
 }
 
 }  // namespace doodle::http

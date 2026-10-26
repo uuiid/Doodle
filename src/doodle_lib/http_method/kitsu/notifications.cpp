@@ -218,7 +218,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_user_notifications, get) {
   data_user_notifications_get_args l_args{};
   l_args.get_query_params(in_handle->url_.params());
   auto l_ret = get_last_notifications_query(person_.person_.uuid_id_, l_args);
-  co_return in_handle->make_msg(nlohmann::json{} = l_ret);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_ret);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_user_notification, put) {
   auto l_sql         = get_sqlite_database();
@@ -244,7 +244,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_user_notification, put) {
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新通知 notification_id {} read {}", person_.person_.email_,
       person_.person_.get_full_name(), id_, l_not.read_
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_not);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_not);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_user_notifications_mark_all_as_read, post) {
   auto l_sql = get_sqlite_database();
@@ -269,7 +269,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_user_notifications_mark_all_as_read, 
       person_.person_.get_full_name()
   );
 
-  co_return in_handle->make_msg(nlohmann::json{{"success", true}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"success", true}});
 }
 
 }  // namespace doodle::http

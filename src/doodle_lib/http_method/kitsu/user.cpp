@@ -204,7 +204,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_context, get) {
                                           .to_optional()
                                           .value_or(std::string{});
 
-  co_return in_handle->make_msg(l_ret);
+  co_return std::make_unique<http_body_json_t>(l_ret);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person, get) {
@@ -216,7 +216,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person, get) {
   for (auto&& l_person : l_p) {
     if (l_person_deps_map.contains(l_person.uuid_id_)) l_person.departments_ = l_person_deps_map[l_person.uuid_id_];
   }
-  co_return in_handle->make_msg(nlohmann::json{} = l_p);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_p));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person, post) {
@@ -246,7 +246,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person, post) {
       person_.person_.get_full_name(), l_person->uuid_id_, l_person->email_, l_person->departments_.size()
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_person);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_person));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person_instance, put) {
@@ -305,7 +305,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person_instance, put) {
                                 .sign(jwt::algorithm::hs256{l_ctx.secret_});
   }
 
-  co_return in_handle->make_msg(l_ret);
+  co_return std::make_unique<http_body_json_t>(l_ret);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   person_.check_admin();
@@ -325,7 +325,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
           .where(c(&person::uuid_id_) == person_id_)
   );
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg(nlohmann::json{} = *l_person);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_person));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_change_password, post) {
   auto l_sql                 = get_sqlite_database();
@@ -346,6 +346,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_change_password, post) {
           .where(c(&person::uuid_id_) == l_person->uuid_id_)
   );
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_return in_handle->make_msg(nlohmann::json{} = *l_person);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_person));
 }
 }  // namespace doodle::http

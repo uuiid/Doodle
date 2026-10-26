@@ -265,7 +265,7 @@ void emit_signal(const std::shared_ptr<server_task_info>& in_ptr) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance, get) {
   auto l_list = task_info_manager().get_instance().get_all_task_info();
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_list);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_list));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task, get) {
   server_task_info_type l_type{server_task_info_type::unknown};
@@ -284,7 +284,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task, get) {
     i.get_last_line_log(
         core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", i.uuid_id_)
     );
-  co_return in_handle->make_msg(nlohmann::json{} = l_list);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_list));
 }
 void task::init_ctx() {
   static std::once_flag l_flag{};
@@ -313,26 +313,26 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task, post) {
   task_info_manager().get_instance().add_task_info(l_ptr);
   l_run_long_task_local->load_form_json(l_ptr->command_);
   l_run_long_task_local->run();
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance_log, get) {
   auto l_path = core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", id_);
   if (!FSys::exists(l_path))
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "日志不存在");
+    co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "日志不存在");
   auto l_mime = std::string{mime_type(l_path.extension())};
   l_mime += "; charset=utf-8";
-  co_return in_handle->make_msg(l_path, l_mime);
+  co_return std::make_unique<http_body_file_t>(l_path, l_mime);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance, delete_) {
   auto l_list = task_info_manager().get_instance().get_task_info(id_);
   if (l_list->status_ == server_task_info_status::running) {
-    co_return in_handle->make_error_code_msg(
+    co_return std::make_unique<http_body_error_t>(
         boost::beast::http::status::method_not_allowed, "任务正在运行中, 无法删除"
     );
   }
   task_info_manager().get_instance().remove_task_info(id_);
-  co_return in_handle->make_msg(nlohmann::json{});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{});
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance, patch) {
@@ -346,7 +346,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance, patch) {
 
   if (l_sr == server_task_info_status::running && l_server_task_info->status_ == server_task_info_status::canceled)
     g_ctx().get<run_post_task_local_cancel_manager>().cancel(l_server_task_info->uuid_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_server_task_info);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_server_task_info));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_inspect_instance, post) {
   auto l_ptr   = std::make_shared<server_task_info>();
@@ -367,7 +367,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_inspect_instance, post) {
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance_generate_uesk_file, post) {
@@ -394,7 +394,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance_generate_uesk_file, post) {
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_export_anim_fbx_local, post) {
@@ -422,7 +422,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_export_anim_fbx_local,
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_update_sim_abc_local, post) {
@@ -450,7 +450,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_update_sim_abc_local, 
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_project_sync_local, post) {
@@ -478,7 +478,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_project_sync_local, post) {
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_ue_files, post) {
@@ -506,7 +506,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_ue_files, post) {
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_ptr));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_files, post) {
@@ -534,7 +534,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_files, post) 
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_ptr));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_compose, post) {
@@ -562,7 +562,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_compose, post
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_ptr));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_watch_file_maya_anim, post) {
   DOODLE_TO_EXECUTOR(strand_);
@@ -584,7 +584,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_watch_file_maya_anim, post) {
   folder_watcher_->watch(l_watch_infos);
   folder_watcher_->set_token(token_);
   DOODLE_TO_SELF();
-  co_return in_handle->make_msg(nlohmann::json{} = l_watch_infos);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_watch_infos));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_watch_file_maya_anim, delete_) {
@@ -594,14 +594,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_watch_file_maya_anim, delete_) 
     folder_watcher_.reset();
   }
   DOODLE_TO_SELF();
-  co_return in_handle->make_msg(nlohmann::json{});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_watch_file_maya_anim, get) {
   DOODLE_TO_EXECUTOR(strand_);
   std::vector<doodle::exe_warp::folder_watcher_anim_fbx::watch_arg> l_watch_infos;
   if (folder_watcher_) l_watch_infos = co_await folder_watcher_->get_watch_args();
   DOODLE_TO_SELF();
-  co_return in_handle->make_msg(nlohmann::json{} = l_watch_infos);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_watch_infos));
 }
 
 }  // namespace doodle::http::local

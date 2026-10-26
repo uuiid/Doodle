@@ -14,7 +14,7 @@
 
 namespace doodle::http {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_file_status, get) {
-  co_return in_handle->make_msg(nlohmann::json::array());
+  co_return std::make_unique<http_body_json_t>(nlohmann::json::array());
 }
 
 }  // namespace doodle::http

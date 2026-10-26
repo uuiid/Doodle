@@ -100,9 +100,7 @@ std::pair<std::size_t, std::size_t> pictures_base::create_thumbnail_mp4(
   return l_size;
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_post(
-    session_data_ptr in_handle, FSys::path in_path
-) {
+boost::asio::awaitable<http_body_ptr> pictures_base::thumbnail_post(session_data_ptr in_handle, FSys::path in_path) {
   std::string l_name{fmt::format("{}", id_)};
   FSys::path l_path = in_path;
 
@@ -120,16 +118,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
       create_thumbnail_mp4(in_handle->get_file(), l_path, FSys::split_uuid_path(l_name));
       break;
     default:
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
+      co_return std::make_unique<http_body_error_t>(boost::beast::http::status::bad_request, "错误的请求类型");
   }
 
   // 原先这里会把生成的宽高回写到 ai_image_metadata; 该表与 /api/doodle/ai_image 接口已随本次
   // 清理一起删除, 缩略图生成不再需要这一步, 因此不再接收 create_thumbnail_* 的返回值.
 
-  co_return in_handle->make_msg(fmt::format(R"({{"id":"{}"}})", id_));
+  co_return std::make_unique<http_body_string_t>(
+      fmt::format(R"({{"id":"{}"}})", id_), "application/json; charset=utf-8"
+  );
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_get(
+boost::asio::awaitable<http_body_ptr> pictures_base::thumbnail_get(
     session_data_ptr in_handle, FSys::path in_path, std::string in_extension
 ) {
   FSys::path l_path = in_path;
@@ -139,40 +139,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
     l_path = l_new_path;
 
   if (!FSys::exists(l_path)) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
+    co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "文件不存在");
   }
 
   auto l_ext = l_path.extension();
-  boost::system::error_code l_code{};
-  auto l_set_handle = [&l_ext, &in_handle](auto&& in_res) {
-    in_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-    in_res.set(boost::beast::http::field::content_type, mime_type(l_ext));
-    in_res.keep_alive(in_handle->keep_alive_);
-    in_res.prepare_payload();
-  };
-
   if (in_handle->req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
-    boost::beast::http::response<http::zlib_deflate_file_body> l_res{
-        boost::beast::http::status::ok, in_handle->version_
-    };
-    l_res.body().open(l_path, std::ios::in | std::ios::binary, l_code);
-    l_res.set(boost::beast::http::field::content_encoding, "deflate");
-    l_set_handle(l_res);
-    if (l_code)
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::service_unavailable, l_code.message());
-    co_return std::move(l_res);
+    auto l_body = std::make_unique<http_body_file_t>(l_path, mime_type(l_ext));
+    l_body->set_deflate_body();
+    co_return l_body;
   }
-  boost::beast::http::response<boost::beast::http::file_body> l_res{
-      boost::beast::http::status::ok, in_handle->version_
-  };
-  l_res.body().open(l_path.generic_string().c_str(), boost::beast::file_mode::scan, l_code);
-  l_set_handle(l_res);
-  if (l_code)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::service_unavailable, l_code.message());
-  co_return std::move(l_res);
+  co_return std::make_unique<http_body_file_t>(l_path, mime_type(l_ext));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_404(session_data_ptr in_handle) {
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
+boost::asio::awaitable<http_body_ptr> pictures_base::thumbnail_404(session_data_ptr in_handle) {
+  co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "文件不存在");
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_instance, post) {

@@ -37,12 +37,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(authenticated, get) {
   l_r["user"]          = person_.person_;
   auto l_org           = get_sqlite_database().get_all<organisation>();
   l_r["organisation"]  = l_org.empty() ? organisation::get_default() : l_org.front();
-  co_return in_handle->make_msg(l_r.dump());
+  co_return std::make_unique<http_body_string_t>(l_r.dump(), "application/json; charset=utf-8");
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(organisations, get) {
   auto l_org = get_sqlite_database().get_all<organisation>();
-  co_return in_handle->make_msg((nlohmann::json{l_org.empty() ? organisation::get_default() : l_org.front()}).dump());
+  co_return std::make_unique<http_body_string_t>(
+      (nlohmann::json{l_org.empty() ? organisation::get_default() : l_org.front()}).dump(),
+      "application/json; charset=utf-8"
+  );
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_login, post) {
@@ -121,33 +124,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_login, post) {
                              .set_expires_at(chrono::system_clock::now() + chrono::days{15})
                              .sign(jwt::algorithm::hs256{l_ctx.secret_});
   l_json["refresh_token"] = l_refresh_token;
-  boost::beast::http::response<boost::beast::http::string_body> l_res{
-      boost::beast::http::status::ok, in_handle->version_
-  };
-  l_res.set(boost::beast::http::field::content_type, "application/json; charset=utf-8");
-  l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-  l_res.set(boost::beast::http::field::access_control_allow_origin, "*");
-  l_res.keep_alive(in_handle->keep_alive_);
-  // if (req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
-  //   l_res.body() = zlib_compress(std::move(in_body));
-  //   l_res.set(boost::beast::http::field::content_encoding, "deflate");
-  // } else
-
-  l_res.set(
+  auto l_body             = std::make_unique<http_body_json_t>(l_json);
+  l_body->set_header(
       boost::beast::http::field::set_cookie,
       fmt::format("access_token_cookie={}; Max-Age=31540000; HttpOnly; Path=/; SameSite=Lax", l_access_token)
   );
-  l_res.insert(
+  l_body->add_header(
       boost::beast::http::field::set_cookie,
       fmt::format(
           "refresh_token_cookie={}; Max-Age=31540000; HttpOnly; Path=/auth/refresh-token; SameSite=Lax", l_refresh_token
       )
   );
-  l_res.body() = l_json.dump();
 
-  l_res.prepare_payload();
-
-  co_return boost::beast::http::message_generator{std::move(l_res)};
+  co_return l_body;
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_refresh_token, get) {
@@ -174,34 +163,20 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_refresh_token, get) {
                              .set_expires_at(chrono::system_clock::now() + chrono::days{15})
                              .sign(jwt::algorithm::hs256{l_ctx.secret_});
   l_json["refresh_token"] = l_refresh_token;
-  boost::beast::http::response<boost::beast::http::string_body> l_res{
-      boost::beast::http::status::ok, in_handle->version_
-  };
-  l_res.set(boost::beast::http::field::content_type, "application/json; charset=utf-8");
-  l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-  l_res.set(boost::beast::http::field::access_control_allow_origin, "*");
-  l_res.keep_alive(in_handle->keep_alive_);
-  // if (req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
-  //   l_res.body() = zlib_compress(std::move(in_body));
-  //   l_res.set(boost::beast::http::field::content_encoding, "deflate");
-  // } else
-
-  l_res.set(
+  auto l_body             = std::make_unique<http_body_json_t>(l_json);
+  l_body->set_header(
       boost::beast::http::field::set_cookie,
       fmt::format("access_token_cookie={}; Max-Age=31540000; HttpOnly; Path=/; SameSite=Lax", l_access_token)
   );
-  l_res.insert(
+  l_body->add_header(
       boost::beast::http::field::set_cookie,
       fmt::format(
           "refresh_token_cookie={}; Max-Age=31540000; HttpOnly; Path=/api/auth/refresh-token; SameSite=Lax",
           l_refresh_token
       )
   );
-  l_res.body() = l_json.dump();
 
-  l_res.prepare_payload();
-
-  co_return boost::beast::http::message_generator{std::move(l_res)};
+  co_return l_body;
 }
 
 }  // namespace doodle::http

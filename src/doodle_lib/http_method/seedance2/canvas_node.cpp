@@ -27,7 +27,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node, get) {
                       .where(c(&sd2::canvas_element::canvas_id_) == canvas_id_)
                       .order_by(&sd2::canvas_element::created_at_, true)()
                       .to_vector();
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node, post) {
@@ -55,7 +55,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node, post) {
   l_sqls.emplace_back(insert(l_sql).into<sd2::canvas_element>().values(*l_element));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_element);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_element));
 }
 
 // /api/seedance2/canvas/{canvas_id}/node/{node_id}
@@ -68,7 +68,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node_instance, get) {
   if (l_element.canvas_id_ != canvas_id_)
     throw_exception(http_request_error{boost::beast::http::status::not_found, "节点不存在"});
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_element);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_element));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node_instance, put) {
@@ -104,7 +104,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node_instance, put) {
   l_sqls.emplace_back(std::move(l_update));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<sd2::canvas_element>(node_id_));
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sql.get_by_uuid<sd2::canvas_element>(node_id_)));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node_instance, delete_) {
@@ -124,7 +124,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_node_instance, delete_) {
   );
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 /// 画布连线 ---------------------
@@ -141,7 +141,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_connection, get) {
                       .where(c(&sd2::canvas_link::canvas_id_) == canvas_id_)
                       .order_by(&sd2::canvas_link::created_at_, true)()
                       .to_vector();
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_connection, post) {
@@ -168,7 +168,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_connection, post) {
   l_sqls.emplace_back(insert(l_sql).into<sd2::canvas_link>().values(*l_link));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_link);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_link));
 }
 
 // /api/seedance2/canvas/{canvas_id}/connection/{connection_id}
@@ -189,7 +189,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_connection_instance, delete_) {
   );
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 /// 画布可见人员 ---------------------
@@ -217,7 +217,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_person, post) {
   l_sqls.emplace_back(insert(l_sql).into<sd2::infinite_canvas_person_link>().set_range(l_links));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_links);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_links));
 }
 
 // /api/seedance2/canvas_link/{canvas_link_id}
@@ -234,7 +234,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(canvas_person_instance, delete_) {
   );
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 }  // namespace doodle::http

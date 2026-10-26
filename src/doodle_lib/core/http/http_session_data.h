@@ -6,6 +6,7 @@
 
 #include <doodle_core/configure/static_value.h>
 
+#include <doodle_lib/core/http/http_body.h>
 #include <doodle_lib/core/http/http_content_type.h>
 #include <doodle_lib/core/http/multipart_body_value.h>
 #include <doodle_lib/doodle_lib_fwd.h>
@@ -167,6 +168,8 @@ class session_data : public std::enable_shared_from_this<session_data> {
   boost::beast::http::message_generator make_msg(const FSys::path& in_path, std::string_view in_http_header_ctrl) {
     return make_msg(in_path, http_header_ctrl{.mine_type_ = in_http_header_ctrl});
   }
+
+  boost::beast::http::message_generator make_message(const http_body_ptr& in_body);
 
  private:
   // boost::beast::http::response<zlib_deflate_file_body> make_file_deflate(

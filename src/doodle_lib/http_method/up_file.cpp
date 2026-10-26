@@ -31,9 +31,9 @@ namespace doodle::http {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(up_file_base, post) {
   if (in_handle->content_type_ != detail::content_type::application_nuknown)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
+    co_return std::make_unique<http_body_error_t>(boost::beast::http::status::bad_request, "错误的请求类型");
   if (in_handle->req_header_.count(boost::beast::http::field::content_disposition) == 0)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "缺失必要的请求头信息");
+    co_return std::make_unique<http_body_error_t>(boost::beast::http::status::bad_request, "缺失必要的请求头信息");
 
   std::string l_name{in_handle->req_header_[boost::beast::http::field::content_disposition]};
   FSys::path l_d{l_name};
@@ -57,7 +57,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(up_file_base, post) {
   file_path_ = l_d;
   query_task_info(in_handle);
   move_file(in_handle);
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 
 std::string up_file_base::get_current_time_str_hour() const {
@@ -96,11 +96,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(up_file_base, head) {
   auto l_gen_path = gen_file_path();
   auto l_dir      = root_path_ / l_gen_path;
   auto l_path     = l_dir / file_path_;
-  co_return in_handle->make_msg(l_path, http_header_ctrl{.mine_type_ = {}});
+  co_return std::make_unique<http_body_file_t>(l_path, std::string_view{});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(up_file_base, get) {
   query_task_info(in_handle);
-  co_return in_handle->make_msg(nlohmann::json{{"file_path", gen_file_path()}});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"file_path", gen_file_path()}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(up_file_base, delete_) {
   query_task_info(in_handle);
@@ -115,7 +115,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(up_file_base, delete_) {
         person_.person_.get_full_name(), l_dir.string()
     );
   }
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 void up_file_asset_base::query_task_info(session_data_ptr in_handle) {
   auto l_sql = get_sqlite_database();

@@ -11,7 +11,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(context, get) {
   person_.check_user();
   nlohmann::json l_json{};
   l_json["tree_nodes"] = get_sqlite_database().get_all<assets_helper::database_t>();
-  co_return in_handle->make_msg(l_json);
+  co_return std::make_unique<http_body_json_t>(l_json);
 }
 
 }  // namespace doodle::http::model_library

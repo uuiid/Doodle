@@ -388,7 +388,7 @@ data_project_asset_types_casting_result_map get_asset_type_casting(
 }  // namespace
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_sequences_all_casting, get) {
   person_.check_in_project(project_id_);
-  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_, person_.person_));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_sequence_casting(project_id_, person_.person_));
 }
 
 namespace {
@@ -463,7 +463,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, get) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
   if (get_sqlite_database().uuid_to_id<entity>(entity_id_) == 0) throw_exception(doodle_error{"实体不存在或已被删除"});
-  co_return in_handle->make_msg(nlohmann::json{} = get_casting_t::get(entity_id_));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_casting_t::get(entity_id_));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, put) {
@@ -591,21 +591,23 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, put) {
       person_.person_.email_, person_.person_.get_full_name(), project_id_, l_ent->uuid_id_, l_ent->nb_entities_out_,
       l_entity_links_update.size(), l_entity_links_insert->size()
   );
-  co_return in_handle->make_msg(in_handle->get_json());
+  co_return std::make_unique<http_body_json_t>(in_handle->get_json());
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_sequences_casting, get) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
   if (get_sqlite_database().uuid_to_id<entity>(sequence_id_) == 0)
     throw_exception(doodle_error{"序列不存在或已被删除"});
-  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, sequence_id_));
+  co_return std::make_unique<http_body_json_t>(
+      nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, sequence_id_)
+  );
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_asset_types_casting, get) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
   if (get_sqlite_database().uuid_to_id<asset_type>(asset_type_id_) == 0)
     throw_exception(doodle_error{"序列不存在或已被删除"});
-  co_return in_handle->make_msg(nlohmann::json{} = get_asset_type_casting(project_id_, asset_type_id_));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_asset_type_casting(project_id_, asset_type_id_));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_replace, post) {
@@ -660,7 +662,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_replace, post) {
       person_.person_.email_, person_.person_.get_full_name(), project_id_, l_list.size(), l_entity_links->size()
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting({}, person_.person_, {}, l_shot_ids));
+  co_return std::make_unique<http_body_json_t>(
+      nlohmann::json{} = get_sequence_casting({}, person_.person_, {}, l_shot_ids)
+  );
 }
 struct actions_projects_casting_copy_arg {
   uuid source_sequence_id_;
@@ -731,7 +735,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_copy, post) {
     l_sqls.emplace_back(insert(l_sql).into<entity_link>().set_range(*l_install_entity_links));
     co_await l_sql.run_sql(std::move(l_sqls));
   }
-  co_return in_handle->make_msg(
+  co_return std::make_unique<http_body_json_t>(
       nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, l_arg.target_sequence_id_)
   );
 }
@@ -942,6 +946,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
       "harvested_assembly_count {} installed_link_count {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, id_, l_install_entity_links->size(), 1, 1
   );
-  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, id_));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, id_));
 }
 }  // namespace doodle::http

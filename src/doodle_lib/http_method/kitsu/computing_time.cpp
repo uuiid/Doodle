@@ -546,9 +546,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time, post) {
     std::set<uuid> l_task_ids{};
     for (auto&& l_task : l_data) {
       if (l_task.task_id.is_nil())
-        co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "task_id 不可为空");
+        co_return std::make_unique<http_body_error_t>(boost::beast::http::status::bad_request, "task_id 不可为空");
       if (!l_task_ids.emplace(l_task.task_id).second)
-        co_return in_handle->make_error_code_msg(
+        co_return std::make_unique<http_body_error_t>(
             boost::beast::http::status::bad_request, fmt::format("每个任务每个月只能有一个 {}", l_task.task_id)
         );
     }
@@ -575,7 +575,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time, post) {
       fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()}), l_block_ptr->size()
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
 orm::update_t set_work_xlsx_task_info(
@@ -611,7 +611,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time, get) {
 
   *l_block_ptr     = l_sql.get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
   *l_block_ptr |= ranges::actions::sort;
-  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_add, post) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
@@ -685,7 +685,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_add, post) {
       fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()}), l_block_ptr->size()
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_custom, post) {
@@ -749,7 +749,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_custom, post) {
       l_block_ptr->size()
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_sort, post) {
@@ -809,7 +809,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_sort, post) {
       person_.person_.get_full_name(), user_id_,
       fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()})
   );
-  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_sort));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_task_fulls(*l_block_sort));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_average, post) {
@@ -842,7 +842,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_average, post) {
       fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()}), l_block->size()
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_task_fulls(*l_block));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_patch, patch) {
@@ -860,9 +860,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_patch, patch) {
                                           : std::nullopt;
 
   if (l_duration && l_duration->count() <= 0) {
-    co_return in_handle->make_error_code_msg(
+    co_return std::make_unique<http_body_error_t>(
         boost::beast::http::status::bad_request,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}, "参数错误"
+        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}.what() + "参数错误"
     );
   }
   auto l_sql       = get_sqlite_database();
@@ -875,10 +875,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_patch, patch) {
     auto l_year_month_str_1 =
         fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()});
 
-    co_return in_handle->make_error_code_msg(
+    co_return std::make_unique<http_body_error_t>(
         boost::beast::http::status::not_found,
-        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()},
-        fmt::format("找不到用户 {} 中 {} 月 对应的表格", l_user.phone_, l_year_month_str_1)
+        boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()}.what() +
+            fmt::format("找不到用户 {} 中 {} 月 对应的表格", l_user.phone_, l_year_month_str_1)
     );
   }
   if (l_duration) {
@@ -892,7 +892,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_patch, patch) {
         co_await l_sql.run_sql(std::move(l_sqls));
       }
     } else {
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, l_err);
+      co_return std::make_unique<http_body_error_t>(boost::beast::http::status::bad_request, l_err);
     }
   } else if (l_comment) {
     using namespace orm;
@@ -927,7 +927,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_patch, patch) {
     }
     co_await l_sql.run_sql(std::move(l_sqls));
   }
-  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_delete, delete_) {
@@ -957,7 +957,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(computing_time_delete, delete_) {
   if (!l_block_ptr->empty()) l_modify_statements.emplace_back(set_work_xlsx_task_info(*l_block_ptr, l_sql));
 
   co_await l_sql.run_sql(std::move(l_modify_statements));
-  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
 orm::update_t recomputing_time(

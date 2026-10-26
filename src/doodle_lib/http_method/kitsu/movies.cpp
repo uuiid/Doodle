@@ -18,20 +18,22 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_low_preview_files, get) {
   auto l_entt = l_sql.get_by_uuid<task>(l_sql.get_by_uuid<preview_file>(id_).task_id_);
   person_.check_project_access(l_entt.project_id_);
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_lowdef_file(id_);
+  auto l_mime = mime_type(l_path.extension());
 
-  co_return in_handle->make_msg(
-      l_path, http_header_ctrl{.mine_type_ = mime_type(l_path.extension()), .has_cache_control_ = true}
-  );
+  auto l_body = std::make_unique<http_body_file_t>(l_path, l_mime);
+  l_body->set_cache_control();
+  co_return l_body;
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_originals_preview_files, get) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   auto l_entt = l_sql.get_by_uuid<task>(l_sql.get_by_uuid<preview_file>(id_).task_id_);
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(id_);
+  auto l_mime = mime_type(l_path.extension());
 
-  co_return in_handle->make_msg(
-      l_path, http_header_ctrl{.mine_type_ = mime_type(l_path.extension()), .has_cache_control_ = true}
-  );
+  auto l_body = std::make_unique<http_body_file_t>(l_path, l_mime);
+  l_body->set_cache_control();
+  co_return l_body;
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_tiles_preview_files, get) {
   person_.check_not_outsourcer();
@@ -39,10 +41,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_tiles_preview_files, get) {
   auto l_sql = get_sqlite_database();
   auto l_entt = l_sql.get_by_uuid<task>(l_sql.get_by_uuid<preview_file>(id_).task_id_);
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_tiles_file_path(id_);
+  auto l_mime = mime_type(l_path.extension());
 
-  co_return in_handle->make_msg(
-      l_path, http_header_ctrl{.mine_type_ = mime_type(l_path.extension()), .has_cache_control_ = true}
-  );
+  auto l_body = std::make_unique<http_body_file_t>(l_path, l_mime);
+  l_body->set_cache_control();
+  co_return l_body;
 }
 
 }  // namespace doodle::http

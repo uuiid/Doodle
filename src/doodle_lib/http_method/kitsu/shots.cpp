@@ -282,10 +282,12 @@ auto make_shots_with_tasks_result(const person& in_person, const boost::urls::ur
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_shots_with_tasks, get) {
   auto l_sql = get_sqlite_database();
 
-  co_return in_handle->make_msg(nlohmann::json{} = make_shots_with_tasks_result(person_.person_, in_handle->url_, {}));
+  co_return std::make_unique<http_body_json_t>(
+      (nlohmann::json{} = make_shots_with_tasks_result(person_.person_, in_handle->url_, {}))
+  );
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_shots, get) {
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 namespace {
 struct data_project_shots_args {
@@ -334,7 +336,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_shots, post) {
               .where(c(&entity::name_) == l_args.name_ && c(&entity::parent_id_) == l_args.sequence_id_ && c(&entity::project_id_) == project_id_ && c(&entity::entity_type_id_) == l_shot_type_id)()
               .to_vector<entity>();
       !l_list.empty())
-    co_return in_handle->make_msg(nlohmann::json{} = l_list.front());
+    co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_list.front()));
 
   auto l_shot = std::make_shared<entity>(entity{
       .name_           = l_args.name_,
@@ -366,14 +368,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_shots, post) {
   nlohmann::json l_result;
   l_result = *l_shot;
   l_result.update(*l_shot_extend);
-  co_return in_handle->make_msg(l_result);
+  co_return std::make_unique<http_body_json_t>(l_result);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_shot, get) {
   auto l_sql = get_sqlite_database();
   //
   auto l_ret = make_shots_with_tasks_result(person_.person_, {}, id_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_ret.empty() ? nlohmann::json{} : l_ret.front());
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_ret.empty() ? nlohmann::json{} : l_ret.front()));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_task_types_shots_create_tasks, post) {
   auto l_sql       = get_sqlite_database();
@@ -443,7 +445,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_task_types_shots_create_task
       person_.person_.email_, person_.person_.get_full_name(), project_id_, task_type_id_, l_tasks->size()
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_results);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_results));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_shot, delete_) {
   auto l_sql  = get_sqlite_database();
@@ -492,7 +494,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_shot, delete_) {
         socket_io::shot_delete_broadcast_t{.shot_id_ = l_shot->uuid_id_, .project_id_ = l_shot->project_id_}
     );
   }
-  co_return in_handle->make_msg_204();
+  co_return std::make_unique<http_body_empty_t>();
 }
 struct actions_projects_shots_import_frame_range_args {
   struct shot_frame_range_t {
@@ -597,7 +599,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_import_frame_range, po
   l_result.reserve(l_shot_ext_update->size() + l_shot_ext_instasll->size());
   for (auto&& l_shot_ext : *l_shot_ext_update) l_result.emplace_back(std::move(l_shot_ext));
   for (auto&& l_shot_ext : *l_shot_ext_instasll) l_result.emplace_back(std::move(l_shot_ext));
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result));
 }
 
 }  // namespace doodle::http

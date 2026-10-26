@@ -49,7 +49,7 @@ std::vector<std::int64_t> get_task_assignees_ids_for_task(uuid in_task_id) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_clear_assignation, put) {
   auto l_args = in_handle->get_json().get<actions_tasks_clear_assignation_put_args>();
   auto l_sql  = get_sqlite_database();
-  if (l_args.task_id_.empty()) co_return in_handle->make_msg(nlohmann::json::array());
+  if (l_args.task_id_.empty()) co_return std::make_unique<http_body_json_t>(nlohmann::json::array());
 
   auto l_task = l_sql.get_by_uuid<task>(l_args.task_id_.front());
   person_.check_project_supervisor(l_task.project_id_);
@@ -80,7 +80,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_clear_assignation, put) {
     co_await l_sql.run_sql(std::move(l_sqls));
   }
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_args.task_id_);
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_args.task_id_));
 }
 
 }  // namespace doodle::http
