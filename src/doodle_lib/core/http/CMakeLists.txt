@@ -9,6 +9,7 @@ target_sources(
         websocket_route.h
         http_websocket_client.h
         zlib_deflate_file_body.h
+        http_body.h
         multipart_body.h
         http_content_type.h
         http_listener_port_shm.h
@@ -24,6 +25,7 @@ target_sources(
         websocket_route.cpp
         http_websocket_client.cpp
         zlib_deflate_file_body.cpp
+        http_body.cpp
         multipart_body.cpp
         http_content_type.cpp
 )
