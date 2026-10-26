@@ -20,7 +20,6 @@
 #include <doodle_lib/http_method/ai/ai_main.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu/computing_time.h>
-#include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/local/local.h>
 #include <doodle_lib/http_method/model_library/model_library.h>

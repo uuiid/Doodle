@@ -2,7 +2,6 @@ target_sources(
         doodle_lib
         
         PUBLIC
-        kitsu_front_end.h
         kitsu_reg_url.h
         kitsu_result.h
         preview.h
@@ -18,7 +17,6 @@ target_sources(
         kitsu_reg_url.cpp
         task.cpp
         user.cpp
-        kitsu_front_end.cpp
         project.cpp
         assets.cpp
         preview.cpp
