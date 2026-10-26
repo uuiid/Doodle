@@ -49,7 +49,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/Ninja_debug/bin/doodle_kitsu_supplement.exe",
             "args": [
-                "--config=${workspaceFolder}/build/debug_server.json",
+                "--config=${workspaceFolder}/build/my_debug_server.json",
                 "--local",
                 "--port=50024"
             ],
@@ -179,7 +179,6 @@
                 "Doodle_debug",
                 "debug_test"
             ],
-            "preLaunchTask": "cmake build",
             "presentation": {
                 "hidden": false,
                 "group": "test",
@@ -192,7 +191,6 @@
                 "Doodle_debug",
                 "Doodle_debug_local"
             ],
-            "preLaunchTask": "cmake build",
             "presentation": {
                 "hidden": false,
                 "group": "main",
@@ -216,7 +214,6 @@
             "configurations": [
                 "Doodle_debug_local"
             ],
-            "preLaunchTask": "cmake build",
             "presentation": {
                 "hidden": false,
                 "group": "main",
