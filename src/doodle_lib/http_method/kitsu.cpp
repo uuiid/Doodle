@@ -293,6 +293,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_c<canvas_person>()
       .reg_c<canvas_person_instance>()
       .reg_c<seedance2_task>()
+      .reg_c<seedance2_task_instance>()
       .reg_c<seedance2_task_run>()
       .reg_c<seedance2_task_date>()
       .reg_c<data_preview_files>()

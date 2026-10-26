@@ -740,6 +740,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
 
   co_return in_handle->make_msg(l_json);
 }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, get) {
+  auto l_sql = get_sqlite_database();
+  person_.check_manager();
+  nlohmann::json l_json;
+  l_json               = l_sql.get_by_uuid<sd2::task>(task_);
+  l_json["entity"]     = l_sql.get_by_uuid<sd2::ai_generate_entity>(l_json["ai_episode_id_"].get<uuid>());
+  l_json["episode"]    = l_sql.get_by_uuid<sd2::ai_episode>(l_json["ai_episode_id_"].get<uuid>());
+  l_json["subproject"] = l_sql.get_by_uuid<sd2::subproject>(l_json["subproject_id_"].get<uuid>());
+  co_return in_handle->make_msg(l_json);
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_run, get) {
   co_return in_handle->make_msg(nlohmann::json{{"running", seedance2_task_run_manager::Get().is_running()}});
 }
