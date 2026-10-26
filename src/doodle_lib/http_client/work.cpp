@@ -142,7 +142,6 @@ uuid get_motherboard_uuid() {
 void http_work::run(std::set<server_task_info_type> in_allowed_task_types) {
   executor_           = boost::asio::make_strand(g_io_context());
   allowed_task_types_ = std::move(in_allowed_task_types);
-  spdlog::flush_every(1s);
   logger_ = g_logger_ctrl().make_log("http_work");
   app_cancel_state_.emplace(app_base::Get().on_cancel.slot());
   boost::asio::co_spawn(
@@ -365,7 +364,7 @@ boost::asio::awaitable<void> http_work::async_ping_loop() {
 
 base_distributed_task::base_distributed_task(server_task_info in_task_info, std::shared_ptr<http_work> in_http_work_ptr)
     : task_info_(std::move(in_task_info)), http_work_ptr_(std::move(in_http_work_ptr)) {
-  in_http_work_ptr->task_started();
+  http_work_ptr_->task_started();
 }
 
 base_distributed_task::~base_distributed_task() {
