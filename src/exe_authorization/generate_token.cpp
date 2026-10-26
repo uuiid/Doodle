@@ -2,12 +2,12 @@
 // Created by TD on 2022/3/24.
 //
 
-#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/authorization.h>
 
 
 int main(int argc, char *argv[]) {
-  doodle::doodle_lib l_lib{};
+  doodle::app_base l_app{};
 
   if (argc > 1) {
     doodle::authorization::generate_token(argv[1]);

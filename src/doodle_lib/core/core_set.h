@@ -21,7 +21,6 @@ namespace doodle {
 
 class DOODLELIB_API core_set : public boost::noncopyable {
   friend class user;
-  friend class doodle_lib;
 
  public:
   static core_set& get_set();

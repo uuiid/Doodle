@@ -12,6 +12,9 @@ target_link_libraries(doodle_kitsu_supplement
         PUBLIC
         mimalloc
         doodle_lib
+        PRIVATE
+        OpenSSL::SSL
+        OpenSSL::Crypto
 )
 
 

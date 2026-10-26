@@ -4,6 +4,7 @@
 
 #pragma once
 #include <doodle_lib/core/cancellation_signals.h>
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib/platform/win/windows_alias.h>
@@ -23,12 +24,17 @@ namespace doodle {
  * @brief app 的基类
  *
  */
-class DOODLELIB_API app_base {
+class DOODLELIB_API app_base : public boost::noncopyable {
+  friend DOODLELIB_API boost::asio::io_context& g_io_context();
+  friend DOODLELIB_API entt::registry::context& g_ctx();
+  friend DOODLELIB_API details::logger_ctrl& g_logger_ctrl();
+  friend DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_strand();
+  friend DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_pool_strand();
+
  public:
  protected:
   void bind_thread_to_group(int group_id);
   static app_base* self;
-  doodle_lib_ptr lib_ptr;
 
   argh::parser arg_;
   std::vector<std::shared_ptr<void>> facets_;
@@ -45,6 +51,17 @@ class DOODLELIB_API app_base {
   /// 初始化函数, 返回true继续运行, 返回false退出
   virtual bool init();
   void set_exit_code(std::int32_t in_exit_code);
+
+ private:
+  void init_lib();
+
+  boost::asio::io_context io_context_{};
+  entt::registry::context ctx_p{std::allocator<entt::entity>{}};
+  using strand_t = boost::asio::strand<boost::asio::io_context::executor_type>;
+  strand_t strand_{boost::asio::make_strand(io_context_)};
+  std::vector<strand_t> strands_{};
+  std::atomic_size_t strand_index_{0};
+  std::shared_ptr<details::logger_ctrl> p_log{std::make_shared<std::shared_ptr<details::logger_ctrl>::element_type>()};
 
  public:
   explicit app_base(int argc, const char* const argv[]);
@@ -71,8 +88,10 @@ class DOODLELIB_API app_base {
   cancellation_signals on_stop_listener;
 
   virtual void stop_app(std::int32_t in_exit_code = 0);
+  void clear_global_state();
 
-  DOODLE_DIS_COPY(app_base);
+  bool operator==(const app_base& in_rhs) const;
+
   static app_base& Get();
   static app_base* GetPtr();
 };

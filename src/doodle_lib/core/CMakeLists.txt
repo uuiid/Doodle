@@ -17,7 +17,6 @@ target_sources(
         generate_text_video.hpp
         crashpad.h
         core_set.h
-        doodle_lib.h
         template_util.h
         file_sys.h
         app_base.h
@@ -41,7 +40,6 @@ target_sources(
         generate_text_video.cpp
         crashpad.cpp
         core_set.cpp
-        doodle_lib.cpp
         file_sys.cpp
         app_base.cpp
         app_service.cpp
