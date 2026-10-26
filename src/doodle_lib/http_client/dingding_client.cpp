@@ -91,7 +91,7 @@ boost::asio::awaitable<std::vector<client::attendance_update>> client::get_atten
   co_return l_ret;
 }
 
-client_ptr dingding_company::make_client(std::reference_wrapper<const studio> in_studio) {
+client_ptr make_client(std::reference_wrapper<const studio> in_studio) {
   auto& l_studio = in_studio.get();
   DOODLE_CHICK(
       !l_studio.app_key_.empty() && !l_studio.app_secret_.empty(), "钉钉工作空间 {} 未配置 app_key 或 app_secret",

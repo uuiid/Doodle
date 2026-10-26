@@ -89,14 +89,5 @@ class DOODLELIB_API client : public std::enable_shared_from_this<client> {
 
 using client_ptr = std::shared_ptr<client>;
 
-class dingding_company {
- public:
-  dingding_company()  = default;
-
-  ~dingding_company() = default;
-
-  client_ptr make_client(std::reference_wrapper<const studio> in_studio);
-
- private:
-};
+DOODLELIB_API client_ptr make_client(std::reference_wrapper<const studio> in_studio);
 }  // namespace doodle::dingding

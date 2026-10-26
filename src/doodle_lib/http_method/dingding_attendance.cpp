@@ -62,7 +62,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
 
   auto l_sql                    = get_sqlite_database();
   auto l_user                   = l_sql.get_by_uuid<person>(id_);
-  auto& l_d                     = g_ctx().get<dingding::dingding_company>();
   auto l_studio                 = l_sql.get_by_uuid<studio>(l_user.studio_id_);
 
   // 查询缓存
@@ -81,7 +80,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(dingding_attendance_create_post, post) {
     co_return in_handle->logger_->error("/api/dingding/attendance {} {}", l_user.id_, "没有手机号"),
            std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "没有手机号");
 
-  auto l_dingding_client = l_d.make_client(l_studio);
+  auto l_dingding_client = dingding::make_client(l_studio);
   if (l_user.dingding_id_.empty()) {
     l_user.dingding_id_ = co_await l_dingding_client->get_user_by_mobile(l_user.phone_);
     l_modify_user       = true;

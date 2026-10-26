@@ -259,7 +259,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person_instance, put) {
   l_person->password_                    = l_old_person.password_;                     // 不允许修改密码
   if (l_old_person.studio_id_ != l_person->studio_id_ && !l_person->phone_.empty()) {
     auto l_studio          = l_sql.get_by_uuid<studio>(l_person->studio_id_);
-    auto l_dingding_client = g_ctx().get<dingding::dingding_company>().make_client(l_studio);
+    auto l_dingding_client = dingding::make_client(l_studio);
     l_person->dingding_id_ = co_await l_dingding_client->get_user_by_mobile(l_person->phone_);
   }
 
