@@ -3,7 +3,6 @@ target_sources(
         
         PUBLIC
         kitsu_front_end.h
-        epiboly.h
         kitsu_reg_url.h
         kitsu_result.h
         preview.h
@@ -21,7 +20,6 @@ target_sources(
         user.cpp
         kitsu_front_end.cpp
         project.cpp
-        epiboly.cpp
         assets.cpp
         preview.cpp
         login.cpp

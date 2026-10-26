@@ -14,7 +14,6 @@ class http_route;
 using http_route_ptr = std::shared_ptr<http_route>;
 
 http_route_ptr create_kitsu_route_2(const FSys::path& in_root);
-http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root);
 http_route_ptr create_kitsu_local_route();
 
 doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_name);

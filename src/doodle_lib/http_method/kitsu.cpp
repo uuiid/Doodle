@@ -20,7 +20,6 @@
 #include <doodle_lib/http_method/ai/ai_main.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu/computing_time.h>
-#include <doodle_lib/http_method/kitsu/epiboly.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/local/local.h>
@@ -340,28 +339,6 @@ http_route_ptr create_kitsu_local_route() {
 
         ;
   return l_rout_ptr;
-}
-
-http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
-  auto l_router  = std::make_shared<http_route>();
-  auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
-  l_sid_ctx->register_namespace("/events");
-  (*l_router)
-      .reg_c<doodle_tool_version>()
-      .reg_c<local::local_setting>()  //
-      // 外包
-      .reg_c<config>()
-      .reg_c<authenticated>()
-      .reg_c<epiboly_user_context>()
-
-      // 最后注册nodejs前端
-      .reg_c<socket_io::socket_io_http>(l_sid_ctx)
-      .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
-
-      ;
-  if (g_ctx().get<authorization>().is_valid()) (*l_router).reg_c<epiboly_actions_projects_export_anim_fbx>();
-
-  return l_router;
 }
 
 uuid get_url_project_id(const boost::urls::url& in_url) {

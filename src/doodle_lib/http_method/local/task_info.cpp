@@ -27,7 +27,6 @@
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/computer_reg_data.h>
 #include <doodle_lib/http_method/kitsu.h>
-#include <doodle_lib/http_method/kitsu/epiboly.h>
 #include <doodle_lib/http_method/local/local.h>
 #include <doodle_lib/long_task/connect_video.h>
 #include <doodle_lib/long_task/image_to_move.h>
@@ -173,7 +172,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   void set_arg(const async_task_ptr& in_arg) {
     auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
                          fmt::format("{}.log", task_info_->uuid_id_);
-    logger_ = std::make_shared<spdlog::async_logger>(
+    logger_            = std::make_shared<spdlog::async_logger>(
         task_info_->name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
         spdlog::thread_pool()
     );
@@ -185,7 +184,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   void load_form_json(const nlohmann::json& in_json) {
     auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
                          fmt::format("{}.log", task_info_->uuid_id_);
-    logger_ = std::make_shared<spdlog::async_logger>(
+    logger_            = std::make_shared<spdlog::async_logger>(
         task_info_->name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
         spdlog::thread_pool()
     );
@@ -196,7 +195,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       in_json.get_to(*l_arg_t);
       l_arg_t->sim_path = FSys::path{in_json["project"]["path"].get<std::string>()} /
                           in_json["project"]["asset_root_path"].get<std::string>() / "CFX";
-      arg_ = l_arg_t;
+      arg_              = l_arg_t;
     } else if (in_json.contains("file_list")) {  /// 替换文件
       auto l_arg_t = std::make_shared<maya_exe_ns::replace_file_arg>();
       in_json.get_to(*l_arg_t);
@@ -241,7 +240,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       task_info_->last_line_log_ = fmt::format("{}", e.what());
     } catch (...) {
       task_info_->status_ = server_task_info_status::failed;
-      auto l_err_str      = boost::current_exception_diagnostic_information() |
+      auto l_err_str = boost::current_exception_diagnostic_information() |
                        ranges::actions::remove_if([](const char& in_) -> bool { return in_ == '\n' || in_ == '\r'; });
       logger_->error(l_err_str);
       task_info_->last_line_log_ = l_err_str;
@@ -606,48 +605,3 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_watch_file_maya_anim, get) {
 }
 
 }  // namespace doodle::http::local
-
-namespace doodle::http {
-
-void epiboly_actions_projects_export_anim_fbx::init_ctx() {
-  static std::once_flag l_flag{};
-  std::call_once(l_flag, []() {
-    if (!g_ctx().contains<maya_ctx>()) g_ctx().emplace<maya_ctx>();
-    if (!g_ctx().contains<ue_ctx>()) g_ctx().emplace<ue_ctx>();
-    g_ctx().emplace<local::run_post_task_local_cancel_manager>();
-    app_base::Get().on_cancel.slot().assign([](boost::asio::cancellation_type_t) {
-      g_ctx().get<local::run_post_task_local_cancel_manager>().cancel_all();
-    });
-  });
-}
-
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(epiboly_actions_projects_export_anim_fbx, post) {
-  auto l_ptr          = std::make_shared<server_task_info>();
-  l_ptr->type_        = server_task_info_type::export_fbx;
-  l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  // 在外包的后端中, 会载入数据库, 可以使用  project_id_ 获取项目数据
-  auto l_project      = get_sqlite_database().get_by_uuid<project>(project_id_);
-
-  auto l_json         = in_handle->get_json();
-  l_json.get_to(*l_ptr);
-  l_ptr->run_computer_id_                         = boost::uuids::nil_uuid();
-  l_ptr->submitter_                               = boost::uuids::nil_uuid();
-
-  std::shared_ptr<export_fbx_arg_epiboly> l_arg_t = std::make_shared<export_fbx_arg_epiboly>();
-  l_json.get_to(*l_arg_t);
-
-  l_arg_t->create_play_blast_ = true;
-  l_arg_t->film_aperture_     = l_project.get_film_aperture();
-  l_arg_t->size_              = l_project.get_resolution();
-  l_ptr->command_             = (nlohmann::json{} = *l_arg_t);
-  local::task_info_manager().get_instance().add_task_info(l_ptr);
-
-  if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
-  auto l_run_long_task_local = std::make_shared<local::run_long_task_local>(l_ptr);
-  l_run_long_task_local->set_arg(l_arg_t);
-  l_run_long_task_local->run();
-  socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
-  co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
-}
-
-}  // namespace doodle::http
