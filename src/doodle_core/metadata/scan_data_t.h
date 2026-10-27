@@ -7,5 +7,4 @@
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/project.h>
 
-#include <entt/entt.hpp>
 namespace doodle {}  // namespace doodle

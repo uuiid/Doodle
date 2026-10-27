@@ -47,7 +47,6 @@ target_link_libraries(
         magic_enum::magic_enum
         fmt::fmt
         nlohmann_json nlohmann_json::nlohmann_json
-        EnTT::EnTT
         range-v3 range-v3-meta range-v3::meta range-v3-concepts
         cryptopp::cryptopp
         WIL::WIL

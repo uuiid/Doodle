@@ -8,8 +8,6 @@
 
 #include <boost/operators.hpp>
 
-#include <entt/entity/fwd.hpp>
-#include <entt/entt.hpp>
 namespace doodle {
 
 namespace details {

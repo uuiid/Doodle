@@ -11,7 +11,6 @@
 #include <boost/asio.hpp>
 #include <boost/uuid/uuid.hpp>
 
-#include <entt/entt.hpp>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
 #include <sstream>

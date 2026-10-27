@@ -64,7 +64,6 @@ target_link_libraries(doodle_lib
         nlohmann_json nlohmann_json::nlohmann_json
         ${OpenCV_LIBS}
         opencv_ml opencv_dnn opencv_core opencv_flann
-        EnTT::EnTT
         spdlog::spdlog
         range-v3 range-v3-meta range-v3::meta range-v3-concepts
         cryptopp::cryptopp

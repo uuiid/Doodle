@@ -5,7 +5,6 @@
 #pragma once
 #include <doodle_lib/core/file_sys.h>
 
-#include <entt/entt.hpp>
 namespace doodle {
 class assets_file;
 }  // namespace doodle

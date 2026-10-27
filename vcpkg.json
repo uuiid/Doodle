@@ -92,7 +92,6 @@
       ]
     },
     "spdlog",
-    "entt",
     "eigen3",
     "range-v3",
     "wil",

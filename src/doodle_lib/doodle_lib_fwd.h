@@ -9,7 +9,6 @@
 
 #include <boost/asio.hpp>
 
-#include <entt/entt.hpp>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
@@ -98,7 +97,6 @@ namespace detail {
 struct process_child;
 }
 using process_child_ptr = std::shared_ptr<detail::process_child>;
-using namespace entt::literals;
 using namespace std::literals;
 using namespace chrono::literals;
 

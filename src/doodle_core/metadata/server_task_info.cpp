@@ -8,8 +8,6 @@
 
 #include <boost/preprocessor.hpp>
 
-#include <entt/entt.hpp>
-
 namespace doodle {
 
 void server_task_info::get_last_line_log(const FSys::path& in_log_path) {

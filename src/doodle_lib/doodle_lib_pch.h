@@ -1,4 +1,4 @@
-﻿//
+//
 // Created by TD on 2021/6/17.
 //
 
@@ -46,7 +46,6 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 
-#include <entt/entt.hpp>
 #include <fmt/chrono.h>
 #include <fmt/color.h>
 #include <fmt/compile.h>

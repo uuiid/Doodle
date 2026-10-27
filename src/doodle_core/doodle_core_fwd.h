@@ -12,8 +12,6 @@
 
 #include <boost/uuid/uuid.hpp>
 
-#include <entt/entt.hpp>
-
 namespace boost::asio {
 class io_context;
 class thread_pool;

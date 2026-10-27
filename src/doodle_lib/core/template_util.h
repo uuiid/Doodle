@@ -2,7 +2,6 @@
 // Created by TD on 2022/3/4.
 //
 #pragma once
-#include <entt/fwd.hpp>
 #include <type_traits>
 
 namespace doodle::details {
