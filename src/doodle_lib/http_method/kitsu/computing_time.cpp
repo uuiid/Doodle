@@ -20,7 +20,6 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 
-#include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/holidaycn_time.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/kitsu.h>

@@ -6,7 +6,6 @@ target_sources(
         filesystem_extend.h
         observable_container.h
         holidaycn_time.h
-        cache_manger.h
         socket_io.h
         base64.h
         fbx_file.h

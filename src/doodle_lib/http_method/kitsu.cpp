@@ -11,7 +11,6 @@
 #include <doodle_core/metadata/task_type.h>
 
 #include <doodle_lib/core/app_base.h>
-#include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/socket_io.h>
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
@@ -37,8 +36,6 @@
 namespace doodle::http {
 
 http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
-  g_ctx().emplace<cache_manger>();
-
   auto l_router  = std::make_shared<http_route>();
   auto l_ctx     = g_ctx().get<kitsu_ctx_t>();
   auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();

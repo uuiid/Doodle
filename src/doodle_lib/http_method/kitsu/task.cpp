@@ -8,7 +8,6 @@
 #include <doodle_core/metadata/subscription.h>
 #include <doodle_core/metadata/task.h>
 
-#include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_method/kitsu.h>
