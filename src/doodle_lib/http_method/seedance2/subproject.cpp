@@ -167,7 +167,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_preview, post) {
   );
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx           = g_kitsu_ctx();
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview->uuid_id_, l_file.extension().string());
   auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(l_preview->uuid_id_);
 

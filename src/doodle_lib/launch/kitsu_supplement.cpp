@@ -167,7 +167,7 @@ bool kitsu_supplement_main::init() {
       l_args.port_ = 0;
     l_set.set_root("D:/sy_maigc");
     // 初始化上下文
-    g_ctx().emplace<http::kitsu_ctx_t>(l_args.root_, l_args.kitsu_front_end_path_);
+    l_set.kitsu_ctx_ = std::make_shared<http::kitsu_ctx_t>(l_args.root_, l_args.kitsu_front_end_path_);
     // 打开内存数据库
     l_set.database_->open();
     l_set.database_->upgrade();
@@ -192,7 +192,7 @@ bool kitsu_supplement_main::init() {
   facets_.emplace_back(l_ssl_ctx);
   l_set.ctx_ptr = l_ssl_ctx;
   {
-    g_ctx().emplace<http::kitsu_ctx_t>(
+    l_set.kitsu_ctx_ = std::make_shared<http::kitsu_ctx_t>(
         l_args.root_, l_args.kitsu_front_end_path_, l_args.deepseek_keys_, l_args.ji_meng_access_key_id_,
         l_args.ji_meng_secret_access_key_, l_args.secret_, l_args.domain_protocol_, l_args.domain_name_
     );

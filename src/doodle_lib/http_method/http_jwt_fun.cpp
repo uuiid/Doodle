@@ -31,7 +31,7 @@ bool http_jwt_or_signed_fun::try_signed_url(const session_data_ptr& in_handle) {
   const std::string l_cookie{in_handle->req_header_[boost::beast::http::field::cookie]};
   const std::string l_auth{in_handle->req_header_[boost::beast::http::field::authorization]};
   if (l_cookie.find("access_token_cookie=") != std::string::npos || l_auth.starts_with("Bearer ")) return false;
-  if (!g_ctx().contains<kitsu_ctx_t>()) return false;
+  if (!core_set::get_set().kitsu_ctx_) return false;
 
   auto&& l_params = in_handle->url_.params();
   auto l_exp_it   = l_params.find(url_sign_t::g_exp_key);
@@ -54,7 +54,7 @@ bool http_jwt_or_signed_fun::try_signed_url(const session_data_ptr& in_handle) {
 
   std::string l_reason{};
   if (!url_sign_t::verify(
-          l_path, l_exp, l_uid, l_sig, g_ctx().get<kitsu_ctx_t>().secret_, url_sign_t::now_seconds(), &l_reason
+          l_path, l_exp, l_uid, l_sig, g_kitsu_ctx().secret_, url_sign_t::now_seconds(), &l_reason
       )) {
     SPDLOG_LOGGER_DEBUG(g_logger_ctrl().get_http(), "签名 URL 校验失败 path [{}]: {}", l_path, l_reason);
     return false;
@@ -83,7 +83,7 @@ void http_jwt_or_signed_fun::parse_header(const session_data_ptr& in_handle) {
 
 void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
   if (in_handle->method() == boost::beast::http::verb::options) return;
-  if (!g_ctx().contains<kitsu_ctx_t>()) return;
+  if (!core_set::get_set().kitsu_ctx_) return;
   auto l_jwt = in_handle->req_header_[boost::beast::http::field::cookie];
   if (l_jwt.empty()) l_jwt = in_handle->req_header_[boost::beast::http::field::authorization];
 
@@ -104,7 +104,7 @@ void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
   if (l_jwt.empty()) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
   // std::string l_l_jwt_str{l_jwt};
 
-  auto& l_ctx       = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx       = g_kitsu_ctx();
 
   auto verifier     = jwt::verify().allow_algorithm(jwt::algorithm::hs256{l_ctx.secret_});
   auto l_jwt_decode = jwt::decode(l_jwt);

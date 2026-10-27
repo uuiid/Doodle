@@ -73,6 +73,7 @@ class DOODLELIB_API core_set : public boost::noncopyable {
   std::shared_ptr<http::computers_assign_task> computers_assign_task_ptr_{};
   std::shared_ptr<boost::asio::ssl::context> ctx_ptr;
   std::shared_ptr<socket_io::sid_ctx> sid_ctx_{};
+  std::shared_ptr<http::kitsu_ctx_t> kitsu_ctx_{};
   email::seed_email seed_email_{"", 0, "", ""};
   // onnxruntime env
   std::shared_ptr<void> ort_env_ptr_;

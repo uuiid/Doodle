@@ -16,7 +16,7 @@
 namespace doodle::http {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_tool_version, get) {
-  auto l_kitsu_version = g_ctx().get<kitsu_ctx_t>().get_version();
+  auto l_kitsu_version = g_kitsu_ctx().get_version();
 
   if (FSys::exists(l_kitsu_version)) {
     FSys::ifstream l_version_file(l_kitsu_version);

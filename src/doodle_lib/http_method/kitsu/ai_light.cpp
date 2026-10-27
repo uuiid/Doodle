@@ -114,7 +114,7 @@ bool query_bool(const boost::url& in_url, std::string_view in_key, bool in_defau
 }
 
 FSys::path session_dir(const ai_light_session& in_session) {
-  auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx = g_kitsu_ctx();
   return l_ctx.root_ / "ai_light" / FSys::split_uuid_path(fmt::to_string(in_session.uuid_id_));
 }
 
@@ -122,7 +122,7 @@ void backup_session_dir(const ai_light_session& in_session) {
   auto l_src = session_dir(in_session);
   if (!FSys::exists(l_src)) return;
   try {
-    auto l_dst = g_ctx().get<kitsu_ctx_t>().get_ai_light_backup_dir(
+    auto l_dst = g_kitsu_ctx().get_ai_light_backup_dir(
         in_session.uuid_id_, fmt::format("{:%Y_%m_%d_%H}", chrono::floor<chrono::hours>(chrono::system_clock::now()))
     );
     if (!FSys::exists(l_dst.parent_path())) FSys::create_directories(l_dst.parent_path());
@@ -443,7 +443,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_route, post) {
   auto l_files   = in_handle->get_files();
   DOODLE_CHICK_HTTP(!l_files.empty(), bad_request, "请上传至少一张参考图");
 
-  auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx = g_kitsu_ctx();
 
   std::vector<ai_light_reference> l_added{};
   for (auto&& l_file : l_files) {
@@ -538,7 +538,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(reference_instance_route, delete_) {
   l_sqls.emplace_back(delete_from(l_sql).from<ai_light_reference>().where(c(&ai_light_reference::uuid_id_) == id_));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  if (auto l_file_path = g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_file(id_, "png"); !l_file_path.empty()) {
+  if (auto l_file_path = g_kitsu_ctx().get_sd2_pictures_file(id_, "png"); !l_file_path.empty()) {
     std::error_code l_ec{};
     FSys::remove(l_file_path, l_ec);
     if (l_ec)
@@ -572,7 +572,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
   DOODLE_CHICK_HTTP(
       l_cand.render_status_ != candidate_render_status::failed, not_found, "候选 {} 渲染失败", l_cand.uuid_id_
   );
-  const FSys::path l_movie_path = candidate_movie_path(g_ctx().get<kitsu_ctx_t>(), l_cand);
+  const FSys::path l_movie_path = candidate_movie_path(g_kitsu_ctx(), l_cand);
   DOODLE_CHICK(FSys::exists(l_movie_path), "候选视频不存在 文件 {}", l_movie_path.generic_string());
 
   co_return std::make_unique<http_body_file_t>(l_movie_path, mime_type(l_movie_path.extension()));
@@ -770,7 +770,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_begin_sequence_route, post) {
   person_.check_not_outsourcer();
 
   auto l_sql    = get_sqlite_database();
-  auto& l_ctx   = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx   = g_kitsu_ctx();
   auto l_target = locate_upload_target(l_sql, l_ctx, candidate_id_);
 
   std::error_code l_ec{};
@@ -810,7 +810,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_upload_frame_route, post) {
   person_.check_not_outsourcer();
 
   auto l_sql    = get_sqlite_database();
-  auto& l_ctx   = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx   = g_kitsu_ctx();
   auto l_target = locate_upload_target(l_sql, l_ctx, candidate_id_);
 
   DOODLE_CHICK_HTTP(
@@ -857,7 +857,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_finish_sequence_route, post) {
   person_.check_not_outsourcer();
 
   auto l_sql    = get_sqlite_database();
-  auto& l_ctx   = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx   = g_kitsu_ctx();
   auto l_target = locate_upload_target(l_sql, l_ctx, candidate_id_);
 
   const auto l_frames = list_sequence_frames(l_target.frames_dir_);

@@ -68,7 +68,7 @@ struct compose_video_impl_t : public std::enable_shared_from_this<compose_video_
   void operator()() try {
     progress_data_->set_total_steps(2);
     auto l_now             = std::chrono::steady_clock::now();
-    auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
+    auto& l_ctx            = g_kitsu_ctx();
     auto l_target_path     = l_ctx.get_movie_source_file(target_preview_file_.uuid_id_);
 
     auto l_new_path        = l_ctx.get_movie_source_file(preview_file_->uuid_id_);
@@ -248,7 +248,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
 
   // 检查文件的存在性, 以及长度
   {
-    auto l_target_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(l_target_preview_file.uuid_id_);
+    auto l_target_path = g_kitsu_ctx().get_movie_source_file(l_target_preview_file.uuid_id_);
     cv::VideoCapture l_cap(l_file.generic_string(), cv::CAP_FFMPEG);
     cv::VideoCapture l_target_cap(l_target_path.generic_string(), cv::CAP_FFMPEG);
     DOODLE_CHICK_HTTP(
@@ -362,7 +362,7 @@ struct run_actions_playlists_preview_files_create_review {
         g_logger_ctrl().get_long_task(), "连接视频完成 {} {:%H:%M:%S}", l_tmp, std::chrono::steady_clock::now() - l_now
     );
     // 再处理视频
-    auto l_out_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(data_ptr_->review_preview_file_->uuid_id_);
+    auto l_out_path = g_kitsu_ctx().get_movie_source_file(data_ptr_->review_preview_file_->uuid_id_);
     auto l_out_backup_path = FSys::add_time_stamp(l_out_path);
     if (auto l_p = l_out_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
     data_ptr_->ffmpeg_video_.set_input_video(l_tmp);
@@ -456,7 +456,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
         });
     DOODLE_CHICK_HTTP(l_subtitle_file != l_attachment_files.end(), bad_request, "没有找到字幕文件");
     l_run.data_ptr_->ffmpeg_video_.set_subtitle(
-        g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_subtitle_file->uuid_id_)
+        g_kitsu_ctx().get_attachment_file(l_subtitle_file->uuid_id_)
     );
   }
   if (l_arg.add_dubbing_) {
@@ -465,7 +465,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
           return in_file.name_.ends_with(".wav");
         });
     DOODLE_CHICK_HTTP(l_dubbing_file != l_attachment_files.end(), bad_request, "没有找到配音文件");
-    l_run.data_ptr_->ffmpeg_video_.set_audio(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_dubbing_file->uuid_id_));
+    l_run.data_ptr_->ffmpeg_video_.set_audio(g_kitsu_ctx().get_attachment_file(l_dubbing_file->uuid_id_));
   }
   if (l_arg.add_name_) {
     auto l_name_file =
@@ -474,7 +474,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
         });
     DOODLE_CHICK_HTTP(l_name_file != l_attachment_files.end(), bad_request, "没有找到名称视频文件");
     l_run.data_ptr_->ffmpeg_video_.set_episodes_name(
-        g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_name_file->uuid_id_)
+        g_kitsu_ctx().get_attachment_file(l_name_file->uuid_id_)
     );
   }
   if (l_arg.add_head_tail_) {
@@ -483,13 +483,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
           return in_file.name_.ends_with("_intro.mp4");
         });
     DOODLE_CHICK_HTTP(l_head_file != l_attachment_files.end(), bad_request, "没有找到片头视频文件");
-    l_run.data_ptr_->ffmpeg_video_.set_intro(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_head_file->uuid_id_));
+    l_run.data_ptr_->ffmpeg_video_.set_intro(g_kitsu_ctx().get_attachment_file(l_head_file->uuid_id_));
     auto l_tail_file =
         std::find_if(l_attachment_files.begin(), l_attachment_files.end(), [](const attachment_file& in_file) {
           return in_file.name_.ends_with("_outro.mp4");
         });
     DOODLE_CHICK_HTTP(l_tail_file != l_attachment_files.end(), bad_request, "没有找到片尾视频文件");
-    l_run.data_ptr_->ffmpeg_video_.set_outro(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_tail_file->uuid_id_));
+    l_run.data_ptr_->ffmpeg_video_.set_outro(g_kitsu_ctx().get_attachment_file(l_tail_file->uuid_id_));
   }
   if (l_arg.add_watermark_) {
     l_run.data_ptr_->ffmpeg_video_.set_watermark("送审样片");
@@ -501,7 +501,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
 
   std::vector<FSys::path> l_paths{};
   for (const auto& l_shot_preview : l_playlist_shot) {
-    auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(l_shot_preview.preview_id_);
+    auto l_path = g_kitsu_ctx().get_movie_source_file(l_shot_preview.preview_id_);
     if (FSys::exists(l_path)) l_paths.push_back(l_path);
   }
   DOODLE_CHICK_HTTP(!l_paths.empty(), bad_request, "没有找到任何镜头预览视频, 无法生成评审视频");
@@ -692,7 +692,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
     );
     DOODLE_CHICK(l_it != l_result.attachment_file_.end(), "无法找到附件文件 {}", in_path);
 
-    return g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_it->uuid_id_);
+    return g_kitsu_ctx().get_attachment_file(l_it->uuid_id_);
   };
   l_run.data_ptr_->logger_                   = in_handle->logger_;
   l_run.data_ptr_->args_.audio_path_         = l_fix_path(l_run.data_ptr_->args_.audio_path_);

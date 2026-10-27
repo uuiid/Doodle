@@ -134,7 +134,7 @@ struct handle_video_file_t {
 
 cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
   DOODLE_CHICK(!in_image.empty(), "保存变体图片时输入图片为空");
-  auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx = g_kitsu_ctx();
   auto l_now  = std::chrono::steady_clock::now();
   auto l_sql  = get_sqlite_database();
   doodle::detail::add_watermark_t l_add_watermark{l_sql.get_all<organisation>().front().name_, 150};
@@ -171,7 +171,7 @@ namespace {
 cv::Size save_watermarked_image(const cv::Mat& in_image, const uuid& in_id) {
   DOODLE_CHICK(!in_image.empty(), "保存加水印图片时输入图片为空");
 
-  auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx = g_kitsu_ctx();
   auto l_sql  = get_sqlite_database();
   auto l_path = l_ctx.get_outsource_pictures_original_file(in_id);
   if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
@@ -246,8 +246,8 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
 ) {
   handle_video_file_t l_files{in_path, in_fps, in_size, in_preview_file};
 
-  auto l_low_file_path         = g_ctx().get<kitsu_ctx_t>().get_movie_lowdef_file(in_preview_file->uuid_id_);
-  auto l_high_file_path        = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(in_preview_file->uuid_id_);
+  auto l_low_file_path         = g_kitsu_ctx().get_movie_lowdef_file(in_preview_file->uuid_id_);
+  auto l_high_file_path        = g_kitsu_ctx().get_movie_preview_file(in_preview_file->uuid_id_);
   auto l_low_file_path_backup  = FSys::add_time_stamp(l_low_file_path);
   auto l_high_file_path_backup = FSys::add_time_stamp(l_high_file_path);
   if (auto l_p = l_low_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
@@ -278,7 +278,7 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   save_variants(l_frame, in_preview_file->uuid_id_);
 
   auto l_tiles       = create_video_tile_image(l_video, l_files);
-  auto l_path        = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" /
+  auto l_path        = g_kitsu_ctx().root_ / "pictures" / "tiles" /
                        FSys::split_uuid_path(fmt::format("{}.png", in_preview_file->uuid_id_));
   auto l_path_backup = FSys::add_time_stamp(l_path);
   if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
@@ -365,7 +365,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
     auto l_size       = save_variants(l_file_image, l_preview_file->uuid_id_);
     save_watermarked_image(l_file_image, l_preview_file->uuid_id_);
     /// 将原始文件添加到相应的位置中
-    auto l_new_path = g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(l_preview_file->uuid_id_);
+    auto l_new_path = g_kitsu_ctx().get_pictures_original_file(l_preview_file->uuid_id_);
     if (auto l_p = l_new_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
     FSys::rename(l_file, l_new_path);
     l_preview_file->extension_     = "png";
@@ -375,7 +375,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
     l_preview_file->status_        = preview_file_statuses::ready;
     l_file                         = l_new_path;
   } else if (is_video_extension(l_ext)) {
-    auto l_new_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(id_);
+    auto l_new_path = g_kitsu_ctx().get_movie_source_file(id_);
     if (auto l_p = l_new_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
     FSys::rename(l_file, l_new_path);
     auto l_task     = l_sql.get_by_uuid<task>(l_preview_file->task_id_);
@@ -403,7 +403,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_preview_files, post) {
         }
     );
 
-    l_file                         = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(l_preview_file->uuid_id_);
+    l_file                         = g_kitsu_ctx().get_movie_preview_file(l_preview_file->uuid_id_);
     l_preview_file->extension_     = "mp4";
     l_preview_file->original_name_ = l_file.stem().generic_string();
     l_preview_file->width_         = l_prj_size.first;

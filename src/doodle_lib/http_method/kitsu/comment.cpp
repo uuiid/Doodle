@@ -120,7 +120,7 @@ create_comment_result create_comment(
       l_attachment_file->size_       = FSys::file_size(i);
       l_sqls.emplace_back(insert(l_sql).into<attachment_file>().values(*l_attachment_file));
 
-      auto l_attachment_file_path = g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_attachment_file->uuid_id_);
+      auto l_attachment_file_path = g_kitsu_ctx().get_attachment_file(l_attachment_file->uuid_id_);
       if (auto l_p = l_attachment_file_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
       FSys::rename(i, l_attachment_file_path);
       l_attachment_files.emplace_back(*l_attachment_file);

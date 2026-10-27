@@ -280,7 +280,7 @@ work_clock2 create_time_clock(
   auto l_rules_ = rules::get_default();
   chrono::local_days l_begin_time{chrono::local_days{in_year_month / chrono::day{1}}},
       l_end_time{chrono::local_days{in_year_month / chrono::last} + chrono::days{3}};
-  holidaycn_time2 l_holidaycn_time{l_rules_.work_pair_p, g_ctx().get<kitsu_ctx_t>().get_time()};
+  holidaycn_time2 l_holidaycn_time{l_rules_.work_pair_p, g_kitsu_ctx().get_time()};
   for (auto l_begin = l_begin_time; l_begin <= l_end_time; l_begin += chrono::days{1}) {
     // 加入工作日规定时间
     if (l_holidaycn_time.is_working_day(l_begin)) {

@@ -396,7 +396,7 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
   l_job.status_            = server_task_info_status::running;
   l_job.run_time_          = {chrono::current_zone(), chrono::system_clock::now()};
   l_job.run_computer_id_   = in_computer->get_computer_id();
-  auto& l_ctx              = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx              = g_kitsu_ctx();
   auto l_access_token      = jwt::create()
                                  .set_payload_claim("identity_type", jwt::claim{"person"s})
                                  .set_issued_at(chrono::system_clock::now())

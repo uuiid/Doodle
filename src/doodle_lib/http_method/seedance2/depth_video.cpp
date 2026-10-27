@@ -70,7 +70,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
   co_await l_sql.run_sql(std::move(l_sqls));
 
   // 4. 存储路径 — 原始视频暂存临时文件
-  auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx           = g_kitsu_ctx();
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview->uuid_id_, l_ext);
   auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(l_preview->uuid_id_);
   auto l_file_tmp       = l_file_picture;
@@ -89,7 +89,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_file, get) {
   auto l_sql     = get_sqlite_database();
   auto l_preview = l_sql.get_by_uuid<sd2::ai_preview_file>(depth_id_);
-  auto& l_ctx    = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx    = g_kitsu_ctx();
   auto l_file_picture = l_ctx.get_sd2_pictures_file(depth_id_, l_preview.extension_);
   auto l_file_tmp     = l_file_picture;
   l_file_tmp.replace_extension(".upload_tmp.mp4");
@@ -104,7 +104,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_file, put) {
 
   auto l_sql     = get_sqlite_database();
   auto l_preview = l_sql.get_by_uuid<sd2::ai_preview_file>(depth_id_);
-  auto& l_ctx    = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx    = g_kitsu_ctx();
 
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(depth_id_, l_preview.extension_);
   auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(depth_id_);

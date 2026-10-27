@@ -208,7 +208,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_preview, post) {
   );
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx           = g_kitsu_ctx();
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview->uuid_id_, l_file.extension().string());
   auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(l_preview->uuid_id_);
 
@@ -280,7 +280,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, post) 
   l_sqls.emplace_back(insert(l_sql).into<sd2::ai_entity_reference_preview>().values(*l_ref));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx           = g_kitsu_ctx();
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview->uuid_id_, l_ext);
   auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(l_preview->uuid_id_);
 
@@ -315,7 +315,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_reference_instance, dele
   auto l_ref =
       std::make_shared<sd2::ai_entity_reference_preview>(l_sql.get_by_uuid<sd2::ai_entity_reference_preview>(id_));
 
-  auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx           = g_kitsu_ctx();
   auto l_preview        = l_sql.get_by_uuid<sd2::ai_preview_file>(l_ref->preview_file_);
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview.uuid_id_, l_preview.extension_);
   auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(l_preview.uuid_id_);

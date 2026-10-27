@@ -24,20 +24,20 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs, get) {
   auto l_jobs = l_sql.get_all<server_task_info>();
   for (auto& l_job : l_jobs) {
     if (l_job.status_ == server_task_info_status::failed)
-      l_job.get_last_line_log(g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(l_job.uuid_id_));
+      l_job.get_last_line_log(g_kitsu_ctx().get_jobs_logs_file(l_job.uuid_id_));
   }
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_jobs);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, get) {
   person_.check_not_outsourcer();
-  auto l_jobs_path = g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(job_id_);
+  auto l_jobs_path = g_kitsu_ctx().get_jobs_logs_file(job_id_);
   if (!FSys::exists(l_jobs_path)) co_return std::make_unique<http_body_empty_t>();
   co_return std::make_unique<http_body_file_t>(l_jobs_path, "text/plain; charset=utf-8");  // utf-8编码的文本文件
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, put) {
   person_.check_not_outsourcer();
-  auto l_jobs_path = g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(job_id_);
+  auto l_jobs_path = g_kitsu_ctx().get_jobs_logs_file(job_id_);
   auto l_string    = in_handle->get_string();
   if (auto l_p = l_jobs_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   FSys::ofstream{l_jobs_path, std::ios::out | std::ios::binary | std::ios::app} << l_string;
@@ -48,7 +48,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, get) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   auto l_job = l_sql.get_by_uuid<server_task_info>(job_id_);
-  l_job.get_last_line_log(g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(job_id_));
+  l_job.get_last_line_log(g_kitsu_ctx().get_jobs_logs_file(job_id_));
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_job);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {

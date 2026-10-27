@@ -71,7 +71,7 @@ FSys::path parse_site_image_id(std::string_view in_url) {
   auto l_id_str = l_name.stem().generic_string();
 
   uuid l_id     = from_uuid_str(l_id_str);
-  return g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_file(l_id, l_ext);
+  return g_kitsu_ctx().get_sd2_pictures_file(l_id, l_ext);
 }
 
 kmt_image_client::reference_image_t compress_reference_image(const FSys::path& in_path) {

@@ -37,7 +37,7 @@ boost::asio::awaitable<void> depth_estimation_distributed::run() {
     SPDLOG_LOGGER_INFO(l_logger, "下载输入视频完成: {}", l_input_path);
 
     // 2. 加载模型并执行深度估计
-    auto& l_ctx       = g_ctx().get<kitsu_ctx_t>();
+    auto& l_ctx       = g_kitsu_ctx();
     auto l_model_path = l_ctx.get_depth_model_path();
     ai::doodle_depth_estimation l_estimator{l_model_path};
 

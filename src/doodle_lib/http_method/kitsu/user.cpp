@@ -294,7 +294,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_person_instance, put) {
   l_ret = *l_person;
 
   if (l_json.contains("expiration_date")) {
-    auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
+    auto& l_ctx           = g_kitsu_ctx();
     l_ret["access_token"] = jwt::create()
                                 .set_payload_claim("identity_type", jwt::claim{"person"s})
                                 .set_issued_at(chrono::system_clock::now())

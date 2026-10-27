@@ -124,7 +124,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, post) {
   }
   auto l_token = generate_reset_token();
   pimpl_->set_reset_token(l_email, l_token);
-  auto& l_kitsu_ctx = g_ctx().get<http::kitsu_ctx_t>();
+  auto& l_kitsu_ctx = g_kitsu_ctx();
   auto l_rest_url   = fmt::format(
       "{}://{}/reset-change-password?email={}&token={}", l_kitsu_ctx.domain_protocol_, l_kitsu_ctx.domain_name_,
       l_email, l_token

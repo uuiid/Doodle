@@ -57,6 +57,12 @@ using spdlog::default_logger_raw;
 DOODLELIB_API boost::asio::io_context& g_io_context();
 DOODLELIB_API entt::registry::context& g_ctx();
 
+namespace http {
+struct kitsu_ctx_t;
+}  // namespace http
+
+DOODLELIB_API http::kitsu_ctx_t& g_kitsu_ctx();
+
 class sqlite_database;
 class sqlite_storage;
 class server_task_info;

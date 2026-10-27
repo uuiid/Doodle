@@ -387,14 +387,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_updata_logs, post) {
   co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_updata_logs));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_production_specifications, get) {
-  auto l_ctx  = g_ctx().get<kitsu_ctx_t>();
+  auto l_ctx  = g_kitsu_ctx();
   auto l_path = l_ctx.get_production_specifications_file();
   co_return std::make_unique<http_body_file_t>(
       l_path, std::string{mime_type(l_path.extension())} + "; charset=utf-8"
   );
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version, get) {
-  auto l_ctx  = g_ctx().get<kitsu_ctx_t>();
+  auto l_ctx  = g_kitsu_ctx();
   auto l_path = l_ctx.get_ue_plugins_version_file();
 
   std::vector<std::string> l_lines{};
@@ -412,7 +412,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version, get) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version, post) {
   person_.check_admin();
-  auto l_ctx  = g_ctx().get<kitsu_ctx_t>();
+  auto l_ctx  = g_kitsu_ctx();
   auto l_path = l_ctx.get_ue_plugins_version_file();
   auto l_arg  = in_handle->get_json().get<std::string>();
   static const std::regex l_version_regex{R"(^\d+\.\d+\.\d+$)"};
@@ -424,7 +424,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version, post) {
   co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_arg));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version_instance, get) {
-  auto l_ctx  = g_ctx().get<kitsu_ctx_t>();
+  auto l_ctx  = g_kitsu_ctx();
   auto l_path = l_ctx.get_ue_plugins_file(version_major_, version_minor_, version_patch_);
   DOODLE_CHICK(FSys::exists(l_path), "UE 插件版本文件不存在");
   co_return std::make_unique<http_body_file_t>(

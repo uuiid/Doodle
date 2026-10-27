@@ -17,7 +17,7 @@
 
 namespace doodle::http {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_organisations_png, get) {
-  auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
+  auto l_path = g_kitsu_ctx().get_pictures_thumbnails_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "组织缩略图不存在 组织 id {}", id_);
   co_return std::make_unique<http_body_file_t>(l_path, mime_type(l_ext));
@@ -48,7 +48,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_organisations, post) {
     co_return std::make_unique<http_body_json_t>(nlohmann::json{});
   else
     l_file = l_fs.front();
-  FSys::path l_save_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
+  FSys::path l_save_path = g_kitsu_ctx().get_pictures_thumbnails_file(id_);
   handle_organisation_thumbnail(l_file, l_save_path);
   socket_io::broadcast(socket_io::organisation_set_thumbnail_broadcast_t{.organisation_id_ = id_});
 
@@ -63,20 +63,20 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_organisations, post) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_square_preview_files, get) {
   FSys::path l_filename = fmt::format("{}.png", id_);
-  auto l_path           = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_square_file(id_);
+  auto l_path           = g_kitsu_ctx().get_pictures_thumbnails_square_file(id_);
   auto l_ext            = l_filename.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
   co_return std::make_unique<http_body_file_t>(l_path, mime_type(l_ext));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_preview_files, get) {
-  auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
+  auto l_path = g_kitsu_ctx().get_pictures_thumbnails_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
   co_return std::make_unique<http_body_file_t>(l_path, mime_type(l_ext));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_persons, get) {
-  auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
+  auto l_path = g_kitsu_ctx().get_pictures_thumbnails_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
   co_return std::make_unique<http_body_file_t>(l_path, mime_type(l_ext));
@@ -85,21 +85,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_thumbnails_persons, get) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_originals_preview_files_download, get) {
   auto l_sql        = get_sqlite_database();
   auto l_pre_file   = l_sql.get_by_uuid<preview_file>(id_);
-  FSys::path l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_original_file(id_)
-                                              : g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(id_);
+  FSys::path l_path = person_.is_outsourcer() ? g_kitsu_ctx().get_outsource_pictures_original_file(id_)
+                                              : g_kitsu_ctx().get_pictures_original_file(id_);
   DOODLE_CHICK(FSys::exists(l_path), "原始图片不存在 文件 {}", l_path.generic_string());
   co_return std::make_unique<http_body_file_t>(l_path, mime_type(l_pre_file.extension_));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_previews_preview_files, get) {
-  auto l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_preview_file(id_)
-                                        : g_ctx().get<kitsu_ctx_t>().get_pictures_preview_file(id_);
+  auto l_path = person_.is_outsourcer() ? g_kitsu_ctx().get_outsource_pictures_preview_file(id_)
+                                        : g_kitsu_ctx().get_pictures_preview_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
   co_return std::make_unique<http_body_file_t>(l_path, mime_type(l_ext));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(pictures_originals_preview_files, get) {
-  auto l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_original_file(id_)
-                                        : g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(id_);
+  auto l_path = person_.is_outsourcer() ? g_kitsu_ctx().get_outsource_pictures_original_file(id_)
+                                        : g_kitsu_ctx().get_pictures_original_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "原始图片不存在 文件 {}", l_path.generic_string());
   co_return std::make_unique<http_body_file_t>(l_path, mime_type(l_ext));
@@ -111,7 +111,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_originals_preview_files_download, get)
   auto l_handle = in_handle->req_header_.at(boost::beast::http::field::user_agent);
   DOODLE_CHICK(!l_handle.empty(), "缺少 User-Agent 头");
   DOODLE_CHICK(l_handle.starts_with("doodle/"), "User-Agent 头, 必须以 doodle/ 开头");
-  auto l_path     = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(preview_file_id_);
+  auto l_path     = g_kitsu_ctx().get_movie_source_file(preview_file_id_);
   auto l_pre_file = get_sqlite_database().get_by_uuid<preview_file>(preview_file_id_);
   auto l_ext      = l_path.extension();
   auto l_mime     = mime_type(l_ext);

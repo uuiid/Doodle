@@ -105,7 +105,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_login, post) {
   auto l_org             = l_sql.get_all<organisation>();
   l_json["organisation"] = l_org.empty() ? organisation::get_default() : l_org.front();
   l_json["login"]        = true;
-  auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx            = g_kitsu_ctx();
   auto l_access_token    = jwt::create()
                             .set_payload_claim("identity_type", jwt::claim{"person"s})
                             .set_issued_at(chrono::system_clock::now())
@@ -144,7 +144,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_refresh_token, get) {
 
   nlohmann::json l_json{};
   l_json["login"]     = true;
-  auto& l_ctx         = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx         = g_kitsu_ctx();
   auto l_access_token = jwt::create()
                             .set_payload_claim("identity_type", jwt::claim{"person"s})
                             .set_issued_at(chrono::system_clock::now())
