@@ -44,6 +44,42 @@
 
 namespace doodle::http::local {
 
+class task_instance::task_local_cancel_manager {
+  std::map<uuid, std::size_t> sigs_index;
+  std::vector<std::shared_ptr<boost::asio::cancellation_signal>> sigs_{};
+  std::recursive_mutex mtx_;
+
+ public:
+  task_local_cancel_manager() = default;
+
+  boost::asio::cancellation_slot add(uuid in_id) {
+    std::lock_guard<std::recursive_mutex> _(mtx_);
+    auto itr = std::find_if(sigs_.begin(), sigs_.end(), [](std::shared_ptr<boost::asio::cancellation_signal>& sig) {
+      return !sig->slot().has_handler();
+    });
+    if (itr != sigs_.end()) {
+      sigs_index[in_id] = std::distance(sigs_.begin(), itr);
+      return (*itr)->slot();
+    } else {
+      sigs_index[in_id] = sigs_.size();
+      return sigs_.emplace_back(std::make_shared<boost::asio::cancellation_signal>())->slot();
+    }
+  }
+
+  void cancel(uuid in_id) {
+    std::lock_guard<std::recursive_mutex> _(mtx_);
+    if (auto itr = sigs_index.find(in_id);
+        itr != sigs_index.end() && itr->second < sigs_.size() && sigs_[itr->second]->slot().has_handler())
+      sigs_[itr->second]->emit(boost::asio::cancellation_type::all);
+  }
+  void cancel_all() {
+    std::lock_guard<std::recursive_mutex> _(mtx_);
+    for (auto& sig : sigs_) {
+      if (sig->slot().has_handler()) sig->emit(boost::asio::cancellation_type::all);
+    }
+  }
+};
+
 namespace {
 
 class task_info_manager {
@@ -113,42 +149,6 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
 };
 using run_post_task_local_impl_sink_mt = run_post_task_local_impl_sink<std::mutex>;
 
-class run_post_task_local_cancel_manager {
-  std::map<uuid, std::size_t> sigs_index;
-  std::vector<std::shared_ptr<boost::asio::cancellation_signal>> sigs_{};
-  std::recursive_mutex mtx_;
-
- public:
-  run_post_task_local_cancel_manager() = default;
-
-  boost::asio::cancellation_slot add(uuid in_id) {
-    std::lock_guard<std::recursive_mutex> _(mtx_);
-    auto itr = std::find_if(sigs_.begin(), sigs_.end(), [](std::shared_ptr<boost::asio::cancellation_signal>& sig) {
-      return !sig->slot().has_handler();
-    });
-    if (itr != sigs_.end()) {
-      sigs_index[in_id] = std::distance(sigs_.begin(), itr);
-      return (*itr)->slot();
-    } else {
-      sigs_index[in_id] = sigs_.size();
-      return sigs_.emplace_back(std::make_shared<boost::asio::cancellation_signal>())->slot();
-    }
-  }
-
-  void cancel(uuid in_id) {
-    std::lock_guard<std::recursive_mutex> _(mtx_);
-    if (auto itr = sigs_index.find(in_id);
-        itr != sigs_index.end() && itr->second < sigs_.size() && sigs_[itr->second]->slot().has_handler())
-      sigs_[itr->second]->emit(boost::asio::cancellation_type::all);
-  }
-  void cancel_all() {
-    std::lock_guard<std::recursive_mutex> _(mtx_);
-    for (auto& sig : sigs_) {
-      if (sig->slot().has_handler()) sig->emit(boost::asio::cancellation_type::all);
-    }
-  }
-};
-
 class run_long_task_local : public std::enable_shared_from_this<run_long_task_local> {
   using async_task_ptr = std::shared_ptr<async_task>;
   async_task_ptr arg_;
@@ -216,12 +216,12 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     arg_->set_logger(logger_);
   }
 
-  void run() {
+  void run(const decltype(std::declval<task_instance>().get_cancel_manager())& in_cancel_manager) {
     // auto l_v = std::visit(*this, arg_);
     boost::asio::co_spawn(
         g_io_context(), (*this)(),
         boost::asio::bind_cancellation_slot(
-            g_ctx().get<run_post_task_local_cancel_manager>().add(task_info_->uuid_id_),
+            in_cancel_manager->add(task_info_->uuid_id_),
             boost::asio::consign(boost::asio::detached, shared_from_this())
         )
     );
@@ -291,10 +291,6 @@ void task::init_ctx() {
   std::call_once(l_flag, []() {
     if (!g_ctx().contains<maya_ctx>()) g_ctx().emplace<maya_ctx>();
     if (!g_ctx().contains<ue_ctx>()) g_ctx().emplace<ue_ctx>();
-    g_ctx().emplace<run_post_task_local_cancel_manager>();
-    app_base::Get().on_cancel.slot().assign([](boost::asio::cancellation_type_t) {
-      g_ctx().get<run_post_task_local_cancel_manager>().cancel_all();
-    });
   });
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task, post) {
@@ -312,7 +308,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task, post) {
   // 先进行数据加载, 如果出错抛出异常后直接不插入数据库
   task_info_manager().get_instance().add_task_info(l_ptr);
   l_run_long_task_local->load_form_json(l_ptr->command_);
-  l_run_long_task_local->run();
+  l_run_long_task_local->run(in_handle->route_ptr_->get_function<task_instance>()->get_cancel_manager());
   co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
 
@@ -345,7 +341,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance, patch) {
   if (l_json.contains("name")) l_json["name"].get_to(l_server_task_info->name_);
 
   if (l_sr == server_task_info_status::running && l_server_task_info->status_ == server_task_info_status::canceled)
-    g_ctx().get<run_post_task_local_cancel_manager>().cancel(l_server_task_info->uuid_id_);
+    get_cancel_manager()->cancel(l_server_task_info->uuid_id_);
   co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_server_task_info));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_inspect_instance, post) {
@@ -366,7 +362,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_inspect_instance, post) {
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
-  l_run_long_task_local->run();
+  l_run_long_task_local->run(in_handle->route_ptr_->get_function<task_instance>()->get_cancel_manager());
   co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
 
@@ -392,7 +388,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance_generate_uesk_file, post) {
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
-  l_run_long_task_local->run();
+  l_run_long_task_local->run(in_handle->route_ptr_->get_function<task_instance>()->get_cancel_manager());
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
   co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
@@ -420,7 +416,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_export_anim_fbx_local,
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
-  l_run_long_task_local->run();
+  l_run_long_task_local->run(in_handle->route_ptr_->get_function<task_instance>()->get_cancel_manager());
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
   co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
@@ -448,7 +444,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_update_sim_abc_local, 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
-  l_run_long_task_local->run();
+  l_run_long_task_local->run(in_handle->route_ptr_->get_function<task_instance>()->get_cancel_manager());
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
   co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
@@ -476,7 +472,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_project_sync_local, post) {
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
-  l_run_long_task_local->run();
+  l_run_long_task_local->run(in_handle->route_ptr_->get_function<task_instance>()->get_cancel_manager());
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
   co_return std::make_unique<http_body_string_t>((nlohmann::json{} = *l_ptr).dump(), "application/json; charset=utf-8");
 }
@@ -504,7 +500,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_ue_files, post) {
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
-  l_run_long_task_local->run();
+  l_run_long_task_local->run(in_handle->route_ptr_->get_function<task_instance>()->get_cancel_manager());
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
   co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_ptr));
 }
@@ -532,7 +528,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_files, post) 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
-  l_run_long_task_local->run();
+  l_run_long_task_local->run(in_handle->route_ptr_->get_function<task_instance>()->get_cancel_manager());
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
   co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_ptr));
 }
@@ -560,7 +556,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_compose, post
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
-  l_run_long_task_local->run();
+  l_run_long_task_local->run(in_handle->route_ptr_->get_function<task_instance>()->get_cancel_manager());
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
   co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_ptr));
 }

@@ -48,6 +48,12 @@ DOODLE_HTTP_ROUTE("/api/doodle/task")
 DOODLE_HTTP_FUN_END()
 // /api/doodle/task/{id}
 DOODLE_HTTP_FUN(task_instance)
+private:
+class task_local_cancel_manager;
+std::shared_ptr<task_local_cancel_manager> cancel_manager_;
+
+public:
+std::shared_ptr<task_local_cancel_manager> get_cancel_manager();
 DOODLE_HTTP_FUN_OVERRIDE(patch)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 DOODLE_HTTP_FUN_OVERRIDE(get)
@@ -84,18 +90,14 @@ DOODLE_HTTP_FUN_END()
 // /api/actions/projects/{project_id}/shots/{shot_id}/export-anim-fbx
 DOODLE_HTTP_FUN_C(actions_projects_shots_export_anim_fbx_local, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_ROUTE(
-    "/api/actions/projects/{project_id_}/shots/{id_}/export-anim-fbx", project_id_, id_
-)
+DOODLE_HTTP_ROUTE("/api/actions/projects/{project_id_}/shots/{id_}/export-anim-fbx", project_id_, id_)
 uuid project_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/actions/projects/{project_id}/shots/{shot_id}/update-sim-abc
 DOODLE_HTTP_FUN_C(actions_projects_shots_update_sim_abc_local, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_ROUTE(
-    "/api/actions/projects/{project_id_}/shots/{id_}/update-sim-abc", project_id_, id_
-)
+DOODLE_HTTP_ROUTE("/api/actions/projects/{project_id_}/shots/{id_}/update-sim-abc", project_id_, id_)
 uuid project_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
