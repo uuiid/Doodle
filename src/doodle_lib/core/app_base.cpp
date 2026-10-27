@@ -82,9 +82,12 @@ void app_base::init_lib() {
 }
 
 void app_base::clear_global_state() {
+  core_set::get_set().maya_ctx_.reset();
+  core_set::get_set().ue_ctx_.reset();
+  core_set::get_set().sid_ctx_.reset();
+  core_set::get_set().ctx_ptr.reset();
   core_set::get_set().computers_assign_task_ptr_.reset();
   core_set::get_set().database_.reset();
-  core_set::get_set().ctx_ptr.reset();
   core_set::get_set().seed_email_ = email::seed_email{"", 0, "", ""};
   core_set::get_set().ort_env_ptr_.reset();
 }
