@@ -76,8 +76,6 @@ uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/doodle/video/thumbnail
 DOODLE_HTTP_FUN(video_thumbnail)
-void init_ctx();
-video_thumbnail() : base_type() { init_ctx(); }
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_ROUTE("/api/doodle/video/thumbnail")

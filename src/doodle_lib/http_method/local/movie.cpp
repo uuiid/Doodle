@@ -12,9 +12,6 @@
 #include <boost/numeric/conversion/cast.hpp>
 
 #include "local.h"
-#include <cache.hpp>
-#include <cache_policy.hpp>
-#include <lru_cache_policy.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/freetype.hpp>
@@ -26,11 +23,13 @@
 
 namespace doodle::http::local {
 
-struct video_thumbnail_cache : caches::fixed_sized_cache<uuid, std::vector<uchar>, caches::LRUCachePolicy> {
-  video_thumbnail_cache() : caches::fixed_sized_cache<uuid, std::vector<uchar>, caches::LRUCachePolicy>(1) {}
+struct video_thumbnail_buffer {
+  std::vector<uchar> buffer_{};
+  static video_thumbnail_buffer& get() {
+    static video_thumbnail_buffer l_buffer{};
+    return l_buffer;
+  }
 };
-
-static constexpr uuid video_thumbnail_cache_id{};
 
 struct video_thumbnail_arg_t {
   FSys::path video_path_;
@@ -63,20 +62,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(video_thumbnail, post) {
   // }
   std::vector<uchar> l_buffer{};
   cv::imencode(".png", l_image, l_buffer, {cv::IMWRITE_PNG_BILEVEL, 0});
-  g_ctx().get<video_thumbnail_cache>().Put(video_thumbnail_cache_id, l_buffer);
+  video_thumbnail_buffer::get().buffer_ = l_buffer;
   co_return std::make_unique<http_body_binary_t>(std::move(l_buffer), "image/png");
-}
-void video_thumbnail::init_ctx() {
-  static std::once_flag l_flag{};
-  std::call_once(l_flag, []() { g_ctx().emplace<video_thumbnail_cache>(); });
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(video_thumbnail, get) {
-  auto& l_cache = g_ctx().get<video_thumbnail_cache>();
-  if (l_cache.Cached(video_thumbnail_cache_id)) {
-    auto l_buffer = *l_cache.Get(video_thumbnail_cache_id);
-    co_return std::make_unique<http_body_binary_t>(std::move(l_buffer), "image/png");
-  }
+  auto& l_buffer = video_thumbnail_buffer::get().buffer_;
+  if (!l_buffer.empty()) co_return std::make_unique<http_body_binary_t>(l_buffer, "image/png");
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "视频文件不存在"});
 }
 
