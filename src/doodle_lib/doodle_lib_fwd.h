@@ -61,6 +61,9 @@ namespace http {
 struct kitsu_ctx_t;
 }  // namespace http
 
+class maya_ctx;
+class ue_ctx;
+
 DOODLELIB_API http::kitsu_ctx_t& g_kitsu_ctx();
 
 class sqlite_database;

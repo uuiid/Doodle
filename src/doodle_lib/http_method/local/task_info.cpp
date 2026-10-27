@@ -286,13 +286,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task, get) {
     );
   co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_list));
 }
-void task::init_ctx() {
-  static std::once_flag l_flag{};
-  std::call_once(l_flag, []() {
-    if (!g_ctx().contains<maya_ctx>()) g_ctx().emplace<maya_ctx>();
-    if (!g_ctx().contains<ue_ctx>()) g_ctx().emplace<ue_ctx>();
-  });
-}
+void task::init_ctx() {}
 std::shared_ptr<task_instance::task_local_cancel_manager> task_instance::get_cancel_manager() {
   if (!cancel_manager_) cancel_manager_ = std::make_shared<task_local_cancel_manager>();
   return cancel_manager_;

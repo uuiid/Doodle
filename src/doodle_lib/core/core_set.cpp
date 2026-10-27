@@ -5,6 +5,8 @@
 #include <doodle_core/metadata/user.h>
 
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/exe_warp/maya_exe.h>
+#include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/logger/logger.h>
 
 #include <boost/algorithm/string.hpp>

@@ -57,7 +57,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(local_setting, post) {
   auto l_json = in_handle->get_json();
   if (l_json.contains("maya_parallel_quantity")) {
     l_set.p_max_thread = l_json["maya_parallel_quantity"];
-    g_ctx().get<maya_ctx>().queue_->set_limit(l_set.p_max_thread);
+    l_set.maya_ctx_->queue_->set_limit(l_set.p_max_thread);
   }
 
   if (l_json.contains("UE_path")) l_set.ue4_path = l_json["UE_path"].get<std::string>();

@@ -83,8 +83,6 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
     default_logger_raw()->error("必须有maya文件");
     return true;
   }
-  if (!g_ctx().contains<maya_ctx>()) g_ctx().emplace<maya_ctx>();
-  if (!g_ctx().contains<ue_ctx>()) g_ctx().emplace<ue_ctx>();
   FSys::path l_file = FSys::from_quotation_marks(in_arh(g_maya_file).str());
   auto l_strm       = l_file.stem().generic_string();
   if (!FSys::exists(l_file)) {

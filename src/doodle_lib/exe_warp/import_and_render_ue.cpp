@@ -196,7 +196,7 @@ boost::asio::awaitable<void> run_ue_assembly_base::run() {
   kitsu_client_->set_logger(logger_ptr_);
 
   co_await get_arg();
-  auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
+  auto l_g = co_await core_set::get_set().ue_ctx_->queue_->queue(boost::asio::use_awaitable);
   //
   for (auto&& [p_from, p_to] : arg_.ue_asset_path_) {
     FSys::copy_diff(p_from, p_to, logger_ptr_);

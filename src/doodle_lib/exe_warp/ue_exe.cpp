@@ -161,7 +161,7 @@ boost::asio::awaitable<void> async_run_ue(
     const std::vector<std::string>& in_arg, logger_ptr in_logger, std::shared_ptr<kitsu::kitsu_client> in_kitsu_client,
     bool create_lock, std::shared_ptr<server_task_info::run_time_info_t> in_time
 ) {
-  auto l_g = create_lock ? co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable)
+  auto l_g = create_lock ? co_await core_set::get_set().ue_ctx_->queue_->queue(boost::asio::use_awaitable)
                          : awaitable_queue_limitation::queue_guard_ptr{};
 
   in_logger->info("开始检查 UE 版本");

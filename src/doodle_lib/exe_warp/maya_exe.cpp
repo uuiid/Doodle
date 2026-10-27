@@ -136,7 +136,7 @@ void to_json(nlohmann::json& in_json, const export_rig_arg& out_obj) {
 FSys::path find_maya_path() { return find_maya_path_impl(); }
 
 boost::asio::awaitable<void> arg::async_run_maya() {
-  auto l_g = co_await g_ctx().get<maya_ctx>().queue_->queue(boost::asio::use_awaitable);
+  auto l_g = co_await core_set::get_set().maya_ctx_->queue_->queue(boost::asio::use_awaitable);
   if (time_info_) time_info_->start_time_ = std::chrono::system_clock::now();
   auto l_maya_path = find_maya_path_impl() / "bin" / "mayabatch.exe";
   out_path_file_   = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
