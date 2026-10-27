@@ -48,7 +48,7 @@ struct kitsu_supplement_args_t {
   std::uint16_t public_url_port_ = 38192;
 
   /// SOCKS5 代理地址(写入 core_set::http_proxy_url_)。只支持 socks5:// 且不带用户名密码, 空串表示直连
-  std::string http_proxy_url_ = "socks5://127.0.0.1:20122";
+  std::string http_proxy_url_    = "socks5://127.0.0.1:20122";
 
   struct mail_config_t {
     std::string address_;
@@ -130,7 +130,6 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
 
 bool kitsu_supplement_main::init() {
   app_base::Get().use_multithread(true);
-  // g_ctx().emplace<detail::crash_reporting_thread>();
   crashpad_init::get();
   auto& l_set                      = core_set::get_set();
   l_set.computers_assign_task_ptr_ = std::make_shared<http::computers_assign_task>();
