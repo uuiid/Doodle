@@ -19,7 +19,6 @@
 #include <doodle_lib/http_client/seedance2_client.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/ai_light.h>
-#include <doodle_lib/http_method/kitsu/ai_light_orchestrator.h>
 #include <doodle_lib/http_method/kitsu/ai_light_stats.h>
 #include <doodle_lib/http_method/kitsu/auto_task.h>
 #include <doodle_lib/http_method/kitsu/preview.h>
@@ -51,6 +50,34 @@ namespace {
 
 using namespace orm;
 using namespace doodle::ai_light;
+
+std::optional<doodle::ai_light::ai_light_session_detail_t> build_session_detail(
+    sqlite_database& in_sql, const uuid& in_session_id
+) {
+  std::optional<doodle::ai_light::ai_light_session_detail_t> l_ret{};
+  try {
+    l_ret.emplace();
+    l_ret->session_ = in_sql.get_by_uuid<doodle::ai_light::ai_light_session>(in_session_id);
+  } catch (const orm::sqlite_orm_exception& in_err) {
+    if (in_err.code_status_() != boost::beast::http::status::not_found) throw;
+    SPDLOG_LOGGER_DEBUG(g_logger_ctrl().get_http(), "AI 灯光会话 {} 不存在: {}", in_session_id, in_err.what());
+    return std::nullopt;
+  }
+
+  auto& l_detail                 = *l_ret;
+  l_detail.references_           = in_sql.get_ai_light_references(in_session_id);
+  l_detail.iterations_           = in_sql.get_ai_light_iterations(in_session_id);
+  l_detail.candidates_           = in_sql.get_ai_light_candidates_by_session(in_session_id);
+
+  if (!l_detail.iterations_.empty()) {
+    const auto& l_latest             = l_detail.iterations_.back();
+    l_detail.is_waiting_human_       = is_waiting_human(l_latest);
+    l_detail.is_judgement_overdue_   = is_judgement_overdue(
+        l_latest, chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()}
+    );
+  }
+  return l_ret;
+}
 
 struct ai_light_judgement_t {
   uuid selected_candidate_id_{};
@@ -572,7 +599,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_movie_route, get) {
   DOODLE_CHICK_HTTP(
       l_cand.render_status_ != candidate_render_status::failed, not_found, "候选 {} 渲染失败", l_cand.uuid_id_
   );
-  const FSys::path l_movie_path = candidate_movie_path(g_kitsu_ctx(), l_cand);
+  const FSys::path l_movie_path = g_kitsu_ctx().get_ai_light_candidate_movie_file(l_cand.uuid_id_);
   DOODLE_CHICK(FSys::exists(l_movie_path), "候选视频不存在 文件 {}", l_movie_path.generic_string());
 
   co_return std::make_unique<http_body_file_t>(l_movie_path, mime_type(l_movie_path.extension()));
@@ -697,8 +724,8 @@ candidate_media_result_t compose_candidate_media(
   DOODLE_CHICK_HTTP(!in_frames.empty(), bad_request, "候选 {} 没有可合成的帧", in_candidate.uuid_id_);
 
   candidate_media_result_t l_ret{};
-  l_ret.poster_path_ = candidate_render_path(in_ctx, in_candidate);
-  l_ret.movie_path_  = candidate_movie_path(in_ctx, in_candidate);
+  l_ret.poster_path_ = in_ctx.get_ai_light_candidate_thumbnail_file(in_candidate.uuid_id_);
+  l_ret.movie_path_  = in_ctx.get_ai_light_candidate_movie_file(in_candidate.uuid_id_);
   l_ret.frame_count_ = boost::numeric_cast<std::int32_t>(in_frames.size());
   l_ret.frame_rate_  = in_frame_rate > 0 ? in_frame_rate : ai_light::g_ai_light_default_frame_rate;
 

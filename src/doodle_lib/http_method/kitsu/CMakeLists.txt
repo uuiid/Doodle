@@ -10,7 +10,6 @@ target_sources(
         auto_task.h
         computers.h
         ai_light.h
-        ai_light_orchestrator.h
         ai_light_stats.h
         
         PRIVATE
@@ -49,7 +48,6 @@ target_sources(
         ai_studio.cpp
         jobs.cpp
         ai_light.cpp
-        ai_light_orchestrator.cpp
         ai_light_stats.cpp
 )
  
