@@ -12,7 +12,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/range/iterator_range.hpp>
 
-
 namespace doodle::http {
 void url_route_component_t::initializer_t::parse_url_path() {
   std::vector<std::string> l_result{};
@@ -33,20 +32,6 @@ url_route_component_t::component_vector_t url_route_component_t::initializer_t::
 }
 url_route_component_t::initializer_t::operator url_route_component_ptr() const {
   return std::make_shared<url_route_component_t>(url_path_, get_component_vector());
-}
-struct initializer_url_list {
-  std::set<std::string> url_list{};
-};
-url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t in_len) {
-  if (!g_ctx().contains<initializer_url_list>()) g_ctx().emplace<initializer_url_list>(initializer_url_list{});
-  auto& l_list = g_ctx().get<initializer_url_list>();
-  std::string l_str{in_str, in_len};
-  if (l_list.url_list.count(l_str)) throw_exception(doodle_error{"url 已经注册 {}", l_str});
-  l_list.url_list.insert(l_str);
-
-  url_route_component_t::initializer_t l_url{in_str, in_len};
-  l_url.parse_url_path();
-  return l_url;
 }
 
 uuid url_route_component_t::component_base_t::convert_uuid(const std::string& in_str) const {

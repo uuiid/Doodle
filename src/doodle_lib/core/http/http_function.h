@@ -154,10 +154,7 @@ class DOODLELIB_API url_route_component_t : public url_route_component_base_t {
   component_vector_t component_vector_{};
   std::regex url_regex_{};
 
-  class initializer_t;
-  friend url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t);
   class initializer_t {
-    friend url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t);
 
     std::string url_path_;
     component_vector_t component_;
@@ -259,7 +256,6 @@ class DOODLELIB_API url_route_component_t : public url_route_component_base_t {
     return l_initializer_t;
   };
 };
-url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t);
 
 class DOODLELIB_API http_function {
  protected:
