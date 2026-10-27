@@ -78,6 +78,8 @@
   - [.github/instructions/http-put-update-standard.instructions.md](.github/instructions/http-put-update-standard.instructions.md) —— `put` 必须用 `orm::update` 链式 + `run_sql`，禁止「读取实体 → 改写 → 整体写回」。
 - DoodleLiveLink（`DoodleLiveLink/**`）
   - [.github/instructions/doodle-livelink-ue-project.instructions.md](.github/instructions/doodle-livelink-ue-project.instructions.md) —— 它是**独立 UE 项目**而非本仓库的 C++ 模块，引擎根目录 `E:\UnrealEngine`。
+- UE 插件（`UnrealEngine/Engine/Plugins/Doodle/**`）
+  - `E:\Doodle\UnrealEngine\Engine\Plugins\Doodle` 是指向 `E:\Doodle\script\uePlug\Doodle` 的 junction，两处路径等价、是同一份文件。用哪条路径读写都可以，改动只需做一次。
 
 新增或修改 HTTP 路由后，确认它在 `kitsu.cpp` 一类的注册表里有对应 `reg_t<>`：未注册的 route 在运行期不可达，改了也不生效。
 
