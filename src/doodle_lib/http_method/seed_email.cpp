@@ -15,6 +15,8 @@ seed_email::seed_email(std::string in_address, std::uint32_t in_port, std::strin
       password_(in_password),
       executor_(g_io_context().get_executor()) {}
 
+seed_email::~seed_email() = default;
+
 void seed_email::operator()(
     const std::string& in_subject, const std::string& in_recipient, const std::string& in_body
 ) {

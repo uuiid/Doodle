@@ -1,6 +1,7 @@
 #pragma once
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/http_method/seed_email.h>
 
 #include <boost/asio/ssl/context.hpp>
 #include <boost/process.hpp>
@@ -72,6 +73,7 @@ class DOODLELIB_API core_set : public boost::noncopyable {
 
   std::shared_ptr<http::computers_assign_task> computers_assign_task_ptr_{};
   std::shared_ptr<boost::asio::ssl::context> ctx_ptr;
+  email::seed_email seed_email_{"", 0, "", ""};
   // onnxruntime env
   std::shared_ptr<void> ort_env_ptr_;
 

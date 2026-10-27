@@ -129,10 +129,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, post) {
       "{}://{}/reset-change-password?email={}&token={}", l_kitsu_ctx.domain_protocol_, l_kitsu_ctx.domain_name_,
       l_email, l_token
   );
-  if (g_ctx().contains<email::seed_email>())
-    g_ctx().get<email::seed_email>()(
-        "doodle 重置密码", l_person.email_, generate_email_content(l_person.get_full_name(), l_rest_url)
-    );
+  if (auto& l_seed_email = core_set::get_set().seed_email_; l_seed_email)
+    l_seed_email("doodle 重置密码", l_person.email_, generate_email_content(l_person.get_full_name(), l_rest_url));
 
   co_return std::make_unique<http_body_json_t>(nlohmann::json{{"success", "Reset token sent"}});
 }

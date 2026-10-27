@@ -20,8 +20,10 @@ class DOODLELIB_API seed_email {
 
  public:
   explicit seed_email(std::string in_address, std::uint32_t in_port, std::string in_username, std::string in_password);
+  ~seed_email();
 
   void operator()(const std::string& in_subject, const std::string& in_recipient, const std::string& in_body);
 
+  explicit operator bool() const { return !address_.empty() && port_ != 0; }
 };
 }  // namespace doodle::email
