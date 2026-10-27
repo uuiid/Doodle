@@ -1,13 +1,5 @@
 #include "DoodleLightingJson.h"
 
-/**
- * 读写的严格度：载荷（服务端写）与回传（本机写、服务端校验）都按「字段路径级报错」实现，
- * 因为现场只有一行 "AI 灯光任务失败"，没有路径就无从定位。
- *
- * 注意所有 required 字段都对应服务端 to_json 里**无条件写**的键；只有服务端
- * 条件写出的（anchor.target / look_at、shape 锥角、op.patch、metrics）才是可选。
- */
-
 namespace
 {
 	bool Fail(FString& OutError, const FString& InPath, const FString& InReason)
@@ -18,9 +10,6 @@ namespace
 
 	bool GetObject(const TSharedPtr<FJsonObject>& In, const TCHAR* InKey, const FString& InPath, TSharedPtr<FJsonObject>& OutValue, FString& OutError)
 	{
-		// UE 5.7 的 TryGetObjectField 只有 `const TSharedPtr<FJsonObject>*&` 一种出参形式
-		// （JsonObject.h:293），**没有**收 `TSharedPtr<FJsonObject>&` 的重载；
-		// 直接传引用会去匹配 FAnsiStringView 那个重载，然后因为 TCHAR* 转不了 FAnsiStringView 报 C2665。
 		const TSharedPtr<FJsonObject>* LObject = nullptr;
 		if (!In->TryGetObjectField(InKey, LObject) || LObject == nullptr || !LObject->IsValid())
 		{
@@ -30,8 +19,6 @@ namespace
 		return true;
 	}
 
-	/// 可选对象字段：缺失或不是对象都只返回 false，**不**报错（对应服务端条件写出的键）。
-	/// 单独抽出来是因为 UE 5.7 的 TryGetObjectField 只收指针出参，直传引用编译不过（见 GetObject 的注释）。
 	bool TryGetObjectFieldPtr(const TSharedPtr<FJsonObject>& In, const TCHAR* InKey, TSharedPtr<FJsonObject>& OutValue)
 	{
 		const TSharedPtr<FJsonObject>* LObject = nullptr;
@@ -114,7 +101,6 @@ namespace
 		return true;
 	}
 
-	/// 向量：JSON 里必须是长度 3 的数组（服务端 vec3_t 的 from_json 就是这个口径）。
 	bool GetVec3(const TSharedPtr<FJsonObject>& In, const TCHAR* InKey, const FString& InPath, FDoodleVec3& OutValue, FString& OutError)
 	{
 		const TArray<TSharedPtr<FJsonValue>>* LArray = nullptr;
@@ -168,7 +154,6 @@ namespace
 		{
 			return false;
 		}
-		// target / look_at 只在非空时才被服务端写出。
 		GetString(LObject, TEXT("target"), InPath + TEXT(".target"), OutValue.Target, OutError, false);
 		GetString(LObject, TEXT("look_at"), InPath + TEXT(".look_at"), OutValue.LookAt, OutError, false);
 		return true;
@@ -198,7 +183,6 @@ namespace
 		{
 			return false;
 		}
-		// 服务端 to_json 只写当前分支那一个键（rig.h color_t::to_json 的 switch）。
 		switch (OutValue.Mode)
 		{
 			case EDoodleColorMode::Temperature:
@@ -221,7 +205,6 @@ namespace
 		}
 		if (!GetNumber(LObject, TEXT("source_radius_cm"), InPath + TEXT(".source_radius_cm"), OutValue.SourceRadiusCm, OutError)) return false;
 		if (!GetString(LObject, TEXT("ies"), InPath + TEXT(".ies"), OutValue.Ies, OutError)) return false;
-		// 锥角是 std::optional：服务端只在有值时写出。
 		double LCone = 0.0;
 		if (LObject->TryGetNumberField(TEXT("inner_cone_deg"), LCone)) OutValue.InnerConeDeg = LCone;
 		if (LObject->TryGetNumberField(TEXT("outer_cone_deg"), LCone)) OutValue.OuterConeDeg = LCone;
@@ -328,7 +311,6 @@ namespace
 		return true;
 	}
 
-	/// 写回：空字符串的字段按服务端 from_json 的宽松口径省略，不留无意义的空键。
 	void WriteVec3(const TSharedRef<FJsonObject>& In, const TCHAR* InKey, const FDoodleVec3& InValue)
 	{
 		TArray<TSharedPtr<FJsonValue>> LArray;
@@ -337,7 +319,7 @@ namespace
 		LArray.Add(MakeShared<FJsonValueNumber>(InValue.Z));
 		In->SetArrayField(InKey, LArray);
 	}
-}  // namespace
+}
 
 bool DoodleLightingJson::ParseLightingRig(const TSharedPtr<FJsonObject>& InRoot, FDoodleLightingRig& OutRig, FString& OutError)
 {
@@ -361,6 +343,7 @@ bool DoodleLightingJson::ParseLightingRig(const TSharedPtr<FJsonObject>& InRoot,
 		return false;
 	}
 
+	TSharedPtr<FJsonObject> LObject;
 	if (TryGetObjectFieldPtr(InRoot, TEXT("provenance"), LObject) && LObject.IsValid())
 	{
 		GetString(LObject, TEXT("model"), TEXT("rig.provenance.model"), OutRig.Provenance.Model, OutError, false);
@@ -370,7 +353,6 @@ bool DoodleLightingJson::ParseLightingRig(const TSharedPtr<FJsonObject>& InRoot,
 		GetString(LObject, TEXT("tier"), TEXT("rig.provenance.tier"), OutRig.Provenance.Tier, OutError, false);
 	}
 
-	// 灯集合：§6.6 护栏要求同轮候选灯集合一致，所以空数组 = 契约被破坏，必须报错而不是渲染一个没有灯的场景。
 	const TArray<TSharedPtr<FJsonValue>>* LLights = nullptr;
 	if (!GetArray(InRoot, TEXT("lights"), TEXT("rig.lights"), LLights, OutError))
 	{
@@ -398,7 +380,6 @@ bool DoodleLightingJson::ParseLightingRig(const TSharedPtr<FJsonObject>& InRoot,
 		OutRig.Lights.Add(MoveTemp(LLight));
 	}
 
-	// ops：对齐服务端 diff_rigs 的输出（只用于审计与日志，执行器按 lights_ + globals_ 幂等落状态）。
 	const TArray<TSharedPtr<FJsonValue>>* LOps = nullptr;
 	if (InRoot->TryGetArrayField(TEXT("ops"), LOps) && LOps != nullptr)
 	{
@@ -441,12 +422,9 @@ bool DoodleLightingJson::ParseTaskPayload(const TSharedPtr<FJsonObject>& InRoot,
 	if (!GetInt(InRoot, TEXT("iteration"), TEXT("iteration"), OutPayload.Iteration, OutError)) return false;
 	GetString(InRoot, TEXT("spec_id"), TEXT("spec_id"), OutPayload.SpecId, OutError, false);
 	if (!GetString(InRoot, TEXT("out_dir"), TEXT("out_dir"), OutPayload.OutDir, OutError)) return false;
-	// 基线关卡 / .uproject 允许为空（服务端推导失败时只 WARN 不拦），由执行器决定怎么报错。
 	GetString(InRoot, TEXT("baseline_level"), TEXT("baseline_level"), OutPayload.BaselineLevel, OutError, false);
 	GetString(InRoot, TEXT("ue_project_path"), TEXT("ue_project_path"), OutPayload.UeProjectPath, OutError, false);
 	GetString(InRoot, TEXT("camera_file_path"), TEXT("camera_file_path"), OutPayload.CameraFilePath, OutError, false);
-	// 视频渲染要用的三个资产：渲染关卡与关卡序列是硬要求（没有序列就没有视频），
-	// 电影管线配置允许为空（执行器会按内置参数另建一份）。
 	if (!GetString(InRoot, TEXT("render_map"), TEXT("render_map"), OutPayload.RenderMap, OutError)) return false;
 	if (!GetString(InRoot, TEXT("level_sequence"), TEXT("level_sequence"), OutPayload.LevelSequence, OutError)) return false;
 	GetString(InRoot, TEXT("movie_pipeline_config"), TEXT("movie_pipeline_config"), OutPayload.MoviePipelineConfig, OutError, false);
@@ -473,8 +451,6 @@ bool DoodleLightingJson::ParseTaskPayload(const TSharedPtr<FJsonObject>& InRoot,
 		FDoodleTaskCandidate LCandidate;
 		if (!GetInt(*LItem, TEXT("candidate_index"), LPath + TEXT(".candidate_index"), LCandidate.CandidateIndex, OutError)) return false;
 		if (!GetString(*LItem, TEXT("candidate_id"), LPath + TEXT(".candidate_id"), LCandidate.CandidateId, OutError)) return false;
-		// frames_dir 是 UE 唯一要用的候选字段（MRQ 往这里写帧）；其余三个路径是工作机的活，
-		// UE 不读也不写，允许缺省 —— 少一个键不该让整轮渲染起不来。
 		if (!GetString(*LItem, TEXT("frames_dir"), LPath + TEXT(".frames_dir"), LCandidate.FramesDir, OutError)) return false;
 		GetString(*LItem, TEXT("png_path"), LPath + TEXT(".png_path"), LCandidate.PngPath, OutError, false);
 		GetString(*LItem, TEXT("exr_path"), LPath + TEXT(".exr_path"), LCandidate.ExrPath, OutError, false);
@@ -521,8 +497,6 @@ TSharedPtr<FJsonObject> DoodleLightingJson::SerializeTaskPayload(const FDoodleTa
 
 TSharedPtr<FJsonObject> DoodleLightingJson::SerializeLaunchPlan(const FDoodleLaunchPlan& InPlan)
 {
-	// 与 SerializeTaskPayload 的差别只有三处（都是刻意的，见 FDoodleLaunchPlan 的说明）：
-	// 没有 spec_id / baseline_level，多了 iteration_id。
 	TSharedRef<FJsonObject> LRoot = MakeShared<FJsonObject>();
 	LRoot->SetStringField(TEXT("session_id"), InPlan.SessionId);
 	LRoot->SetStringField(TEXT("iteration_id"), InPlan.IterationId);
@@ -561,7 +535,6 @@ bool DoodleLightingJson::ParseLaunchPlan(const TSharedPtr<FJsonObject>& InRoot, 
 	}
 
 	if (!GetString(InRoot, TEXT("session_id"), TEXT("session_id"), OutPlan.SessionId, OutError)) return false;
-	// 轮次 uuid 是回传定位键（D54）与磁盘目录名（D44），缺了这条计划就没法用
 	if (!GetString(InRoot, TEXT("iteration_id"), TEXT("iteration_id"), OutPlan.IterationId, OutError)) return false;
 	if (!GetInt(InRoot, TEXT("iteration"), TEXT("iteration"), OutPlan.Iteration, OutError)) return false;
 	if (!GetString(InRoot, TEXT("out_dir"), TEXT("out_dir"), OutPlan.OutDir, OutError)) return false;
@@ -593,15 +566,10 @@ bool DoodleLightingJson::ParseLaunchPlan(const TSharedPtr<FJsonObject>& InRoot, 
 		FDoodleTaskCandidate LCandidate;
 		if (!GetInt(*LItem, TEXT("candidate_index"), LPath + TEXT(".candidate_index"), LCandidate.CandidateIndex, OutError)) return false;
 		if (!GetString(*LItem, TEXT("candidate_id"), LPath + TEXT(".candidate_id"), LCandidate.CandidateId, OutError)) return false;
-		// frames_dir 在计划里是**相对工作机本地缓存根**的（D39），由客户端拼成绝对路径再喂给 Runner；
-		// png_path / exr_path / movie_path 同样是相对的，且 UE 不读它们。
 		if (!GetString(*LItem, TEXT("frames_dir"), LPath + TEXT(".frames_dir"), LCandidate.FramesDir, OutError)) return false;
 		GetString(*LItem, TEXT("png_path"), LPath + TEXT(".png_path"), LCandidate.PngPath, OutError, false);
 		GetString(*LItem, TEXT("exr_path"), LPath + TEXT(".exr_path"), LCandidate.ExrPath, OutError, false);
 		GetString(*LItem, TEXT("movie_path"), LPath + TEXT(".movie_path"), LCandidate.MoviePath, OutError, false);
-		// **刻意不读 rig**：计划是「本机自己写、本机自己读」，客户端把这份结构原样交给 Runner，
-		// 中间不经过 wire —— 和 SerializeTaskPayload 不写 rig 是同一个理由。要读的话得先有一个
-		// rig 的序列化器（目前只有反序列化），没必要为这条本机路线加。
 		OutPlan.Candidates.Add(MoveTemp(LCandidate));
 	}
 	return true;
@@ -620,7 +588,6 @@ TSharedPtr<FJsonObject> DoodleLightingJson::SerializeRoundReport(const FDoodleRo
 		LItem->SetNumberField(TEXT("render_ms"), LCandidate.RenderMs);
 		LItem->SetNumberField(TEXT("light_count"), LCandidate.LightCount);
 		LItem->SetNumberField(TEXT("frame_count"), LCandidate.FrameCount);
-		// 路径不进回传（D27）：服务端按 session/iteration/candidate 现算。
 		if (LCandidate.Metrics.IsValid())
 		{
 			LItem->SetObjectField(TEXT("metrics"), LCandidate.Metrics);
@@ -628,7 +595,6 @@ TSharedPtr<FJsonObject> DoodleLightingJson::SerializeRoundReport(const FDoodleRo
 		LCandidates.Add(MakeShared<FJsonValueObject>(LItem));
 	}
 	LRoot->SetArrayField(TEXT("candidates"), LCandidates);
-	// 帧率给工作机合成视频用：序列的 display rate，缺了它只能猜 25
 	LRoot->SetNumberField(TEXT("frame_rate"), InReport.FrameRate);
 	LRoot->SetStringField(TEXT("error"), InReport.Error);
 	return LRoot;
@@ -659,8 +625,6 @@ bool DoodleLightingJson::ParseRoundReport(const TSharedPtr<FJsonObject>& InRoot,
 			return Fail(OutError, LPath, TEXT("不是对象"));
 		}
 		FDoodleCandidateReport LCandidate;
-		// candidate_id 与 status 是服务端严格字段，这里也严格：不确定的报文宁可整轮失败，
-		// 也不要让服务端按「下标猜」把状态写错候选。
 		if (!GetString(*LItem, TEXT("candidate_id"), LPath + TEXT(".candidate_id"), LCandidate.CandidateId, OutError)) return false;
 		if (!GetEnum(*LItem, TEXT("status"), LPath + TEXT(".status"), LCandidate.Status, OutError, &DoodleRenderStatusFromString)) return false;
 		GetInt(*LItem, TEXT("candidate_index"), LPath + TEXT(".candidate_index"), LCandidate.CandidateIndex, OutError, false);

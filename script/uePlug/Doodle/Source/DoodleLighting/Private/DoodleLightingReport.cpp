@@ -22,7 +22,6 @@ bool DoodleLightingReport::WriteReportFile(const FString& InOutDir, const FDoodl
 		return false;
 	}
 
-	// 目录由服务端按 session/iteration 规划好，但工作机上可能还没建过 —— 自己兜底建出来。
 	IPlatformFile& LPlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 	if (!LPlatformFile.DirectoryExists(*InOutDir))
 	{
@@ -42,7 +41,6 @@ bool DoodleLightingReport::WriteReportFile(const FString& InOutDir, const FDoodl
 		return false;
 	}
 
-	// 强制 UTF-8（不带 BOM）：服务端是 nlohmann/json 按 UTF-8 读的，BOM 会让它解析失败。
 	const FString LPath = MakeReportPath(InOutDir);
 	if (!FFileHelper::SaveStringToFile(LText, *LPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 	{

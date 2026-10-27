@@ -42,10 +42,8 @@
 
 namespace
 {
-	/// 命令行开关。工作机起进程时传的是绝对路径的载荷 json。
 	const TCHAR* const GAiLightParamsKey = TEXT("DoodleAiLightParams=");
 
-	/// 没有序列帧率时的兜底（与服务端/工作机的 25 一致）。
 	constexpr int32 GDefaultFrameRate = 25;
 
 	bool LoadUtf8File(const FString& InFilePath, FString& OutText, FString& OutError)
@@ -59,7 +57,7 @@ namespace
 		int32 L_Offset = 0;
 		if (L_Bytes.Num() >= 3 && L_Bytes[0] == 0xEF && L_Bytes[1] == 0xBB && L_Bytes[2] == 0xBF)
 		{
-			L_Offset = 3; // 撇掉 UTF-8 BOM
+			L_Offset = 3;
 		}
 		OutText = FString(L_Bytes.Num() - L_Offset, reinterpret_cast<const ANSICHAR*>(L_Bytes.GetData() + L_Offset));
 		return true;
@@ -76,7 +74,6 @@ namespace
 		return true;
 	}
 
-	/// 资产路径可能是包路径（`/Game/...`），也可能是磁盘路径。统一成包路径再 LoadObject。
 	FString NormalizePackagePath(const FString& InPath)
 	{
 		if (InPath.IsEmpty() || InPath.StartsWith(TEXT("/")))
@@ -91,7 +88,6 @@ namespace
 		return InPath;
 	}
 
-	/// MRQ 写出来的帧是 `frame_0000.png` 这种补零名字，数一下 `.png` 就是帧数。
 	int32 CountPngFrames(const FString& InFramesDir)
 	{
 		if (InFramesDir.IsEmpty())
@@ -117,11 +113,6 @@ namespace
 		return L_Rate;
 	}
 
-	/// 剥掉序列里自带的灯 spawnable。
-	///
-	/// 为什么必须剥：候选 rig 是本轮唯一权威（§6.6 同轮 6 个候选的灯集合完全一致）。auto_light 的序列里
-	/// 带着它自己摆的灯，不剥掉就会和候选的灯叠在一起，美术看到的既不是 auto_light 的也不是候选的。
-	/// 只碰灯：角色/道具/几何留在序列里，本轮不许动它们。
 	int32 StripLightSpawnables(ULevelSequence& InSequence)
 	{
 		UMovieScene* L_MovieScene = InSequence.GetMovieScene();
@@ -130,7 +121,6 @@ namespace
 			return 0;
 		}
 		int32 L_Removed = 0;
-		// 倒着遍历：RemoveSpawnable 会让后面的下标失效；spawnable 按 guid 排序，下标不能跨增删缓存
 		for (int32 L_Index = L_MovieScene->GetSpawnableCount() - 1; L_Index >= 0; --L_Index)
 		{
 			const FMovieSceneSpawnable& L_Spawnable = L_MovieScene->GetSpawnable(L_Index);
@@ -149,11 +139,6 @@ namespace
 		return L_Removed;
 	}
 
-	/// 逐 job 的输出与质量设置。
-	///
-	/// 输出目录是**每个候选自己的帧目录**（同一份配置资产复制出来的 job 各改各的，不会互相踩）；
-	/// 质量设置照 auto_light 生成配置资产时的取法（`DoodleAutoAnimationCommandlet.cpp:1261-1362`）：
-	/// 有配置资产就直接用它（它已经是调好的），没有才由这里按同一套值现建。
 	void ApplyCandidateSettings(UMoviePipelineExecutorJob& InJob, const FDoodleTaskCandidate& InCandidate,
 	                            const FFrameRate& InFrameRate, bool bHasBaseConfig)
 	{
@@ -177,7 +162,6 @@ namespace
 			}
 		}
 
-		// 只出 PNG 帧：EXR/JPG 都不要（线性 EXR 本轮不产，工作机是从 PNG 合的视频）
 		if (UMoviePipelineImageSequenceOutput_EXR* L_Exr = L_Config->FindSetting<UMoviePipelineImageSequenceOutput_EXR>())
 		{
 			L_Config->RemoveSetting(L_Exr);
@@ -191,7 +175,7 @@ namespace
 
 		if (bHasBaseConfig)
 		{
-			return; // 配置资产里的画质设置是 auto_light 调好的，不覆盖
+			return;
 		}
 
 		if (UMoviePipelineConsoleVariableSetting* L_ConsoleVar = Cast<UMoviePipelineConsoleVariableSetting>(
@@ -226,7 +210,7 @@ namespace
 			L_Camera->OverscanPercentage = 0.0;
 		}
 	}
-} // namespace
+}
 
 bool UDoodleLightingRoundRunner::HasAiLightParams()
 {
@@ -250,7 +234,6 @@ void UDoodleLightingRoundRunner::Main(float InDeltaTime)
 	{
 		return;
 	}
-	// 资产注册表还在扫盘时不能碰资产（照 DoodleEditor 模块里 UDoodleAutoRender 的等待方式）
 	FAssetRegistryModule& L_AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 	if (L_AssetRegistry.Get().IsLoadingAssets())
 	{
@@ -261,12 +244,6 @@ void UDoodleLightingRoundRunner::Main(float InDeltaTime)
 
 void UDoodleLightingRoundRunner::StartRoundFromLaunchPlan(const FDoodleLaunchPlan& InPlan)
 {
-	// 引擎内原生路线（D52/D53）：本机客户端读完桥目录后在**内存里**把计划交过来。
-	// 与队列路线的三处差别：
-	//   1) 计划里没有 spec_id / baseline_level（本机用不上），多了 iteration_id（回传定位用）；
-	//   2) 不写 render_report.json —— 回传由客户端走 `render_report_local`（D54），
-	//      UE 这边的整轮回传结果只在内存里攒着，由客户端拉走；
-	//   3) 渲染完**不退出进程**（D56）：美术还要留在编辑器里看这一轮的结果。
 	bRoundStarted = true;
 	bInteractiveMode = true;
 
@@ -286,7 +263,6 @@ void UDoodleLightingRoundRunner::StartRoundFromLaunchPlan(const FDoodleLaunchPla
 	FString L_StartError;
 	if (!StartRoundInternal(L_StartError))
 	{
-		// 交互模式没有报告文件可写：只能把原因留在日志里（客户端的超时兜底会收这个会话）
 		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] 本机一轮没能开始：%s"), *L_StartError);
 	}
 }
@@ -316,8 +292,6 @@ void UDoodleLightingRoundRunner::StartRound()
 		return;
 	}
 
-	// out_dir 先从裸 json 读一遍：载荷解析失败时也得有一份报告落到那里，
-	// 否则会话会一直停在 generating 等一个永远不来的回传
 	FString L_RawOutDir;
 	L_Root->TryGetStringField(TEXT("out_dir"), L_RawOutDir);
 
@@ -333,7 +307,6 @@ void UDoodleLightingRoundRunner::StartRound()
 	}
 	if (Payload.OutDir.IsEmpty())
 	{
-		// 没有落点就写不出报告，只能非零退出，让工作机按「UE 没有写出渲染报告」报错
 		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] 载荷里既没有 out_dir，也没有别的落点"));
 		RequestExit(1);
 		return;
@@ -359,7 +332,6 @@ bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
 		return false;
 	}
 
-	// 回传条目先按候选铺好：谁渲出来就翻谁的状态，没渲到的留在 Pending（= 没成功）
 	for (const FDoodleTaskCandidate& L_Candidate : Payload.Candidates)
 	{
 		FDoodleCandidateReport L_Report;
@@ -388,8 +360,6 @@ bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
 	UE_LOG(LogTemp, Log, TEXT("[DoodleLighting] 序列 %s：剥掉 %d 个灯 spawnable，display rate %d fps，帧区间 %d~%d（诊断）"),
 	       *Payload.LevelSequence, L_StrippedLights, FrameRate, Payload.FrameBegin, Payload.FrameEnd);
 
-	// 锚点换算要用机位姿态：把交付机位 FBX 导进来求一次姿态，随后立刻拆掉 ——
-	// 它不该跟着进 PIE（灯的位置是相对机位算的，机位本身由序列的 camera cut 决定）
 	{
 		DoodleLightingExecutor::FRoundContext L_Context;
 		L_Context.CameraFilePath = Payload.CameraFilePath;
@@ -435,13 +405,11 @@ bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
 			OutError = TEXT("建渲染 job 失败");
 			return false;
 		}
-		// JobName 就是候选 uuid：回调里靠它认人（回调只给 job，不给候选）
 		L_Job->JobName = L_Candidate.CandidateId;
 		L_Job->Sequence = FSoftObjectPath(L_Sequence);
 		L_Job->Map = FSoftObjectPath(L_RenderWorld);
 		if (L_BaseConfig != nullptr)
 		{
-			// SetConfiguration 是**把配置拷进 job**（不是存指针），所以逐 job 改输出目录不会碰资产
 			L_Job->SetConfiguration(L_BaseConfig);
 		}
 		ApplyCandidateSettings(*L_Job, L_Candidate, L_FrameRate, L_BaseConfig != nullptr);
@@ -517,7 +485,6 @@ void UDoodleLightingRoundRunner::OnIndividualJobStarted(UMoviePipelineExecutorJo
 		return;
 	}
 
-	// 这个回调在 UMoviePipeline::Initialize 之前触发，所以下一帧渲出来的就是这个候选的灯
 	const DoodleLightingExecutor::FCandidateRenderResult L_Result =
 		DoodleLightingExecutor::ApplyCandidateToWorld(*L_World, *L_Candidate);
 	if (L_Report != nullptr)
@@ -564,7 +531,6 @@ void UDoodleLightingRoundRunner::OnIndividualJobWorkFinished(FMoviePipelineOutpu
 	L_Report->FrameCount = L_FrameCount;
 	if (L_FrameCount < 2)
 	{
-		// 一两帧合成不出视频：这个候选对美术没有意义，直接算失败
 		L_Report->Status = EDoodleRenderStatus::Failed;
 		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] 候选 %s 只渲出 %d 帧，合成不出视频"), *L_CandidateId, L_FrameCount);
 		return;
@@ -601,21 +567,15 @@ void UDoodleLightingRoundRunner::OnExecutorFinished(UMoviePipelineExecutorBase* 
 	}
 	if (L_RenderedCount == 0)
 	{
-		// 整轮全灭走轮级通道：会话那边记一条说得清的原因，而不是「6 个候选都失败」
 		L_Round.Error = FString::Printf(TEXT("%d 个候选全部渲染失败"), L_FailedCount);
 	}
 
 	if (bInteractiveMode)
 	{
-		// 引擎内原生路线（D52/D53）：**不写报告文件、不退出进程**。
-		// 回传由本机客户端做（它调 `render_report_local`，D54），美术还要留在编辑器里看这一轮。
-		// 这里的 CandidateReports 就是留在内存里的那一份，客户端通过 OnRoundFinished 回调取走。
 		UE_LOG(LogTemp, Log, TEXT("[DoodleLighting] 本机一轮渲染结束：成功 %d / 失败 %d，%d fps（停在这里，不退出）"),
 		       L_RenderedCount, L_FailedCount, L_Round.FrameRate);
 		if (RoundFinished.IsBound())
 		{
-			// 多播委托的调用是 `Broadcast`（`MulticastDelegateBase.h:281`）：`Execute` 只属于
-			// 单播 `TDelegate`，写 `Execute` 会报 C2039。
 			RoundFinished.Broadcast(L_Round);
 		}
 		return;

@@ -6,8 +6,6 @@ namespace DoodleLightingCapture
 {
 	void ApplyFrozenPostProcessBaseline(FPostProcessSettings& InOut)
 	{
-		// 逐条对应 `DoodleAutoAnimationCommandlet.cpp:557-603` 的 `PostProcessVolumeConfig`。
-		// 这组值是美术成片的验收基准：AI 灯光只是改变光，不该顺带改掉调色/曝光的解释口径。
 		InOut.bOverride_BloomIntensity = true;
 		InOut.BloomIntensity = 0.0f;
 
@@ -24,7 +22,6 @@ namespace DoodleLightingCapture
 		InOut.bOverride_LumenMaxReflectionBounces = true;
 		InOut.LumenMaxReflectionBounces = 3;
 
-		// 曝光锁（§7.5）：min == max 就是手动锁定，候选的 ev100_bias 再叠在 AutoExposureBias 上
 		InOut.bOverride_AutoExposureMinBrightness = true;
 		InOut.AutoExposureMinBrightness = 1.0f;
 		InOut.bOverride_AutoExposureMaxBrightness = true;

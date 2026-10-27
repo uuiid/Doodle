@@ -48,12 +48,8 @@ namespace DoodleLightingExecutor
 {
 	namespace
 	{
-		// `DoodleLightingOps.h` 里的换算函数都在 `DoodleLightingOps` 命名空间里，而本文件里的
-		// 调用点是裸名（`ResolveIntensityUnits(...)` 等）。这里补一次限定，不然 MSVC 报一串
-		// C3861「identifier not found」——而且它会连带把后面的行也带歪（C2737/C2672）。
 		using namespace DoodleLightingOps;
 
-		/// 整轮状态。这个执行器一次进程只服务一轮 6 个候选，所以用文件级状态而不是类。
 		UWorld* G_World = nullptr;
 
 		ULevelSequence* G_CameraSequence = nullptr;
@@ -65,14 +61,9 @@ namespace DoodleLightingExecutor
 		FRotator G_CameraRotation = FRotator::ZeroRotator;
 		float G_CameraFovDeg = 0.0f;
 
-		/// 我们自己建出来的 actor（每轮/每候选清理，美术手工放的东西一律不碰）
 		TArray<TWeakObjectPtr<AActor>> G_AiSpawnedActors;
 		TWeakObjectPtr<APostProcessVolume> G_PostProcessVolume;
 		bool G_PostProcessVolumeOwned = false;
-
-		// ------------------------------------------------------------------
-		// 小工具
-		// ------------------------------------------------------------------
 
 		void CollectActor(AActor* InActor)
 		{
@@ -101,18 +92,11 @@ namespace DoodleLightingExecutor
 				{
 					GEngine->ForceGarbageCollection(true);
 					GEngine->ConditionalCollectGarbage();
-					// 推进一帧让 GC 真的落地。UE 5.7 没有 CommandletHelpers::TickEngine（那个
-					// 辅助函数已从引擎里删掉，5.7 的 CommandletHelpers 只剩 BuildCommandletProcessArguments），
-					// 直接 tick 世界即可 —— 原来用 TickEngine 就是因为旧 commandlet 在主循环之外跑，
-					// 现在这条路已经不在 commandlet 里了（批 9 删掉 `-run=DoodleLighting`）。
 					G_World->Tick(LEVELTICK_All, 0.0f);
 				}
 			}
 		}
 
-		// 返回类型是 `EComponentMobility::Type`（EngineTypes.h:3786 的 `namespace EComponentMobility { enum Type : int }`）。
-		// 这里原来写的是 `ELightMobilityType` —— 那个类型在引擎里根本不存在，MSVC 找不到类型名就往下
-		// 解析成 C4430/C2146，然后整块匿名命名空间里的助手函数全部「identifier not found」。
 		EComponentMobility::Type ToMobility(EDoodleLightMobility InMobility)
 		{
 			switch (InMobility)
@@ -134,18 +118,15 @@ namespace DoodleLightingExecutor
 					static_cast<float>(InLight.Color.RGB.Y),
 					static_cast<float>(InLight.Color.RGB.Z));
 			case EDoodleColorMode::Filter:
-				// 色纸名（字符串）执行器认不出来 —— 契约里说好按白处理 + 告警，不静默乱猜
 				OutWarnings.Add(FString::Printf(TEXT("灯 %s 用色纸 %s 指定颜色，执行器无法解析色纸名，按白处理"),
 				                                *InLight.Id, *InLight.Color.Filter));
 				return FLinearColor::White;
 			case EDoodleColorMode::Temperature:
 			default:
-				return FLinearColor::White; // 走 UseTemperature 分支，这里只是兜底
+				return FLinearColor::White;
 			}
 		}
 
-		/// 灯的公共属性。`ULightComponent::SetIntensity/SetLightColor/SetTemperature/...` 的入参都是 float，
-		/// 契约里是 double，这里显式收敛一次。
 		void ApplyCommonLightProperties(ULightComponent& InComponent, const FDoodleLight& InLight, TArray<FString>& OutWarnings)
 		{
 			InComponent.SetMobility(ToMobility(InLight.Mobility));
@@ -163,14 +144,12 @@ namespace DoodleLightingExecutor
 				InComponent.SetLightColor(ToLinearColor(InLight, OutWarnings), false);
 			}
 
-			// 项目约定：主光走 Channel1（`FDoodleLight::Channels` 默认 [0,1,0]）
 			const bool L_Channel0 = InLight.Channels.IsValidIndex(0) && InLight.Channels[0] != 0;
 			const bool L_Channel1 = InLight.Channels.IsValidIndex(1) && InLight.Channels[1] != 0;
 			const bool L_Channel2 = InLight.Channels.IsValidIndex(2) && InLight.Channels[2] != 0;
 			InComponent.SetLightingChannels(L_Channel0, L_Channel1, L_Channel2);
 		}
 
-		/// 建 actor 并返回它的灯组件（天空光返回 nullptr，它走 USkyLightComponent 分支）
 		AActor* SpawnLightActor(EDoodleUeLightKind InKind, ULightComponent*& OutLightComponent)
 		{
 			OutLightComponent = nullptr;
@@ -223,8 +202,6 @@ namespace DoodleLightingExecutor
 					OutWarnings.Add(FString::Printf(TEXT("灯 %s：天空光没有 USkyLightComponent"), *InLight.Id));
 					return;
 				}
-				// 天空光只有强度/阴影有意义（颜色是 USkyLightComponent 自己的 LightColor 语义，
-				// M1 不动它）：载荷要 RGB/色纸时只告警，不瞎猜
 				if (InLight.Color.Mode != EDoodleColorMode::Temperature)
 				{
 					OutWarnings.Add(FString::Printf(TEXT("灯 %s：天空光不支持 RGB/色纸颜色，忽略"), *InLight.Id));
@@ -260,7 +237,6 @@ namespace DoodleLightingExecutor
 
 			if (ULocalLightComponent* L_Local = Cast<ULocalLightComponent>(InLightComponent))
 			{
-				// SetIntensityUnits 会连带把 bUseInverseSquaredFalloff 切到对应模式（Unitless ↔ false）
 				L_Local->SetIntensityUnits(ResolveIntensityUnits(InLight.Intensity.Unit));
 			}
 
@@ -297,19 +273,12 @@ namespace DoodleLightingExecutor
 			L_Frame.CameraLocation = G_CameraLocation;
 			L_Frame.CameraForward = G_CameraRotation.Vector();
 			L_Frame.SubjectPoint = MakeFallbackSubjectPoint(G_CameraLocation, L_Frame.CameraForward);
-			// M1：主体点用「相机前方 5m」的兜底值（没有碰撞体可以做射线命中，见 §15.13 D32）
 			L_Frame.bHasSubjectPoint = true;
 			return L_Frame;
 		}
 
-		// ------------------------------------------------------------------
-		// 相机
-		// ------------------------------------------------------------------
-
 		bool ResolveCameraView(FString& OutError);
 
-		/// 交付机位：把 `camera_file_path_` 的 FBX 相机导进一个临时 level sequence，求值出位姿与 HFOV。
-		/// 做法照抄 `DoodleAutoAnimationCommandlet.cpp:606-688`，唯一区别是序列建在临时包里、不注册成资产。
 		bool ImportDeliveryCamera(const FString& InFbxPath, FString& OutError)
 		{
 			if (InFbxPath.IsEmpty())
@@ -323,7 +292,6 @@ namespace DoodleLightingExecutor
 				return false;
 			}
 
-			// 临时序列：不 CreatePackage 到 /Game，也不 AssetCreated —— 进程退出即消失
 			UPackage* L_Package = CreatePackage(*FString::Printf(TEXT("/Temp/DoodleLightingCamera_%s"), *FGuid::NewGuid().ToString()));
 			G_CameraSequence = NewObject<ULevelSequence>(L_Package, TEXT("DoodleLightingCamera"), RF_Public | RF_Transient);
 			if (G_CameraSequence == nullptr)
@@ -343,7 +311,6 @@ namespace DoodleLightingExecutor
 				OutError = TEXT("生成交付机位 ACineCameraActor 失败");
 				return false;
 			}
-			// 机位不是「每候选清理」的对象：它整轮存活，不进 G_AiSpawnedActors
 			if (UCineCameraComponent* L_CameraComponent = G_CameraActor->GetCineCameraComponent())
 			{
 				L_CameraComponent->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
@@ -355,7 +322,6 @@ namespace DoodleLightingExecutor
 			G_CameraGuid = L_MovieScene->AddPossessable(G_CameraActor->GetName(), G_CameraActor->GetClass());
 			G_CameraSequence->BindPossessableObject(G_CameraGuid, *G_CameraActor, G_World);
 
-			// 自定义绑定 + spawn track：和既有链路一致，否则序列求值不会把 actor 生成/驱动起来
 			if (const FMovieSceneBindingReference* L_Reference = G_CameraSequence->GetBindingReferences()->GetReference(G_CameraGuid, 0))
 			{
 				UMovieSceneCustomBinding* L_Binding = NewObject<UMovieSceneSpawnableActorBinding>()
@@ -370,7 +336,6 @@ namespace DoodleLightingExecutor
 				L_SpawnTrack->AddSection(*L_SpawnSection);
 			}
 
-			// 相机切换段（同时给出后面 FBX 导入要用的绑定 id）
 			MovieSceneToolHelpers::CreateCameraCutSectionForCamera(L_MovieScene, G_CameraGuid, FFrameNumber(0));
 			FMovieSceneObjectBindingID L_CameraBindingId;
 			if (const UMovieSceneCameraCutTrack* L_CutTrack = Cast<UMovieSceneCameraCutTrack>(L_MovieScene->GetCameraCutTrack()))
@@ -399,7 +364,6 @@ namespace DoodleLightingExecutor
 			G_CameraSequenceActor->InitializePlayer();
 			L_Player->Play();
 
-			// FBX 导入（bCreateCameras=false：相机 actor 我们已经建好了，导入只写轨道）
 			TMap<FGuid, FString> L_BindingMap{};
 			L_BindingMap.Add(L_CameraBindingId.GetGuid(), G_CameraActor->GetActorNameOrLabel());
 
@@ -425,8 +389,6 @@ namespace DoodleLightingExecutor
 			                                                L_CameraBindingId.GetRelativeSequenceID(), L_BindingMap, L_ImportSettings, L_FbxParams);
 			L_FbxImporter->ReleaseScene();
 
-			// 推一帧，把刚导入的轨道应用到绑定 actor 上（见 DestroyAiSpawnedActors 里关于
-			// UE 5.7 删掉 CommandletHelpers::TickEngine 的说明）。
 			if (G_World != nullptr)
 			{
 				G_World->Tick(LEVELTICK_All, 0.0f);
@@ -434,8 +396,6 @@ namespace DoodleLightingExecutor
 			return ResolveCameraView(OutError);
 		}
 
-		/// 求值机位。主路径：让序列播放器把姿态写到绑定的 actor 上再读 actor。
-		/// 兜底：直接求值 3D 变换通道（`DoodleAutoAnimationCommandlet.cpp:701-726` 的读法）。
 		bool ResolveCameraView(FString& OutError)
 		{
 			if (G_CameraActor == nullptr || G_CameraPlayer == nullptr)
@@ -445,7 +405,6 @@ namespace DoodleLightingExecutor
 			}
 
 			G_CameraPlayer->Play();
-			// 推一帧让播放器把姿态写到绑定的相机 actor 上（下面还要读它）。
 			if (G_World != nullptr)
 			{
 				G_World->Tick(LEVELTICK_All, 0.0f);
@@ -458,7 +417,6 @@ namespace DoodleLightingExecutor
 				G_CameraFovDeg = L_CameraComponent->GetHorizontalFieldOfView();
 			}
 
-			// 播放器没驱动到 actor（姿态还是生成时的原点）就从轨道里直接求值
 			if (G_CameraLocation.IsNearlyZero() && G_CameraRotation.IsNearlyZero())
 			{
 				UMovieScene* L_MovieScene = G_CameraSequence != nullptr ? G_CameraSequence->GetMovieScene() : nullptr;
@@ -487,7 +445,7 @@ namespace DoodleLightingExecutor
 							}
 						}
 						G_CameraLocation = FVector(L_Values[0], L_Values[1], L_Values[2]);
-						G_CameraRotation = FRotator(L_Values[4], L_Values[5], L_Values[3]); // Pitch, Yaw, Roll
+						G_CameraRotation = FRotator(L_Values[4], L_Values[5], L_Values[3]);
 					}
 				}
 			}
@@ -499,10 +457,6 @@ namespace DoodleLightingExecutor
 			}
 			return true;
 		}
-
-		// ------------------------------------------------------------------
-		// 全局量（曝光/白平衡/天光/雾/调色）
-		// ------------------------------------------------------------------
 
 		void ApplyFogDensity(double InDensity)
 		{
@@ -541,7 +495,6 @@ namespace DoodleLightingExecutor
 			}
 		}
 
-		/// 调色映射（§15.13 D34）。基线里已冻结的项（Bloom=0）会被这里的载荷值覆盖 —— 载荷是 AI 的意图。
 		void ApplyGrading(FPostProcessSettings& InOut, const FDoodleGrading& InGrading)
 		{
 			const float L_Contrast = static_cast<float>(InGrading.Contrast);
@@ -564,7 +517,6 @@ namespace DoodleLightingExecutor
 			FPostProcessSettings L_Settings{};
 			DoodleLightingCapture::ApplyFrozenPostProcessBaseline(L_Settings);
 
-			// 曝光：基线已锁 min == max == 1.0，这里只叠 ev100 偏移（§7.5）
 			L_Settings.bOverride_AutoExposureBias = true;
 			L_Settings.AutoExposureBias = static_cast<float>(InGlobals.Exposure.Ev100Bias);
 
@@ -600,8 +552,6 @@ namespace DoodleLightingExecutor
 		}
 	}
 
-	/// 拆掉交付机位的导入物（播放器、序列 actor、相机 actor）。
-	/// 只清导入物：`G_CameraLocation/G_CameraRotation/G_CameraFovDeg` 三个数值保留 —— 锚点换算还要用。
 	void ReleaseDeliveryCamera()
 	{
 		if (G_CameraPlayer != nullptr && G_CameraSequenceActor != nullptr)
@@ -623,8 +573,6 @@ namespace DoodleLightingExecutor
 		G_CameraActor = nullptr;
 	}
 
-	/// 按 rig 全量建灯（`rig.ops` 只做审计：`diff_rigs` 永不产生 add/remove，§6.6 同轮 6 个候选灯集合完全一致）。
-	/// 返回建出来的灯数。
 	int32 BuildRigLights(const FDoodleLightingRig& InRig, TArray<FString>& OutWarnings)
 	{
 		const FDoodleAnchorFrame L_AnchorFrame = BuildAnchorFrame();
@@ -660,10 +608,6 @@ namespace DoodleLightingExecutor
 		return L_LightCount;
 	}
 
-	// ----------------------------------------------------------------------
-	// 对外接口
-	// ----------------------------------------------------------------------
-
 	bool PrepareAnchorCamera(const FRoundContext& InContext, FString& OutError)
 	{
 		if (InContext.CameraFilePath.IsEmpty())
@@ -676,8 +620,6 @@ namespace DoodleLightingExecutor
 			OutError = TEXT("没有编辑器实例，导不了交付机位");
 			return false;
 		}
-		// 机位只用来求一次姿态（锚点换算要用它），所以借编辑器世界临时搭一下，求完立刻拆掉：
-		// 灯真正建进去的是 MRQ 的 PIE 世界（`ApplyCandidateToWorld`），不是这里。
 		G_World = GEditor->GetEditorWorldContext().World();
 		if (G_World == nullptr)
 		{
@@ -703,16 +645,13 @@ namespace DoodleLightingExecutor
 	FCandidateRenderResult ApplyCandidateToWorld(UWorld& InWorld, const FDoodleTaskCandidate& InCandidate)
 	{
 		FCandidateRenderResult L_Result;
-		// 世界是 MRQ 的 PIE 世界（每个 job 一次），但它是本文件所有建灯辅助函数的落点
 		G_World = &InWorld;
 
-		// 上一个候选的 AI 灯先清掉：每个候选都要从「基线 + 本候选的灯」重来，不能叠
 		DestroyAiSpawnedActors();
 
 		const FDoodleLightingRig& L_Rig = InCandidate.Rig;
 		TArray<FString> L_Warnings;
 
-		// 全局量：曝光/白平衡/调色落 PostProcessVolume（MRQ 渲的就是它），天光与雾落世界里的 actor
 		const FPostProcessSettings L_Settings = BuildPostProcessSettings(L_Rig.Globals);
 		if (APostProcessVolume* L_Volume = EnsurePostProcessVolume())
 		{

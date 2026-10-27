@@ -12,13 +12,10 @@
 
 namespace
 {
-	/// 桥目录的环境变量名。取不到就退回 `<project>/Saved/DoodleAiLight`。
 	const TCHAR* const GBridgeDirEnvVar = TEXT("DOODLE_AI_LIGHT_BRIDGE_DIR");
 
-	/// 桥目录缺省落点的子路径（相对项目 Saved）。
 	const TCHAR* const GBridgeDirDefaultSub = TEXT("DoodleAiLight");
 
-	/// 启动计划的文件名前缀。客户端按同一个规则拼，改这里必须同时改工作机/客户端。
 	const TCHAR* const GLaunchPlanPrefix = TEXT("launch_plan_");
 
 	FString MakeLaunchPlanFileName(const FString& InSessionId, int32 InIteration)

@@ -1,16 +1,5 @@
 #include "DoodleLightingTypes.h"
 
-/**
- * 枚举 ↔ JSON 串。
- *
- * 一张表同时给出两个方向，避免「加了一个枚举值只改了半边」——服务端 rig.h 的
- * NLOHMANN_JSON_SERIALIZE_ENUM 是逐字对齐的权威，改名 = 破协议（服务端 ORM 存的是名字）。
- *
- * 调用点的第三个实参就是初始化列表本身，**不要再套 `({...})`**：那是 GNU 语句表达式，
- * MSVC 在标准 C++ 下直接报 C2059。宏里 `__VA_ARGS__` 出现两次，所以每次展开都会把
- * 同一份列表再写一遍 —— 需要一个函数作用域的 `static` 变量，用 `(__VA_ARGS__)` 的
- * 圆括号包住即可保持「逗号不进宏实参切分」。
- */
 #define DOODLE_LIGHTING_ENUM_IMPL(FnPrefix, EnumType, ...)                                     \
 	FString FnPrefix##ToString(EnumType InValue)                                               \
 	{                                                                                          \
