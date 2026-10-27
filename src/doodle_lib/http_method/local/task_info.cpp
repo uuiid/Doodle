@@ -293,6 +293,10 @@ void task::init_ctx() {
     if (!g_ctx().contains<ue_ctx>()) g_ctx().emplace<ue_ctx>();
   });
 }
+std::shared_ptr<task_instance::task_local_cancel_manager> task_instance::get_cancel_manager() {
+  if (!cancel_manager_) cancel_manager_ = std::make_shared<task_local_cancel_manager>();
+  return cancel_manager_;
+}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task, post) {
   auto l_ptr  = std::make_shared<server_task_info>();
   auto l_json = in_handle->get_json();
