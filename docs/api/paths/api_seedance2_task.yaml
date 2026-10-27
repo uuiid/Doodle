@@ -8,28 +8,45 @@ get:
     响应体是对象而非裸数组，三个字段共用同一套过滤条件（`size` / `offset` 只作用于 `data`）：
     - `data` - 当前页的任务列表，元素同 `Task` schema
     - `count` - 满足过滤条件的任务总数
-    - `sum` - 满足过滤条件的任务的 `completion_tokens` 之和
+    - `sum` - 满足过滤条件的任务按 `model_name` + `backend` 分组的 `completion_tokens` 之和
 
     可见性：
     - 制片/管理员：查看所有任务（含已归档任务）
     - 普通用户：仅查看自己参与的子项目下的任务，且不含已归档（`archived=true`）的任务
 
     所有过滤条件之间为 AND 关系；`size` / `offset` 在过滤之后生效。
-    `task_type` 过滤的是任务响应中的 `type` 字段，`backend` 过滤的是任务响应中的 `backend` 字段，
-    `project` 过滤的是任务所属子项目的 `project_id`。
-    非法枚举值（`status` / `task_type` / `backend`）、非法 UUID（`project` / `user_id` / `episode` / `department`）
-    或非法整数（`size` / `offset`）会导致请求失败。
+    任务列表查询固定 JOIN 子项目（`subproject`）与 AI 生成实体（`ai_generate_entity`），
+    因此只有这两条外键都能命中行记录的任务才会出现在结果里；`sum` 与 `count` 使用同一套 JOIN 与过滤条件。
+
+    过滤字段语义：
+    - `status` / `task_type` / `backend` 分别过滤任务响应中的 `status` / `type` / `backend` 字段
+    - `project` 过滤任务所属子项目的 `project_id`
+    - `user_id` 过滤任务的提交用户 `user_id`
+    - `time_beg` / `time_end` 过滤任务的 `created_at`（闭区间，两端都含边界）；时间字符串接受
+      `YYYY-MM-DDTHH:MM:SSZ`、带时区偏移的 `YYYY-MM-DDTHH:MM:SS+08:00`、本地时间 `YYYY-MM-DD HH:MM:SS`
+      与纯日期 `YYYY-MM-DD` 四种写法，按服务端本地时区解释
+    - `episode` 过滤任务所属 AI 生成实体的 `ai_episode_id`
+    - `department` 过滤任务提交用户所属的部门
+    - `size` 默认 `100`，`offset` 默认 `0`
+
+    省略任一参数即不加该条件；省略 `size` / `offset` 时按默认值分页。
+    非法枚举值（`status` / `task_type` / `backend`）、非法 UUID（`project` / `user_id` / `episode` / `department`）、
+    非法时间（`time_beg` / `time_end`）或非法整数（`size` / `offset`）会导致请求失败。
   parameters:
     - name: size
       in: query
+      required: false
       schema:
         type: integer
+        format: int32
         default: 100
       description: 每页返回条数，只影响 `data`，不影响 `count` / `sum`
     - name: offset
       in: query
+      required: false
       schema:
         type: integer
+        format: int32
         default: 0
       description: 分页偏移量，只影响 `data`，不影响 `count` / `sum`
     - name: status
@@ -43,13 +60,13 @@ get:
       required: false
       schema:
         $ref: ../components/schemas/TaskType.yaml
-      description: 按任务类型过滤（图片/视频/同步推理）
+      description: 按任务类型过滤（图片/视频/同步推理），匹配任务响应中的 `type` 字段
     - name: backend
       in: query
       required: false
       schema:
         $ref: ../components/schemas/TaskBackend.yaml
-      description: 按任务后端过滤（seedance2 / transfer_station / apipy_image / kmt_image）
+      description: 按任务后端过滤（seedance2 / transfer_station / apipy_image / kmt_image / gemini_image）
     - name: project
       in: query
       required: false
@@ -63,21 +80,31 @@ get:
       schema:
         type: string
         format: uuid
-      description: 按提交用户 ID 过滤
+      description: 按提交用户 ID 过滤，匹配任务的 `user_id`
     - name: time_beg
       in: query
       required: false
       schema:
         type: string
-        format: date-time
-      description: 按任务创建时间下界过滤（含边界）
+        description: |
+          按任务创建时间下界过滤（闭区间，含边界）。接受 `YYYY-MM-DDTHH:MM:SSZ`、
+          `YYYY-MM-DDTHH:MM:SS+08:00`、`YYYY-MM-DD HH:MM:SS` 与 `YYYY-MM-DD` 四种写法，
+          按服务端本地时区解释；使用日期写法时只传日期即可。
+        examples:
+          - '2026-01-01'
+          - '2026-01-01T00:00:00+08:00'
     - name: time_end
       in: query
       required: false
       schema:
         type: string
-        format: date-time
-      description: 按任务创建时间上界过滤（含边界）
+        description: |
+          按任务创建时间上界过滤（闭区间，含边界）。接受 `YYYY-MM-DDTHH:MM:SSZ`、
+          `YYYY-MM-DDTHH:MM:SS+08:00`、`YYYY-MM-DD HH:MM:SS` 与 `YYYY-MM-DD` 四种写法，
+          按服务端本地时区解释；**只传日期时上界是当天 00:00:00**，要覆盖整天需传
+          `2026-01-01T23:59:59` 或带时间的写法。
+        examples:
+          - '2026-01-31T23:59:59'
     - name: episode
       in: query
       required: false
@@ -85,6 +112,13 @@ get:
         type: string
         format: uuid
       description: 按剧本集 ID 过滤，匹配任务所属 AI 生成实体的 `ai_episode_id`
+    - name: department
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: 按部门 ID 过滤，通过人员-部门关联匹配任务提交用户所属的部门
   responses:
     '200':
       description: 任务列表与统计

@@ -1,0 +1,15 @@
+allOf:
+  - $ref: ./Task.yaml
+  - type: object
+    properties:
+      entity:
+        $ref: ./AiGenerateEntity.yaml
+      episode:
+        $ref: ./AiEpisode.yaml
+      subproject:
+        $ref: ./Subproject.yaml
+    description: |
+      除 `Task` 的字段外，另附三个关联对象，均与 `Task` 字段平铺在同一层：
+      `entity` 与 `episode` 都由任务行的 `ai_episode_id` 查出（实现里两者取的是同一个 id，
+      因此它们的 `id` 相同），`subproject` 由任务行的 `subproject_id` 查出。
+      任一关联行不存在时整个请求失败，不会返回 `null`。

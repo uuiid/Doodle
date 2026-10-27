@@ -1,0 +1,37 @@
+get:
+  tags:
+    - 任务
+  summary: 获取单个任务详情
+  description: |
+    按任务 ID 获取单个任务的完整详情，并附带该任务关联的生成实体、剧本集与子项目。
+
+    仅制片/管理员可调用：非管理员访问会直接以 403 拒绝（不校验该任务是否属于自己参与的子项目）。
+    任务 ID 不存在时返回 404。
+
+    响应体是对象而非裸数组，结构为：
+    - `Task` schema 的全部字段平铺在最外层
+    - `entity` - 关联的 AI 生成实体（`AiGenerateEntity` schema）
+    - `episode` - 任务所属剧本集（`AiEpisode` schema）
+    - `subproject` - 任务所属子项目（`Subproject` schema）
+
+    注意 `entity` 与 `episode` 都由任务行的 `ai_episode_id` 查出（`entity` 取的是 `ai_episode_id`
+    指向的那一行，而不是 `ai_generate_entity_id` 指向的那一行），因此两者的 `id` 相同。
+    任一关联行缺失（例如剧本集已删除）会导致请求失败而不是返回 `null`。
+  operationId: seedance2_task_instance_get
+  parameters:
+    - name: task
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 任务 ID（`task.uuid_id_`）
+  responses:
+    '200':
+      description: 任务详情及其关联实体、剧本集、子项目
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/TaskDetail.yaml
+  security:
+    - bearerAuth: []

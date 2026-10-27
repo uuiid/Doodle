@@ -10,9 +10,10 @@ properties:
     format: int64
     description: 满足过滤条件的任务总数，不受 `size` / `offset` 影响
   sum:
-    type: integer
-    format: int64
-    nullable: true
+    type: array
     description: |
-      满足过滤条件的任务的 `completion_tokens` 之和，不受 `size` / `offset` 影响。
-      过滤后没有任务行时该值为 `null`（SQL `SUM` 对空集返回 NULL）。
+      满足过滤条件的任务按 `model_name` + `backend` 分组的 `completion_tokens` 之和，不受
+      `size` / `offset` 影响。分组维度与 `data` 的过滤条件相同，但不受分页限制。
+      过滤后没有任何任务行时为空数组（SQL `GROUP BY` 对空集不产生分组）。
+    items:
+      $ref: ./TaskSumGroup.yaml

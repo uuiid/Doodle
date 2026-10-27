@@ -1,0 +1,15 @@
+type: object
+description: 任务 token 消耗的按模型分组统计，`sum` 数组的元素
+properties:
+  completion_tokens_sum:
+    type: integer
+    format: int64
+    nullable: true
+    description: |
+      该分组内任务的 `completion_tokens` 之和。为 `null` 时表示分组内所有任务的
+      `completion_tokens` 都是 `null`（SQL `SUM` 忽略 NULL 行，全为 NULL 时返回 NULL）。
+  model_name:
+    type: string
+    description: 分组维度之一，任务实际使用的模型名
+  backend:
+    $ref: ./TaskBackend.yaml

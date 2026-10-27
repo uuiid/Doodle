@@ -320,6 +320,8 @@ paths:
     $ref: paths/api_seedance2_task_run.yaml
   /api/seedance2/task/{date_start}-{date_end}:
     $ref: paths/api_seedance2_task_{date_start}-{date_end}.yaml
+  /api/seedance2/task/{task}:
+    $ref: paths/api_seedance2_task_{task}.yaml
   /api/seedance2/tokens:
     $ref: paths/api_seedance2_tokens.yaml
   /api/seedance2/tokens/person/{person_id}:
