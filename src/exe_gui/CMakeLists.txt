@@ -169,11 +169,5 @@ install(CODE
 # # 修复dll
 # include(BundleUtilities)
 # fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_NAME:doodle_kitsu_supplement>.exe\" \"\" \"\${CMAKE_INSTALL_PREFIX}/bin\")
-
-# 生成授权文件
-execute_process(
-        COMMAND $<TARGET_FILE:generate_token> \${CMAKE_INSTALL_PREFIX}/bin/
-        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/bin
-)
         "
 )

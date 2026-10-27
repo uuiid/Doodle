@@ -1,7 +1,6 @@
 #include "kitsu_supplement.h"
 
 #include <doodle_lib/core/app_base.h>
-#include <doodle_lib/core/authorization.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/crashpad.h>
 #include <doodle_lib/core/http/http_listener.h>
@@ -173,8 +172,6 @@ bool kitsu_supplement_main::init() {
     // 打开内存数据库
     l_set.database_->open();
     l_set.database_->upgrade();
-    // 初始化授权上下文
-    g_ctx().emplace<authorization>(l_set.authorize_);
     // 初始化路由
     auto l_rout_ptr = http::create_kitsu_local_route();
     // 开始运行服务器

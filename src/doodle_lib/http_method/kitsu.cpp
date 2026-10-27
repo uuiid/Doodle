@@ -11,7 +11,6 @@
 #include <doodle_core/metadata/task_type.h>
 
 #include <doodle_lib/core/app_base.h>
-#include <doodle_lib/core/authorization.h>
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/socket_io.h>
@@ -312,31 +311,26 @@ http_route_ptr create_kitsu_local_route() {
   (*l_rout_ptr)                       //
       .reg_c<local::local_setting>()  //
       .reg_c<local::video_thumbnail>()
+      .reg_c<local::task>()
+      .reg_c<local::task_instance>()
+      .reg_c<local::task_instance_log>()
+      .reg_c<local::local_setting_tmp_dir_server_task>()
+      .reg_c<local::task_inspect_instance>()
+      .reg_c<local::task_instance_generate_uesk_file>()
+      .reg_c<ai_train_animation>()
+      .reg_c<ai_train_animation_settings>()
+      .reg_c<local::actions_projects_shots_export_anim_fbx_local>()
+      .reg_c<local::actions_projects_shots_update_sim_abc_local>()
+      .reg_c<local::actions_project_sync_local>()
+      .reg_c<local::actions_local_task_update_movie_files>()
+      .reg_c<local::actions_local_task_update_ue_files>()
+      .reg_c<local::actions_local_task_update_movie_compose>()
+      .reg_c<local::tools_add_watermark>()
+      .reg_c<local::actions_local_task_run>()
+      .reg_c<local::actions_local_watch_file_maya_anim>()
+      .reg_c<socket_io::socket_io_http>(l_sid_ctx)
 
       ;
-
-  if (g_ctx().get<authorization>().is_valid())
-    (*l_rout_ptr)
-        .reg_c<local::task>()
-        .reg_c<local::task_instance>()
-        .reg_c<local::task_instance_log>()
-        .reg_c<local::local_setting_tmp_dir_server_task>()
-        .reg_c<local::task_inspect_instance>()
-        .reg_c<local::task_instance_generate_uesk_file>()
-        .reg_c<ai_train_animation>()
-        .reg_c<ai_train_animation_settings>()
-        .reg_c<local::actions_projects_shots_export_anim_fbx_local>()
-        .reg_c<local::actions_projects_shots_update_sim_abc_local>()
-        .reg_c<local::actions_project_sync_local>()
-        .reg_c<local::actions_local_task_update_movie_files>()
-        .reg_c<local::actions_local_task_update_ue_files>()
-        .reg_c<local::actions_local_task_update_movie_compose>()
-        .reg_c<local::tools_add_watermark>()
-        .reg_c<local::actions_local_task_run>()
-        .reg_c<local::actions_local_watch_file_maya_anim>()
-        .reg_c<socket_io::socket_io_http>(l_sid_ctx)
-
-        ;
   return l_rout_ptr;
 }
 

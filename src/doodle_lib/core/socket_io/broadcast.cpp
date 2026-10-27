@@ -7,13 +7,11 @@
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/core/authorization.h>
 namespace doodle::socket_io {
 void broadcast(
     const std::string& in_event, const nlohmann::json& in_data, const std::string& in_namespace,
     const std::shared_ptr<sid_ctx>& in_ctx
 ) {
-  // if(!g_ctx().contains<authorization>()) return; // 暂时屏蔽服务器广播功能
   sid_ctx* l_sid = in_ctx.get();
   if (!l_sid) l_sid = g_ctx().find<sid_ctx>();
 

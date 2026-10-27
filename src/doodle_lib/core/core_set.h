@@ -58,7 +58,6 @@ class DOODLELIB_API core_set : public boost::noncopyable {
   // 代理地址(写入 http_client_proxy 的 SOCKS5 客户端)。只支持 socks5:// 且不带用户名密码, 空串表示直连。
   std::string http_proxy_url_{"socks5://127.0.0.1:20122"};
 
-  std::string authorize_{};
   void save();
   // 只读模式
   std::atomic_bool read_only_mode_{false};

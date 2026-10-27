@@ -6,7 +6,6 @@
 #include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/metadata/server_task_info.h>
 
-#include <doodle_lib/core/authorization.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/http/http_body.h>
 #include <doodle_lib/core/http/http_function.h>
@@ -43,7 +42,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(local_setting, get) {
   co_return std::make_unique<http_body_json_t>(
       nlohmann::json{
           {"maya_parallel_quantity", core_set::get_set().p_max_thread},
-          {"authorize", g_ctx().get<authorization>().is_valid()},
           {"maya_path", l_maya_path},
           {"UE_path", core_set::get_set().ue4_path},
           {"UE_version", core_set::get_set().ue4_version},
@@ -61,11 +59,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(local_setting, post) {
     l_set.p_max_thread = l_json["maya_parallel_quantity"];
     g_ctx().get<maya_ctx>().queue_->set_limit(l_set.p_max_thread);
   }
-  auto& l_au = g_ctx().get<authorization>();
-  if (l_json.contains("authorize") && l_json["authorize"].is_string())
-    if (auto& l_a = l_json["authorize"];
-        l_a.is_string() && (l_au.load_authorization_data(l_a.get<std::string>()), l_au.is_valid()))
-      l_set.authorize_ = l_a.get<std::string>();
 
   if (l_json.contains("UE_path")) l_set.ue4_path = l_json["UE_path"].get<std::string>();
   if (l_json.contains("UE_version")) l_set.ue4_version = l_json["UE_version"].get<std::string>();
@@ -89,7 +82,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(local_setting, post) {
   co_return std::make_unique<http_body_json_t>(
       nlohmann::json{
           {"maya_parallel_quantity", l_set.p_max_thread},
-          {"authorize", g_ctx().get<authorization>().is_valid()},
           {"maya_path", l_maya_path},
           {"UE_path", l_set.ue4_path},
           {"UE_version", l_set.ue4_version},
