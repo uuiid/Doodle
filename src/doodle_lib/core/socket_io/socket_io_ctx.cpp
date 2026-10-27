@@ -33,7 +33,6 @@ sid_ctx::sid_ctx()
           .ping_timeout_  = chrono::milliseconds{40000},
           .max_payload_   = 1000000
       } {
-  g_ctx().emplace<sid_ctx&>(*this);
 }
 
 std::shared_ptr<sid_data> sid_ctx::generate() {

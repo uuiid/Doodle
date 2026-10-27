@@ -4,6 +4,7 @@
 
 #include "broadcast.h"
 
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
 #include <doodle_lib/doodle_lib_fwd.h>
@@ -13,7 +14,7 @@ void broadcast(
     const std::shared_ptr<sid_ctx>& in_ctx
 ) {
   sid_ctx* l_sid = in_ctx.get();
-  if (!l_sid) l_sid = g_ctx().find<sid_ctx>();
+  if (!l_sid) l_sid = core_set::get_set().sid_ctx_.get();
 
   if (!l_sid) return;
 
