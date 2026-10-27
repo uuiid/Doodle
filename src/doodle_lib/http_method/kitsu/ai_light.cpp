@@ -1006,10 +1006,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(preset_instance_route, delete_) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   person_.check_not_outsourcer();
 
-  auto l_sql     = get_sqlite_database();
-  auto l_json    = in_handle->get_json();
+  auto l_sql       = get_sqlite_database();
+  auto l_json      = in_handle->get_json();
+  l_json["stream"] = false;
 
-  auto l_session = l_sql.get_by_uuid<ai_light_session>(session_id_);
+  auto l_session   = l_sql.get_by_uuid<ai_light_session>(session_id_);
   person_.check_project_access(l_session.project_id_);
 
   const uuid& l_operator_id = person_.person_.uuid_id_;
