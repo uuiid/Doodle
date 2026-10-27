@@ -26,7 +26,6 @@ namespace doodle {
  */
 class DOODLELIB_API app_base : public boost::noncopyable {
   friend DOODLELIB_API boost::asio::io_context& g_io_context();
-  friend DOODLELIB_API entt::registry::context& g_ctx();
   friend DOODLELIB_API details::logger_ctrl& g_logger_ctrl();
   friend DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_strand();
   friend DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_pool_strand();
@@ -56,7 +55,6 @@ class DOODLELIB_API app_base : public boost::noncopyable {
   void init_lib();
 
   boost::asio::io_context io_context_{};
-  entt::registry::context ctx_p{std::allocator<entt::entity>{}};
   using strand_t = boost::asio::strand<boost::asio::io_context::executor_type>;
   strand_t strand_{boost::asio::make_strand(io_context_)};
   std::vector<strand_t> strands_{};

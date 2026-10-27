@@ -93,7 +93,7 @@ bool app_base::operator==(const app_base& in_rhs) const { return this == &in_rhs
 
 boost::asio::io_context& g_io_context() { return app_base::Get().io_context_; }
 details::logger_ctrl& g_logger_ctrl() { return *app_base::Get().p_log; }
-entt::registry::context& g_ctx() { return app_base::Get().ctx_p; }
+
 http::kitsu_ctx_t& g_kitsu_ctx() {
   auto l_ptr = core_set::get_set().kitsu_ctx_;
   if (!l_ptr) throw_exception(doodle_error{"kitsu_ctx_t 未初始化"});

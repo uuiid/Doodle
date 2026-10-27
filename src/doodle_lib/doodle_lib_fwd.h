@@ -55,7 +55,6 @@ using spdlog::level::warn;
 using spdlog::default_logger_raw;
 
 DOODLELIB_API boost::asio::io_context& g_io_context();
-DOODLELIB_API entt::registry::context& g_ctx();
 
 namespace http {
 struct kitsu_ctx_t;
