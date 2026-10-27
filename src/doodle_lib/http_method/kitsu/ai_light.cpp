@@ -64,15 +64,15 @@ std::optional<doodle::ai_light::ai_light_session_detail_t> build_session_detail(
     return std::nullopt;
   }
 
-  auto& l_detail                 = *l_ret;
-  l_detail.references_           = in_sql.get_ai_light_references(in_session_id);
-  l_detail.iterations_           = in_sql.get_ai_light_iterations(in_session_id);
-  l_detail.candidates_           = in_sql.get_ai_light_candidates_by_session(in_session_id);
+  auto& l_detail       = *l_ret;
+  l_detail.references_ = in_sql.get_ai_light_references(in_session_id);
+  l_detail.iterations_ = in_sql.get_ai_light_iterations(in_session_id);
+  l_detail.candidates_ = in_sql.get_ai_light_candidates_by_session(in_session_id);
 
   if (!l_detail.iterations_.empty()) {
-    const auto& l_latest             = l_detail.iterations_.back();
-    l_detail.is_waiting_human_       = is_waiting_human(l_latest);
-    l_detail.is_judgement_overdue_   = is_judgement_overdue(
+    const auto& l_latest           = l_detail.iterations_.back();
+    l_detail.is_waiting_human_     = is_waiting_human(l_latest);
+    l_detail.is_judgement_overdue_ = is_judgement_overdue(
         l_latest, chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()}
     );
   }
@@ -883,9 +883,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_upload_frame_route, post) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(candidate_finish_sequence_route, post) {
   person_.check_not_outsourcer();
 
-  auto l_sql    = get_sqlite_database();
-  auto& l_ctx   = g_kitsu_ctx();
-  auto l_target = locate_upload_target(l_sql, l_ctx, candidate_id_);
+  auto l_sql          = get_sqlite_database();
+  auto& l_ctx         = g_kitsu_ctx();
+  auto l_target       = locate_upload_target(l_sql, l_ctx, candidate_id_);
 
   const auto l_frames = list_sequence_frames(l_target.frames_dir_);
   DOODLE_CHICK_HTTP(!l_frames.empty(), bad_request, "候选 {} 没有收到任何帧", candidate_id_);
@@ -1015,27 +1015,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   const uuid& l_operator_id = person_.person_.uuid_id_;
 
   DOODLE_CHICK_HTTP(
-      !l_operator_id.is_nil(), bad_request, "推理缺少触发人（operator_id），无法解析 AI 工作室与计费主体"
-  );
-  const auto l_person = select(l_sql)
-                            .columns(object<person>())
-                            .from<person>()
-                            .where(c(&person::uuid_id_) == l_operator_id)()
-                            .to_optional();
-  DOODLE_CHICK_HTTP(
-      l_person.has_value(), bad_request, "推理找不到触发人 {}（person 不存在），无法解析 AI 工作室", l_operator_id
-  );
-  DOODLE_CHICK_HTTP(
-      !l_person->ai_studio_id_.is_nil(), bad_request, "推理的触发人 {} 未关联 AI 工作室，无法调用推理接口",
+      !person_.person_.ai_studio_id_.is_nil(), bad_request, "推理的触发人 {} 未关联 AI 工作室，无法调用推理接口",
       l_operator_id
   );
   const auto l_studio = select(l_sql)
                             .columns(object<ai_studio>())
                             .from<ai_studio>()
-                            .where(c(&ai_studio::uuid_id_) == l_person->ai_studio_id_)()
+                            .where(c(&ai_studio::uuid_id_) == person_.person_.ai_studio_id_)()
                             .to_optional();
   DOODLE_CHICK_HTTP(
-      l_studio.has_value(), bad_request, "推理找不到 AI 工作室 {}（配置可能已被删除）", l_person->ai_studio_id_
+      l_studio.has_value(), bad_request, "推理找不到 AI 工作室 {}（配置可能已被删除）", person_.person_.ai_studio_id_
   );
 
   doodle::seedance2::task l_task{};
@@ -1048,8 +1037,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
   l_task.completion_tokens_   = doodle_config::g_ark_inference_default_consumed_tokens;
   l_task.data_request_        = l_json;
 
-  auto l_result =
-      co_await http::run_inference_task(l_task, l_sql, http::make_inference_client(*l_studio));
+  auto l_result = co_await http::run_inference_task(l_task, l_sql, http::make_inference_client(*l_studio));
 
   SPDLOG_LOGGER_INFO(
       g_logger_ctrl().get_http(), "AI 灯光推理网关：会话 {} 完成一次推理（{} → {} token）", l_session.uuid_id_,
