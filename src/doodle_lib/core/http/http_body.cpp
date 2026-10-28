@@ -102,8 +102,9 @@ boost::beast::http::message_generator http_body_json_t::make_message(
     const detail::session_data& in_session_data
 ) const {
   boost::beast::http::response<boost::beast::http::string_body> l_res{
-      body_status(in_session_data), in_session_data.version_, headers_
+      body_status(in_session_data), in_session_data.version_
   };
+  for (auto const& l_field : headers_) l_res.insert(l_field.name(), l_field.value());
   set_response_header(l_res, get_mine_type(), in_session_data.access_control_allow_origin_, in_session_data.timeout_);
   l_res.keep_alive(in_session_data.keep_alive_);
   l_res.body() = body_.dump();
@@ -124,8 +125,9 @@ boost::beast::http::message_generator http_body_string_t::make_message(
     const detail::session_data& in_session_data
 ) const {
   boost::beast::http::response<boost::beast::http::string_body> l_res{
-      body_status(in_session_data), in_session_data.version_, headers_
+      body_status(in_session_data), in_session_data.version_
   };
+  for (auto const& l_field : headers_) l_res.insert(l_field.name(), l_field.value());
   set_response_header(l_res, get_mine_type(), in_session_data.access_control_allow_origin_, in_session_data.timeout_);
   l_res.keep_alive(in_session_data.keep_alive_);
   l_res.body() = body_;
@@ -154,8 +156,9 @@ boost::beast::http::message_generator http_body_binary_t::make_message(
     const detail::session_data& in_session_data
 ) const {
   boost::beast::http::response<boost::beast::http::vector_body<unsigned char>> l_res{
-      get_status(), in_session_data.version_, headers_
+      get_status(), in_session_data.version_
   };
+  for (auto const& l_field : headers_) l_res.insert(l_field.name(), l_field.value());
   set_response_header(l_res, get_mine_type(), in_session_data.access_control_allow_origin_, in_session_data.timeout_);
   l_res.keep_alive(in_session_data.keep_alive_);
   l_res.body().resize(body_.size());
@@ -194,8 +197,9 @@ boost::beast::http::message_generator http_body_file_t::make_message(
 
   if (range_mode_ == http_file_range_mode::head_only || in_session_data.method() == boost::beast::http::verb::head) {
     boost::beast::http::response<boost::beast::http::empty_body> l_res{
-        boost::beast::http::status::ok, in_session_data.version_, headers_
+        boost::beast::http::status::ok, in_session_data.version_
     };
+    for (auto const& l_field : headers_) l_res.insert(l_field.name(), l_field.value());
     set_response_file_header(
         l_res, path_, get_mine_type(), has_cache_control(), is_attachment(), get_attachment_filename(),
         in_session_data.access_control_allow_origin_, in_session_data.timeout_
@@ -208,8 +212,9 @@ boost::beast::http::message_generator http_body_file_t::make_message(
   boost::system::error_code l_code{};
   if (use_deflate_body_) {
     boost::beast::http::response<zlib_deflate_file_body> l_res{
-        boost::beast::http::status::ok, in_session_data.version_, headers_
+        boost::beast::http::status::ok, in_session_data.version_
     };
+    for (auto const& l_field : headers_) l_res.insert(l_field.name(), l_field.value());
     l_res.body().open(path_, std::ios::in | std::ios::binary, l_code);
     if (l_code)
       throw_exception(
@@ -229,8 +234,9 @@ boost::beast::http::message_generator http_body_file_t::make_message(
   }
 
   boost::beast::http::response<boost::beast::http::file_body> l_res{
-      boost::beast::http::status::ok, in_session_data.version_, headers_
+      boost::beast::http::status::ok, in_session_data.version_
   };
+  for (auto const& l_field : headers_) l_res.insert(l_field.name(), l_field.value());
   l_res.body().open(path_.generic_string().c_str(), boost::beast::file_mode::scan, l_code);
   if (l_code)
     throw_exception(
@@ -293,7 +299,8 @@ http_body_empty_t::http_body_empty_t(boost::beast::http::status in_status)
 boost::beast::http::message_generator http_body_empty_t::make_message(
     const detail::session_data& in_session_data
 ) const {
-  boost::beast::http::response<boost::beast::http::empty_body> l_res{get_status(), in_session_data.version_, headers_};
+  boost::beast::http::response<boost::beast::http::empty_body> l_res{get_status(), in_session_data.version_};
+  for (auto const& l_field : headers_) l_res.insert(l_field.name(), l_field.value());
   set_response_header(l_res, get_mine_type(), in_session_data.access_control_allow_origin_, in_session_data.timeout_);
   l_res.keep_alive(in_session_data.keep_alive_);
   l_res.prepare_payload();
@@ -311,8 +318,9 @@ boost::beast::http::message_generator http_body_error_t::make_message(
   auto l_msg_code = code_ == -1 ? enum_to_num(get_status()) : code_;
 
   boost::beast::http::response<boost::beast::http::string_body> l_response{
-      get_status(), in_session_data.version_, headers_
+      get_status(), in_session_data.version_
   };
+  for (auto const& l_field : headers_) l_response.insert(l_field.name(), l_field.value());
   set_response_header(
       l_response, get_mine_type(), in_session_data.access_control_allow_origin_, in_session_data.timeout_
   );
