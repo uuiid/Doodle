@@ -16,22 +16,11 @@ function endpoint() {
   return base.replace(/\/+$/, '')
 }
 
-function workspaceFolderOf(document) {
-  const folder = vscode.workspace.getWorkspaceFolder(document.uri)
-  if (folder) return folder.uri.fsPath
-  const folders = vscode.workspace.workspaceFolders
-  return folders && folders.length === 1 ? folders[0].uri.fsPath : undefined
-}
-
 function pathFor(document) {
   const fsPath = document.uri.fsPath
   const format = config().get('format')
   if (format === 'basename') return path.basename(fsPath)
-  if (format === 'relative') {
-    const root = workspaceFolderOf(document)
-    if (root) return path.relative(root, fsPath)
-  }
-  return fsPath
+  return path.resolve(fsPath)
 }
 
 function lineSuffix(selection) {

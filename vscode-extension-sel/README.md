@@ -19,7 +19,7 @@ DSH 输入框光标处出现：
 @src/doodle_lib/http_method/kitsu/ai_light.cpp:779-795
 ```
 
-路径默认取**相对工作区根目录**的形式。文件不属于任何工作区目录时（无工作区、或文件在工作区之外）自动回退为绝对路径。
+路径固定取**绝对路径**。
 
 ## 命令
 
@@ -33,7 +33,7 @@ DSH 输入框光标处出现：
 | 键 | 类型 | 默认 | 说明 |
 | --- | --- | --- | --- |
 | `dshSel.endpoint` | string | `http://127.0.0.1:3080` | DSH 本地服务地址（协议 + 主机 + 端口）|
-| `dshSel.format` | `relative` \| `full` \| `basename` | `relative` | `relative` 相对工作区根目录；`full` 绝对路径；`basename` 仅文件名 |
+| `dshSel.format` | `full` \| `basename` | `full` | `full` 绝对路径（默认）；`basename` 仅文件名 |
 | `dshSel.includeLineNumbers` | boolean | `true` | 是否附带行号 |
 
 ## 安装

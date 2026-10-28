@@ -63,17 +63,15 @@
         "dshSel.format": {
           "type": "string",
           "enum": [
-            "relative",
             "full",
             "basename"
           ],
           "enumDescriptions": [
-            "相对工作区根目录的路径，如 src/doodle_lib/http_method/kitsu/ai_light.cpp",
-            "编辑器文件的绝对路径",
+            "编辑器文件的绝对路径，如 E:\\Doodle\\src\\doodle_lib\\http_method\\kitsu\\ai_light.cpp",
             "仅文件名"
           ],
-          "default": "relative",
-          "description": "插入到 DSH 的路径形式。relative 取工作区根目录；文件不属于任何工作区目录时回退为绝对路径。行号始终附带。"
+          "default": "full",
+          "description": "插入到 DSH 的路径形式。full 发送绝对路径（默认）；basename 仅文件名。行号始终附带。"
         },
         "dshSel.includeLineNumbers": {
           "type": "boolean",
