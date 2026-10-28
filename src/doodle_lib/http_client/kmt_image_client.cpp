@@ -176,7 +176,7 @@ kmt_image_client::edits_form_t kmt_image_client::request_t::to_multipart() const
 void from_json(const nlohmann::json& j, kmt_image_client::response_t& in) {
   in.id_      = j.value("id", std::string{});
   in.object_  = j.value("object", std::string{});
-  in.status_  = j.value("status", std::string{});
+  in.status_  = kmt_image_client::parse_status(j.value("status", std::string{}));
   in.model_   = j.value("model", std::string{});
   in.created_ = j.value("created", std::int64_t{0});
   if (!j.contains("data") || !j.at("data").is_array()) return;
@@ -189,7 +189,7 @@ doodle::seedance2::task_status kmt_image_client::parse_status(std::string_view i
   if (in_status == "completed") return doodle::seedance2::task_status::succeeded;
   if (in_status == "failed") return doodle::seedance2::task_status::failed;
   if (in_status == "violation") return doodle::seedance2::task_status::violation;
-  throw_exception(doodle_error{fmt::format("kmt_image_client: 未识别的任务状态 {}", in_status)});
+  return doodle::seedance2::task_status::failed;
 }
 
 ai_client_base::request_info_t kmt_image_client::collect_request_info(const nlohmann::json& in_request) const {
@@ -308,10 +308,11 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::quer
   l_result.task_id_       = in_task.task_id_;
   auto l_req_body         = in_task.data_request_.get<doodle::seedance2::transfer_station_request_t>();
 
-  const auto l_resp       = l_result.data_response_.get<response_t>();
-  const auto& l_pricing   = find_pricing(l_req_body.model_);
+  const auto l_resp =
+      l_res.result() == boost::beast::http::status::ok ? l_result.data_response_.get<response_t>() : response_t{};
+  const auto& l_pricing = find_pricing(l_req_body.model_);
 
-  l_result.status_        = parse_status(l_resp.status_);
+  l_result.status_      = l_resp.status_;
   switch (l_result.status_) {
     case doodle::seedance2::task_status::succeeded:
       l_result.completion_tokens_ = l_pricing.cost_points;

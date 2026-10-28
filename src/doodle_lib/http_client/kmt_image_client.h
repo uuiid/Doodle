@@ -51,7 +51,7 @@ class DOODLELIB_API kmt_image_client final : public ai_client_base {
   struct response_t {
     std::string id_;
     std::string object_;
-    std::string status_;
+    doodle::seedance2::task_status status_{doodle::seedance2::task_status::failed};
     std::string model_;
     std::int64_t created_{0};
     std::vector<data_item_t> data_;
