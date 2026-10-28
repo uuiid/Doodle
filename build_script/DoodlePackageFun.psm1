@@ -225,7 +225,8 @@ function Initialize-Doodle {
     # 先查看标签, 再组合下载url
 
     # 检查文件是否是三个月以上的旧文件
-    if ((Get-ChildItem "$DoodleBuildRoot/holiday-cn-*.zip")[-1].LastWriteTime - (Get-Date).AddMonths(-3) -lt 0) {
+    $holidayFiles = Get-ChildItem "$DoodleBuildRoot/holiday-cn-*.zip"
+    if ($holidayFiles.Count -eq 0 -or $holidayFiles[-1].LastWriteTime - (Get-Date).AddMonths(-3) -lt 0) {
         $tag = (Invoke-WebRequest -Uri https://api.github.com/repos/NateScarlet/holiday-cn/tags -Headers @{ "accept" = "application/json" } |
             ConvertFrom-Json)[0].name
         # 检查文件是否存在
@@ -233,7 +234,7 @@ function Initialize-Doodle {
         Expand-Archive -Path "$DoodleBuildRoot\holiday-cn-$tag.zip" -DestinationPath $DoodleTimePath -Force
     }
     else {
-        Expand-Archive -Path (Get-ChildItem "$DoodleBuildRoot/holiday-cn-*.zip")[-1].FullName -DestinationPath $DoodleTimePath -Force
+        Expand-Archive -Path $holidayFiles[-1].FullName -DestinationPath $DoodleTimePath -Force
     }
     Add-Compensatory -Path "$DoodleTimePath\2025.json" @(
         [System.Management.Automation.PSObject]@{
