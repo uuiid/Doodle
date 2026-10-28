@@ -36,9 +36,9 @@
 namespace doodle::http {
 
 http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
-  auto l_router  = std::make_shared<http_route>();
-  auto l_ctx     = g_kitsu_ctx();
-  auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
+  auto l_router                = std::make_shared<http_route>();
+  auto l_ctx                   = g_kitsu_ctx();
+  auto l_sid_ctx               = std::make_shared<socket_io::sid_ctx>();
   core_set::get_set().sid_ctx_ = l_sid_ctx;
   l_sid_ctx->register_namespace("/events");
   (*l_router)
@@ -306,6 +306,7 @@ http_route_ptr create_kitsu_local_route() {
   auto l_rout_ptr = std::make_shared<http::http_route>();
   auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->register_namespace("/events");
+  core_set::get_set().sid_ctx_ = l_sid_ctx;
   (*l_rout_ptr)                       //
       .reg_c<local::local_setting>()  //
       .reg_c<local::video_thumbnail>()
