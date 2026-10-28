@@ -14,6 +14,10 @@ if ($BuildSd2) {
     return;
 }
 
+if(-not (Test-Path "$PSScriptRoot/../build/pack")){
+    New-Item -ItemType Directory -Path "$PSScriptRoot/../build/pack" | Out-Null
+}
+
 $DoodleOut = Convert-Path "$PSScriptRoot/../build/pack"
 Initialize-Doodle -OutPath $DoodleOut -BackupPdb:$CopyServer
 
