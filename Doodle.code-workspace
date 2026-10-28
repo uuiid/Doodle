@@ -211,7 +211,9 @@
 			"editor.defaultFormatter": "ms-python.black-formatter"
 		},
 		"python.analysis.exclude": [
-			"${workspaceFolder}/vcpkg"
+			"${workspaceFolder}/vcpkg",
+			"${workspaceFolder}/src",
+			"${workspaceFolder}/script"
 		]
 	}
 }
