@@ -108,7 +108,6 @@
       "name": "Release_Exe",
       "configurePreset": "Ninja_release",
       "targets": [
-        "generate_token",
         "doodle_kitsu_supplement"
       ]
     },
