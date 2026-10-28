@@ -192,9 +192,6 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_clien
 
   boost::beast::http::response<http::basic_json_body> l_res{};
   co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
-  DOODLE_CHICK(
-      l_res.result() == boost::beast::http::status::ok, "query_task error: {} {}", l_res.result(), l_res.body().dump()
-  );
 
   run_task_result_t l_result;
   l_result.data_response_ = l_res.body();
