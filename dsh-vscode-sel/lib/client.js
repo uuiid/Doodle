@@ -79,10 +79,80 @@ window.__ModuleLoader__.load({ id: 'dsh-vscode-sel', factory: () => {
     return end > start ? ':' + start + '-' + end : ':' + start
   }
 
-  function describe(entry) {
+  function isWindowsStyle(filePath) {
+    return /^[A-Za-z]:[\\/]/.test(filePath) || filePath.slice(0, 2) === '\\\\'
+  }
+
+  function isAbsolute(filePath) {
+    return filePath.slice(0, 1) === '/' || isWindowsStyle(filePath)
+  }
+
+  function normalizeSegments(filePath) {
+    var windows = isWindowsStyle(filePath)
+    var segments = filePath.split(windows ? /[\\/]+/ : /\/+/)
+    var folded = []
+    for (var i = 0; i < segments.length; i++) {
+      var segment = segments[i]
+      if (i === 0 || segment !== '') folded.push(windows ? segment.toLowerCase() : segment)
+    }
+    return folded.join('/')
+  }
+
+  function withinRoot(root, fsPath) {
+    if (root === '') return ''
+    var rootKey = normalizeSegments(root)
+    var pathKey = normalizeSegments(fsPath)
+    if (pathKey === rootKey) return ''
+    var prefix = rootKey.slice(-1) === '/' ? rootKey : rootKey + '/'
+    if (pathKey.slice(0, prefix.length) !== prefix) return ''
+    return pathKey.slice(prefix.length)
+  }
+
+  function currentSessionId(sessions) {
+    var list = sessions.list.getSnapshot()
+    for (var i = 0; i < list.ids.length; i++) {
+      var row = list.byId[list.ids[i]]
+      if (row !== undefined && (row.retainedBy.mainView ?? 0) > 0) return row.id
+    }
+    return undefined
+  }
+
+  function workspacePathOf(ctx, sessionId) {
+    if (sessionId === undefined) return ''
+    var root = ''
+    var list = ctx.sessions.list.getSnapshot()
+    var row = list.byId[sessionId]
+    if (row !== undefined && typeof row.cwd === 'string') root = row.cwd
+    if (root !== '') return root
+    var items = ctx.workspaces.list.getSnapshot().items
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].sessionIds.indexOf(sessionId) !== -1) return items[i].path
+    }
+    return ''
+  }
+
+  function currentWorkspacePath(ctx) {
+    var sessions = ctx.sessions
+    if (sessions === undefined || sessions === null) return ''
+    try {
+      return workspacePathOf(ctx, currentSessionId(sessions))
+    } catch (reason) {
+      console.warn('[dsh-vscode-sel] workspace lookup failed:', reason)
+      return ''
+    }
+  }
+
+  function relativeTo(filePath, root) {
+    if (!isAbsolute(filePath) || root === '') return filePath
+    var rest = withinRoot(root, filePath)
+    if (rest === '') return filePath
+    return (isWindowsStyle(root) ? rest.replace(/\//g, '\\') : rest)
+  }
+
+  function describe(ctx, entry) {
     if (entry === null || typeof entry !== 'object') return ''
     if (typeof entry.filePath !== 'string' || entry.filePath === '') return ''
-    return '@' + entry.filePath + lineSuffix(entry)
+    return '@' + relativeTo(entry.filePath, currentWorkspacePath(ctx)) + lineSuffix(entry)
   }
 
   function install(ctx) {
@@ -92,7 +162,7 @@ window.__ModuleLoader__.load({ id: 'dsh-vscode-sel', factory: () => {
       if (!Array.isArray(items) || items.length === 0) return
       var texts = []
       for (var i = 0; i < items.length; i++) {
-        var text = describe(items[i])
+        var text = describe(ctx, items[i])
         if (text !== '') texts.push(text)
       }
       if (texts.length === 0) return

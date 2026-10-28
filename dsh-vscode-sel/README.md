@@ -24,7 +24,9 @@ VS Code 扩展 ──POST /api/dsh-vscode-sel/push──▶ DSH host 信箱（�
 @src/doodle_lib/http_method/kitsu/ai_light.cpp:779-795
 ```
 
-- 路径由 VS Code 扩展决定：默认是**相对工作区根目录**的路径（`dshSel.format: relative`），也可配 `full`（绝对路径）或 `basename`（仅文件名）
+- 路径由 VS Code 扩展推送，**为绝对路径**
+- 浏览器端插入前会把落在**当前对话工作区**内的绝对路径改写为工作区相对路径（如 `src/doodle_lib/...`）：先读当前 Session 的 `cwd`，缺省时回退到包含该 Session 的 Workspace `path`；改写只做前缀裁剪，不做大小写规范化（仅比较时忽略大小写），分隔符沿用工作区路径的风格
+- 路径不在当前工作区内、或拿不到工作区根时，原样保留绝对路径
 - 单行选区：`@路径:行号`
 - 多行选区：`@路径:起始行-结束行`
 - 多条同时到达时用空格连接，整体末尾补一个空格
