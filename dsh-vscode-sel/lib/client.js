@@ -57,20 +57,20 @@ window.__ModuleLoader__.load({ id: 'dsh-vscode-sel', factory: () => {
     if (selection === null) return false
     selection.removeAllRanges()
     selection.addRange(range)
-    var applied = false
+    var data = null
     try {
-      applied = document.execCommand('insertText', false, text)
+      data = new DataTransfer()
+      data.setData('text/plain', text)
     } catch {
-      applied = false
+      return false
     }
-    if (applied) return true
-    range.deleteContents()
-    range.insertNode(document.createTextNode(text))
-    range.collapse(false)
-    selection.removeAllRanges()
-    selection.addRange(range)
-    root.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: text }))
-    return true
+    var event = null
+    try {
+      event = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: data })
+    } catch {
+      return false
+    }
+    return root.dispatchEvent(event) === false
   }
 
   function lineSuffix(entry) {
@@ -112,7 +112,9 @@ window.__ModuleLoader__.load({ id: 'dsh-vscode-sel', factory: () => {
     var list = sessions.list.getSnapshot()
     for (var i = 0; i < list.ids.length; i++) {
       var row = list.byId[list.ids[i]]
-      if (row !== undefined && (row.retainedBy.mainView ?? 0) > 0) return row.id
+      if (row === undefined) continue
+      var retained = row.retainedBy === undefined || row.retainedBy === null ? 0 : (row.retainedBy.mainView ?? 0)
+      if (retained > 0) return row.id
     }
     return undefined
   }
@@ -132,9 +134,9 @@ window.__ModuleLoader__.load({ id: 'dsh-vscode-sel', factory: () => {
   }
 
   function currentWorkspacePath(ctx) {
-    var sessions = ctx.sessions
-    if (sessions === undefined || sessions === null) return ''
     try {
+      var sessions = ctx.sessions
+      if (sessions === undefined || sessions === null) return ''
       return workspacePathOf(ctx, currentSessionId(sessions))
     } catch (reason) {
       console.warn('[dsh-vscode-sel] workspace lookup failed:', reason)
@@ -230,6 +232,6 @@ window.__ModuleLoader__.load({ id: 'dsh-vscode-sel', factory: () => {
   }
 
   exports.apply = apply
-  exports.inject = []
+  exports.inject = ['sessions', 'workspaces']
   return module.exports
 } })
