@@ -192,6 +192,7 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_clien
 
   boost::beast::http::response<http::basic_json_body> l_res{};
   co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
+  // 这里特意不检查http 状态
 
   run_task_result_t l_result;
   l_result.data_response_ = l_res.body();
@@ -199,7 +200,8 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> transfer_station_clien
   // 按模型定价扣除积分
   auto l_model            = in_task.data_request_.value("model", "");
   const auto* l_pricing   = find_pricing(l_model);
-  l_result.status_        = parse_status(l_result.data_response_);
+  l_result.status_        = l_res.result() == boost::beast::http::status::ok ? parse_status(l_result.data_response_)
+                                                                             : doodle::seedance2::task_status::failed;
 
   if (l_result.status_ == doodle::seedance2::task_status::succeeded) {
     l_result.completion_tokens_ = l_pricing ? l_pricing->cost_points : 0;
