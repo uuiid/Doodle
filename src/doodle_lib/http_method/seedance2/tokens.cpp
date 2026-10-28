@@ -95,7 +95,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
 
     if (!l_common_departments_fun(person_.person_.departments_, l_others_person.departments_))
       throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
-  } else if (person_.person_.role_ == person_role_type::admin) {
+  } else if (person_.person_.role_ == person_role_type::admin || person_.person_.role_ == person_role_type::producer) {
   } else
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 
