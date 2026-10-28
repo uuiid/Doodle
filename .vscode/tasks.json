@@ -328,6 +328,30 @@
           }
         }
       ]
+    },
+    {
+      "label": "copy to share",
+      "detail": "把 build/install、build/kitsu_new.db(含 -wal/-shm) 与 docs/api 复制到共享的时间戳目录",
+      "type": "shell",
+      "command": "${workspaceFolder}/build_script/copy_to_share.ps1",
+      "args": [],
+      "problemMatcher": [
+        {
+          "owner": "powershell",
+          "severity": "error",
+          "fileLocation": [
+            "relative",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^At (.*):(\\d+) char:(\\d+)(.*)",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "message": 4
+          }
+        }
+      ]
     }
   ],
   "inputs": [
