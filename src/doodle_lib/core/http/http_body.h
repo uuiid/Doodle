@@ -7,6 +7,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/beast.hpp>
+#include <boost/beast/http/message_fwd.hpp>
 
 #include <chrono>
 #include <cstddef>
@@ -39,7 +40,6 @@ struct http_body_base_t {
   bool is_deflate_{false};
   bool is_attachment_{false};
   std::string attachment_filename_{};
-  std::vector<std::pair<boost::beast::http::field, std::string>> headers_{};
 
   static std::string generate_etag(const FSys::path& in_path);
 
@@ -53,6 +53,10 @@ struct http_body_base_t {
   http_body_base_t& operator=(http_body_base_t&&)      = default;
 
   boost::beast::http::status body_status(const detail::session_data& in_session_data) const;
+
+  boost::beast::http::response_header<> headers_{};
+  template <typename T>
+  void apply_headers(T& in_res) const;
 
  public:
   virtual ~http_body_base_t() = default;
@@ -84,7 +88,7 @@ struct http_body_base_t {
   [[nodiscard]] bool is_deflate() const;
   [[nodiscard]] bool is_attachment() const;
   [[nodiscard]] const std::string& get_attachment_filename() const;
-  [[nodiscard]] const std::vector<std::pair<boost::beast::http::field, std::string>>& get_headers() const;
+  [[nodiscard]] const boost::beast::http::response_header<>& get_headers() const;
 
   virtual boost::beast::http::message_generator make_message(const detail::session_data& in_session_data) const = 0;
 };

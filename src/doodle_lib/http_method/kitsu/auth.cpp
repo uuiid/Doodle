@@ -156,6 +156,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_reset_password, put) {
   co_return std::make_unique<http_body_json_t>(nlohmann::json{{"success", "Password changed"}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_logout, get) {
-  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"logout", true}});
+  auto l_body = std::make_unique<http_body_json_t>(nlohmann::json{{"logout", true}});
+  l_body->set_header(
+      boost::beast::http::field::set_cookie,
+      "access_token_cookie=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Path=/; SameSite=Lax"
+  );
+  l_body->add_header(
+      boost::beast::http::field::set_cookie,
+      "refresh_token_cookie=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Path=/auth/refresh-token; "
+      "SameSite=Lax"
+  );
+  l_body->add_header(
+      boost::beast::http::field::set_cookie,
+      "refresh_token_cookie=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; "
+      "Path=/api/auth/refresh-token; SameSite=Lax"
+  );
+  co_return l_body;
 }
 }  // namespace doodle::http

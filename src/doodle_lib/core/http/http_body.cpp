@@ -73,17 +73,11 @@ http_body_base_t& http_body_base_t::set_attachment(std::string in_filename) {
   return *this;
 }
 http_body_base_t& http_body_base_t::set_header(boost::beast::http::field in_field, std::string in_value) {
-  auto l_it = std::find_if(headers_.begin(), headers_.end(), [in_field](const auto& in_pair) {
-    return in_pair.first == in_field;
-  });
-  if (l_it != headers_.end())
-    l_it->second = std::move(in_value);
-  else
-    headers_.emplace_back(in_field, std::move(in_value));
+  headers_.set(in_field, std::move(in_value));
   return *this;
 }
 http_body_base_t& http_body_base_t::add_header(boost::beast::http::field in_field, std::string in_value) {
-  headers_.emplace_back(in_field, std::move(in_value));
+  headers_.insert(in_field, std::move(in_value));
   return *this;
 }
 
@@ -93,9 +87,7 @@ bool http_body_base_t::has_cache_control() const { return has_cache_control_; }
 bool http_body_base_t::is_deflate() const { return is_deflate_; }
 bool http_body_base_t::is_attachment() const { return is_attachment_; }
 const std::string& http_body_base_t::get_attachment_filename() const { return attachment_filename_; }
-const std::vector<std::pair<boost::beast::http::field, std::string>>& http_body_base_t::get_headers() const {
-  return headers_;
-}
+const boost::beast::http::response_header<>& http_body_base_t::get_headers() const { return headers_; }
 
 boost::beast::http::status http_body_base_t::body_status(const detail::session_data& in_session_data) const {
   return status_ == boost::beast::http::status::ok && in_session_data.method() == boost::beast::http::verb::post
@@ -110,7 +102,7 @@ boost::beast::http::message_generator http_body_json_t::make_message(
     const detail::session_data& in_session_data
 ) const {
   boost::beast::http::response<boost::beast::http::string_body> l_res{
-      body_status(in_session_data), in_session_data.version_
+      body_status(in_session_data), in_session_data.version_, headers_
   };
   set_response_header(l_res, get_mine_type(), in_session_data.access_control_allow_origin_, in_session_data.timeout_);
   l_res.keep_alive(in_session_data.keep_alive_);
@@ -132,7 +124,7 @@ boost::beast::http::message_generator http_body_string_t::make_message(
     const detail::session_data& in_session_data
 ) const {
   boost::beast::http::response<boost::beast::http::string_body> l_res{
-      body_status(in_session_data), in_session_data.version_
+      body_status(in_session_data), in_session_data.version_, headers_
   };
   set_response_header(l_res, get_mine_type(), in_session_data.access_control_allow_origin_, in_session_data.timeout_);
   l_res.keep_alive(in_session_data.keep_alive_);
@@ -162,7 +154,7 @@ boost::beast::http::message_generator http_body_binary_t::make_message(
     const detail::session_data& in_session_data
 ) const {
   boost::beast::http::response<boost::beast::http::vector_body<unsigned char>> l_res{
-      get_status(), in_session_data.version_
+      get_status(), in_session_data.version_, headers_
   };
   set_response_header(l_res, get_mine_type(), in_session_data.access_control_allow_origin_, in_session_data.timeout_);
   l_res.keep_alive(in_session_data.keep_alive_);
@@ -202,7 +194,7 @@ boost::beast::http::message_generator http_body_file_t::make_message(
 
   if (range_mode_ == http_file_range_mode::head_only || in_session_data.method() == boost::beast::http::verb::head) {
     boost::beast::http::response<boost::beast::http::empty_body> l_res{
-        boost::beast::http::status::ok, in_session_data.version_
+        boost::beast::http::status::ok, in_session_data.version_, headers_
     };
     set_response_file_header(
         l_res, path_, get_mine_type(), has_cache_control(), is_attachment(), get_attachment_filename(),
@@ -216,7 +208,7 @@ boost::beast::http::message_generator http_body_file_t::make_message(
   boost::system::error_code l_code{};
   if (use_deflate_body_) {
     boost::beast::http::response<zlib_deflate_file_body> l_res{
-        boost::beast::http::status::ok, in_session_data.version_
+        boost::beast::http::status::ok, in_session_data.version_, headers_
     };
     l_res.body().open(path_, std::ios::in | std::ios::binary, l_code);
     if (l_code)
@@ -237,7 +229,7 @@ boost::beast::http::message_generator http_body_file_t::make_message(
   }
 
   boost::beast::http::response<boost::beast::http::file_body> l_res{
-      boost::beast::http::status::ok, in_session_data.version_
+      boost::beast::http::status::ok, in_session_data.version_, headers_
   };
   l_res.body().open(path_.generic_string().c_str(), boost::beast::file_mode::scan, l_code);
   if (l_code)
@@ -301,7 +293,7 @@ http_body_empty_t::http_body_empty_t(boost::beast::http::status in_status)
 boost::beast::http::message_generator http_body_empty_t::make_message(
     const detail::session_data& in_session_data
 ) const {
-  boost::beast::http::response<boost::beast::http::empty_body> l_res{get_status(), in_session_data.version_};
+  boost::beast::http::response<boost::beast::http::empty_body> l_res{get_status(), in_session_data.version_, headers_};
   set_response_header(l_res, get_mine_type(), in_session_data.access_control_allow_origin_, in_session_data.timeout_);
   l_res.keep_alive(in_session_data.keep_alive_);
   l_res.prepare_payload();
@@ -318,7 +310,9 @@ boost::beast::http::message_generator http_body_error_t::make_message(
 
   auto l_msg_code = code_ == -1 ? enum_to_num(get_status()) : code_;
 
-  boost::beast::http::response<boost::beast::http::string_body> l_response{get_status(), in_session_data.version_};
+  boost::beast::http::response<boost::beast::http::string_body> l_response{
+      get_status(), in_session_data.version_, headers_
+  };
   set_response_header(
       l_response, get_mine_type(), in_session_data.access_control_allow_origin_, in_session_data.timeout_
   );
