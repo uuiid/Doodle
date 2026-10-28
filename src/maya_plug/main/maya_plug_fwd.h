@@ -12,12 +12,16 @@
 #include <maya_plug/fmt/fmt_warp.h>
 #include <maya_plug/maya_plug_fwd.h>
 
+#include <map>
 #include <maya/MGlobal.h>
 #include <maya/MPxCommand.h>
 #include <maya/MStatus.h>
 #include <maya/MString.h>
 #include <maya/MSyntax.h>
+#include <set>
+#include <string>
 #include <utility>
+
 
 namespace doodle {
 
