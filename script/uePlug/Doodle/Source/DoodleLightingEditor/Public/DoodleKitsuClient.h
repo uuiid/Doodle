@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Templates/Function.h"
 #include "Templates/ValueOrError.h"
 
 namespace DoodleKitsuClient
@@ -13,6 +14,7 @@ namespace DoodleKitsuClient
 	};
 
 	using FDoodleLoginResult = TValueOrError<FDoodleLoginValue, FString>;
+	using FDoodleLoginCallback = TFunction<void(FDoodleLoginResult)>;
 
 	DOODLELIGHTINGEDITOR_API FString GetServerUrl();
 
@@ -20,7 +22,9 @@ namespace DoodleKitsuClient
 
 	DOODLELIGHTINGEDITOR_API FString MakeBearerAuthorization();
 
-	DOODLELIGHTINGEDITOR_API FDoodleLoginResult Login(const FString& InEmail, const FString& InPassword);
+	DOODLELIGHTINGEDITOR_API FDoodleLoginResult StartLogin(
+		const FString& InEmail, const FString& InPassword, FDoodleLoginCallback InOnComplete
+	);
 
 	DOODLELIGHTINGEDITOR_API bool Logout();
 }

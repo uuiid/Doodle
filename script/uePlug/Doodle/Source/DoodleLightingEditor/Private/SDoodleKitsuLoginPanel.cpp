@@ -107,6 +107,7 @@ void SDoodleKitsuLoginPanel::Construct(const FArguments& InArgs)
 			[
 				SNew(SButton)
 				.Text(FText::FromString(TEXT("登录")))
+				.IsEnabled(this, &SDoodleKitsuLoginPanel::IsLoginButtonEnabled)
 				.OnClicked(this, &SDoodleKitsuLoginPanel::OnLoginClicked)
 			]
 
@@ -116,6 +117,7 @@ void SDoodleKitsuLoginPanel::Construct(const FArguments& InArgs)
 			[
 				SNew(SButton)
 				.Text(FText::FromString(TEXT("退出登录")))
+				.IsEnabled(this, &SDoodleKitsuLoginPanel::IsLoginButtonEnabled)
 				.OnClicked(this, &SDoodleKitsuLoginPanel::OnLogoutClicked)
 			]
 
@@ -157,7 +159,10 @@ FReply SDoodleKitsuLoginPanel::OnLoginClicked()
 	L_Settings->Email = L_Email;
 	const bool bEmailSaved = L_Settings->TryUpdateDefaultConfigFile();
 
-	const DoodleKitsuClient::FDoodleLoginResult L_Result = DoodleKitsuClient::Login(L_Email, L_Password);
+	if (!bEmailSaved)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[DoodleKitsu] 登录邮箱没能写入配置文件"));
+	}
 
 	if (PasswordBox.IsValid())
 	{
@@ -166,24 +171,52 @@ FReply SDoodleKitsuLoginPanel::OnLoginClicked()
 
 	if (ResultBox.IsValid())
 	{
-		if (L_Result.HasValue())
-		{
-			ResultBox->SetText(FText::FromString(FString::Printf(
-				TEXT("登录成功: %s (%s)"), *L_Result.GetValue().UserName, *L_Result.GetValue().Email
-			)));
-		}
-		else
-		{
-			ResultBox->SetText(FText::FromString(L_Result.GetError()));
-		}
+		ResultBox->SetText(FText::GetEmpty());
 	}
 
-	if (!bEmailSaved)
+	bLoggingIn = true;
+
+	const DoodleKitsuClient::FDoodleLoginResult L_StartResult = DoodleKitsuClient::StartLogin(
+		L_Email, L_Password,
+		[L_WeakPanel = TWeakPtr<SDoodleKitsuLoginPanel>(SharedThis(this))](DoodleKitsuClient::FDoodleLoginResult InResult)
+		{
+			if (const TSharedPtr<SDoodleKitsuLoginPanel> L_Panel = L_WeakPanel.Pin())
+			{
+				L_Panel->ApplyLoginResult(MoveTemp(InResult));
+			}
+		}
+	);
+
+	if (L_StartResult.HasError())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[DoodleKitsu] 登录邮箱没能写入配置文件"));
+		bLoggingIn = false;
+		if (ResultBox.IsValid())
+		{
+			ResultBox->SetText(FText::FromString(L_StartResult.GetError()));
+		}
 	}
 
 	return FReply::Handled();
+}
+
+void SDoodleKitsuLoginPanel::ApplyLoginResult(DoodleKitsuClient::FDoodleLoginResult InResult)
+{
+	bLoggingIn = false;
+
+	if (!ResultBox.IsValid())
+	{
+		return;
+	}
+
+	if (InResult.HasValue())
+	{
+		ResultBox->SetText(FText::FromString(FString::Printf(
+			TEXT("登录成功: %s (%s)"), *InResult.GetValue().UserName, *InResult.GetValue().Email
+		)));
+		return;
+	}
+
+	ResultBox->SetText(FText::FromString(InResult.GetError()));
 }
 
 FReply SDoodleKitsuLoginPanel::OnLogoutClicked()
@@ -200,6 +233,11 @@ FReply SDoodleKitsuLoginPanel::OnLogoutClicked()
 
 FText SDoodleKitsuLoginPanel::GetStatusText() const
 {
+	if (bLoggingIn)
+	{
+		return FText::FromString(TEXT("登录中…"));
+	}
+
 	if (!DoodleKitsuClient::IsLoggedIn())
 	{
 		return FText::FromString(TEXT("未登录"));
@@ -207,4 +245,14 @@ FText SDoodleKitsuLoginPanel::GetStatusText() const
 
 	const UDoodleLightingSettings* L_Settings = GetDefault<UDoodleLightingSettings>();
 	return FText::FromString(FString::Printf(TEXT("已登录: %s"), *L_Settings->UserName));
+}
+
+bool SDoodleKitsuLoginPanel::IsLoggingIn() const
+{
+	return bLoggingIn;
+}
+
+bool SDoodleKitsuLoginPanel::IsLoginButtonEnabled() const
+{
+	return !bLoggingIn;
 }

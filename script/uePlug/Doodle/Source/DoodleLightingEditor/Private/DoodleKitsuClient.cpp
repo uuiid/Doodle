@@ -2,8 +2,8 @@
 
 #include "DoodleLightingSettings.h"
 
+#include "Containers/Ticker.h"
 #include "Dom/JsonObject.h"
-#include "HttpManager.h"
 #include "HttpModule.h"
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
@@ -13,6 +13,15 @@
 
 namespace
 {
+	constexpr double LoginTimeoutSeconds = 30.0;
+
+	struct FLoginRequestState
+	{
+		FHttpRequestPtr Request;
+		DoodleKitsuClient::FDoodleLoginResult Result = MakeError(TEXT("登录请求没有等到响应"));
+		bool bCompleted = false;
+	};
+
 	UDoodleLightingSettings* GetSettings()
 	{
 		return GetMutableDefault<UDoodleLightingSettings>();
@@ -98,6 +107,38 @@ namespace
 
 		return MakeValue(MoveTemp(L_Value));
 	}
+
+	DoodleKitsuClient::FDoodleLoginResult MakeResponseResult(
+		FHttpResponsePtr InResponse, bool bInConnectedSuccessfully, const FString& InServerUrl
+	)
+	{
+		if (!bInConnectedSuccessfully || !InResponse.IsValid())
+		{
+			return MakeError(FString::Printf(TEXT("无法连接服务器: %s"), *InServerUrl));
+		}
+		if (InResponse->GetResponseCode() == EHttpResponseCodes::Created)
+		{
+			return ParseLoginResponse(InResponse->GetContentAsString());
+		}
+		return MakeError(DescribeFailure(InResponse->GetResponseCode(), InResponse->GetContentAsString()));
+	}
+
+	void ReportLoginResult(
+		const TSharedRef<FLoginRequestState>& InState, const FString& InEmailBeforeLogin,
+		const DoodleKitsuClient::FDoodleLoginCallback& InOnComplete
+	)
+	{
+		if (InState->Result.HasValue())
+		{
+			UE_LOG(LogTemp, Log, TEXT("[DoodleKitsu] 登录成功 %s"), *InState->Result.GetValue().Email);
+		}
+		else
+		{
+			GetSettings()->Email = InEmailBeforeLogin;
+			UE_LOG(LogTemp, Error, TEXT("[DoodleKitsu] 登录失败 %s"), *InState->Result.GetError());
+		}
+		InOnComplete(MoveTemp(InState->Result));
+	}
 }
 
 namespace DoodleKitsuClient
@@ -122,13 +163,18 @@ namespace DoodleKitsuClient
 		return FString::Printf(TEXT("Bearer %s"), *L_Token);
 	}
 
-	FDoodleLoginResult Login(const FString& InEmail, const FString& InPassword)
+	FDoodleLoginResult StartLogin(const FString& InEmail, const FString& InPassword, FDoodleLoginCallback InOnComplete)
 	{
 		FString L_Email = InEmail;
 		L_Email.TrimStartAndEndInline();
 		if (L_Email.IsEmpty() || InPassword.IsEmpty())
 		{
 			return MakeError(TEXT("email 或 password 为空"));
+		}
+
+		if (!InOnComplete)
+		{
+			return MakeError(TEXT("登录回调为空"));
 		}
 
 		const FString L_ServerUrl = GetServerUrl();
@@ -148,68 +194,59 @@ namespace DoodleKitsuClient
 			return MakeError(TEXT("登录请求体序列化失败"));
 		}
 
-		const TSharedRef<IHttpRequest, ESPMode::ThreadSafe> L_Request = FHttpModule::Get().CreateRequest();
-		L_Request->SetURL(FString::Printf(TEXT("%s/api/auth/login"), *L_ServerUrl));
-		L_Request->SetVerb(TEXT("POST"));
-		L_Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
-		L_Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
-		L_Request->SetTimeout(30.0f);
-		L_Request->SetContentAsString(L_BodyText);
-
 		const FString L_EmailBeforeLogin = GetSettings()->Email;
 
-		FDoodleLoginResult L_Result = MakeError(TEXT("登录请求没有等到响应"));
-		bool bCompleted = false;
-		L_Request->OnProcessRequestComplete().BindLambda(
-			[&L_Result, &bCompleted, L_ServerUrl](
+		TSharedRef<FLoginRequestState> L_State = MakeShared<FLoginRequestState>();
+		L_State->Request = FHttpModule::Get().CreateRequest();
+		L_State->Request->SetURL(FString::Printf(TEXT("%s/api/auth/login"), *L_ServerUrl));
+		L_State->Request->SetVerb(TEXT("POST"));
+		L_State->Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+		L_State->Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
+		L_State->Request->SetTimeout(LoginTimeoutSeconds);
+		L_State->Request->SetContentAsString(L_BodyText);
+		L_State->Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
+
+		L_State->Request->OnProcessRequestComplete().BindLambda(
+			[L_State, L_ServerUrl](
 				FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool bInConnectedSuccessfully
 			)
 			{
-				if (!bInConnectedSuccessfully || !InResponse.IsValid())
-				{
-					L_Result = MakeError(FString::Printf(TEXT("无法连接服务器: %s"), *L_ServerUrl));
-				}
-				else if (InResponse->GetResponseCode() == EHttpResponseCodes::Created)
-				{
-					L_Result = ParseLoginResponse(InResponse->GetContentAsString());
-				}
-				else
-				{
-					L_Result = MakeError(DescribeFailure(InResponse->GetResponseCode(), InResponse->GetContentAsString()));
-				}
-				bCompleted = true;
+				L_State->Result = MakeResponseResult(InResponse, bInConnectedSuccessfully, L_ServerUrl);
+				L_State->bCompleted = true;
 			}
 		);
 
-		if (!L_Request->ProcessRequest())
+		if (!L_State->Request->ProcessRequest())
 		{
 			GetSettings()->Email = L_EmailBeforeLogin;
 			return MakeError(FString::Printf(TEXT("登录请求发不出去: %s"), *L_ServerUrl));
 		}
 
-		const double L_Deadline = FPlatformTime::Seconds() + 30.0;
-		while (!bCompleted && FPlatformTime::Seconds() < L_Deadline)
-		{
-			FHttpModule::Get().GetHttpManager().Tick(0.01f);
-			FPlatformProcess::Sleep(0.01f);
-		}
+		const double L_Deadline = FPlatformTime::Seconds() + LoginTimeoutSeconds;
+		FTSTicker::GetCoreTicker().AddTicker(
+			TEXT("DoodleKitsuLogin"), 0.0f,
+			[L_State, L_ServerUrl, L_Deadline, L_EmailBeforeLogin,
+			 L_OnComplete = MoveTemp(InOnComplete)](float InDeltaTime) mutable
+			{
+				if (!L_State->bCompleted)
+				{
+					if (FPlatformTime::Seconds() < L_Deadline)
+					{
+						return true;
+					}
+					if (L_State->Request.IsValid())
+					{
+						L_State->Request->CancelRequest();
+					}
+					L_State->Result = MakeError(FString::Printf(TEXT("登录超时: %s"), *L_ServerUrl));
+					L_State->bCompleted = true;
+				}
+				ReportLoginResult(L_State, L_EmailBeforeLogin, L_OnComplete);
+				return false;
+			}
+		);
 
-		if (!bCompleted)
-		{
-			GetSettings()->Email = L_EmailBeforeLogin;
-			return MakeError(FString::Printf(TEXT("登录超时: %s"), *L_ServerUrl));
-		}
-
-		if (L_Result.HasValue())
-		{
-			UE_LOG(LogTemp, Log, TEXT("[DoodleKitsu] 登录成功 %s"), *L_Result.GetValue().Email);
-		}
-		else
-		{
-			GetSettings()->Email = L_EmailBeforeLogin;
-			UE_LOG(LogTemp, Error, TEXT("[DoodleKitsu] 登录失败 %s"), *L_Result.GetError());
-		}
-		return L_Result;
+		return MakeValue(FDoodleLoginValue{});
 	}
 
 	bool Logout()
