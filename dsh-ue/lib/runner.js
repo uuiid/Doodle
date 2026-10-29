@@ -170,7 +170,7 @@ export async function runUeBuild(deps, spec) {
     handle = deps.subprocess.spawn({
       argv: spec.argv,
       cwd: spec.cwd,
-      env: { ...(deps.env ?? {}), DSH_UE_NO_AUTORUN: '1' },
+      env: { DSH_UE_NO_AUTORUN: '1' },
       stdio: {
         stdin: 'ignore',
         stdout: { maxBytes: spec.maxOutputBytes, spill: { maxBytes: spec.maxOutputBytes } },
