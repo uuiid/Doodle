@@ -18,7 +18,7 @@
     - id: ue-build
       name: dsh-ue
       config:
-        repoRoot: E:\dsh_work\Doodle
-        engineRoot: E:\dsh_work\UnrealEngine
+        repoRoot: E:\Doodle
+        engineRoot: E:\UnrealEngine
         projectFile: E:\ue_main\ue_main.uproject
         defaultTarget: DoodleLiveLink

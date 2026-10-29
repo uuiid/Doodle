@@ -14,5 +14,5 @@
     - id: cmake
       name: dsh-cmake
       config:
-        repoRoot: E:\dsh_work\Doodle
+        repoRoot: E:\Doodle
         maxParallel: 20
