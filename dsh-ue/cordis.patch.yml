@@ -1,0 +1,24 @@
+# dsh-ue bundle patch
+#
+# 把 UE 构建工具挂进 DSH 工具注册表。config 全部可选：
+#   engineRoot            引擎根目录（默认 E:\UnrealEngine），Build.bat 位于其下 Engine\Build\BatchFiles
+#   engineBuildBat        Build.bat 相对 engineRoot 的路径（默认 Engine/Build/BatchFiles/Build.bat）
+#   repoRoot              Doodle 仓库根目录（默认 E:\Doodle），projectFile / pluginBuildScript 相对它解析
+#   projectFile           默认 .uproject（相对 repoRoot）；空表示必须由调用方传 projectFile
+#   pluginBuildScript     仓库里的 UE 插件工程脚本（相对 repoRoot）；配置后按顺序优先于 projectFile
+#   comspec               cmd.exe 路径（默认 C:\WINDOWS\system32\cmd.exe）
+#   defaultPlatform       默认平台（默认 Win64）
+#   defaultConfiguration  默认配置（默认 Development）
+#   defaultTarget         不传 target 时使用的 target 名；空则回退到 `<工程名>Editor`
+#   buildTimeoutMs        单次构建超时（默认 5400000，即 90 分钟）
+#   maxOutputBytes        stdout / stderr 各自的内存缓冲上限（默认 32 MiB，超出落 spill 文件）
+#   outputHeadBytes / outputTailBytes  render 里输出头尾截断字节数
+#   guidanceOrder         系统提示词里本工具指引段的排序值（默认 1394，紧邻 cmake 段）
+- insert:
+    - id: ue-build
+      name: dsh-ue
+      config:
+        repoRoot: E:\dsh_work\Doodle
+        engineRoot: E:\dsh_work\UnrealEngine
+        projectFile: E:\ue_main\ue_main.uproject
+        defaultTarget: DoodleLiveLink

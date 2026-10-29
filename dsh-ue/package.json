@@ -1,0 +1,42 @@
+{
+  "name": "dsh-ue",
+  "version": "0.1.0",
+  "description": "Unreal Engine build tool for DeepSeek Harness: compiles UE targets through Engine\\Build\\BatchFiles\\Build.bat with parsed MSVC/UBT diagnostics and reliable success decisions.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "MIT",
+  "files": [
+    "lib/**/*.js",
+    "cordis.patch.yml",
+    "locale/**/*.json",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.5",
+    "@deepseek-ai/dsh-tools": "0.2.1-rc.4",
+    "@deepseek-ai/schemastery": "~3.18.5"
+  },
+  "scripts": {
+    "check": "node --check lib/index.js && node --check lib/target.js && node --check lib/parse.js && node --check lib/runner.js",
+    "test": "node test/pure.mjs"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "unreal-engine",
+    "ue5",
+    "unrealbuildtool",
+    "cordis"
+  ]
+}
