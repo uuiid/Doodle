@@ -56,22 +56,20 @@ namespace
 
 	DoodleKitsuClient::FDoodleLoginResult ParseLoginResponse(const FString& InBody)
 	{
-		DoodleKitsuClient::FDoodleLoginResult L_Result;
-
 		TSharedPtr<FJsonObject> L_Root;
 		const TSharedRef<TJsonReader<>> L_Reader = TJsonReaderFactory<>::Create(InBody);
 		if (!FJsonSerializer::Deserialize(L_Reader, L_Root) || !L_Root.IsValid())
 		{
-			L_Result.Error = TEXT("登录响应不是合法 json");
-			return L_Result;
+			return MakeError(TEXT("登录响应不是合法 json"));
 		}
 
 		FString L_AccessToken;
 		if (!L_Root->TryGetStringField(TEXT("access_token"), L_AccessToken) || L_AccessToken.IsEmpty())
 		{
-			L_Result.Error = TEXT("登录响应里没有 access_token");
-			return L_Result;
+			return MakeError(TEXT("登录响应里没有 access_token"));
 		}
+
+		DoodleKitsuClient::FDoodleLoginValue L_Value;
 
 		FString L_RefreshToken;
 		L_Root->TryGetStringField(TEXT("refresh_token"), L_RefreshToken);
@@ -79,27 +77,26 @@ namespace
 		const TSharedPtr<FJsonObject>* L_User = nullptr;
 		if (L_Root->TryGetObjectField(TEXT("user"), L_User) && L_User != nullptr && L_User->IsValid())
 		{
-			(*L_User)->TryGetStringField(TEXT("id"), L_Result.UserId);
-			if (!(*L_User)->TryGetStringField(TEXT("full_name"), L_Result.UserName) || L_Result.UserName.IsEmpty())
+			(*L_User)->TryGetStringField(TEXT("id"), L_Value.UserId);
+			if (!(*L_User)->TryGetStringField(TEXT("full_name"), L_Value.UserName) || L_Value.UserName.IsEmpty())
 			{
-				(*L_User)->TryGetStringField(TEXT("first_name"), L_Result.UserName);
+				(*L_User)->TryGetStringField(TEXT("first_name"), L_Value.UserName);
 			}
-			(*L_User)->TryGetStringField(TEXT("email"), L_Result.Email);
+			(*L_User)->TryGetStringField(TEXT("email"), L_Value.Email);
 		}
 
 		UDoodleLightingSettings* L_Settings = GetSettings();
 		L_Settings->AccessToken = L_AccessToken;
 		L_Settings->RefreshToken = L_RefreshToken;
-		L_Settings->UserId = L_Result.UserId;
-		L_Settings->UserName = L_Result.UserName;
-		if (!L_Result.Email.IsEmpty())
+		L_Settings->UserId = L_Value.UserId;
+		L_Settings->UserName = L_Value.UserName;
+		if (!L_Value.Email.IsEmpty())
 		{
-			L_Settings->Email = L_Result.Email;
+			L_Settings->Email = L_Value.Email;
 		}
 		L_Settings->TryUpdateDefaultConfigFile();
 
-		L_Result.bSucceeded = true;
-		return L_Result;
+		return MakeValue(MoveTemp(L_Value));
 	}
 }
 
@@ -131,17 +128,13 @@ namespace DoodleKitsuClient
 		L_Email.TrimStartAndEndInline();
 		if (L_Email.IsEmpty() || InPassword.IsEmpty())
 		{
-			FDoodleLoginResult L_Result;
-			L_Result.Error = TEXT("email 或 password 为空");
-			return L_Result;
+			return MakeError(TEXT("email 或 password 为空"));
 		}
 
 		const FString L_ServerUrl = GetServerUrl();
 		if (L_ServerUrl.IsEmpty())
 		{
-			FDoodleLoginResult L_Result;
-			L_Result.Error = TEXT("未设置服务器地址（Project Settings -> Plugins -> Doodle Lighting）");
-			return L_Result;
+			return MakeError(TEXT("未设置服务器地址（Project Settings -> Plugins -> Doodle Lighting）"));
 		}
 
 		TSharedPtr<FJsonObject> L_Body = MakeShared<FJsonObject>();
@@ -152,9 +145,7 @@ namespace DoodleKitsuClient
 		const TSharedRef<TJsonWriter<>> L_Writer = TJsonWriterFactory<>::Create(&L_BodyText);
 		if (!FJsonSerializer::Serialize(L_Body.ToSharedRef(), L_Writer))
 		{
-			FDoodleLoginResult L_Result;
-			L_Result.Error = TEXT("登录请求体序列化失败");
-			return L_Result;
+			return MakeError(TEXT("登录请求体序列化失败"));
 		}
 
 		const TSharedRef<IHttpRequest, ESPMode::ThreadSafe> L_Request = FHttpModule::Get().CreateRequest();
@@ -167,7 +158,7 @@ namespace DoodleKitsuClient
 
 		const FString L_EmailBeforeLogin = GetSettings()->Email;
 
-		FDoodleLoginResult L_Result;
+		FDoodleLoginResult L_Result = MakeError(TEXT("登录请求没有等到响应"));
 		bool bCompleted = false;
 		L_Request->OnProcessRequestComplete().BindLambda(
 			[&L_Result, &bCompleted, L_ServerUrl](
@@ -176,8 +167,7 @@ namespace DoodleKitsuClient
 			{
 				if (!bInConnectedSuccessfully || !InResponse.IsValid())
 				{
-					L_Result = FDoodleLoginResult();
-					L_Result.Error = FString::Printf(TEXT("无法连接服务器: %s"), *L_ServerUrl);
+					L_Result = MakeError(FString::Printf(TEXT("无法连接服务器: %s"), *L_ServerUrl));
 				}
 				else if (InResponse->GetResponseCode() == EHttpResponseCodes::Ok)
 				{
@@ -185,8 +175,7 @@ namespace DoodleKitsuClient
 				}
 				else
 				{
-					L_Result = FDoodleLoginResult();
-					L_Result.Error = DescribeFailure(InResponse->GetResponseCode(), InResponse->GetContentAsString());
+					L_Result = MakeError(DescribeFailure(InResponse->GetResponseCode(), InResponse->GetContentAsString()));
 				}
 				bCompleted = true;
 			}
@@ -194,10 +183,8 @@ namespace DoodleKitsuClient
 
 		if (!L_Request->ProcessRequest())
 		{
-			L_Result = FDoodleLoginResult();
-			L_Result.Error = FString::Printf(TEXT("登录请求发不出去: %s"), *L_ServerUrl);
 			GetSettings()->Email = L_EmailBeforeLogin;
-			return L_Result;
+			return MakeError(FString::Printf(TEXT("登录请求发不出去: %s"), *L_ServerUrl));
 		}
 
 		const double L_Deadline = FPlatformTime::Seconds() + 30.0;
@@ -209,36 +196,29 @@ namespace DoodleKitsuClient
 
 		if (!bCompleted)
 		{
-			L_Result = FDoodleLoginResult();
-			L_Result.Error = FString::Printf(TEXT("登录超时: %s"), *L_ServerUrl);
 			GetSettings()->Email = L_EmailBeforeLogin;
-			return L_Result;
+			return MakeError(FString::Printf(TEXT("登录超时: %s"), *L_ServerUrl));
 		}
 
-		if (L_Result.bSucceeded)
+		if (L_Result.HasValue())
 		{
-			UE_LOG(LogTemp, Log, TEXT("[DoodleKitsu] 登录成功 %s"), *L_Result.Email);
+			UE_LOG(LogTemp, Log, TEXT("[DoodleKitsu] 登录成功 %s"), *L_Result.GetValue().Email);
 		}
 		else
 		{
 			GetSettings()->Email = L_EmailBeforeLogin;
-			UE_LOG(LogTemp, Error, TEXT("[DoodleKitsu] 登录失败 %s"), *L_Result.Error);
+			UE_LOG(LogTemp, Error, TEXT("[DoodleKitsu] 登录失败 %s"), *L_Result.GetError());
 		}
 		return L_Result;
 	}
 
-	void Logout()
+	bool Logout()
 	{
 		UDoodleLightingSettings* L_Settings = GetSettings();
 		L_Settings->AccessToken.Empty();
 		L_Settings->RefreshToken.Empty();
 		L_Settings->UserId.Empty();
 		L_Settings->UserName.Empty();
-		L_Settings->TryUpdateDefaultConfigFile();
-	}
-
-	bool LoginIntoActiveSession(const FString& InEmail, const FString& InPassword)
-	{
-		return Login(InEmail, InPassword).bSucceeded;
+		return L_Settings->TryUpdateDefaultConfigFile();
 	}
 }

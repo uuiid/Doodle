@@ -155,7 +155,7 @@ FReply SDoodleKitsuLoginPanel::OnLoginClicked()
 
 	UDoodleLightingSettings* L_Settings = GetMutableDefault<UDoodleLightingSettings>();
 	L_Settings->Email = L_Email;
-	L_Settings->TryUpdateDefaultConfigFile();
+	const bool bEmailSaved = L_Settings->TryUpdateDefaultConfigFile();
 
 	const DoodleKitsuClient::FDoodleLoginResult L_Result = DoodleKitsuClient::Login(L_Email, L_Password);
 
@@ -166,9 +166,21 @@ FReply SDoodleKitsuLoginPanel::OnLoginClicked()
 
 	if (ResultBox.IsValid())
 	{
-		ResultBox->SetText(FText::FromString(
-			L_Result.bSucceeded ? FString::Printf(TEXT("登录成功: %s (%s)"), *L_Result.UserName, *L_Result.Email) : L_Result.Error
-		));
+		if (L_Result.HasValue())
+		{
+			ResultBox->SetText(FText::FromString(FString::Printf(
+				TEXT("登录成功: %s (%s)"), *L_Result.GetValue().UserName, *L_Result.GetValue().Email
+			)));
+		}
+		else
+		{
+			ResultBox->SetText(FText::FromString(L_Result.GetError()));
+		}
+	}
+
+	if (!bEmailSaved)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[DoodleKitsu] 登录邮箱没能写入配置文件"));
 	}
 
 	return FReply::Handled();
@@ -176,11 +188,11 @@ FReply SDoodleKitsuLoginPanel::OnLoginClicked()
 
 FReply SDoodleKitsuLoginPanel::OnLogoutClicked()
 {
-	DoodleKitsuClient::Logout();
+	const bool bLoggedOut = DoodleKitsuClient::Logout();
 
 	if (ResultBox.IsValid())
 	{
-		ResultBox->SetText(FText::FromString(TEXT("已退出登录")));
+		ResultBox->SetText(FText::FromString(bLoggedOut ? TEXT("已退出登录") : TEXT("已退出登录，但登录凭据没能从配置文件清除")));
 	}
 
 	return FReply::Handled();

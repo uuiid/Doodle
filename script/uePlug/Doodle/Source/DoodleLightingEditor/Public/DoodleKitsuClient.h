@@ -1,17 +1,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Templates/ValueOrError.h"
 
 namespace DoodleKitsuClient
 {
-	struct DOODLELIGHTINGEDITOR_API FDoodleLoginResult
+	struct FDoodleLoginValue
 	{
-		bool bSucceeded = false;
-		FString Error;
 		FString UserId;
 		FString UserName;
 		FString Email;
 	};
+
+	using FDoodleLoginResult = TValueOrError<FDoodleLoginValue, FString>;
 
 	DOODLELIGHTINGEDITOR_API FString GetServerUrl();
 
@@ -21,7 +22,5 @@ namespace DoodleKitsuClient
 
 	DOODLELIGHTINGEDITOR_API FDoodleLoginResult Login(const FString& InEmail, const FString& InPassword);
 
-	DOODLELIGHTINGEDITOR_API void Logout();
-
-	DOODLELIGHTINGEDITOR_API bool LoginIntoActiveSession(const FString& InEmail, const FString& InPassword);
+	DOODLELIGHTINGEDITOR_API bool Logout();
 }
