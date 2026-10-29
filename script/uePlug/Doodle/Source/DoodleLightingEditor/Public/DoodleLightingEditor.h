@@ -10,6 +10,8 @@ public:
 	virtual void ShutdownModule() override;
 
 private:
+	void RegisterMenus();
+
 	FDelegateHandle OnPreTickHandle;
 
 	static inline FDoodleLightingEditorModule& Get()

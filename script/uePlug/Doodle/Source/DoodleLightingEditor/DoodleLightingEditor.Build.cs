@@ -15,6 +15,7 @@ public class DoodleLightingEditor : ModuleRules
 				"Core",
 				"CoreUObject",
 				"Engine",
+				"DeveloperSettings",
 				"DoodleLighting",
 			}
 		);
@@ -24,6 +25,7 @@ public class DoodleLightingEditor : ModuleRules
 			{
 				"Json",
 				"JsonUtilities",
+				"HTTP",
 				"UnrealEd",
 				"AssetRegistry",
 				"AssetTools",
