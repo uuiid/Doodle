@@ -213,7 +213,8 @@
 		"python.analysis.exclude": [
 			"${workspaceFolder}/vcpkg",
 			"${workspaceFolder}/src",
-			"${workspaceFolder}/script"
+			"${workspaceFolder}/script",
+			"${workspaceFolder}/build"
 		]
 	}
 }
