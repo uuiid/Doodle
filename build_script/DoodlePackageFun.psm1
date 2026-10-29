@@ -131,8 +131,8 @@ function Initialize-Doodle {
     }
     $DoodleTMPDir = [System.IO.Path]::GetTempPath()
     $DoodleGitRoot = Convert-Path "$PSScriptRoot/../"
-    $DoodleBuildRoot = Convert-Path "$DoodleGitRoot/build"
-    $DoodleInstallRoot = Convert-Path "$DoodleBuildRoot/install" 
+    $DoodleBuildRoot = Convert-Path "$DoodleGitRoot/../build"
+    $DoodleInstallRoot = Convert-Path "$DoodleBuildRoot/../install" 
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
     $DoodleLogPath = $DoodleTMPDir + "\build_$timestamp.log"
     $Tags = git tag --sort=-v:refname;

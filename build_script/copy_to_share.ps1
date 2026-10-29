@@ -1,7 +1,7 @@
 param (
   [string]$ShareRoot = "\\192.168.20.88\分享",
-  [string]$BuildDir = "$PSScriptRoot/../build",
-  [string]$ApiDir = "$PSScriptRoot/../docs/api",
+  [string]$BuildDir = "$PSScriptRoot/../../build",
+  [string]$ApiDir = "$PSScriptRoot/../../docs/api",
   [string]$DbName = "kitsu_new.db",
   [string]$TimeStamp = (Get-Date -Format "yyyyMMdd_HHmmss")
 )

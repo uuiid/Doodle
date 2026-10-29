@@ -44,7 +44,7 @@ $env:VSLANG = 1033
 # 系统 pwsh 一升级，所有已装依赖就整体失效、全量重编。
 # vcpkg.cmake 用 find_program(Z_VCPKG_PWSH_PATH pwsh) 按 PATH 查找，
 # 因此这里把仓库内的固定版本排到 PATH 最前、并摘掉系统安装目录，让探测结果稳定。
-$PinnedPwsh = Join-Path $PSScriptRoot '../../build/PowerShell-7.6.6'
+$PinnedPwsh = Join-Path $PSScriptRoot '../../../build/PowerShell-7.6.6'
 if (Test-Path (Join-Path $PinnedPwsh 'pwsh.exe')) {
   $PinnedPwsh = (Resolve-Path $PinnedPwsh).Path
   $SystemPwshDir = 'C:\Program Files\PowerShell\7'

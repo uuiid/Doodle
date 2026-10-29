@@ -5,7 +5,7 @@ param (
 )
 
 $BackupShare = "\\$Kitsu_Ip\Users\Administrator\AppData\Local\Temp\doodle\backup"
-$DataDestination = [System.IO.Path]::GetFullPath("$PSScriptRoot/../build/kitsu_new.db")
+$DataDestination = [System.IO.Path]::GetFullPath("$PSScriptRoot/../../build/kitsu_new.db")
 $ProjectPath = 'D:/test_db'
 
 # 功能二: 调用 /api/doodle/backup 让服务器备份数据库

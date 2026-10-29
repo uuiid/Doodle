@@ -1,2 +1,2 @@
 CompileFlags:
-  CompilationDatabase: "../../build/Ninja_RelWithDebInfo"
+  CompilationDatabase: "../../../build/Ninja_RelWithDebInfo"

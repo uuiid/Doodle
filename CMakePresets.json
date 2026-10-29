@@ -11,9 +11,9 @@
       "displayName": "Ninja build",
       "description": "Ninja build using vcpkg",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "installDir": "${sourceDir}/build/install",
-      "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "binaryDir": "${sourceParentDir}/build/${presetName}",
+      "installDir": "${sourceParentDir}/build/install",
+      "toolchainFile": "${sourceParentDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
       "architecture": {
         "value": "x64",
         "strategy": "external"
