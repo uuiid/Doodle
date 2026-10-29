@@ -214,7 +214,9 @@
 			"${workspaceFolder}/vcpkg",
 			"${workspaceFolder}/src",
 			"${workspaceFolder}/script",
-			"${workspaceFolder}/build"
+			"${workspaceFolder}/build",
+			"${workspaceFolder}/DoodleLiveLink",
+			"${workspaceFolder}/external"
 		]
 	}
 }
