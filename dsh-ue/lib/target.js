@@ -210,7 +210,7 @@ export function resolveTarget(input, context, exists) {
   if (problems.length > 0) return { ok: false, problems };
 
   const repoRoot = stripTrailingSeparators(context.repoRoot);
-  const engineRoot = stripTrailingSeparators(context.engineRoot);
+  const engineRoot = stripTrailingSeparators(context.engineRoot ?? 'E:\\UnrealEngine');
   const engineBuildBat = `${engineRoot}\\Engine\\Build\\BatchFiles\\Build.bat`;
   const defaultProject = typeof context.defaultProjectFileRel === 'string' ? context.defaultProjectFileRel : '';
   const engineProject = typeof context.targetProjectFileRel === 'string' && context.targetProjectFileRel.length > 0
@@ -377,27 +377,17 @@ export function moduleTargetName(projectAbsolute) {
 }
 
 /**
- * 组装最终 argv：`cmd.exe /d /s /c ""<bat>" <args...>"`。
+ * 组装最终 argv：`cmd.exe /d /s /c <bat> <args...>`，每个参数是独立的 argv 项。
  *
- * cmd 的引号规则决定了必须包两层引号：源码里 UE 的文档也是 `/d /s /c "…"`。
- * 每个参数单独加引号后再拼，避免路径里的空格把参数拆开。
+ * 不能把整条命令拼成一个带引号的字符串交给 `/c`：宿主用 CommandLineToArgvW 规则
+ * 给 argv 项转义，会把内部的 `"` 变成 `\"`，而 cmd 的 `/s /c` 不认 `\"`，
+ * 于是程序名里带上字面反斜杠、cmd 报「找不到程序」。
  *
  * @param {{comspec:string, buildBat:string, args:string[]}} spec
  * @returns {string[]}
  */
 export function buildLaunchArgv(spec) {
-  const inner = [quoteForCmd(spec.buildBat), ...spec.args.map(quoteForCmd)].join(' ');
-  return [spec.comspec, '/d', '/s', '/c', `"${inner}"`];
-}
-
-/**
- * @param {string} value
- * @returns {string}
- */
-function quoteForCmd(value) {
-  const text = String(value);
-  if (text.length === 0) return '""';
-  return `"${text}"`;
+  return [spec.comspec, '/d', '/s', '/c', spec.buildBat, ...spec.args];
 }
 
 /**

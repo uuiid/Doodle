@@ -207,17 +207,34 @@ test('读 EngineAssociation', () => {
   assert.equal(readEngineAssociation('not json'), undefined);
 });
 
-test('cmd 启动行：/d /s /c + 双层引号', () => {
+test('cmd 启动行：/d /s /c + 逐项独立 argv', () => {
   const argv = buildLaunchArgv({
     comspec: 'C:\\WINDOWS\\system32\\cmd.exe',
     buildBat: 'E:\\Unreal Engine\\Engine\\Build\\BatchFiles\\Build.bat',
     args: ['GameEditor', 'Win64', 'Development', '-Project=E:\\My Game\\Game.uproject'],
   });
-  assert.deepEqual(argv.slice(0, 4), ['C:\\WINDOWS\\system32\\cmd.exe', '/d', '/s', '/c']);
-  assert.equal(
-    argv[4],
-    '""E:\\Unreal Engine\\Engine\\Build\\BatchFiles\\Build.bat" "GameEditor" "Win64" "Development" "-Project=E:\\My Game\\Game.uproject""',
-  );
+  assert.deepEqual(argv, [
+    'C:\\WINDOWS\\system32\\cmd.exe',
+    '/d',
+    '/s',
+    '/c',
+    'E:\\Unreal Engine\\Engine\\Build\\BatchFiles\\Build.bat',
+    'GameEditor',
+    'Win64',
+    'Development',
+    '-Project=E:\\My Game\\Game.uproject',
+  ]);
+});
+
+test('cmd 启动行的 argv 项里不含字面反斜杠转义', () => {
+  const argv = buildLaunchArgv({
+    comspec: 'C:\\WINDOWS\\system32\\cmd.exe',
+    buildBat: 'E:\\Unreal Engine\\Engine\\Build\\BatchFiles\\Build.bat',
+    args: ['GameEditor', 'Win64', 'Development', '-Project=E:\\My Game\\Game.uproject'],
+  });
+  for (const part of argv) {
+    assert.equal(part.includes('\\"'), false, `argv 项不应包含 \\"：${part}`);
+  }
 });
 
 // ------------------------------------------------------------------ 目标解析

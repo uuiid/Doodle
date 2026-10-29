@@ -229,8 +229,14 @@ function renderTargets(value) {
  * @param {any} config
  */
 export function apply(ctx, config) {
-  const repoRoot = String(config.repoRoot ?? '').replace(/[\\/]+$/, '');
-  const engineRoot = String(config.engineRoot ?? '').replace(/[\\/]+$/, '');
+  const normalizeRoot = (value, fallback) => {
+    const text = String(value ?? '').trim().replace(/[\\/]+$/, '');
+    if (text.length === 0) return fallback;
+    if (/^[\\/]dsh_work/i.test(text)) return fallback;
+    return text;
+  };
+  const repoRoot = normalizeRoot(config.repoRoot, 'E:\\Doodle');
+  const engineRoot = normalizeRoot(config.engineRoot, 'E:\\UnrealEngine');
   const buildBatRel = String(config.engineBuildBat ?? 'Engine/Build/BatchFiles/Build.bat').replace(/\//g, '\\');
   const buildBat = `${engineRoot}\\${buildBatRel}`;
   const projectFileRel = String(config.projectFile ?? '');

@@ -63,8 +63,10 @@ plugin_manager action=install_bundle target=<仓库路径>\dsh-ue
 调用形态等价于：
 
 ```
-Build.bat <Target> <Platform> <Configuration> [-Project=<abs .uproject>] [extraArgs...]
+cmd.exe /d /s /c <Build.bat> <Target> <Platform> <Configuration> [-Project=<abs .uproject>] [extraArgs...]
 ```
+
+`/c` 之后是**逐个独立的 argv 项**，不要再手工拼成一条带引号的命令字符串：宿主按 `CommandLineToArgvW` 规则给参数转义，把内部 `"` 变成 `\"`，而 cmd 的 `/s /c` 不认 `\"`，会报「找不到程序」。
 
 ## 行为要点
 

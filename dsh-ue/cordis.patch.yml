@@ -21,4 +21,5 @@
         repoRoot: E:\Doodle
         engineRoot: E:\UnrealEngine
         projectFile: E:\ue_main\ue_main.uproject
-        defaultTarget: DoodleLiveLink
+        defaultTarget: UnrealEditor
+

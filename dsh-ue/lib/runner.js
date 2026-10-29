@@ -2,7 +2,7 @@
 //
 // 设计要点：
 //   * Build.bat 是批处理脚本，只能由 cmd.exe 解释；argv 交给 target.js 的
-//     buildLaunchArgv 统一加引号（路径含空格时也不会被拆开）。
+//     buildLaunchArgv 拆成独立项（路径含空格时由宿主逐项加引号）。
 //   * cwd 必须是 .uproject 所在目录 —— UBT 用 cwd 找工程，找不到就报
 //     "Unable to find project file"。
 //   * Build.bat 自带 `%tmp%\<Build.bat 全路径>.lock` 串行锁：两个并发的 UE 构建会互相等待，
@@ -148,12 +148,29 @@ export async function runUeBuild(deps, spec) {
     spillPath: undefined,
   };
 
+  for (const arg of [spec.buildBat, spec.cwd ?? '', ...(spec.argv ?? [])]) {
+    if (/[\\/]dsh_work[\\/]/i.test(String(arg))) {
+      return sanitizeForJson({
+        ...base,
+        reason: `拒绝执行：命令行里仍残留 dsh_work 路径（stale engineRoot / repoRoot 配置）：${spec.command}`,
+        code: 'stale-config',
+        durationMs: Date.now() - started,
+        diagnostics: [{
+          severity: 'error',
+          code: 'config/stale',
+          message: 'dsh-ue 的 engineRoot / repoRoot 配置仍是旧值（E:\\dsh_work\\…），请在插件配置里改成真实路径。',
+        }],
+      });
+    }
+  }
+
   /** @type {any} */
   let handle;
   try {
     handle = deps.subprocess.spawn({
       argv: spec.argv,
       cwd: spec.cwd,
+      env: { ...(deps.env ?? {}), DSH_UE_NO_AUTORUN: '1' },
       stdio: {
         stdin: 'ignore',
         stdout: { maxBytes: spec.maxOutputBytes, spill: { maxBytes: spec.maxOutputBytes } },
