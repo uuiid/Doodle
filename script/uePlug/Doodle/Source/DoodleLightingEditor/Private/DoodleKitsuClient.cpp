@@ -169,7 +169,7 @@ namespace DoodleKitsuClient
 				{
 					L_Result = MakeError(FString::Printf(TEXT("无法连接服务器: %s"), *L_ServerUrl));
 				}
-				else if (InResponse->GetResponseCode() == EHttpResponseCodes::Ok)
+				else if (InResponse->GetResponseCode() == EHttpResponseCodes::Created)
 				{
 					L_Result = ParseLoginResponse(InResponse->GetContentAsString());
 				}
