@@ -1,6 +1,7 @@
 #include <doodle_core/configure/static_value.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/ai_light/ai_light.h>
+#include <doodle_core/metadata/ai_light/iteration_view.h>
 #include <doodle_core/metadata/ai_studio.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/move_create.h>
@@ -1051,6 +1052,20 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
 // ===========================================================================
 // 会话提交一轮候选
 // ===========================================================================
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, get) {
+  person_.check_not_outsourcer();
+  auto l_sql     = get_sqlite_database();
+
+  auto l_session = load_session_checked(person_, l_sql, session_id_);
+
+  const auto l_prev = l_sql.get_ai_light_iterations(l_session.uuid_id_);
+  DOODLE_CHICK_HTTP(!l_prev.empty(), not_found, "会话 {} 还没有提交任何轮次", l_session.uuid_id_);
+
+  co_return std::make_unique<http_body_json_t>(
+      (nlohmann::json{} = ai_light_current_iteration_t{l_prev.back()})
+  );
+}
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   person_.check_not_outsourcer();

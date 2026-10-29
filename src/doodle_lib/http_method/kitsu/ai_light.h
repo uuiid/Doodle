@@ -108,6 +108,7 @@ DOODLE_HTTP_FUN_END()
 
 // /api/doodle/ai/light/session/{}/iterate
 DOODLE_HTTP_JWT_FUN(iteration_submit_route)
+DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 
 DOODLE_HTTP_ROUTE("/api/doodle/ai/light/session/{session_id_}/iteration", session_id_)
