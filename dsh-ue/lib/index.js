@@ -12,7 +12,7 @@
 import { defineTool } from '@deepseek-ai/dsh-tools';
 import z from '@deepseek-ai/schemastery';
 
-import { buildLaunchArgv, readEngineAssociation, renderCommandLine, resolveTarget } from './target.js';
+import { buildLaunchArgv, readEngineAssociation, renderCommandLine, resolveProjectPath, resolveTarget } from './target.js';
 import { invalid, runUeBuild, sanitizeForJson } from './runner.js';
 
 export const name = 'ue-build';
@@ -309,11 +309,11 @@ export function apply(ctx, config) {
     const repoPath = (rel) => (rel ? `${repoRoot}\\${String(rel).replace(/\//g, '\\')}` : '');
     const candidates = [
       buildBat,
-      repoPath(projectFileRel),
+      resolveProjectPath(projectFileRel, repoRoot),
       repoPath(pluginBuildScriptRel),
     ];
     if (typeof args.projectAbsolute === 'string') candidates.push(args.projectAbsolute);
-    if (typeof args.projectFile === 'string') candidates.push(repoPath(args.projectFile));
+    if (typeof args.projectFile === 'string') candidates.push(resolveProjectPath(args.projectFile, repoRoot));
     const exists = await makeExists(candidates);
 
     const outcome = resolveTarget(args, context, exists);
@@ -358,7 +358,7 @@ export function apply(ctx, config) {
       },
       projectFile: {
         type: 'string',
-        description: '相对 repoRoot 的 .uproject 路径，例如 DoodleLiveLink/DoodleLiveLink.uproject。省略时用插件 config 的 projectFile，再否则用 pluginBuildScript。',
+        description: '相对 repoRoot 或绝对路径的 .uproject，例如 DoodleLiveLink/DoodleLiveLink.uproject 或 E:\\ue_main\\ue_main.uproject。省略时用插件 config 的 projectFile，再否则用 pluginBuildScript。',
       },
       engine: {
         type: 'boolean',
@@ -371,7 +371,7 @@ export function apply(ctx, config) {
       },
       projectAbsolute: {
         type: 'string',
-        description: '带 scope=absolute 使用的 .uproject 绝对路径（Doodle 仓库外的工程，例如 E:\\UnrealEngine\\MyGame\\MyGame.uproject）。',
+        description: '带 scope=absolute 显式指定口径时使用的 .uproject 绝对路径（项目根不在仓库内，例如 E:\\UnrealEngine\\MyGame\\MyGame.uproject）；只给绝对路径也可以直接写进 projectFile。',
       },
       platform: { type: 'string', description: '目标平台，默认 Win64。' },
       configuration: { type: 'string', description: 'Debug / DebugGame / Development（默认）/ Shipping / Test。' },
@@ -476,7 +476,7 @@ export function apply(ctx, config) {
       };
 
       if (projectFileRel) {
-        const projectAbsolute = repoPath(projectFileRel);
+        const projectAbsolute = resolveProjectPath(projectFileRel, repoRoot);
         const projectExists = await fsp.stat(projectAbsolute).then((stat) => stat.isFile(), () => false);
         if (!projectExists) warnings.push(`配置的 projectFile 不存在：${projectAbsolute}`);
         const association = await engineAssociationOf(projectAbsolute);
@@ -536,7 +536,7 @@ export function apply(ctx, config) {
         '- `ue_targets` —— 只读列出当前可编译的目标与它们实际会执行的命令行；不确定传参时先调它。',
         '- `ue_build` —— 编译一个目标；默认 Doodle 仓库的 UE 工程、Win64、Development、增量。',
         `- 不传 target 时用 config.defaultTarget，没配置才回退到 \`<工程名>Editor\`（当前：${defaultTargetName || '未配置'}）。`,
-        '- 编译引擎用 `engine: true`（默认 target=UnrealEditor）；仓库外工程用 `scope: "absolute"` + `projectAbsolute`。',
+        '- 编译指定工程用 `projectFile`（相对 repoRoot 或绝对路径）；编译引擎用 `engine: true`（默认 target=UnrealEditor）。',
         '',
         '规则：',
         '- **不要手工拼** `Build.bat` 命令行，也不要直接调 `dotnet UnrealBuildTool.dll` —— 环境变量（DOTNET_ROOT、bundled dotnet）由 Build.bat 自己设置。',

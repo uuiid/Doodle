@@ -40,6 +40,22 @@ export function isSafeRelativePath(value) {
 }
 
 /**
+ * .uproject 路径解析：绝对路径原样使用，相对路径相对 repoRoot 拼接。
+ *
+ * @param {unknown} value
+ * @param {unknown} repoRoot
+ * @returns {string}
+ */
+export function resolveProjectPath(value, repoRoot) {
+  const text = String(value ?? '').trim();
+  if (text.length === 0) return '';
+  const normalized = text.replace(/\//g, '\\');
+  if (isAbsolutePath(normalized)) return normalized;
+  const root = stripTrailingSeparators(repoRoot);
+  return root.length > 0 ? `${root}\\${normalized}` : normalized;
+}
+
+/**
  * 平台名：UBT 的 platform 是标识符形状（Win64 / Android_ASTC / HTML5）。
  *
  * @param {unknown} value
@@ -137,7 +153,7 @@ export function validateBuildArgs(input) {
  * @typedef {object} ResolveInput
  * @property {string} [target]
  * @property {boolean} [engine]
- * @property {string} [projectFile]     相对 repoRoot 的 .uproject
+ * @property {string} [projectFile]     相对 repoRoot 或绝对路径的 .uproject
  * @property {string} [projectAbsolute] 绝对路径 .uproject（scope=absolute）
  * @property {'repo'|'absolute'} [scope]
  * @property {string} [platform]
@@ -165,7 +181,7 @@ export function validateBuildArgs(input) {
  * 规则（按顺序）：
  *   1. scope=absolute 且给了 projectAbsolute → 用该 .uproject，cwd 落在它所在目录。
  *   2. engine=true，或 target 命中 UnrealEditor / Unreal（引擎编辑器）。
- *   3. 给了 projectFile（相对 repoRoot）→ 用该 .uproject。
+ *   3. 给了 projectFile（相对 repoRoot 或绝对路径）→ 用该 .uproject。
  *   4. 仓库配置了 pluginBuildScript → 走该脚本（UE 插件工程的编译入口）。
  *   5. 否则用 defaultProjectFileRel。
  *
@@ -216,6 +232,8 @@ export function resolveTarget(input, context, exists) {
 
   /** @param {string} rel @returns {string} */
   const repoPath = (rel) => `${repoRoot}\\${rel.replace(/\//g, '\\')}`;
+  /** @param {string} project @returns {string} */
+  const projectPath = (project) => resolveProjectPath(project, repoRoot);
   /** @param {string} absolute @returns {string} */
   const dirOf = (absolute) => {
     const index = Math.max(absolute.lastIndexOf('\\'), absolute.lastIndexOf('/'));
@@ -276,7 +294,7 @@ export function resolveTarget(input, context, exists) {
         problems: ['engine=true（编译 UnrealEditor）需要插件 config 里的 projectFile 指向一个 .uproject。'],
       };
     }
-    const projectAbsolute = repoPath(engineProject);
+    const projectAbsolute = projectPath(engineProject);
     if (!exists(projectAbsolute)) {
       return { ok: false, problems: [`engine 模式使用的 .uproject 不存在：${projectAbsolute}`] };
     }
@@ -285,13 +303,14 @@ export function resolveTarget(input, context, exists) {
   }
 
   if (input.projectFile !== undefined) {
-    if (!isSafeRelativePath(input.projectFile)) {
-      return { ok: false, problems: [`projectFile 必须是 repoRoot 内的相对路径（不许 ..、不许盘符）。收到：${JSON.stringify(input.projectFile)}`] };
+    const given = typeof input.projectFile === 'string' ? input.projectFile.trim() : input.projectFile;
+    if (!isAbsolutePath(given) && !isSafeRelativePath(given)) {
+      return { ok: false, problems: [`projectFile 必须是 repoRoot 内的相对路径或不含 .. 的绝对路径。收到：${JSON.stringify(input.projectFile)}`] };
     }
-    if (!/\.uproject$/i.test(input.projectFile)) {
+    if (!/\.uproject$/i.test(given)) {
       return { ok: false, problems: [`projectFile 必须是 .uproject 文件。收到：${JSON.stringify(input.projectFile)}`] };
     }
-    const projectAbsolute = repoPath(input.projectFile);
+    const projectAbsolute = projectPath(given);
     if (!exists(projectAbsolute)) {
       return { ok: false, problems: [`projectFile 指向的 .uproject 不存在：${projectAbsolute}`] };
     }
@@ -324,12 +343,12 @@ export function resolveTarget(input, context, exists) {
   if (defaultProject.length === 0) {
     return {
       ok: false,
-      problems: ['没有可编译的目标：传 projectFile（相对 repoRoot 的 .uproject）、scope=absolute + projectAbsolute、target=UnrealEditor，'
+      problems: ['没有可编译的目标：传 projectFile（相对 repoRoot 或绝对路径的 .uproject）、scope=absolute + projectAbsolute、target=UnrealEditor，'
         + '或在插件 config 里配置 projectFile / pluginBuildScript。'],
     };
   }
 
-  const projectAbsolute = repoPath(defaultProject);
+  const projectAbsolute = projectPath(defaultProject);
   if (!exists(projectAbsolute)) {
     return { ok: false, problems: [`默认工程不存在：${projectAbsolute}`] };
   }

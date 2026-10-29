@@ -4,7 +4,7 @@
 #   engineRoot            引擎根目录（默认 E:\UnrealEngine），Build.bat 位于其下 Engine\Build\BatchFiles
 #   engineBuildBat        Build.bat 相对 engineRoot 的路径（默认 Engine/Build/BatchFiles/Build.bat）
 #   repoRoot              Doodle 仓库根目录（默认 E:\Doodle），projectFile / pluginBuildScript 相对它解析
-#   projectFile           默认 .uproject（相对 repoRoot）；空表示必须由调用方传 projectFile
+#   projectFile           默认 .uproject（相对 repoRoot 或绝对路径）；空表示必须由调用方传 projectFile
 #   pluginBuildScript     仓库里的 UE 插件工程脚本（相对 repoRoot）；配置后按顺序优先于 projectFile
 #   comspec               cmd.exe 路径（默认 C:\WINDOWS\system32\cmd.exe）
 #   defaultPlatform       默认平台（默认 Win64）

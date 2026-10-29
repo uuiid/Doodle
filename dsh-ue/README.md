@@ -37,7 +37,7 @@ plugin_manager action=install_bundle target=<仓库路径>\dsh-ue
 | `repoRoot` | `E:\Doodle` | 工程所在的仓库根；相对路径形式的 `projectFile` 都相对它解析 |
 | `engineRoot` | `E:\UnrealEngine` | 引擎安装目录（含 `Engine/Build/BatchFiles/Build.bat`） |
 | `engineBuildBat` | `Engine/Build/BatchFiles/Build.bat` | 相对 `engineRoot` 的构建脚本 |
-| `projectFile` | 空 | 默认 `.uproject`（相对 `repoRoot`）；空则只能用 `scope=absolute` |
+| `projectFile` | 空 | 默认 `.uproject`，相对 `repoRoot` 或绝对路径；空则只能用 `scope=absolute` |
 | `pluginBuildScript` | 空 | 若填写，则不指定 target/projectFile 时直接调用这个批处理 |
 | `comspec` | `C:\WINDOWS\system32\cmd.exe` | 启动 Build.bat 的 shell |
 | `defaultPlatform` | `Win64` | 默认平台 |
@@ -52,9 +52,9 @@ plugin_manager action=install_bundle target=<仓库路径>\dsh-ue
 | 参数 | 说明 |
 | --- | --- |
 | `target` | UBT target 名，例如 `DoodleLiveLink`、`UnrealEditor`、`UnrealPak`。省略时用 `defaultTarget`，再否则取 `<工程名>Editor`（`engine=true` 时取 `UnrealEditor`） |
-| `projectFile` | 相对 `repoRoot` 的 `.uproject`，编译该工程的目标 |
+| `projectFile` | 相对 `repoRoot` 或绝对路径的 `.uproject`，编译该工程的目标 |
 | `engine` | `true` 时编译引擎自身的目标（默认 target 变成 `UnrealEditor`） |
-| `scope` + `projectAbsolute` | `scope: "absolute"` 时用绝对路径的 `.uproject` 编译仓库外的工程 |
+| `scope` + `projectAbsolute` | 显式指定口径时用绝对路径的 `.uproject` 编译仓库外的工程（只给绝对路径也可以直接写进 `projectFile`） |
 | `platform` | 默认 `Win64` |
 | `configuration` | `Debug` / `DebugGame` / `Development` / `Shipping` / `Test` |
 | `extraArgs` | 透传给 UBT 的开关（只接受 `-Foo` / `-Foo=bar` 形状，核心选项会被拒绝） |
