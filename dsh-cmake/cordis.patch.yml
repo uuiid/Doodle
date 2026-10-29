@@ -15,4 +15,4 @@
       name: dsh-cmake
       config:
         repoRoot: E:\Doodle
-        maxParallel: 20
+        maxParallel: 16
