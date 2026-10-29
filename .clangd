@@ -7,7 +7,7 @@ InlayHints:
 Hover:
   ShowAKA: Yes
 CompileFlags:
-  Add: 
+  Add:
     - /std:c++20
     - -ferror-limit=0
     - -D_HAS_CXX17=1
@@ -19,3 +19,8 @@ CompileFlags:
     - /MP
     - /Zc:preprocessor
   CompilationDatabase: "../build/Ninja_debug"
+---
+If:
+  PathMatch: "script/uePlug/Doodle/Source/.*" # 使用正则表达式匹配整个 legacy_code 目录
+Diagnostics:
+  Suppress: "*"
