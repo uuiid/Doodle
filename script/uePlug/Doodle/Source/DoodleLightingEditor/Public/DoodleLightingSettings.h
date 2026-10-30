@@ -16,4 +16,7 @@ public:
 
 	UPROPERTY(config, EditAnywhere, Category = "Kitsu", meta = (DisplayName = "本机服务端口"))
 	int32 LocalPort = 0;
+
+	UPROPERTY(config, EditAnywhere, Category = "Kitsu", meta = (DisplayName = "服务器 URL"))
+	FString LocalServerUrl;
 };

@@ -17,6 +17,8 @@ public class DoodleLightingEditor : ModuleRules
 				"Engine",
 				"DeveloperSettings",
 				"DoodleLighting",
+				"WebBrowser",
+				"WebBrowserWidget",
 			}
 		);
 
@@ -46,6 +48,7 @@ public class DoodleLightingEditor : ModuleRules
 				"UEOpenExrRTTI",
 				"FBX",
 				"Projects",
+				"Settings",
 				"Slate",
 				"SlateCore",
 				"ToolMenus",
