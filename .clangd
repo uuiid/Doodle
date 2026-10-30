@@ -7,7 +7,16 @@ InlayHints:
 Hover:
   ShowAKA: Yes
 CompileFlags:
+  Compiler: clang-cl
   Add:
+    - -imsvcC:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/include
+    - -imsvcC:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/atlmfc/include
+    - -imsvcC:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/ucrt
+    - -imsvcC:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/shared
+    - -imsvcC:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/um
+    - -imsvcC:/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/winrt
+    - -imsvcE:/build/Ninja_RelWithDebInfo/vcpkg_installed/x64-windows/include
+    - -imsvcE:/build/Ninja_RelWithDebInfo/vcpkg_installed/x64-windows/include/opencv4
     - /std:c++20
     - -ferror-limit=0
     - -D_HAS_CXX17=1
@@ -16,9 +25,24 @@ CompileFlags:
     - -D_MSVC_LANG=202002L
   Remove:
     - /std:c++20
+    - /std:c++latest
     - /MP
     - /Zc:preprocessor
+    - /Yu.*
+    - /Fp.*
+    - /FI.*
+    - /Fo.*
+    - /Fd.*
+    - /FS
+    - /RTC1
+    - /Ob\d*
+    - /Od
   CompilationDatabase: "../build/Ninja_debug"
+---
+If:
+  PathMatch: ".*\\.rc$"
+Diagnostics:
+  Suppress: "*"
 ---
 If:
   PathMatch: "script/uePlug/Doodle/Source/.*" # 使用正则表达式匹配整个 legacy_code 目录
