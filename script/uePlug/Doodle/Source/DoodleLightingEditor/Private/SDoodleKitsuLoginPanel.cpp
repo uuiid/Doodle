@@ -71,11 +71,6 @@ void SDoodleKitsuLoginPanel::Construct(const FArguments& InArgs)
 
 FReply SDoodleKitsuLoginPanel::OnRefreshClicked()
 {
-	if (bRefreshing)
-	{
-		return FReply::Handled();
-	}
-
 	bRefreshing = true;
 	LastRefreshSeconds = FPlatformTime::Seconds();
 
