@@ -7,16 +7,6 @@
 
 namespace DoodleKitsuClient
 {
-	struct FDoodleLoginValue
-	{
-		FString UserId;
-		FString UserName;
-		FString Email;
-	};
-
-	using FDoodleLoginResult = TValueOrError<FDoodleLoginValue, FString>;
-	using FDoodleLoginCallback = TFunction<void(FDoodleLoginResult)>;
-
 	struct FDoodleLightingIterationValue
 	{
 		int32 Iteration = 0;
@@ -32,19 +22,7 @@ namespace DoodleKitsuClient
 	using FDoodleIterationResult = TValueOrError<FDoodleLightingIterationValue, FString>;
 	using FDoodleIterationCallback = TFunction<void(FDoodleIterationResult)>;
 
-	DOODLELIGHTINGEDITOR_API FString GetServerUrl();
+	DOODLELIGHTINGEDITOR_API TValueOrError<FString, FString> GetLocalServerUrl();
 
-	DOODLELIGHTINGEDITOR_API bool IsLoggedIn();
-
-	DOODLELIGHTINGEDITOR_API FString MakeBearerAuthorization();
-
-	DOODLELIGHTINGEDITOR_API FDoodleLoginResult StartLogin(
-		const FString& InEmail, const FString& InPassword, FDoodleLoginCallback InOnComplete
-	);
-
-	DOODLELIGHTINGEDITOR_API FDoodleIterationResult StartFetchCurrentIteration(
-		const FString& InSessionId, FDoodleIterationCallback InOnComplete
-	);
-
-	DOODLELIGHTINGEDITOR_API bool Logout();
+	DOODLELIGHTINGEDITOR_API FDoodleIterationResult StartFetchCurrentIteration(FDoodleIterationCallback InOnComplete);
 }

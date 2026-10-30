@@ -14,21 +14,6 @@ public:
 	virtual FName GetCategoryName() const override;
 	virtual FText GetSectionText() const override;
 
-	UPROPERTY(config, EditAnywhere, Category = "Kitsu", meta = (DisplayName = "服务器地址"))
-	FString ServerUrl;
-
-	UPROPERTY(config, EditAnywhere, Category = "Kitsu", meta = (DisplayName = "登录邮箱"))
-	FString Email;
-
-	UPROPERTY(config)
-	FString AccessToken;
-
-	UPROPERTY(config)
-	FString RefreshToken;
-
-	UPROPERTY(config)
-	FString UserId;
-
-	UPROPERTY(config)
-	FString UserName;
+	UPROPERTY(config, EditAnywhere, Category = "Kitsu", meta = (DisplayName = "本机服务端口"))
+	int32 LocalPort = 0;
 };

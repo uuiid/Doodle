@@ -1,7 +1,7 @@
 #include "DoodleKitsuClient.h"
 
+#include "DoodleListenerPortShm.h"
 #include "DoodleLightingJson.h"
-#include "DoodleLightingSettings.h"
 
 #include "Containers/Ticker.h"
 #include "Dom/JsonObject.h"
@@ -10,11 +10,12 @@
 #include "Interfaces/IHttpResponse.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
-#include "Serialization/JsonWriter.h"
 
 namespace
 {
 	constexpr double RequestTimeoutSeconds = 30.0;
+	const TCHAR* const LocalIterationPath = TEXT("/api/actions/local/ai_session/ue");
+	const TCHAR* const LocalBearerToken = TEXT("xxxxx");
 
 	struct FDoodleRequestState
 	{
@@ -22,22 +23,6 @@ namespace
 		TValueOrError<TSharedPtr<FJsonObject>, FString> Body = MakeError(TEXT("请求没有等到响应"));
 		bool bCompleted = false;
 	};
-
-	UDoodleLightingSettings* GetSettings()
-	{
-		return GetMutableDefault<UDoodleLightingSettings>();
-	}
-
-	FString NormalizeServerUrl(const FString& InServerUrl)
-	{
-		FString L_Url = InServerUrl;
-		L_Url.TrimStartAndEndInline();
-		while (L_Url.EndsWith(TEXT("/")))
-		{
-			L_Url.LeftChopInline(1);
-		}
-		return L_Url;
-	}
 
 	FString DescribeFailure(int32 InStatusCode, const FString& InBody)
 	{
@@ -59,7 +44,7 @@ namespace
 		L_Message.TrimStartAndEndInline();
 		if (L_Message.IsEmpty())
 		{
-			return FString::Printf(TEXT("%d 登录失败"), InStatusCode);
+			return FString::Printf(TEXT("%d 请求失败"), InStatusCode);
 		}
 		return FString::Printf(TEXT("%d %s"), InStatusCode, *L_Message);
 	}
@@ -85,14 +70,9 @@ namespace
 		return MakeValue(MoveTemp(L_Root));
 	}
 
-	FString MakeApiUrl(const FString& InServerUrl, const TCHAR* InPath)
-	{
-		return FString::Printf(TEXT("%s%s"), *InServerUrl, InPath);
-	}
-
 	void SubmitRequest(
 		const TSharedRef<FDoodleRequestState>& InState, const FString& InVerb, const FString& InUrl,
-		const FString& InBodyText, TFunction<bool(int32)> InIsSuccessCode, TFunction<void()> InOnDone
+		const FString& InAuthorization, TFunction<bool(int32)> InIsSuccessCode, TFunction<void()> InOnDone
 	)
 	{
 		InState->Request = FHttpModule::Get().CreateRequest();
@@ -100,8 +80,8 @@ namespace
 		InState->Request->SetVerb(InVerb);
 		InState->Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 		InState->Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
+		InState->Request->SetHeader(TEXT("Authorization"), InAuthorization);
 		InState->Request->SetTimeout(RequestTimeoutSeconds);
-		InState->Request->SetContentAsString(InBodyText);
 		InState->Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
 
 		InState->Request->OnProcessRequestComplete().BindLambda(
@@ -110,8 +90,9 @@ namespace
 			)
 			{
 				const int32 L_Code = InResponse.IsValid() ? InResponse->GetResponseCode() : 0;
-				InState->Body =
-					MakeResponseBody(InResponse, bInConnectedSuccessfully, InUrl, bInConnectedSuccessfully && L_IsSuccessCode(L_Code));
+				InState->Body = MakeResponseBody(
+					InResponse, bInConnectedSuccessfully, InUrl, bInConnectedSuccessfully && L_IsSuccessCode(L_Code)
+				);
 				InState->bCompleted = true;
 			}
 		);
@@ -131,70 +112,13 @@ namespace
 					{
 						InState->Request->CancelRequest();
 					}
-					InState->Body = MakeError(FString::Printf(TEXT("请求超时: %s"), *InUrl));					InState->bCompleted = true;
+					InState->Body = MakeError(FString::Printf(TEXT("请求超时: %s"), *InUrl));
+					InState->bCompleted = true;
 				}
 				L_OnDone();
 				return false;
 			}
 		);
-	}
-
-	DoodleKitsuClient::FDoodleLoginValue ParseLoginBody(const TSharedPtr<FJsonObject>& InRoot)
-	{
-		DoodleKitsuClient::FDoodleLoginValue L_Value;
-
-		FString L_AccessToken;
-		if (!InRoot->TryGetStringField(TEXT("access_token"), L_AccessToken) || L_AccessToken.IsEmpty())
-		{
-			throw FString(TEXT("登录响应里没有 access_token"));
-		}
-
-		FString L_RefreshToken;
-		InRoot->TryGetStringField(TEXT("refresh_token"), L_RefreshToken);
-
-		const TSharedPtr<FJsonObject>* L_User = nullptr;
-		if (InRoot->TryGetObjectField(TEXT("user"), L_User) && L_User != nullptr && L_User->IsValid())
-		{
-			(*L_User)->TryGetStringField(TEXT("id"), L_Value.UserId);
-			if (!(*L_User)->TryGetStringField(TEXT("full_name"), L_Value.UserName) || L_Value.UserName.IsEmpty())
-			{
-				(*L_User)->TryGetStringField(TEXT("first_name"), L_Value.UserName);
-			}
-			(*L_User)->TryGetStringField(TEXT("email"), L_Value.Email);
-		}
-
-		UDoodleLightingSettings* L_Settings = GetSettings();
-		L_Settings->AccessToken = L_AccessToken;
-		L_Settings->RefreshToken = L_RefreshToken;
-		L_Settings->UserId = L_Value.UserId;
-		L_Settings->UserName = L_Value.UserName;
-		if (!L_Value.Email.IsEmpty())
-		{
-			L_Settings->Email = L_Value.Email;
-		}
-		L_Settings->TryUpdateDefaultConfigFile();
-
-		return L_Value;
-	}
-
-	DoodleKitsuClient::FDoodleLoginResult MakeLoginResult(
-		const TValueOrError<TSharedPtr<FJsonObject>, FString>& InBody, const FString& InEmailBeforeLogin
-	)
-	{
-		if (InBody.HasError())
-		{
-			GetSettings()->Email = InEmailBeforeLogin;
-			return MakeError(InBody.GetError());
-		}
-		try
-		{
-			return MakeValue(ParseLoginBody(InBody.GetValue()));
-		}
-		catch (const FString& L_Error)
-		{
-			GetSettings()->Email = InEmailBeforeLogin;
-			return MakeError(L_Error);
-		}
 	}
 
 	DoodleKitsuClient::FDoodleLightingIterationValue ParseIterationBody(const TSharedPtr<FJsonObject>& InRoot)
@@ -269,111 +193,33 @@ namespace
 
 namespace DoodleKitsuClient
 {
-	FString GetServerUrl()
+	TValueOrError<FString, FString> GetLocalServerUrl()
 	{
-		return NormalizeServerUrl(GetSettings()->ServerUrl);
+		const FDoodleListenerPortResult L_Port = ReadListenerPort();
+		if (L_Port.HasError())
+		{
+			return MakeError(L_Port.GetError());
+		}
+		return MakeValue(FString::Printf(TEXT("http://127.0.0.1:%u"), L_Port.GetValue().Port));
 	}
 
-	bool IsLoggedIn()
+	FDoodleIterationResult StartFetchCurrentIteration(FDoodleIterationCallback InOnComplete)
 	{
-		return !GetSettings()->AccessToken.IsEmpty();
-	}
-
-	FString MakeBearerAuthorization()
-	{
-		const FString L_Token = GetSettings()->AccessToken;
-		if (L_Token.IsEmpty())
-		{
-			return FString();
-		}
-		return FString::Printf(TEXT("Bearer %s"), *L_Token);
-	}
-
-	FDoodleLoginResult StartLogin(const FString& InEmail, const FString& InPassword, FDoodleLoginCallback InOnComplete)
-	{
-		FString L_Email = InEmail;
-		L_Email.TrimStartAndEndInline();
-		if (L_Email.IsEmpty() || InPassword.IsEmpty())
-		{
-			return MakeError(TEXT("email 或 password 为空"));
-		}
-
-		if (!InOnComplete)
-		{
-			return MakeError(TEXT("登录回调为空"));
-		}
-
-		const FString L_ServerUrl = GetServerUrl();
-		if (L_ServerUrl.IsEmpty())
-		{
-			return MakeError(TEXT("未设置服务器地址（Project Settings -> Plugins -> Doodle Lighting）"));
-		}
-
-		TSharedPtr<FJsonObject> L_Body = MakeShared<FJsonObject>();
-		L_Body->SetStringField(TEXT("email"), L_Email);
-		L_Body->SetStringField(TEXT("password"), InPassword);
-
-		FString L_BodyText;
-		const TSharedRef<TJsonWriter<>> L_Writer = TJsonWriterFactory<>::Create(&L_BodyText);
-		if (!FJsonSerializer::Serialize(L_Body.ToSharedRef(), L_Writer))
-		{
-			return MakeError(TEXT("登录请求体序列化失败"));
-		}
-
-		const FString L_EmailBeforeLogin = GetSettings()->Email;
-		const FString L_Url = MakeApiUrl(L_ServerUrl, TEXT("/api/auth/login"));
-		TSharedRef<FDoodleRequestState> L_State = MakeShared<FDoodleRequestState>();
-		SubmitRequest(
-			L_State, TEXT("POST"), L_Url, L_BodyText,
-			[](int32 InStatusCode) { return InStatusCode == EHttpResponseCodes::Created; },
-			[L_State, L_EmailBeforeLogin, L_OnComplete = MoveTemp(InOnComplete)]() mutable
-			{
-				FDoodleLoginResult L_Result = MakeLoginResult(L_State->Body, L_EmailBeforeLogin);
-				if (L_Result.HasValue())
-				{
-					UE_LOG(LogTemp, Log, TEXT("[DoodleKitsu] 登录成功 %s"), *L_Result.GetValue().Email);
-				}
-				else
-				{
-					UE_LOG(LogTemp, Error, TEXT("[DoodleKitsu] 登录失败 %s"), *L_Result.GetError());
-				}
-				L_OnComplete(MoveTemp(L_Result));
-			}
-		);
-
-		return MakeValue(FDoodleLoginValue{});
-	}
-
-	FDoodleIterationResult StartFetchCurrentIteration(const FString& InSessionId, FDoodleIterationCallback InOnComplete)
-	{
-		FString L_SessionId = InSessionId;
-		L_SessionId.TrimStartAndEndInline();
-		if (L_SessionId.IsEmpty())
-		{
-			return MakeError(TEXT("会话 ID 为空"));
-		}
-
 		if (!InOnComplete)
 		{
 			return MakeError(TEXT("轮次回调为空"));
 		}
 
-		if (!IsLoggedIn())
+		const TValueOrError<FString, FString> L_ServerUrl = GetLocalServerUrl();
+		if (L_ServerUrl.HasError())
 		{
-			return MakeError(TEXT("未登录，无法获取会话轮次"));
+			return MakeError(FString::Printf(TEXT("读不到本机服务端口: %s"), *L_ServerUrl.GetError()));
 		}
 
-		const FString L_ServerUrl = GetServerUrl();
-		if (L_ServerUrl.IsEmpty())
-		{
-			return MakeError(TEXT("未设置服务器地址（Project Settings -> Plugins -> Doodle Lighting）"));
-		}
-
-		const FString L_Url = FString::Printf(TEXT("%s/api/doodle/ai/light/session/%s/iteration"), *L_ServerUrl, *L_SessionId);
-
+		const FString L_Url = FString::Printf(TEXT("%s%s"), *L_ServerUrl.GetValue(), LocalIterationPath);
 		TSharedRef<FDoodleRequestState> L_State = MakeShared<FDoodleRequestState>();
 		SubmitRequest(
-			L_State, TEXT("GET"), L_Url, FString(),
+			L_State, TEXT("GET"), L_Url, FString::Printf(TEXT("Bearer %s"), LocalBearerToken),
 			[](int32 InStatusCode) { return EHttpResponseCodes::IsOk(InStatusCode); },
 			[L_State, L_OnComplete = MoveTemp(InOnComplete)]() mutable
 			{
@@ -394,15 +240,5 @@ namespace DoodleKitsuClient
 		);
 
 		return MakeValue(FDoodleLightingIterationValue{});
-	}
-
-	bool Logout()
-	{
-		UDoodleLightingSettings* L_Settings = GetSettings();
-		L_Settings->AccessToken.Empty();
-		L_Settings->RefreshToken.Empty();
-		L_Settings->UserId.Empty();
-		L_Settings->UserName.Empty();
-		return L_Settings->TryUpdateDefaultConfigFile();
 	}
 }
