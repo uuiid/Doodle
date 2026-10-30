@@ -104,6 +104,38 @@ void SDoodleKitsuLoginPanel::Construct(const FArguments& InArgs)
 
 			+ SHorizontalBox::Slot()
 			.AutoWidth()
+			.VAlign(VAlign_Center)
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(TEXT("会话 ID")))
+			]
+
+			+ SHorizontalBox::Slot()
+			.FillWidth(1.0f)
+			.Padding(8.0f, 0.0f)
+			[
+				SAssignNew(SessionIdBox, SEditableTextBox)
+			]
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.VAlign(VAlign_Center)
+			[
+				SNew(SButton)
+				.Text(FText::FromString(TEXT("获取当前轮次")))
+				.IsEnabled(this, &SDoodleKitsuLoginPanel::IsFetchButtonEnabled)
+				.OnClicked(this, &SDoodleKitsuLoginPanel::OnFetchIterationClicked)
+			]
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(8.0f)
+		[
+			SNew(SHorizontalBox)
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
 			[
 				SNew(SButton)
 				.Text(FText::FromString(TEXT("登录")))
@@ -219,6 +251,104 @@ void SDoodleKitsuLoginPanel::ApplyLoginResult(DoodleKitsuClient::FDoodleLoginRes
 	ResultBox->SetText(FText::FromString(InResult.GetError()));
 }
 
+FReply SDoodleKitsuLoginPanel::OnFetchIterationClicked()
+{
+	const FString L_SessionId = SessionIdBox.IsValid() ? SessionIdBox->GetText().ToString() : FString();
+
+	if (ResultBox.IsValid())
+	{
+		ResultBox->SetText(FText::GetEmpty());
+	}
+
+	bFetchingIteration = true;
+
+	const DoodleKitsuClient::FDoodleIterationResult L_StartResult = DoodleKitsuClient::StartFetchCurrentIteration(
+		L_SessionId,
+		[L_WeakPanel = TWeakPtr<SDoodleKitsuLoginPanel>(SharedThis(this))](DoodleKitsuClient::FDoodleIterationResult InResult)
+		{
+			if (const TSharedPtr<SDoodleKitsuLoginPanel> L_Panel = L_WeakPanel.Pin())
+			{
+				L_Panel->ApplyIterationResult(MoveTemp(InResult));
+			}
+		}
+	);
+
+	if (L_StartResult.HasError())
+	{
+		bFetchingIteration = false;
+		if (ResultBox.IsValid())
+		{
+			ResultBox->SetText(FText::FromString(L_StartResult.GetError()));
+		}
+	}
+
+	return FReply::Handled();
+}
+
+void SDoodleKitsuLoginPanel::ApplyIterationResult(DoodleKitsuClient::FDoodleIterationResult InResult)
+{
+	bFetchingIteration = false;
+
+	if (!ResultBox.IsValid())
+	{
+		return;
+	}
+
+	if (InResult.HasValue())
+	{
+		ResultBox->SetText(FText::FromString(FormatIterationSummary(InResult.GetValue())));
+		return;
+	}
+
+	ResultBox->SetText(FText::FromString(InResult.GetError()));
+}
+
+FString SDoodleKitsuLoginPanel::FormatIterationSummary(const DoodleKitsuClient::FDoodleLightingIterationValue& InValue) const
+{
+	TArray<FString> L_Lines;
+	L_Lines.Add(FString::Printf(
+		TEXT("第 %d 轮    状态: %s    渲染于: %s"), InValue.Iteration, *InValue.State,
+		InValue.RenderAt.IsEmpty() ? TEXT("(未渲染)") : *InValue.RenderAt
+	));
+	L_Lines.Add(FString::Printf(TEXT("会话: %s"), InValue.SessionId.IsEmpty() ? TEXT("(未知)") : *InValue.SessionId));
+	L_Lines.Add(FString::Printf(
+		TEXT("镜头任务: %s    基线关卡: %s"), InValue.ShotTaskId.IsEmpty() ? TEXT("(未知)") : *InValue.ShotTaskId,
+		InValue.BaselineLevel.IsEmpty() ? TEXT("(未知)") : *InValue.BaselineLevel
+	));
+	if (!InValue.FeedbackText.IsEmpty())
+	{
+		L_Lines.Add(FString::Printf(TEXT("反馈: %s"), *InValue.FeedbackText));
+	}
+	L_Lines.Add(FString::Printf(TEXT("候选 %d 个"), InValue.Rigs.Num()));
+
+	for (int32 L_Index = 0; L_Index < InValue.Rigs.Num(); ++L_Index)
+	{
+		const FDoodleLightingRig& L_Rig = InValue.Rigs[L_Index];
+		L_Lines.Add(FString::Printf(
+			TEXT("[%d] 方案 %s    灯 %d 盏    ops %d 条"), L_Index,
+			L_Rig.RigId.IsEmpty() ? TEXT("(无 id)") : *L_Rig.RigId, L_Rig.Lights.Num(), L_Rig.Ops.Num()
+		));
+		for (const FDoodleLight& L_Light : L_Rig.Lights)
+		{
+			L_Lines.Add(FString::Printf(
+				TEXT("    %s  %s/%s  %g %s  方位 %g 仰角 %g 距离 %gm"), *L_Light.Id,
+				*DoodleLightRoleToString(L_Light.Role), *DoodleLightTypeToString(L_Light.Type), L_Light.Intensity.Value,
+				*DoodleIntensityUnitToString(L_Light.Intensity.Unit), L_Light.Offset.AzimuthDeg, L_Light.Offset.ElevationDeg,
+				L_Light.Offset.DistanceM
+			));
+		}
+		for (const FDoodleLightOp& L_Op : L_Rig.Ops)
+		{
+			L_Lines.Add(FString::Printf(
+				TEXT("    op %s  %s  %s"), *DoodleLightOpKindToString(L_Op.Op),
+				L_Op.Light.IsEmpty() ? TEXT("(全局)") : *L_Op.Light, *L_Op.Rationale
+			));
+		}
+	}
+
+	return FString::Join(L_Lines, TEXT("\n"));
+}
+
 FReply SDoodleKitsuLoginPanel::OnLogoutClicked()
 {
 	const bool bLoggedOut = DoodleKitsuClient::Logout();
@@ -238,6 +368,11 @@ FText SDoodleKitsuLoginPanel::GetStatusText() const
 		return FText::FromString(TEXT("登录中…"));
 	}
 
+	if (bFetchingIteration)
+	{
+		return FText::FromString(TEXT("获取轮次中…"));
+	}
+
 	if (!DoodleKitsuClient::IsLoggedIn())
 	{
 		return FText::FromString(TEXT("未登录"));
@@ -255,4 +390,9 @@ bool SDoodleKitsuLoginPanel::IsLoggingIn() const
 bool SDoodleKitsuLoginPanel::IsLoginButtonEnabled() const
 {
 	return !bLoggingIn;
+}
+
+bool SDoodleKitsuLoginPanel::IsFetchButtonEnabled() const
+{
+	return !bFetchingIteration && !bLoggingIn && DoodleKitsuClient::IsLoggedIn();
 }
