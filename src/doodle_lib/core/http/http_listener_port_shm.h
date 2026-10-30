@@ -13,8 +13,7 @@ namespace doodle::http {
 /**
  * @brief 共享内存中保存的监听端口信息
  *
- * 固定大小(8 字节), 便于用 shared_memory_object + truncate 直接覆盖写,
- * 不需要 managed_shared_memory 的分配器与段内元数据。
+ * 固定大小(12 字节), 直接按布局覆盖写, 不需要 managed_shared_memory 的分配器与段内元数据。
  */
 struct http_listener_port_shm_t {
   /// 魔数, 读端用于确认这块内存确实是本结构, 而不是残留的脏数据
@@ -23,7 +22,7 @@ struct http_listener_port_shm_t {
   std::uint32_t version_;
   /// 实际监听端口(内核分配的真实值, 不是入参 0)
   std::uint16_t port_;
-  /// 对齐填充, 保持结构 8 字节
+  /// 对齐填充
   std::uint16_t reserved_;
 };
 
@@ -37,6 +36,7 @@ constexpr std::uint32_t g_listener_port_shm_version{1};
  *
  * 全局唯一, 不做实例区分: 同一台机器上后启动的监听器直接覆盖先前的端口。
  * 只含 ASCII 字母数字下划线, 在 Windows 命名对象下合法。
+ * 段是 Windows 原生命名对象, 其它进程(含 PowerShell 的 OpenFileMappingW)同名即可打开。
  */
 constexpr std::string_view g_listener_port_shm_name{"doodle_http_listener_port"};
 
@@ -44,7 +44,7 @@ constexpr std::string_view g_listener_port_shm_name{"doodle_http_listener_port"}
  * @brief 把监听端口写入固定共享内存
  *
  * 已存在则原地覆盖, 无需先删除。本函数**不抛异常**:
- * 任何失败(权限/名字冲突/truncate 失败等)都只记 err 日志并返回 false,
+ * 任何失败(权限/名字冲突/尺寸不符等)都只记 err 日志并返回 false,
  * 调用方(监听协程)必须照常继续 accept, 不能因发布失败而拒绝服务。
  *
  * @param in_port 实际监听端口
