@@ -20,8 +20,6 @@ public:
 
 	static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& InSpawnTabArgs);
 
-	virtual void Tick(const FGeometry& InAllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
-
 private:
 	FString GetConfiguredUrl() const;
 	bool HasLoggedIn() const;

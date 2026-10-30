@@ -3,6 +3,7 @@
 #include "DoodleLightingSettings.h"
 #include "DoodleListenerPortShm.h"
 #include "DoodleLightingJson.h"
+#include "DoodleWebCookie.h"
 
 #include "Containers/Ticker.h"
 #include "Dom/JsonObject.h"
@@ -251,15 +252,6 @@ namespace
 		}
 		return FString::Printf(TEXT("%s%s"), *L_Url.TrimEnd(), LocalLoginPath);
 	}
-
-	void ApplyLoginToSettings(const DoodleKitsuClient::FDoodleLoginValue& InValue, const FString& InServerUrl)
-	{
-		UDoodleLightingSettings* L_Settings = GetMutableDefault<UDoodleLightingSettings>();
-		L_Settings->LocalServerUrl = InServerUrl.TrimStartAndEnd();
-		L_Settings->Account = InValue.Email;
-		L_Settings->Cookies = InValue.AccessToken;
-		L_Settings->SaveConfig();
-	}
 }
 
 namespace DoodleKitsuClient
@@ -350,24 +342,48 @@ namespace DoodleKitsuClient
 		}
 
 		const FString L_Email = InEmail.TrimStartAndEnd();
-		const FString L_ServerUrl = InServerUrl.TrimStartAndEnd();
+		const TValueOrError<FString, FString> L_Origin = DoodleWebCookie::ResolveCookieOrigin(InServerUrl);
+		if (L_Origin.HasError())
+		{
+			return MakeError(L_Origin.GetError());
+		}
+
 		TSharedRef<FDoodleRequestState> L_State = MakeShared<FDoodleRequestState>();
 		SubmitRequest(
 			L_State, TEXT("POST"), L_Url, FString(),
 			[](int32 InStatusCode) { return EHttpResponseCodes::IsOk(InStatusCode); },
-			[L_State, L_Email, L_ServerUrl, L_OnComplete = MoveTemp(InOnComplete)]() mutable
+			[L_State, L_Email, L_CookieOrigin = L_Origin.GetValue(), L_OnComplete = MoveTemp(InOnComplete)]() mutable
 			{
 				FDoodleLoginResult L_Result = MakeLoginResult(L_State->Body, L_Email);
-				if (L_Result.HasValue())
-				{
-					ApplyLoginToSettings(L_Result.GetValue(), L_ServerUrl);
-					UE_LOG(LogTemp, Log, TEXT("[DoodleKitsu] 登录成功 %s"), *L_Result.GetValue().Email);
-				}
-				else
+				if (L_Result.HasError())
 				{
 					UE_LOG(LogTemp, Error, TEXT("[DoodleKitsu] 登录失败 %s"), *L_Result.GetError());
+					L_OnComplete(MoveTemp(L_Result));
+					return;
 				}
-				L_OnComplete(MoveTemp(L_Result));
+
+				const FString L_AccessToken = L_Result.GetValue().AccessToken;
+				UE_LOG(LogTemp, Log, TEXT("[DoodleKitsu] 登录成功 %s"), *L_Email);
+
+				DoodleWebCookie::SetAccessTokenCookie(
+					L_CookieOrigin, L_AccessToken,
+					[L_AccessToken, L_Result = MoveTemp(L_Result), L_OnComplete = MoveTemp(L_OnComplete)](
+						bool bInWritten
+					) mutable
+					{
+						if (!bInWritten)
+						{
+							L_OnComplete(MakeError(TEXT("登录成功，但没能把 cookie 写进浏览器")));
+							return;
+						}
+
+						UDoodleLightingSettings* L_Settings = GetMutableDefault<UDoodleLightingSettings>();
+						L_Settings->Cookies = L_AccessToken;
+						L_Settings->SaveConfig();
+
+						L_OnComplete(MoveTemp(L_Result));
+					}
+				);
 			},
 			L_RequestBody
 		);

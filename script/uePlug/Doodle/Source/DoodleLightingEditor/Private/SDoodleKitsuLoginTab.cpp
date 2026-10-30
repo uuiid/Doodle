@@ -3,6 +3,7 @@
 #include "DoodleKitsuClient.h"
 #include "DoodleLightingSettings.h"
 #include "DoodleWebBridge.h"
+#include "DoodleWebCookie.h"
 
 #include "ISettingsModule.h"
 #include "Modules/ModuleManager.h"
@@ -24,8 +25,6 @@ namespace
 
 void SDoodleKitsuLoginTab::Construct(const FArguments& InArgs)
 {
-	SetCanTick(true);
-
 	const UDoodleLightingSettings* L_Settings = GetDefault<UDoodleLightingSettings>();
 	PendingUrl = L_Settings->LocalServerUrl;
 	PendingUrl.TrimStartAndEndInline();
@@ -194,17 +193,27 @@ FReply SDoodleKitsuLoginTab::OnLoginClicked()
 	bLoginFailed = false;
 	LoginMessage = TEXT("登录中…");
 
+	UDoodleLightingSettings* L_Settings = GetMutableDefault<UDoodleLightingSettings>();
+	L_Settings->LocalServerUrl = PendingUrl.TrimStartAndEnd();
+	L_Settings->Account = PendingEmail.TrimStartAndEnd();
+	L_Settings->SaveConfig();
+
 	DoodleKitsuClient::FDoodleLoginResult L_Result = DoodleKitsuClient::StartLogin(
 		PendingUrl, PendingEmail, PendingPassword,
-		[this](DoodleKitsuClient::FDoodleLoginResult InResult)
+		[WeakThis = TWeakPtr<SDoodleKitsuLoginTab>(SharedThis(this))](DoodleKitsuClient::FDoodleLoginResult InResult)
 		{
+			const TSharedPtr<SDoodleKitsuLoginTab> L_This = WeakThis.Pin();
+			if (!L_This.IsValid())
+			{
+				return;
+			}
 			if (InResult.HasValue())
 			{
-				OnLoginFinished(true, FString());
+				L_This->OnLoginFinished(true, FString());
 			}
 			else
 			{
-				OnLoginFinished(false, InResult.GetError());
+				L_This->OnLoginFinished(false, InResult.GetError());
 			}
 		}
 	);
@@ -231,6 +240,12 @@ void SDoodleKitsuLoginTab::OnLoginFinished(bool bInSuccess, const FString& InMes
 	bLoginFailed = false;
 	LoginMessage.Reset();
 	LoadError = FText::GetEmpty();
+
+	LoadedUrl = GetConfiguredUrl();
+	if (WebBrowser.IsValid() && !LoadedUrl.IsEmpty())
+	{
+		WebBrowser->LoadURL(LoadedUrl);
+	}
 }
 
 FReply SDoodleKitsuLoginTab::OnOpenSettingsClicked()
@@ -254,7 +269,7 @@ FString SDoodleKitsuLoginTab::GetConfiguredUrl() const
 
 bool SDoodleKitsuLoginTab::HasLoggedIn() const
 {
-	return !GetConfiguredUrl().IsEmpty() && !UDoodleWebBridge::GetCookies().IsEmpty();
+	return !GetConfiguredUrl().IsEmpty() && !GetDefault<UDoodleLightingSettings>()->Cookies.TrimStartAndEnd().IsEmpty();
 }
 
 bool SDoodleKitsuLoginTab::CanSubmitLogin() const
@@ -265,29 +280,6 @@ bool SDoodleKitsuLoginTab::CanSubmitLogin() const
 	}
 	return !PendingUrl.TrimStartAndEnd().IsEmpty() && !PendingEmail.TrimStartAndEnd().IsEmpty() &&
 		   !PendingPassword.IsEmpty();
-}
-
-void SDoodleKitsuLoginTab::Tick(const FGeometry& InAllottedGeometry, const double InCurrentTime, const float InDeltaTime)
-{
-	SCompoundWidget::Tick(InAllottedGeometry, InCurrentTime, InDeltaTime);
-
-	if (!HasLoggedIn())
-	{
-		return;
-	}
-
-	const FString L_Url = GetConfiguredUrl();
-	if (L_Url == LoadedUrl)
-	{
-		return;
-	}
-
-	LoadedUrl = L_Url;
-	LoadError = FText::GetEmpty();
-	if (!L_Url.IsEmpty() && WebBrowser.IsValid())
-	{
-		WebBrowser->LoadURL(L_Url);
-	}
 }
 
 TSharedRef<SDockTab> SDoodleKitsuLoginTab::OnSpawnAction(const FSpawnTabArgs& InSpawnTabArgs)
