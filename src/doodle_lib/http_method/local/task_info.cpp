@@ -605,6 +605,11 @@ struct actions_local_ai_session_ue::impl {
 
 actions_local_ai_session_ue::actions_local_ai_session_ue() : base_type(), impl_ptr_(std::make_shared<impl>()) {}
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_ai_session_ue, get) {
+  DOODLE_CHICK_HTTP(!impl_ptr_->iteration_.is_null(), not_found, "还没有获取任何 ai 会话的灯光方案");
+  co_return std::make_unique<http_body_json_t>(impl_ptr_->iteration_);
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_ai_session_ue, post) {
   auto l_json = in_handle->get_json();
   DOODLE_CHICK(l_json.contains("ai_session_id"), "请求体缺少 ai_session_id");

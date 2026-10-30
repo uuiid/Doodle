@@ -162,6 +162,7 @@ DOODLE_HTTP_FUN_C(actions_local_ai_session_ue, local_http_fun)
 struct impl;
 std::shared_ptr<impl> impl_ptr_;
 actions_local_ai_session_ue();
+DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_ROUTE("/api/actions/local/ai_session/ue")
 DOODLE_HTTP_FUN_END()
