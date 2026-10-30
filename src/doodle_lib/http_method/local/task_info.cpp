@@ -598,8 +598,23 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_watch_file_maya_anim, get) {
   co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_watch_infos));
 }
 
+struct actions_local_ai_session_ue::impl {
+  uuid session_id_{};
+  nlohmann::json iteration_{};
+};
+
+actions_local_ai_session_ue::actions_local_ai_session_ue() : base_type(), impl_ptr_(std::make_shared<impl>()) {}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_ai_session_ue, post) {
-  co_return std::make_unique<http_body_json_t>(nlohmann::json{});
+  auto l_json = in_handle->get_json();
+  DOODLE_CHICK(l_json.contains("ai_session_id"), "请求体缺少 ai_session_id");
+  impl_ptr_->session_id_ = l_json["ai_session_id"].get<uuid>();
+
+  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  l_client->set_token(token_);
+  impl_ptr_->iteration_ = co_await l_client->get_ai_light_session_iteration(impl_ptr_->session_id_);
+
+  co_return std::make_unique<http_body_json_t>(impl_ptr_->iteration_);
 }
 
 }  // namespace doodle::http::local
