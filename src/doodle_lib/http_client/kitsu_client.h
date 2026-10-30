@@ -205,6 +205,10 @@ class DOODLELIB_API kitsu_client {
   boost::asio::awaitable<FSys::path> download_depth_file(uuid in_depth_id) const;
   // 深度估计文件传输 — PUT /api/seedance2/depth/{depth_id}
   boost::asio::awaitable<void> upload_depth_file(uuid in_depth_id, FSys::path in_file_path) const;
+
+  // get /api/doodle/ai/light/session/{session_id}/iteration —— 获取会话当前轮次，
+  // 响应体是 ai_light_current_iteration_t（iteration / state / render_at / feedback_text / rigs）。
+  boost::asio::awaitable<nlohmann::json> get_ai_light_session_iteration(uuid in_session_id) const;
 };
 
 }  // namespace doodle::kitsu

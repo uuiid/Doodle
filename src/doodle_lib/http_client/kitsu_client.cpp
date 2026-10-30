@@ -784,6 +784,20 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::post_ai_light_session_itera
   co_return nlohmann::json::parse(l_res.body(), nullptr, false);
 }
 
+boost::asio::awaitable<nlohmann::json> kitsu_client::get_ai_light_session_iteration(uuid in_session_id) const {
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::get,
+      fmt::format("/api/doodle/ai/light/session/{}/iteration", in_session_id), 11
+  };
+  set_req_headers(l_req);
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok)
+    throw_exception(doodle_error{"kitsu get ai light session iteration error {} {}", l_res.result(), l_res.body()});
+  if (l_res.body().empty()) co_return nlohmann::json{};
+  co_return nlohmann::json::parse(l_res.body(), nullptr, false);
+}
+
 boost::asio::awaitable<std::string> kitsu_client::login(const std::string& in_email, const std::string& in_password) {
   // 本机客户端用发起人的身份调接口（引擎内原生路线），所以要像人一样登录拿 access_token。
   boost::beast::http::request<boost::beast::http::string_body> l_req{
