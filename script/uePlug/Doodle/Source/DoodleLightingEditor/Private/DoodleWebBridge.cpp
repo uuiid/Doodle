@@ -9,6 +9,8 @@ void UDoodleWebBridge::Logout()
 	L_Settings->SaveConfig();
 }
 
+void UDoodleWebBridge::SetAiLightIteration(const FString& InIteration) {}
+
 UDoodleWebBridge* UDoodleWebBridge::Get()
 {
 	static UDoodleWebBridge* L_Bridge = []()

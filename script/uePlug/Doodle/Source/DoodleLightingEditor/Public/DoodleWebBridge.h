@@ -14,5 +14,8 @@ public:
 	UFUNCTION()
 	void Logout();
 
+	UFUNCTION()
+	void SetAiLightIteration(const FString& InIteration);
+
 	static UDoodleWebBridge* Get();
 };
