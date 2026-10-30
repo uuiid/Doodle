@@ -108,6 +108,12 @@ namespace
 			}
 		);
 
+		if (!InState->Request->ProcessRequest())
+		{
+			InState->Body = MakeError(FString::Printf(TEXT("请求没能发出去: %s"), *InUrl));
+			InState->bCompleted = true;
+		}
+
 		const double L_Deadline = FPlatformTime::Seconds() + RequestTimeoutSeconds;
 		FTSTicker::GetCoreTicker().AddTicker(
 			TEXT("DoodleKitsuRequest"), 0.0f,
