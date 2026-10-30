@@ -26,6 +26,8 @@ private:
 	bool CanSubmitLogin() const;
 	TSharedRef<SWidget> BuildBrowser();
 	TSharedRef<SWidget> BuildLoginForm();
+	void LoadUrlAfterCookie();
+	void OpenBrowserUrl();
 	FReply OnOpenSettingsClicked();
 	FReply OnLoginClicked();
 	void OnLoginFinished(bool bInSuccess, const FString& InMessage);

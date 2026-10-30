@@ -12,10 +12,7 @@ class DOODLELIGHTINGEDITOR_API UDoodleWebBridge : public UObject
 
 public:
 	UFUNCTION()
-	void SetCookies(const FString& InCookies);
-
-	void SetCookiesFromNative(const FString& InCookies);
-	static FString GetCookies();
+	void Logout();
 
 	static UDoodleWebBridge* Get();
 };

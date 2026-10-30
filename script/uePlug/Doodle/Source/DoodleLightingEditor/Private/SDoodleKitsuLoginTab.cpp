@@ -47,8 +47,42 @@ void SDoodleKitsuLoginTab::Construct(const FArguments& InArgs)
 			]
 		];
 
+	LoadedUrl.Reset();
+	if (HasLoggedIn())
+	{
+		LoadUrlAfterCookie();
+	}
+}
+
+void SDoodleKitsuLoginTab::LoadUrlAfterCookie()
+{
+	const TValueOrError<FString, FString> L_Origin = DoodleWebCookie::ResolveCookieOrigin(GetConfiguredUrl());
+	if (L_Origin.HasError())
+	{
+		LoadError = FText::FromString(L_Origin.GetError());
+		return;
+	}
+
+	const FString L_Token = GetDefault<UDoodleLightingSettings>()->Cookies.TrimStartAndEnd();
+	DoodleWebCookie::SetAccessTokenCookie(
+		L_Origin.GetValue(), L_Token,
+		[WeakThis = TWeakPtr<SDoodleKitsuLoginTab>(SharedThis(this))](bool bInWritten)
+		{
+			const TSharedPtr<SDoodleKitsuLoginTab> L_This = WeakThis.Pin();
+			if (!L_This.IsValid() || !bInWritten)
+			{
+				return;
+			}
+			L_This->OpenBrowserUrl();
+		}
+	);
+}
+
+void SDoodleKitsuLoginTab::OpenBrowserUrl()
+{
 	LoadedUrl = GetConfiguredUrl();
-	if (HasLoggedIn() && !LoadedUrl.IsEmpty())
+	LoadError = FText::GetEmpty();
+	if (WebBrowser.IsValid() && !LoadedUrl.IsEmpty())
 	{
 		WebBrowser->LoadURL(LoadedUrl);
 	}
@@ -57,7 +91,6 @@ void SDoodleKitsuLoginTab::Construct(const FArguments& InArgs)
 TSharedRef<SWidget> SDoodleKitsuLoginTab::BuildBrowser()
 {
 	TSharedRef<SWidget> L_BrowserWidget = SAssignNew(WebBrowser, SWebBrowser)
-		.InitialURL(GetConfiguredUrl())
 		.ShowControls(false)
 		.ShowAddressBar(false)
 		.ShowInitialThrobber(true)
@@ -241,11 +274,7 @@ void SDoodleKitsuLoginTab::OnLoginFinished(bool bInSuccess, const FString& InMes
 	LoginMessage.Reset();
 	LoadError = FText::GetEmpty();
 
-	LoadedUrl = GetConfiguredUrl();
-	if (WebBrowser.IsValid() && !LoadedUrl.IsEmpty())
-	{
-		WebBrowser->LoadURL(LoadedUrl);
-	}
+	LoadUrlAfterCookie();
 }
 
 FReply SDoodleKitsuLoginTab::OnOpenSettingsClicked()
