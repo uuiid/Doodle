@@ -1,3 +1,39 @@
+get:
+  tags:
+    - AI灯光
+  summary: 获取会话当前轮次的灯光方案
+  description: |
+    处理器为 `ai_light::iteration_submit_route::get`，实现见 `http_method/kitsu/ai_light.cpp`。
+
+    取会话最新一轮，要求它处于 `generated` 状态（还没有派发/渲染/判断），返回该轮的
+    `AiLightIterationView` 视图：轮次号、状态、判断时限基准时刻、反馈文本与整轮的灯光方案。
+
+    响应体与 `post` 完全同一形状 —— 两个方法都从同一条 `ai_light_iteration` 行构造
+    `ai_light_current_iteration_t`，前端可以用一个类型承接两者。
+  operationId: ai_light_session_iteration_get
+  parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 会话 id
+  responses:
+    '200':
+      description: 当前轮次的灯光方案
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiLightIterationView.yaml
+    '400':
+      description: 最新一轮的状态不是 `generated`（已派发、渲染中、等判断或已判断）
+    '401':
+      description: 未认证、外包人员不可调用，或对该会话所属项目无权限
+    '404':
+      description: 会话不存在，或会话还没有提交任何轮次
+  security:
+    - bearerAuth: []
 post:
   tags:
     - AI灯光
@@ -16,6 +52,9 @@ post:
     `session_id`、`project_id`、`task_id` 由服务端从会话填充，请求体里给了也不采信。
     本接口不派发分布式任务；渲染由发起方（工作机/引擎侧）就绪后经 `candidate/{id}/begin_sequence`
     系列接口回传帧序列，或由派发方另行下发 `ai_light` 类型任务。
+
+    响应体与 `get` 完全同一形状：返回刚落库的这一轮（`AiLightIterationView`），
+    字段与 `get` 一致，前端可以用一个类型承接两个方法的返回值。
   operationId: ai_light_session_iteration_submit_post
   parameters:
     - name: session_id
@@ -32,14 +71,14 @@ post:
         schema:
           $ref: ../components/schemas/AiLightIterationSubmit.yaml
   responses:
-    '201':
-      description: 提交成功，返回会话详情
+    '200':
+      description: 提交成功，返回刚落库的这一轮（形状同 `get`）
       content:
         application/json:
           schema:
-            $ref: ../components/schemas/AiLightSessionDetail.yaml
+            $ref: ../components/schemas/AiLightIterationView.yaml
     '400':
-      description: 上一轮未判断、轮次号不一致、`candidates` 为空，或会话没有关联镜头任务
+      description: 上一轮未判断、`iteration` 不是正整数、轮次号与会话期望不一致、`candidates` 为空，或会话没有关联镜头任务
     '401':
       description: 未认证、外包人员不可调用，或对该会话所属项目无权限
     '500':

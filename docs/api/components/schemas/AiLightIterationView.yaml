@@ -1,0 +1,37 @@
+type: object
+description: |
+  会话当前轮次的读视图（`ai_light_current_iteration_t`，定义见
+  `metadata/ai_light/iteration_view.h`）。是 `ai_light_iteration` 的精简子集：
+  只带前端渲染与判断需要的字段，不暴露任务派发 id、判断人、创建/更新时间。
+
+  `session/{session_id}/iteration` 的 `get` 与 `post` 都返回本形状。
+properties:
+  iteration:
+    type: integer
+    minimum: 1
+    description: 轮次序号，从 1 开始
+  state:
+    type: string
+    enum:
+      - generated
+      - dispatched
+      - rendering
+      - awaiting_judgement
+      - judged
+    description: |
+      轮次推进状态：
+      - `generated`：候选已生成，尚未派发
+      - `dispatched`：已派发给工作机
+      - `rendering`：工作机渲染中
+      - `awaiting_judgement`：渲染完，等美术判断（人工闸门 2）
+      - `judged`：已判断
+  render_at:
+    type: string
+    format: date-time
+    nullable: true
+    description: 转入 `awaiting_judgement` 的时间，也是判断时限的基准时钟；未渲染完时为 `null`
+  feedback_text:
+    type: string
+    description: 美术的自由文本反馈；未判断时为空串
+  rigs:
+    $ref: AiLightRigSet.yaml
