@@ -19,4 +19,10 @@ public:
 
 	UPROPERTY(config, EditAnywhere, Category = "Kitsu", meta = (DisplayName = "服务器 URL"))
 	FString LocalServerUrl;
+
+	UPROPERTY(config, EditAnywhere, Category = "Kitsu", meta = (DisplayName = "Cookies"))
+	FString Cookies;
+
+	UPROPERTY(config, EditAnywhere, Category = "Kitsu", meta = (DisplayName = "账号"))
+	FString Account;
 };

@@ -24,12 +24,22 @@ public:
 
 private:
 	FString GetConfiguredUrl() const;
-	bool HasConfiguredUrl() const;
+	bool HasLoggedIn() const;
+	bool CanSubmitLogin() const;
 	TSharedRef<SWidget> BuildBrowser();
-	TSharedRef<SWidget> BuildMissingUrlHint();
+	TSharedRef<SWidget> BuildLoginForm();
 	FReply OnOpenSettingsClicked();
+	FReply OnLoginClicked();
+	void OnLoginFinished(bool bInSuccess, const FString& InMessage);
 
 	FText LoadError;
 	FString LoadedUrl;
 	TSharedPtr<SWebBrowser> WebBrowser;
+
+	FString PendingUrl;
+	FString PendingEmail;
+	FString PendingPassword;
+	FString LoginMessage;
+	bool bLoginFailed = false;
+	bool bLoginInFlight = false;
 };

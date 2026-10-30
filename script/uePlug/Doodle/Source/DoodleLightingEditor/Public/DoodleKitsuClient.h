@@ -22,7 +22,22 @@ namespace DoodleKitsuClient
 	using FDoodleIterationResult = TValueOrError<FDoodleLightingIterationValue, FString>;
 	using FDoodleIterationCallback = TFunction<void(FDoodleIterationResult)>;
 
+	struct FDoodleLoginValue
+	{
+		FString AccessToken;
+		FString RefreshToken;
+		FString Email;
+		FString DisplayName;
+	};
+
+	using FDoodleLoginResult = TValueOrError<FDoodleLoginValue, FString>;
+	using FDoodleLoginCallback = TFunction<void(FDoodleLoginResult)>;
+
 	DOODLELIGHTINGEDITOR_API TValueOrError<FString, FString> GetLocalServerUrl();
 
 	DOODLELIGHTINGEDITOR_API FDoodleIterationResult StartFetchCurrentIteration(FDoodleIterationCallback InOnComplete);
+
+	DOODLELIGHTINGEDITOR_API FDoodleLoginResult StartLogin(
+		const FString& InServerUrl, const FString& InEmail, const FString& InPassword, FDoodleLoginCallback InOnComplete
+	);
 }

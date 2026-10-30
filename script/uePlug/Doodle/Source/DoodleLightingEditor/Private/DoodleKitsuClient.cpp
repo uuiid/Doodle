@@ -1,5 +1,6 @@
 #include "DoodleKitsuClient.h"
 
+#include "DoodleLightingSettings.h"
 #include "DoodleListenerPortShm.h"
 #include "DoodleLightingJson.h"
 
@@ -15,6 +16,7 @@ namespace
 {
 	constexpr double RequestTimeoutSeconds = 30.0;
 	const TCHAR* const LocalIterationPath = TEXT("/api/actions/local/ai_session/ue");
+	const TCHAR* const LocalLoginPath = TEXT("/api/auth/login");
 	const TCHAR* const LocalBearerToken = TEXT("xxxxx");
 
 	struct FDoodleRequestState
@@ -72,7 +74,8 @@ namespace
 
 	void SubmitRequest(
 		const TSharedRef<FDoodleRequestState>& InState, const FString& InVerb, const FString& InUrl,
-		const FString& InAuthorization, TFunction<bool(int32)> InIsSuccessCode, TFunction<void()> InOnDone
+		const FString& InAuthorization, TFunction<bool(int32)> InIsSuccessCode, TFunction<void()> InOnDone,
+		const FString& InBody = FString()
 	)
 	{
 		InState->Request = FHttpModule::Get().CreateRequest();
@@ -80,7 +83,14 @@ namespace
 		InState->Request->SetVerb(InVerb);
 		InState->Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 		InState->Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
-		InState->Request->SetHeader(TEXT("Authorization"), InAuthorization);
+		if (!InAuthorization.IsEmpty())
+		{
+			InState->Request->SetHeader(TEXT("Authorization"), InAuthorization);
+		}
+		if (!InBody.IsEmpty())
+		{
+			InState->Request->SetContentAsString(InBody);
+		}
 		InState->Request->SetTimeout(RequestTimeoutSeconds);
 		InState->Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
 
@@ -189,6 +199,67 @@ namespace
 			return MakeError(L_Error);
 		}
 	}
+
+	DoodleKitsuClient::FDoodleLoginResult MakeLoginResult(
+		const TValueOrError<TSharedPtr<FJsonObject>, FString>& InBody, const FString& InFallbackEmail
+	)
+	{
+		if (InBody.HasError())
+		{
+			return MakeError(InBody.GetError());
+		}
+
+		const TSharedPtr<FJsonObject>& L_Root = InBody.GetValue();
+
+		DoodleKitsuClient::FDoodleLoginValue L_Value;
+		if (!L_Root->TryGetStringField(TEXT("access_token"), L_Value.AccessToken) || L_Value.AccessToken.IsEmpty())
+		{
+			return MakeError(TEXT("登录响应里没有 access_token"));
+		}
+		L_Root->TryGetStringField(TEXT("refresh_token"), L_Value.RefreshToken);
+
+		const TSharedPtr<FJsonObject>* L_User = nullptr;
+		if (L_Root->TryGetObjectField(TEXT("user"), L_User) && L_User != nullptr && L_User->IsValid())
+		{
+			(*L_User)->TryGetStringField(TEXT("email"), L_Value.Email);
+			(*L_User)->TryGetStringField(TEXT("full_name"), L_Value.DisplayName);
+			if (L_Value.DisplayName.IsEmpty())
+			{
+				(*L_User)->TryGetStringField(TEXT("name"), L_Value.DisplayName);
+			}
+		}
+		if (L_Value.Email.IsEmpty())
+		{
+			L_Value.Email = InFallbackEmail;
+		}
+
+		return MakeValue(MoveTemp(L_Value));
+	}
+
+	FString ResolveLoginUrl(const FString& InServerUrl, FString& OutError)
+	{
+		const FString L_Url = InServerUrl.TrimStartAndEnd();
+		if (L_Url.IsEmpty())
+		{
+			OutError = TEXT("远程 URL 为空");
+			return FString();
+		}
+		if (!L_Url.StartsWith(TEXT("http://")) && !L_Url.StartsWith(TEXT("https://")))
+		{
+			OutError = TEXT("远程 URL 必须以 http:// 或 https:// 开头");
+			return FString();
+		}
+		return FString::Printf(TEXT("%s%s"), *L_Url.TrimEnd(), LocalLoginPath);
+	}
+
+	void ApplyLoginToSettings(const DoodleKitsuClient::FDoodleLoginValue& InValue, const FString& InServerUrl)
+	{
+		UDoodleLightingSettings* L_Settings = GetMutableDefault<UDoodleLightingSettings>();
+		L_Settings->LocalServerUrl = InServerUrl.TrimStartAndEnd();
+		L_Settings->Account = InValue.Email;
+		L_Settings->Cookies = InValue.AccessToken;
+		L_Settings->SaveConfig();
+	}
 }
 
 namespace DoodleKitsuClient
@@ -240,5 +311,67 @@ namespace DoodleKitsuClient
 		);
 
 		return MakeValue(FDoodleLightingIterationValue{});
+	}
+
+	FDoodleLoginResult StartLogin(
+		const FString& InServerUrl, const FString& InEmail, const FString& InPassword, FDoodleLoginCallback InOnComplete
+	)
+	{
+		if (!InOnComplete)
+		{
+			return MakeError(TEXT("登录回调为空"));
+		}
+		if (InEmail.TrimStartAndEnd().IsEmpty())
+		{
+			return MakeError(TEXT("邮箱为空"));
+		}
+		if (InPassword.IsEmpty())
+		{
+			return MakeError(TEXT("密码为空"));
+		}
+
+		FString L_UrlError;
+		const FString L_Url = ResolveLoginUrl(InServerUrl, L_UrlError);
+		if (!L_UrlError.IsEmpty())
+		{
+			return MakeError(L_UrlError);
+		}
+
+		const TSharedRef<FJsonObject> L_RequestRoot = MakeShared<FJsonObject>();
+		L_RequestRoot->SetStringField(TEXT("email"), InEmail.TrimStartAndEnd());
+		L_RequestRoot->SetStringField(TEXT("password"), InPassword);
+		L_RequestRoot->SetBoolField(TEXT("isTrusted"), true);
+
+		FString L_RequestBody;
+		const TSharedRef<TJsonWriter<>> L_Writer = TJsonWriterFactory<>::Create(&L_RequestBody);
+		if (!FJsonSerializer::Serialize(L_RequestRoot, L_Writer))
+		{
+			return MakeError(TEXT("登录请求体序列化失败"));
+		}
+
+		const FString L_Email = InEmail.TrimStartAndEnd();
+		const FString L_ServerUrl = InServerUrl.TrimStartAndEnd();
+		TSharedRef<FDoodleRequestState> L_State = MakeShared<FDoodleRequestState>();
+		SubmitRequest(
+			L_State, TEXT("POST"), L_Url, FString(),
+			[](int32 InStatusCode) { return EHttpResponseCodes::IsOk(InStatusCode); },
+			[L_State, L_Email, L_ServerUrl, L_OnComplete = MoveTemp(InOnComplete)]() mutable
+			{
+				FDoodleLoginResult L_Result = MakeLoginResult(L_State->Body, L_Email);
+				if (L_Result.HasValue())
+				{
+					ApplyLoginToSettings(L_Result.GetValue(), L_ServerUrl);
+					UE_LOG(LogTemp, Log, TEXT("[DoodleKitsu] 登录成功 %s"), *L_Result.GetValue().Email);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("[DoodleKitsu] 登录失败 %s"), *L_Result.GetError());
+				}
+				L_OnComplete(MoveTemp(L_Result));
+			},
+			L_RequestBody
+		);
+
+		return MakeValue(FDoodleLoginValue{});
 	}
 }
