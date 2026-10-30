@@ -598,4 +598,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_watch_file_maya_anim, get) {
   co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_watch_infos));
 }
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_ai_session_ue, post) {
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{});
+}
+
 }  // namespace doodle::http::local

@@ -156,4 +156,12 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 DOODLE_HTTP_ROUTE("/api/actions/local/watch_file/maya_anim")
 DOODLE_HTTP_FUN_END()
+// 监听本地 ai 会话, 为本地的 ai 会话提供一个和UE的通信接口
+// /api/actions/local/ai_session/ue
+DOODLE_HTTP_FUN_C(actions_local_ai_session_ue, local_http_fun)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/actions/local/ai_session/ue")
+DOODLE_HTTP_FUN_END()
+
+
 }  // namespace doodle::http::local

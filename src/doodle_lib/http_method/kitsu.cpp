@@ -327,6 +327,7 @@ http_route_ptr create_kitsu_local_route() {
       .reg_c<local::tools_add_watermark>()
       .reg_c<local::actions_local_task_run>()
       .reg_c<local::actions_local_watch_file_maya_anim>()
+      .reg_c<local::actions_local_ai_session_ue>()
       .reg_c<socket_io::socket_io_http>(l_sid_ctx)
 
       ;
