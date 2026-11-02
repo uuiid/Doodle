@@ -1,48 +1,65 @@
 ---
 name: doodle-openapi-doc-sync
-description: 在 Doodle 仓库改了后端 HTTP 路由（新增/删除/迁移 URL）、结构体或响应字段（新增 kmt_key、canvas_ids、person_links、backend 等）、列表响应体整体改形（裸 array 改为 {data,count,sum} 对象）、查询过滤参数（新增 in query 的 backend / task_type / time_beg / time_end / episode）、或枚举取值（如 TaskBackend 加 kmt_image）后，同步 docs/api 下的 OpenAPI 分片（openapi.yaml 的 paths $ref、paths/*.yaml 的参数与 description 清单、components/schemas/*.yaml 的属性、enum 与组合 schema），并处理新增枚举型字段复用既有枚举 schema、可选字段默认值语义写入 description，最后用 build/tmp/check_openapi.py 与 pyyaml 校验；当用户说“把 ai_studio 的字段更改同步到 docs/api/openapi.yaml”“路由改了同步文档”“新增 backend 查询参数同步文档”“补齐 time_beg/time_end 查询参数”“列表响应改成 data/count/sum 同步文档”“新增后端枚举值同步文档”“新增了 task_backend backend_{task_backend::seedance2} 同步文档”“openapi 引用校验”，或直接贴出 src\doodle_lib\http_method 的 .cpp 行号范围（如 task.cpp:610-722）要求同步相应文档时使用。
-version: 5
+description: 在 Doodle 仓库改了后端 HTTP 路由（新增/删除/迁移 URL）、结构体或响应字段（新增 kmt_key、canvas_ids、person_links、backend 等）、同一路径的 get 与 post 需要返回同一结构体、列表响应体整体改形（裸 array 改为 {data,count,sum} 对象）、查询过滤参数（新增 in query 的 backend / task_type / time_beg / time_end / episode）、或枚举取值（如 TaskBackend 加 kmt_image）后，同步 docs/api 下的 OpenAPI 分片（openapi.yaml 的 paths $ref、paths/*.yaml 的参数与 description 清单、components/schemas/*.yaml 的属性、enum 与组合 schema），并处理新增枚举型字段复用既有枚举 schema、可选字段默认值语义写入 description，最后用 build/tmp/check_openapi.py 与 pyyaml 校验；当用户说“把 ai_studio 的字段更改同步到 docs/api/openapi.yaml”“路由改了同步文档”“新增 backend 查询参数同步文档”“补齐 time_beg/time_end 查询参数”“列表响应改成 data/count/sum 同步文档”“新增后端枚举值同步文档”“新增了 task_backend backend_{task_backend::seedance2} 同步文档”“get 与 post 让两个 URL 返回结构一致”“openapi 引用校验”，或直接贴出 src\doodle_lib\http_method 的 .cpp / .h / reg.h 行号范围（如 task.cpp:610-722、ai_light.h:109-117）要求同步相应文档时使用。
+version: 6
 ---
 
-# Doodle OpenAPI 文档同步（路由 + 字段 + 查询参数/枚举 + 响应体改形）
+# Doodle OpenAPI 文档同步（路由 + 字段 + 查询参数/枚举 + 响应体改形 + 多方法一致性）
 
-`docs/api/` 是接口文档的唯一来源，结构是 `openapi.yaml`（`paths` 里每条只是 `$ref: paths/xxx.yaml`）+ `paths/*.yaml` 分片 + `components/schemas/*.yaml` 分片。本 skill 覆盖四类改动，都要“先全量定位、再改文件、最后校验”：
+`docs/api/` 是接口文档的唯一来源，结构是 `openapi.yaml`（`paths` 里每条只是 `$ref: paths/xxx.yaml`）+ `paths/*.yaml` 分片 + `components/schemas/*.yaml` 分片。本 skill 覆盖五类改动，都要“先全量定位、再改文件、最后校验”：
 
 - **A. 路由级**：新增 / 删除 / 迁移 URL（`git mv` 改名、去掉路径层级参数）。
 - **B. 字段级**：后端结构体或响应新增/改名一个字段，需要同步可写 schema、响应 schema 描述、以及 path 分片里硬编码的字段清单。若新增字段是枚举型（如 `task_backend backend_`），还要决定“复用既有枚举 schema 还是内联手抄”，并把代码里的默认值与可选性写进 description。
 - **C. 查询参数级 / 枚举取值级**：给 GET 等接口新增 `in: query` 过滤参数（可能一次缺多个，如 `backend`、`time_beg`、`time_end`、`episode`），或给枚举 schema（如 `TaskBackend.yaml`）追加取值，需要同步分片 `parameters`、枚举 schema 的 `enum` 与各取值 `description`、分片 `description` 里硬编码的过滤字段与“非法枚举值”清单。
 - **D. 响应体改形级**：整个响应体形状变了（如列表接口从裸 `type: array` 改为 `{data, count, sum}` 对象），需要新建组合 schema、把分片 `responses.200` 的 `$ref` 改指新 schema，并核对 `description` 里对 `size` / `offset` 等参数作用范围的硬编码说明。
+- **E. 多方法一致性级**：同一分片下 `get` 与 `post`（或 `put` / `delete`）共用一条 URL、且现在要返回同一个结构体时，要把两个方法的 `responses` 统一指向同一个 schema，并回读聚合读模型 schema 核对字段不漂移。
 
-四类都要用 `pyyaml` 校验，能跑时再跑 `build/tmp/check_openapi.py` 查 `$ref` 完整性。本工作区里 `git mv`、`Remove-Item`、`git status` 常被沙箱拒绝：迁移只能走“write 新建 + edit 旧文件 + 改 $ref”，删除旧分片也只能写占位说明。
+每类都要用 `pyyaml` 校验；`check_openapi.py` 在**本工作区常不存在**，先按 F.1 复制重建再跑。本工作区里 `git mv`、`Remove-Item`、`git status` 常被沙箱拒绝：迁移只能走“write 新建 + edit 旧文件 + 改 $ref”，删除旧分片也只能写占位说明。
 
 ## Steps
 
-### 0. 从代码行号出发（用户给了 .cpp 路径 + 行号时）
+### 0. 从代码行号出发（用户给了 .cpp / .h / reg.h 路径 + 行号时）
 
-1. `read` 用户给的行号范围（如 `src\doodle_lib\http_method\seedance2\task.cpp:610-722`），确认 handler 名与宏参数：`DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get)` 里的第二个实参就是 HTTP 方法（`get` / `post` / `put` / `delete`）。
-2. **用 handler 类名反查真实注册路由**，不要从行号猜 URL：`esearch`（或 `grep`）在 `src/doodle_lib/http_method` 的 `kitsu.cpp` 等注册表里搜该类名（如 `seedance2_task`）与 `reg_t<` / `reg_c<`，拿到实际 URL，例如 `/api/seedance2/task`、`/api/seedance2/subproject/{subproject_id}/entity/{entity_id}/task`。
-3. 由 URL 反推分片文件名（规则见 A.1），再在 `docs/api/openapi.yaml` 上 `grep` 该分片名确认它**已被引用**。已存在 = 这是改字段/参数，**不要在 `openapi.yaml` 里新增 `$ref`**；只有代码里出现全新 URL 才走 A 类。在报告里先写出“实际注册 URL + 对应分片 + 是否新增 $ref”的结论。
-4. `read` 该分片的完整内容作为改动底稿，再按 B / C / D 类分支落地。
+1. `read` 用户给的行号范围：
+   - `.cpp` 里的 `DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, get)`：第二个实参就是 HTTP 方法（`get` / `post` / `put` / `delete`）。
+   - `.h` 里的声明区（如 `ai_light.h:109-117`）：拿到类名与 `DOODLE_HTTP_FUN` / `DOODLE_HTTP_ROUTE` 宏里的 URL 片段，**仍然要按第 2 步反查注册表**，头文件里的 URL 只是声明。
+   - `reg.h` 里的路由声明块：读出类名与 URL，再到注册表确认 `reg_c<类名>()` / `reg_t<>` 真实存在。
+2. **用 handler 类名反查真实注册路由**，不要从行号猜 URL：在 `src/doodle_lib/http_method` 的 `kitsu.cpp` 等注册表里搜该类名与 `reg_t<` / `reg_c<`，拿到实际 URL（如 `/api/doodle/ai/light/session/{session_id}/iteration`、`/api/seedance2/task`）。报告里给出「行号 → 类名 → URL → 分片」的对照。
+3. **同一个类名要搜两次**：先限定在 `src/doodle_lib/http_method/<域>`（如 `kitsu`）目录下定位实现（步骤 5 的 grep 就找到了 `ai_light.cpp:987` 的 `get` 与 `:1008` 的 `post`），再放宽到 `src/doodle_lib/http_method` 甚至 `src/doodle_lib` 才能找到 `kitsu.cpp:240` 的 `.reg_c<iteration_submit_route>()`——`reg_c` 注册点和实现不在同一目录。只用第一次 grep 的结果会漏掉注册点，只有第二次才能写出真实注册 URL。
+4. 由 URL 反推分片文件名（规则见 A.1），再在 `docs/api/openapi.yaml` 上 `grep` 该 URL 片段（如 `ai/light/session`）或分片名，确认它**已被引用**。已存在 = 这是改字段/参数/响应形状，**不要在 `openapi.yaml` 里新增 `$ref`**；只有代码里出现全新 URL 才走 A 类。在报告里先写出“实际注册 URL + 对应分片 + 是否新增 $ref”的结论。
+5. 需要参照既有分片写法时，用 `esearch` 通配（如 `*ai_light*`、`*seedance2*`）限定在 `docs/api/paths` 下枚举同域分片，挑一个结构最接近的 `read` 作模板。
+6. `read` 该分片的完整内容作为改动底稿：逐块确认它是否已经有 `get` / `post` 两段，哪些方法的 `responses` 还指向旧形状，再按 B / C / D / E 类分支落地。
 
 ### A. 路由级同步
 
-1. 用 `grep`（pattern 取路由前缀，如 `canvas`）在 `docs/api/openapi.yaml` 上定位所有相关 `paths` 条目，记录每条 path 对应的 `$ref: paths/....yaml`。分片命名规则是**路径转文件名**：`/api/a/{id}/b` → `api_a_{id}_b.yaml`，参数保留花括号。
-2. 确定新路径后反推新分片文件名。例如 `/api/seedance2/subproject/{subproject_id}/canvas` → `api_seedance2_subproject_{subproject_id}_canvas.yaml`。用 `read` 读取每个旧分片的完整内容与它引用的 schema，作为新文件底稿。
-3. 用 `write` 在新文件名下创建分片：保留原 `tags` / `summary` / `responses`，按新路径补齐路径参数（新增层级参数如 `subproject_id` 放在 `canvas_id` 前，`in: path`、`required: true`、类型与同级参数保持一致），`description` 改成新语义。
-4. 用 `edit` 更新 `docs/api/openapi.yaml`：把旧 path 条目替换为新 path 与对应 `$ref`，保持同一缩进与相邻条目顺序风格。若 `paths` 下引用的 schema 也要换，一并改分片里的 `$ref`。
+1. 用 `grep`（pattern 取路由前缀，如 `canvas`）在 `docs/api/openapi.yaml` 上定位所有相关 `paths` 条目，记录每条 path 对应的 `$ref: paths/....yaml`。分片命名规则是**路径转文件名**：`/api/a/{id}/b` → `api_a_{id}_b.yaml`，参数保留花括号（如 `GET /api/seedance2/task/{task_}` → `paths/api_seedance2_task_{task}.yaml`）。
+2. 确定新路径后反推新分片文件名，用 `read` 读取每个旧分片的完整内容与它引用的 schema，作为新文件底稿。
+3. 用 `write` 在新文件名下创建分片：保留原 `tags` / `summary` / `responses`，按新路径补齐路径参数（新增层级参数如 `subproject_id` 放在 `canvas_id` 前，`in: path`、`required: true`、类型与同级参数保持一致），`description` 改成新语义，`responses.200` 明确说明“响应是对象而非裸数组”一类形状。
+4. 用 `edit` 更新 `docs/api/openapi.yaml`：把旧 path 条目替换为新 path 与对应 `$ref`（或在新位置追加 `$ref: paths/<新分片>.yaml`），保持同一缩进与相邻条目顺序风格。若 `paths` 下引用的 schema 也要换，一并改分片里的 `$ref`。
 5. 删除 / 迁移旧分片时，旧文件不删（删不掉）：用 `edit` 把旧文件内容整体替换为两行迁移说明，例如：
    ```yaml
    # 已迁移至 api_seedance2_subproject_{subproject_id}_canvas.yaml
    # 画布现在必须归属于子项目：/api/seedance2/subproject/{subproject_id}/canvas
    ```
-   接口被删除而非迁移时，同样写成 `# 已删除：对应硬删` 之类的注释占位，让旧文件不再是有效 YAML 定义。但**必须在最终报告里明确写出“这些旧文件需你手工 `git rm`”，不要静默保留**。
+   接口被删除而非迁移时，同样写成 `# 已删除：对应硬删` 之类的注释占位，让旧文件不再是有效 YAML 定义。但**必须在最终报告里明确写出“这些旧文件需你手工 `git rm`”，不要静默保留**。从 `openapi.yaml` 里删掉 `$ref` 条目这一步必须真的做，否则 `check_openapi.py` 仍会检查旧分片。
 6. 若有多个分片的同一参数块（如 `- name: subproject_id`）需要统一删除，不要手改逐个冒风险：写一个一次性 python 脚本（或逐文件 `edit`），处理后在 `docs/api/paths` 上 `grep 'name: subproject_id'` 确认目标分片无残留，再逐个 `yaml.safe_load` 确认仍可解析。
+7. 组合 schema（如任务详情 `TaskDetail`）优先用 `allOf` 复用既有响��� schema，再追加关联对象，不要内联手抄主 schema 的字段：
+   ```yaml
+   allOf:
+     - $ref: ./Task.yaml
+     - type: object
+       properties:
+         entity:
+           $ref: ./Entity.yaml
+           description: <外键来源，见下条>
+   ```
+   关联对象的**外键必须读实现确认**（如 `entity` 取任务行里的 `ai_episode_id` 还是 `entity_id`），不凭字段名猜测；在 `description` 里写明取值来源（文件和字段名）。
 
 ### B. 字段级同步
 
 1. **先定位，再动手**：用 `grep`（pattern 取字段名，如 `apipy_key`、`kmt_key`、`backend`）在 `docs/api` 上**全量搜索**，一次性列出所有出现该字段的分片文件。字段级改动通常不止一处。
 2. 再 `grep`（pattern 取业务域，如 `AI工作室|ai_studio`）在 `docs/api/openapi.yaml` 上确认该业务域的 `paths` `$ref` 与 `tags` 列表，检查是否还有没被分片覆盖的引用。
-3. `read` 读后端源头确认语义。**结构体路径别猜**：实体常定义在 `src/doodle_core/metadata/<域>/<x>.h`（如 `src/doodle_core/metadata/seedance2/task.h`），`src/doodle_lib/metadata/...` 可能根本不存在（`grep` 会报 `exit 2: os error 2`）。先从代码里 include 的头文件名或 `esearch` 的文件名搜索定位，再用 `include=*task*.h` 一类过滤在正确目录上 `grep` 字段名。读 `put_property_list()`、`from_json` / `to_json` 的读取方式（是否 `if (j.contains("xxx"))`、成员默认值是什么）、返回体应取哪些字段（密钥类字段是否只写不读）。
+3. `read` 读后端源头确认语义。**结构体路径别猜**：实体常定义在 `src/doodle_core/metadata/<域>/<x>.h`（如 `src/doodle_core/metadata/seedance2/task.h`、`src/doodle_core/metadata/ai_light/iteration_view.h`），`src/doodle_lib/metadata/...` 可能根本不存在（`grep` 会报 `exit 2: os error 2`）。先从代码里 include 的头文件名或 `esearch` 的文件名搜索定位，再用 `include=*task*.h` 一类过滤在正确目录上 `grep` 字段名。读 `put_property_list()`、`from_json` / `to_json` 的读取方式（是否 `if (j.contains("xxx"))`、成员默认值是什么）、返回体应取哪些字段（密钥类字段是否只写不读）。
 4. 按三处联动改（缺一处文档就自相矛盾）：
    - **可写 schema**（如 `components/schemas/AiStudioWrite.yaml`）：新增字段的 `type` 与 `description`，放在同类字段后面。POST 与 PUT 共用的 schema，新字段必须在这里可写。
    - **响应 schema 描述**（如 `components/schemas/AiStudio.yaml`）：若描述里硬编码了“响应中不包含 `a` / `b` / `c`”这类密钥清单，把新字段名补进去。响应里实际带出该字段时，在 `properties` 里加属性。
@@ -62,7 +79,7 @@ version: 5
 ### C. 查询参数级 / 枚举取值级同步
 
 1. **先全量定位**：用 `grep` 在 `docs/api` 上搜枚举 schema 名（如 `TaskBackend`）与要新增的参数名（如 `backend`），拿到：引用该枚举的 `components/schemas/*.yaml`（响应 schema）、各 `paths/*.yaml` 里 `$ref` 到它的位置、以及分片 `description` 里硬编码列出的过滤字段 / 枚举值清单。
-2. `read` 后端源头确认语义：查询参数名、是否能空、对应响应字段名（如 `backend` / `task_type` 过滤的是响应里的 `backend` / `type` 字段）、新枚举值在代码里代表什么（同步还是异步、计费方式、是否已下线）。分片里现有参数缺哪些再看一遍 handler 的 `get_param` 一类调用——**一次可能缺好几个**（如 `time_beg` / `time_end` / `episode`），别只补用户点名的那一个。
+2. `read` 后端源头确认语义：查询参数名、是否能空、对应响应字段名（如 `backend` 过滤响应里的 `backend` 字段）、新枚举值在代码里代表什么（同步还是异步、计费方式、是否已下线）。分片里现有参数缺哪些再看一遍 handler 的 `get_param` 一类调用——**一次可能缺好几个**（如 `time_beg` / `time_end` / `episode`），别只补用户点名的那一个。
 3. 改分片 `parameters`：在同类参数（如 `task_type`）后面追加 `- name: backend` / `in: query` / `required: false`，`schema` 用 `$ref: ../components/schemas/TaskBackend.yaml` 复用枚举而不是重抄一遍值，`description` 写“按任务后端过滤（seedance2 / transfer_station / ...）”。时间范围类参数写明格式（`time_beg` / `time_end` 的日期或时间格式）与是否闭区间，取值必须来自代码。
 4. 改枚举 schema（如 `components/schemas/TaskBackend.yaml`）：在 `enum` **末尾按既有顺序追加**新值（如 `kmt_image`），不要打乱原有值顺序；同时在 `description` 里补该取值的中文语义（图片中转站、异步任务、轮询地址、计费方式；已下线的写“已下线，仅为存量任务兼容保留”）。
 5. 改分片 `description` 里硬编码的约束清单，两处都要同步：过滤语义行（“`task_type` 过滤响应中的 `type`，`backend` 过滤响应中的 `backend`”）与非法值清单（“非法枚举值（`status` / `task_type` / `backend`）、非法 UUID……会导致请求失败”）。
@@ -95,9 +112,19 @@ version: 5
 4. **改分片 `description`**：把分片顶部 `description` 里关于响应体的说明改写为对象语义（如“响应体是对象而非裸数组，`size` / `offset` 只作用于 `data`”），并列出 `data` / `count` / `sum` 各自的含义。
 5. 只在“原 schema 需要复用给其他接口”时才考虑 `allOf` 包裹原 schema；整个响应形状都变了就新建组合 schema，不要给列表接口继续挂裸 array。
 
-### E. 校验（四类改动都做）
+### E. 多方法一致性同步（同一 URL 的 get / post 返回同一结构体）
 
-1. **先找脚本再跑**，别猜路径：`esearch`/`grep` 搜 `check_openapi.py`（本仓库在 `build/tmp/check_openapi.py`）。它遍历 `openapi.yaml` 的 `paths`，检查每个 `$ref` 指向的文件是否存在，输出 total paths 与 missing path refs；再检查分片里的 `#/components/schemas/...` 引用，输出 missing schema refs。若该脚本不存在，说明原因后再按本步逻辑临时写一个到 `build/tmp/`，不要用 PowerShell 内联 `python -c` ���带 `$ref` 的完整脚本（`$` 会被吞掉）。
+1. **先确认两个方法都存在**：`grep` 类名在实现目录下（如 `src/doodle_lib/http_method/kitsu`），确认 `DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(<类名>, get)` 与 `(<类名>, post)` 各自的行号；报告里写出这两个行号，别只改看到的那一个。
+2. `read` 两个实现各自写出的 JSON 键，确认它们现在真的返回同一形状、同一键名；若实现里有差异，先在报告里点明差异，再决定 schema 取并集还是以其中一个为准。
+3. 在分的**读模型结构体**定义（如 `src/doodle_core/metadata/ai_light/iteration_view.h` 的 `ai_light_current_iteration_t`）中确认字段清单、类型与可空性，作为新 schema 的权威来源。
+4. `write` 新 schema（如 `components/schemas/AiLightIterationView.yaml`），`description` 里写明“`<URL>` 的 `get` 与 `post` 都返回本形状”，并注明它是哪个结构体的精简子集、刻意不带哪些字段。
+5. `write`（整体重写）该分片，让 **`get` 与 `post` 的 `responses.200` 都 `$ref` 同一个 `../components/schemas/<新schema>.yaml`**；其他方法的 `responses`、`tags` / `summary` / 路径参数保持原样。若两个方法在分片里原本合并写在同一个 `responses` 块下，拆分时不要重复定义 `tags` / `parameters`。
+6. **交叉核对聚合读模型**：`read` 同类聚合读模型 schema（如 `components/schemas/AiLightSessionDetail.yaml`，其 `iterations` 数组项多半就是同一结构体），逐字段比对属性名、类型、`nullable`；不一致时以代码为准改新 schema，并在报告里说明“聚合读模型那边是否需要跟着改”。
+7. 同一 URL 还有其他方法（`put` / `delete`）时同样检查：要么也指向同一 schema，要么在分片 `description` 里写明它们的响应不同。
+
+### F. 校验（五类改动都做）
+
+1. **先确认脚本在不在本工作区，不在就重建再跑**：`esearch` 搜 `check_openapi.py`，先限定 `path=E:\Doodle\build\tmp`；本工作区常有 `total: 0`。此时把范围放宽到整仓（`path=E:\Doodle`），旧副本可能在 `E:\Doodle_old\build\tmp\check_openapi.py`：`read` 它，再 `write` 到 `build/tmp/check_openapi.py` 重建，然后 `pwsh` 跑 `python build/tmp/check_openapi.py`。它遍历 `openapi.yaml` 的 `paths`，检查每个 `$ref` 指向的文件是否存在，输出 total paths 与 missing path refs；再检查分片里的 `#/components/schemas/...` 引用，输出 missing schema refs。不要用 PowerShell 内联 `python -c` 写带 `$ref` 的完整脚本（`$` 会被吞掉）。
 2. 对每个改动过的文件单独做 `yaml.safe_load` 解析校验（含 `openapi.yaml` 本体与新建 schema），例如：
    ```powershell
    python -c "import yaml,io; [yaml.safe_load(io.open(p,encoding='utf-8')) for p in ['docs/api/openapi.yaml','docs/api/paths/api_seedance2_task.yaml','docs/api/components/schemas/TaskListPage.yaml','docs/api/components/schemas/Task.yaml']]; print('YAML OK')"
@@ -106,8 +133,9 @@ version: 5
 
 ## Pitfalls
 
-- **从行号猜 URL / 猜结构体路径**：行号只告诉你 handler 在哪，真实注册 URL 要去注册表（`kitsu.cpp` 的 `reg_t<>` / `reg_c<>`）里按类名反查；结构体在 `src/doodle_core/metadata/...`，`src/doodle_lib/metadata/seedance2` 这类路径不存在时 `grep` 会直接 `exit 2`，别在同一路径上反复重试，换成 include 头文件名 / `include=*x*.h` 过滤再搜。
-- **已知路径只是缺引用就去加 `$ref`**：分片已存在说明这是改字段/参数，`openapi.yaml` 不动，报告里要明确说“不是新路径”。
+- **把 esearch 的 0 命中当成“符号不存在”**：本工作区 Everything 索引陈旧是常态（同一次任务里 `iteration_submit_route` 在 `kitsu.cpp` 上 `total: 0`、`ai/light/session/...` 片段却能在 `openapi.yaml` 上命中）。0 命中只说明该范围内索引没刷。立刻退回 `grep`，并且**从窄到宽换两个目录**：先 `path=src/doodle_lib/http_method/kitsu` + `include=*.cpp` 找实现，再 `path=src/doodle_lib`（pattern 加 `|` 备选写法，如 `iteration_submit_route|ai/light/session/\{session_id_\}/iteration`）找 `reg_c<>` 注册点。只有两轮都空、或 `grep` 报 `exit 2` 路径不存在，才能说该符号不在代码里。
+- **从行号猜 URL / 猜结构体路径**：行号只告诉你 handler 在哪，真实注册 URL 要去注册表（`kitsu.cpp` 的 `reg_t<>` / `reg_c<>`）里按类名反查；`.h` 里的宏声明也只是声明。结构体在 `src/doodle_core/metadata/...`，`src/doodle_lib/metadata/seedance2` 这类路径不存在时 `grep` 会直接 `exit 2`，别在同一路径上反复重试，换成 include 头文件名 / `include=*x*.h` 过滤再搜。
+- **已知路径只是缺引用就去加 `$ref`**：分片已存在说明这是改字段/参数/响应形状，`openapi.yaml` 不动，报告里要明确说“不是新路径”。
 - **`git mv` / `Remove-Item` / `git status` 会被沙箱拒绝**（`ResourceUnavailable: ... 拒绝访问`）。别重试、别换 `cmd /c del`，按 A.3–A.5 的 write + edit 路径走。
 - **只改 `openapi.yaml` 不改分片**：`$ref` 指向不存在的文件名，文档校验必挂。新建分片、改 `$ref`、处理旧分片必须一起做。
 - **字段级只改一处**：只往 Write schema 加字段、忘了响应 schema 的“不含密钥”描述和 path 分片的“可写字段清单”，文档会自相矛盾。动手前先全量 `grep` 字段名拿到完整清单。
@@ -118,6 +146,9 @@ version: 5
 - **查询参数级只加参数块**：只往分片 `parameters` 里塞 `backend`，却没在枚举 schema 里加值、没改分片 `description` 的过滤语义与“非法枚举值”清单，是最容易漏的联调点；三处一起改。也别只补用户点名的那一个参数：handler 里 `time_beg` / `time_end` / `episode` 等一起被读取时，分片缺的都要补齐。
 - **响应体改形只换 `$ref` 不建 schema**：把分片 `$ref` 改成 `../components/schemas/TaskListPage.yaml` 却没 `write` 该文件，`check_openapi.py` 会直接报 missing schema refs；新建文件里的 `items.$ref` 也要指向真实存在的 `X.yaml`。
 - **改形后没改描述**：分片 `description` 还写着“返回数组”，或没说明 `size` / `offset` 只作用于 `data`、`count` / `sum` 不受分页影响，调用方会误用。
+- **只统一了一个方法的 responses**：同一 URL 的 `get` 改成新 schema 而 `post` 还挂在旧 schema（或反过来）时，用户看到的仍是“两个 URL 结构不一致”。改完必须 `read` 整个分片，确认每个方法各自的 `responses.200.$ref` 是同一个文件。
+- **改了两处形状却没回读聚合 schema**：新 schema 的 `iteration` 字段若与 `AiLightSessionDetail.yaml` 的 `iterations` 项类型不同（如一处 `integer` 一处 `int64`/`nullable`），同一数据在文档里出现两种形状。改完顺手 `read` 聚合 schema 比对。
+- **没建脚本就说校验通过**：本工作区 `build/tmp/check_openapi.py` 常常不存在，`esearch` 在 `build/tmp` 上会返回 0 命中。别跳过这一步，也别只跑 `yaml.safe_load` 交差；按 F.1 从 `E:\Doodle_old\build\tmp` 抄回重建后跑，报告里写出 total paths 与两个 missing 列表都为空。
 - **枚举值追加打乱顺序 / 漏写语义**：新值要接在 `enum` 末尾保持既有顺序，且枚举 schema 的 `description` 里必须写明它的中文语义（含异步/同步、是否已下线），只在 `enum` 里加一个裸字符串不算同步。
 - **新路径多出的层级参数漏写**：`subproject_id` 之类必须同时出现在每个受影响分片的 `parameters` 里；反过来，路径缩短后要批量清掉则用脚本 + `grep` 验证，别靠肉眼。
 - **文件名花括号**：参数名要保留 `{...}`（如 `api_..._{subproject_id}_canvas.yaml`），不要转成别的占位符。
@@ -128,15 +159,17 @@ version: 5
 
 ## Verification
 
-- 在 `docs/api` 下跑 `check_openapi.py`：输出 total paths 数量（如 226/227 条或当前实际条数），`missing path refs` 与 `missing schema refs` 均为空列表。
+- 在 `docs/api` 下跑 `check_openapi.py`：输出 total paths 数量（如 227 条或当前实际条数），`missing path refs` 与 `missing schema refs` 均为空列表；脚本本工作区不存在时先按 F.1 从 `E:\Doodle_old\build\tmp` 重建。
 - 对每个改动过的 YAML（含 `openapi.yaml` 与新建 schema）逐个 `yaml.safe_load`，无 parse failure，报告 `parsed OK` / `YAML OK`。
-- 从行号出发的任务：报告里先写出“实际注册 URL + 对应分片 + 是否新增 `$ref`”的结论，再列字段/参数改动。
+- 从行号出发的任务：报告里先写出「行号 → 类名 → 实际注册 URL → 对应分片 → 是否新增 `$ref`」的对照，再列字段/参数改动。
 - `grep` 新路由前缀与旧路由前缀：新 path 都有 `$ref` 且格式与相邻条目一致；旧前缀（如 `paths/api_canvas.yaml`）在 `openapi.yaml` 里已无引用。
 - 字段级：`grep` 字段名，确认可写 schema 有属性、响应 schema 描述含该名、path 分片字段清单含该名，三处齐全。
 - 共享形状的后端清单：`grep` 后端值（如 `kmt_image`、`apipy_image`）在 `TaskBackend.yaml`、`TransferStationTaskDataRequest.yaml` 与相关 path 分片里表述一致，`grep` “只有|仅” 已无残留旧说法。
 - 枚举型新字段：`read` 改过的 schema 与分片，确认 `backend` 这类属性写的是 `$ref` 到枚举 schema（响应 `./TaskBackend.yaml`、分片 `../components/schemas/TaskBackend.yaml`），与 `Task.yaml` 既有写法一致；`read` 分片 `description` 确认写了“省略时默认 `seedance2`”一类语义，且该字段不在 `required` 列表里。
 - 查询参数 / 枚举级：`read` 改过的分片，确认 `parameters` 里有 `name: backend`（及 `time_beg` / `time_end` 等）且 `schema.$ref` 指向枚举 schema；`read` 枚举 schema，确认新值在 `enum` 末尾、`description` 含其语义；`grep` 分片 `description`，确认过滤字段与“非法枚举值”清单都含新参数。
 - 响应体改形：`read` 新建的组合 schema（如 `TaskListPage.yaml`），确认 `data.items.$ref` 指向原有 schema、`count` / `sum` 的类型与可空性与代码一致；`grep` 新 schema 文件名，确认至少一个分片引用它，且该分片不再指向裸 array。
+- 多方法一致性：`read` 整个分片，确认 `get` 与 `post` 的 `responses.200.$ref` 都指向同一 `components/schemas/*.yaml`；`grep` 该 schema 文件名，确认没有别的分片还指向旧形状；`read` 聚合读模型 schema（如 `AiLightSessionDetail.yaml`），逐个比对字段名与类型，差异已修正或在报告里说明。
+- 组合 schema：`read` 新 schema，确认用 `allOf` 复用主 schema（如 `./Task.yaml`），外键 `description` 里写明的取值来源与实现一致。
 - `read` 至少一个新分片，确认 `tags` / `summary` / `parameters`（含新增层级参数）/ `responses` 结构完整、YAML 缩进正确。
-- 汇报改动范围、仍未提交的状态；若残留旧分片，明确列出“需手工 `git rm`”。
+- 汇报改动范围、校验结果与仍未提交的状态；若残留旧分片，明确列出“需手工 `git rm`”。
 - TODO: 若团队成员规定旧分片可以随提交一并删除，请在此补充仓库层面约定（现有证据只支持“写迁移说明”的处理方式）。
