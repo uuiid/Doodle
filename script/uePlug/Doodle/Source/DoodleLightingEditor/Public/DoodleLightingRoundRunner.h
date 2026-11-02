@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DoodleLightingExecutor.h"
 #include "DoodleLightingTypes.h"
 #include "UObject/Object.h"
 
@@ -47,6 +48,7 @@ private:
 
 	bool StartRoundInternal(FString& OutError);
 	FDoodleTaskPayload Payload;
+	DoodleLightingExecutor::FAnchorCamera AnchorCamera;
 	TArray<FDoodleCandidateReport> CandidateReports;
 	TMap<FString, double> CandidateStartSeconds;
 

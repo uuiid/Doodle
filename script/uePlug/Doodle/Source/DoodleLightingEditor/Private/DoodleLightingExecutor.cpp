@@ -29,22 +29,12 @@
 #include "Engine/SpotLight.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
-#include "FbxImporter.h"
 #include "GameFramework/WorldSettings.h"
 #include "LevelSequence.h"
-#include "LevelSequenceActor.h"
-#include "LevelSequencePlayer.h"
 #include "Misc/Paths.h"
 #include "MovieScene.h"
-#include "MovieSceneBindingReferences.h"
-#include "MovieSceneToolHelpers.h"
-#include "MovieSceneToolsUserSettings.h"
-#include "Sections/MovieScene3DTransformSection.h"
 #include "Sections/MovieSceneCameraCutSection.h"
-#include "Sections/MovieSceneSpawnSection.h"
-#include "Tracks/MovieScene3DTransformTrack.h"
 #include "Tracks/MovieSceneCameraCutTrack.h"
-#include "Tracks/MovieSceneSpawnTrack.h"
 
 namespace DoodleLightingExecutor
 {
@@ -53,15 +43,6 @@ namespace DoodleLightingExecutor
 		using namespace DoodleLightingOps;
 
 		UWorld* G_World = nullptr;
-
-		ULevelSequence* G_CameraSequence = nullptr;
-		ALevelSequenceActor* G_CameraSequenceActor = nullptr;
-		ULevelSequencePlayer* G_CameraPlayer = nullptr;
-		ACineCameraActor* G_CameraActor = nullptr;
-		FGuid G_CameraGuid;
-		FVector G_CameraLocation = FVector::ZeroVector;
-		FRotator G_CameraRotation = FRotator::ZeroRotator;
-		float G_CameraFovDeg = 0.0f;
 
 		TArray<TWeakObjectPtr<AActor>> G_AiSpawnedActors;
 		TWeakObjectPtr<APostProcessVolume> G_PostProcessVolume;
@@ -269,195 +250,64 @@ namespace DoodleLightingExecutor
 			}
 		}
 
-		FDoodleAnchorFrame BuildAnchorFrame()
+		FDoodleAnchorFrame BuildAnchorFrame(const FAnchorCamera& InCamera)
 		{
 			FDoodleAnchorFrame L_Frame;
-			L_Frame.CameraLocation = G_CameraLocation;
-			L_Frame.CameraForward = G_CameraRotation.Vector();
-			L_Frame.SubjectPoint = MakeFallbackSubjectPoint(G_CameraLocation, L_Frame.CameraForward);
+			L_Frame.CameraLocation = InCamera.Location;
+			L_Frame.CameraForward = InCamera.Rotation.Vector();
+			L_Frame.SubjectPoint = MakeFallbackSubjectPoint(InCamera.Location, L_Frame.CameraForward);
 			L_Frame.bHasSubjectPoint = true;
 			return L_Frame;
 		}
 
-		bool ResolveCameraView(FString& OutError);
-
-		bool ImportDeliveryCamera(const FString& InFbxPath, FString& OutError)
+		ACineCameraActor* FindCameraActorByGuid(ULevelSequence& InSequence, UWorld& InWorld, const FGuid& InGuid)
 		{
-			if (InFbxPath.IsEmpty())
+			if (!InGuid.IsValid())
 			{
-				OutError = TEXT("载荷里没有相机文件路径（camera_file_path）");
-				return false;
+				return nullptr;
 			}
-			if (!FPaths::FileExists(InFbxPath))
+			TArray<UObject*, TInlineAllocator<1>> L_Bound;
+			UE::UniversalObjectLocator::FResolveParams L_Params(&InWorld);
+			InSequence.LocateBoundObjects(InGuid, L_Params, nullptr, L_Bound);
+			for (UObject* L_Object : L_Bound)
 			{
-				OutError = FString::Printf(TEXT("相机 FBX 不存在：%s"), *InFbxPath);
-				return false;
-			}
-
-			UPackage* L_Package = CreatePackage(*FString::Printf(TEXT("/Temp/DoodleLightingCamera_%s"), *FGuid::NewGuid().ToString()));
-			G_CameraSequence = NewObject<ULevelSequence>(L_Package, TEXT("DoodleLightingCamera"), RF_Public | RF_Transient);
-			if (G_CameraSequence == nullptr)
-			{
-				OutError = TEXT("建临时 level sequence 失败");
-				return false;
-			}
-			G_CameraSequence->Initialize();
-			G_CameraSequence->GetMovieScene()->SetDisplayRate(FFrameRate(24, 1));
-			G_CameraSequence->GetMovieScene()->SetTickResolutionDirectly(FFrameRate(24000, 1));
-
-			FActorSpawnParameters L_SpawnParams{};
-			L_SpawnParams.ObjectFlags &= ~RF_Transactional;
-			G_CameraActor = Cast<ACineCameraActor>(G_World->SpawnActor<ACineCameraActor>(L_SpawnParams));
-			if (G_CameraActor == nullptr)
-			{
-				OutError = TEXT("生成交付机位 ACineCameraActor 失败");
-				return false;
-			}
-			if (UCineCameraComponent* L_CameraComponent = G_CameraActor->GetCineCameraComponent())
-			{
-				L_CameraComponent->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
-				L_CameraComponent->PostProcessSettings.bOverride_MotionBlurAmount = true;
-				L_CameraComponent->PostProcessSettings.MotionBlurAmount = 0.1f;
-			}
-
-			UMovieScene* L_MovieScene = G_CameraSequence->GetMovieScene();
-			G_CameraGuid = L_MovieScene->AddPossessable(G_CameraActor->GetName(), G_CameraActor->GetClass());
-			G_CameraSequence->BindPossessableObject(G_CameraGuid, *G_CameraActor, G_World);
-
-			if (const FMovieSceneBindingReference* L_Reference = G_CameraSequence->GetBindingReferences()->GetReference(G_CameraGuid, 0))
-			{
-				UMovieSceneCustomBinding* L_Binding = NewObject<UMovieSceneSpawnableActorBinding>()
-					->CreateCustomBindingFromBinding(*L_Reference, G_CameraActor, *L_MovieScene);
-				L_Binding->SetupDefaults(nullptr, L_Reference->ID, *L_MovieScene);
-			}
-			UMovieSceneSpawnTrack* L_SpawnTrack = L_MovieScene->AddTrack<UMovieSceneSpawnTrack>(G_CameraGuid);
-			if (L_SpawnTrack != nullptr)
-			{
-				UMovieSceneSpawnSection* L_SpawnSection = CastChecked<UMovieSceneSpawnSection>(L_SpawnTrack->CreateNewSection());
-				L_SpawnSection->SetRange(L_MovieScene->GetPlaybackRange());
-				L_SpawnTrack->AddSection(*L_SpawnSection);
-			}
-
-			MovieSceneToolHelpers::CreateCameraCutSectionForCamera(L_MovieScene, G_CameraGuid, FFrameNumber(0));
-			FMovieSceneObjectBindingID L_CameraBindingId;
-			if (const UMovieSceneCameraCutTrack* L_CutTrack = Cast<UMovieSceneCameraCutTrack>(L_MovieScene->GetCameraCutTrack()))
-			{
-				const TArray<UMovieSceneSection*>& L_Sections = L_CutTrack->GetAllSections();
-				if (const UMovieSceneCameraCutSection* L_CutSection = L_Sections.IsValidIndex(0) ? Cast<UMovieSceneCameraCutSection>(L_Sections[0]) : nullptr)
+				if (ACineCameraActor* L_Camera = Cast<ACineCameraActor>(L_Object))
 				{
-					L_CameraBindingId = L_CutSection->GetCameraBindingID();
+					return L_Camera;
 				}
 			}
-			if (!L_CameraBindingId.GetGuid().IsValid())
-			{
-				OutError = TEXT("没能建出相机切换段（拿不到 camera binding id）");
-				return false;
-			}
-
-			ULevelSequencePlayer* L_Player = ULevelSequencePlayer::CreateLevelSequencePlayer(G_World->PersistentLevel, G_CameraSequence,
-			                                                                                FMovieSceneSequencePlaybackSettings{}, G_CameraSequenceActor);
-			if (L_Player == nullptr || G_CameraSequenceActor == nullptr)
-			{
-				OutError = TEXT("建 level sequence 播放器失败");
-				return false;
-			}
-			G_CameraPlayer = L_Player;
-			G_CameraSequenceActor->AddToRoot();
-			G_CameraSequenceActor->InitializePlayer();
-			L_Player->Play();
-
-			TMap<FGuid, FString> L_BindingMap{};
-			L_BindingMap.Add(L_CameraBindingId.GetGuid(), G_CameraActor->GetActorNameOrLabel());
-
-			FFBXInOutParameters L_FbxParams;
-			UMovieSceneUserImportFBXSettings* L_ImportSettings = GetMutableDefault<UMovieSceneUserImportFBXSettings>();
-			L_ImportSettings->bMatchByNameOnly = false;
-			L_ImportSettings->bForceFrontXAxis = false;
-			L_ImportSettings->bConvertSceneUnit = false;
-			L_ImportSettings->bCreateCameras = false;
-			L_ImportSettings->bReplaceTransformTrack = true;
-			L_ImportSettings->bReduceKeys = false;
-
-			if (!MovieSceneToolHelpers::ReadyFBXForImport(InFbxPath, L_ImportSettings, L_FbxParams))
-			{
-				OutError = FString::Printf(TEXT("FBX 预读失败：%s"), *InFbxPath);
-				return false;
-			}
-			UnFbx::FFbxImporter* L_FbxImporter = UnFbx::FFbxImporter::GetInstance();
-			L_FbxImporter->ImportFromFile(*InFbxPath, FPaths::GetExtension(InFbxPath));
-			MovieSceneToolHelpers::ImportFBXCameraToExisting(L_FbxImporter, G_CameraSequence, L_Player,
-			                                                 L_CameraBindingId.GetRelativeSequenceID(), L_BindingMap, false, false);
-			MovieSceneToolHelpers::ImportFBXIfReady(G_World, G_CameraSequence, L_Player,
-			                                                L_CameraBindingId.GetRelativeSequenceID(), L_BindingMap, L_ImportSettings, L_FbxParams);
-			L_FbxImporter->ReleaseScene();
-
-			if (G_World != nullptr)
-			{
-				G_World->Tick(LEVELTICK_All, 0.0f);
-			}
-			return ResolveCameraView(OutError);
+			return nullptr;
 		}
 
-		bool ResolveCameraView(FString& OutError)
+		TValueOrError<ACineCameraActor*, FString> FindCameraInSequence(ULevelSequence& InSequence, UWorld& InWorld)
 		{
-			if (G_CameraActor == nullptr || G_CameraPlayer == nullptr)
+			UMovieScene* L_MovieScene = InSequence.GetMovieScene();
+			if (L_MovieScene == nullptr)
 			{
-				OutError = TEXT("机位没准备好");
-				return false;
+				return MakeError(FString(TEXT("定序器里没有 MovieScene")));
 			}
 
-			G_CameraPlayer->Play();
-			if (G_World != nullptr)
+			const UMovieSceneCameraCutTrack* L_CutTrack = Cast<UMovieSceneCameraCutTrack>(L_MovieScene->GetCameraCutTrack());
+			if (L_CutTrack == nullptr)
 			{
-				G_World->Tick(LEVELTICK_All, 0.0f);
+				return MakeError(FString(TEXT("定序器里没有相机切换轨道（UMovieSceneCameraCutTrack）")));
 			}
 
-			G_CameraLocation = G_CameraActor->GetActorLocation();
-			G_CameraRotation = G_CameraActor->GetActorRotation();
-			if (UCineCameraComponent* L_CameraComponent = G_CameraActor->GetCineCameraComponent())
+			for (UMovieSceneSection* L_Section : L_CutTrack->GetAllSections())
 			{
-				G_CameraFovDeg = L_CameraComponent->GetHorizontalFieldOfView();
-			}
-
-			if (G_CameraLocation.IsNearlyZero() && G_CameraRotation.IsNearlyZero())
-			{
-				UMovieScene* L_MovieScene = G_CameraSequence != nullptr ? G_CameraSequence->GetMovieScene() : nullptr;
-				UMovieScene3DTransformTrack* L_TransformTrack = L_MovieScene != nullptr
-					? L_MovieScene->FindTrack<UMovieScene3DTransformTrack>(G_CameraGuid)
-					: nullptr;
-				if (L_TransformTrack != nullptr)
+				const UMovieSceneCameraCutSection* L_CutSection = Cast<UMovieSceneCameraCutSection>(L_Section);
+				if (L_CutSection == nullptr)
 				{
-					const FFrameNumber L_Frame = L_MovieScene->GetPlaybackRange().GetLowerBoundValue();
-					for (UMovieSceneSection* L_Section : L_TransformTrack->GetAllSections())
-					{
-						UMovieScene3DTransformSection* L_TransformSection = Cast<UMovieScene3DTransformSection>(L_Section);
-						if (L_TransformSection == nullptr)
-						{
-							continue;
-						}
-						FMovieSceneChannelProxy& L_Proxy = L_TransformSection->GetChannelProxy();
-						double L_Values[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-						const TCHAR* L_Names[6] = {TEXT("Location.X"), TEXT("Location.Y"), TEXT("Location.Z"),
-						                            TEXT("Rotation.X"), TEXT("Rotation.Y"), TEXT("Rotation.Z")};
-						for (int32 i = 0; i < 6; ++i)
-						{
-							if (FMovieSceneDoubleChannel* L_Channel = L_Proxy.GetChannelByName<FMovieSceneDoubleChannel>(L_Names[i]).Get())
-							{
-								L_Channel->Evaluate(L_Frame, L_Values[i]);
-							}
-						}
-						G_CameraLocation = FVector(L_Values[0], L_Values[1], L_Values[2]);
-						G_CameraRotation = FRotator(L_Values[4], L_Values[5], L_Values[3]);
-					}
+					continue;
+				}
+				if (ACineCameraActor* L_Camera = FindCameraActorByGuid(
+				        InSequence, InWorld, L_CutSection->GetCameraBindingID().GetGuid()))
+				{
+					return MakeValue(L_Camera);
 				}
 			}
 
-			if (G_CameraFovDeg <= 0.0f || G_CameraFovDeg >= 179.0f)
-			{
-				OutError = FString::Printf(TEXT("相机水平视场角不合法：%f"), G_CameraFovDeg);
-				return false;
-			}
-			return true;
+			return MakeError(FString(TEXT("相机切换轨道里没有能解析到 CineCameraActor 的段")));
 		}
 
 		void ApplyFogDensity(double InDensity)
@@ -554,30 +404,9 @@ namespace DoodleLightingExecutor
 		}
 	}
 
-	void ReleaseDeliveryCamera()
+	int32 BuildRigLights(const FDoodleLightingRig& InRig, const FAnchorCamera& InCamera, TArray<FString>& OutWarnings)
 	{
-		if (G_CameraPlayer != nullptr && G_CameraSequenceActor != nullptr)
-		{
-			G_CameraPlayer->Stop();
-		}
-		if (G_CameraSequenceActor != nullptr)
-		{
-			G_CameraSequenceActor->RemoveFromRoot();
-			G_CameraSequenceActor->Destroy();
-		}
-		if (G_CameraActor != nullptr)
-		{
-			G_CameraActor->Destroy();
-		}
-		G_CameraPlayer = nullptr;
-		G_CameraSequenceActor = nullptr;
-		G_CameraSequence = nullptr;
-		G_CameraActor = nullptr;
-	}
-
-	int32 BuildRigLights(const FDoodleLightingRig& InRig, TArray<FString>& OutWarnings)
-	{
-		const FDoodleAnchorFrame L_AnchorFrame = BuildAnchorFrame();
+		const FDoodleAnchorFrame L_AnchorFrame = BuildAnchorFrame(InCamera);
 		int32 L_LightCount = 0;
 		for (const FDoodleLight& L_Light : InRig.Lights)
 		{
@@ -610,42 +439,52 @@ namespace DoodleLightingExecutor
 		return L_LightCount;
 	}
 
-	bool PrepareAnchorCamera(const FRoundContext& InContext, FString& OutError)
+	FAnchorCameraResult PrepareAnchorCamera(const FRoundContext& InContext)
 	{
-		if (InContext.CameraFilePath.IsEmpty())
+		ULevelSequence* L_Sequence = LoadObject<ULevelSequence>(nullptr, *InContext.LevelSequencePath);
+		if (L_Sequence == nullptr)
 		{
-			OutError = TEXT("载荷里没有交付机位 FBX（camera_file_path）");
-			return false;
+			return MakeError(FString::Printf(TEXT("定序器加载失败：%s"), *InContext.LevelSequencePath));
 		}
-		if (GEditor == nullptr)
+		UWorld* L_EditorWorld = GEditor != nullptr ? GEditor->GetEditorWorldContext().World() : nullptr;
+		if (L_EditorWorld == nullptr)
 		{
-			OutError = TEXT("没有编辑器实例，导不了交付机位");
-			return false;
+			return MakeError(FString(TEXT("编辑器世界还没准备好")));
 		}
-		G_World = GEditor->GetEditorWorldContext().World();
-		if (G_World == nullptr)
+		G_World = L_EditorWorld;
+
+		const TValueOrError<ACineCameraActor*, FString> L_CameraResult = FindCameraInSequence(*L_Sequence, *L_EditorWorld);
+		if (L_CameraResult.HasError())
 		{
-			OutError = TEXT("编辑器世界还没准备好");
-			return false;
+			return MakeError(L_CameraResult.GetError());
+		}
+		const ACineCameraActor* L_Camera = L_CameraResult.GetValue();
+		const UCineCameraComponent* L_Component = L_Camera->GetCineCameraComponent();
+		if (L_Component == nullptr)
+		{
+			return MakeError(FString(TEXT("定序器里的相机没有 CineCameraComponent")));
 		}
 
-		if (!ImportDeliveryCamera(InContext.CameraFilePath, OutError))
+		FAnchorCamera L_Anchor;
+		L_Anchor.Location = L_Camera->GetActorLocation();
+		L_Anchor.Rotation = L_Camera->GetActorRotation();
+		L_Anchor.HorizontalFovDeg = L_Component->GetHorizontalFieldOfView();
+		if (L_Anchor.HorizontalFovDeg <= 0.0f || L_Anchor.HorizontalFovDeg >= 179.0f)
 		{
-			return false;
+			return MakeError(FString::Printf(TEXT("相机水平视场角不合法：%f"), L_Anchor.HorizontalFovDeg));
 		}
-		const bool L_Resolved = ResolveCameraView(OutError);
-		ReleaseDeliveryCamera();
-		if (!L_Resolved)
-		{
-			return false;
-		}
-		UE_LOG(LogDoodleLightingEditor, Log, TEXT("交付机位：位置 %s，旋转 %s，水平视场角 %.2f"),
-		       *G_CameraLocation.ToCompactString(), *G_CameraRotation.ToCompactString(), G_CameraFovDeg);
-		return true;
+
+		return MakeValue(L_Anchor);
 	}
 
-	FCandidateRenderResult ApplyCandidateToWorld(UWorld& InWorld, const FDoodleTaskCandidate& InCandidate)
+	FCandidateRenderResultOrError ApplyCandidateToWorld(UWorld& InWorld, const FDoodleTaskCandidate& InCandidate,
+	                                                    const FAnchorCamera& InCamera)
 	{
+		if (InCandidate.Rig.Lights.IsEmpty())
+		{
+			return MakeError(FString::Printf(TEXT("候选 %d 没有灯，无法建灯"), InCandidate.CandidateIndex));
+		}
+
 		FCandidateRenderResult L_Result;
 		G_World = &InWorld;
 
@@ -663,14 +502,13 @@ namespace DoodleLightingExecutor
 		ApplySkyLightIntensity(L_Rig.Globals.Environment.SkyLightIntensity);
 		ApplyFogDensity(L_Rig.Globals.Environment.FogDensity);
 
-		L_Result.LightCount = BuildRigLights(L_Rig, L_Warnings);
+		L_Result.LightCount = BuildRigLights(L_Rig, InCamera, L_Warnings);
 
 		for (const FString& L_Warning : L_Warnings)
 		{
 			UE_LOG(LogDoodleLightingEditor, Warning, TEXT("候选 %d：%s"), InCandidate.CandidateIndex, *L_Warning);
 		}
-		L_Result.bSucceeded = true;
-		return L_Result;
+		return MakeValue(L_Result);
 	}
 
 }

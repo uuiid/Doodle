@@ -364,13 +364,18 @@ bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
 
 	{
 		DoodleLightingExecutor::FRoundContext L_Context;
-		L_Context.CameraFilePath = Payload.CameraFilePath;
-		FString L_CameraError;
-		if (!DoodleLightingExecutor::PrepareAnchorCamera(L_Context, L_CameraError))
+		L_Context.LevelSequencePath = NormalizePackagePath(Payload.LevelSequence);
+		const DoodleLightingExecutor::FAnchorCameraResult L_CameraResult =
+			DoodleLightingExecutor::PrepareAnchorCamera(L_Context);
+		if (L_CameraResult.HasError())
 		{
-			OutError = FString::Printf(TEXT("机位准备失败：%s"), *L_CameraError);
+			OutError = FString::Printf(TEXT("机位准备失败：%s"), *L_CameraResult.GetError());
 			return false;
 		}
+		AnchorCamera = L_CameraResult.GetValue();
+		UE_LOG(LogDoodleLightingEditor, Log, TEXT("机位：位置 %s，旋转 %s，水平视场角 %.2f"),
+		       *AnchorCamera.Location.ToCompactString(), *AnchorCamera.Rotation.ToCompactString(),
+		       AnchorCamera.HorizontalFovDeg);
 	}
 
 	UMoviePipelineQueueSubsystem* L_Subsystem =
@@ -487,24 +492,23 @@ void UDoodleLightingRoundRunner::OnIndividualJobStarted(UMoviePipelineExecutorJo
 		return;
 	}
 
-	const DoodleLightingExecutor::FCandidateRenderResult L_Result =
-		DoodleLightingExecutor::ApplyCandidateToWorld(*L_World, *L_Candidate);
-	if (L_Report != nullptr)
+	const DoodleLightingExecutor::FCandidateRenderResultOrError L_Result =
+		DoodleLightingExecutor::ApplyCandidateToWorld(*L_World, *L_Candidate, AnchorCamera);
+	if (L_Result.HasError())
 	{
-		L_Report->LightCount = L_Result.LightCount;
-		if (!L_Result.bSucceeded)
+		if (L_Report != nullptr)
 		{
 			L_Report->Status = EDoodleRenderStatus::Failed;
 		}
+		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s 建灯失败：%s"), *L_CandidateId, *L_Result.GetError());
+		return;
 	}
-	if (!L_Result.bSucceeded)
+	if (L_Report != nullptr)
 	{
-		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s 建灯失败：%s"), *L_CandidateId, *L_Result.Error);
+		L_Report->LightCount = L_Result.GetValue().LightCount;
 	}
-	else
-	{
-		UE_LOG(LogDoodleLightingEditor, Log, TEXT("候选 %s：%d 盏灯已建进 PIE 世界"), *L_CandidateId, L_Result.LightCount);
-	}
+	UE_LOG(LogDoodleLightingEditor, Log, TEXT("候选 %s：%d 盏灯已建进 PIE 世界"), *L_CandidateId,
+	       L_Result.GetValue().LightCount);
 }
 
 void UDoodleLightingRoundRunner::OnIndividualJobWorkFinished(FMoviePipelineOutputData InOutputData)

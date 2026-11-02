@@ -2,22 +2,32 @@
 
 #include "CoreMinimal.h"
 #include "DoodleLightingTypes.h"
+#include "Templates/ValueOrError.h"
 
 namespace DoodleLightingExecutor
 {
+	struct FAnchorCamera
+	{
+		FVector Location = FVector::ZeroVector;
+		FRotator Rotation = FRotator::ZeroRotator;
+		float HorizontalFovDeg = 0.0f;
+	};
+
 	struct FRoundContext
 	{
-		FString CameraFilePath;
+		FString LevelSequencePath;
 	};
 
 	struct FCandidateRenderResult
 	{
-		bool bSucceeded = false;
-		FString Error;
 		int32 LightCount = 0;
 	};
 
-	bool PrepareAnchorCamera(const FRoundContext& InContext, FString& OutError);
+	using FAnchorCameraResult = TValueOrError<FAnchorCamera, FString>;
+	using FCandidateRenderResultOrError = TValueOrError<FCandidateRenderResult, FString>;
 
-	FCandidateRenderResult ApplyCandidateToWorld(UWorld& InWorld, const FDoodleTaskCandidate& InCandidate);
+	FAnchorCameraResult PrepareAnchorCamera(const FRoundContext& InContext);
+
+	FCandidateRenderResultOrError ApplyCandidateToWorld(UWorld& InWorld, const FDoodleTaskCandidate& InCandidate,
+	                                                    const FAnchorCamera& InCamera);
 }
