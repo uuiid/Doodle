@@ -100,13 +100,17 @@ namespace
 } // namespace
 
 DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::StartRender(
-	const FString& InBaselineLevel, const FString& InMoviePipelineConfig, const FString& InOutDir,
-	const FDoodleLightingRig& InRig
+	const FString& InRenderMap, const FString& InBaselineLevel, const FString& InMoviePipelineConfig,
+	const FString& InOutDir, const FDoodleLightingRig& InRig
 )
 {
 	CandidateRig = InRig;
 	CandidateReport = FDoodleCandidateReport();
 
+	if (InRenderMap.IsEmpty())
+	{
+		return MakeError(FString(TEXT("渲染关卡为空")));
+	}
 	if (InBaselineLevel.IsEmpty())
 	{
 		return MakeError(FString(TEXT("基线关卡为空")));
@@ -125,6 +129,13 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::St
 	if (LoadedSequence == nullptr)
 	{
 		return MakeError(FString::Printf(TEXT("基线定序器加载失败：%s"), *L_BaselinePackage));
+	}
+
+	const FString L_RenderMapPackage = NormalizePackagePath(InRenderMap);
+	LoadedMap = LoadObject<UWorld>(nullptr, *L_RenderMapPackage);
+	if (LoadedMap == nullptr)
+	{
+		return MakeError(FString::Printf(TEXT("渲染关卡加载失败：%s"), *L_RenderMapPackage));
 	}
 
 	bUsingLoadedSequence = LoadedSequence->GetMovieScene() != nullptr && LoadedSequence->GetMovieScene()->IsReadOnly();

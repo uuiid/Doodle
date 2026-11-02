@@ -20,8 +20,8 @@ class UDoodleLightingRoundRunner : public UObject
 
 public:
 	DoodleLightingExecutor::FRoundRenderResultOrError StartRender(
-		const FString& InBaselineLevel, const FString& InMoviePipelineConfig, const FString& InOutDir,
-		const FDoodleLightingRig& InRig
+		const FString& InRenderMap, const FString& InBaselineLevel, const FString& InMoviePipelineConfig,
+		const FString& InOutDir, const FDoodleLightingRig& InRig
 	);
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnRoundFinished, const FDoodleRoundReport&);
