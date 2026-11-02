@@ -170,8 +170,7 @@ struct DOODLE_CORE_API vec3_t {
 
   friend void to_json(nlohmann::json& j, const vec3_t& p) { j = nlohmann::json::array({p.x_, p.y_, p.z_}); }
   friend void from_json(const nlohmann::json& j, vec3_t& p) {
-    if (!j.is_array() || j.size() != 3)
-      throw nlohmann::json::type_error::create(302, "vec3_t 需要长度为 3 的数组", &j);
+    if (!j.is_array() || j.size() != 3) throw nlohmann::json::type_error::create(302, "vec3_t 需要长度为 3 的数组", &j);
     j.at(0).get_to(p.x_);
     j.at(1).get_to(p.y_);
     j.at(2).get_to(p.z_);
@@ -216,9 +215,15 @@ struct DOODLE_CORE_API color_t {
   friend void to_json(nlohmann::json& j, const color_t& p) {
     j["mode"] = p.mode_;
     switch (p.mode_) {
-      case color_mode::temperature: j["kelvin"] = p.kelvin_; break;
-      case color_mode::rgb:         j["rgb"]    = p.rgb_; break;
-      case color_mode::filter:      j["filter"] = p.filter_; break;
+      case color_mode::temperature:
+        j["kelvin"] = p.kelvin_;
+        break;
+      case color_mode::rgb:
+        j["rgb"] = p.rgb_;
+        break;
+      case color_mode::filter:
+        j["filter"] = p.filter_;
+        break;
     }
   }
   friend void from_json(const nlohmann::json& j, color_t& p) {
@@ -481,9 +486,9 @@ struct DOODLE_CORE_API globals_t {
 /// 不同 op 的 patch 结构不同，硬塞成结构体只会让新增 op 变成破坏性改动。
 struct DOODLE_CORE_API light_op_t {
   light_op_kind op_{light_op_kind::add};
-  std::string light_{};       ///< 目标灯的语义 id（全局 op 为空）
-  nlohmann::json patch_{};    ///< 该 op 的参数
-  std::string rationale_{};   ///< 为什么这么做，进日志与前端展示
+  std::string light_{};      ///< 目标灯的语义 id（全局 op 为空）
+  nlohmann::json patch_{};   ///< 该 op 的参数
+  std::string rationale_{};  ///< 为什么这么做，进日志与前端展示
 
   friend void to_json(nlohmann::json& j, const light_op_t& p) {
     j["op"] = p.op_;
@@ -530,8 +535,9 @@ struct DOODLE_CORE_API lighting_rig_set_t {
   uuid session_id_{};
   uuid shot_task_id_{};
   std::int32_t iteration_{0};
-  std::string baseline_level_{};
-  std::string movie_pipeline_config_{};
+  std::string baseline_level_{};         // 定序器
+  std::string render_map_{};             // 渲染关卡
+  std::string movie_pipeline_config_{};  // 渲染输出配置
   std::vector<lighting_rig_t> rigs_{};
 
   friend void to_json(nlohmann::json& j, const lighting_rig_set_t& p) {
@@ -539,6 +545,7 @@ struct DOODLE_CORE_API lighting_rig_set_t {
     j["shot_task_id"]          = p.shot_task_id_;
     j["iteration"]             = p.iteration_;
     j["baseline_level"]        = p.baseline_level_;
+    j["render_map"]            = p.render_map_;
     j["movie_pipeline_config"] = p.movie_pipeline_config_;
     j["rigs"]                  = p.rigs_;
   }
@@ -547,6 +554,7 @@ struct DOODLE_CORE_API lighting_rig_set_t {
     if (j.contains("shot_task_id")) j.at("shot_task_id").get_to(p.shot_task_id_);
     if (j.contains("iteration")) j.at("iteration").get_to(p.iteration_);
     if (j.contains("baseline_level")) j.at("baseline_level").get_to(p.baseline_level_);
+    if (j.contains("render_map")) j.at("render_map").get_to(p.render_map_);
     if (j.contains("movie_pipeline_config")) j.at("movie_pipeline_config").get_to(p.movie_pipeline_config_);
     if (j.contains("rigs")) j.at("rigs").get_to(p.rigs_);
   }

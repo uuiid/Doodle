@@ -219,6 +219,7 @@ orm::sql_modify_statement_vector_t write_dispatched_iteration(
   l_rig_set.iteration_      = l_iteration;
   l_rig_set.shot_task_id_   = in_request.task_id_;
   l_rig_set.baseline_level_ = l_assembly_res.original_map_.generic_string();
+  l_rig_set.render_map_     = l_assembly_res.render_map_.generic_string();
 
   for (std::size_t l_i = 0; l_i < in_request.rigs_.size(); ++l_i) {
     auto l_rig = in_request.rigs_.at(l_i);
@@ -1068,6 +1069,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   l_rig_set.iteration_             = l_req.iteration_;
   l_rig_set.shot_task_id_          = l_req.task_id_;
   l_rig_set.baseline_level_        = l_assembly_res.original_map_.generic_string();
+  l_rig_set.render_map_            = l_assembly_res.render_map_.generic_string();
   l_rig_set.movie_pipeline_config_ = l_assembly_res.movie_pipeline_config_.generic_string();
 
   orm::sql_modify_statement_vector_t l_sqls{};
