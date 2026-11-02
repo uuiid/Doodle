@@ -163,6 +163,8 @@ namespace
 		(*L_RigSet)->TryGetStringField(TEXT("session_id"), L_Value.SessionId);
 		(*L_RigSet)->TryGetStringField(TEXT("shot_task_id"), L_Value.ShotTaskId);
 		(*L_RigSet)->TryGetStringField(TEXT("baseline_level"), L_Value.BaselineLevel);
+		(*L_RigSet)->TryGetStringField(TEXT("render_map"), L_Value.RenderMap);
+		(*L_RigSet)->TryGetStringField(TEXT("movie_pipeline_config"), L_Value.MoviePipelineConfig);
 
 		const TArray<TSharedPtr<FJsonValue>>* L_Rigs = nullptr;
 		if (!(*L_RigSet)->TryGetArrayField(TEXT("rigs"), L_Rigs) || L_Rigs == nullptr)

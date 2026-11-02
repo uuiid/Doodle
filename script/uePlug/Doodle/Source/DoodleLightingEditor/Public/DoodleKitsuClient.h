@@ -17,6 +17,8 @@ namespace DoodleKitsuClient
 		FString SessionId;
 		FString ShotTaskId;
 		FString BaselineLevel;
+		FString RenderMap;
+		FString MoviePipelineConfig;
 		TArray<FDoodleLightingRig> Rigs;
 	};
 
