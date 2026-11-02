@@ -12,8 +12,6 @@ public:
 private:
 	void RegisterMenus();
 
-	FDelegateHandle OnPreTickHandle;
-
 	static inline FDoodleLightingEditorModule& Get()
 	{
 		return FModuleManager::LoadModuleChecked<FDoodleLightingEditorModule>("DoodleLightingEditor");

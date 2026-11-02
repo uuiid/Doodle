@@ -3,30 +3,19 @@
 #include "DoodleLightingEditorLog.h"
 
 #include "DoodleLightingExecutor.h"
-#include "DoodleLightingJson.h"
-#include "DoodleLightingReport.h"
+#include "DoodleLightingTypes.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "Dom/JsonObject.h"
 #include "Editor.h"
-#include "Engine/Engine.h"
 #include "Engine/Light.h"
 #include "Engine/SkyLight.h"
 #include "Engine/World.h"
-#include "Framework/Application/SlateApplication.h"
 #include "HAL/FileManager.h"
-#include "HAL/PlatformMisc.h"
 #include "HAL/PlatformTime.h"
 #include "LevelSequence.h"
-#include "Misc/CommandLine.h"
-#include "Misc/FileHelper.h"
 #include "Misc/PackageName.h"
-#include "Misc/Parse.h"
-#include "Misc/Paths.h"
 #include "MovieScene.h"
 #include "MovieSceneSpawnable.h"
-#include "Serialization/JsonReader.h"
-#include "Serialization/JsonSerializer.h"
 
 #include "MoviePipelineAntiAliasingSetting.h"
 #include "MoviePipelineCameraSetting.h"
@@ -44,37 +33,7 @@
 
 namespace
 {
-	const TCHAR* const GAiLightParamsKey = TEXT("DoodleAiLightParams=");
-
 	constexpr int32 GDefaultFrameRate = 25;
-
-	bool LoadUtf8File(const FString& InFilePath, FString& OutText, FString& OutError)
-	{
-		TArray<uint8> L_Bytes;
-		if (!FFileHelper::LoadFileToArray(L_Bytes, *InFilePath))
-		{
-			OutError = FString::Printf(TEXT("读不了载荷文件 %s"), *InFilePath);
-			return false;
-		}
-		int32 L_Offset = 0;
-		if (L_Bytes.Num() >= 3 && L_Bytes[0] == 0xEF && L_Bytes[1] == 0xBB && L_Bytes[2] == 0xBF)
-		{
-			L_Offset = 3;
-		}
-		OutText = FString(L_Bytes.Num() - L_Offset, reinterpret_cast<const ANSICHAR*>(L_Bytes.GetData() + L_Offset));
-		return true;
-	}
-
-	bool ParseJsonObject(const FString& InText, TSharedPtr<FJsonObject>& OutObject, FString& OutError)
-	{
-		const TSharedRef<TJsonReader<>> L_Reader = TJsonReaderFactory<>::Create(InText);
-		if (!FJsonSerializer::Deserialize(L_Reader, OutObject) || !OutObject.IsValid())
-		{
-			OutError = TEXT("载荷不是合法 json");
-			return false;
-		}
-		return true;
-	}
 
 	FString NormalizePackagePath(const FString& InPath)
 	{
@@ -214,41 +173,8 @@ namespace
 	}
 }
 
-bool UDoodleLightingRoundRunner::HasAiLightParams()
-{
-	FString L_Params;
-	if (!FParse::Value(FCommandLine::Get(), GAiLightParamsKey, L_Params))
-	{
-		return false;
-	}
-	return !L_Params.IsEmpty();
-}
-
-void UDoodleLightingRoundRunner::RequestExit(int32 InExitCode)
-{
-	UE_LOG(LogDoodleLightingEditor, Log, TEXT("本轮结束，退出码 %d"), InExitCode);
-	FPlatformMisc::RequestExitWithStatus(false, static_cast<uint8>(FMath::Clamp(InExitCode, 0, 255)));
-}
-
-void UDoodleLightingRoundRunner::Main(float InDeltaTime)
-{
-	if (bRoundStarted)
-	{
-		return;
-	}
-	FAssetRegistryModule& L_AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-	if (L_AssetRegistry.Get().IsLoadingAssets())
-	{
-		return;
-	}
-	StartRound();
-}
-
 void UDoodleLightingRoundRunner::StartRoundFromLaunchPlan(const FDoodleLaunchPlan& InPlan)
 {
-	bRoundStarted = true;
-	bInteractiveMode = true;
-
 	Payload = FDoodleTaskPayload();
 	Payload.SessionId = InPlan.SessionId;
 	Payload.Iteration = InPlan.Iteration;
@@ -269,60 +195,14 @@ void UDoodleLightingRoundRunner::StartRoundFromLaunchPlan(const FDoodleLaunchPla
 	}
 }
 
-void UDoodleLightingRoundRunner::StartRound()
-{
-	bRoundStarted = true;
-
-	FString L_Params;
-	FParse::Value(FCommandLine::Get(), GAiLightParamsKey, L_Params);
-	PayloadPath = FPaths::ConvertRelativePathToFull(L_Params);
-	UE_LOG(LogDoodleLightingEditor, Log, TEXT("载荷：%s"), *PayloadPath);
-
-	FString L_Text;
-	FString L_Error;
-	if (!LoadUtf8File(PayloadPath, L_Text, L_Error))
-	{
-		UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *L_Error);
-		RequestExit(1);
-		return;
-	}
-	TSharedPtr<FJsonObject> L_Root;
-	if (!ParseJsonObject(L_Text, L_Root, L_Error) || !L_Root.IsValid())
-	{
-		UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *L_Error);
-		RequestExit(1);
-		return;
-	}
-
-	FString L_RawOutDir;
-	L_Root->TryGetStringField(TEXT("out_dir"), L_RawOutDir);
-
-	if (!DoodleLightingJson::ParseTaskPayload(L_Root, Payload, L_Error))
-	{
-		Payload.OutDir = L_RawOutDir;
-		FailRound(FString::Printf(TEXT("载荷解析失败：%s"), *L_Error));
-		return;
-	}
-	if (Payload.OutDir.IsEmpty())
-	{
-		Payload.OutDir = L_RawOutDir;
-	}
-	if (Payload.OutDir.IsEmpty())
-	{
-		UE_LOG(LogDoodleLightingEditor, Error, TEXT("载荷里既没有 out_dir，也没有别的落点"));
-		RequestExit(1);
-		return;
-	}
-
-	FString L_StartError;
-	if (!StartRoundInternal(L_StartError))
-	{
-		FailRound(L_StartError);
-	}
-}
-
 bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
 {
+	FAssetRegistryModule& L_AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+	if (L_AssetRegistry.Get().IsLoadingAssets())
+	{
+		OutError = TEXT("资产注册表还在加载，现在起不了渲染");
+		return false;
+	}
 	if (Payload.OutDir.IsEmpty())
 	{
 		OutError = TEXT("计划/载荷里没有 out_dir");
@@ -444,24 +324,16 @@ bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
 void UDoodleLightingRoundRunner::FailRound(const FString& InError)
 {
 	UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *InError);
-	if (Payload.OutDir.IsEmpty())
-	{
-		RequestExit(1);
-		return;
-	}
 
 	FDoodleRoundReport L_Round;
+	L_Round.Candidates = CandidateReports;
 	L_Round.FrameRate = FrameRate > 0 ? FrameRate : GDefaultFrameRate;
 	L_Round.Error = InError;
 
-	FString L_WriteError;
-	if (!DoodleLightingReport::WriteReportFile(Payload.OutDir, L_Round, L_WriteError))
+	if (RoundFinished.IsBound())
 	{
-		UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *L_WriteError);
-		RequestExit(1);
-		return;
+		RoundFinished.Broadcast(L_Round);
 	}
-	RequestExit(0);
 }
 
 void UDoodleLightingRoundRunner::OnIndividualJobStarted(UMoviePipelineExecutorJob* InJob)
@@ -576,27 +448,12 @@ void UDoodleLightingRoundRunner::OnExecutorFinished(UMoviePipelineExecutorBase* 
 		L_Round.Error = FString::Printf(TEXT("%d 个候选全部渲染失败"), L_FailedCount);
 	}
 
-	if (bInteractiveMode)
+	UE_LOG(LogDoodleLightingEditor, Log, TEXT("本机一轮渲染结束：成功 %d / 失败 %d，%d fps"),
+	       L_RenderedCount, L_FailedCount, L_Round.FrameRate);
+	if (RoundFinished.IsBound())
 	{
-		UE_LOG(LogDoodleLightingEditor, Log, TEXT("本机一轮渲染结束：成功 %d / 失败 %d，%d fps（停在这里，不退出）"),
-		       L_RenderedCount, L_FailedCount, L_Round.FrameRate);
-		if (RoundFinished.IsBound())
-		{
-			RoundFinished.Broadcast(L_Round);
-		}
-		return;
+		RoundFinished.Broadcast(L_Round);
 	}
-
-	FString L_WriteError;
-	if (!DoodleLightingReport::WriteReportFile(Payload.OutDir, L_Round, L_WriteError))
-	{
-		UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *L_WriteError);
-		RequestExit(1);
-		return;
-	}
-	UE_LOG(LogDoodleLightingEditor, Log, TEXT("回传报告 %s：成功 %d / 失败 %d，%d fps"),
-	       *DoodleLightingReport::MakeReportPath(Payload.OutDir), L_RenderedCount, L_FailedCount, L_Round.FrameRate);
-	RequestExit(0);
 }
 
 const FDoodleTaskCandidate* UDoodleLightingRoundRunner::FindCandidate(const FString& InCandidateId) const

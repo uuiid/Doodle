@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "DoodleLightingExecutor.h"
-#include "DoodleLightingTypes.h"
 #include "UObject/Object.h"
 
 #include "DoodleLightingRoundRunner.generated.h"
@@ -10,6 +9,8 @@
 class UMoviePipelineExecutorBase;
 class UMoviePipelineExecutorJob;
 struct FMoviePipelineOutputData;
+struct FDoodleLaunchPlan;
+struct FDoodleRoundReport;
 
 UCLASS()
 class UDoodleLightingRoundRunner : public UObject
@@ -17,22 +18,12 @@ class UDoodleLightingRoundRunner : public UObject
 	GENERATED_BODY()
 
 public:
-	static bool HasAiLightParams();
-
-	void Main(float InDeltaTime);
-
 	void StartRoundFromLaunchPlan(const FDoodleLaunchPlan& InPlan);
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnRoundFinished, const FDoodleRoundReport&);
 	FOnRoundFinished RoundFinished;
 
-	static void RequestExit(int32 InExitCode);
-
 private:
-	bool bInteractiveMode = false;
-
-	void StartRound();
-
 	void FailRound(const FString& InError);
 
 	void OnIndividualJobStarted(UMoviePipelineExecutorJob* InJob);
@@ -44,8 +35,6 @@ private:
 	const FDoodleTaskCandidate* FindCandidate(const FString& InCandidateId) const;
 	FDoodleCandidateReport* FindCandidateReport(const FString& InCandidateId);
 
-	FString PayloadPath;
-
 	bool StartRoundInternal(FString& OutError);
 	FDoodleTaskPayload Payload;
 	DoodleLightingExecutor::FAnchorCamera AnchorCamera;
@@ -53,6 +42,4 @@ private:
 	TMap<FString, double> CandidateStartSeconds;
 
 	int32 FrameRate = 25;
-
-	bool bRoundStarted = false;
 };

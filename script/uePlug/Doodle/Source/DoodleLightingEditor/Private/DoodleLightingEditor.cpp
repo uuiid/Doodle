@@ -1,9 +1,7 @@
 #include "DoodleLightingEditor.h"
 
-#include "DoodleLightingRoundRunner.h"
 #include "SDoodleKitsuLoginTab.h"
 
-#include "Framework/Application/SlateApplication.h"
 #include "Framework/Docking/TabManager.h"
 #include "ToolMenus.h"
 #include "WorkspaceMenuStructure.h"
@@ -13,13 +11,6 @@
 
 void FDoodleLightingEditorModule::StartupModule()
 {
-	if (UDoodleLightingRoundRunner::HasAiLightParams())
-	{
-		UDoodleLightingRoundRunner* L_Runner = NewObject<UDoodleLightingRoundRunner>(GetTransientPackage());
-		L_Runner->AddToRoot();
-		OnPreTickHandle = FSlateApplication::Get().OnPreTick().AddUObject(L_Runner, &UDoodleLightingRoundRunner::Main);
-	}
-
 	FGlobalTabmanager::Get()
 		->RegisterNomadTabSpawner(SDoodleKitsuLoginTab::TabName, FOnSpawnTab::CreateStatic(&SDoodleKitsuLoginTab::OnSpawnAction))
 		.SetDisplayName(LOCTEXT("DoodleKitsuLoginTabTitle", "Doodle 本机服务"))
@@ -36,12 +27,6 @@ void FDoodleLightingEditorModule::ShutdownModule()
 	if (FSlateApplication::IsInitialized())
 	{
 		FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleKitsuLoginTab::TabName);
-	}
-
-	if (OnPreTickHandle.IsValid())
-	{
-		FSlateApplication::Get().OnPreTick().Remove(OnPreTickHandle);
-		OnPreTickHandle.Reset();
 	}
 }
 
