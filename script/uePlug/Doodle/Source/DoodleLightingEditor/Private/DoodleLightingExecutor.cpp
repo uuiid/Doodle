@@ -44,38 +44,14 @@ namespace DoodleLightingExecutor
 
 		UWorld* G_World = nullptr;
 
-		TArray<TWeakObjectPtr<AActor>> G_AiSpawnedActors;
-		TWeakObjectPtr<APostProcessVolume> G_PostProcessVolume;
-		bool G_PostProcessVolumeOwned = false;
-
-		void CollectActor(AActor* InActor)
+		void RemoveSpawnedActors(const TArray<TStrongObjectPtr<AActor>>& InActors)
 		{
-			if (InActor != nullptr)
+			for (const TStrongObjectPtr<AActor>& L_Actor : InActors)
 			{
-				G_AiSpawnedActors.Add(InActor);
-			}
-		}
-
-		void DestroyAiSpawnedActors()
-		{
-			if (!G_AiSpawnedActors.IsEmpty())
-			{
-				for (const TWeakObjectPtr<AActor>& L_Weak : G_AiSpawnedActors)
+				AActor* L_Raw = L_Actor.Get();
+				if (L_Raw != nullptr && !L_Raw->IsPendingKillPending())
 				{
-					if (AActor* L_Actor = L_Weak.Get())
-					{
-						if (!L_Actor->IsPendingKillPending())
-						{
-							L_Actor->Destroy();
-						}
-					}
-				}
-				G_AiSpawnedActors.Reset();
-				if (G_World != nullptr)
-				{
-					GEngine->ForceGarbageCollection(true);
-					GEngine->ConditionalCollectGarbage();
-					G_World->Tick(LEVELTICK_All, 0.0f);
+					L_Raw->Destroy();
 				}
 			}
 		}
@@ -310,8 +286,9 @@ namespace DoodleLightingExecutor
 			return MakeError(FString(TEXT("相机切换轨道里没有能解析到 CineCameraActor 的段")));
 		}
 
-		void ApplyFogDensity(double InDensity)
+		TArray<AActor*> ApplyFogDensity(double InDensity)
 		{
+			TArray<AActor*> L_Spawned;
 			AExponentialHeightFog* L_Fog = nullptr;
 			for (TActorIterator<AExponentialHeightFog> L_It(G_World); L_It; ++L_It)
 			{
@@ -322,15 +299,19 @@ namespace DoodleLightingExecutor
 			{
 				if (InDensity <= 0.0)
 				{
-					return;
+					return L_Spawned;
 				}
 				L_Fog = G_World->SpawnActor<AExponentialHeightFog>();
-				CollectActor(L_Fog);
+				if (L_Fog != nullptr)
+				{
+					L_Spawned.Add(L_Fog);
+				}
 			}
 			if (L_Fog != nullptr && L_Fog->GetComponent() != nullptr)
 			{
 				L_Fog->GetComponent()->SetFogDensity(static_cast<float>(InDensity));
 			}
+			return L_Spawned;
 		}
 
 		void ApplySkyLightIntensity(double InIntensity)
@@ -381,15 +362,11 @@ namespace DoodleLightingExecutor
 			return L_Settings;
 		}
 
-		APostProcessVolume* EnsurePostProcessVolume()
+		APostProcessVolume* EnsurePostProcessVolume(bool& bOutSpawned)
 		{
-			if (APostProcessVolume* L_Existing = G_PostProcessVolume.Get())
-			{
-				return L_Existing;
-			}
+			bOutSpawned = false;
 			for (TActorIterator<APostProcessVolume> L_It(G_World); L_It; ++L_It)
 			{
-				G_PostProcessVolume = *L_It;
 				return *L_It;
 			}
 			APostProcessVolume* L_Volume = G_World->SpawnActor<APostProcessVolume>();
@@ -397,14 +374,14 @@ namespace DoodleLightingExecutor
 			{
 				L_Volume->bEnabled = true;
 				L_Volume->bUnbound = true;
-				G_PostProcessVolume = L_Volume;
-				G_PostProcessVolumeOwned = true;
+				bOutSpawned = true;
 			}
 			return L_Volume;
 		}
 	}
 
-	int32 BuildRigLights(const FDoodleLightingRig& InRig, const FAnchorCamera& InCamera, TArray<FString>& OutWarnings)
+	int32 BuildRigLights(const FDoodleLightingRig& InRig, const FAnchorCamera& InCamera, TArray<AActor*>& OutSpawned,
+	                     TArray<FString>& OutWarnings)
 	{
 		const FDoodleAnchorFrame L_AnchorFrame = BuildAnchorFrame(InCamera);
 		int32 L_LightCount = 0;
@@ -418,7 +395,7 @@ namespace DoodleLightingExecutor
 				OutWarnings.Add(FString::Printf(TEXT("灯 %s：生成 actor 失败"), *L_Light.Id));
 				continue;
 			}
-			CollectActor(L_Actor);
+			OutSpawned.Add(L_Actor);
 			ApplyLightProperties(L_Actor, L_Kind, L_LightComponent, L_Light, OutWarnings);
 
 			if (L_Kind != EDoodleUeLightKind::Sky)
@@ -488,26 +465,49 @@ namespace DoodleLightingExecutor
 		FCandidateRenderResult L_Result;
 		G_World = &InWorld;
 
-		DestroyAiSpawnedActors();
-
 		TArray<FString> L_Warnings;
+		TArray<AActor*> L_Spawned;
 
 		const FPostProcessSettings L_Settings = BuildPostProcessSettings(InRig.Globals);
-		if (APostProcessVolume* L_Volume = EnsurePostProcessVolume())
+		bool bVolumeSpawned = false;
+		APostProcessVolume* L_Volume = EnsurePostProcessVolume(bVolumeSpawned);
+		if (L_Volume != nullptr)
 		{
 			L_Volume->Settings = L_Settings;
 			L_Volume->BlendWeight = 1.0f;
+			if (bVolumeSpawned)
+			{
+				L_Result.OwnedPostProcessVolume.Reset(L_Volume);
+			}
 		}
 		ApplySkyLightIntensity(InRig.Globals.Environment.SkyLightIntensity);
-		ApplyFogDensity(InRig.Globals.Environment.FogDensity);
+		L_Spawned.Append(ApplyFogDensity(InRig.Globals.Environment.FogDensity));
 
-		L_Result.LightCount = BuildRigLights(InRig, InCamera, L_Warnings);
+		L_Result.LightCount = BuildRigLights(InRig, InCamera, L_Spawned, L_Warnings);
+
+		L_Result.SpawnedActors.Reserve(L_Spawned.Num());
+		for (AActor* L_Actor : L_Spawned)
+		{
+			L_Result.SpawnedActors.Emplace(L_Actor);
+		}
 
 		for (const FString& L_Warning : L_Warnings)
 		{
 			UE_LOG(LogDoodleLightingEditor, Warning, TEXT("出图目录 %s：%s"), *InFramesDir, *L_Warning);
 		}
 		return MakeValue(L_Result);
+	}
+
+	void RemoveCandidate(const FCandidateRenderResult& InResult)
+	{
+		RemoveSpawnedActors(InResult.SpawnedActors);
+		if (APostProcessVolume* L_Volume = InResult.OwnedPostProcessVolume.Get())
+		{
+			if (!L_Volume->IsPendingKillPending())
+			{
+				L_Volume->Destroy();
+			}
+		}
 	}
 
 }

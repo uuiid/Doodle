@@ -30,6 +30,8 @@ public:
 private:
 	void FailRound(const FString& InError);
 
+	void RemoveCandidateFromWorld();
+
 	void OnIndividualJobStarted(UMoviePipelineExecutorJob* InJob);
 
 	void OnIndividualJobWorkFinished(FMoviePipelineOutputData InOutputData);
@@ -42,6 +44,7 @@ private:
 	FString CandidateFramesDir;
 	FDoodleLightingRig CandidateRig;
 	DoodleLightingExecutor::FAnchorCamera AnchorCamera;
+	DoodleLightingExecutor::FCandidateRenderResult CandidateSpawned;
 	FDoodleCandidateReport CandidateReport;
 	double CandidateStartSeconds = 0.0;
 	int32 FrameRate = 25;

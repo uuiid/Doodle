@@ -4,6 +4,10 @@
 #include "DoodleLightingTypes.h"
 #include "Templates/ValueOrError.h"
 
+class AActor;
+class APostProcessVolume;
+class UWorld;
+
 namespace DoodleLightingExecutor
 {
 	struct FAnchorCamera
@@ -21,6 +25,8 @@ namespace DoodleLightingExecutor
 	struct FCandidateRenderResult
 	{
 		int32 LightCount = 0;
+		TArray<TStrongObjectPtr<AActor>> SpawnedActors;
+		TStrongObjectPtr<APostProcessVolume> OwnedPostProcessVolume;
 	};
 
 	struct FRoundRenderResult
@@ -35,4 +41,6 @@ namespace DoodleLightingExecutor
 
 	FCandidateRenderResultOrError ApplyCandidateToWorld(UWorld& InWorld, const FString& InFramesDir,
 	                                                    const FDoodleLightingRig& InRig, const FAnchorCamera& InCamera);
+
+	void RemoveCandidate(const FCandidateRenderResult& InResult);
 }

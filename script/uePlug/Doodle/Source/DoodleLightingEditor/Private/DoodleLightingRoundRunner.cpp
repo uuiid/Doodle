@@ -286,11 +286,23 @@ void UDoodleLightingRoundRunner::OnIndividualJobStarted(UMoviePipelineExecutorJo
 		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s 建灯失败：%s"), *L_CandidateId, *L_Result.GetError());
 		return;
 	}
-	CandidateReport.LightCount = L_Result.GetValue().LightCount;
+	CandidateSpawned = L_Result.GetValue();
+	CandidateReport.LightCount = CandidateSpawned.LightCount;
 	UE_LOG(
 		LogDoodleLightingEditor, Log, TEXT("候选 %s：%d 盏灯已建进 PIE 世界"), *L_CandidateId,
-		L_Result.GetValue().LightCount
+		CandidateSpawned.LightCount
 	);
+}
+
+void UDoodleLightingRoundRunner::RemoveCandidateFromWorld()
+{
+	if (CandidateSpawned.SpawnedActors.IsEmpty() && !CandidateSpawned.OwnedPostProcessVolume.IsValid())
+	{
+		return;
+	}
+	DoodleLightingExecutor::RemoveCandidate(CandidateSpawned);
+	CandidateSpawned = DoodleLightingExecutor::FCandidateRenderResult();
+	UE_LOG(LogDoodleLightingEditor, Log, TEXT("候选 %s：灯已从 PIE 世界删除"), *CandidateRig.CandidateId);
 }
 
 void UDoodleLightingRoundRunner::OnIndividualJobWorkFinished(FMoviePipelineOutputData InOutputData)
@@ -299,6 +311,7 @@ void UDoodleLightingRoundRunner::OnIndividualJobWorkFinished(FMoviePipelineOutpu
 		? InOutputData.Job->JobName
 		: FString();
 	CandidateReport.RenderMs = static_cast<int64>((FPlatformTime::Seconds() - CandidateStartSeconds) * 1000.0);
+	RemoveCandidateFromWorld();
 
 	if (!InOutputData.bSuccess)
 	{
@@ -329,6 +342,8 @@ void UDoodleLightingRoundRunner::OnExecutorFinished(UMoviePipelineExecutorBase* 
 {
 	(void)InExecutor;
 	(void)bSuccess;
+
+	RemoveCandidateFromWorld();
 
 	FDoodleRoundReport L_Round;
 	L_Round.Candidates.Add(CandidateReport);
