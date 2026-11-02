@@ -531,20 +531,23 @@ struct DOODLE_CORE_API lighting_rig_set_t {
   uuid shot_task_id_{};
   std::int32_t iteration_{0};
   std::string baseline_level_{};
+  std::string movie_pipeline_config_{};
   std::vector<lighting_rig_t> rigs_{};
 
   friend void to_json(nlohmann::json& j, const lighting_rig_set_t& p) {
-    j["session_id"]     = p.session_id_;
-    j["shot_task_id"]   = p.shot_task_id_;
-    j["iteration"]      = p.iteration_;
-    j["baseline_level"] = p.baseline_level_;
-    j["rigs"]           = p.rigs_;
+    j["session_id"]            = p.session_id_;
+    j["shot_task_id"]          = p.shot_task_id_;
+    j["iteration"]             = p.iteration_;
+    j["baseline_level"]        = p.baseline_level_;
+    j["movie_pipeline_config"] = p.movie_pipeline_config_;
+    j["rigs"]                  = p.rigs_;
   }
   friend void from_json(const nlohmann::json& j, lighting_rig_set_t& p) {
     if (j.contains("session_id")) j.at("session_id").get_to(p.session_id_);
     if (j.contains("shot_task_id")) j.at("shot_task_id").get_to(p.shot_task_id_);
     if (j.contains("iteration")) j.at("iteration").get_to(p.iteration_);
     if (j.contains("baseline_level")) j.at("baseline_level").get_to(p.baseline_level_);
+    if (j.contains("movie_pipeline_config")) j.at("movie_pipeline_config").get_to(p.movie_pipeline_config_);
     if (j.contains("rigs")) j.at("rigs").get_to(p.rigs_);
   }
 };

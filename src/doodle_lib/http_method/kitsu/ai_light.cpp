@@ -1064,10 +1064,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
   l_iteration.server_task_info_id_ = uuid{};
 
   lighting_rig_set_t l_rig_set{};
-  l_rig_set.session_id_     = l_req.session_id_;
-  l_rig_set.iteration_      = l_req.iteration_;
-  l_rig_set.shot_task_id_   = l_req.task_id_;
-  l_rig_set.baseline_level_ = l_assembly_res.original_map_.generic_string();
+  l_rig_set.session_id_            = l_req.session_id_;
+  l_rig_set.iteration_             = l_req.iteration_;
+  l_rig_set.shot_task_id_          = l_req.task_id_;
+  l_rig_set.baseline_level_        = l_assembly_res.original_map_.generic_string();
+  l_rig_set.movie_pipeline_config_ = l_assembly_res.movie_pipeline_config_.generic_string();
 
   orm::sql_modify_statement_vector_t l_sqls{};
   for (auto& l_rig : l_req.rigs_) {
