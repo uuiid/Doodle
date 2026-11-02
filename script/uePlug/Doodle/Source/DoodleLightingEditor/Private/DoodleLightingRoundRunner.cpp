@@ -100,7 +100,7 @@ namespace
 		return L_Removed;
 	}
 
-	void ApplyCandidateSettings(UMoviePipelineExecutorJob& InJob, const FDoodleTaskCandidate& InCandidate,
+	void ApplyCandidateSettings(UMoviePipelineExecutorJob& InJob, const FString& InFramesDir,
 	                            const FFrameRate& InFrameRate, bool bHasBaseConfig)
 	{
 		UMoviePipelinePrimaryConfig* L_Config = InJob.GetConfiguration();
@@ -112,7 +112,7 @@ namespace
 		if (UMoviePipelineOutputSetting* L_Output = Cast<UMoviePipelineOutputSetting>(
 				L_Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass())))
 		{
-			L_Output->OutputDirectory.Path = InCandidate.FramesDir;
+			L_Output->OutputDirectory.Path = InFramesDir;
 			L_Output->FileNameFormat = TEXT("frame_{frame_number}");
 			L_Output->ZeroPadFrameNumbers = 4;
 			L_Output->bUseCustomFrameRate = true;
@@ -173,84 +173,74 @@ namespace
 	}
 }
 
-void UDoodleLightingRoundRunner::StartRoundFromLaunchPlan(const FDoodleLaunchPlan& InPlan)
+DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::StartRender(
+	const FString& InBaselineLevel, const FString& InMoviePipelineConfig, const FString& InOutDir,
+	const FDoodleLightingRig& InRig
+)
 {
-	Payload = FDoodleTaskPayload();
-	Payload.SessionId = InPlan.SessionId;
-	Payload.Iteration = InPlan.Iteration;
-	Payload.OutDir = InPlan.OutDir;
-	Payload.RenderMap = InPlan.RenderMap;
-	Payload.LevelSequence = InPlan.LevelSequence;
-	Payload.MoviePipelineConfig = InPlan.MoviePipelineConfig;
-	Payload.FrameBegin = InPlan.FrameBegin;
-	Payload.FrameEnd = InPlan.FrameEnd;
-	Payload.UeProjectPath = InPlan.UeProjectPath;
-	Payload.CameraFilePath = InPlan.CameraFilePath;
-	Payload.Candidates = InPlan.Candidates;
+	CandidateRig = InRig;
+	CandidateReport = FDoodleCandidateReport();
 
-	FString L_StartError;
-	if (!StartRoundInternal(L_StartError))
+	if (InBaselineLevel.IsEmpty())
 	{
-		UE_LOG(LogDoodleLightingEditor, Error, TEXT("本机一轮没能开始：%s"), *L_StartError);
+		return MakeError(FString(TEXT("基线关卡为空")));
 	}
-}
+	if (InRig.CandidateId.IsEmpty())
+	{
+		return MakeError(FString(TEXT("灯光方案没有候选 id")));
+	}
+	if (InRig.Lights.IsEmpty())
+	{
+		return MakeError(FString(TEXT("灯光方案里没有灯")));
+	}
 
-bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
-{
-	FAssetRegistryModule& L_AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+	CandidateFramesDir = DoodleLightingProtocol::MakeCandidateFramesDir(InOutDir, InRig.CandidateId);
+	if (CandidateFramesDir.IsEmpty())
+	{
+		return MakeError(FString(TEXT("算不出出图目录，出图根目录为空")));
+	}
+
+	FAssetRegistryModule& L_AssetRegistry =
+		FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 	if (L_AssetRegistry.Get().IsLoadingAssets())
 	{
-		OutError = TEXT("资产注册表还在加载，现在起不了渲染");
-		return false;
-	}
-	if (Payload.OutDir.IsEmpty())
-	{
-		OutError = TEXT("计划/载荷里没有 out_dir");
-		return false;
-	}
-	if (Payload.Candidates.IsEmpty())
-	{
-		OutError = TEXT("计划/载荷里没有候选");
-		return false;
+		return MakeError(FString(TEXT("资产注册表还在加载，现在起不了渲染")));
 	}
 
-	for (const FDoodleTaskCandidate& L_Candidate : Payload.Candidates)
+	const FString L_BaselinePackage = NormalizePackagePath(InBaselineLevel);
+	LoadedMap = LoadObject<UWorld>(nullptr, *L_BaselinePackage);
+	if (LoadedMap == nullptr)
 	{
-		FDoodleCandidateReport L_Report;
-		L_Report.CandidateIndex = L_Candidate.CandidateIndex;
-		L_Report.CandidateId = L_Candidate.CandidateId;
-		CandidateReports.Add(L_Report);
+		return MakeError(FString::Printf(TEXT("基线关卡加载失败：%s"), *L_BaselinePackage));
+	}
+	LoadedSequence = LoadObject<ULevelSequence>(nullptr, *L_BaselinePackage);
+	if (LoadedSequence == nullptr)
+	{
+		return MakeError(FString::Printf(TEXT("基线定序器加载失败：%s"), *L_BaselinePackage));
 	}
 
-	UWorld* L_RenderWorld = LoadObject<UWorld>(nullptr, *NormalizePackagePath(Payload.RenderMap));
-	if (L_RenderWorld == nullptr)
+	bUsingLoadedSequence = LoadedSequence->GetMovieScene() != nullptr && LoadedSequence->GetMovieScene()->IsReadOnly();
+	const int32 L_StrippedLights = StripLightSpawnables(*LoadedSequence);
+	if (L_StrippedLights > 0 && bUsingLoadedSequence)
 	{
-		OutError = FString::Printf(TEXT("渲染关卡加载失败：%s"), *Payload.RenderMap);
-		return false;
-	}
-	ULevelSequence* L_Sequence = LoadObject<ULevelSequence>(nullptr, *NormalizePackagePath(Payload.LevelSequence));
-	if (L_Sequence == nullptr)
-	{
-		OutError = FString::Printf(TEXT("关卡序列加载失败：%s"), *Payload.LevelSequence);
-		return false;
+		return MakeError(FString::Printf(
+			TEXT("定序器 %s 是外部引用，改不了，剥不掉里面 %d 个灯的 spawnable"), *L_BaselinePackage, L_StrippedLights
+		));
 	}
 
-	const int32 L_StrippedLights = StripLightSpawnables(*L_Sequence);
-	const FFrameRate L_FrameRate = ResolveFrameRate(L_Sequence);
+	const FFrameRate L_FrameRate = ResolveFrameRate(LoadedSequence);
 	FrameRate = FMath::Max(1, FMath::RoundToInt(L_FrameRate.AsDecimal()));
-
-	UE_LOG(LogDoodleLightingEditor, Log, TEXT("序列 %s：剥掉 %d 个灯 spawnable，display rate %d fps，帧区间 %d~%d（诊断）"),
-	       *Payload.LevelSequence, L_StrippedLights, FrameRate, Payload.FrameBegin, Payload.FrameEnd);
+	UE_LOG(LogDoodleLightingEditor, Log, TEXT("序列 %s：剥掉 %d 个灯 spawnable，display rate %d fps"),
+	       *L_BaselinePackage, L_StrippedLights, FrameRate);
 
 	{
 		DoodleLightingExecutor::FRoundContext L_Context;
-		L_Context.LevelSequencePath = NormalizePackagePath(Payload.LevelSequence);
+		L_Context.BaselineLevel = L_BaselinePackage;
 		const DoodleLightingExecutor::FAnchorCameraResult L_CameraResult =
 			DoodleLightingExecutor::PrepareAnchorCamera(L_Context);
 		if (L_CameraResult.HasError())
 		{
-			OutError = FString::Printf(TEXT("机位准备失败：%s"), *L_CameraResult.GetError());
-			return false;
+			return MakeError(FString::Printf(TEXT("机位准备失败：%s"), *L_CameraResult.GetError()));
 		}
 		AnchorCamera = L_CameraResult.GetValue();
 		UE_LOG(LogDoodleLightingEditor, Log, TEXT("机位：位置 %s，旋转 %s，水平视场角 %.2f"),
@@ -258,55 +248,53 @@ bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
 		       AnchorCamera.HorizontalFovDeg);
 	}
 
+	UMoviePipelinePrimaryConfig* L_BaseConfig = nullptr;
+	if (!InMoviePipelineConfig.IsEmpty())
+	{
+		L_BaseConfig = LoadObject<UMoviePipelinePrimaryConfig>(
+			nullptr, *NormalizePackagePath(InMoviePipelineConfig)
+		);
+		if (L_BaseConfig == nullptr)
+		{
+			return MakeError(FString::Printf(TEXT("电影管线配置加载失败：%s"), *InMoviePipelineConfig));
+		}
+	}
+	else
+	{
+		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("没有指定电影管线配置，本轮按内置画质设置渲染"));
+	}
+
 	UMoviePipelineQueueSubsystem* L_Subsystem =
 		GEditor != nullptr ? GEditor->GetEditorSubsystem<UMoviePipelineQueueSubsystem>() : nullptr;
 	if (L_Subsystem == nullptr)
 	{
-		OutError = TEXT("拿不到 UMoviePipelineQueueSubsystem，建不了渲染队列");
-		return false;
+		return MakeError(FString(TEXT("拿不到 UMoviePipelineQueueSubsystem，建不了渲染队列")));
 	}
 	UMoviePipelineQueue* L_Queue = L_Subsystem->GetQueue();
 	if (L_Queue == nullptr)
 	{
-		OutError = TEXT("电影渲染队列不可用");
-		return false;
+		return MakeError(FString(TEXT("电影渲染队列不可用")));
 	}
 	L_Queue->DeleteAllJobs();
 
-	UMoviePipelinePrimaryConfig* L_BaseConfig = nullptr;
-	if (!Payload.MoviePipelineConfig.IsEmpty())
+	UMoviePipelineExecutorJob* L_Job = L_Queue->AllocateNewJob(UMoviePipelineExecutorJob::StaticClass());
+	if (L_Job == nullptr)
 	{
-		L_BaseConfig = LoadObject<UMoviePipelinePrimaryConfig>(nullptr, *NormalizePackagePath(Payload.MoviePipelineConfig));
+		return MakeError(FString(TEXT("建渲染 job 失败")));
 	}
-	if (L_BaseConfig == nullptr)
+	L_Job->JobName = InRig.CandidateId;
+	L_Job->Sequence = FSoftObjectPath(LoadedSequence);
+	L_Job->Map = FSoftObjectPath(LoadedMap);
+	if (L_BaseConfig != nullptr)
 	{
-		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("没有可用的电影管线配置（%s），本轮按内置画质设置渲染"),
-		       *Payload.MoviePipelineConfig);
+		L_Job->SetConfiguration(L_BaseConfig);
 	}
-
-	for (const FDoodleTaskCandidate& L_Candidate : Payload.Candidates)
-	{
-		UMoviePipelineExecutorJob* L_Job = L_Queue->AllocateNewJob(UMoviePipelineExecutorJob::StaticClass());
-		if (L_Job == nullptr)
-		{
-			OutError = TEXT("建渲染 job 失败");
-			return false;
-		}
-		L_Job->JobName = L_Candidate.CandidateId;
-		L_Job->Sequence = FSoftObjectPath(L_Sequence);
-		L_Job->Map = FSoftObjectPath(L_RenderWorld);
-		if (L_BaseConfig != nullptr)
-		{
-			L_Job->SetConfiguration(L_BaseConfig);
-		}
-		ApplyCandidateSettings(*L_Job, L_Candidate, L_FrameRate, L_BaseConfig != nullptr);
-	}
+	ApplyCandidateSettings(*L_Job, CandidateFramesDir, L_FrameRate, L_BaseConfig != nullptr);
 
 	UMoviePipelinePIEExecutor* L_Executor = NewObject<UMoviePipelinePIEExecutor>(GetTransientPackage());
 	if (L_Executor == nullptr)
 	{
-		OutError = TEXT("建 PIE 渲染执行器失败");
-		return false;
+		return MakeError(FString(TEXT("建 PIE 渲染执行器失败")));
 	}
 	L_Executor->AddToRoot();
 	L_Executor->SetIsRenderingOffscreen(true);
@@ -315,10 +303,10 @@ bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
 	L_Executor->OnIndividualJobWorkFinished().AddUObject(this, &UDoodleLightingRoundRunner::OnIndividualJobWorkFinished);
 	L_Executor->OnExecutorFinished().AddUObject(this, &UDoodleLightingRoundRunner::OnExecutorFinished);
 
-	UE_LOG(LogDoodleLightingEditor, Log, TEXT("起渲染：%d 个候选，关卡 %s，序列 %s"),
-	       Payload.Candidates.Num(), *Payload.RenderMap, *Payload.LevelSequence);
+	UE_LOG(LogDoodleLightingEditor, Log, TEXT("起渲染：候选 %s，基线关卡 %s，出图目录 %s"),
+	       *InRig.CandidateId, *L_BaselinePackage, *CandidateFramesDir);
 	L_Subsystem->RenderQueueWithExecutorInstance(L_Executor);
-	return true;
+	return MakeValue(DoodleLightingExecutor::FRoundRenderResult{});
 }
 
 void UDoodleLightingRoundRunner::FailRound(const FString& InError)
@@ -326,7 +314,7 @@ void UDoodleLightingRoundRunner::FailRound(const FString& InError)
 	UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *InError);
 
 	FDoodleRoundReport L_Round;
-	L_Round.Candidates = CandidateReports;
+	L_Round.Candidates.Add(CandidateReport);
 	L_Round.FrameRate = FrameRate > 0 ? FrameRate : GDefaultFrameRate;
 	L_Round.Error = InError;
 
@@ -339,46 +327,25 @@ void UDoodleLightingRoundRunner::FailRound(const FString& InError)
 void UDoodleLightingRoundRunner::OnIndividualJobStarted(UMoviePipelineExecutorJob* InJob)
 {
 	const FString L_CandidateId = InJob != nullptr ? InJob->JobName : FString();
-	CandidateStartSeconds.Add(L_CandidateId, FPlatformTime::Seconds());
-
-	FDoodleCandidateReport* L_Report = FindCandidateReport(L_CandidateId);
-	const FDoodleTaskCandidate* L_Candidate = FindCandidate(L_CandidateId);
-	if (L_Candidate == nullptr)
-	{
-		UE_LOG(LogDoodleLightingEditor, Error, TEXT("job %s 在载荷里找不到对应候选"), *L_CandidateId);
-		if (L_Report != nullptr)
-		{
-			L_Report->Status = EDoodleRenderStatus::Failed;
-		}
-		return;
-	}
+	CandidateStartSeconds = FPlatformTime::Seconds();
 
 	UWorld* L_World = GEditor != nullptr ? GEditor->PlayWorld : nullptr;
 	if (L_World == nullptr)
 	{
+		CandidateReport.Status = EDoodleRenderStatus::Failed;
 		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s：PIE 世界还没起来，灯建不进去"), *L_CandidateId);
-		if (L_Report != nullptr)
-		{
-			L_Report->Status = EDoodleRenderStatus::Failed;
-		}
 		return;
 	}
 
 	const DoodleLightingExecutor::FCandidateRenderResultOrError L_Result =
-		DoodleLightingExecutor::ApplyCandidateToWorld(*L_World, *L_Candidate, AnchorCamera);
+		DoodleLightingExecutor::ApplyCandidateToWorld(*L_World, CandidateFramesDir, CandidateRig, AnchorCamera);
 	if (L_Result.HasError())
 	{
-		if (L_Report != nullptr)
-		{
-			L_Report->Status = EDoodleRenderStatus::Failed;
-		}
+		CandidateReport.Status = EDoodleRenderStatus::Failed;
 		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s 建灯失败：%s"), *L_CandidateId, *L_Result.GetError());
 		return;
 	}
-	if (L_Report != nullptr)
-	{
-		L_Report->LightCount = L_Result.GetValue().LightCount;
-	}
+	CandidateReport.LightCount = L_Result.GetValue().LightCount;
 	UE_LOG(LogDoodleLightingEditor, Log, TEXT("候选 %s：%d 盏灯已建进 PIE 世界"), *L_CandidateId,
 	       L_Result.GetValue().LightCount);
 }
@@ -386,39 +353,29 @@ void UDoodleLightingRoundRunner::OnIndividualJobStarted(UMoviePipelineExecutorJo
 void UDoodleLightingRoundRunner::OnIndividualJobWorkFinished(FMoviePipelineOutputData InOutputData)
 {
 	const FString L_CandidateId = InOutputData.Job != nullptr ? InOutputData.Job->JobName : FString();
-	FDoodleCandidateReport* L_Report = FindCandidateReport(L_CandidateId);
-	if (L_Report == nullptr)
-	{
-		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("job %s 渲完了，但载荷里没有这个候选"), *L_CandidateId);
-		return;
-	}
-	if (const double* L_Start = CandidateStartSeconds.Find(L_CandidateId))
-	{
-		L_Report->RenderMs = static_cast<int64>((FPlatformTime::Seconds() - *L_Start) * 1000.0);
-	}
+	CandidateReport.RenderMs = static_cast<int64>((FPlatformTime::Seconds() - CandidateStartSeconds) * 1000.0);
 
 	if (!InOutputData.bSuccess)
 	{
-		L_Report->Status = EDoodleRenderStatus::Failed;
+		CandidateReport.Status = EDoodleRenderStatus::Failed;
 		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s 渲染失败"), *L_CandidateId);
 		return;
 	}
 
-	const FDoodleTaskCandidate* L_Candidate = FindCandidate(L_CandidateId);
-	const int32 L_FrameCount = L_Candidate != nullptr ? CountPngFrames(L_Candidate->FramesDir) : 0;
-	L_Report->FrameCount = L_FrameCount;
+	const int32 L_FrameCount = CountPngFrames(CandidateFramesDir);
+	CandidateReport.FrameCount = L_FrameCount;
 	if (L_FrameCount < 2)
 	{
-		L_Report->Status = EDoodleRenderStatus::Failed;
+		CandidateReport.Status = EDoodleRenderStatus::Failed;
 		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s 只渲出 %d 帧，合成不出视频"), *L_CandidateId, L_FrameCount);
 		return;
 	}
-	if (L_Report->Status != EDoodleRenderStatus::Failed)
+	if (CandidateReport.Status != EDoodleRenderStatus::Failed)
 	{
-		L_Report->Status = EDoodleRenderStatus::Rendered;
+		CandidateReport.Status = EDoodleRenderStatus::Rendered;
 	}
-	UE_LOG(LogDoodleLightingEditor, Log, TEXT("候选 %s：%d 帧，耗时 %lld ms"),
-	       *L_CandidateId, L_FrameCount, L_Report->RenderMs);
+	UE_LOG(LogDoodleLightingEditor, Log, TEXT("候选 %s：%d 帧，耗时 %lld ms"), *L_CandidateId, L_FrameCount,
+	       CandidateReport.RenderMs);
 }
 
 void UDoodleLightingRoundRunner::OnExecutorFinished(UMoviePipelineExecutorBase* InExecutor, bool bSuccess)
@@ -427,45 +384,20 @@ void UDoodleLightingRoundRunner::OnExecutorFinished(UMoviePipelineExecutorBase* 
 	(void)bSuccess;
 
 	FDoodleRoundReport L_Round;
-	L_Round.Candidates = CandidateReports;
+	L_Round.Candidates.Add(CandidateReport);
 	L_Round.FrameRate = FrameRate > 0 ? FrameRate : GDefaultFrameRate;
 
-	int32 L_RenderedCount = 0;
-	int32 L_FailedCount = 0;
-	for (const FDoodleCandidateReport& L_Report : CandidateReports)
+	const bool bRendered = CandidateReport.Status == EDoodleRenderStatus::Rendered;
+	if (!bRendered)
 	{
-		if (L_Report.Status == EDoodleRenderStatus::Rendered)
-		{
-			++L_RenderedCount;
-		}
-		else
-		{
-			++L_FailedCount;
-		}
-	}
-	if (L_RenderedCount == 0)
-	{
-		L_Round.Error = FString::Printf(TEXT("%d 个候选全部渲染失败"), L_FailedCount);
+		L_Round.Error = FString::Printf(TEXT("候选 %s 渲染失败"), *CandidateRig.CandidateId);
 	}
 
-	UE_LOG(LogDoodleLightingEditor, Log, TEXT("本机一轮渲染结束：成功 %d / 失败 %d，%d fps"),
-	       L_RenderedCount, L_FailedCount, L_Round.FrameRate);
+	UE_LOG(LogDoodleLightingEditor, Log, TEXT("本机一轮渲染结束：候选 %s %s，%d 帧，%d fps"),
+	       *CandidateRig.CandidateId, bRendered ? TEXT("成功") : TEXT("失败"), CandidateReport.FrameCount,
+	       L_Round.FrameRate);
 	if (RoundFinished.IsBound())
 	{
 		RoundFinished.Broadcast(L_Round);
 	}
-}
-
-const FDoodleTaskCandidate* UDoodleLightingRoundRunner::FindCandidate(const FString& InCandidateId) const
-{
-	return Payload.Candidates.FindByPredicate([&InCandidateId](const FDoodleTaskCandidate& InCandidate) {
-		return InCandidate.CandidateId == InCandidateId;
-	});
-}
-
-FDoodleCandidateReport* UDoodleLightingRoundRunner::FindCandidateReport(const FString& InCandidateId)
-{
-	return CandidateReports.FindByPredicate([&InCandidateId](const FDoodleCandidateReport& InReport) {
-		return InReport.CandidateId == InCandidateId;
-	});
 }

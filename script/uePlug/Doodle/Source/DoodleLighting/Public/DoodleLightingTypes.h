@@ -242,11 +242,12 @@ struct DOODLELIGHTING_API FDoodleLightingRig
 {
 	FString SchemaVersion = TEXT("1.1");
 	FString RigId;
+	FString CandidateId;
 	FString SessionId;
 	FString ShotTaskId;
 	FString SpecId;
+	FString MoviePipelineConfig;
 	int32 Iteration = 1;
-	int32 CandidateIndex = 0;
 	FDoodleProvenance Provenance;
 	FString BaselineLevel;
 	FDoodleGlobals Globals;
@@ -256,15 +257,7 @@ struct DOODLELIGHTING_API FDoodleLightingRig
 
 struct DOODLELIGHTING_API FDoodleTaskCandidate
 {
-	int32 CandidateIndex = 0;
-	FString CandidateId;
-
 	FString FramesDir;
-
-	FString PngPath;
-	FString ExrPath;
-
-	FString MoviePath;
 	FDoodleLightingRig Rig;
 };
 
@@ -272,14 +265,11 @@ struct DOODLELIGHTING_API FDoodleTaskPayload
 {
 	FString SessionId;
 	int32 Iteration = 1;
-	FString SpecId;
 	FString OutDir;
 	FString BaselineLevel;
 	FString UeProjectPath;
 	FString CameraFilePath;
 
-	FString RenderMap;
-	FString LevelSequence;
 	FString MoviePipelineConfig;
 
 	int32 FrameBegin = 0;
@@ -295,8 +285,7 @@ struct DOODLELIGHTING_API FDoodleLaunchPlan
 	int32 Iteration = 1;
 
 	FString OutDir;
-	FString RenderMap;
-	FString LevelSequence;
+	FString BaselineLevel;
 	FString MoviePipelineConfig;
 	int32 FrameBegin = 0;
 	int32 FrameEnd = 0;
@@ -307,8 +296,6 @@ struct DOODLELIGHTING_API FDoodleLaunchPlan
 
 struct DOODLELIGHTING_API FDoodleCandidateReport
 {
-	int32 CandidateIndex = 0;
-	FString CandidateId;
 	EDoodleRenderStatus Status = EDoodleRenderStatus::Pending;
 	int64 RenderMs = 0;
 	int32 LightCount = 0;
@@ -329,4 +316,8 @@ struct DOODLELIGHTING_API FDoodleRoundReport
 namespace DoodleLightingProtocol
 {
 	static const TCHAR* const RenderReportFileName = TEXT("render_report.json");
+
+	DOODLELIGHTING_API FString MakeCandidateFramesDir(const FString& InOutDir, const FString& InCandidateId);
+
+	DOODLELIGHTING_API FString MakeCandidateMoviePath(const FString& InOutDir, const FString& InCandidateId);
 }

@@ -15,7 +15,7 @@ namespace DoodleLightingExecutor
 
 	struct FRoundContext
 	{
-		FString LevelSequencePath;
+		FString BaselineLevel;
 	};
 
 	struct FCandidateRenderResult
@@ -23,11 +23,16 @@ namespace DoodleLightingExecutor
 		int32 LightCount = 0;
 	};
 
+	struct FRoundRenderResult
+	{
+	};
+
 	using FAnchorCameraResult = TValueOrError<FAnchorCamera, FString>;
 	using FCandidateRenderResultOrError = TValueOrError<FCandidateRenderResult, FString>;
+	using FRoundRenderResultOrError = TValueOrError<FRoundRenderResult, FString>;
 
 	FAnchorCameraResult PrepareAnchorCamera(const FRoundContext& InContext);
 
-	FCandidateRenderResultOrError ApplyCandidateToWorld(UWorld& InWorld, const FDoodleTaskCandidate& InCandidate,
-	                                                    const FAnchorCamera& InCamera);
+	FCandidateRenderResultOrError ApplyCandidateToWorld(UWorld& InWorld, const FString& InFramesDir,
+	                                                    const FDoodleLightingRig& InRig, const FAnchorCamera& InCamera);
 }

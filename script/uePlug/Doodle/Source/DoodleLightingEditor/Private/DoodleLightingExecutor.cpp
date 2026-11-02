@@ -441,10 +441,10 @@ namespace DoodleLightingExecutor
 
 	FAnchorCameraResult PrepareAnchorCamera(const FRoundContext& InContext)
 	{
-		ULevelSequence* L_Sequence = LoadObject<ULevelSequence>(nullptr, *InContext.LevelSequencePath);
+		ULevelSequence* L_Sequence = LoadObject<ULevelSequence>(nullptr, *InContext.BaselineLevel);
 		if (L_Sequence == nullptr)
 		{
-			return MakeError(FString::Printf(TEXT("定序器加载失败：%s"), *InContext.LevelSequencePath));
+			return MakeError(FString::Printf(TEXT("定序器加载失败：%s"), *InContext.BaselineLevel));
 		}
 		UWorld* L_EditorWorld = GEditor != nullptr ? GEditor->GetEditorWorldContext().World() : nullptr;
 		if (L_EditorWorld == nullptr)
@@ -477,12 +477,12 @@ namespace DoodleLightingExecutor
 		return MakeValue(L_Anchor);
 	}
 
-	FCandidateRenderResultOrError ApplyCandidateToWorld(UWorld& InWorld, const FDoodleTaskCandidate& InCandidate,
-	                                                    const FAnchorCamera& InCamera)
+	FCandidateRenderResultOrError ApplyCandidateToWorld(UWorld& InWorld, const FString& InFramesDir,
+	                                                    const FDoodleLightingRig& InRig, const FAnchorCamera& InCamera)
 	{
-		if (InCandidate.Rig.Lights.IsEmpty())
+		if (InRig.Lights.IsEmpty())
 		{
-			return MakeError(FString::Printf(TEXT("候选 %d 没有灯，无法建灯"), InCandidate.CandidateIndex));
+			return MakeError(FString(TEXT("候选没有灯，无法建灯")));
 		}
 
 		FCandidateRenderResult L_Result;
@@ -490,23 +490,22 @@ namespace DoodleLightingExecutor
 
 		DestroyAiSpawnedActors();
 
-		const FDoodleLightingRig& L_Rig = InCandidate.Rig;
 		TArray<FString> L_Warnings;
 
-		const FPostProcessSettings L_Settings = BuildPostProcessSettings(L_Rig.Globals);
+		const FPostProcessSettings L_Settings = BuildPostProcessSettings(InRig.Globals);
 		if (APostProcessVolume* L_Volume = EnsurePostProcessVolume())
 		{
 			L_Volume->Settings = L_Settings;
 			L_Volume->BlendWeight = 1.0f;
 		}
-		ApplySkyLightIntensity(L_Rig.Globals.Environment.SkyLightIntensity);
-		ApplyFogDensity(L_Rig.Globals.Environment.FogDensity);
+		ApplySkyLightIntensity(InRig.Globals.Environment.SkyLightIntensity);
+		ApplyFogDensity(InRig.Globals.Environment.FogDensity);
 
-		L_Result.LightCount = BuildRigLights(L_Rig, InCamera, L_Warnings);
+		L_Result.LightCount = BuildRigLights(InRig, InCamera, L_Warnings);
 
 		for (const FString& L_Warning : L_Warnings)
 		{
-			UE_LOG(LogDoodleLightingEditor, Warning, TEXT("候选 %d：%s"), InCandidate.CandidateIndex, *L_Warning);
+			UE_LOG(LogDoodleLightingEditor, Warning, TEXT("出图目录 %s：%s"), *InFramesDir, *L_Warning);
 		}
 		return MakeValue(L_Result);
 	}

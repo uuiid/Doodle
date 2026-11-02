@@ -331,12 +331,13 @@ bool DoodleLightingJson::ParseLightingRig(const TSharedPtr<FJsonObject>& InRoot,
 
 	GetString(InRoot, TEXT("schema_version"), TEXT("rig.schema_version"), OutRig.SchemaVersion, OutError, false);
 	GetString(InRoot, TEXT("rig_id"), TEXT("rig.rig_id"), OutRig.RigId, OutError, false);
+	GetString(InRoot, TEXT("candidate_id"), TEXT("rig.candidate_id"), OutRig.CandidateId, OutError, false);
 	GetString(InRoot, TEXT("session_id"), TEXT("rig.session_id"), OutRig.SessionId, OutError, false);
 	GetString(InRoot, TEXT("shot_task_id"), TEXT("rig.shot_task_id"), OutRig.ShotTaskId, OutError, false);
 	GetString(InRoot, TEXT("spec_id"), TEXT("rig.spec_id"), OutRig.SpecId, OutError, false);
 	GetString(InRoot, TEXT("baseline_level"), TEXT("rig.baseline_level"), OutRig.BaselineLevel, OutError, false);
+	GetString(InRoot, TEXT("movie_pipeline_config"), TEXT("rig.movie_pipeline_config"), OutRig.MoviePipelineConfig, OutError, false);
 	GetInt(InRoot, TEXT("iteration"), TEXT("rig.iteration"), OutRig.Iteration, OutError, false);
-	GetInt(InRoot, TEXT("candidate_index"), TEXT("rig.candidate_index"), OutRig.CandidateIndex, OutError, false);
 
 	if (!ParseGlobals(InRoot, TEXT("rig.globals"), OutRig.Globals, OutError))
 	{
@@ -410,100 +411,14 @@ bool DoodleLightingJson::ParseLightingRig(const TSharedPtr<FJsonObject>& InRoot,
 	return true;
 }
 
-bool DoodleLightingJson::ParseTaskPayload(const TSharedPtr<FJsonObject>& InRoot, FDoodleTaskPayload& OutPayload, FString& OutError)
-{
-	if (!InRoot.IsValid())
-	{
-		OutError = TEXT("payload：不是 JSON 对象");
-		return false;
-	}
-
-	if (!GetString(InRoot, TEXT("session_id"), TEXT("session_id"), OutPayload.SessionId, OutError)) return false;
-	if (!GetInt(InRoot, TEXT("iteration"), TEXT("iteration"), OutPayload.Iteration, OutError)) return false;
-	GetString(InRoot, TEXT("spec_id"), TEXT("spec_id"), OutPayload.SpecId, OutError, false);
-	if (!GetString(InRoot, TEXT("out_dir"), TEXT("out_dir"), OutPayload.OutDir, OutError)) return false;
-	GetString(InRoot, TEXT("baseline_level"), TEXT("baseline_level"), OutPayload.BaselineLevel, OutError, false);
-	GetString(InRoot, TEXT("ue_project_path"), TEXT("ue_project_path"), OutPayload.UeProjectPath, OutError, false);
-	GetString(InRoot, TEXT("camera_file_path"), TEXT("camera_file_path"), OutPayload.CameraFilePath, OutError, false);
-	if (!GetString(InRoot, TEXT("render_map"), TEXT("render_map"), OutPayload.RenderMap, OutError)) return false;
-	if (!GetString(InRoot, TEXT("level_sequence"), TEXT("level_sequence"), OutPayload.LevelSequence, OutError)) return false;
-	GetString(InRoot, TEXT("movie_pipeline_config"), TEXT("movie_pipeline_config"), OutPayload.MoviePipelineConfig, OutError, false);
-	GetInt(InRoot, TEXT("frame_begin"), TEXT("frame_begin"), OutPayload.FrameBegin, OutError, false);
-	GetInt(InRoot, TEXT("frame_end"), TEXT("frame_end"), OutPayload.FrameEnd, OutError, false);
-
-	const TArray<TSharedPtr<FJsonValue>>* LCandidates = nullptr;
-	if (!GetArray(InRoot, TEXT("candidates"), TEXT("candidates"), LCandidates, OutError)) return false;
-	if (LCandidates->Num() == 0)
-	{
-		OutError = TEXT("candidates：数组为空");
-		return false;
-	}
-
-	OutPayload.Candidates.Reset();
-	for (int32 LIndex = 0; LIndex < LCandidates->Num(); ++LIndex)
-	{
-		const TSharedPtr<FJsonObject>* LItem = nullptr;
-		const FString LPath = FString::Printf(TEXT("candidates[%d]"), LIndex);
-		if (!(*LCandidates)[LIndex].IsValid() || !(*LCandidates)[LIndex]->TryGetObject(LItem) || LItem == nullptr)
-		{
-			return Fail(OutError, LPath, TEXT("不是对象"));
-		}
-		FDoodleTaskCandidate LCandidate;
-		if (!GetInt(*LItem, TEXT("candidate_index"), LPath + TEXT(".candidate_index"), LCandidate.CandidateIndex, OutError)) return false;
-		if (!GetString(*LItem, TEXT("candidate_id"), LPath + TEXT(".candidate_id"), LCandidate.CandidateId, OutError)) return false;
-		if (!GetString(*LItem, TEXT("frames_dir"), LPath + TEXT(".frames_dir"), LCandidate.FramesDir, OutError)) return false;
-		GetString(*LItem, TEXT("png_path"), LPath + TEXT(".png_path"), LCandidate.PngPath, OutError, false);
-		GetString(*LItem, TEXT("exr_path"), LPath + TEXT(".exr_path"), LCandidate.ExrPath, OutError, false);
-		GetString(*LItem, TEXT("movie_path"), LPath + TEXT(".movie_path"), LCandidate.MoviePath, OutError, false);
-		TSharedPtr<FJsonObject> LRig;
-		if (!GetObject(*LItem, TEXT("rig"), LPath + TEXT(".rig"), LRig, OutError)) return false;
-		if (!ParseLightingRig(LRig, LCandidate.Rig, OutError)) return false;
-		OutPayload.Candidates.Add(MoveTemp(LCandidate));
-	}
-	return true;
-}
-
-TSharedPtr<FJsonObject> DoodleLightingJson::SerializeTaskPayload(const FDoodleTaskPayload& InPayload)
-{
-	TSharedRef<FJsonObject> LRoot = MakeShared<FJsonObject>();
-	LRoot->SetStringField(TEXT("session_id"), InPayload.SessionId);
-	LRoot->SetNumberField(TEXT("iteration"), InPayload.Iteration);
-	LRoot->SetStringField(TEXT("spec_id"), InPayload.SpecId);
-	LRoot->SetStringField(TEXT("out_dir"), InPayload.OutDir);
-	LRoot->SetStringField(TEXT("baseline_level"), InPayload.BaselineLevel);
-	LRoot->SetStringField(TEXT("ue_project_path"), InPayload.UeProjectPath);
-	LRoot->SetStringField(TEXT("camera_file_path"), InPayload.CameraFilePath);
-	LRoot->SetStringField(TEXT("render_map"), InPayload.RenderMap);
-	LRoot->SetStringField(TEXT("level_sequence"), InPayload.LevelSequence);
-	LRoot->SetStringField(TEXT("movie_pipeline_config"), InPayload.MoviePipelineConfig);
-	LRoot->SetNumberField(TEXT("frame_begin"), InPayload.FrameBegin);
-	LRoot->SetNumberField(TEXT("frame_end"), InPayload.FrameEnd);
-
-	TArray<TSharedPtr<FJsonValue>> LCandidates;
-	for (const FDoodleTaskCandidate& LCandidate : InPayload.Candidates)
-	{
-		TSharedRef<FJsonObject> LItem = MakeShared<FJsonObject>();
-		LItem->SetNumberField(TEXT("candidate_index"), LCandidate.CandidateIndex);
-		LItem->SetStringField(TEXT("candidate_id"), LCandidate.CandidateId);
-		LItem->SetStringField(TEXT("frames_dir"), LCandidate.FramesDir);
-		LItem->SetStringField(TEXT("png_path"), LCandidate.PngPath);
-		LItem->SetStringField(TEXT("exr_path"), LCandidate.ExrPath);
-		LItem->SetStringField(TEXT("movie_path"), LCandidate.MoviePath);
-		LCandidates.Add(MakeShared<FJsonValueObject>(LItem));
-	}
-	LRoot->SetArrayField(TEXT("candidates"), LCandidates);
-	return LRoot;
-}
-
-TSharedPtr<FJsonObject> DoodleLightingJson::SerializeLaunchPlan(const FDoodleLaunchPlan& InPlan)
+TSharedPtr<FJsonObject> DoodleLightingJson::SerializeRenderPayload(const FDoodleLaunchPlan& InPlan)
 {
 	TSharedRef<FJsonObject> LRoot = MakeShared<FJsonObject>();
 	LRoot->SetStringField(TEXT("session_id"), InPlan.SessionId);
 	LRoot->SetStringField(TEXT("iteration_id"), InPlan.IterationId);
 	LRoot->SetNumberField(TEXT("iteration"), InPlan.Iteration);
 	LRoot->SetStringField(TEXT("out_dir"), InPlan.OutDir);
-	LRoot->SetStringField(TEXT("render_map"), InPlan.RenderMap);
-	LRoot->SetStringField(TEXT("level_sequence"), InPlan.LevelSequence);
+	LRoot->SetStringField(TEXT("baseline_level"), InPlan.BaselineLevel);
 	LRoot->SetStringField(TEXT("movie_pipeline_config"), InPlan.MoviePipelineConfig);
 	LRoot->SetNumberField(TEXT("frame_begin"), InPlan.FrameBegin);
 	LRoot->SetNumberField(TEXT("frame_end"), InPlan.FrameEnd);
@@ -514,32 +429,26 @@ TSharedPtr<FJsonObject> DoodleLightingJson::SerializeLaunchPlan(const FDoodleLau
 	for (const FDoodleTaskCandidate& LCandidate : InPlan.Candidates)
 	{
 		TSharedRef<FJsonObject> LItem = MakeShared<FJsonObject>();
-		LItem->SetNumberField(TEXT("candidate_index"), LCandidate.CandidateIndex);
-		LItem->SetStringField(TEXT("candidate_id"), LCandidate.CandidateId);
 		LItem->SetStringField(TEXT("frames_dir"), LCandidate.FramesDir);
-		LItem->SetStringField(TEXT("png_path"), LCandidate.PngPath);
-		LItem->SetStringField(TEXT("exr_path"), LCandidate.ExrPath);
-		LItem->SetStringField(TEXT("movie_path"), LCandidate.MoviePath);
 		LCandidates.Add(MakeShared<FJsonValueObject>(LItem));
 	}
 	LRoot->SetArrayField(TEXT("candidates"), LCandidates);
 	return LRoot;
 }
 
-bool DoodleLightingJson::ParseLaunchPlan(const TSharedPtr<FJsonObject>& InRoot, FDoodleLaunchPlan& OutPlan, FString& OutError)
+bool DoodleLightingJson::ParseRenderPayload(const TSharedPtr<FJsonObject>& InRoot, FDoodleLaunchPlan& OutPlan, FString& OutError)
 {
 	if (!InRoot.IsValid())
 	{
-		OutError = TEXT("launch_plan：不是 JSON 对象");
+		OutError = TEXT("render_payload：不是 JSON 对象");
 		return false;
 	}
 
 	if (!GetString(InRoot, TEXT("session_id"), TEXT("session_id"), OutPlan.SessionId, OutError)) return false;
-	if (!GetString(InRoot, TEXT("iteration_id"), TEXT("iteration_id"), OutPlan.IterationId, OutError)) return false;
-	if (!GetInt(InRoot, TEXT("iteration"), TEXT("iteration"), OutPlan.Iteration, OutError)) return false;
+	GetString(InRoot, TEXT("iteration_id"), TEXT("iteration_id"), OutPlan.IterationId, OutError, false);
+	GetInt(InRoot, TEXT("iteration"), TEXT("iteration"), OutPlan.Iteration, OutError, false);
 	if (!GetString(InRoot, TEXT("out_dir"), TEXT("out_dir"), OutPlan.OutDir, OutError)) return false;
-	if (!GetString(InRoot, TEXT("render_map"), TEXT("render_map"), OutPlan.RenderMap, OutError)) return false;
-	if (!GetString(InRoot, TEXT("level_sequence"), TEXT("level_sequence"), OutPlan.LevelSequence, OutError)) return false;
+	if (!GetString(InRoot, TEXT("baseline_level"), TEXT("baseline_level"), OutPlan.BaselineLevel, OutError)) return false;
 	GetString(InRoot, TEXT("movie_pipeline_config"), TEXT("movie_pipeline_config"), OutPlan.MoviePipelineConfig, OutError, false);
 	GetInt(InRoot, TEXT("frame_begin"), TEXT("frame_begin"), OutPlan.FrameBegin, OutError, false);
 	GetInt(InRoot, TEXT("frame_end"), TEXT("frame_end"), OutPlan.FrameEnd, OutError, false);
@@ -564,79 +473,11 @@ bool DoodleLightingJson::ParseLaunchPlan(const TSharedPtr<FJsonObject>& InRoot, 
 			return Fail(OutError, LPath, TEXT("不是对象"));
 		}
 		FDoodleTaskCandidate LCandidate;
-		if (!GetInt(*LItem, TEXT("candidate_index"), LPath + TEXT(".candidate_index"), LCandidate.CandidateIndex, OutError)) return false;
-		if (!GetString(*LItem, TEXT("candidate_id"), LPath + TEXT(".candidate_id"), LCandidate.CandidateId, OutError)) return false;
 		if (!GetString(*LItem, TEXT("frames_dir"), LPath + TEXT(".frames_dir"), LCandidate.FramesDir, OutError)) return false;
-		GetString(*LItem, TEXT("png_path"), LPath + TEXT(".png_path"), LCandidate.PngPath, OutError, false);
-		GetString(*LItem, TEXT("exr_path"), LPath + TEXT(".exr_path"), LCandidate.ExrPath, OutError, false);
-		GetString(*LItem, TEXT("movie_path"), LPath + TEXT(".movie_path"), LCandidate.MoviePath, OutError, false);
+		TSharedPtr<FJsonObject> LRig;
+		if (!GetObject(*LItem, TEXT("rig"), LPath + TEXT(".rig"), LRig, OutError)) return false;
+		if (!ParseLightingRig(LRig, LCandidate.Rig, OutError)) return false;
 		OutPlan.Candidates.Add(MoveTemp(LCandidate));
-	}
-	return true;
-}
-
-TSharedPtr<FJsonObject> DoodleLightingJson::SerializeRoundReport(const FDoodleRoundReport& InReport)
-{
-	TSharedRef<FJsonObject> LRoot = MakeShared<FJsonObject>();
-	TArray<TSharedPtr<FJsonValue>> LCandidates;
-	for (const FDoodleCandidateReport& LCandidate : InReport.Candidates)
-	{
-		TSharedRef<FJsonObject> LItem = MakeShared<FJsonObject>();
-		LItem->SetNumberField(TEXT("candidate_index"), LCandidate.CandidateIndex);
-		LItem->SetStringField(TEXT("candidate_id"), LCandidate.CandidateId);
-		LItem->SetStringField(TEXT("status"), DoodleRenderStatusToString(LCandidate.Status));
-		LItem->SetNumberField(TEXT("render_ms"), LCandidate.RenderMs);
-		LItem->SetNumberField(TEXT("light_count"), LCandidate.LightCount);
-		LItem->SetNumberField(TEXT("frame_count"), LCandidate.FrameCount);
-		if (LCandidate.Metrics.IsValid())
-		{
-			LItem->SetObjectField(TEXT("metrics"), LCandidate.Metrics);
-		}
-		LCandidates.Add(MakeShared<FJsonValueObject>(LItem));
-	}
-	LRoot->SetArrayField(TEXT("candidates"), LCandidates);
-	LRoot->SetNumberField(TEXT("frame_rate"), InReport.FrameRate);
-	LRoot->SetStringField(TEXT("error"), InReport.Error);
-	return LRoot;
-}
-
-bool DoodleLightingJson::ParseRoundReport(const TSharedPtr<FJsonObject>& InRoot, FDoodleRoundReport& OutReport, FString& OutError)
-{
-	if (!InRoot.IsValid())
-	{
-		OutError = TEXT("render_report：不是 JSON 对象");
-		return false;
-	}
-	const TArray<TSharedPtr<FJsonValue>>* LCandidates = nullptr;
-	if (!GetArray(InRoot, TEXT("candidates"), TEXT("candidates"), LCandidates, OutError))
-	{
-		return false;
-	}
-	GetString(InRoot, TEXT("error"), TEXT("error"), OutReport.Error, OutError, false);
-	GetInt(InRoot, TEXT("frame_rate"), TEXT("frame_rate"), OutReport.FrameRate, OutError, false);
-
-	OutReport.Candidates.Reset();
-	for (int32 LIndex = 0; LIndex < LCandidates->Num(); ++LIndex)
-	{
-		const TSharedPtr<FJsonObject>* LItem = nullptr;
-		const FString LPath = FString::Printf(TEXT("candidates[%d]"), LIndex);
-		if (!(*LCandidates)[LIndex].IsValid() || !(*LCandidates)[LIndex]->TryGetObject(LItem) || LItem == nullptr)
-		{
-			return Fail(OutError, LPath, TEXT("不是对象"));
-		}
-		FDoodleCandidateReport LCandidate;
-		if (!GetString(*LItem, TEXT("candidate_id"), LPath + TEXT(".candidate_id"), LCandidate.CandidateId, OutError)) return false;
-		if (!GetEnum(*LItem, TEXT("status"), LPath + TEXT(".status"), LCandidate.Status, OutError, &DoodleRenderStatusFromString)) return false;
-		GetInt(*LItem, TEXT("candidate_index"), LPath + TEXT(".candidate_index"), LCandidate.CandidateIndex, OutError, false);
-		GetInt64(*LItem, TEXT("render_ms"), LPath + TEXT(".render_ms"), LCandidate.RenderMs, OutError, false);
-		GetInt(*LItem, TEXT("light_count"), LPath + TEXT(".light_count"), LCandidate.LightCount, OutError, false);
-		GetInt(*LItem, TEXT("frame_count"), LPath + TEXT(".frame_count"), LCandidate.FrameCount, OutError, false);
-		TSharedPtr<FJsonObject> LMetrics;
-		if (TryGetObjectFieldPtr(*LItem, TEXT("metrics"), LMetrics) && LMetrics.IsValid())
-		{
-			LCandidate.Metrics = LMetrics;
-		}
-		OutReport.Candidates.Add(MoveTemp(LCandidate));
 	}
 	return true;
 }

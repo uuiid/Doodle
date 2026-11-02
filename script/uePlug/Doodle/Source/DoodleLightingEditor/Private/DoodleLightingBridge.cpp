@@ -46,7 +46,7 @@ namespace DoodleLightingBridge
 	{
 		OutPath = MakeLaunchPlanPath(InPlan.SessionId, InPlan.Iteration);
 
-		const TSharedPtr<FJsonObject> L_Json = DoodleLightingJson::SerializeLaunchPlan(InPlan);
+		const TSharedPtr<FJsonObject> L_Json = DoodleLightingJson::SerializeRenderPayload(InPlan);
 		if (!L_Json.IsValid())
 		{
 			OutError = TEXT("启动计划序列化失败");
@@ -97,7 +97,7 @@ namespace DoodleLightingBridge
 			OutError = FString::Printf(TEXT("启动计划不是合法 json：%s"), *InPath);
 			return false;
 		}
-		return DoodleLightingJson::ParseLaunchPlan(L_Root, OutPlan, OutError);
+		return DoodleLightingJson::ParseRenderPayload(L_Root, OutPlan, OutError);
 	}
 
 	bool DeleteLaunchPlan(const FString& InPath, FString& OutError)
