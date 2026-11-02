@@ -138,7 +138,7 @@ namespace
 		);
 	}
 
-	DoodleKitsuClient::FDoodleLightingIterationValue ParseIterationBody(const TSharedPtr<FJsonObject>& InRoot)
+	DoodleKitsuClient::FDoodleLightingIterationValue ParseIterationRoot(const TSharedPtr<FJsonObject>& InRoot)
 	{
 		DoodleKitsuClient::FDoodleLightingIterationValue L_Value;
 
@@ -197,14 +197,7 @@ namespace
 		{
 			return MakeError(InBody.GetError());
 		}
-		try
-		{
-			return MakeValue(ParseIterationBody(InBody.GetValue()));
-		}
-		catch (const FString& L_Error)
-		{
-			return MakeError(L_Error);
-		}
+		return DoodleKitsuClient::ParseIterationBody(InBody.GetValue());
 	}
 
 	DoodleKitsuClient::FDoodleLoginResult MakeLoginResult(
@@ -262,6 +255,23 @@ namespace
 
 namespace DoodleKitsuClient
 {
+	FDoodleIterationResult ParseIterationBody(const TSharedPtr<FJsonObject>& InRoot)
+	{
+		if (!InRoot.IsValid())
+		{
+			return MakeError(TEXT("轮次响应不是 json 对象"));
+		}
+
+		try
+		{
+			return MakeValue(ParseIterationRoot(InRoot));
+		}
+		catch (const FString& L_Error)
+		{
+			return MakeError(L_Error);
+		}
+	}
+
 	TValueOrError<FString, FString> GetLocalServerUrl()
 	{
 		const FDoodleListenerPortResult L_Port = ReadListenerPort();

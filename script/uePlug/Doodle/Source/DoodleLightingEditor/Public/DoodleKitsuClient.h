@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "DoodleLightingTypes.h"
+#include "Dom/JsonObject.h"
 #include "Templates/Function.h"
 #include "Templates/ValueOrError.h"
 
@@ -32,6 +33,8 @@ namespace DoodleKitsuClient
 
 	using FDoodleLoginResult = TValueOrError<FDoodleLoginValue, FString>;
 	using FDoodleLoginCallback = TFunction<void(FDoodleLoginResult)>;
+
+	DOODLELIGHTINGEDITOR_API FDoodleIterationResult ParseIterationBody(const TSharedPtr<FJsonObject>& InRoot);
 
 	DOODLELIGHTINGEDITOR_API TValueOrError<FString, FString> GetLocalServerUrl();
 
