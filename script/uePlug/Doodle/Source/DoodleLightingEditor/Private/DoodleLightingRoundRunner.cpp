@@ -97,83 +97,6 @@ namespace
 		return L_Removed;
 	}
 
-	void ApplyCandidateSettings(
-		UMoviePipelineExecutorJob& InJob, const FString& InFramesDir, const FFrameRate& InFrameRate, bool bHasBaseConfig
-	)
-	{
-		UMoviePipelinePrimaryConfig* L_Config = InJob.GetConfiguration();
-		if (L_Config == nullptr)
-		{
-			return;
-		}
-
-		if (UMoviePipelineOutputSetting* L_Output = Cast<UMoviePipelineOutputSetting>(
-			L_Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass())
-		))
-		{
-			L_Output->OutputDirectory.Path = InFramesDir;
-			L_Output->FileNameFormat = TEXT("frame_{frame_number}");
-			L_Output->ZeroPadFrameNumbers = 4;
-			L_Output->bUseCustomFrameRate = true;
-			L_Output->OutputFrameRate = InFrameRate;
-			if (!bHasBaseConfig)
-			{
-				L_Output->OutputResolution = FIntPoint(1920, 1080);
-			}
-		}
-
-		if (UMoviePipelineImageSequenceOutput_EXR* L_Exr = L_Config->FindSetting<UMoviePipelineImageSequenceOutput_EXR>())
-		{
-			L_Config->RemoveSetting(L_Exr);
-		}
-		if (UMoviePipelineImageSequenceOutput_JPG* L_Jpg = L_Config->FindSetting<UMoviePipelineImageSequenceOutput_JPG>())
-		{
-			L_Config->RemoveSetting(L_Jpg);
-		}
-		L_Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass());
-		L_Config->FindOrAddSettingByClass(UMoviePipelineDeferredPassBase::StaticClass());
-
-		if (bHasBaseConfig)
-		{
-			return;
-		}
-
-		if (UMoviePipelineConsoleVariableSetting* L_ConsoleVar = Cast<UMoviePipelineConsoleVariableSetting>(
-			L_Config->FindOrAddSettingByClass(UMoviePipelineConsoleVariableSetting::StaticClass())
-		))
-		{
-			L_ConsoleVar->AddOrUpdateConsoleVariable(TEXT("r.MotionBlurQuality"), 0.0);
-			L_ConsoleVar->AddOrUpdateConsoleVariable(TEXT("r.DefaultFeature.MotionBlur"), 0.0);
-			L_ConsoleVar->AddOrUpdateConsoleVariable(TEXT("r.Streaming.UseFixedPoolSize"), 1.0);
-			L_ConsoleVar->AddOrUpdateConsoleVariable(TEXT("r.Streaming.PoolSize"), 4096.0);
-		}
-		if (UMoviePipelineAntiAliasingSetting* L_AntiAliasing = Cast<UMoviePipelineAntiAliasingSetting>(
-			L_Config->FindOrAddSettingByClass(UMoviePipelineAntiAliasingSetting::StaticClass())
-		))
-		{
-			L_AntiAliasing->SpatialSampleCount = 1;
-			L_AntiAliasing->TemporalSampleCount = 1;
-			L_AntiAliasing->bOverrideAntiAliasing = true;
-			L_AntiAliasing->AntiAliasingMethod = EAntiAliasingMethod::AAM_TSR;
-			L_AntiAliasing->bRenderWarmUpFrames = true;
-			L_AntiAliasing->EngineWarmUpCount = 128;
-			L_AntiAliasing->RenderWarmUpCount = 0;
-		}
-		if (UMoviePipelineGameOverrideSetting* L_GameOverride = Cast<UMoviePipelineGameOverrideSetting>(
-			L_Config->FindOrAddSettingByClass(UMoviePipelineGameOverrideSetting::StaticClass())
-		))
-		{
-			L_GameOverride->bCinematicQualitySettings = true;
-			L_GameOverride->TextureStreaming = EMoviePipelineTextureStreamingMethod::None;
-		}
-		if (UMoviePipelineCameraSetting* L_Camera = Cast<UMoviePipelineCameraSetting>(
-			L_Config->FindOrAddSettingByClass(UMoviePipelineCameraSetting::StaticClass())
-		))
-		{
-			L_Camera->ShutterTiming = EMoviePipelineShutterTiming::FrameClose;
-			L_Camera->OverscanPercentage = 0.0;
-		}
-	}
 } // namespace
 
 DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::StartRender(
@@ -280,7 +203,15 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::St
 	{
 		L_Job->SetConfiguration(L_BaseConfig);
 	}
-	ApplyCandidateSettings(*L_Job, CandidateFramesDir, L_FrameRate, L_BaseConfig != nullptr);
+	if (UMoviePipelinePrimaryConfig* L_Config = L_Job->GetConfiguration())
+	{
+		if (UMoviePipelineOutputSetting* L_Output = Cast<UMoviePipelineOutputSetting>(
+			L_Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass())
+		))
+		{
+			L_Output->OutputDirectory.Path = CandidateFramesDir;
+		}
+	}
 
 	UMoviePipelinePIEExecutor* L_Executor = NewObject<UMoviePipelinePIEExecutor>(GetTransientPackage());
 	if (L_Executor == nullptr)
