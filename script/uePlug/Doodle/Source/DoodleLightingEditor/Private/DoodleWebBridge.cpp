@@ -7,38 +7,11 @@
 #include "Dom/JsonObject.h"
 #include "Editor.h"
 #include "Engine/World.h"
-#include "Misc/PackageName.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 
 namespace
 {
-	FString NormalizeMapPath(const FString& InPath)
-	{
-		if (InPath.IsEmpty())
-		{
-			return FString();
-		}
-
-		FString L_Path = InPath.TrimStartAndEnd();
-		L_Path.ReplaceInline(TEXT("\\"), TEXT("/"));
-
-		if (!L_Path.StartsWith(TEXT("/")))
-		{
-			FString L_PackageName;
-			if (FPackageName::TryConvertFilenameToLongPackageName(L_Path, L_PackageName))
-			{
-				L_Path = L_PackageName;
-			}
-		}
-
-		if (L_Path.EndsWith(TEXT(".umap"), ESearchCase::IgnoreCase))
-		{
-			L_Path.LeftChopInline(5);
-		}
-		return L_Path;
-	}
-
 	FString GetCurrentMapPath()
 	{
 		const UWorld* L_World = GEditor != nullptr ? GEditor->GetEditorWorldContext().World() : nullptr;
@@ -46,7 +19,7 @@ namespace
 		{
 			return FString();
 		}
-		return NormalizeMapPath(L_World->GetPathName());
+		return L_World->GetPathName();
 	}
 }
 
@@ -86,8 +59,7 @@ FString UDoodleWebBridge::SetAiLightIteration(const FString& InIteration)
 		return L_Error;
 	}
 
-	const FString L_Baseline = NormalizeMapPath(L_Value.BaselineLevel);
-	if (!L_Baseline.Equals(L_CurrentMap, ESearchCase::IgnoreCase))
+	if (!L_Value.BaselineLevel.Equals(L_CurrentMap, ESearchCase::IgnoreCase))
 	{
 		const FString L_Error = FString::Printf(
 			TEXT("基线关卡不匹配：本轮要求 %s，当前打开的是 %s"),
