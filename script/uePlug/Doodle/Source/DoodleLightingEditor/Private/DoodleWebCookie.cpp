@@ -1,5 +1,7 @@
 #include "DoodleWebCookie.h"
 
+#include "DoodleLightingEditorLog.h"
+
 #include "IWebBrowserCookieManager.h"
 #include "IWebBrowserSingleton.h"
 #include "WebBrowserModule.h"
@@ -54,7 +56,7 @@ namespace DoodleWebCookie
 		IWebBrowserModule* L_Module = FModuleManager::GetModulePtr<IWebBrowserModule>(TEXT("WebBrowser"));
 		if (L_Module == nullptr || !L_Module->IsWebModuleAvailable())
 		{
-			UE_LOG(LogTemp, Error, TEXT("[DoodleKitsu] 浏览器模块不可用，写不进 cookie"));
+			UE_LOG(LogDoodleLightingEditor, Error, TEXT("浏览器模块不可用，写不进 cookie"));
 			InOnComplete(false);
 			return;
 		}
@@ -62,7 +64,7 @@ namespace DoodleWebCookie
 		IWebBrowserSingleton* L_Singleton = L_Module->GetSingleton();
 		if (L_Singleton == nullptr)
 		{
-			UE_LOG(LogTemp, Error, TEXT("[DoodleKitsu] 浏览器没有初始化，写不进 cookie"));
+			UE_LOG(LogDoodleLightingEditor, Error, TEXT("浏览器没有初始化，写不进 cookie"));
 			InOnComplete(false);
 			return;
 		}
@@ -70,7 +72,7 @@ namespace DoodleWebCookie
 		const TSharedPtr<IWebBrowserCookieManager> L_CookieManager = L_Singleton->GetCookieManager();
 		if (!L_CookieManager.IsValid())
 		{
-			UE_LOG(LogTemp, Error, TEXT("[DoodleKitsu] 拿不到 cookie 管理器，写不进 cookie"));
+			UE_LOG(LogDoodleLightingEditor, Error, TEXT("拿不到 cookie 管理器，写不进 cookie"));
 			InOnComplete(false);
 			return;
 		}
@@ -90,7 +92,7 @@ namespace DoodleWebCookie
 			{
 				if (!bInSuccess)
 				{
-					UE_LOG(LogTemp, Error, TEXT("[DoodleKitsu] 浏览器拒绝写入 access_token_cookie"));
+					UE_LOG(LogDoodleLightingEditor, Error, TEXT("浏览器拒绝写入 access_token_cookie"));
 				}
 				L_OnComplete(bInSuccess);
 			}

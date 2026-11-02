@@ -1,5 +1,7 @@
 #include "DoodleLightingRoundRunner.h"
 
+#include "DoodleLightingEditorLog.h"
+
 #include "DoodleLightingExecutor.h"
 #include "DoodleLightingJson.h"
 #include "DoodleLightingReport.h"
@@ -224,7 +226,7 @@ bool UDoodleLightingRoundRunner::HasAiLightParams()
 
 void UDoodleLightingRoundRunner::RequestExit(int32 InExitCode)
 {
-	UE_LOG(LogTemp, Log, TEXT("[DoodleLighting] 本轮结束，退出码 %d"), InExitCode);
+	UE_LOG(LogDoodleLightingEditor, Log, TEXT("本轮结束，退出码 %d"), InExitCode);
 	FPlatformMisc::RequestExitWithStatus(false, static_cast<uint8>(FMath::Clamp(InExitCode, 0, 255)));
 }
 
@@ -263,7 +265,7 @@ void UDoodleLightingRoundRunner::StartRoundFromLaunchPlan(const FDoodleLaunchPla
 	FString L_StartError;
 	if (!StartRoundInternal(L_StartError))
 	{
-		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] 本机一轮没能开始：%s"), *L_StartError);
+		UE_LOG(LogDoodleLightingEditor, Error, TEXT("本机一轮没能开始：%s"), *L_StartError);
 	}
 }
 
@@ -274,20 +276,20 @@ void UDoodleLightingRoundRunner::StartRound()
 	FString L_Params;
 	FParse::Value(FCommandLine::Get(), GAiLightParamsKey, L_Params);
 	PayloadPath = FPaths::ConvertRelativePathToFull(L_Params);
-	UE_LOG(LogTemp, Log, TEXT("[DoodleLighting] 载荷：%s"), *PayloadPath);
+	UE_LOG(LogDoodleLightingEditor, Log, TEXT("载荷：%s"), *PayloadPath);
 
 	FString L_Text;
 	FString L_Error;
 	if (!LoadUtf8File(PayloadPath, L_Text, L_Error))
 	{
-		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] %s"), *L_Error);
+		UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *L_Error);
 		RequestExit(1);
 		return;
 	}
 	TSharedPtr<FJsonObject> L_Root;
 	if (!ParseJsonObject(L_Text, L_Root, L_Error) || !L_Root.IsValid())
 	{
-		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] %s"), *L_Error);
+		UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *L_Error);
 		RequestExit(1);
 		return;
 	}
@@ -307,7 +309,7 @@ void UDoodleLightingRoundRunner::StartRound()
 	}
 	if (Payload.OutDir.IsEmpty())
 	{
-		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] 载荷里既没有 out_dir，也没有别的落点"));
+		UE_LOG(LogDoodleLightingEditor, Error, TEXT("载荷里既没有 out_dir，也没有别的落点"));
 		RequestExit(1);
 		return;
 	}
@@ -357,7 +359,7 @@ bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
 	const FFrameRate L_FrameRate = ResolveFrameRate(L_Sequence);
 	FrameRate = FMath::Max(1, FMath::RoundToInt(L_FrameRate.AsDecimal()));
 
-	UE_LOG(LogTemp, Log, TEXT("[DoodleLighting] 序列 %s：剥掉 %d 个灯 spawnable，display rate %d fps，帧区间 %d~%d（诊断）"),
+	UE_LOG(LogDoodleLightingEditor, Log, TEXT("序列 %s：剥掉 %d 个灯 spawnable，display rate %d fps，帧区间 %d~%d（诊断）"),
 	       *Payload.LevelSequence, L_StrippedLights, FrameRate, Payload.FrameBegin, Payload.FrameEnd);
 
 	{
@@ -393,7 +395,7 @@ bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
 	}
 	if (L_BaseConfig == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[DoodleLighting] 没有可用的电影管线配置（%s），本轮按内置画质设置渲染"),
+		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("没有可用的电影管线配置（%s），本轮按内置画质设置渲染"),
 		       *Payload.MoviePipelineConfig);
 	}
 
@@ -428,7 +430,7 @@ bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
 	L_Executor->OnIndividualJobWorkFinished().AddUObject(this, &UDoodleLightingRoundRunner::OnIndividualJobWorkFinished);
 	L_Executor->OnExecutorFinished().AddUObject(this, &UDoodleLightingRoundRunner::OnExecutorFinished);
 
-	UE_LOG(LogTemp, Log, TEXT("[DoodleLighting] 起渲染：%d 个候选，关卡 %s，序列 %s"),
+	UE_LOG(LogDoodleLightingEditor, Log, TEXT("起渲染：%d 个候选，关卡 %s，序列 %s"),
 	       Payload.Candidates.Num(), *Payload.RenderMap, *Payload.LevelSequence);
 	L_Subsystem->RenderQueueWithExecutorInstance(L_Executor);
 	return true;
@@ -436,7 +438,7 @@ bool UDoodleLightingRoundRunner::StartRoundInternal(FString& OutError)
 
 void UDoodleLightingRoundRunner::FailRound(const FString& InError)
 {
-	UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] %s"), *InError);
+	UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *InError);
 	if (Payload.OutDir.IsEmpty())
 	{
 		RequestExit(1);
@@ -450,7 +452,7 @@ void UDoodleLightingRoundRunner::FailRound(const FString& InError)
 	FString L_WriteError;
 	if (!DoodleLightingReport::WriteReportFile(Payload.OutDir, L_Round, L_WriteError))
 	{
-		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] %s"), *L_WriteError);
+		UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *L_WriteError);
 		RequestExit(1);
 		return;
 	}
@@ -466,7 +468,7 @@ void UDoodleLightingRoundRunner::OnIndividualJobStarted(UMoviePipelineExecutorJo
 	const FDoodleTaskCandidate* L_Candidate = FindCandidate(L_CandidateId);
 	if (L_Candidate == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] job %s 在载荷里找不到对应候选"), *L_CandidateId);
+		UE_LOG(LogDoodleLightingEditor, Error, TEXT("job %s 在载荷里找不到对应候选"), *L_CandidateId);
 		if (L_Report != nullptr)
 		{
 			L_Report->Status = EDoodleRenderStatus::Failed;
@@ -477,7 +479,7 @@ void UDoodleLightingRoundRunner::OnIndividualJobStarted(UMoviePipelineExecutorJo
 	UWorld* L_World = GEditor != nullptr ? GEditor->PlayWorld : nullptr;
 	if (L_World == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] 候选 %s：PIE 世界还没起来，灯建不进去"), *L_CandidateId);
+		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s：PIE 世界还没起来，灯建不进去"), *L_CandidateId);
 		if (L_Report != nullptr)
 		{
 			L_Report->Status = EDoodleRenderStatus::Failed;
@@ -497,11 +499,11 @@ void UDoodleLightingRoundRunner::OnIndividualJobStarted(UMoviePipelineExecutorJo
 	}
 	if (!L_Result.bSucceeded)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] 候选 %s 建灯失败：%s"), *L_CandidateId, *L_Result.Error);
+		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s 建灯失败：%s"), *L_CandidateId, *L_Result.Error);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Log, TEXT("[DoodleLighting] 候选 %s：%d 盏灯已建进 PIE 世界"), *L_CandidateId, L_Result.LightCount);
+		UE_LOG(LogDoodleLightingEditor, Log, TEXT("候选 %s：%d 盏灯已建进 PIE 世界"), *L_CandidateId, L_Result.LightCount);
 	}
 }
 
@@ -511,7 +513,7 @@ void UDoodleLightingRoundRunner::OnIndividualJobWorkFinished(FMoviePipelineOutpu
 	FDoodleCandidateReport* L_Report = FindCandidateReport(L_CandidateId);
 	if (L_Report == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[DoodleLighting] job %s 渲完了，但载荷里没有这个候选"), *L_CandidateId);
+		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("job %s 渲完了，但载荷里没有这个候选"), *L_CandidateId);
 		return;
 	}
 	if (const double* L_Start = CandidateStartSeconds.Find(L_CandidateId))
@@ -522,7 +524,7 @@ void UDoodleLightingRoundRunner::OnIndividualJobWorkFinished(FMoviePipelineOutpu
 	if (!InOutputData.bSuccess)
 	{
 		L_Report->Status = EDoodleRenderStatus::Failed;
-		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] 候选 %s 渲染失败"), *L_CandidateId);
+		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s 渲染失败"), *L_CandidateId);
 		return;
 	}
 
@@ -532,14 +534,14 @@ void UDoodleLightingRoundRunner::OnIndividualJobWorkFinished(FMoviePipelineOutpu
 	if (L_FrameCount < 2)
 	{
 		L_Report->Status = EDoodleRenderStatus::Failed;
-		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] 候选 %s 只渲出 %d 帧，合成不出视频"), *L_CandidateId, L_FrameCount);
+		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s 只渲出 %d 帧，合成不出视频"), *L_CandidateId, L_FrameCount);
 		return;
 	}
 	if (L_Report->Status != EDoodleRenderStatus::Failed)
 	{
 		L_Report->Status = EDoodleRenderStatus::Rendered;
 	}
-	UE_LOG(LogTemp, Log, TEXT("[DoodleLighting] 候选 %s：%d 帧，耗时 %lld ms"),
+	UE_LOG(LogDoodleLightingEditor, Log, TEXT("候选 %s：%d 帧，耗时 %lld ms"),
 	       *L_CandidateId, L_FrameCount, L_Report->RenderMs);
 }
 
@@ -572,7 +574,7 @@ void UDoodleLightingRoundRunner::OnExecutorFinished(UMoviePipelineExecutorBase* 
 
 	if (bInteractiveMode)
 	{
-		UE_LOG(LogTemp, Log, TEXT("[DoodleLighting] 本机一轮渲染结束：成功 %d / 失败 %d，%d fps（停在这里，不退出）"),
+		UE_LOG(LogDoodleLightingEditor, Log, TEXT("本机一轮渲染结束：成功 %d / 失败 %d，%d fps（停在这里，不退出）"),
 		       L_RenderedCount, L_FailedCount, L_Round.FrameRate);
 		if (RoundFinished.IsBound())
 		{
@@ -584,11 +586,11 @@ void UDoodleLightingRoundRunner::OnExecutorFinished(UMoviePipelineExecutorBase* 
 	FString L_WriteError;
 	if (!DoodleLightingReport::WriteReportFile(Payload.OutDir, L_Round, L_WriteError))
 	{
-		UE_LOG(LogTemp, Error, TEXT("[DoodleLighting] %s"), *L_WriteError);
+		UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *L_WriteError);
 		RequestExit(1);
 		return;
 	}
-	UE_LOG(LogTemp, Log, TEXT("[DoodleLighting] 回传报告 %s：成功 %d / 失败 %d，%d fps"),
+	UE_LOG(LogDoodleLightingEditor, Log, TEXT("回传报告 %s：成功 %d / 失败 %d，%d fps"),
 	       *DoodleLightingReport::MakeReportPath(Payload.OutDir), L_RenderedCount, L_FailedCount, L_Round.FrameRate);
 	RequestExit(0);
 }

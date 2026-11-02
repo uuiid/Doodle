@@ -1,6 +1,7 @@
 #include "DoodleWebBridge.h"
 
 #include "DoodleKitsuClient.h"
+#include "DoodleLightingEditorLog.h"
 #include "DoodleLightingSettings.h"
 
 #include "Dom/JsonObject.h"
@@ -63,7 +64,7 @@ FString UDoodleWebBridge::SetAiLightIteration(const FString& InIteration)
 	if (!FJsonSerializer::Deserialize(L_Reader, L_Root) || !L_Root.IsValid())
 	{
 		const FString L_Error = FString::Printf(TEXT("不是合法 json 对象，长度 %d"), InIteration.Len());
-		UE_LOG(LogTemp, Warning, TEXT("[DoodleWebBridge] ai light iteration 解析失败: %s"), *L_Error);
+		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("ai light iteration 解析失败: %s"), *L_Error);
 		return L_Error;
 	}
 
@@ -71,7 +72,7 @@ FString UDoodleWebBridge::SetAiLightIteration(const FString& InIteration)
 	if (L_Result.HasError())
 	{
 		const FString L_Error = FString::Printf(TEXT("轮次解析失败: %s"), *L_Result.GetError());
-		UE_LOG(LogTemp, Warning, TEXT("[DoodleWebBridge] ai light iteration 解析失败: %s"), *L_Error);
+		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("ai light iteration 解析失败: %s"), *L_Error);
 		return L_Error;
 	}
 
@@ -81,7 +82,7 @@ FString UDoodleWebBridge::SetAiLightIteration(const FString& InIteration)
 	if (L_CurrentMap.IsEmpty())
 	{
 		const FString L_Error = TEXT("编辑器里没有打开的关卡，无法校验基线关卡");
-		UE_LOG(LogTemp, Warning, TEXT("[DoodleWebBridge] ai light iteration 校验失败: %s"), *L_Error);
+		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("ai light iteration 校验失败: %s"), *L_Error);
 		return L_Error;
 	}
 
@@ -92,13 +93,13 @@ FString UDoodleWebBridge::SetAiLightIteration(const FString& InIteration)
 			TEXT("基线关卡不匹配：本轮要求 %s，当前打开的是 %s"),
 			L_Value.BaselineLevel.IsEmpty() ? TEXT("<空>") : *L_Value.BaselineLevel, *L_CurrentMap
 		);
-		UE_LOG(LogTemp, Warning, TEXT("[DoodleWebBridge] ai light iteration 校验失败: %s"), *L_Error);
+		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("ai light iteration 校验失败: %s"), *L_Error);
 		return L_Error;
 	}
 
 	UE_LOG(
-		LogTemp, Log,
-		TEXT("[DoodleWebBridge] ai light iteration 第 %d 轮，state=%s，会话 %s，镜头任务 %s，基线关卡 %s，候选 %d 个"),
+		LogDoodleLightingEditor, Log,
+		TEXT("ai light iteration 第 %d 轮，state=%s，会话 %s，镜头任务 %s，基线关卡 %s，候选 %d 个"),
 		L_Value.Iteration, *L_Value.State, *L_Value.SessionId, *L_Value.ShotTaskId, *L_Value.BaselineLevel,
 		L_Value.Rigs.Num()
 	);
@@ -107,7 +108,7 @@ FString UDoodleWebBridge::SetAiLightIteration(const FString& InIteration)
 	{
 		const FDoodleLightingRig& L_Rig = L_Value.Rigs[L_Index];
 		UE_LOG(
-			LogTemp, Log, TEXT("[DoodleWebBridge]   候选 %d：rig_id=%s，spec_id=%s，灯 %d 盏，op %d 条"), L_Index,
+			LogDoodleLightingEditor, Log, TEXT("  候选 %d：rig_id=%s，spec_id=%s，灯 %d 盏，op %d 条"), L_Index,
 			*L_Rig.RigId, *L_Rig.SpecId, L_Rig.Lights.Num(), L_Rig.Ops.Num()
 		);
 	}

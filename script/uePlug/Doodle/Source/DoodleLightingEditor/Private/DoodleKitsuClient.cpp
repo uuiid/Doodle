@@ -1,8 +1,9 @@
 #include "DoodleKitsuClient.h"
 
+#include "DoodleLightingEditorLog.h"
+#include "DoodleLightingJson.h"
 #include "DoodleLightingSettings.h"
 #include "DoodleListenerPortShm.h"
-#include "DoodleLightingJson.h"
 #include "DoodleWebCookie.h"
 
 #include "Containers/Ticker.h"
@@ -306,13 +307,13 @@ namespace DoodleKitsuClient
 				if (L_Result.HasValue())
 				{
 					UE_LOG(
-						LogTemp, Log, TEXT("[DoodleKitsu] 获取第 %d 轮成功（%d 个候选）"), L_Result.GetValue().Iteration,
+						LogDoodleLightingEditor, Log, TEXT("获取第 %d 轮成功（%d 个候选）"), L_Result.GetValue().Iteration,
 						L_Result.GetValue().Rigs.Num()
 					);
 				}
 				else
 				{
-					UE_LOG(LogTemp, Error, TEXT("[DoodleKitsu] 获取轮次失败 %s"), *L_Result.GetError());
+					UE_LOG(LogDoodleLightingEditor, Error, TEXT("获取轮次失败 %s"), *L_Result.GetError());
 				}
 				L_OnComplete(MoveTemp(L_Result));
 			}
@@ -373,13 +374,13 @@ namespace DoodleKitsuClient
 				FDoodleLoginResult L_Result = MakeLoginResult(L_State->Body, L_Email);
 				if (L_Result.HasError())
 				{
-					UE_LOG(LogTemp, Error, TEXT("[DoodleKitsu] 登录失败 %s"), *L_Result.GetError());
+					UE_LOG(LogDoodleLightingEditor, Error, TEXT("登录失败 %s"), *L_Result.GetError());
 					L_OnComplete(MoveTemp(L_Result));
 					return;
 				}
 
 				const FString L_AccessToken = L_Result.GetValue().AccessToken;
-				UE_LOG(LogTemp, Log, TEXT("[DoodleKitsu] 登录成功 %s"), *L_Email);
+				UE_LOG(LogDoodleLightingEditor, Log, TEXT("登录成功 %s"), *L_Email);
 
 				DoodleWebCookie::SetAccessTokenCookie(
 					L_CookieOrigin, L_AccessToken,

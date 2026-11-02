@@ -1,5 +1,7 @@
 #include "DoodleLightingExecutor.h"
 
+#include "DoodleLightingEditorLog.h"
+
 #include "DoodleLightingCapture.h"
 #include "DoodleLightingOps.h"
 
@@ -637,7 +639,7 @@ namespace DoodleLightingExecutor
 		{
 			return false;
 		}
-		UE_LOG(LogTemp, Log, TEXT("[DoodleLighting] 交付机位：位置 %s，旋转 %s，水平视场角 %.2f"),
+		UE_LOG(LogDoodleLightingEditor, Log, TEXT("交付机位：位置 %s，旋转 %s，水平视场角 %.2f"),
 		       *G_CameraLocation.ToCompactString(), *G_CameraRotation.ToCompactString(), G_CameraFovDeg);
 		return true;
 	}
@@ -665,7 +667,7 @@ namespace DoodleLightingExecutor
 
 		for (const FString& L_Warning : L_Warnings)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[DoodleLighting] 候选 %d：%s"), InCandidate.CandidateIndex, *L_Warning);
+			UE_LOG(LogDoodleLightingEditor, Warning, TEXT("候选 %d：%s"), InCandidate.CandidateIndex, *L_Warning);
 		}
 		L_Result.bSucceeded = true;
 		return L_Result;
