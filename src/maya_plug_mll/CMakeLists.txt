@@ -59,3 +59,7 @@ install(TARGETS doodle_maya
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "Maya${Maya_Version}"
         DESTINATION maya/plug-ins
 )
+# FBX 是静态链接(Fbx::Fbx-static)，libfbxsdk.dll 不在导入表里，RUNTIME_DEPENDENCIES 扫不到
+install(FILES $<TARGET_FILE:Fbx::Fbx>
+        DESTINATION maya/plug-ins
+)

@@ -105,6 +105,11 @@ install(FILES
         "$<IF:$<CONFIG:Debug>,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/debug/bin/onnxruntime_providers_shared.dll,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin/onnxruntime_providers_shared.dll>"
         DESTINATION bin
 )
+# 7zip.dll 由 bit7z 在运行期按名字 LoadLibrary(ue_exe.cpp 的 Bit7zLibrary)，不在导入表里，
+# RUNTIME_DEPENDENCIES 扫不到，必须显式安装
+install(FILES $<TARGET_FILE:7zip::7zip>
+        DESTINATION bin
+)
 
 
 
