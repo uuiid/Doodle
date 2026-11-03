@@ -98,16 +98,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, delete_) {
 
 class data_computers_socket_io_impl : public std::enable_shared_from_this<data_computers_socket_io_impl> {
   std::shared_ptr<boost::beast::websocket::stream<http::tcp_stream_type>> web_stream_;
-  // computer 各属性的原子快照, 取代原先的 std::shared_ptr<computer> computer_。
-  // 写方恒为本对象的 strand_(见 run()), 读方可来自任意执行器; 发布用 release, 读取用 acquire。
-  // 标量属性直接存 std::atomic<T>, 非平凡可复制的属性用 atomic<shared_ptr<T>> 发布不可变副本。
   std::atomic<uuid> uuid_id_{};
   std::atomic<uuid> hardware_id_{};
   std::atomic<std::shared_ptr<std::set<server_task_info_type>>> allowed_task_types_{};
 
-  // 分配器视角的状态(get_computer_status / set_computer_status(computer_status) 读写)。
-  // 由 init() 按注册消息首次发布, 之后每次 set_computer_status 刷新;
-  // 连接断开时置 offline(见 async_run 的读循环 scope_exit)。
   std::atomic<computer_status> last_status_{computer_status::offline};
 
   boost::asio::strand<boost::asio::io_context::executor_type> strand_;
@@ -115,7 +109,6 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   std::atomic<bool> writing_{false}, should_close_{false};
   boost::lockfree::spsc_value<boost::beast::websocket::ping_data> ping_message_;
 
-  // 第一步, 等待计算机发送自身信息, 第二步, 将计算机信息保存到数据库
   boost::asio::awaitable<void> init() {
     boost::beast::flat_buffer l_buffer{};
 
@@ -123,7 +116,6 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     auto l_json =
         nlohmann::json::parse(boost::asio::buffers_begin(l_buffer.data()), boost::asio::buffers_end(l_buffer.data()));
     auto l_computer_json       = l_json.get<computer>();
-    // ORM 的 insert/update 需要一个完整的 computer 对象, 这里保留一个局部副本(不再是成员)
     auto l_row                 = l_computer_json;
     l_row.last_heartbeat_time_ = std::chrono::system_clock::now();
     auto l_sql                 = get_sqlite_database();
@@ -143,16 +135,11 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
       l_sqls.emplace_back(insert(l_sql).into<computer>().values(l_row));
       co_await l_sql.run_sql(std::move(l_sqls));
     }
-    // 逐属性发布快照, 之后每次 set_computer_status 都会刷新
     uuid_id_.store(l_row.uuid_id_, std::memory_order_release);
     hardware_id_.store(l_row.hardware_id_, std::memory_order_release);
     allowed_task_types_.store(
         std::make_shared<std::set<server_task_info_type>>(l_row.allowed_task_types_), std::memory_order_release
     );
-    // 注册消息本身就是一次状态上报, 必须在这里发布: 客户端连接时只发这一条消息,
-    // 之后没有周期性心跳(ping 是 websocket 控制帧, 不会走到 set_computer_status)。
-    // 漏掉这一行的话 last_status_ 会一直停在 offline —— 库里 status_ 是 online(UI 显示在线),
-    // 但 run_next_task 的在线判据永远不成立, 机器一个任务都拿不到。
     last_status_.store(l_computer_json.status_, std::memory_order_release);
   }
   void write_msg(const std::string& in_msg) { message_queue_.push(in_msg); }
@@ -178,8 +165,6 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
                                       .set(c(&computer::status_) = computer_status::offline)
                                       .set(c(&computer::last_heartbeat_time_) = l_zoned)
                                       .where(c(&computer::uuid_id_) == l_uuid));
-              // 断开时把仍挂在这台机器名下的 running 任务解绑(状态保留 running 供人工确认),
-              // 否则该机器重连后会被这条孤儿任务一直挡住, 再也拿不到任务
               l_sqls.emplace_back(update(l_sql)
                                       .from<server_task_info>()
                                       .set(c(&server_task_info::run_computer_id_) = uuid{})
@@ -202,13 +187,10 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     try {
       boost::scope::scope_exit l_{[this, sh = shared_from_this()]() {
         should_close_ = true;
-        // 读循环一结束就标记离线: 本对象还会被 ping 协程持有最多一个 ping 周期,
-        // 期间 run_next_task 不能把它当成在线机器派任务(派了也发不出去)
         last_status_.store(computer_status::offline, std::memory_order_release);
       }};
       while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
              boost::asio::cancellation_type::none) {
-        // boost::beast::flat_buffer l_buffer{};
         std::string l_body{};
         auto l_buffer = boost::asio::dynamic_buffer(l_body);
         if (!web_stream_) co_return;
@@ -246,11 +228,9 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   boost::asio::awaitable<void> set_computer_status(std::reference_wrapper<computer> in_computer) {
     auto l_sql    = get_sqlite_database();
     auto l_uuid   = uuid_id_.load(std::memory_order_acquire);
-    // name 从库中刷新(保持原有行为), 其余属性取自本次上报
     auto l_status = in_computer.get().status_;
     auto l_now    = chrono::system_clock::now();
     auto l_zoned  = chrono::system_zoned_time{chrono::current_zone(), l_now};
-    // 本协程运行在 strand_ 上; 发布后任务分配 strand 才会看到新值
     allowed_task_types_.store(
         std::make_shared<std::set<server_task_info_type>>(in_computer.get().allowed_task_types_),
         std::memory_order_release
@@ -306,15 +286,11 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   void set_computer_status(computer_status in_status) { last_status_ = in_status; }
   computer_status get_computer_status() const { return last_status_; }
   uuid get_computer_id() const { return uuid_id_.load(std::memory_order_acquire); }
-  // 可在任意执行器上安全调用: 返回允许任务类型的不可变快照(nullptr 表示尚未发布, 等价于不限制)
   std::shared_ptr<const std::set<server_task_info_type>> get_allowed_task_types() const {
     return allowed_task_types_.load(std::memory_order_acquire);
   }
 
   void run() {
-    // 整个连接生命周期(含 init/读写/关闭/ping)都必须跑在本对象的 strand_ 上:
-    // web_stream_ 是 boost::beast::websocket::stream, 非线程安全, 且下面的
-    // allowed_task_types_ 等状态也依赖单一执行器串行化。
     boost::asio::co_spawn(
         strand_, async_run(),
         boost::asio::bind_cancellation_slot(
@@ -343,9 +319,6 @@ boost::asio::awaitable<void> computers_assign_task::register_computer(
       g_logger_ctrl().get_http(), "计算机 {} 注册成功, 当前在线计算机数量 {}", in_computer->get_computer_id(),
       computer_map_.size()
   );
-  // 注册后立刻尝试派发: 客户端连接时只发一条注册消息(由 init() 消费), 不会再有第二条消息
-  // 触发 run_next_task, 这里不补一次的话刚上线的机器拿不到任务。
-  // 若该机注册时上报的是 busy(重连时还有任务在跑), run_next_task 的在线判据会把它跳过。
   co_await run_next_task();
 }
 
@@ -370,9 +343,6 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
   auto l_sql = get_sqlite_database();
   using namespace orm;
   auto l_jobs = l_sql.get_server_tasks_by_submitted();
-  // 过滤：若计算机配置了允许的任务类型，只分配匹配的任务
-  // 注意: 这里运行在分配器 strand 上, 而该字段由计算机自己的 strand 更新,
-  // 因此只能通过 get_allowed_task_types() 读取原子快照
   if (auto l_allowed = in_computer->get_allowed_task_types(); l_allowed && !l_allowed->empty()) {
     std::erase_if(l_jobs, [&l_allowed](const server_task_info& j) { return !l_allowed->contains(j.type_); });
   }
@@ -425,12 +395,7 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task() {
   DOODLE_TO_EXECUTOR(strand_);
   clear_offline_computer();
   SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "{}", fmt::join(computer_map_ | std::ranges::views::keys, ", "));
-  // 判据必须包含服务端自有的事实: 库里是否还有绑在这台机器上的 running 任务。
-  // 只信客户端上报的 online 是不够的 —— 客户端在连接/重连时会多发一条 online,
-  // 那条过期的 online 会把 run_next_task_impl 刚设的 busy 覆盖掉, 同一台机器就会被派第二个任务。
   auto l_running_computers = get_sqlite_database().get_running_task_computer_ids();
-  // 先快照再派发: 循环体里的 co_await 会挂起, 期间同 strand 上的 register_computer /
-  // clear_offline_computer 可能插入或删除 computer_map_ 的节点, 直接迭代会拿到失效迭代器
   std::vector<std::shared_ptr<data_computers_socket_io_impl>> l_targets{};
   for (auto& [l_id, l_weak_ptr] : computer_map_) {
     auto l_ptr = l_weak_ptr.lock();
