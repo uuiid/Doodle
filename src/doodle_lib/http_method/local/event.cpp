@@ -21,6 +21,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, get) {
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = has_running_task);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, post) {
+  DOODLE_TO_EXECUTOR(strand_);
+
   auto& l_set = core_set::get_set();
   if (auto l_ptr = l_set.internal_distributed_render_client_.lock()) {
     SPDLOG_WARN("已经有一个分布式任务在运行了, 无法同时运行多个分布式任务");

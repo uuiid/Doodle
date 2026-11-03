@@ -141,6 +141,7 @@ DOODLE_HTTP_FUN_END()
 // 运行分布式任务后端
 // /api/actions/local/task/run
 DOODLE_HTTP_FUN_C(actions_local_task_run, local_http_fun)
+boost::asio::any_io_executor strand_{boost::asio::make_strand(g_io_context())};
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
@@ -166,6 +167,5 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_ROUTE("/api/actions/local/ai_session/ue")
 DOODLE_HTTP_FUN_END()
-
 
 }  // namespace doodle::http::local
