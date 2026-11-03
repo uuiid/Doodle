@@ -165,11 +165,7 @@ boost::asio::awaitable<void> http_work::async_run() {
   this_computer_info_.status_             = computer_status::online;
   this_computer_info_.allowed_task_types_ = allowed_task_types_;
   auto l_ip                               = core_set::get_set().server_ip;
-  if (l_ip.starts_with("http://"))
-    l_ip.erase(0, 7);
-  else if (l_ip.starts_with("https://"))
-    l_ip.erase(0, 8);
-  const boost::urls::url l_url{fmt::format("ws://{}/api/data/computers", l_ip)};
+
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     try {
       auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
