@@ -314,8 +314,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance_log, get) {
   auto l_path = core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", id_);
   if (!FSys::exists(l_path))
     co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "日志不存在");
-  auto l_mime = std::string{mime_type(l_path.extension())};
-  l_mime += "; charset=utf-8";
+  auto l_mime = fmt::format("{}; charset=utf-8", mime_type(l_path.extension()));
   co_return std::make_unique<http_body_file_t>(l_path, l_mime);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_instance, delete_) {

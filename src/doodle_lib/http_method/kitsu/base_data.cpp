@@ -389,9 +389,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_updata_logs, post) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_production_specifications, get) {
   auto l_ctx  = g_kitsu_ctx();
   auto l_path = l_ctx.get_production_specifications_file();
-  co_return std::make_unique<http_body_file_t>(
-      l_path, std::string{mime_type(l_path.extension())} + "; charset=utf-8"
-  );
+  auto l_mime = fmt::format("{}; charset=utf-8", mime_type(l_path.extension()));
+  co_return std::make_unique<http_body_file_t>(l_path, l_mime);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version, get) {
   auto l_ctx  = g_kitsu_ctx();
@@ -427,8 +426,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version_instance, get) {
   auto l_ctx  = g_kitsu_ctx();
   auto l_path = l_ctx.get_ue_plugins_file(version_major_, version_minor_, version_patch_);
   DOODLE_CHICK(FSys::exists(l_path), "UE 插件版本文件不存在");
-  co_return std::make_unique<http_body_file_t>(
-      l_path, std::string{mime_type(l_path.extension())}
-  );
+  co_return std::make_unique<http_body_file_t>(l_path, mime_type(l_path.extension()));
 }
 }  // namespace doodle::http

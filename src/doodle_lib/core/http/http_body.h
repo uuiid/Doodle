@@ -35,7 +35,7 @@ enum class http_file_range_mode {
 struct http_body_base_t {
  private:
   boost::beast::http::status status_{boost::beast::http::status::ok};
-  std::string_view mine_type_{"application/json; charset=utf-8"};
+  std::string mine_type_{"application/json; charset=utf-8"};
   bool has_cache_control_{false};
   bool is_deflate_{false};
   bool is_attachment_{false};
@@ -83,7 +83,7 @@ struct http_body_base_t {
   http_body_base_t& add_header(boost::beast::http::field in_field, std::string in_value);
 
   [[nodiscard]] boost::beast::http::status get_status() const;
-  [[nodiscard]] std::string_view get_mine_type() const;
+  [[nodiscard]] const std::string& get_mine_type() const;
   [[nodiscard]] bool has_cache_control() const;
   [[nodiscard]] bool is_deflate() const;
   [[nodiscard]] bool is_attachment() const;

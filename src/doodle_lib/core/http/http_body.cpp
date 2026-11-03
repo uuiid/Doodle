@@ -56,7 +56,7 @@ http_body_base_t& http_body_base_t::set_status(boost::beast::http::status in_sta
   return *this;
 }
 http_body_base_t& http_body_base_t::set_mine_type(std::string_view in_mine_type) {
-  mine_type_ = in_mine_type;
+  mine_type_.assign(in_mine_type);
   return *this;
 }
 http_body_base_t& http_body_base_t::set_deflate(bool in_deflate) {
@@ -82,7 +82,7 @@ http_body_base_t& http_body_base_t::add_header(boost::beast::http::field in_fiel
 }
 
 boost::beast::http::status http_body_base_t::get_status() const { return status_; }
-std::string_view http_body_base_t::get_mine_type() const { return mine_type_; }
+const std::string& http_body_base_t::get_mine_type() const { return mine_type_; }
 bool http_body_base_t::has_cache_control() const { return has_cache_control_; }
 bool http_body_base_t::is_deflate() const { return is_deflate_; }
 bool http_body_base_t::is_attachment() const { return is_attachment_; }
