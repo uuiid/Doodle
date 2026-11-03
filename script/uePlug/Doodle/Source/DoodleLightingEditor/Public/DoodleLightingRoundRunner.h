@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DoodleKitsuClient.h"
 #include "DoodleLightingExecutor.h"
 #include "DoodleLightingTypes.h"
 #include "UObject/Object.h"
@@ -10,6 +11,8 @@
 class ULevelSequence;
 class UMoviePipelineExecutorBase;
 class UMoviePipelineExecutorJob;
+class UMoviePipelinePrimaryConfig;
+class UMoviePipelineQueueSubsystem;
 class UWorld;
 struct FMoviePipelineOutputData;
 
@@ -20,15 +23,18 @@ class UDoodleLightingRoundRunner : public UObject
 
 public:
 	DoodleLightingExecutor::FRoundRenderResultOrError StartRender(
-		const FString& InRenderMap, const FString& InBaselineLevel, const FString& InMoviePipelineConfig,
-		const FString& InOutDir, const FDoodleLightingRig& InRig
+		const DoodleKitsuClient::FDoodleLightingIterationValue& InIteration
 	);
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnRoundFinished, const FDoodleRoundReport&);
 	FOnRoundFinished RoundFinished;
 
 private:
-	void FailRound(const FString& InError);
+	DoodleLightingExecutor::FRoundRenderResultOrError PrepareRound();
+
+	DoodleLightingExecutor::FRoundRenderResultOrError StartCandidate(int32 InIndex);
+
+	void FinishRound();
 
 	void RemoveCandidateFromWorld();
 
@@ -38,14 +44,21 @@ private:
 
 	void OnExecutorFinished(UMoviePipelineExecutorBase* InExecutor, bool bSuccess);
 
+	DoodleKitsuClient::FDoodleLightingIterationValue Iteration;
+	FString OutDir;
+	int32 CurrentIndex = 0;
+	FDoodleRoundReport RoundReport;
+
+	UMoviePipelineQueueSubsystem* QueueSubsystem = nullptr;
+	UMoviePipelinePrimaryConfig* BaseConfig = nullptr;
 	ULevelSequence* LoadedSequence = nullptr;
 	UWorld* LoadedMap = nullptr;
-	bool bUsingLoadedSequence = false;
+	FFrameRate AnchorFrameRate;
+	DoodleLightingExecutor::FAnchorCamera AnchorCamera;
+
 	FString CandidateFramesDir;
 	FDoodleLightingRig CandidateRig;
-	DoodleLightingExecutor::FAnchorCamera AnchorCamera;
 	DoodleLightingExecutor::FCandidateRenderResult CandidateSpawned;
 	FDoodleCandidateReport CandidateReport;
 	double CandidateStartSeconds = 0.0;
-	int32 FrameRate = 25;
 };

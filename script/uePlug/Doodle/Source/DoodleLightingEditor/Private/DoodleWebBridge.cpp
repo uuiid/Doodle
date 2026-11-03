@@ -8,7 +8,6 @@
 #include "Dom/JsonObject.h"
 #include "Editor.h"
 #include "Engine/World.h"
-#include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 
@@ -85,36 +84,21 @@ FString UDoodleWebBridge::SetAiLightIteration(const FString& InIteration)
 		return L_Error;
 	}
 
-	const FString L_OutDir = FPaths::Combine(
-		FPaths::ProjectSavedDir(), TEXT("DoodleLighting"), L_Value.SessionId, FString::FromInt(L_Value.Iteration)
-	);
-
-	for (int32 L_Index = 0; L_Index < L_Value.Rigs.Num(); ++L_Index)
+	UDoodleLightingRoundRunner* L_Runner = NewObject<UDoodleLightingRoundRunner>(GetTransientPackage());
+	L_Runner->AddToRoot();
+	L_Runner->RoundFinished.AddWeakLambda(L_Runner, [L_Runner](const FDoodleRoundReport& InReport)
 	{
-		const FDoodleLightingRig& L_Rig = L_Value.Rigs[L_Index];
-		UE_LOG(
-			LogDoodleLightingEditor, Log, TEXT("  候选 %d：rig_id=%s，spec_id=%s，灯 %d 盏，op %d 条"), L_Index,
-			*L_Rig.RigId, *L_Rig.SpecId, L_Rig.Lights.Num(), L_Rig.Ops.Num()
-		);
+		L_Runner->RemoveFromRoot();
+	});
 
-		UDoodleLightingRoundRunner* L_Runner = NewObject<UDoodleLightingRoundRunner>(GetTransientPackage());
-		L_Runner->AddToRoot();
-		L_Runner->RoundFinished.AddWeakLambda(L_Runner, [L_Runner](const FDoodleRoundReport& InReport)
-		{
-			L_Runner->RemoveFromRoot();
-		});
-
-		const DoodleLightingExecutor::FRoundRenderResultOrError L_StartResult = L_Runner->StartRender(
-			L_Value.RenderMap, L_Value.BaselineLevel, L_Value.MoviePipelineConfig, L_OutDir, L_Rig
-		);
-		if (L_StartResult.HasError())
-		{
-			L_Runner->RemoveFromRoot();
-			const FString L_Error = FString::Printf(TEXT("候选 %s 起渲染失败: %s"), *L_Rig.CandidateId,
-			                                        *L_StartResult.GetError());
-			UE_LOG(LogDoodleLightingEditor, Warning, TEXT("ai light iteration 起渲染失败: %s"), *L_Error);
-			return L_Error;
-		}
+	const DoodleLightingExecutor::FRoundRenderResultOrError L_StartResult = L_Runner->StartRender(L_Value);
+	if (L_StartResult.HasError())
+	{
+		L_Runner->RemoveFromRoot();
+		L_Runner->RoundFinished.Clear();
+		const FString L_Error = FString::Printf(TEXT("起渲染失败: %s"), *L_StartResult.GetError());
+		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("ai light iteration 起渲染失败: %s"), *L_Error);
+		return L_Error;
 	}
 
 	return FString();
