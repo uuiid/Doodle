@@ -188,7 +188,9 @@ boost::asio::awaitable<void> http_work::async_run() {
           if (!l_task.is_null() && !l_task.empty()) {
             server_task_info l_task_info{};
             l_task.get_to(l_task_info);
-            SPDLOG_LOGGER_INFO(logger_, "收到任务 {}: {}", l_task_info.uuid_id_, l_task_info.name_);
+            l_task_info.uuid_id_ = l_task.at("id").get<uuid>();
+            l_task_info.command_ = l_task.at("command");
+            SPDLOG_LOGGER_INFO(logger_, "收到任务 {}: {} {}", l_task_info.uuid_id_, l_task_info.name_, l_task_info.command_.dump());
             if (!run_task(l_task_info)) {
               SPDLOG_LOGGER_ERROR(logger_, "无法运行任务 {}: {}", l_task_info.uuid_id_, l_task_info.name_);
               co_await report_task_unsupported(l_task_info);
