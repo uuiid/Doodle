@@ -186,6 +186,7 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::St
 	CandidateRig = L_Rig;
 	CandidateSpawned = DoodleLightingExecutor::FCandidateRenderResult();
 	CandidateFramesDir = DoodleLightingProtocol::MakeCandidateFramesDir(OutDir, L_Rig.CandidateId);
+	IFileManager::Get().MakeDirectory(*CandidateFramesDir, true);
 
 	UMoviePipelineQueue* L_Queue = QueueSubsystem->GetQueue();
 	if (L_Queue == nullptr)
