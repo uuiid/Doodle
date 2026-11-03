@@ -86,7 +86,7 @@ FString UDoodleWebBridge::SetAiLightIteration(const FString& InIteration)
 
 	UDoodleLightingRoundRunner* L_Runner = NewObject<UDoodleLightingRoundRunner>(GetTransientPackage());
 	L_Runner->AddToRoot();
-	L_Runner->RoundFinished.AddWeakLambda(L_Runner, [L_Runner](const FDoodleRoundReport& InReport)
+	L_Runner->RoundFinished.AddWeakLambda(L_Runner, [L_Runner](const TArray<FDoodleRenderedCandidate>& InRendered)
 	{
 		L_Runner->RemoveFromRoot();
 	});

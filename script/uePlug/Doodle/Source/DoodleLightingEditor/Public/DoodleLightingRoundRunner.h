@@ -16,6 +16,12 @@ class UMoviePipelineQueueSubsystem;
 class UWorld;
 struct FMoviePipelineOutputData;
 
+struct DOODLELIGHTINGEDITOR_API FDoodleRenderedCandidate
+{
+	FString CandidateId;
+	FString FramesDir;
+};
+
 UCLASS()
 class UDoodleLightingRoundRunner : public UObject
 {
@@ -26,7 +32,7 @@ public:
 		const DoodleKitsuClient::FDoodleLightingIterationValue& InIteration
 	);
 
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnRoundFinished, const FDoodleRoundReport&);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnRoundFinished, const TArray<FDoodleRenderedCandidate>&);
 	FOnRoundFinished RoundFinished;
 
 private:
@@ -47,7 +53,7 @@ private:
 	DoodleKitsuClient::FDoodleLightingIterationValue Iteration;
 	FString OutDir;
 	int32 CurrentIndex = 0;
-	FDoodleRoundReport RoundReport;
+	TArray<FDoodleRenderedCandidate> RenderedCandidates;
 
 	UMoviePipelineQueueSubsystem* QueueSubsystem = nullptr;
 	UMoviePipelinePrimaryConfig* BaseConfig = nullptr;
@@ -59,6 +65,5 @@ private:
 	FString CandidateFramesDir;
 	FDoodleLightingRig CandidateRig;
 	DoodleLightingExecutor::FCandidateRenderResult CandidateSpawned;
-	FDoodleCandidateReport CandidateReport;
 	double CandidateStartSeconds = 0.0;
 };

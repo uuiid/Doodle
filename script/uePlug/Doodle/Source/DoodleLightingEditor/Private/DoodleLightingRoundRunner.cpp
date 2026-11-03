@@ -68,7 +68,7 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::St
 )
 {
 	Iteration = InIteration;
-	RoundReport = FDoodleRoundReport();
+	RenderedCandidates.Reset();
 	CurrentIndex = 0;
 
 	if (Iteration.RenderMap.IsEmpty())
@@ -82,6 +82,18 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::St
 	if (Iteration.Rigs.IsEmpty())
 	{
 		return MakeError(FString(TEXT("本轮没有候选灯光方案")));
+	}
+	for (int32 L_Index = 0; L_Index < Iteration.Rigs.Num(); ++L_Index)
+	{
+		const FDoodleLightingRig& L_Rig = Iteration.Rigs[L_Index];
+		if (L_Rig.CandidateId.IsEmpty())
+		{
+			return MakeError(FString::Printf(TEXT("第 %d 个灯光方案没有候选 id"), L_Index));
+		}
+		if (L_Rig.Lights.IsEmpty())
+		{
+			return MakeError(FString::Printf(TEXT("候选 %s 里没有灯"), *L_Rig.CandidateId));
+		}
 	}
 
 	OutDir = FPaths::Combine(
@@ -169,18 +181,9 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::St
 		return MakeError(FString::Printf(TEXT("候选下标越界：%d"), InIndex));
 	}
 	const FDoodleLightingRig& L_Rig = Iteration.Rigs[InIndex];
-	if (L_Rig.CandidateId.IsEmpty())
-	{
-		return MakeError(FString::Printf(TEXT("第 %d 个灯光方案没有候选 id"), InIndex));
-	}
-	if (L_Rig.Lights.IsEmpty())
-	{
-		return MakeError(FString::Printf(TEXT("候选 %s 里没有灯"), *L_Rig.CandidateId));
-	}
 
 	CurrentIndex = InIndex;
 	CandidateRig = L_Rig;
-	CandidateReport = FDoodleCandidateReport();
 	CandidateSpawned = DoodleLightingExecutor::FCandidateRenderResult();
 	CandidateFramesDir = DoodleLightingProtocol::MakeCandidateFramesDir(OutDir, L_Rig.CandidateId);
 
@@ -232,31 +235,14 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::St
 
 void UDoodleLightingRoundRunner::FinishRound()
 {
-	RoundReport.FrameRate = FMath::Max(1, FMath::RoundToInt(AnchorFrameRate.AsDecimal()));
-
-	int32 L_Rendered = 0;
-	for (const FDoodleCandidateReport& L_Report : RoundReport.Candidates)
-	{
-		if (L_Report.Status == EDoodleRenderStatus::Rendered)
-		{
-			++L_Rendered;
-		}
-	}
-
 	UE_LOG(
-		LogDoodleLightingEditor, Log, TEXT("本机一轮渲染结束：%d/%d 个候选成功，%d fps"), L_Rendered,
-		RoundReport.Candidates.Num(), RoundReport.FrameRate
+		LogDoodleLightingEditor, Log, TEXT("本机一轮渲染结束：%d/%d 个候选渲出视频"), RenderedCandidates.Num(),
+		Iteration.Rigs.Num()
 	);
-	if (RoundReport.Error.IsEmpty())
-	{
-		RoundReport.Error = L_Rendered == RoundReport.Candidates.Num()
-			? FString()
-			: FString::Printf(TEXT("%d 个候选里只有 %d 个渲成功"), RoundReport.Candidates.Num(), L_Rendered);
-	}
 
 	if (RoundFinished.IsBound())
 	{
-		RoundFinished.Broadcast(RoundReport);
+		RoundFinished.Broadcast(RenderedCandidates);
 	}
 }
 
@@ -283,7 +269,6 @@ void UDoodleLightingRoundRunner::OnIndividualJobStarted(UMoviePipelineExecutorJo
 		: nullptr;
 	if (L_World == nullptr)
 	{
-		CandidateReport.Status = EDoodleRenderStatus::Failed;
 		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s：PIE 世界还没起来，灯建不进去"), *L_CandidateId);
 		return;
 	}
@@ -292,12 +277,10 @@ void UDoodleLightingRoundRunner::OnIndividualJobStarted(UMoviePipelineExecutorJo
 		DoodleLightingExecutor::ApplyCandidateToWorld(*L_World, CandidateFramesDir, CandidateRig, AnchorCamera);
 	if (L_Result.HasError())
 	{
-		CandidateReport.Status = EDoodleRenderStatus::Failed;
 		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s 建灯失败：%s"), *L_CandidateId, *L_Result.GetError());
 		return;
 	}
 	CandidateSpawned = L_Result.GetValue();
-	CandidateReport.LightCount = CandidateSpawned.LightCount;
 	UE_LOG(
 		LogDoodleLightingEditor, Log, TEXT("候选 %s：%d 盏灯已建进 PIE 世界"), *L_CandidateId,
 		CandidateSpawned.LightCount
@@ -309,31 +292,25 @@ void UDoodleLightingRoundRunner::OnIndividualJobWorkFinished(FMoviePipelineOutpu
 	const FString L_CandidateId = InOutputData.Job != nullptr
 		? InOutputData.Job->JobName
 		: FString();
-	CandidateReport.RenderMs = static_cast<int64>((FPlatformTime::Seconds() - CandidateStartSeconds) * 1000.0);
+	const int64 L_RenderMs = static_cast<int64>((FPlatformTime::Seconds() - CandidateStartSeconds) * 1000.0);
 	RemoveCandidateFromWorld();
 
 	if (!InOutputData.bSuccess)
 	{
-		CandidateReport.Status = EDoodleRenderStatus::Failed;
 		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s 渲染失败"), *L_CandidateId);
 		return;
 	}
 
 	const int32 L_FrameCount = CountPngFrames(CandidateFramesDir);
-	CandidateReport.FrameCount = L_FrameCount;
 	if (L_FrameCount < 2)
 	{
-		CandidateReport.Status = EDoodleRenderStatus::Failed;
 		UE_LOG(LogDoodleLightingEditor, Error, TEXT("候选 %s 只渲出 %d 帧，合成不出视频"), *L_CandidateId, L_FrameCount);
 		return;
 	}
-	if (CandidateReport.Status != EDoodleRenderStatus::Failed)
-	{
-		CandidateReport.Status = EDoodleRenderStatus::Rendered;
-	}
+
+	RenderedCandidates.Add(FDoodleRenderedCandidate{CandidateRig.CandidateId, CandidateFramesDir});
 	UE_LOG(
-		LogDoodleLightingEditor, Log, TEXT("候选 %s：%d 帧，耗时 %lld ms"), *L_CandidateId, L_FrameCount,
-		CandidateReport.RenderMs
+		LogDoodleLightingEditor, Log, TEXT("候选 %s：%d 帧，耗时 %lld ms"), *L_CandidateId, L_FrameCount, L_RenderMs
 	);
 }
 
@@ -344,15 +321,6 @@ void UDoodleLightingRoundRunner::OnExecutorFinished(UMoviePipelineExecutorBase* 
 
 	RemoveCandidateFromWorld();
 
-	RoundReport.Candidates.Add(CandidateReport);
-	if (CandidateReport.Status != EDoodleRenderStatus::Rendered)
-	{
-		const FString L_Error = FString::Printf(TEXT("候选 %s 渲染失败"), *CandidateRig.CandidateId);
-		RoundReport.Error = RoundReport.Error.IsEmpty()
-			? L_Error
-			: FString::Printf(TEXT("%s；%s"), *RoundReport.Error, *L_Error);
-	}
-
 	const int32 L_NextIndex = CurrentIndex + 1;
 	if (Iteration.Rigs.IsValidIndex(L_NextIndex))
 	{
@@ -361,19 +329,10 @@ void UDoodleLightingRoundRunner::OnExecutorFinished(UMoviePipelineExecutorBase* 
 		{
 			return;
 		}
-		const FString L_Error = FString::Printf(
-			TEXT("候选 %s 起不来：%s"), *Iteration.Rigs[L_NextIndex].CandidateId, *L_NextResult.GetError()
+		UE_LOG(
+			LogDoodleLightingEditor, Error, TEXT("候选 %s 起不来：%s"), *Iteration.Rigs[L_NextIndex].CandidateId,
+			*L_NextResult.GetError()
 		);
-		UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *L_Error);
-		RoundReport.Error = RoundReport.Error.IsEmpty()
-			? L_Error
-			: FString::Printf(TEXT("%s；%s"), *RoundReport.Error, *L_Error);
-		for (int32 L_Index = L_NextIndex; L_Index < Iteration.Rigs.Num(); ++L_Index)
-		{
-			FDoodleCandidateReport L_Skipped;
-			L_Skipped.Status = EDoodleRenderStatus::Failed;
-			RoundReport.Candidates.Add(L_Skipped);
-		}
 	}
 
 	FinishRound();
