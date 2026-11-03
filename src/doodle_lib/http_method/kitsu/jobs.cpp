@@ -93,7 +93,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_computer_task, post) {
                           .set(c(&server_task_info::status_) = l_job.status_)
                           .set(c(&server_task_info::run_time_) = l_job.run_time_)
                           .set(c(&server_task_info::run_computer_id_) = l_job.run_computer_id_)
-                          .set(c(&server_task_info::submitter_cookies_) = l_job.submitter_cookies_)
                           .where(c(&server_task_info::uuid_id_) == l_job.uuid_id_));
   co_await l_sql.run_sql(std::move(l_sqls));
   socket_io::broadcast(socket_io::server_task_info_update_broadcast_t{.server_task_info_id_ = l_job.uuid_id_});

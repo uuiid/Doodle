@@ -56,7 +56,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers, post) {
     l_computer.uuid_id_ = l_db_computer->uuid_id_;
     l_sqls.emplace_back(update(l_sql)
                             .from<computer>()
-                            .set_from_ref<computer>(l_json)
+                            .set(c(&computer::status_) = l_computer.status_)
                             .set(c(&computer::last_heartbeat_time_) = l_computer.last_heartbeat_time_)
                             .where(c(&computer::uuid_id_) == l_computer.uuid_id_));
   } else {
