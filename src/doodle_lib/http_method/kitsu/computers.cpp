@@ -136,43 +136,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   boost::asio::awaitable<void> async_run() {
     co_await init();
     co_await computers_assign_task::get_instance().register_computer(shared_from_this());
-    co_await computers_assign_task::get_instance().run_next_task_impl(shared_from_this());
     begin_ping();
-    boost::scope::scope_exit l_{[this, sh = shared_from_this()]() {
-      try {
-        auto l_uuid = uuid_id_.load(std::memory_order_acquire);
-        boost::asio::co_spawn(
-            g_io_context(),
-            [l_uuid]() -> boost::asio::awaitable<void> {
-              auto l_sql = get_sqlite_database();
-              using namespace orm;
-              auto l_now   = chrono::system_clock::now();
-              auto l_zoned = chrono::system_zoned_time{chrono::current_zone(), l_now};
-              sql_modify_statement_vector_t l_sqls{};
-              l_sqls.emplace_back(update(l_sql)
-                                      .from<computer>()
-                                      .set(c(&computer::status_) = computer_status::offline)
-                                      .set(c(&computer::last_heartbeat_time_) = l_zoned)
-                                      .where(c(&computer::uuid_id_) == l_uuid));
-              l_sqls.emplace_back(update(l_sql)
-                                      .from<server_task_info>()
-                                      .set(c(&server_task_info::run_computer_id_) = uuid{})
-                                      .where(
-                                          c(&server_task_info::run_computer_id_) == l_uuid &&
-                                          c(&server_task_info::status_) == server_task_info_status::running
-                                      ));
-              co_await l_sql.run_sql(std::move(l_sqls));
-            },
-            boost::asio::detached
-        );
-        socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = l_uuid});
-      } catch (...) {
-        SPDLOG_LOGGER_ERROR(
-            g_logger_ctrl().get_http(), "清理计算机 {} 状态时发生异常: {}", get_computer_id(),
-            boost::current_exception_diagnostic_information()
-        );
-      }
-    }};
     try {
       boost::scope::scope_exit l_{[this, sh = shared_from_this()]() {
         should_close_ = true;
@@ -233,7 +197,6 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
                             .set(c(&computer::last_heartbeat_time_) = l_zoned)
                             .where(c(&computer::uuid_id_) == l_uuid));
     co_await l_sql.run_sql(std::move(l_sqls));
-    if (l_status == computer_status::online) co_await computers_assign_task::get_instance().run_next_task();
 
     socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = l_uuid});
   }
@@ -325,77 +288,23 @@ void computers_assign_task::clear_offline_computer() {
   }
 }
 
-boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
-    std::shared_ptr<data_computers_socket_io_impl> in_computer
-) {
-  SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "让计算机 {} 执行下一个任务", in_computer->get_computer_id());
-  auto l_sql = get_sqlite_database();
-  using namespace orm;
-  auto l_jobs = l_sql.get_server_tasks_by_submitted();
-  if (auto l_allowed = in_computer->get_allowed_task_types(); l_allowed && !l_allowed->empty()) {
-    std::erase_if(l_jobs, [&l_allowed](const server_task_info& j) { return !l_allowed->contains(j.type_); });
-  }
-  if (l_jobs.empty()) {
-    in_computer->set_computer_status(computer_status::online);
-    sql_modify_statement_vector_t l_sqls{};
-    l_sqls.emplace_back(update(l_sql)
-                            .from<computer>()
-                            .set(c(&computer::status_) = computer_status::online)
-                            .where(c(&computer::uuid_id_) == in_computer->get_computer_id()));
-    co_await l_sql.run_sql(std::move(l_sqls));
-    co_return;
-  }
-  in_computer->set_computer_status(computer_status::busy);
-  sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(update(l_sql)
-                          .from<computer>()
-                          .set(c(&computer::status_) = computer_status::busy)
-                          .where(c(&computer::uuid_id_) == in_computer->get_computer_id()));
-  auto l_job               = l_jobs.front();
-  l_job.status_            = server_task_info_status::running;
-  l_job.run_time_          = {chrono::current_zone(), chrono::system_clock::now()};
-  l_job.run_computer_id_   = in_computer->get_computer_id();
-  auto& l_ctx              = g_kitsu_ctx();
-  auto l_access_token      = jwt::create()
-                                 .set_payload_claim("identity_type", jwt::claim{"person"s})
-                                 .set_issued_at(chrono::system_clock::now())
-                                 .set_id(fmt::to_string(l_job.submitter_))
-                                 .set_subject(fmt::to_string(l_job.submitter_))
-                                 .set_not_before(chrono::system_clock::now())
-                                 .set_expires_at(chrono::system_clock::now() + chrono::days{7})
-                                 .sign(jwt::algorithm::hs256{l_ctx.secret_});
-  l_job.submitter_cookies_ = l_access_token;
-  l_sqls.emplace_back(update(l_sql)
-                          .from<server_task_info>()
-                          .set(c(&server_task_info::status_) = l_job.status_)
-                          .set(c(&server_task_info::run_time_) = l_job.run_time_)
-                          .set(c(&server_task_info::run_computer_id_) = l_job.run_computer_id_)
-                          .where(c(&server_task_info::uuid_id_) == l_job.uuid_id_));
-  co_await l_sql.run_sql(std::move(l_sqls));
-  auto l_json = (nlohmann::json{} = l_job);
-  in_computer->write_msg(l_json.dump());
-  in_computer->begin_write_msg();
-  SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "分发任务 {} 成功，在线计算机 {}", l_job.uuid_id_, in_computer->get_computer_id()
-  );
-  co_return;
-}
 boost::asio::awaitable<void> computers_assign_task::run_next_task() {
   DOODLE_TO_EXECUTOR(strand_);
   clear_offline_computer();
   DOODLE_TO_SELF();
   SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "{}", fmt::join(computer_map_ | std::ranges::views::keys, ", "));
-  auto l_running_computers = get_sqlite_database().get_running_task_computer_ids();
   std::vector<std::shared_ptr<data_computers_socket_io_impl>> l_targets{};
   for (auto& [l_id, l_weak_ptr] : computer_map_) {
     auto l_ptr = l_weak_ptr.lock();
     if (!l_ptr) continue;
     auto l_computer_id = l_ptr->get_computer_id();
-    if (l_computer_id.is_nil() || l_ptr->get_computer_status() != computer_status::online) continue;
-    if (l_running_computers.contains(l_computer_id)) continue;
+    if (l_computer_id.is_nil()) continue;
     l_targets.emplace_back(std::move(l_ptr));
   }
-  for (auto& l_ptr : l_targets) co_await run_next_task_impl(l_ptr);
+  for (auto& l_ptr : l_targets) {
+    l_ptr->write_msg("run_task");
+    l_ptr->begin_write_msg();
+  }
 }
 void data_computers::websocket_callback(
     boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle
