@@ -199,10 +199,7 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::St
 	L_Job->JobName = L_Rig.CandidateId;
 	L_Job->Sequence = FSoftObjectPath(LoadedSequence);
 	L_Job->Map = FSoftObjectPath(LoadedMap);
-	if (BaseConfig != nullptr)
-	{
-		L_Job->SetConfiguration(BaseConfig);
-	}
+	L_Job->SetConfiguration(BaseConfig);
 	if (UMoviePipelinePrimaryConfig* L_Config = L_Job->GetConfiguration())
 	{
 		if (UMoviePipelineOutputSetting* L_Output = Cast<UMoviePipelineOutputSetting>(
