@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     开启本机 PowerShell 远程访问（WinRM / PSRemoting）权限，允许通过 IP 地址连接，
     并把 PowerShell 脚本执行策略调整为可运行本地脚本。
@@ -51,7 +51,7 @@
 .EXAMPLE
     # 推荐：在目标机器上执行，本机同时作为服务端和客户端，全部放行
     powershell -ExecutionPolicy Bypass -File .\build_script\enable_psremoting.ps1
-    powershell -ExecutionPolicy Bypass -File \\192.168.20.89\Doodle2\build_script\enable_psremoting.ps1 -EnableCredSSP
+    powershell -ExecutionPolicy Bypass -File \\192.168.20.89\Doodle_build\build_script\enable_psremoting.ps1 -EnableCredSSP
 
 .EXAMPLE
     # 只让本机可以被访问，且只信任指定地址

@@ -26,13 +26,19 @@ param (
 
 $ErrorActionPreference = "Stop"
 
-$ShareBin = "\\192.168.20.89\Doodle2\build\install\bin"
-$ShareCuda = "\\192.168.20.89\Doodle2\build\cuda_dll"
+$ShareBin = "\\192.168.20.89\Doodle_build\install\bin"
+$ShareCuda = "\\192.168.20.89\Doodle_build\cuda_dll"
 $ExeName = "doodle_kitsu_supplement.exe"
 $ProcName = [System.IO.Path]::GetFileNameWithoutExtension($ExeName)
 $ExePath = Join-Path $InstallDir $ExeName
 $ModelsDir = Join-Path $InstallDir "models\depth"
 $RunKeyPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+
+# listening port published by the worker in named shared memory (http_listener_port_shm.h)
+$ShmName = "doodle_http_listener_port"
+$ShmMagic = [uint32]0x444C5054
+$ShmVersion = [uint32]1
+$ShmSize = 12
 
 # ---------------------------------------------------------------------------
 # process helpers
@@ -70,9 +76,74 @@ function Get-ExitCodeText {
     return "unknown"
 }
 
-# Start the worker and wait until it reports its port, then register it on the server.
+# Read the listening port the worker published into its named shared memory.
+# Layout matches http_listener_port_shm_t (4+4+2+2); returns $null when the
+# segment is missing, unreadable or still holds an invalid magic/version.
+function Read-WorkerSharedPort {
+    if (-not ('DoodleWorkerShmNative' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+public static class DoodleWorkerShmNative
+{
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern IntPtr OpenFileMappingW(uint dwDesiredAccess, bool bInheritHandle, string lpName);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern IntPtr MapViewOfFile(
+        IntPtr hFileMappingObject, uint dwDesiredAccess, uint dwFileOffsetHigh,
+        uint dwFileOffsetLow, UIntPtr dwNumberOfBytesToMap);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool UnmapViewOfFile(IntPtr lpBaseAddress);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool CloseHandle(IntPtr hObject);
+}
+'@
+    }
+
+    $native = 'DoodleWorkerShmNative' -as [type]
+    $FILE_MAP_READ = 0x0004
+    $hMap = [IntPtr]::Zero
+    # a bare name lands in the private session namespace, global\ only when the publisher took the privilege
+    foreach ($n in @($ShmName, "Global\$ShmName")) {
+        $hMap = $native::OpenFileMappingW($FILE_MAP_READ, $false, $n)
+        if ($hMap -ne [IntPtr]::Zero) { break }
+        if ([System.Runtime.InteropServices.Marshal]::GetLastWin32Error() -ne 2) { break }
+    }
+    if ($hMap -eq [IntPtr]::Zero) { return $null }
+
+    $pView = [IntPtr]::Zero
+    try {
+        $pView = $native::MapViewOfFile($hMap, $FILE_MAP_READ, 0, 0, [UIntPtr]::Zero)
+        if ($pView -eq [IntPtr]::Zero) { return $null }
+
+        $buf = [byte[]]::new($ShmSize)
+        [System.Runtime.InteropServices.Marshal]::Copy($pView, $buf, 0, $ShmSize)
+
+        $magic = [BitConverter]::ToUInt32($buf, 0)
+        $version = [BitConverter]::ToUInt32($buf, 4)
+        $port = [BitConverter]::ToUInt16($buf, 8)
+        if ($magic -ne $ShmMagic -or $version -ne $ShmVersion -or $port -eq 0) { return $null }
+        return [int]$port
+    } catch {
+        return $null
+    } finally {
+        if ($pView -ne [IntPtr]::Zero) { [void]$native::UnmapViewOfFile($pView) }
+        [void]$native::CloseHandle($hMap)
+    }
+}
+
+# Start the worker and wait until it publishes its port in the shared memory, then register it.
 function Start-Worker {
     Stop-Worker -Worker $null
+
+    # a stale segment from an earlier run would hand back the old port
+    $null = Read-WorkerSharedPort
 
     # cmd.exe is used for the stdout redirect: Start-Process cannot read async output
     $stamp = Get-Date -Format "yyyyMMdd_HHmmss_fff"
@@ -82,23 +153,20 @@ function Start-Worker {
 
     $port = $null
     $deadline = (Get-Date).AddSeconds(30)
-    while ((Get-Date) -lt $deadline -and -not $proc.HasExited) {
-        if (Test-Path $stdoutFile) {
-            foreach ($line in (Get-Content -Path $stdoutFile -Tail 50)) {
-                Write-Host "  $line"
-                if ($null -eq $port -and $line -match '^\s*(\d{1,5})\s*$') {
-                    $port = [int]$Matches[1]
-                }
-            }
-        }
+    while ((Get-Date) -lt $deadline) {
+        if ($proc.HasExited) { break }
+        $port = Read-WorkerSharedPort
         if ($port) { break }
         Start-Sleep -Milliseconds 500
     }
 
     if ($proc.HasExited) { throw "Worker process exited prematurely (exit code $(Get-ExitCodeText $proc))" }
-    if (-not $port) { throw "Could not determine worker port within 30 seconds" }
+    if (-not $port) { throw "Could not read worker port from shared memory '$ShmName' within 30 seconds" }
 
     Write-Host "Worker running on port $port (PID $($proc.Id))"
+    if (Test-Path $stdoutFile) {
+        foreach ($line in (Get-Content -Path $stdoutFile -Tail 20)) { Write-Host "  $line" }
+    }
     Register-Worker -Port $port
 
     return [pscustomobject]@{ Process = $proc; Port = $port; StdoutFile = $stdoutFile }
