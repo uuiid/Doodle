@@ -148,6 +148,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   boost::asio::awaitable<void> async_run() {
     co_await init();
     co_await computers_assign_task::get_instance().register_computer(shared_from_this());
+    co_await computers_assign_task::get_instance().run_next_task_impl(shared_from_this());
     begin_ping();
     boost::scope::scope_exit l_{[this, sh = shared_from_this()]() {
       try {
@@ -319,7 +320,6 @@ boost::asio::awaitable<void> computers_assign_task::register_computer(
       g_logger_ctrl().get_http(), "计算机 {} 注册成功, 当前在线计算机数量 {}", in_computer->get_computer_id(),
       computer_map_.size()
   );
-  co_await run_next_task();
 }
 
 void computers_assign_task::clear_offline_computer() {
