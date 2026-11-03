@@ -978,7 +978,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
       l_result.input_tokens_, l_result.output_tokens_
   );
 
-  co_return std::make_unique<http_body_json_t>(l_task.data_request_);
+  co_return std::make_unique<http_body_json_t>(l_task.data_response_);
 }
 
 // ===========================================================================
