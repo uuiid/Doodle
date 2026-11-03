@@ -55,16 +55,16 @@ FString UDoodleWebBridge::SetAiLightIteration(const FString& InIteration)
 	const FString L_CurrentMap = GetCurrentMapPath();
 	if (L_CurrentMap.IsEmpty())
 	{
-		const FString L_Error = TEXT("编辑器里没有打开的关卡，无法校验基线关卡");
+		const FString L_Error = TEXT("编辑器里没有打开的关卡，无法校验渲染关卡");
 		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("ai light iteration 校验失败: %s"), *L_Error);
 		return L_Error;
 	}
 
-	if (!L_Value.BaselineLevel.Equals(L_CurrentMap, ESearchCase::IgnoreCase))
+	if (!L_Value.RenderMap.Equals(L_CurrentMap, ESearchCase::IgnoreCase))
 	{
 		const FString L_Error = FString::Printf(
-			TEXT("基线关卡不匹配：本轮要求 %s，当前打开的是 %s"),
-			L_Value.BaselineLevel.IsEmpty() ? TEXT("<空>") : *L_Value.BaselineLevel, *L_CurrentMap
+			TEXT("渲染关卡不匹配：本轮要求 %s，当前打开的是 %s"),
+			L_Value.RenderMap.IsEmpty() ? TEXT("<空>") : *L_Value.RenderMap, *L_CurrentMap
 		);
 		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("ai light iteration 校验失败: %s"), *L_Error);
 		return L_Error;
@@ -72,7 +72,7 @@ FString UDoodleWebBridge::SetAiLightIteration(const FString& InIteration)
 
 	UE_LOG(
 		LogDoodleLightingEditor, Log,
-		TEXT("ai light iteration 第 %d 轮，state=%s，会话 %s，镜头任务 %s，基线关卡 %s，渲染关卡 %s，候选 %d 个"),
+		TEXT("ai light iteration 第 %d 轮，state=%s，会话 %s，镜头任务 %s，基线定序器 %s，渲染关卡 %s，候选 %d 个"),
 		L_Value.Iteration, *L_Value.State, *L_Value.SessionId, *L_Value.ShotTaskId, *L_Value.BaselineLevel,
 		*L_Value.RenderMap, L_Value.Rigs.Num()
 	);

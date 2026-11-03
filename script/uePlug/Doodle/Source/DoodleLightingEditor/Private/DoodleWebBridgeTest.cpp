@@ -220,8 +220,8 @@ bool FDoodleWebBridgeSetIterationTest::RunTest(const FString& Parameters)
 	const FString L_SampleError = L_Bridge->SetAiLightIteration(L_Sample);
 	TestTrue(TEXT("样例在无匹配关卡时返回非空错误"), !L_SampleError.IsEmpty());
 	TestTrue(
-		TEXT("错误里点名基线关卡"),
-		L_SampleError.Contains(TEXT("基线关卡")) || L_SampleError.Contains(TEXT("没有打开的关卡"))
+		TEXT("错误里点名渲染关卡"),
+		L_SampleError.Contains(TEXT("渲染关卡")) || L_SampleError.Contains(TEXT("没有打开的关卡"))
 	);
 
 	return true;
