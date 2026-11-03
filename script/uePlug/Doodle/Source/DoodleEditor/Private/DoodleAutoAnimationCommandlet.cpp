@@ -186,7 +186,9 @@ int UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 
 
 	const TObjectPtr<USkeletalMesh> L_SkinMesh = LoadObject<USkeletalMesh>(nullptr, *L_Skin_Path);
-	const TObjectPtr<USkeleton> L_Skeleton = L_SkinMesh ? L_SkinMesh->GetSkeleton() : nullptr;
+	const TObjectPtr<USkeleton> L_Skeleton = L_SkinMesh
+		? L_SkinMesh->GetSkeleton()
+		: nullptr;
 	auto [TmpSkeletalMesh, _] = CreateCharacterImportTask(FbxPath, L_Skeleton, false, false);
 
 	if (!TmpSkeletalMesh) // 空, 代表导入的是只有动画, 直接抛出异常失败
@@ -1315,7 +1317,9 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 	}
 	else
 	{
-		Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass());
+		UMoviePipelineImageSequenceOutput_PNG* L_Png = Cast<UMoviePipelineImageSequenceOutput_PNG>(
+			Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass()));
+		L_Png->bWriteAlpha = false;
 	}
 
 	// 设置控制台变量
