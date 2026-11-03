@@ -318,6 +318,4 @@ namespace DoodleLightingProtocol
 	static const TCHAR* const RenderReportFileName = TEXT("render_report.json");
 
 	DOODLELIGHTING_API FString MakeCandidateFramesDir(const FString& InOutDir, const FString& InCandidateId);
-
-	DOODLELIGHTING_API FString MakeCandidateMoviePath(const FString& InOutDir, const FString& InCandidateId);
 }
