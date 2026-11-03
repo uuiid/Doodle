@@ -344,16 +344,6 @@ bool DoodleLightingJson::ParseLightingRig(const TSharedPtr<FJsonObject>& InRoot,
 		return false;
 	}
 
-	TSharedPtr<FJsonObject> LObject;
-	if (TryGetObjectFieldPtr(InRoot, TEXT("provenance"), LObject) && LObject.IsValid())
-	{
-		GetString(LObject, TEXT("model"), TEXT("rig.provenance.model"), OutRig.Provenance.Model, OutError, false);
-		GetString(LObject, TEXT("prompt_hash"), TEXT("rig.provenance.prompt_hash"), OutRig.Provenance.PromptHash, OutError, false);
-		GetString(LObject, TEXT("reference"), TEXT("rig.provenance.reference"), OutRig.Provenance.Reference, OutError, false);
-		GetInt(LObject, TEXT("seed"), TEXT("rig.provenance.seed"), OutRig.Provenance.Seed, OutError, false);
-		GetString(LObject, TEXT("tier"), TEXT("rig.provenance.tier"), OutRig.Provenance.Tier, OutError, false);
-	}
-
 	const TArray<TSharedPtr<FJsonValue>>* LLights = nullptr;
 	if (!GetArray(InRoot, TEXT("lights"), TEXT("rig.lights"), LLights, OutError))
 	{

@@ -211,13 +211,6 @@ function makeLights(seed) {
 // 其余方案在基线上叠加「调曝光 / 调色 / 改主光色温」几步操作。
 function makeRig({ base = false, seed = 0 }) {
   const rig = {
-    provenance: {
-      model: 'test_js',
-      prompt_hash: 'ai_light_contract_test',
-      reference: [],
-      seed: 1000 + seed,
-      tier: 'stats_only',
-    },
     globals: {
       exposure: { method: 'manual', ev100_bias: base ? 0 : 0.5 + seed * 0.1 },
       white_balance: { kelvin: 5600, tint: 0 },
@@ -921,14 +914,13 @@ test.describe('AI 灯光 —— 提交一轮候选（iteration submit）', () =>
     // 每个 rig 的 candidate_id 由服务端回填成落库的候选 uuid，客户端给的值不采信
     const landedIds = body.candidates.map((c) => c.id);
     it.rigs.rigs.forEach((rig, i) => {
-      expect(rig).to.have.keys(['candidate_id', 'provenance', 'globals', 'lights', 'ops']);
+      expect(rig).to.have.keys(['candidate_id', 'globals', 'lights', 'ops']);
       expect(rig.candidate_id).to.equal(landedIds[i]);
       // 方案内容原样回传：全局参数、灯阵列与 ops
       expect(rig.globals).to.have.keys(['exposure', 'white_balance', 'environment', 'grading']);
       expect(rig.lights).to.have.lengthOf(4);
       expect(rig.lights.map((l) => l.id)).to.deep.equal(['key', 'fill', 'rim', 'sky']);
       expect(rig.lights.map((l) => l.role)).to.deep.equal(['key', 'fill', 'rim', 'ambient']);
-      expect(rig.provenance.seed).to.equal(1000 + i);
     });
     // 基线（第 0 个）不做任何 ops，其余方案至少一步
     expect(it.rigs.rigs[0].ops).to.have.lengthOf(0);

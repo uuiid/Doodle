@@ -8,23 +8,6 @@ properties:
     type: string
     format: uuid
     description: 该方案对应的候选 id。由服务端在落库时生成并回填，前端提交时给了也不采信
-  provenance:
-    type: object
-    description: 方案来源
-    properties:
-      model:
-        type: string
-      prompt_hash:
-        type: string
-      reference:
-        type: array
-        items:
-          type: string
-      seed:
-        type: integer
-        format: int64
-      tier:
-        type: string
   globals:
     $ref: AiLightGlobals.yaml
   lights:

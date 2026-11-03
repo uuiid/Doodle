@@ -186,15 +186,6 @@ struct DOODLELIGHTING_API FDoodleLight
 	EDoodleLightOrigin Origin = EDoodleLightOrigin::AI;
 };
 
-struct DOODLELIGHTING_API FDoodleProvenance
-{
-	FString Model;
-	FString PromptHash;
-	FString Reference;
-	int32 Seed = 0;
-	FString Tier;
-};
-
 struct DOODLELIGHTING_API FDoodleExposure
 {
 	FString Method = TEXT("manual");
@@ -248,7 +239,6 @@ struct DOODLELIGHTING_API FDoodleLightingRig
 	FString SpecId;
 	FString MoviePipelineConfig;
 	int32 Iteration = 1;
-	FDoodleProvenance Provenance;
 	FString BaselineLevel;
 	FDoodleGlobals Globals;
 	TArray<FDoodleLight> Lights;

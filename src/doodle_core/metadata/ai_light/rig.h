@@ -371,29 +371,6 @@ struct DOODLE_CORE_API light_t {
   }
 };
 
-struct DOODLE_CORE_API provenance_t {
-  std::string model_{};
-  std::string prompt_hash_{};
-  std::vector<std::string> reference_{};
-  std::int64_t seed_{0};
-  std::string tier_{};
-
-  friend void to_json(nlohmann::json& j, const provenance_t& p) {
-    j["model"]       = p.model_;
-    j["prompt_hash"] = p.prompt_hash_;
-    j["reference"]   = p.reference_;
-    j["seed"]        = p.seed_;
-    j["tier"]        = p.tier_;
-  }
-  friend void from_json(const nlohmann::json& j, provenance_t& p) {
-    if (j.contains("model")) j.at("model").get_to(p.model_);
-    if (j.contains("prompt_hash")) j.at("prompt_hash").get_to(p.prompt_hash_);
-    if (j.contains("reference")) j.at("reference").get_to(p.reference_);
-    if (j.contains("seed")) j.at("seed").get_to(p.seed_);
-    if (j.contains("tier")) j.at("tier").get_to(p.tier_);
-  }
-};
-
 struct DOODLE_CORE_API exposure_t {
   std::string method_{"manual"};
   double ev100_bias_{0.0};
@@ -509,21 +486,18 @@ struct DOODLE_CORE_API lighting_rig_t {
   /// 该方案对应的 ai_light_candidate 行 uuid。由服务端在落库时生成并回填；
   /// 前端提交时给了也不采信（与 session_id / iteration 等其他身份字段同口径）。
   uuid candidate_id_{};
-  provenance_t provenance_{};
   globals_t globals_{};
   std::vector<light_t> lights_{};
   std::vector<light_op_t> ops_{};
 
   friend void to_json(nlohmann::json& j, const lighting_rig_t& p) {
     j["candidate_id"] = p.candidate_id_;
-    j["provenance"]   = p.provenance_;
     j["globals"]      = p.globals_;
     j["lights"]       = p.lights_;
     j["ops"]          = p.ops_;
   }
   friend void from_json(const nlohmann::json& j, lighting_rig_t& p) {
     if (j.contains("candidate_id")) j.at("candidate_id").get_to(p.candidate_id_);
-    if (j.contains("provenance")) j.at("provenance").get_to(p.provenance_);
     if (j.contains("globals")) j.at("globals").get_to(p.globals_);
     if (j.contains("lights")) j.at("lights").get_to(p.lights_);
     if (j.contains("ops")) j.at("ops").get_to(p.ops_);
