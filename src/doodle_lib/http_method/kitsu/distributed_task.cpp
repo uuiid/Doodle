@@ -78,7 +78,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(insert(l_sql).into<server_task_info>().values(*l_ptr));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_await computers_assign_task::get_instance().run_next_task(l_ptr->submitter_cookies_);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 提交 UE 装配任务 project_id {} task_id {} job_id {} computer_id {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, id_, l_ptr->uuid_id_,
@@ -130,7 +129,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_export_anim_fbx, p
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(insert(l_sql).into<server_task_info>().values(*l_ptr));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_await computers_assign_task::get_instance().run_next_task(l_ptr->submitter_cookies_);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 提交动画导出任务 project_id {} task_id {} job_id {} computer_id {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, id_, l_ptr->uuid_id_,

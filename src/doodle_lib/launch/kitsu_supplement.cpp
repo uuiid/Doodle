@@ -136,7 +136,6 @@ bool kitsu_supplement_main::init() {
   auto& l_set                      = core_set::get_set();
   l_set.maya_ctx_                  = std::make_shared<maya_ctx>();
   l_set.ue_ctx_                    = std::make_shared<ue_ctx>();
-  l_set.computers_assign_task_ptr_ = std::make_shared<http::computers_assign_task>();
   l_set.database_                  = std::make_shared<sqlite_storage>();
   kitsu_supplement_args_t l_args{
       .port_                 = 50025,

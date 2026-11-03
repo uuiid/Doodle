@@ -89,8 +89,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
 
   FSys::rename(l_file, l_file_tmp);
 
-  co_await computers_assign_task::get_instance().run_next_task(l_task->submitter_cookies_);
-
   co_return std::make_unique<http_body_json_t>(nlohmann::json{{"reference", *l_ref}, {"preview", *l_preview}});
 }
 

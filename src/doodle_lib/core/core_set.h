@@ -70,7 +70,6 @@ class DOODLELIB_API core_set : public boost::noncopyable {
   // 原子计数(http连接条数)
   std::atomic_uint64_t http_connection_count_{0};
 
-  std::shared_ptr<http::computers_assign_task> computers_assign_task_ptr_{};
   std::shared_ptr<boost::asio::ssl::context> ctx_ptr;
   std::shared_ptr<socket_io::sid_ctx> sid_ctx_{};
   std::shared_ptr<http::kitsu_ctx_t> kitsu_ctx_{};
