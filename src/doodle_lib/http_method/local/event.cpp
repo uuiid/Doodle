@@ -44,7 +44,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, post) {
 
   auto l_woek                               = std::make_shared<http_work>();
   l_set.internal_distributed_render_client_ = l_woek;
-  l_woek->run(l_allowed_task_types);
+  l_woek->run(l_allowed_task_types, token_);
   SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "分布式任务已经开始运行, 允许的任务类型: {}", l_allowed_task_types);
   co_return std::make_unique<http_body_empty_t>();
 }
