@@ -74,7 +74,7 @@ class DOODLELIB_API http_work : public std::enable_shared_from_this<http_work> {
 
   void run(const std::set<server_task_info_type>& in_allowed_task_types, const std::string& in_kitsu_token);
   void cancel();
-  void set_computer_status(computer_status in_status);
+
   // 由 base_distributed_task 调用: 任务开始 / 结束(结束归零时才上报 online)
   void task_started();
   void task_finished();

@@ -169,7 +169,7 @@ boost::asio::awaitable<void> http_work::async_run() {
   auto l_ip                        = core_set::get_set().server_ip;
   boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
   SPDLOG_LOGGER_INFO(logger_, "http_work 开始运行, 服务器地址: {}", l_ip);
-  std::size_t  l_count = 0;
+  std::size_t l_count = 0;
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     try {
       auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
@@ -245,10 +245,7 @@ bool http_work::run_task(const server_task_info& in_task_info) {
 
 void http_work::task_started() { running_task_count_.fetch_add(1, std::memory_order_acq_rel); }
 
-void http_work::task_finished() {
-  // 只有全部任务都结束了才上报 online: 只要还有一个任务在跑, 服务端就不该再派新任务过来
-  if (running_task_count_.fetch_sub(1, std::memory_order_acq_rel) <= 1) set_computer_status(computer_status::online);
-}
+void http_work::task_finished() { running_task_count_.fetch_sub(1, std::memory_order_acq_rel); }
 
 boost::asio::awaitable<void> http_work::report_task_unsupported(const server_task_info& in_task_info) {
   try {
