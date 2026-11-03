@@ -830,6 +830,22 @@ boost::asio::awaitable<void> kitsu_client::get_next_job(uuid in_computer_id) con
     throw_exception(doodle_error{"kitsu get next job error {} {}", l_res.result(), l_res.body()});
   co_return;
 }
+boost::asio::awaitable<nlohmann::json> kitsu_client::get_computer_task(
+    uuid in_hardware_id, std::set<server_task_info_type> in_allowed_task_types
+) const {
+  boost::beast::http::request<boost::beast::http::string_body> l_req{
+      boost::beast::http::verb::post, fmt::format("/api/data/jobs/computer/{}/task", in_hardware_id), 11
+  };
+  set_req_headers(l_req, "application/json");
+  l_req.body() = nlohmann::json{{"allowed_task_types", in_allowed_task_types}}.dump();
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
+    throw_exception(doodle_error{"kitsu get computer task error {} {}", l_res.result(), l_res.body()});
+  if (l_res.body().empty()) co_return nlohmann::json{};
+  co_return nlohmann::json::parse(l_res.body(), nullptr, false);
+}
+
 boost::asio::awaitable<std::tuple<std::string, std::vector<std::string>>> kitsu_client::get_ue_plugins_version() const {
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::get, fmt::format("/api/ue-plugins/version"), 11

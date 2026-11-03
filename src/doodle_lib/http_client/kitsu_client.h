@@ -4,6 +4,7 @@
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/project.h>
+#include <doodle_core/metadata/server_task_info_type.h>
 
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/http/json_body.h>
@@ -17,6 +18,7 @@
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
+#include <set>
 #include <string>
 #include <tl/expected.hpp>
 #include <tuple>
@@ -209,6 +211,11 @@ class DOODLELIB_API kitsu_client {
   // get /api/doodle/ai/light/session/{session_id}/iteration —— 获取会话当前轮次，
   // 响应体是 ai_light_current_iteration_t（iteration / state / render_at / feedback_text / rigs）。
   boost::asio::awaitable<nlohmann::json> get_ai_light_session_iteration(uuid in_session_id) const;
+
+  // post /api/data/jobs/computer/{hardware_id}/task —— 工作机主动接取一个任务，没有任务时返回空 json
+  boost::asio::awaitable<nlohmann::json> get_computer_task(
+      uuid in_hardware_id, std::set<server_task_info_type> in_allowed_task_types
+  ) const;
 };
 
 }  // namespace doodle::kitsu
