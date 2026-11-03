@@ -169,7 +169,7 @@ boost::asio::awaitable<void> http_work::async_run() {
   auto l_ip                        = core_set::get_set().server_ip;
   boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
   SPDLOG_LOGGER_INFO(logger_, "http_work 开始运行, 服务器地址: {}", l_ip);
-  std::int32_t l_count = 0;
+  std::size_t  l_count = 0;
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     try {
       auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
@@ -185,7 +185,7 @@ boost::asio::awaitable<void> http_work::async_run() {
           auto l_task = co_await l_client->get_computer_task(
               this_computer_info_.hardware_id_, this_computer_info_.allowed_task_types_
           );
-          if (!l_task.is_null() || l_task.empty()) {
+          if (!l_task.is_null() && !l_task.empty()) {
             server_task_info l_task_info{};
             l_task.get_to(l_task_info);
             SPDLOG_LOGGER_INFO(logger_, "收到任务 {}: {}", l_task_info.uuid_id_, l_task_info.name_);
@@ -210,7 +210,6 @@ boost::asio::awaitable<void> http_work::async_run() {
       SPDLOG_LOGGER_ERROR(logger_, "处理 WebSocket 消息发生错误: {}", e.what());
     }
 
-    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
     timer.expires_after(std::chrono::seconds(10));
     co_await timer.async_wait(boost::asio::use_awaitable);
   }
