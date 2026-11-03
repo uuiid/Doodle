@@ -207,9 +207,9 @@ boost::asio::awaitable<void> http_work::async_run() {
       }
 
     } catch (const boost::system::system_error& e) {
-      SPDLOG_LOGGER_ERROR(logger_, "WebSocket 连接发生错误: {}", e.what());
+      SPDLOG_LOGGER_ERROR(logger_, "连接服务器失败: {}, 10 秒后重连", e.what());
     } catch (const std::exception& e) {
-      SPDLOG_LOGGER_ERROR(logger_, "处理 WebSocket 消息发生错误: {}", e.what());
+      SPDLOG_LOGGER_ERROR(logger_, "拉取任务失败: {}, 10 秒后重连", e.what());
     }
 
     timer.expires_after(std::chrono::seconds(10));
