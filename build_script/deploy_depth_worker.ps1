@@ -28,10 +28,14 @@ $ErrorActionPreference = "Stop"
 
 $ShareBin = "\\192.168.20.89\Doodle_build\install\bin"
 $ShareCuda = "\\192.168.20.89\Doodle_build\cuda_dll"
+$ShareModels = "\\192.168.20.89\Doodle_build\models"
+$KitsuDataRoot = "D:\kitsu_data"
 $ExeName = "doodle_kitsu_supplement.exe"
 $ProcName = [System.IO.Path]::GetFileNameWithoutExtension($ExeName)
 $ExePath = Join-Path $InstallDir $ExeName
-$ModelsDir = Join-Path $InstallDir "models\depth"
+# kitsu_ctx_t::get_depth_model_path() resolves the relative default under root_,
+# and the worker is started with --local, so root_ is D:\kitsu_data
+$ModelsDir = Join-Path $KitsuDataRoot "models"
 $RunKeyPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 
 # listening port published by the worker in named shared memory (http_listener_port_shm.h)
@@ -303,6 +307,19 @@ function Deploy-Worker {
         } else {
             Write-Warning "  $dll not found at $src"
         }
+    }
+
+    # 5. Copy depth models into the runtime root the worker loads them from
+    Write-Host "Copying models from $ShareModels to $ModelsDir ..."
+    $null = New-Item -ItemType Directory -Force -Path $ModelsDir
+    if (Test-Path -LiteralPath $ShareModels) {
+        # the onnx and its external weight file are ~1.3 GB each; a re-run must not copy them again
+        & robocopy $ShareModels $ModelsDir /E /XO /XN /r:2 /w:1 /NDL /NFL
+        if ($LASTEXITCODE -ge 8) { throw "robocopy models failed (exit $LASTEXITCODE)" }
+    } elseif (Test-Path -LiteralPath (Join-Path $ModelsDir "depth\da3mono_large.onnx")) {
+        Write-Warning "Share $ShareModels unreachable; keeping the models already in $ModelsDir"
+    } else {
+        throw "Share $ShareModels unreachable and no models in $ModelsDir"
     }
 }
 
