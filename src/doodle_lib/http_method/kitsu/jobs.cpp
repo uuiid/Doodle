@@ -15,6 +15,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <jwt-cpp/traits/nlohmann-json/traits.h>
 
 namespace doodle::http {
 
@@ -42,6 +43,62 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, put) {
   if (auto l_p = l_jobs_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   FSys::ofstream{l_jobs_path, std::ios::out | std::ios::binary | std::ios::app} << l_string;
   co_return std::make_unique<http_body_empty_t>();
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_computer_task, post) {
+  person_.check_not_outsourcer();
+  auto l_sql      = get_sqlite_database();
+  auto l_json     = in_handle->get_json();
+
+  auto l_computer = l_sql.get_computer_by_hardware_id(id_);
+  if (!l_computer.has_value())
+    co_return std::make_unique<http_body_error_t>(boost::beast::http::status::not_found, "计算机不存在");
+
+  std::set<server_task_info_type> l_allowed{};
+  l_json.at("allowed_task_types").get_to(l_allowed);
+
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  auto l_jobs = l_sql.get_server_tasks_by_submitted();
+  std::erase_if(l_jobs, [&l_allowed](const server_task_info& j) { return !l_allowed.contains(j.type_); });
+
+  if (l_jobs.empty()) {
+    l_sqls.emplace_back(update(l_sql)
+                            .from<computer>()
+                            .set(c(&computer::status_) = computer_status::online)
+                            .where(c(&computer::uuid_id_) == l_computer->uuid_id_));
+    co_await l_sql.run_sql(std::move(l_sqls));
+    co_return std::make_unique<http_body_empty_t>();
+  }
+
+  l_sqls.emplace_back(update(l_sql)
+                          .from<computer>()
+                          .set(c(&computer::status_) = computer_status::busy)
+                          .where(c(&computer::uuid_id_) == l_computer->uuid_id_));
+  auto l_job               = l_jobs.front();
+  l_job.status_            = server_task_info_status::running;
+  l_job.run_time_          = {chrono::current_zone(), chrono::system_clock::now()};
+  l_job.run_computer_id_   = l_computer->uuid_id_;
+  auto& l_ctx              = g_kitsu_ctx();
+  l_job.submitter_cookies_ = jwt::create()
+                                 .set_payload_claim("identity_type", jwt::claim{"person"s})
+                                 .set_issued_at(chrono::system_clock::now())
+                                 .set_id(fmt::to_string(l_job.submitter_))
+                                 .set_subject(fmt::to_string(l_job.submitter_))
+                                 .set_not_before(chrono::system_clock::now())
+                                 .set_expires_at(chrono::system_clock::now() + chrono::days{7})
+                                 .sign(jwt::algorithm::hs256{l_ctx.secret_});
+  l_sqls.emplace_back(update(l_sql)
+                          .from<server_task_info>()
+                          .set(c(&server_task_info::status_) = l_job.status_)
+                          .set(c(&server_task_info::run_time_) = l_job.run_time_)
+                          .set(c(&server_task_info::run_computer_id_) = l_job.run_computer_id_)
+                          .set(c(&server_task_info::submitter_cookies_) = l_job.submitter_cookies_)
+                          .where(c(&server_task_info::uuid_id_) == l_job.uuid_id_));
+  co_await l_sql.run_sql(std::move(l_sqls));
+  socket_io::broadcast(socket_io::server_task_info_update_broadcast_t{.server_task_info_id_ = l_job.uuid_id_});
+  socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = l_computer->uuid_id_});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_job);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, get) {

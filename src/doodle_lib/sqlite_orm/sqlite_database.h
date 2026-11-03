@@ -5,6 +5,7 @@
 #pragma once
 
 #include "doodle_core/metadata/entity.h"
+#include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/scan_data_t.h>
 
@@ -264,6 +265,7 @@ class DOODLELIB_API sqlite_database {
   std::vector<server_task_info> get_server_tasks_by_submitted();
   // 当前仍处于 running 的任务所绑定的计算机 id 集合, 用于判断某台机器是否还有未完成的工作
   std::set<uuid> get_running_task_computer_ids();
+  std::optional<computer> get_computer_by_hardware_id(const uuid& in_hardware_id);
   // 获取镜头任务对应的 场景资产的扩展数据 如果没有, 抛出异常, 大于一个, 抛出异常
   entity_asset_extend_value get_entity_shot_extend_by_task(const uuid& in_shot_id);
 

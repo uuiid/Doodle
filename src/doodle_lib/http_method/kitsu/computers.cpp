@@ -34,18 +34,6 @@
 #include <string>
 
 namespace doodle::http {
-namespace {
-std::optional<computer> get_entity_computer_by_hardware_id(const uuid& in_hardware_id) {
-  auto l_sql = get_sqlite_database();
-  using namespace orm;
-  return select(l_sql)
-      .columns(object<computer>())
-      .from<computer>()
-      .where(c(&computer::hardware_id_) == in_hardware_id)
-      .limit(1)()
-      .to_optional();
-}
-}  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers, get) {
   person_.check_not_outsourcer();
@@ -119,7 +107,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     auto l_row                 = l_computer_json;
     l_row.last_heartbeat_time_ = std::chrono::system_clock::now();
     auto l_sql                 = get_sqlite_database();
-    if (auto l_db_computer = get_entity_computer_by_hardware_id(l_row.hardware_id_); l_db_computer.has_value()) {
+    if (auto l_db_computer = l_sql.get_computer_by_hardware_id(l_row.hardware_id_); l_db_computer.has_value()) {
       l_row         = l_db_computer.value();
       l_row.status_ = l_computer_json.status_;
       using namespace orm;

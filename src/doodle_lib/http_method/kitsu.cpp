@@ -224,6 +224,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_c<auth_change_password>()
       .reg_c<data_jobs>()
       .reg_c<data_jobs_instance>()
+      .reg_c<data_jobs_computer_task>()
       .reg_c<actions_jobs_log>()
       .reg_c<data_computers>()
       .reg_c<data_computers_instance>()

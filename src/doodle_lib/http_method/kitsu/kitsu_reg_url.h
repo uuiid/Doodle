@@ -936,6 +936,13 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_)
 DOODLE_HTTP_ROUTE("/api/data/jobs/{job_id_}", job_id_)
 uuid job_id_{};
 DOODLE_HTTP_FUN_END()
+
+DOODLE_HTTP_JWT_FUN(data_jobs_computer_task)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/data/jobs/computer/{id_}/task", id_)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
 // /api/actions/jobs/{job_id}/log
 DOODLE_HTTP_JWT_FUN(actions_jobs_log)
 DOODLE_HTTP_FUN_OVERRIDE(get)

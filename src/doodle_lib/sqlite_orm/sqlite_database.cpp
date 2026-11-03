@@ -2100,6 +2100,17 @@ std::set<uuid> sqlite_database::get_running_task_computer_ids() {
       .to_set();
 }
 
+std::optional<computer> sqlite_database::get_computer_by_hardware_id(const uuid& in_hardware_id) {
+  using namespace orm;
+
+  return select(*this)
+      .columns(object<computer>())
+      .from<computer>()
+      .where(c(&computer::hardware_id_) == in_hardware_id)
+      .limit(1)()
+      .to_optional();
+}
+
 entity_asset_extend_value sqlite_database::get_entity_shot_extend_by_task(const uuid& in_shot_id) {
   using namespace orm;
   auto l_shot         = alias<entity>("shot");
