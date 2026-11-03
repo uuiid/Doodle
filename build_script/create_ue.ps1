@@ -3,8 +3,8 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 . "$PSScriptRoot\set_main_var.ps1"
 
 Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
- 
-$DoodleBuildRoot = Convert-Path "$DoodleGitRoot/build/UE"
+$DoodleGitRoot = Convert-Path "$PSScriptRoot/.."
+$DoodleBuildRoot = "$DoodleGitRoot/build/UE"
 if (-not (Test-Path $DoodleBuildRoot)) {
   New-Item -ItemType Directory -Path $DoodleBuildRoot | Out-Null
 }
