@@ -15,10 +15,12 @@
 
 namespace
 {
-	const TCHAR* const c_SampleBaselineLevel = TEXT("/Game/Shot/LS_SH0100.LS_SH0100");
+	const TCHAR* const c_SampleBaselineLevel = TEXT(
+		"/Game/Shot/ep0388/LQ388_sc028/Import_DH/LQ_EP388_SC028_DH.LQ_EP388_SC028_DH"
+	);
 	const TCHAR* const c_SampleSessionId = TEXT("4f1a2b3c-5d6e-4f70-8192-a3b4c5d6e7f8");
 	const TCHAR* const c_SampleShotTaskId = TEXT("9c8b7a65-4321-4fed-8cba-0987654321fe");
-	const TCHAR* const c_SampleRenderMap = TEXT("/Game/Shot/Map_SH0100");
+	const TCHAR* const c_SampleRenderMap = TEXT("/Game/Shot/ep0388/LQ388_sc028/Import_DH/sc028_DH");
 	const TCHAR* const c_SampleMoviePipelineConfig = TEXT("/Game/DoodleLighting/MRQ_AiLight.MRQ_AiLight");
 	const TCHAR* const c_SampleCandidate0 = TEXT("0d1e2f3a-4b5c-4d6e-8f90-a1b2c3d4e5f6");
 	const TCHAR* const c_SampleCandidate1 = TEXT("7a6b5c4d-3e2f-4019-8b7a-6c5d4e3f2a1b");
