@@ -3,6 +3,7 @@
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/server_task_info.h>
 
+#include "doodle_lib_fwd.h"
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/socket_io.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
@@ -47,8 +48,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, put) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_computer_task, post) {
   person_.check_not_outsourcer();
-  auto l_sql      = get_sqlite_database();
-  auto l_json     = in_handle->get_json();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+
+  DOODLE_TO_EXECUTOR(strand_);
 
   auto l_computer = l_sql.get_computer_by_hardware_id(id_);
   if (!l_computer.has_value())

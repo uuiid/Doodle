@@ -9,6 +9,9 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
+#include <boost/asio/strand.hpp>
+
+#include "core/global_function.h"
 #include <core/http/http_function.h>
 #include <string>
 
@@ -938,6 +941,7 @@ uuid job_id_{};
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_JWT_FUN(data_jobs_computer_task)
+boost::asio::any_io_executor strand_{boost::asio::make_strand(g_io_context())};
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_ROUTE("/api/data/jobs/computer/{id_}/task", id_)
 uuid id_{};
