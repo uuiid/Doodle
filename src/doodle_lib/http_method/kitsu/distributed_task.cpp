@@ -1,4 +1,5 @@
 #include <doodle_core/metadata/computer.h>
+#include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/task.h>
 
@@ -14,6 +15,7 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <memory>
+#include <jwt-cpp/traits/nlohmann-json/traits.h>
 
 namespace doodle::http {
 
@@ -44,6 +46,18 @@ std::shared_ptr<server_task_info> make_server_task_info_from_json(
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   return l_ptr;
 }
+
+std::string make_submitter_cookies(const uuid& in_submitter) {
+  auto& l_ctx = g_kitsu_ctx();
+  return jwt::create()
+      .set_payload_claim("identity_type", jwt::claim{"person"s})
+      .set_issued_at(chrono::system_clock::now())
+      .set_id(fmt::to_string(in_submitter))
+      .set_subject(fmt::to_string(in_submitter))
+      .set_not_before(chrono::system_clock::now())
+      .set_expires_at(chrono::system_clock::now() + chrono::days{7})
+      .sign(jwt::algorithm::hs256{l_ctx.secret_});
+}
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post) {
@@ -58,12 +72,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
       project_id_, id_, l_json.value("simulation_abc_import", simulation_abc_import::with_abc)
   );
   // #endif
-  auto l_sql = get_sqlite_database();
+  l_ptr->submitter_cookies_ = make_submitter_cookies(l_ptr->submitter_);
+  auto l_sql                = get_sqlite_database();
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(insert(l_sql).into<server_task_info>().values(*l_ptr));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_await computers_assign_task::get_instance().run_next_task();
+  co_await computers_assign_task::get_instance().run_next_task(l_ptr->submitter_cookies_);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 提交 UE 装配任务 project_id {} task_id {} job_id {} computer_id {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, id_, l_ptr->uuid_id_,
@@ -110,11 +125,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_export_anim_fbx, p
   auto l_ptr      = make_server_task_info_from_json(in_handle->get_json(), person_.person_.uuid_id_, id_);
   l_ptr->type_    = server_task_info_type::export_fbx;
   l_ptr->command_ = shot_export_anim_fbx(project_id_, id_);
+  l_ptr->submitter_cookies_ = make_submitter_cookies(l_ptr->submitter_);
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(insert(l_sql).into<server_task_info>().values(*l_ptr));
   co_await l_sql.run_sql(std::move(l_sqls));
-  co_await computers_assign_task::get_instance().run_next_task();
+  co_await computers_assign_task::get_instance().run_next_task(l_ptr->submitter_cookies_);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 提交动画导出任务 project_id {} task_id {} job_id {} computer_id {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, id_, l_ptr->uuid_id_,

@@ -26,6 +26,7 @@
 #include "core/global_function.h"
 #include <core/http/http_function.h>
 #include <filesystem>
+#include <jwt-cpp/traits/nlohmann-json/traits.h>
 #include <opencv2/opencv.hpp>
 #include <utility>
 
@@ -59,18 +60,26 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
   l_sqls.emplace_back(insert(l_sql).into<sd2::ai_entity_reference_preview>().values(*l_ref));
 
   // 2. 创建分布式任务
-  auto l_task = std::make_shared<server_task_info>();
-  l_task->type_      = server_task_info_type::depth_estimation;
-  l_task->status_    = server_task_info_status::submitted;
-  l_task->submitter_ = person_.person_.uuid_id_;
-  l_task->command_   = nlohmann::json{{"preview_id", l_preview->uuid_id_}};
+  auto l_task         = std::make_shared<server_task_info>();
+  l_task->type_       = server_task_info_type::depth_estimation;
+  l_task->status_     = server_task_info_status::submitted;
+  l_task->submitter_  = person_.person_.uuid_id_;
+  l_task->command_    = nlohmann::json{{"preview_id", l_preview->uuid_id_}};
+  auto& l_ctx         = g_kitsu_ctx();
+  l_task->submitter_cookies_ = jwt::create()
+                                   .set_payload_claim("identity_type", jwt::claim{"person"s})
+                                   .set_issued_at(chrono::system_clock::now())
+                                   .set_id(fmt::to_string(l_task->submitter_))
+                                   .set_subject(fmt::to_string(l_task->submitter_))
+                                   .set_not_before(chrono::system_clock::now())
+                                   .set_expires_at(chrono::system_clock::now() + chrono::days{7})
+                                   .sign(jwt::algorithm::hs256{l_ctx.secret_});
   l_sqls.emplace_back(insert(l_sql).into<server_task_info>().values(*l_task));
 
   // 3. 一次提交三个 insert
   co_await l_sql.run_sql(std::move(l_sqls));
 
   // 4. 存储路径 — 原始视频暂存临时文件
-  auto& l_ctx           = g_kitsu_ctx();
   auto l_file_picture   = l_ctx.get_sd2_pictures_file(l_preview->uuid_id_, l_ext);
   auto l_file_thumbnail = l_ctx.get_sd2_thumbnail_file(l_preview->uuid_id_);
   auto l_file_tmp       = l_file_picture;
@@ -80,7 +89,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
 
   FSys::rename(l_file, l_file_tmp);
 
-  co_await computers_assign_task::get_instance().run_next_task();
+  co_await computers_assign_task::get_instance().run_next_task(l_task->submitter_cookies_);
 
   co_return std::make_unique<http_body_json_t>(nlohmann::json{{"reference", *l_ref}, {"preview", *l_preview}});
 }

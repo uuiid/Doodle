@@ -288,7 +288,7 @@ void computers_assign_task::clear_offline_computer() {
   }
 }
 
-boost::asio::awaitable<void> computers_assign_task::run_next_task() {
+boost::asio::awaitable<void> computers_assign_task::run_next_task(std::string in_cookie) {
   DOODLE_TO_EXECUTOR(strand_);
   clear_offline_computer();
   DOODLE_TO_SELF();
@@ -302,7 +302,7 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task() {
     l_targets.emplace_back(std::move(l_ptr));
   }
   for (auto& l_ptr : l_targets) {
-    l_ptr->write_msg("run_task");
+    l_ptr->write_msg(in_cookie);
     l_ptr->begin_write_msg();
   }
 }
