@@ -38,6 +38,9 @@ $ExePath = Join-Path $InstallDir $ExeName
 $ModelsDir = Join-Path $KitsuDataRoot "models"
 $RunKeyPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 
+# session JWT sent as the access_token_cookie header, local_http_fun::parse_header reads it from there
+$AccessToken = "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjU5NTg5Mjk1NzMsImlhdCI6MTc1NzkyNDc3MywiaWRlbnRpdHlfdHlwZSI6InBlcnNvbiIsImp0aSI6IjY5YThkMDkzLWRjYWItNDg5MC04ZjlkLWM1MWVmMDY1ZDAzYiIsIm5iZiI6MTc1NzkyNDc3Mywic3ViIjoiNjlhOGQwOTMtZGNhYi00ODkwLThmOWQtYzUxZWYwNjVkMDNiIn0.6gA3BdCxhuhYPzyBp_my0yHR7gJmIercSyjGBDexqtw"
+
 # listening port published by the worker in named shared memory (http_listener_port_shm.h)
 $ShmName = "doodle_http_listener_port"
 $ShmMagic = [uint32]0x444C5054
@@ -199,12 +202,15 @@ function Register-Worker {
 
     $body = @{ allowed_task_types = @("depth_estimation") } | ConvertTo-Json -Compress
     $url = "http://127.0.0.1:$Port/api/actions/local/task/run"
+    # local_http_fun::parse_header takes the session JWT from the access_token_cookie header
+    $headers = @{ Cookie = "access_token_cookie=$AccessToken" }
     Write-Host "POST $url $body"
 
     $attempt = 0
     do {
         try {
-            $res = Invoke-WebRequest -Uri $url -Method Post -Body $body -ContentType "application/json" -TimeoutSec 10
+            $res = Invoke-WebRequest -Uri $url -Method Post -Body $body -ContentType "application/json" `
+                -Headers $headers -TimeoutSec 10
             Write-Host "Worker registered: $($res.StatusCode) $($res.StatusDescription)"
             return
         } catch {
