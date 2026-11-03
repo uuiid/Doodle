@@ -2,6 +2,7 @@
 
 #include <doodle_core/metadata/ai_light/task_payload.h>
 #include <doodle_core/metadata/assets.h>
+#include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/server_task_info_type.h>
@@ -216,6 +217,9 @@ class DOODLELIB_API kitsu_client {
   boost::asio::awaitable<nlohmann::json> get_computer_task(
       uuid in_hardware_id, std::set<server_task_info_type> in_allowed_task_types
   ) const;
+
+  // post /api/data/computers —— 用 computer 对象直接注册/更新工作机
+  boost::asio::awaitable<nlohmann::json> post_computer(const computer& in_computer) const;
 };
 
 }  // namespace doodle::kitsu

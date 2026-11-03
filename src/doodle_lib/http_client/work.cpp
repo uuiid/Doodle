@@ -18,6 +18,8 @@
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/lib_warp/boost_fmt_error.h>
 
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/co_spawn.hpp>
 #include <boost/asio/consign.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
@@ -142,7 +144,7 @@ uuid get_motherboard_uuid() {
 void http_work::run(std::set<server_task_info_type> in_allowed_task_types) {
   executor_           = boost::asio::make_strand(g_io_context());
   allowed_task_types_ = std::move(in_allowed_task_types);
-  logger_ = g_logger_ctrl().make_log("http_work");
+  logger_             = g_logger_ctrl().make_log("http_work");
   app_cancel_state_.emplace(app_base::Get().on_cancel.slot());
   boost::asio::co_spawn(
       executor_, async_run(),
@@ -170,36 +172,10 @@ boost::asio::awaitable<void> http_work::async_run() {
   const boost::urls::url l_url{fmt::format("ws://{}/api/data/computers", l_ip)};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     try {
-      websocket_client_ = co_await make_websocket_stream(l_url);
-      // 必须按真实状态上报: 重连时若还有任务在跑却报 online, 服务端会认为这台机器空闲, 再派一个任务过来。
-      // 这条注册消息本身就是一次状态上报, 不需要再补发一条(多发的那条正好会覆盖服务端刚设的 busy)
+      auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
       this_computer_info_.status_ =
           running_task_count_.load(std::memory_order_acquire) > 0 ? computer_status::busy : computer_status::online;
-      const auto l_computer_json = nlohmann::json(this_computer_info_).dump();
-      co_await websocket_client_->async_write(boost::asio::buffer(l_computer_json));
-      begin_ping();
-      while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
-             boost::asio::cancellation_type::none) {
-        boost::beast::flat_buffer l_msg;
-        co_await websocket_client_->async_read(l_msg);
-        // 处理消息
-        auto l_json =
-            nlohmann::json::parse(boost::asio::buffers_begin(l_msg.data()), boost::asio::buffers_end(l_msg.data()));
-        auto l_data     = l_json.get<server_task_info>();
-        l_data.uuid_id_ = l_json.at("id").get<uuid>();
-        l_data.command_ = l_json.at("command");
 
-        SPDLOG_LOGGER_INFO(logger_, "收到任务 {}，命令 {}", l_data.uuid_id_, l_data.command_.dump());
-        if (run_task(l_data))
-          set_computer_status(computer_status::busy);
-        else {
-          SPDLOG_LOGGER_ERROR(logger_, "无法运行任务 {}，不支持的任务类型 {}", l_data.uuid_id_, l_data.type_);
-          co_await report_task_unsupported(l_data);
-          set_computer_status(
-              running_task_count_.load(std::memory_order_acquire) > 0 ? computer_status::busy : computer_status::online
-          );
-        }
-      }
     } catch (const boost::system::system_error& e) {
       SPDLOG_LOGGER_ERROR(logger_, "WebSocket 连接发生错误: {}", e.what());
     } catch (const std::exception& e) {

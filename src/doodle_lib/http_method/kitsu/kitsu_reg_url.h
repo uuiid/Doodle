@@ -954,6 +954,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/computers
 DOODLE_HTTP_JWT_FUN(data_computers)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_ROUTE("/api/data/computers")
 using session_data_ptr = std::shared_ptr<http::session_data>;
 void websocket_callback(

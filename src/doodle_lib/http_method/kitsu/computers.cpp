@@ -42,6 +42,31 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers, get) {
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_computers);
 }
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers, post) {
+  person_.check_not_outsourcer();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+
+  auto l_computer                 = l_json.get<computer>();
+  l_computer.last_heartbeat_time_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  if (auto l_db_computer = l_sql.get_computer_by_hardware_id(l_computer.hardware_id_); l_db_computer.has_value()) {
+    l_computer.uuid_id_ = l_db_computer->uuid_id_;
+    l_sqls.emplace_back(update(l_sql)
+                            .from<computer>()
+                            .set_from_ref<computer>(l_json)
+                            .set(c(&computer::last_heartbeat_time_) = l_computer.last_heartbeat_time_)
+                            .where(c(&computer::uuid_id_) == l_computer.uuid_id_));
+  } else {
+    l_sqls.emplace_back(insert(l_sql).into<computer>().values(l_computer));
+  }
+  co_await l_sql.run_sql(std::move(l_sqls));
+  socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = l_computer.uuid_id_});
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_computer);
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, get) {
   person_.check_not_outsourcer();
   auto l_sql      = get_sqlite_database();
