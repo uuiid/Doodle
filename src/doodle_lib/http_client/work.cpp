@@ -23,6 +23,7 @@
 #include <boost/asio/consign.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/lockfree/detail/uses_optional.hpp>
 #include <boost/process/process.hpp>
@@ -141,10 +142,11 @@ uuid get_motherboard_uuid() {
 
 }  // namespace
 
-void http_work::run(std::set<server_task_info_type> in_allowed_task_types) {
+void http_work::run(std::set<server_task_info_type> in_allowed_task_types, const std::string& in_kitsu_token) {
   executor_           = boost::asio::make_strand(g_io_context());
   allowed_task_types_ = std::move(in_allowed_task_types);
   logger_             = g_logger_ctrl().make_log("http_work");
+  kitsu_token_        = in_kitsu_token;
   app_cancel_state_.emplace(app_base::Get().on_cancel.slot());
   boost::asio::co_spawn(
       executor_, async_run(),
@@ -165,12 +167,40 @@ boost::asio::awaitable<void> http_work::async_run() {
   this_computer_info_.status_             = computer_status::online;
   this_computer_info_.allowed_task_types_ = allowed_task_types_;
   auto l_ip                               = core_set::get_set().server_ip;
-
+  boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
+  SPDLOG_LOGGER_INFO(logger_, "http_work 开始运行, 服务器地址: {}", l_ip);
+  std::int32_t l_count = 0;
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     try {
       auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+      l_client->set_token(kitsu_token_);
+      l_client->set_logger(logger_);
       this_computer_info_.status_ =
           running_task_count_.load(std::memory_order_acquire) > 0 ? computer_status::busy : computer_status::online;
+      co_await l_client->post_computer(this_computer_info_);
+
+      while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
+             boost::asio::cancellation_type::none) {
+        if (running_task_count_.load(std::memory_order_acquire) == 0) {
+          auto l_task = co_await l_client->get_computer_task(this_computer_info_.hardware_id_, allowed_task_types_);
+          if (!l_task.is_null()) {
+            server_task_info l_task_info{};
+            l_task.get_to(l_task_info);
+            SPDLOG_LOGGER_INFO(logger_, "收到任务 {}: {}", l_task_info.uuid_id_, l_task_info.name_);
+            if (!run_task(l_task_info)) {
+              SPDLOG_LOGGER_ERROR(logger_, "无法运行任务 {}: {}", l_task_info.uuid_id_, l_task_info.name_);
+              co_await report_task_unsupported(l_task_info);
+            }
+          }
+        }
+        this_computer_info_.status_ =
+            running_task_count_.load(std::memory_order_acquire) > 0 ? computer_status::busy : computer_status::online;
+        co_await l_client->post_computer(this_computer_info_);
+        timer.expires_after(std::chrono::seconds(10));
+        l_count++;
+        if (l_count % 6000 == 0) co_await l_client->refresh_token();
+        co_await timer.async_wait(boost::asio::use_awaitable);
+      }
 
     } catch (const boost::system::system_error& e) {
       SPDLOG_LOGGER_ERROR(logger_, "WebSocket 连接发生错误: {}", e.what());
@@ -236,59 +266,6 @@ boost::asio::awaitable<void> http_work::report_task_unsupported(const server_tas
   co_return;
 }
 
-void http_work::set_computer_status(computer_status in_status) {
-  this_computer_info_.status_ = in_status;
-  message_queue_.push(nlohmann::json(this_computer_info_).dump());
-  begin_write_msg();
-}
-
-void http_work::begin_write_msg() {
-  // 用 exchange 而不是先读后写: set_computer_status 可能来自 strand_ 之外的线程
-  if (is_writing_.exchange(true, std::memory_order_seq_cst)) return;
-  boost::asio::co_spawn(
-      strand_, async_write_msg(),
-      boost::asio::bind_cancellation_slot(
-          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
-      )
-  );
-}
-
-void http_work::begin_ping() {
-  boost::asio::co_spawn(
-      g_io_context(), async_ping_loop(),
-      boost::asio::bind_cancellation_slot(
-          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
-      )
-  );
-}
-
-boost::asio::awaitable<void> http_work::async_write_msg() {
-  DOODLE_TO_EXECUTOR(strand_);
-
-  try {
-    if (ping_message_.read(boost::lockfree::uses_optional)) {
-      co_await websocket_client_->async_ping(boost::beast::websocket::ping_data{}, boost::asio::use_awaitable);
-    }
-
-    while (!message_queue_.empty()) {
-      std::string l_msg{};
-      message_queue_.pop(l_msg);
-      if (!websocket_client_) break;
-      if (!l_msg.empty())
-        co_await websocket_client_->async_write(boost::asio::buffer(l_msg), boost::asio::use_awaitable);
-      else
-        co_await websocket_client_->async_ping(boost::beast::websocket::ping_data{}, boost::asio::use_awaitable);
-    }
-  } catch (const boost::system::system_error& e) {
-    SPDLOG_LOGGER_ERROR(logger_, "WebSocket 连接发生错误: {}", e.what());
-  } catch (const std::exception& e) {
-    SPDLOG_LOGGER_ERROR(logger_, "处理 WebSocket 消息发生错误: {}", e.what());
-  }
-  // 收尾: 先清标记再复查队列。若有人在"队列判空"和"清标记"之间入队, 他会看到 is_writing_ == true 而直接返回,
-  // 那条消息就没人发了(要等到下一次 set_computer_status 或 30s 后的 ping 才被捎带出去) —— 这里复查一次捞回来
-  is_writing_.store(false, std::memory_order_seq_cst);
-  if (!message_queue_.empty()) begin_write_msg();
-}
 template <class Mutex>
 class run_ue_assembly_distributed_sink : public spdlog::sinks::base_sink<Mutex>,
                                          public std::enable_shared_from_this<run_ue_assembly_distributed_sink<Mutex>> {
@@ -316,23 +293,6 @@ class run_ue_assembly_distributed_sink : public spdlog::sinks::base_sink<Mutex>,
   }
 };
 using run_ue_assembly_distributed_sink_mt = run_ue_assembly_distributed_sink<std::mutex>;
-
-boost::asio::awaitable<void> http_work::async_ping_loop() {
-  try {
-    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
-    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none &&
-           websocket_client_ && websocket_client_->is_open()) {
-      timer.expires_after(std::chrono::seconds(30));
-      co_await timer.async_wait(boost::asio::use_awaitable);
-      ping_message_.write(boost::beast::websocket::ping_data{});
-      begin_write_msg();
-    }
-  } catch (const boost::system::system_error& e) {
-    SPDLOG_LOGGER_ERROR(logger_, "WebSocket 连接发生错误: {}", e.what());
-  } catch (const std::exception& e) {
-    SPDLOG_LOGGER_ERROR(logger_, "处理 WebSocket 消息发生错误: {}", e.what());
-  }
-}
 
 base_distributed_task::base_distributed_task(server_task_info in_task_info, std::shared_ptr<http_work> in_http_work_ptr)
     : task_info_(std::move(in_task_info)), http_work_ptr_(std::move(in_http_work_ptr)) {

@@ -220,6 +220,9 @@ class DOODLELIB_API kitsu_client {
 
   // post /api/data/computers —— 用 computer 对象直接注册/更新工作机
   boost::asio::awaitable<nlohmann::json> post_computer(const computer& in_computer) const;
+
+  // post /api/auth/refresh-token —— 用当前 token 换一套新的 access/refresh token
+  boost::asio::awaitable<std::string> refresh_token();
 };
 
 }  // namespace doodle::kitsu

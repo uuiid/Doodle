@@ -860,6 +860,23 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::post_computer(const compute
   co_return nlohmann::json::parse(l_res.body(), nullptr, false);
 }
 
+boost::asio::awaitable<std::string> kitsu_client::refresh_token() {
+  boost::beast::http::request<boost::beast::http::string_body> l_req{
+      boost::beast::http::verb::post, "/api/auth/refresh-token", 11
+  };
+  set_req_headers(l_req, "application/json");
+  l_req.body() = nlohmann::json::object().dump();
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok)
+    throw_exception(doodle_error{"刷新 token 失败 {} {}", l_res.result(), l_res.body()});
+  auto l_json = nlohmann::json::parse(l_res.body(), nullptr, false);
+  if (l_json.is_discarded() || !l_json.contains("access_token"))
+    throw_exception(doodle_error{"刷新 token 响应里没有 access_token：{}", l_res.body()});
+  kitsu_token_ = l_json.at("access_token").get<std::string>();
+  co_return kitsu_token_;
+}
+
 boost::asio::awaitable<std::tuple<std::string, std::vector<std::string>>> kitsu_client::get_ue_plugins_version() const {
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::get, fmt::format("/api/ue-plugins/version"), 11

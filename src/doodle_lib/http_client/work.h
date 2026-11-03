@@ -60,6 +60,7 @@ class DOODLELIB_API http_work : public std::enable_shared_from_this<http_work> {
   boost::asio::awaitable<void> async_write_msg();
   // 上报收到的任务无法执行(置为 failed), 否则服务端库里这条任务会一直是 running, 一直挡住这台机器
   boost::asio::awaitable<void> report_task_unsupported(const server_task_info& in_task_info);
+  std::string kitsu_token_{};
 
  protected:
   bool run_task(const server_task_info& in_task_info);
@@ -72,7 +73,7 @@ class DOODLELIB_API http_work : public std::enable_shared_from_this<http_work> {
   http_work()  = default;
   ~http_work() = default;
 
-  void run(std::set<server_task_info_type> in_allowed_task_types = {});
+  void run(const std::set<server_task_info_type>& in_allowed_task_types, const std::string& in_kitsu_token);
   void cancel();
   void set_computer_status(computer_status in_status);
   // 由 base_distributed_task 调用: 任务开始 / 结束(结束归零时才上报 online)
