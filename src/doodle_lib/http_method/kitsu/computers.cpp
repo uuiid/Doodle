@@ -320,6 +320,7 @@ boost::asio::awaitable<void> computers_assign_task::register_computer(
       g_logger_ctrl().get_http(), "计算机 {} 注册成功, 当前在线计算机数量 {}", in_computer->get_computer_id(),
       computer_map_.size()
   );
+  DOODLE_TO_SELF();
 }
 
 void computers_assign_task::clear_offline_computer() {
@@ -394,6 +395,7 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
 boost::asio::awaitable<void> computers_assign_task::run_next_task() {
   DOODLE_TO_EXECUTOR(strand_);
   clear_offline_computer();
+  DOODLE_TO_SELF();
   SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "{}", fmt::join(computer_map_ | std::ranges::views::keys, ", "));
   auto l_running_computers = get_sqlite_database().get_running_task_computer_ids();
   std::vector<std::shared_ptr<data_computers_socket_io_impl>> l_targets{};
