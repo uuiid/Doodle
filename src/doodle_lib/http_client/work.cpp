@@ -142,11 +142,11 @@ uuid get_motherboard_uuid() {
 
 }  // namespace
 
-void http_work::run(std::set<server_task_info_type> in_allowed_task_types, const std::string& in_kitsu_token) {
-  executor_           = boost::asio::make_strand(g_io_context());
-  allowed_task_types_ = std::move(in_allowed_task_types);
-  logger_             = g_logger_ctrl().make_log("http_work");
-  kitsu_token_        = in_kitsu_token;
+void http_work::run(const std::set<server_task_info_type>& in_allowed_task_types, const std::string& in_kitsu_token) {
+  executor_                               = boost::asio::make_strand(g_io_context());
+  this_computer_info_.allowed_task_types_ = std::move(in_allowed_task_types);
+  logger_                                 = g_logger_ctrl().make_log("http_work");
+  kitsu_token_                            = in_kitsu_token;
   app_cancel_state_.emplace(app_base::Get().on_cancel.slot());
   boost::asio::co_spawn(
       executor_, async_run(),
@@ -162,11 +162,11 @@ void http_work::cancel() {
 }
 
 boost::asio::awaitable<void> http_work::async_run() {
-  this_computer_info_.hardware_id_        = get_motherboard_uuid();
-  this_computer_info_.name_               = boost::asio::ip::host_name();
-  this_computer_info_.status_             = computer_status::online;
-  this_computer_info_.allowed_task_types_ = allowed_task_types_;
-  auto l_ip                               = core_set::get_set().server_ip;
+  this_computer_info_.hardware_id_ = get_motherboard_uuid();
+  this_computer_info_.name_        = boost::asio::ip::host_name();
+  this_computer_info_.status_      = computer_status::online;
+
+  auto l_ip                        = core_set::get_set().server_ip;
   boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
   SPDLOG_LOGGER_INFO(logger_, "http_work 开始运行, 服务器地址: {}", l_ip);
   std::int32_t l_count = 0;
@@ -182,8 +182,10 @@ boost::asio::awaitable<void> http_work::async_run() {
       while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
              boost::asio::cancellation_type::none) {
         if (running_task_count_.load(std::memory_order_acquire) == 0) {
-          auto l_task = co_await l_client->get_computer_task(this_computer_info_.hardware_id_, allowed_task_types_);
-          if (!l_task.is_null()) {
+          auto l_task = co_await l_client->get_computer_task(
+              this_computer_info_.hardware_id_, this_computer_info_.allowed_task_types_
+          );
+          if (!l_task.is_null() || l_task.empty()) {
             server_task_info l_task_info{};
             l_task.get_to(l_task_info);
             SPDLOG_LOGGER_INFO(logger_, "收到任务 {}: {}", l_task_info.uuid_id_, l_task_info.name_);
@@ -198,7 +200,7 @@ boost::asio::awaitable<void> http_work::async_run() {
         co_await l_client->post_computer(this_computer_info_);
         timer.expires_after(std::chrono::seconds(10));
         l_count++;
-        if (l_count % 6000 == 0) co_await l_client->refresh_token();
+        if (l_count % 6000 == 0) kitsu_token_ = co_await l_client->refresh_token();
         co_await timer.async_wait(boost::asio::use_awaitable);
       }
 
