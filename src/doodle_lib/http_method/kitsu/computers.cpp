@@ -39,6 +39,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers, get) {
   person_.check_not_outsourcer();
   auto l_sql       = get_sqlite_database();
   auto l_computers = l_sql.get_all<computer>();
+  auto l_now = std::chrono::system_clock::now();
+  for (auto& i : l_computers) 
+    if (i.last_heartbeat_time_.get_sys_time() + std::chrono::seconds(30) < l_now) 
+      i.status_ = computer_status::offline;
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_computers);
 }
 
