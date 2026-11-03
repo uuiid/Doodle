@@ -396,7 +396,7 @@ uuid subproject_id_{};
 uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
 
-// /api/seedance2/depth/{depth_id}
+// /api/seedance2/depth/{depth_id}  仅内部
 DOODLE_HTTP_JWT_FUN(doodle_ai_depth_estimation_file)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
