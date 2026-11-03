@@ -41,32 +41,19 @@ using http_websocket_data_ptr = std::shared_ptr<detail::http_websocket_data>;
  */
 
 class DOODLELIB_API http_work : public std::enable_shared_from_this<http_work> {
-  using timer     = boost::asio::high_resolution_timer;
-  using timer_ptr = std::shared_ptr<timer>;
-
   boost::asio::any_io_executor executor_{};
   logger_ptr logger_{};
-  std::shared_ptr<boost::beast::websocket::stream<boost::beast::tcp_stream>> websocket_client_{};
-  boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
   boost::asio::awaitable<void> async_run();
   computer this_computer_info_;
-  std::atomic<bool> is_writing_{false};
   // 正在执行的任务数: 只有归零才向服务端上报 online, 否则服务端会以为这台机器空闲, 在任务没跑完时再派一个过来
   std::atomic<int> running_task_count_{0};
-  boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> message_queue_;
-  boost::lockfree::spsc_value<boost::beast::websocket::ping_data> ping_message_;
   std::optional<boost::asio::cancellation_state> app_cancel_state_{};
-  boost::asio::awaitable<void> async_write_msg();
   // 上报收到的任务无法执行(置为 failed), 否则服务端库里这条任务会一直是 running, 一直挡住这台机器
   boost::asio::awaitable<void> report_task_unsupported(const server_task_info& in_task_info);
   std::string kitsu_token_{};
 
  protected:
   bool run_task(const server_task_info& in_task_info);
-
-  void begin_write_msg();
-  void begin_ping();
-  boost::asio::awaitable<void> async_ping_loop();
 
  public:
   http_work()  = default;
