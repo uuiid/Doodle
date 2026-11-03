@@ -164,7 +164,7 @@ bool kitsu_supplement_main::init() {
   }
   if (auto l_root_path = arg_({"root"}); l_root_path) l_args.root_ = FSys::from_quotation_marks(l_root_path.str());
   if (arg_["local"]) {
-    app_base::Get().use_multithread(false);
+    // app_base::Get().use_multithread(false);
     if (auto l_str = arg_({"port"}); l_str)
       l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
     else
