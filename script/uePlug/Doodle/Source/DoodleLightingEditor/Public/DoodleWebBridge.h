@@ -17,6 +17,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Doodle")
 	FString SetAiLightIteration(const FString& InIteration);
 
+	UFUNCTION(BlueprintCallable, Category = "Doodle")
+	FString SetAiLightIterationFromFile(const FString& InFilePath);
+
 	UFUNCTION(BlueprintPure, Category = "Doodle")
 	static UDoodleWebBridge* Get();
 };
