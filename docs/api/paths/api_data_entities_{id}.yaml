@@ -5,7 +5,9 @@ get:
   description: |
     机器生成：注册于 `kitsu.cpp`，处理器为 `data_entities::get`，实现见 `entities.cpp`。
 
-    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+    只返回 `entity` 本体（`to_json(entity)`：`id` / `name` / `code` / `description` /
+    `entity_type_id` / `parent_id` / `source_id` / `status` / `project_id` / `preview_file_id` 等），
+    **不带** `entity_asset_extend` / `entity_shot_extend` / `entity_episode_extend` 扩展数据。
   operationId: data_entities_get
   parameters:
     - name: id
@@ -16,11 +18,12 @@ get:
         format: uuid
   responses:
     '200':
-      description: JSON 响应（字段结构尚未逐字段整理）
+      description: 实体本体
       content:
         application/json:
           schema:
             type: object
+            description: 序列化后的 `entity`
   security:
     - bearerAuth: []
 put:
@@ -30,7 +33,23 @@ put:
   description: |
     机器生成：注册于 `kitsu.cpp`，处理器为 `data_entities::put`，实现见 `entities.cpp`。
 
-    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+    请求体是 `entity` 字段 ∪ 三种可写扩展字段的**扁平**对象（扩展字段与 `entity` 同层，不是嵌套对象）：
+
+    - `entity` 本体：`entity::put_property_list()` 中的 `name`、`description`、`code`、`status`、
+      `is_shared`、`is_casting_standby`、`canceled`、`parent_id`、`entity_type_id`、`ready_for`。
+      仅当请求人是项目主管时才写库；否则这些字段全部忽略，响应仍回写新值。
+    - `entity_asset_extend`（资产扩展）：请求体含 `ji_shu_lie` / `deng_ji` / `gui_dang` / `bian_hao` /
+      `pin_yin_ming_cheng` / `ban_ben` / `ji_du` / `kai_shi_ji_shu` / `chang_ci` / `te_xie`
+      任一键时触发。
+    - `entity_shot_extend`（镜头扩展）：请求体含 `frame_in` / `frame_out` 任一键时触发
+      （`frame_in` / `frame_out` 为可空整数）。
+    - `entity_episode_extend`（集数扩展）：请求体含 `ji_du2` 键时触发，可空整数；该扩展行不存在时插入新行，
+      存在时按 `entity_id` 更新。
+
+    扩展数据**不受**项目主管限制（非主管也能写扩展字段）。任一扩展字段未触发时保持原值不变。
+
+    响应体是更新后的 `entity` 本体，并 `update()` 合入本次触发写入的扩展字段
+    （即响应里可能多出 `ji_du2` / `frame_in` / `frame_out` / 资产扩展字段）。
   operationId: data_entities_put
   parameters:
     - name: id
@@ -43,12 +62,63 @@ put:
     required: true
     content:
       application/json:
-        schema: {}
+        schema:
+          type: object
+          description: |
+            `entity` 可写字段 + 扩展字段（扁平），详见接口 description
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            code:
+              type: string
+            status:
+              type: string
+              enum:
+                - standby
+                - running
+                - complete
+                - canceled
+            is_shared:
+              type: boolean
+            is_casting_standby:
+              type: boolean
+            canceled:
+              type: boolean
+            parent_id:
+              type: string
+              format: uuid
+            entity_type_id:
+              type: string
+              format: uuid
+            ready_for:
+              type: string
+              format: uuid
+            frame_in:
+              type: integer
+              format: int32
+              nullable: true
+              description: 镜头扩展，含该键即写 `entity_shot_extend`
+            frame_out:
+              type: integer
+              format: int32
+              nullable: true
+              description: 镜头扩展，含该键即写 `entity_shot_extend`
+            ji_du2:
+              type: integer
+              format: int32
+              nullable: true
+              description: 集数扩展（季度），含该键即写 `entity_episode_extend`
   responses:
     '200':
-      description: JSON 响应（字段结构尚未逐字段整理）
+      description: 更新后的实体本体（含本次写入的扩展字段）
       content:
         application/json:
-          schema: {}
+          schema:
+            allOf:
+              - type: object
+                description: 序列化后的 `entity`
+              - $ref: ../components/schemas/EntityEpisodeExtend.yaml
   security:
     - bearerAuth: []

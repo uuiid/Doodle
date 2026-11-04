@@ -1,0 +1,133 @@
+type: object
+description: |
+  `GET /api/data/sequences/with-tasks` 列表项的响应形状，对应处理器内部的 `sequences_with_tasks_result`。
+
+  它是 `entity` 本体（只取部分字段）与 `entity_episode_extend`（只取 `ji_du2`）的投影，其余字段
+  （如 `code`、`project_id`、`entity_type_id`）刻意不带出。`frame_in` / `frame_out` / `fps`
+  由序列读取，当前实现固定为 `null`。
+properties:
+  id:
+    type: string
+    format: uuid
+  name:
+    type: string
+  status:
+    type: string
+    enum:
+      - standby
+      - running
+      - complete
+      - canceled
+    description: 序列状态，取自 `entity.status`（`entity_status`）
+  episode_id:
+    type: string
+    format: uuid
+    description: 所属集数ID（取自 `entity.parent_id_`）
+  description:
+    type: string
+  ji_du2:
+    type: integer
+    format: int32
+    nullable: true
+    description: |
+      季度编号，取自 `entity_episode_extend.ji_du2_`（左连接 `entity_episode_extend`）。
+      没有扩展行的序列为 `null`。
+  frame_in:
+    type: integer
+    format: int32
+    nullable: true
+    description: 当前实现恒为 `null`
+  frame_out:
+    type: integer
+    format: int32
+    nullable: true
+    description: 当前实现恒为 `null`
+  fps:
+    type: integer
+    format: int32
+    nullable: true
+    description: 当前实现恒为 `null`
+  preview_file_id:
+    type: string
+    format: uuid
+    description: 预览文件ID
+  canceled:
+    type: boolean
+    description: 是否作废
+  tasks:
+    type: array
+    description: 该序列下的任务列表（同一任务只出现一次，`assignees` 为该任务的全部指派人）
+    items:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        estimation:
+          type: integer
+          format: int32
+          description: 预估工时
+        entity_id:
+          type: string
+          format: uuid
+          description: 任务所属序列ID
+        end_date:
+          type: string
+          format: date-time
+        due_date:
+          type: string
+          format: date-time
+        done_date:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          format: int32
+          description: 实际耗时
+        is_subscribed:
+          type: boolean
+          description: 当前用户是否订阅该任务
+        last_comment_date:
+          type: string
+          format: date-time
+        last_preview_file_id:
+          type: string
+          format: uuid
+          description: 最后一次预览文件ID
+        priority:
+          type: integer
+          format: int32
+        real_start_date:
+          type: string
+          format: date-time
+        retake_count:
+          type: integer
+          format: int32
+          description: 返修次数
+        start_date:
+          type: string
+          format: date-time
+        difficulty:
+          type: integer
+          format: int32
+        task_type_id:
+          type: string
+          format: uuid
+        task_status_id:
+          type: string
+          format: uuid
+        assignees:
+          type: array
+          description: 指派人ID列表
+          items:
+            type: string
+            format: uuid
+        working_files:
+          type: array
+          description: 当前实现恒为空数组
+          items:
+            type: object
+  shot_count:
+    type: integer
+    format: int64
+    description: 该序列下子实体（镜头）的数量，取自 `entity.parent_id` 的计数

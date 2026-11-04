@@ -5,14 +5,49 @@ get:
   description: |
     机器生成：注册于 `kitsu.cpp`，处理器为 `sequences_with_tasks::get`，实现见 `sequences.cpp`。
 
-    请求体与响应体的字段结构尚未逐字段整理，请以处理器实现为准。
+    只返回 `entity_type` 为 `sequence` 的实体；未指定 `project_id` 时不做项目过滤。外包账号
+    （`person_role_type::outsource`）只能看到被授权工作室的项目数据。每个序列附带
+    `entity_episode_extend` 中的 `ji_du2`（季度，无扩展行时为 `null`）。
+
+    响应体是 **对象**，身为 `{ "data": [<SequencesWithTasks 元素>...] }`（`nlohmann::json{} = l_r`
+    直接序列化 `std::vector<sequences_with_tasks_result>`，因此列表挂在 `data` 键上，不是裸数组），
+    没有 `count` / `total` 之类的总数分页字段；`offset` / `limit` 只作用于 `data`。
   operationId: sequences_with_tasks_get
+  parameters:
+    - name: project_id
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: 项目ID；为空时不做项目过滤（只受外包装权限限制）
+    - name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: 0
+      description: 偏移量，按 `entity.name` 排序后生效
+    - name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: 300
+      description: 每页条数；省略或为 `0` 时默认 `300`
   responses:
     '200':
-      description: JSON 响应（字段结构尚未逐字段整理）
+      description: 序列列表（对象，列表挂在 `data`）
       content:
         application/json:
           schema:
             type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/SequencesWithTasks.yaml
   security:
     - bearerAuth: []

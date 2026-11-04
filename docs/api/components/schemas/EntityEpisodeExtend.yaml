@@ -1,0 +1,22 @@
+type: object
+description: |
+  集数（episode）实体的扩展数据，对应 `entity_episode_extend` 表（一实体一行）。
+
+  与 `entity_asset_extend` / `entity_shot_extend` 一样，它只在请求体里出现对应键时才被写入：
+  `PUT /api/data/entities/{id}` 收到 `ji_du2` 键时整体读取并落库。
+
+  注意：该表目前**只在** `PUT /api/data/entities/{id}` 的请求体和
+  `GET /api/data/sequences/with-tasks` 的响应元素里出现；`GET /api/data/entities/{id}`
+  只返回 `entity` 本体，不带扩展数据。
+properties:
+  entity_id:
+    type: string
+    format: uuid
+    description: 所属实体ID（外键 → `entity.uuid_id_`）
+  ji_du2:
+    type: integer
+    format: int32
+    nullable: true
+    description: |
+      季度编号。表中为可空列；`PUT /api/data/entities/{id}` 未携带该键时不更新，
+      携带 `null` 时写入 NULL。
