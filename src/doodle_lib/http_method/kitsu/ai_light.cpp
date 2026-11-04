@@ -1030,6 +1030,23 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
       l_req.iteration_, l_prev.empty() ? 0 : l_prev.back().iteration_, l_expected
   );
 
+  
+
+  for (const auto& l_rig : l_req.rigs_) {
+    std::size_t l_sky_count{};
+    std::size_t l_directional_count{};
+    for (const auto& l_light : l_rig.lights_) {
+      if (l_light.type_ == light_type::sky) ++l_sky_count;
+      if (l_light.type_ == light_type::directional) ++l_directional_count;
+    }
+    DOODLE_CHICK_HTTP(
+        l_sky_count <= 1, bad_request, "灯光方案里 sky 灯最多一个，收到 {} 个", l_sky_count
+    );
+    DOODLE_CHICK_HTTP(
+        l_directional_count <= 1, bad_request, "灯光方案里 directional 灯最多一个，收到 {} 个", l_directional_count
+    );
+  }
+
   l_req.session_id_  = l_session.uuid_id_;
   l_req.project_id_  = l_session.project_id_;
   l_req.operator_id_ = person_.person_.uuid_id_;
