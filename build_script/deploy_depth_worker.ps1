@@ -53,7 +53,7 @@ $ShmSize = 12
 
 function Get-WorkerProcess {
     Get-Process -Name $ProcName -ErrorAction SilentlyContinue |
-        Where-Object { try { $_.Path -like "$InstallDir*" } catch { $false } }
+    Where-Object { try { $_.Path -like "$InstallDir*" } catch { $false } }
 }
 
 function Test-WorkerAlive {
@@ -79,7 +79,8 @@ function Get-ExitCodeText {
     try {
         $code = $Process.ExitCode
         if ($null -ne $code) { return $code }
-    } catch { }
+    }
+    catch { }
     return "unknown"
 }
 
@@ -137,9 +138,11 @@ public static class DoodleWorkerShmNative
         $port = [BitConverter]::ToUInt16($buf, 8)
         if ($magic -ne $ShmMagic -or $version -ne $ShmVersion -or $port -eq 0) { return $null }
         return [int]$port
-    } catch {
+    }
+    catch {
         return $null
-    } finally {
+    }
+    finally {
         if ($pView -ne [IntPtr]::Zero) { [void]$native::UnmapViewOfFile($pView) }
         [void]$native::CloseHandle($hMap)
     }
@@ -188,7 +191,8 @@ function Start-WorkerWithRetry {
         Start-Sleep -Milliseconds $IntervalMs
         try {
             return (Start-Worker)
-        } catch {
+        }
+        catch {
             Write-Warning "Start attempt $attempt/$Attempts failed: $($_.Exception.Message)"
             Stop-Worker -Worker $null
         }
@@ -203,7 +207,7 @@ function Register-Worker {
     $body = @{ allowed_task_types = @("depth_estimation") } | ConvertTo-Json -Compress
     $url = "http://127.0.0.1:$Port/api/actions/local/task/run"
     # local_http_fun::parse_header takes the session JWT from the access_token_cookie header
-    $headers = @{ Cookie = "access_token_cookie=$AccessToken" }
+    $headers = @{ "Authorization" = "Bearer $KitsuCookies" }
     Write-Host "POST $url $body"
 
     $attempt = 0
@@ -213,7 +217,8 @@ function Register-Worker {
                 -Headers $headers -TimeoutSec 10
             Write-Host "Worker registered: $($res.StatusCode) $($res.StatusDescription)"
             return
-        } catch {
+        }
+        catch {
             $attempt++
             if ($attempt -ge 5) { throw }
             Write-Host "  Retry $attempt/5..."
@@ -244,14 +249,16 @@ function Install-StartupRegistration {
             -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
         if ($RunAsSystem) {
             $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
-        } else {
+        }
+        else {
             $principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Highest
         }
 
         Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $triggers -Settings $settings `
             -Principal $principal -Description "Doodle depth estimation worker (deploy + watchdog)" -Force | Out-Null
         Write-Host "Startup registration: scheduled task '$TaskName' (at startup + at logon)"
-    } catch {
+    }
+    catch {
         # no elevation: fall back to a per-user Run entry, which only covers logon
         Write-Warning "Scheduled task registration failed ($($_.Exception.Message)); using HKCU Run key instead"
         Set-ItemProperty -Path $RunKeyPath -Name $TaskName -Value "powershell.exe $arguments"
@@ -310,7 +317,8 @@ function Deploy-Worker {
         if (Test-Path $src) {
             Copy-Item -Force $src $InstallDir
             Write-Host "  $dll"
-        } else {
+        }
+        else {
             Write-Warning "  $dll not found at $src"
         }
     }
@@ -322,9 +330,11 @@ function Deploy-Worker {
         # the onnx and its external weight file are ~1.3 GB each; a re-run must not copy them again
         & robocopy $ShareModels $ModelsDir /E /XO /XN /r:2 /w:1 /NDL /NFL
         if ($LASTEXITCODE -ge 8) { throw "robocopy models failed (exit $LASTEXITCODE)" }
-    } elseif (Test-Path -LiteralPath (Join-Path $ModelsDir "depth\da3mono_large.onnx")) {
+    }
+    elseif (Test-Path -LiteralPath (Join-Path $ModelsDir "depth\da3mono_large.onnx")) {
         Write-Warning "Share $ShareModels unreachable; keeping the models already in $ModelsDir"
-    } else {
+    }
+    else {
         throw "Share $ShareModels unreachable and no models in $ModelsDir"
     }
 }
