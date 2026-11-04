@@ -5,17 +5,18 @@
 
 #include "DoodleWebBridge.generated.h"
 
-UCLASS()
+UCLASS(BlueprintType)
 class DOODLELIGHTINGEDITOR_API UDoodleWebBridge : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = "Doodle")
 	void Logout();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = "Doodle")
 	FString SetAiLightIteration(const FString& InIteration);
 
+	UFUNCTION(BlueprintPure, Category = "Doodle")
 	static UDoodleWebBridge* Get();
 };
