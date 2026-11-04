@@ -10,6 +10,97 @@ get:
 
     响应体与 `post` 完全同一形状 —— 两个方法都从同一条 `ai_light_iteration` 行构造
     `ai_light_current_iteration_t`，前端可以用一个类型承接两者。
+
+    ## 方案如何被实现到关卡（UE 侧执行方式）
+
+    本接口只负责把 `LightingRig` **存下来**，不在请求里做任何 UE 侧操作；点灯由 UE 工作机
+    在渲染一帧时按下面的规则把 JSON 还原成真实的 actor 与组件。权威实现是
+    `uePlug/Doodle/Source/DoodleLightingEditor/Private/DoodleLightingExecutor.cpp`
+    （整体入口 `ApplyCandidateToWorld`，行 636-677），下表描述的是它的实际行为，不是目标行为。
+
+    ### 入口与生命周期
+
+    1. `PrepareAnchorCamera`（行 599-634）先加载会话的 `baseline_level` 定序器，取出相机：
+       相机切换轨道（`UMovieSceneCameraCutTrack`）各段的绑定 guid 经 `LocateBoundObjects` / spawnable
+       模板解析成 `ACineCameraActor`，解析不到就退回编辑世界里第一台 `ACineCameraActor`；
+       该相机的位置、朝向、水平视场角（必须落在 `(0, 179)` 之间）构成整轮的锚点帧。
+    2. 每个候选渲染前调 `ApplyCandidateToWorld`（行 636-677），把该候选的 `rigs[i]` 建进 PIE 世界；
+       渲染完（无论成功失败）立刻调 `RemoveCandidate`（行 679-689）把这一轮新建的 actor 删掉，
+       所以候选项之间的灯不会互相污染，关卡也不会被改脏。
+    3. 上图目录 `frames_dir` 只用于日志前缀，执行器不往里面写文件。
+
+    ### 一次 `ApplyCandidateToWorld` 的五个步骤
+
+    | 顺序 | 做什么 | 关键行为 |
+    | --- | --- | --- |
+    | 1 | 候选没有灯 | `lights` 为空直接整体失败：「候选没有灯，无法建灯」 |
+    | 2 | 后处理 | `EnsurePostProcessVolume`：世界里已有 `APostProcessVolume` 就**改写它**的 `Settings` 并 `BlendWeight = 1`；没有就新建一个 `bEnabled` / `bUnbound` 的 volume，且只有新建的那个归本轮所有、渲染后会被删 |
+    | 3 | 环境两件套 | `ApplySkyLightIntensity`：**直接改**世界里第一盏 `ASkyLight` 的强度（没有就不做，不新建）；`ApplyFogDensity`：已有 `AExponentialHeightFog` 就改密度，没有且 `fog_density > 0` 才新建（新建的会被清理），`fog_density <= 0` 时不新建 |
+    | 4 | 逐灯建 actor | `BuildRigLights`（行 532-597），规则见下节 |
+    | 5 | 收口 | 警告逐条写日志（不影响结果）；返回 `LightCount`（**只统计 `lights` 里真正落地的盏数**，不含后处理、天空光、雾）与 `SpawnedActors`（本轮新建、渲染后要删的 actor） |
+
+    ### 逐灯细化（`BuildRigLights` + `SpawnLightActor` + `ApplyLightProperties`）
+
+    - **建灯顺序按类型而非数组顺序**：`stable_sort` 按 `LightBuildOrder` 排，`sky` = 0、
+      `directional` = 1、其余（`point` / `spot` / `rect`） = 2，同类型保持 `lights` 里的相对顺序。
+      目的是先让天空光与平行光到位，避免局部光在天空光重捕获之前就参与计算。
+    - **先按 `id` 认领已有的 actor，认出就改、认不出才建**：`FindLightActorByGuid`（行 163-193）把
+      `lights[i].id` 当 **actor 的 `GetActorGuid()`**（`DigitsWithHyphens` 形式）解析；`id` 为空、
+      不是合法 guid、或世界里找不到同一类型且带灯组件的 actor，都视为「没找到」。
+      `sky` 只接受 `ASkyLight` + `USkyLightComponent`，其余只接受对应 `APointLight` / `ASpotLight` /
+      `ARectLight` / `ADirectionalLight` 及其灯组件。**命中时 actor 不新建、不进清理列表**，
+      它原本就属于关卡，渲染后保持被改写后的状态。
+    - **认领不到时的兜底**：`SpawnLightActor`（行 195-258）——
+      `point` / `spot` / `rect` 一律新建；
+      `directional` **不新建**，改为在整个世界里挑 `Intensity` 最大的那盏（取第一盏，
+      之后 `Intensity` 严格更大才替换；全为 0 时仍取第一盏；忽略 `mobility` / `CastShadows` /
+      可见性），找不到任何平行光才新建；
+      `sky` **不新建**，取世界里第一盏 `ASkyLight`，没有才新建。
+      注意这两类的兜底是「就地改写关卡里的灯」，而不是与美术原有平行光/天空光并存。
+    - **每盏灯的 ID 与会话的 `id` 契约**：`id` 是**唯一**的认领依据，`name` / `role` / `anchor` 的 `target` /
+      `look_at` 都不参与定位，所以同一 `id` 的灯在重复渲染时总是落到同一个 actor 上；
+      `id` 用错（例如填了 actor 名）不会报错，只会退化成「新建一盏灯」，在多次迭代里留下重复的灯。
+    - **公共属性**（`ApplyCommonLightProperties`，行 88-109）：`SetMobility` 按 `mobility` 映射
+      （`static_light` → Static、`stationary` → Stationary、其余 → Movable）。
+      `SetCastShadows(shadows.cast)`；`SetIntensity(intensity.value)` **直接照抄数值、不按 `unit` 换算**。
+      `color.mode = temperature` 时 `SetUseTemperature(true)` + `SetTemperature(kelvin)`；
+      否则 `SetUseTemperature(false)` + `SetLightColor(...)`，其中 `rgb` 通道直取 `[0,1]` 线性色，
+      **`filter`（色纸）无法解析，按白处理并记一条警告**。`channels` 只有前三位有效
+      （缺位或为 0 视为关闭），经 `SetLightingChannels` 写入。
+    - **按类型追加的专属属性**：
+      - `directional`：`SetLightSourceAngle(Lerp(0.5°, 12°, shadows.softness))`；`intensity.unit` 不是
+        `lux` 时按 lux 处理并记警告，且**不**设置灯源角度以外的单位。
+      - `rect`：宽高都取 `2 × source_radius_cm`（即正方面光）。
+      - `point` / `spot`：`source_radius_cm` 同时写入 `SourceRadius` 与 `SoftSourceRadius`。
+      - `spot` 额外写锥角：`outer_cone_deg` 缺省或 ≤0 取 45°，`inner_cone_deg` 缺省则按 25/45 比例
+        从 outer 推出；最终 outer 被夹到 `[1°, 89°]`、inner 夹到 `[0°, outer]`。
+      - 含光源半径的几项还会再乘一次软度：实际半径 = `source_radius_cm × (0.3 + 1.2 × shadows.softness)`，
+        夹到 `[0, 200]` cm。
+      - `sky`：**只**认 `intensity.value` 与 `shadows.cast`，强制 `Mobility = Movable`，
+        改完调 `RecaptureSky()`；`color.mode` 不是 `temperature` 时记警告并忽略，
+        `mobility` / `channels` / `shape` 都被忽略。
+    - **定位（除 `sky` 外）**：`ResolveLightPlacement`（`DoodleLightingOps.cpp` 行 95-133）先校验
+      `offset` 三个量是有限值，再算锚点与方位角零点：
+      `space = camera` 时锚点是相机前方 500 cm 的点、方位角零点随相机朝向旋转；
+      `space = subject` 时锚点是同一个兜底点、方位角零点取世界 +X；
+      `space = world` 时锚点取世界原点、方位角零点取世界 +X。
+      `target` / `look_at` 非空时**无法解析对象名**，只记警告并按「锚点 + 球面偏移」继续。
+      `distance_m` ≤ 0 或未给时按 3 m；`elevation_deg` 夹到 `[-89, 89]`；
+      水平方向绕世界 up 轴旋转 `azimuth_deg`，再叠加仰角得到单位方向，
+      位置 = 锚点 + 方向 × `distance_m × 100`（cm）；朝向始终指向锚点。
+      **`anchor.space` 的实际语义是「用哪个锚点 + 从哪个方向量方位角」，`camera` 与 `subject`
+      的锚点位置相同**，两者只在方位角零点上不同。
+
+    ### 容易踩坑的点
+
+    - `origin`（`inherited` / `ai` / `artist`）与 `anim`（强度关键帧）**执行器完全不读**，
+      既不因 `origin = inherited` 而只做 modify/remove，也不会建立任何动画轨道；`anim` 目前只能靠
+      「改写强度」的静态结果体现，时间维度的强度变化要另做。
+    - `shape.ies` 不读；`role` 不读。
+    - 后处理与天空光强度、雾密度是**就地改写关卡里的既有 actor**（没有就新建，新建的会被清理），
+      这一部分即使在 `RemoveCandidate` 之后也会保留。
+    - 任何「复用既有 actor」的路径都不会把 actor 记进 `SpawnedActors`，因此渲染后不会被删；
+      想让某盏灯每次迭代都干净重建，只能给它一个身份 id（`id` 填 guid）或在不认领的情况下由兜底新建。
   operationId: ai_light_session_iteration_get
   parameters:
     - name: session_id
@@ -55,6 +146,19 @@ post:
 
     响应体与 `get` 完全同一形状：返回刚落库的这一轮（`AiLightIterationView`），
     字段与 `get` 一致，前端可以用一个类型承接两个方法的返回值。
+
+    ### 与 UE 侧执行方式的关系
+
+    这里落库的每个候选就是 `ApplyCandidateToWorld` 的输入：`candidates[i]` 的整份 `LightingRig`
+    原样存进 `lighting_rig_set_t.rigs_[i]`（服务端只把 `candidate_id` 回填进去），
+    之后渲染时由 UE 按 `get` 一节的「方案如何被实现到关卡」逐灯还原成 actor。
+    因此提交时就需要注意：
+
+    - 每盏灯的 `id` 若填成既有 actor 的 guid，渲染时执行器会**就地改写那盏灯**而不是新建；
+      填空或非 guid 时会新建一盏灯，并在每轮渲染结束后被删除。
+    - 一套方案里 `sky` 与 `directional` 都最多一个（服务端在行 1033-1044 校验），
+      因为执行器里这两类都只会「复用世界里那一盏」或挑最亮的一盏，多给的会互相覆盖。
+    - `origin` 与 `anim` 目前不会被执行器读取，提交它们不会报错，但也不会产生相应效果。
   operationId: ai_light_session_iteration_submit_post
   parameters:
     - name: session_id

@@ -995,11 +995,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, get) {
   DOODLE_CHICK_HTTP(!l_prev.empty(), not_found, "会话 {} 还没有提交任何轮次", l_session.uuid_id_);
 
   const auto& l_iteration = l_prev.back();
-  DOODLE_CHICK_HTTP(
-      l_iteration.state_ == ai_light_iteration_state::generated, bad_request,
-      "会话 {} 第 {} 轮的状态是 {}，只有 generated 状态的轮次才能获取灯光方案", l_session.uuid_id_,
-      l_iteration.iteration_, l_iteration.state_
-  );
 
   co_return std::make_unique<http_body_json_t>((nlohmann::json{} = ai_light_current_iteration_t{l_iteration}));
 }
