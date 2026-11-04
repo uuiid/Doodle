@@ -35,9 +35,29 @@ namespace DoodleKitsuClient
 	using FDoodleLoginResult = TValueOrError<FDoodleLoginValue, FString>;
 	using FDoodleLoginCallback = TFunction<void(FDoodleLoginResult)>;
 
+	struct FDoodleUploadSequenceValue
+	{
+		FString CandidateId;
+		int32 FrameCount = 0;
+	};
+
+	using FDoodleUploadSequenceResult = TValueOrError<FDoodleUploadSequenceValue, FString>;
+
+	struct FUploadSequenceOptions
+	{
+		FString ServerUrl;
+		FString CandidateId;
+		FString FramesDir;
+		int32 FrameRate = 24;
+	};
+
 	DOODLELIGHTINGEDITOR_API FDoodleIterationResult ParseIterationBody(const TSharedPtr<FJsonObject>& InRoot);
 
 	DOODLELIGHTINGEDITOR_API FDoodleLoginResult StartLogin(
 		const FString& InServerUrl, const FString& InEmail, const FString& InPassword, FDoodleLoginCallback InOnComplete
+	);
+
+	DOODLELIGHTINGEDITOR_API FDoodleUploadSequenceResult UploadCandidateSequence(
+		const FUploadSequenceOptions& InOptions
 	);
 }

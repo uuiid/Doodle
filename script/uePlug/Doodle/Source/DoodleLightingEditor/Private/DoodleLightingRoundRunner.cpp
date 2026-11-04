@@ -1,8 +1,10 @@
 #include "DoodleLightingRoundRunner.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Async/Async.h"
 #include "DoodleLightingEditorLog.h"
 #include "DoodleLightingExecutor.h"
+#include "DoodleLightingSettings.h"
 #include "DoodleLightingTypes.h"
 #include "Editor.h"
 #include "Engine/World.h"
@@ -275,6 +277,83 @@ void UDoodleLightingRoundRunner::FinishRound()
 		Iteration.Rigs.Num()
 	);
 
+	if (RenderedCandidates.IsEmpty())
+	{
+		BroadcastRoundFinished();
+		return;
+	}
+
+	const FString L_ServerUrl = GetDefault<UDoodleLightingSettings>()->LocalServerUrl;
+	if (L_ServerUrl.IsEmpty())
+	{
+		UE_LOG(LogDoodleLightingEditor, Error, TEXT("没有配置服务器 URL，%d 个候选的帧不会上传"), RenderedCandidates.Num());
+		BroadcastRoundFinished();
+		return;
+	}
+
+	const int32 L_FrameRate = AnchorFrameRate.IsValid() ? FMath::RoundToInt(AnchorFrameRate.AsDecimal()) : 0;
+	const TArray<FDoodleRenderedCandidate> L_Candidates = RenderedCandidates;
+
+	AddToRoot();
+	TWeakObjectPtr<UDoodleLightingRoundRunner> L_WeakThis(this);
+
+	TFuture<TArray<FDoodleUploadOutcome>> L_Future = Async(
+		EAsyncExecution::ThreadPool,
+		[L_ServerUrl, L_FrameRate, L_Candidates]()
+		{
+			TArray<FDoodleUploadOutcome> L_Outcomes;
+			L_Outcomes.Reserve(L_Candidates.Num());
+			for (const FDoodleRenderedCandidate& L_Candidate : L_Candidates)
+			{
+				DoodleKitsuClient::FUploadSequenceOptions L_Options;
+				L_Options.ServerUrl = L_ServerUrl;
+				L_Options.CandidateId = L_Candidate.CandidateId;
+				L_Options.FramesDir = L_Candidate.FramesDir;
+				L_Options.FrameRate = L_FrameRate;
+
+				const DoodleKitsuClient::FDoodleUploadSequenceResult L_Result =
+					DoodleKitsuClient::UploadCandidateSequence(L_Options);
+
+				FDoodleUploadOutcome L_Outcome;
+				L_Outcome.CandidateId = L_Candidate.CandidateId;
+				L_Outcome.bFailed = L_Result.HasError();
+				L_Outcome.Error = L_Result.HasError() ? L_Result.GetError() : FString();
+				L_Outcomes.Add(MoveTemp(L_Outcome));
+			}
+			return L_Outcomes;
+		}
+	);
+
+	L_Future.Next(
+		[L_WeakThis](TArray<FDoodleUploadOutcome> InOutcomes)
+		{
+			UDoodleLightingRoundRunner* L_Runner = L_WeakThis.Get();
+			if (L_Runner == nullptr)
+			{
+				return;
+			}
+
+			for (const FDoodleUploadOutcome& L_Outcome : InOutcomes)
+			{
+				if (L_Outcome.bFailed)
+				{
+					UE_LOG(
+						LogDoodleLightingEditor, Error, TEXT("候选 %s 上传失败：%s"), *L_Outcome.CandidateId, *L_Outcome.Error
+					);
+				}
+				else
+				{
+					UE_LOG(LogDoodleLightingEditor, Log, TEXT("候选 %s 上传完成"), *L_Outcome.CandidateId);
+				}
+			}
+			L_Runner->RemoveFromRoot();
+			L_Runner->BroadcastRoundFinished();
+		}
+	);
+}
+
+void UDoodleLightingRoundRunner::BroadcastRoundFinished()
+{
 	if (RoundFinished.IsBound())
 	{
 		RoundFinished.Broadcast(RenderedCandidates);

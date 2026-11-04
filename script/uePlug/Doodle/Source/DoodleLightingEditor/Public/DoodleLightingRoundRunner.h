@@ -22,6 +22,13 @@ struct DOODLELIGHTINGEDITOR_API FDoodleRenderedCandidate
 	FString FramesDir;
 };
 
+struct FDoodleUploadOutcome
+{
+	FString CandidateId;
+	bool bFailed = false;
+	FString Error;
+};
+
 UCLASS()
 class UDoodleLightingRoundRunner : public UObject
 {
@@ -41,6 +48,8 @@ private:
 	DoodleLightingExecutor::FRoundRenderResultOrError StartCandidate(int32 InIndex);
 
 	void FinishRound();
+
+	void BroadcastRoundFinished();
 
 	void RemoveCandidateFromWorld();
 

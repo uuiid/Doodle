@@ -7,9 +7,12 @@
 
 #include "Containers/Ticker.h"
 #include "Dom/JsonObject.h"
+#include "HAL/FileManager.h"
 #include "HttpModule.h"
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 
@@ -240,6 +243,124 @@ namespace
 		}
 		return FString::Printf(TEXT("%s%s"), *L_Url.TrimEnd(), LocalLoginPath);
 	}
+
+	FString TrimServerUrl(const FString& InServerUrl)
+	{
+		FString L_Url = InServerUrl.TrimStartAndEnd();
+		while (L_Url.EndsWith(TEXT("/")))
+		{
+			L_Url.LeftChopInline(1);
+		}
+		return L_Url;
+	}
+
+	TValueOrError<TArray<FString>, FString> ListPngFrames(const FString& InFramesDir)
+	{
+		if (InFramesDir.IsEmpty())
+		{
+			return MakeError(FString(TEXT("帧目录为空")));
+		}
+
+		TArray<FString> L_Files;
+		IFileManager::Get().FindFiles(L_Files, *FPaths::Combine(InFramesDir, TEXT("*.png")), true, false);
+		if (L_Files.IsEmpty())
+		{
+			return MakeError(FString::Printf(TEXT("帧目录 %s 里没有 png"), *InFramesDir));
+		}
+
+		L_Files.Sort();
+		TArray<FString> L_Paths;
+		L_Paths.Reserve(L_Files.Num());
+		for (const FString& L_File : L_Files)
+		{
+			L_Paths.Add(FPaths::ConvertRelativePathToFull(FPaths::Combine(InFramesDir, L_File)));
+		}
+		return MakeValue(MoveTemp(L_Paths));
+	}
+
+	FString ResolveAuthorization()
+	{
+		const FString L_Token = GetDefault<UDoodleLightingSettings>()->Cookies;
+		return L_Token.IsEmpty() ? FString() : FString::Printf(TEXT("Bearer %s"), *L_Token);
+	}
+
+	struct FUploadJsonOptions
+	{
+		FString Url;
+		FString Authorization;
+		FString Body;
+	};
+
+	TValueOrError<FString, FString> PostJsonSync(const FUploadJsonOptions& InOptions)
+	{
+		const FHttpRequestPtr L_Request = FHttpModule::Get().CreateRequest();
+		L_Request->SetURL(InOptions.Url);
+		L_Request->SetVerb(TEXT("POST"));
+		L_Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+		L_Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
+		if (!InOptions.Authorization.IsEmpty())
+		{
+			L_Request->SetHeader(TEXT("Authorization"), InOptions.Authorization);
+		}
+		L_Request->SetContentAsString(InOptions.Body);
+		L_Request->SetTimeout(RequestTimeoutSeconds);
+
+		L_Request->ProcessRequestUntilComplete();
+
+		const FHttpResponsePtr L_Response = L_Request->GetResponse();
+		if (!L_Response.IsValid())
+		{
+			return MakeError(FString::Printf(TEXT("无法连接服务器: %s"), *InOptions.Url));
+		}
+		const int32 L_Code = L_Response->GetResponseCode();
+		if (!EHttpResponseCodes::IsOk(L_Code))
+		{
+			return MakeError(DescribeFailure(L_Code, L_Response->GetContentAsString()));
+		}
+		return MakeValue(FString());
+	}
+
+	struct FUploadFrameOptions
+	{
+		FString Url;
+		FString Authorization;
+		FString FileName;
+		TArray<uint8> Content;
+	};
+
+	TValueOrError<FString, FString> PostFrameSync(const FUploadFrameOptions& InOptions)
+	{
+		const FHttpRequestPtr L_Request = FHttpModule::Get().CreateRequest();
+		L_Request->SetURL(InOptions.Url);
+		L_Request->SetVerb(TEXT("POST"));
+		L_Request->SetHeader(TEXT("Content-Type"), TEXT("application/octet-stream"));
+		L_Request->SetHeader(TEXT("Accept"), TEXT("application/json"));
+		L_Request->SetHeader(TEXT("Content-Disposition"), InOptions.FileName);
+		if (!InOptions.Authorization.IsEmpty())
+		{
+			L_Request->SetHeader(TEXT("Authorization"), InOptions.Authorization);
+		}
+		L_Request->SetContent(InOptions.Content);
+		L_Request->SetTimeout(RequestTimeoutSeconds);
+
+		L_Request->ProcessRequestUntilComplete();
+
+		const FHttpResponsePtr L_Response = L_Request->GetResponse();
+		if (!L_Response.IsValid())
+		{
+			return MakeError(FString::Printf(TEXT("无法连接服务器: %s"), *InOptions.Url));
+		}
+		const int32 L_Code = L_Response->GetResponseCode();
+		if (!EHttpResponseCodes::IsOk(L_Code))
+		{
+			return MakeError(DescribeFailure(L_Code, L_Response->GetContentAsString()));
+		}
+		return MakeValue(FString());
+	}
+	FString BuildCandidateUrl(const FString& InServerUrl, const FString& InCandidateId, const TCHAR* InAction)
+	{
+		return FString::Printf(TEXT("%s/api/doodle/ai/light/candidate/%s/%s"), *InServerUrl, *InCandidateId, InAction);
+	}
 }
 
 namespace DoodleKitsuClient
@@ -345,5 +466,126 @@ namespace DoodleKitsuClient
 		);
 
 		return MakeValue(FDoodleLoginValue{});
+	}
+
+	FDoodleUploadSequenceResult UploadCandidateSequence(
+		const FUploadSequenceOptions& InOptions
+	)
+	{
+		if (InOptions.CandidateId.IsEmpty())
+		{
+			return MakeError(FString(TEXT("候选 id 为空")));
+		}
+
+		const FString L_ServerUrl = TrimServerUrl(InOptions.ServerUrl);
+		if (L_ServerUrl.IsEmpty())
+		{
+			return MakeError(FString(TEXT("服务器 URL 为空")));
+		}
+		if (!L_ServerUrl.StartsWith(TEXT("http://")) && !L_ServerUrl.StartsWith(TEXT("https://")))
+		{
+			return MakeError(FString(TEXT("服务器 URL 必须以 http:// 或 https:// 开头")));
+		}
+
+		const FString L_Authorization = ResolveAuthorization();
+		if (L_Authorization.IsEmpty())
+		{
+			return MakeError(FString(TEXT("没有登录令牌，请先登录")));
+		}
+
+		const TValueOrError<TArray<FString>, FString> L_Frames = ListPngFrames(InOptions.FramesDir);
+		if (L_Frames.HasError())
+		{
+			return MakeError(L_Frames.GetError());
+		}
+
+		const TArray<FString>& L_FramePaths = L_Frames.GetValue();
+		const int32 L_FrameRate = InOptions.FrameRate > 0 ? InOptions.FrameRate : 24;
+
+		UE_LOG(
+			LogDoodleLightingEditor, Log, TEXT("候选 %s 开始上传帧序列，共 %d 帧，%d fps，目录 %s"), *InOptions.CandidateId,
+			L_FramePaths.Num(), L_FrameRate, *InOptions.FramesDir
+		);
+
+		FUploadJsonOptions L_BeginOptions;
+		L_BeginOptions.Url = BuildCandidateUrl(L_ServerUrl, InOptions.CandidateId, TEXT("begin_sequence"));
+		L_BeginOptions.Authorization = L_Authorization;
+		L_BeginOptions.Body = TEXT("{}");
+		const TValueOrError<FString, FString> L_BeginResult = PostJsonSync(L_BeginOptions);
+		if (L_BeginResult.HasError())
+		{
+			const FString L_Error = FString::Printf(
+				TEXT("候选 %s 开始上传失败: %s"), *InOptions.CandidateId, *L_BeginResult.GetError()
+			);
+			UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *L_Error);
+			return MakeError(L_Error);
+		}
+
+		const FString L_UploadUrl = BuildCandidateUrl(L_ServerUrl, InOptions.CandidateId, TEXT("upload_frame"));
+		for (int32 L_Index = 0; L_Index < L_FramePaths.Num(); ++L_Index)
+		{
+			const FString& L_Path = L_FramePaths[L_Index];
+			TArray<uint8> L_Content;
+			if (!FFileHelper::LoadFileToArray(L_Content, *L_Path))
+			{
+				const FString L_Error = FString::Printf(TEXT("候选 %s 帧文件读取失败: %s"), *InOptions.CandidateId, *L_Path);
+				UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *L_Error);
+				return MakeError(L_Error);
+			}
+
+			const FString L_FileName = FPaths::GetCleanFilename(L_Path);
+			UE_LOG(
+				LogDoodleLightingEditor, Log, TEXT("候选 %s 上传帧 %d/%d：%s"), *InOptions.CandidateId, L_Index + 1,
+				L_FramePaths.Num(), *L_FileName
+			);
+
+			FUploadFrameOptions L_FrameOptions;
+			L_FrameOptions.Url = L_UploadUrl;
+			L_FrameOptions.Authorization = L_Authorization;
+			L_FrameOptions.FileName = L_FileName;
+			L_FrameOptions.Content = MoveTemp(L_Content);
+			const TValueOrError<FString, FString> L_FrameResult = PostFrameSync(L_FrameOptions);
+			if (L_FrameResult.HasError())
+			{
+				const FString L_Error = FString::Printf(
+					TEXT("候选 %s 上传第 %d 帧失败: %s"), *InOptions.CandidateId, L_Index + 1, *L_FrameResult.GetError()
+				);
+				UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *L_Error);
+				return MakeError(L_Error);
+			}
+		}
+
+		FString L_FinishBody = TEXT("{}");
+		TSharedRef<FJsonObject> L_RequestRoot = MakeShared<FJsonObject>();
+		L_RequestRoot->SetNumberField(TEXT("frame_rate"), L_FrameRate);
+		FString L_Serialized;
+		const TSharedRef<TJsonWriter<>> L_Writer = TJsonWriterFactory<>::Create(&L_Serialized);
+		if (FJsonSerializer::Serialize(L_RequestRoot, L_Writer))
+		{
+			L_FinishBody = L_Serialized;
+		}
+
+		FUploadJsonOptions L_FinishOptions;
+		L_FinishOptions.Url = BuildCandidateUrl(L_ServerUrl, InOptions.CandidateId, TEXT("finish_sequence"));
+		L_FinishOptions.Authorization = L_Authorization;
+		L_FinishOptions.Body = L_FinishBody;
+		const TValueOrError<FString, FString> L_FinishResult = PostJsonSync(L_FinishOptions);
+		if (L_FinishResult.HasError())
+		{
+			const FString L_Error = FString::Printf(
+				TEXT("候选 %s 收尾失败: %s"), *InOptions.CandidateId, *L_FinishResult.GetError()
+			);
+			UE_LOG(LogDoodleLightingEditor, Error, TEXT("%s"), *L_Error);
+			return MakeError(L_Error);
+		}
+
+		UE_LOG(
+			LogDoodleLightingEditor, Log, TEXT("候选 %s 帧序列上传完成，共 %d 帧"), *InOptions.CandidateId, L_FramePaths.Num()
+		);
+
+		FDoodleUploadSequenceValue L_Value;
+		L_Value.CandidateId = InOptions.CandidateId;
+		L_Value.FrameCount = L_FramePaths.Num();
+		return MakeValue(MoveTemp(L_Value));
 	}
 }
