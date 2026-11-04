@@ -108,9 +108,11 @@ namespace DoodleLightingExecutor
 			InComponent.SetLightingChannels(L_Channel0, L_Channel1, L_Channel2);
 		}
 
-		AActor* SpawnLightActor(UWorld& InWorld, EDoodleUeLightKind InKind, ULightComponent*& OutLightComponent)
+		AActor* SpawnLightActor(UWorld& InWorld, EDoodleUeLightKind InKind, ULightComponent*& OutLightComponent,
+		                        bool& bOutSpawned)
 		{
 			OutLightComponent = nullptr;
+			bOutSpawned = true;
 			switch (InKind)
 			{
 			case EDoodleUeLightKind::Point:
@@ -133,12 +135,23 @@ namespace DoodleLightingExecutor
 			}
 			case EDoodleUeLightKind::Directional:
 			{
+				for (TActorIterator<ADirectionalLight> L_It(&InWorld); L_It; ++L_It)
+				{
+					bOutSpawned = false;
+					OutLightComponent = L_It->GetLightComponent();
+					return *L_It;
+				}
 				ADirectionalLight* L_Actor = InWorld.SpawnActor<ADirectionalLight>();
 				OutLightComponent = L_Actor != nullptr ? L_Actor->GetLightComponent() : nullptr;
 				return L_Actor;
 			}
 			case EDoodleUeLightKind::Sky:
 			default:
+				for (TActorIterator<ASkyLight> L_It(&InWorld); L_It; ++L_It)
+				{
+					bOutSpawned = false;
+					return *L_It;
+				}
 				return InWorld.SpawnActor<ASkyLight>();
 			}
 		}
@@ -402,22 +415,55 @@ namespace DoodleLightingExecutor
 		}
 	}
 
+	int32 LightBuildOrder(EDoodleUeLightKind InKind)
+	{
+		switch (InKind)
+		{
+		case EDoodleUeLightKind::Sky:
+			return 0;
+		case EDoodleUeLightKind::Directional:
+			return 1;
+		default:
+			return 2;
+		}
+	}
+
 	int32 BuildRigLights(UWorld& InWorld, const FDoodleLightingRig& InRig, const FAnchorCamera& InCamera,
 	                     TArray<AActor*>& OutSpawned, TArray<FString>& OutWarnings)
 	{
 		const FDoodleAnchorFrame L_AnchorFrame = BuildAnchorFrame(InCamera);
-		int32 L_LightCount = 0;
-		for (const FDoodleLight& L_Light : InRig.Lights)
+		TArray<int32> L_LightOrder;
+		L_LightOrder.Reserve(InRig.Lights.Num());
+		for (int32 L_Index = 0; L_Index < InRig.Lights.Num(); ++L_Index)
 		{
+			L_LightOrder.Add(L_Index);
+		}
+		L_LightOrder.StableSort([&InRig](int32 InLeft, int32 InRight)
+		{
+			return LightBuildOrder(ResolveUeLightKind(InRig.Lights[InLeft].Type)) <
+			       LightBuildOrder(ResolveUeLightKind(InRig.Lights[InRight].Type));
+		});
+		int32 L_LightCount = 0;
+		for (const int32 L_LightIndex : L_LightOrder)
+		{
+			const FDoodleLight& L_Light = InRig.Lights[L_LightIndex];
 			const EDoodleUeLightKind L_Kind = ResolveUeLightKind(L_Light.Type);
 			ULightComponent* L_LightComponent = nullptr;
-			AActor* L_Actor = SpawnLightActor(InWorld, L_Kind, L_LightComponent);
+			bool bSpawned = false;
+			AActor* L_Actor = SpawnLightActor(InWorld, L_Kind, L_LightComponent, bSpawned);
 			if (L_Actor == nullptr)
 			{
 				OutWarnings.Add(FString::Printf(TEXT("灯 %s：生成 actor 失败"), *L_Light.Id));
 				continue;
 			}
-			OutSpawned.Add(L_Actor);
+			if (bSpawned)
+			{
+				OutSpawned.Add(L_Actor);
+			}
+			else
+			{
+				UE_LOG(LogDoodleLightingEditor, Log, TEXT("灯 %s：复用关卡里已有的 %s"), *L_Light.Id, *L_Actor->GetName());
+			}
 			ApplyLightProperties(L_Actor, L_Kind, L_LightComponent, L_Light, OutWarnings);
 
 			if (L_Kind != EDoodleUeLightKind::Sky)
