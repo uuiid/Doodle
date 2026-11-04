@@ -9,6 +9,7 @@
 
 #include <bitset>
 #include <string>
+#include <tuple>
 
 namespace doodle {
 
@@ -81,10 +82,8 @@ struct DOODLE_CORE_API entity_episode_extend {
   std::optional<std::int32_t> ji_du2_;
 
   static bool has_extend_data(const nlohmann::json& j) { return j.contains("ji_du2"); }
-  constexpr static auto put_property_list() {
-    return std::tuple{
-        std::pair{"ji_du2", &entity_episode_extend::ji_du2_},
-    };
+  constexpr static std::tuple<std::pair<const char*, decltype(&entity_episode_extend::ji_du2_)>> put_property_list() {
+    return std::make_tuple(std::pair{"ji_du2", &entity_episode_extend::ji_du2_});
   }
   // to json
   friend void to_json(nlohmann::json& j, const entity_episode_extend& p) {

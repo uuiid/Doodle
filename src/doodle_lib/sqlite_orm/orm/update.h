@@ -7,6 +7,7 @@
 #include <doodle_lib/sqlite_orm/orm/session.h>
 
 #include <cstdint>
+#include <concepts>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -33,6 +34,12 @@ struct update_arg_type<object_t<Table>> {
 
 template <typename T>
 using update_arg_type_t = typename update_arg_type<std::decay_t<T>>::type;
+
+template <typename Key>
+concept property_key_sequence = requires(Key in_key) {
+  { in_key.size() } -> std::convertible_to<std::size_t>;
+  { in_key[0] } -> std::convertible_to<const char*>;
+};
 
 }  // namespace detail
 
@@ -186,26 +193,26 @@ struct DOODLELIB_API update_t : public statement_info_base_t {
     // return true;
   }
 
-  template <typename MemberPtr>
-  void apply_json_property(const nlohmann::json& in_json, const std::pair<const char*, MemberPtr>& in_pair) {
+  template <typename Key, typename MemberPtr>
+    requires(std::same_as<std::remove_cvref_t<Key>, const char*> || std::same_as<std::remove_cvref_t<Key>, char*> ||
+             std::same_as<std::remove_cvref_t<Key>, std::string>)
+  void apply_json_property(const nlohmann::json& in_json, const std::pair<Key, MemberPtr>& in_pair) {
     if (!in_json.contains(in_pair.first)) return;
     column_operations l_col{in_pair.second};
-    assign_json_value<decltype(in_pair.second)>(l_col, in_json.at(in_pair.first));
+    assign_json_value<MemberPtr>(l_col, in_json.at(in_pair.first));
     this->set(std::move(l_col));
   }
-  template <std::size_t N, typename MemberPtr>
-  void apply_json_property(
-      const nlohmann::json& in_json, const std::pair<std::array<const char*, N>, MemberPtr>& in_pair
-  ) {
+  template <typename Key, typename MemberPtr>
+    requires detail::property_key_sequence<Key>
+  void apply_json_property(const nlohmann::json& in_json, const std::pair<Key, MemberPtr>& in_pair) {
     const nlohmann::json* l_json = &in_json;
-    // 遍历嵌套的 JSON 键，逐级查找对应的值
-    for (const auto& key : in_pair.first) {
-      if (!l_json->contains(key)) return;  // 如果当前 key 不存在，直接返回
-      l_json = &l_json->at(key);
+    for (const auto& l_key : in_pair.first) {
+      if (!l_json->contains(l_key)) return;
+      l_json = &l_json->at(l_key);
     }
-    if (l_json == &in_json) return;  // 没有找到任何匹配的 key
+    if (l_json == &in_json) return;
     column_operations l_col{in_pair.second};
-    assign_json_value<decltype(in_pair.second)>(l_col, *l_json);
+    assign_json_value<MemberPtr>(l_col, *l_json);
     this->set(std::move(l_col));
   }
 
