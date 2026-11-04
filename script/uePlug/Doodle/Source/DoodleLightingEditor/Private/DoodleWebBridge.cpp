@@ -8,7 +8,6 @@
 #include "Dom/JsonObject.h"
 #include "Editor.h"
 #include "Engine/World.h"
-#include "Misc/FileHelper.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 
@@ -103,26 +102,6 @@ FString UDoodleWebBridge::SetAiLightIteration(const FString& InIteration)
 	}
 
 	return FString();
-}
-
-FString UDoodleWebBridge::SetAiLightIterationFromFile(const FString& InFilePath)
-{
-	if (InFilePath.IsEmpty())
-	{
-		const FString L_Error = TEXT("文件路径为空");
-		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("ai light iteration 读取失败: %s"), *L_Error);
-		return L_Error;
-	}
-
-	FString L_Json;
-	if (!FFileHelper::LoadFileToString(L_Json, *InFilePath))
-	{
-		const FString L_Error = FString::Printf(TEXT("读取文件失败：%s"), *InFilePath);
-		UE_LOG(LogDoodleLightingEditor, Warning, TEXT("ai light iteration 读取失败: %s"), *L_Error);
-		return L_Error;
-	}
-
-	return SetAiLightIteration(L_Json);
 }
 
 UDoodleWebBridge* UDoodleWebBridge::Get()
