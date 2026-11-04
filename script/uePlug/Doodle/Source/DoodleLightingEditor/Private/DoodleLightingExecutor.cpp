@@ -108,6 +108,90 @@ namespace DoodleLightingExecutor
 			InComponent.SetLightingChannels(L_Channel0, L_Channel1, L_Channel2);
 		}
 
+		const UClass* ResolveActorClass(EDoodleUeLightKind InKind)
+		{
+			switch (InKind)
+			{
+			case EDoodleUeLightKind::Point: return APointLight::StaticClass();
+			case EDoodleUeLightKind::Spot: return ASpotLight::StaticClass();
+			case EDoodleUeLightKind::Rect: return ARectLight::StaticClass();
+			case EDoodleUeLightKind::Directional: return ADirectionalLight::StaticClass();
+			case EDoodleUeLightKind::Sky:
+			default: return ASkyLight::StaticClass();
+			}
+		}
+
+		ULightComponent* GetLightComponentOfActor(EDoodleUeLightKind InKind, AActor& InActor)
+		{
+			switch (InKind)
+			{
+			case EDoodleUeLightKind::Point:
+				if (const APointLight* L_Point = Cast<APointLight>(&InActor))
+				{
+					return L_Point->PointLightComponent;
+				}
+				return nullptr;
+			case EDoodleUeLightKind::Spot:
+				if (const ASpotLight* L_Spot = Cast<ASpotLight>(&InActor))
+				{
+					return L_Spot->SpotLightComponent;
+				}
+				return nullptr;
+			case EDoodleUeLightKind::Rect:
+				if (const ARectLight* L_Rect = Cast<ARectLight>(&InActor))
+				{
+					return L_Rect->RectLightComponent;
+				}
+				return nullptr;
+			case EDoodleUeLightKind::Directional:
+				if (const ADirectionalLight* L_Directional = Cast<ADirectionalLight>(&InActor))
+				{
+					return L_Directional->GetLightComponent();
+				}
+				return nullptr;
+			default:
+				return nullptr;
+			}
+		}
+
+		USkyLightComponent* GetSkyLightComponentOfActor(AActor& InActor)
+		{
+			const ASkyLight* L_Sky = Cast<ASkyLight>(&InActor);
+			return L_Sky != nullptr ? L_Sky->GetLightComponent() : nullptr;
+		}
+
+		AActor* FindLightActorByGuid(UWorld& InWorld, EDoodleUeLightKind InKind, const FString& InId)
+		{
+			if (InId.IsEmpty())
+			{
+				return nullptr;
+			}
+
+			FGuid L_ExpectedGuid;
+			if (!FGuid::Parse(InId, L_ExpectedGuid) || !L_ExpectedGuid.IsValid())
+			{
+				return nullptr;
+			}
+
+			const UClass* L_ExpectedClass = ResolveActorClass(InKind);
+			for (TActorIterator<AActor> L_It(&InWorld); L_It; ++L_It)
+			{
+				AActor* L_Actor = *L_It;
+				if (L_Actor == nullptr || !L_Actor->IsA(L_ExpectedClass) || L_Actor->GetActorGuid() != L_ExpectedGuid)
+				{
+					continue;
+				}
+				const bool bHasLightComponent = InKind == EDoodleUeLightKind::Sky
+					? GetSkyLightComponentOfActor(*L_Actor) != nullptr
+					: GetLightComponentOfActor(InKind, *L_Actor) != nullptr;
+				if (bHasLightComponent)
+				{
+					return L_Actor;
+				}
+			}
+			return nullptr;
+		}
+
 		AActor* SpawnLightActor(UWorld& InWorld, EDoodleUeLightKind InKind, ULightComponent*& OutLightComponent,
 		                        bool& bOutSpawned)
 		{
@@ -135,11 +219,28 @@ namespace DoodleLightingExecutor
 			}
 			case EDoodleUeLightKind::Directional:
 			{
+				ADirectionalLight* L_Brightest = nullptr;
+				float L_BrightestIntensity = 0.0f;
 				for (TActorIterator<ADirectionalLight> L_It(&InWorld); L_It; ++L_It)
 				{
+					ADirectionalLight* L_Candidate = *L_It;
+					const ULightComponent* L_CandidateComponent =
+						L_Candidate != nullptr ? L_Candidate->GetLightComponent() : nullptr;
+					if (L_CandidateComponent == nullptr)
+					{
+						continue;
+					}
+					if (L_Brightest == nullptr || L_CandidateComponent->Intensity > L_BrightestIntensity)
+					{
+						L_Brightest = L_Candidate;
+						L_BrightestIntensity = L_CandidateComponent->Intensity;
+					}
+				}
+				if (L_Brightest != nullptr)
+				{
 					bOutSpawned = false;
-					OutLightComponent = L_It->GetLightComponent();
-					return *L_It;
+					OutLightComponent = L_Brightest->GetLightComponent();
+					return L_Brightest;
 				}
 				ADirectionalLight* L_Actor = InWorld.SpawnActor<ADirectionalLight>();
 				OutLightComponent = L_Actor != nullptr ? L_Actor->GetLightComponent() : nullptr;
@@ -450,7 +551,18 @@ namespace DoodleLightingExecutor
 			const EDoodleUeLightKind L_Kind = ResolveUeLightKind(L_Light.Type);
 			ULightComponent* L_LightComponent = nullptr;
 			bool bSpawned = false;
-			AActor* L_Actor = SpawnLightActor(InWorld, L_Kind, L_LightComponent, bSpawned);
+			AActor* L_Actor = FindLightActorByGuid(InWorld, L_Kind, L_Light.Id);
+			if (L_Actor != nullptr)
+			{
+				if (L_Kind != EDoodleUeLightKind::Sky)
+				{
+					L_LightComponent = GetLightComponentOfActor(L_Kind, *L_Actor);
+				}
+			}
+			else
+			{
+				L_Actor = SpawnLightActor(InWorld, L_Kind, L_LightComponent, bSpawned);
+			}
 			if (L_Actor == nullptr)
 			{
 				OutWarnings.Add(FString::Printf(TEXT("灯 %s：生成 actor 失败"), *L_Light.Id));
