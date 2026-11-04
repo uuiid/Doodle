@@ -168,7 +168,7 @@ window.__ModuleLoader__.load({ id: 'dsh-vscode-sel', factory: () => {
         if (text !== '') texts.push(text)
       }
       if (texts.length === 0) return
-      typeText(texts.join(' ') + ' ')
+      typeText(' ' + texts.join(' ') + ' ')
     }
 
     function pull() {
