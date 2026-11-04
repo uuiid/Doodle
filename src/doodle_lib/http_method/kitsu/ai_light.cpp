@@ -987,9 +987,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(inference_route, post) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, get) {
   person_.check_not_outsourcer();
-  auto l_sql     = get_sqlite_database();
+  auto l_sql        = get_sqlite_database();
 
-  auto l_session = load_session_checked(person_, l_sql, session_id_);
+  auto l_session    = load_session_checked(person_, l_sql, session_id_);
 
   const auto l_prev = l_sql.get_ai_light_iterations(l_session.uuid_id_);
   DOODLE_CHICK_HTTP(!l_prev.empty(), not_found, "会话 {} 还没有提交任何轮次", l_session.uuid_id_);
@@ -1001,9 +1001,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, get) {
       l_iteration.iteration_, l_iteration.state_
   );
 
-  co_return std::make_unique<http_body_json_t>(
-      (nlohmann::json{} = ai_light_current_iteration_t{l_iteration})
-  );
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = ai_light_current_iteration_t{l_iteration}));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
@@ -1082,7 +1080,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(iteration_submit_route, post) {
     l_cand.is_selected_     = false;
     l_cand.preview_file_id_ = uuid{};
 
-    l_rig.candidate_id_ = l_cand.uuid_id_;
+    l_rig.candidate_id_     = l_cand.uuid_id_;
     l_rig_set.rigs_.emplace_back(std::move(l_rig));
 
     l_sqls.emplace_back(orm::insert(l_sql).into<ai_light_candidate>().values(l_cand));
