@@ -213,8 +213,14 @@ function Register-Worker {
     $attempt = 0
     do {
         try {
-            $res = Invoke-WebRequest -Uri $url -Method Post -Body $body -ContentType "application/json" `
-                -Headers $headers -TimeoutSec 10
+            if ($PSVersionTable.PSVersion.Major -lt 6) {
+                $res = Invoke-WebRequest -Uri $url -Method Post -Body $body -ContentType "application/json" `
+                    -Headers $headers -TimeoutSec 10 -UseBasicParsing
+            }
+            else {
+                $res = Invoke-WebRequest -Uri $url -Method Post -Body $body -ContentType "application/json" `
+                    -Headers $headers -TimeoutSec 10
+            }
             Write-Host "Worker registered: $($res.StatusCode) $($res.StatusDescription)"
             return
         }
