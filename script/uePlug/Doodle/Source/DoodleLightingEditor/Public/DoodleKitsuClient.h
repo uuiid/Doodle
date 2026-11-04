@@ -23,7 +23,6 @@ namespace DoodleKitsuClient
 	};
 
 	using FDoodleIterationResult = TValueOrError<FDoodleLightingIterationValue, FString>;
-	using FDoodleIterationCallback = TFunction<void(FDoodleIterationResult)>;
 
 	struct FDoodleLoginValue
 	{
@@ -37,10 +36,6 @@ namespace DoodleKitsuClient
 	using FDoodleLoginCallback = TFunction<void(FDoodleLoginResult)>;
 
 	DOODLELIGHTINGEDITOR_API FDoodleIterationResult ParseIterationBody(const TSharedPtr<FJsonObject>& InRoot);
-
-	DOODLELIGHTINGEDITOR_API TValueOrError<FString, FString> GetLocalServerUrl();
-
-	DOODLELIGHTINGEDITOR_API FDoodleIterationResult StartFetchCurrentIteration(FDoodleIterationCallback InOnComplete);
 
 	DOODLELIGHTINGEDITOR_API FDoodleLoginResult StartLogin(
 		const FString& InServerUrl, const FString& InEmail, const FString& InPassword, FDoodleLoginCallback InOnComplete

@@ -3,7 +3,6 @@
 #include "DoodleLightingEditorLog.h"
 #include "DoodleLightingJson.h"
 #include "DoodleLightingSettings.h"
-#include "DoodleListenerPortShm.h"
 #include "DoodleWebCookie.h"
 
 #include "Containers/Ticker.h"
@@ -17,9 +16,7 @@
 namespace
 {
 	constexpr double RequestTimeoutSeconds = 30.0;
-	const TCHAR* const LocalIterationPath = TEXT("/api/actions/local/ai_session/ue");
 	const TCHAR* const LocalLoginPath = TEXT("/api/auth/login");
-	const TCHAR* const LocalBearerToken = TEXT("xxxxx");
 
 	struct FDoodleRequestState
 	{
@@ -192,17 +189,6 @@ namespace
 		return L_Value;
 	}
 
-	DoodleKitsuClient::FDoodleIterationResult MakeIterationResult(
-		const TValueOrError<TSharedPtr<FJsonObject>, FString>& InBody
-	)
-	{
-		if (InBody.HasError())
-		{
-			return MakeError(InBody.GetError());
-		}
-		return DoodleKitsuClient::ParseIterationBody(InBody.GetValue());
-	}
-
 	DoodleKitsuClient::FDoodleLoginResult MakeLoginResult(
 		const TValueOrError<TSharedPtr<FJsonObject>, FString>& InBody, const FString& InFallbackEmail
 	)
@@ -273,55 +259,6 @@ namespace DoodleKitsuClient
 		{
 			return MakeError(L_Error);
 		}
-	}
-
-	TValueOrError<FString, FString> GetLocalServerUrl()
-	{
-		const FDoodleListenerPortResult L_Port = ReadListenerPort();
-		if (L_Port.HasError())
-		{
-			return MakeError(L_Port.GetError());
-		}
-		return MakeValue(FString::Printf(TEXT("http://127.0.0.1:%u"), L_Port.GetValue().Port));
-	}
-
-	FDoodleIterationResult StartFetchCurrentIteration(FDoodleIterationCallback InOnComplete)
-	{
-		if (!InOnComplete)
-		{
-			return MakeError(TEXT("轮次回调为空"));
-		}
-
-		const TValueOrError<FString, FString> L_ServerUrl = GetLocalServerUrl();
-		if (L_ServerUrl.HasError())
-		{
-			return MakeError(FString::Printf(TEXT("读不到本机服务端口: %s"), *L_ServerUrl.GetError()));
-		}
-
-		const FString L_Url = FString::Printf(TEXT("%s%s"), *L_ServerUrl.GetValue(), LocalIterationPath);
-		TSharedRef<FDoodleRequestState> L_State = MakeShared<FDoodleRequestState>();
-		SubmitRequest(
-			L_State, TEXT("GET"), L_Url, FString::Printf(TEXT("Bearer %s"), LocalBearerToken),
-			[](int32 InStatusCode) { return EHttpResponseCodes::IsOk(InStatusCode); },
-			[L_State, L_OnComplete = MoveTemp(InOnComplete)]() mutable
-			{
-				FDoodleIterationResult L_Result = MakeIterationResult(L_State->Body);
-				if (L_Result.HasValue())
-				{
-					UE_LOG(
-						LogDoodleLightingEditor, Log, TEXT("获取第 %d 轮成功（%d 个候选）"), L_Result.GetValue().Iteration,
-						L_Result.GetValue().Rigs.Num()
-					);
-				}
-				else
-				{
-					UE_LOG(LogDoodleLightingEditor, Error, TEXT("获取轮次失败 %s"), *L_Result.GetError());
-				}
-				L_OnComplete(MoveTemp(L_Result));
-			}
-		);
-
-		return MakeValue(FDoodleLightingIterationValue{});
 	}
 
 	FDoodleLoginResult StartLogin(
