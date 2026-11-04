@@ -401,6 +401,141 @@ bool DoodleLightingJson::ParseLightingRig(const TSharedPtr<FJsonObject>& InRoot,
 	return true;
 }
 
+TSharedPtr<FJsonObject> DoodleLightingJson::SerializeLightingRig(const FDoodleLightingRig& InRig)
+{
+	TSharedRef<FJsonObject> LRoot = MakeShared<FJsonObject>();
+	LRoot->SetStringField(TEXT("schema_version"), InRig.SchemaVersion);
+	LRoot->SetStringField(TEXT("rig_id"), InRig.RigId);
+	LRoot->SetStringField(TEXT("candidate_id"), InRig.CandidateId);
+	LRoot->SetStringField(TEXT("session_id"), InRig.SessionId);
+	LRoot->SetStringField(TEXT("shot_task_id"), InRig.ShotTaskId);
+	LRoot->SetStringField(TEXT("spec_id"), InRig.SpecId);
+	LRoot->SetStringField(TEXT("baseline_level"), InRig.BaselineLevel);
+	LRoot->SetStringField(TEXT("movie_pipeline_config"), InRig.MoviePipelineConfig);
+	LRoot->SetNumberField(TEXT("iteration"), InRig.Iteration);
+
+	TSharedRef<FJsonObject> LGlobals = MakeShared<FJsonObject>();
+
+	TSharedRef<FJsonObject> LExposure = MakeShared<FJsonObject>();
+	LExposure->SetStringField(TEXT("method"), InRig.Globals.Exposure.Method);
+	LExposure->SetNumberField(TEXT("ev100_bias"), InRig.Globals.Exposure.Ev100Bias);
+	LGlobals->SetObjectField(TEXT("exposure"), LExposure);
+
+	TSharedRef<FJsonObject> LWhiteBalance = MakeShared<FJsonObject>();
+	LWhiteBalance->SetNumberField(TEXT("kelvin"), InRig.Globals.WhiteBalance.Kelvin);
+	LWhiteBalance->SetNumberField(TEXT("tint"), InRig.Globals.WhiteBalance.Tint);
+	LGlobals->SetObjectField(TEXT("white_balance"), LWhiteBalance);
+
+	TSharedRef<FJsonObject> LEnvironment = MakeShared<FJsonObject>();
+	LEnvironment->SetNumberField(TEXT("sky_light_intensity"), InRig.Globals.Environment.SkyLightIntensity);
+	LEnvironment->SetNumberField(TEXT("fog_density"), InRig.Globals.Environment.FogDensity);
+	LGlobals->SetObjectField(TEXT("environment"), LEnvironment);
+
+	TSharedRef<FJsonObject> LGrading = MakeShared<FJsonObject>();
+	LGrading->SetNumberField(TEXT("contrast"), InRig.Globals.Grading.Contrast);
+	LGrading->SetNumberField(TEXT("saturation"), InRig.Globals.Grading.Saturation);
+	LGrading->SetNumberField(TEXT("lift"), InRig.Globals.Grading.Lift);
+	LGrading->SetNumberField(TEXT("vignette"), InRig.Globals.Grading.Vignette);
+	LGrading->SetNumberField(TEXT("bloom"), InRig.Globals.Grading.Bloom);
+	LGlobals->SetObjectField(TEXT("grading"), LGrading);
+
+	LRoot->SetObjectField(TEXT("globals"), LGlobals);
+
+	TArray<TSharedPtr<FJsonValue>> LLights;
+	for (const FDoodleLight& LLight : InRig.Lights)
+	{
+		TSharedRef<FJsonObject> LItem = MakeShared<FJsonObject>();
+		LItem->SetStringField(TEXT("id"), LLight.Id);
+		LItem->SetStringField(TEXT("role"), DoodleLightRoleToString(LLight.Role));
+		LItem->SetStringField(TEXT("type"), DoodleLightTypeToString(LLight.Type));
+
+		TSharedRef<FJsonObject> LAnchor = MakeShared<FJsonObject>();
+		LAnchor->SetStringField(TEXT("space"), DoodleAnchorSpaceToString(LLight.Anchor.Space));
+		if (!LLight.Anchor.Target.IsEmpty()) LAnchor->SetStringField(TEXT("target"), LLight.Anchor.Target);
+		if (!LLight.Anchor.LookAt.IsEmpty()) LAnchor->SetStringField(TEXT("look_at"), LLight.Anchor.LookAt);
+		LItem->SetObjectField(TEXT("anchor"), LAnchor);
+
+		TSharedRef<FJsonObject> LOffset = MakeShared<FJsonObject>();
+		LOffset->SetNumberField(TEXT("azimuth_deg"), LLight.Offset.AzimuthDeg);
+		LOffset->SetNumberField(TEXT("elevation_deg"), LLight.Offset.ElevationDeg);
+		LOffset->SetNumberField(TEXT("distance_m"), LLight.Offset.DistanceM);
+		LItem->SetObjectField(TEXT("offset"), LOffset);
+
+		TSharedRef<FJsonObject> LIntensity = MakeShared<FJsonObject>();
+		LIntensity->SetStringField(TEXT("unit"), DoodleIntensityUnitToString(LLight.Intensity.Unit));
+		LIntensity->SetNumberField(TEXT("value"), LLight.Intensity.Value);
+		LItem->SetObjectField(TEXT("intensity"), LIntensity);
+
+		TSharedRef<FJsonObject> LColor = MakeShared<FJsonObject>();
+		LColor->SetStringField(TEXT("mode"), DoodleColorModeToString(LLight.Color.Mode));
+		switch (LLight.Color.Mode)
+		{
+			case EDoodleColorMode::Temperature:
+				LColor->SetNumberField(TEXT("kelvin"), LLight.Color.Kelvin);
+				break;
+			case EDoodleColorMode::RGB:
+				WriteVec3(LColor, TEXT("rgb"), LLight.Color.RGB);
+				break;
+			case EDoodleColorMode::Filter:
+				LColor->SetStringField(TEXT("filter"), LLight.Color.Filter);
+				break;
+			default:
+				break;
+		}
+		LItem->SetObjectField(TEXT("color"), LColor);
+
+		TSharedRef<FJsonObject> LShape = MakeShared<FJsonObject>();
+		LShape->SetNumberField(TEXT("source_radius_cm"), LLight.Shape.SourceRadiusCm);
+		LShape->SetStringField(TEXT("ies"), LLight.Shape.Ies);
+		if (LLight.Shape.InnerConeDeg.IsSet()) LShape->SetNumberField(TEXT("inner_cone_deg"), LLight.Shape.InnerConeDeg.GetValue());
+		if (LLight.Shape.OuterConeDeg.IsSet()) LShape->SetNumberField(TEXT("outer_cone_deg"), LLight.Shape.OuterConeDeg.GetValue());
+		LItem->SetObjectField(TEXT("shape"), LShape);
+
+		TSharedRef<FJsonObject> LShadows = MakeShared<FJsonObject>();
+		LShadows->SetBoolField(TEXT("cast"), LLight.Shadows.bCast);
+		LShadows->SetNumberField(TEXT("softness"), LLight.Shadows.Softness);
+		LItem->SetObjectField(TEXT("shadows"), LShadows);
+
+		TArray<TSharedPtr<FJsonValue>> LChannels;
+		for (const int32 LChannel : LLight.Channels)
+		{
+			LChannels.Add(MakeShared<FJsonValueNumber>(LChannel));
+		}
+		LItem->SetArrayField(TEXT("channels"), LChannels);
+
+		LItem->SetStringField(TEXT("mobility"), DoodleLightMobilityToString(LLight.Mobility));
+
+		TArray<TSharedPtr<FJsonValue>> LAnim;
+		for (const FDoodleAnimKey& LKey : LLight.Anim)
+		{
+			TSharedRef<FJsonObject> LKeyItem = MakeShared<FJsonObject>();
+			LKeyItem->SetNumberField(TEXT("frame"), LKey.Frame);
+			LKeyItem->SetNumberField(TEXT("intensity"), LKey.Intensity);
+			LAnim.Add(MakeShared<FJsonValueObject>(LKeyItem));
+		}
+		LItem->SetArrayField(TEXT("anim"), LAnim);
+
+		LItem->SetStringField(TEXT("origin"), DoodleLightOriginToString(LLight.Origin));
+
+		LLights.Add(MakeShared<FJsonValueObject>(LItem));
+	}
+	LRoot->SetArrayField(TEXT("lights"), LLights);
+
+	TArray<TSharedPtr<FJsonValue>> LOps;
+	for (const FDoodleLightOp& LOp : InRig.Ops)
+	{
+		TSharedRef<FJsonObject> LItem = MakeShared<FJsonObject>();
+		LItem->SetStringField(TEXT("op"), DoodleLightOpKindToString(LOp.Op));
+		if (!LOp.Light.IsEmpty()) LItem->SetStringField(TEXT("light"), LOp.Light);
+		if (!LOp.Rationale.IsEmpty()) LItem->SetStringField(TEXT("rationale"), LOp.Rationale);
+		if (LOp.Patch.IsValid()) LItem->SetObjectField(TEXT("patch"), LOp.Patch.ToSharedRef());
+		LOps.Add(MakeShared<FJsonValueObject>(LItem));
+	}
+	LRoot->SetArrayField(TEXT("ops"), LOps);
+
+	return LRoot;
+}
+
 TSharedPtr<FJsonObject> DoodleLightingJson::SerializeRenderPayload(const FDoodleLaunchPlan& InPlan)
 {
 	TSharedRef<FJsonObject> LRoot = MakeShared<FJsonObject>();
