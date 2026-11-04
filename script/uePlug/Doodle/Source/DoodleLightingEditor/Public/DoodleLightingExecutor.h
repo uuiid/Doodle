@@ -25,8 +25,8 @@ namespace DoodleLightingExecutor
 	struct FCandidateRenderResult
 	{
 		int32 LightCount = 0;
-		TArray<TStrongObjectPtr<AActor>> SpawnedActors;
-		TStrongObjectPtr<APostProcessVolume> OwnedPostProcessVolume;
+		TArray<TWeakObjectPtr<AActor>> SpawnedActors;
+		TWeakObjectPtr<APostProcessVolume> OwnedPostProcessVolume;
 	};
 
 	struct FRoundRenderResult

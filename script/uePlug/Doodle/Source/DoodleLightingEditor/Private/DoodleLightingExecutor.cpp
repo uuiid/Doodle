@@ -33,6 +33,7 @@
 #include "LevelSequence.h"
 #include "Misc/Paths.h"
 #include "MovieScene.h"
+#include "MovieSceneSpawnable.h"
 #include "Sections/MovieSceneCameraCutSection.h"
 #include "Tracks/MovieSceneCameraCutTrack.h"
 
@@ -42,11 +43,9 @@ namespace DoodleLightingExecutor
 	{
 		using namespace DoodleLightingOps;
 
-		UWorld* G_World = nullptr;
-
-		void RemoveSpawnedActors(const TArray<TStrongObjectPtr<AActor>>& InActors)
+		void RemoveSpawnedActors(const TArray<TWeakObjectPtr<AActor>>& InActors)
 		{
-			for (const TStrongObjectPtr<AActor>& L_Actor : InActors)
+			for (const TWeakObjectPtr<AActor>& L_Actor : InActors)
 			{
 				AActor* L_Raw = L_Actor.Get();
 				if (L_Raw != nullptr && !L_Raw->IsPendingKillPending())
@@ -109,38 +108,38 @@ namespace DoodleLightingExecutor
 			InComponent.SetLightingChannels(L_Channel0, L_Channel1, L_Channel2);
 		}
 
-		AActor* SpawnLightActor(EDoodleUeLightKind InKind, ULightComponent*& OutLightComponent)
+		AActor* SpawnLightActor(UWorld& InWorld, EDoodleUeLightKind InKind, ULightComponent*& OutLightComponent)
 		{
 			OutLightComponent = nullptr;
 			switch (InKind)
 			{
 			case EDoodleUeLightKind::Point:
 			{
-				APointLight* L_Actor = G_World->SpawnActor<APointLight>();
+				APointLight* L_Actor = InWorld.SpawnActor<APointLight>();
 				OutLightComponent = L_Actor != nullptr ? L_Actor->PointLightComponent : nullptr;
 				return L_Actor;
 			}
 			case EDoodleUeLightKind::Spot:
 			{
-				ASpotLight* L_Actor = G_World->SpawnActor<ASpotLight>();
+				ASpotLight* L_Actor = InWorld.SpawnActor<ASpotLight>();
 				OutLightComponent = L_Actor != nullptr ? L_Actor->SpotLightComponent : nullptr;
 				return L_Actor;
 			}
 			case EDoodleUeLightKind::Rect:
 			{
-				ARectLight* L_Actor = G_World->SpawnActor<ARectLight>();
+				ARectLight* L_Actor = InWorld.SpawnActor<ARectLight>();
 				OutLightComponent = L_Actor != nullptr ? L_Actor->RectLightComponent : nullptr;
 				return L_Actor;
 			}
 			case EDoodleUeLightKind::Directional:
 			{
-				ADirectionalLight* L_Actor = G_World->SpawnActor<ADirectionalLight>();
+				ADirectionalLight* L_Actor = InWorld.SpawnActor<ADirectionalLight>();
 				OutLightComponent = L_Actor != nullptr ? L_Actor->GetLightComponent() : nullptr;
 				return L_Actor;
 			}
 			case EDoodleUeLightKind::Sky:
 			default:
-				return G_World->SpawnActor<ASkyLight>();
+				return InWorld.SpawnActor<ASkyLight>();
 			}
 		}
 
@@ -236,25 +235,6 @@ namespace DoodleLightingExecutor
 			return L_Frame;
 		}
 
-		ACineCameraActor* FindCameraActorByGuid(ULevelSequence& InSequence, UWorld& InWorld, const FGuid& InGuid)
-		{
-			if (!InGuid.IsValid())
-			{
-				return nullptr;
-			}
-			TArray<UObject*, TInlineAllocator<1>> L_Bound;
-			UE::UniversalObjectLocator::FResolveParams L_Params(&InWorld);
-			InSequence.LocateBoundObjects(InGuid, L_Params, nullptr, L_Bound);
-			for (UObject* L_Object : L_Bound)
-			{
-				if (ACineCameraActor* L_Camera = Cast<ACineCameraActor>(L_Object))
-				{
-					return L_Camera;
-				}
-			}
-			return nullptr;
-		}
-
 		TValueOrError<ACineCameraActor*, FString> FindCameraInSequence(ULevelSequence& InSequence, UWorld& InWorld)
 		{
 			UMovieScene* L_MovieScene = InSequence.GetMovieScene();
@@ -269,6 +249,7 @@ namespace DoodleLightingExecutor
 				return MakeError(FString(TEXT("定序器里没有相机切换轨道（UMovieSceneCameraCutTrack）")));
 			}
 
+			TArray<FGuid> L_CameraGuids;
 			for (UMovieSceneSection* L_Section : L_CutTrack->GetAllSections())
 			{
 				const UMovieSceneCameraCutSection* L_CutSection = Cast<UMovieSceneCameraCutSection>(L_Section);
@@ -276,21 +257,62 @@ namespace DoodleLightingExecutor
 				{
 					continue;
 				}
-				if (ACineCameraActor* L_Camera = FindCameraActorByGuid(
-				        InSequence, InWorld, L_CutSection->GetCameraBindingID().GetGuid()))
+				const FGuid L_Guid = L_CutSection->GetCameraBindingID().GetGuid();
+				if (L_Guid.IsValid())
 				{
-					return MakeValue(L_Camera);
+					L_CameraGuids.AddUnique(L_Guid);
+				}
+			}
+			if (L_CameraGuids.IsEmpty())
+			{
+				return MakeError(FString(TEXT("相机切换轨道里没有带绑定 id 的段")));
+			}
+
+			// LocateBoundObjects 不解析 spawnable 与 custom binding（见 MovieSceneSequence.h 注释），所以再按 guid 直接找。
+			for (const FGuid& L_Guid : L_CameraGuids)
+			{
+				TArray<UObject*, TInlineAllocator<1>> L_Bound;
+				UE::UniversalObjectLocator::FResolveParams L_Params(&InWorld);
+				InSequence.LocateBoundObjects(L_Guid, L_Params, nullptr, L_Bound);
+				for (UObject* L_Object : L_Bound)
+				{
+					if (ACineCameraActor* L_Camera = Cast<ACineCameraActor>(L_Object))
+					{
+						return MakeValue(L_Camera);
+					}
+				}
+
+				for (int32 L_SpawnableIndex = 0; L_SpawnableIndex < L_MovieScene->GetSpawnableCount(); ++L_SpawnableIndex)
+				{
+					const FMovieSceneSpawnable& L_Spawnable = L_MovieScene->GetSpawnable(L_SpawnableIndex);
+					if (L_Spawnable.GetGuid() != L_Guid)
+					{
+						continue;
+					}
+					const UObject* L_Template = L_Spawnable.GetObjectTemplate();
+					if (const ACineCameraActor* L_Camera = Cast<ACineCameraActor>(L_Template))
+					{
+						return MakeValue(const_cast<ACineCameraActor*>(L_Camera));
+					}
 				}
 			}
 
-			return MakeError(FString(TEXT("相机切换轨道里没有能解析到 CineCameraActor 的段")));
+			// 相机切在子关卡里时，编辑世界（持久关卡）解析不到，按类名直接找。
+			for (TActorIterator<ACineCameraActor> L_It(&InWorld); L_It; ++L_It)
+			{
+				return MakeValue(*L_It);
+			}
+
+			return MakeError(FString::Printf(
+				TEXT("相机切换轨道里的 %d 个段都没解析到 CineCameraActor，编辑世界里也没有 CineCameraActor"), L_CameraGuids.Num()
+			));
 		}
 
-		TArray<AActor*> ApplyFogDensity(double InDensity)
+		TArray<AActor*> ApplyFogDensity(UWorld& InWorld, double InDensity)
 		{
 			TArray<AActor*> L_Spawned;
 			AExponentialHeightFog* L_Fog = nullptr;
-			for (TActorIterator<AExponentialHeightFog> L_It(G_World); L_It; ++L_It)
+			for (TActorIterator<AExponentialHeightFog> L_It(&InWorld); L_It; ++L_It)
 			{
 				L_Fog = *L_It;
 				break;
@@ -301,7 +323,7 @@ namespace DoodleLightingExecutor
 				{
 					return L_Spawned;
 				}
-				L_Fog = G_World->SpawnActor<AExponentialHeightFog>();
+				L_Fog = InWorld.SpawnActor<AExponentialHeightFog>();
 				if (L_Fog != nullptr)
 				{
 					L_Spawned.Add(L_Fog);
@@ -314,10 +336,10 @@ namespace DoodleLightingExecutor
 			return L_Spawned;
 		}
 
-		void ApplySkyLightIntensity(double InIntensity)
+		void ApplySkyLightIntensity(UWorld& InWorld, double InIntensity)
 		{
 			ASkyLight* L_SkyLight = nullptr;
-			for (TActorIterator<ASkyLight> L_It(G_World); L_It; ++L_It)
+			for (TActorIterator<ASkyLight> L_It(&InWorld); L_It; ++L_It)
 			{
 				L_SkyLight = *L_It;
 				break;
@@ -362,14 +384,14 @@ namespace DoodleLightingExecutor
 			return L_Settings;
 		}
 
-		APostProcessVolume* EnsurePostProcessVolume(bool& bOutSpawned)
+		APostProcessVolume* EnsurePostProcessVolume(UWorld& InWorld, bool& bOutSpawned)
 		{
 			bOutSpawned = false;
-			for (TActorIterator<APostProcessVolume> L_It(G_World); L_It; ++L_It)
+			for (TActorIterator<APostProcessVolume> L_It(&InWorld); L_It; ++L_It)
 			{
 				return *L_It;
 			}
-			APostProcessVolume* L_Volume = G_World->SpawnActor<APostProcessVolume>();
+			APostProcessVolume* L_Volume = InWorld.SpawnActor<APostProcessVolume>();
 			if (L_Volume != nullptr)
 			{
 				L_Volume->bEnabled = true;
@@ -380,8 +402,8 @@ namespace DoodleLightingExecutor
 		}
 	}
 
-	int32 BuildRigLights(const FDoodleLightingRig& InRig, const FAnchorCamera& InCamera, TArray<AActor*>& OutSpawned,
-	                     TArray<FString>& OutWarnings)
+	int32 BuildRigLights(UWorld& InWorld, const FDoodleLightingRig& InRig, const FAnchorCamera& InCamera,
+	                     TArray<AActor*>& OutSpawned, TArray<FString>& OutWarnings)
 	{
 		const FDoodleAnchorFrame L_AnchorFrame = BuildAnchorFrame(InCamera);
 		int32 L_LightCount = 0;
@@ -389,7 +411,7 @@ namespace DoodleLightingExecutor
 		{
 			const EDoodleUeLightKind L_Kind = ResolveUeLightKind(L_Light.Type);
 			ULightComponent* L_LightComponent = nullptr;
-			AActor* L_Actor = SpawnLightActor(L_Kind, L_LightComponent);
+			AActor* L_Actor = SpawnLightActor(InWorld, L_Kind, L_LightComponent);
 			if (L_Actor == nullptr)
 			{
 				OutWarnings.Add(FString::Printf(TEXT("灯 %s：生成 actor 失败"), *L_Light.Id));
@@ -428,7 +450,6 @@ namespace DoodleLightingExecutor
 		{
 			return MakeError(FString(TEXT("编辑器世界还没准备好")));
 		}
-		G_World = L_EditorWorld;
 
 		const TValueOrError<ACineCameraActor*, FString> L_CameraResult = FindCameraInSequence(*L_Sequence, *L_EditorWorld);
 		if (L_CameraResult.HasError())
@@ -463,32 +484,31 @@ namespace DoodleLightingExecutor
 		}
 
 		FCandidateRenderResult L_Result;
-		G_World = &InWorld;
 
 		TArray<FString> L_Warnings;
 		TArray<AActor*> L_Spawned;
 
 		const FPostProcessSettings L_Settings = BuildPostProcessSettings(InRig.Globals);
 		bool bVolumeSpawned = false;
-		APostProcessVolume* L_Volume = EnsurePostProcessVolume(bVolumeSpawned);
+		APostProcessVolume* L_Volume = EnsurePostProcessVolume(InWorld, bVolumeSpawned);
 		if (L_Volume != nullptr)
 		{
 			L_Volume->Settings = L_Settings;
 			L_Volume->BlendWeight = 1.0f;
 			if (bVolumeSpawned)
 			{
-				L_Result.OwnedPostProcessVolume.Reset(L_Volume);
+				L_Result.OwnedPostProcessVolume = L_Volume;
 			}
 		}
-		ApplySkyLightIntensity(InRig.Globals.Environment.SkyLightIntensity);
-		L_Spawned.Append(ApplyFogDensity(InRig.Globals.Environment.FogDensity));
+		ApplySkyLightIntensity(InWorld, InRig.Globals.Environment.SkyLightIntensity);
+		L_Spawned.Append(ApplyFogDensity(InWorld, InRig.Globals.Environment.FogDensity));
 
-		L_Result.LightCount = BuildRigLights(InRig, InCamera, L_Spawned, L_Warnings);
+		L_Result.LightCount = BuildRigLights(InWorld, InRig, InCamera, L_Spawned, L_Warnings);
 
 		L_Result.SpawnedActors.Reserve(L_Spawned.Num());
 		for (AActor* L_Actor : L_Spawned)
 		{
-			L_Result.SpawnedActors.Emplace(L_Actor);
+			L_Result.SpawnedActors.Add(L_Actor);
 		}
 
 		for (const FString& L_Warning : L_Warnings)
@@ -509,5 +529,4 @@ namespace DoodleLightingExecutor
 			}
 		}
 	}
-
 }

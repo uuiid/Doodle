@@ -146,7 +146,6 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::Pr
 		*AnchorCamera.Location.ToCompactString(), *AnchorCamera.Rotation.ToCompactString(),
 		AnchorCamera.HorizontalFovDeg
 	);
-
 	BaseConfig = nullptr;
 	if (!Iteration.MoviePipelineConfig.IsEmpty())
 	{
@@ -182,6 +181,13 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::St
 	}
 	const FDoodleLightingRig& L_Rig = Iteration.Rigs[InIndex];
 
+	if (QueueSubsystem->IsRendering())
+	{
+		return MakeError(FString::Printf(
+			TEXT("本机已经有一轮渲染在跑，候选 %s 起不来"), *L_Rig.CandidateId
+		));
+	}
+
 	CurrentIndex = InIndex;
 	CandidateRig = L_Rig;
 	CandidateSpawned = DoodleLightingExecutor::FCandidateRenderResult();
@@ -204,6 +210,15 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::St
 	L_Job->Sequence = FSoftObjectPath(LoadedSequence);
 	L_Job->Map = FSoftObjectPath(LoadedMap);
 	L_Job->SetConfiguration(BaseConfig);
+
+	const UMovieScene* L_MovieScene = LoadedSequence != nullptr
+		? LoadedSequence->GetMovieScene()
+		: nullptr;
+	if (L_MovieScene == nullptr)
+	{
+		return MakeError(FString(TEXT("基线定序器里没有 MovieScene")));
+	}
+
 	if (UMoviePipelinePrimaryConfig* L_Config = L_Job->GetConfiguration())
 	{
 		if (UMoviePipelineOutputSetting* L_Output = Cast<UMoviePipelineOutputSetting>(
@@ -211,7 +226,18 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::St
 		))
 		{
 			L_Output->OutputDirectory.Path = CandidateFramesDir;
+			UE_LOG(
+				LogDoodleLightingEditor, Log, TEXT("候选 %s：出图目录 %s"), *L_Rig.CandidateId, *CandidateFramesDir
+			);
 		}
+		else
+		{
+			return MakeError(FString::Printf(TEXT("候选 %s：管线配置里没有输出设置，渲染不会出图"), *L_Rig.CandidateId));
+		}
+	}
+	else
+	{
+		return MakeError(FString::Printf(TEXT("候选 %s：管线配置为空，渲染不会出图"), *L_Rig.CandidateId));
 	}
 
 	UMoviePipelinePIEExecutor* L_Executor = NewObject<UMoviePipelinePIEExecutor>(GetTransientPackage());
@@ -220,11 +246,13 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::St
 		return MakeError(FString(TEXT("建 PIE 渲染执行器失败")));
 	}
 	L_Executor->AddToRoot();
-	L_Executor->SetIsRenderingOffscreen(true);
+	// 关掉离屏会走 AddWindow(CustomWindow, false)（隐藏窗口），渲染不再抽帧，出图目录会空。
+	L_Executor->SetIsRenderingOffscreen(false);
 	L_Executor->SetAllowUsingUnsavedLevels(false);
 	L_Executor->OnIndividualJobStarted().AddUObject(this, &UDoodleLightingRoundRunner::OnIndividualJobStarted);
 	L_Executor->OnIndividualJobWorkFinished().AddUObject(this, &UDoodleLightingRoundRunner::OnIndividualJobWorkFinished);
 	L_Executor->OnExecutorFinished().AddUObject(this, &UDoodleLightingRoundRunner::OnExecutorFinished);
+	ActiveExecutor = L_Executor;
 
 	UE_LOG(
 		LogDoodleLightingEditor, Log, TEXT("起渲染：第 %d 个候选 %s，出图目录 %s"), InIndex, *L_Rig.CandidateId,
@@ -236,6 +264,12 @@ DoodleLightingExecutor::FRoundRenderResultOrError UDoodleLightingRoundRunner::St
 
 void UDoodleLightingRoundRunner::FinishRound()
 {
+	if (ActiveExecutor != nullptr)
+	{
+		ActiveExecutor->RemoveFromRoot();
+		ActiveExecutor = nullptr;
+	}
+
 	UE_LOG(
 		LogDoodleLightingEditor, Log, TEXT("本机一轮渲染结束：%d/%d 个候选渲出视频"), RenderedCandidates.Num(),
 		Iteration.Rigs.Num()

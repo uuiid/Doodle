@@ -57,6 +57,7 @@ private:
 
 	UMoviePipelineQueueSubsystem* QueueSubsystem = nullptr;
 	UMoviePipelinePrimaryConfig* BaseConfig = nullptr;
+	UMoviePipelineExecutorBase* ActiveExecutor = nullptr;
 	ULevelSequence* LoadedSequence = nullptr;
 	UWorld* LoadedMap = nullptr;
 	FFrameRate AnchorFrameRate;
