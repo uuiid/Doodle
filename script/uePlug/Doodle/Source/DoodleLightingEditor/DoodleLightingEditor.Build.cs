@@ -38,6 +38,7 @@ public class DoodleLightingEditor : ModuleRules
 				"MovieSceneTracks",
 				"CinematicCamera",
 				"Sequencer",
+				"LevelSequenceEditor",
 				"MovieSceneTools",
 				"MovieRenderPipelineCore",
 				"MovieRenderPipelineEditor",

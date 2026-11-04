@@ -25,8 +25,16 @@
 #include "Engine/SpotLight.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "Evaluation/MovieSceneEvaluationState.h"
+#include "ILevelSequenceEditorToolkit.h"
+#include "ISequencer.h"
+#include "MovieScene.h"
+#include "MovieSceneCommonHelpers.h"
+#include "MovieScenePossessable.h"
+#include "MovieSceneSpawnable.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 
 namespace
 {
@@ -40,8 +48,165 @@ namespace
 		return L_World->GetPathName();
 	}
 
+	ILevelSequenceEditorToolkit* CastToLevelSequenceToolkit(IAssetEditorInstance* InEditorInstance)
+	{
+		const FName L_EditorName = InEditorInstance->GetEditorName();
+		if (!L_EditorName.IsValid() || !L_EditorName.ToString().StartsWith(TEXT("LevelSequenceEditor")))
+		{
+			return nullptr;
+		}
+		return static_cast<ILevelSequenceEditorToolkit*>(InEditorInstance);
+	}
+
+	ISequencer* GetOpenedSequencer()
+	{
+		UAssetEditorSubsystem* L_Subsystem = GEditor != nullptr
+			? GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()
+			: nullptr;
+		if (L_Subsystem == nullptr)
+		{
+			return nullptr;
+		}
+
+		for (UObject* L_Asset : L_Subsystem->GetAllEditedAssets())
+		{
+			IAssetEditorInstance* L_EditorInstance = L_Subsystem->FindEditorForAsset(L_Asset, false);
+			ILevelSequenceEditorToolkit* L_Toolkit =
+				L_EditorInstance != nullptr ? CastToLevelSequenceToolkit(L_EditorInstance) : nullptr;
+			if (L_Toolkit == nullptr || !L_Toolkit->GetSequencer().IsValid())
+			{
+				continue;
+			}
+			return L_Toolkit->GetSequencer().Get();
+		}
+		return nullptr;
+	}
+
+	ACineCameraActor* FindCameraInSequence(ISequencer& InSequencer)
+	{
+		UMovieSceneSequence* L_Sequence = InSequencer.GetFocusedMovieSceneSequence();
+		if (L_Sequence == nullptr)
+		{
+			return nullptr;
+		}
+
+		UMovieScene* L_MovieScene = L_Sequence->GetMovieScene();
+		if (L_MovieScene == nullptr)
+		{
+			return nullptr;
+		}
+
+		const FMovieSceneSequenceID L_SequenceID = InSequencer.GetFocusedTemplateID();
+		const FMovieSceneEvaluationState* L_EvaluationState = InSequencer.GetEvaluationState();
+		if (L_EvaluationState == nullptr)
+		{
+			return nullptr;
+		}
+
+		const FMovieSceneObjectCache* L_ObjectCache = L_EvaluationState->FindObjectCache(L_SequenceID);
+		if (L_ObjectCache == nullptr)
+		{
+			return nullptr;
+		}
+
+		UWorld* L_World = GEditor != nullptr ? GEditor->GetEditorWorldContext().World() : nullptr;
+		if (L_World == nullptr)
+		{
+			return nullptr;
+		}
+
+		auto L_FindCamera = [L_ObjectCache, L_World](const FGuid& InBindingGuid) -> ACineCameraActor*
+		{
+			const TArrayView<const TWeakObjectPtr<>> L_BoundObjects = L_ObjectCache->IterateBoundObjects(InBindingGuid);
+			ACineCameraActor* L_SpawnedCamera = nullptr;
+			AActor* L_HostedCamera = nullptr;
+			for (const TWeakObjectPtr<>& L_BoundObject : L_BoundObjects)
+			{
+				AActor* L_Actor = Cast<AActor>(L_BoundObject.Get());
+				if (L_Actor == nullptr || MovieSceneHelpers::CameraComponentFromActor(L_Actor) == nullptr)
+				{
+					continue;
+				}
+
+				if (ACineCameraActor* L_CineCamera = Cast<ACineCameraActor>(L_Actor))
+				{
+					if (L_SpawnedCamera == nullptr)
+					{
+						L_SpawnedCamera = L_CineCamera;
+					}
+				}
+				else if (L_HostedCamera == nullptr)
+				{
+					L_HostedCamera = L_Actor;
+				}
+			}
+
+			if (L_SpawnedCamera != nullptr)
+			{
+				return L_SpawnedCamera;
+			}
+
+			if (L_HostedCamera == nullptr)
+			{
+				return nullptr;
+			}
+
+			if (ACineCameraActor* L_HostedCine = Cast<ACineCameraActor>(L_HostedCamera))
+			{
+				return L_HostedCine;
+			}
+
+			FActorSpawnParameters L_SpawnParams;
+			L_SpawnParams.OverrideLevel = L_HostedCamera->GetLevel();
+			L_SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			const ACineCameraActor* L_NewCamera =
+				L_World->SpawnActor<ACineCameraActor>(ACineCameraActor::StaticClass(), L_SpawnParams);
+			return const_cast<ACineCameraActor*>(L_NewCamera);
+		};
+
+		for (int32 L_Index = 0; L_Index < L_MovieScene->GetSpawnableCount(); ++L_Index)
+		{
+			const FMovieSceneSpawnable& L_Spawnable = L_MovieScene->GetSpawnable(L_Index);
+			const UObject* L_Template = L_Spawnable.GetObjectTemplate();
+			if (L_Template == nullptr || !L_Template->IsA<AActor>())
+			{
+				continue;
+			}
+
+			if (ACineCameraActor* L_Camera = L_FindCamera(L_Spawnable.GetGuid()))
+			{
+				return L_Camera;
+			}
+		}
+
+		for (int32 L_Index = 0; L_Index < L_MovieScene->GetPossessableCount(); ++L_Index)
+		{
+			const FMovieScenePossessable& L_Possessable = L_MovieScene->GetPossessable(L_Index);
+			const UClass* L_PossessedClass = L_Possessable.GetPossessedObjectClass();
+			if (L_PossessedClass == nullptr || !L_PossessedClass->IsChildOf(AActor::StaticClass()))
+			{
+				continue;
+			}
+
+			if (ACineCameraActor* L_Camera = L_FindCamera(L_Possessable.GetGuid()))
+			{
+				return L_Camera;
+			}
+		}
+
+		return nullptr;
+	}
+
 	ACineCameraActor* FindSceneCamera(UWorld& InWorld)
 	{
+		if (ISequencer* L_Sequencer = GetOpenedSequencer())
+		{
+			if (ACineCameraActor* L_Camera = FindCameraInSequence(*L_Sequencer))
+			{
+				return L_Camera;
+			}
+		}
+
 		for (TActorIterator<ACineCameraActor> L_It(&InWorld); L_It; ++L_It)
 		{
 			return *L_It;
@@ -128,7 +293,7 @@ namespace
 	                            const FVector& InCameraLocation, const FVector& InCameraForward)
 	{
 		FDoodleLight L_Light;
-		L_Light.Id = InActor.GetName();
+		L_Light.Id = InActor.GetActorGuid().ToString(EGuidFormats::DigitsWithHyphens);
 		L_Light.Role = EDoodleLightRole::Fill;
 		L_Light.Type = InType;
 		L_Light.Origin = EDoodleLightOrigin::Artist;
@@ -168,7 +333,7 @@ namespace
 	FDoodleLight MakeDirectionalLight(const ADirectionalLight& InActor, const UDirectionalLightComponent& InComponent)
 	{
 		FDoodleLight L_Light;
-		L_Light.Id = InActor.GetName();
+		L_Light.Id = InActor.GetActorGuid().ToString(EGuidFormats::DigitsWithHyphens);
 		L_Light.Role = EDoodleLightRole::Key;
 		L_Light.Type = EDoodleLightType::Directional;
 		L_Light.Origin = EDoodleLightOrigin::Artist;
@@ -183,7 +348,7 @@ namespace
 	FDoodleLight MakeSkyLight(const ASkyLight& InActor, const USkyLightComponent& InComponent)
 	{
 		FDoodleLight L_Light;
-		L_Light.Id = InActor.GetName();
+		L_Light.Id = InActor.GetActorGuid().ToString(EGuidFormats::DigitsWithHyphens);
 		L_Light.Role = EDoodleLightRole::Ambient;
 		L_Light.Type = EDoodleLightType::Sky;
 		L_Light.Origin = EDoodleLightOrigin::Artist;
