@@ -74,6 +74,29 @@ enum class entity_shot_extend_ai_type {
   half,
   all,
 };
+
+struct DOODLE_CORE_API entity_episode_extend {
+  DOODLE_BASE_FIELDS();
+  uuid entity_id_;
+  std::optional<std::int32_t> ji_du2_;
+
+  static bool has_extend_data(const nlohmann::json& j) { return j.contains("ji_du2"); }
+  constexpr static auto put_property_list() {
+    return std::tuple{
+        std::pair{"ji_du2", &entity_episode_extend::ji_du2_},
+    };
+  }
+  // to json
+  friend void to_json(nlohmann::json& j, const entity_episode_extend& p) {
+    j["entity_id"] = p.entity_id_;
+    j["ji_du2"]    = p.ji_du2_;
+  }
+  // from json
+  friend void from_json(const nlohmann::json& j, entity_episode_extend& p) {
+    if (j.contains("ji_du2")) j.at("ji_du2").get_to(p.ji_du2_);
+  }
+};
+
 struct DOODLE_CORE_API entity_shot_extend {
   DOODLE_BASE_FIELDS();
   uuid entity_id_;
@@ -275,16 +298,16 @@ struct DOODLE_CORE_API entity {
 
   constexpr static auto put_property_list() {
     return std::tuple{
-        std::pair{"description", &entity::description_},               //
-        std::pair{"entity_type_id", &entity::entity_type_id_},         //
-        std::pair{"is_shared", &entity::is_shared_},                   //
-        std::pair{"name", &entity::name_},                             //
-        std::pair{"ready_for", &entity::ready_for_},                   //
-        std::pair{"canceled", &entity::canceled_},                     //
-        std::pair{"code", &entity::code_},                             //
-        std::pair{"status", &entity::status_},                         //
-        std::pair{"is_casting_standby", &entity::is_casting_standby_}, //
-        std::pair{"parent_id", &entity::parent_id_},                   //
+        std::pair{"description", &entity::description_},                //
+        std::pair{"entity_type_id", &entity::entity_type_id_},          //
+        std::pair{"is_shared", &entity::is_shared_},                    //
+        std::pair{"name", &entity::name_},                              //
+        std::pair{"ready_for", &entity::ready_for_},                    //
+        std::pair{"canceled", &entity::canceled_},                      //
+        std::pair{"code", &entity::code_},                              //
+        std::pair{"status", &entity::status_},                          //
+        std::pair{"is_casting_standby", &entity::is_casting_standby_},  //
+        std::pair{"parent_id", &entity::parent_id_},                    //
     };
   }
 
