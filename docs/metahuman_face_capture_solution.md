@@ -3,7 +3,6 @@
 > 状态：已拍板（2026-11-04），待实现
 > 环境：UE 5.7.4（`E:\UnrealEngine`）
 > 落地位置：`E:\Doodle\script\uePlug\Doodle` 新增 Editor 模块 `DoodleMetaHumanFace`
-> 前身：`docs/metahuman_face_capture_plan.md`（自研求解器路线，已暂停，本方案取代它）
 
 **已拍板的四条**（后文全部按此展开）：
 
@@ -415,13 +414,13 @@ frames 目录 + 有理数帧率 → `UFootageCaptureData` → `UMetaHumanPerform
 
 ## 10. 与旧方案的取舍
 
-`docs/metahuman_face_capture_plan.md` 走的是「自己抽 `MetaHumanCoreTechLib` 编独立 Program，直接出 blendshape 权重」，能编出 208MB 的 `MHTechProbe.exe`，但卡在 `GEngineLoop::PreInit` 的 ShaderCodeLibrary 缺失，还有 EULA 再分发合规问题。
+`docs/metahuman_face_capture_plan.md` 走的是「自己抽 `MetaHumanCoreTechLib` 编独立 Program，直接出 blendshape 权重」，能编出 208MB 的 `MHTechProbe.exe`，但卡在 `GEngineLoop::PreInit` 的 ShaderCodeLibrary 缺失，还有 EULA 再分发合规问题。该文档已删除，内容不再维护。
 
 本次核实证明：**5.7 的官方 C++ API 已经把同样的能力暴露出来了**（`UMetaHumanPerformance` 自己编排 `FHyprsenseRealtimeNode`）。所以：
 
 - 放弃「独立 Program」路线，改为「编辑器内模块」——一个 UE 进程解决全部问题。
 - 旧的 DNA/RigLogic 侧投入**不浪费**：`vcpkg` 的 riglogic/dnacalib、`src/maya_plug/maya_comm/dna_calib_import.cpp` 将来要把曲线落到具体 MetaHuman 的 DNA rig 上、或在 Maya 侧直接驱动时仍要用。
-- 旧文档标记「已被本方案取代」，不再推进。
+- 旧文档所述路线已放弃，不再推进。
 
 ---
 

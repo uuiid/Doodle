@@ -22,12 +22,12 @@ plugin_manager action=install_bundle target=<仓库路径>\dsh-ue
       config:
         repoRoot: E:\dsh_work\Doodle
         engineRoot: E:\dsh_work\UnrealEngine
-        projectFile: DoodleLiveLink/DoodleLiveLink.uproject
-        defaultTarget: DoodleLiveLink
+        projectFile: <工程>.uproject
+        defaultTarget: <工程名>
 ```
 
-> `defaultTarget` 不是可选项的摆设：Doodle 的 `Source/DoodleLiveLink.Target.cs` 只有一个 `DoodleLiveLinkTarget` 类（`Type = TargetType.Editor`），
-> 所以 UBT 的 target 名是 **`DoodleLiveLink`** 而不是 `DoodleLiveLinkEditor`。名字错了 UBT 会报
+> `defaultTarget` 不是可选项的摆设：项目的 `Source/<工程名>.Target.cs` 里若只有 `<工程名>Target` 一个类（`Type = TargetType.Editor`），
+> 那么 UBT 的 target 名就是 **`<工程名>`** 而不是 `<工程名>Editor`。名字错了 UBT 会报
 > `Couldn't find target rules file for target '...'` 并以 `Result: Failed (RulesError)` 结束。
 
 ## 配置
@@ -51,7 +51,7 @@ plugin_manager action=install_bundle target=<仓库路径>\dsh-ue
 
 | 参数 | 说明 |
 | --- | --- |
-| `target` | UBT target 名，例如 `DoodleLiveLink`、`UnrealEditor`、`UnrealPak`。省略时用 `defaultTarget`，再否则取 `<工程名>Editor`（`engine=true` 时取 `UnrealEditor`） |
+| `target` | UBT target 名，例如 `UnrealEditor`、`UnrealPak`。省略时用 `defaultTarget`，再否则取 `<工程名>Editor`（`engine=true` 时取 `UnrealEditor`） |
 | `projectFile` | 相对 `repoRoot` 或绝对路径的 `.uproject`，编译该工程的目标 |
 | `engine` | `true` 时编译引擎自身的目标（默认 target 变成 `UnrealEditor`） |
 | `scope` + `projectAbsolute` | 显式指定口径时用绝对路径的 `.uproject` 编译仓库外的工程（只给绝对路径也可以直接写进 `projectFile`） |

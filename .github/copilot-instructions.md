@@ -1,10 +1,9 @@
 ## 快速目标（对 AI 编码代理）
 
-这是一个以 CMake + vcpkg 为中心的 Windows 优先的 C++ 项目，包含独立软件、Maya 插件、UE 独立程序与若干工具。主要路径和约定见下。请在进行改动前阅读并参考下面的文件/命令。只修改能通过本地构建与测试的最小改动。
+这是一个以 CMake + vcpkg 为中心的 Windows 优先的 C++ 项目，包含独立软件、Maya 插件、UE 插件与若干工具。主要路径和约定见下。请在进行改动前阅读并参考下面的文件/命令。只修改能通过本地构建与测试的最小改动。
 
 ### 一眼看懂仓库结构
 - `src/`：C++ 源代码入口，除 `maya_plug`、`maya_plug_mll` 两个目录（Maya 插件）外均为独立软件。模块分层：`doodle_core`（底层核心）、`doodle_lib`（可复用库）、`exe_*`（各可执行入口）、`maya_plug` / `maya_plug_mll`（Maya 插件）、`exe_maya*`（Maya 相关 exe）。
-- `DoodleLiveLink/`：UE 独立程序（非插件），需接入 UE 源码 `Engine\Source\Programs\` 目录中使用；UE 根目录暂定 `E:\UnrealEngine`。
 - `CMake/`：自定义的 Find 模块（例如 `FindMaya.cmake`, `FindAutodesk_FBX.cmake`），查看这里即可了解如何寻找并链接外部 SDK（Maya/FBX/Photoshop 等）。
 - `external/`、`vcpkg/`：第三方库和预编译内容（例如 USD、libtorch）。依赖由 `vcpkg.json` 管理；本仓库使用 overlay ports (`vcpkg_ports`) 和 overlay triplets (`vcpkg_triplets`).
 - `build_script/`：一组用于构建/部署的脚本（Windows .cmd/.ps1）。重要：`build_script/build/set_venv.cmd` 是调用 CMake 的 wrapper，会激活 `.venv` 并运行 vcvars，VS/Ninja 构建都通过它。 
