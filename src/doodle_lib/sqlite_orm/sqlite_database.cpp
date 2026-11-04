@@ -131,8 +131,7 @@ void sqlite_storage::regs_all() {
       )
       .add_foreign_key(
           &seedance2::task::ai_light_session_id_, &ai_light::ai_light_session::uuid_id_, foreign_key_action::set_null
-      )
-      ;
+      );
 
   reg_table<seedance2::task_similarity>("seedance2_task_similarity")
       .add_column("id", &seedance2::task_similarity::id_, primary_key(), autoincrement())
@@ -778,7 +777,7 @@ void sqlite_storage::regs_all() {
   reg_table<entity_asset_extend>("entity_asset_extend_2")
       .add_column("id", &entity_asset_extend::id_, primary_key(), autoincrement())
       .add_column("uuid", &entity_asset_extend::uuid_id_, unique(), not_null())
-      .add_column("entity_id", &entity_asset_extend::entity_id_, not_null())
+      .add_column("entity_id", &entity_asset_extend::entity_id_, not_null(), unique())
       .add_column("ji_shu_lie", &entity_asset_extend::ji_shu_lie_)
       .add_column("deng_ji", &entity_asset_extend::deng_ji_)
       .add_column("gui_dang", &entity_asset_extend::gui_dang_)
@@ -831,6 +830,13 @@ void sqlite_storage::regs_all() {
               .on(&entity::name_, &entity::project_id_, &entity::entity_type_id_)
               .where(c(&entity::parent_id_) == nullptr)
       );
+
+  reg_table<entity_episode_extend>("entity_episode_extend")
+      .add_column("id", &entity_episode_extend::id_, primary_key(), autoincrement())
+      .add_column("uuid", &entity_episode_extend::uuid_id_, unique(), not_null())
+      .add_column("entity_id", &entity_episode_extend::entity_id_, not_null(), unique())
+      .add_column("ji_du2", &entity_episode_extend::ji_du2_)
+      .add_foreign_key(&entity_episode_extend::entity_id_, &entity::uuid_id_, foreign_key_action::cascade);
 
   reg_table<task_type_asset_type_link>("task_type_asset_type_link")
       .add_column("id", &task_type_asset_type_link::id_, primary_key(), autoincrement())

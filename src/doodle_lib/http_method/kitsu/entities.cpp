@@ -30,6 +30,16 @@ std::optional<entity_shot_extend> get_entity_shot_extend_by_entity_id(const uuid
       .limit(1)()
       .to_optional();
 }
+std::optional<entity_episode_extend> get_entity_episode_extend_by_entity_id(const uuid& in_entity_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(object<entity_episode_extend>())
+      .from<entity_episode_extend>()
+      .where(c(&entity_episode_extend::entity_id_) == in_entity_id)
+      .limit(1)()
+      .to_optional();
+}
 }  // namespace
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, get) {
   auto l_sql  = get_sqlite_database();
@@ -61,10 +71,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
     if (auto l_list_ext = get_entity_asset_extend_by_entity_id(l_entt->uuid_id_); l_list_ext.has_value()) {
       *l_ext_ptr = l_list_ext.value();
       l_json.get_to(*l_ext_ptr);
-      auto l_update = update(l_sql)
-                          .from<entity_asset_extend>()
-                          .set_from_ref<entity_asset_extend>(l_json)
-                          .where(c(&entity_asset_extend::entity_id_) == l_entt->uuid_id_);
+      auto l_update = update(l_sql).from<entity_asset_extend>().set_from_ref<entity_asset_extend>(l_json).where(
+          c(&entity_asset_extend::entity_id_) == l_entt->uuid_id_
+      );
       if (l_update) l_sqls.emplace_back(std::move(l_update));
     } else {
       l_json.get_to(*l_ext_ptr);
@@ -77,16 +86,31 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
     entity_shot_extend l_new_ext{};
     if (auto l_list_ext = get_entity_shot_extend_by_entity_id(l_entt->uuid_id_); l_list_ext.has_value()) {
       l_json.get_to(l_new_ext);
-      auto l_update = update(l_sql)
-                          .from<entity_shot_extend>()
-                          .set_from_ref<entity_shot_extend>(l_json)
-                          .where(c(&entity_shot_extend::entity_id_) == l_entt->uuid_id_);
+      auto l_update = update(l_sql).from<entity_shot_extend>().set_from_ref<entity_shot_extend>(l_json).where(
+          c(&entity_shot_extend::entity_id_) == l_entt->uuid_id_
+      );
       if (l_update) l_sqls.emplace_back(std::move(l_update));
     } else {
       l_json.get_to(l_new_ext);
       l_new_ext.entity_id_ = l_entt->uuid_id_;
       auto l_new_ptr       = std::make_shared<entity_shot_extend>(l_new_ext);
       l_sqls.emplace_back(insert(l_sql).into<entity_shot_extend>().values(*l_new_ptr));
+    }
+    l_res.update(l_new_ext);
+  }
+  if (entity_episode_extend::has_extend_data(l_json)) {
+    entity_episode_extend l_new_ext{};
+    if (auto l_list_ext = get_entity_episode_extend_by_entity_id(l_entt->uuid_id_); l_list_ext.has_value()) {
+      l_json.get_to(l_new_ext);
+      auto l_update = update(l_sql).from<entity_episode_extend>().set_from_ref<entity_episode_extend>(l_json).where(
+          c(&entity_episode_extend::entity_id_) == l_entt->uuid_id_
+      );
+      if (l_update) l_sqls.emplace_back(std::move(l_update));
+    } else {
+      l_json.get_to(l_new_ext);
+      l_new_ext.entity_id_ = l_entt->uuid_id_;
+      auto l_new_ptr       = std::make_shared<entity_episode_extend>(l_new_ext);
+      l_sqls.emplace_back(insert(l_sql).into<entity_episode_extend>().values(*l_new_ptr));
     }
     l_res.update(l_new_ext);
   }
@@ -101,11 +125,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, put) {
   co_return std::make_unique<http_body_json_t>(l_res);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_news, get) {
-  co_return std::make_unique<http_body_json_t>(
-      nlohmann::json{
-          {"data", nlohmann::json::array()}, {"limit", 2000}, {"nb_pages", 0}, {"offset", 0}, {"page", 1}, {"total", 0}
-      }
-  );
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{
+      {"data", nlohmann::json::array()}, {"limit", 2000}, {"nb_pages", 0}, {"offset", 0}, {"page", 1}, {"total", 0}
+  });
 }
 
 }  // namespace doodle::http

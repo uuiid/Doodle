@@ -38,7 +38,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_old_version     = 35;
+constexpr std::size_t g_old_version     = 36;
 constexpr std::size_t g_current_version = g_old_version + 1;
 
 }  // namespace
@@ -100,17 +100,9 @@ struct upgrade_3_t : sqlite_upgrade {
     backup(l_s);
     l_s.pragma().foreign_keys(false);
     using namespace orm;
-    l_s.add_column("seedance2_task_2", "model_name", column_type::text);
     auto l_g = l_s.transaction();
-    auto l_json_list = select(l_s)
-                           .columns(&seedance2::task::uuid_id_, &seedance2::task::data_request_)
-                           .from<seedance2::task>()()
-                           .to_vector();
-    for (auto&& [l_id, l_json] : l_json_list) {
-      auto l_model_name = l_json.value("model", std::string{});
-      if (l_model_name.empty()) continue;
-      update(l_s).from<seedance2::task>().set(c(&seedance2::task::model_name_) = l_model_name).where(c(&seedance2::task::uuid_id_) == l_id)();
-    }
+    l_s.rebuild_table<entity_asset_extend>();
+    l_s.sync_schema();
 
     l_g.commit();
     l_s.pragma().user_version(g_current_version);

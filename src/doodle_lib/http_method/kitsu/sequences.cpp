@@ -16,7 +16,7 @@ namespace doodle::http {
 namespace {
 
 struct get_get_entities_and_tasks_select_t {
-  std::vector<std::tuple<entity, task, uuid>> entity_and_task_and_person_id_;
+  std::vector<std::tuple<entity, task, entity_episode_extend, uuid>> entity_and_task_and_person_id_;
   std::vector<std::tuple<uuid, std::int64_t>> sequence_and_cout_;
 
   static get_get_entities_and_tasks_select_t get(
@@ -35,22 +35,24 @@ get_get_entities_and_tasks_select_t get_get_entities_and_tasks_select_t::get(
                                 .from<outsource_studio_authorization>()
                                 .where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_);
 
-  auto l_where = dynamic_column_operations{};
+  auto l_where            = dynamic_column_operations{};
   l_where.add_condition(c(&entity::entity_type_id_) == in_entity_type_id);
   if (!in_project_id.is_nil()) l_where.add_condition(c(&entity::project_id_) == in_project_id);
   if (in_person.role_ == person_role_type::outsource)
     l_where.add_condition(c(&entity::uuid_id_).in(l_outsource_select));
 
-  auto l_rows = select(l_sql)
-                    .columns(object<entity>(), object<task>(), &assignees_table::person_id_)
-                    .from<entity>()
-                    .left_outer_join<task>(&entity::uuid_id_, &task::entity_id_)
-                    .left_outer_join<assignees_table>(&assignees_table::task_id_, &task::uuid_id_)
-                    .where(l_where)
-                    .order_by(&entity::name_)
-                    .offset(in_offset)
-                    .limit(in_limit)()
-                    .to_vector();
+  auto l_rows =
+      select(l_sql)
+          .columns(object<entity>(), object<task>(), object<entity_episode_extend>(), &assignees_table::person_id_)
+          .from<entity>()
+          .left_outer_join<task>(&entity::uuid_id_, &task::entity_id_)
+          .left_outer_join<assignees_table>(&assignees_table::task_id_, &task::uuid_id_)
+          .left_outer_join<entity_episode_extend>(&entity_episode_extend::entity_id_, &entity::uuid_id_)
+          .where(l_where)
+          .order_by(&entity::name_)
+          .offset(in_offset)
+          .limit(in_limit)()
+          .to_vector();
   auto l_cout = select(l_sql)
                     .columns(&entity::parent_id_, count(&entity::parent_id_))
                     .from<entity>()
@@ -89,7 +91,7 @@ bool task_exit_by_entity_id_and_task_type_id(const uuid& in_entity_id, const uui
 struct sequences_with_tasks_result {
   sequences_with_tasks_result() = default;
 
-  explicit sequences_with_tasks_result(const entity& in_entity)
+  explicit sequences_with_tasks_result(const entity& in_entity, const entity_episode_extend& in_extend_)
       : uuid_id_(in_entity.uuid_id_),
         name_(in_entity.name_),
         status_(in_entity.status_),
@@ -97,6 +99,7 @@ struct sequences_with_tasks_result {
         description_(in_entity.description_),
         preview_file_id_(in_entity.preview_file_id_),
         canceled_(in_entity.canceled_),
+        ji_du2_(in_extend_.ji_du2_),
         frame_in_(0),
         frame_out_(0),
         fps_(0) {}
@@ -108,6 +111,7 @@ struct sequences_with_tasks_result {
   decltype(entity::description_) description_;
   decltype(entity::preview_file_id_) preview_file_id_;
   decltype(entity::canceled_) canceled_;
+  decltype(entity_episode_extend::ji_du2_) ji_du2_;
 
   std::int32_t frame_in_;
   std::int32_t frame_out_;
@@ -182,6 +186,7 @@ struct sequences_with_tasks_result {
     j["status"]          = p.status_;
     j["episode_id"]      = p.episode_id_;
     j["description"]     = p.description_;
+    j["ji_du2"]          = p.ji_du2_;
 
     j["frame_in"]        = p.frame_in_ ? nlohmann::json{} = p.frame_in_ : nlohmann::json::object();
     j["frame_out"]       = p.frame_out_ ? nlohmann::json{} = p.frame_out_ : nlohmann::json::object();
@@ -208,9 +213,9 @@ auto get_get_entities_and_tasks(
 
   std::map<uuid, sequences_with_tasks_result> l_entities_and_tasks_map{};
   std::map<uuid, std::size_t> l_task_id_set{};
-  for (auto&& [l_entity, l_task, l_person_id] : l_row.entity_and_task_and_person_id_) {
+  for (auto&& [l_entity, l_task, l_episode_extend, l_person_id] : l_row.entity_and_task_and_person_id_) {
     if (!l_entities_and_tasks_map.contains(l_entity.uuid_id_)) {
-      l_entities_and_tasks_map.emplace(l_entity.uuid_id_, sequences_with_tasks_result{l_entity});
+      l_entities_and_tasks_map.emplace(l_entity.uuid_id_, sequences_with_tasks_result{l_entity, l_episode_extend});
     }
     if (!l_task.uuid_id_.is_nil()) {
       if (!l_task_id_set.contains(l_task.uuid_id_)) {
@@ -346,12 +351,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_sequence_instance, delete_) {
   if (!l_force) {
     using namespace orm;
     sql_modify_statement_vector_t l_sqls{};
-    l_sqls.emplace_back(
-        update(l_sql)
-            .from<entity>()
-            .set(c(&entity::canceled_) = true)
-            .where(c(&entity::uuid_id_) == l_sequence->uuid_id_)
-    );
+    l_sqls.emplace_back(update(l_sql)
+                            .from<entity>()
+                            .set(c(&entity::canceled_) = true)
+                            .where(c(&entity::uuid_id_) == l_sequence->uuid_id_));
     co_await l_sql.run_sql(std::move(l_sqls));
     socket_io::broadcast(
         socket_io::sequence_update_broadcast_t{
