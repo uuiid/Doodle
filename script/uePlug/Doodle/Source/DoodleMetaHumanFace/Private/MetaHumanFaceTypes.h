@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Misc/Timecode.h"
 
 class UFootageCaptureData;
 
@@ -40,6 +41,7 @@ struct FMetaHumanFaceJobRequest
     FString SequencePattern;
     FString OutDir;
     FString AssetPackagePath;
+    FString CaptureDataOuter;
     uint32 FpsNum = 24000;
     uint32 FpsDen = 1;
     int32 FirstFrame = 0;
@@ -78,11 +80,43 @@ struct FMetaHumanFaceCurveSet
     int32 FrameCount = 0;
 };
 
-struct OutCaptureDataResult
+enum class EMetaHumanFaceBuildErrorCode : uint8
 {
-    bool bOk = false;
-    FString Error;
+    InvalidRequest,
+    FramesNotFound,
+    FramesFormatMismatch,
+    CaptureDataBuildFailed,
+    FileSystemFailed
+};
+
+enum class EMetaHumanFaceScanErrorCode : uint8
+{
+    FramesNotFound,
+    FramesFormatMismatch
+};
+
+struct FMetaHumanFaceScanError
+{
+    EMetaHumanFaceScanErrorCode Code = EMetaHumanFaceScanErrorCode::FramesNotFound;
+    FString Detail;
+    TArray<FMetaHumanFaceFrameRange> DroppedFrameRanges;
+};
+
+struct FMetaHumanFaceBuildError
+{
+    EMetaHumanFaceBuildErrorCode Code = EMetaHumanFaceBuildErrorCode::InvalidRequest;
+    FString Detail;
+    TArray<FMetaHumanFaceFrameRange> DroppedFrameRanges;
+};
+
+struct FMetaHumanFaceBuiltCaptureData
+{
     UFootageCaptureData* CaptureData = nullptr;
+    FString OuterPackageName;
+    int32 StartFrame = 0;
+    int32 NumFrames = 0;
+    TArray<FMetaHumanFaceFrameRange> DroppedFrameRanges;
+    FTimecode StartTimecode;
 };
 
 struct CurveSetResult

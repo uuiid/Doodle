@@ -128,7 +128,7 @@
 			"Enabled": true
 		},
 		{
-			"Name": "MetaHumanAnimator",
+			"Name": "MetaHuman",
 			"Enabled": true
 		}
 	]
