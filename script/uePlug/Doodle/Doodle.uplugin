@@ -80,7 +80,7 @@
 		{
 			"Name": "DoodleMetaHumanFace",
 			"Type": "Editor",
-			"LoadingPhase": "PostEngineInit",
+			"LoadingPhase": "PostConfigInit",
 			"WhitelistPlatforms": [
 				"Win64"
 			]

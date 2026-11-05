@@ -11,6 +11,7 @@
 3. **V1 宿主用 `E:\ue_main`** —— 只验证能编译、能跑通，不作为部署目标。
 4. **引擎插件在 `Doodle.uplugin` 的 `"Plugins"` 段启用** —— 借 `Doodle.uplugin:13` 的 `EnabledByDefault: true`，Doodle 插件在任意工程自动加载，因此宿主工程**不必改自己的 `.uproject`**。
 5. **不导出 FBX / AnimSequence** —— 唯一交付格式是 `.dhfc` 曲线。
+6. **入口是命令行 commandlet，一次一个序列** —— 无常驻进程、无 HTTP、无队列（§6）。
 
 ---
 
@@ -19,7 +20,8 @@
 | 问题 | 答案 |
 | --- | --- |
 | 必须写 Python 吗？ | **不必**。上一版的 Python 只是照抄官方示例；ingest / 求解 / 导出三件事全部有公开 C++ API。 |
-| 能放进现有 Doodle 插件吗？ | **能**，加一个 `Type: Editor`、`LoadingPhase: PostEngineInit` 的新模块即可，不需要新进程、不需要新工程。 |
+| 能放进现有 Doodle 插件吗？ | **能**，加一个 `Type: Editor` 的新模块即可，不需要新进程、不需要新工程。 |
+| 入口形态？ | **命令行 commandlet**，一次进程只转换一个序列，进程退出即出结果。无 HTTP、无常驻、无 IPC。 |
 | 视频解帧在哪做？ | **Doodle 侧做**（B 路线）。UE 只负责把图像序列包成 `UFootageCaptureData`，因此不启用 CaptureManager 那一串插件。 |
 | 主交付用自定义格式？ | **是，唯一交付格式**。UE 的 AnimSequence 导出会丢掉全部面部曲线（见 §3.4），所以不导出 FBX / AnimSequence。 |
 | 需要 Identity / DNA 吗？ | 单目素材**不需要**。`MonoFootage` 分支只校验图像序列（`MetaHumanPerformance.cpp:1728-1753`）。 |
@@ -71,23 +73,30 @@
 {
   "Name": "DoodleMetaHumanFace",
   "Type": "Editor",
-  "LoadingPhase": "PostEngineInit",
+  "LoadingPhase": "PostConfigInit",
   "WhitelistPlatforms": [ "Win64" ]
 }
 ```
 
-为什么 `Editor` + `PostEngineInit`：`MetaHumanPerformance` 模块本身就是 `Editor/PostEngineInit`，且 `MetaHumanPerformance.cpp:798` 直接用了 `GEditor->GetTimerManager()`。同插件里已有 `BatchRender` 就是这个类型，可作模板。
+**必须是 `PostConfigInit`，不能用 `PostEngineInit`**。原因（`Engine\Source\Runtime\Launch\Private\LaunchEngineLoop.cpp`）：
 
-`DoodleMetaHumanFace.Build.cs` 依赖（**已逐个核实模块实存**，B 路线版）：
+- `:3877` 起 commandlet 分支先启动 `UEditorEngine`（`:3971` `GEngine = GEditor = NewObject<UEditorEngine>(...)`，`:3976` `GEditor->InitEditor(this)`）→ 然后才在 `:4010-4012` 加载 `PostEngineInit` 阶段模块 → 最后 `:4034` 才查找 commandlet 类。
+- 所以 `LoadingPhase: PostEngineInit` 的模块**能**被加载、类也能注册。但 **`MetaHumanPerformance` 模块本身就是 `Editor/PostEngineInit`**（`MetaHuman.uplugin`），而它的代码強依赖 `GEditor`（`MetaHumanPerformance.cpp:798` 用 `GEditor->GetTimerManager()`）。把我们的模块也放 `PostEngineInit` 就会和它抢同一个阶段，加载顺序不确定。
+- `PostConfigInit` 在 `:6762` 加载，远早于引擎启动，是 commandlet 宿主模块的常规选择。
+
+`Type: Editor` + `IsEditor = true` 的 commandlet：`LaunchEngineLoop.cpp:3941` 用 `UCommandlet::IsEditor` 决定造 `UEditorEngine` 还是 `UGameEngine`，`MetaHumanPerformance` 需要真正的编辑器。
+
+`DoodleMetaHumanFace.Build.cs` 依赖（**已逐个核实模块实存**，B 路线 + commandlet 版）：
 
 ```
 Public:  Core, CoreUObject, Engine
 Private: MetaHumanPerformance, MetaHumanCoreTech, MetaHumanCoreTechLib, MetaHumanPipelineCore,
          CaptureDataCore, ImgMedia, MediaAssets,
-         Projects, Json, JsonUtilities, DeveloperSettings,
-         UnrealEd, AssetRegistry, Slate, SlateCore,
-         HTTP, Sockets, Networking
+         Projects, Json, JsonUtilities,
+         UnrealEd, AssetRegistry
 ```
+
+不在这个列表里的就是不需要的：`HTTP` / `Sockets` / `Networking` / `Slate` / `SlateCore` / `DeveloperSettings` 在改成命令行入口后全部移除（没有服务端、没有 UI、没有配置类）。
 
 相比 A 路线，B 路线**去掉**了 `CaptureManagerEditor`、`CaptureUtils`、`DataIngestCore`、`LiveLinkDevice`、`LiveLinkCapabilities`、`LiveLinkHub`、`LiveLinkHubMessaging`、`MonoVideoIngestDevice`、`VideoLiveLinkDeviceCommon`、`MetaHumanCore`、`MetaHumanPipeline`、`ToolWidgets` 共 12 个模块依赖。
 
@@ -98,14 +107,13 @@ Private: MetaHumanPerformance, MetaHumanCoreTech, MetaHumanCoreTechLib, MetaHuma
 
 | 文件 | 职责 |
 | --- | --- |
-| `DoodleMetaHumanFaceModule.cpp/.h` | `IModuleInterface`；`StartupModule` 注册配置与端点 |
+| `DoodleMetaHumanFaceModule.cpp/.h` | `IModuleInterface` 空实现，只是让 commandlet 类被加载 |
 | `MetaHumanFaceTypes.h` | `FMetaHumanFaceJobRequest` / `FMetaHumanFaceJobResult` / 阶段与错误码枚举 |
+| `MetaHumanFaceCommandlet.cpp/.h` | `UMetaHumanFaceCommandlet : UCommandlet`，进程入口 `int32 Main(const FString& Params)` |
+| `MetaHumanFaceCommandLine.cpp/.h` | 把 `-FramesDir=` 之类的 token 解析成 `FMetaHumanFaceJobRequest`，含校验与 `Usage()` |
 | `MetaHumanFaceCaptureDataBuilder.cpp/.h` | B 路线：frames 目录 → `UImgMediaSource` + `UFootageCaptureData`（替代 ingest） |
 | `MetaHumanFaceSolver.cpp/.h` | `UMetaHumanPerformance` 的创建 / 处理 / 诊断 / 取曲线 |
 | `MetaHumanFaceCurveWriter.cpp/.h` | 写 `.dhfc`（§5） |
-| `MetaHumanFaceJobSubsystem.h` | `UEngineSubsystem`，串行队列 |
-| `MetaHumanFaceEndpoint.cpp/.h` | HTTP 路由，供 Doodle 后端提交/查询 |
-| `MetaHumanFaceSmokeTest.cpp/.h` | V1 冒烟：`UFUNCTION(CallInEditor)` 跑通并打印曲线名 |
 
 ---
 
@@ -169,7 +177,7 @@ FFootageCaptureMetadata             Metadata;
 **资产创建的两个坑**（`MetaHumanPerformance.cpp:189-287` 的 `PostEditChangeProperty`）：
 
 - 新建的 `UMetaHumanPerformance` **默认 `InputType == DepthFootage`**，必须显式改 `MonoFootage` 并让 `PostEditChangeProperty` 跑一遍，否则帧率校验、帧范围重算、`ResetOutput` 都不会发生。Python 示例注释里说的"必须用 `set_editor_property` 而不是直接赋值"就是指这个。
-- 同一处会调 `FMessageDialog::Open`（`:261`）弹「帧率非法」对话框。**无 UI 的常驻进程里弹窗会卡死**。所以我们的顺序是：先构造并校验好 `UFootageCaptureData`（帧率分子非零），再赋给 `FootageCaptureData`。
+- 同一处会调 `FMessageDialog::Open`（`:261`）弹「帧率非法」对话框。**commandlet 里没人点确定，会一直挂着**。所以我们的顺序是：先构造并校验好 `UFootageCaptureData`（帧率分子非零），再赋给 `FootageCaptureData`。
 - 反过来，直接 `Perf->StartFrameToProcess = X` 不做 `PostEditChangeProperty` 是**可以**的（`:204` 那条分支只做 Clamp），但 Sprite 顺序上要在 `FootageCaptureData` 赋值之后。**默认值不用管**：`FootageCaptureData` 一赋值，`:267-268` 就已经把整个 `ProcessingLimitFrameRange` 填好了。
 
 **帧率**：B 路线用 `FFrameRate` 有理数，`29.97` 写 `30000/1001`，`23.976` 写 `24000/1001`。`.dhfc` 里存分子/分母，不存 double。
@@ -200,7 +208,7 @@ const EStartPipelineErrorType Err = Perf->StartPipeline(true);
    const bool bOk = Perf->ContainsAnimationData() && Perf->GetNumberOfProcessedFrames() > 0;
    ```
    再加 `DiagnosticsIndicatesProcessingIssue(FText& OutText)` 拿诊断文本。
-4. **全局单实例**：`MetaHumanPerformance.cpp:1715-1717` 有 `CurrentlyProcessedPerformance`，一次只能跑一个。队列必须串行（§6）。
+4. **全局单实例**：`MetaHumanPerformance.cpp:1715-1717` 有 `CurrentlyProcessedPerformance`，一次只能跑一个。命令行形态下「一次进程一个序列」天然满足（§6）。
 5. **杆位校验一次要早**：`FHyprsenseRealtimeNode::LoadModels()`（`MetaHumanCoreTechLib/Source/MetaHumanPipelineCore/Private/Nodes/HyprsenseRealtimeNode.cpp:688-719`）硬性依赖三件事，任一失败只打一条 `LogMetaHumanPipeline` Warning 然后返回 false —— 上层看到的就是「帧数 0」这个空洞的失败。三件事：
    - `LoadObject("/MetaHumanCoreTech/GenericTracker/FaceDetector.FaceDetector")`
    - `LoadObject("/MetaHumanCoreTech/RealtimeMono/landmark_tracker_v0_6.landmark_tracker_v0_6")`
@@ -296,31 +304,52 @@ offset  type       field
 
 ---
 
-## 6. 任务化与并发
+## 6. 入口形态：命令行 commandlet，一次一个序列
 
-`UMetaHumanFaceJobSubsystem : public UEngineSubsystem`
-
-- 一个任务队列 + 串行执行（`CurrentlyProcessedPerformance` 全局唯一，并发无意义）。
-- 状态机：`Queued → Building → Solving → Exporting → Done / Failed`（B 路线没有 Ingest 阶段，改为 `Building`：frames 校验 + 构造 CaptureData）。
-- **线程纪律**：`UMetaHumanPerformance` 是 UObject，内部用 `GEditor->GetTimerManager()`，**必须在 GameThread 上推进**。worker 线程只做文件 IO 与编排，求解段用 `AsyncTask(ENamedThreads::GameThread, ...)` + `FEventRef` 等回来（和 `ULiveLinkHubCaptureDevice::FImpl::Start` 同一范式）。
-- 取消：`CancelPipeline()`。B 路线没有 ingest，所以**不存在"没有取消 API"的段落**，取消是干净的。
-- **失败语义**：失败即失败。保留 frames 目录与日志；结果带 `stage` + `code` + `detail` + `log_path`。不重试、不降级、不自动改参数。
-
-**HTTP 端点**（`MetaHumanFaceEndpoint`）：模块 `StartupModule` 里拿 `FHttpServerModule` 起路由。
+**没有服务端，没有常驻进程，没有 HTTP，没有队列。**
 
 ```
-POST /metahuman_face/job       body: {frames_dir, fps_num, fps_den, head_stabilize, out_dir} → {job_id}
-GET  /metahuman_face/job/<id>                                  → {state, stage, code, detail, out_path}
-POST /metahuman_face/job/<id>/cancel
+UnrealEditor-Cmd.exe <Project>.uproject -run=MetaHumanFace -FramesDir=... -OutDir=... -FPS=24000/1
 ```
 
-端口与 `out_dir` 走配置。插件现在 `Config/` 只有 `FilterPlugin.ini`，**没有 `DefaultEngine.ini`**，需要新建：
+`UMetaHumanFaceCommandlet : public UCommandlet`，`int32 Main(const FString& Params)` 就是整个程序。
 
-```ini
-[/Script/DoodleMetaHumanFace.DoodleMetaHumanFaceSettings]
-ListenPort=50025
-OutRoot=D:/DoodleFaceTmp
-```
+### 6.1 为什么 commandlet 可行（已核实）
+
+| 环节 | 位置 | 结论 |
+| --- | --- | --- |
+| 类发现 | `LaunchEngineLoop.cpp:3885` `StaticFindFirstObject<UClass>`，`:3887-3892` 找不到且带 `.` 时按前缀 `LoadModule` 再试 | 宿主模块在 `PostConfigInit`（`:6762`）加载，早于 commandlet 分支，类必然已注册 |
+| 引擎类型 | `:3930-3941` 用 `UCommandlet::IsEditor` 决定造 `UEditorEngine` 还是 `UGameEngine` | `IsEditor = true` → 真正的编辑器引擎，`MetaHumanPerformance` 需要的 `GEditor` 存在 |
+| 参数 | `:4033 Commandlet->ParseParms(CommandletCommandLine)`，`CommandletCommandLine` 来自 `:2194` 把命令行 token 重新拼装 | `Params` 就是整条命令行的 token 串，可自由解析；**也能用 `FCommandLine::Get()` 直接读全局** |
+| 退出码 | `:4199 return ErrorLevel`；`:4191-4196` `FastExit` → `RequestExitWithStatus` | `Main` 的返回值就是进程退出码 |
+| 日志 | UAT 的 `RunCommandlet`（`AutomationTool/AutomationUtils/CommandletUtils.cs:321-329`）用 `-run={0} {1} -abslog={2} -stdout -CrashForUAT -unattended -NoLogTimes` | `-abslog=xxx.log` 写盘（`GenericPlatformOutputDevices.cpp:84-90`，**扩展名必须是 `.log` 或 `.txt`，否则被忽略**），`-stdout` 同时回显 |
+
+### 6.2 命令行约定
+
+| 参数 | 必填 | 说明 |
+| --- | --- | --- |
+| `-FramesDir=<绝对路径>` | 是 | 逐帧图像目录 |
+| `-OutDir=<绝对路径>` | 是 | 输出根目录，每次运行独立 |
+| `-FPS=<num>/<den>` | 否 | 有理数帧率，默认 `24000/1` |
+| `-Range=<first>:<count>` | 否 | 默认全序列 |
+| `-SequencePattern=<模板>` | 否 | 默认 `{frame}` |
+| `-PackagePath=<长包名>` | 否 | 中间资产落点，默认 `/Temp/MetaHumanFace/<runId>` |
+| `-NoHeadStabilize` | 否 | 关掉 `bHeadStabilization` |
+| `-KeepTongueSolve` | 否 | 打开 `bSkipTongueSolve=false` |
+
+**路径用 `-Key=Value` 形式、整体加引号**（`"-FramesDir=E:\素材\Shot_010"`）。因为引擎自己会扫命令行，值里以 `-` 开头的裸 token 会被当成引擎开关；`=` 形式把值绑在同一个 token 里，不会被引擎的 tokenizer 拆开。相对路径一律拒绝，只收绝对路径。
+
+### 6.3 每次一个序列的语义
+
+- **一个进程 = 一个序列 = 一个输出目录。** 冷启动 30-60 秒的代价由调用方批量调用时逐次付出；换来的是完全无状态的隔离 —— 上一次运行残留的资产/全局状态不可能污染下一次。
+- `CurrentlyProcessedPerformance` 单实例限制（`MetaHumanPerformance.cpp:1715-1717`）**天然满足**，不需要队列。
+- 中间资产落在 `/Temp/...`（不写工程 `Content`），进程结束时删包；`-KeepIntermediate` 才保留。
+- 失败即失败：退出码非 0，产物（frames 目录、日志）原样保留。**退出码约定**：`0` 成功，`1` 参数错，`2` 素材错，`3` 模型/推理后端缺失，`4` 求解失败，`5` 写盘失败。
+- 诊断信息同时出现在两处：`-abslog` 日志里（人看），以及 `-OutDir/result.json`（机器读）。
+
+### 6.4 并发策略
+
+并发由调用方控制粒度：**一个序列一个进程**，同时跑 N 个序列就是 N 个 `UnrealEditor-Cmd`。代价是 N × 内存与 N × 冷启动，收益是零串行协调、零共享状态。因为 B 路线下求解是纯 CPU/GPU 计算，没有 DDC 写冲突也没有资产包冲突（各自 `/Temp` 独立），并发是安全的。
 
 ---
 
@@ -339,31 +368,38 @@ OutRoot=D:/DoodleFaceTmp
 
 ### 7.2 部署形态
 
-- 任选一个工程常驻即可（哪个工程要跑面捕就用哪个）。因为模块是 `Editor` 类型，不影响打包产物。
-- 运行方式（常驻，冷启动 30-60 秒只付一次）：
+- 哪个工程要跑面捕就用哪个工程当宿主；模块是 `Editor` 类型，不影响打包产物。
+- 一次调用一个序列：
 
 ```
-UnrealEditor-Cmd.exe <Project>.uproject -unattended -nologo -nosplash
+UnrealEditor-Cmd.exe <Project>.uproject -run=MetaHumanFace ^
+    "-FramesDir=E:\DoodleFaceTmp\Shot_010\frames" ^
+    "-OutDir=E:\DoodleFaceTmp\Shot_010\curves" ^
+    -FPS=24000/1 -abslog="E:\DoodleFaceTmp\Shot_010\run.log" -stdout ^
+    -unattended -nologo -nosplash -NoLogTimes
 ```
 
 注意：
 - 不要用 `-nullrhi` 赌：求解走 `NNERuntimeORTDml`（DirectML），本身不依赖 RHI，但 MetaHuman 其它资产加载要正常初始化的引擎；先带 RHI 跑通，再试能否省掉。
-- **不要用 `-ExecutePythonScript` 传业务参数**：UE 自己会解析命令行，中文/空格路径极易被吃掉。业务参数一律走 HTTP body 或配置文件。
+- `-abslog` 的路径**扩展名必须是 `.log` 或 `.txt`**（`GenericPlatformOutputDevices.cpp:92-97` 直接丢弃其他扩展名）。
+- 路径里的空格与中文：整体加引号即可，但**不要**把业务参数拼成裸 token（见 §6.2）。
+- **不要用 `-ExecutePythonScript`** 传业务参数：UE 自己会解析命令行，业务参数一律走 `-Key=Value`。
 
 ---
 
 ## 8. 验证计划（三步，每步可单独交付）
 
-### V1 冒烟：确认曲线集合、图像命名（半天，宿主 `E:\ue_main`）
+### V1 冒烟：确认 commandlet 能跑起来、曲线集合、图像命名（半天，宿主 `E:\ue_main`）
 
-不做 HTTP、不做完整任务流。在模块里加一个 `UFUNCTION(CallInEditor)`（`MetaHumanFaceSmokeTest`），直接喂一份现成 JPEG 序列目录，跑：
+不做完整任务流：先只做「解析命令行 + 读 frames 目录 + 跑求解 + 打印曲线」。直接喂一份现成 JPEG 序列目录，跑：
 
 `FUEImageLoadNode → HyprsenseRealtimeSolver → Smoothing → GetAnimationData`
 
 验收物（5 条，缺一不可）：
 
-1. `AnimationData` 的**完整 key 列表**（应为 251 条；决定 `.dhfc` 曲线表）。这份列表同时作为「引擎升级后曲线表变化」的基线。
-2. **图像序列命名规则**：用 `SetTokenizedSequencePath` 能正确解析的最简文件命名。这条要写成断言，是 B 路线唯一的强耦合点。
+1. **`-run=MetaHumanFace` 能被找到**（模块 `PostConfigInit` 加载）并返回预期退出码；日志里出现 `Executing ...MetaHumanFaceCommandlet`。
+2. `AnimationData` 的**完整 key 列表**（应为 251 条；决定 `.dhfc` 曲线表）。这份列表同时作为「引擎升级后曲线表变化」的基线。
+3. **图像序列命名规则**：用 `SetTokenizedSequencePath` 能正确解析的最简文件命名。这条要写成断言，是 B 路线唯一的强耦合点。
 3. 单帧/整段耗时 → 校验 20 分钟约束。
 4. `NNERuntimeORTDml` + 3 个 `LoadObject`（FaceDetector / landmark_tracker / generic_rig_solver）是否全部可用（§3.3 第 5 条）。
 5. 顺带：打印平滑前后的差异（同一帧同一条曲线，`HyprsenseRealtimeSolver` 输出 vs `Smoothing` 输出各打一条日志），为将来是否要做平滑前数据留判断依据。
@@ -375,9 +411,9 @@ frames 目录 + 有理数帧率 → `UFootageCaptureData` → `UMetaHumanPerform
 
 验收：同一批素材跑两次结果 bit 级一致；帧率 29.97 存成 `30000/1001`；掉帧区间正确进 `CaptureExcludedFrames`；失败时 frames 目录与日志完整保留。
 
-### V3 服务化 + Doodle 接入（2 天）
+### V3 命令行收口 + Doodle 接入（2 天）
 
-串行队列 + HTTP 端点 + 失败诊断文案；Doodle 后端加客户端调 `POST /metahuman_face/job`。
+补 `MetaHumanFaceCommandline` 的完整解析与校验、退出码映射、`result.json`、失败诊断文案；Doodle 后端改成起进程 + 读退出码 + 读 `result.json`。
 
 ---
 
@@ -389,9 +425,9 @@ frames 目录 + 有理数帧率 → `UFootageCaptureData` → `UMetaHumanPerform
 | 模型/NNE 后端缺失 | 求解静默返回 0 帧 | 启动时预热校验 3 个 `LoadObject` + `NNERuntimeORTDml`，失败即明确报错（§3.3 第 5 条） |
 | **图像序列命名与 `FFramePathResolver` 不匹配**（B 路线首风险） | 管线启动即 exit，`StartPipeline` 仍返回 `None`，表现为 0 帧 | V1 用实测钉死命名规则并写成启动断言（§3.2、§8 V1-3） |
 | **`UFootageCaptureData` 元数据自洽性无校验**（B 路线） | `FrameRateOverride` 填错时求解不报错、结果整体偏 | 自己校验帧率/尺寸/时间码；`.dhfc` 存分子分母 |
-| **无 UI 下 `PostEditChangeProperty` 弹窗卡死** | 常驻进程挂死 | 先构造并校验好 CaptureData 再赋值给 `FootageCaptureData`（§3.2） |
+| **无 UI 下 `PostEditChangeProperty` 弹窗卡死** | commandlet 卡死 | 先构造并校验好 CaptureData 再赋值给 `FootageCaptureData`（§3.2） |
 | 面部控制曲线集合随版本变 | `.dhfc` 曲线表对不上 | 启动比对常量表与实际 key，不一致直接失败并输出 diff |
-| 单实例限制 | 并发任务互相阻塞 | 队列串行 + 端点返回排队位置 |
+| 冷启动开销 | 每序列 30-60 秒 | 调用方掌控批量粒度；序列切分越粗总开销越小 |
 | 20 分钟约束 | 长素材超时 | 单段 ≤ 10 分钟硬限制；预检按时长估算耗时并提前失败 |
 
 ---
@@ -417,6 +453,8 @@ frames 目录 + 有理数帧率 → `UFootageCaptureData` → `UMetaHumanPerform
 | 3 | V1 宿主 | **`E:\ue_main`** | 现成工程，只验证能编译能跑通，不作为部署目标 |
 | 4 | 引擎插件启用位置 | **`Doodle.uplugin` 的 `"Plugins"` 段**，只加 `MetaHumanAnimator` 一条 | `Doodle.uplugin:13` 的 `EnabledByDefault: true` 让 Doodle 在任意工程自动加载，其依赖段对所有宿主生效，因此各工程的 `.uproject` 无需改动 |
 | 5 | 是否导出 FBX / AnimSequence | **不导出，只出 `.dhfc`** | AnimSequence 经 `RemoveAllBoneTracks()` 后只剩 7 条头部曲线、没有面部骨骼；FBX 是它的下游，同样没有脸；而且都要绑 `Face_Archetype_Skeleton` 与其曲线表，多一层无用依赖 |
+| 6 | 调用入口形态 | **命令行 commandlet，一次一个序列** | 删除 HTTP 服务端、常驻队列、`FHttpServerModule` 三块；无 IPC、无端口、无状态泄漏；单实例限制天然满足；失败=非零退出码，调用方按进程管理即可 |
+| 7 | 模块 LoadingPhase | **`PostConfigInit`**（不是 `PostEngineInit`） | `MetaHumanPerformance` 自己是 `PostEngineInit` 且依赖 `GEditor`，同阶段会抢加载顺序；`PostConfigInit` 早于引擎启动，commandlet 查找类时必然已注册 |
 
 **仍未定（不阻塞实现）**：
 

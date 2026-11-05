@@ -56,7 +56,6 @@ struct FMetaHumanFaceFrameRange
 
 struct FMetaHumanFaceJobResult
 {
-    FString JobId;
     EMetaHumanFaceStage Stage = EMetaHumanFaceStage::Queued;
     EMetaHumanFaceErrorCode Code = EMetaHumanFaceErrorCode::None;
     FString Detail;

@@ -44,14 +44,8 @@ public class DoodleMetaHumanFace : ModuleRules
                 "Projects",
                 "Json",
                 "JsonUtilities",
-                "DeveloperSettings",
                 "UnrealEd",
                 "AssetRegistry",
-                "Slate",
-                "SlateCore",
-                "HTTP",
-                "Sockets",
-                "Networking",
             }
             );
 
