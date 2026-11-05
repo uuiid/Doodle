@@ -71,7 +71,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_computer_task, post) {
                             .set(c(&computer::status_) = computer_status::online)
                             .where(c(&computer::uuid_id_) == l_computer->uuid_id_));
     co_await l_sql.run_sql(std::move(l_sqls));
-    co_return std::make_unique<http_body_empty_t>();
+    co_return std::make_unique<http_body_json_t>(nlohmann::json::object());
   }
 
   l_sqls.emplace_back(update(l_sql)
