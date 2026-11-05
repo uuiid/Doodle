@@ -3,6 +3,7 @@
 > 状态：已拍板（2026-11-04），待实现
 > 环境：UE 5.7.4（`E:\UnrealEngine`）
 > 落地位置：`E:\Doodle\script\uePlug\Doodle` 新增 Editor 模块 `DoodleMetaHumanFace`
+> 上游调用方（Doodle 后端）见 [face_capture_camera_stream_plan.md](face_capture_camera_stream_plan.md)：它负责把 `-FramesDir` 的 PNG 序列按本文 §6.2 的口径产出，并在进程退出后读 `face_capture_log.json`。
 
 **已拍板的五条**（后文全部按此展开）：
 
@@ -258,8 +259,8 @@ for (int32 i = 0; i < Perf->GetNumberOfProcessedFrames(); ++i)
 | 项 | 要求 | 违反时 |
 | --- | --- | --- |
 | 容器 / 编码 | 由 Doodle 的 decoder 决定，不再受 `mp4`/`mov` 限制 | 解不出即失败 |
-| 输出格式 | **JPG 优先**（`UImgMediaSource` 默认走 `UJpegImageWrapper`）；PNG 需先确认 ImgMedia reader 注册 | V1 实测确认 |
-| 输出命名 | 按 ImgMedia 序列 token，帧号补零连续 | **必须与 `FTrackingPathUtils::GetTrackingFilePathAndInfo` 对齐，V1 钉死** |
+| 输出格式 | **PNG**（已定），文件名 `frame_000000.png`；命名与数字位数的校验口径见 `MetaHumanFaceCaptureDataBuilder.cpp:20,212-222` | V1 实测确认 `FTrackingPathUtils` 接受该命名 |
+| 输出命名 | 6 位补零、全序列位数一致、帧号从 0 连续无空洞 | 位数不一致或帧号有空洞 → `FramesFormatMismatch` / `FramesNotFound` |
 | 画面 | 正立、sRGB，不依赖 EXIF 旋转 | 人脸检测直接失败 |
 | 帧率 | 以有理数 `FFrameRate` 传给 UE | 变帧率失败 |
 
@@ -332,10 +333,14 @@ UnrealEditor-Cmd.exe <Project>.uproject -run=MetaHumanFace -FramesDir=... -OutDi
 | `-OutDir=<绝对路径>` | 是 | 输出根目录，每次运行独立 |
 | `-FPS=<num>/<den>` | 否 | 有理数帧率，默认 `24000/1` |
 | `-Range=<first>:<count>` | 否 | 默认全序列 |
-| `-SequencePattern=<模板>` | 否 | 默认 `{frame}` |
-| `-PackagePath=<长包名>` | 否 | 中间资产落点，默认 `/Temp/MetaHumanFace/<runId>` |
+| `-SequencePattern=<模板>` | 否 | 默认 `{frame}`；**调用方可以完全不传**（只校验"传了但不含 `{frame}`"），帧命名固定为 `frame_000000.png` |
+| `-PackagePath=<长包名>` | 否 | 中间资产落点，默认 `/Temp/MetaHumanFace/<runId>`；调用方通常显式传 `/Game/...` |
 | `-NoHeadStabilize` | 否 | 关掉 `bHeadStabilization` |
 | `-KeepTongueSolve` | 否 | 打开 `bSkipTongueSolve=false` |
+
+**起始时间码**：`ResolveStartTimecode`（`MetaHumanFaceCaptureDataBuilder.cpp:312-340`）优先读 `-OutDir` 下的 `frames_meta.json` 的 `first_frame`，其次用扫描到的起始帧号，最后才用墙钟。调用方不写 `frames_meta.json` 时求解结果本身不会报错，但与序列动画对不齐，所以**调用方应当在 `-OutDir` 里写 `{"first_frame": n}`**。
+
+**退出码**：`0` 成功，`2` 参数/素材/CaptureData 失败，`3` 模型或推理后端缺失，`4` 求解失败，`5` 导出或写盘失败（`MetaHumanFaceCommandlet.cpp:449-469`）。结果同时写在 `-OutDir/face_capture_log.json`，**调用方应优先读它而不是只看退出码**。
 
 **路径用 `-Key=Value` 形式、整体加引号**（`"-FramesDir=E:\素材\Shot_010"`）。因为引擎自己会扫命令行，值里以 `-` 开头的裸 token 会被当成引擎开关；`=` 形式把值绑在同一个 token 里，不会被引擎的 tokenizer 拆开。相对路径一律拒绝，只收绝对路径。
 
