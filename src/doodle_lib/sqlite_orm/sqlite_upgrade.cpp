@@ -38,7 +38,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_old_version     = 36;
+constexpr std::size_t g_old_version     = 37;
 constexpr std::size_t g_current_version = g_old_version + 1;
 
 }  // namespace
