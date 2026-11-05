@@ -76,6 +76,14 @@
 			"WhitelistPlatforms": [
 				"Win64"
 			]
+		},
+		{
+			"Name": "DoodleMetaHumanFace",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
 		}
 	],
 	"Plugins": [
@@ -117,6 +125,10 @@
 		},
 		{
 			"Name": "WebBrowserWidget",
+			"Enabled": true
+		},
+		{
+			"Name": "MetaHumanAnimator",
 			"Enabled": true
 		}
 	]

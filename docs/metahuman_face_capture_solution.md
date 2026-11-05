@@ -4,12 +4,13 @@
 > 环境：UE 5.7.4（`E:\UnrealEngine`）
 > 落地位置：`E:\Doodle\script\uePlug\Doodle` 新增 Editor 模块 `DoodleMetaHumanFace`
 
-**已拍板的四条**（后文全部按此展开）：
+**已拍板的五条**（后文全部按此展开）：
 
 1. **ingest 走 B 路线** —— Doodle 侧出逐帧图像，UE 只构造 `UImgMediaSource` + `UFootageCaptureData`。A 路线（CaptureManager 设备链）不实现，仅留附录 B 备查。
 2. **`.dhfc` 不含平滑前数据** —— `flags` 保留为扩展位，`bit0` 恒为 0。
 3. **V1 宿主用 `E:\ue_main`** —— 只验证能编译、能跑通，不作为部署目标。
 4. **引擎插件在 `Doodle.uplugin` 的 `"Plugins"` 段启用** —— 借 `Doodle.uplugin:13` 的 `EnabledByDefault: true`，Doodle 插件在任意工程自动加载，因此宿主工程**不必改自己的 `.uproject`**。
+5. **不导出 FBX / AnimSequence** —— 唯一交付格式是 `.dhfc` 曲线。
 
 ---
 
@@ -20,7 +21,7 @@
 | 必须写 Python 吗？ | **不必**。上一版的 Python 只是照抄官方示例；ingest / 求解 / 导出三件事全部有公开 C++ API。 |
 | 能放进现有 Doodle 插件吗？ | **能**，加一个 `Type: Editor`、`LoadingPhase: PostEngineInit` 的新模块即可，不需要新进程、不需要新工程。 |
 | 视频解帧在哪做？ | **Doodle 侧做**（B 路线）。UE 只负责把图像序列包成 `UFootageCaptureData`，因此不启用 CaptureManager 那一串插件。 |
-| 主交付用自定义格式？ | 可行，且**比 FBX 好**：UE 的 AnimSequence 导出会丢掉全部面部曲线（见 §3.4），只有自定义曲线才是完整的脸。 |
+| 主交付用自定义格式？ | **是，唯一交付格式**。UE 的 AnimSequence 导出会丢掉全部面部曲线（见 §3.4），所以不导出 FBX / AnimSequence。 |
 | 需要 Identity / DNA 吗？ | 单目素材**不需要**。`MonoFootage` 分支只校验图像序列（`MetaHumanPerformance.cpp:1728-1753`）。 |
 | 新增工程接入成本？ | 只需 `Doodle.uplugin` 里加 1 个插件条目（`MetaHumanAnimator`），宿主工程的 `.uproject` 一个字都不用改。 |
 
@@ -102,7 +103,6 @@ Private: MetaHumanPerformance, MetaHumanCoreTech, MetaHumanCoreTechLib, MetaHuma
 | `MetaHumanFaceCaptureDataBuilder.cpp/.h` | B 路线：frames 目录 → `UImgMediaSource` + `UFootageCaptureData`（替代 ingest） |
 | `MetaHumanFaceSolver.cpp/.h` | `UMetaHumanPerformance` 的创建 / 处理 / 诊断 / 取曲线 |
 | `MetaHumanFaceCurveWriter.cpp/.h` | 写 `.dhfc`（§5） |
-| `MetaHumanFaceFbxExporter.cpp/.h` | 可选：`UAnimSequenceExporterFBX` |
 | `MetaHumanFaceJobSubsystem.h` | `UEngineSubsystem`，串行队列 |
 | `MetaHumanFaceEndpoint.cpp/.h` | HTTP 路由，供 Doodle 后端提交/查询 |
 | `MetaHumanFaceSmokeTest.cpp/.h` | V1 冒烟：`UFUNCTION(CallInEditor)` 跑通并打印曲线名 |
@@ -229,29 +229,15 @@ for (int32 i = 0; i < Perf->GetNumberOfProcessedFrames(); ++i)
 }
 ```
 
-`FFrameAnimationData` 在 `MetaHumanCoreTechLib/Source/MetaHumanCoreTech/Public/FrameAnimationData.h:31`，`AnimationData` 是 `BlueprintReadOnly` 的 `TMap<FString,float>`。**这是完整的 MetaHuman 控制集合**，比 AnimSequence 拿到的多得多。
+`FFrameAnimationData` 在 `MetaHumanCoreTechLib/Source/MetaHumanCoreTech/Public/FrameAnimationData.h:31`，`AnimationData` 是 `BlueprintReadOnly` 的 `TMap<FString,float>`。**这是完整的 MetaHuman 控制集合**，比 AnimSequence 拿到的多得多。我们直接把这套值写进 `.dhfc`，不经 AnimSequence 中转。
 
-**可选：落一个 AnimSequence 便于人眼核对**
-
-```cpp
-auto* S = NewObject<UMetaHumanPerformanceExportAnimationSettings>();
-S->bShowExportDialog     = false;                     // 默认 true，不开对话框
-S->bAutoSaveAnimSequence = true;
-S->bEnableHeadMovement   = true;
-S->ExportRange           = EPerformanceExportRange::WholeSequence;
-S->TargetSkeletonOrSkeletalMesh = FaceArchetypeSkeleton;
-UAnimSequence* Anim = UMetaHumanPerformanceExportUtils::ExportAnimationSequence(Perf, S);
-```
-
-**关键事实：AnimSequence 里没有面部骨骼动画。** `MetaHumanPerformanceExportUtils.cpp:2279-2285` 写完曲线后执行 `RemoveAllBoneTracks()`，然后只 `AddBoneCurve("root")`（为挂 timecode 属性）。面部相关只剩 7 条头部曲线：
+**为什么不走 AnimSequence / FBX**：`UMetaHumanPerformanceExportUtils::ExportAnimationSequence` 写完曲线后执行 `RemoveAllBoneTracks()`，然后只 `AddBoneCurve("root")`（为挂 timecode 属性，`MetaHumanPerformanceExportUtils.cpp:2279-2285`）。面部相关只剩 7 条头部曲线：
 
 `HeadYaw` / `HeadPitch` / `HeadRoll` / `HeadTranslationX` / `HeadTranslationY` / `HeadTranslationZ` / `HeadControlSwitch`
 
-而且**只有 Skeleton 的 `CurveMetaData` 里已存在同名曲线时才写**（`:2199-2250` 的 `SkeletonCurveNames.Contains(...)`）。`IsTargetSkeletonCompatible` 只在 UI 的 `ExportClicked` 里被调用（`:355-380`，弹对话框），**无 UI 路径完全不校验** —— 曲线名对不上就静默少写，不报错。C++ 里必须主动调一次并把缺失曲线打进日志。
+而且**只有 Skeleton 的 `CurveMetaData` 里已存在同名曲线时才写**（`:2199-2250` 的 `SkeletonCurveNames.Contains(...)`），`IsTargetSkeletonCompatible` 只在 UI 的 `ExportClicked` 里被调用（`:355-380`，弹对话框），**无 UI 路径完全不校验** —— 曲线名对不上就静默少写。再经 `UAnimSequenceExporterFBX` 转 FBX，拿到的还是一模一样的东西。
 
-**骨架路径未定**：内置骨架在 `MetaHumanAnimator/Content/IdentityTemplate/Face_Archetype_Skeleton.uasset`（同目录还有 `Face_Archetype_Brows.json`、`Face_ControlBoard_CtrlRig.uasset` 等），而官方示例脚本写的是 `/Game/MetaHumans/Common/Face/Face_Archetype_Skeleton`（**两者不一致**）。我们插件内容目录 `Content/MetaHumans/` 下只有材质贴图，**没有任何 Skeleton**。V1 冒烟必须先把这条路径与它的曲线表确认下来。
-
-**FBX（可选）**：`UAnimSequenceExporterFBX`（`Engine/Source/Editor/UnrealEd/Classes/Exporters/AnimSequenceExporterFBX.h`），走 `UExporter::ExportToFile`。**它只能导出上面那 7 条头部曲线，没有脸。** 请求里 `"fbx": true` 才导。Epic 官方论坛也明确建议「走 anim/level sequence 再生成 FBX，不要从 Performance 直接导出 control rig track」（[来源](https://forums.unrealengine.com/t/export-control-rig-fbx-from-metahuman-performance-via-python/2730980)）。
+结论：**不实现 AnimSequence / FBX 导出，也不依赖 `Face_Archetype_Skeleton`**。唯一交付产物是 `.dhfc`（`.dhfc.json` 只是人读摘要）。
 
 ---
 
@@ -323,7 +309,7 @@ offset  type       field
 **HTTP 端点**（`MetaHumanFaceEndpoint`）：模块 `StartupModule` 里拿 `FHttpServerModule` 起路由。
 
 ```
-POST /metahuman_face/job       body: {frames_dir, fps_num, fps_den, head_stabilize, fbx, out_dir} → {job_id}
+POST /metahuman_face/job       body: {frames_dir, fps_num, fps_den, head_stabilize, out_dir} → {job_id}
 GET  /metahuman_face/job/<id>                                  → {state, stage, code, detail, out_path}
 POST /metahuman_face/job/<id>/cancel
 ```
@@ -368,7 +354,7 @@ UnrealEditor-Cmd.exe <Project>.uproject -unattended -nologo -nosplash
 
 ## 8. 验证计划（三步，每步可单独交付）
 
-### V1 冒烟：确认曲线集合、骨架路径、图像命名（半天，宿主 `E:\ue_main`）
+### V1 冒烟：确认曲线集合、图像命名（半天，宿主 `E:\ue_main`）
 
 不做 HTTP、不做完整任务流。在模块里加一个 `UFUNCTION(CallInEditor)`（`MetaHumanFaceSmokeTest`），直接喂一份现成 JPEG 序列目录，跑：
 
@@ -376,12 +362,11 @@ UnrealEditor-Cmd.exe <Project>.uproject -unattended -nologo -nosplash
 
 验收物（5 条，缺一不可）：
 
-1. `AnimationData` 的**完整 key 列表**（应为 251 条；决定 `.dhfc` 曲线表）。
-2. `Face_Archetype_Skeleton` 在宿主工程里的真实路径（`/Game/...` 还是 `/MetaHumanAnimator/...`），以及它 `CurveMetaData` 里注册了哪 7 条头部曲线。
-3. **图像序列命名规则**：用 `SetTokenizedSequencePath` 能正确解析的最简文件命名。这条要写成断言，是 B 路线唯一的强耦合点。
-4. 单帧/整段耗时 → 校验 20 分钟约束。
-5. `NNERuntimeORTDml` + 3 个 `LoadObject`（FaceDetector / landmark_tracker / generic_rig_solver）是否全部可用（§3.3 第 5 条）。
-6. 顺带：打印平滑前后的差异（同一帧同一条曲线，`HyprsenseRealtimeSolver` 输出 vs `Smoothing` 输出各打一条日志），为将来是否要做平滑前数据留判断依据。
+1. `AnimationData` 的**完整 key 列表**（应为 251 条；决定 `.dhfc` 曲线表）。这份列表同时作为「引擎升级后曲线表变化」的基线。
+2. **图像序列命名规则**：用 `SetTokenizedSequencePath` 能正确解析的最简文件命名。这条要写成断言，是 B 路线唯一的强耦合点。
+3. 单帧/整段耗时 → 校验 20 分钟约束。
+4. `NNERuntimeORTDml` + 3 个 `LoadObject`（FaceDetector / landmark_tracker / generic_rig_solver）是否全部可用（§3.3 第 5 条）。
+5. 顺带：打印平滑前后的差异（同一帧同一条曲线，`HyprsenseRealtimeSolver` 输出 vs `Smoothing` 输出各打一条日志），为将来是否要做平滑前数据留判断依据。
 
 ### V2 任务链：frames → CaptureData → 曲线（1 天）
 
@@ -405,8 +390,7 @@ frames 目录 + 有理数帧率 → `UFootageCaptureData` → `UMetaHumanPerform
 | **图像序列命名与 `FFramePathResolver` 不匹配**（B 路线首风险） | 管线启动即 exit，`StartPipeline` 仍返回 `None`，表现为 0 帧 | V1 用实测钉死命名规则并写成启动断言（§3.2、§8 V1-3） |
 | **`UFootageCaptureData` 元数据自洽性无校验**（B 路线） | `FrameRateOverride` 填错时求解不报错、结果整体偏 | 自己校验帧率/尺寸/时间码；`.dhfc` 存分子分母 |
 | **无 UI 下 `PostEditChangeProperty` 弹窗卡死** | 常驻进程挂死 | 先构造并校验好 CaptureData 再赋值给 `FootageCaptureData`（§3.2） |
-| 骨架曲线集合随版本变 | `.dhfc` 曲线表对不上 | 启动比对常量表与实际 key，不一致直接失败并输出 diff |
-| AnimSequence 无面部骨骼 | 客户坚持要 FBX 会踩空 | 主交付 `.dhfc`；FBX 明确只含头部并写在文档里 |
+| 面部控制曲线集合随版本变 | `.dhfc` 曲线表对不上 | 启动比对常量表与实际 key，不一致直接失败并输出 diff |
 | 单实例限制 | 并发任务互相阻塞 | 队列串行 + 端点返回排队位置 |
 | 20 分钟约束 | 长素材超时 | 单段 ≤ 10 分钟硬限制；预检按时长估算耗时并提前失败 |
 
@@ -432,12 +416,12 @@ frames 目录 + 有理数帧率 → `UFootageCaptureData` → `UMetaHumanPerform
 | 2 | `.dhfc` 是否含平滑前数据 | **不含** | 单目管线里 `RawAnimationData` 恒空（写它的是 DepthFootage 专属节点）；要拿真正的平滑前值必须绕过 `UMetaHumanPerformance` 自搭第二条管线，等于跑两遍模型，与 20 分钟约束冲突。`flags` bit0 留作扩展（附录 C） |
 | 3 | V1 宿主 | **`E:\ue_main`** | 现成工程，只验证能编译能跑通，不作为部署目标 |
 | 4 | 引擎插件启用位置 | **`Doodle.uplugin` 的 `"Plugins"` 段**，只加 `MetaHumanAnimator` 一条 | `Doodle.uplugin:13` 的 `EnabledByDefault: true` 让 Doodle 在任意工程自动加载，其依赖段对所有宿主生效，因此各工程的 `.uproject` 无需改动 |
+| 5 | 是否导出 FBX / AnimSequence | **不导出，只出 `.dhfc`** | AnimSequence 经 `RemoveAllBoneTracks()` 后只剩 7 条头部曲线、没有面部骨骼；FBX 是它的下游，同样没有脸；而且都要绑 `Face_Archetype_Skeleton` 与其曲线表，多一层无用依赖 |
 
 **仍未定（不阻塞实现）**：
 
-1. 是否在 `E:\ue_main\uproject` 里显式补 `"Name": "Doodle"`（我倾向补，自包含可复现）。
-2. FBX 要不要做（当前只能出头部运动，没有脸）。
-3. 是否需要「一段素材 → 多段区间 / 多个演员」的批量能力。
+1. 是否在 `E:\ue_main` 的 `.uproject` 里显式补 `"Name": "Doodle"`（我倾向补，自包含可复现）。
+2. 是否需要「一段素材 → 多段区间 / 多个演员」的批量能力。
 
 ---
 
