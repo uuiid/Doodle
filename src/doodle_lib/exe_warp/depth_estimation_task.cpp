@@ -51,7 +51,7 @@ boost::asio::awaitable<void> depth_estimation_distributed::run() {
       auto l_height  = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_HEIGHT));
 
       auto l_writer  = cv::VideoWriter{
-          l_output_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), l_fps,
+          l_output_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), l_fps,
           cv::Size{l_width, l_height}
       };
 
