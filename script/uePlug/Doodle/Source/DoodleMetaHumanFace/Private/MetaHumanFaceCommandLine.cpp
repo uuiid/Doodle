@@ -89,7 +89,9 @@ FMetaHumanFaceCommandLine::FMetaHumanFaceCommandLine() {
 FMetaHumanFaceCommandLine::~FMetaHumanFaceCommandLine() {
 }
 
-FMetaHumanFaceJobResult FMetaHumanFaceCommandLine::Parse(const FString& InCommandLine) const {
+FMetaHumanFaceJobResult FMetaHumanFaceCommandLine::Parse(const FString& InCommandLine) {
+    Request = FMetaHumanFaceJobRequest();
+
     TArray<FString> Tokens;
     TArray<FString> Switches;
     TMap<FString, FString> Params;
@@ -103,7 +105,6 @@ FMetaHumanFaceJobResult FMetaHumanFaceCommandLine::Parse(const FString& InComman
         }
     }
 
-    FMetaHumanFaceJobRequest Request;
     TArray<FString> Errors;
 
     for (const FString& Switch : Switches)
@@ -131,50 +132,8 @@ FMetaHumanFaceJobResult FMetaHumanFaceCommandLine::Parse(const FString& InComman
 
     for (const TPair<FString, FString>& Param : Params)
     {
-        const FString& Key = Param.Key;
-        const FString& Value = Param.Value;
-
-        if (Key.Equals(TEXT("NoHeadStabilize"), ESearchCase::IgnoreCase) ||
-            Key.Equals(TEXT("KeepTongueSolve"), ESearchCase::IgnoreCase))
-        {
-            Errors.Add(FString::Printf(TEXT("argument \"-%s\" does not take a value"), *Key));
-        }
-        else if (Key.Equals(TEXT("FramesDir"), ESearchCase::IgnoreCase))
-        {
-            Request.FramesDir = Value;
-        }
-        else if (Key.Equals(TEXT("OutDir"), ESearchCase::IgnoreCase))
-        {
-            Request.OutDir = Value;
-        }
-        else if (Key.Equals(TEXT("SequencePattern"), ESearchCase::IgnoreCase))
-        {
-            Request.SequencePattern = Value;
-        }
-        else if (Key.Equals(TEXT("PackagePath"), ESearchCase::IgnoreCase))
-        {
-            Request.AssetPackagePath = Value;
-        }
-        else if (Key.Equals(TEXT("FPS"), ESearchCase::IgnoreCase))
-        {
-            const FMetaHumanFaceJobResult FrameRateResult = ParseFrameRate(Value, Request);
-            if (FrameRateResult.Code != EMetaHumanFaceErrorCode::None)
-            {
-                Errors.Add(FrameRateResult.Detail);
-            }
-        }
-        else if (Key.Equals(TEXT("Range"), ESearchCase::IgnoreCase))
-        {
-            const FMetaHumanFaceJobResult FrameRangeResult = ParseFrameRange(Value, Request);
-            if (FrameRangeResult.Code != EMetaHumanFaceErrorCode::None)
-            {
-                Errors.Add(FrameRangeResult.Detail);
-            }
-        }
-        else
-        {
-            Errors.Add(FString::Printf(TEXT("unknown argument \"-%s\""), *Key));
-        }
+        const FString Token = FString::Printf(TEXT("%s=%s"), *Param.Key, *Param.Value);
+        ParseToken(Token, Errors);
     }
 
     if (!Errors.IsEmpty())
@@ -190,6 +149,79 @@ FMetaHumanFaceJobResult FMetaHumanFaceCommandLine::Parse(const FString& InComman
     }
 
     return MakeParseSuccess();
+}
+
+const FMetaHumanFaceJobRequest& FMetaHumanFaceCommandLine::GetRequest() const {
+    return Request;
+}
+
+bool FMetaHumanFaceCommandLine::ParseToken(const FString& InToken, TArray<FString>& InOutErrors) {
+    const int32 AssignmentIndex = InToken.Find(TEXT("="), ESearchCase::CaseSensitive, ESearchDir::FromStart);
+
+    if (AssignmentIndex <= 0)
+    {
+        InOutErrors.Add(FString::Printf(TEXT("invalid argument \"%s\""), *InToken));
+        return false;
+    }
+
+    const FString Key = InToken.Left(AssignmentIndex);
+    const FString Value = InToken.Mid(AssignmentIndex + 1);
+
+    if (Key.Equals(TEXT("NoHeadStabilize"), ESearchCase::IgnoreCase) ||
+        Key.Equals(TEXT("KeepTongueSolve"), ESearchCase::IgnoreCase))
+    {
+        InOutErrors.Add(FString::Printf(TEXT("argument \"-%s\" does not take a value"), *Key));
+        return false;
+    }
+
+    if (Key.Equals(TEXT("FramesDir"), ESearchCase::IgnoreCase))
+    {
+        Request.FramesDir = Value;
+        return true;
+    }
+
+    if (Key.Equals(TEXT("OutDir"), ESearchCase::IgnoreCase))
+    {
+        Request.OutDir = Value;
+        return true;
+    }
+
+    if (Key.Equals(TEXT("SequencePattern"), ESearchCase::IgnoreCase))
+    {
+        Request.SequencePattern = Value;
+        return true;
+    }
+
+    if (Key.Equals(TEXT("PackagePath"), ESearchCase::IgnoreCase))
+    {
+        Request.AssetPackagePath = Value;
+        return true;
+    }
+
+    if (Key.Equals(TEXT("FPS"), ESearchCase::IgnoreCase))
+    {
+        const FMetaHumanFaceJobResult FrameRateResult = ParseFrameRate(Value, Request);
+        if (FrameRateResult.Code != EMetaHumanFaceErrorCode::None)
+        {
+            InOutErrors.Add(FrameRateResult.Detail);
+        }
+
+        return FrameRateResult.Code == EMetaHumanFaceErrorCode::None;
+    }
+
+    if (Key.Equals(TEXT("Range"), ESearchCase::IgnoreCase))
+    {
+        const FMetaHumanFaceJobResult FrameRangeResult = ParseFrameRange(Value, Request);
+        if (FrameRangeResult.Code != EMetaHumanFaceErrorCode::None)
+        {
+            InOutErrors.Add(FrameRangeResult.Detail);
+        }
+
+        return FrameRangeResult.Code == EMetaHumanFaceErrorCode::None;
+    }
+
+    InOutErrors.Add(FString::Printf(TEXT("unknown argument \"-%s\""), *Key));
+    return false;
 }
 
 FMetaHumanFaceJobResult FMetaHumanFaceCommandLine::Validate(const FMetaHumanFaceJobRequest& InRequest) {
