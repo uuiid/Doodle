@@ -35,6 +35,7 @@ public class DoodleMetaHumanFace : ModuleRules
             new string[]
             {
                 "MetaHumanPerformance",
+                "NNE",
                 "MetaHumanCoreTech",
                 "MetaHumanCoreTechLib",
                 "MetaHumanCaptureData",

@@ -4,6 +4,7 @@
 #include "Misc/Timecode.h"
 
 class UFootageCaptureData;
+class UMetaHumanPerformance;
 
 enum class EMetaHumanFaceStage : uint8
 {
@@ -124,4 +125,55 @@ struct CurveSetResult
     bool bOk = false;
     FString Error;
     FMetaHumanFaceCurveSet CurveSet;
+};
+
+enum class EMetaHumanFaceSolverErrorCode : uint8
+{
+    PerformanceCreationFailed,
+    MetaHumanModelMissing,
+    InferenceRuntimeMissing,
+    CaptureDataNotReady,
+    ProcessingRejected,
+    ProcessingFailed,
+    NoAnimationData,
+    CurveSetMismatch,
+    Cancelled,
+    TimedOut
+};
+
+struct FMetaHumanFaceSolverError
+{
+    EMetaHumanFaceSolverErrorCode Code = EMetaHumanFaceSolverErrorCode::ProcessingFailed;
+    FString Detail;
+    TArray<FString> MissingModelAssets;
+};
+
+struct FMetaHumanFaceBuiltPerformance
+{
+    UMetaHumanPerformance* Performance = nullptr;
+    FString OuterPackageName;
+    int32 FirstFrame = 0;
+    int32 FrameCount = 0;
+};
+
+struct FMetaHumanFaceSolverResult
+{
+    TArray<FString> CurveNames;
+    TArray<float> Values;
+    TArray<FTransform> RootPoses;
+    TArray<FMetaHumanFaceFrameRange> DroppedFrameRanges;
+    int32 FirstFrame = 0;
+    int32 FrameCount = 0;
+    uint32 FpsNum = 24000;
+    uint32 FpsDen = 1;
+};
+
+enum class EMetaHumanFaceProcessState : uint8
+{
+    Idle,
+    Running,
+    Succeeded,
+    Failed,
+    Cancelled,
+    TimedOut
 };
