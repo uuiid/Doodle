@@ -66,14 +66,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_depth_estimation_video, post) {
   l_task->submitter_  = person_.person_.uuid_id_;
   l_task->command_    = nlohmann::json{{"preview_id", l_preview->uuid_id_}};
   auto& l_ctx         = g_kitsu_ctx();
-  l_task->submitter_cookies_ = jwt::create()
-                                   .set_payload_claim("identity_type", jwt::claim{"person"s})
-                                   .set_issued_at(chrono::system_clock::now())
-                                   .set_id(fmt::to_string(l_task->submitter_))
-                                   .set_subject(fmt::to_string(l_task->submitter_))
-                                   .set_not_before(chrono::system_clock::now())
-                                   .set_expires_at(chrono::system_clock::now() + chrono::days{7})
-                                   .sign(jwt::algorithm::hs256{l_ctx.secret_});
   l_sqls.emplace_back(insert(l_sql).into<server_task_info>().values(*l_task));
 
   // 3. 一次提交三个 insert
