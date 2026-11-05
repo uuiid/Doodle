@@ -315,18 +315,23 @@ function Deploy-Worker {
     & robocopy $ShareBin $InstallDir /MIR /r:2 /w:1 /NDL /NFL
     if ($LASTEXITCODE -ge 8) { throw "robocopy runtime failed (exit $LASTEXITCODE)" }
 
-    # 4. Copy CUDA runtime DLLs
-    Write-Host "Copying CUDA DLLs from $ShareCuda ..."
-    $cudaDlls = @("onnxruntime_providers_cuda.dll", "onnxruntime_providers_shared.dll")
-    foreach ($dll in $cudaDlls) {
-        $src = Join-Path $ShareCuda $dll
-        if (Test-Path $src) {
-            Copy-Item -Force $src $InstallDir
-            Write-Host "  $dll"
+    # 4. Copy every CUDA runtime file (CUDA/cuDNN DLLs and whatever else the share holds)
+    Write-Host "Copying CUDA runtime files from $ShareCuda ..."
+    if (Test-Path -LiteralPath $ShareCuda) {
+        $cudaFiles = @(Get-ChildItem -LiteralPath $ShareCuda -File)
+        if ($cudaFiles.Count -eq 0) {
+            Write-Warning "  no files found in $ShareCuda"
         }
-        else {
-            Write-Warning "  $dll not found at $src"
+        foreach ($file in $cudaFiles) {
+            Copy-Item -LiteralPath $file.FullName -Destination $InstallDir -Force
+            Write-Host "  $($file.Name)"
         }
+    }
+    elseif (Test-Path -LiteralPath $ExePath) {
+        Write-Warning "Share $ShareCuda unreachable; keeping the CUDA files already in $InstallDir"
+    }
+    else {
+        throw "Share $ShareCuda unreachable and no worker binaries in $InstallDir"
     }
 
     # 5. Copy depth models into the runtime root the worker loads them from
