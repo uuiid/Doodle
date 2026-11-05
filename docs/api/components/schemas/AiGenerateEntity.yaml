@@ -37,3 +37,11 @@ properties:
     type: string
     format: uuid
     description: 主要任务ID
+  sub_task_list:
+    type: array
+    description: |
+      次要任务列表，一对多；仅在
+      `GET /api/seedance2/subproject/{subproject_id}/episodes/{episode_id}/entity` 的列表响应里返回，
+      单实体查询接口不含本字段。无次要任务时为空数组。
+    items:
+      $ref: ./AiGenerateEntitySubTask.yaml

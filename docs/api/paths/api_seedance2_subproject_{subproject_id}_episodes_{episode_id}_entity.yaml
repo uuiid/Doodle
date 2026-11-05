@@ -2,7 +2,13 @@ get:
   tags:
     - AI生成实体
   summary: 获取剧集下的实体列表
-  description: 返回指定剧集下的所有 AI 生成实体
+  description: |
+    返回指定剧集下的所有 AI 生成实体。
+
+    每个实体除了本体字段与 `preview`，还带 `sub_task_list`：该实体的全部次要任务
+    （`AiGenerateEntitySubTask`），按 `importance` 升序排列；没有次要任务的实体返回空数组。
+    次要任务由 `/api/seedance2/subproject/{subproject_id}/entity/{entity_id}/task/{task_id}`
+    的 `post` / `put` / `delete` 维护。
   parameters:
     - name: subproject_id
       in: path
@@ -31,6 +37,11 @@ get:
                     preview:
                       $ref: ../components/schemas/AiPreviewFile.yaml
                       description: 预览文件，仅存在预览时返回
+                    sub_task_list:
+                      type: array
+                      description: 该实体的次要任务列表，按 `importance` 升序；无次要任务时为空数组
+                      items:
+                        $ref: ../components/schemas/AiGenerateEntitySubTask.yaml
   security:
     - bearerAuth: []
 put:

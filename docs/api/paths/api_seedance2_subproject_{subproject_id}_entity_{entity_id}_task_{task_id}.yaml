@@ -1,0 +1,155 @@
+post:
+  tags:
+    - 任务
+  summary: 新建实体的次要任务
+  description: |
+    为 AI 生成实体新建一条次要任务记录（`AiGenerateEntitySubTask`）。
+
+    不做存在性检查：请求体直接解析成次要任务写入数据库，实体、任务是否存在由外键
+    （`ai_generate_entity_id`、`task_id` 均级联）负责，重复创建由唯一索引
+    `(ai_generate_entity_id, task_id)` 负责。任一约束不满足时数据库抛出的约束错误会被
+    HTTP 层映射为 400，响应体里带数据库的错误文本。
+
+    `id` / `uuid_id` 由服务端生成，请求体中传值无效。
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: entity_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: task_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - ai_generate_entity_id
+            - task_id
+            - importance
+          properties:
+            ai_generate_entity_id:
+              type: string
+              format: uuid
+              description: 所属 AI 生成实体ID（应为路径里的 `entity_id`）
+            task_id:
+              type: string
+              format: uuid
+              description: 对应任务ID（应为路径里的 `task_id`）
+            importance:
+              type: integer
+              format: int64
+              description: 重要性，必填，缺省即 400
+  responses:
+    '200':
+      description: 创建成功，返回新建的次要任务
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiGenerateEntitySubTask.yaml
+  security:
+    - bearerAuth: []
+put:
+  tags:
+    - 任务
+  summary: 修改实体次要任务的重要性
+  description: |
+    只修改已存在次要任务的 `importance`，不会新建。
+
+    请求体必须**只含 `importance`**：出现任何其它字段（包括 `ai_generate_entity_id`、
+    `task_id`）或缺少 `importance`，一律返回 400。记录不存在时按路径里的
+    `entity_id` + `task_id` 更新不到任何行，同样返回 400（文本为「次要任务不存在」），
+    不会插入新行；新建请用同 URL 的 `post`。
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: entity_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: task_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - importance
+          additionalProperties: false
+          properties:
+            importance:
+              type: integer
+              format: int64
+              description: 重要性
+  responses:
+    '200':
+      description: 修改成功，返回更新后的次要任务
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/AiGenerateEntitySubTask.yaml
+  security:
+    - bearerAuth: []
+delete:
+  tags:
+    - 任务
+  summary: 删除实体的次要任务
+  description: |
+    按路径里的 `entity_id` + `task_id` 删除次要任务记录；不存在时删除 0 行，同样返回 200。
+  parameters:
+    - name: subproject_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: entity_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: task_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: 删除成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              task_id:
+                type: string
+                format: uuid
+  security:
+    - bearerAuth: []

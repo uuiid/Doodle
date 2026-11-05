@@ -1,0 +1,24 @@
+type: object
+description: |
+  AI 生成实体的次要任务（`ai_generate_entity_sub_task`），与实体是一对多关系；
+  实体的「主要任务」是 `AiGenerateEntity.yaml` 里的 `main_task_id`。
+
+  同一实体下同一个任务只能有一条次要任务记录：`(ai_generate_entity_id, task_id)`
+  在数据库中带唯一索引，重复创建会因约束冲突返回 400。
+properties:
+  id:
+    type: string
+    format: uuid
+    description: 次要任务ID
+  ai_generate_entity_id:
+    type: string
+    format: uuid
+    description: 所属 AI 生成实体ID（必填，外键指向实体，实体删除时级联删除）
+  task_id:
+    type: string
+    format: uuid
+    description: 对应任务ID（必填，外键指向任务，任务删除时级联删除）
+  importance:
+    type: integer
+    format: int64
+    description: 重要性（必填，创建时必须显式提供，修改时只能改这一个字段）

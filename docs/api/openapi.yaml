@@ -312,6 +312,9 @@ paths:
   /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/task:
     $ref: >-
       paths/api_seedance2_subproject_{subproject_id}_entity_{entity_id}_task.yaml
+  /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/task/{task_id}:
+    $ref: >-
+      paths/api_seedance2_subproject_{subproject_id}_entity_{entity_id}_task_{task_id}.yaml
   /api/seedance2/subproject/{subproject_id}/task/{id}:
     $ref: paths/api_seedance2_subproject_{subproject_id}_task_{id}.yaml
   /api/seedance2/task:
