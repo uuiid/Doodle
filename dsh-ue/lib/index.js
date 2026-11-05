@@ -360,11 +360,11 @@ export function apply(ctx, config) {
     parameters: {
       target: {
         type: 'string',
-        description: 'UBT target 名，例如 DoodleLiveLink / UnrealEditor / UnrealPak。省略时先取 config.defaultTarget，没有配置才回退到 `<工程名>Editor`。',
+        description: 'UBT target 名，例如 MyGame / UnrealEditor / UnrealPak。省略时先取 config.defaultTarget，没有配置才回退到 `<工程名>Editor`。',
       },
       projectFile: {
         type: 'string',
-        description: '相对 repoRoot 或绝对路径的 .uproject，例如 DoodleLiveLink/DoodleLiveLink.uproject 或 E:\\ue_main\\ue_main.uproject。省略时用插件 config 的 projectFile，再否则用 pluginBuildScript。',
+        description: '相对 repoRoot 或绝对路径的 .uproject，例如 MyGame/MyGame.uproject 或 E:\\ue_main\\ue_main.uproject。省略时用插件 config 的 projectFile，再否则用 pluginBuildScript。',
       },
       engine: {
         type: 'boolean',
@@ -556,7 +556,7 @@ export function apply(ctx, config) {
 }
 
 /**
- * DoodleLiveLink.uproject → DoodleLiveLink
+ * MyGame.uproject → MyGame
  *
  * @param {string} projectAbsolute
  * @returns {string}

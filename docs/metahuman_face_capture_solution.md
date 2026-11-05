@@ -414,7 +414,7 @@ frames 目录 + 有理数帧率 → `UFootageCaptureData` → `UMetaHumanPerform
 
 ## 10. 与旧方案的取舍
 
-`docs/metahuman_face_capture_plan.md` 走的是「自己抽 `MetaHumanCoreTechLib` 编独立 Program，直接出 blendshape 权重」，能编出 208MB 的 `MHTechProbe.exe`，但卡在 `GEngineLoop::PreInit` 的 ShaderCodeLibrary 缺失，还有 EULA 再分发合规问题。该文档已删除，内容不再维护。
+`docs/metahuman_face_capture_plan.md` 走的是「自己抽 `MetaHumanCoreTechLib` 编独立 Program，直接出 blendshape 权重」，能编出 208MB 的 `MHTechProbe.exe`，但卡在 `GEngineLoop::PreInit` 的 ShaderCodeLibrary 缺失，还有 EULA 再分发合规问题。
 
 本次核实证明：**5.7 的官方 C++ API 已经把同样的能力暴露出来了**（`UMetaHumanPerformance` 自己编排 `FHyprsenseRealtimeNode`）。所以：
 

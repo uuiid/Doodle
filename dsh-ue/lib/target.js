@@ -222,7 +222,7 @@ export function resolveTarget(input, context, exists) {
 
   /**
    * target 名的取值顺序：显式 target → config.defaultTarget → `<工程名>Editor`。
-   * 有些工程（例如 Doodle 的 DoodleLiveLink）只有 `FooTarget` 一个 target 类，
+   * 有些工程只有一个 `FooTarget` target 类（没有 `FooEditorTarget`），
    * UBT 的 target 名就是 `Foo`，此时必须靠 config.defaultTarget 或显式 target 指定。
    *
    * @param {string} projectAbsolute
@@ -365,7 +365,7 @@ function stripTrailingSeparators(value) {
 }
 
 /**
- * 从 .uproject 路径推默认 target 名：DoodleLiveLink.uproject → DoodleLiveLinkEditor。
+ * 从 .uproject 路径推默认 target 名：MyGame.uproject → MyGameEditor。
  *
  * @param {string} projectAbsolute
  * @returns {string}
