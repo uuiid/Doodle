@@ -13,7 +13,7 @@ class FMetaHumanFaceCommandLine
     FMetaHumanFaceCommandLine& operator=(const FMetaHumanFaceCommandLine&) = delete;
     FMetaHumanFaceCommandLine& operator=(FMetaHumanFaceCommandLine&&) = delete;
 
-    FMetaHumanFaceJobResult Parse(const TArray<FString>& InTokens) const;
+    FMetaHumanFaceJobResult Parse(const FString& InCommandLine) const;
 
     static FMetaHumanFaceJobResult Validate(const FMetaHumanFaceJobRequest& InRequest);
     static FString Usage();
