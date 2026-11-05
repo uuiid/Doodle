@@ -207,7 +207,7 @@ function Register-Worker {
     $body = @{ allowed_task_types = @("depth_estimation") } | ConvertTo-Json -Compress
     $url = "http://127.0.0.1:$Port/api/actions/local/task/run"
     # local_http_fun::parse_header takes the session JWT from the access_token_cookie header
-    $headers = @{ "Authorization" = "Bearer $KitsuCookies" }
+    $headers = @{ "Authorization" = "Bearer $AccessToken" }
     Write-Host "POST $url $body"
 
     $attempt = 0
