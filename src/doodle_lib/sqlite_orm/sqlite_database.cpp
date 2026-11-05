@@ -246,6 +246,27 @@ void sqlite_storage::regs_all() {
           &seedance2::ai_generate_entity::main_task_id_, &seedance2::task::uuid_id_, foreign_key_action::set_null
       );
 
+  reg_table<seedance2::ai_generate_entity_sub_task>("seedance2_ai_generate_entity_sub_task")
+      .add_column("id", &seedance2::ai_generate_entity_sub_task::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::ai_generate_entity_sub_task::uuid_id_, unique(), not_null())
+      .add_column(
+          "ai_generate_entity_id", &seedance2::ai_generate_entity_sub_task::ai_generate_entity_id_, not_null()
+      )
+      .add_column("task_id", &seedance2::ai_generate_entity_sub_task::task_id_, not_null())
+      .add_column("importance", &seedance2::ai_generate_entity_sub_task::importance_, not_null())
+      .add_foreign_key(
+          &seedance2::ai_generate_entity_sub_task::ai_generate_entity_id_,
+          &seedance2::ai_generate_entity::uuid_id_,
+          foreign_key_action::cascade
+      )
+      .add_foreign_key(
+          &seedance2::ai_generate_entity_sub_task::task_id_, &seedance2::task::uuid_id_,
+          foreign_key_action::cascade
+      )
+      .add_unique_index(
+          &seedance2::ai_generate_entity_sub_task::ai_generate_entity_id_, &seedance2::ai_generate_entity_sub_task::task_id_
+      );
+
   reg_table<seedance2::ai_entity_reference_preview>("seedance2_ai_entity_reference_preview")
       .add_column("id", &seedance2::ai_entity_reference_preview::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::ai_entity_reference_preview::uuid_id_, unique(), not_null())

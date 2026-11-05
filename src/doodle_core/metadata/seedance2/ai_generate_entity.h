@@ -82,4 +82,24 @@ struct DOODLE_CORE_API ai_entity_reference_preview {
   }
 };
 
+/// entity 对应的次要任务
+struct DOODLE_CORE_API ai_generate_entity_sub_task {
+  DOODLE_BASE_FIELDS();
+  uuid ai_generate_entity_id_;  // 必填
+  uuid task_id_;                // 必填 对应 task.h
+  std::int64_t importance_;
+
+  friend void to_json(nlohmann::json& j, const ai_generate_entity_sub_task& p) {
+    j["id"]                    = p.uuid_id_;
+    j["ai_generate_entity_id"] = p.ai_generate_entity_id_;
+    j["task_id"]               = p.task_id_;
+    j["importance"]            = p.importance_;
+  }
+  friend void from_json(const nlohmann::json& j, ai_generate_entity_sub_task& p) {
+    j.at("ai_generate_entity_id").get_to(p.ai_generate_entity_id_);
+    j.at("task_id").get_to(p.task_id_);
+    j.at("importance").get_to(p.importance_);
+  }
+};
+
 }  // namespace doodle::seedance2

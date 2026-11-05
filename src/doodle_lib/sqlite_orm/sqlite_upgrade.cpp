@@ -101,7 +101,6 @@ struct upgrade_3_t : sqlite_upgrade {
     l_s.pragma().foreign_keys(false);
     using namespace orm;
     auto l_g = l_s.transaction();
-    l_s.rebuild_table<entity_asset_extend>();
     l_s.sync_schema();
 
     l_g.commit();

@@ -275,6 +275,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_c<seedance2_subproject_entity_preview>()
       .reg_c<seedance2_subproject_task>()
       .reg_c<seedance2_subproject_task_instance>()
+      .reg_c<seedance2_subproject_entity_sub_task>()
       .reg_c<seedance2_subproject_entity_reference>()
       .reg_c<seedance2_subproject_reference_instance>()
       .reg_c<seedance2_subproject_ai_category>()

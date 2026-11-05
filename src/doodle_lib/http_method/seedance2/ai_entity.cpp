@@ -2,6 +2,7 @@
 #include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/seedance2/ai_generate_entity.h>
 #include <doodle_core/metadata/seedance2/ai_preview_file.h>
+#include <doodle_core/metadata/seedance2/task.h>
 
 #include <doodle_lib/http_method/seedance2/reg.h>
 #include <doodle_lib/sqlite_orm/orm/orm.h>
@@ -333,6 +334,72 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_reference_instance, dele
   co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return std::make_unique<http_body_json_t>(nlohmann::json{{"id", id_}});
+}
+
+// /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/task/{task_id}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_sub_task, post) {
+  person_.check_subproject_access(subproject_id_);
+  person_.check_not_outsourcer();
+  auto l_sql      = get_sqlite_database();
+  auto l_sub_task = std::make_shared<sd2::ai_generate_entity_sub_task>(in_handle->get_json());
+
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(insert(l_sql).into<sd2::ai_generate_entity_sub_task>().values(*l_sub_task));
+  co_await l_sql.run_sql(std::move(l_sqls));
+
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = *l_sub_task));
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_sub_task, put) {
+  person_.check_subproject_access(subproject_id_);
+  person_.check_not_outsourcer();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
+  for (const auto& [l_key, l_value] : l_json.items())
+    DOODLE_CHICK_HTTP(l_key == "importance", bad_request, "只支持修改 importance 字段: {}", l_key);
+  DOODLE_CHICK_HTTP(l_json.contains("importance"), bad_request, "缺少 importance");
+
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      update(l_sql)
+          .from<sd2::ai_generate_entity_sub_task>()
+          .set(c(&sd2::ai_generate_entity_sub_task::importance_) = l_json.at("importance").get<std::int64_t>())
+          .where(
+              c(&sd2::ai_generate_entity_sub_task::ai_generate_entity_id_) == entity_id_ &&
+              c(&sd2::ai_generate_entity_sub_task::task_id_) == task_id_
+          )
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
+
+  auto l_sub_task_list = select(l_sql)
+                             .columns(object<sd2::ai_generate_entity_sub_task>())
+                             .from<sd2::ai_generate_entity_sub_task>()
+                             .where(
+                                 c(&sd2::ai_generate_entity_sub_task::ai_generate_entity_id_) == entity_id_ &&
+                                 c(&sd2::ai_generate_entity_sub_task::task_id_) == task_id_
+                             )()
+                             .to_vector();
+  DOODLE_CHICK_HTTP(!l_sub_task_list.empty(), bad_request, "次要任务不存在");
+  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sub_task_list.front()));
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_sub_task, delete_) {
+  person_.check_subproject_access(subproject_id_);
+  person_.check_not_outsourcer();
+  auto l_sql = get_sqlite_database();
+  using namespace orm;
+  sql_modify_statement_vector_t l_sqls{};
+  l_sqls.emplace_back(
+      delete_from(l_sql).from<sd2::ai_generate_entity_sub_task>().where(
+          c(&sd2::ai_generate_entity_sub_task::ai_generate_entity_id_) == entity_id_ &&
+          c(&sd2::ai_generate_entity_sub_task::task_id_) == task_id_
+      )
+  );
+  co_await l_sql.run_sql(std::move(l_sqls));
+
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{{"task_id", task_id_}});
 }
 
 }  // namespace doodle::http

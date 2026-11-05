@@ -172,6 +172,22 @@ DOODLE_HTTP_ROUTE(
 uuid subproject_id_{};
 uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
+// 设置 entity 对应的次要任务
+// /api/seedance2/subproject/{subproject_id}/entity/{entity_id}/task/{task_id}
+DOODLE_HTTP_JWT_FUN(seedance2_subproject_entity_sub_task)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_ROUTE(
+    "/api/seedance2/subproject/{subproject_id_}/entity/{entity_id_}/task/{task_id_}", subproject_id_, entity_id_,
+    task_id_
+)
+uuid subproject_id_{};
+uuid entity_id_{};
+uuid task_id_{};
+DOODLE_HTTP_FUN_END()
+
+
 // 获取所有可以访问的任务
 // /api/seedance2/task
 DOODLE_HTTP_JWT_FUN(seedance2_task)
