@@ -10,6 +10,8 @@
 
 #include "core/global_function.h"
 #include "reg.h"
+#include <algorithm>
+#include <map>
 #include <memory>
 #include <opencv2/opencv.hpp>
 
@@ -36,6 +38,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity, post) {
 }
 struct ai_generate_entity_with_preview_file : public sd2::ai_generate_entity {
   sd2::ai_preview_file preview_;
+  std::vector<sd2::ai_generate_entity_sub_task> sub_task_list_;
   explicit ai_generate_entity_with_preview_file(
       const sd2::ai_generate_entity& in_reference, const sd2::ai_preview_file& in_preview
   )
@@ -44,6 +47,7 @@ struct ai_generate_entity_with_preview_file : public sd2::ai_generate_entity {
   friend void to_json(nlohmann::json& j, const ai_generate_entity_with_preview_file& p) {
     to_json(j, static_cast<const sd2::ai_generate_entity&>(p));
     if (!p.preview_.uuid_id_.is_nil()) j["preview"] = p.preview_;
+    j["sub_task_list"] = p.sub_task_list_;
   }
 };
 namespace {
@@ -130,6 +134,26 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, get)
                       .where(c(&sd2::ai_generate_entity::ai_episode_id_) == episode_id_)
                       .order_by(&sd2::ai_generate_entity::name_)()
                       .to_vector<ai_generate_entity_with_preview_file>();
+  std::vector<uuid> l_entity_ids{};
+  l_entity_ids.reserve(l_result.size());
+  for (const auto& l_entity : l_result) l_entity_ids.emplace_back(l_entity.uuid_id_);
+
+  if (!l_entity_ids.empty()) {
+    auto l_sub_task_list = select(l_sql)
+                               .columns(object<sd2::ai_generate_entity_sub_task>())
+                               .from<sd2::ai_generate_entity_sub_task>()
+                               .where(c(&sd2::ai_generate_entity_sub_task::ai_generate_entity_id_).in(l_entity_ids))()
+                               .to_vector();
+    std::map<uuid, std::vector<sd2::ai_generate_entity_sub_task>> l_sub_task_map{};
+    for (auto& l_sub_task : l_sub_task_list) l_sub_task_map[l_sub_task.ai_generate_entity_id_].emplace_back(l_sub_task);
+    for (auto& [l_key, l_value] : l_sub_task_map)
+      std::ranges::sort(l_value, {}, &sd2::ai_generate_entity_sub_task::importance_);
+
+    for (auto& l_entity : l_result) {
+      if (auto l_iter = l_sub_task_map.find(l_entity.uuid_id_); l_iter != l_sub_task_map.end())
+        l_entity.sub_task_list_ = l_iter->second;
+    }
+  }
   co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_result));
 }
 
@@ -173,7 +197,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_insta
   l_sqls.emplace_back(std::move(l_update));
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_)));
+  co_return std::make_unique<http_body_json_t>(
+      (nlohmann::json{} = l_sql.get_by_uuid<sd2::ai_generate_entity>(entity_id_))
+  );
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity_instance, delete_) {
@@ -201,12 +227,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_preview, post) {
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
   l_sqls.emplace_back(insert(l_sql).into<sd2::ai_preview_file>().values(*l_preview));
-  l_sqls.emplace_back(
-      update(l_sql)
-          .from<sd2::ai_generate_entity>()
-          .set(c(&sd2::ai_generate_entity::preview_file_) = l_preview->uuid_id_)
-          .where(c(&sd2::ai_generate_entity::uuid_id_) == l_entity.uuid_id_)
-  );
+  l_sqls.emplace_back(update(l_sql)
+                          .from<sd2::ai_generate_entity>()
+                          .set(c(&sd2::ai_generate_entity::preview_file_) = l_preview->uuid_id_)
+                          .where(c(&sd2::ai_generate_entity::uuid_id_) == l_entity.uuid_id_));
   co_await l_sql.run_sql(std::move(l_sqls));
 
   auto& l_ctx           = g_kitsu_ctx();
@@ -323,11 +347,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_reference_instance, dele
 
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(
-      delete_from(l_sql).from<sd2::ai_entity_reference_preview>().where(
-          c(&sd2::ai_entity_reference_preview::uuid_id_) == id_
-      )
-  );
+  l_sqls.emplace_back(delete_from(l_sql).from<sd2::ai_entity_reference_preview>().where(
+      c(&sd2::ai_entity_reference_preview::uuid_id_) == id_
+  ));
   l_sqls.emplace_back(
       delete_from(l_sql).from<sd2::ai_preview_file>().where(c(&sd2::ai_preview_file::uuid_id_) == l_ref->preview_file_)
   );
@@ -373,14 +395,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_sub_task, put) {
   );
   co_await l_sql.run_sql(std::move(l_sqls));
 
-  auto l_sub_task_list = select(l_sql)
-                             .columns(object<sd2::ai_generate_entity_sub_task>())
-                             .from<sd2::ai_generate_entity_sub_task>()
-                             .where(
-                                 c(&sd2::ai_generate_entity_sub_task::ai_generate_entity_id_) == entity_id_ &&
-                                 c(&sd2::ai_generate_entity_sub_task::task_id_) == task_id_
-                             )()
-                             .to_vector();
+  auto l_sub_task_list =
+      select(l_sql)
+          .columns(object<sd2::ai_generate_entity_sub_task>())
+          .from<sd2::ai_generate_entity_sub_task>()
+          .where(c(&sd2::ai_generate_entity_sub_task::ai_generate_entity_id_) == entity_id_ && c(&sd2::ai_generate_entity_sub_task::task_id_) == task_id_)()
+          .to_vector();
   DOODLE_CHICK_HTTP(!l_sub_task_list.empty(), bad_request, "次要任务不存在");
   co_return std::make_unique<http_body_json_t>((nlohmann::json{} = l_sub_task_list.front()));
 }
@@ -391,12 +411,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_sub_task, delete_
   auto l_sql = get_sqlite_database();
   using namespace orm;
   sql_modify_statement_vector_t l_sqls{};
-  l_sqls.emplace_back(
-      delete_from(l_sql).from<sd2::ai_generate_entity_sub_task>().where(
-          c(&sd2::ai_generate_entity_sub_task::ai_generate_entity_id_) == entity_id_ &&
-          c(&sd2::ai_generate_entity_sub_task::task_id_) == task_id_
-      )
-  );
+  l_sqls.emplace_back(delete_from(l_sql).from<sd2::ai_generate_entity_sub_task>().where(
+      c(&sd2::ai_generate_entity_sub_task::ai_generate_entity_id_) == entity_id_ &&
+      c(&sd2::ai_generate_entity_sub_task::task_id_) == task_id_
+  ));
   co_await l_sql.run_sql(std::move(l_sqls));
 
   co_return std::make_unique<http_body_json_t>(nlohmann::json{{"task_id", task_id_}});
