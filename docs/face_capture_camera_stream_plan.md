@@ -86,7 +86,7 @@ src/doodle_lib/core/face_capture/          ← 新增：与 HTTP 无关的采集
     face_capture_types.h                    公共结构体、enums、错误码、to_json/from_json
     media_fragment_pipeline.h/.cpp          ffmpeg 编码 + fMP4 分片产出 + raw_sink（无损）
     frame_filter.h/.cpp                     fps 滤镜包装：真实时间戳输入 → 25 fps 输出
-    ws_outlet.h/.cpp                        单推流出口：单在途写、上限 8 片、丢非关键帧
+    ws_outlet.h/.cpp                        单推流出口：单在途写、上限 8 片、丢非关键帧；send_* post 到 strand，查询走 atomic
     capture_session.h/.cpp                  会话状态机 + 摄像头读线程 + 采集处理（本机唯一的会话）
     frame_align.h/.cpp                      align.json 记录与读取
     png_sequence_writer.h/.cpp              raw.mkv → frames/（逐帧，无补位）
@@ -175,9 +175,11 @@ WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` 
 
 - `websocket_init`：从 `in_handle->url_` 取 `token`（复用 `local_http_fun::parse_header` 的 cookie/Bearer 逻辑）；用 `capture_session::instance()` 拿那**唯一一个** `shared_ptr<capture_session>`，**不要依赖自身成员**（clone 后是副本）。
 - 若此时还没有会话（前端没调 `POST /recordings` 就已经连了 WS），就把 `ws_outlet` 先挂到一个**待用槽**上：`hello` 回 `{state:"idle"}`，只下发事件、不下发视频；等 `POST /recordings` 建成会话后，会话把 outlet 接过去，自动开始推流。**前端不需要为了拿画面去重连。**
+- 接入顺序固定为 **先 `attach(write_fn)` 再 `send_hello()`**：`ws_outlet` 的 `send_*` 是 post 到 strand 的异步投递，未 attach 时会被丢弃（§5.3）。
 - 若已有会话且它在 `recording`，**新连接接管推流**：旧连接的 `ws_outlet` 被关掉并发 `error: superseded`，旧连接只读不写（或由服务端直接关闭），新连接成为唯一出口。**同一时刻只有一条推流**，不做多播。
 - `websocket_callback`：`co_spawn(g_io_context(), run(std::move(stream)), detached)`，协程内部自己 `async_read`/`async_write`。
 - 写端必须**单在途**：`atomic_bool writing_`，与 `socket_io_websocket_core::async_write_websocket`（`websocket_impl.cpp:124-158`）同构。控制消息是 text JSON，视频分片是 binary，切换用 `stream.binary(true/false)` 的 RAII guard（同 `binary_data_guard`）。**一条 WS 上不能并发写**，这是 beast 的硬约束。
+- `write_fn` 的实现体内直接 `co_await stream.async_write_some(true, buffer, use_awaitable)`（`ws_outlet` 保证单在途），不需要再套一层 `writing_` 标志位。
 - 读端**只做保活与断连检测**：收到任何帧都忽略，靠 `async_read` 的失败感知连接已经断掉（从而清掉 `ws_outlet`）。**没有命令解析、没有 `post` 到采集 strand 的分派逻辑**——控制面已经全在 HTTP（§3.5）。
 - 降级：若客户端协商不到 `Sec-WebSocket-Protocol`，仍按普通 WS 走；诊断信息统一用 JSON 事件下发。
 
@@ -267,6 +269,7 @@ idle ──POST /recordings──► recording ──POST /stop、错误──�
 ```
 
 - `stopping` 是**短暂中间态**：`stop()` 把状态置成 `stopping` 并下发 `capture_state` 事件，然后**在同一个协程里**等推流排空（≤ 2 秒）→ 收尾三个编码器 → 写 `align.json` → 置 `stopped` 再发一次事件。所以前端看到 `stopping` 之后必定能等到 `stopped`，`POST .../stop` 返回时状态已经是 `stopped`。
+- 等推空**必须用 `co_await timer.async_wait()` 轮询 `outlet_->idle()`**，不能用同步的 `timer.wait()`：`stop()` 与写协程在同一个 strand 上，同步阻塞会把 strand 占死，写协程永远抢不到执行权，结果是真的空等满 2 秒。
 - 新一轮 `start()` 进来时若仍是 `recording`/`stopping` → `409 already_recording`（`error_code_t::already_recording`）；否则先 `close_resources()` 收拾上一个会话的残留，再建新的。
 - **本机只有一个会话对象**：`capture_session::instance()` 单例（§3.2）。所以"设备互斥"退化成"状态机不许重入"——没有第二个会话能来抢摄像头。
 - `session_id` 在 `POST /recordings` 成功时生成（`uuid`），`session_dir = core_set::get_set().get_cache_root("face_capture") / session_id_str`。
@@ -357,11 +360,15 @@ camera → (fps 滤镜) ─┬─► media_fragment_pipeline(推流编码器) �
 ```
 
 - `ws_outlet` 就是当前绑定的那条连接的写接口（`shared_ptr`，可为空——没连 WS 时推流编码直接**不做**，省 CPU）。
-- **写不动就丢**：`ws_outlet::send_fragment(fragment)` 是非阻塞返回值的调用。内部是一个**上限 8 片**的 `std::deque`，用一个 `atomic_bool` 保证**同时只有一条写协程在途**；`drain()` 依次取队首写出去。
+- **线程模型（硬约束）**：`ws_outlet` 的 strand 背后是 `g_ioc` 线程池，**strand 上的处理函数与它的调用线程不保证同一线程**。所以"发帧"（`send_*`，可能从采集 strand 调用）与"写帧"（`drain()`，在 outlet 自己的 strand 上）之间**没有同线程假设可用**，只能靠"所有共享状态只在 strand 上访问"来串行化。
+- **怎么做到**：`send_hello` / `send_event` / `send_fragment` / `notify_state` 一律 `boost::asio::post(strand_, ...)` 投递，逻辑体在 strand 上执行；`attach` / `detach` / `set_init_segment` / `set_session_info` 保留同步签名，但**必须在注入的 strand 上调用**（调用方就是采集 strand，满足）。`queue_` / `pumping_` / `closing_` / `write_` / `state_` / `init_segment_` / `session_id_` / `width_` / `height_` 全部只由 strand 触碰，不需要 mutex，也不需要 TBB 并发容器。
+- **查询走 atomic**：`attached_`、`idle_` 两个 `std::atomic_bool` 专门给外部查询用（`is_attached()` / `idle()`），只是快照，不参与 strand 上的任何决策。决策一律用 strand 内的 `closing_` / `write_` / `queue_` 判断。
+- **顺序要求**：因为 `send_*` 变成异步投递，**必须先 `attach()` 再 `send_hello()` / `send_fragment()`**；反过来的话投递的函数先执行、看到未 attach 就丢弃。HTTP/WS 层接入时按这个顺序写。
+- **写不动就丢**：`send_fragment(fragment)` 调完即返回。内部是一个**上限 8 片**的 `std::deque`，`pumping_` 保证**同时只有一条写协程在途**；`drain()` 依次取队首写出去。
 - **丢非关键帧**：队列里还压着没发出去的关键帧分片时，新进来的**非关键帧分片直接丢弃**（它反正要靠后面的关键帧重同步）。所以异常时队列最多积到 8 片，随后被关键帧覆盖式清空。**没有任何环形缓冲、没有 history 补发**。
 - 为什么不需要更复杂的背压：单用户本机 + 同机前端，WS 走 loopback，单帧分片 10–60 KB，写满窗口的概率极低；偶发丢片最多让画面卡一下，**录制链（`raw.mkv`）完全不受影响**，因为 `raw.mkv` 与推流是两条独立的编码器，各自从同一批 `cv::Mat` 取帧。
 - 这也意味着**§3.3 里不需要 `gap` 标记**：丢片时前端只会停在上一帧，下一个关键帧到达自然恢复（GOP = 1 秒）。
-- 只由采集 strand 触碰 `ws_outlet`；WS 协程只在写完成时回到 strand 复位"空闲"标志。**不要裸 `std::queue` 跨线程**。
+- 只由采集 strand 触碰 `ws_outlet` 的同步接口（`attach`/`detach`/`set_*`），投递型接口（`send_*`）可以任意线程调用。**不要裸 `std::queue` 跨线程**。
 - 页面切后台导致 WS 停读：beast 的 `async_write` 挂着，队列一直满，分片被丢 —— 这正是期望行为，**不超时、不主动断开**（录制还在跑，断开就没法控制停止）。
 
 ### 5.4 录制侧（raw.mkv）
@@ -710,7 +717,8 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | 摄像头帧率高于 25 | 推流/`take.mp4` 时间轴抖动 | `fps=25` 滤镜按真实时间戳采样；`raw.mkv` 与 `frames/` 不受影响（§4.4） |
 | 摄像头帧率低于 25 | 推流里出现重复帧 | `fps` 滤镜自动补重复帧，`inserted_frames` 记录数量；只在画面运动上有观感差异，不影响求解 |
 | `fps` 滤镜建不出来 | `take.mp4` 时间轴按帧数而非墙钟 | `frame_filter::make()` 返回 `nullptr` 时降级为原始帧逐帧编码，`source_fps` / `inserted_frames` 暴露实情（§4.4） |
-| WS 写并发 | beast 直接崩或数据错乱 | 单在途写标志 + `binary(true/false)` RAII（§3.3） |
+| WS 写并发 | beast 直接崩或数据错乱 | 所有共享状态只在 outlet 自己的 strand 上访问：`send_*` 一律 post 到 strand，`attach`/`detach`/`set_*` 要求调用方已在 strand 上；查询只读 `attached_`/`idle_` 两个 atomic（§5.3） |
+| `stop()` 同步阻塞 strand | 写协程饿死，等满 2 秒才返回 | `wait_outlet_idle()` 改成 `co_await timer.async_wait()` 轮询，让出 strand（§4.2） |
 | 页面挂起导致 WS 停读 | 写挂住、推流分片被丢 | 上限 8 片队列 + 丢非关键帧（§5.3）；**录制链不受影响**，丢的只是画面 |
 | 摄像头型号差异（分辨率/帧率/MJPG 直出） | 请求的分辨率被静默改成别的 | 回读实际分辨率并上报（§4.3）；帧率不需要协商，滤镜负责统一（§4.4） |
 | 摄像头静默 / 驱动掉帧 | 录制里出现时长空洞 | `gaps` 记墙钟区间（§4.4）；`raw.mkv` 与 `frames/` 只少几张，UE 不受影响（§10） |
@@ -738,6 +746,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 - beast 的流类型是 `boost::beast::tcp_stream`（头 `boost/beast/core/tcp_stream.hpp`），不是 `boost::asio::ip::tcp::tcp_stream`。
 - beast websocket 写接口 `async_write_some(bool fin, ...)` 第一参必须传 `true`。
 - 重写整个 `.cpp` 时务必确认没有残留旧函数体，否则 `C2084 ... already has a body`。
+- 用了 `boost::asio::post` 要包含 `boost/asio/post.hpp`；`std::atomic_bool` 成员要包含 `<atomic>`（`ws_outlet.cpp` 已补）。
 
 **编译期注意**：新增源文件必须同时登记到 `core/CMakeLists.txt`、`exe_warp/CMakeLists.txt`、`http_method/local/CMakeLists.txt` 三个 `target_sources(doodle_lib ...)` 里（现状见 [local/CMakeLists.txt](E:\Doodle\src\doodle_lib\http_method\local\CMakeLists.txt)：`PUBLIC` 只放 `.h`，`.cpp` 全在 `PRIVATE`）。漏登记表现为"链接时找不到符号"而不是语法错误。
 

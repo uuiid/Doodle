@@ -54,8 +54,6 @@ class ws_outlet : public std::enable_shared_from_this<ws_outlet> {
 
   [[nodiscard]] bool idle() const;
 
-  [[nodiscard]] bool pumping() const;
-
   [[nodiscard]] const executor_type& get_executor() const;
 
  private:

@@ -177,7 +177,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     co_await wait_read_thread();
     drain_filter();
 
-    wait_outlet_idle();
+    co_await wait_outlet_idle();
 
     auto l_result       = fill_result(true, capture_state::stopped);
     l_result.truncated_ = truncated_;
@@ -320,10 +320,12 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     }
   }
 
-  void wait_outlet_idle() {
+  boost::asio::awaitable<void> wait_outlet_idle() {
     auto l_deadline = clock_type::now() + std::chrono::milliseconds{k_stop_drain_timeout_ms};
+    boost::asio::steady_timer l_timer{strand_};
     while (outlet_ && !outlet_->idle() && clock_type::now() < l_deadline) {
-      boost::asio::steady_timer{strand_, std::chrono::milliseconds{2}}.wait();
+      l_timer.expires_after(std::chrono::milliseconds{2});
+      co_await l_timer.async_wait(boost::asio::use_awaitable);
     }
   }
 
