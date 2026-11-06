@@ -179,8 +179,6 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 
 > **会话对象的归属**：会话由 `ws_stream_runner`（定义在 `http_method/local/face_capture_stream.cpp`）持有，成员是唯一的 `std::shared_ptr<capture_session> session_`；`stop` / `GET recordings` 等 HTTP handler 通过"当前唯一活跃会话"的弱引用登记拿它。**本机只有一个会话，所以不存在查找表。**
 
-**设备枚举不能占 io 线程**：`capture_session::list_devices()` 逐个 index 尝试 `VideoCapture::open`（DSHOW/MSMF），是阻塞调用，最长几百毫秒。实现里把它丢进文件内一个 `boost::asio::thread_pool{1}`（进程内单例、单线程，避免两次枚举同时抢同一个设备），`co_spawn` 到该池后 `co_await` 回来。GET 与 POST 都走这条路径——POST 要用真实枚举结果校验 index，不能只判"非负"。
-
 ### 3.3 WS 协议
 
 WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` + `websocket::is_upgrade()` + `callback_->has_websocket()` 三者同时成立才升级；`websocket_init(session_data_ptr)` 在 `async_accept` **之前**同步调用，`websocket_callback(stream, session_data_ptr)` 在 accept **之后**调用且拿不到错误码——连接生命周期只能靠第一次 `async_read` 失败感知。
@@ -815,7 +813,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | `src/doodle_lib/exe_warp/face_capture/*`（2 组 .h/.cpp） | 新增 | 未开始 |
 | `src/doodle_lib/exe_warp/CMakeLists.txt` | 登记新增源文件 | 未开始 |
 | `src/doodle_lib/http_method/local/face_capture.h` + `face_capture_stream.cpp` | 新增 | **已完成**（WS 部分，`ws_stream_runner` 就地定义在 `.cpp` 里；构造参数注入选中的设备） |
-| `src/doodle_lib/http_method/local/face_capture_device.cpp` | 新增 | **已完成**（GET 枚举 / POST 选中，`face_capture_selected_device` 共享 `shared_ptr<impl>`，枚举走独立 `thread_pool{1}`）；录制 3 个 .cpp 与转码 1 个 .cpp 未开始 |
+| `src/doodle_lib/http_method/local/face_capture_device.cpp` | 新增 | **已完成**（GET 枚举 / POST 选中，`face_capture_selected_device` 共享 `shared_ptr<impl>`）；录制 3 个 .cpp 与转码 1 个 .cpp 未开始 |
 | `src/doodle_lib/http_method/local/CMakeLists.txt` | 登记 `.h`(PUBLIC) 与 `.cpp`(PRIVATE) | **已完成**（后续新增 .cpp 继续登记） |
 | `src/doodle_lib/http_method/kitsu.cpp` | `create_kitsu_local_route()` 追加 §3.1 的 10 条 `reg_c` | **已完成 2 条**（`face_capture_devices`、`face_capture_stream`），其余 8 条未开始 |
 | `src/doodle_core/metadata/kitsu_ctx_t.h` / `core_set` | **不改**（人脸检测在二期才加 `face_detector_model_path_`；选中摄像头不落 `core_set`） | — |

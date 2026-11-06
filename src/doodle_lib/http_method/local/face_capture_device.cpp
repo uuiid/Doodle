@@ -13,11 +13,6 @@
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
-#include <boost/asio/awaitable.hpp>
-#include <boost/asio/co_spawn.hpp>
-#include <boost/asio/thread_pool.hpp>
-#include <boost/asio/use_awaitable.hpp>
-
 #include <algorithm>
 #include <cstdint>
 #include <memory>
@@ -45,27 +40,14 @@ void face_capture_selected_device::select(std::int32_t in_index) {
 
 namespace {
 
-boost::asio::thread_pool& device_pool() {
-  static boost::asio::thread_pool l_pool{1};
-  return l_pool;
-}
-
-boost::asio::awaitable<std::vector<face_capture::camera_info>> enumerate_devices() {
-  co_return co_await boost::asio::co_spawn(
-      device_pool(),
-      []() -> boost::asio::awaitable<std::vector<face_capture::camera_info>> {
-        co_return face_capture::capture_session::list_devices();
-      },
-      boost::asio::use_awaitable
-  );
-}
+std::vector<face_capture::camera_info> enumerate_devices() { return face_capture::capture_session::list_devices(); }
 
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_devices, get) {
   auto l_selected = selected_->index();
   auto l_devices  = nlohmann::json::array();
-  for (auto& l_info : co_await enumerate_devices()) {
+  for (const face_capture::camera_info& l_info : enumerate_devices()) {
     auto l_json        = nlohmann::json(l_info);
     l_json["selected"] = l_info.index_ == l_selected;
     l_devices.emplace_back(std::move(l_json));
@@ -84,7 +66,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_devices, post) {
   auto l_index = l_json["index"].get<std::int32_t>();
   DOODLE_CHICK_HTTP(l_index >= 0, bad_request, "index 不能为负");
 
-  auto l_devices = co_await enumerate_devices();
+  auto l_devices = enumerate_devices();
   DOODLE_CHICK_HTTP(
       std::any_of(
           l_devices.begin(), l_devices.end(), [l_index](const face_capture::camera_info& in) {
