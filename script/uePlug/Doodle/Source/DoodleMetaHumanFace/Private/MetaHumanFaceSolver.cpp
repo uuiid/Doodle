@@ -31,6 +31,25 @@ namespace
                 TEXT("HeadTranslationX"), TEXT("HeadTranslationY"), TEXT("HeadTranslationZ")};
     }
 
+    void AppendHeadPoseCurves(const FTransform& InPose, TArray<FString>& InOutNames, TArray<float>& InOutValues)
+    {
+        const FRotator Rotation = InPose.Rotator();
+        const FVector Translation = InPose.GetTranslation();
+
+        InOutNames.Add(TEXT("HeadYaw"));
+        InOutValues.Add(static_cast<float>(Rotation.Yaw));
+        InOutNames.Add(TEXT("HeadPitch"));
+        InOutValues.Add(static_cast<float>(Rotation.Pitch));
+        InOutNames.Add(TEXT("HeadRoll"));
+        InOutValues.Add(static_cast<float>(Rotation.Roll));
+        InOutNames.Add(TEXT("HeadTranslationX"));
+        InOutValues.Add(static_cast<float>(Translation.X));
+        InOutNames.Add(TEXT("HeadTranslationY"));
+        InOutValues.Add(static_cast<float>(Translation.Y));
+        InOutNames.Add(TEXT("HeadTranslationZ"));
+        InOutValues.Add(static_cast<float>(Translation.Z));
+    }
+
     FString JoinStrings(const TArray<FString>& InValues)
     {
         return FString::Join(InValues, TEXT(", "));
@@ -45,20 +64,6 @@ namespace
         }
 
         return InDefaultValue;
-    }
-
-    TArray<FString> ExpectedCurveSetMismatch(const TSet<FString>& InCurveNames)
-    {
-        TArray<FString> Missing;
-        for (const FString& HeadCurve : ExpectedHeadCurveNames())
-        {
-            if (!InCurveNames.Contains(HeadCurve))
-            {
-                Missing.Add(HeadCurve);
-            }
-        }
-
-        return Missing;
     }
 
     TArray<FString> CollectMissingValues()
@@ -173,10 +178,6 @@ FMetaHumanFaceSolver::~FMetaHumanFaceSolver() {
             Performance->CancelPipeline();
         }
     }
-}
-
-TArray<FString> FMetaHumanFaceSolver::ExpectedHeadCurves() {
-    return ExpectedHeadCurveNames();
 }
 
 const TArray<FString>& FMetaHumanFaceSolver::ModelAssetPaths() {
@@ -525,12 +526,10 @@ TValueOrError<FMetaHumanFaceSolverResult, FMetaHumanFaceSolverError> FMetaHumanF
     }
 
     const TSet<FString> ProducedCurveNames = Performance->GetAnimationCurveNames();
-    const TArray<FString> MissingHeadCurves = ExpectedCurveSetMismatch(ProducedCurveNames);
-    if (!MissingHeadCurves.IsEmpty())
+    if (ProducedCurveNames.IsEmpty())
     {
         return MakeSolverError<FMetaHumanFaceSolverResult>(
-            EMetaHumanFaceSolverErrorCode::CurveSetMismatch,
-            FString::Printf(TEXT("head curves are missing: %s"), *JoinStrings(MissingHeadCurves))
+            EMetaHumanFaceSolverErrorCode::NoAnimationData, TEXT("the performance produced no animation curves")
         );
     }
 
@@ -600,9 +599,14 @@ TValueOrError<FMetaHumanFaceSolverResult, FMetaHumanFaceSolverError> FMetaHumanF
 
         bool bFrameEmpty = FrameData.AnimationData.IsEmpty();
 
-        for (const FString& CurveName : Result.CurveNames)
+        TArray<FString> HeadCurveNames;
+        TArray<float> HeadCurveValues;
+        AppendHeadPoseCurves(FrameData.Pose, HeadCurveNames, HeadCurveValues);
+        Result.Values.Append(HeadCurveValues);
+
+        for (int32 Index = HeadCurveNames.Num(); Index < CurveCount; ++Index)
         {
-            const float* Value = FrameData.AnimationData.Find(CurveName);
+            const float* Value = FrameData.AnimationData.Find(Result.CurveNames[Index]);
             if (Value == nullptr)
             {
                 bFrameEmpty = true;
