@@ -190,14 +190,6 @@ frame_filter& frame_filter::operator=(frame_filter&&) noexcept = default;
 
 frame_filter::~frame_filter() = default;
 
-std::shared_ptr<frame_filter> frame_filter::make(
-    const frame_filter_option& in_option, frame_filter_sink_t in_sink
-) {
-  auto l_filter = std::make_shared<frame_filter>(in_option, std::move(in_sink));
-  if (!l_filter->valid()) return nullptr;
-  return l_filter;
-}
-
 bool frame_filter::valid() const { return impl_ptr_ && impl_ptr_->valid(); }
 
 void frame_filter::push(const cv::Mat& in_bgr, std::int64_t in_pts_us) { impl_ptr_->push(in_bgr, in_pts_us); }

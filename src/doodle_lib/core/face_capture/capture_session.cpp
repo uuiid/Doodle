@@ -146,11 +146,14 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     state_            = capture_state::recording;
 
     auto l_self = this->shared_from_this();
-    filter_     = frame_filter::make(
+    filter_     = std::make_shared<frame_filter>(
         frame_filter_option{.width_ = width_, .height_ = height_, .graph_ = fmt::format("fps={}", k_fps)},
         [l_self](const cv::Mat& in_mat, std::uint64_t in_seq) { l_self->emit_output_frame(in_mat, in_seq); }
     );
-    if (!filter_) SPDLOG_WARN("fps 滤镜不可用, 推流与 take.mp4 直接使用摄像头原始帧");
+    if (!filter_->valid()) {
+      SPDLOG_WARN("fps 滤镜不可用, 推流与 take.mp4 直接使用摄像头原始帧");
+      filter_.reset();
+    }
 
     if (outlet_) {
       outlet_->set_session_info(session_id_, width_, height_);

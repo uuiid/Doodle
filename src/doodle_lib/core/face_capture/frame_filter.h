@@ -26,7 +26,6 @@ using frame_filter_sink_t = std::function<void(const cv::Mat&, std::uint64_t)>;
 
 class frame_filter {
  public:
-  static std::shared_ptr<frame_filter> make(const frame_filter_option& in_option, frame_filter_sink_t in_sink);
   frame_filter(const frame_filter_option& in_option, frame_filter_sink_t in_sink);
 
   frame_filter(frame_filter&&) noexcept;
