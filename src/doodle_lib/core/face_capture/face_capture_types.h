@@ -29,6 +29,8 @@ constexpr std::int32_t k_max_raw_queue_frames{300};
 
 constexpr std::int32_t k_stop_drain_timeout_ms{2000};
 
+constexpr std::int32_t k_max_capture_queue_frames{120};
+
 constexpr std::int32_t k_default_max_frames{999'999};
 
 constexpr std::int32_t k_default_width{1280};
@@ -83,6 +85,9 @@ struct capture_result {
   std::int32_t height_{0};
   std::int32_t fps_{k_fps};
   std::uint64_t frames_{0};
+  std::uint64_t raw_frames_{0};
+  std::uint64_t inserted_frames_{0};
+  double source_fps_{0.0};
   std::int64_t duration_ms_{0};
   bool truncated_{false};
   error_code_t error_code_{error_code_t::none};
@@ -92,9 +97,9 @@ struct capture_result {
 };
 
 struct gap_range {
-  std::uint64_t from_seq_{0};
-  std::uint64_t to_seq_{0};
-  std::uint64_t missing_{0};
+  std::int64_t wall_ms_begin_{0};
+  std::int64_t wall_ms_end_{0};
+  std::int64_t duration_ms_{0};
 
   friend void to_json(nlohmann::json& nlohmann_json_j, const gap_range& nlohmann_json_t);
   friend void from_json(const nlohmann::json& nlohmann_json_j, gap_range& nlohmann_json_t);
@@ -102,7 +107,8 @@ struct gap_range {
 
 struct align_frame {
   std::uint64_t seq_{0};
-  std::int64_t host_pts_us_{0};
+  std::uint64_t orig_seq_{0};
+  std::int64_t wall_ms_{0};
 
   friend void to_json(nlohmann::json& nlohmann_json_j, const align_frame& nlohmann_json_t);
   friend void from_json(const nlohmann::json& nlohmann_json_j, align_frame& nlohmann_json_t);
@@ -113,8 +119,11 @@ struct align_record {
   std::int32_t width_{0};
   std::int32_t height_{0};
   std::int32_t fps_{k_fps};
+  double source_fps_{0.0};
   std::string started_at_{};
   std::int64_t duration_ms_{0};
+  std::uint64_t raw_frames_{0};
+  std::uint64_t inserted_frames_{0};
   std::vector<align_frame> frames_{};
   std::vector<gap_range> gaps_{};
   bool truncated_{false};

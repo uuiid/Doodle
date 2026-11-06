@@ -27,6 +27,7 @@ target_sources(
         cancellation_signals.h
         face_capture/face_capture_types.h
         face_capture/media_fragment_pipeline.h
+        face_capture/frame_filter.h
         face_capture/ws_outlet.h
         face_capture/capture_session.h
         face_capture/frame_align.h
@@ -54,6 +55,7 @@ target_sources(
         cancellation_signals.cpp
         progress_data.cpp
         face_capture/media_fragment_pipeline.cpp
+        face_capture/frame_filter.cpp
         face_capture/ws_outlet.cpp
         face_capture/capture_session.cpp
         face_capture/frame_align.cpp

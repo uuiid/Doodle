@@ -73,47 +73,26 @@ class decoded_frame_buffer {
 
 class frame_spool {
  public:
-  frame_spool(const FSys::path& in_dir, const align_record& in_record) : dir_(in_dir), record_(in_record) {}
-
-  bool done() const { return index_ >= record_.frames_.size(); }
+  explicit frame_spool(const FSys::path& in_dir) : dir_(in_dir) {}
 
   std::uint64_t written() const { return written_; }
 
-  const cv::Mat& last() const { return last_; }
-
-  bool write(const cv::Mat& in_image) { return write_one(in_image); }
-
-  bool write_gap_frame() { return write_one(last_); }
-
-  bool catch_up(std::uint64_t in_seq) {
-    while (!done() && record_.frames_[index_].seq_ < in_seq) {
-      if (last_.empty()) return false;
-      if (!write_one(last_)) return false;
-    }
-    return !done() && record_.frames_[index_].seq_ == in_seq;
-  }
- private:
-  bool write_one(const cv::Mat& in_image) {
-    if (index_ >= record_.frames_.size()) return false;
+  bool write(const cv::Mat& in_image) {
     std::vector<std::uint8_t> l_bytes{};
     if (!cv::imencode(".png", in_image, l_bytes, {cv::IMWRITE_PNG_COMPRESSION, k_png_compression})) return false;
 
-    auto l_path = dir_ / png_file_name(record_.frames_[index_].seq_);
+    auto l_path = dir_ / png_file_name(written_);
     std::ofstream l_file{l_path, std::ios::binary | std::ios::trunc};
     if (!l_file) return false;
     l_file.write(reinterpret_cast<const char*>(l_bytes.data()), static_cast<std::streamsize>(l_bytes.size()));
     if (!l_file) return false;
 
-    last_ = in_image;
-    ++index_;
     ++written_;
     return true;
   }
 
+ private:
   FSys::path dir_{};
-  align_record record_{};
-  cv::Mat last_{};
-  std::size_t index_{0};
   std::uint64_t written_{0};
 };
 
@@ -134,15 +113,15 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
     return fail(error_code_t::png_sequence_invalid, fmt::format("读取 align.json 失败: {}", in_err.what()));
   }
 
-  auto l_expect = expect_frame_count(l_record);
-  if (l_expect == 0) return fail(error_code_t::png_sequence_invalid, "align.json 中没有帧记录");
+  auto l_expect_raw_frames = l_record.raw_frames_ > 0 ? l_record.raw_frames_ : l_record.frames_.size();
+  if (l_expect_raw_frames == 0) return fail(error_code_t::png_sequence_invalid, "align.json 中没有帧记录");
 
   auto l_tmp_dir    = png_tmp_dir_of(in_option.session_dir_);
   auto l_frames_dir = frames_dir_of(in_option.session_dir_);
   if (FSys::exists(l_tmp_dir)) FSys::remove_all(l_tmp_dir);
   FSys::create_directories(l_tmp_dir);
 
-  frame_spool l_spool{l_tmp_dir, l_record};
+  frame_spool l_spool{l_tmp_dir};
   std::int32_t l_width{0};
   std::int32_t l_height{0};
 
@@ -198,8 +177,6 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
     decoded_frame_buffer l_buffer{};
 
     auto l_store = [&](av::VideoFrame in_frame) {
-      if (l_spool.done()) return;
-      if (!l_spool.catch_up(l_spool.written())) return;
       auto l_out = l_rescaler.rescale(in_frame);
       if (!l_out.isValid()) return;
       l_spool.write(l_buffer.wrap(l_out, l_width, l_height));
@@ -216,28 +193,26 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
     l_format.close();
   }
 
-  while (!l_spool.done()) {
-    if (l_spool.last().empty()) break;
-    if (!l_spool.write(l_spool.last())) break;
+  if (l_spool.written() == 0) {
+    FSys::remove_all(l_tmp_dir);
+    return fail(error_code_t::png_sequence_invalid, "raw.mkv 中没有可解码的帧");
   }
 
-  if (l_spool.done()) {
-    if (FSys::exists(l_frames_dir)) FSys::remove_all(l_frames_dir);
-    FSys::rename(l_tmp_dir, l_frames_dir);
+  if (FSys::exists(l_frames_dir)) FSys::remove_all(l_frames_dir);
+  FSys::rename(l_tmp_dir, l_frames_dir);
 
-    png_sequence_result l_result{};
-    l_result.ok_          = true;
-    l_result.frame_count_ = l_expect;
-    l_result.width_       = l_width;
-    l_result.height_      = l_height;
-    l_result.frames_dir_  = l_frames_dir;
-    return l_result;
-  }
+  if (l_expect_raw_frames != l_spool.written())
+    SPDLOG_WARN(
+        "raw.mkv 解码帧数 {} 与 align.json 记录 {} 不一致", l_spool.written(), l_expect_raw_frames
+    );
 
-  return fail(
-      error_code_t::png_sequence_invalid,
-      fmt::format("PNG 序列生成不完整: {}/{}", l_spool.written(), l_expect)
-  );
+  png_sequence_result l_result{};
+  l_result.ok_          = true;
+  l_result.frame_count_ = l_spool.written();
+  l_result.width_       = l_width;
+  l_result.height_      = l_height;
+  l_result.frames_dir_  = l_frames_dir;
+  return l_result;
 }
 
 }  // namespace doodle::face_capture

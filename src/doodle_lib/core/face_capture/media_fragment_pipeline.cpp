@@ -55,6 +55,8 @@ av::Rational frame_time_base() { return av::Rational{1, k_fps}; }
 
 av::Rational frame_rate() { return av::Rational{k_fps, 1}; }
 
+av::Rational raw_time_base() { return av::Rational{1, 1000}; }
+
 std::int32_t even(std::int32_t in_value) { return in_value - in_value % 2; }
 
 class frame_buffer {
@@ -102,6 +104,8 @@ void configure_encoder(
 av::Timestamp frame_timestamp(std::uint64_t in_seq) {
   return av::Timestamp{static_cast<std::int64_t>(in_seq), frame_time_base()};
 }
+
+av::Timestamp raw_timestamp(std::int64_t in_wall_ms) { return av::Timestamp{in_wall_ms, raw_time_base()}; }
 
 }  // namespace
 
@@ -152,7 +156,7 @@ class h264_fragmenter::impl {
     return true;
   }
 
-  bool push(const cv::Mat& in_bgr) {
+  bool push(const cv::Mat& in_bgr, std::uint64_t in_seq) {
     if (!enc_ctx_.isOpened()) return false;
     if (in_bgr.empty() || in_bgr.cols != width_ || in_bgr.rows != height_ || in_bgr.type() != CV_8UC3)
       return false;
@@ -160,8 +164,8 @@ class h264_fragmenter::impl {
     auto l_src = buffers_.make_frame(in_bgr);
     auto l_yuv = rescaler_.rescale(l_src);
     l_yuv.setTimeBase(frame_time_base());
-    l_yuv.setPts(frame_timestamp(seq_));
-    ++seq_;
+    l_yuv.setPts(frame_timestamp(in_seq));
+    seq_ = in_seq + 1;
 
     auto l_packet = enc_ctx_.encode(l_yuv);
     if (l_packet) write_packet(l_packet);
@@ -269,7 +273,7 @@ std::shared_ptr<h264_fragmenter> h264_fragmenter::make(std::int32_t in_width, st
 
 bool h264_fragmenter::init() { return impl_ptr_->init(); }
 
-bool h264_fragmenter::push(const cv::Mat& in_bgr) { return impl_ptr_->push(in_bgr); }
+bool h264_fragmenter::push(const cv::Mat& in_bgr, std::uint64_t in_seq) { return impl_ptr_->push(in_bgr, in_seq); }
 
 std::uint64_t h264_fragmenter::frames() const { return impl_ptr_ ? impl_ptr_->frames() : 0; }
 
@@ -311,7 +315,7 @@ class mp4_writer::impl {
     return true;
   }
 
-  bool push(const cv::Mat& in_bgr) {
+  bool push(const cv::Mat& in_bgr, std::uint64_t in_seq) {
     if (!enc_ctx_.isOpened()) return false;
     if (in_bgr.empty() || in_bgr.cols != width_ || in_bgr.rows != height_ || in_bgr.type() != CV_8UC3)
       return false;
@@ -319,8 +323,8 @@ class mp4_writer::impl {
     auto l_src = buffers_.make_frame(in_bgr);
     auto l_yuv = rescaler_.rescale(l_src);
     l_yuv.setTimeBase(frame_time_base());
-    l_yuv.setPts(frame_timestamp(seq_));
-    ++seq_;
+    l_yuv.setPts(frame_timestamp(in_seq));
+    seq_ = in_seq + 1;
 
     auto l_packet = enc_ctx_.encode(l_yuv);
     if (l_packet) format_context_.writePacket(l_packet);
@@ -385,7 +389,7 @@ std::shared_ptr<mp4_writer> mp4_writer::make(
 
 bool mp4_writer::init() { return impl_ptr_->init(); }
 
-bool mp4_writer::push(const cv::Mat& in_bgr) { return impl_ptr_->push(in_bgr); }
+bool mp4_writer::push(const cv::Mat& in_bgr, std::uint64_t in_seq) { return impl_ptr_->push(in_bgr, in_seq); }
 
 std::uint64_t mp4_writer::frames() const { return impl_ptr_ ? impl_ptr_->frames() : 0; }
 
@@ -407,7 +411,7 @@ class raw_sink_thread {
 
     enc_ctx_.setWidth(width_);
     enc_ctx_.setHeight(height_);
-    enc_ctx_.setTimeBase(frame_time_base());
+    enc_ctx_.setTimeBase(raw_time_base());
     enc_ctx_.setPixelFormat(yuv_pixel_format());
     enc_ctx_.setOption("level", "3");
     enc_ctx_.open();
@@ -415,9 +419,8 @@ class raw_sink_thread {
 
     format_context_.openOutput(path_.string());
     stream_ = format_context_.addStream(enc_ctx_);
-    stream_.setTimeBase(frame_time_base());
-    stream_.setFrameRate(frame_rate());
-    stream_.setAverageFrameRate(frame_rate());
+    stream_.setTimeBase(raw_time_base());
+    stream_.setFrameRate(av::Rational{0, 1});
     format_context_.writeHeader();
 
     rescaler_ = av::VideoRescaler{
@@ -428,7 +431,7 @@ class raw_sink_thread {
     return true;
   }
 
-  bool push(const cv::Mat& in_bgr) {
+  bool push(const cv::Mat& in_bgr, std::int64_t in_wall_ms) {
     if (in_bgr.empty() || in_bgr.cols != width_ || in_bgr.rows != height_ || in_bgr.type() != CV_8UC3)
       return false;
     {
@@ -438,7 +441,7 @@ class raw_sink_thread {
         SPDLOG_WARN("raw.mkv 写盘队列已满({}), 丢弃当前帧", k_max_raw_queue_frames);
         return false;
       }
-      queue_.push_back(queued_frame{.mat_ = in_bgr.clone(), .seq_ = seq_++});
+      queue_.push_back(queued_frame{.mat_ = in_bgr.clone(), .wall_ms_ = in_wall_ms});
     }
     cv_.notify_one();
     return true;
@@ -479,7 +482,7 @@ class raw_sink_thread {
  private:
   struct queued_frame {
     cv::Mat mat_{};
-    std::uint64_t seq_{0};
+    std::int64_t wall_ms_{0};
   };
 
   void run() {
@@ -501,8 +504,8 @@ class raw_sink_thread {
     try {
       auto l_src = buffers_.make_frame(in_frame.mat_);
       auto l_yuv = rescaler_.rescale(l_src);
-      l_yuv.setTimeBase(frame_time_base());
-      l_yuv.setPts(frame_timestamp(in_frame.seq_));
+      l_yuv.setTimeBase(raw_time_base());
+      l_yuv.setPts(raw_timestamp(in_frame.wall_ms_));
       auto l_packet = enc_ctx_.encode(l_yuv);
       if (l_packet) format_context_.writePacket(l_packet);
       ++written_;
@@ -560,7 +563,6 @@ class raw_sink_thread {
   av::VideoRescaler rescaler_{};
   frame_buffer buffers_{};
   std::atomic<std::uint64_t> written_{0};
-  std::uint64_t seq_{0};
 };
 
 class ffv1_raw_writer : public raw_writer {
@@ -570,7 +572,7 @@ class ffv1_raw_writer : public raw_writer {
 
   bool start() { return sink_->start(); }
 
-  bool push(const cv::Mat& in_bgr) override { return sink_->push(in_bgr); }
+  bool push(const cv::Mat& in_bgr, std::int64_t in_wall_ms) override { return sink_->push(in_bgr, in_wall_ms); }
 
   std::uint64_t frames() const override { return sink_->written(); }
 

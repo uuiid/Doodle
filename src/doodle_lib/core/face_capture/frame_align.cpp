@@ -66,14 +66,17 @@ void from_json(const nlohmann::json& nlohmann_json_j, capture_option& nlohmann_j
 }
 
 void to_json(nlohmann::json& nlohmann_json_j, const capture_result& nlohmann_json_t) {
-  nlohmann_json_j["ok"]          = nlohmann_json_t.ok_;
-  nlohmann_json_j["state"]       = nlohmann_json_t.state_;
-  nlohmann_json_j["width"]       = nlohmann_json_t.width_;
-  nlohmann_json_j["height"]      = nlohmann_json_t.height_;
-  nlohmann_json_j["fps"]         = nlohmann_json_t.fps_;
-  nlohmann_json_j["frames"]      = nlohmann_json_t.frames_;
-  nlohmann_json_j["duration_ms"] = nlohmann_json_t.duration_ms_;
-  nlohmann_json_j["truncated"]   = nlohmann_json_t.truncated_;
+  nlohmann_json_j["ok"]              = nlohmann_json_t.ok_;
+  nlohmann_json_j["state"]           = nlohmann_json_t.state_;
+  nlohmann_json_j["width"]           = nlohmann_json_t.width_;
+  nlohmann_json_j["height"]          = nlohmann_json_t.height_;
+  nlohmann_json_j["fps"]             = nlohmann_json_t.fps_;
+  nlohmann_json_j["frames"]          = nlohmann_json_t.frames_;
+  nlohmann_json_j["raw_frames"]      = nlohmann_json_t.raw_frames_;
+  nlohmann_json_j["inserted_frames"] = nlohmann_json_t.inserted_frames_;
+  nlohmann_json_j["source_fps"]      = nlohmann_json_t.source_fps_;
+  nlohmann_json_j["duration_ms"]     = nlohmann_json_t.duration_ms_;
+  nlohmann_json_j["truncated"]       = nlohmann_json_t.truncated_;
   if (nlohmann_json_t.error_code_ != error_code_t::none) {
     nlohmann_json_j["error_code"] = to_string(nlohmann_json_t.error_code_);
     nlohmann_json_j["message"]    = nlohmann_json_t.message_;
@@ -81,37 +84,42 @@ void to_json(nlohmann::json& nlohmann_json_j, const capture_result& nlohmann_jso
 }
 
 void to_json(nlohmann::json& nlohmann_json_j, const gap_range& nlohmann_json_t) {
-  nlohmann_json_j["from_seq"] = nlohmann_json_t.from_seq_;
-  nlohmann_json_j["to_seq"]   = nlohmann_json_t.to_seq_;
-  nlohmann_json_j["missing"]  = nlohmann_json_t.missing_;
+  nlohmann_json_j["wall_ms_begin"] = nlohmann_json_t.wall_ms_begin_;
+  nlohmann_json_j["wall_ms_end"]   = nlohmann_json_t.wall_ms_end_;
+  nlohmann_json_j["duration_ms"]   = nlohmann_json_t.duration_ms_;
 }
 
 void from_json(const nlohmann::json& nlohmann_json_j, gap_range& nlohmann_json_t) {
-  nlohmann_json_j.at("from_seq").get_to(nlohmann_json_t.from_seq_);
-  nlohmann_json_j.at("to_seq").get_to(nlohmann_json_t.to_seq_);
-  nlohmann_json_j.at("missing").get_to(nlohmann_json_t.missing_);
+  nlohmann_json_j.at("wall_ms_begin").get_to(nlohmann_json_t.wall_ms_begin_);
+  nlohmann_json_j.at("wall_ms_end").get_to(nlohmann_json_t.wall_ms_end_);
+  nlohmann_json_j.at("duration_ms").get_to(nlohmann_json_t.duration_ms_);
 }
 
 void to_json(nlohmann::json& nlohmann_json_j, const align_frame& nlohmann_json_t) {
-  nlohmann_json_j["seq"]         = nlohmann_json_t.seq_;
-  nlohmann_json_j["host_pts_us"] = nlohmann_json_t.host_pts_us_;
+  nlohmann_json_j["seq"]      = nlohmann_json_t.seq_;
+  nlohmann_json_j["orig_seq"] = nlohmann_json_t.orig_seq_;
+  nlohmann_json_j["wall_ms"]  = nlohmann_json_t.wall_ms_;
 }
 
 void from_json(const nlohmann::json& nlohmann_json_j, align_frame& nlohmann_json_t) {
   nlohmann_json_j.at("seq").get_to(nlohmann_json_t.seq_);
-  nlohmann_json_j.at("host_pts_us").get_to(nlohmann_json_t.host_pts_us_);
+  nlohmann_json_j.at("orig_seq").get_to(nlohmann_json_t.orig_seq_);
+  nlohmann_json_j.at("wall_ms").get_to(nlohmann_json_t.wall_ms_);
 }
 
 void to_json(nlohmann::json& nlohmann_json_j, const align_record& nlohmann_json_t) {
-  nlohmann_json_j["session_id"]  = nlohmann_json_t.session_id_;
-  nlohmann_json_j["width"]       = nlohmann_json_t.width_;
-  nlohmann_json_j["height"]      = nlohmann_json_t.height_;
-  nlohmann_json_j["fps"]         = nlohmann_json_t.fps_;
-  nlohmann_json_j["started_at"]  = nlohmann_json_t.started_at_;
-  nlohmann_json_j["duration_ms"] = nlohmann_json_t.duration_ms_;
-  nlohmann_json_j["frames"]      = nlohmann_json_t.frames_;
-  nlohmann_json_j["gaps"]        = nlohmann_json_t.gaps_;
-  nlohmann_json_j["truncated"]   = nlohmann_json_t.truncated_;
+  nlohmann_json_j["session_id"]      = nlohmann_json_t.session_id_;
+  nlohmann_json_j["width"]           = nlohmann_json_t.width_;
+  nlohmann_json_j["height"]          = nlohmann_json_t.height_;
+  nlohmann_json_j["fps"]             = nlohmann_json_t.fps_;
+  nlohmann_json_j["source_fps"]      = nlohmann_json_t.source_fps_;
+  nlohmann_json_j["started_at"]      = nlohmann_json_t.started_at_;
+  nlohmann_json_j["duration_ms"]     = nlohmann_json_t.duration_ms_;
+  nlohmann_json_j["raw_frames"]      = nlohmann_json_t.raw_frames_;
+  nlohmann_json_j["inserted_frames"] = nlohmann_json_t.inserted_frames_;
+  nlohmann_json_j["frames"]          = nlohmann_json_t.frames_;
+  nlohmann_json_j["gaps"]            = nlohmann_json_t.gaps_;
+  nlohmann_json_j["truncated"]       = nlohmann_json_t.truncated_;
 }
 
 void from_json(const nlohmann::json& nlohmann_json_j, align_record& nlohmann_json_t) {
@@ -119,8 +127,12 @@ void from_json(const nlohmann::json& nlohmann_json_j, align_record& nlohmann_jso
   if (nlohmann_json_j.contains("width")) nlohmann_json_j.at("width").get_to(nlohmann_json_t.width_);
   if (nlohmann_json_j.contains("height")) nlohmann_json_j.at("height").get_to(nlohmann_json_t.height_);
   nlohmann_json_t.fps_ = k_fps;
+  if (nlohmann_json_j.contains("source_fps")) nlohmann_json_j.at("source_fps").get_to(nlohmann_json_t.source_fps_);
   if (nlohmann_json_j.contains("started_at")) nlohmann_json_j.at("started_at").get_to(nlohmann_json_t.started_at_);
   if (nlohmann_json_j.contains("duration_ms")) nlohmann_json_j.at("duration_ms").get_to(nlohmann_json_t.duration_ms_);
+  if (nlohmann_json_j.contains("raw_frames")) nlohmann_json_j.at("raw_frames").get_to(nlohmann_json_t.raw_frames_);
+  if (nlohmann_json_j.contains("inserted_frames"))
+    nlohmann_json_j.at("inserted_frames").get_to(nlohmann_json_t.inserted_frames_);
   nlohmann_json_j.at("frames").get_to(nlohmann_json_t.frames_);
   if (nlohmann_json_j.contains("gaps")) nlohmann_json_j.at("gaps").get_to(nlohmann_json_t.gaps_);
   if (nlohmann_json_j.contains("truncated")) nlohmann_json_j.at("truncated").get_to(nlohmann_json_t.truncated_);
@@ -198,17 +210,20 @@ align_record read_align(const FSys::path& in_session_dir) {
   return nlohmann::json::parse(l_if).get<align_record>();
 }
 
-std::optional<std::int64_t> host_pts_of(const align_record& in_record, std::uint64_t in_seq) {
+std::optional<std::int64_t> wall_ms_of(const align_record& in_record, std::uint64_t in_seq) {
   for (const auto& l_frame : in_record.frames_) {
-    if (l_frame.seq_ == in_seq) return l_frame.host_pts_us_;
+    if (l_frame.seq_ == in_seq) return l_frame.wall_ms_;
   }
   return std::nullopt;
 }
 
-std::uint64_t expect_frame_count(const align_record& in_record) {
-  std::uint64_t l_count{in_record.frames_.size()};
-  for (const auto& l_gap : in_record.gaps_) l_count += l_gap.missing_;
-  return l_count;
+std::optional<std::uint64_t> orig_seq_of(const align_record& in_record, std::uint64_t in_seq) {
+  for (const auto& l_frame : in_record.frames_) {
+    if (l_frame.seq_ == in_seq) return l_frame.orig_seq_;
+  }
+  return std::nullopt;
 }
+
+std::uint64_t expect_frame_count(const align_record& in_record) { return in_record.frames_.size(); }
 
 }  // namespace doodle::face_capture

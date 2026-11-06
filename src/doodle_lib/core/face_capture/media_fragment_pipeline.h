@@ -17,18 +17,18 @@ namespace doodle::face_capture {
 
 class raw_writer {
  public:
-  virtual ~raw_writer()                     = default;
-  virtual bool push(const cv::Mat& in_bgr)  = 0;
-  virtual std::uint64_t frames() const      = 0;
-  virtual bool finish()                     = 0;
+  virtual ~raw_writer() = default;
+  virtual bool push(const cv::Mat& in_bgr, std::int64_t in_wall_ms) = 0;
+  virtual std::uint64_t frames() const = 0;
+  virtual bool finish() = 0;
 };
 
 class video_writer {
  public:
-  virtual ~video_writer()                   = default;
-  virtual bool push(const cv::Mat& in_bgr)  = 0;
-  virtual std::uint64_t frames() const      = 0;
-  virtual bool finish()                     = 0;
+  virtual ~video_writer() = default;
+  virtual bool push(const cv::Mat& in_bgr, std::uint64_t in_seq) = 0;
+  virtual std::uint64_t frames() const = 0;
+  virtual bool finish() = 0;
 };
 
 class h264_fragmenter : public video_writer {
@@ -41,7 +41,7 @@ class h264_fragmenter : public video_writer {
 
   ~h264_fragmenter() override;
 
-  bool push(const cv::Mat& in_bgr) override;
+  bool push(const cv::Mat& in_bgr, std::uint64_t in_seq) override;
   std::uint64_t frames() const override;
   bool finish() override;
 
@@ -70,7 +70,7 @@ class mp4_writer : public video_writer {
 
   bool init();
 
-  bool push(const cv::Mat& in_bgr) override;
+  bool push(const cv::Mat& in_bgr, std::uint64_t in_seq) override;
   std::uint64_t frames() const override;
   bool finish() override;
 
