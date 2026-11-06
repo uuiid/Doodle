@@ -215,17 +215,15 @@ UMetaHumanFaceCommandlet::UMetaHumanFaceCommandlet() {
     ShowErrorCount = true;
     UseCommandletResultAsExitCode = true;
     HelpDescription = TEXT("Converts one frame sequence to MetaHuman face curves");
-    HelpUsage = TEXT("-FramesDir=<dir> -OutDir=<dir> [-FPS=num/den] [-Range=start:count]");
+    HelpUsage = TEXT("-FramesDir=<dir> -OutDir=<dir> [-FPS=num/den]");
     HelpParamNames.Add(TEXT("FramesDir"));
     HelpParamNames.Add(TEXT("OutDir"));
     HelpParamNames.Add(TEXT("FPS"));
-    HelpParamNames.Add(TEXT("Range"));
     HelpParamNames.Add(TEXT("SequencePattern"));
     HelpParamNames.Add(TEXT("PackagePath"));
     HelpParamDescriptions.Add(TEXT("Directory holding the frame sequence"));
     HelpParamDescriptions.Add(TEXT("Directory receiving the curve output"));
     HelpParamDescriptions.Add(TEXT("Frame rate as a rational number, default 24000/1"));
-    HelpParamDescriptions.Add(TEXT("First frame and frame count, default covers the whole sequence"));
     HelpParamDescriptions.Add(TEXT("Frame file name template containing {frame}"));
     HelpParamDescriptions.Add(TEXT("Package path receiving the intermediate assets"));
 }

@@ -4,6 +4,8 @@
 #include "HAL/PlatformMemory.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Policies/PrettyJsonPrintPolicy.h"
+#include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 #include "Serialization/MemoryWriter.h"
 
@@ -236,91 +238,81 @@ TValueOrError<void, FString> VerifyWrittenHeader(
 }
 
 FString MakeSummaryJson(const FMetaHumanFaceSolverResult& InResult) {
-    TArray<uint8> Bytes;
-    FMemoryWriter Writer(Bytes);
+    const TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
+    Root->SetStringField(TEXT("magic"), CurvesMagic);
+    Root->SetNumberField(TEXT("version"), static_cast<int32>(CurvesVersion));
+    Root->SetNumberField(TEXT("flags"), static_cast<int32>(CurvesFlags));
+    Root->SetNumberField(TEXT("frame_count"), InResult.FrameCount);
+    Root->SetNumberField(TEXT("curve_count"), InResult.CurveNames.Num());
+    Root->SetStringField(TEXT("fps"), FString::Printf(TEXT("%u/%u"), InResult.FpsNum, InResult.FpsDen));
+    Root->SetNumberField(TEXT("start_frame"), InResult.FirstFrame);
+    Root->SetNumberField(
+        TEXT("start_time_sec"),
+        static_cast<double>(InResult.FirstFrame) * static_cast<double>(InResult.FpsDen) /
+            static_cast<double>(InResult.FpsNum)
+    );
+    Root->SetNumberField(
+        TEXT("duration_sec"),
+        static_cast<double>(InResult.FrameCount) * static_cast<double>(InResult.FpsDen) /
+            static_cast<double>(InResult.FpsNum)
+    );
 
-    const bool bSucceeded = [&Writer, &InResult]() {
-        const TSharedRef<TJsonWriter<>> JsonWriter = TJsonWriter<>::Create(&Writer);
-        JsonWriter->WriteObjectStart();
-        JsonWriter->WriteValue(TEXT("magic"), CurvesMagic);
-        JsonWriter->WriteValue(TEXT("version"), static_cast<int32>(CurvesVersion));
-        JsonWriter->WriteValue(TEXT("flags"), static_cast<int32>(CurvesFlags));
-        JsonWriter->WriteValue(TEXT("frame_count"), InResult.FrameCount);
-        JsonWriter->WriteValue(TEXT("curve_count"), InResult.CurveNames.Num());
-        JsonWriter->WriteValue(
-            TEXT("fps"),
-            FString::Printf(TEXT("%u/%u"), InResult.FpsNum, InResult.FpsDen)
-        );
-        JsonWriter->WriteValue(TEXT("start_frame"), InResult.FirstFrame);
-        JsonWriter->WriteValue(
-            TEXT("start_time_sec"),
-            static_cast<double>(InResult.FirstFrame) * static_cast<double>(InResult.FpsDen) /
-                static_cast<double>(InResult.FpsNum)
-        );
-        JsonWriter->WriteValue(
-            TEXT("duration_sec"),
-            static_cast<double>(InResult.FrameCount) * static_cast<double>(InResult.FpsDen) /
-                static_cast<double>(InResult.FpsNum)
-        );
+    TArray<TSharedPtr<FJsonValue>> DroppedValues;
+    for (const FMetaHumanFaceFrameRange& Range : InResult.DroppedFrameRanges)
+    {
+        const TSharedRef<FJsonObject> RangeObject = MakeShared<FJsonObject>();
+        RangeObject->SetNumberField(TEXT("start"), Range.Start);
+        RangeObject->SetNumberField(TEXT("end"), Range.End);
+        DroppedValues.Add(MakeShared<FJsonValueObject>(RangeObject));
+    }
+    Root->SetArrayField(TEXT("dropped_frame_ranges"), DroppedValues);
 
-        JsonWriter->WriteArrayStart(TEXT("dropped_frame_ranges"));
-        for (const FMetaHumanFaceFrameRange& Range : InResult.DroppedFrameRanges)
+    TArray<TSharedPtr<FJsonValue>> CurveValues;
+    for (int32 CurveIndex = 0; CurveIndex < InResult.CurveNames.Num(); ++CurveIndex)
+    {
+        float Minimum = 0.0f;
+        float Maximum = 0.0f;
+        float First = 0.0f;
+        float Last = 0.0f;
+
+        for (int32 FrameIndex = 0; FrameIndex < InResult.FrameCount; ++FrameIndex)
         {
-            JsonWriter->WriteObjectStart();
-            JsonWriter->WriteValue(TEXT("start"), Range.Start);
-            JsonWriter->WriteValue(TEXT("end"), Range.End);
-            JsonWriter->WriteObjectEnd();
-        }
-        JsonWriter->WriteArrayEnd();
+            const float Value = InResult.Values[FrameIndex * InResult.CurveNames.Num() + CurveIndex];
 
-        JsonWriter->WriteArrayStart(TEXT("curves"));
-        for (int32 CurveIndex = 0; CurveIndex < InResult.CurveNames.Num(); ++CurveIndex)
-        {
-            float Minimum = 0.0f;
-            float Maximum = 0.0f;
-            float First = 0.0f;
-            float Last = 0.0f;
-
-            for (int32 FrameIndex = 0; FrameIndex < InResult.FrameCount; ++FrameIndex)
+            if (FrameIndex == 0)
             {
-                const float Value = InResult.Values[FrameIndex * InResult.CurveNames.Num() + CurveIndex];
-
-                if (FrameIndex == 0)
-                {
-                    Minimum = Value;
-                    Maximum = Value;
-                    First = Value;
-                }
-                else
-                {
-                    Minimum = FMath::Min(Minimum, Value);
-                    Maximum = FMath::Max(Maximum, Value);
-                }
-
-                Last = Value;
+                Minimum = Value;
+                Maximum = Value;
+                First = Value;
+            }
+            else
+            {
+                Minimum = FMath::Min(Minimum, Value);
+                Maximum = FMath::Max(Maximum, Value);
             }
 
-            JsonWriter->WriteObjectStart();
-            JsonWriter->WriteValue(TEXT("name"), InResult.CurveNames[CurveIndex]);
-            JsonWriter->WriteValue(TEXT("min"), Minimum);
-            JsonWriter->WriteValue(TEXT("max"), Maximum);
-            JsonWriter->WriteValue(TEXT("first"), First);
-            JsonWriter->WriteValue(TEXT("last"), Last);
-            JsonWriter->WriteObjectEnd();
+            Last = Value;
         }
-        JsonWriter->WriteArrayEnd();
 
-        JsonWriter->WriteObjectEnd();
-        return JsonWriter->Close();
-    }();
+        const TSharedRef<FJsonObject> CurveObject = MakeShared<FJsonObject>();
+        CurveObject->SetStringField(TEXT("name"), InResult.CurveNames[CurveIndex]);
+        CurveObject->SetNumberField(TEXT("min"), Minimum);
+        CurveObject->SetNumberField(TEXT("max"), Maximum);
+        CurveObject->SetNumberField(TEXT("first"), First);
+        CurveObject->SetNumberField(TEXT("last"), Last);
+        CurveValues.Add(MakeShared<FJsonValueObject>(CurveObject));
+    }
+    Root->SetArrayField(TEXT("curves"), CurveValues);
 
-    if (!bSucceeded)
+    FString Serialized;
+    const TSharedRef<TJsonWriter<TCHAR, TPrettyJsonPrintPolicy<TCHAR>>> JsonWriter =
+        TJsonWriterFactory<TCHAR, TPrettyJsonPrintPolicy<TCHAR>>::Create(&Serialized);
+    if (!FJsonSerializer::Serialize(Root, JsonWriter))
     {
         return FString();
     }
 
-    Bytes.Add(0);
-    return FString(UTF8_TO_TCHAR(reinterpret_cast<const ANSICHAR*>(Bytes.GetData())));
+    return Serialized;
 }
 }
 
