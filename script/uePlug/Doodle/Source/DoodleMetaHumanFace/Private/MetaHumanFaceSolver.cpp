@@ -4,6 +4,7 @@
 #include "FrameRange.h"
 #include "FrameAnimationData.h"
 #include "ImgMediaSource.h"
+#include "MetaHumanSupportedRHI.h"
 #include "MetaHumanPerformance.h"
 #include "MetaHumanRealtimeSmoothing.h"
 #include "Misc/ConfigCacheIni.h"
@@ -12,6 +13,7 @@
 #include "NNETypes.h"
 #include "Pipeline/PipelineData.h"
 #include "Pipeline/DataTreeTypes.h"
+#include "RHI.h"
 #include "UObject/Package.h"
 
 namespace
@@ -76,6 +78,19 @@ namespace
         }
 
         return Missing;
+    }
+
+    FString DescribeUnsupportedRHI()
+    {
+        const TCHAR* const CurrentRHI = GDynamicRHI != nullptr ? GDynamicRHI->GetName() : TEXT("none");
+        const TCHAR* const SupportedRHIs = TEXT("D3D12");
+
+        return FString::Printf(
+            TEXT("the active RHI is %s but MetaHuman face solving requires %s; pass -graphicsadapter=0 or "
+                 "-nullrhi=0 to run with a GPU adapter backed by %s, or pass "
+                 "-ExecCmds=\"mh.Core.CheckRHI 0\" to skip the check at your own risk"),
+            CurrentRHI, SupportedRHIs, SupportedRHIs
+        );
     }
 
     TArray<FMetaHumanFaceFrameRange> IntersectWithExcludedFrames(
@@ -332,6 +347,13 @@ TValueOrError<TArray<FMetaHumanFaceFrameRange>, FMetaHumanFaceSolverError> FMeta
     {
         return MakeSolverError<TArray<FMetaHumanFaceFrameRange>>(
             EMetaHumanFaceSolverErrorCode::ProcessingRejected, TEXT("a run is already in progress")
+        );
+    }
+
+    if (!FMetaHumanSupportedRHI::IsSupported())
+    {
+        return MakeSolverError<TArray<FMetaHumanFaceFrameRange>>(
+            EMetaHumanFaceSolverErrorCode::ProcessingRejected, DescribeUnsupportedRHI()
         );
     }
 

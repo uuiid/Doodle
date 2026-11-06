@@ -130,6 +130,10 @@
 		{
 			"Name": "MetaHuman",
 			"Enabled": true
+		},
+		{
+			"Name": "NNERuntimeORT",
+			"Enabled": true
 		}
 	]
 }
