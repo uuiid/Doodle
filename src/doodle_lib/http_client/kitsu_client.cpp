@@ -861,11 +861,10 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::post_computer(const compute
 }
 
 boost::asio::awaitable<std::string> kitsu_client::refresh_token() {
-  boost::beast::http::request<boost::beast::http::string_body> l_req{
-      boost::beast::http::verb::post, "/api/auth/refresh-token", 11
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::get, "/api/auth/refresh-token", 11
   };
   set_req_headers(l_req, "application/json");
-  l_req.body() = nlohmann::json::object().dump();
   boost::beast::http::response<boost::beast::http::string_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok)
