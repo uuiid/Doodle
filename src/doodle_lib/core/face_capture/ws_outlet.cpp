@@ -166,10 +166,6 @@ class ws_outlet::impl : public std::enable_shared_from_this<ws_outlet::impl> {
   bool closing_{false};
 };
 
-std::shared_ptr<ws_outlet> ws_outlet::make(executor_type in_executor) {
-  return std::make_shared<ws_outlet>(std::move(in_executor));
-}
-
 ws_outlet::ws_outlet(executor_type in_executor) : impl_ptr_(std::make_shared<impl>(std::move(in_executor))) {}
 
 ws_outlet::~ws_outlet() = default;

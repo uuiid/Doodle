@@ -27,8 +27,6 @@ class ws_outlet : public std::enable_shared_from_this<ws_outlet> {
 
   using write_fn = std::function<boost::asio::awaitable<bool>(const std::uint8_t* in_data, std::size_t in_size)>;
 
-  static std::shared_ptr<ws_outlet> make(executor_type in_executor);
-
   explicit ws_outlet(executor_type in_executor);
 
   ~ws_outlet();
