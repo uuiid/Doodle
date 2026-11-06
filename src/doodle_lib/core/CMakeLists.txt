@@ -25,6 +25,12 @@ target_sources(
         http_client_proxy.h
         co_queue.h
         cancellation_signals.h
+        face_capture/face_capture_types.h
+        face_capture/media_fragment_pipeline.h
+        face_capture/ws_outlet.h
+        face_capture/capture_session.h
+        face_capture/frame_align.h
+        face_capture/png_sequence_writer.h
 
         PRIVATE
         filesystem_extend.cpp
@@ -47,6 +53,11 @@ target_sources(
         global_function.cpp
         cancellation_signals.cpp
         progress_data.cpp
+        face_capture/media_fragment_pipeline.cpp
+        face_capture/ws_outlet.cpp
+        face_capture/capture_session.cpp
+        face_capture/frame_align.cpp
+        face_capture/png_sequence_writer.cpp
 
 )
 add_subdirectory(http)

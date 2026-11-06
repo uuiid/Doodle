@@ -1,6 +1,6 @@
 # 摄像头采集 · WebSocket 推流 · 前端控制录制 · UE 转码 方案
 
-> 状态：方案已拍板（2026-11-05），待实现。本文只描述设计，不含实现代码。
+> 状态：方案已拍板（2026-11-05）。**采集引擎（M1/M2 引擎侧 + `write_png_sequence`）已实现并编译通过**，HTTP/WS 路由与转码作业层待实现（进度见附录 A）。
 > 范围：**一期**。人脸检测整体推迟到二期，本文只在 §6 钉住它的插入点与约束，不实现。
 > 部署前提：**后端跑在用户自己的电脑上，由打包好的前端 App 拉起**（不是常驻服务器）。因此没有多用户、没有多设备并发。
 > 落地位置：后端 `E:\Doodle\src\doodle_lib\http_method\local`（新增文件），复用 `src/doodle_lib/core`、`src/doodle_lib/exe_warp`。
@@ -18,11 +18,11 @@
 | 3 | 丢帧补位 | **策略 A：重复上一帧**。补位后的帧序列必须连续无空洞 |
 | 4 | UE 进程排队 | 脸捕 Commandlet **与渲染任务共用 `core_set::get_set().ue_ctx_->queue_`**（`awaitable_queue_limitation`，默认 limit=1），不新开闩 |
 | 5 | `frames/` 的保留策略 | **转码作业成功后自动删除 PNG 序列、保留 `raw.mkv`；不可配置** |
-| 6 | 会话与连接的绑定 | 会话挂在 `local::face_capture_recordings` 路由的 `shared_ptr<capture_session>` 上，**不挂 WebSocket 连接**；WS 断开不影响录制 |
+| 6 | 会话与连接的绑定 | 会话由 `capture_session::instance()` 进程内单例持有，**不挂 WebSocket 连接**；WS 断开不影响录制 |
 | 7 | 控制通道 | **控制一律走 HTTP**：`POST /recordings` 开始、`POST /recordings/{id}/stop` 结束、`POST /transcode` 转码。**WS 是纯下行**，不接受任何命令（§3.5） |
 | 8 | UE 侧源码变更 | **0**。前提是 M0 真机验证通过（§11） |
 | 9 | **推流只有一条** | 本机后端、单用户，**任何时刻最多一条视频推流**。设计上**不提供第二条**：不做多连接分发、不做环形缓冲-history、不做逐连接背压（§5.3） |
-| 10 | **同一时刻最多一个会话** | 会话对象只有一个，不用查找表、不做会话池。同一台电脑上摄像头只有一个消费者，第二条 WS 连上就**接管**（§3.3） |
+| 10 | **同一时刻最多一个会话** | 会话对象只有一个（`capture_session::instance()`），不用查找表、不做会话池。同一台电脑上摄像头只有一个消费者，第二条 WS 连上就**接管**（§3.3） |
 | 11 | **帧率定死 25 fps** | 全链路（推流/`raw.mkv`/`take.mp4`/`frames/`/UE `-FPS=25/1`）只用 25 fps，`time_base = 1/25`。不协商、不可配、不做分数换算；采集侧 40 ms 一拍抽帧/补帧（§4.4） |
 | 12 | **人脸检测推迟到二期** | 一期**不做**：不写检测代码、不引模型、不预留 `face_status` 事件、不做开录前的人脸校验。§6 只记二期插入点与约束 |
 | 13 | **转码作业不登记任务表** | **不写 `server_task_info`、不进任务列表 UI**，只在内存注册表保活；进度只看 `GET /transcode/{job_id}` 与 WS `transcode_progress`（§7.2） |
@@ -44,11 +44,11 @@
   浏览器 ◄──WS── avc_init / avc_fragment / capture_state / transcode_progress / error
                        │
         ┌──────────────┴───────────────┐
-        │  后端 rt_loop_strand (单 strand) │
+        │  后端采集 strand (单 strand)    │
         │  40ms 定时器 → 抽帧/补帧(25fps)   │
         │  cv::VideoCapture 读最新帧        │
         │  ├─► raw_sink   ───────────────► raw.mkv     (FFV1 无损，唯一权威来源)
-        │  ├─► h264_encoder(libx264) ────► 分片 ─► ws_outlet(2 片槽) ─► 浏览器 fMP4
+        │  ├─► h264_encoder(libx264) ────► 分片 ─► ws_outlet(≤8 片) ──► 浏览器 fMP4
         │  └─► align_recorder ───────────► align.json  (seq / host_pts / gaps)
         └───────────────────────────────┘
                        │ 前端 POST stop → 200 返回时 raw.mkv 已收尾
@@ -64,7 +64,7 @@
 
 1. **控制面全在 HTTP，数据面全在 WS**。WS 只往下推帧与事件，不解析任何上行命令（§3.5）。
 2. **WS 是可选通道**：不连 WS 也能开始/结束录制、也能查状态——只是看不到实时画面。
-3. **录制与转码是两条独立的协程链**。录制在 `rt_loop_strand` 上逐帧串行推进；转码在 `g_io_context()` 上用另一条协程，两者只通过 `session_dir` 下的文件交互，不共享内存对象。
+3. **录制与转码是两条独立的协程链**。录制在采集 strand 上逐帧串行推进；转码在 `g_io_context()` 上用另一条协程，两者只通过 `session_dir` 下的文件交互，不共享内存对象。
 4. **帧率自始至终只有 25 fps**。采集侧用 40 ms 定时器把任何摄像头帧率整形成 25，后面每一环（编码时基、`align.json`、PNG 计数、UE 的 `-FPS`）都直接用这个常量（§4.4）。
 
 一句话总括：`opencv 采集 → raw.mkv（FFV1 无损，唯一权威来源）→ ①png_sequence → frames/ → UE Commandlet → face_curves.dhfc`，`②mp4 → 浏览器回放`，`③H.264 分片 → WebSocket → 实时预览`。
@@ -78,15 +78,16 @@
 `src/doodle_lib/http_method/local` 是 HTTP/WS 入口层，依赖必须下沉到 `core`/`exe_warp`。因此：
 
 ```text
-src/doodle_lib/core/face_capture/          ← 新增：与 HTTP 无关的采集/编码引擎
+src/doodle_lib/core/face_capture/          ← 新增：与 HTTP 无关的采集/编码引擎（已实现）
     face_capture_types.h                    公共结构体、enums、错误码、to_json/from_json
     media_fragment_pipeline.h/.cpp          ffmpeg 编码 + fMP4 分片产出 + raw_sink（无损）
+    ws_outlet.h/.cpp                        单推流出口：单在途写、上限 8 片、丢非关键帧
     capture_session.h/.cpp                  会话状态机 + 采集循环 + 产物目录管理（本机唯一的会话）
     frame_align.h/.cpp                      align.json 记录与读取
     png_sequence_writer.h/.cpp              raw.mkv → frames/（含补位策略 A）
 ```
 
-一期是 **5 组源文件**（`face_detector` 随人脸检测一起推到二期，§6）。
+一期是 **6 组源文件**（`face_detector` 随人脸检测一起推到二期，§6）。`ws_outlet` 独立成组是因为它既要被 `capture_session` 用，又要被 HTTP 层的 WS 协程持有，放在 `capture_session` 里会让两层互相包含。
 src/doodle_lib/exe_warp/face_capture/      ← 新增：转码作业与 UE 编排
     face_transcode_job.h/.cpp               三步作业调度、状态机、进度
     face_ue_commandlet.h/.cpp               拼 Commandlet 参数、调 async_run_ue、解析退出码与 face_capture_log.json
@@ -100,7 +101,7 @@ src/doodle_lib/http_method/local/          ← 新增：路由
     CMakeLists.txt                          （改）追加上述 .cpp
 ```
 
-**没有 `capture_session_registry`**：单用户本机、同一时刻只有一个会话，注册表那一层是多余抽象。会话对象由 `local::face_capture_recordings` 路由持有（`std::shared_ptr<capture_session>`），`route_ptr_->get_function<T>()` 取原型的成员即可（§3.2）——与 `local::actions_local_ai_session_ue` 的 `impl_ptr_` 同款。
+**没有 `capture_session_registry`**：单用户本机、同一时刻只有一个会话，注册表那一层是多余抽象。会话对象由 `capture_session::instance()`（进程内单例，`static std::mutex` + `static std::shared_ptr<capture_session>`）持有，HTTP 路由与 WS 协程都只是从它取**同一个** `shared_ptr`（§3.2）。之所以用单例而不是"挂在路由对象上"，是因为采集引擎要能脱离 HTTP 层独立跑（M1/M2 就是这样验证的），路由层的 clone 语义也不该参与会话生命周期。
 
 `local.h` 已经有 171 行、18 个路由类，再塞 10 个会失控；把新模块集中到 `face_capture.h` 与既有 `local.h` **分开**：`kitsu.cpp` 里加一行 `#include <doodle_lib/http_method/local/face_capture.h>` 即可。
 
@@ -121,7 +122,7 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 ```cpp
 .reg_c<local::face_capture_devices>()            // GET 设备枚举
 .reg_c<local::face_capture_stream>()             // GET + Upgrade → WS（纯下行）
-.reg_c<local::face_capture_recordings>()         // POST 开始录制 / GET 列表（此路由持会话对象）
+.reg_c<local::face_capture_recordings>()         // POST 开始录制 / GET 列表
 .reg_c<local::face_capture_recording>()          // GET / DELETE，{session_id_}
 .reg_c<local::face_capture_recording_stop>()     // POST 结束录制
 .reg_c<local::face_capture_recording_video>()    // GET take.mp4
@@ -130,9 +131,9 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 .reg_c<local::face_capture_transcode_instance>() // GET / DELETE，{job_id_}
 ```
 
-**持有会话对象的路由类名是 `local::face_capture_recordings`**（`POST /recordings` 与 `GET /recordings` 同一个类、两条 handler），文中的"会话归属"指的就是它。
+**持有会话对象的是 `capture_session::instance()` 这个进程内单例**（不是某个路由类）。`local::face_capture_recordings` 只是"开始/列表"两个 handler 的容器，它和其他路由一样通过 `capture_session::instance()` 拿会话，**路由对象上不存任何会话状态**（clone 之后是副本，存了也不可信）。
 
-稳定性检查：**10 个路由类、11 个端点**，没有再增加。（早先还考虑过把 `/stream` 拆成 open/close 两条，已否决——WS 的一生由 TCP 决定，不需要额外端点。）
+稳定性检查：**9 个路由类、11 个端点**，没有再增加。（早先还考虑过把 `/stream` 拆成 open/close 两条，已否决——WS 的一生由 TCP 决定，不需要额外端点。）
 
 路由模板必须**一个类一条 URL**（`DOODLE_HTTP_ROUTE` 只接受一个路径字面量），所以 `/recordings/{id}` 与 `/recordings/{id}/stop` 是两个类。`kitsu.cpp:312-333` 里每个排队项都是这个形态，照抄即可。
 
@@ -159,7 +160,7 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 
 路由类一律 `DOODLE_HTTP_FUN_C(xxx, local_http_fun)`（要拿登录 token）或 `DOODLE_HTTP_FUN_C(xxx, ::doodle::http::http_function)`（纯本机操作）。**注意 clone 语义**：`http_function.cpp:74` 每个请求都会 `clone()` 一次路由对象（`std::make_shared<Self>(*this)`），所以路由类的成员只能是可拷贝的值或 `shared_ptr`，**不能放 `cv::VideoCapture`、`FaceDetectorYN`、`std::unique_ptr`**。
 
-> **会话对象的归属随控制面改写**：既然开始录制的入口是 `POST /recordings`，会话就由 `local::face_capture_recordings` 路由持有（`std::shared_ptr<capture_session>`），`face_capture_stream` 只从它那里**读**同一个指针。取指针的办法与 `local::actions_local_ai_session_ue`（[local.h:162-169](E:\Doodle\src\doodle_lib\http_method\local\local.h)）的 `impl_ptr_` 同款：`route_ptr_->get_function<T>()` 拿注册时的原型对象。**本机只有一个会话，所以这个 shared_ptr 只有一份，不存在查找表。**
+> **会话对象的归属**：会话由 `capture_session::instance()` 单例持有，所有 handler 与 WS 协程都只是 `auto l_session = face_capture::capture_session::instance();` 取到**同一个** `shared_ptr`。**本机只有一个会话，所以这个 shared_ptr 只有一份，不存在查找表**；路径里的 `{session_id_}` 只用于前端日志与路由占位，不参与查找。
 
 ### 3.3 WS 协议
 
@@ -167,12 +168,12 @@ WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` 
 
 `face_capture_stream` 的约定：
 
-- `websocket_init`：从 `in_handle->url_` 取 `token`（复用 `local_http_fun::parse_header` 的 cookie/Bearer 逻辑）；用 `in_handle->route_ptr_->get_function<local::face_capture_recordings>()` 拿到持会话的那个原型对象，从它取那**唯一一个** `shared_ptr<capture_session>`，**不要依赖自身成员**（clone 后是副本）。
+- `websocket_init`：从 `in_handle->url_` 取 `token`（复用 `local_http_fun::parse_header` 的 cookie/Bearer 逻辑）；用 `capture_session::instance()` 拿那**唯一一个** `shared_ptr<capture_session>`，**不要依赖自身成员**（clone 后是副本）。
 - 若此时还没有会话（前端没调 `POST /recordings` 就已经连了 WS），就把 `ws_outlet` 先挂到一个**待用槽**上：`hello` 回 `{state:"idle"}`，只下发事件、不下发视频；等 `POST /recordings` 建成会话后，会话把 outlet 接过去，自动开始推流。**前端不需要为了拿画面去重连。**
 - 若已有会话且它在 `recording`，**新连接接管推流**：旧连接的 `ws_outlet` 被关掉并发 `error: superseded`，旧连接只读不写（或由服务端直接关闭），新连接成为唯一出口。**同一时刻只有一条推流**，不做多播。
 - `websocket_callback`：`co_spawn(g_io_context(), run(std::move(stream)), detached)`，协程内部自己 `async_read`/`async_write`。
 - 写端必须**单在途**：`atomic_bool writing_`，与 `socket_io_websocket_core::async_write_websocket`（`websocket_impl.cpp:124-158`）同构。控制消息是 text JSON，视频分片是 binary，切换用 `stream.binary(true/false)` 的 RAII guard（同 `binary_data_guard`）。**一条 WS 上不能并发写**，这是 beast 的硬约束。
-- 读端**只做保活与断连检测**：收到任何帧都忽略，靠 `async_read` 的失败感知连接已经断掉（从而清掉 `ws_outlet`）。**没有命令解析、没有 `post` 到 `rt_loop_strand` 的分派逻辑**——控制面已经全在 HTTP（§3.5）。
+- 读端**只做保活与断连检测**：收到任何帧都忽略，靠 `async_read` 的失败感知连接已经断掉（从而清掉 `ws_outlet`）。**没有命令解析、没有 `post` 到采集 strand 的分派逻辑**——控制面已经全在 HTTP（§3.5）。
 - 降级：若客户端协商不到 `Sec-WebSocket-Protocol`，仍按普通 WS 走；诊断信息统一用 JSON 事件下发。
 
 #### 分片装载格式
@@ -189,12 +190,12 @@ WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` 
 
 | event | 时机 | 负载要点 |
 | --- | --- | --- |
-| `hello` | 连接建立 | `{session_id, state, server_seq, fps, width, height}` |
-| `avc_init` | 编码器首帧或重连补发 | `{codec:"avc1.42E01E", init: base64}`（fMP4 的 `ftyp+moov`） |
-| `avc_fragment` | 每个分片 | `{seq, pts_ms, dur_ms, keyframe}`，紧随一个 binary 帧装 `moof+mdat` |
-| `capture_state` | 状态变化 | `{state:"idle"/"recording"/"stopping"/"stopped"/"error", session_id, start_pts, frames}` |
+| `hello` | 连接建立 | `{session_id, state, width, height, fps:25}` |
+| `avc_init` | 连接建立时补发、以及每次新会话开始录制 | `{bytes, seq_begin, seq_end}`（fMP4 的 `ftyp+moov`），紧随一个 binary 帧装 init 段 |
+| `avc_fragment` | 每个分片 | `{seq, keyframe, size}`，紧随一个 binary 帧装 `moof+mdat` |
+| `capture_state` | 状态变化 | `{state:"idle"/"recording"/"stopping"/"stopped"}` |
 | `transcode_progress` | 转码阶段推进（≥1 Hz 节流） | `{job_id, step:"png_sequence"/"mp4"/"ue_commandlet", state, progress, detail}` |
-| `error` | 任何失败 | `{code, message, session_id}`，`code` 取自统一错误码表 |
+| `error` | 任何失败 | `{code, message}`，`code` 取自统一错误码表（`to_string(error_code_t)`） |
 
 一期就这 6 个事件。**没有 `face_status`**：人脸检测在二期（§6），一期前端拿不到、也不需要拿人脸框。
 
@@ -208,14 +209,14 @@ WS 上**不定义任何上行命令**。前端不需要发 `ping`（浏览器原
 
 | 动作 | 请求 | 成功返回 | 失败 |
 | --- | --- | --- | --- |
-| 开始录制 | `POST /recordings`，body `{device:0, width:1280, height:720}` | `201 {session_id, state:"recording", width, height, fps:25}` | `409 already_recording`（附带当前 `session_id`）、`422 camera_open_failed` |
-| 结束录制 | `POST /recordings/{session_id}/stop` | `200 {state:"stopped", frames, duration_ms}` | `409 not_recording`、`404 unknown_session` |
-| 查询状态 | `GET /recordings/{session_id}` | `{state, frames, gaps, artifacts}` | `404` |
+| 开始录制 | `POST /recordings`，body `{device:0, width:1280, height:720}` | `201 {ok, state:"recording", width, height, fps:25, frames:0, duration_ms:0}` + `session_id` | `409 already_recording`（`error_code:"already_recording"`）、`422 camera_open_failed` |
+| 结束录制 | `POST /recordings/{session_id}/stop` | `200 {ok, state:"stopped", frames, duration_ms, truncated}` | `409 not_recording`、`404 unknown_session` |
+| 查询状态 | `GET /recordings/{session_id}` | `{state, frames, gaps, artifacts, session_id, width, height, fps}` | `404` |
 | 提交转码 | `POST /transcode`，body 见 §7.2 | `202 {job_id, state:"queued"}` | `409 job_running`、`400 missing_ue_project`（`ue_project` 缺失/为空/非绝对路径/文件不存在）、`400 bad_package_path`（非空但不是合法包路径） |
 
 要点：
 
-- **开始录制是同步的**：`POST /recordings` 在返回 `201` 之前已经完成了 `cv::VideoCapture` 打开、分辨率回读、编码器与 `raw.mkv` 的建立。所以前端拿到 `201` 就意味着"确实在录"。代价是这一个请求会阻塞几十到几百毫秒（打开 DSHOW 设备是慢操作），实现时放在 `rt_loop_strand` 上 `co_await`，路由本身返回 `awaitable`。
+- **开始录制是同步的**：`POST /recordings` 在返回 `201` 之前已经完成了 `cv::VideoCapture` 打开、分辨率回读、编码器与 `raw.mkv` 的建立。所以前端拿到 `201` 就意味着"确实在录"。代价是这一个请求会阻塞几十到几百毫秒（打开 DSHOW 设备是慢操作），实现时 `co_await` 采集 strand 上跑的 `capture_session::start()`，路由本身返回 `awaitable`。
 - **结束录制也是同步的**：等 `raw.mkv` 的 `av_write_trailer` 落完（上限 2 秒）再返回，前端拿到 `200` 就可以直接去拉 `/video` 或提交转码，不需要轮询等 `stopped`。
 - 状态变化仍通过 WS 的 `capture_state` 推送一次，作为"另一条路也能看到"的冗余，但**前端应以 POST 的返回值为准**。
 - 重复调用是幂等的：已在 `recording` 时再发 `POST /recordings` 返回 `409`（不悄悄重开录）；已 `stopped` 时再发 `stop` 返回 `409`。
@@ -245,21 +246,23 @@ WS 传命令的代价是**全双工状态的维护**：命令要有 id、要等 
 
 ### 4.1 线程与执行器
 
-- **一条 `boost::asio::strand`（`rt_loop_strand`）承载全部采集步骤**：取帧、检测、编码、写分片。`cv::VideoCapture::read()` 与 `avcodec_send_frame` 都是阻塞调用，必须 `post`/`co_spawn` 到 strand 上跑，**绝不能直接在 io 线程里同步阻塞**，否则整个 HTTP 服务卡住。
-  - 代价要说清：strand 跑在共享的 `g_io_context()` 上，一次 `read()` 阻塞仍会占住一个 io 线程。`g_io_context()` 是多线程跑的，单个阻塞只会降低并发而非死锁；但**如果实现时发现 `g_io_context()` 线程数过少**，应改为一条**专属 `boost::asio::io_context` + 1 线程**同时跑采集与分片，HTTP/WS 只做投递与写。—— M1 开工时先确认 `app_base` 的线程数，再定这一条。
+- **一条 `boost::asio::strand`（`make_strand(g_io_context())`，实现里是 `capture_session::impl::strand_`）承载全部采集步骤**：取帧、编码、写分片、推流分发。`cv::VideoCapture::read()` 与 `avcodec_send_frame` 都是阻塞调用，必须 `post`/`co_spawn` 到 strand 上跑，**绝不能直接在 io 线程里同步阻塞**，否则整个 HTTP 服务卡住。
+  - 代价要说清：strand 跑在共享的 `g_io_context()` 上，一次 `read()` 阻塞仍会占住一个 io 线程。`g_io_context()` 是多线程跑的（`app_base` 起 `hardware_concurrency()-1` 条线程），单个阻塞只会降低并发而非死锁，**一期就按这个方案做**。若将来实测发现卡顿，再改成专属 `io_context` + 1 线程。
 - 一帧一拍：`async_wait` 一个 `steady_timer`，固定 40 ms 一拍（`next_tick += 40ms` 的绝对时间累加，避免漂移）→ 取帧 → 分发 → 下一拍。详见 §4.4。
-- 停止时 `asio::cancellation_signal` 取消定时器，协程走清理路径；清理必须幂等。
+- 停止：**不用 `cancellation_signal`**。`stop()` 把 `state_` 改成 `stopping`，拍点循环在下一拍醒来时看到状态变了就 `break` 退出（`tick_loop` 的 `while (state_ == recording)`）；`stop()` 自己接着等推流排空、收尾编码器、写 `align.json`。这样清理路径只有一条，且幂等。
 - 本轮**不采集音频**，`raw.mkv` 不带音轨。**注意**：UE 侧 `bSkipTongueSolve` 默认就是 `true`（`MetaHumanFaceTypes.h:51`），所以无音轨与 UE 的默认参数天然一致，不需要传任何额外开关。
 
 ### 4.2 会话状态机
 
 ```
-idle ──POST /recordings──► recording ──POST /stop、断流、错误──► stopping ──收尾完成──► stopped
-                                │                                    │
-                                └── cancel/析构 ─────────────────────► stopped(partial)
+idle ──POST /recordings──► recording ──POST /stop、错误──► stopping ──收尾完成──► stopped
+                                │                                            ▲
+                                └── 析构 / 下一个 start() ────────────────────┘
 ```
 
-- **本机只有一个会话对象**：`local::face_capture_recordings` 路由上那一个 `shared_ptr<capture_session>`（§3.2）。所以"设备互斥"退化成"状态机不许重入"——没有第二个会话能来抢摄像头。
+- `stopping` 是**短暂中间态**：`stop()` 把状态置成 `stopping` 并下发 `capture_state` 事件，然后**在同一个协程里**等推流排空（≤ 2 秒）→ 收尾三个编码器 → 写 `align.json` → 置 `stopped` 再发一次事件。所以前端看到 `stopping` 之后必定能等到 `stopped`，`POST .../stop` 返回时状态已经是 `stopped`。
+- 新一轮 `start()` 进来时若仍是 `recording`/`stopping` → `409 already_recording`（`error_code_t::already_recording`）；否则先 `close_resources()` 收拾上一个会话的残留，再建新的。
+- **本机只有一个会话对象**：`capture_session::instance()` 单例（§3.2）。所以"设备互斥"退化成"状态机不许重入"——没有第二个会话能来抢摄像头。
 - `session_id` 在 `POST /recordings` 成功时生成（`uuid`），`session_dir = core_set::get_set().get_cache_root("face_capture") / session_id_str`。
 - `stopped` 之后再 `POST /recordings`：**不开新会话对象，只换 `session_id` 与 `session_dir`**。上一个会话的 `raw.mkv`/`align.json` 已经被落在旧目录里，不迁移、不覆盖。
 - WS 断开**不改变状态**；`recording` 期间重连是接管（§3.3），不是新建会话。
@@ -269,9 +272,9 @@ idle ──POST /recordings──► recording ──POST /stop、断流、错�
 - `cv::VideoCapture(index, cv::CAP_DSHOW)`（Windows 首选 DSHOW，失败回退 MSMF；DirectShow 更容易设置分辨率/帧率并在某些设备上更稳）。
 - 请求 `CAP_PROP_FRAME_WIDTH/HEIGHT` 后**必须回读实际值**；帧率**不回读也不采用**——一律按 §4.4 固定 25 fps。设备若不支持 25 会给出它自己最接近的帧率，由我们的定时器抽帧/补帧吃掉差异。
 - OpenCV 输出 BGR。**三条色彩口径，都要写死在实现里**：
-  - **推流 / `raw.mkv`（编码链）**：`cv::cvtColor(BGR→RGB)` → `SwsConverter` → `AV_PIX_FMT_YUV420P`。
-  - **`frames/`（step 1）**：ffmpeg 解码 `raw.mkv` → `RGB24` `cv::Mat`（**不要**再 `cvtColor`）→ `cv::imwrite`（`imwrite` 自己会把它当 RGB 写 PNG）。
-  - **颜色来源**：ffmpeg 的 swscale 默认按 `SWS_BICUBIC` 做 BGR↔YUV，与 OpenCV 的默认 `BGR2YUV`（BT.601 有限范围）可能产生 ±2 级别差。**M4 验收方式**：`take.mp4` 解码一帧与 `frames/` 同 **seq** 的 PNG 逐像素比较，平均色差 > 2 即视为口径错；修复方向是统一两端 swscale 的 `colorspace/color_primaries/color_trc`（都设成 `bt709` + `tv` range）。
+  - **推流 / `raw.mkv` / `take.mp4`（编码链）**：`cv::Mat` 是 BGR24，**直接**用 `av::VideoFrame::wrap(..., AV_PIX_FMT_BGR24, ...)` 交给 `av::VideoRescaler` → `AV_PIX_FMT_YUV420P`。**不做 `cvtColor(BGR→RGB)` 中转**——多一次全帧转换只是多花 CPU，`swscale` 本身就有 BGR24 输入。
+  - **`frames/`（step 1）**：ffmpeg 解码 `raw.mkv` → `av::VideoRescaler` 到 `RGB24` → `cv::Mat`（`CV_8UC3`，**不要**再 `cvtColor`）→ `cv::imencode(".png", ...)`（OpenCV 把 `CV_8UC3` 当 RGB 编码）。
+  - **颜色来源**：swscale 默认按 `SWS_BICUBIC` 做 BGR↔YUV，`VideoRescaler` 用默认 flags（`SwsFlagAuto`）。**因为两条链路同源（同一份 `cv::Mat` BGR24、同一个 swscale），口径天然一致**，`take.mp4` 与 `frames/` 的逐像素比对（M4 验收）不应有系统偏差；若实测平均色差 > 2，先查是不是有人在中途插了 `cvtColor`，再考虑统一 `colorspace/color_primaries/color_trc`（都设成 `bt709` + `tv` range）。
 - 正立与 sRGB 是 UE 求解链的硬要求（`FHyprsenseRealtimeNode` 只在正立画面上工作），摄像头驱动一般不做旋转，**画面翻转只允许在前端做，不进后端**。
 - 像素格式统一到 `AV_PIX_FMT_YUV420P`（H.264 通用选择）；奇数分辨率会被 libx264 拒绝，`POST /recordings` 时把宽高向下取偶。
 
@@ -279,7 +282,7 @@ idle ──POST /recordings──► recording ──POST /stop、断流、错�
 
 **全链路只有一个帧率：25 fps，`AVRational{25, 1}`，`time_base = 1/25`。** 推流、`raw.mkv`、`take.mp4`、`frames/`、UE 的 `-FPS=25/1` 全部用它，**没有任何一处需要按 num/den 分数推理**（25 是整数，不会出现 `30000/1001` 那种情况）。
 
-**采集节奏**：`rt_loop_strand` 上一条 `steady_timer`，按绝对时间累加 `40ms` 一拍（`next_tick += 40ms`，不是 `sleep(40ms)`，避免累积漂移）。每拍**产出一帧**，来源按下面的优先级：
+**采集节奏**：采集 strand（`capture_session::impl::strand_`）上一条 `steady_timer`，按绝对时间累加 `40ms` 一拍（`next_tick += 40ms`，不是 `sleep(40ms)`，避免累积漂移）。每拍**产出一帧**，来源按下面的优先级：
 
 | 拍点到来时 | 做法 |
 | --- | --- |
@@ -287,11 +290,13 @@ idle ──POST /recordings──► recording ──POST /stop、断流、错�
 | 没有新帧（摄像头更慢，例如它只出 15/20 fps） | **重复上一帧**（与 §10 的补位策略 A 同一原则，录制时长与墙钟保持一致） |
 | 摄像头更快（30/60 fps） | 每拍取一帧，其余丢弃（**不做运动模糊、不做降采样平均**） |
 
-- 这样 `pts = seq`、`seq` 连续，**录制链本身不产生空洞**。
+- 这样 `pts = seq`、`seq` 连续，**录制链本身不产生空洞**：一拍一定落一帧进 `raw.mkv`，除非摄像头完全卡死（下一条）。
 - 摄像头打开时仍尝试设置 `CAP_PROP_FPS = 25` 让驱动走原生 25，但**不依赖它成功**：设置失败也照常按 40 ms 抽帧。
 - `POST /recordings` 的 body 里**没有 `fps` 字段**：前端没有选择余地。`GET .../recordings/{id}` 与 `align.json` 里有 `"fps": 25`，那是给下游消费者读的常量，不是可配项。
-- 摄像头完全卡死（连续 > 1 秒没有新帧）时不重复补帧，而是记一条 `gaps` 区间后继续——这类长时间空洞由 §10 的补位在转码时补平，避免把 `raw.mkv` 写成一段静止画面。
-- 时长口径：`duration_ms = seq 总数 × 40`，与墙钟无关；`align.json` 里的 `host_pts` 只用于诊断卡顿，不参与任何换算。
+- **摄像头完全卡死（连续 > 1 秒没有新帧）时不补帧**：这一段拍点不往 `raw.mkv` 写，只在 `gaps` 里记一条区间（`{from_seq, to_seq, missing}`），**`seq` 照常只按实到帧递增**。所以 `align.json` 的 `frames[]` 与 `raw.mkv` 的包序**严格一一对应**（第 i 个 `frames` 项 ↔ 第 i 个解码帧）——这是 `png_sequence_writer` 消费解码帧的唯一依据，**实现里绝不能因为记 gap 就推进 `seq`**（否则 PNG 会整体错位）。短暂掉帧（< 1 秒）仍然走"重复上一帧"，不进 gaps。
+  - 空洞的"时长"体现在两处：`gaps[].missing`（该补多少帧），以及 `expect_frame_count = frames.size() + Σ gaps.missing`（`frames/` 应有多少张）。
+  - `capture_result.frames` 与 `align.json` 的 `duration_ms` 都按 **`frames.size() + Σ gaps.missing` × 40ms** 计，即"成片时长"，与 `frames/` 张数一致，而不是 `raw.mkv` 的包数。
+- 时长口径：`duration_ms = 总帧数（含 gaps）× 40`，与墙钟无关；`align.json` 里的 `host_pts_us` 只用于诊断卡顿，不参与任何换算。
 
 ---
 
@@ -303,11 +308,14 @@ idle ──POST /recordings──► recording ──POST /stop、断流、错�
 | --- | --- | --- |
 | 编码库 | `libx264`（`av::findEncodingCodec("libx264")`，已有同款写法见 [ffmpeg_video.cpp:78-86](E:\Doodle\src\doodle_lib\core\ffmpeg_video.cpp)） | vcpkg 的 `ffmpeg[all-gpl]` 已带 |
 | preset / tune | `veryfast` / `zerolatency` | 编码延迟 ≤ 1 帧 |
-| profile / level | `baseline` 或 `main`，`3.1` | 浏览器兼容面最宽 |
+| profile / level | `main`；`level` 不显式设，由 libx264 按分辨率自选 | 浏览器兼容面最宽；硬写 `3.1` 会在高分辨率时被拒 |
 | GOP | `keyint = 25`（1 秒）、`sc_threshold=0` | 重连等待 ≤ 1 秒；25 来自 §4.4 的固定帧率 |
 | rate control | `crf 23`（或 `bitrate 4M` 上限） | 局域网够用且画质稳定 |
 | 像素格式 | `yuv420p` | 见 §4.3 |
 | 时基 / 帧率 | `AVRational{1, 25}`，`AVRational{25, 1}` | 见 §4.4，全链路常量 |
+| B 帧 | `max_b_frames = 0` | 零延迟推流；无 B 帧时 `pts == dts`，分片切分不需要处理重排 |
+
+实现取值：`preset=veryfast`、`tune=zerolatency`、`crf=23`（`AV_OPT_SEARCH_CHILDREN`）、`sc_threshold=0`、`profile=main`、`gop=25`。**`level` 不显式设**——libx264 按分辨率自动选，硬写 `3.1` 反而会在 1080p 时被拒。
 
 编码器封装：`avcpp` 的 `av::VideoEncoderContext`，或直接 `libavcodec`（`ffmpeg_video.cpp` 两种都有先例）。**禁止**用 `cv::VideoWriter`——它无法产出分片容器。
 
@@ -315,10 +323,11 @@ idle ──POST /recordings──► recording ──POST /stop、断流、错�
 
 ### 5.2 fMP4 分片
 
-- 容器层用 `libavformat` 的 `mov`/`mp4` muxer，`AVFMT_FLAG_FLUSH_PACKETS` + `movflags` 组合：`frag_keyframe+empty_moov+default_base_moof`；
+- 容器层用 `libavformat` 的 `mov`/`mp4` muxer，`movflags` 组合：`frag_keyframe+empty_moov+default_base_moof`，另加 `flush_packets=1`、`mov_write_trailer=0`；
+- 实现方式：avcpp 的 `av::CustomIO` 子类（`memory_io`）承接 muxer 的输出字节，`format_context_.setFormat(av::OutputFormat{"mp4"})` + `openOutput(io_.get())` + `writeHeader(movflags...)`；
 - **降级路径（M1 必须准备）**：若实测发现自定义 `AVIOContext` 无法稳定切出 `moof` 边界，改成**手工封装**——`libavcodec` 出 H.264 Annex-B packet，分片时把每个关键帧起始包转成 AVCC（`h264_mp4toannexb` 的反向），自己拼 `moov`（一次）与每片的 `moof`（`tfhd/tfdt/trun`）+ `mdat`。这条路完全可控、无 muxer 状态，代价是自己维护 `trun` 的 `sample_duration/sample_flags/composition_time_offset`。**实现时先按 muxer 方案做；仓库不写测试，M1 靠"浏览器里能播、切页回来能续"人工验收；一旦 `moof` 边界错乱（表现为 `MEDIA_ERR_SRC_NOT_SUPPORTED` 或画面花屏）立即切手工封装。**
 - 分片边界取 `AV_PKT_FLAG_KEY`：每遇到关键帧 packet 就切一个片段（片段 = 一个关键帧 + 其后所有非关键帧），与 `frag_keyframe` 语义一致；
-- 片段产出：`avio` 用**自定义写回调**（或内存 `AVIOContext`）截获 muxer 输出，每写完一个 fragment 就把 `(init_bytes_once, moof+mdat_bytes)` 交给分发器。**不要每帧重开 muxer**。
+- **第一个片段的特殊身份**：`empty_moov` 使得 `writeHeader` 输出的 `ftyp+moov` 就是 **init segment**（浏览器 `SourceBuffer.appendBuffer` 的第一块）。实现里把它作为 `h264_fragmenter::init_segment()` 单独取出，`seq_begin = seq_end = 0, key = true`，其余片段才是 `moof+mdat`。**不要每帧重开 muxer**。
 - 全部编码器的时基固定为 `{1, 25}`（§4.4），`pts` 就是 `seq`；**不要**从 `host_pts` 换算，也不要按摄像头真实出帧率设时基。
 
 ### 5.3 分发（单推流，无背压层）
@@ -331,18 +340,20 @@ capture_session::frames ─┬─► media_fragment_pipeline(推流编码器) �
 ```
 
 - `ws_outlet` 就是当前绑定的那条连接的写接口（`shared_ptr`，可为空——没连 WS 时推流编码直接**不做**，省 CPU）。
-- **写不动就丢**：`ws_outlet::try_send(fragment)` 是非阻塞返回值的调用。内部是一个**容量 2 片**的槽：写协程正在写时新分片进来，若新分片是**关键帧**就替换掉槽里的旧分片，否则直接丢弃。**没有任何缓冲队列、没有环形缓冲、没有 history 补发**。
+- **写不动就丢**：`ws_outlet::send_fragment(fragment)` 是非阻塞返回值的调用。内部是一个**上限 8 片**的 `std::deque`，用一个 `atomic_bool` 保证**同时只有一条写协程在途**；`drain()` 依次取队首写出去。
+- **丢非关键帧**：队列里还压着没发出去的关键帧分片时，新进来的**非关键帧分片直接丢弃**（它反正要靠后面的关键帧重同步）。所以异常时队列最多积到 8 片，随后被关键帧覆盖式清空。**没有任何环形缓冲、没有 history 补发**。
 - 为什么不需要更复杂的背压：单用户本机 + 同机前端，WS 走 loopback，单帧分片 10–60 KB，写满窗口的概率极低；偶发丢片最多让画面卡一下，**录制链（`raw.mkv`）完全不受影响**，因为 `raw.mkv` 与推流是两条独立的编码器，各自从同一批 `cv::Mat` 取帧。
 - 这也意味着**§3.3 里不需要 `gap` 标记**：丢片时前端只会停在上一帧，下一个关键帧到达自然恢复（GOP = 1 秒）。
-- 只由 `rt_loop_strand` 触碰 `ws_outlet`；WS 协程只在写完成时回到 strand 复位"空闲"标志。**不要裸 `std::queue` 跨线程**。
-- 页面切后台导致 WS 停读：beast 的 `async_write` 挂着，槽一直满，分片被丢 —— 这正是期望行为，**不超时、不主动断开**（录制还在跑，断开就没法控制停止）。
+- 只由采集 strand 触碰 `ws_outlet`；WS 协程只在写完成时回到 strand 复位"空闲"标志。**不要裸 `std::queue` 跨线程**。
+- 页面切后台导致 WS 停读：beast 的 `async_write` 挂着，队列一直满，分片被丢 —— 这正是期望行为，**不超时、不主动断开**（录制还在跑，断开就没法控制停止）。
 
 ### 5.4 录制侧（raw.mkv）
 
-- 与推流**同一批 `cv::Mat`**，走第二条编码器：`FFV1`（`AV_CODEC_ID_FFV1`，level 3，`yuv420p` 或 `bgr0`），封装 `matroska`。
+- 与推流**同一批 `cv::Mat`**，走第二条编码器：`FFV1`（`AV_CODEC_ID_FFV1`，level 3），封装 `matroska`。**像素格式不强制转换**：直接用 `AV_PIX_FMT_BGR24`（FFV1 支持 bgr0/bgr0p16 等 RGB 布局），省掉一次 swscale；若实测该布局编码失败再退回 `yuv444p`。
 - 为什么 FFV1 而不是 H.264：`raw.mkv` 是转码与 `frames/` 的唯一权威来源，必须**逐帧无损**，否则 PNG 序列里会有压缩痕迹，UE 求解精度受影响。
 - 体积代价：1280×720@25 约 7–13 MB/s，1 分钟约 0.4–0.8 GB；1080p 再放大 4 倍。默认分辨率取 **1280×720@25**（帧率定死，见 §4.4；分辨率在 `POST /recordings` 时可调）；超时长（> 10 分钟，见 UE 侧"单段 ≤ 10 分钟"约束）在 `capture_state` 里给 `warning`，不强制中断。
-- 落盘线程：`av_interleaved_write_frame` 在无损编码下是大块顺序写，放在 `rt_loop_strand` 上会和采集抢同一个 io 线程。用一条**专用写盘线程**（`boost::asio::thread_pool{1}`）+ 有界队列（上限 300 帧），队列满时**丢帧并记入 align.json**，绝不阻塞采集主循环。
+- 落盘线程：`av_interleaved_write_frame` 在无损编码下是大块顺序写，放在采集 strand 上会和采集抢同一个 io 线程。用一条**专用写盘线程**（实现里是 `std::thread` + `mutex`/`condition_variable`）+ 有界队列（上限 300 帧，`k_max_raw_queue_frames`），队列满时**丢帧并返回 false**，**绝不阻塞采集主循环**。
+  - 丢帧记在哪：`raw_writer::push()` 返回 false 时 `capture_session` 置 `truncated_ = true`，`align.json` 的 `truncated` 就是这个含义（`raw.mkv` 比 `frames[]` 少帧）。**注意**这会让 `frames[]` 与 `raw.mkv` 包序不再一一对应 —— 这是"写盘线程丢帧"的已知代价，一期不做额外补偿，只标记 `truncated`；转码作业看到 `truncated: true` 时应在 step 1 前后对帧数做一次一致性检查（解码出来的包数 vs `frames.size()`），不一致就判 `raw_frames_mismatch`。
 - **坏帧与短尾**：`POST .../stop` 到达时可能还有几帧在队列里，收尾必须先 `drain` 队列再 `av_write_trailer`；`stopping` 状态最长等 2 秒，超时直接 trailer 并记 `align.json` 的 `truncated: true`。**这个等待发生在 HTTP 请求内**，所以 `stop` 的响应时间上限就是 2 秒，前端超时要设得比它大。
 
 ---
@@ -377,10 +388,10 @@ capture_session::frames ─┬─► media_fragment_pipeline(推流编码器) �
 
 ### 6.4 运行策略（二期）
 
-- 检测**降频**：固定每 2 帧一次 = **12.5 Hz**（§4.4 帧率定死 25），跑在 `rt_loop_strand` 上；单次检测耗时 > 80 ms（两帧间隔）就顺延到下一拍，把实际频率如实上报。
+- 检测**降频**：固定每 2 帧一次 = **12.5 Hz**（§4.4 帧率定死 25），跑在采集 strand 上；单次检测耗时 > 80 ms（两帧间隔）就顺延到下一拍，把实际频率如实上报。
 - 检测分辨率：把帧 `resize` 到长边 640 再送检，边界框按比例映射回原尺寸。
 - `status` 取 `none` / `ok` / `multi`，**任何取值都不影响录制**。是否在开录前拦下"没检到脸"的场景留到二期再定（一期没有这道闸，所以一期也没有 `422 no_face`）。
-- 线程模型：`FaceDetectorYN` 对象**不可拷贝**，放进 `std::shared_ptr<face_detector>`，只在 `rt_loop_strand` 上调用 `detect()`，销毁也在 strand 上完成。
+- 线程模型：`FaceDetectorYN` 对象**不可拷贝**，放进 `std::shared_ptr<face_detector>`，只在采集 strand 上调用 `detect()`，销毁也在 strand 上完成。
 
 ---
 
@@ -570,7 +581,7 @@ co_await async_run_ue(
 - **没有 `face` 字段**：人脸检测在二期（§6），一期不往权威记录里写任何检测结果。
 - `gaps` 只在摄像头卡死（§4.4 的"连续 > 1 秒没有新帧"）时才会出现；正常情况下 `seq` 连续、`gaps` 为空。它是 step 1 补位的唯一依据。
 - `frames` 只记 `{seq, host_pts_us}`；`pts` 不单独存——帧率固定为 25，`pts` 就是 `seq`。
-- `gaps[].from_seq` 与 `to_seq` 是**补位后的逻辑帧号**（`to_seq - from_seq + 1 == missing`），与 `frames[].seq` 同一坐标系；`raw.mkv` 里的实际帧是连续编号的，与 `frames[].seq` 之间隔着一个累计空洞，实现时 `png_sequence_writer` 按 `seq` 顺序消费 `raw.mkv` 的同一顺序帧即可，不需要号对号。
+- **`frames[].seq` 是连续递增的实际帧号**（两次 gap 之间没有洞），`gaps[].from_seq/to_seq` 标的是"这里本该有帧但没有"，`to_seq = from_seq + missing - 1`。所以 `frames[i].seq` 与 `raw.mkv` 第 i 个解码帧严格对应 —— 这是 `png_sequence_writer` 的消费依据（§10），**实现里绝不能因为记 gap 就推进 `seq`**。
 
 ---
 
@@ -580,10 +591,8 @@ co_await async_run_ue(
 
 `missing` 的计算必须自洽，**不能依赖墙钟时长**（墙钟会引入假丢帧；帧率固定 25 之后连"帧率不稳"这个诱因都没了，`gaps` 只来自摄像头卡死）：
 
-1. 用 `align.json` 的 `frames[].seq` 与 `gaps[].missing`：`expect_frames = len(frames) + Σ gaps.missing`（`frames` 里已经包含了补位前实际落盘的帧，`gaps` 是它们之间的空洞）。
-
-1. 用 `align.json` 的 `frames[].seq` 与 `gaps[].missing`：`expect_frames = len(frames) + Σ gaps.missing`（`frames` 里已经包含了补位前实际落盘的帧，`gaps` 是它们之间的空洞）。
-2. 逐帧解码 `raw.mkv`（帧率 25，解码顺序即采集顺序），按 `frames[].seq` 的顺序写 `frame_%06d.png`；遇到 `gaps` 区间，就把**上一张 PNG 的字节直接复制 `missing` 次**（不重新编码，省 CPU 与 IO）。`raw.mkv` 的帧号与 `seq` 之间差一个累计 `missing`，`png_sequence_writer` 只要按顺序消费即可，不需要号对号匹配。
+1. 用 `align.json` 的 `frames[].seq` 与 `gaps[].missing`：`expect_frames = len(frames) + Σ gaps.missing`（`frames` 里是**实际落进 `raw.mkv` 的帧**，`gaps` 是它们之间的空洞）。
+2. 逐帧解码 `raw.mkv`（帧率 25，解码顺序即采集顺序），**第 i 个解码帧对应 `frames[i]`**（因为采集侧 gap 不推进 `seq`，见 §4.4，所以两者天然一一对应）；解码帧按顺序写 `frame_%06d.png`。**当上一张与下一张有空洞时**（即 `frames[i+1].seq > 写出的下一张编号`），就把**上一张 PNG 的字节直接复制**若干次，凑到 `frames[i+1].seq` 为止（不重新编码，省 CPU 与 IO）。
 3. 若首帧就丢（理论上不该发生），复制第一个实到帧。
 4. 写完后自检：`png_count == expect_frames`、编号从 000000 连续、位数为 6、目录内只有 `.png` —— 任一不满足即判 step 1 失败，**绝不把不合格的序列交给 UE**。
 
@@ -596,9 +605,9 @@ co_await async_run_ue(
 | 里程碑 | 内容 | 验收 |
 | --- | --- | --- |
 | **M0（0.5 天，只验证不写产品代码）** | ①手搓一份 `frame_000000.png`（6 位数字）序列，真机跑 `-run=MetaHumanFace -FramesDir=<abs> -OutDir=<abs> -FPS=25/1`；②记录单帧求解耗时，判断 `core_set.timeout` 是否够；③确认 `curves/frames_meta.json` 的 `first_frame` 被采用；④确认不传 `-SequencePattern` 能通过；⑤确认 `FTrackingPathUtils` 接受该命名 | 五条结论写回本文 §8；任一条失败立即回到 §8 复核 |
-| M1 | `capture_session` + `media_fragment_pipeline`（仅推流）+ `ws_outlet` + `face_capture_stream` WS + `POST/GET recordings` + 路由注册 + CMake | 浏览器里出现实时画面；`curl -X POST .../recordings` 能开录、`.../stop` 能收尾 |
-| M2 | `raw.mkv`（FFV1）+ `align.json` + 完整 `POST/GET/stop` 状态机 + `take.mp4` 回放下载 | 录完得到 raw + align，可播放/下载 |
-| M3 | 转码作业 step 1 + step 2（`png_sequence` 含策略 A、`mp4`）+ 作业查询/取消 | 不接 UE 也能产出合格 `frames/` 与 `take.mp4`，补位与命名校验生效 |
+| **M1（引擎部分已完成）** | `capture_session` + `media_fragment_pipeline`（仅推流）+ `ws_outlet`；**HTTP/WS 路由待做**：`face_capture_stream` WS + `POST/GET recordings` + 路由注册 + CMake | 引擎侧：编译通过 ✅；剩下浏览器里出现实时画面 + `curl -X POST .../recordings` 开录/收尾 |
+| **M2（引擎部分已完成）** | `raw.mkv`（FFV1）+ `align.json` + 状态机 + `take.mp4`；**HTTP 层待做**：`POST/GET/stop` 端点 | 引擎侧：编译通过 ✅；剩下录完能得到 raw + align、可播放/下载 |
+| M3 | 转码作业 step 1 + step 2（`png_sequence` 含策略 A、`mp4`）+ 作业查询/取消。**`write_png_sequence()` 已实现并编译通过**，等待最终作业调度层 | 不接 UE 也能产出合格 `frames/` 与 `take.mp4`，补位与命名校验生效 |
 | M4 | 转码作业 step 3（Commandlet 编排 + 结果解析 + `frames/` 删除） | 端到端：录 → PNG → UE → `.dhfc` |
 | M5 | 加固：状态机重入、`ws_outlet` 丢片调参、`ue_ctx` 排队观测、错误码统一 | 连续录 20 次无泄漏、无卡死 |
 
@@ -611,9 +620,9 @@ co_await async_run_ue(
 | 风险 | 影响 | 对策 |
 | --- | --- | --- |
 | **UE 侧命名/跟踪路径不匹配**（B 路线首风险） | `BuildWithTimecode` 直接 `CaptureDataBuildFailed`，表现为"素材错" | M0 先钉死；step 1 用 §10 的落盘前自检，不合格不提交 UE |
-| `cv::VideoCapture` 阻塞 io 线程 | 整个 HTTP 服务卡死 | 只在 `rt_loop_strand` 上调用（§4.1） |
+| `cv::VideoCapture` 阻塞 io 线程 | 整个 HTTP 服务卡死 | 只在采集 strand 上调用（§4.1） |
 | WS 写并发 | beast 直接崩或数据错乱 | 单在途写标志 + `binary(true/false)` RAII（§3.3） |
-| 页面挂起导致 WS 停读 | 写挂住、推流分片被丢 | 两片槽 + 丢非关键帧（§5.3）；**录制链不受影响**，丢的只是画面 |
+| 页面挂起导致 WS 停读 | 写挂住、推流分片被丢 | 上限 8 片队列 + 丢非关键帧（§5.3）；**录制链不受影响**，丢的只是画面 |
 | 摄像头型号差异（分辨率/帧率/MJPG 直出） | 请求的分辨率被静默改成别的 | 回读实际分辨率并上报（§4.3）；帧率不关心，由 25 fps 定时器抽帧/补帧（§4.4） |
 | 摄像头卡死 / 驱动掉帧 | 录制里出现时长空洞 | 每拍补上一帧，超过 1 秒无新帧则记 `gaps` 交给转码补位（§4.4、§10） |
 | 设备不支持 25 fps | 出帧节奏与 25 不匹配 | 不做任何协商：定时器 40 ms 一拍抽帧，静态补帧只影响流畅度不影响求解 |
@@ -621,7 +630,8 @@ co_await async_run_ue(
 | `core_set.timeout` 不足以覆盖脸捕 | 长素材必失败 | M0 实测后决定是否为 `async_run_ue` 增加可选 timeout（§7.3-5） |
 | 与渲染任务抢 `ue_ctx` 闩 | 脸捕要排队，前端进度长时间停在 40% | 进度里显式给出 `ue_commandlet: waiting_for_ue_lock` 子状态，别让前端以为卡死 |
 | `async_run_ue` 超时后 UE 进程仍在跑 | 闩被占死，后续所有 UE 任务排队卡住 | 作业捕获超时异常后先终止该进程再返回（§7.4） |
-| 路由类被 `clone()` | 成员生成两份，引擎状态错乱 | 路由只持 `shared_ptr`，引擎放在被指的那一个对象上（§3.2） |
+| 路由类被 `clone()` | 成员生成两份，引擎状态错乱 | 会话放在 `capture_session::instance()` 单例上，路由对象不存会话状态（§3.2） |
+| 记 `gaps` 时误推进 `seq` | `frames[].seq` 与 `raw.mkv` 包序错位，PNG 序列整体错位 | gap **只记录、不推进 `seq`**；`expect_frame_count` 负责把张数补齐（§4.4、§9） |
 
 > 一期没有"模型缺失""opencv 不带 objdetect"这类风险——人脸检测整体在二期（§6）。
 
@@ -630,6 +640,15 @@ co_await async_run_ue(
 ## 13. 验证方式
 
 按仓库约束：**不写测试、不跑测试**，验证手段只有编译通过（`cmake_configure Ninja_debug` + `cmake_build debug_doodle`）。运行期验证只在 M0 里程碑里做一次真机冒烟，其余靠人工按 §3.2 的接口清单点一遍。
+
+**当前状态**：采集引擎 6 组源文件已全部实现，`cmake_build(--preset debug_doodle)` **exit 0**（`doodle_lib.dll` / `test_main.exe` / `doodle_kitsu_supplement.exe` 全链接通过）。HTTP 与 WS 路由、转码作业层尚未开始。
+
+**编译期踩过的坑**（写后续代码时照此避让）：
+- `av::VideoFrame` **没有 `copyTo`**，取像素要用 `copyToBuffer(uint8_t*, size_t, align)`，且它是**非 const 成员** —— 所以取帧的函数参数要按值收 `av::VideoFrame`。
+- `av::VideoRescaler::rescale()` 返回新帧，缩放这一步不能省（直接 `wrap` 原始帧会拿到未缩放的尺寸）。
+- `boost/asio/make_strand.hpp` 不存在，`make_strand` 在 `boost/asio/strand.hpp`。
+- beast 的流类型是 `boost::beast::tcp_stream`（头 `boost/beast/core/tcp_stream.hpp`），不是 `boost::asio::ip::tcp::tcp_stream`。
+- beast websocket 写接口 `async_write_some(bool fin, ...)` 第一参必须传 `true`。
 
 **编译期注意**：新增源文件必须同时登记到 `core/CMakeLists.txt`、`exe_warp/CMakeLists.txt`、`http_method/local/CMakeLists.txt` 三个 `target_sources(doodle_lib ...)` 里（现状见 [local/CMakeLists.txt](E:\Doodle\src\doodle_lib\http_method\local\CMakeLists.txt)：`PUBLIC` 只放 `.h`，`.cpp` 全在 `PRIVATE`）。漏登记表现为"链接时找不到符号"而不是语法错误。
 
@@ -657,18 +676,18 @@ co_await async_run_ue(
 
 ## 附录 A：改动面清单（实现时逐项勾掉）
 
-| 文件 | 动作 |
-| --- | --- |
-| `src/doodle_lib/core/face_capture/*`（5 组 .h/.cpp） | 新增 |
-| `src/doodle_lib/core/CMakeLists.txt` | 登记新增源文件 |
-| `src/doodle_lib/exe_warp/face_capture/*`（2 组 .h/.cpp） | 新增 |
-| `src/doodle_lib/exe_warp/CMakeLists.txt` | 登记新增源文件 |
-| `src/doodle_lib/http_method/local/face_capture.h` + 4 个 .cpp | 新增 |
-| `src/doodle_lib/http_method/local/CMakeLists.txt` | 登记 `.h`(PUBLIC) 与 `.cpp`(PRIVATE) |
-| `src/doodle_lib/http_method/kitsu.cpp` | `create_kitsu_local_route()` 追加 §3.1 的 10 条 `reg_c` |
-| `src/doodle_core/metadata/kitsu_ctx_t.h` | **不改**（人脸检测在二期才加 `face_detector_model_path_`） |
-| `script/uePlug/Doodle/**` | **不改** |
-| `vcpkg.json` | **不改** |
+| 文件 | 动作 | 状态 |
+| --- | --- | --- |
+| `src/doodle_lib/core/face_capture/*`（6 组 .h/.cpp：`face_capture_types.h`、`media_fragment_pipeline`、`ws_outlet`、`capture_session`、`frame_align`、`png_sequence_writer`） | 新增 | **已完成，编译通过** |
+| `src/doodle_lib/core/CMakeLists.txt` | 登记新增源文件 | **已完成** |
+| `src/doodle_lib/exe_warp/face_capture/*`（2 组 .h/.cpp） | 新增 | 未开始 |
+| `src/doodle_lib/exe_warp/CMakeLists.txt` | 登记新增源文件 | 未开始 |
+| `src/doodle_lib/http_method/local/face_capture.h` + 4 个 .cpp | 新增 | 未开始 |
+| `src/doodle_lib/http_method/local/CMakeLists.txt` | 登记 `.h`(PUBLIC) 与 `.cpp`(PRIVATE) | 未开始 |
+| `src/doodle_lib/http_method/kitsu.cpp` | `create_kitsu_local_route()` 追加 §3.1 的 10 条 `reg_c` | 未开始 |
+| `src/doodle_core/metadata/kitsu_ctx_t.h` | **不改**（人脸检测在二期才加 `face_detector_model_path_`） | — |
+| `script/uePlug/Doodle/**` | **不改** | — |
+| `vcpkg.json` | **不改** | — |
 
 ## 附录 B：与既有模块的边界
 
@@ -686,10 +705,10 @@ co_await async_run_ue(
 
 | 初稿设计 | 现在 | 原因 |
 | --- | --- | --- |
-| `capture_session_registry`（`session_id` 查找表） | 删除，会话挂在 `face_capture_stream` 原型上那一个 `shared_ptr` | 本机只有一个会话 |
+| `capture_session_registry`（`session_id` 查找表） | 删除，改为 `capture_session::instance()` 进程内单例 | 本机只有一个会话 |
 | WS 按 `session_id` 分路径、多连接互斥 + `409 device_busy` | 路径保留占位但不参与查找；第二条连接接管，旧的 `superseded` | 摄像头只有一个消费者，不需要仲裁 |
 | 多标签页：`control:"observer"` 观察者模式 | 删除 | 只有一条推流、一个控制者 |
-| 每连接 `fragment_sink` + 环形缓冲 + 逐连接 FIFO(8 片) + `gap` 标记 | 两片槽 + 关键帧优先替换，`gap` 字段删除 | 只有一个出口，不需要分发与回放补发 |
+| 每连接 `fragment_sink` + 环形缓冲 + 逐连接 FIFO(8 片) + `gap` 标记 | 上限 8 片队列 + 关键帧优先级覆盖 + 丢非关键帧，`gap` 字段删除 | 只有一个出口，不需要分发与回放补发 |
 | `align.json` 里的 `dropped_by_sink` | 删除 | 推流丢片不影响录制，不写进权威记录 |
 | `capture_start` 的 `fill_mode` 字段（只接受一个值） | 删除 | 策略 A 已拍板，协议里不留无效开关 |
 | WS 上行命令（`capture_start` / `capture_stop` / `transcode_start` / `ping`） | 全部删除，改为 `POST /recordings`、`POST .../stop`、`POST /transcode` | 本机 loopback，请求-响应没有不确定性，没必要维护 ack/超时/重放（§3.5） |
@@ -698,4 +717,5 @@ co_await async_run_ue(
 | 单独的"兜底停止"REST 端点 | 合并为唯一的 `POST .../stop` | 控制面只有一条路，不存在"主路用完用兜底" |
 | 帧率可配：`POST /recordings` 的 `fps`、转码的 `fps:"num/den"`、`align.json` 的 `fps_num/fps_den`、按实际出帧率设 `time_base` | 全部删除，全链路常量 25 fps；`align.json` 只留 `"fps": 25`，`raw_pts` 一列也删（`pts == seq`） | 帧率定死（§4.4），分子分母推理、实际帧率回读、`host_pts → pts` 换算全都不需要 |
 | 丢帧判定的 `1.8 × 帧间隔` 自适应阈值 | 删除；采集成拍产出，`gaps` 只记录"连续 > 1 秒无新帧"的卡死区间 | 帧率固定后没有"帧率抖动"这个丢帧来源 |
+| 编码链 `cvtColor(BGR→RGB)` 中转后交 `SwsConverter` | 直接 `AV_PIX_FMT_BGR24` → `av::VideoRescaler` → `YUV420P`；`frames/` 侧用 `cv::imencode` 而不是 `cv::imwrite`（便于先把 PNG 字节攒在内存里做补位复制） | 少一次全帧转换；两条链路同源同 swscale，色彩口径天然一致 |
 | 人脸检测整块（`core/face_capture/face_detector.*`、`face_status` 事件、`hello` 的 `face_detector` 字段、`align.json` 的 `face`、`POST /recordings` 的 `422 no_face` 与 `force`、`kitsu_ctx_t::face_detector_model_path_`、M0' 预研与 M3 里程碑） | 全部推迟到二期，一期不做也不预留 | 一期目标是把"录 → 推 → PNG → UE 曲线"打通，检测是独立增量（§6） |
