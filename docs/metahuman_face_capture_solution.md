@@ -181,7 +181,7 @@ FFootageCaptureMetadata             Metadata;
 - 同一处会调 `FMessageDialog::Open`（`:261`）弹「帧率非法」对话框。**commandlet 里没人点确定，会一直挂着**。所以我们的顺序是：先构造并校验好 `UFootageCaptureData`（帧率分子非零），再赋给 `FootageCaptureData`。
 - 反过来，直接 `Perf->StartFrameToProcess = X` 不做 `PostEditChangeProperty` 是**可以**的（`:204` 那条分支只做 Clamp），但 Sprite 顺序上要在 `FootageCaptureData` 赋值之后。**默认值不用管**：`FootageCaptureData` 一赋值，`:267-268` 就已经把整个 `ProcessingLimitFrameRange` 填好了。
 
-**帧率**：B 路线用 `FFrameRate` 有理数，`29.97` 写 `30000/1001`，`23.976` 写 `24000/1001`。`.dhfc` 里存分子/分母，不存 double。
+**帧率**：B 路线用 `FFrameRate` 有理数，`29.97` 写 `30000/1001`，`23.976` 写 `24000/1001`。`.dhfc` 里存分子/分母，不存 double。命令行 `-FPS` 的**缺省值是 `25/1`**（`MetaHumanFaceTypes.h:46-47`），与 Doodle 侧固定 25 fps 的链路一致（[face_capture_camera_stream_plan.md §4.4](face_capture_camera_stream_plan.md)）。
 
 ### 3.3 P3：求解（核心）
 
@@ -246,7 +246,7 @@ for (int32 i = 0; i < Perf->GetNumberOfProcessedFrames(); ++i)
 
 而且**只有 Skeleton 的 `CurveMetaData` 里已存在同名曲线时才写**（`:2199-2250` 的 `SkeletonCurveNames.Contains(...)`），`IsTargetSkeletonCompatible` 只在 UI 的 `ExportClicked` 里被调用（`:355-380`，弹对话框），**无 UI 路径完全不校验** —— 曲线名对不上就静默少写。再经 `UAnimSequenceExporterFBX` 转 FBX，拿到的还是一模一样的东西。
 
-结论：**不实现 AnimSequence / FBX 导出，也不依赖 `Face_Archetype_Skeleton`**。唯一交付产物是 `.dhfc`（`.dhfc.json` 只是人读摘要）。
+结论：**不实现 AnimSequence / FBX 导出，也不依赖 `Face_Archetype_Skeleton`**。唯一交付产物是 `.dhfc`（`face_curves_summary.json` 只是人读摘要）。
 
 ---
 
@@ -300,7 +300,7 @@ offset  type       field
 - **不含平滑前数据**（已拍板）。`flags` 的 bit0 只是占位：以后若要做，按附录 C 的方案 3 跑第二条管线，`bit0 = 1` 时在尾部追加一段与主数据段同构的曲线块，读端向后兼容。
 - `name` 直接复制 `FFrameAnimationData::AnimationData` 的 key（`HyprsenseRealtimeNode.cpp:1202` 的 `check == 251` 说明单目固定 251 条）。
 - **曲线集合以首次跑通时的实际 key 为准，不在代码里硬编码**。V1 冒烟的核心产出就是把它打印出来固化成常量表 + 「引擎升级后 key 集合变化」的启动校验。
-- 伴随 `xxx.dhfc.json`（人可读摘要：帧数、fps、曲线名、每曲线 min/max/首末值），给动画人员核对。
+- 伴随 `face_curves_summary.json`（人可读摘要：帧数、fps、曲线名、每曲线 min/max/首末值），给动画人员核对。
 - 可选压缩：`flags bit2` 时按帧分块 zlib（块头 `uint32 uncompressed_size`）。先不做，看实测体积再定。
 
 ---
@@ -310,7 +310,7 @@ offset  type       field
 **没有服务端，没有常驻进程，没有 HTTP，没有队列。**
 
 ```
-UnrealEditor-Cmd.exe <Project>.uproject -run=MetaHumanFace -FramesDir=... -OutDir=... -FPS=24000/1
+UnrealEditor-Cmd.exe <Project>.uproject -run=MetaHumanFace -FramesDir=... -OutDir=... -FPS=25/1
 ```
 
 `UMetaHumanFaceCommandlet : public UCommandlet`，`int32 Main(const FString& Params)` 就是整个程序。
@@ -323,7 +323,7 @@ UnrealEditor-Cmd.exe <Project>.uproject -run=MetaHumanFace -FramesDir=... -OutDi
 | 引擎类型 | `:3930-3941` 用 `UCommandlet::IsEditor` 决定造 `UEditorEngine` 还是 `UGameEngine` | `IsEditor = true` → 真正的编辑器引擎，`MetaHumanPerformance` 需要的 `GEditor` 存在 |
 | 参数 | `:4033 Commandlet->ParseParms(CommandletCommandLine)`，`CommandletCommandLine` 来自 `:2194` 把命令行 token 重新拼装 | `Params` 就是整条命令行的 token 串，可自由解析；**也能用 `FCommandLine::Get()` 直接读全局** |
 | 退出码 | `:4199 return ErrorLevel`；`:4191-4196` `FastExit` → `RequestExitWithStatus` | `Main` 的返回值就是进程退出码 |
-| 日志 | UAT 的 `RunCommandlet`（`AutomationTool/AutomationUtils/CommandletUtils.cs:321-329`）用 `-run={0} {1} -abslog={2} -stdout -CrashForUAT -unattended -NoLogTimes` | `-abslog=xxx.log` 写盘（`GenericPlatformOutputDevices.cpp:84-90`，**扩展名必须是 `.log` 或 `.txt`，否则被忽略**），`-stdout` 同时回显 |
+| 日志 | UAT 的 `RunCommandlet`（`AutomationTool/AutomationUtils/CommandletUtils.cs:321-329`）用 `-run={0} {1} -abslog={2} -stdout -CrashForUAT -unattended -NoLogTimes` | `-abslog=xxx.log` 写盘（`GenericPlatformOutputDevices.cpp:84-90`，**扩展名必须是 `.log` 或 `.txt`，否则被忽略**），`-stdout` 同时回显。**注意 UAT 这串参数不能照抄**：其中的 `-unattended` 会禁用 RHI，MetaHuman 求解必须换用 `-AllowCommandletRendering -RenderOffscreen`（§6.2） |
 
 ### 6.2 命令行约定
 
@@ -331,17 +331,21 @@ UnrealEditor-Cmd.exe <Project>.uproject -run=MetaHumanFace -FramesDir=... -OutDi
 | --- | --- | --- |
 | `-FramesDir=<绝对路径>` | 是 | 逐帧图像目录 |
 | `-OutDir=<绝对路径>` | 是 | 输出根目录，每次运行独立 |
-| `-FPS=<num>/<den>` | 否 | 有理数帧率，默认 `24000/1` |
+| `-FPS=<num>/<den>` | 否 | 有理数帧率，默认 `25/1` |
 | `-SequencePattern=<模板>` | 否 | 默认 `{frame}`；**调用方可以完全不传**（只校验"传了但不含 `{frame}`"），帧命名固定为 `frame_000000.png` |
-| `-PackagePath=<长包名>` | 否 | 中间资产落点，默认 `/Temp/MetaHumanFace/<runId>`；调用方通常显式传 `/Game/...` |
+| `-PackagePath=<包路径>` | 否 | 中间资产落点；**不传或传空 → 用 `<OutDir>/Package`**（`MetaHumanFaceCaptureDataBuilder.cpp:303-310`）；显式传时必须是 `/Game/...` 形式且末段不含 `.` |
 | `-NoHeadStabilize` | 否 | 关掉 `bHeadStabilization` |
 | `-KeepTongueSolve` | 否 | 打开 `bSkipTongueSolve=false` |
 
 **处理范围**：本命令只处理**整段序列**，不提供帧区间选择。需要只处理片段时，由调用方先把帧裁好放进一个独立目录再调用；命令行里带 `-Range=...` 会被静默忽略（与其它未知参数的策略一致），不会裁剪处理范围。
 
-**起始时间码**：`ResolveStartTimecode`（`MetaHumanFaceCaptureDataBuilder.cpp:312-340`）优先读 `-OutDir` 下的 `frames_meta.json` 的 `first_frame`，其次用扫描到的起始帧号，最后才用墙钟。调用方不写 `frames_meta.json` 时求解结果本身不会报错，但与序列动画对不齐，所以**调用方应当在 `-OutDir` 里写 `{"first_frame": n}`**。
+**帧命名缺帧即失败**：`ScanSequence`（`MetaHumanFaceCaptureDataBuilder.cpp:233-258`）一旦发现帧号不连续就返回 `FramesNotFound`（退出码 2），**不允许跳过缺帧继续求解**。目录为空、扩展名为空、中间缺帧统一归到 `FramesNotFound`，具体差异只体现在 `detail` 文本与 `dropped_frame_ranges` 里。
 
-**退出码**：`0` 成功，`2` 参数/素材/CaptureData 失败，`3` 模型或推理后端缺失，`4` 求解失败，`5` 导出或写盘失败（`MetaHumanFaceCommandlet.cpp:449-469`）。结果同时写在 `-OutDir/face_capture_log.json`，**调用方应优先读它而不是只看退出码**。
+**起始时间码**：`ResolveStartTimecode`（`MetaHumanFaceCaptureDataBuilder.cpp:312-340`）优先读 `-OutDir` 下的 `frames_meta.json` 的 `first_frame`，其次用扫描到的起始帧号，最后才用墙钟。三级都经过 `MakeNonZeroTimecode`（`:91-102`）避开全零时间码（`FTimecode()` 会被 `IsValidTimecode` 判非法），所以落到墙钟那级也只是一个"任意的合法起始时刻"，不是随机坏值；素材从 `frame_000000.png` 起步时三级结果等价，**调用方可以省略 `frames_meta.json`**。
+
+**退出码**：`0` 成功，`2` 参数/素材/CaptureData 失败，`3` 模型或推理后端缺失，`4` 求解失败（含 `CurveSetMismatch`/`Cancelled`/`TimedOut`），`5` 导出或写盘失败（`MetaHumanFaceCommandlet.cpp:450-470`）。结果同时写在 `-OutDir/face_capture_log.json`（成功失败都写，但参数解析阶段就失败时 `OutDir` 未确定、该文件不存在），**调用方应优先读它而不是只看退出码**。
+
+**渲染开关（必须）**：Commandlet 默认走 NullRHI（`FApp::CanEverRender()` 见 `Misc/App.h:411-419`），而 MetaHuman 求解只认 D3D12，NullRHI 下 `CanProcess()` 为假、表现为 `ProcessingRejected` + 退出码 4。所以**必须**传 `-AllowCommandletRendering -RenderOffscreen`，且**不能**传 `-unattended` 或 `-nullrhi`——注意 `-nullrhi=0` 同样等于 NullRHI，因为 `bHasNullRHIOnCommandline = FParse::Param(...)` 只判断开关是否出现、不解析它的值。
 
 **路径用 `-Key=Value` 形式、整体加引号**（`"-FramesDir=E:\素材\Shot_010"`）。因为引擎自己会扫命令行，值里以 `-` 开头的裸 token 会被当成引擎开关；`=` 形式把值绑在同一个 token 里，不会被引擎的 tokenizer 拆开。相对路径一律拒绝，只收绝对路径。
 
@@ -349,9 +353,9 @@ UnrealEditor-Cmd.exe <Project>.uproject -run=MetaHumanFace -FramesDir=... -OutDi
 
 - **一个进程 = 一个序列 = 一个输出目录。** 冷启动 30-60 秒的代价由调用方批量调用时逐次付出；换来的是完全无状态的隔离 —— 上一次运行残留的资产/全局状态不可能污染下一次。
 - `CurrentlyProcessedPerformance` 单实例限制（`MetaHumanPerformance.cpp:1715-1717`）**天然满足**，不需要队列。
-- 中间资产落在 `/Temp/...`（不写工程 `Content`），进程结束时删包；`-KeepIntermediate` 才保留。
-- 失败即失败：退出码非 0，产物（frames 目录、日志）原样保留。**退出码约定**：`0` 成功，`1` 参数错，`2` 素材错，`3` 模型/推理后端缺失，`4` 求解失败，`5` 写盘失败。
-- 诊断信息同时出现在两处：`-abslog` 日志里（人看），以及 `-OutDir/result.json`（机器读）。
+- 中间资产落在 `<OutDir>/Package`（不传 `-PackagePath` 时的默认值，`MetaHumanFaceCaptureDataBuilder.cpp:303-310`）。因为 `OutDir` 是调用方给的临时目录，这等于不写工程 `Content`，进程退出即随目录一起清理。
+- 失败即失败：退出码非 0，产物（frames 目录、日志）原样保留。**退出码约定见 §6.2**（`1` 没有被使用，参数错误也是 `2`）。
+- 诊断信息同时出现在两处：`-abslog` / `-stdout` 日志里（人看），以及 `-OutDir/face_capture_log.json`（机器读）。
 
 ### 6.4 并发策略
 
@@ -378,15 +382,16 @@ UnrealEditor-Cmd.exe <Project>.uproject -run=MetaHumanFace -FramesDir=... -OutDi
 - 一次调用一个序列：
 
 ```
-UnrealEditor-Cmd.exe <Project>.uproject -run=MetaHumanFace ^
+UnrealEditor-Cmd.exe <Project>.uproject -AllowCommandletRendering -RenderOffscreen ^
+    -run=MetaHumanFace ^
     "-FramesDir=E:\DoodleFaceTmp\Shot_010\frames" ^
     "-OutDir=E:\DoodleFaceTmp\Shot_010\curves" ^
-    -FPS=24000/1 -abslog="E:\DoodleFaceTmp\Shot_010\run.log" -stdout ^
-    -unattended -nologo -nosplash -NoLogTimes
+    -FPS=25/1 -abslog="E:\DoodleFaceTmp\Shot_010\run.log" -stdout -nosplash
 ```
 
 注意：
-- 不要用 `-nullrhi` 赌：求解走 `NNERuntimeORTDml`（DirectML），本身不依赖 RHI，但 MetaHuman 其它资产加载要正常初始化的引擎；先带 RHI 跑通，再试能否省掉。
+- **`-AllowCommandletRendering -RenderOffscreen` 是必需项**，不是可选项：不加就落进 NullRHI，`FMetaHumanSupportedRHI::IsSupported()` 为假 → `ProcessingRejected` + 退出码 4。`-unattended` 会同样把 RHI 打回 NullRHI，**不要加**；`-nullrhi` / `-nullrhi=0` 也都不行（`FParse::Param` 只判断开关是否出现，不看值）。
+- 启用 RHI 后首帧要编译光追 PSO（冷启可能出现 4 次、每次 20–45 秒），这部分耗时不进求解耗时，看 `Finished Pipeline ... in X seconds` 那一行。
 - `-abslog` 的路径**扩展名必须是 `.log` 或 `.txt`**（`GenericPlatformOutputDevices.cpp:92-97` 直接丢弃其他扩展名）。
 - 路径里的空格与中文：整体加引号即可，但**不要**把业务参数拼成裸 token（见 §6.2）。
 - **不要用 `-ExecutePythonScript`** 传业务参数：UE 自己会解析命令行，业务参数一律走 `-Key=Value`。
@@ -419,7 +424,7 @@ frames 目录 + 有理数帧率 → `UFootageCaptureData` → `UMetaHumanPerform
 
 ### V3 命令行收口 + Doodle 接入（2 天）
 
-补 `MetaHumanFaceCommandline` 的完整解析与校验、退出码映射、`result.json`、失败诊断文案；Doodle 后端改成起进程 + 读退出码 + 读 `result.json`。
+补 `MetaHumanFaceCommandline` 的完整解析与校验、退出码映射、`face_capture_log.json`、失败诊断文案；Doodle 后端改成起进程 + 读退出码 + 读 `face_capture_log.json`。
 
 ---
 
@@ -427,7 +432,7 @@ frames 目录 + 有理数帧率 → `UFootageCaptureData` → `UMetaHumanPerform
 
 | 风险 | 影响 | 对策 |
 | --- | --- | --- |
-| Epic 账号/EULA 授权 | 首次启用 MetaHumanAnimator 可能要登录验证 | 官方 ReadMe 明确：**只有身份创建与 level sequence 导出**需要引擎带 UI 在后台；**我们的链路（capture data + mono performance + anim sequence 导出）都在 unattended 范围内**。依然要在一台工程师机器上先手工启一遍并提交产出的模板资产 |
+| Epic 账号/EULA 授权 | 首次启用 MetaHumanAnimator 可能要登录验证 | 官方 ReadMe 明确：**只有身份创建与 level sequence 导出**需要引擎带 UI 在后台；我们的链路（capture data + mono performance + 曲线导出）不需要 UI 交互，但**必须带 `-AllowCommandletRendering -RenderOffscreen`** 才能拿到 D3D12 上下文（"unattended" 指的是不弹对话框，不是 `-unattended` 那个开关——那个开关会禁用 RHI，反而让求解失败）。依然要在一台工程师机器上先手工启一遍并提交产出的模板资产 |
 | 模型/NNE 后端缺失 | 求解静默返回 0 帧 | 启动时预热校验 3 个 `LoadObject` + `NNERuntimeORTDml`，失败即明确报错（§3.3 第 5 条） |
 | **图像序列命名与 `FFramePathResolver` 不匹配**（B 路线首风险） | 管线启动即 exit，`StartPipeline` 仍返回 `None`，表现为 0 帧 | V1 用实测钉死命名规则并写成启动断言（§3.2、§8 V1-3） |
 | **`UFootageCaptureData` 元数据自洽性无校验**（B 路线） | `FrameRateOverride` 填错时求解不报错、结果整体偏 | 自己校验帧率/尺寸/时间码；`.dhfc` 存分子分母 |

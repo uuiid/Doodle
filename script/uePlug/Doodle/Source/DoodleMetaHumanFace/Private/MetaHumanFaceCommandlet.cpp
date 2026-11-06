@@ -223,7 +223,7 @@ UMetaHumanFaceCommandlet::UMetaHumanFaceCommandlet() {
     HelpParamNames.Add(TEXT("PackagePath"));
     HelpParamDescriptions.Add(TEXT("Directory holding the frame sequence"));
     HelpParamDescriptions.Add(TEXT("Directory receiving the curve output"));
-    HelpParamDescriptions.Add(TEXT("Frame rate as a rational number, default 24000/1"));
+    HelpParamDescriptions.Add(TEXT("Frame rate as a rational number, default 25/1"));
     HelpParamDescriptions.Add(TEXT("Frame file name template containing {frame}"));
     HelpParamDescriptions.Add(TEXT("Package path receiving the intermediate assets"));
 }

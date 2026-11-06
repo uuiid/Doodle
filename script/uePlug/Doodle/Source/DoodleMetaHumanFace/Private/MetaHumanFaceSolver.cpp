@@ -91,10 +91,10 @@ namespace
         const TCHAR* const SupportedRHIs = TEXT("D3D12");
 
         return FString::Printf(
-            TEXT("the active RHI is %s but MetaHuman face solving requires %s; pass -graphicsadapter=0 or "
-                 "-nullrhi=0 to run with a GPU adapter backed by %s, or pass "
+            TEXT("the active RHI is %s but MetaHuman face solving requires %s; pass "
+                 "-AllowCommandletRendering -RenderOffscreen and drop -unattended / -nullrhi, or pass "
                  "-ExecCmds=\"mh.Core.CheckRHI 0\" to skip the check at your own risk"),
-            CurrentRHI, SupportedRHIs, SupportedRHIs
+            CurrentRHI, SupportedRHIs
         );
     }
 
@@ -575,7 +575,7 @@ TValueOrError<FMetaHumanFaceSolverResult, FMetaHumanFaceSolverError> FMetaHumanF
                                          !Performance->FootageCaptureData->ImageSequences.IsEmpty() &&
                                          Performance->FootageCaptureData->ImageSequences[0] != nullptr
                                      ? Performance->FootageCaptureData->ImageSequences[0]->FrameRateOverride
-                                     : FFrameRate(24000, 1);
+                                     : FFrameRate(25, 1);
     Result.FpsNum = static_cast<uint32>(FrameRate.Numerator);
     Result.FpsDen = static_cast<uint32>(FrameRate.Denominator);
 

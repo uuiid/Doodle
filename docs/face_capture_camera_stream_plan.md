@@ -479,7 +479,8 @@ camera → (fps 滤镜) ─┬─► media_fragment_pipeline(推流编码器) �
 ```cpp
 co_await async_run_ue(
     {l_uproject_path.generic_string(),
-     "-Unattended", "-log", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
+     "-nosplash", "-stdout",
+     "-AllowCommandletRendering", "-RenderOffscreen",
      "-run=MetaHumanFace",
      fmt::format(R"(-FramesDir="{}")", l_frames_dir.generic_string()),
      fmt::format(R"(-OutDir="{}")",    l_curves_dir.generic_string()),
@@ -491,24 +492,76 @@ co_await async_run_ue(
 
 **`-PackagePath` 是条件项**：请求里的 `package_path` 为空字符串（或不传）时，这一项**根本不拼进 `in_arg`**，由 Commandlet 用它自己的默认值；后端不写死、不猜、不补。拼参函数做成"传空就跳过"的形式，避免出现 `-PackagePath=` 这种空值参数被 Commandlet 当成非法包路径。
 
+#### 渲染开关：必须给 `-AllowCommandletRendering`
+
+这是 M0 真机跑出来的结论，**与"惯用写法"相反**。`FApp::CanEverRender()`（[App.h:411-419](E:\UnrealEngine\Engine\Source\Runtime\Core\Public\Misc\App.h)）的实现是：
+
+```cpp
+return (!IsRunningCommandlet() || IsAllowCommandletRendering()) && !IsRunningDedicatedServer()
+       && !(USE_NULL_RHI || bHasNullRHIOnCommandline);
+```
+
+Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRendering` 是独立的开关，见 [LaunchEngineLoop.cpp:2207](E:\UnrealEngine\Engine\Source\Runtime\Launch\Private\LaunchEngineLoop.cpp)），于是 `RHIInit`（[DynamicRHI.cpp:278-362](E:\UnrealEngine\Engine\Source\Runtime\RHI\Private\DynamicRHI.cpp)）走 `InitNullRHI()`。而 MetaHuman 的动作捕捉求解只认 D3D12（`FMetaHumanSupportedRHI::IsSupported()`），NullRHI 下 `UMetaHumanPerformance::CanProcess()` 直接返回 false，表现为 `ProcessingRejected` + 退出码 4。
+
+| 命令行片段 | 后果 |
+| --- | --- |
+| 什么都不给 | NullRHI → `ProcessingRejected`，退出码 4 |
+| `-unattended` | **同样落进 NullRHI**，且 `FMessageDialog` 被抑制后错误只剩日志，更难查 |
+| `-nullrhi` | NullRHI → 同上 |
+| `-nullrhi=0` | **仍然等于 NullRHI**：`bHasNullRHIOnCommandline = FParse::Param(...)` 只判断开关是否出现，不解析它的值 |
+| `-AllowCommandletRendering -RenderOffscreen` | ✅ D3D12 + 离屏渲染，求解正常 |
+
+`-RenderOffscreen` 让 RHI 在没有窗口的情况下也能创建设备；`-nosplash` / `-stdout` 是常规的无界面参数，`-stdout` 保证 `async_run_ue` 的管道能实时读到日志。
+
+> 副作用：启用 RHI 后首帧会编译光追 PSO（`LogD3D12RHI: Compiled PathTracingMainRG for RTPSO in 20432.52 ms`，冷启可能出现 4 次、每次 20–45 秒）。这部分耗时进 `elapsed_seconds`，**不属于求解**，判断性能时要用 `Finished Pipeline ... in X seconds` 那一行。
+
+#### 参数表（Commandlet 实际接受的形式）
+
+解析走 `UCommandlet::ParseCommandLine(Params, Tokens, Switches, Params)`（`MetaHumanFaceCommandLine.cpp:82`）：`=` 两侧都是值 → 进 `Params` 表；没有 `=` 的 → 进 `Switches`。取值**大小写不敏感**，`-FramesDir` 与 `-framesdir` 等价。
+
+| 参数 | 必需 | 语义 | 缺失/非法时 |
+| --- | --- | --- | --- |
+| `-FramesDir=<绝对目录>` | **是** | 帧序列所在目录（不递归） | 缺 / 相对路径 → `InvalidRequest`，退出码 2 |
+| `-OutDir=<绝对目录>` | **是** | 曲线产物落点，不存在会自动创建 | 缺 / 相对路径 → `InvalidRequest`，退出码 2 |
+| `-FPS=<num>/<den>` | 否 | 素材帧率，**默认 `25/1`** | 不是 `正整数/正整数` → 退出码 2 |
+| `-SequencePattern=<含{frame}的模板>` | 否 | 一般**不传**（命名规则见 §8.1） | 传了但不含 `{frame}` → 退出码 2 |
+| `-PackagePath=/Game/...` | 否 | 中间资产的包路径，末段不得含 `.` | 非空且格式错 → 退出码 2；**空/不传 → 用 `<OutDir>/Package`** |
+| `-NoHeadStabilize` | 否 | 无值开关，关掉头部稳定 | — |
+| `-KeepTongueSolve` | 否 | 无值开关，打开舌头求解（默认关） | — |
+| `-H` / `-Help` / `-?` | 否 | 打印 `Usage()` 到日志并退出，退出码 2 | — |
+
+- **`-NoHeadStabilize` / `-KeepTongueSolve` 给值会报错**：写成 `-NoHeadStabilize=1` 会被 `UCommandlet::ParseCommandLine` 放进 `Params` 表，Commandlet 明确拒绝（`argument "-NoHeadStabilize" does not take a value`，退出码 2），不会静默失效。
+- **其它任何参数一律静默忽略**（`MetaHumanFaceCommandLine.cpp:184` 的 `return false`）。引擎自己会往命令行塞大量开关（`-nosplash`、`-stdout`、`-RenderOffscreen` 等），Commandlet 只校验自己认识的那几个。
+- **`-Range` 已不存在**：本命令只处理整段序列（§8.1）。残留的 `-Range=...` 会被当成未知参数静默吞掉，不报错也不生效。
+
 要点：
 
 1. **不新写进程封装**。`async_run_ue`（[ue_exe.cpp:160-241](E:\Doodle\src\doodle_lib\exe_warp\ue_exe.cpp)）已经做了：UE 版本/插件安装 → 进程启动（`boost::process::v2`，读 stdout/stderr 管道）→ `timeout` 计时 → 结束后回捞 `<Project>/Saved/Logs` 最新日志 → 非 0 退出码抛 `doodle_error`。调用范例见 [import_and_render_ue.cpp:242-248](E:\Doodle\src\doodle_lib\exe_warp\import_and_render_ue.cpp)。
 2. **`create_lock=true`**——与渲染任务共用 `core_set::get_set().ue_ctx_->queue_`（`ue_ctx` 定义见 [ue_exe.h:26-31](E:\Doodle\src\doodle_lib\exe_warp\ue_exe.h)，闩本身是 [co_queue.h](E:\Doodle\src\doodle_lib\core\co_queue.h) 的 `awaitable_queue_limitation`，`limit` 默认 1）。**同一台机器上不允许两个 UE 进程并发**，脸捕排队在渲染任务后面是可接受的代价，换来零新增跨模块改动。
 3. **`in_arg.front()` 必须是 `.uproject` 路径**：`async_run_ue` 用 `ue_exe_ns::find_ue_project_file(in_arg.front())` 回捞日志（`ue_exe.cpp:206`），顺序错了日志就丢。
-4. **不能用 `-nullrhi`**：Commandlet 里求解走 `NNERuntimeORTDml`，但引擎资产加载要正常初始化（同 [metahuman_face_capture_solution.md §7.2](E:\Doodle\docs\metahuman_face_capture_solution.md) 的结论）。
+4. **不能用 `-nullrhi`，也不要用 `-unattended`，必须给 `-AllowCommandletRendering -RenderOffscreen`**：求解走 `NNERuntimeORTDml` + D3D12，而 Commandlet 默认不创建 RHI 上下文（`FApp::CanEverRender()` 为假 → NullRHI）。三个开关的判定细节见上面的「渲染开关」小节，`-nullrhi=0` 同样无效。
 5. **超时**：`async_run_ue` 用的是全局 `core_set::get_set().timeout`，脸捕耗时与帧数线性相关，可能不够。**本轮不改 `async_run_ue` 签名**；M0 实测出单帧耗时后，若 10 分钟素材会超时，再单独提"给 `async_run_ue` 加可选 timeout 参数"的改动（只加一个带默认值的形参，不改现有调用点）。
 6. **`kitsu_client_` 用来做插件版本检查与安装**；脸捕作业没有 kitsu 上下文时传 `nullptr` 会在 `installUePath` 里解引用。因此作业在构造时从路由层拿到 `kitsu_client`（同 `local` 其它路由的做法：`std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip)` + `set_token(token_)`）。
-7. **`-Unattended` / `-log` / `-AllowStdOutLogVerbosity` / `-ForceLogFlush`**：`-Unattended` 防 `FMessageDialog` 在无 UI 下把进程挂死（同一坑见 [metahuman_face_capture_solution.md §3.2](E:\Doodle\docs\metahuman_face_capture_solution.md)）；后三个让 `async_run_ue` 的管道读取能实时拿到日志，否则脸捕过程在作业日志里不可见。
+7. **`-nosplash` / `-stdout` 保实时日志**：`-stdout` 让引擎把日志写进 stdout，`async_run_ue` 的管道才读得到过程日志；`-nosplash` 省掉启动画面。**不要再补 `-Unattended`**（见要点 4）——它会把 RHI 打回 NullRHI，而且抑制了 `FMessageDialog` 之后失败只剩日志，比不加更难查。
 8. **`.uproject` 由前端必填且必须是绝对路径**：脸捕是"某个人在某台机器上用某个工程跑"，工程路径不能从代码里猜、也不能从配置里猜。前端在 `POST /transcode` 的 body 里传 `ue_project`（**必填、绝对路径**），后端**只做两个校验**：`path::is_absolute()` 为真、该文件存在。**不拼 `ue4_path`、不做相对路径解析、不回退 `find_ue_project_file` 或任何默认工程**；任一校验不过，一律在提交时返回 `400 missing_ue_project`——猜错工程比报错更糟（用户会拿到别的工程的曲线）。
 9. **`package_path` 由 Commandlet 决定**：请求里为空就不传 `-PackagePath`（见上面的条件项）。后端只做"非空时必须形如 `/Game/...` 且末段不含 `.`"的校验，不提供默认值。
 
 ### 7.4 结果解析
 
-- 优先读 `curves/face_capture_log.json`（Commandlet 自己写，`MetaHumanFaceCommandlet.cpp:420-447`），字段：`stage / code / detail / curves_path / summary_path / log_path / frame_count / curve_count / elapsed_seconds / dropped_frame_ranges / missing_model_assets`（`MakeResultJson`，`MetaHumanFaceCommandlet.cpp:164-201`）。
-- 退出码映射（`ToExitCode`，`MetaHumanFaceCommandlet.cpp:449-469`）：`0` 成功；`2` 参数/素材/CaptureData 问题；`3` 模型或推理后端缺失；`4` 其它求解失败；`5` 导出或写盘失败。
+- 优先读 `curves/face_capture_log.json`（Commandlet 自己写，`MetaHumanFaceCommandlet.cpp:421-448`），字段：`stage / code / detail / curves_path / summary_path / log_path / frame_count / curve_count / elapsed_seconds / dropped_frame_ranges / missing_model_assets`（`MakeResultJson`，`MetaHumanFaceCommandlet.cpp:165-202`）。**成功和失败都会写**，前提是一次运行已经走到 `OutDir` 已知的那一步；参数解析阶段就失败（`-FramesDir` 缺失等）时不写——那时 `RunOutDir` 还没确定落点。
+- 退出码映射（`ToExitCode`，`MetaHumanFaceCommandlet.cpp:450-470`），**以 `code` 字段为准、退出码只用于粗分类**：
+
+| 退出码 | 覆盖的 `code` |
+| --- | --- |
+| `0` | `None`（成功） |
+| `2` | `InvalidRequest`、`FramesNotFound`、`FramesFormatMismatch`、`FrameCountMismatch`、`CaptureDataBuildFailed` |
+| `3` | `MetaHumanModelMissing`、`InferenceRuntimeMissing` |
+| `4` | `PerformanceCreationFailed`、`ProcessingFailed`、`NoAnimationData`、`CurveSetMismatch`、`Cancelled`、`TimedOut`，以及 `NotInGameThread`/`StartError`/`ProcessError`/`EndError`/`TooFast`/`InsufficientThreadsForNodes` 等管线退出状态 |
+| `5` | `ExportFailed`、`FileSystemFailed` |
+
+  `stage` 取 `Queued / Building / Solving / Exporting / Done / Failed`，与退出码组合能区分"素材错"（2 / Building）与"求解错"（4 / Solving）。
 - `async_run_ue` 在非 0 退出码时抛异常，作业里 `catch (const doodle_error&)` 后**仍然去读 `face_capture_log.json`**（文件已落盘），把 `code/detail` 转成前端的 `error.code`。
-- **`exit_code == 0` 不等于产物齐全**：必须同时校验 `curves_path` 存在且非空、`frame_count > 0`。
+- **`exit_code == 0` 不等于产物齐全**：必须同时校验 `curves_path` 存在且非空、`summary_path` 存在且非空、`frame_count > 0`。
 - **超时与"退出码"的混淆**：`async_run_ue` 触发全局 timeout 时同样抛异常且**进程仍在跑**。作业必须先 `boost::process` 终止该进程（或等待其自行退出），再去读日志，否则会出现"作业已失败但 UE 还在占着 `ue_ctx` 闩"的死循环。
 
 ### 7.5 清理策略（拍板：不可配置）
@@ -529,22 +582,24 @@ co_await async_run_ue(
 
 | 约束 | 出处 | 后端的做法 |
 | --- | --- | --- |
-| 文件名必须匹配 `^(([a-zA-Z0-9]*[_\s-])*)([0-9]+)[a-zA-Z_\s-]*\.[a-zA-Z]+$` | `:20` | 固定 `frame_000000.png`（前缀 `frame_` + 下划线 + 6 位数字） |
+| 文件名必须匹配 `^(([a-zA-Z0-9]*[_\s-])*)([0-9]+)[a-zA-Z_\s-]*\.[a-zA-Z]+$` | `MetaHumanFaceCaptureDataBuilder.cpp:20` | 固定 `frame_000000.png`（前缀 `frame_` + 下划线 + 6 位数字） |
 | 数字位数必须全序列一致 | `:212-222` | 固定 6 位；超过 999999 帧直接拒绝，**不自动加位** |
-| 帧号必须从首帧起连续，不能有空洞 | `:233-258` | `frames/` 由 `raw.mkv` **按解码顺序逐帧写出**，`n` 从 0 连续自增，天然无空洞（真实帧按下标编号，不再需要补位，§10） |
+| 帧号必须从首帧起连续，不能有空洞 | `:233-258`（缺帧即 `FramesNotFound`，**不允许跳过**） | `frames/` 由 `raw.mkv` **按解码顺序逐帧写出**，`n` 从 0 连续自增，天然无空洞（真实帧按下标编号，不再需要补位，§10） |
 | 扩展名限 `bmp/dds/exr/jpg/jpeg/png` 且必须能被 ImgMedia 读 | `:287-298` | 只用 PNG |
 | 目录里不能有别的图片文件 | `:148-156` 会扫描所有图片扩展名 | `frames/` 下**只放 PNG**，任何 meta 文件放 `curves/` 或 `session_dir` 根 |
-| `-FramesDir` / `-OutDir` 必须是绝对路径 | `MetaHumanFaceCommandLine.cpp:234-246` | 传 `FSys::path::generic_string()` 的绝对路径并整体加引号 |
-| `-PackagePath` 必须是 `/Game/...` 形式的包路径（不得含 `.`） | `MetaHumanFaceCommandLine.cpp:70-83` | **请求给了就校验**（非空必须是合法包路径，否则 `400 bad_package_path`）；**请求没给就不传这个参数**，落点由 Commandlet 决定（§7.2、§7.3） |
-| ImgMedia 侧还要能解析出同一组帧 | `:487-512` `FTrackingPathUtils::GetTrackingFilePathAndInfo` 的 offset / 帧数必须与扫描结果一致 | M0 真机验证项（§11） |
-| **不传 `-SequencePattern`** | `MetaHumanFaceCommandLine.cpp:189-193` 把它解析出 `MaxTokenLen`，`:256-261` 只校验"传了但不含 `{frame}`" | 省略；文件命名固定为 `frame_000000.png` |
+| `-FramesDir` / `-OutDir` 必须是绝对路径 | `MetaHumanFaceCommandLine.cpp:194-206` | 传 `FSys::path::generic_string()` 的绝对路径并整体加引号 |
+| `-PackagePath` 必须是 `/Game/...` 形式的包路径（不得含 `.`） | `MetaHumanFaceCommandLine.cpp:208-214` | **请求给了就校验**（非空必须是合法包路径，否则 `400 bad_package_path`）；**请求没给就不传这个参数**，落点由 Commandlet 决定（§7.2、§7.3） |
+| ImgMedia 侧还要能解析出同一组帧 | `:449-474` `FTrackingPathUtils::GetTrackingFilePathAndInfo` 的 offset / 帧数必须与扫描结果一致 | M0 真机验证项（§11） |
+| **不传 `-SequencePattern`** | `MetaHumanFaceCommandLine.cpp:161-165` 接收、`:216-221` 只校验"传了但不含 `{frame}`" | 省略；文件命名固定为 `frame_000000.png` |
 
 ### 8.2 帧率与时间基准
 
-- **`-FPS=25/1`，写死。** Commandlet 要的是 `<num>/<den>` 分数形式（`MetaHumanFaceCommandLine.cpp:201-210`），但后端不需要做"帧率 → 分数"的换算：输出帧率恒为 25（§4.4），常量字符串直接拼进命令行。
-- **必须在 `curves/`（即 `-OutDir`）写 `frames_meta.json`，字段 `first_frame`**（`ResolveStartTimecode`，`MetaHumanFaceCaptureDataBuilder.cpp:312-340`）。否则 Commandlet 退回用 `StartFrame`，再退回墙钟，时间码就是随机值。后端写入 `{"first_frame": n}`，`n` 默认为 0。
-- UE 只要求"帧序列连续"，**不要求源素材真的是 25 fps**：`frames/` 来自 `raw.mkv` 的真实帧，`-FPS=25/1` 只是告诉求解器"把这张张图当作均匀 25 fps 来处理"。所以摄像头实际 30 fps 也不影响求解，只是时间轴被压到 25 fps 的节奏上（每张 40 ms）。
-- `-Range=<first>:<count>`：全量转码**不传**（不传等价 `FrameCount == 0` = 全序列，`:398`）。
+- **`-FPS=25/1`，写死。** Commandlet 要的是 `<num>/<den>` 分数形式（`MetaHumanFaceCommandLine.cpp:263-298`），但后端不需要做"帧率 → 分数"的换算：输出帧率恒为 25（§4.4），常量字符串直接拼进命令行。参数缺省值也是 `25/1`（`MetaHumanFaceTypes.h:46-47`），所以即使漏传也不会退回 23.976 那种反直觉的默认值。
+- **`-FramesDir` / `-OutDir` 必须绝对路径**（`MetaHumanFaceCommandLine.cpp:194-206`），相对路径直接拒绝、不做 `FPaths::ConvertRelativePathToFull` 兜底。
+- **必须在 `curves/`（即 `-OutDir`）写 `frames_meta.json`，字段 `first_frame`**（`ResolveStartTimecode`，`MetaHumanFaceCaptureDataBuilder.cpp:312-340`）。三级兜底：`frames_meta.json` 的 `first_frame` → 目录里扫描到的最小帧号（`frame_000000.png` 起就是 0）→ 当前墙钟。
+  - 落到墙钟这一级不是"随机值"，而是**一个合法的任意起始时间码**：`MakeNonZeroTimecode`（`:91-102`）专门避开全零时间码（`UImageSequenceTimecodeUtils::IsValidTimecode` 把 `FTimecode()` 判为非法）。素材从 `frame_000000.png` 起步时用哪一级结果都一样，所以后端**可以省略这个文件**；`first_frame` 只对"序列从非零帧号开始"的场景有意义。
+- UE 只要求"帧序列连续"，**不要求源素材真的是 25 fps**：`frames/` 来自 `raw.mkv` 的真实帧，`-FPS=25/1` 只是告诉求解器"把这些图当作均匀 25 fps 来处理"。所以摄像头实际 30 fps 也不影响求解，只是时间轴被压到 25 fps 的节奏上（每张 40 ms）。
+- **没有 `-Range`**：本命令只处理整段序列，`StartFrameToProcess` / `EndFrameToProcess` 由 `UMetaHumanPerformance::GetProcessingLimitFrameRange()` 自动取全区间。需要只处理某一段，由调用方先裁好帧放进独立目录（§8.1）。
 
 ### 8.3 PNG 编码细节
 
@@ -572,13 +627,23 @@ co_await async_run_ue(
     frames/                    # step 1 产出 → UE 输入；step 3 成功后删除（§8.4）
         frame_000000.png …
     curves/                    # step 3 产出
-        face_curves.dhfc       # 主交付（格式见 metahuman_face_capture_solution.md §5）
-        face_curves.dhfc.json  # 人读摘要
-        face_capture_log.json  # Commandlet 自写（§7.4）
-        frames_meta.json       # 后端写（§8.2）
+        face_curves.dhfc           # 主交付，二进制（格式见 metahuman_face_capture_solution.md §5）
+        face_curves_summary.json   # 人读摘要：元信息 + 掉帧区间 + 每条曲线的 min/max/first/last
+        face_capture_log.json      # Commandlet 自写，成功失败都写（§7.4）
+        frames_meta.json           # 可选，后端写 `{"first_frame": n}`（§8.2）
     logs/
-        transcode.log          # 三步作业过程日志
+        transcode.log              # 三步作业过程日志
 ```
+
+`curves/` 里那三个文件由 Commandlet 在 `-OutDir` 下直接落盘（`MetaHumanFaceCommandlet.cpp:20-22` 的三个文件名常量）。`face_curves_summary.json` 的字段：
+
+| 字段 | 说明 |
+| --- | --- |
+| `magic` / `version` / `flags` | 与 `.dhfc` 二进制头同源（`"DHFC0001"` / `1` / `2`），用来确认摘要和曲线文件配套 |
+| `frame_count` / `curve_count` / `fps` | 帧数、曲线数、帧率（`"25/1"`），`curve_count` 实测为 257（6 条头部 + 251 条面部） |
+| `start_frame` / `start_time_sec` / `duration_sec` | 起始帧号与对应秒数、时长 |
+| `dropped_frame_ranges` | `[{start, end}]`；缺图在扫描阶段就失败，正常为空数组 |
+| `curves` | `[{name, min, max, first, last}]`，每条曲线的极值与首末值，用于不开二进制也能判断某条曲线是不是全程为 0 |
 
 `core_set::get_set().get_cache_root("face_capture")` 与 `movie.cpp` 用 `get_cache_root("http")` 同款。
 

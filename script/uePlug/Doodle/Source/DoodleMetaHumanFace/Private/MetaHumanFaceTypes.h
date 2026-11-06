@@ -43,7 +43,7 @@ struct FMetaHumanFaceJobRequest
     FString OutDir;
     FString AssetPackagePath;
     FString CaptureDataOuter;
-    uint32 FpsNum = 24000;
+    uint32 FpsNum = 25;
     uint32 FpsDen = 1;
     bool bHeadStabilize = true;
     bool bSkipTongueSolve = true;
@@ -73,7 +73,7 @@ struct FMetaHumanFaceJobResult
 struct FMetaHumanFaceCurveSet
 {
     TArray<FString> CurveNames;
-    uint32 FpsNum = 24000;
+    uint32 FpsNum = 25;
     uint32 FpsDen = 1;
     int32 FirstFrame = 0;
     int32 FrameCount = 0;
@@ -160,7 +160,7 @@ struct FMetaHumanFaceSolverResult
     TArray<FMetaHumanFaceFrameRange> DroppedFrameRanges;
     int32 FirstFrame = 0;
     int32 FrameCount = 0;
-    uint32 FpsNum = 24000;
+    uint32 FpsNum = 25;
     uint32 FpsDen = 1;
 };
 

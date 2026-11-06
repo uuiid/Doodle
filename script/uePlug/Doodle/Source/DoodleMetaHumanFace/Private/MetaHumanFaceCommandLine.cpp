@@ -246,7 +246,7 @@ FString FMetaHumanFaceCommandLine::Usage() {
             TEXT(""),
             TEXT("  -FramesDir=<absolute directory>   required, directory holding the frame sequence"),
             TEXT("  -OutDir=<absolute directory>      required, directory receiving the curve output"),
-            TEXT("  -FPS=<numerator>/<denominator>    optional, default 24000/1"),
+            TEXT("  -FPS=<numerator>/<denominator>    optional, default 25/1"),
             TEXT("  -SequencePattern=<template>       optional, must contain {frame}"),
             TEXT("  -PackagePath=<package path>       optional, where the intermediate assets are created"),
             TEXT("  -NoHeadStabilize                  optional, disables head stabilization"),
