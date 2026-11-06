@@ -1,0 +1,19 @@
+target_sources(
+        doodle_lib
+        PUBLIC
+        face_capture_types.h
+        media_fragment_pipeline.h
+        frame_filter.h
+        ws_outlet.h
+        capture_session.h
+        frame_align.h
+        png_sequence_writer.h
+
+        PRIVATE
+        media_fragment_pipeline.cpp
+        frame_filter.cpp
+        ws_outlet.cpp
+        capture_session.cpp
+        frame_align.cpp
+        png_sequence_writer.cpp
+)
