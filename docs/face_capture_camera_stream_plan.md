@@ -1,6 +1,6 @@
 # 摄像头采集 · WebSocket 推流 · 前端控制录制 · UE 转码 方案
 
-> 状态：方案已拍板（2026-11-05，11-06 追加"取消固定节拍"）。**采集引擎（M1/M2 引擎侧 + `write_png_sequence`）已实现并编译通过**，HTTP/WS 路由与转码作业层待实现（进度见附录 A）。
+> 状态：方案已拍板（2026-11-05，11-06 追加"取消固定节拍"与"会话挂在 WS 上"）。**采集引擎（M1/M2 引擎侧 + `write_png_sequence`）与 WS 路由（含连上即开录、断开即收尾）已实现并编译通过**，HTTP 录制端点与转码作业层待实现（进度见附录 A）。
 > 范围：**一期**。人脸检测整体推迟到二期，本文只在 §6 钉住它的插入点与约束，不实现。
 > 部署前提：**后端跑在用户自己的电脑上，由打包好的前端 App 拉起**（不是常驻服务器）。因此没有多用户、没有多设备并发。
 > 落地位置：后端 `E:\Doodle\src\doodle_lib\http_method\local`（新增文件），复用 `src/doodle_lib/core`、`src/doodle_lib/exe_warp`。
@@ -18,17 +18,18 @@
 | 3 | 丢帧补位 | **已废止**：取消固定节拍后 `raw.mkv` 只存真实帧，`frames/` 不再需要补位（§10 保留为历史记录） |
 | 4 | UE 进程排队 | 脸捕 Commandlet **与渲染任务共用 `core_set::get_set().ue_ctx_->queue_`**（`awaitable_queue_limitation`，默认 limit=1），不新开闩 |
 | 5 | `frames/` 的保留策略 | **转码作业成功后自动删除 PNG 序列、保留 `raw.mkv`；不可配置** |
-| 6 | 会话与连接的绑定 | 会话由 `capture_session::instance()` 进程内单例持有，**不挂 WebSocket 连接**；WS 断开不影响录制 |
-| 7 | 控制通道 | **控制一律走 HTTP**：`POST /recordings` 开始、`POST /recordings/{id}/stop` 结束、`POST /transcode` 转码。**WS 是纯下行**，不接受任何命令（§3.5） |
+| 6 | 会话与连接的绑定 | `capture_session` 是 `ws_stream_runner` 的**成员**，**会话生命周期 = WS 连接生命周期**：连上就打开摄像头开录，断开就停止。没有进程内单例，也不挂别的对象 |
+| 7 | 控制通道 | **控制一律走 HTTP**：`POST /recordings` 重开一段录制、`POST /recordings/{id}/stop` 结束、`POST /transcode` 转码。**WS 是纯下行**，不接受任何命令（§3.5） |
 | 8 | UE 侧源码变更 | **0**。前提是 M0 真机验证通过（§11） |
 | 9 | **推流只有一条** | 本机后端、单用户，**任何时刻最多一条视频推流**。设计上**不提供第二条**：不做多连接分发、不做环形缓冲-history、不做逐连接背压（§5.3） |
-| 10 | **同一时刻最多一个会话** | 会话对象只有一个（`capture_session::instance()`），不用查找表、不做会话池。同一台电脑上摄像头只有一个消费者，第二条 WS 连上就**接管**（§3.3） |
+| 10 | **同一时刻最多一个会话** | 会话对象只有一个，且它就是 `ws_stream_runner` 的成员，**不打开 WS 就不会抓摄像头**。不用查找表、不做会话池；第二条 WS 连上时旧连接因为失去 outlet 自然断开，新连接成为唯一会话（§3.3） |
 | 11 | **输出帧率定死 25 fps** | 推流/`take.mp4`/UE `-FPS=25/1` 只用 25 fps，`time_base = 1/25`。**输入侧不再假设帧率**：摄像头到达即处理、带真实时间戳，由 `fps` 滤镜统一到 25 fps（§4.4）；`raw.mkv` 存真实帧、时基 `{1,1000}` |
 | 12 | **人脸检测推迟到二期** | 一期**不做**：不写检测代码、不引模型、不预留 `face_status` 事件、不做开录前的人脸校验。§6 只记二期插入点与约束 |
 | 13 | **转码作业不登记任务表** | **不写 `server_task_info`、不进任务列表 UI**，只在内存注册表保活；进度只看 `GET /transcode/{job_id}` 与 WS `transcode_progress`（§7.2） |
 | 14 | **`ue_project` 必填且必须是绝对路径** | 前端在 `POST /transcode` 的 body 里必须给 `.uproject` 的**绝对路径**；缺失/为空/非绝对路径/文件不存在 → `400 missing_ue_project`。**后端不做相对路径拼接、不猜默认工程**（§7.2、§7.3-8） |
 | 15 | **`package_path` 可空** | 空字符串或不传 → 命令行里**不出现 `-PackagePath`**，落点由 Commandlet 自己决定；非空才校验 `/Game/...` 格式（§7.2、§7.3-9、§8.1） |
 | 16 | **取消固定节拍** | 采集改为"摄像头阻塞读线程 → 到达即打 `steady_clock` 时间戳 → `post` 到采集 strand"，**没有 `steady_timer` 轮询、没有 40 ms 拍点**；帧率统一交给 `fps` 滤镜（§4.1、§4.4） |
+| 17 | **不打开 WS 就不抓摄像头** | `capture_session` 由 `ws_stream_runner` 直接持有并随连接创建/销毁；WS 连上即 `start()` 开录、断开即 `stop()` 收尾。**删除进程内单例 `capture_session::instance()`** |
 
 ---
 
@@ -39,7 +40,7 @@
   POST /face_capture/recordings                    开始录制
   POST /face_capture/recordings/{id}/stop          结束录制
   POST /face_capture/transcode                     转码
-  GET  /face_capture/recordings[/{id}]            状态查询（WS 没连时的唯一来源）
+  GET  /face_capture/recordings[/{id}]            状态查询（磁盘扫描，跨连接可用）
 
 数据面（后端 → 前端，单向 WS，不接受任何命令）
   浏览器 ◄──WS── avc_init / avc_fragment / capture_state / transcode_progress / error
@@ -67,7 +68,7 @@
 关键点四条：
 
 1. **控制面全在 HTTP，数据面全在 WS**。WS 只往下推帧与事件，不解析任何上行命令（§3.5）。
-2. **WS 是可选通道**：不连 WS 也能开始/结束录制、也能查状态——只是看不到实时画面。
+2. **WS 是会话本体，不是可选通道**：连上 WS 才打开摄像头、才开录；断开就等于结束录制。`POST /recordings/{id}/stop` 只是"提前收尾"，不连 WS 时没有会话可控制。
 3. **录制与转码是两条独立的协程链**。录制在采集 strand 上逐帧串行推进；转码在 `g_io_context()` 上用另一条协程，两者只通过 `session_dir` 下的文件交互，不共享内存对象。
 4. **帧率只在出口处统一**。输入是"摄像头什么时候给就什么时候要"，带真实时间戳；`fps=25` 滤镜负责把任意输入帧率采样成 25 fps，供 `take.mp4` 与推流；`raw.mkv` 与 `frames/` 保存的是真实帧，不做任何复制（§4.4）。
 
@@ -94,7 +95,7 @@ src/doodle_lib/core/face_capture/          ← 新增：与 HTTP 无关的采集
 
 一期是 **7 组源文件**（`face_detector` 随人脸检测一起推到二期，§6）。`frame_filter` 自成一组是因为它只依赖 ffmpeg 的 `avfilter`，不关心 `capture_session` 的状态机；`ws_outlet` 独立成组是因为它既要被 `capture_session` 用，又要被 HTTP 层的 WS 协程持有，放在 `capture_session` 里会让两层互相包含。
 
-WS 连接的生命周期（建 `ws_outlet` → attach → hello → 读循环 → 断连清理）不进 core，而是以 `ws_stream_runner` 类的形式**就地写在** `http_method/local/face_capture_stream.cpp` 的 `doodle::http::local` 命名空间里，由 `face_capture.h` 前置声明（`class ws_stream_runner;`）供成员 `std::shared_ptr<ws_stream_runner> runner_` 使用。连接管理只对一个 HTTP 路由有意义，没有第二个消费者，下沉到 core 只会多一对要登记的 `.h/.cpp`。
+WS 连接的生命周期（建 `ws_outlet` → attach → 开录 → 读循环 → 停录 → 断连清理）不进 core，而是以 `ws_stream_runner` 类的形式**就地写在** `http_method/local/face_capture_stream.cpp` 的 `doodle::http::local` 命名空间里，由 `face_capture.h` 前置声明（`class ws_stream_runner;`）供成员 `std::shared_ptr<ws_stream_runner> runner_` 使用。连接管理只对一个 HTTP 路由有意义，没有第二个消费者，下沉到 core 只会多一对要登记的 `.h/.cpp`。
 src/doodle_lib/exe_warp/face_capture/      ← 新增：转码作业与 UE 编排
     face_transcode_job.h/.cpp               三步作业调度、状态机、进度
     face_ue_commandlet.h/.cpp               拼 Commandlet 参数、调 async_run_ue、解析退出码与 face_capture_log.json
@@ -108,7 +109,7 @@ src/doodle_lib/http_method/local/          ← 新增：路由
     CMakeLists.txt                          （改）追加上述 .cpp
 ```
 
-**没有 `capture_session_registry`**：单用户本机、同一时刻只有一个会话，注册表那一层是多余抽象。会话对象由 `capture_session::instance()`（进程内单例，`static std::mutex` + `static std::shared_ptr<capture_session>`）持有，HTTP 路由与 WS 协程都只是从它取**同一个** `shared_ptr`（§3.2）。之所以用单例而不是"挂在路由对象上"，是因为采集引擎要能脱离 HTTP 层独立跑（M1/M2 就是这样验证的），路由层的 clone 语义也不该参与会话生命周期。
+**没有 `capture_session_registry`**：单用户本机、同一时刻只有一个会话，注册表那一层是多余抽象。**也没有进程内单例**：`capture_session` 是 `ws_stream_runner` 的成员，跟着 WS 连接一起创建、一起销毁——不打开 WS 就不会抓摄像头（§0 第 17 条、§3.3）。
 
 `local.h` 已经有 171 行、18 个路由类，再塞 10 个会失控；把新模块集中到 `face_capture.h` 与既有 `local.h` **分开**：`kitsu.cpp` 里加一行 `#include <doodle_lib/http_method/local/face_capture.h>` 即可。
 
@@ -138,7 +139,7 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 .reg_c<local::face_capture_transcode_instance>() // GET / DELETE，{job_id_}
 ```
 
-**持有会话对象的是 `capture_session::instance()` 这个进程内单例**（不是某个路由类）。`local::face_capture_recordings` 只是"开始/列表"两个 handler 的容器，它和其他路由一样通过 `capture_session::instance()` 拿会话，**路由对象上不存任何会话状态**（clone 之后是副本，存了也不可信）。
+**持有会话对象的是 `local::face_capture_stream` 的 `ws_stream_runner`**（即 WS 连接本身）：`ws_stream_runner` 成员里有唯一的 `std::shared_ptr<capture_session> session_`，连上 `start()`、断开 `stop()`。**没有任何路由或单例长期持有会话**——不打开 WS 就不会打开摄像头（§0 第 17 条）。
 
 稳定性检查：**9 个路由类、11 个端点**，没有再增加。（早先还考虑过把 `/stream` 拆成 open/close 两条，已否决——WS 的一生由 TCP 决定，不需要额外端点。）
 
@@ -151,7 +152,7 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/api/doodle/local/face_capture/devices` | 枚举摄像头：`{devices:[{index, name, backend, width, height, fps}]}` |
-| GET | `/api/doodle/local/face_capture/stream/{session_id_}` | **WS 升级点**（`has_websocket() = true`，GET + `Upgrade` 才升级）。路径里的 `session_id_` 只用于前端日志与路由占位，**不参与查找**：服务端始终用那唯一一个会话，两者对不上就以会话内真实的 `session_id` 为准并在 `hello` 里回传。**这条连上只下发视频与状态，不接受任何命令**（§3.3） |
+| GET | `/api/doodle/local/face_capture/stream/{session_id_}` | **WS 升级点 + 会话本体**（`has_websocket() = true`，GET + `Upgrade` 才升级）。连上即创建 `capture_session`、打开摄像头、开始录制并推流；断开即停止录制。路径里的 `session_id_` 只用于前端日志与路由占位，**不参与查找**，真实 `session_id` 在 `hello` 里回传。**这条只下发视频与状态，不接受任何命令**（§3.3） |
 | POST | `/api/doodle/local/face_capture/recordings` | **开始录制**。body 见 §3.3「控制面」；`201` 返回新会话 `{session_id, state, width, height, fps}` |
 | GET | `/api/doodle/local/face_capture/recordings` | 历史会话列表（磁盘扫描 `session_dir`） |
 | GET | `/api/doodle/local/face_capture/recordings/{session_id}` | 单会话状态、帧数、丢帧区间、产物清单 |
@@ -163,11 +164,11 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 | GET | `/api/doodle/local/face_capture/transcode/{job_id}` | 查询作业（含三步子状态） |
 | DELETE | `/api/doodle/local/face_capture/transcode/{job_id}` | 取消作业（正在跑 Commandlet 时置取消标志） |
 
-**控制面全部是 HTTP，WS 是纯下行**。这样前端不需要维护"命令发出去没回应"的重试逻辑：开始/结束录制都是一次 POST，成败直接看状态码与 body；WS 断了只影响画面，不影响任何控制动作。
+**控制面全部是 HTTP，WS 是纯下行且是会话本体**。前端不需要维护"命令发出去没回应"的重试逻辑：开始/结束录制都是一次 POST，成败直接看状态码与 body；WS 断了就意味着录制已经结束（`stop()` 在 `close_impl()` 里收尾）。
 
 路由类一律 `DOODLE_HTTP_FUN_C(xxx, local_http_fun)`（要拿登录 token）或 `DOODLE_HTTP_FUN_C(xxx, ::doodle::http::http_function)`（纯本机操作）。**注意 clone 语义**：`http_function.cpp:74` 每个请求都会 `clone()` 一次路由对象（`std::make_shared<Self>(*this)`），所以路由类的成员只能是可拷贝的值或 `shared_ptr`，**不能放 `cv::VideoCapture`、`FaceDetectorYN`、`std::unique_ptr`**。
 
-> **会话对象的归属**：会话由 `capture_session::instance()` 单例持有，所有 handler 与 WS 协程都只是 `auto l_session = face_capture::capture_session::instance();` 取到**同一个** `shared_ptr`。**本机只有一个会话，所以这个 shared_ptr 只有一份，不存在查找表**；路径里的 `{session_id_}` 只用于前端日志与路由占位，不参与查找。
+> **会话对象的归属**：会话由 `ws_stream_runner`（定义在 `http_method/local/face_capture_stream.cpp`）持有，成员是唯一的 `std::shared_ptr<capture_session> session_`；`stop` / `GET recordings` 等 HTTP handler 通过"当前唯一活跃会话"的弱引用登记拿它。**本机只有一个会话，所以不存在查找表。**
 
 ### 3.3 WS 协议
 
@@ -178,17 +179,19 @@ WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` 
 - `websocket_callback` 里 `runner_ = std::make_shared<ws_stream_runner>(std::move(in_stream), in_handle->logger_); runner_->start();`，别的一行不写。
 - `ws_stream_runner` 声明在 `face_capture_stream.cpp` 的 `namespace doodle::http::local` 下（**不能塞进匿名 namespace**，否则 `face_capture.h` 里前置声明的 `std::shared_ptr<ws_stream_runner> runner_` 指向的是另一个类型，编译报 C2027/C2039），`face_capture.h` 只前置声明。
 - `ws_stream_runner` 自建 `make_strand(g_io_context())`，用同一个 strand 构造 `ws_outlet`——`send_*` 的 post 与 `drain()` 落在同一串行队列里，单在途写才成立。
-- `run()` 的顺序是：建 outlet → `outlet->attach(write_fn)` → `capture_session::instance()->attach(outlet)` → `outlet->send_hello()` → `co_await read_loop()` → `co_await close_impl()`。**先 attach 再 hello** 是硬顺序。
+- **`ws_stream_runner` 直接持有会话**：构造时 `session_ = std::make_shared<face_capture::capture_session>(face_capture::capture_session::default_root());`。会话不共享、不查表、不做单例——每条 WS 连接一个自己的会话。
+- `run()` 的顺序是：建 outlet → `outlet->attach(write_fn)` → `session_->attach(outlet)` → `co_await start_capture()`（`session_->start(capture_option{})`，失败只记 WARN 不掐断连接）→ `co_await read_loop()` → `co_await close_impl()`。**先 attach 再 start** 是硬顺序：`start()` 建完会话目录就会开始出帧，此时 outlet 必须已经挂好。
+- `close_impl()` 的顺序是：`open_=false` → `co_await stop_capture()`（`session_->stop()`，内部会等推流排空、收 `raw.mkv`、写 `align.json`）→ `outlet_->detach()` → `async_close`。**stop 在 detach 之前**，否则最后几帧没处可写。
 - `write_fn` 签名是 `awaitable<bool>(bool in_binary, const uint8_t*, size_t)`：文本事件走 `binary(false)`，视频分片走 `binary(true)`，实现体是 `stream_.binary(x)` → `async_write_some(true, buffer)` → `stream_.binary(false)`。
-- `close_impl()` 解绑 outlet：**先比 `capture_session::outlet() == outlet_` 再 `detach()`**，避免 A 连接退出误伤接管后的 B 连接。
 - `co_spawn` 绑 `app_base::Get().on_cancel` 槽，进程取消时协程随之退出。
 
 `face_capture_stream` 的约定：
 
-- `websocket_init`：当前是空实现（不校验 token，见 §14 仍未定第 2 条）；会话一律通过 `capture_session::instance()` 取，**不依赖路由自身成员**（clone 后是副本）。
-- 若此时还没有会话（前端没调 `POST /recordings` 就已经连了 WS），`hello` 回 `{state:"idle"}`，`ws_outlet` 先挂在 `capture_session` 上；等 `POST /recordings` 建成会话后，同一个 outlet 自动开始推流。**前端不需要为了拿画面去重连。**
-- 接入顺序固定为 **先 `attach(write_fn)` 再 `send_hello()`**：`ws_outlet` 的 `send_*` 是 post 到 strand 的异步投递，未 attach 时会被丢弃（§5.3）。
-- `attach()` 即接管：新连接 attach 到 `capture_session` 后，旧的 outlet 因为`is_attached_locked()` 为假而不再被推送，新连接成为唯一出口。**同一时刻只有一条推流**，不做多播（§0 第 9 条）。
+- `websocket_init`：当前是空实现（不校验 token，见 §14 仍未定第 2 条）。路由成员里只有 `runner_`（`shared_ptr`，clone 安全），**不存会话**。
+- **连上就开录**：`hello` 里的 `state` 是 `start()` 之后的状态（通常是 `recording`；摄像头打不开时是 `idle` 并在 `error` 事件里说明原因）。**没有"先连 WS 等 POST 再开录"这条路**。
+- 接入顺序固定为 **先 `attach(write_fn)` → `session_->attach(outlet)` → `start_capture()`**。`hello` 不在连接建立时发：`start()` 建完会话后由采集侧驱动 `ws_outlet` 发 `hello`（带真实的 `session_id`/`width`/`height`/`state`），前端第一帧事件必然是 `hello`。
+- **断开即结束录制**：`close_impl()` 先 `stop()` 再 `detach()`。前端要"结束但保留画面"就得自己重连（新连接 = 新会话、新 `session_id`）。
+- 第二条连接 = 第二个会话：旧连接此时正卡在它自己的 `stop()` 里，摄像头被 `VideoCapture::release()` 唤醒收尾后，新连接才拿得到设备。**同一时刻仍然只有一条推流**（§0 第 9 条），但"接管"退化成"旧连接被关掉、新连接重开"。
 - `websocket_callback`：`runner_ = std::make_shared<ws_stream_runner>(std::move(in_stream), in_handle->logger_); runner_->start();`，协程在 `runner_` 内部 `co_spawn`，自己 `async_read`/`async_write`。
 - 写端由 `ws_outlet` 保证**单在途**（`drain()` 串行），不需要额外 `atomic_bool writing_`。
 - `write_fn` 的实现体内直接 `co_await stream.async_write_some(true, buffer, use_awaitable)`（`ws_outlet` 保证单在途），不需要再套一层 `writing_` 标志位；首参 `in_binary` 决定 `stream.binary(true/false)`。
@@ -218,7 +221,7 @@ WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` 
 
 一期就这 6 个事件。**没有 `face_status`**：人脸检测在二期（§6），一期前端拿不到、也不需要拿人脸框。
 
-所有事件都是**纯下行**。`transcode_progress` 由后台作业广播到当前唯一的 WS；**WS 没连时事件直接丢弃**，前端恢复连接后用 `GET /transcode/{job_id}` 补齐当前状态（轮询 `GET /recordings/{id}` 同理）——即"WS 是可选的低延迟通道，不是唯一数据源"。
+所有事件都是**纯下行**。`transcode_progress` 由后台作业广播到当前唯一的 WS；**WS 没连时没有会话也没有作业可跑**，所以不存在"事件丢了"这回事；跨连接的作业状态用 `GET /transcode/{job_id}` 查（`GET /recordings/{id}` 同理）。
 
 #### 上行：什么都没有
 
@@ -228,17 +231,18 @@ WS 上**不定义任何上行命令**。前端不需要发 `ping`（浏览器原
 
 | 动作 | 请求 | 成功返回 | 失败 |
 | --- | --- | --- | --- |
-| 开始录制 | `POST /recordings`，body `{device:0, width:1280, height:720}` | `201 {ok, state:"recording", width, height, fps:25, frames:0, duration_ms:0}` + `session_id` | `409 already_recording`（`error_code:"already_recording"`）、`422 camera_open_failed` |
+| 开始录制 | 由连 WS 隐式触发；`POST /recordings` 只用于"主动重开"（断开重连后的显式请求） | `201 {ok, state:"recording", width, height, fps:25, frames:0, duration_ms:0}` + `session_id` | `409 already_recording`（`error_code:"already_recording"`）、`422 camera_open_failed`、`409 no_stream`（没有活跃 WS 会话） |
 | 结束录制 | `POST /recordings/{session_id}/stop` | `200 {ok, state:"stopped", frames, raw_frames, inserted_frames, source_fps, duration_ms, truncated}` | `409 not_recording`、`404 unknown_session` |
 | 查询状态 | `GET /recordings/{session_id}` | `{state, frames, gaps, artifacts, session_id, width, height, fps, raw_frames, source_fps}` | `404` |
 | 提交转码 | `POST /transcode`，body 见 §7.2 | `202 {job_id, state:"queued"}` | `409 job_running`、`400 missing_ue_project`（`ue_project` 缺失/为空/非绝对路径/文件不存在）、`400 bad_package_path`（非空但不是合法包路径） |
 
 要点：
 
-- **开始录制是同步的**：`POST /recordings` 在返回 `201` 之前已经完成了 `cv::VideoCapture` 打开、分辨率回读、编码器与 `raw.mkv` 的建立。所以前端拿到 `201` 就意味着"确实在录"。代价是这一个请求会阻塞几十到几百毫秒（打开 DSHOW 设备是慢操作），实现时 `co_await` 采集 strand 上跑的 `capture_session::start()`，路由本身返回 `awaitable`。
-- **结束录制也是同步的**：等 `raw.mkv` 的 `av_write_trailer` 落完（上限 2 秒）再返回，前端拿到 `200` 就可以直接去拉 `/video` 或提交转码，不需要轮询等 `stopped`。
-- 状态变化仍通过 WS 的 `capture_state` 推送一次，作为"另一条路也能看到"的冗余，但**前端应以 POST 的返回值为准**。
-- 重复调用是幂等的：已在 `recording` 时再发 `POST /recordings` 返回 `409`（不悄悄重开录）；已 `stopped` 时再发 `stop` 返回 `409`。
+- **录制由 WS 连接的开合决定**：`GET /stream/{session_id}` 一升级成功，`ws_stream_runner` 就 `session_->start()`（同步完成 `cv::VideoCapture` 打开、分辨率回读、编码器与 `raw.mkv` 的建立），连接一断就 `session_->stop()`。摄像头打不开时连接不断，只发 `error` 事件让前端看见原因。
+- **`POST /recordings` 不是开录的必经之路**：它只是"同一连接上重开一段录制"的显式入口；没有活跃 WS 会话时返回 `409 no_stream`。
+- **结束录制也是同步的**：等 `raw.mkv` 的 `av_write_trailer` 落完（上限 2 秒）再返回，前端拿到 `200` 就可以直接去拉 `/video` 或提交转码，不需要轮询等 `stopped`。断开 WS 走的是同一条 `stop()`，只是没人接返回值。
+- 状态变化仍通过 WS 的 `capture_state` 推送一次，作为"另一条路也能看到"的冗余，但**前端应以 WS 事件与 POST 返回值为准**。
+- 重复调用是幂等的：已在 `recording` 时再发 `POST /recordings` 返回 `409`；已 `stopped` 时再发 `stop` 返回 `409`。
 
 ### 3.4 为什么不用 socket.io
 
@@ -275,18 +279,18 @@ WS 传命令的代价是**全双工状态的维护**：命令要有 id、要等 
 ### 4.2 会话状态机
 
 ```
-idle ──POST /recordings──► recording ──POST /stop、错误──► stopping ──收尾完成──► stopped
-                                │                                            ▲
-                                └── 析构 / 下一个 start() ────────────────────┘
+idle ──WS 连上 / POST /recordings──► recording ──POST /stop、WS 断开、错误──► stopping ──收尾完成──► stopped
+                                        │                                                    ▲
+                                        └── 析构 / 下一个 start() ───────────────────────────┘
 ```
 
 - `stopping` 是**短暂中间态**：`stop()` 把状态置成 `stopping` 并下发 `capture_state` 事件，然后**在同一个协程里**等推流排空（≤ 2 秒）→ 收尾三个编码器 → 写 `align.json` → 置 `stopped` 再发一次事件。所以前端看到 `stopping` 之后必定能等到 `stopped`，`POST .../stop` 返回时状态已经是 `stopped`。
 - 等推空**必须用 `co_await timer.async_wait()` 轮询 `outlet_->idle()`**，不能用同步的 `timer.wait()`：`stop()` 与写协程在同一个 strand 上，同步阻塞会把 strand 占死，写协程永远抢不到执行权，结果是真的空等满 2 秒。
 - 新一轮 `start()` 进来时若仍是 `recording`/`stopping` → `409 already_recording`（`error_code_t::already_recording`）；否则先 `close_resources()` 收拾上一个会话的残留，再建新的。
-- **本机只有一个会话对象**：`capture_session::instance()` 单例（§3.2）。所以"设备互斥"退化成"状态机不许重入"——没有第二个会话能来抢摄像头。
-- `session_id` 在 `POST /recordings` 成功时生成（`uuid`），`session_dir = core_set::get_set().get_cache_root("face_capture") / session_id_str`。
-- `stopped` 之后再 `POST /recordings`：**不开新会话对象，只换 `session_id` 与 `session_dir`**。上一个会话的 `raw.mkv`/`align.json` 已经被落在旧目录里，不迁移、不覆盖。
-- WS 断开**不改变状态**；`recording` 期间重连是接管（§3.3），不是新建会话。
+- **会话对象只有一个，且归 `ws_stream_runner` 所有**（§3.3）：不存在跨连接的会话对象，所以"设备互斥"退化成两层——进程层面由 `ws_stream_runner` 的持有关系保证，对象层面由状态机不许重入保证。
+- `session_id` 在 `start()` 成功时生成（`uuid`），`session_dir = core_set::get_set().get_cache_root("face_capture") / session_id_str`。**每次 WS 连接都是一个新 `session_id`**。
+- 同一个 `capture_session` 上 `stopped` 之后再 `start()`：**不换对象，只换 `session_id` 与 `session_dir`**。上一个会话的 `raw.mkv`/`align.json` 已经被落在旧目录里，不迁移、不覆盖。
+- WS 断开**直接走 `stop()`**，与 `POST .../stop` 是同一条路径，只是返回值没人接。
 
 ### 4.3 取帧与像素约定
 
@@ -375,7 +379,7 @@ camera → (fps 滤镜) ─┬─► media_fragment_pipeline(推流编码器) �
 - **线程模型（硬约束）**：`ws_outlet` 的 strand 背后是 `g_ioc` 线程池，**strand 上的处理函数与它的调用线程不保证同一线程**。所以"发帧"（`send_*`，可能从采集 strand 调用）与"写帧"（`drain()`，在 outlet 自己的 strand 上）之间**没有同线程假设可用**，只能靠"所有共享状态只在 strand 上访问"来串行化。
 - **怎么做到**：`send_hello` / `send_event` / `send_fragment` / `notify_state` 一律 `boost::asio::post(strand_, ...)` 投递，逻辑体在 strand 上执行；`attach` / `detach` / `set_init_segment` / `set_session_info` 保留同步签名，但**必须在注入的 strand 上调用**（调用方就是采集 strand，满足）。`queue_` / `pumping_` / `closing_` / `write_` / `state_` / `init_segment_` / `session_id_` / `width_` / `height_` 全部只由 strand 触碰，不需要 mutex，也不需要 TBB 并发容器。
 - **查询走 atomic**：`attached_`、`idle_` 两个 `std::atomic_bool` 专门给外部查询用（`is_attached()` / `idle()`），只是快照，不参与 strand 上的任何决策。决策一律用 strand 内的 `closing_` / `write_` / `queue_` 判断。
-- **顺序要求**：因为 `send_*` 变成异步投递，**必须先 `attach()` 再 `send_hello()` / `send_fragment()`**；反过来的话投递的函数先执行、看到未 attach 就丢弃。HTTP/WS 层接入时按这个顺序写。
+- **顺序要求**：因为 `send_*` 变成异步投递，**必须先 `attach()` 再发任何 `send_*`**（`send_hello` / `send_fragment`）；反过来的话投递的函数先执行、看到未 attach 就丢弃。`ws_stream_runner` 的顺序就是 attach outlet → `session_->attach()` → `start()`。
 - **写不动就丢**：`send_fragment(fragment)` 调完即返回。内部是一个**上限 8 片**的 `std::deque`，`pumping_` 保证**同时只有一条写协程在途**；`drain()` 依次取队首写出去。
 - **丢非关键帧**：队列里还压着没发出去的关键帧分片时，新进来的**非关键帧分片直接丢弃**（它反正要靠后面的关键帧重同步）。所以异常时队列最多积到 8 片，随后被关键帧覆盖式清空。**没有任何环形缓冲、没有 history 补发**。
 - 为什么不需要更复杂的背压：单用户本机 + 同机前端，WS 走 loopback，单帧分片 10–60 KB，写满窗口的概率极低；偶发丢片最多让画面卡一下，**录制链（`raw.mkv`）完全不受影响**，因为 `raw.mkv` 与推流是两条独立的编码器，各自从同一批 `cv::Mat` 取帧。
@@ -709,7 +713,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | 里程碑 | 内容 | 验收 |
 | --- | --- | --- |
 | **M0（0.5 天，只验证不写产品代码）** | ①手搓一份 `frame_000000.png`（6 位数字）序列，真机跑 `-run=MetaHumanFace -FramesDir=<abs> -OutDir=<abs> -FPS=25/1`；②记录单帧求解耗时，判断 `core_set.timeout` 是否够；③确认 `curves/frames_meta.json` 的 `first_frame` 被采用；④确认不传 `-SequencePattern` 能通过；⑤确认 `FTrackingPathUtils` 接受该命名 | 五条结论写回本文 §8；任一条失败立即回到 §8 复核 |
-| **M1（引擎 + WS 已完成）** | 摄像头读线程 + `frame_filter` + `media_fragment_pipeline`（推流）+ `ws_outlet` + **WS 路由 `face_capture_stream`（内含 `ws_stream_runner`）与注册**；**剩下 HTTP 录制端点**：`POST/GET recordings` | 引擎与 WS 侧：编译通过 ✅；剩下浏览器里出现实时画面 + `curl -X POST .../recordings` 开录/收尾 |
+| **M1（引擎 + WS 已完成）** | 摄像头读线程 + `frame_filter` + `media_fragment_pipeline`（推流）+ `ws_outlet` + **WS 路由 `face_capture_stream`（内含 `ws_stream_runner`，连上即开录、断开即收尾）与注册**；**剩下 HTTP 录制端点**：`POST/GET recordings` | 引擎与 WS 侧：编译通过 ✅；剩下浏览器里连 WS 就出现实时画面 + 断开后 `raw.mkv`/`align.json` 已落盘 |
 | **M2（引擎部分已完成）** | `raw.mkv`（FFV1，时基 1/1000）+ `align.json` + 状态机 + `take.mp4`；**HTTP 层待做**：`POST/GET/stop` 端点 | 引擎侧：编译通过 ✅；`ffprobe take.mp4` 的相邻 `pts_time` 间隔恒为 0.04s、`raw.mkv` 帧数≈摄像头帧率×秒数 |
 | M3 | 转码作业 step 1 + step 2（`png_sequence` 逐帧无补位、`mp4`）+ 作业查询/取消。**`write_png_sequence()` 已实现并编译通过**，等待最终作业调度层 | 不接 UE 也能产出合格 `frames/` 与 `take.mp4`，命名校验生效 |
 | M4 | 转码作业 step 3（Commandlet 编排 + 结果解析 + `frames/` 删除） | 端到端：录 → PNG → UE → `.dhfc` |
@@ -738,7 +742,8 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | `core_set.timeout` 不足以覆盖脸捕 | 长素材必失败 | M0 实测后决定是否为 `async_run_ue` 增加可选 timeout（§7.3-5） |
 | 与渲染任务抢 `ue_ctx` 闩 | 脸捕要排队，前端进度长时间停在 40% | 进度里显式给出 `ue_commandlet: waiting_for_ue_lock` 子状态，别让前端以为卡死 |
 | `async_run_ue` 超时后 UE 进程仍在跑 | 闩被占死，后续所有 UE 任务排队卡住 | 作业捕获超时异常后先终止该进程再返回（§7.4） |
-| 路由类被 `clone()` | 成员生成两份，引擎状态错乱 | 会话放在 `capture_session::instance()` 单例上，路由对象不存会话状态（§3.2） |
+| 路由类被 `clone()` | 成员生成两份，引擎状态错乱 | 会话归 `ws_stream_runner` 所有，路由成员只有 `shared_ptr<ws_stream_runner> runner_`；HTTP handler 不存会话（§3.2） |
+| WS 断开时 `stop()` 未完成 | `raw.mkv` 没有 `trailer`、`align.json` 缺失 | `close_impl()` 先 `co_await stop()` 再关流；进程退出时由 `app_base::Get().on_cancel` 槽控制协程退出顺序 |
 
 > 一期没有"模型缺失""opencv 不带 objdetect"这类风险——人脸检测整体在二期（§6）。
 
@@ -748,7 +753,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 
 按仓库约束：**不写测试、不跑测试**，验证手段只有编译通过（`cmake_configure Ninja_debug` + `cmake_build debug_doodle`）。运行期验证只在 M0 里程碑里做一次真机冒烟，其余靠人工按 §3.2 的接口清单点一遍。
 
-**当前状态**：采集引擎 7 组源文件已全部实现，WS 路由（`face_capture_stream` + `kitsu.cpp` 注册 + 两个 CMakeLists）也已完成，`cmake_build(--preset debug_doodle)` **exit 0**（`doodle_lib.dll` / `test_main.exe` / `doodle_kitsu_supplement.exe` 全链接通过）。HTTP 录制端点、转码作业层尚未开始。
+**当前状态**：采集引擎 7 组源文件已全部实现，WS 路由（`face_capture_stream` + `kitsu.cpp` 注册 + 两个 CMakeLists）也已完成——`ws_stream_runner` 就是会话持有者，连上开录、断开收尾，`cmake_build(--preset debug_doodle)` **exit 0**（`doodle_lib.dll` / `test_main.exe` / `doodle_kitsu_supplement.exe` 全链接通过）。HTTP 录制端点（`POST/GET recordings`、`stop`、`video`、`curves`、设备枚举）、转码作业层尚未开始。
 
 **编译期踩过的坑**（写后续代码时照此避让）：
 - `av::VideoFrame` **没有 `copyTo`**，取像素要用 `copyToBuffer(uint8_t*, size_t, align)`，且它是**非 const 成员** —— 所以取帧的函数参数要按值收 `av::VideoFrame`。
@@ -779,6 +784,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 9. **`package_path` 可以为空，空则不传 `-PackagePath`**，由 Commandlet 自己决定落点；非空时后端只校验格式（§7.2、§7.3-9、§7.3 的条件拼参）。
 10. **取消固定节拍**（2026-11-06）：不再用 `steady_timer` 40 ms 轮询采样；摄像头阻塞读放独立线程，到达即打时间戳 `post` 到 strand，`fps` 滤镜统一成 25 fps（§0 第 16 条、§4.1、§4.4）。
 11. **`raw.mkv` 存真实帧、时基 `{1,1000}`**：不写复制帧，`frames/` 由它逐帧解码得到，不做补位（§4.4、§5.4、§10）。
+12. **`capture_session` 归 `ws_stream_runner` 所有**（2026-11-06）：不打开 WS 就不抓摄像头，WS 连上即开录、断开即收尾；删除进程内单例与 `make()`（§0 第 6/17 条、§3.3）。
 
 **仍未定（不阻塞实现）**：
 
@@ -818,7 +824,8 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 
 | 初稿设计 | 现在 | 原因 |
 | --- | --- | --- |
-| `capture_session_registry`（`session_id` 查找表） | 删除，改为 `capture_session::instance()` 进程内单例 | 本机只有一个会话 |
+| `capture_session_registry`（`session_id` 查找表） | 删除，动作改由 `ws_stream_runner` 持有的会话对象承担 | 本机只有一个会话 |
+| `capture_session::instance()` 进程内单例 | 删除，`capture_session` 变成 `ws_stream_runner` 的成员，随 WS 连接创建/销毁 | 不打开 WS 就不该抓摄像头；单例会让"有连接/没连接"与"有没有会话"脱钩 |
 | WS 按 `session_id` 分路径、多连接互斥 + `409 device_busy` | 路径保留占位但不参与查找；第二条连接 attach 后自然接管，旧 outlet 不再被推送（不发 `superseded`，旧连接自己从 `async_read` 失败退出） | 摄像头只有一个消费者，不需要仲裁 |
 | 多标签页：`control:"observer"` 观察者模式 | 删除 | 只有一条推流、一个控制者 |
 | 每连接 `fragment_sink` + 环形缓冲 + 逐连接 FIFO(8 片) + `gap` 标记 | 上限 8 片队列 + 关键帧优先级覆盖 + 丢非关键帧，`gap` 字段删除 | 只有一个出口，不需要分发与回放补发 |

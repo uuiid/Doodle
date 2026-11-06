@@ -495,19 +495,6 @@ capture_session::capture_session(FSys::path in_root)
 
 capture_session::~capture_session() = default;
 
-std::shared_ptr<capture_session> capture_session::make(const FSys::path& in_root) {
-  return std::make_shared<capture_session>(in_root);
-}
-
-std::shared_ptr<capture_session> capture_session::instance() {
-  static std::mutex l_mutex{};
-  static std::shared_ptr<capture_session> l_instance{};
-
-  std::unique_lock l_lock{l_mutex};
-  if (!l_instance) l_instance = make(default_root());
-  return l_instance;
-}
-
 std::vector<camera_info> capture_session::list_devices() {
   std::vector<camera_info> l_result{};
   for (std::int32_t l_index = 0; l_index < 8; ++l_index) {

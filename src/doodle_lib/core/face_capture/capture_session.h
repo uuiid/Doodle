@@ -22,10 +22,6 @@ class capture_session : public std::enable_shared_from_this<capture_session> {
  public:
   using executor_type = boost::asio::strand<boost::asio::io_context::executor_type>;
 
-  static std::shared_ptr<capture_session> make(const FSys::path& in_root);
-
-  static std::shared_ptr<capture_session> instance();
-
   explicit capture_session(FSys::path in_root);
 
   ~capture_session();
