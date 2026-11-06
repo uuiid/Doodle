@@ -32,7 +32,6 @@ target_sources(
         face_capture/capture_session.h
         face_capture/frame_align.h
         face_capture/png_sequence_writer.h
-        face_capture/ws_stream_runner.h
 
         PRIVATE
         filesystem_extend.cpp
@@ -61,7 +60,6 @@ target_sources(
         face_capture/capture_session.cpp
         face_capture/frame_align.cpp
         face_capture/png_sequence_writer.cpp
-        face_capture/ws_stream_runner.cpp
 
 )
 add_subdirectory(http)
