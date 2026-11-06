@@ -29,6 +29,11 @@ const RE_UBT_RESULT = /^\s*Result:\s*(Succeeded|Failed)\b(.*)$/;
 const RE_UBT_TOTAL_TIME = /^\s*Total execution time:\s*([\d.]+)\s*seconds\.?/;
 const RE_UBT_FATAL = /一个或多个模块编译失败|one or more modules failed to compile/i;
 const RE_STACK_FRAME = /^\s*at\s+[\w.<>+`]+\s*\(/;
+const RE_EDITOR_LOG = /^\s*Log[A-Za-z0-9]+\s*:\s*(Error|Warning|Fatal)\s*:\s*(.*)$/i;
+const RE_EDITOR_FATAL = /^\s*(?:Unhandled Exception|Assertion failed|Fatal error)\b[: ]*(.*)$/i;
+const RE_EDITOR_KEYLINE = /\b(Error|Fatal|Failed|Failure|Exception|Assertion failed|Crash|Shutdown|Exit|Quitting|Missing|Unable|Refused|TimedOut)\b/i;
+const EDITOR_KEYLINE_LIMIT = 200;
+const EDITOR_KEYLINE_MAX_LENGTH = 400;
 
 export const UBT_COMPILE_FAILED = 'UBT/CompileFailed';
 export const UBT_TOOL_ERROR = 'UBT/Error';
@@ -309,6 +314,40 @@ export function classifyErrors(errors) {
 }
 
 /**
+ * 解析编辑器日志里的失败行（stdout 与 Saved/Logs 同格式）。
+ *
+ * @param {string} text
+ * @returns {any[]}
+ */
+export function editorLogDiagnostics(text) {
+  /** @type {any[]} */
+  const out = [];
+  for (const line of splitLines(text)) {
+    const match = RE_EDITOR_LOG.exec(line);
+    if (match) {
+      const level = match[1].toLowerCase();
+      out.push(pruneDiagnostic({
+        severity: level === 'warning' ? 'warning' : 'error',
+        code: /Fatal/i.test(line) || /Critical/i.test(match[2]) ? 'Editor/Fatal' : `Editor/${level === 'warning' ? 'Warning' : 'Error'}`,
+        message: match[2].trim() || line.trim(),
+        raw: line,
+      }));
+      continue;
+    }
+    const fatal = RE_EDITOR_FATAL.exec(line);
+    if (fatal) {
+      out.push(pruneDiagnostic({
+        severity: 'error',
+        code: 'Editor/Fatal',
+        message: fatal[1].trim() || line.trim(),
+        raw: line,
+      }));
+    }
+  }
+  return out;
+}
+
+/**
  * 把一次 UE 构建的「事实」收敛成结论。
  *
  * 判定顺序（任何一条命中都算失败）：
@@ -322,6 +361,8 @@ export function classifyErrors(errors) {
  * @returns {{ok:boolean, reason:string, code:string}}
  */
 export function decideOutcome(facts) {
+  if (facts.mode === 'editor') return decideEditorOutcome(facts);
+
   const exitCode = typeof facts.exitCode === 'number' ? facts.exitCode : null;
   const errors = Array.isArray(facts.errors) ? facts.errors : [];
   const result = typeof facts.result === 'string' ? facts.result : undefined;
@@ -382,6 +423,50 @@ export function decideOutcome(facts) {
     reason: 'exit code 0 but no `Result:` line in UBT output — UBT 可能没跑起来或输出被过滤，看 output 确认',
     code: 'no-result',
   };
+}
+
+/**
+ * 把一次编辑器运行收敛成结论。
+ *
+ * 判定顺序（任何一条命中都算失败）：
+ *   1. 被取消或超时 —— 编辑器多半仍在等待自己退出，GUI 版窗口又被 DSH 隐藏，需要带退出命令重跑。
+ *   2. 存在 error 级诊断 —— 编辑器启动失败或运行期致命错误。
+ *   3. 退出码为 0 才算成功；非 0 即失败。
+ *
+ * @param {{exitCode:number|null, aborted:boolean, errors:any[]}} facts
+ * @returns {{ok:boolean, reason:string, code:string}}
+ */
+export function decideEditorOutcome(facts) {
+  const exitCode = typeof facts.exitCode === 'number' ? facts.exitCode : null;
+  const errors = Array.isArray(facts.errors) ? facts.errors : [];
+
+  if (facts.aborted) {
+    return {
+      ok: false,
+      reason: 'cancelled (aborted or timed out) — 编辑器是被终止而不是自己退出的；'
+        + '长时间运行的编辑器要在参数里给它退出命令，例如 -ExecCmds="QUIT_EDITOR" 或 -run=... 脚本里主动退出',
+      code: 'cancelled',
+    };
+  }
+
+  if (errors.length > 0) {
+    const suffix = exitCode === null ? ' (exit code unavailable)' : ` — exit code ${exitCode}`;
+    return {
+      ok: false,
+      reason: `${errors.length} error line(s) in editor output${suffix}`,
+      code: 'error-diagnostics',
+    };
+  }
+
+  if (exitCode === null) {
+    return { ok: false, reason: 'exit code unavailable for the editor process', code: 'unknown' };
+  }
+
+  if (exitCode !== 0) {
+    return { ok: false, reason: `editor exited with code ${exitCode}`, code: 'exit-code' };
+  }
+
+  return { ok: true, reason: 'editor exited with code 0', code: 'ok' };
 }
 
 /**
@@ -454,6 +539,52 @@ export function truncateOutput(text, headBytes = 4096, tailBytes = 12288) {
     truncated: true,
     totalBytes,
   };
+}
+
+/**
+ * 从编辑器原始输出里抽取「关键行」：只保留带严重级别或失败关键字的那几行，其余噪声丢弃。
+ *
+ * @param {string} text
+ * @param {number} [limit]
+ * @returns {string[]}
+ */
+export function editorKeyLines(text, limit = EDITOR_KEYLINE_LIMIT) {
+  const cap = Number.isFinite(limit) && limit > 0 ? Math.trunc(limit) : EDITOR_KEYLINE_LIMIT;
+  /** @type {string[]} */
+  const picked = [];
+  for (const line of splitLines(text)) {
+    if (picked.length >= cap) break;
+    const trimmed = line.trim();
+    if (trimmed.length === 0) continue;
+    const matched = RE_EDITOR_LOG.test(trimmed) || RE_EDITOR_FATAL.test(trimmed) || RE_EDITOR_KEYLINE.test(trimmed);
+    if (!matched) continue;
+    if (picked[picked.length - 1] === trimmed) continue;
+    picked.push(trimmed.length > EDITOR_KEYLINE_MAX_LENGTH ? `${trimmed.slice(0, EDITOR_KEYLINE_MAX_LENGTH)}…` : trimmed);
+  }
+  return picked;
+}
+
+/**
+ * 一次编辑器会话的输出摘要：关键行 + 规模统计。
+ *
+ * @param {string} text
+ * @returns {{keyLines:string[], keyLineCount:number, totalLines:number, errorLines:number, warningLines:number}}
+ */
+export function summarizeEditorOutput(text) {
+  const lines = splitLines(text).filter((line) => line.trim().length > 0);
+  let errorLines = 0;
+  let warningLines = 0;
+  for (const line of lines) {
+    const match = RE_EDITOR_LOG.exec(line);
+    if (match) {
+      if (match[1].toLowerCase() === 'warning') warningLines += 1;
+      else errorLines += 1;
+      continue;
+    }
+    if (RE_EDITOR_FATAL.test(line)) errorLines += 1;
+  }
+  const keyLines = editorKeyLines(text);
+  return { keyLines, keyLineCount: keyLines.length, totalLines: lines.length, errorLines, warningLines };
 }
 
 //#endregion

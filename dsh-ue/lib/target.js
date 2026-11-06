@@ -4,6 +4,11 @@ export const DEFAULT_PLATFORM = 'Win64';
 export const DEFAULT_CONFIGURATION = 'Development';
 export const CONFIGURATIONS = ['Debug', 'DebugGame', 'Development', 'Shipping', 'Test'];
 
+export const EDITOR_EXES = { cmd: 'UnrealEditor-Cmd.exe', editor: 'UnrealEditor.exe' };
+export const EDITOR_EXE_KINDS = ['cmd', 'editor'];
+export const DEFAULT_EDITOR_EXE = 'cmd';
+export const EDITOR_BINARIES_RE = /Engine[\\/]Binaries[\\/]Win64$/i;
+
 const RE_PLATFORM = /^[A-Za-z][A-Za-z0-9_]{0,40}$/;
 const RE_TARGET = /^[A-Za-z][A-Za-z0-9_]{0,120}$/;
 const RE_CONFIGURATION = /^[A-Za-z][A-Za-z]{0,40}$/;
@@ -234,11 +239,6 @@ export function resolveTarget(input, context, exists) {
   const repoPath = (rel) => `${repoRoot}\\${rel.replace(/\//g, '\\')}`;
   /** @param {string} project @returns {string} */
   const projectPath = (project) => resolveProjectPath(project, repoRoot);
-  /** @param {string} absolute @returns {string} */
-  const dirOf = (absolute) => {
-    const index = Math.max(absolute.lastIndexOf('\\'), absolute.lastIndexOf('/'));
-    return index > 0 ? absolute.slice(0, index) : absolute;
-  };
 
   if (!exists(engineBuildBat)) {
     return {
@@ -400,6 +400,195 @@ export function renderCommandLine(argv) {
   return argv
     .map((part) => (/[\s"]/.test(part) ? `"${part.replace(/"/g, '\\"')}"` : part))
     .join(' ');
+}
+
+/**
+ * 编辑器可直接复制的完整命令行：exe + .uproject + 其余参数。
+ *
+ * @param {{exePath:string, projectFile:string, args?:string[]}} spec
+ * @returns {string}
+ */
+export function renderEditorCommandLine(spec) {
+  return renderCommandLine(buildEditorLaunchArgv(spec));
+}
+
+/**
+ * 编辑器二进制档位：`cmd`（UnrealEditor-Cmd.exe）或 `editor`（UnrealEditor.exe）。
+ *
+ * @param {unknown} value 省略时取默认档位
+ * @returns {'cmd'|'editor'}
+ */
+export function editorExeName(value) {
+  const text = String(value ?? '').trim().toLowerCase();
+  return text === 'editor' ? 'editor' : 'cmd';
+}
+
+/**
+ * 编辑器可执行文件的绝对路径：`<engineRoot>\Engine\Binaries\Win64\UnrealEditor[-Cmd].exe`。
+ *
+ * @param {unknown} kind
+ * @param {unknown} engineRoot 允许直接给出 `...\Engine\Binaries\Win64` 这一层目录
+ * @returns {string}
+ */
+export function editorExePath(kind, engineRoot) {
+  const root = stripTrailingSeparators(engineRoot);
+  const binaries = EDITOR_BINARIES_RE.test(root) ? root : `${root}\\Engine\\Binaries\\Win64`;
+  return `${binaries}\\${EDITOR_EXES[editorExeName(kind)]}`;
+}
+
+/**
+ * 启动编辑器的 argv：exe 在前，`.uproject` 作为第一个参数，其余参数按给出的顺序原样追加。
+ *
+ * @param {{exePath:string, projectFile:string, args?:string[]}} spec
+ * @returns {string[]}
+ */
+export function buildEditorLaunchArgv(spec) {
+  return [spec.exePath, spec.projectFile, ...(Array.isArray(spec.args) ? spec.args : [])];
+}
+
+/**
+ * 编辑器参数只拒绝会让解析产生歧义的值，其余（裸词、带引号的 UE 命令、含空格的路径）原样透传。
+ *
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+export function isForwardableEditorArg(value) {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 2048) return false;
+  return !/[\r\n\u0000]/.test(value);
+}
+
+/**
+ * 从干净环境启动时会被拒绝的编辑器参数：另起一个 `.uproject` 或改写日志目标都会与启动参数冲突。
+ *
+ * @param {unknown} value
+ * @returns {string|undefined} 拒绝理由；可透传时返回 undefined
+ */
+export function unsafeEditorArg(value) {
+  const text = String(value ?? '').trim();
+  if (/^-{1,2}(abs)?project(=|:)/i.test(text)) {
+    return '不接受改写工程的 -project / -absproject：工程已由插件配置固定为第一个参数';
+  }
+  if (/^-{1,2}(abs)?log(=|:)/i.test(text)) {
+    return '不接受改写日志目标的 -abslog：编辑器会按自己的日志规则写入工程的 Saved/Logs';
+  }
+  return undefined;
+}
+
+/**
+ * 校验 ue_editor 的参数形状（不涉及磁盘）。
+ *
+ * @param {{exe?:unknown, extraArgs?:unknown, timeoutMs?:unknown}} input
+ * @returns {string[]} 问题列表，空数组表示通过
+ */
+export function validateEditorArgs(input) {
+  /** @type {string[]} */
+  const problems = [];
+  if (input.exe !== undefined && !EDITOR_EXE_KINDS.includes(input.exe)) {
+    problems.push(`exe 只能是 ${EDITOR_EXE_KINDS.map((kind) => JSON.stringify(kind)).join(' 或 ')}。收到：${JSON.stringify(input.exe)}`);
+  }
+  if (input.extraArgs !== undefined) {
+    if (!Array.isArray(input.extraArgs)) {
+      problems.push('extraArgs 必须是字符串数组（每项一个编辑器参数）。');
+    } else {
+      for (const arg of input.extraArgs) {
+        if (!isForwardableEditorArg(arg)) {
+          problems.push(`extraArgs 含无法透传的参数：${JSON.stringify(arg)}。参数必须非空、不超过 2048 字符，且不含换行或 \\0。`);
+          continue;
+        }
+        const reason = unsafeEditorArg(arg);
+        if (reason !== undefined) problems.push(`${reason}：${JSON.stringify(arg)}`);
+      }
+    }
+  }
+  if (input.timeoutMs !== undefined
+    && !(typeof input.timeoutMs === 'number' && Number.isInteger(input.timeoutMs) && input.timeoutMs > 0)) {
+    problems.push(`timeoutMs 必须是正整数毫秒数。收到：${JSON.stringify(input.timeoutMs)}`);
+  }
+  return problems;
+}
+
+/**
+ * @typedef {object} EditorResolveContext
+ * @property {string} repoRoot                 仓库根（Doodle 仓库）
+ * @property {string} engineRoot               引擎根，例如 E:\\UnrealEngine
+ * @property {string} editorProjectFileRel     编辑器启动时使用的 .uproject（相对 repoRoot 或绝对路径）
+ */
+
+/**
+ * @typedef {object} ResolvedEditor
+ * @property {'editor'} mode
+ * @property {'cmd'|'editor'} exeKind
+ * @property {string} exeName
+ * @property {string} exePath
+ * @property {string} projectFile              固定为第一个参数的 .uproject（绝对路径）
+ * @property {string} cwd
+ * @property {string[]} launchArgs             [exe, projectFile, ...extraArgs]
+ * @property {string[]} editorArgs             [projectFile, ...extraArgs]
+ * @property {string} explanation
+ */
+
+/**
+ * 把 ue_editor 的松散参数解析成一次确定的编辑器启动。
+ *
+ * @param {{exe?:unknown, extraArgs?:unknown, timeoutMs?:unknown}} input
+ * @param {EditorResolveContext} context
+ * @param {(absolutePath:string)=>boolean} exists 注入式存在性检查
+ * @returns {{ok:true, resolved:ResolvedEditor} | {ok:false, problems:string[]}}
+ */
+export function resolveEditor(input, context, exists) {
+  /** @type {string[]} */
+  const problems = validateEditorArgs(input);
+  if (problems.length > 0) return { ok: false, problems };
+
+  const repoRoot = stripTrailingSeparators(context.repoRoot);
+  const engineRoot = stripTrailingSeparators(context.engineRoot ?? 'E:\\UnrealEngine');
+  const exeKind = editorExeName(input.exe);
+  const exePath = editorExePath(exeKind, engineRoot);
+  const projectFile = resolveProjectPath(context.editorProjectFileRel, repoRoot);
+  const editorArgs = Array.isArray(input.extraArgs) ? input.extraArgs.slice() : [];
+
+  if (projectFile.length === 0) {
+    return {
+      ok: false,
+      problems: ['没有可启动的工程：插件 config 的 projectFile / editorProjectFile 必须指向一个 .uproject。'],
+    };
+  }
+  if (!exists(exePath)) {
+    return {
+      ok: false,
+      problems: [`编辑器不存在：${exePath}。检查插件 config 的 engineRoot，或确认编辑器目标已经编译通过。`],
+    };
+  }
+  if (!exists(projectFile)) {
+    return { ok: false, problems: [`工程文件不存在：${projectFile}。检查插件 config 的 projectFile / editorProjectFile。`] };
+  }
+
+  return {
+    ok: true,
+    resolved: {
+      mode: 'editor',
+      exeKind,
+      exeName: EDITOR_EXES[editorExeName(exeKind)],
+      exePath,
+      projectFile,
+      cwd: dirOf(projectFile),
+      launchArgs: buildEditorLaunchArgv({ exePath, projectFile, args: editorArgs }),
+      editorArgs: [projectFile, ...editorArgs],
+      explanation: `编辑器 ${EDITOR_EXES[editorExeName(exeKind)]}（工程 ${projectFile}）`,
+    },
+  };
+}
+
+/**
+ * 取出路径的所在目录（同时接受 `\` 与 `/`）。
+ *
+ * @param {string} absolute
+ * @returns {string}
+ */
+export function dirOf(absolute) {
+  const text = String(absolute ?? '');
+  const index = Math.max(text.lastIndexOf('\\'), text.lastIndexOf('/'));
+  return index > 0 ? text.slice(0, index) : text;
 }
 
 /**

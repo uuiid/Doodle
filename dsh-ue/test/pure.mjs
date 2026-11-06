@@ -5,19 +5,28 @@
 import assert from 'node:assert/strict';
 
 import {
+  decideEditorOutcome,
   decideOutcome,
   dedupeDiagnostics,
+  editorLogDiagnostics,
   parseDiagnostics,
   readUbtSummary,
   truncateOutput,
 } from '../lib/parse.js';
 import {
+  buildEditorLaunchArgv,
   buildLaunchArgv,
+  editorExeName,
+  editorExePath,
+  isForwardableEditorArg,
   isForwardableUbtArg,
   isSafeRelativePath,
   moduleTargetName,
   readEngineAssociation,
+  renderCommandLine,
+  resolveEditor,
   resolveTarget,
+  unsafeEditorArg,
 } from '../lib/target.js';
 
 let passed = 0;
@@ -403,6 +412,152 @@ test('非法参数被拒绝', () => {
   );
   assert.equal(outcome.ok, false);
   assert.equal(outcome.problems.length, 3);
+});
+
+// ------------------------------------------------------------------ 编辑器
+
+const EDITOR_CONTEXT = {
+  repoRoot: 'E:\\Doodle',
+  engineRoot: 'E:\\UnrealEngine',
+  editorProjectFileRel: 'E:\\ue_main\\ue_main.uproject',
+};
+
+const EDITOR_BIN_DIR = 'E:\\UnrealEngine\\Engine\\Binaries\\Win64';
+const EDITOR_CMD = `${EDITOR_BIN_DIR}\\UnrealEditor-Cmd.exe`;
+const EDITOR_GUI = `${EDITOR_BIN_DIR}\\UnrealEditor.exe`;
+const EDITOR_PROJECT = 'E:\\ue_main\\ue_main.uproject';
+
+test('编辑器 exe 名与路径固定为 Engine\\Binaries\\Win64', () => {
+  assert.equal(editorExeName(undefined), 'cmd');
+  assert.equal(editorExeName('editor'), 'editor');
+  assert.equal(editorExeName('CMD'), 'cmd');
+  assert.equal(editorExePath(undefined, 'E:\\UnrealEngine'), EDITOR_CMD);
+  assert.equal(editorExePath('editor', 'E:\\UnrealEngine\\'), EDITOR_GUI);
+  assert.equal(editorExePath('editor', EDITOR_BIN_DIR), EDITOR_GUI);
+});
+
+test('编辑器 argv：exe 在前，.uproject 是第一个参数', () => {
+  assert.deepEqual(
+    buildEditorLaunchArgv({ exePath: EDITOR_CMD, projectFile: EDITOR_PROJECT, args: ['-game', '-unattended'] }),
+    [EDITOR_CMD, EDITOR_PROJECT, '-game', '-unattended'],
+  );
+  assert.deepEqual(
+    buildEditorLaunchArgv({ exePath: EDITOR_GUI, projectFile: EDITOR_PROJECT }),
+    [EDITOR_GUI, EDITOR_PROJECT],
+  );
+});
+
+test('编辑器参数原样透传，只拦截 -project / -abslog', () => {
+  assert.equal(isForwardableEditorArg('-game'), true);
+  assert.equal(isForwardableEditorArg('D:\\tools\\x.py'), true);
+  assert.equal(isForwardableEditorArg('-ExecCmds="QUIT_EDITOR"'), true);
+  assert.equal(isForwardableEditorArg(''), false);
+  assert.equal(isForwardableEditorArg('a\nb'), false);
+  assert.equal(unsafeEditorArg('-ExecCmds=QUIT_EDITOR'), undefined);
+  assert.match(String(unsafeEditorArg('-project=E:\\Other\\Other.uproject')), /-project/);
+  assert.match(String(unsafeEditorArg('--abslog=D:\\x.log')), /-abslog/);
+});
+
+test('默认启动 UnrealEditor-Cmd.exe 并固定工程', () => {
+  const outcome = resolveEditor(
+    { extraArgs: ['-game', '-unattended'] },
+    EDITOR_CONTEXT,
+    existsFrom([EDITOR_CMD, EDITOR_PROJECT]),
+  );
+  assert.equal(outcome.ok, true);
+  assert.equal(outcome.resolved.exeKind, 'cmd');
+  assert.equal(outcome.resolved.exePath, EDITOR_CMD);
+  assert.equal(outcome.resolved.projectFile, EDITOR_PROJECT);
+  assert.equal(outcome.resolved.cwd, 'E:\\ue_main');
+  assert.deepEqual(outcome.resolved.launchArgs, [EDITOR_CMD, EDITOR_PROJECT, '-game', '-unattended']);
+});
+
+test('exe=editor 启动 GUI 版，参数顺序保持不变', () => {
+  const outcome = resolveEditor(
+    { exe: 'editor', extraArgs: ['-stdout', '-NullRHI', '-ExecCmds=QUIT_EDITOR'] },
+    EDITOR_CONTEXT,
+    existsFrom([EDITOR_GUI, EDITOR_PROJECT]),
+  );
+  assert.equal(outcome.ok, true);
+  assert.equal(outcome.resolved.exeName, 'UnrealEditor.exe');
+  assert.deepEqual(outcome.resolved.launchArgs, [
+    EDITOR_GUI,
+    EDITOR_PROJECT,
+    '-stdout',
+    '-NullRHI',
+    '-ExecCmds=QUIT_EDITOR',
+  ]);
+});
+
+test('编辑器解析失败给出可读问题', () => {
+  const badExe = resolveEditor({ exe: 'gui' }, EDITOR_CONTEXT, existsFrom([EDITOR_CMD, EDITOR_PROJECT]));
+  assert.equal(badExe.ok, false);
+  assert.match(badExe.problems[0], /exe 只能是/);
+
+  const badArgs = resolveEditor({ extraArgs: ['-game', ''] }, EDITOR_CONTEXT, existsFrom([EDITOR_CMD, EDITOR_PROJECT]));
+  assert.equal(badArgs.ok, false);
+  assert.match(badArgs.problems[0], /无法透传/);
+
+  const badTimeout = resolveEditor({ timeoutMs: 1.5 }, EDITOR_CONTEXT, existsFrom([EDITOR_CMD, EDITOR_PROJECT]));
+  assert.equal(badTimeout.ok, false);
+  assert.match(badTimeout.problems[0], /timeoutMs/);
+
+  const missingExe = resolveEditor({}, EDITOR_CONTEXT, existsFrom([EDITOR_PROJECT]));
+  assert.equal(missingExe.ok, false);
+  assert.match(missingExe.problems[0], /编辑器不存在/);
+
+  const missingProject = resolveEditor({}, EDITOR_CONTEXT, existsFrom([EDITOR_CMD]));
+  assert.equal(missingProject.ok, false);
+  assert.match(missingProject.problems[0], /工程文件不存在/);
+
+  const noProject = resolveEditor({}, { ...EDITOR_CONTEXT, editorProjectFileRel: '' }, existsFrom([EDITOR_CMD, EDITOR_PROJECT]));
+  assert.equal(noProject.ok, false);
+  assert.match(noProject.problems[0], /没有可启动的工程/);
+});
+
+test('编辑器命令行渲染：含空格的项加引号且不出现 \\"', () => {
+  const line = renderCommandLine([EDITOR_CMD, 'E:\\My Game\\Game.uproject', '-ExecCmds=QUIT_EDITOR']);
+  assert.equal(line, `${EDITOR_CMD} "E:\\My Game\\Game.uproject" -ExecCmds=QUIT_EDITOR`);
+  for (const part of [EDITOR_CMD, 'E:\\My Game\\Game.uproject']) {
+    assert.equal(part.includes('\\"'), false);
+  }
+});
+
+test('编辑器日志里的 Error / Fatal 行成为诊断', () => {
+  const parsed = editorLogDiagnostics([
+    'LogInit: Display: Engine is initialized',
+    'LogWindows: Error: === Critical error: ===',
+    'LogPlayLevel: Warning: 忽略',
+    'Fatal error: [File:Unknown] Assertion failed',
+  ].join('\n'));
+  const errors = parsed.filter((item) => item.severity === 'error');
+  const warnings = parsed.filter((item) => item.severity === 'warning');
+  assert.equal(errors.length, 2);
+  assert.equal(warnings.length, 1);
+  assert.equal(errors[0].code, 'Editor/Fatal');
+  assert.match(errors[0].message, /Critical error/);
+  assert.equal(errors[1].code, 'Editor/Fatal');
+});
+
+test('编辑器判定：退出码 0 成功，非 0 / 超时 / 错误行失败', () => {
+  assert.deepEqual(decideEditorOutcome({ exitCode: 0, aborted: false, errors: [] }), {
+    ok: true,
+    reason: 'editor exited with code 0',
+    code: 'ok',
+  });
+  const failed = decideEditorOutcome({ exitCode: 3, aborted: false, errors: [] });
+  assert.equal(failed.ok, false);
+  assert.equal(failed.code, 'exit-code');
+  const timedOut = decideEditorOutcome({ exitCode: null, aborted: true, errors: [] });
+  assert.equal(timedOut.code, 'cancelled');
+  const errored = decideEditorOutcome({ exitCode: 0, aborted: false, errors: [{ severity: 'error' }] });
+  assert.equal(errored.code, 'error-diagnostics');
+});
+
+test('decideOutcome 把 editor 模式分流到编辑器判定', () => {
+  const verdict = decideOutcome({ mode: 'editor', exitCode: 0, aborted: false, errors: [] });
+  assert.equal(verdict.ok, true);
+  assert.equal(decideOutcome({ mode: 'editor', exitCode: 2, aborted: false, errors: [] }).code, 'exit-code');
 });
 
 console.log(`\n${passed} checks passed`);

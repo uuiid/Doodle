@@ -1,8 +1,10 @@
-// dsh-ue —— 让 DSH 通过 UE 自带的 Engine\Build\BatchFiles\Build.bat 编译 Unreal Engine 的工程。
+// dsh-ue —— 让 DSH 通过 UE 自带的 Engine\Build\BatchFiles\Build.bat 编译 Unreal Engine 的工程，
+// 并启动 UnrealEditor.exe / UnrealEditor-Cmd.exe。
 //
 // 工具清单：
 //   ue_build   编译一个 UE 目标（游戏工程 / 编辑器 / 引擎）
-//   ue_targets 只读列出当前配置下可编译的目标
+//   ue_editor  运行 UE 编辑器（配置的 .uproject 固定为第一个参数，其余参数透传）
+//   ue_targets 只读列出当前配置下可编译的目标与可运行的编辑器
 //
 // 硬约束（见 cordis-plugin-development 技能）：
 //   * 顶层不 import node: 内置模块，需要时在 apply 内动态 import。
@@ -12,7 +14,18 @@
 import { defineTool } from '@deepseek-ai/dsh-tools';
 import z from '@deepseek-ai/schemastery';
 
-import { buildLaunchArgv, readEngineAssociation, renderCommandLine, resolveProjectPath, resolveTarget } from './target.js';
+import {
+  buildLaunchArgv,
+  dirOf,
+  editorExeName,
+  editorExePath,
+  EDITOR_EXE_KINDS,
+  readEngineAssociation,
+  renderCommandLine,
+  resolveEditor,
+  resolveProjectPath,
+  resolveTarget,
+} from './target.js';
 import { invalid, runUeBuild, sanitizeForJson } from './runner.js';
 
 export const name = 'ue-build';
@@ -25,11 +38,13 @@ export const Config = z.object({
   engineBuildBat: z.string().default('Engine/Build/BatchFiles/Build.bat'),
   projectFile: z.string().default(''),
   pluginBuildScript: z.string().default(''),
+  editorProjectFile: z.string().default(''),
   comspec: z.string().default('C:\\WINDOWS\\system32\\cmd.exe'),
   defaultPlatform: z.string().default('Win64'),
   defaultConfiguration: z.string().default('Development'),
   defaultTarget: z.string().default(''),
   buildTimeoutMs: z.number().default(5400000),
+  editorTimeoutMs: z.number().default(1800000),
   maxOutputBytes: z.number().default(33554432),
   outputHeadBytes: z.number().default(6144),
   outputTailBytes: z.number().default(20480),
@@ -52,6 +67,16 @@ const DIAGNOSTICS_SCHEMA = {
   },
 };
 
+const LOG_INFO_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    logDir: { type: 'string' },
+    logFile: { type: 'string' },
+    exists: { type: 'boolean' },
+  },
+};
+
 const OUTCOME_SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -62,6 +87,7 @@ const OUTCOME_SCHEMA = {
     durationMs: { type: 'integer' },
     exitCode: { oneOf: [{ type: 'integer' }, { type: 'null' }] },
     command: { type: 'string' },
+    exe: { type: 'string' },
     ubtResult: { type: 'string' },
     ubtCompileFailed: { type: 'boolean' },
     ubtTotalTimeSeconds: { type: 'number' },
@@ -78,6 +104,8 @@ const OUTCOME_SCHEMA = {
         engineRoot: { type: 'string' },
         repoRoot: { type: 'string' },
         buildBat: { type: 'string' },
+        exePath: { type: 'string' },
+        log: LOG_INFO_SCHEMA,
       },
     },
     diagnostics: DIAGNOSTICS_SCHEMA,
@@ -90,6 +118,9 @@ const OUTCOME_SCHEMA = {
         tail: { type: 'string' },
         truncated: { type: 'boolean' },
         totalBytes: { type: 'integer' },
+        keyLines: { type: 'array', items: { type: 'string' } },
+        keyLineCount: { type: 'integer' },
+        totalLines: { type: 'integer' },
       },
     },
     spillPath: { type: 'string' },
@@ -119,7 +150,11 @@ const TARGETS_SCHEMA = {
           target: { type: 'string' },
           projectFile: { type: 'string' },
           engineAssociation: { type: 'string' },
+          exePath: { type: 'string' },
           commandLine: { type: 'string' },
+          logDir: { type: 'string' },
+          logFile: { type: 'string' },
+          logExists: { type: 'boolean' },
         },
       },
     },
@@ -145,16 +180,20 @@ function keep(value, ok) {
  * @returns {string}
  */
 function renderOutcome(value) {
+  const WARNING_RENDER_LIMIT = 5;
+  const ERROR_RENDER_LIMIT = 40;
   const lines = [];
   const target = value.target ?? {};
-  const where = target.mode === 'script' ? 'script' : 'UBT';
+  const where = target.mode === 'editor' ? 'editor' : target.mode === 'script' ? 'script' : 'UBT';
+  const headline = target.mode === 'editor' ? 'ue_editor' : 'ue_build';
   lines.push(
-    `${value.ok ? 'OK' : 'FAILED'} — ue_build (${where}, exit ${value.exitCode ?? 'n/a'}, ${value.durationMs} ms)`,
+    `${value.ok ? 'OK' : 'FAILED'} — ${headline} (${where}, exit ${value.exitCode ?? 'n/a'}, ${value.durationMs} ms)`,
   );
   if (value.ubtResult) {
     lines.push(`UBT result: ${value.ubtResult}` + (value.ubtTotalTimeSeconds ? ` (UBT 自身计时 ${value.ubtTotalTimeSeconds}s)` : ''));
   }
   lines.push(`reason: ${value.reason}`);
+  if (value.exe) lines.push(`exe: ${value.exe}`);
   if (target.target) {
     lines.push(`target: ${target.target} | ${target.platform ?? '?'} | ${target.configuration ?? '?'}`);
   }
@@ -166,20 +205,36 @@ function renderOutcome(value) {
   const warnings = value.warnings ?? [];
   if (errors.length > 0) {
     lines.push('', `errors (${errors.length}):`);
-    for (const item of errors.slice(0, 40)) {
+    for (const item of errors.slice(0, ERROR_RENDER_LIMIT)) {
       const loc = item.file
         ? `${item.file}${item.line ? `(${item.line}${item.column ? `,${item.column}` : ''})` : ''}`
         : '';
       lines.push(`  [${item.code ?? 'error'}] ${loc}${loc ? ' ' : ''}${item.message}`);
     }
-    if (errors.length > 40) lines.push(`  … ${errors.length - 40} more error(s)`);
+    if (errors.length > ERROR_RENDER_LIMIT) lines.push(`  … ${errors.length - ERROR_RENDER_LIMIT} more error(s)`);
   }
   if (warnings.length > 0) {
-    lines.push('', `warnings (${warnings.length}) — first 10:`);
-    for (const item of warnings.slice(0, 10)) {
+    let warningsShown = 0;
+    lines.push('', `warnings (${warnings.length}) — first ${WARNING_RENDER_LIMIT}:`);
+    for (const item of warnings.slice(0, WARNING_RENDER_LIMIT)) {
       const loc = item.file ? `${item.file}${item.line ? `(${item.line})` : ''}` : '';
       lines.push(`  [${item.code ?? 'warning'}] ${loc}${loc ? ' ' : ''}${item.message}`);
+      warningsShown += 1;
     }
+    if (warnings.length > warningsShown) lines.push(`  … ${warnings.length - warningsShown} more warning(s)`);
+  }
+
+  const logInfo = value.target?.log;
+  if (logInfo?.logFile) {
+    lines.push('', `log: ${logInfo.logFile} (${logInfo.exists ? 'exists' : 'not created by this run'})`);
+    lines.push(`  dir: ${logInfo.logDir}`);
+  }
+
+  const keyLines = value.output?.keyLines ?? [];
+  if (keyLines.length > 0) {
+    const total = value.output?.totalLines ?? 0;
+    lines.push('', `key lines (${keyLines.length} of ${total} non-empty line(s)):`);
+    for (const line of keyLines) lines.push(`  ${line}`);
   }
 
   const output = value.output ?? { head: '', tail: '', truncated: false, totalBytes: 0 };
@@ -195,6 +250,7 @@ function renderOutcome(value) {
  * @param {any} value
  * @returns {string}
  */
+
 function renderTargets(value) {
   const lines = [];
   lines.push(`build script: ${value.buildBat ?? '(missing)'}`);
@@ -214,6 +270,8 @@ function renderTargets(value) {
           (item.engineAssociation ? ` (EngineAssociation ${item.engineAssociation})` : ''),
         );
       }
+      if (item.exePath) lines.push(`      exe: ${item.exePath}`);
+      if (item.logFile) lines.push(`      log: ${item.logFile}`);
       lines.push(`      command: ${item.commandLine}`);
     }
   }
@@ -242,6 +300,9 @@ export function apply(ctx, config) {
   const projectFileRel = String(config.projectFile ?? '');
   const pluginBuildScriptRel = String(config.pluginBuildScript ?? '');
   const defaultTargetName = String(config.defaultTarget ?? '');
+  const editorProjectFileRel = String(config.editorProjectFile ?? '').length > 0
+    ? String(config.editorProjectFile)
+    : projectFileRel;
 
   /** 动态 import 是插件硬约束：顶层不得出现 node: 内置模块。 */
   let fspPromise;
@@ -302,6 +363,70 @@ export function apply(ctx, config) {
    */
   function timeoutSignal(exec, timeoutMs) {
     return AbortSignal.any([exec.signal, AbortSignal.timeout(timeoutMs)]);
+  }
+
+  /**
+   * 计算编辑器日志位置：<工程目录>\Saved\Logs 与其中的 <项目名>.log。
+   *
+   * @param {string} projectFile
+   * @returns {{logDir:string, logFile:string}}
+   */
+  function editorLogLocation(projectFile) {
+    const normalized = String(projectFile ?? '').replace(/[\\/]+$/, '');
+    const baseName = normalized.split(/[\\/]/).pop() ?? '';
+    const stem = baseName.replace(/\.uproject$/i, '');
+    const projectDir = dirOf(normalized);
+    const logDir = `${projectDir}\\Saved\\Logs`;
+    return { logDir, logFile: `${logDir}\\${stem}.log` };
+  }
+
+  /**
+   * @param {string} logFile
+   * @returns {Promise<boolean>}
+   */
+  async function logFileExists(logFile) {
+    const fsp = await getFs();
+    try {
+      const stat = await fsp.stat(logFile);
+      return stat.isFile();
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * 按请求解析出一次确定的编辑器启动（含 argv 与 cwd）。
+   *
+   * @param {any} args
+   * @returns {Promise<{ok:true, resolved:any, argv:string[], command:string} | {ok:false, problems:string[], command:string, target:Record<string, any>}>}
+   */
+  async function planEditor(args) {
+    const exePath = editorExePath(editorExeName(args.exe), engineRoot);
+    const projectFile = resolveProjectPath(editorProjectFileRel, repoRoot);
+    const exists = await makeExists([exePath, projectFile]);
+
+    const outcome = resolveEditor(
+      { exe: args.exe, extraArgs: args.extraArgs, timeoutMs: args.timeoutMs },
+      { repoRoot, engineRoot, editorProjectFileRel },
+      exists,
+    );
+    if (!outcome.ok) {
+      return {
+        ok: false,
+        problems: outcome.problems,
+        command: renderCommandLine([exePath, projectFile]),
+        target: { mode: 'editor', exePath, projectFile, cwd: dirOf(projectFile), engineRoot, repoRoot },
+      };
+    }
+
+    const resolved = outcome.resolved;
+    return {
+      ok: true,
+      resolved,
+      argv: resolved.launchArgs,
+      command: renderCommandLine(resolved.launchArgs),
+      log: editorLogLocation(resolved.projectFile),
+    };
   }
 
   /**
@@ -424,13 +549,74 @@ export function apply(ctx, config) {
     },
   })));
 
+  // ---------------------------------------------------------------- ue_editor
+
+  ctx.effect(() => ctx.tools.register(defineTool({
+    name: 'ue_editor',
+    description:
+      '运行 Unreal Engine 编辑器（UnrealEditor-Cmd.exe 或 UnrealEditor.exe），把插件配置里的 .uproject 固定成第一个参数，其余参数全部透传。' +
+      '对应 UE 官方用法 `UnrealEditor-Cmd.exe <Project.uproject> <其它参数>`：把 `-run=...`、`-script=...`、`-ExecCmds=...`、`-game`、`-unattended`、' +
+      '`-stdout`、`-NullRHI` 等原样放进 extraArgs。DSH 用 Windows Job 以隐藏窗口启动子进程，所以 GUI 版 UnrealEditor.exe 不会弹出窗口，只能读它的 stdout 日志；' +
+      '默认 exe=cmd 无界面、输出最完整。编辑器是长驻进程：要么在参数里给它退出命令（-ExecCmds="QUIT_EDITOR"、-run=... 脚本里退出、-game -unattended 跑完退出），' +
+      '要么接受它在 timeoutMs 之后被终止（返回 code=cancelled）。',
+    parameters: {
+      exe: {
+        type: 'string',
+        enum: EDITOR_EXE_KINDS,
+        description: 'cmd（默认，UnrealEditor-Cmd.exe，无界面、stdout 最完整）或 editor（UnrealEditor.exe，GUI 进程但窗口被 DSH 隐藏）。',
+      },
+      extraArgs: {
+        type: 'array',
+        items: { type: 'string' },
+        description:
+          '原样追加在 .uproject 之后的编辑器参数，每项一个参数，如 ["-game","-unattended","-stdout","-NullRHI","-ExecCmds=QUIT_EDITOR"]。' +
+          '不接受 -project / -absproject（工程由配置固定为第一个参数），也不接受 -abslog / -abslog=...。',
+      },
+      timeoutMs: { type: 'integer', description: `本次调用的超时毫秒数，默认 ${config.editorTimeoutMs}。超时会终止进程树并返回 cancelled。` },
+    },
+    output: {
+      schema: OUTCOME_SCHEMA,
+      render: (_args, value) => [{ type: 'text', text: renderOutcome(value) }],
+    },
+    timeoutMs: config.editorTimeoutMs + 60000,
+    isConcurrencySafe: () => false,
+    async execute(args, exec) {
+      const planned = await planEditor(args);
+      if (!planned.ok) {
+        return invalid(planned.command, planned.problems, planned.target);
+      }
+
+      const resolved = planned.resolved;
+      const timeoutMs = resolveTimeout(args.timeoutMs, config.editorTimeoutMs);
+
+      return runUeBuild(ctx, {
+        buildBat: resolved.exePath,
+        exePath: resolved.exePath,
+        cwd: resolved.cwd,
+        argv: planned.argv,
+        command: planned.command,
+        engineRoot,
+        repoRoot,
+        target: resolved.exeName,
+        mode: resolved.mode,
+        projectFile: resolved.projectFile,
+        timeoutMs,
+        maxOutputBytes: config.maxOutputBytes,
+        outputHeadBytes: config.outputHeadBytes,
+        outputTailBytes: config.outputTailBytes,
+        signal: timeoutSignal(exec, timeoutMs),
+        log: { ...planned.log, exists: await logFileExists(planned.log.logFile) },
+      });
+    },
+  })));
+
   // ---------------------------------------------------------------- ue_targets
 
   ctx.effect(() => ctx.tools.register(defineTool({
     name: 'ue_targets',
     description:
-      '只读列出 dsh-ue 当前能编译的 UE 目标：默认工程、引擎目标、仓库里的插件工程脚本，' +
-      '以及每个目标实际会执行的 Build.bat 命令行。不确定 ue_build 该传什么参数时先调它。',
+      '只读列出 dsh-ue 当前能编译的 UE 目标（默认工程、引擎目标、仓库里的插件工程脚本）与可运行的编辑器，' +
+      '以及每一项实际会执行的命令行。不确定 ue_build / ue_editor 该传什么参数时先调它。',
     parameters: {},
     output: {
       schema: TARGETS_SCHEMA,
@@ -494,6 +680,30 @@ export function apply(ctx, config) {
         warnings.push('未配置 projectFile：只能通过 ue_build 的 projectFile / projectAbsolute 参数指定 .uproject。');
       }
 
+      if (editorProjectFileRel) {
+        const editorProject = resolveProjectPath(editorProjectFileRel, repoRoot);
+        const editorAssociation = await engineAssociationOf(editorProject);
+        const editorLog = editorLogLocation(editorProject);
+        for (const exeKind of EDITOR_EXE_KINDS) {
+          const exePath = editorExePath(exeKind, engineRoot);
+          const exeExists = await fsp.stat(exePath).then((stat) => stat.isFile(), () => false);
+          if (!exeExists) warnings.push(`编辑器不存在：${exePath}（检查 config 的 engineRoot，或先编译编辑器目标）`);
+          targets.push({
+            label: exeKind === 'cmd' ? '编辑器 UnrealEditor-Cmd.exe' : '编辑器 UnrealEditor.exe（窗口被 DSH 隐藏）',
+            mode: 'editor',
+            target: editorExeName(exeKind),
+            projectFile: editorProject,
+            engineAssociation: editorAssociation,
+            exePath,
+            commandLine: renderCommandLine([exePath, editorProject]),
+            logDir: editorLog.logDir,
+            logFile: editorLog.logFile,
+          });
+        }
+      } else {
+        warnings.push('未配置 projectFile / editorProjectFile：ue_editor 无法确定要启动的 .uproject。');
+      }
+
       if (pluginBuildScriptRel) {
         const scriptAbsolute = repoPath(pluginBuildScriptRel);
         const scriptExists = await fsp.stat(scriptAbsolute).then((stat) => stat.isFile(), () => false);
@@ -530,27 +740,50 @@ export function apply(ctx, config) {
     name: 'ue-build',
     order: config.guidanceOrder,
     text: ({ scope }) => {
-      const available = ['ue_build', 'ue_targets']
-        .filter((toolName) => ctx.tools.get(toolName, scope) !== undefined);
-      if (available.length === 0) return '';
+      const hasBuild = ctx.tools.get('ue_build', scope) !== undefined;
+      const hasEditor = ctx.tools.get('ue_editor', scope) !== undefined;
+      const hasTargets = ctx.tools.get('ue_targets', scope) !== undefined;
+      if (!hasBuild && !hasEditor && !hasTargets) return '';
 
-      return [
-        '## Unreal Engine 编译（dsh-ue）',
-        '',
-        `编译 UE 必须经由 \`ue_build\`，它执行 \`${buildBat}\`（cmd.exe 调用，cwd 在 .uproject 目录）：`,
-        '',
-        '- `ue_targets` —— 只读列出当前可编译的目标与它们实际会执行的命令行；不确定传参时先调它。',
-        '- `ue_build` —— 编译一个目标；默认 Doodle 仓库的 UE 工程、Win64、Development、增量。',
-        `- 不传 target 时用 config.defaultTarget，没配置才回退到 \`<工程名>Editor\`（当前：${defaultTargetName || '未配置'}）。`,
-        '- 编译指定工程用 `projectFile`（相对 repoRoot 或绝对路径）；编译引擎用 `engine: true`（默认 target=UnrealEditor）。',
-        '',
-        '规则：',
-        '- **不要手工拼** `Build.bat` 命令行，也不要直接调 `dotnet UnrealBuildTool.dll` —— 环境变量（DOTNET_ROOT、bundled dotnet）由 Build.bat 自己设置。',
-        '- UBT 的失败经常仍以 exit code 0 结束：**以返回值的 `ok` / `code` 为权威结论**，`diagnostics` 已解析出 `文件(行,列) error CXXXX`。',
-        '- `code=compile-failed` 才是 C++ 编译错误；`ubt-failed` 表示 UBT 自己拒绝了请求（目标不存在、模块依赖、工程类型不符）。',
-        '- 首次构建和改引擎头文件后的构建可能耗时数十分钟：**不要因为慢就重复调用**，也别并发调用两个 `ue_build`（Build.bat 有全局锁，第二个会一直等）。',
-        '- 不要在构建期间改动头文件或 `.uproject`，会造成半截状态。',
-      ].join('\n');
+      /** @type {string[]} */
+      const lines = ['## Unreal Engine（dsh-ue）', ''];
+      if (hasTargets) {
+        lines.push('- `ue_targets` —— 只读列出当前可编译的目标、可运行的编辑器与它们实际会执行的命令行；不确定传参时先调它。');
+      }
+      if (hasBuild) {
+        lines.push(
+          `- \`ue_build\` —— 编译一个 UE 目标，执行 \`${buildBat}\`（cmd.exe 调用，cwd 在 .uproject 目录）；默认 Win64、Development、增量。`,
+          `  不传 target 时用 config.defaultTarget，没配置才回退到 \`<工程名>Editor\`（当前：${defaultTargetName || '未配置'}）。`,
+          '  编译指定工程用 `projectFile`（相对 repoRoot 或绝对路径）；编译引擎用 `engine: true`（默认 target=UnrealEditor）。',
+        );
+      }
+      if (hasEditor) {
+        lines.push(
+          `- \`ue_editor\` —— 运行编辑器：插件配置的 \`.uproject\`（当前：${editorProjectFileRel || '未配置'}）固定为第一个参数，` +
+          '其余参数全部透传给 `extraArgs`，即 `UnrealEditor-Cmd.exe <Project.uproject> <extraArgs...>`。',
+          '  `exe` 默认 `cmd`（UnrealEditor-Cmd.exe，无界面、stdout 最完整）；`exe: "editor"` 启动 GUI 版，但 DSH 以隐藏窗口启动，看不到界面，只能读 stdout 日志。',
+        );
+      }
+      lines.push('', '规则：');
+      if (hasBuild) {
+        lines.push(
+          '- **不要手工拼** `Build.bat` 命令行，也不要直接调 `dotnet UnrealBuildTool.dll` —— 环境变量（DOTNET_ROOT、bundled dotnet）由 Build.bat 自己设置。',
+          '- UBT 的失败经常仍以 exit code 0 结束：**以返回值的 `ok` / `code` 为权威结论**，`diagnostics` 已解析出 `文件(行,列) error CXXXX`。',
+          '- `code=compile-failed` 才是 C++ 编译错误；`ubt-failed` 表示 UBT 自己拒绝了请求（目标不存在、模块依赖、工程类型不符）。',
+          '- 首次构建和改引擎头文件后的构建可能耗时数十分钟：**不要因为慢就重复调用**，也别并发调用两个 `ue_build`（Build.bat 有全局锁，第二个会一直等）。',
+          '- 不要在构建期间改动头文件或 `.uproject`，会造成半截状态。',
+        );
+      }
+      if (hasEditor) {
+        lines.push(
+          '- 编辑器是长驻进程：`ue_editor` 会一直运行到编辑器自己退出，或在 `timeoutMs` 后被终止（此时返回 `code=cancelled`）。' +
+          '要在参数里给它退出方式，例如 `-ExecCmds="QUIT_EDITOR"`、`-run=pythonscript -script=...` 的脚本里退出、`-game -unattended`（跑完自动退出）。',
+          '- 需要读日志时加 `-stdout`（`-game` 要加 `-log`）；自动化场景加 `-unattended -stdout`，必要时 `-NullRHI` 跳过渲染。',
+          '- 参数里的引号按宿主 `CommandLineToArgvW` 规则转义：带空格的路径直接把 `"..."` 写进同一个 `extraArgs` 项即可（如 `-script="D:\\a b\\x.py"`）。',
+          '- 不要用 `ue_editor` 去启动另一个 `ue_editor`，也不要同时开两个编辑器操作同一个工程；启动前请确认编辑器目标已用 `ue_build` 编译通过。',
+        );
+      }
+      return lines.join('\n');
     },
   }));
 }

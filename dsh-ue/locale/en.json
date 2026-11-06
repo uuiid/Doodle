@@ -1,5 +1,5 @@
 {
   "name": "dsh-ue",
-  "title": "Unreal Engine Build",
-  "description": "Compile Unreal Engine targets through Engine\\Build\\BatchFiles\\Build.bat, with MSVC/UBT diagnostics and reliable success decisions."
+  "title": "Unreal Engine Build & Editor",
+  "description": "Compile Unreal Engine targets through Engine\\Build\\BatchFiles\\Build.bat, and launch the configured project with UnrealEditor.exe / UnrealEditor-Cmd.exe, with MSVC/UBT/editor diagnostics and reliable success decisions."
 }

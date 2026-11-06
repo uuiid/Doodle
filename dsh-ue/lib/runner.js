@@ -9,7 +9,16 @@
 //     所以工具声明 isConcurrencySafe=false。
 //   * UBT 输出可达数十 MB，用头尾截断后再交给模型。
 
-import { decideOutcome, dedupeDiagnostics, parseDiagnostics, pruneUndefined, readUbtSummary, truncateOutput } from './parse.js';
+import {
+  decideOutcome,
+  dedupeDiagnostics,
+  editorLogDiagnostics,
+  parseDiagnostics,
+  pruneUndefined,
+  readUbtSummary,
+  summarizeEditorOutput,
+  truncateOutput,
+} from './parse.js';
 
 /**
  * 读取 SubprocessOutputReader 的全部可得文本。
@@ -109,7 +118,8 @@ export function toSchemaDiagnostic(diagnostic) {
  * @param {string} spec.platform
  * @param {string} spec.configuration
  * @param {string|undefined} spec.projectFile
- * @param {string} spec.mode                 ubt | script
+ * @param {string|undefined} spec.exePath    编辑器可执行文件（mode=editor 时给出）
+ * @param {string} spec.mode                 ubt | script | editor
  * @param {number} spec.timeoutMs
  * @param {number} spec.maxOutputBytes
  * @param {number} spec.outputHeadBytes
@@ -141,6 +151,7 @@ export async function runUeBuild(deps, spec) {
       engineRoot: spec.engineRoot,
       repoRoot: spec.repoRoot,
       buildBat: spec.buildBat,
+      exePath: spec.exePath,
     }),
     diagnostics: [],
     warnings: [],
@@ -221,13 +232,18 @@ export async function runUeBuild(deps, spec) {
   const errText = drainReader(handle.collected?.stderr);
   const combined = [outText.text, errText.text].filter((part) => part.length > 0).join('\n');
 
-  const parsed = dedupeDiagnostics(parseDiagnostics(combined));
+  const parsed = dedupeDiagnostics([
+    ...parseDiagnostics(combined),
+    ...(spec.mode === 'editor' ? editorLogDiagnostics(combined) : []),
+  ]);
   const summary = readUbtSummary(combined);
   const errors = parsed.filter((item) => item.severity === 'error');
   const warnings = parsed.filter((item) => item.severity === 'warning');
   const exitCode = typeof outcome?.exitCode === 'number' ? outcome.exitCode : null;
+  const editor = spec.mode === 'editor' ? summarizeEditorOutput(combined) : undefined;
 
   const verdict = decideOutcome({
+    mode: spec.mode,
     exitCode,
     aborted,
     result: summary.result,
@@ -247,7 +263,12 @@ export async function runUeBuild(deps, spec) {
     ubtTotalTimeSeconds: summary.totalTimeSeconds,
     diagnostics: errors.map(toSchemaDiagnostic).slice(0, 200),
     warnings: warnings.map(toSchemaDiagnostic).slice(0, 100),
-    output: truncateOutput(combined, spec.outputHeadBytes, spec.outputTailBytes),
+    output: {
+      ...truncateOutput(combined, spec.outputHeadBytes, spec.outputTailBytes),
+      keyLines: editor?.keyLines ?? [],
+      keyLineCount: editor?.keyLineCount ?? 0,
+      totalLines: editor?.totalLines ?? 0,
+    },
     spillPath: outText.spillPath ?? errText.spillPath,
   });
 }

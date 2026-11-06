@@ -1,5 +1,5 @@
 {
   "name": "dsh-ue",
-  "title": "Unreal Engine 编译",
-  "description": "通过 Engine\\Build\\BatchFiles\\Build.bat 编译 UE 目标，返回解析后的 MSVC/UBT 诊断与可靠的成败结论。"
+  "title": "Unreal Engine 编译与编辑器",
+  "description": "通过 Engine\\Build\\BatchFiles\\Build.bat 编译 UE 目标，并直接用 UnrealEditor.exe / UnrealEditor-Cmd.exe 启动配置的工程；返回解析后的 MSVC/UBT/编辑器诊断与可靠的成败结论。"
 }
