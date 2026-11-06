@@ -117,17 +117,6 @@ FMetaHumanFaceJobResult FMetaHumanFaceCommandLine::Parse(const FString& InComman
         {
             Request.bSkipTongueSolve = false;
         }
-        else if (!IsHelpSwitch(Switch))
-        {
-            Errors.Add(FString::Printf(TEXT("unknown argument \"-%s\""), *Switch));
-        }
-    }
-
-    if (!Tokens.IsEmpty())
-    {
-        Errors.Add(FString::Printf(
-            TEXT("unexpected argument \"%s\": arguments must use the -Key=Value or -Switch form"), *Tokens[0]
-        ));
     }
 
     for (const TPair<FString, FString>& Param : Params)
@@ -160,7 +149,6 @@ bool FMetaHumanFaceCommandLine::ParseToken(const FString& InToken, TArray<FStrin
 
     if (AssignmentIndex <= 0)
     {
-        InOutErrors.Add(FString::Printf(TEXT("invalid argument \"%s\""), *InToken));
         return false;
     }
 
@@ -220,7 +208,6 @@ bool FMetaHumanFaceCommandLine::ParseToken(const FString& InToken, TArray<FStrin
         return FrameRangeResult.Code == EMetaHumanFaceErrorCode::None;
     }
 
-    InOutErrors.Add(FString::Printf(TEXT("unknown argument \"-%s\""), *Key));
     return false;
 }
 
