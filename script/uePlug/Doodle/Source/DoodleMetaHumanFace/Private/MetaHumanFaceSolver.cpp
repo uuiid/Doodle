@@ -328,13 +328,11 @@ TValueOrError<FMetaHumanFaceBuiltPerformance, FMetaHumanFaceSolverError> FMetaHu
     FMetaHumanFaceBuiltPerformance Built;
     Built.Performance = Performance;
     Built.OuterPackageName = OuterPackageName;
-    Built.FirstFrame = Impl->FirstFrame;
-    Built.FrameCount = Impl->FrameCount;
     return MakeValue(MoveTemp(Built));
 }
 
 TValueOrError<TArray<FMetaHumanFaceFrameRange>, FMetaHumanFaceSolverError> FMetaHumanFaceSolver::Process(
-    UFootageCaptureData* InCaptureData, int32 InFirstFrame, int32 InFrameCount
+    UFootageCaptureData* InCaptureData
 ) {
     UMetaHumanPerformance* Performance = Impl->Performance.Get();
     if (Performance == nullptr)
@@ -384,27 +382,16 @@ TValueOrError<TArray<FMetaHumanFaceFrameRange>, FMetaHumanFaceSolverError> FMeta
     const int32 LimitLower = ProcessingLimit.GetLowerBoundValue().Value;
     const int32 LimitUpper = ProcessingLimit.GetUpperBoundValue().Value;
 
-    if (InFrameCount <= 0)
-    {
-        InFrameCount = LimitUpper - InFirstFrame;
-    }
-
-    const int32 ClampedLower = FMath::Max(InFirstFrame, LimitLower);
-    const int32 ClampedUpper = FMath::Min(InFirstFrame + InFrameCount, LimitUpper);
-
-    if (ClampedLower >= ClampedUpper)
+    if (LimitLower >= LimitUpper)
     {
         return MakeSolverError<TArray<FMetaHumanFaceFrameRange>>(
             EMetaHumanFaceSolverErrorCode::CaptureDataNotReady,
-            FString::Printf(
-                TEXT("requested frames %d-%d are outside the processing range %d-%d"), InFirstFrame,
-                InFirstFrame + InFrameCount - 1, LimitLower, LimitUpper - 1
-            )
+            FString::Printf(TEXT("the processing range %d-%d is empty"), LimitLower, LimitUpper - 1)
         );
     }
 
-    Performance->StartFrameToProcess = static_cast<uint32>(ClampedLower);
-    Performance->EndFrameToProcess = static_cast<uint32>(ClampedUpper);
+    Performance->StartFrameToProcess = static_cast<uint32>(LimitLower);
+    Performance->EndFrameToProcess = static_cast<uint32>(LimitUpper);
 
     if (!Performance->CanProcess())
     {
@@ -429,8 +416,8 @@ TValueOrError<TArray<FMetaHumanFaceFrameRange>, FMetaHumanFaceSolverError> FMeta
         }
     );
 
-    Impl->FirstFrame = ClampedLower;
-    Impl->FrameCount = ClampedUpper - ClampedLower;
+    Impl->FirstFrame = LimitLower;
+    Impl->FrameCount = LimitUpper - LimitLower;
     Impl->bRunStarted = true;
     Impl->bRunFinished = false;
     Impl->bCancelRequested = false;
@@ -461,7 +448,7 @@ TValueOrError<TArray<FMetaHumanFaceFrameRange>, FMetaHumanFaceSolverError> FMeta
 
     return MakeValue(
         IntersectWithExcludedFrames(
-            TRange<FFrameNumber>(ClampedLower, ClampedUpper), InCaptureData->CaptureExcludedFrames
+            TRange<FFrameNumber>(LimitLower, LimitUpper), InCaptureData->CaptureExcludedFrames
         )
     );
 }

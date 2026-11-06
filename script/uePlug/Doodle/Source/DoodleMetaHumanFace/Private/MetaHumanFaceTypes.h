@@ -45,8 +45,6 @@ struct FMetaHumanFaceJobRequest
     FString CaptureDataOuter;
     uint32 FpsNum = 24000;
     uint32 FpsDen = 1;
-    int32 FirstFrame = 0;
-    int32 FrameCount = 0;
     bool bHeadStabilize = true;
     bool bSkipTongueSolve = true;
 };
@@ -152,8 +150,6 @@ struct FMetaHumanFaceBuiltPerformance
 {
     UMetaHumanPerformance* Performance = nullptr;
     FString OuterPackageName;
-    int32 FirstFrame = 0;
-    int32 FrameCount = 0;
 };
 
 struct FMetaHumanFaceSolverResult

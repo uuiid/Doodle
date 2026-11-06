@@ -24,5 +24,4 @@ class FMetaHumanFaceCommandLine
 
     bool ParseToken(const FString& InToken, TArray<FString>& InOutErrors);
     static FMetaHumanFaceJobResult ParseFrameRate(const FString& InValue, FMetaHumanFaceJobRequest& InOut);
-    static FMetaHumanFaceJobResult ParseFrameRange(const FString& InValue, FMetaHumanFaceJobRequest& InOut);
 };

@@ -21,14 +21,13 @@ class FMetaHumanFaceSolver
         const FMetaHumanFaceJobRequest& InRequest, UFootageCaptureData* InCaptureData
     );
     TValueOrError<TArray<FMetaHumanFaceFrameRange>, FMetaHumanFaceSolverError> Process(
-        UFootageCaptureData* InCaptureData, int32 InFirstFrame, int32 InFrameCount
+        UFootageCaptureData* InCaptureData
     );
     EMetaHumanFaceProcessState PollRun();
     TValueOrError<FMetaHumanFaceSolverResult, FMetaHumanFaceSolverError> CollectCurveSet() const;
     bool IsProcessing() const;
     void Cancel();
 
-    static TArray<FString> ExpectedHeadCurves();
     static const TArray<FString>& ModelAssetPaths();
 
   private:

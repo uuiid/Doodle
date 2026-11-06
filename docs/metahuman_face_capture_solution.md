@@ -332,11 +332,12 @@ UnrealEditor-Cmd.exe <Project>.uproject -run=MetaHumanFace -FramesDir=... -OutDi
 | `-FramesDir=<绝对路径>` | 是 | 逐帧图像目录 |
 | `-OutDir=<绝对路径>` | 是 | 输出根目录，每次运行独立 |
 | `-FPS=<num>/<den>` | 否 | 有理数帧率，默认 `24000/1` |
-| `-Range=<first>:<count>` | 否 | 默认全序列 |
 | `-SequencePattern=<模板>` | 否 | 默认 `{frame}`；**调用方可以完全不传**（只校验"传了但不含 `{frame}`"），帧命名固定为 `frame_000000.png` |
 | `-PackagePath=<长包名>` | 否 | 中间资产落点，默认 `/Temp/MetaHumanFace/<runId>`；调用方通常显式传 `/Game/...` |
 | `-NoHeadStabilize` | 否 | 关掉 `bHeadStabilization` |
 | `-KeepTongueSolve` | 否 | 打开 `bSkipTongueSolve=false` |
+
+**处理范围**：本命令只处理**整段序列**，不提供帧区间选择。需要只处理片段时，由调用方先把帧裁好放进一个独立目录再调用；命令行里带 `-Range=...` 会被静默忽略（与其它未知参数的策略一致），不会裁剪处理范围。
 
 **起始时间码**：`ResolveStartTimecode`（`MetaHumanFaceCaptureDataBuilder.cpp:312-340`）优先读 `-OutDir` 下的 `frames_meta.json` 的 `first_frame`，其次用扫描到的起始帧号，最后才用墙钟。调用方不写 `frames_meta.json` 时求解结果本身不会报错，但与序列动画对不齐，所以**调用方应当在 `-OutDir` 里写 `{"first_frame": n}`**。
 

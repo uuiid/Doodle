@@ -2,6 +2,7 @@
 
 #include "DoodleMetaHumanFaceModule.h"
 #include "HAL/PlatformTime.h"
+#include "MetaHumanPerformance.h"
 #include "Misc/DateTime.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
@@ -309,8 +310,10 @@ FMetaHumanFaceJobResult UMetaHumanFaceCommandlet::Run(const FMetaHumanFaceJobReq
 
         const FMetaHumanFaceBuiltPerformance Performance = MoveTemp(Created.GetValue());
 
+        const TRange<FFrameNumber>& SolvedRange = Performance.Performance->GetProcessingLimitFrameRange();
+
         TValueOrError<TArray<FMetaHumanFaceFrameRange>, FMetaHumanFaceSolverError> Started =
-            Solver->Process(CaptureData.CaptureData, Performance.FirstFrame, Performance.FrameCount);
+            Solver->Process(CaptureData.CaptureData);
 
         if (Started.HasError())
         {
@@ -361,7 +364,7 @@ FMetaHumanFaceJobResult UMetaHumanFaceCommandlet::Run(const FMetaHumanFaceJobReq
                 NextProgressLogSeconds += 5.0;
                 UE_LOG(
                     LogDoodleMetaHumanFaceCommandlet, Display, TEXT("solving frames %d-%d, elapsed %.1fs"),
-                    Performance.FirstFrame, Performance.FirstFrame + Performance.FrameCount - 1,
+                    SolvedRange.GetLowerBoundValue().Value, SolvedRange.GetUpperBoundValue().Value - 1,
                     FPlatformTime::Seconds() - StartSeconds
                 );
             }

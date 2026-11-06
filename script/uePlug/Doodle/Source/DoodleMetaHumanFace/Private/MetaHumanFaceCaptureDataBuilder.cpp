@@ -365,16 +365,6 @@ FMetaHumanFaceJobResult FMetaHumanFaceCaptureDataBuilder::Validate(const FMetaHu
         Errors.Add(FString::Printf(TEXT("frame rate is invalid: %u/%u"), InRequest.FpsNum, InRequest.FpsDen));
     }
 
-    if (InRequest.FirstFrame < 0)
-    {
-        Errors.Add(FString::Printf(TEXT("first frame is negative: %d"), InRequest.FirstFrame));
-    }
-
-    if (InRequest.FrameCount < 0)
-    {
-        Errors.Add(FString::Printf(TEXT("frame count is negative: %d"), InRequest.FrameCount));
-    }
-
     if (!Errors.IsEmpty())
     {
         return MakeFailure(EMetaHumanFaceErrorCode::InvalidRequest, JoinErrors(Errors));
@@ -392,33 +382,6 @@ FMetaHumanFaceJobResult FMetaHumanFaceCaptureDataBuilder::Validate(const FMetaHu
     }
 
     const FSequenceScan& Scan = ScanResult.GetValue();
-
-    const int32 SequenceEnd = Scan.StartFrame + Scan.NumFrames;
-
-    if (InRequest.FrameCount > 0)
-    {
-        if (InRequest.FirstFrame < Scan.StartFrame)
-        {
-            Errors.Add(FString::Printf(
-                TEXT("first frame %d is before the sequence start frame %d"), InRequest.FirstFrame,
-                Scan.StartFrame
-                ));
-        }
-
-        const int32 RequestedEnd = InRequest.FirstFrame + InRequest.FrameCount;
-        if (RequestedEnd > SequenceEnd)
-        {
-            Errors.Add(FString::Printf(
-                TEXT("requested frame range %d-%d exceeds the sequence range %d-%d"), InRequest.FirstFrame,
-                RequestedEnd - 1, Scan.StartFrame, SequenceEnd - 1
-                ));
-        }
-    }
-
-    if (!Errors.IsEmpty())
-    {
-        return MakeFailure(EMetaHumanFaceErrorCode::FrameCountMismatch, JoinErrors(Errors));
-    }
 
     FMetaHumanFaceJobResult Result;
     Result.Stage = EMetaHumanFaceStage::Building;

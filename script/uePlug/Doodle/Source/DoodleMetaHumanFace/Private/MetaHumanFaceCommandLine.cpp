@@ -45,22 +45,6 @@ bool ParsePositiveInteger(const FString& InValue, uint32& OutValue) {
     return true;
 }
 
-bool ParseNonNegativeInteger(const FString& InValue, int32& OutValue) {
-    uint32 Parsed = 0;
-    if (!ParsePositiveInteger(InValue, Parsed))
-    {
-        return false;
-    }
-
-    if (Parsed > static_cast<uint32>(MAX_int32))
-    {
-        return false;
-    }
-
-    OutValue = static_cast<int32>(Parsed);
-    return true;
-}
-
 bool IsHelpSwitch(const FString& InSwitch) {
     return InSwitch.Equals(TEXT("H"), ESearchCase::IgnoreCase) ||
            InSwitch.Equals(TEXT("Help"), ESearchCase::IgnoreCase) ||
@@ -197,17 +181,6 @@ bool FMetaHumanFaceCommandLine::ParseToken(const FString& InToken, TArray<FStrin
         return FrameRateResult.Code == EMetaHumanFaceErrorCode::None;
     }
 
-    if (Key.Equals(TEXT("Range"), ESearchCase::IgnoreCase))
-    {
-        const FMetaHumanFaceJobResult FrameRangeResult = ParseFrameRange(Value, Request);
-        if (FrameRangeResult.Code != EMetaHumanFaceErrorCode::None)
-        {
-            InOutErrors.Add(FrameRangeResult.Detail);
-        }
-
-        return FrameRangeResult.Code == EMetaHumanFaceErrorCode::None;
-    }
-
     return false;
 }
 
@@ -252,16 +225,6 @@ FMetaHumanFaceJobResult FMetaHumanFaceCommandLine::Validate(const FMetaHumanFace
         Errors.Add(FString::Printf(TEXT("-FPS is invalid: %u/%u"), InRequest.FpsNum, InRequest.FpsDen));
     }
 
-    if (InRequest.FirstFrame < 0)
-    {
-        Errors.Add(FString::Printf(TEXT("-Range first frame is negative: %d"), InRequest.FirstFrame));
-    }
-
-    if (InRequest.FrameCount < 0)
-    {
-        Errors.Add(FString::Printf(TEXT("-Range frame count is negative: %d"), InRequest.FrameCount));
-    }
-
     if (Errors.IsEmpty())
     {
         return MakeParseSuccess();
@@ -284,7 +247,6 @@ FString FMetaHumanFaceCommandLine::Usage() {
             TEXT("  -FramesDir=<absolute directory>   required, directory holding the frame sequence"),
             TEXT("  -OutDir=<absolute directory>      required, directory receiving the curve output"),
             TEXT("  -FPS=<numerator>/<denominator>    optional, default 24000/1"),
-            TEXT("  -Range=<first>:<count>            optional, default covers the whole sequence"),
             TEXT("  -SequencePattern=<template>       optional, must contain {frame}"),
             TEXT("  -PackagePath=<package path>       optional, where the intermediate assets are created"),
             TEXT("  -NoHeadStabilize                  optional, disables head stabilization"),
@@ -292,7 +254,7 @@ FString FMetaHumanFaceCommandLine::Usage() {
             TEXT(""),
             TEXT("Examples:"),
             TEXT("  \"-FramesDir=E:\\DoodleFaceTmp\\Shot_010\\frames\" \"-OutDir=E:\\DoodleFaceTmp\\Shot_010\\curves\""),
-            TEXT("  -FPS=30000/1001 -Range=0:120")
+            TEXT("  -FPS=30000/1001")
         },
         TEXT("\n")
     );
@@ -335,37 +297,3 @@ FMetaHumanFaceJobResult FMetaHumanFaceCommandLine::ParseFrameRate(
     return MakeParseSuccess();
 }
 
-FMetaHumanFaceJobResult FMetaHumanFaceCommandLine::ParseFrameRange(
-    const FString& InValue, FMetaHumanFaceJobRequest& InOut
-) {
-    const int32 ColonIndex = InValue.Find(TEXT(":"), ESearchCase::CaseSensitive, ESearchDir::FromStart);
-
-    if (ColonIndex < 0 || InValue.Find(TEXT(":"), ESearchCase::CaseSensitive, ESearchDir::FromEnd) != ColonIndex)
-    {
-        return MakeParseFailure(FString::Printf(
-            TEXT("invalid -Range value \"%s\": expected <first>:<count>, for example 0:120"), *InValue
-        ));
-    }
-
-    int32 FirstFrame = 0;
-    int32 FrameCount = 0;
-
-    if (!ParseNonNegativeInteger(InValue.Left(ColonIndex), FirstFrame) ||
-        !ParseNonNegativeInteger(InValue.Mid(ColonIndex + 1), FrameCount))
-    {
-        return MakeParseFailure(FString::Printf(
-            TEXT("invalid -Range value \"%s\": both parts must be non negative integers, for example 0:120"), *InValue
-        ));
-    }
-
-    if (FrameCount == 0)
-    {
-        return MakeParseFailure(FString::Printf(
-            TEXT("invalid -Range value \"%s\": the frame count must be greater than zero, for example 0:120"), *InValue
-        ));
-    }
-
-    InOut.FirstFrame = FirstFrame;
-    InOut.FrameCount = FrameCount;
-    return MakeParseSuccess();
-}
