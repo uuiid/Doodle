@@ -110,12 +110,13 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       width_  = l_width;
       height_ = l_height;
 
-      fragmenter_ = h264_fragmenter::make(width_, height_);
+      fragmenter_ = std::make_shared<h264_fragmenter>(width_, height_);
       fragmenter_->init();
-      raw_writer_ = make_raw_writer(l_dir / "raw.mkv", width_, height_);
+      raw_writer_ = raw_writer::make(l_dir / "raw.mkv", width_, height_);
       DOODLE_CHICK(static_cast<bool>(raw_writer_), "无法创建 raw.mkv 编码器");
-      mp4_writer_ = make_mp4_writer(l_dir / "take.mp4", width_, height_, true);
-      DOODLE_CHICK(static_cast<bool>(mp4_writer_), "无法创建 take.mp4 编码器");
+      auto l_mp4  = std::make_shared<mp4_writer>(l_dir / "take.mp4", width_, height_, true);
+      DOODLE_CHICK(l_mp4->init(), "无法创建 take.mp4 编码器");
+      mp4_writer_ = std::move(l_mp4);
 
       session_id_  = l_session_id;
       session_dir_ = l_dir;

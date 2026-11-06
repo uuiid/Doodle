@@ -17,6 +17,8 @@ namespace doodle::face_capture {
 
 class raw_writer {
  public:
+  static std::shared_ptr<raw_writer> make(const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height);
+
   virtual ~raw_writer() = default;
   virtual bool push(const cv::Mat& in_bgr, std::int64_t in_wall_ms) = 0;
   virtual std::uint64_t frames() const = 0;
@@ -33,7 +35,6 @@ class video_writer {
 
 class h264_fragmenter : public video_writer {
  public:
-  static std::shared_ptr<h264_fragmenter> make(std::int32_t in_width, std::int32_t in_height);
   explicit h264_fragmenter(std::int32_t in_width, std::int32_t in_height);
 
   h264_fragmenter(h264_fragmenter&&) noexcept;
@@ -58,9 +59,6 @@ class h264_fragmenter : public video_writer {
 
 class mp4_writer : public video_writer {
  public:
-  static std::shared_ptr<mp4_writer> make(
-      const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height, bool in_low_latency
-  );
   mp4_writer(const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height, bool in_low_latency);
 
   mp4_writer(mp4_writer&&) noexcept;
@@ -78,11 +76,5 @@ class mp4_writer : public video_writer {
   class impl;
   std::unique_ptr<impl> impl_ptr_{};
 };
-
-std::shared_ptr<raw_writer> make_raw_writer(const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height);
-
-std::shared_ptr<video_writer> make_mp4_writer(
-    const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height, bool in_low_latency
-);
 
 }  // namespace doodle::face_capture

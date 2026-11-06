@@ -267,10 +267,6 @@ h264_fragmenter& h264_fragmenter::operator=(h264_fragmenter&&) noexcept = defaul
 
 h264_fragmenter::~h264_fragmenter() = default;
 
-std::shared_ptr<h264_fragmenter> h264_fragmenter::make(std::int32_t in_width, std::int32_t in_height) {
-  return std::make_shared<h264_fragmenter>(in_width, in_height);
-}
-
 bool h264_fragmenter::init() { return impl_ptr_->init(); }
 
 bool h264_fragmenter::push(const cv::Mat& in_bgr, std::uint64_t in_seq) { return impl_ptr_->push(in_bgr, in_seq); }
@@ -284,8 +280,7 @@ const std::vector<std::uint8_t>& h264_fragmenter::init_segment() const { return 
 std::vector<fragment_t> h264_fragmenter::take_fragments() { return impl_ptr_->take_fragments(); }
 
 class mp4_writer::impl {
- public:
-  impl(const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height, bool in_low_latency)
+ public:  impl(const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height, bool in_low_latency)
       : path_(in_path),
         width_(even(in_width)),
         height_(even(in_height)),
@@ -380,12 +375,6 @@ mp4_writer::mp4_writer(mp4_writer&&) noexcept = default;
 mp4_writer& mp4_writer::operator=(mp4_writer&&) noexcept = default;
 
 mp4_writer::~mp4_writer() = default;
-
-std::shared_ptr<mp4_writer> mp4_writer::make(
-    const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height, bool in_low_latency
-) {
-  return std::make_shared<mp4_writer>(in_path, in_width, in_height, in_low_latency);
-}
 
 bool mp4_writer::init() { return impl_ptr_->init(); }
 
@@ -568,9 +557,9 @@ class raw_sink_thread {
 class ffv1_raw_writer : public raw_writer {
  public:
   ffv1_raw_writer(const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height)
-      : sink_(std::make_shared<raw_sink_thread>(in_path, in_width, in_height)) {}
-
-  bool start() { return sink_->start(); }
+      : sink_(std::make_shared<raw_sink_thread>(in_path, in_width, in_height)) {
+    sink_->start();
+  }
 
   bool push(const cv::Mat& in_bgr, std::int64_t in_wall_ms) override { return sink_->push(in_bgr, in_wall_ms); }
 
@@ -582,18 +571,10 @@ class ffv1_raw_writer : public raw_writer {
   std::shared_ptr<raw_sink_thread> sink_{};
 };
 
-std::shared_ptr<raw_writer> make_raw_writer(const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height) {
-  auto l_writer = std::make_shared<ffv1_raw_writer>(in_path, in_width, in_height);
-  if (!l_writer->start()) return nullptr;
-  return l_writer;
-}
-
-std::shared_ptr<video_writer> make_mp4_writer(
-    const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height, bool in_low_latency
+std::shared_ptr<raw_writer> raw_writer::make(
+    const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height
 ) {
-  auto l_writer = mp4_writer::make(in_path, in_width, in_height, in_low_latency);
-  if (!l_writer->init()) return nullptr;
-  return l_writer;
+  return std::make_shared<ffv1_raw_writer>(in_path, in_width, in_height);
 }
 
 }  // namespace doodle::face_capture
