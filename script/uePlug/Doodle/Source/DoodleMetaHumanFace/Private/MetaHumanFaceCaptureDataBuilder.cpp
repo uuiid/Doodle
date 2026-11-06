@@ -387,7 +387,6 @@ FMetaHumanFaceJobResult FMetaHumanFaceCaptureDataBuilder::Validate(const FMetaHu
     Result.Stage = EMetaHumanFaceStage::Building;
     Result.Code = EMetaHumanFaceErrorCode::None;
     Result.FrameCount = Scan.NumFrames;
-    Result.DroppedFrameRanges = Scan.Gaps;
     Result.Detail = FString::Printf(
         TEXT("frames=%d start=%d digits=%d extension=%s"),
         Scan.NumFrames, Scan.StartFrame, Scan.DigitCount, *Scan.Extension
