@@ -25,6 +25,9 @@
 | 10 | **同一时刻最多一个会话** | 会话对象只有一个，不用查找表、不做会话池。同一台电脑上摄像头只有一个消费者，第二条 WS 连上就**接管**（§3.3） |
 | 11 | **帧率定死 25 fps** | 全链路（推流/`raw.mkv`/`take.mp4`/`frames/`/UE `-FPS=25/1`）只用 25 fps，`time_base = 1/25`。不协商、不可配、不做分数换算；采集侧 40 ms 一拍抽帧/补帧（§4.4） |
 | 12 | **人脸检测推迟到二期** | 一期**不做**：不写检测代码、不引模型、不预留 `face_status` 事件、不做开录前的人脸校验。§6 只记二期插入点与约束 |
+| 13 | **转码作业不登记任务表** | **不写 `server_task_info`、不进任务列表 UI**，只在内存注册表保活；进度只看 `GET /transcode/{job_id}` 与 WS `transcode_progress`（§7.2） |
+| 14 | **`ue_project` 必填且必须是绝对路径** | 前端在 `POST /transcode` 的 body 里必须给 `.uproject` 的**绝对路径**；缺失/为空/非绝对路径/文件不存在 → `400 missing_ue_project`。**后端不做相对路径拼接、不猜默认工程**（§7.2、§7.3-8） |
+| 15 | **`package_path` 可空** | 空字符串或不传 → 命令行里**不出现 `-PackagePath`**，落点由 Commandlet 自己决定；非空才校验 `/Game/...` 格式（§7.2、§7.3-9、§8.1） |
 
 ---
 
@@ -208,7 +211,7 @@ WS 上**不定义任何上行命令**。前端不需要发 `ping`（浏览器原
 | 开始录制 | `POST /recordings`，body `{device:0, width:1280, height:720}` | `201 {session_id, state:"recording", width, height, fps:25}` | `409 already_recording`（附带当前 `session_id`）、`422 camera_open_failed` |
 | 结束录制 | `POST /recordings/{session_id}/stop` | `200 {state:"stopped", frames, duration_ms}` | `409 not_recording`、`404 unknown_session` |
 | 查询状态 | `GET /recordings/{session_id}` | `{state, frames, gaps, artifacts}` | `404` |
-| 提交转码 | `POST /transcode` | `202 {job_id, state:"queued"}` | `409 job_running`、`400 no_ue_project` |
+| 提交转码 | `POST /transcode`，body 见 §7.2 | `202 {job_id, state:"queued"}` | `409 job_running`、`400 missing_ue_project`（`ue_project` 缺失/为空/非绝对路径/文件不存在）、`400 bad_package_path`（非空但不是合法包路径） |
 
 要点：
 
@@ -404,15 +407,22 @@ capture_session::frames ─┬─► media_fragment_pipeline(推流编码器) �
 ```json
 {
   "session_id": "…",
-  "decode_max_width": 1280,
-  "package_path": "/Game/Game/FaceCapture"
+  "ue_project": "E:/Doodle/UnrealEngine/MyProject.uproject",
+  "package_path": "",
+  "decode_max_width": 1280
 }
 ```
 
-- **请求体里没有 `fps`**：帧率由分层固定为 25（§4.4），转码也一律按 25 解 25 出，前端无从选择、也不需要选择。
-- `decode_max_width`：`from(raw.mkv) → scale` 的目标长边，默认 1280，用于控制 `frames/` 体积。
-- `package_path` 是 **UE 包路径**，不是磁盘路径。默认留空则让 Commandlet 用它自己的默认值（`OutDir/Package`），但推荐显式传。
+| 字段 | 必填 | 说明 |
+| --- | --- | --- |
+| `session_id` | **是** | 要转码的会话 |
+| `ue_project` | **是** | `.uproject` 的**绝对路径**。**不是绝对路径、为空、缺失、文件不存在，一律 `400 missing_ue_project`**；后端不做相对路径拼接（不拼 `core_set::get_set().ue4_path`），也不回退到任何默认工程——脸捕是"在某台机器上用某个工程跑"，路径只能由调用方给出 |
+| `package_path` | 否 | UE 包路径（不是磁盘路径）。**空字符串或不传 → 命令行里根本不出现 `-PackagePath`**，落点由 Commandlet 自己决定，后端不替它填默认值。传了则必须 `/Game/...` 且末段不含 `.`，否则 `400 bad_package_path` |
+| `decode_max_width` | 否 | `raw.mkv → frames/` 的目标长边，默认 1280，用于控制 PNG 体积 |
+
+- **请求体里没有 `fps`**：帧率固定 25（§4.4），转码也一律按 25 解 25 出，前端无从选择、也不需要选择。
 - **没有 `target` 字段**，也**没有"失败时保留 frames"开关**：保留策略固定（§7.5），失败天然保留、成功必删。
+- 两个 400 都在**提交时**返回（不是等到 UE 进程启动），前端拿到 body 直接展示即可。
 
 `GET .../transcode/{job_id}`
 
@@ -432,7 +442,8 @@ capture_session::frames ─┬─► media_fragment_pipeline(推流编码器) �
 ```
 
 - 进度：`png_sequence` 0–40%，`mp4` 0–20%，`ue_commandlet` 40–100%。**明确标注为粗粒度**，前端不得用于精确 ETA。
-- 作业状态与 Doodle 现有长任务（`server_task_info`）**解耦**：它是一次本地短作业，不写数据库，只在内存注册表里保活；服务重启即丢失，产物文件仍在磁盘上可被下次扫描发现。
+- **作业状态不进 `server_task_info`（拍板）**：转码作业是一次本机短作业，**不写数据库、不登记任务表、不出现在任务列表 UI 里**，只在内存注册表里保活；服务重启即丢失，产物文件仍在磁盘上可被下次扫描发现。要查进度只能走 `GET /transcode/{job_id}` 或 WS 的 `transcode_progress`。
+- `run_time_info_t` 仍会传给 `async_run_ue`（它要这个入参收集起止时间），但**该对象只用于进程耗时统计，不落库**。
 
 ### 7.3 调用 Commandlet 的固定写法
 
@@ -444,10 +455,12 @@ co_await async_run_ue(
      fmt::format(R"(-FramesDir="{}")", l_frames_dir.generic_string()),
      fmt::format(R"(-OutDir="{}")",    l_curves_dir.generic_string()),
      fmt::format("-FPS={}",            l_fps),
-     fmt::format("-PackagePath={}",    l_package_path)},
+     /* package_path 非空时才追加：*/ fmt::format("-PackagePath={}", l_package_path)},
     logger_ptr_, kitsu_client_, /*create_lock=*/true, l_run_time_info
 );
 ```
+
+**`-PackagePath` 是条件项**：请求里的 `package_path` 为空字符串（或不传）时，这一项**根本不拼进 `in_arg`**，由 Commandlet 用它自己的默认值；后端不写死、不猜、不补。拼参函数做成"传空就跳过"的形式，避免出现 `-PackagePath=` 这种空值参数被 Commandlet 当成非法包路径。
 
 要点：
 
@@ -458,7 +471,8 @@ co_await async_run_ue(
 5. **超时**：`async_run_ue` 用的是全局 `core_set::get_set().timeout`，脸捕耗时与帧数线性相关，可能不够。**本轮不改 `async_run_ue` 签名**；M0 实测出单帧耗时后，若 10 分钟素材会超时，再单独提"给 `async_run_ue` 加可选 timeout 参数"的改动（只加一个带默认值的形参，不改现有调用点）。
 6. **`kitsu_client_` 用来做插件版本检查与安装**；脸捕作业没有 kitsu 上下文时传 `nullptr` 会在 `installUePath` 里解引用。因此作业在构造时从路由层拿到 `kitsu_client`（同 `local` 其它路由的做法：`std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip)` + `set_token(token_)`）。
 7. **`-Unattended` / `-log` / `-AllowStdOutLogVerbosity` / `-ForceLogFlush`**：`-Unattended` 防 `FMessageDialog` 在无 UI 下把进程挂死（同一坑见 [metahuman_face_capture_solution.md §3.2](E:\Doodle\docs\metahuman_face_capture_solution.md)）；后三个让 `async_run_ue` 的管道读取能实时拿到日志，否则脸捕过程在作业日志里不可见。
-8. **`.uproject` 的来源**：脸捕是"某个人在某台机器上用某个工程跑"，工程路径不能从代码里猜。取法与渲染任务一致——前端在 `POST /transcode` 的 body 里传 `ue_project`（可选），后端按 `core_set::get_set().ue4_path` + 该工程的 `.uproject` 拼绝对路径；传空则用 `ue_exe_ns::find_ue_project_file(core_set::get_set().ue4_path)`。**若找不到 `.uproject`，作业在提交时就返回 `400 no_ue_project`，不要等到进程启动才炸。**
+8. **`.uproject` 由前端必填且必须是绝对路径**：脸捕是"某个人在某台机器上用某个工程跑"，工程路径不能从代码里猜、也不能从配置里猜。前端在 `POST /transcode` 的 body 里传 `ue_project`（**必填、绝对路径**），后端**只做两个校验**：`path::is_absolute()` 为真、该文件存在。**不拼 `ue4_path`、不做相对路径解析、不回退 `find_ue_project_file` 或任何默认工程**；任一校验不过，一律在提交时返回 `400 missing_ue_project`——猜错工程比报错更糟（用户会拿到别的工程的曲线）。
+9. **`package_path` 由 Commandlet 决定**：请求里为空就不传 `-PackagePath`（见上面的条件项）。后端只做"非空时必须形如 `/Game/...` 且末段不含 `.`"的校验，不提供默认值。
 
 ### 7.4 结果解析
 
@@ -472,7 +486,7 @@ co_await async_run_ue(
 
 - step 3 成功 → **立即 `FSys::remove_all(session_dir / "frames")`**，保留 `raw.mkv`、`take.mp4`、`align.json`、`curves/`。删除动作失败只记警告，不影响作业返回成功（产物已齐）。
 - 提供重跑入口：再次 `POST /transcode` 时若 `frames/` 已不存在，自动从 `raw.mkv` 重跑 step 1（不需要重录）。
-- `/Game/<package_path>/<session_id>` 下的中间资产由 Commandlet 写；删除会话（`DELETE .../recordings/{session_id}`）时一并清理（尽力而为，失败只记日志）。
+- `/Game/.../<session_id>` 下的中间资产由 Commandlet 写（包路径为空时落点由它自己决定）；删除会话（`DELETE .../recordings/{session_id}`）时一并清理（尽力而为，失败只记日志）。
 - **`raw.mkv` 永不自动删除**；磁盘水位策略由部署侧运维负责，方案里不引入自动淘汰。
 - 本方案**不改变** `DeleteSession` 对 `frames/`、`curves/` 的处理口径：它们都在 `session_dir` 下，删会话即删全部。
 
@@ -492,7 +506,7 @@ co_await async_run_ue(
 | 扩展名限 `bmp/dds/exr/jpg/jpeg/png` 且必须能被 ImgMedia 读 | `:287-298` | 只用 PNG |
 | 目录里不能有别的图片文件 | `:148-156` 会扫描所有图片扩展名 | `frames/` 下**只放 PNG**，任何 meta 文件放 `curves/` 或 `session_dir` 根 |
 | `-FramesDir` / `-OutDir` 必须是绝对路径 | `MetaHumanFaceCommandLine.cpp:234-246` | 传 `FSys::path::generic_string()` 的绝对路径并整体加引号 |
-| `-PackagePath` 必须是 `/Game/...` 形式的包路径（不得含 `.`） | `MetaHumanFaceCommandLine.cpp:70-83` | 由前端/配置给出，后端只校验 |
+| `-PackagePath` 必须是 `/Game/...` 形式的包路径（不得含 `.`） | `MetaHumanFaceCommandLine.cpp:70-83` | **请求给了就校验**（非空必须是合法包路径，否则 `400 bad_package_path`）；**请求没给就不传这个参数**，落点由 Commandlet 决定（§7.2、§7.3） |
 | ImgMedia 侧还要能解析出同一组帧 | `:487-512` `FTrackingPathUtils::GetTrackingFilePathAndInfo` 的 offset / 帧数必须与扫描结果一致 | M0 真机验证项（§11） |
 | **不传 `-SequencePattern`** | `MetaHumanFaceCommandLine.cpp:189-193` 把它解析出 `MaxTokenLen`，`:256-261` 只校验"传了但不含 `{frame}`" | 省略；文件命名固定为 `frame_000000.png` |
 
@@ -623,7 +637,7 @@ co_await async_run_ue(
 
 ## 14. 已拍板 / 仍未定
 
-**已拍板（2026-11-05，不必再问）**：
+**已拍板（2026-11-05 / 11-06，不必再问）**：
 
 1. 丢帧补位 = 策略 A（重复上一帧），代码里不提供 B/C 分支（§10）。
 2. 脸捕 Commandlet 与渲染任务共用 `core_set::get_set().ue_ctx_->queue_`（§7.3-2）。
@@ -631,12 +645,13 @@ co_await async_run_ue(
 4. **推流只有一条**，不存在第二条，设计上也不为它留口子（§0 第 9/10 条、§5.3）。
 5. **控制一律走 HTTP POST，WS 纯下行**（§0 第 7 条、§3.5）。
 6. **人脸检测推迟到二期**，一期不实现、不预留字段（§0 第 12 条、§6）。
+7. **转码作业不登记 `server_task_info`**：不写库、不进任务列表，只走 `GET /transcode/{job_id}` 与 WS 进度（§7.2）。
+8. **`ue_project` 由前端在转码请求里必填，且必须是绝对路径**：缺失/为空/非绝对路径/文件不存在即 `400 missing_ue_project`；后端不拼相对路径、不猜默认工程（§7.2、§7.3-8）。
+9. **`package_path` 可以为空，空则不传 `-PackagePath`**，由 Commandlet 自己决定落点；非空时后端只校验格式（§7.2、§7.3-9、§7.3 的条件拼参）。
 
 **仍未定（不阻塞实现）**：
 
-1. `package_path` 的默认值：当前设计是"留空则由 Commandlet 使用 `OutDir/Package`"，推荐前端/配置显式传 `/Game/...`。等 M0 确认包路径的实际落盘形态后再定。
-2. `ue_project`（§7.3-8）：渲染任务由 kitsu 任务下发工程路径，脸捕没有这个上下文。当前设计是"前端可选传 + 缺省用 `ue4_path` 下的 `.uproject`"。若前端不方便传，需要再定一个"全局默认工程"的配置项放置位置。
-3. 是否需要把转码作业登记进 `server_task_info`（从而出现在现有的任务列表 UI 里）。当前设计是**不登记**（本机短作业）。若要登记，需要额外的数据库写入与广播，属于加固阶段之后的增强。
+1. M0 真机跑一次 Commandlet 后确认：不传 `-PackagePath` 时它的实际默认落点是否稳定（决定前端要不要养成显式传的习惯），以及 `-PackagePath=` 空值是否会被它当非法参数（所以后端才做条件拼参，不拼空值）。
 
 ---
 
@@ -663,7 +678,7 @@ co_await async_run_ue(
 | `doodle::exe_warp::async_run_ue` | **直接复用**，新增作业只是它的调用方 |
 | `core_set::get_set().ue_ctx_->queue_` | **共用**，不新开闩 |
 | `socket_io::broadcast` / `/events` | 推流**不用**（单条推流不需要广播）；列表刷新等低频事件可选接入 |
-| `server_task_info` / `run_long_task_local` | 转码作业**不登记**；`run_time_info_t` 仅作为 `async_run_ue` 的入参收集起止时间 |
+| `server_task_info` / `run_long_task_local` | 转码作业**不登记**（不写库、不进任务列表）；`run_time_info_t` 仅作为 `async_run_ue` 的入参收集起止时间，不落库 |
 | `doodle::ai::doodle_depth_estimation` / `get_ort_env()` | **不涉及**（一期没有任何推理；二期的 `cv::FaceDetectorYN` 也不走 `Ort::Env`） |
 | `doodle::kitsu::kitsu_client` | 作业用它做 UE 插件版本检查（`async_run_ue` 内部所需），以及可选的产物上传 |
 
