@@ -1,6 +1,6 @@
 # 摄像头采集 · WebSocket 推流 · 前端控制录制 · UE 转码 方案
 
-> 状态：方案已拍板（2026-11-05，11-06 追加"取消固定节拍"与"会话挂在 WS 上"）。**采集引擎（M1/M2 引擎侧 + `write_png_sequence`）与 WS 路由（含连上即开录、断开即收尾）已实现并编译通过**，HTTP 录制端点与转码作业层待实现（进度见附录 A）。
+> 状态：方案已拍板（2026-11-05，11-06 追加"取消固定节拍"、"会话挂在 WS 上"、"选中摄像头"）。**采集引擎（M1/M2 引擎侧 + `write_png_sequence`）、WS 路由（含连上即开录、断开即收尾）、设备路由（GET 枚举 / POST 选中）已实现并编译通过**，HTTP 录制端点与转码作业层待实现（进度见附录 A）。
 > 范围：**一期**。人脸检测整体推迟到二期，本文只在 §6 钉住它的插入点与约束，不实现。
 > 部署前提：**后端跑在用户自己的电脑上，由打包好的前端 App 拉起**（不是常驻服务器）。因此没有多用户、没有多设备并发。
 > 落地位置：后端 `E:\Doodle\src\doodle_lib\http_method\local`（新增文件），复用 `src/doodle_lib/core`、`src/doodle_lib/exe_warp`。
@@ -30,6 +30,7 @@
 | 15 | **`package_path` 可空** | 空字符串或不传 → 命令行里**不出现 `-PackagePath`**，落点由 Commandlet 自己决定；非空才校验 `/Game/...` 格式（§7.2、§7.3-9、§8.1） |
 | 16 | **取消固定节拍** | 采集改为"摄像头阻塞读线程 → 到达即打 `steady_clock` 时间戳 → `post` 到采集 strand"，**没有 `steady_timer` 轮询、没有 40 ms 拍点**；帧率统一交给 `fps` 滤镜（§4.1、§4.4） |
 | 17 | **不打开 WS 就不抓摄像头** | `capture_session` 由 `ws_stream_runner` 直接持有并随连接创建/销毁；WS 连上即 `start()` 开录、断开即 `stop()` 收尾。**删除进程内单例 `capture_session::instance()`** |
+| 18 | **摄像头由前端先选中，WS 只负责开流** | `GET /face_capture/devices` 枚举、`POST /face_capture/devices` 选中（body `{"index":n}`）；选中值是设备路由上的**共享属性**（`shared_ptr<impl>`，clone 后仍共享），通过 `reg_c` 构造参数注入 `face_capture_stream`，WS 连上时取它传给 `capture_session::start()`。不落盘，重启回 0（§3.1、§3.2） |
 
 ---
 
@@ -102,7 +103,7 @@ src/doodle_lib/exe_warp/face_capture/      ← 新增：转码作业与 UE 编�
 
 src/doodle_lib/http_method/local/          ← 新增：路由
     face_capture.h                          DOODLE_HTTP_FUN_* 声明（全部路由类集中在此，与 local.h 同构）
-    face_capture_device.cpp                 设备枚举
+    face_capture_device.cpp                 设备枚举 GET + 选中设备 POST
     face_capture_stream.cpp                 WS 下行推流（纯输出，无命令处理）
     face_capture_record.cpp                 录制：POST 开始 / POST 停止 / GET 列表 / GET 查询 / 下载 / DELETE
     face_capture_transcode.cpp              转码提交/查询/取消
@@ -128,8 +129,9 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 沿用现有写法，在 `create_kitsu_local_route()`（[kitsu.cpp:307-337](E:\Doodle\src\doodle_lib\http_method\kitsu.cpp)）末尾追加：
 
 ```cpp
-.reg_c<local::face_capture_devices>()            // GET 设备枚举
-.reg_c<local::face_capture_stream>()             // GET + Upgrade → WS（纯下行）
+.reg_c<local::face_capture_devices>()            // GET 设备枚举 / POST 选中设备
+.reg_c<local::face_capture_stream>(              // GET + Upgrade → WS（纯下行）
+    l_rout_ptr->get_function<local::face_capture_devices>()->selected_)
 .reg_c<local::face_capture_recordings>()         // POST 开始录制 / GET 列表
 .reg_c<local::face_capture_recording>()          // GET / DELETE，{session_id_}
 .reg_c<local::face_capture_recording_stop>()     // POST 结束录制
@@ -141,7 +143,13 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 
 **持有会话对象的是 `local::face_capture_stream` 的 `ws_stream_runner`**（即 WS 连接本身）：`ws_stream_runner` 成员里有唯一的 `std::shared_ptr<capture_session> session_`，连上 `start()`、断开 `stop()`。**没有任何路由或单例长期持有会话**——不打开 WS 就不会打开摄像头（§0 第 17 条）。
 
-稳定性检查：**9 个路由类、11 个端点**，没有再增加。（早先还考虑过把 `/stream` 拆成 open/close 两条，已否决——WS 的一生由 TCP 决定，不需要额外端点。）
+**选中摄像头的共享属性**放在 `local::face_capture_devices` 上，字段是 `std::shared_ptr<face_capture_selected_device> selected_`；`face_capture_stream` 通过 `reg_c` 的构造参数拿到同一个 `shared_ptr`（`reg_t/reg_c` 会把参数原样透传给 `std::make_shared<T>`，见 [http_route.h:54-67](E:\Doodle\src\doodle_lib\http\http_route.h)）。**设备路由必须先注册**，否则 `get_function<>()` 取到空指针。
+
+不放在 `core_set` 的理由：`create_kitsu_local_route()` 返回的 `http_route_ptr` 在 `kitsu_supplement.cpp:179` 只是局部变量，没挂到 `core_set`；为了一个"选中第几个摄像头"的整数去动 `core_set` 会多出一处跨模块耦合。
+
+`face_capture_selected_device` 内部是 `std::shared_ptr<impl>`（`impl` 里 `std::mutex` + `std::int32_t index_`）：路由对象每请求 clone 一次，**值成员复制的是快照，写进去的东西下一个请求就丢**；`shared_ptr` 成员的副本指向同一个 `impl`，共享才成立。加锁是因为 HTTP handler 在 `g_ioc` 线程池上跑，而读它的 WS 协程在另一条 strand 上。
+
+稳定性检查：**10 个路由类、12 个端点**（`devices` 一条 URL 两个方法）。（早先还考虑过把 `/stream` 拆成 open/close 两条，已否决——WS 的一生由 TCP 决定，不需要额外端点。）
 
 路由模板必须**一个类一条 URL**（`DOODLE_HTTP_ROUTE` 只接受一个路径字面量），所以 `/recordings/{id}` 与 `/recordings/{id}/stop` 是两个类。`kitsu.cpp:312-333` 里每个排队项都是这个形态，照抄即可。
 
@@ -151,7 +159,8 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| GET | `/api/doodle/local/face_capture/devices` | 枚举摄像头：`{devices:[{index, name, backend, width, height, fps}]}` |
+| GET | `/api/doodle/local/face_capture/devices` | 枚举摄像头：`{selected, devices:[{index, name, backend, width, height, selected}]}` |
+| POST | `/api/doodle/local/face_capture/devices` | **选中摄像头**。body `{"index": 0}`；成功返回 `{selected}`；body 缺整数 `index` → `400`，负值 → `400`，设备不存在（越界/已拔出）→ `404` |
 | GET | `/api/doodle/local/face_capture/stream/{session_id_}` | **WS 升级点 + 会话本体**（`has_websocket() = true`，GET + `Upgrade` 才升级）。连上即创建 `capture_session`、打开摄像头、开始录制并推流；断开即停止录制。路径里的 `session_id_` 只用于前端日志与路由占位，**不参与查找**，真实 `session_id` 在 `hello` 里回传。**这条只下发视频与状态，不接受任何命令**（§3.3） |
 | POST | `/api/doodle/local/face_capture/recordings` | **开始录制**。body 见 §3.3「控制面」；`201` 返回新会话 `{session_id, state, width, height, fps}` |
 | GET | `/api/doodle/local/face_capture/recordings` | 历史会话列表（磁盘扫描 `session_dir`） |
@@ -170,17 +179,19 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 
 > **会话对象的归属**：会话由 `ws_stream_runner`（定义在 `http_method/local/face_capture_stream.cpp`）持有，成员是唯一的 `std::shared_ptr<capture_session> session_`；`stop` / `GET recordings` 等 HTTP handler 通过"当前唯一活跃会话"的弱引用登记拿它。**本机只有一个会话，所以不存在查找表。**
 
+**设备枚举不能占 io 线程**：`capture_session::list_devices()` 逐个 index 尝试 `VideoCapture::open`（DSHOW/MSMF），是阻塞调用，最长几百毫秒。实现里把它丢进文件内一个 `boost::asio::thread_pool{1}`（进程内单例、单线程，避免两次枚举同时抢同一个设备），`co_spawn` 到该池后 `co_await` 回来。GET 与 POST 都走这条路径——POST 要用真实枚举结果校验 index，不能只判"非负"。
+
 ### 3.3 WS 协议
 
 WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` + `websocket::is_upgrade()` + `callback_->has_websocket()` 三者同时成立才升级；`websocket_init(session_data_ptr)` 在 `async_accept` **之前**同步调用，`websocket_callback(stream, session_data_ptr)` 在 accept **之后**调用且拿不到错误码——连接生命周期只能靠第一次 `async_read` 失败感知。
 
 **实现已落地**：路由类 `local::face_capture_stream`（`http_method/local/face_capture.h` + `face_capture_stream.cpp`）只做转发，连接管理由同一个 `.cpp` 里的 `ws_stream_runner` 类承担：
 
-- `websocket_callback` 里 `runner_ = std::make_shared<ws_stream_runner>(std::move(in_stream), in_handle->logger_); runner_->start();`，别的一行不写。
+- `websocket_callback` 里 `runner_ = std::make_shared<ws_stream_runner>(std::move(in_stream), in_handle->logger_, selected_->index()); runner_->start();`，别的一行不写。第三个参数是**连接建立那一刻**的选中设备，之后改选择不影响进行中的会话。
 - `ws_stream_runner` 声明在 `face_capture_stream.cpp` 的 `namespace doodle::http::local` 下（**不能塞进匿名 namespace**，否则 `face_capture.h` 里前置声明的 `std::shared_ptr<ws_stream_runner> runner_` 指向的是另一个类型，编译报 C2027/C2039），`face_capture.h` 只前置声明。
 - `ws_stream_runner` 自建 `make_strand(g_io_context())`，用同一个 strand 构造 `ws_outlet`——`send_*` 的 post 与 `drain()` 落在同一串行队列里，单在途写才成立。
 - **`ws_stream_runner` 直接持有会话**：构造时 `session_ = std::make_shared<face_capture::capture_session>(face_capture::capture_session::default_root());`。会话不共享、不查表、不做单例——每条 WS 连接一个自己的会话。
-- `run()` 的顺序是：建 outlet → `outlet->attach(write_fn)` → `session_->attach(outlet)` → `co_await start_capture()`（`session_->start(capture_option{})`，失败只记 WARN 不掐断连接）→ `co_await read_loop()` → `co_await close_impl()`。**先 attach 再 start** 是硬顺序：`start()` 建完会话目录就会开始出帧，此时 outlet 必须已经挂好。
+- `run()` 的顺序是：建 outlet → `outlet->attach(write_fn)` → `session_->attach(outlet)` → `co_await start_capture()`（`session_->start(capture_option{.device_index_ = device_index_})`，`device_index_` 来自 POST devices 的选中值，从未选过就是 0；失败只记 WARN 不掐断连接）→ `co_await read_loop()` → `co_await close_impl()`。**先 attach 再 start** 是硬顺序：`start()` 建完会话目录就会开始出帧，此时 outlet 必须已经挂好。
 - `close_impl()` 的顺序是：`open_=false` → `co_await stop_capture()`（`session_->stop()`，内部会等推流排空、收 `raw.mkv`、写 `align.json`）→ `outlet_->detach()` → `async_close`。**stop 在 detach 之前**，否则最后几帧没处可写。
 - `write_fn` 签名是 `awaitable<bool>(bool in_binary, const uint8_t*, size_t)`：文本事件走 `binary(false)`，视频分片走 `binary(true)`，实现体是 `stream_.binary(x)` → `async_write_some(true, buffer)` → `stream_.binary(false)`。
 - `co_spawn` 绑 `app_base::Get().on_cancel` 槽，进程取消时协程随之退出。
@@ -713,7 +724,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | 里程碑 | 内容 | 验收 |
 | --- | --- | --- |
 | **M0（0.5 天，只验证不写产品代码）** | ①手搓一份 `frame_000000.png`（6 位数字）序列，真机跑 `-run=MetaHumanFace -FramesDir=<abs> -OutDir=<abs> -FPS=25/1`；②记录单帧求解耗时，判断 `core_set.timeout` 是否够；③确认 `curves/frames_meta.json` 的 `first_frame` 被采用；④确认不传 `-SequencePattern` 能通过；⑤确认 `FTrackingPathUtils` 接受该命名 | 五条结论写回本文 §8；任一条失败立即回到 §8 复核 |
-| **M1（引擎 + WS 已完成）** | 摄像头读线程 + `frame_filter` + `media_fragment_pipeline`（推流）+ `ws_outlet` + **WS 路由 `face_capture_stream`（内含 `ws_stream_runner`，连上即开录、断开即收尾）与注册**；**剩下 HTTP 录制端点**：`POST/GET recordings` | 引擎与 WS 侧：编译通过 ✅；剩下浏览器里连 WS 就出现实时画面 + 断开后 `raw.mkv`/`align.json` 已落盘 |
+| **M1（引擎 + WS + 设备已完成）** | 摄像头读线程 + `frame_filter` + `media_fragment_pipeline`（推流）+ `ws_outlet` + **WS 路由 `face_capture_stream`（内含 `ws_stream_runner`，连上即开录、断开即收尾）与注册** + **设备路由 `face_capture_devices`（GET 枚举 / POST 选中）**；**剩下 HTTP 录制端点**：`POST/GET recordings` | 引擎、WS、设备侧：编译通过 ✅；剩下浏览器里选设备 → 连 WS 就出现实时画面 + 断开后 `raw.mkv`/`align.json` 已落盘 |
 | **M2（引擎部分已完成）** | `raw.mkv`（FFV1，时基 1/1000）+ `align.json` + 状态机 + `take.mp4`；**HTTP 层待做**：`POST/GET/stop` 端点 | 引擎侧：编译通过 ✅；`ffprobe take.mp4` 的相邻 `pts_time` 间隔恒为 0.04s、`raw.mkv` 帧数≈摄像头帧率×秒数 |
 | M3 | 转码作业 step 1 + step 2（`png_sequence` 逐帧无补位、`mp4`）+ 作业查询/取消。**`write_png_sequence()` 已实现并编译通过**，等待最终作业调度层 | 不接 UE 也能产出合格 `frames/` 与 `take.mp4`，命名校验生效 |
 | M4 | 转码作业 step 3（Commandlet 编排 + 结果解析 + `frames/` 删除） | 端到端：录 → PNG → UE → `.dhfc` |
@@ -742,7 +753,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | `core_set.timeout` 不足以覆盖脸捕 | 长素材必失败 | M0 实测后决定是否为 `async_run_ue` 增加可选 timeout（§7.3-5） |
 | 与渲染任务抢 `ue_ctx` 闩 | 脸捕要排队，前端进度长时间停在 40% | 进度里显式给出 `ue_commandlet: waiting_for_ue_lock` 子状态，别让前端以为卡死 |
 | `async_run_ue` 超时后 UE 进程仍在跑 | 闩被占死，后续所有 UE 任务排队卡住 | 作业捕获超时异常后先终止该进程再返回（§7.4） |
-| 路由类被 `clone()` | 成员生成两份，引擎状态错乱 | 会话归 `ws_stream_runner` 所有，路由成员只有 `shared_ptr<ws_stream_runner> runner_`；HTTP handler 不存会话（§3.2） |
+| 路由类被 `clone()` | 成员生成两份，引擎状态错乱 | 会话归 `ws_stream_runner` 所有，路由成员只有 `shared_ptr<ws_stream_runner> runner_`；跨请求共享的选中设备用 `shared_ptr<impl>` 而不是值成员；HTTP handler 不存会话（§3.2） |
 | WS 断开时 `stop()` 未完成 | `raw.mkv` 没有 `trailer`、`align.json` 缺失 | `close_impl()` 先 `co_await stop()` 再关流；进程退出时由 `app_base::Get().on_cancel` 槽控制协程退出顺序 |
 
 > 一期没有"模型缺失""opencv 不带 objdetect"这类风险——人脸检测整体在二期（§6）。
@@ -753,7 +764,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 
 按仓库约束：**不写测试、不跑测试**，验证手段只有编译通过（`cmake_configure Ninja_debug` + `cmake_build debug_doodle`）。运行期验证只在 M0 里程碑里做一次真机冒烟，其余靠人工按 §3.2 的接口清单点一遍。
 
-**当前状态**：采集引擎 7 组源文件已全部实现，WS 路由（`face_capture_stream` + `kitsu.cpp` 注册 + 两个 CMakeLists）也已完成——`ws_stream_runner` 就是会话持有者，连上开录、断开收尾，`cmake_build(--preset debug_doodle)` **exit 0**（`doodle_lib.dll` / `test_main.exe` / `doodle_kitsu_supplement.exe` 全链接通过）。HTTP 录制端点（`POST/GET recordings`、`stop`、`video`、`curves`、设备枚举）、转码作业层尚未开始。
+**当前状态**：采集引擎 7 组源文件已全部实现，WS 路由（`face_capture_stream` + `kitsu.cpp` 注册 + 两个 CMakeLists）也已完成——`ws_stream_runner` 就是会话持有者，连上开录、断开收尾。设备路由 `face_capture_devices`（GET 枚举 / POST 选中）已实现，选中值以共享 `shared_ptr` 注入 `face_capture_stream`，WS 连接时传给 `capture_session::start()`。`cmake_build(--preset debug_doodle)` **exit 0**（`doodle_lib.dll` / `test_main.exe` / `doodle_kitsu_supplement.exe` 全链接通过）。HTTP 录制端点（`POST/GET recordings`、`stop`、`video`、`curves`）、转码作业层尚未开始。
 
 **编译期踩过的坑**（写后续代码时照此避让）：
 - `av::VideoFrame` **没有 `copyTo`**，取像素要用 `copyToBuffer(uint8_t*, size_t, align)`，且它是**非 const 成员** —— 所以取帧的函数参数要按值收 `av::VideoFrame`。
@@ -785,11 +796,13 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 10. **取消固定节拍**（2026-11-06）：不再用 `steady_timer` 40 ms 轮询采样；摄像头阻塞读放独立线程，到达即打时间戳 `post` 到 strand，`fps` 滤镜统一成 25 fps（§0 第 16 条、§4.1、§4.4）。
 11. **`raw.mkv` 存真实帧、时基 `{1,1000}`**：不写复制帧，`frames/` 由它逐帧解码得到，不做补位（§4.4、§5.4、§10）。
 12. **`capture_session` 归 `ws_stream_runner` 所有**（2026-11-06）：不打开 WS 就不抓摄像头，WS 连上即开录、断开即收尾；删除进程内单例与 `make()`（§0 第 6/17 条、§3.3）。
+13. **选中摄像头是 `face_capture_devices` 路由上的共享属性**（2026-11-06）：`shared_ptr<impl>` 保证 clone 后仍共享，通过 `reg_c` 构造参数注入 `face_capture_stream`；不进 `core_set`（§3.1）。
 
 **仍未定（不阻塞实现）**：
 
 1. M0 真机跑一次 Commandlet 后确认：不传 `-PackagePath` 时它的实际默认落点是否稳定（决定前端要不要养成显式传的习惯），以及 `-PackagePath=` 空值是否会被它当非法参数（所以后端才做条件拼参，不拼空值）。
 2. `/face_capture/stream` 的 WS 是否校验登录 token：当前 `websocket_init` 是空实现（纯下行、只推本机画面），要校验就得在 accept 之前抛异常，而 `websocket_init` 的异常在 `async_websocket_session` 协程里的行为未验证。
+3. 选中的摄像头**不持久化**：进程重启回 0。要不要落盘（写 `core_set` 或配置文件）等前端提需求再定。
 
 ---
 
@@ -801,10 +814,11 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | `src/doodle_lib/core/CMakeLists.txt` | 登记新增源文件 | **已完成** |
 | `src/doodle_lib/exe_warp/face_capture/*`（2 组 .h/.cpp） | 新增 | 未开始 |
 | `src/doodle_lib/exe_warp/CMakeLists.txt` | 登记新增源文件 | 未开始 |
-| `src/doodle_lib/http_method/local/face_capture.h` + `face_capture_stream.cpp` | 新增 | **已完成**（WS 部分，`ws_stream_runner` 就地定义在 `.cpp` 里）；设备/录制/转码 4 个 .cpp 未开始 |
+| `src/doodle_lib/http_method/local/face_capture.h` + `face_capture_stream.cpp` | 新增 | **已完成**（WS 部分，`ws_stream_runner` 就地定义在 `.cpp` 里；构造参数注入选中的设备） |
+| `src/doodle_lib/http_method/local/face_capture_device.cpp` | 新增 | **已完成**（GET 枚举 / POST 选中，`face_capture_selected_device` 共享 `shared_ptr<impl>`，枚举走独立 `thread_pool{1}`）；录制 3 个 .cpp 与转码 1 个 .cpp 未开始 |
 | `src/doodle_lib/http_method/local/CMakeLists.txt` | 登记 `.h`(PUBLIC) 与 `.cpp`(PRIVATE) | **已完成**（后续新增 .cpp 继续登记） |
-| `src/doodle_lib/http_method/kitsu.cpp` | `create_kitsu_local_route()` 追加 §3.1 的 9 条 `reg_c` | **已完成 1 条**（`face_capture_stream`），其余 8 条未开始 |
-| `src/doodle_core/metadata/kitsu_ctx_t.h` | **不改**（人脸检测在二期才加 `face_detector_model_path_`） | — |
+| `src/doodle_lib/http_method/kitsu.cpp` | `create_kitsu_local_route()` 追加 §3.1 的 10 条 `reg_c` | **已完成 2 条**（`face_capture_devices`、`face_capture_stream`），其余 8 条未开始 |
+| `src/doodle_core/metadata/kitsu_ctx_t.h` / `core_set` | **不改**（人脸检测在二期才加 `face_detector_model_path_`；选中摄像头不落 `core_set`） | — |
 | `script/uePlug/Doodle/**` | **不改** | — |
 | `vcpkg.json` | **不改** | — |
 
@@ -845,3 +859,4 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | `capture_session::impl` 的 `stream_` / `set_stream()` / `stream()` / `write_ws()`（早期给 WS 预留的写通路） | 全部删除，`attach()` 只接管 outlet，`write_fn` 由 `ws_stream_runner` 注入 | 两条并存的写通路没有调用者，且 `write_ws` 拿不到 text/binary 信息 |
 | `core/face_capture/ws_stream_runner.h/.cpp`（曾下沉到 core 的独立一组） | 删除该组文件，类移入 `http_method/local/face_capture_stream.cpp` | 只有一个 HTTP 路由用它；core 不必知道 WS 连接怎么活 |
 | 人脸检测整块（`core/face_capture/face_detector.*`、`face_status` 事件、`hello` 的 `face_detector` 字段、`align.json` 的 `face`、`POST /recordings` 的 `422 no_face` 与 `force`、`kitsu_ctx_t::face_detector_model_path_`、M0' 预研与 M3 里程碑） | 全部推迟到二期，一期不做也不预留 | 一期目标是把"录 → 推 → PNG → UE 曲线"打通，检测是独立增量（§6） |
+| 摄像头选择放进 `core_set` / 环境变量 / 配置文件 | 定为 `face_capture_devices` 路由上的 `shared_ptr<face_capture_selected_device>`，`reg_c` 构造参数注入 `face_capture_stream` | `create_kitsu_local_route()` 的 `http_route_ptr` 本就没挂 `core_set`；选中值只在同一次路由注册里流转，不必惊动全局配置 |

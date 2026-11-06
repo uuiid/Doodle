@@ -27,11 +27,12 @@ class ws_stream_runner : public std::enable_shared_from_this<ws_stream_runner> {
  public:
   using stream_t = boost::beast::websocket::stream<tcp_stream_type>;
 
-  explicit ws_stream_runner(stream_t in_stream, logger_ptr in_logger)
+  explicit ws_stream_runner(stream_t in_stream, logger_ptr in_logger, std::int32_t in_device_index)
       : stream_(std::move(in_stream)),
         logger_(std::move(in_logger)),
         strand_(boost::asio::make_strand(g_io_context())),
-        session_(std::make_shared<face_capture::capture_session>(face_capture::capture_session::default_root())) {}
+        session_(std::make_shared<face_capture::capture_session>(face_capture::capture_session::default_root())),
+        device_index_(in_device_index) {}
 
   void start() {
     open_.store(true);
@@ -61,7 +62,7 @@ class ws_stream_runner : public std::enable_shared_from_this<ws_stream_runner> {
 
   boost::asio::awaitable<void> start_capture() {
     try {
-      auto l_result = co_await session_->start(face_capture::capture_option{});
+      auto l_result = co_await session_->start(face_capture::capture_option{.device_index_ = device_index_});
       if (!l_result.ok_)
         SPDLOG_WARN(
             "face_capture 打开摄像头失败: {} {}", face_capture::to_string(l_result.error_code_), l_result.message_
@@ -122,6 +123,7 @@ class ws_stream_runner : public std::enable_shared_from_this<ws_stream_runner> {
   std::shared_ptr<face_capture::ws_outlet> outlet_;
   boost::beast::flat_buffer read_buffer_;
   std::atomic_bool open_{false};
+  std::int32_t device_index_{0};
 };
 
 bool face_capture_stream::has_websocket() const { return true; }
@@ -131,7 +133,9 @@ void face_capture_stream::websocket_init(session_data_ptr in_handle) {}
 void face_capture_stream::websocket_callback(
     boost::beast::websocket::stream<tcp_stream_type> in_stream, session_data_ptr in_handle
 ) {
-  runner_ = std::make_shared<ws_stream_runner>(std::move(in_stream), in_handle->logger_);
+  runner_ = std::make_shared<ws_stream_runner>(
+      std::move(in_stream), in_handle->logger_, selected_ ? selected_->index() : 0
+  );
   runner_->start();
 }
 

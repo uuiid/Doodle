@@ -8,4 +8,5 @@ target_sources(doodle_lib
         movie.cpp
         event.cpp
         face_capture_stream.cpp
+        face_capture_device.cpp
 ) 

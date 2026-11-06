@@ -331,7 +331,8 @@ http_route_ptr create_kitsu_local_route() {
       .reg_c<local::actions_local_task_run>()
       .reg_c<local::actions_local_watch_file_maya_anim>()
       .reg_c<local::actions_local_ai_session_ue>()
-      .reg_c<local::face_capture_stream>()
+      .reg_c<local::face_capture_devices>()
+      .reg_c<local::face_capture_stream>(l_rout_ptr->get_function<local::face_capture_devices>()->selected_)
       .reg_c<socket_io::socket_io_http>(l_sid_ctx)
 
       ;
