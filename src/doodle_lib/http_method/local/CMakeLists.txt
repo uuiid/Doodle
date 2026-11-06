@@ -1,9 +1,11 @@
 target_sources(doodle_lib
         PUBLIC
         local.h
+        face_capture.h
         PRIVATE
         local_setting.cpp
         task_info.cpp
         movie.cpp
         event.cpp
+        face_capture_stream.cpp
 ) 

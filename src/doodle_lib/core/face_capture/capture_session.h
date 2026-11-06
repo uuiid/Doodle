@@ -45,6 +45,8 @@ class capture_session : public std::enable_shared_from_this<capture_session> {
 
   void detach();
 
+  [[nodiscard]] std::shared_ptr<ws_outlet> outlet() const;
+
   capture_state state() const;
 
   std::uint64_t frames() const;

@@ -19,6 +19,7 @@
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu/computing_time.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/http_method/local/face_capture.h>
 #include <doodle_lib/http_method/local/local.h>
 #include <doodle_lib/http_method/model_library/model_library.h>
 #include <doodle_lib/http_method/other/other.h>
@@ -330,6 +331,7 @@ http_route_ptr create_kitsu_local_route() {
       .reg_c<local::actions_local_task_run>()
       .reg_c<local::actions_local_watch_file_maya_anim>()
       .reg_c<local::actions_local_ai_session_ue>()
+      .reg_c<local::face_capture_stream>()
       .reg_c<socket_io::socket_io_http>(l_sid_ctx)
 
       ;

@@ -25,7 +25,8 @@ class ws_outlet : public std::enable_shared_from_this<ws_outlet> {
  public:
   using executor_type = boost::asio::strand<boost::asio::io_context::executor_type>;
 
-  using write_fn = std::function<boost::asio::awaitable<bool>(const std::uint8_t* in_data, std::size_t in_size)>;
+  using write_fn =
+      std::function<boost::asio::awaitable<bool>(bool in_binary, const std::uint8_t* in_data, std::size_t in_size)>;
 
   explicit ws_outlet(executor_type in_executor);
 

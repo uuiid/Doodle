@@ -66,8 +66,6 @@ std::string uuid_string(boost::uuids::uuid in_id) { return fmt::format("{}", in_
 
 class capture_session::impl : public std::enable_shared_from_this<capture_session::impl> {
  public:
-  using stream_type = boost::beast::websocket::stream<boost::beast::tcp_stream>;
-
   explicit impl(FSys::path in_root)
       : root_(std::move(in_root)), strand_(boost::asio::make_strand(g_io_context())) {}
 
@@ -199,9 +197,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
     outlet_->set_session_info(session_id_, width_, height_);
     if (fragmenter_) outlet_->set_init_segment(fragmenter_->init_segment());
-    outlet_->attach([self = this->shared_from_this()](const std::uint8_t* in_data, std::size_t in_size) {
-      return self->write_ws(in_data, in_size);
-    });
     if (state_ != capture_state::idle) outlet_->notify_state(to_string(state_));
   }
 
@@ -220,19 +215,9 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
   const executor_type& get_executor() const { return strand_; }
 
+  [[nodiscard]] std::shared_ptr<ws_outlet> outlet() const { return outlet_; }
+
  private:
-  boost::asio::awaitable<bool> write_ws(const std::uint8_t* in_data, std::size_t in_size) {
-    co_await boost::asio::this_coro::throw_if_cancelled(false);
-    if (!stream_) co_return false;
-
-    co_await stream_->async_write_some(true, boost::asio::buffer(in_data, in_size), boost::asio::use_awaitable);
-    co_return true;
-  }
-
-  void set_stream(std::shared_ptr<stream_type> in_stream) { stream_ = std::move(in_stream); }
-
-  [[nodiscard]] std::shared_ptr<stream_type> stream() const { return stream_; }
-
   capture_result fill_result(bool in_ok, capture_state in_state) const {
     capture_result l_result{};
     l_result.ok_              = in_ok;
@@ -503,7 +488,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
   align_record record_{};
   std::vector<gap_range> gaps_{};
-  std::shared_ptr<stream_type> stream_{};
 };
 
 capture_session::capture_session(FSys::path in_root)
@@ -556,6 +540,8 @@ boost::asio::awaitable<capture_result> capture_session::stop() { return impl_ptr
 void capture_session::attach(std::shared_ptr<ws_outlet> in_outlet) { impl_ptr_->attach(std::move(in_outlet)); }
 
 void capture_session::detach() { impl_ptr_->detach(); }
+
+std::shared_ptr<ws_outlet> capture_session::outlet() const { return impl_ptr_->outlet(); }
 
 capture_state capture_session::state() const { return impl_ptr_->state(); }
 

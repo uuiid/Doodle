@@ -104,6 +104,7 @@ class ws_outlet::impl : public std::enable_shared_from_this<ws_outlet::impl> {
  private:
   struct item_t {
     bool key_{false};
+    bool binary_{true};
     std::vector<std::uint8_t> bytes_{};
     std::uint64_t seq_begin_{0};
     std::uint64_t seq_end_{0};
@@ -129,7 +130,11 @@ class ws_outlet::impl : public std::enable_shared_from_this<ws_outlet::impl> {
     if (!is_attached_locked()) return;
     auto l_text = in_json.dump();
     queue_.emplace_back(item_t{
-        .key_ = true, .bytes_ = std::vector<std::uint8_t>{l_text.begin(), l_text.end()}, .seq_begin_ = 0, .seq_end_ = 0
+        .key_       = true,
+        .binary_    = false,
+        .bytes_     = std::vector<std::uint8_t>{l_text.begin(), l_text.end()},
+        .seq_begin_ = 0,
+        .seq_end_   = 0
     });
     while (queue_.size() > k_max_pending) queue_.pop_front();
     idle_.store(false);
@@ -143,6 +148,7 @@ class ws_outlet::impl : public std::enable_shared_from_this<ws_outlet::impl> {
 
     queue_.emplace_back(item_t{
         .key_       = in_fragment.key_,
+        .binary_    = true,
         .bytes_     = std::move(in_fragment.data_),
         .seq_begin_ = in_fragment.seq_begin_,
         .seq_end_   = in_fragment.seq_end_
@@ -170,7 +176,7 @@ class ws_outlet::impl : public std::enable_shared_from_this<ws_outlet::impl> {
     while (!closing_ && static_cast<bool>(write_) && !queue_.empty()) {
       auto l_item = std::move(queue_.front());
       queue_.pop_front();
-      if (!(co_await write_(l_item.bytes_.data(), l_item.bytes_.size()))) {
+      if (!(co_await write_(l_item.binary_, l_item.bytes_.data(), l_item.bytes_.size()))) {
         closing_ = true;
         break;
       }
