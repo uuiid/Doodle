@@ -7,6 +7,7 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 
+#include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/face_capture/frame_align.h>
 #include <doodle_lib/core/face_capture/frame_filter.h>
@@ -26,18 +27,16 @@
 #include <boost/beast/websocket/stream.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 
-#include <opencv2/core.hpp>
-#include <opencv2/videoio.hpp>
-
-#include <fmt/format.h>
-#include <spdlog/fmt/ranges.h>
-
 #include <algorithm>
 #include <chrono>
 #include <condition_variable>
+#include <fmt/format.h>
 #include <memory>
 #include <mutex>
+#include <opencv2/core.hpp>
+#include <opencv2/videoio.hpp>
 #include <optional>
+#include <spdlog/fmt/ranges.h>
 #include <string>
 #include <thread>
 #include <utility>
@@ -66,8 +65,7 @@ std::string uuid_string(boost::uuids::uuid in_id) { return fmt::format("{}", in_
 
 class capture_session::impl : public std::enable_shared_from_this<capture_session::impl> {
  public:
-  explicit impl(FSys::path in_root)
-      : root_(std::move(in_root)), strand_(boost::asio::make_strand(g_io_context())) {}
+  explicit impl(FSys::path in_root) : root_(std::move(in_root)), strand_(boost::asio::make_strand(g_io_context())) {}
 
   ~impl() = default;
 
@@ -75,8 +73,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     co_await boost::asio::this_coro::throw_if_cancelled(false);
 
     DOODLE_CHICK_HTTP(
-        record_state_ != capture_state::recording && record_state_ != capture_state::stopping, conflict,
-        "已经在录制中"
+        record_state_ != capture_state::recording && record_state_ != capture_state::stopping, conflict, "已经在录制中"
     );
 
     if (stream_state_ == capture_state::previewing) co_return make_status(capture_state::previewing);
@@ -86,7 +83,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     auto l_width  = even(in_option.width_ > 0 ? in_option.width_ : k_default_width);
     auto l_height = even(in_option.height_ > 0 ? in_option.height_ : k_default_height);
 
-    auto l_cap = std::make_shared<cv::VideoCapture>();
+    auto l_cap    = std::make_shared<cv::VideoCapture>();
     if (!l_cap->open(in_option.device_index_, cv::CAP_DSHOW)) l_cap->open(in_option.device_index_, cv::CAP_MSMF);
     DOODLE_CHICK_HTTP(l_cap->isOpened(), unprocessable_entity, "无法打开摄像头 {}", in_option.device_index_);
 
@@ -116,7 +113,10 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     }
 
     boost::asio::co_spawn(
-        g_io_context(), read_loop(), boost::asio::consign(boost::asio::detached, this->shared_from_this())
+        g_io_context(), read_loop(),
+        boost::asio::bind_cancellation_slot(
+            app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, this->shared_from_this())
+        )
     );
 
     co_return make_status(capture_state::previewing);
@@ -127,8 +127,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
     DOODLE_CHICK_HTTP(stream_state_ == capture_state::previewing, conflict, "摄像头未打开");
     DOODLE_CHICK_HTTP(
-        record_state_ != capture_state::recording && record_state_ != capture_state::stopping, conflict,
-        "已经在录制中"
+        record_state_ != capture_state::recording && record_state_ != capture_state::stopping, conflict, "已经在录制中"
     );
 
     close_record();
@@ -140,10 +139,10 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
     auto l_mp4 = std::make_shared<mp4_writer>(l_dir / "take.mp4", width_, height_, true);
     DOODLE_CHICK_HTTP(l_mp4->init(), unprocessable_entity, "无法创建 take.mp4 编码器: {}", l_dir.string());
-    mp4_writer_ = std::move(l_mp4);
+    mp4_writer_         = std::move(l_mp4);
 
-    session_id_  = l_session_id;
-    session_dir_ = l_dir;
+    session_id_         = l_session_id;
+    session_dir_        = l_dir;
 
     record_             = align_record{};
     record_.session_id_ = session_id_;
@@ -178,10 +177,10 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
     co_await finish_record();
 
-    auto l_result = make_status(capture_state::previewing);
+    auto l_result       = make_status(capture_state::previewing);
     l_result.truncated_ = truncated_;
 
-    record_state_ = capture_state::stopped;
+    record_state_       = capture_state::stopped;
 
     co_return l_result;
   }
@@ -268,19 +267,19 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   }
 
   void reset_counters(clock_type::time_point in_now) {
-    seq_             = 0;
-    orig_seq_        = 0;
-    preview_seq_     = 0;
-    source_frames_   = 0;
-    source_last_ms_  = 0;
-    gaps_            = {};
-    started_at_      = in_now;
-    last_frame_at_   = std::nullopt;
-    silent_logged_   = false;
-    truncated_       = false;
-    read_failures_   = 0;
-    read_stop_       = false;
-    read_finished_   = false;
+    seq_            = 0;
+    orig_seq_       = 0;
+    preview_seq_    = 0;
+    source_frames_  = 0;
+    source_last_ms_ = 0;
+    gaps_           = {};
+    started_at_     = in_now;
+    last_frame_at_  = std::nullopt;
+    silent_logged_  = false;
+    truncated_      = false;
+    read_failures_  = 0;
+    read_stop_      = false;
+    read_finished_  = false;
   }
 
   void reset_recording_counters(clock_type::time_point in_now) {
@@ -310,7 +309,9 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       record_.truncated_       = truncated_;
       try {
         write_align(record_, session_dir_);
-      } catch (const std::exception& in_err) { SPDLOG_WARN("写 align.json 失败: {}", in_err.what()); }
+      } catch (const std::exception& in_err) {
+        SPDLOG_WARN("写 align.json 失败: {}", in_err.what());
+      }
     }
   }
 
@@ -363,8 +364,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       read_failures_ = 0;
 
       boost::asio::post(
-          strand_,
-          [self = this->shared_from_this(), l_mat = std::move(l_grab), l_now = clock_type::now()]() mutable {
+          strand_, [self = this->shared_from_this(), l_mat = std::move(l_grab), l_now = clock_type::now()]() mutable {
             self->on_capture(std::move(l_mat), l_now);
           }
       );
@@ -386,9 +386,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     auto l_deadline = clock_type::now() + std::chrono::milliseconds{k_stop_drain_timeout_ms};
     while (clock_type::now() < l_deadline) {
       if (read_finished_) co_return;
-      co_await boost::asio::steady_timer{strand_, std::chrono::milliseconds{2}}.async_wait(
-          boost::asio::use_awaitable
-      );
+      co_await boost::asio::steady_timer{strand_, std::chrono::milliseconds{2}}.async_wait(boost::asio::use_awaitable);
     }
 
     if (!read_finished_) {
@@ -406,7 +404,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
   void drain_filter_frames() {
     for (auto& l_frame : filter_->take_frames()) {
-      const cv::Mat& l_mat  = l_frame.mat_;
+      const cv::Mat& l_mat   = l_frame.mat_;
       const bool l_recording = record_state_ == capture_state::recording || record_state_ == capture_state::stopping;
 
       if (l_recording && mp4_writer_) {
@@ -460,9 +458,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       const auto l_gap_ms = in_wall_ms - *last_frame_at_;
       if (l_gap_ms >= k_silent_timeout_ms) {
         gaps_.push_back(
-            gap_range{
-                .wall_ms_begin_ = *last_frame_at_, .wall_ms_end_ = in_wall_ms, .duration_ms_ = l_gap_ms
-            }
+            gap_range{.wall_ms_begin_ = *last_frame_at_, .wall_ms_end_ = in_wall_ms, .duration_ms_ = l_gap_ms}
         );
         SPDLOG_WARN("摄像头静默 {} ms", l_gap_ms);
       }
@@ -507,8 +503,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   std::vector<gap_range> gaps_{};
 };
 
-capture_session::capture_session(FSys::path in_root)
-    : impl_ptr_(std::make_shared<impl>(std::move(in_root))) {}
+capture_session::capture_session(FSys::path in_root) : impl_ptr_(std::make_shared<impl>(std::move(in_root))) {}
 
 capture_session::~capture_session() = default;
 
