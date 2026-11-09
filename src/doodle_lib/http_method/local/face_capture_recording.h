@@ -38,8 +38,6 @@ class face_capture_session_holder {
 DOODLE_HTTP_FUN_C(face_capture_recordings, local_http_fun)
 std::shared_ptr<face_capture_session_holder> holder_{};
 
-face_capture_recordings() : base_type() {}
-
 explicit face_capture_recordings(std::shared_ptr<face_capture_session_holder> in_holder)
     : base_type(), holder_(std::move(in_holder)) {}
 
@@ -52,8 +50,6 @@ DOODLE_HTTP_FUN_C(face_capture_recording_stop, local_http_fun)
 boost::uuids::uuid session_id_{};
 std::shared_ptr<face_capture_session_holder> holder_{};
 
-face_capture_recording_stop() : base_type() {}
-
 explicit face_capture_recording_stop(std::shared_ptr<face_capture_session_holder> in_holder)
     : base_type(), holder_(std::move(in_holder)) {}
 
@@ -64,8 +60,6 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN_C(face_capture_recording, local_http_fun)
 boost::uuids::uuid session_id_{};
 std::shared_ptr<face_capture_session_holder> holder_{};
-
-face_capture_recording() : base_type() {}
 
 explicit face_capture_recording(std::shared_ptr<face_capture_session_holder> in_holder)
     : base_type(), holder_(std::move(in_holder)) {}

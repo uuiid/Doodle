@@ -310,7 +310,9 @@ http_route_ptr create_kitsu_local_route() {
   auto l_rout_ptr = std::make_shared<http::http_route>();
   auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->register_namespace("/events");
-  core_set::get_set().sid_ctx_ = l_sid_ctx;
+  core_set::get_set().sid_ctx_               = l_sid_ctx;
+  auto l_face_capture_selected              = std::make_shared<local::face_capture_selected_device>();
+  auto l_face_capture_holder                = std::make_shared<local::face_capture_session_holder>();
   (*l_rout_ptr)                       //
       .reg_c<local::local_setting>()  //
       .reg_c<local::video_thumbnail>()
@@ -332,14 +334,11 @@ http_route_ptr create_kitsu_local_route() {
       .reg_c<local::actions_local_task_run>()
       .reg_c<local::actions_local_watch_file_maya_anim>()
       .reg_c<local::actions_local_ai_session_ue>()
-      .reg_c<local::face_capture_devices>()
-      .reg_c<local::face_capture_stream>(
-          l_rout_ptr->get_function<local::face_capture_devices>()->selected_,
-          l_rout_ptr->get_function<local::face_capture_devices>()->holder_
-      )
-      .reg_c<local::face_capture_recordings>(l_rout_ptr->get_function<local::face_capture_devices>()->holder_)
-      .reg_c<local::face_capture_recording>(l_rout_ptr->get_function<local::face_capture_devices>()->holder_)
-      .reg_c<local::face_capture_recording_stop>(l_rout_ptr->get_function<local::face_capture_devices>()->holder_)
+      .reg_c<local::face_capture_devices>(l_face_capture_selected, l_face_capture_holder)
+      .reg_c<local::face_capture_stream>(l_face_capture_selected, l_face_capture_holder)
+      .reg_c<local::face_capture_recordings>(l_face_capture_holder)
+      .reg_c<local::face_capture_recording>(l_face_capture_holder)
+      .reg_c<local::face_capture_recording_stop>(l_face_capture_holder)
       .reg_c<local::face_capture_recording_video>()
       .reg_c<local::face_capture_recording_curves>()
       .reg_c<socket_io::socket_io_http>(l_sid_ctx)
