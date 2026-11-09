@@ -12,32 +12,12 @@
 #include <doodle_lib/logger/logger.h>
 
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 
 #include <fstream>
 
 namespace doodle::face_capture {
-
-void to_json(nlohmann::json& nlohmann_json_j, const capture_state& nlohmann_json_t) {
-  nlohmann_json_j = doodle::face_capture::to_string(nlohmann_json_t);
-}
-
-void from_json(const nlohmann::json& nlohmann_json_j, capture_state& nlohmann_json_t) {
-  auto l_str = nlohmann_json_j.get<std::string>();
-  if (l_str == "idle") {
-    nlohmann_json_t = capture_state::idle;
-  } else if (l_str == "recording") {
-    nlohmann_json_t = capture_state::recording;
-  } else if (l_str == "stopping") {
-    nlohmann_json_t = capture_state::stopping;
-  } else if (l_str == "stopped") {
-    nlohmann_json_t = capture_state::stopped;
-  } else if (l_str == "previewing") {
-    nlohmann_json_t = capture_state::previewing;
-  } else {
-    throw_exception(doodle_error{fmt::format("未知的采集状态: {}", l_str)});
-  }
-}
 
 void to_json(nlohmann::json& nlohmann_json_j, const camera_info& nlohmann_json_t) {
   nlohmann_json_j["index"]   = nlohmann_json_t.index_;
@@ -135,51 +115,7 @@ void from_json(const nlohmann::json& nlohmann_json_j, align_record& nlohmann_jso
   if (nlohmann_json_j.contains("truncated")) nlohmann_json_j.at("truncated").get_to(nlohmann_json_t.truncated_);
 }
 
-std::string to_string(capture_state in_state) {
-  switch (in_state) {
-    case capture_state::idle:
-      return "idle";
-    case capture_state::recording:
-      return "recording";
-    case capture_state::stopping:
-      return "stopping";
-    case capture_state::stopped:
-      return "stopped";
-    case capture_state::previewing:
-      return "previewing";
-  }
-  return "unknown";
-}
-
-std::string to_string(error_code_t in_error_code) {
-  switch (in_error_code) {
-    case error_code_t::none:
-      return "none";
-    case error_code_t::already_recording:
-      return "already_recording";
-    case error_code_t::not_recording:
-      return "not_recording";
-    case error_code_t::not_streaming:
-      return "not_streaming";
-    case error_code_t::camera_open_failed:
-      return "camera_open_failed";
-    case error_code_t::camera_read_failed:
-      return "camera_read_failed";
-    case error_code_t::encode_failed:
-      return "encode_failed";
-    case error_code_t::raw_mkv_missing:
-      return "raw_mkv_missing";
-    case error_code_t::raw_frames_mismatch:
-      return "raw_frames_mismatch";
-    case error_code_t::png_sequence_invalid:
-      return "png_sequence_invalid";
-    case error_code_t::busy:
-      return "busy";
-    case error_code_t::unknown:
-      return "unknown";
-  }
-  return "unknown";
-}
+std::string to_string(capture_state in_state) { return std::string{magic_enum::enum_name(in_state)}; }
 
 FSys::path align_path(const FSys::path& in_session_dir) { return in_session_dir / "align.json"; }
 

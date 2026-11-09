@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <doodle_core/lib_warp/json_warp.h>
+
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/uuid/uuid.hpp>
@@ -44,22 +46,15 @@ enum class capture_state : std::int32_t {
   stopped    = 3,
   previewing = 4,
 };
-
-enum class error_code_t : std::int32_t {
-  none = 0,
-  already_recording,
-  not_recording,
-  not_streaming,
-  camera_open_failed,
-  camera_read_failed,
-  encode_failed,
-  raw_mkv_missing,
-  raw_frames_mismatch,
-  png_sequence_invalid,
-  busy,
-  unknown,
-};
-
+DOODLE_JSON_SERIALIZE_ENUM_STRICT(
+    capture_state, {
+                       {capture_state::idle, "idle"},
+                       {capture_state::recording, "recording"},
+                       {capture_state::stopping, "stopping"},
+                       {capture_state::stopped, "stopped"},
+                       {capture_state::previewing, "previewing"},
+                   }
+)
 struct camera_info {
   std::int32_t index_{0};
   std::string name_{};
@@ -139,9 +134,5 @@ struct fragment_t {
 };
 
 std::string to_string(capture_state in_state);
-std::string to_string(error_code_t in_error_code);
-
-void to_json(nlohmann::json& nlohmann_json_j, const capture_state& nlohmann_json_t);
-void from_json(const nlohmann::json& nlohmann_json_j, capture_state& nlohmann_json_t);
 
 }  // namespace doodle::face_capture
