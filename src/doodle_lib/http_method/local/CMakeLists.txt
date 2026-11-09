@@ -2,7 +2,6 @@ target_sources(doodle_lib
         PUBLIC
         local.h
         face_capture.h
-        face_capture_recording.h
         PRIVATE
         local_setting.cpp
         task_info.cpp

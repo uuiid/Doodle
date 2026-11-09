@@ -2,7 +2,7 @@
 // Created by TD on 2026-11-6.
 //
 
-#include "face_capture_recording.h"
+#include "face_capture.h"
 
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/face_capture/capture_session.h>

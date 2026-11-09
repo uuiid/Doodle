@@ -20,7 +20,6 @@
 #include <doodle_lib/http_method/kitsu/computing_time.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/local/face_capture.h>
-#include <doodle_lib/http_method/local/face_capture_recording.h>
 #include <doodle_lib/http_method/local/local.h>
 #include <doodle_lib/http_method/model_library/model_library.h>
 #include <doodle_lib/http_method/other/other.h>
@@ -310,9 +309,9 @@ http_route_ptr create_kitsu_local_route() {
   auto l_rout_ptr = std::make_shared<http::http_route>();
   auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->register_namespace("/events");
-  core_set::get_set().sid_ctx_               = l_sid_ctx;
-  auto l_face_capture_selected              = std::make_shared<local::face_capture_selected_device>();
-  auto l_face_capture_holder                = std::make_shared<local::face_capture_session_holder>();
+  core_set::get_set().sid_ctx_ = l_sid_ctx;
+  auto l_face_capture_selected = std::make_shared<local::face_capture_selected_device>();
+  auto l_face_capture_holder   = std::make_shared<local::face_capture_session_holder>();
   (*l_rout_ptr)                       //
       .reg_c<local::local_setting>()  //
       .reg_c<local::video_thumbnail>()

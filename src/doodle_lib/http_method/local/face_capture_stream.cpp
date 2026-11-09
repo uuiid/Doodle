@@ -3,7 +3,6 @@
 //
 
 #include "face_capture.h"
-#include "face_capture_recording.h"
 
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/face_capture/capture_session.h>
