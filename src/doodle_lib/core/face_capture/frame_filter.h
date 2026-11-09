@@ -9,10 +9,10 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <opencv2/core/mat.hpp>
 #include <string>
+#include <vector>
 
 namespace doodle::face_capture {
 
@@ -22,11 +22,14 @@ struct frame_filter_option {
   std::string graph_{"fps=25"};
 };
 
-using frame_filter_sink_t = std::function<void(const cv::Mat&, std::uint64_t)>;
+struct filtered_frame {
+  cv::Mat mat_{};
+  std::uint64_t seq_{0};
+};
 
 class frame_filter {
  public:
-  frame_filter(const frame_filter_option& in_option, frame_filter_sink_t in_sink);
+  explicit frame_filter(const frame_filter_option& in_option);
 
   frame_filter(frame_filter&&) noexcept;
   frame_filter& operator=(frame_filter&&) noexcept;
@@ -36,6 +39,8 @@ class frame_filter {
   void push(const cv::Mat& in_bgr, std::int64_t in_pts_us);
 
   void flush();
+
+  std::vector<filtered_frame> take_frames();
 
   std::uint64_t output_frames() const;
 

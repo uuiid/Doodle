@@ -61,12 +61,10 @@ class frame_buffer {
 
 class frame_filter::impl {
  public:
-  impl(const frame_filter_option& in_option, frame_filter_sink_t in_sink)
-      : option_(in_option), sink_(std::move(in_sink)) {}
+  impl(const frame_filter_option& in_option) : option_(in_option) {}
 
   bool init() {
     DOODLE_CHICK(option_.width_ > 0 && option_.height_ > 0, "fps 滤镜尺寸非法: {}x{}", option_.width_, option_.height_);
-    DOODLE_CHICK(sink_ != nullptr, "fps 滤镜缺少输出回调");
     DOODLE_CHICK(!option_.graph_.empty(), "fps 滤镜描述为空");
 
     filter_ = av::Filter{"fps"};
@@ -113,21 +111,23 @@ class frame_filter::impl {
 
   std::uint64_t output_frames() const { return output_; }
 
+  std::vector<filtered_frame> take_frames() { return std::move(pending_); }
+
  private:
   void drain() {
     av::VideoFrame l_frame{};
-    while (buffersink_.getVideoFrame(l_frame)) sink_(to_mat(l_frame), output_++);
+    while (buffersink_.getVideoFrame(l_frame)) pending_.push_back(to_frame(l_frame));
   }
 
-  cv::Mat to_mat(av::VideoFrame& in_frame) {
-    const auto l_size = static_cast<std::size_t>(in_frame.raw()->width) * in_frame.raw()->height * 3;
-    if (out_bytes_.size() < l_size) out_bytes_.resize(l_size);
-    in_frame.copyToBuffer(out_bytes_.data(), l_size, 1);
-    return cv::Mat{in_frame.raw()->height, in_frame.raw()->width, CV_8UC3, out_bytes_.data()};
+  filtered_frame to_frame(av::VideoFrame& in_frame) {
+    filtered_frame l_out{
+        .mat_ = cv::Mat{in_frame.raw()->height, in_frame.raw()->width, CV_8UC3}, .seq_ = output_++
+    };
+    in_frame.copyToBuffer(l_out.mat_.data, l_out.mat_.total() * 3, 1);
+    return l_out;
   }
 
   frame_filter_option option_{};
-  frame_filter_sink_t sink_{};
 
   av::Filter filter_{};
   av::FilterGraph graph_{};
@@ -138,13 +138,12 @@ class frame_filter::impl {
   av::BufferSinkFilterContext buffersink_{};
 
   frame_buffer buffers_{};
-  std::vector<std::uint8_t> out_bytes_{};
+  std::vector<filtered_frame> pending_{};
 
   std::uint64_t output_{0};
 };
 
-frame_filter::frame_filter(const frame_filter_option& in_option, frame_filter_sink_t in_sink)
-    : impl_ptr_(std::make_unique<impl>(in_option, std::move(in_sink))) {
+frame_filter::frame_filter(const frame_filter_option& in_option) : impl_ptr_(std::make_unique<impl>(in_option)) {
   impl_ptr_->init();
 }
 
@@ -157,6 +156,8 @@ frame_filter::~frame_filter() = default;
 void frame_filter::push(const cv::Mat& in_bgr, std::int64_t in_pts_us) { impl_ptr_->push(in_bgr, in_pts_us); }
 
 void frame_filter::flush() { impl_ptr_->flush(); }
+
+std::vector<filtered_frame> frame_filter::take_frames() { return impl_ptr_->take_frames(); }
 
 std::uint64_t frame_filter::output_frames() const { return impl_ptr_->output_frames(); }
 

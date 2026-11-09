@@ -261,10 +261,8 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     fragmenter_ = std::make_shared<h264_fragmenter>(width_, height_);
     fragmenter_->init();
 
-    auto l_self = this->shared_from_this();
-    filter_     = std::make_shared<frame_filter>(
-        frame_filter_option{.width_ = width_, .height_ = height_, .graph_ = fmt::format("fps={}", k_fps)},
-        [l_self](const cv::Mat& in_mat, std::uint64_t /*in_seq*/) { l_self->emit_output_frame(in_mat); }
+    filter_ = std::make_shared<frame_filter>(
+        frame_filter_option{.width_ = width_, .height_ = height_, .graph_ = fmt::format("fps={}", k_fps)}
     );
   }
 
@@ -428,7 +426,13 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   }
 
   void drain_filter() {
-    if (filter_) filter_->flush();
+    if (!filter_) return;
+    filter_->flush();
+    drain_filter_frames();
+  }
+
+  void drain_filter_frames() {
+    for (auto& l_frame : filter_->take_frames()) emit_output_frame(l_frame.mat_);
   }
 
   void on_capture(cv::Mat in_mat, clock_type::time_point in_now) {
@@ -451,6 +455,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     }
 
     filter_->push(in_mat, l_wall_ms * 1000);
+    drain_filter_frames();
   }
 
   void on_silence(std::int64_t in_wall_ms) {
