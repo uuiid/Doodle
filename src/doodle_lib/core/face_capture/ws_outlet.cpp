@@ -16,13 +16,12 @@
 #include <boost/asio/post.hpp>
 #include <boost/asio/use_awaitable.hpp>
 
-#include <fmt/format.h>
-#include <nlohmann/json.hpp>
-
 #include <atomic>
 #include <cstring>
 #include <deque>
+#include <fmt/format.h>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <utility>
 #include <variant>
@@ -54,9 +53,7 @@ class ws_outlet::impl : public std::enable_shared_from_this<ws_outlet::impl> {
 
   bool is_attached() const { return attached_.load(); }
 
-  void set_init_segment(std::vector<std::uint8_t> in_init_segment) {
-    init_segment_ = std::move(in_init_segment);
-  }
+  void set_init_segment(std::vector<std::uint8_t> in_init_segment) { init_segment_ = std::move(in_init_segment); }
 
   void set_session_info(boost::uuids::uuid in_session_id, std::int32_t in_width, std::int32_t in_height) {
     session_id_ = in_session_id;
@@ -66,15 +63,21 @@ class ws_outlet::impl : public std::enable_shared_from_this<ws_outlet::impl> {
 
   void send_hello() {
     post([self = this->shared_from_this()] {
-      self->send_json(nlohmann::json{
-          {"type", "hello"}, {"session_id", fmt::format("{}", self->session_id_)}, {"state", to_string(self->state_)},
-          {"width", self->width_}, {"height", self->height_}, {"fps", k_fps}
-      });
+      self->send_json(
+          nlohmann::json{
+              {"type", "hello"},
+              {"session_id", fmt::format("{}", self->session_id_)},
+              {"state", self->state_},
+              {"width", self->width_},
+              {"height", self->height_},
+              {"fps", k_fps}
+          }
+      );
 
       if (self->init_segment_.empty()) return;
-      self->send_json(nlohmann::json{
-          {"type", "avc_init"}, {"bytes", self->init_segment_.size()}, {"seq_begin", 0}, {"seq_end", 0}
-      });
+      self->send_json(
+          nlohmann::json{{"type", "avc_init"}, {"bytes", self->init_segment_.size()}, {"seq_begin", 0}, {"seq_end", 0}}
+      );
       self->queue_.emplace_back(item_t{.key_ = true, .bytes_ = self->init_segment_});
       self->pump();
     });
@@ -90,10 +93,10 @@ class ws_outlet::impl : public std::enable_shared_from_this<ws_outlet::impl> {
     });
   }
 
-  void notify_state(std::string in_state) {
-    post([self = this->shared_from_this(), in_state = std::move(in_state)] {
-      self->state_ = parse_state(in_state);
-      self->send_json(nlohmann::json{{"type", "capture_state"}, {"state", in_state}});
+  void notify_state(capture_state in_state) {
+    post([self = this->shared_from_this(), in_state] {
+      self->state_ = in_state;
+      self->send_json(nlohmann::json{{"type", "capture_state"}, {"state", nlohmann::json{in_state}}});
     });
   }
 
@@ -112,13 +115,6 @@ class ws_outlet::impl : public std::enable_shared_from_this<ws_outlet::impl> {
 
   static constexpr std::size_t k_max_pending{8};
 
-  static capture_state parse_state(const std::string& in_state) {
-    if (in_state == "recording") return capture_state::recording;
-    if (in_state == "stopping") return capture_state::stopping;
-    if (in_state == "stopped") return capture_state::stopped;
-    return capture_state::idle;
-  }
-
   template <typename F>
   void post(F&& in_fn) {
     boost::asio::post(strand_, std::forward<F>(in_fn));
@@ -129,13 +125,15 @@ class ws_outlet::impl : public std::enable_shared_from_this<ws_outlet::impl> {
   void send_json(nlohmann::json in_json) {
     if (!is_attached_locked()) return;
     auto l_text = in_json.dump();
-    queue_.emplace_back(item_t{
-        .key_       = true,
-        .binary_    = false,
-        .bytes_     = std::vector<std::uint8_t>{l_text.begin(), l_text.end()},
-        .seq_begin_ = 0,
-        .seq_end_   = 0
-    });
+    queue_.emplace_back(
+        item_t{
+            .key_       = true,
+            .binary_    = false,
+            .bytes_     = std::vector<std::uint8_t>{l_text.begin(), l_text.end()},
+            .seq_begin_ = 0,
+            .seq_end_   = 0
+        }
+    );
     while (queue_.size() > k_max_pending) queue_.pop_front();
     idle_.store(false);
     pump();
@@ -146,13 +144,15 @@ class ws_outlet::impl : public std::enable_shared_from_this<ws_outlet::impl> {
 
     if (!in_fragment.key_ && has_pending_frame()) return;
 
-    queue_.emplace_back(item_t{
-        .key_       = in_fragment.key_,
-        .binary_    = true,
-        .bytes_     = std::move(in_fragment.data_),
-        .seq_begin_ = in_fragment.seq_begin_,
-        .seq_end_   = in_fragment.seq_end_
-    });
+    queue_.emplace_back(
+        item_t{
+            .key_       = in_fragment.key_,
+            .binary_    = true,
+            .bytes_     = std::move(in_fragment.data_),
+            .seq_begin_ = in_fragment.seq_begin_,
+            .seq_end_   = in_fragment.seq_end_
+        }
+    );
     while (queue_.size() > k_max_pending) queue_.pop_front();
     idle_.store(false);
     pump();
@@ -231,7 +231,7 @@ void ws_outlet::send_event(nlohmann::json in_json) { impl_ptr_->send_event(std::
 
 void ws_outlet::send_fragment(fragment_t in_fragment) { impl_ptr_->send_fragment(std::move(in_fragment)); }
 
-void ws_outlet::notify_state(std::string in_state) { impl_ptr_->notify_state(std::move(in_state)); }
+void ws_outlet::notify_state(capture_state in_state) { impl_ptr_->notify_state(in_state); }
 
 bool ws_outlet::idle() const { return impl_ptr_->idle(); }
 

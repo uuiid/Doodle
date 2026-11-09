@@ -51,7 +51,7 @@ class ws_outlet : public std::enable_shared_from_this<ws_outlet> {
 
   void send_fragment(fragment_t in_fragment);
 
-  void notify_state(std::string in_state);
+  void notify_state(capture_state in_state);
 
   [[nodiscard]] bool idle() const;
 
