@@ -81,7 +81,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
     if (stream_state_ == capture_state::previewing) co_return make_status(capture_state::previewing);
 
-    close_stream();
+    co_await close_stream();
 
     auto l_width  = even(in_option.width_ > 0 ? in_option.width_ : k_default_width);
     auto l_height = even(in_option.height_ > 0 ? in_option.height_ : k_default_height);
@@ -115,8 +115,9 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       outlet_->send_hello();
     }
 
-    auto l_self  = this->shared_from_this();
-    read_thread_ = std::thread{[l_self] { l_self->read_loop(); }};
+    boost::asio::co_spawn(
+        g_io_context(), read_loop(), boost::asio::consign(boost::asio::detached, this->shared_from_this())
+    );
 
     co_return make_status(capture_state::previewing);
   }
@@ -196,7 +197,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       record_state_ = capture_state::stopped;
     }
 
-    close_stream();
+    co_await close_stream();
 
     stream_state_ = capture_state::idle;
     if (outlet_) outlet_->set_init_segment({});
@@ -313,22 +314,9 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     }
   }
 
-  void close_stream() {
-    if (read_thread_.joinable()) {
-      release_camera();
-      std::unique_lock l_lock{read_mutex_};
-      read_cv_.wait_for(
-          l_lock, std::chrono::milliseconds{k_stop_drain_timeout_ms}, [this] { return read_finished_; }
-      );
-      l_lock.unlock();
-      if (!read_finished_) {
-        SPDLOG_WARN("摄像头读线程未退出, 放弃等待, 线程随进程结束");
-        truncated_ = true;
-        read_thread_.detach();
-      } else {
-        read_thread_.join();
-      }
-    }
+  boost::asio::awaitable<void> close_stream() {
+    release_camera();
+    co_await wait_read_thread();
     close_record();
     if (fragmenter_) {
       fragmenter_->finish();
@@ -339,6 +327,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       cap_->release();
       cap_.reset();
     }
+    co_return;
   }
 
   boost::asio::awaitable<void> wait_outlet_idle() {
@@ -350,12 +339,9 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     }
   }
 
-  void read_loop() {
+  boost::asio::awaitable<void> read_loop() {
     while (true) {
-      {
-        std::unique_lock l_lock{read_mutex_};
-        if (read_stop_) break;
-      }
+      if (read_stop_) break;
 
       auto l_cap = cap_;
       if (!l_cap) break;
@@ -369,7 +355,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       }
 
       if (l_grab.empty() || l_grab.type() != CV_8UC3) {
-        std::unique_lock l_lock{read_mutex_};
         if (read_stop_) break;
         ++read_failures_;
         if (read_failures_ % k_fps == 0) SPDLOG_WARN("摄像头连续返回空帧 {} 次", read_failures_);
@@ -385,18 +370,11 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       );
     }
 
-    std::unique_lock l_lock{read_mutex_};
     read_finished_ = true;
-    read_cv_.notify_all();
+    co_return;
   }
 
-  void request_read_stop() {
-    {
-      std::unique_lock l_lock{read_mutex_};
-      read_stop_ = true;
-    }
-    read_cv_.notify_all();
-  }
+  void request_read_stop() { read_stop_ = true; }
 
   void release_camera() {
     request_read_stop();
@@ -404,25 +382,20 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   }
 
   boost::asio::awaitable<void> wait_read_thread() {
-    if (!read_thread_.joinable()) co_return;
+    if (read_finished_) co_return;
     auto l_deadline = clock_type::now() + std::chrono::milliseconds{k_stop_drain_timeout_ms};
     while (clock_type::now() < l_deadline) {
-      {
-        std::unique_lock l_lock{read_mutex_};
-        if (read_finished_) break;
-      }
+      if (read_finished_) co_return;
       co_await boost::asio::steady_timer{strand_, std::chrono::milliseconds{2}}.async_wait(
           boost::asio::use_awaitable
       );
     }
 
-    std::unique_lock l_lock{read_mutex_};
     if (!read_finished_) {
-      SPDLOG_WARN("摄像头读线程未在 {} ms 内退出, 放弃等待", k_stop_drain_timeout_ms);
+      SPDLOG_WARN("摄像头读协程未在 {} ms 内退出, 放弃等待", k_stop_drain_timeout_ms);
       truncated_ = true;
-      co_return;
     }
-    l_lock.unlock();
+    co_return;
   }
 
   void drain_filter() {
