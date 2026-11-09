@@ -15,6 +15,7 @@
 
 #include "zlib_deflate_file_body.h"
 #include <algorithm>
+#include <cctype>
 #include <core/global_function.h>
 #include <cryptopp/adler32.h>
 #include <cryptopp/filters.h>
@@ -246,7 +247,9 @@ boost::beast::http::message_generator http_body_file_t::make_message(
         }
     );
 
-  auto l_begin = range_begin_;
+  auto l_begin           = range_begin_;
+  const auto l_file_size = static_cast<std::uint64_t>(FSys::file_size(path_));
+  if (l_file_size > 0 && l_begin >= l_file_size) l_begin = 0;
   if (range_mode_ == http_file_range_mode::partial) {
     l_res.body().seek(l_begin, l_code);
     if (l_code)
@@ -259,25 +262,30 @@ boost::beast::http::message_generator http_body_file_t::make_message(
     l_res.result(boost::beast::http::status::partial_content);
     l_res.set(
         boost::beast::http::field::content_range,
-        fmt::format("bytes {}-{}/{}", l_begin, FSys::file_size(path_) - 1, FSys::file_size(path_))
+        fmt::format("bytes {}-{}/{}", l_begin, l_file_size - 1, l_file_size)
     );
   } else if (in_session_data.req_header_.find(boost::beast::http::field::range) != in_session_data.req_header_.end()) {
     if (auto l_range = in_session_data.req_header_.at(boost::beast::http::field::range);
         !l_range.empty() && l_range.starts_with("bytes=")) {
-      l_begin = std::stoll(l_range.substr(6, l_range.find("-") - 6));
-      l_res.body().seek(l_begin, l_code);
-      if (l_code)
-        throw_exception(
-            http_request_error{
-                boost::beast::http::status::internal_server_error,
-                fmt::format("无法定位文件 {} {}", path_.generic_string(), l_code.message())
-            }
+      auto l_str       = l_range.substr(6, l_range.find("-") - 6);
+      bool l_all_digit = !l_str.empty() && std::ranges::all_of(l_str, [](char in_c) { return std::isdigit(in_c); });
+      if (l_all_digit) {
+        l_begin = std::stoll(l_str);
+        if (l_file_size > 0 && l_begin >= l_file_size) l_begin = 0;
+        l_res.body().seek(l_begin, l_code);
+        if (l_code)
+          throw_exception(
+              http_request_error{
+                  boost::beast::http::status::internal_server_error,
+                  fmt::format("无法定位文件 {} {}", path_.generic_string(), l_code.message())
+              }
+          );
+        l_res.result(boost::beast::http::status::partial_content);
+        l_res.set(
+            boost::beast::http::field::content_range,
+            fmt::format("bytes {}-{}/{}", l_begin, l_file_size - 1, l_file_size)
         );
-      l_res.result(boost::beast::http::status::partial_content);
-      l_res.set(
-          boost::beast::http::field::content_range,
-          fmt::format("bytes {}-{}/{}", l_begin, FSys::file_size(path_) - 1, FSys::file_size(path_))
-      );
+      }
     }
   }
 

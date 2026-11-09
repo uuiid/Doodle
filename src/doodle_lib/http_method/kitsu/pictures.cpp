@@ -116,7 +116,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_originals_preview_files_download, get)
   auto l_ext      = l_path.extension();
   auto l_mime     = mime_type(l_ext);
   auto l_body     = std::make_unique<http_body_file_t>(l_path, l_mime);
-  l_body->set_attachment(fmt::format("movie_preview_{}.{}", l_pre_file.original_name_, l_ext.string().substr(1)));
+  l_body->set_attachment(
+      fmt::format(
+          "{}.{}",
+          l_pre_file.original_name_.empty() ? fmt::format("movie_preview_{}", preview_file_id_)
+                                            : l_pre_file.original_name_,
+          l_ext.string().substr(1)
+      )
+  );
+  l_body->set_header(boost::beast::http::field::cache_control, "no-transform");
+
   co_return l_body;
 }
 }  // namespace doodle::http

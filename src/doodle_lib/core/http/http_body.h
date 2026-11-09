@@ -8,6 +8,7 @@
 
 #include <boost/beast.hpp>
 #include <boost/beast/http/message_fwd.hpp>
+#include <boost/url.hpp>
 
 #include <chrono>
 #include <cstddef>
@@ -221,14 +222,16 @@ void http_body_base_t::set_response_file_header(
   in_res.set(boost::beast::http::field::last_modified, fmt::format("{:%a, %d %b %Y %T} GMT", l_last_time));
   in_res.set(boost::beast::http::field::etag, generate_etag(in_path));
   if (in_is_attachment) {
+    const auto& l_filename = in_attachment_filename.empty() ? in_path.filename().string() : in_attachment_filename;
     in_res.set(
         boost::beast::http::field::content_disposition,
         fmt::format(
-            "attachment; filename=\"{}\"",
-            in_attachment_filename.empty() ? in_path.filename().string() : in_attachment_filename
+            "attachment; filename=\"{}\"; filename*=UTF-8''{}", l_filename,
+            boost::urls::encode(std::string_view{l_filename}, boost::urls::unreserved_chars)
         )
     );
   }
+  in_res.set(boost::beast::http::field::accept_ranges, "bytes");
 }
 
 }  // namespace doodle::http
