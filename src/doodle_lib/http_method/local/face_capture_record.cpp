@@ -29,7 +29,7 @@ std::string uuid_string(boost::uuids::uuid in_id) { return fmt::format("{}", in_
 
 nlohmann::json capture_status_json(const face_capture::capture_status& in_status) {
   return nlohmann::json{
-      {"state", face_capture::to_string(in_status.state_)},
+      {"state", in_status.state_},
       {"width", in_status.width_},
       {"height", in_status.height_},
       {"fps", in_status.fps_},
@@ -40,9 +40,9 @@ nlohmann::json capture_status_json(const face_capture::capture_status& in_status
   };
 }
 
-std::string state_of(const std::shared_ptr<face_capture::capture_session>& in_session) {
-  if (!in_session) return "idle";
-  return face_capture::to_string(in_session->state());
+face_capture::capture_state state_of(const std::shared_ptr<face_capture::capture_session>& in_session) {
+  if (!in_session) return face_capture::capture_state::idle;
+  return in_session->state();
 }
 
 FSys::path session_dir_of(const boost::uuids::uuid& in_session_id) {
@@ -154,7 +154,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording, get) {
     l_json["frames"] = l_session->frames();
   }
   l_json["session_id"] = uuid_string(session_id_);
-  l_json["state"]      = (l_session && l_session->session_id() == session_id_) ? state_of(l_session) : "stopped";
+  l_json["state"] =
+      (l_session && l_session->session_id() == session_id_) ? state_of(l_session) : face_capture::capture_state::stopped;
   l_json["artifacts"]  = artifacts_of(l_dir);
 
   co_return std::make_unique<http_body_json_t>(std::move(l_json));

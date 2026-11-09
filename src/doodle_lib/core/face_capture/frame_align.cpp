@@ -12,7 +12,6 @@
 #include <doodle_lib/logger/logger.h>
 
 #include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 
 #include <fstream>
@@ -114,8 +113,6 @@ void from_json(const nlohmann::json& nlohmann_json_j, align_record& nlohmann_jso
   if (nlohmann_json_j.contains("gaps")) nlohmann_json_j.at("gaps").get_to(nlohmann_json_t.gaps_);
   if (nlohmann_json_j.contains("truncated")) nlohmann_json_j.at("truncated").get_to(nlohmann_json_t.truncated_);
 }
-
-std::string to_string(capture_state in_state) { return std::string{magic_enum::enum_name(in_state)}; }
 
 FSys::path align_path(const FSys::path& in_session_dir) { return in_session_dir / "align.json"; }
 

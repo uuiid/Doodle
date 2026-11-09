@@ -133,6 +133,4 @@ struct fragment_t {
   bool key_{false};
 };
 
-std::string to_string(capture_state in_state);
-
 }  // namespace doodle::face_capture
