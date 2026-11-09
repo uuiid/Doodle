@@ -13,7 +13,6 @@
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
 
-#include "zlib_deflate_file_body.h"
 #include <algorithm>
 #include <cctype>
 #include <core/global_function.h>
@@ -185,10 +184,6 @@ http_body_file_t& http_body_file_t::set_range(std::uint64_t in_begin, std::uint6
   range_end_   = in_end;
   return *this;
 }
-http_body_file_t& http_body_file_t::set_deflate_body(bool in_deflate) {
-  use_deflate_body_ = in_deflate;
-  return *this;
-}
 
 boost::beast::http::message_generator http_body_file_t::make_message(
     const detail::session_data& in_session_data
@@ -211,29 +206,6 @@ boost::beast::http::message_generator http_body_file_t::make_message(
   }
 
   boost::system::error_code l_code{};
-  if (use_deflate_body_) {
-    boost::beast::http::response<zlib_deflate_file_body> l_res{
-        boost::beast::http::status::ok, in_session_data.version_
-    };
-    for (auto const& l_field : headers_) l_res.insert(l_field.name(), l_field.value());
-    l_res.body().open(path_, std::ios::in | std::ios::binary, l_code);
-    if (l_code)
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::internal_server_error,
-              fmt::format("无法打开文件 {} {}", path_.generic_string(), l_code.message())
-          }
-      );
-    l_res.set(boost::beast::http::field::content_encoding, "deflate");
-    set_response_file_header(
-        l_res, path_, get_mine_type(), has_cache_control(), is_attachment(), get_attachment_filename(),
-        in_session_data.access_control_allow_origin_, in_session_data.timeout_
-    );
-    l_res.keep_alive(in_session_data.keep_alive_);
-    l_res.prepare_payload();
-    return l_res;
-  }
-
   boost::beast::http::response<boost::beast::http::file_body> l_res{
       boost::beast::http::status::ok, in_session_data.version_
   };

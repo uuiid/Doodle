@@ -4,7 +4,6 @@
 
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/http/http_function.h>
-#include <doodle_lib/core/http/zlib_deflate_file_body.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
@@ -143,11 +142,6 @@ boost::asio::awaitable<http_body_ptr> pictures_base::thumbnail_get(
   }
 
   auto l_ext = l_path.extension();
-  if (in_handle->req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
-    auto l_body = std::make_unique<http_body_file_t>(l_path, mime_type(l_ext));
-    l_body->set_deflate_body();
-    co_return l_body;
-  }
   co_return std::make_unique<http_body_file_t>(l_path, mime_type(l_ext));
 }
 boost::asio::awaitable<http_body_ptr> pictures_base::thumbnail_404(session_data_ptr in_handle) {

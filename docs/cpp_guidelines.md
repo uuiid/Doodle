@@ -65,7 +65,7 @@ boost::asio::awaitable<spec_branch_result> advance_session_spec_branch(...);
 | 类别 | 数量 | 处置 |
 |---|---|---|
 | nlohmann `to_json` / `from_json`（含 friend） | ~430 | **豁免**：签名由库规定 |
-| `boost::system::error_code&`（`json_body.h` / `multipart_body.h` / `zlib_deflate_file_body.h`） | ~12 | **豁免**：Asio/Beast 规定 |
+| `boost::system::error_code&`（`json_body.h` / `multipart_body.h`） | ~12 | **豁免**：Asio/Beast 规定 |
 | Maya SDK（`MPxNode::compute`、`MFn*`、`MStatus&`、`captureCallback`） | 多 | **豁免**：SDK 规定 |
 | 第三方 vendored（`bcrypt/`、`ai/Math/`、`ai/AnimProcessing/`，均带 NVIDIA Apache-2.0 头） | 17 | **豁免**：不是本库代码 |
 

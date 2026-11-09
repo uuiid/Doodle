@@ -23,7 +23,6 @@ struct capture_t;
 class http_route;
 class http_function;
 using http_function_ptr = std::shared_ptr<http_function>;
-struct zlib_deflate_file_body;
 using http_route_ptr = std::shared_ptr<http_route>;
 class http_session_data;
 using http_session_data_ptr = std::shared_ptr<http_session_data>;

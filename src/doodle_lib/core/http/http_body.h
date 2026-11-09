@@ -140,7 +140,6 @@ struct http_body_file_t : http_body_base_t {
   http_file_range_mode range_mode_{http_file_range_mode::full};
   std::uint64_t range_begin_{0};
   std::uint64_t range_end_{0};
-  bool use_deflate_body_{false};
 
   http_body_file_t() = default;
   explicit http_body_file_t(
@@ -150,7 +149,6 @@ struct http_body_file_t : http_body_base_t {
 
   http_body_file_t& set_range_mode(http_file_range_mode in_mode);
   http_body_file_t& set_range(std::uint64_t in_begin, std::uint64_t in_end);
-  http_body_file_t& set_deflate_body(bool in_deflate = true);
 
   boost::beast::http::message_generator make_message(const detail::session_data& in_session_data) const override;
 };
