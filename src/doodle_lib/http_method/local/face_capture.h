@@ -107,7 +107,7 @@ explicit face_capture_recording_stop(std::shared_ptr<face_capture_session_holder
     : base_type(), holder_(std::move(in_holder)) {}
 
 DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}/stop")
+DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}/stop", session_id_)
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN_C(face_capture_recording, local_http_fun)
@@ -119,7 +119,7 @@ explicit face_capture_recording(std::shared_ptr<face_capture_session_holder> in_
 
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
-DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}")
+DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}", session_id_)
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN_C(face_capture_recording_video, local_http_fun)
@@ -128,7 +128,7 @@ boost::uuids::uuid session_id_{};
 face_capture_recording_video() : base_type() {}
 
 DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}/video")
+DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}/video", session_id_)
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN_C(face_capture_recording_curves, local_http_fun)
@@ -137,7 +137,7 @@ boost::uuids::uuid session_id_{};
 face_capture_recording_curves() : base_type() {}
 
 DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}/curves")
+DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}/curves", session_id_)
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http::local
