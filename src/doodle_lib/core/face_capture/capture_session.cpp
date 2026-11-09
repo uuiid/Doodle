@@ -134,20 +134,8 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     if (FSys::exists(l_dir)) FSys::remove_all(l_dir);
     FSys::create_directories(l_dir);
 
-    std::shared_ptr<mp4_writer> l_mp4{};
-    std::string l_encode_error{};
-    try {
-      l_mp4 = std::make_shared<mp4_writer>(l_dir / "take.mp4", width_, height_, true);
-      if (!l_mp4->init()) {
-        l_mp4.reset();
-        l_encode_error = "无法创建 take.mp4 编码器";
-      }
-    } catch (const std::exception& in_err) { l_encode_error = in_err.what(); }
-
-    if (!l_encode_error.empty()) {
-      if (FSys::exists(l_dir)) FSys::remove_all(l_dir);
-      DOODLE_CHICK_HTTP(false, unprocessable_entity, "无法创建 take.mp4 编码器: {}", l_encode_error);
-    }
+    auto l_mp4 = std::make_shared<mp4_writer>(l_dir / "take.mp4", width_, height_, true);
+    DOODLE_CHICK_HTTP(l_mp4->init(), unprocessable_entity, "无法创建 take.mp4 编码器: {}", l_dir.string());
     mp4_writer_ = std::move(l_mp4);
 
     session_id_  = l_session_id;
