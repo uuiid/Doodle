@@ -46,7 +46,7 @@
   GET  /face_capture/recordings[/{id}]            状态查询（磁盘扫描，跨连接可用）
 
 数据面（后端 → 前端，单向 WS，不接受任何命令）
-  浏览器 ◄──WS── avc_init / avc_fragment / capture_state / transcode_progress / error
+  浏览器 ◄──WS── hello / avc_init / avc_fragment / transcode_progress / error
                        │
         ┌──────────────┴───────────────┐
         │  摄像头读线程 (阻塞 read)        │
@@ -206,7 +206,8 @@ WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` 
 
 - `websocket_init`：当前是空实现（不校验 token，见 §14 仍未定第 2 条）。路由成员里只有 `runner_` / `selected_` / `holder_`（都是 `shared_ptr`，clone 安全），**不存会话**。
 - **连上只开预览，不开录**：`hello` 里的 `state` 是 `open()` 之后的状态，即 `previewing`（摄像头打不开时是 `idle` 并在 `error` 事件里说明原因）。**录制必须由前端 `POST /recordings` 显式开始**，这是本方案与早期草案最大的差别。
-- 接入顺序固定为 **先 `attach(write_fn)` → `session_->attach(outlet)` → `open_capture()`**。`hello` 不在连接建立时发：`open()` 之后由采集侧驱动 `ws_outlet` 发 `hello`（带真实的 `session_id`/`width`/`height`/`state`），前端第一帧事件必然是 `hello`。
+- 接入顺序固定为 **先 `attach(write_fn)` → `session_->attach(outlet)` → `open_capture()`**。`hello` 不在连接建立时发：`open()` 之后由采集侧驱动 `ws_outlet` 发一次 `hello`（带真实的 `session_id`/`width`/`height`/`state`），前端第一帧事件必然是 `hello`。
+- **`hello` 是唯一的状态快照，之后没有任何状态推送**：连接存续期间不再下发 `capture_state` 事件。前端判断动作是否生效一律以 HTTP 响应（状态码 + `capture_status` 的 `state`）为准；需要重新取状态就再发一次 `GET /recordings/{id}`，或重连拿新的 `hello`。
 - **断开即结束会话**：`close_impl()` 先 `close()` 再 `detach()`。若当时正在录制，`close()` 内部等价于一次 `stop()`，`take.mp4` 与 `align.json` 照常落盘。前端要"结束但保留画面"就得自己重连（新连接 = 新会话）。
 - 第二条连接 = 第二个会话：旧连接此时正卡在它自己的 `close()` 里，摄像头被 `VideoCapture::release()` 唤醒收尾后，新连接才拿得到设备。**同一时刻仍然只有一条推流**（§0 第 9 条），但"接管"退化成"旧连接被关掉、新连接重开"。
 - `websocket_callback`：`runner_ = std::make_shared<ws_stream_runner>(std::move(in_stream), in_handle->logger_, selected_->index(), holder_); runner_->start();`，协程在 `runner_` 内部 `co_spawn`，自己 `async_read`/`async_write`。
@@ -220,7 +221,7 @@ WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` 
 
 1. 前端收到 `avc_init` → `SourceBuffer.appendBuffer(init)`；
 2. 前端收到 `avc_fragment` → 等下一帧 binary → `appendBuffer(moof+mdat)`；
-3. 服务端**可能跳号**（§5.3：WS 写不动时丢分片），但**只会在关键帧边界重新同步**：丢掉的分片之后，下一个 `keyframe=true` 的分片一定完整送到。前端不需要实现跳片逻辑，只需在收到 `capture_state: recording` 或新的 `avc_init` 时清空 buffer。
+3. 服务端**可能跳号**（§5.3：WS 写不动时丢分片），但**只会在关键帧边界重新同步**：丢掉的分片之后，下一个 `keyframe=true` 的分片一定完整送到。前端不需要实现跳片逻辑，只需在收到新的 `avc_init` 时清空 buffer。
 
 服务端保证同一连接上 `seq` 严格递增（可能不连续）。**预览期与录制期各用一套帧号**：预览期 `seq` 是独立的预览计数，录制期 `seq` 与 `take.mp4` 的帧号一致，并通过 `align.json` 的 `seq` 字段一一对应（§4.4），这也是"录制到第几帧"的唯一口径。
 
@@ -228,14 +229,13 @@ WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` 
 
 | event | 时机 | 负载要点 |
 | --- | --- | --- |
-| `hello` | 连接建立 | `{session_id, state:"previewing", width, height, fps:25}` |
+| `hello` | 连接建立时一次（`open()` 成功后由采集侧下发） | `{session_id, state:"previewing", width, height, fps:25}`，连接存续期间的唯一状态快照 |
 | `avc_init` | 连接建立时补发、以及每次新会话开始录制 | `{bytes, seq_begin, seq_end}`（fMP4 的 `ftyp+moov`），紧随一个 binary 帧装 init 段 |
 | `avc_fragment` | 每个分片 | `{seq, keyframe, size}`，紧随一个 binary 帧装 `moof+mdat` |
-| `capture_state` | 状态变化 | `{state:"idle"/"previewing"/"recording"/"stopping"/"stopped"}` |
 | `transcode_progress` | 转码阶段推进（≥1 Hz 节流） | `{job_id, step:"png_sequence"/"ue_commandlet", state, progress, detail}` |
 | `error` | 任何失败 | `{code, message}`，`code` 取自统一错误码表（`to_string(error_code_t)`） |
 
-一期就这 6 个事件。**没有 `face_status`**：人脸检测在二期（§6），一期前端拿不到、也不需要拿人脸框。
+一期就这 5 个事件。**没有 `face_status`**：人脸检测在二期（§6），一期前端拿不到、也不需要拿人脸框。**没有 `capture_state`**：状态只在 `hello` 里给一次，后续以 HTTP 响应为准（§3.5）。
 
 所有事件都是**纯下行**。`transcode_progress` 由后台作业广播到当前唯一的 WS；**WS 没连时没有会话也没有作业可跑**，所以不存在"事件丢了"这回事；跨连接的作业状态用 `GET /transcode/{job_id}` 查（`GET /recordings/{id}` 同理）。
 
@@ -258,7 +258,7 @@ WS 上**不定义任何上行命令**。前端不需要发 `ping`（浏览器原
 - **录制是显式动作**：`POST /recordings` 才建 `session_dir` 与 `take.mp4`。没有活跃 WS 会话时返回 `409`。
 - **结束录制是同步的**：`stop()` 内 `filter_->flush()` → 等推流排空 → `mp4_writer_->finish()`（`av_write_trailer`）→ 写 `align.json`，上限 2 秒。返回时 `take.mp4` 已完整，前端可以直接去拉 `/video` 或提交转码，不需要轮询。**收尾之后预览继续**，摄像头不关。
 - **断开 WS 走 `close()`**：若正在录制，内部等价于先 `stop()` 再关摄像头，只是没人接返回值。
-- 状态变化通过 WS 的 `capture_state` 推送，前端应以 WS 事件与 POST 返回值为准。
+- 状态变化**不通过 WS 推送**，前端以 HTTP 响应体里的 `state` 为准；WS 只在连接建立时用 `hello` 给一次状态快照。
 - 重复调用是幂等的：已在 `recording` 时再发 `POST /recordings` 返回 `409`；没在录时发 `stop` 也返回 `409`。
 - **同一连接可以录多段**：每次 `POST /recordings` 新生成一个 `session_id` 与目录，上一段的 `take.mp4` 留在自己的目录里。
 
@@ -274,7 +274,7 @@ WS 传命令的代价是**全双工状态的维护**：命令要有 id、要等 
 
 | 关注点 | WS 命令 | HTTP POST（采用） |
 | --- | --- | --- |
-| 知道动作成没成 | 等下一条 `capture_state` 事件，超时要自己定 | 看状态码与 body，浏览器原生支持 |
+| 知道动作成没成 | 等下一条状态推送，超时要自己定 | 看状态码与 body，浏览器原生支持 |
 | 断线期间发命令 | 需要客户端队列与重放策略 | 请求本身就失败了，前端直接提示重试 |
 | 调试 | 要开 WS 面板看帧 | `curl` 一行就能复现 |
 | 服务端实现 | 读协程里解析 + `post` 到 strand + 回执状态机 | 一个 handler，返回 `awaitable` |
@@ -305,11 +305,11 @@ record_state:  idle ──POST /recordings start_record()──► recording ─
                                                               └──── 再次 POST /recordings ─────────┘
 ```
 
-对外只暴露一个 `capture_state`（WS 事件与 HTTP 响应体里的 `state`），映射规则：`record_state` 不是 `idle` 就取它，否则取 `stream_state`。所以前端看到的是 `idle → previewing → recording → stopping → (stopped) → previewing`：
+对外只暴露一个 `capture_state`（HTTP 响应体里的 `state`，以及连接建立时 `hello` 的那一次快照），映射规则：`record_state` 不是 `idle` 就取它，否则取 `stream_state`。所以状态序列是 `idle → previewing → recording → stopping → (stopped) → previewing`：
 
 - **预览态是新增的**：`previewing` 表示"摄像头开着、画面在推、但没有落盘"。这是本次改动唯一的契约新增值，`capture_state` 枚举里追加了 `previewing = 4`（原有 0–3 不变）。
 - `stopped` 是**录制完成后的一次性状态**：`stop()` 返回时 `record_state` 已是 `stopped`，但下一次 `start_record()` 立刻回到 `recording`。`GET /recordings/{id}` 对历史会话一律报 `stopped`。
-- `stopping` 是**短暂中间态**：`stop()` 把 `record_state` 置成 `stopping` 并下发 `capture_state` 事件，然后**在同一个协程里**等推流排空（≤ 2 秒）→ 收 `take.mp4` → 写 `align.json` → 置 `stopped` 再发一次事件。所以前端看到 `stopping` 之后必定能等到 `stopped`，`POST .../stop` 返回时 `record_state` 已经是 `stopped`（对外状态回到 `previewing`）。
+- `stopping` 是**短暂中间态**：`stop()` 把 `record_state` 置成 `stopping`，然后**在同一个协程里**等推流排空（≤ 2 秒）→ 收 `take.mp4` → 写 `align.json` → 置 `stopped`，最后才返回。这段时间 HTTP 请求一直挂着，前端要靠自己的 pending 态与按钮禁用提示用户"正在收尾"，响应超时须大于 2 秒；不上报 `stopping` 事件，所以前后端都不必为这两秒额外做时序同步。
 - 等推空**必须用 `co_await timer.async_wait()` 轮询 `outlet_->idle()`**，不能用同步的 `timer.wait()`：`stop()` 与写协程在同一个 strand 上，同步阻塞会把 strand 占死，写协程永远抢不到执行权，结果是真的空等满 2 秒。
 - `open()` 时若仍在 `recording`/`stopping` → 抛 `doodle_error`（`409`）；已在 `previewing` 则直接返回（幂等）。`start_record()` 在未 `open` 时 → 抛 `409`，在 `recording`/`stopping` 时 → 抛 `409`；否则先 `close_record()` 收拾上一段，再建新的。`stop()` 在没在录时 → 抛 `409`。
 - **会话对象只有一个，由 `ws_stream_runner` 创建持有**（§3.3），裸指针登记在 `face_capture_session_holder` 供录制端点使用：不存在跨连接的会话对象，所以"设备互斥"退化成两层——进程层面由 `ws_stream_runner` 的持有关系保证，对象层面由状态机不许重入保证。
@@ -399,9 +399,9 @@ camera → (fps 滤镜) ─┬─► media_fragment_pipeline(推流编码器) �
 
 - `ws_outlet` 就是当前绑定的那条连接的写接口（`shared_ptr`，可为空——没连 WS 时推流编码直接**不做**，省 CPU）。
 - **线程模型（硬约束）**：`ws_outlet` 的 strand 背后是 `g_ioc` 线程池，**strand 上的处理函数与它的调用线程不保证同一线程**。所以"发帧"（`send_*`，可能从采集 strand 调用）与"写帧"（`drain()`，在 outlet 自己的 strand 上）之间**没有同线程假设可用**，只能靠"所有共享状态只在 strand 上访问"来串行化。
-- **怎么做到**：`send_hello` / `send_event` / `send_fragment` / `notify_state` 一律 `boost::asio::post(strand_, ...)` 投递，逻辑体在 strand 上执行；`attach` / `detach` / `set_init_segment` / `set_session_info` 保留同步签名，但**必须在注入的 strand 上调用**（调用方就是采集 strand，满足）。`queue_` / `closing_` / `write_` / `state_` / `init_segment_` / `session_id_` / `width_` / `height_` 全部只由 strand 触碰，不需要 mutex，也不需要 TBB 并发容器。
+- **怎么做到**：`send_hello` / `send_event` / `send_fragment` 一律 `boost::asio::post(strand_, ...)` 投递，逻辑体在 strand 上执行；`attach` / `detach` / `set_init_segment` / `set_session_info` 保留同步签名，但**必须在注入的 strand 上调用**（调用方就是采集 strand，满足）。`queue_` / `closing_` / `write_` / `state_` / `init_segment_` / `session_id_` / `width_` / `height_` 全部只由 strand 触碰，不需要 mutex，也不需要 TBB 并发容器。`state_` 只在 `open()` 时由 `set_session_info` 一并写入，此后不再变化。
 - **查询走 atomic**：`attached_`、`idle_` 两个 `std::atomic_bool` 专门给外部查询用（`is_attached()` / `idle()`），只是快照，不参与 strand 上的任何决策。决策一律用 strand 内的 `closing_` / `write_` / `queue_` 判断。
-- **顺序要求**：因为 `send_*` 变成异步投递，**必须先 `attach()` 再发任何 `send_*`**（`send_hello` / `send_fragment`）；反过来的话投递的函数先执行、看到未 attach 就丢弃。`ws_stream_runner` 的顺序就是 attach outlet → `session_->attach()` → `open()`。
+- **顺序要求**：因为 `send_*` 变成异步投递，**必须先 `attach()` 再发任何 `send_*`**（`send_hello` / `send_fragment`）；反过来的话投递的函数先执行、看到未 attach 就丢弃。`ws_stream_runner` 的顺序就是 attach outlet → `session_->attach()` → `open()`，`hello` 由 `open()` 末尾在 `set_session_info` 之后发出。
 - **写不动就丢**：`send_fragment(fragment)` 调完即返回。内部是一个**上限 8 片**的 `std::deque`，`drain()` 保证**同时只有一条写协程在途**，依次取队首写出去。
 - **丢非关键帧**：队列里还压着没发出去的关键帧分片时，新进来的**非关键帧分片直接丢弃**（它反正要靠后面的关键帧重同步）。所以异常时队列最多积到 8 片，随后被关键帧覆盖式清空。**没有任何环形缓冲、没有 history 补发**。
 - 为什么不需要更复杂的背压：单用户本机 + 同机前端，WS 走 loopback，单帧分片 10–60 KB，写满窗口的概率极低；偶发丢片最多让画面卡一下。**预览丢片不影响 `take.mp4`**：两者是两条独立编码器，各自从同一批滤镜输出帧取图，`take.mp4` 只取决于编码器是否跟得上，与 WS 写不写得动无关。
@@ -875,4 +875,5 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | **连上 WS 即开始录制**（`run()` 里直接 `session_->start()`），录制产物与连接生命周期绑定 | 拆成三段：`open()` 只开摄像头推预览（不落盘）、`start_record()` 由 `POST /recordings` 触发、`stop()` 收尾后**继续预览**；`capture_state` 追加 `previewing` | 用户要求"没点开始录制之前只推预览流"；预览期不该在磁盘上留下任何东西 |
 | **`raw.mkv`（FFV1 无损，时基 1/1000）+ 转码三步（png_sequence / mp4 / ue_commandlet）** | 取消 `raw.mkv`，录制只落 `take.mp4`（H.264 25 fps）；转码变两步：`take.mp4 → frames/ → curves/`，原 `mp4` 步骤删除 | 用户要求"不保存 raw.mkv，只保存 take"：少写一份 GB 级文件、少一次编码、录完即能回放；代价是有损输入 UE，列入 §12 风险并留了恢复 `raw_writer` 的口子 |
 | `capture_session::start()` 一个 `state_` 走全程 | 拆成 `stream_state_`（idle/previewing）与 `record_state_`（idle/recording/stopping/stopped）两轴，对外用 `display_state()` 合成 `capture_state` | 一根轴表达不了"摄像头开着但没在录"这个中间状态 |
+| WS 的 `capture_state` 状态推送事件 + `ws_outlet::notify_state` + `impl::state_` 的持续维护 | 删除：状态只在连接建立时由 `open()` 末尾发一次 `hello` 快照，之后状态一律以 HTTP 响应体为准 | 动作是否生效本来就由 `POST /recordings`、`POST .../stop` 的状态码与 `capture_status` 回答（§3.5）；同一份状态有两条上报通路只会制造"WS 说 stopping、HTTP 已返回 stopped"的不一致。代价：前端需自己处理 `stop()` 最长 2 秒的 pending，以及重连后靠 `hello` 或 `GET /recordings/{id}` 重新取状态 |
 | `align.json` 的 `raw_frames` 表示"真实帧数"、`inserted_frames` 表示滤镜补帧数 | `raw_frames` 改为"录制期写入 `take.mp4` 的帧数"（= `frames_` 长度），`inserted_frames` 恒 0 保留字段 | 没有 `raw.mkv` 之后就不存在"真实帧"这条轴 |

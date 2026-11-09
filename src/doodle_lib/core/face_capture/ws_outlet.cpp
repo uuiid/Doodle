@@ -93,13 +93,6 @@ class ws_outlet::impl : public std::enable_shared_from_this<ws_outlet::impl> {
     });
   }
 
-  void notify_state(capture_state in_state) {
-    post([self = this->shared_from_this(), in_state] {
-      self->state_ = in_state;
-      self->send_json(nlohmann::json{{"type", "capture_state"}, {"state", nlohmann::json{in_state}}});
-    });
-  }
-
   bool idle() const { return idle_.load(); }
 
   const executor_type& get_executor() const { return strand_; }
@@ -230,8 +223,6 @@ void ws_outlet::send_hello() { impl_ptr_->send_hello(); }
 void ws_outlet::send_event(nlohmann::json in_json) { impl_ptr_->send_event(std::move(in_json)); }
 
 void ws_outlet::send_fragment(fragment_t in_fragment) { impl_ptr_->send_fragment(std::move(in_fragment)); }
-
-void ws_outlet::notify_state(capture_state in_state) { impl_ptr_->notify_state(in_state); }
 
 bool ws_outlet::idle() const { return impl_ptr_->idle(); }
 

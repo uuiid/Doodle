@@ -110,7 +110,10 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     stream_state_ = capture_state::previewing;
     record_state_ = capture_state::idle;
 
-    if (outlet_) outlet_->notify_state(display_state());
+    if (outlet_) {
+      outlet_->set_session_info(session_id_, width_, height_);
+      outlet_->send_hello();
+    }
 
     auto l_self  = this->shared_from_this();
     read_thread_ = std::thread{[l_self] { l_self->read_loop(); }};
@@ -153,7 +156,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
     if (outlet_) {
       outlet_->set_session_info(session_id_, width_, height_);
-      outlet_->notify_state(display_state());
+      outlet_->set_init_segment(fragmenter_->init_segment());
     }
 
     co_return make_status(capture_state::recording);
@@ -171,7 +174,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     DOODLE_CHICK_HTTP(record_state_ == capture_state::recording, conflict, "当前没有在录制");
 
     record_state_ = capture_state::stopping;
-    if (outlet_) outlet_->notify_state(display_state());
 
     co_await finish_record();
 
@@ -179,7 +181,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     l_result.truncated_ = truncated_;
 
     record_state_ = capture_state::stopped;
-    if (outlet_) outlet_->notify_state(display_state());
 
     co_return l_result;
   }
@@ -190,7 +191,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     auto l_result = make_status(capture_state::idle);
     if (record_state_ == capture_state::recording) {
       record_state_ = capture_state::stopping;
-      if (outlet_) outlet_->notify_state(display_state());
       co_await finish_record();
       l_result      = make_status(capture_state::previewing);
       record_state_ = capture_state::stopped;
@@ -199,10 +199,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     close_stream();
 
     stream_state_ = capture_state::idle;
-    if (outlet_) {
-      outlet_->set_init_segment({});
-      outlet_->notify_state(display_state());
-    }
+    if (outlet_) outlet_->set_init_segment({});
 
     co_return l_result;
   }
@@ -214,7 +211,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
     outlet_->set_session_info(session_id_, width_, height_);
     if (fragmenter_) outlet_->set_init_segment(fragmenter_->init_segment());
-    if (display_state() != capture_state::idle) outlet_->notify_state(display_state());
   }
 
   void detach() {
