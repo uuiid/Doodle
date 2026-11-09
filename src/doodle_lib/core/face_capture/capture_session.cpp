@@ -59,8 +59,6 @@ std::int64_t elapsed_ms(clock_type::time_point in_start, clock_type::time_point 
   return std::chrono::duration_cast<std::chrono::milliseconds>(in_now - in_start).count();
 }
 
-std::string uuid_string(boost::uuids::uuid in_id) { return fmt::format("{}", in_id); }
-
 }  // namespace
 
 class capture_session::impl : public std::enable_shared_from_this<capture_session::impl> {
@@ -133,7 +131,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     close_record();
 
     auto l_session_id = boost::uuids::random_generator{}();
-    auto l_dir        = root_ / uuid_string(l_session_id);
+    auto l_dir        = root_ / fmt::format("{}", l_session_id);
     if (FSys::exists(l_dir)) FSys::remove_all(l_dir);
     FSys::create_directories(l_dir);
 
