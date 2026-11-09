@@ -4,6 +4,7 @@
 其余细节一律**引用**已有文件，原文永远优先于本文件的转述。
 
 修改本文件前先读 [.github/copilot-instructions.md](.github/copilot-instructions.md)：两者受众重叠，不要制造两份互相漂移的规范。
+C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp_guidelines.md](docs/cpp_guidelines.md)，本文件只摘要其中必须遵守的部分。
 
 ---
 
@@ -14,13 +15,10 @@
 - **Git 提交一律由用户执行。** 完成改动后只报告：改了什么、验证结果、当前处于未提交状态。不要 `git commit` / `git push`，也不要主动提议代提交。
 - **绝不测试。** 不要运行任何测试、不要构建测试目标、不要跑测试验证改动；验证手段只有编译通过。
 - **不要跑发布构建**：`Ninja_release` / `Release_*` / `package_release` 耗时过长，用户已明确要求停用。
-- **不要用非常量引用入参返回结果（out-parameter）**，即使麻烦也要用返回值。
-  协程下应返回 `awaitable<结果结构体>`（如 `awaitable<spec_branch_result>`），而不是 `awaitable<void>` + 非常量引用。
 - **依赖只经 `vcpkg.json` 管理。** 自定义 port 放 `vcpkg_ports/`，triplet 放 `vcpkg_triplets/`。不要在 `CMakeLists.txt` 里硬编码外部依赖路径。
 - **HTTP 处理器的声明与实现必须用宏**，见 §4。手写完整签名是禁止的。
 - **没有明确说明，不写注释。** 代码里默认不出现任何注释；只有任务中明确要求写注释时才写。
-
-以 [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines) 作为本库编程的基本指导。
+- **不修旁支。** 只做请求范围内的改动；顺手发现的其它缺陷先报告，由用户决定改不改。
 
 ## 2. 构建与测试
 
@@ -61,13 +59,74 @@
 
 排查方法：`vcpkg_abi_info.txt` 只记录 `cmake` / `powershell` / `triplet`，**不含编译器**；编译器要看 `CMakeCache.txt` 的 `Z_VCPKG_CL`、`CMakeFiles/rules.ninja` 里的 cl.exe 绝对路径，以及 `vcpkg/compiler-file-hash-cache.json`。
 
-## 3. 代码组织与风格
+## 3. 代码风格
 
 分层：`doodle_core`（底层核心）→ `doodle_lib`（可复用库）→ `exe_*`（可执行入口）/ `maya_plug*`（Maya 插件）。新增公共 API 进 `doodle_lib`，内部实现进 `doodle_core`。
 
-- 格式化用 [.clang-format](.clang-format)：Google 基线，`ColumnLimit: 120`，`IncludeBlocks: Regroup`。include 顺序**由该文件的分组规则决定**（mimalloc → doodle_core → doodle_app → doodle_lib → boost → maya_plug），不要凭习惯排。
-- 静态检查用 [.clang-tidy](.clang-tidy)：`abseil-* / bugprone-* / google-* / misc-* / modernize-* / performance-* / portability-* / readability-*`，且 `WarningsAsErrors: " "`——命中即为错误。豁免项及其理由写在该文件头部注释里，要加新的豁免请连理由一起补。
-- C++ 标准为 C++20（`CMakeLists.txt` 的 `CMAKE_CXX_STANDARD`）。协程已是本仓库一等公民，异步逻辑优先用协程而非回调。
+- **格式化交给工具**：[.clang-format](.clang-format)，Google 基线、`ColumnLimit: 120`、`AlignConsecutiveAssignments`、`AlignAfterOpenBracket: BlockIndent`、`IncludeBlocks: Regroup`。include 顺序**由该文件的 IncludeCategories 决定**（mimalloc → doodle_core → doodle_app → doodle_lib → boost → maya_plug），不要凭习惯排；只在代码风格与本文件冲突时才人工干预格式。
+- **静态检查交工具**：[.clang-tidy](.clang-tidy)，`abseil-* / bugprone-* / google-* / misc-* / modernize-* / performance-* / portability-* / readability-*`，且 `WarningsAsErrors: " "`——命中即为错误。豁免项及其理由写在该文件头部注释里；要加新的豁免请连理由一起补，不要在代码里 `// NOLINT` 绕开。
+- **技术底座**：C++20（`CMakeLists.txt` 的 `CMAKE_CXX_STANDARD`）。协程是一等公民，异步逻辑优先用协程而非回调。
+
+### 3.1 命名
+
+| 前缀/后缀 | 含义 |
+|---|---|
+| `l_` | 局部量（local）|
+| `in_` | 入参（input）|
+| `io_` | 读写入参（in-out），**不得用来做出参**，见 §3.2 |
+| `_`（尾随）| 类成员，如 `state_`、`uuid_id_` |
+| `k_` | `constexpr` / `static const` 常量 |
+| `out_` | **已禁止**：出参本身就不允许 |
+| `p_` / `r_` | 只在 `ai/`、`usd/` 等移植自第三方的数学库中沿用，新代码不用 |
+
+函数与类型一律 `snake_case`（含类名与工厂函数），不写 `GetValue()` 这类驼峰；例外只有对第三方接口的 `override`（Maya `MPxNode::compute`、Asio `async_*` 等按 SDK 规定）。私有成员函数同样带尾随 `_`。类型用 `_t` 后缀表达派生/别名，配置类结构体用 `_arg` / `_option` / `_info` 后缀（如 `export_fbx_arg`、`capture_option`、`camera_info`）。
+
+### 3.2 接口形态
+
+- **不用非常量引用/指针做出参，一律返回值。** 即使包一层结构体显得啰嗦也要用返回值。
+  协程下返回 `awaitable<结果结构体>`（如 `awaitable<spec_branch_result>`），而不是 `awaitable<void>` + 非常量引用。
+  读到一半看到 `T& out_xxx` / `T* out_xxx`：先读函数体——有一半其实是漏了 `const`。
+- **纯输入参数用 `const T&`**（字符串、`FSys::path`、容器、结构体），小整数与枚举按值。不引入 `string_view` / `span` / GSL 改造既有签名，理由见 [docs/cpp_guidelines.md](docs/cpp_guidelines.md) §2。
+- **结果结构体字段全部带默认值**（`std::int32_t width_{0};`），聚合初始化与 `{}` 都能用；只读结果用 `friend to_json` 输出，不另写一个"转 JSON"函数。
+- 成员初始化优先用**类内默认值**，构造函数只做必须做的事。
+
+### 3.3 失败一律走异常
+
+Doodle **没有** `bool ok_` / `error_code_` / `message_` 三件套式的返回值，也不用 `std::optional` 表示失败原因。
+
+- 出错直接抛 `doodle_error`；在 HTTP 路由或会影响响应码的地方用 `DOODLE_CHICK_HTTP(cond, status, fmt, ...)`，纯内部逻辑用 `DOODLE_CHICK(cond, fmt, ...)`（[exception.h](src/doodle_core/exception/exception.h)）。两者都支持 fmt 参数，不必先 `fmt::format`。
+- 缺少状态码的异常一律落成 500 —— 前端拿到的「用户输入不合法」会伪装成「服务器炸了」，所以该有 4xx 的地方必须写 `DOODLE_CHICK_HTTP`。
+- **不要吞异常转成布尔/错误码**；**不要**把 `catch (...)` 当作"把失败变成返回值"的手段。
+- 允许捕获的场合只有：给它加上下文后再抛（`throw_exception`/`throw;`）、边界处必须有人兜底（HTTP 会话层 `http_session_data.cpp`、线程入口 `app_service.h`、协程里的线程池回调）、或纯日志降级（如流已经断开，丢一帧不如打一条 WARN）。
+- **协程里不能 `co_await` 在 catch 块内**（标准禁止）。需要"记下原因再抛"时，先在 catch 里存到局部量，出了 catch 再处理，最后抛出。
+
+### 3.4 枚举与 JSON
+
+- 一律 `enum class`；`magic_enum` 做数值/名字转换，不要手写 `switch` 转字符串。
+- **枚举 ↔ JSON 用 `DOODLE_JSON_SERIALIZE_ENUM_STRICT`**（[json_warp.h](src/doodle_core/lib_warp/json_warp.h)），紧跟在枚举定义之后，映射表列全所有取值：
+
+  ```cpp
+  enum class preview_file_statuses { processing, ready, broken };
+  DOODLE_JSON_SERIALIZE_ENUM_STRICT(
+      preview_file_statuses, {
+                                 {preview_file_statuses::processing, "processing"},
+                                 {preview_file_statuses::ready, "ready"},
+                                 {preview_file_statuses::broken, "broken"},
+                             }
+  )
+  ```
+
+  映射表里**手写 JSON 字符串**（上游 `NLOHMANN_JSON_SERIALIZE_ENUM` 宏会把值序列化成数字，本项目不用它）；未映射的取值两个方向都抛 `out_of_range.410`，不要用"静默落到首项"的宏。JSON 键名一旦进契约就等同于接口，改名等于改接口——先搜前端、测试与 `docs/api/`。
+- 结构体 ↔ JSON 用 `friend to_json` / `friend from_json`。
+- **不要写 `nlohmann::json{x}` 把结构体转成 json**：花括号优先选 `initializer_list` 构造，结果是一个**数组**，值被塞进第一项。正确写法是拷贝初始化或赋值：
+
+  ```cpp
+  nlohmann::json l_json = l_status;                         // ✓ 对象
+  l_json["session_id"]  = uuid_string(l_session_id);        // 之后可按对象补键
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = (co_await l_session->stop()));  // ✓ 表达式位
+  ```
+
+  `nlohmann::json{{"k", v}}` 才是对象字面量；`nlohmann::json{wrapper}` 也是数组，除非 `wrapper` 自带 `to_json` 且你是**故意**走拷贝初始化。
 
 ## 4. 分区域规则
 
