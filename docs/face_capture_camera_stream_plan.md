@@ -170,10 +170,10 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 | GET | `/api/doodle/local/face_capture/devices` | 枚举摄像头：`{selected, devices:[{index, name, backend, width, height, selected}]}` |
 | POST | `/api/doodle/local/face_capture/devices` | **选中摄像头**。body `{"index": 0}`；成功返回 `{selected}`；body 缺整数 `index` → `400`，负值 → `400`，设备不存在（越界/已拔出）→ `404` |
 | GET | `/api/doodle/local/face_capture/stream/{session_id_}` | **WS 升级点 + 会话本体**（`has_websocket() = true`，GET + `Upgrade` 才升级）。连上即创建 `capture_session`、打开摄像头、**推预览流（不落盘）**；断开即关闭会话（若在录则先收尾）。路径里的 `session_id_` 只用于前端日志与路由占位，**不参与查找**，真实 `session_id` 在 `hello` 里回传。**这条只下发视频与状态，不接受任何命令**（§3.3） |
-| POST | `/api/doodle/local/face_capture/recordings` | **开始录制**。无 body；新建 `session_dir` 并开写 `take.mp4`；返回 `{ok, session_id, state:"recording", width, height, fps, frames, duration_ms, source_fps, truncated, error_code, message}`。没有预览连接 → `409`，已在录 → `409`，`take.mp4` 建不出来 → `422` |
+| POST | `/api/doodle/local/face_capture/recordings` | **开始录制**。无 body；新建 `session_dir` 并开写 `take.mp4`；返回 `{session_id, state:"recording", width, height, fps, frames, duration_ms, source_fps, truncated}`。没有预览连接 → `409`，已在录 → `409`，`take.mp4` 建不出来 → `422` |
 | GET | `/api/doodle/local/face_capture/recordings` | 历史会话列表（磁盘扫描 `session_dir`） |
 | GET | `/api/doodle/local/face_capture/recordings/{session_id}` | 单会话状态、帧数、丢帧区间、产物清单 |
-| POST | `/api/doodle/local/face_capture/recordings/{session_id}/stop` | **结束录制**。同步等 `take.mp4` 收尾（≤ 2 秒）后返回 `{ok, state, frames, duration_ms, truncated, source_fps}`；`session_id` 与当前录制段不符 → `404`，没在录 → `409`。**收尾后预览继续**，不关摄像头 |
+| POST | `/api/doodle/local/face_capture/recordings/{session_id}/stop` | **结束录制**。同步等 `take.mp4` 收尾（≤ 2 秒）后返回 `{state, frames, duration_ms, truncated, source_fps}`；`session_id` 与当前录制段不符 → `404`，没在录 → `409`。**收尾后预览继续**，不关摄像头 |
 | DELETE | `/api/doodle/local/face_capture/recordings/{session_id}` | 删除会话目录与 `/Game/.../<id>` 备用包；进行中返回 `409 recording` |
 | GET | `/api/doodle/local/face_capture/recordings/{session_id}/video` | `take.mp4`（`http_body_file_t`，支持 Range） |
 | GET | `/api/doodle/local/face_capture/recordings/{session_id}/curves` | `face_curves.dhfc` 下载（`set_attachment()`） |
@@ -247,19 +247,19 @@ WS 上**不定义任何上行命令**。前端不需要发 `ping`（浏览器原
 
 | 动作 | 请求 | 成功返回 | 失败 |
 | --- | --- | --- | --- |
-| 开始录制 | `POST /recordings`（**显式动作**，连 WS 不会自动开始） | `200 {ok, state:"recording", session_id, width, height, fps:25, frames:0, duration_ms:0}` | `409 not_streaming`（没有活跃 WS 会话）、`409 already_recording`、`422 encode_failed`（`take.mp4` 建不出来） |
-| 结束录制 | `POST /recordings/{session_id}/stop` | `200 {ok, state:"previewing", frames, source_fps, duration_ms, truncated}` | `409 not_recording`、`404`（`session_id` 不是当前录制段） |
+| 开始录制 | `POST /recordings`（**显式动作**，连 WS 不会自动开始） | `200 {state:"recording", session_id, width, height, fps:25, frames:0, duration_ms:0}` | `409`（没有活跃 WS 会话）、`409`（已在录制）、`422`（`take.mp4` 建不出来） |
+| 结束录制 | `POST /recordings/{session_id}/stop` | `200 {state:"previewing", frames, source_fps, duration_ms, truncated}` | `409`（当前没有在录制）、`404`（`session_id` 不是当前录制段） |
 | 查询状态 | `GET /recordings/{session_id}` | `{state, session_id, frames, duration_ms, gaps, artifacts:{take_mp4,align_json,frames,curves}, width, height, fps, source_fps, truncated}` | `404` |
 | 提交转码 | `POST /transcode`，body 见 §7.2 | `202 {job_id, state:"queued"}` | `409 job_running`、`400 missing_ue_project`（`ue_project` 缺失/为空/非绝对路径/文件不存在）、`400 bad_package_path`（非空但不是合法包路径） |
 
 要点：
 
 - **WS 连接只负责预览**：`GET /stream/{session_id}` 升级成功后，`ws_stream_runner` 调 `session_->open()`（只做 `cv::VideoCapture` 打开、分辨率回读、`h264_fragmenter` + `fps` 滤镜的建立），随后一直把 25 fps 的 H.264 分片推给前端。**这一路不写任何磁盘文件**。摄像头打不开时连接不断，只发 `error` 事件让前端看见原因。
-- **录制是显式动作**：`POST /recordings` 才建 `session_dir` 与 `take.mp4`。没有活跃 WS 会话时返回 `409`（`error_code:"not_streaming"`）。
+- **录制是显式动作**：`POST /recordings` 才建 `session_dir` 与 `take.mp4`。没有活跃 WS 会话时返回 `409`。
 - **结束录制是同步的**：`stop()` 内 `filter_->flush()` → 等推流排空 → `mp4_writer_->finish()`（`av_write_trailer`）→ 写 `align.json`，上限 2 秒。返回时 `take.mp4` 已完整，前端可以直接去拉 `/video` 或提交转码，不需要轮询。**收尾之后预览继续**，摄像头不关。
 - **断开 WS 走 `close()`**：若正在录制，内部等价于先 `stop()` 再关摄像头，只是没人接返回值。
 - 状态变化通过 WS 的 `capture_state` 推送，前端应以 WS 事件与 POST 返回值为准。
-- 重复调用是幂等的：已在 `recording` 时再发 `POST /recordings` 返回 `409 already_recording`；没在录时发 `stop` 返回 `409 not_recording`。
+- 重复调用是幂等的：已在 `recording` 时再发 `POST /recordings` 返回 `409`；没在录时发 `stop` 也返回 `409`。
 - **同一连接可以录多段**：每次 `POST /recordings` 新生成一个 `session_id` 与目录，上一段的 `take.mp4` 留在自己的目录里。
 
 ### 3.4 为什么不用 socket.io
@@ -311,7 +311,7 @@ record_state:  idle ──POST /recordings start_record()──► recording ─
 - `stopped` 是**录制完成后的一次性状态**：`stop()` 返回时 `record_state` 已是 `stopped`，但下一次 `start_record()` 立刻回到 `recording`。`GET /recordings/{id}` 对历史会话一律报 `stopped`。
 - `stopping` 是**短暂中间态**：`stop()` 把 `record_state` 置成 `stopping` 并下发 `capture_state` 事件，然后**在同一个协程里**等推流排空（≤ 2 秒）→ 收 `take.mp4` → 写 `align.json` → 置 `stopped` 再发一次事件。所以前端看到 `stopping` 之后必定能等到 `stopped`，`POST .../stop` 返回时 `record_state` 已经是 `stopped`（对外状态回到 `previewing`）。
 - 等推空**必须用 `co_await timer.async_wait()` 轮询 `outlet_->idle()`**，不能用同步的 `timer.wait()`：`stop()` 与写协程在同一个 strand 上，同步阻塞会把 strand 占死，写协程永远抢不到执行权，结果是真的空等满 2 秒。
-- `open()` 时若仍在 `recording`/`stopping` → `already_recording`；已在 `previewing` 则直接返回（幂等）。`start_record()` 在未 `open` 时 → `not_streaming`，在 `recording`/`stopping` 时 → `already_recording`；否则先 `close_record()` 收拾上一段，再建新的。
+- `open()` 时若仍在 `recording`/`stopping` → 抛 `doodle_error`（`409`）；已在 `previewing` 则直接返回（幂等）。`start_record()` 在未 `open` 时 → 抛 `409`，在 `recording`/`stopping` 时 → 抛 `409`；否则先 `close_record()` 收拾上一段，再建新的。`stop()` 在没在录时 → 抛 `409`。
 - **会话对象只有一个，由 `ws_stream_runner` 创建持有**（§3.3），裸指针登记在 `face_capture_session_holder` 供录制端点使用：不存在跨连接的会话对象，所以"设备互斥"退化成两层——进程层面由 `ws_stream_runner` 的持有关系保证，对象层面由状态机不许重入保证。
 - `session_id` 在 `start_record()` 成功时生成（`uuid`），`session_dir = core_set::get_set().get_cache_root("face_capture/sessions") / session_id_str`。**每段录制一个 `session_id`**，同一条 WS 连接可以录多段。
 - 同一个 `capture_session` 上 `stopped` 之后再 `start_record()`：**不换对象，只换 `session_id` 与 `session_dir`**。上一段的 `take.mp4`/`align.json` 已经落在旧目录里，不迁移、不覆盖。

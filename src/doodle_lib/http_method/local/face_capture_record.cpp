@@ -27,19 +27,16 @@ namespace {
 
 std::string uuid_string(boost::uuids::uuid in_id) { return fmt::format("{}", in_id); }
 
-nlohmann::json capture_result_json(const face_capture::capture_result& in_result) {
+nlohmann::json capture_status_json(const face_capture::capture_status& in_status) {
   return nlohmann::json{
-      {"ok", in_result.ok_},
-      {"state", face_capture::to_string(in_result.state_)},
-      {"width", in_result.width_},
-      {"height", in_result.height_},
-      {"fps", in_result.fps_},
-      {"frames", in_result.frames_},
-      {"duration_ms", in_result.duration_ms_},
-      {"source_fps", in_result.source_fps_},
-      {"truncated", in_result.truncated_},
-      {"error_code", face_capture::to_string(in_result.error_code_)},
-      {"message", in_result.message_}
+      {"state", face_capture::to_string(in_status.state_)},
+      {"width", in_status.width_},
+      {"height", in_status.height_},
+      {"fps", in_status.fps_},
+      {"frames", in_status.frames_},
+      {"duration_ms", in_status.duration_ms_},
+      {"source_fps", in_status.source_fps_},
+      {"truncated", in_status.truncated_}
   };
 }
 
@@ -48,24 +45,6 @@ std::string state_of(const std::shared_ptr<face_capture::capture_session>& in_se
   return face_capture::to_string(in_session->state());
 }
 
-void check_recording_error(const face_capture::capture_result& in_result) {
-  if (in_result.ok_) return;
-  switch (in_result.error_code_) {
-    case face_capture::error_code_t::not_streaming:
-      DOODLE_CHICK_HTTP(false, conflict, "当前没有可用的预览连接");
-    case face_capture::error_code_t::already_recording:
-      DOODLE_CHICK_HTTP(false, conflict, "已经在录制中");
-    case face_capture::error_code_t::not_recording:
-      DOODLE_CHICK_HTTP(false, conflict, "当前没有在录制");
-    case face_capture::error_code_t::camera_open_failed:
-      DOODLE_CHICK_HTTP(false, unprocessable_entity, "打开摄像头失败: {}", in_result.message_);
-    default:
-      DOODLE_CHICK_HTTP(
-          false, internal_server_error, "{}: {}", face_capture::to_string(in_result.error_code_),
-          in_result.message_
-      );
-  }
-}
 FSys::path session_dir_of(const boost::uuids::uuid& in_session_id) {
   return face_capture::capture_session::default_root() / uuid_string(in_session_id);
 }
@@ -146,11 +125,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recordings, post) {
   auto l_session = holder_->session();
   DOODLE_CHICK_HTTP(l_session != nullptr, conflict, "当前没有可用的预览连接");
 
-  auto l_result = co_await l_session->start_record();
-  check_recording_error(l_result);
-
-  auto l_json               = capture_result_json(l_result);
-  l_json["session_id"]      = uuid_string(l_session->session_id());
+  auto l_status = co_await l_session->start_record();
+  auto l_json   = capture_status_json(l_status);
+  l_json["session_id"] = uuid_string(l_session->session_id());
   co_return std::make_unique<http_body_json_t>(std::move(l_json));
 }
 
@@ -161,10 +138,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_stop, post) {
       l_session->session_id() == session_id_, not_found, "没有 session_id = {} 的活动录制", uuid_string(session_id_)
   );
 
-  auto l_result = co_await l_session->stop();
-  check_recording_error(l_result);
+  auto l_status = co_await l_session->stop();
 
-  co_return std::make_unique<http_body_json_t>(capture_result_json(l_result));
+  co_return std::make_unique<http_body_json_t>(capture_status_json(l_status));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording, get) {

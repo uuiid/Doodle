@@ -80,8 +80,7 @@ struct capture_option {
   friend void from_json(const nlohmann::json& nlohmann_json_j, capture_option& nlohmann_json_t);
 };
 
-struct capture_result {
-  bool ok_{false};
+struct capture_status {
   capture_state state_{capture_state::idle};
   std::int32_t width_{0};
   std::int32_t height_{0};
@@ -92,10 +91,8 @@ struct capture_result {
   double source_fps_{0.0};
   std::int64_t duration_ms_{0};
   bool truncated_{false};
-  error_code_t error_code_{error_code_t::none};
-  std::string message_{};
 
-  friend void to_json(nlohmann::json& nlohmann_json_j, const capture_result& nlohmann_json_t);
+  friend void to_json(nlohmann::json& nlohmann_json_j, const capture_status& nlohmann_json_t);
 };
 
 struct gap_range {

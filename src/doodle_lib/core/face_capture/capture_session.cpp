@@ -71,44 +71,40 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
   ~impl() = default;
 
-  boost::asio::awaitable<capture_result> open(const capture_option& in_option) {
+  boost::asio::awaitable<capture_status> open(const capture_option& in_option) {
     co_await boost::asio::this_coro::throw_if_cancelled(false);
 
-    if (record_state_ == capture_state::recording || record_state_ == capture_state::stopping)
-      co_return fail(error_code_t::already_recording);
+    DOODLE_CHICK_HTTP(
+        record_state_ != capture_state::recording && record_state_ != capture_state::stopping, conflict,
+        "已经在录制中"
+    );
 
-    if (stream_state_ == capture_state::previewing) co_return fill_result(true, capture_state::previewing);
+    if (stream_state_ == capture_state::previewing) co_return make_status(capture_state::previewing);
 
     close_stream();
 
     auto l_width  = even(in_option.width_ > 0 ? in_option.width_ : k_default_width);
     auto l_height = even(in_option.height_ > 0 ? in_option.height_ : k_default_height);
 
-    try {
-      auto l_cap = std::make_shared<cv::VideoCapture>();
-      if (!l_cap->open(in_option.device_index_, cv::CAP_DSHOW)) l_cap->open(in_option.device_index_, cv::CAP_MSMF);
-      if (!l_cap->isOpened())
-        co_return fail(error_code_t::camera_open_failed, fmt::format("无法打开摄像头 {}", in_option.device_index_));
+    auto l_cap = std::make_shared<cv::VideoCapture>();
+    if (!l_cap->open(in_option.device_index_, cv::CAP_DSHOW)) l_cap->open(in_option.device_index_, cv::CAP_MSMF);
+    DOODLE_CHICK_HTTP(l_cap->isOpened(), unprocessable_entity, "无法打开摄像头 {}", in_option.device_index_);
 
-      l_cap->set(cv::CAP_PROP_FRAME_WIDTH, l_width);
-      l_cap->set(cv::CAP_PROP_FRAME_HEIGHT, l_height);
+    l_cap->set(cv::CAP_PROP_FRAME_WIDTH, l_width);
+    l_cap->set(cv::CAP_PROP_FRAME_HEIGHT, l_height);
 
-      cv::Mat l_probe{};
-      *l_cap >> l_probe;
-      if (!l_probe.empty()) {
-        l_width  = even(l_probe.cols);
-        l_height = even(l_probe.rows);
-      }
-
-      width_  = l_width;
-      height_ = l_height;
-      cap_    = std::move(l_cap);
-
-      reset_stream_encoders();
-    } catch (const std::exception& in_err) {
-      close_stream();
-      co_return fail(error_code_t::camera_open_failed, in_err.what());
+    cv::Mat l_probe{};
+    *l_cap >> l_probe;
+    if (!l_probe.empty()) {
+      l_width  = even(l_probe.cols);
+      l_height = even(l_probe.rows);
     }
+
+    width_  = l_width;
+    height_ = l_height;
+    cap_    = std::move(l_cap);
+
+    reset_stream_encoders();
 
     reset_counters(clock_type::now());
     stream_state_ = capture_state::previewing;
@@ -119,15 +115,17 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     auto l_self  = this->shared_from_this();
     read_thread_ = std::thread{[l_self] { l_self->read_loop(); }};
 
-    co_return fill_result(true, capture_state::previewing);
+    co_return make_status(capture_state::previewing);
   }
 
-  boost::asio::awaitable<capture_result> start_record() {
+  boost::asio::awaitable<capture_status> start_record() {
     co_await boost::asio::this_coro::throw_if_cancelled(false);
 
-    if (stream_state_ != capture_state::previewing) co_return fail(error_code_t::not_streaming);
-    if (record_state_ == capture_state::recording || record_state_ == capture_state::stopping)
-      co_return fail(error_code_t::already_recording);
+    DOODLE_CHICK_HTTP(stream_state_ == capture_state::previewing, conflict, "摄像头未打开");
+    DOODLE_CHICK_HTTP(
+        record_state_ != capture_state::recording && record_state_ != capture_state::stopping, conflict,
+        "已经在录制中"
+    );
 
     close_record();
 
@@ -136,17 +134,21 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     if (FSys::exists(l_dir)) FSys::remove_all(l_dir);
     FSys::create_directories(l_dir);
 
+    std::shared_ptr<mp4_writer> l_mp4{};
+    std::string l_encode_error{};
     try {
-      auto l_mp4 = std::make_shared<mp4_writer>(l_dir / "take.mp4", width_, height_, true);
+      l_mp4 = std::make_shared<mp4_writer>(l_dir / "take.mp4", width_, height_, true);
       if (!l_mp4->init()) {
-        FSys::remove_all(l_dir);
-        co_return fail(error_code_t::encode_failed, "无法创建 take.mp4 编码器");
+        l_mp4.reset();
+        l_encode_error = "无法创建 take.mp4 编码器";
       }
-      mp4_writer_ = std::move(l_mp4);
-    } catch (const std::exception& in_err) {
+    } catch (const std::exception& in_err) { l_encode_error = in_err.what(); }
+
+    if (!l_encode_error.empty()) {
       if (FSys::exists(l_dir)) FSys::remove_all(l_dir);
-      co_return fail(error_code_t::encode_failed, in_err.what());
+      DOODLE_CHICK_HTTP(false, unprocessable_entity, "无法创建 take.mp4 编码器: {}", l_encode_error);
     }
+    mp4_writer_ = std::move(l_mp4);
 
     session_id_  = l_session_id;
     session_dir_ = l_dir;
@@ -166,7 +168,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       outlet_->notify_state(to_string(display_state()));
     }
 
-    co_return fill_result(true, capture_state::recording);
+    co_return make_status(capture_state::recording);
   }
 
   boost::asio::awaitable<void> finish_record() {
@@ -175,17 +177,17 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     close_record();
   }
 
-  boost::asio::awaitable<capture_result> stop() {
+  boost::asio::awaitable<capture_status> stop() {
     co_await boost::asio::this_coro::throw_if_cancelled(false);
 
-    if (record_state_ != capture_state::recording) co_return fail(error_code_t::not_recording);
+    DOODLE_CHICK_HTTP(record_state_ == capture_state::recording, conflict, "当前没有在录制");
 
     record_state_ = capture_state::stopping;
     if (outlet_) outlet_->notify_state(to_string(display_state()));
 
     co_await finish_record();
 
-    auto l_result = fill_result(true, capture_state::previewing);
+    auto l_result = make_status(capture_state::previewing);
     l_result.truncated_ = truncated_;
 
     record_state_ = capture_state::stopped;
@@ -194,15 +196,15 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     co_return l_result;
   }
 
-  boost::asio::awaitable<capture_result> close() {
+  boost::asio::awaitable<capture_status> close() {
     co_await boost::asio::this_coro::throw_if_cancelled(false);
 
-    auto l_result = fail(error_code_t::none);
+    auto l_result = make_status(capture_state::idle);
     if (record_state_ == capture_state::recording) {
       record_state_ = capture_state::stopping;
       if (outlet_) outlet_->notify_state(to_string(display_state()));
       co_await finish_record();
-      l_result      = fill_result(true, capture_state::previewing);
+      l_result      = make_status(capture_state::previewing);
       record_state_ = capture_state::stopped;
     }
 
@@ -250,36 +252,19 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     return stream_state_;
   }
 
-  capture_result fill_result(bool in_ok, capture_state in_state) const {
-    capture_result l_result{};
-    l_result.ok_              = in_ok;
-    l_result.state_           = in_state;
-    l_result.width_           = width_;
-    l_result.height_          = height_;
-    l_result.fps_             = k_fps;
-    l_result.frames_          = seq_;
-    l_result.raw_frames_      = orig_seq_;
-    l_result.inserted_frames_ = 0;
-    l_result.source_fps_      = source_fps();
-    l_result.duration_ms_     = static_cast<std::int64_t>(seq_) * k_frame_interval_ms;
-    l_result.truncated_       = truncated_;
-    return l_result;
-  }
-
-  capture_result fail(error_code_t in_code, std::string in_message = {}) const {
-    capture_result l_result{};
-    l_result.ok_              = false;
-    l_result.state_           = display_state();
-    l_result.width_           = width_;
-    l_result.height_          = height_;
-    l_result.fps_             = k_fps;
-    l_result.frames_          = seq_;
-    l_result.raw_frames_      = orig_seq_;
-    l_result.inserted_frames_ = 0;
-    l_result.source_fps_      = source_fps();
-    l_result.error_code_      = in_code;
-    l_result.message_         = std::move(in_message);
-    return l_result;
+  capture_status make_status(capture_state in_state) const {
+    capture_status l_status{};
+    l_status.state_           = in_state;
+    l_status.width_           = width_;
+    l_status.height_          = height_;
+    l_status.fps_             = k_fps;
+    l_status.frames_          = seq_;
+    l_status.raw_frames_      = orig_seq_;
+    l_status.inserted_frames_ = 0;
+    l_status.source_fps_      = source_fps();
+    l_status.duration_ms_     = static_cast<std::int64_t>(seq_) * k_frame_interval_ms;
+    l_status.truncated_       = truncated_;
+    return l_status;
   }
 
   double source_fps() const {
@@ -595,15 +580,15 @@ FSys::path capture_session::default_root() {
   return core_set::get_set().get_cache_root(FSys::path{"face_capture"} / "sessions");
 }
 
-boost::asio::awaitable<capture_result> capture_session::open(const capture_option& in_option) {
+boost::asio::awaitable<capture_status> capture_session::open(const capture_option& in_option) {
   return impl_ptr_->open(in_option);
 }
 
-boost::asio::awaitable<capture_result> capture_session::start_record() { return impl_ptr_->start_record(); }
+boost::asio::awaitable<capture_status> capture_session::start_record() { return impl_ptr_->start_record(); }
 
-boost::asio::awaitable<capture_result> capture_session::stop() { return impl_ptr_->stop(); }
+boost::asio::awaitable<capture_status> capture_session::stop() { return impl_ptr_->stop(); }
 
-boost::asio::awaitable<capture_result> capture_session::close() { return impl_ptr_->close(); }
+boost::asio::awaitable<capture_status> capture_session::close() { return impl_ptr_->close(); }
 
 void capture_session::attach(std::shared_ptr<ws_outlet> in_outlet) { impl_ptr_->attach(std::move(in_outlet)); }
 

@@ -51,13 +51,6 @@ av::PixelFormat rgb_pixel_format() { return av::PixelFormat{AV_PIX_FMT_RGB24}; }
 
 std::int32_t even(std::int32_t in_value) { return std::max<std::int32_t>(in_value - in_value % 2, 2); }
 
-png_sequence_result fail(error_code_t in_code, std::string in_message) {
-  png_sequence_result l_result{};
-  l_result.error_code_ = in_code;
-  l_result.message_    = std::move(in_message);
-  return l_result;
-}
-
 class decoded_frame_buffer {
  public:
   cv::Mat wrap(av::VideoFrame in_frame, int in_width, int in_height) {
@@ -103,18 +96,21 @@ FSys::path frames_dir_of(const FSys::path& in_session_dir) { return in_session_d
 FSys::path png_tmp_dir_of(const FSys::path& in_session_dir) { return in_session_dir / "png_tmp"; }
 
 png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
-  if (!FSys::exists(in_option.video_))
-    return fail(error_code_t::raw_mkv_missing, fmt::format("视频文件不存在: {}", in_option.video_.string()));
+  DOODLE_CHICK_HTTP(
+      FSys::exists(in_option.video_), unprocessable_entity, "视频文件不存在: {}", in_option.video_.string()
+  );
 
   align_record l_record{};
+  std::string l_read_error{};
   try {
     l_record = read_align(in_option.session_dir_);
   } catch (const std::exception& in_err) {
-    return fail(error_code_t::png_sequence_invalid, fmt::format("读取 align.json 失败: {}", in_err.what()));
+    l_read_error = in_err.what();
   }
 
+  DOODLE_CHICK_HTTP(l_read_error.empty(), unprocessable_entity, "读取 align.json 失败: {}", l_read_error);
   auto l_expect_raw_frames = l_record.raw_frames_ > 0 ? l_record.raw_frames_ : l_record.frames_.size();
-  if (l_expect_raw_frames == 0) return fail(error_code_t::png_sequence_invalid, "align.json 中没有帧记录");
+  DOODLE_CHICK_HTTP(l_expect_raw_frames > 0, unprocessable_entity, "align.json 中没有帧记录");
 
   auto l_tmp_dir    = png_tmp_dir_of(in_option.session_dir_);
   auto l_frames_dir = frames_dir_of(in_option.session_dir_);
@@ -139,13 +135,13 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
     }
     if (!l_stream.isValid()) {
       FSys::remove_all(l_tmp_dir);
-      return fail(error_code_t::raw_mkv_missing, "视频文件中没有视频流");
+      DOODLE_CHICK_HTTP(false, unprocessable_entity, "视频文件中没有视频流");
     }
 
     auto l_codec = l_stream.codecParameters().decodingCodec();
     if (l_codec.isNull() || !l_codec.isDecoder()) {
       FSys::remove_all(l_tmp_dir);
-      return fail(error_code_t::raw_mkv_missing, "视频流没有可用的解码器");
+      DOODLE_CHICK_HTTP(false, unprocessable_entity, "视频流没有可用的解码器");
     }
 
     av::VideoDecoderContext l_decoder{l_stream, l_codec};
@@ -156,7 +152,7 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
     auto l_src_pix_fmt     = l_decoder.pixelFormat();
     if (l_src_width <= 0 || l_src_height <= 0) {
       FSys::remove_all(l_tmp_dir);
-      return fail(error_code_t::raw_mkv_missing, "视频尺寸非法");
+      DOODLE_CHICK_HTTP(false, unprocessable_entity, "视频尺寸非法");
     }
 
     auto l_max_width = in_option.decode_max_width_ > 0 ? in_option.decode_max_width_ : k_default_width;
@@ -170,7 +166,7 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
     }
     if (l_width <= 0 || l_height <= 0) {
       FSys::remove_all(l_tmp_dir);
-      return fail(error_code_t::raw_mkv_missing, "缩放后尺寸非法");
+      DOODLE_CHICK_HTTP(false, unprocessable_entity, "缩放后尺寸非法");
     }
 
     av::VideoRescaler l_rescaler{l_width, l_height, rgb_pixel_format(), l_src_width, l_src_height, l_src_pix_fmt};
@@ -195,7 +191,7 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
 
   if (l_spool.written() == 0) {
     FSys::remove_all(l_tmp_dir);
-    return fail(error_code_t::png_sequence_invalid, "视频中没有可解码的帧");
+    DOODLE_CHICK_HTTP(false, unprocessable_entity, "视频中没有可解码的帧");
   }
 
   if (FSys::exists(l_frames_dir)) FSys::remove_all(l_frames_dir);
@@ -207,7 +203,6 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
     );
 
   png_sequence_result l_result{};
-  l_result.ok_          = true;
   l_result.frame_count_ = l_spool.written();
   l_result.width_       = l_width;
   l_result.height_      = l_height;

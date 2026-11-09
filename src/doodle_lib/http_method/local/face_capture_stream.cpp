@@ -67,22 +67,18 @@ class ws_stream_runner : public std::enable_shared_from_this<ws_stream_runner> {
 
   boost::asio::awaitable<void> open_capture() {
     try {
-      auto l_result = co_await session_->open(face_capture::capture_option{.device_index_ = device_index_});
-      if (!l_result.ok_)
-        SPDLOG_WARN(
-            "face_capture 打开摄像头失败: {} {}", face_capture::to_string(l_result.error_code_), l_result.message_
-        );
-    } catch (const std::exception& in_err) { SPDLOG_WARN("face_capture 打开摄像头异常: {}", in_err.what()); }
+      co_await session_->open(face_capture::capture_option{.device_index_ = device_index_});
+    } catch (const std::exception& in_err) {
+      SPDLOG_WARN("face_capture 打开摄像头失败: {}", in_err.what());
+    }
   }
 
   boost::asio::awaitable<void> close_capture() {
     try {
-      auto l_result = co_await session_->close();
-      if (!l_result.ok_)
-        SPDLOG_WARN(
-            "face_capture 关闭摄像头失败: {} {}", face_capture::to_string(l_result.error_code_), l_result.message_
-        );
-    } catch (const std::exception& in_err) { SPDLOG_WARN("face_capture 关闭摄像头异常: {}", in_err.what()); }
+      co_await session_->close();
+    } catch (const std::exception& in_err) {
+      SPDLOG_WARN("face_capture 关闭摄像头失败: {}", in_err.what());
+    }
   }
 
   boost::asio::awaitable<bool> write(bool in_binary, const std::uint8_t* in_data, std::size_t in_size) {

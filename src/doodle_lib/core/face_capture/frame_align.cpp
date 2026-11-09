@@ -67,8 +67,7 @@ void from_json(const nlohmann::json& nlohmann_json_j, capture_option& nlohmann_j
   if (nlohmann_json_j.contains("height")) nlohmann_json_j.at("height").get_to(nlohmann_json_t.height_);
 }
 
-void to_json(nlohmann::json& nlohmann_json_j, const capture_result& nlohmann_json_t) {
-  nlohmann_json_j["ok"]              = nlohmann_json_t.ok_;
+void to_json(nlohmann::json& nlohmann_json_j, const capture_status& nlohmann_json_t) {
   nlohmann_json_j["state"]           = nlohmann_json_t.state_;
   nlohmann_json_j["width"]           = nlohmann_json_t.width_;
   nlohmann_json_j["height"]          = nlohmann_json_t.height_;
@@ -79,10 +78,6 @@ void to_json(nlohmann::json& nlohmann_json_j, const capture_result& nlohmann_jso
   nlohmann_json_j["source_fps"]      = nlohmann_json_t.source_fps_;
   nlohmann_json_j["duration_ms"]     = nlohmann_json_t.duration_ms_;
   nlohmann_json_j["truncated"]       = nlohmann_json_t.truncated_;
-  if (nlohmann_json_t.error_code_ != error_code_t::none) {
-    nlohmann_json_j["error_code"] = to_string(nlohmann_json_t.error_code_);
-    nlohmann_json_j["message"]    = nlohmann_json_t.message_;
-  }
 }
 
 void to_json(nlohmann::json& nlohmann_json_j, const gap_range& nlohmann_json_t) {

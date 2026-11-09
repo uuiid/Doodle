@@ -20,13 +20,10 @@ struct png_sequence_option {
 };
 
 struct png_sequence_result {
-  bool ok_{false};
   std::uint64_t frame_count_{0};
   std::int32_t width_{0};
   std::int32_t height_{0};
   FSys::path frames_dir_{};
-  error_code_t error_code_{error_code_t::none};
-  std::string message_{};
 };
 
 FSys::path frames_dir_of(const FSys::path& in_session_dir);
