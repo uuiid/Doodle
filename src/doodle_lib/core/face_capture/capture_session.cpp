@@ -432,7 +432,31 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   }
 
   void drain_filter_frames() {
-    for (auto& l_frame : filter_->take_frames()) emit_output_frame(l_frame.mat_);
+    for (auto& l_frame : filter_->take_frames()) {
+      const cv::Mat& l_mat  = l_frame.mat_;
+      const bool l_recording = record_state_ == capture_state::recording || record_state_ == capture_state::stopping;
+
+      if (l_recording && mp4_writer_) {
+        try {
+          mp4_writer_->push(l_mat, seq_);
+        } catch (const std::exception& in_err) {
+          SPDLOG_WARN("take.mp4 写入失败: {}", in_err.what());
+          truncated_ = true;
+        }
+        ++seq_;
+      }
+
+      auto l_seq = l_recording ? (seq_ > 0 ? seq_ - 1 : 0) : preview_seq_++;
+
+      if (outlet_ && outlet_->is_attached() && fragmenter_) {
+        try {
+          fragmenter_->push(l_mat, l_seq);
+          for (auto& l_fragment : fragmenter_->take_fragments()) outlet_->send_fragment(std::move(l_fragment));
+        } catch (const std::exception& in_err) {
+          SPDLOG_WARN("推流编码失败: {}", in_err.what());
+        }
+      }
+    }
   }
 
   void on_capture(cv::Mat in_mat, clock_type::time_point in_now) {
@@ -471,31 +495,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       }
     }
     last_frame_at_ = in_wall_ms;
-  }
-
-  void emit_output_frame(const cv::Mat& in_mat) {
-    const bool l_recording = record_state_ == capture_state::recording || record_state_ == capture_state::stopping;
-
-    if (l_recording && mp4_writer_) {
-      try {
-        mp4_writer_->push(in_mat, seq_);
-      } catch (const std::exception& in_err) {
-        SPDLOG_WARN("take.mp4 写入失败: {}", in_err.what());
-        truncated_ = true;
-      }
-      ++seq_;
-    }
-
-    auto l_seq = l_recording ? (seq_ > 0 ? seq_ - 1 : 0) : preview_seq_++;
-
-    if (outlet_ && outlet_->is_attached() && fragmenter_) {
-      try {
-        fragmenter_->push(in_mat, l_seq);
-        for (auto& l_fragment : fragmenter_->take_fragments()) outlet_->send_fragment(std::move(l_fragment));
-      } catch (const std::exception& in_err) {
-        SPDLOG_WARN("推流编码失败: {}", in_err.what());
-      }
-    }
   }
 
   FSys::path root_{};
