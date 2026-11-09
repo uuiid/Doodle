@@ -33,9 +33,13 @@ class capture_session : public std::enable_shared_from_this<capture_session> {
 
   static FSys::path default_root();
 
-  boost::asio::awaitable<capture_result> start(const capture_option& in_option);
+  boost::asio::awaitable<capture_result> open(const capture_option& in_option);
+
+  boost::asio::awaitable<capture_result> start_record();
 
   boost::asio::awaitable<capture_result> stop();
+
+  boost::asio::awaitable<capture_result> close();
 
   void attach(std::shared_ptr<ws_outlet> in_outlet);
 

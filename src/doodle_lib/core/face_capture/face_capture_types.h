@@ -38,16 +38,18 @@ constexpr std::int32_t k_default_width{1280};
 constexpr std::int32_t k_default_height{720};
 
 enum class capture_state : std::int32_t {
-  idle      = 0,
-  recording = 1,
-  stopping  = 2,
-  stopped   = 3,
+  idle       = 0,
+  recording  = 1,
+  stopping   = 2,
+  stopped    = 3,
+  previewing = 4,
 };
 
 enum class error_code_t : std::int32_t {
   none = 0,
   already_recording,
   not_recording,
+  not_streaming,
   camera_open_failed,
   camera_read_failed,
   encode_failed,

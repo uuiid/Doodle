@@ -17,6 +17,7 @@
 namespace doodle::http::local {
 
 class ws_stream_runner;
+class face_capture_session_holder;
 
 class face_capture_selected_device {
  public:
@@ -33,6 +34,7 @@ class face_capture_selected_device {
 
 DOODLE_HTTP_FUN_C(face_capture_devices, local_http_fun)
 std::shared_ptr<face_capture_selected_device> selected_{};
+std::shared_ptr<face_capture_session_holder> holder_{};
 
 face_capture_devices() : base_type(), selected_(std::make_shared<face_capture_selected_device>()) {}
 
@@ -45,11 +47,15 @@ DOODLE_HTTP_FUN_C(face_capture_stream, local_http_fun)
 boost::uuids::uuid session_id_{};
 std::shared_ptr<ws_stream_runner> runner_{};
 std::shared_ptr<face_capture_selected_device> selected_{};
+std::shared_ptr<face_capture_session_holder> holder_{};
 
 face_capture_stream() : base_type() {}
 
-explicit face_capture_stream(std::shared_ptr<face_capture_selected_device> in_selected)
-    : base_type(), selected_(std::move(in_selected)) {}
+explicit face_capture_stream(
+    std::shared_ptr<face_capture_selected_device> in_selected,
+    std::shared_ptr<face_capture_session_holder> in_holder
+)
+    : base_type(), selected_(std::move(in_selected)), holder_(std::move(in_holder)) {}
 
 [[nodiscard]] bool has_websocket() const override;
 

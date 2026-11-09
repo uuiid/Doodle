@@ -20,6 +20,7 @@
 #include <doodle_lib/http_method/kitsu/computing_time.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/local/face_capture.h>
+#include <doodle_lib/http_method/local/face_capture_recording.h>
 #include <doodle_lib/http_method/local/local.h>
 #include <doodle_lib/http_method/model_library/model_library.h>
 #include <doodle_lib/http_method/other/other.h>
@@ -332,7 +333,15 @@ http_route_ptr create_kitsu_local_route() {
       .reg_c<local::actions_local_watch_file_maya_anim>()
       .reg_c<local::actions_local_ai_session_ue>()
       .reg_c<local::face_capture_devices>()
-      .reg_c<local::face_capture_stream>(l_rout_ptr->get_function<local::face_capture_devices>()->selected_)
+      .reg_c<local::face_capture_stream>(
+          l_rout_ptr->get_function<local::face_capture_devices>()->selected_,
+          l_rout_ptr->get_function<local::face_capture_devices>()->holder_
+      )
+      .reg_c<local::face_capture_recordings>(l_rout_ptr->get_function<local::face_capture_devices>()->holder_)
+      .reg_c<local::face_capture_recording>(l_rout_ptr->get_function<local::face_capture_devices>()->holder_)
+      .reg_c<local::face_capture_recording_stop>(l_rout_ptr->get_function<local::face_capture_devices>()->holder_)
+      .reg_c<local::face_capture_recording_video>()
+      .reg_c<local::face_capture_recording_curves>()
       .reg_c<socket_io::socket_io_http>(l_sid_ctx)
 
       ;

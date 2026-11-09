@@ -103,8 +103,8 @@ FSys::path frames_dir_of(const FSys::path& in_session_dir) { return in_session_d
 FSys::path png_tmp_dir_of(const FSys::path& in_session_dir) { return in_session_dir / "png_tmp"; }
 
 png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
-  if (!FSys::exists(in_option.raw_mkv_))
-    return fail(error_code_t::raw_mkv_missing, fmt::format("raw.mkv 不存在: {}", in_option.raw_mkv_.string()));
+  if (!FSys::exists(in_option.video_))
+    return fail(error_code_t::raw_mkv_missing, fmt::format("视频文件不存在: {}", in_option.video_.string()));
 
   align_record l_record{};
   try {
@@ -127,7 +127,7 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
 
   {
     av::FormatContext l_format{};
-    l_format.openInput(in_option.raw_mkv_.string());
+    l_format.openInput(in_option.video_.string());
     l_format.findStreamInfo();
 
     av::Stream l_stream{};
@@ -139,13 +139,13 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
     }
     if (!l_stream.isValid()) {
       FSys::remove_all(l_tmp_dir);
-      return fail(error_code_t::raw_mkv_missing, "raw.mkv 中没有视频流");
+      return fail(error_code_t::raw_mkv_missing, "视频文件中没有视频流");
     }
 
     auto l_codec = l_stream.codecParameters().decodingCodec();
     if (l_codec.isNull() || !l_codec.isDecoder()) {
       FSys::remove_all(l_tmp_dir);
-      return fail(error_code_t::raw_mkv_missing, "raw.mkv 视频流没有可用的解码器");
+      return fail(error_code_t::raw_mkv_missing, "视频流没有可用的解码器");
     }
 
     av::VideoDecoderContext l_decoder{l_stream, l_codec};
@@ -156,7 +156,7 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
     auto l_src_pix_fmt     = l_decoder.pixelFormat();
     if (l_src_width <= 0 || l_src_height <= 0) {
       FSys::remove_all(l_tmp_dir);
-      return fail(error_code_t::raw_mkv_missing, "raw.mkv 视频尺寸非法");
+      return fail(error_code_t::raw_mkv_missing, "视频尺寸非法");
     }
 
     auto l_max_width = in_option.decode_max_width_ > 0 ? in_option.decode_max_width_ : k_default_width;
@@ -170,7 +170,7 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
     }
     if (l_width <= 0 || l_height <= 0) {
       FSys::remove_all(l_tmp_dir);
-      return fail(error_code_t::raw_mkv_missing, "raw.mkv 缩放后尺寸非法");
+      return fail(error_code_t::raw_mkv_missing, "缩放后尺寸非法");
     }
 
     av::VideoRescaler l_rescaler{l_width, l_height, rgb_pixel_format(), l_src_width, l_src_height, l_src_pix_fmt};
@@ -195,7 +195,7 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
 
   if (l_spool.written() == 0) {
     FSys::remove_all(l_tmp_dir);
-    return fail(error_code_t::png_sequence_invalid, "raw.mkv 中没有可解码的帧");
+    return fail(error_code_t::png_sequence_invalid, "视频中没有可解码的帧");
   }
 
   if (FSys::exists(l_frames_dir)) FSys::remove_all(l_frames_dir);
@@ -203,7 +203,7 @@ png_sequence_result write_png_sequence(const png_sequence_option& in_option) {
 
   if (l_expect_raw_frames != l_spool.written())
     SPDLOG_WARN(
-        "raw.mkv 解码帧数 {} 与 align.json 记录 {} 不一致", l_spool.written(), l_expect_raw_frames
+        "视频解码帧数 {} 与 align.json 记录 {} 不一致", l_spool.written(), l_expect_raw_frames
     );
 
   png_sequence_result l_result{};

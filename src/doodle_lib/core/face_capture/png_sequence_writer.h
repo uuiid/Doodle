@@ -14,7 +14,7 @@
 namespace doodle::face_capture {
 
 struct png_sequence_option {
-  FSys::path raw_mkv_{};
+  FSys::path video_{};
   FSys::path session_dir_{};
   std::int32_t decode_max_width_{k_default_width};
 };

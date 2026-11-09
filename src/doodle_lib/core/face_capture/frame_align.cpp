@@ -32,6 +32,8 @@ void from_json(const nlohmann::json& nlohmann_json_j, capture_state& nlohmann_js
     nlohmann_json_t = capture_state::stopping;
   } else if (l_str == "stopped") {
     nlohmann_json_t = capture_state::stopped;
+  } else if (l_str == "previewing") {
+    nlohmann_json_t = capture_state::previewing;
   } else {
     throw_exception(doodle_error{fmt::format("未知的采集状态: {}", l_str)});
   }
@@ -148,6 +150,8 @@ std::string to_string(capture_state in_state) {
       return "stopping";
     case capture_state::stopped:
       return "stopped";
+    case capture_state::previewing:
+      return "previewing";
   }
   return "unknown";
 }
@@ -160,6 +164,8 @@ std::string to_string(error_code_t in_error_code) {
       return "already_recording";
     case error_code_t::not_recording:
       return "not_recording";
+    case error_code_t::not_streaming:
+      return "not_streaming";
     case error_code_t::camera_open_failed:
       return "camera_open_failed";
     case error_code_t::camera_read_failed:

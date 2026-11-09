@@ -2,6 +2,7 @@ target_sources(doodle_lib
         PUBLIC
         local.h
         face_capture.h
+        face_capture_recording.h
         PRIVATE
         local_setting.cpp
         task_info.cpp
@@ -9,4 +10,5 @@ target_sources(doodle_lib
         event.cpp
         face_capture_stream.cpp
         face_capture_device.cpp
+        face_capture_record.cpp
 ) 
