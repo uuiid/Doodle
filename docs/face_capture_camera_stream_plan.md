@@ -351,7 +351,7 @@ record_state:  idle ──POST /recordings start_record()──► recording ─
 - **`fps` 滤镜是采样器，不是插值器**：25 fps 输出里必然存在重复帧，它只改变"哪一帧被重复、重复在哪里"，不创造运动。真正的顺滑只能靠摄像头原生 25 fps 或 `minterpolate`（720p 单帧 1.5–3 秒，实时不可行，已否决）。低光长曝光造成的运动模糊也无法用滤镜消除。
 - **`frames/` 来自 `take.mp4`，也就是滤镜输出**：帧数 = 录制时长 × 25（含重复帧），`frame_%06d.png` 按下标连续编号，**没有补位逻辑也天然连续**。这与"去掉 raw.mkv"的取舍一致：UE 求解输入就是前端看到的同一条流。
 - **预览期与录制期各用一个帧号**：预览期用内部 `preview_seq_` 给 `fragmenter_` 打 pts；`start_record()` 把 `seq_` 与 `preview_seq_` 归零、重建 `fragmenter_`（新 `init_segment` 通过 `avc_init` 重发），因此 `take.mp4` 与推流在录制开始时都从 0 起，前端收到新的 `avc_init` 清 buffer 即可。
-- **滤镜不可用时降级**：`fps=25` 建不出来（`av::Filter{"fps"}` 为空、graph 配置失败）时 `frame_filter::valid()` 返回 false，直接丢弃该对象；录制照常，`take.mp4` / 推流直接用原始帧并逐帧自增 pts。此时 `take.mp4` 的时间轴会按"一帧一格"播放，与墙钟不等，`capture_result` / `align.json` 里 `source_fps` 会暴露这一点。
+- **滤镜不可用时硬失败**：`fps=25` 建不出来（`av::Filter{"fps"}` 为空、graph 配置失败、尺寸非法）时 `frame_filter` 构造函数直接抛 `doodle_error`，`capture_session::open()` 以失败返回，不再降级为原始帧直通。这些失败全部来自 FFmpeg 构建配置/运行期环境而非业务逻辑，带着错误的帧率跑完整条链路只会产出时间轴错误的 `take.mp4`，比直接失败更糟。
 - **`gaps` 语义收窄为"摄像头静默"**：摄像头连续 > 1 秒没有返回帧（`k_silent_timeout_ms`）时，用 `{wall_ms_begin, wall_ms_end, duration_ms}` 记一条墙钟区间。它**不参与任何帧号折算**，只是告诉下游"这段时间摄像头哑了"。
 - **无界帧率 → 有界队列**：若读线程无界 `post`，摄像头 60 fps、strand 卡住时会内存暴涨；实现里 strand 侧按 `k_max_capture_queue_frames`（120 帧 ≈ 2 秒）限制积压。
 - `POST /recordings` 的 body 里**没有 `fps` 字段**：前端没有选择余地。`GET .../recordings/{id}` 与 `align.json` 里有 `"fps": 25`（输出帧率）与 `"source_fps"`（实测摄像头帧率），都是只读信息。
@@ -751,7 +751,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | `stop()` 时 `read()` 卡死不返回 | HTTP 请求挂住 | `cap_->release()` 唤醒阻塞读；2 秒内退不出就记 `truncated` 并 `detach`（§4.1） |
 | 摄像头帧率高于 25 | 推流/`take.mp4` 时间轴抖动 | `fps=25` 滤镜按真实时间戳采样（§4.4） |
 | 摄像头帧率低于 25 | 推流里出现重复帧 | `fps` 滤镜自动重复帧；只在画面运动上有观感差异，不影响求解 |
-| `fps` 滤镜建不出来 | `take.mp4` 时间轴按帧数而非墙钟 | `frame_filter::valid()` 为 false 时丢弃滤镜、降级为原始帧逐帧编码，`source_fps` 暴露实情（§4.4） |
+| `fps` 滤镜建不出来 | `take.mp4` 的时间轴按帧数而非墙钟时间推进 | 不降级，`frame_filter` 构造即抛异常，`open()` 失败并把原因回给前端（§4.4） |
 | WS 写并发 | beast 直接崩或数据错乱 | 所有共享状态只在 outlet 自己的 strand 上访问：`send_*` 一律 post 到 strand，`attach`/`detach`/`set_*` 要求调用方已在 strand 上；查询只读 `attached_`/`idle_` 两个 atomic（§5.3） |
 | `stop()` 同步阻塞 strand | 写协程饿死，等满 2 秒才返回 | `wait_outlet_idle()` 改成 `co_await timer.async_wait()` 轮询，让出 strand（§4.2） |
 | 页面挂起导致 WS 停读 | 写挂住、推流分片被丢 | 上限 8 片队列 + 丢非关键帧（§5.3）；**录制链不受影响**，丢的只是画面 |

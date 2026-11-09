@@ -270,10 +270,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
         frame_filter_option{.width_ = width_, .height_ = height_, .graph_ = fmt::format("fps={}", k_fps)},
         [l_self](const cv::Mat& in_mat, std::uint64_t /*in_seq*/) { l_self->emit_output_frame(in_mat); }
     );
-    if (!filter_->valid()) {
-      SPDLOG_WARN("fps 滤镜不可用, 推流与 take.mp4 直接使用摄像头原始帧");
-      filter_.reset();
-    }
   }
 
   void reset_counters(clock_type::time_point in_now) {
@@ -436,13 +432,15 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   }
 
   void drain_filter() {
-    if (!filter_) return;
-    filter_->flush();
+    if (filter_) filter_->flush();
   }
 
   void on_capture(cv::Mat in_mat, clock_type::time_point in_now) {
     if (stream_state_ != capture_state::previewing) return;
-    if (in_mat.cols < width_ || in_mat.rows < height_) return;
+    DOODLE_CHICK(
+        in_mat.cols >= width_ && in_mat.rows >= height_, "摄像头帧尺寸 {}x{} 小于采集尺寸 {}x{}", in_mat.cols,
+        in_mat.rows, width_, height_
+    );
     if (in_mat.cols != width_ || in_mat.rows != height_) in_mat = in_mat(cv::Rect{0, 0, width_, height_});
 
     const auto l_wall_ms = elapsed_ms(started_at_, in_now);
@@ -456,10 +454,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       ++orig_seq_;
     }
 
-    if (!filter_) {
-      emit_output_frame(in_mat);
-      return;
-    }
     filter_->push(in_mat, l_wall_ms * 1000);
   }
 

@@ -33,17 +33,11 @@ class frame_filter {
 
   ~frame_filter();
 
-  bool valid() const;
-
   void push(const cv::Mat& in_bgr, std::int64_t in_pts_us);
 
   void flush();
 
   std::uint64_t output_frames() const;
-
-  std::uint64_t inserted_frames() const;
-
-  void add_inserted();
 
  private:
   class impl;

@@ -65,92 +65,58 @@ class frame_filter::impl {
       : option_(in_option), sink_(std::move(in_sink)) {}
 
   bool init() {
-    if (option_.width_ <= 0 || option_.height_ <= 0) return false;
-    if (!sink_) return false;
-    if (option_.graph_.empty()) return false;
+    DOODLE_CHICK(option_.width_ > 0 && option_.height_ > 0, "fps 滤镜尺寸非法: {}x{}", option_.width_, option_.height_);
+    DOODLE_CHICK(sink_ != nullptr, "fps 滤镜缺少输出回调");
+    DOODLE_CHICK(!option_.graph_.empty(), "fps 滤镜描述为空");
 
-    try {
-      av::Filter l_filter{"fps"};
-      if (!l_filter) {
-        SPDLOG_WARN("找不到 fps 滤镜, 采集时间轴降级");
-        return false;
-      }
-      filter_ = l_filter;
+    filter_ = av::Filter{"fps"};
+    DOODLE_CHICK(static_cast<bool>(filter_), "当前 FFmpeg 构建缺少 fps 滤镜 (avfilter)");
 
-      graph_.setAutoConvert(AVFILTER_AUTO_CONVERT_ALL);
+    graph_.setAutoConvert(AVFILTER_AUTO_CONVERT_ALL);
 
-      const auto l_buffer_args = fmt::format(
-          "video_size={}x{}:pix_fmt={}:time_base={}/{}:pixel_aspect=1/1", option_.width_, option_.height_,
-          static_cast<int>(AV_PIX_FMT_BGR24), in_time_base().getNumerator(), in_time_base().getDenominator()
-      );
+    const auto l_buffer_args = fmt::format(
+        "video_size={}x{}:pix_fmt={}:time_base={}/{}:pixel_aspect=1/1", option_.width_, option_.height_,
+        static_cast<int>(AV_PIX_FMT_BGR24), in_time_base().getNumerator(), in_time_base().getDenominator()
+    );
 
-      buffersrc_ctx_  = graph_.createFilter(av::Filter{"buffer"}, "in", l_buffer_args);
-      buffersink_ctx_ = graph_.createFilter(av::Filter{"buffersink"}, "out", "");
+    buffersrc_ctx_  = graph_.createFilter(av::Filter{"buffer"}, "in", l_buffer_args);
+    buffersink_ctx_ = graph_.createFilter(av::Filter{"buffersink"}, "out", "");
 
-      filter_ctx_ = graph_.allocFilter(filter_, "fps");
-      filter_ctx_.init(option_.graph_);
+    filter_ctx_ = graph_.allocFilter(filter_, "fps");
+    filter_ctx_.init(option_.graph_);
 
-      buffersrc_ctx_.link(0, filter_ctx_, 0);
-      filter_ctx_.link(0, buffersink_ctx_, 0);
+    buffersrc_ctx_.link(0, filter_ctx_, 0);
+    filter_ctx_.link(0, buffersink_ctx_, 0);
 
-      graph_.config();
+    graph_.config();
 
-      buffersrc_  = av::BufferSrcFilterContext{buffersrc_ctx_};
-      buffersink_ = av::BufferSinkFilterContext{buffersink_ctx_};
-      valid_      = true;
-      return true;
-    } catch (const std::exception& in_err) {
-      SPDLOG_WARN("创建 fps 滤镜失败, 采集时间轴降级: {}", in_err.what());
-    } catch (...) {
-      SPDLOG_WARN("创建 fps 滤镜失败, 采集时间轴降级");
-    }
-
-    valid_ = false;
-    return false;
+    buffersrc_ = av::BufferSrcFilterContext{buffersrc_ctx_};
+    buffersink_ = av::BufferSinkFilterContext{buffersink_ctx_};
+    return true;
   }
 
-  bool valid() const { return valid_; }
-
   void push(const cv::Mat& in_bgr, std::int64_t in_pts_us) {
-    if (!valid_) return;
-    if (in_bgr.empty() || in_bgr.cols != option_.width_ || in_bgr.rows != option_.height_) return;
+    DOODLE_CHICK(
+        !in_bgr.empty() && in_bgr.cols == option_.width_ && in_bgr.rows == option_.height_,
+        "fps 滤镜输入帧尺寸不符: {}x{}, 期望 {}x{}", in_bgr.cols, in_bgr.rows, option_.width_, option_.height_
+    );
 
-    try {
-      auto l_frame = buffers_.make_frame(in_bgr, in_pts_us);
-      buffersrc_.writeVideoFrame(l_frame);
-      drain();
-    } catch (const std::exception& in_err) {
-      SPDLOG_WARN("fps 滤镜处理帧失败: {}", in_err.what());
-    } catch (...) {
-      SPDLOG_WARN("fps 滤镜处理帧失败");
-    }
+    auto l_frame = buffers_.make_frame(in_bgr, in_pts_us);
+    buffersrc_.writeVideoFrame(l_frame);
+    drain();
   }
 
   void flush() {
-    if (!valid_) return;
-    try {
-      (void)av_buffersrc_add_frame_flags(buffersrc_ctx_.raw(), nullptr, 0);
-      drain();
-    } catch (const std::exception& in_err) {
-      SPDLOG_WARN("fps 滤镜排空失败: {}", in_err.what());
-    } catch (...) {
-      SPDLOG_WARN("fps 滤镜排空失败");
-    }
+    (void)av_buffersrc_add_frame_flags(buffersrc_ctx_.raw(), nullptr, 0);
+    drain();
   }
 
   std::uint64_t output_frames() const { return output_; }
 
-  std::uint64_t inserted_frames() const { return inserted_; }
-
-  void add_inserted() { ++inserted_; }
-
  private:
   void drain() {
     av::VideoFrame l_frame{};
-    while (buffersink_.getVideoFrame(l_frame)) {
-      if (l_frame.pts().isValid() == false) continue;
-      sink_(to_mat(l_frame), output_++);
-    }
+    while (buffersink_.getVideoFrame(l_frame)) sink_(to_mat(l_frame), output_++);
   }
 
   cv::Mat to_mat(av::VideoFrame& in_frame) {
@@ -174,9 +140,7 @@ class frame_filter::impl {
   frame_buffer buffers_{};
   std::vector<std::uint8_t> out_bytes_{};
 
-  bool valid_{false};
   std::uint64_t output_{0};
-  std::uint64_t inserted_{0};
 };
 
 frame_filter::frame_filter(const frame_filter_option& in_option, frame_filter_sink_t in_sink)
@@ -190,16 +154,10 @@ frame_filter& frame_filter::operator=(frame_filter&&) noexcept = default;
 
 frame_filter::~frame_filter() = default;
 
-bool frame_filter::valid() const { return impl_ptr_ && impl_ptr_->valid(); }
-
 void frame_filter::push(const cv::Mat& in_bgr, std::int64_t in_pts_us) { impl_ptr_->push(in_bgr, in_pts_us); }
 
 void frame_filter::flush() { impl_ptr_->flush(); }
 
-std::uint64_t frame_filter::output_frames() const { return impl_ptr_ ? impl_ptr_->output_frames() : 0; }
-
-std::uint64_t frame_filter::inserted_frames() const { return impl_ptr_ ? impl_ptr_->inserted_frames() : 0; }
-
-void frame_filter::add_inserted() { impl_ptr_->add_inserted(); }
+std::uint64_t frame_filter::output_frames() const { return impl_ptr_->output_frames(); }
 
 }  // namespace doodle::face_capture
