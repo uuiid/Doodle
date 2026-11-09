@@ -341,7 +341,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   }
 
   boost::asio::awaitable<void> read_loop() {
-    while (true) {
+    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
       if (read_stop_) break;
 
       auto l_cap = cap_;
