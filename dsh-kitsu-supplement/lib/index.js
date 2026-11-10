@@ -248,7 +248,7 @@ function buildArgv({ mode, port, configPath, root, dbPath, extraArgs }) {
 /**
  * 把一段 sql 脚本切成单条语句。
  *
- * 轻量扫描而不是真解析：引号（' " ` 与 [ ] 标识符）、`--` 行注释、`/* *​/` 块注释里的分号都不算边界；
+ * 轻量扫描而不是真解析：引号（' " ` 与 [ ] 标识符）、`--` 行注释、块注释里的分号都不算边界；
  * `CREATE TRIGGER ... BEGIN ... END;` 的内部语句靠 BEGIN/END 深度判断。
  * 分号之后只剩空白/注释的尾巴不算语句。
  *
@@ -263,11 +263,13 @@ function splitSqlStatements(text) {
   let quote = "";
   let depth = 0;
   let isTrigger = false;
+  let isWordStart = true;
   for (let i = 0; i < source.length; i += 1) {
     const ch = source[i];
     const next = source[i + 1];
     if (quote !== "") {
       current += ch;
+      isWordStart = false;
       if (ch === quote) {
         if (next === quote) {
           current += next;
@@ -281,11 +283,13 @@ function splitSqlStatements(text) {
     if (ch === "'" || ch === '"' || ch === "`") {
       quote = ch;
       current += ch;
+      isWordStart = false;
       continue;
     }
     if (ch === "[") {
       quote = "]";
       current += ch;
+      isWordStart = false;
       continue;
     }
     if (ch === "-" && next === "-") {
@@ -293,6 +297,7 @@ function splitSqlStatements(text) {
       if (end === -1) break;
       current += " ";
       i = end;
+      isWordStart = true;
       continue;
     }
     if (ch === "/" && next === "*") {
@@ -300,12 +305,13 @@ function splitSqlStatements(text) {
       if (end === -1) break;
       current += " ";
       i = end + 1;
+      isWordStart = true;
       continue;
     }
-    if (/[A-Za-z_]/.test(ch) && !/[A-Za-z0-9_]/.test(current.slice(-1))) {
+    if (/[A-Za-z_]/.test(ch) && isWordStart) {
       let word = "";
       let j = i;
-      while (j < source.length && /[A-Za-z_]/.test(source[j])) {
+      while (j < source.length && /[A-Za-z0-9_]/.test(source[j])) {
         word += source[j];
         j += 1;
       }
@@ -315,6 +321,7 @@ function splitSqlStatements(text) {
       else if (isTrigger && upper === "END" && depth > 0) depth -= 1;
       current += word;
       i = j - 1;
+      isWordStart = false;
       continue;
     }
     if (ch === ";" && depth === 0) {
@@ -322,10 +329,13 @@ function splitSqlStatements(text) {
       if (trimmed !== "") statements.push(trimmed);
       current = "";
       isTrigger = false;
+      isWordStart = true;
       continue;
     }
     current += ch;
-  }  const tail = current.trim();
+    isWordStart = !/[A-Za-z0-9_$]/.test(ch);
+  }
+  const tail = current.trim();
   if (tail !== "") statements.push(tail);
   return statements;
 }
@@ -557,7 +567,7 @@ async function resolveSpec({ config, args, exists }) {
   const overrides = {};
   const dbPath = trimOrEmpty(args.dbPath);
   const frontEndPath = trimOrEmpty(args.frontEndPath);
-  if (dbPath !== "") overrides.db_path = normalizePath(dbPath);
+  if (dbPath !== "" && dbPath !== MEMORY_DB) overrides.db_path = normalizePath(dbPath);
   if (frontEndPath !== "") overrides.kitsu_front_end_path = normalizePath(frontEndPath);
   if (args.publicUrlPort !== undefined && args.publicUrlPort !== "") overrides.public_url_port = args.publicUrlPort;
 
@@ -567,7 +577,7 @@ async function resolveSpec({ config, args, exists }) {
     exePath,
     cwd,
     root: normalizedRoot,
-    dbPath: dbPath === "" ? undefined : normalizePath(dbPath),
+    dbPath: dbPath === "" ? undefined : dbPath === MEMORY_DB ? MEMORY_DB : normalizePath(dbPath),
     readyPath,
     extraArgs: Array.isArray(args.extraArgs) ? args.extraArgs : undefined,
     configValues: buildConfig({ defaults: config.defaultConfigPaths ?? {}, port, extraConfig: args.extraConfig, overrides }),
@@ -595,7 +605,7 @@ function startWarnings(spec) {
     warnings.push(
       spec.mode === "local"
         ? "local 模式没有传 dbPath：服务端使用内存数据库（:memory:），进程退出即丢，kitsu_server_sql 无法写入；需要可写库请传 dbPath。"
-        : "没有传 dbPath：服务端使用其内置默认库路径（C:/kitsu_new.database），kitsu_server_sql 会沿用该路径。",
+        : "没有传 dbPath：服务端使用其内置默认库路径（C:/kitsu_new.database），kitsu_server_sql 会写入该文件。",
     );
   }
   return warnings;
@@ -630,6 +640,152 @@ function startFailure(spec, code, reason, extra = {}) {
     warnings: [],
     ...extra,
   });
+}
+
+/**
+ * 校验 kitsu_server_sql 的参数。
+ *
+ * @param {any} args
+ * @returns {string[]}
+ */
+function validateSqlArgs(args) {
+  /** @type {string[]} */
+  const problems = [];
+  const hasSql = trimOrEmpty(args.sql) !== "";
+  const files = Array.isArray(args.files) ? args.files : [];
+  if (!hasSql && files.length === 0) problems.push("必须给 sql 片段或至少一个 files 路径。");
+  if (args.files !== undefined && !Array.isArray(args.files)) problems.push("files 必须是字符串数组。");
+  for (const file of files) {
+    if (typeof file !== "string" || file.trim() === "") {
+      problems.push(`files 含非法项 ${JSON.stringify(file)}（必须是非空绝对路径）。`);
+    } else if (!/^([A-Za-z]:[\\/]|\\\\[^\\/]+)/.test(file)) {
+      problems.push(`files 项必须是绝对路径，收到 ${JSON.stringify(file)}。`);
+    } else if (!file.toLowerCase().endsWith(".sql")) {
+      problems.push(`files 项必须以 .sql 结尾，收到 ${JSON.stringify(file)}。`);
+    }
+  }
+  if (args.dbPath !== undefined) {
+    const dbPath = trimOrEmpty(args.dbPath);
+    if (dbPath === "") problems.push("dbPath 不能是空串；不给就沿用实例或插件默认值。");
+    else if (dbPath === MEMORY_DB) problems.push(`${MEMORY_DB} 是进程内存库，外部写不进去；请给服务端传一个磁盘 dbPath。`);
+    else if (!/^([A-Za-z]:[\\/]|\\\\[^\\/]+)/.test(dbPath)) problems.push(`dbPath 必须是绝对路径，收到 ${JSON.stringify(dbPath)}。`);
+  }
+  if (args.serverId !== undefined && trimOrEmpty(args.serverId) === "") problems.push("serverId 不能是空串。");
+  return problems;
+}
+
+/**
+ * 决定这次写入哪个库：参数 > 实例记录的 dbPath > 插件默认 db_path。
+ *
+ * @param {object} deps
+ * @param {any} deps.args
+ * @param {any} deps.config
+ * @param {Map<string, any>} deps.registry
+ * @returns {{dbPath:string|undefined, serverId:string|undefined, problem?:string}}
+ */
+function resolveSqlTarget({ args, config, registry }) {
+  const wantedId = trimOrEmpty(args.serverId);
+  /** @type {any} */
+  let record;
+  if (wantedId !== "") {
+    record = registry.get(wantedId);
+    if (record === undefined) return { dbPath: undefined, serverId: wantedId, problem: `找不到实例 ${wantedId}（先用 kitsu_server_status 查看）。` };
+  }
+  const explicit = trimOrEmpty(args.dbPath);
+  const fromRecord = typeof record?.dbPath === "string" ? record.dbPath : "";
+  const fallback = trimOrEmpty(config?.defaultConfigPaths?.db_path);
+  const dbPath = explicit !== "" ? normalizePath(explicit) : fromRecord !== "" ? fromRecord : fallback;
+  if (dbPath === "") {
+    return {
+      dbPath: undefined,
+      serverId: wantedId === "" ? undefined : wantedId,
+      problem: "无法确定数据库路径：请传 dbPath，或先起一个带 dbPath 的实例，或配置 defaultConfigPaths.db_path。",
+    };
+  }
+  if (dbPath === MEMORY_DB) {
+    return {
+      dbPath,
+      serverId: wantedId === "" ? undefined : wantedId,
+      problem:
+        `目标是内存库 ${MEMORY_DB}（服务端启动时没拿到 --dbPath，见 kitsu_supplement.cpp:175-178）：外部进程写不进去。` +
+        "请用 dbPath 参数重启服务端后再填充数据。",
+    };
+  }
+  return { dbPath, serverId: wantedId === "" ? undefined : wantedId };
+}
+
+/**
+ * 在磁盘库上执行一批 sql。服务端对磁盘库调 journal_mode(wal)（sqlite_database.cpp:1335），
+ * 但实测新库仍可能是 rollback journal；两种模式下外部提交的写入都不需要停服或重启。
+ *
+ * 连接级 PRAGMA 与服务端保持一致（sqlite_database.cpp:1310-1312），
+ * 否则可能写出服务端读不了的库（尤其外键）。
+ *
+ * @param {{dbPath:string, batches:{label:string, sql:string}[], dryRun:boolean}} spec
+ * @returns {Promise<{ok:boolean, statements:number, changes:number, results:any[], error?:string}>}
+ */
+async function runSql({ dbPath, batches, dryRun }) {
+  const { DatabaseSync } = await import("node:sqlite");
+  /** @type {any} */
+  let db;
+  try {
+    db = new DatabaseSync(dbPath, { timeout: SQL_BUSY_TIMEOUT_MS });
+  } catch (error) {
+    return { ok: false, statements: 0, changes: 0, results: [], error: `打不开数据库 ${dbPath}：${errorText(error)}` };
+  }
+  /** @type {any[]} */
+  const results = [];
+  let statements = 0;
+  let changes = 0;
+  let inTransaction = false;
+  try {
+    db.exec("PRAGMA foreign_keys = ON;");
+    db.exec("PRAGMA synchronous = NORMAL;");
+    db.exec("PRAGMA recursive_triggers = ON;");
+    db.exec("BEGIN IMMEDIATE;");
+    inTransaction = true;
+    for (const batch of batches) {
+      const list = splitSqlStatements(batch.sql);
+      for (let index = 0; index < list.length; index += 1) {
+        const statement = list[index];
+        const rejection = rejectSqlStatement(statement);
+        if (rejection !== undefined) throw new Error(`${batch.label} 第 ${index + 1} 条：${rejection}`);
+        statements += 1;
+        try {
+          const stmt = db.prepare(statement);
+          const rowChanges = dryRun ? 0 : Number(stmt.run()?.changes ?? 0);
+          changes += rowChanges;
+          results.push({ source: batch.label, index: index + 1, verb: sqlVerb(statement), changes: rowChanges });
+        } catch (error) {
+          return {
+            ok: false,
+            statements,
+            changes: 0,
+            results,
+            error: `${batch.label} 第 ${index + 1} 条失败：${errorText(error)}\nSQL: ${tailText(statement, 400)}`,
+          };
+        }
+      }
+    }
+    db.exec(dryRun ? "ROLLBACK;" : "COMMIT;");
+    inTransaction = false;
+    return { ok: true, statements, changes, results };
+  } catch (error) {
+    return { ok: false, statements, changes: 0, results, error: errorText(error) };
+  } finally {
+    if (inTransaction) {
+      try {
+        db.exec("ROLLBACK;");
+      } catch {
+        /* 事务可能已经因错误被 SQLite 回滚 */
+      }
+    }
+    try {
+      db.close();
+    } catch {
+      /* 连接已经不可用，无需再抛 */
+    }
+  }
 }
 
 //#endregion
@@ -783,6 +939,36 @@ const STOP_SCHEMA = {
   },
 };
 
+const SQL_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    ok: { type: "boolean", required: true },
+    code: { type: "string", required: true },
+    reason: { type: "string", required: true },
+    dbPath: { type: "string" },
+    serverId: { type: "string" },
+    dryRun: { type: "boolean" },
+    statements: { type: "number", required: true },
+    changes: { type: "number", required: true },
+    results: {
+      type: "array",
+      required: true,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          source: { type: "string", required: true },
+          index: { type: "number", required: true },
+          verb: { type: "string", required: true },
+          changes: { type: "number", required: true },
+        },
+      },
+    },
+    diagnostics: { type: "array", required: true, items: DIAGNOSTIC_ITEM },
+  },
+};
+
 /**
  * @param {any} value
  * @returns {any[]}
@@ -851,6 +1037,32 @@ function renderStop(args, value) {
     lines.push(`${item.serverId}  pid=${item.pid}  :${item.port}  ${item.ok ? "已停止" : `停止失败: ${item.reason}`}${exit}`);
   }
   for (const item of value.diagnostics ?? []) lines.push(`${item.severity.toUpperCase()} ${item.code}: ${item.message}`);
+  return [{ type: "text", text: lines.join("\n") }];
+}
+
+/**
+ * @param {any} args
+ * @param {any} value
+ * @returns {any[]}
+ */
+function renderSql(args, value) {
+  /** @type {string[]} */
+  const lines = [];
+  lines.push(`${value.ok ? "OK" : "FAILED"} [${value.code}] ${value.reason}`);
+  if (value.dbPath) lines.push(`db: ${value.dbPath}`);
+  if (value.serverId) lines.push(`server: ${value.serverId}（未停服、未重启，写完即可查）`);
+  if (value.ok === true) {
+    lines.push(`statements: ${value.statements}  changes: ${value.changes}${value.dryRun ? "  (dryRun: 已回滚)" : ""}`);
+    const byVerb = new Map();
+    for (const item of value.results ?? []) {
+      byVerb.set(item.verb, (byVerb.get(item.verb) ?? 0) + 1);
+    }
+    if (byVerb.size > 0) {
+      lines.push(`by verb: ${[...byVerb].map(([verb, count]) => `${verb}=${count}`).join(", ")}`);
+    }
+  } else {
+    for (const item of value.diagnostics ?? []) lines.push(`${item.severity.toUpperCase()} ${item.code}: ${item.message}`);
+  }
   return [{ type: "text", text: lines.join("\n") }];
 }
 
@@ -957,71 +1169,6 @@ function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
-}
-
-/**
- * 在磁盘库上执行一批 sql。服务端库是 WAL 模式（sqlite_database.cpp:1335），
- * 所以运行中的进程能直接读到这里的写入，不需要停服或重启。
- *
- * 连接级 PRAGMA 与服务端保持一致（sqlite_database.cpp:1310-1312），
- * 否则可能写出服务端读不了的库（尤其外键）。
- *
- * @param {{dbPath:string, batches:{label:string, sql:string}[], dryRun:boolean}} spec
- * @returns {Promise<{ok:boolean, statements:number, changes:number, results:any[], error?:string}>}
- */
-async function runSql({ dbPath, batches, dryRun }) {
-  const { DatabaseSync } = await import("node:sqlite");
-  /** @type {any} */
-  let db;
-  try {
-    db = new DatabaseSync(dbPath, { timeout: SQL_BUSY_TIMEOUT_MS });
-  } catch (error) {
-    return { ok: false, statements: 0, changes: 0, results: [], error: `打不开数据库 ${dbPath}：${errorText(error)}` };
-  }
-  /** @type {any[]} */
-  const results = [];
-  let statements = 0;
-  let changes = 0;
-  try {
-    db.exec("PRAGMA foreign_keys = ON;");
-    db.exec("PRAGMA synchronous = NORMAL;");
-    db.exec("PRAGMA recursive_triggers = ON;");
-    db.exec("BEGIN IMMEDIATE;");
-    for (const batch of batches) {
-      const list = splitSqlStatements(batch.sql);
-      for (let index = 0; index < list.length; index += 1) {
-        const statement = list[index];
-        const rejection = rejectSqlStatement(statement);
-        if (rejection !== undefined) throw new Error(`${batch.label} 第 ${index + 1} 条：${rejection}`);
-        statements += 1;
-        try {
-          const stmt = db.prepare(statement);
-          const info = stmt.run();
-          const rowChanges = typeof info?.changes === "number" ? info.changes : 0;
-          changes += rowChanges;
-          results.push({ source: batch.label, index: index + 1, verb: sqlVerb(statement), changes: rowChanges });
-        } catch (error) {
-          return {
-            ok: false,
-            statements,
-            changes: 0,
-            results,
-            error: `${batch.label} 第 ${index + 1} 条失败：${errorText(error)}\nSQL: ${tailText(statement, 400)}`,
-          };
-        }
-      }
-    }
-    db.exec("ROLLBACK;");
-    return { ok: true, statements, changes: dryRun ? 0 : changes, results };
-  } catch (error) {
-    return { ok: false, statements, changes: 0, results, error: errorText(error) };
-  } finally {
-    try {
-      db.close();
-    } catch {
-      /* 连接已经不可用，无需再抛 */
-    }
-  }
 }
 
 /**
@@ -1319,6 +1466,7 @@ async function startServer(ctx, spec) {
     exePath: spec.exePath,
     cwd: spec.cwd,
     configPath: spec.configPath,
+    dbPath: spec.dbPath,
     command: spec.command,
   };
   handle.done.then(
@@ -1535,8 +1683,9 @@ export function apply(ctx, config) {
         ? ""
         : [
             "`kitsu_server_start` 拉起本机 doodle_kitsu_supplement.exe HTTP 服务（测试前准备后端），返回的 `port` / `baseUrl` 取自进程 stdout 的真实监听端口，测试脚本应引用它而不是猜端口。",
-            `\`port\` 必须显式传，且必须是 ${PORT_RANGE_TEXT} 之间的整数；端口被占用时工具默认失败并给出占用 PID，只有显式传 \`killExisting: true\` 才强杀。\`mode: \"local\"\`（或 \`local: true\`）会给进程加 \`--local\`，服务端在该模式下忽略 dbPath/root 覆盖并改用内置数据库。`,
+            `\`port\` 必须显式传，且必须是 ${PORT_RANGE_TEXT} 之间的整数；端口被占用时工具默认失败并给出占用 PID，只有显式传 \`killExisting: true\` 才强杀。\`mode: \"local\"\`（或 \`local: true\`）会给进程加 \`--local\`，并把 \`dbPath\` 作为 \`--dbPath\` 传给服务端；不传 dbPath 时 local 分支落进内存库（\`:memory:\`），重启即丢。`,
             "`kitsu_server_status` 查看本插件的实例与端口占用；`kitsu_server_stop` 停掉本插件拉起的实例；本插件不杀别人启动的进程。",
+            "`kitsu_server_sql` 对磁盘库执行 sql 文件或片段（填测试数据），写完运行中的进程立刻能查到，**不要**为它停服或重启；执行前不确定就先 `dryRun: true` 走一遍。",
           ].join(" "),
   });
 
@@ -1546,8 +1695,8 @@ export function apply(ctx, config) {
       description:
         "Start the doodle_kitsu_supplement HTTP server for local testing and return the REAL listening port (parsed " +
         "from the process stdout) plus a ready http://127.0.0.1:<port> baseUrl. `mode: \"production\"` (default) lets " +
-        "the server read its registry config and listen on config.port; `mode: \"local\"` adds `--local`, which makes " +
-        "the server use its built-in database and ignore dbPath (the local branch only accepts the explicit --port value). " +
+        "the server read its registry config and listen on config.port; `mode: \"local\"` adds `--local`, which also " +
+        "turns off the registry-only paths (in-memory database unless `dbPath` is given). " +
         `\`port\` is REQUIRED and must be an integer in ${PORT_RANGE_TEXT}: without --port the local branch listens on a ` +
         "random port, and this node needs a stable, test-referable address. The generated config JSON carries dbPath (db_path), frontEndPath " +
         "(kitsu_front_end_path), publicUrlPort (public_url_port) and root; the working directory is `cwd` (default: the " +
@@ -1582,7 +1731,9 @@ export function apply(ctx, config) {
         },
         dbPath: {
           type: "string",
-          description: "SQLite database file for the server config (`db_path`). Ignored by the local branch.",
+          description:
+            "SQLite database file for the server config (`db_path`), also passed on the command line as `--dbPath`. " +
+            "In local mode omitting it means the in-memory database (`:memory:`), which no external process can write.",
         },
         root: {
           type: "string",
@@ -1781,6 +1932,120 @@ export function apply(ctx, config) {
           stopped: stopped.map((item) => ({ ...item, exitCode: item.exitCode ?? null })),
           remaining: [...registry.keys()],
           diagnostics,
+        });
+      },
+    }),
+  );
+
+  ctx.tools.register(
+    defineTool({
+      name: "kitsu_server_sql",
+      description:
+        "Run a SQL file or inline SQL against the doodle_kitsu_supplement database to change it or seed test data. " +
+        "A running instance sees committed writes immediately: this tool never " +
+        "stops or restarts the server. Sources run in order (`files[0]`, `files[1]`, ... then `sql`); everything runs in " +
+        "a single transaction with `BEGIN IMMEDIATE`, so a failure rolls the whole batch back and reports the source " +
+        "name, the statement number and the SQLite error. The target database is `dbPath`, else the dbPath of " +
+        "`serverId`'s instance, else the plugin default. Connection pragmas mirror the server (`foreign_keys = ON`, " +
+        "`synchronous = NORMAL`, `recursive_triggers = ON`) and the write lock waits up to 5s. ATTACH/DETACH are " +
+        "rejected. `dryRun: true` executes and rolls back, so you can verify a script without persisting it. A " +
+        "`:memory:` target (server started without dbPath) is refused with code `memory-db`.",
+      parameters: {
+        sql: {
+          type: "string",
+          description: "Inline SQL. May contain multiple statements; runs after every `files` entry.",
+        },
+        files: {
+          type: "array",
+          items: { type: "string" },
+          description: "Absolute paths of SQL files, executed in the given order before `sql`.",
+        },
+        dbPath: {
+          type: "string",
+          description:
+            "Target SQLite file. Defaults to the dbPath of `serverId`'s instance, then the plugin default. " +
+            "`:memory:` is rejected.",
+        },
+        serverId: {
+          type: "string",
+          description: "Instance whose database is targeted (and noted in the result). It is not stopped or restarted.",
+        },
+        dryRun: {
+          type: "boolean",
+          description: "Run the whole batch inside a transaction and roll it back; nothing is persisted.",
+        },
+      },
+      output: { schema: SQL_SCHEMA, render: renderSql },
+      isConcurrencySafe() {
+        return false;
+      },
+      async execute(args, exec) {
+        const problems = validateSqlArgs(args);
+        const fs = await import("node:fs/promises");
+        /** @type {{label:string, sql:string}[]} */
+        const batches = [];
+        const fileList = Array.isArray(args.files) ? args.files : [];
+        for (const file of fileList) {
+          if (typeof file !== "string" || file.trim() === "") continue;
+          const absolute = normalizePath(file);
+          try {
+            batches.push({ label: absolute, sql: await fs.readFile(absolute, "utf8") });
+          } catch (error) {
+            problems.push(`读不到 SQL 文件 ${absolute}：${errorText(error)}`);
+          }
+        }
+        if (trimOrEmpty(args.sql) !== "") batches.push({ label: "<inline sql>", sql: String(args.sql) });
+
+        const target = resolveSqlTarget({ args, config: resolved, registry });
+        if (target.problem !== undefined) problems.push(target.problem);
+        if (problems.length > 0) {
+          return sanitizeForJson({
+            ok: false,
+            code: "invalid-args",
+            reason: problems.join(" "),
+            dbPath: target.dbPath,
+            serverId: target.serverId,
+            statements: 0,
+            changes: 0,
+            results: [],
+            diagnostics: problems.map((message) => ({ severity: "error", code: "args/invalid", message })),
+          });
+        }
+        if (batches.length === 0) {
+          const message = "SQL 里没有任何可执行语句（文件为空或只有注释）。";
+          return sanitizeForJson({
+            ok: false,
+            code: "empty",
+            reason: message,
+            dbPath: target.dbPath,
+            serverId: target.serverId,
+            statements: 0,
+            changes: 0,
+            results: [],
+            diagnostics: [{ severity: "error", code: "sql/empty", message }],
+          });
+        }
+
+        const outcome = await runSql({
+          dbPath: target.dbPath,
+          batches,
+          dryRun: args.dryRun === true,
+        });
+        return sanitizeForJson({
+          ok: outcome.ok,
+          code: outcome.ok ? "ok" : "sql-failed",
+          reason: outcome.ok
+            ? `${args.dryRun === true ? "已校验并回滚" : "已提交"} ${outcome.statements} 条语句，影响 ${outcome.changes} 行（${target.dbPath}）。`
+            : outcome.error,
+          dbPath: target.dbPath,
+          serverId: target.serverId,
+          dryRun: args.dryRun === true ? true : undefined,
+          statements: outcome.statements,
+          changes: outcome.changes,
+          results: outcome.results.slice(0, 200),
+          diagnostics: outcome.ok
+            ? []
+            : [{ severity: "error", code: "sql/failed", message: String(outcome.error) }],
         });
       },
     }),

@@ -163,6 +163,56 @@ test("开关一律两参数，绝不出现 --key=value（argh 只把 = 形式记
   eq(argv.filter((item) => item.startsWith("--") && item.includes("=")), []);
   eq(argv, ["--config", "C:\\a b\\c.json", "--root", "D:\\x y", "--local", "--port", "50030"]);
 });
+test("dbPath 以 --dbPath 两个 argv 项传入，且在 --local 之前", () => {
+  eq(
+    P.buildArgv({ mode: "local", port: 50123, dbPath: "E:\\db\\test.sqlite" }),
+    ["--dbPath", "E:\\db\\test.sqlite", "--local", "--port", "50123"],
+  );
+});
+test("extraArgs 不允许重复 --dbPath", () => {
+  const problems = P.validateExtraArgs(["--dbPath=x", "--dbPath", "y"]);
+  eq(problems.length, 2);
+});
+
+process.stdout.write("splitSqlStatements\n");
+test("按分号切分并保留语句正文", () => {
+  eq(P.splitSqlStatements("INSERT INTO a VALUES (1);\nINSERT INTO b VALUES (2);"), [
+    "INSERT INTO a VALUES (1)",
+    "INSERT INTO b VALUES (2)",
+  ]);
+});
+test("字符串字面量里的分号不切分", () => {
+  eq(P.splitSqlStatements("INSERT INTO a VALUES ('x;y'); SELECT 1"), ["INSERT INTO a VALUES ('x;y')", "SELECT 1"]);
+});
+test("标识符引号里的分号不切分", () => {
+  eq(P.splitSqlStatements('INSERT INTO "a;b" VALUES (1);'), ['INSERT INTO "a;b" VALUES (1)']);
+  eq(P.splitSqlStatements("INSERT INTO [a;b] VALUES (1);"), ["INSERT INTO [a;b] VALUES (1)"]);
+});
+test("注释里的分号不切分", () => {
+  eq(P.splitSqlStatements("-- a;b\nSELECT 1;"), ["SELECT 1"]);
+  eq(P.splitSqlStatements("/* a;b */ SELECT 1;"), ["SELECT 1"]);
+});
+test("CREATE TRIGGER 体内分号不切分", () => {
+  const script = "CREATE TRIGGER t AFTER INSERT ON a BEGIN INSERT INTO b VALUES (1); END; SELECT 1;";
+  eq(P.splitSqlStatements(script), [
+    "CREATE TRIGGER t AFTER INSERT ON a BEGIN INSERT INTO b VALUES (1); END",
+    "SELECT 1",
+  ]);
+});
+test("只有注释或空白的脚本没有语句", () => {
+  eq(P.splitSqlStatements("-- nothing\n"), []);
+  eq(P.splitSqlStatements("   \n\t"), []);
+});
+
+process.stdout.write("rejectSqlStatement\n");
+test("拒绝 ATTACH / DETACH（含大小写）", () => {
+  ok(P.rejectSqlStatement("ATTACH DATABASE 'x.db' AS x") !== undefined, "attach should be rejected");
+  ok(P.rejectSqlStatement("detach database x") !== undefined, "detach should be rejected");
+});
+test("普通写语句放行", () => {
+  eq(P.rejectSqlStatement("INSERT INTO a VALUES (1)"), undefined);
+  eq(P.rejectSqlStatement("UPDATE a SET b = 1"), undefined);
+});
 
 process.stdout.write("buildConfig\n");
 test("默认 -> extraConfig -> 参数覆盖，port 恒为参数", () => {
@@ -230,6 +280,33 @@ const baseConfig = {
 };
 const allExists = async () => true;
 const noneExists = async () => false;
+
+process.stdout.write("resolveSqlTarget\n");
+test("参数优先，其次实例，其次插件默认", () => {
+  const registry = new Map([["kitsu-1", { dbPath: "E:\\from-instance.db" }]]);
+  eq(P.resolveSqlTarget({ args: { dbPath: "E:\\explicit.db" }, config: baseConfig, registry }), {
+    dbPath: "E:\\explicit.db",
+    serverId: undefined,
+  });
+  eq(P.resolveSqlTarget({ args: { serverId: "kitsu-1" }, config: baseConfig, registry }), {
+    dbPath: "E:\\from-instance.db",
+    serverId: "kitsu-1",
+  });
+  eq(P.resolveSqlTarget({ args: {}, config: baseConfig, registry: new Map() }), {
+    dbPath: "C:/db.sqlite",
+    serverId: undefined,
+  });
+});
+test("内存库被明确拒绝", () => {
+  const registry = new Map([["kitsu-2", { dbPath: ":memory:" }]]);
+  const target = P.resolveSqlTarget({ args: { serverId: "kitsu-2" }, config: baseConfig, registry });
+  ok(target.problem !== undefined && target.problem.includes("内存库"), String(target.problem));
+});
+test("空库路径 + 无默认值 -> 报错", () => {
+  const target = P.resolveSqlTarget({ args: {}, config: { defaultConfigPaths: { db_path: "" } }, registry: new Map() });
+  ok(target.problem !== undefined && target.problem.includes("无法确定数据库路径"), String(target.problem));
+});
+
 
 await testAsync("cwd 缺省取 exe 所在目录", async () => {
   const plan = await P.resolveSpec({ config: baseConfig, args: { port: 50100, mode: "" }, exists: allExists });
