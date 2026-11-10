@@ -15,6 +15,7 @@ target_sources(
         folder_watcher_anim_fbx.h
         depth_estimation_task.h
         ai_light_render.h
+        face_capture_transcode.h
         
         PRIVATE
         maya_exe.cpp
@@ -31,4 +32,5 @@ target_sources(
         folder_watcher_anim_fbx.cpp
         depth_estimation_task.cpp
         ai_light_render.cpp
+        face_capture_transcode.cpp
 )
