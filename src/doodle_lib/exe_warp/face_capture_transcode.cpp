@@ -9,12 +9,13 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/face_capture/capture_session.h>
 #include <doodle_lib/core/face_capture/face_capture_types.h>
-#include <doodle_lib/core/face_capture/png_sequence_writer.h>
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 
-#include <algorithm>
-#include <cctype>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/videoio.hpp>
+
 #include <cstdint>
 #include <filesystem>
 #include <fmt/format.h>
@@ -30,68 +31,33 @@ constexpr std::string_view k_curves_file_name{"face_curves.dhfc"};
 
 constexpr std::string_view k_log_file_name{"face_capture_log.json"};
 
+constexpr std::int32_t k_png_compression{3};
+
 FSys::path session_dir_of(const uuid& in_session_id) {
   return face_capture::capture_session::default_root() / fmt::format("{}", in_session_id);
 }
 
-std::vector<FSys::path> list_png(const FSys::path& in_dir) {
-  std::vector<FSys::path> l_files{};
-  if (!FSys::exists(in_dir)) return l_files;
-  for (const auto& l_entry : FSys::directory_iterator{in_dir}) {
-    if (!l_entry.is_regular_file()) continue;
-    if (l_entry.path().extension() != ".png") continue;
-    l_files.emplace_back(l_entry.path());
-  }
-  std::sort(l_files.begin(), l_files.end());
-  return l_files;
+bool write_png_frame(const FSys::path& in_dir, std::int32_t in_index, const cv::Mat& in_image) {
+  auto l_name = fmt::format("frame_{:0{}d}.png", in_index, face_capture::k_png_digits);
+  return cv::imwrite((in_dir / l_name).string(), in_image, {cv::IMWRITE_PNG_COMPRESSION, k_png_compression});
 }
 
-bool is_digit(char in_char) { return std::isdigit(static_cast<unsigned char>(in_char)) != 0; }
+std::int32_t decode_to_png(const FSys::path& in_video, const FSys::path& in_frames_dir) {
+  cv::VideoCapture l_capture{in_video.string()};
+  DOODLE_CHICK(l_capture.isOpened(), "无法打开视频文件 {}", in_video.generic_string());
 
-std::string digits_of(const FSys::path& in_path) {
-  auto l_stem = in_path.stem().generic_string();
-  auto l_end  = l_stem.find_last_of("0123456789");
-  if (l_end == std::string::npos) return {};
-  auto l_begin = l_end;
-  while (l_begin > 0 && is_digit(l_stem[l_begin - 1])) --l_begin;
-  return l_stem.substr(l_begin, l_end - l_begin + 1);
-}
-
-void normalize_frames(const FSys::path& in_frames_dir) {
-  auto l_files = list_png(in_frames_dir);
-  DOODLE_CHICK(!l_files.empty(), "帧目录 {} 中没有 png 文件", in_frames_dir.generic_string());
-
-  bool l_need_rename  = false;
-  std::string l_first = digits_of(l_files.front());
-  if (l_first.empty() || l_first.size() != static_cast<std::size_t>(face_capture::k_png_digits)) {
-    l_need_rename = true;
+  std::int32_t l_count = 0;
+  cv::Mat l_frame{};
+  while (l_capture.read(l_frame)) {
+    if (l_frame.empty()) continue;
+    DOODLE_CHICK(
+        write_png_frame(in_frames_dir, l_count, l_frame), "写出第 {} 帧 png 失败, 目录 {}",
+        l_count, in_frames_dir.generic_string()
+    );
+    ++l_count;
   }
-
-  if (!l_need_rename) {
-    std::int64_t l_expect = std::stoll(l_first);
-    for (const auto& l_path : l_files) {
-      auto l_digits = digits_of(l_path);
-      if (l_digits.size() != l_first.size() || std::stoll(l_digits) != l_expect) {
-        l_need_rename = true;
-        break;
-      }
-      ++l_expect;
-    }
-  }
-  if (!l_need_rename) return;
-
-  auto l_tmp_dir = in_frames_dir.parent_path() / fmt::format("{}_rename", in_frames_dir.filename().generic_string());
-
-  if (FSys::exists(l_tmp_dir)) FSys::remove_all(l_tmp_dir);
-  FSys::create_directories(l_tmp_dir);
-
-  for (std::size_t l_index = 0; l_index < l_files.size(); ++l_index) {
-    const auto l_name = fmt::format("frame_{:0{}d}.png", l_index, face_capture::k_png_digits);
-    FSys::rename(l_files[l_index], l_tmp_dir / l_name);
-  }
-
-  FSys::remove_all(in_frames_dir);
-  FSys::rename(l_tmp_dir, in_frames_dir);
+  l_capture.release();
+  return l_count;
 }
 
 std::string read_log_code(const FSys::path& in_out_dir) {
@@ -135,25 +101,15 @@ boost::asio::awaitable<void> face_capture_transcode_arg::run() {
 
   if (FSys::exists(l_frames_dir)) FSys::remove_all(l_frames_dir);
   if (FSys::exists(l_curves_dir)) FSys::remove_all(l_curves_dir);
+  FSys::create_directories(l_frames_dir);
 
   SPDLOG_LOGGER_INFO(logger_ptr_, "开始把 {} 转码为 png 序列", l_video.generic_string());
-  const auto l_png_result = face_capture::write_png_sequence(
-      face_capture::png_sequence_option{
-          .video_            = l_video,
-          .session_dir_      = l_session_dir,
-          .decode_max_width_ = face_capture::k_default_width,
-      }
-  );
+  const auto l_frame_count = decode_to_png(l_video, l_frames_dir);
   SPDLOG_LOGGER_INFO(
-      logger_ptr_, "转码完成 {} 帧 {}x{}, 输出目录 {}", l_png_result.frame_count_, l_png_result.width_,
-      l_png_result.height_, l_frames_dir.generic_string()
+      logger_ptr_, "转码完成 {} 帧, 输出目录 {}", l_frame_count, l_frames_dir.generic_string()
   );
 
-  DOODLE_CHICK(
-      l_png_result.frame_count_ >= 2, "会话 {} 只解码出 {} 帧, 无法解算动捕", l_id_str, l_png_result.frame_count_
-  );
-
-  normalize_frames(l_frames_dir);
+  DOODLE_CHICK(l_frame_count >= 2, "会话 {} 只解码出 {} 帧, 无法解算动捕", l_id_str, l_frame_count);
 
   FSys::create_directories(l_curves_dir);
 
