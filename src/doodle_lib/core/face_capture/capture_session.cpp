@@ -131,7 +131,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
     close_record();
 
-    auto l_session_id = boost::uuids::random_generator{}();
+    auto l_session_id = core_set::get_set().get_uuid();
     auto l_dir        = root_ / fmt::format("{}", l_session_id);
     if (FSys::exists(l_dir)) FSys::remove_all(l_dir);
     FSys::create_directories(l_dir);
@@ -407,7 +407,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
         ++seq_;
       }
 
-      auto l_seq = l_recording ? (seq_ > 0 ? seq_ - 1 : 0) : preview_seq_++;
+      auto l_seq    = l_recording ? (seq_ > 0 ? seq_ - 1 : 0) : preview_seq_++;
 
       auto l_outlet = outlet_.lock();
       if (l_outlet && l_outlet->is_attached() && fragmenter_) {
