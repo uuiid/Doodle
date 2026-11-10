@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/server_task_info.h>
+
 #include <doodle_lib/core/face_capture/capture_session.h>
 #include <doodle_lib/core/face_capture/face_capture_types.h>
 #include <doodle_lib/core/http/http_function.h>
@@ -14,7 +17,11 @@
 #include <boost/uuid/uuid.hpp>
 
 #include <cstdint>
+#include <deque>
+#include <map>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <string>
 
 namespace doodle::http::local {
@@ -32,6 +39,25 @@ class face_capture_selected_device {
  private:
   struct impl;
   std::shared_ptr<impl> impl_ptr_{};
+};
+
+class face_capture_transcode_tasks : public std::enable_shared_from_this<face_capture_transcode_tasks> {
+ public:
+  face_capture_transcode_tasks() = default;
+
+  std::shared_ptr<server_task_info> enqueue(const boost::uuids::uuid& in_preview_id);
+
+  std::shared_ptr<server_task_info> find(const boost::uuids::uuid& in_preview_id) const;
+
+  void start_next(const std::string& in_token);
+
+  void finish(const boost::uuids::uuid& in_preview_id, const std::string& in_token);
+
+ private:
+  mutable std::mutex mtx_{};
+  std::deque<std::shared_ptr<server_task_info>> pending_{};
+  std::map<boost::uuids::uuid, std::shared_ptr<server_task_info>> infos_{};
+  std::optional<boost::uuids::uuid> running_{};
 };
 
 DOODLE_HTTP_FUN_C(face_capture_devices, local_http_fun)
@@ -106,6 +132,16 @@ boost::uuids::uuid session_id_{};
 face_capture_recording_curves() : base_type() {}
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}/curves", session_id_)
+DOODLE_HTTP_FUN_END()
+
+DOODLE_HTTP_FUN_C(face_capture_transcode, local_http_fun)
+boost::uuids::uuid preview_id_{};
+std::shared_ptr<face_capture_transcode_tasks> tasks_{};
+explicit face_capture_transcode(std::shared_ptr<face_capture_transcode_tasks> in_tasks)
+    : base_type(), tasks_(std::move(in_tasks)) {}
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{preview_id_}/transcode", preview_id_)
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http::local

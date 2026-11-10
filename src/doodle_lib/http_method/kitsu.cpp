@@ -312,6 +312,7 @@ http_route_ptr create_kitsu_local_route() {
   core_set::get_set().sid_ctx_ = l_sid_ctx;
   auto l_face_capture_selected = std::make_shared<local::face_capture_selected_device>();
   auto l_face_capture_holder   = std::make_shared<local::face_capture_session_holder>();
+  auto l_face_capture_tasks    = std::make_shared<local::face_capture_transcode_tasks>();
   (*l_rout_ptr)                       //
       .reg_c<local::local_setting>()  //
       .reg_c<local::video_thumbnail>()
@@ -340,6 +341,7 @@ http_route_ptr create_kitsu_local_route() {
       .reg_c<local::face_capture_recording_stop>(l_face_capture_holder)
       .reg_c<local::face_capture_recording_video>()
       .reg_c<local::face_capture_recording_curves>()
+      .reg_c<local::face_capture_transcode>(l_face_capture_tasks)
       .reg_c<socket_io::socket_io_http>(l_sid_ctx)
 
       ;
