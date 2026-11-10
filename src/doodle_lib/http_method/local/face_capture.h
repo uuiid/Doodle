@@ -51,7 +51,6 @@ DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN_C(face_capture_stream, local_http_fun)
 boost::uuids::uuid session_id_{};
-std::shared_ptr<face_capture::ws_outlet> runner_{};
 std::shared_ptr<face_capture_selected_device> selected_{};
 std::shared_ptr<face_capture_session_holder> holder_{};
 

@@ -198,7 +198,9 @@ WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` 
 
 **实现已落地**：路由类 `local::face_capture_stream`（`http_method/local/face_capture.h` + `face_capture_stream.cpp`）只做转发，连接管理由 `core/face_capture/ws_outlet` 承担（消息体在 `core/face_capture/ws_message`）：
 
-- `websocket_callback` 里 `runner_ = std::make_shared<face_capture::ws_outlet>(std::move(in_stream), selected_ ? selected_->index() : 0, holder_); runner_->start();`，别的一行不写。第二个参数是**连接建立那一刻**的选中设备，之后改选择不影响进行中的会话。
+- `websocket_callback` 里 `std::make_shared<face_capture::ws_outlet>(std::move(in_stream), selected_ ? selected_->index() : 0, holder_)->start();`，别的一行不写。第二个参数是**连接建立那一刻**的选中设备，之后改选择不影响进行中的会话。
+- **`ws_outlet` 没有外部持有者，生命周期完全由 `run()` 协程决定**：`start()` 里 `co_spawn` 用 `consign(detached, shared_from_this())` 把对象挂在完成处理器上，协程跑完（`close_impl()` 返回）对象才析构，随之释放 `session_`。路由成员因此**不存 `ws_outlet`**——早期版本留过一个 `runner_`，它是旧 `ws_stream_runner`（定义在 `.cpp` 里的局部类，必须由路由兜住）的遗留，合并后既多余又让回收时机变得不确定。
+- 硬约束：**必须先 `make_shared` 再用 `->start()`，不能在构造函数里 `co_spawn`**，否则 `shared_from_this()` 抛 `bad_weak_ptr`。
 - `ws_outlet` 直接以 `boost::beast::websocket::stream<tcp_stream_type>` 构造，**执行器取自流本身**（`stream_.get_executor()`），不再自建 strand：所有连接状态（`closing_` / `key_backlog_` / `pending_since_`）都只在该执行器上访问，跨线程只暴露 `closed_` / `writing_` 两个 `atomic_bool`。
 - **`ws_outlet` 直接持有会话**：构造时 `session_ = std::make_shared<face_capture::capture_session>(capture_session::default_root());`。会话不共享、不查表、不做单例——每条 WS 连接一个自己的会话。`capture_session::impl::outlet_` 是 **`weak_ptr<ws_outlet>`**（不是 `shared_ptr`），否则会话与连接互相持有成环。
 - `run()` 的顺序是：`session_->attach(shared_from_this())` → `holder_->reset(session_)` → `co_await open_capture()`（`session_->open(capture_option{.device_index_ = device_index_})`；失败只记 WARN 不掐断连接）→ `co_await read_loop()` → `co_await close_impl()`。**先 attach 再 open** 是硬顺序：`open()` 一开摄像头就会开始出帧，此时 outlet 必须已经挂好。
@@ -208,7 +210,7 @@ WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` 
 
 `face_capture_stream` 的约定：
 
-- `websocket_init`：当前是空实现（不校验 token，见 §14 仍未定第 2 条）。路由成员里只有 `runner_` / `selected_` / `holder_`（都是 `shared_ptr`，clone 安全），**不存会话**。
+- `websocket_init`：当前是空实现（不校验 token，见 §14 仍未定第 2 条）。路由成员里只有 `selected_` / `holder_`（都是 `shared_ptr`，clone 安全），**不存会话、也不存 `ws_outlet`**。
 - **连上只开预览，不开录**：`hello` 里的 `state` 是 `open()` 之后的状态，即 `previewing`（摄像头打不开时是 `idle` 并在 `error` 事件里说明原因）。**录制必须由前端 `POST /recordings` 显式开始**，这是本方案与早期草案最大的差别。
 - 接入顺序固定为 **`session_->attach(outlet)` → `open_capture()`**。`hello` 不在连接建立时发：`open()` 末尾由采集侧 `send(std::make_unique<ws_hello>(...))` 发一次 `hello`（带真实的 `session_id`/`width`/`height`/`state`），前端第一帧事件必然是 `hello`。
 - **`hello` 是唯一的状态快照，之后没有任何状态推送**：连接存续期间不再下发 `capture_state` 事件。前端判断动作是否生效一律以 HTTP 响应（状态码 + `capture_status` 的 `state`）为准；需要重新取状态就再发一次 `GET /recordings/{id}`，或重连拿新的 `hello`。
@@ -769,7 +771,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | `core_set.timeout` 不足以覆盖脸捕 | 长素材必失败 | M0 实测后决定是否为 `async_run_ue` 增加可选 timeout（§7.3-5） |
 | 与渲染任务抢 `ue_ctx` 闩 | 脸捕要排队，前端进度长时间停在 40% | 进度里显式给出 `ue_commandlet: waiting_for_ue_lock` 子状态，别让前端以为卡死 |
 | `async_run_ue` 超时后 UE 进程仍在跑 | 闩被占死，后续所有 UE 任务排队卡住 | 作业捕获超时异常后先终止该进程再返回（§7.4） |
-| 路由类被 `clone()` | 成员生成两份，引擎状态错乱 | 会话由 `ws_outlet` 持有，路由成员只有 `shared_ptr`（`runner_` / `selected_` / `holder_`）；跨请求共享状态一律 `shared_ptr<impl>` 而不是值成员（§3.1） |
+| 路由类被 `clone()` | 成员生成两份，引擎状态错乱 | 会话由 `ws_outlet` 持有，`ws_outlet` 由协程持有，路由成员只有 `selected_` / `holder_` 两个 `shared_ptr`；跨请求共享状态一律 `shared_ptr<impl>` 而不是值成员（§3.1） |
 | WS 断开时录制收尾未完成 | `take.mp4` 没有 `moov`/`trailer`、`align.json` 缺失 | `close()` 内部先等价执行 `stop()` 再关摄像头，`close_impl()` 等它跑完再关流；进程退出时由 `app_base::Get().on_cancel` 槽控制协程退出顺序 |
 
 > 一期没有"模型缺失""opencv 不带 objdetect"这类风险——人脸检测整体在二期（§6）。
@@ -877,7 +879,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | `ws_outlet::write_fn` 只收 `(data, size)`，文本/二进制由调用方自己 `stream.binary()` 切换 | 帧类型判定收进 `ws_outlet` 的写协程，按消息的 `binary()` 决定是否再发一帧二进制 | 写协程是唯一能安全切换帧类型的地方（单在途），调用方拿不到这个时序 |
 | `capture_session::impl` 的 `stream_` / `set_stream()` / `stream()` / `write_ws()`（早期给 WS 预留的写通路） | 全部删除，`attach()` 只接管 outlet | 两条并存的写通路没有调用者，且 `write_ws` 拿不到 text/binary 信息 |
 | `core/face_capture/ws_stream_runner.h/.cpp` 与 `http_method/local/face_capture_stream.cpp` 里的连接管理类（两代实现） | **合并进 `ws_outlet`**：它直接以 `websocket::stream<tcp_stream_type>` 构造、执行器取自流、自己 co_spawn 读写协程；`capture_session` 持 `weak_ptr<ws_outlet>` 断环 | 一个"出口"和一个"连接"本来就一一对应，分两个类只是把同一份状态拆到两处；HTTP 层也不必再前置声明一个只为它服务的类 |
-| `ws_outlet` 的 `send_hello` / `send_event` / `send_fragment`（裸函数 + 手拼 JSON）+ `set_session_info` / `set_init_segment` | 全部替换为结构体消息 `ws_message` 派生（`ws_hello` / `ws_avc_init` / `ws_avc_fragment`）+ 唯一入口 `send(std::unique_ptr<ws_message>)`；状态只在 `hello` 里带出，不再有 `set_*` 充填状态 | 协议形状从散落在 5 个函数里的 `nlohmann::json{{...}}` 收敛到一个 `.cpp`，加事件只加一个派生类；`set_*` 那套"先填字段再发"的顺序约束随之消失 |
+| `face_capture_stream::runner_`（`std::shared_ptr<ws_outlet>` 路由成员） | 删除：`websocket_callback` 里 `make_shared<ws_outlet>(...)->start()`，对象由 `run()` 协程的 `consign(detached, shared_from_this())` 持有 | 它是旧 `ws_stream_runner`（`.cpp` 里的局部类，必须由路由兜住）的遗留；合并进 `ws_outlet` 后既多余，又让"断开后会话何时释放"变成依赖路由实例何时被回收的不确定行为。删掉后 **`ws_outlet` 寿命 = `run()` 协程寿命**，断开即 `close_impl()` → 协程结束 → 对象析构 → `capture_session` 随之释放（`outlet_` 是 `weak_ptr`，不成环） |
 | `ws_outlet` 自建 `make_strand(g_io_context())` + 上限 8 片 `std::deque` + `drain()` 泵 | 执行器直接取 beast 流自己的（`stream_.get_executor()`），发送改为"`post` 到该执行器 + `co_spawn` 一个写协程"，不排队 | 流已经在那个执行器上，另建 strand 只会多一层跨 strand 投递；`co_spawn` 天然串行，等价于原来的泵，但没有队列与长度上限 |
 | "写不动"只靠丢非关键帧 + 队列满 | 两层判定（采集侧见 `pending_frame()` 丢非关键帧、执行器内再判一次）+ 关键帧封顶 `k_max_pending_keys`=2 + `pending_since_` 超 2 秒判死连接 | 页签切后台时 `async_write` 会一直挂着而不报错，没有超时判定就只剩"永远不恢复"；关键帧不封顶则会在前端不读时无限堆积 |
 | `face_capture_session_holder`（定义在 `http_method/local/face_capture.h`） | 下沉为 `core/face_capture/capture_session.h` 里的 `capture_session_holder`，HTTP 层用 `using face_capture_session_holder = face_capture::capture_session_holder;` 沿用旧名 | `ws_outlet` 在 core 里要它注销会话，HTTP 头不能反向被 core 引用 |

@@ -17,9 +17,8 @@ void face_capture_stream::websocket_init(session_data_ptr in_handle) {}
 void face_capture_stream::websocket_callback(
     boost::beast::websocket::stream<tcp_stream_type> in_stream, session_data_ptr in_handle
 ) {
-  runner_ =
-      std::make_shared<face_capture::ws_outlet>(std::move(in_stream), selected_ ? selected_->index() : 0, holder_);
-  runner_->start();
+  std::make_shared<face_capture::ws_outlet>(std::move(in_stream), selected_ ? selected_->index() : 0, holder_)
+      ->start();
 }
 
 }  // namespace doodle::http::local
