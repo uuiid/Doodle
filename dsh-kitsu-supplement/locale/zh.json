@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Kitsu supplement 服务",
+    "description": "按 production / --local 两种模式拉起 doodle_kitsu_supplement.exe，报告真实监听端口，并负责停止插件自己启动的实例。"
+  }
+}

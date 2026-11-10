@@ -1,0 +1,44 @@
+{
+  "name": "dsh-kitsu-supplement",
+  "version": "0.1.0",
+  "description": "Kitsu supplement HTTP server tool for DeepSeek Harness: launches doodle_kitsu_supplement.exe in production or --local mode from a configured working directory, reports the real listening port, and stops the instance it started.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "MIT",
+  "files": [
+    "lib/**/*.js",
+    "cordis.patch.yml",
+    "locale/**/*.json",
+    "icon.svg",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.5",
+    "@deepseek-ai/dsh-tools": "^0.2.1-rc.4",
+    "@deepseek-ai/schemastery": "~3.18.5"
+  },
+  "scripts": {
+    "check": "node --check lib/index.js",
+    "test": "node test/pure.mjs"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "kitsu",
+    "doodle",
+    "http-server",
+    "cordis"
+  ]
+}

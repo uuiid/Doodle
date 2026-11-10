@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Kitsu supplement server",
+    "description": "Launch doodle_kitsu_supplement.exe in production or --local mode, report the real listening port, and stop the instances this plugin started."
+  }
+}

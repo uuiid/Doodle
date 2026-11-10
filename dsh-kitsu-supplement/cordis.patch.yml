@@ -1,0 +1,24 @@
+# dsh-kitsu-supplement bundle patch
+#
+# 把 kitsu_server_start / kitsu_server_status / kitsu_server_stop 挂进 DSH 工具注册表。
+# config 全部可选：
+#   exePath             doodle_kitsu_supplement.exe 路径（默认 E:\build\Ninja_debug\bin\doodle_kitsu_supplement.exe）
+#   defaultCwd          默认运行路径；空表示取 exe 所在目录（dll 与 exe 同目录，不要随便改）
+#   defaultMode         production（不加 --local）或 local（加 --local）
+#   defaultRoot         未给 root 时的 root；空表示不传 --root（生产模式用程序内置默认值）
+#   defaultConfigPaths  生产模式 config JSON 里 db_path / kitsu_front_end_path / public_url_port 等的默认值
+#   readyPath           就绪探测路径（默认 /，服务端未匹配路由也返回 HTTP 状态即视为就绪）
+#   readyTimeoutMs      就绪等待预算（默认 30000）
+#   stopTimeoutMs       终止后等待进程退出的预算（默认 5000）
+#   maxOutputBytes      stdout / stderr 各自的内存缓冲上限（默认 8 MiB）
+#   guidanceOrder       系统提示词里本工具指引段的排序值（默认 1396，紧邻 cmake / ue 段）
+- insert:
+    - id: kitsu-supplement
+      name: dsh-kitsu-supplement
+      config:
+        exePath: E:\build\Ninja_debug\bin\doodle_kitsu_supplement.exe
+        defaultConfigPaths:
+          db_path: C:/kitsu_new.database
+          kitsu_front_end_path: D:/kitsu/dist
+          root: D:/kitsu_data
+          public_url_port: 38193
