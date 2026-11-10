@@ -5,6 +5,7 @@
 
 #include "ai_client_base.h"
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -71,6 +72,8 @@ class DOODLELIB_API kmt_image_client final : public ai_client_base {
   std::size_t default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const override;
 
  private:
+  [[nodiscard]] std::shared_ptr<doodle::http::http_client_ssl> make_own_client() const;
+
   static doodle::seedance2::task_status parse_status(std::string_view in_status);
 };
 

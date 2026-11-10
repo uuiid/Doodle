@@ -250,13 +250,16 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::subm
 
   l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
   l_req.set(boost::beast::http::field::accept, "application/json");
-  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
   l_req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
-  http_client_ptr_->set_timeout(g_request_timeout);
+
+  auto l_client = make_own_client();
+  l_req.set(boost::beast::http::field::host, l_client->server_ip_);
+  l_req.set(boost::beast::http::field::connection, "keep-alive");
+  l_client->set_timeout(g_request_timeout);
 
   boost::beast::http::response<http::basic_json_body> l_res{};
 
-  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  co_await l_client->read_and_write(l_req, l_res, boost::asio::use_awaitable);
 
   l_result.data_response_ = l_res.body();
   l_result.task_id_       = l_result.data_response_.get<response_t>().id_;
@@ -294,11 +297,15 @@ boost::asio::awaitable<ai_client_base::run_task_result_t> kmt_image_client::quer
   };
   l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
   l_req.set(boost::beast::http::field::accept, "application/json");
-  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
   l_req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
 
+  auto l_client = make_own_client();
+  l_req.set(boost::beast::http::field::host, l_client->server_ip_);
+  l_req.set(boost::beast::http::field::connection, "keep-alive");
+  l_client->set_timeout(g_request_timeout);
+
   boost::beast::http::response<http::basic_json_body> l_res{};
-  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  co_await l_client->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   DOODLE_CHICK(
       l_res.result() == boost::beast::http::status::ok, "kmt query_task error: {} {}", l_res.result(),
       l_res.body().dump()
@@ -352,6 +359,12 @@ boost::asio::awaitable<void> kmt_image_client::download_result(run_task_result_t
     auto l_file = co_await download_raw_file(l_url);
     in_data.result_file_paths_.push_back(l_file);
   }
+}
+
+std::shared_ptr<doodle::http::http_client_ssl> kmt_image_client::make_own_client() const {
+  auto l_ctx = core_set::get_set().ctx_ptr;
+  DOODLE_CHICK(l_ctx != nullptr, "ssl context 未初始化(见 core_set::ctx_ptr), 无法创建快米兔 客户端");
+  return std::make_shared<doodle::http::http_client_ssl>(std::string{g_default_host}, *l_ctx);
 }
 
 std::size_t kmt_image_client::default_consumed_tokens(const doodle::seedance2::task_type& in_task_type) const {
