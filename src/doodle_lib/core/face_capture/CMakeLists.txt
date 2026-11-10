@@ -8,7 +8,6 @@ target_sources(
         ws_outlet.h
         capture_session.h
         frame_align.h
-        png_sequence_writer.h
 
         PRIVATE
         media_fragment_pipeline.cpp
@@ -17,5 +16,4 @@ target_sources(
         ws_outlet.cpp
         capture_session.cpp
         frame_align.cpp
-        png_sequence_writer.cpp
 )

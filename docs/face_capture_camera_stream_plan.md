@@ -1,6 +1,6 @@
 # 摄像头采集 · WebSocket 推流 · 前端控制录制 · UE 转码 方案
 
-> 状态：方案已拍板（2026-11-05，11-06 追加"取消固定节拍"、"会话挂在 WS 上"、"选中摄像头"、"WS 只预览 / 录制显式开始 / 取消 raw.mkv"）。**采集引擎（M1/M2 + `write_png_sequence`）、WS 路由（连上只开预览、断开即关闭）、设备路由（GET 枚举 / POST 选中）、录制段路由（开始 / 停止 / 查询 / 列表 / 下载 / 删除）已实现并编译通过**，转码作业层待实现（进度见附录 A）。
+> 状态：方案已拍板（2026-11-05，11-06 追加"取消固定节拍"、"会话挂在 WS 上"、"选中摄像头"、"WS 只预览 / 录制显式开始 / 取消 raw.mkv"）。**采集引擎（M1/M2）、WS 路由（连上只开预览、断开即关闭）、设备路由（GET 枚举 / POST 选中）、录制段路由（开始 / 停止 / 查询 / 列表 / 下载 / 删除）已实现并编译通过**，转码作业层待实现（进度见附录 A）。
 > 范围：**一期**。人脸检测整体推迟到二期，本文只在 §6 钉住它的插入点与约束，不实现。
 > 部署前提：**后端跑在用户自己的电脑上，由打包好的前端 App 拉起**（不是常驻服务器）。因此没有多用户、没有多设备并发。
 > 落地位置：后端 `E:\Doodle\src\doodle_lib\http_method\local`（新增文件），复用 `src/doodle_lib/core`、`src/doodle_lib/exe_warp`。
@@ -95,10 +95,9 @@ src/doodle_lib/core/face_capture/          ← 新增：与 HTTP 无关的采集
     capture_session.h/.cpp                  会话状态机（预览 / 录制两轴）+ 摄像头读协程 + 采集处理
                                             另含 capture_session_holder（跨路由共享的单槽位）
     frame_align.h/.cpp                      align.json 记录与读取
-    png_sequence_writer.h/.cpp              take.mp4 → frames/（逐帧解码，无补位）
 ```
 
-一期是 **8 组源文件**（`face_detector` 随人脸检测一起推到二期，§6）。`frame_filter` 自成一组是因为它只依赖 ffmpeg 的 `avfilter`，不关心 `capture_session` 的状态机；`ws_outlet` 独立成组是因为它既要被 `capture_session` 用，又要被 HTTP 层的 WS 路由持有，放在 `capture_session` 里会让两层互相包含；`ws_message` 再拆一层是因为它**只依赖 `nlohmann::json` 与 `face_capture_types`**，不碰 asio/beast，前端协议要改时只看这一个文件。
+一期是 **7 组源文件**（`face_detector` 随人脸检测一起推到二期，§6）。`frame_filter` 自成一组是因为它只依赖 ffmpeg 的 `avfilter`，不关心 `capture_session` 的状态机；`ws_outlet` 独立成组是因为它既要被 `capture_session` 用，又要被 HTTP 层的 WS 路由持有，放在 `capture_session` 里会让两层互相包含；`ws_message` 再拆一层是因为它**只依赖 `nlohmann::json` 与 `face_capture_types`**，不碰 asio/beast，前端协议要改时只看这一个文件。
 
 WS 连接的生命周期（建 `ws_outlet` → attach → open 预览 → 读循环 → close 清理）已经**整体并入 `core/face_capture/ws_outlet`**：早期版本把它放在 `http_method/local/face_capture_stream.cpp` 里当 `ws_stream_runner` 类，但它既要持有 beast 流、又要持有会话、又要做丢帧策略，与 `ws_outlet` 一一对应，合起来才是一条完整的连接。现在 HTTP 路由层只剩三个 override。
 src/doodle_lib/exe_warp/face_capture/      ← 新增：转码作业与 UE 编排
@@ -717,7 +716,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 - **`fps` 是输出帧率（恒 25），`source_fps` 是实测摄像头帧率**（由真实帧数与墙钟算得），两者不必相等。
 - `frames[]` 一项对应 `take.mp4` 里的一个帧，`i` 就是解码顺序下标：`seq` 是该帧在 25 fps 输出时间轴上的位置（`fps` 滤镜给它分配的序号），`orig_seq` 是原始采集序号（0,1,2…严格连续），`wall_ms` 是它到达的时刻。
 - `gaps` 只在摄像头连续 > 1 秒没返回帧时出现（§4.4），记的是**墙钟区间**，不参与帧号折算。
-- 录制期 `seq` 就是 25 fps 输出帧号，从 0 起连续；`orig_seq` 是录制期摄像头原始帧号，两者在摄像头帧率高于 25 时不再一一对应。**这不影响 `frames/`**：`write_png_sequence()` 按下标逐帧写 PNG，不用 `seq`（§10）。`inserted_frames` 恒为 0（保留字段只为兼容旧记录）。
+- 录制期 `seq` 就是 25 fps 输出帧号，从 0 起连续；`orig_seq` 是录制期摄像头原始帧号，两者在摄像头帧率高于 25 时不再一一对应。**这不影响 `frames/`**：按解码下标逐帧写 PNG，不用 `seq`（§10）。`inserted_frames` 恒为 0（保留字段只为兼容旧记录）。
 
 ---
 
@@ -725,12 +724,12 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 
 **取消固定节拍后，这一节不再有实现。** `frames/` 由 `take.mp4` 按下标逐帧写出，`n` 从 0 连续自增，天然满足 UE 的"帧号连续无空洞"约束（§8.1），**不需要复制任何帧**。
 
-`write_png_sequence()` 的现行做法（已实现并编译通过）：
+现行做法（由 `exe_warp/face_capture_transcode` 实现）：
 
-1. `take.mp4` 按解码顺序逐帧取图（`av::VideoDecoderContext`）→ `av::VideoRescaler` 到 `RGB24` → `cv::imencode(".png")`；
-2. 第 i 个解码帧写成 `png_tmp/frame_{i:06d}.png`，**下标自增，与 `align.json` 的 `seq` 无关**；
-3. 全部成功才 `rename(png_tmp → frames/)`；失败保留 `png_tmp/` 并返回 `png_sequence_invalid`；
-4. 写完后比对解码帧数与 `align.json` 的 `raw_frames`，不一致只记 `SPDLOG_WARN`（不复位、不补帧）——差异只可能来自编码器掉帧，由 `truncated` 标记（§5.4）。
+1. `take.mp4` 逐帧取图（`cv::VideoCapture`）→ 保持原始分辨率 → `cv::imwrite` 写 PNG；
+2. 第 i 个解码帧写成 `frames/frame_{i:06d}.png`，**下标自增，与 `align.json` 的 `seq` 无关**；
+3. 先清空 `frames/` 与 `curves/` 再解码，解出帧数 < 2 时判失败；
+4. 不比对 `align.json` 的 `raw_frames`——转码作业是宽松的，差异只可能来自编码器掉帧，由 `truncated` 标记（§5.4）。
 
 历史方案（保留以备查阅）：固定 40 ms 采样时代，采集侧产出的帧率恒为 25，而摄像头卡死会造成帧号空洞，于是按"策略 A：重复上一帧"把 PNG 序列补齐到 `len(frames) + Σ gaps.missing` 张。**该机制随固定节拍一起删除。**
 
@@ -743,7 +742,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | **M0（0.5 天，只验证不写产品代码）** | ①手搓一份 `frame_000000.png`（6 位数字）序列，真机跑 `-run=MetaHumanFace -FramesDir=<abs> -OutDir=<abs> -FPS=25/1`；②记录单帧求解耗时，判断 `core_set.timeout` 是否够；③确认 `curves/frames_meta.json` 的 `first_frame` 被采用；④确认不传 `-SequencePattern` 能通过；⑤确认 `FTrackingPathUtils` 接受该命名 | 五条结论写回本文 §8；任一条失败立即回到 §8 复核 |
 | **M1（已完成 ✅）** | 摄像头读协程 + `frame_filter` + `media_fragment_pipeline`（推流）+ `ws_outlet` + `ws_message` + WS 路由 `face_capture_stream`（`ws_outlet`：连上 `open()` 预览、断开 `close()` 收尾）+ 设备路由 `face_capture_devices`（GET 枚举 / POST 选中）+ `capture_session_holder` | 浏览器里选设备 → 连 WS 就出现实时画面，**且磁盘上不产生任何文件** |
 | **M2（已完成 ✅）** | `take.mp4`（H.264 25 fps）+ `align.json` + 两轴状态机 + 录制段路由（`POST/GET /recordings`、`stop`、`GET /video`、`GET /curves`、`DELETE`） | 点"开始录制"后目录里出现 `take.mp4`；`ffprobe take.mp4` 的相邻 `pts_time` 间隔恒为 0.04s；`stop` 返回后 `align.json` 已存在 |
-| M3 | 转码作业 step 1（`png_sequence` 逐帧无补位）+ 作业查询/取消。**`write_png_sequence()` 已实现并编译通过**，等待最终作业调度层 | 不接 UE 也能从 `take.mp4` 产出合格 `frames/`，命名校验生效 |
+| M3 | 转码作业 step 1（`png_sequence` 逐帧无补位）+ 作业查询/取消。**PNG 序列产出已在 `exe_warp/face_capture_transcode` 实现并编译通过**，等待最终作业调度层 | 不接 UE 也能从 `take.mp4` 产出合格 `frames/`，命名校验生效 |
 | M4 | 转码作业 step 2（Commandlet 编排 + 结果解析 + `frames/` 删除） | 端到端：录 → PNG → UE → `.dhfc` |
 | M5 | 加固：状态机重入、`ws_outlet` 丢片调参、`ue_ctx` 排队观测、错误码统一 | 连续录 20 次无泄漏、无卡死 |
 
@@ -830,7 +829,7 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 
 | 文件 | 动作 | 状态 |
 | --- | --- | --- |
-| `src/doodle_lib/core/face_capture/*`（7 组 .h/.cpp：`face_capture_types.h`、`media_fragment_pipeline`、`frame_filter`、`ws_outlet`、`capture_session`、`frame_align`、`png_sequence_writer`） | 新增 | **已完成，编译通过** |
+| `src/doodle_lib/core/face_capture/*`（6 组 .h/.cpp：`face_capture_types.h`、`media_fragment_pipeline`、`frame_filter`、`ws_outlet`、`capture_session`、`frame_align`） | 新增 | **已完成，编译通过** |
 | `src/doodle_lib/core/CMakeLists.txt` | 登记新增源文件 | **已完成** |
 | `src/doodle_lib/exe_warp/face_capture/*`（2 组 .h/.cpp） | 新增 | 未开始 |
 | `src/doodle_lib/exe_warp/CMakeLists.txt` | 登记新增源文件 | 未开始 |
