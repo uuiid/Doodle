@@ -169,7 +169,7 @@ bool kitsu_supplement_main::init() {
       l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
     else
       l_args.port_ = 0;
-    l_set.set_root("D:/sy_maigc");
+    l_set.set_root(l_args.root_);
     // 初始化上下文
     l_set.kitsu_ctx_ = std::make_shared<http::kitsu_ctx_t>(l_args.root_, l_args.kitsu_front_end_path_);
     // 打开内存数据库
