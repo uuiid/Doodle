@@ -133,10 +133,10 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
 bool kitsu_supplement_main::init() {
   app_base::Get().use_multithread(true);
   crashpad_init::get();
-  auto& l_set                      = core_set::get_set();
-  l_set.maya_ctx_                  = std::make_shared<maya_ctx>();
-  l_set.ue_ctx_                    = std::make_shared<ue_ctx>();
-  l_set.database_                  = std::make_shared<sqlite_storage>();
+  auto& l_set     = core_set::get_set();
+  l_set.maya_ctx_ = std::make_shared<maya_ctx>();
+  l_set.ue_ctx_   = std::make_shared<ue_ctx>();
+  l_set.database_ = std::make_shared<sqlite_storage>();
   kitsu_supplement_args_t l_args{
       .port_                 = 50025,
       .db_path_              = "C:/kitsu_new.database",
@@ -163,17 +163,24 @@ bool kitsu_supplement_main::init() {
     }
   }
   if (auto l_root_path = arg_({"root"}); l_root_path) l_args.root_ = FSys::from_quotation_marks(l_root_path.str());
+
+  if (auto l_db_path = arg_({"dbPath"}); l_db_path) l_args.db_path_ = FSys::from_quotation_marks(l_db_path.str());
+
   if (arg_["local"]) {
     // app_base::Get().use_multithread(false); 这里还是要多线程的
     if (auto l_str = arg_({"port"}); l_str)
       l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
     else
       l_args.port_ = 0;
+    if (auto l_db_path = arg_({"dbPath"}); l_db_path)
+      l_args.db_path_ = FSys::from_quotation_marks(l_db_path.str());
+    else
+      l_args.db_path_ = ":memory:";  // 内存数据库
     l_set.set_root(l_args.root_);
     // 初始化上下文
     l_set.kitsu_ctx_ = std::make_shared<http::kitsu_ctx_t>(l_args.root_, l_args.kitsu_front_end_path_);
     // 打开内存数据库
-    l_set.database_->open();
+    l_set.database_->open(l_args.db_path_);
     l_set.database_->upgrade();
     // 初始化路由
     auto l_rout_ptr = http::create_kitsu_local_route();
