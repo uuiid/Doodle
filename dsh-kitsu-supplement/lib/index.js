@@ -36,7 +36,7 @@ import z from "@deepseek-ai/schemastery";
 const MODES = ["production", "local"];
 
 /** 这些开关由参数生成，extraArgs 里再出现就是两个事实来源。 */
-const OWNED_FLAGS = ["--local", "--config", "--port", "--root"];
+const OWNED_FLAGS = ["--local", "--config", "--port", "--root", "--dbPath"];
 
 const DEFAULT_EXE_PATH = "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement.exe";
 const DEFAULT_MODE = "production";
@@ -58,6 +58,10 @@ const PORT_LINE_TIMEOUT_MS = 10000;
 /** 允许的监听端口闭区间；端口必须落在区间内，测试脚本才能引用固定地址。 */
 const PORT_MIN = 50030;
 const PORT_MAX = 50330;
+/** 内存库标记：服务端没拿到 --dbPath 时落在 ":memory:"（kitsu_supplement.cpp:178）。 */
+const MEMORY_DB = ":memory:";
+/** sql 执行时等待写锁的上限，运行中的服务端可能正好在写。 */
+const SQL_BUSY_TIMEOUT_MS = 5000;
 const PORT_RANGE_TEXT = `${PORT_MIN}-${PORT_MAX}`;
 
 /**
@@ -221,23 +225,136 @@ function buildConfig({ defaults, port, extraConfig, overrides }) {
 
 /**
  * 按服务端的解析顺序拼 argv（可执行文件本身不在 argv 里）：
- * `--config <json>` -> `--root <path>` -> `--local` -> `--port <n>` -> extraArgs。
+ * `--config <json>` -> `--root <path>` -> `--dbPath <path>` -> `--local` -> `--port <n>` -> extraArgs。
  *
  * 服务端用 argh 解析，`--key=value` 只会落进 params_（argh.h:196-204），
  * 而 arg_({...}) / arg_[...] 查的是 flags_，所以 `--config=x` 会被当成"没给"。
  *
- * @param {{mode:string, port:number, configPath?:string, root?:string, extraArgs?:string[]}} spec
+ * @param {{mode:string, port:number, configPath?:string, root?:string, dbPath?:string, extraArgs?:string[]}} spec
  * @returns {string[]}
  */
-function buildArgv({ mode, port, configPath, root, extraArgs }) {
+function buildArgv({ mode, port, configPath, root, dbPath, extraArgs }) {
   /** @type {string[]} */
   const argv = [];
   if (configPath) argv.push("--config", configPath);
   if (root) argv.push("--root", root);
+  if (dbPath) argv.push("--dbPath", dbPath);
   if (mode === "local") argv.push("--local");
   argv.push("--port", String(port));
   for (const item of extraArgs ?? []) argv.push(item);
   return argv;
+}
+
+/**
+ * 把一段 sql 脚本切成单条语句。
+ *
+ * 轻量扫描而不是真解析：引号（' " ` 与 [ ] 标识符）、`--` 行注释、`/* *​/` 块注释里的分号都不算边界；
+ * `CREATE TRIGGER ... BEGIN ... END;` 的内部语句靠 BEGIN/END 深度判断。
+ * 分号之后只剩空白/注释的尾巴不算语句。
+ *
+ * @param {string} text
+ * @returns {string[]}
+ */
+function splitSqlStatements(text) {
+  /** @type {string[]} */
+  const statements = [];
+  const source = String(text ?? "");
+  let current = "";
+  let quote = "";
+  let depth = 0;
+  let isTrigger = false;
+  for (let i = 0; i < source.length; i += 1) {
+    const ch = source[i];
+    const next = source[i + 1];
+    if (quote !== "") {
+      current += ch;
+      if (ch === quote) {
+        if (next === quote) {
+          current += next;
+          i += 1;
+        } else {
+          quote = "";
+        }
+      }
+      continue;
+    }
+    if (ch === "'" || ch === '"' || ch === "`") {
+      quote = ch;
+      current += ch;
+      continue;
+    }
+    if (ch === "[") {
+      quote = "]";
+      current += ch;
+      continue;
+    }
+    if (ch === "-" && next === "-") {
+      const end = source.indexOf("\n", i);
+      if (end === -1) break;
+      current += " ";
+      i = end;
+      continue;
+    }
+    if (ch === "/" && next === "*") {
+      const end = source.indexOf("*/", i + 2);
+      if (end === -1) break;
+      current += " ";
+      i = end + 1;
+      continue;
+    }
+    if (/[A-Za-z_]/.test(ch) && !/[A-Za-z0-9_]/.test(current.slice(-1))) {
+      let word = "";
+      let j = i;
+      while (j < source.length && /[A-Za-z_]/.test(source[j])) {
+        word += source[j];
+        j += 1;
+      }
+      const upper = word.toUpperCase();
+      if (upper === "CREATE" && current.trim() === "" && !isTrigger) isTrigger = true;
+      else if (isTrigger && upper === "BEGIN") depth += 1;
+      else if (isTrigger && upper === "END" && depth > 0) depth -= 1;
+      current += word;
+      i = j - 1;
+      continue;
+    }
+    if (ch === ";" && depth === 0) {
+      const trimmed = current.trim();
+      if (trimmed !== "") statements.push(trimmed);
+      current = "";
+      isTrigger = false;
+      continue;
+    }
+    current += ch;
+  }  const tail = current.trim();
+  if (tail !== "") statements.push(tail);
+  return statements;
+}
+
+/**
+ * 语句首关键字，用于拒绝跨库操作。
+ *
+ * @param {string} statement
+ * @returns {string}
+ */
+function sqlVerb(statement) {
+  const match = /^[A-Za-z]+/.exec(statement.trim());
+  return match === null ? "" : match[0].toUpperCase();
+}
+
+/**
+ * 校验一条语句能否交给本工具执行。
+ *
+ * ATTACH/DETACH 会把写入引到另一个库文件，直接拒绝。
+ *
+ * @param {string} statement
+ * @returns {string|undefined}
+ */
+function rejectSqlStatement(statement) {
+  const verb = sqlVerb(statement);
+  if (verb === "ATTACH" || verb === "DETACH") {
+    return `不允许 ${verb}：本工具只写目标库文件，跨库操作请手工处理。`;
+  }
+  return undefined;
 }
 
 /**
@@ -450,6 +567,7 @@ async function resolveSpec({ config, args, exists }) {
     exePath,
     cwd,
     root: normalizedRoot,
+    dbPath: dbPath === "" ? undefined : normalizePath(dbPath),
     readyPath,
     extraArgs: Array.isArray(args.extraArgs) ? args.extraArgs : undefined,
     configValues: buildConfig({ defaults: config.defaultConfigPaths ?? {}, port, extraConfig: args.extraConfig, overrides }),
@@ -461,6 +579,26 @@ async function resolveSpec({ config, args, exists }) {
   if (!(await exists(cwd))) problems.push(`cwd 不存在：${cwd}`);
 
   return { problems, spec };
+}
+
+/**
+ * 启动成功/失败都要带上的提示。local 模式没给 dbPath 时会落进 ":memory:"，
+ * 那个库只活在本进程里，kitsu_server_sql 写不进去。
+ *
+ * @param {{mode:string, dbPath?:string}} spec
+ * @returns {string[]}
+ */
+function startWarnings(spec) {
+  /** @type {string[]} */
+  const warnings = [];
+  if (spec.dbPath === undefined) {
+    warnings.push(
+      spec.mode === "local"
+        ? "local 模式没有传 dbPath：服务端使用内存数据库（:memory:），进程退出即丢，kitsu_server_sql 无法写入；需要可写库请传 dbPath。"
+        : "没有传 dbPath：服务端使用其内置默认库路径（C:/kitsu_new.database），kitsu_server_sql 会沿用该路径。",
+    );
+  }
+  return warnings;
 }
 
 /**
@@ -819,6 +957,71 @@ function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+/**
+ * 在磁盘库上执行一批 sql。服务端库是 WAL 模式（sqlite_database.cpp:1335），
+ * 所以运行中的进程能直接读到这里的写入，不需要停服或重启。
+ *
+ * 连接级 PRAGMA 与服务端保持一致（sqlite_database.cpp:1310-1312），
+ * 否则可能写出服务端读不了的库（尤其外键）。
+ *
+ * @param {{dbPath:string, batches:{label:string, sql:string}[], dryRun:boolean}} spec
+ * @returns {Promise<{ok:boolean, statements:number, changes:number, results:any[], error?:string}>}
+ */
+async function runSql({ dbPath, batches, dryRun }) {
+  const { DatabaseSync } = await import("node:sqlite");
+  /** @type {any} */
+  let db;
+  try {
+    db = new DatabaseSync(dbPath, { timeout: SQL_BUSY_TIMEOUT_MS });
+  } catch (error) {
+    return { ok: false, statements: 0, changes: 0, results: [], error: `打不开数据库 ${dbPath}：${errorText(error)}` };
+  }
+  /** @type {any[]} */
+  const results = [];
+  let statements = 0;
+  let changes = 0;
+  try {
+    db.exec("PRAGMA foreign_keys = ON;");
+    db.exec("PRAGMA synchronous = NORMAL;");
+    db.exec("PRAGMA recursive_triggers = ON;");
+    db.exec("BEGIN IMMEDIATE;");
+    for (const batch of batches) {
+      const list = splitSqlStatements(batch.sql);
+      for (let index = 0; index < list.length; index += 1) {
+        const statement = list[index];
+        const rejection = rejectSqlStatement(statement);
+        if (rejection !== undefined) throw new Error(`${batch.label} 第 ${index + 1} 条：${rejection}`);
+        statements += 1;
+        try {
+          const stmt = db.prepare(statement);
+          const info = stmt.run();
+          const rowChanges = typeof info?.changes === "number" ? info.changes : 0;
+          changes += rowChanges;
+          results.push({ source: batch.label, index: index + 1, verb: sqlVerb(statement), changes: rowChanges });
+        } catch (error) {
+          return {
+            ok: false,
+            statements,
+            changes: 0,
+            results,
+            error: `${batch.label} 第 ${index + 1} 条失败：${errorText(error)}\nSQL: ${tailText(statement, 400)}`,
+          };
+        }
+      }
+    }
+    db.exec("ROLLBACK;");
+    return { ok: true, statements, changes: dryRun ? 0 : changes, results };
+  } catch (error) {
+    return { ok: false, statements, changes: 0, results, error: errorText(error) };
+  } finally {
+    try {
+      db.close();
+    } catch {
+      /* 连接已经不可用，无需再抛 */
+    }
+  }
 }
 
 /**
@@ -1439,7 +1642,14 @@ export function apply(ctx, config) {
         const spec = plan.spec;
         const serverId = allocateServerId();
         const configPath = await writeConfigFile(serverId, spec.configValues);
-        const argv = buildArgv({ mode: spec.mode, port: spec.port, configPath, root: spec.root, extraArgs: spec.extraArgs });
+        const argv = buildArgv({
+          mode: spec.mode,
+          port: spec.port,
+          configPath,
+          root: spec.root,
+          dbPath: spec.dbPath,
+          extraArgs: spec.extraArgs,
+        });
         try {
           return await startServer(ctx, {
             serverId,
@@ -1450,15 +1660,13 @@ export function apply(ctx, config) {
             mode: spec.mode,
             port: spec.port,
             configPath,
+            dbPath: spec.dbPath ?? MEMORY_DB,
             readyPath: spec.readyPath,
             killExisting: args.killExisting === true,
             readyTimeoutMs: resolved.readyTimeoutMs,
             stopTimeoutMs: resolved.stopTimeoutMs,
             maxOutputBytes: resolved.maxOutputBytes,
-            warnings:
-              spec.mode === "local"
-                ? ["local 模式会忽略 dbPath / root：服务端该分支使用内置数据库与硬编码 root，config 里只生效其它键。"]
-                : [],
+            warnings: startWarnings(spec),
             signal: exec.signal,
           });
         } finally {
