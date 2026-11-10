@@ -67,24 +67,6 @@ nlohmann::json recording_json(const FSys::path& in_dir) {
 
 }  // namespace
 
-struct face_capture_session_holder::impl {
-  mutable std::mutex mutex_{};
-  std::shared_ptr<face_capture::capture_session> session_{};
-};
-
-face_capture_session_holder::face_capture_session_holder() : impl_ptr_(std::make_shared<impl>()) {}
-
-std::shared_ptr<face_capture::capture_session> face_capture_session_holder::session() const {
-  std::scoped_lock l_lock{impl_ptr_->mutex_};
-  return impl_ptr_->session_;
-}
-
-void face_capture_session_holder::reset(std::shared_ptr<face_capture::capture_session> in_session) {
-  std::scoped_lock l_lock{impl_ptr_->mutex_};
-  if (in_session && impl_ptr_->session_ && impl_ptr_->session_ != in_session) return;
-  impl_ptr_->session_ = std::move(in_session);
-}
-
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recordings, get) {
   auto l_root = face_capture::capture_session::default_root();
   auto l_list = nlohmann::json::array();

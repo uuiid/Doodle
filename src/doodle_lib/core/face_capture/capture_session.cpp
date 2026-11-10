@@ -12,6 +12,8 @@
 #include <doodle_lib/core/face_capture/frame_align.h>
 #include <doodle_lib/core/face_capture/frame_filter.h>
 #include <doodle_lib/core/face_capture/media_fragment_pipeline.h>
+#include <doodle_lib/core/face_capture/ws_message.h>
+#include <doodle_lib/core/face_capture/ws_outlet.h>
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/logger/logger.h>
@@ -105,9 +107,8 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     stream_state_ = capture_state::previewing;
     record_state_ = capture_state::idle;
 
-    if (outlet_) {
-      outlet_->set_session_info(session_id_, width_, height_);
-      outlet_->send_hello();
+    if (auto l_outlet = outlet_.lock()) {
+      l_outlet->send(std::make_unique<ws_hello>(session_id_, capture_state::previewing, width_, height_));
     }
 
     boost::asio::co_spawn(
@@ -152,9 +153,8 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     reset_recording_counters(clock_type::now());
     record_state_ = capture_state::recording;
 
-    if (outlet_) {
-      outlet_->set_session_info(session_id_, width_, height_);
-      outlet_->set_init_segment(fragmenter_->init_segment());
+    if (auto l_outlet = outlet_.lock()) {
+      l_outlet->send(std::make_unique<ws_avc_init>(fragmenter_->init_segment()));
     }
 
     co_return make_status(capture_state::recording);
@@ -197,24 +197,13 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     co_await close_stream();
 
     stream_state_ = capture_state::idle;
-    if (outlet_) outlet_->set_init_segment({});
 
     co_return l_result;
   }
 
-  void attach(std::shared_ptr<ws_outlet> in_outlet) {
-    if (outlet_ && outlet_ != in_outlet) outlet_->detach();
-    outlet_ = std::move(in_outlet);
-    if (!outlet_) return;
+  void attach(std::shared_ptr<ws_outlet> in_outlet) { outlet_ = std::move(in_outlet); }
 
-    outlet_->set_session_info(session_id_, width_, height_);
-    if (fragmenter_) outlet_->set_init_segment(fragmenter_->init_segment());
-  }
-
-  void detach() {
-    if (outlet_) outlet_->detach();
-    outlet_.reset();
-  }
+  void detach() { outlet_.reset(); }
 
   capture_state state() const { return display_state(); }
 
@@ -226,7 +215,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
   const executor_type& get_executor() const { return strand_; }
 
-  [[nodiscard]] std::shared_ptr<ws_outlet> outlet() const { return outlet_; }
+  [[nodiscard]] std::shared_ptr<ws_outlet> outlet() const { return outlet_.lock(); }
 
  private:
   capture_state display_state() const {
@@ -330,9 +319,12 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   }
 
   boost::asio::awaitable<void> wait_outlet_idle() {
+    auto l_outlet = outlet_.lock();
+    if (!l_outlet) co_return;
+
     auto l_deadline = clock_type::now() + std::chrono::milliseconds{k_stop_drain_timeout_ms};
     boost::asio::steady_timer l_timer{strand_};
-    while (outlet_ && !outlet_->idle() && clock_type::now() < l_deadline) {
+    while (!l_outlet->idle() && clock_type::now() < l_deadline) {
       l_timer.expires_after(std::chrono::milliseconds{2});
       co_await l_timer.async_wait(boost::asio::use_awaitable);
     }
@@ -417,10 +409,14 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
       auto l_seq = l_recording ? (seq_ > 0 ? seq_ - 1 : 0) : preview_seq_++;
 
-      if (outlet_ && outlet_->is_attached() && fragmenter_) {
+      auto l_outlet = outlet_.lock();
+      if (l_outlet && l_outlet->is_attached() && fragmenter_) {
         try {
           fragmenter_->push(l_mat, l_seq);
-          for (auto& l_fragment : fragmenter_->take_fragments()) outlet_->send_fragment(std::move(l_fragment));
+          for (auto& l_fragment : fragmenter_->take_fragments()) {
+            if (!l_fragment.key_ && l_outlet->pending_frame()) continue;
+            l_outlet->send(std::make_unique<ws_avc_fragment>(std::move(l_fragment)));
+          }
         } catch (const std::exception& in_err) {
           SPDLOG_WARN("推流编码失败: {}", in_err.what());
         }
@@ -473,7 +469,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   std::shared_ptr<cv::VideoCapture> cap_{};
   std::shared_ptr<h264_fragmenter> fragmenter_{};
   std::shared_ptr<video_writer> mp4_writer_{};
-  std::shared_ptr<ws_outlet> outlet_{};
+  std::weak_ptr<ws_outlet> outlet_{};
   std::shared_ptr<frame_filter> filter_{};
 
   boost::uuids::uuid session_id_{};
@@ -553,5 +549,23 @@ boost::uuids::uuid capture_session::session_id() const { return impl_ptr_->sessi
 FSys::path capture_session::session_dir() const { return impl_ptr_->session_dir(); }
 
 const capture_session::executor_type& capture_session::get_executor() const { return impl_ptr_->get_executor(); }
+
+struct capture_session_holder::impl {
+  mutable std::mutex mutex_{};
+  std::shared_ptr<capture_session> session_{};
+};
+
+capture_session_holder::capture_session_holder() : impl_ptr_(std::make_shared<impl>()) {}
+
+std::shared_ptr<capture_session> capture_session_holder::session() const {
+  std::scoped_lock l_lock{impl_ptr_->mutex_};
+  return impl_ptr_->session_;
+}
+
+void capture_session_holder::reset(std::shared_ptr<capture_session> in_session) {
+  std::scoped_lock l_lock{impl_ptr_->mutex_};
+  if (in_session && impl_ptr_->session_ && impl_ptr_->session_ != in_session) return;
+  impl_ptr_->session_ = std::move(in_session);
+}
 
 }  // namespace doodle::face_capture

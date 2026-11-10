@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <doodle_lib/core/face_capture/capture_session.h>
 #include <doodle_lib/core/face_capture/face_capture_types.h>
 #include <doodle_lib/core/http/http_function.h>
 
@@ -16,26 +17,9 @@
 #include <memory>
 #include <string>
 
-namespace doodle::face_capture {
-class capture_session;
-}
-
 namespace doodle::http::local {
 
-class ws_stream_runner;
-
-class face_capture_session_holder {
- public:
-  face_capture_session_holder();
-
-  [[nodiscard]] std::shared_ptr<face_capture::capture_session> session() const;
-
-  void reset(std::shared_ptr<face_capture::capture_session> in_session);
-
- private:
-  struct impl;
-  std::shared_ptr<impl> impl_ptr_{};
-};
+using face_capture_session_holder = face_capture::capture_session_holder;
 
 class face_capture_selected_device {
  public:
@@ -67,7 +51,7 @@ DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN_C(face_capture_stream, local_http_fun)
 boost::uuids::uuid session_id_{};
-std::shared_ptr<ws_stream_runner> runner_{};
+std::shared_ptr<face_capture::ws_outlet> runner_{};
 std::shared_ptr<face_capture_selected_device> selected_{};
 std::shared_ptr<face_capture_session_holder> holder_{};
 

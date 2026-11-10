@@ -6,7 +6,6 @@
 
 #include <doodle_lib/core/face_capture/face_capture_types.h>
 #include <doodle_lib/core/face_capture/media_fragment_pipeline.h>
-#include <doodle_lib/core/face_capture/ws_outlet.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
@@ -17,6 +16,22 @@
 #include <vector>
 
 namespace doodle::face_capture {
+
+class capture_session;
+class ws_outlet;
+
+class capture_session_holder {
+ public:
+  capture_session_holder();
+
+  [[nodiscard]] std::shared_ptr<capture_session> session() const;
+
+  void reset(std::shared_ptr<capture_session> in_session);
+
+ private:
+  struct impl;
+  std::shared_ptr<impl> impl_ptr_{};
+};
 
 class capture_session : public std::enable_shared_from_this<capture_session> {
  public:
