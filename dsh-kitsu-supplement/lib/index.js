@@ -12,11 +12,10 @@
  *    local 模式不给 --port 时服务端会 listen(0)（随机端口），
  *    而 local 分支同样不防重复实例（kitsu_supplement.cpp:212 的 stop_previous_instance 已注释），
  *    随机端口意味着每次重启地址都变，测试用例没法引用。所以缺 port 或越界都直接报错。
- * 2) 真实端口只读共享内存段 `doodle_http_listener_port_<pid>`（http_listener_port_shm.cpp:35-63）：
- *    服务端 listen 之后把端口写进段，插件用 pid 拼段名、轮询读到为止。段名带 pid，
- *    每个实例各占一块，不会互相覆盖。stdout 仍会打印端口（http_listener.cpp:35），
- *    但只用于失败诊断（见 shm/stdout-mismatch）。
- *    读段走 node:ffi（Node.js 26.1+，`--no-experimental-ffi` 或权限模型下未开 ffi 时读不了）。
+ * 2) 监听端口就是入参 port，不再去服务端的共享内存段（`doodle_http_listener_port_<pid>`）里找：
+ *    宿主的 ctx.subprocess.spawn 不返回 pid，读段只能靠 netstat 反查 pid，而沙箱下 netstat
+ *    看不到宿主拉起的进程，整条路在受限环境里必然失败。就绪与否直接对
+ *    `http://127.0.0.1:<port><readyPath>` 轮询，任何 HTTP 状态码都算就绪，最多等 READY_TIMEOUT_MS。
  * 3) 固定端口先探占用。默认失败并给出占用 PID，只有显式 killExisting:true 才强杀。
  * 4) --config 由插件生成。服务端 config 解析失败会 return true 且**不启动 HTTP**，
  *    进程可能一闪而过，所以 JSON 只由插件写，模型的额外字段并进 extraConfig。
@@ -34,7 +33,7 @@
 import { defineTool } from "@deepseek-ai/dsh-tools";
 import z from "@deepseek-ai/schemastery";
 
-//#region 纯逻辑（校验、argv、共享内存段名与端口解析、渲染）
+//#region 纯逻辑（校验、argv、端口解析、渲染）
 // 本区段不依赖任何 import，test/pure.mjs 直接求值；下一个区段是配置与输出契约。
 
 /** 启动模式；local 对应 argv 里的 `--local`。 */
@@ -46,7 +45,8 @@ const OWNED_FLAGS = ["--local", "--config", "--port", "--root", "--dbPath"];
 const DEFAULT_EXE_PATH = "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement.exe";
 const DEFAULT_MODE = "production";
 const DEFAULT_READY_PATH = "/";
-const DEFAULT_READY_TIMEOUT_MS = 30000;
+/** 就绪等待上限：显式端口已定，剩下的只是等进程把监听建立起来。 */
+const READY_TIMEOUT_MS = 100000;
 const DEFAULT_STOP_TIMEOUT_MS = 5000;
 const DEFAULT_MAX_OUTPUT_BYTES = 8 * 1024 * 1024;
 const DEFAULT_MAX_TAIL_CHARS = 4000;
@@ -58,16 +58,6 @@ const GUIDANCE_SECTION = "tool:kitsu-supplement";
 /** 系统工具用绝对路径：提供方对裸名称按清理后的 PATH 解析，结果随宿主环境变化。 */
 const NETSTAT_EXE = "C:\\Windows\\System32\\netstat.exe";
 const TASKKILL_EXE = "C:\\Windows\\System32\\taskkill.exe";
-/** 等共享内存段里出现端口的上限（与服务端 listen 的耗时无关，只用来看住"进程没发布就退出"）。 */
-const PORT_SHM_TIMEOUT_MS = 10000;
-/** 共享内存段里 `http_listener_port_shm_t` 的固定长度（http_listener_port_shm.cpp:39 `sizeof`）。 */
-const PORT_SHM_SIZE = 12;
-/** 魔数 "DLPT"（http_listener_port_shm.h:30）。 */
-const PORT_SHM_MAGIC = 0x444c5054;
-/** 结构版本（http_listener_port_shm.h:32）。 */
-const PORT_SHM_VERSION = 1;
-/** `OpenFileMappingW` 的失败码 ERROR_FILE_NOT_FOUND：段还没创建，不是错误。 */
-const ERROR_FILE_NOT_FOUND = 2;
 /** 允许的监听端口闭区间；端口必须落在区间内，测试脚本才能引用固定地址。 */
 const PORT_MIN = 50030;
 const PORT_MAX = 50330;
@@ -377,65 +367,6 @@ function rejectSqlStatement(statement) {
   const verb = sqlVerb(statement);
   if (verb === "ATTACH" || verb === "DETACH") {
     return `不允许 ${verb}：本工具只写目标库文件，跨库操作请手工处理。`;
-  }
-  return undefined;
-}
-
-/**
- * 服务端共享内存段名：`<前缀>_<进程 id>`（http_listener_port_shm.cpp:35-37）。
- *
- * 段名只含 ASCII，`OpenFileMappingA` 可以直接用；`*W` 版本在 node:ffi 下拿不到
- * （string 参数按 UTF-8 传递，不是 UTF-16）。
- *
- * @param {number} pid
- * @returns {string}
- */
-function listenerPortShmName(pid) {
-  return `doodle_http_listener_port_${pid}`;
-}
-
-/**
- * 解析共享内存里 `http_listener_port_shm_t` 的 12 字节。
- *
- * 布局（x86 小端，http_listener_port_shm.h:18-27）：
- * magic(u32) / version(u32) / port(u16) / reserved(u16)。
- *
- * @param {ArrayBuffer|Uint8Array} bytes
- * @returns {number|undefined} 校验通过返回端口，否则 undefined（未发布或结构不符）
- */
-function parseListenerPortShm(bytes) {
-  let buffer;
-  if (bytes !== null && typeof bytes === "object" && typeof bytes.byteLength === "number" && !ArrayBuffer.isView(bytes)) {
-    buffer = bytes;
-  } else if (bytes !== null && typeof bytes === "object" && ArrayBuffer.isView(bytes)) {
-    buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-  } else {
-    return undefined;
-  }
-  if (buffer.byteLength < PORT_SHM_SIZE) return undefined;
-  const view = new DataView(buffer);
-  if (view.getUint32(0, true) !== PORT_SHM_MAGIC) return undefined;
-  if (view.getUint32(4, true) !== PORT_SHM_VERSION) return undefined;
-  const port = view.getUint16(8, true);
-  return port >= 1 && port <= 65535 ? port : undefined;
-}
-
-/**
- * 从 stdout 里找监听协程打印的端口行：第一行纯数字就是端口。
- *
- * 端口本身已改从共享内存读取；这里保留解析能力，只用于失败诊断时把
- * stdout 里出现过的端口一并报给调用方。
- *
- * @param {string} text
- * @returns {number|undefined}
- */
-function findPortLine(text) {
-  for (const raw of String(text ?? "").split(/\r?\n/)) {
-    const line = raw.trim();
-    if (line === "") continue;
-    if (!/^[0-9]{1,5}$/.test(line)) return undefined;
-    const port = Number.parseInt(line, 10);
-    return port >= 1 && port <= 65535 ? port : undefined;
   }
   return undefined;
 }
@@ -844,6 +775,26 @@ async function runSql({ dbPath, batches, dryRun }) {
   }
 }
 
+/**
+ * 从 stdout 里找监听协程打印的端口行：第一行纯数字就是端口。
+ *
+ * 端口以入参为准（http_listener.cpp:35 仍会把真实端口打到 stdout），
+ * 这里只用于失败诊断时把 stdout 里报告过的端口一并报给调用方。
+ *
+ * @param {string} text
+ * @returns {number|undefined}
+ */
+function findPortLine(text) {
+  for (const raw of String(text ?? "").split(/\r?\n/)) {
+    const line = raw.trim();
+    if (line === "") continue;
+    if (!/^[0-9]{1,5}$/.test(line)) return undefined;
+    const port = Number.parseInt(line, 10);
+    return port >= 1 && port <= 65535 ? port : undefined;
+  }
+  return undefined;
+}
+
 //#endregion
 
 //#region 配置与输出契约
@@ -866,7 +817,7 @@ export const Config = z.object({
     })
     .default({}),
   readyPath: z.string().default(DEFAULT_READY_PATH),
-  readyTimeoutMs: z.number().default(DEFAULT_READY_TIMEOUT_MS),
+  readyTimeoutMs: z.number().default(READY_TIMEOUT_MS),
   stopTimeoutMs: z.number().default(DEFAULT_STOP_TIMEOUT_MS),
   maxOutputBytes: z.number().default(DEFAULT_MAX_OUTPUT_BYTES),
   guidanceOrder: z.number().default(DEFAULT_GUIDANCE_ORDER),
@@ -874,7 +825,7 @@ export const Config = z.object({
 
 const SERVER_PROPERTIES = {
   mode: { type: "string", enum: MODES, description: "启动模式" },
-  port: { type: "number", description: "实际监听端口（来自服务端发布的共享内存段）" },
+  port: { type: "number", description: "监听端口（就是启动时传入的 --port）" },
   pid: { type: "number", description: "服务进程 PID" },
   baseUrl: { type: "string", description: "http://127.0.0.1:<port>" },
   cwd: { type: "string", description: "服务进程工作目录" },
@@ -907,8 +858,6 @@ const START_SCHEMA = {
         "port-in-use",
         "kill-failed",
         "spawn-failed",
-        "exited-before-listen",
-        "no-shm-port",
         "exited-before-ready",
         "ready-timeout",
         "cancelled",
@@ -926,7 +875,6 @@ const START_SCHEMA = {
     warnings: { type: "array", required: true, items: { type: "string" } },
     outputTail: { type: "string", description: "失败时的 stdout+stderr 尾巴" },
     spillPath: { type: "string", description: "输出溢出时的完整日志文件" },
-    shmName: { type: "string", description: "本次读取的共享内存段名（启动失败时回显）" },
   },
 };
 
@@ -1034,7 +982,7 @@ function renderStart(args, value) {
   /** @type {string[]} */
   const lines = [];
   if (value.ok === true) {
-    lines.push(`已启动 ${value.serverId} (${value.mode})  ${value.baseUrl}  pid=${value.pid}`);
+    lines.push(`已启动 ${value.serverId} (${value.mode})  ${value.baseUrl}`);
     if (value.readyMs !== undefined) {
       lines.push(`就绪等待 ${value.readyMs} ms（GET ${value.readyPath} -> ${value.readyStatus ?? "?"}）`);
     }
@@ -1063,7 +1011,7 @@ function renderStatus(args, value) {
   const lines = [value.reason];
   for (const server of value.servers ?? []) {
     const state = server.running === true ? "运行中" : `已退出(exit ${server.exitCode ?? "n/a"})`;
-    lines.push("", `${server.serverId}  ${server.mode}  :${server.port}  pid=${server.pid}  ${state}`);
+    lines.push("", `${server.serverId}  ${server.mode}  :${server.port}  ${state}`);
     if (server.baseUrl) lines.push(`  baseUrl: ${server.baseUrl}`);
     if (server.configPath) lines.push(`  config: ${server.configPath}`);
     if (server.cwd) lines.push(`  cwd: ${server.cwd}`);
@@ -1212,85 +1160,6 @@ function sleep(ms) {
 }
 
 /**
- * kernel32 里读命名共享内存所需的几个符号。
- *
- * 签名格式是 `{ return, arguments }`（doc/api/ffi.md 的 Signature objects），
- * 不是 V8 fast-api 的 `{ result, parameters }`——写错会"接受签名但不传参"。
- * 名字一律用 `A` 版本：node:ffi 的 `string` 按 UTF-8 传递，`*W` 系列拿到的是
- * 非 UTF-16 缓冲区，内核永远报 ERROR_FILE_NOT_FOUND。
- *
- * @returns {any}
- */
-function loadKernel32ShmFunctions() {
-  const ffi = process.getBuiltinModule("node:ffi");
-  if (!ffi) throw new Error("node:ffi 不可用（需要 Node.js 26.1+ 且构建时带 FFI 支持）");
-  const { functions } = ffi.dlopen("kernel32.dll", {
-    OpenFileMappingA: { arguments: ["uint32", "bool", "string"], return: "pointer" },
-    MapViewOfFile: { arguments: ["pointer", "uint32", "uint32", "uint32", "uint64"], return: "pointer" },
-    UnmapViewOfFile: { arguments: ["pointer"], return: "bool" },
-    CloseHandle: { arguments: ["pointer"], return: "bool" },
-    GetLastError: { arguments: [], return: "uint32" },
-  });
-  return { ffi, functions };
-}
-
-/** 惰性加载一次；加载失败（老 Node、权限模型）不影响其它工具。 */
-let kernel32Shm;
-/** @type {string|undefined} */
-let kernel32ShmError;
-
-/**
- * @returns {{ffi: any, functions: any}|undefined}
- */
-function kernel32ShmOrError() {
-  if (kernel32Shm !== undefined) return kernel32Shm;
-  if (kernel32ShmError !== undefined) return undefined;
-  try {
-    kernel32Shm = loadKernel32ShmFunctions();
-  } catch (error) {
-    kernel32ShmError = errorText(error);
-    kernel32Shm = null;
-  }
-  return kernel32Shm ?? undefined;
-}
-
-/**
- * 读一次服务端发布的监听端口。
- *
- * 段由服务端在 listen 之后写入（http_listener.cpp:33-38），段名带进程 id，
- * 所以每个实例各占一块，不会互相覆盖。插件只读不写：写端归服务端。
- *
- * @param {number} pid 服务端进程 id（= 段名后缀）
- * @returns {{port?:number, absent?:boolean, error?:string}}
- *   port：读到合法端口；absent：段还不存在（服务端尚未 listen）；error：读不了
- */
-function readListenerPortShm(pid) {
-  const loaded = kernel32ShmOrError();
-  if (loaded === undefined) return { error: kernel32ShmError ?? "node:ffi 不可用" };
-  const { ffi, functions: F } = loaded;
-  const name = listenerPortShmName(pid);
-  const handle = F.OpenFileMappingA(4, 0, name);
-  if (handle === 0n) {
-    const code = F.GetLastError();
-    if (code === ERROR_FILE_NOT_FOUND) return { absent: true };
-    return { error: `OpenFileMappingA(${name}) 失败，GetLastError=${code}` };
-  }
-  const view = F.MapViewOfFile(handle, 4, 0, 0, 12n);
-  if (view === 0n) {
-    const code = F.GetLastError();
-    F.CloseHandle(handle);
-    return { error: `MapViewOfFile(${name}) 失败，GetLastError=${code}` };
-  }
-  try {
-    const port = parseListenerPortShm(ffi.toBuffer(view, PORT_SHM_SIZE));
-    return port === undefined ? { absent: true } : { port };
-  } finally {
-    F.UnmapViewOfFile(view);
-    F.CloseHandle(handle);
-  }
-}
-
-/**
  * 跑一次 `netstat.exe -ano`。
  *
  * 刻意用绝对路径而不是 PATH 上的 `netstat`：提供方对裸名称按清理后的 PATH 解析，
@@ -1343,43 +1212,6 @@ async function probePort(ctx, port, signal) {
   const netstat = await netstatText(ctx, signal);
   if (netstat.error !== undefined) return { owners: [], ours, error: netstat.error };
   return { owners: parseNetstatOwners(netstat.text, port), ours };
-}
-
-/**
- * 轮询 netstat 直到出现监听目标端口的进程，返回其 pid。
- *
- * 宿主的 `ctx.subprocess.spawn` 返回的 handle 不带 pid（dsh-subprocess 的
- * `SubprocessHandle` 只有 stdin/stdout/stderr/control/collected/done/terminate/waitForExit），
- * 所以不能像早期版本那样用 `handle.pid` 拼共享内存段名。改为等 netstat 报出监听端口的
- * pid：监听在 publish_listener_port 之前（http_listener.cpp:32-38），pid 一旦出现，
- * 共享内存段随后即可读。
- *
- * @param {any} ctx
- * @param {number} port
- * @param {number[]} excluded 启动前就占着端口的 pid（killExisting 已杀掉的），不认
- * @param {() => boolean} isDead 进程是否已退出，退出即停止等待
- * @param {number} deadline 绝对截止时间（Date.now() 口径）
- * @param {AbortSignal} [signal]
- * @returns {Promise<{pid?:number, error?:string}>}
- */
-async function resolveListenerPid(ctx, port, excluded, isDead, deadline, signal) {
-  const skip = new Set(excluded);
-  /** @type {string|undefined} */
-  let lastError;
-  for (;;) {
-    if (signal?.aborted === true) return { error: "已取消" };
-    if (isDead()) return { error: "进程已退出" };
-    const netstat = await netstatText(ctx, signal);
-    if (netstat.error !== undefined) lastError = netstat.error;
-    else {
-      const owner = parseNetstatOwners(netstat.text, port).find((candidate) => !skip.has(candidate));
-      if (owner !== undefined) return { pid: owner };
-    }
-    if (Date.now() >= deadline) {
-      return { error: lastError === undefined ? undefined : `netstat 不可用：${lastError}` };
-    }
-    await sleep(100);
-  }
 }
 
 /**
@@ -1563,7 +1395,6 @@ async function startServer(ctx, spec) {
       const result = await stopRecord(record, spec.stopTimeoutMs);
       if (result.ok) {
         registry.delete(id);
-        if (typeof record.pid === "number") priorStopped.push(record.pid);
       } else {
         diagnostics.push({ severity: "error", code: "kill/failed", message: `停止本插件实例 ${id} 失败：${result.reason}` });
       }
@@ -1605,8 +1436,6 @@ async function startServer(ctx, spec) {
   }
 
   const serverId = spec.serverId;
-  /** @type {number|undefined} */
-  let pid;
   /** @type {any} */
   const record = {
     serverId,
@@ -1619,7 +1448,6 @@ async function startServer(ctx, spec) {
     exitCode: null,
     exitSignal: null,
     outputOffset: 0,
-    portSource: undefined,
     exePath: spec.exePath,
     cwd: spec.cwd,
     configPath: spec.configPath,
@@ -1640,102 +1468,18 @@ async function startServer(ctx, spec) {
     },
   );
 
-  const portDeadline = Date.now() + Math.min(PORT_SHM_TIMEOUT_MS, spec.readyTimeoutMs);
-  /** @type {number|undefined} */
-  let port;
-  /** @type {string|undefined} */
-  let shmError;
-  /** @type {string|undefined} */
-  let pidError;
-  while (port === undefined && record.exited !== true && Date.now() < portDeadline) {
-    if (pid === undefined) {
-      const resolved = await resolveListenerPid(
-        ctx,
-        spec.port,
-        priorStopped,
-        () => record.exited === true,
-        portDeadline,
-        spec.signal,
-      );
-      pid = resolved.pid;
-      if (pid === undefined) pidError = resolved.error;
-    }
-    if (pid !== undefined) {
-      const read = readListenerPortShm(pid);
-      if (read.port !== undefined) {
-        port = read.port;
-        break;
-      }
-      if (read.error !== undefined) shmError = read.error;
-    }
-    if (record.exited === true) break;
-    await sleep(50);
-  }
-  record.pid = pid;
-  // 先认端口：进程退出的瞬间段可能刚好发布，此时进程其实已经监听。
-  const exitedEarly = record.exited === true;
-
+  const port = spec.port;
   const stdoutText = () => readAll(handle.collected?.stdout);
   const stderrText = () => readAll(handle.collected?.stderr);
   const outputTail = () =>
     tailText([stdoutText().text, stderrText().text].filter((text) => text.length > 0).join("\n"), DEFAULT_MAX_TAIL_CHARS) || undefined;
 
-  if (port === undefined) {
-    await stopRecord(record, spec.stopTimeoutMs);
-    const alive = !exitedEarly;
-    const stdoutPort = findPortLine(readAll(handle.collected?.stdout).text);
-    diagnostics.push({
-      severity: "error",
-      code: "listen/unknown",
-      message:
-        pid === undefined
-          ? `端口 ${spec.port} 上没有出现监听进程（netstat 未报出 pid），无法定位共享内存段（http_listener_port_shm.cpp:60-63 写入，魔数 0x444c5054/版本 1）。`
-          : `共享内存段 ${listenerPortShmName(pid)} 里没有读到合法端口（http_listener_port_shm.cpp:60-63 写入，魔数 0x444c5054/版本 1）。`,
-    });
-    if (pidError !== undefined && pid === undefined) {
-      diagnostics.push({ severity: "warning", code: "shm/pid-unresolved", message: pidError });
-    }
-    if (shmError !== undefined) {
-      diagnostics.push({ severity: "warning", code: "shm/read-failed", message: shmError });
-    }
-    if (stdoutPort !== undefined) {
-      diagnostics.push({
-        severity: "warning",
-        code: "shm/stdout-mismatch",
-        message: `stdout 里出现了端口 ${stdoutPort}，但共享内存里没有——说明服务端与插件的 pid 不一致（经包装器启动？）或共享内存写入失败。`,
-      });
-    }
-    if (spec.configPath) {
-      diagnostics.push({
-        severity: "info",
-        code: "config/hint",
-        message: `服务端 --config 解析失败时会直接退出且不启动 HTTP（kitsu_supplement.cpp:158-163），请检查 ${spec.configPath}。`,
-      });
-    }
-    return startFailure(
-      spec,
-      alive ? "no-shm-port" : "exited-before-listen",
-      alive
-        ? `进程已启动（pid=${pid ?? "未知"}），但 ${Math.min(PORT_SHM_TIMEOUT_MS, spec.readyTimeoutMs)} ms 内没有从共享内存读到监听端口，已终止。`
-        : `进程在发布监听端口前就退出了（exit ${record.exitCode ?? "n/a"}）。`,
-      {
-        serverId,
-        pid,
-        diagnostics,
-        outputTail: outputTail(),
-        priorStopped,
-      },
-    );
-  }
-
-  record.port = port;
-  record.portSource = "shm";
   registry.set(serverId, record);
 
   const ready = await waitForReady({
     port,
     readyPath: spec.readyPath,
-    isDead: () => exitedEarly,
+    isDead: () => record.exited === true,
     timeoutMs: spec.readyTimeoutMs,
     signal: spec.signal,
   });
@@ -1748,17 +1492,31 @@ async function startServer(ctx, spec) {
       code: "ready/failed",
       message: ready.error ?? "没有取得 HTTP 响应",
     });
+    if (spec.configPath) {
+      diagnostics.push({
+        severity: "info",
+        code: "config/hint",
+        message: `服务端 --config 解析失败时会直接退出且不启动 HTTP（kitsu_supplement.cpp:158-163），请检查 ${spec.configPath}。`,
+      });
+    }
+    const stdoutPort = findPortLine(stdoutText().text);
+    if (stdoutPort !== undefined && stdoutPort !== port) {
+      diagnostics.push({
+        severity: "warning",
+        code: "listen/stdout-mismatch",
+        message: `stdout 里报告监听端口 ${stdoutPort}，与入参 port ${port} 不一致——说明服务端没有按 --port 监听（经包装器启动？参数被改写？）。`,
+      });
+    }
     return startFailure(
       spec,
       ready.dead ? "exited-before-ready" : ready.aborted ? "cancelled" : "ready-timeout",
       ready.dead
-        ? `端口 ${port} 已监听，但进程随后退出（exit ${record.exitCode ?? "n/a"}）。`
+        ? `进程在就绪前退出（exit ${record.exitCode ?? "n/a"}）。`
         : ready.aborted
-          ? `已取消：端口 ${port} 已监听，但就绪等待被中止，进程已终止。`
-          : `端口 ${port} 已监听，但 ${spec.readyTimeoutMs} ms 内 GET ${readyUrlOf(port, spec.readyPath)} 没有响应，已终止。`,
+          ? `已取消：就绪等待被中止，进程已终止。`
+          : `${spec.readyTimeoutMs} ms 内 GET ${readyUrlOf(port, spec.readyPath)} 没有响应，已终止。`,
       {
         serverId,
-        pid,
         port,
         baseUrl: baseUrlOf(port),
         readyMs: ready.waitedMs,
@@ -1776,7 +1534,6 @@ async function startServer(ctx, spec) {
     serverId,
     mode: spec.mode,
     port,
-    pid,
     baseUrl: baseUrlOf(port),
     cwd: spec.cwd,
     exePath: spec.exePath,
@@ -1827,7 +1584,7 @@ export function apply(ctx, config) {
     defaultRoot: trimOrEmpty(config?.defaultRoot),
     defaultConfigPaths: isPlainObject(config?.defaultConfigPaths) ? config.defaultConfigPaths : {},
     readyPath: trimOrEmpty(config?.readyPath) || DEFAULT_READY_PATH,
-    readyTimeoutMs: positiveOrDefault(config?.readyTimeoutMs, DEFAULT_READY_TIMEOUT_MS),
+    readyTimeoutMs: positiveOrDefault(config?.readyTimeoutMs, READY_TIMEOUT_MS),
     stopTimeoutMs: positiveOrDefault(config?.stopTimeoutMs, DEFAULT_STOP_TIMEOUT_MS),
     maxOutputBytes: clamp(config?.maxOutputBytes ?? DEFAULT_MAX_OUTPUT_BYTES, MIN_OUTPUT_BYTES, MAX_OUTPUT_BYTES),
     guidanceOrder: config?.guidanceOrder ?? DEFAULT_GUIDANCE_ORDER,
@@ -1876,7 +1633,7 @@ export function apply(ctx, config) {
       ctx.tools.get("kitsu_server_start", scope) === undefined
         ? ""
         : [
-            "`kitsu_server_start` 拉起本机 doodle_kitsu_supplement.exe HTTP 服务（测试前准备后端），返回的 `port` / `baseUrl` 取自服务端写入的共享内存段 `doodle_http_listener_port_<pid>` 里的真实监听端口，测试脚本应引用它而不是猜端口。",
+            "`kitsu_server_start` 拉起本机 doodle_kitsu_supplement.exe HTTP 服务（测试前准备后端），返回的 `port` 就是传入的显式端口，就绪判定是对 `http://127.0.0.1:<port><readyPath>` 轮询 HTTP（任何状态码都算就绪，最多等 100 秒），测试脚本应引用返回的 `baseUrl` 而不是猜端口。",
             `\`port\` 必须显式传，且必须是 ${PORT_RANGE_TEXT} 之间的整数；端口被占用时工具默认失败并给出占用 PID，只有显式传 \`killExisting: true\` 才强杀。\`mode: \"local\"\`（或 \`local: true\`）会给进程加 \`--local\`，并把 \`dbPath\` 作为 \`--dbPath\` 传给服务端；不传 dbPath 时 local 分支落进内存库（\`:memory:\`），重启即丢。`,
             "`kitsu_server_status` 查看本插件的实例与端口占用；`kitsu_server_stop` 停掉本插件拉起的实例；本插件不杀别人启动的进程。",
             "`kitsu_server_sql` 对磁盘库执行 sql 文件或片段（填测试数据），写完运行中的进程立刻能查到，**不要**为它停服或重启；执行前不确定就先 `dryRun: true` 走一遍。",
@@ -1887,12 +1644,13 @@ export function apply(ctx, config) {
     defineTool({
       name: "kitsu_server_start",
       description:
-        "Start the doodle_kitsu_supplement HTTP server for local testing and return the REAL listening port (read from " +
-        "the shared-memory section the server publishes) plus a ready http://127.0.0.1:<port> baseUrl. `mode: \"production\"` (default) lets " +
+        "Start the doodle_kitsu_supplement HTTP server for local testing and return a ready http://127.0.0.1:<port> " +
+        "baseUrl. `mode: \"production\"` (default) lets " +
         "the server read its registry config and listen on config.port; `mode: \"local\"` adds `--local`, which also " +
         "turns off the registry-only paths (in-memory database unless `dbPath` is given). " +
-        `\`port\` is REQUIRED and must be an integer in ${PORT_RANGE_TEXT}: without --port the local branch listens on a ` +
-        "random port, and this node needs a stable, test-referable address. The generated config JSON carries dbPath (db_path), frontEndPath " +
+        `\`port\` is REQUIRED and must be an integer in ${PORT_RANGE_TEXT}: the server is started with that exact ` +
+        "`--port`, and readiness is decided by polling " +
+        "`http://127.0.0.1:<port><readyPath>` until any HTTP status comes back (up to 100 s). The generated config JSON carries dbPath (db_path), frontEndPath " +
         "(kitsu_front_end_path), publicUrlPort (public_url_port) and root; the working directory is `cwd` (default: the " +
         "exe's own directory, which holds its DLLs). When the port is already taken the call fails with code " +
         "`port-in-use` and reports the owning PIDs; pass `killExisting: true` only when those processes should be " +
@@ -2026,10 +1784,9 @@ export function apply(ctx, config) {
     defineTool({
       name: "kitsu_server_status",
       description:
-        "List the doodle_kitsu_supplement instances this plugin started (id, mode, port, PID, running/exited, baseUrl, " +
+        "List the doodle_kitsu_supplement instances this plugin started (id, mode, port, running/exited, baseUrl, " +
         "config path) and, for running instances, who is LISTENING on their ports (netstat). Pass `port` to also check " +
-        "an arbitrary port. The shared-memory listener port is a global slot that any later instance overwrites, so it " +
-        "is never used as evidence here.",
+        "an arbitrary port. The port is always the explicitly requested one, never derived from the process.",
       parameters: {
         port: { type: "number", description: "Additional port to check for listeners." },
       },

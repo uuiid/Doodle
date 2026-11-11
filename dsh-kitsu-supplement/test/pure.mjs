@@ -228,43 +228,6 @@ test("空串键被丢弃", () => {
   eq(P.buildConfig({ defaults: { a: "", b: "x" }, port: 1 }), { b: "x", port: 1 });
 });
 
-process.stdout.write("listenerPortShmName\n");
-test("段名 = 前缀_进程id", () => {
-  eq(P.listenerPortShmName(4242), "doodle_http_listener_port_4242");
-});
-
-process.stdout.write("parseListenerPortShm\n");
-function shmBytes({ magic = 0x444c5054, version = 1, port = 50123, reserved = 0, size = 12 } = {}) {
-  const buf = new Uint8Array(size);
-  const view = new DataView(buf.buffer);
-  if (size >= 4) view.setUint32(0, magic, true);
-  if (size >= 8) view.setUint32(4, version, true);
-  if (size >= 10) view.setUint16(8, port, true);
-  if (size >= 12) view.setUint16(10, reserved, true);
-  return buf;
-}
-test("合法结构 -> 端口", () => {
-  eq(P.parseListenerPortShm(shmBytes()), 50123);
-  eq(P.parseListenerPortShm(shmBytes({ port: 65535 })), 65535);
-  eq(P.parseListenerPortShm(shmBytes().buffer), 50123);
-});
-test("魔数不符 / 版本不符 -> undefined（段里是脏数据）", () => {
-  eq(P.parseListenerPortShm(shmBytes({ magic: 0 })), undefined);
-  eq(P.parseListenerPortShm(shmBytes({ version: 2 })), undefined);
-});
-test("端口 0 或越界 -> undefined（服务端还没写完或写坏）", () => {
-  eq(P.parseListenerPortShm(shmBytes({ port: 0 })), undefined);
-});
-test("不足 12 字节 -> undefined", () => {
-  eq(P.parseListenerPortShm(shmBytes({ size: 8 })), undefined);
-  eq(P.parseListenerPortShm(shmBytes({ size: 0 })), undefined);
-});
-test("Uint8Array 带 byteOffset 时按视图解析", () => {
-  const backing = new Uint8Array(16);
-  backing.set(shmBytes({ port: 50030 }), 4);
-  eq(P.parseListenerPortShm(backing.subarray(4, 16)), 50030);
-});
-
 process.stdout.write("findPortLine\n");
 test("第一行纯数字即端口", () => {
   eq(P.findPortLine("50025\n"), 50025);
