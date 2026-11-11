@@ -73,3 +73,27 @@ export function requireEnvFile(envName, fallback) {
 export function nowMs() {
   return Date.now();
 }
+
+// ---------------------------------------------------------------------------
+// 面部捕捉（src/doodle_lib/http_method/local/face_capture.h）
+//
+// 这九条路由只注册在 create_kitsu_local_route()，所以被测服务端必须带 --local 启动。
+// 会话根目录 = core_set::get_cache_root()/"face_capture"/"sessions" = <root>/face_capture/sessions
+// （capture_session.cpp:523-525），--local 分支会用 --root 覆盖 core_set 的 p_root，
+// 所以服务端以 --root 指向下面这个目录时，会话目录是确定的。
+// ---------------------------------------------------------------------------
+
+export const FACE_CAPTURE_ROOT = process.env.DOODLE_ROOT || path.join(BUILD_DIR, 'root');
+
+export const FACE_CAPTURE_SESSIONS_DIR =
+  process.env.FACE_CAPTURE_SESSIONS_DIR || path.join(FACE_CAPTURE_ROOT, 'face_capture', 'sessions');
+
+export const FACE_CAPTURE_SAMPLE =
+  process.env.FACE_CAPTURE_SAMPLE || path.join(BUILD_DIR, 'shi_ping', 'MySlate_20', 'front-1-wide.mp4');
+
+export const FACE_CAPTURE_SEED_DIR =
+  process.env.FACE_CAPTURE_SEED_DIR || path.join(BUILD_DIR, 'shi_ping', 'MySlate_20_face_test');
+
+export const FACE_CAPTURE_TRANSCODE_E2E = process.env.FACE_CAPTURE_TRANSCODE_E2E === '1';
+
+export const FACE_CAPTURE_TRANSCODE_WAIT = process.env.FACE_CAPTURE_TRANSCODE_WAIT === '1';

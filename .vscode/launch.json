@@ -51,7 +51,9 @@
             "args": [
                 "--config=${workspaceFolder}/../build/my_debug_server.json",
                 "--local",
-                "--port=50024"
+                "--port=50024",
+                "--root=E:/Doodle/build/root",
+                "--dbPath=E:/Doodle/build/root/live.db"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/../build/Ninja_debug/bin",
