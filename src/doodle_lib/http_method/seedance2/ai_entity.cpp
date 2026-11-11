@@ -119,6 +119,55 @@ cv::Mat pad_video_to_4s(const FSys::path& in_path) {
   return l_image;
 }
 
+void pad_video_to_8n1_frames(const FSys::path& in_path, const FSys::path& in_out_path) {
+  DOODLE_CHICK(!in_path.empty() && FSys::exists(in_path), "视频文件不存在: {}", in_path.generic_string());
+  DOODLE_CHICK(!in_out_path.empty(), "视频输出路径为空");
+
+  if (FSys::exists(in_out_path) && FSys::equivalent(in_path, in_out_path)) return;
+
+  auto l_capture = cv::VideoCapture{in_path.generic_string()};
+  DOODLE_CHICK(l_capture.isOpened(), "视频打开失败: {}", in_path.generic_string());
+
+  const auto l_fps     = l_capture.get(cv::CAP_PROP_FPS);
+  const auto l_count   = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_COUNT));
+  DOODLE_CHICK(l_count > 0, "视频帧数读取失败: {}", in_path.generic_string());
+
+  if (auto l_p = in_out_path.parent_path(); !l_p.empty() && !FSys::exists(l_p)) FSys::create_directories(l_p);
+
+  if (l_count % 8 == 1) {
+    FSys::copy_file(in_path, in_out_path, FSys::copy_options::overwrite_existing);
+    return;
+  }
+
+  const auto l_width  = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_WIDTH));
+  const auto l_height = static_cast<int>(l_capture.get(cv::CAP_PROP_FRAME_HEIGHT));
+  DOODLE_CHICK(l_fps > 0.0 && l_width > 0 && l_height > 0, "视频属性读取失败: {}", in_path.generic_string());
+
+  cv::Mat l_last_frame{};
+  for (auto l_pos = l_count - 1; l_pos >= 0 && l_last_frame.empty(); --l_pos) {
+    l_capture.set(cv::CAP_PROP_POS_FRAMES, l_pos);
+    l_capture >> l_last_frame;
+  }
+  DOODLE_CHICK(!l_last_frame.empty(), "视频解码失败: {}", in_path.generic_string());
+
+  const auto l_target_frames = 8 * ((l_count - 1) / 8) + 9;
+  const auto l_needed_frames = l_target_frames - l_count;
+
+  auto l_writer = cv::VideoWriter{
+      in_out_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), l_fps,
+      cv::Size{l_width, l_height}
+  };
+  l_writer.set(cv::VIDEOWRITER_PROP_QUALITY, 100);
+  DOODLE_CHICK(l_writer.isOpened(), "视频写出失败: {}", in_out_path.generic_string());
+
+  l_capture.set(cv::CAP_PROP_POS_FRAMES, 0);
+  cv::Mat l_frame{};
+  while (l_capture.read(l_frame)) l_writer << l_frame;
+  for (auto l_i = 0; l_i < l_needed_frames; ++l_i) l_writer << l_last_frame;
+
+  l_writer.release();
+}
+
 }  // namespace
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_ai_generate_entity, get) {
   person_.check_subproject_access(subproject_id_);
