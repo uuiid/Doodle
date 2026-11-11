@@ -1,8 +1,8 @@
 # dsh-kitsu-supplement
 
-在 DeepSeek Harness 里拉起 `doodle_kitsu_supplement.exe` 的 HTTP 服务，供本机测试使用：起服务、拿到**真实**监听端口、改数据库填测试数据、测试完停掉。
+在 DeepSeek Harness 里拉起 `doodle_kitsu_supplement.exe` 的 HTTP 服务，供本机测试使用：起服务、拿到**真实**监听端口、改数据库填测试数据、跑 `test_js` 里的 Playwright 用例、测试完停掉。
 
-四个工具：
+五个工具：
 
 | 工具 | 作用 |
 | --- | --- |
@@ -10,6 +10,7 @@
 | `kitsu_server_status` | 列出本插件记录的实例，并用 netstat 查端口被谁监听 |
 | `kitsu_server_stop` | 停掉本插件拉起的实例（终止进程树并等停稳） |
 | `kitsu_server_sql` | 对磁盘库执行 SQL 文件或片段（建表、改数据、填测试数据），**不需要停服或重启** |
+| `kitsu_playwright_test` | 把参数原样转发给 `test_js` 里的 playwright CLI（`playwright test ...` 的 `test ...` 部分），返回摘要、失败标题与输出尾巴；**不可并发** |
 
 ## 为什么这样设计
 
@@ -50,6 +51,12 @@ plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-suppleme
 | `stopTimeoutMs` | `5000` | 终止后等待退出预算 |
 | `maxOutputBytes` | `8388608` | stdout / stderr 各自的内存缓冲上限 |
 | `guidanceOrder` | `1396` | 系统提示词里本工具指引段的排序值 |
+| `playwrightCwd` | `E:\Doodle\test_js` | `kitsu_playwright_test` 的默认 `cwd` |
+| `playwrightNodePath` | `node` | 跑 playwright 用的 node；空串 = 从 PATH 取 |
+| `playwrightCliPath` | 空（= `<cwd>\node_modules\@playwright\test\cli.js`） | 显式指定 playwright 入口 |
+| `playwrightDefaultBaseUrl` | 空 | 调用时没给 `baseUrl`、父进程也没有 `DOODLE_BASE_URL` 时的兜底值 |
+| `playwrightTimeoutMs` | `900000` | 单次运行的整体预算 |
+| `playwrightKillTimeoutMs` | `5000` | 终止后等待退出的预算 |
 
 ## 参数
 
@@ -81,7 +88,85 @@ plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-suppleme
 | `serverId` | 目标实例（只用于定位库与在结果里标注），**不会**停服或重启 |
 | `dryRun` | 整批在事务里跑一遍再回滚，用来验证脚本而不落库 |
 
+`kitsu_playwright_test`：
+
+| 参数 | 必填 | 说明 |
+| --- | --- | --- |
+| `args` | | `playwright` 之后那串参数，**原样转发**；`["test"]`、`["show-report"]` 等都可以 |
+| `cwd` | | 运行路径（必须是目录）；缺省取 `playwrightCwd` |
+| `baseUrl` | | `"auto"` 接上唯一在跑的 local 实例；绝对地址直接指定；不传则沿用父进程环境。见[下一节](#跑-test_js-kitsu_playwright_test) |
+| `env` | | 追加/覆盖的环境变量（字符串键值对），与注入的 `DOODLE_BASE_URL` 同名时以 `env` 为准 |
+| `isolateOutput` | | `true` 时报告与产物落到 `%TEMP%\dsh-kitsu-supplement\playwright\<runId>\`，不覆盖项目目录 |
+| `timeoutMs` | | 本次运行的整体预算，缺省取 `playwrightTimeoutMs` |
+| `nodePath` | | 本次指定 node |
+| `cliPath` | | 本次指定 playwright 入口 |
+
 `kitsu_server_stop`：`serverId` 指定实例，`port` 指定端口，都不给就停掉全部。本插件**不会**杀别人启动的进程。
+
+## 跑 test_js（`kitsu_playwright_test`）
+
+`args` 是 **`playwright` 之后那串参数，原样转发**，插件不改写、不解释：
+
+```text
+kitsu_playwright_test { args: ["test"] }                                  # 全部用例
+kitsu_playwright_test { args: ["test", "face_capture.js"] }               # 单个文件
+kitsu_playwright_test { args: ["test", "-g", "创建设备"] }                 # 按标题过滤
+kitsu_playwright_test { args: ["test", "--list"] }                        # 只列用例，不连服务端
+kitsu_playwright_test { args: ["show-report"] }                           # 打开上次的 HTML 报告
+```
+
+子进程固定是 `node <cwd>\node_modules\@playwright\test\cli.js <args...>`，`cwd` 默认取配置
+`playwrightCwd`（`E:\Doodle\test_js`）。**不需要** `test_js/run-playwright.mjs` 那个
+fork→spawn 降级补丁——本插件走宿主的子进程通道，普通 fork 可用；那个脚本服务于 pwsh 沙箱。
+
+### 与被测服务端配合
+
+`baseUrl` 只决定给子进程设不设 `DOODLE_BASE_URL`（`playwright.config.js:17`、`test/config.js:6` 都读它）：
+
+| 传法 | 效果 |
+| --- | --- |
+| 不传 | 完全沿用父进程环境；父进程没有该变量就落到 `http://localhost:50025` |
+| `baseUrl: "auto"` | 接上**唯一在跑**的 `local` 实例（`kitsu_server_start` 起的），否则退回复用父进程的 `DOODLE_BASE_URL`；有两个 local 实例时直接报 `invalid-args`，不猜 |
+| `baseUrl: "http://127.0.0.1:50136"` | 指到这个地址 |
+
+典型一条龙（用例需要 `--local` 服务时）：
+
+```text
+kitsu_server_start { mode: "local", port: 50136, dbPath: "E:\\tmp\\kitsu_test.db" }
+kitsu_playwright_test { args: ["test", "face_capture.js"], baseUrl: "auto" }
+kitsu_server_stop { port: 50136 }
+```
+
+`env` 可以追加环境变量（如 `{ FACE_CAPTURE_TRANSCODE_E2E: "1" }`），同名键以 `env` 为准。
+
+### 结果与失败码
+
+返回里带：`summary`（passed / failed / skipped / didNotRun / flaky，从 line 报告器输出里抓）、
+`failures`（每条失败用例的标题 + 错误首行）、`listed`（`--list` 时的用例总数与文件数）、
+`reportDir` / `outputDir`、`outputTail`（stdout+stderr 尾巴，溢出时给 `spillPath`）。
+
+失败码：`ok` / `tests-failed` / `busy` / `timeout` / `cancelled` / `spawn-failed` / `timeout-cli` /
+`invalid-args` / `exit-nonzero`。`timeout-cli` 表示找不到 `@playwright/test/cli.js`；
+`exit-nonzero` 表示退出码非 0 但输出里没有用例计数（命令或配置写错了，先看 `outputTail`）。
+
+素材缺失的用例会 `test.skip()`（见 `test_js/README.md`），所以 `skipped` 非 0 是正常结果，
+不等于失败。
+
+### 不可并发
+
+同一时刻只允许一个 `kitsu_playwright_test` 在跑：第二次调用立刻返回 `busy`（写明正在跑的 runId
+与参数），**不排队**。原因是用例会往 `test_js/test-results` 与 `test_js/playwright-report` 写，
+两个运行互相覆盖。运行期间会在 `<cwd>\.playwright-run.lock` 留一个标记文件（只作提示，
+并发判断不依赖它），结束时删除。
+
+要保留上一次的报告，传 `isolateOutput: true`，报告与产物会落到
+`%TEMP%\dsh-kitsu-supplement\playwright\<runId>\`，不覆盖项目目录。
+
+### 超时
+
+`timeoutMs` 是**整个运行**的预算（默认 900000，15 分钟），超时后先 `terminate()`，
+`playwrightKillTimeoutMs`（默认 5000）内仍未退出就由宿主结束进程树。单条用例的超时仍是
+`playwright.config.js` 里的 `timeout: 60000`。
 
 ## 典型用法
 
@@ -96,6 +181,9 @@ kitsu_server_sql { serverId: "kitsu-1", files: ["E:\\seed\\big.sql"], dryRun: tr
 → 先验一遍，确认无误再去掉 dryRun
 
 kitsu_server_status { port: 50124 }
+
+kitsu_playwright_test { args: ["test", "face_capture.js"], baseUrl: "auto" }
+→ ok, passed=3 failed=0 skipped=1（playwright-report 已更新）
 kitsu_server_stop { serverId: "kitsu-1" }
 ```
 
@@ -103,6 +191,8 @@ kitsu_server_stop { serverId: "kitsu-1" }
 
 **`kitsu_server_start`**：`invalid-args` / `port-in-use` / `kill-failed` / `spawn-failed` / `exited-before-listen` / `no-shm-port` / `exited-before-ready` / `ready-timeout` / `cancelled`。
 失败结果里会带 `shmName`（查的是哪个段）、`outputTail`（stdout + stderr 尾巴）与服务端源码位置提示，`--config` 解析失败会给出 `config/hint` 诊断。
+
+**`kitsu_playwright_test`**：`ok` / `tests-failed` / `busy` / `timeout` / `cancelled` / `spawn-failed` / `timeout-cli` / `invalid-args` / `exit-nonzero`。
 
 **`kitsu_server_sql`**：`ok` / `invalid-args` / `empty` / `sql-failed`。
 `sql-failed` 会给出「来源（文件名或 `<inline sql>`）+ 第几条语句 + SQLite 原文 + 截断后的 SQL」，整批已回滚。
@@ -116,6 +206,8 @@ kitsu_server_stop { serverId: "kitsu-1" }
 - 端口是否放通"公开访问"（`public_url_port`）由服务端注册表配置与服务端声明决定，插件只把它写进生成的 config。
 - `kitsu_server_sql` 连接时模拟服务端的连接级 PRAGMA（`foreign_keys = ON`、`synchronous = NORMAL`、`recursive_triggers = ON`，见 `sqlite_database.cpp:1310-1312`），但不会加载服务端的 jieba FTS5 分词器；写 FTS5 虚拟表或依赖该分词器的内容请走服务端接口。
 - `ATTACH` / `DETACH` 被拒绝：本工具只写目标库文件。
+- **`kitsu_playwright_test` 用 `test_js` 自己的 playwright**：`cwd` 下没有 `node_modules/@playwright/test` 时直接报 `timeout-cli`，插件不替你装依赖。
+- **playwright 与 kitsu 服务端是两个独立进程**：工具只负责把 `DOODLE_BASE_URL` 递给 playwright，服务端有没有起来由调用方保证（`baseUrl: "auto"` 只接本插件记录的 local 实例）。
 - 实例表只在本进程内有效：DSH 重启后插件不再管之前拉起的进程（它们仍在运行），需要用 `kitsu_server_status { port }` 看占用并手工处理。
 
 ## 开发

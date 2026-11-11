@@ -353,6 +353,177 @@ await testAsync("exePath 无目录且无 cwd -> 报错而不是猜", async () =>
   ok(plan.problems.some((p) => p.includes("无法从 exePath 推断 cwd")), plan.problems.join(" | "));
 });
 
+process.stdout.write("validatePlaywrightArgs\n");
+test("缺 args / 空数组 / 空串都报错", () => {
+  ok(P.validatePlaywrightArgs(undefined).length > 0, "undefined 应该报错");
+  ok(P.validatePlaywrightArgs([]).length > 0, "空数组应该报错");
+  ok(P.validatePlaywrightArgs(["test", "  "]).length > 0, "空串项应该报错");
+  ok(P.validatePlaywrightArgs("test").length > 0, "非数组应该报错");
+});
+test("原样透传的常见形态都通过", () => {
+  eq(P.validatePlaywrightArgs(["test"]), []);
+  eq(P.validatePlaywrightArgs(["test", "--list"]), []);
+  eq(P.validatePlaywrightArgs(["test", "-g", "创建设备"]), []);
+  eq(P.validatePlaywrightArgs(["test", "--", "--my-flag"]), []);
+});
+
+process.stdout.write("parseBaseUrlArg\n");
+test("auto / 显式地址 / 缺省", () => {
+  eq(P.parseBaseUrlArg(undefined), { kind: "none" });
+  eq(P.parseBaseUrlArg("  "), { kind: "none" });
+  eq(P.parseBaseUrlArg("auto"), { kind: "auto" });
+  eq(P.parseBaseUrlArg("AUTO"), { kind: "auto" });
+  eq(P.parseBaseUrlArg("http://127.0.0.1:50136/"), { kind: "explicit", value: "http://127.0.0.1:50136" });
+  eq(P.parseBaseUrlArg("https://kitsu.local"), { kind: "explicit", value: "https://kitsu.local" });
+});
+test("不是 URL 就报 invalid", () => {
+  eq(P.parseBaseUrlArg("127.0.0.1:50136").kind, "invalid");
+  eq(P.parseBaseUrlArg("ftp://x").kind, "invalid");
+});
+
+process.stdout.write("resolveAutoBaseUrl\n");
+test("唯一 local 实例优先于父进程环境", () => {
+  const records = new Map([
+    ["kitsu-1", { mode: "production", port: 50025, exited: false }],
+    ["kitsu-2", { mode: "local", port: 50136, exited: false }],
+  ]);
+  const picked = P.resolveAutoBaseUrl({ records, env: { DOODLE_BASE_URL: "http://10.0.0.1:1" } });
+  eq(picked.kind, "auto-server");
+  eq(picked.baseUrl, "http://127.0.0.1:50136");
+});
+test("没有在跑的 local 实例时退回父进程 DOODLE_BASE_URL", () => {
+  const records = new Map([["kitsu-1", { mode: "local", port: 50136, exited: true }]]);
+  eq(P.resolveAutoBaseUrl({ records, env: { DOODLE_BASE_URL: "http://a:1/" } }), {
+    kind: "auto-env",
+    baseUrl: "http://a:1",
+  });
+});
+test("两个 local 实例 -> 歧义，不猜", () => {
+  const records = new Map([
+    ["kitsu-1", { mode: "local", port: 50136, exited: false }],
+    ["kitsu-2", { mode: "local", port: 50137, exited: false }],
+  ]);
+  const picked = P.resolveAutoBaseUrl({ records, env: {} });
+  eq(picked.kind, "ambiguous");
+  eq(picked.candidates, ["kitsu-1 :50136", "kitsu-2 :50137"]);
+  ok(picked.problem.includes("2 个 local 实例"), picked.problem);
+});
+test("既没实例也没环境变量 -> 明确报错", () => {
+  const picked = P.resolveAutoBaseUrl({ records: new Map(), env: {} });
+  eq(picked.kind, "none");
+  ok(picked.problem.includes("auto"), picked.problem);
+});
+
+process.stdout.write("mergePlaywrightEnv\n");
+test("注入覆盖同名环境变量，显式 env 优先级最高", () => {
+  const merged = P.mergePlaywrightEnv({
+    baseEnv: { Path: "C:\\bin", doodle_base_url: "http://old:1", KEEP: "1" },
+    injected: { DOODLE_BASE_URL: "http://new:2", PLAYWRIGHT_HTML_OPEN: "never" },
+    explicit: { "doodle_base_url": "http://explicit:3" },
+  });
+  eq(merged.doodle_base_url, "http://explicit:3", "显式值的键名原样保留，值覆盖注入值");
+  eq(Object.keys(merged).filter((key) => key.toUpperCase() === "DOODLE_BASE_URL").length, 1, "同名键只保留一个");
+  eq(merged.PLAYWRIGHT_HTML_OPEN, "never");
+  eq(merged.Path, "C:\\bin");
+  eq(merged.KEEP, "1");
+});
+test("显式 env 可以新建键，非字符串值被忽略", () => {
+  const merged = P.mergePlaywrightEnv({
+    baseEnv: {},
+    injected: {},
+    explicit: { FACE_CAPTURE_TRANSCODE_E2E: "1", BAD: 2 },
+  });
+  eq(merged.FACE_CAPTURE_TRANSCODE_E2E, "1");
+  ok(!Object.hasOwn(merged, "BAD"), "非字符串值不应进入 env");
+});
+
+process.stdout.write("playwrightOutputDirs\n");
+test("默认落在项目目录，isolate 落到临时目录", () => {
+  eq(P.playwrightOutputDirs({ cwd: "E:\\Doodle\\test_js", runId: "pw-1", isolate: false, tmpRoot: "C:\\tmp" }), {
+    reportDir: "E:\\Doodle\\test_js/playwright-report",
+    outputDir: "E:\\Doodle\\test_js/test-results",
+  });
+  eq(P.playwrightOutputDirs({ cwd: "E:\\Doodle\\test_js", runId: "pw-1", isolate: true, tmpRoot: "C:\\tmp" }), {
+    reportDir: "C:\\tmp/pw-1/playwright-report",
+    outputDir: "C:\\tmp/pw-1/test-results",
+  });
+});
+test("cli 路径与锁路径按 cwd 拼", () => {
+  eq(P.defaultPlaywrightCli("E:/Doodle/test_js"), "E:\\Doodle\\test_js\\node_modules\\@playwright\\test\\cli.js");
+  eq(P.playwrightLockPath("E:/Doodle/test_js/"), "E:\\Doodle\\test_js\\.playwright-run.lock");
+});
+
+process.stdout.write("parsePlaywrightSummary\n");
+test("抓 passed / failed / skipped / didNotRun / flaky", () => {
+  const text = ["  1 failed", "  3 passed (12.4s)", "  2 skipped", "  1 did not run", "  1 flaky"].join("\n");
+  eq(P.parsePlaywrightSummary(text), { passed: 3, failed: 1, skipped: 2, didNotRun: 1, flaky: 1 });
+});
+test("没有计数时全 0", () => {
+  eq(P.parsePlaywrightSummary("Running 5 tests using 1 worker"), {
+    passed: 0,
+    failed: 0,
+    skipped: 0,
+    didNotRun: 0,
+    flaky: 0,
+  });
+});
+
+process.stdout.write("parsePlaywrightFailures\n");
+test("抓失败标题与错误首行", () => {
+  const text = [
+    "  ✘  1 [face_capture.js:190:1] 设备列表 › 返回设备 (120ms)",
+    "",
+    "    Error: expect(received).to.equal(expected)",
+    "",
+    "  1 failed",
+  ].join("\n");
+  eq(P.parsePlaywrightFailures(text), [
+    { title: "设备列表 › 返回设备", error: "Error: expect(received).to.equal(expected)" },
+  ]);
+});
+test("× 记号与跨平台输出都能识别", () => {
+  const text = "  ×  2 [canvas.js:10:1] 画布 › 创建 (5ms)\r\n    TimeoutError: page.goto: Timeout 30000ms exceeded";
+  eq(P.parsePlaywrightFailures(text), [
+    { title: "画布 › 创建", error: "TimeoutError: page.goto: Timeout 30000ms exceeded" },
+  ]);
+});
+test("没有失败行时返回空数组", () => {
+  eq(P.parsePlaywrightFailures("  3 passed (12.4s)"), []);
+});
+
+process.stdout.write("parsePlaywrightListing\n");
+test("抓 --list 的总数与用例行", () => {
+  const text = [
+    "Listing tests:",
+    "  [face_capture.js] › 设备 › 列表",
+    "  [canvas.js] › 画布 › 创建",
+    "Total: 2 tests in 2 files",
+  ].join("\n");
+  const listed = P.parsePlaywrightListing(text);
+  eq(listed.tests, 2);
+  eq(listed.files, 2);
+  eq(listed.titles, ["[face_capture.js] › 设备 › 列表", "[canvas.js] › 画布 › 创建"]);
+});
+test("只有 Total 行时 files 记 0；完全没有就 undefined", () => {
+  eq(P.parsePlaywrightListing("Total: 7 tests").files, 0);
+  eq(P.parsePlaywrightListing("  3 passed (12.4s)"), undefined);
+});
+
+process.stdout.write("interpretPlaywrightExit\n");
+test("退出码与失败计数的组合", () => {
+  const clean = { passed: 3, failed: 0 };
+  eq(P.interpretPlaywrightExit({ exitCode: 0, summary: clean, failures: [] }), "ok");
+  eq(P.interpretPlaywrightExit({ exitCode: 1, summary: { passed: 0, failed: 1 }, failures: [] }), "tests-failed");
+  eq(P.interpretPlaywrightExit({ exitCode: 1, summary: { passed: 0, failed: 0 }, failures: [] }), "exit-nonzero");
+  eq(P.interpretPlaywrightExit({ exitCode: 1, summary: { passed: 0, failed: 0 }, failures: [{ title: "t", error: "e" }] }), "tests-failed");
+  eq(P.interpretPlaywrightExit({ exitCode: null, summary: { passed: 0, failed: 0 }, failures: [] }), "exit-nonzero");
+});
+test("超时与取消优先于退出码", () => {
+  const clean = { passed: 0, failed: 0 };
+  eq(P.interpretPlaywrightExit({ exitCode: null, summary: clean, failures: [], timedOut: true }), "timeout");
+  eq(P.interpretPlaywrightExit({ exitCode: 0, summary: clean, failures: [], aborted: true }), "cancelled");
+  eq(P.interpretPlaywrightExit({ exitCode: 0, summary: clean, failures: [], timedOut: false, aborted: false }), "ok");
+});
 process.stdout.write(`\n${passed} passed, ${failed} failed\n`);
 if (failed > 0) {
   for (const failure of failures) process.stdout.write(`  - ${failure.name}: ${failure.error.stack}\n`);

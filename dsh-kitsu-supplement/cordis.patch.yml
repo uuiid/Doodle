@@ -1,6 +1,7 @@
 # dsh-kitsu-supplement bundle patch
 #
-# 把 kitsu_server_start / kitsu_server_status / kitsu_server_stop 挂进 DSH 工具注册表。
+# 把 kitsu_server_start / kitsu_server_status / kitsu_server_stop / kitsu_server_sql /
+# kitsu_playwright_test 挂进 DSH 工具注册表。
 # config 全部可选：
 #   exePath             doodle_kitsu_supplement.exe 路径（默认 E:\build\Ninja_debug\bin\doodle_kitsu_supplement.exe）
 #   defaultCwd          默认运行路径；空表示取 exe 所在目录（dll 与 exe 同目录，不要随便改）
@@ -12,6 +13,15 @@
 #   stopTimeoutMs       终止后等待进程退出的预算（默认 5000）
 #   maxOutputBytes      stdout / stderr 各自的内存缓冲上限（默认 8 MiB）
 #   guidanceOrder       系统提示词里本工具指引段的排序值（默认 1396，紧邻 cmake / ue 段）
+#   playwrightCwd       kitsu_playwright_test 的默认 cwd（默认 E:\Doodle\test_js）
+#   playwrightNodePath  跑 playwright 用的 node（默认 node，从 PATH 取）
+#   playwrightCliPath   playwright 入口；空表示 <cwd>\node_modules\@playwright\test\cli.js
+#   playwrightDefaultBaseUrl  没给 baseUrl 且父进程也没有 DOODLE_BASE_URL 时的兜底地址；空表示不注入
+#   playwrightTimeoutMs 单次 playwright 运行的整体预算（默认 900000，超时 terminate 后结束进程树）
+#   playwrightKillTimeoutMs  终止后等待退出的预算（默认 5000）
+#
+# kitsu_playwright_test 的 args 是 playwright 之后那串参数，原样转发；同一时刻只允许一个运行，
+# 第二次调用立即返回 busy（不排队），因为多个运行会互相覆盖 test-results / playwright-report。
 - insert:
     - id: kitsu-supplement
       name: dsh-kitsu-supplement

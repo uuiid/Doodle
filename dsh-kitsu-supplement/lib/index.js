@@ -795,6 +795,304 @@ function findPortLine(text) {
   return undefined;
 }
 
+const PLAYWRIGHT_AUTO_BASE_URL = "auto";
+const PLAYWRIGHT_BASE_URL_ENV = "DOODLE_BASE_URL";
+const PLAYWRIGHT_HTML_OPEN_ENV = "PLAYWRIGHT_HTML_OPEN";
+const PLAYWRIGHT_HTML_REPORT_ENV = "PLAYWRIGHT_HTML_REPORT";
+const PLAYWRIGHT_OUTPUT_DIR_ENV = "PLAYWRIGHT_OUTPUT_DIR";
+const PLAYWRIGHT_RESULTS_DIR = "test-results";
+const PLAYWRIGHT_REPORT_DIR = "playwright-report";
+const PLAYWRIGHT_DEFAULT_CWD = "E:\\Doodle\\test_js";
+const PLAYWRIGHT_CLI_RELATIVE = "node_modules/@playwright/test/cli.js";
+const PLAYWRIGHT_TIMEOUT_MS = 900000;
+const PLAYWRIGHT_KILL_TIMEOUT_MS = 5000;
+const PLAYWRIGHT_MAX_LISTED = 500;
+
+/**
+ * 校验 kitsu_playwright_test 的透传参数。
+ *
+ * playwright 自己的命令行以子命令开头（test / show-report / install ...），
+ * 这里不做语义校验，只保证每一项能原样放进 argv。
+ *
+ * @param {unknown} args
+ * @returns {string[]}
+ */
+function validatePlaywrightArgs(args) {
+  if (args === undefined) return ["args 必须给出：它是 playwright CLI 后面的参数，例如 [\"test\"]、[\"test\", \"face_capture.js\"]、[\"test\", \"--list\"]。"];
+  if (!Array.isArray(args)) return ["args 必须是字符串数组。"];
+  if (args.length === 0) return ["args 不能为空：至少要给 playwright 子命令，例如 [\"test\"]。"];
+  /** @type {string[]} */
+  const problems = [];
+  for (const item of args) {
+    if (typeof item !== "string" || item.trim() === "") {
+      problems.push(`args 含非法项 ${JSON.stringify(item)}（必须是非空字符串）。`);
+    }
+  }
+  return problems;
+}
+
+/**
+ * 把 baseUrl 解析成 explicit / auto / none / invalid。
+ *
+ * `auto` 是唯一一个会让插件去查实例表的取值；不传就完全沿用父进程环境，
+ * 不在插件里替调用方决定地址（playwright.config.js:17 自己兜底 localhost:50025）。
+ *
+ * @param {unknown} baseUrl
+ * @returns {{kind:string, value?:string, problem?:string}}
+ */
+function parseBaseUrlArg(baseUrl) {
+  const text = trimOrEmpty(baseUrl);
+  if (text === "") return { kind: "none" };
+  if (text.toLowerCase() === PLAYWRIGHT_AUTO_BASE_URL) return { kind: "auto" };
+  const normalized = text.replace(/\/+$/, "");
+  if (!/^https?:\/\/[^\s/]+$/i.test(normalized)) {
+    return { kind: "invalid", problem: `baseUrl 必须是 http(s)://host[:port] 或 "auto"，收到 ${JSON.stringify(normalized)}。` };
+  }
+  return { kind: "explicit", value: normalized };
+}
+
+/**
+ * `baseUrl: "auto"` 的取值：实例表里唯一在跑的 local 实例 > 父进程 DOODLE_BASE_URL。
+ *
+ * 多个 local 实例时要求显式指定，不猜。
+ *
+ * @param {{records:Map<string, any>, env?:Record<string, string|undefined>}} spec
+ * @returns {{kind:string, baseUrl?:string, value?:string, problem?:string, candidates?:string[]}}
+ */
+function resolveAutoBaseUrl({ records, env }) {
+  /** @type {string[]} */
+  const running = [];
+  for (const [id, record] of records ?? []) {
+    if (record?.exited === true) continue;
+    if (record?.mode !== "local") continue;
+    running.push(`${id} :${record.port}`);
+  }
+  if (running.length > 1) {
+    return {
+      kind: "ambiguous",
+      problem: `baseUrl: "auto" 有歧义：${running.length} 个 local 实例在跑（${running.join(", ")}）。请显式传 baseUrl。`,
+      candidates: running,
+    };
+  }
+  if (running.length === 1) {
+    const [id] = running[0].split(" ");
+    return { kind: "auto-server", baseUrl: `http://127.0.0.1:${records.get(id).port}`, value: id };
+  }
+  const inherited = trimOrEmpty(env?.[PLAYWRIGHT_BASE_URL_ENV]);
+  if (inherited !== "") return { kind: "auto-env", baseUrl: inherited.replace(/\/+$/, "") };
+  return {
+    kind: "none",
+    problem: `baseUrl: "auto" 没有可用的地址：没有在跑的 local 实例，父进程也没有 ${PLAYWRIGHT_BASE_URL_ENV}。请显式传 baseUrl。`,
+  };
+}
+
+/**
+ * 修正环境变量的名字大小写：Windows 的环境变量不区分大小写，但传给 node 的对象是普通对象。
+ *
+ * @param {Record<string, string|undefined>} baseEnv
+ * @param {string} name
+ * @returns {string|undefined}
+ */
+function lookupEnv(baseEnv, name) {
+  const wanted = name.toUpperCase();
+  for (const key of Object.keys(baseEnv ?? {})) {
+    if (key.toUpperCase() === wanted) return baseEnv[key];
+  }
+  return undefined;
+}
+
+/**
+ * 在继承的环境上覆盖若干键：显式 env 优先于插件内部注入，且同名键只保留一个。
+ *
+ * @param {{baseEnv:Record<string, string|undefined>, injected:Record<string, string>, explicit?:Record<string, string>}} spec
+ * @returns {Record<string, string>}
+ */
+function mergePlaywrightEnv({ baseEnv, injected, explicit }) {
+  /** @type {Record<string, string>} */
+  const result = {};
+  /** @type {Map<string, string>} */
+  const renamed = new Map();
+  for (const [key, value] of Object.entries(baseEnv ?? {})) {
+    if (typeof value !== "string") continue;
+    const upper = key.toUpperCase();
+    if (renamed.has(upper)) {
+      result[renamed.get(upper)] = value;
+      continue;
+    }
+    renamed.set(upper, key);
+    result[key] = value;
+  }
+  for (const [key, value] of Object.entries(injected ?? {})) {
+    if (typeof value !== "string") continue;
+    const upper = key.toUpperCase();
+    const existing = renamed.get(upper);
+    if (existing !== undefined) {
+      result[existing] = value;
+      continue;
+    }
+    renamed.set(upper, key);
+    result[key] = value;
+  }
+  for (const [key, value] of Object.entries(explicit ?? {})) {
+    if (typeof value !== "string" || key.trim() === "") continue;
+    const upper = key.toUpperCase();
+    const wanted = key.trim();
+    const existing = renamed.get(upper);
+    if (existing !== undefined) {
+      delete result[existing];
+      renamed.set(upper, wanted);
+    } else {
+      renamed.set(upper, wanted);
+    }
+    result[wanted] = value;
+  }
+  return result;
+}
+
+/**
+ * playwright 报告目录与产物目录的落点。
+ *
+ * @param {{cwd:string, runId:string, isolate:boolean, tmpRoot:string}} spec
+ * @returns {{reportDir:string, outputDir:string}}
+ */
+function playwrightOutputDirs({ cwd, runId, isolate, tmpRoot }) {
+  if (!isolate) {
+    return {
+      reportDir: `${cwd}/${PLAYWRIGHT_REPORT_DIR}`,
+      outputDir: `${cwd}/${PLAYWRIGHT_RESULTS_DIR}`,
+    };
+  }
+  return {
+    reportDir: `${tmpRoot}/${runId}/${PLAYWRIGHT_REPORT_DIR}`,
+    outputDir: `${tmpRoot}/${runId}/${PLAYWRIGHT_RESULTS_DIR}`,
+  };
+}
+
+/**
+ * 入口脚本的兜底路径。`@playwright/test` 是纯 ESM 包，不能 require.resolve，
+ * 只按 hoisted 布局拼一个路径，不存在时由调用方决定怎么报。
+ *
+ * @param {string} cwd
+ * @returns {string}
+ */
+function defaultPlaywrightCli(cwd) {
+  return `${normalizePath(cwd)}\\${PLAYWRIGHT_CLI_RELATIVE.replace(/\//g, "\\")}`;
+}
+
+/**
+ * @param {string} cwd
+ * @returns {string}
+ */
+function playwrightLockPath(cwd) {
+  return `${normalizePath(cwd)}\\.playwright-run.lock`;
+}
+
+/**
+ * 命令行展示形式（argv 里可执行文件在第一位）。
+ *
+ * @param {string[]} argv
+ * @returns {string}
+ */
+function playwrightCommandText(argv) {
+  return renderArgv(argv);
+}
+
+/**
+ * 从 playwright 输出里抓通过/失败/跳过计数。
+ *
+ * 只认 line / list 报告器的措辞（` 3 passed `、` 1 failed `、` 2 skipped `、` 1 did not run `），
+ * 不重新实现报告器。
+ *
+ * @param {string} text
+ * @returns {{passed:number, failed:number, skipped:number, didNotRun:number, flaky:number}}
+ */
+function parsePlaywrightSummary(text) {
+  const source = String(text ?? "");
+  const count = (pattern) => {
+    let total = 0;
+    for (const match of source.matchAll(pattern)) {
+      const value = Number.parseInt(match[1], 10);
+      if (Number.isFinite(value)) total += value;
+    }
+    return total;
+  };
+  return {
+    passed: count(/(\d+)\s+passed\b/g),
+    failed: count(/(\d+)\s+failed\b/g),
+    skipped: count(/(\d+)\s+skipped\b/g),
+    didNotRun: count(/(\d+)\s+did not run\b/g),
+    flaky: count(/(\d+)\s+flaky\b/g),
+  };
+}
+
+/**
+ * 从 line 报告器输出里抓失败用例标题与错误首行。
+ *
+ * @param {string} text
+ * @returns {{title:string, error:string}[]}
+ */
+function parsePlaywrightFailures(text) {
+  /** @type {{title:string, error:string}[]} */
+  const failures = [];
+  const lines = String(text ?? "").split(/\r?\n/);
+  for (let i = 0; i < lines.length; i += 1) {
+    const head = /^\s*(?:\u2718|\u00d7|\u25cf)\s+(\d+)\s+\[[^\]]*\]\s*(.+?)\s*(?:\(\d+(?:\.\d+)?m?s\))?\s*$/.exec(lines[i]);
+    if (head === null) continue;
+    let error = "";
+    for (let j = i + 1; j < lines.length && j <= i + 12; j += 1) {
+      const candidate = lines[j].trim();
+      if (candidate !== "") {
+        error = candidate;
+        break;
+      }
+    }
+    failures.push({ title: head[2].trim(), error: tailText(error, 300) });
+    if (failures.length >= 50) break;
+  }
+  return failures;
+}
+
+/**
+ * 从 `playwright test --list` 的输出里抓用例总数与文件数。
+ *
+ * @param {string} text
+ * @returns {{tests:number, files:number, titles:string[]}|undefined}
+ */
+function parsePlaywrightListing(text) {
+  const source = String(text ?? "");
+  const total = /Total:\s*(\d+)\s+tests?\s+in\s+(\d+)\s+files?/i.exec(source);
+  if (total === null) {
+    const only = /Total:\s*(\d+)\s+tests?/i.exec(source);
+    if (only === null) return undefined;
+    return { tests: Number.parseInt(only[1], 10), files: 0, titles: [] };
+  }
+  /** @type {string[]} */
+  const titles = [];
+  for (const raw of source.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (/^(Listing tests:|Total:)/i.test(line)) continue;
+    if (!/›/.test(line)) continue;
+    titles.push(line);
+    if (titles.length >= PLAYWRIGHT_MAX_LISTED) break;
+  }
+  return { tests: Number.parseInt(total[1], 10), files: Number.parseInt(total[2], 10), titles };
+}
+
+/**
+ * 退出码 + 输出 -> 结论码。先看插件自己判定的终态，再看输出里的失败计数，最后看退出码。
+ *
+ * @param {{exitCode:number|null, summary:{failed:number, passed:number}, failures:{title:string, error:string}[], aborted?:boolean, timedOut?:boolean}} spec
+ * @returns {string}
+ */
+function interpretPlaywrightExit({ exitCode, summary, failures, aborted, timedOut }) {
+  if (timedOut === true) return "timeout";
+  if (aborted === true) return "cancelled";
+  if (exitCode === null || exitCode === undefined) return "exit-nonzero";
+  if (exitCode === 0) return "ok";
+  if (summary.failed > 0 || failures.length > 0) return "tests-failed";
+  return "exit-nonzero";
+}
+
 //#endregion
 
 //#region 配置与输出契约
@@ -818,6 +1116,12 @@ export const Config = z.object({
     .default({}),
   readyPath: z.string().default(DEFAULT_READY_PATH),
   readyTimeoutMs: z.number().default(READY_TIMEOUT_MS),
+  playwrightCwd: z.string().default(PLAYWRIGHT_DEFAULT_CWD),
+  playwrightNodePath: z.string().default(""),
+  playwrightCliPath: z.string().default(""),
+  playwrightDefaultBaseUrl: z.string().default(""),
+  playwrightTimeoutMs: z.number().default(PLAYWRIGHT_TIMEOUT_MS),
+  playwrightKillTimeoutMs: z.number().default(PLAYWRIGHT_KILL_TIMEOUT_MS),
   stopTimeoutMs: z.number().default(DEFAULT_STOP_TIMEOUT_MS),
   maxOutputBytes: z.number().default(DEFAULT_MAX_OUTPUT_BYTES),
   guidanceOrder: z.number().default(DEFAULT_GUIDANCE_ORDER),
@@ -1001,6 +1305,109 @@ function renderStart(args, value) {
   return [{ type: "text", text: lines.join("\n") }];
 }
 
+const PLAYWRIGHT_SUMMARY_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    passed: { type: "number", required: true },
+    failed: { type: "number", required: true },
+    skipped: { type: "number", required: true },
+    didNotRun: { type: "number", required: true },
+    flaky: { type: "number", required: true },
+  },
+};
+
+const PLAYWRIGHT_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    ok: { type: "boolean", required: true },
+    code: {
+      type: "string",
+      required: true,
+      enum: ["ok", "tests-failed", "busy", "timeout", "cancelled", "spawn-failed", "timeout-cli", "invalid-args", "exit-nonzero"],
+    },
+    reason: { type: "string", required: true },
+    runId: { type: "string", required: true },
+    command: { type: "string", required: true },
+    args: { type: "array", required: true, items: { type: "string" } },
+    cwd: { type: "string", required: true },
+    cliPath: { type: "string", required: true },
+    baseUrl: { type: "string", description: "子进程实际使用的 DOODLE_BASE_URL；空表示沿用父进程环境" },
+    baseUrlSource: { type: "string", required: true, enum: ["param", "auto-server", "auto-env", "config", "env", "none"] },
+    exitCode: { type: "number" },
+    durationMs: { type: "number", required: true },
+    summary: PLAYWRIGHT_SUMMARY_SCHEMA,
+    failures: {
+      type: "array",
+      required: true,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          title: { type: "string", required: true },
+          error: { type: "string", required: true },
+        },
+      },
+    },
+    listed: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        tests: { type: "number", required: true },
+        files: { type: "number", required: true },
+        titles: { type: "array", required: true, items: { type: "string" } },
+      },
+    },
+    reportDir: { type: "string" },
+    outputDir: { type: "string" },
+    diagnostics: { type: "array", required: true, items: DIAGNOSTIC_ITEM },
+    warnings: { type: "array", required: true, items: { type: "string" } },
+    outputTail: { type: "string", description: "stdout + stderr 的尾部" },
+    spillPath: { type: "string", description: "输出溢出时的完整日志文件" },
+  },
+};
+
+/**
+ * @returns {any}
+ */
+function emptyPlaywrightSummary() {
+  return { passed: 0, failed: 0, skipped: 0, didNotRun: 0, flaky: 0 };
+}
+
+/**
+ * @param {any} args
+ * @param {any} value
+ * @returns {any[]}
+ */
+function renderPlaywright(args, value) {
+  /** @type {string[]} */
+  const lines = [];
+  lines.push(`${value.ok === true ? "OK" : "FAILED"} [${value.code}] ${value.reason}`);
+  if (value.command) lines.push(`command: ${value.command}`);
+  if (value.cwd) lines.push(`cwd: ${value.cwd}`);
+  lines.push(`baseUrl: ${value.baseUrl || `（沿用父进程 ${PLAYWRIGHT_BASE_URL_ENV}）`}  [${value.baseUrlSource}]`);
+  if (value.exitCode !== undefined) lines.push(`exit: ${value.exitCode}  耗时 ${value.durationMs} ms`);
+  const summary = value.summary ?? emptyPlaywrightSummary();
+  if (summary.passed + summary.failed + summary.skipped + summary.didNotRun + summary.flaky > 0) {
+    const flaky = summary.flaky > 0 ? ` flaky=${summary.flaky}` : "";
+    lines.push(`summary: passed=${summary.passed} failed=${summary.failed} skipped=${summary.skipped} didNotRun=${summary.didNotRun}${flaky}`);
+  }
+  if (value.listed !== undefined) {
+    lines.push(`listing: ${value.listed.tests} 条用例 / ${value.listed.files} 个文件`);
+  }
+  for (const failure of value.failures ?? []) {
+    lines.push(`FAILED  ${failure.title}`);
+    if (failure.error) lines.push(`        ${failure.error}`);
+  }
+  for (const item of value.diagnostics ?? []) lines.push(`${item.severity.toUpperCase()} ${item.code}: ${item.message}`);
+  for (const warning of value.warnings ?? []) lines.push(`WARNING: ${warning}`);
+  if (value.reportDir) lines.push(`report: ${value.reportDir}`);
+  if (value.outputTail) lines.push("", "--- playwright output tail ---", value.outputTail);
+  if (value.spillPath) lines.push(`full log: ${value.spillPath}`);
+  return [{ type: "text", text: lines.join("\n") }];
+}
+
 /**
  * @param {any} args
  * @param {any} value
@@ -1080,6 +1487,16 @@ const registry = new Map();
 
 /** 实例 id 自增种子。 */
 let nextServerId = 1;
+
+/** playwright 运行序号，只用于 runId。 */
+let playwrightRunSeq = 1;
+
+/**
+ * 正在跑的 playwright 运行（同一时刻最多一个）。
+ *
+ * @type {{runId:string, startedAt:number, args:string[], cwd:string}|null}
+ */
+let playwrightRunning = null;
 
 /**
  * 分配实例 id；只增不复用，保证 stop 后同一 id 不会指向新进程。
@@ -1322,6 +1739,334 @@ async function waitForExit(handle, timeoutMs) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * 分配 run id（只用于日志与临时目录命名）。
+ *
+ * @returns {string}
+ */
+function allocatePlaywrightRunId() {
+  const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+  const sequence = `${playwrightRunSeq++}`.padStart(3, "0");
+  return `pw-${stamp}-${sequence}`;
+}
+
+/**
+ * 写入「本机正在跑 playwright」的标记文件；写不进去不影响执行。
+ *
+ * @param {string} lockPath
+ * @param {any} info
+ * @returns {Promise<string>} 空串表示成功，否则是失败原因
+ */
+async function writePlaywrightLock(lockPath, info) {
+  const fs = await import("node:fs/promises");
+  try {
+    await fs.writeFile(lockPath, `${JSON.stringify(info, null, 2)}\n`, "utf8");
+    return "";
+  } catch (error) {
+    return errorText(error);
+  }
+}
+
+/**
+ * @param {string} lockPath
+ * @returns {Promise<void>}
+ */
+async function removePlaywrightLock(lockPath) {
+  const fs = await import("node:fs/promises");
+  try {
+    await fs.unlink(lockPath);
+  } catch {
+    // 锁文件可能已被删除；残留由下一次运行覆盖
+  }
+}
+
+/**
+ * 写完结果前统一的「失败」形状：键集合与成功时一致。
+ *
+ * @param {any} base
+ * @param {string} code
+ * @param {string} reason
+ * @param {any[]} diagnostics
+ * @returns {any}
+ */
+function playwrightFailure(base, code, reason, diagnostics) {
+  return sanitizeForJson({
+    ...base,
+    ok: false,
+    code,
+    reason,
+    diagnostics,
+  });
+}
+
+/**
+ * @param {any} handle
+ * @param {number} timeoutMs
+ * @returns {Promise<boolean>} true 表示在预算内退出
+ */
+async function waitPlaywrightExit(handle, timeoutMs) {
+  if (typeof handle.waitForExit !== "function") return true;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const settled = await handle.waitForExit(controller.signal);
+    return settled !== false;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * kitsu_playwright_test 的实现：原样转发 playwright CLI 参数。
+ *
+ * 不走 test_js/run-playwright.mjs 的 fork->spawn 降级——插件用的是宿主子进程通道，
+ * 那个脚本服务于 pwsh 沙箱，与本插件无关。
+ *
+ * @param {any} ctx
+ * @param {any} config
+ * @param {any} args
+ * @param {any} exec
+ * @returns {Promise<any>}
+ */
+async function runPlaywrightTool(ctx, config, args, exec) {
+  const runId = allocatePlaywrightRunId();
+  const startedAt = Date.now();
+  const fs = await import("node:fs/promises");
+  const os = await import("node:os");
+  const path = await import("node:path");
+
+  const passthrough = Array.isArray(args.args) ? args.args.map((item) => String(item)) : [];
+  const cwd = normalizePath(trimOrEmpty(args.cwd) || config.playwrightCwd);
+  const cliPath = trimOrEmpty(args.cliPath) || config.playwrightCliPath || defaultPlaywrightCli(cwd);
+  const nodePath = trimOrEmpty(args.nodePath) || config.playwrightNodePath || "node";
+  const isolate = args.isolateOutput === true;
+  const timeoutMs = positiveOrDefault(args.timeoutMs, config.playwrightTimeoutMs);
+  const killTimeoutMs = config.playwrightKillTimeoutMs;
+  const reportDirs = playwrightOutputDirs({
+    cwd,
+    runId,
+    isolate,
+    tmpRoot: path.join(os.tmpdir(), "dsh-kitsu-supplement", "playwright"),
+  });
+  const command = playwrightCommandText([nodePath, cliPath, ...passthrough]);
+
+  /** @type {string[]} */
+  const problems = [...validatePlaywrightArgs(args.args)];
+  const baseArg = parseBaseUrlArg(args.baseUrl);
+  if (baseArg.kind === "invalid") problems.push(baseArg.problem);
+  if (args.env !== undefined && !isPlainObject(args.env)) problems.push("env 必须是字符串键值对对象。");
+
+  if (problems.length === 0) {
+    /** @type {any} */
+    let stat;
+    try {
+      stat = await fs.stat(cwd);
+    } catch (error) {
+      problems.push(`cwd 不存在或不可访问：${cwd}（${errorText(error)}）`);
+    }
+    if (stat !== undefined && stat.isDirectory() !== true) problems.push(`cwd 不是目录：${cwd}`);
+  }
+
+  /** @type {string} */
+  let baseUrl = "";
+  /** @type {string} */
+  let baseUrlSource = "none";
+  if (problems.length === 0) {
+    if (baseArg.kind === "explicit") {
+      baseUrl = baseArg.value;
+      baseUrlSource = "param";
+    } else if (baseArg.kind === "auto") {
+      const auto = resolveAutoBaseUrl({ records: registry, env: process.env });
+      if (auto.problem !== undefined) {
+        problems.push(auto.problem);
+      } else {
+        baseUrl = auto.baseUrl;
+        baseUrlSource = auto.kind;
+      }
+    } else if (config.playwrightDefaultBaseUrl !== "") {
+      baseUrl = config.playwrightDefaultBaseUrl;
+      baseUrlSource = "config";
+    } else {
+      const inherited = trimOrEmpty(lookupEnv(process.env, PLAYWRIGHT_BASE_URL_ENV));
+      if (inherited !== "") {
+        baseUrl = inherited.replace(/\/+$/, "");
+        baseUrlSource = "env";
+      }
+    }
+  }
+
+  /** @type {Record<string, string>} */
+  const injected = { [PLAYWRIGHT_HTML_OPEN_ENV]: "never" };
+  if (baseUrl !== "") injected[PLAYWRIGHT_BASE_URL_ENV] = baseUrl;
+  if (isolate) {
+    injected[PLAYWRIGHT_HTML_REPORT_ENV] = reportDirs.reportDir;
+    injected[PLAYWRIGHT_OUTPUT_DIR_ENV] = reportDirs.outputDir;
+  }
+  const env = mergePlaywrightEnv({
+    baseEnv: process.env,
+    injected,
+    explicit: isPlainObject(args.env) ? args.env : undefined,
+  });
+
+  const base = {
+    runId,
+    command,
+    args: passthrough,
+    cwd,
+    cliPath,
+    baseUrl,
+    baseUrlSource,
+    durationMs: 0,
+    summary: emptyPlaywrightSummary(),
+    failures: [],
+    reportDir: reportDirs.reportDir,
+    outputDir: reportDirs.outputDir,
+    diagnostics: [],
+    warnings: [],
+  };
+
+  try {
+    await fs.access(cliPath);
+  } catch {
+    return playwrightFailure(
+      { ...base, durationMs: Date.now() - startedAt },
+      "timeout-cli",
+      `找不到 playwright 入口：${cliPath}。确认 cwd 下装好了 @playwright/test，或用 cliPath 参数 / playwrightCliPath 配置指向真实的 cli.js。`,
+      [{ severity: "error", code: "cli/missing", message: `playwright 入口不存在：${cliPath}（cwd=${cwd}）` }],
+    );
+  }
+
+  if (problems.length > 0) {
+    return playwrightFailure(
+      base,
+      "invalid-args",
+      problems.join(" "),
+      problems.map((message) => ({ severity: "error", code: "args/invalid", message })),
+    );
+  }
+
+  const lockPath = playwrightLockPath(cwd);
+  if (isolate) await fs.mkdir(reportDirs.reportDir, { recursive: true }).catch(() => {});
+
+  /** @type {any} */
+  let handle;
+  try {
+    handle = ctx.subprocess.spawn({
+      argv: [nodePath, cliPath, ...passthrough],
+      cwd,
+      env,
+      stdio: {
+        stdin: "ignore",
+        stdout: { maxBytes: config.maxOutputBytes },
+        stderr: { maxBytes: config.maxOutputBytes },
+      },
+      graceMs: killTimeoutMs,
+      signal: exec.signal,
+    });
+  } catch (error) {
+    return playwrightFailure(
+      { ...base, durationMs: Date.now() - startedAt },
+      "spawn-failed",
+      `无法启动 ${nodePath}：${errorText(error)}`,
+      [{ severity: "error", code: "spawn/failed", message: errorText(error) }],
+    );
+  }
+
+  const lockWarning = await writePlaywrightLock(lockPath, {
+    runId,
+    argv: [nodePath, cliPath, ...passthrough],
+    startedAt,
+  });
+  /** @type {string[]} */
+  const warnings = [];
+  if (lockWarning !== "") warnings.push(`标记文件 ${lockPath} 写入失败（不影响执行）：${lockWarning}`);
+
+  /** @type {any} */
+  let settled;
+  let timedOut = false;
+  let runError = "";
+  try {
+    settled = await Promise.race([
+      handle.done.catch((error) => ({ exitCode: null, error: errorText(error) })),
+      sleep(timeoutMs).then(() => ({ timedOut: true })),
+    ]);
+    if (settled !== null && settled !== undefined && settled.timedOut === true) {
+      timedOut = true;
+      try {
+        handle.terminate();
+      } catch {
+        // 进程可能已经退出，下面等停稳是兜底
+      }
+      await waitPlaywrightExit(handle, killTimeoutMs).catch(() => false);
+      settled = { exitCode: null };
+    }
+  } catch (error) {
+    runError = errorText(error);
+  } finally {
+    await removePlaywrightLock(lockPath);
+  }
+  const aborted = exec.signal?.aborted === true;
+  if (runError !== "") {
+    return playwrightFailure(
+      { ...base, durationMs: Date.now() - startedAt },
+      aborted ? "cancelled" : "exit-nonzero",
+      aborted ? "调用被中止。" : `等待 playwright 结束时出错：${runError}`,
+      [{ severity: "error", code: "run/error", message: runError }],
+    );
+  }
+
+  const stdout = readAll(handle.collected?.stdout);
+  const stderr = readAll(handle.collected?.stderr);
+  const combined = [stdout.text, stderr.text].filter((text) => text.length > 0).join("\n");
+  const summary = parsePlaywrightSummary(combined);
+  const failures = parsePlaywrightFailures(combined);
+  const listed = parsePlaywrightListing(combined);
+  const exitCode = typeof settled?.exitCode === "number" ? settled.exitCode : null;
+  const code = interpretPlaywrightExit({ exitCode, summary, failures, aborted, timedOut });
+
+  /** @type {any[]} */
+  const diagnostics = [];
+  if (timedOut) {
+    diagnostics.push({
+      severity: "error",
+      code: "timeout/killed",
+      message: `超过 ${timeoutMs} ms：已 terminate，${killTimeoutMs} ms 内未退出时由宿主结束进程树。`,
+    });
+  }
+  if (aborted) diagnostics.push({ severity: "warning", code: "run/cancelled", message: "调用被中止，进程已终止。" });
+  if (settled?.error !== undefined) diagnostics.push({ severity: "error", code: "run/error", message: String(settled.error) });
+  if (exitCode !== null && exitCode !== 0) {
+    diagnostics.push({ severity: "error", code: "run/exit", message: `playwright 退出码 ${exitCode}` });
+  }
+
+  const durationMs = Date.now() - startedAt;
+  const counts = `passed=${summary.passed} failed=${summary.failed} skipped=${summary.skipped}`;
+  let reason;
+  if (code === "ok") reason = `playwright 通过：${counts}（${durationMs} ms）。`;
+  else if (code === "tests-failed") reason = `playwright 有失败用例：${counts}。`;
+  else if (code === "timeout") reason = `超过 ${timeoutMs} ms，已终止。`;
+  else if (code === "cancelled") reason = "调用被中止。";
+  else reason = `playwright 退出码 ${exitCode ?? "n/a"}，输出里没有用例计数：先看 outputTail 确认命令与配置。`;
+
+  return sanitizeForJson({
+    ...base,
+    ok: code === "ok",
+    code,
+    reason,
+    exitCode: exitCode ?? undefined,
+    durationMs,
+    summary,
+    failures,
+    listed,
+    diagnostics,
+    warnings,
+    outputTail: tailText(combined, DEFAULT_MAX_TAIL_CHARS) || undefined,
+    spillPath: stdout.spillPath ?? stderr.spillPath,
+  });
 }
 
 /**
@@ -1588,6 +2333,12 @@ export function apply(ctx, config) {
     stopTimeoutMs: positiveOrDefault(config?.stopTimeoutMs, DEFAULT_STOP_TIMEOUT_MS),
     maxOutputBytes: clamp(config?.maxOutputBytes ?? DEFAULT_MAX_OUTPUT_BYTES, MIN_OUTPUT_BYTES, MAX_OUTPUT_BYTES),
     guidanceOrder: config?.guidanceOrder ?? DEFAULT_GUIDANCE_ORDER,
+    playwrightCwd: trimOrEmpty(config?.playwrightCwd) || PLAYWRIGHT_DEFAULT_CWD,
+    playwrightNodePath: trimOrEmpty(config?.playwrightNodePath),
+    playwrightCliPath: trimOrEmpty(config?.playwrightCliPath),
+    playwrightDefaultBaseUrl: trimOrEmpty(config?.playwrightDefaultBaseUrl).replace(/\/+$/, ""),
+    playwrightTimeoutMs: positiveOrDefault(config?.playwrightTimeoutMs, PLAYWRIGHT_TIMEOUT_MS),
+    playwrightKillTimeoutMs: positiveOrDefault(config?.playwrightKillTimeoutMs, PLAYWRIGHT_KILL_TIMEOUT_MS),
   };
   if (!Number.isFinite(resolved.guidanceOrder)) {
     throw new Error(`kitsu-supplement: guidanceOrder must be a finite number, got ${String(config?.guidanceOrder)}`);
@@ -1615,6 +2366,7 @@ export function apply(ctx, config) {
   };
 
   ctx.effect(() => () => {
+    playwrightRunning = null;
     for (const [id, record] of registry) {
       registry.delete(id);
       if (record.exited === true) continue;
@@ -1637,6 +2389,7 @@ export function apply(ctx, config) {
             `\`port\` 必须显式传，且必须是 ${PORT_RANGE_TEXT} 之间的整数；端口被占用时工具默认失败并给出占用 PID，只有显式传 \`killExisting: true\` 才强杀。\`mode: \"local\"\`（或 \`local: true\`）会给进程加 \`--local\`，并把 \`dbPath\` 作为 \`--dbPath\` 传给服务端；不传 dbPath 时 local 分支落进内存库（\`:memory:\`），重启即丢。`,
             "`kitsu_server_status` 查看本插件的实例与端口占用；`kitsu_server_stop` 停掉本插件拉起的实例；本插件不杀别人启动的进程。",
             "`kitsu_server_sql` 对磁盘库执行 sql 文件或片段（填测试数据），写完运行中的进程立刻能查到，**不要**为它停服或重启；执行前不确定就先 `dryRun: true` 走一遍。",
+            "`kitsu_playwright_test` 跑 test_js 里的 Playwright 用例：`args` 是 `playwright` 之后那串参数、原样转发（如 `[\"test\", \"face_capture.js\"]`、`[\"test\", \"--list\"]`）；`baseUrl: \"auto\"` 会接上唯一在跑的 local 实例，也可以直接传 `kitsu_server_start` 返回的 `baseUrl`。本工具不可并发：已经在跑时立刻返回 `busy`，不排队。",
           ].join(" "),
   });
 
@@ -2002,6 +2755,121 @@ export function apply(ctx, config) {
     }),
   );
 }
+
+  ctx.tools.register(
+    defineTool({
+      name: "kitsu_playwright_test",
+      description:
+        "Run the Playwright test suite under test_js and PASS ITS ARGUMENTS THROUGH VERBATIM: `args` is everything " +
+        "after the `playwright` executable (`[\"test\"]`, `[\"test\", \"face_capture.js\", \"--reporter=line\"]`, " +
+        "`[\"test\", \"--list\"]`, `[\"test\", \"-g\", \"创建设备\"]`, `[\"show-report\"]`). The child is started as " +
+        "`node <cwd>/node_modules/@playwright/test/cli.js <args...>` with cwd = `cwd` (default: the configured " +
+        "playwrightCwd, i.e. E:\\Doodle\\test_js), so no run-playwright.mjs shim is needed. `baseUrl` only decides " +
+        "whether DOODLE_BASE_URL is set for the child: omit it to inherit the parent environment " +
+        "(playwright.config.js then falls back to http://localhost:50025), pass a URL to point the suite at a " +
+        "specific server, or pass \"auto\" to reuse the single running `local` instance started by kitsu_server_start. " +
+        "The tool is NEVER concurrent: a second call while one is running is rejected at once with code `busy` " +
+        "(nothing is queued). A run is killed once `timeoutMs` expires (terminate, then the host ends the process " +
+        "tree). The result carries the pass/fail/skip summary parsed from the output, per-failure titles with their " +
+        "first error line, --list totals when present, the report/output directories and the output tail.",
+      parameters: {
+        args: {
+          type: "array",
+          items: { type: "string" },
+          required: true,
+          description:
+            "Everything after `playwright`, forwarded unchanged ([\"test\"], [\"test\", \"--list\"], " +
+            "[\"show-report\"], ...). Not interpreted by the tool: sub-commands, -g, --reporter, --project and -- " +
+            "reach playwright as given.",
+        },
+        cwd: {
+          type: "string",
+          description:
+            "Directory holding node_modules/@playwright/test. Defaults to the configured playwrightCwd " +
+            "(E:\\Doodle\\test_js). Must exist and be a directory.",
+        },
+        baseUrl: {
+          type: "string",
+          description:
+            "\"auto\" or http(s)://host[:port]. `auto` uses the only running `local` instance started by " +
+            "kitsu_server_start, else the parent DOODLE_BASE_URL; with several local instances it fails with " +
+            "`invalid-args` instead of guessing. Omitted: the plugin config default, else the inherited " +
+            "DOODLE_BASE_URL, else nothing (playwright.config.js falls back to localhost:50025).",
+        },
+        env: {
+          type: "object",
+          additionalProperties: true,
+          description:
+            "Extra environment variables for the child (e.g. FACE_CAPTURE_TRANSCODE_E2E: \"1\"). An explicit key " +
+            "wins over the plugin's own injection (DOODLE_BASE_URL / PLAYWRIGHT_HTML_OPEN).",
+        },
+        isolateOutput: {
+          type: "boolean",
+          description:
+            "When true, point PLAYWRIGHT_HTML_REPORT and PLAYWRIGHT_OUTPUT_DIR at " +
+            "%TEMP%\\dsh-kitsu-supplement\\playwright\\<runId> so the run does not overwrite " +
+            "test_js\\playwright-report and test_js\\test-results. Default false: the project config decides.",
+        },
+        timeoutMs: {
+          type: "number",
+          description:
+            "Kill the run after this many milliseconds (default: configured playwrightTimeoutMs, 900000). The " +
+            "per-test timeout stays the one in playwright.config.js (60000).",
+        },
+        nodePath: {
+          type: "string",
+          description:
+            "Node executable used to run playwright (default: `node` from PATH, or configured playwrightNodePath).",
+        },
+        cliPath: {
+          type: "string",
+          description:
+            "Path to @playwright/test/cli.js (default: <cwd>/node_modules/@playwright/test/cli.js, or the " +
+            "configured playwrightCliPath).",
+        },
+      },
+      output: { schema: PLAYWRIGHT_SCHEMA, render: renderPlaywright },
+      isConcurrencySafe() {
+        return false;
+      },
+      async execute(args, exec) {
+        const runId = allocatePlaywrightRunId();
+        if (playwrightRunning !== null) {
+          const running = playwrightRunning;
+          const elapsed = Date.now() - running.startedAt;
+          /** @type {any} */
+          const busyBase = {
+            runId: running.runId,
+            command: "",
+            args: running.args,
+            cwd: running.cwd,
+            cliPath: "",
+            baseUrl: "",
+            baseUrlSource: "none",
+            durationMs: elapsed,
+            summary: emptyPlaywrightSummary(),
+            failures: [],
+            diagnostics: [],
+            warnings: [],
+          };
+          const busyReason = `kitsu_playwright_test 已经在跑（${running.runId}，${elapsed} ms）：本工具不可并发，等它结束后再调用。`;
+          const busyItem = "同一时刻只允许一个 playwright 运行，避免 test-results 与报告目录互相覆盖。";
+          return playwrightFailure(busyBase, "busy", busyReason, [{ severity: "error", code: "run/busy", message: busyItem }]);
+        }
+        playwrightRunning = {
+          runId,
+          startedAt: Date.now(),
+          args: Array.isArray(args.args) ? args.args.map((item) => String(item)) : [],
+          cwd: normalizePath(trimOrEmpty(args.cwd) || resolved.playwrightCwd),
+        };
+        try {
+          return await runPlaywrightTool(ctx, resolved, args, exec);
+        } finally {
+          playwrightRunning = null;
+        }
+      },
+    }),
+  );
 
 //#endregion
 
