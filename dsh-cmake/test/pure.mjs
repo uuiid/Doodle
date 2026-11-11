@@ -372,15 +372,6 @@ test('summarizePresets marks hidden presets', () => {
   eq(s.presets.configure.find((p) => p.name === 'Ninja_debug').hidden, false, 'not hidden');
 });
 
-test('binaryDirForConfigurePreset resolves the real Doodle layout', () => {
-  eq(P.binaryDirForConfigurePreset(DOC, 'Ninja_debug', 'E:/Doodle'), 'E:/Doodle/build/Ninja_debug', 'path');
-});
-
-test('configurePresetForBuildPreset resolves through inheritance', () => {
-  eq(P.configurePresetForBuildPreset(DOC, 'debug_doodle'), 'Ninja_debug', 'via parent');
-  eq(P.configurePresetForBuildPreset(DOC, 'nope'), undefined, 'unknown -> undefined');
-});
-
 // --------------------------------------------------- lossless JSON 回归
 //
 // 背景：工具的 output schema 用 additionalProperties:false 声明字段，

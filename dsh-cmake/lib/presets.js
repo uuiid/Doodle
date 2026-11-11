@@ -189,34 +189,6 @@ function expandPresetVarsInline(value, vars) {
   });
 }
 
-/**
- * 由 configure preset 推导其构建目录（绝对路径）。
- *
- * @param {Record<string, any>} doc
- * @param {string} presetName
- * @param {string} sourceDir
- * @returns {string|undefined}
- */
-export function binaryDirForConfigurePreset(doc, presetName, sourceDir) {
-  const { merged } = resolvePresetChain(doc, 'configure', presetName);
-  const raw = typeof merged?.binaryDir === 'string' ? merged.binaryDir : undefined;
-  if (!raw) return undefined;
-  return expandPresetVarsInline(raw, { sourceDir, presetName });
-}
-
-/**
- * 由 build preset 推导其对应的 configure preset 名。
- *
- * @param {Record<string, any>} doc
- * @param {string} presetName
- * @returns {string|undefined}
- */
-export function configurePresetForBuildPreset(doc, presetName) {
-  const { merged } = resolvePresetChain(doc, 'build', presetName);
-  const raw = merged?.configurePreset;
-  return typeof raw === 'string' ? raw : undefined;
-}
-
 //#endregion
 
 //#region 插件入口

@@ -5,7 +5,7 @@
 #   cmakeExecutable   cmake.exe 路径（默认 C:/PROGRA~1/CMake/bin/cmake.exe）
 #   setEnvScript      set_env.ps1 相对 repoRoot 的路径（默认 build_script/build/set_env.ps1）
 #   powershellPath    PowerShell 可执行文件（默认 powershell.exe）
-#   defaultBuildDir   buildDir 缺省时的相对目录（默认 build）
+#   defaultConfigurePreset  configure preset 缺省名（默认 Ninja_debug）
 #   configureTimeoutMs / buildTimeoutMs / cleanTimeoutMs  各阶段超时
 #   maxParallel       传给 cmake --parallel 的默认值（默认 8）
 #   outputHeadBytes / outputTailBytes  输出头尾截断字节数

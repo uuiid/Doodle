@@ -3,8 +3,8 @@
 // 工具清单：
 //   cmake_presets   只读解析 CMakePresets.json / CMakeUserPresets.json
 //   cmake_configure cmake --preset <preset>
-//   cmake_build     cmake --build --preset <preset> | --build <dir> --target <...>
-//   cmake_clean     cmake --build <dir> --target clean
+//   cmake_build     cmake --build --preset <preset>
+//   cmake_clean     cmake --build --preset <preset> --target clean
 //
 // 硬约束（见 cordis-plugin-development 技能）：
 //   * 顶层不 import node: 内置模块，需要时在 apply 内动态 import。
@@ -14,8 +14,8 @@
 import { defineTool } from '@deepseek-ai/dsh-tools';
 import z from '@deepseek-ai/schemastery';
 
-import { isSafePresetName, isSafeRelativeDir } from './diagnostics.js';
-import { summarizePresets, binaryDirForConfigurePreset } from './presets.js';
+import { isSafePresetName } from './diagnostics.js';
+import { summarizePresets } from './presets.js';
 import { runCmake, sanitizeForJson } from './runner.js';
 
 export const name = 'cmake';
@@ -27,7 +27,6 @@ export const Config = z.object({
   cmakeExecutable: z.string().default('C:/PROGRA~1/CMake/bin/cmake.exe'),
   setEnvScript: z.string().default('build_script/build/set_env.ps1'),
   powershellPath: z.string().default('powershell.exe'),
-  defaultBuildDir: z.string().default('build'),
   defaultConfigurePreset: z.string().default('Ninja_debug'),
   defaultBuildPreset: z.string().default('debug_doodle'),
   configureTimeoutMs: z.number().default(600000),
@@ -202,19 +201,6 @@ function renderPresets(value) {
 /**
  * @param {unknown} value
  * @param {string} label
- * @returns {string|null} 出错时返回消息
- */
-function validateRelativeDir(value, label) {
-  if (value === undefined) return null;
-  if (!isSafeRelativeDir(value)) {
-    return `${label} 非法：必须是 repoRoot 内的相对路径，且不得包含 ".." 或盘符。收到：${JSON.stringify(value)}`;
-  }
-  return null;
-}
-
-/**
- * @param {unknown} value
- * @param {string} label
  * @returns {string|null}
  */
 function validatePresetName(value, label) {
@@ -344,7 +330,6 @@ export function apply(ctx, config) {
     if (!fspPromise) fspPromise = import('node:fs/promises');
     return fspPromise;
   };
-  const getPath = () => import('node:path');
 
   /**
    * @param {number} requested
@@ -460,16 +445,12 @@ export function apply(ctx, config) {
   ctx.effect(() => ctx.tools.register(defineTool({
     name: 'cmake_build',
     description:
-      '经 build_script/build/set_env.ps1 构建项目。两种形态：' +
-      '(1) 传 preset —— `cmake --build --preset <preset>`，使用 preset 自带的 targets，' +
-      '常用 debug_doodle（doodle_kitsu_supplement + test_main）与 debug_maya（doodle_maya）；' +
-      '(2) 传 buildDir —— `cmake --build <dir> --target <targets...>`。' +
-      'preset 与 buildDir 二选一，都省略时用默认 build preset。' +
+      '经 build_script/build/set_env.ps1 构建项目，只接受 build preset：`cmake --build --preset <preset>`，' +
+      '构建目标由 preset 自带，不支持按 buildDir 或临时 targets 构建。' +
+      '常用 debug_doodle（doodle_kitsu_supplement + test_main）与 debug_maya（doodle_maya）。' +
       '默认 --parallel 16：更大并行度会让 cl 抢写 obj 文件而报 Permission denied。',
     parameters: {
-      preset: { type: 'string', description: 'build preset 名，例如 debug_doodle。与 buildDir 二选一。' },
-      buildDir: { type: 'string', description: '相对 repoRoot 的构建目录，例如 build/Ninja_debug。与 preset 二选一。' },
-      targets: { type: 'array', items: { type: 'string' }, description: '要构建的目标；仅在与 buildDir 同用时有意义。' },
+      preset: { type: 'string', required: true, description: 'build preset 名，例如 debug_doodle。先用 cmake_presets 查询可用值。' },
       parallel: { type: 'integer', description: '并行度，默认 16。不要显著调大。' },
       cleanFirst: { type: 'boolean', description: '为 true 时先执行 --target clean 再构建，默认 false。' },
       extraArgs: { type: 'array', items: { type: 'string' }, description: '追加到 cmake 命令末尾的额外参数（谨慎使用）。' },
@@ -484,14 +465,8 @@ export function apply(ctx, config) {
     async execute(args, exec) {
       const problems = [
         validatePresetName(args.preset, 'preset'),
-        validateRelativeDir(args.buildDir, 'buildDir'),
-        validateTargets(args.targets, 'targets'),
         validateTargets(args.extraArgs, 'extraArgs'),
       ].filter(Boolean);
-
-      if (args.preset !== undefined && args.buildDir !== undefined) {
-        problems.push('preset 与 buildDir 不能同时给出，请二选一。');
-      }
 
       const maxParallel = Number.isFinite(config.maxParallel) && config.maxParallel > 0
         ? Math.trunc(config.maxParallel)
@@ -501,28 +476,13 @@ export function apply(ctx, config) {
         : maxParallel;
 
       /** @type {string[]} */
-      const cmakeArgs = [];
-      if (args.preset !== undefined || args.buildDir === undefined) {
-        const preset = args.preset ?? config.defaultBuildPreset;
-        cmakeArgs.push('--build', '--preset', preset);
-      } else {
-        // buildDir 已是相对 repoRoot 的完整相对路径（如 build/Ninja_debug），
-        // 不能再补 defaultBuildDir 前缀，否则会拼成 build/build/Ninja_debug。
-        cmakeArgs.push('--build', args.buildDir.replace(/\\/g, '/').replace(/\/+/g, '/'));
-        if (Array.isArray(args.targets) && args.targets.length > 0) {
-          cmakeArgs.push('--target', ...args.targets);
-        }
-      }
+      const cmakeArgs = ['--build', '--preset', args.preset];
       cmakeArgs.push('--parallel', String(parallel));
       if (args.cleanFirst === true) cmakeArgs.push('--clean-first');
       if (Array.isArray(args.extraArgs)) cmakeArgs.push(...args.extraArgs);
 
       const command = `cmake ${cmakeArgs.join(' ')}`;
-      const target = {
-        repoRoot,
-        preset: args.preset ?? (args.buildDir === undefined ? config.defaultBuildPreset : undefined),
-        buildDir: args.buildDir,
-      };
+      const target = { repoRoot, preset: args.preset, buildDir: undefined };
       if (problems.length > 0) return invalid('build', command, problems.join(' '), target);
 
       const timeoutMs = resolveTimeout(args.timeoutMs, config.buildTimeoutMs);
@@ -549,12 +509,10 @@ export function apply(ctx, config) {
   ctx.effect(() => ctx.tools.register(defineTool({
     name: 'cmake_clean',
     description:
-      '经 build_script/build/set_env.ps1 运行 `cmake --build <dir> --target clean`，删除指定构建目录里的产物。' +
-      '可传 buildDir（相对 repoRoot，例如 build/Ninja_debug），或传 preset 由该 preset 的 binaryDir 推导。' +
-      '都不传时清理默认 configure preset 的构建目录。',
+      '经 build_script/build/set_env.ps1 运行 `cmake --build --preset <preset> --target clean`，清理该 preset 的构建产物。' +
+      'preset 是 configure preset（例如 Ninja_debug），其 binaryDir 由 CMake 自行解析；不支持按 buildDir 清理。',
     parameters: {
-      buildDir: { type: 'string', description: '相对 repoRoot 的构建目录，例如 build/Ninja_debug。' },
-      preset: { type: 'string', description: 'configure preset 名，用它的 binaryDir 作为清理目标。与 buildDir 二选一。' },
+      preset: { type: 'string', required: true, description: 'configure preset 名，例如 Ninja_debug。' },
       timeoutMs: { type: 'integer', description: '本次调用的超时毫秒数，默认 300000。' },
     },
     output: {
@@ -565,42 +523,12 @@ export function apply(ctx, config) {
     isConcurrencySafe: () => false,
     async execute(args, exec) {
       const problems = [
-        validateRelativeDir(args.buildDir, 'buildDir'),
         validatePresetName(args.preset, 'preset'),
       ].filter(Boolean);
-      if (args.buildDir !== undefined && args.preset !== undefined) {
-        problems.push('buildDir 与 preset 不能同时给出，请二选一。');
-      }
 
-      let dirArg;
-      let resolvedFromPreset;
-      if (args.buildDir !== undefined) {
-        // 同 cmake_build：buildDir 已含 build/ 前缀，勿再拼 defaultBuildDir。
-        dirArg = args.buildDir.replace(/\\/g, '/').replace(/\/+/g, '/');
-      } else {
-        const configurePreset = args.preset ?? config.defaultConfigurePreset;
-        resolvedFromPreset = configurePreset;
-        const fsp = await getFs();
-        const pathMod = await getPath();
-        const { doc, error } = await loadPresetDocs(repoRoot, fsp);
-        if (error && !doc?.configurePresets?.length) {
-          return invalid('clean', 'cmake --build <dir> --target clean', `无法推导构建目录：${error}`, {
-            repoRoot, preset: configurePreset, buildDir: undefined,
-          });
-        }
-        const abs = binaryDirForConfigurePreset(doc, configurePreset, repoRoot.replace(/\\/g, '/'));
-        if (!abs) {
-          return invalid('clean', 'cmake --build <dir> --target clean',
-            `无法从 preset "${configurePreset}" 推导 binaryDir，请显式传 buildDir。`, {
-              repoRoot, preset: configurePreset, buildDir: undefined,
-            });
-        }
-        dirArg = pathMod.relative(repoRoot, abs).replace(/\\/g, '/');
-      }
-
-      const cmakeArgs = ['--build', dirArg, '--target', 'clean'];
+      const cmakeArgs = ['--build', '--preset', args.preset, '--target', 'clean'];
       const command = `cmake ${cmakeArgs.join(' ')}`;
-      const target = { repoRoot, preset: resolvedFromPreset, buildDir: dirArg };
+      const target = { repoRoot, preset: args.preset, buildDir: undefined };
       if (problems.length > 0) return invalid('clean', command, problems.join(' '), target);
 
       const timeoutMs = resolveTimeout(args.timeoutMs, config.cleanTimeoutMs);
@@ -640,8 +568,8 @@ export function apply(ctx, config) {
         '',
         `- \`cmake_presets\` —— 只读列出可用 preset 与它们的构建目录；不确定用哪个先调它。`,
         `- \`cmake_configure\` —— \`cmake --preset <name>\`。`,
-        `- \`cmake_build\` —— \`cmake --build --preset <name>\` 或指定 buildDir + targets。`,
-        `- \`cmake_clean\` —— 删除构建产物。`,
+        `- \`cmake_build\` —— \`cmake --build --preset <name>\`，只接受 build preset，不支持按 buildDir 或临时 targets 构建。`,
+        `- \`cmake_clean\` —— \`cmake --build --preset <name> --target clean\`，按 configure preset 删除构建产物。`,
         '',
         '规则：',
         '- **不要**手工拼 `-G Ninja -DCMAKE_C_COMPILER=cl`，也**不要**自己激活 VS 环境 —— 会让工具集落回 v143，导致 vcpkg ABI 失效并全量重编。',
