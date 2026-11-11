@@ -32,18 +32,19 @@ constexpr std::uint32_t g_listener_port_shm_magic{0x444C'5054U};  // "DLPT"
 constexpr std::uint32_t g_listener_port_shm_version{1};
 
 /**
- * @brief 固定共享内存的名字
+ * @brief 共享内存名字的前缀
  *
- * 全局唯一, 不做实例区分: 同一台机器上后启动的监听器直接覆盖先前的端口。
+ * 完整段名是 `<前缀>_<进程 id>`, 每个进程各占一块段, 后启动的监听器只覆盖自己的,
+ * 不会抹掉其它仍在运行的进程的端口。
  * 只含 ASCII 字母数字下划线, 在 Windows 命名对象下合法。
  * 段是 Windows 原生命名对象, 其它进程(含 PowerShell 的 OpenFileMappingW)同名即可打开。
  */
 constexpr std::string_view g_listener_port_shm_name{"doodle_http_listener_port"};
 
 /**
- * @brief 把监听端口写入固定共享内存
+ * @brief 把监听端口写入本进程独占的共享内存
  *
- * 已存在则原地覆盖, 无需先删除。本函数**不抛异常**:
+ * 段名由当前进程 id 决定, 已存在则原地覆盖, 无需先删除。本函数**不抛异常**:
  * 任何失败(权限/名字冲突/尺寸不符等)都只记 err 日志并返回 false,
  * 调用方(监听协程)必须照常继续 accept, 不能因发布失败而拒绝服务。
  *
@@ -51,14 +52,5 @@ constexpr std::string_view g_listener_port_shm_name{"doodle_http_listener_port"}
  * @return 写入成功返回 true
  */
 DOODLELIB_API bool publish_listener_port(std::uint16_t in_port);
-
-/**
- * @brief 从固定共享内存读取监听端口
- *
- * 会校验魔数与版本号, 因此从未写入过或内容损坏时返回 nullopt。
- *
- * @return 读取且校验通过时返回端口号, 否则 nullopt
- */
-DOODLELIB_API std::optional<std::uint16_t> read_listener_port();
 
 }  // namespace doodle::http
