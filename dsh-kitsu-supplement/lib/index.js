@@ -1346,6 +1346,43 @@ async function probePort(ctx, port, signal) {
 }
 
 /**
+ * 轮询 netstat 直到出现监听目标端口的进程，返回其 pid。
+ *
+ * 宿主的 `ctx.subprocess.spawn` 返回的 handle 不带 pid（dsh-subprocess 的
+ * `SubprocessHandle` 只有 stdin/stdout/stderr/control/collected/done/terminate/waitForExit），
+ * 所以不能像早期版本那样用 `handle.pid` 拼共享内存段名。改为等 netstat 报出监听端口的
+ * pid：监听在 publish_listener_port 之前（http_listener.cpp:32-38），pid 一旦出现，
+ * 共享内存段随后即可读。
+ *
+ * @param {any} ctx
+ * @param {number} port
+ * @param {number[]} excluded 启动前就占着端口的 pid（killExisting 已杀掉的），不认
+ * @param {() => boolean} isDead 进程是否已退出，退出即停止等待
+ * @param {number} deadline 绝对截止时间（Date.now() 口径）
+ * @param {AbortSignal} [signal]
+ * @returns {Promise<{pid?:number, error?:string}>}
+ */
+async function resolveListenerPid(ctx, port, excluded, isDead, deadline, signal) {
+  const skip = new Set(excluded);
+  /** @type {string|undefined} */
+  let lastError;
+  for (;;) {
+    if (signal?.aborted === true) return { error: "已取消" };
+    if (isDead()) return { error: "进程已退出" };
+    const netstat = await netstatText(ctx, signal);
+    if (netstat.error !== undefined) lastError = netstat.error;
+    else {
+      const owner = parseNetstatOwners(netstat.text, port).find((candidate) => !skip.has(candidate));
+      if (owner !== undefined) return { pid: owner };
+    }
+    if (Date.now() >= deadline) {
+      return { error: lastError === undefined ? undefined : `netstat 不可用：${lastError}` };
+    }
+    await sleep(100);
+  }
+}
+
+/**
  * 强杀 PID 树。只在显式 killExisting 时使用。
  *
  * 走 `ctx.subprocess` 而不是 node:child_process：沙箱下宿主进程起原生子进程会被拒，
@@ -1526,12 +1563,12 @@ async function startServer(ctx, spec) {
       const result = await stopRecord(record, spec.stopTimeoutMs);
       if (result.ok) {
         registry.delete(id);
-        if (typeof record.handle?.pid === "number") priorStopped.push(record.handle.pid);
+        if (typeof record.pid === "number") priorStopped.push(record.pid);
       } else {
         diagnostics.push({ severity: "error", code: "kill/failed", message: `停止本插件实例 ${id} 失败：${result.reason}` });
       }
     }
-    const ownPids = new Set([...registry.values()].map((record) => record.handle?.pid));
+    const ownPids = new Set([...registry.values()].map((record) => record.pid));
     const foreign = busy.owners.filter((pid) => !ownPids.has(pid));
     if (foreign.length > 0) {
       const killed = await killPids(ctx, foreign);
@@ -1568,6 +1605,8 @@ async function startServer(ctx, spec) {
   }
 
   const serverId = spec.serverId;
+  /** @type {number|undefined} */
+  let pid;
   /** @type {any} */
   const record = {
     serverId,
@@ -1601,21 +1640,38 @@ async function startServer(ctx, spec) {
     },
   );
 
-  const shmName = listenerPortShmName(handle.pid);
   const portDeadline = Date.now() + Math.min(PORT_SHM_TIMEOUT_MS, spec.readyTimeoutMs);
   /** @type {number|undefined} */
   let port;
   /** @type {string|undefined} */
   let shmError;
+  /** @type {string|undefined} */
+  let pidError;
   while (port === undefined && record.exited !== true && Date.now() < portDeadline) {
-    const read = readListenerPortShm(handle.pid);
-    if (read.port !== undefined) {
-      port = read.port;
-      break;
+    if (pid === undefined) {
+      const resolved = await resolveListenerPid(
+        ctx,
+        spec.port,
+        priorStopped,
+        () => record.exited === true,
+        portDeadline,
+        spec.signal,
+      );
+      pid = resolved.pid;
+      if (pid === undefined) pidError = resolved.error;
     }
-    if (read.error !== undefined) shmError = read.error;
+    if (pid !== undefined) {
+      const read = readListenerPortShm(pid);
+      if (read.port !== undefined) {
+        port = read.port;
+        break;
+      }
+      if (read.error !== undefined) shmError = read.error;
+    }
+    if (record.exited === true) break;
     await sleep(50);
   }
+  record.pid = pid;
   // 先认端口：进程退出的瞬间段可能刚好发布，此时进程其实已经监听。
   const exitedEarly = record.exited === true;
 
@@ -1631,8 +1687,14 @@ async function startServer(ctx, spec) {
     diagnostics.push({
       severity: "error",
       code: "listen/unknown",
-      message: `共享内存段 ${shmName} 里没有读到合法端口（http_listener_port_shm.cpp:60-63 写入，魔数 0x444c5054/版本 1）。`,
+      message:
+        pid === undefined
+          ? `端口 ${spec.port} 上没有出现监听进程（netstat 未报出 pid），无法定位共享内存段（http_listener_port_shm.cpp:60-63 写入，魔数 0x444c5054/版本 1）。`
+          : `共享内存段 ${listenerPortShmName(pid)} 里没有读到合法端口（http_listener_port_shm.cpp:60-63 写入，魔数 0x444c5054/版本 1）。`,
     });
+    if (pidError !== undefined && pid === undefined) {
+      diagnostics.push({ severity: "warning", code: "shm/pid-unresolved", message: pidError });
+    }
     if (shmError !== undefined) {
       diagnostics.push({ severity: "warning", code: "shm/read-failed", message: shmError });
     }
@@ -1654,11 +1716,11 @@ async function startServer(ctx, spec) {
       spec,
       alive ? "no-shm-port" : "exited-before-listen",
       alive
-        ? `进程已启动（pid=${handle.pid}），但 ${Math.min(PORT_SHM_TIMEOUT_MS, spec.readyTimeoutMs)} ms 内共享内存段 ${shmName} 里没有出现监听端口，已终止。`
+        ? `进程已启动（pid=${pid ?? "未知"}），但 ${Math.min(PORT_SHM_TIMEOUT_MS, spec.readyTimeoutMs)} ms 内没有从共享内存读到监听端口，已终止。`
         : `进程在发布监听端口前就退出了（exit ${record.exitCode ?? "n/a"}）。`,
       {
         serverId,
-        pid: handle.pid,
+        pid,
         diagnostics,
         outputTail: outputTail(),
         priorStopped,
@@ -1696,7 +1758,7 @@ async function startServer(ctx, spec) {
           : `端口 ${port} 已监听，但 ${spec.readyTimeoutMs} ms 内 GET ${readyUrlOf(port, spec.readyPath)} 没有响应，已终止。`,
       {
         serverId,
-        pid: handle.pid,
+        pid,
         port,
         baseUrl: baseUrlOf(port),
         readyMs: ready.waitedMs,
@@ -1714,7 +1776,7 @@ async function startServer(ctx, spec) {
     serverId,
     mode: spec.mode,
     port,
-    pid: handle.pid,
+    pid,
     baseUrl: baseUrlOf(port),
     cwd: spec.cwd,
     exePath: spec.exePath,
@@ -1741,7 +1803,7 @@ function describeServer(serverId, record) {
     running: alive,
     mode: record.mode,
     port: record.port,
-    pid: record.handle?.pid,
+    pid: record.pid,
     baseUrl: baseUrlOf(record.port),
     cwd: record.cwd,
     exePath: record.exePath,
@@ -2041,7 +2103,7 @@ export function apply(ctx, config) {
           const result = await stopRecord(record, resolved.stopTimeoutMs);
           stopped.push({
             serverId: id,
-            pid: record.handle?.pid,
+            pid: record.pid,
             port: record.port,
             ok: result.ok,
             reason: result.reason,
