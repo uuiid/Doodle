@@ -143,6 +143,16 @@ std::shared_ptr<server_task_info> face_capture_transcode_tasks::find(const uuid_
   return l_itr->second;
 }
 
+std::vector<std::shared_ptr<server_task_info>> face_capture_transcode_tasks::find_all() const {
+  std::lock_guard<std::mutex> _(mtx_);
+  std::vector<std::shared_ptr<server_task_info>> l_result{};
+  l_result.reserve(infos_.size());
+  for (const auto& [_, l_ptr] : infos_) {
+    if (l_ptr) l_result.emplace_back(l_ptr);
+  }
+  return l_result;
+}
+
 void face_capture_transcode_tasks::start_next(const std::string& in_token) {
   std::shared_ptr<server_task_info> l_ptr{};
   {
@@ -175,6 +185,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_transcode, get) {
   auto l_ptr = tasks_->find(preview_id_);
   DOODLE_CHICK_HTTP(l_ptr != nullptr, not_found, "该会话没有转码任务");
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_ptr);
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_transcode_tasks_all, get) {
+  auto l_list = tasks_->find_all();
+  std::vector<server_task_info> l_result{};
+  l_result.reserve(l_list.size());
+  for (const auto& l_ptr : l_list) l_result.emplace_back(*l_ptr);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_result);
 }
 
 }  // namespace doodle::http::local

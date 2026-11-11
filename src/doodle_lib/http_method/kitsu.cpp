@@ -342,6 +342,7 @@ http_route_ptr create_kitsu_local_route() {
       .reg_c<local::face_capture_recording_video>()
       .reg_c<local::face_capture_recording_curves>()
       .reg_c<local::face_capture_transcode>(l_face_capture_tasks)
+      .reg_c<local::face_capture_transcode_tasks_all>(l_face_capture_tasks)
       .reg_c<socket_io::socket_io_http>(l_sid_ctx)
 
       ;

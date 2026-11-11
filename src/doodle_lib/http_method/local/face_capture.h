@@ -23,6 +23,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace doodle::http::local {
 
@@ -48,6 +49,8 @@ class face_capture_transcode_tasks : public std::enable_shared_from_this<face_ca
   std::shared_ptr<server_task_info> enqueue(const boost::uuids::uuid& in_preview_id);
 
   std::shared_ptr<server_task_info> find(const boost::uuids::uuid& in_preview_id) const;
+
+  std::vector<std::shared_ptr<server_task_info>> find_all() const;
 
   void start_next(const std::string& in_token);
 
@@ -142,6 +145,14 @@ explicit face_capture_transcode(std::shared_ptr<face_capture_transcode_tasks> in
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{preview_id_}/transcode", preview_id_)
+DOODLE_HTTP_FUN_END()
+
+DOODLE_HTTP_FUN_C(face_capture_transcode_tasks_all, local_http_fun)
+std::shared_ptr<face_capture_transcode_tasks> tasks_{};
+explicit face_capture_transcode_tasks_all(std::shared_ptr<face_capture_transcode_tasks> in_tasks)
+    : base_type(), tasks_(std::move(in_tasks)) {}
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/transcode")
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http::local
