@@ -22,6 +22,7 @@
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 
 #include <spdlog/async.h>
 #include <spdlog/sinks/base_sink.h>
@@ -106,9 +107,9 @@ void start_task(
           co_await in_task->task_->run();
           l_info->status_   = server_task_info_status::completed;
           l_info->progress_ = 1.0;
-        } catch (const std::exception& in_e) {
+        } catch (...) {
           l_info->status_        = server_task_info_status::failed;
-          l_info->last_line_log_ = in_e.what();
+          l_info->last_line_log_ = boost::current_exception_diagnostic_information();
         }
         l_info->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
         socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_info});
