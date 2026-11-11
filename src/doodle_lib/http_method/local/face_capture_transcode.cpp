@@ -24,18 +24,17 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 
-#include <spdlog/async.h>
-#include <spdlog/sinks/base_sink.h>
-#include <spdlog/sinks/basic_file_sink.h>
-
+#include "face_capture.h"
 #include <algorithm>
 #include <cstdlib>
 #include <memory>
+#include <spdlog/async.h>
 #include <spdlog/details/log_msg.h>
+#include <spdlog/sinks/base_sink.h>
+#include <spdlog/sinks/basic_file_sink.h>
 #include <string>
 #include <vector>
 
-#include "face_capture.h"
 
 namespace doodle::http::local {
 
@@ -86,9 +85,9 @@ void start_task(
 ) {
   const auto& l_task_info = in_task->task_info_;
 
-  auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
-                       fmt::format("{}.log", l_task_info->uuid_id_);
-  auto l_logger      = std::make_shared<spdlog::async_logger>(
+  auto l_logger_path      = core_set::get_set().get_cache_root() / server_task_info::logger_category /
+                            fmt::format("{}.log", l_task_info->uuid_id_);
+  auto l_logger           = std::make_shared<spdlog::async_logger>(
       l_task_info->name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
       spdlog::thread_pool()
   );
@@ -102,6 +101,7 @@ void start_task(
   boost::asio::co_spawn(
       g_io_context(),
       [in_task, in_tasks]() -> boost::asio::awaitable<void> {
+        auto l_tasks       = in_tasks;
         const auto& l_info = in_task->task_info_;
         try {
           co_await in_task->task_->run();
@@ -113,7 +113,7 @@ void start_task(
         }
         l_info->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
         socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_info});
-        in_tasks->finish(l_info->uuid_id_);
+        l_tasks->finish(l_info->uuid_id_);
       }(),
       boost::asio::detached
   );
@@ -178,7 +178,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_transcode, post) {
       l_json.contains("ue_project") && l_json.at("ue_project").is_string(), unprocessable_entity, "缺少 ue_project"
   );
   auto const l_ue_project = FSys::path{l_json.at("ue_project").get<std::string>()};
-  DOODLE_CHICK_HTTP(FSys::exists(l_ue_project), unprocessable_entity, "ue_project 不存在: {}", l_ue_project.generic_string());
+  DOODLE_CHICK_HTTP(
+      FSys::exists(l_ue_project), unprocessable_entity, "ue_project 不存在: {}", l_ue_project.generic_string()
+  );
 
   auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
@@ -192,9 +194,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_transcode, post) {
   l_info->uuid_id_     = preview_id_;
   l_info->name_        = fmt::format("face_capture_transcode_{}", preview_id_);
   l_info->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  l_info->command_     = nlohmann::json{} = *l_arg;
+  l_info->command_ = nlohmann::json{} = *l_arg;
 
-  auto l_ptr = tasks_->enqueue(l_arg, l_info);
+  auto l_ptr                          = tasks_->enqueue(l_arg, l_info);
   tasks_->start_next();
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_ptr->task_info_);
 }
