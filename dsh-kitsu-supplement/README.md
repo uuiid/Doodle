@@ -6,7 +6,7 @@
 
 | 工具 | 作用 |
 | --- | --- |
-| `kitsu_server_start` | 按 `production` / `local` 模式拉起服务，返回 `port` 与 `baseUrl`（来自进程 stdout 的真实端口） |
+| `kitsu_server_start` | 按 `production` / `local` 模式拉起服务，返回 `port` 与 `baseUrl`（来自服务端发布的共享内存段） |
 | `kitsu_server_status` | 列出本插件记录的实例，并用 netstat 查端口被谁监听 |
 | `kitsu_server_stop` | 停掉本插件拉起的实例（终止进程树并等停稳） |
 | `kitsu_server_sql` | 对磁盘库执行 SQL 文件或片段（建表、改数据、填测试数据），**不需要停服或重启** |
@@ -17,7 +17,8 @@
 
 - **端口必须显式传，且必须落在 50030–50330 之间。** local 模式不给 `--port` 时服务端会 `listen(0)`（随机端口），而 local 分支同样不防重复实例（`kitsu_supplement.cpp:219` 的 `stop_previous_instance` 已被注释）。随机端口意味着每次重启地址都变，测试用例没法引用，所以缺 `port` 直接报错；越界同理（报 `port 必须在 50030-50330 之间`）。
 - **开关一律写成 `--key <value>` 两个 argv 项，不能用 `--key=value`。** 服务端用 argh 解析，`=` 形式只落进 `params_`（`argh.h:196-204`），而 `arg_({"config"})` / `arg_["local"]` 查的是 `flags_`，于是 `--config=x` 会被静默当成"没给"，进程照常启动但不读 JSON。生成命令行固定为 `--config <json路径> --root <路径> --dbPath <库路径> --local --port <端口>`。
-- **真实端口只认 stdout 第一行。** 监听协程 `listen` 之后立刻 `std::cout << l_port << std::endl`（`http_listener.cpp:35`）。共享内存里的端口是全局单例，会被后启动的实例覆盖，不能作为某次启动的事后判据。
+- **真实端口从共享内存段读取。** 服务端 `listen` 之后把端口写进命名段 `doodle_http_listener_port_<pid>`（`http_listener_port_shm.cpp:35-63`），结构是 12 字节的 `magic(u32) / version(u32) / port(u16) / reserved(u16)`。插件用子进程 pid 拼段名，轮询到 `magic=0x444c5054 && version=1 && 端口合法` 为止；段名带 pid，每个实例各占一块，不会互相覆盖。stdout 仍会打印端口（`http_listener.cpp:35`），但只在失败诊断时用于比对（`shm/stdout-mismatch`）。
+- **读段用 `node:ffi`。** 需要 Node.js 26.1+ 且构建带 FFI 支持（`--experimental-ffi` 已在 26.9+ 默认开启；权限模型下需要 `--allow-ffi`）。三个实测约束写在 `readListenerPortShm` 上：签名必须是 `{ return, arguments }`；`string` 参数按 UTF-8 传，所以只能用 `OpenFileMappingA`（`*W` 永远读不到）；插件只读，`MapViewOfFile` 恒用 `FILE_MAP_READ`。
 - **固定端口先探占用。** 默认失败并给出占用 PID；只有显式 `killExisting: true` 才先强杀。上个实例没关干净是固定端口最常见的故障。
 - **config JSON 由插件生成。** 服务端 `--config` 解析失败时会 `return true` 且**不启动 HTTP**，进程可能一闪而过。JSON 写在 `%TEMP%\dsh-kitsu-supplement\kitsu-N.json`，调用返回后即删除（`configPath` 字段仍会报告路径）。
 - **cwd 默认取 exe 所在目录。** exe 依赖同目录的 dll；运行路径也可以由参数 `cwd` 或配置 `defaultCwd` 显式指定，插件不猜别的位置。
@@ -100,8 +101,8 @@ kitsu_server_stop { serverId: "kitsu-1" }
 
 ## 失败码
 
-**`kitsu_server_start`**：`invalid-args` / `port-in-use` / `kill-failed` / `spawn-failed` / `exited-before-listen` / `no-port-line` / `exited-before-ready` / `ready-timeout` / `cancelled`。
-失败结果里会带 `outputTail`（stdout + stderr 尾巴）与服务端源码位置提示，`--config` 解析失败会给出 `config/hint` 诊断。
+**`kitsu_server_start`**：`invalid-args` / `port-in-use` / `kill-failed` / `spawn-failed` / `exited-before-listen` / `no-shm-port` / `exited-before-ready` / `ready-timeout` / `cancelled`。
+失败结果里会带 `shmName`（查的是哪个段）、`outputTail`（stdout + stderr 尾巴）与服务端源码位置提示，`--config` 解析失败会给出 `config/hint` 诊断。
 
 **`kitsu_server_sql`**：`ok` / `invalid-args` / `empty` / `sql-failed`。
 `sql-failed` 会给出「来源（文件名或 `<inline sql>`）+ 第几条语句 + SQLite 原文 + 截断后的 SQL」，整批已回滚。
@@ -110,6 +111,8 @@ kitsu_server_stop { serverId: "kitsu-1" }
 
 - **local 模式没人传 dbPath 时是内存库**：服务端落 `:memory:`，进程退出即丢，`kitsu_server_sql` 直接拒绝。要用可写的库，启动时传 `dbPath`。
 - **生产模式依赖注册表** `HKLM\SOFTWARE\Doodle\MainConfig`（以及 `\Email`）：读不到会抛异常，服务不启动。这属于测试机环境配置，插件不处理。
+- **读端口依赖 `node:ffi`。** 宿主 Node 必须是 26.1+ 且带 FFI 支持；`--no-experimental-ffi`、或开了权限模型却没给 `--allow-ffi` 时读不到段，`kitsu_server_start` 会报 `no-shm-port` 并在诊断里给出 `shm/read-failed` 的真实原因。
+- **段名按子进程 pid 拼。** 如果 `exePath` 指向 `.bat` 或其它包装器，拿到的 pid 属于包装器而不是 `doodle_kitsu_supplement.exe`，段名会对不上；此时诊断里会同时报 `shm/stdout-mismatch`（stdout 有端口、共享内存没有）。
 - 端口是否放通"公开访问"（`public_url_port`）由服务端注册表配置与服务端声明决定，插件只把它写进生成的 config。
 - `kitsu_server_sql` 连接时模拟服务端的连接级 PRAGMA（`foreign_keys = ON`、`synchronous = NORMAL`、`recursive_triggers = ON`，见 `sqlite_database.cpp:1310-1312`），但不会加载服务端的 jieba FTS5 分词器；写 FTS5 虚拟表或依赖该分词器的内容请走服务端接口。
 - `ATTACH` / `DETACH` 被拒绝：本工具只写目标库文件。
@@ -122,4 +125,4 @@ node --check lib/index.js
 node test/pure.mjs
 ```
 
-`test/pure.mjs` 用 `node:vm` 从 `lib/index.js` 的第一个区段（校验、argv、SQL 切分、config、端口行解析、渲染）求值，不依赖 `@deepseek-ai/*` 包。
+`test/pure.mjs` 用 `node:vm` 从 `lib/index.js` 的第一个区段（校验、argv、SQL 切分、config、共享内存段名与端口解析、渲染）求值，不依赖 `@deepseek-ai/*` 包。
