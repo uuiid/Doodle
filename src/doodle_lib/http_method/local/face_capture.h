@@ -83,7 +83,7 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/devices")
 DOODLE_HTTP_FUN_END()
 
-DOODLE_HTTP_FUN_C(face_capture_stream, local_http_fun)
+DOODLE_HTTP_FUN(face_capture_stream)
 boost::uuids::uuid session_id_{};
 std::shared_ptr<face_capture_selected_device> selected_{};
 std::shared_ptr<face_capture_session_holder> holder_{};
