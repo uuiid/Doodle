@@ -36,7 +36,7 @@
 
 namespace doodle::http {
 
-http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
+http_route_ptr create_kitsu_route_2() {
   auto l_router                = std::make_shared<http_route>();
   auto l_ctx                   = g_kitsu_ctx();
   auto l_sid_ctx               = std::make_shared<socket_io::sid_ctx>();
@@ -74,10 +74,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_c<model_library::pictures_instance_no_ext>(l_ctx.root_)
       .reg_c<model_library::pictures_thumbnails>(l_ctx.root_)
       .reg_c<model_library::pictures_thumbnails_no_ext>(l_ctx.root_)
-
-      /// 杂项
-      .reg_c<other::deepseek_key>()
-      .reg_c<other::key_ji_meng>()
 
       /// 模拟 kitsu后端
       .reg_c<actions_user_notifications_mark_all_as_read>()

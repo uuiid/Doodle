@@ -15,14 +15,6 @@ namespace doodle::http {
 struct kitsu_ctx_t {
   /// 产生的资产储存位置
   std::filesystem::path root_;
-  /// 前端部署的问价所在位置
-  std::filesystem::path front_end_root_;
-  /// deepseek ai 的key
-  std::vector<std::string> deepseek_keys_;
-
-  /// 即梦授权
-  std::string ji_meng_access_key_id_;
-  std::string ji_meng_secret_access_key_;
 
   /// 会话 jwt token
   std::string secret_;

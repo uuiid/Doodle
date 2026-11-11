@@ -32,14 +32,8 @@ struct kitsu_supplement_args_t {
   std::uint16_t port_;
   FSys::path db_path_{};
 
-  FSys::path kitsu_front_end_path_{};
-
   FSys::path root_{};
-  std::vector<std::string> deepseek_keys_{};
 
-  /// 即梦授权
-  std::string ji_meng_access_key_id_;
-  std::string ji_meng_secret_access_key_;
   /// 会话 jwt token
   std::string secret_;
 
@@ -73,13 +67,8 @@ struct kitsu_supplement_args_t {
   friend void from_json(const nlohmann::json& in_json, kitsu_supplement_args_t& out_obj) {
     in_json.at("port").get_to(out_obj.port_);
     in_json.at("db_path").get_to(out_obj.db_path_);
-    in_json.at("kitsu_front_end_path").get_to(out_obj.kitsu_front_end_path_);
     in_json.at("root").get_to(out_obj.root_);
-    in_json.at("deepseek_keys").get_to(out_obj.deepseek_keys_);
-    if (in_json.contains("ji_meng_access_key_id"))
-      in_json.at("ji_meng_access_key_id").get_to(out_obj.ji_meng_access_key_id_);
-    if (in_json.contains("ji_meng_secret_access_key"))
-      in_json.at("ji_meng_secret_access_key").get_to(out_obj.ji_meng_secret_access_key_);
+
     if (in_json.contains("mail_config")) in_json.at("mail_config").get_to(out_obj.mail_config_);
     if (in_json.contains("domain_protocol")) in_json.at("domain_protocol").get_to(out_obj.domain_protocol_);
     if (in_json.contains("domain_name")) in_json.at("domain_name").get_to(out_obj.domain_name_);
@@ -95,16 +84,6 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
         l_key.TryOpen(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY).Failed())
       return default_logger_raw()->error("无法打开键 SOFTWARE/Doodle/MainConfig");
     else {
-      auto l_value_w         = l_key.GetMultiStringValue(L"Deepseek");
-      in_args.deepseek_keys_ = l_value_w | std::ranges::views::transform([](const std::wstring& in) -> std::string {
-                                 return conv::utf_to_utf<char>(in);
-                               }) |
-                               ranges::to<std::vector<std::string>>();
-
-      if (auto l_value = l_key.TryGetStringValue(L"ji_meng_access_key_id"); l_value.IsValid())
-        in_args.ji_meng_access_key_id_ = conv::utf_to_utf<char>(l_value.GetValue());
-      if (auto l_value = l_key.TryGetStringValue(L"ji_meng_secret_access_key"); l_value.IsValid())
-        in_args.ji_meng_secret_access_key_ = conv::utf_to_utf<char>(l_value.GetValue());
       if (auto l_value = l_key.TryGetStringValue(L"domain_name"); l_value.IsValid())
         in_args.domain_name_ = conv::utf_to_utf<char>(l_value.GetValue());
       if (auto l_value = l_key.TryGetStringValue(L"domain_protocol"); l_value.IsValid())
@@ -138,13 +117,12 @@ bool kitsu_supplement_main::init() {
   l_set.ue_ctx_   = std::make_shared<ue_ctx>();
   l_set.database_ = std::make_shared<sqlite_storage>();
   kitsu_supplement_args_t l_args{
-      .port_                 = 50025,
-      .db_path_              = "C:/kitsu_new.database",
-      .kitsu_front_end_path_ = "D:/kitsu/dist",
-      .root_                 = "D:/kitsu_data",
-      .secret_               = "22T0iwSHK7qkhdI6",
-      .domain_protocol_      = "http",
-      .domain_name_          = "192.168.40.188",
+      .port_            = 50025,
+      .db_path_         = "C:/kitsu_new.database",
+      .root_            = "D:/kitsu_data",
+      .secret_          = "22T0iwSHK7qkhdI6",
+      .domain_protocol_ = "http",
+      .domain_name_     = "192.168.40.188",
 #ifdef NDEBUG
       .public_url_port_ = 38192,
 #else
@@ -178,7 +156,7 @@ bool kitsu_supplement_main::init() {
       l_args.db_path_ = ":memory:";  // 内存数据库
     l_set.set_root(l_args.root_);
     // 初始化上下文
-    l_set.kitsu_ctx_ = std::make_shared<http::kitsu_ctx_t>(l_args.root_, l_args.kitsu_front_end_path_);
+    l_set.kitsu_ctx_ = std::make_shared<http::kitsu_ctx_t>(l_args.root_);
     // 打开内存数据库
     l_set.database_->open(l_args.db_path_);
     l_set.database_->upgrade();
@@ -203,10 +181,8 @@ bool kitsu_supplement_main::init() {
   facets_.emplace_back(l_ssl_ctx);
   l_set.ctx_ptr = l_ssl_ctx;
   {
-    l_set.kitsu_ctx_ = std::make_shared<http::kitsu_ctx_t>(
-        l_args.root_, l_args.kitsu_front_end_path_, l_args.deepseek_keys_, l_args.ji_meng_access_key_id_,
-        l_args.ji_meng_secret_access_key_, l_args.secret_, l_args.domain_protocol_, l_args.domain_name_
-    );
+    l_set.kitsu_ctx_ =
+        std::make_shared<http::kitsu_ctx_t>(l_args.root_, l_args.secret_, l_args.domain_protocol_, l_args.domain_name_);
   }
   if (!l_args.mail_config_.username_.empty() && !l_args.mail_config_.password_.empty())
     l_set.seed_email_ = email::seed_email{
@@ -214,7 +190,7 @@ bool kitsu_supplement_main::init() {
         l_args.mail_config_.password_
     };
   // 初始化路由
-  auto l_rout_ptr = http::create_kitsu_route_2(l_args.kitsu_front_end_path_);
+  auto l_rout_ptr = http::create_kitsu_route_2();
   // 关闭可能存在的旧实例
   // stop_previous_instance(l_args.port_, l_args.secret_);
   // 开始运行服务器
