@@ -926,6 +926,7 @@ const START_SCHEMA = {
     warnings: { type: "array", required: true, items: { type: "string" } },
     outputTail: { type: "string", description: "失败时的 stdout+stderr 尾巴" },
     spillPath: { type: "string", description: "输出溢出时的完整日志文件" },
+    shmName: { type: "string", description: "本次读取的共享内存段名（启动失败时回显）" },
   },
 };
 
@@ -1658,7 +1659,6 @@ async function startServer(ctx, spec) {
       {
         serverId,
         pid: handle.pid,
-        shmName,
         diagnostics,
         outputTail: outputTail(),
         priorStopped,
