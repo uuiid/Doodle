@@ -2,11 +2,10 @@
 
 #include "Commandlets/Commandlet.h"
 #include "CoreMinimal.h"
+#include "MetaHumanFaceSolver.h"
 #include "MetaHumanFaceTypes.h"
 
 #include "MetaHumanFaceCommandlet.generated.h"
-
-class FMetaHumanFaceSolver;
 
 UCLASS()
 class UMetaHumanFaceCommandlet : public UCommandlet
