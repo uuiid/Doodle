@@ -743,6 +743,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 			TheLevelSequence->MakeSpawnableTemplateFromInstance(*L_SpotLight1, L_SpotLight1->GetFName()));
 		/// 调整辅助光源属性
 		L_SpotLight->SpotLightComponent->bUseInverseSquaredFalloff = false;
+		L_SpotLight->SpotLightComponent->bAllowMegaLights = false;
 		L_SpotLight->SpotLightComponent->SetInnerConeAngle(80);
 		L_SpotLight->SpotLightComponent->SetUseInverseSquaredFalloff(false);
 		L_SpotLight->SpotLightComponent->SetAttenuationRadius(16384);
