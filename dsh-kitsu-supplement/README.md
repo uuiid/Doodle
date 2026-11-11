@@ -6,8 +6,8 @@
 
 | 工具 | 作用 |
 | --- | --- |
-| `kitsu_server_start` | 按 `production` / `local` 模式拉起服务，返回 `port` 与 `baseUrl`（来自服务端发布的共享内存段） |
-| `kitsu_server_status` | 列出本插件记录的实例，并用 netstat 查端口被谁监听 |
+| `kitsu_server_start` | 按 `production` / `local` 模式拉起服务（**每模式最多一个**），返回 `port` 与 `baseUrl`（来自服务端发布的共享内存段） |
+| `kitsu_server_status` | 列出本插件记录的实例、每个模式的槽位占用，并用 netstat 查端口被谁监听 |
 | `kitsu_server_stop` | 停掉本插件拉起的实例（终止进程树并等停稳） |
 | `kitsu_server_sql` | 对磁盘库执行 SQL 文件或片段（建表、改数据、填测试数据），**不需要停服或重启** |
 | `kitsu_playwright_test` | 把参数原样转发给 `test_js` 里的 playwright CLI（`playwright test ...` 的 `test ...` 部分），返回摘要、失败标题与输出尾巴；**不可并发** |
@@ -24,6 +24,7 @@
 - **config JSON 由插件生成。** 服务端 `--config` 解析失败时会 `return true` 且**不启动 HTTP**，进程可能一闪而过。JSON 写在 `%TEMP%\dsh-kitsu-supplement\kitsu-N.json`，调用返回后即删除（`configPath` 字段仍会报告路径）。
 - **cwd 默认取 exe 所在目录。** exe 依赖同目录的 dll；运行路径也可以由参数 `cwd` 或配置 `defaultCwd` 显式指定，插件不猜别的位置。
 - **不用 `POST /api/doodle/stop-server`。** 它要 admin JWT，且 `connection_count` 不为 0 时拒绝退出（`base_data.cpp:343-366`），测试机上的连接数恰恰不为 0。这里直接终止进程树并 `waitForExit`。
+- **每模式一个槽位。** `local` 与 `production` 各最多一个在跑实例，第二个直接 `slot-in-use`，要换就显式 `replaceExisting: true`。理由：两个同模式实例通常意味着上一个没停干净，它们读同一份注册表/库、抢同一类端口，`kitsu_server_status` 与 `baseUrl: "auto"` 也没法判断该指哪个；而静默替换又会把正在跑的用例打断。实例表落盘到状态文件，DSH 重启后仍能认领（无句柄）并按 pid 停。
 - **写库不停服。** `upgrade()` 会对磁盘库调 `journal_mode(wal)`（`sqlite_database.cpp:1335`），但实测新建库上 `pragma journal_mode` 仍是 `delete`——两种模式下外部进程提交的写入都能被运行中的服务端读到，所以 `kitsu_server_sql` 只做"开库 → 事务 → 提交"，不碰进程。写锁最多等 5 秒（`busy_timeout`），撞上服务端正好在写也只是排队。
 - **local 模式不给 dbPath 就没有可写的库。** 服务端 local 分支在没拿到 `--dbPath` 时落到 `":memory:"`（`kitsu_supplement.cpp:175-178`），那个库只活在本进程里，外部进程根本看不到，`kitsu_server_sql` 会直接拒绝并说明原因。
 
@@ -50,6 +51,8 @@ plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-suppleme
 | `readyTimeoutMs` | `30000` | 就绪等待预算 |
 | `stopTimeoutMs` | `5000` | 终止后等待退出预算 |
 | `maxOutputBytes` | `8388608` | stdout / stderr 各自的内存缓冲上限 |
+| `stateDir` | 空（= `%TEMP%\dsh-kitsu-supplement`） | 实例快照所在目录 |
+| `instancesFile` | 空（= `<stateDir>\instances.json`） | 实例快照文件名；给绝对路径就整个覆盖，给相对名就拼在 `stateDir` 下 |
 | `guidanceOrder` | `1396` | 系统提示词里本工具指引段的排序值 |
 | `playwrightCwd` | `E:\Doodle\test_js` | `kitsu_playwright_test` 的默认 `cwd` |
 | `playwrightNodePath` | `node` | 跑 playwright 用的 node；空串 = 从 PATH 取 |
@@ -77,6 +80,7 @@ plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-suppleme
 | `exePath` | | 仅本次调用覆盖可执行文件 |
 | `readyPath` | | 本次的就绪探测路径 |
 | `killExisting` | | `true` 才强杀端口上的旧进程；默认失败并报 PID |
+| `replaceExisting` | | `true` 时先停掉同模式已在跑的实例再起新的（见[实例组合规则](#实例组合规则每模式一个槽位)）；默认 `false`，撞槽位直接报 `slot-in-use` |
 
 `kitsu_server_sql`：
 
@@ -133,6 +137,11 @@ fork→spawn 降级补丁——本插件走宿主的子进程通道，普通 for
 
 ```text
 kitsu_server_start { mode: "local", port: 50136, dbPath: "E:\\tmp\\kitsu_test.db" }
+kitsu_server_start { mode: "local", port: 50124 }
+→ 失败：code=slot-in-use, serverId=kitsu-1（local 槽位被占着）
+kitsu_server_start { mode: "local", port: 50124, replaceExisting: true }
+→ ok, serverId=kitsu-2, replaced=[{ serverId: "kitsu-1", ok: true }]
+
 kitsu_playwright_test { args: ["test", "face_capture.js"], baseUrl: "auto" }
 kitsu_server_stop { port: 50136 }
 ```
@@ -168,6 +177,28 @@ kitsu_server_stop { port: 50136 }
 `playwrightKillTimeoutMs`（默认 5000）内仍未退出就由宿主结束进程树。单条用例的超时仍是
 `playwright.config.js` 里的 `timeout: 60000`。
 
+## 实例组合规则（每模式一个槽位）
+
+实例表按**模式**分槽：`local` 与 `production` 各最多 **1 个在跑**实例。因此只有四种状态——
+空 `{}`、只有 `local`、只有 `production`、`local` + `production` 各一个。第三种组合（两个
+local，或两个 production）不会被 `kitsu_server_start` 放出来。
+
+- 槽位只算**在跑**的实例：已经退出的记录不占位，可以照常起新的。
+- `kitsu_server_start` 发现目标模式已被占着，直接报 `slot-in-use`，并在 `serverId` 里给出占位实例的 id；
+  **不会**排队，也**不会**偷偷替换。要替换就显式传 `replaceExisting: true`：先停掉占位实例（结果里
+  `replaced` 报告它停了谁、成没成），再起新的；停不掉就报 `kill-failed`，新实例不会起。
+- `kitsu_server_status` 返回 `slots` / `usage` / `available`，一眼能看出哪个模式空着。
+- 状态文件被外部改坏（手工塞进两个同模式实例）不会自动杀进程：`kitsu_server_status` 会给出
+  `slot/duplicate` 诊断并把 `ok` 置为 `false`，由调用方 `kitsu_server_stop` 处理。
+
+**状态文件**让实例表跨 DSH 重启保留：插件把实例元数据（id / 模式 / 端口 / pid / 命令行）落到
+`stateDir\instances.json`（`instancesFile` 可以给绝对路径或相对 `stateDir` 的文件名）。默认落在系统临时目录
+`%TEMP%\dsh-kitsu-supplement\instances.json`。
+
+重启后读出来的实例**没有进程句柄**（句柄属于上一个 DSH 进程）。插件用 netstat 核实"端口上还有没有那个
+pid"：还在就算 `adopted`（`kitsu_server_status` 里标 `[来自状态文件]`），`kitsu_server_stop` 按 pid 用
+`taskkill /F /T` 停；端口上查不到就标成已退出，不占槽位。
+
 ## 典型用法
 
 ```text
@@ -182,6 +213,11 @@ kitsu_server_sql { serverId: "kitsu-1", files: ["E:\\seed\\big.sql"], dryRun: tr
 
 kitsu_server_status { port: 50124 }
 
+kitsu_server_start { mode: "local", port: 50124 }
+→ 失败：code=slot-in-use, serverId=kitsu-1（local 槽位被占着）
+kitsu_server_start { mode: "local", port: 50124, replaceExisting: true }
+→ ok, serverId=kitsu-2, replaced=[{ serverId: "kitsu-1", ok: true }]
+
 kitsu_playwright_test { args: ["test", "face_capture.js"], baseUrl: "auto" }
 → ok, passed=3 failed=0 skipped=1（playwright-report 已更新）
 kitsu_server_stop { serverId: "kitsu-1" }
@@ -189,7 +225,7 @@ kitsu_server_stop { serverId: "kitsu-1" }
 
 ## 失败码
 
-**`kitsu_server_start`**：`invalid-args` / `port-in-use` / `kill-failed` / `spawn-failed` / `exited-before-listen` / `no-shm-port` / `exited-before-ready` / `ready-timeout` / `cancelled`。
+**`kitsu_server_start`**：`invalid-args` / `slot-in-use` / `port-in-use` / `kill-failed` / `spawn-failed` / `exited-before-listen` / `no-shm-port` / `exited-before-ready` / `ready-timeout` / `cancelled`。
 失败结果里会带 `shmName`（查的是哪个段）、`outputTail`（stdout + stderr 尾巴）与服务端源码位置提示，`--config` 解析失败会给出 `config/hint` 诊断。
 
 **`kitsu_playwright_test`**：`ok` / `tests-failed` / `busy` / `timeout` / `cancelled` / `spawn-failed` / `timeout-cli` / `invalid-args` / `exit-nonzero`。
@@ -208,7 +244,7 @@ kitsu_server_stop { serverId: "kitsu-1" }
 - `ATTACH` / `DETACH` 被拒绝：本工具只写目标库文件。
 - **`kitsu_playwright_test` 用 `test_js` 自己的 playwright**：`cwd` 下没有 `node_modules/@playwright/test` 时直接报 `timeout-cli`，插件不替你装依赖。
 - **playwright 与 kitsu 服务端是两个独立进程**：工具只负责把 `DOODLE_BASE_URL` 递给 playwright，服务端有没有起来由调用方保证（`baseUrl: "auto"` 只接本插件记录的 local 实例）。
-- 实例表只在本进程内有效：DSH 重启后插件不再管之前拉起的进程（它们仍在运行），需要用 `kitsu_server_status { port }` 看占用并手工处理。
+- **实例表靠状态文件跨重启保留**：DSH 重启后读回来的实例没有句柄，只按「端口上还有没有那个 pid」判定死活（见[实例组合规则](#实例组合规则每模式一个槽位)）。如果进程还活着但已不再监听原端口（例如自己崩在别的端口上），会被判成已退出，槽位随之释放。快照文件损坏或版本不符时整份被忽略，插件只给出 `state/read-failed` 警告，不会因此起不来。
 
 ## 开发
 
@@ -217,4 +253,4 @@ node --check lib/index.js
 node test/pure.mjs
 ```
 
-`test/pure.mjs` 用 `node:vm` 从 `lib/index.js` 的第一个区段（校验、argv、SQL 切分、config、共享内存段名与端口解析、渲染）求值，不依赖 `@deepseek-ai/*` 包。
+`test/pure.mjs` 用 `node:vm` 从 `lib/index.js` 的第一个区段（校验、argv、SQL 切分、config、共享内存段名与端口解析、实例槽位与快照、playwright 输出摘要、渲染）求值，不依赖 `@deepseek-ai/*` 包。

@@ -1093,6 +1093,223 @@ function interpretPlaywrightExit({ exitCode, summary, failures, aborted, timedOu
   return "exit-nonzero";
 }
 
+const INSTANCE_STATE_VERSION = 1;
+const INSTANCE_STATE_FILE = "instances.json";
+const MAX_INSTANCES_PER_MODE = 1;
+
+/**
+ * 实例的模式分组：只算在跑的实例，已退出的只作历史。
+ *
+ * @param {Map<string, any>} records
+ * @returns {Map<string, string[]>}
+ */
+function groupRunningByMode(records) {
+  /** @type {Map<string, string[]>} */
+  const groups = new Map(MODES.map((mode) => [mode, []]));
+  for (const [id, record] of records ?? []) {
+    if (record?.exited === true) continue;
+    if (!MODES.includes(record?.mode)) continue;
+    groups.get(record.mode).push(id);
+  }
+  return groups;
+}
+
+/**
+ * 每个模式的槽位：每模式最多一个在跑实例。
+ *
+ * @param {Map<string, any>} records
+ * @returns {{slots:Record<string, any|null>, usage:any, available:string[], duplicates:{mode:string, serverIds:string[]}[]}}
+ */
+function slotSummary(records) {
+  const groups = groupRunningByMode(records);
+  /** @type {Record<string, any|null>} */
+  const slots = {};
+  /** @type {string[]} */
+  const available = [];
+  /** @type {{mode:string, serverIds:string[]}[]} */
+  const duplicates = [];
+  /** @type {{limitPerMode:number, running:number, local:number, production:number}} */
+  const usage = { limitPerMode: MAX_INSTANCES_PER_MODE, running: 0, local: 0, production: 0 };
+  for (const mode of MODES) {
+    const ids = groups.get(mode) ?? [];
+    usage[mode] = ids.length;
+    usage.running += ids.length;
+    if (ids.length === 0) {
+      slots[mode] = null;
+      available.push(mode);
+    } else if (ids.length > MAX_INSTANCES_PER_MODE) {
+      duplicates.push({ mode, serverIds: [...ids] });
+      slots[mode] = null;
+    } else {
+      const record = records.get(ids[0]);
+      slots[mode] = {
+        serverId: ids[0],
+        port: record?.port,
+        baseUrl: typeof record?.port === "number" ? baseUrlOf(record.port) : undefined,
+        pid: record?.pid,
+        uptimeMs: typeof record?.startedAt === "number" ? Date.now() - record.startedAt : 0,
+      };
+    }
+  }
+  return { slots, usage, available, duplicates };
+}
+
+/**
+ * 某个模式当前被谁占着（在跑）。没有就返回 undefined。
+ *
+ * @param {Map<string, any>} records
+ * @param {string} mode
+ * @returns {string|undefined}
+ */
+function findSlotHolder(records, mode) {
+  if (!MODES.includes(mode)) return undefined;
+  for (const [id, record] of records ?? []) {
+    if (record?.exited === true) continue;
+    if (record?.mode === mode) return id;
+  }
+  return undefined;
+}
+
+/**
+ * 起服务前的准入判定：同一模式最多一个实例，replaceExisting 才允许替换。
+ *
+ * @param {{records:Map<string, any>, mode:string, replaceExisting?:boolean}} spec
+ * @returns {{kind:string, holderId?:string, holderPort?:number, holderUptimeMs?:number, problem?:string}}
+ */
+function validateSlotRequest({ records, mode, replaceExisting }) {
+  const holderId = findSlotHolder(records, mode);
+  if (holderId === undefined) return { kind: "free" };
+  const holder = records.get(holderId);
+  const holderUptimeMs = typeof holder?.startedAt === "number" ? Date.now() - holder.startedAt : 0;
+  if (replaceExisting === true) {
+    return { kind: "replace", holderId, holderPort: holder?.port, holderUptimeMs };
+  }
+  return {
+    kind: "occupied",
+    holderId,
+    holderPort: holder?.port,
+    holderUptimeMs,
+    problem:
+      `${mode} 模式已经有一个实例在跑（${holderId}，端口 ${holder?.port ?? "?"}，已运行 ${holderUptimeMs} ms）。` +
+      "同一模式最多一个：先 kitsu_server_stop 停掉它，或传 replaceExisting: true 让本次启动替换掉它。",
+  };
+}
+
+/**
+ * 实例表快照文件路径。instancesFile 给绝对路径就整个覆盖，否则落在 stateDir（空 = 系统临时目录）下。
+ *
+ * @param {{stateDir?:string, instancesFile?:string, tmpRoot:string}} spec
+ * @returns {string}
+ */
+function instancesPathOf({ stateDir, instancesFile, tmpRoot }) {
+  const base = trimOrEmpty(stateDir) === "" ? normalizePath(tmpRoot) : normalizePath(stateDir);
+  const explicitFile = trimOrEmpty(instancesFile);
+  if (explicitFile !== "") {
+    const normalized = normalizePath(explicitFile);
+    return /^([A-Za-z]:[\\/]|\\\\[^\\/]+)/.test(normalized) ? normalized : `${base}\\${normalized}`;
+  }
+  return `${base}\\${INSTANCE_STATE_FILE}`;
+}
+
+/**
+ * 把实例表投影成可落盘的快照（只留元数据，不存句柄）。
+ *
+ * @param {Map<string, any>} records
+ * @returns {any}
+ */
+function serializeInstances(records) {
+  /** @type {any[]} */
+  const servers = [];
+  for (const [serverId, record] of records ?? []) {
+    servers.push({
+      serverId,
+      mode: record?.mode,
+      port: record?.port,
+      pid: record?.pid,
+      exePath: record?.exePath,
+      cwd: record?.cwd,
+      dbPath: record?.dbPath,
+      command: record?.command,
+      startedAt: record?.startedAt,
+      exited: record?.exited === true,
+      exitCode: typeof record?.exitCode === "number" ? record.exitCode : undefined,
+    });
+  }
+  return { version: INSTANCE_STATE_VERSION, savedAt: Date.now(), servers };
+}
+
+/**
+ * 解析快照文件。损坏或版本不符都返回 problem，调用方降级为「没有历史」。
+ *
+ * @param {string} text
+ * @returns {{records:any[], problem?:string}}
+ */
+function parseInstancesState(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(String(text ?? ""));
+  } catch (error) {
+    return { records: [], problem: `快照不是合法 JSON：${errorText(error)}` };
+  }
+  if (!isPlainObject(parsed)) return { records: [], problem: "快照不是对象。" };
+  if (parsed.version !== INSTANCE_STATE_VERSION) {
+    return { records: [], problem: `快照版本 ${String(parsed.version)} 与期望的 ${INSTANCE_STATE_VERSION} 不一致。` };
+  }
+  if (!Array.isArray(parsed.servers)) return { records: [], problem: "快照缺少 servers 数组。" };
+  /** @type {any[]} */
+  const records = [];
+  for (const item of parsed.servers) {
+    if (!isPlainObject(item)) continue;
+    const serverId = trimOrEmpty(item.serverId);
+    if (serverId === "") continue;
+    records.push({
+      serverId,
+      mode: MODES.includes(item.mode) ? item.mode : DEFAULT_MODE,
+      port: parsePort(item.port),
+      pid: typeof item.pid === "number" ? item.pid : undefined,
+      exePath: trimOrEmpty(item.exePath) || undefined,
+      cwd: trimOrEmpty(item.cwd) || undefined,
+      dbPath: trimOrEmpty(item.dbPath) || undefined,
+      command: trimOrEmpty(item.command) || undefined,
+      startedAt: typeof item.startedAt === "number" ? item.startedAt : Date.now(),
+      exited: item.exited === true,
+      exitCode: typeof item.exitCode === "number" ? item.exitCode : null,
+    });
+  }
+  return { records };
+}
+
+/**
+ * 快照里的实例是否还活着：端口上能查到它的 pid 才算。
+ *
+ * @param {any} item
+ * @param {Map<number, number[]>} livePidsByPort
+ * @returns {boolean}
+ */
+function instanceLooksAlive(item, livePidsByPort) {
+  if (typeof item?.port !== "number" || typeof item?.pid !== "number") return false;
+  const pids = livePidsByPort?.get(item.port);
+  return Array.isArray(pids) && pids.includes(item.pid);
+}
+
+/**
+ * 合并快照与实时探测：快照里「在跑但本进程没有句柄、且端口上查不到它的 pid」的实例标成 exited。
+ * 本进程认识（live 里有）的 serverId 一律跳过，实时记录优先。
+ *
+ * @param {{saved:any[], live:Map<string, any>, livePidsByPort:Map<number, number[]>}} spec
+ * @returns {any[]}
+ */
+function mergeInstancesState({ saved, live, livePidsByPort }) {
+  /** @type {any[]} */
+  const merged = [];
+  for (const item of saved ?? []) {
+    if (live?.has(item.serverId)) continue;
+    const alive = item.exited === true ? false : instanceLooksAlive(item, livePidsByPort);
+    merged.push({ ...item, exited: !alive });
+  }
+  return merged;
+}
+
 //#endregion
 
 //#region 配置与输出契约
@@ -1122,6 +1339,8 @@ export const Config = z.object({
   playwrightDefaultBaseUrl: z.string().default(""),
   playwrightTimeoutMs: z.number().default(PLAYWRIGHT_TIMEOUT_MS),
   playwrightKillTimeoutMs: z.number().default(PLAYWRIGHT_KILL_TIMEOUT_MS),
+  stateDir: z.string().default(""),
+  instancesFile: z.string().default(""),
   stopTimeoutMs: z.number().default(DEFAULT_STOP_TIMEOUT_MS),
   maxOutputBytes: z.number().default(DEFAULT_MAX_OUTPUT_BYTES),
   guidanceOrder: z.number().default(DEFAULT_GUIDANCE_ORDER),
@@ -1159,6 +1378,7 @@ const START_SCHEMA = {
       enum: [
         "ok",
         "invalid-args",
+        "slot-in-use",
         "port-in-use",
         "kill-failed",
         "spawn-failed",
@@ -1175,6 +1395,20 @@ const START_SCHEMA = {
     readyPath: { type: "string", required: true },
     readyStatus: { type: "number" },
     priorStopped: { type: "array", required: true, items: { type: "number" } },
+    replaced: {
+      type: "array",
+      required: true,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          serverId: { type: "string", required: true },
+          port: { type: "number" },
+          ok: { type: "boolean", required: true },
+          reason: { type: "string", required: true },
+        },
+      },
+    },
     diagnostics: { type: "array", required: true, items: DIAGNOSTIC_ITEM },
     warnings: { type: "array", required: true, items: { type: "string" } },
     outputTail: { type: "string", description: "失败时的 stdout+stderr 尾巴" },
@@ -1192,6 +1426,39 @@ const SERVER_STATUS_SCHEMA = {
     uptimeMs: { type: "number", required: true },
     exitCode: { type: "number" },
     exitSignal: { type: "string" },
+    adopted: { type: "boolean", description: "来自状态文件、本进程没有句柄的实例" },
+  },
+};
+
+const SLOT_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    serverId: { type: "string", required: true },
+    port: { type: "number" },
+    baseUrl: { type: "string" },
+    pid: { type: "number" },
+    uptimeMs: { type: "number", required: true },
+  },
+};
+
+const SLOTS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    local: SLOT_SCHEMA,
+    production: SLOT_SCHEMA,
+  },
+};
+
+const USAGE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    local: { type: "number", required: true },
+    production: { type: "number", required: true },
+    running: { type: "number", required: true },
+    limitPerMode: { type: "number", required: true },
   },
 };
 
@@ -1202,6 +1469,10 @@ const STATUS_SCHEMA = {
     ok: { type: "boolean", required: true },
     reason: { type: "string", required: true },
     servers: { type: "array", required: true, items: SERVER_STATUS_SCHEMA },
+    slots: SLOTS_SCHEMA,
+    usage: USAGE_SCHEMA,
+    available: { type: "array", required: true, items: { type: "string" } },
+    statePath: { type: "string" },
     portOwners: {
       type: "array",
       required: true,
@@ -1416,9 +1687,22 @@ function renderPlaywright(args, value) {
 function renderStatus(args, value) {
   /** @type {string[]} */
   const lines = [value.reason];
+  if (value.slots !== undefined) {
+    for (const mode of MODES) {
+      const slot = value.slots?.[mode];
+      if (slot === null || slot === undefined) {
+        lines.push(`${mode} 槽位: 空闲`);
+        continue;
+      }
+      lines.push(`${mode} 槽位: ${slot.serverId} :${slot.port ?? "?"}  pid=${slot.pid ?? "?"}  已运行 ${slot.uptimeMs} ms`);
+    }
+    const free = Array.isArray(value.available) ? value.available : [];
+    lines.push(`剩余槽位: ${free.length > 0 ? free.join(" / ") : "无"}`);
+  }
   for (const server of value.servers ?? []) {
     const state = server.running === true ? "运行中" : `已退出(exit ${server.exitCode ?? "n/a"})`;
-    lines.push("", `${server.serverId}  ${server.mode}  :${server.port}  ${state}`);
+    const adopted = server.adopted === true ? "  [来自状态文件]" : "";
+    lines.push("", `${server.serverId}  ${server.mode}  :${server.port}  ${state}${adopted}`);
     if (server.baseUrl) lines.push(`  baseUrl: ${server.baseUrl}`);
     if (server.configPath) lines.push(`  config: ${server.configPath}`);
     if (server.cwd) lines.push(`  cwd: ${server.cwd}`);
@@ -2112,6 +2396,26 @@ async function stopRecord(record, timeoutMs) {
  * @param {AbortSignal} [spec.signal]
  * @returns {Promise<any>}
  */
+/**
+ * 停掉从状态文件接管的实例：本进程没有句柄，只能按 pid 结束进程树。
+ *
+ * @param {any} ctx
+ * @param {any} record
+ * @returns {Promise<{ok:boolean, reason:string, exitCode?:number|null, waitedMs:number}>}
+ */
+async function stopAdopted(ctx, record) {
+  const started = Date.now();
+  if (typeof record?.pid !== "number") {
+    return { ok: false, reason: "记录里没有 pid，无法结束进程：请手工处理后重试", waitedMs: 0 };
+  }
+  const killed = await killPids(ctx, [record.pid]);
+  if (killed.killed.includes(record.pid)) {
+    return { ok: true, reason: "已按 pid 结束进程树", waitedMs: Date.now() - started };
+  }
+  const reason = killed.failed.length > 0 ? killed.failed.join("；") : `PID ${record.pid} 结束失败`;
+  return { ok: false, reason, waitedMs: Date.now() - started };
+}
+
 async function startServer(ctx, spec) {
   /** @type {string[]} */
   const warnings = [...spec.warnings];
@@ -2306,14 +2610,15 @@ function describeServer(serverId, record) {
     mode: record.mode,
     port: record.port,
     pid: record.pid,
-    baseUrl: baseUrlOf(record.port),
+    baseUrl: typeof record.port === "number" ? baseUrlOf(record.port) : undefined,
     cwd: record.cwd,
     exePath: record.exePath,
     configPath: record.configPath,
     command: record.command,
-    uptimeMs: alive ? Date.now() - record.startedAt : 0,
+    uptimeMs: alive && typeof record.startedAt === "number" ? Date.now() - record.startedAt : 0,
     exitCode: record.exited === true && typeof record.exitCode === "number" ? record.exitCode : undefined,
     exitSignal: record.exited === true && typeof record.exitSignal === "string" ? record.exitSignal : undefined,
+    adopted: record.adopted === true ? true : undefined,
   });
 }
 
@@ -2321,7 +2626,7 @@ function describeServer(serverId, record) {
  * @param {any} ctx
  * @param {any} config
  */
-export function apply(ctx, config) {
+export async function apply(ctx, config) {
   const resolved = {
     exePath: trimOrEmpty(config?.exePath) || DEFAULT_EXE_PATH,
     defaultCwd: trimOrEmpty(config?.defaultCwd),
@@ -2339,11 +2644,90 @@ export function apply(ctx, config) {
     playwrightDefaultBaseUrl: trimOrEmpty(config?.playwrightDefaultBaseUrl).replace(/\/+$/, ""),
     playwrightTimeoutMs: positiveOrDefault(config?.playwrightTimeoutMs, PLAYWRIGHT_TIMEOUT_MS),
     playwrightKillTimeoutMs: positiveOrDefault(config?.playwrightKillTimeoutMs, PLAYWRIGHT_KILL_TIMEOUT_MS),
+    stateDir: trimOrEmpty(config?.stateDir),
+    instancesFile: trimOrEmpty(config?.instancesFile),
   };
   if (!Number.isFinite(resolved.guidanceOrder)) {
     throw new Error(`kitsu-supplement: guidanceOrder must be a finite number, got ${String(config?.guidanceOrder)}`);
   }
 
+  const os = await import("node:os");
+  const statePath = instancesPathOf({
+    stateDir: resolved.stateDir,
+    instancesFile: resolved.instancesFile,
+    tmpRoot: os.tmpdir(),
+  });
+  /** @type {string[]} */
+  const stateWarnings = [];
+
+  const saveInstances = async () => {
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    try {
+      await fs.mkdir(path.dirname(statePath), { recursive: true });
+      await fs.writeFile(statePath, `${JSON.stringify(serializeInstances(registry), null, 2)}\n`, "utf8");
+      return "";
+    } catch (error) {
+      const message = `实例快照写入失败（${statePath}）：${errorText(error)}`;
+      if (!stateWarnings.includes(message)) stateWarnings.push(message);
+      return message;
+    }
+  };
+
+  const loadInstances = async () => {
+    const fs = await import("node:fs/promises");
+    /** @type {string} */
+    let text;
+    try {
+      text = await fs.readFile(statePath, "utf8");
+    } catch (error) {
+      if (error?.code !== "ENOENT") stateWarnings.push(`实例快照读取失败（${statePath}）：${errorText(error)}`);
+      return;
+    }
+    const parsed = parseInstancesState(text);
+    if (parsed.problem !== undefined) {
+      stateWarnings.push(`实例快照被忽略（${statePath}）：${parsed.problem}`);
+      return;
+    }
+    /** @type {Map<number, number[]>} */
+    const livePidsByPort = new Map();
+    /** @type {number[]} */
+    const ports = [];
+    for (const item of parsed.records) {
+      if (item.exited === true) continue;
+      if (typeof item.port !== "number" || ports.includes(item.port)) continue;
+      ports.push(item.port);
+    }
+    for (const port of ports) {
+      const probe = await probePort(ctx, port);
+      if (probe.error === undefined) livePidsByPort.set(port, probe.owners);
+    }
+    for (const item of mergeInstancesState({ saved: parsed.records, live: registry, livePidsByPort })) {
+      if (registry.has(item.serverId)) continue;
+      registry.set(item.serverId, {
+        serverId: item.serverId,
+        handle: null,
+        mode: item.mode,
+        port: item.port,
+        pid: item.pid,
+        readyPath: resolved.readyPath,
+        startedAt: item.startedAt,
+        exited: item.exited === true,
+        exitCode: item.exited === true ? (item.exitCode ?? null) : null,
+        exitSignal: null,
+        exePath: item.exePath,
+        cwd: item.cwd,
+        configPath: undefined,
+        dbPath: item.dbPath,
+        command: item.command,
+        adopted: true,
+      });
+      const parsedId = /^kitsu-(\d+)$/.exec(item.serverId);
+      if (parsedId !== null) nextServerId = Math.max(nextServerId, Number.parseInt(parsedId[1], 10) + 1);
+    }
+  };
+
+  await loadInstances();
   const exists = async (path) => {
     const fs = await import("node:fs/promises");
     try {
@@ -2370,12 +2754,14 @@ export function apply(ctx, config) {
     for (const [id, record] of registry) {
       registry.delete(id);
       if (record.exited === true) continue;
+      if (record.handle === null || record.handle === undefined) continue;
       try {
         record.handle.terminate();
       } catch {
         // 卸载时尽力而为：未停稳的进程仍由子进程提供方的清理兜底
       }
     }
+    void saveInstances();
   });
 
   ctx.systemPrompt.section({
@@ -2387,7 +2773,7 @@ export function apply(ctx, config) {
         : [
             "`kitsu_server_start` 拉起本机 doodle_kitsu_supplement.exe HTTP 服务（测试前准备后端），返回的 `port` 就是传入的显式端口，就绪判定是对 `http://127.0.0.1:<port><readyPath>` 轮询 HTTP（任何状态码都算就绪，最多等 100 秒），测试脚本应引用返回的 `baseUrl` 而不是猜端口。",
             `\`port\` 必须显式传，且必须是 ${PORT_RANGE_TEXT} 之间的整数；端口被占用时工具默认失败并给出占用 PID，只有显式传 \`killExisting: true\` 才强杀。\`mode: \"local\"\`（或 \`local: true\`）会给进程加 \`--local\`，并把 \`dbPath\` 作为 \`--dbPath\` 传给服务端；不传 dbPath 时 local 分支落进内存库（\`:memory:\`），重启即丢。`,
-            "`kitsu_server_status` 查看本插件的实例与端口占用；`kitsu_server_stop` 停掉本插件拉起的实例；本插件不杀别人启动的进程。",
+            "`kitsu_server_status` 查看本插件的实例、每个模式的槽位占用与端口占用；`kitsu_server_stop` 停掉本插件拉起的实例（含 DSH 重启后从状态文件认领的）；本插件不杀别人启动的进程。local 与 production 各最多 1 个在跑实例，同模式重复启动直接返回 `slot-in-use`，要替换就显式传 `replaceExisting: true`（先停旧的，结果在 `replaced`）。",
             "`kitsu_server_sql` 对磁盘库执行 sql 文件或片段（填测试数据），写完运行中的进程立刻能查到，**不要**为它停服或重启；执行前不确定就先 `dryRun: true` 走一遍。",
             "`kitsu_playwright_test` 跑 test_js 里的 Playwright 用例：`args` 是 `playwright` 之后那串参数、原样转发（如 `[\"test\", \"face_capture.js\"]`、`[\"test\", \"--list\"]`）；`baseUrl: \"auto\"` 会接上唯一在跑的 local 实例，也可以直接传 `kitsu_server_start` 返回的 `baseUrl`。本工具不可并发：已经在跑时立刻返回 `busy`，不排队。",
           ].join(" "),
@@ -2408,7 +2794,9 @@ export function apply(ctx, config) {
         "exe's own directory, which holds its DLLs). When the port is already taken the call fails with code " +
         "`port-in-use` and reports the owning PIDs; pass `killExisting: true` only when those processes should be " +
         "force-killed first. The server keeps running after the call returns — it is tracked for `kitsu_server_status` " +
-        "and `kitsu_server_stop`, and terminated when the plugin unloads.",
+        "and `kitsu_server_stop`, and terminated when the plugin unloads. Each mode (local / production) allows " +
+        "at most ONE running instance: starting a second one in the same mode fails with `slot-in-use` unless " +
+        "`replaceExisting: true` is passed, which stops the previous instance first (reported in `replaced`).",
       parameters: {
         port: {
           type: "number",
@@ -2482,6 +2870,13 @@ export function apply(ctx, config) {
           description:
             "Force-kill whatever listens on `port` before starting. Default false: the call fails with `port-in-use`.",
         },
+        replaceExisting: {
+          type: "boolean",
+          description:
+            "Every mode allows at most ONE running instance. When the target mode is already taken the call fails with " +
+            "`slot-in-use`; pass `replaceExisting: true` to stop that instance first and start the new one in its place. " +
+            "Default false.",
+        },
       },
       output: { schema: START_SCHEMA, render: renderStart },
       isConcurrencySafe() {
@@ -2496,6 +2891,37 @@ export function apply(ctx, config) {
           });
         }
         const spec = plan.spec;
+        const replaced = [];
+        const slot = validateSlotRequest({ records: registry, mode: spec.mode, replaceExisting: args.replaceExisting === true });
+        if (slot.kind === "occupied") {
+          return startFailure(spec, "slot-in-use", slot.problem, {
+            serverId: slot.holderId,
+            replaced,
+            diagnostics: [{ severity: "error", code: "slot/in-use", message: slot.problem }],
+            warnings: [...stateWarnings],
+          });
+        }
+        if (slot.kind === "replace" && slot.holderId !== undefined) {
+          const holder = registry.get(slot.holderId);
+          if (holder !== undefined) {
+            const stopped =
+              holder.handle === null || holder.handle === undefined
+                ? await stopAdopted(ctx, holder)
+                : await stopRecord(holder, resolved.stopTimeoutMs);
+            replaced.push({ serverId: slot.holderId, port: holder.port, ok: stopped.ok, reason: stopped.reason });
+            if (!stopped.ok) {
+              const detail = `替换 ${spec.mode} 模式的旧实例 ${slot.holderId} 失败：${stopped.reason}`;
+              return startFailure(spec, "kill-failed", detail, {
+                serverId: slot.holderId,
+                replaced,
+                diagnostics: [{ severity: "error", code: "kill/failed", message: detail }],
+                warnings: [...stateWarnings],
+              });
+            }
+            registry.delete(slot.holderId);
+            await saveInstances();
+          }
+        }
         const serverId = allocateServerId();
         const configPath = await writeConfigFile(serverId, spec.configValues);
         const argv = buildArgv({
@@ -2507,7 +2933,7 @@ export function apply(ctx, config) {
           extraArgs: spec.extraArgs,
         });
         try {
-          return await startServer(ctx, {
+          const result = await startServer(ctx, {
             serverId,
             exePath: spec.exePath,
             argv,
@@ -2522,9 +2948,11 @@ export function apply(ctx, config) {
             readyTimeoutMs: resolved.readyTimeoutMs,
             stopTimeoutMs: resolved.stopTimeoutMs,
             maxOutputBytes: resolved.maxOutputBytes,
-            warnings: startWarnings(spec),
+            warnings: [...startWarnings(spec), ...stateWarnings],
             signal: exec.signal,
           });
+          if (result?.ok === true) await saveInstances();
+          return { ...result, replaced, statePath };
         } finally {
           const fs = await import("node:fs/promises");
           await fs.unlink(configPath).catch(() => {});
@@ -2554,7 +2982,7 @@ export function apply(ctx, config) {
         const ports = [];
         for (const [id, record] of registry) {
           servers.push(describeServer(id, record));
-          if (record.exited !== true && !ports.includes(record.port)) ports.push(record.port);
+          if (record.exited !== true && typeof record.port === "number" && !ports.includes(record.port)) ports.push(record.port);
         }
         const extra = parsePort(args.port);
         if (extra !== undefined && !ports.includes(extra)) ports.push(extra);
@@ -2573,10 +3001,37 @@ export function apply(ctx, config) {
           }
           portOwners.push(entry);
         }
+        const summary = slotSummary(registry);
+        for (const duplicate of summary.duplicates) {
+          diagnostics.push({
+            severity: "error",
+            code: "slot/duplicate",
+            message:
+              `${duplicate.mode} 模式有 ${duplicate.serverIds.length} 个实例同时在跑（${duplicate.serverIds.join(", ")}），` +
+              "超过每模式 1 个的上限：先 kitsu_server_stop 停掉多余的，这里只报告、不自动杀。",
+          });
+        }
+        for (const warning of stateWarnings) {
+          diagnostics.push({ severity: "warning", code: "state/read-failed", message: warning });
+        }
         const running = servers.filter((server) => server.running === true).length;
+        const describeSlot = (mode) => {
+          const slot = summary.slots[mode];
+          if (summary.duplicates.some((item) => item.mode === mode)) return `${mode} 重复占用`;
+          return slot === null || slot === undefined ? `${mode} 空闲` : `${mode} ${slot.serverId}(:${slot.port ?? "?"})`;
+        };
+        const availableText = summary.available.length === 0 ? "没有空位" : `还能起 ${summary.available.join(" / ")}`;
+        const reason =
+          servers.length === 0
+            ? `本插件没有记录任何实例。每模式最多 1 个，${availableText}。`
+            : `记录 ${servers.length} 个实例，${running} 个在运行：${describeSlot("local")}，${describeSlot("production")}，${availableText}。`;
         return {
-          ok: true,
-          reason: servers.length === 0 ? "本插件没有记录任何实例。" : `本插件记录 ${servers.length} 个实例，${running} 个在运行。`,
+          ok: summary.duplicates.length === 0,
+          reason,
+          slots: summary.slots,
+          usage: summary.usage,
+          available: summary.available,
+          statePath,
           servers,
           portOwners,
           diagnostics,
@@ -2610,7 +3065,7 @@ export function apply(ctx, config) {
         for (const [id, record] of [...registry]) {
           if (wantedId !== "" && id !== wantedId) continue;
           if (wantedId === "" && wantedPort !== undefined && record.port !== wantedPort) continue;
-          const result = await stopRecord(record, resolved.stopTimeoutMs);
+          const result = record.handle === null || record.handle === undefined ? await stopAdopted(ctx, record) : await stopRecord(record, resolved.stopTimeoutMs);
           stopped.push({
             serverId: id,
             pid: record.pid,
@@ -2630,6 +3085,7 @@ export function apply(ctx, config) {
         if (stopped.length === 0) {
           diagnostics.push({ severity: "info", code: "stop/nothing", message: "没有匹配的实例。" });
         }
+        await saveInstances();
         return sanitizeForJson({
           ok: !diagnostics.some((item) => item.severity === "error"),
           reason: stopped.length === 0 ? "没有匹配的实例。" : `已处理 ${stopped.length} 个实例。`,
@@ -2754,7 +3210,6 @@ export function apply(ctx, config) {
       },
     }),
   );
-}
 
   ctx.tools.register(
     defineTool({
@@ -2870,6 +3325,7 @@ export function apply(ctx, config) {
       },
     }),
   );
+}
 
 //#endregion
 

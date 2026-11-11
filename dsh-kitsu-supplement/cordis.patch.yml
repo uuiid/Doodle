@@ -12,6 +12,8 @@
 #   readyTimeoutMs      就绪等待预算（默认 30000）
 #   stopTimeoutMs       终止后等待进程退出的预算（默认 5000）
 #   maxOutputBytes      stdout / stderr 各自的内存缓冲上限（默认 8 MiB）
+#   stateDir            实例快照目录；空表示 %TEMP%\dsh-kitsu-supplement
+#   instancesFile       实例快照文件名；空表示 <stateDir>\instances.json，给绝对路径就整个覆盖
 #   guidanceOrder       系统提示词里本工具指引段的排序值（默认 1396，紧邻 cmake / ue 段）
 #   playwrightCwd       kitsu_playwright_test 的默认 cwd（默认 E:\Doodle\test_js）
 #   playwrightNodePath  跑 playwright 用的 node（默认 node，从 PATH 取）
@@ -19,6 +21,10 @@
 #   playwrightDefaultBaseUrl  没给 baseUrl 且父进程也没有 DOODLE_BASE_URL 时的兜底地址；空表示不注入
 #   playwrightTimeoutMs 单次 playwright 运行的整体预算（默认 900000，超时 terminate 后结束进程树）
 #   playwrightKillTimeoutMs  终止后等待退出的预算（默认 5000）
+#
+# 每模式（local / production）最多一个在跑实例：同模式重复启动返回 slot-in-use，除非本次显式传
+# replaceExisting: true（先停旧的，结果在 replaced）。实例表落到 instancesFile，DSH 重启后仍能认领
+# （没有句柄，按 pid 停），所以状态文件决定下一次启动会不会被判成"槽位已占"。
 #
 # kitsu_playwright_test 的 args 是 playwright 之后那串参数，原样转发；同一时刻只允许一个运行，
 # 第二次调用立即返回 busy（不排队），因为多个运行会互相覆盖 test-results / playwright-report。

@@ -524,6 +524,164 @@ test("超时与取消优先于退出码", () => {
   eq(P.interpretPlaywrightExit({ exitCode: 0, summary: clean, failures: [], aborted: true }), "cancelled");
   eq(P.interpretPlaywrightExit({ exitCode: 0, summary: clean, failures: [], timedOut: false, aborted: false }), "ok");
 });
+process.stdout.write(`== 槽位规则 / 实例快照 ==\n`);
+
+const rec = (id, mode, extra = {}) => [id, { mode, port: 50030 + id.length, pid: 1000 + id.length, startedAt: Date.now() - 1000, ...extra }];
+
+process.stdout.write(`groupRunningByMode\n`);
+test("按模式分组，已退出与非法模式被忽略", () => {
+  const groups = P.groupRunningByMode(new Map([rec("kitsu-1", "local"), rec("kitsu-2", "production"), rec("kitsu-3", "local", { exited: true }), rec("kitsu-4", "weird")]));
+  eq(JSON.stringify([...groups.get("local")]), JSON.stringify(["kitsu-1"]));
+  eq(JSON.stringify([...groups.get("production")]), JSON.stringify(["kitsu-2"]));
+});
+test("空表与 undefined 都给两个空槽", () => {
+  for (const input of [new Map(), undefined]) {
+    const groups = P.groupRunningByMode(input);
+    eq(groups.get("local").length, 0);
+    eq(groups.get("production").length, 0);
+  }
+});
+
+process.stdout.write(`slotSummary\n`);
+test("空表：两个模式都空闲、可用列表全给", () => {
+  const summary = P.slotSummary(new Map());
+  eq(summary.usage.running, 0);
+  eq(summary.usage.limitPerMode, 1);
+  eq(JSON.stringify(summary.available), JSON.stringify(["production", "local"]));
+  eq(summary.slots.local, null);
+  eq(summary.slots.production, null);
+  eq(summary.duplicates.length, 0);
+});
+test("local + production 各一个：都占着，没有空位", () => {
+  const summary = P.slotSummary(new Map([rec("kitsu-1", "local"), rec("kitsu-2", "production")]));
+  eq(summary.usage.running, 2);
+  eq(summary.usage.local, 1);
+  eq(summary.usage.production, 1);
+  eq(summary.available.length, 0);
+  eq(summary.slots.local.serverId, "kitsu-1");
+  eq(summary.slots.production.serverId, "kitsu-2");
+  eq(summary.slots.local.baseUrl, `http://127.0.0.1:${summary.slots.local.port}`);
+  eq(summary.duplicates.length, 0);
+});
+test("同模式两个实例被记为 duplicate，且该模式不算占着", () => {
+  const summary = P.slotSummary(new Map([rec("kitsu-1", "local"), rec("kitsu-2", "local")]));
+  eq(summary.usage.local, 2);
+  eq(summary.slots.local, null);
+  eq(summary.duplicates.length, 1);
+  eq(summary.duplicates[0].mode, "local");
+  eq(JSON.stringify(summary.duplicates[0].serverIds), JSON.stringify(["kitsu-1", "kitsu-2"]));
+  eq(JSON.stringify(summary.available), JSON.stringify(["production"]));
+});
+test("已退出实例不占槽位", () => {
+  const summary = P.slotSummary(new Map([rec("kitsu-1", "production", { exited: true })]));
+  eq(summary.usage.running, 0);
+  eq(JSON.stringify(summary.available), JSON.stringify(["production", "local"]));
+});
+
+process.stdout.write(`findSlotHolder / validateSlotRequest\n`);
+test("找占位者；空闲与非法模式返回 undefined", () => {
+  const records = new Map([rec("kitsu-7", "production")]);
+  eq(P.findSlotHolder(records, "production"), "kitsu-7");
+  eq(P.findSlotHolder(records, "local"), undefined);
+  eq(P.findSlotHolder(records, "nope"), undefined);
+});
+test("空闲时直接放行", () => {
+  eq(P.validateSlotRequest({ records: new Map(), mode: "local" }).kind, "free");
+});
+test("重复启动被拒且给出停指纹提示", () => {
+  const verdict = P.validateSlotRequest({ records: new Map([rec("kitsu-7", "local")]), mode: "local" });
+  eq(verdict.kind, "occupied");
+  eq(verdict.holderId, "kitsu-7");
+  eq(verdict.holderPort, 50037);
+  ok(verdict.problem.includes("kitsu-7"));
+  ok(verdict.problem.includes("replaceExisting"));
+});
+test("replaceExisting=true 时转为替换，并带上原实例信息", () => {
+  const verdict = P.validateSlotRequest({ records: new Map([rec("kitsu-7", "local")]), mode: "local", replaceExisting: true });
+  eq(verdict.kind, "replace");
+  eq(verdict.holderId, "kitsu-7");
+  ok(typeof verdict.holderUptimeMs === "number");
+});
+test("另一个模式占着不影响本模式", () => {
+  eq(P.validateSlotRequest({ records: new Map([rec("kitsu-7", "local")]), mode: "production" }).kind, "free");
+});
+
+process.stdout.write(`instancesPathOf\n`);
+test("默认落在临时目录的 instances.json", () => {
+  eq(P.instancesPathOf({ stateDir: "", instancesFile: "", tmpRoot: "C:\\Temp" }), "C:\\Temp\\instances.json");
+  eq(P.instancesPathOf({ tmpRoot: "C:\\Temp" }), "C:\\Temp\\instances.json");
+});
+test("stateDir 覆盖目录；相对 instancesFile 拼在 stateDir 下；绝对路径整体覆盖", () => {
+  eq(P.instancesPathOf({ stateDir: "E:\\dsh-state", tmpRoot: "C:\\Temp" }), "E:\\dsh-state\\instances.json");
+  eq(P.instancesPathOf({ stateDir: "E:\\dsh-state", instancesFile: "kitsu.json", tmpRoot: "C:\\Temp" }), "E:\\dsh-state\\kitsu.json");
+  eq(P.instancesPathOf({ stateDir: "E:\\dsh-state", instancesFile: "D:\\other\\k.json", tmpRoot: "C:\\Temp" }), "D:\\other\\k.json");
+});
+
+process.stdout.write(`serializeInstances / parseInstancesState\n`);
+test("序列化只留元数据，版本号与 savedAt 就位", () => {
+  const dumped = P.serializeInstances(new Map([rec("kitsu-1", "local", { handle: {}, output: "x" })]));
+  eq(dumped.version, 1);
+  ok(typeof dumped.savedAt === "number");
+  eq(dumped.servers.length, 1);
+  eq(dumped.servers[0].serverId, "kitsu-1");
+  eq("handle" in dumped.servers[0], false);
+  eq("output" in dumped.servers[0], false);
+});
+test("解析再序列化能还原关键字段", () => {
+  const original = new Map([rec("kitsu-1", "local", { dbPath: "E:\\a.db", exited: true, exitCode: 3 })]);
+  const parsed = P.parseInstancesState(JSON.stringify(P.serializeInstances(original)));
+  eq(parsed.problem, undefined);
+  eq(parsed.records.length, 1);
+  eq(parsed.records[0].mode, "local");
+  eq(parsed.records[0].dbPath, "E:\\a.db");
+  eq(parsed.records[0].exited, true);
+  eq(parsed.records[0].exitCode, 3);
+});
+test("坏快照都给 problem 而不是抛异常", () => {
+  ok(P.parseInstancesState("{not json").problem.includes("JSON"));
+  ok(P.parseInstancesState("[]").problem.includes("对象"));
+  ok(P.parseInstancesState(JSON.stringify({ version: 99, servers: [] })).problem.includes("版本"));
+  ok(P.parseInstancesState(JSON.stringify({ version: 1 })).problem.includes("servers"));
+});
+test("解析丢掉坏条目与非对象元素", () => {
+  const text = JSON.stringify({ version: 1, servers: [null, { serverId: "" }, { serverId: "kitsu-9", mode: "weird", port: "50030" }] });
+  const parsed = P.parseInstancesState(text);
+  eq(parsed.records.length, 1);
+  eq(parsed.records[0].serverId, "kitsu-9");
+  eq(parsed.records[0].mode, "production");
+  eq(parsed.records[0].port, 50030);
+});
+
+process.stdout.write(`instanceLooksAlive / mergeInstancesState\n`);
+test("端口上查不到该 pid 就算死了", () => {
+  const byPort = new Map([[50030, [111]]]);
+  eq(P.instanceLooksAlive({ port: 50030, pid: 111 }, byPort), true);
+  eq(P.instanceLooksAlive({ port: 50030, pid: 222 }, byPort), false);
+  eq(P.instanceLooksAlive({ port: 50031, pid: 111 }, byPort), false);
+  eq(P.instanceLooksAlive({ pid: 111 }, byPort), false);
+  eq(P.instanceLooksAlive({ port: 50030, pid: 111 }, new Map()), false);
+});
+test("合并时实时记录优先；快照里查不到的标 exited", () => {
+  const saved = [
+    { serverId: "kitsu-1", mode: "local", port: 50030, pid: 111 },
+    { serverId: "kitsu-2", mode: "production", port: 50031, pid: 222 },
+    { serverId: "kitsu-3", mode: "local", port: 50032, pid: 333 },
+  ];
+  const live = new Map([["kitsu-1", { mode: "local", port: 50030 }]]);
+  const merged = P.mergeInstancesState({ saved, live, livePidsByPort: new Map([[50031, [222]]]) });
+  eq(merged.length, 2);
+  eq(merged[0].serverId, "kitsu-2");
+  eq(merged[0].exited, false);
+  eq(merged[1].serverId, "kitsu-3");
+  eq(merged[1].exited, true);
+});
+test("快照里已 exited 的保持 exited（不再探测）", () => {
+  const saved = [{ serverId: "kitsu-5", mode: "local", port: 50030, pid: 111, exited: true }];
+  const merged = P.mergeInstancesState({ saved, live: new Map(), livePidsByPort: new Map([[50030, [111]]]) });
+  eq(merged.length, 1);
+  eq(merged[0].exited, true);
+});
+
 process.stdout.write(`\n${passed} passed, ${failed} failed\n`);
 if (failed > 0) {
   for (const failure of failures) process.stdout.write(`  - ${failure.name}: ${failure.error.stack}\n`);
