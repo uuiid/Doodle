@@ -26,10 +26,12 @@
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <memory>
 #include <spdlog/details/log_msg.h>
 #include <string>
+#include <vector>
 
 #include "face_capture.h"
 
@@ -131,35 +133,34 @@ std::shared_ptr<server_task_info> face_capture_transcode_tasks::enqueue(const uu
   l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
 
   std::lock_guard<std::mutex> _(mtx_);
-  pending_.emplace_back(l_ptr);
-  infos_[in_preview_id] = l_ptr;
+  tasks_.emplace_back(l_ptr);
   return l_ptr;
 }
 
 std::shared_ptr<server_task_info> face_capture_transcode_tasks::find(const uuid_t& in_preview_id) const {
   std::lock_guard<std::mutex> _(mtx_);
-  auto l_itr = infos_.find(in_preview_id);
-  if (l_itr == infos_.end()) return nullptr;
-  return l_itr->second;
+  auto l_itr = std::ranges::find_if(tasks_, [&in_preview_id](const auto& in_ptr) {
+    return in_ptr && in_ptr->uuid_id_ == in_preview_id;
+  });
+  if (l_itr == tasks_.end()) return nullptr;
+  return *l_itr;
 }
 
 std::vector<std::shared_ptr<server_task_info>> face_capture_transcode_tasks::find_all() const {
   std::lock_guard<std::mutex> _(mtx_);
-  std::vector<std::shared_ptr<server_task_info>> l_result{};
-  l_result.reserve(infos_.size());
-  for (const auto& [_, l_ptr] : infos_) {
-    if (l_ptr) l_result.emplace_back(l_ptr);
-  }
-  return l_result;
+  return tasks_;
 }
 
 void face_capture_transcode_tasks::start_next(const std::string& in_token) {
   std::shared_ptr<server_task_info> l_ptr{};
   {
     std::lock_guard<std::mutex> _(mtx_);
-    if (running_.has_value() || pending_.empty()) return;
-    l_ptr    = pending_.front();
-    pending_.pop_front();
+    if (running_.has_value()) return;
+    auto l_itr = std::ranges::find_if(tasks_, [](const auto& in_ptr) {
+      return in_ptr && in_ptr->status_ == server_task_info_status::submitted;
+    });
+    if (l_itr == tasks_.end()) return;
+    l_ptr    = *l_itr;
     running_ = l_ptr->uuid_id_;
   }
   start_task(shared_from_this(), l_ptr, in_token);

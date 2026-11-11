@@ -17,8 +17,6 @@
 #include <boost/uuid/uuid.hpp>
 
 #include <cstdint>
-#include <deque>
-#include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -58,8 +56,7 @@ class face_capture_transcode_tasks : public std::enable_shared_from_this<face_ca
 
  private:
   mutable std::mutex mtx_{};
-  std::deque<std::shared_ptr<server_task_info>> pending_{};
-  std::map<boost::uuids::uuid, std::shared_ptr<server_task_info>> infos_{};
+  std::vector<std::shared_ptr<server_task_info>> tasks_{};
   std::optional<boost::uuids::uuid> running_{};
 };
 
