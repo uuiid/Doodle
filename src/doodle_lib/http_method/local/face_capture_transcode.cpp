@@ -16,6 +16,7 @@
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/exe_warp/face_capture_transcode.h>
+#include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 
 #include <boost/asio/co_spawn.hpp>
@@ -87,6 +88,7 @@ void start_task(
 
   auto l_arg           = std::make_shared<face_capture_transcode_arg>();
   l_arg->preview_id_   = in_task_info->uuid_id_;
+  l_arg->ue_project_   = ue_exe_ns::find_ue_project_file(core_set::get_set().ue4_path);
   l_arg->kitsu_client_ = l_client;
 
   auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
@@ -176,6 +178,11 @@ void face_capture_transcode_tasks::finish(const uuid_t& in_preview_id, const std
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_transcode, post) {
   DOODLE_CHICK_HTTP(FSys::exists(session_dir_of(preview_id_) / "take.mp4"), not_found, "take.mp4 不存在");
+  auto l_uproject = ue_exe_ns::find_ue_project_file(core_set::get_set().ue4_path);
+  DOODLE_CHICK_HTTP(
+      !l_uproject.empty(), unprocessable_entity, "UE 路径 {} 下找不到 .uproject 文件",
+      core_set::get_set().ue4_path.generic_string()
+  );
 
   auto l_ptr = tasks_->enqueue(preview_id_);
   tasks_->start_next(token_);

@@ -24,6 +24,8 @@ class DOODLELIB_API face_capture_transcode_arg : public async_task {
  public:
   uuid preview_id_{};
 
+  FSys::path ue_project_{};
+
   std::shared_ptr<kitsu::kitsu_client> kitsu_client_{};
 
   constexpr static std::string_view k_name{"face_capture_transcode"};

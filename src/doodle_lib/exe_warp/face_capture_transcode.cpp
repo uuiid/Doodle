@@ -6,7 +6,6 @@
 
 #include <doodle_core/exception/exception.h>
 
-#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/face_capture/capture_session.h>
 #include <doodle_lib/core/face_capture/face_capture_types.h>
 #include <doodle_lib/core/file_sys.h>
@@ -82,10 +81,12 @@ std::string read_log_code(const FSys::path& in_out_dir) {
 
 void from_json(const nlohmann::json& in_json, face_capture_transcode_arg& out_obj) {
   in_json.at("preview_id").get_to(out_obj.preview_id_);
+  in_json.at("ue_project").get_to(out_obj.ue_project_);
 }
 
 void to_json(nlohmann::json& in_json, const face_capture_transcode_arg& out_obj) {
-  in_json["preview_id"] = out_obj.preview_id_;
+  in_json["preview_id"]  = out_obj.preview_id_;
+  in_json["ue_project"]  = out_obj.ue_project_;
 }
 
 boost::asio::awaitable<void> face_capture_transcode_arg::run() {
@@ -113,13 +114,10 @@ boost::asio::awaitable<void> face_capture_transcode_arg::run() {
 
   FSys::create_directories(l_curves_dir);
 
-  const auto l_uproject = ue_exe_ns::find_ue_project_file(core_set::get_set().ue4_path);
-  DOODLE_CHICK(
-      !l_uproject.empty(), "UE 路径 {} 下找不到 .uproject 文件", core_set::get_set().ue4_path.generic_string()
-  );
+  DOODLE_CHICK(!ue_project_.empty(), "面部捕捉转码任务缺少 ue_project, 无法运行 UE 解算");
 
   const auto l_ue_arg = std::vector<std::string>{
-      l_uproject.generic_string(),
+      ue_project_.generic_string(),
       "-run=MetaHumanFace",
       fmt::format(R"(-FramesDir="{}")", l_frames_dir.generic_string()),
       fmt::format(R"(-OutDir="{}")", l_curves_dir.generic_string()),
