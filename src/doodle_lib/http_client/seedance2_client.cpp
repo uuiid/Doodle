@@ -54,9 +54,23 @@ ai_client_base::request_info_t seedance2_client::collect_request_info(const nloh
 boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::submit_task(
     const doodle::seedance2::task& in_task
 ) {
-  auto l_ip  = co_await get_ip_str();
+  auto l_ip = co_await get_ip_str();
+
+  auto l_request = in_task.data_request_;
+  if (l_request.value("model", std::string{}).starts_with("doubao-seedance-2-5"))
+    for_each_media_url(l_request, [](nlohmann::json& in_url) {
+      if (!in_url.is_string()) return;
+      auto l_value = in_url.get<std::string>();
+      constexpr std::string_view k_pictures{"/api/seedance2/pictures/"};
+      constexpr std::string_view k_pictures_8n_1{"/api/seedance2/pictures_8n_1/"};
+      const auto l_path =
+          std::string_view{l_value}.substr(l_value.size() < k_pictures.size() ? l_value.size() : k_pictures.size());
+      const auto l_is_video = l_value.ends_with(".mp4") || l_value.ends_with(".mov") || l_value.ends_with(".avi");
+      if (l_value.starts_with(k_pictures) && l_is_video) in_url = fmt::format("{}{}", k_pictures_8n_1, l_path);
+    });
+
   auto l_req = add_ip_to_req(
-      in_task.data_request_, l_ip, url_sign_secret_,
+      l_request, l_ip, url_sign_secret_,
       in_task.user_id_.is_nil() ? std::string{} : boost::uuids::to_string(in_task.user_id_)
   );
 
