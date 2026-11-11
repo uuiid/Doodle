@@ -146,27 +146,27 @@ test("extraConfig 必须是对象", () => {
 });
 
 process.stdout.write("buildArgv\n");
-test("local 模式顺序：--config --root --local --port", () => {
+test("local 模式顺序：--config= --root= --local --port=", () => {
   eq(
     P.buildArgv({ mode: "local", port: 50123, configPath: "C:\\t\\c.json", root: "D:\\data", extraArgs: ["--foo"] }),
-    ["--config", "C:\\t\\c.json", "--root", "D:\\data", "--local", "--port", "50123", "--foo"],
+    ["--config=C:\\t\\c.json", "--root=D:\\data", "--local", "--port=50123", "--foo"],
   );
 });
 test("production 模式不带 --local", () => {
-  eq(P.buildArgv({ mode: "production", port: 50123, configPath: "c.json" }), ["--config", "c.json", "--port", "50123"]);
+  eq(P.buildArgv({ mode: "production", port: 50123, configPath: "c.json" }), ["--config=c.json", "--port=50123"]);
 });
 test("root 为空时不写 --root", () => {
-  eq(P.buildArgv({ mode: "production", port: 50123, root: "" }), ["--port", "50123"]);
+  eq(P.buildArgv({ mode: "production", port: 50123, root: "" }), ["--port=50123"]);
 });
-test("开关一律两参数，绝不出现 --key=value（argh 只把 = 形式记进 params_）", () => {
+test("带值开关一律单参数 --key=value（两个 argv 项会让值掉进位置参数）", () => {
   const argv = P.buildArgv({ mode: "local", port: 50030, configPath: "C:\\a b\\c.json", root: "D:\\x y" });
-  eq(argv.filter((item) => item.startsWith("--") && item.includes("=")), []);
-  eq(argv, ["--config", "C:\\a b\\c.json", "--root", "D:\\x y", "--local", "--port", "50030"]);
+  eq(argv.filter((item) => item === "--root" || item === "--port" || item === "--config"), []);
+  eq(argv, ["--config=C:\\a b\\c.json", "--root=D:\\x y", "--local", "--port=50030"]);
 });
-test("dbPath 以 --dbPath 两个 argv 项传入，且在 --local 之前", () => {
+test("dbPath 以 --dbPath= 单参数传入，且在 --local 之前", () => {
   eq(
     P.buildArgv({ mode: "local", port: 50123, dbPath: "E:\\db\\test.sqlite" }),
-    ["--dbPath", "E:\\db\\test.sqlite", "--local", "--port", "50123"],
+    ["--dbPath=E:\\db\\test.sqlite", "--local", "--port=50123"],
   );
 });
 test("extraArgs 不允许重复 --dbPath", () => {

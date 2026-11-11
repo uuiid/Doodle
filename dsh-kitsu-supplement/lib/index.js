@@ -17,8 +17,10 @@
  * 3) 固定端口先探占用。默认失败并给出占用 PID，只有显式 killExisting:true 才强杀。
  * 4) --config 由插件生成。服务端 config 解析失败会 return true 且**不启动 HTTP**，
  *    进程可能一闪而过，所以 JSON 只由插件写，模型的额外字段并进 extraConfig。
- *    开关一律写成 `--key <value>` 两个 argv 项：argh 把 `--key=value` 只记进 params_，
- *    而服务端用 arg_({...}) 查 flags_，`--config=x` 会被静默当成没给。
+ *    带值开关一律写成 `--key=value` 单个 argv 项（与 .vscode/launch.json 的用法一致）：
+ *    argh 把 `--key=value` 记进 params_，`arg_({"key"})` 先查 params_ 再查 flags_，能取到值；
+ *    而 `--key value` 里只有 `--key` 是选项、value 掉进位置参数，arg_ 得到空串——
+ *    服务端 `--port` 空串会 lexical_cast 抛异常（监听之前就退出），`--root` 空串会把会话目录落到 cwd。
  * 5) cwd 默认取 exe 所在目录（exe 依赖同目录的 dll）；运行路径也可由参数/配置显式传入。
  * 6) 不用服务端的 POST /api/doodle/stop-server：它要 admin JWT，且连接数不为 0 时拒绝退出
  *    （base_data.cpp:343-366），测试机上的连接数恰恰不为 0。这里直接终止进程树并等停稳。
@@ -225,10 +227,11 @@ function buildConfig({ defaults, port, extraConfig, overrides }) {
 
 /**
  * 按服务端的解析顺序拼 argv（可执行文件本身不在 argv 里）：
- * `--config <json>` -> `--root <path>` -> `--dbPath <path>` -> `--local` -> `--port <n>` -> extraArgs。
+ * `--config=<json>` -> `--root=<path>` -> `--dbPath=<path>` -> `--local` -> `--port=<n>` -> extraArgs。
  *
- * 服务端用 argh 解析，`--key=value` 只会落进 params_（argh.h:196-204），
- * 而 arg_({...}) / arg_[...] 查的是 flags_，所以 `--config=x` 会被当成"没给"。
+ * 服务端用 argh 解析，`--key value` 里的 value 只会落进位置参数（argh.h:236-240），
+ * 而 arg_({...}) 的 operator() 先查 params_ 再查 flags_（argh.h:345-364），
+ * 所以带值开关必须写成 `--key=value`（argh.h:196-204 记进 params_）才拿得到值。
  *
  * @param {{mode:string, port:number, configPath?:string, root?:string, dbPath?:string, extraArgs?:string[]}} spec
  * @returns {string[]}
@@ -236,11 +239,11 @@ function buildConfig({ defaults, port, extraConfig, overrides }) {
 function buildArgv({ mode, port, configPath, root, dbPath, extraArgs }) {
   /** @type {string[]} */
   const argv = [];
-  if (configPath) argv.push("--config", configPath);
-  if (root) argv.push("--root", root);
-  if (dbPath) argv.push("--dbPath", dbPath);
+  if (configPath) argv.push(`--config=${configPath}`);
+  if (root) argv.push(`--root=${root}`);
+  if (dbPath) argv.push(`--dbPath=${dbPath}`);
   if (mode === "local") argv.push("--local");
-  argv.push("--port", String(port));
+  argv.push(`--port=${port}`);
   for (const item of extraArgs ?? []) argv.push(item);
   return argv;
 }
