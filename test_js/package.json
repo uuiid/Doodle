@@ -11,7 +11,8 @@
     "test:grep": "playwright test --grep",
     "test:seedance2": "playwright test seedance2.js",
     "test:canvas": "playwright test canvas.js",
-    "test:ai_light": "playwright test ai_light.js"
+    "test:ai_light": "playwright test ai_light.js",
+    "test:face_capture": "playwright test face_capture.js"
   },
   "author": "",
   "license": "ISC",

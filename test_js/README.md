@@ -20,6 +20,8 @@ npx playwright show-report             # 打开上次的 HTML 报告
 
 对应的 npm 脚本：`npm test`、`npm run test:list`、`npm run test:ui`、`npm run test:report`。
 
+面部捕捉用例需要 `--local` 服务端与样本视频，见下文「面部捕捉」一节（`npm run test:face_capture`）。
+
 ## 配置
 
 `playwright.config.js` 里 `baseURL` 取自环境变量 `DOODLE_BASE_URL`，默认
@@ -46,6 +48,13 @@ npx playwright show-report             # 打开上次的 HTML 报告
 | `SOCKET_IO_CONNECTION_COUNT` | `20` | socket.io 并发连接数 |
 | `DISTRIBUTED_WORKER_COUNT` | `20` | 分布式工作机并发连接数 |
 | `DISTRIBUTED_WORK_URL` | 由 `DOODLE_BASE_URL` 推导 | 工作机 WebSocket 地址 |
+| `DOODLE_ROOT` | `<仓库>/build/root` | 服务端 `--root` 指向的目录，面部捕捉据此定位会话目录 |
+| `FACE_CAPTURE_SESSIONS_DIR` | `$DOODLE_ROOT/face_capture/sessions` | 面部捕捉会话目录（测试往这里铺样本）|
+| `FACE_CAPTURE_SAMPLE` | `build/shi_ping/MySlate_20/front-1-wide.mp4` | 面部捕捉用例用的样本视频 |
+| `FACE_CAPTURE_SEED_DIR` | `build/shi_ping/MySlate_20_face_test` | 提供 `face_curves.dhfc` 的种子目录 |
+| `FACE_CAPTURE_UE_PROJECT` | `E:\ue_main\ue_main.uproject` | 转码提交任务时 `ue_project` 指向的工程 |
+| `FACE_CAPTURE_WAIT_MS` | `20000` | 转码用例轮询终态的最长时间 |
+| `FACE_CAPTURE_TRANSCODE_E2E` | 未设置 | 设为 `1` 时要求转码真的解算成功（`completed`）|
 
 **依赖本机文件的用例在文件缺失时会自动 `test.skip()`**，而不是硬失败——所以整套测试
 可以在没有这些素材的机器上跑完，只会跳过相应条目。
@@ -68,6 +77,47 @@ npx playwright show-report             # 打开上次的 HTML 报告
 | `animation_train.js` | AI 动画训练（独立端口 `:50024`） |
 | `socket_io.js` | socket.io 连接与并发连接 |
 | `distributed_work.js` | 分布式工作机 WebSocket 上线与回执 |
+| `face_capture.js` | 面部捕捉（仅 local 路由）：设备 / 录制列表与详情 / 视频与动捕曲线下载 / 转码任务 / WebSocket stream / 鉴权 |
+
+### 面部捕捉（`face_capture.js`）
+
+这九条路由**只**注册在 `create_kitsu_local_route()`（`face_capture.h`），生产服务没有，
+所以必须先以 `--local` 拉起服务端，并让它与测试跑在同一台机器上（用例直接往会话目录写文件）：
+
+```powershell
+# 1. 起服务（dsh-kitsu-supplement 插件；root 与下面的 DOODLE_ROOT 保持一致）
+kitsu_server_start -mode local -port 50136 -root E:\Doodle\build\root -dbPath E:\Doodle\build\root\live.db `
+                   -exePath E:\build\Ninja_debug\bin\doodle_kitsu_supplement.exe -readyPath /api/doodle/local/face_capture/devices
+
+# 2. 跑用例
+$env:DOODLE_BASE_URL = "http://127.0.0.1:50136"
+npm run test:face_capture
+
+# 3. 停服
+kitsu_server_stop -port 50136
+```
+
+用例不录屏，而是把样本视频复制成 `<会话目录>/<uuid>/take.mp4`，并生成自洽的 `align.json`、
+复制一份 `face_curves.dhfc`、放 3 个 1×1 PNG 到 `frames/`，走真实的 HTTP / WebSocket 契约；
+每个用例结束会把铺出来的会话目录删掉。
+
+转码部分只做 **A 层**：断言 404/422 分支、提交后单条与全量两个通道可见、终态落在
+`completed` / `failed` 之内。真实解算需要 UE 工程 + 插件版本服务，等不到终态时用例带日志
+`skip`；`FACE_CAPTURE_TRANSCODE_E2E=1` 时才要求终态是 `completed` 且产出 `curves/face_curves.dhfc`。
+
+**记录在案的已发现缺陷**（用例按现状断言，不修）：
+
+1. `face_curves.dhfc` 的 `content-type` 是 `application/octet-stream`，但服务端对 HEAD 请求
+   仍会带上 `content-length` 与文件本体，node 的 HTTP 客户端解析 HEAD 响应时会报
+   `HPE_INVALID_CONSTANT` —— 客户端不能对这个 URL 发 HEAD（`http_body.cpp:194-206`）。
+2. `Range: bytes=0-15` 这类「有上界」的 Range 被忽略，返回 200 + 整个文件；
+   只有 `bytes=N-` 形式会返回 206（`http_body.cpp:239-262`）。
+3. 服务端把 `count` 写成无符号，`GET /recordings` 的 `count` 与 `data.length` 一致；但
+   `server_task_info` 里没有 `progress` 字段，进度只走 socket.io 广播，HTTP 侧查不到。
+4. 转码 POST 的 `type` 字段是 `export_fbx`（`server_task_info` 的默认类型），
+   与 `preview_id`/`ue_project` 的语义不一致，前端若要按 type 区分需要自行匹配。
+5. 删除正在转码的会话时，服务端 `remove_all` 撞上仍被打开的文件，返回
+   `500 filesystem_error`，而不是 409 —— 用例没有对这一点建断言（依赖时序）。
 
 `main` 是一个**独立的 socket.io 测试服务端**（监听 50025），用于验证 socket.io 客户端，
 与 Doodle 的 C++ 服务端无关；它不是 Playwright 测试文件。

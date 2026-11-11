@@ -83,6 +83,8 @@ export function nowMs() {
 // 所以服务端以 --root 指向下面这个目录时，会话目录是确定的。
 // ---------------------------------------------------------------------------
 
+export const FACE_CAPTURE_API = `${URL}/api/doodle/local/face_capture`;
+
 export const FACE_CAPTURE_ROOT = process.env.DOODLE_ROOT || path.join(BUILD_DIR, 'root');
 
 export const FACE_CAPTURE_SESSIONS_DIR =
@@ -96,4 +98,6 @@ export const FACE_CAPTURE_SEED_DIR =
 
 export const FACE_CAPTURE_TRANSCODE_E2E = process.env.FACE_CAPTURE_TRANSCODE_E2E === '1';
 
-export const FACE_CAPTURE_TRANSCODE_WAIT = process.env.FACE_CAPTURE_TRANSCODE_WAIT === '1';
+export const FACE_CAPTURE_WAIT_MS = Number(process.env.FACE_CAPTURE_WAIT_MS || 20000);
+
+export const FACE_CAPTURE_UE_PROJECT = process.env.FACE_CAPTURE_UE_PROJECT || 'E:\\ue_main\\ue_main.uproject';
