@@ -7,6 +7,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/server_task_info.h>
 
+#include <doodle_lib/core/asyn_task.h>
 #include <doodle_lib/core/face_capture/capture_session.h>
 #include <doodle_lib/core/face_capture/face_capture_types.h>
 #include <doodle_lib/core/http/http_function.h>
@@ -40,23 +41,30 @@ class face_capture_selected_device {
   std::shared_ptr<impl> impl_ptr_{};
 };
 
+struct face_capture_transcode_task {
+  std::shared_ptr<async_task> task_{};
+  std::shared_ptr<server_task_info> task_info_{};
+};
+
 class face_capture_transcode_tasks : public std::enable_shared_from_this<face_capture_transcode_tasks> {
  public:
   face_capture_transcode_tasks() = default;
 
-  std::shared_ptr<server_task_info> enqueue(const boost::uuids::uuid& in_preview_id);
+  std::shared_ptr<face_capture_transcode_task> enqueue(
+      std::shared_ptr<async_task> in_task, std::shared_ptr<server_task_info> in_task_info
+  );
 
-  std::shared_ptr<server_task_info> find(const boost::uuids::uuid& in_preview_id) const;
+  std::shared_ptr<face_capture_transcode_task> find(const boost::uuids::uuid& in_preview_id) const;
 
-  std::vector<std::shared_ptr<server_task_info>> find_all() const;
+  std::vector<std::shared_ptr<face_capture_transcode_task>> find_all() const;
 
-  void start_next(const std::string& in_token);
+  void start_next();
 
-  void finish(const boost::uuids::uuid& in_preview_id, const std::string& in_token);
+  void finish(const boost::uuids::uuid& in_preview_id);
 
  private:
   mutable std::mutex mtx_{};
-  std::vector<std::shared_ptr<server_task_info>> tasks_{};
+  std::vector<std::shared_ptr<face_capture_transcode_task>> tasks_{};
   std::optional<boost::uuids::uuid> running_{};
 };
 

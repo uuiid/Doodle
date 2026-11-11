@@ -81,46 +81,38 @@ using face_capture_transcode_sink_mt = face_capture_transcode_sink<std::mutex>;
 
 void start_task(
     const std::shared_ptr<face_capture_transcode_tasks>& in_tasks,
-    const std::shared_ptr<server_task_info>& in_task_info, const std::string& in_token
+    const std::shared_ptr<face_capture_transcode_task>& in_task
 ) {
-  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
-  l_client->set_token(in_token);
-
-  auto l_arg           = std::make_shared<face_capture_transcode_arg>();
-  l_arg->preview_id_   = in_task_info->uuid_id_;
-  l_arg->ue_project_   = ue_exe_ns::find_ue_project_file(core_set::get_set().ue4_path);
-  l_arg->kitsu_client_ = l_client;
+  const auto& l_task_info = in_task->task_info_;
 
   auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
-                       fmt::format("{}.log", in_task_info->uuid_id_);
+                       fmt::format("{}.log", l_task_info->uuid_id_);
   auto l_logger      = std::make_shared<spdlog::async_logger>(
-      in_task_info->name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
+      l_task_info->name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
       spdlog::thread_pool()
   );
-  l_logger->sinks().emplace_back(std::make_shared<face_capture_transcode_sink_mt>(in_task_info));
-  l_arg->set_logger(l_logger);
-  in_task_info->command_ = nlohmann::json{} = *l_arg;
+  l_logger->sinks().emplace_back(std::make_shared<face_capture_transcode_sink_mt>(l_task_info));
+  in_task->task_->set_logger(l_logger);
 
-  in_task_info->status_ = server_task_info_status::running;
-  in_task_info->run_time_ =
-      server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *in_task_info});
+  l_task_info->status_   = server_task_info_status::running;
+  l_task_info->run_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_task_info});
 
   boost::asio::co_spawn(
       g_io_context(),
-      [l_arg, in_task_info, in_tasks, in_token]() -> boost::asio::awaitable<void> {
+      [in_task, in_tasks]() -> boost::asio::awaitable<void> {
+        const auto& l_info = in_task->task_info_;
         try {
-          co_await l_arg->run();
-          in_task_info->status_   = server_task_info_status::completed;
-          in_task_info->progress_ = 1.0;
+          co_await in_task->task_->run();
+          l_info->status_   = server_task_info_status::completed;
+          l_info->progress_ = 1.0;
         } catch (const std::exception& in_e) {
-          in_task_info->status_        = server_task_info_status::failed;
-          in_task_info->last_line_log_ = in_e.what();
+          l_info->status_        = server_task_info_status::failed;
+          l_info->last_line_log_ = in_e.what();
         }
-        in_task_info->end_time_ =
-            server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-        socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *in_task_info});
-        in_tasks->finish(in_task_info->uuid_id_, in_token);
+        l_info->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+        socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_info});
+        in_tasks->finish(l_info->uuid_id_);
       }(),
       boost::asio::detached
   );
@@ -128,78 +120,95 @@ void start_task(
 
 }  // namespace
 
-std::shared_ptr<server_task_info> face_capture_transcode_tasks::enqueue(const uuid_t& in_preview_id) {
-  auto l_ptr          = std::make_shared<server_task_info>();
-  l_ptr->uuid_id_     = in_preview_id;
-  l_ptr->name_        = fmt::format("face_capture_transcode_{}", in_preview_id);
-  l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+std::shared_ptr<face_capture_transcode_task> face_capture_transcode_tasks::enqueue(
+    std::shared_ptr<async_task> in_task, std::shared_ptr<server_task_info> in_task_info
+) {
+  auto l_ptr        = std::make_shared<face_capture_transcode_task>();
+  l_ptr->task_      = std::move(in_task);
+  l_ptr->task_info_ = std::move(in_task_info);
 
   std::lock_guard<std::mutex> _(mtx_);
   tasks_.emplace_back(l_ptr);
   return l_ptr;
 }
 
-std::shared_ptr<server_task_info> face_capture_transcode_tasks::find(const uuid_t& in_preview_id) const {
+std::shared_ptr<face_capture_transcode_task> face_capture_transcode_tasks::find(const uuid_t& in_preview_id) const {
   std::lock_guard<std::mutex> _(mtx_);
   auto l_itr = std::ranges::find_if(tasks_, [&in_preview_id](const auto& in_ptr) {
-    return in_ptr && in_ptr->uuid_id_ == in_preview_id;
+    return in_ptr && in_ptr->task_info_ && in_ptr->task_info_->uuid_id_ == in_preview_id;
   });
   if (l_itr == tasks_.end()) return nullptr;
   return *l_itr;
 }
 
-std::vector<std::shared_ptr<server_task_info>> face_capture_transcode_tasks::find_all() const {
+std::vector<std::shared_ptr<face_capture_transcode_task>> face_capture_transcode_tasks::find_all() const {
   std::lock_guard<std::mutex> _(mtx_);
   return tasks_;
 }
 
-void face_capture_transcode_tasks::start_next(const std::string& in_token) {
-  std::shared_ptr<server_task_info> l_ptr{};
+void face_capture_transcode_tasks::start_next() {
+  std::shared_ptr<face_capture_transcode_task> l_ptr{};
   {
     std::lock_guard<std::mutex> _(mtx_);
     if (running_.has_value()) return;
     auto l_itr = std::ranges::find_if(tasks_, [](const auto& in_ptr) {
-      return in_ptr && in_ptr->status_ == server_task_info_status::submitted;
+      return in_ptr && in_ptr->task_info_ && in_ptr->task_info_->status_ == server_task_info_status::submitted;
     });
     if (l_itr == tasks_.end()) return;
     l_ptr    = *l_itr;
-    running_ = l_ptr->uuid_id_;
+    running_ = l_ptr->task_info_->uuid_id_;
   }
-  start_task(shared_from_this(), l_ptr, in_token);
+  start_task(shared_from_this(), l_ptr);
 }
 
-void face_capture_transcode_tasks::finish(const uuid_t& in_preview_id, const std::string& in_token) {
+void face_capture_transcode_tasks::finish(const uuid_t& in_preview_id) {
   {
     std::lock_guard<std::mutex> _(mtx_);
     if (running_ == in_preview_id) running_ = std::nullopt;
   }
-  start_next(in_token);
+  start_next();
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_transcode, post) {
   DOODLE_CHICK_HTTP(FSys::exists(session_dir_of(preview_id_) / "take.mp4"), not_found, "take.mp4 不存在");
-  auto l_uproject = ue_exe_ns::find_ue_project_file(core_set::get_set().ue4_path);
-  DOODLE_CHICK_HTTP(
-      !l_uproject.empty(), unprocessable_entity, "UE 路径 {} 下找不到 .uproject 文件",
-      core_set::get_set().ue4_path.generic_string()
-  );
 
-  auto l_ptr = tasks_->enqueue(preview_id_);
-  tasks_->start_next(token_);
-  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_ptr);
+  auto l_json = in_handle->get_json();
+  DOODLE_CHICK_HTTP(
+      l_json.contains("ue_project") && l_json.at("ue_project").is_string(), unprocessable_entity, "缺少 ue_project"
+  );
+  auto const l_ue_project = FSys::path{l_json.at("ue_project").get<std::string>()};
+  DOODLE_CHICK_HTTP(FSys::exists(l_ue_project), unprocessable_entity, "ue_project 不存在: {}", l_ue_project.generic_string());
+
+  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  l_client->set_token(token_);
+
+  auto l_arg           = std::make_shared<face_capture_transcode_arg>();
+  l_arg->preview_id_   = preview_id_;
+  l_arg->ue_project_   = l_ue_project;
+  l_arg->kitsu_client_ = l_client;
+
+  auto l_info          = std::make_shared<server_task_info>();
+  l_info->uuid_id_     = preview_id_;
+  l_info->name_        = fmt::format("face_capture_transcode_{}", preview_id_);
+  l_info->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  l_info->command_     = nlohmann::json{} = *l_arg;
+
+  auto l_ptr = tasks_->enqueue(l_arg, l_info);
+  tasks_->start_next();
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_ptr->task_info_);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_transcode, get) {
   auto l_ptr = tasks_->find(preview_id_);
   DOODLE_CHICK_HTTP(l_ptr != nullptr, not_found, "该会话没有转码任务");
-  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_ptr);
+  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_ptr->task_info_);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_transcode_tasks_all, get) {
   auto l_list = tasks_->find_all();
   std::vector<server_task_info> l_result{};
   l_result.reserve(l_list.size());
-  for (const auto& l_ptr : l_list) l_result.emplace_back(*l_ptr);
+  for (const auto& l_ptr : l_list) l_result.emplace_back(*l_ptr->task_info_);
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = l_result);
 }
 
