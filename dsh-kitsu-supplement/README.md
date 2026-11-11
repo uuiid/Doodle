@@ -24,7 +24,7 @@
 - **config JSON 由插件生成。** 服务端 `--config` 解析失败时会 `return true` 且**不启动 HTTP**，进程可能一闪而过。JSON 写在 `%TEMP%\dsh-kitsu-supplement\kitsu-N.json`，调用返回后即删除（`configPath` 字段仍会报告路径）。
 - **cwd 默认取 exe 所在目录。** exe 依赖同目录的 dll；运行路径也可以由参数 `cwd` 或配置 `defaultCwd` 显式指定，插件不猜别的位置。
 - **不用 `POST /api/doodle/stop-server`。** 它要 admin JWT，且 `connection_count` 不为 0 时拒绝退出（`base_data.cpp:343-366`），测试机上的连接数恰恰不为 0。这里直接终止进程树并 `waitForExit`。
-- **每模式一个槽位。** `local` 与 `production` 各最多一个在跑实例，第二个直接 `slot-in-use`，要换就显式 `replaceExisting: true`。理由：两个同模式实例通常意味着上一个没停干净，它们读同一份注册表/库、抢同一类端口，`kitsu_server_status` 与 `baseUrl: "auto"` 也没法判断该指哪个；而静默替换又会把正在跑的用例打断。实例表落盘到状态文件，DSH 重启后仍能认领（无句柄）并按 pid 停。
+- **每模式一个槽位。** `local` 与 `production` 各最多一个在跑实例，第二个直接 `slot-in-use`，要换就显式 `replaceExisting: true`。理由：两个同模式实例通常意味着上一个没停干净，它们读同一份注册表/库、抢同一类端口，`kitsu_server_status` 也没法判断该指哪个；而静默替换又会把正在跑的用例打断。实例表落盘到状态文件，DSH 重启后仍能认领（无句柄）并按 pid 停。
 - **写库不停服。** `upgrade()` 会对磁盘库调 `journal_mode(wal)`（`sqlite_database.cpp:1335`），但实测新建库上 `pragma journal_mode` 仍是 `delete`——两种模式下外部进程提交的写入都能被运行中的服务端读到，所以 `kitsu_server_sql` 只做"开库 → 事务 → 提交"，不碰进程。写锁最多等 5 秒（`busy_timeout`），撞上服务端正好在写也只是排队。
 - **local 模式不给 dbPath 就没有可写的库。** 服务端 local 分支在没拿到 `--dbPath` 时落到 `":memory:"`（`kitsu_supplement.cpp:175-178`），那个库只活在本进程里，外部进程根本看不到，`kitsu_server_sql` 会直接拒绝并说明原因。
 
@@ -98,7 +98,7 @@ plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-suppleme
 | --- | --- | --- |
 | `args` | | `playwright` 之后那串参数，**原样转发**；`["test"]`、`["show-report"]` 等都可以 |
 | `cwd` | | 运行路径（必须是目录）；缺省取 `playwrightCwd` |
-| `baseUrl` | | `"auto"` 接上唯一在跑的 local 实例；绝对地址直接指定；不传则沿用父进程环境。见[下一节](#跑-test_js-kitsu_playwright_test) |
+| `baseUrl` | | 绝对地址（通常用 `kitsu_server_start` 返回的 `baseUrl`）；不传则沿用父进程环境。见[下一节](#跑-test_js-kitsu_playwright_test) |
 | `env` | | 追加/覆盖的环境变量（字符串键值对），与注入的 `DOODLE_BASE_URL` 同名时以 `env` 为准 |
 | `isolateOutput` | | `true` 时报告与产物落到 `%TEMP%\dsh-kitsu-supplement\playwright\<runId>\`，不覆盖项目目录 |
 | `timeoutMs` | | 本次运行的整体预算，缺省取 `playwrightTimeoutMs` |
@@ -130,8 +130,8 @@ fork→spawn 降级补丁——本插件走宿主的子进程通道，普通 for
 | 传法 | 效果 |
 | --- | --- |
 | 不传 | 完全沿用父进程环境；父进程没有该变量就落到 `http://localhost:50025` |
-| `baseUrl: "auto"` | 接上**唯一在跑**的 `local` 实例（`kitsu_server_start` 起的），否则退回复用父进程的 `DOODLE_BASE_URL`；有两个 local 实例时直接报 `invalid-args`，不猜 |
-| `baseUrl: "http://127.0.0.1:50136"` | 指到这个地址 |
+| `baseUrl: "http://127.0.0.1:50136"` | 指到这个地址（通常直接用 `kitsu_server_start` 返回的 `baseUrl`） |
+| `baseUrl: "auto"` | **不再支持**，报 `invalid-args`：工具不会自己去查实例表，地址必须由调用方给 |
 
 典型一条龙（用例需要 `--local` 服务时）：
 
@@ -142,7 +142,7 @@ kitsu_server_start { mode: "local", port: 50124 }
 kitsu_server_start { mode: "local", port: 50124, replaceExisting: true }
 → ok, serverId=kitsu-2, replaced=[{ serverId: "kitsu-1", ok: true }]
 
-kitsu_playwright_test { args: ["test", "face_capture.js"], baseUrl: "auto" }
+kitsu_playwright_test { args: ["test", "face_capture.js"], baseUrl: "http://127.0.0.1:50124" }
 kitsu_server_stop { port: 50136 }
 ```
 
@@ -218,7 +218,7 @@ kitsu_server_start { mode: "local", port: 50124 }
 kitsu_server_start { mode: "local", port: 50124, replaceExisting: true }
 → ok, serverId=kitsu-2, replaced=[{ serverId: "kitsu-1", ok: true }]
 
-kitsu_playwright_test { args: ["test", "face_capture.js"], baseUrl: "auto" }
+kitsu_playwright_test { args: ["test", "face_capture.js"], baseUrl: "http://127.0.0.1:50124" }
 → ok, passed=3 failed=0 skipped=1（playwright-report 已更新）
 kitsu_server_stop { serverId: "kitsu-1" }
 ```
@@ -243,7 +243,7 @@ kitsu_server_stop { serverId: "kitsu-1" }
 - `kitsu_server_sql` 连接时模拟服务端的连接级 PRAGMA（`foreign_keys = ON`、`synchronous = NORMAL`、`recursive_triggers = ON`，见 `sqlite_database.cpp:1310-1312`），但不会加载服务端的 jieba FTS5 分词器；写 FTS5 虚拟表或依赖该分词器的内容请走服务端接口。
 - `ATTACH` / `DETACH` 被拒绝：本工具只写目标库文件。
 - **`kitsu_playwright_test` 用 `test_js` 自己的 playwright**：`cwd` 下没有 `node_modules/@playwright/test` 时直接报 `timeout-cli`，插件不替你装依赖。
-- **playwright 与 kitsu 服务端是两个独立进程**：工具只负责把 `DOODLE_BASE_URL` 递给 playwright，服务端有没有起来由调用方保证（`baseUrl: "auto"` 只接本插件记录的 local 实例）。
+- **playwright 与 kitsu 服务端是两个独立进程**：`kitsu_playwright_test` 不会自己起服务，也不会替你去实例表里挑地址，`baseUrl` 要显式传（`kitsu_server_start` 返回的那个）；服务端有没有起来由调用方保证。
 - **实例表靠状态文件跨重启保留**：DSH 重启后读回来的实例没有句柄，只按「端口上还有没有那个 pid」判定死活（见[实例组合规则](#实例组合规则每模式一个槽位)）。如果进程还活着但已不再监听原端口（例如自己崩在别的端口上），会被判成已退出，槽位随之释放。快照文件损坏或版本不符时整份被忽略，插件只给出 `state/read-failed` 警告，不会因此起不来。
 
 ## 开发

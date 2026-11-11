@@ -368,51 +368,21 @@ test("原样透传的常见形态都通过", () => {
 });
 
 process.stdout.write("parseBaseUrlArg\n");
-test("auto / 显式地址 / 缺省", () => {
+process.stdout.write("parseBaseUrlArg\n");
+test("显式地址与缺省；auto 不再被接受", () => {
   eq(P.parseBaseUrlArg(undefined), { kind: "none" });
   eq(P.parseBaseUrlArg("  "), { kind: "none" });
-  eq(P.parseBaseUrlArg("auto"), { kind: "auto" });
-  eq(P.parseBaseUrlArg("AUTO"), { kind: "auto" });
   eq(P.parseBaseUrlArg("http://127.0.0.1:50136/"), { kind: "explicit", value: "http://127.0.0.1:50136" });
   eq(P.parseBaseUrlArg("https://kitsu.local"), { kind: "explicit", value: "https://kitsu.local" });
+  eq(P.parseBaseUrlArg("auto").kind, "invalid");
+  eq(P.parseBaseUrlArg("AUTO").kind, "invalid");
+  ok(P.parseBaseUrlArg("auto").problem.includes("http(s)://"), P.parseBaseUrlArg("auto").problem);
 });
 test("不是 URL 就报 invalid", () => {
   eq(P.parseBaseUrlArg("127.0.0.1:50136").kind, "invalid");
   eq(P.parseBaseUrlArg("ftp://x").kind, "invalid");
 });
-
-process.stdout.write("resolveAutoBaseUrl\n");
-test("唯一 local 实例优先于父进程环境", () => {
-  const records = new Map([
-    ["kitsu-1", { mode: "production", port: 50025, exited: false }],
-    ["kitsu-2", { mode: "local", port: 50136, exited: false }],
-  ]);
-  const picked = P.resolveAutoBaseUrl({ records, env: { DOODLE_BASE_URL: "http://10.0.0.1:1" } });
-  eq(picked.kind, "auto-server");
-  eq(picked.baseUrl, "http://127.0.0.1:50136");
-});
-test("没有在跑的 local 实例时退回父进程 DOODLE_BASE_URL", () => {
-  const records = new Map([["kitsu-1", { mode: "local", port: 50136, exited: true }]]);
-  eq(P.resolveAutoBaseUrl({ records, env: { DOODLE_BASE_URL: "http://a:1/" } }), {
-    kind: "auto-env",
-    baseUrl: "http://a:1",
-  });
-});
-test("两个 local 实例 -> 歧义，不猜", () => {
-  const records = new Map([
-    ["kitsu-1", { mode: "local", port: 50136, exited: false }],
-    ["kitsu-2", { mode: "local", port: 50137, exited: false }],
-  ]);
-  const picked = P.resolveAutoBaseUrl({ records, env: {} });
-  eq(picked.kind, "ambiguous");
-  eq(picked.candidates, ["kitsu-1 :50136", "kitsu-2 :50137"]);
-  ok(picked.problem.includes("2 个 local 实例"), picked.problem);
-});
-test("既没实例也没环境变量 -> 明确报错", () => {
-  const picked = P.resolveAutoBaseUrl({ records: new Map(), env: {} });
-  eq(picked.kind, "none");
-  ok(picked.problem.includes("auto"), picked.problem);
-});
+eq(typeof P.resolveAutoBaseUrl, "undefined");
 
 process.stdout.write("mergePlaywrightEnv\n");
 test("注入覆盖同名环境变量，显式 env 优先级最高", () => {

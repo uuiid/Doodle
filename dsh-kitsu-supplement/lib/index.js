@@ -795,7 +795,6 @@ function findPortLine(text) {
   return undefined;
 }
 
-const PLAYWRIGHT_AUTO_BASE_URL = "auto";
 const PLAYWRIGHT_BASE_URL_ENV = "DOODLE_BASE_URL";
 const PLAYWRIGHT_HTML_OPEN_ENV = "PLAYWRIGHT_HTML_OPEN";
 const PLAYWRIGHT_HTML_REPORT_ENV = "PLAYWRIGHT_HTML_REPORT";
@@ -832,10 +831,9 @@ function validatePlaywrightArgs(args) {
 }
 
 /**
- * 把 baseUrl 解析成 explicit / auto / none / invalid。
+ * 把 baseUrl 解析成 explicit / none / invalid。
  *
- * `auto` 是唯一一个会让插件去查实例表的取值；不传就完全沿用父进程环境，
- * 不在插件里替调用方决定地址（playwright.config.js:17 自己兜底 localhost:50025）。
+ * 插件不替调用方决定地址：不传就完全沿用父进程环境（playwright.config.js:17 自己兜底 localhost:50025）。
  *
  * @param {unknown} baseUrl
  * @returns {{kind:string, value?:string, problem?:string}}
@@ -843,47 +841,11 @@ function validatePlaywrightArgs(args) {
 function parseBaseUrlArg(baseUrl) {
   const text = trimOrEmpty(baseUrl);
   if (text === "") return { kind: "none" };
-  if (text.toLowerCase() === PLAYWRIGHT_AUTO_BASE_URL) return { kind: "auto" };
   const normalized = text.replace(/\/+$/, "");
   if (!/^https?:\/\/[^\s/]+$/i.test(normalized)) {
-    return { kind: "invalid", problem: `baseUrl 必须是 http(s)://host[:port] 或 "auto"，收到 ${JSON.stringify(normalized)}。` };
+    return { kind: "invalid", problem: `baseUrl 必须是 http(s)://host[:port]，收到 ${JSON.stringify(normalized)}。` };
   }
   return { kind: "explicit", value: normalized };
-}
-
-/**
- * `baseUrl: "auto"` 的取值：实例表里唯一在跑的 local 实例 > 父进程 DOODLE_BASE_URL。
- *
- * 多个 local 实例时要求显式指定，不猜。
- *
- * @param {{records:Map<string, any>, env?:Record<string, string|undefined>}} spec
- * @returns {{kind:string, baseUrl?:string, value?:string, problem?:string, candidates?:string[]}}
- */
-function resolveAutoBaseUrl({ records, env }) {
-  /** @type {string[]} */
-  const running = [];
-  for (const [id, record] of records ?? []) {
-    if (record?.exited === true) continue;
-    if (record?.mode !== "local") continue;
-    running.push(`${id} :${record.port}`);
-  }
-  if (running.length > 1) {
-    return {
-      kind: "ambiguous",
-      problem: `baseUrl: "auto" 有歧义：${running.length} 个 local 实例在跑（${running.join(", ")}）。请显式传 baseUrl。`,
-      candidates: running,
-    };
-  }
-  if (running.length === 1) {
-    const [id] = running[0].split(" ");
-    return { kind: "auto-server", baseUrl: `http://127.0.0.1:${records.get(id).port}`, value: id };
-  }
-  const inherited = trimOrEmpty(env?.[PLAYWRIGHT_BASE_URL_ENV]);
-  if (inherited !== "") return { kind: "auto-env", baseUrl: inherited.replace(/\/+$/, "") };
-  return {
-    kind: "none",
-    problem: `baseUrl: "auto" 没有可用的地址：没有在跑的 local 实例，父进程也没有 ${PLAYWRIGHT_BASE_URL_ENV}。请显式传 baseUrl。`,
-  };
 }
 
 /**
@@ -1605,7 +1567,7 @@ const PLAYWRIGHT_SCHEMA = {
     cwd: { type: "string", required: true },
     cliPath: { type: "string", required: true },
     baseUrl: { type: "string", description: "子进程实际使用的 DOODLE_BASE_URL；空表示沿用父进程环境" },
-    baseUrlSource: { type: "string", required: true, enum: ["param", "auto-server", "auto-env", "config", "env", "none"] },
+    baseUrlSource: { type: "string", required: true, enum: ["param", "config", "env", "none"] },
     exitCode: { type: "number" },
     durationMs: { type: "number", required: true },
     summary: PLAYWRIGHT_SUMMARY_SCHEMA,
@@ -2163,14 +2125,6 @@ async function runPlaywrightTool(ctx, config, args, exec) {
     if (baseArg.kind === "explicit") {
       baseUrl = baseArg.value;
       baseUrlSource = "param";
-    } else if (baseArg.kind === "auto") {
-      const auto = resolveAutoBaseUrl({ records: registry, env: process.env });
-      if (auto.problem !== undefined) {
-        problems.push(auto.problem);
-      } else {
-        baseUrl = auto.baseUrl;
-        baseUrlSource = auto.kind;
-      }
     } else if (config.playwrightDefaultBaseUrl !== "") {
       baseUrl = config.playwrightDefaultBaseUrl;
       baseUrlSource = "config";
@@ -2775,7 +2729,7 @@ export async function apply(ctx, config) {
             `\`port\` 必须显式传，且必须是 ${PORT_RANGE_TEXT} 之间的整数；端口被占用时工具默认失败并给出占用 PID，只有显式传 \`killExisting: true\` 才强杀。\`mode: \"local\"\`（或 \`local: true\`）会给进程加 \`--local\`，并把 \`dbPath\` 作为 \`--dbPath\` 传给服务端；不传 dbPath 时 local 分支落进内存库（\`:memory:\`），重启即丢。`,
             "`kitsu_server_status` 查看本插件的实例、每个模式的槽位占用与端口占用；`kitsu_server_stop` 停掉本插件拉起的实例（含 DSH 重启后从状态文件认领的）；本插件不杀别人启动的进程。local 与 production 各最多 1 个在跑实例，同模式重复启动直接返回 `slot-in-use`，要替换就显式传 `replaceExisting: true`（先停旧的，结果在 `replaced`）。",
             "`kitsu_server_sql` 对磁盘库执行 sql 文件或片段（填测试数据），写完运行中的进程立刻能查到，**不要**为它停服或重启；执行前不确定就先 `dryRun: true` 走一遍。",
-            "`kitsu_playwright_test` 跑 test_js 里的 Playwright 用例：`args` 是 `playwright` 之后那串参数、原样转发（如 `[\"test\", \"face_capture.js\"]`、`[\"test\", \"--list\"]`）；`baseUrl: \"auto\"` 会接上唯一在跑的 local 实例，也可以直接传 `kitsu_server_start` 返回的 `baseUrl`。本工具不可并发：已经在跑时立刻返回 `busy`，不排队。",
+            "`kitsu_playwright_test` 跑 test_js 里的 Playwright 用例：`args` 是 `playwright` 之后那串参数、原样转发（如 `[\"test\", \"face_capture.js\"]`、`[\"test\", \"--list\"]`）；`baseUrl` 请直接传 `kitsu_server_start` 返回的 `baseUrl`（本工具不会自己去查实例表）。本工具不可并发：已经在跑时立刻返回 `busy`，不排队。",
           ].join(" "),
   });
 
@@ -3222,7 +3176,7 @@ export async function apply(ctx, config) {
         "playwrightCwd, i.e. E:\\Doodle\\test_js), so no run-playwright.mjs shim is needed. `baseUrl` only decides " +
         "whether DOODLE_BASE_URL is set for the child: omit it to inherit the parent environment " +
         "(playwright.config.js then falls back to http://localhost:50025), pass a URL to point the suite at a " +
-        "specific server, or pass \"auto\" to reuse the single running `local` instance started by kitsu_server_start. " +
+        "specific server (the baseUrl returned by kitsu_server_start). " +
         "The tool is NEVER concurrent: a second call while one is running is rejected at once with code `busy` " +
         "(nothing is queued). A run is killed once `timeoutMs` expires (terminate, then the host ends the process " +
         "tree). The result carries the pass/fail/skip summary parsed from the output, per-failure titles with their " +
@@ -3246,10 +3200,10 @@ export async function apply(ctx, config) {
         baseUrl: {
           type: "string",
           description:
-            "\"auto\" or http(s)://host[:port]. `auto` uses the only running `local` instance started by " +
-            "kitsu_server_start, else the parent DOODLE_BASE_URL; with several local instances it fails with " +
-            "`invalid-args` instead of guessing. Omitted: the plugin config default, else the inherited " +
-            "DOODLE_BASE_URL, else nothing (playwright.config.js falls back to localhost:50025).",
+            "http(s)://host[:port] to set DOODLE_BASE_URL for the child (use the baseUrl returned by " +
+            "kitsu_server_start). Omitted: the plugin config default (`playwrightDefaultBaseUrl`), else the inherited " +
+            "DOODLE_BASE_URL, else nothing (playwright.config.js falls back to localhost:50025). `\"auto\"` is not " +
+            "supported: the tool never looks up running instances itself.",
         },
         env: {
           type: "object",
