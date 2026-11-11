@@ -48,6 +48,13 @@ DOODLE_HTTP_ROUTE("/api/seedance2/pictures/{id_}{file_extension_}", id_, file_ex
 uuid id_{};
 file_extension_t file_extension_{};
 DOODLE_HTTP_FUN_END()
+// /api/seedance2/pictures_8n_1/{id}{file_extension}
+DOODLE_HTTP_SIGNED_FUN(seedance2_pictures_8n_1)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/seedance2/pictures_8n_1/{id_}{file_extension_}", id_, file_extension_)
+uuid id_{};
+file_extension_t file_extension_{};
+DOODLE_HTTP_FUN_END()
 // 等待动画
 // /api/seedance2/animation/waiting.mp4
 DOODLE_HTTP_JWT_FUN(seedance2_animation_waiting)

@@ -250,6 +250,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
 
       .reg_c<seedance2_thumbnail>()
       .reg_c<seedance2_pictures>()
+      .reg_c<seedance2_pictures_8n_1>()
       .reg_c<seedance2_animation_waiting>()
       .reg_c<data_ai_studio>()
       .reg_c<data_ai_studio_instance>()

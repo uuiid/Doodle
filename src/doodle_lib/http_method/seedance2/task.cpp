@@ -785,6 +785,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures, get) {
   auto l_file = l_ctx.get_sd2_pictures_file(id_, file_extension_.file_extension_.generic_string());
   co_return std::make_unique<http_body_file_t>(l_file, mime_type(l_file.extension()));
 }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures_8n_1, get) {
+  auto& l_ctx = g_kitsu_ctx();
+  auto l_file = l_ctx.get_sd2_pictures_file_8n_1(id_, file_extension_.file_extension_.generic_string());
+  DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "视频不存在");
+  co_return std::make_unique<http_body_file_t>(l_file, mime_type(l_file.extension()));
+}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_animation_waiting, get) {
   auto l_file = g_kitsu_ctx().get_seedance2_waiting();
   DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "文件不存在");
