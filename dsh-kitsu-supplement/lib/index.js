@@ -1567,8 +1567,8 @@ function describeServer(serverId, record) {
     configPath: record.configPath,
     command: record.command,
     uptimeMs: alive ? Date.now() - record.startedAt : 0,
-    exitCode: record.exited !== true ? null : (record.exitCode ?? null),
-    exitSignal: record.exited === true && record.exitSignal !== null ? record.exitSignal : undefined,
+    exitCode: record.exited === true && typeof record.exitCode === "number" ? record.exitCode : undefined,
+    exitSignal: record.exited === true && typeof record.exitSignal === "string" ? record.exitSignal : undefined,
   });
 }
 
