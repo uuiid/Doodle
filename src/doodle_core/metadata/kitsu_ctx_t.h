@@ -51,6 +51,9 @@ struct kitsu_ctx_t {
   FSys::path get_sd2_pictures_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / "sd2" / "pictures" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
   }
+  FSys::path get_sd2_pictures_file_8n_1(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "sd2" / "pictures_8n_1" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
+  }
   FSys::path get_jobs_logs_file(const uuid& in_uuid) {
     return root_ / "jobs" / FSys::split_uuid_path(fmt::format("{}.log", in_uuid));
   }

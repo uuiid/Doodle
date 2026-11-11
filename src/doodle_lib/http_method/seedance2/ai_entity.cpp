@@ -374,6 +374,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_subproject_entity_reference, post) 
     auto l_resize = std::min(500.0 / l_image.cols, 500.0 / l_image.rows);
     cv::resize(l_image, l_image, cv::Size(l_image.cols * l_resize, l_image.rows * l_resize));
     cv::imwrite(l_file_thumbnail.generic_string(), l_image);
+
+    if (l_is_video) {
+      auto l_file_8n_1 = l_ctx.get_sd2_pictures_file_8n_1(l_preview->uuid_id_, l_ext);
+      pad_video_to_8n1_frames(l_file, l_file_8n_1);
+    }
   }
 
   FSys::rename(l_file, l_file_picture);
