@@ -119,7 +119,7 @@ class frame_filter::impl {
 
   filtered_frame to_frame(av::VideoFrame& in_frame) {
     filtered_frame l_out{
-        .mat_ = cv::Mat{in_frame.raw()->height, in_frame.raw()->width, CV_8UC3}, .seq_ = output_++
+        .mat_ = cv::Mat(in_frame.raw()->height, in_frame.raw()->width, CV_8UC3), .seq_ = output_++
     };
     in_frame.copyToBuffer(l_out.mat_.data, l_out.mat_.total() * 3, 1);
     return l_out;
