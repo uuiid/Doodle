@@ -37,7 +37,8 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
 | Maya 插件 | `cmake config maya` → `cmake build maya` | `Ninja_RelWithDebInfo` / `debug_maya` |
 | 清理构建产物 | `cmake clean` | — |
 
-- 任务没覆盖的场合（CI、其他 agent）才直接经 `build_script/build/set_env.ps1` 调用 cmake。
+- 任务没覆盖的场合（纯 CI）才直接经 `build_script/build/set_env.ps1` 调用 cmake。
+- **不要把「shell 手工调 wrapper」当作任务失败的兜底**：实测 `chocolatey/bin/ninja.exe` shim 会以 `0xE0434352`（CLR 异常）退出、`cmake --preset` 会因 vcpkg 下载不到 cmake 3.31.10 中断配置，这两条只说明入口错了，换 `.vscode/tasks.json` 的任务重跑即可。
 - 不要调高构建并行度：`cl` 抢写 obj 会报 `Permission denied: cannot open compiler generated file`。
 - 搜索用内置 `glob` / `grep`；不要用 `Get-ChildItem -Recurse` / `Select-String` 全仓库递归。
 - 测试范围只有 ORM/升级与视频图片解码；网络客户端、HTTP 处理器、Maya 插件**没有**单元测试，不要期待 `test_main` 替你验证。
