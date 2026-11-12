@@ -217,6 +217,15 @@
 			"${workspaceFolder}/build",
 			"${workspaceFolder}/DoodleLiveLink",
 			"${workspaceFolder}/external"
-		]
+		],
+		"chat.agent.sandbox.enabled": "on",
+		"chat.agent.sandbox.fileSystem.userConfiguredPaths": {
+			"deniedPaths": [],
+			"readwritePaths": [
+				"E:\\Doodle",
+				"E:\\vcpkg",
+				"E:\\build"
+			]
+		}
 	}
 }
