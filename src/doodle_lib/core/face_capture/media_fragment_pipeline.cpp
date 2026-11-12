@@ -211,8 +211,11 @@ class h264_fragmenter::impl {
   };
 
   void write_packet(const av::Packet& in_packet) {
-    format_context_.writePacket(in_packet);
-    if ((in_packet.flags() & AV_PKT_FLAG_KEY) != 0) {
+    av::Packet l_packet = in_packet;
+    l_packet.setStreamIndex(stream_.index());
+    l_packet.setTimeBase(stream_.timeBase());
+    format_context_.writePacket(l_packet);
+    if ((l_packet.flags() & AV_PKT_FLAG_KEY) != 0) {
       flush_open_fragment();
       open_seq_begin_ = seq_ > 0 ? seq_ - 1 : 0;
       fragment_open_  = true;
@@ -312,7 +315,7 @@ class mp4_writer::impl {
     seq_ = in_seq + 1;
 
     auto l_packet = enc_ctx_.encode(l_yuv);
-    if (l_packet) format_context_.writePacket(l_packet);
+    if (l_packet) write_packet(l_packet);
     return true;
   }
 
@@ -334,7 +337,12 @@ class mp4_writer::impl {
   std::uint64_t frames() const { return seq_; }
 
  private:
-  void write_packet(const av::Packet& in_packet) { format_context_.writePacket(in_packet); }
+  void write_packet(const av::Packet& in_packet) {
+    av::Packet l_packet = in_packet;
+    l_packet.setStreamIndex(stream_.index());
+    l_packet.setTimeBase(stream_.timeBase());
+    format_context_.writePacket(l_packet);
+  }
 
   void flush() {
     while (true) {
