@@ -50,7 +50,7 @@ npx playwright show-report             # 打开上次的 HTML 报告
 | `DISTRIBUTED_WORK_URL` | 由 `DOODLE_BASE_URL` 推导 | 工作机 WebSocket 地址 |
 | `DOODLE_ROOT` | `<仓库>/build/root` | 服务端 `--root` 指向的目录，面部捕捉据此定位会话目录 |
 | `FACE_CAPTURE_SESSIONS_DIR` | `$DOODLE_ROOT/face_capture/sessions` | 面部捕捉会话目录（测试往这里铺样本）|
-| `FACE_CAPTURE_SAMPLE` | `build/shi_ping/MySlate_20/front-1-wide.mp4` | 面部捕捉用例用的样本视频 |
+| `FACE_CAPTURE_SAMPLE` | `build/shi_ping/MySlate_20/front-1-wide-5s.mp4` | 面部捕捉用例用的样本视频（原片前 5 秒，约 150 帧）|
 | `FACE_CAPTURE_SEED_DIR` | `build/shi_ping/MySlate_20_face_test` | 提供 `face_curves.dhfc` 的种子目录 |
 | `FACE_CAPTURE_UE_PROJECT` | `E:\ue_main\ue_main.uproject` | 转码提交任务时 `ue_project` 指向的工程 |
 | `FACE_CAPTURE_WAIT_MS` | `20000` | 转码用例轮询终态的最长时间 |

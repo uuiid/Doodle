@@ -91,7 +91,7 @@ export const FACE_CAPTURE_SESSIONS_DIR =
   process.env.FACE_CAPTURE_SESSIONS_DIR || path.join(FACE_CAPTURE_ROOT, 'face_capture', 'sessions');
 
 export const FACE_CAPTURE_SAMPLE =
-  process.env.FACE_CAPTURE_SAMPLE || path.join(BUILD_DIR, 'shi_ping', 'MySlate_20', 'front-1-wide.mp4');
+  process.env.FACE_CAPTURE_SAMPLE || path.join(BUILD_DIR, 'shi_ping', 'MySlate_20', ' ');
 
 export const FACE_CAPTURE_SEED_DIR =
   process.env.FACE_CAPTURE_SEED_DIR || path.join(BUILD_DIR, 'shi_ping', 'MySlate_20_face_test');
