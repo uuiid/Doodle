@@ -225,15 +225,13 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string& in_name, 
       ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true));
   l_sinks.emplace_back(rotating_file_sink_);
-#ifndef NDEBUG
-  l_sinks.emplace_back(debug_sink_);
-#endif
 
   auto l_logger = std::make_shared<spdlog::async_logger>(
       in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
   );
   l_logger->set_level(spdlog::level::trace);
   l_logger->should_log(spdlog::level::trace);
+
   DOODLE_ADD_DEBUG_SINK(l_logger);
   return l_logger;
 }
@@ -248,9 +246,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(
       ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
   // l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true));
   l_sinks.emplace_back(rotating_file_sink_);
-#ifndef NDEBUG
-  l_sinks.emplace_back(debug_sink_);
-#endif
+
   auto l_logger = std::make_shared<spdlog::async_logger>(
       in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
   );
@@ -273,9 +269,6 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log_file(
   // if (in_path != l_path)
   // l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(in_path.generic_string(), true));
   l_sinks.emplace_back(rotating_file_sink_);
-#ifndef NDEBUG
-  l_sinks.emplace_back(debug_sink_);
-#endif
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
       ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
 
