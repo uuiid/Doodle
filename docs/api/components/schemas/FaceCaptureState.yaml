@@ -1,0 +1,24 @@
+type: string
+description: |
+  脸捕会话状态，对应 `doodle::face_capture::capture_state`
+  （`src/doodle_lib/core/face_capture/face_capture_types.h`，用 `DOODLE_JSON_SERIALIZE_ENUM_STRICT`
+  序列化，5 个取值全部有字符串映射，未登记的取值两个方向都会抛 `out_of_range.410`）。
+
+  录制接口返回的是 `capture_status.state`，录像查询接口返回的是
+  `capture_session::state()`（即 `display_state()`：**录制轴状态不为 `idle` 时优先返回录制轴状态**，
+  否则返回推流轴状态）。因此录制结束后查询到的 `state` 是 `stopped`，
+  而实际上预览推流仍在继续。
+
+  | 取值 | 含义 |
+  | --- | --- |
+  | `idle` | 摄像头未打开（没有 WS 会话，或会话已关闭） |
+  | `previewing` | 摄像头已打开，正在推 25 fps 预览（未录制，或录制已结束） |
+  | `recording` | 正在录制 `take.mp4` |
+  | `stopping` | 正在收尾录制（drain 滤镜 + 等推流出口空闲 + 写 `align.json`） |
+  | `stopped` | 录制轴停留在「已停止」；录像查询接口在会话未录制时返回该值 |
+enum:
+  - idle
+  - recording
+  - stopping
+  - stopped
+  - previewing

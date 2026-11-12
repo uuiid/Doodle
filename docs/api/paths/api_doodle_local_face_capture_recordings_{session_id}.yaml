@@ -1,0 +1,92 @@
+get:
+  tags:
+    - 脸捕
+  summary: 查询单个录制段
+  description: |
+    返回指定会话的录制详情：`align.json` 派生字段 + 实时 `state` + 磁盘产出清点 `artifacts`。
+
+    处理器为 `local::face_capture_recording::get`，实现见
+    `src/doodle_lib/http_method/local/face_capture_record.cpp`：
+
+    - 会话目录 `<缓存根>/face_capture/sessions/<session_id>/` 既无 `take.mp4` 又无 `align.json`
+      时返回 404「会话不存在」；
+    - `session_id` 会被强制改写为 URL 里的路径参数；
+    - `state`：若该 id 正好是当前活动录制会话，取 `capture_session::state()`；否则固定 `stopped`。
+      注意 `state` 是**录制轴优先**的显示状态，所以录制结束后返回 `stopped`，
+      即使该连接仍在推预览；
+    - `frames`：正常情况下是 `align.json` 的原始帧计数；`align.json` 读不出来且该 id 正好是
+      活动会话时，用会话内的实时帧计数补上；
+    - `artifacts` 现场扫描 `take.mp4` / `align.json` / `frames/*.png` 个数 / `curves/face_curves.dhfc`。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则 401「请先登录」；
+    路由只在 `kitsu_supplement --local` 模式注册。
+  operationId: face_capture_recording_get
+  parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 录制开始时生成的会话 id（`POST .../recordings` 的返回值，或列表接口的 `session_id`）
+  responses:
+    '200':
+      description: 录制详情
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/FaceCaptureRecordingDetail.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '404':
+      description: 会话目录不存在，或目录里既没有 `take.mp4` 也没有 `align.json`
+  security:
+    - bearerAuth: []
+delete:
+  tags:
+    - 脸捕
+  summary: 删除录制段
+  description: |
+    递归删除整个会话目录，**不可恢复**。
+
+    处理器为 `local::face_capture_recording::delete_`，实现见
+    `src/doodle_lib/http_method/local/face_capture_record.cpp`：
+
+    1. 该 id 正是当前活动会话且状态为 `recording` 时返回 409「会话正在录制中」，
+       必须先 `POST .../recordings/{session_id}/stop`；
+    2. 会话目录不存在则 404「会话不存在」；
+    3. `FSys::remove_all()` 删除目录（含 `take.mp4`、`align.json`、`frames/`、`curves/`、
+       UE 日志等），返回 `{"ok": true}`。
+
+    只删磁盘文件，不影响内存里的转码任务注册表：转码任务按该会话路径读写，
+    删除后仍未开始的转码任务会在执行时报「缺少录制视频」而失败。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则 401「请先登录」。
+  operationId: face_capture_recording_delete
+  parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 录制会话 id
+  responses:
+    '200':
+      description: 已删除
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              ok:
+                type: boolean
+                description: 恒为 `true`
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '404':
+      description: 会话目录不存在
+    '409':
+      description: 该会话正在录制中，需先停止
+  security:
+    - bearerAuth: []

@@ -1,0 +1,86 @@
+get:
+  tags:
+    - 脸捕
+  summary: 枚举本机摄像头
+  description: |
+    逐个打开摄像头探测，返回设备列表与当前选中的 index。
+    每个元素额外带一个 `selected` 标记，结构见 `FaceCaptureDeviceList`。
+
+    处理器为 `local::face_capture_devices::get`，实现见
+    `src/doodle_lib/http_method/local/face_capture_device.cpp`，实际探测在
+    `face_capture::capture_session::list_devices()`：
+
+    - index 从 0 到 7 依次尝试（`CAP_DSHOW` 失败回退 `CAP_MSMF`），
+      **遇到第一个打不开的 index 就停止**，编号有空洞时后面的设备枚举不到；
+    - 探测是实时的：会逐个 `open` / `release` 设备。摄像头已被 WS 会话占用时，
+      相应 index 可能打不开，枚举会提前结束、返回不完整的列表；
+    - 返回的 `selected` 是进程内共享的选中值（`face_capture_selected_device`），
+      不落盘，进程重启回到 0。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌
+    （`access_token_cookie` cookie 或 `Authorization: Bearer <token>`），否则返回 401「请先登录」；
+    路由只在 `kitsu_supplement --local` 模式注册（`http_method/kitsu.cpp` 的
+    `create_kitsu_local_route()`）。
+  operationId: face_capture_devices_get
+  responses:
+    '200':
+      description: 摄像头列表与当前选中项
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/FaceCaptureDeviceList.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+  security:
+    - bearerAuth: []
+post:
+  tags:
+    - 脸捕
+  summary: 选中摄像头
+  description: |
+    设置后续 WS 会话要打开的摄像头 index。选中值只在新建 WS 连接时被读取一次，
+    **不会切换**已建立的会话（要换设备需要重连 WS）。
+
+    处理器为 `local::face_capture_devices::post`，实现见
+    `src/doodle_lib/http_method/local/face_capture_device.cpp`，校验顺序：
+
+    1. 请求体必须是 JSON 对象且含整数 `index`，否则 400「请求体需要整数 index」；
+    2. `index` 不能为负，否则 400「index 不能为负」；
+    3. `index` 必须在当前枚举结果里存在，否则 404「没有 index = N 的摄像头」。
+
+    校验通过后写入进程内共享的选中值，返回 `{"selected": <index>}`。
+    该处理器同样继承自 `local_http_fun`（需令牌，401 见 GET），且只在本地模式注册。
+  operationId: face_capture_devices_post
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - index
+          properties:
+            index:
+              type: integer
+              format: int32
+              description: 摄像头序号，取值来自 `GET .../devices` 返回的 `devices[].index`
+  responses:
+    '201':
+      description: 已选中
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              selected:
+                type: integer
+                format: int32
+                description: 新的选中 index
+    '400':
+      description: 请求体不是对象、缺 `index`、`index` 不是整数或为负
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '404':
+      description: 当前枚举结果里没有该 index 的摄像头
+  security:
+    - bearerAuth: []

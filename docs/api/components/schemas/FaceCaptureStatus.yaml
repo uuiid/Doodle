@@ -1,0 +1,48 @@
+type: object
+description: |
+  采集状态，对应 `doodle::face_capture::capture_status`（`face_capture_types.h`）。
+  `POST .../recordings` 与 `POST .../recordings/{session_id}/stop` 直接返回本结构
+  （录制接口另外补一个 `session_id`，见各分片）。
+
+  计数口径：`POST .../recordings` 开始录制时会清零计数器，因此录制期间与 `stop` 返回的
+  `frames` / `raw_frames` / `duration_ms` 都是**本次录制**的累计；未录制时则是自打开摄像头起的累计。
+properties:
+  state:
+    $ref: ./FaceCaptureState.yaml
+  width:
+    type: integer
+    format: int32
+    description: 实际采集宽度（偶数化后的尺寸，会被首帧探测结果覆盖）
+  height:
+    type: integer
+    format: int32
+    description: 实际采集高度（偶数化后的尺寸，会被首帧探测结果覆盖）
+  fps:
+    type: integer
+    format: int32
+    description: 输出帧率，固定 25（`face_capture::k_fps`）
+  frames:
+    type: integer
+    format: int64
+    description: 经 `fps=25` 滤镜后输出的帧数；`duration_ms` 即由它乘 40 ms 得到
+  raw_frames:
+    type: integer
+    format: int64
+    description: 摄像头原始到达帧数（未经滤镜），用于观察是否丢帧
+  inserted_frames:
+    type: integer
+    format: int64
+    description: 补位插入帧数。丢帧补位方案已废止，当前恒为 0，仅为字段兼容保留
+  source_fps:
+    type: number
+    format: double
+    description: 摄像头实测输入帧率；样本不足 2 帧时为 0
+  duration_ms:
+    type: integer
+    format: int64
+    description: 录制时长（毫秒），等于 `frames × 40`
+  truncated:
+    type: boolean
+    description: |-
+      录制是否不完整。以下两种情况会被置 `true`：
+      录制期间 `take.mp4` 写入失败；停止时摄像头读协程未在 2000 ms 内退出。

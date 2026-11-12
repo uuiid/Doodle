@@ -1,0 +1,40 @@
+get:
+  tags:
+    - 脸捕
+  summary: 下载面捕曲线文件
+  description: |
+    以 `application/octet-stream` 返回会话目录下的 `curves/face_curves.dhfc`，
+    并带上 `Content-Disposition: attachment; filename="<session_id>.dhfc"`。
+
+    处理器为 `local::face_capture_recording_curves::get`，实现见
+    `src/doodle_lib/http_method/local/face_capture_record.cpp`：
+    文件不存在则 404「face_curves.dhfc 不存在」。
+
+    该文件由转码作业第二步的 UE Commandlet（`-run=MetaHumanFace`）产出，
+    因此只有 `POST .../recordings/{preview_id}/transcode` 成功之后才存在。
+    `.dhfc` 的格式与 UE 侧管线见 `docs/metahuman_face_capture_solution.md`。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则 401「请先登录」。
+  operationId: face_capture_recording_curves_get
+  parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 录制会话 id
+  responses:
+    '200':
+      description: 面捕曲线文件（`.dhfc`）
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '404':
+      description: 该会话目录下没有 `curves/face_curves.dhfc`（未转码，或转码失败）
+  security:
+    - bearerAuth: []

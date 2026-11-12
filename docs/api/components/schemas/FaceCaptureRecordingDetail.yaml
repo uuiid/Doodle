@@ -1,0 +1,21 @@
+type: object
+description: |
+  `GET /api/doodle/local/face_capture/recordings/{session_id}` 的响应：
+  在录制段摘要的基础上，补上实时状态与磁盘产出清点。
+
+  与列表项的三点差异：
+
+  - `session_id` 固定为 URL 里的路径参数（实现会覆盖同名字段）；
+  - `state` 是该会话的实时状态：`session_id` 正是当前活动录制会话时取
+    `capture_session::state()`（录制轴优先，所以录制结束后返回 `stopped`，
+    即使预览仍在继续）；否则固定为 `stopped`（该会话已无活动连接）；
+  - `frames` 在 `align.json` 读不出来、且该会话正好是当前活动连接时，
+    用会话内的实时帧计数补上。
+allOf:
+  - $ref: ./FaceCaptureRecordingSummary.yaml
+  - type: object
+    properties:
+      state:
+        $ref: ./FaceCaptureState.yaml
+      artifacts:
+        $ref: ./FaceCaptureArtifacts.yaml

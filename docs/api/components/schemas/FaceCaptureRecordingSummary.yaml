@@ -1,0 +1,67 @@
+type: object
+description: |
+  录制段摘要（录像列表项），由会话目录里的 `align.json` 派生
+  （`recording_json()`，见 `src/doodle_lib/http_method/local/face_capture_record.cpp`）。
+
+  ⚠️ 字段口径与 `align.json` 本身不同：
+
+  - `frames` 是**原始帧计数**（取 `align_record::raw_frames_`），
+    **不是** `align.json` 里那个逐帧对齐数组；逐帧对齐数组不通过 HTTP 接口返回。
+  - `align_record::inserted_frames_` 不返回。
+  - `session_id` 取的是**目录名**，不是 `align.json` 里记录的值。
+
+  `align.json` 读取失败（文件缺失或损坏）时不清空整个响应，只返回 `session_id`
+  并在服务端记一条 WARN；因此下列除 `session_id` 外的字段都可能缺失。
+properties:
+  session_id:
+    type: string
+    format: uuid
+    description: 会话 id，即会话目录名；也是 `.../recordings/{session_id}` 系列接口的路径参数
+  width:
+    type: integer
+    format: int32
+    description: 录制宽度
+  height:
+    type: integer
+    format: int32
+    description: 录制高度
+  fps:
+    type: integer
+    format: int32
+    description: 录制帧率，固定 25
+  source_fps:
+    type: number
+    format: double
+    description: 录制期间摄像头实测输入帧率
+  started_at:
+    type: string
+    description: 录制开始时间，格式 `YYYY-MM-DDTHH:MM:SS+08:00`
+  frames:
+    type: integer
+    format: int64
+    description: 原始帧计数（`raw_frames`），不是逐帧数组
+  duration_ms:
+    type: integer
+    format: int64
+    description: 录制时长（毫秒）
+  truncated:
+    type: boolean
+    description: 该段录制是否不完整（写 mp4 失败或停止时读协程超时）
+  gaps:
+    type: array
+    description: 采集空档区间列表（摄像头断流被记录下来的时间段）
+    items:
+      type: object
+      properties:
+        wall_ms_begin:
+          type: integer
+          format: int64
+          description: 空档开始（wall clock 毫秒）
+        wall_ms_end:
+          type: integer
+          format: int64
+          description: 空档结束（wall clock 毫秒）
+        duration_ms:
+          type: integer
+          format: int64
+          description: 空档时长（毫秒）

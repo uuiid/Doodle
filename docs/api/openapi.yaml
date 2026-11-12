@@ -63,6 +63,13 @@ tags:
   - name: Doodle
     description: Kitsu Doodle API
     x-displayName: Doodle
+  - name: 脸捕
+    description: |
+      本机脸捕（只在 `kitsu_supplement --local` 模式注册）：摄像头枚举与选中、
+      WebSocket 预览推流、录制段管理与 UE 转码任务。
+      录制文件落在 `<缓存根>/face_capture/sessions/<session_id>/`；
+      除 WS 推流端点外，其余接口都要求请求头带非空令牌。
+    x-displayName: 脸捕
   - name: UE插件
     description: Kitsu UE 插件 API
     x-displayName: UE插件
@@ -637,6 +644,24 @@ paths:
     $ref: paths/api_doodle_local_setting.yaml
   /api/doodle/local_setting/tmp_dir/server_task:
     $ref: paths/api_doodle_local_setting_tmp_dir_server_task.yaml
+  /api/doodle/local/face_capture/devices:
+    $ref: paths/api_doodle_local_face_capture_devices.yaml
+  /api/doodle/local/face_capture/stream/{session_id}:
+    $ref: paths/api_doodle_local_face_capture_stream_{session_id}.yaml
+  /api/doodle/local/face_capture/recordings:
+    $ref: paths/api_doodle_local_face_capture_recordings.yaml
+  /api/doodle/local/face_capture/recordings/{session_id}:
+    $ref: paths/api_doodle_local_face_capture_recordings_{session_id}.yaml
+  /api/doodle/local/face_capture/recordings/{session_id}/stop:
+    $ref: paths/api_doodle_local_face_capture_recordings_{session_id}_stop.yaml
+  /api/doodle/local/face_capture/recordings/{session_id}/video:
+    $ref: paths/api_doodle_local_face_capture_recordings_{session_id}_video.yaml
+  /api/doodle/local/face_capture/recordings/{session_id}/curves:
+    $ref: paths/api_doodle_local_face_capture_recordings_{session_id}_curves.yaml
+  /api/doodle/local/face_capture/recordings/{preview_id}/transcode:
+    $ref: paths/api_doodle_local_face_capture_recordings_{preview_id}_transcode.yaml
+  /api/doodle/local/face_capture/transcode:
+    $ref: paths/api_doodle_local_face_capture_transcode.yaml
   /api/doodle/task:
     $ref: paths/api_doodle_task.yaml
   /api/doodle/task/{id}:
@@ -768,6 +793,7 @@ x-tagGroups:
   - name: Kitsu Doodle API
     tags:
       - Doodle
+      - 脸捕
   - name: Kitsu UE 插件 API
     tags:
       - UE插件

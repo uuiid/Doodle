@@ -1,0 +1,34 @@
+get:
+  tags:
+    - 脸捕
+  summary: 列出全部转码任务
+  description: |
+    返回内存注册表里的**全部**脸捕转码任务（含已结束的）。
+
+    处理器为 `local::face_capture_transcode_tasks_all::get`，实现见
+    `src/doodle_lib/http_method/local/face_capture_transcode.cpp`：
+    对 `face_capture_transcode_tasks::find_all()` 的结果逐个序列化 `server_task_info`。
+
+    注意事项：
+
+    - 响应是**裸数组**，没有分页、没有过滤、没有排序保证（按入队顺序）；
+    - 任务只存在内存里，进程重启后列表清空；
+    - 注册表只增不删，已结束的任务会一直留在列表里；
+    - 单任务查询请用 `GET /api/doodle/local/face_capture/recordings/{preview_id}/transcode`。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则 401「请先登录」；
+    路由只在 `kitsu_supplement --local` 模式注册。
+  operationId: face_capture_transcode_tasks_all_get
+  responses:
+    '200':
+      description: 转码任务列表
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/ServerTaskInfo.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+  security:
+    - bearerAuth: []

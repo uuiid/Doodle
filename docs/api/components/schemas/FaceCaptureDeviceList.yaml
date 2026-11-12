@@ -1,0 +1,23 @@
+type: object
+description: |
+  `GET /api/doodle/local/face_capture/devices` 的响应。
+
+  `devices` 里的每个元素是 `camera_info` 的全部字段，外加一个 `selected` 标记
+  （按 `camera_info.index_ == 当前选中 index` 计算），所以同一个 index 最多只有一项
+  `selected: true`；列表为空表示探测不到任何摄像头。
+properties:
+  selected:
+    type: integer
+    format: int32
+    description: 当前选中的摄像头 index；进程内共享、不落盘，进程重启回到 0
+  devices:
+    type: array
+    description: 探测到的摄像头列表（按 index 升序）
+    items:
+      allOf:
+        - $ref: ./FaceCaptureCameraInfo.yaml
+        - type: object
+          properties:
+            selected:
+              type: boolean
+              description: 该设备是否是当前选中的那个

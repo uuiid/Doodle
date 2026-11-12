@@ -1,0 +1,47 @@
+post:
+  tags:
+    - 脸捕
+  summary: 结束录制
+  description: |
+    结束当前活动会话上的录制，并返回本次录制的最终状态。
+
+    处理器为 `local::face_capture_recording_stop::post`，实现见
+    `src/doodle_lib/http_method/local/face_capture_record.cpp`，实际收尾在
+    `capture_session::stop()`：
+
+    1. 没有活动会话 → 404「没有活动会话」；
+    2. 活动会话的 id 与路径参数不一致 → 404「没有 session_id = <id> 的活动录制」
+       （即只能停止**当前这条连接**正在录制的那一段）；
+    3. `stop()` 要求录制轴为 `recording`，否则 409「当前没有在录制」（重复调用会命中这里）；
+    4. 收尾顺序：drain 滤镜 → 等推流出口空闲 → `mp4_writer` 结束并写出 `align.json`。
+       **响应返回时 `take.mp4` 已可安全读取**；
+    5. 返回的 `capture_status` 里 `state` 固定为 `previewing`（预览推流继续），
+       `frames` / `raw_frames` / `duration_ms` 是本次录制的累计值，`truncated` 透传录制过程中的异常。
+
+    与 `DELETE .../recordings/{session_id}` 的区别：本接口只收尾、保留文件；DELETE 会删除整个目录。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则 401「请先登录」。
+  operationId: face_capture_recording_stop_post
+  parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 要结束的录制会话 id（必须是当前活动连接正在录制的那一段）
+  responses:
+    '201':
+      description: 已结束录制，`take.mp4` 已收尾
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/FaceCaptureStatus.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '404':
+      description: 没有活动会话，或活动会话的 id 与路径参数不一致
+    '409':
+      description: 该会话当前不在录制状态
+  security:
+    - bearerAuth: []

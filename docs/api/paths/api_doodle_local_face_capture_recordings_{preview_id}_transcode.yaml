@@ -1,0 +1,121 @@
+post:
+  tags:
+    - 脸捕
+  summary: 提交录制段转码任务
+  description: |
+    把该会话的 `take.mp4` 转成 PNG 序列并调用 UE 解算面部动捕，产出 `curves/face_curves.dhfc`。
+
+    处理器为 `local::face_capture_transcode::post`，实现见
+    `src/doodle_lib/http_method/local/face_capture_transcode.cpp`，作业本体在
+    `face_capture_transcode_arg::run()`（`src/doodle_lib/exe_warp/face_capture_transcode.cpp`）。
+
+    ### 提交校验
+
+    1. 会话目录下必须存在 `take.mp4`，否则 404「take.mp4 不存在」；
+    2. 请求体必须含字符串 `ue_project`，否则 422「缺少 ue_project」；
+    3. `ue_project` 指向的路径必须存在，否则 422「ue_project 不存在: <path>」。
+       ⚠️ 实现只校验「字符串 + `FSys::exists`」，**不校验是否绝对路径、也不校验 `.uproject` 扩展名**。
+
+    ### 任务对象
+
+    - `id` = 路径参数 `preview_id`（即录制会话 id）；`name` = `face_capture_transcode_<preview_id>`；
+    - `command` = `{"preview_id": <id>, "ue_project": <path>}`；
+    - `type` 未单独设置，保留 `server_task_info` 的默认值 `export_fbx`；
+    - 入队后立刻 `start_next()`：队列空闲时任务在返回前就被同步置为 `running`，
+      因此响应里的 `status` **通常是 `running`**，队列已有任务在跑时才是 `submitted`；
+    - 任意时刻只运行一个转码任务（`face_capture_transcode_tasks` 单槽串行），其余排队；
+    - 任务只存在内存注册表里：**不写数据库、不进任务列表 UI**，进程重启即丢失；
+    - 状态与进度经 Socket.IO（命名空间 `/events`）广播：`doodle:task_info:update`
+      （完整任务对象）与 `doodle:task_info:progress`（`{"id", "progress"}`）。
+      进度由日志 sink 驱动，每次写日志 `progress += 0.001`，超过 1 时重置为 `rand()%100/500`
+      （即 0 到 0.198 的随机值），**不是**真实完成度。
+
+    ### 作业步骤
+
+    1. 删除该会话已有的 `frames/` 与 `curves/`，重建 `frames/`；
+    2. `take.mp4` 逐帧解码为 `frames/frame_000000.png …`（25 fps，无补位）；解码帧数少于 2 视为失败；
+    3. 以 `-run=MetaHumanFace -FramesDir=<frames> -OutDir=<curves> -FPS=25/1
+       -abslog=<session_dir>/face_capture_ue.log -stdout -nosplash` 运行 UE Commandlet（共用 UE 队列限流）；
+    4. 成功后 `frames/` **保留**（不自动删除），成功判据是 `curves/face_curves.dhfc` 存在；
+       UE 退出码失败时会补上 `face_capture_log.json` 里的原因。
+
+    请求头令牌会用于构造 Kitsu 客户端（UE 侧回传），因此必须带非空令牌，否则 401「请先登录」。
+  operationId: face_capture_transcode_post
+  parameters:
+    - name: preview_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 录制会话 id（转码任务 id 也用它）
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - ue_project
+          properties:
+            ue_project:
+              type: string
+              description: 用于解算的 UE 工程路径；只校验存在性，不做路径规范校验
+  responses:
+    '201':
+      description: 已提交的转码任务
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ServerTaskInfo.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '404':
+      description: 该会话没有 `take.mp4`
+    '422':
+      description: 请求体缺 `ue_project`，或该路径不存在
+  security:
+    - bearerAuth: []
+get:
+  tags:
+    - 脸捕
+  summary: 查询录制段的转码任务
+  description: |
+    按会话 id 在内存注册表里查该录制段的转码任务，返回其 `server_task_info`。
+
+    处理器为 `local::face_capture_transcode::get`，实现见
+    `src/doodle_lib/http_method/local/face_capture_transcode.cpp`：
+    遍历 `face_capture_transcode_tasks` 找 `task_info_->uuid_id_ == preview_id` 的任务，
+    找不到返回 404「该会话没有转码任务」。
+
+    注意事项：
+
+    - 注册表只在内存中，进程重启后所有任务都查不到（历史结果只能看磁盘：
+      `curves/face_curves.dhfc` 是否存在，见 `GET .../recordings/{session_id}` 的 `artifacts`）；
+    - 注册表只增不删，已结束的任务仍可查到其最终状态；
+    - 单任务查询路径挂在录制段下（本接口），**没有** `/transcode/{id}` 这个路由；
+      查询全部任务用 `GET /api/doodle/local/face_capture/transcode`。
+
+    该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则 401「请先登录」。
+  operationId: face_capture_transcode_get
+  parameters:
+    - name: preview_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 录制会话 id（提交转码时即作为任务 id）
+  responses:
+    '200':
+      description: 转码任务
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ServerTaskInfo.yaml
+    '401':
+      description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
+    '404':
+      description: 内存注册表里没有该会话的转码任务
+  security:
+    - bearerAuth: []

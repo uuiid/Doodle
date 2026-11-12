@@ -1,0 +1,19 @@
+type: object
+description: |
+  会话目录下已产出文件的清点结果，由 `artifacts_of()` 现场扫描磁盘得到
+  （`src/doodle_lib/http_method/local/face_capture_record.cpp`）。
+  目录为 `<缓存根>/face_capture/sessions/<session_id>/`。
+properties:
+  take_mp4:
+    type: boolean
+    description: 是否存在 `take.mp4`（录制视频；录制中时文件已存在但尚未收尾）
+  align_json:
+    type: boolean
+    description: 是否存在 `align.json`（对齐记录；录制正常结束后才写出）
+  frames:
+    type: integer
+    format: int64
+    description: 目录 `frames/` 下的 `.png` 文件个数（转码第一步产出的 PNG 序列）
+  curves:
+    type: boolean
+    description: 是否存在 `curves/face_curves.dhfc`（UE 解算产出的动捕曲线文件，转码成功才有）

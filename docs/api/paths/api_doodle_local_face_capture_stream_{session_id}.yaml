@@ -1,0 +1,56 @@
+get:
+  tags:
+    - 脸捕
+  summary: WebSocket 预览推流（连接即开摄像头）
+  description: |
+    该路由是 **WebSocket 升级端点**（`face_capture_stream::has_websocket()` 返回 `true`），
+    只有带 `Upgrade: websocket` 的 GET 会走 WS 分支并返回 `101 Switching Protocols`；
+    普通 GET 落到基类默认实现，返回 404「服务器端未实现 api」。
+
+    处理器为 `local::face_capture_stream`，实现见
+    `src/doodle_lib/http_method/local/face_capture_device.cpp`，推流引擎与会话生命周期在
+    `src/doodle_lib/core/face_capture/{ws_outlet,capture_session}.{h,cpp}`。
+
+    ### 连接行为
+
+    - 握手成功即按**当前选中的摄像头 index**（见 `GET/POST .../devices`）打开摄像头并开始推
+      25 fps 预览，**不落任何文件**；断开连接即关闭摄像头，若在录制则先收尾 `take.mp4`。
+    - 打开时请求 1280×720（偶数化），随后用首帧实际尺寸覆盖；打开失败只记 WARN 日志，
+      连接保持但**不会收到 `hello` 与任何帧**。
+    - 路径里的 `{session_id}` **当前实现既不读取也不校验**（`face_capture_stream::session_id_`
+      未被使用），传任意 UUID 都能连上；真正的会话 id 在 `POST .../recordings` 开始时生成，
+      见下方 `hello` / 录制接口。
+    - 每条连接都会新建自己的 `capture_session`（不是全局单例），并把共享的
+      `capture_session_holder` 指向自己；因此录制类接口只作用于**最近建立的连接**。
+      旧连接不会被主动断开：摄像头已被前一条会话占用时，后连的 `open` 会失败并只记 WARN。
+    - 相反方向的副作用：任一连接断开都会把 holder 置空，即使此时已有更新的连接接管，
+      之后调用录制类接口会得到「当前没有可用的预览连接」。
+    - 服务端**不解析任何上行消息**（读循环只是 `async_read` 后丢弃），控制一律走 HTTP。
+
+    ### 下行消息
+
+    每条消息先发一条 **text** 消息（JSON 元数据），若带负载再紧跟一条 **binary** 消息；
+    前端按 text 的 `type` 分流即可，binary 属于紧邻的前一条 text。
+
+    | `type` | 伴随 binary | 字段 |
+    | --- | --- | --- |
+    | `hello` | 无 | `session_id`（打开摄像头时尚未开录，因此是空 uuid `00000000-0000-0000-0000-000000000000`）、`state`（`previewing`）、`width`、`height`、`fps`（固定 25） |
+    | `avc_init` | 有 | `bytes`（初始化段字节数）、`seq_begin`、`seq_end`（均为 0）；binary 即 H.264/fMP4 初始化段。每次开始录制（`POST .../recordings`）都会重发 |
+    | `avc_fragment` | 有 | `seq`（输出帧序号）、`keyframe`（是否关键帧）、`size`（字节数） |
+
+    丢帧策略（`ws_outlet::write_message`）：非关键帧在上一帧仍在写时直接丢弃；
+    关键帧在途数量上限 2；单次写阻塞超过 2000 ms 判定连接失效并关闭。
+  operationId: face_capture_stream
+  parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 路径占位，当前实现忽略，任意 UUID 均可
+  responses:
+    '101':
+      description: WebSocket 握手成功，随后按上述协议单向推流（文本元数据 + 二进制帧）
+    '404':
+      description: '非 WebSocket 的普通 GET；响应体为 `{"error": "服务器端未实现 api", "code": <数字码>}`'

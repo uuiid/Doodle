@@ -1,0 +1,17 @@
+type: object
+description: |
+  `GET /api/doodle/local/face_capture/recordings` 的响应：会话目录列表。
+
+  `data` 是扫描 `<缓存根>/face_capture/sessions/` 得到的**全部**含 `take.mp4` 或
+  `align.json` 的子目录，没有分页、没有过滤、没有排序保证（按文件系统遍历顺序）。
+  断开 WS 后录制目录仍在，因此该列表跨连接、跨会话都可用；`count` 就是 `data` 的长度。
+properties:
+  count:
+    type: integer
+    format: int64
+    description: 命中的会话目录数量
+  data:
+    type: array
+    description: 会话摘要列表
+    items:
+      $ref: ./FaceCaptureRecordingSummary.yaml
