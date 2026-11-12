@@ -35,9 +35,12 @@ post:
     1. 删除该会话已有的 `frames/` 与 `curves/`，重建 `frames/`；
     2. `take.mp4` 逐帧解码为 `frames/frame_000000.png …`（25 fps，无补位）；解码帧数少于 2 视为失败；
     3. 以 `-run=MetaHumanFace -FramesDir=<frames> -OutDir=<curves> -FPS=25/1
-       -abslog=<session_dir>/face_capture_ue.log -stdout -nosplash` 运行 UE Commandlet（共用 UE 队列限流）；
+       -abslog=<session_dir>/face_capture_ue.log -stdout -nosplash` 运行 UE Commandlet
+       （`async_run_ue`，`create_lock = true`：先取全局 UE 队列闸 `ue_ctx_->queue_`，
+       再检查/安装 UE 插件版本，然后启动配置的 UE 可执行文件，并受 `core_set::timeout` 秒超时约束）；
     4. 成功后 `frames/` **保留**（不自动删除），成功判据是 `curves/face_curves.dhfc` 存在；
-       UE 退出码失败时会补上 `face_capture_log.json` 里的原因。
+       UE 失败时读 `curves/face_capture_log.json`（Commandlet 写出）里的 `stage` / `code` / `detail`
+       拼成 `stage=… code=… detail=…` 追加到错误信息；该文件不存在时只报 `async_run_ue` 的原始错误。
 
     请求头令牌会用于构造 Kitsu 客户端（UE 侧回传），因此必须带非空令牌，否则 401「请先登录」。
   operationId: face_capture_transcode_post

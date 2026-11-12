@@ -1,45 +1,152 @@
 get:
   tags:
     - 脸捕
-  summary: WebSocket 预览推流（连接即开摄像头）
+  summary: WebSocket 预览推流（连接即开摄像头，纯下行）
   description: |
-    该路由是 **WebSocket 升级端点**（`face_capture_stream::has_websocket()` 返回 `true`），
-    只有带 `Upgrade: websocket` 的 GET 会走 WS 分支并返回 `101 Switching Protocols`；
+    该路由是 WebSocket 升级端点：`face_capture_stream::has_websocket()` 返回 `true`，
+    只有 `GET` + `Upgrade: websocket` 才升级为 WS 并返回 `101 Switching Protocols`；
     普通 GET 落到基类默认实现，返回 404「服务器端未实现 api」。
 
-    处理器为 `local::face_capture_stream`，实现见
-    `src/doodle_lib/http_method/local/face_capture_device.cpp`，推流引擎与会话生命周期在
-    `src/doodle_lib/core/face_capture/{ws_outlet,capture_session}.{h,cpp}`。
+    处理器为 `local::face_capture_stream`（声明见
+    `src/doodle_lib/http_method/local/face_capture.h`），`websocket_callback` 只做一件事：
+    构造 `face_capture::ws_outlet` 并 `start()`，别的一行不写。协议实现分布在
+    `src/doodle_lib/core/face_capture/` 下：
 
-    ### 连接行为
+    | 文件 | 负责 |
+    | --- | --- |
+    | `ws_outlet.cpp` | 连接生命周期、在途消息封顶与丢弃、死连接判定 |
+    | `ws_message.cpp` | 三种下行事件的 JSON 字段 |
+    | `capture_session.cpp` | 事件发送时机、帧号、预览/录制两轴状态 |
+    | `media_fragment_pipeline.cpp` | libx264 编码与 fMP4 分片切分 |
 
-    - 握手成功即按**当前选中的摄像头 index**（见 `GET/POST .../devices`）打开摄像头并开始推
-      25 fps 预览，**不落任何文件**；断开连接即关闭摄像头，若在录制则先收尾 `take.mp4`。
-    - 打开时请求 1280×720（偶数化），随后用首帧实际尺寸覆盖；打开失败只记 WARN 日志，
-      连接保持但**不会收到 `hello` 与任何帧**。
-    - 路径里的 `{session_id}` **当前实现既不读取也不校验**（`face_capture_stream::session_id_`
-      未被使用），传任意 UUID 都能连上；真正的会话 id 在 `POST .../recordings` 开始时生成，
-      见下方 `hello` / 录制接口。
-    - 每条连接都会新建自己的 `capture_session`（不是全局单例），并把共享的
-      `capture_session_holder` 指向自己；因此录制类接口只作用于**最近建立的连接**。
-      旧连接不会被主动断开：摄像头已被前一条会话占用时，后连的 `open` 会失败并只记 WARN。
-    - 相反方向的副作用：任一连接断开都会把 holder 置空，即使此时已有更新的连接接管，
-      之后调用录制类接口会得到「当前没有可用的预览连接」。
-    - 服务端**不解析任何上行消息**（读循环只是 `async_read` 后丢弃），控制一律走 HTTP。
+    设计依据见 `docs/face_capture_camera_stream_plan.md` §3.3 / §4.4 / §5。
 
-    ### 下行消息
+    ### 连接与会话
 
-    每条消息先发一条 **text** 消息（JSON 元数据），若带负载再紧跟一条 **binary** 消息；
-    前端按 text 的 `type` 分流即可，binary 属于紧邻的前一条 text。
+    - 握手成功即按当前选中的摄像头 index（见 `GET/POST .../devices`）打开摄像头并推 25 fps
+      预览，不写任何磁盘文件；宽高请求 1280×720（向下取偶），随后用首帧实际尺寸覆盖。
+    - 每条连接各自创建并持有自己的 `capture_session`（不是全局单例），并在启动时把它登记到
+      共享的 `capture_session_holder`。登记有保护（`capture_session_holder::reset`）：
+      槽位里已有一个不同的会话时不覆盖，因此 holder 指向的是最早建立且尚未断开的那条连接，
+      录制类接口（`/recordings*`）也作用在它上面。
+    - 后连的连接不会挤掉先前的登记，也不会让服务端主动断开旧连接：它会自己再打开一次摄像头；
+      打开失败（例如设备被占用）只记 WARN 日志，连接保持，但收不到 `hello`、也不会有任何帧，
+      且不会收到任何错误事件。
+    - 断开即结束会话：`close_impl()` 的顺序固定为「关摄像头并收尾在录的 `take.mp4` / `align.json`
+      → 无条件把 holder 置空（`holder_->reset(nullptr)`，不校验归属）→ 置关闭标志 →
+      正常 `async_close`」。置空不区分归属，即使槽位里此时已是另一条连接的会话也会被清掉，
+      之后录制类接口会得到「当前没有可用的预览连接」。
+    - 路径里的 `{session_id}` 当前实现既不读取也不校验（`face_capture_stream::session_id_`
+      未被使用），任意 UUID 都能连上；真正的录制 id 由 `POST .../recordings` 生成。
+    - 服务端不解析任何上行消息（读循环每次 `async_read` 后清空缓冲区丢弃），控制面一律走 HTTP；
+      服务端也不主动发 ping 或状态事件，连接是否存活由浏览器自己感知，重连就是重新发起本请求。
 
-    | `type` | 伴随 binary | 字段 |
-    | --- | --- | --- |
-    | `hello` | 无 | `session_id`（打开摄像头时尚未开录，因此是空 uuid `00000000-0000-0000-0000-000000000000`）、`state`（`previewing`）、`width`、`height`、`fps`（固定 25） |
-    | `avc_init` | 有 | `bytes`（初始化段字节数）、`seq_begin`、`seq_end`（均为 0）；binary 即 H.264/fMP4 初始化段。每次开始录制（`POST .../recordings`）都会重发 |
-    | `avc_fragment` | 有 | `seq`（输出帧序号）、`keyframe`（是否关键帧）、`size`（字节数） |
+    ### 帧格式
 
-    丢帧策略（`ws_outlet::write_message`）：非关键帧在上一帧仍在写时直接丢弃；
-    关键帧在途数量上限 2；单次写阻塞超过 2000 ms 判定连接失效并关闭。
+    每条事件是一或两条 WebSocket 消息，按顺序配对：
+
+    1. 先一条 text 帧，内容是 JSON 元数据（`type` 区分事件）；
+    2. 若该事件带二进制负载，紧跟一条 binary 帧（H.264 / fMP4 字节）。
+
+    text 与紧随的 binary 属于同一事件，前端按到达顺序配对即可（`avc_fragment` 的 `seq` 是帧号，
+    不是消息序号）。两种帧由 `stream_.binary()` 逐次切换并在每次写完后复位。
+
+    ### 下行事件
+
+    | `type` | 何时发 | text 字段 | 紧随 binary |
+    | --- | --- | --- | --- |
+    | `hello` | 每次连接一次，在摄像头成功打开后（`capture_session::open()` 末尾） | `session_id`、`state`、`width`、`height`、`fps` | 无 |
+    | `avc_fragment` | 每个分片一次；连接后的第一帧事件就是它，携带 init 段 | `seq`、`keyframe`、`size` | 有：分片字节 |
+    | `avc_init` | 每次 `POST .../recordings` 开始录制时重发一次 | `bytes`、`seq_begin`、`seq_end` | 有：fMP4 init 段 |
+
+    字段细节：
+
+    - `hello`：`state` 恒为 `previewing`，`fps` 恒为 25；`session_id` 在连接建立时尚未开始录制，
+      因此是空 uuid `00000000-0000-0000-0000-000000000000`；`width` / `height` 是偶数化后的
+      实际采集尺寸。`hello` 是整条连接唯一的状态快照，之后不再推任何状态事件。
+    - `avc_fragment`：`seq` 取分片起始帧号（`fragment.seq_begin_`）；`keyframe` 取分片标记，
+      当前实现恒为 `true`——分片一律在关键帧边界切分（每个分片都以关键帧开头、长度一个 GOP）；
+      `size` 是紧随 binary 帧的字节数。
+    - `avc_init`：`seq_begin` / `seq_end` 恒为 `0`；`bytes` 是 init 段字节数；binary 即
+      `ftyp+moov`（`SourceBuffer.appendBuffer` 的第一块）。内容与连接首帧那次 init 段一致
+      （同一编码器、同一套参数），用于让前端清空缓冲重新开始。
+
+    一期没有 `face_status`（人脸检测推迟到二期）、没有 `capture_state` 推送、也没有
+    `transcode_progress` / `error` 事件：摄像头打不开只记服务端 WARN 日志；转码进度走
+    `GET .../recordings/{preview_id}/transcode` 与 Socket.IO（见该接口文档）。
+
+    ### 编码与分片参数
+
+    推流编码器与 `take.mp4` 共用同一套 libx264 参数（`configure_encoder`，
+    `media_fragment_pipeline.cpp`）：
+
+    | 项 | 取值 |
+    | --- | --- |
+    | 编码器 / 容器 | `libx264` → `mp4` muxer，`movflags=frag_keyframe+empty_moov+default_base_moof`，`flush_packets=1`、`mov_write_trailer=0` |
+    | preset / tune / crf | `veryfast` / `zerolatency` / `23` |
+    | profile / level | `main`；`level` 不显式设置，由 libx264 按分辨率自选 |
+    | GOP | `keyint=25`、`min-keyint=25`、`scenecut=0`（1 秒一个关键帧） |
+    | B 帧 | `max_b_frames=0`（`pts == dts`，零延迟） |
+    | 像素格式 | 输入 BGR24 → `yuv420p` |
+    | 时基 / 帧率 | `time_base=1/25`、`frame_rate=25/1`；`pts = seq` |
+
+    帧率口径：摄像头到达即处理（到达瞬间打 `steady_clock` 时间戳），由 `fps=25` 滤镜按真实
+    时间戳采样，只有 25 fps 一个输出帧率。滤镜是采样器不是插值器，成片里的重复帧属正常现象，
+    不做补位（`capture_status.inserted_frames` 恒为 0）。
+
+    ### 帧号（`seq`）语义
+
+    - 预览期与录制期各用一套计数：预览期是内部预览计数，录制期与 `take.mp4` 帧号一致。
+    - 收到 `avc_init` 表示帧号已归零：前端应丢弃当前 `SourceBuffer` 里的旧分片再继续 append。
+    - 同一段内 `seq` 严格递增，但可能跳号（写不动时整条分片事件被丢，见下）；跳号后下一个分片
+      一定以关键帧开头（GOP = 1 秒），前端不需要实现补片逻辑，最坏表现是画面停顿约 1 秒。
+    - 停止录制不会重发 `avc_init`：`stop()` 之后帧号回到预览计数（已在 `start_record()` 时归零），
+      可能与刚录完那段重叠。需要干净的时间轴就重连，或按 `avc_init` 语义自行清 buffer。
+
+    ### 发送与丢弃
+
+    `send()` 对调用方是同步的：把消息 `post` 到 WS 流自己的执行器，再在该执行器上
+    `co_spawn` 一个 `write_message` 协程。没有写队列，也不保证严格单在途——**在途消息的封顶是 2**：
+
+    - `write_message` 入口按 `key()` 分流：`key()` 为真的消息若 `key_backlog_ >= 2`
+      （`k_max_pending_keys`）就整条丢弃（text 与 binary 都不写）；否则 `++key_backlog_`，
+      写完后 `--`。
+    - 当前三种事件的 `key()` 都是 `true`（`ws_message` 默认 `true`，`ws_avc_fragment` 取分片标记，
+      而分片标记恒为 `true`），所以**实际生效的只有「在途 2 条即丢新消息」这一条**；
+      `key()` 为假时「上一帧未写完就丢」的分支当前不可达。
+    - 被丢的是整条事件：前端看到的只是这一秒没有新画面，下一段分片仍以关键帧开头，可继续解码。
+    - `writing_` / `pending_since_` 是**单次 `async_write`** 的快照（text 帧与 binary 帧各算一次），
+      两帧之间会短暂复位，因此 `idle()` / `pending_frame()` 只是给采集侧看的粗略状态，不参与丢弃决策。
+
+    ### 死连接判定
+
+    - 只有当**新消息到达**、`send()` 在流执行器上执行时才会检查 `stalled()`：若有单次
+      `async_write` 已挂起 ≥ 2000 ms（`k_stop_drain_timeout_ms`），记 INFO 日志并 `mark_closed()`。
+      典型场景是页面切到后台不再读 socket；摄像头没再出帧时不会有 `send()`，也就检测不到。
+    - `write_raw` 里写失败（对端已断 / 异常）同样记 INFO 日志并 `mark_closed()`。
+    - `mark_closed()` 只置标志（`closing_ = true`、`closed_ = true`、`writing_ = false`），
+      **不主动关闭 TCP/WS**：此后所有 `send()` 在入口短路；读循环要等当前 `async_read` 返回
+      才在下一轮检查时退出，再由 `close_impl()` 收尾（关摄像头、在录则收尾文件、清 holder、
+      `async_close`）。
+      因此若客户端既不读也不主动断开，读协程会一直挂在 `async_read` 上，该会话不会被主动回收。
+    - 预览丢片不影响 `take.mp4`：两条链是独立编码器，同取滤镜输出帧，互不阻塞。
+    - 摄像头静默（连续 > 1000 ms 无帧，`k_silent_timeout_ms`）只记 `gaps` 区间，不通过 WS 推送；
+      要看就在 `GET .../recordings/{session_id}` 的 `gaps` 里查。
+
+    ### 前端推荐时序
+
+    ```
+    GET(Upgrade) /stream/{任意 uuid}
+      <- hello                      取 session_id(空)/width/height/fps/state
+      <- avc_fragment seq=0 key     appendBuffer(init 段)
+      <- avc_fragment seq=n key     appendBuffer(moof+mdat)   <- 持续 25 fps
+    POST /recordings               （显式开录；无活跃会话 -> 409）
+      <- avc_init                  清 buffer，之后 seq 从 0 起
+      <- avc_fragment ...          录制期分片，seq 与 take.mp4 对齐
+    POST /recordings/{id}/stop     （返回时 take.mp4 已收尾，预览继续）
+      <- avc_fragment ...          回到预览计数
+    断开连接                       会话结束；若在录则自动收尾
+    ```
   operationId: face_capture_stream
   parameters:
     - name: session_id
@@ -51,6 +158,6 @@ get:
       description: 路径占位，当前实现忽略，任意 UUID 均可
   responses:
     '101':
-      description: WebSocket 握手成功，随后按上述协议单向推流（文本元数据 + 二进制帧）
+      description: WS 握手成功，随后按上文协议单向推流（text 元数据 + 可选紧随的 binary 帧）
     '404':
       description: '非 WebSocket 的普通 GET；响应体为 `{"error": "服务器端未实现 api", "code": <数字码>}`'
