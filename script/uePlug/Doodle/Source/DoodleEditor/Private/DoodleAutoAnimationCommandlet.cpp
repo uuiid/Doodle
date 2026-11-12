@@ -140,9 +140,14 @@ namespace
 	                                              const FString& In_VersionString, bool bSetMaterialUsage = false)
 	{
 		auto L_Mat_Path = In_Material->GetPathName();
+		check(!In_VersionString.IsEmpty())
+		auto L_VersionString_Sub = In_VersionString[0] == '_'
+			? In_VersionString.RightChop(1)
+			: In_VersionString;
 		// 添加后缀后重新按照路径寻找
-		auto L_New_Path = FPaths::Combine(FPaths::GetPath(L_Mat_Path),
+		auto L_New_Path = FPaths::Combine(FPaths::GetPath(L_Mat_Path), L_VersionString_Sub,
 			FPaths::GetBaseFilename(L_Mat_Path) + In_VersionString + FPaths::GetExtension(L_Mat_Path, true) + In_VersionString);
+		UE_LOG(LogTemp, Warning, TEXT("find Material version path: %s"), *L_New_Path);
 		auto L_New_Material_Object = LoadObject<UMaterialInterface>(In_Outer, L_New_Path);
 		if (!L_New_Material_Object) return {};
 		UMaterial* L_Mat_Object = Cast<UMaterial>(L_New_Material_Object);
