@@ -114,7 +114,8 @@ class h264_fragmenter::impl {
   impl(std::int32_t in_width, std::int32_t in_height)
       : width_(even(in_width)),
         height_(even(in_height)),
-        codec_(av::findEncodingCodec(std::string{"libx264"})) {}
+        codec_(av::findEncodingCodec(std::string{"libx264"})),
+        enc_ctx_(codec_) {}
 
   bool init() {
     DOODLE_CHICK(codec_.isEncoder(), "找不到 libx264 编码器");
