@@ -19,7 +19,9 @@
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 
+#include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/co_spawn.hpp>
+#include <boost/asio/consign.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/exception/diagnostic_information.hpp>
@@ -34,7 +36,6 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <string>
 #include <vector>
-
 
 namespace doodle::http::local {
 
@@ -79,10 +80,7 @@ class face_capture_transcode_sink : public spdlog::sinks::base_sink<Mutex> {
 
 using face_capture_transcode_sink_mt = face_capture_transcode_sink<std::mutex>;
 
-void start_task(
-    const std::shared_ptr<face_capture_transcode_tasks>& in_tasks,
-    const std::shared_ptr<face_capture_transcode_task>& in_task
-) {
+void start_task(const std::shared_ptr<face_capture_transcode_task>& in_task) {
   const auto& l_task_info = in_task->task_info_;
 
   auto l_logger_path      = core_set::get_set().get_cache_root() / server_task_info::logger_category /
@@ -99,34 +97,36 @@ void start_task(
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_task_info});
 
   boost::asio::co_spawn(
-      g_io_context(),
-      [in_task, in_tasks]() -> boost::asio::awaitable<void> {
-        auto l_tasks       = in_tasks;
-        const auto& l_info = in_task->task_info_;
-        try {
-          co_await in_task->task_->run();
-          l_info->status_   = server_task_info_status::completed;
-          l_info->progress_ = 1.0;
-        } catch (...) {
-          l_info->status_        = server_task_info_status::failed;
-          l_info->last_line_log_ = boost::current_exception_diagnostic_information();
-        }
-        l_info->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-        socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_info});
-        l_tasks->finish(l_info->uuid_id_);
-      }(),
-      boost::asio::detached
+      g_io_context(), in_task->run(),
+      boost::asio::bind_cancellation_slot(
+          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, in_task)
+      )
   );
 }
 
 }  // namespace
 
+boost::asio::awaitable<void> face_capture_transcode_task::run() {
+  try {
+    co_await task_->run();
+    task_info_->status_   = server_task_info_status::completed;
+    task_info_->progress_ = 1.0;
+  } catch (...) {
+    task_info_->status_        = server_task_info_status::failed;
+    task_info_->last_line_log_ = boost::current_exception_diagnostic_information();
+  }
+  task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *task_info_});
+  if (auto l_task_manager = task_manager.lock(); l_task_manager) l_task_manager->finish(task_info_->uuid_id_);
+}
+
 std::shared_ptr<face_capture_transcode_task> face_capture_transcode_tasks::enqueue(
     std::shared_ptr<async_task> in_task, std::shared_ptr<server_task_info> in_task_info
 ) {
-  auto l_ptr        = std::make_shared<face_capture_transcode_task>();
-  l_ptr->task_      = std::move(in_task);
-  l_ptr->task_info_ = std::move(in_task_info);
+  auto l_ptr          = std::make_shared<face_capture_transcode_task>();
+  l_ptr->task_        = std::move(in_task);
+  l_ptr->task_info_   = std::move(in_task_info);
+  l_ptr->task_manager = shared_from_this();
 
   std::lock_guard<std::mutex> _(mtx_);
   tasks_.emplace_back(l_ptr);
@@ -159,7 +159,7 @@ void face_capture_transcode_tasks::start_next() {
     l_ptr    = *l_itr;
     running_ = l_ptr->task_info_->uuid_id_;
   }
-  start_task(shared_from_this(), l_ptr);
+  start_task(l_ptr);
 }
 
 void face_capture_transcode_tasks::finish(const uuid_t& in_preview_id) {

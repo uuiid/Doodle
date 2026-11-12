@@ -11,7 +11,6 @@
 #include <doodle_lib/core/face_capture/capture_session.h>
 #include <doodle_lib/core/face_capture/face_capture_types.h>
 #include <doodle_lib/core/http/http_function.h>
-
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/local/local.h>
 
@@ -23,6 +22,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+
 
 namespace doodle::http::local {
 
@@ -41,9 +41,13 @@ class face_capture_selected_device {
   std::shared_ptr<impl> impl_ptr_{};
 };
 
+class face_capture_transcode_tasks;
+
 struct face_capture_transcode_task {
   std::shared_ptr<async_task> task_{};
   std::shared_ptr<server_task_info> task_info_{};
+  std::weak_ptr<face_capture_transcode_tasks> task_manager{};
+  boost::asio::awaitable<void> run();
 };
 
 class face_capture_transcode_tasks : public std::enable_shared_from_this<face_capture_transcode_tasks> {
@@ -73,8 +77,7 @@ std::shared_ptr<face_capture_selected_device> selected_{};
 std::shared_ptr<face_capture_session_holder> holder_{};
 
 explicit face_capture_devices(
-    std::shared_ptr<face_capture_selected_device> in_selected,
-    std::shared_ptr<face_capture_session_holder> in_holder
+    std::shared_ptr<face_capture_selected_device> in_selected, std::shared_ptr<face_capture_session_holder> in_holder
 )
     : base_type(), selected_(std::move(in_selected)), holder_(std::move(in_holder)) {}
 
@@ -88,8 +91,7 @@ boost::uuids::uuid session_id_{};
 std::shared_ptr<face_capture_selected_device> selected_{};
 std::shared_ptr<face_capture_session_holder> holder_{};
 explicit face_capture_stream(
-    std::shared_ptr<face_capture_selected_device> in_selected,
-    std::shared_ptr<face_capture_session_holder> in_holder
+    std::shared_ptr<face_capture_selected_device> in_selected, std::shared_ptr<face_capture_session_holder> in_holder
 )
     : base_type(), selected_(std::move(in_selected)), holder_(std::move(in_holder)) {}
 [[nodiscard]] bool has_websocket() const override;
