@@ -51,8 +51,10 @@ class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
 using msvc_doodle_sink_mt = msvc_doodle_sink<std::mutex>;
 
 #if !defined(NDEBUG)
-#define DOODLE_ADD_DEBUG_SINK(logger) logger->sinks().push_back(debug_sink_);
-#define DOODLE_DEBUG_SINK() debug_sink_
+#define DOODLE_ADD_DEBUG_SINK(logger)     \
+  logger->sinks().push_back(debug_sink_); \
+  logger->sinks().push_back(std_sink_);
+#define DOODLE_DEBUG_SINK() debug_sink_, std_sink_
 #else
 #define DOODLE_ADD_DEBUG_SINK(logger)
 #define DOODLE_DEBUG_SINK()
@@ -162,6 +164,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path& in_path, c
 
 #if !defined(NDEBUG)
     debug_sink_ = std::make_shared<msvc_doodle_sink_mt>();
+    std_sink_   = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 #endif
     DOODLE_ADD_DEBUG_SINK(l_logger);
     spdlog::register_logger(l_logger);
