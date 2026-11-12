@@ -13,7 +13,6 @@
 #include <boost/asio/thread_pool.hpp>
 
 #include <algorithm>
-#include <atomic>
 #include <avcpp/codec.h>
 #include <avcpp/codeccontext.h>
 #include <avcpp/dictionary.h>
@@ -30,16 +29,10 @@
 #include <opencv2/imgproc.hpp>
 
 #include <fmt/format.h>
-#include <spdlog/spdlog.h>
 
-#include <chrono>
-#include <condition_variable>
 #include <cstdint>
-#include <deque>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <thread>
 #include <utility>
 #include <vector>
 
@@ -54,8 +47,6 @@ av::PixelFormat yuv_pixel_format() { return av::PixelFormat{AV_PIX_FMT_YUV420P};
 av::Rational frame_time_base() { return av::Rational{1, k_fps}; }
 
 av::Rational frame_rate() { return av::Rational{k_fps, 1}; }
-
-av::Rational raw_time_base() { return av::Rational{1, 1000}; }
 
 std::int32_t even(std::int32_t in_value) { return in_value - in_value % 2; }
 
@@ -104,8 +95,6 @@ void configure_encoder(
 av::Timestamp frame_timestamp(std::uint64_t in_seq) {
   return av::Timestamp{static_cast<std::int64_t>(in_seq), frame_time_base()};
 }
-
-av::Timestamp raw_timestamp(std::int64_t in_wall_ms) { return av::Timestamp{in_wall_ms, raw_time_base()}; }
 
 }  // namespace
 
@@ -384,198 +373,5 @@ bool mp4_writer::push(const cv::Mat& in_bgr, std::uint64_t in_seq) { return impl
 std::uint64_t mp4_writer::frames() const { return impl_ptr_ ? impl_ptr_->frames() : 0; }
 
 bool mp4_writer::finish() { return impl_ptr_ ? impl_ptr_->finish() : true; }
-
-class raw_sink_thread {
- public:
-  raw_sink_thread(const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height)
-      : path_(in_path), width_(even(in_width)), height_(even(in_height)) {}
-
-  ~raw_sink_thread() { stop(); }
-
-  bool start() {
-    codec_ = av::findEncodingCodec(AV_CODEC_ID_FFV1);
-    DOODLE_CHICK(codec_.isEncoder(), "找不到 FFV1 编码器");
-    DOODLE_CHICK(width_ > 0 && height_ > 0, "raw.mkv 编码器尺寸非法 {}x{}", width_, height_);
-    if (path_.has_parent_path() && !FSys::exists(path_.parent_path()))
-      FSys::create_directories(path_.parent_path());
-
-    enc_ctx_.setWidth(width_);
-    enc_ctx_.setHeight(height_);
-    enc_ctx_.setTimeBase(raw_time_base());
-    enc_ctx_.setPixelFormat(yuv_pixel_format());
-    enc_ctx_.setOption("level", "3");
-    enc_ctx_.open();
-    DOODLE_CHICK(enc_ctx_.isOpened(), "打开 FFV1 编码器失败");
-
-    format_context_.openOutput(path_.string());
-    stream_ = format_context_.addStream(enc_ctx_);
-    stream_.setTimeBase(raw_time_base());
-    stream_.setFrameRate(av::Rational{0, 1});
-    format_context_.writeHeader();
-
-    rescaler_ = av::VideoRescaler{
-        width_, height_, yuv_pixel_format(), width_, height_, bgr_pixel_format(), av::SwsFlagBicubic
-    };
-
-    worker_ = std::thread{[this] { run(); }};
-    return true;
-  }
-
-  bool push(const cv::Mat& in_bgr, std::int64_t in_wall_ms) {
-    if (in_bgr.empty() || in_bgr.cols != width_ || in_bgr.rows != height_ || in_bgr.type() != CV_8UC3)
-      return false;
-    {
-      std::unique_lock l_lock{mutex_};
-      if (stopping_ || closed_) return false;
-      if (queue_.size() >= static_cast<std::size_t>(k_max_raw_queue_frames)) {
-        SPDLOG_WARN("raw.mkv 写盘队列已满({}), 丢弃当前帧", k_max_raw_queue_frames);
-        return false;
-      }
-      queue_.push_back(queued_frame{.mat_ = in_bgr.clone(), .wall_ms_ = in_wall_ms});
-    }
-    cv_.notify_one();
-    return true;
-  }
-
-  bool finish() {
-    {
-      std::unique_lock l_lock{mutex_};
-      stopping_ = true;
-    }
-    cv_.notify_all();
-
-    auto l_deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds{k_stop_drain_timeout_ms};
-    {
-      std::unique_lock l_lock{mutex_};
-      cv_.wait_until(l_lock, l_deadline, [this] { return queue_.empty() || error_; });
-      if (!queue_.empty()) {
-        SPDLOG_WARN("raw.mkv 写盘超时, 丢弃 {} 帧", queue_.size());
-        queue_.clear();
-      }
-      closed_ = true;
-    }
-    cv_.notify_all();
-    if (worker_.joinable()) worker_.join();
-
-    if (error_) SPDLOG_ERROR("raw.mkv 写盘线程异常, 尾部可能不完整");
-    if (enc_ctx_.isOpened()) {
-      flush_encoder();
-      enc_ctx_ = av::VideoEncoderContext{};
-      format_context_.writeTrailer();
-      format_context_.close();
-    }
-    return !error_;
-  }
-
-  std::uint64_t written() const { return written_.load(); }
-
- private:
-  struct queued_frame {
-    cv::Mat mat_{};
-    std::int64_t wall_ms_{0};
-  };
-
-  void run() {
-    while (true) {
-      queued_frame l_frame{};
-      {
-        std::unique_lock l_lock{mutex_};
-        cv_.wait(l_lock, [this] { return !queue_.empty() || closed_; });
-        if (queue_.empty()) break;
-        l_frame = std::move(queue_.front());
-        queue_.pop_front();
-      }
-      encode_frame(l_frame);
-      cv_.notify_all();
-    }
-  }
-
-  void encode_frame(const queued_frame& in_frame) {
-    try {
-      auto l_src = buffers_.make_frame(in_frame.mat_);
-      auto l_yuv = rescaler_.rescale(l_src);
-      l_yuv.setTimeBase(raw_time_base());
-      l_yuv.setPts(raw_timestamp(in_frame.wall_ms_));
-      auto l_packet = enc_ctx_.encode(l_yuv);
-      if (l_packet) format_context_.writePacket(l_packet);
-      ++written_;
-    } catch (...) {
-      std::unique_lock l_lock{mutex_};
-      error_ = true;
-    }
-  }
-
-  void flush_encoder() {
-    while (true) {
-      av::Packet l_packet = enc_ctx_.encode();
-      if (!l_packet) break;
-      format_context_.writePacket(l_packet);
-    }
-  }
-
-  void stop() {
-    if (worker_.joinable()) {
-      {
-        std::unique_lock l_lock{mutex_};
-        closed_   = true;
-        stopping_ = true;
-      }
-      cv_.notify_all();
-      worker_.join();
-    }
-    if (enc_ctx_.isOpened()) {
-      try {
-        flush_encoder();
-        enc_ctx_ = av::VideoEncoderContext{};
-        format_context_.writeTrailer();
-        format_context_.close();
-      } catch (...) {
-      }
-    }
-  }
-
-  FSys::path path_{};
-  std::int32_t width_{0};
-  std::int32_t height_{0};
-
-  std::thread worker_{};
-  std::mutex mutex_{};
-  std::condition_variable cv_{};
-  std::deque<queued_frame> queue_{};
-  bool stopping_{false};
-  bool closed_{false};
-  bool error_{false};
-
-  av::Codec codec_{};
-  av::FormatContext format_context_{};
-  av::VideoEncoderContext enc_ctx_{};
-  av::Stream stream_{};
-  av::VideoRescaler rescaler_{};
-  frame_buffer buffers_{};
-  std::atomic<std::uint64_t> written_{0};
-};
-
-class ffv1_raw_writer : public raw_writer {
- public:
-  ffv1_raw_writer(const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height)
-      : sink_(std::make_shared<raw_sink_thread>(in_path, in_width, in_height)) {
-    sink_->start();
-  }
-
-  bool push(const cv::Mat& in_bgr, std::int64_t in_wall_ms) override { return sink_->push(in_bgr, in_wall_ms); }
-
-  std::uint64_t frames() const override { return sink_->written(); }
-
-  bool finish() override { return sink_->finish(); }
-
- private:
-  std::shared_ptr<raw_sink_thread> sink_{};
-};
-
-std::shared_ptr<raw_writer> raw_writer::make(
-    const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height
-) {
-  return std::make_shared<ffv1_raw_writer>(in_path, in_width, in_height);
-}
 
 }  // namespace doodle::face_capture

@@ -15,16 +15,6 @@
 
 namespace doodle::face_capture {
 
-class raw_writer {
- public:
-  static std::shared_ptr<raw_writer> make(const FSys::path& in_path, std::int32_t in_width, std::int32_t in_height);
-
-  virtual ~raw_writer() = default;
-  virtual bool push(const cv::Mat& in_bgr, std::int64_t in_wall_ms) = 0;
-  virtual std::uint64_t frames() const = 0;
-  virtual bool finish() = 0;
-};
-
 class video_writer {
  public:
   virtual ~video_writer() = default;
