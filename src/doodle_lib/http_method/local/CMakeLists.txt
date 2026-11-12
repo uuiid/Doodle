@@ -7,7 +7,6 @@ target_sources(doodle_lib
         task_info.cpp
         movie.cpp
         event.cpp
-        face_capture_stream.cpp
         face_capture_device.cpp
         face_capture_record.cpp
         face_capture_transcode.cpp
