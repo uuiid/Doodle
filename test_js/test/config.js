@@ -101,7 +101,7 @@ export const FACE_CAPTURE_SESSIONS_DIR =
   process.env.FACE_CAPTURE_SESSIONS_DIR || path.join(FACE_CAPTURE_ROOT, 'face_capture', 'sessions');
 
 export const FACE_CAPTURE_SAMPLE =
-  process.env.FACE_CAPTURE_SAMPLE || path.join(BUILD_DIR, 'shi_ping', 'MySlate_20', ' ');
+  process.env.FACE_CAPTURE_SAMPLE || path.join(BUILD_DIR, 'shi_ping', 'MySlate_20', 'front-1-wide-5s.mp4');
 
 export const FACE_CAPTURE_SEED_DIR =
   process.env.FACE_CAPTURE_SEED_DIR || path.join(BUILD_DIR, 'shi_ping', 'MySlate_20_face_test');
@@ -110,4 +110,4 @@ export const FACE_CAPTURE_TRANSCODE_E2E = process.env.FACE_CAPTURE_TRANSCODE_E2E
 
 export const FACE_CAPTURE_WAIT_MS = Number(process.env.FACE_CAPTURE_WAIT_MS || 20000);
 
-export const FACE_CAPTURE_UE_PROJECT = process.env.FACE_CAPTURE_UE_PROJECT || 'E:\\ue_main\\ue_main.uproject';
+export const FACE_CAPTURE_UE_PROJECT = process.env.FACE_CAPTURE_UE_PROJECT || 'E:\\ue_main_test\\ue_main_test.uproject';

@@ -93,8 +93,19 @@ const PNG_1PX = Buffer.from(
   'hex'
 );
 
-// 样本视频的字节数随样本变化，这里只在运行时取真实大小做对比
-const SAMPLE_READY = fs.existsSync(FACE_CAPTURE_SAMPLE);
+// 样本视频的字节数随样本变化，这里只在运行时取真实大小做对比。
+// 同时要求文件能独占打开：上一轮「提交任务并在两个通道可见」用例可能还在后台解码它
+// （服务端 decode_to_png 是同步的，直接打开 take.mp4），此时 copyFileSync 会撞 EPERM。
+const SAMPLE_READY = fs.existsSync(FACE_CAPTURE_SAMPLE) && canOpenExclusive(FACE_CAPTURE_SAMPLE);
+
+function canOpenExclusive(filePath) {
+  try {
+    fs.closeSync(fs.openSync(filePath, 'r+'));
+    return true;
+  } catch {
+    return false;
+  }
+}
 const CURVES_SOURCE = path.join(FACE_CAPTURE_SEED_DIR, 'face_curves.dhfc');
 const CURVES_READY = fs.existsSync(CURVES_SOURCE);
 
@@ -174,6 +185,10 @@ function removeSession(sessionId) {
 
 // 整文件串行跑：所有铺出来的会话最后一起删
 const created = [];
+
+// 「提交任务并在两个通道可见」用例提交出去的任务 id，供后面的终态用例轮询（不再重复提交）
+let transcodeSubmittedId = null;
+
 function freshSession(options) {
   if (!SAMPLE_READY) test.skip(true, `样本视频不存在：${FACE_CAPTURE_SAMPLE}`);
   if (options?.withCurves && !CURVES_READY) test.skip(true, `动捕曲线不存在：${CURVES_SOURCE}`);
@@ -656,22 +671,22 @@ test.describe('面部捕捉转码', () => {
   test('POST /recordings/{id}/transcode 提交任务并在两个通道可见', async ({ request }) => {
     test.skip(!fs.existsSync(FACE_CAPTURE_UE_PROJECT), `UE 工程不存在：${FACE_CAPTURE_UE_PROJECT}`);
     const seeded = freshSession({ withCurves: false });
+    transcodeSubmittedId = seeded.sessionId;
 
     // 提交这一条 HTTP 响应要等后台 run() 走到第一个 co_await 才回来：同步解帧 + 拉 UE 插件
-    // 都在 run() 的前半段，样本（原片前 5 秒，约 150 帧）解帧也要数百毫秒，可能超过这里的 10s 窗口。
-    // 所以 POST 当作「发出去了」而不是「一定拿到响应」：
-    // 真的拿到响应就顺手校验响应体，拿不到就靠后面两个查询通道（或跳过）覆盖。
+    // 都在 run() 的前半段。样本是原片前 5 秒（约 150 帧），实测提交约 30s 才返回（截图解码同步
+    // 占用请求线程），所以这里给 120s；仍拿不到就以「发出去了」继续，靠后面两个查询通道覆盖。
     let submitted = null;
     try {
       submitted = await readJson(
         await request.post(`${FACE_CAPTURE_API}/recordings/${seeded.sessionId}/transcode`, {
           headers: authHeader(),
           data: { ue_project: FACE_CAPTURE_UE_PROJECT },
-          timeout: 10000,
+          timeout: 120000,
         })
       );
     } catch (error) {
-      console.log(`提交后没有在 10s 内拿到响应（后台解帧占用 io_context）：${error.message.split('\n')[0]}`);
+      console.log(`提交后没有在 120s 内拿到响应：${error.message.split('\n')[0]}`);
     }
 
     if (submitted) {
@@ -684,7 +699,7 @@ test.describe('面部捕捉转码', () => {
       expect(task.status, '提交时 start_next 会立刻把它置为 running').to.be.oneOf(['submitted', 'running']);
     }
 
-    // 任务已经开跑，后台解帧会占住 io_context；这里给读接口留更宽的等待时间
+    // 任务已经开跑，后台解帧会占住请求线程；这里给读接口留更宽的等待时间
     let single = null;
     try {
       single = await readJson(
@@ -700,16 +715,22 @@ test.describe('面部捕捉转码', () => {
     expectServerTaskInfo(single.body);
     expect(single.body.id).to.equal(seeded.sessionId);
 
+    // POST 没拿到响应时任务表里也可能还没有这条（提交协程尚未恢复），给全量通道重试一会儿
     let all = null;
-    try {
-      all = await readJson(
-        await request.get(`${FACE_CAPTURE_API}/transcode`, {
-          headers: authCookie(),
-          timeout: FACE_CAPTURE_WAIT_MS,
-        })
-      );
-    } catch (error) {
-      test.skip(true, `后台解帧期间查询应不上：${error.message.split('\n')[0]}`);
+    const deadline = Date.now() + FACE_CAPTURE_WAIT_MS;
+    while (Date.now() < deadline) {
+      try {
+        all = await readJson(
+          await request.get(`${FACE_CAPTURE_API}/transcode`, {
+            headers: authCookie(),
+            timeout: FACE_CAPTURE_WAIT_MS,
+          })
+        );
+      } catch (error) {
+        test.skip(true, `后台解帧期间查询应不上：${error.message.split('\n')[0]}`);
+      }
+      if (all.body.some((item) => item.id === seeded.sessionId)) break;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
     expect(all.status).to.equal(200);
     expect(all.body.filter((item) => item.id === seeded.sessionId)).to.have.lengthOf(1);
@@ -717,17 +738,22 @@ test.describe('面部捕捉转码', () => {
 
   test('POST /recordings/{id}/transcode 终态落在 completed / failed 之内', async ({ request }) => {
     // A 层：终态只断言「落在 completed / failed 之内」，等不到就带日志跳过。
-    // 本机跑这一段时，解帧 + 找 UE 插件版本 + 等 UE 进程往往超过这里的等待预算，跳过是常态。
+    // 提交一条新的会再付一次同步解帧 + 找插件版本 + 等 UE 进程的代价，所以这里轮询上一条用例
+    // 已经提交的任务（transcodeSubmittedId），只有那一条没提交成功时才自己补一条。
     test.skip(!fs.existsSync(FACE_CAPTURE_UE_PROJECT), `UE 工程不存在：${FACE_CAPTURE_UE_PROJECT}`);
-    const seeded = freshSession({ withCurves: false });
-
-    const submitted = await readJson(
-      await request.post(`${FACE_CAPTURE_API}/recordings/${seeded.sessionId}/transcode`, {
-        headers: authHeader(),
-        data: { ue_project: FACE_CAPTURE_UE_PROJECT },
-      })
-    );
-    expect([200, 201]).to.include(submitted.status);
+    let sessionId = transcodeSubmittedId;
+    if (!sessionId) {
+      const seeded = freshSession({ withCurves: false });
+      sessionId = seeded.sessionId;
+      const submitted = await readJson(
+        await request.post(`${FACE_CAPTURE_API}/recordings/${sessionId}/transcode`, {
+          headers: authHeader(),
+          data: { ue_project: FACE_CAPTURE_UE_PROJECT },
+          timeout: 120000,
+        })
+      );
+      expect([200, 201], JSON.stringify(submitted.body)).to.include(submitted.status);
+    }
 
     let last = null;
     let lastError = null;
@@ -735,7 +761,7 @@ test.describe('面部捕捉转码', () => {
     while (Date.now() < deadline) {
       try {
         const res = await readJson(
-          await request.get(`${FACE_CAPTURE_API}/recordings/${seeded.sessionId}/transcode?poll=1`, {
+          await request.get(`${FACE_CAPTURE_API}/recordings/${sessionId}/transcode?poll=1`, {
             headers: authCookie(),
             timeout: 5000,
           })
@@ -762,7 +788,7 @@ test.describe('面部捕捉转码', () => {
     if (FACE_CAPTURE_TRANSCODE_E2E) {
       expect(last.status, `端到端模式要求解算成功：${detail}`).to.equal('completed');
       const rec = await readJson(
-        await request.get(`${FACE_CAPTURE_API}/recordings/${seeded.sessionId}`, { headers: authCookie() })
+        await request.get(`${FACE_CAPTURE_API}/recordings/${sessionId}`, { headers: authCookie() })
       );
       expect(rec.body.artifacts.curves, '解算成功应产出 curves/face_curves.dhfc').to.equal(true);
       expect(rec.body.artifacts.frames, '解算前会清空 frames/ 并重新解帧').to.be.greaterThan(0);

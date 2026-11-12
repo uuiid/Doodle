@@ -52,7 +52,7 @@ npx playwright show-report             # 打开上次的 HTML 报告
 | `FACE_CAPTURE_SESSIONS_DIR` | `$DOODLE_ROOT/face_capture/sessions` | 面部捕捉会话目录（测试往这里铺样本）|
 | `FACE_CAPTURE_SAMPLE` | `build/shi_ping/MySlate_20/front-1-wide-5s.mp4` | 面部捕捉用例用的样本视频（原片前 5 秒，约 150 帧）|
 | `FACE_CAPTURE_SEED_DIR` | `build/shi_ping/MySlate_20_face_test` | 提供 `face_curves.dhfc` 的种子目录 |
-| `FACE_CAPTURE_UE_PROJECT` | `E:\ue_main\ue_main.uproject` | 转码提交任务时 `ue_project` 指向的工程 |
+| `FACE_CAPTURE_UE_PROJECT` | `E:\ue_main_test\ue_main_test.uproject` | 转码提交任务时 `ue_project` 指向的工程 |
 | `FACE_CAPTURE_WAIT_MS` | `20000` | 转码用例轮询终态的最长时间 |
 | `FACE_CAPTURE_TRANSCODE_E2E` | 未设置 | 设为 `1` 时要求转码真的解算成功（`completed`）|
 | `KITSU_COOKIES` | 读注册表 `HKLM:\SOFTWARE\Doodle` 的 `kitsu_cookies` | 面部捕捉用例提交请求带的 token（`build_script/backup.ps1:3` 同一个值）；设置后优先于注册表 |
