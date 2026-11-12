@@ -19,7 +19,6 @@
 #include <spdlog/sinks/stdout_sinks.h>
 #include <spdlog/spdlog.h>
 
-
 namespace doodle::details {
 template <class Mutex>
 class msvc_doodle_sink : public spdlog::sinks::base_sink<Mutex> {
@@ -226,6 +225,9 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const std::string& in_name, 
       ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true));
   l_sinks.emplace_back(rotating_file_sink_);
+#ifndef NDEBUG
+  l_sinks.emplace_back(debug_sink_);
+#endif
 
   auto l_logger = std::make_shared<spdlog::async_logger>(
       in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
@@ -246,7 +248,9 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(
       ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
   // l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_path.generic_string(), true));
   l_sinks.emplace_back(rotating_file_sink_);
-
+#ifndef NDEBUG
+  l_sinks.emplace_back(debug_sink_);
+#endif
   auto l_logger = std::make_shared<spdlog::async_logger>(
       in_name, std::begin(l_sinks), std::end(l_sinks), spdlog::thread_pool(), spdlog::async_overflow_policy::block
   );
@@ -269,7 +273,9 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log_file(
   // if (in_path != l_path)
   // l_sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(in_path.generic_string(), true));
   l_sinks.emplace_back(rotating_file_sink_);
-
+#ifndef NDEBUG
+  l_sinks.emplace_back(debug_sink_);
+#endif
   l_sinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>())
       ->set_level(out_console ? spdlog::level::debug : spdlog::level::err);
 
@@ -289,6 +295,9 @@ bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_pt
   auto l_default_logger = spdlog::default_logger_raw();
   auto l_logger         = make_log(p_log_path, in_name);
   l_logger->sinks().emplace_back(in_ptr);
+#ifndef NDEBUG
+  l_logger->sinks().emplace_back(debug_sink_);
+#endif
   /// 刷新默认log
   try {
     l_default_logger->flush();
