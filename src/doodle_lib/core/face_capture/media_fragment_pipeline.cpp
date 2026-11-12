@@ -68,7 +68,7 @@ class frame_buffer {
     auto l_clone = wrap(in_bgr);
     return av::VideoFrame{
         l_clone.data, static_cast<std::size_t>(l_clone.total()) * l_clone.elemSize(), bgr_pixel_format(),
-        l_clone.cols, l_clone.rows, l_clone.cols * 3
+        l_clone.cols, l_clone.rows, 1
     };
   }
 

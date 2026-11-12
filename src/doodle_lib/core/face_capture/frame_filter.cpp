@@ -45,9 +45,7 @@ class frame_buffer {
     cv::Mat l_out{in_bgr.rows, in_bgr.cols, CV_8UC3, bytes_.data(), static_cast<std::size_t>(in_bgr.cols) * 3};
     in_bgr.copyTo(l_out);
 
-    av::VideoFrame l_frame{
-        bytes_.data(), l_size, bgr_pixel_format(), in_bgr.cols, in_bgr.rows, in_bgr.cols * 3
-    };
+    av::VideoFrame l_frame{bytes_.data(), l_size, bgr_pixel_format(), in_bgr.cols, in_bgr.rows, 1};
     l_frame.setTimeBase(in_time_base());
     l_frame.setPts(av::Timestamp{in_pts_us, in_time_base()});
     return l_frame;
