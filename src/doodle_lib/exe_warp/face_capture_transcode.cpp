@@ -119,13 +119,14 @@ boost::asio::awaitable<void> face_capture_transcode_arg::run() {
   const auto l_ue_arg = std::vector<std::string>{
       ue_project_.generic_string(),
       "-run=MetaHumanFace",
-      fmt::format(R"(-FramesDir="{}")", l_frames_dir.generic_string()),
-      fmt::format(R"(-OutDir="{}")", l_curves_dir.generic_string()),
+      "-AllowCommandletRendering",
+      "-RenderOffscreen",
+      fmt::format("-FramesDir={}", l_frames_dir.generic_string()),
+      fmt::format("-OutDir={}", l_curves_dir.generic_string()),
       fmt::format("-FPS={}/{}", face_capture::k_fps, 1),
-      "-log",
-      "-AllowStdOutLogVerbosity",
-      "-ForceLogFlush",
-      "-Unattended",
+      fmt::format(R"(-abslog={})", (l_session_dir / "face_capture_ue.log").generic_string()),
+      "-stdout",
+      "-nosplash",
   };
 
   SPDLOG_LOGGER_INFO(logger_ptr_, "开始运行 UE 解算面部动捕 {}", l_ue_arg);
