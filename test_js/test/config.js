@@ -1,9 +1,19 @@
 import jwt_encode from 'jwt-encode';
+import { execSync } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 export const URL = process.env.DOODLE_BASE_URL || 'http://localhost:50025';
+
+// 提交用的 token 取本机安装登记的真实登录凭证（build_script/backup.ps1:3 的 kitsu_cookies），
+// 与 JWT 不同：JWT 只供验证签名的用例（篡改签名必 401、人员不存在）使用。
+export const KITSU_COOKIE =
+  process.env.KITSU_COOKIES ||
+  execSync(
+    '(Get-ItemProperty -Path HKLM:\\SOFTWARE\\Doodle -Name kitsu_cookies).kitsu_cookies',
+    { encoding: 'utf8' }
+  ).trim();
 
 export const JWT = jwt_encode({
   'sub': '69a8d093-dcab-4890-8f9d-c51ef065d03b',

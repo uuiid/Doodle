@@ -77,6 +77,7 @@ import {
   FACE_CAPTURE_TRANSCODE_E2E,
   FACE_CAPTURE_WAIT_MS,
   FACE_CAPTURE_UE_PROJECT,
+  KITSU_COOKIE,
 } from './config.js';
 import { readJson, readBuffer, expectError } from './helpers.js';
 
@@ -874,11 +875,11 @@ test.describe('面部捕捉鉴权', () => {
 // ---------------------------------------------------------------------------
 
 function authHeader() {
-  return { Cookie: `access_token_cookie=${JWT}`, 'Content-Type': 'application/json' };
+  return { Cookie: `access_token_cookie=${KITSU_COOKIE}`, 'Content-Type': 'application/json' };
 }
 
 function authCookie() {
-  return { Cookie: `access_token_cookie=${JWT}` };
+  return { Cookie: `access_token_cookie=${KITSU_COOKIE}` };
 }
 
 function expectServerTaskInfo(task) {

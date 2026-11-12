@@ -55,6 +55,7 @@ npx playwright show-report             # 打开上次的 HTML 报告
 | `FACE_CAPTURE_UE_PROJECT` | `E:\ue_main\ue_main.uproject` | 转码提交任务时 `ue_project` 指向的工程 |
 | `FACE_CAPTURE_WAIT_MS` | `20000` | 转码用例轮询终态的最长时间 |
 | `FACE_CAPTURE_TRANSCODE_E2E` | 未设置 | 设为 `1` 时要求转码真的解算成功（`completed`）|
+| `KITSU_COOKIES` | 读注册表 `HKLM:\SOFTWARE\Doodle` 的 `kitsu_cookies` | 面部捕捉用例提交请求带的 token（`build_script/backup.ps1:3` 同一个值）；设置后优先于注册表 |
 
 **依赖本机文件的用例在文件缺失时会自动 `test.skip()`**，而不是硬失败——所以整套测试
 可以在没有这些素材的机器上跑完，只会跳过相应条目。
