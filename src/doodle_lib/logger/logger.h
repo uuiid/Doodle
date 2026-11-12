@@ -46,7 +46,6 @@ class DOODLELIB_API logger_ctrl {
   async_logger_ptr make_log_file(const FSys::path& in_path, const std::string& in_name, bool out_console = false);
 
   file_sink_mt_ptr make_file_sink_mt(const std::string& in_name);
-  bool add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr, const std::string& in_name);
 
   logger_ptr get_long_task() { return spdlog::get("doodle_long_task"); }
   logger_ptr get_socket_io() { return spdlog::get("socket_io"); }

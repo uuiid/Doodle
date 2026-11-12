@@ -291,31 +291,4 @@ logger_ctrl::~logger_ctrl() {
   spdlog::shutdown();
 }
 
-bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr, const std::string& in_name) {
-  auto l_default_logger = spdlog::default_logger_raw();
-  auto l_logger         = make_log(p_log_path, in_name);
-  l_logger->sinks().emplace_back(in_ptr);
-#ifndef NDEBUG
-  l_logger->sinks().emplace_back(debug_sink_);
-#endif
-  /// 刷新默认log
-  try {
-    l_default_logger->flush();
-  } catch (const spdlog::spdlog_ex& spdlog_ex) {
-    l_logger->log(log_loc(), spdlog::level::err, "刷新旧的日志失败 {}", boost::diagnostic_information(spdlog_ex));
-  }
-
-  auto l_name = spdlog::default_logger()->name();
-  spdlog::set_default_logger(l_logger);
-
-  /// 去除旧的log
-  try {
-    spdlog::drop(l_name);
-  } catch (const spdlog::spdlog_ex& spdlog_ex) {
-    l_logger->log(log_loc(), spdlog::level::err, "删除旧的日志失败 {}", boost::diagnostic_information(spdlog_ex));
-  }
-
-  SPDLOG_DEBUG(fmt::format("初始化日志 {}", in_name));
-  return true;
-}
 }  // namespace doodle::details
