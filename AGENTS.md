@@ -156,19 +156,7 @@ Doodle **没有** `bool ok_` / `error_code_` / `message_` 三件套式的返回�
 
 新增或修改 HTTP 路由后，确认它在 `kitsu.cpp` 一类的注册表里有对应 `reg_t<>`：未注册的 route 在运行期不可达，改了也不生效。
 
-## 5. 任务型 skill
-
-[.github/skills/](.github/skills/) 下的任务清单按需加载：
-
-| skill | 处理什么 |
-| --- | --- |
-| `debug-fun` | 审查指定 C++ 代码（函数/类/文件），检查逻辑、协程、空指针、线程安全 |
-| `refactor-put-set-from-ref` | 把 put 处理器重构为 `orm::update` 链式（JSON 走 `set_from_ref<T>`）|
-| `review-git-commit` | 审查 staged / commit / 分支区间的改动 |
-| `ai` | 骨骼蒙皮权重推理模型 |
-| `write-coding-standards-from-file` | 从既有文件归纳编码规范文档 |
-
-## 6. 超出本文件范围的事
+## 5. 超出本文件范围的事
 
 功能语义、业务流程、各模块的域知识在 [README.md](README.md) 与 `docs/` 下；`docs/api/` 是接口文档。
 `external/`（USD、libtorch 等）与 `vcpkg/` 是第三方内容，**不要改动**，它们各自带自己的 `AGENTS.md`。

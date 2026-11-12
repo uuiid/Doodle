@@ -1,42 +1,56 @@
-## 快速目标（对 AI 编码代理）
+# Doodle · Copilot 入口
 
-这是一个以 CMake + vcpkg 为中心的 Windows 优先的 C++ 项目，包含独立软件、Maya 插件、UE 插件与若干工具。主要路径和约定见下。请在进行改动前阅读并参考下面的文件/命令。只修改能通过本地构建与测试的最小改动。
+VS Code Copilot 在本仓库的规范入口：一张仓库地图 + 一页硬约束。
+C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp_guidelines.md](../docs/cpp_guidelines.md)。
 
-### 一眼看懂仓库结构
-- `src/`：C++ 源代码入口，除 `maya_plug`、`maya_plug_mll` 两个目录（Maya 插件）外均为独立软件。模块分层：`doodle_core`（底层核心）、`doodle_lib`（可复用库）、`exe_*`（各可执行入口）、`maya_plug` / `maya_plug_mll`（Maya 插件）、`exe_maya*`（Maya 相关 exe）。
-- `CMake/`：自定义的 Find 模块（例如 `FindMaya.cmake`, `FindAutodesk_FBX.cmake`），查看这里即可了解如何寻找并链接外部 SDK（Maya/FBX/Photoshop 等）。
-- `external/`、`vcpkg/`：第三方库和预编译内容（例如 USD、libtorch）。依赖由 `vcpkg.json` 管理；本仓库使用 overlay ports (`vcpkg_ports`) 和 overlay triplets (`vcpkg_triplets`).
-- `build_script/`：一组用于构建/部署的脚本（Windows .cmd/.ps1）。重要：`build_script/build/set_venv.cmd` 是调用 CMake 的 wrapper，会激活 `.venv` 并运行 vcvars，VS/Ninja 构建都通过它。 
-- `docs/`：功能/域特定的文档（UE、Maya、导出流程等），调试新逻辑时常有助。
+## 仓库地图
 
-### 构建与测试：可复制的最小步骤（证据：`CMakePresets.json` + `set_venv.cmd`）
-- 常用 presets（在 `CMakePresets.json`）：
-  - `Ninja_debug` / build preset `debug_doodle`：调试 exe。
-  - `Ninja_RelWithDebInfo` / build preset `debug_maya`：用于构建 Maya 插件（仓库约定 Maya 插件使用 RelWithDebInfo）。
-- 在本仓库中，所有 CMake/Build 命令通过 `build_script/build/set_venv.cmd` 调用（该脚本会 set venv 并调用 vcvars）。示例：
-  - CMake configure（示例）: 调用 wrapper 并传入 cmake 可执行路径与 `--preset`。VSCode tasks 已配置并使用该 wrapper（参见 workspace tasks）。
+- `src/`：C++ 源码。分层 `doodle_core`（底层核心）→ `doodle_lib`（可复用库）→ `exe_*`（可执行入口）；`maya_plug` / `maya_plug_mll` 是 Maya 插件，`exe_maya*` 是 Maya 相关 exe。新增公共 API 进 `doodle_lib`，内部实现进 `doodle_core`。
+- `src/doodle_lib/http_method/**`：HTTP 处理器，声明与实现必须用宏（见下方「分区域规则」）。
+- `src/test/**`：C++ 单元测试，范围仅限数据库 ORM/升级与视频图片解码。既有内容不要改动，也不要为了新功能往里加测试。
+- [`test_js/`](../test_js/)：Playwright HTTP 契约测试，只有用户明确要求测试时才写。
+- [`CMake/`](../CMake/)：自定义 Find 模块（`FindMaya.cmake`、`FindAutodesk_FBX.cmake` 等），外部 SDK 的接入点。
+- [`CMakePresets.json`](../CMakePresets.json)：configure / build / package 的权威入口。改构建步骤优先改它和 `CMake/` 下的 Find 模块，不要在 `CMakeLists.txt` 里写死平台路径。
+- [`vcpkg.json`](../vcpkg.json) + `vcpkg_ports/` + `vcpkg_triplets/`：依赖清单与 overlay，依赖只从这里管理。
+- `external/`、`vcpkg/`：第三方内容（USD、libtorch 等），**不要改动**。
+- [`build_script/`](../build_script/)：构建/部署脚本；`build_script/build/set_env.ps1` 是激活 vcvars64 并调用 cmake 的 wrapper。
+- [`docs/`](../docs/)：领域文档；`docs/api/` 是接口文档。
+- `UnrealEngine/Engine/Plugins/Doodle` 与 `script/uePlug/Doodle` 是同一份文件（前者是后者的目录链接），改一次即可。
 
+## 硬约束
 
-### 项目约定与常见变更点（具体、可操作）
-- 新增第三方库：修改 `vcpkg.json`（并把自定义 port 放在 `vcpkg_ports/`），然后使用 CMakePresets（或通过 wrapper）重新 configure。不要直接在 CMakeLists 中硬编码外部依赖路径。
-- Maya/FBX 集成：查看 `CMake/FindMaya.cmake` 与 `CMake/FindAutodesk_FBX.cmake`，Maya 版本通过 CMake 的 `Maya_Version` 变量驱动（见 `src/CMakeLists.txt` 条件分支）。要支持新 Maya 版本，优先修改或扩展 `FindMaya.cmake`。 
-- 插件调试：Maya 插件用 `Ninja_RelWithDebInfo`；如果需要在本地调试，使用 build preset `debug_maya`（会构建目标 `doodle_maya`, `doodle_maya_exe`）。
-- 可执行程序：主要 exe 在 `exe_*` 子目录，通过 `debug_doodle` preset 构建 `doodle_kitsu_supplement` 等目标。
+- **Git 提交由用户执行**：完成后只报告改了什么、验证结果、当前未提交状态；不要 `commit` / `push`，也不要提议代提交。
+- **默认不测试**：验证只到编译通过。只有用户明确要求测试时才写用例并运行（Playwright 用例放 `test_js/`，约定见 [test_js/README.md](../test_js/README.md)）。
+- **不跑发布构建**：`Ninja_release` / `Release_*` / `package_release` 已停用。
+- **依赖只经 vcpkg 管理**：自定义 port 放 `vcpkg_ports/`，triplet 放 `vcpkg_triplets/`。
+- **HTTP 处理器必须用宏**：声明 `DOODLE_HTTP_FUN` / `DOODLE_HTTP_JWT_FUN` + `DOODLE_HTTP_FUN_OVERRIDE`，实现一律 `DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(类名, 方法名)`；手写完整签名是禁止的。
+- **没有明确要求就不写注释。**
+- **不修旁支**：只做请求范围内的改动；顺手发现的其它缺陷先报告，由用户决定改不改。
 
-### 代码风格与检查点（从代码/工程可观察到的习惯）
-- 倾向在 C++ 里拆分为 core/lib/exe 三层；新增公共 API 放到 `doodle_lib`，内部实现放 `doodle_core`。
-- 对平台/SDK 兼容性使用 CMake 条件判断（例如 `if (DEFINED Maya_Version)`）——请在 CMake 修改时维持这种条件分支以避免影响其它构建目标。
+## 构建、搜索与验证（VS Code 入口）
 
-### 快速导航：关键文件示例
-- 根 README: `README.md` — 总体功能与模块索引（项目域知识）。
-- CMake presets: `CMakePresets.json` — 构建/测试/打包的官方入口，AI 修改构建步骤应优先修改 presets。 
-- vcpkg config: `vcpkg.json` — 所有库依赖清单（使用 overlay ports/triplets）。
-- 自定义查找模块: `CMake/FindMaya.cmake`, `CMake/FindAutodesk_FBX.cmake` — 改变集成点时必看。
-- 构建 wrapper: `build_script/build/set_venv.cmd` — 所有 CI/本地 tasks 会调用它以确保环境一致。
+- **构建一律走 [.vscode/tasks.json](../.vscode/tasks.json) 的任务**：任务内部经 `build_script/build/set_env.ps1` 激活 vcvars64 再调 cmake。不要自己拼 `cmake` 命令行、不要手工激活 VS 环境、不要 `--fresh`。
 
-### 做变更时的安全步骤（必做）
-1. 在本地用对应 preset 进行 configure+build（通过 `set_venv.cmd` wrapper 或 VSCode 提供的 task）。
-2. 运行受影响模块的测试（`build/Ninja_debug/bin/test_main.exe` 或对应 test preset）。
-3. 对于依赖变更，确保 `vcpkg.json` 与 overlays 一致，并在 CI/同事机器上复现一次 configure。 
+| 目的 | 任务标签 | configure / build preset |
+| --- | --- | --- |
+| 独立软件、测试目标 | `cmake config` → `cmake build` | `Ninja_debug` / `debug_doodle` |
+| Maya 插件 | `cmake config maya` → `cmake build maya` | `Ninja_RelWithDebInfo` / `debug_maya` |
+| 清理构建产物 | `cmake clean` | — |
 
-如果这些说明中有任何不清楚或缺失的点（比如你想补充某个常用的调试命令或特定模块的开发流程），告诉我你想要增强的部分，我会把文档进一步收紧并合并到仓库。 
+- 任务没覆盖的场合（CI、其他 agent）才直接经 `build_script/build/set_env.ps1` 调用 cmake。
+- 不要调高构建并行度：`cl` 抢写 obj 会报 `Permission denied: cannot open compiler generated file`。
+- 搜索用内置 `glob` / `grep`；不要用 `Get-ChildItem -Recurse` / `Select-String` 全仓库递归。
+- 测试范围只有 ORM/升级与视频图片解码；网络客户端、HTTP 处理器、Maya 插件**没有**单元测试，不要期待 `test_main` 替你验证。
+- Maya 版本由 CMake 变量 `Maya_Version` 驱动（条件分支见 `src/CMakeLists.txt`）；支持新版本优先扩展 `CMake/FindMaya.cmake`。
+- 以下任一变化都会让 vcpkg ABI 失效、依赖全量重编（可达数小时）：MSVC 工具集版本变（`Ninja_build` preset 不声明 toolset，由 wrapper 调用的 `vcvars64.bat` 决定）；PowerShell 版本变（经 vcpkg-cmake helper 进入所有包的 ABI 哈希）；二进制缓存丢失（当前 `VCPKG_DEFAULT_BINARY_CACHE` 为 `E:\vcpkg_cache\archives`）。
+
+## 分区域规则
+
+进入下列路径前，先读对应规则文件：
+
+| 路径 | 规则 |
+| --- | --- |
+| `src/doodle_lib/http_method/**` | [http-fun-macro-signature.instructions.md](instructions/http-fun-macro-signature.instructions.md)（声明/实现用宏）<br>[http-put-update-standard.instructions.md](instructions/http-put-update-standard.instructions.md)（`put` 用 `orm::update` 链式 + `run_sql`） |
+| `UnrealEngine/Engine/Plugins/Doodle/**` | 与 `script/uePlug/Doodle` 是同一份文件（目录链接），改动只需做一次 |
+
+新增或修改 HTTP 路由后，确认它在 `kitsu.cpp` 一类的注册表里有对应 `reg_t<>`：未注册的 route 在运行期不可达，改了也不生效。
