@@ -802,7 +802,7 @@ test.describe('面部捕捉转码', () => {
 
 test.describe('面部捕捉 stream（WebSocket）', () => {
   test('GET /stream 不带 token 也升级成功（token 不参与 WS 握手校验）', async ({ request }) => {
-    const unauth = await rawHandshake(request, `${FACE_CAPTURE_API}/stream`, { withAuth: false });
+    const unauth = await rawHandshake(`${FACE_CAPTURE_API}/stream`, { withAuth: false });
     expect(unauth.statusLine, 'WS 握手不校验 token，这是允许的行为').to.equal('HTTP/1.1 101 Switching Protocols');
     expect(unauth.headers['upgrade'], unauth.headText).to.equal('websocket');
     expect(unauth.headers['sec-websocket-accept']).to.be.a('string');
@@ -811,7 +811,7 @@ test.describe('面部捕捉 stream（WebSocket）', () => {
   });
 
   test('GET /stream 带 token 升级成功并保持连接', async ({ request }) => {
-    const ws = await rawHandshake(request, `${FACE_CAPTURE_API}/stream`, { withAuth: true });
+    const ws = await rawHandshake(`${FACE_CAPTURE_API}/stream`, { withAuth: true });
     expect(ws.statusLine).to.equal('HTTP/1.1 101 Switching Protocols');
     expect(ws.headers['upgrade'], ws.headText).to.equal('websocket');
     expect(ws.headers['connection'].toLowerCase()).to.equal('upgrade');
@@ -936,11 +936,14 @@ function expectServerTaskInfo(task) {
 // 等到响应头之后再保持 holdMs，用来区分「升级后被关闭」和「保持打开」。
 async function rawHandshake(urlPath, { withAuth, holdMs = 1500, cookie } = {}) {
   const origin = new globalThis.URL(URL);
-  const port = Number(origin.port || 80);
+  // 调用方传的是完整 URL（`${FACE_CAPTURE_API}/stream`），但请求行必须用 origin-form 路径：
+  // absolute-form 的 target 会被 beast 直接丢弃，连接不回包就断开。
+  const target = new globalThis.URL(urlPath, origin);
+  const port = Number(target.port || 80);
   const key = crypto.randomBytes(16).toString('base64');
 
   return new Promise((resolve, reject) => {
-    const sock = net.connect({ host: origin.hostname, port });
+    const sock = net.connect({ host: target.hostname, port });
     let buffer = Buffer.alloc(0);
     let headEnded = false;
     let headers = {};
@@ -972,7 +975,7 @@ async function rawHandshake(urlPath, { withAuth, holdMs = 1500, cookie } = {}) {
     sock.setTimeout(holdMs + 3000, settle);
     sock.on('connect', () => {
       sock.write(
-        `GET ${urlPath} HTTP/1.1\r\nHost: ${origin.host}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n` +
+        `GET ${target.pathname}${target.search} HTTP/1.1\r\nHost: ${target.host}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n` +
           `Sec-WebSocket-Key: ${key}\r\nSec-WebSocket-Version: 13\r\n` +
           (withAuth ? `Cookie: ${cookie || authCookie().Cookie}\r\n` : '') +
           '\r\n'
