@@ -1,6 +1,7 @@
-// dsh-kitsu-supplement 纯函数自测：用 node:vm 从源码切片求值，无需安装 @deepseek-ai/* 依赖。
+// dsh-kitsu-supplement 纯函数自测：用 node:vm 直接求值 lib/pure/*.js，无需安装 @deepseek-ai/* 依赖。
 //
-// 契约：lib/index.js 里 `//#region 插件入口` 之前的部分必须是不依赖任何 import 的纯逻辑。
+// 契约：lib/pure/ 下的文件必须是「零 import、零 ctx、零 await 宿主资源」的纯逻辑；
+// 文件清单由 lib/pure/dispatch.js 的 PURE_FILES 给出（数组字面量在这里直接解析，不加载模块）。
 //
 // 注意：AGENTS.md 规定"绝不测试"，这里指的是 Doodle 仓库的 C++ 测试与构建目标。
 // 本文件是插件自带的语法/纯函数校验脚本（node test/pure.mjs），不涉及 cmake / MSVC。
@@ -11,30 +12,38 @@ import { dirname, join } from "node:path";
 import vm from "node:vm";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const libFile = join(here, "..", "lib", "index.js");
-// 插件入口之前有多个区段（纯逻辑 / 配置与输出契约），只取第一个：纯逻辑区段。
-const MARKER = "//#endregion";
+const pureDir = join(here, "..", "lib", "pure");
 
-function loadPure(relPath) {
-  const source = readFileSync(join(here, "..", "lib", relPath), "utf8");
-  const cut = source.indexOf(MARKER);
-  if (cut < 0) throw new Error(`${relPath}: missing marker ${MARKER}`);
+const PURE_FILES = (() => {
+  const source = readFileSync(join(pureDir, "dispatch.js"), "utf8");
+  const match = /export\s+const\s+PURE_FILES\s*=\s*\[([^\]]*)\]/.exec(source);
+  if (match === null) throw new Error("lib/pure/dispatch.js: PURE_FILES 未找到");
+  return [...match[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+})();
+
+function evalPure(relPath, injected) {
+  const source = readFileSync(join(pureDir, relPath), "utf8");
   const body = source
-    .slice(0, cut)
-    .replace(/^import[^;]*;[ \t]*\r?\n/gm, "")
+    .replace(/^import\s+[\s\S]*?\s+from\s+"[^"]+";[ \t]*\r?\n/gm, "")
     .replace(/^export\s+/gm, "");
-  if (body.includes("z.object(")) {
-    // Config 用的是 schemastery；纯逻辑区段必须停在它之前，否则这里要真的加载依赖。
-    throw new Error(`${relPath}: pure region must end before the Config definition`);
+  if (/^import\s+[^;]*;/m.test(body)) {
+    throw new Error(`${relPath}: pure 文件不允许静态 import（跨文件的同名依赖由本脚本注入）`);
   }
-  const context = vm.createContext({ console, Math, JSON, Object, Array, String, Number, RegExp, Map, Set, Error });
+  const context = vm.createContext({ console, Math, JSON, Object, Array, String, Number, RegExp, Map, Set, Error, ...injected });
   const names = [...body.matchAll(/^(?:async\s+)?(?:function|const|let|var)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);
   const script = new vm.Script(`${body}\n;({${names.join(",")}});`, { filename: relPath });
   return script.runInContext(context);
 }
 
-const P = loadPure("index.js");
-
+// 按 PURE_FILES 顺序求值，前一份文件导出的名字注入到后一份的上下文里。
+const P = {};
+for (const file of PURE_FILES) {
+  const result = evalPure(file, P);
+  for (const [name, value] of Object.entries(result)) {
+    if (name in P) throw new Error(`${file}: 与前面文件重名的导出 ${name}`);
+    P[name] = value;
+  }
+}
 let passed = 0;
 let failed = 0;
 const failures = [];

@@ -29,8 +29,8 @@
     "@deepseek-ai/schemastery": "~3.18.5"
   },
   "scripts": {
-    "check": "node --check lib/index.js",
-    "test": "node test/pure.mjs"
+    "check": "node test/check-syntax.mjs",
+    "test": "node test/pure.mjs && node test/load-graph.mjs && node test/apply-smoke.mjs"
   },
   "keywords": [
     "deepseek-harness",
