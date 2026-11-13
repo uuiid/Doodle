@@ -156,7 +156,7 @@ namespace
 			UMaterialInstanceConstant* L_Mat_Instance_Object = Cast<UMaterialInstanceConstant>(L_New_Material_Object);
 			L_Mat_Object = L_Mat_Instance_Object->GetMaterial();
 		}
-		if (!L_Mat_Object && bSetMaterialUsage)
+		if (L_Mat_Object && bSetMaterialUsage)
 		{
 			bool L_bHasProperty{true};
 			L_Mat_Object->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
@@ -1047,7 +1047,9 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 						if (const auto L_Version_Material = ConvertVersion(TempGeometryCache, L_Material, BanBen))
 							L_Material =
 								L_Version_Material;
-					}
+          }
+          TempGeometryCache->Modify();
+					TempGeometryCache->MarkPackageDirty();
 				}
 
 				//----------
