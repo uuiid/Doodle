@@ -142,6 +142,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_video, get) {
   co_return std::make_unique<http_body_file_t>(l_path, "video/mp4");
 }
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_video, head) { return get(in_handle); }
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_curves, get) {
   auto l_path = session_dir_of(session_id_) / "curves" / "face_curves.dhfc";
   DOODLE_CHICK_HTTP(FSys::exists(l_path), not_found, "face_curves.dhfc 不存在");
@@ -149,5 +151,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_curves, get) {
   l_body->set_attachment(fmt::format("{}.dhfc", session_id_));
   co_return l_body;
 }
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_curves, head) { return get(in_handle); }
 
 }  // namespace doodle::http::local

@@ -202,6 +202,7 @@ boost::beast::http::message_generator http_body_file_t::make_message(
     );
     l_res.keep_alive(in_session_data.keep_alive_);
     l_res.prepare_payload();
+    l_res.content_length(static_cast<std::uint64_t>(FSys::file_size(path_)));
     return l_res;
   }
 

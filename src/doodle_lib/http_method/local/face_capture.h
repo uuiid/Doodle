@@ -132,6 +132,7 @@ DOODLE_HTTP_FUN_C(face_capture_recording_video, local_http_fun)
 boost::uuids::uuid session_id_{};
 face_capture_recording_video() : base_type() {}
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(head)
 DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}/video", session_id_)
 DOODLE_HTTP_FUN_END()
 
@@ -139,6 +140,7 @@ DOODLE_HTTP_FUN_C(face_capture_recording_curves, local_http_fun)
 boost::uuids::uuid session_id_{};
 face_capture_recording_curves() : base_type() {}
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(head)
 DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}/curves", session_id_)
 DOODLE_HTTP_FUN_END()
 
