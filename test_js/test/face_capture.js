@@ -1,11 +1,11 @@
 // face_capture.js — 面部捕捉 HTTP / WebSocket 接口测试
 //
-// 路由唯一来源：src/doodle_lib/http_method/local/face_capture.h:71-161，九条路由**只**注册在
+// 路由唯一来源：src/doodle_lib/http_method/local/face_capture.h:75-162，九条路由**只**注册在
 // create_kitsu_local_route()（kitsu.cpp:337-345），生产路由没有它们 —— 被测服务端必须带 `--local`
 // 启动，否则整组用例都会落到 404「服务器端未实现 api」。
 //
 //   /api/doodle/local/face_capture/devices                                GET, POST
-//   /api/doodle/local/face_capture/stream/{session_id_}                    WS upgrade
+//   /api/doodle/local/face_capture/stream                                  WS upgrade
 //   /api/doodle/local/face_capture/recordings                             GET, POST
 //   /api/doodle/local/face_capture/recordings/{session_id_}/stop           POST
 //   /api/doodle/local/face_capture/recordings/{session_id_}                GET, DELETE
@@ -801,8 +801,8 @@ test.describe('面部捕捉转码', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('面部捕捉 stream（WebSocket）', () => {
-  test('GET /stream/{id} 不带 token 也升级成功（token 不参与 WS 握手校验）', async ({ request }) => {
-    const unauth = await rawHandshake(request, `${FACE_CAPTURE_API}/stream/${NIL_ID}`, { withAuth: false });
+  test('GET /stream 不带 token 也升级成功（token 不参与 WS 握手校验）', async ({ request }) => {
+    const unauth = await rawHandshake(request, `${FACE_CAPTURE_API}/stream`, { withAuth: false });
     expect(unauth.statusLine, 'WS 握手不校验 token，这是允许的行为').to.equal('HTTP/1.1 101 Switching Protocols');
     expect(unauth.headers['upgrade'], unauth.headText).to.equal('websocket');
     expect(unauth.headers['sec-websocket-accept']).to.be.a('string');
@@ -810,8 +810,8 @@ test.describe('面部捕捉 stream（WebSocket）', () => {
     expect(unauth.payload.length, '没有会话时不应推送任何帧').to.equal(0);
   });
 
-  test('GET /stream/{id} 带 token 升级成功并保持连接', async ({ request }) => {
-    const ws = await rawHandshake(request, `${FACE_CAPTURE_API}/stream/${NIL_ID}`, { withAuth: true });
+  test('GET /stream 带 token 升级成功并保持连接', async ({ request }) => {
+    const ws = await rawHandshake(request, `${FACE_CAPTURE_API}/stream`, { withAuth: true });
     expect(ws.statusLine).to.equal('HTTP/1.1 101 Switching Protocols');
     expect(ws.headers['upgrade'], ws.headText).to.equal('websocket');
     expect(ws.headers['connection'].toLowerCase()).to.equal('upgrade');
@@ -819,11 +819,11 @@ test.describe('面部捕捉 stream（WebSocket）', () => {
     expect(ws.closed, '没有摄像头时没有 hello，但连接保持打开直到客户端关闭').to.equal(false);
   });
 
-  test('GET /stream/{id} 注册为 WS 路由：普通 GET 不进 handler', async ({ request }) => {
+  test('GET /stream 注册为 WS 路由：普通 GET 不进 handler', async ({ request }) => {
     // face_capture_stream 只声明了 has_websocket()/websocket_callback，没有 get 实现
-    // （face_capture.h:86-101），所以非升级请求落回默认实现。
+    // （face_capture.h:88-102），所以非升级请求落回默认实现。
     const res = await readJson(
-      await request.get(`${FACE_CAPTURE_API}/stream/${NIL_ID}`, { headers: authCookie() })
+      await request.get(`${FACE_CAPTURE_API}/stream`, { headers: authCookie() })
     );
     expect(res.status, '默认实现的状态码').to.be.oneOf([404, 405]);
     expect(res.body).to.be.an('object').that.has.property('code').that.equals(res.status);

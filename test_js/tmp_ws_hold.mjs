@@ -1,7 +1,7 @@
 import net from 'node:net';
 import crypto from 'node:crypto';
 
-const WS = '/api/doodle/local/face_capture/stream/00000000-0000-0000-0000-000000000000';
+const WS = '/api/doodle/local/face_capture/stream';
 const origin = { host: '127.0.0.1', port: 50024 };
 
 const sock = net.connect({ host: origin.host, port: origin.port });

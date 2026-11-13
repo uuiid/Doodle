@@ -173,7 +173,7 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 | --- | --- | --- |
 | GET | `/api/doodle/local/face_capture/devices` | 枚举摄像头：`{selected, devices:[{index, name, backend, width, height, selected}]}` |
 | POST | `/api/doodle/local/face_capture/devices` | **选中摄像头**。body `{"index": 0}`；成功返回 `{selected}`；body 缺整数 `index` → `400`，负值 → `400`，设备不存在（越界/已拔出）→ `404` |
-| GET | `/api/doodle/local/face_capture/stream/{session_id_}` | **WS 升级点 + 会话本体**（`has_websocket() = true`，GET + `Upgrade` 才升级）。连上即创建 `capture_session`、打开摄像头、**推预览流（不落盘）**；断开即关闭会话（若在录则先收尾）。路径里的 `session_id_` 只用于前端日志与路由占位，**不参与查找**，真实 `session_id` 在 `hello` 里回传。**这条只下发视频与状态，不接受任何命令**（§3.3） |
+| GET | `/api/doodle/local/face_capture/stream` | **WS 升级点 + 会话本体**（`has_websocket() = true`，GET + `Upgrade` 才升级）。连上即创建 `capture_session`、打开摄像头、**推预览流（不落盘）**；断开即关闭会话（若在录则先收尾）。路径不带任何会话标识，真实 `session_id` 在 `hello` 里回传。**这条只下发视频与状态，不接受任何命令**（§3.3） |
 | POST | `/api/doodle/local/face_capture/recordings` | **开始录制**。无 body；新建 `session_dir` 并开写 `take.mp4`；返回 `{session_id, state:"recording", width, height, fps, frames, duration_ms, source_fps, truncated}`。没有预览连接 → `409`，已在录 → `409`，`take.mp4` 建不出来 → `422` |
 | GET | `/api/doodle/local/face_capture/recordings` | 历史会话列表（磁盘扫描 `session_dir`） |
 | GET | `/api/doodle/local/face_capture/recordings/{session_id}` | 单会话状态、帧数、丢帧区间、产物清单 |
@@ -246,7 +246,7 @@ WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` 
 
 #### 上行：什么都没有
 
-WS 上**不定义任何上行命令**。前端不需要发 `ping`（浏览器原生 WS 没有心跳 API，beast 侧也不做空闲超时：单用户本机连接不该被服务端主动断开）；连接是否活着由浏览器自己感知，重连就是重新 `GET /stream/{session_id}`。
+WS 上**不定义任何上行命令**。前端不需要发 `ping`（浏览器原生 WS 没有心跳 API，beast 侧也不做空闲超时：单用户本机连接不该被服务端主动断开）；连接是否活着由浏览器自己感知，重连就是重新 `GET /stream`。
 
 #### 控制面（HTTP）
 
@@ -259,7 +259,7 @@ WS 上**不定义任何上行命令**。前端不需要发 `ping`（浏览器原
 
 要点：
 
-- **WS 连接只负责预览**：`GET /stream/{session_id}` 升级成功后，`ws_outlet::run()` 调 `session_->open()`（只做 `cv::VideoCapture` 打开、分辨率回读、`h264_fragmenter` + `fps` 滤镜的建立），随后一直把 25 fps 的 H.264 分片推给前端。**这一路不写任何磁盘文件**。摄像头打不开时连接不断，只发 `error` 事件让前端看见原因。
+- **WS 连接只负责预览**：`GET /stream` 升级成功后，`ws_outlet::run()` 调 `session_->open()`（只做 `cv::VideoCapture` 打开、分辨率回读、`h264_fragmenter` + `fps` 滤镜的建立），随后一直把 25 fps 的 H.264 分片推给前端。**这一路不写任何磁盘文件**。摄像头打不开时连接不断，只发 `error` 事件让前端看见原因。
 - **录制是显式动作**：`POST /recordings` 才建 `session_dir` 与 `take.mp4`。没有活跃 WS 会话时返回 `409`。
 - **结束录制是同步的**：`stop()` 内 `filter_->flush()` → 等推流排空 → `mp4_writer_->finish()`（`av_write_trailer`）→ 写 `align.json`，上限 2 秒。返回时 `take.mp4` 已完整，前端可以直接去拉 `/video` 或提交转码，不需要轮询。**收尾之后预览继续**，摄像头不关。
 - **断开 WS 走 `close()`**：若正在录制，内部等价于先 `stop()` 再关摄像头，只是没人接返回值。

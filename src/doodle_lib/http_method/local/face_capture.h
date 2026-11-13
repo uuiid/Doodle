@@ -87,7 +87,6 @@ DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/devices")
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN(face_capture_stream)
-boost::uuids::uuid session_id_{};
 std::shared_ptr<face_capture_selected_device> selected_{};
 std::shared_ptr<face_capture_session_holder> holder_{};
 explicit face_capture_stream(
@@ -99,7 +98,7 @@ void websocket_init(session_data_ptr in_handle) override;
 void websocket_callback(
     boost::beast::websocket::stream<tcp_stream_type> in_stream, session_data_ptr in_handle
 ) override;
-DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/stream/{session_id_}", session_id_)
+DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/stream")
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN_C(face_capture_recordings, local_http_fun)

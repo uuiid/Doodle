@@ -646,8 +646,8 @@ paths:
     $ref: paths/api_doodle_local_setting_tmp_dir_server_task.yaml
   /api/doodle/local/face_capture/devices:
     $ref: paths/api_doodle_local_face_capture_devices.yaml
-  /api/doodle/local/face_capture/stream/{session_id}:
-    $ref: paths/api_doodle_local_face_capture_stream_{session_id}.yaml
+  /api/doodle/local/face_capture/stream:
+    $ref: paths/api_doodle_local_face_capture_stream.yaml
   /api/doodle/local/face_capture/recordings:
     $ref: paths/api_doodle_local_face_capture_recordings.yaml
   /api/doodle/local/face_capture/recordings/{session_id}:

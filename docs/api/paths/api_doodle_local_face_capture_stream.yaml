@@ -36,8 +36,7 @@ get:
       → 无条件把 holder 置空（`holder_->reset(nullptr)`，不校验归属）→ 置关闭标志 →
       正常 `async_close`」。置空不区分归属，即使槽位里此时已是另一条连接的会话也会被清掉，
       之后录制类接口会得到「当前没有可用的预览连接」。
-    - 路径里的 `{session_id}` 当前实现既不读取也不校验（`face_capture_stream::session_id_`
-      未被使用），任意 UUID 都能连上；真正的录制 id 由 `POST .../recordings` 生成。
+    - `/stream` 不带路径参数，连接不携带任何会话标识；真正的录制 id 由 `POST .../recordings` 生成。
     - 服务端不解析任何上行消息（读循环每次 `async_read` 后清空缓冲区丢弃），控制面一律走 HTTP；
       服务端也不主动发 ping 或状态事件，连接是否存活由浏览器自己感知，重连就是重新发起本请求。
 
@@ -136,7 +135,7 @@ get:
     ### 前端推荐时序
 
     ```
-    GET(Upgrade) /stream/{任意 uuid}
+    GET(Upgrade) /stream
       <- hello                      取 session_id(空)/width/height/fps/state
       <- avc_fragment seq=0 key     appendBuffer(init 段)
       <- avc_fragment seq=n key     appendBuffer(moof+mdat)   <- 持续 25 fps
@@ -148,14 +147,6 @@ get:
     断开连接                       会话结束；若在录则自动收尾
     ```
   operationId: face_capture_stream
-  parameters:
-    - name: session_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: 路径占位，当前实现忽略，任意 UUID 均可
   responses:
     '101':
       description: WS 握手成功，随后按上文协议单向推流（text 元数据 + 可选紧随的 binary 帧）

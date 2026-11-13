@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { execSync } from 'node:child_process';
 
 const API = 'http://127.0.0.1:50024/api/doodle/local/face_capture';
-const WS = '/api/doodle/local/face_capture/stream/00000000-0000-0000-0000-000000000000';
+const WS = '/api/doodle/local/face_capture/stream';
 
 function connectWs() {
   return new Promise((resolve, reject) => {

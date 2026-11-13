@@ -1,11 +1,11 @@
 // face_capture.js — 面部捕捉 HTTP / WebSocket 接口测试
 //
-// 路由唯一来源：src/doodle_lib/http_method/local/face_capture.h:71-161，九条路由**只**注册在
+// 路由唯一来源：src/doodle_lib/http_method/local/face_capture.h:75-162，九条路由**只**注册在
 // create_kitsu_local_route()（kitsu.cpp:337-345），生产路由没有它们 —— 被测服务端必须带 `--local`
 // 启动，否则整组用例都会落到 404「服务器端未实现 api」。
 //
 //   /api/doodle/local/face_capture/devices                                GET, POST
-//   /api/doodle/local/face_capture/stream/{session_id_}                    WS upgrade
+//   /api/doodle/local/face_capture/stream                                  WS upgrade
 //   /api/doodle/local/face_capture/recordings                             GET, POST
 //   /api/doodle/local/face_capture/recordings/{session_id_}/stop           POST
 //   /api/doodle/local/face_capture/recordings/{session_id_}                GET, DELETE
@@ -53,7 +53,7 @@
 //   无摄像头时 GET /devices 返回空列表，相关用例会跳过。
 // · WS 的 hello / 音视频帧：只有 capture_session::open 成功（摄像头打开）后才会推送
 //   （capture_session.cpp:110-112），本文件只断言握手与升级语义。
-// · GET /stream/{id} 不带 token：服务端在升级**之后**才校验 token（http_session_data.cpp:157-182），
+// · GET /stream 不带 token：服务端在升级**之后**才校验 token（http_session_data.cpp:157-182），
 //   客户端看到的是握手成功后被关闭，而不是 HTTP 401，行为不确定，不建断言。
 //
 // 环境变量见 README.md「面部捕捉」。
@@ -714,8 +714,8 @@ test.describe('面部捕捉转码', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('面部捕捉 stream（WebSocket）', () => {
-  test('GET /stream/{id} 返回 101 且必须带 token', async ({ request }) => {
-    const unauth = await rawHandshake(request, `${FACE_CAPTURE_API}/stream/${NIL_ID}`, { withAuth: false });
+  test('GET /stream 返回 101 且必须带 token', async ({ request }) => {
+    const unauth = await rawHandshake(request, `${FACE_CAPTURE_API}/stream`, { withAuth: false });
     expect(unauth.statusLine, '不带 token 时服务端在升级之后才校验，客户端看到的是 101 后被关闭').to.equal(
       'HTTP/1.1 101 Switching Protocols'
     );
@@ -723,8 +723,8 @@ test.describe('面部捕捉 stream（WebSocket）', () => {
     expect(unauth.afterClose.length, '没有会话时不应推送任何帧').to.equal(0);
   });
 
-  test('GET /stream/{id} 带 token 升级成功并保持连接', async ({ request }) => {
-    const ws = await rawHandshake(request, `${FACE_CAPTURE_API}/stream/${NIL_ID}`, { withAuth: true });
+  test('GET /stream 带 token 升级成功并保持连接', async ({ request }) => {
+    const ws = await rawHandshake(request, `${FACE_CAPTURE_API}/stream`, { withAuth: true });
     expect(ws.statusLine).to.equal('HTTP/1.1 101 Switching Protocols');
     expect(ws.headers['upgrade'], ws.headText).to.equal('websocket');
     expect(ws.headers['connection'].toLowerCase()).to.equal('upgrade');
@@ -732,9 +732,9 @@ test.describe('面部捕捉 stream（WebSocket）', () => {
     expect(ws.closed, '没有摄像头时没有 hello，但连接保持打开直到客户端关闭').to.equal(false);
   });
 
-  test('GET /stream/{id} 非升级请求走普通 GET 且未实现返回 404', async ({ request }) => {
+  test('GET /stream 非升级请求走普通 GET 且未实现返回 404', async ({ request }) => {
     const res = await readJson(
-      await request.get(`${FACE_CAPTURE_API}/stream/${NIL_ID}`, { headers: authCookie() })
+      await request.get(`${FACE_CAPTURE_API}/stream`, { headers: authCookie() })
     );
     expectError(res, 404, '服务器端未实现 api');
   });
