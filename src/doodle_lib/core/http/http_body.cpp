@@ -174,24 +174,13 @@ http_body_file_t::http_body_file_t(
   DOODLE_CHICK_HTTP(FSys::exists(path_), not_found, "文件不存在 {}", path_);
 }
 
-http_body_file_t& http_body_file_t::set_range_mode(http_file_range_mode in_mode) {
-  range_mode_ = in_mode;
-  return *this;
-}
-http_body_file_t& http_body_file_t::set_range(std::uint64_t in_begin, std::uint64_t in_end) {
-  range_mode_  = http_file_range_mode::partial;
-  range_begin_ = in_begin;
-  range_end_   = in_end;
-  return *this;
-}
-
 boost::beast::http::message_generator http_body_file_t::make_message(
     const detail::session_data& in_session_data
 ) const {
   if (!FSys::exists(path_))
     return http_body_error_t{boost::beast::http::status::not_found, "文件不存在"}.make_message(in_session_data);
 
-  if (range_mode_ == http_file_range_mode::head_only || in_session_data.method() == boost::beast::http::verb::head) {
+  if (in_session_data.method() == boost::beast::http::verb::head) {
     boost::beast::http::response<boost::beast::http::empty_body> l_res{
         boost::beast::http::status::ok, in_session_data.version_
     };
@@ -220,24 +209,9 @@ boost::beast::http::message_generator http_body_file_t::make_message(
         }
     );
 
-  auto l_begin           = range_begin_;
+  std::uint64_t l_begin = 0;
   const auto l_file_size = static_cast<std::uint64_t>(FSys::file_size(path_));
-  if (l_file_size > 0 && l_begin >= l_file_size) l_begin = 0;
-  if (range_mode_ == http_file_range_mode::partial) {
-    l_res.body().seek(l_begin, l_code);
-    if (l_code)
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::internal_server_error,
-              fmt::format("无法定位文件 {} {}", path_.generic_string(), l_code.message())
-          }
-      );
-    l_res.result(boost::beast::http::status::partial_content);
-    l_res.set(
-        boost::beast::http::field::content_range,
-        fmt::format("bytes {}-{}/{}", l_begin, l_file_size - 1, l_file_size)
-    );
-  } else if (in_session_data.req_header_.find(boost::beast::http::field::range) != in_session_data.req_header_.end()) {
+  if (in_session_data.req_header_.find(boost::beast::http::field::range) != in_session_data.req_header_.end()) {
     if (auto l_range = in_session_data.req_header_.at(boost::beast::http::field::range);
         !l_range.empty() && l_range.starts_with("bytes=")) {
       auto l_str       = l_range.substr(6, l_range.find("-") - 6);

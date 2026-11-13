@@ -27,12 +27,6 @@ namespace detail {
 class session_data;
 }
 
-enum class http_file_range_mode {
-  full,
-  head_only,
-  partial,
-};
-
 struct http_body_base_t {
  private:
   boost::beast::http::status status_{boost::beast::http::status::ok};
@@ -137,18 +131,12 @@ struct http_body_binary_t : http_body_base_t {
 
 struct http_body_file_t : http_body_base_t {
   FSys::path path_{};
-  http_file_range_mode range_mode_{http_file_range_mode::full};
-  std::uint64_t range_begin_{0};
-  std::uint64_t range_end_{0};
 
   http_body_file_t() = default;
   explicit http_body_file_t(
       FSys::path in_path, std::string_view in_mime_type,
       boost::beast::http::status in_status = boost::beast::http::status::ok
   );
-
-  http_body_file_t& set_range_mode(http_file_range_mode in_mode);
-  http_body_file_t& set_range(std::uint64_t in_begin, std::uint64_t in_end);
 
   boost::beast::http::message_generator make_message(const detail::session_data& in_session_data) const override;
 };
