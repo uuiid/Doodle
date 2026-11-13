@@ -24,10 +24,8 @@ namespace doodle::http::local {
 
 namespace {
 
-std::string uuid_string(boost::uuids::uuid in_id) { return fmt::format("{}", in_id); }
-
 FSys::path session_dir_of(const boost::uuids::uuid& in_session_id) {
-  return face_capture::capture_session::default_root() / uuid_string(in_session_id);
+  return face_capture::capture_session::default_root() / fmt::to_string(in_session_id);
 }
 
 std::string session_id_of(const FSys::path& in_dir) { return in_dir.filename().string(); }
@@ -36,7 +34,7 @@ bool is_current_session(
     const std::shared_ptr<face_capture::capture_session>& in_session, const boost::uuids::uuid& in_id
 ) {
   if (!in_session) return false;
-  return session_id_of(in_session->session_dir()) == uuid_string(in_id);
+  return session_id_of(in_session->session_dir()) == fmt::to_string(in_id);
 }
 
 nlohmann::json artifacts_of(const FSys::path& in_dir) {
@@ -58,7 +56,7 @@ nlohmann::json recording_json(const FSys::path& in_dir) {
   auto l_json = nlohmann::json::object();
   try {
     const auto l_record   = face_capture::read_align(in_dir);
-    l_json["session_id"]  = uuid_string(l_record.session_id_);
+    l_json["session_id"]  = l_record.session_id_;
     l_json["width"]       = l_record.width_;
     l_json["height"]      = l_record.height_;
     l_json["fps"]         = l_record.fps_;
@@ -118,7 +116,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording, get) {
   if (is_current_session(l_session, session_id_) && !l_json.contains("frames")) {
     l_json["frames"] = l_session->frames();
   }
-  l_json["session_id"] = uuid_string(session_id_);
+  l_json["session_id"] = session_id_;
   l_json["state"] =
       is_current_session(l_session, session_id_) ? l_session->state() : face_capture::capture_state::stopped;
   l_json["artifacts"] = artifacts_of(l_dir);
@@ -150,7 +148,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_curves, get) {
   auto l_path = session_dir_of(session_id_) / "curves" / "face_curves.dhfc";
   DOODLE_CHICK_HTTP(FSys::exists(l_path), not_found, "face_curves.dhfc 不存在");
   auto l_body = std::make_unique<http_body_file_t>(l_path, "application/octet-stream");
-  l_body->set_attachment(fmt::format("{}.dhfc", uuid_string(session_id_)));
+  l_body->set_attachment(fmt::format("{}.dhfc", session_id_));
   co_return l_body;
 }
 
