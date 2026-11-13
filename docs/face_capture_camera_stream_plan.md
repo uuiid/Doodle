@@ -19,7 +19,7 @@
 | 4 | UE 进程排队 | 脸捕 Commandlet **与渲染任务共用 `core_set::get_set().ue_ctx_->queue_`**（`awaitable_queue_limitation`，默认 limit=1），不新开闩 |
 | 5 | `frames/` 的保留策略 | **转码作业成功后自动删除 PNG 序列、保留 `take.mp4`；不可配置** |
 | 6 | 会话与连接的绑定 | `capture_session` 是 `ws_outlet` 的**成员**，**会话生命周期 = WS 连接生命周期**：连上就打开摄像头推预览，断开就关闭。**连上不等于开录**，录制要另行 `POST /recordings`。没有进程内单例 |
-| 7 | 控制通道 | **控制一律走 HTTP**：`POST /recordings` 开始一段录制、`POST /recordings/{id}/stop` 结束、`POST /transcode` 转码。**WS 是纯下行**，不接受任何命令（§3.5） |
+| 7 | 控制通道 | **控制一律走 HTTP**：`POST /recordings` 开始一段录制、`POST /recordings/stop` 结束、`POST /transcode` 转码。**WS 是纯下行**，不接受任何命令（§3.5） |
 | 8 | UE 侧源码变更 | **0**。前提是 M0 真机验证通过（§11） |
 | 9 | **推流只有一条** | 本机后端、单用户，**任何时刻最多一条视频推流**。设计上**不提供第二条**：不做多连接分发、不做环形缓冲-history、不做逐连接背压（§5.3） |
 | 10 | **同一时刻最多一个会话** | 会话对象只有一个，且它就是 `ws_outlet` 的成员，**不打开 WS 就不会抓摄像头**。不用查找表、不做会话池；第二条 WS 连上时旧连接因为失去 outlet 自然断开，新连接成为唯一会话（§3.3） |
@@ -41,7 +41,7 @@
 ```
 控制面（前端 → 后端，全部 HTTP）
   POST /face_capture/recordings                    开始录制
-  POST /face_capture/recordings/{id}/stop          结束录制
+  POST /face_capture/recordings/stop                结束录制
   POST /face_capture/transcode                     转码
   GET  /face_capture/recordings[/{id}]            状态查询（磁盘扫描，跨连接可用）
 
@@ -164,7 +164,7 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 
 稳定性检查：**10 个路由类、12 个端点**（`devices` 一条 URL 两个方法）。（早先还考虑过把 `/stream` 拆成 open/close 两条，已否决——WS 的一生由 TCP 决定，不需要额外端点。）
 
-路由模板必须**一个类一条 URL**（`DOODLE_HTTP_ROUTE` 只接受一个路径字面量），所以 `/recordings/{id}` 与 `/recordings/{id}/stop` 是两个类。`kitsu.cpp:312-333` 里每个排队项都是这个形态，照抄即可。
+路由模板必须**一个类一条 URL**（`DOODLE_HTTP_ROUTE` 只接受一个路径字面量），所以 `/recordings/{session_id}` 与 `/recordings/stop` 是两个类（两者的路径形状不同：前者带 uuid 段，后者是固定段，不会互相吃掉）。`kitsu.cpp:312-333` 里每个排队项都是这个形态，照抄即可。
 未注册的路由运行期不可达，这是新增 HTTP 功能唯一容易漏的一步。
 
 ### 3.2 接口清单
@@ -177,7 +177,7 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 | POST | `/api/doodle/local/face_capture/recordings` | **开始录制**。无 body；新建 `session_dir` 并开写 `take.mp4`；返回 `{session_id, state:"recording", width, height, fps, frames, duration_ms, source_fps, truncated}`。没有预览连接 → `409`，已在录 → `409`，`take.mp4` 建不出来 → `422` |
 | GET | `/api/doodle/local/face_capture/recordings` | 历史会话列表（磁盘扫描 `session_dir`） |
 | GET | `/api/doodle/local/face_capture/recordings/{session_id}` | 单会话状态、帧数、丢帧区间、产物清单 |
-| POST | `/api/doodle/local/face_capture/recordings/{session_id}/stop` | **结束录制**。同步等 `take.mp4` 收尾（≤ 2 秒）后返回 `{state, frames, duration_ms, truncated, source_fps}`；`session_id` 与当前录制段不符 → `404`，没在录 → `409`。**收尾后预览继续**，不关摄像头 |
+| POST | `/api/doodle/local/face_capture/recordings/stop` | **结束录制**。作用对象是当前活动会话（路径不带 id）。同步等 `take.mp4` 收尾（≤ 2 秒）后返回 `{state, frames, duration_ms, truncated, source_fps}`；没在录 → `409`。**收尾后预览继续**，不关摄像头 |
 | DELETE | `/api/doodle/local/face_capture/recordings/{session_id}` | 删除会话目录与 `/Game/.../<id>` 备用包；进行中返回 `409 recording` |
 | GET | `/api/doodle/local/face_capture/recordings/{session_id}/video` | `take.mp4`（`http_body_file_t`，支持 Range） |
 | GET | `/api/doodle/local/face_capture/recordings/{session_id}/curves` | `face_curves.dhfc` 下载（`set_attachment()`） |
@@ -253,7 +253,7 @@ WS 上**不定义任何上行命令**。前端不需要发 `ping`（浏览器原
 | 动作 | 请求 | 成功返回 | 失败 |
 | --- | --- | --- | --- |
 | 开始录制 | `POST /recordings`（**显式动作**，连 WS 不会自动开始） | `200 {state:"recording", session_id, width, height, fps:25, frames:0, duration_ms:0}` | `409`（没有活跃 WS 会话）、`409`（已在录制）、`422`（`take.mp4` 建不出来） |
-| 结束录制 | `POST /recordings/{session_id}/stop` | `200 {state:"previewing", frames, source_fps, duration_ms, truncated}` | `409`（当前没有在录制）、`404`（`session_id` 不是当前录制段） |
+| 结束录制 | `POST /recordings/stop` | `200 {state:"previewing", frames, source_fps, duration_ms, truncated}` | `409`（当前没有在录制） |
 | 查询状态 | `GET /recordings/{session_id}` | `{state, session_id, frames, duration_ms, gaps, artifacts:{take_mp4,align_json,frames,curves}, width, height, fps, source_fps, truncated}` | `404` |
 | 提交转码 | `POST /transcode`，body 见 §7.2 | `202 {job_id, state:"queued"}` | `409 job_running`、`400 missing_ue_project`（`ue_project` 缺失/为空/非绝对路径/文件不存在）、`400 bad_package_path`（非空但不是合法包路径） |
 
@@ -890,3 +890,4 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | WS 的 `capture_state` 状态推送事件 + `ws_outlet::notify_state` + `impl::state_` 的持续维护 | 删除：状态只在连接建立时由 `open()` 末尾发一次 `hello` 快照，之后状态一律以 HTTP 响应体为准 | 动作是否生效本来就由 `POST /recordings`、`POST .../stop` 的状态码与 `capture_status` 回答（§3.5）；同一份状态有两条上报通路只会制造"WS 说 stopping、HTTP 已返回 stopped"的不一致。代价：前端需自己处理 `stop()` 最长 2 秒的 pending，以及重连后靠 `hello` 或 `GET /recordings/{id}` 重新取状态 |
 | `align.json` 的 `raw_frames` 表示"真实帧数"、`inserted_frames` 表示滤镜补帧数 | `raw_frames` 改为"录制期写入 `take.mp4` 的帧数"（= `frames_` 长度），`inserted_frames` 恒 0 保留字段 | 没有 `raw.mkv` 之后就不存在"真实帧"这条轴 |
 | `capture_session::impl::session_id_`、公有 `capture_session::session_id()`、`hello` 的 `session_id` 字段 | 全部删除：会话 id 直接用 `session_dir()` 的文件名（`root_/<uuid>`），`hello` 只下发 `state`/`width`/`height`/`fps`；`align.json` 的 `session_id` 取自 `start_record()` 生成的 uuid 局部量 | `session_id_` 只是目录名的副本，且 `hello` 在 `open()` 阶段发出，那时还没开始录制，该字段恒为空 uuid——前端拿不到任何信息 |
+| `/recordings/{session_id_}/stop` 的路径 id | 改为 `POST /recordings/stop`：停止动作固定作用在 `capture_session_holder` 里的活动会话，`face_capture_recording_stop` 不再持有 id 成员，也不再做「id 与当前录制段不符 → 404」的校验 | 停止只能作用于当前连接的录制段，路径里的 id 只是把"没有别的会话可停"这件事重复了一遍；`stop()` 本身已经用 `409` 回答"当前没有在录制" |

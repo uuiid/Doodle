@@ -111,12 +111,11 @@ DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings")
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN_C(face_capture_recording_stop, local_http_fun)
-boost::uuids::uuid session_id_{};
 std::shared_ptr<face_capture_session_holder> holder_{};
 explicit face_capture_recording_stop(std::shared_ptr<face_capture_session_holder> in_holder)
     : base_type(), holder_(std::move(in_holder)) {}
 DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}/stop", session_id_)
+DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/stop")
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN_C(face_capture_recording, local_http_fun)

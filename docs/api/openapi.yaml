@@ -652,8 +652,8 @@ paths:
     $ref: paths/api_doodle_local_face_capture_recordings.yaml
   /api/doodle/local/face_capture/recordings/{session_id}:
     $ref: paths/api_doodle_local_face_capture_recordings_{session_id}.yaml
-  /api/doodle/local/face_capture/recordings/{session_id}/stop:
-    $ref: paths/api_doodle_local_face_capture_recordings_{session_id}_stop.yaml
+  /api/doodle/local/face_capture/recordings/stop:
+    $ref: paths/api_doodle_local_face_capture_recordings_stop.yaml
   /api/doodle/local/face_capture/recordings/{session_id}/video:
     $ref: paths/api_doodle_local_face_capture_recordings_{session_id}_video.yaml
   /api/doodle/local/face_capture/recordings/{session_id}/curves:

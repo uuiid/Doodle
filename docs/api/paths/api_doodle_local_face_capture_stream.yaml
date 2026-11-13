@@ -141,7 +141,7 @@ get:
     POST /recordings               （显式开录；无活跃会话 -> 409）
       <- avc_init                  清 buffer，之后 seq 从 0 起
       <- avc_fragment ...          录制期分片，seq 与 take.mp4 对齐
-    POST /recordings/{id}/stop     （返回时 take.mp4 已收尾，预览继续）
+    POST /recordings/stop          （返回时 take.mp4 已收尾，预览继续）
       <- avc_fragment ...          回到预览计数
     断开连接                       会话结束；若在录则自动收尾
     ```

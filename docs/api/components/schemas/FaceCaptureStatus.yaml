@@ -1,7 +1,7 @@
 type: object
 description: |
   采集状态，对应 `doodle::face_capture::capture_status`（`face_capture_types.h`）。
-  `POST .../recordings` 与 `POST .../recordings/{session_id}/stop` 直接返回本结构
+  `POST .../recordings` 与 `POST .../recordings/stop` 直接返回本结构
   （录制接口另外补一个 `session_id`，见各分片）。
 
   计数口径：`POST .../recordings` 开始录制时会清零计数器，因此录制期间与 `stop` 返回的

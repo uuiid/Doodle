@@ -7,7 +7,7 @@
 //   /api/doodle/local/face_capture/devices                                GET, POST
 //   /api/doodle/local/face_capture/stream                                  WS upgrade
 //   /api/doodle/local/face_capture/recordings                             GET, POST
-//   /api/doodle/local/face_capture/recordings/{session_id_}/stop           POST
+//   /api/doodle/local/face_capture/recordings/stop                         POST
 //   /api/doodle/local/face_capture/recordings/{session_id_}                GET, DELETE
 //   /api/doodle/local/face_capture/recordings/{session_id_}/video          GET
 //   /api/doodle/local/face_capture/recordings/{session_id_}/curves         GET
@@ -578,9 +578,9 @@ test.describe('面部捕捉录制入口（无预览会话）', () => {
     expectError(res, 409, '当前没有可用的预览连接');
   });
 
-  test('POST /recordings/{id}/stop 没有活动会话返回 404', async ({ request }) => {
+  test('POST /recordings/stop 没有活动会话返回 404', async ({ request }) => {
     const res = await readJson(
-      await request.post(`${FACE_CAPTURE_API}/recordings/${NON_EXISTENT_ID}/stop`, {
+      await request.post(`${FACE_CAPTURE_API}/recordings/stop`, {
         headers: authHeader(),
         data: {},
       })
@@ -852,7 +852,7 @@ test.describe('面部捕捉鉴权', () => {
     ['POST', '/recordings'],
     ['GET', `/recordings/${NIL_ID}`],
     ['DELETE', `/recordings/${NIL_ID}`],
-    ['POST', `/recordings/${NIL_ID}/stop`],
+    ['POST', '/recordings/stop'],
     ['GET', `/recordings/${NIL_ID}/video`],
     ['GET', `/recordings/${NIL_ID}/curves`],
     ['GET', `/recordings/${NIL_ID}/transcode`],

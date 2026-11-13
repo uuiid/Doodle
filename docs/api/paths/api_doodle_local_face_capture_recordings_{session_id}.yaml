@@ -53,7 +53,7 @@ delete:
     `src/doodle_lib/http_method/local/face_capture_record.cpp`：
 
     1. 该 id 正是当前活动会话且状态为 `recording` 时返回 409「会话正在录制中」，
-       必须先 `POST .../recordings/{session_id}/stop`；
+       必须先 `POST .../recordings/stop`；
     2. 会话目录不存在则 404「会话不存在」；
     3. `FSys::remove_all()` 删除目录（含 `take.mp4`、`align.json`、`frames/`、`curves/`、
        UE 日志等），返回 `{"ok": true}`。

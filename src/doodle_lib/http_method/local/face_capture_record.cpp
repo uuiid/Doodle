@@ -104,9 +104,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recordings, post) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_stop, post) {
   auto l_session = holder_->session();
   DOODLE_CHICK_HTTP(l_session != nullptr, not_found, "没有活动会话");
-  DOODLE_CHICK_HTTP(
-      is_current_session(l_session, session_id_), not_found, "没有 session_id = {} 的活动录制", uuid_string(session_id_)
-  );
 
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = (co_await l_session->stop()));
 }
