@@ -171,7 +171,7 @@ void face_capture_transcode_tasks::finish(const uuid_t& in_preview_id) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_transcode, post) {
-  DOODLE_CHICK_HTTP(FSys::exists(session_dir_of(preview_id_) / "take.mp4"), not_found, "take.mp4 不存在");
+  DOODLE_CHICK_HTTP(FSys::exists(session_dir_of(session_id_) / "take.mp4"), not_found, "take.mp4 不存在");
 
   auto l_json = in_handle->get_json();
   DOODLE_CHICK_HTTP(
@@ -186,13 +186,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_transcode, post) {
   l_client->set_token(token_);
 
   auto l_arg           = std::make_shared<face_capture_transcode_arg>();
-  l_arg->preview_id_   = preview_id_;
+  l_arg->preview_id_   = session_id_;
   l_arg->ue_project_   = l_ue_project;
   l_arg->kitsu_client_ = l_client;
 
   auto l_info          = std::make_shared<server_task_info>();
-  l_info->uuid_id_     = preview_id_;
-  l_info->name_        = fmt::format("face_capture_transcode_{}", preview_id_);
+  l_info->uuid_id_     = session_id_;
+  l_info->name_        = fmt::format("face_capture_transcode_{}", session_id_);
   l_info->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_info->command_ = nlohmann::json{} = *l_arg;
 
@@ -202,7 +202,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_transcode, post) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_transcode, get) {
-  auto l_ptr = tasks_->find(preview_id_);
+  auto l_ptr = tasks_->find(session_id_);
   DOODLE_CHICK_HTTP(l_ptr != nullptr, not_found, "该会话没有转码任务");
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = *l_ptr->task_info_);
 }

@@ -11,7 +11,7 @@
 //   /api/doodle/local/face_capture/recordings/{session_id_}                GET, DELETE
 //   /api/doodle/local/face_capture/recordings/{session_id_}/video          GET
 //   /api/doodle/local/face_capture/recordings/{session_id_}/curves         GET
-//   /api/doodle/local/face_capture/recordings/{preview_id_}/transcode      GET, POST
+//   /api/doodle/local/face_capture/recordings/{session_id_}/transcode      GET, POST
 //   /api/doodle/local/face_capture/transcode                               GET
 //
 // ---------------------------------------------------------------------------
@@ -36,7 +36,7 @@
 // ---------------------------------------------------------------------------
 // 转码（"特殊"的一条 URL）
 // ---------------------------------------------------------------------------
-// POST /recordings/{preview_id}/transcode 要求请求体带 ue_project（face_capture_transcode.cpp:172-199）：
+// POST /recordings/{session_id}/transcode 要求请求体带 ue_project（face_capture_transcode.cpp:173-202）：
 //   1. 会话目录没有 take.mp4            → 404「take.mp4 不存在」
 //   2. 缺 ue_project / 不是字符串       → 422「缺少 ue_project」
 //   3. ue_project 路径不存在            → 422「ue_project 不存在: <path>」

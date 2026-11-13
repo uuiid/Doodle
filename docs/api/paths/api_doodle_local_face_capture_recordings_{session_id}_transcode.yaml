@@ -18,7 +18,7 @@ post:
 
     ### 任务对象
 
-    - `id` = 路径参数 `preview_id`（即录制会话 id）；`name` = `face_capture_transcode_<preview_id>`；
+    - `id` = 路径参数 `session_id`（即录制会话 id）；`name` = `face_capture_transcode_<session_id>`；
     - `command` = `{"preview_id": <id>, "ue_project": <path>}`；
     - `type` 未单独设置，保留 `server_task_info` 的默认值 `export_fbx`；
     - 入队后立刻 `start_next()`：队列空闲时任务在返回前就被同步置为 `running`，
@@ -45,7 +45,7 @@ post:
     请求头令牌会用于构造 Kitsu 客户端（UE 侧回传），因此必须带非空令牌，否则 401「请先登录」。
   operationId: face_capture_transcode_post
   parameters:
-    - name: preview_id
+    - name: session_id
       in: path
       required: true
       schema:
@@ -88,7 +88,7 @@ get:
 
     处理器为 `local::face_capture_transcode::get`，实现见
     `src/doodle_lib/http_method/local/face_capture_transcode.cpp`：
-    遍历 `face_capture_transcode_tasks` 找 `task_info_->uuid_id_ == preview_id` 的任务，
+    遍历 `face_capture_transcode_tasks` 找 `task_info_->uuid_id_ == session_id` 的任务，
     找不到返回 404「该会话没有转码任务」。
 
     注意事项：
@@ -102,7 +102,7 @@ get:
     该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则 401「请先登录」。
   operationId: face_capture_transcode_get
   parameters:
-    - name: preview_id
+    - name: session_id
       in: path
       required: true
       schema:

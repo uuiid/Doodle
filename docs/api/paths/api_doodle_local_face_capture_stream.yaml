@@ -71,7 +71,7 @@ get:
 
     一期没有 `face_status`（人脸检测推迟到二期）、没有 `capture_state` 推送、也没有
     `transcode_progress` / `error` 事件：摄像头打不开只记服务端 WARN 日志；转码进度走
-    `GET .../recordings/{preview_id}/transcode` 与 Socket.IO（见该接口文档）。
+    `GET .../recordings/{session_id}/transcode` 与 Socket.IO（见该接口文档）。
 
     ### 编码与分片参数
 

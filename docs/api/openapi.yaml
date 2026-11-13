@@ -658,8 +658,8 @@ paths:
     $ref: paths/api_doodle_local_face_capture_recordings_{session_id}_video.yaml
   /api/doodle/local/face_capture/recordings/{session_id}/curves:
     $ref: paths/api_doodle_local_face_capture_recordings_{session_id}_curves.yaml
-  /api/doodle/local/face_capture/recordings/{preview_id}/transcode:
-    $ref: paths/api_doodle_local_face_capture_recordings_{preview_id}_transcode.yaml
+  /api/doodle/local/face_capture/recordings/{session_id}/transcode:
+    $ref: paths/api_doodle_local_face_capture_recordings_{session_id}_transcode.yaml
   /api/doodle/local/face_capture/transcode:
     $ref: paths/api_doodle_local_face_capture_transcode.yaml
   /api/doodle/task:

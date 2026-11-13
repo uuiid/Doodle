@@ -143,13 +143,13 @@ DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}/curve
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN_C(face_capture_transcode, local_http_fun)
-boost::uuids::uuid preview_id_{};
+boost::uuids::uuid session_id_{};
 std::shared_ptr<face_capture_transcode_tasks> tasks_{};
 explicit face_capture_transcode(std::shared_ptr<face_capture_transcode_tasks> in_tasks)
     : base_type(), tasks_(std::move(in_tasks)) {}
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{preview_id_}/transcode", preview_id_)
+DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/{session_id_}/transcode", session_id_)
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN_C(face_capture_transcode_tasks_all, local_http_fun)
