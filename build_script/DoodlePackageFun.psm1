@@ -46,7 +46,7 @@ function Compress-UEPlugins() {
         return
     }
     $UEPluginsJsonPath = Convert-Path "$DoodleGitRoot/script/uePlug/$UEVersion/Plugins/Doodle/Doodle.uplugin"
-    $UEPluginsJson = Get-Content -Path $UEPluginsJsonPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $UEPluginsJson = Get-Content -Path $UEPluginsJsonPath -Raw -Encoding UTF8 | ConvertFrom-Json -Depth 4
     $UEPluginsJson.VersionName = $MyVersion
     $UEPluginsJson.Version = [int]($MyVersion -replace "\.", "")
     # 判断属性 EnabledByDefault 是否存在
@@ -57,7 +57,7 @@ function Compress-UEPlugins() {
         $UEPluginsJson.EnabledByDefault = $true
     }
 
-    $UEPluginsJson | ConvertTo-Json | Set-Content -Path $UEPluginsJsonPath -Encoding UTF8
+    $UEPluginsJson | ConvertTo-Json -Depth 4 | Set-Content -Path $UEPluginsJsonPath -Encoding UTF8
 
     Compress-Archive -Path "$DoodleGitRoot\script\uePlug\$UEVersion\Plugins\Doodle" -DestinationPath "$OutPath\UE_$UEVersion.$MyVersion.zip"
 }
