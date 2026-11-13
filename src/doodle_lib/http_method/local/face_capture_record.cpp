@@ -28,13 +28,11 @@ FSys::path session_dir_of(const boost::uuids::uuid& in_session_id) {
   return face_capture::capture_session::default_root() / fmt::to_string(in_session_id);
 }
 
-std::string session_id_of(const FSys::path& in_dir) { return in_dir.filename().string(); }
-
 bool is_current_session(
     const std::shared_ptr<face_capture::capture_session>& in_session, const boost::uuids::uuid& in_id
 ) {
   if (!in_session) return false;
-  return session_id_of(in_session->session_dir()) == fmt::to_string(in_id);
+  return in_session->session_dir().filename().string() == fmt::to_string(in_id);
 }
 
 nlohmann::json artifacts_of(const FSys::path& in_dir) {
@@ -95,7 +93,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recordings, post) {
 
   auto l_status         = co_await l_session->start_record();
   nlohmann::json l_json = l_status;
-  l_json["session_id"]  = session_id_of(l_session->session_dir());
+  l_json["session_id"]  = l_session->session_dir().filename().string();
   co_return std::make_unique<http_body_json_t>(std::move(l_json));
 }
 
