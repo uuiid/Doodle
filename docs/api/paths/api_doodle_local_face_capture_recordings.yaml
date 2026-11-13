@@ -75,7 +75,7 @@ post:
                   session_id:
                     type: string
                     format: uuid
-                    description: 本次录制的会话 id（`capture_session::session_id()`）
+                    description: 本次录制的会话 id，即新建会话目录的名字（`capture_session::session_dir()` 的文件名）
     '401':
       description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
     '409':

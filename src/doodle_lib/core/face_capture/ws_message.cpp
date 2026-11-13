@@ -6,8 +6,6 @@
 
 #include <doodle_core/lib_warp/json_warp.h>
 
-#include <fmt/format.h>
-
 namespace doodle::face_capture {
 
 std::vector<std::uint8_t> ws_message::payload() const { return {}; }
@@ -15,7 +13,6 @@ std::vector<std::uint8_t> ws_message::payload() const { return {}; }
 nlohmann::json ws_hello::to_json() const {
   nlohmann::json l_json{};
   l_json["type"]       = "hello";
-  l_json["session_id"] = fmt::format("{}", session_id_);
   l_json["state"]      = state_;
   l_json["width"]      = width_;
   l_json["height"]     = height_;

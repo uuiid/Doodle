@@ -173,7 +173,7 @@ src/doodle_lib/http_method/local/          ← 新增：路由
 | --- | --- | --- |
 | GET | `/api/doodle/local/face_capture/devices` | 枚举摄像头：`{selected, devices:[{index, name, backend, width, height, selected}]}` |
 | POST | `/api/doodle/local/face_capture/devices` | **选中摄像头**。body `{"index": 0}`；成功返回 `{selected}`；body 缺整数 `index` → `400`，负值 → `400`，设备不存在（越界/已拔出）→ `404` |
-| GET | `/api/doodle/local/face_capture/stream` | **WS 升级点 + 会话本体**（`has_websocket() = true`，GET + `Upgrade` 才升级）。连上即创建 `capture_session`、打开摄像头、**推预览流（不落盘）**；断开即关闭会话（若在录则先收尾）。路径不带任何会话标识，真实 `session_id` 在 `hello` 里回传。**这条只下发视频与状态，不接受任何命令**（§3.3） |
+| GET | `/api/doodle/local/face_capture/stream` | **WS 升级点 + 会话本体**（`has_websocket() = true`，GET + `Upgrade` 才升级）。连上即创建 `capture_session`、打开摄像头、**推预览流（不落盘）**；断开即关闭会话（若在录则先收尾）。路径不带任何会话标识，真实 `session_id` 由 `POST .../recordings` 返回。**这条只下发视频与状态，不接受任何命令**（§3.3） |
 | POST | `/api/doodle/local/face_capture/recordings` | **开始录制**。无 body；新建 `session_dir` 并开写 `take.mp4`；返回 `{session_id, state:"recording", width, height, fps, frames, duration_ms, source_fps, truncated}`。没有预览连接 → `409`，已在录 → `409`，`take.mp4` 建不出来 → `422` |
 | GET | `/api/doodle/local/face_capture/recordings` | 历史会话列表（磁盘扫描 `session_dir`） |
 | GET | `/api/doodle/local/face_capture/recordings/{session_id}` | 单会话状态、帧数、丢帧区间、产物清单 |
@@ -211,7 +211,7 @@ WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` 
 
 - `websocket_init`：当前是空实现（不校验 token，见 §14 仍未定第 2 条）。路由成员里只有 `selected_` / `holder_`（都是 `shared_ptr`，clone 安全），**不存会话、也不存 `ws_outlet`**。
 - **连上只开预览，不开录**：`hello` 里的 `state` 是 `open()` 之后的状态，即 `previewing`（摄像头打不开时是 `idle` 并在 `error` 事件里说明原因）。**录制必须由前端 `POST /recordings` 显式开始**，这是本方案与早期草案最大的差别。
-- 接入顺序固定为 **`session_->attach(outlet)` → `open_capture()`**。`hello` 不在连接建立时发：`open()` 末尾由采集侧 `send(std::make_unique<ws_hello>(...))` 发一次 `hello`（带真实的 `session_id`/`width`/`height`/`state`），前端第一帧事件必然是 `hello`。
+- 接入顺序固定为 **`session_->attach(outlet)` → `open_capture()`**。`hello` 不在连接建立时发：`open()` 末尾由采集侧 `send(std::make_unique<ws_hello>(...))` 发一次 `hello`（带真实的 `width`/`height`/`state`），前端第一帧事件必然是 `hello`。
 - **`hello` 是唯一的状态快照，之后没有任何状态推送**：连接存续期间不再下发 `capture_state` 事件。前端判断动作是否生效一律以 HTTP 响应（状态码 + `capture_status` 的 `state`）为准；需要重新取状态就再发一次 `GET /recordings/{id}`，或重连拿新的 `hello`。
 - **断开即结束会话**：`close_impl()` 先 `close()` 再 `mark_closed()` 并断开。若当时正在录制，`close()` 内部等价于一次 `stop()`，`take.mp4` 与 `align.json` 照常落盘。前端要"结束但保留画面"就得自己重连（新连接 = 新会话）。
 - 第二条连接 = 第二个会话：旧连接此时正卡在它自己的 `close()` 里，摄像头被 `VideoCapture::release()` 唤醒收尾后，新连接才拿得到设备。**同一时刻仍然只有一条推流**（§0 第 9 条），但"接管"退化成"旧连接被关掉、新连接重开"。
@@ -232,7 +232,7 @@ WS 升级线的关键事实（`http_session_data.cpp:157-181`）：只有 `GET` 
 
 | event | 时机 | 负载要点 |
 | --- | --- | --- |
-| `hello` | 连接建立时一次（`open()` 成功后由采集侧下发） | `{session_id, state:"previewing", width, height, fps:25}`，连接存续期间的唯一状态快照 |
+| `hello` | 连接建立时一次（`open()` 成功后由采集侧下发） | `{state:"previewing", width, height, fps:25}`，连接存续期间的唯一状态快照 |
 | `avc_init` | 每次新会话开始录制 | `{bytes, seq_begin, seq_end}`（fMP4 的 `ftyp+moov`），紧随一个 binary 帧装 init 段 |
 | `avc_fragment` | 每个分片 | `{seq, keyframe, size}`，紧随一个 binary 帧装 `moof+mdat` |
 | `transcode_progress` | 转码阶段推进（≥1 Hz 节流） | `{job_id, step:"png_sequence"/"ue_commandlet", state, progress, detail}` |
@@ -889,3 +889,4 @@ Commandlet 默认 `IsAllowCommandletRendering()` 为假（`-AllowCommandletRende
 | `capture_session::start()` 一个 `state_` 走全程 | 拆成 `stream_state_`（idle/previewing）与 `record_state_`（idle/recording/stopping/stopped）两轴，对外用 `display_state()` 合成 `capture_state` | 一根轴表达不了"摄像头开着但没在录"这个中间状态 |
 | WS 的 `capture_state` 状态推送事件 + `ws_outlet::notify_state` + `impl::state_` 的持续维护 | 删除：状态只在连接建立时由 `open()` 末尾发一次 `hello` 快照，之后状态一律以 HTTP 响应体为准 | 动作是否生效本来就由 `POST /recordings`、`POST .../stop` 的状态码与 `capture_status` 回答（§3.5）；同一份状态有两条上报通路只会制造"WS 说 stopping、HTTP 已返回 stopped"的不一致。代价：前端需自己处理 `stop()` 最长 2 秒的 pending，以及重连后靠 `hello` 或 `GET /recordings/{id}` 重新取状态 |
 | `align.json` 的 `raw_frames` 表示"真实帧数"、`inserted_frames` 表示滤镜补帧数 | `raw_frames` 改为"录制期写入 `take.mp4` 的帧数"（= `frames_` 长度），`inserted_frames` 恒 0 保留字段 | 没有 `raw.mkv` 之后就不存在"真实帧"这条轴 |
+| `capture_session::impl::session_id_`、公有 `capture_session::session_id()`、`hello` 的 `session_id` 字段 | 全部删除：会话 id 直接用 `session_dir()` 的文件名（`root_/<uuid>`），`hello` 只下发 `state`/`width`/`height`/`fps`；`align.json` 的 `session_id` 取自 `start_record()` 生成的 uuid 局部量 | `session_id_` 只是目录名的副本，且 `hello` 在 `open()` 阶段发出，那时还没开始录制，该字段恒为空 uuid——前端拿不到任何信息 |

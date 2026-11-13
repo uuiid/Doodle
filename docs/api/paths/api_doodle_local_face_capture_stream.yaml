@@ -54,14 +54,13 @@ get:
 
     | `type` | 何时发 | text 字段 | 紧随 binary |
     | --- | --- | --- | --- |
-    | `hello` | 每次连接一次，在摄像头成功打开后（`capture_session::open()` 末尾） | `session_id`、`state`、`width`、`height`、`fps` | 无 |
+    | `hello` | 每次连接一次，在摄像头成功打开后（`capture_session::open()` 末尾） | `state`、`width`、`height`、`fps` | 无 |
     | `avc_fragment` | 每个分片一次；连接后的第一帧事件就是它，携带 init 段 | `seq`、`keyframe`、`size` | 有：分片字节 |
     | `avc_init` | 每次 `POST .../recordings` 开始录制时重发一次 | `bytes`、`seq_begin`、`seq_end` | 有：fMP4 init 段 |
 
     字段细节：
 
-    - `hello`：`state` 恒为 `previewing`，`fps` 恒为 25；`session_id` 在连接建立时尚未开始录制，
-      因此是空 uuid `00000000-0000-0000-0000-000000000000`；`width` / `height` 是偶数化后的
+    - `hello`：`state` 恒为 `previewing`，`fps` 恒为 25；`width` / `height` 是偶数化后的
       实际采集尺寸。`hello` 是整条连接唯一的状态快照，之后不再推任何状态事件。
     - `avc_fragment`：`seq` 取分片起始帧号（`fragment.seq_begin_`）；`keyframe` 取分片标记，
       当前实现恒为 `true`——分片一律在关键帧边界切分（每个分片都以关键帧开头、长度一个 GOP）；
@@ -136,7 +135,7 @@ get:
 
     ```
     GET(Upgrade) /stream
-      <- hello                      取 session_id(空)/width/height/fps/state
+      <- hello                      取 width/height/fps/state
       <- avc_fragment seq=0 key     appendBuffer(init 段)
       <- avc_fragment seq=n key     appendBuffer(moof+mdat)   <- 持续 25 fps
     POST /recordings               （显式开录；无活跃会话 -> 409）

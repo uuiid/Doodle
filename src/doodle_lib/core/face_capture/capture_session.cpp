@@ -108,7 +108,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     record_state_ = capture_state::idle;
 
     if (auto l_outlet = outlet_.lock()) {
-      l_outlet->send(std::make_unique<ws_hello>(session_id_, capture_state::previewing, width_, height_));
+      l_outlet->send(std::make_unique<ws_hello>(capture_state::previewing, width_, height_));
     }
 
     boost::asio::co_spawn(
@@ -140,11 +140,10 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     DOODLE_CHICK_HTTP(l_mp4->init(), unprocessable_entity, "无法创建 take.mp4 编码器: {}", l_dir.string());
     mp4_writer_         = std::move(l_mp4);
 
-    session_id_         = l_session_id;
     session_dir_        = l_dir;
 
     record_             = align_record{};
-    record_.session_id_ = session_id_;
+    record_.session_id_ = l_session_id;
     record_.width_      = width_;
     record_.height_     = height_;
     record_.fps_        = k_fps;
@@ -208,8 +207,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   capture_state state() const { return display_state(); }
 
   std::uint64_t frames() const { return seq_; }
-
-  boost::uuids::uuid session_id() const { return session_id_; }
 
   FSys::path session_dir() const { return session_dir_; }
 
@@ -472,7 +469,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   std::weak_ptr<ws_outlet> outlet_{};
   std::shared_ptr<frame_filter> filter_{};
 
-  boost::uuids::uuid session_id_{};
   std::int32_t width_{0};
   std::int32_t height_{0};
   std::uint64_t seq_{0};
@@ -543,8 +539,6 @@ std::shared_ptr<ws_outlet> capture_session::outlet() const { return impl_ptr_->o
 capture_state capture_session::state() const { return impl_ptr_->state(); }
 
 std::uint64_t capture_session::frames() const { return impl_ptr_->frames(); }
-
-boost::uuids::uuid capture_session::session_id() const { return impl_ptr_->session_id(); }
 
 FSys::path capture_session::session_dir() const { return impl_ptr_->session_dir(); }
 

@@ -10,7 +10,6 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio/awaitable.hpp>
-#include <boost/uuid/uuid.hpp>
 
 #include <memory>
 #include <vector>
@@ -65,8 +64,6 @@ class capture_session : public std::enable_shared_from_this<capture_session> {
   capture_state state() const;
 
   std::uint64_t frames() const;
-
-  boost::uuids::uuid session_id() const;
 
   FSys::path session_dir() const;
 

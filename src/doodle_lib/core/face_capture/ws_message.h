@@ -8,8 +8,6 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
-#include <boost/uuid/uuid.hpp>
-
 #include <cstdint>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -39,12 +37,9 @@ class ws_message {
 struct ws_hello : ws_message {
   ws_hello() = default;
 
-  ws_hello(
-      boost::uuids::uuid in_session_id, capture_state in_state, std::int32_t in_width, std::int32_t in_height
-  )
-      : session_id_(in_session_id), state_(in_state), width_(in_width), height_(in_height) {}
+  ws_hello(capture_state in_state, std::int32_t in_width, std::int32_t in_height)
+      : state_(in_state), width_(in_width), height_(in_height) {}
 
-  boost::uuids::uuid session_id_{};
   capture_state state_{capture_state::idle};
   std::int32_t width_{0};
   std::int32_t height_{0};

@@ -30,6 +30,15 @@ FSys::path session_dir_of(const boost::uuids::uuid& in_session_id) {
   return face_capture::capture_session::default_root() / uuid_string(in_session_id);
 }
 
+std::string session_id_of(const FSys::path& in_dir) { return in_dir.filename().string(); }
+
+bool is_current_session(
+    const std::shared_ptr<face_capture::capture_session>& in_session, const boost::uuids::uuid& in_id
+) {
+  if (!in_session) return false;
+  return session_id_of(in_session->session_dir()) == uuid_string(in_id);
+}
+
 nlohmann::json artifacts_of(const FSys::path& in_dir) {
   auto l_exists        = [&in_dir](std::string_view in_name) { return FSys::exists(in_dir / std::string{in_name}); };
   std::size_t l_frames = 0;
@@ -88,7 +97,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recordings, post) {
 
   auto l_status         = co_await l_session->start_record();
   nlohmann::json l_json = l_status;
-  l_json["session_id"]  = uuid_string(l_session->session_id());
+  l_json["session_id"]  = session_id_of(l_session->session_dir());
   co_return std::make_unique<http_body_json_t>(std::move(l_json));
 }
 
@@ -96,7 +105,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_stop, post) {
   auto l_session = holder_->session();
   DOODLE_CHICK_HTTP(l_session != nullptr, not_found, "没有活动会话");
   DOODLE_CHICK_HTTP(
-      l_session->session_id() == session_id_, not_found, "没有 session_id = {} 的活动录制", uuid_string(session_id_)
+      is_current_session(l_session, session_id_), not_found, "没有 session_id = {} 的活动录制", uuid_string(session_id_)
   );
 
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = (co_await l_session->stop()));
@@ -109,12 +118,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording, get) {
   auto l_json    = recording_json(l_dir);
 
   auto l_session = holder_->session();
-  if (l_session && l_session->session_id() == session_id_ && !l_json.contains("frames")) {
+  if (is_current_session(l_session, session_id_) && !l_json.contains("frames")) {
     l_json["frames"] = l_session->frames();
   }
   l_json["session_id"] = uuid_string(session_id_);
   l_json["state"] =
-      (l_session && l_session->session_id() == session_id_) ? l_session->state() : face_capture::capture_state::stopped;
+      is_current_session(l_session, session_id_) ? l_session->state() : face_capture::capture_state::stopped;
   l_json["artifacts"] = artifacts_of(l_dir);
 
   co_return std::make_unique<http_body_json_t>(std::move(l_json));
@@ -123,8 +132,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording, get) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording, delete_) {
   auto l_session = holder_->session();
   DOODLE_CHICK_HTTP(
-      !(l_session && l_session->session_id() == session_id_ &&
-        l_session->state() == face_capture::capture_state::recording),
+      !(is_current_session(l_session, session_id_) && l_session->state() == face_capture::capture_state::recording),
       conflict, "会话正在录制中"
   );
 
