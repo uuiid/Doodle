@@ -1028,6 +1028,7 @@ UGroomCache* UDoodleAutoAnimationCommandlet::CreateGroomImportTask(const FString
 	L_Opt->ImportSettings.bImportGroomCache = true;
 	L_Opt->ImportSettings.ImportType = EGroomCacheImportType::Guides;
 	L_Opt->ImportSettings.GroomAsset = InGroomAssetPath;
+	L_Opt->ImportSettings.bOverrideConversionSettings = true;
 	auto L_Obj = L_Data->Factory->ImportObject(L_Data->Factory->ResolveSupportedClass(), Pkg, FName{*L_Name},
 		RF_Public | RF_Standalone | RF_Transactional,
 		InAbcPath, nullptr, bImportWasCancelled);
