@@ -8,9 +8,10 @@
 #include <doodle_lib/lib_warp/boost_fmt_beast.h>
 
 #include <boost/url.hpp>
-#include <fmt/format.h>
 
 #include <chrono>
+#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 namespace doodle::http {
 
@@ -71,7 +72,7 @@ nlohmann::json ai_client_base::add_ip_to_req(
 }
 
 boost::asio::awaitable<std::string> ai_client_base::get_ip_str() {
-  using http_client_ssl = doodle::http::http_client_ssl;
+  using http_client_ssl         = doodle::http::http_client_ssl;
 
   constexpr auto g_ip_cache_ttl = std::chrono::seconds{1};
 
@@ -129,13 +130,19 @@ boost::asio::awaitable<FSys::path> ai_client_base::download_raw_file(std::string
   FSys::path l_path;
   for (int i = 0; i < 3; ++i) try {
       boost::beast::http::response<boost::beast::http::file_body> l_res{};
-      l_path = core_set::get_set().get_cache_root("http") /
-               (core_set::get_set().get_uuid_str() + l_ext.generic_string());
+      l_path =
+          core_set::get_set().get_cache_root("http") / (core_set::get_set().get_uuid_str() + l_ext.generic_string());
       boost::system::error_code l_ec{};
       l_res.body().open(l_path.generic_string().c_str(), boost::beast::file_mode::write, l_ec);
       if (l_ec) throw_exception(http_request_error{boost::beast::http::status::internal_server_error, l_ec.message()});
       co_await l_client->read_and_write(req, l_res, boost::asio::use_awaitable);
-      DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "download_result error: {}", l_res.result());
+      if (l_res.result() == boost::beast::http::status::ok)
+        co_return l_path;
+      else {
+        SPDLOG_LOGGER_ERROR(logger_, "download_raw_file error: {}", l_res.result());
+        l_path.clear();
+        co_return l_path;
+      }
       break;
     } catch (const std::exception& e) {
       logger_->error("download_result error: {}, retrying {}/3", e.what(), i + 1);

@@ -54,7 +54,7 @@ ai_client_base::request_info_t seedance2_client::collect_request_info(const nloh
 boost::asio::awaitable<ai_client_base::run_task_result_t> seedance2_client::submit_task(
     const doodle::seedance2::task& in_task
 ) {
-  auto l_ip = co_await get_ip_str();
+  auto l_ip      = co_await get_ip_str();
 
   auto l_request = in_task.data_request_;
   if (l_request.value("model", std::string{}).starts_with("doubao-seedance-2-5"))
@@ -221,6 +221,7 @@ boost::asio::awaitable<void> seedance2_client::cancel_task(const std::string& in
 boost::asio::awaitable<void> seedance2_client::download_result(run_task_result_t& in_data) {
   for (auto& l_url : in_data.result_files_) {
     auto l_raw_file = co_await download_raw_file(l_url);
+    if (l_raw_file.empty()) continue;  // 下载失败, 但不抛异常, 让调用方自己处理
     auto l_adj_file =
         l_raw_file.parent_path() / (l_raw_file.stem().string() + "_adj" + l_raw_file.extension().string());
     ffmpeg_video_resize{l_raw_file, l_adj_file, core_set::get_set().get_uuid()}.process();
