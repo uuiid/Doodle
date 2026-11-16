@@ -89,7 +89,7 @@
             "program": "C:/Program Files/Autodesk/Maya2024/bin/maya.exe",
             "args": [
                 "-script",
-                "${workspaceFolder}/../build/test_sim_fbx.mel"
+                "${workspaceFolder}/build/test_sim_fbx.mel"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/../build/Ninja_RelWithDebInfo/bin",
@@ -101,7 +101,6 @@
             ],
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis",
-            "preLaunchTask": "cmake build maya",
             "presentation": {
                 "hidden": false,
                 "group": "maya",
