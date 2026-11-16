@@ -163,6 +163,7 @@ public class doodleEditor : ModuleRules
 				"InterchangeImport",
 				"InterchangeCore",
 				"InterchangeEngine",
+				"DoodleDnaImporter", // DNA 角色 FBX 低内存导入
 				
 				
 			}

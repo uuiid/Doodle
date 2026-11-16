@@ -104,6 +104,7 @@
 #include "MovieSceneGroomCacheSection.h"
 #include "MovieSceneGroomCacheTrack.h"
 #include "ObjectTools.h"
+#include "DNACharacterImporter.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 	: Super()
@@ -202,10 +203,6 @@ int UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 		return -1;
 	}
 
-	static USkeletalMeshLODSettings* L_Skin_Mesh_Setting = LoadObject<USkeletalMeshLODSettings>(
-		GetTransientPackage(), TEXT("/Doodle/Doodle_LOD_Setting.Doodle_LOD_Setting"));
-	TmpSkeletalMesh->SetLODSettings(L_Skin_Mesh_Setting);
-
 	FScopedSuspendAlternateSkinWeightPreview ScopedSuspendAlternateSkinnWeightPreview(TmpSkeletalMesh);
 	FScopedSkeletalMeshPostEditChange ScopedPostEditChange(TmpSkeletalMesh);
 	check(TmpSkeletalMesh);
@@ -236,6 +233,9 @@ int UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 	FLODUtilities::RegenerateLOD(TmpSkeletalMesh, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 3, true, false);
 	TmpSkeletalMesh->PostEditChange();
+	static USkeletalMeshLODSettings* L_Skin_Mesh_Setting = LoadObject<USkeletalMeshLODSettings>(
+		GetTransientPackage(), TEXT("/Doodle/Doodle_LOD_Setting.Doodle_LOD_Setting"));
+	TmpSkeletalMesh->SetLODSettings(L_Skin_Mesh_Setting);
 	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 	return 0;
 }
@@ -867,62 +867,90 @@ TPair<USkeletalMesh*, UAnimSequence*> UDoodleAutoAnimationCommandlet::CreateChar
 	const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton,
 	bool bImportAnimations, bool bImportOnlyAnimations)
 {
-	UInterchangeManager& L_InterchangeManager = UInterchangeManager::GetInterchangeManager();
-
-
-	// 2. 创建源数据对象
-	UInterchangeSourceData* L_SourceData = NewObject<UInterchangeSourceData>(this);
-	L_SourceData->SetFilename(InFbxPath);
-
-	FImportAssetParameters ImportParams;
-	ImportParams.bIsAutomated = true; // 关键：静默导入，不显示任何对话框[reference:17]
-	ImportParams.bReplaceExisting = true; // 覆盖同名文件[reference:18]
-	// ImportParams.bRunSynchronous = true; // 同步执行[reference:19]
-
-	// 4. 配置流水线（导入选项在此设置）
-	// 我们手动创建一个通用资产流水线实例来覆盖默认行为
-	UInterchangeGenericAssetsPipeline* L_AssetPipeline = NewObject<UInterchangeGenericAssetsPipeline>(L_SourceData);
-	L_AssetPipeline->CommonMeshesProperties->bRecomputeNormals = false;
-	L_AssetPipeline->CommonMeshesProperties->bRecomputeTangents = false;
-	L_AssetPipeline->CommonSkeletalMeshesAndAnimationsProperties->bImportOnlyAnimations = bImportOnlyAnimations;
-	L_AssetPipeline->CommonSkeletalMeshesAndAnimationsProperties->Skeleton = InSkeleton;
-	L_AssetPipeline->AnimationPipeline->bImportAnimations = bImportAnimations;
-	L_AssetPipeline->MaterialPipeline->bImportMaterials = false;
-	L_AssetPipeline->MaterialPipeline->SearchLocation = EInterchangeMaterialSearchLocation::UnderRoot;
-	L_AssetPipeline->MaterialPipeline->TexturePipeline->bImportTextures = false;
-	ImportParams.OverridePipelines.Add(L_AssetPipeline);
-
-	auto L_Result = L_InterchangeManager.ImportAssetWithResult(ImportPath, L_SourceData, ImportParams);
-	// L_Result->GetImportedObjects();
 	TPair<USkeletalMesh*, UAnimSequence*> L_Results{};
-	for (UObject* L_Object : L_Result->GetImportedObjects())
-	{
-		if (L_Object->IsA(USkeletalMesh::StaticClass()))
-			L_Results.Key = Cast<USkeletalMesh>(L_Object);
-		else if (L_Object->IsA(UAnimSequence::StaticClass()))
-			L_Results.Value = Cast<UAnimSequence>(L_Object);
-	}
-	// 必须有任意一个导入
-	checkf(L_Results.Key || L_Results.Value, TEXT("导入失败，未找到骨骼网格或动画序列！"));
 
-	if (L_Results.Key == nullptr && L_Results.Value)
+	if (!bImportOnlyAnimations)
 	{
-		// 如果没有导入骨骼网格，则尝试从动画序列中获取骨骼网格	
-		L_Results.Key = L_Results.Value->GetSkeleton()->FindCompatibleMesh();
-	}
-	if (L_Results.Value == nullptr && L_Results.Key)
-	{
-		UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+		FDNACharacterImportRequest L_Request;
+		L_Request.FbxFilename = InFbxPath;
+		L_Request.DestinationPath = ImportPath;
+		L_Request.Mode = EDNACharacterImportMode::LowMemory;
+		L_Request.bReplaceExisting = true;
+		L_Request.bSaveAssets = true;
+		if (InSkeleton)
+			L_Request.SkeletonPath = InSkeleton->GetPathName();
 
-		TArray<FAssetData> OutAssetData;
-		IAssetRegistry::Get()->GetAssetsByPath(FName(*ImportPath), OutAssetData, false);
-		for (const FAssetData& Asset : OutAssetData)
+		FDNACharacterImportResult L_ImportResult;
+		if (!FDNACharacterImporter::Run(L_Request, L_ImportResult))
 		{
-			EditorAssetSubsystem->SaveLoadedAsset(Asset.GetAsset());
-			if (UAnimSequence* Anim = Cast<UAnimSequence>(Asset.GetAsset()); Anim && Anim->GetSkeleton() == L_Results.Key->GetSkeleton())
+			UE_LOG(LogTemp, Error, TEXT("导入的FBX文件 %s 导入失败: %s"), *InFbxPath, *L_ImportResult.Message);
+			return L_Results;
+		}
+
+		if (!L_ImportResult.MeshObjectPath.IsEmpty())
+			L_Results.Key = LoadObject<USkeletalMesh>(nullptr, *L_ImportResult.MeshObjectPath);
+
+		if (bImportAnimations)
+			UE_LOG(LogTemp, Warning,
+			       TEXT("DNA 导入不导入动画, FBX %s 的动画已跳过"), *InFbxPath);
+	}
+	else
+	{
+		UInterchangeManager& L_InterchangeManager = UInterchangeManager::GetInterchangeManager();
+
+		// 2. 创建源数据对象
+		UInterchangeSourceData* L_SourceData = NewObject<UInterchangeSourceData>(this);
+		L_SourceData->SetFilename(InFbxPath);
+
+		FImportAssetParameters ImportParams;
+		ImportParams.bIsAutomated = true; // 关键：静默导入，不显示任何对话框[reference:17]
+		ImportParams.bReplaceExisting = true; // 覆盖同名文件[reference:18]
+		// ImportParams.bRunSynchronous = true; // 同步执行[reference:19]
+
+		// 4. 配置流水线（导入选项在此设置）
+		// 我们手动创建一个通用资产流水线实例来覆盖默认行为
+		UInterchangeGenericAssetsPipeline* L_AssetPipeline = NewObject<UInterchangeGenericAssetsPipeline>(L_SourceData);
+		L_AssetPipeline->CommonMeshesProperties->bRecomputeNormals = false;
+		L_AssetPipeline->CommonMeshesProperties->bRecomputeTangents = false;
+		L_AssetPipeline->CommonSkeletalMeshesAndAnimationsProperties->bImportOnlyAnimations = bImportOnlyAnimations;
+		L_AssetPipeline->CommonSkeletalMeshesAndAnimationsProperties->Skeleton = InSkeleton;
+		L_AssetPipeline->AnimationPipeline->bImportAnimations = bImportAnimations;
+		L_AssetPipeline->MaterialPipeline->bImportMaterials = false;
+		L_AssetPipeline->MaterialPipeline->SearchLocation = EInterchangeMaterialSearchLocation::UnderRoot;
+		L_AssetPipeline->MaterialPipeline->TexturePipeline->bImportTextures = false;
+		ImportParams.OverridePipelines.Add(L_AssetPipeline);
+
+		auto L_Result = L_InterchangeManager.ImportAssetWithResult(ImportPath, L_SourceData, ImportParams);
+		// L_Result->GetImportedObjects();
+		for (UObject* L_Object : L_Result->GetImportedObjects())
+		{
+			if (L_Object->IsA<USkeletalMesh>())
+				L_Results.Key = Cast<USkeletalMesh>(L_Object);
+			else if (L_Object->IsA<UAnimSequence>())
+				L_Results.Value = Cast<UAnimSequence>(L_Object);
+		}
+		// 必须有任意一个导入
+		checkf(L_Results.Key || L_Results.Value, TEXT("导入失败，未找到骨骼网格或动画序列！"));
+
+		if (L_Results.Key == nullptr && L_Results.Value)
+		{
+			// 如果没有导入骨骼网格，则尝试从动画序列中获取骨骼网格
+			L_Results.Key = L_Results.Value->GetSkeleton()->FindCompatibleMesh();
+		}
+		if (L_Results.Value == nullptr && L_Results.Key)
+		{
+			UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+
+			TArray<FAssetData> OutAssetData;
+			IAssetRegistry::Get()->GetAssetsByPath(FName(*ImportPath), OutAssetData, false);
+			for (const FAssetData& Asset : OutAssetData)
 			{
-				L_Results.Value = Anim;
-				break;
+				EditorAssetSubsystem->SaveLoadedAsset(Asset.GetAsset());
+				if (UAnimSequence* Anim = Cast<UAnimSequence>(Asset.GetAsset()); Anim && Anim->GetSkeleton() == L_Results.Key->GetSkeleton())
+				{
+					L_Results.Value = Anim;
+					break;
+				}
 			}
 		}
 	}
