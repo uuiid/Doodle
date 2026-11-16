@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "DNACharacterImporter.h"
 
 #include "DNACharacterImporterModule.h"
@@ -22,7 +20,6 @@
 
 namespace
 {
-	/** Object names cannot contain path separators or spaces. */
 	FString SanitizeAssetName(const FString& InName)
 	{
 		FString Name = FPaths::GetBaseFilename(InName);
@@ -38,9 +35,9 @@ namespace
 		return Name.IsEmpty() ? TEXT("DNACharacter") : Name;
 	}
 
-	void FillMeshStats(USkeletalMesh& Mesh, FDNACharacterImportResult& OutResult)
+	void FillMeshStats(USkeletalMesh& Mesh, FDNACharacterImportResult& InOutResult)
 	{
-		OutResult.BoneCount = Mesh.GetRefSkeleton().GetNum();
+		InOutResult.BoneCount = Mesh.GetRefSkeleton().GetNum();
 
 		if (FSkeletalMeshModel* Model = Mesh.GetImportedModel())
 		{
@@ -52,21 +49,20 @@ namespace
 				{
 					TriangleCount += static_cast<int64>(Section.NumTriangles);
 				}
-				OutResult.VertexCount = static_cast<int32>(LODModel.NumVertices);
-				OutResult.TriangleCount = static_cast<int32>(TriangleCount);
-				OutResult.SectionCount = LODModel.Sections.Num();
+				InOutResult.VertexCount = static_cast<int32>(LODModel.NumVertices);
+				InOutResult.TriangleCount = static_cast<int32>(TriangleCount);
+				InOutResult.SectionCount = LODModel.Sections.Num();
 				return;
 			}
 		}
-		OutResult.VertexCount = Mesh.GetNumImportedVertices();
+		InOutResult.VertexCount = Mesh.GetNumImportedVertices();
 	}
 
-	/** Number of morph targets that ended up with at least one delta after the build. */
-	int32 CountMorphTargetsWithData(USkeletalMesh& Mesh, int64& OutDeltaCount, int32& OutMaxDeltasPerTarget)
+	int32 CountMorphTargetsWithData(USkeletalMesh& Mesh, int64& InOutDeltaCount, int32& InOutMaxDeltasPerTarget)
 	{
 		int32 WithData = 0;
-		OutDeltaCount = 0;
-		OutMaxDeltasPerTarget = 0;
+		InOutDeltaCount = 0;
+		InOutMaxDeltasPerTarget = 0;
 
 		for (const TObjectPtr<UMorphTarget>& MorphTargetPtr : Mesh.GetMorphTargets())
 		{
@@ -79,8 +75,8 @@ namespace
 			bool bHasData = false;
 			for (const FMorphTargetLODModel& LODModel : MorphTarget->GetMorphLODModels())
 			{
-				OutDeltaCount += LODModel.Vertices.Num();
-				OutMaxDeltasPerTarget = FMath::Max(OutMaxDeltasPerTarget, LODModel.Vertices.Num());
+				InOutDeltaCount += LODModel.Vertices.Num();
+				InOutMaxDeltasPerTarget = FMath::Max(InOutMaxDeltasPerTarget, LODModel.Vertices.Num());
 				if (LODModel.Vertices.Num() > 0)
 				{
 					bHasData = true;
@@ -95,35 +91,47 @@ namespace
 
 		return WithData;
 	}
+
+	using FRunResult = TValueOrError<FDNACharacterImportResult, FDNACharacterImporterRunError>;
+
+	FRunResult MakeRunError(
+		EDNACharacterImporterRunError InCode, const FString& InDetail, const FDNACharacterImportResult& InResult)
+	{
+		FDNACharacterImporterRunError Error;
+		Error.Code = InCode;
+		Error.Detail = InDetail;
+		Error.Log = InResult.Log;
+		return MakeError(MoveTemp(Error));
+	}
 }
 
-void FDNACharacterImporter::NormalizeRequest(FDNACharacterImportRequest& Request)
+void FDNACharacterImporter::NormalizeRequest(FDNACharacterImportRequest& InOutRequest)
 {
-	if (!Request.FbxFilename.IsEmpty())
+	if (!InOutRequest.FbxFilename.IsEmpty())
 	{
-		Request.FbxFilename = FPaths::ConvertRelativePathToFull(Request.FbxFilename);
-		FPaths::NormalizeFilename(Request.FbxFilename);
+		InOutRequest.FbxFilename = FPaths::ConvertRelativePathToFull(InOutRequest.FbxFilename);
+		FPaths::NormalizeFilename(InOutRequest.FbxFilename);
 	}
 
-	if (Request.AssetName.IsEmpty())
+	if (InOutRequest.AssetName.IsEmpty())
 	{
-		Request.AssetName = SanitizeAssetName(Request.FbxFilename);
+		InOutRequest.AssetName = SanitizeAssetName(InOutRequest.FbxFilename);
 	}
 	else
 	{
-		Request.AssetName = SanitizeAssetName(Request.AssetName);
+		InOutRequest.AssetName = SanitizeAssetName(InOutRequest.AssetName);
 	}
 
-	if (Request.DestinationPath.IsEmpty())
+	if (InOutRequest.DestinationPath.IsEmpty())
 	{
-		Request.DestinationPath = TEXT("/Game/DNA");
+		InOutRequest.DestinationPath = TEXT("/Game/DNA");
 	}
-	Request.DestinationPath.RemoveFromEnd(TEXT("/"));
+	InOutRequest.DestinationPath.RemoveFromEnd(TEXT("/"));
 }
 
-FString FDNACharacterImporter::ModeToString(EDNACharacterImportMode Mode)
+FString FDNACharacterImporter::ModeToString(EDNACharacterImportMode InMode)
 {
-	switch (Mode)
+	switch (InMode)
 	{
 	case EDNACharacterImportMode::Stock:
 		return TEXT("stock");
@@ -135,54 +143,49 @@ FString FDNACharacterImporter::ModeToString(EDNACharacterImportMode Mode)
 	}
 }
 
-bool FDNACharacterImporter::ParseMode(const FString& Text, EDNACharacterImportMode& OutMode)
+TValueOrError<EDNACharacterImportMode, FString> FDNACharacterImporter::ParseMode(const FString& InText)
 {
-	if (Text.Equals(TEXT("stock"), ESearchCase::IgnoreCase))
+	if (InText.Equals(TEXT("stock"), ESearchCase::IgnoreCase))
 	{
-		OutMode = EDNACharacterImportMode::Stock;
-		return true;
+		return MakeValue(EDNACharacterImportMode::Stock);
 	}
-	if (Text.Equals(TEXT("lowmem"), ESearchCase::IgnoreCase)
-		|| Text.Equals(TEXT("lowmemory"), ESearchCase::IgnoreCase)
-		|| Text.Equals(TEXT("plugin"), ESearchCase::IgnoreCase))
+	if (InText.Equals(TEXT("lowmem"), ESearchCase::IgnoreCase)
+		|| InText.Equals(TEXT("lowmemory"), ESearchCase::IgnoreCase)
+		|| InText.Equals(TEXT("plugin"), ESearchCase::IgnoreCase))
 	{
-		OutMode = EDNACharacterImportMode::LowMemory;
-		return true;
+		return MakeValue(EDNACharacterImportMode::LowMemory);
 	}
-	if (Text.Equals(TEXT("morphs"), ESearchCase::IgnoreCase)
-		|| Text.Equals(TEXT("morph"), ESearchCase::IgnoreCase)
-		|| Text.Equals(TEXT("morphsonly"), ESearchCase::IgnoreCase))
+	if (InText.Equals(TEXT("morphs"), ESearchCase::IgnoreCase)
+		|| InText.Equals(TEXT("morph"), ESearchCase::IgnoreCase)
+		|| InText.Equals(TEXT("morphsonly"), ESearchCase::IgnoreCase))
 	{
-		OutMode = EDNACharacterImportMode::MorphTargetsOnly;
-		return true;
+		return MakeValue(EDNACharacterImportMode::MorphTargetsOnly);
 	}
-	return false;
+	return MakeError(FString::Printf(TEXT("unknown import mode '%s'"), *InText));
 }
 
-bool FDNACharacterImporter::Run(const FDNACharacterImportRequest& InRequest, FDNACharacterImportResult& OutResult)
+FRunResult FDNACharacterImporter::Run(const FDNACharacterImportRequest& InRequest)
 {
-	OutResult = FDNACharacterImportResult();
-	TArray<FString>& Log = OutResult.Log;
+	FDNACharacterImportResult Result;
 
-	auto AddLog = [&Log](const FString& Line)
+	auto AddLog = [&Result](const FString& Line)
 	{
-		Log.Add(Line);
+		Result.Log.Add(Line);
 		UE_LOG(LogDoodleDnaImporter, Display, TEXT("%s"), *Line);
 	};
 
-	// Failure paths still have to report how much memory the attempt burned.
-	auto FillMemory = [&OutResult]()
+	auto FillMemory = [&Result]()
 	{
 		const FPlatformMemoryStats MemoryStats = FPlatformMemory::GetStats();
-		OutResult.ProcessPeakPhysicalBytes = static_cast<int64>(MemoryStats.PeakUsedPhysical);
-		OutResult.UsedPhysicalBytes = static_cast<int64>(MemoryStats.UsedPhysical);
+		Result.ProcessPeakPhysicalBytes = static_cast<int64>(MemoryStats.PeakUsedPhysical);
+		Result.UsedPhysicalBytes = static_cast<int64>(MemoryStats.UsedPhysical);
 	};
 
 	if (!IsInGameThread())
 	{
-		OutResult.Message = TEXT("A DNA character import has to run on the game thread.");
-		AddLog(OutResult.Message);
-		return false;
+		const FString Detail = TEXT("A DNA character import has to run on the game thread.");
+		AddLog(Detail);
+		return MakeRunError(EDNACharacterImporterRunError::NotOnGameThread, Detail, Result);
 	}
 
 	const UDNACharacterImporterSettings& Settings = *GetDefault<UDNACharacterImporterSettings>();
@@ -197,26 +200,21 @@ bool FDNACharacterImporter::Run(const FDNACharacterImportRequest& InRequest, FDN
 	{
 		if (Request.FbxFilename.IsEmpty() || !FPaths::FileExists(Request.FbxFilename))
 		{
-			OutResult.Message = FString::Printf(TEXT("FBX file not found: %s"), *Request.FbxFilename);
-			AddLog(OutResult.Message);
+			const FString Detail = FString::Printf(TEXT("FBX file not found: %s"), *Request.FbxFilename);
+			AddLog(Detail);
 			FillMemory();
-			return false;
+			return MakeRunError(EDNACharacterImporterRunError::FbxMissing, Detail, Result);
 		}
 	}
 
 	FDNAMemoryTrace Trace;
 	Trace.Reset();
 	Trace.Checkpoint(TEXT("start"));
-	OutResult.BaselinePeakPhysicalBytes = static_cast<int64>(Trace.GetBaselinePeakPhysical());
+	Result.BaselinePeakPhysicalBytes = static_cast<int64>(Trace.GetBaselinePeakPhysical());
 
 	USkeletalMesh* Mesh = nullptr;
-	FString Error;
 	DNACharacterImporterInternal::FImportedMeshInfo ImportedInfo;
-	DNACharacterImporterInternal::FMorphGenerationStats MorphStats;
 
-	// ------------------------------------------------------------------
-	// 1. The mesh itself.
-	// ------------------------------------------------------------------
 	const double ImportStart = FPlatformTime::Seconds();
 	if (Request.Mode == EDNACharacterImportMode::MorphTargetsOnly)
 	{
@@ -225,69 +223,70 @@ bool FDNACharacterImporter::Run(const FDNACharacterImportRequest& InRequest, FDN
 		Mesh = LoadObject<USkeletalMesh>(nullptr, *ObjectPath);
 		if (Mesh == nullptr)
 		{
-			OutResult.Message = FString::Printf(TEXT("Skeletal mesh '%s' could not be loaded."), *ObjectPath);
-			AddLog(OutResult.Message);
+			const FString Detail = FString::Printf(TEXT("Skeletal mesh '%s' could not be loaded."), *ObjectPath);
+			AddLog(Detail);
 			FillMemory();
-			return false;
+			return MakeRunError(EDNACharacterImporterRunError::MeshNotLoaded, Detail, Result);
 		}
 		ImportedInfo.MeshObjectPath = ObjectPath;
 		AddLog(FString::Printf(TEXT("Reusing the skeletal mesh '%s'."), *ObjectPath));
 	}
 	else
 	{
-		// The stock mode lets Interchange build the blend shapes, every other mode keeps them away
-		// from Interchange so that this plugin can build them one at a time afterwards.
 		const bool bImportMorphTargets = (Request.Mode == EDNACharacterImportMode::Stock);
-		if (!DNACharacterImporterInternal::ImportSkeletalMeshFromFbx(Request, Settings, bImportMorphTargets, ImportedInfo, Error))
+		auto ImportResult = DNACharacterImporterInternal::ImportSkeletalMeshFromFbx(Request, Settings, bImportMorphTargets);
+		if (ImportResult.HasError())
 		{
-			OutResult.Message = Error;
-			AddLog(Error);
+			const FString Detail = ImportResult.GetError().Detail;
+			AddLog(Detail);
 			FillMemory();
-			return false;
+			return MakeRunError(EDNACharacterImporterRunError::MeshImportFailed, Detail, Result);
 		}
+		ImportedInfo = MoveTemp(ImportResult.GetValue());
 
 		Mesh = LoadObject<USkeletalMesh>(nullptr, *ImportedInfo.MeshObjectPath);
 		if (Mesh == nullptr)
 		{
-			OutResult.Message = FString::Printf(TEXT("The imported skeletal mesh '%s' could not be loaded."), *ImportedInfo.MeshObjectPath);
-			AddLog(OutResult.Message);
+			const FString Detail = FString::Printf(TEXT("The imported skeletal mesh '%s' could not be loaded."), *ImportedInfo.MeshObjectPath);
+			AddLog(Detail);
 			FillMemory();
-			return false;
+			return MakeRunError(EDNACharacterImporterRunError::MeshNotLoaded, Detail, Result);
 		}
 	}
-	OutResult.ImportSeconds = FPlatformTime::Seconds() - ImportStart;
-	OutResult.MeshObjectPath = ImportedInfo.MeshObjectPath;
-	OutResult.SkeletonObjectPath = ImportedInfo.SkeletonObjectPath;
-	if (USkeleton* Skeleton = Mesh->GetSkeleton())
+	Result.ImportSeconds = FPlatformTime::Seconds() - ImportStart;
+	Result.MeshObjectPath = ImportedInfo.MeshObjectPath;
+	Result.SkeletonObjectPath = ImportedInfo.SkeletonObjectPath;
+	if (const USkeleton* Skeleton = Mesh->GetSkeleton())
 	{
-		OutResult.SkeletonObjectPath = Skeleton->GetPathName();
+		Result.SkeletonObjectPath = Skeleton->GetPathName();
 	}
 	Trace.Checkpoint(TEXT("skeletal mesh imported"));
-	AddLog(FString::Printf(TEXT("Skeletal mesh '%s' ready in %.2f s."), *OutResult.MeshObjectPath, OutResult.ImportSeconds));
+	AddLog(FString::Printf(TEXT("Skeletal mesh '%s' ready in %.2f s."), *Result.MeshObjectPath, Result.ImportSeconds));
 
-	// ------------------------------------------------------------------
-	// 2. Morph targets.
-	// ------------------------------------------------------------------
 	if (Request.Mode != EDNACharacterImportMode::Stock && Settings.bGenerateMorphTargetsFromFbx
 		&& !Request.bVerifyOnly && !Request.bSkipMorphGeneration)
 	{
 		const double MorphStart = FPlatformTime::Seconds();
-		const bool bGenerated = DNACharacterImporterInternal::GenerateMorphTargets(
-			*Mesh, Request, Settings, MorphStats, &Trace, Log);
-		OutResult.MorphTargetSeconds = FPlatformTime::Seconds() - MorphStart;
+		auto MorphResult = DNACharacterImporterInternal::GenerateMorphTargets(*Mesh, Request, Settings);
+		Result.MorphTargetSeconds = FPlatformTime::Seconds() - MorphStart;
 		Trace.Checkpoint(TEXT("morph targets generated"));
 
-		OutResult.ShapeCount = MorphStats.ShapeCount;
-		OutResult.MeshPartCount = MorphStats.MeshPartCount;
-		OutResult.MappedMeshPartCount = MorphStats.MappedMeshPartCount;
-
-		if (!bGenerated)
+		if (MorphResult.HasError())
 		{
-			OutResult.Message = TEXT("The blend shapes of the FBX could not be turned into morph targets.");
-			AddLog(OutResult.Message);
+			const FString Detail = MorphResult.GetError().Detail;
+			AddLog(Detail);
 			FillMemory();
-			return false;
+			return MakeRunError(EDNACharacterImporterRunError::MorphGenerationFailed, Detail, Result);
 		}
+
+		const DNACharacterImporterInternal::FMorphGenerationStats& MorphStats = MorphResult.GetValue();
+		for (const FString& Line : MorphStats.Log)
+		{
+			Result.Log.Add(Line);
+		}
+		Result.ShapeCount = MorphStats.ShapeCount;
+		Result.MeshPartCount = MorphStats.MeshPartCount;
+		Result.MappedMeshPartCount = MorphStats.MappedMeshPartCount;
 	}
 	else if (Request.bSkipMorphGeneration)
 	{
@@ -298,55 +297,45 @@ bool FDNACharacterImporter::Run(const FDNACharacterImportRequest& InRequest, FDN
 		AddLog(TEXT("Verify only: the mesh is reported as it is, nothing was generated or saved."));
 	}
 
-	// ------------------------------------------------------------------
-	// 3. Physics asset.
-	// ------------------------------------------------------------------
-	// Done here, after the mesh has been rebuilt: Interchange would generate the bodies from the mesh
-	// as it was imported, before the blend shapes were written into its mesh description.
 	if (!Request.bVerifyOnly)
 	{
 		const double PhysicsStart = FPlatformTime::Seconds();
-		const bool bPhysicsAssetCreated = DNACharacterImporterInternal::CreatePhysicsAssetForMesh(
-			*Mesh, Settings, OutResult.PhysicsAssetObjectPath, Error);
+		auto PhysicsResult = DNACharacterImporterInternal::CreatePhysicsAssetForMesh(*Mesh, Settings);
 		Trace.Checkpoint(TEXT("physics asset created"));
-		OutResult.PhysicsAssetSeconds = FPlatformTime::Seconds() - PhysicsStart;
+		Result.PhysicsAssetSeconds = FPlatformTime::Seconds() - PhysicsStart;
 
-		if (!bPhysicsAssetCreated)
+		if (PhysicsResult.HasError())
 		{
-			OutResult.Message = Error;
-			AddLog(Error);
+			const FString Detail = PhysicsResult.GetError().Detail;
+			AddLog(Detail);
 			FillMemory();
-			return false;
+			return MakeRunError(EDNACharacterImporterRunError::PhysicsAssetFailed, Detail, Result);
 		}
-		if (!OutResult.PhysicsAssetObjectPath.IsEmpty())
+
+		Result.PhysicsAssetObjectPath = PhysicsResult.GetValue();
+		if (!Result.PhysicsAssetObjectPath.IsEmpty())
 		{
-			AddLog(FString::Printf(TEXT("Physics asset: %s (%.2f s)."), *OutResult.PhysicsAssetObjectPath, OutResult.PhysicsAssetSeconds));
+			AddLog(FString::Printf(TEXT("Physics asset: %s (%.2f s)."), *Result.PhysicsAssetObjectPath, Result.PhysicsAssetSeconds));
 		}
 	}
 
-	// ------------------------------------------------------------------
-	// 4. What came out of it.
-	// ------------------------------------------------------------------
-	FillMeshStats(*Mesh, OutResult);
+	FillMeshStats(*Mesh, Result);
 
 	int64 DeltaCount = 0;
 	int32 MaxDeltasPerTarget = 0;
-	OutResult.MorphTargetCount = Mesh->GetMorphTargets().Num();
-	OutResult.MorphTargetsWithData = CountMorphTargetsWithData(*Mesh, DeltaCount, MaxDeltasPerTarget);
+	Result.MorphTargetCount = Mesh->GetMorphTargets().Num();
+	Result.MorphTargetsWithData = CountMorphTargetsWithData(*Mesh, DeltaCount, MaxDeltasPerTarget);
 
 	AddLog(FString::Printf(
 		TEXT("Result: %d vertices, %d triangles, %d bones, %d section(s), %d morph target(s) (%d with data, %lld deltas, up to %d per target)."),
-		OutResult.VertexCount, OutResult.TriangleCount, OutResult.BoneCount, OutResult.SectionCount,
-		OutResult.MorphTargetCount, OutResult.MorphTargetsWithData, DeltaCount, MaxDeltasPerTarget));
+		Result.VertexCount, Result.TriangleCount, Result.BoneCount, Result.SectionCount,
+		Result.MorphTargetCount, Result.MorphTargetsWithData, DeltaCount, MaxDeltasPerTarget));
 
-	if (Settings.bVerifyGeneratedMorphTargets && OutResult.MorphTargetCount > 0 && OutResult.MorphTargetsWithData == 0)
+	if (Settings.bVerifyGeneratedMorphTargets && Result.MorphTargetCount > 0 && Result.MorphTargetsWithData == 0)
 	{
 		AddLog(TEXT("Warning: every morph target is empty. The deltas were either filtered out by the LOD build settings or mapped to the wrong vertices."));
 	}
 
-	// ------------------------------------------------------------------
-	// 5. Save.
-	// ------------------------------------------------------------------
 	if (Request.bSaveAssets && !Request.bVerifyOnly)
 	{
 		TArray<UPackage*> PackagesToSave;
@@ -377,17 +366,17 @@ bool FDNACharacterImporter::Run(const FDNACharacterImportRequest& InRequest, FDN
 	if (Settings.bLogMemoryTrace)
 	{
 		Trace.Log(FString::Printf(TEXT("DNA character import (%s)"), *ModeToString(Request.Mode)));
-		Log.Add(Trace.ToString());
+		Result.Log.Add(Trace.ToString());
 	}
 
-	OutResult.bSucceeded = true;
-	OutResult.Message = FString::Printf(
+	Result.bSucceeded = true;
+	Result.Message = FString::Printf(
 		TEXT("Imported '%s' in %.2f s (mesh) + %.2f s (morph targets) + %.2f s (physics asset); process peak %s."),
 		*Request.AssetName,
-		OutResult.ImportSeconds,
-		OutResult.MorphTargetSeconds,
-		OutResult.PhysicsAssetSeconds,
-		*FDNAMemoryTrace::FormatBytes(static_cast<uint64>(OutResult.ProcessPeakPhysicalBytes)));
-	AddLog(OutResult.Message);
-	return true;
+		Result.ImportSeconds,
+		Result.MorphTargetSeconds,
+		Result.PhysicsAssetSeconds,
+		*FDNAMemoryTrace::FormatBytes(static_cast<uint64>(Result.ProcessPeakPhysicalBytes)));
+	AddLog(Result.Message);
+	return MakeValue(MoveTemp(Result));
 }

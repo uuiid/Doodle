@@ -1,10 +1,8 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DNACharacterMorphGenerator.h"
 
 #include "DNACharacterImporterModule.h"
 #include "DNACharacterImporterSettings.h"
-#include "DNACharacterMemoryTrace.h"
 #include "DNAFbxShapeSource.h"
 
 #include "Engine/SkeletalMesh.h"
@@ -15,7 +13,6 @@ namespace DNACharacterImporterInternal
 {
 	namespace
 	{
-		/** Affine transform (3x3 linear part + translation) fitted between FBX space and mesh space. */
 		struct FAffineFit
 		{
 			double Linear[3][3] = { { 1.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }, { 0.0, 0.0, 1.0 } };
@@ -30,10 +27,6 @@ namespace DNACharacterImporterInternal
 			FVector3f Dest;
 		};
 
-		/**
-		 * Gauss-Jordan on a 4x7 augmented matrix: [ M | R ] with M 4x4 and R 4x3.
-		 * Returns false when M is singular.
-		 */
 		bool SolveAugmented(double Aug[4][7], double OutB[4][3])
 		{
 			for (int32 Column = 0; Column < 4; ++Column)
@@ -94,7 +87,6 @@ namespace DNACharacterImporterInternal
 			return true;
 		}
 
-		/** Least squares fit of Dest ~= Linear * Source + Translation, plus its residuals. */
 		bool FitAffineSamples(const TArray<FSamplePair>& Samples, FAffineFit& OutFit, double& OutDiagonal)
 		{
 			if (Samples.Num() < 4)
@@ -137,8 +129,6 @@ namespace DNACharacterImporterInternal
 				return false;
 			}
 
-			// B solves Dest = X * B, so B is indexed [input][output]: the 3x3 linear part of the
-			// fit (which is what ApplyLinear uses) is its transpose.
 			for (int32 Output = 0; Output < 3; ++Output)
 			{
 				for (int32 Input = 0; Input < 3; ++Input)
@@ -180,33 +170,35 @@ namespace DNACharacterImporterInternal
 		}
 	}
 
-	bool GenerateMorphTargets(
-		USkeletalMesh& Mesh,
-		const FDNACharacterImportRequest& Request,
-		const UDNACharacterImporterSettings& Settings,
-		FMorphGenerationStats& OutStats,
-		FDNAMemoryTrace* Trace,
-		TArray<FString>& OutLog)
+	TValueOrError<FMorphGenerationStats, FMorphGenerationError> GenerateMorphTargets(
+		USkeletalMesh& InMesh,
+		const FDNACharacterImportRequest& InRequest,
+		const UDNACharacterImporterSettings& InSettings)
 	{
-		auto Log = [&OutLog](const FString& Line)
+		FMorphGenerationStats Stats;
+		auto Log = [&Stats](const FString& Line)
 		{
-			OutLog.Add(Line);
+			Stats.Log.Add(Line);
 			UE_LOG(LogDoodleDnaImporter, Display, TEXT("%s"), *Line);
 		};
 
-		FMeshDescription* MeshDescription = Mesh.GetMeshDescription(0);
+		FMeshDescription* MeshDescription = InMesh.GetMeshDescription(0);
 		if (MeshDescription == nullptr)
 		{
 			Log(TEXT("The imported mesh has no mesh description for LOD 0."));
-			return false;
+			return MakeError(FMorphGenerationError{
+				EMorphGenerationError::NoMeshDescription,
+				TEXT("the imported mesh has no mesh description for LOD 0")
+			});
 		}
 
 		FDNAFbxShapeSource Source;
-		FString Error;
-		if (!Source.Open(Request.FbxFilename, Error))
+		const auto OpenResult = Source.Open(InRequest.FbxFilename);
+		if (OpenResult.HasError())
 		{
-			Log(Error);
-			return false;
+			const FString Detail = OpenResult.GetError().Detail;
+			Log(Detail);
+			return MakeError(FMorphGenerationError{EMorphGenerationError::FbxUnreadable, Detail});
 		}
 
 		FSkeletalMeshAttributes Attributes(*MeshDescription);
@@ -215,17 +207,18 @@ namespace DNACharacterImporterInternal
 		if (!Attributes.HasSourceGeometryParts())
 		{
 			Log(TEXT("The mesh description carries no source geometry parts: the FBX blend shapes cannot be mapped."));
-			return false;
+			return MakeError(FMorphGenerationError{
+				EMorphGenerationError::NoSourceGeometryParts,
+				TEXT("the mesh description carries no source geometry parts")
+			});
 		}
 
 		const TArray<FDNAFbxMeshInfo>& FbxMeshes = Source.GetMeshes();
 		const TArray<FDNAFbxShapeInfo>& FbxShapes = Source.GetShapes();
 
-		OutStats.ShapeCount = FbxShapes.Num();
-		OutStats.VertexCount = MeshDescription->Vertices().Num();
+		Stats.ShapeCount = FbxShapes.Num();
+		Stats.VertexCount = MeshDescription->Vertices().Num();
 
-		// The vertices of the description in creation order: a source geometry part covers the
-		// range [offset, offset + count) of that list.
 		TArray<FVertexID> VertexIDs;
 		VertexIDs.Reserve(MeshDescription->Vertices().Num());
 		for (const FVertexID VertexID : MeshDescription->Vertices().GetElementIDs())
@@ -242,21 +235,18 @@ namespace DNACharacterImporterInternal
 		{
 			PartIDs.Add(PartID);
 		}
-		OutStats.MeshPartCount = PartIDs.Num();
+		Stats.MeshPartCount = PartIDs.Num();
 
 		Log(FString::Printf(TEXT("Mesh description: %d vertices, %d source geometry part(s), %d FBX mesh(es), FBX control points in all parts, import point index attribute: %s."),
 			MeshDescription->Vertices().Num(), PartIDs.Num(), FbxMeshes.Num(),
 			MeshDescription->VertexAttributes().HasAttribute(MeshAttribute::Vertex::ImportPointIndex) ? TEXT("present") : TEXT("absent")));
 
-		// Base positions of the FBX meshes, read once and kept for the fit of the parts.
 		TMap<int32, TArray<FVector3f>> BasePositionCache;
 
-		const int32 MaxSamples = FMath::Max(16, Settings.MorphMappingSampleCount);
-		const float DeltaThresholdSquared = Settings.MorphTargetDeltaThreshold * Settings.MorphTargetDeltaThreshold;
+		const int32 MaxSamples = FMath::Max(16, InSettings.MorphMappingSampleCount);
+		const float DeltaThresholdSquared = InSettings.MorphTargetDeltaThreshold * InSettings.MorphTargetDeltaThreshold;
 
 		TSet<FName> RegisteredMorphs;
-		TArray<FVector3f> ShapeOffsets;
-		TArray<int32> ShapeOffsetVertices;
 		TSet<int32> UsedFbxMeshes;
 		TArray<int32> UnmappedParts;
 		int64 WrittenDeltas = 0;
@@ -277,7 +267,6 @@ namespace DNACharacterImporterInternal
 				continue;
 			}
 
-			// Candidate meshes: same number of control points. The names are only a hint, the fit decides.
 			TArray<int32> Candidates;
 			for (int32 MeshIndex = 0; MeshIndex < FbxMeshes.Num(); ++MeshIndex)
 			{
@@ -303,7 +292,6 @@ namespace DNACharacterImporterInternal
 				continue;
 			}
 
-			// Destination sample points of this part.
 			const int32 Stride = FMath::Max(1, PartCount / MaxSamples);
 			TArray<int32> SampleIndices;
 			SampleIndices.Reserve(MaxSamples + 1);
@@ -342,12 +330,12 @@ namespace DNACharacterImporterInternal
 				TArray<FVector3f>* BasePositions = BasePositionCache.Find(MeshIndex);
 				if (BasePositions == nullptr)
 				{
-					TArray<FVector3f> Loaded;
-					if (!Source.GetMeshBasePositions(MeshIndex, Loaded))
+					const auto BaseResult = Source.GetMeshBasePositions(MeshIndex);
+					if (BaseResult.HasError())
 					{
 						continue;
 					}
-					BasePositions = &BasePositionCache.Add(MeshIndex, MoveTemp(Loaded));
+					BasePositions = &BasePositionCache.Add(MeshIndex, BaseResult.GetValue());
 				}
 				if (BasePositions->Num() != PartCount)
 				{
@@ -370,7 +358,7 @@ namespace DNACharacterImporterInternal
 					continue;
 				}
 
-				const double Tolerance = static_cast<double>(Settings.MorphMappingTolerance)
+				const double Tolerance = static_cast<double>(InSettings.MorphMappingTolerance)
 					* FMath::Max(DestDiagonal, FMath::Max(FitDiagonal, 1.0));
 				if (Fit.RmsError > Tolerance || Fit.MaxError > Tolerance * 4.0)
 				{
@@ -389,8 +377,6 @@ namespace DNACharacterImporterInternal
 			{
 				UnmappedParts.Add(PartID.GetValue());
 
-				// Diagnostic: shows whether the part and the FBX mesh cover the same points (a vertex
-				// order problem) or live in different spaces (a transform problem).
 				{
 					FString Probe = FString::Printf(
 						TEXT("  probe '%s': dest bbox [%.1f %.1f %.1f]-[%.1f %.1f %.1f] first (%.1f %.1f %.1f)"),
@@ -404,10 +390,10 @@ namespace DNACharacterImporterInternal
 						TArray<FVector3f>* ProbePositions = BasePositionCache.Find(ProbeMeshIndex);
 						if (ProbePositions == nullptr)
 						{
-							TArray<FVector3f> Loaded;
-							if (Source.GetMeshBasePositions(ProbeMeshIndex, Loaded))
+							const auto ProbeResult = Source.GetMeshBasePositions(ProbeMeshIndex);
+							if (ProbeResult.HasValue())
 							{
-								ProbePositions = &BasePositionCache.Add(ProbeMeshIndex, MoveTemp(Loaded));
+								ProbePositions = &BasePositionCache.Add(ProbeMeshIndex, ProbeResult.GetValue());
 							}
 						}
 
@@ -459,7 +445,7 @@ namespace DNACharacterImporterInternal
 				continue;
 			}
 
-			++OutStats.MappedMeshPartCount;
+			++Stats.MappedMeshPartCount;
 			UsedFbxMeshes.Add(BestMeshIndex);
 			Log(FString::Printf(TEXT("Mesh part '%s': %d vertices <- FBX mesh '%s' (rms %.6f cm)."),
 				*PartName.ToString(), PartCount, *FbxMeshes[BestMeshIndex].Name, BestRms));
@@ -467,16 +453,18 @@ namespace DNACharacterImporterInternal
 			for (const int32 ShapeIndex : FbxMeshes[BestMeshIndex].ShapeIndices)
 			{
 				const FDNAFbxShapeInfo& ShapeInfo = FbxShapes[ShapeIndex];
-				if (!Source.GetShapeVertexOffsets(ShapeIndex, ShapeOffsets, ShapeOffsetVertices))
+				const auto OffsetsResult = Source.GetShapeVertexOffsets(ShapeIndex);
+				if (OffsetsResult.HasError())
 				{
 					continue;
 				}
+				const FDNAFbxShapeVertexOffsets& ShapeVertexOffsets = OffsetsResult.GetValue();
+				const TArray<FVector3f>& ShapeOffsets = ShapeVertexOffsets.Offsets;
+				const TArray<int32>& ShapeOffsetVertices = ShapeVertexOffsets.VertexIndices;
 
 				const FName MorphName(*ShapeInfo.Name);
 				if (!RegisteredMorphs.Contains(MorphName))
 				{
-					// The mesh may already carry a morph target of that name (re-import): writing into
-					// it is what we want there, registering it a second time would fail.
 					const bool bAlreadyRegistered = Attributes.GetMorphTargetNames().Contains(MorphName);
 					if (!bAlreadyRegistered && !Attributes.RegisterMorphTargetAttribute(MorphName, /*bIncludeNormals=*/false))
 					{
@@ -486,7 +474,7 @@ namespace DNACharacterImporterInternal
 					RegisteredMorphs.Add(MorphName);
 					if (!bAlreadyRegistered)
 					{
-						++OutStats.MorphTargetCount;
+						++Stats.MorphTargetCount;
 					}
 				}
 
@@ -514,63 +502,48 @@ namespace DNACharacterImporterInternal
 				WrittenDeltas += NonZeroOffsets;
 				if (NonZeroOffsets > 0)
 				{
-					++OutStats.MorphTargetsWithData;
+					++Stats.MorphTargetsWithData;
 				}
 			}
 
-			if (Trace != nullptr)
-			{
-				Trace->Checkpoint(FString::Printf(TEXT("blend shapes of mesh part '%s'"), *PartName.ToString()));
-			}
 		}
 
 		UE_LOG(LogDoodleDnaImporter, Display,
 			TEXT("Morph target generation: %d shape(s), %d morph target(s), %d with data, %lld delta(s), %d/%d mesh part(s) mapped."),
-			OutStats.ShapeCount, OutStats.MorphTargetCount, OutStats.MorphTargetsWithData, WrittenDeltas,
-			OutStats.MappedMeshPartCount, OutStats.MeshPartCount);
+			Stats.ShapeCount, Stats.MorphTargetCount, Stats.MorphTargetsWithData, WrittenDeltas,
+			Stats.MappedMeshPartCount, Stats.MeshPartCount);
 
-		if (OutStats.MappedMeshPartCount == 0)
+		Stats.DeltaCount = WrittenDeltas;
+
+		if (Stats.MappedMeshPartCount == 0)
 		{
 			Log(TEXT("No mesh part could be matched; nothing was written."));
-			return false;
+			return MakeError(FMorphGenerationError{
+				EMorphGenerationError::UnmappedMeshParts,
+				TEXT("no mesh part of the mesh description could be matched to an FBX mesh")
+			});
 		}
 
-		if (Settings.bFailOnUnmappedMeshPart && UnmappedParts.Num() > 0)
+		if (InSettings.bFailOnUnmappedMeshPart && UnmappedParts.Num() > 0)
 		{
 			Log(FString::Printf(TEXT("%d mesh part(s) could not be mapped."), UnmappedParts.Num()));
-			return false;
+			return MakeError(FMorphGenerationError{
+				EMorphGenerationError::UnmappedMeshParts,
+				FString::Printf(TEXT("%d mesh part(s) could not be mapped"), UnmappedParts.Num())
+			});
 		}
 
-		// Every LOD has to keep the small deltas of the DNA blend shapes: the default threshold of the
-		// build settings (0.015 cm) would silently delete most of them while the LOD models are built.
-		for (int32 LODIndex = 0; LODIndex < Mesh.GetLODNum(); ++LODIndex)
+		for (int32 LODIndex = 0; LODIndex < InMesh.GetLODNum(); ++LODIndex)
 		{
-			if (FSkeletalMeshLODInfo* LODInfo = Mesh.GetLODInfo(LODIndex))
+			if (FSkeletalMeshLODInfo* LODInfo = InMesh.GetLODInfo(LODIndex))
 			{
-				LODInfo->BuildSettings.MorphThresholdPosition = Settings.MorphTargetBuildSettingsThreshold;
+				LODInfo->BuildSettings.MorphThresholdPosition = InSettings.MorphTargetBuildSettingsThreshold;
 			}
 		}
 
-		if (Trace != nullptr)
-		{
-			Trace->Checkpoint(TEXT("before CommitMeshDescription"));
-		}
-
-		Mesh.CommitMeshDescription(0);
-
-		if (Trace != nullptr)
-		{
-			Trace->Checkpoint(TEXT("after CommitMeshDescription"));
-		}
-
-		Mesh.Build();
-
-		if (Trace != nullptr)
-		{
-			Trace->Checkpoint(TEXT("after Build"));
-		}
-
-		Mesh.PostEditChange();
-		return true;
+		InMesh.CommitMeshDescription(0);
+		InMesh.Build();
+		InMesh.PostEditChange();
+		return MakeValue(MoveTemp(Stats));
 	}
 }

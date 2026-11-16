@@ -1,4 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DNACharacterInterchangeImport.h"
 
@@ -23,13 +22,8 @@ namespace DNACharacterImporterInternal
 {
 	namespace
 	{
-		/** The engine pipeline that drives FBX -> mesh description translation. */
 		const TCHAR* DefaultAssetsPipelinePath = TEXT("/Interchange/Pipelines/DefaultAssetsPipeline");
 
-		/**
-		 * Changes the settings of the shared default assets pipeline for the duration of one import and
-		 * puts everything (including the dirty flag of the pipeline asset) back afterwards.
-		 */
 		struct FScopedPipelineSettings
 		{
 			explicit FScopedPipelineSettings(UInterchangeGenericAssetsPipeline& InPipeline)
@@ -146,95 +140,96 @@ namespace DNACharacterImporterInternal
 		};
 	}
 
-	bool ImportSkeletalMeshFromFbx(
-		const FDNACharacterImportRequest& Request,
-		const UDNACharacterImporterSettings& Settings,
-		bool bImportMorphTargets,
-		FImportedMeshInfo& OutInfo,
-		FString& OutError)
+	TValueOrError<FImportedMeshInfo, FInterchangeImportError> ImportSkeletalMeshFromFbx(
+		const FDNACharacterImportRequest& InRequest,
+		const UDNACharacterImporterSettings& InSettings,
+		bool bInImportMorphTargets)
 	{
-		if (!FPackageName::IsValidLongPackageName(Request.DestinationPath))
+		if (!FPackageName::IsValidLongPackageName(InRequest.DestinationPath))
 		{
-			OutError = FString::Printf(TEXT("'%s' is not a valid content path."), *Request.DestinationPath);
-			return false;
+			return MakeError(FInterchangeImportError{
+				EInterchangeImportError::InvalidContentPath,
+				FString::Printf(TEXT("'%s' is not a valid content path."), *InRequest.DestinationPath)
+			});
 		}
 
 		UInterchangeGenericAssetsPipeline* Pipeline =
 			LoadObject<UInterchangeGenericAssetsPipeline>(nullptr, DefaultAssetsPipelinePath);
 		if (Pipeline == nullptr)
 		{
-			OutError = FString::Printf(TEXT("The Interchange pipeline '%s' could not be loaded."), DefaultAssetsPipelinePath);
-			return false;
+			return MakeError(FInterchangeImportError{
+				EInterchangeImportError::PipelineMissing,
+				FString::Printf(TEXT("The Interchange pipeline '%s' could not be loaded."), DefaultAssetsPipelinePath)
+			});
 		}
 
 		USkeleton* Skeleton = nullptr;
-		if (!Request.SkeletonPath.IsEmpty())
+		if (!InRequest.SkeletonPath.IsEmpty())
 		{
-			Skeleton = LoadObject<USkeleton>(nullptr, *Request.SkeletonPath);
+			Skeleton = LoadObject<USkeleton>(nullptr, *InRequest.SkeletonPath);
 			if (Skeleton == nullptr)
 			{
-				OutError = FString::Printf(TEXT("Skeleton '%s' could not be loaded."), *Request.SkeletonPath);
-				return false;
+				return MakeError(FInterchangeImportError{
+					EInterchangeImportError::SkeletonMissing,
+					FString::Printf(TEXT("Skeleton '%s' could not be loaded."), *InRequest.SkeletonPath)
+				});
 			}
 		}
 
 		FScopedPipelineSettings PipelineSettings(*Pipeline);
-		PipelineSettings.CommonMeshes.bKeepSectionsSeparate = Settings.bKeepSectionsSeparate;
-		PipelineSettings.CommonMeshes.bImportLods = Settings.bImportLods;
-		PipelineSettings.CommonMeshes.bUseFullPrecisionUVs = Settings.bUseFullPrecisionUVs;
-		PipelineSettings.CommonMeshes.bRecomputeNormals = Settings.bRecomputeNormals;
-		PipelineSettings.CommonMeshes.bRecomputeTangents = Settings.bRecomputeTangents;
+		PipelineSettings.CommonMeshes.bKeepSectionsSeparate = InSettings.bKeepSectionsSeparate;
+		PipelineSettings.CommonMeshes.bImportLods = InSettings.bImportLods;
+		PipelineSettings.CommonMeshes.bUseFullPrecisionUVs = InSettings.bUseFullPrecisionUVs;
+		PipelineSettings.CommonMeshes.bRecomputeNormals = InSettings.bRecomputeNormals;
+		PipelineSettings.CommonMeshes.bRecomputeTangents = InSettings.bRecomputeTangents;
 		PipelineSettings.CommonMeshes.bComputeWeightedNormals = false;
 
 		PipelineSettings.MeshPipeline.bImportStaticMeshes = false;
-		PipelineSettings.MeshPipeline.bImportSkeletalMeshes = Settings.bImportSkeletalMeshes;
-		PipelineSettings.MeshPipeline.bImportMorphTargets = bImportMorphTargets;
-		// Interchange would build the physics asset from the mesh as imported, i.e. before this plugin
-		// writes the blend shapes into its mesh description. The plugin creates it afterwards instead
-		// (see DNACharacterPhysicsAsset.h), from the mesh that is actually saved.
+		PipelineSettings.MeshPipeline.bImportSkeletalMeshes = InSettings.bImportSkeletalMeshes;
+		PipelineSettings.MeshPipeline.bImportMorphTargets = bInImportMorphTargets;
 		PipelineSettings.MeshPipeline.bCreatePhysicsAsset = false;
-		// Interchange copies this into the LOD build settings of the mesh; it must not filter the
-		// deltas of DNA blend shapes away.
-		PipelineSettings.MeshPipeline.MorphThresholdPosition = Settings.MorphTargetBuildSettingsThreshold;
+		PipelineSettings.MeshPipeline.MorphThresholdPosition = InSettings.MorphTargetBuildSettingsThreshold;
 
 		PipelineSettings.SkeletalMeshes.Skeleton = Skeleton;
 		PipelineSettings.SkeletalMeshes.bAddCurveMetadataToSkeleton = false;
 
 		if (UInterchangeGenericAnimationPipeline* AnimationPipeline = PipelineSettings.AnimationPipeline)
 		{
-			AnimationPipeline->bImportAnimations = Settings.bImportAnimations;
+			AnimationPipeline->bImportAnimations = InSettings.bImportAnimations;
 		}
 		if (UInterchangeGenericMaterialPipeline* MaterialPipeline = PipelineSettings.MaterialPipeline)
 		{
-			MaterialPipeline->bImportMaterials = Settings.bImportMaterials;
-			if (UInterchangeGenericTexturePipeline* TexturePipeline = PipelineSettings.TexturePipeline)
+			MaterialPipeline->bImportMaterials = InSettings.bImportMaterials;
+			if (UInterchangeGenericTexturePipeline* TexturePipeline = MaterialPipeline->TexturePipeline)
 			{
-				TexturePipeline->bImportTextures = Settings.bImportTextures;
+				TexturePipeline->bImportTextures = InSettings.bImportTextures;
 			}
 		}
 
-		const FString AssetName = Request.AssetName.IsEmpty()
-			? FPaths::GetBaseFilename(Request.FbxFilename)
-			: Request.AssetName;
+		const FString AssetName = InRequest.AssetName.IsEmpty()
+			? FPaths::GetBaseFilename(InRequest.FbxFilename)
+			: InRequest.AssetName;
 
-		UE::Interchange::FScopedSourceData SourceData(Request.FbxFilename);
+		UE::Interchange::FScopedSourceData SourceData(InRequest.FbxFilename);
 		if (SourceData.GetSourceData() == nullptr)
 		{
-			OutError = FString::Printf(TEXT("The FBX file '%s' could not be read."), *Request.FbxFilename);
-			return false;
+			return MakeError(FInterchangeImportError{
+				EInterchangeImportError::SourceDataUnreadable,
+				FString::Printf(TEXT("The FBX file '%s' could not be read."), *InRequest.FbxFilename)
+			});
 		}
 
 		FImportAssetParameters ImportParameters;
 		ImportParameters.bIsAutomated = true;
 		ImportParameters.bFollowRedirectors = false;
-		ImportParameters.bReplaceExisting = Request.bReplaceExisting;
+		ImportParameters.bReplaceExisting = InRequest.bReplaceExisting;
 		ImportParameters.bForceShowDialog = false;
 		ImportParameters.DestinationName = AssetName;
 		ImportParameters.OverridePipelines.Add(FSoftObjectPath(Pipeline));
 
 		TArray<UObject*> ImportedObjects;
 		UInterchangeManager& InterchangeManager = UInterchangeManager::GetInterchangeManager();
-		InterchangeManager.ImportAsset(Request.DestinationPath, SourceData.GetSourceData(), ImportParameters, ImportedObjects);
+		InterchangeManager.ImportAsset(InRequest.DestinationPath, SourceData.GetSourceData(), ImportParameters, ImportedObjects);
 
 		USkeletalMesh* ImportedMesh = nullptr;
 		for (UObject* ImportedObject : ImportedObjects)
@@ -248,20 +243,23 @@ namespace DNACharacterImporterInternal
 
 		if (ImportedMesh == nullptr)
 		{
-			OutError = FString::Printf(TEXT("Interchange did not create a skeletal mesh from '%s' (imported objects: %d)."),
-				*Request.FbxFilename, ImportedObjects.Num());
-			return false;
+			return MakeError(FInterchangeImportError{
+				EInterchangeImportError::MeshNotImported,
+				FString::Printf(TEXT("Interchange did not create a skeletal mesh from '%s' (imported objects: %d)."),
+					*InRequest.FbxFilename, ImportedObjects.Num())
+			});
 		}
 
-		OutInfo.MeshObjectPath = ImportedMesh->GetPathName();
+		FImportedMeshInfo Info;
+		Info.MeshObjectPath = ImportedMesh->GetPathName();
 		if (const USkeleton* MeshSkeleton = ImportedMesh->GetSkeleton())
 		{
-			OutInfo.SkeletonObjectPath = MeshSkeleton->GetPathName();
+			Info.SkeletonObjectPath = MeshSkeleton->GetPathName();
 		}
 
 		UE_LOG(LogDoodleDnaImporter, Display,
 			TEXT("Interchange imported '%s' -> %s (morph targets: %s)"),
-			*Request.FbxFilename, *OutInfo.MeshObjectPath, bImportMorphTargets ? TEXT("engine") : TEXT("plugin"));
-		return true;
+			*InRequest.FbxFilename, *Info.MeshObjectPath, bInImportMorphTargets ? TEXT("engine") : TEXT("plugin"));
+		return MakeValue(MoveTemp(Info));
 	}
 }

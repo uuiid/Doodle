@@ -880,15 +880,16 @@ TPair<USkeletalMesh*, UAnimSequence*> UDoodleAutoAnimationCommandlet::CreateChar
 		if (InSkeleton)
 			L_Request.SkeletonPath = InSkeleton->GetPathName();
 
-		FDNACharacterImportResult L_ImportResult;
-		if (!FDNACharacterImporter::Run(L_Request, L_ImportResult))
+		const auto L_ImportResult = FDNACharacterImporter::Run(L_Request);
+		if (L_ImportResult.HasError())
 		{
-			UE_LOG(LogTemp, Error, TEXT("导入的FBX文件 %s 导入失败: %s"), *InFbxPath, *L_ImportResult.Message);
+			UE_LOG(LogTemp, Error, TEXT("导入的FBX文件 %s 导入失败: %s"), *InFbxPath, *L_ImportResult.GetError().Detail);
 			return L_Results;
 		}
 
-		if (!L_ImportResult.MeshObjectPath.IsEmpty())
-			L_Results.Key = LoadObject<USkeletalMesh>(nullptr, *L_ImportResult.MeshObjectPath);
+		const FDNACharacterImportResult& L_Result = L_ImportResult.GetValue();
+		if (!L_Result.MeshObjectPath.IsEmpty())
+			L_Results.Key = LoadObject<USkeletalMesh>(nullptr, *L_Result.MeshObjectPath);
 
 		if (bImportAnimations)
 			UE_LOG(LogTemp, Warning,

@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "DNACharacterPhysicsAsset.h"
 
 #include "DNACharacterImporterModule.h"
@@ -15,36 +13,34 @@
 
 namespace DNACharacterImporterInternal
 {
-	bool CreatePhysicsAssetForMesh(USkeletalMesh& Mesh, const UDNACharacterImporterSettings& Settings, FString& OutPhysicsAssetPath, FString& OutError)
+	TValueOrError<FString, FPhysicsAssetError> CreatePhysicsAssetForMesh(
+		USkeletalMesh& InMesh, const UDNACharacterImporterSettings& InSettings)
 	{
-		OutPhysicsAssetPath.Reset();
-		OutError.Reset();
-
-		if (!Settings.bCreatePhysicsAsset)
+		if (!InSettings.bCreatePhysicsAsset)
 		{
-			return true;
+			return MakeValue(FString());
 		}
 
-		// A mesh that already points at a physics asset keeps it: re-running the import must not
-		// throw away a hand edited asset.
-		if (const UPhysicsAsset* ExistingPhysicsAsset = Mesh.GetPhysicsAsset())
+		if (const UPhysicsAsset* ExistingPhysicsAsset = InMesh.GetPhysicsAsset())
 		{
-			OutPhysicsAssetPath = ExistingPhysicsAsset->GetPathName();
+			const FString ExistingPath = ExistingPhysicsAsset->GetPathName();
 			UE_LOG(LogDoodleDnaImporter, Display,
-				TEXT("The skeletal mesh already has the physics asset '%s'; it was left untouched."), *OutPhysicsAssetPath);
-			return true;
+				TEXT("The skeletal mesh already has the physics asset '%s'; it was left untouched."), *ExistingPath);
+			return MakeValue(ExistingPath);
 		}
 
-		const FString MeshPackageName = Mesh.GetOutermost()->GetName();
+		const FString MeshPackageName = InMesh.GetOutermost()->GetName();
 		const FString MeshPackagePath = FPackageName::GetLongPackagePath(MeshPackageName);
-		const FString PhysicsAssetName = FString::Printf(TEXT("%s_PhysicsAsset"), *Mesh.GetName());
+		const FString PhysicsAssetName = FString::Printf(TEXT("%s_PhysicsAsset"), *InMesh.GetName());
 		const FString PhysicsAssetPackageName = FString::Printf(TEXT("%s/%s"), *MeshPackagePath, *PhysicsAssetName);
 
 		UPackage* PhysicsAssetPackage = CreatePackage(*PhysicsAssetPackageName);
 		if (PhysicsAssetPackage == nullptr)
 		{
-			OutError = FString::Printf(TEXT("The package '%s' could not be created."), *PhysicsAssetPackageName);
-			return false;
+			return MakeError(FPhysicsAssetError{
+				EPhysicsAssetError::PackageCreationFailed,
+				FString::Printf(TEXT("The package '%s' could not be created."), *PhysicsAssetPackageName)
+			});
 		}
 
 		UPhysicsAsset* PhysicsAsset = Cast<UPhysicsAsset>(FindObject<UObject>(PhysicsAssetPackage, *PhysicsAssetName));
@@ -52,51 +48,55 @@ namespace DNACharacterImporterInternal
 		{
 			if (FindObject<UObject>(PhysicsAssetPackage, *PhysicsAssetName) != nullptr)
 			{
-				OutError = FString::Printf(TEXT("'%s' already exists but is not a physics asset."), *PhysicsAssetPackageName);
-				return false;
+				return MakeError(FPhysicsAssetError{
+					EPhysicsAssetError::NameOccupied,
+					FString::Printf(TEXT("'%s' already exists but is not a physics asset."), *PhysicsAssetPackageName)
+				});
 			}
 
 			PhysicsAsset = NewObject<UPhysicsAsset>(PhysicsAssetPackage, *PhysicsAssetName, RF_Public | RF_Standalone | RF_Transactional);
 			if (PhysicsAsset == nullptr)
 			{
-				OutError = FString::Printf(TEXT("The physics asset '%s' could not be created."), *PhysicsAssetPackageName);
-				return false;
+				return MakeError(FPhysicsAssetError{
+					EPhysicsAssetError::AssetCreationFailed,
+					FString::Printf(TEXT("The physics asset '%s' could not be created."), *PhysicsAssetPackageName)
+				});
 			}
 		}
 
-		// Same body generation the engine uses for a regular FBX import, with the bone size floor from
-		// the plugin settings so the hundreds of tiny facial bones do not each get a body.
 		FPhysAssetCreateParams CreateParams;
-		CreateParams.MinBoneSize = Settings.PhysicsAssetMinBoneSize;
-		CreateParams.LodIndex = Settings.PhysicsAssetLodIndex;
+		CreateParams.MinBoneSize = InSettings.PhysicsAssetMinBoneSize;
+		CreateParams.LodIndex = InSettings.PhysicsAssetLodIndex;
 
 		FText ErrorMessage;
 		const bool bCreated = FPhysicsAssetUtils::CreateFromSkeletalMesh(
 			PhysicsAsset,
-			&Mesh,
+			&InMesh,
 			CreateParams,
 			ErrorMessage,
-			/*bSetToMesh=*/false,
-			/*bShowProgress=*/false);
+			false,
+			false);
 
 		if (!bCreated)
 		{
-			OutError = ErrorMessage.IsEmpty()
-				? FString::Printf(TEXT("The bodies of '%s' could not be generated."), *PhysicsAssetName)
-				: ErrorMessage.ToString();
 			PhysicsAsset->MarkAsGarbage();
-			return false;
+			return MakeError(FPhysicsAssetError{
+				EPhysicsAssetError::BodyGenerationFailed,
+				ErrorMessage.IsEmpty()
+					? FString::Printf(TEXT("The bodies of '%s' could not be generated."), *PhysicsAssetName)
+					: ErrorMessage.ToString()
+			});
 		}
 
-		Mesh.SetPhysicsAsset(PhysicsAsset);
+		InMesh.SetPhysicsAsset(PhysicsAsset);
 		PhysicsAsset->MarkPackageDirty();
-		Mesh.MarkPackageDirty();
+		InMesh.MarkPackageDirty();
 		FAssetRegistryModule::AssetCreated(PhysicsAsset);
 
-		OutPhysicsAssetPath = PhysicsAsset->GetPathName();
+		const FString PhysicsAssetPath = PhysicsAsset->GetPathName();
 		UE_LOG(LogDoodleDnaImporter, Display,
 			TEXT("Created the physics asset '%s' (%d body/bodies, bone size floor %.1f cm)."),
-			*OutPhysicsAssetPath, PhysicsAsset->SkeletalBodySetups.Num(), CreateParams.MinBoneSize);
-		return true;
+			*PhysicsAssetPath, PhysicsAsset->SkeletalBodySetups.Num(), CreateParams.MinBoneSize);
+		return MakeValue(PhysicsAssetPath);
 	}
 }

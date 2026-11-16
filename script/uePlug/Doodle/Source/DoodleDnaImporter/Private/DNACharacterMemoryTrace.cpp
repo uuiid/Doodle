@@ -1,4 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DNACharacterMemoryTrace.h"
 
@@ -10,19 +9,33 @@
 
 namespace
 {
-	void ReadMemory(uint64& OutUsedPhysical, uint64& OutPeakPhysical, uint64& OutUsedVirtual, uint64& OutPeakVirtual)
+	struct FMemoryValues
+	{
+		uint64 UsedPhysical = 0;
+		uint64 PeakPhysical = 0;
+		uint64 UsedVirtual = 0;
+		uint64 PeakVirtual = 0;
+	};
+
+	FMemoryValues ReadMemory()
 	{
 		const FPlatformMemoryStats Stats = FPlatformMemory::GetStats();
-		OutUsedPhysical = Stats.UsedPhysical;
-		OutPeakPhysical = Stats.PeakUsedPhysical;
-		OutUsedVirtual = Stats.UsedVirtual;
-		OutPeakVirtual = Stats.PeakUsedVirtual;
+		FMemoryValues Values;
+		Values.UsedPhysical = Stats.UsedPhysical;
+		Values.PeakPhysical = Stats.PeakUsedPhysical;
+		Values.UsedVirtual = Stats.UsedVirtual;
+		Values.PeakVirtual = Stats.PeakUsedVirtual;
+		return Values;
 	}
 }
 
 void FDNAMemoryTrace::Reset()
 {
-	ReadMemory(BaselineUsedPhysical, BaselinePeakPhysical, BaselineUsedVirtual, BaselinePeakVirtual);
+	const FMemoryValues Baseline = ReadMemory();
+	BaselineUsedPhysical = Baseline.UsedPhysical;
+	BaselinePeakPhysical = Baseline.PeakPhysical;
+	BaselineUsedVirtual = Baseline.UsedVirtual;
+	BaselinePeakVirtual = Baseline.PeakVirtual;
 	CurrentUsedPhysical = BaselineUsedPhysical;
 	CurrentPeakPhysical = BaselinePeakPhysical;
 	CurrentUsedVirtual = BaselineUsedVirtual;
@@ -42,7 +55,11 @@ void FDNAMemoryTrace::Checkpoint(const FString& Label)
 
 	FDNAMemorySample Sample;
 	Sample.Label = Label;
-	ReadMemory(Sample.UsedPhysical, Sample.PeakUsedPhysical, Sample.UsedVirtual, Sample.PeakUsedVirtual);
+	const FMemoryValues Current = ReadMemory();
+	Sample.UsedPhysical = Current.UsedPhysical;
+	Sample.PeakUsedPhysical = Current.PeakPhysical;
+	Sample.UsedVirtual = Current.UsedVirtual;
+	Sample.PeakUsedVirtual = Current.PeakVirtual;
 
 	const double Now = FPlatformTime::Seconds();
 	Sample.Seconds = Now - StartTime;

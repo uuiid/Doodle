@@ -1,4 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DNAFbxShapeSource.h"
 
@@ -8,7 +7,6 @@
 #include "Misc/Paths.h"
 #include "Misc/ScopeExit.h"
 
-// Vendored ufbx, same version the engine's Interchange FBX parser uses.
 #include "ufbx.h"
 
 namespace
@@ -24,7 +22,6 @@ namespace
 		{
 			return FString();
 		}
-		// ufbx strings are not guaranteed to be null terminated.
 		TArray<ANSICHAR> Buffer;
 		Buffer.Append(Str.data, static_cast<int32>(Str.length));
 		Buffer.Add('\0');
@@ -45,7 +42,6 @@ struct FDNAFbxShapeSource::FImpl
 	FString Filename;
 	TArray<FDNAFbxMeshInfo> Meshes;
 	TArray<FDNAFbxShapeInfo> Shapes;
-	/** Parallel to Shapes: the ufbx shape each entry evaluates. */
 	TArray<const ufbx_blend_shape*> ShapePointers;
 };
 
@@ -59,18 +55,18 @@ FDNAFbxShapeSource::~FDNAFbxShapeSource()
 	Close();
 }
 
-bool FDNAFbxShapeSource::Open(const FString& InFilename, FString& OutError)
+TValueOrError<void, FDNAFbxShapeSourceError> FDNAFbxShapeSource::Open(const FString& InFilename)
 {
 	Close();
 
 	if (!FPaths::FileExists(InFilename))
 	{
-		OutError = FString::Printf(TEXT("FBX file not found: %s"), *InFilename);
-		return false;
+		return MakeError(FDNAFbxShapeSourceError{
+			EDNAFbxShapeSourceError::FileNotFound,
+			FString::Printf(TEXT("FBX file not found: %s"), *InFilename)
+		});
 	}
 
-	// Exactly the options the engine's Interchange FBX parser uses, so positions are in the
-	// same space the engine would produce (see UfbxParser.cpp).
 	ufbx_load_opts LoadOptions = {};
 	LoadOptions.evaluate_skinning = false;
 	LoadOptions.load_external_files = true;
@@ -86,15 +82,14 @@ bool FDNAFbxShapeSource::Open(const FString& InFilename, FString& OutError)
 	Impl->Scene = ufbx_load_file(FilenameUtf8.Get(), &LoadOptions, &Error);
 	if (Impl->Scene == nullptr)
 	{
-		OutError = FString::Printf(TEXT("ufbx could not parse '%s': %s"),
+		const FString Detail = FString::Printf(TEXT("ufbx could not parse '%s': %s"),
 			*InFilename, *ToFString(Error.description));
-		UE_LOG(LogDoodleDnaImporter, Error, TEXT("%s"), *OutError);
-		return false;
+		UE_LOG(LogDoodleDnaImporter, Error, TEXT("%s"), *Detail);
+		return MakeError(FDNAFbxShapeSourceError{EDNAFbxShapeSourceError::ParseFailed, Detail});
 	}
 
 	Impl->Filename = InFilename;
 
-	// Meshes (geometries).
 	const ufbx_scene* Scene = Impl->Scene;
 	Impl->Meshes.SetNum(static_cast<int32>(Scene->meshes.count));
 	for (int32 MeshIndex = 0; MeshIndex < Impl->Meshes.Num(); ++MeshIndex)
@@ -106,7 +101,6 @@ bool FDNAFbxShapeSource::Open(const FString& InFilename, FString& OutError)
 		Info.TriangleCount = static_cast<int32>(Mesh->num_triangles);
 	}
 
-	// Node names that instance each mesh: the engine names source geometry parts after them.
 	for (size_t NodeIndex = 0; NodeIndex < Scene->nodes.count; ++NodeIndex)
 	{
 		const ufbx_node* Node = Scene->nodes.data[NodeIndex];
@@ -121,7 +115,6 @@ bool FDNAFbxShapeSource::Open(const FString& InFilename, FString& OutError)
 		}
 	}
 
-	// Blend shapes, grouped per mesh in a deterministic order.
 	for (int32 MeshIndex = 0; MeshIndex < Impl->Meshes.Num(); ++MeshIndex)
 	{
 		const ufbx_mesh* Mesh = Scene->meshes.data[MeshIndex];
@@ -176,7 +169,7 @@ bool FDNAFbxShapeSource::Open(const FString& InFilename, FString& OutError)
 	UE_LOG(LogDoodleDnaImporter, Display,
 		TEXT("Parsed '%s': %d mesh(es), %d blend shape channel(s), %lld control point(s) in total."),
 		*InFilename, Impl->Meshes.Num(), Impl->Shapes.Num(), GetTotalVertexCount());
-	return true;
+	return MakeValue();
 }
 
 void FDNAFbxShapeSource::Close()
@@ -222,38 +215,50 @@ int64 FDNAFbxShapeSource::GetTotalVertexCount() const
 	return Total;
 }
 
-bool FDNAFbxShapeSource::GetMeshBasePositions(int32 MeshIndex, TArray<FVector3f>& OutPositions) const
+TValueOrError<TArray<FVector3f>, FDNAFbxShapeSourceError> FDNAFbxShapeSource::GetMeshBasePositions(int32 InMeshIndex) const
 {
-	OutPositions.Reset();
-	if (Impl->Scene == nullptr || !Impl->Meshes.IsValidIndex(MeshIndex))
+	if (Impl->Scene == nullptr)
 	{
-		return false;
+		return MakeError(FDNAFbxShapeSourceError{EDNAFbxShapeSourceError::NotOpen, TEXT("the FBX file is not open")});
+	}
+	if (!Impl->Meshes.IsValidIndex(InMeshIndex))
+	{
+		return MakeError(FDNAFbxShapeSourceError{
+			EDNAFbxShapeSourceError::InvalidMeshIndex,
+			FString::Printf(TEXT("mesh index %d is out of range (%d mesh(es))"), InMeshIndex, Impl->Meshes.Num())
+		});
 	}
 
-	const ufbx_mesh* Mesh = Impl->Scene->meshes.data[MeshIndex];
+	const ufbx_mesh* Mesh = Impl->Scene->meshes.data[InMeshIndex];
 	const int32 VertexCount = static_cast<int32>(Mesh->num_vertices);
-	OutPositions.SetNumUninitialized(VertexCount);
+	TArray<FVector3f> Positions;
+	Positions.SetNumUninitialized(VertexCount);
 	for (int32 VertexIndex = 0; VertexIndex < VertexCount; ++VertexIndex)
 	{
-		OutPositions[VertexIndex] = ToVector3f(Mesh->vertices.data[VertexIndex]);
+		Positions[VertexIndex] = ToVector3f(Mesh->vertices.data[VertexIndex]);
 	}
-	return true;
+	return MakeValue(MoveTemp(Positions));
 }
 
-bool FDNAFbxShapeSource::GetShapePositions(int32 ShapeIndex, TArray<FVector3f>& OutPositions) const
+TValueOrError<TArray<FVector3f>, FDNAFbxShapeSourceError> FDNAFbxShapeSource::GetShapePositions(int32 InShapeIndex) const
 {
-	OutPositions.Reset();
-	if (Impl->Scene == nullptr || !Impl->Shapes.IsValidIndex(ShapeIndex))
+	if (Impl->Scene == nullptr)
 	{
-		return false;
+		return MakeError(FDNAFbxShapeSourceError{EDNAFbxShapeSourceError::NotOpen, TEXT("the FBX file is not open")});
+	}
+	if (!Impl->Shapes.IsValidIndex(InShapeIndex))
+	{
+		return MakeError(FDNAFbxShapeSourceError{
+			EDNAFbxShapeSourceError::InvalidShapeIndex,
+			FString::Printf(TEXT("shape index %d is out of range (%d shape(s))"), InShapeIndex, Impl->Shapes.Num())
+		});
 	}
 
-	const FDNAFbxShapeInfo& ShapeInfo = Impl->Shapes[ShapeIndex];
-	const ufbx_blend_shape* Shape = Impl->ShapePointers[ShapeIndex];
+	const FDNAFbxShapeInfo& ShapeInfo = Impl->Shapes[InShapeIndex];
+	const ufbx_blend_shape* Shape = Impl->ShapePointers[InShapeIndex];
 	const ufbx_mesh* Mesh = Impl->Scene->meshes.data[ShapeInfo.MeshIndex];
 	const int32 VertexCount = static_cast<int32>(Mesh->num_vertices);
 
-	// ufbx applies the offsets in place, so evaluate into a scratch buffer and convert.
 	TArray<ufbx_vec3> Scratch;
 	Scratch.SetNumUninitialized(VertexCount);
 	for (int32 VertexIndex = 0; VertexIndex < VertexCount; ++VertexIndex)
@@ -264,22 +269,23 @@ bool FDNAFbxShapeSource::GetShapePositions(int32 ShapeIndex, TArray<FVector3f>& 
 	ufbx_add_blend_shape_vertex_offsets(Shape, Scratch.GetData(), static_cast<size_t>(VertexCount),
 		static_cast<ufbx_real>(ShapeInfo.TargetWeight == 0.0f ? 1.0f : ShapeInfo.TargetWeight));
 
-	OutPositions.SetNumUninitialized(VertexCount);
+	TArray<FVector3f> Positions;
+	Positions.SetNumUninitialized(VertexCount);
 	for (int32 VertexIndex = 0; VertexIndex < VertexCount; ++VertexIndex)
 	{
-		OutPositions[VertexIndex] = ToVector3f(Scratch[VertexIndex]);
+		Positions[VertexIndex] = ToVector3f(Scratch[VertexIndex]);
 	}
-	return true;
+	return MakeValue(MoveTemp(Positions));
 }
 
-int32 FDNAFbxShapeSource::CountNonZeroOffsets(int32 ShapeIndex) const
+int32 FDNAFbxShapeSource::CountNonZeroOffsets(int32 InShapeIndex) const
 {
-	if (Impl->Scene == nullptr || !Impl->Shapes.IsValidIndex(ShapeIndex))
+	if (Impl->Scene == nullptr || !Impl->Shapes.IsValidIndex(InShapeIndex))
 	{
 		return 0;
 	}
 
-	const ufbx_blend_shape* Shape = Impl->ShapePointers[ShapeIndex];
+	const ufbx_blend_shape* Shape = Impl->ShapePointers[InShapeIndex];
 	const int32 OffsetCount = static_cast<int32>(Shape->num_offsets);
 	int32 NonZeroCount = 0;
 	for (int32 OffsetIndex = 0; OffsetIndex < OffsetCount; ++OffsetIndex)
@@ -292,28 +298,33 @@ int32 FDNAFbxShapeSource::CountNonZeroOffsets(int32 ShapeIndex) const
 	return NonZeroCount;
 }
 
-bool FDNAFbxShapeSource::GetShapeVertexOffsets(int32 ShapeIndex, TArray<FVector3f>& OutOffsets, TArray<int32>& OutVertexIndices) const
+TValueOrError<FDNAFbxShapeVertexOffsets, FDNAFbxShapeSourceError> FDNAFbxShapeSource::GetShapeVertexOffsets(int32 InShapeIndex) const
 {
-	OutOffsets.Reset();
-	OutVertexIndices.Reset();
-	if (Impl->Scene == nullptr || !Impl->Shapes.IsValidIndex(ShapeIndex))
+	if (Impl->Scene == nullptr)
 	{
-		return false;
+		return MakeError(FDNAFbxShapeSourceError{EDNAFbxShapeSourceError::NotOpen, TEXT("the FBX file is not open")});
+	}
+	if (!Impl->Shapes.IsValidIndex(InShapeIndex))
+	{
+		return MakeError(FDNAFbxShapeSourceError{
+			EDNAFbxShapeSourceError::InvalidShapeIndex,
+			FString::Printf(TEXT("shape index %d is out of range (%d shape(s))"), InShapeIndex, Impl->Shapes.Num())
+		});
 	}
 
-	const ufbx_blend_shape* Shape = Impl->ShapePointers[ShapeIndex];
+	const ufbx_blend_shape* Shape = Impl->ShapePointers[InShapeIndex];
 	const int32 OffsetCount = static_cast<int32>(Shape->num_offsets);
-	// A shape either stores a delta for every control point, or a sparse list of indices.
 	const bool bSparse = Shape->offset_vertices.count > 0;
 
-	OutOffsets.SetNumUninitialized(OffsetCount);
-	OutVertexIndices.SetNumUninitialized(OffsetCount);
+	FDNAFbxShapeVertexOffsets Offsets;
+	Offsets.Offsets.SetNumUninitialized(OffsetCount);
+	Offsets.VertexIndices.SetNumUninitialized(OffsetCount);
 	for (int32 OffsetIndex = 0; OffsetIndex < OffsetCount; ++OffsetIndex)
 	{
-		OutOffsets[OffsetIndex] = ToVector3f(Shape->position_offsets.data[OffsetIndex]);
-		OutVertexIndices[OffsetIndex] = bSparse
+		Offsets.Offsets[OffsetIndex] = ToVector3f(Shape->position_offsets.data[OffsetIndex]);
+		Offsets.VertexIndices[OffsetIndex] = bSparse
 			? static_cast<int32>(Shape->offset_vertices.data[OffsetIndex])
 			: OffsetIndex;
 	}
-	return true;
+	return MakeValue(MoveTemp(Offsets));
 }
