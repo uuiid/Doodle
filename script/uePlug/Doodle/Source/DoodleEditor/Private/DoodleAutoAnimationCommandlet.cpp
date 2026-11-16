@@ -1022,9 +1022,9 @@ UGroomCache* UDoodleAutoAnimationCommandlet::CreateGroomImportTask(const FString
 	L_Data->Factory->AssetImportTask->bAutomated = true;
 	L_Opt->ImportSettings.FrameStart = L_Start.Value;
 	L_Opt->ImportSettings.FrameEnd = L_End.Value;
-	L_Opt->ImportSettings.ConversionSettings.Rotation.X = -90.0;
-	L_Opt->ImportSettings.ConversionSettings.Rotation.Z = 180.0;
-	L_Opt->ImportSettings.ConversionSettings.Scale.X = -1.0;
+	// L_Opt->ImportSettings.ConversionSettings.Rotation.X = -90.0;
+	// L_Opt->ImportSettings.ConversionSettings.Rotation.Z = 180.0;
+	// L_Opt->ImportSettings.ConversionSettings.Scale.X = -1.0;
 	L_Opt->ImportSettings.bImportGroomCache = true;
 	L_Opt->ImportSettings.ImportType = EGroomCacheImportType::Guides;
 	L_Opt->ImportSettings.GroomAsset = InGroomAssetPath;
