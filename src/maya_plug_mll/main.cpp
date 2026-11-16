@@ -9,6 +9,7 @@
 #include <maya_plug/maya_comm/doodle_batch_run.h>
 #include <maya_plug/maya_comm/doodle_to_ue_fbx.h>
 #include <maya_plug/maya_comm/export_abc_file.h>
+#include <maya_plug/maya_comm/face_capture_import.h>
 #include <maya_plug/maya_comm/file_info_edit.h>
 #include <maya_plug/maya_comm/find_duplicate_poly_comm.h>
 #include <maya_plug/maya_comm/open_doodle_main.h>
@@ -52,6 +53,9 @@ MStatus initializePlugin(MObject obj) {
   status = maya_reg->register_node<doodle::maya_plug::websocket_record_node>(k_plugin);
   CHECK_MSTATUS(status);
   status = maya_reg->register_command<::doodle::maya_plug::dna_calib_import>(k_plugin);
+  CHECK_MSTATUS(status);
+
+  status = maya_reg->register_command<::doodle::maya_plug::face_capture_import>(k_plugin);
   CHECK_MSTATUS(status);
 
   /// 添加录制 websocket 数据命令

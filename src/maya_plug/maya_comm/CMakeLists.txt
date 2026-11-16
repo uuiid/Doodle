@@ -15,6 +15,7 @@ target_sources(doodle_maya_lib
         export_abc_file.h
         doodle_batch_run.h
         dna_calib_import.h
+        face_capture_import.h
         websocket_record.h
 
         PRIVATE
@@ -33,5 +34,6 @@ target_sources(doodle_maya_lib
         export_abc_file.cpp
         doodle_batch_run.cpp
         dna_calib_import.cpp
+        face_capture_import.cpp
         websocket_record.cpp
 )
