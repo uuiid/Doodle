@@ -40,6 +40,7 @@
 #include "GeometryScript/MeshAssetFunctions.h"
 #include "GeometryScript/MeshSubdivideFunctions.h"
 #include "GeometryScript/GeometryScriptTypes.h"
+#include "DNACharacterImporter.h"
 namespace
 {
 	void print_test(USkeletalMesh* In_Obj)
@@ -301,6 +302,17 @@ void DoodleCopyMat::Construct(const FArguments& Arg)
 											]
 											.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("曲面细分")); })
 									]
+									+ SUniformWrapPanel::Slot()
+										[
+											SNew(SButton).OnClicked_Lambda([this]() -> FReply
+												{
+													return ImportDnaCharacter();
+												})
+												[
+													SNew(STextBlock).Text(FText::FromString(TEXT("导入DNA角色")))
+												]
+												.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("用低内存管道导入DNA角色FBX")); })
+										]
 									
 
 					]
@@ -609,6 +621,38 @@ void DoodleCopyMat::StaticMeshTessellation(UStaticMesh* StaticMeshAsset)
 	}
 	DynamicMeshPool->ReturnMesh(DynamicMesh2);
 
+}
+
+FReply DoodleCopyMat::ImportDnaCharacter()
+{
+	const TArray<FString> L_Files = OpenFileDialog(
+		TEXT("选择要导入的DNA角色FBX"), FPaths::ProjectDir(), TEXT("FBX files (*.fbx)|*.fbx"));
+	if (L_Files.IsEmpty())
+		return FReply::Handled();
+
+	FString L_DestinationPath = TEXT("/Game/DNA");
+	TArray<FString> L_SelectedFolders;
+	FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser")
+		.Get().GetSelectedFolders(L_SelectedFolders);
+	if (!L_SelectedFolders.IsEmpty())
+		L_DestinationPath = L_SelectedFolders[0];
+
+	for (const FString& L_Fbx : L_Files)
+	{
+		FDNACharacterImportRequest L_Request;
+		L_Request.FbxFilename = L_Fbx;
+		L_Request.DestinationPath = L_DestinationPath;
+		L_Request.Mode = EDNACharacterImportMode::LowMemory;
+
+		const auto L_ImportResult = FDNACharacterImporter::Run(L_Request);
+		if (L_ImportResult.HasError())
+		{
+			UE_LOG(LogTemp, Error, TEXT("导入DNA角色FBX %s 失败: %s"), *L_Fbx, *L_ImportResult.GetError().Detail);
+			continue;
+		}
+		UE_LOG(LogTemp, Log, TEXT("导入DNA角色FBX %s 完成: %s"), *L_Fbx, *L_ImportResult.GetValue().Message);
+	}
+	return FReply::Handled();
 }
 
 void DoodleCopyMat::Tessellation()

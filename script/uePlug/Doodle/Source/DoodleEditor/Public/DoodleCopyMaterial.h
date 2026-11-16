@@ -35,6 +35,7 @@ private:
 	void SkeletalMeshTessellation(USkeletalMesh* SkeletalMeshAsset);
 	void StaticMeshTessellation(UStaticMesh* StaticMeshAsset);
 	void Tessellation();
+	FReply ImportDnaCharacter();
 
 	TArray<FString> OpenFileDialog(const FString& DialogTitle, const FString& DefaultPath, const FString& FileTypes);
 	FString OpenDirDialog(const FString& DialogTitle, const FString& DefaultPath);
