@@ -57,6 +57,7 @@ namespace DNACharacterImporterInternal
 				if (MaterialPipeline != nullptr)
 				{
 					bImportMaterials = MaterialPipeline->bImportMaterials;
+					SearchLocation = MaterialPipeline->SearchLocation;
 					TexturePipeline = MaterialPipeline->TexturePipeline;
 					if (TexturePipeline != nullptr)
 					{
@@ -95,6 +96,7 @@ namespace DNACharacterImporterInternal
 				if (MaterialPipeline != nullptr)
 				{
 					MaterialPipeline->bImportMaterials = bImportMaterials;
+					MaterialPipeline->SearchLocation = SearchLocation;
 				}
 				if (TexturePipeline != nullptr)
 				{
@@ -134,6 +136,7 @@ namespace DNACharacterImporterInternal
 
 			bool bImportAnimations = true;
 			bool bImportMaterials = true;
+			EInterchangeMaterialSearchLocation SearchLocation = EInterchangeMaterialSearchLocation::Local;
 			bool bImportTextures = true;
 
 			bool bPackageWasDirty = false;
@@ -200,6 +203,7 @@ namespace DNACharacterImporterInternal
 		if (UInterchangeGenericMaterialPipeline* MaterialPipeline = PipelineSettings.MaterialPipeline)
 		{
 			MaterialPipeline->bImportMaterials = InSettings.bImportMaterials;
+			MaterialPipeline->SearchLocation = InSettings.MaterialSearchLocation;
 			if (UInterchangeGenericTexturePipeline* TexturePipeline = MaterialPipeline->TexturePipeline)
 			{
 				TexturePipeline->bImportTextures = InSettings.bImportTextures;

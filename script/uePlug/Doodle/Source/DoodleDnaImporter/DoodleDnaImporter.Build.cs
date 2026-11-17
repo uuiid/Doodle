@@ -17,6 +17,7 @@ public class DoodleDnaImporter : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"DeveloperSettings",
+			"InterchangePipelines",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]
@@ -27,7 +28,6 @@ public class DoodleDnaImporter : ModuleRules
 			"Projects",
 			"InterchangeCore",
 			"InterchangeEngine",
-			"InterchangePipelines",
 			"InterchangeImport",
 			"InterchangeNodes",
 			"MeshDescription",

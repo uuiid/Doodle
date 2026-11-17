@@ -3,6 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
+#include "InterchangeGenericMaterialPipeline.h"
 
 #include "DNACharacterImporterSettings.generated.h"
 
@@ -23,6 +24,9 @@ public:
 	bool bImportMaterials = false;
 
 	UPROPERTY(EditAnywhere, config, Category = "Import")
+	EInterchangeMaterialSearchLocation MaterialSearchLocation = EInterchangeMaterialSearchLocation::UnderRoot;
+
+	UPROPERTY(EditAnywhere, config, Category = "Import")
 	bool bImportTextures = false;
 
 	UPROPERTY(EditAnywhere, config, Category = "Import")
@@ -35,7 +39,7 @@ public:
 	bool bCreatePhysicsAsset = true;
 
 	UPROPERTY(EditAnywhere, config, Category = "Import")
-	bool bKeepSectionsSeparate = true;
+	bool bKeepSectionsSeparate = false;
 
 	UPROPERTY(EditAnywhere, config, Category = "Import")
 	bool bUseFullPrecisionUVs = true;
