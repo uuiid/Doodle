@@ -464,8 +464,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, get) {
   person_.check_in_project(project_id_);
   auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(entity_id_) == 0) throw_exception(doodle_error{"实体不存在或已被删除"});
+
   DOODLE_CHICK_HTTP(
-      l_sql.is_entity_outsourced(entity_id_, person_.person_.studio_id_), unauthorized, "实体不属于当前工作室"
+      person_.is_outsourcer() && l_sql.is_entity_outsourced(entity_id_, person_.person_.studio_id_), unauthorized,
+      "实体不属于当前工作室"
   );
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_casting_t::get(entity_id_));
 }
@@ -477,7 +479,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, put) {
   if (l_ent->entity_type_id_ == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_episode}).uuid_id_)
     throw_exception(doodle_error{"不能将 Episode 作为实体类型进行操作"});
   DOODLE_CHICK_HTTP(
-      l_sql.is_entity_outsourced(entity_id_, person_.person_.studio_id_), unauthorized, "实体不属于当前工作室"
+      person_.is_outsourcer() && l_sql.is_entity_outsourced(entity_id_, person_.person_.studio_id_), unauthorized,
+      "实体不属于当前工作室"
   );
 
   SPDLOG_LOGGER_WARN(
@@ -606,7 +609,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_sequences_casting, get) {
 
   if (l_sql.uuid_to_id<entity>(sequence_id_) == 0) throw_exception(doodle_error{"序列不存在或已被删除"});
   DOODLE_CHICK_HTTP(
-      l_sql.is_entity_outsourced(sequence_id_, person_.person_.studio_id_), unauthorized, "实体不属于当前工作室"
+      person_.is_outsourcer() && l_sql.is_entity_outsourced(sequence_id_, person_.person_.studio_id_), unauthorized,
+      "实体不属于当前工作室"
   );
   co_return std::make_unique<http_body_json_t>(
       nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, sequence_id_)
@@ -615,8 +619,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_sequences_casting, get) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_asset_types_casting, get) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  if (get_sqlite_database().uuid_to_id<asset_type>(asset_type_id_) == 0)
-    throw_exception(doodle_error{"序列不存在或已被删除"});
+  auto l_sql = get_sqlite_database();
+  if (l_sql.uuid_to_id<asset_type>(asset_type_id_) == 0) throw_exception(doodle_error{"序列不存在或已被删除"});
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_asset_type_casting(project_id_, asset_type_id_));
 }
 
