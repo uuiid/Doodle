@@ -869,6 +869,9 @@ TPair<USkeletalMesh*, UAnimSequence*> UDoodleAutoAnimationCommandlet::CreateChar
 {
 	TPair<USkeletalMesh*, UAnimSequence*> L_Results{};
 
+#define DOODLE_USE_DNA_CHARACTER_IMPORT 0
+
+#if DOODLE_USE_DNA_CHARACTER_IMPORT
 	if (!bImportOnlyAnimations)
 	{
 		FDNACharacterImportRequest L_Request;
@@ -896,6 +899,7 @@ TPair<USkeletalMesh*, UAnimSequence*> UDoodleAutoAnimationCommandlet::CreateChar
 			       TEXT("DNA 导入不导入动画, FBX %s 的动画已跳过"), *InFbxPath);
 	}
 	else
+#endif
 	{
 		UInterchangeManager& L_InterchangeManager = UInterchangeManager::GetInterchangeManager();
 
