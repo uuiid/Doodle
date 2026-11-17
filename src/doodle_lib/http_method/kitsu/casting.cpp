@@ -479,7 +479,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, put) {
     throw_exception(doodle_error{"不能将 Episode 作为实体类型进行操作"});
   if (person_.is_outsourcer())
     DOODLE_CHICK_HTTP(
-        l_sql.is_entity_outsourced(entity_id_, person_.person_.studio_id_), unauthorized, "实体不属于当前工作室"
+        l_sql.is_entity_outsourced(entity_id_, person_.person_.studio_id_, l_ent->parent_id_), unauthorized,
+        "实体不属于当前工作室"
     );
 
   SPDLOG_LOGGER_WARN(
