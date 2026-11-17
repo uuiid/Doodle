@@ -466,7 +466,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, get) {
   if (l_sql.uuid_to_id<entity>(entity_id_) == 0) throw_exception(doodle_error{"实体不存在或已被删除"});
   if (person_.is_outsourcer())
     DOODLE_CHICK_HTTP(
-        l_sql.is_entity_outsourced(entity_id_, person_.person_.studio_id_), unauthorized, "实体不属于当前工作室"
+        l_sql.is_entity_outsourced(entity_id_, person_.person_.studio_id_, l_sql.get_by_uuid<entity>(entity_id_).parent_id_), unauthorized, "实体不属于当前工作室"
     );
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_casting_t::get(entity_id_));
 }
