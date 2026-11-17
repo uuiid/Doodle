@@ -2,6 +2,7 @@
 // Created by TD on 25-8-21.
 //
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/exception/exception.h"
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/person.h>
@@ -463,7 +464,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, get) {
   person_.check_in_project(project_id_);
   auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(entity_id_) == 0) throw_exception(doodle_error{"实体不存在或已被删除"});
-  l_sql.is_entity_outsourced(entity_id_, person_.person_.studio_id_);
+  DOODLE_CHICK_HTTP(
+      l_sql.is_entity_outsourced(entity_id_, person_.person_.studio_id_), unauthorized, "实体不属于当前工作室"
+  );
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_casting_t::get(entity_id_));
 }
 
@@ -473,7 +476,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, put) {
   auto l_ent = std::make_shared<entity>(l_sql.get_by_uuid<entity>(entity_id_));
   if (l_ent->entity_type_id_ == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_episode}).uuid_id_)
     throw_exception(doodle_error{"不能将 Episode 作为实体类型进行操作"});
-  l_sql.is_entity_outsourced(entity_id_, person_.person_.studio_id_);
+  DOODLE_CHICK_HTTP(
+      l_sql.is_entity_outsourced(entity_id_, person_.person_.studio_id_), unauthorized, "实体不属于当前工作室"
+  );
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始更新 Casting 关联 project_id {} entity_id {}",
@@ -597,9 +602,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, put) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_sequences_casting, get) {
   person_.check_in_project(project_id_);
-  person_.check_not_outsourcer();
-  if (get_sqlite_database().uuid_to_id<entity>(sequence_id_) == 0)
-    throw_exception(doodle_error{"序列不存在或已被删除"});
+  auto l_sql = get_sqlite_database();
+
+  if (l_sql.uuid_to_id<entity>(sequence_id_) == 0) throw_exception(doodle_error{"序列不存在或已被删除"});
+  DOODLE_CHICK_HTTP(
+      l_sql.is_entity_outsourced(sequence_id_, person_.person_.studio_id_), unauthorized, "实体不属于当前工作室"
+  );
   co_return std::make_unique<http_body_json_t>(
       nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, sequence_id_)
   );
@@ -948,6 +956,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
       "harvested_assembly_count {} installed_link_count {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, id_, l_install_entity_links->size(), 1, 1
   );
-  co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, id_));
+  co_return std::make_unique<http_body_json_t>(
+      nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, id_)
+  );
 }
 }  // namespace doodle::http
