@@ -461,8 +461,9 @@ struct get_casting_t {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, get) {
   person_.check_in_project(project_id_);
-  person_.check_not_outsourcer();
-  if (get_sqlite_database().uuid_to_id<entity>(entity_id_) == 0) throw_exception(doodle_error{"实体不存在或已被删除"});
+ auto l_sql = get_sqlite_database();
+  if (l_sql.uuid_to_id<entity>(entity_id_) == 0) throw_exception(doodle_error{"实体不存在或已被删除"});
+  l_sql.is_entity_outsourced(entity_id_, person_.person_.studio_id_);
   co_return std::make_unique<http_body_json_t>(nlohmann::json{} = get_casting_t::get(entity_id_));
 }
 
