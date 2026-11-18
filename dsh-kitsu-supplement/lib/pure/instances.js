@@ -3,7 +3,7 @@
 // 本文件只放纯逻辑：不依赖任何 import，也不访问 ctx / await 宿主资源。
 // test/pure.mjs 读取 lib/pure/dispatch.js 里登记的文件逐个求值，契约与原先的纯逻辑区段一致。
 
-import { DEFAULT_MODE, MODES, baseUrlOf, errorText, isPlainObject, normalizePath, parsePort, trimOrEmpty } from "./common.js";
+import { DEFAULT_MODE, MODES, baseUrlOf, errorText, isPlainObject, normalizePath, parsePort, sanitizeForJson, trimOrEmpty } from "./common.js";
 
 export const INSTANCE_STATE_VERSION = 1;
 
@@ -70,13 +70,13 @@ export function slotSummary(records) {
       slots[mode] = null;
     } else {
       const record = records.get(ids[0]);
-      slots[mode] = {
+      slots[mode] = sanitizeForJson({
         serverId: ids[0],
         port: record?.port,
         baseUrl: typeof record?.port === "number" ? baseUrlOf(record.port) : undefined,
         pid: record?.pid,
         uptimeMs: typeof record?.startedAt === "number" ? Date.now() - record.startedAt : 0,
-      };
+      });
     }
   }
   return { slots, usage, available, duplicates };

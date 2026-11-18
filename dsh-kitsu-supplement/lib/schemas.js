@@ -155,8 +155,8 @@ export const SLOTS_SCHEMA = {
   type: "object",
   additionalProperties: false,
   properties: {
-    local: SLOT_SCHEMA,
-    production: SLOT_SCHEMA,
+    local: { oneOf: [SLOT_SCHEMA, { type: "null" }] },
+    production: { oneOf: [SLOT_SCHEMA, { type: "null" }] },
   },
 };
 
