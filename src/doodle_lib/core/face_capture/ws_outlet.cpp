@@ -96,7 +96,6 @@ std::shared_ptr<capture_session> ws_outlet::session() const { return session_; }
 
 boost::asio::awaitable<void> ws_outlet::run() {
   session_->attach(shared_from_this());
-  co_await take_over_previous();
   if (holder_) holder_->reset(session_);
 
   try {
