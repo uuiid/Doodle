@@ -55,7 +55,7 @@ get:
     | `type` | 何时发 | text 字段 | 紧随 binary |
     | --- | --- | --- | --- |
     | `hello` | 每次连接一次，在摄像头成功打开后（`capture_session::open()` 末尾） | `state`、`width`、`height`、`fps` | 无 |
-    | `avc_fragment` | 每个分片一次（每 2 帧一片，约 80 ms）；连接后的第一帧事件就是它，携带 init 段 | `seq`、`keyframe`、`size` | 有：分片字节 |
+    | `avc_fragment` | 每帧一次（约 40 ms）；连接后的第一帧事件就是它，携带 init 段 | `seq`、`keyframe`、`size` | 有：分片字节 |
     | `avc_init` | 每次 `POST .../recordings` 开始录制时重发一次 | `bytes`、`seq_begin`、`seq_end` | 有：fMP4 init 段 |
 
     字段细节：
@@ -63,8 +63,8 @@ get:
     - `hello`：`state` 恒为 `previewing`，`fps` 恒为 25；`width` / `height` 是偶数化后的
       实际采集尺寸。`hello` 是整条连接唯一的状态快照，之后不再推任何状态事件。
     - `avc_fragment`：`seq` 取分片起始帧号（`fragment.seq_begin_`）；`size` 是紧随 binary 帧的
-      字节数；`keyframe` 取分片标记，**可能为 `false`**——分片按帧数切分（见「编码与分片参数」），
-      只有恰好从关键帧开始的分片为 `true`，其余为 `false`。**不能**把 `keyframe` 当作
+      字节数；`keyframe` 取分片标记，**可能为 `false`**——每帧一片（见「编码与分片参数」），
+      只有帧本身就是关键帧的那一片为 `true`（每 25 帧一次），其余为 `false`。**不能**把 `keyframe` 当作
       「能否 append」的依据：分片一律是合法的 fMP4 片段，`false` 的分片照常 append，
       WebCodecs 侧按 `type: "delta"` 收即可。
     - `avc_init`：`seq_begin` / `seq_end` 恒为 `0`；`bytes` 是 init 段字节数；binary 即
@@ -82,20 +82,26 @@ get:
 
     | 项 | 取值 |
     | --- | --- |
-    | 编码器 / 容器 | `libx264` → `mp4` muxer，`movflags=frag_keyframe+empty_moov+default_base_moof`，`flush_packets=1`、`mov_write_trailer=0` |
+    | 编码器 / 容器 | `libx264` → `mp4` muxer，`movflags=frag_every_frame+empty_moov+default_base_moof`，`flush_packets=1`、`mov_write_trailer=0` |
     | preset / tune / crf | `veryfast` / `zerolatency` / `23` |
     | profile / level | `main`；`level` 不显式设置，由 libx264 按分辨率自选 |
     | GOP | `keyint=25`、`min-keyint=25`、`scenecut=0`（1 秒一个关键帧） |
-    | 分片粒度 | 每 `k_stream_fragment_frames`（2）帧一个分片（80 ms），**与 GOP 解耦**；关键帧只决定 `keyframe` 标记，不再决定分片边界 |
+    | 分片粒度 | **每帧一个分片（40 ms）**，由 muxer 的 `frag_every_frame` 控制；**与 GOP 解耦**，关键帧只决定 `keyframe` 标记，不决定分片边界 |
     | B 帧 | `max_b_frames=0`（`pts == dts`，零延迟） |
     | 像素格式 | 输入 BGR24 → `yuv420p` |
     | 时基 / 帧率 | `time_base=1/25`、`frame_rate=25/1`；`pts = seq` |
 
     分片切分规则（`h264_fragmenter`）：libx264 每出一个包就立刻写进 fMP4 muxer
-    （`flush_packets=1`），再由 fragmenter 决定何时把累积字节作为一个分片发出——
-    遇到关键帧先关掉当前分片，非关键帧分片满 2 帧就关。因此分片不再是一个 GOP，
-    前端最多等一个分片（约 80 ms）就能 append，而不是等满 1 秒。
-    GOP 仍是 25 帧不变，唯一影响是每秒那 1 帧的关键帧分片可作为重同步点。
+    （`flush_packets=1`），muxer 在 `frag_every_frame` 下**每写一包就产出一个完整的
+    `moof+mdat`**，fragmenter 每次 `write_packet` 后立刻把 `memory_io` 里的字节作为一帧分片取出。
+    **切分必须由 muxer 的 movflags 控制，不能在应用层按帧数聚合**：`frag_keyframe`（旧实现）
+    只在遇到关键帧时才吐 `moof`，应用层无论怎么切都只能拿到整段 GOP（实测每片 26 帧、
+    间隔 1000 ms、`keyframe` 恒为 false）。因此前端最多等一帧（约 40 ms）就能 append，
+    而不是等满 1 秒。GOP 仍是 25 帧不变，唯一影响是每 25 帧有 1 个 `keyframe=true` 的分片可作重同步点。
+
+    实测（640×480、`kitsu_supplement --local`、80 个分片）：`seq` 步长恒为 1、
+    间隔平均 40.4 ms（16–78 ms）、单帧分片平均 6.6 KB、首片约 55 KB（init 段 + I 帧）、
+    `keyframe=true` 每 25 帧出现一次。
 
     帧率口径：摄像头到达即处理（到达瞬间打 `steady_clock` 时间戳），由 `fps=25` 滤镜按真实
     时间戳采样，只有 25 fps 一个输出帧率。滤镜是采样器不是插值器，成片里的重复帧属正常现象，
@@ -105,8 +111,8 @@ get:
 
     - 预览期与录制期各用一套计数：预览期是内部预览计数，录制期与 `take.mp4` 帧号一致。
     - 收到 `avc_init` 表示帧号已归零：前端应丢弃当前 `SourceBuffer` 里的旧分片再继续 append。
-    - 同一段内 `seq` 严格递增，但可能跳号（写不动时整条分片事件被丢，见下）；分片只含 2 帧，
-      跳号后前端最多丢 80 ms 画面，下一个到的分片照常 append 即可继续解码，
+    - 同一段内 `seq` 严格递增，但可能跳号（写不动时整条分片事件被丢，见下）；分片只含 1 帧，
+      跳号后前端最多丢 40 ms 画面，下一个到的分片照常 append 即可继续解码，
       不需要补片逻辑（不确定时可按 `keyframe: true` 的分片做一次重同步）。
     - 停止录制不会重发 `avc_init`：`stop()` 之后帧号回到预览计数（已在 `start_record()` 时归零），
       可能与刚录完那段重叠。需要干净的时间轴就重连，或按 `avc_init` 语义自行清 buffer。
@@ -123,7 +129,7 @@ get:
       不再在 text 与 binary 之间的空档短暂复位，因此 `pending_frame()` 不会在事件中途变回 `false`。
     - 采集侧（`capture_session::drain_filter_frames`）在发分片前也做了一次同样的判断：
       `l_outlet->pending_frame()` 为真就跳过该分片，不再入 `send()`。
-    - 被丢的是整条事件：前端看到的只是这 80 ms 没有新画面，下一段分片照常 append 即可解码
+    - 被丢的是整条事件：前端看到的只是这 40 ms 没有新画面，下一段分片照常 append 即可解码
       （分片是 GOP 内的连续片段，不需要等关键帧恢复）。
 
     ### 死连接判定
@@ -148,7 +154,7 @@ get:
     GET(Upgrade) /stream
       <- hello                      取 width/height/fps/state
       <- avc_fragment seq=0 key     appendBuffer(init 段)
-      <- avc_fragment seq=n key     appendBuffer(moof+mdat)   <- 持续 25 fps，每 2 帧一片
+      <- avc_fragment seq=n key     appendBuffer(moof+mdat)   <- 持续 25 fps，每帧一片
       <- avc_fragment seq=n !key    appendBuffer 照常（非关键帧分片，可直接解码）
     POST /recordings               （显式开录；无活跃会话 -> 409）
       <- avc_init                  清 buffer，之后 seq 从 0 起
