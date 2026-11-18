@@ -23,8 +23,6 @@ constexpr std::int64_t k_frame_interval_ms{1000 / k_fps};
 
 constexpr std::int32_t k_keyint{k_fps};
 
-constexpr std::int32_t k_stream_fragment_frames{2};
-
 constexpr std::int32_t k_png_digits{6};
 
 constexpr std::int32_t k_silent_timeout_ms{1000};
