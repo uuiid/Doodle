@@ -62,9 +62,10 @@ function Invoke-Git {
     $psi.RedirectStandardError = $true
     $psi.UseShellExecute = $false
     $psi.StandardOutputEncoding = [System.Text.UTF8Encoding]::new($false)
-    $psi.StandardErrorEncoding = [System.Text.UTF8Encoding]::new($false)
     $psi.Environment["GIT_TERMINAL_PROMPT"] = "0"
-    $psi.Environment["GIT_SSH_COMMAND"] = "ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=6"
+    # 沿用环境里已设置的 GIT_SSH_COMMAND（例如指定 OpenSSH 绝对路径），只在末尾追加保活参数
+    $sshBase = if ($env:GIT_SSH_COMMAND) { $env:GIT_SSH_COMMAND } else { "ssh" }
+    $psi.Environment["GIT_SSH_COMMAND"] = "$sshBase -o ServerAliveInterval=30 -o ServerAliveCountMax=6"
     $psi.Environment["LC_ALL"] = "C"
     $p = [System.Diagnostics.Process]::Start($psi)
     $outTask = $p.StandardOutput.ReadToEndAsync()
