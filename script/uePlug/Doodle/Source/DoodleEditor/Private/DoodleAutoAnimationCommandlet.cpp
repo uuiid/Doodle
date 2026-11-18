@@ -869,7 +869,7 @@ TPair<USkeletalMesh*, UAnimSequence*> UDoodleAutoAnimationCommandlet::CreateChar
 {
 	TPair<USkeletalMesh*, UAnimSequence*> L_Results{};
 
-#define DOODLE_USE_DNA_CHARACTER_IMPORT 1
+#define DOODLE_USE_DNA_CHARACTER_IMPORT 0
 
 #if DOODLE_USE_DNA_CHARACTER_IMPORT
 	if (!bImportOnlyAnimations)
