@@ -123,6 +123,7 @@ TValueOrError<void, FDNAFbxShapeSourceError> FDNAFbxShapeSource::Open(const FStr
 		for (size_t DeformerIndex = 0; DeformerIndex < Mesh->blend_deformers.count; ++DeformerIndex)
 		{
 			const ufbx_blend_deformer* Deformer = Mesh->blend_deformers.data[DeformerIndex];
+			const FString DeformerName = ToFString(Deformer->element.name);
 			for (size_t ChannelIndex = 0; ChannelIndex < Deformer->channels.count; ++ChannelIndex)
 			{
 				const ufbx_blend_channel* Channel = Deformer->channels.data[ChannelIndex];
@@ -158,6 +159,10 @@ TValueOrError<void, FDNAFbxShapeSourceError> FDNAFbxShapeSource::Open(const FStr
 				ShapeInfo.OffsetCount = static_cast<int32>(Shape->num_offsets);
 				ShapeInfo.KeyframeCount = static_cast<int32>(Channel->keyframes.count);
 				ShapeInfo.TargetWeight = TargetWeight;
+
+				UE_LOG(LogDoodleDnaImporter, Display,
+					TEXT("[ShapeNameProbe] meshId=%d deformer='%s' channel='%s' shape='%s' -> resolved='%s'"),
+					MeshIndex, *DeformerName, *ToFString(Channel->name), *ShapeInfo.ShapeName, *ShapeInfo.Name);
 
 				MeshInfo.ShapeIndices.Add(Impl->Shapes.Num());
 				Impl->ShapePointers.Add(Shape);

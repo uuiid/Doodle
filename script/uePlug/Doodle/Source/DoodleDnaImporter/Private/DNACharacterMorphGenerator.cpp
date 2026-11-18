@@ -5,6 +5,8 @@
 #include "DNACharacterImporterSettings.h"
 #include "DNAFbxShapeSource.h"
 
+#include "Animation/MorphTarget.h"
+#include "Animation/Skeleton.h"
 #include "Engine/SkeletalMesh.h"
 #include "MeshDescription.h"
 #include "SkeletalMeshAttributes.h"
@@ -544,6 +546,44 @@ namespace DNACharacterImporterInternal
 		InMesh.CommitMeshDescription(0);
 		InMesh.Build();
 		InMesh.PostEditChange();
+
+		{
+			TSet<FName> MeshMorphNames;
+			for (const TObjectPtr<UMorphTarget>& MorphTargetPtr : InMesh.GetMorphTargets())
+			{
+				if (const UMorphTarget* MorphTarget = MorphTargetPtr.Get())
+				{
+					MeshMorphNames.Add(MorphTarget->GetFName());
+				}
+			}
+
+			int32 SkeletonMorphCurveCount = 0;
+			if (const USkeleton* Skeleton = InMesh.GetSkeleton())
+			{
+				for (const FName MeshMorphName : MeshMorphNames)
+				{
+					const FCurveMetaData* Meta = Skeleton->GetCurveMetaData(MeshMorphName);
+					const bool bMorph = Meta != nullptr && Meta->Type.bMorphtarget;
+					if (bMorph)
+					{
+						++SkeletonMorphCurveCount;
+					}
+					UE_LOG(LogDoodleDnaImporter, Display,
+						TEXT("[CurveMetaProbe] morph='%s' skeletonHasCurve=%s morphFlag=%s"),
+						*MeshMorphName.ToString(), Meta != nullptr ? TEXT("yes") : TEXT("no"),
+						bMorph ? TEXT("true") : TEXT("false"));
+				}
+			}
+			else
+			{
+				UE_LOG(LogDoodleDnaImporter, Warning, TEXT("[CurveMetaProbe] the skeletal mesh has no skeleton"));
+			}
+
+			UE_LOG(LogDoodleDnaImporter, Display,
+				TEXT("[CurveMetaProbe] summary: meshMorphs=%d skeletonMorphCurves=%d"),
+				MeshMorphNames.Num(), SkeletonMorphCurveCount);
+		}
+
 		return MakeValue(MoveTemp(Stats));
 	}
 }
