@@ -89,6 +89,7 @@ TValueOrError<void, FDNAFbxShapeSourceError> FDNAFbxShapeSource::Open(const FStr
 	}
 
 	Impl->Filename = InFilename;
+	TSet<FString> UsedShapeNames;
 
 	const ufbx_scene* Scene = Impl->Scene;
 	Impl->Meshes.SetNum(static_cast<int32>(Scene->meshes.count));
@@ -149,10 +150,19 @@ TValueOrError<void, FDNAFbxShapeSourceError> FDNAFbxShapeSource::Open(const FStr
 				}
 
 				FDNAFbxShapeInfo ShapeInfo;
-				ShapeInfo.Name = ToFString(Channel->name);
+				ShapeInfo.Name = ToFString(Shape->name);
 				if (ShapeInfo.Name.IsEmpty())
 				{
-					ShapeInfo.Name = ToFString(Shape->name);
+					FString ChannelName = ToFString(Channel->name);
+					if (ChannelName.StartsWith(DeformerName) && ChannelName.Len() > DeformerName.Len() + 1)
+					{
+						ChannelName.RightInline(ChannelName.Len() - (DeformerName.Len() + 1), EAllowShrinking::No);
+					}
+					ShapeInfo.Name = ChannelName;
+				}
+				if (ShapeInfo.Name.IsEmpty())
+				{
+					ShapeInfo.Name = FString::Printf(TEXT("%s_MorphTarget_%d"), *DeformerName, static_cast<int32>(ChannelIndex));
 				}
 				ShapeInfo.ShapeName = ToFString(Shape->name);
 				ShapeInfo.MeshIndex = MeshIndex;
@@ -160,9 +170,13 @@ TValueOrError<void, FDNAFbxShapeSourceError> FDNAFbxShapeSource::Open(const FStr
 				ShapeInfo.KeyframeCount = static_cast<int32>(Channel->keyframes.count);
 				ShapeInfo.TargetWeight = TargetWeight;
 
-				UE_LOG(LogDoodleDnaImporter, Display,
-					TEXT("[ShapeNameProbe] meshId=%d deformer='%s' channel='%s' shape='%s' -> resolved='%s'"),
-					MeshIndex, *DeformerName, *ToFString(Channel->name), *ShapeInfo.ShapeName, *ShapeInfo.Name);
+				int32 NameClashIndex = 1;
+				const FString NameBase = ShapeInfo.Name;
+				while (UsedShapeNames.Contains(ShapeInfo.Name))
+				{
+					ShapeInfo.Name = FString::Printf(TEXT("%s_ncl_%d"), *NameBase, NameClashIndex++);
+				}
+				UsedShapeNames.Add(ShapeInfo.Name);
 
 				MeshInfo.ShapeIndices.Add(Impl->Shapes.Num());
 				Impl->ShapePointers.Add(Shape);

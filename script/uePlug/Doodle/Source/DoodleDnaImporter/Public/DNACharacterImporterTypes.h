@@ -96,6 +96,9 @@ struct DOODLEDNAIMPORTER_API FDNACharacterImportResult
 	int32 MappedMeshPartCount = 0;
 
 	UPROPERTY()
+	int32 MorphCurveCount = 0;
+
+	UPROPERTY()
 	double ImportSeconds = 0.0;
 
 	UPROPERTY()

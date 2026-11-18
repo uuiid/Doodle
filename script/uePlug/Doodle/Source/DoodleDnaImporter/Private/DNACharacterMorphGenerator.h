@@ -33,6 +33,7 @@ namespace DNACharacterImporterInternal
 		int32 MappedMeshPartCount = 0;
 		int32 VertexCount = 0;
 		int64 DeltaCount = 0;
+		int32 MorphCurveCount = 0;
 		TArray<FString> Log;
 	};
 

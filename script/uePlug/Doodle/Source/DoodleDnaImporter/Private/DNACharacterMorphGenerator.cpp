@@ -547,42 +547,36 @@ namespace DNACharacterImporterInternal
 		InMesh.Build();
 		InMesh.PostEditChange();
 
+		int32 RegisteredMorphCurves = 0;
+		if (USkeleton* Skeleton = InMesh.GetSkeleton())
 		{
-			TSet<FName> MeshMorphNames;
 			for (const TObjectPtr<UMorphTarget>& MorphTargetPtr : InMesh.GetMorphTargets())
 			{
-				if (const UMorphTarget* MorphTarget = MorphTargetPtr.Get())
+				const UMorphTarget* MorphTarget = MorphTargetPtr.Get();
+				if (MorphTarget == nullptr)
 				{
-					MeshMorphNames.Add(MorphTarget->GetFName());
+					continue;
+				}
+
+				const FName MorphName = MorphTarget->GetFName();
+				Skeleton->AddCurveMetaData(MorphName, false);
+				if (FCurveMetaData* CurveMetaData = Skeleton->GetCurveMetaData(MorphName))
+				{
+					CurveMetaData->Type.bMorphtarget = true;
+					++RegisteredMorphCurves;
+				}
+				else
+				{
+					Log(FString::Printf(TEXT("Curve metadata for morph target '%s' could not be registered on the skeleton."),
+						*MorphName.ToString()));
 				}
 			}
 
-			int32 SkeletonMorphCurveCount = 0;
-			if (const USkeleton* Skeleton = InMesh.GetSkeleton())
-			{
-				for (const FName MeshMorphName : MeshMorphNames)
-				{
-					const FCurveMetaData* Meta = Skeleton->GetCurveMetaData(MeshMorphName);
-					const bool bMorph = Meta != nullptr && Meta->Type.bMorphtarget;
-					if (bMorph)
-					{
-						++SkeletonMorphCurveCount;
-					}
-					UE_LOG(LogDoodleDnaImporter, Display,
-						TEXT("[CurveMetaProbe] morph='%s' skeletonHasCurve=%s morphFlag=%s"),
-						*MeshMorphName.ToString(), Meta != nullptr ? TEXT("yes") : TEXT("no"),
-						bMorph ? TEXT("true") : TEXT("false"));
-				}
-			}
-			else
-			{
-				UE_LOG(LogDoodleDnaImporter, Warning, TEXT("[CurveMetaProbe] the skeletal mesh has no skeleton"));
-			}
-
-			UE_LOG(LogDoodleDnaImporter, Display,
-				TEXT("[CurveMetaProbe] summary: meshMorphs=%d skeletonMorphCurves=%d"),
-				MeshMorphNames.Num(), SkeletonMorphCurveCount);
+			Skeleton->MarkPackageDirty();
 		}
+
+		Stats.MorphCurveCount = RegisteredMorphCurves;
+		Log(FString::Printf(TEXT("Registered %d morph target curve(s) on the skeleton."), RegisteredMorphCurves));
 
 		return MakeValue(MoveTemp(Stats));
 	}

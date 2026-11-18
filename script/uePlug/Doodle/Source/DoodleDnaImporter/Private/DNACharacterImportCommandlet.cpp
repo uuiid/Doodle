@@ -91,6 +91,7 @@ int32 UDNACharacterImportCommandlet::Main(const FString& Params)
 		Result.VertexCount, Result.TriangleCount, Result.BoneCount, Result.SectionCount);
 	UE_LOG(LogDoodleDnaImporter, Display, TEXT("  Morph targets: %d (%d with data, %d shape(s) in the FBX, %d/%d mesh parts mapped)"),
 		Result.MorphTargetCount, Result.MorphTargetsWithData, Result.ShapeCount, Result.MappedMeshPartCount, Result.MeshPartCount);
+	UE_LOG(LogDoodleDnaImporter, Display, TEXT("  Skeleton morph curves: %d"), Result.MorphCurveCount);
 	UE_LOG(LogDoodleDnaImporter, Display, TEXT("  Time         : %.2f s mesh + %.2f s morph targets + %.2f s physics asset"),
 		Result.ImportSeconds, Result.MorphTargetSeconds, Result.PhysicsAssetSeconds);
 	UE_LOG(LogDoodleDnaImporter, Display, TEXT("  Result       : OK"));

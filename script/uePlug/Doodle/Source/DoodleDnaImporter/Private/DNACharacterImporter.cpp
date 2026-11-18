@@ -287,6 +287,7 @@ FRunResult FDNACharacterImporter::Run(const FDNACharacterImportRequest& InReques
 		Result.ShapeCount = MorphStats.ShapeCount;
 		Result.MeshPartCount = MorphStats.MeshPartCount;
 		Result.MappedMeshPartCount = MorphStats.MappedMeshPartCount;
+		Result.MorphCurveCount = MorphStats.MorphCurveCount;
 	}
 	else if (Request.bSkipMorphGeneration)
 	{
