@@ -94,7 +94,17 @@ boost::asio::awaitable<void> ws_outlet::run() {
   co_await open_capture();
 
   co_await read_loop();
+  co_await close_protocol();
   co_await close_impl();
+}
+
+boost::asio::awaitable<void> ws_outlet::close_protocol() {
+  if (!stream_.is_open()) co_return;
+  try {
+    co_await stream_.async_close(boost::beast::websocket::close_code::normal, boost::asio::use_awaitable);
+  } catch (const std::exception& in_err) {
+    SPDLOG_INFO("face_capture ws 关闭: {}", in_err.what());
+  }
 }
 
 boost::asio::awaitable<void> ws_outlet::open_capture() {
@@ -126,19 +136,11 @@ boost::asio::awaitable<void> ws_outlet::read_loop() {
 }
 
 boost::asio::awaitable<void> ws_outlet::close_impl() {
+  mark_closed();
+
   co_await close_capture();
 
   if (holder_) holder_->reset(nullptr);
-
-  mark_closed();
-
-  if (stream_.is_open()) {
-    try {
-      co_await stream_.async_close(boost::beast::websocket::close_code::normal, boost::asio::use_awaitable);
-    } catch (const std::exception& in_err) {
-      SPDLOG_INFO("face_capture ws 关闭: {}", in_err.what());
-    }
-  }
 }
 
 boost::asio::awaitable<void> ws_outlet::write_message(std::unique_ptr<ws_message> in_message) {

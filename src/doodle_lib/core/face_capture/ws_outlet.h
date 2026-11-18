@@ -66,6 +66,8 @@ class ws_outlet : public std::enable_shared_from_this<ws_outlet> {
 
   boost::asio::awaitable<void> read_loop();
 
+  boost::asio::awaitable<void> close_protocol();
+
   boost::asio::awaitable<void> close_impl();
 
   boost::asio::awaitable<void> write_message(std::unique_ptr<ws_message> in_message);
