@@ -31,8 +31,10 @@
  *    带值开关一律写成 `--key=value` 单个 argv 项（与 .vscode/launch.json 的用法一致）：
  *    argh 把 `--key=value` 记进 params_，`arg_({"key"})` 先查 params_ 再查 flags_，能取到值；
  *    而 `--key value` 里只有 `--key` 是选项、value 掉进位置参数，arg_ 得到空串——
- *    服务端 `--port` 空串会 lexical_cast 抛异常（监听之前就退出），`--root` 空串会把会话目录落到 cwd。
+ *    服务端 `--port` 空串会 lexical_cast 抛异常（监听之前就退出），`--root` 空串会把 `p_root` 置成空路径。
  * 5) cwd 默认取 exe 所在目录（exe 依赖同目录的 dll）；运行路径也可由参数/配置显式传入。
+ *    `--root` 同时是服务端 `core_set::p_root`，日志目录 `<root>\log` 由它决定（app_base 构造函数里先设
+ *    p_root 再建 logger），所以 root 不只是数据目录，也决定了崩溃日志落在哪里。
  * 6) 不用服务端的 POST /api/doodle/stop-server：它要 admin JWT，且连接数不为 0 时拒绝退出
  *    （base_data.cpp:343-366），测试机上的连接数恰恰不为 0。这里直接终止进程树并等停稳。
  *
@@ -248,6 +250,7 @@ export async function apply(ctx, config) {
             "`kitsu_server_status` 查看本插件的实例、每个模式的槽位占用与端口占用；`kitsu_server_stop` 停掉本插件拉起的实例（含 DSH 重启后从状态文件认领的）；本插件不杀别人启动的进程。local 与 production 各最多 1 个在跑实例，同模式重复启动直接返回 `slot-in-use`，要替换就显式传 `replaceExisting: true`（先停旧的，结果在 `replaced`）。",
             "`kitsu_server_sql` 对磁盘库执行 sql 文件或片段（填测试数据），写完运行中的进程立刻能查到，**不要**为它停服或重启；执行前不确定就先 `dryRun: true` 走一遍。",
             "`kitsu_playwright_test` 跑 test_js 里的 Playwright 用例：`args` 是 `playwright` 之后那串参数、原样转发（如 `[\"test\", \"face_capture.js\"]`、`[\"test\", \"--list\"]`）；`baseUrl` 请直接传 `kitsu_server_start` 返回的 `baseUrl`（本工具不会自己去查实例表）。本工具不可并发：已经在跑时立刻返回 `busy`，不排队。",
+            `服务端自己的日志写在 \`<root>\\log\`（root 即 \`kitsu_server_start\` 的 \`root\` 参数，不传则用配置的 defaultRoot，再退回服务端内置的 \`%TEMP%\\Doodle\`）：主日志 \`doodle_lib.txt\`，另有 \`doodle_long_task.txt\` / \`socket_io.txt\` / \`http.txt\` / \`doodle_main_error.txt\`，每个都是 1 MB 轮转文件；同名文件已存在时服务端会在文件名里补 UUID 而不是覆盖，所以崩溃那一轮的日志不会被下一次启动冲掉。本插件不转发这些日志：启动失败最多回显 4000 字符输出尾巴，查崩溃原因要按上面的路径用本地文件工具读 \`<root>\\log\`。`,
           ].join(" "),
   });
 

@@ -49,7 +49,13 @@ export function registerStartTool({ ctx, resolved, registry, stateWarnings, stat
         "force-killed first. The server keeps running after the call returns — it is tracked for `kitsu_server_status` " +
         "and `kitsu_server_stop`, and terminated when the plugin unloads. Each mode (local / production) allows " +
         "at most ONE running instance: starting a second one in the same mode fails with `slot-in-use` unless " +
-        "`replaceExisting: true` is passed, which stops the previous instance first (reported in `replaced`).",
+        "`replaceExisting: true` is passed, which stops the previous instance first (reported in `replaced`). " +
+        "The server writes its own logs to `<root>\\log` (root = the `root` parameter, else the configured " +
+        "defaultRoot, else the server's built-in `%TEMP%\\Doodle`); the default logger goes to `doodle_lib.txt`, " +
+        "plus `doodle_long_task.txt`, `socket_io.txt`, `http.txt` and `doodle_main_error.txt`, each a rotating " +
+        "file capped at 1 MB. When a file from an earlier run already exists the server appends a UUID to the name " +
+        "instead of overwriting, so a crashed run's log stays readable; read them with the local file tools after " +
+        "the process is gone, because this tool reports only the last 4000 characters of a failed start's output.",
       parameters: {
         port: {
           type: "number",
@@ -84,8 +90,10 @@ export function registerStartTool({ ctx, resolved, registry, stateWarnings, stat
         root: {
           type: "string",
           description:
-            "Absolute project-data root. Passed as `--root` and used as config fallback for the server's root. " +
-            "The local branch currently hardcodes its own root and ignores it.",
+            "Absolute project-data root, passed as `--root`. It is the server's `p_root`: besides the data/cache root " +
+            "it is where the server writes its log directory (`<root>\\log`), see the log files listed on this tool. " +
+            "Without it the server falls back to `%TEMP%\\Doodle`, so pass a stable directory when the crash logs of " +
+            "this run must be found later.",
         },
         frontEndPath: {
           type: "string",
@@ -223,7 +231,12 @@ export function registerStatusTool({ ctx, resolved, registry, stateWarnings, sta
       description:
         "List the doodle_kitsu_supplement instances this plugin started (id, mode, port, running/exited, baseUrl, " +
         "config path) and, for running instances, who is LISTENING on their ports (netstat). Pass `port` to also check " +
-        "an arbitrary port. The port is always the explicitly requested one, never derived from the process.",
+        "an arbitrary port. The port is always the explicitly requested one, never derived from the process. " +
+        "An instance whose process died is reported as `running: false` with its `exitCode` and stays in the list " +
+        "until `kitsu_server_stop` drops it, while its slot is already free. This tool does not return process " +
+        "output: to see why a run failed, read the server's own log directory `<root>\\log` " +
+        "(`doodle_lib.txt` first, plus `doodle_long_task.txt` / `socket_io.txt` / `http.txt` / " +
+        "`doodle_main_error.txt`; names carry a UUID suffix when the plain name already existed).",
       parameters: {
         port: { type: "number", description: "Additional port to check for listeners." },
       },
@@ -305,7 +318,10 @@ export function registerStopTool({ ctx, resolved, registry, stateWarnings, state
       description:
         "Stop doodle_kitsu_supplement instances started by this plugin: terminate the process tree, wait for it to " +
         "settle, and drop it from the tracked list. With neither `serverId` nor `port`, every tracked instance is " +
-        "stopped. Processes this plugin did not start are never killed.",
+        "stopped. Processes this plugin did not start are never killed. This call is what removes an already-crashed " +
+        "instance (`running: false`) from the list, and it succeeds with reason `进程已退出` for one. It leaves the " +
+        "server's `<root>\\log` directory intact for reading afterwards, and per AGENTS.md it must run before " +
+        "rebuilding `doodle_lib`, because the live process holds `bin\\doodle_lib.dll`.",
       parameters: {
         serverId: { type: "string", description: "Instance id from kitsu_server_start / kitsu_server_status (kitsu-N)." },
         port: { type: "number", description: "Stop every tracked instance listening on this port." },
