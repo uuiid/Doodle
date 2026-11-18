@@ -27,12 +27,6 @@
 
 namespace doodle::face_capture {
 
-namespace {
-
-constexpr std::size_t k_max_pending_keys{2};
-
-}  // namespace
-
 ws_outlet::ws_outlet(
     stream_t in_stream, std::int32_t in_device_index, std::shared_ptr<capture_session_holder> in_holder
 )
@@ -150,12 +144,10 @@ boost::asio::awaitable<void> ws_outlet::close_impl() {
 boost::asio::awaitable<void> ws_outlet::write_message(std::unique_ptr<ws_message> in_message) {
   if (closing_) co_return;
 
-  if (!in_message->key()) {
-    if (pending_frame()) co_return;
-  } else {
-    if (key_backlog_ >= k_max_pending_keys) co_return;
-    ++key_backlog_;
-  }
+  if (pending_frame()) co_return;
+
+  writing_.store(true, std::memory_order_release);
+  pending_since_ = std::chrono::steady_clock::now();
 
   auto l_text   = in_message->to_json().dump();
   auto l_binary = in_message->binary() ? in_message->payload() : std::vector<std::uint8_t>{};
@@ -163,15 +155,14 @@ boost::asio::awaitable<void> ws_outlet::write_message(std::unique_ptr<ws_message
   co_await write_raw(false, std::vector<std::uint8_t>{l_text.begin(), l_text.end()});
   if (!l_binary.empty()) co_await write_raw(true, l_binary);
 
-  if (in_message->key() && key_backlog_ > 0) --key_backlog_;
+  pending_since_ = {};
+  writing_.store(false, std::memory_order_release);
   co_return;
 }
 
 boost::asio::awaitable<void> ws_outlet::write_raw(bool in_binary, const std::vector<std::uint8_t>& in_bytes) {
   if (closing_) co_return;
 
-  pending_since_ = std::chrono::steady_clock::now();
-  writing_.store(true, std::memory_order_release);
   try {
     stream_.binary(in_binary);
     co_await stream_.async_write(boost::asio::buffer(in_bytes), boost::asio::use_awaitable);
@@ -181,8 +172,6 @@ boost::asio::awaitable<void> ws_outlet::write_raw(bool in_binary, const std::vec
     mark_closed();
     co_return;
   }
-  pending_since_ = {};
-  writing_.store(false, std::memory_order_release);
   co_return;
 }
 

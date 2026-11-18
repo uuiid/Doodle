@@ -411,7 +411,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
         try {
           fragmenter_->push(l_mat, l_seq);
           for (auto& l_fragment : fragmenter_->take_fragments()) {
-            if (!l_fragment.key_ && l_outlet->pending_frame()) continue;
+            if (l_outlet->pending_frame()) continue;
             l_outlet->send(std::make_unique<ws_avc_fragment>(std::move(l_fragment)));
           }
         } catch (const std::exception& in_err) {

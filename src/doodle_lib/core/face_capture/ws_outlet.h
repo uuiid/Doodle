@@ -83,7 +83,6 @@ class ws_outlet : public std::enable_shared_from_this<ws_outlet> {
   std::atomic_bool writing_{false};
 
   bool closing_{false};
-  std::size_t key_backlog_{0};
   std::chrono::steady_clock::time_point pending_since_{};
 };
 

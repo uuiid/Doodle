@@ -134,15 +134,9 @@ class h264_fragmenter::impl {
         width_, height_, yuv_pixel_format(), width_, height_, bgr_pixel_format(), av::SwsFlagBicubic
     };
 
-    pending_.emplace_back();
-    pending_.back().data_      = io_->take();
-    pending_.back().seq_begin_ = 0;
-    pending_.back().seq_end_   = 0;
-    pending_.back().key_       = true;
-    init_segment_              = pending_.back().data_;
+    init_segment_ = fragment_t{.data_ = io_->take(), .seq_begin_ = 0, .seq_end_ = 0, .key_ = true};
 
-    fragment_open_   = true;
-    open_seq_begin_  = 0;
+    open_seq_begin_ = 0;
     return true;
   }
 
@@ -178,7 +172,7 @@ class h264_fragmenter::impl {
     return std::move(pending_);
   }
 
-  const std::vector<std::uint8_t>& init_segment() const { return init_segment_; }
+  const std::vector<std::uint8_t>& init_segment() const { return init_segment_.data_; }
 
   std::uint64_t frames() const { return seq_; }
 
@@ -215,24 +209,30 @@ class h264_fragmenter::impl {
     l_packet.setStreamIndex(stream_.index());
     l_packet.setTimeBase(stream_.timeBase());
     format_context_.writePacket(l_packet);
-    if ((l_packet.flags() & AV_PKT_FLAG_KEY) != 0) {
+
+    const bool l_key = (l_packet.flags() & AV_PKT_FLAG_KEY) != 0;
+    if (l_key) {
       flush_open_fragment();
-      open_seq_begin_ = seq_ > 0 ? seq_ - 1 : 0;
-      fragment_open_  = true;
+      open_key_ = true;
+    } else if (fragment_frames_ >= k_stream_fragment_frames - 1) {
+      flush_open_fragment();
     }
+    ++fragment_frames_;
   }
 
   void flush_open_fragment() {
-    if (!fragment_open_) return;
-    auto l_bytes = io_->take();
-    if (l_bytes.empty()) return;
+    const std::int32_t l_frames = fragment_frames_;
+    fragment_frames_            = 0;
+    auto l_bytes                = io_->take();
     fragment_t l_fragment{};
     l_fragment.data_      = std::move(l_bytes);
     l_fragment.seq_begin_ = open_seq_begin_;
-    l_fragment.seq_end_   = seq_ > 0 ? seq_ - 1 : 0;
-    l_fragment.key_       = true;
+    l_fragment.seq_end_   = open_seq_begin_ + (l_frames > 0 ? l_frames - 1 : 0);
+    l_fragment.key_       = open_key_;
+    open_seq_begin_       = l_fragment.seq_end_ + 1;
+    open_key_             = false;
+    if (l_fragment.data_.empty()) return;
     pending_.emplace_back(std::move(l_fragment));
-    fragment_open_ = false;
   }
 
   std::int32_t width_{0};
@@ -245,9 +245,10 @@ class h264_fragmenter::impl {
   std::unique_ptr<memory_io> io_{};
   frame_buffer buffers_{};
   std::uint64_t seq_{0};
-  std::vector<std::uint8_t> init_segment_{};
+  fragment_t init_segment_{};
   std::uint64_t open_seq_begin_{0};
-  bool fragment_open_{false};
+  bool open_key_{true};
+  std::int32_t fragment_frames_{0};
   std::vector<fragment_t> pending_{};
 };
 
