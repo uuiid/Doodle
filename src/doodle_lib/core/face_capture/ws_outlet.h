@@ -60,6 +60,8 @@ class ws_outlet : public std::enable_shared_from_this<ws_outlet> {
  private:
   boost::asio::awaitable<void> run();
 
+  boost::asio::awaitable<void> take_over_previous();
+
   boost::asio::awaitable<void> open_capture();
 
   boost::asio::awaitable<void> close_capture();

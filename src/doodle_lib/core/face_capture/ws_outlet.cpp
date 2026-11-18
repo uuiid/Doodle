@@ -20,12 +20,19 @@
 #include <boost/asio/post.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/beast/core/buffers_prefix.hpp>
+#include <boost/beast/websocket/stream_base.hpp>
 
 #include <chrono>
 #include <string>
 #include <utility>
 
 namespace doodle::face_capture {
+
+namespace {
+
+constexpr std::int32_t k_ws_idle_timeout_s{10};
+
+}  // namespace
 
 ws_outlet::ws_outlet(
     stream_t in_stream, std::int32_t in_device_index, std::shared_ptr<capture_session_holder> in_holder
@@ -89,13 +96,33 @@ std::shared_ptr<capture_session> ws_outlet::session() const { return session_; }
 
 boost::asio::awaitable<void> ws_outlet::run() {
   session_->attach(shared_from_this());
+  co_await take_over_previous();
   if (holder_) holder_->reset(session_);
 
-  co_await open_capture();
+  try {
+    co_await open_capture();
+    co_await read_loop();
+  } catch (const std::exception& in_err) {
+    SPDLOG_WARN("face_capture 会话异常结束: {}", in_err.what());
+  }
 
-  co_await read_loop();
   co_await close_protocol();
   co_await close_impl();
+}
+
+boost::asio::awaitable<void> ws_outlet::take_over_previous() {
+  if (!holder_) co_return;
+  auto l_previous = holder_->session();
+  if (!l_previous || l_previous == session_) co_return;
+  try {
+    co_await boost::asio::dispatch(
+        boost::asio::bind_executor(l_previous->get_executor(), boost::asio::use_awaitable)
+    );
+    co_await l_previous->close();
+    SPDLOG_INFO("face_capture 新连接接管摄像头, 已关闭旧会话");
+  } catch (const std::exception& in_err) {
+    SPDLOG_WARN("face_capture 关闭旧会话失败: {}", in_err.what());
+  }
 }
 
 boost::asio::awaitable<void> ws_outlet::close_protocol() {
@@ -108,6 +135,11 @@ boost::asio::awaitable<void> ws_outlet::close_protocol() {
 }
 
 boost::asio::awaitable<void> ws_outlet::open_capture() {
+  stream_.set_option(boost::beast::websocket::stream_base::timeout{
+      .handshake_timeout = std::chrono::seconds{k_ws_idle_timeout_s},
+      .idle_timeout      = std::chrono::seconds{k_ws_idle_timeout_s},
+      .keep_alive_pings  = true,
+  });
   try {
     co_await session_->open(capture_option{.device_index_ = device_index_});
   } catch (const std::exception& in_err) {
