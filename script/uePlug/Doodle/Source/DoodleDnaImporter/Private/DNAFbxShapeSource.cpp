@@ -89,7 +89,7 @@ TValueOrError<void, FDNAFbxShapeSourceError> FDNAFbxShapeSource::Open(const FStr
 	}
 
 	Impl->Filename = InFilename;
-	TSet<FString> UsedShapeNames;
+	TMap<int32, TSet<FString>> UsedShapeNames;
 
 	const ufbx_scene* Scene = Impl->Scene;
 	Impl->Meshes.SetNum(static_cast<int32>(Scene->meshes.count));
@@ -172,11 +172,12 @@ TValueOrError<void, FDNAFbxShapeSourceError> FDNAFbxShapeSource::Open(const FStr
 
 				int32 NameClashIndex = 1;
 				const FString NameBase = ShapeInfo.Name;
-				while (UsedShapeNames.Contains(ShapeInfo.Name))
+				TSet<FString>& MeshShapeNames = UsedShapeNames.FindOrAdd(MeshIndex);
+				while (MeshShapeNames.Contains(ShapeInfo.Name))
 				{
 					ShapeInfo.Name = FString::Printf(TEXT("%s_ncl_%d"), *NameBase, NameClashIndex++);
 				}
-				UsedShapeNames.Add(ShapeInfo.Name);
+				MeshShapeNames.Add(ShapeInfo.Name);
 
 				MeshInfo.ShapeIndices.Add(Impl->Shapes.Num());
 				Impl->ShapePointers.Add(Shape);
@@ -304,12 +305,15 @@ int32 FDNAFbxShapeSource::CountNonZeroOffsets(int32 InShapeIndex) const
 		return 0;
 	}
 
+	const FDNAFbxShapeInfo& ShapeInfo = Impl->Shapes[InShapeIndex];
 	const ufbx_blend_shape* Shape = Impl->ShapePointers[InShapeIndex];
-	const int32 OffsetCount = static_cast<int32>(Shape->num_offsets);
+	const ufbx_mesh* Mesh = Impl->Scene->meshes.data[ShapeInfo.MeshIndex];
+	const int32 ControlPointCount = static_cast<int32>(Mesh->num_vertices);
+
 	int32 NonZeroCount = 0;
-	for (int32 OffsetIndex = 0; OffsetIndex < OffsetCount; ++OffsetIndex)
+	for (int32 VertexIndex = 0; VertexIndex < ControlPointCount; ++VertexIndex)
 	{
-		if (IsNonZero(Shape->position_offsets.data[OffsetIndex]))
+		if (IsNonZero(ufbx_get_blend_shape_vertex_offset(Shape, static_cast<size_t>(VertexIndex))))
 		{
 			++NonZeroCount;
 		}
@@ -331,19 +335,65 @@ TValueOrError<FDNAFbxShapeVertexOffsets, FDNAFbxShapeSourceError> FDNAFbxShapeSo
 		});
 	}
 
+	const FDNAFbxShapeInfo& ShapeInfo = Impl->Shapes[InShapeIndex];
 	const ufbx_blend_shape* Shape = Impl->ShapePointers[InShapeIndex];
-	const int32 OffsetCount = static_cast<int32>(Shape->num_offsets);
-	const bool bSparse = Shape->offset_vertices.count > 0;
+	const ufbx_mesh* Mesh = Impl->Scene->meshes.data[ShapeInfo.MeshIndex];
+	const int32 ControlPointCount = static_cast<int32>(Mesh->num_vertices);
 
 	FDNAFbxShapeVertexOffsets Offsets;
-	Offsets.Offsets.SetNumUninitialized(OffsetCount);
-	Offsets.VertexIndices.SetNumUninitialized(OffsetCount);
-	for (int32 OffsetIndex = 0; OffsetIndex < OffsetCount; ++OffsetIndex)
+	Offsets.VertexIndices.Reserve(static_cast<int32>(Shape->num_offsets));
+	Offsets.Offsets.Reserve(static_cast<int32>(Shape->num_offsets));
+	for (int32 VertexIndex = 0; VertexIndex < ControlPointCount; ++VertexIndex)
 	{
-		Offsets.Offsets[OffsetIndex] = ToVector3f(Shape->position_offsets.data[OffsetIndex]);
-		Offsets.VertexIndices[OffsetIndex] = bSparse
-			? static_cast<int32>(Shape->offset_vertices.data[OffsetIndex])
-			: OffsetIndex;
+		const ufbx_vec3 VertexOffset = ufbx_get_blend_shape_vertex_offset(Shape, static_cast<size_t>(VertexIndex));
+		if (!IsNonZero(VertexOffset))
+		{
+			continue;
+		}
+		Offsets.Offsets.Add(ToVector3f(VertexOffset));
+		Offsets.VertexIndices.Add(VertexIndex);
 	}
 	return MakeValue(MoveTemp(Offsets));
+}
+
+TValueOrError<FDNAFbxShapeOffsetProbe, FDNAFbxShapeSourceError> FDNAFbxShapeSource::ProbeShapeOffsets(int32 InShapeIndex) const
+{
+	if (Impl->Scene == nullptr)
+	{
+		return MakeError(FDNAFbxShapeSourceError{EDNAFbxShapeSourceError::NotOpen, TEXT("the FBX file is not open")});
+	}
+	if (!Impl->Shapes.IsValidIndex(InShapeIndex))
+	{
+		return MakeError(FDNAFbxShapeSourceError{
+			EDNAFbxShapeSourceError::InvalidShapeIndex,
+			FString::Printf(TEXT("shape index %d is out of range (%d shape(s))"), InShapeIndex, Impl->Shapes.Num())
+		});
+	}
+
+	const FDNAFbxShapeInfo& ShapeInfo = Impl->Shapes[InShapeIndex];
+	const ufbx_blend_shape* Shape = Impl->ShapePointers[InShapeIndex];
+	const ufbx_mesh* Mesh = Impl->Scene->meshes.data[ShapeInfo.MeshIndex];
+
+	FDNAFbxShapeOffsetProbe Probe;
+	Probe.ShapeName = ShapeInfo.Name;
+	Probe.OffsetCount = static_cast<int32>(Shape->num_offsets);
+	Probe.ControlPointCount = static_cast<int32>(Mesh->num_vertices);
+	Probe.StoredVertexIndexCount = static_cast<int32>(Shape->offset_vertices.count);
+	Probe.bSparse = Shape->offset_vertices.count > 0;
+
+	for (int32 VertexIndex = 0; VertexIndex < Probe.ControlPointCount; ++VertexIndex)
+	{
+		const ufbx_vec3 VertexOffset = ufbx_get_blend_shape_vertex_offset(Shape, static_cast<size_t>(VertexIndex));
+		const float Length = ToVector3f(VertexOffset).Size();
+		Probe.MaxOffsetLength = FMath::Max(Probe.MaxOffsetLength, Length);
+		if (VertexIndex == 0)
+		{
+			Probe.FirstOffsetLength = Length;
+		}
+		if (IsNonZero(VertexOffset))
+		{
+			++Probe.NonZeroOffsetCount;
+		}
+	}
+	return MakeValue(MoveTemp(Probe));
 }

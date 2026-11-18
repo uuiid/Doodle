@@ -44,6 +44,18 @@ struct DOODLEDNAIMPORTER_API FDNAFbxShapeVertexOffsets
 	TArray<int32> VertexIndices;
 };
 
+struct DOODLEDNAIMPORTER_API FDNAFbxShapeOffsetProbe
+{
+	FString ShapeName;
+	int32 OffsetCount = 0;
+	int32 StoredVertexIndexCount = 0;
+	int32 ControlPointCount = 0;
+	bool bSparse = false;
+	int32 NonZeroOffsetCount = 0;
+	float MaxOffsetLength = 0.0f;
+	float FirstOffsetLength = 0.0f;
+};
+
 class DOODLEDNAIMPORTER_API FDNAFbxShapeSource
 {
 public:
@@ -71,6 +83,8 @@ public:
 	TValueOrError<FDNAFbxShapeVertexOffsets, FDNAFbxShapeSourceError> GetShapeVertexOffsets(int32 InShapeIndex) const;
 
 	int32 CountNonZeroOffsets(int32 InShapeIndex) const;
+
+	TValueOrError<FDNAFbxShapeOffsetProbe, FDNAFbxShapeSourceError> ProbeShapeOffsets(int32 InShapeIndex) const;
 
 private:
 	struct FImpl;
