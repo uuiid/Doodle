@@ -109,6 +109,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
     if (auto l_outlet = outlet_.lock()) {
       l_outlet->send(std::make_unique<ws_hello>(capture_state::previewing, width_, height_));
+      l_outlet->send(std::make_unique<ws_avc_init>(fragmenter_->init_segment()));
     }
 
     boost::asio::co_spawn(

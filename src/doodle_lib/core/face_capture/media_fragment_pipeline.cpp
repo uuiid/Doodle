@@ -270,7 +270,8 @@ class mp4_writer::impl {
         width_(even(in_width)),
         height_(even(in_height)),
         low_latency_(in_low_latency),
-        codec_(av::findEncodingCodec(std::string{"libx264"})) {}
+        codec_(av::findEncodingCodec(std::string{"libx264"})),
+        enc_ctx_(codec_) {}
 
   bool init() {
     DOODLE_CHICK(codec_.isEncoder(), "找不到 libx264 编码器");
