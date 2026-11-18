@@ -6,6 +6,7 @@
 # 先确认 UnrealEngine 目录可写：脚本会更新 .git 内的 FETCH_HEAD / refs / objects，
 # 权限不足时 git 会报 `cannot open .git/FETCH_HEAD: Permission denied`。
 # 需要的实际提交由「已完成窗口」状态文件驱动，中途失败直接用同一条命令重跑即可。
+# 状态文件（done.txt / clone_ue.log）写在 build\clone_ue_state，不进 git 仓库。
 
 [CmdletBinding()]
 param(
@@ -34,7 +35,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot "..\UnrealEngine")).Path
-$StateDir = Join-Path $PSScriptRoot "clone_ue_state"
+$StateDir = Join-Path $PSScriptRoot "..\build\clone_ue_state"
 $DoneFile = Join-Path $StateDir "done.txt"
 $LogFile = Join-Path $StateDir "clone_ue.log"
 
