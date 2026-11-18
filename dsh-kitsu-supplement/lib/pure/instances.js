@@ -89,14 +89,6 @@ export function slotSummary(records) {
  * @param {string} mode
  * @returns {string|undefined}
  */
-
-/**
- * 某个模式当前被谁占着（在跑）。没有就返回 undefined。
- *
- * @param {Map<string, any>} records
- * @param {string} mode
- * @returns {string|undefined}
- */
 export function findSlotHolder(records, mode) {
   if (!MODES.includes(mode)) return undefined;
   for (const [id, record] of records ?? []) {

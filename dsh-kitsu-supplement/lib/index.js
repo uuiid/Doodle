@@ -21,10 +21,14 @@
  *    local 模式不给 --port 时服务端会 listen(0)（随机端口），
  *    而 local 分支同样不防重复实例（kitsu_supplement.cpp:219 的 stop_previous_instance 已注释），
  *    随机端口意味着每次重启地址都变，测试用例没法引用。所以缺 port 或越界都直接报错。
- * 2) 监听端口就是入参 port，不去服务端的共享内存段（`doodle_http_listener_port_<pid>`）里找：
- *    宿主的 ctx.subprocess.spawn 不返回 pid，读段只能靠 netstat 反查 pid，而沙箱下 netstat
- *    看不到宿主拉起的进程，整条路在受限环境里必然失败。就绪与否直接对
- *    `http://127.0.0.1:<port><readyPath>` 轮询，任何 HTTP 状态码都算就绪，最多等 READY_TIMEOUT_MS。
+ * 2) 服务端由 node:child_process 启动，pid 取自 child.pid 并随实例落盘。
+ *    不用 ctx.subprocess.spawn 是因为它的 handle 不暴露 pid（SubprocessHandle / SubprocessOutcome
+ *    都没有 pid 字段），而 pid 是状态展示与「DSH 重启后按 pid 接管」的唯一依据；
+ *    本地 provider 内部同样调用 child_process.spawn，两者权限要求一致。
+ *    不要改成按端口用 netstat 反查 pid：实测 netstat 看不到这类服务进程的 LISTENING 行。
+ *    监听端口恒为入参 port，不读服务端的共享内存段（`doodle_http_listener_port_<pid>`）。
+ *    就绪判定不依赖 pid：直接对 `http://127.0.0.1:<port><readyPath>` 轮询，任何 HTTP 状态码都算
+ *    就绪，最多等 READY_TIMEOUT_MS。
  * 3) 固定端口先探占用。默认失败并给出占用 PID，只有显式 killExisting:true 才强杀。
  * 4) --config 由插件生成。服务端 config 解析失败会 return true 且**不启动 HTTP**，
  *    进程可能一闪而过，所以 JSON 只由插件写，模型的额外字段并进 extraConfig。

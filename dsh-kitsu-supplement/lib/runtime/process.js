@@ -1,6 +1,7 @@
 // dsh-kitsu-supplement —— 进程、端口与就绪探测
 //
-// 全部走 ctx.subprocess：沙箱下 node:child_process 起原生子进程会被拒，受管子进程通道始终可用。
+// 服务端用 node:child_process 启动（pid 只能从这里拿）；netstat/taskkill 走 ctx.subprocess 的纳管通道。
+// 两者底层同是 child_process.spawn，能否起进程取决于调用方进程的完整性级别，与选哪个 API 无关。
 
 import { NETSTAT_EXE, TASKKILL_EXE, errorText, parseNetstatOwners, readyUrlOf, tailText } from "../pure/common.js";
 
@@ -198,4 +199,83 @@ export async function waitForExit(handle, timeoutMs) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * 起一个服务端进程并拿回 pid。
+ *
+ * 走 node:child_process 而不是 ctx.subprocess：后者的 handle 不暴露 pid，
+ * 而 pid 是「重启 DSH 后按 pid 接管」与状态展示的唯一依据。
+ * 本地 provider 内部同样调用 child_process.spawn，二者权限要求一致。
+ *
+ * @param {{exePath:string, argv:string[], cwd:string, maxOutputBytes:number, signal?:AbortSignal}} spec
+ * @returns {Promise<any>}
+ */
+export async function spawnServer(spec) {
+  const { spawn } = await import("node:child_process");
+  const child = spawn(spec.exePath, spec.argv, {
+    cwd: spec.cwd,
+    stdio: ["ignore", "pipe", "pipe"],
+    windowsHide: true,
+    signal: spec.signal,
+  });
+
+  /** @type {{stdout?:{text:string,spillPath?:string}, stderr?:{text:string,spillPath?:string}}} */
+  const collected = { stdout: { text: "" }, stderr: { text: "" } };
+  const cap = spec.maxOutputBytes;
+  const attach = (stream, target) => {
+    stream.setEncoding("utf8");
+    stream.on("data", (chunk) => {
+      target.text += chunk;
+      if (target.text.length > cap) target.text = target.text.slice(target.text.length - cap);
+    });
+  };
+  if (child.stdout) attach(child.stdout, collected.stdout);
+  if (child.stderr) attach(child.stderr, collected.stderr);
+
+  const done = new Promise((resolve, reject) => {
+    child.once("error", (error) => reject(error));
+    child.once("close", (code, signal) => resolve({ exitCode: typeof code === "number" ? code : null, signal: signal ?? null }));
+  });
+  done.catch(() => {});
+
+  const reader = (target) => ({
+    readFrom(fromByte) {
+      if (fromByte >= target.text.length) return undefined;
+      return { text: target.text.slice(fromByte), nextOffset: target.text.length, lossy: false };
+    },
+  });
+
+  return {
+    pid: child.pid,
+    done,
+    collected: {
+      stdout: reader(collected.stdout),
+      stderr: reader(collected.stderr),
+    },
+    terminate() {
+      if (child.exitCode !== null || child.signalCode !== null) return;
+      try {
+        child.kill("SIGTERM");
+      } catch {}
+    },
+    async waitForExit(signal) {
+      if (child.exitCode !== null || child.signalCode !== null) return true;
+      return new Promise((resolve) => {
+        const finish = (value) => {
+          clearTimeout(timer);
+          signal?.removeEventListener("abort", onAbort);
+          resolve(value);
+        };
+        const onAbort = () => finish(false);
+        if (signal?.aborted) {
+          finish(false);
+          return;
+        }
+        signal?.addEventListener("abort", onAbort, { once: true });
+        const timer = setTimeout(() => finish(false), 5 * 60_000);
+        child.once("close", () => finish(true));
+      });
+    },
+  };
 }

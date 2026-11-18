@@ -168,7 +168,7 @@ export function registerStartTool({ ctx, resolved, registry, stateWarnings, stat
             const stopped =
               holder.handle === null || holder.handle === undefined
                 ? await stopAdopted(ctx, holder)
-                : await stopRecord(holder, resolved.stopTimeoutMs);
+                : await stopRecord(ctx, holder, resolved.stopTimeoutMs);
             replaced.push({ serverId: slot.holderId, port: holder.port, ok: stopped.ok, reason: stopped.reason });
             if (!stopped.ok) {
               const detail = `替换 ${spec.mode} 模式的旧实例 ${slot.holderId} 失败：${stopped.reason}`;
@@ -340,7 +340,7 @@ export function registerStopTool({ ctx, resolved, registry, stateWarnings, state
         for (const [id, record] of [...registry]) {
           if (wantedId !== "" && id !== wantedId) continue;
           if (wantedId === "" && wantedPort !== undefined && record.port !== wantedPort) continue;
-          const result = record.handle === null || record.handle === undefined ? await stopAdopted(ctx, record) : await stopRecord(record, resolved.stopTimeoutMs);
+          const result = record.handle === null || record.handle === undefined ? await stopAdopted(ctx, record) : await stopRecord(ctx, record, resolved.stopTimeoutMs);
           stopped.push({
             serverId: id,
             pid: record.pid,

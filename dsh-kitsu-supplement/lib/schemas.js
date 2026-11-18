@@ -218,7 +218,7 @@ export const STOP_SCHEMA = {
           port: { type: "number" },
           ok: { type: "boolean", required: true },
           reason: { type: "string", required: true },
-          exitCode: { type: "number" },
+          exitCode: { oneOf: [{ type: "number" }, { type: "null" }] },
           waitedMs: { type: "number" },
         },
       },
