@@ -14,10 +14,12 @@
 #include <doodle_lib/logger/logger.h>
 
 #include <boost/asio/bind_cancellation_slot.hpp>
+#include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/consign.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/post.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/beast/core/buffers_prefix.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
@@ -127,7 +129,9 @@ boost::asio::awaitable<void> ws_outlet::take_over_previous() {
 boost::asio::awaitable<void> ws_outlet::close_protocol() {
   if (!stream_.is_open()) co_return;
   try {
-    co_await stream_.async_close(boost::beast::websocket::close_code::normal, boost::asio::use_awaitable);
+    co_await stream_.async_close(
+        boost::beast::websocket::close_code::normal, boost::asio::bind_executor(exec_, boost::asio::use_awaitable)
+    );
   } catch (const std::exception& in_err) {
     SPDLOG_INFO("face_capture ws 关闭: {}", in_err.what());
   }
@@ -158,7 +162,7 @@ boost::asio::awaitable<void> ws_outlet::read_loop() {
   while (!closed_.load(std::memory_order_acquire)) {
     read_buffer_.consume(read_buffer_.size());
     try {
-      co_await stream_.async_read(read_buffer_, boost::asio::use_awaitable);
+      co_await stream_.async_read(read_buffer_, boost::asio::bind_executor(exec_, boost::asio::use_awaitable));
     } catch (const std::exception& in_err) {
       SPDLOG_INFO("face_capture ws 连接结束: {}", in_err.what());
       break;
@@ -177,7 +181,7 @@ boost::asio::awaitable<void> ws_outlet::close_impl() {
 boost::asio::awaitable<void> ws_outlet::write_message(std::unique_ptr<ws_message> in_message) {
   if (closing_) co_return;
 
-  if (pending_frame()) co_return;
+  if (!in_message->key() && pending_frame()) co_return;
 
   writing_.store(true, std::memory_order_release);
   pending_since_ = std::chrono::steady_clock::now();
@@ -198,7 +202,9 @@ boost::asio::awaitable<void> ws_outlet::write_raw(bool in_binary, const std::vec
 
   try {
     stream_.binary(in_binary);
-    co_await stream_.async_write(boost::asio::buffer(in_bytes), boost::asio::use_awaitable);
+    co_await stream_.async_write(
+        boost::asio::buffer(in_bytes), boost::asio::bind_executor(exec_, boost::asio::use_awaitable)
+    );
     stream_.binary(false);
   } catch (const std::exception& in_err) {
     SPDLOG_INFO("face_capture ws 写失败: {}", in_err.what());
