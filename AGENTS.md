@@ -62,6 +62,10 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
 2. **写测试放到 [`test_js/`](test_js/)。** Playwright + `request` fixture 打 HTTP 契约，不启浏览器；`baseURL` 取环境变量 `DOODLE_BASE_URL`（`playwright.config.js`、`test/config.js` 都读它），把它设成上一步的 `baseUrl`。目录约定、环境变量与既有文件清单见 [test_js/README.md](test_js/README.md)。**不要往 `src/test/**` 加测试**（那是 C++ 单元测试）。
 3. **数据不足时用 `kitsu_server_sql` 补。** 直接对 `dbPath` 指向的库执行 SQL 文件或片段，**不要为它停服或重启**——运行中的服务端写完即可查到。不确定脚本对不对就先 `dryRun: true` 跑一遍。整批是单事务，失败会整体回滚并报出「来源 + 第几条 + SQLite 原文」。
 4. **测完停服。** `kitsu_server_stop` 停掉本次拉起的实例，别把监听端口和进程留给下一次。
+5. **编译前必须先停服。** 服务进程持有 `bin\doodle_lib.dll`，不停服直接 `cmake_build` 会在链接阶段报
+   `LNK1168: cannot open bin\doodle_lib.dll for writing`，整次构建失败。顺序固定为
+   **`kitsu_server_stop` → `cmake_build` → 需要时再 `kitsu_server_start`**；改完 `doodle_lib` 里的代码要复测时，
+   也必须先停服再编译、编译完再重启，不能指望运行中的进程换掉已加载的 DLL。
 
 `kitsu_server_status` 可随时查本插件记录的实例与端口占用。本插件只杀自己拉起的进程。
 
