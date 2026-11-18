@@ -1,8 +1,7 @@
 // dsh-kitsu-supplement —— 通用：常量、路径/端口解析、argv、URL 与输出清洗
 //
 // 本文件只放纯逻辑：不依赖任何 import，也不访问 ctx / await 宿主资源。
-// 常量不写 export：跨文件 import 会变成加载期契约，一旦模块图的导出名丢失就是
-// 「MODES is not defined」这类运行期错误；各文件就地定义自己的副本。
+// 常量在本文件唯一定义并导出，其余文件从这里 import（test/pure.mjs 不允许文件间同名导出）。
 // test/pure.mjs 读取 lib/pure/dispatch.js 里登记的文件逐个求值，契约与原先的纯逻辑区段一致。
 
 
@@ -10,50 +9,50 @@ export const MODES = ["production", "local"];
 
 /** 这些开关由参数生成，extraArgs 里再出现就是两个事实来源。 */
 
-const OWNED_FLAGS = ["--local", "--config", "--port", "--root", "--dbPath"];
+export const OWNED_FLAGS = ["--local", "--config", "--port", "--root", "--dbPath"];
 
 
-const DEFAULT_EXE_PATH = "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement.exe";
+export const DEFAULT_EXE_PATH = "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement.exe";
 
-const DEFAULT_MODE = "production";
+export const DEFAULT_MODE = "production";
 
-const DEFAULT_READY_PATH = "/";
+export const DEFAULT_READY_PATH = "/";
 /** 就绪等待上限：显式端口已定，剩下的只是等进程把监听建立起来。 */
 
-const READY_TIMEOUT_MS = 100000;
+export const READY_TIMEOUT_MS = 100000;
 
-const DEFAULT_STOP_TIMEOUT_MS = 5000;
+export const DEFAULT_STOP_TIMEOUT_MS = 5000;
 
-const DEFAULT_MAX_OUTPUT_BYTES = 8 * 1024 * 1024;
+export const DEFAULT_MAX_OUTPUT_BYTES = 8 * 1024 * 1024;
 
-const DEFAULT_MAX_TAIL_CHARS = 4000;
+export const DEFAULT_MAX_TAIL_CHARS = 4000;
 
-const DEFAULT_GUIDANCE_ORDER = 1396;
+export const DEFAULT_GUIDANCE_ORDER = 1396;
 
-const MIN_OUTPUT_BYTES = 64 * 1024;
+export const MIN_OUTPUT_BYTES = 64 * 1024;
 
-const MAX_OUTPUT_BYTES = 64 * 1024 * 1024;
+export const MAX_OUTPUT_BYTES = 64 * 1024 * 1024;
 
-const GUIDANCE_SECTION = "tool:kitsu-supplement";
+export const GUIDANCE_SECTION = "tool:kitsu-supplement";
 
 /** 系统工具用绝对路径：提供方对裸名称按清理后的 PATH 解析，结果随宿主环境变化。 */
 
-const NETSTAT_EXE = "C:\\Windows\\System32\\netstat.exe";
+export const NETSTAT_EXE = "C:\\Windows\\System32\\netstat.exe";
 
-const TASKKILL_EXE = "C:\\Windows\\System32\\taskkill.exe";
+export const TASKKILL_EXE = "C:\\Windows\\System32\\taskkill.exe";
 /** 允许的监听端口闭区间；端口必须落在区间内，测试脚本才能引用固定地址。 */
 
-const PORT_MIN = 50030;
+export const PORT_MIN = 50030;
 
-const PORT_MAX = 50330;
+export const PORT_MAX = 50330;
 /** 内存库标记：服务端没拿到 --dbPath 时落在 ":memory:"（kitsu_supplement.cpp:178）。 */
 
-const MEMORY_DB = ":memory:";
+export const MEMORY_DB = ":memory:";
 /** sql 执行时等待写锁的上限，运行中的服务端可能正好在写。 */
 
-const SQL_BUSY_TIMEOUT_MS = 5000;
+export const SQL_BUSY_TIMEOUT_MS = 5000;
 
-const PORT_RANGE_TEXT = `${PORT_MIN}-${PORT_MAX}`;
+export const PORT_RANGE_TEXT = `${PORT_MIN}-${PORT_MAX}`;
 
 /**
  * @param {unknown} value

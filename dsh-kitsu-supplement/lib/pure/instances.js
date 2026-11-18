@@ -3,11 +3,7 @@
 // 本文件只放纯逻辑：不依赖任何 import，也不访问 ctx / await 宿主资源。
 // test/pure.mjs 读取 lib/pure/dispatch.js 里登记的文件逐个求值，契约与原先的纯逻辑区段一致。
 
-import { DEFAULT_MODE, baseUrlOf, errorText, isPlainObject, normalizePath, parsePort, trimOrEmpty } from "./common.js";
-
-/** 这些名字在本文件内就地定义，不跨文件 import：模块图的导出名不是加载期契约。 */
-
-const MODES = ["production", "local"];
+import { DEFAULT_MODE, MODES, baseUrlOf, errorText, isPlainObject, normalizePath, parsePort, trimOrEmpty } from "./common.js";
 
 export const INSTANCE_STATE_VERSION = 1;
 
