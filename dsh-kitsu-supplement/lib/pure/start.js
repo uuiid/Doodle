@@ -3,7 +3,21 @@
 // 本文件只放纯逻辑：不依赖任何 import，也不访问 ctx / await 宿主资源。
 // test/pure.mjs 读取 lib/pure/dispatch.js 里登记的文件逐个求值，契约与原先的纯逻辑区段一致。
 
-import { DEFAULT_EXE_PATH, DEFAULT_MODE, DEFAULT_READY_PATH, MEMORY_DB, OWNED_FLAGS, PORT_RANGE_TEXT, baseUrlOf, isPlainObject, normalizePath, parsePort, portInRange, sanitizeForJson, trimOrEmpty } from "./common.js";
+import { DEFAULT_MODE, baseUrlOf, isPlainObject, normalizePath, parsePort, portInRange, sanitizeForJson, trimOrEmpty } from "./common.js";
+
+/** 这些名字在本文件内就地定义，不跨文件 import：模块图的导出名不是加载期契约。 */
+
+const MODES = ["production", "local"];
+
+const DEFAULT_EXE_PATH = "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement.exe";
+
+const DEFAULT_READY_PATH = "/";
+
+const MEMORY_DB = ":memory:";
+
+const OWNED_FLAGS = ["--local", "--config", "--port", "--root", "--dbPath"];
+
+const PORT_RANGE_TEXT = "50030-50330";
 
 /**
  * 校验启动参数，返回全部问题（空数组表示通过）。

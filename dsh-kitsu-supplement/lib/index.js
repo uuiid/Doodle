@@ -78,6 +78,11 @@ export { errorText, sanitizeForJson } from "./pure/common.js";
 
 export { getServer, resetRegistry } from "./runtime/registry.js";
 
+// 跨文件导入会变成加载期绑定：宿主把模块图求值后它可能丢掉，
+// 变成「MODES is not defined」这类运行期错误。这里按值取一次再持有，
+// 后续逻辑只用本文件的局部常量，不再依赖导入绑定。
+const MODE_NAMES = [...MODES];
+
 /**
  * 把配置规整成运行期用的 resolved 对象。
  *
@@ -88,7 +93,7 @@ function resolveConfig(config) {
   const resolved = {
     exePath: trimOrEmpty(config?.exePath) || DEFAULT_EXE_PATH,
     defaultCwd: trimOrEmpty(config?.defaultCwd),
-    defaultMode: MODES.includes(config?.defaultMode) ? config.defaultMode : DEFAULT_MODE,
+    defaultMode: MODE_NAMES.includes(config?.defaultMode) ? config.defaultMode : DEFAULT_MODE,
     defaultRoot: trimOrEmpty(config?.defaultRoot),
     defaultConfigPaths: isPlainObject(config?.defaultConfigPaths) ? config.defaultConfigPaths : {},
     readyPath: trimOrEmpty(config?.readyPath) || DEFAULT_READY_PATH,

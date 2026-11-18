@@ -5,7 +5,7 @@
 
 import { defineTool } from "@deepseek-ai/dsh-tools";
 
-import { MEMORY_DB, MODES, PORT_RANGE_TEXT, normalizePath, parsePort, renderArgv, sanitizeForJson, trimOrEmpty } from "./pure/common.js";
+import { MEMORY_DB, PORT_RANGE_TEXT, normalizePath, parsePort, renderArgv, sanitizeForJson, trimOrEmpty } from "./pure/common.js";
 import { slotSummary } from "./pure/instances.js";
 import { errorText } from "./pure/common.js";
 import { validateSlotRequest } from "./pure/instances.js";
@@ -29,6 +29,11 @@ import { allocatePlaywrightRunId, allocateServerId, getPlaywrightRunning, setPla
 import { playwrightFailure, runPlaywrightTool } from "./runtime/playwright.js";
 import { probePort, sleep } from "./runtime/process.js";
 import { startServer, stopAdopted, stopRecord } from "./runtime/server.js";
+
+/** 本文件就地定义，不跨文件 import：模块图的导出名不是加载期契约。 */
+
+const MODES = ["production", "local"];
+
 /** @param {any} deps */
 export function registerStartTool({ ctx, resolved, registry, stateWarnings, statePath, saveInstances, writeConfigFile, exists }) {
   ctx.tools.register(

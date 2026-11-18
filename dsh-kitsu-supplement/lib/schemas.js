@@ -12,7 +12,6 @@ import {
   DEFAULT_MODE,
   DEFAULT_READY_PATH,
   DEFAULT_STOP_TIMEOUT_MS,
-  MODES,
   READY_TIMEOUT_MS,
 } from "./pure/common.js";
 import {
@@ -21,6 +20,10 @@ import {
   PLAYWRIGHT_KILL_TIMEOUT_MS,
   PLAYWRIGHT_TIMEOUT_MS,
 } from "./pure/playwright.js";
+
+/** 这些名字在本文件内就地定义，不跨文件 import：模块层的导出名不是加载期契约。 */
+
+const MODES = ["production", "local"];
 
 export const name = "kitsu-supplement";
 
