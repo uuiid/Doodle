@@ -35,6 +35,10 @@ app_base* app_base::self = nullptr;
 bool app_base::init() { return true; }
 app_base::app_base(int argc, const char* const argv[]) : arg_{argc, argv} {
   self = this;
+  if (auto l_root_path = arg_({"root"}); l_root_path)
+    core_set::get_set().p_root = FSys::from_quotation_marks(l_root_path.str());
+  
+  p_log = std::make_shared<std::shared_ptr<details::logger_ctrl>::element_type>();
   init_lib();
   default_logger_raw()->log(log_loc(), level::warn, "开始初始化基本配置");
   default_logger_raw()->flush();

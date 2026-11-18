@@ -147,7 +147,7 @@ logger_ctrl::file_sink_mt_ptr logger_ctrl::make_file_sink_mt(const std::string& 
   return l_rotating_file_sink_;
 }
 
-logger_ctrl::logger_ctrl() : p_log_path(FSys::temp_directory_path() / "doodle" / "log") {
+logger_ctrl::logger_ctrl() : p_log_path(core_set::get_set().p_root / "log") {
   if (!spdlog::details::registry::instance().get_tp()) spdlog::init_thread_pool(8192, 1);
   init_temp_log();
 }

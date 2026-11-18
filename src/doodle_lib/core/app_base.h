@@ -59,7 +59,7 @@ class DOODLELIB_API app_base : public boost::noncopyable {
   strand_t strand_{boost::asio::make_strand(io_context_)};
   std::vector<strand_t> strands_{};
   std::atomic_size_t strand_index_{0};
-  std::shared_ptr<details::logger_ctrl> p_log{std::make_shared<std::shared_ptr<details::logger_ctrl>::element_type>()};
+  std::shared_ptr<details::logger_ctrl> p_log{};
 
  public:
   explicit app_base(int argc, const char* const argv[]);
