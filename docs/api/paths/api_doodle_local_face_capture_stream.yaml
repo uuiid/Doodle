@@ -14,7 +14,7 @@ get:
 
     | 文件 | 负责 |
     | --- | --- |
-    | `ws_outlet.cpp` | 连接生命周期、按 `key()` 分流的单帧在途发送、读方向空闲超时与死连接判定、关闭顺序 |
+    | `ws_outlet.cpp` | 连接生命周期、设备级互斥申请、TBB 写队列与唯一写协程、读方向空闲超时与死连接判定、关闭顺序 |
     | `ws_message.cpp` | 三种下行事件的 JSON 字段 |
     | `capture_session.cpp` | 事件发送时机、帧号、预览/录制两轴状态 |
     | `media_fragment_pipeline.cpp` | libx264 编码与 fMP4 分片切分 |
@@ -25,17 +25,18 @@ get:
 
     - 握手成功即按当前选中的摄像头 index（见 `GET/POST .../devices`）打开摄像头并推 25 fps
       预览，不写任何磁盘文件；宽高请求 1280×720（向下取偶），随后用首帧实际尺寸覆盖。
-    - 每条连接各自创建并持有自己的 `capture_session`（不是全局单例），并在启动时把它登记到
-      共享的 `capture_session_holder`。登记有保护（`capture_session_holder::reset`）：
-      槽位里已有一个不同的会话时不覆盖，因此 holder 指向的是最早建立且尚未断开的那条连接，
-      录制类接口（`/recordings*`）也作用在它上面。
-    - 后连的连接不会挤掉先前的登记，也不会让服务端主动断开旧连接：它会自己再打开一次摄像头；
-      打开失败（例如设备被占用）只记 WARN 日志，连接保持，但收不到 `hello`、也不会有任何帧，
-      且不会收到任何错误事件。
+    - **同一时刻只允许一条连接占用摄像头**（设备级互斥）。每条连接各自创建并持有自己的
+      `capture_session`，启动时先向共享的 `capture_session_holder` 申请设备
+      （`try_acquire_device`，内部原子「检查并占用」）：
+      - 申请成功：正常打开摄像头并推流，同时把会话登记进 holder，录制类接口（`/recordings*`）
+        作用在它上面；
+      - 申请失败（已有其它连接的会话持有设备）：**握手仍是成功的 `101`，但服务端随即正常关闭
+        这条连接**，不打开摄像头、不下发 `hello` / `avc_init`、不推任何帧，也没有错误事件。
+        前端应把「连上但没有 `hello` 就关闭」识别为「摄像头已被其它页面占用」并给出提示，
+        不要反复静默重连。
     - 断开即结束会话：`close_impl()` 的顺序固定为「关摄像头并收尾在录的 `take.mp4` / `align.json`
-      → 无条件把 holder 置空（`holder_->reset(nullptr)`，不校验归属）→ 置关闭标志 →
-      正常 `async_close`」。置空不区分归属，即使槽位里此时已是另一条连接的会话也会被清掉，
-      之后录制类接口会得到「当前没有可用的预览连接」。
+      → 把 holder 置空 → **释放设备所有权（`release_device`）** → 置关闭标志」。
+      释放后下一条连接可立即申请成功并接管摄像头，不需要等待超时。
     - `/stream` 不带路径参数，连接不携带任何会话标识；真正的录制 id 由 `POST .../recordings` 生成。
     - 服务端不解析任何上行消息（读循环每次 `async_read` 后清空缓冲区丢弃），控制面一律走 HTTP；
       服务端也不主动发 ping 或状态事件，连接是否存活由浏览器自己感知，重连就是重新发起本请求。
@@ -123,23 +124,27 @@ get:
 
     ### 发送与丢弃
 
-    `send()` 对调用方是同步的：把消息 `post` 到 WS 流自己的执行器，再在该执行器上
-    `co_spawn` 一个 `write_message` 协程。**没有写队列，单帧在途**，按 `key()` 分两类处理：
+    `send()` 对调用方是同步的：只把消息 push 进 `tbb::concurrent_queue`，若当前没有写协程在跑，
+    再 `co_spawn` 一个 `write_loop()`。**全生命周期只有一个写协程**，它是该 WS 流唯一的写者——
+    这是必须的：beast 的 `websocket::stream` 用内部 soft_mutex 保护写方向，同一时刻允许多个
+    `async_write` 在途会直接触发断言崩溃。
 
-    - **`avc_fragment`（`key() == false`）可丢**：`write_message` 入口查 `pending_frame()`，
-      上一条事件还没写完就整条丢弃（text 与 binary 都不写）。
-    - **`hello` / `avc_init`（`key() == true`）不丢**：不再走 `pending_frame()` 判断。它们与
-      `avc_fragment` 一样投递到同一个执行器上串行执行，天然排在前一条之后，
-      因此「`hello` 紧跟 `avc_init`」这类连续两次 `send()` 不会因为前一条还在写就被丢掉。
+    - **丢弃判断在 `write_loop` 里**：取出消息后若 `key() == false` 且 `pending_frame()` 为真
+      （上一条事件的 text + binary 还没写完），整条丢弃（text 与 binary 都不写）。
+    - **`avc_fragment`（`key() == false`）可丢**：画质优先，前端最多少 40 ms 画面。
+    - **`hello` / `avc_init`（`key() == true`）不丢**：不参与 `pending_frame()` 判断，一定写出。
+      因此「`hello` 紧跟 `avc_init`」这类连续两次 `send()` 都能到达。
       ——早期实现对所有消息一律按 `pending_frame()` 丢弃，导致连接建立时 `avc_init` 被
       `hello` 挤掉、前端永远收不到初始化段。
     - `writing_` / `pending_since_` 覆盖**整次事件**（`avc_fragment` 的 text 帧 + binary 帧
       两次 `async_write` 合起来才算一次）：`write_message` 入口置位、两次写完才复位，
       因此 `pending_frame()` 不会在事件中途变回 `false`。
     - 采集侧（`capture_session::drain_filter_frames`）在发分片前也做了一次同样的判断：
-      `l_outlet->pending_frame()` 为真就跳过该分片，不再入 `send()`。
-    - 被丢的是整条事件：前端看到的只是这 40 ms 没有新画面，下一段分片照常 append 即可解码
-      （分片是 GOP 内的连续片段，不需要等关键帧恢复）。
+      `l_outlet->pending_frame()` 为真就跳过该分片，不再入队。
+    - 队列空时写协程退出；若退出瞬间又有消息入队，`send()` 会重新拉起写协程，不会丢消息。
+    - **取消信号**：`write_loop` 循环条件监听
+      `(co_await this_coro::cancellation_state).cancelled() == cancellation_type::none`，
+      进程退出（`app_base::on_cancel` 触发）时写协程随取消信号结束。
 
     ### 死连接判定
 
@@ -175,7 +180,14 @@ get:
       <- avc_fragment ...          录制期分片，seq 与 take.mp4 对齐
     POST /recordings/stop          （返回时 take.mp4 已收尾，预览继续）
       <- avc_fragment ...          回到预览计数
-    断开连接                       会话结束；若在录则自动收尾
+    断开连接                       会话结束；若在录则自动收尾；设备所有权随即释放
+    ```
+
+    设备已被占用时的时序（同一时刻只允许一条连接）：
+
+    ```
+    GET(Upgrade) /stream            <- 101 握手成功
+    服务端立即 close                <- 没有 hello、没有 avc_init、没有任何分片
     ```
   operationId: face_capture_stream
   responses:
