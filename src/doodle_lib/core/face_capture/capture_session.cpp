@@ -227,11 +227,11 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     l_status.width_           = width_;
     l_status.height_          = height_;
     l_status.fps_             = k_fps;
-    l_status.frames_          = seq_;
+    l_status.frames_          = record_frame_seq_;
     l_status.raw_frames_      = orig_seq_;
     l_status.inserted_frames_ = 0;
     l_status.source_fps_      = source_fps();
-    l_status.duration_ms_     = static_cast<std::int64_t>(seq_) * k_frame_interval_ms;
+    l_status.duration_ms_     = static_cast<std::int64_t>(record_frame_seq_) * k_frame_interval_ms;
     l_status.truncated_       = truncated_;
     return l_status;
   }
@@ -252,29 +252,31 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   }
 
   void reset_counters(clock_type::time_point in_now) {
-    seq_            = 0;
-    orig_seq_       = 0;
-    preview_seq_    = 0;
-    source_frames_  = 0;
-    source_last_ms_ = 0;
-    gaps_           = {};
-    started_at_     = in_now;
-    last_frame_at_  = std::nullopt;
-    silent_logged_  = false;
-    truncated_      = false;
-    read_failures_  = 0;
-    read_stop_      = false;
-    read_finished_  = false;
+    seq_              = 0;
+    orig_seq_         = 0;
+    record_frame_seq_ = 0;
+    preview_seq_      = 0;
+    source_frames_    = 0;
+    source_last_ms_   = 0;
+    gaps_             = {};
+    started_at_       = in_now;
+    last_frame_at_    = std::nullopt;
+    silent_logged_    = false;
+    truncated_        = false;
+    read_failures_    = 0;
+    read_stop_        = false;
+    read_finished_    = false;
   }
 
   void reset_recording_counters(clock_type::time_point in_now) {
-    seq_            = 0;
-    orig_seq_       = 0;
-    preview_seq_    = 0;
-    source_frames_  = 0;
-    source_last_ms_ = 0;
-    gaps_           = {};
-    started_at_     = in_now;
+    seq_              = 0;
+    orig_seq_         = 0;
+    record_frame_seq_ = 0;
+    preview_seq_      = 0;
+    source_frames_    = 0;
+    source_last_ms_   = 0;
+    gaps_             = {};
+    started_at_       = in_now;
     last_frame_at_  = std::nullopt;
     silent_logged_  = false;
     truncated_      = false;
@@ -290,7 +292,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       record_.raw_frames_      = orig_seq_;
       record_.inserted_frames_ = 0;
       record_.source_fps_      = source_fps();
-      record_.duration_ms_     = static_cast<std::int64_t>(seq_) * k_frame_interval_ms;
+      record_.duration_ms_     = static_cast<std::int64_t>(record_frame_seq_) * k_frame_interval_ms;
       record_.truncated_       = truncated_;
       try {
         write_align(record_, session_dir_);
@@ -397,15 +399,15 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
       if (l_recording && mp4_writer_) {
         try {
-          mp4_writer_->push(l_mat, seq_);
+          mp4_writer_->push(l_mat, record_frame_seq_);
         } catch (const std::exception& in_err) {
           SPDLOG_WARN("take.mp4 写入失败: {}", in_err.what());
           truncated_ = true;
         }
-        ++seq_;
+        ++record_frame_seq_;
       }
 
-      auto l_seq    = l_recording ? (seq_ > 0 ? seq_ - 1 : 0) : preview_seq_++;
+      auto l_seq    = l_recording ? (record_frame_seq_ > 0 ? record_frame_seq_ - 1 : 0) : preview_seq_++;
 
       auto l_outlet = outlet_.lock();
       if (l_outlet && l_outlet->is_attached() && fragmenter_) {
@@ -474,6 +476,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   std::int32_t height_{0};
   std::uint64_t seq_{0};
   std::uint64_t orig_seq_{0};
+  std::uint64_t record_frame_seq_{0};
   std::uint64_t preview_seq_{0};
   std::uint64_t source_frames_{0};
   std::int64_t source_last_ms_{0};

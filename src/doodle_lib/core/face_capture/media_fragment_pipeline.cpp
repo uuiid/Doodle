@@ -316,13 +316,15 @@ class mp4_writer::impl {
     if (!enc_ctx_.isOpened()) return true;
     try {
       flush();
-    } catch (...) {
+    } catch (const std::exception& in_err) {
+      SPDLOG_WARN("take.mp4 flush 失败: {}", in_err.what());
     }
     enc_ctx_ = av::VideoEncoderContext{};
     try {
       format_context_.writeTrailer();
       format_context_.close();
-    } catch (...) {
+    } catch (const std::exception& in_err) {
+      SPDLOG_WARN("take.mp4 收尾失败: {}", in_err.what());
     }
     return true;
   }
