@@ -7,17 +7,22 @@
 # 权限不足时 git 会报 `cannot open .git/FETCH_HEAD: Permission denied`。
 # 需要的实际提交由「已完成窗口」状态文件驱动，中途失败直接用同一条命令重跑即可。
 # 状态文件（done.txt / clone_ue.log）写在 build\clone_ue_state，不进 git 仓库。
+# 超时处理：先请求优雅退出，未退出再杀整棵进程树，然后清理 .git 下的残留 *.lock（proto.lock 除外）。
 
 [CmdletBinding()]
 param(
     # 每个分块窗口取多少个提交；UE 单分支约 35 万提交，1 万一份大约 35 份
     [int]$WindowSize = 10000,
     # 单次 git 命令的网络上限（秒）；超时即按失败处理、写断点退出
-    [int]$FetchTimeoutSec = 1800,
+    [int]$FetchTimeoutSec = 7200,
+    # 超时后先请求优雅退出，等这么久仍未退出才强杀
+    [int]$GracefulKillSec = 15,
     # 单个窗口失败后的重试次数
     [int]$MaxRetry = 10,
     # 首次重试等待秒数，之后指数退避，上限 RetryWaitMax
     [int]$RetryWaitSec = 10,
+    # 重试前等待残留锁释放的上限（秒），超时后按进程情况决定是否清理
+    [int]$LockWaitSec = 120,
     [int]$RetryWaitMaxSec = 600,
     # 只补提交历史，不下载文件内容（blob）；真正需要 blob 时再跑 git backfill
     [switch]$SkipBackfill,
@@ -38,6 +43,72 @@ $Repo = (Resolve-Path (Join-Path $PSScriptRoot "..\UnrealEngine")).Path
 $StateDir = Join-Path $PSScriptRoot "..\build\clone_ue_state"
 $DoneFile = Join-Path $StateDir "done.txt"
 $LogFile = Join-Path $StateDir "clone_ue.log"
+
+# 结束 git 进程及其整棵子进程树；-GracefulSec 先发关闭请求，超时返回 $false 由调用方决定是否强杀
+function Stop-ProcessTree {
+    param(
+        [System.Diagnostics.Process]$Process,
+        [int]$GracefulSec = 0,
+        [switch]$Force
+    )
+    try {
+        if ($Process.HasExited) { return $true }
+        if (-not $Force -and $GracefulSec -gt 0) {
+            try { $null = $Process.CloseMainWindow() } catch { }
+            if ($Process.WaitForExit($GracefulSec * 1000)) { return $true }
+        }
+        $Process.Refresh()
+        if (-not $Process.HasExited) { $Process.Kill($true) }
+        $null = $Process.WaitForExit(15000)
+    }
+    catch {
+        Write-Log "终止进程树失败: $($_.Exception.Message)" "WARN"
+    }
+    # Kill(true) 只结束了 Windows 上已知的子进程，git-remote-*/ssh/index-pack 可能仍残留
+    foreach ($name in @("git", "git-remote-https", "git-remote-ssh", "git-index-pack", "git-pack-objects", "git-fetch-pack", "ssh")) {
+        Get-Process -Name $name -ErrorAction SilentlyContinue | ForEach-Object {
+            try { $_.Kill($true) } catch { }
+        }
+    }
+    $Process.Refresh()
+    return $Process.HasExited
+}
+
+# 列出仓库内所有 *.lock；git 正常结束会自行删除，留下的即为崩溃/强杀残留
+function Get-RepoLocks {
+    $gitDir = Join-Path $Repo ".git"
+    if (-not (Test-Path $gitDir)) { return @() }
+    return @(Get-ChildItem -Path $gitDir -Filter "*.lock" -Recurse -File -ErrorAction SilentlyContinue)
+}
+
+# 确认无 git 进程后删除残留锁；
+# 注意 proto.lock 是 .git 的普通文件（记录协议版本），不是锁，必须排除
+function Clear-StaleLocks {
+    $gitAlive = @(Get-Process -Name "git", "git-remote-https", "git-remote-ssh", "git-index-pack", "git-pack-objects" -ErrorAction SilentlyContinue)
+    if ($gitAlive.Count -gt 0) {
+        Write-Log "仍有 $($gitAlive.Count) 个 git 进程在运行，跳过残留锁清理" "WARN"
+        return $false
+    }
+    $locks = Get-RepoLocks | Where-Object { $_.Name -ne "proto.lock" }
+    if ($locks.Count -eq 0) { return $true }
+    foreach ($lock in $locks) {
+        Write-Log "删除残留锁 $($lock.FullName)" "WARN"
+        Remove-Item -Path $lock.FullName -Force -ErrorAction SilentlyContinue
+    }
+    return $true
+}
+
+# 等待指定锁文件消失，最多等 TimeoutSec 秒
+function Wait-LockCleared {
+    param([string[]]$LockPaths, [int]$TimeoutSec = 60)
+    $deadline = (Get-Date).AddSeconds($TimeoutSec)
+    while ((Get-Date) -lt $deadline) {
+        $alive = @($LockPaths | Where-Object { Test-Path $_ })
+        if ($alive.Count -eq 0) { return $true }
+        Start-Sleep -Seconds 2
+    }
+    return $false
+}
 
 function Write-Log {
     param([string]$Message, [string]$Level = "INFO")
@@ -73,8 +144,12 @@ function Invoke-Git {
     $errTask = $p.StandardError.ReadToEndAsync()
     $limitMs = if ($TimeoutSec -gt 0) { [int][Math]::Min([int64]$TimeoutSec * 1000, [int64][int]::MaxValue) } else { [int]::MaxValue }
     if (-not $p.WaitForExit($limitMs)) {
-        try { $p.Kill($true) } catch { }
-        Write-Log "git $($Arguments -join ' ') 超过 ${TimeoutSec}s，已终止" "WARN"
+        Write-Log "git $($Arguments -join ' ') 超过 ${TimeoutSec}s，先尝试优雅终止" "WARN"
+        if (-not (Stop-ProcessTree -Process $p -GracefulSec $GracefulKillSec)) {
+            Write-Log "进程未在 ${GracefulKillSec}s 内自行退出，强制杀进程树" "WARN"
+            Stop-ProcessTree -Process $p -Force
+        }
+        Clear-StaleLocks
         if (-not $AllowFail) { throw "git 超时: $($Arguments -join ' ')" }
         return @{ Code = -1; Out = ""; Err = "timeout" }
     }
@@ -224,10 +299,13 @@ if ($DryRun) {
     exit 0
 }
 
-if (Test-Path (Join-Path $Repo ".git\index.lock")) {
-    Write-Log "存在 .git\index.lock，可能另一个 git 进程在运行，退出以免破坏仓库" "ERROR"
+# 启动前：有 git 进程在跑就不动仓库；没有则清理上次强杀留下的残留锁
+$gitRunning = @(Get-Process -Name "git", "git-remote-https", "git-remote-ssh", "git-index-pack", "git-pack-objects" -ErrorAction SilentlyContinue)
+if ($gitRunning.Count -gt 0) {
+    Write-Log "有 $($gitRunning.Count) 个 git 进程在运行（PID $($gitRunning.Id -join ',')），退出以免破坏仓库" "ERROR"
     exit 2
 }
+$null = Clear-StaleLocks
 
 $round = 0
 while ($true) {
@@ -249,6 +327,14 @@ while ($true) {
     for ($try = 1; $try -le $MaxRetry; $try++) {
         if (Invoke-Window -Target $target) { $ok = $true; break }
         if ($try -lt $MaxRetry) {
+            # 重试前必须先等上一轮的锁消失，否则必然重复撞同一个锁，白白耗掉重试次数
+            $locks = @(Get-RepoLocks | Where-Object { $_.Name -ne "proto.lock" } | ForEach-Object { $_.FullName })
+            if ($locks.Count -gt 0) {
+                Write-Log "发现残留锁 $(($locks | ForEach-Object { Split-Path $_ -Leaf }) -join ',')，等待其释放" "WARN"
+                if (-not (Wait-LockCleared -LockPaths $locks -TimeoutSec $LockWaitSec)) {
+                    $null = Clear-StaleLocks
+                }
+            }
             $wait = [Math]::Min($RetryWaitSec * [Math]::Pow(2, $try - 1), $RetryWaitMaxSec)
             Write-Log "第 $try 次失败，${wait}s 后重试" "WARN"
             Start-Sleep -Seconds $wait
