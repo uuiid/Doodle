@@ -37,9 +37,11 @@ bool kitsu_supplement_test_main::init() {
   l_set.ue_ctx_   = std::make_shared<ue_ctx>();
   l_set.database_ = std::make_shared<sqlite_storage>();
 
-  auto l_root  = FSys::from_quotation_marks(arg_str(arg_, "root", (boost::dll::program_location().parent_path() / "test_data").generic_string()));
-  auto l_db    = arg_str(arg_, "dbPath", ":memory:");
-  auto l_secret = arg_str(arg_, "secret", "22T0iwSHK7qkhdI6");
+  auto l_root = FSys::from_quotation_marks(arg_str(
+      arg_, "root", (boost::dll::program_location().parent_path() / "test_data").generic_string()
+  ));
+  auto l_db       = arg_str(arg_, "dbPath", ":memory:");
+  auto l_secret   = arg_str(arg_, "secret", "22T0iwSHK7qkhdI6");
   auto l_protocol = arg_str(arg_, "domain_protocol", "http");
   auto l_domain   = arg_str(arg_, "domain_name", "127.0.0.1");
   auto l_proxy    = arg_str(arg_, "http_proxy_url", "");
@@ -60,7 +62,7 @@ bool kitsu_supplement_test_main::init() {
 
   cv::setNumThreads(::GetActiveProcessorCount(0));
 
-  auto l_route_ptr = http::create_test_route(l_root.generic_string(), l_db, l_port);
+  auto l_route_ptr = http::create_test_route();
 
   if (arg_["selftest"]) return true;
 
