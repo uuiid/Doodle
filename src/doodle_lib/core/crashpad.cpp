@@ -30,7 +30,7 @@ crashpad_init::crashpad_init() {
   l_annotations["version"] = version::build_info::get().version_str;
   std::vector<std::string> l_arguments{};
   l_arguments.push_back("--no-rate-limit");
-#ifdef NDEBUG
+// #ifdef NDEBUG
   bool l_success = l_client.StartHandler(
       base::FilePath{l_handler_path.wstring()}, base::FilePath{l_db_path.wstring()},
       base::FilePath{l_db_path.wstring()}, std::string{}, l_annotations, l_arguments, true, false
@@ -40,7 +40,7 @@ crashpad_init::crashpad_init() {
   } else {
     SPDLOG_INFO(fmt::format("crashpad 初始化成功, handler: {}, db: {}", l_handler_path.string(), l_db_path.string()));
   }
-#endif
+// #endif
 }
 crashpad_init::~crashpad_init() {}
 crashpad_init& crashpad_init::get() {
