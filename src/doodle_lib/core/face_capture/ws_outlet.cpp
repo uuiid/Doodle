@@ -111,6 +111,13 @@ void ws_outlet::mark_closed() {
 std::shared_ptr<capture_session> ws_outlet::session() const { return session_; }
 
 boost::asio::awaitable<void> ws_outlet::run() {
+  if (holder_ && !holder_->try_acquire_device(session_)) {
+    SPDLOG_WARN("face_capture 摄像头已被其它连接占用, 拒绝本条连接");
+    co_await close_protocol();
+    co_await close_impl();
+    co_return;
+  }
+
   session_->attach(shared_from_this());
   if (holder_) holder_->reset(session_);
 
@@ -187,7 +194,10 @@ boost::asio::awaitable<void> ws_outlet::close_impl() {
 
   co_await close_capture();
 
-  if (holder_) holder_->reset(nullptr);
+  if (holder_) {
+    holder_->reset(nullptr);
+    holder_->release_device();
+  }
 }
 
 boost::asio::awaitable<void> ws_outlet::write_message(std::unique_ptr<ws_message> in_message) {

@@ -551,6 +551,7 @@ const capture_session::executor_type& capture_session::get_executor() const { re
 struct capture_session_holder::impl {
   mutable std::mutex mutex_{};
   std::shared_ptr<capture_session> session_{};
+  std::shared_ptr<capture_session> device_owner_{};
 };
 
 capture_session_holder::capture_session_holder() : impl_ptr_(std::make_shared<impl>()) {}
@@ -558,6 +559,18 @@ capture_session_holder::capture_session_holder() : impl_ptr_(std::make_shared<im
 std::shared_ptr<capture_session> capture_session_holder::session() const {
   std::scoped_lock l_lock{impl_ptr_->mutex_};
   return impl_ptr_->session_;
+}
+
+bool capture_session_holder::try_acquire_device(const std::shared_ptr<capture_session>& in_session) {
+  std::scoped_lock l_lock{impl_ptr_->mutex_};
+  if (impl_ptr_->device_owner_ && impl_ptr_->device_owner_ != in_session) return false;
+  impl_ptr_->device_owner_ = in_session;
+  return true;
+}
+
+void capture_session_holder::release_device() {
+  std::scoped_lock l_lock{impl_ptr_->mutex_};
+  impl_ptr_->device_owner_.reset();
 }
 
 void capture_session_holder::reset(std::shared_ptr<capture_session> in_session) {

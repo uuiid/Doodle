@@ -25,6 +25,10 @@ class capture_session_holder {
 
   [[nodiscard]] std::shared_ptr<capture_session> session() const;
 
+  bool try_acquire_device(const std::shared_ptr<capture_session>& in_session);
+
+  void release_device();
+
   void reset(std::shared_ptr<capture_session> in_session);
 
  private:
