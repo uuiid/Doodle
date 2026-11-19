@@ -12,10 +12,13 @@
 
 namespace doodle::http {
 class http_route;
-using http_route_ptr = std::shared_ptr<http_route>;
 
-http_route_ptr create_kitsu_route_2();
-http_route_ptr create_kitsu_local_route();
+void DOODLELIB_API reg_kitsu_socket_io(http_route& in_route);
+void DOODLELIB_API reg_kitsu_urls(http_route& in_route);
+void DOODLELIB_API reg_kitsu_local_urls(http_route& in_route);
+
+void DOODLELIB_API create_kitsu_route_2(http_route& in_route);
+void DOODLELIB_API create_kitsu_local_route(http_route& in_route);
 
 doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_name);
 

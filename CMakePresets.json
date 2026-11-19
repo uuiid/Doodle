@@ -93,7 +93,7 @@
       "inherits": "debug",
       "targets": [
         "doodle_kitsu_supplement",
-        "test_main"
+        "doodle_kitsu_supplement_test"
       ]
     },
     {

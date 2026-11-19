@@ -220,9 +220,9 @@ class DOODLELIB_API url_route_component_t : public url_route_component_base_t {
       component_ = {create_cap_ptr(args)...};
       return *this;
     }
-    void parse_url_path();
-    component_vector_t get_component_vector() const;
-    operator url_route_component_ptr() const;
+    DOODLELIB_API void parse_url_path();
+    DOODLELIB_API component_vector_t get_component_vector() const;
+    DOODLELIB_API operator url_route_component_ptr() const;
   };
 
  public:

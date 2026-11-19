@@ -161,7 +161,8 @@ bool kitsu_supplement_main::init() {
     l_set.database_->open(l_args.db_path_);
     l_set.database_->upgrade();
     // 初始化路由
-    auto l_rout_ptr = http::create_kitsu_local_route();
+    auto l_rout_ptr = std::make_shared<http::http_route>();
+    http::create_kitsu_local_route(*l_rout_ptr);
     // 开始运行服务器
     http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
     return true;
@@ -190,7 +191,8 @@ bool kitsu_supplement_main::init() {
         l_args.mail_config_.password_
     };
   // 初始化路由
-  auto l_rout_ptr = http::create_kitsu_route_2();
+  auto l_rout_ptr = std::make_shared<http::http_route>();
+  http::create_kitsu_route_2(*l_rout_ptr);
   // 关闭可能存在的旧实例
   // stop_previous_instance(l_args.port_, l_args.secret_);
   // 开始运行服务器

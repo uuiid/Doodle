@@ -1,98 +1,66 @@
-
-
 add_executable(
-        test_main
-        EXCLUDE_FROM_ALL
-)
-target_sources(
-        test_main
-        PRIVATE
+        doodle_kitsu_supplement_test
         test_main.cpp
-)
-
-target_sources(
-        test_main
-        PUBLIC
-        PRIVATE
+        kitsu_supplement_test.cpp
+        test_reg.cpp
         ${PROJECT_SOURCE_DIR}/src/DoodleExe.manifest
         ${PROJECT_SOURCE_DIR}/src/icon.ico
         ${PROJECT_SOURCE_DIR}/src/win_exe.rc
 )
-set_target_properties(test_main
+
+set_target_properties(doodle_kitsu_supplement_test
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-target_link_libraries(test_main
+
+target_include_directories(doodle_kitsu_supplement_test
+        PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/src/exe_gui)
+
+target_link_libraries(doodle_kitsu_supplement_test
         PUBLIC
+        mimalloc
         doodle_lib
-        Boost::unit_test_framework
-        cldapi.lib
-        Boost::log
-        Boost::log_setup
-        Alembic::Alembic
-        Fbx::Fbx-static
-        TBB::tbb
+        PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto
-        unofficial::sqlite3::sqlite3
-        Eigen3::Eigen
-)
-target_compile_definitions(test_main
-        PUBLIC
-        CRTDBG_MAP_ALLOC
-        BOOST_TEST_DYN_LINK
-        BOOST_ALL_DYN_LINK
+        TBB::tbb
 )
 
-target_compile_options(test_main PRIVATE
+target_compile_definitions(doodle_kitsu_supplement_test
+        PUBLIC
+        CRTDBG_MAP_ALLOC
+)
+
+target_compile_options(doodle_kitsu_supplement_test PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/bigobj>
         $<$<CXX_COMPILER_ID:MSVC>:/MP>)
 
-add_subdirectory(core)
+find_program(
+        crashpad_handler_exe
+        NAMES crashpad_handler.exe
+        HINTS
+        $<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/debug/tools>
+        $<$<CONFIG:Release>:${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/tools>
+)
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        add_custom_command(
+                TARGET doodle_kitsu_supplement_test
+                POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE_DIR:doodle_kitsu_supplement_test>/zlibd1.dll $<TARGET_FILE_DIR:doodle_kitsu_supplement_test>/zlib1.dll
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${crashpad_handler_exe} $<TARGET_FILE_DIR:doodle_kitsu_supplement_test>
+        )
+endif()
 
-# create the testing file and list of tests
-# create_test_sourcelist(main_test
-#         CommonCxxTests.cxx
-#         core/abc.cpp
-#         core/sod_log.cpp
-#         core/folder_is_save.cpp
-#         core/process_message.cpp
-#         core/merge_assets_tree.cpp
-# )
+add_custom_command(
+        TARGET doodle_kitsu_supplement_test
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<IF:$<CONFIG:Debug>,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/debug/bin/onnxruntime_providers_cuda.dll,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin/onnxruntime_providers_cuda.dll>"
+                "$<TARGET_FILE_DIR:doodle_kitsu_supplement_test>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<IF:$<CONFIG:Debug>,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/debug/bin/onnxruntime_providers_shared.dll,${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin/onnxruntime_providers_shared.dll>"
+                "$<TARGET_FILE_DIR:doodle_kitsu_supplement_test>"
+)
 
-# # add the executable
-# add_executable(CommonCxxTests ${main_test} ../DoodleExe.manifest)
-
-# # remove the test driver source file
-# set(TestsToRun ${main_test})
-# list(REMOVE_ITEM TestsToRun CommonCxxTests.cxx)
-
-# # Add all the ADD_TEST for each test
-# foreach (test ${TestsToRun})
-#     cmake_path(GET test PARENT_PATH TPath)
-#     cmake_path(GET test STEM TStem)
-#     if (TPath STREQUAL "")
-#         set(test_name ${TStem})
-#         set(test_comm ${TStem})
-#     else ()
-#         set(test_name ${TPath}_${TStem})
-#         set(test_comm ${TPath}/${TStem})
-#     endif ()
-#     add_test(NAME ${test_name} COMMAND CommonCxxTests ${test_comm})
-# endforeach ()
-
-# target_link_libraries(CommonCxxTests
-#         PUBLIC
-#         doodle_lib
-#         Alembic::Alembic
-# )
-# target_compile_definitions(CommonCxxTests
-#         PUBLIC
-#         BOOST_TEST_DYN_LINK
-#         BOOST_ALL_DYN_LINK
-# )
-# target_compile_options(CommonCxxTests PRIVATE
-#         $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
-#         $<$<CXX_COMPILER_ID:MSVC>:/MP>)
-
-
- 
+add_test(NAME doodle_kitsu_supplement_test COMMAND doodle_kitsu_supplement_test --selftest)

@@ -6,6 +6,8 @@
 #include <doodle_core/configure/static_value.h>
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/configure/doodle_lib_export.h>
+
 #include <boost/beast.hpp>
 #include <boost/beast/http/message_fwd.hpp>
 #include <boost/url.hpp>
@@ -90,7 +92,7 @@ struct http_body_base_t {
 
 using http_body_ptr = std::unique_ptr<http_body_base_t>;
 
-struct http_body_json_t : http_body_base_t {
+struct DOODLELIB_API http_body_json_t : http_body_base_t {
   nlohmann::json body_{};
 
   http_body_json_t() = default;

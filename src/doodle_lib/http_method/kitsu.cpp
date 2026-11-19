@@ -36,16 +36,17 @@
 
 namespace doodle::http {
 
-http_route_ptr create_kitsu_route_2() {
-  auto l_router                = std::make_shared<http_route>();
-  auto l_ctx                   = g_kitsu_ctx();
+void reg_kitsu_socket_io(http_route& in_route) {
   auto l_sid_ctx               = std::make_shared<socket_io::sid_ctx>();
   core_set::get_set().sid_ctx_ = l_sid_ctx;
   l_sid_ctx->register_namespace("/events");
-  (*l_router)
+  in_route.reg_c<socket_io::socket_io_http>(l_sid_ctx);
+}
+
+void reg_kitsu_urls(http_route& in_route) {
+  auto l_ctx = g_kitsu_ctx();
+  in_route
       // clang-format off
-      // 我们自己的后端
-      .reg_c<socket_io::socket_io_http>(l_sid_ctx)
       .reg_c<doodle_data_asset_file_maya>()
       .reg_c<doodle_data_asset_file_ue>()
       .reg_c<doodle_data_asset_file_image>()
@@ -299,18 +300,13 @@ http_route_ptr create_kitsu_route_2() {
 
       // clang-format on
       ;
-  return l_router;
 }
 
-http_route_ptr create_kitsu_local_route() {
-  auto l_rout_ptr = std::make_shared<http::http_route>();
-  auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
-  l_sid_ctx->register_namespace("/events");
-  core_set::get_set().sid_ctx_ = l_sid_ctx;
+void reg_kitsu_local_urls(http_route& in_route) {
   auto l_face_capture_selected = std::make_shared<local::face_capture_selected_device>();
   auto l_face_capture_holder   = std::make_shared<local::face_capture_session_holder>();
   auto l_face_capture_tasks    = std::make_shared<local::face_capture_transcode_tasks>();
-  (*l_rout_ptr)                       //
+  in_route                            //
       .reg_c<local::local_setting>()  //
       .reg_c<local::video_thumbnail>()
       .reg_c<local::task>()
@@ -340,10 +336,18 @@ http_route_ptr create_kitsu_local_route() {
       .reg_c<local::face_capture_recording_curves>()
       .reg_c<local::face_capture_transcode>(l_face_capture_tasks)
       .reg_c<local::face_capture_transcode_tasks_all>(l_face_capture_tasks)
-      .reg_c<socket_io::socket_io_http>(l_sid_ctx)
 
       ;
-  return l_rout_ptr;
+}
+
+void create_kitsu_route_2(http_route& in_route) {
+  reg_kitsu_socket_io(in_route);
+  reg_kitsu_urls(in_route);
+}
+
+void create_kitsu_local_route(http_route& in_route) {
+  reg_kitsu_socket_io(in_route);
+  reg_kitsu_local_urls(in_route);
 }
 
 uuid get_url_project_id(const boost::urls::url& in_url) {

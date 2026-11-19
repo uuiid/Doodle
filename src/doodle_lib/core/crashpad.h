@@ -13,6 +13,6 @@ class crashpad_init : boost::noncopyable {
 
  public:
   // 获取单例
-  static crashpad_init& get();
+  static DOODLELIB_API crashpad_init& get();
 };
 }  // namespace doodle
