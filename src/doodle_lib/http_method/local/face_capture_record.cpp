@@ -64,6 +64,7 @@ nlohmann::json recording_json(const FSys::path& in_dir) {
     l_json["duration_ms"] = l_record.duration_ms_;
     l_json["truncated"]   = l_record.truncated_;
     l_json["gaps"]        = nlohmann::json(l_record.gaps_);
+    l_json["path"]        = in_dir;
   } catch (...) {
     SPDLOG_WARN("读取 align.json 失败: {}", in_dir.string());
   }
