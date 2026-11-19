@@ -40,7 +40,6 @@ ws_outlet::ws_outlet(
     stream_t in_stream, std::int32_t in_device_index, std::shared_ptr<capture_session_holder> in_holder
 )
     : stream_(std::move(in_stream)),
-      exec_(stream_.get_executor()),
       session_(std::make_shared<capture_session>(capture_session::default_root())),
       holder_(std::move(in_holder)),
       device_index_(in_device_index) {}
@@ -49,7 +48,7 @@ ws_outlet::~ws_outlet() = default;
 
 void ws_outlet::start() {
   boost::asio::co_spawn(
-      exec_, run(),
+      stream_.get_executor(), run(),
       boost::asio::bind_cancellation_slot(
           app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
       )
@@ -58,23 +57,38 @@ void ws_outlet::start() {
 
 void ws_outlet::send(std::unique_ptr<ws_message> in_message) {
   if (!in_message) return;
-  boost::asio::post(
-      exec_,
-      [self = shared_from_this(), in_message = std::move(in_message)]() mutable {
-        if (self->closing_) return;
-        if (self->stalled()) {
-          SPDLOG_INFO("face_capture ws 写阻塞超过 {} ms, 判定连接失效", k_stop_drain_timeout_ms);
-          self->mark_closed();
-          return;
-        }
-        boost::asio::co_spawn(
-            self->exec_, self->write_message(std::move(in_message)),
-            boost::asio::bind_cancellation_slot(
-                app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, self)
-            )
-        );
-      }
-  );
+
+  queue_.push(std::move(in_message));
+
+  if (!writer_running_.exchange(true, std::memory_order_acq_rel)) {
+    boost::asio::co_spawn(
+        stream_.get_executor(), write_loop(),
+        boost::asio::bind_cancellation_slot(
+            app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+        )
+    );
+  }
+}
+
+boost::asio::awaitable<void> ws_outlet::write_loop() {
+  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+    if (closing_) {
+      queue_.clear();
+      writer_running_.store(false, std::memory_order_release);
+      co_return;
+    }
+
+    std::unique_ptr<ws_message> l_message{};
+    if (!queue_.try_pop(l_message)) {
+      writer_running_.store(false, std::memory_order_release);
+      if (!queue_.empty() && !writer_running_.exchange(true, std::memory_order_acq_rel)) continue;
+      co_return;
+    }
+
+    if (!l_message->key() && pending_frame()) continue;
+
+    co_await write_message(std::move(l_message));
+  }
 }
 
 bool ws_outlet::is_attached() const { return !closed_.load(std::memory_order_acquire); }
@@ -129,9 +143,7 @@ boost::asio::awaitable<void> ws_outlet::take_over_previous() {
 boost::asio::awaitable<void> ws_outlet::close_protocol() {
   if (!stream_.is_open()) co_return;
   try {
-    co_await stream_.async_close(
-        boost::beast::websocket::close_code::normal, boost::asio::bind_executor(exec_, boost::asio::use_awaitable)
-    );
+    co_await stream_.async_close(boost::beast::websocket::close_code::normal, boost::asio::use_awaitable);
   } catch (const std::exception& in_err) {
     SPDLOG_INFO("face_capture ws 关闭: {}", in_err.what());
   }
@@ -162,7 +174,7 @@ boost::asio::awaitable<void> ws_outlet::read_loop() {
   while (!closed_.load(std::memory_order_acquire)) {
     read_buffer_.consume(read_buffer_.size());
     try {
-      co_await stream_.async_read(read_buffer_, boost::asio::bind_executor(exec_, boost::asio::use_awaitable));
+      co_await stream_.async_read(read_buffer_, boost::asio::use_awaitable);
     } catch (const std::exception& in_err) {
       SPDLOG_INFO("face_capture ws 连接结束: {}", in_err.what());
       break;
@@ -180,8 +192,6 @@ boost::asio::awaitable<void> ws_outlet::close_impl() {
 
 boost::asio::awaitable<void> ws_outlet::write_message(std::unique_ptr<ws_message> in_message) {
   if (closing_) co_return;
-
-  if (!in_message->key() && pending_frame()) co_return;
 
   writing_.store(true, std::memory_order_release);
   pending_since_ = std::chrono::steady_clock::now();
@@ -202,9 +212,7 @@ boost::asio::awaitable<void> ws_outlet::write_raw(bool in_binary, const std::vec
 
   try {
     stream_.binary(in_binary);
-    co_await stream_.async_write(
-        boost::asio::buffer(in_bytes), boost::asio::bind_executor(exec_, boost::asio::use_awaitable)
-    );
+    co_await stream_.async_write(boost::asio::buffer(in_bytes), boost::asio::use_awaitable);
     stream_.binary(false);
   } catch (const std::exception& in_err) {
     SPDLOG_INFO("face_capture ws 写失败: {}", in_err.what());

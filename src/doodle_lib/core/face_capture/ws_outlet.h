@@ -22,6 +22,8 @@
 #include <memory>
 #include <vector>
 
+#include <oneapi/tbb/concurrent_queue.h>
+
 namespace doodle::face_capture {
 
 class capture_session;
@@ -74,10 +76,11 @@ class ws_outlet : public std::enable_shared_from_this<ws_outlet> {
 
   boost::asio::awaitable<void> write_message(std::unique_ptr<ws_message> in_message);
 
+  boost::asio::awaitable<void> write_loop();
+
   boost::asio::awaitable<void> write_raw(bool in_binary, const std::vector<std::uint8_t>& in_bytes);
 
   stream_t stream_;
-  executor_type exec_;
   std::shared_ptr<capture_session> session_;
   std::shared_ptr<capture_session_holder> holder_;
   boost::beast::flat_buffer read_buffer_;
@@ -86,6 +89,8 @@ class ws_outlet : public std::enable_shared_from_this<ws_outlet> {
   std::atomic_bool closed_{false};
   std::atomic_bool writing_{false};
 
+  tbb::concurrent_queue<std::unique_ptr<ws_message>> queue_{};
+  std::atomic_bool writer_running_{false};
   bool closing_{false};
   std::chrono::steady_clock::time_point pending_since_{};
 };
