@@ -200,6 +200,7 @@ boost::asio::awaitable<void> http_work::async_run() {
         this_computer_info_.status_ =
             running_task_count_.load(std::memory_order_acquire) > 0 ? computer_status::busy : computer_status::online;
         co_await l_client->post_computer(this_computer_info_);
+        SPDLOG_LOGGER_INFO(logger_, "心跳: 电脑状态 {}, 正在运行的任务数 {}", this_computer_info_.status_, running_task_count_.load(std::memory_order_acquire));
         timer.expires_after(std::chrono::seconds(10));
         l_count++;
         if (l_count % 6000 == 0) kitsu_token_ = co_await l_client->refresh_token();
