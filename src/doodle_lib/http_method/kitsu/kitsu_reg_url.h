@@ -511,7 +511,7 @@ std::int32_t year_;
 std::int32_t month_;
 DOODLE_HTTP_FUN_END()
 // /api/config
-DOODLE_HTTP_JWT_FUN(config)
+DOODLE_HTTP_FUN(config)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_ROUTE("/api/config")
 DOODLE_HTTP_FUN_END()
