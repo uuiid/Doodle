@@ -67,6 +67,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
                 TARGET doodle_kitsu_supplement
                 POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different  $<TARGET_FILE_DIR:doodle_kitsu_supplement>/zlibd1.dll $<TARGET_FILE_DIR:doodle_kitsu_supplement>/zlib1.dll
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${crashpad_handler_exe} $<TARGET_FILE_DIR:doodle_kitsu_supplement>
         )
 endif()
 
