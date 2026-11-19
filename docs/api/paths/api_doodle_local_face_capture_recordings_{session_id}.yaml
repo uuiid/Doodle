@@ -16,6 +16,8 @@ get:
       即使该连接仍在推预览；
     - `frames`：正常情况下是 `align.json` 的原始帧计数；`align.json` 读不出来且该 id 正好是
       活动会话时，用会话内的实时帧计数补上；
+    - `path`：该会话目录在服务端磁盘上的路径（`<缓存根>/face_capture/sessions/<session_id>/`），
+      与列表接口同源，给本机转码/上传定位文件用；同样只在 `align.json` 读取成功时才出现；
     - `artifacts` 现场扫描 `take.mp4` / `align.json` / `frames/*.png` 个数 / `curves/face_curves.dhfc`。
 
     该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则 401「请先登录」；

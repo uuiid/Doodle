@@ -14,6 +14,9 @@ get:
     - 每个子目录的 `session_id` 取**目录名**，其余字段从该目录的 `align.json` 派生
       （`frames` 是原始帧计数，不是逐帧数组，详见 `FaceCaptureRecordingSummary`）；
     - `align.json` 读不出来时该条只返回 `session_id` 并记一条 WARN；
+    - 每条还带 `path`：该会话目录在服务端磁盘上的路径（`recording_json()` 里的
+      `l_json["path"] = in_dir`），给本机转码/上传直接定位文件用；它是在 `align.json`
+      读取成功之后写入的，所以 `align.json` 读不出来时该条**也没有** `path`；
     - 没有分页、没有过滤、没有排序保证，`count` 就是返回数组长度。
 
     录制目录与 WS 连接解耦：连接断开后目录仍在，所以该接口跨连接、跨会话都能查到历史录制。
