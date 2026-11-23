@@ -70,16 +70,12 @@ struct desktop_update_t {
 };
 
 // /api/desktop/update/{platform}/{arch}/{channel}
-DOODLE_HTTP_FUN(desktop_update)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_ROUTE("/api/desktop/update/{platform_}/{arch_}/{channel_}", platform_, arch_, channel_)
-desktop_platform_enum platform_{};
-desktop_arch_enum arch_{};
-desktop_channel_enum channel_{};
-DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_JWT_FUN(desktop_update)
+protected:
+void parse_header(const session_data_ptr& in_handle) override;
 
-// /api/desktop/update/{platform}/{arch}/{channel}
-DOODLE_HTTP_JWT_FUN(desktop_update_post)
+public:
+DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_ROUTE("/api/desktop/update/{platform_}/{arch_}/{channel_}", platform_, arch_, channel_)
 desktop_platform_enum platform_{};

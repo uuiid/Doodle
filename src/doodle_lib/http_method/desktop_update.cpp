@@ -109,6 +109,11 @@ void save_desktop_update(const FSys::path& in_path, const desktop_update_t& in_u
 }
 }  // namespace
 
+void desktop_update::parse_header(const session_data_ptr& in_handle) {
+  if (in_handle->method() != boost::beast::http::verb::post) return;
+  base_type::parse_header(in_handle);
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(desktop_update, get) {
   const std::string l_platform{magic_enum::enum_name(platform_)};
   const std::string l_arch{magic_enum::enum_name(arch_)};
@@ -121,7 +126,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(desktop_update, get) {
   co_return std::make_unique<http_body_json_t>(load_desktop_update(l_path.generic_string()));
 }
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(desktop_update_post, post) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(desktop_update, post) {
   person_.check_admin();
   const std::string l_platform{magic_enum::enum_name(platform_)};
   const std::string l_arch{magic_enum::enum_name(arch_)};
