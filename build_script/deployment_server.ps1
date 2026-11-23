@@ -14,12 +14,6 @@ if ($BuildSd2) {
     return;
 }
 
-if ($CopyServer) {
-    Add-GitVersionLabel -WorkingDirectory (Join-Path $PSScriptRoot "..")
-    & "$PSScriptRoot\build\set_env.ps1" C:/PROGRA~1/CMake/bin/cmake.exe --workflow --preset build_release
-    if ($LASTEXITCODE -ne 0) { throw "release 构建失败，退出码 $LASTEXITCODE" }
-}
-
 if (-not (Test-Path "$PSScriptRoot/../../build/pack")) {
     New-Item -ItemType Directory -Path "$PSScriptRoot/../../build/pack" | Out-Null
 }

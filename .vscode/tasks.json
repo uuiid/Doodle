@@ -129,13 +129,7 @@
     {
       "label": "build_all",
       "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/set_env.ps1",
-      "args": [
-        "C:/PROGRA~1/CMake/bin/cmake.exe",
-        "--workflow",
-        "--preset",
-        "build_release"
-      ],
+      "command": "${workspaceFolder}/build_script/build/build_all.ps1",
       "problemMatcher": []
     },
     {
