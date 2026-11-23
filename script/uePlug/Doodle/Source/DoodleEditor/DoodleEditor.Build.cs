@@ -148,7 +148,7 @@ public class doodleEditor : ModuleRules
 				"ImageWrapper",
 				"CinematicCamera",
 				"MovieRenderPipelineSettings",
-				// "ColorManagement",
+				"ColorManagement",
 				"SlateCore",
 				"ImageCore",
 				"OpenColorIOWrapper",

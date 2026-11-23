@@ -27,9 +27,11 @@
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/websocket/stream.hpp>
+#include <boost/scope/scope_exit.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <condition_variable>
 #include <fmt/format.h>
@@ -42,6 +44,13 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <vector>
+
+#include <combaseapi.h>
+#include <mfapi.h>
+#include <mferror.h>
+#include <mfidl.h>
+#include <wil/com.h>
 
 namespace doodle::face_capture {
 
@@ -59,6 +68,101 @@ std::string now_string() {
 
 std::int64_t elapsed_ms(clock_type::time_point in_start, clock_type::time_point in_now) {
   return std::chrono::duration_cast<std::chrono::milliseconds>(in_now - in_start).count();
+}
+
+struct mf_startup_guard {
+  mf_startup_guard() { THROW_IF_FAILED(MFStartup(MF_VERSION, MFSTARTUP_LITE)); }
+  ~mf_startup_guard() { MFShutdown(); }
+  mf_startup_guard(const mf_startup_guard&)            = delete;
+  mf_startup_guard& operator=(const mf_startup_guard&) = delete;
+};
+
+std::pair<std::int32_t, std::int32_t> size_from_media_type(IMFMediaType* in_type) {
+  UINT32 l_width{0};
+  UINT32 l_height{0};
+  THROW_IF_FAILED(MFGetAttributeSize(in_type, MF_MT_FRAME_SIZE, &l_width, &l_height));
+  DOODLE_CHICK(l_width > 0 && l_height > 0, "媒体类型 {} 的帧尺寸无效: {}x{}", fmt::ptr(in_type), l_width, l_height);
+  return {even(static_cast<std::int32_t>(l_width)), even(static_cast<std::int32_t>(l_height))};
+}
+
+std::pair<std::int32_t, std::int32_t> max_size_from_source(IMFMediaSource* in_source) {
+  wil::com_ptr<IMFPresentationDescriptor> l_presentation{};
+  THROW_IF_FAILED(in_source->CreatePresentationDescriptor(l_presentation.put()));
+
+  DWORD l_stream_count{0};
+  THROW_IF_FAILED(l_presentation->GetStreamDescriptorCount(&l_stream_count));
+
+  std::pair<std::int32_t, std::int32_t> l_best{0, 0};
+  std::int64_t l_best_area{0};
+
+  for (DWORD l_index = 0; l_index < l_stream_count; ++l_index) {
+    BOOL l_selected{FALSE};
+    wil::com_ptr<IMFStreamDescriptor> l_stream{};
+    THROW_IF_FAILED(l_presentation->GetStreamDescriptorByIndex(l_index, &l_selected, l_stream.put()));
+
+    wil::com_ptr<IMFMediaTypeHandler> l_handler{};
+    THROW_IF_FAILED(l_stream->GetMediaTypeHandler(l_handler.put()));
+
+    DWORD l_type_count{0};
+    THROW_IF_FAILED(l_handler->GetMediaTypeCount(&l_type_count));
+
+    for (DWORD l_type_index = 0; l_type_index < l_type_count; ++l_type_index) {
+      wil::com_ptr<IMFMediaType> l_type{};
+      THROW_IF_FAILED(l_handler->GetMediaTypeByIndex(l_type_index, l_type.put()));
+      auto l_size = size_from_media_type(l_type.get());
+      auto l_area = static_cast<std::int64_t>(l_size.first) * l_size.second;
+      if (l_area > l_best_area) {
+        l_best_area = l_area;
+        l_best      = l_size;
+      }
+    }
+  }
+
+  DOODLE_CHICK(l_best_area > 0, "媒体源 {} 未提供任何带帧尺寸的媒体类型", fmt::ptr(in_source));
+  return l_best;
+}
+
+std::pair<std::int32_t, std::int32_t> probe_max_size(IMFActivate* in_activate) {
+  auto l_shutdown = boost::scope::scope_exit{[in_activate]() { in_activate->ShutdownObject(); }};
+
+  wil::com_ptr<IMFMediaSource> l_source{};
+  THROW_IF_FAILED(in_activate->ActivateObject(IID_PPV_ARGS(l_source.put())));
+  return max_size_from_source(l_source.get());
+}
+
+std::vector<wil::com_ptr<IMFActivate>> enum_video_activates() {
+  wil::com_ptr<IMFAttributes> l_attributes{};
+  THROW_IF_FAILED(MFCreateAttributes(l_attributes.put(), 1));
+  THROW_IF_FAILED(l_attributes->SetGUID(
+      MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID
+  ));
+
+  IMFActivate** l_devices{nullptr};
+  UINT32 l_count{0};
+  THROW_IF_FAILED(MFEnumDeviceSources(l_attributes.get(), &l_devices, &l_count));
+
+  auto l_free = boost::scope::scope_exit{[l_devices, l_count]() {
+    for (UINT32 l_index = 0; l_index < l_count; ++l_index) l_devices[l_index]->Release();
+    CoTaskMemFree(l_devices);
+  }};
+
+  std::vector<wil::com_ptr<IMFActivate>> l_result{};
+  l_result.reserve(l_count);
+  for (UINT32 l_index = 0; l_index < l_count; ++l_index) {
+    l_result.emplace_back(wil::com_ptr<IMFActivate>{l_devices[l_index]});
+  }
+  return l_result;
+}
+
+std::pair<std::int32_t, std::int32_t> max_size_of_device(std::int32_t in_index) {
+  mf_startup_guard l_guard{};
+
+  auto l_activates = enum_video_activates();
+  DOODLE_CHICK_HTTP(
+      in_index >= 0 && static_cast<std::size_t>(in_index) < l_activates.size(), unprocessable_entity,
+      "没有 index = {} 的摄像头, 当前共 {} 个", in_index, l_activates.size()
+  );
+  return probe_max_size(l_activates[static_cast<std::size_t>(in_index)].get());
 }
 
 }  // namespace
@@ -80,26 +184,29 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
     co_await close_stream();
 
-    auto l_width  = even(in_option.width_ > 0 ? in_option.width_ : k_default_width);
-    auto l_height = even(in_option.height_ > 0 ? in_option.height_ : k_default_height);
+    auto l_size = max_size_of_device(in_option.device_index_);
 
-    auto l_cap    = std::make_shared<cv::VideoCapture>();
-    if (!l_cap->open(in_option.device_index_, cv::CAP_DSHOW)) l_cap->open(in_option.device_index_, cv::CAP_MSMF);
-    DOODLE_CHICK_HTTP(l_cap->isOpened(), unprocessable_entity, "无法打开摄像头 {}", in_option.device_index_);
+    auto l_cap  = std::make_shared<cv::VideoCapture>(
+        in_option.device_index_, cv::CAP_MSMF,
+        std::vector<int>{
+            cv::CAP_PROP_FRAME_WIDTH, l_size.first, cv::CAP_PROP_FRAME_HEIGHT, l_size.second
+        }
+    );
+    DOODLE_CHICK_HTTP(
+        l_cap->isOpened(), unprocessable_entity, "无法以原生 {}x{} 打开摄像头 {}", l_size.first, l_size.second,
+        in_option.device_index_
+    );
 
-    l_cap->set(cv::CAP_PROP_FRAME_WIDTH, l_width);
-    l_cap->set(cv::CAP_PROP_FRAME_HEIGHT, l_height);
+    auto l_width  = static_cast<std::int32_t>(l_cap->get(cv::CAP_PROP_FRAME_WIDTH));
+    auto l_height = static_cast<std::int32_t>(l_cap->get(cv::CAP_PROP_FRAME_HEIGHT));
+    DOODLE_CHICK_HTTP(
+        l_width > 0 && l_height > 0, unprocessable_entity, "摄像头 {} 打开后未报告有效的帧尺寸: {}x{}",
+        in_option.device_index_, l_width, l_height
+    );
 
-    cv::Mat l_probe{};
-    *l_cap >> l_probe;
-    if (!l_probe.empty()) {
-      l_width  = even(l_probe.cols);
-      l_height = even(l_probe.rows);
-    }
-
-    width_  = l_width;
-    height_ = l_height;
-    cap_    = std::move(l_cap);
+    width_        = even(l_width);
+    height_       = even(l_height);
+    cap_          = std::move(l_cap);
 
     reset_stream_encoders();
 
@@ -503,18 +610,19 @@ capture_session::~capture_session() = default;
 
 std::vector<camera_info> capture_session::list_devices() {
   std::vector<camera_info> l_result{};
-  for (std::int32_t l_index = 0; l_index < 8; ++l_index) {
-    cv::VideoCapture l_cap{};
-    if (!l_cap.open(l_index, cv::CAP_DSHOW)) l_cap.open(l_index, cv::CAP_MSMF);
-    if (!l_cap.isOpened()) break;
 
+  mf_startup_guard l_guard{};
+
+  auto l_activates = enum_video_activates();
+  for (std::size_t l_index = 0; l_index < l_activates.size(); ++l_index) {
     camera_info l_info{};
-    l_info.index_   = l_index;
+    l_info.index_   = static_cast<std::int32_t>(l_index);
     l_info.name_    = fmt::format("camera_{}", l_index);
-    l_info.backend_ = l_cap.getBackendName();
-    l_info.width_   = static_cast<std::int32_t>(l_cap.get(cv::CAP_PROP_FRAME_WIDTH));
-    l_info.height_  = static_cast<std::int32_t>(l_cap.get(cv::CAP_PROP_FRAME_HEIGHT));
-    l_cap.release();
+    l_info.backend_ = "MSMF";
+
+    auto l_size    = probe_max_size(l_activates[l_index].get());
+    l_info.width_  = l_size.first;
+    l_info.height_ = l_size.second;
     l_result.emplace_back(std::move(l_info));
   }
   return l_result;

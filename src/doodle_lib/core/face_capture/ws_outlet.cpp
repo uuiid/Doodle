@@ -163,7 +163,7 @@ boost::asio::awaitable<void> ws_outlet::open_capture() {
       .keep_alive_pings  = true,
   });
   try {
-    co_await session_->open(capture_option{.device_index_ = device_index_});
+    co_await session_->open(capture_option{.device_index_ = device_index_, .width_ = 0, .height_ = 0});
   } catch (const std::exception& in_err) {
     SPDLOG_WARN("face_capture 打开摄像头失败: {}", in_err.what());
   }

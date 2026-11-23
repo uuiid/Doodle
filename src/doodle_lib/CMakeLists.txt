@@ -92,6 +92,11 @@ target_link_libraries(doodle_lib
         onnxruntime::onnxruntime
         cnpy::cnpy_static
         rapidfuzz::rapidfuzz
+        mfplat.lib
+        mf.lib
+        mfuuid.lib
+        shlwapi.lib
+        WIL::WIL
 )
 
 
