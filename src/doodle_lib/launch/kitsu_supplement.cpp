@@ -6,6 +6,7 @@
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/exe_warp/exe_runner.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_client/dingding_client.h>
@@ -112,10 +113,11 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
 bool kitsu_supplement_main::init() {
   app_base::Get().use_multithread(true);
   crashpad_init::get();
-  auto& l_set     = core_set::get_set();
-  l_set.maya_ctx_ = std::make_shared<maya_ctx>();
-  l_set.ue_ctx_   = std::make_shared<ue_ctx>();
-  l_set.database_ = std::make_shared<sqlite_storage>();
+  auto& l_set       = core_set::get_set();
+  l_set.exe_runner_ = std::make_shared<exe_runner_process>();
+  l_set.maya_ctx_   = std::make_shared<maya_ctx>();
+  l_set.ue_ctx_     = std::make_shared<ue_ctx>();
+  l_set.database_   = std::make_shared<sqlite_storage>();
   kitsu_supplement_args_t l_args{
       .port_            = 50025,
       .db_path_         = "C:/kitsu_new.database",

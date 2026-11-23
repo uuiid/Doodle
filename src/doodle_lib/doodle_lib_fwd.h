@@ -61,6 +61,7 @@ struct kitsu_ctx_t;
 
 class maya_ctx;
 class ue_ctx;
+class exe_runner;
 
 DOODLELIB_API http::kitsu_ctx_t& g_kitsu_ctx();
 

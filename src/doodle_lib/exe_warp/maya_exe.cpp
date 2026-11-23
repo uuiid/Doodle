@@ -12,6 +12,7 @@
 #include <doodle_lib/core/filesystem_extend.h>
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/exe_warp/async_read_pipe.h>
+#include <doodle_lib/exe_warp/exe_runner.h>
 #include <doodle_lib/exe_warp/windows_hide.h>
 #include <doodle_lib/lib_warp/boost_fmt_error.h>
 #include <doodle_lib/platform/win/register_file_type.h>
@@ -26,6 +27,7 @@
 #include <filesystem>
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include <functional>
 #include <string>
 #include <winnt.h>
 #include <winreg/WinReg.hpp>
@@ -82,20 +84,6 @@ FSys::path install_maya_exe(FSys::path in_maya_path) {
   return l_out;
 }
 
-void add_maya_module() {
-  static std::string const k_mod{R"(+ doodle 1.1 .
-MYMODULE_LOCATION:= .
-PATH+:= plug-ins
-PYTHONPATH+:= scripts
-)"};
-  auto l_maya_plug = register_file_type::program_location().parent_path() / "maya";
-
-  if (!FSys::exists(l_maya_plug / "doodle.mod")) {
-    FSys::ofstream k_file{l_maya_plug / "doodle.mod"};
-    k_file << k_mod;
-  }
-}
-
 maya_out_arg get_out_arg_impl(const FSys::path& in_path) {
   if (!FSys::exists(in_path)) return {};
 
@@ -138,10 +126,8 @@ FSys::path find_maya_path() { return find_maya_path_impl(); }
 boost::asio::awaitable<void> arg::async_run_maya() {
   auto l_g = co_await core_set::get_set().maya_ctx_->queue_->queue(boost::asio::use_awaitable);
   if (time_info_) time_info_->start_time_ = std::chrono::system_clock::now();
-  auto l_maya_path = find_maya_path_impl() / "bin" / "mayabatch.exe";
-  out_path_file_   = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
+  out_path_file_ = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
                    fmt::format("{}.json", core_set::get_set().get_uuid());
-  logger_ptr_->warn("开始运行maya {}", l_maya_path);
 
   auto [l_key, l_args] = get_json_str();
   if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
@@ -162,74 +148,12 @@ quit -abort -force -exitCode $doodle_batch_run_1;
 
   logger_ptr_->warn("配置命令行 {}", l_arg_path);
 
-  auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
+  auto l_runner = core_set::get_set().exe_runner_;
+  if (!l_runner) throw_exception(doodle_error{"exe_runner_ 未初始化"});
 
-  std::unordered_map<boost::process::v2::environment::key, boost::process::v2::environment::value> l_env{};
-  for (auto&& l_it : boost::process::v2::environment::current()) {
-    if (l_it.key() != L"PYTHONHOME" && l_it.key() != L"PYTHONPATH") l_env.emplace(l_it.key(), l_it.value());
-  }
+  co_await l_runner->run_maya({l_key, l_args, l_com_path, l_arg_path}, logger_ptr_);
 
-  l_env[L"MAYA_MODULE_PATH"] = (register_file_type::program_location().parent_path() / "maya").generic_wstring();
-  add_maya_module();
-  auto l_out_pipe     = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
-  auto l_err_pipe     = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
-
-  auto l_process_maya = boost::process::v2::process{
-      g_io_context(),
-      l_maya_path,
-      {"-batch", "-hideConsole", "-script", l_com_path.generic_string()},
-      boost::process::v2::process_stdio{nullptr, l_out_pipe, l_err_pipe},
-      boost::process::v2::process_environment{l_env},
-      boost::process::v2::process_start_dir{l_maya_path.parent_path()},
-      details::hide_and_not_create_windows
-  };
-
-  l_timer->expires_after(chrono::seconds{core_set::get_set().timeout});
-  auto [l_array_completion_order, l_ec, l_exit_code, l_ec_t, l_ec1, l_ec2] =
-      co_await boost::asio::experimental::make_parallel_group(
-          boost::process::v2::async_execute(std::move(l_process_maya), boost::asio::deferred),
-          l_timer->async_wait(boost::asio::deferred),
-          async_read_pipe(l_out_pipe, logger_ptr_, boost::asio::deferred, level::info),
-          async_read_pipe(l_err_pipe, logger_ptr_, boost::asio::deferred, level::info)
-      )
-          .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
   if (time_info_) time_info_->end_time_ = std::chrono::system_clock::now();
-  switch (l_array_completion_order[0]) {
-    case 1:
-      throw_exception(doodle_error{"maya 运行超时 {}", l_ec.message()});
-    case 0:
-    default:
-      if (l_exit_code != 0 || l_ec) {
-        switch (maya_enum::maya_error_t{l_exit_code}) {
-          case maya_enum::maya_error_t::unknown_error:
-            throw_exception(doodle_error{"maya 运行未知错误"});
-            break;
-          case maya_enum::maya_error_t::camera_name_error:
-            throw_exception(doodle_error{"maya 中没有正确的 camera 名字"});
-            break;
-          case maya_enum::maya_error_t::bone_scale_error:
-            throw_exception(doodle_error{"maya 中骨骼有缩放值为 0 的情况"});
-            break;
-          case maya_enum::maya_error_t::camera_aspect_error:
-            throw_exception(doodle_error{"maya 中摄像机的宽高比不正确"});
-            break;
-          case maya_enum::maya_error_t::cache_path_error:
-            throw_exception(doodle_error{"maya 中解算缓存路径不存在"});
-            break;
-          case maya_enum::maya_error_t::check_error:
-            throw_exception(doodle_error{"maya 文件中有错误, 具体请点击查看日志"});
-          case maya_enum::maya_error_t::namespace_error:
-            throw_exception(doodle_error{"maya 中名称空间错误, 引用文件和名称空间不匹配"});
-            break;
-          case maya_enum::maya_error_t::frame_in_out_error:
-            throw_exception(doodle_error{"maya 中帧范围错误, 帧范围超过了动画的实际范围"});
-            break;
-          default:
-            throw_exception(doodle_error{"maya 运行未知错误 {}", l_exit_code});
-        }
-      }
-      break;
-  }
   out_arg_ = get_out_arg_impl(out_path_file_);
   co_return;
 }

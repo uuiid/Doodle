@@ -1,6 +1,7 @@
 target_sources(
         doodle_lib
         PUBLIC
+        exe_runner.h
         maya_exe.h
         ue_exe.h
         import_and_render_ue.h
@@ -18,6 +19,7 @@ target_sources(
         face_capture_transcode.h
         
         PRIVATE
+        exe_runner.cpp
         maya_exe.cpp
         ue_exe.cpp
         import_and_render_ue.cpp

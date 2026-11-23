@@ -1,5 +1,6 @@
 #include "kitsu_supplement_test.h"
 
+#include "test_exe_runner.h"
 #include "test_reg.h"
 
 #include <doodle_core/metadata/kitsu_ctx_t.h>
@@ -32,10 +33,11 @@ bool kitsu_supplement_test_main::init() {
   app_base::Get().use_multithread(true);
   crashpad_init::get();
 
-  auto& l_set     = core_set::get_set();
-  l_set.maya_ctx_ = std::make_shared<maya_ctx>();
-  l_set.ue_ctx_   = std::make_shared<ue_ctx>();
-  l_set.database_ = std::make_shared<sqlite_storage>();
+  auto& l_set       = core_set::get_set();
+  l_set.exe_runner_ = std::make_shared<test_exe_runner>();
+  l_set.maya_ctx_   = std::make_shared<maya_ctx>();
+  l_set.ue_ctx_     = std::make_shared<ue_ctx>();
+  l_set.database_   = std::make_shared<sqlite_storage>();
 
   auto l_root = FSys::from_quotation_marks(arg_str(
       arg_, "root", (boost::dll::program_location().parent_path() / "test_data").generic_string()

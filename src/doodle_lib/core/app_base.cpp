@@ -86,6 +86,7 @@ void app_base::init_lib() {
 }
 
 void app_base::clear_global_state() {
+  core_set::get_set().exe_runner_.reset();
   core_set::get_set().maya_ctx_.reset();
   core_set::get_set().ue_ctx_.reset();
   core_set::get_set().sid_ctx_.reset();

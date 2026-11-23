@@ -2,6 +2,7 @@ add_executable(
         doodle_kitsu_supplement_test
         test_main.cpp
         kitsu_supplement_test.cpp
+        test_exe_runner.cpp
         test_reg.cpp
         ${PROJECT_SOURCE_DIR}/src/DoodleExe.manifest
         ${PROJECT_SOURCE_DIR}/src/icon.ico

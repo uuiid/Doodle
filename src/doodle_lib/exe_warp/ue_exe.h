@@ -8,7 +8,7 @@
 
 #include <doodle_lib/core/co_queue.h>
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/exe_warp/exe_runner.h>
 
 #include <boost/asio.hpp>
 #include <boost/system.hpp>
