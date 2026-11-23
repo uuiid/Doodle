@@ -120,6 +120,38 @@ function Initialize-Sd2 {
     return "E:\source\sd\dist";
 }
 
+function Add-GitVersionLabel {
+    param (
+        [string]$WorkingDirectory = "$PSScriptRoot/../"
+    )
+    $Description = &git describe --tags --dirty --match "v*" 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $Description) {
+        return
+    }
+    $Match = [regex]::Match($Description, '^v(\d+)\.(\d+)\.(\d+)-?(\d+)?(.*)$')
+    if (-not $Match.Success) {
+        return
+    }
+    $Branch = &git branch --show-current
+    if ($Branch -eq "master" -and $Match.Groups[4].Value) {
+        Write-Host "The current branch is the master branch, and the version number will be added"
+        $Patch = [int]$Match.Groups[3].Value + 1
+        $Tag = "v$($Match.Groups[1].Value).$($Match.Groups[2].Value).$Patch"
+        &git tag -f $Tag
+        if ($LASTEXITCODE -ne 0) {
+            throw "标签创建失败 $Tag"
+        }
+    }
+    [PSCustomObject]@{
+        Major = $Match.Groups[1].Value
+        Minor = $Match.Groups[2].Value
+        Patch = $Match.Groups[3].Value
+        Tweak = $Match.Groups[4].Value
+        Sha1  = $Match.Groups[5].Value
+        Short = "$($Match.Groups[1].Value).$($Match.Groups[2].Value).$($Match.Groups[3].Value)"
+    }
+}
+
 function Initialize-Doodle {
     param(
         [string]$OutPath,
@@ -328,7 +360,7 @@ function Compare-GitArchive {
     return $CombinedFile;
 }
 
-Export-ModuleMember -Function Initialize-Doodle , New-ServerPSSession , Compare-GitArchive, Initialize-Kitsu, Initialize-Sd2, Compress-UEPlugins
+Export-ModuleMember -Function Initialize-Doodle , New-ServerPSSession , Compare-GitArchive, Initialize-Kitsu, Initialize-Sd2, Compress-UEPlugins, Add-GitVersionLabel
 
 function Nono {
     
