@@ -52,6 +52,7 @@ bool kitsu_supplement_test_main::init() {
   l_set.set_root(l_root);
   l_set.public_url_port_ = l_port;
   l_set.http_proxy_url_  = l_proxy;
+  l_set.server_ip      = fmt::format("{}://{}:{}", l_protocol, l_domain, l_port);
 
   l_set.database_->open(FSys::path{l_db});
   l_set.database_->upgrade();

@@ -15,7 +15,6 @@ namespace doodle::http {
 struct kitsu_ctx_t {
   /// 产生的资产储存位置
   std::filesystem::path root_;
-
   /// 会话 jwt token
   std::string secret_;
   /// 服务器 协议和域名(基本在发送电子邮件时使用)
