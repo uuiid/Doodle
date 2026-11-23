@@ -170,6 +170,72 @@ namespace DNACharacterImporterInternal
 				static_cast<float>(Fit.Linear[1][0] * Value.X + Fit.Linear[1][1] * Value.Y + Fit.Linear[1][2] * Value.Z),
 				static_cast<float>(Fit.Linear[2][0] * Value.X + Fit.Linear[2][1] * Value.Y + Fit.Linear[2][2] * Value.Z));
 		}
+
+		bool FitUniformScaleSamples(const TArray<FSamplePair>& Samples, FAffineFit& OutFit)
+		{
+			if (Samples.Num() < 2)
+			{
+				return false;
+			}
+
+			FVector3f SourceCenter = FVector3f::ZeroVector;
+			FVector3f DestCenter = FVector3f::ZeroVector;
+			for (const FSamplePair& Sample : Samples)
+			{
+				SourceCenter += Sample.Source;
+				DestCenter += Sample.Dest;
+			}
+			SourceCenter /= static_cast<float>(Samples.Num());
+			DestCenter /= static_cast<float>(Samples.Num());
+
+			double Dot = 0.0;
+			double SourceSpread = 0.0;
+			for (const FSamplePair& Sample : Samples)
+			{
+				const FVector3f SourceOffset = Sample.Source - SourceCenter;
+				const FVector3f DestOffset = Sample.Dest - DestCenter;
+				Dot += static_cast<double>(SourceOffset.X) * DestOffset.X
+					+ static_cast<double>(SourceOffset.Y) * DestOffset.Y
+					+ static_cast<double>(SourceOffset.Z) * DestOffset.Z;
+				SourceSpread += static_cast<double>(SourceOffset.SizeSquared());
+			}
+			if (SourceSpread < 1e-12)
+			{
+				return false;
+			}
+
+			const double Scale = Dot / SourceSpread;
+			if (!FMath::IsFinite(Scale) || Scale <= 0.0)
+			{
+				return false;
+			}
+
+			for (int32 Row = 0; Row < 3; ++Row)
+			{
+				for (int32 Column = 0; Column < 3; ++Column)
+				{
+					OutFit.Linear[Row][Column] = Row == Column ? Scale : 0.0;
+				}
+				OutFit.Translation[Row] = static_cast<double>(DestCenter[Row]) - Scale * static_cast<double>(SourceCenter[Row]);
+			}
+
+			double SumSquared = 0.0;
+			double MaxError = 0.0;
+			for (const FSamplePair& Sample : Samples)
+			{
+				const FVector3f Estimated = ApplyLinear(OutFit, Sample.Source) + FVector3f(
+					static_cast<float>(OutFit.Translation[0]),
+					static_cast<float>(OutFit.Translation[1]),
+					static_cast<float>(OutFit.Translation[2]));
+				const double Error = static_cast<double>((Estimated - Sample.Dest).Size());
+				SumSquared += Error * Error;
+				MaxError = FMath::Max(MaxError, Error);
+			}
+
+			OutFit.RmsError = FMath::Sqrt(SumSquared / static_cast<double>(Samples.Num()));
+			OutFit.MaxError = MaxError;
+			return true;
+		}
 	}
 
 	TValueOrError<FMorphGenerationStats, FMorphGenerationError> GenerateMorphTargets(
@@ -357,14 +423,21 @@ namespace DNACharacterImporterInternal
 				double FitDiagonal = 0.0;
 				if (!FitAffineSamples(Samples, Fit, FitDiagonal))
 				{
-					continue;
+					Fit = FAffineFit();
+					FitDiagonal = 0.0;
 				}
 
 				const double Tolerance = static_cast<double>(InSettings.MorphMappingTolerance)
 					* FMath::Max(DestDiagonal, FMath::Max(FitDiagonal, 1.0));
 				if (Fit.RmsError > Tolerance || Fit.MaxError > Tolerance * 4.0)
 				{
-					continue;
+					FAffineFit ScaledFit;
+					if (!FitUniformScaleSamples(Samples, ScaledFit) || ScaledFit.RmsError > Tolerance * 4.0
+						|| ScaledFit.MaxError > Tolerance * 16.0)
+					{
+						continue;
+					}
+					Fit = ScaledFit;
 				}
 
 				if (BestMeshIndex == INDEX_NONE || Fit.RmsError < BestRms)
@@ -517,7 +590,7 @@ namespace DNACharacterImporterInternal
 
 		Stats.DeltaCount = WrittenDeltas;
 
-		if (Stats.MappedMeshPartCount == 0)
+		if (Stats.MappedMeshPartCount == 0 && Stats.ShapeCount > 0)
 		{
 			Log(TEXT("No mesh part could be matched; nothing was written."));
 			return MakeError(FMorphGenerationError{

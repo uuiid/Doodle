@@ -34,6 +34,19 @@ namespace
 			|| FMath::Abs(static_cast<float>(V.y)) > 1e-9f
 			|| FMath::Abs(static_cast<float>(V.z)) > 1e-9f;
 	}
+
+	const ufbx_node* FindMeshNode(const ufbx_scene* InScene, const ufbx_mesh* InMesh)
+	{
+		for (size_t NodeIndex = 0; NodeIndex < InScene->nodes.count; ++NodeIndex)
+		{
+			const ufbx_node* Node = InScene->nodes.data[NodeIndex];
+			if (Node->mesh == InMesh)
+			{
+				return Node;
+			}
+		}
+		return nullptr;
+	}
 }
 
 struct FDNAFbxShapeSource::FImpl
@@ -250,12 +263,15 @@ TValueOrError<TArray<FVector3f>, FDNAFbxShapeSourceError> FDNAFbxShapeSource::Ge
 	}
 
 	const ufbx_mesh* Mesh = Impl->Scene->meshes.data[InMeshIndex];
+	const ufbx_node* MeshNode = FindMeshNode(Impl->Scene, Mesh);
 	const int32 VertexCount = static_cast<int32>(Mesh->num_vertices);
 	TArray<FVector3f> Positions;
 	Positions.SetNumUninitialized(VertexCount);
 	for (int32 VertexIndex = 0; VertexIndex < VertexCount; ++VertexIndex)
 	{
-		Positions[VertexIndex] = ToVector3f(Mesh->vertices.data[VertexIndex]);
+		Positions[VertexIndex] = MeshNode != nullptr
+			? ToVector3f(ufbx_transform_position(&MeshNode->geometry_to_world, Mesh->vertices.data[VertexIndex]))
+			: ToVector3f(Mesh->vertices.data[VertexIndex]);
 	}
 	return MakeValue(MoveTemp(Positions));
 }
@@ -338,6 +354,7 @@ TValueOrError<FDNAFbxShapeVertexOffsets, FDNAFbxShapeSourceError> FDNAFbxShapeSo
 	const FDNAFbxShapeInfo& ShapeInfo = Impl->Shapes[InShapeIndex];
 	const ufbx_blend_shape* Shape = Impl->ShapePointers[InShapeIndex];
 	const ufbx_mesh* Mesh = Impl->Scene->meshes.data[ShapeInfo.MeshIndex];
+	const ufbx_node* MeshNode = FindMeshNode(Impl->Scene, Mesh);
 	const int32 ControlPointCount = static_cast<int32>(Mesh->num_vertices);
 
 	FDNAFbxShapeVertexOffsets Offsets;
@@ -350,7 +367,9 @@ TValueOrError<FDNAFbxShapeVertexOffsets, FDNAFbxShapeSourceError> FDNAFbxShapeSo
 		{
 			continue;
 		}
-		Offsets.Offsets.Add(ToVector3f(VertexOffset));
+		Offsets.Offsets.Add(ToVector3f(MeshNode != nullptr
+			? ufbx_transform_direction(&MeshNode->geometry_to_world, VertexOffset)
+			: VertexOffset));
 		Offsets.VertexIndices.Add(VertexIndex);
 	}
 	return MakeValue(MoveTemp(Offsets));
