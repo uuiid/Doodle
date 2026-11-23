@@ -121,9 +121,22 @@
     {
       "label": "build UE plug",
       "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/Build_UE.cmd",
+      "command": "${workspaceFolder}/build_script/Build_UE.ps1",
       "problemMatcher": [
-        "$msCompile"
+        {
+          "owner": "ue-build",
+          "fileLocation": [
+            "autoDetect",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^\\s*(?:\\[\\d+/\\d+\\]\\s+)?([A-Za-z]:[\\\\/].*?\\.(?:h|hpp|c|cpp|cs|inl))\\s*\\((\\d+)(?:,\\d+)?\\)\\s*(?:\\w+\\([^)]*\\)\\s*)?:\\s*(?:(error|warning)\\s+\\w*\\d*\\s*:\\s*)?(.*)$",
+            "file": 1,
+            "line": 2,
+            "severity": 3,
+            "message": 4
+          }
+        }
       ]
     },
     {
