@@ -164,6 +164,41 @@ std::string trim_curve_name(const std::uint8_t* in_ptr) {
   return l_name;
 }
 
+MObject first_dag_top_node(MObject in_object) {
+  if (in_object.isNull() || !in_object.hasFn(MFn::kDagNode)) return MObject{};
+  MDagPath l_path{};
+  if (MDagPath::getAPathTo(in_object, l_path) != MS::kSuccess) return MObject{};
+  while (l_path.length() > 1) l_path.pop();
+  return l_path.node();
+}
+
+MObject find_unique_child_dag_object(MObject in_parent, const std::string& in_leaf_name) {
+  if (in_parent.isNull() || !in_parent.hasFn(MFn::kDagNode) || in_leaf_name.empty()) return MObject{};
+
+  MDagPath l_parent_path{};
+  if (MDagPath::getAPathTo(in_parent, l_parent_path) != MS::kSuccess) return MObject{};
+
+  MObject l_found{};
+  std::size_t l_count{0};
+  const unsigned l_child_count = l_parent_path.childCount();
+  for (unsigned l_i = 0; l_i < l_child_count; ++l_i) {
+    MObject l_child = l_parent_path.child(l_i);
+    if (l_child.isNull() || !l_child.hasFn(MFn::kDagNode)) continue;
+    MFnDagNode l_child_dag{l_child};
+    if (conv::to_s(l_child_dag.name()) != in_leaf_name) continue;
+    l_found = l_child;
+    ++l_count;
+  }
+  return l_count == 1 ? l_found : MObject{};
+}
+
+MObject resolve_gui_node(MObject in_root, const std::string& in_node_name) {
+  if (in_root.isNull() || in_node_name.empty()) return MObject{};
+  MObject l_node = find_unique_child_dag_object(in_root, in_node_name);
+  if (!l_node.isNull()) return l_node;
+  return find_unique_child_dag_object(first_dag_top_node(in_root), in_node_name);
+}
+
 std::string raw_key_of(std::string_view in_name) {
   std::string l_name{leaf_name_of(in_name)};
   if (l_name.rfind(k_raw_prefix, 0) == 0) l_name.erase(0, k_raw_prefix.size());
@@ -204,14 +239,14 @@ bool check_gui_has_input(MObject in_node_object, const std::string& in_attr_name
 MSyntax face_capture_import_syntax() {
   MSyntax l_syntax{};
   CHECK_MSTATUS(l_syntax.addFlag("-fp", "-file_path", MSyntax::kString));
-  CHECK_MSTATUS(l_syntax.addFlag("-n", "-node", MSyntax::kString));
+  CHECK_MSTATUS(l_syntax.setObjectType(MSyntax::kSelectionList, 1, 1));
   return l_syntax;
 }
 
 class face_capture_import::impl {
  public:
   std::string file_path_{};
-  std::string node_name_{};
+  MObject node_object_{};
 
   face_capture_file_t file_{};
   MDagPath target_path_{};
@@ -282,26 +317,12 @@ MStatus face_capture_import::impl::load_file() {
 }
 
 MStatus face_capture_import::impl::locate_node() {
+  if (node_object_.isNull()) return display_error("未指定节点对象"), MS::kFailure;
+
   MSelectionList l_selection{};
-  MStatus l_status = l_selection.add(conv::to_ms(node_name_));
-  if (!l_status) return display_error("找不到节点: {}", node_name_), MS::kFailure;
-
-  if (l_selection.length() != 1) {
-    std::string l_candidates{};
-    for (unsigned l_i = 0; l_i < l_selection.length(); ++l_i) {
-      MDagPath l_path{};
-      if (l_selection.getDagPath(l_i, l_path) != MS::kSuccess) continue;
-      if (!l_candidates.empty()) l_candidates += ", ";
-      l_candidates += full_path_of(l_path);
-    }
-    return display_error(
-               "节点名有歧义, 匹配到 {} 个: {}, 请用完整路径或命名空间前缀指定", l_selection.length(), l_candidates
-           ),
-           MS::kFailure;
-  }
-
+  if (l_selection.add(node_object_) != MS::kSuccess) return display_error("传入的节点对象已失效"), MS::kFailure;
   if (l_selection.getDagPath(0, target_path_) != MS::kSuccess) {
-    return display_error("节点不是 DAG 节点: {}", node_name_), MS::kFailure;
+    return display_error("节点不是 DAG 节点"), MS::kFailure;
   }
 
   target_namespace_ = namespace_of(node_name_of(target_path_));
@@ -394,20 +415,11 @@ MStatus face_capture_import::impl::precheck_gui_connections() {
   std::vector<std::string> l_conflicts{};
 
   for (const auto& l_gui : k_face_capture_gui_map) {
-    MSelectionList l_nodes{};
-    const std::string l_qualified =
-        target_namespace_.empty() ? l_gui.node_name_ : target_namespace_ + ":" + l_gui.node_name_;
-    if (l_nodes.add(conv::to_ms(l_qualified)) != MS::kSuccess) continue;
-
-    for (unsigned l_i = 0; l_i < l_nodes.length(); ++l_i) {
-      MObject l_node_object{};
-      if (l_nodes.getDependNode(l_i, l_node_object) != MS::kSuccess) continue;
-      if (l_node_object.isNull()) continue;
-      std::string l_source{};
-      if (!check_gui_has_input(l_node_object, l_gui.attr_name_, l_source)) continue;
-      l_conflicts.push_back(fmt::format("{}({})", l_gui.gui_name_, l_source));
-      break;
-    }
+    MObject l_node_object = resolve_gui_node(node_object_, l_gui.node_name_);
+    if (l_node_object.isNull()) continue;
+    std::string l_source{};
+    if (!check_gui_has_input(l_node_object, l_gui.attr_name_, l_source)) continue;
+    l_conflicts.push_back(fmt::format("{}({})", l_gui.gui_name_, l_source));
   }
 
   if (!l_conflicts.empty()) {
@@ -491,43 +503,41 @@ MStatus face_capture_import::impl::import_curves() {
     if (!l_gui_written[l_gui_index]) continue;
     const auto& l_gui = k_face_capture_gui_map[l_gui_index];
 
-    MSelectionList l_nodes{};
-    const std::string l_qualified =
-        target_namespace_.empty() ? l_gui.node_name_ : target_namespace_ + ":" + l_gui.node_name_;
-    if (l_nodes.add(conv::to_ms(l_qualified)) != MS::kSuccess) {
+    MObject l_node_object = resolve_gui_node(node_object_, l_gui.node_name_);
+    if (l_node_object.isNull()) {
       l_create_failed.push_back(l_gui.gui_name_);
       continue;
     }
 
-    bool l_done{false};
-    for (unsigned l_i = 0; l_i < l_nodes.length() && !l_done; ++l_i) {
-      MObject l_node_object{};
-      if (l_nodes.getDependNode(l_i, l_node_object) != MS::kSuccess) continue;
-      if (l_node_object.isNull()) continue;
-
-      MFnDependencyNode l_dep{l_node_object};
-      MObject l_attr = l_dep.attribute(conv::to_ms(l_gui.attr_name_));
-      if (l_attr.isNull()) continue;
-
-      MPlug l_plug{l_node_object, l_attr};
-      MFnAnimCurve l_curve{};
-      MStatus l_status = MS::kSuccess;
-      l_curve.create(l_plug, MFnAnimCurve::kAnimCurveTL, nullptr, &l_status);
-      if (!l_status) continue;
-
-      MTimeArray l_times{};
-      MDoubleArray l_values{};
-      for (std::uint32_t l_frame = 0; l_frame < l_frame_count; ++l_frame) {
-        l_times.append(l_start_time + MTime{static_cast<double>(l_frame) / l_scene_fps, MTime::kSeconds});
-        l_values.append(static_cast<double>(l_gui_values[l_gui_index][l_frame]));
-      }
-      l_status = l_curve.addKeys(&l_times, &l_values, MFnAnimCurve::kTangentLinear, MFnAnimCurve::kTangentLinear);
-      if (!l_status) continue;
-
-      ++l_created;
-      l_done = true;
+    MFnDependencyNode l_dep{l_node_object};
+    MObject l_attr = l_dep.attribute(conv::to_ms(l_gui.attr_name_));
+    if (l_attr.isNull()) {
+      l_create_failed.push_back(l_gui.gui_name_);
+      continue;
     }
-    if (!l_done) l_create_failed.push_back(l_gui.gui_name_);
+
+    MPlug l_plug{l_node_object, l_attr};
+    MFnAnimCurve l_curve{};
+    MStatus l_status = MS::kSuccess;
+    l_curve.create(l_plug, MFnAnimCurve::kAnimCurveTL, nullptr, &l_status);
+    if (!l_status) {
+      l_create_failed.push_back(l_gui.gui_name_);
+      continue;
+    }
+
+    MTimeArray l_times{};
+    MDoubleArray l_values{};
+    for (std::uint32_t l_frame = 0; l_frame < l_frame_count; ++l_frame) {
+      l_times.append(l_start_time + MTime{static_cast<double>(l_frame) / l_scene_fps, MTime::kSeconds});
+      l_values.append(static_cast<double>(l_gui_values[l_gui_index][l_frame]));
+    }
+    l_status = l_curve.addKeys(&l_times, &l_values, MFnAnimCurve::kTangentLinear, MFnAnimCurve::kTangentLinear);
+    if (!l_status) {
+      l_create_failed.push_back(l_gui.gui_name_);
+      continue;
+    }
+
+    ++l_created;
   }
 
   if (!l_create_failed.empty()) {
@@ -564,22 +574,14 @@ MStatus face_capture_import::get_arg(const MArgList& in_arg) {
     return display_error("缺少参数 -fp <file_path>"), MS::kFailure;
   }
 
-  if (l_arg_data.isFlagSet("-n")) {
-    MString l_node;
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_arg_data.getFlagArgument("-n", 0, l_node));
-    p_i->node_name_ = conv::to_s(l_node);
+  MSelectionList l_selection{};
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_arg_data.getObjects(l_selection));
+  if (l_selection.length() != 1) {
+    return display_error("节点参数数量不是 1 (当前 {})", l_selection.length()), MS::kFailure;
   }
-
-  if (p_i->node_name_.empty()) {
-    MSelectionList l_selection{};
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::getActiveSelectionList(l_selection));
-    if (l_selection.length() != 1) {
-      return display_error("未指定 -n 且当前选择的节点数不是 1 (当前 {})", l_selection.length()), MS::kFailure;
-    }
-    MDagPath l_path{};
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_selection.getDagPath(0, l_path));
-    p_i->node_name_ = node_name_of(l_path);
-  }
+  MDagPath l_path{};
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_selection.getDagPath(0, l_path));
+  p_i->node_object_ = l_path.node();
 
   return MS::kSuccess;
 }
