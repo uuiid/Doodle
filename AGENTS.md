@@ -36,7 +36,7 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
 
 | 目的 | configure preset | build preset |
 | --- | --- | --- |
-| 独立软件 / 测试 | `Ninja_debug` | `debug_doodle`（`doodle_kitsu_supplement` + `test_main`）|
+| 独立软件 / 测试 | `Ninja_debug` | `debug_doodle`（`doodle_kitsu_supplement` + `doodle_kitsu_supplement_test`）|
 | Maya 插件 | `Ninja_RelWithDebInfo` | `debug_maya`（`doodle_maya`）|
 
 插件另有一条独立约束：**保持 `parallel` 默认值**，调高并行度会让 `cl` 抢写 obj 报 `Permission denied: cannot open compiler generated file`。工具的 `ok` 字段是权威结论，失败先看 `diagnostics` 给出的文件与行号。
@@ -45,7 +45,7 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
 
 其余 preset 的权威定义在 [CMakePresets.json](CMakePresets.json)；改构建步骤优先改该文件与 `CMake/` 下的 Find 模块，不要在 `CMakeLists.txt` 里写死平台路径。
 
-- **没有 C++ 单元测试**：数据库 ORM 与升级（`sqlite_*` 系列）、视频图片文件解码、网络客户端 `src/doodle_lib/http_client/**`、HTTP 处理器、Maya 插件等路径**都没有**单元测试，改动后不要期待 `test_main` 会替你验证。
+- **没有 C++ 单元测试**：数据库 ORM 与升级（`sqlite_*` 系列）、视频图片文件解码、网络客户端 `src/doodle_lib/http_client/**`、HTTP 处理器、Maya 插件等路径**都没有**单元测试，改动后不要期待 `doodle_kitsu_supplement_test` 会替你验证。
   HTTP 契约测试走 §2「按需测试流程」拉起的 `doodle_kitsu_supplement_test` 服务 + `test_js/` 下的 Playwright 用例。
   `src/test/**` 的既有内容不要改动，也不要为了新功能往那里加测试；该目录里唯一允许维护的是测试启动器与
   [test_exe_runner.h](src/test/test_exe_runner.h) / [test_exe_runner.cpp](src/test/test_exe_runner.cpp) 这一对 Maya / UE stub。
