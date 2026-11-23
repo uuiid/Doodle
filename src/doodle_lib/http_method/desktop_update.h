@@ -6,6 +6,10 @@
 #include <doodle_core/lib_warp/json_warp.h>
 
 #include <doodle_lib/core/http/http_route.h>
+#include <doodle_lib/http_method/http_jwt_fun.h>
+
+#include <cstdint>
+#include <string>
 
 namespace doodle::http {
 
@@ -34,9 +38,49 @@ DOODLE_JSON_SERIALIZE_ENUM_STRICT(
                           }
 )
 
+struct desktop_update_latest_t {
+  std::string version_{};
+  std::string published_at_{};
+  bool mandatory_{false};
+  std::string min_supported_version_{};
+  std::string notes_{};
+  std::string notes_url_{};
+
+  friend void to_json(nlohmann::json& in_json, const desktop_update_latest_t& in_latest);
+  friend void from_json(const nlohmann::json& in_json, desktop_update_latest_t& in_latest);
+};
+
+struct desktop_update_installer_t {
+  std::string url_{};
+  std::int64_t size_{0};
+  std::string sha512_{};
+
+  friend void to_json(nlohmann::json& in_json, const desktop_update_installer_t& in_installer);
+  friend void from_json(const nlohmann::json& in_json, desktop_update_installer_t& in_installer);
+};
+
+struct desktop_update_t {
+  desktop_update_latest_t latest_{};
+  desktop_update_installer_t installer_{};
+
+  void check() const;
+
+  friend void to_json(nlohmann::json& in_json, const desktop_update_t& in_update);
+  friend void from_json(const nlohmann::json& in_json, desktop_update_t& in_update);
+};
+
 // /api/desktop/update/{platform}/{arch}/{channel}
 DOODLE_HTTP_FUN(desktop_update)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_ROUTE("/api/desktop/update/{platform_}/{arch_}/{channel_}", platform_, arch_, channel_)
+desktop_platform_enum platform_{};
+desktop_arch_enum arch_{};
+desktop_channel_enum channel_{};
+DOODLE_HTTP_FUN_END()
+
+// /api/desktop/update/{platform}/{arch}/{channel}
+DOODLE_HTTP_JWT_FUN(desktop_update_post)
+DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_ROUTE("/api/desktop/update/{platform_}/{arch_}/{channel_}", platform_, arch_, channel_)
 desktop_platform_enum platform_{};
 desktop_arch_enum arch_{};

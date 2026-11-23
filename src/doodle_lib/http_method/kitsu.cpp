@@ -53,6 +53,7 @@ void reg_kitsu_urls(http_route& in_route) {
       .reg_c<doodle_data_asset_file_image>()
       .reg_c<doodle_tool_version>()
       .reg_c<desktop_update>()
+      .reg_c<desktop_update_post>()
 
       .reg_c<dingding_attendance_get>()
       .reg_c<dingding_attendance_create_post>()
