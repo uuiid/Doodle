@@ -111,10 +111,12 @@ nlohmann::json load_desktop_update(const std::string& in_path) {
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(desktop_update, get) {
-  auto l_path = g_kitsu_ctx().get_desktop_update_file();
+  const std::string l_platform{magic_enum::enum_name(platform_)};
+  const std::string l_arch{magic_enum::enum_name(arch_)};
+  const std::string l_channel{magic_enum::enum_name(channel_)};
+  auto l_path = g_kitsu_ctx().get_desktop_update_file(l_platform, l_arch, l_channel);
   SPDLOG_LOGGER_DEBUG(
-      g_logger_ctrl().get_http(), "客户端检查更新 platform {} arch {} channel {}: {}",
-      magic_enum::enum_name(platform_), magic_enum::enum_name(arch_), magic_enum::enum_name(channel_),
+      g_logger_ctrl().get_http(), "客户端检查更新 platform {} arch {} channel {}: {}", l_platform, l_arch, l_channel,
       l_path.generic_string()
   );
   co_return std::make_unique<http_body_json_t>(load_desktop_update(l_path.generic_string()));
