@@ -149,7 +149,7 @@ void http_work::run(const std::set<server_task_info_type>& in_allowed_task_types
   kitsu_token_                            = in_kitsu_token;
   app_cancel_state_.emplace(app_base::Get().on_cancel.slot());
   boost::asio::co_spawn(
-      executor_, async_run(),
+      g_io_context(), async_run(),
       boost::asio::bind_cancellation_slot(
           app_cancel_state_->slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
       )
@@ -223,24 +223,24 @@ bool http_work::run_task(const server_task_info& in_task_info) {
   // 计数必须在 co_spawn 之前加: 否则任务可能在计数之前就跑完并上报 online
   if (in_task_info.type_ == server_task_info_type::auto_light) {
     auto l_run = std::make_shared<run_ue_assembly_distributed>(in_task_info, shared_from_this());
-    boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
+    boost::asio::co_spawn(g_io_context(), l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
   if (in_task_info.type_ == server_task_info_type::export_fbx) {
     auto l_run = std::make_shared<export_fbx_arg_distributed>(in_task_info, shared_from_this());
-    boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
+    boost::asio::co_spawn(g_io_context(), l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
   if (in_task_info.type_ == server_task_info_type::depth_estimation) {
     auto l_run = std::make_shared<depth_estimation_distributed>(in_task_info, shared_from_this());
-    boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
+    boost::asio::co_spawn(g_io_context(), l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
   if (in_task_info.type_ == server_task_info_type::ai_light) {
     // AI 灯光一轮的渲染（本轮几个候选由前端决定）。载荷在 command_ 里（ai_light_task_payload_t），
     // 渲染报告由任务自己回传到 /api/doodle/ai/light/render_report/{task_id}。
     auto l_run = std::make_shared<ai_light_round_distributed>(in_task_info, shared_from_this());
-    boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
+    boost::asio::co_spawn(g_io_context(), l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
   return false;
