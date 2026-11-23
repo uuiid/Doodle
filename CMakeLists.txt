@@ -5,17 +5,12 @@ cmake_minimum_required(VERSION 4.2)
 # CMAKE_SOURCE_DIR 代表当前文件的路径
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 option(ADD_VERSION_LABEL "添加git版本标签和递增版本号" OFF)
-# SQL_BUILD_POOL:数据库编译池(数据库使用大量模板, 会消耗大量内存, 需要限制), 未设置时, 默认 12 
-if (NOT SQL_BUILD_POOL)
-    set(SQL_BUILD_POOL 6)
-endif ()
 
 
 # 寻找git版本标签🏷️
 include(GetGitVersion)
 get_git_version(
         WORK_DIR ${CMAKE_SOURCE_DIR}
-        ADD_LABEL ${ADD_VERSION_LABEL}
 )
 
 MESSAGE(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE} OS SDK ${CMAKE_SYSTEM_VERSION}")

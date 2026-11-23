@@ -133,9 +133,10 @@ function Add-GitVersionLabel {
         return
     }
     $Branch = &git branch --show-current
+    $Patch = [int]$Match.Groups[3].Value
     if ($Branch -eq "master" -and $Match.Groups[4].Value) {
         Write-Host "The current branch is the master branch, and the version number will be added"
-        $Patch = [int]$Match.Groups[3].Value + 1
+        $Patch = $Patch + 1
         $Tag = "v$($Match.Groups[1].Value).$($Match.Groups[2].Value).$Patch"
         &git tag -f $Tag
         if ($LASTEXITCODE -ne 0) {
@@ -145,10 +146,10 @@ function Add-GitVersionLabel {
     [PSCustomObject]@{
         Major = $Match.Groups[1].Value
         Minor = $Match.Groups[2].Value
-        Patch = $Match.Groups[3].Value
+        Patch = $Patch
         Tweak = $Match.Groups[4].Value
         Sha1  = $Match.Groups[5].Value
-        Short = "$($Match.Groups[1].Value).$($Match.Groups[2].Value).$($Match.Groups[3].Value)"
+        Short = "$($Match.Groups[1].Value).$($Match.Groups[2].Value).$Patch"
     }
 }
 
