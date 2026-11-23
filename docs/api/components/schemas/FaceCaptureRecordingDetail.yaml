@@ -4,9 +4,9 @@ description: |
   会话摘要 + 实时状态 + 磁盘产出清点。
 
   - `session_id` 固定为 URL 里的路径参数（实现会覆盖同名字段）；
-  - `state` 是该会话的实时状态：`session_id` 正是当前活动会话时取
-    `capture_session::state()`；否则固定为 `stopped`（该会话已无活动连接）。
-    注意前端录制 + 上传这条路径**不会**建立 `capture_session`，所以上传出来的会话恒为 `stopped`。
+  - `state` 恒为 `stopped`：会话目录一旦由上传接口建立就是终态，
+    实时录制链路（`capture_session`）已随 `/devices`、`POST /recordings`、`/recordings/stop`
+    一起删除，不再存在「正在录制」的会话。字段保留只为兼容既有的响应形状。
 allOf:
   - $ref: ./FaceCaptureRecordingSummary.yaml
   - type: object

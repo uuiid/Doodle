@@ -303,9 +303,7 @@ void reg_kitsu_urls(http_route& in_route) {
 }
 
 void reg_kitsu_local_urls(http_route& in_route) {
-  auto l_face_capture_selected = std::make_shared<local::face_capture_selected_device>();
-  auto l_face_capture_holder   = std::make_shared<local::face_capture_session_holder>();
-  auto l_face_capture_tasks    = std::make_shared<local::face_capture_transcode_tasks>();
+  auto l_face_capture_tasks = std::make_shared<local::face_capture_transcode_tasks>();
   in_route                            //
       .reg_c<local::local_setting>()  //
       .reg_c<local::video_thumbnail>()
@@ -327,10 +325,8 @@ void reg_kitsu_local_urls(http_route& in_route) {
       .reg_c<local::actions_local_task_run>()
       .reg_c<local::actions_local_watch_file_maya_anim>()
       .reg_c<local::actions_local_ai_session_ue>()
-      .reg_c<local::face_capture_devices>(l_face_capture_selected, l_face_capture_holder)
-      .reg_c<local::face_capture_recordings>(l_face_capture_holder)
-      .reg_c<local::face_capture_recording>(l_face_capture_holder)
-      .reg_c<local::face_capture_recording_stop>(l_face_capture_holder)
+      .reg_c<local::face_capture_recordings>()
+      .reg_c<local::face_capture_recording>()
       .reg_c<local::face_capture_recording_upload>()
       .reg_c<local::face_capture_recording_video>()
       .reg_c<local::face_capture_recording_curves>()

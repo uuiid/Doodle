@@ -4,15 +4,15 @@
 // create_kitsu_local_route()（kitsu.cpp），生产路由没有它们 —— 被测服务端必须带 `--local`
 // 启动，否则整组用例都会落到 404「服务器端未实现 api」。
 //
-//   /api/doodle/local/face_capture/devices                                GET, POST
-//   /api/doodle/local/face_capture/recordings                             GET, POST
+//   /api/doodle/local/face_capture/recordings                             GET
 //   /api/doodle/local/face_capture/recordings/upload                       POST
-//   /api/doodle/local/face_capture/recordings/stop                         POST
 //   /api/doodle/local/face_capture/recordings/{session_id_}                GET, DELETE
 //   /api/doodle/local/face_capture/recordings/{session_id_}/video          GET
 //   /api/doodle/local/face_capture/recordings/{session_id_}/curves         GET
 //   /api/doodle/local/face_capture/recordings/{session_id_}/transcode      GET, POST
 //   /api/doodle/local/face_capture/transcode                               GET
+//
+// 已删除（用例只断言 404）：`/devices`、`/stream`、`POST /recordings`、`POST /recordings/stop`。
 //
 // ---------------------------------------------------------------------------
 // 录制模型
@@ -76,7 +76,6 @@ import {
 import { readJson, readBuffer, expectError } from './helpers.js';
 
 // capture_state 的取值（face_capture_types.h），JSON 里是字符串
-const STATE_IDLE = 'idle';
 const STATE_STOPPED = 'stopped';
 
 // 1x1 透明 PNG，用来铺 frames/ 计数
@@ -157,80 +156,35 @@ test.afterAll(() => {
 });
 
 // ---------------------------------------------------------------------------
-// devices
+// 已移除的路由
 // ---------------------------------------------------------------------------
 
-test.describe('面部捕捉 devices', () => {
-  test('GET /devices 返回选中设备与设备列表', async ({ request }) => {
+test.describe('面部捕捉已移除的路由', () => {
+  test('GET /devices 不再存在', async ({ request }) => {
     const res = await readJson(await request.get(`${FACE_CAPTURE_API}/devices`, { headers: authCookie() }));
-    expect(res.status, JSON.stringify(res.body)).to.equal(200);
-    expect(res.body).to.have.property('selected');
-    expect(res.body).to.have.property('devices').that.is.an('array');
-    expect(res.body.selected).to.be.a('number');
-
-    for (const device of res.body.devices) {
-      expect(device).to.have.all.keys('index', 'name', 'backend', 'width', 'height', 'selected');
-      expect(device.index).to.be.a('number');
-      expect(device.name).to.equal(`camera_${device.index}`);
-      expect(device.backend).to.be.a('string');
-      // 设备尺寸来自 MF 原生 media type 探测（capture_session.cpp list_devices），拿不到时为 0
-      expect(device.width).to.be.a('number').that.is.at.least(0);
-      expect(device.height).to.be.a('number').that.is.at.least(0);
-      expect(device.selected).to.equal(device.index === res.body.selected);
-    }
-
-    // MFEnumDeviceSources 的返回顺序即 index，从 0 连续
-    res.body.devices.forEach((device, i) => expect(device.index).to.equal(i));
-
-    if (res.body.devices.length === 0) {
-      test.skip(true, '本机没有可用摄像头');
-      return;
-    }
-    expect(res.body.selected).to.equal(0);
+    expect(res.status, '设备枚举路由已删除').to.equal(404);
+    expect(res.body).to.be.an('object').that.has.property('code').that.equals(res.status);
   });
 
-  test('POST /devices 选择已存在设备返回 selected', async ({ request }) => {
-    const list = await readJson(await request.get(`${FACE_CAPTURE_API}/devices`, { headers: authCookie() }));
-    const device = list.body.devices[0];
-    if (!device) {
-      test.skip(true, '本机没有可用摄像头');
-      return;
-    }
+  test('POST /devices 不再存在', async ({ request }) => {
     const res = await readJson(
-      await request.post(`${FACE_CAPTURE_API}/devices`, { headers: authHeader(), data: { index: device.index } })
+      await request.post(`${FACE_CAPTURE_API}/devices`, { headers: authHeader(), data: { index: 0 } })
     );
-    expect([200, 201], JSON.stringify(res.body)).to.include(res.status);
-    expect(res.body).to.deep.equal({ selected: device.index });
+    expect(res.status).to.equal(404);
   });
 
-  test('POST /devices 非整数 index 返回 400', async ({ request }) => {
-    for (const data of [{}, { index: 'x' }, { index: 1.5 }, { index: null }]) {
-      const res = await readJson(await request.post(`${FACE_CAPTURE_API}/devices`, { headers: authHeader(), data }));
-      expectError(res, 400, '请求体需要整数 index');
-    }
-  });
-
-  test('POST /devices 负 index 返回 400', async ({ request }) => {
+  test('POST /recordings 不再存在', async ({ request }) => {
     const res = await readJson(
-      await request.post(`${FACE_CAPTURE_API}/devices`, { headers: authHeader(), data: { index: -1 } })
+      await request.post(`${FACE_CAPTURE_API}/recordings`, { headers: authHeader(), data: {} })
     );
-    expectError(res, 400, 'index 不能为负');
+    expect(res.status).to.equal(404);
   });
 
-  test('POST /devices 不存在的 index 返回 404', async ({ request }) => {
-    const list = await readJson(await request.get(`${FACE_CAPTURE_API}/devices`, { headers: authCookie() }));
-    const missing = list.body.devices.length + 5;
+  test('POST /recordings/stop 不再存在', async ({ request }) => {
     const res = await readJson(
-      await request.post(`${FACE_CAPTURE_API}/devices`, { headers: authHeader(), data: { index: missing } })
+      await request.post(`${FACE_CAPTURE_API}/recordings/stop`, { headers: authHeader(), data: {} })
     );
-    expectError(res, 404, `没有 index = ${missing} 的摄像头`);
-  });
-
-  test('POST /devices 大整数 index 返回 400', async ({ request }) => {
-    const res = await readJson(
-      await request.post(`${FACE_CAPTURE_API}/devices`, { headers: authHeader(), data: { index: 2147483648 } })
-    );
-    expectError(res, 400);
+    expect(res.status).to.equal(404);
   });
 });
 
@@ -547,26 +501,6 @@ test.describe('面部捕捉产物下载', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 录制入口（实时推流已移除，这两个入口都应报错）
-// ---------------------------------------------------------------------------
-
-test.describe('面部捕捉录制入口（已废弃的实时录制）', () => {
-  test('POST /recordings 没有会话返回 409', async ({ request }) => {
-    const res = await readJson(
-      await request.post(`${FACE_CAPTURE_API}/recordings`, { headers: authHeader(), data: {} })
-    );
-    expectError(res, 409, '当前没有可用的预览连接');
-  });
-
-  test('POST /recordings/stop 没有会话返回 404', async ({ request }) => {
-    const res = await readJson(
-      await request.post(`${FACE_CAPTURE_API}/recordings/stop`, { headers: authHeader(), data: {} })
-    );
-    expectError(res, 404, '没有活动会话');
-  });
-});
-
-// ---------------------------------------------------------------------------
 // 转码（A 层）
 // ---------------------------------------------------------------------------
 
@@ -809,14 +743,10 @@ test.describe('面部捕捉推流路由已移除', () => {
 
 test.describe('面部捕捉鉴权', () => {
   const routes = [
-    ['GET', '/devices'],
-    ['POST', '/devices'],
     ['GET', '/recordings'],
-    ['POST', '/recordings'],
     ['POST', '/recordings/upload'],
     ['GET', `/recordings/${NIL_ID}`],
     ['DELETE', `/recordings/${NIL_ID}`],
-    ['POST', '/recordings/stop'],
     ['GET', `/recordings/${NIL_ID}/video`],
     ['GET', `/recordings/${NIL_ID}/curves`],
     ['GET', `/recordings/${NIL_ID}/transcode`],
@@ -838,14 +768,14 @@ test.describe('面部捕捉鉴权', () => {
   });
 
   test('OPTIONS 不需要 token', async ({ request }) => {
-    const res = await request.fetch(`${FACE_CAPTURE_API}/devices`, { method: 'OPTIONS' });
+    const res = await request.fetch(`${FACE_CAPTURE_API}/recordings`, { method: 'OPTIONS' });
     expect(res.status()).to.equal(200);
     expect(res.headers()['access-control-allow-methods']).to.include('DELETE');
   });
 
   test('只带 Bearer 也能通过鉴权', async ({ request }) => {
     const res = await readJson(
-      await request.get(`${FACE_CAPTURE_API}/devices`, { headers: { Authorization: 'Bearer any-value' } })
+      await request.get(`${FACE_CAPTURE_API}/recordings`, { headers: { Authorization: 'Bearer any-value' } })
     );
     expect(res.status, 'local 路由只截取 token，不校验内容').to.equal(200);
   });

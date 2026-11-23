@@ -86,11 +86,13 @@ npx playwright show-report             # 打开上次的 HTML 报告
 所以必须先以 `--local` 拉起服务端，并让它与测试跑在同一台机器上（用例直接往会话目录写文件）。
 
 **录制模型已改为前端录制 + 上传**：后端不再采集摄像头、不再推流，`align.json` 已删除。
-`face_capture.js` 共 46 个用例，覆盖 devices / upload / recordings / 详情 / 产物下载 /
-转码 / 推流路由已移除 / 鉴权八组。
+`/devices`、`/stream`、`POST /recordings`、`POST /recordings/stop` 也已删除，
+用例只断言它们返回 404。`face_capture.js` 共 42 个用例，覆盖已移除路由 / upload /
+recordings / 详情 / 产物下载 / 转码 / 推流路由已移除 / 鉴权八组。
 
 > ⚠️ **会话目录必须与 `FACE_CAPTURE_SESSIONS_DIR` 一致**。服务端实际根目录由启动参数
-> `--root` 决定（未指定时落在配置的 cache root，本机常见是 `D:/kitsu_data`），
+> `--root` 决定：`doodle_kitsu_supplement_test.exe` 默认落在 `<exe 目录>/test_data`，
+> 生产 exe 落在配置的 cache root（本机常见是 `D:/kitsu_data`），
 > 而 `config.js` 默认推 `<仓库>/build/root`。两者不一致会导致 upload / seed 的落盘断言失败。
 > 起服务时显式传 `--root`，或跑用例时用 `env: {FACE_CAPTURE_SESSIONS_DIR: "<真实目录>"}` 指过去。
 

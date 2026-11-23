@@ -22,16 +22,20 @@
 >
 > | 方法 | 路径 | 状态 |
 > | --- | --- | --- |
-> | GET / POST | `/face_capture/devices` | 保留（MF 原生枚举，只返回最高分辨率） |
 > | **POST** | **`/face_capture/recordings/upload`** | **新增**，前端录制视频上传 |
 > | GET | `/face_capture/recordings` | 保留（只认 `take.mp4` / `take.webm`） |
-> | GET / DELETE | `/face_capture/recordings/{id}` | 保留（`artifacts` 去掉 `align_json`、加 `take_webm`） |
+> | GET / DELETE | `/face_capture/recordings/{id}` | 保留（`artifacts` 去掉 `align_json`、加 `take_webm`；`state` 恒 `stopped`） |
 > | GET | `/face_capture/recordings/{id}/video` | 保留（mp4 优先，回退 webm） |
 > | GET | `/face_capture/recordings/{id}/curves` | 保留 |
 > | POST / GET | `/face_capture/recordings/{id}/transcode` | 保留（视频存在性改为 mp4 或 webm） |
 > | GET | `/face_capture/transcode` | 保留 |
+> | ~~GET / POST~~ | ~~`/face_capture/devices`~~ | **已删除**（服务端不再接触摄像头） |
 > | ~~GET~~ | ~~`/face_capture/stream`（WS）~~ | **已删除** |
-> | ~~POST~~ | ~~`/face_capture/recordings`~~ / ~~`.../recordings/stop`~~ | **旧版实时录制，恒 409/404，保留只为兼容** |
+> | ~~POST~~ | ~~`/face_capture/recordings`~~ / ~~`.../recordings/stop`~~ | **已删除**（连同 `capture_session` 状态机） |
+>
+> **服务端已完全不接触摄像头**：`capture_session` 只剩 `default_root()`，
+> `frame_filter` / `media_fragment_pipeline` / `frame_align` / `ws_*` 全部删除。
+> OpenCV 与 Media Foundation 的采集代码不再存在，摄像头由浏览器独占。
 >
 > **帧率精度取舍（已拍板）**：接受 `MediaRecorder` 的可变帧率不精确，不做恒定帧率补偿，
 > UE 侧仍按 `-FPS=25/1` 解释解出的帧序列。

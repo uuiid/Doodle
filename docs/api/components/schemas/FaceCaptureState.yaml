@@ -1,23 +1,18 @@
 type: string
 description: |
-  脸捕会话状态，对应 `doodle::face_capture::capture_state`
-  （`src/doodle_lib/core/face_capture/face_capture_types.h`，用 `DOODLE_JSON_SERIALIZE_ENUM_STRICT`
-  序列化，5 个取值全部有字符串映射，未登记的取值两个方向都会抛 `out_of_range.410`）。
+  脸捕会话状态（历史字段）。
 
-  录制接口返回的是 `capture_status.state`，录像查询接口返回的是
-  `capture_session::state()`（即 `display_state()`：**录制轴状态不为 `idle` 时优先返回录制轴状态**，
-  否则返回推流轴状态）。
-
-  前端录制 + 上传建立的会话**没有** `capture_session`，查询 `state` 恒为 `stopped`。
-  实时推流（原 `GET .../stream`）已删除，`previewing` 在生产部署中不会再出现。
+  > **现状**：实时录制链路（`capture_session` 的状态机、`/devices`、`POST /recordings`、
+  > `POST /recordings/stop`）已全部删除，服务端不再产生 `idle` / `previewing` / `recording` /
+  > `stopping` 任何一个取值。`GET .../recordings/{session_id}` 里的 `state` 恒为 `stopped`。
 
   | 取值 | 含义 |
   | --- | --- |
-  | `idle` | 摄像头未打开（没有活动会话） |
-  | `previewing` | 旧版实时推流状态；推流路由删除后不再出现 |
-  | `recording` | 正在录制 `take.mp4`（旧版后端实时录制） |
-  | `stopping` | 正在收尾录制（drain 滤镜 + 结束 `mp4_writer`） |
-  | `stopped` | 录制轴停留在「已停止」；录像查询接口在会话未录制时返回该值 |
+  | `idle` | 历史值，不再产生 |
+  | `previewing` | 历史值，不再产生 |
+  | `recording` | 历史值，不再产生 |
+  | `stopping` | 历史值，不再产生 |
+  | `stopped` | 当前唯一会返回的取值 |
 enum:
   - idle
   - recording
