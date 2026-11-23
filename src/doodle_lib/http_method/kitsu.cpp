@@ -328,7 +328,6 @@ void reg_kitsu_local_urls(http_route& in_route) {
       .reg_c<local::actions_local_watch_file_maya_anim>()
       .reg_c<local::actions_local_ai_session_ue>()
       .reg_c<local::face_capture_devices>(l_face_capture_selected, l_face_capture_holder)
-      .reg_c<local::face_capture_stream>(l_face_capture_selected, l_face_capture_holder)
       .reg_c<local::face_capture_recordings>(l_face_capture_holder)
       .reg_c<local::face_capture_recording>(l_face_capture_holder)
       .reg_c<local::face_capture_recording_stop>(l_face_capture_holder)

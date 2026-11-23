@@ -11,8 +11,6 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/face_capture/frame_filter.h>
 #include <doodle_lib/core/face_capture/media_fragment_pipeline.h>
-#include <doodle_lib/core/face_capture/ws_message.h>
-#include <doodle_lib/core/face_capture/ws_outlet.h>
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/logger/logger.h>
@@ -207,11 +205,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     stream_state_ = capture_state::previewing;
     record_state_ = capture_state::idle;
 
-    if (auto l_outlet = outlet_.lock()) {
-      l_outlet->send(std::make_unique<ws_hello>(capture_state::previewing, width_, height_));
-      l_outlet->send(std::make_unique<ws_avc_init>(fragmenter_->init_segment()));
-    }
-
     boost::asio::co_spawn(
         g_io_context(), read_loop(),
         boost::asio::bind_cancellation_slot(
@@ -246,16 +239,11 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     reset_recording_counters(clock_type::now());
     record_state_ = capture_state::recording;
 
-    if (auto l_outlet = outlet_.lock()) {
-      l_outlet->send(std::make_unique<ws_avc_init>(fragmenter_->init_segment()));
-    }
-
     co_return make_status(capture_state::recording);
   }
 
-  boost::asio::awaitable<void> finish_record() {
+  void finish_record() {
     drain_filter();
-    co_await wait_outlet_idle();
     close_record();
   }
 
@@ -266,7 +254,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
     record_state_ = capture_state::stopping;
 
-    co_await finish_record();
+    finish_record();
 
     auto l_result       = make_status(capture_state::previewing);
     l_result.truncated_ = truncated_;
@@ -282,7 +270,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     auto l_result = make_status(capture_state::idle);
     if (record_state_ == capture_state::recording) {
       record_state_ = capture_state::stopping;
-      co_await finish_record();
+      finish_record();
       l_result      = make_status(capture_state::previewing);
       record_state_ = capture_state::stopped;
     }
@@ -294,10 +282,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     co_return l_result;
   }
 
-  void attach(std::shared_ptr<ws_outlet> in_outlet) { outlet_ = std::move(in_outlet); }
-
-  void detach() { outlet_.reset(); }
-
   capture_state state() const { return display_state(); }
 
   std::uint64_t frames() const { return seq_; }
@@ -305,8 +289,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   FSys::path session_dir() const { return session_dir_; }
 
   const executor_type& get_executor() const { return strand_; }
-
-  [[nodiscard]] std::shared_ptr<ws_outlet> outlet() const { return outlet_.lock(); }
 
  private:
   capture_state display_state() const {
@@ -336,9 +318,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   }
 
   void reset_stream_encoders() {
-    fragmenter_ = std::make_shared<h264_fragmenter>(width_, height_);
-    fragmenter_->init();
-
     filter_ = std::make_shared<frame_filter>(
         frame_filter_option{.width_ = width_, .height_ = height_, .graph_ = fmt::format("fps={}", k_fps)}
     );
@@ -348,7 +327,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     seq_              = 0;
     orig_seq_         = 0;
     record_frame_seq_ = 0;
-    preview_seq_      = 0;
     source_frames_    = 0;
     source_last_ms_   = 0;
     started_at_       = in_now;
@@ -364,7 +342,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     seq_              = 0;
     orig_seq_         = 0;
     record_frame_seq_ = 0;
-    preview_seq_      = 0;
     source_frames_    = 0;
     source_last_ms_   = 0;
     started_at_       = in_now;
@@ -384,28 +361,12 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     release_camera();
     co_await wait_read_thread();
     close_record();
-    if (fragmenter_) {
-      fragmenter_->finish();
-      fragmenter_.reset();
-    }
     filter_.reset();
     if (cap_) {
       cap_->release();
       cap_.reset();
     }
     co_return;
-  }
-
-  boost::asio::awaitable<void> wait_outlet_idle() {
-    auto l_outlet = outlet_.lock();
-    if (!l_outlet) co_return;
-
-    auto l_deadline = clock_type::now() + std::chrono::milliseconds{k_stop_drain_timeout_ms};
-    boost::asio::steady_timer l_timer{strand_};
-    while (!l_outlet->idle() && clock_type::now() < l_deadline) {
-      l_timer.expires_after(std::chrono::milliseconds{2});
-      co_await l_timer.async_wait(boost::asio::use_awaitable);
-    }
   }
 
   boost::asio::awaitable<void> read_loop() {
@@ -484,25 +445,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
         }
         ++record_frame_seq_;
       }
-
-      auto l_seq    = l_recording ? (record_frame_seq_ > 0 ? record_frame_seq_ - 1 : 0) : preview_seq_++;
-
-      auto l_outlet = outlet_.lock();
-      if (l_outlet && l_outlet->is_attached() && fragmenter_) {
-        try {
-          fragmenter_->push(l_mat, l_seq, l_frame.wall_ms_);
-          for (auto& l_fragment : fragmenter_->take_fragments()) {
-            if (l_outlet->pending_frame()) continue;
-            auto l_message = std::make_unique<ws_avc_fragment>(std::move(l_fragment));
-            l_message->set_latency_ms(
-                elapsed_ms(started_at_, clock_type::now()) - l_message->fragment().wall_ms_
-            );
-            l_outlet->send(std::move(l_message));
-          }
-        } catch (const std::exception& in_err) {
-          SPDLOG_WARN("推流编码失败: {}", in_err.what());
-        }
-      }
     }
   }
 
@@ -543,9 +485,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   capture_state stream_state_{capture_state::idle};
   capture_state record_state_{capture_state::idle};
   std::shared_ptr<cv::VideoCapture> cap_{};
-  std::shared_ptr<h264_fragmenter> fragmenter_{};
   std::shared_ptr<video_writer> mp4_writer_{};
-  std::weak_ptr<ws_outlet> outlet_{};
   std::shared_ptr<frame_filter> filter_{};
 
   std::int32_t width_{0};
@@ -553,7 +493,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   std::uint64_t seq_{0};
   std::uint64_t orig_seq_{0};
   std::uint64_t record_frame_seq_{0};
-  std::uint64_t preview_seq_{0};
   std::uint64_t source_frames_{0};
   std::int64_t source_last_ms_{0};
 
@@ -607,12 +546,6 @@ boost::asio::awaitable<capture_status> capture_session::start_record() { return 
 boost::asio::awaitable<capture_status> capture_session::stop() { return impl_ptr_->stop(); }
 
 boost::asio::awaitable<capture_status> capture_session::close() { return impl_ptr_->close(); }
-
-void capture_session::attach(std::shared_ptr<ws_outlet> in_outlet) { impl_ptr_->attach(std::move(in_outlet)); }
-
-void capture_session::detach() { impl_ptr_->detach(); }
-
-std::shared_ptr<ws_outlet> capture_session::outlet() const { return impl_ptr_->outlet(); }
 
 capture_state capture_session::state() const { return impl_ptr_->state(); }
 

@@ -4,16 +4,12 @@ target_sources(
         face_capture_types.h
         media_fragment_pipeline.h
         frame_filter.h
-        ws_message.h
-        ws_outlet.h
         capture_session.h
         frame_align.h
 
         PRIVATE
         media_fragment_pipeline.cpp
         frame_filter.cpp
-        ws_message.cpp
-        ws_outlet.cpp
         capture_session.cpp
         frame_align.cpp
 )

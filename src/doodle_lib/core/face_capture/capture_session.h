@@ -17,7 +17,6 @@
 namespace doodle::face_capture {
 
 class capture_session;
-class ws_outlet;
 
 class capture_session_holder {
  public:
@@ -58,12 +57,6 @@ class capture_session : public std::enable_shared_from_this<capture_session> {
   boost::asio::awaitable<capture_status> stop();
 
   boost::asio::awaitable<capture_status> close();
-
-  void attach(std::shared_ptr<ws_outlet> in_outlet);
-
-  void detach();
-
-  [[nodiscard]] std::shared_ptr<ws_outlet> outlet() const;
 
   capture_state state() const;
 

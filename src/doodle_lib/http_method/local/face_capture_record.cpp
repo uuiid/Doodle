@@ -88,13 +88,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recordings, post) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_upload, post) {
-  auto l_file = in_handle->get_file();
-  DOODLE_CHICK_HTTP(!l_file.empty() && FSys::exists(l_file), bad_request, "请求体中没有视频文件");
-
   auto l_name = FSys::path{std::string{in_handle->req_header_[boost::beast::http::field::content_disposition]}};
   auto l_ext  = l_name.extension().string();
   DOODLE_CHICK_HTTP(
       l_ext == ".webm" || l_ext == ".mp4", bad_request, "不支持的视频扩展名 {}，只接受 .webm 或 .mp4", l_ext
+  );
+
+  auto l_file = in_handle->get_file();
+  DOODLE_CHICK_HTTP(!l_file.empty() && FSys::exists(l_file), bad_request, "请求体中没有视频文件");
+  DOODLE_CHICK_HTTP(
+      FSys::file_size(l_file) > 0, bad_request, "请求体中的视频文件为空: {}", l_file.generic_string()
   );
 
   auto l_session_id = core_set::get_set().get_uuid();
