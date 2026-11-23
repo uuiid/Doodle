@@ -16,6 +16,72 @@
 
 namespace doodle::http {
 namespace {
+struct desktop_update_latest_t {
+  std::string version_{};
+  std::string published_at_{};
+  bool mandatory_{false};
+  std::string min_supported_version_{};
+  std::string notes_{};
+  std::string notes_url_{};
+
+  friend void to_json(nlohmann::json& in_json, const desktop_update_latest_t& in_latest) {
+    in_json["version"] = in_latest.version_;
+    if (!in_latest.published_at_.empty()) in_json["published_at"] = in_latest.published_at_;
+    in_json["mandatory"] = in_latest.mandatory_;
+    if (!in_latest.min_supported_version_.empty())
+      in_json["min_supported_version"] = in_latest.min_supported_version_;
+    if (!in_latest.notes_.empty()) in_json["notes"] = in_latest.notes_;
+    if (!in_latest.notes_url_.empty()) in_json["notes_url"] = in_latest.notes_url_;
+  }
+  friend void from_json(const nlohmann::json& in_json, desktop_update_latest_t& in_latest) {
+    in_json.at("version").get_to(in_latest.version_);
+    if (in_json.contains("published_at")) in_json["published_at"].get_to(in_latest.published_at_);
+    if (in_json.contains("mandatory")) in_json["mandatory"].get_to(in_latest.mandatory_);
+    if (in_json.contains("min_supported_version"))
+      in_json["min_supported_version"].get_to(in_latest.min_supported_version_);
+    if (in_json.contains("notes")) in_json["notes"].get_to(in_latest.notes_);
+    if (in_json.contains("notes_url")) in_json["notes_url"].get_to(in_latest.notes_url_);
+  }
+};
+
+struct desktop_update_installer_t {
+  std::string url_{};
+  std::int64_t size_{0};
+  std::string sha512_{};
+
+  friend void to_json(nlohmann::json& in_json, const desktop_update_installer_t& in_installer) {
+    in_json["url"]    = in_installer.url_;
+    in_json["size"]   = in_installer.size_;
+    in_json["sha512"] = in_installer.sha512_;
+  }
+  friend void from_json(const nlohmann::json& in_json, desktop_update_installer_t& in_installer) {
+    in_json.at("url").get_to(in_installer.url_);
+    in_json.at("sha512").get_to(in_installer.sha512_);
+    if (in_json.contains("size")) in_json["size"].get_to(in_installer.size_);
+  }
+};
+
+struct desktop_update_t {
+  desktop_update_latest_t latest_{};
+  desktop_update_installer_t installer_{};
+
+  void check() const {
+    DOODLE_CHICK(!latest_.version_.empty(), "latest.version 为空");
+    DOODLE_CHICK(!installer_.url_.empty(), "installer.url 为空");
+    DOODLE_CHICK(!installer_.sha512_.empty(), "installer.sha512 为空");
+  }
+
+  friend void to_json(nlohmann::json& in_json, const desktop_update_t& in_update) {
+    in_json["latest"]    = in_update.latest_;
+    in_json["installer"] = in_update.installer_;
+  }
+  friend void from_json(const nlohmann::json& in_json, desktop_update_t& in_update) {
+    in_json.at("latest").get_to(in_update.latest_);
+    in_json.at("installer").get_to(in_update.installer_);
+    in_update.check();
+  }
+};
+
 nlohmann::json load_desktop_update(const std::string& in_path) {
   const auto l_empty = nlohmann::json{{"has_update", false}};
   std::error_code l_code{};
@@ -29,26 +95,18 @@ nlohmann::json load_desktop_update(const std::string& in_path) {
     return l_empty;
   }
   auto l_json = nlohmann::json::parse(l_file, nullptr, false);
-  if (l_json.is_discarded() || !l_json.is_object()) {
-    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "客户端升级配置不是合法的 JSON 对象: {}", in_path);
+  if (l_json.is_discarded()) {
+    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "客户端升级配置不是合法的 JSON: {}", in_path);
     return l_empty;
   }
-  const bool l_has_installer = l_json.contains("installer") && l_json["installer"].is_object() &&
-                               l_json["installer"].contains("url") && l_json["installer"]["url"].is_string() &&
-                               !l_json["installer"]["url"].get<std::string>().empty() &&
-                               l_json["installer"].contains("sha512") && l_json["installer"]["sha512"].is_string() &&
-                               !l_json["installer"]["sha512"].get<std::string>().empty();
-  const bool l_has_version =
-      l_json.contains("latest") && l_json["latest"].is_object() && l_json["latest"].contains("version") &&
-      l_json["latest"]["version"].is_string() && !l_json["latest"]["version"].get<std::string>().empty();
-  if (!l_has_installer || !l_has_version) {
-    SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_http(), "客户端升级配置缺少必需字段 latest.version / installer.url / installer.sha512: {}",
-        in_path
-    );
+  try {
+    nlohmann::json l_out{};
+    l_out = l_json.get<desktop_update_t>();
+    return l_out;
+  } catch (const std::exception& in_error) {
+    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "客户端升级配置无效 {}: {}", in_path, in_error.what());
     return l_empty;
   }
-  return l_json;
 }
 }  // namespace
 
