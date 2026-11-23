@@ -129,7 +129,7 @@
     {
       "label": "build_all",
       "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/build_all.ps1",
+      "command": "${workspaceFolder}/build_script/build_all.ps1",
       "problemMatcher": []
     },
     {
