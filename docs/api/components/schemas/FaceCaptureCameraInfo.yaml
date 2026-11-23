@@ -1,11 +1,12 @@
 type: object
 description: |
   摄像头信息，对应 `doodle::face_capture::camera_info`（`face_capture_types.h`）；
-  由 `capture_session::list_devices()` 逐个打开 index 探测得到。
+  由 `capture_session::list_devices()` 用 **Media Foundation 原生 API** 枚举得到。
 
   探测规则（`src/doodle_lib/core/face_capture/capture_session.cpp` 的 `list_devices()`）：
-  index 从 0 到 7 依次尝试，先 `cv::CAP_DSHOW`、失败再回退 `cv::CAP_MSMF`，
-  **遇到第一个打不开的 index 立即停止**，因此编号不连续时后面的设备不会被枚举到。
+  `MFEnumDeviceSources` 枚举视频源，逐个 `IMFActivate::ActivateObject` 打开
+  `IMFMediaSource`，遍历 presentation descriptor 里所有流的 media type，
+  取**面积最大**的帧尺寸。
 properties:
   index:
     type: integer
@@ -16,12 +17,15 @@ properties:
     description: 设备名。当前实现是合成的 `camera_<index>`，不是系统设备描述
   backend:
     type: string
-    description: 实际打开成功的 OpenCV 后端名（如 `DSHOW` / `MSMF`），取自 `cv::VideoCapture::getBackendName()`
+    description: 固定为 `MSMF`（枚举走 Media Foundation；值由实现直接写入，不来自运行时查询）
   width:
     type: integer
     format: int32
-    description: 摄像头默认采集宽度（`cv::CAP_PROP_FRAME_WIDTH`）
+    description: |
+      该摄像头 media type 里面积最大的宽度；读不到 media type 时为 0。
+      注意这不代表 `POST /face_capture/recordings` 实际会以该尺寸打开
+      （旧版采集路径会把它截断到 1920×1080）。
   height:
     type: integer
     format: int32
-    description: 摄像头默认采集高度（`cv::CAP_PROP_FRAME_HEIGHT`）
+    description: 同上，最大高度；读不到时为 0

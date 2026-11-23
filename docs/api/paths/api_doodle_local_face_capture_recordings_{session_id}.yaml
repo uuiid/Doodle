@@ -3,22 +3,20 @@ get:
     - 脸捕
   summary: 查询单个录制段
   description: |
-    返回指定会话的录制详情：`align.json` 派生字段 + 实时 `state` + 磁盘产出清点 `artifacts`。
+    返回指定会话的实时 `state` + 磁盘产出清点 `artifacts`，外加摘要里的
+    `session_id` / `path`。
 
     处理器为 `local::face_capture_recording::get`，实现见
     `src/doodle_lib/http_method/local/face_capture_record.cpp`：
 
-    - 会话目录 `<缓存根>/face_capture/sessions/<session_id>/` 既无 `take.mp4` 又无 `align.json`
-      时返回 404「会话不存在」；
+    - 会话目录 `<缓存根>/face_capture/sessions/<session_id>/` 既无 `take.mp4`、又无
+      `take.webm`、也没有 `curves/` 时返回 404「会话不存在」；
     - `session_id` 会被强制改写为 URL 里的路径参数；
     - `state`：若该 id 正好是当前活动录制会话，取 `capture_session::state()`；否则固定 `stopped`。
-      注意 `state` 是**录制轴优先**的显示状态，所以录制结束后返回 `stopped`，
-      即使该连接仍在推预览；
-    - `frames`：正常情况下是 `align.json` 的原始帧计数；`align.json` 读不出来且该 id 正好是
-      活动会话时，用会话内的实时帧计数补上；
-    - `path`：该会话目录在服务端磁盘上的路径（`<缓存根>/face_capture/sessions/<session_id>/`），
-      与列表接口同源，给本机转码/上传定位文件用；同样只在 `align.json` 读取成功时才出现；
-    - `artifacts` 现场扫描 `take.mp4` / `align.json` / `frames/*.png` 个数 / `curves/face_curves.dhfc`。
+      前端录制 + 上传建立的会话没有 `capture_session`，因此恒为 `stopped`；
+    - `path`：该会话目录在服务端磁盘上的路径，给本机转码/上传定位文件用；
+    - `artifacts` 现场扫描 `take.mp4` / `take.webm` / `frames/*.png` 个数 / `curves/face_curves.dhfc`。
+      **`align.json` 相关字段已删除**。
 
     该处理器继承自 `local_http_fun`：请求头必须带非空令牌，否则 401「请先登录」；
     路由只在 `kitsu_supplement --local` 模式注册。
@@ -30,7 +28,7 @@ get:
       schema:
         type: string
         format: uuid
-      description: 录制开始时生成的会话 id（`POST .../recordings` 的返回值，或列表接口的 `session_id`）
+      description: 录制开始时生成的会话 id，或上传接口 `POST .../recordings/upload` 的返回值
   responses:
     '200':
       description: 录制详情
@@ -41,7 +39,7 @@ get:
     '401':
       description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
     '404':
-      description: 会话目录不存在，或目录里既没有 `take.mp4` 也没有 `align.json`
+      description: 会话目录不存在，或目录里没有视频文件也没有 `curves/`
   security:
     - bearerAuth: []
 delete:
@@ -57,7 +55,7 @@ delete:
     1. 该 id 正是当前活动会话且状态为 `recording` 时返回 409「会话正在录制中」，
        必须先 `POST .../recordings/stop`；
     2. 会话目录不存在则 404「会话不存在」；
-    3. `FSys::remove_all()` 删除目录（含 `take.mp4`、`align.json`、`frames/`、`curves/`、
+    3. `FSys::remove_all()` 删除目录（含 `take.webm` / `take.mp4`、`frames/`、`curves/`、
        UE 日志等），返回 `{"ok": true}`。
 
     只删磁盘文件，不影响内存里的转码任务注册表：转码任务按该会话路径读写，

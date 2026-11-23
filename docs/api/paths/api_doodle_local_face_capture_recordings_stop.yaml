@@ -1,8 +1,12 @@
 post:
   tags:
     - 脸捕
-  summary: 结束录制
+  summary: 结束录制（旧版服务端实时录制，前端已不再使用）
   description: |
+    > **现状**：录制已改为前端 `MediaRecorder` + `POST .../recordings/upload`。
+    > 实时推流（原 `GET .../stream`）已删除，没有任何路径能建立活动会话，
+    > 所以这个端点在实际部署里恒返回 404「没有活动会话」。保留只为兼容旧调用方。
+
     结束当前活动会话上的录制，并返回本次录制的最终状态。
 
     处理器为 `local::face_capture_recording_stop::post`，实现见
@@ -11,13 +15,12 @@ post:
 
     1. 没有活动会话 → 404「没有活动会话」；
     2. `stop()` 要求录制轴为 `recording`，否则 409「当前没有在录制」（重复调用会命中这里）；
-    3. 收尾顺序：drain 滤镜 → 等推流出口空闲 → `mp4_writer` 结束并写出 `align.json`。
-       **响应返回时 `take.mp4` 已可安全读取**；
-    4. 返回的 `capture_status` 里 `state` 固定为 `previewing`（预览推流继续），
+    3. 收尾顺序：drain 滤镜 → `mp4_writer` 结束。**响应返回时 `take.mp4` 已可安全读取**；
+       **不再写 `align.json`**（该文件已在改造中删除）；
+    4. 返回的 `capture_status` 里 `state` 固定为 `previewing`，
        `frames` / `raw_frames` / `duration_ms` 是本次录制的累计值，`truncated` 透传录制过程中的异常。
 
-    路径不带会话 id：作用对象固定是 `capture_session_holder` 里登记的那条活动会话，
-    因此只能停止**当前这条连接**正在录制的那一段。
+    路径不带会话 id：作用对象固定是 `capture_session_holder` 里登记的那条活动会话。
 
     与 `DELETE .../recordings/{session_id}` 的区别：本接口只收尾、保留文件；DELETE 会删除整个目录。
 

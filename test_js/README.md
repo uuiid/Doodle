@@ -78,12 +78,21 @@ npx playwright show-report             # 打开上次的 HTML 报告
 | `animation_train.js` | AI 动画训练（独立端口 `:50024`） |
 | `socket_io.js` | socket.io 连接与并发连接 |
 | `distributed_work.js` | 分布式工作机 WebSocket 上线与回执 |
-| `face_capture.js` | 面部捕捉（仅 local 路由）：设备 / 录制列表与详情 / 视频与动捕曲线下载 / 转码任务 / WebSocket stream / 鉴权 |
+| `face_capture.js` | 面部捕捉（仅 local 路由）：设备 / 前端录制视频上传 / 录制列表与详情 / 视频与动捕曲线下载 / 转码任务 / 推流路由已移除 / 鉴权 |
 
 ### 面部捕捉（`face_capture.js`）
 
-这九条路由**只**注册在 `create_kitsu_local_route()`（`face_capture.h`），生产服务没有，
-所以必须先以 `--local` 拉起服务端，并让它与测试跑在同一台机器上（用例直接往会话目录写文件）：
+这些路由**只**注册在 `create_kitsu_local_route()`（`face_capture.h`），生产服务没有，
+所以必须先以 `--local` 拉起服务端，并让它与测试跑在同一台机器上（用例直接往会话目录写文件）。
+
+**录制模型已改为前端录制 + 上传**：后端不再采集摄像头、不再推流，`align.json` 已删除。
+`face_capture.js` 共 46 个用例，覆盖 devices / upload / recordings / 详情 / 产物下载 /
+转码 / 推流路由已移除 / 鉴权八组。
+
+> ⚠️ **会话目录必须与 `FACE_CAPTURE_SESSIONS_DIR` 一致**。服务端实际根目录由启动参数
+> `--root` 决定（未指定时落在配置的 cache root，本机常见是 `D:/kitsu_data`），
+> 而 `config.js` 默认推 `<仓库>/build/root`。两者不一致会导致 upload / seed 的落盘断言失败。
+> 起服务时显式传 `--root`，或跑用例时用 `env: {FACE_CAPTURE_SESSIONS_DIR: "<真实目录>"}` 指过去。
 
 ```powershell
 # 1. 起服务（dsh-kitsu-supplement 插件；root 与下面的 DOODLE_ROOT 保持一致）
@@ -98,9 +107,10 @@ npm run test:face_capture
 kitsu_server_stop -port 50136
 ```
 
-用例不录屏，而是把样本视频复制成 `<会话目录>/<uuid>/take.mp4`，并生成自洽的 `align.json`、
-复制一份 `face_curves.dhfc`、放 3 个 1×1 PNG 到 `frames/`，走真实的 HTTP / WebSocket 契约；
-每个用例结束会把铺出来的会话目录删掉。
+用例不录屏。上传组走真实接口：把样本视频字节以 `Content-Disposition: take.webm` / `take.mp4`
+POST 到 `/recordings/upload`，断言落盘文件名与随后各接口的可见性；其余组把样本视频复制成
+`<会话目录>/<uuid>/take.webm`（或 `take.mp4`）、复制一份 `face_curves.dhfc`、放 3 个 1×1 PNG 到
+`frames/`，走真实的 HTTP 契约。每个用例结束会把铺出来的会话目录删掉。
 
 转码部分只做 **A 层**：断言 404/422 分支、提交后单条与全量两个通道可见、终态落在
 `completed` / `failed` 之内。真实解算需要 UE 工程 + 插件版本服务，等不到终态时用例带日志

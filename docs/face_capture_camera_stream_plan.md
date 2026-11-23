@@ -1,6 +1,48 @@
 # 摄像头采集 · WebSocket 推流 · 前端控制录制 · UE 转码 方案
 
-> 状态：方案已拍板（2026-11-05，11-06 追加"取消固定节拍"、"会话挂在 WS 上"、"选中摄像头"、"WS 只预览 / 录制显式开始 / 取消 raw.mkv"）。**采集引擎（M1/M2）、WS 路由（连上只开预览、断开即关闭）、设备路由（GET 枚举 / POST 选中）、录制段路由（开始 / 停止 / 查询 / 列表 / 下载 / 删除）已实现并编译通过**，转码作业层待实现（进度见附录 A）。
+> ## ⚠️ 本方案已废止（保留为历史记录）
+>
+> **现行方案：前端录制 + 上传。** 后端已不再采集摄像头、不再推流，`align.json` 也已删除。
+> 本文后续章节描述的 `ws_outlet` / `ws_message` / `h264_fragmenter` 推流链路、
+> WebSocket `/stream` 路由、`align.json` 帧对齐、`capture_session` 挂在 WS 连接上的会话模型
+> **全部已从代码中移除**，阅读时不要按本文实现。
+>
+> **现行链路**：
+>
+> ```
+> 前端                                          后端
+>   getUserMedia + <video> 本地预览（浏览器独占摄像头）
+>   MediaRecorder 录完整段
+>   POST /recordings/upload  ──────────────────►  落盘 take.webm / take.mp4（新会话）
+>   POST /recordings/{id}/transcode  ──────────►  take.* → frames/*.png → UE Commandlet
+>   GET  /recordings/{id}/curves  ◄────────────  curves/face_curves.dhfc
+> ```
+>
+> **接口契约以 [docs/api/](./api/openapi.yaml) 为准**，现行路由共 10 条：
+>
+> | 方法 | 路径 | 状态 |
+> | --- | --- | --- |
+> | GET / POST | `/face_capture/devices` | 保留（MF 原生枚举，只返回最高分辨率） |
+> | **POST** | **`/face_capture/recordings/upload`** | **新增**，前端录制视频上传 |
+> | GET | `/face_capture/recordings` | 保留（只认 `take.mp4` / `take.webm`） |
+> | GET / DELETE | `/face_capture/recordings/{id}` | 保留（`artifacts` 去掉 `align_json`、加 `take_webm`） |
+> | GET | `/face_capture/recordings/{id}/video` | 保留（mp4 优先，回退 webm） |
+> | GET | `/face_capture/recordings/{id}/curves` | 保留 |
+> | POST / GET | `/face_capture/recordings/{id}/transcode` | 保留（视频存在性改为 mp4 或 webm） |
+> | GET | `/face_capture/transcode` | 保留 |
+> | ~~GET~~ | ~~`/face_capture/stream`（WS）~~ | **已删除** |
+> | ~~POST~~ | ~~`/face_capture/recordings`~~ / ~~`.../recordings/stop`~~ | **旧版实时录制，恒 409/404，保留只为兼容** |
+>
+> **帧率精度取舍（已拍板）**：接受 `MediaRecorder` 的可变帧率不精确，不做恒定帧率补偿，
+> UE 侧仍按 `-FPS=25/1` 解释解出的帧序列。
+>
+> **摄像头原生分辨率**：MF 枚举显示该设备最高为 **4000×3000**；旧版采集路径把它截断到
+> 1920×1080，且 4K 在 OpenCV/MSMF 软件回读下推不出帧（延迟持续累积）。
+> 前端 `getUserMedia` 不受此限制。
+>
+> ---
+
+> 状态：**（历史）方案已拍板（2026-11-05，11-06 追加"取消固定节拍"、"会话挂在 WS 上"、"选中摄像头"、"WS 只预览 / 录制显式开始 / 取消 raw.mkv"）**。以下为废止前的记录。
 > 范围：**一期**。人脸检测整体推迟到二期，本文只在 §6 钉住它的插入点与约束，不实现。
 > 部署前提：**后端跑在用户自己的电脑上，由打包好的前端 App 拉起**（不是常驻服务器）。因此没有多用户、没有多设备并发。
 > 落地位置：后端 `E:\Doodle\src\doodle_lib\http_method\local`（新增文件），复用 `src/doodle_lib/core`、`src/doodle_lib/exe_warp`。

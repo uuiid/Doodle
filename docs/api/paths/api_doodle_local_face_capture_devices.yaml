@@ -10,10 +10,11 @@ get:
     `src/doodle_lib/http_method/local/face_capture_device.cpp`，实际探测在
     `face_capture::capture_session::list_devices()`：
 
-    - index 从 0 到 7 依次尝试（`CAP_DSHOW` 失败回退 `CAP_MSMF`），
-      **遇到第一个打不开的 index 就停止**，编号有空洞时后面的设备枚举不到；
-    - 探测是实时的：会逐个 `open` / `release` 设备。摄像头已被 WS 会话占用时，
-      相应 index 可能打不开，枚举会提前结束、返回不完整的列表；
+    - 用 **Media Foundation 原生 API** 枚举设备（`MFEnumDeviceSources` + `IMFActivate`
+      → `IMFMediaSource`），不再逐个 `open`/`release` 试探；
+    - `index` 就是 MF 枚举返回的顺序，从 0 连续；
+    - `width` / `height` 是该设备 media type 里**面积最大**的那一档；读不到时为 0；
+    - 枚举**不再探测可用分辨率列表**（早期版本的 `formats` 数组与 `fourcc` 字段已删除）；
     - 返回的 `selected` 是进程内共享的选中值（`face_capture_selected_device`），
       不落盘，进程重启回到 0。
 
@@ -38,8 +39,9 @@ post:
     - 脸捕
   summary: 选中摄像头
   description: |
-    设置后续 WS 会话要打开的摄像头 index。选中值只在新建 WS 连接时被读取一次，
-    **不会切换**已建立的会话（要换设备需要重连 WS）。
+    设置「选中的摄像头」index（进程内共享值，供旧版实时录制链路读取）。
+    **前端录制方案下这个选中值不再影响录制**：摄像头由浏览器 `getUserMedia` 自己打开，
+    服务端不参与采集；本端点保留给旧版调用方与设备偏好记录。
 
     处理器为 `local::face_capture_devices::post`，实现见
     `src/doodle_lib/http_method/local/face_capture_device.cpp`，校验顺序：

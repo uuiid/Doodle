@@ -3,7 +3,8 @@ post:
     - 脸捕
   summary: 提交录制段转码任务
   description: |
-    把该会话的 `take.mp4` 转成 PNG 序列并调用 UE 解算面部动捕，产出 `curves/face_curves.dhfc`。
+    把该会话的录制视频（`take.mp4` 或 `take.webm`）转成 PNG 序列并调用 UE 解算面部动捕，
+    产出 `curves/face_curves.dhfc`。
 
     处理器为 `local::face_capture_transcode::post`，实现见
     `src/doodle_lib/http_method/local/face_capture_transcode.cpp`，作业本体在
@@ -11,7 +12,7 @@ post:
 
     ### 提交校验
 
-    1. 会话目录下必须存在 `take.mp4`，否则 404「take.mp4 不存在」；
+    1. 会话目录下必须存在 `take.mp4` 或 `take.webm`，否则 404「录制视频不存在」；
     2. 请求体必须含字符串 `ue_project`，否则 422「缺少 ue_project」；
     3. `ue_project` 指向的路径必须存在，否则 422「ue_project 不存在: <path>」。
        ⚠️ 实现只校验「字符串 + `FSys::exists`」，**不校验是否绝对路径、也不校验 `.uproject` 扩展名**。
@@ -33,7 +34,8 @@ post:
     ### 作业步骤
 
     1. 删除该会话已有的 `frames/` 与 `curves/`，重建 `frames/`；
-    2. `take.mp4` 逐帧解码为 `frames/frame_000000.png …`（25 fps，无补位）；解码帧数少于 2 视为失败；
+    2. 录制视频逐帧解码为 `frames/frame_000000.png …`（按文件顺序，不做恒定帧率补偿）；
+       解码帧数少于 2 视为失败；
     3. 以 `-run=MetaHumanFace -FramesDir=<frames> -OutDir=<curves> -FPS=25/1
        -abslog=<session_dir>/face_capture_ue.log -stdout -nosplash` 运行 UE Commandlet
        （`async_run_ue`，`create_lock = true`：先取全局 UE 队列闸 `ue_ctx_->queue_`，
@@ -74,7 +76,7 @@ post:
     '401':
       description: '未提供令牌，响应体为 `{"error": "请先登录", "code": <数字码>}`'
     '404':
-      description: 该会话没有 `take.mp4`
+      description: 该会话没有 `take.mp4` 也没有 `take.webm`
     '422':
       description: 请求体缺 `ue_project`，或该路径不存在
   security:

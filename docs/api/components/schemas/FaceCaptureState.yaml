@@ -6,15 +6,17 @@ description: |
 
   录制接口返回的是 `capture_status.state`，录像查询接口返回的是
   `capture_session::state()`（即 `display_state()`：**录制轴状态不为 `idle` 时优先返回录制轴状态**，
-  否则返回推流轴状态）。因此录制结束后查询到的 `state` 是 `stopped`，
-  而实际上预览推流仍在继续。
+  否则返回推流轴状态）。
+
+  前端录制 + 上传建立的会话**没有** `capture_session`，查询 `state` 恒为 `stopped`。
+  实时推流（原 `GET .../stream`）已删除，`previewing` 在生产部署中不会再出现。
 
   | 取值 | 含义 |
   | --- | --- |
-  | `idle` | 摄像头未打开（没有 WS 会话，或会话已关闭） |
-  | `previewing` | 摄像头已打开，正在推 25 fps 预览（未录制，或录制已结束） |
-  | `recording` | 正在录制 `take.mp4` |
-  | `stopping` | 正在收尾录制（drain 滤镜 + 等推流出口空闲 + 写 `align.json`） |
+  | `idle` | 摄像头未打开（没有活动会话） |
+  | `previewing` | 旧版实时推流状态；推流路由删除后不再出现 |
+  | `recording` | 正在录制 `take.mp4`（旧版后端实时录制） |
+  | `stopping` | 正在收尾录制（drain 滤镜 + 结束 `mp4_writer`） |
   | `stopped` | 录制轴停留在「已停止」；录像查询接口在会话未录制时返回该值 |
 enum:
   - idle
