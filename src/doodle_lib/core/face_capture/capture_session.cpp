@@ -184,29 +184,29 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
     co_await close_stream();
 
-    auto l_size = max_size_of_device(in_option.device_index_);
+    auto l_size  = max_size_of_device(in_option.device_index_);
+    auto l_width = std::min(l_size.first, k_max_width);
+    auto l_height = std::min(l_size.second, k_max_height);
 
     auto l_cap  = std::make_shared<cv::VideoCapture>(
         in_option.device_index_, cv::CAP_MSMF,
-        std::vector<int>{
-            cv::CAP_PROP_FRAME_WIDTH, l_size.first, cv::CAP_PROP_FRAME_HEIGHT, l_size.second
-        }
+        std::vector<int>{cv::CAP_PROP_FRAME_WIDTH, l_width, cv::CAP_PROP_FRAME_HEIGHT, l_height}
     );
     DOODLE_CHICK_HTTP(
-        l_cap->isOpened(), unprocessable_entity, "无法以原生 {}x{} 打开摄像头 {}", l_size.first, l_size.second,
+        l_cap->isOpened(), unprocessable_entity, "无法以 {}x{} 打开摄像头 {}", l_width, l_height,
         in_option.device_index_
     );
 
-    auto l_width  = static_cast<std::int32_t>(l_cap->get(cv::CAP_PROP_FRAME_WIDTH));
-    auto l_height = static_cast<std::int32_t>(l_cap->get(cv::CAP_PROP_FRAME_HEIGHT));
+    l_width  = static_cast<std::int32_t>(l_cap->get(cv::CAP_PROP_FRAME_WIDTH));
+    l_height = static_cast<std::int32_t>(l_cap->get(cv::CAP_PROP_FRAME_HEIGHT));
     DOODLE_CHICK_HTTP(
         l_width > 0 && l_height > 0, unprocessable_entity, "摄像头 {} 打开后未报告有效的帧尺寸: {}x{}",
         in_option.device_index_, l_width, l_height
     );
 
-    width_        = even(l_width);
-    height_       = even(l_height);
-    cap_          = std::move(l_cap);
+    width_  = even(l_width);
+    height_ = even(l_height);
+    cap_    = std::move(l_cap);
 
     reset_stream_encoders();
 

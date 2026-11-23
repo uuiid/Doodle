@@ -39,6 +39,10 @@ constexpr std::int32_t k_default_width{1280};
 
 constexpr std::int32_t k_default_height{720};
 
+constexpr std::int32_t k_max_width{1920};
+
+constexpr std::int32_t k_max_height{1080};
+
 enum class capture_state : std::int32_t {
   idle       = 0,
   recording  = 1,
