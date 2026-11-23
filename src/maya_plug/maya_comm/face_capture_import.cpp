@@ -25,7 +25,8 @@
 #include <maya/MFnDagNode.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MGlobal.h>
-#include <maya/MItDag.h>
+#include <maya/MNamespace.h>
+#include <maya/MObjectArray.h>
 #include <maya/MObject.h>
 #include <maya/MPlug.h>
 #include <maya/MPlugArray.h>
@@ -100,30 +101,15 @@ struct face_capture_file_t {
   std::unordered_map<std::string, std::size_t> curve_index_{};
 };
 
-std::size_t find_last_separator(std::string_view in_name) { return in_name.find_last_of(':'); }
-
-std::string leaf_name_of(std::string_view in_name) {
-  const std::size_t l_pos = find_last_separator(in_name);
-  return l_pos == std::string_view::npos ? std::string{in_name} : std::string{in_name.substr(l_pos + 1)};
+MString dag_leaf_of(const MString& in_dag_path) {
+  const int l_bar = in_dag_path.rindex('|');
+  return l_bar < 0 ? in_dag_path : MString{in_dag_path.substring(l_bar + 1, in_dag_path.length())};
 }
 
-std::string namespace_of(std::string_view in_name) {
-  const std::size_t l_pos = find_last_separator(in_name);
-  return l_pos == std::string_view::npos ? std::string{} : std::string{in_name.substr(0, l_pos)};
-}
+MString namespace_of(const MDagPath& in_path) { return MNamespace::getNamespaceFromName(dag_leaf_of(in_path.fullPathName())); }
 
-std::string leaf_name_of_dag_path(const MDagPath& in_path) {
-  MString l_full      = in_path.fullPathName();
-  const auto l_str    = conv::to_s(l_full);
-  const auto l_bar    = l_str.find_last_of('|');
-  return leaf_name_of(l_bar == std::string::npos ? std::string_view{l_str} : std::string_view{l_str}.substr(l_bar + 1));
-}
-
-std::string node_name_of(const MDagPath& in_path) {
-  MString l_full   = in_path.fullPathName();
-  const auto l_str = conv::to_s(l_full);
-  const auto l_bar = l_str.find_last_of('|');
-  return l_bar == std::string::npos ? l_str : l_str.substr(l_bar + 1);
+MString leaf_name_of_dag_path(const MDagPath& in_path) {
+  return MNamespace::stripNamespaceFromName(dag_leaf_of(in_path.fullPathName()));
 }
 
 std::string full_path_of(const MDagPath& in_path) {
@@ -200,7 +186,9 @@ MObject resolve_gui_node(MObject in_root, const std::string& in_node_name) {
 }
 
 std::string raw_key_of(std::string_view in_name) {
-  std::string l_name{leaf_name_of(in_name)};
+  std::string l_name{in_name};
+  const auto l_pos = l_name.find_last_of(':');
+  if (l_pos != std::string::npos) l_name.erase(0, l_pos + 1);
   if (l_name.rfind(k_raw_prefix, 0) == 0) l_name.erase(0, k_raw_prefix.size());
   return l_name;
 }
@@ -250,7 +238,7 @@ class face_capture_import::impl {
 
   face_capture_file_t file_{};
   MDagPath target_path_{};
-  std::string target_namespace_{};
+  MString target_namespace_{};
   std::vector<std::size_t> raw_resolved_{};
 
   MStatus load_file();
@@ -325,11 +313,13 @@ MStatus face_capture_import::impl::locate_node() {
     return display_error("节点不是 DAG 节点"), MS::kFailure;
   }
 
-  target_namespace_ = namespace_of(node_name_of(target_path_));
+  target_namespace_ = namespace_of(target_path_);
   return MS::kSuccess;
 }
 
 MStatus face_capture_import::impl::locate_target() {
+  const MObjectArray l_objects = MNamespace::getNamespaceObjects(target_namespace_);
+
   MDagPathArray l_candidates{};
 
   auto l_push = [&](const MDagPath& in_path) {
@@ -339,43 +329,27 @@ MStatus face_capture_import::impl::locate_target() {
     l_candidates.append(in_path);
   };
 
-  auto l_walk = [&](auto&& in_self, const MDagPath& in_path) -> void {
-    if (leaf_name_of_dag_path(in_path) == k_target_control_name &&
-        namespace_of(node_name_of(in_path)) == target_namespace_) {
-      l_push(in_path);
+  std::string l_suggestion{};
+  for (unsigned l_i = 0; l_i < l_objects.length(); ++l_i) {
+    MDagPath l_path{};
+    if (MDagPath::getAPathTo(l_objects[l_i], l_path) != MS::kSuccess) continue;
+    const auto l_leaf = conv::to_s(leaf_name_of_dag_path(l_path));
+    if (l_leaf == k_target_control_name) {
+      l_push(l_path);
+      continue;
     }
-    for (unsigned l_i = 0; l_i < in_path.childCount(); ++l_i) {
-      MDagPath l_child = in_path;
-      if (l_child.push(in_path.child(l_i)) == MS::kSuccess) in_self(in_self, l_child);
-    }
-  };
-  l_walk(l_walk, target_path_);
+    if (l_leaf.find("CTRL_expr") == std::string::npos) continue;
+    if (!l_suggestion.empty()) l_suggestion += ", ";
+    l_suggestion += l_leaf;
+  }
 
   if (l_candidates.length() == 0) {
-    MItDag l_it{MItDag::kDepthFirst, MFn::kTransform};
-    std::string l_suggestion{};
-    for (; !l_it.isDone(); l_it.next()) {
-      MDagPath l_path{};
-      if (l_it.getPath(l_path) != MS::kSuccess) continue;
-      if (namespace_of(node_name_of(l_path)) != target_namespace_) continue;
-      const auto l_leaf = leaf_name_of_dag_path(l_path);
-      if (l_leaf == k_target_control_name) {
-        l_push(l_path);
-        continue;
-      }
-      if (l_leaf.find("CTRL_expr") == std::string::npos) continue;
-      if (!l_suggestion.empty()) l_suggestion += ", ";
-      l_suggestion += l_leaf;
-    }
-
-    if (l_candidates.length() == 0) {
-      return display_error(
-                 "在命名空间 \"{}\" 下找不到 {} 节点{}", target_namespace_.empty() ? "(root)" : target_namespace_,
-                 k_target_control_name,
-                 l_suggestion.empty() ? std::string{} : fmt::format(", 相近节点: {}", l_suggestion)
-             ),
-             MS::kFailure;
-    }
+    const std::string l_ns = target_namespace_.length() == 0 ? std::string{"(root)"} : conv::to_s(target_namespace_);
+    return display_error(
+               "在命名空间 \"{}\" 下找不到 {} 节点{}", l_ns, k_target_control_name,
+               l_suggestion.empty() ? std::string{} : fmt::format(", 相近节点: {}", l_suggestion)
+           ),
+           MS::kFailure;
   }
 
   if (l_candidates.length() > 1) {
@@ -384,9 +358,10 @@ MStatus face_capture_import::impl::locate_target() {
       if (!l_list.empty()) l_list += ", ";
       l_list += full_path_of(l_candidates[l_i]);
     }
+    const std::string l_ns = target_namespace_.length() == 0 ? std::string{"(root)"} : conv::to_s(target_namespace_);
     return display_error(
-               "命名空间 \"{}\" 下找到 {} 个 {}: {}, 无法确定目标", target_namespace_.empty() ? "(root)" : target_namespace_,
-               l_candidates.length(), k_target_control_name, l_list
+               "命名空间 \"{}\" 下找到 {} 个 {}: {}, 无法确定目标", l_ns, l_candidates.length(), k_target_control_name,
+               l_list
            ),
            MS::kFailure;
   }
@@ -551,7 +526,7 @@ MStatus face_capture_import::impl::import_curves() {
 
   display_info(
       "面捕曲线导入完成: 写入 {} 个 GUI 控制器, {} 帧, 目标 {} [命名空间 {}]", l_created, l_frame_count,
-      full_path_of(target_path_), target_namespace_.empty() ? std::string{"(root)"} : target_namespace_
+      full_path_of(target_path_), target_namespace_.length() == 0 ? std::string{"(root)"} : conv::to_s(target_namespace_)
   );
 
   if (l_created == 0) return display_error("没有写入任何 GUI 控制器"), MS::kFailure;
