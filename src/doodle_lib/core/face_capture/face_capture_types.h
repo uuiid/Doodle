@@ -94,42 +94,6 @@ struct capture_status {
   friend void to_json(nlohmann::json& nlohmann_json_j, const capture_status& nlohmann_json_t);
 };
 
-struct gap_range {
-  std::int64_t wall_ms_begin_{0};
-  std::int64_t wall_ms_end_{0};
-  std::int64_t duration_ms_{0};
-
-  friend void to_json(nlohmann::json& nlohmann_json_j, const gap_range& nlohmann_json_t);
-  friend void from_json(const nlohmann::json& nlohmann_json_j, gap_range& nlohmann_json_t);
-};
-
-struct align_frame {
-  std::uint64_t seq_{0};
-  std::uint64_t orig_seq_{0};
-  std::int64_t wall_ms_{0};
-
-  friend void to_json(nlohmann::json& nlohmann_json_j, const align_frame& nlohmann_json_t);
-  friend void from_json(const nlohmann::json& nlohmann_json_j, align_frame& nlohmann_json_t);
-};
-
-struct align_record {
-  boost::uuids::uuid session_id_{};
-  std::int32_t width_{0};
-  std::int32_t height_{0};
-  std::int32_t fps_{k_fps};
-  double source_fps_{0.0};
-  std::string started_at_{};
-  std::int64_t duration_ms_{0};
-  std::uint64_t raw_frames_{0};
-  std::uint64_t inserted_frames_{0};
-  std::vector<align_frame> frames_{};
-  std::vector<gap_range> gaps_{};
-  bool truncated_{false};
-
-  friend void to_json(nlohmann::json& nlohmann_json_j, const align_record& nlohmann_json_t);
-  friend void from_json(const nlohmann::json& nlohmann_json_j, align_record& nlohmann_json_t);
-};
-
 struct fragment_t {
   std::vector<std::uint8_t> data_{};
   std::uint64_t seq_begin_{0};

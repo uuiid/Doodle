@@ -9,7 +9,6 @@
 
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
-#include <doodle_lib/core/face_capture/frame_align.h>
 #include <doodle_lib/core/face_capture/frame_filter.h>
 #include <doodle_lib/core/face_capture/media_fragment_pipeline.h>
 #include <doodle_lib/core/face_capture/ws_message.h>
@@ -59,12 +58,6 @@ namespace {
 using clock_type = std::chrono::steady_clock;
 
 std::int32_t even(std::int32_t in_value) { return std::max<std::int32_t>(in_value - in_value % 2, 2); }
-
-std::string now_string() {
-  return fmt::format(
-      "{:%FT%T%Ez}", std::chrono::zoned_time{std::chrono::current_zone(), std::chrono::system_clock::now()}
-  );
-}
 
 std::int64_t elapsed_ms(clock_type::time_point in_start, clock_type::time_point in_now) {
   return std::chrono::duration_cast<std::chrono::milliseconds>(in_now - in_start).count();
@@ -250,13 +243,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
     session_dir_        = l_dir;
 
-    record_             = align_record{};
-    record_.session_id_ = l_session_id;
-    record_.width_      = width_;
-    record_.height_     = height_;
-    record_.fps_        = k_fps;
-    record_.started_at_ = now_string();
-
     reset_recording_counters(clock_type::now());
     record_state_ = capture_state::recording;
 
@@ -365,7 +351,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     preview_seq_      = 0;
     source_frames_    = 0;
     source_last_ms_   = 0;
-    gaps_             = {};
     started_at_       = in_now;
     last_frame_at_    = std::nullopt;
     silent_logged_    = false;
@@ -382,7 +367,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     preview_seq_      = 0;
     source_frames_    = 0;
     source_last_ms_   = 0;
-    gaps_             = {};
     started_at_       = in_now;
     last_frame_at_  = std::nullopt;
     silent_logged_  = false;
@@ -393,19 +377,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     if (mp4_writer_) {
       mp4_writer_->finish();
       mp4_writer_.reset();
-    }
-    if (!record_.frames_.empty() && !session_dir_.empty()) {
-      record_.gaps_            = gaps_;
-      record_.raw_frames_      = orig_seq_;
-      record_.inserted_frames_ = 0;
-      record_.source_fps_      = source_fps();
-      record_.duration_ms_     = static_cast<std::int64_t>(record_frame_seq_) * k_frame_interval_ms;
-      record_.truncated_       = truncated_;
-      try {
-        write_align(record_, session_dir_);
-      } catch (const std::exception& in_err) {
-        SPDLOG_WARN("写 align.json 失败: {}", in_err.what());
-      }
     }
   }
 
@@ -549,7 +520,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
     source_last_ms_ = l_wall_ms;
 
     if (record_state_ == capture_state::recording) {
-      record_.frames_.push_back(align_frame{.seq_ = seq_, .orig_seq_ = orig_seq_, .wall_ms_ = l_wall_ms});
       ++seq_;
       ++orig_seq_;
     }
@@ -561,12 +531,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   void on_silence(std::int64_t in_wall_ms) {
     if (last_frame_at_) {
       const auto l_gap_ms = in_wall_ms - *last_frame_at_;
-      if (l_gap_ms >= k_silent_timeout_ms) {
-        gaps_.push_back(
-            gap_range{.wall_ms_begin_ = *last_frame_at_, .wall_ms_end_ = in_wall_ms, .duration_ms_ = l_gap_ms}
-        );
-        SPDLOG_WARN("摄像头静默 {} ms", l_gap_ms);
-      }
+      if (l_gap_ms >= k_silent_timeout_ms) SPDLOG_WARN("摄像头静默 {} ms", l_gap_ms);
     }
     last_frame_at_ = in_wall_ms;
   }
@@ -603,9 +568,6 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
   bool read_stop_{false};
   bool read_finished_{false};
   std::uint64_t read_failures_{0};
-
-  align_record record_{};
-  std::vector<gap_range> gaps_{};
 };
 
 capture_session::capture_session(FSys::path in_root) : impl_ptr_(std::make_shared<impl>(std::move(in_root))) {}

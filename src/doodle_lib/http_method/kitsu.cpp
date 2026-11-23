@@ -332,6 +332,7 @@ void reg_kitsu_local_urls(http_route& in_route) {
       .reg_c<local::face_capture_recordings>(l_face_capture_holder)
       .reg_c<local::face_capture_recording>(l_face_capture_holder)
       .reg_c<local::face_capture_recording_stop>(l_face_capture_holder)
+      .reg_c<local::face_capture_recording_upload>()
       .reg_c<local::face_capture_recording_video>()
       .reg_c<local::face_capture_recording_curves>()
       .reg_c<local::face_capture_transcode>(l_face_capture_tasks)

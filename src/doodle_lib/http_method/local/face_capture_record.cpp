@@ -4,7 +4,6 @@
 
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/face_capture/capture_session.h>
-#include <doodle_lib/core/face_capture/frame_align.h>
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/http/http_body.h>
 #include <doodle_lib/core/http/http_function.h>
@@ -35,6 +34,10 @@ bool is_current_session(
   return in_session->session_dir().filename().string() == fmt::to_string(in_id);
 }
 
+bool has_video(const FSys::path& in_dir) {
+  return FSys::exists(in_dir / "take.mp4") || FSys::exists(in_dir / "take.webm");
+}
+
 nlohmann::json artifacts_of(const FSys::path& in_dir) {
   auto l_exists        = [&in_dir](std::string_view in_name) { return FSys::exists(in_dir / std::string{in_name}); };
   std::size_t l_frames = 0;
@@ -44,30 +47,16 @@ nlohmann::json artifacts_of(const FSys::path& in_dir) {
   }
   return nlohmann::json{
       {"take_mp4", l_exists("take.mp4")},
-      {"align_json", l_exists("align.json")},
+      {"take_webm", l_exists("take.webm")},
       {"frames", l_frames},
       {"curves", FSys::exists(in_dir / "curves" / "face_curves.dhfc")}
   };
 }
 
 nlohmann::json recording_json(const FSys::path& in_dir) {
-  auto l_json = nlohmann::json::object();
-  try {
-    const auto l_record   = face_capture::read_align(in_dir);
-    l_json["session_id"]  = l_record.session_id_;
-    l_json["width"]       = l_record.width_;
-    l_json["height"]      = l_record.height_;
-    l_json["fps"]         = l_record.fps_;
-    l_json["source_fps"]  = l_record.source_fps_;
-    l_json["started_at"]  = l_record.started_at_;
-    l_json["frames"]      = l_record.raw_frames_;
-    l_json["duration_ms"] = l_record.duration_ms_;
-    l_json["truncated"]   = l_record.truncated_;
-    l_json["gaps"]        = nlohmann::json(l_record.gaps_);
-    l_json["path"]        = in_dir;
-  } catch (...) {
-    SPDLOG_WARN("读取 align.json 失败: {}", in_dir.string());
-  }
+  auto l_json          = nlohmann::json::object();
+  l_json["session_id"] = in_dir.filename().string();
+  l_json["path"]       = in_dir;
   return l_json;
 }
 
@@ -79,7 +68,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recordings, get) {
   if (FSys::exists(l_root)) {
     for (const auto& l_entry : FSys::directory_iterator{l_root}) {
       if (!l_entry.is_directory()) continue;
-      if (!FSys::exists(l_entry.path() / "take.mp4") && !FSys::exists(l_entry.path() / "align.json")) continue;
+      if (!has_video(l_entry.path())) continue;
       auto l_json          = recording_json(l_entry.path());
       l_json["session_id"] = l_entry.path().filename().string();
       l_list.emplace_back(std::move(l_json));
@@ -98,6 +87,28 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recordings, post) {
   co_return std::make_unique<http_body_json_t>(std::move(l_json));
 }
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_upload, post) {
+  auto l_file = in_handle->get_file();
+  DOODLE_CHICK_HTTP(!l_file.empty() && FSys::exists(l_file), bad_request, "请求体中没有视频文件");
+
+  auto l_name = FSys::path{std::string{in_handle->req_header_[boost::beast::http::field::content_disposition]}};
+  auto l_ext  = l_name.extension().string();
+  DOODLE_CHICK_HTTP(
+      l_ext == ".webm" || l_ext == ".mp4", bad_request, "不支持的视频扩展名 {}，只接受 .webm 或 .mp4", l_ext
+  );
+
+  auto l_session_id = core_set::get_set().get_uuid();
+  auto l_dir        = face_capture::capture_session::default_root() / fmt::format("{}", l_session_id);
+  FSys::create_directories(l_dir);
+
+  auto l_target = l_dir / fmt::format("take{}", l_ext);
+  FSys::rename(l_file, l_target);
+
+  co_return std::make_unique<http_body_json_t>(
+      nlohmann::json{{"session_id", fmt::to_string(l_session_id)}, {"video", l_target.filename().string()}}
+  );
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_stop, post) {
   auto l_session = holder_->session();
   DOODLE_CHICK_HTTP(l_session != nullptr, not_found, "没有活动会话");
@@ -107,7 +118,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_stop, post) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording, get) {
   auto l_dir = session_dir_of(session_id_);
-  DOODLE_CHICK_HTTP(FSys::exists(l_dir / "take.mp4") || FSys::exists(l_dir / "align.json"), not_found, "会话不存在");
+  DOODLE_CHICK_HTTP(has_video(l_dir) || FSys::exists(l_dir / "curves"), not_found, "会话不存在");
 
   auto l_json    = recording_json(l_dir);
 
@@ -138,9 +149,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording, delete_) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_video, get) {
-  auto l_path = session_dir_of(session_id_) / "take.mp4";
-  DOODLE_CHICK_HTTP(FSys::exists(l_path), not_found, "take.mp4 不存在");
-  co_return std::make_unique<http_body_file_t>(l_path, "video/mp4");
+  auto l_dir  = session_dir_of(session_id_);
+  auto l_path = l_dir / "take.mp4";
+  auto l_mime = std::string{"video/mp4"};
+  if (!FSys::exists(l_path)) {
+    l_path = l_dir / "take.webm";
+    l_mime = "video/webm";
+  }
+  DOODLE_CHICK_HTTP(FSys::exists(l_path), not_found, "录制视频不存在");
+  co_return std::make_unique<http_body_file_t>(l_path, l_mime);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_recording_video, head) { return get(in_handle); }

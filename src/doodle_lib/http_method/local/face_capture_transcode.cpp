@@ -171,7 +171,10 @@ void face_capture_transcode_tasks::finish(const uuid_t& in_preview_id) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(face_capture_transcode, post) {
-  DOODLE_CHICK_HTTP(FSys::exists(session_dir_of(session_id_) / "take.mp4"), not_found, "take.mp4 不存在");
+  auto l_dir = session_dir_of(session_id_);
+  DOODLE_CHICK_HTTP(
+      FSys::exists(l_dir / "take.mp4") || FSys::exists(l_dir / "take.webm"), not_found, "录制视频不存在"
+  );
 
   auto l_json = in_handle->get_json();
   DOODLE_CHICK_HTTP(

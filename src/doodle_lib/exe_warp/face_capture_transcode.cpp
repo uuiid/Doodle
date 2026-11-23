@@ -36,6 +36,14 @@ FSys::path session_dir_of(const uuid& in_session_id) {
   return face_capture::capture_session::default_root() / fmt::format("{}", in_session_id);
 }
 
+FSys::path resolve_video(const FSys::path& in_session_dir) {
+  for (const auto& l_name : {"take.mp4", "take.webm"}) {
+    auto l_path = in_session_dir / l_name;
+    if (FSys::exists(l_path)) return l_path;
+  }
+  return {};
+}
+
 bool write_png_frame(const FSys::path& in_dir, std::int32_t in_index, const cv::Mat& in_image) {
   auto l_name = fmt::format("frame_{:0{}d}.png", in_index, face_capture::k_png_digits);
   return cv::imwrite((in_dir / l_name).string(), in_image, {cv::IMWRITE_PNG_COMPRESSION, k_png_compression});
@@ -94,11 +102,11 @@ boost::asio::awaitable<void> face_capture_transcode_arg::run() {
   DOODLE_CHICK(!preview_id_.is_nil(), "面部捕捉转码任务缺少 preview_id, 无法确定对应会话");
 
   const auto l_session_dir = session_dir_of(preview_id_);
-  const auto l_video       = l_session_dir / "take.mp4";
+  const auto l_video       = resolve_video(l_session_dir);
   const auto l_frames_dir  = l_session_dir / "frames";
   const auto l_curves_dir  = l_session_dir / "curves";
 
-  DOODLE_CHICK(FSys::exists(l_video), "会话 {} 缺少录制视频 {}", l_id_str, l_video.generic_string());
+  DOODLE_CHICK(!l_video.empty(), "会话 {} 缺少录制视频 {}", l_id_str, l_session_dir.generic_string());
 
   if (FSys::exists(l_frames_dir)) FSys::remove_all(l_frames_dir);
   if (FSys::exists(l_curves_dir)) FSys::remove_all(l_curves_dir);

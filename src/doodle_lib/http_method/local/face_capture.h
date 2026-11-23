@@ -118,6 +118,11 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/stop")
 DOODLE_HTTP_FUN_END()
 
+DOODLE_HTTP_FUN_C(face_capture_recording_upload, local_http_fun)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_ROUTE("/api/doodle/local/face_capture/recordings/upload")
+DOODLE_HTTP_FUN_END()
+
 DOODLE_HTTP_FUN_C(face_capture_recording, local_http_fun)
 boost::uuids::uuid session_id_{};
 std::shared_ptr<face_capture_session_holder> holder_{};
