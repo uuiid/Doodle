@@ -70,8 +70,8 @@ bool kitsu_supplement_test_main::init() {
   if (arg_["selftest"]) return true;
 
   http::run_http_listener(g_io_context(), l_route_ptr, l_port);
-  default_logger_raw()->info(
-      "kitsu_supplement_test_main listening :{} root={} db={}", l_port, l_root.generic_string(), l_db
+  default_logger_raw()->warn(
+      "kitsu_supplement_test_main listening :{} root={} db={} secret={}", l_port, l_root.generic_string(), l_db, l_secret
   );
   return true;
 }
