@@ -14,7 +14,7 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
 
 - **Git 提交一律由用户执行。** 完成改动后只报告：改了什么、验证结果、当前处于未提交状态。不要 `git commit` / `git push`，也不要主动提议代提交。
 - **默认不测试。** 没有用户明确要求时，不要运行任何测试、不要构建测试目标、不要跑测试验证改动；验证手段只有编译通过。
-  **只有用户主动明确需要测试时**，才按 §2「按需测试流程」用 `kitsu_server_start` 拉起测试服务器、在 `test_js/` 里编写并运行测试；数据不足时用 `kitsu_server_sql` 补。
+  **只有用户主动明确需要测试时**，才按 §2「按需测试流程」先用 `kitsu_server_start` 拉起 **`doodle_kitsu_supplement_test.exe`**（唯一的测试服务入口，不传 `exePath` 即为它），再在 `test_js/` 里编写并运行测试；数据不足时用 `kitsu_server_sql` 补。
 - **不要跑发布构建**：`Ninja_release` / `Release_*` / `package_release` 耗时过长，用户已明确要求停用。
 - **依赖只经 `vcpkg.json` 管理。** 自定义 port 放 `vcpkg_ports/`，triplet 放 `vcpkg_triplets/`。不要在 `CMakeLists.txt` 里硬编码外部依赖路径。
 - **HTTP 处理器的声明与实现必须用宏**，见 §4。手写完整签名是禁止的。
@@ -45,20 +45,27 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
 
 其余 preset 的权威定义在 [CMakePresets.json](CMakePresets.json)；改构建步骤优先改该文件与 `CMake/` 下的 Find 模块，不要在 `CMakeLists.txt` 里写死平台路径。
 
-- **测试范围收窄**：现有测试只有两部分——**数据库 ORM 与升级**（`sqlite_*` 系列、schema/迁移/外键），以及**视频图片文件解码**。
-  其余路径（网络客户端 `src/doodle_lib/http_client/**`、HTTP 处理器、Maya 插件等）**没有**单元测试，改动这些路径不要期待 `test_main` 会替你验证。
-  `src/test/**` 的既有内容不要改动，也不要为了新功能往那里加测试。
+- **没有 C++ 单元测试**：数据库 ORM 与升级（`sqlite_*` 系列）、视频图片文件解码、网络客户端 `src/doodle_lib/http_client/**`、HTTP 处理器、Maya 插件等路径**都没有**单元测试，改动后不要期待 `test_main` 会替你验证。
+  HTTP 契约测试走 §2「按需测试流程」拉起的 `doodle_kitsu_supplement_test` 服务 + `test_js/` 下的 Playwright 用例。
+  `src/test/**` 的既有内容不要改动，也不要为了新功能往那里加测试；该目录里唯一允许维护的是测试启动器与
+  [test_exe_runner.h](src/test/test_exe_runner.h) / [test_exe_runner.cpp](src/test/test_exe_runner.cpp) 这一对 Maya / UE stub。
 - Maya 版本由 CMake 变量 `Maya_Version` 驱动，条件分支见 `src/CMakeLists.txt`；扩展新版本优先改 `CMake/FindMaya.cmake`。
 
 ### 按需测试流程
 
 **只在用户主动明确要求测试时才走这条流程**（见 §1「默认不测试」）。没有明确要求时，验证一律只到编译通过。
+整个流程的**第一步永远是拉起 `doodle_kitsu_supplement_test` 进程**：先有服务，再谈写用例、灌数据、跑 Playwright。
 
-1. **拉起测试服务器。** 用 `kitsu_server_start`（dsh-kitsu-supplement 插件）：
+1. **先拉起 `doodle_kitsu_supplement_test` 进程。** 用 `kitsu_server_start`（dsh-kitsu-supplement 插件），**不要传 `exePath`**——它的默认值就是
+   `E:\build\Ninja_debug\bin\doodle_kitsu_supplement_test.exe`，`doodle_kitsu_supplement.exe` 只在确需真实 Maya / UE 外部进程时才用
+   （那时显式传 `exePath: "supplement-prod"`）。测试 exe 与生产 exe 共用同一份 `doodle_lib`、路由完全一致，但
+   [test_exe_runner.h](src/test/test_exe_runner.h) 注入的 runner 把 Maya / UE 子进程换成 stub：**不需要本机装 Maya、UE 或其插件**，
+   也不要为了测试去配这些环境。返回里的 `exeKind` 应为 `test`，若是 `production` 说明传了 `exePath`，停下核对。
    - `port` 必填，落在 50030–50330；`mode: "local"` 起本地服务，不给 `dbPath` 就是内存库（进程退出即丢，写不进数据）。
    - **要跑有数据依赖的用例就显式传 `dbPath`**，指向一个磁盘库；否则 `kitsu_server_sql` 无处可写。
    - 返回的 `port` / `baseUrl` 取自进程 stdout 的真实监听端口，**测试脚本一律引用它**，不要猜端口。
    - 端口被占时工具默认失败并报占用 PID；确认那是上一次的残留才传 `killExisting: true` 强杀。
+   - 服务起不来看 `kitsu_server_start` 的返回诊断与 `<root>\log`；测试 exe 的初始化日志里应有 stub 生效的痕迹，Maya / UE 相关依赖报错说明跑错了 exe。
 2. **写测试放到 [`test_js/`](test_js/)。** Playwright + `request` fixture 打 HTTP 契约，不启浏览器；`baseURL` 取环境变量 `DOODLE_BASE_URL`（`playwright.config.js`、`test/config.js` 都读它），把它设成上一步的 `baseUrl`。目录约定、环境变量与既有文件清单见 [test_js/README.md](test_js/README.md)。**不要往 `src/test/**` 加测试**（那是 C++ 单元测试）。
 3. **数据不足时用 `kitsu_server_sql` 补。** 直接对 `dbPath` 指向的库执行 SQL 文件或片段，**不要为它停服或重启**——运行中的服务端写完即可查到。不确定脚本对不对就先 `dryRun: true` 跑一遍。整批是单事务，失败会整体回滚并报出「来源 + 第几条 + SQLite 原文」。
 4. **测完停服。** `kitsu_server_stop` 停掉本次拉起的实例，别把监听端口和进程留给下一次。
