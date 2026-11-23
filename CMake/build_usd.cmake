@@ -68,11 +68,11 @@
 #
 #FetchContent_MakeAvailable(UsdPackage)
 #add_custom_target(genexdebug COMMAND ${CMAKE_COMMAND} -E echo "${PXR_USD_ROOT}$<$<CONFIG:Debug>:/debug>")
-if (DEFINED PXR_USD_ROOT)
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(PXR_USD_ROOT_ ${PXR_USD_ROOT}/debug)
-    endif ()
-    find_package(pxr CONFIG HINTS ${PXR_USD_ROOT})
-    # $<$<CONFIG:Debug>:/debug>
-    #    message("find pxr ${PXR_LIBRARIES}")
-endif ()
+# if (DEFINED PXR_USD_ROOT)
+#     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+#         set(PXR_USD_ROOT_ ${PXR_USD_ROOT}/debug)
+#     endif ()
+#     find_package(pxr CONFIG HINTS ${PXR_USD_ROOT})
+#     # $<$<CONFIG:Debug>:/debug>
+#     #    message("find pxr ${PXR_LIBRARIES}")
+# endif ()
