@@ -7,6 +7,7 @@ target_sources(
         http_jwt_fun.h
         seed_email.h
         kitsu.h
+        desktop_update.h
 
         PRIVATE
         dingding_attendance.cpp
@@ -16,6 +17,7 @@ target_sources(
         http_jwt_fun.cpp
         seed_email.cpp
         kitsu.cpp
+        desktop_update.cpp
 )
 
 add_subdirectory(kitsu)

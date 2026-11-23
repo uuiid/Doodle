@@ -83,6 +83,7 @@ struct kitsu_ctx_t {
 
   FSys::path get_time() { return root_ / "time"; }
   FSys::path get_version() { return root_ / "version.txt"; }
+  FSys::path get_desktop_update_file() { return root_ / "desktop_update.json"; }
   FSys::path get_seedance2_waiting() { return root_ / "seedance2" / "animation" / "waiting.mp4"; }
 
   FSys::path get_ai_light_candidate_thumbnail_file(const uuid& in_candidate_id) const {
