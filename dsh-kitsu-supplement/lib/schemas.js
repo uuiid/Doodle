@@ -8,6 +8,7 @@ import z from "@deepseek-ai/schemastery";
 import {
   DEFAULT_EXE_PATH,
   DEFAULT_GUIDANCE_ORDER,
+  DEFAULT_PRODUCTION_EXE_PATH,
   DEFAULT_MAX_OUTPUT_BYTES,
   DEFAULT_MODE,
   DEFAULT_READY_PATH,
@@ -28,6 +29,7 @@ export const inject = ["tools", "subprocess", "systemPrompt"];
 
 export const Config = z.object({
   exePath: z.string().default(DEFAULT_EXE_PATH),
+  productionExePath: z.string().default(DEFAULT_PRODUCTION_EXE_PATH),
   defaultCwd: z.string().default(""),
   defaultMode: z.string().default(DEFAULT_MODE),
   defaultRoot: z.string().default(""),
@@ -61,6 +63,7 @@ export const SERVER_PROPERTIES = {
   baseUrl: { type: "string", description: "http://127.0.0.1:<port>" },
   cwd: { type: "string", description: "服务进程工作目录" },
   exePath: { type: "string", description: "可执行文件" },
+  exeKind: { type: "string", description: "test = doodle_kitsu_supplement_test（Maya/UE 走 stub，默认），production = doodle_kitsu_supplement（真实外部进程）" },
   configPath: { type: "string", description: "为本次启动生成的 config JSON 路径" },
   command: { type: "string", description: "等价命令行" },
 };
@@ -266,7 +269,8 @@ export function renderStart(args, value) {
   /** @type {string[]} */
   const lines = [];
   if (value.ok === true) {
-    lines.push(`已启动 ${value.serverId} (${value.mode})  ${value.baseUrl}`);
+    lines.push(`已启动 ${value.serverId} (${value.mode}, ${value.exeKind ?? "test"})  ${value.baseUrl}`);
+    if (value.exePath) lines.push(`exe: ${value.exePath}${value.exeKind === "test" ? "（Maya/UE 走 stub）" : "（真实外部进程）"}`);
     if (value.readyMs !== undefined) {
       lines.push(`就绪等待 ${value.readyMs} ms（GET ${value.readyPath} -> ${value.readyStatus ?? "?"}）`);
     }

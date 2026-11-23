@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Kitsu supplement 服务",
-    "description": "按 production / --local 两种模式拉起 doodle_kitsu_supplement.exe，报告真实监听端口，并负责停止插件自己启动的实例。"
+    "description": "启动 kitsu supplement HTTP 服务：默认用 doodle_kitsu_supplement_test.exe（Maya / UE 走 stub，测试的主要启动方式），需要真实外部进程时才切到 doodle_kitsu_supplement.exe；报告真实监听端口，并负责停止插件自己启动的实例。"
   }
 }

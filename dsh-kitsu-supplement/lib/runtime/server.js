@@ -156,6 +156,7 @@ export async function startServer(ctx, spec) {
     exitSignal: null,
     outputOffset: 0,
     exePath: spec.exePath,
+    exeKind: spec.exeKind,
     cwd: spec.cwd,
     configPath: spec.configPath,
     dbPath: spec.dbPath,

@@ -36,9 +36,13 @@ export function registerStartTool({ ctx, resolved, registry, stateWarnings, stat
     defineTool({
       name: "kitsu_server_start",
       description:
-        "Start the doodle_kitsu_supplement HTTP server for local testing and return a ready http://127.0.0.1:<port> " +
-        "baseUrl. `mode: \"production\"` (default) lets " +
-        "the server read its registry config and listen on config.port; `mode: \"local\"` adds `--local`, which also " +
+        "Start the kitsu supplement HTTP server for local testing and return a ready http://127.0.0.1:<port> " +
+        "baseUrl. The DEFAULT executable is doodle_kitsu_supplement_test.exe, the primary way to run the server: " +
+        "it serves the same routes as the production exe but replaces the Maya / UE child processes with stubs " +
+        "(test_exe_runner), so no Maya, Unreal or plugin install is needed on this machine; use it for every test. " +
+        "Pass `exePath: \"supplement-prod\"` only when the real mayabatch / UnrealEditor-Cmd must actually run. " +
+        "`mode: \"production\"` (default) lets the server read its registry config and listen on config.port; " +
+        "`mode: \"local\"` adds `--local`, which " +
         "turns off the registry-only paths (in-memory database unless `dbPath` is given). " +
         `\`port\` is REQUIRED and must be an integer in ${PORT_RANGE_TEXT}: the server is started with that exact ` +
         "`--port`, and readiness is decided by polling " +
@@ -120,7 +124,10 @@ export function registerStartTool({ ctx, resolved, registry, stateWarnings, stat
         },
         exePath: {
           type: "string",
-          description: "Per-call override of the executable path (defaults to the plugin config).",
+          description:
+            "Which executable to run. Default = doodle_kitsu_supplement_test.exe (stubbed Maya/UE). " +
+            "`\"supplement-prod\"` = doodle_kitsu_supplement.exe (real external processes); " +
+            "any other non-empty value is used verbatim as a path.",
         },
         readyPath: {
           type: "string",
@@ -202,6 +209,7 @@ export function registerStartTool({ ctx, resolved, registry, stateWarnings, stat
             command: `${spec.exePath} ${renderArgv(argv)}`,
             mode: spec.mode,
             port: spec.port,
+            exeKind: spec.exeKind,
             configPath,
             dbPath: spec.dbPath ?? MEMORY_DB,
             readyPath: spec.readyPath,

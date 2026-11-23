@@ -67,6 +67,7 @@ import {
 } from "./pure/common.js";
 import { PLAYWRIGHT_DEFAULT_CWD, PLAYWRIGHT_KILL_TIMEOUT_MS, PLAYWRIGHT_TIMEOUT_MS } from "./pure/playwright.js";
 import { instancesPathOf, mergeInstancesState, parseInstancesState, serializeInstances } from "./pure/instances.js";
+import { exeKindOfPath } from "./pure/start.js";
 
 import { registry, advanceServerIdPast, resetRegistry, setPlaywrightRunning } from "./runtime/registry.js";
 import { probePort } from "./runtime/process.js";
@@ -194,6 +195,7 @@ export async function apply(ctx, config) {
         exitCode: item.exited === true ? (item.exitCode ?? null) : null,
         exitSignal: null,
         exePath: item.exePath,
+        exeKind: exeKindOfPath(item.exePath),
         cwd: item.cwd,
         configPath: undefined,
         dbPath: item.dbPath,
@@ -249,7 +251,7 @@ export async function apply(ctx, config) {
       ctx.tools.get("kitsu_server_start", scope) === undefined
         ? ""
         : [
-            "`kitsu_server_start` 拉起本机 doodle_kitsu_supplement.exe HTTP 服务（测试前准备后端），返回的 `port` 就是传入的显式端口，就绪判定是对 `http://127.0.0.1:<port><readyPath>` 轮询 HTTP（任何状态码都算就绪，最多等 100 秒），测试脚本应引用返回的 `baseUrl` 而不是猜端口。",
+            "`kitsu_server_start` 是准备测试后端的**唯一主要启动方式**：默认拉起 `doodle_kitsu_supplement_test.exe`（测试版，路由与生产一致，但 Maya / UE 外部进程被替换成 stub，不需要本机装 Maya / UE / 插件），返回的 `port` 就是传入的显式端口，就绪判定是对 `http://127.0.0.1:<port><readyPath>` 轮询 HTTP（任何状态码都算就绪，最多等 100 秒），测试脚本应引用返回的 `baseUrl` 而不是猜端口。只有确实要跑真实 mayabatch / UnrealEditor-Cmd 时才传 `exePath: \"supplement-prod\"` 改用生产 exe；返回里的 `exeKind`（test / production）标出这次跑的是哪一个。",
             `\`port\` 必须显式传，且必须是 ${PORT_RANGE_TEXT} 之间的整数；端口被占用时工具默认失败并给出占用 PID，只有显式传 \`killExisting: true\` 才强杀。\`mode: \"local\"\`（或 \`local: true\`）会给进程加 \`--local\`，并把 \`dbPath\` 作为 \`--dbPath\` 传给服务端；不传 dbPath 时 local 分支落进内存库（\`:memory:\`），重启即丢。`,
             "`kitsu_server_status` 查看本插件的实例、每个模式的槽位占用与端口占用；`kitsu_server_stop` 停掉本插件拉起的实例（含 DSH 重启后从状态文件认领的）；本插件不杀别人启动的进程。local 与 production 各最多 1 个在跑实例，同模式重复启动直接返回 `slot-in-use`，要替换就显式传 `replaceExisting: true`（先停旧的，结果在 `replaced`）。",
             "`kitsu_server_sql` 对磁盘库执行 sql 文件或片段（填测试数据），写完运行中的进程立刻能查到，**不要**为它停服或重启；执行前不确定就先 `dryRun: true` 走一遍。",

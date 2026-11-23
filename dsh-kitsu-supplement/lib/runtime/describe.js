@@ -20,6 +20,7 @@ export function describeServer(serverId, record) {
     baseUrl: typeof record.port === "number" ? baseUrlOf(record.port) : undefined,
     cwd: record.cwd,
     exePath: record.exePath,
+    exeKind: record.exeKind,
     configPath: record.configPath,
     command: record.command,
     uptimeMs: alive && typeof record.startedAt === "number" ? Date.now() - record.startedAt : 0,

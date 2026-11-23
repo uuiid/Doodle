@@ -3,7 +3,7 @@
 // 本文件只放纯逻辑：不依赖任何 import，也不访问 ctx / await 宿主资源。
 // test/pure.mjs 读取 lib/pure/dispatch.js 里登记的文件逐个求值，契约与原先的纯逻辑区段一致。
 
-import { DEFAULT_EXE_PATH, DEFAULT_MODE, DEFAULT_READY_PATH, MEMORY_DB, MODES, OWNED_FLAGS, PORT_RANGE_TEXT, baseUrlOf, isPlainObject, normalizePath, parsePort, portInRange, sanitizeForJson, trimOrEmpty } from "./common.js";
+import { DEFAULT_EXE_PATH, DEFAULT_MODE, DEFAULT_PRODUCTION_EXE_PATH, DEFAULT_READY_PATH, MEMORY_DB, MODES, OWNED_FLAGS, PORT_RANGE_TEXT, PRODUCTION_EXE, baseUrlOf, isPlainObject, normalizePath, parsePort, portInRange, sanitizeForJson, trimOrEmpty } from "./common.js";
 
 /**
  * 校验启动参数，返回全部问题（空数组表示通过）。
@@ -189,9 +189,56 @@ export function buildArgv({ mode, port, configPath, root, dbPath, extraArgs }) {
  * @param {(path:string) => Promise<boolean>} deps.exists
  * @returns {Promise<{problems:string[], spec:any}>}
  */
+/**
+ * 选本次要跑的可执行文件。
+ *
+ * 默认是测试可执行文件 doodle_kitsu_supplement_test.exe：它继承 doodle_lib 的全部路由，
+ * 但把 Maya / UE 外部进程替换成 stub（test_exe_runner），测试机不需要装 Maya、UE 或它们的插件。
+ * 参数 exePath 的取值优先级：`supplement-prod` 表示改用生产 exe（配置里的 productionExePath，
+ * 默认出厂路径），空串表示沿用配置的 exePath，其余非空值按字面路径使用。
+ *
+ * @param {{args:{exePath?:unknown}, config:any}} spec
+ * @returns {string}
+ */
+export function resolveExePath({ args, config }) {
+  const productionExePath = trimOrEmpty(config.productionExePath) || DEFAULT_PRODUCTION_EXE_PATH;
+  const requested = trimOrEmpty(args.exePath);
+  if (requested === PRODUCTION_EXE) return productionExePath;
+  if (requested !== "") return requested;
+  const configured = trimOrEmpty(config.exePath);
+  return configured === "" ? DEFAULT_EXE_PATH : configured;
+}
+
+/**
+ * 本次跑的是测试可执行文件还是生产可执行文件。
+ *
+ * @param {string} exePath
+ * @param {any} config
+ * @returns {"test"|"production"}
+ */
+export function exeKindOf(exePath, config) {
+  const productionExePath = trimOrEmpty(config?.productionExePath) || DEFAULT_PRODUCTION_EXE_PATH;
+  return normalizePath(exePath).toLowerCase() === normalizePath(productionExePath).toLowerCase()
+    ? "production"
+    : "test";
+}
+
+/**
+ * 只有「doodle_kitsu_supplement.exe」算生产；其它（测试 exe、自定义路径）一律按 test 展示。
+ *
+ * @param {unknown} exePath
+ * @returns {"test"|"production"}
+ */
+export function exeKindOfPath(exePath) {
+  const name = trimOrEmpty(exePath).toLowerCase().replace(/\\/g, "/");
+  const base = name.slice(name.lastIndexOf("/") + 1);
+  return base === "doodle_kitsu_supplement.exe" ? "production" : "test";
+}
+
 export async function resolveSpec({ config, args, exists }) {
   const mode = trimOrEmpty(args.mode) || config.defaultMode || DEFAULT_MODE;
-  const exePath = trimOrEmpty(args.exePath) || config.exePath || DEFAULT_EXE_PATH;
+  const exePath = resolveExePath({ args, config });
+  const exeKind = exeKindOf(exePath, config);
   const explicitCwd = trimOrEmpty(args.cwd) || trimOrEmpty(config.defaultCwd);
   const root = trimOrEmpty(args.root) || trimOrEmpty(config.defaultRoot);
   const readyPath = trimOrEmpty(args.readyPath) || config.readyPath || DEFAULT_READY_PATH;
@@ -230,6 +277,7 @@ export async function resolveSpec({ config, args, exists }) {
     mode,
     port,
     exePath,
+    exeKind,
     cwd,
     root: normalizedRoot,
     dbPath: dbPath === "" ? undefined : dbPath === MEMORY_DB ? MEMORY_DB : normalizePath(dbPath),
@@ -303,6 +351,7 @@ export function startFailure(spec, code, reason, extra = {}) {
     baseUrl: spec.port === undefined ? undefined : baseUrlOf(spec.port),
     cwd: spec.cwd,
     exePath: spec.exePath,
+    exeKind: spec.exeKind,
     configPath: spec.configPath,
     command: spec.command,
     killExisting: spec.killExisting === true ? true : undefined,

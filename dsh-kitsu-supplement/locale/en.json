@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Kitsu supplement server",
-    "description": "Launch doodle_kitsu_supplement.exe in production or --local mode, report the real listening port, and stop the instances this plugin started."
+    "description": "Launch the kitsu supplement HTTP server: doodle_kitsu_supplement_test.exe by default (Maya/UE stubbed, the primary way to run tests), or doodle_kitsu_supplement.exe when real external processes are needed; report the real listening port and stop the instances this plugin started."
   }
 }

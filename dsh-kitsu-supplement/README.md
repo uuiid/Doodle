@@ -1,12 +1,14 @@
 # dsh-kitsu-supplement
 
-在 DeepSeek Harness 里拉起 `doodle_kitsu_supplement.exe` 的 HTTP 服务，供本机测试使用：起服务、拿到**真实**监听端口、改数据库填测试数据、跑 `test_js` 里的 Playwright 用例、测试完停掉。
+在 DeepSeek Harness 里拉起 kitsu supplement HTTP 服务，供本机测试使用：起服务、拿到**真实**监听端口、改数据库填测试数据、跑 `test_js` 里的 Playwright 用例、测试完停掉。
+
+**默认启动的是 `doodle_kitsu_supplement_test.exe`**，它是本插件的主要（也是推荐的）启动方式：路由与服务端完全一致（`reg_kitsu_socket_io` / `reg_kitsu_urls` / `reg_kitsu_local_urls`），但 `core_set::exe_runner_` 注入的是 stub（`src/test/test_exe_runner`），Maya 与 UE 的子进程调用不再依赖注册表 / `mayabatch` / `UnrealEditor-Cmd`，所以测试机**不需要装 Maya、UE 及其插件**。只有确实要跑真实外部进程时才显式传 `exePath: "supplement-prod"` 切回 `doodle_kitsu_supplement.exe`；返回里的 `exeKind`（`test` / `production`）标出这次实际跑的是哪一个。
 
 五个工具：
 
 | 工具 | 作用 |
 | --- | --- |
-| `kitsu_server_start` | 按 `production` / `local` 模式拉起服务（**每模式最多一个**），返回 `port` 与 `baseUrl`（来自服务端发布的共享内存段） |
+| `kitsu_server_start` | 按 `production` / `local` 模式拉起服务（**每模式最多一个**；默认测试 exe），返回 `port` 与 `baseUrl`（来自服务端发布的共享内存段）与 `exeKind` |
 | `kitsu_server_status` | 列出本插件记录的实例、每个模式的槽位占用，并用 netstat 查端口被谁监听 |
 | `kitsu_server_stop` | 停掉本插件拉起的实例（终止进程树并等停稳） |
 | `kitsu_server_sql` | 对磁盘库执行 SQL 文件或片段（建表、改数据、填测试数据），**不需要停服或重启** |
@@ -42,7 +44,8 @@ plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-suppleme
 
 | 键 | 默认 | 说明 |
 | --- | --- | --- |
-| `exePath` | `E:\build\Ninja_debug\bin\doodle_kitsu_supplement.exe` | 可执行文件 |
+| `exePath` | `E:\build\Ninja_debug\bin\doodle_kitsu_supplement_test.exe` | 默认启动的可执行文件（测试版，Maya/UE 走 stub） |
+| `productionExePath` | `E:\build\Ninja_debug\bin\doodle_kitsu_supplement.exe` | 生产可执行文件；只有调用时传 `exePath: "supplement-prod"` 才会用到 |
 | `defaultCwd` | 空（= exe 所在目录） | 默认运行路径 |
 | `defaultMode` | `production` | `production` 或 `local` |
 | `defaultRoot` | 空 | 没传 `--root` 就不写 |
@@ -77,7 +80,7 @@ plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-suppleme
 | `publicUrlPort` | | 写进 config 的 `public_url_port` |
 | `extraConfig` | | 原样并进 config JSON 的额外键（不允许 `port`） |
 | `extraArgs` | | 追加在生成开关之后的 argv 项（不允许 `--local` / `--config` / `--port` / `--root` / `--dbPath`） |
-| `exePath` | | 仅本次调用覆盖可执行文件 |
+| `exePath` | | `supplement-prod` = 改用生产 exe（`productionExePath`）；空 = 用配置的 `exePath`；其它值按字面路径使用。默认测试 exe |
 | `readyPath` | | 本次的就绪探测路径 |
 | `killExisting` | | `true` 才强杀端口上的旧进程；默认失败并报 PID |
 | `replaceExisting` | | `true` 时先停掉同模式已在跑的实例再起新的（见[实例组合规则](#实例组合规则每模式一个槽位)）；默认 `false`，撞槽位直接报 `slot-in-use` |
@@ -198,6 +201,18 @@ local，或两个 production）不会被 `kitsu_server_start` 放出来。
 重启后读出来的实例**没有进程句柄**（句柄属于上一个 DSH 进程）。插件用 netstat 核实"端口上还有没有那个
 pid"：还在就算 `adopted`（`kitsu_server_status` 里标 `[来自状态文件]`），`kitsu_server_stop` 按 pid 用
 `taskkill /F /T` 停；端口上查不到就标成已退出，不占槽位。
+
+## 测试 exe 与生产 exe
+
+| | `doodle_kitsu_supplement_test.exe`（默认） | `doodle_kitsu_supplement.exe`（`exePath: "supplement-prod"`） |
+| --- | --- | --- |
+| 路由 | 与生产一致 | 与生产一致 |
+| Maya 调用 | stub：直接写 `maya_out_arg` json，不查注册表、不跑 `mayabatch` | 查 `HKLM\SOFTWARE\Autodesk\Maya\<ver>`、复制 `doodle_maya_exe_<ver>.exe`、跑 `mayabatch.exe` |
+| UE 调用 | stub：只记一行日志 | 从 kitsu 服务端拉 UE 插件包、解压安装，再跑 `UnrealEditor-Cmd.exe` |
+| 本机依赖 | 无（不需要 Maya / UE / 插件） | 需要 Maya 安装、UE 安装与 kitsu 插件仓库 |
+| 适用 | 一切自动化测试（默认） | 手工确认真实导出 / 渲染链路 |
+
+两者共用同一份 `doodle_lib`，所以路由与行为一致；差异只在 `core_set::exe_runner_` 注入的实现。
 
 ## 典型用法
 

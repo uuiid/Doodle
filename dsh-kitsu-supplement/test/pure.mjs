@@ -82,7 +82,8 @@ function ok(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-const EXE = "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement.exe";
+const EXE = "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement_test.exe";
+const EXE_PROD = "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement.exe";
 const CWD = "E:\\build\\Ninja_debug\\bin";
 
 process.stdout.write("parsePort\n");
@@ -278,6 +279,30 @@ test("tailText 行对齐", () => {
   eq(P.tailText("short", 100), "short");
 });
 
+process.stdout.write("resolveExePath\n");
+test("默认走测试 exe", () => {
+  eq(P.resolveExePath({ args: {}, config: {} }), EXE);
+  eq(P.resolveExePath({ args: {}, config: { exePath: "" } }), EXE);
+});
+test("supplement-prod 切到生产 exe", () => {
+  eq(P.resolveExePath({ args: { exePath: P.PRODUCTION_EXE }, config: {} }), EXE_PROD);
+  eq(P.resolveExePath({ args: { exePath: P.PRODUCTION_EXE }, config: { productionExePath: "D:\\x\\p.exe" } }), "D:\\x\\p.exe");
+  eq(P.resolveExePath({ args: { exePath: P.PRODUCTION_EXE }, config: { exePath: EXE } }), EXE_PROD);
+});
+test("其它非空 exePath 原样使用，配置 exePath 作为中间层", () => {
+  eq(P.resolveExePath({ args: { exePath: "E:\\a\\b.exe" }, config: { exePath: EXE } }), "E:\\a\\b.exe");
+  eq(P.resolveExePath({ args: {}, config: { exePath: "E:\\a\\c.exe" } }), "E:\\a\\c.exe");
+});
+test("exeKindOf 只有生产 exe 算 production", () => {
+  eq(P.exeKindOf(EXE, {}), "test");
+  eq(P.exeKindOf(EXE_PROD, {}), "production");
+  eq(P.exeKindOfPath(EXE_PROD), "production");
+  eq(P.exeKindOfPath(EXE), "test");
+  eq(P.exeKindOfPath("E:\\x\\doodle_kitsu_supplement.exe"), "production");
+  eq(P.exeKindOfPath("E:/x/doodle_kitsu_supplement.exe"), "production");
+  eq(P.exeKindOfPath(""), "test");
+});
+
 process.stdout.write("resolveSpec\n");
 const baseConfig = {
   exePath: EXE,
@@ -323,6 +348,7 @@ await testAsync("cwd 缺省取 exe 所在目录", async () => {
   eq(plan.spec.cwd, CWD);
   eq(plan.spec.mode, "production");
   eq(plan.spec.port, 50100);
+  eq(plan.spec.exeKind, "test");
   eq(plan.spec.configValues, {
     db_path: "C:/db.sqlite",
     kitsu_front_end_path: "D:/kitsu/dist",
