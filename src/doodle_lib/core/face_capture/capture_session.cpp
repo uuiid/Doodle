@@ -506,7 +506,7 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
 
       if (l_recording && mp4_writer_) {
         try {
-          mp4_writer_->push(l_mat, record_frame_seq_);
+          mp4_writer_->push(l_mat, record_frame_seq_, l_frame.wall_ms_);
         } catch (const std::exception& in_err) {
           SPDLOG_WARN("take.mp4 写入失败: {}", in_err.what());
           truncated_ = true;
@@ -519,10 +519,14 @@ class capture_session::impl : public std::enable_shared_from_this<capture_sessio
       auto l_outlet = outlet_.lock();
       if (l_outlet && l_outlet->is_attached() && fragmenter_) {
         try {
-          fragmenter_->push(l_mat, l_seq);
+          fragmenter_->push(l_mat, l_seq, l_frame.wall_ms_);
           for (auto& l_fragment : fragmenter_->take_fragments()) {
             if (l_outlet->pending_frame()) continue;
-            l_outlet->send(std::make_unique<ws_avc_fragment>(std::move(l_fragment)));
+            auto l_message = std::make_unique<ws_avc_fragment>(std::move(l_fragment));
+            l_message->set_latency_ms(
+                elapsed_ms(started_at_, clock_type::now()) - l_message->fragment().wall_ms_
+            );
+            l_outlet->send(std::move(l_message));
           }
         } catch (const std::exception& in_err) {
           SPDLOG_WARN("推流编码失败: {}", in_err.what());

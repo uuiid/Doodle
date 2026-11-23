@@ -34,7 +34,9 @@ nlohmann::json ws_avc_fragment::to_json() const {
   l_json["type"]     = "avc_fragment";
   l_json["seq"]      = fragment_.seq_begin_;
   l_json["keyframe"] = fragment_.key_;
-  l_json["size"]     = fragment_.data_.size();
+  l_json["size"]       = fragment_.data_.size();
+  l_json["wall_ms"]    = fragment_.wall_ms_;
+  l_json["latency_ms"] = latency_ms_;
   return l_json;
 }
 

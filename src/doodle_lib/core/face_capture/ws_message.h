@@ -75,8 +75,11 @@ struct ws_avc_fragment : ws_message {
 
   [[nodiscard]] const fragment_t& fragment() const { return fragment_; }
 
+  void set_latency_ms(std::int64_t in_latency_ms) { latency_ms_ = in_latency_ms; }
+
  private:
   fragment_t fragment_{};
+  std::int64_t latency_ms_{0};
 };
 
 }  // namespace doodle::face_capture

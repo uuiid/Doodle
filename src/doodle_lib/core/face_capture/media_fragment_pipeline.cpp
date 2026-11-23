@@ -140,13 +140,15 @@ class h264_fragmenter::impl {
     return true;
   }
 
-  bool push(const cv::Mat& in_bgr, std::uint64_t in_seq) {
+  bool push(const cv::Mat& in_bgr, std::uint64_t in_seq, std::int64_t in_wall_ms) {
     if (!enc_ctx_.isOpened()) return false;
     if (in_bgr.empty() || in_bgr.cols != width_ || in_bgr.rows != height_ || in_bgr.type() != CV_8UC3)
       return false;
 
-    auto l_src = buffers_.make_frame(in_bgr);
-    auto l_yuv = rescaler_.rescale(l_src);
+    open_wall_ms_ = in_wall_ms;
+
+    auto l_src    = buffers_.make_frame(in_bgr);
+    auto l_yuv    = rescaler_.rescale(l_src);
     l_yuv.setTimeBase(frame_time_base());
     l_yuv.setPts(frame_timestamp(in_seq));
     seq_ = in_seq + 1;
@@ -222,6 +224,7 @@ class h264_fragmenter::impl {
     l_fragment.seq_begin_ = open_seq_begin_;
     l_fragment.seq_end_   = open_seq_begin_;
     l_fragment.key_       = open_key_;
+    l_fragment.wall_ms_   = open_wall_ms_;
     ++open_seq_begin_;
     open_key_ = false;
     pending_.emplace_back(std::move(l_fragment));
@@ -240,6 +243,7 @@ class h264_fragmenter::impl {
   fragment_t init_segment_{};
   std::uint64_t open_seq_begin_{0};
   bool open_key_{true};
+  std::int64_t open_wall_ms_{0};
   std::vector<fragment_t> pending_{};
 };
 
@@ -254,7 +258,9 @@ h264_fragmenter::~h264_fragmenter() = default;
 
 bool h264_fragmenter::init() { return impl_ptr_->init(); }
 
-bool h264_fragmenter::push(const cv::Mat& in_bgr, std::uint64_t in_seq) { return impl_ptr_->push(in_bgr, in_seq); }
+bool h264_fragmenter::push(const cv::Mat& in_bgr, std::uint64_t in_seq, std::int64_t in_wall_ms) {
+  return impl_ptr_->push(in_bgr, in_seq, in_wall_ms);
+}
 
 std::uint64_t h264_fragmenter::frames() const { return impl_ptr_ ? impl_ptr_->frames() : 0; }
 
@@ -296,10 +302,12 @@ class mp4_writer::impl {
     return true;
   }
 
-  bool push(const cv::Mat& in_bgr, std::uint64_t in_seq) {
+  bool push(const cv::Mat& in_bgr, std::uint64_t in_seq, std::int64_t in_wall_ms) {
     if (!enc_ctx_.isOpened()) return false;
     if (in_bgr.empty() || in_bgr.cols != width_ || in_bgr.rows != height_ || in_bgr.type() != CV_8UC3)
       return false;
+
+    (void)in_wall_ms;
 
     auto l_src = buffers_.make_frame(in_bgr);
     auto l_yuv = rescaler_.rescale(l_src);
@@ -371,7 +379,9 @@ mp4_writer::~mp4_writer() = default;
 
 bool mp4_writer::init() { return impl_ptr_->init(); }
 
-bool mp4_writer::push(const cv::Mat& in_bgr, std::uint64_t in_seq) { return impl_ptr_->push(in_bgr, in_seq); }
+bool mp4_writer::push(const cv::Mat& in_bgr, std::uint64_t in_seq, std::int64_t in_wall_ms) {
+  return impl_ptr_->push(in_bgr, in_seq, in_wall_ms);
+}
 
 std::uint64_t mp4_writer::frames() const { return impl_ptr_ ? impl_ptr_->frames() : 0; }
 

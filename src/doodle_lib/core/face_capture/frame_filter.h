@@ -25,6 +25,7 @@ struct frame_filter_option {
 struct filtered_frame {
   cv::Mat mat_{};
   std::uint64_t seq_{0};
+  std::int64_t wall_ms_{0};
 };
 
 class frame_filter {

@@ -135,6 +135,7 @@ struct fragment_t {
   std::uint64_t seq_begin_{0};
   std::uint64_t seq_end_{0};
   bool key_{false};
+  std::int64_t wall_ms_{0};
 };
 
 }  // namespace doodle::face_capture
