@@ -1,0 +1,210 @@
+get:
+  tags:
+    - 桌面客户端升级
+  summary: 查询客户端更新
+  description: |
+    桌面客户端（`SYMagic` / 安装包「索以魔盒」）启动 10s 后静默调用，菜单「检查更新…」也会调用。
+    实现见 `src/doodle_lib/http_method/desktop_update.cpp` 的 `desktop_update::get`。
+
+    **不需要登录**：这条路由此路由类重写的 `parse_header()` 直接放行（只有 `POST` 走 JWT 鉴权），
+    所以会话过期不会让客户端检查更新失败。
+
+    服务端**不做任何版本比较**：读出的元数据原样返回，`has_update` 只是辅助字段，客户端会自己拿
+    `latest.version` 与本地当前版本比较。
+
+    数据来源：`<服务根目录>/desktop_update/<platform>/<arch>/<channel>.json`，
+    由下面同一个 URL 的 `POST` 写入。
+
+    文件缺失、不是合法 JSON、或缺必填字段时，一律返回 `{"has_update": false}` 并打 WARN 日志，
+    **不会返回 5xx**。
+  operationId: desktop_update_get
+  parameters:
+    - name: platform
+      in: path
+      required: true
+      description: |
+        客户端平台，取客户端 `process.platform`。
+
+        当前只发布 Windows 包，非 `win32` 的取值也会命中路由并返回 `has_update: false`，
+        不会落到 404（404 会让客户端提示「后端还没有提供更新接口」）。
+      schema:
+        type: string
+        enum: [win32, darwin, linux]
+    - name: arch
+      in: path
+      required: true
+      description: 客户端架构，取客户端 `process.arch`
+      schema:
+        type: string
+        enum: [x64, arm64]
+    - name: channel
+      in: path
+      required: true
+      description: 更新通道，来自客户端配置 `updateChannel`，默认 `latest`。可用于灰度
+      schema:
+        type: string
+        enum: [latest, beta]
+    - name: version
+      in: query
+      required: false
+      description: |
+        客户端当前版本（= 安装包 `package.json` 的 `version`）。
+
+        服务端**不读取**这个参数——版本比较由客户端自己完成。带上只是为了调用方与日志的一致性。
+      schema:
+        type: string
+      example: 1.0.0
+    - name: instance
+      in: query
+      required: false
+      description: |
+        多开时的实例描述，仅供日志／排查；不要求服务端区分。
+      schema:
+        type: string
+  responses:
+    '200':
+      description: |
+        正常响应。已是最新或没有配置时返回 `{"has_update": false}`。
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              has_update:
+                type: boolean
+                description: |
+                  辅助字段，可选。`false` 表示没有可用的更新元数据（未配置 / 配置无效）；
+                  客户端即使不看它也会自己比较版本
+              latest:
+                $ref: ../components/schemas/DesktopUpdateLatest.yaml
+              installer:
+                $ref: ../components/schemas/DesktopUpdateInstaller.yaml
+            example:
+              has_update: true
+              latest:
+                version: 1.0.1
+                published_at: '2026-11-03T10:20:00+08:00'
+                mandatory: false
+                min_supported_version: '0.9.0'
+                notes: |-
+                  1. 修复登录偶发失败
+                  2. 优化启动速度
+                notes_url: https://example.com/releases/1.0.1
+              installer:
+                url: https://dl.example.com/updates/win/索以魔盒-1.0.1.exe
+                size: 94371840
+                sha512: 9mR0n4hQ2jVp...
+          example:
+            has_update: false
+    '404':
+      description: |
+        路径段不在枚举内（例如 `platform=macos`）时路由匹配不上，返回此状态。
+        客户端会提示「后端还没有提供更新接口（404）」——这也是回滚开关的语义。
+post:
+  tags:
+    - 桌面客户端升级
+  summary: 写入客户端更新元数据（维护接口）
+  description: |
+    维护时上传升级元数据。实现见 `src/doodle_lib/http_method/desktop_update.cpp` 的
+    `desktop_update::post`。
+
+    **需要管理员**：JWT 鉴权 + `check_admin()`，非管理员返回 401「权限不足」。
+
+    写入位置：`<服务根目录>/desktop_update/<platform>/<arch>/<channel>.json`，父目录自动创建。
+    **直接覆盖**，不做备份、不做版本递增。写入后 `GET` 立即可读，无需重启服务。
+
+    请求体就是这个结构的完整对象（与 `GET` 返回同构），必须同时给 `latest.version`、
+    `installer.url`、`installer.sha512` 三个非空字符串，缺任何一个返回 400。
+
+    返回写入后的完整对象（内容与请求体一致，字段顺序按服务端序列化）。
+  operationId: desktop_update_post
+  parameters:
+    - name: platform
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [win32, darwin, linux]
+    - name: arch
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [x64, arm64]
+    - name: channel
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [latest, beta]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/DesktopUpdate.yaml
+        example:
+          latest:
+            version: 1.0.1
+            published_at: '2026-11-03T10:20:00+08:00'
+            mandatory: false
+            min_supported_version: '0.9.0'
+            notes: |-
+              1. 修复登录偶发失败
+              2. 优化启动速度
+            notes_url: https://example.com/releases/1.0.1
+          installer:
+            url: https://dl.example.com/updates/win/索以魔盒-1.0.1.exe
+            size: 94371840
+            sha512: 9mR0n4hQ2jVp...
+  responses:
+    '201':
+      description: 写入成功，返回写入后的完整对象
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/DesktopUpdate.yaml
+    '400':
+      description: |
+        请求体不是合法对象、缺少 `latest` / `installer`，或三个必填字段为空串。
+        错误详情在响应体的 `error` 里。
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 400
+              error:
+                type: string
+                example: "客户端升级配置无效: key 'installer' not found"
+    '401':
+      description: |
+        未登录（缺 Cookie / Bearer），或已登录但不是管理员（「权限不足」）
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 401
+              error:
+                type: string
+                example: 权限不足
+    '500':
+      description: |
+        落盘失败（无法创建目录 / 无法打开文件 / 写入失败）
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 500
+              error:
+                type: string
+  security:
+    - bearerAuth: []

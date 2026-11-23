@@ -1,0 +1,32 @@
+type: object
+description: |
+  客户端升级元数据里 `installer` 对象的内容（C++ 侧 `desktop_update_installer_t`，见
+  `src/doodle_lib/http_method/desktop_update.h`）。
+
+  安装包直链。本服务不提供 `feed`（静态更新源 + 差分下载），安装包放在 nginx 上，
+  由这里给出地址；因此每次升级都是全量下载。
+properties:
+  url:
+    type: string
+    description: |
+      安装包直链地址。必填且不能是空串。
+
+      必须是客户端能直连的地址（客户端配了代理时，这个下载也不走代理）。
+    example: https://dl.example.com/updates/win/索以魔盒-1.0.1.exe
+  size:
+    type: integer
+    format: int64
+    default: 0
+    description: 字节数，仅用于展示「安装包大小」。始终输出
+    example: 94371840
+  sha512:
+    type: string
+    description: |
+      安装包 sha512，base64（electron-builder 的写法）或十六进制都认。必填且不能是空串。
+
+      直链下载完成后客户端会校验；缺失时客户端只 `console.warn` 并放行，所以服务端强制要求给。
+      必须与实际文件一致。
+    example: 9mR0n4hQ2jVp...
+required:
+  - url
+  - sha512

@@ -1,0 +1,40 @@
+type: object
+description: |
+  客户端升级元数据里 `latest` 对象的内容（C++ 侧 `desktop_update_latest_t`，见
+  `src/doodle_lib/http_method/desktop_update.h`）。
+
+  `GET` 返回它；`POST` 也用同一个结构接收。服务端**不做版本比较**：`has_update` 只是辅助字段，
+  客户端会自己拿 `version` 与本地当前版本比较。
+properties:
+  version:
+    type: string
+    description: |
+      最新版本号，`x.y.z` 形式（允许 `v` 前缀；`1.2.3-beta.1` 这类后缀在客户端比较时被忽略）。
+
+      必填且不能是空串。**必须与更新源 `latest.yml` 里的 `version` 一致**，否则客户端会报
+      「请确认后端已上传新包」。
+    example: 1.0.1
+  published_at:
+    type: string
+    description: 发布时间（ISO8601），用于弹窗展示。空串时不写进响应
+    example: '2026-11-03T10:20:00+08:00'
+  mandatory:
+    type: boolean
+    default: false
+    description: |
+      `true` = 强制更新：客户端只给「立即升级 / 退出客户端」两个选项。
+
+      始终输出（没配就是 `false`）。
+  min_supported_version:
+    type: string
+    description: |
+      最低可用版本。当前版本低于它也会被客户端当成强制更新（用于「旧版本接口不兼容，必须升级」）。
+      空串时不写进响应
+  notes:
+    type: string
+    description: 更新说明（纯文本，`\n` 换行），直接展示在弹窗里。空串时不写进响应
+  notes_url:
+    type: string
+    description: 详情页链接，弹窗里以文字展示（不自动打开）。空串时不写进响应
+required:
+  - version

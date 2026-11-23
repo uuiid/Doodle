@@ -1,0 +1,14 @@
+type: object
+description: |
+  桌面客户端升级元数据的完整结构（C++ 侧 `desktop_update_t`，见
+  `src/doodle_lib/http_method/desktop_update.h`）。
+
+  `GET` 与 `POST` 共用同一份结构：`POST` 写入什么，`GET` 就返回什么。
+properties:
+  latest:
+    $ref: DesktopUpdateLatest.yaml
+  installer:
+    $ref: DesktopUpdateInstaller.yaml
+required:
+  - latest
+  - installer

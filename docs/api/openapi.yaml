@@ -705,6 +705,8 @@ paths:
     $ref: paths/api_ue-plugins_version.yaml
   /api/ue-plugins/version/{version_major}.{version_minor}.{version_patch}:
     $ref: paths/api_ue-plugins_version_{version_major}.{version_minor}.{version_patch}.yaml
+  /api/desktop/update/{platform}/{arch}/{channel}:
+    $ref: paths/api_desktop_update_{platform}_{arch}_{channel}.yaml
 components:
   securitySchemes:
     bearerAuth:
@@ -802,3 +804,6 @@ x-tagGroups:
   - name: Kitsu UE装配 API
     tags:
       - UE装配
+  - name: 桌面客户端升级 API
+    tags:
+      - 桌面客户端升级
