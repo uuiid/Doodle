@@ -68,6 +68,7 @@ import { PLAYWRIGHT_KILL_TIMEOUT_MS, PLAYWRIGHT_TIMEOUT_MS } from "./pure/playwr
 import { instancesPathOf, mergeInstancesState, parseInstancesState, serializeInstances } from "./pure/instances.js";
 import { exeKindOfPath } from "./pure/start.js";
 import {
+  choosePlaywrightCwd,
   chooseWorkspaceRoot,
   parentOf,
   parseGitBranch,
@@ -352,13 +353,13 @@ export async function apply(ctx, config) {
       ctx.tools.get("kitsu_server_start", scope) === undefined
         ? ""
         : [
-            "`kitsu_server_start` 是准备测试后端的**唯一主要启动方式**：默认拉起 `doodle_kitsu_supplement_test.exe`（测试版，路由与生产一致，但 Maya / UE 外部进程被替换成 stub，不需要本机装 Maya / UE / 插件），返回的 `port` 就是传入的显式端口，就绪判定是对 `http://127.0.0.1:<port><readyPath>` 轮询 HTTP（任何状态码都算就绪，最多等 100 秒），测试脚本应引用返回的 `baseUrl` 而不是猜端口。可执行文件路径由**当前会话的工作区与 git 分支**推出（`<工作区上一级>\\build\\<分支>\\Ninja_debug\\bin\\<exeName>`，与 CMakePresets.json 的 binaryDir 同一表达式），参数只收 `exeName`（默认测试 exe，传 `doodle_kitsu_supplement.exe` 才是生产 exe），**不接受任何路径**；工作区、分支或 exe 解析不出来时工具直接失败并结束本轮，此时必须停下来交给用户检查，不要改传别的路径重试。返回里的 `exeKind`（test / production）标出这次跑的是哪一个。",
-            `\`port\` 必须显式传，且必须是 ${PORT_RANGE_TEXT} 之间的整数；端口被占用时工具默认失败并给出占用 PID，只有显式传 \`killExisting: true\` 才强杀。\`mode: \"local\"\`（或 \`local: true\`）会给进程加 \`--local\`，并把 \`dbPath\` 作为 \`--dbPath\` 传给服务端；不传 dbPath 时 local 分支落进内存库（\`:memory:\`），重启即丢。`,
-            "`kitsu_server_status` 查看本插件的实例、每个模式的槽位占用与端口占用；`kitsu_server_stop` 停掉本插件拉起的实例（含 DSH 重启后从状态文件认领的）；本插件不杀别人启动的进程。local 与 production 各最多 1 个在跑实例，同模式重复启动直接返回 `slot-in-use`，要替换就显式传 `replaceExisting: true`（先停旧的，结果在 `replaced`）。",
-            "`kitsu_server_sql` 对磁盘库执行 sql 文件或片段（填测试数据），写完运行中的进程立刻能查到，**不要**为它停服或重启；执行前不确定就先 `dryRun: true` 走一遍。",
-            "`kitsu_playwright_test` 跑 test_js 里的 Playwright 用例：`args` 是 `playwright` 之后那串参数、原样转发（如 `[\"test\", \"face_capture.js\"]`、`[\"test\", \"--list\"]`）；工作目录取**当前会话工作区**里装着 `node_modules/@playwright/test` 的 test_js（会话工作区没有依赖时才回落到插件配置的目录），找不到就失败并结束本轮、交给用户检查，不要改传 `cwd` 到别处。`baseUrl` 请直接传 `kitsu_server_start` 返回的 `baseUrl`（本工具不会自己去查实例表）。本工具不可并发：已经在跑时立刻返回 `busy`，不排队。",
-            `服务端自己的日志写在 \`<root>\\log\`（root 即 \`kitsu_server_start\` 的 \`root\` 参数，不传则用配置的 defaultRoot，再退回服务端内置的 \`%TEMP%\\Doodle\`）：主日志 \`doodle_lib.txt\`，另有 \`doodle_long_task.txt\` / \`socket_io.txt\` / \`http.txt\` / \`doodle_main_error.txt\`，每个都是 1 MB 轮转文件；同名文件已存在时服务端会在文件名里补 UUID 而不是覆盖，所以崩溃那一轮的日志不会被下一次启动冲掉。本插件不转发这些日志：启动失败最多回显 4000 字符输出尾巴，查崩溃原因要按上面的路径用本地文件工具读 \`<root>\\log\`。`,
-          ].join(" "),
+          "`kitsu_server_start` 是准备测试后端的**唯一主要启动方式**：默认拉起 `doodle_kitsu_supplement_test.exe`（测试版，路由与生产一致，但 Maya / UE 外部进程被替换成 stub，不需要本机装 Maya / UE / 插件），返回的 `port` 就是传入的显式端口，就绪判定是对 `http://127.0.0.1:<port><readyPath>` 轮询 HTTP（任何状态码都算就绪，最多等 100 秒），测试脚本应引用返回的 `baseUrl` 而不是猜端口。可执行文件路径由**当前会话的工作区与 git 分支**推出（`<工作区上一级>\\build\\<分支>\\Ninja_debug\\bin\\<exeName>`，与 CMakePresets.json 的 binaryDir 同一表达式），参数只收 `exeName`（默认测试 exe，传 `doodle_kitsu_supplement.exe` 才是生产 exe），**不接受任何路径**；工作区、分支或 exe 解析不出来时工具直接失败并结束本轮，此时必须停下来交给用户检查，不要改传别的路径重试。返回里的 `exeKind`（test / production）标出这次跑的是哪一个。",
+          `\`port\` 必须显式传，且必须是 ${PORT_RANGE_TEXT} 之间的整数；端口被占用时工具默认失败并给出占用 PID，只有显式传 \`killExisting: true\` 才强杀。\`mode: \"local\"\`（或 \`local: true\`）会给进程加 \`--local\`，并把 \`dbPath\` 作为 \`--dbPath\` 传给服务端；不传 dbPath 时 local 分支落进内存库（\`:memory:\`），重启即丢。`,
+          "`kitsu_server_status` 查看本插件的实例、每个模式的槽位占用与端口占用；`kitsu_server_stop` 停掉本插件拉起的实例（含 DSH 重启后从状态文件认领的）；本插件不杀别人启动的进程。local 与 production 各最多 1 个在跑实例，同模式重复启动直接返回 `slot-in-use`，要替换就显式传 `replaceExisting: true`（先停旧的，结果在 `replaced`）。",
+          "`kitsu_server_sql` 对磁盘库执行 sql 文件或片段（填测试数据），写完运行中的进程立刻能查到，**不要**为它停服或重启；执行前不确定就先 `dryRun: true` 走一遍。",
+          "`kitsu_playwright_test` 跑 test_js 里的 Playwright 用例：`args` 是 `playwright` 之后那串参数、原样转发（如 `[\"test\", \"face_capture.js\"]`、`[\"test\", \"--list\"]`）；工作目录取**当前会话工作区**里装着 `node_modules/@playwright/test` 的 test_js（会话工作区没有依赖时才回落到插件配置的目录），找不到就失败并结束本轮、交给用户检查，不要改传 `cwd` 到别处。`baseUrl` 请直接传 `kitsu_server_start` 返回的 `baseUrl`（本工具不会自己去查实例表）。本工具不可并发：已经在跑时立刻返回 `busy`，不排队。",
+          `服务端自己的日志写在 \`<root>\\log\`（root 即 \`kitsu_server_start\` 的 \`root\` 参数，不传则用配置的 defaultRoot，再退回服务端内置的 \`%TEMP%\\Doodle\`）：主日志 \`doodle_lib.txt\`，另有 \`doodle_long_task.txt\` / \`socket_io.txt\` / \`http.txt\` / \`doodle_main_error.txt\`，每个都是 1 MB 轮转文件；同名文件已存在时服务端会在文件名里补 UUID 而不是覆盖，所以崩溃那一轮的日志不会被下一次启动冲掉。本插件不转发这些日志：启动失败最多回显 4000 字符输出尾巴，查崩溃原因要按上面的路径用本地文件工具读 \`<root>\\log\`。`,
+        ].join(" "),
   });
 
   const deps = { ctx, resolved, registry, stateWarnings, statePath, saveInstances, writeConfigFile, exists, workspaceRootOf, branchOf, playwrightCwdOf };

@@ -365,6 +365,7 @@ export function startFailure(spec, code, reason, extra = {}) {
     readyMs: 0,
     readyPath: spec.readyPath,
     priorStopped: [],
+    replaced: [],
     diagnostics: [],
     warnings: [],
     ...extra,
