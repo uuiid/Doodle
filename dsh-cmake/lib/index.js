@@ -417,7 +417,7 @@ export function apply(ctx, config) {
   function workspaceRootOf(execOrContext) {
     const agent = execOrContext?.agent;
     const service = ctx.get('workingDirectory');
-    const current = agent === undefined || service === undefined ? '' : service.get(agent);
+    const current = agent === undefined || service === undefined ? '' : service.get(agent.session);
     return chooseWorkspaceRoot({
       workingDirectory: current,
       sessionCwd: sessionCwdOf(agent) || sessionCwdOf(execOrContext),
@@ -756,7 +756,7 @@ export function apply(ctx, config) {
       if (available.length === 0) return '';
 
       const repoRoot = chooseWorkspaceRoot({
-        workingDirectory: scope === undefined ? '' : ctx.get('workingDirectory')?.get(scope),
+        workingDirectory: scope === undefined ? '' : ctx.get('workingDirectory')?.get(scope.session),
         sessionCwd: sessionCwdOf(scope),
         defaultDirectory,
       });

@@ -154,7 +154,7 @@ export async function apply(ctx, config) {
     const agent = subject?.agent ?? subject;
     const service = ctx.get("workingDirectory");
     return chooseWorkspaceRoot({
-      workingDirectory: agent === undefined || service === undefined ? "" : service.get(agent),
+      workingDirectory: agent === undefined || service === undefined ? "" : service.get(agent.session ?? agent),
       sessionCwd: sessionCwdOf(agent) || sessionCwdOf(subject),
       defaultDirectory: ctx.get("workingDirectory")?.defaultDirectory,
     });
