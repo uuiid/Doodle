@@ -1,6 +1,6 @@
 # dsh-kitsu-supplement bundle patch
 #
-# 把 kitsu_server_start / kitsu_server_status / kitsu_server_stop / kitsu_server_sql /
+# 把 kitsu_server_start / kitsu_server_status / kitsu_server_stop /
 # kitsu_playwright_test 挂进 DSH 工具注册表。
 #
 # config 全部可选，且没有 exe 路径项：可执行文件每次按发起会话的工作区与 git 分支解析

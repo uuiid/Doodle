@@ -14,7 +14,7 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
 
 - **Git 提交一律由用户执行。** 完成改动后只报告：改了什么、验证结果、当前处于未提交状态。不要 `git commit` / `git push`，也不要主动提议代提交。
 - **默认不测试。** 没有用户明确要求时，不要运行任何测试、不要构建测试目标、不要跑测试验证改动；验证手段只有编译通过。
-  **只有用户主动明确需要测试时**，才按 §2「按需测试流程」先用 `kitsu_server_start` 拉起 **`doodle_kitsu_supplement_test.exe`**（唯一的测试服务入口，不传 `exeName` 即为它），再在 `test_js/` 里编写并运行测试；数据不足时用 `kitsu_server_sql` 补。
+  **只有用户主动明确需要测试时**，才按 §2「按需测试流程」先用 `kitsu_server_start` 拉起 **`doodle_kitsu_supplement_test.exe`**（唯一的测试服务入口，不传 `exeName` 即为它），再在 `test_js/` 里编写并运行测试；数据不足时按 §2.1 用 debug 路由补。
 - **不要跑发布构建**：`Ninja_release` / `Release_*` / `package_release` 耗时过长，用户已明确要求停用。
 - **依赖只经 `vcpkg.json` 管理。** 自定义 port 放 `vcpkg_ports/`，triplet 放 `vcpkg_triplets/`。不要在 `CMakeLists.txt` 里硬编码外部依赖路径。
 - **HTTP 处理器的声明与实现必须用宏**，见 §4。手写完整签名是禁止的。
@@ -64,12 +64,12 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
    [test_exe_runner.h](src/test/test_exe_runner.h) 注入的 runner 把 Maya / UE 子进程换成 stub：**不需要本机装 Maya、UE 或其插件**，
    也不要为了测试去配这些环境。返回里的 `exeKind` 应为 `test`，若不是说明这次选错了 exe。
    - `port` 必填，落在 50030–50330；`mode: "local"` 起本地服务，不给 `dbPath` 就是内存库（进程退出即丢，写不进数据）。
-   - **要跑有数据依赖的用例就显式传 `dbPath`**，指向一个磁盘库；否则 `kitsu_server_sql` 无处可写。
+   - **要跑有数据依赖的用例就显式传 `dbPath`**，指向一个磁盘库；否则 §2.1 的 debug 路由无处可写。
    - 返回的 `port` / `baseUrl` 取自进程 stdout 的真实监听端口，**测试脚本一律引用它**，不要猜端口。
    - 端口被占时工具默认失败并报占用 PID；确认那是上一次的残留才传 `killExisting: true` 强杀。
    - 服务起不来看 `kitsu_server_start` 的返回诊断与 `<root>\log`；测试 exe 的初始化日志里应有 stub 生效的痕迹，Maya / UE 相关依赖报错说明跑错了 exe。
 2. **写测试放到 [`test_js/`](test_js/)。** Playwright + `request` fixture 打 HTTP 契约，不启浏览器；`baseURL` 取环境变量 `DOODLE_BASE_URL`（`playwright.config.js`、`test/config.js` 都读它），把它设成上一步的 `baseUrl`。目录约定、环境变量与既有文件清单见 [test_js/README.md](test_js/README.md)。**不要往 `src/test/**` 加测试**（那是 C++ 单元测试）。
-3. **数据不足时补数据**，两条通道按下面 §2.1 选，**都不要为它停服或重启**。
+3. **数据不足时按 §2.1 补数据**，**不要为它停服或重启**。
 4. **测完停服。** `kitsu_server_stop` 停掉本次拉起的实例，别把监听端口和进程留给下一次。
 5. **编译前必须先停服。** 服务进程持有 `bin\doodle_lib.dll`，不停服直接 `cmake_build` 会在链接阶段报
    `LNK1168: cannot open bin\doodle_lib.dll for writing`，整次构建失败。顺序固定为
@@ -78,26 +78,14 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
 
 `kitsu_server_status` 可随时查本插件记录的实例与端口占用。本插件只杀自己拉起的进程。
 
-### 2.1 改测试数据库：两条通道怎么选
+### 2.1 改测试数据库
 
-补测试数据有两条完全不重叠的通道，**选错会得到"数据明明写进去了却搜不到"的假故障**。
+补测试数据走 debug 路由 `POST /api/doodle/debug/sql`，**不要为它停服或重启**。
 
-| | `kitsu_server_sql` | `POST /api/doodle/debug/sql` |
-| --- | --- | --- |
-| 连接 | 工具自己另开 SQLite 直连 `dbPath` | **服务端自己的连接**（strand 上执行） |
-| jieba 分词器 | ❌ 没注册，`MATCH` 不可用 | ✅ 与业务代码同一份 |
-| 外键 / 触发器 / PRAGMA | 需自行保证 | ✅ 与 `run_sql` 完全一致 |
-| 事务 | 整批单事务 | `BEGIN IMMEDIATE` → SQL → `COMMIT`/`ROLLBACK` |
-
-**默认用 `kitsu_server_sql`**：纯 DDL、灌种子数据、批量修正都不涉及全文检索语义。
-直接对 `dbPath` 指向的库执行 SQL 文件或片段，写完运行中的服务端即可查到。不确定脚本对不对就先 `dryRun: true`。
-整批是单事务，失败会整体回滚并报出「来源 + 第几条 + SQLite 原文」。
-它自己的连接**不带** jieba tokenizer，也没跑 `register_custom_extension` 那三条 PRAGMA；
-所以它只适合不依赖检索语义的写入，别用它验证 `MATCH`。
-
-**只在测 FTS / 全词检索时用 debug 路由**：分词结果、`MATCH` 命中、触发器内建索引这些行为只有进程内连接才能复现。
 它是 [`src/test/test_debug_sql.cpp`](src/test/test_debug_sql.cpp) 里的 `debug_sql`，只注册在 `create_test_route()`，
-**只有 `doodle_kitsu_supplement_test.exe` 有这个 URL，生产 exe 没有**。
+**只有 `doodle_kitsu_supplement_test.exe` 有这个 URL，生产 exe 没有**。它跑在服务端自己的连接上（strand 内），
+所以 jieba 分词器、外键、触发器、`register_custom_extension` 那三条 PRAGMA 全部与业务代码一致——
+`MATCH`、`highlight()` 这些检索语义只有这条通道能复现，外部 sqlite3 直连做不到。
 
 ```bash
 curl -X POST "$BASE/api/doodle/debug/sql" -H "Content-Type: application/json" \

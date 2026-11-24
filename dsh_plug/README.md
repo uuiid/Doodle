@@ -56,7 +56,7 @@ dsh_plug/
 
 启动 doodle kitsu supplement 的后端服务，并托管 Playwright 契约测试。
 
-工具：`kitsu_server_start`、`kitsu_server_status`、`kitsu_server_stop`、`kitsu_server_sql`、`kitsu_playwright_test`
+工具：`kitsu_server_start`、`kitsu_server_status`、`kitsu_server_stop`、`kitsu_playwright_test`
 
 可执行文件路径不写在配置里，每次按**发起调用的会话工作区**和 git 分支解析到 `<工作区上一级>/build/<分支>/Ninja_debug/bin/<exeName>`，与 `CMakePresets.json` 的 `binaryDir` 是同一个表达式。默认用 `doodle_kitsu_supplement_test.exe`（Maya / UE 走 stub，无需安装 Maya 或 UE）。
 

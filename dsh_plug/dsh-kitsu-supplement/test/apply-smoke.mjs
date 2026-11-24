@@ -155,7 +155,7 @@ await mod.apply(fakeCtx, {
   playwrightCwd: "E:\\Doodle\\test_js",
 });
 
-const expected = ["kitsu_server_start", "kitsu_server_status", "kitsu_server_stop", "kitsu_server_sql", "kitsu_playwright_test"];
+const expected = ["kitsu_server_start", "kitsu_server_status", "kitsu_server_stop", "kitsu_playwright_test"];
 const missing = expected.filter((n) => !registered.includes(n));
 if (missing.length > 0) problems.push(`未注册的工具: ${missing.join(", ")}`);
 if (sections.length !== 1) problems.push(`guidance section 数量 ${sections.length}，应为 1`);

@@ -303,15 +303,7 @@ export async function resolveSpec({ config, args, exists, workspaceRoot, branch 
 
 /**
  * 启动成功/失败都要带上的提示。local 模式没给 dbPath 时会落进 ":memory:"，
- * 那个库只活在本进程里，kitsu_server_sql 写不进去。
- *
- * @param {{mode:string, dbPath?:string}} spec
- * @returns {string[]}
- */
-
-/**
- * 启动成功/失败都要带上的提示。local 模式没给 dbPath 时会落进 ":memory:"，
- * 那个库只活在本进程里，kitsu_server_sql 写不进去。
+ * 那个库只活在本进程里，外部进程写不进去。
  *
  * @param {{mode:string, dbPath?:string}} spec
  * @returns {string[]}
@@ -322,8 +314,8 @@ export function startWarnings(spec) {
   if (spec.dbPath === undefined) {
     warnings.push(
       spec.mode === "local"
-        ? "local 模式没有传 dbPath：服务端使用内存数据库（:memory:），进程退出即丢，kitsu_server_sql 无法写入；需要可写库请传 dbPath。"
-        : "没有传 dbPath：服务端使用其内置默认库路径（C:/kitsu_new.database），kitsu_server_sql 会写入该文件。",
+        ? "local 模式没有传 dbPath：服务端使用内存数据库（:memory:），进程退出即丢；需要可写库请传 dbPath。"
+        : "没有传 dbPath：服务端使用其内置默认库路径（C:/kitsu_new.database）。",
     );
   }
   return warnings;
@@ -373,8 +365,21 @@ export function startFailure(spec, code, reason, extra = {}) {
 }
 
 /**
- * 校验 kitsu_server_sql 的参数。
+ * 从 stdout 里找监听协程打印的端口行：第一行纯数字就是端口。
  *
- * @param {any} args
- * @returns {string[]}
+ * 端口以入参为准（http_listener.cpp:35 仍会把真实端口打到 stdout），
+ * 这里只用于失败诊断时把 stdout 里报告过的端口一并报给调用方。
+ *
+ * @param {string} text
+ * @returns {number|undefined}
  */
+export function findPortLine(text) {
+  for (const raw of String(text ?? "").split(/\r?\n/)) {
+    const line = raw.trim();
+    if (line === "") continue;
+    if (!/^[0-9]{1,5}$/.test(line)) return undefined;
+    const port = Number.parseInt(line, 10);
+    return port >= 1 && port <= 65535 ? port : undefined;
+  }
+  return undefined;
+}

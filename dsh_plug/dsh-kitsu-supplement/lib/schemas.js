@@ -226,36 +226,6 @@ export const STOP_SCHEMA = {
   },
 };
 
-export const SQL_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    ok: { type: "boolean", required: true },
-    code: { type: "string", required: true },
-    reason: { type: "string", required: true },
-    dbPath: { type: "string" },
-    serverId: { type: "string" },
-    dryRun: { type: "boolean" },
-    statements: { type: "number", required: true },
-    changes: { type: "number", required: true },
-    results: {
-      type: "array",
-      required: true,
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          source: { type: "string", required: true },
-          index: { type: "number", required: true },
-          verb: { type: "string", required: true },
-          changes: { type: "number", required: true },
-        },
-      },
-    },
-    diagnostics: { type: "array", required: true, items: DIAGNOSTIC_ITEM },
-  },
-};
-
 /**
  * @param {any} value
  * @returns {any[]}
@@ -441,31 +411,5 @@ export function renderStop(args, value) {
     lines.push(`${item.serverId}  pid=${item.pid}  :${item.port}  ${item.ok ? "已停止" : `停止失败: ${item.reason}`}${exit}`);
   }
   for (const item of value.diagnostics ?? []) lines.push(`${item.severity.toUpperCase()} ${item.code}: ${item.message}`);
-  return [{ type: "text", text: lines.join("\n") }];
-}
-
-/**
- * @param {any} args
- * @param {any} value
- * @returns {any[]}
- */
-export function renderSql(args, value) {
-  /** @type {string[]} */
-  const lines = [];
-  lines.push(`${value.ok ? "OK" : "FAILED"} [${value.code}] ${value.reason}`);
-  if (value.dbPath) lines.push(`db: ${value.dbPath}`);
-  if (value.serverId) lines.push(`server: ${value.serverId}（未停服、未重启，写完即可查）`);
-  if (value.ok === true) {
-    lines.push(`statements: ${value.statements}  changes: ${value.changes}${value.dryRun ? "  (dryRun: 已回滚)" : ""}`);
-    const byVerb = new Map();
-    for (const item of value.results ?? []) {
-      byVerb.set(item.verb, (byVerb.get(item.verb) ?? 0) + 1);
-    }
-    if (byVerb.size > 0) {
-      lines.push(`by verb: ${[...byVerb].map(([verb, count]) => `${verb}=${count}`).join(", ")}`);
-    }
-  } else {
-    for (const item of value.diagnostics ?? []) lines.push(`${item.severity.toUpperCase()} ${item.code}: ${item.message}`);
-  }
   return [{ type: "text", text: lines.join("\n") }];
 }

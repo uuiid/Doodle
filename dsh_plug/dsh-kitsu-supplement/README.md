@@ -11,7 +11,6 @@
 | `kitsu_server_start` | 按 `production` / `local` 模式拉起服务（**每模式最多一个**；默认测试 exe），返回 `port` 与 `baseUrl`（来自服务端发布的共享内存段）与 `exeKind` |
 | `kitsu_server_status` | 列出本插件记录的实例、每个模式的槽位占用，并用 netstat 查端口被谁监听 |
 | `kitsu_server_stop` | 停掉本插件拉起的实例（终止进程树并等停稳） |
-| `kitsu_server_sql` | 对磁盘库执行 SQL 文件或片段（建表、改数据、填测试数据），**不需要停服或重启** |
 | `kitsu_playwright_test` | 把参数原样转发给 `test_js` 里的 playwright CLI（`playwright test ...` 的 `test ...` 部分），返回摘要、失败标题与输出尾巴；**不可并发** |
 
 ## 为什么这样设计
@@ -27,8 +26,7 @@
 - **cwd 默认取 exe 所在目录。** exe 依赖同目录的 dll；运行路径也可以由参数 `cwd` 或配置 `defaultCwd` 显式指定，插件不猜别的位置。
 - **不用 `POST /api/doodle/stop-server`。** 它要 admin JWT，且 `connection_count` 不为 0 时拒绝退出（`base_data.cpp:343-366`），测试机上的连接数恰恰不为 0。这里直接终止进程树并 `waitForExit`。
 - **每模式一个槽位。** `local` 与 `production` 各最多一个在跑实例，第二个直接 `slot-in-use`，要换就显式 `replaceExisting: true`。理由：两个同模式实例通常意味着上一个没停干净，它们读同一份注册表/库、抢同一类端口，`kitsu_server_status` 也没法判断该指哪个；而静默替换又会把正在跑的用例打断。实例表落盘到状态文件，DSH 重启后仍能认领（无句柄）并按 pid 停。
-- **写库不停服。** `upgrade()` 会对磁盘库调 `journal_mode(wal)`（`sqlite_database.cpp:1335`），但实测新建库上 `pragma journal_mode` 仍是 `delete`——两种模式下外部进程提交的写入都能被运行中的服务端读到，所以 `kitsu_server_sql` 只做"开库 → 事务 → 提交"，不碰进程。写锁最多等 5 秒（`busy_timeout`），撞上服务端正好在写也只是排队。
-- **local 模式不给 dbPath 就没有可写的库。** 服务端 local 分支在没拿到 `--dbPath` 时落到 `":memory:"`（`kitsu_supplement.cpp:175-178`），那个库只活在本进程里，外部进程根本看不到，`kitsu_server_sql` 会直接拒绝并说明原因。
+- **改测试数据不在这里做。** 往库里写数据走服务端的 `POST /api/doodle/debug/sql`（只有 `doodle_kitsu_supplement_test.exe` 注册），它在服务端自己的连接上执行，jieba 分词器与外键/触发器都与业务代码一致；插件不再另开外部 SQLite 连接去写库。
 
 ## 安装
 
@@ -36,7 +34,7 @@
 plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-supplement")
 ```
 
-安装后 `kitsu_server_start` / `kitsu_server_status` / `kitsu_server_stop` / `kitsu_server_sql` 出现在工具表里。
+安装后 `kitsu_server_start` / `kitsu_server_status` / `kitsu_server_stop` / `kitsu_playwright_test` 出现在工具表里。
 
 ## 配置（`cordis.patch.yml`）
 
@@ -47,7 +45,7 @@ plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-suppleme
 | `defaultCwd` | 空（= exe 所在目录） | 默认运行路径 |
 | `defaultMode` | `production` | `production` 或 `local` |
 | `defaultRoot` | 空 | 没传 `--root` 就不写 |
-| `defaultConfigPaths` | 见 patch | 写进 config JSON 的 `db_path` / `kitsu_front_end_path` / `root` / `public_url_port`；空串表示不写；`db_path` 同时是 `kitsu_server_sql` 的兜底目标 |
+| `defaultConfigPaths` | 见 patch | 写进 config JSON 的 `db_path` / `kitsu_front_end_path` / `root` / `public_url_port`；空串表示不写 |
 | `readyPath` | `/` | 就绪探测路径；任何 HTTP 状态码都算就绪 |
 | `readyTimeoutMs` | `30000` | 就绪等待预算 |
 | `stopTimeoutMs` | `5000` | 终止后等待退出预算 |
@@ -82,16 +80,6 @@ plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-suppleme
 | `readyPath` | | 本次的就绪探测路径 |
 | `killExisting` | | `true` 才强杀端口上的旧进程；默认失败并报 PID |
 | `replaceExisting` | | `true` 时先停掉同模式已在跑的实例再起新的（见[实例组合规则](#实例组合规则每模式一个槽位)）；默认 `false`，撞槽位直接报 `slot-in-use` |
-
-`kitsu_server_sql`：
-
-| 参数 | 说明 |
-| --- | --- |
-| `sql` | 内联 SQL，可含多条语句；在所有 `files` 之后执行 |
-| `files` | SQL 文件绝对路径数组（`.sql`），按给定顺序先执行 |
-| `dbPath` | 目标库；缺省取 `serverId` 实例的库路径，再缺省取 `defaultConfigPaths.db_path` |
-| `serverId` | 目标实例（只用于定位库与在结果里标注），**不会**停服或重启 |
-| `dryRun` | 整批在事务里跑一遍再回滚，用来验证脚本而不落库 |
 
 `kitsu_playwright_test`：
 
@@ -219,12 +207,6 @@ pid"：还在就算 `adopted`（`kitsu_server_status` 里标 `[来自状态文�
 kitsu_server_start { mode: "local", port: 50123, dbPath: "E:\\tmp\\kitsu_test.db" }
 → ok, serverId=kitsu-1, baseUrl=http://127.0.0.1:50123
 
-kitsu_server_sql { serverId: "kitsu-1", files: ["E:\\seed\\projects.sql"], sql: "INSERT INTO person ...;" }
-→ ok, statements=12, changes=34（服务端仍在跑，直接就能查）
-
-kitsu_server_sql { serverId: "kitsu-1", files: ["E:\\seed\\big.sql"], dryRun: true }
-→ 先验一遍，确认无误再去掉 dryRun
-
 kitsu_server_status { port: 50124 }
 
 kitsu_server_start { mode: "local", port: 50124 }
@@ -244,19 +226,14 @@ kitsu_server_stop { serverId: "kitsu-1" }
 
 **`kitsu_playwright_test`**：`ok` / `tests-failed` / `busy` / `timeout` / `cancelled` / `spawn-failed` / `timeout-cli` / `invalid-args` / `exit-nonzero`。
 
-**`kitsu_server_sql`**：`ok` / `invalid-args` / `empty` / `sql-failed`。
-`sql-failed` 会给出「来源（文件名或 `<inline sql>`）+ 第几条语句 + SQLite 原文 + 截断后的 SQL」，整批已回滚。
-
 ## 已知边界
 
-- **local 模式没人传 dbPath 时是内存库**：服务端落 `:memory:`，进程退出即丢，`kitsu_server_sql` 直接拒绝。要用可写的库，启动时传 `dbPath`。
+- **local 模式没人传 dbPath 时是内存库**：服务端落 `:memory:`，进程退出即丢。要用可写的库，启动时传 `dbPath`。
 - **生产模式依赖注册表** `HKLM\SOFTWARE\Doodle\MainConfig`（以及 `\Email`）：读不到会抛异常，服务不启动。这属于测试机环境配置，插件不处理。
 - **读端口依赖 `node:ffi`。** 宿主 Node 必须是 26.1+ 且带 FFI 支持；`--no-experimental-ffi`、或开了权限模型却没给 `--allow-ffi` 时读不到段，`kitsu_server_start` 会报 `no-shm-port` 并在诊断里给出 `shm/read-failed` 的真实原因。
 - **段名按子进程 pid 拼。** 如果启动的不是 exe 本体（例如被包装器套了一层），拿到的 pid 属于包装器而不是 `doodle_kitsu_supplement.exe`，段名会对不上；此时诊断里会同时报 `shm/stdout-mismatch`（stdout 有端口、共享内存没有）。
 - 端口是否放通"公开访问"（`public_url_port`）由服务端注册表配置与服务端声明决定，插件只把它写进生成的 config。
-- `kitsu_server_sql` 连接时模拟服务端的连接级 PRAGMA（`foreign_keys = ON`、`synchronous = NORMAL`、`recursive_triggers = ON`，见 `sqlite_database.cpp:1310-1312`），但不会加载服务端的 jieba FTS5 分词器；写 FTS5 虚拟表或依赖该分词器的内容请走服务端接口。
-- `ATTACH` / `DETACH` 被拒绝：本工具只写目标库文件。
-- **`kitsu_playwright_test` 用 `test_js` 自己的 playwright**：`cwd` 下没有 `node_modules/@playwright/test` 时直接报 `timeout-cli`，插件不替你装依赖。
+- `kitsu_playwright_test` 用 `test_js` 自己的 playwright：`cwd` 下没有 `node_modules/@playwright/test` 时直接报 `timeout-cli`，插件不替你装依赖。
 - **playwright 与 kitsu 服务端是两个独立进程**：`kitsu_playwright_test` 不会自己起服务，也不会替你去实例表里挑地址，`baseUrl` 要显式传（`kitsu_server_start` 返回的那个）；服务端有没有起来由调用方保证。
 - **实例表靠状态文件跨重启保留**：DSH 重启后读回来的实例没有句柄，只按「端口上还有没有那个 pid」判定死活（见[实例组合规则](#实例组合规则每模式一个槽位)）。如果进程还活着但已不再监听原端口（例如自己崩在别的端口上），会被判成已退出，槽位随之释放。快照文件损坏或版本不符时整份被忽略，插件只给出 `state/read-failed` 警告，不会因此起不来。
 

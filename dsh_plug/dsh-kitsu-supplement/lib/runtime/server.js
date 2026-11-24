@@ -3,10 +3,9 @@
 // 起服务、等就绪、登记实例；停服时终止进程树并等停稳。
 
 import { baseUrlOf, errorText, sanitizeForJson, tailText } from "../pure/common.js";
-import { startFailure } from "../pure/start.js";
+import { findPortLine, startFailure } from "../pure/start.js";
 
 import { registry } from "./registry.js";
-import { findPortLine } from "../pure/sql.js";
 import { killPids, probePort, readAll, spawnServer, waitForExit, waitForReady } from "./process.js";
 
 /**

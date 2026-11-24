@@ -40,7 +40,7 @@ await mod.apply(fakeCtx, {
   stateDir: join(process.env.TEMP || ".", "kitsu-shared-workspace-check"),
 });
 
-for (const name of ["kitsu_server_start", "kitsu_server_status", "kitsu_server_stop", "kitsu_server_sql"]) {
+for (const name of ["kitsu_server_start", "kitsu_server_status", "kitsu_server_stop"]) {
   if (!tools.has(name)) problems.push(`未注册的工具: ${name}`);
 }
 

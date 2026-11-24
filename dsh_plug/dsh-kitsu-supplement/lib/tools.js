@@ -11,16 +11,13 @@ import { errorText } from "./pure/common.js";
 import { validateSlotRequest } from "./pure/instances.js";
 import { buildArgv, resolveSpec, startFailure, startWarnings } from "./pure/start.js";
 import { EXE_STOP_NOTICE, playwrightCwdFailure } from "dsh-doodle-workspace";
-import { resolveSqlTarget, runSql, validateSqlArgs } from "./pure/sql.js";
 import {
   PLAYWRIGHT_SCHEMA,
-  SQL_SCHEMA,
   START_SCHEMA,
   STATUS_SCHEMA,
   STOP_SCHEMA,
   emptyPlaywrightSummary,
   renderPlaywright,
-  renderSql,
   renderStart,
   renderStatus,
   renderStop,
@@ -436,123 +433,6 @@ export function registerStopTool({ ctx, resolved, registry, stateWarnings, state
           stopped: stopped.map((item) => ({ ...item, exitCode: item.exitCode ?? null })),
           remaining: [...registry.keys()],
           diagnostics,
-        });
-      },
-    }),
-  );
-}
-
-/** @param {any} deps */
-export function registerSqlTool({ ctx, resolved, registry, stateWarnings, statePath, saveInstances, writeConfigFile, exists }) {
-  ctx.tools.register(
-    defineTool({
-      name: "kitsu_server_sql",
-      description:
-        "Run a SQL file or inline SQL against the doodle_kitsu_supplement database to change it or seed test data. " +
-        "A running instance sees committed writes immediately: this tool never " +
-        "stops or restarts the server. Sources run in order (`files[0]`, `files[1]`, ... then `sql`); everything runs in " +
-        "a single transaction with `BEGIN IMMEDIATE`, so a failure rolls the whole batch back and reports the source " +
-        "name, the statement number and the SQLite error. The target database is `dbPath`, else the dbPath of " +
-        "`serverId`'s instance, else the plugin default. Connection pragmas mirror the server (`foreign_keys = ON`, " +
-        "`synchronous = NORMAL`, `recursive_triggers = ON`) and the write lock waits up to 5s. ATTACH/DETACH are " +
-        "rejected. `dryRun: true` executes and rolls back, so you can verify a script without persisting it. A " +
-        "`:memory:` target (server started without dbPath) is refused with code `memory-db`.",
-      parameters: {
-        sql: {
-          type: "string",
-          description: "Inline SQL. May contain multiple statements; runs after every `files` entry.",
-        },
-        files: {
-          type: "array",
-          items: { type: "string" },
-          description: "Absolute paths of SQL files, executed in the given order before `sql`.",
-        },
-        dbPath: {
-          type: "string",
-          description:
-            "Target SQLite file. Defaults to the dbPath of `serverId`'s instance, then the plugin default. " +
-            "`:memory:` is rejected.",
-        },
-        serverId: {
-          type: "string",
-          description: "Instance whose database is targeted (and noted in the result). It is not stopped or restarted.",
-        },
-        dryRun: {
-          type: "boolean",
-          description: "Run the whole batch inside a transaction and roll it back; nothing is persisted.",
-        },
-      },
-      output: { schema: SQL_SCHEMA, render: renderSql },
-      isConcurrencySafe() {
-        return false;
-      },
-      async execute(args, exec) {
-        const problems = validateSqlArgs(args);
-        const fs = await import("node:fs/promises");
-        /** @type {{label:string, sql:string}[]} */
-        const batches = [];
-        const fileList = Array.isArray(args.files) ? args.files : [];
-        for (const file of fileList) {
-          if (typeof file !== "string" || file.trim() === "") continue;
-          const absolute = normalizePath(file);
-          try {
-            batches.push({ label: absolute, sql: await fs.readFile(absolute, "utf8") });
-          } catch (error) {
-            problems.push(`读不到 SQL 文件 ${absolute}：${errorText(error)}`);
-          }
-        }
-        if (trimOrEmpty(args.sql) !== "") batches.push({ label: "<inline sql>", sql: String(args.sql) });
-  
-        const target = resolveSqlTarget({ args, config: resolved, registry });
-        if (target.problem !== undefined) problems.push(target.problem);
-        if (problems.length > 0) {
-          return sanitizeForJson({
-            ok: false,
-            code: "invalid-args",
-            reason: problems.join(" "),
-            dbPath: target.dbPath,
-            serverId: target.serverId,
-            statements: 0,
-            changes: 0,
-            results: [],
-            diagnostics: problems.map((message) => ({ severity: "error", code: "args/invalid", message })),
-          });
-        }
-        if (batches.length === 0) {
-          const message = "SQL 里没有任何可执行语句（文件为空或只有注释）。";
-          return sanitizeForJson({
-            ok: false,
-            code: "empty",
-            reason: message,
-            dbPath: target.dbPath,
-            serverId: target.serverId,
-            statements: 0,
-            changes: 0,
-            results: [],
-            diagnostics: [{ severity: "error", code: "sql/empty", message }],
-          });
-        }
-  
-        const outcome = await runSql({
-          dbPath: target.dbPath,
-          batches,
-          dryRun: args.dryRun === true,
-        });
-        return sanitizeForJson({
-          ok: outcome.ok,
-          code: outcome.ok ? "ok" : "sql-failed",
-          reason: outcome.ok
-            ? `${args.dryRun === true ? "已校验并回滚" : "已提交"} ${outcome.statements} 条语句，影响 ${outcome.changes} 行（${target.dbPath}）。`
-            : outcome.error,
-          dbPath: target.dbPath,
-          serverId: target.serverId,
-          dryRun: args.dryRun === true ? true : undefined,
-          statements: outcome.statements,
-          changes: outcome.changes,
-          results: outcome.results.slice(0, 200),
-          diagnostics: outcome.ok
-            ? []
-            : [{ severity: "error", code: "sql/failed", message: String(outcome.error) }],
         });
       },
     }),

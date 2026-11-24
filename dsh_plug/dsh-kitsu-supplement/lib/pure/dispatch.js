@@ -6,4 +6,4 @@
 //   * 工作区/构建目录解析不在本目录，来自 dsh-doodle-workspace 包，由 test/pure.mjs 以 work 注入；
 //   * 新增纯逻辑文件时只改这里，不必再动测试里的硬编码路径。
 
-export const PURE_FILES = ["common.js", "start.js", "sql.js", "instances.js", "playwright.js"];
+export const PURE_FILES = ["common.js", "start.js", "instances.js", "playwright.js"];
