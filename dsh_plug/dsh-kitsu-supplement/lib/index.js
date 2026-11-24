@@ -223,7 +223,7 @@ export async function apply(ctx, config) {
    * @returns {Promise<{cwd:string, workspaceRoot:string, lookedAt:string[]}>}
    */
   const playwrightCwdOf = async (subject, signal) => {
-    const fs = await import("node:fs/promises");
+    const fs = await import("node:fs");
     const path = await import("node:path");
     const workspaceRoot = workspaceRootOf(subject);
     const fallbackDirs = [resolved.playwrightCwd];
