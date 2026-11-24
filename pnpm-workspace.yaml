@@ -1,7 +1,0 @@
-packages:
-  - dsh_plug/dsh-cmake
-  - dsh_plug/dsh-doodle-workspace
-  - dsh_plug/dsh-kitsu-supplement
-  - dsh_plug/dsh-tool-everything
-  - dsh_plug/dsh-ue
-  - dsh_plug/dsh-vscode-sel

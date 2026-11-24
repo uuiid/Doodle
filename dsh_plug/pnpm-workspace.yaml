@@ -1,0 +1,7 @@
+packages:
+  - dsh-cmake
+  - dsh-doodle-workspace
+  - dsh-kitsu-supplement
+  - dsh-tool-everything
+  - dsh-ue
+  - dsh-vscode-sel
