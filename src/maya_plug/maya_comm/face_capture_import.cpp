@@ -225,7 +225,7 @@ MSyntax face_capture_import_syntax() {
 class face_capture_import::impl {
  public:
   std::string file_path_{};
-  MObject node_object_{};
+  MDagPath node_path_{};
 
   face_capture_file_t file_{};
   MDagPath target_path_{};
@@ -234,7 +234,6 @@ class face_capture_import::impl {
   std::vector<std::size_t> raw_resolved_{};
 
   MStatus load_file();
-  MStatus locate_node();
   MStatus locate_target();
   MStatus precheck_frame_rate();
   MStatus precheck_gui_connections();
@@ -296,20 +295,10 @@ MStatus face_capture_import::impl::load_file() {
   return MS::kSuccess;
 }
 
-MStatus face_capture_import::impl::locate_node() {
-  if (node_object_.isNull()) return display_error("未指定节点对象"), MS::kFailure;
-
-  MSelectionList l_selection{};
-  if (l_selection.add(node_object_) != MS::kSuccess) return display_error("传入的节点对象已失效"), MS::kFailure;
-  if (l_selection.getDagPath(0, target_path_) != MS::kSuccess) {
-    return display_error("节点不是 DAG 节点"), MS::kFailure;
-  }
-
-  target_namespace_ = namespace_of(target_path_);
-  return MS::kSuccess;
-}
-
 MStatus face_capture_import::impl::locate_target() {
+  if (!node_path_.isValid() || node_path_.node().isNull()) return display_error("未选择有效的导入目标节点"), MS::kFailure;
+  target_path_ = node_path_;
+  target_namespace_ = namespace_of(target_path_);
   const MObjectArray l_objects = MNamespace::getNamespaceObjects(target_namespace_);
   gui_node_index_              = build_gui_node_index(l_objects);
 
@@ -544,12 +533,8 @@ MStatus face_capture_import::get_arg(const MArgList& in_arg) {
 
   MSelectionList l_selection{};
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_arg_data.getObjects(l_selection));
-  if (l_selection.length() != 1) {
-    return display_error("节点参数数量不是 1 (当前 {})", l_selection.length()), MS::kFailure;
-  }
-  MDagPath l_path{};
-  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_selection.getDagPath(0, l_path));
-  p_i->node_object_ = l_path.node();
+  if (l_selection.length() != 1) return display_error("节点参数数量不是 1 (当前 {})", l_selection.length()), MS::kFailure;
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_selection.getDagPath(0, p_i->node_path_));
 
   return MS::kSuccess;
 }
@@ -558,7 +543,6 @@ MStatus face_capture_import::doIt(const MArgList& in_list) {
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(get_arg(in_list));
 
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(p_i->load_file());
-  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(p_i->locate_node());
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(p_i->locate_target());
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(p_i->precheck_frame_rate());
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(p_i->precheck_gui_connections());
