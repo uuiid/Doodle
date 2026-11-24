@@ -2,6 +2,8 @@
 
 const vscode = require('vscode')
 const path = require('node:path')
+const fs = require('node:fs')
+const { execFileSync } = require('node:child_process')
 
 const PUSH_PATH = '/api/dsh-vscode-sel/push'
 const PENDING_PATH = '/api/dsh-vscode-sel/pending'
@@ -98,9 +100,99 @@ async function checkEndpoint() {
   }
 }
 
+function git(cwd, ...args) {
+  return execFileSync('git', ['-C', cwd, ...args], {
+    encoding: 'utf8',
+    timeout: 10000,
+    windowsHide: true,
+    stdio: ['ignore', 'pipe', 'ignore']
+  }).trim()
+}
+
+function firstExistingDirectory(candidates) {
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === 'string') {
+      try {
+        if (fs.statSync(candidate).isDirectory()) return candidate
+      } catch {
+        continue
+      }
+    }
+  }
+  return null
+}
+
+function fallbackBranch() {
+  const folders = []
+  if (vscode.workspace.workspaceFolders) {
+    for (const folder of vscode.workspace.workspaceFolders) folders.push(folder.uri.fsPath)
+  }
+  let directory = firstExistingDirectory(folders)
+  if (!directory) {
+    const active = vscode.window.activeTextEditor
+    directory = active ? path.dirname(active.document.uri.fsPath) : process.cwd()
+  }
+  let branch = ''
+  try {
+    branch = git(directory, 'rev-parse', '--abbrev-ref', 'HEAD')
+  } catch {
+    return ''
+  }
+  if (!branch || branch === 'HEAD') {
+    try {
+      return git(directory, 'rev-parse', '--short', 'HEAD')
+    } catch {
+      return ''
+    }
+  }
+  return branch
+}
+
+let branchCache = { value: '', at: 0 }
+let gitWatcher = null
+
+async function currentBranch() {
+  for (const repository of vscode.extensions.getExtension('vscode.git')?.exports?.getAPI(1)?.repositories ?? []) {
+    const head = repository.state && repository.state.HEAD
+    if (head && head.name) return head.name
+    if (head && head.commit) {
+      const short = String(head.commit).slice(0, 8)
+      if (short !== '') return short
+    }
+  }
+  const now = Date.now()
+  if (branchCache.value !== '' && now - branchCache.at < 5000) return branchCache.value
+  branchCache = { value: fallbackBranch(), at: now }
+  return branchCache.value
+}
+
+function watchGit() {
+  if (gitWatcher) return
+  const api = vscode.extensions.getExtension('vscode.git')?.exports
+  if (!api) return
+  gitWatcher = api.onDidOpenRepository((repository) => {
+    branchCache.at = 0
+    repository.state.onDidChange(() => {
+      branchCache.at = 0
+    })
+  })
+}
+
+async function getBranchName() {
+  const branch = await currentBranch()
+  if (branch === '') {
+    vscode.window.showErrorMessage('无法获取当前 git 分支：请确认工作区是 git 仓库且 git 在 PATH 中。')
+    return '${workspaceFolder}'
+  }
+  return branch
+}
+
 function activate(context) {
   context.subscriptions.push(vscode.commands.registerCommand('dshSel.sendSelection', sendSelection))
   context.subscriptions.push(vscode.commands.registerCommand('dshSel.checkEndpoint', checkEndpoint))
+  context.subscriptions.push(vscode.commands.registerCommand('dshSel.getBranchName', getBranchName))
+  context.subscriptions.push({ dispose: () => gitWatcher && gitWatcher.dispose() })
+  watchGit()
 }
 
 function deactivate() {}

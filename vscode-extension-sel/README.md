@@ -27,6 +27,24 @@ DSH 输入框光标处出现：
 | --- | --- |
 | `dshSel.sendSelection` | 推送当前选区 |
 | `dshSel.checkEndpoint` | 探测 DSH 端点是否可达，并报告待取条数 |
+| `dshSel.getBranchName` | 返回当前 git 分支名（供 `${command:...}` 变量展开）|
+
+### 在变量里取当前 git 分支
+
+VS Code 的内置变量里没有「当前 git 分支」，所以新建构建目录等按分支区分的路径没法直接写。本扩展提供 `dshSel.getBranchName`，在支持 `${command:...}` 的位置这样用：
+
+```json
+"program": "${workspaceFolder}/../build/${command:dshSel.getBranchName}/Ninja_debug/bin/doodle_kitsu_supplement.exe",
+"cwd": "${workspaceFolder}/../build/${command:dshSel.getBranchName}/Ninja_debug/bin"
+```
+
+- 分支名取自 VS Code 内置 Git 扩展的 `HEAD.name`；内置 Git 扩展不可用时退回执行 `git rev-parse --abbrev-ref HEAD`，detached HEAD 时返回短 commit hash。
+- 与 [CMakePresets.json](../CMakePresets.json) 中 `binaryDir` 的 `${sourceParentDir}/build/$env{DOODLE_GIT_BRANCH}/${presetName}` 用的是同一个分支名。
+- 分支名匹配仓库 `master` 等纯名；分支里有 `/`（如 `feature/x`）时展开成嵌套目录，与构建脚本一致。
+- 该命令**不是**给命令面板用的，也不弹通知；展开失败（工作区不是 git 仓库 / 无 git）时返回 `${workspaceFolder}` 并弹出错误提示。
+- 需要扩展处于激活状态：把 `vscode-extension-sel` 装成扩展后，配置里第一次展开会激活它。
+
+`${command:...}` 只在 `launch.json` / `tasks.json` / `settings.json` 等支持变量展开的位置有效；`CMakePresets.json` 的 `cmake` 进程看不到 VS Code 变量，那里仍靠 `build_script/build/set_env.ps1` 设置 `DOODLE_GIT_BRANCH`。
 
 ## 配置
 

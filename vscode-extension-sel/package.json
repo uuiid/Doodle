@@ -21,7 +21,8 @@
   "icon": "./icon.png",
   "main": "./extension.js",
   "activationEvents": [
-    "onCommand:dshSel.sendSelection"
+    "onCommand:dshSel.sendSelection",
+    "onCommand:dshSel.getBranchName"
   ],
   "contributes": {
     "commands": [
@@ -33,6 +34,11 @@
       {
         "command": "dshSel.checkEndpoint",
         "title": "检查 DSH 端点连通性",
+        "category": "DSH"
+      },
+      {
+        "command": "dshSel.getBranchName",
+        "title": "获取当前 Git 分支名",
         "category": "DSH"
       }
     ],
