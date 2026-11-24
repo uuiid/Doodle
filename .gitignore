@@ -97,4 +97,4 @@ UnrealEngine
 
 # pnpm workspace（插件之间的本地依赖链接，见 package.json / pnpm-workspace.yaml）
 node_modules/
-/pnpm-lock.yaml
+/dsh_plug/pnpm-lock.yaml
