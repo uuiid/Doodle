@@ -227,6 +227,7 @@ export async function apply(ctx, config) {
     const path = await import("node:path");
     const workspaceRoot = workspaceRootOf(subject);
     const fallbackDirs = [resolved.playwrightCwd];
+    if (workspaceRoot !== "") fallbackDirs.unshift(`${workspaceRoot}\\test_js`);
     const parent = parentOf(workspaceRoot);
     if (parent !== "") fallbackDirs.push(`${parent}\\Doodle\\test_js`);
     const hasDependency = (dir) => {

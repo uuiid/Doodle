@@ -140,6 +140,7 @@ test("node:fs/promises 确实没有 statSync（本检查的前提成立）", asy
 const schemas = await import(pathToFileURL(join(libDir, "schemas.js")).href);
 const startModule = await import(pathToFileURL(join(libDir, "pure", "start.js")).href);
 const playwrightRuntime = await import(pathToFileURL(join(libDir, "runtime", "playwright.js")).href);
+const workspaceModule = await import(pathToFileURL(join(libDir, "..", "..", "dsh-doodle-workspace", "lib", "workspace.js")).href);
 
 function requiredOf(schema) {
   return Object.entries(schema.properties ?? {})
@@ -219,6 +220,54 @@ test("playwrightFailure 结果满足 PLAYWRIGHT_SCHEMA 必填项", () => {
 test("START_SCHEMA 与 PLAYWRIGHT_SCHEMA 的必填项都不为空", () => {
   ok(requiredOf(schemas.START_SCHEMA).length > 0, "START_SCHEMA 无必填项");
   ok(requiredOf(schemas.PLAYWRIGHT_SCHEMA).length > 0, "PLAYWRIGHT_SCHEMA 无必填项");
+});
+
+// ---------------------------------------------------------------------------
+// 5. playwright cwd 候选目录必须包含会话工作区自己的 test_js
+//
+// 只查 workspaceRoot 本身会漏掉「依赖装在 <工作区>/test_js 下」的常见布局，
+// 进而落到宿主仓库的兜底目录，跑出 No tests found。
+// ---------------------------------------------------------------------------
+
+test("playwright cwd 优先命中会话工作区的 test_js", () => {
+  const workspace = "E:\\some_worktree";
+  const fallbackDirs = [""];
+  if (workspace !== "") fallbackDirs.unshift(`${workspace}\\test_js`);
+  const parent = workspaceModule.parentOf(workspace);
+  if (parent !== "") fallbackDirs.push(`${parent}\\Doodle\\test_js`);
+
+  const onlyWorktreeTestJs = (dir) => dir === `${workspace}\\test_js`;
+  const chosen = workspaceModule.choosePlaywrightCwd({
+    workspaceRoot: workspace,
+    fallbackDirs,
+    hasDependency: onlyWorktreeTestJs,
+  });
+  ok(chosen.cwd === `${workspace}\\test_js`, `应命中工作区 test_js，实际：${chosen.cwd || "(空)"}`);
+});
+
+test("playwright cwd 在会话工作区自身有依赖时仍优先生效", () => {
+  const workspace = "E:\\some_worktree";
+  const fallbackDirs = [`${workspace}\\test_js`];
+  const chosen = workspaceModule.choosePlaywrightCwd({
+    workspaceRoot: workspace,
+    fallbackDirs,
+    hasDependency: (dir) => dir === workspace || dir === `${workspace}\\test_js`,
+  });
+  ok(chosen.cwd === workspace, `应命中工作区根，实际：${chosen.cwd || "(空)"}`);
+});
+
+test("index.js 的 fallbackDirs 含 workspaceRoot\\test_js 且有去重保障", () => {
+  const source = readFileSync(join(libDir, "index.js"), "utf8");
+  ok(
+    /fallbackDirs\.unshift\(\s*`\$\{workspaceRoot\}\\\\test_js`\s*\)/.test(source),
+    "index.js 未把 `${workspaceRoot}\\test_js` 放进候选目录",
+  );
+  const deduped = workspaceModule.choosePlaywrightCwd({
+    workspaceRoot: "E:\\w",
+    fallbackDirs: ["E:\\w\\test_js", "E:\\w\\test_js", ""],
+    hasDependency: () => false,
+  });
+  ok(deduped.lookedAt.filter((d) => d === "E:\\w\\test_js").length === 1, "候选目录未去重");
 });
 
 process.stdout.write(`\n${passed} passed, ${failed} failed\n`);
