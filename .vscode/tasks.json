@@ -71,21 +71,6 @@
       },
     },
     {
-      "label": "cmake build test",
-      "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/set_env.ps1",
-      "args": [
-        "C:/PROGRA~1/CMake/bin/cmake.exe",
-        "--build",
-        "${workspaceFolder}/../build/${input:build_dir}",
-        "--target",
-        "test_main"
-      ],
-      "problemMatcher": [
-        "$msCompile"
-      ]
-    },
-    {
       "label": "cmake build maya",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/build/set_env.ps1",
@@ -101,21 +86,6 @@
       "group": "build",
       "dependsOn": [
         "copy maya script"
-      ]
-    },
-    {
-      "label": "cmake clean",
-      "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/set_env.ps1",
-      "args": [
-        "C:/PROGRA~1/CMake/bin/cmake.exe",
-        "--build",
-        "${workspaceFolder}/../build/${input:build_dir}",
-        "--target",
-        "clean"
-      ],
-      "problemMatcher": [
-        "$msCompile"
       ]
     },
     {
@@ -143,19 +113,6 @@
       "label": "build_all",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/build_all.ps1",
-      "problemMatcher": []
-    },
-    {
-      "label": "test boost",
-      "detail": "运行boost 测试",
-      "type": "shell",
-      "command": "${workspaceFolder}/../build/Ninja_debug/bin/test_main.exe",
-      "args": [
-        "--color_output=true",
-        "--detect_memory_leaks=0",
-        "--log_level=message",
-        "--run_test=${input:test_list}"
-      ],
       "problemMatcher": []
     },
     {
@@ -221,7 +178,7 @@
     {
       "label": "copy maya script",
       "type": "shell",
-      "command": "Copy-Item -Path E:/source/kitsu/mayaPlugins/* -Destination ${workspaceFolder}/../build/Ninja_RelWithDebInfo/plug/maya -Recurse -Force",
+      "command": "Copy-Item -Path E:/source/kitsu/mayaPlugins/* -Destination ${workspaceFolder}/../build/${command:dshSel.getBranchName}/Ninja_RelWithDebInfo/plug/maya -Recurse -Force",
       "problemMatcher": [],
       "hide": false
     },
@@ -252,15 +209,6 @@
       "command": "node",
       "args": [
         "${workspaceFolder}/src/test_js/test/distributed_work.js"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "only server",
-      "type": "shell",
-      "command": "${workspaceFolder}/../build/Ninja_debug/bin/doodle_kitsu_supplement.exe",
-      "args": [
-        "--config=${workspaceFolder}/../build/my_debug_server.json"
       ],
       "problemMatcher": []
     },
