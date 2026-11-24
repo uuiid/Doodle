@@ -33,7 +33,8 @@
   },
   "scripts": {
     "check": "node test/check-syntax.mjs",
-    "test": "node test/pure.mjs && node test/load-graph.mjs && node test/apply-smoke.mjs && node test/workspace-resolve.mjs"
+    "test": "node test/pure.mjs && node test/static-checks.mjs && node test/load-graph.mjs && node test/apply-smoke.mjs && node test/workspace-resolve.mjs",
+    "test:static": "node test/static-checks.mjs"
   },
   "keywords": [
     "deepseek-harness",
