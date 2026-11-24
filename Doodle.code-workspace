@@ -2,11 +2,7 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"path": "../doodle_task_fix",
-			"name": "task_fix"
-		},
+		}
 		// {
 		// 	"path": "external/kimodo",
 		// 	"name": "kimodo"
