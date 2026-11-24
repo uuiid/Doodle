@@ -99,16 +99,10 @@ function Initialize-Kitsu() {
 
 function Initialize-Sd2 {
     $DoodleSdRoot = "E:\source\sd"
-    $DoodleExeSD = "E:\source\sd\release\SyAIStudio.exe"
     $DoodleLogPath = "$env:TEMP\build_sd2.log"
     $is_run = Start-GitPull -Remote "origin" -Branch "master" -WorkingDirectory $DoodleSdRoot -LogPath $DoodleLogPath
     if ($is_run) {
-        # 客户端: vite build --base ./ + electron-builder, 产物 release\SyAIStudio.exe (nsis 安装包) 与 release\SyAIStudio-portable.exe
-        Write-Host "开始构建客户端 SyAIStudio.exe"
-        $ClientResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "pack:win" -WorkingDirectory $DoodleSdRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
-        if ($ClientResult.ExitCode -ne 0) {
-            throw "Client build failed with exit code $($ClientResult.ExitCode)"
-        }
+
         # 前端: pack:win 内部的 build:electron 会把 dist 重建成相对路径 (base ./), 必须最后再构建一次线上版本 (base /) 供 nginx 使用
         Write-Host "开始构建前端"
         $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "build" -WorkingDirectory $DoodleSdRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
@@ -116,7 +110,6 @@ function Initialize-Sd2 {
             throw "Build failed with exit code $($NpmResult.ExitCode)"
         }
     }
-    Copy-Item $DoodleExeSD -Destination "$DoodleSdRoot\dist\" -Force
     return "E:\source\sd\dist";
 }
 
