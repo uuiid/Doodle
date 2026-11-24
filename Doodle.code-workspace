@@ -3,9 +3,10 @@
 		{
 			"path": "."
 		},
-		// {
-		// 	"path": "test_js"
-		// },
+		{
+			"path": "../doodle_task_fix",
+			"name": "task_fix"
+		},
 		// {
 		// 	"path": "external/kimodo",
 		// 	"name": "kimodo"
