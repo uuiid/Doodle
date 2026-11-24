@@ -8,11 +8,15 @@
 
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import vm from "node:vm";
 
+// 工作区/构建目录解析来自 dsh-doodle-workspace 包（同仓库兄弟目录，不需要安装）。
+// 按文件 URL 直接加载：插件目录不一定解析得到这个包名。
+const WORKSPACE = await import(new URL("../../dsh-doodle-workspace/lib/workspace.js", import.meta.url).href);
+
 const here = dirname(fileURLToPath(import.meta.url));
-const pureDir = join(here, "..", "lib", "pure");
+const pureDir = resolve(here, "..", "lib", "pure");
 
 const PURE_FILES = (() => {
   const source = readFileSync(join(pureDir, "dispatch.js"), "utf8");
@@ -36,7 +40,12 @@ function evalPure(relPath, injected) {
 }
 
 // 按 PURE_FILES 顺序求值，前一份文件导出的名字注入到后一份的上下文里。
-const P = {};
+const WORKSPACE_EXPORTS = {};
+for (const [name, value] of Object.entries(WORKSPACE)) {
+  if (typeof value === "function" || typeof value === "string") WORKSPACE_EXPORTS[name] = value;
+}
+
+const P = { ...WORKSPACE_EXPORTS };
 
 
 for (const file of PURE_FILES) {

@@ -4,7 +4,8 @@
 // test/pure.mjs 读取 lib/pure/dispatch.js 里登记的文件逐个求值，契约与原先的纯逻辑区段一致。
 
 import { DEFAULT_MODE, DEFAULT_READY_PATH, MEMORY_DB, MODES, OWNED_FLAGS, PORT_RANGE_TEXT, baseUrlOf, isPlainObject, normalizePath, parsePort, portInRange, sanitizeForJson, trimOrEmpty } from "./common.js";
-import { DEFAULT_TEST_EXE_NAME, buildDirOf, exePathOf, judgeExeResolution, resolveExeName } from "./workspace.js";
+// workspace 解析统一来自 dsh-doodle-workspace；纯函数测试通过宿主传入 work 求值（见 test/pure.mjs）。
+import { DEFAULT_TEST_EXE_NAME, KITSU_PRESET_DIR, buildDirOf, exePathOf, judgeExeResolution, resolveExeName } from "dsh-doodle-workspace";
 
 /**
  * 校验启动参数，返回全部问题（空数组表示通过）。
@@ -199,7 +200,7 @@ export function buildArgv({ mode, port, configPath, root, dbPath, extraArgs }) {
  */
 export function resolveExePath({ workspaceRoot, branch, exeName }) {
   const name = trimOrEmpty(exeName) || DEFAULT_TEST_EXE_NAME;
-  const buildDir = buildDirOf({ workspaceRoot, branch, presetName: "Ninja_debug" });
+  const buildDir = buildDirOf({ workspaceRoot, branch, presetName: KITSU_PRESET_DIR });
   return { exePath: exePathOf({ buildDir, exeName: name }), buildDir };
 }
 

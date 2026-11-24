@@ -1,7 +1,7 @@
 {
   "name": "dsh-kitsu-supplement",
   "version": "0.1.0",
-  "description": "Kitsu supplement HTTP server tool for DeepSeek Harness: launches doodle_kitsu_supplement_test.exe by default (same routes as production, Maya/UE replaced by stubs \u2014 the primary way to run the backend for tests), or doodle_kitsu_supplement.exe (exePath: \"supplement-prod\") for real external processes; reports the real listening port and stops the instance it started.",
+  "description": "Kitsu supplement HTTP server tool for DeepSeek Harness: launches doodle_kitsu_supplement_test.exe by default (same routes as production, Maya/UE replaced by stubs — the primary way to run the backend for tests), or doodle_kitsu_supplement.exe (exePath: \"supplement-prod\") for real external processes; reports the real listening port and stops the instance it started.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -23,6 +23,9 @@
     "icon.svg",
     "README.md"
   ],
+  "dependencies": {
+    "dsh-doodle-workspace": "*"
+  },
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.5",
     "@deepseek-ai/dsh-tools": "^0.2.1-rc.4",
@@ -30,7 +33,7 @@
   },
   "scripts": {
     "check": "node test/check-syntax.mjs",
-    "test": "node test/pure.mjs && node test/load-graph.mjs && node test/apply-smoke.mjs"
+    "test": "node test/pure.mjs && node test/load-graph.mjs && node test/apply-smoke.mjs && node test/workspace-resolve.mjs"
   },
   "keywords": [
     "deepseek-harness",

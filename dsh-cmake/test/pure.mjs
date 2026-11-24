@@ -418,64 +418,84 @@ test('every preset row survives a JSON round trip', () => {
 });
 
 // --------------------------------------------------------------- workspace
+//
+// 工作区解析已收敛到 dsh-doodle-workspace 包（它有自己的 test/pure.mjs）。
+// 这里不 import 那个包，改为两条不依赖安装的检查：
+//   1) lib/index.js 确实从共享包取这些函数；
+//   2) 用仓库真实的 CMakePresets.json 核对「构建目录 = <上一级>/build/<分支>/<preset>」这条约定。
 
-const W = loadPure('workspace.js');
+const indexSource = readFileSync(join(libDir, 'index.js'), 'utf8');
+const SHARED_IMPORT = /import\s*\{([^}]*)\}\s*from\s*'dsh-doodle-workspace'/;
 
-test('workspace: normalizeRoot 统一分隔符并去尾部分隔符', () => {
-  eq(W.normalizeRoot('E:/Doodle/'), 'E:\\Doodle', 'forward slashes');
-  eq(W.normalizeRoot('  E:\\Doodle\\  '), 'E:\\Doodle', 'trailing separators');
-  eq(W.normalizeRoot(undefined), '', 'non-string');
+test('workspace: 插件从共享包取工作区解析', () => {
+  const match = SHARED_IMPORT.exec(indexSource);
+  ok(match !== null, 'index.js 应该 import dsh-doodle-workspace');
+  const names = match[1].split(',').map((part) => part.trim()).filter(Boolean);
+  for (const required of ['chooseWorkspaceRoot', 'sessionCwdOf', 'resolveBuildDir', 'parseGitBranch']) {
+    ok(names.includes(required), `共享包应该提供 ${required}`);
+  }
 });
 
-test('workspace: parentOf 取上一级，盘符根返回空', () => {
-  eq(W.parentOf('E:\\Doodle'), 'E:', 'one level');
-  eq(W.parentOf('E:\\a\\b'), 'E:\\a\\', 'two levels keeps trailing separator');
-  eq(W.parentOf('E:\\'), 'E:', 'drive root stays empty prefix');
-  eq(W.parentOf('E:\\Doodle\\src'), 'E:\\Doodle\\', 'nested');
+test('workspace: 不再保留本地副本', () => {
+  ok(!readFileSync(join(here, '..', 'package.json'), 'utf8').includes('"lib/workspace.js"'), '依赖清单里不应再有本地 workspace.js');
+  assertNoFile(join(libDir, 'workspace.js'));
 });
 
-test('workspace: 工作区根目录优先级', () => {
-  eq(
-    W.chooseWorkspaceRoot({ workingDirectory: 'E:\\doodle_task_fix', sessionCwd: 'E:\\Doodle', defaultDirectory: 'C:\\x' }),
-    'E:\\doodle_task_fix',
-    'workingDirectory wins',
-  );
-  eq(W.chooseWorkspaceRoot({ sessionCwd: 'E:/Doodle/' }), 'E:\\Doodle', 'session cwd normalized');
-  eq(W.chooseWorkspaceRoot({}), '', 'none');
+test('workspace: 仓库 preset 的二进制目录跟随分支', () => {
+  const doc = JSON.parse(readFileSync(join(libDir, '..', '..', 'CMakePresets.json'), 'utf8'));
+  const binaryDir = findBinaryDir(doc, 'Ninja_debug');
+  eq(binaryDir, '${sourceParentDir}/build/$env{DOODLE_GIT_BRANCH}/${presetName}', 'Ninja_debug 继承 Ninja_build 的 binaryDir');
+  eq(expandConvention(binaryDir, 'E:\\Doodle', 'master', 'Ninja_debug'), 'E:/build/master/Ninja_debug', 'master');
+  eq(expandConvention(binaryDir, 'E:\\doodle_task_fix', 'task_fix', 'Ninja_debug'), 'E:/build/task_fix/Ninja_debug', 'worktree');
 });
 
-test('workspace: 会话 cwd 从 header 读取', () => {
-  eq(W.sessionCwdOf({ header: { cwd: 'E:\\Doodle' } }), 'E:\\Doodle', 'session');
-  eq(W.sessionCwdOf({ session: { header: { cwd: 'E:/x' } } }), 'E:\\x', 'agent.session');
-  eq(W.sessionCwdOf(undefined), '', 'undefined');
-});
+/**
+ * 按继承链取 configure preset 的 binaryDir 表达式。
+ * @param {any} doc
+ * @param {string} name
+ * @returns {string}
+ */
+function findBinaryDir(doc, name) {
+  const byName = new Map((doc.configurePresets ?? []).map((preset) => [preset.name, preset]));
+  const chain = [];
+  let current = byName.get(name);
+  while (current !== undefined) {
+    chain.push(current);
+    current = typeof current.inherits === 'string' ? byName.get(current.inherits) : undefined;
+  }
+  let expression = '';
+  for (let index = chain.length - 1; index >= 0; index -= 1) {
+    if (typeof chain[index].binaryDir === 'string') expression = chain[index].binaryDir;
+  }
+  return expression;
+}
 
-test('workspace: 分支解析与 binaryDir 展开', () => {
-  eq(W.parseGitBranch('master\n'), { kind: 'branch', name: 'master' });
-  eq(W.parseGitBranch('HEAD'), { kind: 'detached', name: '' });
-  eq(W.parseGitBranch(''), { kind: 'unknown', name: '' });
-  const doc = {
-    configurePresets: [
-      { name: 'base', binaryDir: '${sourceParentDir}/build/$env{DOODLE_GIT_BRANCH}/${presetName}' },
-      { name: 'child', inherits: 'base' },
-    ],
-  };
-  eq(
-    W.resolveBuildDir(doc, { sourceDir: 'E:\\doodle_task_fix', presetName: 'child', branch: 'task_fix' }),
-    'E:/build/task_fix/child',
-    'expanded',
-  );
-  eq(W.resolveBuildDir(doc, { sourceDir: 'E:\\Doodle', presetName: 'missing', branch: 'master' }), '', 'missing preset');
-});
+/**
+ * 测试侧的独立实现：把表达式展开成期望的构建目录（/ 分隔）。
+ * @param {string} expression
+ * @param {string} sourceDir
+ * @param {string} branch
+ * @param {string} presetName
+ * @returns {string}
+ */
+function expandConvention(expression, sourceDir, branch, presetName) {
+  const normalized = sourceDir.replace(/\\/g, '/').replace(/\/+$/, '');
+  const parent = normalized.slice(0, normalized.lastIndexOf('/'));
+  return expression
+    .replace('${sourceParentDir}', parent)
+    .replace('$env{DOODLE_GIT_BRANCH}', branch)
+    .replace('${presetName}', presetName);
+}
 
-test('workspace: CMakeCache 归属判断', () => {
-  const text = 'A=1\nCMAKE_HOME_DIRECTORY:INTERNAL=E:/Doodle\nB=2\n';
-  eq(W.cacheHomeDirectory(text), 'E:\\Doodle');
-  eq(W.cacheHomeDirectory('nothing'), '');
-  eq(W.buildDirOwnership({ sourceDir: 'E:\\Doodle', buildDir: 'x', cacheHomeDirectory: 'E:/Doodle' }), 'ok');
-  eq(W.buildDirOwnership({ sourceDir: 'E:\\doodle_task_fix', buildDir: 'x', cacheHomeDirectory: 'E:/Doodle' }), 'foreign-source');
-  eq(W.buildDirOwnership({ sourceDir: 'E:\\Doodle', buildDir: 'x', cacheHomeDirectory: '' }), 'empty');
-});
+function assertNoFile(file) {
+  let missing = false;
+  try {
+    readFileSync(file, 'utf8');
+  } catch {
+    missing = true;
+  }
+  ok(missing, `${file} 应该已经删掉`);
+}
 
 // -------------------------------------------------------------------- report
 

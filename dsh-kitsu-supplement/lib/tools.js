@@ -10,7 +10,7 @@ import { slotSummary } from "./pure/instances.js";
 import { errorText } from "./pure/common.js";
 import { validateSlotRequest } from "./pure/instances.js";
 import { buildArgv, resolveSpec, startFailure, startWarnings } from "./pure/start.js";
-import { EXE_STOP_NOTICE } from "./pure/workspace.js";
+import { EXE_STOP_NOTICE } from "dsh-doodle-workspace";
 import { resolveSqlTarget, runSql, validateSqlArgs } from "./pure/sql.js";
 import {
   PLAYWRIGHT_SCHEMA,

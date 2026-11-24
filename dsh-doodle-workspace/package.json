@@ -1,0 +1,27 @@
+{
+  "name": "dsh-doodle-workspace",
+  "version": "0.1.0",
+  "description": "Shared session-workspace, git-branch and build-directory resolution for the Doodle DeepSeek Harness plugins (dsh-cmake, dsh-kitsu-supplement). Not a plugin: no tools, no ctx.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "license": "MIT",
+  "files": [
+    "lib/**/*.js",
+    "README.md"
+  ],
+  "scripts": {
+    "check": "node --check lib/index.js && node --check lib/workspace.js",
+    "test": "node test/pure.mjs"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "doodle",
+    "workspace",
+    "cmake"
+  ]
+}

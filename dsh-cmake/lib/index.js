@@ -6,7 +6,7 @@
 //   cmake_build     cmake --build --preset <preset>
 //   cmake_clean     cmake --build --preset <preset> --target clean
 //
-// 源码根不来自配置：每次都按发起调用/组装提示词的那个会话解析，见 lib/workspace.js。
+// 源码根不来自配置：每次都按发起调用/组装提示词的那个会话解析，解析规则在 dsh-doodle-workspace 包里。
 //
 // 硬约束（见 cordis-plugin-development 技能）：
 //   * 顶层不 import node: 内置模块，需要时在 apply 内动态 import。
@@ -16,11 +16,7 @@
 import { defineTool } from '@deepseek-ai/dsh-tools';
 import z from '@deepseek-ai/schemastery';
 
-import { isSafePresetName } from './diagnostics.js';
-import { summarizePresets } from './presets.js';
-import { runCmake, sanitizeForJson } from './runner.js';
 import {
-  buildDirOf,
   buildDirOwnership,
   cacheHomeDirectory,
   chooseWorkspaceRoot,
@@ -28,7 +24,11 @@ import {
   parseJsonObject,
   resolveBuildDir,
   sessionCwdOf,
-} from './workspace.js';
+} from 'dsh-doodle-workspace';
+
+import { isSafePresetName } from './diagnostics.js';
+import { summarizePresets } from './presets.js';
+import { runCmake, sanitizeForJson } from './runner.js';
 
 export const name = 'cmake';
 

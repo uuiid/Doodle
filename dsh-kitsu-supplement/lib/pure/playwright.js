@@ -17,7 +17,6 @@ export const PLAYWRIGHT_RESULTS_DIR = "test-results";
 
 export const PLAYWRIGHT_REPORT_DIR = "playwright-report";
 
-export const PLAYWRIGHT_DEFAULT_CWD = "E:\\Doodle\\test_js";
 
 export const PLAYWRIGHT_CLI_RELATIVE = "node_modules/@playwright/test/cli.js";
 

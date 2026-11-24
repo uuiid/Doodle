@@ -2,7 +2,7 @@
 
 在 DeepSeek Harness 里拉起 kitsu supplement HTTP 服务，供本机测试使用：起服务、拿到**真实**监听端口、改数据库填测试数据、跑 `test_js` 里的 Playwright 用例、测试完停掉。
 
-**默认启动的是 `doodle_kitsu_supplement_test.exe`**，它是本插件的主要（也是推荐的）启动方式：路由与服务端完全一致（`reg_kitsu_socket_io` / `reg_kitsu_urls` / `reg_kitsu_local_urls`），但 `core_set::exe_runner_` 注入的是 stub（`src/test/test_exe_runner`），Maya 与 UE 的子进程调用不再依赖注册表 / `mayabatch` / `UnrealEditor-Cmd`，所以测试机**不需要装 Maya、UE 及其插件**。可执行文件的**路径不由配置给出**：每次启动都按发起会话的工作区与 git 分支解析为 `<工作区上一级>\build\<分支>\Ninja_debug\bin\<exeName>`（与 `CMakePresets.json` 的 `binaryDir` 同一表达式）；参数只收 `exeName`，工具本身不认路径。确实要跑真实外部进程时传 `exeName: "doodle_kitsu_supplement.exe"`；返回里的 `exeKind`（`test` / `production`）标出这次实际跑的是哪一个。**工作区、分支或 exe 任一解析不出来时工具直接失败并结束当前回合，把细节交给用户检查**，不要改传别的路径重试。
+**默认启动的是 `doodle_kitsu_supplement_test.exe`**，它是本插件的主要（也是推荐的）启动方式：路由与服务端完全一致（`reg_kitsu_socket_io` / `reg_kitsu_urls` / `reg_kitsu_local_urls`），但 `core_set::exe_runner_` 注入的是 stub（`src/test/test_exe_runner`），Maya 与 UE 的子进程调用不再依赖注册表 / `mayabatch` / `UnrealEditor-Cmd`，所以测试机**不需要装 Maya、UE 及其插件**。可执行文件的**路径不由配置给出**：每次启动都按发起会话的工作区与 git 分支解析为 `<工作区上一级>\build\<分支>\Ninja_debug\bin\<exeName>`（与 `CMakePresets.json` 的 `binaryDir` 同一表达式，解析代码在共享包 [dsh-doodle-workspace](../dsh-doodle-workspace/README.md)）；参数只收 `exeName`，工具本身不认路径。确实要跑真实外部进程时传 `exeName: "doodle_kitsu_supplement.exe"`；返回里的 `exeKind`（`test` / `production`）标出这次实际跑的是哪一个。**工作区、分支或 exe 任一解析不出来时工具直接失败并结束当前回合，把细节交给用户检查**，不要改传别的路径重试。
 
 五个工具：
 

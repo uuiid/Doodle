@@ -64,18 +64,16 @@ import {
   sanitizeForJson,
   trimOrEmpty,
 } from "./pure/common.js";
-import { PLAYWRIGHT_DEFAULT_CWD, PLAYWRIGHT_KILL_TIMEOUT_MS, PLAYWRIGHT_TIMEOUT_MS } from "./pure/playwright.js";
+import { PLAYWRIGHT_KILL_TIMEOUT_MS, PLAYWRIGHT_TIMEOUT_MS } from "./pure/playwright.js";
 import { instancesPathOf, mergeInstancesState, parseInstancesState, serializeInstances } from "./pure/instances.js";
 import { exeKindOfPath } from "./pure/start.js";
 import {
-  DEFAULT_TEST_EXE_NAME,
-  EXE_STOP_NOTICE,
   chooseWorkspaceRoot,
   parentOf,
   parseGitBranch,
   playwrightCwdFailure,
   sessionCwdOf,
-} from "./pure/workspace.js";
+} from "dsh-doodle-workspace";
 
 import { registry, advanceServerIdPast, resetRegistry, setPlaywrightRunning } from "./runtime/registry.js";
 import { probePort } from "./runtime/process.js";

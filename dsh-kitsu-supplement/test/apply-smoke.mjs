@@ -28,10 +28,24 @@ function makeSchemaStub() {
   };
 }
 
+// 同仓库的共享包按真实文件加载（它没有依赖，也不碰 ctx）。
+const WORKSPACE_ENTRY = fileURLToPath(new URL("../../dsh-doodle-workspace/lib/workspace.js", import.meta.url));
+
 const stubs = {
   "@deepseek-ai/dsh-tools": { defineTool: (spec) => ({ __tool: spec }) },
   "@deepseek-ai/schemastery": makeSchemaStub(),
+  "dsh-doodle-workspace": {
+    ...loadSharedWorkspace(),
+  },
 };
+
+function loadSharedWorkspace() {
+  const source = readFileSync(WORKSPACE_ENTRY, "utf8");
+  const names = [...source.matchAll(/^export\s+(?:async\s+)?(?:function|const|class|let|var)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);
+  const body = source.replace(/^export\s+/gm, "");
+  const factory = new vm.Script(`(function() {\n${body}\n; return {${names.join(",")}};\n})`, { filename: WORKSPACE_ENTRY });
+  return factory.runInThisContext()();
+}
 
 function parseClauseNames(clause) {
   const inner = clause.slice(1, clause.lastIndexOf("}"));
