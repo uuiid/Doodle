@@ -175,7 +175,6 @@ function Initialize-Doodle {
     Write-Host "当前最新版本号: $DoodleVersion" 
     $DoodleKitsuRoot = "E:\source\kitsu"
     $DoodleTimePath = "$DoodleBuildRoot\holiday-cn"
-    $DoodleExePath = "E:\source\doodle\dist\索以魔盒.exe"
     $DoodleMp4 = "E:\source\sd\src\assets\animation\waiting.mp4"
     Write-Host "开始检查文件"
 
@@ -249,7 +248,6 @@ function Initialize-Doodle {
     }
     Set-Content -Path "$OutPath\version.txt" -Value ($Tags -join "`n") -NoNewline
 
-    Copy-Item $DoodleExePath -Destination "$OutPath\dist" -Force
     mkdir "$OutPath\seedance2\animation" -ErrorAction SilentlyContinue | Out-Null
     Copy-Item $DoodleMp4 -Destination "$OutPath\seedance2\animation\" -Force
 
