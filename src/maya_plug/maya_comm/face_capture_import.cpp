@@ -228,6 +228,7 @@ MSyntax face_capture_import_syntax() {
   MSyntax l_syntax{};
   CHECK_MSTATUS(l_syntax.addFlag("-fp", "-file_path", MSyntax::kString));
   CHECK_MSTATUS(l_syntax.setObjectType(MSyntax::kSelectionList, 1, 1));
+  l_syntax.useSelectionAsDefault(true);
   return l_syntax;
 }
 
