@@ -94,3 +94,7 @@ CMakeUserPresets.json
 doodle_plug_dev_5
 UnrealEngine
 /build/
+
+# pnpm workspace（插件之间的本地依赖链接，见 package.json / pnpm-workspace.yaml）
+node_modules/
+/pnpm-lock.yaml

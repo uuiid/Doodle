@@ -24,7 +24,7 @@
     "README.md"
   ],
   "dependencies": {
-    "dsh-doodle-workspace": "*"
+    "dsh-doodle-workspace": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.5",

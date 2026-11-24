@@ -1,0 +1,9 @@
+{
+  "name": "doodle-plugins",
+  "private": true,
+  "description": "Workspace root for the Doodle DeepSeek Harness plugins. It exists so a plugin package can resolve a sibling plugin package (dsh-cmake / dsh-kitsu-supplement -> dsh-doodle-workspace) by bare specifier after `pnpm install`.",
+  "type": "module",
+  "devDependencies": {
+    "dsh-doodle-workspace": "workspace:*"
+  }
+}
