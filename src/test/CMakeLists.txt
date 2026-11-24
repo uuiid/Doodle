@@ -4,6 +4,7 @@ add_executable(
         kitsu_supplement_test.cpp
         test_exe_runner.cpp
         test_reg.cpp
+        test_debug_sql.cpp
         ${PROJECT_SOURCE_DIR}/src/DoodleExe.manifest
         ${PROJECT_SOURCE_DIR}/src/icon.ico
         ${PROJECT_SOURCE_DIR}/src/win_exe.rc
@@ -22,6 +23,7 @@ target_link_libraries(doodle_kitsu_supplement_test
         mimalloc
         doodle_lib
         PRIVATE
+        unofficial::sqlite3::sqlite3
         OpenSSL::SSL
         OpenSSL::Crypto
         TBB::tbb

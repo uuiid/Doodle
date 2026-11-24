@@ -69,7 +69,7 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
    - 端口被占时工具默认失败并报占用 PID；确认那是上一次的残留才传 `killExisting: true` 强杀。
    - 服务起不来看 `kitsu_server_start` 的返回诊断与 `<root>\log`；测试 exe 的初始化日志里应有 stub 生效的痕迹，Maya / UE 相关依赖报错说明跑错了 exe。
 2. **写测试放到 [`test_js/`](test_js/)。** Playwright + `request` fixture 打 HTTP 契约，不启浏览器；`baseURL` 取环境变量 `DOODLE_BASE_URL`（`playwright.config.js`、`test/config.js` 都读它），把它设成上一步的 `baseUrl`。目录约定、环境变量与既有文件清单见 [test_js/README.md](test_js/README.md)。**不要往 `src/test/**` 加测试**（那是 C++ 单元测试）。
-3. **数据不足时用 `kitsu_server_sql` 补。** 直接对 `dbPath` 指向的库执行 SQL 文件或片段，**不要为它停服或重启**——运行中的服务端写完即可查到。不确定脚本对不对就先 `dryRun: true` 跑一遍。整批是单事务，失败会整体回滚并报出「来源 + 第几条 + SQLite 原文」。
+3. **数据不足时补数据**，两条通道按下面 §2.1 选，**都不要为它停服或重启**。
 4. **测完停服。** `kitsu_server_stop` 停掉本次拉起的实例，别把监听端口和进程留给下一次。
 5. **编译前必须先停服。** 服务进程持有 `bin\doodle_lib.dll`，不停服直接 `cmake_build` 会在链接阶段报
    `LNK1168: cannot open bin\doodle_lib.dll for writing`，整次构建失败。顺序固定为
@@ -77,6 +77,46 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
    也必须先停服再编译、编译完再重启，不能指望运行中的进程换掉已加载的 DLL。
 
 `kitsu_server_status` 可随时查本插件记录的实例与端口占用。本插件只杀自己拉起的进程。
+
+### 2.1 改测试数据库：两条通道怎么选
+
+补测试数据有两条完全不重叠的通道，**选错会得到"数据明明写进去了却搜不到"的假故障**。
+
+| | `kitsu_server_sql` | `POST /api/doodle/debug/sql` |
+| --- | --- | --- |
+| 连接 | 工具自己另开 SQLite 直连 `dbPath` | **服务端自己的连接**（strand 上执行） |
+| jieba 分词器 | ❌ 没注册，`MATCH` 不可用 | ✅ 与业务代码同一份 |
+| 外键 / 触发器 / PRAGMA | 需自行保证 | ✅ 与 `run_sql` 完全一致 |
+| 事务 | 整批单事务 | `BEGIN IMMEDIATE` → SQL → `COMMIT`/`ROLLBACK` |
+
+**默认用 `kitsu_server_sql`**：纯 DDL、灌种子数据、批量修正都不涉及全文检索语义。
+直接对 `dbPath` 指向的库执行 SQL 文件或片段，写完运行中的服务端即可查到。不确定脚本对不对就先 `dryRun: true`。
+整批是单事务，失败会整体回滚并报出「来源 + 第几条 + SQLite 原文」。
+它自己的连接**不带** jieba tokenizer，也没跑 `register_custom_extension` 那三条 PRAGMA；
+所以它只适合不依赖检索语义的写入，别用它验证 `MATCH`。
+
+**只在测 FTS / 全词检索时用 debug 路由**：分词结果、`MATCH` 命中、触发器内建索引这些行为只有进程内连接才能复现。
+它是 [`src/test/test_debug_sql.cpp`](src/test/test_debug_sql.cpp) 里的 `debug_sql`，只注册在 `create_test_route()`，
+**只有 `doodle_kitsu_supplement_test.exe` 有这个 URL，生产 exe 没有**。
+
+```bash
+curl -X POST "$BASE/api/doodle/debug/sql" -H "Content-Type: application/json" \
+  -d '{"sql":"INSERT INTO t(body) VALUES(\"狙击枪\"); SELECT rowid FROM t WHERE t MATCH \"枪\";"}'
+```
+
+- 请求体 `{"sql": "..."}`，`sqlite3_exec` 原生跑多语句，不用自己切分号。无鉴权。
+- 可选 `"transaction": false`（不包事务）、`"stop_on_error": false`（错误也继续）。
+- 响应含 `ok` / `rolled_back` / `error{code,name,message}` / `changes` / `total_changes` /
+  `last_insert_rowid` / `elapsed_ms` / `row_count` / `rows`。SQL 出错时 HTTP 是 **400**，
+  `error.message` 是 SQLite 原文。
+- 成功时 HTTP 状态码是 **201 不是 200**：框架 `body_status()` 把 POST + `ok` 映射成 `created`，是既有行为，别当成失败。
+
+写 `entity` 这类带 `entity_fts` 的业务表时记住两点：
+
+- **走 `INSERT/UPDATE entity`，不要直接写 `entity_fts`。** `entity_fts` 是 `content=<entity>` 的 external content 表，
+  本身不存原文；三个触发器负责同步索引，直接写它会和 `entity` 对不上。
+- **外键必须真实存在**，否则整批回滚（错误码 787 `FOREIGN KEY constraint failed`）。空库里没有 project / entity_type
+  记录时，先在同一个请求里造父行，或改用独立 FTS 表验证分词器本身。
 
 ### vcpkg 全量重编的三个诱因
 

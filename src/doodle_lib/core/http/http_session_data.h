@@ -33,7 +33,7 @@ using tcp_stream_type_ptr   = std::shared_ptr<tcp_stream_type>;
 using request_parser_ptr    = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
 namespace detail {
 
-class session_data : public std::enable_shared_from_this<session_data> {
+class DOODLELIB_API session_data : public std::enable_shared_from_this<session_data> {
   using empty_body_type               = boost::beast::http::empty_body;
   using empty_request_parser_type     = boost::beast::http::request_parser<empty_body_type>;
   using string_request_parser_type    = boost::beast::http::request_parser<boost::beast::http::string_body>;
