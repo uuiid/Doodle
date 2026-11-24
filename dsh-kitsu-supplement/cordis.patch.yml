@@ -2,11 +2,9 @@
 #
 # 把 kitsu_server_start / kitsu_server_status / kitsu_server_stop / kitsu_server_sql /
 # kitsu_playwright_test 挂进 DSH 工具注册表。
-# config 全部可选：
-#   exePath             默认启动的可执行文件（默认 doodle_kitsu_supplement_test.exe：路由与生产一致，
-#                       Maya / UE 外部进程走 stub，本机不需要装 Maya / UE / 插件）
-#   productionExePath   生产 exe 路径（默认 E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement.exe）；
-#                       只有 kitsu_server_start 传 exePath: "supplement-prod" 时才会用到
+#
+# config 全部可选，且没有 exe 路径项：可执行文件每次按发起会话的工作区与 git 分支解析
+# （<工作区上一级>\build\<分支>\Ninja_debug\bin\<exeName>），解析失败直接报错并停下。
 #   defaultCwd          默认运行路径；空表示取 exe 所在目录（dll 与 exe 同目录，不要随便改）
 #   defaultMode         production（不加 --local）或 local（加 --local）
 #   defaultRoot         未给 root 时的 root；空表示不传 --root（生产模式用程序内置默认值）
@@ -18,7 +16,7 @@
 #   stateDir            实例快照目录；空表示 %TEMP%\dsh-kitsu-supplement
 #   instancesFile       实例快照文件名；空表示 <stateDir>\instances.json，给绝对路径就整个覆盖
 #   guidanceOrder       系统提示词里本工具指引段的排序值（默认 1396，紧邻 cmake / ue 段）
-#   playwrightCwd       kitsu_playwright_test 的默认 cwd（默认 E:\Doodle\test_js）
+#   playwrightCwd       kitsu_playwright_test 的兜底 cwd；空表示只用会话工作区的 test_js
 #   playwrightNodePath  跑 playwright 用的 node（默认 node，从 PATH 取）
 #   playwrightCliPath   playwright 入口；空表示 <cwd>\node_modules\@playwright\test\cli.js
 #   playwrightDefaultBaseUrl  没给 baseUrl 且父进程也没有 DOODLE_BASE_URL 时的兜底地址；空表示不注入
@@ -35,8 +33,6 @@
     - id: kitsu-supplement
       name: dsh-kitsu-supplement
       config:
-        exePath: E:\build\Ninja_debug\bin\doodle_kitsu_supplement_test.exe
-        productionExePath: E:\build\Ninja_debug\bin\doodle_kitsu_supplement.exe
         defaultConfigPaths:
           db_path: C:/kitsu_new.database
           kitsu_front_end_path: D:/kitsu/dist

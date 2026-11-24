@@ -2,7 +2,7 @@
 
 在 DeepSeek Harness 里拉起 kitsu supplement HTTP 服务，供本机测试使用：起服务、拿到**真实**监听端口、改数据库填测试数据、跑 `test_js` 里的 Playwright 用例、测试完停掉。
 
-**默认启动的是 `doodle_kitsu_supplement_test.exe`**，它是本插件的主要（也是推荐的）启动方式：路由与服务端完全一致（`reg_kitsu_socket_io` / `reg_kitsu_urls` / `reg_kitsu_local_urls`），但 `core_set::exe_runner_` 注入的是 stub（`src/test/test_exe_runner`），Maya 与 UE 的子进程调用不再依赖注册表 / `mayabatch` / `UnrealEditor-Cmd`，所以测试机**不需要装 Maya、UE 及其插件**。只有确实要跑真实外部进程时才显式传 `exePath: "supplement-prod"` 切回 `doodle_kitsu_supplement.exe`；返回里的 `exeKind`（`test` / `production`）标出这次实际跑的是哪一个。
+**默认启动的是 `doodle_kitsu_supplement_test.exe`**，它是本插件的主要（也是推荐的）启动方式：路由与服务端完全一致（`reg_kitsu_socket_io` / `reg_kitsu_urls` / `reg_kitsu_local_urls`），但 `core_set::exe_runner_` 注入的是 stub（`src/test/test_exe_runner`），Maya 与 UE 的子进程调用不再依赖注册表 / `mayabatch` / `UnrealEditor-Cmd`，所以测试机**不需要装 Maya、UE 及其插件**。可执行文件的**路径不由配置给出**：每次启动都按发起会话的工作区与 git 分支解析为 `<工作区上一级>\build\<分支>\Ninja_debug\bin\<exeName>`（与 `CMakePresets.json` 的 `binaryDir` 同一表达式）；参数只收 `exeName`，工具本身不认路径。确实要跑真实外部进程时传 `exeName: "doodle_kitsu_supplement.exe"`；返回里的 `exeKind`（`test` / `production`）标出这次实际跑的是哪一个。**工作区、分支或 exe 任一解析不出来时工具直接失败并结束当前回合，把细节交给用户检查**，不要改传别的路径重试。
 
 五个工具：
 
@@ -40,12 +40,10 @@ plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-suppleme
 
 ## 配置（`cordis.patch.yml`）
 
-全部可选：
+全部可选，且**没有 exe 路径项**：可执行文件每次按会话工作区与 git 分支解析，解析不出就报错停下。
 
 | 键 | 默认 | 说明 |
 | --- | --- | --- |
-| `exePath` | `E:\build\Ninja_debug\bin\doodle_kitsu_supplement_test.exe` | 默认启动的可执行文件（测试版，Maya/UE 走 stub） |
-| `productionExePath` | `E:\build\Ninja_debug\bin\doodle_kitsu_supplement.exe` | 生产可执行文件；只有调用时传 `exePath: "supplement-prod"` 才会用到 |
 | `defaultCwd` | 空（= exe 所在目录） | 默认运行路径 |
 | `defaultMode` | `production` | `production` 或 `local` |
 | `defaultRoot` | 空 | 没传 `--root` 就不写 |
@@ -57,7 +55,7 @@ plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-suppleme
 | `stateDir` | 空（= `%TEMP%\dsh-kitsu-supplement`） | 实例快照所在目录 |
 | `instancesFile` | 空（= `<stateDir>\instances.json`） | 实例快照文件名；给绝对路径就整个覆盖，给相对名就拼在 `stateDir` 下 |
 | `guidanceOrder` | `1396` | 系统提示词里本工具指引段的排序值 |
-| `playwrightCwd` | `E:\Doodle\test_js` | `kitsu_playwright_test` 的默认 `cwd` |
+| `playwrightCwd` | 空 | `kitsu_playwright_test` 的兜底 `cwd`；空表示只用会话工作区的 `test_js` |
 | `playwrightNodePath` | `node` | 跑 playwright 用的 node；空串 = 从 PATH 取 |
 | `playwrightCliPath` | 空（= `<cwd>\node_modules\@playwright\test\cli.js`） | 显式指定 playwright 入口 |
 | `playwrightDefaultBaseUrl` | 空 | 调用时没给 `baseUrl`、父进程也没有 `DOODLE_BASE_URL` 时的兜底值 |
@@ -80,7 +78,7 @@ plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-suppleme
 | `publicUrlPort` | | 写进 config 的 `public_url_port` |
 | `extraConfig` | | 原样并进 config JSON 的额外键（不允许 `port`） |
 | `extraArgs` | | 追加在生成开关之后的 argv 项（不允许 `--local` / `--config` / `--port` / `--root` / `--dbPath`） |
-| `exePath` | | `supplement-prod` = 改用生产 exe（`productionExePath`）；空 = 用配置的 `exePath`；其它值按字面路径使用。默认测试 exe |
+| `exeName` | | 只接受文件名：`doodle_kitsu_supplement_test.exe`（默认，Maya/UE 走 stub）或 `doodle_kitsu_supplement.exe`（真实外部进程）。含分隔符或盘符一律拒绝 |
 | `readyPath` | | 本次的就绪探测路径 |
 | `killExisting` | | `true` 才强杀端口上的旧进程；默认失败并报 PID |
 | `replaceExisting` | | `true` 时先停掉同模式已在跑的实例再起新的（见[实例组合规则](#实例组合规则每模式一个槽位)）；默认 `false`，撞槽位直接报 `slot-in-use` |
@@ -100,7 +98,7 @@ plugin_manager(action: "install_bundle", target: "E:\\Doodle\\dsh-kitsu-suppleme
 | 参数 | 必填 | 说明 |
 | --- | --- | --- |
 | `args` | | `playwright` 之后那串参数，**原样转发**；`["test"]`、`["show-report"]` 等都可以 |
-| `cwd` | | 运行路径（必须是目录）；缺省取 `playwrightCwd` |
+| `cwd` | | 运行路径（必须是目录）；缺省取会话工作区里装着 `node_modules/@playwright/test` 的 `test_js` |
 | `baseUrl` | | 绝对地址（通常用 `kitsu_server_start` 返回的 `baseUrl`）；不传则沿用父进程环境。见[下一节](#跑-test_js-kitsu_playwright_test) |
 | `env` | | 追加/覆盖的环境变量（字符串键值对），与注入的 `DOODLE_BASE_URL` 同名时以 `env` 为准 |
 | `isolateOutput` | | `true` 时报告与产物落到 `%TEMP%\dsh-kitsu-supplement\playwright\<runId>\`，不覆盖项目目录 |
@@ -122,8 +120,9 @@ kitsu_playwright_test { args: ["test", "--list"] }                        # 只�
 kitsu_playwright_test { args: ["show-report"] }                           # 打开上次的 HTML 报告
 ```
 
-子进程固定是 `node <cwd>\node_modules\@playwright\test\cli.js <args...>`，`cwd` 默认取配置
-`playwrightCwd`（`E:\Doodle\test_js`）。**不需要** `test_js/run-playwright.mjs` 那个
+子进程固定是 `node <cwd>\node_modules\@playwright\test\cli.js <args...>`，`cwd` 默认取**会话工作区**里的
+`test_js`（会话工作区没有 `node_modules/@playwright/test` 时才回落到配置的 `playwrightCwd`；两者都没有就报错停下，
+把检查交给用户）。**不需要** `test_js/run-playwright.mjs` 那个
 fork→spawn 降级补丁——本插件走宿主的子进程通道，普通 fork 可用；那个脚本服务于 pwsh 沙箱。
 
 ### 与被测服务端配合
@@ -204,7 +203,7 @@ pid"：还在就算 `adopted`（`kitsu_server_status` 里标 `[来自状态文�
 
 ## 测试 exe 与生产 exe
 
-| | `doodle_kitsu_supplement_test.exe`（默认） | `doodle_kitsu_supplement.exe`（`exePath: "supplement-prod"`） |
+| | `doodle_kitsu_supplement_test.exe`（默认） | `doodle_kitsu_supplement.exe`（`exeName`） |
 | --- | --- | --- |
 | 路由 | 与生产一致 | 与生产一致 |
 | Maya 调用 | stub：直接写 `maya_out_arg` json，不查注册表、不跑 `mayabatch` | 查 `HKLM\SOFTWARE\Autodesk\Maya\<ver>`、复制 `doodle_maya_exe_<ver>.exe`、跑 `mayabatch.exe` |
@@ -253,7 +252,7 @@ kitsu_server_stop { serverId: "kitsu-1" }
 - **local 模式没人传 dbPath 时是内存库**：服务端落 `:memory:`，进程退出即丢，`kitsu_server_sql` 直接拒绝。要用可写的库，启动时传 `dbPath`。
 - **生产模式依赖注册表** `HKLM\SOFTWARE\Doodle\MainConfig`（以及 `\Email`）：读不到会抛异常，服务不启动。这属于测试机环境配置，插件不处理。
 - **读端口依赖 `node:ffi`。** 宿主 Node 必须是 26.1+ 且带 FFI 支持；`--no-experimental-ffi`、或开了权限模型却没给 `--allow-ffi` 时读不到段，`kitsu_server_start` 会报 `no-shm-port` 并在诊断里给出 `shm/read-failed` 的真实原因。
-- **段名按子进程 pid 拼。** 如果 `exePath` 指向 `.bat` 或其它包装器，拿到的 pid 属于包装器而不是 `doodle_kitsu_supplement.exe`，段名会对不上；此时诊断里会同时报 `shm/stdout-mismatch`（stdout 有端口、共享内存没有）。
+- **段名按子进程 pid 拼。** 如果启动的不是 exe 本体（例如被包装器套了一层），拿到的 pid 属于包装器而不是 `doodle_kitsu_supplement.exe`，段名会对不上；此时诊断里会同时报 `shm/stdout-mismatch`（stdout 有端口、共享内存没有）。
 - 端口是否放通"公开访问"（`public_url_port`）由服务端注册表配置与服务端声明决定，插件只把它写进生成的 config。
 - `kitsu_server_sql` 连接时模拟服务端的连接级 PRAGMA（`foreign_keys = ON`、`synchronous = NORMAL`、`recursive_triggers = ON`，见 `sqlite_database.cpp:1310-1312`），但不会加载服务端的 jieba FTS5 分词器；写 FTS5 虚拟表或依赖该分词器的内容请走服务端接口。
 - `ATTACH` / `DETACH` 被拒绝：本工具只写目标库文件。

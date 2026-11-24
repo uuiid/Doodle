@@ -107,7 +107,7 @@ export async function waitPlaywrightExit(handle, timeoutMs) {
  * @param {any} exec
  * @returns {Promise<any>}
  */
-export async function runPlaywrightTool(ctx, config, args, exec) {
+export async function runPlaywrightTool(ctx, config, args, exec, cwdProblem) {
   const runId = allocatePlaywrightRunId();
   const startedAt = Date.now();
   const fs = await import("node:fs/promises");
@@ -202,8 +202,10 @@ export async function runPlaywrightTool(ctx, config, args, exec) {
     return playwrightFailure(
       { ...base, durationMs: Date.now() - startedAt },
       "timeout-cli",
-      `找不到 playwright 入口：${cliPath}。确认 cwd 下装好了 @playwright/test，或用 cliPath 参数 / playwrightCliPath 配置指向真实的 cli.js。`,
-      [{ severity: "error", code: "cli/missing", message: `playwright 入口不存在：${cliPath}（cwd=${cwd}）` }],
+      cwdProblem !== undefined
+        ? cwdProblem
+        : `找不到 playwright 入口：${cliPath}。确认 cwd 下装好了 @playwright/test，或用 cliPath 参数 / playwrightCliPath 配置指向真实的 cli.js。`,
+      [{ severity: "error", code: "cli/missing", message: cwdProblem ?? `playwright 入口不存在：${cliPath}（cwd=${cwd}）` }],
     );
   }
 

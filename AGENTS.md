@@ -14,7 +14,7 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
 
 - **Git 提交一律由用户执行。** 完成改动后只报告：改了什么、验证结果、当前处于未提交状态。不要 `git commit` / `git push`，也不要主动提议代提交。
 - **默认不测试。** 没有用户明确要求时，不要运行任何测试、不要构建测试目标、不要跑测试验证改动；验证手段只有编译通过。
-  **只有用户主动明确需要测试时**，才按 §2「按需测试流程」先用 `kitsu_server_start` 拉起 **`doodle_kitsu_supplement_test.exe`**（唯一的测试服务入口，不传 `exePath` 即为它），再在 `test_js/` 里编写并运行测试；数据不足时用 `kitsu_server_sql` 补。
+  **只有用户主动明确需要测试时**，才按 §2「按需测试流程」先用 `kitsu_server_start` 拉起 **`doodle_kitsu_supplement_test.exe`**（唯一的测试服务入口，不传 `exeName` 即为它），再在 `test_js/` 里编写并运行测试；数据不足时用 `kitsu_server_sql` 补。
 - **不要跑发布构建**：`Ninja_release` / `Release_*` / `package_release` 耗时过长，用户已明确要求停用。
 - **依赖只经 `vcpkg.json` 管理。** 自定义 port 放 `vcpkg_ports/`，triplet 放 `vcpkg_triplets/`。不要在 `CMakeLists.txt` 里硬编码外部依赖路径。
 - **HTTP 处理器的声明与实现必须用宏**，见 §4。手写完整签名是禁止的。
@@ -31,7 +31,7 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
 | --- | --- |
 | `cmake_presets` | 查询可用 preset（只读，不确定用哪个先调它）|
 | `cmake_configure` | `cmake --preset <name>` |
-| `cmake_build` | 传 preset（如 `debug_doodle`）或 buildDir + targets |
+| `cmake_build` | 传 build preset（如 `debug_doodle`）|
 | `cmake_clean` | 清理构建产物 |
 
 | 目的 | configure preset | build preset |
@@ -56,11 +56,13 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
 **只在用户主动明确要求测试时才走这条流程**（见 §1「默认不测试」）。没有明确要求时，验证一律只到编译通过。
 整个流程的**第一步永远是拉起 `doodle_kitsu_supplement_test` 进程**：先有服务，再谈写用例、灌数据、跑 Playwright。
 
-1. **先拉起 `doodle_kitsu_supplement_test` 进程。** 用 `kitsu_server_start`（dsh-kitsu-supplement 插件），**不要传 `exePath`**——它的默认值就是
-   `E:\build\Ninja_debug\bin\doodle_kitsu_supplement_test.exe`，`doodle_kitsu_supplement.exe` 只在确需真实 Maya / UE 外部进程时才用
-   （那时显式传 `exePath: "supplement-prod"`）。测试 exe 与生产 exe 共用同一份 `doodle_lib`、路由完全一致，但
+1. **先拉起 `doodle_kitsu_supplement_test` 进程。** 用 `kitsu_server_start`（dsh-kitsu-supplement 插件），**不要传任何路径**：工具按当前会话的工作区与 git 分支解析出
+   `<工作区上一级>\build\<分支>\Ninja_debug\bin\<exeName>`（与 `CMakePresets.json` 的 `binaryDir` 同一表达式），默认 `exeName` 就是
+   `doodle_kitsu_supplement_test.exe`；`doodle_kitsu_supplement.exe` 只在确需真实 Maya / UE 外部进程时才用
+   （那时传 `exeName: "doodle_kitsu_supplement.exe"`）。**解析不出工作区、分支或 exe 时工具会直接失败并结束当前回合**，
+   此时必须停下、把细节交给用户检查，不要改传别的路径重试。测试 exe 与生产 exe 共用同一份 `doodle_lib`、路由完全一致，但
    [test_exe_runner.h](src/test/test_exe_runner.h) 注入的 runner 把 Maya / UE 子进程换成 stub：**不需要本机装 Maya、UE 或其插件**，
-   也不要为了测试去配这些环境。返回里的 `exeKind` 应为 `test`，若是 `production` 说明传了 `exePath`，停下核对。
+   也不要为了测试去配这些环境。返回里的 `exeKind` 应为 `test`，若不是说明这次选错了 exe。
    - `port` 必填，落在 50030–50330；`mode: "local"` 起本地服务，不给 `dbPath` 就是内存库（进程退出即丢，写不进数据）。
    - **要跑有数据依赖的用例就显式传 `dbPath`**，指向一个磁盘库；否则 `kitsu_server_sql` 无处可写。
    - 返回的 `port` / `baseUrl` 取自进程 stdout 的真实监听端口，**测试脚本一律引用它**，不要猜端口。

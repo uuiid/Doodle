@@ -136,7 +136,6 @@ const fakeCtx = {
 
 if (problems.length > 0) { for (const q of problems) process.stdout.write(`LOAD-PROBLEM ${q}\n`); process.exit(1); }
 await mod.apply(fakeCtx, {
-  exePath: "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement.exe",
   defaultConfigPaths: { db_path: "", kitsu_front_end_path: "", root: "", public_url_port: "" },
   stateDir: process.env.KITSU_STATE_DIR || join(process.env.TEMP || ".", "kitsu-split-check"),
   playwrightCwd: "E:\\Doodle\\test_js",

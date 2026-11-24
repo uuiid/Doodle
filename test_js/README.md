@@ -98,8 +98,9 @@ recordings / 详情 / 产物下载 / 转码 / 推流路由已移除 / 鉴权八�
 
 ```powershell
 # 1. 起服务（dsh-kitsu-supplement 插件；root 与下面的 DOODLE_ROOT 保持一致）
+# 可执行文件由插件按会话工作区与 git 分支解析，不传路径；要跑真实外部进程就只换 exeName
 kitsu_server_start -mode local -port 50136 -root E:\Doodle\build\root -dbPath E:\Doodle\build\root\live.db `
-                   -exePath E:\build\Ninja_debug\bin\doodle_kitsu_supplement.exe -readyPath /api/doodle/local/face_capture/devices
+                   -exeName doodle_kitsu_supplement.exe -readyPath /api/doodle/local/face_capture/devices
 
 # 2. 跑用例
 $env:DOODLE_BASE_URL = "http://127.0.0.1:50136"
@@ -153,6 +154,6 @@ POST 到 `/recordings/upload`，断言落盘文件名与随后各接口的可见
 
 ## 与 C++ 单元测试的关系
 
-本目录是**集成测试**，需要真实运行的服务端，与 `build/Ninja_debug/bin/test_main.exe`
+本目录是**集成测试**，需要真实运行的服务端，与 `<../build/<分支>/Ninja_debug/bin>` 下的 exe
 那套 C++ 单元测试（`src/test/core/`，覆盖数据库 / 视频图片解码）互不替代：
 后者不需要服务端，前者验证 HTTP 契约。

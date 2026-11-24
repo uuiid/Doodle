@@ -6,9 +6,7 @@
 import z from "@deepseek-ai/schemastery";
 
 import {
-  DEFAULT_EXE_PATH,
   DEFAULT_GUIDANCE_ORDER,
-  DEFAULT_PRODUCTION_EXE_PATH,
   DEFAULT_MAX_OUTPUT_BYTES,
   DEFAULT_MODE,
   DEFAULT_READY_PATH,
@@ -18,7 +16,6 @@ import {
 } from "./pure/common.js";
 import {
   PLAYWRIGHT_BASE_URL_ENV,
-  PLAYWRIGHT_DEFAULT_CWD,
   PLAYWRIGHT_KILL_TIMEOUT_MS,
   PLAYWRIGHT_TIMEOUT_MS,
 } from "./pure/playwright.js";
@@ -28,8 +25,6 @@ export const name = "kitsu-supplement";
 export const inject = ["tools", "subprocess", "systemPrompt"];
 
 export const Config = z.object({
-  exePath: z.string().default(DEFAULT_EXE_PATH),
-  productionExePath: z.string().default(DEFAULT_PRODUCTION_EXE_PATH),
   defaultCwd: z.string().default(""),
   defaultMode: z.string().default(DEFAULT_MODE),
   defaultRoot: z.string().default(""),
@@ -43,7 +38,7 @@ export const Config = z.object({
     .default({}),
   readyPath: z.string().default(DEFAULT_READY_PATH),
   readyTimeoutMs: z.number().default(READY_TIMEOUT_MS),
-  playwrightCwd: z.string().default(PLAYWRIGHT_DEFAULT_CWD),
+  playwrightCwd: z.string().default(""),
   playwrightNodePath: z.string().default(""),
   playwrightCliPath: z.string().default(""),
   playwrightDefaultBaseUrl: z.string().default(""),

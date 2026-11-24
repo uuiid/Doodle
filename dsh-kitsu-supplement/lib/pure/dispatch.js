@@ -5,4 +5,4 @@
 //   * 文件之间的同名依赖由 test/pure.mjs 按本数组顺序合并，前面的结果先注入；
 //   * 新增纯逻辑文件时只改这里，不必再动测试里的硬编码路径。
 
-export const PURE_FILES = ["common.js", "start.js", "sql.js", "instances.js", "playwright.js"];
+export const PURE_FILES = ["common.js", "workspace.js", "start.js", "sql.js", "instances.js", "playwright.js"];

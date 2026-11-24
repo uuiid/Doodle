@@ -417,6 +417,66 @@ test('every preset row survives a JSON round trip', () => {
   }
 });
 
+// --------------------------------------------------------------- workspace
+
+const W = loadPure('workspace.js');
+
+test('workspace: normalizeRoot 统一分隔符并去尾部分隔符', () => {
+  eq(W.normalizeRoot('E:/Doodle/'), 'E:\\Doodle', 'forward slashes');
+  eq(W.normalizeRoot('  E:\\Doodle\\  '), 'E:\\Doodle', 'trailing separators');
+  eq(W.normalizeRoot(undefined), '', 'non-string');
+});
+
+test('workspace: parentOf 取上一级，盘符根返回空', () => {
+  eq(W.parentOf('E:\\Doodle'), 'E:', 'one level');
+  eq(W.parentOf('E:\\a\\b'), 'E:\\a\\', 'two levels keeps trailing separator');
+  eq(W.parentOf('E:\\'), 'E:', 'drive root stays empty prefix');
+  eq(W.parentOf('E:\\Doodle\\src'), 'E:\\Doodle\\', 'nested');
+});
+
+test('workspace: 工作区根目录优先级', () => {
+  eq(
+    W.chooseWorkspaceRoot({ workingDirectory: 'E:\\doodle_task_fix', sessionCwd: 'E:\\Doodle', defaultDirectory: 'C:\\x' }),
+    'E:\\doodle_task_fix',
+    'workingDirectory wins',
+  );
+  eq(W.chooseWorkspaceRoot({ sessionCwd: 'E:/Doodle/' }), 'E:\\Doodle', 'session cwd normalized');
+  eq(W.chooseWorkspaceRoot({}), '', 'none');
+});
+
+test('workspace: 会话 cwd 从 header 读取', () => {
+  eq(W.sessionCwdOf({ header: { cwd: 'E:\\Doodle' } }), 'E:\\Doodle', 'session');
+  eq(W.sessionCwdOf({ session: { header: { cwd: 'E:/x' } } }), 'E:\\x', 'agent.session');
+  eq(W.sessionCwdOf(undefined), '', 'undefined');
+});
+
+test('workspace: 分支解析与 binaryDir 展开', () => {
+  eq(W.parseGitBranch('master\n'), { kind: 'branch', name: 'master' });
+  eq(W.parseGitBranch('HEAD'), { kind: 'detached', name: '' });
+  eq(W.parseGitBranch(''), { kind: 'unknown', name: '' });
+  const doc = {
+    configurePresets: [
+      { name: 'base', binaryDir: '${sourceParentDir}/build/$env{DOODLE_GIT_BRANCH}/${presetName}' },
+      { name: 'child', inherits: 'base' },
+    ],
+  };
+  eq(
+    W.resolveBuildDir(doc, { sourceDir: 'E:\\doodle_task_fix', presetName: 'child', branch: 'task_fix' }),
+    'E:/build/task_fix/child',
+    'expanded',
+  );
+  eq(W.resolveBuildDir(doc, { sourceDir: 'E:\\Doodle', presetName: 'missing', branch: 'master' }), '', 'missing preset');
+});
+
+test('workspace: CMakeCache 归属判断', () => {
+  const text = 'A=1\nCMAKE_HOME_DIRECTORY:INTERNAL=E:/Doodle\nB=2\n';
+  eq(W.cacheHomeDirectory(text), 'E:\\Doodle');
+  eq(W.cacheHomeDirectory('nothing'), '');
+  eq(W.buildDirOwnership({ sourceDir: 'E:\\Doodle', buildDir: 'x', cacheHomeDirectory: 'E:/Doodle' }), 'ok');
+  eq(W.buildDirOwnership({ sourceDir: 'E:\\doodle_task_fix', buildDir: 'x', cacheHomeDirectory: 'E:/Doodle' }), 'foreign-source');
+  eq(W.buildDirOwnership({ sourceDir: 'E:\\Doodle', buildDir: 'x', cacheHomeDirectory: '' }), 'empty');
+});
+
 // -------------------------------------------------------------------- report
 
 console.log(`\n${passed} passed, ${failed} failed\n`);

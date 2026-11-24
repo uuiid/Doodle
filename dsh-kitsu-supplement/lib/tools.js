@@ -10,6 +10,7 @@ import { slotSummary } from "./pure/instances.js";
 import { errorText } from "./pure/common.js";
 import { validateSlotRequest } from "./pure/instances.js";
 import { buildArgv, resolveSpec, startFailure, startWarnings } from "./pure/start.js";
+import { EXE_STOP_NOTICE } from "./pure/workspace.js";
 import { resolveSqlTarget, runSql, validateSqlArgs } from "./pure/sql.js";
 import {
   PLAYWRIGHT_SCHEMA,
@@ -30,6 +31,58 @@ import { playwrightFailure, runPlaywrightTool } from "./runtime/playwright.js";
 import { probePort, sleep } from "./runtime/process.js";
 import { startServer, stopAdopted, stopRecord } from "./runtime/server.js";
 
+let createUserMessageLoader = null;
+
+/**
+ * exe 解析失败时的收尾：返回失败结果、结束本轮、并把「停下等用户检查」送到对话里。
+ *
+ * 只在当前工具结束模型这一轮（concludeTurn），不会自动再发下一轮的请求；
+ * 那条 user 消息随结果一起进历史，用户下一条消息时模型会先看到它。
+ *
+ * @param {any} exec
+ * @param {any} spec
+ * @param {string} detail
+ * @returns {any}
+ */
+function stopStart(exec, spec, detail) {
+  const message = `${detail} ${EXE_STOP_NOTICE}`;
+  try {
+    exec.concludeTurn();
+  } catch {
+  }
+  const content = [{ type: "text", text: `<kitsu_exe_unresolved>\n${EXE_STOP_NOTICE}\n原因：${detail}\n</kitsu_exe_unresolved>` }];
+  const deliver = (createUserMessage) => {
+    try {
+      exec.deferContext(createUserMessage({
+        content,
+        source: { kind: "kitsu-supplement", form: "notice", summary: "kitsu exe 解析失败，停止操作" },
+      }));
+    } catch {
+    }
+  };
+  if (typeof createUserMessageLoader === "function") {
+    loadCreateUserMessage().then(deliver, () => {});
+  }
+  return startFailure(spec, "invalid-args", message, {
+    diagnostics: [{ severity: "error", code: "exe/unresolved", message }],
+  });
+}
+
+/**
+ * 延迟解析出 `createUserMessage`：它来自可选的 @deepseek-ai/dsh-llm peer 依赖，
+ * 宿主没提供时 deferContext 只是不发，不影响本次失败结果。
+ *
+ * @returns {Promise<any>}
+ */
+function loadCreateUserMessage() {
+  if (createUserMessageLoader === null) {
+    createUserMessageLoader = () => import("@deepseek-ai/dsh-llm")
+      .then((mod) => (typeof mod.createUserMessage === "function" ? mod.createUserMessage : null))
+      .catch(() => null);
+  }
+  return createUserMessageLoader();
+}
+
 /** @param {any} deps */
 export function registerStartTool({ ctx, resolved, registry, stateWarnings, statePath, saveInstances, writeConfigFile, exists }) {
   ctx.tools.register(
@@ -37,10 +90,12 @@ export function registerStartTool({ ctx, resolved, registry, stateWarnings, stat
       name: "kitsu_server_start",
       description:
         "Start the kitsu supplement HTTP server for local testing and return a ready http://127.0.0.1:<port> " +
-        "baseUrl. The DEFAULT executable is doodle_kitsu_supplement_test.exe, the primary way to run the server: " +
-        "it serves the same routes as the production exe but replaces the Maya / UE child processes with stubs " +
+        "baseUrl. The executable is resolved from THIS SESSION'S WORKSPACE, never from a configured path: " +
+        "`<parent of workspace>\\build\\<git branch>\\Ninja_debug\\bin\\<exeName>`, the same expression CMakePresets.json " +
+        "uses for binaryDir. The default `exeName` is doodle_kitsu_supplement_test.exe, the primary way to run the " +
+        "server: it serves the same routes as the production exe but replaces the Maya / UE child processes with stubs " +
         "(test_exe_runner), so no Maya, Unreal or plugin install is needed on this machine; use it for every test. " +
-        "Pass `exePath: \"supplement-prod\"` only when the real mayabatch / UnrealEditor-Cmd must actually run. " +
+        "Pass `exeName: \"doodle_kitsu_supplement.exe\"` only when the real mayabatch / UnrealEditor-Cmd must actually run. " +
         "`mode: \"production\"` (default) lets the server read its registry config and listen on config.port; " +
         "`mode: \"local\"` adds `--local`, which " +
         "turns off the registry-only paths (in-memory database unless `dbPath` is given). " +
@@ -122,12 +177,12 @@ export function registerStartTool({ ctx, resolved, registry, stateWarnings, stat
             "(`--config=<path>`, `--root=<path>`, `--port=<n>`); `--local`, `--config`, `--port`, `--root` are " +
             "rejected because the parameters own them.",
         },
-        exePath: {
+        exeName: {
           type: "string",
           description:
-            "Which executable to run. Default = doodle_kitsu_supplement_test.exe (stubbed Maya/UE). " +
-            "`\"supplement-prod\"` = doodle_kitsu_supplement.exe (real external processes); " +
-            "any other non-empty value is used verbatim as a path.",
+            "File name of the executable, NOT a path. Default = doodle_kitsu_supplement_test.exe (stubbed Maya/UE). " +
+            "`\"doodle_kitsu_supplement.exe\"` = production exe (real external processes). The full path comes from the " +
+            "session workspace and its git branch; anything containing a path separator or a drive letter is rejected.",
         },
         readyPath: {
           type: "string",
@@ -152,11 +207,17 @@ export function registerStartTool({ ctx, resolved, registry, stateWarnings, stat
       },
       async execute(args, exec) {
         const requestedMode = trimOrEmpty(args.mode) || (args.local === true ? "local" : "") || resolved.defaultMode;
-        const plan = await resolveSpec({ config: resolved, args: { ...args, mode: requestedMode }, exists });
+        const workspaceRoot = workspaceRootOf(exec);
+        const branch = await branchOf(workspaceRoot, exec.signal);
+        const plan = await resolveSpec({
+          config: resolved,
+          args: { ...args, mode: requestedMode },
+          exists,
+          workspaceRoot,
+          branch,
+        });
         if (plan.problems.length > 0) {
-          return startFailure(plan.spec, "invalid-args", plan.problems.join(" "), {
-            diagnostics: plan.problems.map((message) => ({ severity: "error", code: "args/invalid", message })),
-          });
+          return stopStart(exec, plan.spec, plan.problems.join(" "));
         }
         const spec = plan.spec;
         const replaced = [];
@@ -499,7 +560,7 @@ export function registerSqlTool({ ctx, resolved, registry, stateWarnings, stateP
 }
 
 /** @param {any} deps */
-export function registerPlaywrightTool({ ctx, resolved, registry, stateWarnings, statePath, saveInstances, writeConfigFile, exists }) {
+export function registerPlaywrightTool({ ctx, resolved, registry, stateWarnings, statePath, saveInstances, writeConfigFile, exists, playwrightCwdOf }) {
   ctx.tools.register(
     defineTool({
       name: "kitsu_playwright_test",
@@ -507,8 +568,10 @@ export function registerPlaywrightTool({ ctx, resolved, registry, stateWarnings,
         "Run the Playwright test suite under test_js and PASS ITS ARGUMENTS THROUGH VERBATIM: `args` is everything " +
         "after the `playwright` executable (`[\"test\"]`, `[\"test\", \"face_capture.js\", \"--reporter=line\"]`, " +
         "`[\"test\", \"--list\"]`, `[\"test\", \"-g\", \"创建设备\"]`, `[\"show-report\"]`). The child is started as " +
-        "`node <cwd>/node_modules/@playwright/test/cli.js <args...>` with cwd = `cwd` (default: the configured " +
-        "playwrightCwd, i.e. E:\\Doodle\\test_js), so no run-playwright.mjs shim is needed. `baseUrl` only decides " +
+        "`node <cwd>/node_modules/@playwright/test/cli.js <args...>` with cwd = the test_js directory of THIS " +
+        "SESSION'S WORKSPACE (the session's workspace root first, then the plugin's fallback directory), so no " +
+        "run-playwright.mjs shim is needed. When no such directory holds node_modules/@playwright/test the call " +
+        "fails and tells you to STOP and leave the check to the user. `baseUrl` only decides " +
         "whether DOODLE_BASE_URL is set for the child: omit it to inherit the parent environment " +
         "(playwright.config.js then falls back to http://localhost:50025), pass a URL to point the suite at a " +
         "specific server (the baseUrl returned by kitsu_server_start). " +
@@ -529,8 +592,9 @@ export function registerPlaywrightTool({ ctx, resolved, registry, stateWarnings,
         cwd: {
           type: "string",
           description:
-            "Directory holding node_modules/@playwright/test. Defaults to the configured playwrightCwd " +
-            "(E:\\Doodle\\test_js). Must exist and be a directory.",
+            "Directory holding node_modules/@playwright/test. Defaults to the test_js directory found from the " +
+            "session workspace root (the plugin's fallback directory is only used when the workspace has no " +
+            "installed dependencies). Must exist and be a directory.",
         },
         baseUrl: {
           type: "string",
@@ -578,6 +642,9 @@ export function registerPlaywrightTool({ ctx, resolved, registry, stateWarnings,
       },
       async execute(args, exec) {
         const runId = allocatePlaywrightRunId();
+        const resolvedCwd = trimOrEmpty(args.cwd) === ""
+          ? await playwrightCwdOf(exec, exec.signal)
+          : { cwd: trimOrEmpty(args.cwd), workspaceRoot: "", lookedAt: [] };
         const inFlight = getPlaywrightRunning();
         if (inFlight !== null) {
           const running = inFlight;
@@ -605,14 +672,19 @@ export function registerPlaywrightTool({ ctx, resolved, registry, stateWarnings,
           runId,
           startedAt: Date.now(),
           args: Array.isArray(args.args) ? args.args.map((item) => String(item)) : [],
-          cwd: normalizePath(trimOrEmpty(args.cwd) || resolved.playwrightCwd),
+          cwd: resolvedCwd.cwd,
         });
         try {
-          return await runPlaywrightTool(ctx, resolved, args, exec);
+          return await runPlaywrightTool(
+            ctx,
+            resolved,
+            { ...args, cwd: resolvedCwd.cwd === "" ? undefined : resolvedCwd.cwd },
+            exec,
+            resolvedCwd.cwd === "" ? playwrightCwdFailure(resolvedCwd) : undefined,
+          );
         } finally {
           setPlaywrightRunning(null);
-        }
-      },
+        }      },
     }),
   );
 }

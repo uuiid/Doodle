@@ -11,15 +11,6 @@ export const MODES = ["production", "local"];
 
 export const OWNED_FLAGS = ["--local", "--config", "--port", "--root", "--dbPath"];
 
-
-export const DEFAULT_EXE_PATH = "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement_test.exe";
-
-/** 显式传这个值表示仍要跑生产 exe；其余任何非空 exePath 都按字面路径使用。 */
-
-export const PRODUCTION_EXE = "supplement-prod";
-
-export const DEFAULT_PRODUCTION_EXE_PATH = "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement.exe";
-
 export const DEFAULT_MODE = "production";
 
 export const DEFAULT_READY_PATH = "/";
@@ -145,7 +136,7 @@ export function portInRange(port) {
 /**
  * 校验启动参数，返回全部问题（空数组表示通过）。
  *
- * @param {{mode:string, port:unknown, cwd?:string, root?:string, exePath?:string, readyPath?:string}} spec
+ * @param {{mode:string, port:unknown, cwd?:string, root?:string, readyPath?:string}} spec
  * @returns {string[]}
  */
 

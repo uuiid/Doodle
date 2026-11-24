@@ -37,6 +37,8 @@ function evalPure(relPath, injected) {
 
 // 按 PURE_FILES 顺序求值，前一份文件导出的名字注入到后一份的上下文里。
 const P = {};
+
+
 for (const file of PURE_FILES) {
   const result = evalPure(file, P);
   for (const [name, value] of Object.entries(result)) {
@@ -82,9 +84,11 @@ function ok(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-const EXE = "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement_test.exe";
-const EXE_PROD = "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement.exe";
-const CWD = "E:\\build\\Ninja_debug\\bin";
+const EXE_NAME = "doodle_kitsu_supplement_test.exe";
+const PROD_EXE_NAME = "doodle_kitsu_supplement.exe";
+const EXE = "E:\\build\\master\\Ninja_debug\\bin\\doodle_kitsu_supplement_test.exe";
+const EXE_PROD = "E:\\build\\master\\Ninja_debug\\bin\\doodle_kitsu_supplement.exe";
+const CWD = "E:\\build\\master\\Ninja_debug\\bin";
 
 process.stdout.write("parsePort\n");
 test("接受数字与数字字符串", () => {
@@ -101,40 +105,40 @@ test("拒绝越界与非数字", () => {
 
 process.stdout.write("validateStartArgs\n");
 test("缺 port 直接报错（local 会被服务端随机监听）", () => {
-  const problems = P.validateStartArgs({ mode: "local", port: undefined, cwd: CWD, exePath: EXE, readyPath: "/" });
+  const problems = P.validateStartArgs({ mode: "local", port: undefined, cwd: CWD, readyPath: "/" });
   ok(problems.some((p) => p.includes("必须显式指定 port")), problems.join(" | "));
 });
 test("生产模式缺 port 同样报错", () => {
-  const problems = P.validateStartArgs({ mode: "production", port: "", cwd: CWD, exePath: EXE, readyPath: "/" });
+  const problems = P.validateStartArgs({ mode: "production", port: "", cwd: CWD, readyPath: "/" });
   ok(problems.some((p) => p.includes("必须显式指定 port")), problems.join(" | "));
 });
 test("合法组合没有问题", () => {
-  eq(P.validateStartArgs({ mode: "local", port: 50030, cwd: CWD, exePath: EXE, readyPath: "/" }), []);
-  eq(P.validateStartArgs({ mode: "local", port: 50330, cwd: CWD, exePath: EXE, readyPath: "/" }), []);
-  eq(P.validateStartArgs({ mode: "production", port: "50123", cwd: CWD, exePath: EXE, readyPath: "/" }), []);
+  eq(P.validateStartArgs({ mode: "local", port: 50030, cwd: CWD, readyPath: "/" }), []);
+  eq(P.validateStartArgs({ mode: "local", port: 50330, cwd: CWD, readyPath: "/" }), []);
+  eq(P.validateStartArgs({ mode: "production", port: "50123", cwd: CWD, readyPath: "/" }), []);
 });
 test("port 低于 50030 报错", () => {
-  const problems = P.validateStartArgs({ mode: "local", port: 50029, cwd: CWD, exePath: EXE, readyPath: "/" });
+  const problems = P.validateStartArgs({ mode: "local", port: 50029, cwd: CWD, readyPath: "/" });
   ok(problems.some((p) => p.includes("50030-50330")), problems.join(" | "));
 });
 test("port 高于 50330 报错", () => {
-  const problems = P.validateStartArgs({ mode: "local", port: 50331, cwd: CWD, exePath: EXE, readyPath: "/" });
+  const problems = P.validateStartArgs({ mode: "local", port: 50331, cwd: CWD, readyPath: "/" });
   ok(problems.some((p) => p.includes("50030-50330")), problems.join(" | "));
 });
 test("port 为字符串且越界同样报错", () => {
-  const problems = P.validateStartArgs({ mode: "production", port: "50025", cwd: CWD, exePath: EXE, readyPath: "/" });
+  const problems = P.validateStartArgs({ mode: "production", port: "50025", cwd: CWD, readyPath: "/" });
   ok(problems.some((p) => p.includes("50030-50330")), problems.join(" | "));
 });
 test("mode 非法", () => {
-  const problems = P.validateStartArgs({ mode: "dev", port: 50025, cwd: CWD, exePath: EXE, readyPath: "/" });
+  const problems = P.validateStartArgs({ mode: "dev", port: 50025, cwd: CWD, readyPath: "/" });
   ok(problems.some((p) => p.includes("mode 只能是")), problems.join(" | "));
 });
 test("root 必须是绝对路径", () => {
-  const problems = P.validateStartArgs({ mode: "production", port: 50025, cwd: CWD, root: "sy_maigc", exePath: EXE, readyPath: "/" });
+  const problems = P.validateStartArgs({ mode: "production", port: 50025, cwd: CWD, root: "sy_maigc", readyPath: "/" });
   ok(problems.some((p) => p.includes("root 必须是绝对路径")), problems.join(" | "));
 });
 test("readyPath 必须以 / 开头", () => {
-  const problems = P.validateStartArgs({ mode: "production", port: 50025, cwd: CWD, exePath: EXE, readyPath: "health" });
+  const problems = P.validateStartArgs({ mode: "production", port: 50025, cwd: CWD, readyPath: "health" });
   ok(problems.some((p) => p.includes("readyPath 必须以 / 开头")), problems.join(" | "));
 });
 
@@ -280,27 +284,71 @@ test("tailText 行对齐", () => {
 });
 
 process.stdout.write("resolveExePath\n");
-test("默认走测试 exe", () => {
-  eq(P.resolveExePath({ args: {}, config: {} }), EXE);
-  eq(P.resolveExePath({ args: {}, config: { exePath: "" } }), EXE);
+const ROOT = "E:\\Doodle";
+const BRANCH = "master";
+const BUILD_DIR = "E:\\build\\master\\Ninja_debug";
+test("按工作区与分支推出测试 exe", () => {
+  const r = P.resolveExePath({ workspaceRoot: ROOT, branch: BRANCH, exeName: EXE_NAME });
+  eq(r.buildDir, BUILD_DIR);
+  eq(r.exePath, EXE);
 });
-test("supplement-prod 切到生产 exe", () => {
-  eq(P.resolveExePath({ args: { exePath: P.PRODUCTION_EXE }, config: {} }), EXE_PROD);
-  eq(P.resolveExePath({ args: { exePath: P.PRODUCTION_EXE }, config: { productionExePath: "D:\\x\\p.exe" } }), "D:\\x\\p.exe");
-  eq(P.resolveExePath({ args: { exePath: P.PRODUCTION_EXE }, config: { exePath: EXE } }), EXE_PROD);
+test("只换名字就能切到生产 exe", () => {
+  const r = P.resolveExePath({ workspaceRoot: ROOT, branch: BRANCH, exeName: PROD_EXE_NAME });
+  eq(r.exePath, EXE_PROD);
 });
-test("其它非空 exePath 原样使用，配置 exePath 作为中间层", () => {
-  eq(P.resolveExePath({ args: { exePath: "E:\\a\\b.exe" }, config: { exePath: EXE } }), "E:\\a\\b.exe");
-  eq(P.resolveExePath({ args: {}, config: { exePath: "E:\\a\\c.exe" } }), "E:\\a\\c.exe");
+test("路径推不出来时返回空串，不猜", () => {
+  eq(P.resolveExePath({ workspaceRoot: "", branch: BRANCH, exeName: EXE_NAME }).exePath, "");
+  eq(P.resolveExePath({ workspaceRoot: ROOT, branch: "", exeName: EXE_NAME }).exePath, "");
 });
-test("exeKindOf 只有生产 exe 算 production", () => {
-  eq(P.exeKindOf(EXE, {}), "test");
-  eq(P.exeKindOf(EXE_PROD, {}), "production");
+test("resolveExeName 只认两个文件名", () => {
+  eq(P.resolveExeName({}), { name: EXE_NAME });
+  eq(P.resolveExeName({ exeName: "" }), { name: EXE_NAME });
+  eq(P.resolveExeName({ exeName: PROD_EXE_NAME }), { name: PROD_EXE_NAME });
+  ok(P.resolveExeName({ exeName: "E:\\build\\Ninja_debug\\bin\\doodle_kitsu_supplement_test.exe" }).problem !== undefined, "路径应被拒绝");
+  ok(P.resolveExeName({ exeName: "D:/x/doodle_kitsu_supplement_test.exe" }).problem !== undefined, "正斜杠路径应被拒绝");
+  ok(P.resolveExeName({ exeName: "nope.exe" }).problem !== undefined, "未知名字应被拒绝");
+});
+test("judgeExeResolution：齐了才算通过", () => {
+  const good = P.judgeExeResolution({ workspaceRoot: ROOT, branch: BRANCH, exeName: EXE_NAME, buildDir: BUILD_DIR, exePath: EXE, exists: true });
+  eq(good.ok, true);
+  eq(good.facts.length, 3);
+  const missing = P.judgeExeResolution({ workspaceRoot: ROOT, branch: BRANCH, exeName: EXE_NAME, buildDir: BUILD_DIR, exePath: EXE, exists: false });
+  eq(missing.ok, false);
+  ok(missing.problems[0].includes("可执行文件不存在"), missing.problems.join(" | "));
+  const noRoot = P.judgeExeResolution({ workspaceRoot: "", branch: "", exeName: EXE_NAME, buildDir: "", exePath: "", exists: false });
+  eq(noRoot.ok, false);
+  ok(noRoot.problems[0].includes("工作区根目录"), noRoot.problems.join(" | "));
+});
+test("exeKindOf 只看文件名", () => {
+  eq(P.exeKindOf(EXE), "test");
+  eq(P.exeKindOf(EXE_PROD), "production");
   eq(P.exeKindOfPath(EXE_PROD), "production");
   eq(P.exeKindOfPath(EXE), "test");
   eq(P.exeKindOfPath("E:\\x\\doodle_kitsu_supplement.exe"), "production");
   eq(P.exeKindOfPath("E:/x/doodle_kitsu_supplement.exe"), "production");
   eq(P.exeKindOfPath(""), "test");
+});
+test("buildDirOf 跟随分支", () => {
+  eq(P.buildDirOf({ workspaceRoot: "E:\\doodle_task_fix", branch: "task_fix", presetName: "Ninja_debug" }), "E:\\build\\task_fix\\Ninja_debug");
+  eq(P.buildDirOf({ workspaceRoot: ROOT, branch: "", presetName: "Ninja_debug" }), "");
+});
+test("chooseWorkspaceRoot 的顺序", () => {
+  eq(P.chooseWorkspaceRoot({ workingDirectory: "E:\\doodle_task_fix", sessionCwd: ROOT, defaultDirectory: "C:\\x" }), "E:\\doodle_task_fix");
+  eq(P.chooseWorkspaceRoot({ sessionCwd: ROOT, defaultDirectory: "C:\\x" }), ROOT);
+  eq(P.chooseWorkspaceRoot({ defaultDirectory: "C:\\x" }), "C:\\x");
+  eq(P.chooseWorkspaceRoot({}), "");
+});
+test("choosePlaywrightCwd 先看会话工作区，再看兜底", () => {
+  const onlyFallback = P.choosePlaywrightCwd({
+    workspaceRoot: ROOT,
+    fallbackDirs: ["E:\\Other\\test_js"],
+    hasDependency: (dir) => dir === "E:\\Other\\test_js",
+  });
+  eq(onlyFallback.cwd, "E:\\Other\\test_js");
+  eq(onlyFallback.lookedAt.length, 2);
+  const none = P.choosePlaywrightCwd({ workspaceRoot: "", fallbackDirs: [], hasDependency: () => false });
+  eq(none.cwd, "");
+  ok(P.playwrightCwdFailure(none).includes("停止"), P.playwrightCwdFailure(none));
 });
 
 process.stdout.write("resolveSpec\n");
@@ -343,12 +391,14 @@ test("空库路径 + 无默认值 -> 报错", () => {
 
 
 await testAsync("cwd 缺省取 exe 所在目录", async () => {
-  const plan = await P.resolveSpec({ config: baseConfig, args: { port: 50100, mode: "" }, exists: allExists });
+  const plan = await P.resolveSpec({ config: baseConfig, args: { port: 50100, mode: "" }, exists: allExists, workspaceRoot: ROOT, branch: BRANCH });
   eq(plan.problems, []);
   eq(plan.spec.cwd, CWD);
   eq(plan.spec.mode, "production");
   eq(plan.spec.port, 50100);
   eq(plan.spec.exeKind, "test");
+  eq(plan.spec.exePath, EXE);
+  eq(plan.spec.buildDir, BUILD_DIR);
   eq(plan.spec.configValues, {
     db_path: "C:/db.sqlite",
     kitsu_front_end_path: "D:/kitsu/dist",
@@ -356,11 +406,25 @@ await testAsync("cwd 缺省取 exe 所在目录", async () => {
     port: 50100,
   });
 });
+await testAsync("exeName 切到生产 exe", async () => {
+  const plan = await P.resolveSpec({
+    config: baseConfig,
+    args: { port: 50100, mode: "", exeName: PROD_EXE_NAME },
+    exists: allExists,
+    workspaceRoot: ROOT,
+    branch: BRANCH,
+  });
+  eq(plan.problems, []);
+  eq(plan.spec.exePath, EXE_PROD);
+  eq(plan.spec.exeKind, "production");
+});
 await testAsync("local + 参数覆盖路径", async () => {
   const plan = await P.resolveSpec({
     config: baseConfig,
     args: { port: "50123", mode: "local", dbPath: "E:/a/b.db", root: "D:/sy", frontEndPath: "E:/fe" },
     exists: allExists,
+    workspaceRoot: ROOT,
+    branch: BRANCH,
   });
   eq(plan.problems, []);
   eq(plan.spec.mode, "local");
@@ -370,22 +434,31 @@ await testAsync("local + 参数覆盖路径", async () => {
   eq(plan.spec.configValues.kitsu_front_end_path, "E:\\fe");
 });
 await testAsync("缺 port 时 problems 非空且 configValues 仍带 port", async () => {
-  const plan = await P.resolveSpec({ config: baseConfig, args: { mode: "local" }, exists: allExists });
+  const plan = await P.resolveSpec({ config: baseConfig, args: { mode: "local" }, exists: allExists, workspaceRoot: ROOT, branch: BRANCH });
   ok(plan.problems.length > 0, "expected problems");
   eq(plan.spec.port, undefined);
 });
 await testAsync("exe / cwd 不存在报错", async () => {
-  const plan = await P.resolveSpec({ config: baseConfig, args: { port: 50100, mode: "" }, exists: noneExists });
-  ok(plan.problems.some((p) => p.includes("exe 不存在")), plan.problems.join(" | "));
+  const plan = await P.resolveSpec({ config: baseConfig, args: { port: 50100, mode: "" }, exists: noneExists, workspaceRoot: ROOT, branch: BRANCH });
+  ok(plan.problems.some((p) => p.includes("可执行文件不存在")), plan.problems.join(" | "));
   ok(plan.problems.some((p) => p.includes("cwd 不存在")), plan.problems.join(" | "));
 });
-await testAsync("exePath 无目录且无 cwd -> 报错而不是猜", async () => {
+await testAsync("解析不出工作区或分支就直接报错，不猜路径", async () => {
+  const noRoot = await P.resolveSpec({ config: { ...baseConfig, defaultCwd: CWD }, args: { port: 50100, mode: "" }, exists: allExists, workspaceRoot: "", branch: "" });
+  eq(noRoot.spec.exePath, "");
+  ok(noRoot.problems.some((p) => p.includes("工作区根目录")), noRoot.problems.join(" | "));
+  const noBranch = await P.resolveSpec({ config: { ...baseConfig, defaultCwd: CWD }, args: { port: 50100, mode: "" }, exists: allExists, workspaceRoot: ROOT, branch: "" });
+  ok(noBranch.problems.some((p) => p.includes("git 分支")), noBranch.problems.join(" | "));
+});
+await testAsync("exeName 传路径被拒绝", async () => {
   const plan = await P.resolveSpec({
-    config: { ...baseConfig, exePath: "doodle_kitsu_supplement.exe" },
-    args: { port: 50100, mode: "" },
+    config: baseConfig,
+    args: { port: 50100, mode: "", exeName: "E:\\build\\x\\doodle_kitsu_supplement_test.exe" },
     exists: allExists,
+    workspaceRoot: ROOT,
+    branch: BRANCH,
   });
-  ok(plan.problems.some((p) => p.includes("无法从 exePath 推断 cwd")), plan.problems.join(" | "));
+  ok(plan.problems.some((p) => p.includes("只接受文件名")), plan.problems.join(" | "));
 });
 
 process.stdout.write("validatePlaywrightArgs\n");

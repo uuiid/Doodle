@@ -3,15 +3,16 @@
 // 本文件只放纯逻辑：不依赖任何 import，也不访问 ctx / await 宿主资源。
 // test/pure.mjs 读取 lib/pure/dispatch.js 里登记的文件逐个求值，契约与原先的纯逻辑区段一致。
 
-import { DEFAULT_EXE_PATH, DEFAULT_MODE, DEFAULT_PRODUCTION_EXE_PATH, DEFAULT_READY_PATH, MEMORY_DB, MODES, OWNED_FLAGS, PORT_RANGE_TEXT, PRODUCTION_EXE, baseUrlOf, isPlainObject, normalizePath, parsePort, portInRange, sanitizeForJson, trimOrEmpty } from "./common.js";
+import { DEFAULT_MODE, DEFAULT_READY_PATH, MEMORY_DB, MODES, OWNED_FLAGS, PORT_RANGE_TEXT, baseUrlOf, isPlainObject, normalizePath, parsePort, portInRange, sanitizeForJson, trimOrEmpty } from "./common.js";
+import { DEFAULT_TEST_EXE_NAME, buildDirOf, exePathOf, judgeExeResolution, resolveExeName } from "./workspace.js";
 
 /**
  * 校验启动参数，返回全部问题（空数组表示通过）。
  *
- * @param {{mode:string, port:unknown, cwd?:string, root?:string, exePath?:string, readyPath?:string}} spec
+ * @param {{mode:string, port:unknown, cwd?:string, root?:string, readyPath?:string}} spec
  * @returns {string[]}
  */
-export function validateStartArgs({ mode, port, cwd, root, exePath, readyPath }) {
+export function validateStartArgs({ mode, port, cwd, root, readyPath }) {
   /** @type {string[]} */
   const problems = [];
   if (!MODES.includes(mode)) {
@@ -38,9 +39,6 @@ export function validateStartArgs({ mode, port, cwd, root, exePath, readyPath })
   }
   if (readyPath !== undefined && !readyPath.startsWith("/")) {
     problems.push(`readyPath 必须以 / 开头，收到 ${JSON.stringify(readyPath)}。`);
-  }
-  if (exePath !== undefined && !exePath.toLowerCase().endsWith(".exe")) {
-    problems.push(`exePath 必须指向 .exe，收到 ${JSON.stringify(exePath)}。`);
   }
   return problems;
 }
@@ -190,41 +188,33 @@ export function buildArgv({ mode, port, configPath, root, dbPath, extraArgs }) {
  * @returns {Promise<{problems:string[], spec:any}>}
  */
 /**
- * 选本次要跑的可执行文件。
+ * 由「会话工作区 + git 分支 + exe 名字」推出可执行文件路径。
  *
- * 默认是测试可执行文件 doodle_kitsu_supplement_test.exe：它继承 doodle_lib 的全部路由，
- * 但把 Maya / UE 外部进程替换成 stub（test_exe_runner），测试机不需要装 Maya、UE 或它们的插件。
- * 参数 exePath 的取值优先级：`supplement-prod` 表示改用生产 exe（配置里的 productionExePath，
- * 默认出厂路径），空串表示沿用配置的 exePath，其余非空值按字面路径使用。
+ * 不再接受任何路径形式的输入，也不读配置里的出厂路径：路径只用 CMakePresets.json 的同一套
+ * 表达方式推出 `<工作区上一级>/build/<分支>/<preset>/bin/<名字>`，推不出来就返回空串，
+ * 由调用方报错并让 agent 停下（见 workspace.js 的 judgeExeResolution）。
  *
- * @param {{args:{exePath?:unknown}, config:any}} spec
- * @returns {string}
+ * @param {{workspaceRoot:string, branch:string, exeName:string}} spec
+ * @returns {{exePath:string, buildDir:string}}
  */
-export function resolveExePath({ args, config }) {
-  const productionExePath = trimOrEmpty(config.productionExePath) || DEFAULT_PRODUCTION_EXE_PATH;
-  const requested = trimOrEmpty(args.exePath);
-  if (requested === PRODUCTION_EXE) return productionExePath;
-  if (requested !== "") return requested;
-  const configured = trimOrEmpty(config.exePath);
-  return configured === "" ? DEFAULT_EXE_PATH : configured;
+export function resolveExePath({ workspaceRoot, branch, exeName }) {
+  const name = trimOrEmpty(exeName) || DEFAULT_TEST_EXE_NAME;
+  const buildDir = buildDirOf({ workspaceRoot, branch, presetName: "Ninja_debug" });
+  return { exePath: exePathOf({ buildDir, exeName: name }), buildDir };
 }
 
 /**
  * 本次跑的是测试可执行文件还是生产可执行文件。
  *
  * @param {string} exePath
- * @param {any} config
  * @returns {"test"|"production"}
  */
-export function exeKindOf(exePath, config) {
-  const productionExePath = trimOrEmpty(config?.productionExePath) || DEFAULT_PRODUCTION_EXE_PATH;
-  return normalizePath(exePath).toLowerCase() === normalizePath(productionExePath).toLowerCase()
-    ? "production"
-    : "test";
+export function exeKindOf(exePath) {
+  return exeKindOfPath(exePath);
 }
 
 /**
- * 只有「doodle_kitsu_supplement.exe」算生产；其它（测试 exe、自定义路径）一律按 test 展示。
+ * 只有「doodle_kitsu_supplement.exe」算生产；测试 exe 算 test。
  *
  * @param {unknown} exePath
  * @returns {"test"|"production"}
@@ -235,10 +225,14 @@ export function exeKindOfPath(exePath) {
   return base === "doodle_kitsu_supplement.exe" ? "production" : "test";
 }
 
-export async function resolveSpec({ config, args, exists }) {
+export async function resolveSpec({ config, args, exists, workspaceRoot, branch }) {
   const mode = trimOrEmpty(args.mode) || config.defaultMode || DEFAULT_MODE;
-  const exePath = resolveExePath({ args, config });
-  const exeKind = exeKindOf(exePath, config);
+  const resolvedName = resolveExeName({ exeName: args.exeName });
+  const resolution = resolvedName.problem === undefined
+    ? resolveExePath({ workspaceRoot: trimOrEmpty(workspaceRoot), branch: trimOrEmpty(branch), exeName: resolvedName.name })
+    : { exePath: "", buildDir: "" };
+  const exePath = resolution.exePath;
+  const exeKind = exeKindOfPath(exePath);
   const explicitCwd = trimOrEmpty(args.cwd) || trimOrEmpty(config.defaultCwd);
   const root = trimOrEmpty(args.root) || trimOrEmpty(config.defaultRoot);
   const readyPath = trimOrEmpty(args.readyPath) || config.readyPath || DEFAULT_READY_PATH;
@@ -250,7 +244,6 @@ export async function resolveSpec({ config, args, exists }) {
       port: args.port,
       cwd: explicitCwd === "" ? undefined : explicitCwd,
       root: root === "" ? undefined : root,
-      exePath,
       readyPath,
     }),
     ...validateExtraArgs(args.extraArgs),
@@ -278,6 +271,10 @@ export async function resolveSpec({ config, args, exists }) {
     port,
     exePath,
     exeKind,
+    exeName: resolvedName.name,
+    buildDir: resolution.buildDir,
+    workspaceRoot: trimOrEmpty(workspaceRoot),
+    branch: trimOrEmpty(branch),
     cwd,
     root: normalizedRoot,
     dbPath: dbPath === "" ? undefined : dbPath === MEMORY_DB ? MEMORY_DB : normalizePath(dbPath),
@@ -286,12 +283,21 @@ export async function resolveSpec({ config, args, exists }) {
     configValues: buildConfig({ defaults: config.defaultConfigPaths ?? {}, port, extraConfig: args.extraConfig, overrides }),
   };
 
+  if (resolvedName.problem !== undefined) problems.push(resolvedName.problem);
   if (problems.length > 0 || port === undefined || cwd === "") return { problems, spec };
 
-  if (!(await exists(exePath))) problems.push(`exe 不存在：${exePath}`);
+  const judged = judgeExeResolution({
+    workspaceRoot: spec.workspaceRoot,
+    branch: spec.branch,
+    exeName: resolvedName.name,
+    buildDir: resolution.buildDir,
+    exePath,
+    exists: await exists(exePath),
+  });
+  problems.push(...judged.problems);
   if (!(await exists(cwd))) problems.push(`cwd 不存在：${cwd}`);
 
-  return { problems, spec };
+  return { problems, spec, facts: judged.facts };
 }
 
 /**
