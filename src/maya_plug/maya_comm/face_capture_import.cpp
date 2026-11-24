@@ -150,39 +150,29 @@ std::string trim_curve_name(const std::uint8_t* in_ptr) {
   return l_name;
 }
 
-MObject first_dag_top_node(MObject in_object) {
-  if (in_object.isNull() || !in_object.hasFn(MFn::kDagNode)) return MObject{};
-  MDagPath l_path{};
-  if (MDagPath::getAPathTo(in_object, l_path) != MS::kSuccess) return MObject{};
-  while (l_path.length() > 1) l_path.pop();
-  return l_path.node();
-}
+struct gui_node_lookup_t {
+  MObject node_{};
+  std::size_t count_{};
+};
 
-MObject find_unique_child_dag_object(MObject in_parent, const std::string& in_leaf_name) {
-  if (in_parent.isNull() || !in_parent.hasFn(MFn::kDagNode) || in_leaf_name.empty()) return MObject{};
+using gui_node_index_t = std::unordered_map<std::string, std::vector<MObject>>;
 
-  MDagPath l_parent_path{};
-  if (MDagPath::getAPathTo(in_parent, l_parent_path) != MS::kSuccess) return MObject{};
-
-  MObject l_found{};
-  std::size_t l_count{0};
-  const unsigned l_child_count = l_parent_path.childCount();
-  for (unsigned l_i = 0; l_i < l_child_count; ++l_i) {
-    MObject l_child = l_parent_path.child(l_i);
-    if (l_child.isNull() || !l_child.hasFn(MFn::kDagNode)) continue;
-    MFnDagNode l_child_dag{l_child};
-    if (conv::to_s(l_child_dag.name()) != in_leaf_name) continue;
-    l_found = l_child;
-    ++l_count;
+gui_node_index_t build_gui_node_index(const MObjectArray& in_objects) {
+  gui_node_index_t l_index{};
+  l_index.reserve(in_objects.length());
+  for (unsigned l_i = 0; l_i < in_objects.length(); ++l_i) {
+    MDagPath l_path{};
+    if (MDagPath::getAPathTo(in_objects[l_i], l_path) != MS::kSuccess) continue;
+    l_index[conv::to_s(leaf_name_of_dag_path(l_path))].push_back(in_objects[l_i]);
   }
-  return l_count == 1 ? l_found : MObject{};
+  return l_index;
 }
 
-MObject resolve_gui_node(MObject in_root, const std::string& in_node_name) {
-  if (in_root.isNull() || in_node_name.empty()) return MObject{};
-  MObject l_node = find_unique_child_dag_object(in_root, in_node_name);
-  if (!l_node.isNull()) return l_node;
-  return find_unique_child_dag_object(first_dag_top_node(in_root), in_node_name);
+gui_node_lookup_t lookup_gui_node(const gui_node_index_t& in_index, const std::string& in_node_name) {
+  auto l_iter = in_index.find(in_node_name);
+  if (l_iter == in_index.end()) return {};
+  if (l_iter->second.size() != 1) return {.count_ = l_iter->second.size()};
+  return {.node_ = l_iter->second.front(), .count_ = 1};
 }
 
 std::string raw_key_of(std::string_view in_name) {
@@ -240,6 +230,7 @@ class face_capture_import::impl {
   face_capture_file_t file_{};
   MDagPath target_path_{};
   MString target_namespace_{};
+  gui_node_index_t gui_node_index_{};
   std::vector<std::size_t> raw_resolved_{};
 
   MStatus load_file();
@@ -320,6 +311,7 @@ MStatus face_capture_import::impl::locate_node() {
 
 MStatus face_capture_import::impl::locate_target() {
   const MObjectArray l_objects = MNamespace::getNamespaceObjects(target_namespace_);
+  gui_node_index_              = build_gui_node_index(l_objects);
 
   MDagPathArray l_candidates{};
 
@@ -391,7 +383,7 @@ MStatus face_capture_import::impl::precheck_gui_connections() {
   std::vector<std::string> l_conflicts{};
 
   for (const auto& l_gui : k_face_capture_gui_map) {
-    MObject l_node_object = resolve_gui_node(node_object_, l_gui.node_name_);
+    MObject l_node_object = lookup_gui_node(gui_node_index_, l_gui.node_name_).node_;
     if (l_node_object.isNull()) continue;
     std::string l_source{};
     if (!check_gui_has_input(l_node_object, l_gui.attr_name_, l_source)) continue;
@@ -479,7 +471,7 @@ MStatus face_capture_import::impl::import_curves() {
     if (!l_gui_written[l_gui_index]) continue;
     const auto& l_gui = k_face_capture_gui_map[l_gui_index];
 
-    MObject l_node_object = resolve_gui_node(node_object_, l_gui.node_name_);
+    MObject l_node_object = lookup_gui_node(gui_node_index_, l_gui.node_name_).node_;
     if (l_node_object.isNull()) {
       l_create_failed.push_back(l_gui.gui_name_);
       continue;
