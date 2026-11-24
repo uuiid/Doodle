@@ -11,7 +11,7 @@
       "displayName": "Ninja build",
       "description": "Ninja build using vcpkg",
       "generator": "Ninja",
-      "binaryDir": "${sourceParentDir}/build/${presetName}",
+      "binaryDir": "${sourceParentDir}/build/$env{DOODLE_GIT_BRANCH}/${presetName}",
       "installDir": "${sourceParentDir}/build/install",
       "toolchainFile": "${sourceParentDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
       "architecture": {

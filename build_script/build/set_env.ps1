@@ -59,6 +59,37 @@ if (Test-Path (Join-Path $PinnedPwsh 'pwsh.exe')) {
 }
 
 $DoodleRoot = Convert-Path "$PSScriptRoot/../..";
+
+try {
+  $GitBranchDump = [System.IO.Path]::GetTempFileName()
+  try {
+    cmd /c "git -C `"$DoodleRoot`" rev-parse --abbrev-ref HEAD > `"$GitBranchDump`" 2>nul"
+    $GitBranch = ([System.IO.File]::ReadAllLines($GitBranchDump) | Select-Object -First 1)
+  } finally {
+    Remove-Item -Force -ErrorAction SilentlyContinue $GitBranchDump
+  }
+  if ([string]::IsNullOrWhiteSpace($GitBranch)) {
+    Write-Warning "无法获取当前 git 分支，DOODLE_GIT_BRANCH 置空"
+    $env:DOODLE_GIT_BRANCH = ''
+  } elseif ($GitBranch -eq 'HEAD') {
+    $GitBranchDump = [System.IO.Path]::GetTempFileName()
+    try {
+      cmd /c "git -C `"$DoodleRoot`" rev-parse --short HEAD > `"$GitBranchDump`" 2>nul"
+      $GitBranch = ([System.IO.File]::ReadAllLines($GitBranchDump) | Select-Object -First 1)
+    } finally {
+      Remove-Item -Force -ErrorAction SilentlyContinue $GitBranchDump
+    }
+    $env:DOODLE_GIT_BRANCH = $GitBranch.Trim()
+    Write-Host "git 处于游离 HEAD，DOODLE_GIT_BRANCH=$($env:DOODLE_GIT_BRANCH)" -ForegroundColor Yellow
+  } else {
+    $env:DOODLE_GIT_BRANCH = $GitBranch.Trim()
+    Write-Host "DOODLE_GIT_BRANCH=$($env:DOODLE_GIT_BRANCH)" -ForegroundColor Yellow
+  }
+} catch {
+  Write-Warning "无法获取当前 git 分支，DOODLE_GIT_BRANCH 置空：$_"
+  $env:DOODLE_GIT_BRANCH = ''
+}
+
 function Get-ChildProcesses ($ParentProcessId) {
   $filter = "parentprocessid = '$($ParentProcessId)'"
   Get-CIMInstance -ClassName win32_process -filter $filter | Foreach-Object {
