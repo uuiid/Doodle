@@ -224,8 +224,9 @@ TValueOrError<FMetaHumanFaceBakedSet, FMetaHumanFaceSolverError> FMetaHumanFaceR
         UMetaHumanPerformanceExportUtils::GetBoneGlobalTransform(FaceSkeleton, HeadBoneName, HeadBoneInitial);
     if (!bHeadBoneOk)
     {
+        const FString SkeletonName = FaceSkeleton != nullptr ? FaceSkeleton->GetName() : FString(TEXT("none"));
         return MakeUnknownRigError(
-            FString::Printf(TEXT("the face skeleton %s has no head bone"), *FaceSkeleton->GetName())
+            FString::Printf(TEXT("the face skeleton %s has no head bone"), *SkeletonName)
         );
     }
 

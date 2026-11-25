@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FrameAnimationData.h"
 #include "MetaHumanFaceTypes.h"
 
 class UControlRig;
