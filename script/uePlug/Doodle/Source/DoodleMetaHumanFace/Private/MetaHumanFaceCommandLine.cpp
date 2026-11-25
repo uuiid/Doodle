@@ -164,6 +164,18 @@ bool FMetaHumanFaceCommandLine::ParseToken(const FString& InToken, TArray<FStrin
         return true;
     }
 
+    if (Key.Equals(TEXT("CtrlRig"), ESearchCase::IgnoreCase))
+    {
+        Request.CtrlRigAsset = Value;
+        return true;
+    }
+
+    if (Key.Equals(TEXT("FaceSkeleton"), ESearchCase::IgnoreCase))
+    {
+        Request.FaceSkeletonAsset = Value;
+        return true;
+    }
+
     if (Key.Equals(TEXT("PackagePath"), ESearchCase::IgnoreCase))
     {
         Request.AssetPackagePath = Value;

@@ -4,6 +4,7 @@
 #include "MetaHumanFaceTypes.h"
 
 class UFootageCaptureData;
+struct FFrameAnimationData;
 
 class FMetaHumanFaceSolver
 {
@@ -25,6 +26,7 @@ class FMetaHumanFaceSolver
     );
     EMetaHumanFaceProcessState PollRun();
     TValueOrError<FMetaHumanFaceSolverResult, FMetaHumanFaceSolverError> CollectCurveSet() const;
+    TValueOrError<TArray<FFrameAnimationData>, FMetaHumanFaceSolverError> CollectAnimationData();
     bool IsProcessing() const;
     void Cancel();
 

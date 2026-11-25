@@ -11,6 +11,7 @@ enum class EMetaHumanFaceStage : uint8
     Queued,
     Building,
     Solving,
+    Baking,
     Exporting,
     Done,
     Failed
@@ -43,6 +44,8 @@ struct FMetaHumanFaceJobRequest
     FString OutDir;
     FString AssetPackagePath;
     FString CaptureDataOuter;
+    FString CtrlRigAsset;
+    FString FaceSkeletonAsset;
     uint32 FpsNum = 25;
     uint32 FpsDen = 1;
     bool bHeadStabilize = true;
@@ -135,6 +138,8 @@ enum class EMetaHumanFaceSolverErrorCode : uint8
     ProcessingFailed,
     NoAnimationData,
     CurveSetMismatch,
+    RigAssetMissing,
+    RigBakeFailed,
     Cancelled,
     TimedOut
 };
@@ -156,6 +161,26 @@ struct FMetaHumanFaceSolverResult
 {
     TArray<FString> CurveNames;
     TArray<float> Values;
+    TArray<FTransform> RootPoses;
+    TArray<FMetaHumanFaceFrameRange> DroppedFrameRanges;
+    int32 FirstFrame = 0;
+    int32 FrameCount = 0;
+    uint32 FpsNum = 25;
+    uint32 FpsDen = 1;
+};
+
+struct FMetaHumanFaceControllerChannel
+{
+    FString ChannelName;
+    FString ControlName;
+    FString ChannelField;
+    int32 Axis = 0;
+    TArray<float> Values;
+};
+
+struct FMetaHumanFaceBakedSet
+{
+    TArray<FMetaHumanFaceControllerChannel> Channels;
     TArray<FTransform> RootPoses;
     TArray<FMetaHumanFaceFrameRange> DroppedFrameRanges;
     int32 FirstFrame = 0;

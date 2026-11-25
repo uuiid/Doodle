@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
 
@@ -35,6 +35,9 @@ public class DoodleMetaHumanFace : ModuleRules
             new string[]
             {
                 "MetaHumanPerformance",
+                "ControlRig",
+                "ControlRigDeveloper",
+                "RigVMDeveloper",
                 "MetaHumanCore",
                 "NNE",
                 "RHI",

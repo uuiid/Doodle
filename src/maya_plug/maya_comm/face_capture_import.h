@@ -1,7 +1,3 @@
-//
-// Created by TD on 2026/11/16.
-//
-
 #pragma once
 
 #include <maya_plug/main/maya_plug_fwd.h>

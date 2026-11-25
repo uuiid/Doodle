@@ -14,6 +14,6 @@ class FMetaHumanFaceCurveWriter
     FMetaHumanFaceCurveWriter& operator=(FMetaHumanFaceCurveWriter&&) = delete;
 
     FMetaHumanFaceJobResult Write(
-        const FMetaHumanFaceSolverResult& InResult, const FString& InCurvesPath, const FString& InSummaryPath
+        const FMetaHumanFaceBakedSet& InResult, const FString& InCurvesPath, const FString& InSummaryPath
     ) const;
 };

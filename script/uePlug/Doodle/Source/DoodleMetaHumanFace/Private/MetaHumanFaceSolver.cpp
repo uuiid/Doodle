@@ -1,9 +1,12 @@
 #include "MetaHumanFaceSolver.h"
 
 #include "CaptureData.h"
+#include "ControlRigBlueprintLegacy.h"
+#include "Engine/SkeletalMesh.h"
 #include "FrameRange.h"
 #include "FrameAnimationData.h"
 #include "ImgMediaSource.h"
+#include "MetaHumanFaceRigBaker.h"
 #include "MetaHumanSupportedRHI.h"
 #include "MetaHumanPerformance.h"
 #include "MetaHumanRealtimeSmoothing.h"
@@ -282,6 +285,31 @@ TValueOrError<FMetaHumanFaceBuiltPerformance, FMetaHumanFaceSolverError> FMetaHu
     Performance->bSkipTongueSolve = InRequest.bSkipTongueSolve;
     Performance->bHeadStabilization = InRequest.bHeadStabilize;
     Performance->HeadMovementMode = EPerformanceHeadMovementMode::TransformTrack;
+
+    {
+        const FString CtrlRigAsset =
+            InRequest.CtrlRigAsset.IsEmpty() ? FMetaHumanFaceRigBaker::DefaultCtrlRigAssets()[0] : InRequest.CtrlRigAsset;
+
+        UControlRigBlueprint* RigBlueprint = LoadObject<UControlRigBlueprint>(
+            nullptr, *(CtrlRigAsset + TEXT(".") + FPackageName::GetShortName(CtrlRigAsset))
+        );
+        if (RigBlueprint != nullptr)
+        {
+            Performance->ControlRigClass = RigBlueprint->GetRigVMBlueprintGeneratedClass();
+        }
+
+        const FString SkeletonAsset = InRequest.FaceSkeletonAsset.IsEmpty()
+                                          ? FMetaHumanFaceRigBaker::DefaultSkeletonAssets()[0]
+                                          : InRequest.FaceSkeletonAsset;
+
+        USkeletalMesh* SkeletonMeshAsset = LoadObject<USkeletalMesh>(
+            nullptr, *(SkeletonAsset + TEXT(".") + FPackageName::GetShortName(SkeletonAsset))
+        );
+        if (SkeletonMeshAsset != nullptr)
+        {
+            Performance->VisualizationMesh = SkeletonMeshAsset;
+        }
+    }
 
     if (Performance->MonoSmoothingParams == nullptr)
     {
@@ -622,6 +650,72 @@ TValueOrError<FMetaHumanFaceSolverResult, FMetaHumanFaceSolverError> FMetaHumanF
     }
 
     return MakeValue(MoveTemp(Result));
+}
+
+TValueOrError<TArray<FFrameAnimationData>, FMetaHumanFaceSolverError> FMetaHumanFaceSolver::CollectAnimationData() {
+    UMetaHumanPerformance* Performance = Impl->Performance.Get();
+    if (Performance == nullptr)
+    {
+        return MakeSolverError<TArray<FFrameAnimationData>>(
+            EMetaHumanFaceSolverErrorCode::NoAnimationData, TEXT("performance has not been created")
+        );
+    }
+
+    if (!Impl->bRunFinished || Impl->ExitStatus != UE::MetaHuman::Pipeline::EPipelineExitStatus::Ok)
+    {
+        return MakeSolverError<TArray<FFrameAnimationData>>(
+            EMetaHumanFaceSolverErrorCode::ProcessingFailed,
+            FString::Printf(
+                TEXT("the run has not finished successfully (exit status %d)"), static_cast<int32>(Impl->ExitStatus)
+            )
+        );
+    }
+
+    if (!Performance->ContainsAnimationData() || Performance->GetNumberOfProcessedFrames() == 0)
+    {
+        return MakeSolverError<TArray<FFrameAnimationData>>(
+            EMetaHumanFaceSolverErrorCode::NoAnimationData, TEXT("the performance produced no animation data")
+        );
+    }
+
+    const TArray<FFrameAnimationData> AnimationData = Performance->GetAnimationData(0, -1);
+
+    const TRange<FFrameNumber>& ProcessingLimit = Performance->GetProcessingLimitFrameRange();
+    const int32 LimitLower = ProcessingLimit.GetLowerBoundValue().Value;
+    const int32 LimitUpper = ProcessingLimit.GetUpperBoundValue().Value;
+
+    if (AnimationData.Num() < LimitUpper - LimitLower)
+    {
+        return MakeSolverError<TArray<FFrameAnimationData>>(
+            EMetaHumanFaceSolverErrorCode::NoAnimationData,
+            FString::Printf(
+                TEXT("animation data holds %d frames but the processing range needs %d frames"), AnimationData.Num(),
+                LimitUpper - LimitLower
+            )
+        );
+    }
+
+    const int32 BeginFrame = FMath::Max(Impl->FirstFrame, LimitLower);
+    const int32 EndFrame = FMath::Min(Impl->FirstFrame + Impl->FrameCount, LimitUpper);
+
+    if (BeginFrame >= EndFrame)
+    {
+        return MakeSolverError<TArray<FFrameAnimationData>>(
+            EMetaHumanFaceSolverErrorCode::NoAnimationData, TEXT("the processed frame range is empty")
+        );
+    }
+
+    TArray<FFrameAnimationData> Sliced;
+    Sliced.Reserve(EndFrame - BeginFrame);
+    for (int32 Frame = BeginFrame; Frame < EndFrame; ++Frame)
+    {
+        Sliced.Add(AnimationData[Frame - LimitLower]);
+    }
+
+    Impl->FirstFrame = BeginFrame;
+    Impl->FrameCount = EndFrame - BeginFrame;
+
+    return MakeValue(MoveTemp(Sliced));
 }
 
 bool FMetaHumanFaceSolver::IsProcessing() const {

@@ -9,6 +9,7 @@
 #include "MetaHumanFaceCaptureDataBuilder.h"
 #include "MetaHumanFaceCommandLine.h"
 #include "MetaHumanFaceCurveWriter.h"
+#include "MetaHumanFaceRigBaker.h"
 #include "MetaHumanFaceSolver.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -30,6 +31,8 @@ const TCHAR* StageToString(const EMetaHumanFaceStage InStage) {
         return TEXT("Building");
     case EMetaHumanFaceStage::Solving:
         return TEXT("Solving");
+    case EMetaHumanFaceStage::Baking:
+        return TEXT("Baking");
     case EMetaHumanFaceStage::Exporting:
         return TEXT("Exporting");
     case EMetaHumanFaceStage::Done:
@@ -118,6 +121,9 @@ EMetaHumanFaceErrorCode SolverErrorToJobError(const EMetaHumanFaceSolverErrorCod
         return EMetaHumanFaceErrorCode::NoAnimationData;
     case EMetaHumanFaceSolverErrorCode::CurveSetMismatch:
         return EMetaHumanFaceErrorCode::CurveSetMismatch;
+    case EMetaHumanFaceSolverErrorCode::RigAssetMissing:
+    case EMetaHumanFaceSolverErrorCode::RigBakeFailed:
+        return EMetaHumanFaceErrorCode::ProcessingFailed;
     case EMetaHumanFaceSolverErrorCode::Cancelled:
         return EMetaHumanFaceErrorCode::Cancelled;
     case EMetaHumanFaceSolverErrorCode::TimedOut:
@@ -398,12 +404,63 @@ FMetaHumanFaceJobResult UMetaHumanFaceCommandlet::Run(const FMetaHumanFaceJobReq
         Solved = MakeValue(MoveTemp(SolvedResult));
     }
 
+    Result.Stage = EMetaHumanFaceStage::Baking;
+
+    FMetaHumanFaceBakedSet BakedSet;
+    {
+        const TValueOrError<TArray<FFrameAnimationData>, FMetaHumanFaceSolverError> Collected =
+            Solver->CollectAnimationData();
+        if (Collected.HasError())
+        {
+            const FMetaHumanFaceSolverError& Error = Collected.GetError();
+            return MakeStageFailure(EMetaHumanFaceStage::Baking, SolverErrorToJobError(Error.Code), Error.Detail);
+        }
+
+        const TArray<FFrameAnimationData> AnimationData = Collected.GetValue();
+
+        FMetaHumanFaceRigBaker Baker;
+        const FMetaHumanFaceJobResult RigPreflight = Baker.Preflight(InRequest);
+        if (RigPreflight.Code != EMetaHumanFaceErrorCode::None)
+        {
+            FMetaHumanFaceJobResult Failed = RigPreflight;
+            Failed.Stage = EMetaHumanFaceStage::Baking;
+            Failed.DroppedFrameRanges = Solved.GetValue().DroppedFrameRanges;
+            return Failed;
+        }
+
+        FString RigError;
+        if (!Baker.LoadRigForBaking(InRequest.CtrlRigAsset, InRequest.FaceSkeletonAsset, RigError))
+        {
+            FMetaHumanFaceJobResult Failed =
+                MakeStageFailure(EMetaHumanFaceStage::Baking, EMetaHumanFaceErrorCode::MetaHumanModelMissing, RigError);
+            Failed.DroppedFrameRanges = Solved.GetValue().DroppedFrameRanges;
+            return Failed;
+        }
+
+        const FMetaHumanFaceSolverResult& SolvedSet = Solved.GetValue();
+
+        TValueOrError<FMetaHumanFaceBakedSet, FMetaHumanFaceSolverError> Baked = Baker.Bake(
+            AnimationData, SolvedSet.FirstFrame, SolvedSet.FrameCount, SolvedSet.FpsNum, SolvedSet.FpsDen
+        );
+        if (Baked.HasError())
+        {
+            const FMetaHumanFaceSolverError& Error = Baked.GetError();
+            FMetaHumanFaceJobResult Failed =
+                MakeStageFailure(EMetaHumanFaceStage::Baking, SolverErrorToJobError(Error.Code), Error.Detail);
+            Failed.DroppedFrameRanges = SolvedSet.DroppedFrameRanges;
+            return Failed;
+        }
+
+        BakedSet = MoveTemp(Baked.GetValue());
+        BakedSet.DroppedFrameRanges = SolvedSet.DroppedFrameRanges;
+    }
+
     Result.Stage = EMetaHumanFaceStage::Exporting;
 
     const FString CurvesPath = FPaths::Combine(InRequest.OutDir, CurvesFileName);
     const FString SummaryPath = FPaths::Combine(InRequest.OutDir, SummaryFileName);
     const FMetaHumanFaceCurveWriter Writer;
-    const FMetaHumanFaceJobResult Written = Writer.Write(Solved.GetValue(), CurvesPath, SummaryPath);
+    const FMetaHumanFaceJobResult Written = Writer.Write(BakedSet, CurvesPath, SummaryPath);
     if (Written.Code != EMetaHumanFaceErrorCode::None)
     {
         FMetaHumanFaceJobResult Failed = Written;

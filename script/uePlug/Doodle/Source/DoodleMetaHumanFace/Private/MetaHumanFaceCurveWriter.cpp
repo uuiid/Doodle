@@ -13,7 +13,7 @@ namespace
 {
 const TCHAR* const CurvesMagic = TEXT("DHFC0001");
 constexpr uint32 CurvesVersion = 1;
-constexpr uint32 CurvesFlags = 2;
+constexpr uint32 CurvesFlags = 3;
 constexpr int32 CurveNameLength = 64;
 constexpr int32 CurvesHeaderSize = 48;
 constexpr int32 RootPoseStride = 28;
@@ -38,7 +38,12 @@ FString DescribeCurveNames(const TArray<FString>& InCurveNames, int32 InMaxCount
     return FString::Join(Head, TEXT(", "));
 }
 
-TValueOrError<void, FString> ValidateResult(const FMetaHumanFaceSolverResult& InResult)
+FString ChannelCurveName(const FMetaHumanFaceControllerChannel& InChannel, int32 InAxis)
+{
+    return FString::Printf(TEXT("%s.%s%d"), *InChannel.ControlName, *InChannel.ChannelField, InAxis);
+}
+
+TValueOrError<void, FString> ValidateResult(const FMetaHumanFaceBakedSet& InResult)
 {
     if (InResult.FpsNum == 0 || InResult.FpsDen == 0)
     {
@@ -50,54 +55,28 @@ TValueOrError<void, FString> ValidateResult(const FMetaHumanFaceSolverResult& In
         return MakeError(FString::Printf(TEXT("frame count must be positive, got %d"), InResult.FrameCount));
     }
 
-    if (InResult.CurveNames.IsEmpty())
+    if (InResult.Channels.IsEmpty())
     {
-        return MakeError(TEXT("curve names are empty"));
+        return MakeError(TEXT("controller channels are empty"));
     }
 
     TArray<FString> InvalidNames;
     TSet<FString> UniqueNames;
-    for (const FString& CurveName : InResult.CurveNames)
+    for (const FMetaHumanFaceControllerChannel& Channel : InResult.Channels)
     {
-        if (CurveName.IsEmpty() || CurveName.Len() >= CurveNameLength)
+        if (Channel.ControlName.IsEmpty() || Channel.ChannelField.IsEmpty())
         {
-            InvalidNames.Add(CurveName);
+            InvalidNames.Add(Channel.ControlName + TEXT(".") + Channel.ChannelField);
             continue;
         }
 
-        if (UniqueNames.Contains(CurveName))
+        if (Channel.Values.Num() != InResult.FrameCount)
         {
-            InvalidNames.Add(CurveName);
-            continue;
+            return MakeError(FString::Printf(
+                TEXT("controller channel %s.%s holds %d values but the frame count is %d"), *Channel.ControlName,
+                *Channel.ChannelField, Channel.Values.Num(), InResult.FrameCount
+            ));
         }
-
-        UniqueNames.Add(CurveName);
-
-        for (const TCHAR Character : CurveName)
-        {
-            if (Character < 0x20 || Character > 0x7E)
-            {
-                InvalidNames.Add(CurveName);
-                break;
-            }
-        }
-    }
-
-    if (!InvalidNames.IsEmpty())
-    {
-        return MakeError(FString::Printf(
-            TEXT("invalid curve names (empty, duplicated, longer than %d bytes or not printable ascii): %s"),
-            CurveNameLength - 1, *DescribeCurveNames(InvalidNames, 3)
-        ));
-    }
-
-    const int64 ExpectedValues = static_cast<int64>(InResult.FrameCount) * InResult.CurveNames.Num();
-    if (InResult.Values.Num() != ExpectedValues)
-    {
-        return MakeError(FString::Printf(
-            TEXT("curve values do not match the frame layout: expected %lld, got %d"), ExpectedValues,
-            InResult.Values.Num()
-        ));
     }
 
     if (InResult.RootPoses.Num() != InResult.FrameCount)
@@ -128,12 +107,12 @@ void AppendMagic(TArray<uint8>& InOutBytes) {
     InOutBytes.Append(Magic, 8);
 }
 
-void AppendHeader(TArray<uint8>& InOutBytes, const FMetaHumanFaceSolverResult& InResult) {
+void AppendHeader(TArray<uint8>& InOutBytes, const FMetaHumanFaceBakedSet& InResult, int32 InCurveCount) {
     AppendMagic(InOutBytes);
     AppendUInt32(InOutBytes, CurvesVersion);
     AppendUInt32(InOutBytes, CurvesFlags);
     AppendUInt32(InOutBytes, static_cast<uint32>(InResult.FrameCount));
-    AppendUInt32(InOutBytes, static_cast<uint32>(InResult.CurveNames.Num()));
+    AppendUInt32(InOutBytes, static_cast<uint32>(InCurveCount));
     AppendUInt32(InOutBytes, InResult.FpsNum);
     AppendUInt32(InOutBytes, InResult.FpsDen);
     AppendFloat(
@@ -193,7 +172,7 @@ bool ReadHeaderField(const TArray<uint8>& InBytes, int32 InOffset, uint32& OutVa
 }
 
 TValueOrError<void, FString> VerifyWrittenHeader(
-    const TArray<uint8>& InBytes, const FMetaHumanFaceSolverResult& InResult, int64 InExpectedSize
+    const TArray<uint8>& InBytes, const FMetaHumanFaceBakedSet& InResult, int32 InCurveCount, int64 InExpectedSize
 ) {
     if (InBytes.Num() != InExpectedSize)
     {
@@ -212,7 +191,7 @@ TValueOrError<void, FString> VerifyWrittenHeader(
         {8, CurvesVersion},
         {12, CurvesFlags},
         {16, static_cast<uint32>(InResult.FrameCount)},
-        {20, static_cast<uint32>(InResult.CurveNames.Num())},
+        {20, static_cast<uint32>(InCurveCount)},
         {24, InResult.FpsNum},
         {28, InResult.FpsDen},
     };
@@ -237,13 +216,36 @@ TValueOrError<void, FString> VerifyWrittenHeader(
     return MakeValue();
 }
 
-FString MakeSummaryJson(const FMetaHumanFaceSolverResult& InResult) {
+TArray<FString> BuildCurveNames(const FMetaHumanFaceBakedSet& InResult) {
+    TArray<FString> Names;
+    Names.Reserve(InResult.Channels.Num());
+    for (const FMetaHumanFaceControllerChannel& Channel : InResult.Channels)
+    {
+        Names.Add(Channel.ChannelName);
+    }
+    return Names;
+}
+
+TArray<float> FlattenValues(const FMetaHumanFaceBakedSet& InResult) {
+    TArray<float> Values;
+    Values.Reserve(static_cast<int64>(InResult.FrameCount) * InResult.Channels.Num());
+    for (int32 FrameIndex = 0; FrameIndex < InResult.FrameCount; ++FrameIndex)
+    {
+        for (const FMetaHumanFaceControllerChannel& Channel : InResult.Channels)
+        {
+            Values.Add(Channel.Values[FrameIndex]);
+        }
+    }
+    return Values;
+}
+
+FString MakeSummaryJson(const FMetaHumanFaceBakedSet& InResult, const TArray<FString>& InCurveNames) {
     const TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
     Root->SetStringField(TEXT("magic"), CurvesMagic);
     Root->SetNumberField(TEXT("version"), static_cast<int32>(CurvesVersion));
     Root->SetNumberField(TEXT("flags"), static_cast<int32>(CurvesFlags));
     Root->SetNumberField(TEXT("frame_count"), InResult.FrameCount);
-    Root->SetNumberField(TEXT("curve_count"), InResult.CurveNames.Num());
+    Root->SetNumberField(TEXT("curve_count"), InCurveNames.Num());
     Root->SetStringField(TEXT("fps"), FString::Printf(TEXT("%u/%u"), InResult.FpsNum, InResult.FpsDen));
     Root->SetNumberField(TEXT("start_frame"), InResult.FirstFrame);
     Root->SetNumberField(
@@ -268,17 +270,17 @@ FString MakeSummaryJson(const FMetaHumanFaceSolverResult& InResult) {
     Root->SetArrayField(TEXT("dropped_frame_ranges"), DroppedValues);
 
     TArray<TSharedPtr<FJsonValue>> CurveValues;
-    for (int32 CurveIndex = 0; CurveIndex < InResult.CurveNames.Num(); ++CurveIndex)
+    for (int32 CurveIndex = 0; CurveIndex < InCurveNames.Num(); ++CurveIndex)
     {
+        const FMetaHumanFaceControllerChannel& Channel = InResult.Channels[CurveIndex];
+
         float Minimum = 0.0f;
         float Maximum = 0.0f;
         float First = 0.0f;
         float Last = 0.0f;
-
         for (int32 FrameIndex = 0; FrameIndex < InResult.FrameCount; ++FrameIndex)
         {
-            const float Value = InResult.Values[FrameIndex * InResult.CurveNames.Num() + CurveIndex];
-
+            const float Value = Channel.Values[FrameIndex];
             if (FrameIndex == 0)
             {
                 Minimum = Value;
@@ -290,12 +292,13 @@ FString MakeSummaryJson(const FMetaHumanFaceSolverResult& InResult) {
                 Minimum = FMath::Min(Minimum, Value);
                 Maximum = FMath::Max(Maximum, Value);
             }
-
             Last = Value;
         }
 
         const TSharedRef<FJsonObject> CurveObject = MakeShared<FJsonObject>();
-        CurveObject->SetStringField(TEXT("name"), InResult.CurveNames[CurveIndex]);
+        CurveObject->SetStringField(TEXT("name"), InCurveNames[CurveIndex]);
+        CurveObject->SetStringField(TEXT("control"), Channel.ControlName);
+        CurveObject->SetStringField(TEXT("field"), Channel.ChannelField);
         CurveObject->SetNumberField(TEXT("min"), Minimum);
         CurveObject->SetNumberField(TEXT("max"), Maximum);
         CurveObject->SetNumberField(TEXT("first"), First);
@@ -323,7 +326,7 @@ FMetaHumanFaceCurveWriter::~FMetaHumanFaceCurveWriter() {
 }
 
 FMetaHumanFaceJobResult FMetaHumanFaceCurveWriter::Write(
-    const FMetaHumanFaceSolverResult& InResult, const FString& InCurvesPath, const FString& InSummaryPath
+    const FMetaHumanFaceBakedSet& InResult, const FString& InCurvesPath, const FString& InSummaryPath
 ) const {
     const TValueOrError<void, FString> Validation = ValidateResult(InResult);
     if (Validation.HasError())
@@ -336,9 +339,11 @@ FMetaHumanFaceJobResult FMetaHumanFaceCurveWriter::Write(
         return MakeWriteFailure(EMetaHumanFaceErrorCode::InvalidRequest, TEXT("output paths are empty"));
     }
 
+    const TArray<FString> CurveNames = BuildCurveNames(InResult);
+    const TArray<float> Values = FlattenValues(InResult);
+
     const FString CurvesDirectory = FPaths::GetPath(InCurvesPath);
-    if (!CurvesDirectory.IsEmpty() &&
-        !IFileManager::Get().MakeDirectory(*CurvesDirectory, true))
+    if (!CurvesDirectory.IsEmpty() && !IFileManager::Get().MakeDirectory(*CurvesDirectory, true))
     {
         return MakeWriteFailure(
             EMetaHumanFaceErrorCode::FileSystemFailed,
@@ -347,8 +352,7 @@ FMetaHumanFaceJobResult FMetaHumanFaceCurveWriter::Write(
     }
 
     const FString SummaryDirectory = FPaths::GetPath(InSummaryPath);
-    if (!SummaryDirectory.IsEmpty() &&
-        !IFileManager::Get().MakeDirectory(*SummaryDirectory, true))
+    if (!SummaryDirectory.IsEmpty() && !IFileManager::Get().MakeDirectory(*SummaryDirectory, true))
     {
         return MakeWriteFailure(
             EMetaHumanFaceErrorCode::FileSystemFailed,
@@ -357,15 +361,14 @@ FMetaHumanFaceJobResult FMetaHumanFaceCurveWriter::Write(
     }
 
     TArray<uint8> Bytes;
-    const int64 ExpectedSize = CurvesHeaderSize +
-                               static_cast<int64>(CurveNameLength) * InResult.CurveNames.Num() +
-                               static_cast<int64>(sizeof(float)) * InResult.Values.Num() +
+    const int64 ExpectedSize = CurvesHeaderSize + static_cast<int64>(CurveNameLength) * CurveNames.Num() +
+                               static_cast<int64>(sizeof(float)) * Values.Num() +
                                static_cast<int64>(RootPoseStride) * InResult.RootPoses.Num();
     Bytes.Reserve(ExpectedSize);
 
-    AppendHeader(Bytes, InResult);
-    AppendCurveNames(Bytes, InResult.CurveNames);
-    AppendValues(Bytes, InResult.Values);
+    AppendHeader(Bytes, InResult, CurveNames.Num());
+    AppendCurveNames(Bytes, CurveNames);
+    AppendValues(Bytes, Values);
     AppendRootPoses(Bytes, InResult.RootPoses);
 
     if (!FFileHelper::SaveArrayToFile(Bytes, *InCurvesPath))
@@ -385,14 +388,15 @@ FMetaHumanFaceJobResult FMetaHumanFaceCurveWriter::Write(
         );
     }
 
-    const TValueOrError<void, FString> Verification = VerifyWrittenHeader(WrittenBytes, InResult, ExpectedSize);
+    const TValueOrError<void, FString> Verification =
+        VerifyWrittenHeader(WrittenBytes, InResult, CurveNames.Num(), ExpectedSize);
     if (Verification.HasError())
     {
         IFileManager::Get().Delete(*InCurvesPath, false, true, true);
         return MakeWriteFailure(EMetaHumanFaceErrorCode::FileSystemFailed, Verification.GetError());
     }
 
-    const FString SummaryJson = MakeSummaryJson(InResult);
+    const FString SummaryJson = MakeSummaryJson(InResult, CurveNames);
     if (SummaryJson.IsEmpty())
     {
         IFileManager::Get().Delete(*InCurvesPath, false, true, true);
@@ -413,7 +417,7 @@ FMetaHumanFaceJobResult FMetaHumanFaceCurveWriter::Write(
     Result.CurvesPath = InCurvesPath;
     Result.SummaryPath = InSummaryPath;
     Result.FrameCount = InResult.FrameCount;
-    Result.CurveCount = InResult.CurveNames.Num();
+    Result.CurveCount = CurveNames.Num();
     Result.DroppedFrameRanges = InResult.DroppedFrameRanges;
     return Result;
 }
