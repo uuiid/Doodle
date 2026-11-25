@@ -6,6 +6,7 @@
 #include "Misc/DateTime.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "MetaHumanFaceAudioImporter.h"
 #include "MetaHumanFaceCaptureDataBuilder.h"
 #include "MetaHumanFaceCommandLine.h"
 #include "MetaHumanFaceCurveWriter.h"
@@ -261,7 +262,24 @@ int32 UMetaHumanFaceCommandlet::Main(const FString& Params) {
 FMetaHumanFaceJobResult UMetaHumanFaceCommandlet::Run(const FMetaHumanFaceJobRequest& InRequest) {
     const FMetaHumanFaceCaptureDataBuilder Builder;
 
-    FMetaHumanFaceJobResult Validated = Builder.Validate(InRequest);
+    FMetaHumanFaceJobRequest EffectiveRequest = InRequest;
+
+    if (!InRequest.VideoFile.IsEmpty() && InRequest.AudioFile.IsEmpty())
+    {
+        const FString WavFile = FPaths::Combine(InRequest.OutDir, TEXT("face_capture_audio.wav"));
+        FString ExtractError;
+        if (!FMetaHumanFaceAudioImporter::ExtractAudioFromVideo(InRequest.VideoFile, WavFile, ExtractError))
+        {
+            return MakeStageFailure(
+                EMetaHumanFaceStage::Building, EMetaHumanFaceErrorCode::InvalidRequest, ExtractError
+            );
+        }
+
+        UE_LOG(LogDoodleMetaHumanFaceCommandlet, Display, TEXT("extracted audio to %s"), *WavFile);
+        EffectiveRequest.AudioFile = WavFile;
+    }
+
+    FMetaHumanFaceJobResult Validated = Builder.Validate(EffectiveRequest);
     if (Validated.Code != EMetaHumanFaceErrorCode::None)
     {
         return Validated;
@@ -275,9 +293,9 @@ FMetaHumanFaceJobResult UMetaHumanFaceCommandlet::Run(const FMetaHumanFaceJobReq
     }
 
     Validated.Stage = EMetaHumanFaceStage::Building;
-    UE_LOG(LogDoodleMetaHumanFaceCommandlet, Display, TEXT("building capture data from %s"), *InRequest.FramesDir);
+    UE_LOG(LogDoodleMetaHumanFaceCommandlet, Display, TEXT("building capture data from %s"), *EffectiveRequest.FramesDir);
 
-    TValueOrError<FMetaHumanFaceBuiltCaptureData, FMetaHumanFaceBuildError> Built = Builder.Build(InRequest);
+    TValueOrError<FMetaHumanFaceBuiltCaptureData, FMetaHumanFaceBuildError> Built = Builder.Build(EffectiveRequest);
     if (Built.HasError())
     {
         const FMetaHumanFaceBuildError& Error = Built.GetError();
@@ -429,7 +447,7 @@ FMetaHumanFaceJobResult UMetaHumanFaceCommandlet::Run(const FMetaHumanFaceJobReq
         }
 
         FString RigError;
-        if (!Baker.LoadRigForBaking(InRequest.CtrlRigAsset, InRequest.FaceSkeletonAsset, RigError))
+        if (!Baker.LoadRigForBaking(EffectiveRequest.CtrlRigAsset, EffectiveRequest.FaceSkeletonAsset, RigError))
         {
             FMetaHumanFaceJobResult Failed =
                 MakeStageFailure(EMetaHumanFaceStage::Baking, EMetaHumanFaceErrorCode::MetaHumanModelMissing, RigError);
@@ -457,8 +475,8 @@ FMetaHumanFaceJobResult UMetaHumanFaceCommandlet::Run(const FMetaHumanFaceJobReq
 
     Result.Stage = EMetaHumanFaceStage::Exporting;
 
-    const FString CurvesPath = FPaths::Combine(InRequest.OutDir, CurvesFileName);
-    const FString SummaryPath = FPaths::Combine(InRequest.OutDir, SummaryFileName);
+    const FString CurvesPath = FPaths::Combine(EffectiveRequest.OutDir, CurvesFileName);
+    const FString SummaryPath = FPaths::Combine(EffectiveRequest.OutDir, SummaryFileName);
     const FMetaHumanFaceCurveWriter Writer;
     const FMetaHumanFaceJobResult Written = Writer.Write(BakedSet, CurvesPath, SummaryPath);
     if (Written.Code != EMetaHumanFaceErrorCode::None)

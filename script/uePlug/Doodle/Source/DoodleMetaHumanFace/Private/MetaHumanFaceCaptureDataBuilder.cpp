@@ -1,5 +1,7 @@
 #include "MetaHumanFaceCaptureDataBuilder.h"
 
+#include "MetaHumanFaceAudioImporter.h"
+
 #include "CaptureData.h"
 #include "FrameRange.h"
 #include "IImageWrapper.h"
@@ -427,6 +429,31 @@ FMetaHumanFaceCaptureDataBuilder::BuildWithTimecode(
     CaptureData->AudioTracks.Reset();
     CaptureData->CameraCalibrations.Reset();
     CaptureData->ImageSequences.Add(ImageSource);
+
+    if (!InRequest.AudioFile.IsEmpty())
+    {
+        FMetaHumanFaceAudioImporter AudioImporter;
+        FString AudioError;
+        USoundWave* AudioTrack = AudioImporter.ImportWav(
+            InRequest.AudioFile,
+            TEXT("/Temp/DoodleFaceCapture"),
+            static_cast<double>(InStartTimecode.Frames) /
+                (InRequest.FpsNum != 0 ? static_cast<double>(InRequest.FpsNum) : 25.0),
+            AudioError
+        );
+        if (AudioTrack == nullptr)
+        {
+            return MakeBuildError(
+                EMetaHumanFaceBuildErrorCode::CaptureDataBuildFailed, AudioError, InScan.Gaps
+            );
+        }
+
+        if (CaptureData->AudioTracks.IsEmpty())
+        {
+            CaptureData->AudioTracks.Add(AudioTrack);
+        }
+    }
+
     CaptureData->CaptureExcludedFrames = ToCaptureExcludedFrames(InScan.Gaps);
     CaptureData->Metadata.FrameRate = InRequest.FpsDen != 0
                                           ? static_cast<double>(InRequest.FpsNum) / static_cast<double>(InRequest.FpsDen)

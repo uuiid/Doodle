@@ -19,6 +19,8 @@
 #include "RHI.h"
 #include "UObject/Package.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogDoodleMetaHumanFaceSolver, Log, All);
+
 namespace
 {
     const TCHAR* const SettingsSection = TEXT("/Script/DoodleMetaHumanFace.DoodleMetaHumanFaceSettings");
@@ -285,6 +287,10 @@ TValueOrError<FMetaHumanFaceBuiltPerformance, FMetaHumanFaceSolverError> FMetaHu
     Performance->bSkipTongueSolve = InRequest.bSkipTongueSolve;
     Performance->bHeadStabilization = InRequest.bHeadStabilize;
     Performance->HeadMovementMode = EPerformanceHeadMovementMode::TransformTrack;
+    UE_LOG(
+        LogDoodleMetaHumanFaceSolver, Display, TEXT("diag: bSkipTongueSolve=%d bHeadStabilization=%d"),
+        Performance->bSkipTongueSolve ? 1 : 0, Performance->bHeadStabilization ? 1 : 0
+    );
 
     {
         const FString CtrlRigAsset =

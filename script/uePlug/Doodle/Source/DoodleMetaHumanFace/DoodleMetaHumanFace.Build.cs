@@ -54,6 +54,7 @@ public class DoodleMetaHumanFace : ModuleRules
                 "Json",
                 "UnrealEd",
                 "AssetRegistry",
+                "AssetTools",
             }
             );
 
