@@ -22,6 +22,6 @@
       config:
         repoRoot: E:\Doodle
         engineRoot: E:\UnrealEngine
-        projectFile: E:\ue_main\ue_main.uproject
+        projectFile: E:\Doodle\build\ue_main\ue_main.uproject
         defaultTarget: UnrealEditor
 
