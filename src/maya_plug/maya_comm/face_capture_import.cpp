@@ -217,7 +217,7 @@ bool check_gui_has_input(MObject in_node_object, const std::string& in_attr_name
 MSyntax face_capture_import_syntax() {
   MSyntax l_syntax{};
   CHECK_MSTATUS(l_syntax.addFlag("-fp", "-file_path", MSyntax::kString));
-  CHECK_MSTATUS(l_syntax.setObjectType(MSyntax::kSelectionList, 1, 1));
+  CHECK_MSTATUS(l_syntax.setObjectType(MSyntax::kSelectionList, 1));
   l_syntax.useSelectionAsDefault(true);
   return l_syntax;
 }
@@ -533,7 +533,7 @@ MStatus face_capture_import::get_arg(const MArgList& in_arg) {
 
   MSelectionList l_selection{};
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_arg_data.getObjects(l_selection));
-  if (l_selection.length() != 1) return display_error("节点参数数量不是 1 (当前 {})", l_selection.length()), MS::kFailure;
+  if (l_selection.length() == 0) return display_error("未选择导入目标节点"), MS::kFailure;
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_selection.getDagPath(0, p_i->node_path_));
 
   return MS::kSuccess;
