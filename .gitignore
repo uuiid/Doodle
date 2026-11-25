@@ -98,3 +98,6 @@ UnrealEngine
 # pnpm workspace（插件之间的本地依赖链接，见 package.json / pnpm-workspace.yaml）
 node_modules/
 /dsh_plug/pnpm-lock.yaml
+
+# UE 插件内容资源（不再纳入版本控制）
+script/uePlug/Doodle/Content/
