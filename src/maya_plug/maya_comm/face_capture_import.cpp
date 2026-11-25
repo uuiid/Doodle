@@ -121,9 +121,33 @@ std::optional<face_capture_channel_t> parse_channel_name(const std::string& in_n
   const auto l_dot = in_name.rfind('.');
   if (l_dot == std::string::npos || l_dot == 0 || l_dot + 1 >= in_name.size()) return std::nullopt;
 
+  const std::string l_field = in_name.substr(l_dot + 1);
+  std::string l_attr{};
+
+  if (l_field == "float") {
+    l_attr = "translateY";
+  } else if (l_field.rfind("vector2d", 0) == 0) {
+    const std::string l_axis = l_field.substr(8);
+    if (l_axis == "0") {
+      l_attr = "translateX";
+    } else if (l_axis == "1") {
+      l_attr = "translateY";
+    } else {
+      return std::nullopt;
+    }
+  } else if (l_field == "position0" || l_field == "rotator0" || l_field == "scale0") {
+    l_attr = "translateX";
+  } else if (l_field == "position1" || l_field == "rotator1" || l_field == "scale1") {
+    l_attr = "translateY";
+  } else if (l_field == "position2" || l_field == "rotator2" || l_field == "scale2") {
+    l_attr = "translateZ";
+  } else {
+    return std::nullopt;
+  }
+
   face_capture_channel_t l_channel{};
   l_channel.node_name_ = in_name.substr(0, l_dot);
-  l_channel.attr_name_ = in_name.substr(l_dot + 1);
+  l_channel.attr_name_ = l_attr;
   return l_channel;
 }
 
