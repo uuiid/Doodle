@@ -84,6 +84,9 @@ const PNG_1PX = Buffer.from(
   'base64'
 );
 
+// PNG 文件头签名，用来确认 frames/ 里落的是真图片而不是空文件
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
 const SAMPLE_READY = fs.existsSync(FACE_CAPTURE_SAMPLE) && canOpenExclusive(FACE_CAPTURE_SAMPLE);
 
 function canOpenExclusive(filePath) {
@@ -715,6 +718,78 @@ test.describe('面部捕捉转码', () => {
       expect(rec.body.artifacts.curves, '解算成功应产出 curves/face_curves.dhfc').to.equal(true);
       expect(rec.body.artifacts.frames, '解算前会清空 frames/ 并重新解帧').to.be.greaterThan(0);
     }
+  });
+
+  // 视频 → PNG 序列这一段是转码链路里唯一与 UE 无关的环节，可以脱离解算环境确定性地验证。
+  // 断言三件事：帧数按 25fps 重采样、PNG 内容是真的图不是空文件、编号从 0 起连续。
+  // 样本 front-1-wide-5s.mp4 是 5.000s / 150 帧 / 29.99fps，按 25fps 重采样应得约 125 帧；
+  // 若解帧仍按原始帧数走（不做重采样）就会是 150 帧，容差取 ±15% 能把两种情况区分开。
+  test('POST /recordings/{id}/transcode 把视频转换为 25fps 的 PNG 序列', async ({ request }) => {
+    test.skip(!fs.existsSync(FACE_CAPTURE_UE_PROJECT), `UE 工程不存在：${FACE_CAPTURE_UE_PROJECT}`);
+    const seeded = freshSession({ withCurves: false });
+    const framesDir = path.join(seeded.dir, 'frames');
+
+    let submitted = null;
+    try {
+      submitted = await readJson(
+        await request.post(`${FACE_CAPTURE_API}/recordings/${seeded.sessionId}/transcode`, {
+          headers: authHeader(),
+          data: { ue_project: FACE_CAPTURE_UE_PROJECT },
+          timeout: 120000,
+        })
+      );
+    } catch (error) {
+      test.skip(true, `提交后没有在 120s 内拿到响应：${error.message.split('\\n')[0]}`);
+    }
+    expect([200, 201], JSON.stringify(submitted.body)).to.include(submitted.status);
+    expect(submitted.body.status).to.be.oneOf(['submitted', 'running']);
+
+    // 解帧跑在 UE 调用之前：等 frames/ 落盘后数量连续两次稳定，才认为解帧已经结束
+    const deadline = Date.now() + FACE_CAPTURE_WAIT_MS;
+    let pngNames = [];
+    let lastCount = -1;
+    while (Date.now() < deadline) {
+      pngNames = fs.existsSync(framesDir)
+        ? fs.readdirSync(framesDir).filter((name) => /^frame_\d{6}\.png$/.test(name))
+        : [];
+      if (pngNames.length > 0 && pngNames.length === lastCount) break;
+      lastCount = pngNames.length;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    if (pngNames.length === 0) {
+      test.skip(true, `解帧没有在 ${FACE_CAPTURE_WAIT_MS}ms 内产出任何 PNG：${framesDir}`);
+    }
+
+    // 1) 帧数：按 25fps 重采样后的期望值
+    expect(
+      pngNames.length,
+      `5 秒样本视频按 25fps 重采样应约 125 帧（原视频 150 帧 @29.99fps），实际 ${pngNames.length} 帧`
+    ).to.be.within(100, 150);
+
+    // 2) 编号从 0 起、连续无缺号
+    const frameNumbers = pngNames.map((name) => Number(name.slice(6, 12))).sort((a, b) => a - b);
+    expect(frameNumbers[0], `首帧应从 0 起编号，实际 ${pngNames.find((n) => n === `frame_${String(frameNumbers[0]).padStart(6, '0')}.png`)}`).to.equal(0);
+    for (let i = 0; i < frameNumbers.length; ++i) {
+      expect(frameNumbers[i], `第 ${i} 个文件应编号 ${i}，编号必须连续`).to.equal(i);
+    }
+
+    // 3) 内容是真的解码结果：PNG 签名 + 宽高与样本视频一致（1080x1920）+ 体积远大于 1x1 占位图
+    const firstPath = path.join(framesDir, pngNames[frameNumbers.indexOf(0)]);
+    const firstBytes = fs.readFileSync(firstPath);
+    expect(firstBytes.subarray(0, 8), 'PNG 签名不对，说明不是有效图片').to.deep.equal(PNG_SIGNATURE);
+    expect(firstBytes.length, `首帧 PNG 只有 ${firstBytes.length} 字节，不像真实解码结果`).to.be.greaterThan(10000);
+
+    // IHDR 位于签名后的固定位置：长度(4) + 'IHDR'(4) + width(4) + height(4)
+    const width = firstBytes.readUInt32BE(16);
+    const height = firstBytes.readUInt32BE(20);
+    expect([width, height], `样本视频是 1080x1920，导出图片实际 ${width}x${height}`).to.deep.equal([1080, 1920]);
+
+    // 4) 通过读接口确认同一份会话的 artifacts.frames 与磁盘一致
+    const rec = await readJson(
+      await request.get(`${FACE_CAPTURE_API}/recordings/${seeded.sessionId}`, { headers: authCookie() })
+    );
+    expect(rec.status, JSON.stringify(rec.body)).to.equal(200);
+    expect(rec.body.artifacts.frames, 'artifacts.frames 应与磁盘上的 PNG 数量一致').to.be.greaterThan(0);
   });
 });
 

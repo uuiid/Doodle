@@ -11,9 +11,23 @@
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 
+#include <avcpp/avconfig.h>
+#include <avcpp/buffersink.h>
+#include <avcpp/buffersrc.h>
+#include <avcpp/codec.h>
+#include <avcpp/codeccontext.h>
+#include <avcpp/ffmpeg.h>
+#include <avcpp/filter.h>
+#include <avcpp/filtercontext.h>
+#include <avcpp/filtergraph.h>
+#include <avcpp/formatcontext.h>
+#include <avcpp/frame.h>
+#include <avcpp/stream.h>
+#include <avcpp/timestamp.h>
+#include <avcpp/videorescaler.h>
+
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
-#include <opencv2/videoio.hpp>
 
 #include <cstdint>
 #include <filesystem>
@@ -49,21 +63,114 @@ bool write_png_frame(const FSys::path& in_dir, std::int32_t in_index, const cv::
   return cv::imwrite((in_dir / l_name).string(), in_image, {cv::IMWRITE_PNG_COMPRESSION, k_png_compression});
 }
 
-std::int32_t decode_to_png(const FSys::path& in_video, const FSys::path& in_frames_dir) {
-  cv::VideoCapture l_capture{in_video.string()};
-  DOODLE_CHICK(l_capture.isOpened(), "无法打开视频文件 {}", in_video.generic_string());
+class fps_resampler {
+ public:
+  explicit fps_resampler(const av::VideoDecoderContext& in_dec_ctx) {
+    auto l_time_base     = in_dec_ctx.timeBase();
+    auto l_sample_aspect = in_dec_ctx.sampleAspectRatio();
+    DOODLE_CHICK(l_sample_aspect != av::Rational{}, "视频的采样宽高比无效");
 
-  std::int32_t l_count = 0;
-  cv::Mat l_frame{};
-  while (l_capture.read(l_frame)) {
-    if (l_frame.empty()) continue;
-    DOODLE_CHICK(
-        write_png_frame(in_frames_dir, l_count, l_frame), "写出第 {} 帧 png 失败, 目录 {}",
-        l_count, in_frames_dir.generic_string()
+    const std::string l_buffer_args = fmt::format(
+        "video_size={}x{}:pix_fmt={}:time_base={}/{}:pixel_aspect={}/{}", in_dec_ctx.width(), in_dec_ctx.height(),
+        static_cast<std::int32_t>(in_dec_ctx.pixelFormat()), l_time_base.getNumerator(),
+        l_time_base.getDenominator(), l_sample_aspect.getNumerator(), l_sample_aspect.getDenominator()
     );
-    ++l_count;
+    graph_.setAutoConvert(AVFILTER_AUTO_CONVERT_ALL);
+
+    buffersrc_ctx_  = graph_.createFilter(av::Filter{"buffer"}, "in", l_buffer_args);
+    buffersink_ctx_ = graph_.createFilter(av::Filter{"buffersink"}, "out", "");
+
+    const av::Filter l_fps_filter{"fps"};
+    DOODLE_CHICK(l_fps_filter, "找不到 ffmpeg 滤镜 fps");
+    auto l_fps_ctx = graph_.allocFilter(l_fps_filter, "fps");
+    l_fps_ctx.init(fmt::format("fps={}", face_capture::k_fps));
+
+    buffersrc_ctx_.link(0, l_fps_ctx, 0);
+    l_fps_ctx.link(0, buffersink_ctx_, 0);
+
+    graph_.config();
+    buffersrc_  = av::BufferSrcFilterContext{buffersrc_ctx_};
+    buffersink_ = av::BufferSinkFilterContext{buffersink_ctx_};
+    rescaler_   = av::VideoRescaler{in_dec_ctx.width(), in_dec_ctx.height(), av::PixelFormat{AV_PIX_FMT_BGR24}};
   }
-  l_capture.release();
+
+  void push(const av::VideoFrame& in_frame) { buffersrc_.writeVideoFrame(in_frame); }
+
+  void flush() { (void)av_buffersrc_add_frame_flags(buffersrc_ctx_.raw(), nullptr, 0); }
+
+  cv::Mat read_bgr() {
+    av::VideoFrame l_frame{};
+    if (!buffersink_.getVideoFrame(l_frame) || !l_frame || !l_frame.isValid()) return {};
+
+    av::VideoFrame l_bgr{av::PixelFormat{AV_PIX_FMT_BGR24}, l_frame.width(), l_frame.height()};
+    rescaler_.rescale(l_bgr, l_frame);
+
+    cv::Mat l_image{
+        l_bgr.height(), l_bgr.width(), CV_8UC3, l_bgr.data(0), static_cast<std::size_t>(l_bgr.raw()->linesize[0])
+    };
+    return l_image.clone();
+  }
+
+ private:
+  av::FilterGraph graph_{};
+  av::FilterContext buffersrc_ctx_{};
+  av::BufferSrcFilterContext buffersrc_{};
+  av::FilterContext buffersink_ctx_{};
+  av::BufferSinkFilterContext buffersink_{};
+  av::VideoRescaler rescaler_{};
+};
+
+std::int32_t decode_to_png(const FSys::path& in_video, const FSys::path& in_frames_dir) {
+  av::FormatContext l_format_ctx{};
+  l_format_ctx.openInput(in_video.string());
+  l_format_ctx.findStreamInfo();
+
+  av::Stream l_video_stream{};
+  for (std::size_t l_i = 0; l_i < l_format_ctx.streamsCount(); ++l_i) {
+    auto l_stream = l_format_ctx.stream(l_i);
+    if (l_stream.isVideo()) {
+      l_video_stream = l_stream;
+      break;
+    }
+  }
+  DOODLE_CHICK(l_video_stream.isValid(), "视频 {} 没有视频流", in_video.generic_string());
+
+  av::Codec l_codec = l_video_stream.codecParameters().decodingCodec();
+  DOODLE_CHICK(!l_codec.isNull(), "视频 {} 找不到解码器", in_video.generic_string());
+  DOODLE_CHICK(l_codec.isDecoder(), "视频 {} 的编解码器不是解码器", in_video.generic_string());
+
+  av::VideoDecoderContext l_dec_ctx{l_video_stream, l_codec};
+  l_dec_ctx.open();
+
+  fps_resampler l_resampler{l_dec_ctx};
+  std::int32_t l_count = 0;
+
+  auto l_write_pending = [&]() {
+    for (auto l_image = l_resampler.read_bgr(); !l_image.empty(); l_image = l_resampler.read_bgr()) {
+      DOODLE_CHICK(
+          write_png_frame(in_frames_dir, l_count, l_image), "写出第 {} 帧 png 失败, 目录 {}", l_count,
+          in_frames_dir.generic_string()
+      );
+      ++l_count;
+    }
+  };
+
+  while (auto l_pkt = l_format_ctx.readPacket()) {
+    if (l_pkt.streamIndex() != l_video_stream.index()) continue;
+    auto l_frame = l_dec_ctx.decode(l_pkt);
+    if (!l_frame) continue;
+    l_resampler.push(l_frame);
+    l_write_pending();
+  }
+
+  while (auto l_frame = l_dec_ctx.decode({})) {
+    l_resampler.push(l_frame);
+    l_write_pending();
+  }
+
+  l_resampler.flush();
+  l_write_pending();
+
   return l_count;
 }
 
