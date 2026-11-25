@@ -20,6 +20,9 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
 - **HTTP 处理器的声明与实现必须用宏**，见 §4。手写完整签名是禁止的。
 - **没有明确说明，不写注释。** 代码里默认不出现任何注释；只有任务中明确要求写注释时才写。
 - **不修旁支。** 只做请求范围内的改动；顺手发现的其它缺陷先报告，由用户决定改不改。
+- **出现权限问题时不允许绕过，直接停止并询问用户。** 无论 UE、CMake 还是其他工具/文件操作，一旦报权限不足、拒绝访问、
+  沙箱拒绝、无法写入、无法创建等权限类错误：**就地停止**，不要换 shell、不要改用别的命令行绕过、不要自行提权或改路径重试，
+  把完整错误与上下文报告给用户，由用户决定如何处理。
 - **临时文件一律落在工作区根目录的 `build/` 下，不要写到工作区外面。** 脚本、导出的 json/csv、调试 dump、抓下来的日志、
   一次性的中间产物，统统放 `build/`（按用途再分子目录）；**不要**往系统临时目录、盘符根、`..\` 上级目录或桌面写。
   `build/` 已是既有临时产物集中地，且不在版本控制里。这条只约束「我产生的临时文件」，
@@ -48,6 +51,21 @@ C++ 规范的完整版（豁免清单、正反例、踩坑记录）在 [docs/cpp
 插件内部经 `build_script/build/set_env.ps1` wrapper 调用 cmake——它激活 vcvars64 并在仓库根目录执行。**非 DSH 环境**（CI、编辑器任务、其他 agent）没有这些工具，需自行经该 wrapper 调用 cmake。相关路径解析见 [CMakePresets.json](CMakePresets.json) 与 [CMake/](CMake/) 下的 Find 模块。
 
 其余 preset 的权威定义在 [CMakePresets.json](CMakePresets.json)；改构建步骤优先改该文件与 `CMake/` 下的 Find 模块，不要在 `CMakeLists.txt` 里写死平台路径。
+
+**UE 构建与调用入口唯一：dsh-ue 插件（[dsh_plug/dsh-ue](dsh_plug/dsh-ue)）。** UE 目标编译、编辑器启动、工程与目标查询一律走该插件的工具，**不允许直接调用** `Build.bat` / `UnrealBuildTool` / `UnrealEditor.exe` / `UnrealEditor-Cmd.exe`——直接调用会出现权限问题。
+
+| 工具 | 作用 |
+| --- | --- |
+| `ue_targets` | 只读列出可编译目标、可运行编辑器与它们的实际命令行（不确定传什么先调它）|
+| `ue_build` | 编译 UE 目标（默认 `Win64` / `Development` / 增量）|
+| `ue_editor` | 启动编辑器，`.uproject` 固定为第一个参数，其余参数经 `extraArgs` 透传 |
+
+- 工具的 `ok` / `code` 是权威结论，**不要用退出码判断**：UBT 的失败常以 exit code 0 结束。C++ 编译错误看 `code=compile-failed` 与 `diagnostics` 给出的文件行号；`ubt-failed` 表示 UBT 自己拒绝了请求（目标不存在、模块依赖不符）。
+- 首次构建、改引擎头文件后的构建可能耗时数十分钟：**不要因为慢就重复调用**，也不要并发调用两个 `ue_build`（`Build.bat` 有全局锁，第二个会一直等）。
+- 不要在构建期间改动头文件或 `.uproject`，会留下半截状态。
+- 编辑器是长驻进程：`ue_editor` 会一直运行到编辑器自己退出或超时被终止，参数里必须给出退出方式（`-ExecCmds="QUIT_EDITOR"`、脚本内退出、或 `-game -unattended`）；自动化场景加 `-unattended -stdout`，必要时 `-NullRHI`。
+- 不要用 `ue_editor` 启动另一个 `ue_editor`，也不要同时开两个编辑器操作同一个工程；启动前先确认编辑器目标已用 `ue_build` 编译通过。
+- 相关路径解析与工程配置见 [dsh_plug/dsh-ue/cordis.patch.yml](dsh_plug/dsh-ue/cordis.patch.yml)（只读参考，不要改插件文件）。
 
 - **没有 C++ 单元测试**：数据库 ORM 与升级（`sqlite_*` 系列）、视频图片文件解码、网络客户端 `src/doodle_lib/http_client/**`、HTTP 处理器、Maya 插件等路径**都没有**单元测试，改动后不要期待 `doodle_kitsu_supplement_test` 会替你验证。
   HTTP 契约测试走 §2「按需测试流程」拉起的 `doodle_kitsu_supplement_test` 服务 + `test_js/` 下的 Playwright 用例。
