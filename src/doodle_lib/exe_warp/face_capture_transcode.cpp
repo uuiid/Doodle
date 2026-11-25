@@ -133,6 +133,7 @@ boost::asio::awaitable<void> face_capture_transcode_arg::run() {
       fmt::format("-OutDir={}", l_curves_dir.generic_string()),
       fmt::format("-FPS={}/{}", face_capture::k_fps, 1),
       fmt::format(R"(-abslog={})", (l_session_dir / "face_capture_ue.log").generic_string()),
+      "-KeepTongueSolve",
       "-stdout",
       "-nosplash",
   };
