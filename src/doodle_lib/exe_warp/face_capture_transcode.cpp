@@ -11,8 +11,7 @@
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 
-#include <boost/process.hpp>
-
+#include <avcpp/audioresampler.h>
 #include <avcpp/avconfig.h>
 #include <avcpp/buffersink.h>
 #include <avcpp/buffersrc.h>
@@ -22,6 +21,7 @@
 #include <avcpp/filter.h>
 #include <avcpp/filtercontext.h>
 #include <avcpp/filtergraph.h>
+#include <avcpp/format.h>
 #include <avcpp/formatcontext.h>
 #include <avcpp/frame.h>
 #include <avcpp/stream.h>
@@ -32,6 +32,7 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <fmt/format.h>
 #include <fstream>
@@ -47,6 +48,12 @@ constexpr std::string_view k_curves_file_name{"face_curves.dhfc"};
 constexpr std::string_view k_log_file_name{"face_capture_log.json"};
 
 constexpr std::int32_t k_png_compression{3};
+
+constexpr std::uint32_t k_audio_sample_rate{16000};
+
+constexpr std::uint16_t k_audio_channels{1};
+
+constexpr std::uint16_t k_audio_bits{16};
 
 FSys::path session_dir_of(const uuid& in_session_id) {
   return face_capture::capture_session::default_root() / fmt::format("{}", in_session_id);
@@ -122,27 +129,37 @@ class fps_resampler {
   av::VideoRescaler rescaler_{};
 };
 
-std::int32_t decode_to_png(const FSys::path& in_video, const FSys::path& in_frames_dir) {
+std::int32_t decode_to_png_and_wav(
+    const FSys::path& in_video, const FSys::path& in_frames_dir, const FSys::path& in_wav,
+    std::int32_t in_target_fps
+) {
+  DOODLE_CHICK(in_target_fps > 0, "目标帧率必须大于 0");
+
   av::FormatContext l_format_ctx{};
   l_format_ctx.openInput(in_video.string());
   l_format_ctx.findStreamInfo();
 
   av::Stream l_video_stream{};
+  av::Stream l_audio_stream{};
   for (std::size_t l_i = 0; l_i < l_format_ctx.streamsCount(); ++l_i) {
     auto l_stream = l_format_ctx.stream(l_i);
-    if (l_stream.isVideo()) {
+    if (l_stream.isVideo() && !l_video_stream.isValid())
       l_video_stream = l_stream;
-      break;
-    }
+    else if (l_stream.isAudio() && !l_audio_stream.isValid())
+      l_audio_stream = l_stream;
   }
   DOODLE_CHICK(l_video_stream.isValid(), "视频 {} 没有视频流", in_video.generic_string());
+  DOODLE_CHICK(l_audio_stream.isValid(), "视频 {} 没有音频流, 无法解算舌头", in_video.generic_string());
 
-  av::Codec l_codec = l_video_stream.codecParameters().decodingCodec();
-  DOODLE_CHICK(!l_codec.isNull(), "视频 {} 找不到解码器", in_video.generic_string());
-  DOODLE_CHICK(l_codec.isDecoder(), "视频 {} 的编解码器不是解码器", in_video.generic_string());
+  av::Codec l_video_codec = l_video_stream.codecParameters().decodingCodec();
+  DOODLE_CHICK(!l_video_codec.isNull(), "视频 {} 找不到解码器", in_video.generic_string());
+  DOODLE_CHICK(l_video_codec.isDecoder(), "视频 {} 的编解码器不是解码器", in_video.generic_string());
 
-  av::VideoDecoderContext l_dec_ctx{l_video_stream, l_codec};
+  av::VideoDecoderContext l_dec_ctx{l_video_stream, l_video_codec};
   l_dec_ctx.open();
+
+  av::AudioDecoderContext l_audio_dec_ctx{l_audio_stream};
+  l_audio_dec_ctx.open();
 
   fps_resampler l_resampler{l_dec_ctx};
   std::int32_t l_count = 0;
@@ -157,78 +174,128 @@ std::int32_t decode_to_png(const FSys::path& in_video, const FSys::path& in_fram
     }
   };
 
+  av::OutputFormat l_out_format{"wav"};
+
+  av::Codec l_audio_codec = av::findEncodingCodec(l_out_format, false);
+  DOODLE_CHICK(!l_audio_codec.isNull(), "找不到 wav 音频编码器");
+
+  av::AudioEncoderContext l_enc_ctx{l_audio_codec};
+  l_enc_ctx.setSampleRate(k_audio_sample_rate);
+  l_enc_ctx.setChannels(k_audio_channels);
+  l_enc_ctx.setChannelLayout(AV_CH_LAYOUT_MONO);
+  l_enc_ctx.setSampleFormat(AV_SAMPLE_FMT_S16);
+  l_enc_ctx.setTimeBase(av::Rational{1, k_audio_sample_rate});
+  {
+    std::error_code l_ec{};
+    l_enc_ctx.open(l_ec);
+    DOODLE_CHICK(!l_ec, "音频编码器 {} 打开失败: {}", l_audio_codec.name(), l_ec.message());
+  }
+
+  av::FormatContext l_out_ctx{};
+  l_out_ctx.setFormat(l_out_format);
+  av::Stream l_out_audio_stream = l_out_ctx.addStream(l_enc_ctx);
+  l_out_ctx.openOutput(in_wav.generic_string());
+  l_out_ctx.writeHeader();
+
+  std::uint32_t l_audio_bytes = 0;
+  std::int64_t l_total_samples = 0;
+  av::AudioResampler l_audio_resampler{};
+  bool l_resampler_ready = false;
+
+  const auto l_write_samples = [&](const av::AudioSamples& in_out_samples) {
+    if (!in_out_samples || in_out_samples.samplesCount() <= 0) return;
+
+    auto l_frame = in_out_samples;
+    l_frame.setTimeBase(av::Rational{1, k_audio_sample_rate});
+    l_frame.setPts(av::Timestamp{l_total_samples, av::Rational{1, k_audio_sample_rate}});
+
+    if (auto l_pkt = l_enc_ctx.encode(l_frame)) {
+      l_pkt.setStreamIndex(l_out_audio_stream.index());
+      l_out_ctx.writePacket(l_pkt);
+    }
+
+    l_total_samples += in_out_samples.samplesCount();
+    l_audio_bytes += static_cast<std::uint32_t>(in_out_samples.samplesCount()) * k_audio_channels * (k_audio_bits / 8);
+  };
+
+  const auto l_drain_audio = [&](const av::AudioSamples& in_samples) {
+    if (!in_samples || in_samples.samplesCount() <= 0) return;
+
+    if (!l_resampler_ready) {
+      const auto l_src_layout = in_samples.channelsLayout();
+      const auto l_src_rate   = in_samples.sampleRate();
+      DOODLE_CHICK(
+          l_src_layout != 0 && l_src_rate > 0, "音频源参数无效: layout={} rate={} channels={}", l_src_layout,
+          l_src_rate, in_samples.channelsCount()
+      );
+      std::error_code l_ec{};
+      const bool l_inited = l_audio_resampler.init(
+          AV_CH_LAYOUT_MONO, k_audio_sample_rate, AV_SAMPLE_FMT_S16, l_src_layout, l_src_rate,
+          in_samples.sampleFormat(), l_ec
+      );
+      DOODLE_CHICK(
+          l_inited && l_audio_resampler.isValid(), "音频重采样器初始化失败: {} (layout={} rate={} fmt={})",
+          l_ec.message(), l_src_layout, l_src_rate, static_cast<int>(in_samples.sampleFormat().get())
+      );
+      l_resampler_ready = true;
+    }
+
+    l_audio_resampler.push(in_samples);
+    for (auto l_out = l_audio_resampler.pop(0); l_out; l_out = l_audio_resampler.pop(0)) l_write_samples(l_out);
+  };
+
   while (auto l_pkt = l_format_ctx.readPacket()) {
-    if (l_pkt.streamIndex() != l_video_stream.index()) continue;
-    auto l_frame = l_dec_ctx.decode(l_pkt);
-    if (!l_frame) continue;
-    l_resampler.push(l_frame);
-    l_write_pending();
+    if (l_pkt.streamIndex() == l_video_stream.index()) {
+      auto l_frame = l_dec_ctx.decode(l_pkt);
+      if (!l_frame) continue;
+      l_resampler.push(l_frame);
+      l_write_pending();
+    } else if (l_pkt.streamIndex() == l_audio_stream.index()) {
+      l_drain_audio(l_audio_dec_ctx.decode(l_pkt));
+    }
   }
 
   while (auto l_frame = l_dec_ctx.decode({})) {
     l_resampler.push(l_frame);
     l_write_pending();
   }
+  while (auto l_samples = l_audio_dec_ctx.decode({})) l_drain_audio(l_samples);
 
   l_resampler.flush();
   l_write_pending();
 
-  return l_count;
-}
-
-FSys::path extract_audio_to_wav(
-    const FSys::path& in_video, const FSys::path& in_wav, std::int32_t in_frame_count, std::int32_t in_fps
-) {
-  DOODLE_CHICK(in_frame_count > 0 && in_fps > 0, "音频对齐需要有效的帧数与帧率");
-
-  av::FormatContext l_format_ctx{};
-  l_format_ctx.openInput(in_video.string());
-  l_format_ctx.findStreamInfo();
-
-  const auto l_duration = static_cast<double>(in_frame_count) / static_cast<double>(in_fps);
-  const auto l_source_seconds = static_cast<double>(l_format_ctx.duration().seconds());
-  DOODLE_CHICK(l_source_seconds > 0.0, "视频 {} 没有有效时长", in_video.generic_string());
-  const auto l_tempo = l_source_seconds / l_duration;
-  DOODLE_CHICK(
-      l_tempo > 0.5 && l_tempo < 2.0, "音频拉伸系数 {:.3f} 超出 atempo 允许范围 [0.5, 2.0]", l_tempo
-  );
-
-  bool l_has_audio{false};
-  for (std::size_t l_i = 0; l_i < l_format_ctx.streamsCount(); ++l_i) {
-    if (l_format_ctx.stream(l_i).isAudio()) {
-      l_has_audio = true;
-      break;
-    }
+  if (l_resampler_ready) {
+    for (auto l_out = l_audio_resampler.pop(0); l_out; l_out = l_audio_resampler.pop(0)) l_write_samples(l_out);
   }
-  DOODLE_CHICK(l_has_audio, "视频 {} 没有音频流, 无法解算舌头", in_video.generic_string());
 
-  const auto l_arg = std::vector<std::string>{
-      "-hide_banner", "-loglevel", "error", "-y",
-      "-i", in_video.generic_string(),
-      "-vn", "-af", fmt::format("atempo={:.6f},apad,atrim=0:{:.6f}", l_tempo, l_duration),
-      "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
-      in_wav.generic_string(),
-  };
-
-  auto l_ctx = boost::process::v2::process(
-      boost::asio::system_executor{}, "ffmpeg", l_arg,
-      boost::process::v2::process_stdio{nullptr, nullptr, nullptr}
+  const auto l_expected_samples = static_cast<std::int64_t>(
+      std::llround(
+          static_cast<double>(l_count) / static_cast<double>(in_target_fps) *
+          static_cast<double>(k_audio_sample_rate)
+      )
   );
-  const auto l_exit = l_ctx.wait();
-  DOODLE_CHICK(
-      l_exit == 0, "ffmpeg 抽取音频失败, 退出码 {}, 视频 {}", l_exit, in_video.generic_string()
-  );
-  DOODLE_CHICK(FSys::exists(in_wav) && FSys::file_size(in_wav) > 44, "ffmpeg 未生成有效 wav: {}", in_wav.generic_string());
+  if (l_total_samples < l_expected_samples) {
+    const auto l_pad = static_cast<int32_t>(l_expected_samples - l_total_samples);
+    av::AudioSamples l_silence{AV_SAMPLE_FMT_S16, l_pad, AV_CH_LAYOUT_MONO, k_audio_sample_rate};
+    std::memset(l_silence.data(0), 0, static_cast<std::size_t>(l_pad) * k_audio_channels * (k_audio_bits / 8));
+    l_write_samples(l_silence);
+  }
 
-  const auto l_actual_bytes = FSys::file_size(in_wav);
-  const auto l_actual_seconds = static_cast<double>(l_actual_bytes - 44) / (16000.0 * 2.0);
-  DOODLE_CHICK(
-      l_actual_seconds + 0.2 >= l_duration,
-      "抽取音频与重采样后的帧序列不一致: 期望 {:.3f}s({} 帧 / {} fps), 实际 {:.3f}s",
-      l_duration, in_frame_count, in_fps, l_actual_seconds
-  );
+  {
+    std::error_code l_ec{};
+    auto l_pkt = l_enc_ctx.encode(l_ec);
+    while (!l_ec && l_pkt) {
+      l_pkt.setStreamIndex(l_out_audio_stream.index());
+      l_out_ctx.writePacket(l_pkt);
+      l_pkt = l_enc_ctx.encode(l_ec);
+    }
+    DOODLE_CHICK(!l_ec, "音频编码收尾失败: {}", l_ec.message());
+  }
+  l_out_ctx.writeTrailer();
 
-  return in_wav;
+  DOODLE_CHICK(l_audio_bytes > 0, "视频 {} 没有可用音频数据", in_video.generic_string());
+
+  return l_count;
 }
 
 std::string read_log_code(const FSys::path& in_out_dir) {
@@ -277,7 +344,10 @@ boost::asio::awaitable<void> face_capture_transcode_arg::run() {
   FSys::create_directories(l_frames_dir);
 
   SPDLOG_LOGGER_INFO(logger_ptr_, "开始把 {} 转码为 png 序列", l_video.generic_string());
-  const auto l_frame_count = decode_to_png(l_video, l_frames_dir);
+  const auto l_audio = l_session_dir / "audio.wav";
+  if (FSys::exists(l_audio)) FSys::remove(l_audio);
+  const auto l_frame_count =
+      decode_to_png_and_wav(l_video, l_frames_dir, l_audio, face_capture::k_fps);
   SPDLOG_LOGGER_INFO(
       logger_ptr_, "转码完成 {} 帧, 输出目录 {}", l_frame_count, l_frames_dir.generic_string()
   );
@@ -285,11 +355,6 @@ boost::asio::awaitable<void> face_capture_transcode_arg::run() {
   DOODLE_CHICK(l_frame_count >= 2, "会话 {} 只解码出 {} 帧, 无法解算动捕", l_id_str, l_frame_count);
 
   FSys::create_directories(l_curves_dir);
-
-  const auto l_audio = l_session_dir / "audio.wav";
-  if (FSys::exists(l_audio)) FSys::remove(l_audio);
-  extract_audio_to_wav(l_video, l_audio, l_frame_count, face_capture::k_fps);
-  SPDLOG_LOGGER_INFO(logger_ptr_, "抽取音频完成 {}", l_audio.generic_string());
 
   DOODLE_CHICK(!ue_project_.empty(), "面部捕捉转码任务缺少 ue_project, 无法运行 UE 解算");
 
