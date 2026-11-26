@@ -18,27 +18,31 @@ struct DOODLE_CORE_API ai_category {
   std::string name_;                               ///< 类别名称 必填
   std::string description_;                        ///< 类别描述 选填
   ai_category_type type_{ai_category_type::shot};  ///< 类别类型 必填
+  uuid subproject_id_;                             ///< 所属子项目 必填
 
   constexpr static auto put_property_list() {
     return std::tuple{
         std::pair{"name", &ai_category::name_},
         std::pair{"description", &ai_category::description_},
+        std::pair{"subproject_id", &ai_category::subproject_id_},
         // std::pair{"type", &ai_category::type_}
     };
   }
 
   // to json
   friend void to_json(nlohmann::json& j, const ai_category& p) {
-    j["id"]          = p.uuid_id_;
-    j["name"]        = p.name_;
-    j["description"] = p.description_;
-    j["type"]        = p.type_;
+    j["id"]            = p.uuid_id_;
+    j["name"]          = p.name_;
+    j["description"]   = p.description_;
+    j["type"]          = p.type_;
+    j["subproject_id"] = p.subproject_id_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, ai_category& p) {
     j.at("name").get_to(p.name_);
     j.at("type").get_to(p.type_);
     if (j.contains("description")) j.at("description").get_to(p.description_);
+    if (j.contains("subproject_id")) j.at("subproject_id").get_to(p.subproject_id_);
   }
 };
 

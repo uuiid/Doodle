@@ -38,7 +38,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_old_version     = 37;
+constexpr std::size_t g_old_version     = 38;
 constexpr std::size_t g_current_version = g_old_version + 1;
 
 }  // namespace
@@ -110,6 +110,38 @@ struct upgrade_3_t : sqlite_upgrade {
   ~upgrade_3_t() override = default;
 };
 
+struct upgrade_category_subproject_t : sqlite_upgrade {
+  explicit upgrade_category_subproject_t() {}
+  void upgrade(sqlite_storage& in_data) override {
+    auto l_s = in_data.create_session();
+    if (l_s.pragma().user_version() > g_old_version) return;
+    backup(l_s);
+
+    using namespace orm;
+    l_s.pragma().legacy_alter_table(true);
+    {
+      auto l_g = l_s.transaction();
+      l_s.pragma().foreign_keys(false);
+      l_s.add_column("seedance2_ai_category", "subproject_id", column_type::text);
+
+      delete_from(l_s)
+          .from<seedance2::ai_generate_entity>()
+          .where(c(&seedance2::ai_generate_entity::ai_category_id_) != nullptr)();
+      delete_from(l_s).from<seedance2::ai_category>().where(c(&seedance2::ai_category::subproject_id_) == nullptr)();
+
+      l_s.sync_schema();
+      l_s.rebuild_table<seedance2::ai_category>();
+
+      l_s.exec(R"(UPDATE "sqlite_sequence" SET "seq" = 0 WHERE "name" = "seedance2_ai_category";)");
+      l_g.commit();
+    }
+    l_s.pragma().legacy_alter_table(false);
+    l_s.pragma().user_version(g_current_version);
+    SPDLOG_INFO("upgrade: 已清空旧类别及其实体, 并为类别表补上 subproject_id");
+  }
+  ~upgrade_category_subproject_t() override = default;
+};
+
 struct upgrade_clear_orphan_task_t : sqlite_upgrade {
   explicit upgrade_clear_orphan_task_t() {}
   void upgrade(sqlite_storage& in_data) override {
@@ -137,6 +169,10 @@ struct upgrade_clear_orphan_task_t : sqlite_upgrade {
 
 std::shared_ptr<sqlite_upgrade> upgrade_init() { return std::make_shared<upgrade_init_t>(); }
 std::shared_ptr<sqlite_upgrade> upgrade_3() { return std::make_shared<upgrade_3_t>(); }
+
+std::shared_ptr<sqlite_upgrade> upgrade_category_subproject() {
+  return std::make_shared<upgrade_category_subproject_t>();
+}
 
 std::shared_ptr<sqlite_upgrade> upgrade_clear_orphan_task() { return std::make_shared<upgrade_clear_orphan_task_t>(); }
 

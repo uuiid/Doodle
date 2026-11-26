@@ -213,7 +213,11 @@ void sqlite_storage::regs_all() {
       .add_column("uuid_id", &seedance2::ai_category::uuid_id_, unique(), not_null())
       .add_column("name", &seedance2::ai_category::name_, not_null())
       .add_column("description", &seedance2::ai_category::description_)
-      .add_column("type", &seedance2::ai_category::type_, not_null());
+      .add_column("type", &seedance2::ai_category::type_, not_null())
+      .add_column("subproject_id", &seedance2::ai_category::subproject_id_, not_null())
+      .add_foreign_key(
+          &seedance2::ai_category::subproject_id_, &seedance2::subproject::uuid_id_, foreign_key_action::cascade
+      );
 
   reg_table<seedance2::ai_generate_entity>("seedance2_ai_generate_entity")
       .add_column("id", &seedance2::ai_generate_entity::id_, primary_key(), autoincrement())
@@ -1322,7 +1326,10 @@ void sqlite_storage::open_(FSys::path in_path, std::int32_t in_flags) {
 void sqlite_storage::upgrade() {
   // 顺序即版本顺序, 新迁移追加在 upgrade_clear_orphan_task 之前 ——
   // 那个是启动清理, 必须排在所有 schema 迁移之后跑 (它要依赖 server_task_info_tab 已经存在).
-  auto l_list = {details::upgrade_init(), details::upgrade_3(), details::upgrade_clear_orphan_task()};
+  auto l_list = {
+      details::upgrade_init(), details::upgrade_3(), details::upgrade_category_subproject(),
+      details::upgrade_clear_orphan_task()
+  };
   for (auto&& i : l_list) {
     i->upgrade(*this);
   }
