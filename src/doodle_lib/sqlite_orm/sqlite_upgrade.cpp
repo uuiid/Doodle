@@ -118,9 +118,6 @@ struct upgrade_3_t : sqlite_upgrade {
     }
     l_s.pragma().legacy_alter_table(false);
     l_s.pragma().user_version(g_current_version);
-    SPDLOG_INFO("upgrade: 已清空旧类别及其实体, 并为类别表补上 subproject_id");
-
-    l_s.pragma().user_version(g_current_version);
     l_s.pragma().foreign_keys(true);
   }
   ~upgrade_3_t() override = default;
