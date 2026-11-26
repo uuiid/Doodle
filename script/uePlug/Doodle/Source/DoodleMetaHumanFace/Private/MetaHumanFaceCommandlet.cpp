@@ -262,22 +262,7 @@ int32 UMetaHumanFaceCommandlet::Main(const FString& Params) {
 FMetaHumanFaceJobResult UMetaHumanFaceCommandlet::Run(const FMetaHumanFaceJobRequest& InRequest) {
     const FMetaHumanFaceCaptureDataBuilder Builder;
 
-    FMetaHumanFaceJobRequest EffectiveRequest = InRequest;
-
-    if (!InRequest.VideoFile.IsEmpty() && InRequest.AudioFile.IsEmpty())
-    {
-        const FString WavFile = FPaths::Combine(InRequest.OutDir, TEXT("face_capture_audio.wav"));
-        FString ExtractError;
-        if (!FMetaHumanFaceAudioImporter::ExtractAudioFromVideo(InRequest.VideoFile, WavFile, ExtractError))
-        {
-            return MakeStageFailure(
-                EMetaHumanFaceStage::Building, EMetaHumanFaceErrorCode::InvalidRequest, ExtractError
-            );
-        }
-
-        UE_LOG(LogDoodleMetaHumanFaceCommandlet, Display, TEXT("extracted audio to %s"), *WavFile);
-        EffectiveRequest.AudioFile = WavFile;
-    }
+    const FMetaHumanFaceJobRequest& EffectiveRequest = InRequest;
 
     FMetaHumanFaceJobResult Validated = Builder.Validate(EffectiveRequest);
     if (Validated.Code != EMetaHumanFaceErrorCode::None)

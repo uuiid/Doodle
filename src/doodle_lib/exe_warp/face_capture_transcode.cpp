@@ -11,6 +11,8 @@
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 
+#include <boost/process.hpp>
+
 #include <avcpp/avconfig.h>
 #include <avcpp/buffersink.h>
 #include <avcpp/buffersrc.h>
@@ -174,6 +176,61 @@ std::int32_t decode_to_png(const FSys::path& in_video, const FSys::path& in_fram
   return l_count;
 }
 
+FSys::path extract_audio_to_wav(
+    const FSys::path& in_video, const FSys::path& in_wav, std::int32_t in_frame_count, std::int32_t in_fps
+) {
+  DOODLE_CHICK(in_frame_count > 0 && in_fps > 0, "音频对齐需要有效的帧数与帧率");
+
+  av::FormatContext l_format_ctx{};
+  l_format_ctx.openInput(in_video.string());
+  l_format_ctx.findStreamInfo();
+
+  const auto l_duration = static_cast<double>(in_frame_count) / static_cast<double>(in_fps);
+  const auto l_source_seconds = static_cast<double>(l_format_ctx.duration().seconds());
+  DOODLE_CHICK(l_source_seconds > 0.0, "视频 {} 没有有效时长", in_video.generic_string());
+  const auto l_tempo = l_source_seconds / l_duration;
+  DOODLE_CHICK(
+      l_tempo > 0.5 && l_tempo < 2.0, "音频拉伸系数 {:.3f} 超出 atempo 允许范围 [0.5, 2.0]", l_tempo
+  );
+
+  bool l_has_audio{false};
+  for (std::size_t l_i = 0; l_i < l_format_ctx.streamsCount(); ++l_i) {
+    if (l_format_ctx.stream(l_i).isAudio()) {
+      l_has_audio = true;
+      break;
+    }
+  }
+  DOODLE_CHICK(l_has_audio, "视频 {} 没有音频流, 无法解算舌头", in_video.generic_string());
+
+  const auto l_arg = std::vector<std::string>{
+      "-hide_banner", "-loglevel", "error", "-y",
+      "-i", in_video.generic_string(),
+      "-vn", "-af", fmt::format("atempo={:.6f},apad,atrim=0:{:.6f}", l_tempo, l_duration),
+      "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
+      in_wav.generic_string(),
+  };
+
+  auto l_ctx = boost::process::v2::process(
+      boost::asio::system_executor{}, "ffmpeg", l_arg,
+      boost::process::v2::process_stdio{nullptr, nullptr, nullptr}
+  );
+  const auto l_exit = l_ctx.wait();
+  DOODLE_CHICK(
+      l_exit == 0, "ffmpeg 抽取音频失败, 退出码 {}, 视频 {}", l_exit, in_video.generic_string()
+  );
+  DOODLE_CHICK(FSys::exists(in_wav) && FSys::file_size(in_wav) > 44, "ffmpeg 未生成有效 wav: {}", in_wav.generic_string());
+
+  const auto l_actual_bytes = FSys::file_size(in_wav);
+  const auto l_actual_seconds = static_cast<double>(l_actual_bytes - 44) / (16000.0 * 2.0);
+  DOODLE_CHICK(
+      l_actual_seconds + 0.2 >= l_duration,
+      "抽取音频与重采样后的帧序列不一致: 期望 {:.3f}s({} 帧 / {} fps), 实际 {:.3f}s",
+      l_duration, in_frame_count, in_fps, l_actual_seconds
+  );
+
+  return in_wav;
+}
+
 std::string read_log_code(const FSys::path& in_out_dir) {
   auto l_path = in_out_dir / std::string{k_log_file_name};
   if (!FSys::exists(l_path)) return {};
@@ -229,6 +286,11 @@ boost::asio::awaitable<void> face_capture_transcode_arg::run() {
 
   FSys::create_directories(l_curves_dir);
 
+  const auto l_audio = l_session_dir / "audio.wav";
+  if (FSys::exists(l_audio)) FSys::remove(l_audio);
+  extract_audio_to_wav(l_video, l_audio, l_frame_count, face_capture::k_fps);
+  SPDLOG_LOGGER_INFO(logger_ptr_, "抽取音频完成 {}", l_audio.generic_string());
+
   DOODLE_CHICK(!ue_project_.empty(), "面部捕捉转码任务缺少 ue_project, 无法运行 UE 解算");
 
   const auto l_ue_arg = std::vector<std::string>{
@@ -239,6 +301,7 @@ boost::asio::awaitable<void> face_capture_transcode_arg::run() {
       fmt::format("-FramesDir={}", l_frames_dir.generic_string()),
       fmt::format("-OutDir={}", l_curves_dir.generic_string()),
       fmt::format("-FPS={}/{}", face_capture::k_fps, 1),
+      fmt::format("-Audio={}", l_audio.generic_string()),
       fmt::format(R"(-abslog={})", (l_session_dir / "face_capture_ue.log").generic_string()),
       "-KeepTongueSolve",
       "-stdout",

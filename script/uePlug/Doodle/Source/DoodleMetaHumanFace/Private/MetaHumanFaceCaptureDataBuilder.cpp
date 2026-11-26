@@ -12,8 +12,6 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Modules/ModuleManager.h"
-#include "Serialization/JsonReader.h"
-#include "Serialization/JsonSerializer.h"
 #include "TrackingPathUtils.h"
 #include "UObject/Package.h"
 
@@ -316,29 +314,12 @@ FTimecode FMetaHumanFaceCaptureDataBuilder::ResolveStartTimecode(
 ) {
     const FFrameRate FrameRate(static_cast<int32>(InRequest.FpsNum), static_cast<int32>(InRequest.FpsDen));
 
-    const FString MetaPath = FPaths::Combine(InRequest.OutDir, TEXT("frames_meta.json"));
-    FString MetaText;
-    if (!MetaPath.IsEmpty() && FFileHelper::LoadFileToString(MetaText, *MetaPath))
-    {
-        TSharedPtr<FJsonObject> MetaObject;
-        const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(MetaText);
-        if (FJsonSerializer::Deserialize(Reader, MetaObject) && MetaObject.IsValid())
-        {
-            int32 FirstFrameOfFile = 0;
-            if (MetaObject->TryGetNumberField(TEXT("first_frame"), FirstFrameOfFile))
-            {
-                return MakeNonZeroTimecode(static_cast<double>(FirstFrameOfFile) / FrameRate.AsDecimal(), FrameRate);
-            }
-        }
-    }
-
     if (InScan.StartFrame != 0)
     {
         return MakeNonZeroTimecode(static_cast<double>(InScan.StartFrame) / FrameRate.AsDecimal(), FrameRate);
     }
 
-    const double OffsetSeconds = static_cast<double>(FDateTime::Now().GetTicks());
-    return MakeNonZeroTimecode(OffsetSeconds, FrameRate);
+    return MakeNonZeroTimecode(1.0, FrameRate);
 }
 
 FMetaHumanFaceJobResult FMetaHumanFaceCaptureDataBuilder::Validate(const FMetaHumanFaceJobRequest& InRequest) const {
@@ -437,8 +418,8 @@ FMetaHumanFaceCaptureDataBuilder::BuildWithTimecode(
         USoundWave* AudioTrack = AudioImporter.ImportWav(
             InRequest.AudioFile,
             TEXT("/Temp/DoodleFaceCapture"),
-            static_cast<double>(InStartTimecode.Frames) /
-                (InRequest.FpsNum != 0 ? static_cast<double>(InRequest.FpsNum) : 25.0),
+            InStartTimecode,
+            FFrameRate(static_cast<int32>(InRequest.FpsNum), static_cast<int32>(InRequest.FpsDen)),
             AudioError
         );
         if (AudioTrack == nullptr)

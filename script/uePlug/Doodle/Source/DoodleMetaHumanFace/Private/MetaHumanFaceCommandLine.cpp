@@ -182,11 +182,6 @@ bool FMetaHumanFaceCommandLine::ParseToken(const FString& InToken, TArray<FStrin
         return true;
     }
 
-    if (Key.Equals(TEXT("Video"), ESearchCase::IgnoreCase))
-    {
-        Request.VideoFile = Value;
-        return true;
-    }
 
     if (Key.Equals(TEXT("PackagePath"), ESearchCase::IgnoreCase))
     {
@@ -275,7 +270,6 @@ FString FMetaHumanFaceCommandLine::Usage() {
             TEXT("  -PackagePath=<package path>       optional, where the intermediate assets are created"),
             TEXT("  -NoHeadStabilize                  optional, disables head stabilization"),
             TEXT("  -KeepTongueSolve                  optional, enables tongue solving (requires audio)"),
-            TEXT("  -Video=<absolute file>            optional, video file to extract the audio track from"),
             TEXT("  -Audio=<absolute file>            optional, pre-extracted wav file used for the tongue solve"),
             TEXT(""),
             TEXT("Examples:"),

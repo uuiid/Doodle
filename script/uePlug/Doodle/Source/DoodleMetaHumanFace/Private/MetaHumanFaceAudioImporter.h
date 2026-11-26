@@ -1,6 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Misc/FrameRate.h"
+#include "Misc/Timecode.h"
 
 class USoundWave;
 
@@ -15,9 +17,10 @@ class FMetaHumanFaceAudioImporter
     FMetaHumanFaceAudioImporter& operator=(const FMetaHumanFaceAudioImporter&) = delete;
     FMetaHumanFaceAudioImporter& operator=(FMetaHumanFaceAudioImporter&&) = delete;
 
-    static bool ExtractAudioFromVideo(const FString& InVideoFile, const FString& InWavFile, FString& OutError);
-
-    USoundWave* ImportWav(const FString& InWavFile, const FString& InPackagePath, double InStartSeconds, FString& OutError);
+    USoundWave* ImportWav(
+        const FString& InWavFile, const FString& InPackagePath, const FTimecode& InStartTimecode,
+        const FFrameRate& InTimecodeRate, FString& OutError
+    );
 
     void Release();
 

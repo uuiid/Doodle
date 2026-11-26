@@ -3,17 +3,25 @@
 #include "AssetImportTask.h"
 #include "AssetToolsModule.h"
 #include "HAL/FileManager.h"
-#include "HAL/PlatformProcess.h"
 #include "IAssetTools.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Modules/ModuleManager.h"
 #include "Sound/SoundWave.h"
 #include "Sound/SoundWaveTimecodeInfo.h"
 #include "UObject/Package.h"
 
 namespace
 {
-    const TCHAR* const FfmpegExecutable = TEXT("ffmpeg");
+    const TCHAR* const BinkAudioDecoderModule = TEXT("BinkAudioDecoder");
+
+    bool LoadBinkAudioDecoder() {
+        if (FModuleManager::Get().IsModuleLoaded(BinkAudioDecoderModule)) {
+            return true;
+        }
+
+        return FModuleManager::Get().LoadModule(BinkAudioDecoderModule) != nullptr;
+    }
 
     bool IsWavHeaderValid(const FString& InWavFile) {
         TArray<uint8> Header;
@@ -39,53 +47,19 @@ FMetaHumanFaceAudioImporter::~FMetaHumanFaceAudioImporter() {
     Release();
 }
 
-bool FMetaHumanFaceAudioImporter::ExtractAudioFromVideo(
-    const FString& InVideoFile, const FString& InWavFile, FString& OutError
-) {
-    if (!IFileManager::Get().FileExists(*InVideoFile)) {
-        OutError = FString::Printf(TEXT("video file does not exist: %s"), *InVideoFile);
-        return false;
-    }
-
-    const FString WavDirectory = FPaths::GetPath(InWavFile);
-    if (!WavDirectory.IsEmpty() && !IFileManager::Get().MakeDirectory(*WavDirectory, true)) {
-        OutError = FString::Printf(TEXT("failed to create directory %s"), *WavDirectory);
-        return false;
-    }
-
-    IFileManager::Get().Delete(*InWavFile, false, true, true);
-
-    const FString Arguments = FString::Printf(
-        TEXT("-hide_banner -loglevel error -y -i \"%s\" -vn -acodec pcm_s16le -ar 16000 -ac 1 \"%s\""),
-        *FPaths::ConvertRelativePathToFull(InVideoFile), *FPaths::ConvertRelativePathToFull(InWavFile)
-    );
-
-    int32 ReturnCode = -1;
-    FString StdOut;
-    FString StdErr;
-    if (!FPlatformProcess::ExecProcess(FfmpegExecutable, *Arguments, &ReturnCode, &StdOut, &StdErr)) {
-        OutError = FString::Printf(TEXT("failed to launch ffmpeg: %s"), *StdErr);
-        return false;
-    }
-
-    if (ReturnCode != 0) {
-        OutError = FString::Printf(TEXT("ffmpeg exited with %d: %s"), ReturnCode, *StdErr);
-        return false;
-    }
-
-    if (!IsWavHeaderValid(InWavFile)) {
-        OutError = FString::Printf(TEXT("ffmpeg produced no readable wav at %s"), *InWavFile);
-        return false;
-    }
-
-    return true;
-}
-
 USoundWave* FMetaHumanFaceAudioImporter::ImportWav(
-    const FString& InWavFile, const FString& InPackagePath, double InStartSeconds, FString& OutError
+    const FString& InWavFile, const FString& InPackagePath, const FTimecode& InStartTimecode,
+    const FFrameRate& InTimecodeRate, FString& OutError
 ) {
     if (!IsWavHeaderValid(InWavFile)) {
         OutError = FString::Printf(TEXT("wav file is missing or invalid: %s"), *InWavFile);
+        return nullptr;
+    }
+
+    if (!LoadBinkAudioDecoder()) {
+        OutError = FString::Printf(
+            TEXT("failed to load the %s module, the imported sound wave cannot be decoded"), BinkAudioDecoderModule
+        );
         return nullptr;
     }
 
@@ -120,11 +94,17 @@ USoundWave* FMetaHumanFaceAudioImporter::ImportWav(
     }
 
     FSoundWaveTimecodeInfo TimecodeInfo;
-    TimecodeInfo.NumSamplesPerSecond = SoundWave->GetSampleRateForCurrentPlatform();
+    const int32 SampleRate = SoundWave->GetSampleRateForCurrentPlatform();
+    const double RateDecimal = InTimecodeRate.AsDecimal();
+    const int32 StartFrame = InStartTimecode.ToFrameNumber(InTimecodeRate).Value;
+    const double StartSeconds =
+        RateDecimal > 0.0 ? static_cast<double>(StartFrame) / RateDecimal : 0.0;
+
+    TimecodeInfo.NumSamplesPerSecond = static_cast<uint32>(SampleRate);
     TimecodeInfo.NumSamplesSinceMidnight =
-        static_cast<uint64>(InStartSeconds * static_cast<double>(TimecodeInfo.NumSamplesPerSecond));
-    TimecodeInfo.TimecodeRate = FFrameRate(25, 1);
-    TimecodeInfo.bTimecodeIsDropFrame = false;
+        static_cast<uint64>(StartSeconds * static_cast<double>(SampleRate));
+    TimecodeInfo.TimecodeRate = InTimecodeRate;
+    TimecodeInfo.bTimecodeIsDropFrame = InStartTimecode.bDropFrameFormat;
     SoundWave->SetTimecodeInfo(TimecodeInfo);
 
     Task->RemoveFromRoot();

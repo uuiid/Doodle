@@ -47,7 +47,6 @@ struct FMetaHumanFaceJobRequest
     FString CtrlRigAsset;
     FString FaceSkeletonAsset;
     FString AudioFile;
-    FString VideoFile;
     uint32 FpsNum = 25;
     uint32 FpsDen = 1;
     bool bHeadStabilize = true;

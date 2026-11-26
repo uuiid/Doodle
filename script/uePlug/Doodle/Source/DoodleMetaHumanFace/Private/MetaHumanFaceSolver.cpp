@@ -17,6 +17,8 @@
 #include "Pipeline/PipelineData.h"
 #include "Pipeline/DataTreeTypes.h"
 #include "RHI.h"
+#include "Sound/SoundWave.h"
+#include "Sound/SoundWaveTimecodeInfo.h"
 #include "UObject/Package.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogDoodleMetaHumanFaceSolver, Log, All);
@@ -303,18 +305,6 @@ TValueOrError<FMetaHumanFaceBuiltPerformance, FMetaHumanFaceSolverError> FMetaHu
         {
             Performance->ControlRigClass = RigBlueprint->GetRigVMBlueprintGeneratedClass();
         }
-
-        const FString SkeletonAsset = InRequest.FaceSkeletonAsset.IsEmpty()
-                                          ? FMetaHumanFaceRigBaker::DefaultSkeletonAssets()[0]
-                                          : InRequest.FaceSkeletonAsset;
-
-        USkeletalMesh* SkeletonMeshAsset = LoadObject<USkeletalMesh>(
-            nullptr, *(SkeletonAsset + TEXT(".") + FPackageName::GetShortName(SkeletonAsset))
-        );
-        if (SkeletonMeshAsset != nullptr)
-        {
-            Performance->VisualizationMesh = SkeletonMeshAsset;
-        }
     }
 
     if (Performance->MonoSmoothingParams == nullptr)
@@ -332,11 +322,68 @@ TValueOrError<FMetaHumanFaceBuiltPerformance, FMetaHumanFaceSolverError> FMetaHu
     if (!ProcessingLimit.HasLowerBound() || !ProcessingLimit.HasUpperBound() ||
         ProcessingLimit.GetLowerBoundValue().Value >= ProcessingLimit.GetUpperBoundValue().Value)
     {
+        UE_LOG(
+            LogDoodleMetaHumanFaceSolver, Error,
+            TEXT("diag: processing range empty. canProcess=%d tooltip=[%s] audioTracks=%d audioForProcessing=%s"),
+            Performance->CanProcess() ? 1 : 0, *Performance->GetCannotProcessTooltipText().ToString(),
+            InCaptureData != nullptr ? InCaptureData->AudioTracks.Num() : -1,
+            (Performance->GetAudioForProcessing() != nullptr)
+                ? *Performance->GetAudioForProcessing()->GetPathName()
+                : TEXT("null")
+        );
+
+        UE_LOG(
+            LogDoodleMetaHumanFaceSolver, Error, TEXT("diag: timecodeAlignment=%d frameRate=%s"),
+            static_cast<int32>(Performance->TimecodeAlignment), *FString::Printf(TEXT("%d/%d"), Performance->GetFrameRate().Numerator, Performance->GetFrameRate().Denominator)
+        );
+
+        if (InCaptureData != nullptr)
+        {
+            if (!InCaptureData->ImageSequences.IsEmpty() && InCaptureData->ImageSequences[0] != nullptr)
+            {
+                const UImgMediaSource* Source = InCaptureData->ImageSequences[0].Get();
+                const FTimecode ImageTimecode = Source->StartTimecode;
+                UE_LOG(
+                    LogDoodleMetaHumanFaceSolver, Error,
+                    TEXT("diag: image[0] timecode=%02d:%02d:%02d:%02d dropFrame=%d frameRateOverride=%s"),
+                    ImageTimecode.Hours, ImageTimecode.Minutes, ImageTimecode.Seconds, ImageTimecode.Frames,
+                    ImageTimecode.bDropFrameFormat ? 1 : 0, *FString::Printf(TEXT("%d/%d"), Source->FrameRateOverride.Numerator, Source->FrameRateOverride.Denominator)
+                );
+            }
+
+            if (!InCaptureData->AudioTracks.IsEmpty() && InCaptureData->AudioTracks[0] != nullptr)
+            {
+                const USoundWave* Wave = InCaptureData->AudioTracks[0].Get();
+                const TOptional<FSoundWaveTimecodeInfo> Info = Wave->GetTimecodeInfo();
+                UE_LOG(
+                    LogDoodleMetaHumanFaceSolver, Error,
+                    TEXT("diag: audio[0] hasTimecode=%d samplesSinceMidnight=%llu samplesPerSecond=%u rate=%s duration=%.3f"),
+                    Info.IsSet() ? 1 : 0, Info.IsSet() ? Info->NumSamplesSinceMidnight : 0,
+                    Info.IsSet() ? Info->NumSamplesPerSecond : 0,
+                    Info.IsSet() ? *FString::Printf(TEXT("%d/%d"), Info->TimecodeRate.Numerator, Info->TimecodeRate.Denominator) : TEXT("none"), Wave->GetDuration()
+                );
+            }
+
+            const TMap<TWeakObjectPtr<UObject>, TRange<FFrameNumber>>& MediaRanges =
+                Performance->GetMediaFrameRanges();
+            for (const TPair<TWeakObjectPtr<UObject>, TRange<FFrameNumber>>& Pair : MediaRanges)
+            {
+                const UObject* Key = Pair.Key.Get();
+                const TRange<FFrameNumber>& Range = Pair.Value;
+                UE_LOG(
+                    LogDoodleMetaHumanFaceSolver, Error, TEXT("diag: mediaRange %s -> [%d, %d]"),
+                    Key != nullptr ? *Key->GetName() : TEXT("null"),
+                    Range.HasLowerBound() ? Range.GetLowerBoundValue().Value : -1,
+                    Range.HasUpperBound() ? Range.GetUpperBoundValue().Value : -1
+                );
+            }
+        }
+
         return MakeSolverError<FMetaHumanFaceBuiltPerformance>(
             EMetaHumanFaceSolverErrorCode::PerformanceCreationFailed,
             FString::Printf(
-                TEXT("performance %s has an empty processing range, capture data was rejected by MetaHuman"),
-                *OuterPackageName
+                TEXT("performance %s has an empty processing range, capture data was rejected by MetaHuman: %s"),
+                *OuterPackageName, *Performance->GetCannotProcessTooltipText().ToString()
             )
         );
     }

@@ -55,6 +55,7 @@ public class DoodleMetaHumanFace : ModuleRules
                 "UnrealEd",
                 "AssetRegistry",
                 "AssetTools",
+                "BinkAudioDecoder",
             }
             );
 
