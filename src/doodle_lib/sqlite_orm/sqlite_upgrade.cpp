@@ -98,8 +98,6 @@ struct upgrade_3_t : sqlite_upgrade {
     auto l_s = in_data.create_session();
     if (l_s.pragma().user_version() > g_old_version) return;
     backup(l_s);
-    l_s.pragma().foreign_keys(false);
-
     using namespace orm;
     l_s.pragma().legacy_alter_table(true);
     {
