@@ -253,22 +253,19 @@ void sqlite_storage::regs_all() {
   reg_table<seedance2::ai_generate_entity_sub_task>("seedance2_ai_generate_entity_sub_task")
       .add_column("id", &seedance2::ai_generate_entity_sub_task::id_, primary_key(), autoincrement())
       .add_column("uuid_id", &seedance2::ai_generate_entity_sub_task::uuid_id_, unique(), not_null())
-      .add_column(
-          "ai_generate_entity_id", &seedance2::ai_generate_entity_sub_task::ai_generate_entity_id_, not_null()
-      )
+      .add_column("ai_generate_entity_id", &seedance2::ai_generate_entity_sub_task::ai_generate_entity_id_, not_null())
       .add_column("task_id", &seedance2::ai_generate_entity_sub_task::task_id_, not_null())
       .add_column("importance", &seedance2::ai_generate_entity_sub_task::importance_, not_null())
       .add_foreign_key(
-          &seedance2::ai_generate_entity_sub_task::ai_generate_entity_id_,
-          &seedance2::ai_generate_entity::uuid_id_,
+          &seedance2::ai_generate_entity_sub_task::ai_generate_entity_id_, &seedance2::ai_generate_entity::uuid_id_,
           foreign_key_action::cascade
       )
       .add_foreign_key(
-          &seedance2::ai_generate_entity_sub_task::task_id_, &seedance2::task::uuid_id_,
-          foreign_key_action::cascade
+          &seedance2::ai_generate_entity_sub_task::task_id_, &seedance2::task::uuid_id_, foreign_key_action::cascade
       )
       .add_unique_index(
-          &seedance2::ai_generate_entity_sub_task::ai_generate_entity_id_, &seedance2::ai_generate_entity_sub_task::task_id_
+          &seedance2::ai_generate_entity_sub_task::ai_generate_entity_id_,
+          &seedance2::ai_generate_entity_sub_task::task_id_
       );
 
   reg_table<seedance2::ai_entity_reference_preview>("seedance2_ai_entity_reference_preview")
@@ -1326,10 +1323,7 @@ void sqlite_storage::open_(FSys::path in_path, std::int32_t in_flags) {
 void sqlite_storage::upgrade() {
   // 顺序即版本顺序, 新迁移追加在 upgrade_clear_orphan_task 之前 ——
   // 那个是启动清理, 必须排在所有 schema 迁移之后跑 (它要依赖 server_task_info_tab 已经存在).
-  auto l_list = {
-      details::upgrade_init(), details::upgrade_3(), details::upgrade_category_subproject(),
-      details::upgrade_clear_orphan_task()
-  };
+  auto l_list = {details::upgrade_init(), details::upgrade_3(), details::upgrade_clear_orphan_task()};
   for (auto&& i : l_list) {
     i->upgrade(*this);
   }

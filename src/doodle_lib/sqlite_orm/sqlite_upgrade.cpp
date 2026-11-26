@@ -99,23 +99,6 @@ struct upgrade_3_t : sqlite_upgrade {
     if (l_s.pragma().user_version() > g_old_version) return;
     backup(l_s);
     l_s.pragma().foreign_keys(false);
-    using namespace orm;
-    auto l_g = l_s.transaction();
-    l_s.sync_schema();
-
-    l_g.commit();
-    l_s.pragma().user_version(g_current_version);
-    l_s.pragma().foreign_keys(true);
-  }
-  ~upgrade_3_t() override = default;
-};
-
-struct upgrade_category_subproject_t : sqlite_upgrade {
-  explicit upgrade_category_subproject_t() {}
-  void upgrade(sqlite_storage& in_data) override {
-    auto l_s = in_data.create_session();
-    if (l_s.pragma().user_version() > g_old_version) return;
-    backup(l_s);
 
     using namespace orm;
     l_s.pragma().legacy_alter_table(true);
@@ -138,8 +121,11 @@ struct upgrade_category_subproject_t : sqlite_upgrade {
     l_s.pragma().legacy_alter_table(false);
     l_s.pragma().user_version(g_current_version);
     SPDLOG_INFO("upgrade: 已清空旧类别及其实体, 并为类别表补上 subproject_id");
+
+    l_s.pragma().user_version(g_current_version);
+    l_s.pragma().foreign_keys(true);
   }
-  ~upgrade_category_subproject_t() override = default;
+  ~upgrade_3_t() override = default;
 };
 
 struct upgrade_clear_orphan_task_t : sqlite_upgrade {
@@ -169,10 +155,6 @@ struct upgrade_clear_orphan_task_t : sqlite_upgrade {
 
 std::shared_ptr<sqlite_upgrade> upgrade_init() { return std::make_shared<upgrade_init_t>(); }
 std::shared_ptr<sqlite_upgrade> upgrade_3() { return std::make_shared<upgrade_3_t>(); }
-
-std::shared_ptr<sqlite_upgrade> upgrade_category_subproject() {
-  return std::make_shared<upgrade_category_subproject_t>();
-}
 
 std::shared_ptr<sqlite_upgrade> upgrade_clear_orphan_task() { return std::make_shared<upgrade_clear_orphan_task_t>(); }
 
